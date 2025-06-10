@@ -1,3 +1,4 @@
+/* eslint-disable no-alert */
 "use client";
 
 import { ReactNode } from "react";
