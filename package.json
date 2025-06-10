@@ -19,8 +19,9 @@
     "apps/*",
     "packages/*"
   ],
-  "dependencies": {},
   "devDependencies": {
+    "@changesets/cli": "^2.29.4",
+    "husky": "^9.1.7",
     "lint-staged": "^15.5.2",
     "prettier": "3.5.3",
     "turbo": "^2.5.4",
