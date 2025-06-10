@@ -5,20 +5,28 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types"
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md,css,scss}\"",
+    "check-types": "turbo run check-types",
+    "prepare": "husky",
+    "precommit": "npm run check-types && npm run lint && npm run test && npm run format",
+    "test": ""
   },
-  "devDependencies": {
-    "prettier": "^3.5.3",
-    "turbo": "^2.5.4",
-    "typescript": "5.8.2"
-  },
+  "packageManager": "npm@10.9.0",
   "engines": {
     "node": ">=18"
   },
-  "packageManager": "npm@10.9.0",
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "lint-staged": "^15.5.2",
+    "prettier": "3.5.3",
+    "turbo": "^2.5.4",
+    "typescript": "5.8.2"
+  },
+  "lint-staged": {
+    "*.{json,js,jsx,ts,tsx,md,css,scss}": "npm run precommit"
+  }
 }
