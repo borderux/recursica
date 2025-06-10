@@ -29,4 +29,11 @@ export const config = [
   {
     ignores: ["dist/**"],
   },
+  {
+    rules: {
+      "no-debugger": "warn",
+      "no-console": "warn",
+      "no-alert": "error",
+    },
+  },
 ];
