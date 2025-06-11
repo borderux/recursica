@@ -1,0 +1,77 @@
+# This workflow automates the versioning and release process using Changesets.
+#
+# How it works:
+# 1. When you push `.changeset` files to the `main` branch, this workflow
+#    opens a "Version Packages" pull request. This PR contains updated package
+#    versions and changelogs.
+# 2. When the "Version Packages" PR is merged, the workflow triggers again. This
+#    time, it builds the packages, publishes them to npm, and creates a
+#    corresponding GitHub Release.
+#
+# Caching for npm dependencies and Turborepo build artifacts is enabled to
+# optimize workflow speed.
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      # Checks-out the repository. `fetch-depth: 0` is required for Changesets to correctly
+      # determine the changes and version bumps.
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Sets up Node.js and caches the npm dependency directory. This speeds up
+      # subsequent `npm ci` runs. It also creates an .npmrc file for publishing.
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          registry-url: "https://registry.npmjs.org"
+
+      # Caches the Turborepo build artifacts stored in the `.turbo` directory.
+      # This avoids re-running tasks on unchanged code, speeding up the build.
+      - name: Cache Turborepo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
+      # Installs dependencies using a clean install.
+      # HUSKY: 0 prevents Husky git hooks from running during the CI process.
+      - name: Install dependencies
+        run: npm ci
+        env:
+          # This prevents husky from installing git hooks during the CI process
+          HUSKY: 0
+
+      # Run unit tests
+      - name: Run tests
+        run: npm test
+
+      # This action has two modes:
+      # 1. If changesets are present, it creates a "Version Packages" pull request.
+      # 2. When the "Version Packages" PR is merged, it runs the `publish` command.
+      # The `publish` command executes the `npm run release` script, which builds,
+      # publishes to npm, and creates a GitHub Release.
+      # NODE_AUTH_TOKEN is used by the `npm publish` command for authentication.
+      - name: Create Release Pull Request or Publish to GitHub Releases
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          publish: npm run release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
