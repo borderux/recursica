@@ -1,4 +1,4 @@
-import { Flex, Typography, Button } from '@/ui-kit';
+import { Flex, Typography, Button } from '@recursica/ui-kit';
 import { NavLink } from 'react-router';
 
 export function Home() {

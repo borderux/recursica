@@ -1,4 +1,4 @@
-import { Flex, Button } from '@/ui-kit';
+import { Flex, Button } from '@recursica/ui-kit';
 import { NavLink, Outlet, useNavigate } from 'react-router';
 
 export function Layout() {

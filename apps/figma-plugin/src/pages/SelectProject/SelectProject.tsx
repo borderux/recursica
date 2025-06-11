@@ -1,5 +1,5 @@
 import { useRepository } from '@/hooks/useRepository';
-import { Typography, Flex, Select, Button } from '@/ui-kit';
+import { Typography, Flex, Select, Button } from '@recursica/ui-kit';
 import { NavLink } from 'react-router';
 
 export function SelectProject() {

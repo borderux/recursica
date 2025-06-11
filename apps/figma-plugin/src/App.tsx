@@ -9,8 +9,7 @@ import {
   RunAdapter,
 } from './pages';
 import { MemoryRouter, Route, Routes } from 'react-router';
-import { Themes } from './recursica/RecursicaRecursicaThemes.css';
-import { ThemeProvider } from '@/ui-kit';
+import { ThemeProvider, Themes } from '@recursica/ui-kit';
 import { Layout } from '@/components';
 import { RepositoryProvider } from './context/Repository/RepositoryProvider';
 

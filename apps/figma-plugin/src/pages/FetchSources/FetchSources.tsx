@@ -1,5 +1,6 @@
 import { useFigma } from '@/hooks/useFigma';
-import { Typography, Button } from '@/ui-kit/components';
+import { Typography, Button } from '@recursica/ui-kit';
+
 import { NavLink } from 'react-router';
 
 export function FetchSources() {

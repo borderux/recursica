@@ -1,4 +1,4 @@
-import { Typography, Flex } from '@/ui-kit';
+import { Typography, Flex } from '@recursica/ui-kit';
 import { useRepository } from '@/hooks/useRepository';
 
 export function PublishFiles() {

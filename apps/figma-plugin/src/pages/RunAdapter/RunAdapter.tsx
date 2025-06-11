@@ -1,5 +1,5 @@
 import { useRepository } from '@/hooks/useRepository';
-import { Flex, Button, Typography } from '@/ui-kit/components';
+import { Flex, Button, Typography } from '@recursica/ui-kit';
 import { NavLink } from 'react-router';
 
 export function RunAdapter() {
