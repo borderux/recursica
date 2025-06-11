@@ -1,0 +1,13 @@
+# Ignore artifacts:
+dist
+build
+coverage
+storybook-static/
+.vscode/
+package.json
+package-lock.json
+pnpm-lock.yaml
+pnpm-workspace.yaml
+*.yaml
+*.yml
+.npmrc
