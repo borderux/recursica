@@ -22,26 +22,20 @@ This Turborepo includes the following packages/apps:
 - `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
 - `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
 
-### `@repo/schemas`
+### `@repo/recursica-schemas`
 
-This package contains shared JSON schemas and generated TypeScript types. The build process, located in `packages/schemas/scripts/build.js`, handles the generation of types and the creation of a barrel file for easy imports.
+This package is responsible for managing the JSON schemas and generating corresponding TypeScript type definitions for the project.
 
-#### Usage
-
-##### Importing a JSON Schema
-
-You can import a schema directly. The build process places all schemas in the root of the package's `dist` folder.
+To use it, you can import the schemas directly:
 
 ```typescript
-import mySchema from "@repo/schemas/MySchema.json";
+import mySchema from "@repo/recursica-schemas/MySchema.json";
 ```
 
-##### Importing a TypeScript Type
-
-You can import any generated type directly from the `@repo/schemas/types` entry point, which is an index file that exports all types.
+You can import any generated type directly from the `@repo/recursica-schemas/types` entry point, which is an index file that exports all types.
 
 ```typescript
-import { MyType } from "@repo/schemas/types";
+import { MyType } from "@repo/recursica-schemas/types";
 ```
 
 Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
