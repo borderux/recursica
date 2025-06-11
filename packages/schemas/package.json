@@ -3,8 +3,9 @@
   "version": "0.0.0",
   "private": false,
   "exports": {
+    "./types": "./dist/types/index.d.ts",
     "./types/*": "./dist/types/*.ts",
-    "./schemas/*": "./dist/schemas/*.json"
+    "./*.json": "./dist/*.json"
   },
   "files": [
     "dist"
