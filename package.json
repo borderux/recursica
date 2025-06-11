@@ -7,7 +7,7 @@
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md,css,scss}\"",
     "check-types": "turbo run check-types",
-    "prepare": "husky",
+    "prepare": "node .husky/install.mjs",
     "precommit": "npm run check-types && npm run lint && npm run test && npm run format",
     "test": ""
   },
@@ -20,6 +20,7 @@
     "packages/*"
   ],
   "devDependencies": {
+    "@changesets/cli": "^2.29.4",
     "husky": "^9.1.7",
     "lint-staged": "^15.5.2",
     "prettier": "3.5.3",
