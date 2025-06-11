@@ -1,5 +1,4 @@
-import { Flex } from '@/ui-kit/components/Flex/Flex';
-import { Button, Typography, MultiSelect, Select } from '@/ui-kit';
+import { Button, Typography, MultiSelect, Select, Flex } from '@recursica/ui-kit';
 import { useRepository } from '@/hooks/useRepository';
 import { useFigma } from '@/hooks/useFigma';
 import { NavLink } from 'react-router';
