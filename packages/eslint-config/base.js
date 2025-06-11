@@ -12,7 +12,15 @@ import onlyWarn from "eslint-plugin-only-warn";
 export const config = [
   js.configs.recommended,
   eslintConfigPrettier,
-  ...tseslint.configs.recommended,
+  ...tseslint.configs.recommended.map((config) => ({
+    ...config,
+    files: ["**/*.ts", "**/*.tsx"],
+  })),
+  // Disable type-aware linting for JS files
+  {
+    ...tseslint.configs.disableTypeChecked,
+    files: ["**/*.js", "**/*.mjs"],
+  },
   {
     plugins: {
       turbo: turboPlugin,
