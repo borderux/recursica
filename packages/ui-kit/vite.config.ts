@@ -17,9 +17,12 @@ export default defineConfig({
       external: [
         "react",
         "react-dom",
-        "modern-ahocorasick",
         "tabbable",
         "@mantine/core",
+        "@floating-ui",
+        "vite-plugin-svgr",
+        "@vanilla-extract/css",
+        "@vanilla-extract/vite-plugin",
       ],
       output: {
         globals: {

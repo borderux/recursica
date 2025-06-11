@@ -21,6 +21,8 @@ const breakpoints: Record<string, string> = {};
 
 const colorTokens: string[] = [];
 
+const spacers: string[] = [];
+const borderRadius: string[] = [];
 const icons: Record<string, string> = {};
 
 const themes: Themes = {};
@@ -169,6 +171,18 @@ function processTokens(
       if (token.type === "color" && !colorTokens.includes(token.name)) {
         colorTokens.push(token.name);
       }
+      if (
+        token.name.startsWith("size/spacer/") &&
+        !spacers.includes(token.name)
+      ) {
+        spacers.push(token.name);
+      }
+      if (
+        token.name.startsWith("size/border-radius/") &&
+        !borderRadius.includes(token.name)
+      ) {
+        borderRadius.push(token.name);
+      }
       processTokenValue(token, modeName, jsonThemeName);
     } else {
       console.warn(`${JSON.stringify(token, null, 2)} could not be processed`);
@@ -235,6 +249,8 @@ self.onmessage = (event) => {
       uiKit,
       project,
       iconsConfig,
+      spacers,
+      borderRadius,
     });
     // 3. Send the response back to the main thread
     console.log("...Worker sending response back:", files);

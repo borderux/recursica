@@ -2,7 +2,6 @@ export * from "./Anchor/Anchor";
 export * from "./Box/Box";
 export * from "./Button/Button";
 export * from "./Checkbox/Checkbox";
-export * from "./Divider/Divider";
 export * from "./Flex/Flex";
 export * from "./MultiSelect/MultiSelect";
 export * from "./Select/Select";
