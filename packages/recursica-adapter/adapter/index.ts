@@ -18,6 +18,9 @@ import {
 import { createRecursicaObject } from "./generateRecursicaObject";
 import { generateColorsType } from "./generateColorTypes";
 import { generateIcons, GenerateIconsOutput } from "./generateIcons";
+import { generateSpacersType } from "./generateSpacersType";
+import { generateBorderRadiusType } from "./generateBorderRadiusType";
+import { generateRecursicaThemes } from "./generateRecursicaThemes";
 
 interface GenerateThemeFileParams {
   overrides: RecursicaConfigOverrides | undefined;
@@ -30,6 +33,8 @@ interface GenerateThemeFileParams {
   icons: Record<string, string>;
   breakpoints: Record<string, string>;
   iconsConfig: RecursicaConfigIcons | undefined;
+  spacers: string[];
+  borderRadius: string[];
 }
 
 /**
@@ -52,7 +57,10 @@ interface RunAdapterOutput {
   uiKitObject: ExportingResult;
   recursicaObject: ExportingResult;
   colorsType: ExportingResult;
+  spacersType: ExportingResult;
+  borderRadiusType: ExportingResult;
   iconsObject: GenerateIconsOutput | undefined;
+  recursicaThemes: ExportingResult;
 }
 export function runAdapter({
   overrides,
@@ -65,6 +73,8 @@ export function runAdapter({
   icons,
   breakpoints,
   iconsConfig,
+  spacers,
+  borderRadius,
 }: GenerateThemeFileParams): RunAdapterOutput {
   const outputPath = srcPath + "/recursica";
 
@@ -109,11 +119,18 @@ export function runAdapter({
   const recursicaObject = createRecursicaObject(project, outputPath);
 
   const colorsType = generateColorsType(colors, outputPath);
+  const spacersType = generateSpacersType(spacers, outputPath);
+  const borderRadiusType = generateBorderRadiusType(borderRadius, outputPath);
 
   let iconsObject: GenerateIconsOutput | undefined;
   if (icons) {
     iconsObject = generateIcons(icons, srcPath, iconsConfig);
   }
+
+  const recursicaThemes = generateRecursicaThemes({
+    outputPath,
+    themes,
+  });
 
   const fileContents = {
     recursicaTokens,
@@ -122,7 +139,10 @@ export function runAdapter({
     uiKitObject,
     recursicaObject,
     colorsType,
+    spacersType,
+    borderRadiusType,
     iconsObject,
+    recursicaThemes,
   };
   return fileContents;
 }

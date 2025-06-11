@@ -20,6 +20,8 @@ import { capitalize } from "./utils/capitalize";
 const tokens: ThemeTokens = {};
 const breakpoints: Record<string, string> = {};
 const colorTokens: string[] = [];
+const spacers: string[] = [];
+const borderRadius: string[] = [];
 const icons: Record<string, string> = {};
 const themes: Themes = {};
 const uiKit: ThemeTokens = {};
@@ -77,14 +79,6 @@ function processTokenValue(
 interface ProcessTokensParams {
   tokens: ThemeTokens;
   themes: Themes;
-  overrides: RecursicaConfigOverrides | undefined;
-}
-
-interface ProcessJsonParams extends ProcessTokensParams {
-  jsonPath: string;
-  tokens: ThemeTokens;
-  themes: Themes;
-  project: string;
   overrides: RecursicaConfigOverrides | undefined;
 }
 
@@ -169,11 +163,31 @@ function processTokens(
       if (token.type === "color" && !colorTokens.includes(token.name)) {
         colorTokens.push(token.name);
       }
+      if (
+        token.name.startsWith("size/spacer/") &&
+        !spacers.includes(token.name)
+      ) {
+        spacers.push(token.name);
+      }
+      if (
+        token.name.startsWith("size/border-radius/") &&
+        !borderRadius.includes(token.name)
+      ) {
+        borderRadius.push(token.name);
+      }
       processTokenValue(token, modeName, jsonThemeName);
     } else {
       console.warn(`${JSON.stringify(token, null, 2)} could not be processed`);
     }
   }
+}
+
+interface ProcessJsonParams extends ProcessTokensParams {
+  jsonPath: string;
+  tokens: ThemeTokens;
+  themes: Themes;
+  project: string;
+  overrides: RecursicaConfigOverrides | undefined;
 }
 
 function readJson({
@@ -240,6 +254,8 @@ export async function runMain(): Promise<void> {
       uiKit,
       project,
       iconsConfig,
+      spacers,
+      borderRadius,
     });
     const {
       recursicaTokens,
@@ -249,6 +265,9 @@ export async function runMain(): Promise<void> {
       recursicaObject,
       colorsType,
       iconsObject,
+      spacersType,
+      borderRadiusType,
+      recursicaThemes,
     } = files;
 
     // check if src/recursica folder exists, if not create it
@@ -263,10 +282,12 @@ export async function runMain(): Promise<void> {
       themeContract,
       themesFileContent,
       vanillaExtractThemes: subThemes,
+      typeDefinitions,
     } = vanillaExtractThemes;
     fs.writeFileSync(availableThemes.path, availableThemes.content);
     fs.writeFileSync(themeContract.path, themeContract.content);
     fs.writeFileSync(themesFileContent.path, themesFileContent.content);
+    fs.writeFileSync(typeDefinitions.path, typeDefinitions.content);
     for (const theme of subThemes) {
       fs.writeFileSync(theme.path, theme.content);
     }
@@ -280,6 +301,9 @@ export async function runMain(): Promise<void> {
     fs.writeFileSync(uiKitObject.path, uiKitObject.content);
 
     fs.writeFileSync(recursicaObject.path, recursicaObject.content);
+
+    fs.writeFileSync(spacersType.path, spacersType.content);
+    fs.writeFileSync(borderRadiusType.path, borderRadiusType.content);
 
     fs.writeFileSync(colorsType.path, colorsType.content);
 
@@ -296,6 +320,9 @@ export async function runMain(): Promise<void> {
         fs.writeFileSync(icon.path, icon.content);
       }
     }
+
+    fs.writeFileSync(recursicaThemes.path, recursicaThemes.content);
+
     console.log("Theme generated successfully");
   } catch (error) {
     console.error("Error generating theme:", error);
