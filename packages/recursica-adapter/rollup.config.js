@@ -55,11 +55,60 @@ export default defineConfig([
       "zlib",
     ],
   },
-  // CLI entry point
+  // CLI entry point - ES Module
   {
     input: "./main.ts",
     output: {
       file: "./dist/main.js",
+      format: "es",
+      exports: "auto",
+      banner: "#!/usr/bin/env node",
+    },
+    plugins: [
+      resolve({
+        preferBuiltins: true,
+        exportConditions: ["node"],
+      }),
+      commonjs(),
+      json(),
+      typescript({
+        tsconfig: "./tsconfig.json",
+        sourceMap: true,
+        inlineSources: true,
+      }),
+    ],
+    external: [
+      "fs",
+      "path",
+      "process",
+      "util",
+      "os",
+      "crypto",
+      "stream",
+      "events",
+      "buffer",
+      "url",
+      "querystring",
+      "http",
+      "https",
+      "net",
+      "tls",
+      "child_process",
+      "cluster",
+      "dgram",
+      "dns",
+      "readline",
+      "repl",
+      "tty",
+      "vm",
+      "zlib",
+    ],
+  },
+  // CLI entry point - CommonJS
+  {
+    input: "./main.ts",
+    output: {
+      file: "./dist/main.cjs",
       format: "cjs",
       exports: "auto",
       banner: "#!/usr/bin/env node",

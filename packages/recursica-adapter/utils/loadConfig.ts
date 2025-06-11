@@ -61,8 +61,8 @@ export function loadConfig(): RecursicaConfig {
 }
 
 export function getRootPath() {
-  // recursively search for the package.json file
-  let currentDir = __dirname;
+  // recursively search for the package.json file starting from the current working directory
+  let currentDir = process.cwd();
   let level = 0;
   while (!fs.existsSync(path.join(currentDir, "package.json"))) {
     currentDir = path.join(currentDir, "..");
