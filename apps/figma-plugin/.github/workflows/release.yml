@@ -1,0 +1,100 @@
+# Release Workflow
+# This workflow handles the release process for the Recursica Figma plugin.
+#
+# Process:
+# 1. Triggered by pushing a version tag (e.g., v0.0.8)
+# 2. Updates package.json version to match the tag
+# 3. Builds the plugin and creates a zip file
+# 4. Creates a GitHub Release with the zip file as an asset
+# 5. Uploads the zip file as a build artifact
+#
+# The workflow will automatically:
+# - Update version in package.json from the tag
+# - Install dependencies
+# - Build the plugin
+# - Create a zip file in the release/ directory
+# - Create a GitHub Release with the zip file as an asset
+# - Upload the zip file as a build artifact
+#
+# Artifacts:
+# - The built plugin zip file will be available in the GitHub Actions run summary
+# - Artifacts are retained for 30 days
+# - Location: release/recursica-plugin.zip
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # Triggers on version tags (e.g., v0.0.8)
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout repository with full history for release notes
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Setup pnpm package manager
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8.10.0
+
+      # Get pnpm store directory
+      - shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      # Cache pnpm store
+      - uses: actions/cache@v4
+        name: Cache pnpm store
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      # Install project dependencies
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Update version in package.json
+        run: |
+          # Get version from release tag (removes 'v' prefix if present)
+          VERSION=${GITHUB_REF#refs/tags/}
+          VERSION=${VERSION#v}
+          # Update package.json version
+          pnpm version $VERSION --no-git-tag-version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build the plugin
+      - name: Build
+        run: pnpm build && pnpm zip
+
+      # Create GitHub Release
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            releases/recursica-plugin.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Upload build artifact
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: recursica-plugin.zip
+          path: releases/recursica-plugin.zip
+          retention-days: 30

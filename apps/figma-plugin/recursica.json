@@ -1,0 +1,15 @@
+{
+  "$schema": "./recursica/schemas/config-schema.json",
+  "project": "Recursica",
+  "icons": {
+    "output": "ui-kit/components/Icons",
+    "names": ["cached"],
+    "variants": ["Outlined", "Filled"]
+  },
+  "overrides": {
+    "mantineTheme": {
+      "1-scale": "'color-1-scale-default'",
+      "background": "themeVars['color/background/default']"
+    }
+  }
+}
