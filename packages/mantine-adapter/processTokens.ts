@@ -18,43 +18,51 @@ export interface ProcessTokensParams {
   overrides: RecursicaConfigOverrides | undefined;
 }
 export class ProcessTokens {
-  tokens: ThemeTokens = {};
+  public tokens: ThemeTokens = {};
+  public themes: Themes = {};
 
-  breakpoints: Record<string, string> = {};
+  public breakpoints: Record<string, string> = {};
+  public colors: string[] = [];
+  public spacers: string[] = [];
+  public borderRadius: string[] = [];
+  public uiKit: ThemeTokens = {};
 
-  colorTokens: string[] = [];
+  public overrides: RecursicaConfigOverrides | undefined;
 
-  icons: Record<string, string> = {};
+  constructor(overrides: RecursicaConfigOverrides | undefined) {
+    this.overrides = overrides;
+  }
 
-  themes: Themes = {};
+  private processValue = (
+    target: Record<string, number | string | Token | ThemeTokens>,
+    token: Token,
+  ) => {
+    if (typeof token.value === "string") {
+      target[token.name] = token.value;
+      return true;
+    }
+    if (typeof token.value === "number") {
+      target[token.name] = `${token.value}px`;
+      return true;
+    }
+    if (typeof token.value === "object") {
+      target[token.name] = token.value as Token;
+      return true;
+    }
+    return false;
+  };
 
-  uiKit: ThemeTokens = {};
-
-  processTokenValue(token: Token, modeName: string, jsonThemeName?: string) {
-    const processValue = (
-      target: Record<string, number | string | Token | ThemeTokens>,
-    ) => {
-      if (typeof token.value === "string") {
-        target[token.name] = token.value;
-        return true;
-      }
-      if (typeof token.value === "number") {
-        target[token.name] = `${token.value}px`;
-        return true;
-      }
-      if (typeof token.value === "object") {
-        target[token.name] = token.value as Token;
-        return true;
-      }
-      return false;
-    };
-
+  private processTokenValue(
+    token: Token,
+    modeName: string,
+    jsonThemeName?: string,
+  ) {
     if (token.collection === "Breakpoints") {
-      processValue(this.breakpoints);
+      this.processValue(this.breakpoints, token);
       // Add breakpoints to uiKit with 'breakpoints/' prefix
       const uiKitTarget: Record<string, number | string | Token | ThemeTokens> =
         {};
-      processValue(uiKitTarget);
+      this.processValue(uiKitTarget, token);
       Object.entries(uiKitTarget).forEach(([key, value]) => {
         // Ensure we only store string values
         if (typeof value === "string") {
@@ -64,39 +72,38 @@ export class ProcessTokens {
         }
       });
     } else if (token.collection === "UI Kit") {
-      processValue(this.uiKit);
+      this.processValue(this.uiKit, token);
     } else if (token.collection === "Tokens") {
-      processValue(this.tokens);
+      this.processValue(this.tokens, token);
     } else {
       if (!jsonThemeName) return;
       if (!this.themes[jsonThemeName]) this.themes[jsonThemeName] = {};
 
       if (!this.themes[jsonThemeName][modeName])
         this.themes[jsonThemeName][modeName] = {};
-      processValue(this.themes[jsonThemeName][modeName]);
+      this.processValue(this.themes[jsonThemeName][modeName], token);
     }
   }
 
-  processTokens(
+  public processTokens(
     variables: Record<string, CollectionToken>,
-    { tokens, themes, overrides }: ProcessTokensParams,
     jsonThemeName?: string,
   ) {
     // Process tokens collection
     for (const token of Object.values(variables)) {
       if (isFontFamilyToken(token)) {
         if (!jsonThemeName) continue;
-        if (!tokens[jsonThemeName]) tokens[jsonThemeName] = {};
-        if (typeof tokens[jsonThemeName] !== "object")
-          tokens[jsonThemeName] = {};
+        if (!this.tokens[jsonThemeName]) this.tokens[jsonThemeName] = {};
+        if (typeof this.tokens[jsonThemeName] !== "object")
+          this.tokens[jsonThemeName] = {};
 
-        tokens[jsonThemeName][`typography/${token.variableName}`] =
-          overrides?.fontFamily?.[token.fontFamily] ?? token.fontFamily;
-        tokens[jsonThemeName][`typography/${token.variableName}-size`] =
+        this.tokens[jsonThemeName][`typography/${token.variableName}`] =
+          this.overrides?.fontFamily?.[token.fontFamily] ?? token.fontFamily;
+        this.tokens[jsonThemeName][`typography/${token.variableName}-size`] =
           `${token.fontSize.toString()}px`;
         // check if overrides.fontWeight is defined
-        if (overrides?.fontWeight) {
-          const weight = overrides.fontWeight.find(
+        if (this.overrides?.fontWeight) {
+          const weight = this.overrides.fontWeight.find(
             (weight) =>
               weight.alias === token.fontWeight.alias &&
               weight.fontFamily === token.fontFamily,
@@ -105,34 +112,38 @@ export class ProcessTokens {
           // if there is, use the value from the overrides
           // if there isn't, use the value from the token
           if (weight) {
-            tokens[jsonThemeName][`typography/${token.variableName}-weight`] =
-              weight.value.toString();
+            this.tokens[jsonThemeName][
+              `typography/${token.variableName}-weight`
+            ] = weight.value.toString();
           } else {
-            tokens[jsonThemeName][`typography/${token.variableName}-weight`] =
-              token.fontWeight.value.toString();
+            this.tokens[jsonThemeName][
+              `typography/${token.variableName}-weight`
+            ] = token.fontWeight.value.toString();
           }
         } else {
-          tokens[jsonThemeName][`typography/${token.variableName}-weight`] =
-            token.fontWeight.value.toString();
+          this.tokens[jsonThemeName][
+            `typography/${token.variableName}-weight`
+          ] = token.fontWeight.value.toString();
         }
         if (token.lineHeight.unit === "PERCENT") {
-          tokens[jsonThemeName][
+          this.tokens[jsonThemeName][
             `typography/${token.variableName}-line-height`
           ] = `${token.lineHeight.value.toString()}%`;
         } else {
-          tokens[jsonThemeName][
+          this.tokens[jsonThemeName][
             `typography/${token.variableName}-line-height`
           ] = "1.2";
         }
-        tokens[jsonThemeName][
+        this.tokens[jsonThemeName][
           `typography/${token.variableName}-letter-spacing`
         ] =
           token.letterSpacing.unit === "PIXELS"
             ? `${token.letterSpacing.value.toString()}px`
             : `${token.letterSpacing.value.toString()}%`;
-        tokens[jsonThemeName][`typography/${token.variableName}-text-case`] =
-          token.textCase;
-        tokens[jsonThemeName][
+        this.tokens[jsonThemeName][
+          `typography/${token.variableName}-text-case`
+        ] = token.textCase;
+        this.tokens[jsonThemeName][
           `typography/${token.variableName}-text-decoration`
         ] = token.textDecoration;
         continue;
@@ -150,7 +161,7 @@ export class ProcessTokens {
             `${x.toString()}px ${y.toString()}px ${radius.toString()}px ${spread.toString()}px rgba(${r.toString()}, ${g.toString()}, ${b.toString()}, ${a.toString()})`,
           );
         });
-        tokens[`effect/${token.variableName}`] = effectValue.join(", ");
+        this.tokens[`effect/${token.variableName}`] = effectValue.join(", ");
         continue;
       }
       if (isColorOrFloatToken(token)) {
@@ -159,9 +170,21 @@ export class ProcessTokens {
           .replace(/\s/g, "")
           .replace(/-$/, "");
 
-        if (modeName !== "mode1") themes[modeName] = {};
-        if (token.type === "color" && !this.colorTokens.includes(token.name)) {
-          this.colorTokens.push(token.name);
+        if (modeName !== "mode1") this.themes[modeName] = {};
+        if (token.type === "color" && !this.colors.includes(token.name)) {
+          this.colors.push(token.name);
+        }
+        if (
+          token.name.startsWith("size/spacer/") &&
+          !this.spacers.includes(token.name)
+        ) {
+          this.spacers.push(token.name);
+        }
+        if (
+          token.name.startsWith("size/border-radius/") &&
+          !this.borderRadius.includes(token.name)
+        ) {
+          this.borderRadius.push(token.name);
         }
         this.processTokenValue(token, modeName, jsonThemeName);
       } else {

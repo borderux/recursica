@@ -1,6 +1,4 @@
 import type {
-  Themes,
-  ThemeTokens,
   RecursicaConfigOverrides,
   RecursicaConfigIcons,
   ExportingResult,
@@ -21,20 +19,15 @@ import { generateIcons, GenerateIconsOutput } from "./generateIcons";
 import { generateSpacersType } from "./generateSpacersType";
 import { generateBorderRadiusType } from "./generateBorderRadiusType";
 import { generateRecursicaThemes } from "./generateRecursicaThemes";
+import { ProcessTokens } from "../processTokens";
 
 interface GenerateThemeFileParams {
   overrides: RecursicaConfigOverrides | undefined;
   srcPath: string;
-  tokens: ThemeTokens;
-  themes: Themes;
   project: string;
-  uiKit: ThemeTokens;
-  colors: string[];
   icons: Record<string, string>;
-  breakpoints: Record<string, string>;
   iconsConfig: RecursicaConfigIcons | undefined;
-  spacers: string[];
-  borderRadius: string[];
+  processTokens: ProcessTokens;
 }
 
 /**
@@ -65,27 +58,21 @@ interface RunAdapterOutput {
 export function runAdapter({
   overrides,
   srcPath,
-  tokens,
-  themes,
   project,
-  uiKit,
-  colors,
   icons,
-  breakpoints,
   iconsConfig,
-  spacers,
-  borderRadius,
+  processTokens,
 }: GenerateThemeFileParams): RunAdapterOutput {
   const outputPath = srcPath + "/recursica";
 
-  const recursicaTokens = generateRecursicaTokens(tokens, {
+  const recursicaTokens = generateRecursicaTokens(processTokens.tokens, {
     outputPath,
     project,
   });
 
   const vanillaExtractThemes = generateVanillaExtractThemes(
-    tokens,
-    themes,
+    processTokens.tokens,
+    processTokens.themes,
     recursicaTokens.filename,
     {
       outputPath,
@@ -95,8 +82,8 @@ export function runAdapter({
 
   const mantineTheme = generateMantineTheme({
     mantineThemeOverride: overrides?.mantineTheme,
-    tokens,
-    breakpoints,
+    tokens: processTokens.tokens,
+    breakpoints: processTokens.breakpoints,
     contractTokens: {
       tokens: vanillaExtractThemes.contractTokens,
       filename: vanillaExtractThemes.themeContract.filename,
@@ -108,7 +95,7 @@ export function runAdapter({
   });
 
   const uiKitObject = generateUiKit(
-    uiKit,
+    processTokens.uiKit,
     {
       recursicaTokensFilename: recursicaTokens.filename,
       themeContractFilename: vanillaExtractThemes.themeContract.filename,
@@ -118,9 +105,12 @@ export function runAdapter({
 
   const recursicaObject = createRecursicaObject(project, outputPath);
 
-  const colorsType = generateColorsType(colors, outputPath);
-  const spacersType = generateSpacersType(spacers, outputPath);
-  const borderRadiusType = generateBorderRadiusType(borderRadius, outputPath);
+  const colorsType = generateColorsType(processTokens.colors, outputPath);
+  const spacersType = generateSpacersType(processTokens.spacers, outputPath);
+  const borderRadiusType = generateBorderRadiusType(
+    processTokens.borderRadius,
+    outputPath,
+  );
 
   let iconsObject: GenerateIconsOutput | undefined;
   if (icons) {
@@ -129,7 +119,7 @@ export function runAdapter({
 
   const recursicaThemes = generateRecursicaThemes({
     outputPath,
-    themes,
+    themes: processTokens.themes,
   });
 
   const fileContents = {

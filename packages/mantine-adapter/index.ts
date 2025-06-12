@@ -1,5 +1,5 @@
 // Main exports for the recursica-adapter package
-export { runAdapter } from "./adapter/index";
+export { runAdapter } from "./adapter";
 
 // Export types that consumers might need
 export type {
@@ -22,6 +22,7 @@ export {
   isColorOrFloatToken,
 } from "./utils/helpers";
 export { capitalize } from "./utils/capitalize";
+export { ProcessTokens } from "./processTokens";
 
 // Export the main CLI function for programmatic use
 export { runMain } from "./cli";
