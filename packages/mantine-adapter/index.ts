@@ -3,16 +3,20 @@ export { runAdapter } from "./adapter";
 
 // Export types that consumers might need
 export type {
-  Token,
   Themes,
   ThemeTokens,
   RecursicaConfigOverrides,
   RecursicaConfigIcons,
   ExportingResult,
-  CollectionToken,
-  JsonContent,
   JsonContentIcons,
 } from "./types";
+
+// Export types from shared-interfaces
+export type {
+  Token,
+  CollectionToken,
+  JsonContent,
+} from "@repo/shared-interfaces";
 
 // Export utility functions
 export { loadConfig } from "./utils/loadConfig";
@@ -22,7 +26,8 @@ export {
   isColorOrFloatToken,
 } from "./utils/helpers";
 export { capitalize } from "./utils/capitalize";
-export { ProcessTokens } from "./processTokens";
+export { ProcessTokens } from "./shared/processTokens";
+export { processJsonContent } from "./shared/common";
 
 // Export the main CLI function for programmatic use
 export { runMain } from "./cli";

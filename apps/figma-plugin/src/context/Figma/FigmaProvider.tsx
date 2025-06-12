@@ -1,19 +1,19 @@
 import { useLayoutEffect, useState } from 'react';
 import { FigmaContext, CurrentRepositoryContext } from './FigmaContext';
-import { VariableJSONCollection } from '@/plugin/types';
+import type { JsonContent } from '@repo/shared-interfaces';
 
 export interface TokensProvidersProps {
   children: React.ReactNode;
 }
 
-export function FigmaProvider({ children }: TokensProvidersProps): JSX.Element {
+export function FigmaProvider({ children }: TokensProvidersProps) {
   const [repository, setRepository] = useState<CurrentRepositoryContext>({
     platform: 'gitlab',
     accessToken: '',
   });
   const [availableLibraries, setAvailableLibraries] =
     useState<Record<string, { value: string; name: string }[]>>();
-  const [recursicaVariables, setRecursicaVariables] = useState<VariableJSONCollection>();
+  const [recursicaVariables, setRecursicaVariables] = useState<JsonContent>();
 
   useLayoutEffect(() => {
     window.onmessage = ({ data: { pluginMessage } }) => {

@@ -1,5 +1,5 @@
 import { createContext } from 'react';
-import { VariableJSONCollection } from '@/plugin/types';
+import type { JsonContent } from '@repo/shared-interfaces';
 
 export interface CurrentRepositoryContext {
   platform: 'gitlab' | 'github';
@@ -12,7 +12,7 @@ export interface IFigmaContext {
   };
   libraries: {
     availableLibraries?: Record<string, { value: string; name: string }[]>;
-    recursicaVariables?: VariableJSONCollection;
+    recursicaVariables?: JsonContent;
   };
 }
 

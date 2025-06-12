@@ -1,44 +1,7 @@
 import fs from "fs";
-import type {
-  JsonContent,
-  JsonContentIcons,
-  RecursicaConfigOverrides,
-  ExportingResult,
-} from "./types";
+import type { ExportingResult } from "./types";
 import { loadConfig } from "./utils/loadConfig";
-import { runAdapter } from "./adapter/index";
-import { ProcessTokens } from "./processTokens";
-
-interface ProcessJsonParams {
-  jsonPath: string;
-  project: string;
-  overrides: RecursicaConfigOverrides | undefined;
-}
-const icons: Record<string, string> = {};
-
-function readJson({ jsonPath, project, overrides }: ProcessJsonParams) {
-  const jsonContent: JsonContent = JSON.parse(
-    fs.readFileSync(jsonPath, "utf-8"),
-  ) as JsonContent;
-
-  const jsonProjectId = jsonContent.projectId;
-  if (!jsonProjectId) {
-    throw new Error("project-id is required in the json file");
-  }
-  if (jsonProjectId.toLowerCase() !== project.toLowerCase()) {
-    throw new Error("project-id does not match the project in the config file");
-  }
-
-  const processTokens = new ProcessTokens(overrides);
-
-  processTokens.processTokens(jsonContent.tokens);
-  for (const theme of Object.keys(jsonContent.themes)) {
-    processTokens.processTokens(jsonContent.themes[theme], theme);
-  }
-  processTokens.processTokens(jsonContent.uiKit);
-
-  return processTokens;
-}
+import { processAdapter } from "./shared/common";
 
 /**
  * Main CLI function that can be called programmatically
@@ -49,30 +12,24 @@ export async function runMain(): Promise<void> {
     const { bundledJson, srcPath, project, iconsJson, overrides, iconsConfig } =
       loadConfig();
 
-    if (iconsJson) {
-      const iconsJsonContent: JsonContentIcons = JSON.parse(
-        fs.readFileSync(iconsJson, "utf-8"),
-      ) as JsonContentIcons;
-      for (const [iconName, iconPath] of Object.entries(iconsJsonContent)) {
-        icons[iconName] = iconPath;
-      }
-    }
-
     if (!bundledJson) throw new Error("bundledJson not found");
-    const processTokens = readJson({
-      jsonPath: bundledJson,
-      project,
-      overrides,
-    });
 
-    const files = runAdapter({
+    // Read file contents
+    const bundledJsonContent = fs.readFileSync(bundledJson, "utf-8");
+    const iconsJsonContent = iconsJson
+      ? fs.readFileSync(iconsJson, "utf-8")
+      : undefined;
+
+    // Use shared processing logic
+    const files = processAdapter({
+      bundledJsonContent,
+      project,
       overrides,
       srcPath,
-      icons,
-      project,
+      iconsJsonContent,
       iconsConfig,
-      processTokens,
     });
+
     const {
       recursicaTokens,
       vanillaExtractThemes,

@@ -1,5 +1,5 @@
 import { GenericVariables } from './exportToJSON';
-import { VariableCastedValue } from './types';
+import { VariableCastedValue } from '@repo/shared-interfaces';
 import { rgbToHex } from './utils/rgbToHex';
 
 export async function getTeamLibrary() {
