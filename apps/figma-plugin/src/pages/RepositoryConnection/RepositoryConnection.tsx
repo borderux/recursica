@@ -3,7 +3,7 @@ import { useFigma } from '@/hooks/useFigma';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 
-export function RepositoryConnection(): JSX.Element {
+export function RepositoryConnection() {
   const { repository } = useFigma();
   if (!repository) return <Typography>Loading...</Typography>;
   const { updateAccessToken, accessToken } = repository;

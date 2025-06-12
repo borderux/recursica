@@ -19,7 +19,7 @@ import { generateIcons, GenerateIconsOutput } from "./generateIcons";
 import { generateSpacersType } from "./generateSpacersType";
 import { generateBorderRadiusType } from "./generateBorderRadiusType";
 import { generateRecursicaThemes } from "./generateRecursicaThemes";
-import { ProcessTokens } from "../processTokens";
+import { ProcessTokens } from "../shared/processTokens";
 
 interface GenerateThemeFileParams {
   overrides: RecursicaConfigOverrides | undefined;

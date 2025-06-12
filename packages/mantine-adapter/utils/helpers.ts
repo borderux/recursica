@@ -3,7 +3,7 @@ import type {
   EffectToken,
   FontFamilyToken,
   CollectionToken,
-} from "../types";
+} from "@repo/shared-interfaces";
 
 /**
  * Type guard function to check if a token is a FontFamilyToken
