@@ -1,7 +1,7 @@
 {
   "name": "@repo/recursica-schemas",
   "description": "Recursica design system schemas and types",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": false,
   "publishConfig": {
     "name": "@borderux/recursica-schemas"
