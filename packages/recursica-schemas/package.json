@@ -37,18 +37,17 @@
   "scripts": {
     "lint": "eslint . --max-warnings 0",
     "check-types": "tsc --noEmit",
-    "build": "node scripts/build.js",
-    "test": "npm run check-types && node scripts/validate-schemas.js"
+    "generate-types": "npm test && node scripts/generate-types.js",
+    "test": "node scripts/validate-schemas.js && npm run check-types"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",
     "@repo/typescript-config": "*",
     "eslint": "^9.28.0",
-    "typescript": "5.8.2"
-  },
-  "dependencies": {
+    "typescript": "5.8.2",
     "ajv": "^8.12.0",
     "glob": "^10.3.10",
     "json-schema-to-typescript": "^15.0.0"
-  }
+  },
+  "dependencies": {}
 }
