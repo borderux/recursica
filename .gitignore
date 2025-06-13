@@ -27,6 +27,11 @@ out/
 build
 dist
 
+# svelte specific
+.svelte-kit/
+
+# Build info
+*.tsbuildinfo
 
 # Debug
 npm-debug.log*
