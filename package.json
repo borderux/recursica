@@ -16,7 +16,7 @@
     "check-types": "turbo run check-types",
     "prepare": "node .husky/install.mjs",
     "precommit": "npm run check-types && npm run lint && npm run test && npm run format",
-    "test": "",
+    "test": "turbo run test",
     "version": "changeset version",
     "release": "changeset publish"
   },

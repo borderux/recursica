@@ -1,0 +1,38 @@
+# This workflow runs checks on pull requests to ensure code quality and prevent regressions.
+name: Pull Request Check
+
+on:
+  # This action triggers on pull requests targeting the main branch.
+  pull_request:
+    branches: [main]
+
+jobs:
+  build_and_test:
+    # The type of runner that the job will run on.
+    runs-on: ubuntu-latest
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it.
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Sets up a specific version of Node.js.
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # Installs project dependencies using a clean install from package-lock.json.
+      - name: Install dependencies
+        run: npm ci
+
+      # Builds the project.
+      - name: Build
+        run: npm run build
+
+      # Runs TypeScript type checking.
+      - name: Check types
+        run: npm run check-types
+
+      # Runs the test suite.
+      - name: Test
+        run: npm run test
