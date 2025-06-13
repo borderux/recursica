@@ -57,7 +57,7 @@ jobs:
           HUSKY: 0
 
       - name: Build
-        run: turbo run build
+        run: npm run build
 
       # Run unit tests
       - name: Run tests
