@@ -43,11 +43,11 @@
   "devDependencies": {
     "@repo/eslint-config": "*",
     "@repo/typescript-config": "*",
-    "eslint": "^9.28.0",
-    "typescript": "5.8.2",
     "ajv": "^8.12.0",
+    "eslint": "^9.28.0",
+    "fast-uri": "^3.0.6",
     "glob": "^10.3.10",
-    "json-schema-to-typescript": "^15.0.0"
-  },
-  "dependencies": {}
+    "json-schema-to-typescript": "^15.0.0",
+    "typescript": "5.8.2"
+  }
 }
