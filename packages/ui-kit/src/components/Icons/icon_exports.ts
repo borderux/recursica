@@ -9,7 +9,11 @@ For more information about Recursica, go to https://recursica.com
 */
 
 /// <reference types="vite-plugin-svgr/client" />
-import cached_Filled from './Svg/cached_Filled.svg?react';
+import arrow_back_ios_new_Filled from './Svg/arrow_back_ios_new_Filled.svg?react';
+export { arrow_back_ios_new_Filled };
+import arrow_back_ios_new_Outlined from "./Svg/arrow_back_ios_new_Outlined.svg?react";
+export { arrow_back_ios_new_Outlined };
+import cached_Filled from "./Svg/cached_Filled.svg?react";
 export { cached_Filled };
 import cached_Outlined from "./Svg/cached_Outlined.svg?react";
 export { cached_Outlined };

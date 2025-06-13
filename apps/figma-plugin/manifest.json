@@ -1,8 +1,8 @@
 {
-  "name": "Recursica Plugin",
+  "name": "Recursica",
   "id": "1423756449827722264",
   "api": "1.0.0",
-  "main": "./dist/recursica-plugin.js",
+  "main": "./dist/figma-plugin.js",
   "capabilities": [],
   "enableProposedApi": false,
   "documentAccess": "dynamic-page",

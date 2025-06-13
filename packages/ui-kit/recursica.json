@@ -2,7 +2,7 @@
   "$schema": "./recursica/schemas/config-schema.json",
   "project": "Recursica",
   "icons": {
-    "names": ["cached"],
+    "names": ["cached", "arrow_back_ios_new"],
     "variants": ["Outlined", "Filled"]
   },
   "overrides": {

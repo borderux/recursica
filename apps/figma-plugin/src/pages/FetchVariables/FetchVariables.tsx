@@ -1,9 +1,9 @@
-import { useFigma } from '@/hooks/useFigma';
+import { useFigma } from '../../hooks/useFigma';
 import { Typography, Button } from '@recursica/ui-kit';
 
 import { NavLink } from 'react-router';
 
-export function FetchSources() {
+export function FetchVariables() {
   const {
     libraries: { recursicaVariables },
   } = useFigma();

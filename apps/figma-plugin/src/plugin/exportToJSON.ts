@@ -8,9 +8,7 @@ export interface fileMetadata {
   version: string;
   theme: string | undefined;
 }
-export type GenericVariables = {
-  [key: string]: object;
-};
+export type GenericVariables = Record<string, object>;
 
 function parseLineHeight(lineHeight: LineHeight) {
   if (lineHeight.unit === 'AUTO') {

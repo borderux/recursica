@@ -11,7 +11,7 @@
       "import": "./dist/ui-kit.js",
       "require": "./dist/ui-kit.cjs"
     },
-    "./styles": "./dist/style.css"
+    "./style.css": "./dist/ui-kit.css"
   },
   "files": [
     "dist"
@@ -23,7 +23,8 @@
     "typescript"
   ],
   "scripts": {
-    "dev": "vite",
+    "dev": "npm run watch",
+    "watch": "vite build --watch",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -33,7 +34,6 @@
     "chromatic": "npx chromatic --project-token=chpt_69ae5d081be6258"
   },
   "dependencies": {
-    "@babel/plugin-syntax-typescript": "^7.26.0",
     "@mantine/core": "~8.1.0",
     "@mantine/hooks": "~8.1.0",
     "@recursica/mantine-adapter": "*",
@@ -45,6 +45,7 @@
     "vite-plugin-svgr": "^4.3.0"
   },
   "devDependencies": {
+    "@babel/plugin-syntax-typescript": "^7.26.0",
     "@chromatic-com/storybook": "^4.0.0",
     "@eslint/js": "^9.25.0",
     "@storybook/addon-a11y": "^9.0.8",
@@ -57,12 +58,14 @@
     "@vitejs/plugin-react": "^4.4.1",
     "@vitest/browser": "^3.2.3",
     "@vitest/coverage-v8": "^3.2.3",
+    "electron-to-chromium": "^1.5.167",
     "eslint": "^9.25.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "eslint-plugin-storybook": "^9.0.8",
     "globals": "^16.0.0",
     "jju": "^1.4.0",
+    "json-parse-even-better-errors": "^3.0.1",
     "playwright": "^1.53.0",
     "sass": "^1.89.2",
     "storybook": "^9.0.8",

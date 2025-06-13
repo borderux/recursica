@@ -11,3 +11,4 @@ export * from "./ThemeProvider/ThemeProvider";
 export * from "./Title/Title";
 export * from "./Accordion/Accordion";
 export * from "./Typography";
+export * from "./Logo/Logo";

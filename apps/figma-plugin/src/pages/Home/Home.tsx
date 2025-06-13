@@ -1,11 +1,14 @@
-import { Flex, Typography, Button } from '@recursica/ui-kit';
+import { Flex, Typography, Button, Logo } from '@recursica/ui-kit';
 import { NavLink } from 'react-router';
 
 export function Home() {
   return (
-    <Flex direction={'column'} justify={'center'} align={'center'} gap={20}>
-      <Typography>Home</Typography>
-      <Button component={NavLink} to='/figma/select-sources' label='Get Started' />
+    <Flex direction={'column'} justify={'center'} align={'center'} gap={10} h='100%'>
+      <Flex direction='column' align='center' gap={4}>
+        <Logo />
+        <Typography>Recursica</Typography>
+      </Flex>
+      <Button component={NavLink} to='/figma/fetch-variables' label='Get started' />
     </Flex>
   );
 }

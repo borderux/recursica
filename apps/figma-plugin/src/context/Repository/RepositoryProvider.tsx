@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { RepositoryContext } from './RepositoryContext';
-import { useFigma } from '@/hooks/useFigma';
+import { useFigma } from '../../hooks/useFigma';
 import {
   BaseRepository,
   GitLabRepository,
@@ -8,7 +8,7 @@ import {
   type UserInfo,
   type Project,
   type CommitAction,
-} from '@/services/repository';
+} from '../../services/repository';
 
 interface AdapterFile {
   path: string;

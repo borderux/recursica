@@ -1,5 +1,5 @@
 import { Flex, Title, Button, Typography, TextInput, Select } from '@recursica/ui-kit';
-import { useFigma } from '@/hooks/useFigma';
+import { useFigma } from '../../hooks/useFigma';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 

@@ -2,7 +2,11 @@ import { GenericVariables } from './exportToJSON';
 import { VariableCastedValue } from '@repo/shared-interfaces';
 import { rgbToHex } from './utils/rgbToHex';
 
-export async function getTeamLibrary() {
+export async function getTeamLibrary(
+  projectId: string,
+  pluginVersion: string,
+  uiKit: GenericVariables
+) {
   // Get the team library from the figma api
   const teamLibrary = await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
 
@@ -16,43 +20,29 @@ export async function getTeamLibrary() {
     });
   }
 
-  // Send the libraries to the main thread
-  figma.ui.postMessage({
-    type: 'TEAM_LIBRARIES',
-    payload: libraries,
+  const validLibraries = Object.keys(libraries).filter((val) => {
+    const collections = libraries?.[val];
+    return collections?.some((collection) => collection.name === 'ID variables');
   });
 
-  return libraries;
-}
-
-export async function getRemoteVariables(
-  projectId: string,
-  pluginVersion: string,
-  tokenCollection: string,
-  themesCollections: string[],
-  uiKit: GenericVariables
-) {
-  // Get the team library from the figma api
-  const libraries = await getTeamLibrary();
-  // Decode the token collection
-  const [tokens] = await decodeFileVariables(libraries[tokenCollection]);
-  // Decode the themes collections
+  let tokens: GenericVariables = {};
   const themes: Record<string, GenericVariables> = {};
-  for (const theme of themesCollections) {
-    const [themeValues, metadata] = await decodeFileVariables(libraries[theme]);
+  for (const library of validLibraries) {
+    console.log(library);
+    const collections = libraries?.[library];
+    const [variables, metadata] = await decodeFileVariables(collections);
     const filetype = Object.values(
       metadata as Record<string, { name: string; value: string }>
     ).find((m) => m.name === 'project-type')?.value;
-    // If the filetype is not themes, continue
-    if (filetype !== 'themes') continue;
-    // Get the theme name
-    const themeName = Object.values(
-      metadata as Record<string, { name: string; value: string }>
-    ).find((m) => m.name === 'theme')?.value;
-    // If the theme values or theme name is not found, continue
-    if (!themeValues || !themeName) continue;
-    // Add the theme to the themes object
-    themes[themeName] = themeValues;
+    if (filetype === 'tokens') {
+      tokens = variables;
+    } else if (filetype === 'themes') {
+      const themeName = Object.values(
+        metadata as Record<string, { name: string; value: string }>
+      ).find((m) => m.name === 'theme')?.value;
+      if (!themeName) continue;
+      themes[themeName] = variables;
+    }
   }
   // Send the variables to the main thread
   const response = {
@@ -65,18 +55,18 @@ export async function getRemoteVariables(
       uiKit,
     },
   };
-
   figma.ui.postMessage(response);
+
+  return libraries;
 }
 
 async function decodeFileVariables(
   fileCollections: { value: string; name: string }[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): Promise<any[]> {
+): Promise<[GenericVariables, GenericVariables]> {
   const metadataCollection = fileCollections.find((f) => f.name === 'ID variables');
   if (!metadataCollection) {
     figma.notify('No metadata collection found');
-    return [];
+    return [{} as GenericVariables, {} as GenericVariables];
   }
   const metadataVariables = await decodeRemoteVariables(metadataCollection.value);
 

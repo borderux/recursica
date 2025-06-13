@@ -1,4 +1,4 @@
-import { useRepository } from '@/hooks/useRepository';
+import { useRepository } from '../../hooks/useRepository';
 import { Flex, Button, Typography } from '@recursica/ui-kit';
 import { NavLink } from 'react-router';
 

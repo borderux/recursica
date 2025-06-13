@@ -1,4 +1,4 @@
-import { Project } from '@/services/repository/BaseRepository';
+import { Project } from '../../services/repository/BaseRepository';
 import { createContext } from 'react';
 
 interface Repository {

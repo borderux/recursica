@@ -1,16 +1,15 @@
-import { FigmaProvider } from '@/context';
+import { FigmaProvider } from './context';
 import {
   SelectProject,
   Home,
   RepositoryConnection,
   PublishFiles,
-  SelectSources,
-  FetchSources,
+  FetchVariables,
   RunAdapter,
 } from './pages';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { ThemeProvider, Themes } from '@recursica/ui-kit';
-import { Layout } from '@/components';
+import { Layout } from './components';
 import { RepositoryProvider } from './context/Repository/RepositoryProvider';
 
 function App() {
@@ -20,11 +19,10 @@ function App() {
         <RepositoryProvider>
           <MemoryRouter initialEntries={['/home']}>
             <Routes>
+              <Route path='home' element={<Home />} />
               <Route path='/' element={<Layout />}>
-                <Route path='home' element={<Home />} />
                 <Route path='figma'>
-                  <Route path='select-sources' element={<SelectSources />} />
-                  <Route path='fetch-data' element={<FetchSources />} />
+                  <Route path='fetch-variables' element={<FetchVariables />} />
                 </Route>
                 <Route path='recursica'>
                   <Route path='token' element={<RepositoryConnection />} />

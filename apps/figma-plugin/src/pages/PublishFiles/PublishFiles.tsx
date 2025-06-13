@@ -1,5 +1,5 @@
 import { Typography, Flex } from '@recursica/ui-kit';
-import { useRepository } from '@/hooks/useRepository';
+import { useRepository } from '../../hooks/useRepository';
 
 export function PublishFiles() {
   const { prLink } = useRepository();
