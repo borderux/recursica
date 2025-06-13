@@ -8,7 +8,6 @@ Do NOT edit these files directly
 For more information about Recursica, go to https://recursica.com
 */
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import * as IconExports from './icon_exports';
 
