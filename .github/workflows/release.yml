@@ -56,6 +56,9 @@ jobs:
           # This prevents husky from installing git hooks during the CI process
           HUSKY: 0
 
+      - name: Build
+        run: turbo run build
+
       # Run unit tests
       - name: Run tests
         run: npm test
