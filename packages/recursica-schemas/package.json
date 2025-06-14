@@ -1,11 +1,9 @@
 {
-  "name": "@repo/recursica-schemas",
+  "name": "@borderux/recursica-schemas",
   "description": "Recursica design system schemas and types",
   "version": "1.0.1",
   "private": false,
-  "publishConfig": {
-    "name": "@borderux/recursica-schemas"
-  },
+  "publishConfig": {},
   "homepage": "https://github.com/borderux/recursica#readme",
   "bugs": {
     "url": "https://github.com/borderux/recursica/issues"
@@ -39,18 +37,17 @@
   "scripts": {
     "lint": "eslint . --max-warnings 0",
     "check-types": "tsc --noEmit",
-    "build": "node scripts/build.js",
-    "test": "npm run check-types && node scripts/validate-schemas.js"
+    "generate-types": "npm test && node scripts/generate-types.js",
+    "test": "node scripts/validate-schemas.js && npm run check-types"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",
     "@repo/typescript-config": "*",
-    "eslint": "^9.28.0",
-    "typescript": "5.8.2"
-  },
-  "dependencies": {
     "ajv": "^8.12.0",
+    "eslint": "^9.28.0",
+    "fast-uri": "^3.0.6",
     "glob": "^10.3.10",
-    "json-schema-to-typescript": "^15.0.0"
+    "json-schema-to-typescript": "^15.0.0",
+    "typescript": "5.8.2"
   }
 }
