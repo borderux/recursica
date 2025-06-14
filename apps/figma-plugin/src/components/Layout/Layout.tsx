@@ -4,20 +4,17 @@ import { Outlet, useNavigate } from 'react-router';
 export function Layout() {
   const navigate = useNavigate();
   return (
-    <Flex direction={'column'} h='100vh'>
+    <Flex direction={'column'}>
       <Flex flex={1} justify='center' align='center'>
         <Outlet />
       </Flex>
       <Flex
-        px={8}
+        px={'size/spacer/default'}
         align='center'
         justify='space-between'
-        border={{
-          top: '1px solid',
-        }}
-        borderColor={{
-          top: 'color/stroke/default',
-        }}
+        btw='1px'
+        bts='solid'
+        btc='color/stroke/default'
       >
         <Button
           size='small'

@@ -46,7 +46,7 @@
     "react-router": "7.6.1"
   },
   "devDependencies": {
-    "@repo/shared-interfaces": "*",
+    "@recursica/common": "*",
     "@babel/helper-string-parser": "7.27.1",
     "@eslint/js": "9.11.1",
     "@rollup/plugin-commonjs": "28.0.3",

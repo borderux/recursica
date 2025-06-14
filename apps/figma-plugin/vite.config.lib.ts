@@ -11,5 +11,8 @@ export default defineConfig({
       name: 'FigmaPlugin',
       formats: ['es'],
     },
+    rollupOptions: {
+      external: ['react', 'react-dom'],
+    },
   },
 });

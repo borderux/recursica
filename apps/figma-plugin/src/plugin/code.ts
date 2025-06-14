@@ -5,13 +5,12 @@ import { getAccessTokens, updateAccessTokens } from './accessTokens';
 import { getTeamLibrary } from './teamLibrary';
 const pluginVersion = packageInfo.version;
 
+figma.showUI(__html__, {
+  width: 370,
+  height: 350,
+  themeColors: true,
+});
 async function main() {
-  figma.showUI(__html__, {
-    width: 370,
-    height: 350,
-    themeColors: true,
-  });
-
   const { projectId } = await decodeProjectMetadataCollection(pluginVersion);
   const localVariables = await exportToJSON();
   getAccessTokens();
@@ -25,4 +24,4 @@ async function main() {
   };
 }
 
-main();
+setTimeout(main, 1000);

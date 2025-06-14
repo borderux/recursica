@@ -14,6 +14,8 @@ interface Repository {
 
   /** User projects/repositories */
   userProjects: Project[];
+  /** Selected project/repository */
+  selectedProject: Project | undefined;
   /** Selected project/repository id */
   selectedProjectId: string;
   /** Update the selected project/repository id */
@@ -22,26 +24,13 @@ interface Repository {
   /** Pull request link */
   prLink: string;
 
-  /** Token collection source */
-  tokenCollection: string;
-  /** Update token collection source */
-  updateTokenCollection: (tokenCollection: string) => void;
-
-  /** Themes collections sources */
-  themesCollections: string[];
-  /** Update themes collections sources */
-  updateThemesCollections: (themesCollections: string[]) => void;
-
-  /** Fetch figma variables */
-  fetchSources: () => void;
-
   /** Run the adapter */
-  runAdapter: () => void;
+  runAdapter: () => Promise<void>;
   /** Adapter response */
   adapterResponse: string;
 
   /** Publish files to the repository */
-  publishFiles: () => void;
+  publishFiles: () => Promise<void>;
 }
 
 export const RepositoryContext = createContext<Repository | null>(null);

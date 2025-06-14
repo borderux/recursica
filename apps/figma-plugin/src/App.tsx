@@ -1,12 +1,5 @@
 import { FigmaProvider } from './context';
-import {
-  SelectProject,
-  Home,
-  RepositoryConnection,
-  PublishFiles,
-  FetchVariables,
-  RunAdapter,
-} from './pages';
+import { SelectProject, Home, RepositoryConnection, Success, Error } from './pages';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { ThemeProvider, Themes } from '@recursica/ui-kit';
 import { Layout } from './components';
@@ -21,16 +14,11 @@ function App() {
             <Routes>
               <Route path='home' element={<Home />} />
               <Route path='/' element={<Layout />}>
-                <Route path='figma'>
-                  <Route path='fetch-variables' element={<FetchVariables />} />
-                </Route>
                 <Route path='recursica'>
                   <Route path='token' element={<RepositoryConnection />} />
                   <Route path='select-project' element={<SelectProject />} />
-                  <Route path='run-adapter' element={<RunAdapter />} />
-                  <Route path='publish-files' element={<PublishFiles />} />
-                  {/* <Route path='success' element={<RecursicaSuccess />} /> */}
-                  {/* <Route path='error' element={<RecursicaError />} /> */}
+                  <Route path='success' element={<Success />} />
+                  <Route path='error' element={<Error />} />
                 </Route>
               </Route>
             </Routes>

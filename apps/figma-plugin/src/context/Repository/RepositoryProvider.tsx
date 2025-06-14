@@ -32,13 +32,7 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     return userProjects.find((project) => project.id === selectedProjectId);
   }, [userProjects, selectedProjectId]);
 
-  const [tokenCollection, setTokenCollection] = useState<string>('');
-  const [themesCollections, setThemesCollections] = useState<string[]>([]);
-
-  const {
-    repository,
-    libraries: { recursicaVariables },
-  } = useFigma();
+  const { repository, recursicaVariables } = useFigma();
 
   const variablesJson = useMemo(() => {
     if (recursicaVariables) {
@@ -175,22 +169,6 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     }
   };
 
-  const fetchSources = async () => {
-    parent.postMessage(
-      {
-        pluginMessage: {
-          type: 'FETCH_SOURCES',
-          payload: {
-            tokenCollection,
-            themesCollections,
-          },
-        },
-        pluginId: '*',
-      },
-      '*'
-    );
-  };
-
   const createBranch = async (project: Project) => {
     if (!repositoryInstance || !selectedProjectId) return;
     const branch = await repositoryInstance.createBranch(
@@ -224,8 +202,6 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
 
       const config = JSON.parse(configFile.content);
 
-      // The new URL(..., import.meta.url) syntax is the standard way to load workers
-      // in modern JavaScript projects (supported by Vite, Create React App, etc.)
       const worker = new Worker(
         URL.createObjectURL(new Blob([fileContent.content], { type: 'text/javascript' }))
       );
@@ -358,6 +334,7 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
   const value = {
     accessToken,
     platform,
+    selectedProject,
     selectedProjectId,
     updateAccessToken: setAccessToken,
     updatePlatform: setPlatform,
@@ -365,11 +342,6 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     userProjects,
     filesPublished,
     prLink,
-    tokenCollection,
-    updateTokenCollection: setTokenCollection,
-    themesCollections,
-    updateThemesCollections: setThemesCollections,
-    fetchSources,
     publishFiles,
     runAdapter,
     adapterResponse,
