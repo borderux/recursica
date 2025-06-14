@@ -1,6 +1,6 @@
 import { useLayoutEffect, useState } from 'react';
 import { FigmaContext, CurrentRepositoryContext } from './FigmaContext';
-import type { JsonContent } from '@repo/shared-interfaces';
+import type { JsonContent } from '@recursica/common';
 
 export interface TokensProvidersProps {
   children: React.ReactNode;
@@ -11,8 +11,6 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
     platform: 'gitlab',
     accessToken: '',
   });
-  const [availableLibraries, setAvailableLibraries] =
-    useState<Record<string, { value: string; name: string }[]>>();
   const [recursicaVariables, setRecursicaVariables] = useState<JsonContent>();
 
   useLayoutEffect(() => {
@@ -23,9 +21,6 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
           platform,
           accessToken,
         });
-      }
-      if (pluginMessage?.type === 'TEAM_LIBRARIES') {
-        setAvailableLibraries(pluginMessage.payload);
       }
       if (pluginMessage?.type === 'RECURSICA_VARIABLES') {
         setRecursicaVariables(pluginMessage.payload);
@@ -62,10 +57,7 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
       accessToken: repository.accessToken,
       updateAccessToken,
     },
-    libraries: {
-      availableLibraries,
-      recursicaVariables,
-    },
+    recursicaVariables,
   };
 
   return <FigmaContext.Provider value={values}>{children}</FigmaContext.Provider>;

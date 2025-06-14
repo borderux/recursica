@@ -8,8 +8,11 @@ export default defineConfig({
     emptyOutDir: false,
     lib: {
       entry: 'src/plugin/code.ts',
-      name: 'ViteReactPlugin',
+      name: 'FigmaPlugin',
       formats: ['es'],
+    },
+    rollupOptions: {
+      external: ['react', 'react-dom'],
     },
   },
 });

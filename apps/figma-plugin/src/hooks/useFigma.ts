@@ -1,4 +1,4 @@
-import { FigmaContext } from '@/context';
+import { FigmaContext } from '../context';
 import { useContext } from 'react';
 
 export function useFigma() {
