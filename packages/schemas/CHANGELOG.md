@@ -1,5 +1,11 @@
 # @repo/recursica-schemas
 
+## 1.0.3
+
+### Patch Changes
+
+- 0c583ba: Moved org and udpated documentation
+
 ## 1.0.2
 
 ### Patch Changes
