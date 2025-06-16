@@ -1,5 +1,11 @@
 # @repo/recursica-schemas
 
+## 1.0.4
+
+### Patch Changes
+
+- 9a30083: Changed publish scope to public
+
 ## 1.0.3
 
 ### Patch Changes
