@@ -9,6 +9,9 @@
   },
   "author": "hi@borderux.com",
   "packageManager": "npm@10.9.0",
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=18"
   },
