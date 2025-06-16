@@ -15,7 +15,6 @@ export function SelectProject() {
     selectedProject,
     selectedProjectId,
     updateSelectedProjectId,
-    runAdapter,
     publishFiles,
   } = useRepository();
   const [step, setStep] = useState<Step>(Step.SelectProject);
@@ -28,8 +27,8 @@ export function SelectProject() {
   const handleConfirm = async () => {
     setStep(Step.Exporting);
     try {
-      await runAdapter();
-      await publishFiles();
+      const prLink = await publishFiles();
+      console.log('prLink', prLink);
       navigate('/recursica/success');
     } catch (error) {
       console.error('Failed to publish files:', error);

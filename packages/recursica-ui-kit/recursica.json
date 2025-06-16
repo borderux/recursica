@@ -14,15 +14,15 @@
         "error",
         "keyboard_arrow_down",
         "keyboard_arrow_up",
-        "check"
+        "check",
+        "open_in_new"
       ],
       "variants": ["Outlined", "Filled"]
     }
   },
   "overrides": {
     "mantineTheme": {
-      "1-scale": "'color-1-scale-default'",
-      "background": "themeVars['color/background/default']"
+      "1-scale": "'color-1-scale-default'"
     }
   }
 }

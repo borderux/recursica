@@ -53,3 +53,7 @@ import logout_Filled from "./Svg/logout_Filled.svg?react";
 export { logout_Filled };
 import logout_Outlined from "./Svg/logout_Outlined.svg?react";
 export { logout_Outlined };
+import open_in_new_Filled from "./Svg/open_in_new_Filled.svg?react";
+export { open_in_new_Filled };
+import open_in_new_Outlined from "./Svg/open_in_new_Outlined.svg?react";
+export { open_in_new_Outlined };
