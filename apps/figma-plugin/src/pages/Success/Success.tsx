@@ -10,7 +10,7 @@ export function Success() {
       {prLink && (
         <Button
           text={false}
-          leftSection={'content_copy_Outlined'}
+          leftSection={'open_in_new_Outlined'}
           label='Open pull request'
           component={Anchor}
           href={prLink}

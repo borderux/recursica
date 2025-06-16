@@ -87,17 +87,17 @@ const section = style({
 
 const dropdown = style({
   padding: 0,
-  borderRadius: 0,
-  border: `1px solid ${recursica["dropdown/color/default"]}`,
+  borderRadius: recursica["menu/size/border-radius"],
 });
 
 const option = style({
   ...typographies["body-2/normal"],
   gap: recursica["menu-item/size/spacing"],
-  color: recursica["menu-item/color/default"],
+  color: recursica["menu-item/color/text-default"],
   borderRadius: 0,
   paddingBlock: recursica["menu-item/size/item-vertical-padding"],
   paddingInline: recursica["menu-item/size/item-horizontal-padding"],
+  backgroundColor: recursica["menu-item/color/default"],
   ":hover": {
     backgroundColor: recursica["menu-item/color/focused"],
   },
@@ -106,6 +106,7 @@ const option = style({
       backgroundColor: recursica["menu-item/color/selected"],
     },
     '&[data-combobox-disabled="true"]': {
+      backgroundColor: recursica["menu-item/color/default"],
       color: recursica["menu-item/color/text-disabled"],
       opacity: "unset",
     },

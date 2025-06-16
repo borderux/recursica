@@ -33,4 +33,6 @@ export const IconResourceMap = {
   favorite_Outlined: IconExports.favorite_Outlined,
   logout_Filled: IconExports.logout_Filled,
   logout_Outlined: IconExports.logout_Outlined,
+  open_in_new_Filled: IconExports.open_in_new_Filled,
+  open_in_new_Outlined: IconExports.open_in_new_Outlined,
 };

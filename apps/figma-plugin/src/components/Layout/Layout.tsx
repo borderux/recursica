@@ -4,7 +4,7 @@ import { Outlet, useNavigate } from 'react-router';
 export function Layout() {
   const navigate = useNavigate();
   return (
-    <Flex direction={'column'}>
+    <Flex direction={'column'} style={{ height: '100%' }}>
       <Flex flex={1} justify='center' align='center'>
         <Outlet />
       </Flex>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { RepositoryContext } from './RepositoryContext';
 import { useFigma } from '../../hooks/useFigma';
 import {
@@ -23,10 +23,8 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
   const [userProjects, setUserProjects] = useState<Project[]>([]);
   const [filesPublished, setFilesPublished] = useState<boolean>(false);
   const [prLink, setPrLink] = useState<string>('');
-  const [adapterResponse, setAdapterResponse] = useState<string>('');
-  const [adapterFiles, setAdapterFiles] = useState<AdapterFile[]>([]);
 
-  const [selectedTargetBranch, setSelectedTargetBranch] = useState<string | undefined>(undefined);
+  const selectedTargetBranch = useRef<string | undefined>(undefined);
 
   const selectedProject = useMemo(() => {
     return userProjects.find((project) => project.id === selectedProjectId);
@@ -96,14 +94,16 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     }
   };
 
-  const publishFiles = async () => {
-    if (!repositoryInstance || !selectedProjectId || !userInfo || !variablesJson) return;
+  const publishFiles = async (): Promise<boolean> => {
+    if (!repositoryInstance || !selectedProjectId || !userInfo || !variablesJson) return false;
+
+    const adapterFiles = await runAdapter();
 
     try {
-      if (!selectedTargetBranch) return;
-      const targetBranch = selectedTargetBranch;
+      if (!selectedTargetBranch.current) throw new Error('Failed to create branch');
+      const targetBranch = selectedTargetBranch.current;
 
-      if (!selectedProject) return;
+      if (!selectedProject) throw new Error('Failed to get selected project');
       const variablesFilename = 'recursica-bundle.json';
 
       const exists = await repositoryInstance.fileExists(
@@ -120,7 +120,7 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
       ];
 
       for (const file of adapterFiles) {
-        if (!selectedProject) return;
+        if (!selectedProject) return false;
         const exists = await repositoryInstance.fileExists(
           selectedProject,
           file.path,
@@ -164,44 +164,46 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
       }
 
       setFilesPublished(true);
+      return true;
     } catch (error) {
       console.error('Failed to publish files:', error);
+      return false;
     }
   };
 
   const createBranch = async (project: Project) => {
-    if (!repositoryInstance || !selectedProjectId) return;
+    if (!repositoryInstance) throw new Error('Failed to create branch');
     const branch = await repositoryInstance.createBranch(
       project,
       `recursica-${userInfo?.username}-${Date.now()}`,
       project.defaultBranch
     );
-    setSelectedTargetBranch(branch.name);
+    selectedTargetBranch.current = branch.name;
     return branch.name;
   };
 
-  const runAdapter = async () => {
-    if (!repositoryInstance || !selectedProjectId || !selectedProject) return;
+  const runAdapter = async (): Promise<AdapterFile[]> => {
+    if (!repositoryInstance || !selectedProjectId || !selectedProject)
+      throw new Error('Failed to run adapter');
 
-    try {
-      const targetBranch = await createBranch(selectedProject);
-      const adapterFilename = 'recursica/adapter.js';
-      if (!selectedProject || !targetBranch) return;
+    const targetBranch = await createBranch(selectedProject);
+    const adapterFilename = 'recursica/adapter.js';
+    if (!selectedProject || !targetBranch) throw new Error('Failed to create branch');
 
-      const fileContent = await repositoryInstance.getSingleFile(
-        selectedProject,
-        adapterFilename,
-        targetBranch
-      );
+    const fileContent = await repositoryInstance.getSingleFile(
+      selectedProject,
+      adapterFilename,
+      targetBranch
+    );
 
-      const configFile = await repositoryInstance.getSingleFile(
-        selectedProject,
-        'recursica.json',
-        targetBranch
-      );
+    const configFile = await repositoryInstance.getSingleFile(
+      selectedProject,
+      'recursica.json',
+      targetBranch
+    );
 
+    return new Promise<AdapterFile[]>((resolve, reject) => {
       const config = JSON.parse(configFile.content);
-
       const worker = new Worker(
         URL.createObjectURL(new Blob([fileContent.content], { type: 'text/javascript' }))
       );
@@ -316,19 +318,15 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
             });
           }
         }
-        setAdapterFiles(newAdapterFiles);
-        setAdapterResponse(`adapter ran successfully: ${event.data}`);
+        resolve(newAdapterFiles);
       };
 
       // Listener for any errors that might occur inside the worker
       worker.onerror = (error) => {
         console.error('❌ Error in worker:', error);
-        setAdapterResponse(`Error: ${error.message}`);
+        reject(error);
       };
-    } catch (error) {
-      console.error('Failed to run adapter:', error);
-      setAdapterResponse('Failed to run adapter');
-    }
+    });
   };
 
   const value = {
@@ -343,8 +341,6 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     filesPublished,
     prLink,
     publishFiles,
-    runAdapter,
-    adapterResponse,
   };
 
   return <RepositoryContext.Provider value={value}>{children}</RepositoryContext.Provider>;

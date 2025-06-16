@@ -24,13 +24,8 @@ interface Repository {
   /** Pull request link */
   prLink: string;
 
-  /** Run the adapter */
-  runAdapter: () => Promise<void>;
-  /** Adapter response */
-  adapterResponse: string;
-
   /** Publish files to the repository */
-  publishFiles: () => Promise<void>;
+  publishFiles: () => Promise<boolean>;
 }
 
 export const RepositoryContext = createContext<Repository | null>(null);
