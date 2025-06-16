@@ -1,6 +1,7 @@
 {
   "name": "@recursica/mantine-adapter",
   "version": "1.0.0",
+  "private": true,
   "description": "Recursica Design Token Adapter - Convert design tokens to code",
   "type": "module",
   "main": "dist/index.js",
