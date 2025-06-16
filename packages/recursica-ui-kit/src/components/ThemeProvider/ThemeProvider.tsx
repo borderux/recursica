@@ -1,3 +1,4 @@
+import "@mantine/core/styles.css";
 import { MantineProvider } from "@mantine/core";
 import { mantineTheme } from "../../recursica/RecursicaRecursicaMantineTheme";
 import { useEffect } from "react";

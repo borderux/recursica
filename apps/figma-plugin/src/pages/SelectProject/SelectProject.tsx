@@ -15,7 +15,6 @@ export function SelectProject() {
     selectedProject,
     selectedProjectId,
     updateSelectedProjectId,
-    runAdapter,
     publishFiles,
   } = useRepository();
   const [step, setStep] = useState<Step>(Step.SelectProject);
@@ -28,7 +27,6 @@ export function SelectProject() {
   const handleConfirm = async () => {
     setStep(Step.Exporting);
     try {
-      await runAdapter();
       await publishFiles();
       navigate('/recursica/success');
     } catch (error) {
