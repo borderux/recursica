@@ -1,5 +1,11 @@
 # @repo/recursica-schemas
 
+## 1.0.3
+
+### Patch Changes
+
+- 44e0c9d: Checking changesets workflow again
+
 ## 1.0.2
 
 ### Patch Changes
