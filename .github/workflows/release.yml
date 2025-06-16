@@ -35,27 +35,28 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          # cache: "npm"
+          cache: "npm"
           registry-url: "https://registry.npmjs.org"
-
-      # Caches the Turborepo build artifacts stored in the `.turbo` directory.
-      # This avoids re-running tasks on unchanged code, speeding up the build.
-      # - name: Cache Turborepo
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: .turbo
-      #     key: ${{ runner.os }}-turbo-${{ hashFiles('**/package-lock.json') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-turbo-
 
       # Installs dependencies using a clean install.
       # HUSKY: 0 prevents Husky git hooks from running during the CI process.
       - name: Install dependencies
-        run: npm install
+        run: npm ci
         env:
           # This prevents husky from installing git hooks during the CI process
           HUSKY: 0
 
+      # Caches the Turborepo build artifacts stored in the `.turbo` directory.
+      # This avoids re-running tasks on unchanged code, speeding up the build.
+      - name: Cache Turborepo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
+      # Runs the build step
       - name: Build
         run: npm run build
 
@@ -75,6 +76,6 @@ jobs:
         with:
           publish: npm run release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT}}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
