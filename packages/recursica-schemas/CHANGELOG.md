@@ -1,5 +1,11 @@
 # @repo/recursica-schemas
 
+## 1.0.2
+
+### Patch Changes
+
+- 2f5c983: Minor version change for schemas
+
 ## 1.0.1
 
 ### Patch Changes
