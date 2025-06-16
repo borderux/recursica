@@ -27,8 +27,7 @@ export function SelectProject() {
   const handleConfirm = async () => {
     setStep(Step.Exporting);
     try {
-      const prLink = await publishFiles();
-      console.log('prLink', prLink);
+      await publishFiles();
       navigate('/recursica/success');
     } catch (error) {
       console.error('Failed to publish files:', error);
