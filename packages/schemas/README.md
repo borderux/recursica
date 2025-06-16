@@ -1,4 +1,4 @@
-# @borderux/recursica-schemas
+# @recursica/schemas
 
 This package is responsible for managing the JSON schemas and generating corresponding TypeScript type definitions for the project.
 
