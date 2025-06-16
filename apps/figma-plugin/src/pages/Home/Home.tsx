@@ -1,11 +1,21 @@
-import { Flex, Typography, Button } from '@recursica/ui-kit';
+import { Flex, Typography, Button, Logo } from '@recursica/ui-kit';
 import { NavLink } from 'react-router';
+import { useFigma } from '../../hooks/useFigma';
 
 export function Home() {
+  const { recursicaVariables } = useFigma();
   return (
-    <Flex direction={'column'} justify={'center'} align={'center'} gap={20}>
-      <Typography>Home</Typography>
-      <Button component={NavLink} to='/figma/select-sources' label='Get Started' />
+    <Flex direction={'column'} justify={'center'} align={'center'} gap={'size/spacer/default'}>
+      <Flex direction='column' align='center' gap={'size/spacer/0-5x'}>
+        <Logo />
+        <Typography variant='h2'>{recursicaVariables ? 'Recursica' : 'Loading...'}</Typography>
+      </Flex>
+      <Button
+        component={NavLink}
+        loading={!recursicaVariables}
+        to='/recursica/token'
+        label='Get started'
+      />
     </Flex>
   );
 }

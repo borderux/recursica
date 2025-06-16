@@ -24,8 +24,8 @@
   },
   "homepage": "https://github.com/recursica/recursica-plugin#readme",
   "scripts": {
-    "dev": "vite",
-    "_build": "npm run build:ui && npm run build:code",
+    "dev": "npm run watch",
+    "build": "npm run build:ui && npm run build:code",
     "build:ui": "tsc -b && vite build",
     "build:code": "tsc -b && vite build --config vite.config.lib.ts",
     "watch": "concurrently \"npm run watch:ui\" \"npm run watch:code\"",
@@ -35,20 +35,18 @@
     "zip": "node scripts/zip.mjs",
     "preview": "vite preview",
     "check-types": "tsc --noEmit",
-    "format": "prettier --write .",
-    "chromatic": "npx chromatic --project-token=chpt_69ae5d081be6258"
+    "format": "prettier --write ."
   },
   "dependencies": {
     "@figma/plugin-typings": "1.113.0",
     "@recursica/ui-kit": "*",
     "axios": "1.9.0",
-    "chromatic": "12.1.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-router": "7.6.1"
   },
   "devDependencies": {
-    "@repo/shared-interfaces": "*",
+    "@recursica/common": "*",
     "@babel/helper-string-parser": "7.27.1",
     "@eslint/js": "9.11.1",
     "@rollup/plugin-commonjs": "28.0.3",
@@ -73,14 +71,9 @@
     "javascript-stringify": "2.1.0",
     "lint-staged": "16.1.0",
     "playwright": "1.52.0",
-    "postcss": "8.4.47",
-    "postcss-preset-mantine": "1.17.0",
-    "postcss-simple-vars": "7.0.1",
     "prettier": "3.5.3",
     "require-like": "0.1.2",
-    "sass": "1.79.4",
     "tslib": "2.8.1",
-    "tsx": "4.19.4",
     "typescript": "5.8.3",
     "typescript-eslint": "8.8.0",
     "vite": "6.3.5",

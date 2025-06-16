@@ -1,4 +1,4 @@
-import { RepositoryContext } from '@/context/Repository/RepositoryContext';
+import { RepositoryContext } from '../context/Repository/RepositoryContext';
 import { useContext } from 'react';
 
 export function useRepository() {
