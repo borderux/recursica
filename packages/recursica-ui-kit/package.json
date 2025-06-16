@@ -1,6 +1,7 @@
 {
   "name": "@recursica/ui-kit",
   "version": "0.0.0",
+  "private": true,
   "type": "module",
   "description": "Reusable UI components for Recursica applications",
   "main": "./dist/ui-kit.cjs",
