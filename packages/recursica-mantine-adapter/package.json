@@ -1,0 +1,44 @@
+{
+  "name": "@recursica/mantine-adapter",
+  "version": "1.0.0",
+  "description": "Recursica Design Token Adapter - Convert design tokens to code",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "recursica": "dist/main.cjs"
+  },
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "design-tokens",
+    "figma",
+    "recursica",
+    "theme",
+    "adapter"
+  ],
+  "files": [
+    "dist/**/*",
+    "README.md"
+  ],
+  "dependencies": {
+    "typescript": "^5.0.0"
+  },
+  "devDependencies": {
+    "@recursica/common": "*",
+    "@rollup/plugin-commonjs": "^28.0.3",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-typescript": "^12.1.2",
+    "@rollup/rollup-win32-x64-msvc": "^4.43.0",
+    "@types/node": "^20.0.0",
+    "rollup": "^4.42.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "license": "MIT"
+}
