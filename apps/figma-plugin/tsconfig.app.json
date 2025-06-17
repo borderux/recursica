@@ -9,7 +9,7 @@
     "resolveJsonModule": true,
     "baseUrl": "./",
     /* Bundler mode */
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,

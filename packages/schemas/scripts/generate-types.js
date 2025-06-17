@@ -23,7 +23,6 @@ const BANNER_COMMENT = `/**
 const CWD = process.cwd();
 const SRC_DIR = path.resolve(CWD, "src");
 const DIST_DIR = path.resolve(CWD, "dist");
-const TYPES_DIR = path.join(DIST_DIR, "types");
 
 /**
  * Cleans the dist directory by removing it if it exists.
@@ -45,10 +44,9 @@ async function cleanDist() {
  * Creates the necessary output directories.
  */
 async function createDist() {
-  console.log("Creating 'dist' directories...");
+  console.log("Creating 'dist' directory...");
   await fs.mkdir(DIST_DIR, { recursive: true });
-  await fs.mkdir(TYPES_DIR, { recursive: true });
-  console.log("'dist' directories created.");
+  console.log("'dist' directory created.");
 }
 
 /**
@@ -67,7 +65,7 @@ async function processSchemas(jsonFiles) {
 
   const tasks = jsonFiles.map(async (file) => {
     const baseName = path.basename(file, ".json");
-    const tsFile = path.join(TYPES_DIR, `${baseName}.d.ts`);
+    const tsFile = path.join(DIST_DIR, `${baseName}.d.ts`);
     const schemaFile = path.join(DIST_DIR, `${baseName}.json`);
 
     // Generate TS definition
@@ -91,7 +89,7 @@ async function processSchemas(jsonFiles) {
  */
 async function createIndexFile() {
   console.log("Creating index file for types...");
-  const typeFiles = await glob(`${TYPES_DIR}/*.d.ts`);
+  const typeFiles = await glob(`${DIST_DIR}/*.d.ts`);
   const exports = typeFiles
     .map((file) => path.basename(file, ".d.ts"))
     .filter((baseName) => baseName !== "index")
@@ -99,7 +97,7 @@ async function createIndexFile() {
     .join("\n");
 
   if (exports) {
-    const indexFile = path.join(TYPES_DIR, "index.d.ts");
+    const indexFile = path.join(DIST_DIR, "index.d.ts");
     const content = `${BANNER_COMMENT}\n\n${exports}\n`;
     await fs.writeFile(indexFile, content);
     console.log("✓ Generated index.d.ts");
