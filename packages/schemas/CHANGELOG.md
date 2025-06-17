@@ -1,5 +1,12 @@
 # @repo/recursica-schemas
 
+## 1.0.5
+
+### Patch Changes
+
+- 84371c1: Version bump to test automation
+- 62f690f: Version bump again to see what happens
+
 ## 1.0.4
 
 ### Patch Changes
