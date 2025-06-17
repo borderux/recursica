@@ -1,5 +1,11 @@
 # @repo/recursica-schemas
 
+## 1.0.6
+
+### Patch Changes
+
+- af44201: Version again to get release
+
 ## 1.0.5
 
 ### Patch Changes
