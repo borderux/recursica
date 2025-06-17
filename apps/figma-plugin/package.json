@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "@figma/plugin-typings": "1.113.0",
+    "@recursica/schemas": "*",
     "@recursica/ui-kit": "*",
     "axios": "1.9.0",
     "react": "19.1.0",
@@ -46,8 +47,8 @@
     "react-router": "7.6.1"
   },
   "devDependencies": {
-    "@recursica/common": "*",
     "@eslint/js": "9.11.1",
+    "@recursica/common": "*",
     "@rollup/plugin-commonjs": "28.0.3",
     "@rollup/plugin-json": "6.1.0",
     "@rollup/plugin-node-resolve": "16.0.1",
