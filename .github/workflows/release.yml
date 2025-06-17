@@ -48,13 +48,13 @@ jobs:
 
       # Caches the Turborepo build artifacts stored in the `.turbo` directory.
       # This avoids re-running tasks on unchanged code, speeding up the build.
-      - name: Cache Turborepo
-        uses: actions/cache@v4
-        with:
-          path: .turbo
-          key: ${{ runner.os }}-turbo-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-turbo-
+      # - name: Cache Turborepo
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: .turbo
+      #     key: ${{ runner.os }}-turbo-${{ hashFiles('**/package-lock.json') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-turbo-
 
       # NOTE: We are skipping the build and test step cause we assume main is healthy when PRs merge
       # Runs the build step
