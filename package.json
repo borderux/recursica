@@ -19,7 +19,7 @@
     "precommit": "npm run check-types && npm run lint && npm run test && npm run format",
     "test": "turbo run test",
     "version": "changeset version",
-    "release": "changeset publish"
+    "release": "changeset publish --access public"
   },
   "packageManager": "npm@10.9.0",
   "engines": {
