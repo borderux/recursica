@@ -21,6 +21,9 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # To create releases and tags
+      pull-requests: write # To create pull requests
     steps:
       # Checks-out the repository. `fetch-depth: 0` is required for Changesets to correctly
       # determine the changes and version bumps.
