@@ -28,10 +28,11 @@
     "UX",
     "UI"
   ],
+  "types": "./dist/types/index.d.ts",
   "exports": {
     "./types": "./dist/types/index.d.ts",
     "./types/*": "./dist/types/*.ts",
-    "./*.json": "./dist/*.json"
+    "./json/*": "./dist/*.json"
   },
   "files": [
     "dist"

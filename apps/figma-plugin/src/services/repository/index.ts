@@ -6,7 +6,6 @@ export type {
   Project,
   Branch,
   FileInfo,
-  FileContent,
   CommitAction,
   PullRequest,
 } from './BaseRepository';

@@ -11,6 +11,38 @@
       "description": "Schema of the configuration file",
       "examples": ["recursica/schemas/config-schema.json"]
     },
+    "project": {
+      "type": ["string", "object"],
+      "description": "Name of the project for which themes will be generated",
+      "pattern": "^[A-Za-z0-9]+$",
+      "errorMessage": {
+        "type": "Project name must be a string or an object",
+        "pattern": "Project name can only contain letters and numbers (no spaces or special characters)"
+      },
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the project for which themes will be generated",
+          "pattern": "^[A-Za-z0-9]+$",
+          "errorMessage": {
+            "type": "Project name must be a string or an object",
+            "pattern": "Project name can only contain letters and numbers (no spaces or special characters)"
+          },
+          "examples": ["Recursica"]
+        },
+        "root": {
+          "type": "string",
+          "description": "Root path of the project",
+          "examples": ["packages/recursica-ui-kit"]
+        },
+        "adapter": {
+          "type": "string",
+          "description": "Path to the adapter file",
+          "examples": ["packages/recursica-ui-kit/webworker.js"]
+        }
+      },
+      "additionalProperties": false
+    },
     "icons": {
       "type": "object",
       "description": "Object containing icons configuration",
@@ -20,32 +52,28 @@
           "description": "Path to the output file for the icons",
           "examples": ["components/Icons"]
         },
-        "names": {
-          "type": "array",
-          "description": "Names of the icons to transform",
-          "items": {
-            "type": "string"
-          }
-        },
-        "variants": {
-          "type": "array",
-          "description": "Variants of the icons to transform",
-          "items": {
-            "type": "string"
-          }
+        "include": {
+          "type": "object",
+          "description": "Object containing icons to include",
+          "properties": {
+            "names": {
+              "type": "array",
+              "description": "Names of the icons to transform",
+              "items": {
+                "type": "string"
+              }
+            },
+            "variants": {
+              "type": "array",
+              "description": "Variants of the icons to transform",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
         }
-      },
-      "additionalProperties": false
-    },
-    "project": {
-      "type": "string",
-      "description": "Name of the project for which themes will be generated",
-      "pattern": "^[A-Za-z0-9]+$",
-      "errorMessage": {
-        "type": "Project name must be a string",
-        "pattern": "Project name can only contain letters and numbers (no spaces or special characters)"
-      },
-      "examples": ["Cymbiotika"]
+      }
     },
     "jsonsPath": {
       "type": "string",
@@ -123,7 +151,7 @@
   },
   "examples": [
     {
-      "project": "Cymbiotika",
+      "project": "Recursica",
       "jsonsPath": "recursica-json",
       "$schema": "recursica/schemas/config-schema.json"
     }

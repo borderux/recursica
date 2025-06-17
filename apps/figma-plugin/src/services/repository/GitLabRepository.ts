@@ -5,7 +5,6 @@ import {
   Project,
   Branch,
   FileInfo,
-  FileContent,
   CommitAction,
   PullRequest,
 } from './BaseRepository';
@@ -74,22 +73,16 @@ export class GitLabRepository extends BaseRepository {
     }));
   }
 
-  async getSingleFile(project: Project, filePath: string, branch: string): Promise<FileContent> {
+  async getSingleFile<T = string>(project: Project, filePath: string, branch: string): Promise<T> {
     const encodedFilePath = encodeURIComponent(filePath);
     const response = await this.httpClient.get(
-      `${this.baseUrl}/projects/${project.id}/repository/files/${encodedFilePath}`,
+      `${this.baseUrl}/projects/${project.id}/repository/files/${encodedFilePath}/raw`,
       {
         params: { ref: branch },
       }
     );
 
-    const content = window.atob(response.data.content);
-
-    return {
-      name: response.data.file_name,
-      path: response.data.file_path,
-      content: content,
-    };
+    return response.data;
   }
 
   async createBranch(project: Project, branchName: string, sourceBranch: string): Promise<Branch> {

@@ -36,16 +36,17 @@ export function SelectProject() {
   };
 
   return (
-    <Flex direction='column' gap={'size/spacer/default'} justify='center' align='center'>
+    <Flex direction='column' gap={16} justify='center' align='center'>
       {step === Step.SelectProject && (
         <>
           <Typography variant='h6'>Pick a project</Typography>
           <Dropdown
-            label='Project'
+            label='Pick a project'
             data={userProjects.map((project) => ({
               label: project.name,
               value: project.id,
             }))}
+            showLabel={false}
             value={selectedProjectId}
             onChange={(value) => {
               if (value) {
@@ -53,7 +54,7 @@ export function SelectProject() {
               }
             }}
           />
-          {selectedProjectId && <Button label='Connect' onClick={handleConnect} />}
+          <Button label='Connect' onClick={handleConnect} disabled={!selectedProjectId} />
         </>
       )}
       {step === Step.Confirmation && (

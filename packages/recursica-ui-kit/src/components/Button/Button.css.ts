@@ -27,6 +27,7 @@ const root = style({
     '&[data-size="default"]': {
       paddingBlock: recursica["button/size/default-vertical-padding"],
       paddingInline: recursica["button/size/default-horizontal-padding"],
+      minWidth: recursica["button/size/default-min-width"],
       vars: {
         [innerGap]: recursica["button/size/default-spacing"],
       },
@@ -41,6 +42,7 @@ const root = style({
     '&[data-size="small"]': {
       paddingBlock: recursica["button/size/small-vertical-padding"],
       paddingInline: recursica["button/size/small-horizontal-padding"],
+      minWidth: recursica["button/size/small-min-width"],
       vars: {
         [innerGap]: recursica["button/size/small-spacing"],
       },
@@ -94,7 +96,6 @@ const inner = style({
 
 const label = style({
   ...typographies.button,
-  textTransform: "capitalize",
   display: "block",
   height: "auto",
   overflow: "hidden",

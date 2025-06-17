@@ -11,6 +11,25 @@ export interface RecursicaConfiguration {
    */
   $schema?: string;
   /**
+   * Name of the project for which themes will be generated
+   */
+  project:
+    | string
+    | {
+        /**
+         * Name of the project for which themes will be generated
+         */
+        name?: string;
+        /**
+         * Root path of the project
+         */
+        root?: string;
+        /**
+         * Path to the adapter file
+         */
+        adapter?: string;
+      };
+  /**
    * Object containing icons configuration
    */
   icons?: {
@@ -19,18 +38,20 @@ export interface RecursicaConfiguration {
      */
     output?: string;
     /**
-     * Names of the icons to transform
+     * Object containing icons to include
      */
-    names?: string[];
-    /**
-     * Variants of the icons to transform
-     */
-    variants?: string[];
+    include?: {
+      /**
+       * Names of the icons to transform
+       */
+      names?: string[];
+      /**
+       * Variants of the icons to transform
+       */
+      variants?: string[];
+    };
+    [k: string]: unknown;
   };
-  /**
-   * Name of the project for which themes will be generated
-   */
-  project: string;
   /**
    * Path to the JSON files for the project
    */
