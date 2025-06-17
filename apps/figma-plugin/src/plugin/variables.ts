@@ -1,6 +1,6 @@
 import { GenericVariables } from './exportToJSON';
-import { VariableCastedValue } from '@recursica/common';
-import { rgbToHex } from './utils';
+import { VariableCastedValue } from '@recursica/schemas';
+import { rgbToHex } from '@recursica/common';
 
 export async function processVariableCollection({
   name: collectionName,

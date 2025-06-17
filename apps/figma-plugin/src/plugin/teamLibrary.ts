@@ -1,6 +1,6 @@
 import { exportToJSON, GenericVariables } from './exportToJSON';
-import { VariableCastedValue } from '@recursica/common';
-import { rgbToHex } from './utils/rgbToHex';
+import { VariableCastedValue } from '@recursica/schemas';
+import { rgbToHex } from '@recursica/common';
 
 export async function getTeamLibrary(projectId: string, pluginVersion: string) {
   const uiKit = await exportToJSON();

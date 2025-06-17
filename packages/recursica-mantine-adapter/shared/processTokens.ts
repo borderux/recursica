@@ -1,5 +1,5 @@
 import type { Themes, ThemeTokens, RecursicaConfigOverrides } from "../types";
-import type { Token, CollectionToken } from "@recursica/common";
+import type { Token, CollectionToken } from "@recursica/schemas";
 import {
   isFontFamilyToken,
   isEffectToken,

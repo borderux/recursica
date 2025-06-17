@@ -1,5 +1,5 @@
 import { createContext } from 'react';
-import type { JsonContent } from '@recursica/common';
+import type { RecursicaVariablesSchema, RecursicaIconsSchema } from '@recursica/schemas';
 
 export interface CurrentRepositoryContext {
   platform: 'gitlab' | 'github';
@@ -10,8 +10,8 @@ export interface IFigmaContext {
   repository?: CurrentRepositoryContext & {
     updateAccessToken: (platform: 'gitlab' | 'github', accessToken: string) => void;
   };
-  recursicaVariables?: JsonContent;
-  svgIcons?: Record<string, string>;
+  recursicaVariables?: RecursicaVariablesSchema;
+  svgIcons?: RecursicaIconsSchema;
   loading: boolean;
 }
 

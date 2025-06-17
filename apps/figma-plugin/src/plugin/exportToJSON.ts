@@ -1,5 +1,5 @@
 import { PROJECT_METADATA_VARIABLE_COLLECTION } from './projectMetadataCollection';
-import { toFontWeight } from './utils';
+import { toFontWeight } from '@recursica/common';
 import { processVariableCollection } from './variables';
 
 export interface fileMetadata {
