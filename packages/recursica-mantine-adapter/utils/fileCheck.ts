@@ -15,7 +15,7 @@ export function hasThemeOrKitFiles(directoryPath: string): string | undefined {
       return fileName === "recursica-bundle.json";
     });
 
-    return matchingFiles;
+    return matchingFiles ? path.join(directoryPath, matchingFiles) : undefined;
   } catch (error) {
     console.error(`Error checking directory ${directoryPath}:`, error);
     return undefined;

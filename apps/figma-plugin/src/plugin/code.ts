@@ -1,8 +1,8 @@
-import { exportToJSON } from './exportToJSON';
 import packageInfo from '../../package.json' with { type: 'json' };
 import { decodeProjectMetadataCollection } from './projectMetadataCollection';
 import { getAccessTokens, updateAccessTokens } from './accessTokens';
 import { getTeamLibrary } from './teamLibrary';
+import { exportIcons } from './exportIcons';
 const pluginVersion = packageInfo.version;
 
 figma.showUI(__html__, {
@@ -11,10 +11,13 @@ figma.showUI(__html__, {
   themeColors: true,
 });
 async function main() {
-  const { projectId } = await decodeProjectMetadataCollection(pluginVersion);
-  const localVariables = await exportToJSON();
+  const { projectId, projectType } = await decodeProjectMetadataCollection(pluginVersion);
   getAccessTokens();
-  getTeamLibrary(projectId, pluginVersion, localVariables);
+  if (projectType === 'icons') {
+    exportIcons();
+  } else {
+    getTeamLibrary(projectId, pluginVersion);
+  }
 
   figma.ui.onmessage = async (e) => {
     if (e.type === 'UPDATE_ACCESS_TOKEN') {

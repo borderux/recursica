@@ -5,7 +5,6 @@ import {
   Project,
   Branch,
   FileInfo,
-  FileContent,
   CommitAction,
   PullRequest,
 } from './BaseRepository';
@@ -87,21 +86,18 @@ export class GitHubRepository extends BaseRepository {
       }));
   }
 
-  async getSingleFile(project: Project, filePath: string, branch: string): Promise<FileContent> {
+  async getSingleFile<T = string>(project: Project, filePath: string, branch: string): Promise<T> {
     const response = await this.httpClient.get(
       `${this.baseUrl}/repos/${project.owner.name}/${project.name}/contents/${filePath}`,
       {
         params: { ref: branch },
+        headers: {
+          Accept: 'application/vnd.github.raw+json',
+        },
       }
     );
 
-    const content = window.atob(response.data.content.replace(/\n/g, ''));
-
-    return {
-      name: response.data.name,
-      path: response.data.path,
-      content: content,
-    };
+    return response.data;
   }
 
   async fileExists(project: Project, filePath: string, branch: string): Promise<boolean> {

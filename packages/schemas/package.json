@@ -1,7 +1,7 @@
 {
   "name": "@recursica/schemas",
   "description": "Recursica design system schemas and types",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "private": false,
   "homepage": "https://github.com/borderux/recursica#readme",
   "bugs": {
@@ -28,10 +28,11 @@
     "UX",
     "UI"
   ],
+  "types": "./dist/types/index.d.ts",
   "exports": {
     "./types": "./dist/types/index.d.ts",
     "./types/*": "./dist/types/*.ts",
-    "./*.json": "./dist/*.json"
+    "./json/*": "./dist/*.json"
   },
   "files": [
     "dist"

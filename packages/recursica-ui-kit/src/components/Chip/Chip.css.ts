@@ -6,7 +6,7 @@ const input = style({});
 
 const label = style({
   ...typographies.caption,
-  height: 32,
+  height: 24,
   paddingLeft: recursica["chip/size/vertical-padding"],
   paddingRight: recursica["chip/size/vertical-padding"],
   borderRadius: recursica["chip/size/border-radius"],

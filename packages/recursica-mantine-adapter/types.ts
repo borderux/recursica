@@ -1,3 +1,5 @@
+import type { RecursicaConfiguration } from "@recursica/schemas";
+
 export interface MantineThemeOverride {
   "1-scale"?: string;
   background?: string;
@@ -55,7 +57,9 @@ export interface ExportingProps {
   /** The path to the output file */
   outputPath: string;
   /** The project name */
-  project: string;
+  project: RecursicaConfiguration["project"];
+  /** The root path of the project */
+  rootPath?: string;
 }
 
 export interface ExportingResult {

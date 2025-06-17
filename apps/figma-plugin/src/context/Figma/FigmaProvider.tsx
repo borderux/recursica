@@ -12,18 +12,24 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
     accessToken: '',
   });
   const [recursicaVariables, setRecursicaVariables] = useState<JsonContent>();
+  const [svgIcons, setSvgIcons] = useState<Record<string, string>>();
 
   useLayoutEffect(() => {
     window.onmessage = ({ data: { pluginMessage } }) => {
-      if (pluginMessage?.type === 'GET_ACCESS_TOKEN') {
-        const { platform, accessToken } = pluginMessage.payload;
+      if (!pluginMessage) return;
+      const { type, payload } = pluginMessage;
+      if (type === 'GET_ACCESS_TOKEN') {
+        const { platform, accessToken } = payload;
         setRepository({
           platform,
           accessToken,
         });
       }
-      if (pluginMessage?.type === 'RECURSICA_VARIABLES') {
-        setRecursicaVariables(pluginMessage.payload);
+      if (type === 'RECURSICA_VARIABLES') {
+        setRecursicaVariables(payload);
+      }
+      if (type === 'SVG_ICONS') {
+        setSvgIcons(payload);
       }
     };
     return () => {
@@ -58,6 +64,8 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
       updateAccessToken,
     },
     recursicaVariables,
+    svgIcons,
+    loading: !(recursicaVariables || svgIcons),
   };
 
   return <FigmaContext.Provider value={values}>{children}</FigmaContext.Provider>;
