@@ -1,7 +1,7 @@
 {
   "name": "@recursica/schemas",
   "description": "Recursica design system schemas and types",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "private": false,
   "homepage": "https://github.com/borderux/recursica#readme",
   "bugs": {
