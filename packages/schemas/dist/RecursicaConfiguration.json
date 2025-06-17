@@ -34,6 +34,11 @@
           "type": "string",
           "description": "Root path of the project",
           "examples": ["packages/recursica-ui-kit"]
+        },
+        "adapter": {
+          "type": "string",
+          "description": "Path to the adapter file",
+          "examples": ["packages/recursica-ui-kit/webworker.js"]
         }
       },
       "additionalProperties": false

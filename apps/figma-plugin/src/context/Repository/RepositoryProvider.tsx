@@ -234,12 +234,15 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     if (!repositoryInstance || !selectedProjectId || !selectedProject)
       throw new Error('Failed to run adapter');
 
-    const adapterFilename = 'recursica/adapter.js';
+    let adapterPath = 'adapter.js';
+    if (typeof config.project === 'object' && config.project.adapter) {
+      adapterPath = config.project.adapter;
+    }
     if (!selectedProject || !targetBranch) throw new Error('Failed to create branch');
 
     const adapterFile = await repositoryInstance.getSingleFile(
       selectedProject,
-      adapterFilename,
+      adapterPath,
       targetBranch
     );
     if (!adapterFile) return [];
@@ -267,10 +270,15 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
       const worker = new Worker(
         URL.createObjectURL(new Blob([adapterFile], { type: 'text/javascript' }))
       );
+      let rootPath = '';
+      if (typeof config.project === 'object' && config.project.root) {
+        rootPath = config.project.root;
+      }
       worker.postMessage({
         bundledJson,
         srcPath: 'src',
         project: config.project,
+        rootPath,
         iconsJson,
         overrides: config.overrides,
         iconsConfig: config.icons,

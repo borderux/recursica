@@ -1,22 +1,22 @@
-import path, { dirname } from "path";
-import { fileURLToPath } from "url";
+import path from "path";
 import fs from "fs";
 import { hasThemeOrKitFiles, hasIconsJsonFiles } from "./fileCheck";
 import type { RecursicaConfigIcons, RecursicaConfigOverrides } from "../types";
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import { RecursicaConfiguration } from "@recursica/schemas";
 
 interface RecursicaConfig {
+  rootPath: string;
   iconsJson: string | undefined;
   bundledJson: string | undefined;
   srcPath: string;
-  project: string;
+  project: RecursicaConfiguration["project"];
   iconsConfig: RecursicaConfigIcons | undefined;
   overrides: RecursicaConfigOverrides | undefined;
 }
 
 interface RecursicaConfigContent {
   jsonsPath: string;
-  project: string;
+  project: RecursicaConfiguration["project"];
   overrides: RecursicaConfigOverrides;
   icons: RecursicaConfigIcons | undefined;
 }
@@ -31,7 +31,7 @@ interface RecursicaConfigContent {
  *   - project: Project name
  */
 export function loadConfig(): RecursicaConfig {
-  const rootPath = getRootPath();
+  let rootPath = getRootPath();
   const configPath = path.join(rootPath, "recursica.json");
 
   if (!fs.existsSync(configPath)) {
@@ -42,6 +42,10 @@ export function loadConfig(): RecursicaConfig {
     fs.readFileSync(configPath, "utf-8"),
   ) as RecursicaConfigContent;
 
+  if (typeof config.project === "object" && config.project?.root) {
+    rootPath = path.join(rootPath, config.project.root);
+  }
+
   const bundledJson = hasThemeOrKitFiles(rootPath);
   const iconsJson = hasIconsJsonFiles(rootPath);
 
@@ -51,6 +55,7 @@ export function loadConfig(): RecursicaConfig {
   }
 
   return {
+    rootPath,
     srcPath: path.join(rootPath, "src"),
     project,
     bundledJson,
@@ -64,11 +69,11 @@ export function getRootPath() {
   // recursively search for the package.json file starting from the current working directory
   let currentDir = process.cwd();
   let level = 0;
-  while (!fs.existsSync(path.join(currentDir, "package.json"))) {
+  while (!fs.existsSync(path.join(currentDir, "recursica.json"))) {
     currentDir = path.join(currentDir, "..");
     level++;
     if (level > 10) {
-      throw new Error("Could not find package.json");
+      throw new Error("Could not find recursica.json");
     }
   }
   return currentDir;

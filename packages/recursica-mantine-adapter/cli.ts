@@ -9,8 +9,15 @@ import { processAdapter } from "./shared/common";
  */
 export async function runMain(): Promise<void> {
   try {
-    const { bundledJson, srcPath, project, iconsJson, overrides, iconsConfig } =
-      loadConfig();
+    const {
+      rootPath,
+      bundledJson,
+      srcPath,
+      project,
+      iconsJson,
+      overrides,
+      iconsConfig,
+    } = loadConfig();
 
     if (!bundledJson) throw new Error("bundledJson not found");
 
@@ -25,6 +32,7 @@ export async function runMain(): Promise<void> {
       bundledJsonContent,
       project,
       overrides,
+      rootPath,
       srcPath,
       iconsJsonContent,
       iconsConfig,
@@ -60,6 +68,7 @@ export async function runMain(): Promise<void> {
     ];
 
     // check if src/recursica folder exists, if not create it
+    console.log("srcPath", srcPath);
     const outputPath = srcPath + "/recursica";
     if (!fs.existsSync(outputPath)) {
       fs.mkdirSync(outputPath);

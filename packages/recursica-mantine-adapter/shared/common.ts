@@ -4,18 +4,20 @@ import type {
   RecursicaConfigIcons,
 } from "../types";
 import type { JsonContent } from "@recursica/common";
+import type { RecursicaConfiguration } from "@recursica/schemas";
 import { ProcessTokens } from "./processTokens";
 import { runAdapter } from "../adapter";
 
 export interface ProcessJsonParams {
-  project: string;
+  project: RecursicaConfiguration["project"];
   overrides: RecursicaConfigOverrides | undefined;
 }
 
 export interface RunAdapterParams {
   bundledJsonContent: string;
-  project: string;
+  project: RecursicaConfiguration["project"];
   overrides: RecursicaConfigOverrides | undefined;
+  rootPath: string;
   srcPath: string;
   iconsJsonContent?: string;
   iconsConfig?: RecursicaConfigIcons;
@@ -35,7 +37,12 @@ export function processJsonContent(
   if (!jsonProjectId) {
     throw new Error("project-id is required in the json file");
   }
-  if (jsonProjectId.toLowerCase() !== project.toLowerCase()) {
+  if (
+    jsonProjectId.toLowerCase() !==
+    (typeof project === "string"
+      ? project.toLowerCase()
+      : project.name?.toLowerCase())
+  ) {
     throw new Error("project-id does not match the project in the config file");
   }
 
@@ -71,6 +78,7 @@ export function processIcons(iconsJsonContent: string): Record<string, string> {
  * This function handles the main processing workflow
  */
 export function processAdapter({
+  rootPath,
   bundledJsonContent,
   project,
   overrides,
@@ -97,6 +105,7 @@ export function processAdapter({
 
   // Run the adapter
   const files = runAdapter({
+    rootPath,
     overrides,
     srcPath,
     icons,

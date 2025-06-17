@@ -24,6 +24,10 @@ export interface RecursicaConfiguration {
          * Root path of the project
          */
         root?: string;
+        /**
+         * Path to the adapter file
+         */
+        adapter?: string;
       };
   /**
    * Object containing icons configuration
