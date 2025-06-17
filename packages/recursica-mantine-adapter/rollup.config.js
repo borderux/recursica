@@ -87,7 +87,7 @@ export default defineConfig([
     output: {
       file: "./dist/webworker.js",
       format: "es",
-      sourcemap: true,
+      sourcemap: false,
       exports: "auto",
     },
     plugins,

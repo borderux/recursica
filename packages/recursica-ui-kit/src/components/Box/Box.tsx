@@ -16,11 +16,18 @@ export interface BoxColors {
 
 export interface BoxSpacers {
   /** Gap */
-  gap?: RecursicaSpacersType;
+  gap?: RecursicaSpacersType | number;
   /** Row gap */
-  rowGap?: RecursicaSpacersType;
+  rowGap?: RecursicaSpacersType | number;
   /** Column gap */
-  columnGap?: RecursicaSpacersType;
+  columnGap?: RecursicaSpacersType | number;
+}
+
+export interface BoxSizes {
+  /** Width */
+  w?: number | string;
+  /** Height */
+  h?: number | string;
 }
 
 export interface BoxMargins {
@@ -46,23 +53,23 @@ export interface BoxMargins {
 
 export interface BoxPaddings {
   /** Padding, theme key: RecursicaSpacersType */
-  p?: RecursicaSpacersType;
+  p?: RecursicaSpacersType | number;
   /** PaddingBlock, theme key: RecursicaSpacersType */
-  py?: RecursicaSpacersType;
+  py?: RecursicaSpacersType | number;
   /** PaddingInline, theme key: RecursicaSpacersType */
-  px?: RecursicaSpacersType;
+  px?: RecursicaSpacersType | number;
   /** PaddingTop, theme key: RecursicaSpacersType */
-  pt?: RecursicaSpacersType;
+  pt?: RecursicaSpacersType | number;
   /** PaddingBottom, theme key: RecursicaSpacersType */
-  pb?: RecursicaSpacersType;
+  pb?: RecursicaSpacersType | number;
   /** PaddingInlineStart, theme key: RecursicaSpacersType */
-  ps?: RecursicaSpacersType;
+  ps?: RecursicaSpacersType | number;
   /** PaddingInlineEnd, theme key: RecursicaSpacersType */
-  pe?: RecursicaSpacersType;
+  pe?: RecursicaSpacersType | number;
   /** PaddingLeft, theme key: RecursicaSpacersType */
-  pl?: RecursicaSpacersType;
+  pl?: RecursicaSpacersType | number;
   /** PaddingRight, theme key: RecursicaSpacersType */
-  pr?: RecursicaSpacersType;
+  pr?: RecursicaSpacersType | number;
 }
 
 export type BorderStyle =
@@ -131,7 +138,8 @@ export interface BoxProps
     BoxMargins,
     BoxPaddings,
     BoxBorders,
-    PositionProps {
+    PositionProps,
+    BoxSizes {
   /** Children */
   children?: React.ReactNode;
   style?: React.CSSProperties;

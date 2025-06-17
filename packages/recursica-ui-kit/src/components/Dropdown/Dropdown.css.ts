@@ -13,12 +13,13 @@ const root = style({
 const wrapper = style({});
 
 const input = style({
+  ...typographies["body-2/normal"],
   height: recursica["dropdown/size/input-height"],
   border: "none",
   minWidth: recursica["dropdown/size/min-width"],
   maxWidth: recursica["dropdown/size/max-width"],
   outline: `1px solid ${recursica["dropdown/color/default"]}`,
-  borderRadius: recursica["radio/size/border-radius"],
+  borderRadius: recursica["size/border-radius/default"],
   paddingBlock: recursica["dropdown/size/vertical-padding"],
   paddingInline: recursica["dropdown/size/horizontal-padding"],
   backgroundColor: recursica["dropdown/color/background-input"],

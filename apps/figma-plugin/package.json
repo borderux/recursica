@@ -47,6 +47,7 @@
   },
   "devDependencies": {
     "@recursica/common": "*",
+    "@recursica/schemas": "*",
     "@eslint/js": "9.11.1",
     "@rollup/plugin-commonjs": "28.0.3",
     "@rollup/plugin-json": "6.1.0",

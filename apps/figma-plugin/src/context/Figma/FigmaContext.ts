@@ -11,6 +11,8 @@ export interface IFigmaContext {
     updateAccessToken: (platform: 'gitlab' | 'github', accessToken: string) => void;
   };
   recursicaVariables?: JsonContent;
+  svgIcons?: Record<string, string>;
+  loading: boolean;
 }
 
 export const FigmaContext = createContext<IFigmaContext | null>(null);

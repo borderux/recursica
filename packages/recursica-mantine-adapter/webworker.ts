@@ -6,7 +6,8 @@ self.onmessage = (event) => {
   const params = event.data;
 
   try {
-    const { bundledJson, srcPath, project, overrides, iconsConfig } = params;
+    const { bundledJson, srcPath, project, overrides, iconsConfig, rootPath } =
+      params;
 
     if (!bundledJson) throw new Error("bundledJson not found");
 
@@ -16,6 +17,7 @@ self.onmessage = (event) => {
       project,
       overrides,
       srcPath,
+      rootPath,
       iconsJsonContent: params.iconsJson,
       iconsConfig,
     });

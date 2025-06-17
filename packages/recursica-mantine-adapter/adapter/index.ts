@@ -20,11 +20,13 @@ import { generateSpacersType } from "./generateSpacersType";
 import { generateBorderRadiusType } from "./generateBorderRadiusType";
 import { generateRecursicaThemes } from "./generateRecursicaThemes";
 import { ProcessTokens } from "../shared/processTokens";
+import type { RecursicaConfiguration } from "@recursica/schemas";
 
 interface GenerateThemeFileParams {
   overrides: RecursicaConfigOverrides | undefined;
+  rootPath: string;
   srcPath: string;
-  project: string;
+  project: RecursicaConfiguration["project"];
   icons: Record<string, string>;
   iconsConfig: RecursicaConfigIcons | undefined;
   processTokens: ProcessTokens;
@@ -56,6 +58,7 @@ interface RunAdapterOutput {
   recursicaThemes: ExportingResult;
 }
 export function runAdapter({
+  rootPath,
   overrides,
   srcPath,
   project,
@@ -91,6 +94,7 @@ export function runAdapter({
     exportingProps: {
       outputPath,
       project,
+      rootPath,
     },
   });
 

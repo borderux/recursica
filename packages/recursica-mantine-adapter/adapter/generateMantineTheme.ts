@@ -43,7 +43,7 @@ export function generateMantineTheme({
   tokens,
   breakpoints,
   contractTokens: { tokens: contractTokens, filename: contractFilename },
-  exportingProps: { outputPath, project },
+  exportingProps: { outputPath, project, rootPath },
 }: GenerateMantineThemeParams): GenerateMantineThemeOutput {
   const themeTokens: ThemeTokensObject = {
     colors: {},
@@ -93,7 +93,7 @@ export function generateMantineTheme({
 
   const postCssFileContent = {
     content: postCssContent,
-    path: postCssFilename,
+    path: rootPath ? rootPath + "/" + postCssFilename : postCssFilename,
     filename: postCssFilename,
   };
 
@@ -126,7 +126,9 @@ export const mantineTheme = createTheme({
   }
 })`;
 
-  const filename = `Recursica${project}MantineTheme.ts`;
+  const projectName =
+    typeof project === "string" ? project : (project.name ?? "Recursica");
+  const filename = `Recursica${projectName}MantineTheme.ts`;
   const mantineThemeFileContent = {
     content: fileContent,
     path: outputPath + "/" + filename,

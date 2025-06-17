@@ -56,18 +56,6 @@ export interface FileInfo {
 }
 
 /**
- * Represents complete file information including content
- */
-export interface FileContent {
-  /** File name without path */
-  name: string;
-  /** Full path relative to repository root */
-  path: string;
-  /** Decoded file content as string */
-  content: string;
-}
-
-/**
  * Represents an action to be performed during a commit operation
  */
 export interface CommitAction {
@@ -109,7 +97,11 @@ export abstract class BaseRepository {
   abstract getUserProjects(): Promise<Project[]>;
   abstract getProjectBranches(selectedProject: Project): Promise<Branch[]>;
   abstract getRepositoryFiles(projectId: string, branch: string): Promise<FileInfo[]>;
-  abstract getSingleFile(project: Project, filePath: string, branch: string): Promise<FileContent>;
+  abstract getSingleFile<T = string>(
+    project: Project,
+    filePath: string,
+    branch: string
+  ): Promise<T>;
   abstract createBranch(
     project: Project,
     branchName: string,
