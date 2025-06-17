@@ -3,25 +3,22 @@ import { NavLink } from 'react-router';
 import { useFigma } from '../../hooks/useFigma';
 
 export function Home() {
-  const { recursicaVariables } = useFigma();
+  const { loading } = useFigma();
   return (
     <Flex
       direction={'column'}
       justify={'center'}
       align={'center'}
-      gap={'size/spacer/default'}
-      style={{ height: '100%' }}
+      gap={24}
+      h={'100%'}
+      py={16}
+      px={24}
     >
-      <Flex direction='column' align='center' gap={'size/spacer/0-5x'}>
+      <Flex direction='column' align='center' gap={4}>
         <Logo />
-        <Typography variant='h2'>{recursicaVariables ? 'Recursica' : 'Loading...'}</Typography>
+        <Typography variant='h2'>{loading ? 'Loading...' : 'Recursica'}</Typography>
       </Flex>
-      <Button
-        component={NavLink}
-        loading={!recursicaVariables}
-        to='/recursica/token'
-        label='Get started'
-      />
+      <Button component={NavLink} loading={loading} to='/recursica/token' label='Get started' />
     </Flex>
   );
 }

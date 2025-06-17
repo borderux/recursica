@@ -1,6 +1,9 @@
 {
-  "$schema": "./recursica/schemas/config-schema.json",
-  "project": "Recursica",
+  "$schema": "./packages/schemas/src/RecursicaConfiguration.json",
+  "project": {
+    "name": "Recursica",
+    "root": "packages/recursica-ui-kit"
+  },
   "icons": {
     "include": {
       "names": [

@@ -1,12 +1,9 @@
-import { GenericVariables } from './exportToJSON';
+import { exportToJSON, GenericVariables } from './exportToJSON';
 import { VariableCastedValue } from '@recursica/common';
 import { rgbToHex } from './utils/rgbToHex';
 
-export async function getTeamLibrary(
-  projectId: string,
-  pluginVersion: string,
-  uiKit: GenericVariables
-) {
+export async function getTeamLibrary(projectId: string, pluginVersion: string) {
+  const uiKit = await exportToJSON();
   // Get the team library from the figma api
   const teamLibrary = await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
 
@@ -67,7 +64,6 @@ export async function getTeamLibrary(
       uiKit,
     },
   };
-  console.log(response);
   figma.ui.postMessage(response);
 
   return libraries;

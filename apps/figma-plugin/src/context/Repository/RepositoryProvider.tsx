@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { RepositoryContext } from './RepositoryContext';
 import { useFigma } from '../../hooks/useFigma';
+import type { RecursicaConfiguration } from '@recursica/schemas';
 import {
   BaseRepository,
   GitLabRepository,
@@ -24,13 +25,11 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
   const [filesPublished, setFilesPublished] = useState<boolean>(false);
   const [prLink, setPrLink] = useState<string>('');
 
-  const selectedTargetBranch = useRef<string | undefined>(undefined);
-
   const selectedProject = useMemo(() => {
     return userProjects.find((project) => project.id === selectedProjectId);
   }, [userProjects, selectedProjectId]);
 
-  const { repository, recursicaVariables } = useFigma();
+  const { repository, recursicaVariables, svgIcons } = useFigma();
 
   const variablesJson = useMemo(() => {
     if (recursicaVariables) {
@@ -38,6 +37,13 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     }
     return null;
   }, [recursicaVariables]);
+
+  const svgIconsJson = useMemo(() => {
+    if (svgIcons) {
+      return JSON.stringify(svgIcons, null, 2);
+    }
+    return null;
+  }, [svgIcons]);
 
   // Create repository instance based on platform
   const repositoryInstance = useMemo((): BaseRepository | null => {
@@ -95,42 +101,82 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
   };
 
   const publishFiles = async (): Promise<boolean> => {
-    if (!repositoryInstance || !selectedProjectId || !userInfo || !variablesJson) return false;
+    if (!selectedProject) throw new Error('Failed to get selected project');
+    if (!repositoryInstance) throw new Error('Failed to get repository instance');
 
-    const adapterFiles = await runAdapter();
+    const targetBranch = await createBranch(selectedProject);
+    const config = await getConfig(targetBranch);
+    const adapterFiles = await runAdapter(targetBranch, config);
+    const commitResult = await commitFiles(targetBranch, adapterFiles);
+
+    return commitResult;
+  };
+
+  const getConfig = async (targetBranch: string): Promise<RecursicaConfiguration> => {
+    if (!repositoryInstance) throw new Error('Failed to get repository instance');
+    if (!selectedProject) throw new Error('Failed to get selected project');
+    const configFile = await repositoryInstance.getSingleFile<RecursicaConfiguration>(
+      selectedProject,
+      'recursica.json',
+      targetBranch
+    );
+    if (!configFile) throw new Error('Failed to get config file');
+    return configFile;
+  };
+
+  const commitFiles = async (
+    targetBranch: string,
+    adapterFiles: AdapterFile[]
+  ): Promise<boolean> => {
+    if (!repositoryInstance || !selectedProjectId || !userInfo)
+      throw new Error('Failed to commit files');
 
     try {
-      if (!selectedTargetBranch.current) throw new Error('Failed to create branch');
-      const targetBranch = selectedTargetBranch.current;
-
       if (!selectedProject) throw new Error('Failed to get selected project');
       const variablesFilename = 'recursica-bundle.json';
+      const svgIconsFilename = 'recursica-icons.json';
 
-      const exists = await repositoryInstance.fileExists(
-        selectedProject,
-        variablesFilename,
-        targetBranch
-      );
-      const actions: CommitAction[] = [
-        {
-          action: exists ? 'update' : 'create',
-          file_path: variablesFilename,
-          content: variablesJson,
-        },
-      ];
-
-      for (const file of adapterFiles) {
-        if (!selectedProject) return false;
+      const actions: CommitAction[] = [];
+      if (variablesJson) {
         const exists = await repositoryInstance.fileExists(
           selectedProject,
-          file.path,
+          variablesFilename,
           targetBranch
         );
         actions.push({
           action: exists ? 'update' : 'create',
-          file_path: file.path,
-          content: file.content,
+          file_path: variablesFilename,
+          content: variablesJson,
         });
+      }
+
+      if (svgIconsJson) {
+        const exists = await repositoryInstance.fileExists(
+          selectedProject,
+          svgIconsFilename,
+          targetBranch
+        );
+        actions.push({
+          action: exists ? 'update' : 'create',
+          file_path: svgIconsFilename,
+          content: svgIconsJson,
+        });
+      }
+
+      if (adapterFiles.length > 0) {
+        for (const file of adapterFiles) {
+          if (!selectedProject) return false;
+          const exists = await repositoryInstance.fileExists(
+            selectedProject,
+            file.path,
+            targetBranch
+          );
+          actions.push({
+            action: exists ? 'update' : 'create',
+            file_path: file.path,
+            content: file.content,
+          });
+        }
       }
 
       await repositoryInstance.commitFiles(
@@ -178,42 +224,56 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
       `recursica-${userInfo?.username}-${Date.now()}`,
       project.defaultBranch
     );
-    selectedTargetBranch.current = branch.name;
     return branch.name;
   };
 
-  const runAdapter = async (): Promise<AdapterFile[]> => {
+  const runAdapter = async (
+    targetBranch: string,
+    config: RecursicaConfiguration
+  ): Promise<AdapterFile[]> => {
     if (!repositoryInstance || !selectedProjectId || !selectedProject)
       throw new Error('Failed to run adapter');
 
-    const targetBranch = await createBranch(selectedProject);
     const adapterFilename = 'recursica/adapter.js';
     if (!selectedProject || !targetBranch) throw new Error('Failed to create branch');
 
-    const fileContent = await repositoryInstance.getSingleFile(
+    const adapterFile = await repositoryInstance.getSingleFile(
       selectedProject,
       adapterFilename,
       targetBranch
     );
+    if (!adapterFile) return [];
 
-    const configFile = await repositoryInstance.getSingleFile(
-      selectedProject,
-      'recursica.json',
-      targetBranch
-    );
+    let iconsJson = svgIconsJson;
+    if (!iconsJson) {
+      const iconsFileRaw = await repositoryInstance.getSingleFile(
+        selectedProject,
+        'recursica-icons.json',
+        targetBranch
+      );
+      iconsJson = JSON.stringify(iconsFileRaw);
+    }
 
+    let bundledJson = variablesJson;
+    if (!bundledJson) {
+      const bundledFileRaw = await repositoryInstance.getSingleFile(
+        selectedProject,
+        'recursica-bundle.json',
+        targetBranch
+      );
+      bundledJson = JSON.stringify(bundledFileRaw);
+    }
     return new Promise<AdapterFile[]>((resolve, reject) => {
-      const config = JSON.parse(configFile.content);
       const worker = new Worker(
-        URL.createObjectURL(new Blob([fileContent.content], { type: 'text/javascript' }))
+        URL.createObjectURL(new Blob([adapterFile], { type: 'text/javascript' }))
       );
       worker.postMessage({
-        bundledJson: variablesJson,
+        bundledJson,
         srcPath: 'src',
         project: config.project,
-        iconsJson: '',
+        iconsJson,
         overrides: config.overrides,
-        iconsConfig: config.iconsConfig,
+        iconsConfig: config.icons,
       });
 
       // Listener for messages coming FROM the worker

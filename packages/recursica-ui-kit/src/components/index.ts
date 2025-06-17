@@ -6,7 +6,7 @@ export * from "./Chip/Chip";
 export * from "./Flex/Flex";
 export * from "./Dropdown";
 export * from "./Tabs/Tabs";
-export * from "./TextInput/TextInput";
+export * from "./Textfield/Textfield";
 export * from "./ThemeProvider/ThemeProvider";
 export * from "./Title/Title";
 export * from "./Accordion/Accordion";

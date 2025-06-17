@@ -1,4 +1,4 @@
-import { Flex, Title, Button, Typography, TextInput, Dropdown } from '@recursica/ui-kit';
+import { Flex, Title, Button, Typography, Dropdown, Textfield } from '@recursica/ui-kit';
 import { useFigma } from '../../hooks/useFigma';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
@@ -16,7 +16,7 @@ export function RepositoryConnection() {
     setInputAccessToken(accessToken);
   }, [accessToken]);
 
-  const handleAccessTokenChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAccessTokenChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputAccessToken(event.target.value);
   };
 
@@ -42,7 +42,7 @@ export function RepositoryConnection() {
             value={platform}
             onChange={handlePlatformChange}
           />
-          <TextInput
+          <Textfield
             label='Access token'
             value={inputAccessToken}
             onChange={handleAccessTokenChange}
