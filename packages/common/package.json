@@ -8,7 +8,6 @@
     "url": "https://github.com/borderux/recursica/issues"
   },
   "author": "hi@borderux.com",
-  "packageManager": "npm@10.9.0",
   "engines": {
     "node": ">=18"
   },
