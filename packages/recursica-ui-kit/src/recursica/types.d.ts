@@ -16,6 +16,6 @@ export interface ThemeVariant {
 }
 
 // TypeScript will automatically infer this as a union of literal types
-export type ThemeType = (typeof THEMES)[keyof typeof THEMES];
+export type ThemeType = typeof THEMES[keyof typeof THEMES];
 
 export type ThemeDictionary = Record<ThemeType, ThemeVariant>;

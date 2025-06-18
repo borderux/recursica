@@ -1,2 +1,3 @@
-export * from "./rgbToHex";
-export * from "./toFontWeight";
+export * from "./parsers";
+export * from "./detectors";
+export * from "./strings";

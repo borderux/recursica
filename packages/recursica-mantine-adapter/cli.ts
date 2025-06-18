@@ -49,6 +49,7 @@ export async function runMain(): Promise<void> {
       spacersType,
       borderRadiusType,
       recursicaThemes,
+      prettierignore,
     } = files;
 
     const filesToWrite: ExportingResult[] = [
@@ -65,10 +66,10 @@ export async function runMain(): Promise<void> {
       spacersType,
       borderRadiusType,
       recursicaThemes,
+      prettierignore,
     ];
 
     // check if src/recursica folder exists, if not create it
-    console.log("srcPath", srcPath);
     const outputPath = srcPath + "/recursica";
     if (!fs.existsSync(outputPath)) {
       fs.mkdirSync(outputPath);

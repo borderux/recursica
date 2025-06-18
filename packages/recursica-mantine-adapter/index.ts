@@ -17,8 +17,8 @@ export {
   isFontFamilyToken,
   isEffectToken,
   isColorOrFloatToken,
-} from "./utils/helpers";
-export { capitalize } from "./utils/capitalize";
+  capitalize,
+} from "@recursica/common";
 export { ProcessTokens } from "./shared/processTokens";
 export { processJsonContent } from "./shared/common";
 

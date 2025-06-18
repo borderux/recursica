@@ -25,10 +25,5 @@
     "typeRoots": ["../../node_modules/@types", "../../node_modules"],
     "types": ["react", "node", "@figma/plugin-typings", "@recursica/schemas"]
   },
-  "include": [
-    "src",
-    "../../packages/ui-kit/src/components/Logo",
-    "../../packages/recursica-common/src/rgbToHex.ts",
-    "../../packages/recursica-common/src/toFontWeight.ts"
-  ]
+  "include": ["src"]
 }
