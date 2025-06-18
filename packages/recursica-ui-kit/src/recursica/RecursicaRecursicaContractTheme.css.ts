@@ -553,5 +553,5 @@ export const themeVars = createThemeContract({
   "typography/overline-line-height": null,
   "typography/overline-letter-spacing": null,
   "typography/overline-text-case": null,
-  "typography/overline-text-decoration": null,
+  "typography/overline-text-decoration": null
 });

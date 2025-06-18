@@ -3,7 +3,7 @@ import type {
   EffectToken,
   FontFamilyToken,
   CollectionToken,
-} from "@recursica/common";
+} from "@recursica/schemas";
 
 /**
  * Type guard function to check if a token is a FontFamilyToken

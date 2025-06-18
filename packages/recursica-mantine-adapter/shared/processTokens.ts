@@ -1,11 +1,11 @@
 import type { Themes, ThemeTokens, RecursicaConfigOverrides } from "../types";
-import type { Token, CollectionToken } from "@recursica/common";
+import type { Token, CollectionToken } from "@recursica/schemas";
 import {
   isFontFamilyToken,
   isEffectToken,
   isColorOrFloatToken,
-} from "../utils/helpers";
-import { capitalize } from "../utils/capitalize";
+  capitalize,
+} from "@recursica/common";
 
 export interface ProcessTokensParams {
   tokens: ThemeTokens;

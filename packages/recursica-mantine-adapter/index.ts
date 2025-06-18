@@ -11,17 +11,14 @@ export type {
   JsonContentIcons,
 } from "./types";
 
-// Export types from shared-interfaces
-export type { Token, CollectionToken, JsonContent } from "@recursica/common";
-
 // Export utility functions
 export { loadConfig } from "./utils/loadConfig";
 export {
   isFontFamilyToken,
   isEffectToken,
   isColorOrFloatToken,
-} from "./utils/helpers";
-export { capitalize } from "./utils/capitalize";
+  capitalize,
+} from "@recursica/common";
 export { ProcessTokens } from "./shared/processTokens";
 export { processJsonContent } from "./shared/common";
 

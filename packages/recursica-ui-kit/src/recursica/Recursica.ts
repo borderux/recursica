@@ -9,11 +9,11 @@ For more information about Recursica, go to https://recursica.com
 */
 
 import { RecursicaRecursicaTokens } from './RecursicaRecursicaTokens';
-import { themeVars } from "./RecursicaRecursicaContractTheme.css";
-import { uiKit } from "./RecursicaRecursicaUiKit";
+import { themeVars } from './RecursicaRecursicaContractTheme.css';
+import { uiKit } from './RecursicaRecursicaUiKit';
 
 export const recursica = {
   ...uiKit,
   ...themeVars,
   ...RecursicaRecursicaTokens,
-};
+}

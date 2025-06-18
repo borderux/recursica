@@ -1,6 +1,5 @@
-import { exportToJSON, GenericVariables } from './exportToJSON';
-import { VariableCastedValue } from '@recursica/common';
-import { rgbToHex } from './utils/rgbToHex';
+import { exportToJSON } from './exportToJSON';
+import { GenericVariables, processRemoteVariableCollection, combineObjects } from './shared';
 
 export async function getTeamLibrary(projectId: string, pluginVersion: string) {
   const uiKit = await exportToJSON();
@@ -64,6 +63,7 @@ export async function getTeamLibrary(projectId: string, pluginVersion: string) {
       uiKit,
     },
   };
+  console.log(response);
   figma.ui.postMessage(response);
 
   return libraries;
@@ -87,104 +87,12 @@ async function decodeFileVariables(
   ]);
 
   // Combine all variables
-  const variables: GenericVariables = {};
-  variableResults.forEach((variableData) => {
-    Object.assign(variables, variableData);
-  });
+  const variables = combineObjects(variableResults);
 
   return [variables, metadataVariables];
 }
 
 // Decode the remote variables
 export async function decodeRemoteVariables(collection: string) {
-  const variables: GenericVariables = {};
-  const tokenVariables = await figma.teamLibrary.getVariablesInLibraryCollectionAsync(collection);
-
-  // Process all variables in parallel instead of sequentially
-  const variablePromises = tokenVariables.map(async (variable) => {
-    const {
-      valuesByMode,
-      name: variableName,
-      resolvedType,
-      description,
-      variableCollectionId,
-    } = await figma.variables.importVariableByKeyAsync(variable.key);
-
-    const parentVariableCollection =
-      await figma.variables.getVariableCollectionByIdAsync(variableCollectionId);
-
-    if (!parentVariableCollection) return {};
-
-    const { modes, name: collectionName } = parentVariableCollection;
-    const variableEntries: GenericVariables = {};
-
-    // Process all modes in parallel
-    const modePromises = Object.entries(valuesByMode).map(async ([modeId, rawValue]) => {
-      const mode = modes.find((md) => md.modeId === modeId);
-      if (!mode) return null;
-
-      let value;
-      if (typeof rawValue === 'object') {
-        if ((rawValue as VariableAlias).type) {
-          const [referencedVariable, referencedCollection] = await Promise.all([
-            figma.variables.getVariableByIdAsync((rawValue as VariableAlias).id),
-            figma.variables
-              .getVariableByIdAsync((rawValue as VariableAlias).id)
-              .then((variable) =>
-                variable
-                  ? figma.variables.getVariableCollectionByIdAsync(variable.variableCollectionId)
-                  : null
-              ),
-          ]);
-
-          if (referencedVariable && referencedCollection) {
-            value = {
-              collection: referencedCollection.name,
-              name: referencedVariable.name,
-            };
-          }
-        } else if (resolvedType === 'COLOR') {
-          value = rgbToHex(rawValue as RGBA);
-        }
-      } else {
-        value = rawValue as VariableCastedValue;
-      }
-
-      if (value !== undefined) {
-        const idValue = `[${collectionName}][${mode.name}][${variableName}]`;
-        const safeParsedIdValue = idValue.split(' ').join('-');
-        return {
-          key: safeParsedIdValue,
-          data: {
-            collection: collectionName,
-            mode: mode.name,
-            name: variableName,
-            type: resolvedType.toLowerCase(),
-            description: description,
-            value,
-          },
-        };
-      }
-      return null;
-    });
-
-    const modeResults = await Promise.all(modePromises);
-    modeResults.forEach((result) => {
-      if (result) {
-        variableEntries[result.key] = result.data;
-      }
-    });
-
-    return variableEntries;
-  });
-
-  // Wait for all variables to be processed
-  const variableResults = await Promise.all(variablePromises);
-
-  // Combine all results
-  variableResults.forEach((variableData) => {
-    Object.assign(variables, variableData);
-  });
-
-  return variables;
+  return await processRemoteVariableCollection(collection);
 }

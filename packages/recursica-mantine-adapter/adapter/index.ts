@@ -21,6 +21,7 @@ import { generateBorderRadiusType } from "./generateBorderRadiusType";
 import { generateRecursicaThemes } from "./generateRecursicaThemes";
 import { ProcessTokens } from "../shared/processTokens";
 import type { RecursicaConfiguration } from "@recursica/schemas";
+import { generatePrettierignore } from "./generatePrettierignore";
 
 interface GenerateThemeFileParams {
   overrides: RecursicaConfigOverrides | undefined;
@@ -56,6 +57,7 @@ interface RunAdapterOutput {
   borderRadiusType: ExportingResult;
   iconsObject: GenerateIconsOutput | undefined;
   recursicaThemes: ExportingResult;
+  prettierignore: ExportingResult;
 }
 export function runAdapter({
   rootPath,
@@ -126,6 +128,8 @@ export function runAdapter({
     themes: processTokens.themes,
   });
 
+  const prettierignore = generatePrettierignore(rootPath);
+
   const fileContents = {
     recursicaTokens,
     vanillaExtractThemes,
@@ -137,6 +141,7 @@ export function runAdapter({
     borderRadiusType,
     iconsObject,
     recursicaThemes,
+    prettierignore,
   };
   return fileContents;
 }
