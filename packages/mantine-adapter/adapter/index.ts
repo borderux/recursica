@@ -128,7 +128,7 @@ export function runAdapter({
     themes: processTokens.themes,
   });
 
-  const prettierignore = generatePrettierignore(rootPath);
+  const prettierignore = generatePrettierignore();
 
   const fileContents = {
     recursicaTokens,
