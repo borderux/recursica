@@ -1,0 +1,296 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema#",
+  "$id": "https://recursica.com/schemas/variables.json",
+  "title": "Recursica Variables Schema",
+  "description": "Schema for Recursica design tokens and variables",
+  "type": "object",
+  "properties": {
+    "projectId": {
+      "type": "string",
+      "description": "The project ID"
+    },
+    "pluginVersion": {
+      "type": "string",
+      "description": "The plugin version"
+    },
+    "tokens": {
+      "type": "object",
+      "description": "Nested record structure containing collections of tokens, organized by collection name and token name",
+      "additionalProperties": {
+        "$ref": "#/$defs/CollectionToken"
+      }
+    },
+    "themes": {
+      "type": "object",
+      "description": "Themes containing collections of tokens",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "#/$defs/CollectionToken"
+        }
+      }
+    },
+    "uiKit": {
+      "type": "object",
+      "description": "UI Kit components",
+      "additionalProperties": {
+        "$ref": "#/$defs/CollectionToken"
+      }
+    }
+  },
+  "required": ["projectId", "pluginVersion", "tokens", "themes", "uiKit"],
+  "$defs": {
+    "Effect": {
+      "type": "object",
+      "description": "Represents an effect token (like shadows) with detailed effect properties",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The type of effect (e.g., 'drop-shadow', 'inner-shadow')"
+        },
+        "color": {
+          "type": "object",
+          "description": "The color of the effect in RGBA format",
+          "properties": {
+            "r": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 255,
+              "description": "Red component (0-255)"
+            },
+            "g": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 255,
+              "description": "Green component (0-255)"
+            },
+            "b": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 255,
+              "description": "Blue component (0-255)"
+            },
+            "a": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Alpha/opacity component (0-1)"
+            }
+          },
+          "required": ["r", "g", "b", "a"],
+          "additionalProperties": false
+        },
+        "offset": {
+          "type": "object",
+          "description": "The offset of the effect",
+          "properties": {
+            "x": {
+              "type": "number",
+              "description": "Horizontal offset"
+            },
+            "y": {
+              "type": "number",
+              "description": "Vertical offset"
+            }
+          },
+          "required": ["x", "y"],
+          "additionalProperties": false
+        },
+        "radius": {
+          "type": "number",
+          "description": "The blur radius of the effect"
+        },
+        "spread": {
+          "type": "number",
+          "description": "The spread radius of the effect"
+        }
+      },
+      "required": ["type", "color", "offset", "radius", "spread"],
+      "additionalProperties": false
+    },
+    "EffectToken": {
+      "type": "object",
+      "properties": {
+        "variableName": {
+          "type": "string",
+          "description": "The variable name used to reference this effect token"
+        },
+        "effects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Effect"
+          }
+        }
+      },
+      "required": ["variableName", "effects"],
+      "additionalProperties": false
+    },
+    "LineHeight": {
+      "type": "object",
+      "description": "Line height configuration",
+      "properties": {
+        "value": {
+          "type": "number"
+        },
+        "unit": {
+          "type": "string"
+        }
+      },
+      "required": ["value", "unit"],
+      "additionalProperties": false
+    },
+    "LetterSpacing": {
+      "type": "object",
+      "description": "Letter spacing configuration",
+      "properties": {
+        "value": {
+          "type": "number"
+        },
+        "unit": {
+          "type": "string"
+        }
+      },
+      "required": ["value", "unit"],
+      "additionalProperties": false
+    },
+    "FontFamilyToken": {
+      "type": "object",
+      "description": "Represents a font family token with detailed typography properties",
+      "properties": {
+        "variableName": {
+          "type": "string",
+          "description": "The variable name used to reference this font token"
+        },
+        "fontFamily": {
+          "type": "string",
+          "description": "The actual font family name"
+        },
+        "fontSize": {
+          "type": "number",
+          "description": "The font size in pixels"
+        },
+        "fontWeight": {
+          "type": "object",
+          "description": "The font weight configuration",
+          "properties": {
+            "value": {
+              "type": "number",
+              "description": "The numeric weight value"
+            },
+            "alias": {
+              "type": "string",
+              "description": "The weight alias (e.g., 'regular', 'bold')"
+            }
+          },
+          "required": ["value", "alias"],
+          "additionalProperties": false
+        },
+        "lineHeight": {
+          "$ref": "#/$defs/LineHeight",
+          "description": "The line height configuration"
+        },
+        "letterSpacing": {
+          "$ref": "#/$defs/LetterSpacing",
+          "description": "The letter spacing configuration"
+        },
+        "textCase": {
+          "type": "string",
+          "description": "The text case transformation (e.g., 'uppercase', 'lowercase')"
+        },
+        "textDecoration": {
+          "type": "string",
+          "description": "The text decoration (e.g., 'none', 'underline')"
+        }
+      },
+      "required": [
+        "variableName",
+        "fontFamily",
+        "fontSize",
+        "fontWeight",
+        "lineHeight",
+        "letterSpacing",
+        "textCase",
+        "textDecoration"
+      ],
+      "additionalProperties": false
+    },
+    "VariableCastedValue": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number"
+        }
+      ],
+      "description": "Represents a variable casted value"
+    },
+    "VariableReferenceValue": {
+      "type": "object",
+      "description": "Represents a variable reference value",
+      "properties": {
+        "collection": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": ["collection", "name"],
+      "additionalProperties": false
+    },
+    "Token": {
+      "type": "object",
+      "description": "Represents a basic design token with common properties",
+      "properties": {
+        "collection": {
+          "type": "string",
+          "description": "The collection this token belongs to"
+        },
+        "mode": {
+          "type": "string",
+          "description": "The mode or variant of the token (e.g., light, dark)"
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of token (e.g., color, spacing, typography)"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the token"
+        },
+        "value": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/VariableCastedValue"
+            },
+            {
+              "$ref": "#/$defs/VariableReferenceValue"
+            }
+          ],
+          "description": "The value of the token, which can be either a direct value or a reference to another token"
+        }
+      },
+      "required": ["collection", "mode", "type", "name", "value"],
+      "additionalProperties": false
+    },
+    "CollectionToken": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Token"
+        },
+        {
+          "$ref": "#/$defs/FontFamilyToken"
+        },
+        {
+          "$ref": "#/$defs/EffectToken"
+        }
+      ],
+      "description": "Union type representing any type of collection token"
+    }
+  },
+  "additionalProperties": false
+}

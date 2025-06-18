@@ -23,7 +23,7 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "typeRoots": ["../../node_modules/@types", "../../node_modules"],
-    "types": ["react", "node", "@figma/plugin-typings", "@recursica/common"]
+    "types": ["react", "node", "@figma/plugin-typings", "@recursica/schemas"]
   },
-  "include": ["src", "../../packages/ui-kit/src/components/Logo"]
+  "include": ["src"]
 }

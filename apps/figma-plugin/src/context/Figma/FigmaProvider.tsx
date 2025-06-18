@@ -1,6 +1,6 @@
 import { useLayoutEffect, useState } from 'react';
 import { FigmaContext, CurrentRepositoryContext } from './FigmaContext';
-import type { JsonContent } from '@recursica/common';
+import type { RecursicaVariablesSchema } from '@recursica/schemas';
 
 export interface TokensProvidersProps {
   children: React.ReactNode;
@@ -11,7 +11,7 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
     platform: 'gitlab',
     accessToken: '',
   });
-  const [recursicaVariables, setRecursicaVariables] = useState<JsonContent>();
+  const [recursicaVariables, setRecursicaVariables] = useState<RecursicaVariablesSchema>();
   const [svgIcons, setSvgIcons] = useState<Record<string, string>>();
 
   useLayoutEffect(() => {

@@ -3,7 +3,7 @@ import type {
   RecursicaConfigOverrides,
   RecursicaConfigIcons,
 } from "../types";
-import type { JsonContent } from "@recursica/common";
+import type { RecursicaVariablesSchema } from "@recursica/schemas";
 import type { RecursicaConfiguration } from "@recursica/schemas";
 import { ProcessTokens } from "./processTokens";
 import { runAdapter } from "../adapter";
@@ -31,7 +31,7 @@ export function processJsonContent(
   jsonFileContent: string,
   { project, overrides }: ProcessJsonParams,
 ): ProcessTokens {
-  const jsonContent: JsonContent = JSON.parse(jsonFileContent) as JsonContent;
+  const jsonContent: RecursicaVariablesSchema = JSON.parse(jsonFileContent);
 
   const jsonProjectId = jsonContent.projectId;
   if (!jsonProjectId) {

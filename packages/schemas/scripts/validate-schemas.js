@@ -1,10 +1,12 @@
 /* eslint-disable no-console */
-const Ajv = require("ajv");
+const Ajv2020 = require("ajv/dist/2020");
 const fs = require("fs");
 const path = require("path");
 const glob = require("glob");
 
-const ajv = new Ajv();
+const ajv = new Ajv2020();
+const draft7MetaSchema = require("ajv/dist/refs/json-schema-draft-07.json");
+ajv.addMetaSchema(draft7MetaSchema);
 const srcDir = path.resolve(__dirname, "../src");
 
 // Find all files ending with .json in the src directory and its subdirectories

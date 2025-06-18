@@ -330,6 +330,7 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
           recursicaObject,
           colorsType,
           iconsObject,
+          prettierignore,
         } = event.data;
         const newAdapterFiles: AdapterFile[] = [];
 
@@ -337,6 +338,13 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
           newAdapterFiles.push({
             path: recursicaTokens.path,
             content: recursicaTokens.content,
+          });
+        }
+
+        if (prettierignore) {
+          newAdapterFiles.push({
+            path: prettierignore.path,
+            content: prettierignore.content,
           });
         }
 

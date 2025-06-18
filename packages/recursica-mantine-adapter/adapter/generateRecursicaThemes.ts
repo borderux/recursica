@@ -1,5 +1,5 @@
 import type { ExportingResult, Themes } from "../types";
-import { capitalize } from "../utils/capitalize";
+import { capitalize } from "@recursica/common";
 
 interface GenerateRecursicaThemesParams {
   outputPath: string;
