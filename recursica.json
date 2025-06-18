@@ -2,8 +2,8 @@
   "$schema": "./packages/schemas/src/RecursicaConfiguration.json",
   "project": {
     "name": "Recursica",
-    "root": "packages/recursica-ui-kit",
-    "adapter": "packages/recursica-ui-kit/webworker.js"
+    "root": "packages/ui-kit",
+    "adapter": "packages/ui-kit/webworker.js"
   },
   "icons": {
     "include": {

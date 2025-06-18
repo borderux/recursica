@@ -1,8 +1,17 @@
 {
   "name": "@recursica/mantine-adapter",
-  "version": "1.0.0",
-  "private": true,
   "description": "Recursica Design Token Adapter - Convert design tokens to code",
+  "version": "0.9.0",
+  "private": false,
+  "homepage": "https://github.com/borderux/recursica#readme",
+  "author": "hi@borderux.com",
+  "bugs": {
+    "url": "https://github.com/borderux/recursica/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/borderux/recursica.git"
+  },
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -26,10 +35,10 @@
     "README.md"
   ],
   "dependencies": {
+    "@recursica/common": "*",
     "typescript": "^5.0.0"
   },
   "devDependencies": {
-    "@recursica/common": "*",
     "@recursica/schemas": "*",
     "@rollup/plugin-commonjs": "^28.0.3",
     "@rollup/plugin-json": "^6.1.0",

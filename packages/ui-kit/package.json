@@ -1,9 +1,18 @@
 {
   "name": "@recursica/ui-kit",
-  "version": "0.0.0",
-  "private": true,
-  "type": "module",
   "description": "Reusable UI components for Recursica applications",
+  "private": false,
+  "homepage": "https://github.com/borderux/recursica#readme",
+  "author": "hi@borderux.com",
+  "bugs": {
+    "url": "https://github.com/borderux/recursica/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/borderux/recursica.git"
+  },
+  "version": "0.0.1",
+  "type": "module",
   "main": "./dist/ui-kit.cjs",
   "module": "./dist/ui-kit.js",
   "types": "./dist/index.d.ts",
