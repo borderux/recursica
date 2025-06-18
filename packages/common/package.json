@@ -2,7 +2,7 @@
   "name": "@recursica/common",
   "description": "Shared TypeScript interfaces and types for Recursica projects",
   "version": "1.0.1",
-  "private": true,
+  "private": false,
   "homepage": "https://github.com/borderux/recursica#readme",
   "bugs": {
     "url": "https://github.com/borderux/recursica/issues"
