@@ -1,7 +1,7 @@
 {
   "name": "@recursica/mantine-adapter",
   "description": "Recursica Design Token Adapter - Convert design tokens to code",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "private": false,
   "homepage": "https://github.com/borderux/recursica#readme",
   "author": "hi@borderux.com",
