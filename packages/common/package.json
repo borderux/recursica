@@ -45,9 +45,10 @@
   },
   "devDependencies": {
     "@figma/plugin-typings": "1.113.0",
-    "@humanfs/node": "^0.16.6",
+    "@humanfs/node": "0.16.6",
     "@repo/eslint-config": "*",
-    "eslint": "^9.28.0",
+    "@types/crypto-js": "4.2.0",
+    "eslint": "9.28.0",
     "typescript": "5.8.2"
   },
   "license": "MIT"

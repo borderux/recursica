@@ -18,7 +18,7 @@ export function Home() {
         <Logo />
         <Typography variant='h2'>{loading ? 'Loading...' : 'Recursica'}</Typography>
       </Flex>
-      <Button component={NavLink} loading={loading} to='/recursica/token' label='Get started' />
+      <Button component={NavLink} loading={loading} to='/auth' label='Get started' />
     </Flex>
   );
 }
