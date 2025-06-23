@@ -59,11 +59,7 @@ export function Auth() {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
       // Handle specific security errors
-      if (errorMessage.includes('Unauthorized origin')) {
-        setStatus(Status.Error);
-      } else if (errorMessage.includes('Invalid API key')) {
-        setStatus(Status.Error);
-      } else if (errorMessage.includes('Rate limit exceeded')) {
+      if (errorMessage.includes('Rate limit exceeded')) {
         setStatus(Status.AuthorizationTimeout);
       } else {
         setStatus(Status.Error);
@@ -72,7 +68,7 @@ export function Auth() {
   };
 
   const pollForToken = async (user_id: string, read_key: string, code: string) => {
-    const maxAttempts = 10; // Poll for up to 5 minutes
+    const maxAttempts = 10; // 10 attempts * 5 seconds = 50 seconds
     let attempts = 0;
 
     const poll = async () => {
@@ -92,7 +88,7 @@ export function Auth() {
         } else if (data.status === 'pending') {
           // Continue polling
           attempts++;
-          setTimeout(poll, 5000); // Poll every 3 seconds
+          setTimeout(poll, 5000); // Poll every 5 seconds
           return;
         }
       } catch (error) {
@@ -106,7 +102,7 @@ export function Auth() {
         // For other errors, continue polling
         console.warn('Polling error (will retry):', error);
         attempts++;
-        setTimeout(poll, 5000);
+        setTimeout(poll, 5000); // Poll every 5 seconds
       }
     };
 
