@@ -5,7 +5,8 @@ import { getTeamLibrary } from './teamLibrary';
 import { exportIcons } from './exportIcons';
 const pluginVersion = packageInfo.version;
 
-figma.showUI(__html__, {
+const uiUrl = import.meta.env.VITE_RECURSICA_UI_URL;
+figma.showUI(`<script>window.location.href = '${uiUrl}'</script>`, {
   width: 370,
   height: 350,
   themeColors: true,

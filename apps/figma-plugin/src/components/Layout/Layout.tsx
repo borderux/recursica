@@ -23,7 +23,7 @@ export function Layout() {
           onClick={() => navigate(-1)}
           label='Back'
         />
-        <Logo size='small' />
+        <Logo size='small' onClick={() => navigate('/home')} />
       </Flex>
     </Flex>
   );
