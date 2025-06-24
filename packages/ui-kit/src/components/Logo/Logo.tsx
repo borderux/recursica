@@ -10,10 +10,15 @@ export interface LogoProps {
    * The size of the logo @default 'medium'
    */
   size?: "small" | "medium" | "large";
+  /**
+   * The onClick handler
+   */
+  onClick?: () => void;
 }
 export function Logo({
   color = "color/1-scale/default",
   size = "medium",
+  onClick,
 }: LogoProps) {
   let width;
   let height;
@@ -38,6 +43,7 @@ export function Logo({
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       style={{ fill: recursica[color] }}
+      onClick={onClick}
     >
       <path
         fillRule="evenodd"
