@@ -615,8 +615,8 @@ export type RecursicaColors =
 	"list/color/selected-surface" |
 	"list/color/text-surface" |
 	"list/color/icon-surface" |
-	"modal/color/background" |
 	"form/icon/color/leading-icon-disabled" |
+	"modal/color/background" |
 	"modal/color/title" |
 	"form/icon/color/trailing-icon" |
 	"form/icon/color/trailing-icon-disabled" |
@@ -634,8 +634,8 @@ export type RecursicaColors =
 	"panel/color/background" |
 	"pagination/color/text-default" |
 	"pagination/color/text-selected" |
-	"panel/color/title" |
 	"pagination/color/text-secondary" |
+	"panel/color/title" |
 	"pagination/color/text-disabled" |
 	"radio/color/selected" |
 	"radio/color/selected-disabled" |
