@@ -1,30 +1,27 @@
-import { Flex, Button, Logo } from '@recursica/ui-kit';
-import { Outlet, useNavigate } from 'react-router';
+import { Flex } from '@recursica/ui-kit';
+import { PropsWithChildren } from 'react';
 
-export function Layout() {
-  const navigate = useNavigate();
+type LayoutProps = PropsWithChildren<{
+  footer?: React.ReactNode;
+  header?: React.ReactNode;
+}>;
+
+export function Layout({ children, footer, header }: LayoutProps) {
   return (
-    <Flex direction={'column'} style={{ height: '100%' }}>
-      <Flex flex={1} justify='center' align='center'>
-        <Outlet />
+    <Flex
+      direction={'column'}
+      justify={'center'}
+      align={'center'}
+      gap={10}
+      h={'100%'}
+      py={16}
+      px={24}
+    >
+      {header}
+      <Flex flex={1} direction='column' justify='center' gap={10}>
+        {children}
       </Flex>
-      <Flex
-        px={'size/spacer/default'}
-        align='center'
-        justify='space-between'
-        btw='1px'
-        bts='solid'
-        btc='color/stroke/default'
-      >
-        <Button
-          size='small'
-          variant='text'
-          leftSection='arrow_back_ios_new_Outlined'
-          onClick={() => navigate(-1)}
-          label='Back'
-        />
-        <Logo size='small' onClick={() => navigate('/home')} />
-      </Flex>
+      {footer}
     </Flex>
   );
 }

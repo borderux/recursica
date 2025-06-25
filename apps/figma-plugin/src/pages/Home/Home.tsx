@@ -1,24 +1,43 @@
 import { Flex, Typography, Button, Logo } from '@recursica/ui-kit';
 import { NavLink } from 'react-router';
 import { useFigma } from '../../hooks/useFigma';
+import { Layout } from '../../components';
+import { useMemo } from 'react';
 
 export function Home() {
-  const { loading } = useFigma();
+  const { loading, repository } = useFigma();
+
+  const target = useMemo(() => {
+    if (repository && repository.platform && repository.accessToken) {
+      return '/publish';
+    }
+    return '/auth';
+  }, [repository]);
+
   return (
-    <Flex
-      direction={'column'}
-      justify={'center'}
-      align={'center'}
-      gap={24}
-      h={'100%'}
-      py={16}
-      px={24}
-    >
-      <Flex direction='column' align='center' gap={4}>
-        <Logo />
-        <Typography variant='h2'>{loading ? 'Loading...' : 'Recursica'}</Typography>
+    <Layout>
+      <Flex direction='column' h='100%'>
+        <Flex direction='column' align='center' justify='center' gap={4} flex={1}>
+          <Logo />
+          <Typography variant='h2'>Recursica</Typography>
+        </Flex>
+        {loading ? (
+          <Typography
+            variant='body-1/normal'
+            textAlign='center'
+            color='color-on/background/medium-emphasis'
+          >
+            Getting this ready for you...
+          </Typography>
+        ) : (
+          <Button
+            component={NavLink}
+            to={target}
+            label='Get started'
+            rightSection='arrow_forward_Outlined'
+          />
+        )}
       </Flex>
-      <Button component={NavLink} loading={loading} to='/auth' label='Get started' />
-    </Flex>
+    </Layout>
   );
 }

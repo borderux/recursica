@@ -38,6 +38,8 @@ export interface FlexProps
   wrap?: StyleProp<React.CSSProperties["flexWrap"]>;
   /** `flex-direction` CSS property */
   direction?: StyleProp<React.CSSProperties["flexDirection"]>;
+  /** `onClick` CSS property */
+  onClick?: () => void;
 }
 
 export const Flex = forwardRef<HTMLDivElement, FlexProps>((props, ref) => {
