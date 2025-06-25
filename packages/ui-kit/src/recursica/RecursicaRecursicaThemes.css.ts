@@ -7,6 +7,8 @@ Do NOT edit these files directly
 
 For more information about Recursica, go to https://recursica.com
 */
+export { DefaultMode1Theme } from './RecursicaRecursicaDefaultMode1Theme.css';
+import { DefaultMode1Theme } from './RecursicaRecursicaDefaultMode1Theme.css';
 export { DefaultLightTheme } from './RecursicaRecursicaDefaultLightTheme.css';
 import { DefaultLightTheme } from './RecursicaRecursicaDefaultLightTheme.css';
 export { DefaultDarkTheme } from './RecursicaRecursicaDefaultDarkTheme.css';
@@ -14,7 +16,8 @@ import { DefaultDarkTheme } from './RecursicaRecursicaDefaultDarkTheme.css';
 
 export const Themes = {
   'Default': {
-    'Light': DefaultLightTheme,
+    'Mode1': DefaultMode1Theme,
+		'Light': DefaultLightTheme,
 		'Dark': DefaultDarkTheme
   }
 }
