@@ -1,20 +1,30 @@
 import { type SelectProps, Select } from "@mantine/core";
-import { Flex } from "../Flex";
-import { styles, errorContainer, labelContainer } from "./Dropdown.css";
+import { Flex } from "../Flex/Flex";
+import {
+  styles,
+  errorContainer,
+  labelContainer,
+  optionStyle,
+} from "./Dropdown.css";
 import { Icon, type IconName } from "../Icons/Icon";
 import { Typography } from "../Typography";
 import { forwardRef } from "react";
+import type { ComboboxItem } from "../../types";
 
 export type DropdownProps = Pick<
   SelectProps,
   | "onChange"
   | "placeholder"
-  | "data"
   | "disabled"
   | "error"
   | "defaultValue"
   | "value"
+  | "readOnly"
 > & {
+  /**
+   * The data to display in the dropdown.
+   */
+  data: ComboboxItem[];
   /**
    * The label of the dropdown.
    */
@@ -34,10 +44,10 @@ export type DropdownProps = Pick<
 };
 
 const renderSelectOption: SelectProps["renderOption"] = ({ option }) => (
-  <>
+  <Flex className={optionStyle} onClick={option.onClick}>
     {option.icon ? <Icon name={option.icon} /> : undefined}
     {option.label}
-  </>
+  </Flex>
 );
 
 export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(

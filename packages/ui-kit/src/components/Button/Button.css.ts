@@ -35,6 +35,7 @@ const root = style({
     '&[data-size="default"][data-notext="true"]': {
       paddingBlock: recursica["button/size/default-icon-padding"],
       paddingInline: recursica["button/size/default-icon-padding"],
+      minWidth: "auto",
       vars: {
         [innerGap]: "0px",
       },
@@ -50,6 +51,7 @@ const root = style({
     '&[data-size="small"][data-notext="true"]': {
       paddingBlock: recursica["button/size/small-icon-padding"],
       paddingInline: recursica["button/size/small-icon-padding"],
+      minWidth: "auto",
       vars: {
         [innerGap]: "0px",
       },

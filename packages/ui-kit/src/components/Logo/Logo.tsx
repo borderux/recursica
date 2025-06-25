@@ -42,7 +42,10 @@ export function Logo({
       viewBox="0 0 64.04 43.03"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      style={{ fill: recursica[color] }}
+      style={{
+        fill: recursica[color],
+        cursor: onClick ? "pointer" : "default",
+      }}
       onClick={onClick}
     >
       <path

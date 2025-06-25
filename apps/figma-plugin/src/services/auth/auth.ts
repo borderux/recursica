@@ -7,7 +7,7 @@ const getSecureHeaders = (): HeadersInit => ({
 // API endpoints configuration
 export const API_ENDPOINTS = {
   keys: `${BASE_URL}/api/plugin/keys`,
-  authorize: `${BASE_URL}/api/github/authorize`,
+  authorize: `${BASE_URL}/api/plugin/authorize`,
   token: `${BASE_URL}/api/plugin/token`,
 } as const;
 
@@ -30,10 +30,10 @@ export const secureApiCall = async (
 // API service methods
 export const apiService = {
   // Generate authentication keys
-  generateKeys: async (user_id: string) => {
+  generateKeys: async (userId: string) => {
     const response = await secureApiCall(API_ENDPOINTS.keys, {
       method: 'POST',
-      body: JSON.stringify({ user_id }),
+      body: JSON.stringify({ userId }),
     });
 
     if (!response.ok) {
@@ -45,10 +45,16 @@ export const apiService = {
   },
 
   // Get GitHub authorization URL
-  authorize: async (user_id: string, read_key: string, write_key: string, code: string) => {
+  authorize: async (
+    userId: string,
+    readKey: string,
+    writeKey: string,
+    code: string,
+    provider: string
+  ) => {
     const response = await secureApiCall(API_ENDPOINTS.authorize, {
       method: 'POST',
-      body: JSON.stringify({ user_id, read_key, write_key, code }),
+      body: JSON.stringify({ userId, readKey, writeKey, code, provider }),
     });
 
     if (!response.ok) {
@@ -60,10 +66,10 @@ export const apiService = {
   },
 
   // Poll for access token
-  getToken: async (user_id: string, read_key: string, code: string) => {
+  getToken: async (userId: string, readKey: string, code: string) => {
     const response = await secureApiCall(API_ENDPOINTS.token, {
       method: 'POST',
-      body: JSON.stringify({ user_id, read_key, code }),
+      body: JSON.stringify({ userId, readKey, code }),
     });
 
     if (!response.ok) {

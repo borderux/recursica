@@ -11,8 +11,12 @@ For more information about Recursica, go to https://recursica.com
 import * as IconExports from './icon_exports';
 
 export const IconResourceMap = {
+	'arrow_back_Filled': IconExports.arrow_back_Filled,
+	'arrow_back_Outlined': IconExports.arrow_back_Outlined,
 	'arrow_back_ios_new_Filled': IconExports.arrow_back_ios_new_Filled,
 	'arrow_back_ios_new_Outlined': IconExports.arrow_back_ios_new_Outlined,
+	'arrow_forward_Filled': IconExports.arrow_forward_Filled,
+	'arrow_forward_Outlined': IconExports.arrow_forward_Outlined,
 	'check_Filled': IconExports.check_Filled,
 	'check_Outlined': IconExports.check_Outlined,
 	'close_Filled': IconExports.close_Filled,
@@ -25,8 +29,14 @@ export const IconResourceMap = {
 	'publish_Outlined': IconExports.publish_Outlined,
 	'content_copy_Filled': IconExports.content_copy_Filled,
 	'content_copy_Outlined': IconExports.content_copy_Outlined,
+	'link_Filled': IconExports.link_Filled,
+	'link_Outlined': IconExports.link_Outlined,
 	'error_Filled': IconExports.error_Filled,
 	'error_Outlined': IconExports.error_Outlined,
+	'warning_amber_Filled': IconExports.warning_amber_Filled,
+	'warning_amber_Outlined': IconExports.warning_amber_Outlined,
+	'bug_report_Filled': IconExports.bug_report_Filled,
+	'bug_report_Outlined': IconExports.bug_report_Outlined,
 	'cached_Filled': IconExports.cached_Filled,
 	'cached_Outlined': IconExports.cached_Outlined,
 	'favorite_Filled': IconExports.favorite_Filled,
@@ -35,4 +45,6 @@ export const IconResourceMap = {
 	'logout_Outlined': IconExports.logout_Outlined,
 	'open_in_new_Filled': IconExports.open_in_new_Filled,
 	'open_in_new_Outlined': IconExports.open_in_new_Outlined,
+	'pending_Filled': IconExports.pending_Filled,
+	'pending_Outlined': IconExports.pending_Outlined,
 };

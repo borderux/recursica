@@ -1,11 +1,7 @@
-import type { IconName } from "@/components/Icons/Icon";
+import type { ComboboxItem as RecursicaComboboxItem } from "./index";
 import "@mantine/core";
 
 declare module "@mantine/core" {
-  export interface ComboboxItem {
-    value: string;
-    label: string;
-    disabled?: boolean;
-    icon?: IconName;
-  }
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  export interface ComboboxItem extends RecursicaComboboxItem {}
 }

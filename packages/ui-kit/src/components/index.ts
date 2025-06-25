@@ -12,3 +12,5 @@ export * from "./Title/Title";
 export * from "./Accordion/Accordion";
 export * from "./Typography";
 export * from "./Logo/Logo";
+export * from "./Tooltip";
+export * from "./Icons/Icon";

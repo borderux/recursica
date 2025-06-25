@@ -109,17 +109,17 @@ export const Optional: Story = {
 export const WithIcon: Story = {
   args: {
     data: [
-      { value: "Option 1", label: "Option 1", icon: "envelope_outline" },
-      { value: "Option 2", label: "Option 2", icon: "archive_box_outline" },
+      { value: "Option 1", label: "Option 1", icon: "close_Filled" },
+      { value: "Option 2", label: "Option 2", icon: "logout_Outlined" },
       {
         value: "Option 3",
         label: "Option 3",
-        icon: "chat_bubble_left_ellipsis_outline",
+        icon: "arrow_forward_Filled",
       },
       {
         value: "Option 4",
         label: "Option 4",
-        icon: "home_outline",
+        icon: "cached_Filled",
         disabled: true,
       },
     ],

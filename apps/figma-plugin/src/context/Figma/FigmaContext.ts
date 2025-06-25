@@ -2,13 +2,17 @@ import { createContext } from 'react';
 import type { RecursicaVariablesSchema, RecursicaIconsSchema } from '@recursica/schemas';
 
 export interface CurrentRepositoryContext {
-  platform: 'gitlab' | 'github';
-  accessToken: string;
+  platform: 'gitlab' | 'github' | undefined;
+  accessToken: string | undefined;
+  selectedProject: string | undefined;
 }
 
 export interface IFigmaContext {
-  repository?: CurrentRepositoryContext & {
-    updateAccessToken: (platform: 'gitlab' | 'github', accessToken: string) => void;
+  repository?: CurrentRepositoryContext;
+  updateRepository: {
+    updatePlatform: (platform: 'gitlab' | 'github') => void;
+    updateAccessToken: (accessToken: string) => void;
+    updateSelectedProject: (selectedProject: string) => void;
   };
   recursicaVariables?: RecursicaVariablesSchema;
   svgIcons?: RecursicaIconsSchema;

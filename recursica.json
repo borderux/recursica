@@ -10,6 +10,8 @@
       "names": [
         "cached",
         "arrow_back_ios_new",
+        "arrow_back",
+        "arrow_forward",
         "content_copy",
         "publish",
         "favorite",
@@ -19,7 +21,11 @@
         "keyboard_arrow_down",
         "keyboard_arrow_up",
         "check",
-        "open_in_new"
+        "open_in_new",
+        "bug_report",
+        "link",
+        "pending",
+        "warning_amber"
       ],
       "variants": ["Outlined", "Filled"]
     }

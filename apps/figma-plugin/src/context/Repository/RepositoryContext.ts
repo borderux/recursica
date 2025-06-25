@@ -1,28 +1,20 @@
 import { Project } from '../../services/repository/BaseRepository';
 import { createContext } from 'react';
+import { FilesStatus } from './RepositoryProvider';
 
 interface Repository {
-  /** Repository access token */
-  accessToken: string;
-  /** Update the repository access token */
-  updateAccessToken: (accessToken: string) => void;
-
-  /** Repository platform */
-  platform: string;
-  /** Update the repository platform */
-  updatePlatform: (platform: string) => void;
-
   /** User projects/repositories */
   userProjects: Project[];
-  /** Selected project/repository */
-  selectedProject: Project | undefined;
   /** Selected project/repository id */
-  selectedProjectId: string;
+  selectedProjectId: string | undefined;
   /** Update the selected project/repository id */
   updateSelectedProjectId: (selectedProjectId: string) => void;
 
   /** Pull request link */
-  prLink: string;
+  prLink: string | null;
+
+  /** Files status */
+  filesStatus: FilesStatus;
 
   /** Publish files to the repository */
   publishFiles: () => Promise<boolean>;

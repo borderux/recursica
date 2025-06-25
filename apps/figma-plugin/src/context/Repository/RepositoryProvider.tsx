@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { RepositoryContext } from './RepositoryContext';
 import { useFigma } from '../../hooks/useFigma';
-import type { RecursicaConfiguration } from '@recursica/schemas';
+import type { RecursicaConfiguration, RecursicaVariablesSchema } from '@recursica/schemas';
 import {
   BaseRepository,
   GitLabRepository,
@@ -20,20 +20,51 @@ function cleanPath(path: string) {
   return path.replace(/^\/+/, '');
 }
 
+export enum FileStatus {
+  Error,
+  Pending,
+  Loading,
+  Done,
+}
+
+export interface Status {
+  quantity: number;
+  status: FileStatus;
+}
+
+export interface FilesStatus {
+  icons: Status;
+  uiKit: Status;
+  tokens: Status;
+  themes: Status;
+  adapter: Status;
+}
+
+const INITIAL_FILES_STATUS: FilesStatus = {
+  icons: { quantity: 0, status: FileStatus.Pending },
+  uiKit: { quantity: 0, status: FileStatus.Pending },
+  tokens: { quantity: 0, status: FileStatus.Pending },
+  themes: { quantity: 0, status: FileStatus.Pending },
+  adapter: { quantity: 0, status: FileStatus.Pending },
+};
+
 export function RepositoryProvider({ children }: { children: React.ReactNode }) {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-  const [accessToken, setAccessToken] = useState('');
-  const [platform, setPlatform] = useState('');
-  const [selectedProjectId, setselectedProjectId] = useState('');
+  const [selectedProjectId, setselectedProjectId] = useState<string | undefined>(undefined);
   const [userProjects, setUserProjects] = useState<Project[]>([]);
-  const [filesPublished, setFilesPublished] = useState<boolean>(false);
-  const [prLink, setPrLink] = useState<string>('');
+  const [prLink, setPrLink] = useState<string | null>(null);
+  const [filesStatus, setFilesStatus] = useState<FilesStatus>(INITIAL_FILES_STATUS);
 
   const selectedProject = useMemo(() => {
     return userProjects.find((project) => project.id === selectedProjectId);
   }, [userProjects, selectedProjectId]);
 
-  const { repository, recursicaVariables, svgIcons } = useFigma();
+  const {
+    repository,
+    recursicaVariables,
+    svgIcons,
+    updateRepository: { updateSelectedProject },
+  } = useFigma();
 
   const variablesJson = useMemo(() => {
     if (recursicaVariables) {
@@ -51,7 +82,8 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
 
   // Create repository instance based on platform
   const repositoryInstance = useMemo((): BaseRepository | null => {
-    if (!accessToken || !platform) return null;
+    if (!repository || !repository.accessToken || !repository.platform) return null;
+    const { accessToken, platform } = repository;
 
     switch (platform.toLowerCase()) {
       case 'gitlab':
@@ -61,12 +93,11 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
       default:
         return null;
     }
-  }, [accessToken, platform]);
+  }, [repository]);
 
   useEffect(() => {
     if (repository) {
-      setAccessToken(repository.accessToken);
-      setPlatform(repository.platform);
+      setselectedProjectId(repository.selectedProject);
     }
   }, [repository]);
 
@@ -107,6 +138,8 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
   const publishFiles = async (): Promise<boolean> => {
     if (!selectedProject) throw new Error('Failed to get selected project');
     if (!repositoryInstance) throw new Error('Failed to get repository instance');
+    setPrLink(null);
+    setFilesStatus(INITIAL_FILES_STATUS);
 
     const targetBranch = await createBranch(selectedProject);
     const config = await getConfig(targetBranch);
@@ -201,6 +234,14 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
         actions
       );
 
+      setFilesStatus((prev) => ({
+        ...prev,
+        icons: { ...prev.icons, status: FileStatus.Done },
+        uiKit: { ...prev.uiKit, status: FileStatus.Done },
+        tokens: { ...prev.tokens, status: FileStatus.Done },
+        themes: { ...prev.themes, status: FileStatus.Done },
+      }));
+
       try {
         const pullRequest = await repositoryInstance.createPullRequest(
           selectedProject,
@@ -224,7 +265,6 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
         }
       }
 
-      setFilesPublished(true);
       return true;
     } catch (error) {
       console.error('Failed to publish files:', error);
@@ -270,11 +310,20 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
         adapterPath,
         targetBranch
       );
+      setFilesStatus((prev) => ({
+        ...prev,
+        adapter: { quantity: 1, status: FileStatus.Loading },
+      }));
     } catch (error) {
+      setFilesStatus((prev) => ({
+        ...prev,
+        adapter: { quantity: 1, status: FileStatus.Error },
+      }));
       console.error('Failed to get adapter file:', error);
       return [];
     }
 
+    // Load local icons or search for them in the repository
     let iconsJson = svgIconsJson;
     if (!iconsJson) {
       let iconsFilename = 'recursica-icons.json';
@@ -290,7 +339,13 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
         iconsJson = JSON.stringify(iconsFileRaw);
       }
     }
+    // Update files status with the number of icons
+    setFilesStatus((prev) => ({
+      ...prev,
+      icons: { quantity: Object.keys(iconsJson || {}).length, status: FileStatus.Loading },
+    }));
 
+    // Load local variables or search for them in the repository
     let bundledJson = variablesJson;
     if (!bundledJson) {
       let bundledFilename = 'recursica-bundle.json';
@@ -304,6 +359,13 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
       );
       bundledJson = JSON.stringify(bundledFileRaw);
     }
+    const parsedVariables: RecursicaVariablesSchema = JSON.parse(bundledJson || '{}');
+    setFilesStatus((prev) => ({
+      ...prev,
+      uiKit: { quantity: Object.keys(parsedVariables.uiKit).length, status: FileStatus.Loading },
+      tokens: { quantity: Object.keys(parsedVariables.tokens).length, status: FileStatus.Loading },
+      themes: { quantity: Object.keys(parsedVariables.themes).length, status: FileStatus.Loading },
+    }));
 
     return new Promise<AdapterFile[]>((resolve, reject) => {
       const worker = new Worker(
@@ -322,6 +384,11 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
       // Listener for messages coming FROM the worker
       worker.onmessage = (event) => {
         console.log('✅ Response received from worker:', event.data);
+
+        setFilesStatus((prev) => ({
+          ...prev,
+          adapter: { ...prev.adapter, status: FileStatus.Done },
+        }));
         const {
           recursicaTokens,
           vanillaExtractThemes,
@@ -440,18 +507,18 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     });
   };
 
+  const updateSelectedProjectId = (projectId: string) => {
+    setselectedProjectId(projectId);
+    updateSelectedProject(projectId);
+  };
+
   const value = {
-    accessToken,
-    platform,
-    selectedProject,
     selectedProjectId,
-    updateAccessToken: setAccessToken,
-    updatePlatform: setPlatform,
-    updateSelectedProjectId: setselectedProjectId,
+    updateSelectedProjectId,
     userProjects,
-    filesPublished,
     prLink,
     publishFiles,
+    filesStatus,
   };
 
   return <RepositoryContext.Provider value={value}>{children}</RepositoryContext.Provider>;

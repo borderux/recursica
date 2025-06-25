@@ -6,14 +6,14 @@ import {
 } from "@mantine/core";
 import { forwardRef } from "react";
 import { Icon, type IconName } from "../Icons/Icon";
-import { Flex } from "../Flex";
+import { Flex } from "../Flex/Flex";
 import { styles } from "./Chip.css";
 
 // Extend the props without modifying the children requirement
 export interface ChipProps
   extends Pick<
     ManChipProps,
-    "checked" | "defaultChecked" | "onChange" | "value"
+    "checked" | "defaultChecked" | "onChange" | "value" | "readOnly"
   > {
   error?: boolean;
   label: string;
