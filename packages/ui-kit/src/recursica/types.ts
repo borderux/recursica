@@ -8,5 +8,5 @@ Do NOT edit these files directly
 For more information about Recursica, go to https://recursica.com
 */
 
-export const AvailableThemes = ["DefaultLightTheme", "DefaultDarkTheme"] as const;
+export const AvailableThemes = ["DefaultMode1Theme", "DefaultLightTheme", "DefaultDarkTheme"] as const;
 export type AvailableThemesType = (typeof AvailableThemes)[number];
