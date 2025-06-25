@@ -30,6 +30,10 @@ export interface TypographyProps {
    * The text align of the typography
    */
   textAlign?: "left" | "center" | "right";
+  /**
+   * The flex of the typography
+   */
+  flex?: number;
 }
 
 export const Typography = ({
@@ -39,6 +43,7 @@ export const Typography = ({
   as: asComponent,
   textDecoration,
   textAlign,
+  flex,
 }: TypographyProps) => {
   const getComponentAsVariantBased = () => {
     switch (variant) {
@@ -63,6 +68,7 @@ export const Typography = ({
       style={{
         "--typography-color": color ? recursica[color] : "currentColor",
         textAlign,
+        flex,
       }}
     >
       {children}

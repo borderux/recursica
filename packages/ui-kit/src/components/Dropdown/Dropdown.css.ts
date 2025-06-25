@@ -89,13 +89,16 @@ const section = style({
 const dropdown = style({
   padding: 0,
   borderRadius: recursica["menu/size/border-radius"],
+  maxHeight: 250,
+  overflowY: "auto",
 });
 
-const option = style({
+export const optionStyle = style({
   ...typographies["body-2/normal"],
   gap: recursica["menu-item/size/spacing"],
   color: recursica["menu-item/color/text-default"],
   borderRadius: 0,
+  width: "100%",
   paddingBlock: recursica["menu-item/size/item-vertical-padding"],
   paddingInline: recursica["menu-item/size/item-horizontal-padding"],
   backgroundColor: recursica["menu-item/color/default"],
@@ -111,6 +114,13 @@ const option = style({
       color: recursica["menu-item/color/text-disabled"],
       opacity: "unset",
     },
+  },
+});
+
+const option = style({
+  padding: 0,
+  ":hover": {
+    backgroundColor: "transparent",
   },
 });
 
@@ -141,6 +151,6 @@ export const styles = {
   input,
   section,
   dropdown,
-  option,
   checkbox,
+  option,
 };

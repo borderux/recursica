@@ -1,20 +1,24 @@
 import { type MultiSelectProps, Box, MultiSelect } from "@mantine/core";
-import { Flex } from "../Flex";
-import { styles, errorContainer, labelContainer } from "./Dropdown.css";
+import { Flex } from "../Flex/Flex";
+import {
+  styles,
+  errorContainer,
+  labelContainer,
+  optionStyle,
+} from "./Dropdown.css";
 import { Icon, type IconName } from "../Icons/Icon";
 import { Typography } from "../Typography";
 import { forwardRef } from "react";
+import { ComboboxItem } from "../../types";
 
 export type MultiselectProps = Pick<
   MultiSelectProps,
-  | "onChange"
-  | "placeholder"
-  | "data"
-  | "disabled"
-  | "error"
-  | "defaultValue"
-  | "value"
+  "onChange" | "placeholder" | "disabled" | "error" | "defaultValue" | "value"
 > & {
+  /**
+   * The data to display in the Multiselect.
+   */
+  data: ComboboxItem[];
   /**
    * The label of the Multiselect.
    */
@@ -37,7 +41,7 @@ const renderSelectOption: MultiSelectProps["renderOption"] = ({
   option,
   checked,
 }) => (
-  <>
+  <Flex className={optionStyle} onClick={option.onClick}>
     {checked ? (
       <Box className={styles.checkbox}>
         <Icon name="check_Outlined" size={16} />
@@ -46,7 +50,7 @@ const renderSelectOption: MultiSelectProps["renderOption"] = ({
       <Icon name={option.icon} />
     ) : undefined}
     {option.label}
-  </>
+  </Flex>
 );
 
 export const Multiselect = forwardRef<HTMLInputElement, MultiselectProps>(

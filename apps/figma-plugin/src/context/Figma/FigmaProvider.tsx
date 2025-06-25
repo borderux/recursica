@@ -8,8 +8,9 @@ export interface TokensProvidersProps {
 
 export function FigmaProvider({ children }: TokensProvidersProps) {
   const [repository, setRepository] = useState<CurrentRepositoryContext>({
-    platform: 'gitlab',
-    accessToken: '',
+    platform: undefined,
+    accessToken: undefined,
+    selectedProject: undefined,
   });
   const [recursicaVariables, setRecursicaVariables] = useState<RecursicaVariablesSchema>();
   const [svgIcons, setSvgIcons] = useState<Record<string, string>>();
@@ -18,11 +19,12 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
     window.onmessage = ({ data: { pluginMessage } }) => {
       if (!pluginMessage) return;
       const { type, payload } = pluginMessage;
-      if (type === 'GET_ACCESS_TOKEN') {
-        const { platform, accessToken } = payload;
+      if (type === 'GET_LOCAL_STORAGE') {
+        const { accessToken, platform, selectedProject } = payload;
         setRepository({
           platform,
           accessToken,
+          selectedProject,
         });
       }
       if (type === 'RECURSICA_VARIABLES') {
@@ -37,15 +39,30 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
     };
   }, []);
 
-  const updateAccessToken = (platform: 'gitlab' | 'github', accessToken: string) => {
+  const updateAccessToken = (accessToken: string) => {
     parent.postMessage(
       {
         pluginMessage: {
           type: 'UPDATE_ACCESS_TOKEN',
-          payload: {
-            platform,
-            accessToken,
-          },
+          payload: accessToken,
+        },
+        pluginId: '*',
+      },
+      '*'
+    );
+    setRepository((prev) => ({
+      platform: prev.platform,
+      accessToken,
+      selectedProject: undefined,
+    }));
+  };
+
+  const updatePlatform = (platform: 'gitlab' | 'github') => {
+    parent.postMessage(
+      {
+        pluginMessage: {
+          type: 'UPDATE_PLATFORM',
+          payload: platform,
         },
         pluginId: '*',
       },
@@ -53,15 +70,38 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
     );
     setRepository({
       platform,
-      accessToken,
+      accessToken: undefined,
+      selectedProject: undefined,
     });
+  };
+
+  const updateSelectedProject = (selectedProject: string) => {
+    setRepository((prev) => ({
+      ...prev,
+      selectedProject,
+    }));
+    parent.postMessage(
+      {
+        pluginMessage: {
+          type: 'UPDATE_SELECTED_PROJECT',
+          payload: selectedProject,
+        },
+        pluginId: '*',
+      },
+      '*'
+    );
   };
 
   const values = {
     repository: {
       platform: repository.platform,
       accessToken: repository.accessToken,
+      selectedProject: repository.selectedProject,
+    },
+    updateRepository: {
+      updatePlatform,
       updateAccessToken,
+      updateSelectedProject,
     },
     recursicaVariables,
     svgIcons,
