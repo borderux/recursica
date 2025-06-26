@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { RepositoryContext } from './RepositoryContext';
 import { useFigma } from '../../hooks/useFigma';
 import type { RecursicaConfiguration, RecursicaVariablesSchema } from '@recursica/schemas';
@@ -48,12 +48,22 @@ const INITIAL_FILES_STATUS: FilesStatus = {
   adapter: { quantity: 0, status: FileStatus.Pending },
 };
 
+export enum ValidationStatus {
+  Valid,
+  Invalid,
+  NotSelected,
+}
+
 export function RepositoryProvider({ children }: { children: React.ReactNode }) {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [selectedProjectId, setselectedProjectId] = useState<string | undefined>(undefined);
   const [userProjects, setUserProjects] = useState<Project[]>([]);
   const [prLink, setPrLink] = useState<string | null>(null);
   const [filesStatus, setFilesStatus] = useState<FilesStatus>(INITIAL_FILES_STATUS);
+  const [validationStatus, setValidationStatus] = useState<ValidationStatus>(
+    ValidationStatus.NotSelected
+  );
+  const initConfig = useRef<boolean>(false);
 
   const selectedProject = useMemo(() => {
     return userProjects.find((project) => project.id === selectedProjectId);
@@ -126,7 +136,6 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
 
   const getUserProjects = async () => {
     if (!repositoryInstance) return;
-
     try {
       const projects = await repositoryInstance.getUserProjects();
       setUserProjects(projects);
@@ -135,23 +144,107 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     }
   };
 
-  const publishFiles = async (): Promise<boolean> => {
+  useEffect(() => {
+    if (selectedProject) {
+      validateProject();
+    }
+  }, [selectedProject]);
+
+  const validateProject = async (): Promise<boolean> => {
+    if (!repositoryInstance) return false;
+    try {
+      const config = await getConfig(selectedProject?.defaultBranch || '');
+      setValidationStatus(
+        config.project !== undefined ? ValidationStatus.Valid : ValidationStatus.Invalid
+      );
+      return config.project !== undefined;
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('404')) {
+        console.error('Project is not valid');
+        setValidationStatus(ValidationStatus.Invalid);
+        return false;
+      }
+      throw error;
+    }
+  };
+
+  const initializeRepo = async () => {
+    if (!repositoryInstance) return;
+    initConfig.current = true;
+  };
+
+  const publishFiles = async () => {
     if (!selectedProject) throw new Error('Failed to get selected project');
     if (!repositoryInstance) throw new Error('Failed to get repository instance');
-    setPrLink(null);
-    setFilesStatus(INITIAL_FILES_STATUS);
+    if (!(variablesJson || svgIconsJson)) {
+      parent.postMessage(
+        {
+          pluginMessage: {
+            type: 'GET_VARIABLES',
+          },
+          pluginId: '*',
+        },
+        '*'
+      );
+    } else {
+      updateFilesStatus(variablesJson, svgIconsJson);
+      handlePublishFiles();
+    }
+  };
 
-    const targetBranch = await createBranch(selectedProject);
+  const updateFilesStatus = (vars: string | null, icons: string | null) => {
+    if (vars) {
+      const bundledFileRaw = JSON.parse(vars);
+      setFilesStatus((prev) => ({
+        ...prev,
+        tokens: {
+          quantity: Object.keys(bundledFileRaw.tokens).length,
+          status: FileStatus.Loading,
+        },
+        themes: {
+          quantity: Object.keys(bundledFileRaw.themes).length,
+          status: FileStatus.Loading,
+        },
+        uiKit: {
+          quantity: Object.keys(bundledFileRaw.uiKit).length,
+          status: FileStatus.Loading,
+        },
+      }));
+    }
+    if (icons) {
+      const iconsFileRaw = JSON.parse(icons);
+      setFilesStatus((prev) => ({
+        ...prev,
+        icons: { quantity: Object.keys(iconsFileRaw).length, status: FileStatus.Loading },
+      }));
+    }
+  };
+
+  useEffect(() => {
+    if (variablesJson || svgIconsJson) {
+      updateFilesStatus(variablesJson, svgIconsJson);
+      handlePublishFiles();
+    }
+  }, [variablesJson, svgIconsJson]);
+
+  const handlePublishFiles = async () => {
+    const targetBranch = await createBranch(selectedProject!);
     const config = await getConfig(targetBranch);
     const adapterFiles = await runAdapter(targetBranch, config);
-    const commitResult = await commitFiles(targetBranch, adapterFiles, config);
-
-    return commitResult;
+    await commitFiles(targetBranch, adapterFiles, config);
   };
 
   const getConfig = async (targetBranch: string): Promise<RecursicaConfiguration> => {
     if (!repositoryInstance) throw new Error('Failed to get repository instance');
     if (!selectedProject) throw new Error('Failed to get selected project');
+    if (initConfig.current) {
+      return {
+        project: {
+          name: selectedProject.name,
+          root: '',
+        },
+      };
+    }
     const configFile = await repositoryInstance.getSingleFile<RecursicaConfiguration>(
       selectedProject,
       'recursica.json',
@@ -195,6 +288,14 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
           action: exists ? 'update' : 'create',
           file_path: variablesFilename,
           content: variablesJson,
+        });
+      }
+
+      if (initConfig.current) {
+        actions.push({
+          action: 'create',
+          file_path: 'recursica.json',
+          content: JSON.stringify(config, null, 2),
         });
       }
 
@@ -319,8 +420,11 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
         ...prev,
         adapter: { quantity: 1, status: FileStatus.Error },
       }));
-      console.error('Failed to get adapter file:', error);
-      return [];
+      if (error instanceof Error && error.message.includes('404')) {
+        console.error('Adapter file not found');
+        return [];
+      }
+      throw error;
     }
 
     // Load local icons or search for them in the repository
@@ -331,19 +435,26 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
         iconsFilename = rootPath + '/' + iconsFilename;
       }
       if (typeof config.icons === 'object' && config.icons.include) {
-        const iconsFileRaw = await repositoryInstance.getSingleFile(
-          selectedProject,
-          iconsFilename,
-          targetBranch
-        );
-        iconsJson = JSON.stringify(iconsFileRaw);
+        try {
+          const iconsFileRaw = await repositoryInstance.getSingleFile(
+            selectedProject,
+            iconsFilename,
+            targetBranch
+          );
+          iconsJson = JSON.stringify(iconsFileRaw);
+          // Update files status with the number of icons
+          setFilesStatus((prev) => ({
+            ...prev,
+            icons: { quantity: Object.keys(iconsFileRaw).length, status: FileStatus.Loading },
+          }));
+        } catch (error) {
+          if (error instanceof Error && error.message.includes('404')) {
+            iconsJson = '{}';
+          }
+          throw error;
+        }
       }
     }
-    // Update files status with the number of icons
-    setFilesStatus((prev) => ({
-      ...prev,
-      icons: { quantity: Object.keys(iconsJson || {}).length, status: FileStatus.Loading },
-    }));
 
     // Load local variables or search for them in the repository
     let bundledJson = variablesJson;
@@ -352,20 +463,35 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
       if (rootPath) {
         bundledFilename = rootPath + '/' + bundledFilename;
       }
-      const bundledFileRaw = await repositoryInstance.getSingleFile(
-        selectedProject,
-        bundledFilename,
-        targetBranch
-      );
-      bundledJson = JSON.stringify(bundledFileRaw);
+      try {
+        const bundledFileRaw = await repositoryInstance.getSingleFile<RecursicaVariablesSchema>(
+          selectedProject,
+          bundledFilename,
+          targetBranch
+        );
+        bundledJson = JSON.stringify(bundledFileRaw);
+        setFilesStatus((prev) => ({
+          ...prev,
+          tokens: {
+            quantity: Object.keys(bundledFileRaw.tokens).length,
+            status: FileStatus.Loading,
+          },
+          themes: {
+            quantity: Object.keys(bundledFileRaw.themes).length,
+            status: FileStatus.Loading,
+          },
+          uiKit: {
+            quantity: Object.keys(bundledFileRaw.uiKit).length,
+            status: FileStatus.Loading,
+          },
+        }));
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('404')) {
+          bundledJson = '{}';
+        }
+        throw error;
+      }
     }
-    const parsedVariables: RecursicaVariablesSchema = JSON.parse(bundledJson || '{}');
-    setFilesStatus((prev) => ({
-      ...prev,
-      uiKit: { quantity: Object.keys(parsedVariables.uiKit).length, status: FileStatus.Loading },
-      tokens: { quantity: Object.keys(parsedVariables.tokens).length, status: FileStatus.Loading },
-      themes: { quantity: Object.keys(parsedVariables.themes).length, status: FileStatus.Loading },
-    }));
 
     return new Promise<AdapterFile[]>((resolve, reject) => {
       const worker = new Worker(
@@ -512,6 +638,13 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     updateSelectedProject(projectId);
   };
 
+  const resetRepository = async () => {
+    setPrLink(null);
+    initConfig.current = false;
+    setFilesStatus(INITIAL_FILES_STATUS);
+    return await validateProject();
+  };
+
   const value = {
     selectedProjectId,
     updateSelectedProjectId,
@@ -519,6 +652,9 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     prLink,
     publishFiles,
     filesStatus,
+    validationStatus,
+    initializeRepo,
+    resetRepository,
   };
 
   return <RepositoryContext.Provider value={value}>{children}</RepositoryContext.Provider>;
