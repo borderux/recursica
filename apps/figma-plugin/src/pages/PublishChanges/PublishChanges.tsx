@@ -18,6 +18,10 @@ import { useNavigate } from 'react-router';
 import { Layout } from '../../components/Layout/Layout';
 import { FileStatus, ValidationStatus } from '../../context/Repository/RepositoryProvider';
 
+/**
+ * @description The steps of the publish changes page
+ * @enum {number}
+ */
 enum Step {
   SelectProject,
   InvalidProject,
@@ -78,7 +82,6 @@ export function PublishChanges() {
 
   const handleReset = async () => {
     const result = await resetRepository();
-    console.log('project reset: ', result);
     if (result) {
       setStep(Step.SelectProject);
     }
@@ -179,7 +182,7 @@ export function PublishChanges() {
         </Flex>
       }
       header={
-        <Flex align='center' gap={24}>
+        <Flex align='center' gap={24} w='100%' justify='space-between'>
           <Dropdown
             label='Pick a project'
             readOnly={step !== Step.SelectProject && step !== Step.InvalidProject}
@@ -220,26 +223,22 @@ export function PublishChanges() {
           </Typography>
         )}
         {step === Step.SelectProject && (
-          <>
-            <Typography variant='body-2/normal' color='color-on/background/medium-emphasis'>
-              Once you’re made changes to the Figma files, publish them to the connected Github
-              project
-            </Typography>
-          </>
+          <Typography variant='body-2/normal' color='color-on/background/medium-emphasis'>
+            Once you’re made changes to the Figma files, publish them to the connected Github
+            project
+          </Typography>
         )}
         {step === Step.Exporting && (
-          <>
-            <Flex direction='column' gap={8}>
-              {Object.entries(filesStatus).map(([key, value]) => (
-                <Flex align='center' gap={8} key={key}>
-                  <Icon name={getIcon(value.status)} />
-                  <Typography variant='body-2/normal' color='menu-item/color/text-default'>
-                    {parseInt(value.quantity).toLocaleString()} {key}
-                  </Typography>
-                </Flex>
-              ))}
-            </Flex>
-          </>
+          <Flex direction='column' gap={8} w='100%'>
+            {Object.entries(filesStatus).map(([key, value]) => (
+              <Flex gap={8} key={key} align='center'>
+                <Icon name={getIcon(value.status)} />
+                <Typography variant='body-2/normal' color='menu-item/color/text-default'>
+                  {parseInt(value.quantity).toLocaleString()} {key}
+                </Typography>
+              </Flex>
+            ))}
+          </Flex>
         )}
         {step === Step.Exported && (
           <Typography variant='body-2/normal' color='color-on/background/medium-emphasis'>
