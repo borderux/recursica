@@ -123,6 +123,13 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     }
   }, [userInfo, repositoryInstance]);
 
+  // Auto-select project if there's only one available and no project is currently selected
+  useEffect(() => {
+    if (userProjects.length === 1 && !selectedProjectId) {
+      updateSelectedProjectId(userProjects[0].id);
+    }
+  }, [userProjects, selectedProjectId]);
+
   const fetchUserInfo = async () => {
     if (!repositoryInstance) return;
 
