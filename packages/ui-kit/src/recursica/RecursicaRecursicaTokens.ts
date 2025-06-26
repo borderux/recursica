@@ -9,16 +9,6 @@ For more information about Recursica, go to https://recursica.com
 */
 
 export const RecursicaRecursicaTokens = {
-  "effect/elevation/elevation-12": "0px 8px 8px 0px rgba(0, 0, 0, 0.10000000149011612), 0px 8px 24px 0px rgba(0, 0, 0, 0.11999999731779099), 0px 12px 16px 0px rgba(0, 0, 0, 0.14000000059604645)",
-  "effect/elevation/elevation-02": "0px 4px 8px 0px rgba(0, 0, 0, 0.20000000298023224)",
-  "effect/elevation/elevation-03": "0px 4px 32px 0px rgba(0, 0, 0, 0.07999999821186066), 0px 4px 8px 0px rgba(0, 0, 0, 0.20000000298023224)",
-  "effect/elevation/elevation-04": "0px 4px 8px 0px rgba(0, 0, 0, 0.20000000298023224), 0px 8px 24px 0px rgba(0, 0, 0, 0.07999999821186066)",
-  "effect/elevation/elevation-08": "0px 4px 12px 0px rgba(0, 0, 0, 0.20000000298023224), 0px 4px 24px 0px rgba(0, 0, 0, 0.11999999731779099), 0px 8px 16px 0px rgba(0, 0, 0, 0.14000000059604645)",
-  "effect/elevation/elevation-06": "0px 4px 8px 0px rgba(0, 0, 0, 0.18000000715255737), 0px 4px 16px 0px rgba(0, 0, 0, 0.14000000059604645)",
-  "effect/elevation/elevation-16": "0px 8px 8px 0px rgba(0, 0, 0, 0.20000000298023224), 0px 8px 32px 0px rgba(0, 0, 0, 0.11999999731779099), 0px 16px 24px 0px rgba(0, 0, 0, 0.14000000059604645)",
-  "effect/elevation/elevation-01": "0px 4px 4px 0px rgba(0, 0, 0, 0.10000000149011612)",
-  "effect/elevation/elevation-00": "0px 0px 0px 0px rgba(0, 0, 0, 0.25)",
-  "effect/elevation/elevation-24": "0px 12px 16px 0px rgba(0, 0, 0, 0.20000000298023224), 0px 8px 48px 0px rgba(0, 0, 0, 0.11999999731779099), 0px 24px 40px 0px rgba(0, 0, 0, 0.14000000059604645)",
   "color/orchid/800": "#41008b",
   "color/salmon/600": "#b12345",
   "color/mandy/900": "#2f0303",
