@@ -15,5 +15,9 @@ export interface AnchorProps
 }
 
 export function Anchor({ children, ...props }: AnchorProps) {
-  return <ManAnchor {...props}>{children}</ManAnchor>;
+  return (
+    <ManAnchor style={{ color: "currentcolor" }} {...props}>
+      {children}
+    </ManAnchor>
+  );
 }

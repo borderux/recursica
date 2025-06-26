@@ -13,13 +13,18 @@ import {
   Icon,
   IconName,
 } from '@recursica/ui-kit';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Layout } from '../../components/Layout/Layout';
-import { FileStatus } from '../../context/Repository/RepositoryProvider';
+import { FileStatus, ValidationStatus } from '../../context/Repository/RepositoryProvider';
 
+/**
+ * @description The steps of the publish changes page
+ * @enum {number}
+ */
 enum Step {
   SelectProject,
+  InvalidProject,
   Exporting,
   Exported,
   Error,
@@ -33,19 +38,55 @@ export function PublishChanges() {
     publishFiles,
     prLink,
     filesStatus,
+    validationStatus,
+    initializeRepo,
+    resetRepository,
   } = useRepository();
   const [step, setStep] = useState<Step>(Step.SelectProject);
   const navigate = useNavigate();
   const copyButtonRef = useRef<HTMLButtonElement>(null);
   const [copied, setCopied] = useState(false);
 
+  useEffect(() => {
+    if (step === Step.Exporting) return;
+    if (validationStatus === ValidationStatus.NotSelected) {
+      setStep(Step.SelectProject);
+    }
+    if (validationStatus === ValidationStatus.Valid) {
+      setStep(Step.SelectProject);
+    }
+    if (validationStatus === ValidationStatus.Invalid) {
+      setStep(Step.InvalidProject);
+    }
+  }, [validationStatus]);
+
   const handleConfirm = async () => {
     setStep(Step.Exporting);
     try {
-      await publishFiles();
+      publishFiles();
     } catch (error) {
       console.error('Failed to publish files:', error);
       setStep(Step.Error);
+    }
+  };
+
+  const handleInitializeRepo = async () => {
+    try {
+      initializeRepo();
+      handleConfirm();
+    } catch (error) {
+      console.error('Failed to initialize repo:', error);
+      setStep(Step.Error);
+    }
+  };
+
+  const handleReset = async () => {
+    const result = await resetRepository();
+    if (result) {
+      setStep(Step.SelectProject);
+    }
+    if (!result) {
+      setStep(Step.InvalidProject);
     }
   };
 
@@ -55,7 +96,12 @@ export function PublishChanges() {
         return {
           label: 'Publish changes',
           onClick: handleConfirm,
-          disabled: !selectedProjectId,
+          disabled: !selectedProjectId || validationStatus !== ValidationStatus.Valid,
+        };
+      case Step.InvalidProject:
+        return {
+          label: 'Initialize Repo',
+          onClick: handleInitializeRepo,
         };
       case Step.Exporting:
         return {
@@ -68,7 +114,7 @@ export function PublishChanges() {
       case Step.Exported:
         return {
           label: 'Done',
-          onClick: () => setStep(Step.SelectProject),
+          onClick: handleReset,
         };
       case Step.Error:
         return {
@@ -106,9 +152,7 @@ export function PublishChanges() {
     <Layout
       footer={
         <Flex
-          justify={
-            step === Step.SelectProject || step === Step.Exporting ? 'center' : 'space-between'
-          }
+          justify={step === Step.Error || step === Step.Exported ? 'space-between' : 'center'}
           w='100%'
         >
           <Button {...getFooter()} />
@@ -138,10 +182,10 @@ export function PublishChanges() {
         </Flex>
       }
       header={
-        <Flex align='center' gap={24}>
+        <Flex align='center' gap={24} w='100%' justify='space-between'>
           <Dropdown
             label='Pick a project'
-            readOnly={step !== Step.SelectProject}
+            readOnly={step !== Step.SelectProject && step !== Step.InvalidProject}
             data={[
               ...userProjects.map(
                 (project) =>
@@ -172,27 +216,29 @@ export function PublishChanges() {
       }
     >
       <Flex direction='column' gap={16} justify='center' align='center'>
+        {step === Step.InvalidProject && (
+          <Typography variant='body-1/normal' color='color-on/background/high-emphasis'>
+            This project is missing the required Recursica configuration file. Please initialize the
+            repo with the correct ui kit.
+          </Typography>
+        )}
         {step === Step.SelectProject && (
-          <>
-            <Typography variant='body-2/normal' color='color-on/background/medium-emphasis'>
-              Once you’re made changes to the Figma files, publish them to the connected Github
-              project
-            </Typography>
-          </>
+          <Typography variant='body-2/normal' color='color-on/background/medium-emphasis'>
+            Once you’re made changes to the Figma files, publish them to the connected Github
+            project
+          </Typography>
         )}
         {step === Step.Exporting && (
-          <>
-            <Flex direction='column' gap={8}>
-              {Object.entries(filesStatus).map(([key, value]) => (
-                <Flex align='center' gap={8} key={key}>
-                  <Icon name={getIcon(value.status)} />
-                  <Typography variant='body-2/normal' color='menu-item/color/text-default'>
-                    {parseInt(value.quantity).toLocaleString()} {key}
-                  </Typography>
-                </Flex>
-              ))}
-            </Flex>
-          </>
+          <Flex direction='column' gap={8} w='100%'>
+            {Object.entries(filesStatus).map(([key, value]) => (
+              <Flex gap={8} key={key} align='center'>
+                <Icon name={getIcon(value.status)} />
+                <Typography variant='body-2/normal' color='menu-item/color/text-default'>
+                  {parseInt(value.quantity).toLocaleString()} {key}
+                </Typography>
+              </Flex>
+            ))}
+          </Flex>
         )}
         {step === Step.Exported && (
           <Typography variant='body-2/normal' color='color-on/background/medium-emphasis'>

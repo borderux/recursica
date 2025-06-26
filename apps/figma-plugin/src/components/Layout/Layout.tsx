@@ -18,7 +18,7 @@ export function Layout({ children, footer, header }: LayoutProps) {
       px={24}
     >
       {header}
-      <Flex flex={1} direction='column' justify='center' gap={10}>
+      <Flex flex={1} direction='column' justify='center' gap={10} w='100%'>
         {children}
       </Flex>
       {footer}

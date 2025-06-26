@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { FigmaContext, CurrentRepositoryContext } from './FigmaContext';
 import type { RecursicaVariablesSchema } from '@recursica/schemas';
 
@@ -37,6 +37,16 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
     return () => {
       window.onmessage = null;
     };
+  }, []);
+
+  useEffect(() => {
+    parent.postMessage(
+      {
+        pluginMessage: { type: 'GET_LOCAL_STORAGE' },
+        pluginId: '*',
+      },
+      '*'
+    );
   }, []);
 
   const updateAccessToken = (accessToken: string) => {
