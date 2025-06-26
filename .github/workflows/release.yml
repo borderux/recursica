@@ -60,9 +60,9 @@ jobs:
       #       ${{ runner.os }}-turbo-
 
       # NOTE: We are skipping the build and test step cause we assume main is healthy when PRs merge
-      # Runs the build step
-      # - name: Build
-      #   run: npm run build
+      #Runs the build step
+      - name: Build
+        run: npm run build
 
       # # Run unit tests
       # - name: Run tests
@@ -78,7 +78,7 @@ jobs:
         id: changesets
         uses: changesets/action@v1
         with:
-          publish: npm run build && npm run release
+          publish: npm run release
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
