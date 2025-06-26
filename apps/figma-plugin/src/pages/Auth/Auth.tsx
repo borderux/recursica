@@ -1,4 +1,4 @@
-import { Button, Dropdown, Flex, Logo, Typography } from '@recursica/ui-kit';
+import { Anchor, Button, Dropdown, Flex, Logo, Typography } from '@recursica/ui-kit';
 import { useEffect, useState } from 'react';
 import { apiService, pluginTokenToCode } from '../../services/auth';
 import { useNavigate } from 'react-router';
@@ -173,9 +173,9 @@ export function Auth() {
       {status === Status.SetupAccount && (
         <Typography variant='body-1/normal' textAlign='center'>
           Go to the{' '}
-          <a target='_blank' rel='noreferrer' href='https://recursica.com'>
+          <Anchor target='_blank' rel='noreferrer' href='https://recursica.com'>
             Recursica.com
-          </a>
+          </Anchor>{' '}
           website and follow the instructions.
         </Typography>
       )}

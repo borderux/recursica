@@ -16,7 +16,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Layout } from '../../components/Layout/Layout';
-import { FileStatus } from '../../context/Repository/RepositoryProvider';
+import { FileStatus, ValidationStatus } from '../../context/Repository/RepositoryProvider';
 
 enum Step {
   SelectProject,
@@ -34,7 +34,7 @@ export function PublishChanges() {
     publishFiles,
     prLink,
     filesStatus,
-    isValidProject,
+    validationStatus,
     initializeRepo,
     resetRepository,
   } = useRepository();
@@ -44,13 +44,17 @@ export function PublishChanges() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (isValidProject) {
+    if (step === Step.Exporting) return;
+    if (validationStatus === ValidationStatus.NotSelected) {
       setStep(Step.SelectProject);
     }
-    if (!isValidProject) {
+    if (validationStatus === ValidationStatus.Valid) {
+      setStep(Step.SelectProject);
+    }
+    if (validationStatus === ValidationStatus.Invalid) {
       setStep(Step.InvalidProject);
     }
-  }, [isValidProject]);
+  }, [validationStatus]);
 
   const handleConfirm = async () => {
     setStep(Step.Exporting);
@@ -64,7 +68,7 @@ export function PublishChanges() {
 
   const handleInitializeRepo = async () => {
     try {
-      await initializeRepo();
+      initializeRepo();
       handleConfirm();
     } catch (error) {
       console.error('Failed to initialize repo:', error);
@@ -72,9 +76,15 @@ export function PublishChanges() {
     }
   };
 
-  const handleReset = () => {
-    resetRepository();
-    setStep(Step.SelectProject);
+  const handleReset = async () => {
+    const result = await resetRepository();
+    console.log('project reset: ', result);
+    if (result) {
+      setStep(Step.SelectProject);
+    }
+    if (!result) {
+      setStep(Step.InvalidProject);
+    }
   };
 
   const getFooter = (): ButtonProps => {
@@ -83,7 +93,7 @@ export function PublishChanges() {
         return {
           label: 'Publish changes',
           onClick: handleConfirm,
-          disabled: !selectedProjectId || !isValidProject,
+          disabled: !selectedProjectId || validationStatus !== ValidationStatus.Valid,
         };
       case Step.InvalidProject:
         return {
