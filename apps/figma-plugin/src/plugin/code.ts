@@ -12,24 +12,24 @@ figma.showUI(`<script>window.location.href = '${uiUrl}'</script>`, {
 });
 async function main() {
   const { projectId, projectType } = await decodeProjectMetadataCollection(pluginVersion);
-  getLocalStorage();
   if (projectType === 'icons') {
     exportIcons();
   } else {
     getTeamLibrary(projectId, pluginVersion);
   }
-
-  figma.ui.onmessage = async (e) => {
-    if (e.type === 'UPDATE_ACCESS_TOKEN') {
-      saveInStorage('accessToken', e.payload);
-    }
-    if (e.type === 'UPDATE_PLATFORM') {
-      saveInStorage('platform', e.payload);
-    }
-    if (e.type === 'UPDATE_SELECTED_PROJECT') {
-      saveInStorage('selectedProject', e.payload);
-    }
-  };
 }
-
-setTimeout(main, 1000);
+getLocalStorage();
+figma.ui.onmessage = async (e) => {
+  if (e.type === 'UPDATE_ACCESS_TOKEN') {
+    saveInStorage('accessToken', e.payload);
+  }
+  if (e.type === 'UPDATE_PLATFORM') {
+    saveInStorage('platform', e.payload);
+  }
+  if (e.type === 'UPDATE_SELECTED_PROJECT') {
+    saveInStorage('selectedProject', e.payload);
+  }
+  if (e.type === 'GET_VARIABLES') {
+    main();
+  }
+};

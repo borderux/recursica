@@ -54,6 +54,8 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
   const [userProjects, setUserProjects] = useState<Project[]>([]);
   const [prLink, setPrLink] = useState<string | null>(null);
   const [filesStatus, setFilesStatus] = useState<FilesStatus>(INITIAL_FILES_STATUS);
+  const [isValidProject, setIsValidProject] = useState(false);
+  const [initConfig, setInitConfig] = useState<boolean>(false);
 
   const selectedProject = useMemo(() => {
     return userProjects.find((project) => project.id === selectedProjectId);
@@ -135,23 +137,68 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     }
   };
 
-  const publishFiles = async (): Promise<boolean> => {
+  useEffect(() => {
+    if (selectedProject) {
+      validateProject();
+    }
+  }, [selectedProject]);
+
+  const validateProject = async (): Promise<boolean> => {
+    if (!repositoryInstance) return false;
+    try {
+      const config = await getConfig(selectedProject?.defaultBranch || '');
+      setIsValidProject(config.project !== undefined);
+      return config.project !== undefined;
+    } catch (error) {
+      console.error('Failed to validate project:', error);
+      setIsValidProject(false);
+      return false;
+    }
+  };
+
+  const initializeRepo = async () => {
+    if (!repositoryInstance) return;
+    setInitConfig(true);
+  };
+
+  const publishFiles = async () => {
     if (!selectedProject) throw new Error('Failed to get selected project');
     if (!repositoryInstance) throw new Error('Failed to get repository instance');
-    setPrLink(null);
-    setFilesStatus(INITIAL_FILES_STATUS);
+    parent.postMessage(
+      {
+        pluginMessage: {
+          type: 'GET_VARIABLES',
+        },
+        pluginId: '*',
+      },
+      '*'
+    );
+  };
 
-    const targetBranch = await createBranch(selectedProject);
+  useEffect(() => {
+    if (variablesJson || svgIconsJson) {
+      handlePublishFiles();
+    }
+  }, [variablesJson, svgIconsJson]);
+
+  const handlePublishFiles = async () => {
+    const targetBranch = await createBranch(selectedProject!);
     const config = await getConfig(targetBranch);
     const adapterFiles = await runAdapter(targetBranch, config);
-    const commitResult = await commitFiles(targetBranch, adapterFiles, config);
-
-    return commitResult;
+    await commitFiles(targetBranch, adapterFiles, config);
   };
 
   const getConfig = async (targetBranch: string): Promise<RecursicaConfiguration> => {
     if (!repositoryInstance) throw new Error('Failed to get repository instance');
     if (!selectedProject) throw new Error('Failed to get selected project');
+    if (initConfig) {
+      return {
+        project: {
+          name: selectedProject.name,
+          root: '',
+        },
+      };
+    }
     const configFile = await repositoryInstance.getSingleFile<RecursicaConfiguration>(
       selectedProject,
       'recursica.json',
@@ -195,6 +242,14 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
           action: exists ? 'update' : 'create',
           file_path: variablesFilename,
           content: variablesJson,
+        });
+      }
+
+      if (initConfig) {
+        actions.push({
+          action: 'create',
+          file_path: 'recursica.json',
+          content: JSON.stringify(config, null, 2),
         });
       }
 
@@ -512,6 +567,12 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     updateSelectedProject(projectId);
   };
 
+  const resetRepository = () => {
+    setPrLink(null);
+    setInitConfig(false);
+    setFilesStatus(INITIAL_FILES_STATUS);
+  };
+
   const value = {
     selectedProjectId,
     updateSelectedProjectId,
@@ -519,6 +580,9 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     prLink,
     publishFiles,
     filesStatus,
+    isValidProject,
+    initializeRepo,
+    resetRepository,
   };
 
   return <RepositoryContext.Provider value={value}>{children}</RepositoryContext.Provider>;

@@ -17,7 +17,16 @@ interface Repository {
   filesStatus: FilesStatus;
 
   /** Publish files to the repository */
-  publishFiles: () => Promise<boolean>;
+  publishFiles: () => void;
+
+  /** Validate the project (check if the project has a valid config file) */
+  isValidProject: boolean;
+
+  /** Initialize the repository */
+  initializeRepo: () => void;
+
+  /** Reset the repository */
+  resetRepository: () => void;
 }
 
 export const RepositoryContext = createContext<Repository | null>(null);

@@ -5,7 +5,7 @@ import { Layout } from '../../components';
 import { useMemo } from 'react';
 
 export function Home() {
-  const { loading, repository } = useFigma();
+  const { repository } = useFigma();
 
   const target = useMemo(() => {
     if (repository && repository.platform && repository.accessToken) {
@@ -21,7 +21,7 @@ export function Home() {
           <Logo />
           <Typography variant='h2'>Recursica</Typography>
         </Flex>
-        {loading ? (
+        {!repository ? (
           <Typography
             variant='body-1/normal'
             textAlign='center'

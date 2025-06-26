@@ -13,13 +13,14 @@ import {
   Icon,
   IconName,
 } from '@recursica/ui-kit';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Layout } from '../../components/Layout/Layout';
 import { FileStatus } from '../../context/Repository/RepositoryProvider';
 
 enum Step {
   SelectProject,
+  InvalidProject,
   Exporting,
   Exported,
   Error,
@@ -33,20 +34,47 @@ export function PublishChanges() {
     publishFiles,
     prLink,
     filesStatus,
+    isValidProject,
+    initializeRepo,
+    resetRepository,
   } = useRepository();
   const [step, setStep] = useState<Step>(Step.SelectProject);
   const navigate = useNavigate();
   const copyButtonRef = useRef<HTMLButtonElement>(null);
   const [copied, setCopied] = useState(false);
 
+  useEffect(() => {
+    if (isValidProject) {
+      setStep(Step.SelectProject);
+    }
+    if (!isValidProject) {
+      setStep(Step.InvalidProject);
+    }
+  }, [isValidProject]);
+
   const handleConfirm = async () => {
     setStep(Step.Exporting);
     try {
-      await publishFiles();
+      publishFiles();
     } catch (error) {
       console.error('Failed to publish files:', error);
       setStep(Step.Error);
     }
+  };
+
+  const handleInitializeRepo = async () => {
+    try {
+      await initializeRepo();
+      handleConfirm();
+    } catch (error) {
+      console.error('Failed to initialize repo:', error);
+      setStep(Step.Error);
+    }
+  };
+
+  const handleReset = () => {
+    resetRepository();
+    setStep(Step.SelectProject);
   };
 
   const getFooter = (): ButtonProps => {
@@ -55,7 +83,12 @@ export function PublishChanges() {
         return {
           label: 'Publish changes',
           onClick: handleConfirm,
-          disabled: !selectedProjectId,
+          disabled: !selectedProjectId || !isValidProject,
+        };
+      case Step.InvalidProject:
+        return {
+          label: 'Initialize Repo',
+          onClick: handleInitializeRepo,
         };
       case Step.Exporting:
         return {
@@ -68,7 +101,7 @@ export function PublishChanges() {
       case Step.Exported:
         return {
           label: 'Done',
-          onClick: () => setStep(Step.SelectProject),
+          onClick: handleReset,
         };
       case Step.Error:
         return {
@@ -106,9 +139,7 @@ export function PublishChanges() {
     <Layout
       footer={
         <Flex
-          justify={
-            step === Step.SelectProject || step === Step.Exporting ? 'center' : 'space-between'
-          }
+          justify={step === Step.Error || step === Step.Exported ? 'space-between' : 'center'}
           w='100%'
         >
           <Button {...getFooter()} />
@@ -141,7 +172,7 @@ export function PublishChanges() {
         <Flex align='center' gap={24}>
           <Dropdown
             label='Pick a project'
-            readOnly={step !== Step.SelectProject}
+            readOnly={step !== Step.SelectProject && step !== Step.InvalidProject}
             data={[
               ...userProjects.map(
                 (project) =>
@@ -172,6 +203,12 @@ export function PublishChanges() {
       }
     >
       <Flex direction='column' gap={16} justify='center' align='center'>
+        {step === Step.InvalidProject && (
+          <Typography variant='body-1/normal' color='color-on/background/high-emphasis'>
+            This project is missing the required Recursica configuration file. Please initialize the
+            repo with the correct ui kit.
+          </Typography>
+        )}
         {step === Step.SelectProject && (
           <>
             <Typography variant='body-2/normal' color='color-on/background/medium-emphasis'>
