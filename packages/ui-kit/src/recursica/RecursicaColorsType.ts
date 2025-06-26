@@ -540,7 +540,7 @@ export type RecursicaColors =
 	"color-on/warning/default/interactive-text-pressed" |
 	"color-on/warning/default/disabled" |
 	"color-on/warning/default/medium-emphasis" |
-	"accordion/color/lavel" |
+	"accordion/color/label" |
 	"accordion/color/chevron" |
 	"accordion/color/stroke" |
 	"action-bar/color/background" |
@@ -615,8 +615,8 @@ export type RecursicaColors =
 	"list/color/selected-surface" |
 	"list/color/text-surface" |
 	"list/color/icon-surface" |
-	"modal/color/background" |
 	"form/icon/color/leading-icon-disabled" |
+	"modal/color/background" |
 	"modal/color/title" |
 	"form/icon/color/trailing-icon" |
 	"form/icon/color/trailing-icon-disabled" |
