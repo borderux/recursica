@@ -1,6 +1,6 @@
 import { Project } from '../../services/repository/BaseRepository';
 import { createContext } from 'react';
-import { FilesStatus, ValidationStatus } from './RepositoryProvider';
+import { FilesStatus, ValidationStatus, RepositoryError } from './RepositoryProvider';
 
 interface Repository {
   /** User projects/repositories */
@@ -17,7 +17,7 @@ interface Repository {
   filesStatus: FilesStatus;
 
   /** Publish files to the repository */
-  publishFiles: () => void;
+  publishFiles: () => Promise<void>;
 
   /** Validate the project (check if the project has a valid config file) */
   validationStatus: ValidationStatus;
@@ -27,6 +27,12 @@ interface Repository {
 
   /** Reset the repository */
   resetRepository: () => Promise<boolean>;
+
+  /** Current error state */
+  error: RepositoryError | null;
+
+  /** Clear the current error */
+  clearError: () => void;
 }
 
 export const RepositoryContext = createContext<Repository | null>(null);

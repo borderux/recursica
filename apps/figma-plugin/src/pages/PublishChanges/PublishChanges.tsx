@@ -42,6 +42,8 @@ export function PublishChanges() {
     validationStatus,
     initializeRepo,
     resetRepository,
+    error,
+    clearError,
   } = useRepository();
   const { repository } = useFigma();
   const [step, setStep] = useState<Step>(Step.SelectProject);
@@ -62,10 +64,18 @@ export function PublishChanges() {
     }
   }, [validationStatus]);
 
+  // Handle error state
+  useEffect(() => {
+    if (error) {
+      setStep(Step.Error);
+    }
+  }, [error]);
+
   const handleConfirm = async () => {
     setStep(Step.Exporting);
+    clearError(); // Clear any previous errors
     try {
-      publishFiles();
+      await publishFiles();
     } catch (error) {
       console.error('Failed to publish files:', error);
       setStep(Step.Error);
@@ -73,6 +83,7 @@ export function PublishChanges() {
   };
 
   const handleInitializeRepo = async () => {
+    clearError(); // Clear any previous errors
     try {
       initializeRepo();
       handleConfirm();
@@ -83,6 +94,7 @@ export function PublishChanges() {
   };
 
   const handleReset = async () => {
+    clearError(); // Clear any previous errors
     const result = await resetRepository();
     if (result) {
       setStep(Step.SelectProject);
@@ -121,7 +133,10 @@ export function PublishChanges() {
       case Step.Error:
         return {
           label: 'Back',
-          disabled: true,
+          onClick: () => {
+            clearError();
+            setStep(Step.SelectProject);
+          },
           leftSection: 'arrow_back_Outlined',
         };
     }
@@ -278,9 +293,21 @@ export function PublishChanges() {
           </Typography>
         )}
         {step === Step.Error && (
-          <Typography variant='body-2/normal' color='color-on/background/medium-emphasis'>
-            Error message
-          </Typography>
+          <Flex direction='column' gap={16} align='center'>
+            <Typography variant='body-1/normal' color='color-on/background/high-emphasis'>
+              {error?.message || 'An error occurred while publishing files'}
+            </Typography>
+            {error?.details && (
+              <Typography variant='body-2/normal' color='color-on/background/medium-emphasis'>
+                {error.details}
+              </Typography>
+            )}
+            {error?.code && (
+              <Typography variant='body-2/normal' color='color-on/background/medium-emphasis'>
+                Error code: {error.code}
+              </Typography>
+            )}
+          </Flex>
         )}
       </Flex>
     </Layout>
