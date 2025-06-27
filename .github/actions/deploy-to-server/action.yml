@@ -1,0 +1,50 @@
+name: "Deploy and Trigger Server Build"
+description: "Release build artifacts to server repository and trigger server build"
+inputs:
+  token:
+    description: "GitHub token with repo permissions"
+    required: true
+  target_repository:
+    description: "Target repository for release"
+    required: true
+  commit_sha:
+    description: "Commit SHA for tagging"
+    required: true
+  source_repo:
+    description: "Source repository name"
+    required: true
+  environment:
+    description: "Environment (dev/prod)"
+    required: true
+    default: "dev"
+  files_path:
+    description: "Path to files to release"
+    required: true
+    default: "dist/**/*"
+  event_type:
+    description: "Event type for repository dispatch"
+    required: true
+    default: "trigger-server-deploy"
+
+runs:
+  using: "composite"
+  steps:
+    # Upload to another repository via GitHub Releases
+    - name: Release to another repository
+      uses: softprops/action-gh-release@v1
+      with:
+        repository: ${{ inputs.target_repository }}
+        token: ${{ inputs.token }}
+        tag_name: build-plugin-ui-${{ inputs.commit_sha }}
+        name: Build Plugin UI - ${{ inputs.commit_sha }}
+        files: ${{ inputs.files_path }}
+        prerelease: true
+
+    - name: Trigger build in server repository
+      shell: bash
+      run: |
+        curl -X POST \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: Bearer ${{ inputs.token }}" \
+          https://api.github.com/repos/${{ inputs.target_repository }}/dispatches \
+          -d '{"event_type":"${{ inputs.event_type }}","client_payload":{"source_repo":"${{ inputs.source_repo }}","commit_sha":"${{ inputs.commit_sha }}","environment":"${{ inputs.environment }}"}}'
