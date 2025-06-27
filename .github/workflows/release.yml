@@ -59,14 +59,9 @@ jobs:
       #     restore-keys: |
       #       ${{ runner.os }}-turbo-
 
-      # NOTE: We are skipping the build and test step cause we assume main is healthy when PRs merge
-      #Runs the build step
+      # Runs the build step
       - name: Build
         run: npm run build
-
-      # # Run unit tests
-      # - name: Run tests
-      #   run: npm test
 
       # This action has two modes:
       # 1. If changesets are present, it creates a "Version Packages" pull request.
