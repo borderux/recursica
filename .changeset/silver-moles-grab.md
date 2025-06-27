@@ -2,4 +2,4 @@
 "@recursica/mantine-adapter": patch
 ---
 
-Add dist missing files
+Add missing distribution files
