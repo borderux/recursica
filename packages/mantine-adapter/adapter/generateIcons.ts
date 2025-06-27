@@ -26,8 +26,10 @@ export function generateIcons(
     const [iconName, variant] = rawIconName.split("[");
     let cleanIconName = iconName.replaceAll("-", "_");
     // check if the iconName is in the names array, if not, skip
-    if (!config?.include?.names?.includes(cleanIconName)) {
-      continue;
+    if (config?.include) {
+      if (!config?.include?.names?.includes(cleanIconName)) {
+        continue;
+      }
     }
     // detect if the iconName starts with a number, if so, add an underscore to the beginning
     if (cleanIconName.match(/^\d/)) {
@@ -36,8 +38,10 @@ export function generateIcons(
     const cleanVariant = variant.replace("]", "").replace("Style=", "");
     const codedVariant = cleanVariant.replaceAll(" ", "_");
     // check if the codedVariant is in the variants array, if not, skip
-    if (!config?.include?.variants?.includes(codedVariant)) {
-      continue;
+    if (config?.include) {
+      if (!config?.include?.variants?.includes(codedVariant)) {
+        continue;
+      }
     }
     const finalIconName = `${cleanIconName}_${codedVariant}`;
     exportedIcons.push({
