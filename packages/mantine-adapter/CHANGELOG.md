@@ -1,5 +1,11 @@
 # @recursica/mantine-adapter
 
+## 0.9.3
+
+### Patch Changes
+
+- 58ddd45: Add missing distribution files
+
 ## 0.9.2
 
 ### Patch Changes
