@@ -1,5 +1,11 @@
 # @recursica/mantine-adapter
 
+## 0.9.4
+
+### Patch Changes
+
+- de72583: fix ignoring icons
+
 ## 0.9.3
 
 ### Patch Changes
