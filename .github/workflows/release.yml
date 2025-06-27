@@ -49,6 +49,37 @@ jobs:
           # This prevents husky from installing git hooks during the CI process
           HUSKY: 0
 
+      # Check if there are changes for the figma-plugin
+      # Check for actual version changes (more robust)
+      - name: Check for figma-plugin version changes
+        id: check-figma-plugin
+        run: |
+          # Get current version
+          current_version=$(jq -r '.version' apps/figma-plugin/package.json 2>/dev/null || echo "")
+
+          # Get previous version
+          previous_version=$(git show HEAD~1:apps/figma-plugin/package.json 2>/dev/null | jq -r '.version' 2>/dev/null || echo "")
+
+          if [ -n "$current_version" ] && [ -n "$previous_version" ] && [ "$current_version" != "$previous_version" ]; then
+            echo "has-figma-changes=true" >> $GITHUB_OUTPUT
+            echo "✅ Figma plugin version changed: $previous_version → $current_version"
+            echo "🚀 Preparing for PRODUCTION deployment"
+          else
+            echo "has-figma-changes=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  No version changes detected"
+            
+            # Debug info
+            echo "Current version: $current_version"
+            echo "Previous version: $previous_version"
+            
+            # Check if package.json had other changes
+            package_changed=$(git diff HEAD~1 HEAD --name-only | grep "apps/figma-plugin/package.json" || true)
+            if [ -n "$package_changed" ]; then
+              echo "📝 Note: package.json was modified but version remained the same"
+              echo "    This could be dependency updates, script changes, etc."
+            fi
+          fi
+
       # Caches the Turborepo build artifacts stored in the `.turbo` directory.
       # This avoids re-running tasks on unchanged code, speeding up the build.
       # - name: Cache Turborepo
@@ -78,3 +109,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Deploy to production when Version Packages PR is merged
+      - name: Deploy Figma Plugin to Production
+        if: steps.check-figma-plugin.outputs.has-figma-changes == 'true'
+        uses: ./.github/actions/deploy-to-server
+        with:
+          token: ${{ secrets.DISPATCH_TOKEN }}
+          target_repository: ${{ github.repository_owner }}/recursica-server
+          commit_sha: ${{ github.sha }}
+          source_repo: ${{ github.repository }}
+          environment: "prod"
+          files_path: "apps/figma-plugin/dist/**/*"
+          event_type: "trigger-server-deploy"
