@@ -1,5 +1,11 @@
 # @recursica/common
 
+## 1.1.0
+
+### Minor Changes
+
+- f8a8129: Fix missing dist files
+
 ## 1.0.2
 
 ### Patch Changes
