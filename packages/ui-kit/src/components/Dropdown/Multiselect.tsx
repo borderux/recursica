@@ -41,7 +41,7 @@ const renderSelectOption: MultiSelectProps["renderOption"] = ({
   option,
   checked,
 }) => (
-  <Flex className={optionStyle} onClick={option.onClick}>
+  <Flex className={optionStyle} align="center" onClick={option.onClick}>
     {checked ? (
       <Box className={styles.checkbox}>
         <Icon name="check_Outlined" size={16} />

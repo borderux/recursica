@@ -25,7 +25,9 @@
         "bug_report",
         "link",
         "pending",
-        "warning_amber"
+        "warning_amber",
+        "github",
+        "gitlab"
       ],
       "variants": ["Outlined", "Filled"]
     }

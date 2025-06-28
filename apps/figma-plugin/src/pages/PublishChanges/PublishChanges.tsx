@@ -1,4 +1,5 @@
 import { useRepository } from '../../hooks/useRepository';
+import { useFigma } from '../../hooks/useFigma';
 import {
   Typography,
   Flex,
@@ -41,7 +42,10 @@ export function PublishChanges() {
     validationStatus,
     initializeRepo,
     resetRepository,
+    error,
+    clearError,
   } = useRepository();
+  const { repository } = useFigma();
   const [step, setStep] = useState<Step>(Step.SelectProject);
   const navigate = useNavigate();
   const copyButtonRef = useRef<HTMLButtonElement>(null);
@@ -60,10 +64,18 @@ export function PublishChanges() {
     }
   }, [validationStatus]);
 
+  // Handle error state
+  useEffect(() => {
+    if (error) {
+      setStep(Step.Error);
+    }
+  }, [error]);
+
   const handleConfirm = async () => {
     setStep(Step.Exporting);
+    clearError(); // Clear any previous errors
     try {
-      publishFiles();
+      await publishFiles();
     } catch (error) {
       console.error('Failed to publish files:', error);
       setStep(Step.Error);
@@ -71,6 +83,7 @@ export function PublishChanges() {
   };
 
   const handleInitializeRepo = async () => {
+    clearError(); // Clear any previous errors
     try {
       initializeRepo();
       handleConfirm();
@@ -81,6 +94,7 @@ export function PublishChanges() {
   };
 
   const handleReset = async () => {
+    clearError(); // Clear any previous errors
     const result = await resetRepository();
     if (result) {
       setStep(Step.SelectProject);
@@ -119,7 +133,10 @@ export function PublishChanges() {
       case Step.Error:
         return {
           label: 'Back',
-          disabled: true,
+          onClick: () => {
+            clearError();
+            setStep(Step.SelectProject);
+          },
           leftSection: 'arrow_back_Outlined',
         };
     }
@@ -145,6 +162,28 @@ export function PublishChanges() {
         return 'warning_amber_Outlined';
       case FileStatus.Pending:
         return 'pending_Outlined';
+    }
+  };
+
+  const getPlatformDisplayName = (platform: string | undefined) => {
+    switch (platform?.toLowerCase()) {
+      case 'github':
+        return 'GitHub';
+      case 'gitlab':
+        return 'GitLab';
+      default:
+        return 'repository';
+    }
+  };
+
+  const getPlatformIcon = (platform: string | undefined): IconName => {
+    switch (platform?.toLowerCase()) {
+      case 'github':
+        return 'github_Outlined';
+      case 'gitlab':
+        return 'gitlab_Outlined';
+      default:
+        return 'logout_Outlined';
     }
   };
 
@@ -183,34 +222,38 @@ export function PublishChanges() {
       }
       header={
         <Flex align='center' gap={24} w='100%' justify='space-between'>
-          <Dropdown
-            label='Pick a project'
-            readOnly={step !== Step.SelectProject && step !== Step.InvalidProject}
-            data={[
-              ...userProjects.map(
-                (project) =>
-                  ({
-                    label: project.name,
-                    value: project.id,
-                  }) as ComboboxItem
-              ),
-              {
-                label: 'Disconnect from repository',
-                value: '',
-                onClick: () => {
-                  navigate('/auth');
+          <Flex flex={1}>
+            <Dropdown
+              label='Pick a project'
+              readOnly={step !== Step.SelectProject && step !== Step.InvalidProject}
+              data={[
+                ...userProjects.map(
+                  (project) =>
+                    ({
+                      label: `${project.owner.name}/${project.name}`,
+                      value: project.id,
+                      icon: getPlatformIcon(repository?.platform),
+                    }) as ComboboxItem
+                ),
+                {
+                  label: `Disconnect from ${getPlatformDisplayName(repository?.platform)}`,
+                  value: '',
+                  icon: 'logout_Outlined',
+                  onClick: () => {
+                    navigate('/auth');
+                  },
                 },
-              },
-            ]}
-            showLabel={false}
-            placeholder='Select a project...'
-            value={selectedProjectId}
-            onChange={(value) => {
-              if (value) {
-                updateSelectedProjectId(value);
-              }
-            }}
-          />
+              ]}
+              showLabel={false}
+              placeholder='Select a project...'
+              value={selectedProjectId}
+              onChange={(value) => {
+                if (value) {
+                  updateSelectedProjectId(value);
+                }
+              }}
+            />
+          </Flex>
           <Logo size='small' onClick={() => navigate('/home')} />
         </Flex>
       }
@@ -224,15 +267,16 @@ export function PublishChanges() {
         )}
         {step === Step.SelectProject && (
           <Typography variant='body-2/normal' color='color-on/background/medium-emphasis'>
-            Once you’re made changes to the Figma files, publish them to the connected Github
-            project
+            {selectedProjectId
+              ? `Once you've made changes to the Figma files, publish them to the connected repository`
+              : 'It looks like there are multiple projects associated with your Github account.'}
           </Typography>
         )}
         {step === Step.Exporting && (
           <Flex direction='column' gap={8} w='100%'>
             {Object.entries(filesStatus).map(([key, value]) => (
               <Flex gap={8} key={key} align='center'>
-                <Icon name={getIcon(value.status)} />
+                <Icon name={getIcon(value.status)} spin={value.status === FileStatus.Loading} />
                 <Typography variant='body-2/normal' color='menu-item/color/text-default'>
                   {parseInt(value.quantity).toLocaleString()} {key}
                 </Typography>
@@ -244,13 +288,26 @@ export function PublishChanges() {
           <Typography variant='body-2/normal' color='color-on/background/medium-emphasis'>
             The changes have been published.
             <br />
-            If you’re ready for the dev to review the changes, send them the URL of your branch.
+            If you&apos;re ready for the dev to review the changes, send them the URL of your
+            branch.
           </Typography>
         )}
         {step === Step.Error && (
-          <Typography variant='body-2/normal' color='color-on/background/medium-emphasis'>
-            Error message
-          </Typography>
+          <Flex direction='column' gap={16} align='center'>
+            <Typography variant='body-1/normal' color='color-on/background/high-emphasis'>
+              {error?.message || 'An error occurred while publishing files'}
+            </Typography>
+            {error?.details && (
+              <Typography variant='body-2/normal' color='color-on/background/medium-emphasis'>
+                {error.details}
+              </Typography>
+            )}
+            {error?.code && (
+              <Typography variant='body-2/normal' color='color-on/background/medium-emphasis'>
+                Error code: {error.code}
+              </Typography>
+            )}
+          </Flex>
         )}
       </Flex>
     </Layout>
