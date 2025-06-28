@@ -5,11 +5,18 @@ import { getTeamLibrary } from './teamLibrary';
 import { exportIcons } from './exportIcons';
 const pluginVersion = packageInfo.version;
 
-const uiUrl = import.meta.env.VITE_RECURSICA_UI_URL;
-figma.showUI(`<script>window.location.href = '${uiUrl}'</script>`, {
-  width: 370,
-  height: 350,
-});
+if (import.meta.env.MODE === 'development') {
+  figma.showUI(__html__, {
+    width: 370,
+    height: 350,
+  });
+} else {
+  const uiUrl = import.meta.env.VITE_RECURSICA_UI_URL;
+  figma.showUI(`<script>window.location.href = '${uiUrl}'</script>`, {
+    width: 370,
+    height: 350,
+  });
+}
 async function main() {
   const { projectId, projectType } = await decodeProjectMetadataCollection(pluginVersion);
   if (projectType === 'icons') {
