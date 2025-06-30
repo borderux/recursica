@@ -46,7 +46,7 @@ echo.
 
 REM Download figma-plugin.js
 echo Downloading figma-plugin.js...
-curl -L -o "dist\figma-plugin.js" "https://raw.githubusercontent.com/borderux/recursica/main/dist-dev/figma-plugin.js"
+curl -L -o "dist\figma-plugin.js" "https://raw.githubusercontent.com/borderux/recursica/main/apps/figma-plugin/dist-dev/figma-plugin.js"
 if %errorlevel% neq 0 (
     echo ERROR: Failed to download figma-plugin.js
     pause
@@ -55,7 +55,7 @@ if %errorlevel% neq 0 (
 
 REM Download index.html
 echo Downloading index.html...
-curl -L -o "dist\index.html" "https://raw.githubusercontent.com/borderux/recursica/main/dist-dev/index.html"
+curl -L -o "dist\index.html" "https://raw.githubusercontent.com/borderux/recursica/main/apps/figma-plugin/dist-dev/index.html"
 if %errorlevel% neq 0 (
     echo ERROR: Failed to download index.html
     pause

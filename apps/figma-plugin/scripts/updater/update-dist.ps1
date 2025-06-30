@@ -14,7 +14,7 @@ Write-Host "Downloading files from GitHub repository..." -ForegroundColor Green
 Write-Host ""
 
 # GitHub repository URLs
-$baseUrl = "https://raw.githubusercontent.com/borderux/recursica/main/dist-dev"
+$baseUrl = "https://raw.githubusercontent.com/borderux/recursica/main/apps/figma-plugin/dist-dev"
 $files = @(
     "figma-plugin.js",
     "index.html"
