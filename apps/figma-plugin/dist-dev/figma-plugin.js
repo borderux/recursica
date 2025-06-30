@@ -1,6 +1,6 @@
-const S = '0.0.2',
-  O = {
-    version: S,
+const L = '0.0.3',
+  R = {
+    version: L,
   };
 class b extends Error {
   constructor(t) {
@@ -8,14 +8,14 @@ class b extends Error {
   }
 }
 const C = ['ui-kit', 'themes', 'tokens', 'icons'],
-  E = 'ID variables';
-function R(e) {
+  V = 'ID variables';
+function O(e) {
   return C.includes(e);
 }
 async function N(e) {
   const t = {},
     o = (await figma.variables.getLocalVariableCollectionsAsync()).find(
-      (a) => a.name.toLowerCase() === E.toLowerCase()
+      (a) => a.name.toLowerCase() === V.toLowerCase()
     );
   if (!o) throw new b('Cannot execute the plugin because the metadata collection is missing.');
   for (const a of o.variableIds) {
@@ -29,7 +29,7 @@ async function N(e) {
       c === 'theme' && (t.theme = u),
       c === 'project-type')
     ) {
-      if (!R(u)) throw new b(`Project type invalid, must be ${C.join(',')}.`);
+      if (!O(u)) throw new b(`Project type invalid, must be ${C.join(',')}.`);
       t.projectType = u;
     }
   }
@@ -49,7 +49,7 @@ async function N(e) {
     t
   );
 }
-async function M() {
+async function _() {
   const e = await w('accessToken'),
     t = await w('platform'),
     n = await w('selectedProject');
@@ -65,7 +65,7 @@ async function M() {
 async function w(e) {
   return figma.clientStorage.getAsync(e);
 }
-async function A(e, t) {
+async function T(e, t) {
   await figma.clientStorage.setAsync(e, t),
     e === 'accessToken' &&
       (await figma.clientStorage.deleteAsync('selectedProject'),
@@ -76,7 +76,7 @@ async function A(e, t) {
       figma.notify('Platform updated')),
     e === 'selectedProject' && figma.notify('Selected project updated');
 }
-function F(e) {
+function M(e) {
   if (e.unit === 'AUTO')
     return {
       unit: 'AUTO',
@@ -107,7 +107,7 @@ function v(e) {
     t
   );
 }
-function _({ r: e, g: t, b: n, a: o }) {
+function F({ r: e, g: t, b: n, a: o }) {
   if (o !== 1)
     return `rgba(${[e, t, n].map((r) => Math.round(r * 255)).join(', ')}, ${o.toFixed(4)})`;
   const a = (r) => {
@@ -170,7 +170,7 @@ async function k(e) {
 async function B(e, t) {
   if (typeof e == 'object' && e !== null) {
     if ('type' in e && e.type) return await k(e);
-    if (t === 'COLOR') return _(e);
+    if (t === 'COLOR') return F(e);
   }
   return e;
 }
@@ -195,14 +195,14 @@ async function D(e) {
     return console.warn(`Failed to get variable collection ${e}:`, t), null;
   }
 }
-async function W(e) {
+async function U(e) {
   try {
     return await figma.variables.importVariableByKeyAsync(e);
   } catch (t) {
     return console.warn(`Failed to import variable ${e}:`, t), null;
   }
 }
-async function $(e) {
+async function W(e) {
   const t = e.variableIds.map(async (o) => {
       const a = await figma.variables.getVariableByIdAsync(o);
       if (!a) return {};
@@ -222,10 +222,10 @@ async function $(e) {
     n = await Promise.all(t);
   return v(n);
 }
-async function G(e) {
+async function $(e) {
   try {
     const n = (await figma.teamLibrary.getVariablesInLibraryCollectionAsync(e)).map(async (a) => {
-        const s = await W(a.key);
+        const s = await U(a.key);
         if (!s) return {};
         const { valuesByMode: r, name: c, resolvedType: u, variableCollectionId: y } = s,
           l = await D(y);
@@ -248,7 +248,7 @@ async function G(e) {
     return console.warn(`Failed to process remote variable collection ${e}:`, t), {};
   }
 }
-async function U() {
+async function G() {
   const e = {},
     t = await figma.getLocalTextStylesAsync();
   for (const n of t) {
@@ -269,7 +269,7 @@ async function U() {
         value: x(s),
         alias: s,
       },
-      lineHeight: F(c),
+      lineHeight: M(c),
       letterSpacing: u,
       textCase: y,
       textDecoration: l,
@@ -296,11 +296,11 @@ async function K() {
 async function J() {
   const e = {},
     t = await figma.variables.getLocalVariableCollectionsAsync();
-  for (const n of t) n.name.toLowerCase() !== E.toLowerCase() && Object.assign(e, await $(n));
+  for (const n of t) n.name.toLowerCase() !== V.toLowerCase() && Object.assign(e, await W(n));
   return e;
 }
 async function z() {
-  return await U();
+  return await G();
 }
 async function H() {
   return await K();
@@ -332,7 +332,7 @@ async function Q(e, t) {
         const m = a == null ? void 0 : a[f],
           [d, g] = await X(m),
           p =
-            (h = Object.values(g).find((L) => L.name === 'project-type')) == null
+            (h = Object.values(g).find((I) => I.name === 'project-type')) == null
               ? void 0
               : h.value;
         return { variables: d, metadata: g, filetype: p };
@@ -362,13 +362,13 @@ async function X(e) {
   const t = e.find((r) => r.name === 'ID variables');
   if (!t) return figma.notify('No metadata collection found'), [{}, {}];
   const n = e.filter((r) => r.name !== 'ID variables'),
-    [o, ...a] = await Promise.all([T(t.value), ...n.map((r) => T(r.value))]);
+    [o, ...a] = await Promise.all([A(t.value), ...n.map((r) => A(r.value))]);
   return [v(a), o];
 }
-async function T(e) {
-  return await G(e);
+async function A(e) {
+  return await $(e);
 }
-async function I(e, t) {
+async function S(e, t) {
   var n, o;
   if (
     e.type === 'VECTOR' &&
@@ -380,25 +380,36 @@ async function I(e, t) {
       r = `${e.parent.parent.name}[${e.parent.name}]`;
     t[r] || (t[r] = s);
   }
-  'children' in e && (await Promise.all(e.children.map((a) => I(a, t))));
+  'children' in e && (await Promise.all(e.children.map((a) => S(a, t))));
 }
 async function Y() {
   const e = {};
-  await I(figma.currentPage, e), figma.ui.postMessage({ type: 'SVG_ICONS', payload: e });
+  await S(figma.currentPage, e);
+  const t = {
+    type: 'SVG_ICONS',
+    payload: e,
+  };
+  console.log(t), figma.ui.postMessage(t);
 }
-const V = O.version;
+const E = R.version;
 figma.showUI(__html__, {
   width: 370,
   height: 350,
 });
 async function Z() {
-  const { projectId: e, projectType: t } = await N(V);
-  t === 'icons' ? Y() : Q(e, V);
+  const { projectId: e, projectType: t } = await N(E);
+  t === 'icons' ? Y() : Q(e, E);
 }
 figma.ui.onmessage = async (e) => {
-  e.type === 'GET_LOCAL_STORAGE' && M(),
-    e.type === 'UPDATE_ACCESS_TOKEN' && A('accessToken', e.payload),
-    e.type === 'UPDATE_PLATFORM' && A('platform', e.payload),
-    e.type === 'UPDATE_SELECTED_PROJECT' && A('selectedProject', e.payload),
+  var t;
+  e.type === 'GET_LOCAL_STORAGE' && _(),
+    e.type === 'GET_CURRENT_USER' &&
+      figma.ui.postMessage({
+        type: 'CURRENT_USER',
+        payload: (t = figma.currentUser) == null ? void 0 : t.id,
+      }),
+    e.type === 'UPDATE_ACCESS_TOKEN' && T('accessToken', e.payload),
+    e.type === 'UPDATE_PLATFORM' && T('platform', e.payload),
+    e.type === 'UPDATE_SELECTED_PROJECT' && T('selectedProject', e.payload),
     e.type === 'GET_VARIABLES' && Z();
 };
