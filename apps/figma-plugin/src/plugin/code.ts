@@ -23,7 +23,6 @@ figma.ui.onmessage = async (e) => {
     getLocalStorage();
   }
   if (e.type === 'GET_CURRENT_USER') {
-    console.log('GET_CURRENT_USER', figma.currentUser?.id);
     figma.ui.postMessage({
       type: 'CURRENT_USER',
       payload: figma.currentUser?.id,
