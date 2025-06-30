@@ -17,6 +17,7 @@ export interface IFigmaContext {
   recursicaVariables?: RecursicaVariablesSchema;
   svgIcons?: RecursicaIconsSchema;
   loading: boolean;
+  userId: string | undefined;
 }
 
 export const FigmaContext = createContext<IFigmaContext | null>(null);

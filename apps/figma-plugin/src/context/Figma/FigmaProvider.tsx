@@ -14,7 +14,7 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
   });
   const [recursicaVariables, setRecursicaVariables] = useState<RecursicaVariablesSchema>();
   const [svgIcons, setSvgIcons] = useState<Record<string, string>>();
-
+  const [userId, setUserId] = useState<string | undefined>();
   useLayoutEffect(() => {
     window.onmessage = ({ data: { pluginMessage } }) => {
       if (!pluginMessage) return;
@@ -33,6 +33,9 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
       if (type === 'SVG_ICONS') {
         setSvgIcons(payload);
       }
+      if (type === 'CURRENT_USER') {
+        setUserId(payload);
+      }
     };
     return () => {
       window.onmessage = null;
@@ -40,9 +43,18 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
   }, []);
 
   useEffect(() => {
+    // get the auth info from the plugin
     parent.postMessage(
       {
         pluginMessage: { type: 'GET_LOCAL_STORAGE' },
+        pluginId: '*',
+      },
+      '*'
+    );
+    // get the current user
+    parent.postMessage(
+      {
+        pluginMessage: { type: 'GET_CURRENT_USER' },
         pluginId: '*',
       },
       '*'
@@ -116,6 +128,7 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
     recursicaVariables,
     svgIcons,
     loading: !(recursicaVariables || svgIcons),
+    userId,
   };
 
   return <FigmaContext.Provider value={values}>{children}</FigmaContext.Provider>;

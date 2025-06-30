@@ -26,6 +26,7 @@ export function Auth() {
   const retryTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const {
     updateRepository: { updateAccessToken, updatePlatform },
+    userId,
   } = useFigma();
   const navigate = useNavigate();
 
@@ -58,9 +59,9 @@ export function Auth() {
     setStatus(Status.WaitingForAuthorization);
 
     try {
-      // Generate a user_id (you might want to get this from your auth system)
-      const userId = Math.random().toString(36).substring(2, 15);
-
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
       // Step 1: Generate keys using secure API service
       const { readKey, writeKey, pluginToken } = await apiService.generateKeys(userId);
       setStatus(Status.WaitingForAuthorization);
