@@ -9,7 +9,8 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const parentDir = resolve(__dirname, '..');
-const releasesDir = path.join(parentDir, 'dev-releases');
+const DEV_RELEASES_DIR = 'dev-releases';
+const releasesDir = path.join(parentDir, DEV_RELEASES_DIR);
 
 // create a file to stream archive data to.
 if (!fs.existsSync(releasesDir)) {
