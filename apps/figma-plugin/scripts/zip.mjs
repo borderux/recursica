@@ -33,5 +33,13 @@ archive.file('PLUGIN.md', { name: 'README.md' });
 
 // append files from a sub-directory
 archive.directory('dist-dev/', 'dist');
+
+// append update scripts (cross-platform)
+archive.file('scripts/updater/update-dist.bat', { name: 'scripts/update-dist.bat' });
+archive.file('scripts/updater/update-dist.ps1', { name: 'scripts/update-dist.ps1' });
+archive.file('scripts/updater/update-dist.sh', { name: 'scripts/update-dist.sh' });
+archive.file('scripts/updater/update-dist', { name: 'scripts/update-dist' });
+archive.file('scripts/updater/UPDATE-README.md', { name: 'UPDATE-README.md' });
+
 // finalize the archive
 archive.finalize();
