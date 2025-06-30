@@ -33,7 +33,7 @@
     "watch:ui": "vite build --watch",
     "watch:code": "vite build --watch --config vite.config.lib.ts",
     "lint": "eslint ./src",
-    "zip": "node scripts/zip.mjs",
+    "zip": "vite build --config vite.config.lib.ts --mode development && vite build --mode development && node scripts/zip.mjs",
     "preview": "vite preview",
     "check-types": "tsc --noEmit",
     "format": "prettier --write ."
