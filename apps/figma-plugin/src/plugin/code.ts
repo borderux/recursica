@@ -22,6 +22,12 @@ figma.ui.onmessage = async (e) => {
   if (e.type === 'GET_LOCAL_STORAGE') {
     getLocalStorage();
   }
+  if (e.type === 'GET_CURRENT_USER') {
+    figma.ui.postMessage({
+      type: 'CURRENT_USER',
+      payload: figma.currentUser?.id,
+    });
+  }
   if (e.type === 'UPDATE_ACCESS_TOKEN') {
     saveInStorage('accessToken', e.payload);
   }
