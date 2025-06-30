@@ -4,6 +4,7 @@ import { typographies } from "../Typography";
 
 const root = style({
   display: "flex",
+  width: "100%",
   flexDirection: "column",
   minWidth: recursica["dropdown/size/min-width"],
   maxWidth: recursica["dropdown/size/max-width"],

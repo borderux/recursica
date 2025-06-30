@@ -32,7 +32,12 @@ export async function exportIcons() {
   const svgIcons: SvgMetadata = {};
   await collectIconsFromNodes(figma.currentPage, svgIcons);
 
-  figma.ui.postMessage({ type: 'SVG_ICONS', payload: svgIcons });
+  const response = {
+    type: 'SVG_ICONS',
+    payload: svgIcons,
+  };
+  console.log(response);
+  figma.ui.postMessage(response);
 }
 
 export async function exportSelectedIcons(currentSelection: SceneNode[]) {

@@ -1,5 +1,5 @@
 import { Anchor, Button, Dropdown, Flex, Logo, Typography } from '@recursica/ui-kit';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { apiService, pluginTokenToCode } from '../../services/auth';
 import { useNavigate } from 'react-router';
 import { useFigma } from '../../hooks/useFigma';
@@ -22,10 +22,32 @@ export function Auth() {
   const [status, setStatus] = useState(Status.SetupAccount);
   const [pairedKeys, setPairedKeys] = useState<PairedKeys | null>(null);
   const [selectedProvider, setSelectedProvider] = useState<'github' | 'gitlab'>('github');
+  const [canRetry, setCanRetry] = useState(false);
+  const retryTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const {
     updateRepository: { updateAccessToken, updatePlatform },
+    userId,
   } = useFigma();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (status === Status.WaitingForAuthorization) {
+      setCanRetry(false);
+      retryTimeout.current = setTimeout(() => setCanRetry(true), 30000);
+    } else {
+      setCanRetry(false);
+      if (retryTimeout.current) {
+        clearTimeout(retryTimeout.current);
+        retryTimeout.current = null;
+      }
+    }
+    return () => {
+      if (retryTimeout.current) {
+        clearTimeout(retryTimeout.current);
+        retryTimeout.current = null;
+      }
+    };
+  }, [status]);
 
   useEffect(() => {
     if (pairedKeys) {
@@ -37,9 +59,9 @@ export function Auth() {
     setStatus(Status.WaitingForAuthorization);
 
     try {
-      // Generate a user_id (you might want to get this from your auth system)
-      const userId = Math.random().toString(36).substring(2, 15);
-
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
       // Step 1: Generate keys using secure API service
       const { readKey, writeKey, pluginToken } = await apiService.generateKeys(userId);
       setStatus(Status.WaitingForAuthorization);
@@ -104,6 +126,7 @@ export function Auth() {
       setStatus(Status.SetupAccount);
       setPairedKeys(null);
     }
+    navigate('/home');
   };
 
   const handleSelectProvider = (provider: 'gitlab' | 'github') => {
@@ -128,7 +151,7 @@ export function Auth() {
     switch (status) {
       case Status.SetupAccount:
         return {
-          label: 'I’ve done the steps',
+          label: "I've done the steps",
           onClick: () => setStatus(Status.SelectProvider),
         };
       case Status.SelectProvider:
@@ -139,8 +162,9 @@ export function Auth() {
         };
       case Status.WaitingForAuthorization:
         return {
-          label: 'It’s taking too long',
+          label: "It's taking too long",
           onClick: () => handleReset(),
+          disabled: !canRetry,
         };
       case Status.Error:
         return {
@@ -154,7 +178,7 @@ export function Auth() {
     <Layout
       footer={<Button {...getFooter()} />}
       header={
-        <Flex align='center' gap={24}>
+        <Flex align='center' gap={24} w='100%'>
           <Button
             size='small'
             variant='text'
@@ -182,8 +206,8 @@ export function Auth() {
       {status === Status.SelectProvider && (
         <Dropdown
           data={[
-            { label: 'GitHub', value: 'github' },
-            { label: 'GitLab', value: 'gitlab' },
+            { label: 'GitHub', value: 'github', icon: 'github_Outlined' },
+            { label: 'GitLab', value: 'gitlab', icon: 'gitlab_Outlined' },
           ]}
           value={selectedProvider}
           onChange={(value) => setSelectedProvider(value as 'github' | 'gitlab')}
