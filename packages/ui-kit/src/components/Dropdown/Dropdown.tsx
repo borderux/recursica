@@ -44,7 +44,7 @@ export type DropdownProps = Pick<
 };
 
 const renderSelectOption: SelectProps["renderOption"] = ({ option }) => (
-  <Flex className={optionStyle} onClick={option.onClick}>
+  <Flex className={optionStyle} align="center" onClick={option.onClick}>
     {option.icon ? <Icon name={option.icon} /> : undefined}
     {option.label}
   </Flex>
@@ -58,10 +58,15 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
       leadingIcon,
       isOptional = false,
       showLabel = true,
+      data,
+      value,
       ...props
     },
     ref,
   ) => {
+    const selectedOption = data.find((item) => item.value === value);
+    const displayIcon = selectedOption?.icon || leadingIcon;
+
     return (
       <Select
         comboboxProps={{
@@ -99,8 +104,10 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
         }
         renderOption={renderSelectOption}
         leftSectionPointerEvents="none"
-        leftSection={leadingIcon ? <Icon name={leadingIcon} /> : undefined}
+        leftSection={displayIcon ? <Icon name={displayIcon} /> : undefined}
         rightSection={<Icon name="keyboard_arrow_down_Outlined" />}
+        data={data}
+        value={value}
         {...props}
       />
     );
