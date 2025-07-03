@@ -10,12 +10,556 @@ For more information about Recursica, go to https://recursica.com
 
 import { colorsTuple, createTheme } from '@mantine/core'
 import { themeVars } from './RecursicaRecursicaContractTheme.css'
+import { recursica } from './Recursica'
 
 export const mantineTheme = createTheme({
   primaryColor: 'color-1-scale-default',
   
   breakpoints: {
     
+  },
+  components: {
+    "accordion": { 
+			styles:{ 
+				root: { 
+					"lavel": recursica['color-on/background/high-emphasis'],
+					"chevron": recursica['color-on/background/high-emphasis'],
+					"stroke": recursica['color/stroke/default'],
+					"padding": recursica['size/spacer/2x'],
+					"spacing": recursica['size/spacer/2x'],
+					"min-width": "140px",
+					"max-width": "464px",
+					"height": "56px",
+					"cheveron": "24px" 
+				} 
+			} 
+		},
+		"action-bar": { 
+			styles:{ 
+				root: { 
+					"background": recursica['color/surface/default'],
+					"vertical-padding": recursica['size/spacer/2x'],
+					"horizontal-padding": recursica['size/spacer/default'],
+					"spacing": recursica['size/spacer/default'] 
+				} 
+			} 
+		},
+		"avatar": { 
+			styles:{ 
+				root: { 
+					"background-contained": recursica['color/1-scale/default'],
+					"background-outline": recursica['color/surface/default'],
+					"stroke-contained": recursica['color-on/1-scale/default/high-emphasis'],
+					"stroke-outline": recursica['color/1-scale/default'],
+					"label-contained": recursica['color-on/1-scale/default/high-emphasis'],
+					"label-outline": recursica['color/1-scale/default'],
+					"small": "24px",
+					"default": "32px",
+					"large": "40px",
+					"icon-size": "20px" 
+				} 
+			} 
+		},
+		"badge": { 
+			styles:{ 
+				root: { 
+					"background-default": recursica['color/surface/default'],
+					"background-primary": recursica['color/1-scale/default'],
+					"background-alert": recursica['color/alert/default'],
+					"background-success": recursica['color/success/default'],
+					"label-default": recursica['color-on/surface/high-emphasis'],
+					"label-primary": recursica['color-on/1-scale/default/high-emphasis'],
+					"label-alert": recursica['color-on/alert/default/high-emphasis'],
+					"label-success": recursica['color-on/success/default/high-emphasis'],
+					"counter-horizontal-padding": recursica['size/spacer/0-5x'],
+					"message-horizontal-padding": recursica['size/spacer/default'],
+					"large-vertical-padding": recursica['size/spacer/0-5x'],
+					"default-min-width": "16px",
+					"default-height": "16px",
+					"large-min-width": "24px",
+					"large-height": "24px" 
+				} 
+			} 
+		},
+		"banner": { 
+			styles:{ 
+				root: { 
+					"background": recursica['color/surface/default'],
+					"stroke": recursica['color/stroke/default'],
+					"text": recursica['color-on/surface/high-emphasis'],
+					"content-spacing": recursica['size/spacer/2x'],
+					"vertical-padding": recursica['size/spacer/2x'],
+					"horizontal-padding-xs": "24px",
+					"horizontal-padding-sm-m": "80px",
+					"horizontal-padding-lg": "128px",
+					"horizontal-padding-xl": "232px",
+					"text-max-width": "500px" 
+				} 
+			} 
+		},
+		"breadcrumb": { 
+			styles:{ 
+				root: { 
+					"clickable": recursica['color-on/background/interactive-text-default'],
+					"unclickable": recursica['color-on/background/high-emphasis'],
+					"padding": recursica['size/spacer/default'],
+					"spacing": recursica['size/spacer/0-5x'],
+					"icon-size": "20px" 
+				} 
+			} 
+		},
+		"button": { 
+			styles:{ 
+				root: { 
+					"background-contained": recursica['color/interactive/default'],
+					"background-contained-hover": recursica['color/interactive/hover'],
+					"background-contained-disabled": recursica['color/interactive/disabled'],
+					"text-contained-enabled": recursica['color-on/interactive/default'],
+					"text-contained-disabled": recursica['color-on/interactive/disabled'],
+					"text-enabled-default": recursica['color-on/background/interactive-text-default'],
+					"text-hover-default": recursica['color-on/background/interactive-text-hover'],
+					"text-disabled-default": recursica['color-on/background/interactive-text-disabled'],
+					"border-radius": recursica['size/border-radius/4x'],
+					"border-radius-icon": recursica['size/border-radius/3x'],
+					"content-max-width": "320px",
+					"icon-size": "24px",
+					"default-vertical-padding": recursica['size/spacer/1-5x'],
+					"default-horizontal-padding": recursica['size/spacer/2x'],
+					"default-icon-padding": recursica['size/spacer/1-5x'],
+					"default-spacing": recursica['size/spacer/default'],
+					"default-min-width": "120px",
+					"small-vertical-padding": recursica['size/spacer/0-5x'],
+					"small-horizontal-padding": recursica['size/spacer/1-5x'],
+					"small-icon-padding": recursica['size/spacer/0-5x'],
+					"small-spacing": recursica['size/spacer/0-5x'],
+					"small-min-width": "80px" 
+				} 
+			} 
+		},
+		"checkbox": { 
+			styles:{ 
+				root: { 
+					"enabled": recursica['color/interactive/default'],
+					"disabled": recursica['color/interactive/disabled'],
+					"icon-enabled": recursica['color-on/interactive/default'],
+					"icon-disabled": recursica['color-on/interactive/disabled'],
+					"spacing-stacked": recursica['size/spacer/default'],
+					"spacing-inline": recursica['size/spacer/2x'],
+					"spacing-individual": recursica['size/spacer/0-5x'],
+					"spacing-group": recursica['size/spacer/0-5x'],
+					"border-radius": recursica['size/border-radius/0-5x'],
+					"checkbox-size": "24px" 
+				} 
+			} 
+		},
+		"chip": { 
+			styles:{ 
+				root: { 
+					"text-unselected": recursica['color-on/background/high-emphasis'],
+					"stroke-unselected": recursica['color/stroke/default'],
+					"text-selected": recursica['color-on/surface/high-emphasis'],
+					"stroke-selected": recursica['color/stroke/selected'],
+					"background-selected": recursica['color/surface/selected'],
+					"stroke-error": recursica['color/stroke/error'],
+					"text-error": recursica['color-on/background/alert'],
+					"border-radius": recursica['size/spacer/0-5x'],
+					"horizontal-padding": recursica['size/spacer/0-5x'],
+					"vertical-padding": recursica['size/spacer/default'],
+					"spacing": recursica['size/spacer/0-5x'],
+					"icon-size": "16px" 
+				} 
+			} 
+		},
+		"date-picker": { 
+			styles:{ 
+				root: { 
+					"background": recursica['color/surface/default'],
+					"stroke": recursica['color/stroke/default'],
+					"background-date-selected": recursica['color/1-scale/default'],
+					"date-selected": recursica['color-on/1-scale/default/high-emphasis'],
+					"date-default": recursica['color-on/surface/high-emphasis'],
+					"date-hover": recursica['color/surface/hover'],
+					"date-disabled": recursica['color-on/surface/disabled'],
+					"height": "400px",
+					"width": "360px",
+					"padding": recursica['size/spacer/1-5x'],
+					"spacing": recursica['size/spacer/2x'],
+					"row-spacing": recursica['size/spacer/default'],
+					"button-spacing": recursica['size/spacer/default'],
+					"border-radius": recursica['size/border-radius/default'],
+					"date-border-radius": recursica['size/border-radius/4x'],
+					"date-padding": recursica['size/spacer/0-5x'],
+					"date-size": "40px",
+					"month-year-height": "40px",
+					"month-year-width": "73px" 
+				} 
+			} 
+		},
+		"divider": { 
+			styles:{ 
+				root: { 
+					"stroke": recursica['color/stroke/default'] 
+				} 
+			} 
+		},
+		"dropdown": { 
+			styles:{ 
+				root: { 
+					"default": recursica['color/stroke/default'],
+					"focus": recursica['color/stroke/focused'],
+					"selected": recursica['color/stroke/selected'],
+					"error": recursica['color/stroke/error'],
+					"disabled": recursica['color/stroke/disabled'],
+					"background-input": recursica['color/surface/default'],
+					"background-input-disabled": recursica['color/surface/disabled'],
+					"horizontal-padding": recursica['size/spacer/2x'],
+					"vertical-padding": recursica['size/spacer/1-5x'],
+					"spacing-stacked": recursica['size/spacer/default'],
+					"spacing-inline": recursica['size/spacer/2x'],
+					"min-width": "140px",
+					"max-width": "464px",
+					"input-height": "48px" 
+				} 
+			} 
+		},
+		"menu": { 
+			styles:{ 
+				root: { 
+					"surface": recursica['color/surface/default'],
+					"menu-vertical-padding": recursica['size/spacer/default'],
+					"menu-horizontal-padding": recursica['size/spacer/default'],
+					"border-radius": recursica['size/border-radius/default'],
+					"min-width": "140px",
+					"max-width": "464px" 
+				} 
+			} 
+		},
+		"menu-item": { 
+			styles:{ 
+				root: { 
+					"default": recursica['color/surface/default'],
+					"selected": recursica['color/surface/selected'],
+					"focused": recursica['color/surface/focused'],
+					"text-default": recursica['color-on/surface/high-emphasis'],
+					"text-disabled": recursica['color-on/surface/disabled'],
+					"item-horizontal-padding": recursica['size/spacer/2x'],
+					"item-vertical-padding": recursica['size/spacer/2x'],
+					"spacing": recursica['size/spacer/default'] 
+				} 
+			} 
+		},
+		"file-upload": { 
+			styles:{ 
+				root: { 
+					"background": recursica['color/surface/default'],
+					"stroke": recursica['color/1-scale/200'],
+					"icon": recursica['color/1-scale/default'],
+					"text": recursica['color-on/surface/high-emphasis'],
+					"text-labels": recursica['color-on/surface/medium-emphasis'],
+					"radius": recursica['size/border-radius/default'],
+					"content-spacing": recursica['size/spacer/default'],
+					"restrictions-spacing": recursica['size/spacer/0-5x'],
+					"vertical-padding": recursica['size/spacer/2x'],
+					"horizontal-padding": recursica['size/spacer/2x'],
+					"icon-size": "36px" 
+				} 
+			} 
+		},
+		"form": { 
+			styles:{ 
+				root: { 
+					"color": recursica['color-on/surface/disabled'],
+					"size": recursica['size/spacer/0-5x'] 
+				} 
+			} 
+		},
+		"list": { 
+			styles:{ 
+				root: { 
+					"selected-background": recursica['color/background/selected'],
+					"text-background": recursica['color-on/background/high-emphasis'],
+					"icon-background": recursica['color-on/background/high-emphasis'],
+					"selected-surface": recursica['color/surface/selected'],
+					"text-surface": recursica['color-on/surface/high-emphasis'],
+					"icon-surface": recursica['color-on/surface/high-emphasis'],
+					"spacing": recursica['size/spacer/default'],
+					"horizontal-padding": recursica['size/spacer/default'],
+					"min-height": "44px",
+					"min-width": "200px" 
+				} 
+			} 
+		},
+		"modal": { 
+			styles:{ 
+				root: { 
+					"background": recursica['color/surface/default'],
+					"title": recursica['color-on/surface/high-emphasis'],
+					"button-spacing": recursica['size/spacer/0-5x'],
+					"border-radius": recursica['size/border-radius/2x'],
+					"horizontal-padding": "24px",
+					"vertical-padding": "16px",
+					"min-width": "304px",
+					"max-width": "542px" 
+				} 
+			} 
+		},
+		"pagination": { 
+			styles:{ 
+				root: { 
+					"number-spacing": recursica['size/spacer/0-5x'],
+					"background-hover-unselected": recursica['color/surface/hover'],
+					"background-selected": recursica['color/interactive/default'],
+					"background-hover-selected": recursica['color/interactive/hover'],
+					"text-default": recursica['color-on/background/interactive-text-default'],
+					"text-selected": recursica['color-on/interactive/default'],
+					"text-secondary": recursica['color-on/surface/medium-emphasis'],
+					"text-disabled": recursica['color-on/background/interactive-text-disabled'] 
+				} 
+			} 
+		},
+		"panel": { 
+			styles:{ 
+				root: { 
+					"background": recursica['color/surface/default'],
+					"title": recursica['color-on/surface/high-emphasis'],
+					"body-padding": "24px",
+					"header-horizontal-padding": "24px",
+					"header-vertical-padding": recursica['size/spacer/2x'],
+					"horizontal-spacing": recursica['size/spacer/2x'] 
+				} 
+			} 
+		},
+		"radio": { 
+			styles:{ 
+				root: { 
+					"selected": recursica['color/interactive/default'],
+					"selected-disabled": recursica['color/interactive/disabled'],
+					"unselected": recursica['color/interactive/default'],
+					"unselected-disabled": recursica['color/interactive/disabled'],
+					"spacing-stacked": recursica['size/spacer/default'],
+					"spacing-inline": recursica['size/spacer/2x'],
+					"spacing-individual": recursica['size/spacer/0-5x'],
+					"spacing-group": recursica['size/spacer/0-5x'],
+					"border-radius": recursica['size/border-radius/2x'],
+					"border-radius-inside": recursica['size/border-radius/1-5x'],
+					"dot": recursica['size/border-radius/default'],
+					"label-vertical-padding": recursica['size/spacer/0-5x'],
+					"value-vertical-padding": recursica['size/spacer/0-5x'],
+					"width": "24px",
+					"height": "24px" 
+				} 
+			} 
+		},
+		"search": { 
+			styles:{ 
+				root: { 
+					"stroke-default": recursica['color/stroke/default'],
+					"stroke-focus": recursica['color/stroke/focused'],
+					"stroke-valued": recursica['color/stroke/selected'],
+					"stroke-disabled": recursica['color/stroke/disabled'],
+					"background-default": recursica['color/surface/default'],
+					"background-disabled": recursica['color/surface/disabled'],
+					"horizontal-padding": recursica['size/spacer/2x'],
+					"vertical-padding": recursica['size/spacer/1-5x'],
+					"spacing-inline": recursica['size/spacer/2x'],
+					"radius": recursica['size/border-radius/default'],
+					"min-width": "224px",
+					"max-width": "464px",
+					"input-height": "48px" 
+				} 
+			} 
+		},
+		"slider": { 
+			styles:{ 
+				root: { 
+					"track-unselected": recursica['color-on/background/medium-emphasis'],
+					"track-unselected-disabled": recursica['color-on/background/disabled'],
+					"discrete-steps-default": recursica['color/surface/default'],
+					"discrete-steps-disabled": recursica['color/surface/disabled'],
+					"track-selected": recursica['color/interactive/default'],
+					"track-selected-disabled": recursica['color/interactive/disabled'],
+					"handle": recursica['color/interactive/default'],
+					"max-width-stacked": "620px",
+					"handle-hovered": recursica['color/interactive/hover'],
+					"max-width-inline": "874px",
+					"handle-disabled": recursica['color/interactive/disabled'],
+					"max-width-slider": "464px",
+					"min-width-slider": "140px",
+					"spacing-stacked": recursica['size/spacer/default'],
+					"spacing-inline": recursica['size/spacer/2x'],
+					"spacing-content": recursica['size/spacer/2x'],
+					"border-radius": recursica['size/border-radius/3x'],
+					"track-height": recursica['size/spacer/0-5x'],
+					"vertical-padding-discrete-steps": recursica['size/spacer/0-5x'],
+					"handle-size": "24px",
+					"discrete-step-size": "2px" 
+				} 
+			} 
+		},
+		"stepper": { 
+			styles:{ 
+				root: { 
+					"done-step-background": recursica['color/1-scale/default'],
+					"done-step-icon": recursica['color-on/1-scale/default/high-emphasis'],
+					"active-step-background": recursica['color/surface/default'],
+					"active-step-stroke": recursica['color/1-scale/default'],
+					"active-step-text": recursica['color-on/surface/high-emphasis'],
+					"next-step-enabled-background": recursica['color/surface/default'],
+					"next-step-enabled-stroke": recursica['color-on/background/medium-emphasis'],
+					"next-step-enabled-text": recursica['color-on/surface/medium-emphasis'],
+					"next-step-disabled-background": recursica['color/surface/disabled'],
+					"next-step-disabled-stroke": recursica['color-on/background/disabled'],
+					"next-step-disabled-text": recursica['color-on/background/disabled'],
+					"padding": recursica['size/spacer/0-5x'],
+					"border-radius": recursica['size/border-radius/3x'],
+					"spacing": recursica['size/spacer/default'],
+					"label-spacing": recursica['size/spacer/0-5x'],
+					"label-horizontal-padding": recursica['size/spacer/default'],
+					"icon-size": "24px",
+					"horizontal-min-width": "463px",
+					"vertical-min-width": "144px" 
+				} 
+			} 
+		},
+		"switch": { 
+			styles:{ 
+				root: { 
+					"thumb-unselected": recursica['color-on/interactive/default'],
+					"thumb-unselected-disabled": recursica['color-on/interactive/disabled'],
+					"thumb-selected": recursica['color-on/interactive/default'],
+					"thumb-selected-disabled": recursica['color-on/interactive/disabled'],
+					"track-selected-enabled": recursica['color/interactive/default'],
+					"track-selected-disabled": recursica['color/interactive/disabled'],
+					"track-unselected-disabled": recursica['color-on/background/disabled'],
+					"track-unselected-enabled": recursica['color-on/background/medium-emphasis'],
+					"spacing-stacked": recursica['size/spacer/default'],
+					"spacing-inline": recursica['size/spacer/2x'],
+					"spacing-standalone": recursica['size/spacer/default'],
+					"border-radius-track": recursica['size/border-radius/3x'] 
+				} 
+			} 
+		},
+		"tab": { 
+			styles:{ 
+				root: { 
+					"default-stroke": recursica['color/stroke/default'],
+					"selected-stroke": recursica['color/interactive/default'],
+					"unselected": recursica['color-on/background/medium-emphasis'],
+					"selected": recursica['color/interactive/default'],
+					"horizontal-padding": recursica['size/spacer/2x'],
+					"spacing": recursica['size/spacer/default'],
+					"icon-size": "20px",
+					"height": "48px",
+					"min-width": "120px",
+					"label-max-width": "200px" 
+				} 
+			} 
+		},
+		"table": { 
+			styles:{ 
+				root: { 
+					"cell-background": recursica['color/surface/default'],
+					"cell-background-hovered": recursica['color/surface/hover'],
+					"cell-background-selected": recursica['color/surface/selected'],
+					"header-background": recursica['color/background/default'],
+					"header-background-hovered": recursica['color/background/hover'],
+					"header-background-pressed": recursica['color/background/pressed'],
+					"icon": recursica['color-on/background/medium-emphasis'],
+					"action-icon": recursica['color/interactive/default'],
+					"spacing": recursica['size/spacer/0-5x'],
+					"comfy-height": "64px",
+					"comfy-vertical-padding": recursica['size/spacer/2x'],
+					"comfy-horizontal-padding": recursica['size/spacer/default'],
+					"default-height": "48px",
+					"default-vertical-padding": recursica['size/spacer/1-5x'],
+					"default-horizontal-padding": recursica['size/spacer/default'],
+					"small-height": "40px",
+					"small-vertical-padding": recursica['size/spacer/0-5x'],
+					"small-horizontal-padding": recursica['size/spacer/default'],
+					"header-right-horizontal-padding": recursica['size/spacer/3x'],
+					"icon-size": "20px" 
+				} 
+			} 
+		},
+		"table-pagination": { 
+			styles:{ 
+				root: { 
+					"text": recursica['color-on/surface/high-emphasis'],
+					"stroke": recursica['color/stroke/default'],
+					"background": recursica['color/surface/default'],
+					"label-spacing": recursica['size/spacer/default'],
+					"horizontal-spacing": recursica['size/spacer/2x'],
+					"horizontal-padding": recursica['size/spacer/default'],
+					"vertical-padding": recursica['size/spacer/2x'],
+					"min-width": "700px" 
+				} 
+			} 
+		},
+		"text-field": { 
+			styles:{ 
+				root: { 
+					"default": recursica['color/stroke/default'],
+					"focused": recursica['color/stroke/focused'],
+					"valued": recursica['color/stroke/selected'],
+					"error": recursica['color/stroke/error'],
+					"disabled": recursica['color/stroke/disabled'],
+					"background-input": recursica['color/surface/default'],
+					"background-input-disabled": recursica['color/surface/disabled'],
+					"horizontal-padding": recursica['size/spacer/2x'],
+					"vertical-padding": recursica['size/spacer/1-5x'],
+					"spacing-stacked": recursica['size/spacer/default'],
+					"spacing-inline": recursica['size/spacer/2x'],
+					"min-width": "140px",
+					"max-width": "464px",
+					"min-input-height": "48px",
+					"read-only-background": recursica['color/surface/disabled'],
+					"read-only-stroke": recursica['color/stroke/disabled'] 
+				} 
+			} 
+		},
+		"time-picker": { 
+			styles:{ 
+				root: { 
+					"max-width-stacked": "288px",
+					"stacked-spacing": recursica['size/spacer/default'],
+					"max-width-inline": "528px",
+					"inline-spacing": recursica['size/spacer/2x'],
+					"between-spacing": recursica['size/spacer/default'],
+					"help-text-left-vertical-spacing": "240px" 
+				} 
+			} 
+		},
+		"toast": { 
+			styles:{ 
+				root: { 
+					"background-default": recursica['color/surface/default'],
+					"vertical-padding": recursica['size/spacer/default'],
+					"horizontal-padding": recursica['size/spacer/2x'],
+					"spacing": recursica['size/spacer/1-5x'],
+					"min-width": "384px",
+					"max-width": "624px",
+					"icon-size": "24px",
+					"background-success": recursica['color/success/default'],
+					"background-error": recursica['color/alert/default'],
+					"text-default": recursica['color-on/surface/high-emphasis'],
+					"text-success": recursica['color-on/success/default/high-emphasis'],
+					"text-error": recursica['color-on/alert/default/high-emphasis'] 
+				} 
+			} 
+		},
+		"tooltip": { 
+			styles:{ 
+				root: { 
+					"background": recursica['color/1-scale/900'],
+					"text": recursica['color-on/1-scale/900/high-emphasis'],
+					"horizontal-padding": recursica['size/spacer/1-5x'],
+					"vertical-padding": recursica['size/spacer/default'],
+					"beak-spacer": recursica['size/spacer/default'],
+					"radius": recursica['size/border-radius/0-5x'],
+					"max-width": "240px" 
+				} 
+			} 
+		}
   },
   colors: {
     "color-on-3-scale-200-high-emphasis": colorsTuple(themeVars['color-on/3-scale/200/high-emphasis']),

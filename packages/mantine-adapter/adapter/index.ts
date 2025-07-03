@@ -88,6 +88,7 @@ export function runAdapter({
   const mantineTheme = generateMantineTheme({
     mantineThemeOverride: overrides?.mantineTheme,
     tokens: processTokens.tokens,
+    uiKit: processTokens.uiKit,
     breakpoints: processTokens.breakpoints,
     contractTokens: {
       tokens: vanillaExtractThemes.contractTokens,
