@@ -19,7 +19,7 @@ import { generateIcons, GenerateIconsOutput } from "./generateIcons";
 import { generateSpacersType } from "./generateSpacersType";
 import { generateBorderRadiusType } from "./generateBorderRadiusType";
 import { generateRecursicaThemes } from "./generateRecursicaThemes";
-import { ProcessTokens } from "../shared/processTokens";
+import { Tokens } from "../shared/Tokens";
 import type { RecursicaConfiguration } from "@recursica/schemas";
 import { generatePrettierignore } from "./generatePrettierignore";
 
@@ -30,7 +30,7 @@ interface GenerateThemeFileParams {
   project: RecursicaConfiguration["project"];
   icons: Record<string, string>;
   iconsConfig: RecursicaConfigIcons | undefined;
-  processTokens: ProcessTokens;
+  processTokens: Tokens;
 }
 
 /**
@@ -46,16 +46,16 @@ interface GenerateThemeFileParams {
  * @param themes - Theme variants
  * @param project - Project name
  */
-interface RunAdapterOutput {
-  recursicaTokens: ExportingResult;
+export interface RunAdapterOutput {
   vanillaExtractThemes: VanillaExtractThemesOutput;
   mantineTheme: GenerateMantineThemeOutput;
+  iconsObject: GenerateIconsOutput | undefined;
+  recursicaTokens: ExportingResult;
   uiKitObject: ExportingResult;
   recursicaObject: ExportingResult;
   colorsType: ExportingResult;
   spacersType: ExportingResult;
   borderRadiusType: ExportingResult;
-  iconsObject: GenerateIconsOutput | undefined;
   recursicaThemes: ExportingResult;
   prettierignore: ExportingResult;
 }
@@ -67,7 +67,7 @@ export function runAdapter({
   icons,
   iconsConfig,
   processTokens,
-}: GenerateThemeFileParams): RunAdapterOutput {
+}: GenerateThemeFileParams): ExportingResult[] {
   const outputPath = srcPath + "/recursica";
 
   const recursicaTokens = generateRecursicaTokens(processTokens.tokens, {
@@ -130,18 +130,28 @@ export function runAdapter({
 
   const prettierignore = generatePrettierignore();
 
-  const fileContents = {
+  const exportingResults: ExportingResult[] = [
     recursicaTokens,
-    vanillaExtractThemes,
-    mantineTheme,
+    vanillaExtractThemes.themeContract,
+    vanillaExtractThemes.themesFileContent,
+    vanillaExtractThemes.typeDefinitions,
+    ...vanillaExtractThemes.vanillaExtractThemes,
+    mantineTheme.mantineTheme,
+    mantineTheme.postCss,
     uiKitObject,
     recursicaObject,
     colorsType,
     spacersType,
     borderRadiusType,
-    iconsObject,
     recursicaThemes,
     prettierignore,
-  };
-  return fileContents;
+  ];
+
+  if (iconsObject) {
+    exportingResults.push(iconsObject.iconExports);
+    exportingResults.push(iconsObject.iconResourceMap);
+    exportingResults.push(...iconsObject.exportedIcons);
+  }
+
+  return exportingResults;
 }

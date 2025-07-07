@@ -12,7 +12,12 @@ export interface ProcessTokensParams {
   themes: Themes;
   overrides: RecursicaConfigOverrides | undefined;
 }
-export class ProcessTokens {
+export type TokensProcessor = (
+  variables: Record<string, CollectionToken>,
+  jsonThemeName?: string,
+) => void;
+
+export class Tokens {
   public tokens: ThemeTokens = {};
   public themes: Themes = {};
 
@@ -23,9 +28,14 @@ export class ProcessTokens {
   public uiKit: ThemeTokens = {};
 
   public overrides: RecursicaConfigOverrides | undefined;
+  public transform?: TokensProcessor;
 
-  constructor(overrides: RecursicaConfigOverrides | undefined) {
+  constructor(
+    overrides: RecursicaConfigOverrides | undefined,
+    transform?: TokensProcessor,
+  ) {
     this.overrides = overrides;
+    this.transform = transform;
   }
 
   private processValue = (
@@ -80,10 +90,13 @@ export class ProcessTokens {
     }
   }
 
-  public processTokens(
+  public process(
     variables: Record<string, CollectionToken>,
     jsonThemeName?: string,
   ) {
+    if (this.transform) {
+      return this.transform(variables, jsonThemeName);
+    }
     // Process tokens collection
     for (const token of Object.values(variables)) {
       if (isFontFamilyToken(token)) {

@@ -4,7 +4,7 @@ import { hasThemeOrKitFiles, hasIconsJsonFiles } from "./fileCheck";
 import type { RecursicaConfigIcons, RecursicaConfigOverrides } from "../types";
 import { RecursicaConfiguration } from "@recursica/schemas";
 
-interface RecursicaConfig {
+export interface RecursicaConfig {
   rootPath: string;
   iconsJson: string | undefined;
   bundledJson: string | undefined;

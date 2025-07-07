@@ -12,15 +12,14 @@ export type {
 } from "./types";
 
 // Export utility functions
-export { loadConfig } from "./utils/loadConfig";
 export {
   isFontFamilyToken,
   isEffectToken,
   isColorOrFloatToken,
   capitalize,
 } from "@recursica/common";
-export { ProcessTokens } from "./shared/processTokens";
+export { Tokens } from "./shared/Tokens";
 export { processJsonContent } from "./shared/common";
 
 // Export the main CLI function for programmatic use
-export { runMain } from "./cli";
+export { recursica } from "./cli";

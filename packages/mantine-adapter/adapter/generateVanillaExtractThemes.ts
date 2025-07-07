@@ -63,7 +63,6 @@ export type ThemeDictionary = Record<ThemeType, ThemeVariant>;
 export interface VanillaExtractThemesOutput {
   themesFileContent: ExportingResult;
   vanillaExtractThemes: ExportingResult[];
-  availableThemes: ExportingResult;
   themeContract: ExportingResult;
   contractTokens: ContractTokens;
   typeDefinitions: ExportingResult;
@@ -186,11 +185,6 @@ export const themeVars = createThemeContract(${JSON.stringify(contractTokens, nu
       content: themesFileContent,
       path: themesFilePath,
       filename: themesFilename,
-    },
-    availableThemes: {
-      content: availableThemesContent,
-      path: availableThemesPath,
-      filename: "types.ts",
     },
     vanillaExtractThemes,
     themeContract: {

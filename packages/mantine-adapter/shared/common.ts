@@ -5,7 +5,7 @@ import type {
 } from "../types";
 import type { RecursicaVariablesSchema } from "@recursica/schemas";
 import type { RecursicaConfiguration } from "@recursica/schemas";
-import { ProcessTokens } from "./processTokens";
+import { Tokens, TokensProcessor } from "./Tokens";
 import { runAdapter } from "../adapter";
 
 export interface ProcessJsonParams {
@@ -30,7 +30,8 @@ export interface RunAdapterParams {
 export function processJsonContent(
   jsonFileContent: string,
   { project, overrides }: ProcessJsonParams,
-): ProcessTokens {
+  transform?: TokensProcessor,
+): Tokens {
   const jsonContent: RecursicaVariablesSchema = JSON.parse(jsonFileContent);
 
   const jsonProjectId = jsonContent.projectId;
@@ -46,14 +47,14 @@ export function processJsonContent(
     throw new Error("project-id does not match the project in the config file");
   }
 
-  const processTokens = new ProcessTokens(overrides);
-  processTokens.processTokens(jsonContent.tokens);
+  const tokens = new Tokens(overrides, transform);
+  tokens.process(jsonContent.tokens);
   for (const theme of Object.keys(jsonContent.themes)) {
-    processTokens.processTokens(jsonContent.themes[theme], theme);
+    tokens.process(jsonContent.themes[theme], theme);
   }
-  processTokens.processTokens(jsonContent.uiKit);
+  tokens.process(jsonContent.uiKit);
 
-  return processTokens;
+  return tokens;
 }
 
 /**
