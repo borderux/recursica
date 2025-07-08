@@ -25,6 +25,44 @@ async function main() {
     getTeamLibrary(projectId, pluginVersion);
   }
 }
+
+async function syncTokens() {
+  const libraries = await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
+  const libraryVariables: Variable[] = [];
+  for (const library of libraries) {
+    const variables = await figma.teamLibrary.getVariablesInLibraryCollectionAsync(library.key);
+    for (const variable of variables) {
+      const actualVar = await figma.variables.importVariableByKeyAsync(variable.key);
+      libraryVariables.push(actualVar);
+    }
+  }
+  const localCollections = await figma.variables.getLocalVariableCollectionsAsync();
+  for (const collection of [...localCollections]) {
+    if (collection.name === 'ID variables') continue;
+    for (const varId of collection.variableIds) {
+      const variable = await figma.variables.getVariableByIdAsync(varId);
+      if (!variable) continue;
+      for (const [key, modeVal] of Object.entries(variable.valuesByMode)) {
+        if (typeof modeVal === 'object' && modeVal !== null && 'type' in modeVal) {
+          const refVar = await figma.variables.getVariableByIdAsync(modeVal.id);
+          if (refVar) {
+            const newSyncVar = libraryVariables.find((v) => v.name === refVar.name);
+            if (newSyncVar) {
+              const newRefVal: VariableValue = {
+                type: 'VARIABLE_ALIAS',
+                id: newSyncVar.id,
+              };
+              variable.setValueForMode(key, newRefVal);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+syncTokens();
+
 figma.ui.onmessage = async (e) => {
   if (e.type === 'GET_LOCAL_STORAGE') {
     getLocalStorage();
