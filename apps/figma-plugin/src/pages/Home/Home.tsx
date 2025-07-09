@@ -21,22 +21,25 @@ export function Home() {
           <Logo />
           <Typography variant='h2'>Recursica</Typography>
         </Flex>
-        {!repository ? (
-          <Typography
-            variant='body-1/normal'
-            textAlign='center'
-            color='color-on/background/medium-emphasis'
-          >
-            Getting this ready for you...
-          </Typography>
-        ) : (
-          <Button
-            component={NavLink}
-            to={target}
-            label='Get started'
-            rightSection='arrow_forward_Outlined'
-          />
-        )}
+        <Flex gap={2} justify='center'>
+          <Button component={NavLink} to='/reconnect-variables' label='Sync Variables' />
+          {!repository ? (
+            <Typography
+              variant='body-1/normal'
+              textAlign='center'
+              color='color-on/background/medium-emphasis'
+            >
+              Getting this ready for you...
+            </Typography>
+          ) : (
+            <Button
+              component={NavLink}
+              to={target}
+              label='Get started'
+              rightSection='arrow_forward_Outlined'
+            />
+          )}
+        </Flex>
       </Flex>
     </Layout>
   );
