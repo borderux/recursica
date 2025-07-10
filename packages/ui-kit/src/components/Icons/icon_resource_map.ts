@@ -11,6 +11,8 @@ For more information about Recursica, go to https://recursica.com
 import * as IconExports from './icon_exports';
 
 export const IconResourceMap = {
+	'person_outline_Filled': IconExports.person_outline_Filled,
+	'person_outline_Outlined': IconExports.person_outline_Outlined,
 	'github_Outlined': IconExports.github_Outlined,
 	'gitlab_Outlined': IconExports.gitlab_Outlined,
 	'arrow_back_Filled': IconExports.arrow_back_Filled,

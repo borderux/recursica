@@ -27,7 +27,8 @@
         "pending",
         "warning_amber",
         "github",
-        "gitlab"
+        "gitlab",
+        "person_outline" 
       ],
       "variants": ["Outlined", "Filled"]
     }

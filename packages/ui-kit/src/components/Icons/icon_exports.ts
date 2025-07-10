@@ -9,6 +9,10 @@ For more information about Recursica, go to https://recursica.com
 */
 
 /// <reference types="vite-plugin-svgr/client" />
+import person_outline_Filled from './Svg/person_outline_Filled.svg?react';
+export { person_outline_Filled };
+import person_outline_Outlined from './Svg/person_outline_Outlined.svg?react';
+export { person_outline_Outlined };
 import github_Outlined from './Svg/github_Outlined.svg?react';
 export { github_Outlined };
 import gitlab_Outlined from './Svg/gitlab_Outlined.svg?react';
