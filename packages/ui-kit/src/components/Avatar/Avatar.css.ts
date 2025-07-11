@@ -5,7 +5,7 @@ import { typographies } from "../Typography";
 const root = style({
   width: recursica["avatar/size/default"],
   height: recursica["avatar/size/default"],
-  background: recursica["avatar/color/background-contained"],
+  background: recursica["avatar/color/background-primary"],
   borderRadius: "100%",
   display: "flex",
   alignItems: "center",
@@ -23,12 +23,12 @@ const root = style({
     },
     // Outline variant for icon and text
     '&[data-outline="true"][data-variant="icon"]': {
-      border: `1px solid ${recursica["avatar/color/stroke-outline"]}`,
-      background: recursica["avatar/color/background-outline"],
+      border: `1px solid ${recursica["avatar/color/border-ghost"]}`,
+      background: recursica["avatar/color/background-ghost"],
     },
     '&[data-outline="true"][data-variant="text"]': {
-      border: `1px solid ${recursica["avatar/color/stroke-outline"]}`,
-      background: recursica["avatar/color/background-outline"],
+      border: `1px solid ${recursica["avatar/color/border-ghost"]}`,
+      background: recursica["avatar/color/background-ghost"],
     },
   },
 });
@@ -46,24 +46,22 @@ const placeholder = style({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  color: recursica["avatar/color/label-contained"],
+  color: recursica["avatar/color/label-primary"],
   fontWeight: 600,
   selectors: {
     // Outline variant for text
     [`${root}[data-outline="true"][data-variant="text"] &`]: {
-      color: recursica["avatar/color/label-outline"],
+      color: recursica["avatar/color/label-ghost"],
     },
   },
 });
 
 const icon = style({
-  width: recursica["avatar/size/icon-size"],
-  height: recursica["avatar/size/icon-size"],
-  color: recursica["avatar/color/label-contained"],
+  color: recursica["avatar/color/label-primary"],
   selectors: {
     // Outline variant for icon
     [`${root}[data-outline="true"][data-variant="icon"] &`]: {
-      color: recursica["avatar/color/label-outline"],
+      color: recursica["avatar/color/label-ghost"],
     },
   },
 });

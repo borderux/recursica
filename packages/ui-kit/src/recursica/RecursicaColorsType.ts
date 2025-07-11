@@ -9,102 +9,64 @@ For more information about Recursica, go to https://recursica.com
 */
 
 export type RecursicaColors = 
-	"color/orchid/800" |
 	"color/salmon/600" |
 	"color/mandy/900" |
-	"color/black/68" |
-	"color/mineshaft/100" |
-	"color/cerise/200" |
+	"color/gray/100" |
 	"color/greensheen/600" |
-	"color/orchid/700" |
-	"color/cerise/50" |
 	"color/salmon/900" |
 	"color/mandy/200" |
 	"color/elevation/14" |
 	"color/salmon/300" |
 	"color/salmon/800" |
-	"color/black/100" |
-	"color/cerise/800" |
-	"color/black/38" |
-	"color/mineshaft/300" |
-	"color/orchid/300" |
-	"color/white/12" |
+	"color/gray/300" |
 	"color/mandarin/300" |
 	"color/elevation/10" |
-	"color/black/95" |
-	"color/mineshaft/400" |
-	"color/white/68" |
+	"color/gray/400" |
 	"color/greensheen/200" |
 	"color/salmon/200" |
-	"color/cerise/600" |
 	"color/cornflower/700" |
 	"color/cornflower/800" |
 	"color/greensheen/300" |
-	"color/white/38" |
 	"color/mandy/500" |
-	"color/orchid/100" |
-	"color/orchid/600" |
-	"color/mineshaft/600" |
+	"color/gray/600" |
 	"color/greensheen/100" |
-	"color/white/100" |
-	"color/cerise/400" |
 	"color/mandarin/200" |
 	"color/salmon/50" |
-	"color/mineshaft/900" |
-	"color/black/8" |
+	"color/gray/1000" |
 	"color/elevation/12" |
-	"color/cerise/100" |
 	"color/greensheen/400" |
 	"color/elevation/25" |
-	"color/mineshaft/50" |
+	"color/gray/050" |
 	"color/cornflower/100" |
-	"color/black/18" |
 	"color/greensheen/500" |
 	"color/greensheen/700" |
-	"color/black/12" |
-	"color/cerise/300" |
-	"color/mineshaft/200" |
-	"color/orchid/900" |
-	"color/white/8" |
-	"color/mineshaft/500" |
+	"color/gray/200" |
+	"color/gray/500" |
 	"color/greensheen/50" |
 	"color/cornflower/300" |
 	"color/cornflower/500" |
 	"color/mandy/700" |
 	"color/cornflower/200" |
 	"color/cornflower/600" |
-	"color/black/4" |
-	"color/cerise/700" |
 	"color/mandy/800" |
 	"color/cornflower/900" |
-	"color/cerise/500" |
-	"color/orchid/50" |
 	"color/mandarin/50" |
 	"color/mandarin/100" |
-	"color/white/92" |
 	"color/elevation/40" |
-	"color/orchid/200" |
 	"color/elevation/08" |
-	"color/mineshaft/800" |
+	"color/gray/800" |
 	"color/mandarin/400" |
-	"color/cerise/900" |
-	"color/orchid/400" |
 	"color/mandy/50" |
 	"color/elevation/20" |
 	"color/mandy/400" |
 	"color/mandarin/600" |
-	"color/white/18" |
 	"color/salmon/500" |
-	"color/white/4" |
-	"color/white/84" |
 	"color/greensheen/800" |
 	"color/mandy/100" |
 	"color/mandarin/800" |
-	"color/black/84" |
 	"color/elevation/18" |
 	"color/elevation/35" |
-	"color/orchid/500" |
-	"color/mineshaft/700" |
+	"color/gray/700" |
 	"color/mandy/300" |
 	"color/mandarin/700" |
 	"color/salmon/700" |
@@ -116,440 +78,136 @@ export type RecursicaColors =
 	"color/salmon/400" |
 	"color/mandarin/900" |
 	"color/greensheen/900" |
-	"color-on/3-scale/200/high-emphasis" |
-	"color-on/surface/success" |
-	"color-on/3-scale/600/medium-emphasis" |
-	"color/background/selected" |
-	"color-on/4-scale/200/disabled" |
-	"color-on/3-scale/050/disabled" |
-	"color/success/400" |
-	"color-on/3-scale/700/medium-emphasis" |
-	"color-on/3-scale/900/medium-emphasis" |
-	"color-on/3-scale/700/disabled" |
-	"color/surface/pressed" |
-	"color-on/4-scale/050/high-emphasis" |
-	"color-on/3-scale/100/medium-emphasis" |
-	"color/surface/selected" |
-	"color-on/3-scale/400/high-emphasis" |
-	"color-on/4-scale/200/high-emphasis" |
-	"color/background/pressed" |
-	"color/background/hover" |
-	"color-on/4-scale/300/disabled" |
-	"color-on/3-scale/300/high-emphasis" |
-	"color-on/4-scale/400/high-emphasis" |
-	"color/surface/disabled" |
-	"color-on/4-scale/800/disabled" |
-	"color-on/surface/disabled" |
-	"color-on/3-scale/800/disabled" |
-	"color-on/4-scale/500/disabled" |
-	"color-on/3-scale/100/high-emphasis" |
-	"color-on/4-scale/500/medium-emphasis" |
-	"color-on/3-scale/200/disabled" |
-	"color-on/3-scale/100/disabled" |
-	"color-on/4-scale/500/high-emphasis" |
-	"color-on/surface/interactive-text-focused" |
-	"color-on/success/700/disabled" |
-	"color/surface/focused" |
-	"color-on/3-scale/600/high-emphasis" |
-	"color-on/4-scale/600/disabled" |
-	"color-on/3-scale/500/high-emphasis" |
-	"color-on/4-scale/600/medium-emphasis" |
-	"color-on/4-scale/700/disabled" |
-	"color-on/3-scale/500/disabled" |
-	"color-on/4-scale/700/medium-emphasis" |
-	"color-on/3-scale/500/medium-emphasis" |
-	"color/1-scale/default" |
-	"color-on/3-scale/600/disabled" |
-	"color-on/4-scale/600/high-emphasis" |
-	"color-on/4-scale/700/high-emphasis" |
-	"color-on/3-scale/900/high-emphasis" |
-	"color-on/3-scale/900/disabled" |
-	"color-on/4-scale/800/medium-emphasis" |
-	"color/stroke/default" |
-	"color-on/4-scale/800/high-emphasis" |
-	"color-on/3-scale/400/disabled" |
-	"color-on/3-scale/300/disabled" |
-	"color-on/4-scale/900/disabled" |
-	"color-on/3-scale/300/medium-emphasis" |
-	"color-on/4-scale/900/medium-emphasis" |
-	"color-on/3-scale/200/medium-emphasis" |
-	"color-on/4-scale/900/high-emphasis" |
-	"color-on/surface/alert" |
-	"color-on/background/success" |
-	"color-on/surface/interactive-text-pressed" |
-	"color-on/background/alert" |
-	"color-on/surface/interactive-text-default" |
-	"color-on/success/700/medium-emphasis" |
-	"color/surface/hover" |
-	"color-on/3-scale/050/medium-emphasis" |
-	"color-on/4-scale/100/disabled" |
-	"color-on/success/700/high-emphasis" |
-	"color-on/4-scale/100/medium-emphasis" |
-	"color-on/3-scale/050/high-emphasis" |
-	"color-on/1-scale/300/high-emphasis" |
-	"color-on/1-scale/300/medium-emphasis" |
-	"color/2-scale/100" |
-	"color/2-scale/200" |
-	"color/2-scale/300" |
-	"color/2-scale/400" |
-	"color/2-scale/500" |
-	"color/2-scale/600" |
-	"color/2-scale/900" |
-	"color-on/3-scale/400/medium-emphasis" |
-	"color-on/4-scale/200/medium-emphasis" |
-	"color-on/4-scale/100/high-emphasis" |
-	"color-on/4-scale/050/disabled" |
-	"color-on/4-scale/050/medium-emphasis" |
-	"color/2-scale/50" |
-	"color-on/surface/medium-emphasis" |
-	"color-on/background/disabled" |
-	"color-on/background/high-emphasis" |
-	"color-on/3-scale/700/high-emphasis" |
-	"color-on/1-scale/300/disabled" |
-	"color/background/disabled" |
-	"color-on/1-scale/050/disabled" |
-	"color/surface/default" |
-	"color-on/1-scale/050/medium-emphasis" |
-	"color-on/1-scale/200/disabled" |
-	"color-on/1-scale/200/medium-emphasis" |
-	"color-on/1-scale/200/high-emphasis" |
-	"color-on/1-scale/400/medium-emphasis" |
-	"color-on/1-scale/100/high-emphasis" |
-	"color-on/1-scale/400/high-emphasis" |
-	"color/1-scale/900" |
-	"color-on/1-scale/500/disabled" |
-	"color-on/1-scale/500/medium-emphasis" |
-	"color-on/1-scale/600/disabled" |
-	"color-on/1-scale/600/medium-emphasis" |
-	"color-on/1-scale/600/high-emphasis" |
-	"color/1-scale/800" |
-	"color-on/1-scale/700/disabled" |
-	"color-on/1-scale/700/medium-emphasis" |
-	"color-on/surface/interactive-text-hover" |
-	"color/2-scale/800" |
-	"color/background/default" |
-	"color-on/1-scale/800/disabled" |
-	"color-on/1-scale/800/medium-emphasis" |
-	"color/1-scale/400" |
-	"color-on/1-scale/900/medium-emphasis" |
-	"color/1-scale/500" |
-	"color-on/1-scale/900/high-emphasis" |
-	"color-on/1-scale/500/high-emphasis" |
-	"color/1-scale/700" |
-	"color-on/1-scale/100/disabled" |
-	"color-on/4-scale/400/disabled" |
-	"color/1-scale/50" |
-	"color-on/1-scale/050/high-emphasis" |
-	"color-on/4-scale/400/medium-emphasis" |
-	"color/1-scale/100" |
-	"color/background/focused" |
-	"color-on/1-scale/900/disabled" |
-	"color-on/1-scale/800/high-emphasis" |
-	"color-on/4-scale/300/medium-emphasis" |
-	"color/1-scale/200" |
-	"color-on/background/medium-emphasis" |
-	"color-on/3-scale/800/high-emphasis" |
-	"color/1-scale/600" |
-	"color-on/1-scale/400/disabled" |
-	"color-on/3-scale/800/medium-emphasis" |
-	"color/2-scale/700" |
-	"color-on/1-scale/700/high-emphasis" |
-	"color-on/surface/high-emphasis" |
-	"color-on/1-scale/100/medium-emphasis" |
-	"color-on/4-scale/300/high-emphasis" |
-	"color/1-scale/300" |
-	"color-on/2-scale/200/disabled" |
-	"color-on/2-scale/300/disabled" |
-	"color-on/2-scale/300/medium-emphasis" |
-	"color-on/2-scale/200/high-emphasis" |
-	"color-on/2-scale/900/disabled" |
-	"color-on/2-scale/200/medium-emphasis" |
-	"color-on/2-scale/900/medium-emphasis" |
-	"color-on/2-scale/400/medium-emphasis" |
-	"color-on/2-scale/800/disabled" |
-	"color-on/2-scale/700/high-emphasis" |
-	"color-on/2-scale/700/medium-emphasis" |
-	"color-on/2-scale/700/disabled" |
-	"color-on/2-scale/900/high-emphasis" |
-	"color-on/2-scale/100/high-emphasis" |
-	"color-on/2-scale/100/medium-emphasis" |
-	"color-on/2-scale/600/high-emphasis" |
-	"color-on/2-scale/800/high-emphasis" |
-	"color-on/2-scale/800/medium-emphasis" |
-	"color-on/2-scale/100/disabled" |
-	"color-on/2-scale/400/disabled" |
-	"color-on/2-scale/300/high-emphasis" |
-	"color-on/2-scale/500/high-emphasis" |
-	"color-on/2-scale/500/medium-emphasis" |
-	"color-on/2-scale/500/disabled" |
-	"color-on/2-scale/400/high-emphasis" |
-	"color-on/2-scale/600/medium-emphasis" |
-	"color-on/2-scale/600/disabled" |
-	"color/2-scale/default" |
-	"color-on/success/100/high-emphasis" |
-	"color-on/alert/500/medium-emphasis" |
-	"color-on/success/200/disabled" |
-	"color-on/alert/500/disabled" |
-	"color-on/alert/700/high-emphasis" |
-	"color-on/success/300/high-emphasis" |
-	"color-on/alert/900/high-emphasis" |
-	"color-on/success/300/medium-emphasis" |
-	"color-on/success/300/disabled" |
-	"color-on/success/050/medium-emphasis" |
-	"color-on/warning/050/disabled" |
-	"color-on/success/050/high-emphasis" |
-	"color/warning/700" |
-	"color-on/success/100/medium-emphasis" |
-	"color-on/success/200/medium-emphasis" |
-	"color-on/success/200/high-emphasis" |
-	"color-on/warning/050/medium-emphasis" |
-	"color-on/success/400/disabled" |
-	"color-on/success/500/medium-emphasis" |
-	"color/warning/50" |
-	"color-on/success/600/disabled" |
-	"color/warning/300" |
-	"color-on/warning/100/disabled" |
-	"color-on/success/500/disabled" |
-	"color-on/success/600/medium-emphasis" |
-	"color/warning/400" |
-	"color-on/alert/700/disabled" |
-	"color-on/alert/050/disabled" |
-	"color/warning/200" |
-	"color-on/success/500/high-emphasis" |
-	"color-on/alert/100/disabled" |
-	"color/success/200" |
-	"color-on/alert/050/medium-emphasis" |
-	"color-on/alert/200/medium-emphasis" |
-	"color-on/alert/200/high-emphasis" |
-	"color-on/alert/300/disabled" |
-	"color/success/900" |
-	"color-on/success/900/high-emphasis" |
-	"color-on/alert/300/medium-emphasis" |
-	"color-on/alert/300/high-emphasis" |
-	"color-on/alert/400/disabled" |
-	"color-on/alert/400/medium-emphasis" |
-	"color-on/alert/400/high-emphasis" |
-	"color-on/alert/500/high-emphasis" |
-	"color-on/alert/600/disabled" |
-	"color/alert/600" |
-	"color-on/warning/050/high-emphasis" |
-	"color-on/alert/800/disabled" |
-	"color-on/alert/900/disabled" |
-	"color-on/warning/300/medium-emphasis" |
-	"color-on/warning/500/high-emphasis" |
-	"color/warning/100" |
-	"color-on/alert/200/disabled" |
-	"color/success/800" |
-	"color-on/warning/600/medium-emphasis" |
-	"color-on/warning/700/disabled" |
-	"color-on/alert/100/medium-emphasis" |
-	"color/success/300" |
-	"color-on/alert/050/high-emphasis" |
-	"color-on/warning/600/disabled" |
-	"color-on/alert/100/high-emphasis" |
-	"color/success/700" |
-	"color-on/warning/400/disabled" |
-	"color/warning/600" |
-	"color/warning/500" |
-	"color-on/success/100/disabled" |
-	"color-on/alert/700/medium-emphasis" |
-	"color/warning/800" |
-	"color-on/warning/800/high-emphasis" |
-	"color-on/warning/900/high-emphasis" |
-	"color-on/warning/600/high-emphasis" |
-	"color-on/warning/700/high-emphasis" |
-	"color-on/warning/700/medium-emphasis" |
-	"color-on/warning/800/medium-emphasis" |
-	"color-on/warning/800/disabled" |
-	"color-on/warning/300/high-emphasis" |
-	"color-on/warning/400/medium-emphasis" |
-	"color-on/warning/900/medium-emphasis" |
-	"color-on/success/600/high-emphasis" |
-	"color-on/success/400/medium-emphasis" |
-	"color-on/success/400/high-emphasis" |
-	"color-on/success/050/disabled" |
-	"color-on/warning/100/high-emphasis" |
-	"color/alert/700" |
-	"color/alert/50" |
-	"color/alert/100" |
-	"color-on/warning/900/disabled" |
-	"color/alert/500" |
-	"color-on/warning/200/high-emphasis" |
-	"color/alert/400" |
-	"color-on/alert/600/high-emphasis" |
-	"color-on/alert/600/medium-emphasis" |
-	"color-on/alert/800/high-emphasis" |
-	"color-on/alert/900/medium-emphasis" |
-	"color-on/success/900/disabled" |
-	"color-on/success/900/medium-emphasis" |
-	"color/success/600" |
-	"color-on/success/800/high-emphasis" |
-	"color-on/warning/200/disabled" |
-	"color/alert/200" |
-	"color-on/warning/300/disabled" |
-	"color/alert/300" |
-	"color-on/success/800/disabled" |
-	"color/warning/900" |
-	"color/success/50" |
-	"color-on/warning/400/high-emphasis" |
-	"color-on/alert/800/medium-emphasis" |
-	"color/success/500" |
-	"color-on/success/800/medium-emphasis" |
-	"color-on/warning/500/disabled" |
-	"color-on/warning/500/medium-emphasis" |
-	"color-on/warning/100/medium-emphasis" |
-	"color/alert/800" |
-	"color-on/warning/200/medium-emphasis" |
-	"color/alert/900" |
-	"color/success/100" |
-	"color/alert/default" |
-	"color-on/1-scale/default/high-emphasis" |
-	"color-on/alert/default/high-emphasis" |
-	"color-on/1-scale/default/disabled" |
-	"color-on/alert/default/medium-emphasis" |
-	"color-on/alert/default/disabled" |
-	"color/success/default" |
-	"color-on/success/default/high-emphasis" |
-	"color-on/success/default/medium-emphasis" |
-	"color-on/success/default/disabled" |
-	"color-on/1-scale/default/medium-emphasis" |
-	"color-on/2-scale/050/high-emphasis" |
-	"color-on/2-scale/050/medium-emphasis" |
-	"color-on/2-scale/050/disabled" |
-	"color/warning/default" |
-	"color-on/2-scale/default/disabled" |
-	"color-on/2-scale/default/medium-emphasis" |
-	"color-on/2-scale/default/high-emphasis" |
-	"color/interactive/selected" |
-	"color/interactive/focused" |
-	"color/interactive/disabled" |
-	"color-on/surface/interactive-text-selected" |
-	"color/interactive/default" |
-	"color/interactive/hover" |
-	"color-on/surface/interactive-text-disabled" |
-	"color/interactive/pressed" |
-	"elevation/elevation-02/1" |
-	"elevation/elevation-03/1" |
-	"elevation/elevation-04/2" |
-	"elevation/elevation-12/2" |
-	"elevation/elevation-08/2" |
-	"elevation/elevation-08/1" |
-	"elevation/elevation-12/3" |
-	"elevation/elevation-12/1" |
-	"elevation/elevation-24/3" |
-	"elevation/elevation-06/1" |
-	"elevation/elevation-24/2" |
-	"elevation/elevation-24/1" |
-	"elevation/elevation-16/1" |
-	"elevation/elevation-16/2" |
-	"elevation/elevation-16/3" |
-	"elevation/elevation-08/3" |
-	"elevation/elevation-06/2" |
-	"elevation/elevation-03/2" |
-	"elevation/elevation-04/1" |
-	"elevation/elevation-00/1" |
-	"elevation/elevation-01/1" |
-	"color/4-scale/100" |
-	"color/4-scale/200" |
-	"color/4-scale/500" |
-	"color/4-scale/300" |
-	"color/4-scale/400" |
-	"color/4-scale/700" |
-	"color/3-scale/50" |
-	"color/4-scale/800" |
-	"color/4-scale/600" |
-	"color/3-scale/200" |
-	"color/3-scale/300" |
-	"color/3-scale/400" |
-	"color/3-scale/500" |
-	"color/3-scale/600" |
-	"color/3-scale/100" |
-	"color/4-scale/900" |
-	"color/3-scale/800" |
-	"color/3-scale/700" |
-	"color/4-scale/50" |
-	"color/3-scale/900" |
-	"color-on/background/interactive-text-disabled" |
-	"color-on/background/interactive-text-hover" |
-	"color-on/background/interactive-text-default" |
-	"color-on/background/interactive-text-focused" |
-	"color-on/background/interactive-text-selected" |
-	"color-on/background/interactive-text-pressed" |
-	"color/neutral/900" |
-	"color/neutral/100" |
-	"color/neutral/700" |
-	"color/neutral/400" |
-	"color/neutral/800" |
-	"color/neutral/600" |
-	"color/neutral/500" |
-	"color/neutral/300" |
-	"color/neutral/200" |
-	"color/neutral/50" |
-	"color-on/interactive/disabled" |
-	"color-on/interactive/default" |
-	"color/stroke/pressed" |
-	"color/stroke/focused" |
-	"color/stroke/selected" |
-	"color/stroke/hover" |
-	"color/stroke/disabled" |
-	"color/stroke/error" |
-	"color-on/alert/default/interactive-text-pressed" |
-	"color-on/1-scale/default/interactive-text-hover" |
-	"color-on/alert/default/interactive-text-default" |
-	"color-on/1-scale/default/interactive-text-pressed" |
-	"color-on/success/default/interactive-text-selected" |
-	"color-on/success/default/interactive-text-focused" |
-	"color-on/success/default/action-text-disabled" |
-	"color-on/alert/default/interactive-text-disabled" |
-	"color-on/success/default/interactive-text-pressed" |
-	"color-on/success/default/interactive-text-hover" |
-	"color-on/1-scale/default/interactive-text-focused" |
-	"color-on/success/default/interactive-text-default" |
-	"color-on/1-scale/default/action-text-disabled" |
-	"color-on/1-scale/default/interactive-text-selected" |
-	"color-on/alert/default/interactive-text-selected" |
-	"color-on/alert/default/interactive-text-focused" |
-	"color-on/alert/default/interactive-text-hover" |
-	"color-on/1-scale/default/interactive-text-default" |
-	"color/1-scale/states/selected" |
-	"color/warning/states/disabled" |
-	"color/success/states/focused" |
-	"color/alert/states/pressed" |
-	"color/warning/states/selected" |
-	"color/1-scale/states/pressed" |
-	"color/1-scale/states/focused" |
-	"color/success/states/pressed" |
-	"color/success/states/hover" |
-	"color/warning/states/hover" |
-	"color/success/states/disabled" |
-	"color/success/states/selected" |
-	"color/warning/states/pressed" |
-	"color/alert/states/disabled" |
-	"color/alert/states/selected" |
-	"color/1-scale/states/hover" |
-	"color/1-scale/states/disabled" |
-	"color/alert/states/focused" |
-	"color/warning/states/focused" |
-	"color/alert/states/hover" |
-	"color-on/warning/default/interactive-text-hover" |
-	"color-on/warning/default/interactive-text-default" |
-	"color-on/warning/default/action-text-disabled 2" |
-	"color-on/warning/default/high-emphasis" |
-	"color-on/warning/default/interactive-text-selected 2" |
-	"color-on/warning/default/interactive-text-focused" |
-	"color-on/warning/default/interactive-text-pressed" |
-	"color-on/warning/default/disabled" |
-	"color-on/warning/default/medium-emphasis" |
-	"accordion/color/lavel" |
+	"color/gray/900" |
+	"color/gray/000" |
+	"layers/layer-0/elements/interactive/color" |
+	"layers/layer-1/elements/warn-text" |
+	"colors/scale-2/300/on-tone" |
+	"layers/layer-0/elements/success-text" |
+	"elevations/elevation-1/color" |
+	"layers/layer-2/elements/success-text" |
+	"colors/neutral/200/tone" |
+	"colors/scale-1/800/on-tone" |
+	"colors/neutral/400/tone" |
+	"colors/scale-1/600/tone" |
+	"colors/neutral/600/tone" |
+	"colors/scale-1/050/on-tone" |
+	"colors/scale-1/default/tone" |
+	"layers/layer-3/elements/warn-text" |
+	"colors/scale-1/500/on-tone" |
+	"colors/scale-1/300/on-tone" |
+	"colors/neutral/700/on-tone" |
+	"colors/black" |
+	"layers/layer-2/properties/surface" |
+	"colors/scale-2/700/tone" |
+	"colors/scale-2/default/on-tone" |
+	"colors/scale-2/600/tone" |
+	"layers/layer-alternatives/high-contrast/elements/interactive/color" |
+	"layers/layer-1/elements/alert-text" |
+	"colors/neutral/050/tone" |
+	"layers/layer-alternatives/success/properties/surface" |
+	"layers/layer-alternatives/high-contrast/elements/text/color" |
+	"colors/scale-2/800/on-tone" |
+	"colors/white" |
+	"layers/layer-alternatives/warn/elements/interactive/color" |
+	"colors/scale-1/700/on-tone" |
+	"colors/scale-2/900/tone" |
+	"layers/layer-2/elements/interactive/color" |
+	"colors/scale-1/default/on-tone" |
+	"colors/scale-1/200/on-tone" |
+	"layers/layer-1/properties/surface" |
+	"colors/neutral/400/on-tone" |
+	"colors/scale-2/700/on-tone" |
+	"layers/layer-0/elements/warn-text" |
+	"colors/neutral/100/on-tone" |
+	"colors/scale-2/600/on-tone" |
+	"colors/neutral/900/on-tone" |
+	"layers/layer-alternatives/primary/properties/surface" |
+	"colors/scale-1/100/on-tone" |
+	"layers/layer-0/properties/surface" |
+	"colors/scale-2/500/on-tone" |
+	"layers/layer-2/elements/alert-text" |
+	"colors/scale-2/400/on-tone" |
+	"colors/scale-2/800/tone" |
+	"colors/scale-1/050/tone" |
+	"colors/scale-1/300/tone" |
+	"colors/scale-2/050/on-tone" |
+	"colors/scale-1/100/tone" |
+	"layers/layer-alternatives/primary/elements/text/color" |
+	"colors/neutral/800/on-tone" |
+	"colors/neutral/600/on-tone" |
+	"colors/neutral/200/on-tone" |
+	"colors/neutral/800/tone" |
+	"layers/layer-3/properties/surface" |
+	"colors/scale-2/500/tone" |
+	"colors/neutral/500/on-tone" |
+	"elevations/elevation-2/color" |
+	"colors/scale-2/default/tone" |
+	"layers/layer-2/elements/text/color" |
+	"elevations/elevation-3/color" |
+	"layers/layer-alternatives/alert/elements/text/color" |
+	"colors/scale-1/700/tone" |
+	"layers/layer-1/elements/text/color" |
+	"layers/layer-1/elements/interactive/color" |
+	"colors/scale-1/600/on-tone" |
+	"colors/scale-2/400/tone" |
+	"layers/layer-alternatives/alert/properties/surface" |
+	"layers/layer-1/properties/border-color" |
+	"layers/layer-2/properties/border-color" |
+	"layers/layer-2/elements/warn-text" |
+	"colors/scale-2/300/tone" |
+	"colors/scale-2/900/on-tone" |
+	"colors/scale-1/900/on-tone" |
+	"colors/neutral/500/tone" |
+	"layers/layer-3/elements/alert-text" |
+	"layers/layer-alternatives/success/elements/interactive/color" |
+	"layers/layer-3/elements/success-text" |
+	"layers/layer-3/elements/text/color" |
+	"colors/scale-2/200/tone" |
+	"layers/layer-3/elements/interactive/color" |
+	"colors/scale-2/050/tone" |
+	"layers/layer-alternatives/primary/elements/interactive/color" |
+	"layers/layer-1/elements/success-text" |
+	"layers/layer-alternatives/alert/elements/interactive/color" |
+	"colors/scale-2/200/on-tone" |
+	"colors/scale-1/500/tone" |
+	"colors/neutral/default/tone" |
+	"layers/layer-alternatives/warn/properties/surface" |
+	"colors/scale-2/100/tone" |
+	"colors/neutral/050/on-tone" |
+	"layers/layer-alternatives/warn/elements/text/color" |
+	"colors/scale-1/800/tone" |
+	"colors/scale-2/100/on-tone" |
+	"colors/scale-1/400/tone" |
+	"layers/layer-3/properties/border-color" |
+	"colors/neutral/900/tone" |
+	"layers/layer-0/elements/alert-text" |
+	"layers/layer-alternatives/success/elements/text/color" |
+	"colors/neutral/300/on-tone" |
+	"colors/neutral/300/tone" |
+	"colors/neutral/default/on-tone" |
+	"colors/scale-1/900/tone" |
+	"layers/layer-0/elements/text/color" |
+	"colors/scale-1/400/on-tone" |
+	"colors/neutral/100/tone" |
+	"layers/layer-alternatives/high-contrast/properties/surface" |
+	"colors/scale-1/200/tone" |
+	"colors/neutral/700/tone" |
+	"colors/alert" |
+	"colors/success" |
+	"colors/warning" |
+	"elevations/elevation-4/color" |
+	"accordion/color/label" |
 	"accordion/color/chevron" |
-	"accordion/color/stroke" |
+	"accordion/color/border" |
 	"action-bar/color/background" |
-	"avatar/color/background-contained" |
-	"avatar/color/background-outline" |
-	"avatar/color/stroke-contained" |
-	"avatar/color/stroke-outline" |
-	"avatar/color/label-contained" |
-	"avatar/color/label-outline" |
+	"avatar/color/background-primary" |
+	"avatar/color/border-primary" |
+	"avatar/color/label-primary" |
+	"avatar/color/background-ghost" |
+	"avatar/color/border-ghost" |
+	"avatar/color/label-ghost" |
+	"avatar/color/border-image" |
 	"badge/color/background-default" |
 	"badge/color/background-primary" |
 	"badge/color/background-alert" |
@@ -559,151 +217,110 @@ export type RecursicaColors =
 	"badge/color/label-alert" |
 	"badge/color/label-success" |
 	"banner/color/background" |
-	"banner/color/stroke" |
+	"banner/color/border" |
 	"banner/color/text" |
-	"breadcrumb/color/clickable" |
-	"breadcrumb/color/unclickable" |
-	"button/color/background-contained" |
-	"button/color/background-contained-hover" |
-	"button/color/background-contained-disabled" |
-	"button/color/text-contained-enabled" |
-	"button/color/text-contained-disabled" |
-	"button/color/text-enabled-default" |
-	"button/color/text-hover-default" |
-	"button/color/text-disabled-default" |
-	"checkbox/color/enabled" |
-	"checkbox/color/disabled" |
-	"checkbox/color/icon-enabled" |
-	"checkbox/color/icon-disabled" |
+	"banner/color/icon-background" |
+	"banner/color/icon-color" |
+	"breadcrumb/color/interactive" |
+	"breadcrumb/color/no-interactive" |
+	"button/color/background-solid" |
+	"button/color/background-solid-hover" |
+	"button/color/text-solid" |
+	"button/color/outline" |
+	"button/color/outline-hover" |
+	"checkbox/color/checkbox" |
+	"checkbox/color/icon" |
+	"chip/color/background-unselected" |
 	"chip/color/text-unselected" |
-	"chip/color/stroke-unselected" |
+	"chip/color/border-unselected" |
 	"chip/color/text-selected" |
-	"chip/color/stroke-selected" |
+	"chip/color/border-selected" |
 	"chip/color/background-selected" |
-	"chip/color/stroke-error" |
-	"chip/color/text-error" |
+	"chip/color/error" |
 	"date-picker/color/background" |
-	"date-picker/color/stroke" |
+	"date-picker/color/border" |
 	"date-picker/color/background-date-selected" |
+	"date-picker/color/date-regular" |
 	"date-picker/color/date-selected" |
-	"date-picker/color/date-default" |
 	"date-picker/color/date-hover" |
-	"date-picker/color/date-disabled" |
-	"divider/color/stroke" |
-	"dropdown/color/default" |
-	"dropdown/color/focus" |
-	"dropdown/color/selected" |
-	"dropdown/color/error" |
-	"dropdown/color/disabled" |
+	"divider/color/border" |
 	"dropdown/color/background-input" |
-	"dropdown/color/background-input-disabled" |
+	"dropdown/color/border" |
+	"dropdown/color/border-focus" |
+	"dropdown/color/border-selected" |
+	"dropdown/color/border-error" |
 	"menu/color/surface" |
 	"menu-item/color/default" |
+	"menu-item/color/hover" |
 	"menu-item/color/selected" |
 	"menu-item/color/focused" |
-	"menu-item/color/text-default" |
-	"menu-item/color/text-disabled" |
+	"menu-item/color/text" |
 	"file-upload/color/background" |
-	"file-upload/color/stroke" |
+	"file-upload/color/border" |
 	"file-upload/color/icon" |
 	"file-upload/color/text" |
-	"file-upload/color/text-labels" |
-	"form/icon/color/leading-icon" |
-	"list/color/selected-background" |
-	"list/color/text-background" |
-	"list/color/icon-background" |
-	"list/color/selected-surface" |
-	"list/color/text-surface" |
-	"list/color/icon-surface" |
+	"form/icon/color/icon-color" |
 	"modal/color/background" |
-	"form/icon/color/leading-icon-disabled" |
 	"modal/color/title" |
-	"form/icon/color/trailing-icon" |
-	"form/icon/color/trailing-icon-disabled" |
-	"form/label/color/label" |
-	"form/label/color/optional indicator" |
-	"form/label/color/assistive text" |
-	"form/label/color/error message" |
-	"form/value+placeholder/color/value-default" |
-	"form/value+placeholder/color/value-disabled" |
-	"form/value+placeholder/color/placeholder-default" |
-	"form/value+placeholder/color/placeholder-disabled" |
-	"pagination/color/background-hover-unselected" |
+	"form/label/color/default-color" |
+	"form/label/color/error-message" |
+	"form/value+placeholder/color/input-value" |
 	"pagination/color/background-selected" |
 	"pagination/color/background-hover-selected" |
+	"pagination/color/background-hover-unselected" |
+	"pagination/color/page-number-default" |
 	"panel/color/background" |
-	"pagination/color/text-default" |
-	"pagination/color/text-selected" |
+	"pagination/color/page-number-selected" |
+	"pagination/color/text" |
 	"panel/color/title" |
-	"pagination/color/text-secondary" |
-	"pagination/color/text-disabled" |
-	"radio/color/selected" |
-	"radio/color/selected-disabled" |
-	"radio/color/unselected" |
-	"radio/color/unselected-disabled" |
-	"search/color/stroke-default" |
-	"search/color/stroke-focus" |
-	"search/color/stroke-valued" |
-	"search/color/stroke-disabled" |
-	"search/color/background-default" |
-	"search/color/background-disabled" |
+	"radio/color/default" |
+	"search/color/background" |
+	"search/color/border" |
+	"search/color/border-focus" |
+	"search/color/border-valued" |
 	"slider/color/track-unselected" |
-	"slider/color/track-unselected-disabled" |
 	"slider/color/discrete-steps-default" |
-	"slider/color/discrete-steps-disabled" |
 	"slider/color/track-selected" |
-	"slider/color/track-selected-disabled" |
 	"slider/color/handle" |
 	"slider/color/handle-hovered" |
-	"slider/color/handle-disabled" |
 	"stepper/color/done-step-background" |
 	"stepper/color/done-step-icon" |
 	"stepper/color/active-step-background" |
 	"stepper/color/active-step-stroke" |
 	"stepper/color/active-step-text" |
-	"stepper/color/next-step-enabled-background" |
-	"stepper/color/next-step-enabled-stroke" |
+	"stepper/color/next-step-background-enabled" |
+	"stepper/color/next-step-border-enabled" |
 	"stepper/color/next-step-enabled-text" |
-	"stepper/color/next-step-disabled-background" |
-	"stepper/color/next-step-disabled-stroke" |
-	"stepper/color/next-step-disabled-text" |
-	"switch/color/thumb-unselected" |
-	"switch/color/thumb-unselected-disabled" |
-	"switch/color/thumb-selected" |
-	"switch/color/thumb-selected-disabled" |
-	"switch/color/track-selected-enabled" |
-	"switch/color/track-selected-disabled" |
-	"switch/color/track-unselected-disabled" |
-	"switch/color/track-unselected-enabled" |
-	"tab/color/default-stroke" |
-	"tab/color/selected-stroke" |
-	"tab/color/unselected" |
-	"tab/color/selected" |
+	"switch/color/thumb" |
+	"switch/color/track-selected" |
+	"switch/color/track-unselected" |
+	"tab/color/border-unselected" |
+	"tab/color/border-selected" |
+	"tab/color/label" |
 	"table/color/cell-background" |
+	"table/color/success" |
 	"table/color/cell-background-hovered" |
 	"table/color/cell-background-selected" |
 	"table/color/header-background" |
 	"table/color/header-background-hovered" |
-	"table/color/header-background-pressed" |
 	"table/color/icon" |
 	"table/color/action-icon" |
 	"table-pagination/color/text" |
-	"table-pagination/color/stroke" |
+	"table-pagination/color/border" |
 	"table-pagination/color/background" |
-	"text-field/color/default" |
-	"text-field/color/focused" |
-	"text-field/color/valued" |
-	"text-field/color/error" |
-	"text-field/color/disabled" |
+	"text-field/color/border" |
+	"text-field/color/border-focus" |
+	"text-field/color/border-valued" |
+	"text-field/color/border-error" |
 	"text-field/color/background-input" |
-	"text-field/color/background-input-disabled" |
 	"text-field/color/read-only-background" |
-	"text-field/color/read-only-stroke" |
 	"toast/color/background-default" |
 	"toast/color/background-success" |
 	"toast/color/background-error" |
 	"toast/color/text-default" |
 	"toast/color/text-success" |
+	"toast/color/button-on-success" |
 	"toast/color/text-error" |
+	"toast/color/button-on-error" |
 	"tooltip/color/background" |
 	"tooltip/color/text";

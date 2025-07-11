@@ -21,7 +21,7 @@ export interface ButtonProps extends HTMLAttributes<HTMLButtonElement> {
   leftSection?: IconName;
 }
 /** Primary UI component for user interaction */
-const ForwardedButton = forwardRef<HTMLButtonElement, ButtonProps>(
+export const ForwardedButton = forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
       label,

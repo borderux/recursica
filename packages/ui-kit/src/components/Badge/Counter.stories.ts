@@ -22,6 +22,30 @@ export const BadgeCount: Story = {
     variant: "default",
   },
 };
+export const BadgeCountPrimary: Story = {
+  args: {
+    label: 42,
+    type: "counter",
+    variant: "primary",
+  },
+};
+
+export const BadgeCountAlert: Story = {
+  args: {
+    label: 7,
+    type: "counter",
+    variant: "alert",
+  },
+};
+
+export const BadgeCountSuccess: Story = {
+  args: {
+    label: 3,
+    type: "counter",
+    variant: "success",
+  },
+};
+
 export const BadgeCountLong: Story = {
   args: {
     label: 10000,

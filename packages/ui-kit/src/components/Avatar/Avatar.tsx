@@ -54,8 +54,8 @@ const ForwardedAvatar = forwardRef<HTMLDivElement, AvatarProps>(
             size={20}
             color={
               outline
-                ? "avatar/color/label-outline"
-                : "avatar/color/label-contained"
+                ? "avatar/color/background-outline"
+                : "avatar/color/background-solid"
             }
             name={icon}
           />

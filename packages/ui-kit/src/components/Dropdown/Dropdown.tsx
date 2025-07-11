@@ -83,7 +83,7 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
                 <Typography variant="body-2/normal">{label}</Typography>
                 <Typography
                   variant="caption"
-                  color="form/label/color/optional indicator"
+                  color="form/value+placeholder/color/input-value"
                 >
                   (optional)
                 </Typography>

@@ -35,7 +35,7 @@
   },
   "overrides": {
     "mantineTheme": {
-      "1-scale": "'color-1-scale-default'"
+      "1-scale": "'colors-scale-1-default-tone'"
     }
   }
 }

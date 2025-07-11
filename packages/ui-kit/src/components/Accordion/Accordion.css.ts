@@ -13,7 +13,7 @@ const control = style({
 const label = style({
   ...typographies["subtitle-1/normal"],
   padding: 0,
-  color: recursica["accordion/color/lavel"],
+  color: recursica["accordion/color/label"],
 });
 
 const item = style({
@@ -21,7 +21,7 @@ const item = style({
   flexDirection: "column",
   alignItems: "flex-start",
   gap: recursica["accordion/size/spacing"],
-  borderColor: recursica["accordion/color/stroke"],
+  borderColor: recursica["accordion/color/border"],
 });
 
 const content = style({

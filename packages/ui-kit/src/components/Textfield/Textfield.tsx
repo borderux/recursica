@@ -134,7 +134,7 @@ export const Textfield = forwardRef<HTMLTextAreaElement, TextfieldProps>(
               <Typography variant="body-2/normal">{label}</Typography>
               <Typography
                 variant="caption"
-                color="form/label/color/optional indicator"
+                color="form/label/color/default-color"
               >
                 (optional)
               </Typography>

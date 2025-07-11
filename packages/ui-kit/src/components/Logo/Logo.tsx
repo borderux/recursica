@@ -16,7 +16,7 @@ export interface LogoProps {
   onClick?: () => void;
 }
 export function Logo({
-  color = "color/1-scale/default",
+  color = "colors/scale-1/default/tone",
   size = "medium",
   onClick,
 }: LogoProps) {

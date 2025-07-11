@@ -8,6 +8,9 @@ const root = style({
   boxSizing: "border-box",
   height: "auto",
   border: "none",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
   borderRadius: recursica["button/size/border-radius"],
   ":hover": {
     border: "none",
@@ -15,6 +18,7 @@ const root = style({
   ":disabled": {
     cursor: "not-allowed",
     pointerEvents: "none",
+    opacity: recursica["button/color/disabled"],
   },
   selectors: {
     '&[data-notext="true"]': {
@@ -25,7 +29,7 @@ const root = style({
     },
     // Button sizes
     '&[data-size="default"]': {
-      paddingBlock: recursica["button/size/default-vertical-padding"],
+      height: recursica["button/size/default-size"],
       paddingInline: recursica["button/size/default-horizontal-padding"],
       minWidth: recursica["button/size/default-min-width"],
       vars: {
@@ -33,15 +37,15 @@ const root = style({
       },
     },
     '&[data-size="default"][data-notext="true"]': {
-      paddingBlock: recursica["button/size/default-icon-padding"],
-      paddingInline: recursica["button/size/default-icon-padding"],
+      height: recursica["button/size/default-size"],
+      width: recursica["button/size/default-size"],
       minWidth: "auto",
       vars: {
         [innerGap]: "0px",
       },
     },
     '&[data-size="small"]': {
-      paddingBlock: recursica["button/size/small-vertical-padding"],
+      height: recursica["button/size/small-size"],
       paddingInline: recursica["button/size/small-horizontal-padding"],
       minWidth: recursica["button/size/small-min-width"],
       vars: {
@@ -59,34 +63,32 @@ const root = style({
     // Button variants
     // Contained
     '&[data-variant="contained"]': {
-      backgroundColor: recursica["button/color/background-contained"],
-      color: recursica["button/color/text-contained-enabled"],
+      backgroundColor: recursica["button/color/background-solid"],
+      color: recursica["button/color/text-solid"],
     },
     '&[data-variant="contained"]:hover': {
-      backgroundColor: recursica["button/color/background-contained-hover"],
+      backgroundColor: recursica["button/color/background-solid-hover"],
     },
     '&[data-variant="contained"]:disabled': {
-      backgroundColor: recursica["button/color/background-contained-disabled"],
-      color: recursica["button/color/text-contained-disabled"],
+      opacity: recursica["button/color/disabled"],
     },
     // Outlined
     '&[data-variant="outline"]': {
       backgroundColor: "transparent",
       border: `1px solid`,
-      borderColor: recursica["button/color/text-enabled-default"],
-      color: recursica["button/color/text-enabled-default"],
+      borderColor: recursica["button/color/outline"],
+      color: recursica["button/color/outline"],
     },
     '&[data-variant="outline"]:disabled': {
-      borderColor: recursica["button/color/text-disabled-default"],
-      color: recursica["button/color/text-disabled-default"],
+      opacity: recursica["button/color/disabled"],
     },
     // Text
     '&[data-variant="text"]': {
       backgroundColor: "transparent",
-      color: recursica["button/color/text-enabled-default"],
+      color: recursica["button/color/outline"],
     },
     '&[data-variant="text"]:disabled': {
-      color: recursica["button/color/text-disabled-default"],
+      opacity: recursica["button/color/disabled"],
     },
   },
 });

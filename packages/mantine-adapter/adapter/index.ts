@@ -46,7 +46,7 @@ interface GenerateThemeFileParams {
  * @param themes - Theme variants
  * @param project - Project name
  */
-interface RunAdapterOutput {
+export interface RunAdapterOutput {
   recursicaTokens: ExportingResult;
   vanillaExtractThemes: VanillaExtractThemesOutput;
   mantineTheme: GenerateMantineThemeOutput;
@@ -87,8 +87,7 @@ export function runAdapter({
 
   const mantineTheme = generateMantineTheme({
     mantineThemeOverride: overrides?.mantineTheme,
-    tokens: processTokens.tokens,
-    breakpoints: processTokens.breakpoints,
+    processTokens,
     contractTokens: {
       tokens: vanillaExtractThemes.contractTokens,
       filename: vanillaExtractThemes.themeContract.filename,
