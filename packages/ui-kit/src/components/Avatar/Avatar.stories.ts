@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 
-import { Avatar } from "./Avatar";
+import { ForwardedAvatar as Avatar } from "./Avatar";
 
 const meta = {
   title: "Avatar",
@@ -65,7 +65,6 @@ export const PrimaryWithIcon: Story = {
   args: {
     initials: "JD",
     variant: "primary",
-    icon: "person_outline_Filled",
     size: "default",
   },
 };
@@ -74,7 +73,6 @@ export const PrimaryWithIconAndBorder: Story = {
   args: {
     initials: "JD",
     variant: "primary",
-    icon: "person_outline_Filled",
     size: "default",
     border: true,
   },
@@ -118,7 +116,6 @@ export const GhostWithIcon: Story = {
   args: {
     initials: "JD",
     variant: "ghost",
-    icon: "person_outline_Filled",
     size: "default",
   },
 };
@@ -127,7 +124,6 @@ export const GhostWithIconAndBorder: Story = {
   args: {
     initials: "JD",
     variant: "ghost",
-    icon: "person_outline_Filled",
     size: "default",
     border: true,
   },

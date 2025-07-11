@@ -1,7 +1,7 @@
 import { createPolymorphicComponent, Avatar as ManAvatar } from "@mantine/core";
 import { forwardRef, type HTMLAttributes } from "react";
 import { styles } from "./Avatar.css";
-import { type IconName, Icon } from "../Icons/Icon";
+import { Icon } from "../Icons/Icon";
 
 export interface AvatarProps extends HTMLAttributes<HTMLDivElement> {
   /** The initials to display (mandatory) */
@@ -10,8 +10,6 @@ export interface AvatarProps extends HTMLAttributes<HTMLDivElement> {
   variant?: "primary" | "ghost" | "image";
   /** The size of the avatar */
   size?: "small" | "default" | "large";
-  /** The icon name for primary and ghost variants */
-  icon?: IconName;
   /** The image source for image variant */
   src?: string;
   /** The alt text for image variant */
@@ -21,13 +19,12 @@ export interface AvatarProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 /** Avatar component for displaying user avatars with different variants */
-const ForwardedAvatar = forwardRef<HTMLDivElement, AvatarProps>(
+export const ForwardedAvatar = forwardRef<HTMLDivElement, AvatarProps>(
   (
     {
       initials,
       variant = "primary",
       size = "default",
-      icon,
       src,
       alt,
       border = false,
@@ -50,7 +47,7 @@ const ForwardedAvatar = forwardRef<HTMLDivElement, AvatarProps>(
         classNames={styles}
         {...props}
       >
-        {(variant === "primary" || variant === "ghost") && icon ? (
+        {variant === "primary" || variant === "ghost" ? (
           <Icon
             size={size === "small" ? 16 : size === "large" ? 24 : 20}
             color={
@@ -58,7 +55,7 @@ const ForwardedAvatar = forwardRef<HTMLDivElement, AvatarProps>(
                 ? "avatar/color/label-primary"
                 : "avatar/color/label-ghost"
             }
-            name={icon}
+            name={"user_outline"}
           />
         ) : (
           initials
