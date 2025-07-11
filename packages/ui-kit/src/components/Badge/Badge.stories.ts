@@ -3,46 +3,90 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { Badge } from "./Badge";
 
 const meta = {
-  title: "Badge/Badge",
+  title: "Badge",
   component: Badge,
   parameters: {
     layout: "centered",
   },
   tags: ["autodocs"],
+  argTypes: {
+    size: {
+      control: { type: "select" },
+      options: ["default", "large"],
+    },
+    style: {
+      control: { type: "select" },
+      options: ["primary", "ghost", "alert", "success"],
+    },
+  },
   args: {},
 } satisfies Meta<typeof Badge>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const BadgeDefault: Story = {
+// Default size stories
+export const Primary: Story = {
   args: {
     label: "Badge",
-    type: "status",
-    variant: "default",
+    size: "default",
+    style: "primary",
   },
 };
 
-export const BadgePrimary: Story = {
+export const Ghost: Story = {
   args: {
     label: "Badge",
-    type: "status",
-    variant: "primary",
+    size: "default",
+    style: "ghost",
   },
 };
 
-export const BadgeAlert: Story = {
+export const Alert: Story = {
   args: {
     label: "Badge",
-    type: "status",
-    variant: "alert",
+    size: "default",
+    style: "alert",
   },
 };
 
-export const BadgeSuccess: Story = {
+export const Success: Story = {
   args: {
     label: "Badge",
-    type: "status",
-    variant: "success",
+    size: "default",
+    style: "success",
+  },
+};
+
+// Large size stories
+export const PrimaryLarge: Story = {
+  args: {
+    label: "Badge",
+    size: "large",
+    style: "primary",
+  },
+};
+
+export const GhostLarge: Story = {
+  args: {
+    label: "Badge",
+    size: "large",
+    style: "ghost",
+  },
+};
+
+export const AlertLarge: Story = {
+  args: {
+    label: "Badge",
+    size: "large",
+    style: "alert",
+  },
+};
+
+export const SuccessLarge: Story = {
+  args: {
+    label: "Badge",
+    size: "large",
+    style: "success",
   },
 };

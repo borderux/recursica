@@ -3,29 +3,32 @@ import { recursica } from "../../recursica/Recursica";
 import { typographies } from "../Typography";
 
 const root = style({
-  paddingLeft: recursica["badge/size/message-horizontal-padding"],
-  paddingRight: recursica["badge/size/message-horizontal-padding"],
-  minWidth: recursica["badge/size/large-min-width"],
-  height: recursica["badge/size/large-height"],
-  borderRadius: 0,
+  height: recursica["badge/size/default-height"],
+  minWidth: recursica["badge/size/default-min-width"],
+  padding: `0px ${recursica["badge/size/padding"]}`,
+  borderRadius: recursica["size/border-radius/2x"],
   border: "none",
   selectors: {
-    '&[data-type="counter"]': {
-      borderRadius: recursica["size/border-radius/2x"],
+    // Size variants
+    '&[data-size="large"]': {
+      height: recursica["badge/size/large-height"],
+      minWidth: recursica["badge/size/large-min-width"],
+      padding: `0px ${recursica["badge/size/padding"]}`,
     },
-    '&[data-variant="default"]': {
-      backgroundColor: recursica["badge/color/background-default"],
-      color: recursica["badge/color/label-default"],
-    },
-    '&[data-variant="primary"]': {
+    // Style variants
+    '&[data-style="primary"]': {
       backgroundColor: recursica["badge/color/background-primary"],
       color: recursica["badge/color/label-primary"],
     },
-    '&[data-variant="alert"]': {
+    '&[data-style="ghost"]': {
+      backgroundColor: recursica["badge/color/background-default"],
+      color: recursica["badge/color/label-default"],
+    },
+    '&[data-style="alert"]': {
       backgroundColor: recursica["badge/color/background-alert"],
       color: recursica["badge/color/label-alert"],
     },
-    '&[data-variant="success"]': {
+    '&[data-style="success"]': {
       backgroundColor: recursica["badge/color/background-success"],
       color: recursica["badge/color/label-success"],
     },

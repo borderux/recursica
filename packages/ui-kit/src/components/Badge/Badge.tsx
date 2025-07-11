@@ -2,9 +2,9 @@ import { styles } from "./Badge.css";
 import { Badge as ManBadge } from "@mantine/core";
 
 /**
- * The variant of the badge.
+ * The style of the badge.
  */
-type BadgeVariant = "default" | "primary" | "alert" | "success";
+type BadgeStyle = "primary" | "ghost" | "alert" | "success";
 
 export interface BadgeProps {
   /**
@@ -12,23 +12,24 @@ export interface BadgeProps {
    */
   label: string | number;
   /**
-   * The variant of the badge.
-   */
-  type: "status" | "counter";
-  /**
-   * The variant of the badge.
+   * The size of the badge.
    * @default 'default'
    */
-  variant?: BadgeVariant;
+  size?: "default" | "large";
+  /**
+   * The style of the badge.
+   * @default 'primary'
+   */
+  style?: BadgeStyle;
 }
 
-export function Badge({ type, label, variant = "default" }: BadgeProps) {
+export function Badge({
+  label,
+  size = "default",
+  style = "primary",
+}: BadgeProps) {
   return (
-    <ManBadge
-      classNames={{ root: styles.root, label: styles.label }}
-      data-type={type}
-      data-variant={variant}
-    >
+    <ManBadge classNames={styles} data-size={size} data-style={style}>
       {label}
     </ManBadge>
   );
