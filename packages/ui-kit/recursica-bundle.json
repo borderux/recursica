@@ -1,5 +1,5 @@
 {
-  "projectId": "recursica",
+  "projectId": "Recursica",
   "pluginVersion": "0.0.4",
   "tokens": {
     "[Tokens][Mode-1][color/salmon/600]": {
@@ -6839,20 +6839,6 @@
         "name": "layers/layer-alternatives/primary/elements/text/color"
       }
     },
-    "[UI-Kit][Mode-1][button/size/default-size]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "button/size/default-size",
-      "type": "float",
-      "value": 48
-    },
-    "[UI-Kit][Mode-1][button/size/small-size]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "button/size/small-size",
-      "type": "float",
-      "value": 32
-    },
     "[UI-Kit][Mode-1][banner/size/icon-size]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
@@ -6987,20 +6973,20 @@
         "name": "colors/neutral/900/on-tone"
       }
     },
-    "[UI-Kit][Mode-1][button/color/outline]": {
+    "[UI-Kit][Mode-1][button/color/border]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
-      "name": "button/color/outline",
+      "name": "button/color/border",
       "type": "color",
       "value": {
         "collection": "Themes",
         "name": "colors/scale-1/500/tone"
       }
     },
-    "[UI-Kit][Mode-1][button/color/outline-hover]": {
+    "[UI-Kit][Mode-1][button/color/border-hover]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
-      "name": "button/color/outline-hover",
+      "name": "button/color/border-hover",
       "type": "color",
       "value": {
         "collection": "Themes",
@@ -7017,39 +7003,19 @@
         "name": "colors/disabled"
       }
     },
-    "[UI-Kit][Mode-1][button/size/border-radius]": {
+    "[UI-Kit][Mode-1][button/size/default-size]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
-      "name": "button/size/border-radius",
+      "name": "button/size/default-size",
       "type": "float",
-      "value": {
-        "collection": "Tokens",
-        "name": "size/border-radius/4x"
-      }
+      "value": 48
     },
-    "[UI-Kit][Mode-1][button/size/border-radius-icon]": {
+    "[UI-Kit][Mode-1][button/size/default-min-width]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
-      "name": "button/size/border-radius-icon",
+      "name": "button/size/default-min-width",
       "type": "float",
-      "value": {
-        "collection": "Tokens",
-        "name": "size/border-radius/3x"
-      }
-    },
-    "[UI-Kit][Mode-1][button/size/content-max-width]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "button/size/content-max-width",
-      "type": "float",
-      "value": 320
-    },
-    "[UI-Kit][Mode-1][button/size/icon-size]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "button/size/icon-size",
-      "type": "float",
-      "value": 20
+      "value": 120
     },
     "[UI-Kit][Mode-1][button/size/default-horizontal-padding]": {
       "collection": "UI Kit",
@@ -7081,13 +7047,6 @@
         "name": "size/spacer/default"
       }
     },
-    "[UI-Kit][Mode-1][button/size/default-min-width]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "button/size/default-min-width",
-      "type": "float",
-      "value": 120
-    },
     "[UI-Kit][Mode-1][checkbox/color/checkbox]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
@@ -7115,6 +7074,13 @@
       "type": "float",
       "value": 360
     },
+    "[UI-Kit][Mode-1][button/size/small-size]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "button/size/small-size",
+      "type": "float",
+      "value": 32
+    },
     "[UI-Kit][Mode-1][checkbox/color/disabled]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
@@ -7125,16 +7091,6 @@
         "name": "colors/disabled"
       }
     },
-    "[UI-Kit][Mode-1][checkbox/size/spacing-stacked]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "checkbox/size/spacing-stacked",
-      "type": "float",
-      "value": {
-        "collection": "Tokens",
-        "name": "size/spacer/default"
-      }
-    },
     "[UI-Kit][Mode-1][chip/color/background-unselected]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
@@ -7143,6 +7099,16 @@
       "value": {
         "collection": "Themes",
         "name": "layers/layer-1/properties/surface"
+      }
+    },
+    "[UI-Kit][Mode-1][checkbox/size/spacing-stacked]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "checkbox/size/spacing-stacked",
+      "type": "float",
+      "value": {
+        "collection": "Tokens",
+        "name": "size/spacer/default"
       }
     },
     "[UI-Kit][Mode-1][chip/color/text-unselected]": {
@@ -7205,16 +7171,6 @@
         "name": "colors/alert"
       }
     },
-    "[UI-Kit][Mode-1][chip/size/border-radius]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "chip/size/border-radius",
-      "type": "float",
-      "value": {
-        "collection": "Tokens",
-        "name": "size/spacer/0-5x"
-      }
-    },
     "[UI-Kit][Mode-1][checkbox/size/spacing-inline]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
@@ -7223,6 +7179,16 @@
       "value": {
         "collection": "Tokens",
         "name": "size/spacer/2x"
+      }
+    },
+    "[UI-Kit][Mode-1][chip/size/border-radius]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "chip/size/border-radius",
+      "type": "float",
+      "value": {
+        "collection": "Tokens",
+        "name": "size/spacer/0-5x"
       }
     },
     "[UI-Kit][Mode-1][date-picker/color/background]": {
@@ -7941,16 +7907,6 @@
         "name": "colors/neutral/900/tone"
       }
     },
-    "[UI-Kit][Mode-1][pagination/color/background-hover-selected]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "pagination/color/background-hover-selected",
-      "type": "color",
-      "value": {
-        "collection": "Themes",
-        "name": "colors/neutral/800/tone"
-      }
-    },
     "[UI-Kit][Mode-1][pagination/size/number-spacing]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
@@ -7959,6 +7915,16 @@
       "value": {
         "collection": "Tokens",
         "name": "size/spacer/0-5x"
+      }
+    },
+    "[UI-Kit][Mode-1][pagination/color/background-hover-selected]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "pagination/color/background-hover-selected",
+      "type": "color",
+      "value": {
+        "collection": "Themes",
+        "name": "colors/neutral/800/tone"
       }
     },
     "[UI-Kit][Mode-1][pagination/color/background-hover-unselected]": {
@@ -8011,16 +7977,6 @@
         "name": "colors/disabled"
       }
     },
-    "[UI-Kit][Mode-1][pagination/color/text]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "pagination/color/text",
-      "type": "color",
-      "value": {
-        "collection": "Themes",
-        "name": "layers/layer-0/elements/text/color"
-      }
-    },
     "[UI-Kit][Mode-1][panel/color/title]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
@@ -8029,6 +7985,16 @@
       "value": {
         "collection": "Themes",
         "name": "layers/layer-1/elements/text/color"
+      }
+    },
+    "[UI-Kit][Mode-1][pagination/color/text]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "pagination/color/text",
+      "type": "color",
+      "value": {
+        "collection": "Themes",
+        "name": "layers/layer-0/elements/text/color"
       }
     },
     "[UI-Kit][Mode-1][panel/size/body-padding]": {
@@ -8765,6 +8731,13 @@
       "type": "float",
       "value": 24
     },
+    "[UI-Kit][Mode-1][button/size/small-min-width]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "button/size/small-min-width",
+      "type": "float",
+      "value": 60
+    },
     "[UI-Kit][Mode-1][switch/size/spacing-standalone]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
@@ -9178,12 +9151,39 @@
         "name": "size/spacer/0-5x"
       }
     },
-    "[UI-Kit][Mode-1][button/size/small-min-width]": {
+    "[UI-Kit][Mode-1][button/size/border-radius]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
-      "name": "button/size/small-min-width",
+      "name": "button/size/border-radius",
       "type": "float",
-      "value": 60
+      "value": {
+        "collection": "Tokens",
+        "name": "size/border-radius/4x"
+      }
+    },
+    "[UI-Kit][Mode-1][button/size/border-radius-icon]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "button/size/border-radius-icon",
+      "type": "float",
+      "value": {
+        "collection": "Tokens",
+        "name": "size/border-radius/3x"
+      }
+    },
+    "[UI-Kit][Mode-1][button/size/content-max-width]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "button/size/content-max-width",
+      "type": "float",
+      "value": 320
+    },
+    "[UI-Kit][Mode-1][button/size/icon-size]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "button/size/icon-size",
+      "type": "float",
+      "value": 20
     },
     "[UI-Kit][Mode-1][text-field/color/border]": {
       "collection": "UI Kit",

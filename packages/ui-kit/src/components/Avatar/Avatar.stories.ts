@@ -12,13 +12,13 @@ const meta = {
   argTypes: {
     variant: {
       control: { type: "select" },
-      options: ["text", "icon", "image"],
+      options: ["primary", "ghost", "image"],
     },
     size: {
       control: { type: "select" },
       options: ["small", "default", "large"],
     },
-    outline: {
+    border: {
       control: { type: "boolean" },
     },
   },
@@ -27,75 +27,109 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// Text variant stories
-export const Text: Story = {
+// Primary variant stories
+export const Primary: Story = {
   args: {
     initials: "JD",
-    variant: "text",
+    variant: "primary",
     size: "default",
   },
 };
 
-export const TextSmall: Story = {
+export const PrimarySmall: Story = {
   args: {
     initials: "JD",
-    variant: "text",
+    variant: "primary",
     size: "small",
   },
 };
 
-export const TextLarge: Story = {
+export const PrimaryLarge: Story = {
   args: {
     initials: "JD",
-    variant: "text",
+    variant: "primary",
     size: "large",
   },
 };
 
-export const TextOutline: Story = {
+export const PrimaryWithBorder: Story = {
   args: {
     initials: "JD",
-    variant: "text",
+    variant: "primary",
     size: "default",
-    outline: true,
+    border: true,
   },
 };
 
-// Icon variant stories
-export const Icon: Story = {
+export const PrimaryWithIcon: Story = {
   args: {
     initials: "JD",
-    variant: "icon",
+    variant: "primary",
     icon: "person_outline_Filled",
     size: "default",
   },
 };
 
-export const IconSmall: Story = {
+export const PrimaryWithIconAndBorder: Story = {
   args: {
     initials: "JD",
-    variant: "icon",
+    variant: "primary",
     icon: "person_outline_Filled",
+    size: "default",
+    border: true,
+  },
+};
+
+// Ghost variant stories
+export const Ghost: Story = {
+  args: {
+    initials: "JD",
+    variant: "ghost",
+    size: "default",
+  },
+};
+
+export const GhostSmall: Story = {
+  args: {
+    initials: "JD",
+    variant: "ghost",
     size: "small",
   },
 };
 
-export const IconLarge: Story = {
+export const GhostLarge: Story = {
   args: {
     initials: "JD",
-    variant: "icon",
-    icon: "person_outline_Filled",
+    variant: "ghost",
     size: "large",
   },
 };
 
-export const IconOutline: Story = {
+export const GhostWithBorder: Story = {
   args: {
     initials: "JD",
-    variant: "icon",
+    variant: "ghost",
+    size: "default",
+    border: true,
+  },
+};
+
+export const GhostWithIcon: Story = {
+  args: {
+    initials: "JD",
+    variant: "ghost",
     icon: "person_outline_Filled",
     size: "default",
-    outline: true,
+  },
+};
+
+export const GhostWithIconAndBorder: Story = {
+  args: {
+    initials: "JD",
+    variant: "ghost",
+    icon: "person_outline_Filled",
+    size: "default",
+    border: true,
   },
 };
 
@@ -127,6 +161,17 @@ export const ImageLarge: Story = {
     src: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
     alt: "John Doe",
     size: "large",
+  },
+};
+
+export const ImageWithBorder: Story = {
+  args: {
+    initials: "JD",
+    variant: "image",
+    src: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
+    alt: "John Doe",
+    size: "default",
+    border: true,
   },
 };
 

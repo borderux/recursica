@@ -226,8 +226,8 @@ export type RecursicaColors =
 	"button/color/background-solid" |
 	"button/color/background-solid-hover" |
 	"button/color/text-solid" |
-	"button/color/outline" |
-	"button/color/outline-hover" |
+	"button/color/border" |
+	"button/color/border-hover" |
 	"checkbox/color/checkbox" |
 	"checkbox/color/icon" |
 	"chip/color/background-unselected" |
@@ -271,8 +271,8 @@ export type RecursicaColors =
 	"pagination/color/page-number-default" |
 	"panel/color/background" |
 	"pagination/color/page-number-selected" |
-	"pagination/color/text" |
 	"panel/color/title" |
+	"pagination/color/text" |
 	"radio/color/default" |
 	"search/color/background" |
 	"search/color/border" |

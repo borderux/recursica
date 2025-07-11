@@ -7,17 +7,17 @@ export interface AvatarProps extends HTMLAttributes<HTMLDivElement> {
   /** The initials to display (mandatory) */
   initials: string;
   /** The variant of the avatar */
-  variant?: "icon" | "text" | "image";
+  variant?: "primary" | "ghost" | "image";
   /** The size of the avatar */
   size?: "small" | "default" | "large";
-  /** The icon name for icon variant */
+  /** The icon name for primary and ghost variants */
   icon?: IconName;
   /** The image source for image variant */
   src?: string;
   /** The alt text for image variant */
   alt?: string;
-  /** Whether to show outline style (only for icon and text variants) */
-  outline?: boolean;
+  /** Whether to show border style */
+  border?: boolean;
 }
 
 /** Avatar component for displaying user avatars with different variants */
@@ -25,17 +25,18 @@ const ForwardedAvatar = forwardRef<HTMLDivElement, AvatarProps>(
   (
     {
       initials,
-      variant = "text",
+      variant = "primary",
       size = "default",
       icon,
       src,
       alt,
-      outline = false,
+      border = false,
       ...props
     },
     ref,
   ) => {
-    const ariaLabel = variant !== "text" ? initials : undefined;
+    const ariaLabel =
+      variant !== "primary" && variant !== "ghost" ? initials : undefined;
 
     return (
       <ManAvatar
@@ -44,18 +45,18 @@ const ForwardedAvatar = forwardRef<HTMLDivElement, AvatarProps>(
         src={variant === "image" ? src : undefined}
         alt={variant === "image" ? alt : undefined}
         data-variant={variant}
-        data-outline={outline}
+        data-border={border}
         aria-label={ariaLabel}
         classNames={styles}
         {...props}
       >
-        {variant === "icon" && icon ? (
+        {(variant === "primary" || variant === "ghost") && icon ? (
           <Icon
-            size={20}
+            size={size === "small" ? 16 : size === "large" ? 24 : 20}
             color={
-              outline
-                ? "avatar/color/background-outline"
-                : "avatar/color/background-solid"
+              variant === "primary"
+                ? "avatar/color/label-primary"
+                : "avatar/color/label-ghost"
             }
             name={icon}
           />

@@ -5,8 +5,7 @@ import { typographies } from "../Typography";
 const root = style({
   width: recursica["avatar/size/default"],
   height: recursica["avatar/size/default"],
-  background: recursica["avatar/color/background-primary"],
-  borderRadius: "100%",
+  borderRadius: "50%",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -21,14 +20,23 @@ const root = style({
       width: recursica["avatar/size/large"],
       height: recursica["avatar/size/large"],
     },
-    // Outline variant for icon and text
-    '&[data-outline="true"][data-variant="icon"]': {
-      border: `1px solid ${recursica["avatar/color/border-ghost"]}`,
+    // Primary variant
+    '&[data-variant="primary"]': {
+      background: recursica["avatar/color/background-primary"],
+    },
+    '&[data-variant="primary"][data-border="true"]': {
+      border: `1px solid ${recursica["avatar/color/border-primary"]}`,
+    },
+    // Ghost variant
+    '&[data-variant="ghost"]': {
       background: recursica["avatar/color/background-ghost"],
     },
-    '&[data-outline="true"][data-variant="text"]': {
+    '&[data-variant="ghost"][data-border="true"]': {
       border: `1px solid ${recursica["avatar/color/border-ghost"]}`,
-      background: recursica["avatar/color/background-ghost"],
+    },
+    // Image variant
+    '&[data-variant="image"][data-border="true"]': {
+      border: `1px solid ${recursica["avatar/color/border-image"]}`,
     },
   },
 });
@@ -46,22 +54,37 @@ const placeholder = style({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  color: recursica["avatar/color/label-primary"],
+  background: "unset",
   fontWeight: 600,
   selectors: {
-    // Outline variant for text
-    [`${root}[data-outline="true"][data-variant="text"] &`]: {
+    // Primary variant
+    [`${root}[data-variant="primary"] &`]: {
+      color: recursica["avatar/color/label-primary"],
+    },
+    // Ghost variant
+    [`${root}[data-variant="ghost"] &`]: {
       color: recursica["avatar/color/label-ghost"],
+    },
+    // Image variant - no color set
+    [`${root}[data-variant="image"] &`]: {
+      color: "unset",
     },
   },
 });
 
 const icon = style({
-  color: recursica["avatar/color/label-primary"],
   selectors: {
-    // Outline variant for icon
-    [`${root}[data-outline="true"][data-variant="icon"] &`]: {
+    // Primary variant
+    [`${root}[data-variant="primary"] &`]: {
+      color: recursica["avatar/color/label-primary"],
+    },
+    // Ghost variant
+    [`${root}[data-variant="ghost"] &`]: {
       color: recursica["avatar/color/label-ghost"],
+    },
+    // Image variant - no color set
+    [`${root}[data-variant="image"] &`]: {
+      color: "unset",
     },
   },
 });
