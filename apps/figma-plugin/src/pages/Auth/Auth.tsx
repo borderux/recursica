@@ -183,7 +183,7 @@ export function Auth() {
             size='small'
             variant='text'
             text={false}
-            leftSection='arrow_back_Outlined'
+            leftSection='arrow_path_outline'
             onClick={() => navigate('/home')}
             label='Back'
           />
@@ -197,7 +197,7 @@ export function Auth() {
       {status === Status.SetupAccount && (
         <Typography variant='body-1/normal' textAlign='center'>
           Go to the{' '}
-          <Anchor target='_blank' rel='noreferrer' href='https://recursica.com'>
+          <Anchor underline='always' target='_blank' rel='noreferrer' href='https://recursica.com'>
             Recursica.com
           </Anchor>{' '}
           website and follow the instructions.
@@ -206,8 +206,8 @@ export function Auth() {
       {status === Status.SelectProvider && (
         <Dropdown
           data={[
-            { label: 'GitHub', value: 'github', icon: 'github_Outlined' },
-            { label: 'GitLab', value: 'gitlab', icon: 'gitlab_Outlined' },
+            { label: 'GitHub', value: 'github', icon: 'github_outline' },
+            { label: 'GitLab', value: 'gitlab', icon: 'gitlab_outline' },
           ]}
           value={selectedProvider}
           onChange={(value) => setSelectedProvider(value as 'github' | 'gitlab')}
