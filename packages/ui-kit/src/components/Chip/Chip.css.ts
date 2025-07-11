@@ -14,7 +14,7 @@ const label = style({
     '&:not([data-disabled])[data-checked="true"]': {
       paddingTop: 0,
       paddingBottom: 0,
-      borderColor: recursica["chip/color/background-selected"],
+      borderColor: recursica["chip/color/border-selected"],
       backgroundColor: recursica["chip/color/background-selected"],
       color: recursica["chip/color/text-selected"],
     },
@@ -22,14 +22,25 @@ const label = style({
       backgroundColor: "transparent",
       borderWidth: 1,
       borderStyle: "solid",
-      borderColor: recursica["chip/color/stroke-unselected"],
+      borderColor: recursica["chip/color/border-unselected"],
       color: recursica["chip/color/text-unselected"],
     },
     "&:not([data-disabled]):hover": {
-      backgroundColor: "unset",
+      backgroundColor: recursica["chip/color/background-unselected"],
     },
     '&:not([data-disabled])[data-checked="true"]:hover': {
       backgroundColor: recursica["chip/color/background-selected"],
+    },
+    // Error state styles
+    '&[data-error="true"]': {
+      border: "1px solid var(--chip-color-error, #BD0B0B)",
+      background: "var(--chip-color-background-unselected, #F9F9F9)",
+    },
+    // Unselected state styles
+    '&:not([data-checked="true"])': {
+      borderRadius: "var(--chip-size-border-radius, 4px)",
+      border: "1px solid var(--chip-color-border-unselected, #F6D5D8)",
+      background: "var(--chip-color-background-unselected, #F9F9F9)",
     },
   },
 });
@@ -41,25 +52,6 @@ const root = style({
 const iconWrapper = style({
   display: "none",
 });
-
-globalStyle(`${input}[data-error="true"] + ${label}:not([data-disabled])`, {
-  backgroundColor: "unset",
-  borderWidth: 1,
-  borderStyle: "solid",
-  borderColor: recursica["chip/color/stroke-error"],
-  color: recursica["chip/color/text-error"],
-});
-
-globalStyle(
-  `${input}[data-error="true"] + ${label}:not([data-disabled])[data-checked="true"]`,
-  {
-    backgroundColor: recursica["chip/color/stroke-error"],
-    borderWidth: 1,
-    borderStyle: "solid",
-    borderColor: recursica["chip/color/stroke-error"],
-    color: recursica["chip/color/text-error"],
-  },
-);
 
 globalStyle(`${label} [data-icon="checked"]`, {
   display: "none",

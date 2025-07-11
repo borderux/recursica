@@ -64,7 +64,7 @@ const ChipComponent = forwardRef<HTMLInputElement, ChipProps>(
             </>
           )}
           <Flex data-icon={"checked"} className={styles.iconCenterWrapper}>
-            <Icon name="check_Outlined" size={16} />
+            <Icon name="check_outline" size={16} />
           </Flex>
           {label}
         </Flex>
