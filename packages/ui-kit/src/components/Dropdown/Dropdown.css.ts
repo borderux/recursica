@@ -3,15 +3,34 @@ import { recursica } from "../../recursica/Recursica";
 import { typographies } from "../Typography";
 
 const root = style({
-  display: "flex",
+  display: "grid",
   width: "100%",
-  flexDirection: "column",
   minWidth: recursica["dropdown/size/min-width"],
   maxWidth: recursica["dropdown/size/max-width"],
-  gap: recursica["dropdown/size/spacing-inline"],
+  gap: `${recursica["dropdown/size/spacing-stacked"]} ${recursica["dropdown/size/spacing-inline"]}`,
+  selectors: {
+    "&[data-label-placement='left']": {
+      gridTemplateColumns: `auto 1fr`,
+      gridTemplateAreas: `"label input" "label error"`,
+      alignItems: "start",
+    },
+    "&[data-label-placement='top']": {
+      gridTemplateColumns: "1fr",
+      gridTemplateAreas: `"label" "input" "error"`,
+    },
+  },
 });
 
-const wrapper = style({});
+const wrapper = style({
+  selectors: {
+    [`${root}[data-label-placement='left'] &`]: {
+      gridArea: "input",
+    },
+    [`${root}[data-label-placement='top'] &`]: {
+      gridArea: "input",
+    },
+  },
+});
 
 const input = style({
   ...typographies["body-2/normal"],
@@ -130,6 +149,20 @@ export const errorContainer = style({
 export const labelContainer = style({
   alignItems: "center",
   gap: recursica["form/label/size/spacing"],
+  selectors: {
+    [`${root}[data-label-placement='left'] &`]: {
+      maxWidth: recursica["form/label/size/inline-width"],
+      paddingTop: recursica["form/label/size/label-vertical-padding"],
+      paddingBottom: recursica["form/label/size/label-vertical-padding"],
+      textAlign: "end",
+      flexShrink: 0,
+    },
+    [`${root}[data-label-placement='top'] &`]: {
+      gridArea: "label",
+      width: "auto",
+      textAlign: "start",
+    },
+  },
 });
 
 const checkbox = style({
@@ -142,6 +175,10 @@ const checkbox = style({
   justifyContent: "center",
 });
 
+const label = style({
+  gridArea: "label",
+});
+
 export const styles = {
   root,
   wrapper,
@@ -150,4 +187,5 @@ export const styles = {
   dropdown,
   checkbox,
   option,
+  label,
 };

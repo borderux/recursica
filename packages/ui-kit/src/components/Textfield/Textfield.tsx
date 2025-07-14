@@ -148,7 +148,7 @@ export const Textfield = forwardRef<HTMLTextAreaElement, TextfieldProps>(
         error={
           error ? (
             <Flex className={errorContainer}>
-              <Icon name="error_Filled" size={16} />
+              <Icon name="exclamation_circle_outline" size={16} />
               <Typography variant="caption">{error}</Typography>
             </Flex>
           ) : undefined
