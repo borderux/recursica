@@ -44,7 +44,7 @@
     "check-types": "tsc --noEmit"
   },
   "devDependencies": {
-    "@figma/plugin-typings": "1.113.0",
+    "@figma/plugin-typings": "1.115.0",
     "@humanfs/node": "0.16.6",
     "@repo/eslint-config": "*",
     "@types/crypto-js": "4.2.0",
