@@ -18,9 +18,7 @@ export interface IFigmaContext {
   svgIcons?: RecursicaIconsSchema;
   loading: boolean;
   userId: string | undefined;
-  librariesAvailable?: Record<string, string>;
-  getAvailableLibraries: () => void;
-  syncVariables: (libraryName?: string) => void;
+  variablesSynced: boolean;
 }
 
 export const FigmaContext = createContext<IFigmaContext | null>(null);

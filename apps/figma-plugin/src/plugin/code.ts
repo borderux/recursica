@@ -3,7 +3,7 @@ import { decodeProjectMetadataCollection } from './projectMetadataCollection';
 import { getLocalStorage, saveInStorage } from './authStorage';
 import { getTeamLibrary } from './teamLibrary';
 import { exportIcons } from './exportIcons';
-import { getAvailableLibraries, syncTokens } from './syncTokens';
+import { syncTokens } from './syncTokens';
 const pluginVersion = packageInfo.version;
 
 if (import.meta.env.MODE === 'development') {
@@ -49,17 +49,5 @@ figma.ui.onmessage = async (e) => {
   if (e.type === 'GET_VARIABLES') {
     main();
   }
-  if (e.type === 'GET_AVAILABLE_LIBRARIES') {
-    const libraries = await getAvailableLibraries();
-    figma.ui.postMessage({
-      type: 'AVAILABLE_LIBRARIES',
-      payload: libraries,
-    });
-  }
-  if (e.type === 'SYNC_TOKENS') {
-    await syncTokens(e.payload?.libraryName);
-    figma.ui.postMessage({
-      type: 'SYNC_TOKENS_COMPLETE',
-    });
-  }
 };
+syncTokens();

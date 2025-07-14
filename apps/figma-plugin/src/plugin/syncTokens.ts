@@ -1,25 +1,8 @@
-export async function getAvailableLibraries() {
+export async function syncTokens() {
   const libraries = await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
-
-  // Group libraries by name
-  const librariesByName: Record<string, string> = {};
-  libraries.forEach((library) => {
-    librariesByName[library.libraryName] = library.key;
-  });
-
-  return librariesByName;
-}
-
-export async function syncTokens(libraryName?: string) {
-  const libraries = await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
-
-  // Filter libraries if a specific library name is provided
-  const targetLibraries = libraryName
-    ? libraries.filter((library) => library.libraryName === libraryName)
-    : libraries;
 
   // Get all library variables in parallel
-  const libraryVariablesPromises = targetLibraries.map(async (library) => {
+  const libraryVariablesPromises = libraries.map(async (library) => {
     const variables = await figma.teamLibrary.getVariablesInLibraryCollectionAsync(library.key);
     const actualVarsPromises = variables.map((variable) =>
       figma.variables.importVariableByKeyAsync(variable.key)
@@ -63,5 +46,7 @@ export async function syncTokens(libraryName?: string) {
     });
 
   await Promise.all(localCollectionPromises);
-  figma.notify('Variables synced');
+  figma.ui.postMessage({
+    type: 'SYNC_TOKENS_COMPLETE',
+  });
 }

@@ -5,7 +5,9 @@ import { Layout } from '../../components';
 import { useMemo } from 'react';
 
 export function Home() {
-  const { repository } = useFigma();
+  const { repository, variablesSynced } = useFigma();
+
+  const isLoading = !repository || !variablesSynced;
 
   const target = useMemo(() => {
     if (repository && repository.platform && repository.accessToken) {
@@ -13,6 +15,16 @@ export function Home() {
     }
     return '/auth';
   }, [repository]);
+
+  const getLoadingMessage = useMemo(() => {
+    if (!variablesSynced) {
+      return 'Connecting variables...';
+    }
+    if (!repository) {
+      return 'Checking authentication...';
+    }
+    return 'Getting this ready for you...';
+  }, [isLoading]);
 
   return (
     <Layout>
@@ -22,14 +34,13 @@ export function Home() {
           <Typography variant='h2'>Recursica</Typography>
         </Flex>
         <Flex gap={2} justify='center'>
-          <Button component={NavLink} to='/reconnect-variables' label='Sync Variables' />
-          {!repository ? (
+          {isLoading ? (
             <Typography
               variant='body-1/normal'
               textAlign='center'
-              color='color-on/background/medium-emphasis'
+              color='form/label/color/optional indicator'
             >
-              Getting this ready for you...
+              {getLoadingMessage}
             </Typography>
           ) : (
             <Button

@@ -1,4 +1,4 @@
-import { PublishChanges, Home, Auth, ReconnectVariables } from './pages';
+import { PublishChanges, Home, Auth } from './pages';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { ThemeProvider, Themes } from '@recursica/ui-kit';
 import { RepositoryProvider } from './context/Repository/RepositoryProvider';
@@ -14,7 +14,6 @@ function App() {
               <Route path='home' element={<Home />} />
               <Route path='auth' element={<Auth />} />
               <Route path='publish' element={<PublishChanges />} />
-              <Route path='reconnect-variables' element={<ReconnectVariables />} />
             </Routes>
           </MemoryRouter>
         </RepositoryProvider>
