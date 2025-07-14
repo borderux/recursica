@@ -15,6 +15,7 @@ interface CheckboxStoryComponentProps {
   optional?: boolean;
   defaultValue?: string[];
   value?: string[];
+  labelPlacement?: "top" | "left";
 }
 export function CheckboxStoryComponent({
   checkboxes,
@@ -22,6 +23,7 @@ export function CheckboxStoryComponent({
   optional,
   defaultValue,
   value,
+  labelPlacement,
 }: CheckboxStoryComponentProps) {
   return (
     <Checkbox.Group
@@ -29,6 +31,7 @@ export function CheckboxStoryComponent({
       optional={optional}
       defaultValue={defaultValue}
       value={value}
+      labelPlacement={labelPlacement}
     >
       {checkboxes.map(
         ({ value, label, disabled, indeterminate, checked, showLabel }) => (

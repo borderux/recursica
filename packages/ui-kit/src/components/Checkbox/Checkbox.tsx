@@ -23,6 +23,7 @@ export interface CheckboxGroupProps
   > {
   label: string;
   optional?: boolean;
+  labelPlacement?: "top" | "left";
 }
 
 export interface CheckboxProps
@@ -71,11 +72,12 @@ const CheckboxIcon: ManCheckboxProps["icon"] = ({
   );
 
 const CheckboxGroupComponent = forwardRef<HTMLDivElement, CheckboxGroupProps>(
-  (props, ref) => {
+  ({ labelPlacement = "top", ...props }, ref) => {
     return (
       <ManCheckboxGroup
         {...props}
         ref={ref}
+        data-label-placement={labelPlacement}
         label={
           <CheckboxGroupLabel label={props.label} optional={props.optional} />
         }

@@ -82,3 +82,24 @@ export const NoLabel: Story = {
     ],
   },
 };
+
+export const LabelOnLeft: Story = {
+  args: {
+    label: "Select your option",
+    optional: true,
+    labelPlacement: "top",
+
+    checkboxes: [
+      { value: "checkbox1", label: "Checkbox 1" },
+      {
+        value: "checkbox2",
+        label: "Checkbox 2 with longer text",
+      },
+      {
+        value: "checkbox3",
+        label: "Checkbox 3",
+        disabled: true,
+      },
+    ],
+  },
+};

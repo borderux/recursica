@@ -55,8 +55,16 @@ const inner = style({});
 
 const group = style({
   display: "flex",
-  flexDirection: "column",
-  gap: recursica["checkbox/size/spacing-stacked"],
+  selectors: {
+    "&[data-label-placement='left']": {
+      flexDirection: "row",
+      gap: recursica["checkbox/size/spacing-inline"],
+    },
+    "&[data-label-placement='top']": {
+      flexDirection: "column",
+      gap: recursica["checkbox/size/spacing-stacked"],
+    },
+  },
 });
 
 const groupLabel = style({
