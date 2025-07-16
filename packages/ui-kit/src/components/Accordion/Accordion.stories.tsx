@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { Accordion } from "./Accordion";
 
-const meta = {
+const meta: Meta<typeof Accordion> = {
   title: "Accordion",
   component: Accordion,
   parameters: {
@@ -27,7 +27,7 @@ const meta = {
       control: "text",
     },
   },
-} satisfies Meta<typeof Accordion>;
+};
 
 export default meta;
 type Story = StoryObj<typeof meta>;

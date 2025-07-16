@@ -19,8 +19,15 @@ const AccordionWrapper = <T extends boolean = false>(
   );
 };
 
+// Define the type for our Accordion component with sub-components
+type AccordionComponent = typeof AccordionWrapper & {
+  Item: typeof MantineAccordion.Item;
+  Control: typeof MantineAccordion.Control;
+  Panel: typeof MantineAccordion.Panel;
+};
+
 // Export the main Accordion component with dot notation
-export const Accordion = Object.assign(AccordionWrapper, {
+export const Accordion: AccordionComponent = Object.assign(AccordionWrapper, {
   Item: MantineAccordion.Item,
   Control: MantineAccordion.Control,
   Panel: MantineAccordion.Panel,

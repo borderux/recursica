@@ -81,13 +81,13 @@ export const LabelMandatoryWithHelpText: Story = {
 
 export const LabelMandatoryWithLeadingIcon: Story = {
   args: {
-    leadingIcon: "arrow_back_ios_new_Filled",
+    leadingIcon: "academic_cap_outline",
   },
 };
 
 export const LabelMandatoryWithTrailingIcon: Story = {
   args: {
-    trailingIcon: "keyboard_arrow_down_Filled",
+    trailingIcon: "adjustments_horizontal_outline",
   },
 };
 
@@ -121,14 +121,14 @@ export const LabelMandatoryValuedHelpText: Story = {
 export const LabelMandatoryValuedLeadingIcon: Story = {
   args: {
     value: "Value",
-    leadingIcon: "arrow_back_ios_new_Filled",
+    leadingIcon: "academic_cap_outline",
   },
 };
 
 export const LabelMandatoryValuedTrailingIcon: Story = {
   args: {
     value: "Value",
-    trailingIcon: "keyboard_arrow_down_Filled",
+    trailingIcon: "adjustments_horizontal_outline",
   },
 };
 
