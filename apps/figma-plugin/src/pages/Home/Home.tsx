@@ -28,7 +28,7 @@ export function Home() {
       return 'Checking authentication...';
     }
     return 'Getting this ready for you...';
-  }, [isLoading]);
+  }, [variablesSynced, repository]);
 
   return (
     <Layout>
