@@ -47,6 +47,10 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
   }, []);
 
   useEffect(() => {
+    syncVariables();
+  }, []);
+
+  useEffect(() => {
     // get the auth info from the plugin
     parent.postMessage(
       {
@@ -146,7 +150,6 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
     loading: !(recursicaVariables || svgIcons),
     userId,
     variablesSynced,
-    syncVariables,
   };
 
   return <FigmaContext.Provider value={values}>{children}</FigmaContext.Provider>;
