@@ -12,6 +12,7 @@ export async function syncTokens() {
 
   const libraryVariablesArrays = await Promise.all(libraryVariablesPromises);
   const libraryVariables = libraryVariablesArrays.flat();
+  const libraryVariablesMap = new Map(libraryVariables.map((v) => [v.name, v]));
 
   const localCollections = await figma.variables.getLocalVariableCollectionsAsync();
 
@@ -27,7 +28,7 @@ export async function syncTokens() {
           if (typeof modeVal === 'object' && modeVal !== null && 'type' in modeVal) {
             const refVar = await figma.variables.getVariableByIdAsync(modeVal.id);
             if (refVar) {
-              const newSyncVar = libraryVariables.find((v) => v.name === refVar.name);
+              const newSyncVar = libraryVariablesMap.get(refVar.name);
               if (newSyncVar) {
                 const newRefVal: VariableValue = {
                   type: 'VARIABLE_ALIAS',
