@@ -2,10 +2,6 @@ import { style } from "@vanilla-extract/css";
 import { typographies } from "../Typography";
 import { recursica } from "../../recursica/Recursica";
 
-const datepicker = style({
-  backgroundColor: "red",
-});
-
 const label = style({
   ...typographies["body-2/normal"],
 });
@@ -122,7 +118,7 @@ const calendarHeaderControl = style({
 
 const dropdown = style({
   padding: 0,
-  border: `1px solid ${recursica["date-picker/color/stroke"]}`,
+  border: `1px solid ${recursica["date-picker/color/border"]}`,
   backgroundColor: recursica["date-picker/color/background"],
   borderRadius: recursica["date-picker/size/border-radius"],
 });
@@ -181,7 +177,6 @@ const listControl = style({
 });
 
 export const styles = {
-  datepicker,
   label,
   root,
   wrapper,

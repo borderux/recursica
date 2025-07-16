@@ -33,14 +33,14 @@ const label = style({
     },
     // Error state styles
     '&[data-error="true"]': {
-      border: "1px solid var(--chip-color-error, #BD0B0B)",
-      background: "var(--chip-color-background-unselected, #F9F9F9)",
+      border: `1px solid ${recursica["chip/color/error"]}`,
+      background: recursica["chip/color/background-unselected"],
     },
     // Unselected state styles
     '&:not([data-checked="true"])': {
-      borderRadius: "var(--chip-size-border-radius, 4px)",
-      border: "1px solid var(--chip-color-border-unselected, #F6D5D8)",
-      background: "var(--chip-color-background-unselected, #F9F9F9)",
+      borderRadius: recursica["chip/size/border-radius"],
+      border: `1px solid ${recursica["chip/color/border-unselected"]}`,
+      background: recursica["chip/color/background-unselected"],
     },
   },
 });
