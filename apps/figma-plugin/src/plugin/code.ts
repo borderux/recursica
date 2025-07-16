@@ -49,5 +49,7 @@ figma.ui.onmessage = async (e) => {
   if (e.type === 'GET_VARIABLES') {
     main();
   }
+  if (e.type === 'SYNC_TOKENS') {
+    syncTokens();
+  }
 };
-syncTokens();

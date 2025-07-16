@@ -118,6 +118,18 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
     );
   };
 
+  const syncVariables = () => {
+    parent.postMessage(
+      {
+        pluginMessage: {
+          type: 'SYNC_TOKENS',
+        },
+        pluginId: '*',
+      },
+      '*'
+    );
+  };
+
   const values = {
     repository: {
       platform: repository.platform,
@@ -134,6 +146,7 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
     loading: !(recursicaVariables || svgIcons),
     userId,
     variablesSynced,
+    syncVariables,
   };
 
   return <FigmaContext.Provider value={values}>{children}</FigmaContext.Provider>;

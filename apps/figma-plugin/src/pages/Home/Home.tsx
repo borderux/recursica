@@ -2,12 +2,16 @@ import { Flex, Typography, Button, Logo } from '@recursica/ui-kit';
 import { NavLink } from 'react-router';
 import { useFigma } from '../../hooks/useFigma';
 import { Layout } from '../../components';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 export function Home() {
-  const { repository, variablesSynced } = useFigma();
+  const { repository, variablesSynced, syncVariables } = useFigma();
 
   const isLoading = !repository || !variablesSynced;
+
+  useEffect(() => {
+    syncVariables();
+  }, []);
 
   const target = useMemo(() => {
     if (repository && repository.platform && repository.accessToken) {
