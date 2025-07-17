@@ -6,6 +6,9 @@ const meta: Meta<typeof Chip> = {
   title: "Chip/Group",
   component: Chip,
   tags: ["autodocs"],
+  parameters: {
+    layout: "centered",
+  },
   argTypes: {},
 };
 
@@ -24,8 +27,8 @@ export const SingleSelection: Story = {
           value="4"
           label="At a time"
           icon={{
-            unselected: "favorite_Outlined",
-            selected: "favorite_Filled",
+            unselected: "heart_outline",
+            selected: "heart_solid",
           }}
         />
       </Flex>
@@ -45,8 +48,8 @@ export const MultipleSelection: Story = {
           value="4"
           label="At a time"
           icon={{
-            unselected: "favorite_Outlined",
-            selected: "favorite_Filled",
+            unselected: "heart_outline",
+            selected: "heart_solid",
           }}
         />
       </Flex>
@@ -66,8 +69,8 @@ export const WithDefaultValue: Story = {
           value="4"
           label="At a time"
           icon={{
-            unselected: "favorite_Outlined",
-            selected: "favorite_Filled",
+            unselected: "heart_outline",
+            selected: "heart_solid",
           }}
         />
       </Flex>

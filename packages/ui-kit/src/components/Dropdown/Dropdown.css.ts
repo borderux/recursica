@@ -3,15 +3,34 @@ import { recursica } from "../../recursica/Recursica";
 import { typographies } from "../Typography";
 
 const root = style({
-  display: "flex",
+  display: "grid",
   width: "100%",
-  flexDirection: "column",
   minWidth: recursica["dropdown/size/min-width"],
   maxWidth: recursica["dropdown/size/max-width"],
-  gap: recursica["dropdown/size/spacing-inline"],
+  gap: `${recursica["dropdown/size/spacing-stacked"]} ${recursica["dropdown/size/spacing-inline"]}`,
+  selectors: {
+    "&[data-label-placement='left']": {
+      gridTemplateColumns: `auto 1fr`,
+      gridTemplateAreas: `"label input" "label error"`,
+      alignItems: "start",
+    },
+    "&[data-label-placement='top']": {
+      gridTemplateColumns: "1fr",
+      gridTemplateAreas: `"label" "input" "error"`,
+    },
+  },
 });
 
-const wrapper = style({});
+const wrapper = style({
+  selectors: {
+    [`${root}[data-label-placement='left'] &`]: {
+      gridArea: "input",
+    },
+    [`${root}[data-label-placement='top'] &`]: {
+      gridArea: "input",
+    },
+  },
+});
 
 const input = style({
   ...typographies["body-2/normal"],
@@ -19,7 +38,7 @@ const input = style({
   border: "none",
   minWidth: recursica["dropdown/size/min-width"],
   maxWidth: recursica["dropdown/size/max-width"],
-  outline: `1px solid ${recursica["dropdown/color/default"]}`,
+  outline: `1px solid ${recursica["dropdown/color/border"]}`,
   borderRadius: recursica["size/border-radius/default"],
   paddingBlock: recursica["dropdown/size/vertical-padding"],
   paddingInline: recursica["dropdown/size/horizontal-padding"],
@@ -27,10 +46,10 @@ const input = style({
   selectors: {
     "&::placeholder": {
       ...typographies["body-2/normal"],
-      color: recursica["form/value+placeholder/color/placeholder-default"],
+      color: recursica["form/value+placeholder/color/input-value"],
     },
     "&:disabled::placeholder": {
-      color: recursica["form/value+placeholder/color/placeholder-disabled"],
+      opacity: recursica["dropdown/color/disabled"],
     },
     [`${wrapper}[data-with-left-section="true"] &`]: {
       paddingLeft: `calc(${recursica["dropdown/size/horizontal-padding"]} + 24px + 8px)`,
@@ -39,34 +58,34 @@ const input = style({
       paddingRight: `calc(${recursica["dropdown/size/horizontal-padding"]} + 24px + 8px)`,
     },
     "&:focus-visible": {
-      outline: `1px solid ${recursica["dropdown/color/default"]}`,
+      outline: `1px solid ${recursica["dropdown/color/border"]}`,
     },
     '&[data-expanded="true"]': {
-      outline: `2px solid ${recursica["dropdown/color/focus"]}`,
+      outline: `2px solid ${recursica["dropdown/color/border-selected"]}`,
     },
     '&[value]:not([value=""]):not([disabled])': {
-      outline: `1px solid ${recursica["dropdown/color/selected"]}`,
+      outline: `1px solid ${recursica["dropdown/color/border-selected"]}`,
     },
     '&[value]:not([value=""]):not([disabled]):focus-visible': {
-      outline: `2px solid ${recursica["dropdown/color/selected"]}`,
+      outline: `2px solid ${recursica["dropdown/color/border-selected"]}`,
     },
     '&[data-error="true"]': {
-      outline: `1px solid ${recursica["dropdown/color/error"]}`,
-      color: recursica["form/value+placeholder/color/value-default"],
+      outline: `1px solid ${recursica["dropdown/color/border-error"]}`,
+      color: recursica["form/value+placeholder/color/input-value"],
     },
     '&[data-error="true"][value]:not([value=""]):not([disabled])': {
-      outline: `1px solid ${recursica["dropdown/color/error"]}`,
+      outline: `1px solid ${recursica["dropdown/color/border-error"]}`,
     },
     '&[data-error="true"]:focus-visible, &[data-error="true"][data-expanded="true"]':
       {
-        outline: `2px solid ${recursica["dropdown/color/error"]}`,
+        outline: `2px solid ${recursica["dropdown/color/border-error"]}`,
       },
   },
 });
 
 const section = style({
   width: "auto",
-  color: recursica["form/icon/color/trailing-icon"],
+  color: "currentcolor",
   paddingBlock: recursica["dropdown/size/vertical-padding"],
   paddingInline: recursica["dropdown/size/horizontal-padding"],
   selectors: {
@@ -81,9 +100,6 @@ const section = style({
       paddingRight: 0,
       paddingLeft: recursica["dropdown/size/horizontal-padding"],
     },
-    [`${wrapper}[data-disabled="true"]  &`]: {
-      color: recursica["form/icon/color/trailing-icon-disabled"],
-    },
   },
 });
 
@@ -97,7 +113,7 @@ const dropdown = style({
 export const optionStyle = style({
   ...typographies["body-2/normal"],
   gap: recursica["menu-item/size/spacing"],
-  color: recursica["menu-item/color/text-default"],
+  color: recursica["form/value+placeholder/color/input-value"],
   borderRadius: 0,
   width: "100%",
   paddingBlock: recursica["menu-item/size/item-vertical-padding"],
@@ -112,8 +128,7 @@ export const optionStyle = style({
     },
     '&[data-combobox-disabled="true"]': {
       backgroundColor: recursica["menu-item/color/default"],
-      color: recursica["menu-item/color/text-disabled"],
-      opacity: "unset",
+      opacity: recursica["dropdown/color/disabled"],
     },
   },
 });
@@ -127,23 +142,41 @@ const option = style({
 
 export const errorContainer = style({
   alignItems: "center",
-  color: recursica["form/label/color/error message"],
+  color: recursica["form/label/color/error-message"],
   gap: recursica["size/spacer/0-5x"],
 });
 
 export const labelContainer = style({
   alignItems: "center",
   gap: recursica["form/label/size/spacing"],
+  selectors: {
+    [`${root}[data-label-placement='left'] &`]: {
+      maxWidth: recursica["form/label/size/inline-width"],
+      paddingTop: recursica["form/label/size/label-vertical-padding"],
+      paddingBottom: recursica["form/label/size/label-vertical-padding"],
+      textAlign: "end",
+      flexShrink: 0,
+    },
+    [`${root}[data-label-placement='top'] &`]: {
+      gridArea: "label",
+      width: "auto",
+      textAlign: "start",
+    },
+  },
 });
 
-export const checkbox = style({
-  backgroundColor: recursica["checkbox/color/enabled"],
-  color: recursica["checkbox/color/icon-enabled"],
+const checkbox = style({
+  backgroundColor: recursica["dropdown/color/background-input"],
+  color: recursica["checkbox/color/icon"],
   width: 20,
   height: 20,
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
+});
+
+const label = style({
+  gridArea: "label",
 });
 
 export const styles = {
@@ -154,4 +187,5 @@ export const styles = {
   dropdown,
   checkbox,
   option,
+  label,
 };

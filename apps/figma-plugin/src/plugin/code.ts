@@ -25,6 +25,7 @@ async function main() {
     getTeamLibrary(projectId, pluginVersion);
   }
 }
+main();
 figma.ui.onmessage = async (e) => {
   if (e.type === 'GET_LOCAL_STORAGE') {
     getLocalStorage();

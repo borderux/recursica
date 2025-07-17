@@ -34,6 +34,10 @@ export interface TypographyProps {
    * The flex of the typography
    */
   flex?: number;
+  /**
+   * The opacity of the typography
+   */
+  opacity?: number;
 }
 
 export const Typography = ({
@@ -44,6 +48,7 @@ export const Typography = ({
   textDecoration,
   textAlign,
   flex,
+  opacity,
 }: TypographyProps) => {
   const getComponentAsVariantBased = () => {
     switch (variant) {
@@ -67,6 +72,7 @@ export const Typography = ({
       variant={variant}
       style={{
         "--typography-color": color ? recursica[color] : "currentColor",
+        opacity: opacity ?? 1,
         textAlign,
         flex,
       }}

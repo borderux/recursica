@@ -83,6 +83,23 @@ export async function runMain(): Promise<void> {
     }
 
     if (iconsObject) {
+      let iconsOutput = srcPath + "/components/Icons";
+      let svgOutput = iconsOutput + "/Svg";
+      if (iconsConfig) {
+        iconsOutput = srcPath + iconsConfig.output;
+        svgOutput = iconsOutput + "/Svg";
+      }
+      if (!fs.existsSync(iconsOutput)) {
+        fs.mkdirSync(iconsOutput);
+      }
+      if (!fs.existsSync(svgOutput)) {
+        fs.mkdirSync(svgOutput);
+      } else {
+        // remove the whole svgOutput folder and recreate it
+        fs.rmSync(svgOutput, { recursive: true, force: true });
+        fs.mkdirSync(svgOutput);
+      }
+
       fs.writeFileSync(
         iconsObject.iconExports.path,
         iconsObject.iconExports.content,

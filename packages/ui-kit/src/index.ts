@@ -1,4 +1,6 @@
 import "@mantine/core/styles.css";
+import "@mantine/dates/styles.css";
+import "./index.css";
 export * from "./components";
 export * from "./utils";
 export * from "./types";

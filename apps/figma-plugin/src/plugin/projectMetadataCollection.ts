@@ -7,13 +7,14 @@ export class PluginError extends Error {
   }
 }
 
-const projectTypes = <const>['ui-kit', 'themes', 'tokens', 'icons'];
-export type ProjectTypes = (typeof projectTypes)[number];
-export const PROJECT_METADATA_VARIABLE_COLLECTION = 'ID variables';
+export type ProjectTypes = 'ui-kit' | 'themes' | 'tokens' | 'icons';
 
-function isProjectType(value: string): value is ProjectTypes {
-  return projectTypes.includes(value as ProjectTypes);
-}
+// Collection names to detect project types (case-insensitive)
+const COLLECTION_TYPE_MAPPING = {
+  'ui kit': 'ui-kit',
+  tokens: 'tokens',
+  themes: 'themes',
+} as const;
 
 export type ProjectMetadata = {
   projectId: string;
@@ -23,14 +24,47 @@ export type ProjectMetadata = {
 
 export async function decodeProjectMetadataCollection(version: string): Promise<ProjectMetadata> {
   const projectData: Partial<ProjectMetadata> = {};
+
   // Get local variable collections
   const rawVariables = await figma.variables.getLocalVariableCollectionsAsync();
-  const metadataVariables = rawVariables.find(
-    (vars) => vars.name.toLowerCase() === PROJECT_METADATA_VARIABLE_COLLECTION.toLowerCase()
-  );
-  if (!metadataVariables)
-    throw new PluginError('Cannot execute the plugin because the metadata collection is missing.');
 
+  // Find collection that matches our type mapping
+  const metadataVariables = rawVariables.find((vars) => {
+    const collectionName = vars.name.toLowerCase();
+    return Object.keys(COLLECTION_TYPE_MAPPING).some((key) =>
+      collectionName.includes(key.toLowerCase())
+    );
+  });
+
+  // If no matching collection found, default to icons
+  if (!metadataVariables) {
+    const defaultMetadata: ProjectMetadata = {
+      projectId: 'default',
+      projectType: 'icons',
+    };
+
+    figma.ui.postMessage({
+      type: 'METADATA',
+      payload: {
+        projectId: defaultMetadata.projectId,
+        projectType: defaultMetadata.projectType,
+        pluginVersion: version,
+      },
+    });
+
+    return defaultMetadata;
+  }
+
+  // Determine project type from collection name
+  const collectionName = metadataVariables.name.toLowerCase();
+  for (const [key, projectType] of Object.entries(COLLECTION_TYPE_MAPPING)) {
+    if (collectionName.includes(key.toLowerCase())) {
+      projectData.projectType = projectType;
+      break;
+    }
+  }
+
+  // Extract metadata from the collection
   for (const varId of metadataVariables.variableIds) {
     const varValue = await figma.variables.getVariableByIdAsync(varId);
     if (!varValue) continue;
@@ -39,17 +73,17 @@ export async function decodeProjectMetadataCollection(version: string): Promise<
     if (typeof realValue !== 'string') continue;
     if (name === 'project-id') projectData.projectId = realValue;
     if (name === 'theme') projectData.theme = realValue;
-    if (name === 'project-type') {
-      if (!isProjectType(realValue))
-        throw new PluginError(`Project type invalid, must be ${projectTypes.join(',')}.`);
-
-      projectData.projectType = realValue as ProjectTypes;
-    }
   }
-  if (!projectData.projectId) throw new PluginError('Missing project id in metadata');
-  if (projectData.projectType === 'themes' && !projectData.theme)
+
+  // Set default project ID if not found
+  if (!projectData.projectId) {
+    projectData.projectId = 'default';
+  }
+
+  // Validate required fields based on project type
+  if (projectData.projectType === 'themes' && !projectData.theme) {
     throw new PluginError('Missing theme name in metadata');
-  if (!projectData.projectType) throw new PluginError('Missing project type in metadata');
+  }
 
   figma.ui.postMessage({
     type: 'METADATA',
@@ -60,5 +94,6 @@ export async function decodeProjectMetadataCollection(version: string): Promise<
       pluginVersion: version,
     },
   });
+
   return projectData as ProjectMetadata;
 }
