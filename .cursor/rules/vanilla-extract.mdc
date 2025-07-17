@@ -1,0 +1,10 @@
+---
+description: This is a rule for the cursor ai to follow when creating a new or updating component with vanilla extract
+globs:
+alwaysApply: false
+---
+
+for each .css.ts file you create you will need to import the recursica object and the typographies object
+in case the given style uses a syntax similar to property: var("some-var-val") try to change it to use the recursica object, in case there isn't a value that matches the var value rollback it to use var
+you should always create const (most of the time will be something like: root, wrapper, etc) and then export them all as an object called styles
+and when importing styles into the component you should set classNames={styles}, do not set them manually, this is to just modify the exported object and the styles will be updated automatically

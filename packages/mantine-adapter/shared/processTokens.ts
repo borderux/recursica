@@ -37,6 +37,10 @@ export class ProcessTokens {
       return true;
     }
     if (typeof token.value === "number") {
+      if (token.name.includes("opacity")) {
+        target[token.name] = `${token.value / 100}`;
+        return true;
+      }
       target[token.name] = `${token.value}px`;
       return true;
     }

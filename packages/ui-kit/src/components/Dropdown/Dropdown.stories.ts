@@ -35,6 +35,10 @@ const meta = {
     label: {
       control: "text",
     },
+    labelPlacement: {
+      control: "select",
+      options: ["top", "left"],
+    },
   },
   // Use `fn` to spy on the onClick arg, which will appear in the actions panel once invoked: https://storybook.js.org/docs/essentials/actions#action-args
   args: {
@@ -95,7 +99,7 @@ export const NoLabel: Story = {
 
 export const WithLeadingIcon: Story = {
   args: {
-    leadingIcon: "close_Outlined",
+    leadingIcon: "check_badge_outline",
   },
 };
 
@@ -108,19 +112,45 @@ export const Optional: Story = {
 export const WithIcon: Story = {
   args: {
     data: [
-      { value: "Option 1", label: "Option 1", icon: "bug_report_Outlined" },
-      { value: "Option 2", label: "Option 2", icon: "open_in_new_Outlined" },
+      { value: "Option 1", label: "Option 1", icon: "bars_3_outline" },
+      { value: "Option 2", label: "Option 2", icon: "trash_outline" },
       {
         value: "Option 3",
         label: "Option 3",
-        icon: "link_Outlined",
+        icon: "receipt_percent_outline",
       },
       {
         value: "Option 4",
         label: "Option 4",
-        icon: "publish_Outlined",
+        icon: "gift_outline",
         disabled: true,
       },
     ],
+  },
+};
+
+export const LabelPlacementTop: Story = {
+  args: {
+    labelPlacement: "top",
+  },
+};
+
+export const LabelPlacementLeft: Story = {
+  args: {
+    labelPlacement: "left",
+  },
+};
+
+export const LabelPlacementLeftWithOptional: Story = {
+  args: {
+    labelPlacement: "left",
+    isOptional: true,
+  },
+};
+
+export const LabelPlacementLeftWithError: Story = {
+  args: {
+    labelPlacement: "left",
+    error: "Error message",
   },
 };

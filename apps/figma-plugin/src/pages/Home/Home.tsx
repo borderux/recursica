@@ -25,7 +25,7 @@ export function Home() {
           <Typography
             variant='body-1/normal'
             textAlign='center'
-            color='color-on/background/medium-emphasis'
+            color='layers/layer-0/elements/text/color'
           >
             Getting this ready for you...
           </Typography>
@@ -34,7 +34,7 @@ export function Home() {
             component={NavLink}
             to={target}
             label='Get started'
-            rightSection='arrow_forward_Outlined'
+            trailing='arrow_right_outline'
           />
         )}
       </Flex>

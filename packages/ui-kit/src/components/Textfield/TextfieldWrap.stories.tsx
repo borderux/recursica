@@ -85,13 +85,13 @@ export const LabelOptionalValuedHelpText: Story = {
 
 export const LabelOptionalValuedLeadingIcon: Story = {
   args: {
-    leadingIcon: "arrow_back_ios_new_Filled",
+    leadingIcon: "academic_cap_outline",
   },
 };
 
 export const LabelOptionalValuedTrailingIcon: Story = {
   args: {
-    trailingIcon: "keyboard_arrow_down_Filled",
+    trailingIcon: "adjustments_horizontal_outline",
   },
 };
 

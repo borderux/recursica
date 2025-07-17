@@ -1,4 +1,3 @@
-import { PROJECT_METADATA_VARIABLE_COLLECTION } from './projectMetadataCollection';
 import {
   processLocalVariableCollection,
   processLocalTypographyStyles,
@@ -13,10 +12,6 @@ async function decodeVariableCollections() {
   // Get local variable collections
   const rawVariables = await figma.variables.getLocalVariableCollectionsAsync();
   for (const variableCollection of rawVariables) {
-    if (
-      variableCollection.name.toLowerCase() === PROJECT_METADATA_VARIABLE_COLLECTION.toLowerCase()
-    )
-      continue;
     Object.assign(objectCollections, await processLocalVariableCollection(variableCollection));
   }
   return objectCollections;

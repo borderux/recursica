@@ -5,36 +5,9 @@
     "root": "packages/ui-kit",
     "adapter": "packages/ui-kit/webworker.js"
   },
-  "icons": {
-    "include": {
-      "names": [
-        "cached",
-        "arrow_back_ios_new",
-        "arrow_back",
-        "arrow_forward",
-        "content_copy",
-        "publish",
-        "favorite",
-        "logout",
-        "close",
-        "error",
-        "keyboard_arrow_down",
-        "keyboard_arrow_up",
-        "check",
-        "open_in_new",
-        "bug_report",
-        "link",
-        "pending",
-        "warning_amber",
-        "github",
-        "gitlab"
-      ],
-      "variants": ["Outlined", "Filled"]
-    }
-  },
   "overrides": {
     "mantineTheme": {
-      "1-scale": "'color-1-scale-default'"
+      "1-scale": "'colors-scale-1-default-tone'"
     }
   }
 }

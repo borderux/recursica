@@ -35,6 +35,10 @@ export type MultiselectProps = Pick<
    * Whether the label is optional. @default false
    */
   isOptional?: boolean;
+  /**
+   * The placement of the label relative to the multiselect. @default 'top'
+   */
+  labelPlacement?: "top" | "left";
 };
 
 const renderSelectOption: MultiSelectProps["renderOption"] = ({
@@ -44,7 +48,11 @@ const renderSelectOption: MultiSelectProps["renderOption"] = ({
   <Flex className={optionStyle} align="center" onClick={option.onClick}>
     {checked ? (
       <Box className={styles.checkbox}>
-        <Icon name="check_Outlined" size={16} />
+        <Icon
+          name="check_outline"
+          size={16}
+          color="form/value+placeholder/color/input-value"
+        />
       </Box>
     ) : option.icon ? (
       <Icon name={option.icon} />
@@ -61,6 +69,7 @@ export const Multiselect = forwardRef<HTMLInputElement, MultiselectProps>(
       leadingIcon,
       isOptional = false,
       showLabel = true,
+      labelPlacement = "top",
       ...props
     },
     ref,
@@ -74,6 +83,9 @@ export const Multiselect = forwardRef<HTMLInputElement, MultiselectProps>(
         withCheckIcon={false}
         withScrollArea={false}
         classNames={styles}
+        wrapperProps={{
+          "data-label-placement": labelPlacement,
+        }}
         renderOption={renderSelectOption}
         label={
           showLabel ? (
@@ -82,7 +94,7 @@ export const Multiselect = forwardRef<HTMLInputElement, MultiselectProps>(
                 <Typography variant="body-2/normal">{label}</Typography>
                 <Typography
                   variant="caption"
-                  color="form/label/color/optional indicator"
+                  color="form/value+placeholder/color/input-value"
                 >
                   (optional)
                 </Typography>
@@ -96,14 +108,14 @@ export const Multiselect = forwardRef<HTMLInputElement, MultiselectProps>(
         error={
           error ? (
             <Flex className={errorContainer}>
-              <Icon name="error_Outlined" size={16} />
+              <Icon name="exclamation_circle_outline" size={16} />
               <Typography variant="caption">{error}</Typography>
             </Flex>
           ) : undefined
         }
         leftSectionPointerEvents="none"
         leftSection={leadingIcon ? <Icon name={leadingIcon} /> : undefined}
-        rightSection={<Icon name="keyboard_arrow_down_Outlined" />}
+        rightSection={<Icon name="chevron_down_outline" />}
         {...props}
       />
     );

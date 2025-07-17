@@ -32,7 +32,7 @@ const input = style({
   border: "none",
   minWidth: recursica["text-field/size/min-width"],
   maxWidth: recursica["text-field/size/max-width"],
-  outline: `1px solid ${recursica["text-field/color/default"]}`,
+  outline: `1px solid ${recursica["text-field/color/border"]}`,
   borderRadius: recursica["size/border-radius/default"],
   paddingBlock: recursica["text-field/size/vertical-padding"],
   paddingInline: recursica["text-field/size/horizontal-padding"],
@@ -44,18 +44,14 @@ const input = style({
     },
     "&::placeholder": {
       ...typographies["body-2/normal"],
-      color: recursica["form/value+placeholder/color/placeholder-default"],
-    },
-    "&:disabled::placeholder": {
-      color: recursica["form/value+placeholder/color/placeholder-disabled"],
     },
     "&:disabled": {
-      color: recursica["form/value+placeholder/color/value-disabled"],
-      backgroundColor: recursica["text-field/color/background-input-disabled"],
+      color: recursica["form/value+placeholder/color/input-value"],
+      backgroundColor: recursica["text-field/color/background-input"],
     },
     "&[readonly]": {
       backgroundColor: recursica["text-field/color/read-only-background"],
-      color: recursica["form/value+placeholder/color/value-default"],
+      color: recursica["form/value+placeholder/color/input-value"],
     },
     [`${wrapper}[data-with-left-section="true"] &`]: {
       paddingLeft: `calc(${recursica["text-field/size/horizontal-padding"]} + 24px + 8px)`,
@@ -66,30 +62,30 @@ const input = style({
     [`
       &[readonly]:focus-visible
     `]: {
-      outline: `1px solid ${recursica["text-field/color/read-only-stroke"]}`,
+      outline: `1px solid ${recursica["text-field/color/border"]}`,
     },
     [`
       &[data-valued="true"]:not([disabled]):not([readonly]),
       &[value]:not([value=""]):not([disabled]):not([readonly])
       `]: {
-      outline: `1px solid ${recursica["text-field/color/valued"]}`,
+      outline: `1px solid ${recursica["text-field/color/border"]}`,
     },
     [`
       &:focus-visible:not([readonly]):not([disabled]),
       &[data-valued="true"]:not([disabled]):not([readonly]):focus-visible, 
       &[value]:not([value=""]):not([disabled]):not([readonly]):focus-visible
       `]: {
-      outline: `2px solid ${recursica["text-field/color/valued"]}`,
+      outline: `2px solid ${recursica["text-field/color/border"]}`,
     },
     '&[data-error="true"]': {
-      outline: `1px solid ${recursica["text-field/color/error"]}`,
-      color: recursica["form/value+placeholder/color/value-default"],
+      outline: `1px solid ${recursica["text-field/color/border"]}`,
+      color: recursica["form/value+placeholder/color/input-value"],
     },
     [`
       &[data-error="true"][data-valued="true"]:not([disabled]):not([readonly]),
       &[data-error="true"][value]:not([value=""]):not([disabled]):not([readonly])
       `]: {
-      outline: `1px solid ${recursica["text-field/color/error"]}`,
+      outline: `1px solid ${recursica["text-field/color/border"]}`,
     },
     [`
       &[data-error="true"]:not([readonly]):not([disabled]):focus-visible, 
@@ -97,7 +93,7 @@ const input = style({
       &[data-error="true"][data-valued="true"]:not([disabled]):not([readonly]):focus-visible, 
       &[data-error="true"][value]:not([value=""]):not([disabled]):not([readonly]):focus-visible
       `]: {
-      outline: `2px solid ${recursica["text-field/color/error"]}`,
+      outline: `2px solid ${recursica["text-field/color/border"]}`,
     },
   },
 });
@@ -105,7 +101,7 @@ const input = style({
 const section = style({
   width: "auto",
   alignItems: "baseline",
-  color: recursica["form/icon/color/trailing-icon"],
+  color: recursica["form/value+placeholder/color/input-value"],
   paddingBlock: recursica["text-field/size/vertical-padding"],
   paddingInline: recursica["text-field/size/horizontal-padding"],
   selectors: {
@@ -121,19 +117,19 @@ const section = style({
       paddingLeft: recursica["text-field/size/horizontal-padding"],
     },
     [`${wrapper}[data-disabled="true"]  &`]: {
-      color: recursica["form/icon/color/trailing-icon-disabled"],
+      opacity: recursica["text-field/color/disabled"],
     },
   },
 });
 
 export const description = style({
   ...typographies.caption,
-  color: recursica["form/label/color/assistive text"],
+  color: recursica["form/label/color/assistive-text"],
 });
 
 export const errorContainer = style({
   alignItems: "center",
-  color: recursica["form/label/color/error message"],
+  color: recursica["form/label/color/error-message"],
   gap: recursica["size/spacer/0-5x"],
 });
 

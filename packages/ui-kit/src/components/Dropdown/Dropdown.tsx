@@ -41,6 +41,10 @@ export type DropdownProps = Pick<
    * Whether the label is optional. @default false
    */
   isOptional?: boolean;
+  /**
+   * The placement of the label relative to the dropdown. @default 'top'
+   */
+  labelPlacement?: "top" | "left";
 };
 
 const renderSelectOption: SelectProps["renderOption"] = ({ option }) => (
@@ -58,6 +62,7 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
       leadingIcon,
       isOptional = false,
       showLabel = true,
+      labelPlacement = "top",
       data,
       value,
       ...props
@@ -76,6 +81,9 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
         withCheckIcon={false}
         withScrollArea={false}
         classNames={styles}
+        wrapperProps={{
+          "data-label-placement": labelPlacement,
+        }}
         label={
           showLabel ? (
             isOptional ? (
@@ -83,7 +91,8 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
                 <Typography variant="body-2/normal">{label}</Typography>
                 <Typography
                   variant="caption"
-                  color="form/label/color/optional indicator"
+                  opacity={0.84}
+                  color="form/value+placeholder/color/input-value"
                 >
                   (optional)
                 </Typography>
@@ -97,7 +106,7 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
         error={
           error ? (
             <Flex className={errorContainer}>
-              <Icon name="error_Outlined" size={16} />
+              <Icon name="exclamation_circle_outline" size={16} />
               <Typography variant="caption">{error}</Typography>
             </Flex>
           ) : undefined
@@ -105,7 +114,7 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
         renderOption={renderSelectOption}
         leftSectionPointerEvents="none"
         leftSection={displayIcon ? <Icon name={displayIcon} /> : undefined}
-        rightSection={<Icon name="keyboard_arrow_down_Outlined" />}
+        rightSection={<Icon name="chevron_down_outline" />}
         data={data}
         value={value}
         {...props}
