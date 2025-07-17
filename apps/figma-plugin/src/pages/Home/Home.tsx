@@ -5,7 +5,9 @@ import { Layout } from '../../components';
 import { useMemo } from 'react';
 
 export function Home() {
-  const { repository } = useFigma();
+  const { repository, variablesSynced } = useFigma();
+
+  const isLoading = !repository || !variablesSynced;
 
   const target = useMemo(() => {
     if (repository && repository.platform && repository.accessToken) {
@@ -14,6 +16,16 @@ export function Home() {
     return '/auth';
   }, [repository]);
 
+  const getLoadingMessage = useMemo(() => {
+    if (!variablesSynced) {
+      return 'Connecting variables...';
+    }
+    if (!repository) {
+      return 'Checking authentication...';
+    }
+    return 'Getting this ready for you...';
+  }, [variablesSynced, repository]);
+
   return (
     <Layout>
       <Flex direction='column' h='100%'>
@@ -21,22 +33,25 @@ export function Home() {
           <Logo />
           <Typography variant='h2'>Recursica</Typography>
         </Flex>
-        {!repository ? (
-          <Typography
-            variant='body-1/normal'
-            textAlign='center'
-            color='layers/layer-0/elements/text/color'
-          >
-            Getting this ready for you...
-          </Typography>
-        ) : (
-          <Button
-            component={NavLink}
-            to={target}
-            label='Get started'
-            trailing='arrow_right_outline'
-          />
-        )}
+        <Flex gap={2} justify='center'>
+          {isLoading ? (
+            <Typography
+              variant='body-1/normal'
+              textAlign='center'
+              color='layers/layer-0/elements/text/color'
+              opacity={0.84}
+            >
+              {getLoadingMessage}
+            </Typography>
+          ) : (
+            <Button
+              component={NavLink}
+              to={target}
+              label='Get started'
+              trailing='arrow_right_outline'
+            />
+          )}
+        </Flex>
       </Flex>
     </Layout>
   );

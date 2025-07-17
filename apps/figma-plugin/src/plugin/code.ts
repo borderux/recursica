@@ -3,6 +3,7 @@ import { decodeProjectMetadataCollection } from './projectMetadataCollection';
 import { getLocalStorage, saveInStorage } from './authStorage';
 import { getTeamLibrary } from './teamLibrary';
 import { exportIcons } from './exportIcons';
+import { syncTokens } from './syncTokens';
 const pluginVersion = packageInfo.version;
 
 if (import.meta.env.MODE === 'development') {
@@ -25,7 +26,6 @@ async function main() {
     getTeamLibrary(projectId, pluginVersion);
   }
 }
-main();
 figma.ui.onmessage = async (e) => {
   if (e.type === 'GET_LOCAL_STORAGE') {
     getLocalStorage();
@@ -47,5 +47,8 @@ figma.ui.onmessage = async (e) => {
   }
   if (e.type === 'GET_VARIABLES') {
     main();
+  }
+  if (e.type === 'SYNC_TOKENS') {
+    syncTokens();
   }
 };
