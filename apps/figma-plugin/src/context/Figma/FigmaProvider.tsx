@@ -15,6 +15,7 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
   const [recursicaVariables, setRecursicaVariables] = useState<RecursicaVariablesSchema>();
   const [svgIcons, setSvgIcons] = useState<Record<string, string>>();
   const [userId, setUserId] = useState<string | undefined>();
+  const [variablesSynced, setVariablesSynced] = useState(false);
   useLayoutEffect(() => {
     window.onmessage = ({ data: { pluginMessage } }) => {
       if (!pluginMessage) return;
@@ -36,10 +37,17 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
       if (type === 'CURRENT_USER') {
         setUserId(payload);
       }
+      if (type === 'SYNC_TOKENS_COMPLETE') {
+        setVariablesSynced(true);
+      }
     };
     return () => {
       window.onmessage = null;
     };
+  }, []);
+
+  useEffect(() => {
+    syncVariables();
   }, []);
 
   useEffect(() => {
@@ -114,6 +122,18 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
     );
   };
 
+  const syncVariables = () => {
+    parent.postMessage(
+      {
+        pluginMessage: {
+          type: 'SYNC_TOKENS',
+        },
+        pluginId: '*',
+      },
+      '*'
+    );
+  };
+
   const values = {
     repository: {
       platform: repository.platform,
@@ -129,6 +149,7 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
     svgIcons,
     loading: !(recursicaVariables || svgIcons),
     userId,
+    variablesSynced,
   };
 
   return <FigmaContext.Provider value={values}>{children}</FigmaContext.Provider>;
