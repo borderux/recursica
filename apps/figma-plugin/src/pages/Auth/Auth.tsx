@@ -182,8 +182,7 @@ export function Auth() {
           <Button
             size='small'
             variant='text'
-            text={false}
-            leftSection='arrow_path_outline'
+            icon='arrow_path_outline'
             onClick={() => navigate('/home')}
             label='Back'
           />
