@@ -5,6 +5,9 @@ const meta = {
   title: "Chip/Standalone",
   component: Chip,
   decorators: [],
+  parameters: {
+    layout: "centered",
+  },
   tags: ["autodocs"],
   args: {},
 } satisfies Meta<typeof Chip>;
@@ -43,8 +46,8 @@ export const Icon: Story = {
   args: {
     label: "Chip",
     icon: {
-      unselected: "favorite_Outlined",
-      selected: "favorite_Filled",
+      unselected: "heart_outline",
+      selected: "heart_solid",
     },
   },
 };
@@ -53,8 +56,8 @@ export const IconChecked: Story = {
   args: {
     label: "Chip",
     icon: {
-      unselected: "favorite_Outlined",
-      selected: "favorite_Filled",
+      unselected: "heart_outline",
+      selected: "heart_solid",
     },
     checked: true,
   },
@@ -64,8 +67,8 @@ export const IconCheckedError: Story = {
   args: {
     label: "Chip",
     icon: {
-      unselected: "favorite_Outlined",
-      selected: "favorite_Filled",
+      unselected: "heart_outline",
+      selected: "heart_solid",
     },
     checked: true,
     error: true,
@@ -76,8 +79,8 @@ export const IconError: Story = {
   args: {
     label: "Chip",
     icon: {
-      unselected: "favorite_Outlined",
-      selected: "favorite_Filled",
+      unselected: "heart_outline",
+      selected: "heart_solid",
     },
     error: true,
   },

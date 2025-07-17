@@ -1,99 +1,94 @@
-import { createVar, style } from "@vanilla-extract/css";
+import { style } from "@vanilla-extract/css";
 import { recursica } from "../../recursica/Recursica";
 import { typographies } from "../Typography";
 
-const innerGap = createVar();
-
 const root = style({
   boxSizing: "border-box",
-  height: "auto",
+  height: recursica["button/size/default-size"],
   border: "none",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
   borderRadius: recursica["button/size/border-radius"],
+  paddingInline: recursica["button/size/default-horizontal-padding"],
+  minWidth: recursica["button/size/default-min-width"],
   ":hover": {
     border: "none",
   },
   ":disabled": {
     cursor: "not-allowed",
     pointerEvents: "none",
+    opacity: recursica["button/color/disabled"],
   },
   selectors: {
-    '&[data-notext="true"]': {
-      minWidth: "auto",
-      vars: {
-        [innerGap]: "0px",
-      },
-    },
     // Button sizes
-    '&[data-size="default"]': {
-      paddingBlock: recursica["button/size/default-vertical-padding"],
-      paddingInline: recursica["button/size/default-horizontal-padding"],
-      minWidth: recursica["button/size/default-min-width"],
-      vars: {
-        [innerGap]: recursica["button/size/default-spacing"],
-      },
-    },
-    '&[data-size="default"][data-notext="true"]': {
-      paddingBlock: recursica["button/size/default-icon-padding"],
-      paddingInline: recursica["button/size/default-icon-padding"],
-      minWidth: "auto",
-      vars: {
-        [innerGap]: "0px",
-      },
-    },
     '&[data-size="small"]': {
-      paddingBlock: recursica["button/size/small-vertical-padding"],
+      height: recursica["button/size/small-size"],
       paddingInline: recursica["button/size/small-horizontal-padding"],
       minWidth: recursica["button/size/small-min-width"],
-      vars: {
-        [innerGap]: recursica["button/size/small-spacing"],
-      },
     },
-    '&[data-size="small"][data-notext="true"]': {
-      paddingBlock: recursica["button/size/small-icon-padding"],
-      paddingInline: recursica["button/size/small-icon-padding"],
-      minWidth: "auto",
-      vars: {
-        [innerGap]: "0px",
-      },
+    // Button styles
+    // Icon
+    '&[data-style="icon"]': {
+      paddingInline: 0,
+      minWidth: 0,
+      width: recursica["button/size/default-size"],
+      height: recursica["button/size/default-size"],
     },
-    // Button variants
-    // Contained
-    '&[data-variant="contained"]': {
-      backgroundColor: recursica["button/color/background-contained"],
-      color: recursica["button/color/text-contained-enabled"],
+    '&[data-style="icon"][data-size="small"]': {
+      width: recursica["button/size/small-size"],
+      height: recursica["button/size/small-size"],
     },
-    '&[data-variant="contained"]:hover': {
-      backgroundColor: recursica["button/color/background-contained-hover"],
+    // Button styles
+    // Solid
+    '&[data-variant="solid"]': {
+      backgroundColor: recursica["button/color/background-solid"],
+      color: recursica["button/color/text-solid"],
     },
-    '&[data-variant="contained"]:disabled': {
-      backgroundColor: recursica["button/color/background-contained-disabled"],
-      color: recursica["button/color/text-contained-disabled"],
+    '&[data-variant="solid"]:hover': {
+      backgroundColor: recursica["button/color/background-solid-hover"],
     },
-    // Outlined
+    '&[data-variant="solid"]:disabled': {
+      opacity: recursica["button/color/disabled"],
+    },
+    // Outline
     '&[data-variant="outline"]': {
       backgroundColor: "transparent",
       border: `1px solid`,
-      borderColor: recursica["button/color/text-enabled-default"],
-      color: recursica["button/color/text-enabled-default"],
+      borderColor: recursica["button/color/border"],
+      color: recursica["button/color/border"],
+    },
+    '&[data-variant="outline"]:hover': {
+      borderColor: recursica["button/color/border-hover"],
+      color: recursica["button/color/border-hover"],
     },
     '&[data-variant="outline"]:disabled': {
-      borderColor: recursica["button/color/text-disabled-default"],
-      color: recursica["button/color/text-disabled-default"],
+      opacity: recursica["button/color/disabled"],
     },
     // Text
     '&[data-variant="text"]': {
       backgroundColor: "transparent",
-      color: recursica["button/color/text-enabled-default"],
+      color: recursica["button/color/border"],
+    },
+    '&[data-variant="text"]:hover': {
+      color: recursica["button/color/border-hover"],
     },
     '&[data-variant="text"]:disabled': {
-      color: recursica["button/color/text-disabled-default"],
+      opacity: recursica["button/color/disabled"],
     },
   },
 });
 
 const inner = style({
   height: 24,
-  gap: innerGap,
+  selectors: {
+    [`${root}[data-size="default"] &`]: {
+      gap: recursica["button/size/default-spacing"],
+    },
+    [`${root}[data-size="small"] &`]: {
+      gap: recursica["button/size/small-spacing"],
+    },
+  },
 });
 
 const label = style({
@@ -107,6 +102,9 @@ const label = style({
   selectors: {
     [`${root}[data-isloading="true"] &`]: {
       color: "transparent",
+    },
+    [`${root}[data-style="icon"] &`]: {
+      display: "none",
     },
   },
 });

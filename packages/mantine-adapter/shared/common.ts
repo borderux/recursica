@@ -6,7 +6,7 @@ import type {
 import type { RecursicaVariablesSchema } from "@recursica/schemas";
 import type { RecursicaConfiguration } from "@recursica/schemas";
 import { ProcessTokens } from "./processTokens";
-import { runAdapter } from "../adapter";
+import { runAdapter, RunAdapterOutput } from "../adapter";
 
 export interface ProcessJsonParams {
   project: RecursicaConfiguration["project"];
@@ -85,7 +85,7 @@ export function processAdapter({
   srcPath,
   iconsJsonContent,
   iconsConfig,
-}: RunAdapterParams) {
+}: RunAdapterParams): RunAdapterOutput {
   let icons: Record<string, string> = {};
 
   // Process icons if provided

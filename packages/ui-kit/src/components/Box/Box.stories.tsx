@@ -36,7 +36,7 @@ const meta = {
     mx: undefined,
     pr: undefined,
 
-    bg: "color/1-scale/50",
+    bg: "colors/scale-1/050/tone",
     children: "Container 1",
   },
   argTypes: {
@@ -146,7 +146,7 @@ export const Border: Story = {
   args: {
     bw: "3px",
     bs: "solid",
-    bc: "color/1-scale/900",
+    bc: "colors/scale-1/900/tone",
   },
 };
 

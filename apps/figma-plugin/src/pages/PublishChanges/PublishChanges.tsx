@@ -122,8 +122,8 @@ export function PublishChanges() {
           label: !prLink ? 'Publishing...' : 'Next',
           disabled: !prLink,
           onClick: () => setStep(Step.Exported),
-          leftSection: !prLink ? 'cached_Outlined' : undefined,
-          rightSection: prLink ? 'arrow_forward_Outlined' : undefined,
+          trailing: !prLink ? 'arrow_path_outline' : undefined,
+          leading: prLink ? 'arrow_right_outline' : undefined,
         };
       case Step.Exported:
         return {
@@ -137,7 +137,7 @@ export function PublishChanges() {
             clearError();
             setStep(Step.SelectProject);
           },
-          leftSection: 'arrow_back_Outlined',
+          leading: 'arrow_left_outline',
         };
     }
   };
@@ -155,13 +155,13 @@ export function PublishChanges() {
   const getIcon = (status: FileStatus): IconName => {
     switch (status) {
       case FileStatus.Loading:
-        return 'cached_Outlined';
+        return 'arrow_path_outline';
       case FileStatus.Done:
-        return 'check_Outlined';
+        return 'check_outline';
       case FileStatus.Error:
-        return 'warning_amber_Outlined';
+        return 'exclamation_circle_outline';
       case FileStatus.Pending:
-        return 'pending_Outlined';
+        return 'clock_outline';
     }
   };
 
@@ -179,11 +179,11 @@ export function PublishChanges() {
   const getPlatformIcon = (platform: string | undefined): IconName => {
     switch (platform?.toLowerCase()) {
       case 'github':
-        return 'github_Outlined';
+        return 'github_outline';
       case 'gitlab':
-        return 'gitlab_Outlined';
+        return 'gitlab_outline';
       default:
-        return 'logout_Outlined';
+        return 'arrow_left_end_on_rectangle_outline';
     }
   };
 
@@ -203,7 +203,7 @@ export function PublishChanges() {
               href='https://github.com/recursica/figma-plugin/issues'
               target='_blank'
               rel='noopener noreferrer'
-              leftSection='bug_report_Outlined'
+              leading='flag_outline'
             />
           )}
           {step === Step.Exported && (
@@ -213,7 +213,7 @@ export function PublishChanges() {
                 ref={copyButtonRef}
                 disabled={!prLink}
                 label='Copy URL'
-                leftSection='link_Outlined'
+                leading='paper_clip_outline'
                 onClick={handleCopyErrorToClipboard}
               />
             </Tooltip>
@@ -238,7 +238,7 @@ export function PublishChanges() {
                 {
                   label: `Disconnect from ${getPlatformDisplayName(repository?.platform)}`,
                   value: '',
-                  icon: 'logout_Outlined',
+                  icon: 'arrow_left_end_on_rectangle_outline',
                   onClick: () => {
                     navigate('/auth');
                   },
@@ -260,13 +260,17 @@ export function PublishChanges() {
     >
       <Flex direction='column' gap={16} justify='center' align='center'>
         {step === Step.InvalidProject && (
-          <Typography variant='body-1/normal' color='color-on/background/high-emphasis'>
+          <Typography variant='body-1/normal' color='layers/layer-0/elements/text/color'>
             This project is missing the required Recursica configuration file. Please initialize the
             repo with the correct ui kit.
           </Typography>
         )}
         {step === Step.SelectProject && (
-          <Typography variant='body-2/normal' color='color-on/background/medium-emphasis'>
+          <Typography
+            variant='body-2/normal'
+            color='layers/layer-0/elements/text/color'
+            opacity={0.84}
+          >
             {selectedProjectId
               ? `Once you've made changes to the Figma files, publish them to the connected repository`
               : 'It looks like there are multiple projects associated with your Github account.'}
@@ -277,7 +281,7 @@ export function PublishChanges() {
             {Object.entries(filesStatus).map(([key, value]) => (
               <Flex gap={8} key={key} align='center'>
                 <Icon name={getIcon(value.status)} spin={value.status === FileStatus.Loading} />
-                <Typography variant='body-2/normal' color='menu-item/color/text-default'>
+                <Typography variant='body-2/normal' color='layers/layer-0/elements/text/color'>
                   {parseInt(value.quantity).toLocaleString()} {key}
                 </Typography>
               </Flex>
@@ -285,7 +289,11 @@ export function PublishChanges() {
           </Flex>
         )}
         {step === Step.Exported && (
-          <Typography variant='body-2/normal' color='color-on/background/medium-emphasis'>
+          <Typography
+            variant='body-2/normal'
+            color='layers/layer-0/elements/text/color'
+            opacity={0.84}
+          >
             The changes have been published.
             <br />
             If you&apos;re ready for the dev to review the changes, send them the URL of your
@@ -294,16 +302,24 @@ export function PublishChanges() {
         )}
         {step === Step.Error && (
           <Flex direction='column' gap={16} align='center'>
-            <Typography variant='body-1/normal' color='color-on/background/high-emphasis'>
+            <Typography variant='body-1/normal' color='layers/layer-0/elements/text/color'>
               {error?.message || 'An error occurred while publishing files'}
             </Typography>
             {error?.details && (
-              <Typography variant='body-2/normal' color='color-on/background/medium-emphasis'>
+              <Typography
+                variant='body-2/normal'
+                color='layers/layer-0/elements/text/color'
+                opacity={0.84}
+              >
                 {error.details}
               </Typography>
             )}
             {error?.code && (
-              <Typography variant='body-2/normal' color='color-on/background/medium-emphasis'>
+              <Typography
+                variant='body-2/normal'
+                color='layers/layer-0/elements/text/color'
+                opacity={0.84}
+              >
                 Error code: {error.code}
               </Typography>
             )}

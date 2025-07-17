@@ -1,6 +1,13 @@
 import { exportToJSON } from './exportToJSON';
 import { GenericVariables, processRemoteVariableCollection, combineObjects } from './shared';
 
+// Collection names to detect project types (case-insensitive)
+const COLLECTION_TYPE_MAPPING = {
+  'ui kit': 'ui-kit',
+  tokens: 'tokens',
+  themes: 'themes',
+} as const;
+
 export async function getTeamLibrary(projectId: string, pluginVersion: string) {
   const uiKit = await exportToJSON();
   // Get the team library from the figma api
@@ -16,20 +23,22 @@ export async function getTeamLibrary(projectId: string, pluginVersion: string) {
     });
   }
 
-  const validLibraries = Object.keys(libraries).filter((val) => {
-    const collections = libraries?.[val];
-    return collections?.some((collection) => collection.name === 'ID variables');
-  });
+  // Filter libraries that have collections matching our type mapping
+  const validLibraries = Object.fromEntries(
+    Object.entries(libraries).filter(([, collections]) => {
+      return collections?.some((collection) => {
+        const collectionName = collection.name.toLowerCase();
+        return Object.keys(COLLECTION_TYPE_MAPPING).some((key) =>
+          collectionName.includes(key.toLowerCase())
+        );
+      });
+    })
+  );
 
   // Process all libraries in parallel instead of sequentially
-  const libraryPromises = validLibraries.map(async (library) => {
-    const collections = libraries?.[library];
-    const [variables, metadata] = await decodeFileVariables(collections);
-    const filetype = Object.values(
-      metadata as Record<string, { name: string; value: string }>
-    ).find((m) => m.name === 'project-type')?.value;
-
-    return { variables, metadata, filetype };
+  const libraryPromises = Object.entries(validLibraries).map(async ([libraryName, collections]) => {
+    const [variables, filetype] = await decodeFileVariables(collections);
+    return { variables, filetype, libraryName };
   });
 
   // Wait for all libraries to be processed
@@ -39,13 +48,11 @@ export async function getTeamLibrary(projectId: string, pluginVersion: string) {
   let tokens: GenericVariables = {};
   const themes: Record<string, GenericVariables> = {};
 
-  for (const { variables, metadata, filetype } of libraryResults) {
+  for (const { variables, filetype, libraryName } of libraryResults) {
     if (filetype === 'tokens') {
       tokens = variables;
     } else if (filetype === 'themes') {
-      const themeName = Object.values(
-        metadata as Record<string, { name: string; value: string }>
-      ).find((m) => m.name === 'theme')?.value;
+      const themeName = libraryName;
       if (themeName) {
         themes[themeName] = variables;
       }
@@ -71,25 +78,20 @@ export async function getTeamLibrary(projectId: string, pluginVersion: string) {
 
 async function decodeFileVariables(
   fileCollections: { value: string; name: string }[]
-): Promise<[GenericVariables, GenericVariables]> {
-  const metadataCollection = fileCollections.find((f) => f.name === 'ID variables');
-  if (!metadataCollection) {
-    figma.notify('No metadata collection found');
-    return [{} as GenericVariables, {} as GenericVariables];
-  }
-
-  const remainingCollections = fileCollections.filter((f) => f.name !== 'ID variables');
-
+): Promise<[GenericVariables, string]> {
   // Run metadata and remaining collections in parallel
-  const [metadataVariables, ...variableResults] = await Promise.all([
-    decodeRemoteVariables(metadataCollection.value),
-    ...remainingCollections.map((variable) => decodeRemoteVariables(variable.value)),
-  ]);
+  const variableResults = await Promise.all(
+    fileCollections.map((variable) => decodeRemoteVariables(variable.value))
+  );
 
   // Combine all variables
   const variables = combineObjects(variableResults);
 
-  return [variables, metadataVariables];
+  if (fileCollections.length === 1) {
+    return [variables, fileCollections[0].name.toLowerCase()];
+  }
+
+  return [variables, 'icons'];
 }
 
 // Decode the remote variables

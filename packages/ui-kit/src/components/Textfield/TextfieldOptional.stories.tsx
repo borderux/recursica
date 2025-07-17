@@ -82,13 +82,13 @@ export const LabelOptionalWithHelpText: Story = {
 
 export const LabelOptionalWithLeadingIcon: Story = {
   args: {
-    leadingIcon: "arrow_back_ios_new_Filled",
+    leadingIcon: "academic_cap_outline",
   },
 };
 
 export const LabelOptionalWithTrailingIcon: Story = {
   args: {
-    trailingIcon: "keyboard_arrow_down_Filled",
+    trailingIcon: "adjustments_horizontal_outline",
   },
 };
 
@@ -122,14 +122,14 @@ export const LabelOptionalValuedHelpText: Story = {
 export const LabelOptionalValuedLeadingIcon: Story = {
   args: {
     value: "Value",
-    leadingIcon: "arrow_back_ios_new_Filled",
+    leadingIcon: "academic_cap_outline",
   },
 };
 
 export const LabelOptionalValuedTrailingIcon: Story = {
   args: {
     value: "Value",
-    trailingIcon: "keyboard_arrow_down_Filled",
+    trailingIcon: "adjustments_horizontal_outline",
   },
 };
 

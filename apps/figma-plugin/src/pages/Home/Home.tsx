@@ -38,7 +38,8 @@ export function Home() {
             <Typography
               variant='body-1/normal'
               textAlign='center'
-              color='form/label/color/optional indicator'
+              color='layers/layer-0/elements/text/color'
+              opacity={0.84}
             >
               {getLoadingMessage}
             </Typography>
@@ -47,7 +48,7 @@ export function Home() {
               component={NavLink}
               to={target}
               label='Get started'
-              rightSection='arrow_forward_Outlined'
+              trailing='arrow_right_outline'
             />
           )}
         </Flex>
