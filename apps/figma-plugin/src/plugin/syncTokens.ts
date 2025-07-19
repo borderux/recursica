@@ -1,9 +1,62 @@
+import { toPascalCase } from '@recursica/common';
+
 export async function syncTokens() {
+  const localCollections = await figma.variables.getLocalVariableCollectionsAsync();
+  let fileType = 'icons';
+  if (localCollections.length > 0) {
+    const tokensCollection = localCollections.find((collection) =>
+      collection.name.toLowerCase().includes('tokens')
+    );
+    const themesCollection = localCollections.find((collection) =>
+      collection.name.toLowerCase().includes('themes')
+    );
+    const uikitCollection = localCollections.find(
+      (collection) =>
+        collection.name.toLowerCase().includes('ui kit') ||
+        collection.name.toLowerCase().includes('uikit')
+    );
+
+    if (tokensCollection) {
+      fileType = 'tokens';
+    } else if (themesCollection) {
+      fileType = 'themes';
+    } else if (uikitCollection) {
+      fileType = 'ui-kit';
+    }
+  }
+
+  console.log(`file type: ${fileType}`);
+
+  if (fileType === 'themes') {
+    const hasTokens = localCollections.some((collection) =>
+      collection.name.toLowerCase().includes('tokens')
+    );
+    if (!hasTokens) {
+      figma.ui.postMessage({
+        type: 'NO_TOKENS_FOUND',
+      });
+    }
+  }
+
+  if (fileType === 'ui-kit') {
+    const hasTokens = localCollections.some((collection) =>
+      collection.name.toLowerCase().includes('tokens')
+    );
+    const hasThemes = localCollections.some((collection) =>
+      collection.name.toLowerCase().includes('themes')
+    );
+    if (!hasTokens || !hasThemes) {
+      figma.ui.postMessage({
+        type: 'NO_TOKENS_OR_THEMES_FOUND',
+      });
+    }
+  }
+
   const libraries = await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
+  console.log(`libraries: ${libraries}`);
   if (libraries.length === 0) {
-    figma.notify('No libraries connected to this project');
-    return figma.ui.postMessage({
-      type: 'SYNC_TOKENS_COMPLETE',
+    figma.notify('No libraries connected to this project', {
+      timeout: 5000,
     });
   }
 
@@ -20,10 +73,12 @@ export async function syncTokens() {
   const libraryVariables = libraryVariablesArrays.flat();
   const libraryVariablesMap = new Map(libraryVariables.map((v) => [v.name, v]));
 
-  const localCollections = await figma.variables.getLocalVariableCollectionsAsync();
-
   // Process local collections in parallel
   const localCollectionPromises = localCollections.map(async (collection) => {
+    collection.setSharedPluginData('recursica', 'file-type', fileType);
+    if (fileType === 'themes')
+      collection.setSharedPluginData('recursica', 'theme-name', toPascalCase(figma.root.name));
+
     const variablePromises = collection.variableIds.map(async (varId) => {
       const variable = await figma.variables.getVariableByIdAsync(varId);
       if (!variable) return null;

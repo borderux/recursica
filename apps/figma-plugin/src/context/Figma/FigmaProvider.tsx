@@ -16,6 +16,8 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
   const [svgIcons, setSvgIcons] = useState<Record<string, string>>();
   const [userId, setUserId] = useState<string | undefined>();
   const [variablesSynced, setVariablesSynced] = useState(false);
+  const [filetype, setFiletype] = useState<string | undefined>();
+  const [error, setError] = useState<string | undefined>();
   useLayoutEffect(() => {
     window.onmessage = ({ data: { pluginMessage } }) => {
       if (!pluginMessage) return;
@@ -39,6 +41,13 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
       }
       if (type === 'SYNC_TOKENS_COMPLETE') {
         setVariablesSynced(true);
+      }
+      if (type === 'METADATA') {
+        const { projectType } = payload;
+        setFiletype(projectType);
+      }
+      if (type === 'NO_TOKENS_FOUND' || type === 'NO_TOKENS_OR_THEMES_FOUND') {
+        setError(payload);
       }
     };
     return () => {
@@ -150,6 +159,8 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
     loading: !(recursicaVariables || svgIcons),
     userId,
     variablesSynced,
+    filetype,
+    error,
   };
 
   return <FigmaContext.Provider value={values}>{children}</FigmaContext.Provider>;
