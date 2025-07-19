@@ -26,23 +26,24 @@ export async function syncTokens() {
   }
 
   console.log(`file type: ${fileType}`);
+  const libraries = await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
 
   if (fileType === 'themes') {
-    const hasTokens = localCollections.some((collection) =>
+    const hasTokens = libraries.some((collection) =>
       collection.name.toLowerCase().includes('tokens')
     );
     if (!hasTokens) {
-      figma.ui.postMessage({
+      return figma.ui.postMessage({
         type: 'NO_TOKENS_FOUND',
       });
     }
   }
 
   if (fileType === 'ui-kit') {
-    const hasTokens = localCollections.some((collection) =>
+    const hasTokens = libraries.some((collection) =>
       collection.name.toLowerCase().includes('tokens')
     );
-    const hasThemes = localCollections.some((collection) =>
+    const hasThemes = libraries.some((collection) =>
       collection.name.toLowerCase().includes('themes')
     );
     if (!hasTokens || !hasThemes) {
@@ -52,8 +53,6 @@ export async function syncTokens() {
     }
   }
 
-  const libraries = await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
-  console.log(`libraries: ${libraries}`);
   if (libraries.length === 0) {
     figma.notify('No libraries connected to this project', {
       timeout: 5000,

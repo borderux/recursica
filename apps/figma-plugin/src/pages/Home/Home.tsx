@@ -13,6 +13,7 @@ export function Home() {
       navigate('/error');
     }
   }, [error]);
+  console.log(`error: ${error}`);
   const isLoading = !repository || !variablesSynced;
 
   const target = useMemo(() => {

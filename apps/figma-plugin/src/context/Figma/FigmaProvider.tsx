@@ -47,7 +47,7 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
         setFiletype(projectType);
       }
       if (type === 'NO_TOKENS_FOUND' || type === 'NO_TOKENS_OR_THEMES_FOUND') {
-        setError(payload);
+        setError(type);
       }
     };
     return () => {

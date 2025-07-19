@@ -1,4 +1,4 @@
-import { PublishChanges, Home, Auth, FileSynced } from './pages';
+import { PublishChanges, Home, Auth, FileSynced, Error } from './pages';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { ThemeProvider, Themes } from '@recursica/ui-kit';
 import { RepositoryProvider } from './context/Repository/RepositoryProvider';
@@ -15,6 +15,7 @@ function App() {
               <Route path='auth' element={<Auth />} />
               <Route path='file-synced' element={<FileSynced />} />
               <Route path='publish' element={<PublishChanges />} />
+              <Route path='error' element={<Error />} />
             </Routes>
           </MemoryRouter>
         </RepositoryProvider>
