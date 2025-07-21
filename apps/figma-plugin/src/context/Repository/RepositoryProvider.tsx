@@ -457,6 +457,8 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
       try {
         await handlePublishFiles();
       } catch (error) {
+        console.error('Publish files error:', error);
+        // The error handling is now done in handlePublishFiles, but we ensure it's logged here too
         if (!isExpectedError(error)) {
           setRepositoryError(
             'Failed to publish files',
@@ -508,22 +510,52 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
       throw new Error('Selected project is not available');
     }
 
-    const targetBranch = await createBranch(selectedProject);
-    const config = await getConfig(targetBranch);
-    const adapterFiles = await runAdapter(targetBranch, config);
+    try {
+      const targetBranch = await createBranch(selectedProject);
+      const config = await getConfig(targetBranch);
 
-    // Generate CSS from bundled JSON
-    if (fileLoadingData.bundledJson) {
-      const cssContent = generateCSSFromBundledJson(fileLoadingData.bundledJson);
-      if (cssContent) {
-        adapterFiles.push({
-          path: 'recursica-variables.css',
-          content: cssContent,
-        });
+      // Run adapter with proper error handling
+      let adapterFiles: AdapterFile[] = [];
+      try {
+        adapterFiles = await runAdapter(targetBranch, config);
+      } catch (error) {
+        console.error('Adapter execution failed:', error);
+        setRepositoryError(
+          'Adapter execution failed',
+          error instanceof Error ? error.message : 'Unknown adapter error',
+          'ADAPTER_EXECUTION_ERROR'
+        );
+        // Update files status to show error immediately
+        setFilesStatus((prev) => ({
+          ...prev,
+          adapter: { ...prev.adapter, status: FileStatus.Error },
+        }));
+        throw error; // Re-throw to prevent further execution
       }
-    }
 
-    await commitFiles(targetBranch, adapterFiles, config);
+      // Generate CSS from bundled JSON
+      if (fileLoadingData.bundledJson) {
+        const cssContent = generateCSSFromBundledJson(fileLoadingData.bundledJson);
+        if (cssContent) {
+          adapterFiles.push({
+            path: 'recursica.css',
+            content: cssContent,
+          });
+        }
+      }
+
+      await commitFiles(targetBranch, adapterFiles, config);
+    } catch (error) {
+      // Ensure any error is properly handled and UI is updated
+      if (!isExpectedError(error)) {
+        setRepositoryError(
+          'Failed to publish files',
+          getErrorMessage(error),
+          'PUBLISH_FILES_ERROR'
+        );
+      }
+      throw error;
+    }
   };
 
   const getConfig = async (targetBranch: string): Promise<RecursicaConfiguration> => {
@@ -709,7 +741,7 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     } catch (error) {
       setFilesStatus((prev) => ({
         ...prev,
-        adapter: { quantity: 1, status: FileStatus.Error },
+        adapter: { quantity: -1, status: FileStatus.Error },
       }));
       if (error instanceof Error && error.message.includes('404')) {
         console.error('Adapter file not found');
@@ -785,13 +817,31 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     }
 
     return new Promise<AdapterFile[]>((resolve, reject) => {
-      const worker = new Worker(
-        URL.createObjectURL(new Blob([adapterFile], { type: 'text/javascript' }))
-      );
+      let worker: Worker;
+
+      try {
+        // Create worker with error handling
+        worker = new Worker(
+          URL.createObjectURL(new Blob([adapterFile], { type: 'text/javascript' }))
+        );
+      } catch (error) {
+        console.error('❌ Failed to create worker:', error);
+        setFilesStatus((prev) => ({
+          ...prev,
+          adapter: { ...prev.adapter, status: FileStatus.Error },
+        }));
+        reject(
+          new Error(
+            `Failed to create worker: ${error instanceof Error ? error.message : 'Unknown error'}`
+          )
+        );
+        return;
+      }
 
       // Set a timeout for the worker (5 minutes)
       const timeoutId = setTimeout(
         () => {
+          console.error('❌ Worker execution timed out after 5 minutes');
           worker.terminate();
           setFilesStatus((prev) => ({
             ...prev,
@@ -802,19 +852,36 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
         5 * 60 * 1000
       );
 
-      worker.postMessage({
-        bundledJson,
-        srcPath: rootPath + '/src',
-        project: config.project,
-        rootPath,
-        iconsJson,
-        overrides: config.overrides,
-        iconsConfig: config.icons,
-      });
+      try {
+        worker.postMessage({
+          bundledJson,
+          srcPath: rootPath + '/src',
+          project: config.project,
+          rootPath,
+          iconsJson,
+          overrides: config.overrides,
+          iconsConfig: config.icons,
+        });
+      } catch (error) {
+        clearTimeout(timeoutId);
+        worker.terminate();
+        console.error('❌ Failed to post message to worker:', error);
+        setFilesStatus((prev) => ({
+          ...prev,
+          adapter: { ...prev.adapter, status: FileStatus.Error },
+        }));
+        reject(
+          new Error(
+            `Failed to post message to worker: ${error instanceof Error ? error.message : 'Unknown error'}`
+          )
+        );
+        return;
+      }
 
       // Listener for messages coming FROM the worker
       worker.onmessage = (event) => {
         clearTimeout(timeoutId); // Clear timeout on successful response
+        worker.terminate(); // Clean up worker
         console.log('✅ Response received from worker:', event.data);
 
         setFilesStatus((prev) => ({
@@ -934,22 +1001,35 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
       // Listener for any errors that might occur inside the worker
       worker.onerror = (error) => {
         clearTimeout(timeoutId); // Clear timeout on error
+        worker.terminate(); // Clean up worker
         console.error('❌ Error in worker:', error);
+
+        // Update UI status immediately
         setFilesStatus((prev) => ({
           ...prev,
           adapter: { ...prev.adapter, status: FileStatus.Error },
         }));
-        reject(new Error(`Worker execution failed: ${error.message || 'Unknown worker error'}`));
+
+        // Create a more detailed error message
+        const errorMessage = error.message || 'Unknown worker error';
+        const errorDetails = error.filename ? `File: ${error.filename}, Line: ${error.lineno}` : '';
+        const fullError = `Worker execution failed: ${errorMessage}${errorDetails ? ` (${errorDetails})` : ''}`;
+
+        reject(new Error(fullError));
       };
 
       // Handle worker message errors
       worker.onmessageerror = (error) => {
         clearTimeout(timeoutId); // Clear timeout on message error
+        worker.terminate(); // Clean up worker
         console.error('❌ Message error in worker:', error);
+
+        // Update UI status immediately
         setFilesStatus((prev) => ({
           ...prev,
           adapter: { ...prev.adapter, status: FileStatus.Error },
         }));
+
         reject(new Error(`Worker message error: Unable to process worker message`));
       };
     });
