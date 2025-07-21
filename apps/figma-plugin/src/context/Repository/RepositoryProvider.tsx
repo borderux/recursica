@@ -211,10 +211,13 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
 
   const variablesJson = useMemo(() => {
     if (recursicaVariables) {
+      if (selectedProject && !recursicaVariables.projectId) {
+        recursicaVariables.projectId = selectedProject.name.replace(/\s+/g, '');
+      }
       return JSON.stringify(recursicaVariables, null, 2);
     }
     return null;
-  }, [recursicaVariables]);
+  }, [recursicaVariables, selectedProject]);
 
   const svgIconsJson = useMemo(() => {
     if (svgIcons) {

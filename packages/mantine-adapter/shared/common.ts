@@ -29,22 +29,9 @@ export interface RunAdapterParams {
  */
 export function processJsonContent(
   jsonFileContent: string,
-  { project, overrides }: ProcessJsonParams,
+  { overrides }: ProcessJsonParams,
 ): Tokens {
   const jsonContent: RecursicaVariablesSchema = JSON.parse(jsonFileContent);
-
-  const jsonProjectId = jsonContent.projectId;
-  if (!jsonProjectId) {
-    throw new Error("project-id is required in the json file");
-  }
-  if (
-    jsonProjectId.toLowerCase() !==
-    (typeof project === "string"
-      ? project.toLowerCase()
-      : project.name?.toLowerCase())
-  ) {
-    throw new Error("project-id does not match the project in the config file");
-  }
 
   const tokens = new Tokens(overrides);
   tokens.process(jsonContent.tokens);
