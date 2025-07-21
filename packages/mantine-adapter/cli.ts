@@ -38,51 +38,14 @@ export async function runMain(): Promise<void> {
       iconsConfig,
     });
 
-    const {
-      recursicaTokens,
-      vanillaExtractThemes,
-      mantineTheme,
-      uiKitObject,
-      recursicaObject,
-      colorsType,
-      iconsObject,
-      spacersType,
-      borderRadiusType,
-      recursicaThemes,
-      prettierignore,
-    } = files;
-
-    const filesToWrite: ExportingResult[] = [
-      recursicaTokens,
-      vanillaExtractThemes.availableThemes,
-      vanillaExtractThemes.themeContract,
-      vanillaExtractThemes.themesFileContent,
-      vanillaExtractThemes.typeDefinitions,
-      mantineTheme.mantineTheme,
-      mantineTheme.postCss,
-      uiKitObject,
-      recursicaObject,
-      colorsType,
-      spacersType,
-      borderRadiusType,
-      recursicaThemes,
-      prettierignore,
-    ];
-
     // check if src/recursica folder exists, if not create it
     const outputPath = srcPath + "/recursica";
     if (!fs.existsSync(outputPath)) {
       fs.mkdirSync(outputPath);
     }
 
-    for (const file of filesToWrite) {
-      fs.writeFileSync(file.path, file.content);
-    }
-    for (const theme of vanillaExtractThemes.vanillaExtractThemes) {
-      fs.writeFileSync(theme.path, theme.content);
-    }
-
-    if (iconsObject) {
+    // Create necessary directories for icon files
+    if (iconsJsonContent) {
       let iconsOutput = srcPath + "/components/Icons";
       let svgOutput = iconsOutput + "/Svg";
       if (iconsConfig) {
@@ -99,18 +62,11 @@ export async function runMain(): Promise<void> {
         fs.rmSync(svgOutput, { recursive: true, force: true });
         fs.mkdirSync(svgOutput);
       }
+    }
 
-      fs.writeFileSync(
-        iconsObject.iconExports.path,
-        iconsObject.iconExports.content,
-      );
-      fs.writeFileSync(
-        iconsObject.iconResourceMap.path,
-        iconsObject.iconResourceMap.content,
-      );
-      for (const icon of iconsObject.exportedIcons) {
-        fs.writeFileSync(icon.path, icon.content);
-      }
+    // Write all files from the array
+    for (const file of files) {
+      fs.writeFileSync(file.path, file.content);
     }
 
     console.log("Theme generated successfully");

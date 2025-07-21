@@ -104,7 +104,7 @@ export function processAdapter({
   });
 
   // Run the adapter
-  const files = runAdapter({
+  const result = runAdapter({
     rootPath,
     overrides,
     srcPath,
@@ -114,5 +114,5 @@ export function processAdapter({
     iconsConfig,
   });
 
-  return files;
+  return result;
 }

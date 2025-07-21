@@ -46,19 +46,8 @@ interface GenerateThemeFileParams {
  * @param themes - Theme variants
  * @param project - Project name
  */
-export interface RunAdapterOutput {
-  recursicaTokens: ExportingResult;
-  vanillaExtractThemes: VanillaExtractThemesOutput;
-  mantineTheme: GenerateMantineThemeOutput;
-  uiKitObject: ExportingResult;
-  recursicaObject: ExportingResult;
-  colorsType: ExportingResult;
-  spacersType: ExportingResult;
-  borderRadiusType: ExportingResult;
-  iconsObject: GenerateIconsOutput | undefined;
-  recursicaThemes: ExportingResult;
-  prettierignore: ExportingResult;
-}
+export type RunAdapterOutput = ExportingResult[];
+
 export function runAdapter({
   rootPath,
   overrides,
@@ -117,11 +106,6 @@ export function runAdapter({
     outputPath,
   );
 
-  let iconsObject: GenerateIconsOutput | undefined;
-  if (icons) {
-    iconsObject = generateIcons(icons, srcPath, iconsConfig);
-  }
-
   const recursicaThemes = generateRecursicaThemes({
     outputPath,
     themes: tokens.themes,
@@ -129,18 +113,33 @@ export function runAdapter({
 
   const prettierignore = generatePrettierignore();
 
-  const fileContents = {
+  const files: ExportingResult[] = [
     recursicaTokens,
-    vanillaExtractThemes,
-    mantineTheme,
+    vanillaExtractThemes.availableThemes,
+    vanillaExtractThemes.themeContract,
+    vanillaExtractThemes.themesFileContent,
+    vanillaExtractThemes.typeDefinitions,
+    mantineTheme.mantineTheme,
+    mantineTheme.postCss,
     uiKitObject,
     recursicaObject,
     colorsType,
     spacersType,
     borderRadiusType,
-    iconsObject,
     recursicaThemes,
     prettierignore,
-  };
-  return fileContents;
+  ];
+
+  // Add vanilla extract theme files
+  files.push(...vanillaExtractThemes.vanillaExtractThemes);
+
+  // Add icon files if icons are provided
+  if (icons) {
+    const iconsObject = generateIcons(icons, srcPath, iconsConfig);
+    files.push(iconsObject.iconExports);
+    files.push(iconsObject.iconResourceMap);
+    files.push(...iconsObject.exportedIcons);
+  }
+
+  return files;
 }
