@@ -1,12 +1,18 @@
 import { Flex, Typography, Button, Logo } from '@recursica/ui-kit';
-import { NavLink } from 'react-router';
+import { NavLink, useNavigate } from 'react-router';
 import { useFigma } from '../../hooks/useFigma';
 import { Layout } from '../../components';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 export function Home() {
-  const { repository, variablesSynced } = useFigma();
+  const { repository, variablesSynced, filetype, error } = useFigma();
+  const navigate = useNavigate();
 
+  useEffect(() => {
+    if (error) {
+      navigate('/error');
+    }
+  }, [error]);
   const isLoading = !repository || !variablesSynced;
 
   const target = useMemo(() => {
@@ -15,6 +21,19 @@ export function Home() {
     }
     return '/auth';
   }, [repository]);
+
+  const getRedirect = useMemo(() => {
+    if (filetype === 'ui-kit') {
+      return {
+        label: 'Connect repo',
+        to: target,
+      };
+    }
+    return {
+      label: 'Next steps',
+      to: '/file-synced',
+    };
+  }, [filetype]);
 
   const getLoadingMessage = useMemo(() => {
     if (!variablesSynced) {
@@ -46,8 +65,8 @@ export function Home() {
           ) : (
             <Button
               component={NavLink}
-              to={target}
-              label='Get started'
+              to={getRedirect.to}
+              label={getRedirect.label}
               trailing='arrow_right_outline'
             />
           )}
