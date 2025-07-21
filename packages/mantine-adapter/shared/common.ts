@@ -5,7 +5,7 @@ import type {
 } from "../types";
 import type { RecursicaVariablesSchema } from "@recursica/schemas";
 import type { RecursicaConfiguration } from "@recursica/schemas";
-import { ProcessTokens } from "./processTokens";
+import { Tokens } from "./tokens";
 import { runAdapter, RunAdapterOutput } from "../adapter";
 
 export interface ProcessJsonParams {
@@ -24,13 +24,13 @@ export interface RunAdapterParams {
 }
 
 /**
- * Processes JSON content and creates ProcessTokens instance
+ * Processes JSON content and creates process instance
  * This is shared logic between CLI and WebWorker
  */
 export function processJsonContent(
   jsonFileContent: string,
   { project, overrides }: ProcessJsonParams,
-): ProcessTokens {
+): Tokens {
   const jsonContent: RecursicaVariablesSchema = JSON.parse(jsonFileContent);
 
   const jsonProjectId = jsonContent.projectId;
@@ -46,14 +46,14 @@ export function processJsonContent(
     throw new Error("project-id does not match the project in the config file");
   }
 
-  const processTokens = new ProcessTokens(overrides);
-  processTokens.processTokens(jsonContent.tokens);
+  const tokens = new Tokens(overrides);
+  tokens.process(jsonContent.tokens);
   for (const theme of Object.keys(jsonContent.themes)) {
-    processTokens.processTokens(jsonContent.themes[theme], theme);
+    tokens.process(jsonContent.themes[theme], theme);
   }
-  processTokens.processTokens(jsonContent.uiKit);
+  tokens.process(jsonContent.uiKit);
 
-  return processTokens;
+  return tokens;
 }
 
 /**
@@ -98,7 +98,7 @@ export function processAdapter({
   }
 
   // Process the main JSON content
-  const processTokens = processJsonContent(bundledJsonContent, {
+  const tokens = processJsonContent(bundledJsonContent, {
     project,
     overrides,
   });
@@ -109,7 +109,7 @@ export function processAdapter({
     overrides,
     srcPath,
     icons,
-    processTokens,
+    tokens,
     project,
     iconsConfig,
   });

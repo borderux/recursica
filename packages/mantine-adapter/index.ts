@@ -19,7 +19,7 @@ export {
   isColorOrFloatToken,
   capitalize,
 } from "@recursica/common";
-export { ProcessTokens } from "./shared/processTokens";
+export { Tokens } from "./shared/tokens";
 export { processJsonContent } from "./shared/common";
 
 // Export the main CLI function for programmatic use
