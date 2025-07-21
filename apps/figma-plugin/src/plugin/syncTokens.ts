@@ -25,7 +25,7 @@ export async function syncTokens() {
     }
   }
 
-  console.log(`file type: ${fileType}`);
+  // Removed unnecessary console.log statement for production.
   const libraries = await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
 
   if (fileType === 'themes') {
