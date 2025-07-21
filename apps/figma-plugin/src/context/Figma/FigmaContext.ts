@@ -19,6 +19,8 @@ export interface IFigmaContext {
   loading: boolean;
   userId: string | undefined;
   variablesSynced: boolean;
+  filetype: string | undefined;
+  error: string | undefined;
 }
 
 export const FigmaContext = createContext<IFigmaContext | null>(null);
