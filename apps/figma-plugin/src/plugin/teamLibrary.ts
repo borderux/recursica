@@ -1,5 +1,11 @@
 import { exportToJSON } from './exportToJSON';
-import { GenericVariables, processRemoteVariableCollection, combineObjects } from './shared';
+import {
+  GenericVariables,
+  processRemoteVariableCollection,
+  combineObjects,
+  importVariableByKey,
+  getVariableCollectionById,
+} from './shared';
 
 // Collection names to detect project types (case-insensitive)
 const COLLECTION_TYPE_MAPPING = {
@@ -8,7 +14,7 @@ const COLLECTION_TYPE_MAPPING = {
   themes: 'themes',
 } as const;
 
-export async function getTeamLibrary(projectId: string, pluginVersion: string) {
+export async function getTeamLibrary(pluginVersion: string) {
   const uiKit = await exportToJSON();
   // Get the team library from the figma api
   const teamLibrary = await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
@@ -36,9 +42,9 @@ export async function getTeamLibrary(projectId: string, pluginVersion: string) {
   );
 
   // Process all libraries in parallel instead of sequentially
-  const libraryPromises = Object.entries(validLibraries).map(async ([libraryName, collections]) => {
-    const [variables, filetype] = await decodeFileVariables(collections);
-    return { variables, filetype, libraryName };
+  const libraryPromises = Object.entries(validLibraries).map(async ([, collections]) => {
+    const [variables, filetype, themeName] = await decodeFileVariables(collections);
+    return { variables, filetype, themeName };
   });
 
   // Wait for all libraries to be processed
@@ -48,11 +54,10 @@ export async function getTeamLibrary(projectId: string, pluginVersion: string) {
   let tokens: GenericVariables = {};
   const themes: Record<string, GenericVariables> = {};
 
-  for (const { variables, filetype, libraryName } of libraryResults) {
+  for (const { variables, filetype, themeName } of libraryResults) {
     if (filetype === 'tokens') {
       tokens = variables;
     } else if (filetype === 'themes') {
-      const themeName = libraryName;
       if (themeName) {
         themes[themeName] = variables;
       }
@@ -63,7 +68,6 @@ export async function getTeamLibrary(projectId: string, pluginVersion: string) {
   const response = {
     type: 'RECURSICA_VARIABLES',
     payload: {
-      projectId,
       pluginVersion,
       tokens,
       themes,
@@ -78,23 +82,29 @@ export async function getTeamLibrary(projectId: string, pluginVersion: string) {
 
 async function decodeFileVariables(
   fileCollections: { value: string; name: string }[]
-): Promise<[GenericVariables, string]> {
+): Promise<[GenericVariables, string, string | undefined]> {
   // Run metadata and remaining collections in parallel
   const variableResults = await Promise.all(
-    fileCollections.map((variable) => decodeRemoteVariables(variable.value))
+    fileCollections.map((variable) => processRemoteVariableCollection(variable.value))
   );
 
   // Combine all variables
   const variables = combineObjects(variableResults);
 
+  const tokenVariables = await figma.teamLibrary.getVariablesInLibraryCollectionAsync(
+    fileCollections[0].value
+  );
+
+  const importedVariable = await importVariableByKey(tokenVariables[0].key);
+  const collection = await getVariableCollectionById(importedVariable!.variableCollectionId);
+
   if (fileCollections.length === 1) {
-    return [variables, fileCollections[0].name.toLowerCase()];
+    return [
+      variables,
+      collection?.getSharedPluginData('recursica', 'file-type') || 'unknown',
+      collection?.getSharedPluginData('recursica', 'theme-name') || undefined,
+    ];
   }
 
-  return [variables, 'icons'];
-}
-
-// Decode the remote variables
-export async function decodeRemoteVariables(collection: string) {
-  return await processRemoteVariableCollection(collection);
+  return [variables, 'icons', undefined];
 }

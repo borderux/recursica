@@ -18,14 +18,17 @@ if (import.meta.env.MODE === 'development') {
     height: 350,
   });
 }
+const projectType = decodeProjectMetadataCollection(pluginVersion);
 async function main() {
-  const { projectId, projectType } = await decodeProjectMetadataCollection(pluginVersion);
-  if (projectType === 'icons') {
+  const fileType = await projectType;
+  if (fileType === 'icons') {
     exportIcons();
-  } else {
-    getTeamLibrary(projectId, pluginVersion);
+  }
+  if (fileType === 'ui-kit') {
+    getTeamLibrary(pluginVersion);
   }
 }
+
 figma.ui.onmessage = async (e) => {
   if (e.type === 'GET_LOCAL_STORAGE') {
     getLocalStorage();
@@ -50,5 +53,8 @@ figma.ui.onmessage = async (e) => {
   }
   if (e.type === 'SYNC_TOKENS') {
     syncTokens();
+  }
+  if (e.type === 'CLOSE_PLUGIN') {
+    figma.closePlugin();
   }
 };
