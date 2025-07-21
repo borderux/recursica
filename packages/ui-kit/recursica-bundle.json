@@ -1,5 +1,4 @@
 {
-  "projectId": "Recursica",
   "pluginVersion": "0.0.4",
   "tokens": {
     "[Tokens][Mode-1][color/salmon/600]": {
@@ -539,7 +538,7 @@
       "mode": "Mode 1",
       "name": "color/mandarin/600",
       "type": "color",
-      "value": "#cd4d0c"
+      "value": "#d9510d"
     },
     "[Tokens][Mode-1][color/salmon/500]": {
       "collection": "Tokens",
@@ -981,10 +980,164 @@
       "name": "elevation/x-axis/6x",
       "type": "float",
       "value": 48
+    },
+    "[Tokens][Mode-1][font/line-height/shorter]": {
+      "collection": "Tokens",
+      "mode": "Mode 1",
+      "name": "font/line-height/shorter",
+      "type": "float",
+      "value": 20
+    },
+    "[Tokens][Mode-1][font/line-height/tallest]": {
+      "collection": "Tokens",
+      "mode": "Mode 1",
+      "name": "font/line-height/tallest",
+      "type": "float",
+      "value": 36
+    },
+    "[Tokens][Mode-1][font/letter-spacing/tighter]": {
+      "collection": "Tokens",
+      "mode": "Mode 1",
+      "name": "font/letter-spacing/tighter",
+      "type": "float",
+      "value": -0.5
+    },
+    "[Tokens][Mode-1][font/letter-spacing/widest]": {
+      "collection": "Tokens",
+      "mode": "Mode 1",
+      "name": "font/letter-spacing/widest",
+      "type": "float",
+      "value": 0.75
+    },
+    "[Tokens][Mode-1][font/line-height/short]": {
+      "collection": "Tokens",
+      "mode": "Mode 1",
+      "name": "font/line-height/short",
+      "type": "float",
+      "value": 24
+    },
+    "[Tokens][Mode-1][font/line-height/shortest]": {
+      "collection": "Tokens",
+      "mode": "Mode 1",
+      "name": "font/line-height/shortest",
+      "type": "float",
+      "value": 16
+    },
+    "[Tokens][Mode-1][font/letter-spacing/wider]": {
+      "collection": "Tokens",
+      "mode": "Mode 1",
+      "name": "font/letter-spacing/wider",
+      "type": "float",
+      "value": 0.5
+    },
+    "[Tokens][Mode-1][font/line-height/taller]": {
+      "collection": "Tokens",
+      "mode": "Mode 1",
+      "name": "font/line-height/taller",
+      "type": "float",
+      "value": 32
+    },
+    "[Tokens][Mode-1][font/line-height/tall]": {
+      "collection": "Tokens",
+      "mode": "Mode 1",
+      "name": "font/line-height/tall",
+      "type": "float",
+      "value": 28
+    },
+    "[Tokens][Mode-1][font/letter-spacing/wide]": {
+      "collection": "Tokens",
+      "mode": "Mode 1",
+      "name": "font/letter-spacing/wide",
+      "type": "float",
+      "value": 0.25
+    },
+    "[Tokens][Mode-1][font/letter-spacing/tighest]": {
+      "collection": "Tokens",
+      "mode": "Mode 1",
+      "name": "font/letter-spacing/tighest",
+      "type": "float",
+      "value": -0.75
+    },
+    "[Tokens][Mode-1][font/letter-spacing/default]": {
+      "collection": "Tokens",
+      "mode": "Mode 1",
+      "name": "font/letter-spacing/default",
+      "type": "float",
+      "value": 0
+    },
+    "[Tokens][Mode-1][font/letter-spacing/tight]": {
+      "collection": "Tokens",
+      "mode": "Mode 1",
+      "name": "font/letter-spacing/tight",
+      "type": "float",
+      "value": -0.25
+    },
+    "[Tokens][Mode-1][font/weight/bold]": {
+      "collection": "Tokens",
+      "mode": "Mode 1",
+      "name": "font/weight/bold",
+      "type": "float",
+      "value": 700
+    },
+    "[Tokens][Mode-1][font/weight/light]": {
+      "collection": "Tokens",
+      "mode": "Mode 1",
+      "name": "font/weight/light",
+      "type": "float",
+      "value": 300
+    },
+    "[Tokens][Mode-1][font/weight/thin]": {
+      "collection": "Tokens",
+      "mode": "Mode 1",
+      "name": "font/weight/thin",
+      "type": "float",
+      "value": 100
+    },
+    "[Tokens][Mode-1][font/weight/black]": {
+      "collection": "Tokens",
+      "mode": "Mode 1",
+      "name": "font/weight/black",
+      "type": "float",
+      "value": 900
+    },
+    "[Tokens][Mode-1][font/weight/medium]": {
+      "collection": "Tokens",
+      "mode": "Mode 1",
+      "name": "font/weight/medium",
+      "type": "float",
+      "value": 500
+    },
+    "[Tokens][Mode-1][font/weight/semi-bold]": {
+      "collection": "Tokens",
+      "mode": "Mode 1",
+      "name": "font/weight/semi-bold",
+      "type": "float",
+      "value": 600
+    },
+    "[Tokens][Mode-1][font/weight/extra-bold]": {
+      "collection": "Tokens",
+      "mode": "Mode 1",
+      "name": "font/weight/extra-bold",
+      "type": "float",
+      "value": 800
+    },
+    "[Tokens][Mode-1][font/weight/extra-light]": {
+      "collection": "Tokens",
+      "mode": "Mode 1",
+      "name": "font/weight/extra-light",
+      "type": "float",
+      "value": 200
+    },
+    "[Tokens][Mode-1][font/weight/regular]": {
+      "collection": "Tokens",
+      "mode": "Mode 1",
+      "name": "font/weight/regular",
+      "type": "float",
+      "value": 400
     }
   },
   "themes": {
-    "default": {
+    "RecursicaBrand": {
       "[Themes][Light][colors/scale-1/400/regular]": {
         "collection": "Themes",
         "mode": "Light",
@@ -1253,8 +1406,8 @@
         "name": "elevations/elevation-1/color",
         "type": "color",
         "value": {
-          "collection": "Themes",
-          "name": "colors/neutral/300/tone"
+          "collection": "Tokens",
+          "name": "color/elevation/14"
         }
       },
       "[Themes][Dark][elevations/elevation-1/color]": {
@@ -1263,8 +1416,8 @@
         "name": "elevations/elevation-1/color",
         "type": "color",
         "value": {
-          "collection": "Themes",
-          "name": "colors/neutral/050/tone"
+          "collection": "Tokens",
+          "name": "color/elevation/40"
         }
       },
       "[Themes][Light][colors/scale-2/400/subtle]": {
@@ -4221,8 +4374,8 @@
         "name": "elevations/elevation-2/color",
         "type": "color",
         "value": {
-          "collection": "Themes",
-          "name": "colors/neutral/300/tone"
+          "collection": "Tokens",
+          "name": "color/elevation/14"
         }
       },
       "[Themes][Dark][elevations/elevation-2/color]": {
@@ -4231,8 +4384,8 @@
         "name": "elevations/elevation-2/color",
         "type": "color",
         "value": {
-          "collection": "Themes",
-          "name": "colors/neutral/050/tone"
+          "collection": "Tokens",
+          "name": "color/elevation/40"
         }
       },
       "[Themes][Light][colors/scale-2/default/tone]": {
@@ -4301,8 +4454,8 @@
         "name": "elevations/elevation-3/color",
         "type": "color",
         "value": {
-          "collection": "Themes",
-          "name": "colors/neutral/300/tone"
+          "collection": "Tokens",
+          "name": "color/elevation/14"
         }
       },
       "[Themes][Dark][elevations/elevation-3/color]": {
@@ -4311,8 +4464,8 @@
         "name": "elevations/elevation-3/color",
         "type": "color",
         "value": {
-          "collection": "Themes",
-          "name": "colors/neutral/050/tone"
+          "collection": "Tokens",
+          "name": "color/elevation/40"
         }
       },
       "[Themes][Light][layers/layer-alternatives/warn/elements/text/regular]": {
@@ -6365,6 +6518,800 @@
           "name": "elevation/blur/0-5x"
         }
       },
+      "[Themes][Light][fonts/h6/line-height]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/h6/line-height",
+        "type": "float",
+        "value": 0
+      },
+      "[Themes][Dark][fonts/h6/line-height]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/h6/line-height",
+        "type": "float",
+        "value": 0
+      },
+      "[Themes][Light][fonts/body-2/weight-strong]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/body-2/weight-strong",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/semi-bold"
+        }
+      },
+      "[Themes][Dark][fonts/body-2/weight-strong]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/body-2/weight-strong",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/semi-bold"
+        }
+      },
+      "[Themes][Light][fonts/h4/line-height]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/h4/line-height",
+        "type": "float",
+        "value": 0
+      },
+      "[Themes][Dark][fonts/h4/line-height]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/h4/line-height",
+        "type": "float",
+        "value": 0
+      },
+      "[Themes][Light][fonts/subtitle-1/line-height]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/subtitle-1/line-height",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/line-height/short"
+        }
+      },
+      "[Themes][Dark][fonts/subtitle-1/line-height]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/subtitle-1/line-height",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/line-height/short"
+        }
+      },
+      "[Themes][Light][fonts/body-2/weight-normal]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/body-2/weight-normal",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/regular"
+        }
+      },
+      "[Themes][Dark][fonts/body-2/weight-normal]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/body-2/weight-normal",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/regular"
+        }
+      },
+      "[Themes][Light][fonts/subtitle-1/weight-normal]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/subtitle-1/weight-normal",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/light"
+        }
+      },
+      "[Themes][Dark][fonts/subtitle-1/weight-normal]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/subtitle-1/weight-normal",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/light"
+        }
+      },
+      "[Themes][Light][fonts/h5/weight]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/h5/weight",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/medium"
+        }
+      },
+      "[Themes][Dark][fonts/h5/weight]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/h5/weight",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/medium"
+        }
+      },
+      "[Themes][Light][fonts/overline/weight]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/overline/weight",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/medium"
+        }
+      },
+      "[Themes][Dark][fonts/overline/weight]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/overline/weight",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/medium"
+        }
+      },
+      "[Themes][Light][fonts/body-2/line-height]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/body-2/line-height",
+        "type": "float",
+        "value": 0
+      },
+      "[Themes][Dark][fonts/body-2/line-height]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/body-2/line-height",
+        "type": "float",
+        "value": 0
+      },
+      "[Themes][Light][fonts/h5/letter-spacing]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/h5/letter-spacing",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/letter-spacing/default"
+        }
+      },
+      "[Themes][Dark][fonts/h5/letter-spacing]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/h5/letter-spacing",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/letter-spacing/default"
+        }
+      },
+      "[Themes][Light][fonts/h3/letter-spacing]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/h3/letter-spacing",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/letter-spacing/default"
+        }
+      },
+      "[Themes][Dark][fonts/h3/letter-spacing]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/h3/letter-spacing",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/letter-spacing/default"
+        }
+      },
+      "[Themes][Light][fonts/overline/letter-spacing]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/overline/letter-spacing",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/letter-spacing/wide"
+        }
+      },
+      "[Themes][Dark][fonts/overline/letter-spacing]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/overline/letter-spacing",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/letter-spacing/wide"
+        }
+      },
+      "[Themes][Light][fonts/h1/line-height]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/h1/line-height",
+        "type": "float",
+        "value": 0
+      },
+      "[Themes][Dark][fonts/h1/line-height]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/h1/line-height",
+        "type": "float",
+        "value": 0
+      },
+      "[Themes][Light][fonts/button/letter-spacing]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/button/letter-spacing",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/letter-spacing/wide"
+        }
+      },
+      "[Themes][Dark][fonts/button/letter-spacing]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/button/letter-spacing",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/letter-spacing/wide"
+        }
+      },
+      "[Themes][Light][fonts/body-1/letter-spacing]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/body-1/letter-spacing",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/letter-spacing/default"
+        }
+      },
+      "[Themes][Dark][fonts/body-1/letter-spacing]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/body-1/letter-spacing",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/letter-spacing/default"
+        }
+      },
+      "[Themes][Light][fonts/h6/weight]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/h6/weight",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/regular"
+        }
+      },
+      "[Themes][Dark][fonts/h6/weight]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/h6/weight",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/regular"
+        }
+      },
+      "[Themes][Light][fonts/h2/weight]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/h2/weight",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/semi-bold"
+        }
+      },
+      "[Themes][Dark][fonts/h2/weight]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/h2/weight",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/semi-bold"
+        }
+      },
+      "[Themes][Light][fonts/caption/weight]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/caption/weight",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/regular"
+        }
+      },
+      "[Themes][Dark][fonts/caption/weight]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/caption/weight",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/regular"
+        }
+      },
+      "[Themes][Light][fonts/caption/line-height]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/caption/line-height",
+        "type": "float",
+        "value": 0
+      },
+      "[Themes][Dark][fonts/caption/line-height]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/caption/line-height",
+        "type": "float",
+        "value": 0
+      },
+      "[Themes][Light][fonts/subtitle-2/line-height]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/subtitle-2/line-height",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/line-height/short"
+        }
+      },
+      "[Themes][Dark][fonts/subtitle-2/line-height]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/subtitle-2/line-height",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/line-height/short"
+        }
+      },
+      "[Themes][Light][fonts/button/weight]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/button/weight",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/regular"
+        }
+      },
+      "[Themes][Dark][fonts/button/weight]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/button/weight",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/regular"
+        }
+      },
+      "[Themes][Light][fonts/subtitle-2/weight-normal]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/subtitle-2/weight-normal",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/light"
+        }
+      },
+      "[Themes][Dark][fonts/subtitle-2/weight-normal]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/subtitle-2/weight-normal",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/light"
+        }
+      },
+      "[Themes][Light][fonts/h3/line-height]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/h3/line-height",
+        "type": "float",
+        "value": 0
+      },
+      "[Themes][Dark][fonts/h3/line-height]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/h3/line-height",
+        "type": "float",
+        "value": 0
+      },
+      "[Themes][Light][fonts/subtitle-1/weight-strong]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/subtitle-1/weight-strong",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/bold"
+        }
+      },
+      "[Themes][Dark][fonts/subtitle-1/weight-strong]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/subtitle-1/weight-strong",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/bold"
+        }
+      },
+      "[Themes][Light][fonts/body-2/letter-spacing]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/body-2/letter-spacing",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/letter-spacing/wide"
+        }
+      },
+      "[Themes][Dark][fonts/body-2/letter-spacing]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/body-2/letter-spacing",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/letter-spacing/wide"
+        }
+      },
+      "[Themes][Light][fonts/h1/letter-spacing]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/h1/letter-spacing",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/letter-spacing/default"
+        }
+      },
+      "[Themes][Dark][fonts/h1/letter-spacing]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/h1/letter-spacing",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/letter-spacing/default"
+        }
+      },
+      "[Themes][Light][fonts/h2/letter-spacing]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/h2/letter-spacing",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/letter-spacing/default"
+        }
+      },
+      "[Themes][Dark][fonts/h2/letter-spacing]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/h2/letter-spacing",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/letter-spacing/default"
+        }
+      },
+      "[Themes][Light][fonts/subtitle-2/letter-spacing]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/subtitle-2/letter-spacing",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/letter-spacing/default"
+        }
+      },
+      "[Themes][Dark][fonts/subtitle-2/letter-spacing]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/subtitle-2/letter-spacing",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/letter-spacing/default"
+        }
+      },
+      "[Themes][Light][fonts/h5/line-height]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/h5/line-height",
+        "type": "float",
+        "value": 0
+      },
+      "[Themes][Dark][fonts/h5/line-height]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/h5/line-height",
+        "type": "float",
+        "value": 0
+      },
+      "[Themes][Light][fonts/h3/weight]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/h3/weight",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/regular"
+        }
+      },
+      "[Themes][Dark][fonts/h3/weight]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/h3/weight",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/regular"
+        }
+      },
+      "[Themes][Light][fonts/h2/line-height]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/h2/line-height",
+        "type": "float",
+        "value": 0
+      },
+      "[Themes][Dark][fonts/h2/line-height]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/h2/line-height",
+        "type": "float",
+        "value": 0
+      },
+      "[Themes][Light][fonts/body-1/weight-normal]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/body-1/weight-normal",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/regular"
+        }
+      },
+      "[Themes][Dark][fonts/body-1/weight-normal]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/body-1/weight-normal",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/regular"
+        }
+      },
+      "[Themes][Light][fonts/h6/letter-spacing]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/h6/letter-spacing",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/letter-spacing/default"
+        }
+      },
+      "[Themes][Dark][fonts/h6/letter-spacing]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/h6/letter-spacing",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/letter-spacing/default"
+        }
+      },
+      "[Themes][Light][fonts/subtitle-2/weight-strong]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/subtitle-2/weight-strong",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/bold"
+        }
+      },
+      "[Themes][Dark][fonts/subtitle-2/weight-strong]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/subtitle-2/weight-strong",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/bold"
+        }
+      },
+      "[Themes][Light][fonts/overline/line-height]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/overline/line-height",
+        "type": "float",
+        "value": 0
+      },
+      "[Themes][Dark][fonts/overline/line-height]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/overline/line-height",
+        "type": "float",
+        "value": 0
+      },
+      "[Themes][Light][fonts/button/line-height]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/button/line-height",
+        "type": "float",
+        "value": 0
+      },
+      "[Themes][Dark][fonts/button/line-height]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/button/line-height",
+        "type": "float",
+        "value": 0
+      },
+      "[Themes][Light][fonts/h4/letter-spacing]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/h4/letter-spacing",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/letter-spacing/default"
+        }
+      },
+      "[Themes][Dark][fonts/h4/letter-spacing]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/h4/letter-spacing",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/letter-spacing/default"
+        }
+      },
+      "[Themes][Light][fonts/body-1/line-height]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/body-1/line-height",
+        "type": "float",
+        "value": 0
+      },
+      "[Themes][Dark][fonts/body-1/line-height]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/body-1/line-height",
+        "type": "float",
+        "value": 0
+      },
+      "[Themes][Light][fonts/body-1/weight-strong]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/body-1/weight-strong",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/semi-bold"
+        }
+      },
+      "[Themes][Dark][fonts/body-1/weight-strong]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/body-1/weight-strong",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/semi-bold"
+        }
+      },
+      "[Themes][Light][fonts/caption/letter-spacing]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/caption/letter-spacing",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/letter-spacing/wide"
+        }
+      },
+      "[Themes][Dark][fonts/caption/letter-spacing]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/caption/letter-spacing",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/letter-spacing/wide"
+        }
+      },
+      "[Themes][Light][fonts/h1/weight]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/h1/weight",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/bold"
+        }
+      },
+      "[Themes][Dark][fonts/h1/weight]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/h1/weight",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/bold"
+        }
+      },
+      "[Themes][Light][fonts/subtitle-1/letter-spacing]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/subtitle-1/letter-spacing",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/letter-spacing/default"
+        }
+      },
+      "[Themes][Dark][fonts/subtitle-1/letter-spacing]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/subtitle-1/letter-spacing",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/letter-spacing/default"
+        }
+      },
+      "[Themes][Light][fonts/h4/weight]": {
+        "collection": "Themes",
+        "mode": "Light",
+        "name": "fonts/h4/weight",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/light"
+        }
+      },
+      "[Themes][Dark][fonts/h4/weight]": {
+        "collection": "Themes",
+        "mode": "Dark",
+        "name": "fonts/h4/weight",
+        "type": "float",
+        "value": {
+          "collection": "Tokens",
+          "name": "font/weight/light"
+        }
+      },
       "[Themes][Light][colors/alert]": {
         "collection": "Themes",
         "mode": "Light",
@@ -6431,8 +7378,8 @@
         "name": "elevations/elevation-4/color",
         "type": "color",
         "value": {
-          "collection": "Themes",
-          "name": "colors/neutral/300/tone"
+          "collection": "Tokens",
+          "name": "color/elevation/14"
         }
       },
       "[Themes][Dark][elevations/elevation-4/color]": {
@@ -6441,8 +7388,8 @@
         "name": "elevations/elevation-4/color",
         "type": "color",
         "value": {
-          "collection": "Themes",
-          "name": "colors/neutral/050/tone"
+          "collection": "Tokens",
+          "name": "color/elevation/40"
         }
       }
     }
@@ -6475,7 +7422,7 @@
       "type": "color",
       "value": {
         "collection": "Themes",
-        "name": "colors/scale-1/050/tone"
+        "name": "colors/neutral/100/tone"
       }
     },
     "[UI-Kit][Mode-1][accordion/size/padding]": {
@@ -6498,20 +7445,6 @@
         "name": "size/spacer/2x"
       }
     },
-    "[UI-Kit][Mode-1][accordion/size/min-width]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "accordion/size/min-width",
-      "type": "float",
-      "value": 140
-    },
-    "[UI-Kit][Mode-1][accordion/size/max-width]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "accordion/size/max-width",
-      "type": "float",
-      "value": 464
-    },
     "[UI-Kit][Mode-1][accordion/size/height]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
@@ -6525,6 +7458,20 @@
       "name": "accordion/size/cheveron",
       "type": "float",
       "value": 24
+    },
+    "[UI-Kit][Mode-1][accordion/size/min-width]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "accordion/size/min-width",
+      "type": "float",
+      "value": 140
+    },
+    "[UI-Kit][Mode-1][accordion/size/max-width]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "accordion/size/max-width",
+      "type": "float",
+      "value": 464
     },
     "[UI-Kit][Mode-1][action-bar/color/background]": {
       "collection": "UI Kit",
@@ -6751,14 +7698,14 @@
         "name": "layers/layer-alternatives/success/elements/text/color"
       }
     },
-    "[UI-Kit][Mode-1][badge/size/padding]": {
+    "[UI-Kit][Mode-1][badge/size/horizontal-padding]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
-      "name": "badge/size/padding",
+      "name": "badge/size/horizontal-padding",
       "type": "float",
       "value": {
         "collection": "Tokens",
-        "name": "size/spacer/0-5x"
+        "name": "size/spacer/default"
       }
     },
     "[UI-Kit][Mode-1][badge/size/default-min-width]": {
@@ -6973,20 +7920,20 @@
         "name": "colors/neutral/900/on-tone"
       }
     },
-    "[UI-Kit][Mode-1][button/color/border]": {
+    "[UI-Kit][Mode-1][button/color/outline]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
-      "name": "button/color/border",
+      "name": "button/color/outline",
       "type": "color",
       "value": {
         "collection": "Themes",
         "name": "colors/scale-1/500/tone"
       }
     },
-    "[UI-Kit][Mode-1][button/color/border-hover]": {
+    "[UI-Kit][Mode-1][button/color/outline-hover]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
-      "name": "button/color/border-hover",
+      "name": "button/color/outline-hover",
       "type": "color",
       "value": {
         "collection": "Themes",
@@ -7074,13 +8021,6 @@
       "type": "float",
       "value": 360
     },
-    "[UI-Kit][Mode-1][button/size/small-size]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "button/size/small-size",
-      "type": "float",
-      "value": 32
-    },
     "[UI-Kit][Mode-1][checkbox/color/disabled]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
@@ -7090,6 +8030,13 @@
         "collection": "Themes",
         "name": "colors/disabled"
       }
+    },
+    "[UI-Kit][Mode-1][button/size/small-size]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "button/size/small-size",
+      "type": "float",
+      "value": 32
     },
     "[UI-Kit][Mode-1][chip/color/background-unselected]": {
       "collection": "UI Kit",
@@ -7128,7 +8075,7 @@
       "type": "color",
       "value": {
         "collection": "Themes",
-        "name": "colors/scale-1/050/tone"
+        "name": "colors/neutral/200/tone"
       }
     },
     "[UI-Kit][Mode-1][chip/color/text-selected]": {
@@ -7487,236 +8434,79 @@
       "type": "float",
       "value": 48
     },
-    "[UI-Kit][Mode-1][menu/color/surface]": {
+    "[UI-Kit][Mode-1][drop-zone/color/border-default]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
-      "name": "menu/color/surface",
-      "type": "color",
-      "value": {
-        "collection": "Themes",
-        "name": "layers/layer-1/properties/surface"
-      }
-    },
-    "[UI-Kit][Mode-1][menu/size/menu-vertical-padding]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "menu/size/menu-vertical-padding",
-      "type": "float",
-      "value": {
-        "collection": "Tokens",
-        "name": "size/spacer/default"
-      }
-    },
-    "[UI-Kit][Mode-1][menu/size/menu-horizontal-padding]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "menu/size/menu-horizontal-padding",
-      "type": "float",
-      "value": {
-        "collection": "Tokens",
-        "name": "size/spacer/default"
-      }
-    },
-    "[UI-Kit][Mode-1][menu/size/border-radius]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "menu/size/border-radius",
-      "type": "float",
-      "value": {
-        "collection": "Tokens",
-        "name": "size/border-radius/default"
-      }
-    },
-    "[UI-Kit][Mode-1][menu/size/min-width]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "menu/size/min-width",
-      "type": "float",
-      "value": 140
-    },
-    "[UI-Kit][Mode-1][menu/size/max-width]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "menu/size/max-width",
-      "type": "float",
-      "value": 464
-    },
-    "[UI-Kit][Mode-1][menu-item/color/default]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "menu-item/color/default",
-      "type": "color",
-      "value": {
-        "collection": "Themes",
-        "name": "layers/layer-1/properties/surface"
-      }
-    },
-    "[UI-Kit][Mode-1][menu-item/color/hover]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "menu-item/color/hover",
-      "type": "color",
-      "value": {
-        "collection": "Themes",
-        "name": "colors/neutral/100/tone"
-      }
-    },
-    "[UI-Kit][Mode-1][menu-item/color/selected]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "menu-item/color/selected",
-      "type": "color",
-      "value": {
-        "collection": "Themes",
-        "name": "colors/neutral/200/tone"
-      }
-    },
-    "[UI-Kit][Mode-1][menu-item/color/focused]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "menu-item/color/focused",
-      "type": "color",
-      "value": {
-        "collection": "Themes",
-        "name": "colors/neutral/100/tone"
-      }
-    },
-    "[UI-Kit][Mode-1][menu-item/color/text]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "menu-item/color/text",
-      "type": "color",
-      "value": {
-        "collection": "Themes",
-        "name": "layers/layer-1/elements/text/color"
-      }
-    },
-    "[UI-Kit][Mode-1][menu-item/size/item-horizontal-padding]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "menu-item/size/item-horizontal-padding",
-      "type": "float",
-      "value": {
-        "collection": "Tokens",
-        "name": "size/spacer/2x"
-      }
-    },
-    "[UI-Kit][Mode-1][menu-item/size/item-vertical-padding]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "menu-item/size/item-vertical-padding",
-      "type": "float",
-      "value": {
-        "collection": "Tokens",
-        "name": "size/spacer/2x"
-      }
-    },
-    "[UI-Kit][Mode-1][menu-item/size/spacing]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "menu-item/size/spacing",
-      "type": "float",
-      "value": {
-        "collection": "Tokens",
-        "name": "size/spacer/default"
-      }
-    },
-    "[UI-Kit][Mode-1][file-upload/color/background]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "file-upload/color/background",
-      "type": "color",
-      "value": {
-        "collection": "Themes",
-        "name": "layers/layer-1/properties/surface"
-      }
-    },
-    "[UI-Kit][Mode-1][file-upload/color/border]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "file-upload/color/border",
+      "name": "drop-zone/color/border-default",
       "type": "color",
       "value": {
         "collection": "Themes",
         "name": "layers/layer-1/properties/border-color"
       }
     },
-    "[UI-Kit][Mode-1][file-upload/color/icon]": {
+    "[UI-Kit][Mode-1][drop-zone/color/border-focus]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
-      "name": "file-upload/color/icon",
+      "name": "drop-zone/color/border-focus",
       "type": "color",
       "value": {
         "collection": "Themes",
         "name": "colors/scale-1/default/tone"
       }
     },
-    "[UI-Kit][Mode-1][file-upload/color/text]": {
+    "[UI-Kit][Mode-1][drop-zone/color/text]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
-      "name": "file-upload/color/text",
+      "name": "drop-zone/color/text",
       "type": "color",
       "value": {
         "collection": "Themes",
-        "name": "layers/layer-1/elements/text/color"
+        "name": "layers/layer-1/elements/interactive/color"
       }
     },
-    "[UI-Kit][Mode-1][file-upload/size/radius]": {
+    "[UI-Kit][Mode-1][drop-zone/size/border-radius]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
-      "name": "file-upload/size/radius",
+      "name": "drop-zone/size/border-radius",
       "type": "float",
       "value": {
         "collection": "Tokens",
         "name": "size/border-radius/default"
       }
     },
-    "[UI-Kit][Mode-1][file-upload/size/content-spacing]": {
+    "[UI-Kit][Mode-1][drop-zone/size/veritical-spacing]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
-      "name": "file-upload/size/content-spacing",
+      "name": "drop-zone/size/veritical-spacing",
       "type": "float",
       "value": {
         "collection": "Tokens",
         "name": "size/spacer/default"
       }
     },
-    "[UI-Kit][Mode-1][file-upload/size/restrictions-spacing]": {
+    "[UI-Kit][Mode-1][drop-zone/size/padding]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
-      "name": "file-upload/size/restrictions-spacing",
-      "type": "float",
-      "value": {
-        "collection": "Tokens",
-        "name": "size/spacer/0-5x"
-      }
-    },
-    "[UI-Kit][Mode-1][file-upload/size/vertical-padding]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "file-upload/size/vertical-padding",
+      "name": "drop-zone/size/padding",
       "type": "float",
       "value": {
         "collection": "Tokens",
         "name": "size/spacer/2x"
       }
     },
-    "[UI-Kit][Mode-1][file-upload/size/horizontal-padding]": {
+    "[UI-Kit][Mode-1][drop-zone/size/min-width]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
-      "name": "file-upload/size/horizontal-padding",
+      "name": "drop-zone/size/min-width",
       "type": "float",
-      "value": {
-        "collection": "Tokens",
-        "name": "size/spacer/2x"
-      }
+      "value": 224
     },
-    "[UI-Kit][Mode-1][file-upload/size/icon-size]": {
+    "[UI-Kit][Mode-1][drop-zone/size/max-width]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
-      "name": "file-upload/size/icon-size",
+      "name": "drop-zone/size/max-width",
       "type": "float",
-      "value": 36
+      "value": 464
     },
     "[UI-Kit][Mode-1][form/icon/color/icon-color]": {
       "collection": "UI Kit",
@@ -7726,26 +8516,6 @@
       "value": {
         "collection": "Themes",
         "name": "layers/layer-1/elements/text/color"
-      }
-    },
-    "[UI-Kit][Mode-1][modal/color/background]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "modal/color/background",
-      "type": "color",
-      "value": {
-        "collection": "Themes",
-        "name": "layers/layer-0/properties/surface"
-      }
-    },
-    "[UI-Kit][Mode-1][modal/color/title]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "modal/color/title",
-      "type": "color",
-      "value": {
-        "collection": "Themes",
-        "name": "layers/layer-0/elements/text/color"
       }
     },
     "[UI-Kit][Mode-1][form/icon/size/icon-size]": {
@@ -7839,6 +8609,16 @@
         "name": "layers/layer-1/elements/text/color"
       }
     },
+    "[UI-Kit][Mode-1][form/value+placeholder/color/input-value-placeholder]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "form/value+placeholder/color/input-value-placeholder",
+      "type": "float",
+      "value": {
+        "collection": "Themes",
+        "name": "layers/layer-1/elements/text/subtle"
+      }
+    },
     "[UI-Kit][Mode-1][form/value+placeholder/size/input-vertical-padding]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
@@ -7847,6 +8627,187 @@
       "value": {
         "collection": "Tokens",
         "name": "size/spacer/0-5x"
+      }
+    },
+    "[UI-Kit][Mode-1][menu/color/background]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "menu/color/background",
+      "type": "color",
+      "value": {
+        "collection": "Themes",
+        "name": "layers/layer-1/properties/surface"
+      }
+    },
+    "[UI-Kit][Mode-1][menu/size/vertical-padding]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "menu/size/vertical-padding",
+      "type": "float",
+      "value": {
+        "collection": "Tokens",
+        "name": "size/spacer/default"
+      }
+    },
+    "[UI-Kit][Mode-1][menu/size/horizontal-padding]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "menu/size/horizontal-padding",
+      "type": "float",
+      "value": {
+        "collection": "Tokens",
+        "name": "size/spacer/default"
+      }
+    },
+    "[UI-Kit][Mode-1][menu/size/border-radius]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "menu/size/border-radius",
+      "type": "float",
+      "value": {
+        "collection": "Tokens",
+        "name": "size/border-radius/default"
+      }
+    },
+    "[UI-Kit][Mode-1][menu/size/min-width]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "menu/size/min-width",
+      "type": "float",
+      "value": 140
+    },
+    "[UI-Kit][Mode-1][menu/size/max-width]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "menu/size/max-width",
+      "type": "float",
+      "value": 464
+    },
+    "[UI-Kit][Mode-1][menu-item/color/enabled]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "menu-item/color/enabled",
+      "type": "color",
+      "value": {
+        "collection": "Themes",
+        "name": "layers/layer-1/properties/surface"
+      }
+    },
+    "[UI-Kit][Mode-1][menu-item/color/hover]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "menu-item/color/hover",
+      "type": "color",
+      "value": {
+        "collection": "Themes",
+        "name": "colors/neutral/100/tone"
+      }
+    },
+    "[UI-Kit][Mode-1][menu-item/color/selected]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "menu-item/color/selected",
+      "type": "color",
+      "value": {
+        "collection": "Themes",
+        "name": "colors/neutral/200/tone"
+      }
+    },
+    "[UI-Kit][Mode-1][menu-item/color/focused]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "menu-item/color/focused",
+      "type": "color",
+      "value": {
+        "collection": "Themes",
+        "name": "colors/neutral/100/tone"
+      }
+    },
+    "[UI-Kit][Mode-1][menu-item/color/disabled]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "menu-item/color/disabled",
+      "type": "float",
+      "value": {
+        "collection": "Themes",
+        "name": "colors/disabled"
+      }
+    },
+    "[UI-Kit][Mode-1][menu-item/color/text]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "menu-item/color/text",
+      "type": "color",
+      "value": {
+        "collection": "Themes",
+        "name": "layers/layer-1/elements/text/color"
+      }
+    },
+    "[UI-Kit][Mode-1][menu-item/color/supporting-text]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "menu-item/color/supporting-text",
+      "type": "float",
+      "value": {
+        "collection": "Themes",
+        "name": "layers/layer-1/elements/text/subtle"
+      }
+    },
+    "[UI-Kit][Mode-1][menu-item/color/border-bottom]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "menu-item/color/border-bottom",
+      "type": "color",
+      "value": {
+        "collection": "Themes",
+        "name": "layers/layer-1/properties/border-color"
+      }
+    },
+    "[UI-Kit][Mode-1][menu-item/size/item-vertical-padding]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "menu-item/size/item-vertical-padding",
+      "type": "float",
+      "value": {
+        "collection": "Tokens",
+        "name": "size/spacer/2x"
+      }
+    },
+    "[UI-Kit][Mode-1][menu-item/size/label-top-padding]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "menu-item/size/label-top-padding",
+      "type": "float",
+      "value": 3
+    },
+    "[UI-Kit][Mode-1][menu-item/size/spacing]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "menu-item/size/spacing",
+      "type": "float",
+      "value": {
+        "collection": "Tokens",
+        "name": "size/spacer/default"
+      }
+    },
+    "[UI-Kit][Mode-1][modal/color/background]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "modal/color/background",
+      "type": "color",
+      "value": {
+        "collection": "Themes",
+        "name": "layers/layer-0/properties/surface"
+      }
+    },
+    "[UI-Kit][Mode-1][modal/color/title]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "modal/color/title",
+      "type": "color",
+      "value": {
+        "collection": "Themes",
+        "name": "layers/layer-0/elements/text/color"
       }
     },
     "[UI-Kit][Mode-1][modal/size/button-spacing]": {
@@ -7874,14 +8835,20 @@
       "mode": "Mode 1",
       "name": "modal/size/horizontal-padding",
       "type": "float",
-      "value": 24
+      "value": {
+        "collection": "Tokens",
+        "name": "size/spacer/3x"
+      }
     },
     "[UI-Kit][Mode-1][modal/size/vertical-padding]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
       "name": "modal/size/vertical-padding",
       "type": "float",
-      "value": 16
+      "value": {
+        "collection": "Tokens",
+        "name": "size/spacer/2x"
+      }
     },
     "[UI-Kit][Mode-1][modal/size/min-width]": {
       "collection": "UI Kit",
@@ -7907,16 +8874,6 @@
         "name": "colors/neutral/900/tone"
       }
     },
-    "[UI-Kit][Mode-1][pagination/size/number-spacing]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "pagination/size/number-spacing",
-      "type": "float",
-      "value": {
-        "collection": "Tokens",
-        "name": "size/spacer/0-5x"
-      }
-    },
     "[UI-Kit][Mode-1][pagination/color/background-hover-selected]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
@@ -7925,6 +8882,16 @@
       "value": {
         "collection": "Themes",
         "name": "colors/neutral/800/tone"
+      }
+    },
+    "[UI-Kit][Mode-1][pagination/size/number-spacing]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "pagination/size/number-spacing",
+      "type": "float",
+      "value": {
+        "collection": "Tokens",
+        "name": "size/spacer/0-5x"
       }
     },
     "[UI-Kit][Mode-1][pagination/color/background-hover-unselected]": {
@@ -7957,6 +8924,16 @@
         "name": "layers/layer-1/properties/surface"
       }
     },
+    "[UI-Kit][Mode-1][panel/color/border]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "panel/color/border",
+      "type": "color",
+      "value": {
+        "collection": "Themes",
+        "name": "layers/layer-1/properties/border-color"
+      }
+    },
     "[UI-Kit][Mode-1][pagination/color/page-number-selected]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
@@ -7977,16 +8954,6 @@
         "name": "colors/disabled"
       }
     },
-    "[UI-Kit][Mode-1][panel/color/title]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "panel/color/title",
-      "type": "color",
-      "value": {
-        "collection": "Themes",
-        "name": "layers/layer-1/elements/text/color"
-      }
-    },
     "[UI-Kit][Mode-1][pagination/color/text]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
@@ -7997,12 +8964,25 @@
         "name": "layers/layer-0/elements/text/color"
       }
     },
-    "[UI-Kit][Mode-1][panel/size/body-padding]": {
+    "[UI-Kit][Mode-1][panel/color/title]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
-      "name": "panel/size/body-padding",
+      "name": "panel/color/title",
+      "type": "color",
+      "value": {
+        "collection": "Themes",
+        "name": "layers/layer-1/elements/text/color"
+      }
+    },
+    "[UI-Kit][Mode-1][panel/size/content-padding]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "panel/size/content-padding",
       "type": "float",
-      "value": 24
+      "value": {
+        "collection": "Tokens",
+        "name": "size/spacer/3x"
+      }
     },
     "[UI-Kit][Mode-1][radio/color/default]": {
       "collection": "UI Kit",
@@ -8133,12 +9113,25 @@
       "mode": "Mode 1",
       "name": "panel/size/header-horizontal-padding",
       "type": "float",
-      "value": 24
+      "value": {
+        "collection": "Tokens",
+        "name": "size/spacer/3x"
+      }
     },
     "[UI-Kit][Mode-1][panel/size/header-vertical-padding]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
       "name": "panel/size/header-vertical-padding",
+      "type": "float",
+      "value": {
+        "collection": "Tokens",
+        "name": "size/spacer/2x"
+      }
+    },
+    "[UI-Kit][Mode-1][panel/size/horizontal-spacing]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "panel/size/horizontal-spacing",
       "type": "float",
       "value": {
         "collection": "Tokens",
@@ -8153,16 +9146,6 @@
       "value": {
         "collection": "Themes",
         "name": "layers/layer-1/properties/surface"
-      }
-    },
-    "[UI-Kit][Mode-1][panel/size/horizontal-spacing]": {
-      "collection": "UI Kit",
-      "mode": "Mode 1",
-      "name": "panel/size/horizontal-spacing",
-      "type": "float",
-      "value": {
-        "collection": "Tokens",
-        "name": "size/spacer/2x"
       }
     },
     "[UI-Kit][Mode-1][search/color/border]": {
@@ -8192,7 +9175,7 @@
       "type": "color",
       "value": {
         "collection": "Themes",
-        "name": "colors/scale-1/default/tone"
+        "name": "layers/layer-1/properties/border-color"
       }
     },
     "[UI-Kit][Mode-1][search/size/horizontal-padding]": {
@@ -8765,7 +9748,7 @@
       "type": "color",
       "value": {
         "collection": "Themes",
-        "name": "colors/scale-1/050/tone"
+        "name": "colors/neutral/100/tone"
       }
     },
     "[UI-Kit][Mode-1][tab/color/border-selected]": {
@@ -9185,6 +10168,20 @@
       "type": "float",
       "value": 20
     },
+    "[UI-Kit][Mode-1][text-area/size/min-height]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "text-area/size/min-height",
+      "type": "float",
+      "value": 72
+    },
+    "[UI-Kit][Mode-1][text-area/size/max-height]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "text-area/size/max-height",
+      "type": "float",
+      "value": 176
+    },
     "[UI-Kit][Mode-1][text-field/color/border]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
@@ -9280,7 +10277,7 @@
       "mode": "Mode 1",
       "name": "text-field/size/min-width",
       "type": "float",
-      "value": 140
+      "value": 64
     },
     "[UI-Kit][Mode-1][text-field/size/max-width]": {
       "collection": "UI Kit",
@@ -9495,7 +10492,7 @@
       "type": "color",
       "value": {
         "collection": "Themes",
-        "name": "colors/neutral/900/tone"
+        "name": "layers/layer-alternatives/high-contrast/properties/surface"
       }
     },
     "[UI-Kit][Mode-1][tooltip/color/text]": {
@@ -9505,7 +10502,7 @@
       "type": "color",
       "value": {
         "collection": "Themes",
-        "name": "colors/neutral/900/on-tone"
+        "name": "layers/layer-alternatives/high-contrast/elements/text/color"
       }
     },
     "[UI-Kit][Mode-1][tooltip/size/horizontal-padding]": {
@@ -9555,6 +10552,13 @@
       "type": "float",
       "value": 240
     },
+    "[UI-Kit][Mode-1][tooltip/size/min-width]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "tooltip/size/min-width",
+      "type": "float",
+      "value": 106
+    },
     "[UI-Kit][Mode-1][text-field/color/disabled]": {
       "collection": "UI Kit",
       "mode": "Mode 1",
@@ -9581,6 +10585,158 @@
       "name": "icon-style",
       "type": "string",
       "value": "outline"
+    },
+    "[UI-Kit][Mode-1][file-uploader/color/file-background]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "file-uploader/color/file-background",
+      "type": "color",
+      "value": {
+        "collection": "Themes",
+        "name": "layers/layer-1/properties/surface"
+      }
+    },
+    "[UI-Kit][Mode-1][file-uploader/color/file-border]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "file-uploader/color/file-border",
+      "type": "color",
+      "value": {
+        "collection": "Themes",
+        "name": "layers/layer-1/properties/border-color"
+      }
+    },
+    "[UI-Kit][Mode-1][file-uploader/color/file-text]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "file-uploader/color/file-text",
+      "type": "color",
+      "value": {
+        "collection": "Themes",
+        "name": "layers/layer-1/elements/text/color"
+      }
+    },
+    "[UI-Kit][Mode-1][file-uploader/color/file-error-text]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "file-uploader/color/file-error-text",
+      "type": "color",
+      "value": {
+        "collection": "Themes",
+        "name": "layers/layer-0/elements/alert-text"
+      }
+    },
+    "[UI-Kit][Mode-1][file-uploader/color/file-error-border]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "file-uploader/color/file-error-border",
+      "type": "color",
+      "value": {
+        "collection": "Themes",
+        "name": "colors/alert"
+      }
+    },
+    "[UI-Kit][Mode-1][file-uploader/size/file-border-radius]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "file-uploader/size/file-border-radius",
+      "type": "float",
+      "value": {
+        "collection": "Tokens",
+        "name": "size/border-radius/default"
+      }
+    },
+    "[UI-Kit][Mode-1][file-uploader/size/file-spacing]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "file-uploader/size/file-spacing",
+      "type": "float",
+      "value": {
+        "collection": "Tokens",
+        "name": "size/spacer/0-5x"
+      }
+    },
+    "[UI-Kit][Mode-1][file-uploader/size/file-left-padding]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "file-uploader/size/file-left-padding",
+      "type": "float",
+      "value": {
+        "collection": "Tokens",
+        "name": "size/spacer/2x"
+      }
+    },
+    "[UI-Kit][Mode-1][file-uploader/size/file-right-padding]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "file-uploader/size/file-right-padding",
+      "type": "float",
+      "value": {
+        "collection": "Tokens",
+        "name": "size/spacer/default"
+      }
+    },
+    "[UI-Kit][Mode-1][file-uploader/size/file-error-padding]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "file-uploader/size/file-error-padding",
+      "type": "float",
+      "value": {
+        "collection": "Tokens",
+        "name": "size/spacer/2x"
+      }
+    },
+    "[UI-Kit][Mode-1][file-uploader/size/label-spacing]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "file-uploader/size/label-spacing",
+      "type": "float",
+      "value": {
+        "collection": "Tokens",
+        "name": "size/spacer/default"
+      }
+    },
+    "[UI-Kit][Mode-1][file-uploader/size/files-spacing]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "file-uploader/size/files-spacing",
+      "type": "float",
+      "value": {
+        "collection": "Tokens",
+        "name": "size/spacer/default"
+      }
+    },
+    "[UI-Kit][Mode-1][file-uploader/size/spacing]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "file-uploader/size/spacing",
+      "type": "float",
+      "value": {
+        "collection": "Tokens",
+        "name": "size/spacer/2x"
+      }
+    },
+    "[UI-Kit][Mode-1][file-uploader/size/file-height]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "file-uploader/size/file-height",
+      "type": "float",
+      "value": 40
+    },
+    "[UI-Kit][Mode-1][file-uploader/size/min-width]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "file-uploader/size/min-width",
+      "type": "float",
+      "value": 224
+    },
+    "[UI-Kit][Mode-1][file-uploader/size/max-width]": {
+      "collection": "UI Kit",
+      "mode": "Mode 1",
+      "name": "file-uploader/size/max-width",
+      "type": "float",
+      "value": 384
     }
-  }
+  },
+  "projectId": "recursica"
 }

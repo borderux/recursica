@@ -226,8 +226,8 @@ export type RecursicaColors =
 	"button/color/background-solid" |
 	"button/color/background-solid-hover" |
 	"button/color/text-solid" |
-	"button/color/border" |
-	"button/color/border-hover" |
+	"button/color/outline" |
+	"button/color/outline-hover" |
 	"checkbox/color/checkbox" |
 	"checkbox/color/icon" |
 	"chip/color/background-unselected" |
@@ -249,30 +249,31 @@ export type RecursicaColors =
 	"dropdown/color/border-focus" |
 	"dropdown/color/border-selected" |
 	"dropdown/color/border-error" |
-	"menu/color/surface" |
-	"menu-item/color/default" |
+	"drop-zone/color/border-default" |
+	"drop-zone/color/border-focus" |
+	"drop-zone/color/text" |
+	"form/icon/color/icon-color" |
+	"form/label/color/default-color" |
+	"form/label/color/error-message" |
+	"form/value+placeholder/color/input-value" |
+	"menu/color/background" |
+	"menu-item/color/enabled" |
 	"menu-item/color/hover" |
 	"menu-item/color/selected" |
 	"menu-item/color/focused" |
 	"menu-item/color/text" |
-	"file-upload/color/background" |
-	"file-upload/color/border" |
-	"file-upload/color/icon" |
-	"file-upload/color/text" |
-	"form/icon/color/icon-color" |
+	"menu-item/color/border-bottom" |
 	"modal/color/background" |
 	"modal/color/title" |
-	"form/label/color/default-color" |
-	"form/label/color/error-message" |
-	"form/value+placeholder/color/input-value" |
 	"pagination/color/background-selected" |
 	"pagination/color/background-hover-selected" |
 	"pagination/color/background-hover-unselected" |
 	"pagination/color/page-number-default" |
 	"panel/color/background" |
+	"panel/color/border" |
 	"pagination/color/page-number-selected" |
-	"panel/color/title" |
 	"pagination/color/text" |
+	"panel/color/title" |
 	"radio/color/default" |
 	"search/color/background" |
 	"search/color/border" |
@@ -323,4 +324,9 @@ export type RecursicaColors =
 	"toast/color/text-error" |
 	"toast/color/button-on-error" |
 	"tooltip/color/background" |
-	"tooltip/color/text";
+	"tooltip/color/text" |
+	"file-uploader/color/file-background" |
+	"file-uploader/color/file-border" |
+	"file-uploader/color/file-text" |
+	"file-uploader/color/file-error-text" |
+	"file-uploader/color/file-error-border";
