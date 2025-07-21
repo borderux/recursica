@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { RepositoryContext } from './RepositoryContext';
 import { useFigma } from '../../hooks/useFigma';
-import type { RecursicaConfiguration, RecursicaVariablesSchema } from '@recursica/schemas';
+import type {
+  RecursicaConfiguration,
+  RecursicaVariablesSchema,
+  CollectionToken,
+  VariableReferenceValue,
+  Token,
+} from '@recursica/schemas';
 import {
   BaseRepository,
   GitLabRepository,
@@ -10,6 +16,7 @@ import {
   type Project,
   type CommitAction,
 } from '../../services/repository';
+import { isColorOrFloatToken } from '@recursica/common';
 
 interface AdapterFile {
   path: string;
@@ -18,6 +25,124 @@ interface AdapterFile {
 
 function cleanPath(path: string) {
   return path.replace(/^\/+/, '');
+}
+
+// Helper function to normalize variable names
+function normalizeVariableName(name: string): string {
+  return `recursica-${name.replace(/\//g, '-')}`;
+}
+
+// Helper function to get token name
+function getTokenName(token: CollectionToken): string {
+  if ('name' in token) {
+    return token.name;
+  }
+  return 'unknown';
+}
+
+// Helper function to get token value
+function getTokenValue(token: Token): string {
+  if (typeof token.value === 'object' && token.value !== null && 'collection' in token.value) {
+    // This is a reference
+    const ref = token.value as VariableReferenceValue;
+    return `var(--${normalizeVariableName(ref.name)})`;
+  }
+
+  // Direct value
+  if (typeof token.value === 'string') {
+    return token.value;
+  }
+  if (typeof token.value === 'number') {
+    if (token.name.includes('opacity')) {
+      return `${token.value / 100}`;
+    }
+    return `${token.value}px`;
+  }
+  if (typeof token.value === 'boolean') {
+    return token.value ? 'true' : 'false';
+  }
+
+  return String(token.value);
+}
+
+// Function to generate CSS from bundled JSON
+function generateCSSFromBundledJson(bundledJson: string): string {
+  try {
+    const data: RecursicaVariablesSchema = JSON.parse(bundledJson);
+    let css = '';
+
+    // Generate CSS variables for tokens and uiKit in :root
+    const rootVariables: string[] = [];
+
+    // Process tokens
+    Object.entries(data.tokens).forEach(([, token]) => {
+      const tokenName = getTokenName(token);
+      const variableName = normalizeVariableName(`${tokenName}`);
+      if (isColorOrFloatToken(token)) {
+        const value = getTokenValue(token);
+        rootVariables.push(`  --${variableName}: ${value};`);
+      }
+    });
+
+    // Process uiKit
+    Object.entries(data.uiKit).forEach(([, token]) => {
+      const tokenName = getTokenName(token);
+      const variableName = normalizeVariableName(`${tokenName}`);
+      if (isColorOrFloatToken(token)) {
+        const value = getTokenValue(token);
+        rootVariables.push(`  --${variableName}: ${value};`);
+      }
+    });
+
+    // Add :root block
+    if (rootVariables.length > 0) {
+      css += ':root {\n';
+      css += rootVariables.join('\n');
+      css += '\n}\n\n';
+    }
+
+    // Generate theme classes
+    Object.entries(data.themes).forEach(([themeName, themeTokens]) => {
+      // Group tokens by mode
+      const tokensByMode: Record<string, string[]> = {};
+
+      Object.entries(themeTokens).forEach(([, token]) => {
+        if (isColorOrFloatToken(token)) {
+          const tokenName = getTokenName(token);
+          const variableName = normalizeVariableName(`${tokenName}`);
+          const value = getTokenValue(token);
+          const mode = token.mode || 'default';
+
+          if (!tokensByMode[mode]) {
+            tokensByMode[mode] = [];
+          }
+          tokensByMode[mode].push(`  --${variableName}: ${value};`);
+        }
+      });
+
+      // Create a CSS class for each mode
+      Object.entries(tokensByMode).forEach(([mode, themeVariables]) => {
+        if (themeVariables.length > 0) {
+          // Clean theme name by removing spaces
+          const cleanThemeName = themeName.replace(/\s+/g, '');
+          const cleanModeName = mode.replace(/\s+/g, '');
+
+          // Create class name: theme-mode (e.g., recursicaBrand-light, recursicaBrand-dark)
+          const className =
+            mode === 'default' ? cleanThemeName : `${cleanThemeName}-${cleanModeName}`;
+
+          css += `.${className} {\n`;
+          css += themeVariables.join('\n');
+          css += '\n}\n\n';
+        }
+      });
+    });
+
+    return css;
+  } catch (error) {
+    console.error('Error generating CSS from bundled JSON:', error);
+    return '';
+  }
 }
 
 export enum FileStatus {
@@ -97,6 +222,18 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     }
     return null;
   }, [svgIcons]);
+
+  // Abstracted file loading logic
+  const fileLoadingData = useMemo(() => {
+    const data = {
+      iconsJson: svgIconsJson,
+      bundledJson: variablesJson,
+      iconsFilename: 'recursica-icons.json',
+      bundledFilename: 'recursica-bundle.json',
+    };
+
+    return data;
+  }, [svgIconsJson, variablesJson]);
 
   // Create repository instance based on platform
   const repositoryInstance = useMemo((): BaseRepository | null => {
@@ -302,7 +439,7 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
       return;
     }
 
-    if (!(variablesJson || svgIconsJson)) {
+    if (!(fileLoadingData.bundledJson || fileLoadingData.iconsJson)) {
       parent.postMessage(
         {
           pluginMessage: {
@@ -313,7 +450,7 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
         '*'
       );
     } else {
-      updateFilesStatus(variablesJson, svgIconsJson);
+      updateFilesStatus(fileLoadingData.bundledJson, fileLoadingData.iconsJson);
       try {
         await handlePublishFiles();
       } catch (error) {
@@ -357,11 +494,11 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
   };
 
   useEffect(() => {
-    if (variablesJson || svgIconsJson) {
-      updateFilesStatus(variablesJson, svgIconsJson);
+    if (fileLoadingData.bundledJson || fileLoadingData.iconsJson) {
+      updateFilesStatus(fileLoadingData.bundledJson, fileLoadingData.iconsJson);
       handlePublishFiles();
     }
-  }, [variablesJson, svgIconsJson]);
+  }, [fileLoadingData.bundledJson, fileLoadingData.iconsJson]);
 
   const handlePublishFiles = async (): Promise<void> => {
     if (!selectedProject) {
@@ -371,6 +508,18 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     const targetBranch = await createBranch(selectedProject);
     const config = await getConfig(targetBranch);
     const adapterFiles = await runAdapter(targetBranch, config);
+
+    // Generate CSS from bundled JSON
+    if (fileLoadingData.bundledJson) {
+      const cssContent = generateCSSFromBundledJson(fileLoadingData.bundledJson);
+      if (cssContent) {
+        adapterFiles.push({
+          path: 'recursica-variables.css',
+          content: cssContent,
+        });
+      }
+    }
+
     await commitFiles(targetBranch, adapterFiles, config);
   };
 
@@ -411,17 +560,17 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     if (typeof config.project === 'object' && config.project.root) {
       rootPath = config.project.root;
     }
-    let variablesFilename = 'recursica-bundle.json';
+    let variablesFilename = fileLoadingData.bundledFilename;
     if (rootPath) {
       variablesFilename = rootPath + '/' + variablesFilename;
     }
-    let svgIconsFilename = 'recursica-icons.json';
+    let svgIconsFilename = fileLoadingData.iconsFilename;
     if (rootPath) {
       svgIconsFilename = rootPath + '/' + svgIconsFilename;
     }
 
     const actions: CommitAction[] = [];
-    if (variablesJson) {
+    if (fileLoadingData.bundledJson) {
       const exists = await repositoryInstance.fileExists(
         selectedProject,
         variablesFilename,
@@ -430,7 +579,7 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
       actions.push({
         action: exists ? 'update' : 'create',
         file_path: variablesFilename,
-        content: variablesJson,
+        content: fileLoadingData.bundledJson,
       });
     }
 
@@ -442,7 +591,7 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
       });
     }
 
-    if (svgIconsJson) {
+    if (fileLoadingData.iconsJson) {
       const exists = await repositoryInstance.fileExists(
         selectedProject,
         svgIconsFilename,
@@ -451,7 +600,7 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
       actions.push({
         action: exists ? 'update' : 'create',
         file_path: svgIconsFilename,
-        content: svgIconsJson,
+        content: fileLoadingData.iconsJson,
       });
     }
 
@@ -567,9 +716,9 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     }
 
     // Load local icons or search for them in the repository
-    let iconsJson = svgIconsJson;
+    let iconsJson = fileLoadingData.iconsJson;
     if (!iconsJson) {
-      let iconsFilename = 'recursica-icons.json';
+      let iconsFilename = fileLoadingData.iconsFilename;
       if (rootPath) {
         iconsFilename = rootPath + '/' + iconsFilename;
       }
@@ -596,9 +745,9 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     }
 
     // Load local variables or search for them in the repository
-    let bundledJson = variablesJson;
+    let bundledJson = fileLoadingData.bundledJson;
     if (!bundledJson) {
-      let bundledFilename = 'recursica-bundle.json';
+      let bundledFilename = fileLoadingData.bundledFilename;
       if (rootPath) {
         bundledFilename = rootPath + '/' + bundledFilename;
       }
