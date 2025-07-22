@@ -122,8 +122,8 @@ export function PublishChanges() {
           label: !prLink ? 'Publishing...' : 'Next',
           disabled: !prLink,
           onClick: () => setStep(Step.Exported),
-          trailing: !prLink ? 'arrow_path_outline' : undefined,
-          leading: prLink ? 'arrow_right_outline' : undefined,
+          leading: !prLink ? 'arrow_path_outline' : undefined,
+          trailing: prLink ? 'arrow_right_outline' : undefined,
         };
       case Step.Exported:
         return {
@@ -282,7 +282,9 @@ export function PublishChanges() {
               <Flex gap={8} key={key} align='center'>
                 <Icon name={getIcon(value.status)} spin={value.status === FileStatus.Loading} />
                 <Typography variant='body-2/normal' color='layers/layer-0/elements/text/color'>
-                  {parseInt(value.quantity).toLocaleString()} {key}
+                  {value.quantity > 0
+                    ? `${parseInt(value.quantity).toLocaleString()} ${key}`
+                    : `No ${key} found`}
                 </Typography>
               </Flex>
             ))}
