@@ -56,7 +56,7 @@ export function generateMantineTheme({
   for (const [key, value] of Object.entries(tokens.tokens)) {
     if (typeof value === "object") continue;
     if (key.includes("border-radius")) {
-      themeTokens.radius[parseKey(key)] = value as string;
+      themeTokens.radius[parseKey(key)] = value;
     }
     if (key.includes("font/size")) {
       themeTokens.fontSizes[parseKey(key)] = `"${value}"`;

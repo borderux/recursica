@@ -741,7 +741,7 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     } catch (error) {
       setFilesStatus((prev) => ({
         ...prev,
-        adapter: { quantity: -1, status: FileStatus.Error },
+        adapter: { quantity: 0, status: FileStatus.Error },
       }));
       if (error instanceof Error && error.message.includes('404')) {
         console.error('Adapter file not found');
