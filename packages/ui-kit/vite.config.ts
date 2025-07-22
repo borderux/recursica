@@ -7,7 +7,19 @@ import svgr from "vite-plugin-svgr";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), dts(), vanillaExtractPlugin(), svgr()],
+  plugins: [
+    react(),
+    dts(),
+    vanillaExtractPlugin({
+      identifiers: ({ debugId, hash }) => {
+        if (!debugId) {
+          return `recursica-${hash}`;
+        }
+        return `recursica-${debugId?.replaceAll("/", "-")}`;
+      },
+    }),
+    svgr(),
+  ],
   build: {
     lib: {
       entry: resolve(__dirname, "src/index.ts"),

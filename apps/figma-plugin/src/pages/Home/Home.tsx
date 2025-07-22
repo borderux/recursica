@@ -64,6 +64,7 @@ export function Home() {
             </Typography>
           ) : (
             <Button
+              disabled={!filetype}
               component={NavLink}
               to={getRedirect.to}
               label={getRedirect.label}

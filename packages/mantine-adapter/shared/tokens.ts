@@ -7,12 +7,12 @@ import {
   capitalize,
 } from "@recursica/common";
 
-export interface ProcessTokensParams {
+export interface TokensParams {
   tokens: ThemeTokens;
   themes: Themes;
   overrides: RecursicaConfigOverrides | undefined;
 }
-export class ProcessTokens {
+export class Tokens {
   public tokens: ThemeTokens = {};
   public themes: Themes = {};
 
@@ -28,7 +28,7 @@ export class ProcessTokens {
     this.overrides = overrides;
   }
 
-  private processValue = (
+  private value = (
     target: Record<string, number | string | Token | ThemeTokens>,
     token: Token,
   ) => {
@@ -51,17 +51,13 @@ export class ProcessTokens {
     return false;
   };
 
-  private processTokenValue(
-    token: Token,
-    modeName: string,
-    jsonThemeName?: string,
-  ) {
+  private tokenValue(token: Token, modeName: string, jsonThemeName?: string) {
     if (token.collection === "Breakpoints") {
-      this.processValue(this.breakpoints, token);
+      this.value(this.breakpoints, token);
       // Add breakpoints to uiKit with 'breakpoints/' prefix
       const uiKitTarget: Record<string, number | string | Token | ThemeTokens> =
         {};
-      this.processValue(uiKitTarget, token);
+      this.value(uiKitTarget, token);
       Object.entries(uiKitTarget).forEach(([key, value]) => {
         // Ensure we only store string values
         if (typeof value === "string") {
@@ -71,20 +67,20 @@ export class ProcessTokens {
         }
       });
     } else if (token.collection === "UI Kit") {
-      this.processValue(this.uiKit, token);
+      this.value(this.uiKit, token);
     } else if (token.collection === "Tokens") {
-      this.processValue(this.tokens, token);
+      this.value(this.tokens, token);
     } else {
       if (!jsonThemeName) return;
       if (!this.themes[jsonThemeName]) this.themes[jsonThemeName] = {};
 
       if (!this.themes[jsonThemeName][modeName])
         this.themes[jsonThemeName][modeName] = {};
-      this.processValue(this.themes[jsonThemeName][modeName], token);
+      this.value(this.themes[jsonThemeName][modeName], token);
     }
   }
 
-  public processTokens(
+  public process(
     variables: Record<string, CollectionToken>,
     jsonThemeName?: string,
   ) {
@@ -185,7 +181,7 @@ export class ProcessTokens {
         ) {
           this.borderRadius.push(token.name);
         }
-        this.processTokenValue(token, modeName, jsonThemeName);
+        this.tokenValue(token, modeName, jsonThemeName);
       } else {
         console.warn(
           `${JSON.stringify(token, null, 2)} could not be processed`,
