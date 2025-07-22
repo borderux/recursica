@@ -6,7 +6,7 @@ import { useMemo } from 'react';
 export function FileSynced() {
   const { filetype } = useFigma();
 
-  const getNextStep = useMemo(() => {
+  const getNextStepDescription = useMemo(() => {
     if (filetype === 'tokens') {
       return 'Move to brand files to continue your workflow';
     }
@@ -44,7 +44,7 @@ export function FileSynced() {
           color='layers/layer-0/elements/text/color'
           opacity={0.84}
         >
-          {getNextStep}
+          {getNextStepDescription}
         </Typography>
       </Flex>
     </Layout>
