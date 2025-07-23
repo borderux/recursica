@@ -200,7 +200,8 @@ export function PublishChanges() {
               variant='outline'
               label='Send bug'
               component={Anchor}
-              href='https://github.com/recursica/figma-plugin/issues'
+              underline='never'
+              href='https://www.recursica.com/community'
               target='_blank'
               rel='noopener noreferrer'
               leading='flag_outline'
