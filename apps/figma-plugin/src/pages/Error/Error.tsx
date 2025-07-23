@@ -22,7 +22,7 @@ export function Error() {
       footer={
         <Button
           component={NavLink}
-          to='https://recursica.com'
+          to='https://www.recursica.com/community'
           target='_blank'
           rel='noopener noreferrer'
           label='Learn more'
