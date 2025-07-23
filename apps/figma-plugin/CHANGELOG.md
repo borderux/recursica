@@ -1,5 +1,11 @@
 # @recursica/figma-plugin
 
+## 0.0.5
+
+### Patch Changes
+
+- 2bbb5e2: new figma plugin release
+
 ## 0.0.4
 
 ### Patch Changes
