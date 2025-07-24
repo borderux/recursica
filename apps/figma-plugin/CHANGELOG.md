@@ -1,5 +1,11 @@
 # @recursica/figma-plugin
 
+## 0.0.6
+
+### Patch Changes
+
+- b624a46: Enhance Figma plugin manifest with network access permissions and update navigation links
+
 ## 0.0.5
 
 ### Patch Changes
