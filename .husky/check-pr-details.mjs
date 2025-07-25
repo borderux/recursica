@@ -44,8 +44,8 @@ function getCurrentBranch() {
     return execSync("git rev-parse --abbrev-ref HEAD", {
       encoding: "utf8",
     }).trim();
-  } catch {
-    log("❌ Error getting current branch", colors.red);
+  } catch (error) {
+    log(`❌ Error getting current branch: ${error.message}`, colors.red);
     process.exit(1);
   }
 }
