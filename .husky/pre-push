@@ -1,0 +1,1 @@
+node .husky/check-pr-details.mjs 
