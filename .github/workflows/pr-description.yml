@@ -2,7 +2,7 @@ name: Auto-populate PR Description
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, reopened]
 
 jobs:
   populate-description:
