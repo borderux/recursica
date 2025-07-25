@@ -1,0 +1,6 @@
+You need to review the changes in the files in the current branch against the main branch.  Analyze the files and check for
+1. Proper code documentation.  All new functions should be properly documented
+2. Any errors in coding style or complexity that could be improved
+3. Check that proper testing has been performed.  Ideally unit tests were created to test functionality, or prompt the user how validation was performed to ensure code is working
+When that is done, you should review the code base and ensure that any documentation that references these files has been updated. Pay special attention to project documentation (md files) to make sure that functionality these files change that may have impacted the project documentation has been updated.  
+Finally, update the file PULL-REQUEST-DETAILS.md in the root of the project with a summary and description of what the pull request entails so that other developers can understand better why the changes were made and what to pay attention to as part of the code review process.  The content of these details should be descriptive, but not too long (no longer than on page of text)
