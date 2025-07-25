@@ -11,7 +11,7 @@
  */
 
 import { execSync } from "child_process";
-import { existsSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 
 /* global console, process */
 
@@ -73,10 +73,10 @@ function getMainBranch() {
 }
 
 /**
- * Checks if a file has been modified compared to the main branch
+ * Checks if a file has meaningful content changes compared to the main branch
  * @param {string} filePath - The path to the file to check
  * @param {string} mainBranch - The main branch name
- * @returns {boolean} True if the file has been modified, false otherwise
+ * @returns {boolean} True if the file has meaningful changes, false otherwise
  */
 function checkFileModified(filePath, mainBranch) {
   try {
@@ -87,6 +87,35 @@ function checkFileModified(filePath, mainBranch) {
     return false; // File has NOT been modified (exit code 0 means no differences)
   } catch {
     return true; // File HAS been modified (exit code 1 means differences found)
+  }
+}
+
+/**
+ * Checks if the PULL-REQUEST-DETAILS.md has meaningful content
+ * @param {string} filePath - The path to the file to check
+ * @returns {boolean} True if the file has meaningful content, false otherwise
+ */
+function hasMeaningfulContent(filePath) {
+  try {
+    const content = readFileSync(filePath, "utf8");
+    const lines = content.split("\n").filter(line => line.trim() !== "");
+    
+    // Check if file has more than just the template content
+    const meaningfulLines = lines.filter(line => {
+      const trimmed = line.trim();
+      // Skip empty lines, headers, and template placeholders
+      return trimmed !== "" && 
+             !trimmed.startsWith("#") && 
+             !trimmed.includes("Add any") &&
+             !trimmed.includes("This pull request includes") &&
+             !trimmed.includes("Feature A") &&
+             !trimmed.includes("Bug fix B") &&
+             !trimmed.includes("Documentation update C");
+    });
+    
+    return meaningfulLines.length > 0;
+  } catch {
+    return false;
   }
 }
 
@@ -149,8 +178,32 @@ function main() {
     process.exit(1);
   }
 
+  // Check if the file has meaningful content (not just template)
+  if (!hasMeaningfulContent(prDetailsFile)) {
+    log("", colors.reset);
+    log("❌ ERROR: PULL-REQUEST-DETAILS.md contains only template content!", colors.red);
+    log("", colors.reset);
+    log(
+      "Please update PULL-REQUEST-DETAILS.md with actual details of your changes before pushing.",
+      colors.reset,
+    );
+    log("", colors.reset);
+    log(
+      "💡 Tip: Use Cursor chat with PULL-REQUEST-CHECK.txt as context to ensure your pull request is fully valid.",
+      colors.yellow,
+    );
+    log("   Reference: PULL-REQUEST-CHECK.txt", colors.yellow);
+    log("", colors.reset);
+    log(
+      "Replace the template placeholders with actual information about your changes.",
+      colors.reset,
+    );
+    log("", colors.reset);
+    process.exit(1);
+  }
+
   log(
-    "✅ PULL-REQUEST-DETAILS.md has been updated - proceeding with push",
+    "✅ PULL-REQUEST-DETAILS.md has been updated with meaningful content - proceeding with push",
     colors.green,
   );
   process.exit(0);
