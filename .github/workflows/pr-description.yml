@@ -1,0 +1,55 @@
+name: Auto-populate PR Description
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  populate-description:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read PULL-REQUEST-DETAILS.md
+        id: read-details
+        run: |
+          if [ -f "PULL-REQUEST-DETAILS.md" ]; then
+            echo "content<<EOF" >> $GITHUB_OUTPUT
+            cat PULL-REQUEST-DETAILS.md >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "file_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "file_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update PR description
+        if: steps.read-details.outputs.file_exists == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pullRequest } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+
+            const currentBody = pullRequest.body || '';
+            const newContent = '${{ steps.read-details.outputs.content }}';
+
+            // Only update if the content is different to avoid unnecessary API calls
+            if (currentBody !== newContent) {
+              await github.rest.pulls.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+                body: newContent
+              });
+              console.log('PR description updated successfully');
+            } else {
+              console.log('PR description already matches PULL-REQUEST-DETAILS.md content');
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
