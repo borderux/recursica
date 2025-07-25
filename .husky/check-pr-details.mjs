@@ -98,22 +98,39 @@ function checkFileModified(filePath, mainBranch) {
 function hasMeaningfulContent(filePath) {
   try {
     const content = readFileSync(filePath, "utf8");
-    const lines = content.split("\n").filter(line => line.trim() !== "");
     
-    // Check if file has more than just the template content
+    // Check for template indicators
+    const templateIndicators = [
+      "This pull request includes the following changes:",
+      "Feature A",
+      "Bug fix B", 
+      "Documentation update C",
+      "Add any additional context or notes here."
+    ];
+    
+    // If all template indicators are present and no other meaningful content, it's just a template
+    const hasAllTemplateContent = templateIndicators.every(indicator => 
+      content.includes(indicator)
+    );
+    
+    // Check if there's any content that's not just template placeholders
+    const lines = content.split("\n").filter(line => line.trim() !== "");
     const meaningfulLines = lines.filter(line => {
       const trimmed = line.trim();
-      // Skip empty lines, headers, and template placeholders
+      // Skip empty lines, headers, checkboxes, and template placeholders
       return trimmed !== "" && 
              !trimmed.startsWith("#") && 
-             !trimmed.includes("Add any") &&
-             !trimmed.includes("This pull request includes") &&
-             !trimmed.includes("Feature A") &&
-             !trimmed.includes("Bug fix B") &&
-             !trimmed.includes("Documentation update C");
+             !trimmed.startsWith("- [ ]") &&
+             !trimmed.startsWith("- [x]") &&
+             !templateIndicators.some(indicator => trimmed.includes(indicator));
     });
     
-    return meaningfulLines.length > 0;
+    // If it has all template content but no meaningful lines, it's just a template
+    if (hasAllTemplateContent && meaningfulLines.length === 0) {
+      return false;
+    }
+    
+    return true;
   } catch {
     return false;
   }
@@ -181,7 +198,10 @@ function main() {
   // Check if the file has meaningful content (not just template)
   if (!hasMeaningfulContent(prDetailsFile)) {
     log("", colors.reset);
-    log("❌ ERROR: PULL-REQUEST-DETAILS.md contains only template content!", colors.red);
+    log(
+      "❌ ERROR: PULL-REQUEST-DETAILS.md contains only template content!",
+      colors.red,
+    );
     log("", colors.reset);
     log(
       "Please update PULL-REQUEST-DETAILS.md with actual details of your changes before pushing.",
