@@ -263,7 +263,7 @@ export function PublishChanges() {
         {step === Step.InvalidProject && (
           <Typography variant='body-1/normal' color='layers/layer-0/elements/text/color'>
             This project is missing the required Recursica configuration file. Please initialize the
-            repo with the correct ui kit.
+            repo with the correct UI Kit.
           </Typography>
         )}
         {step === Step.SelectProject && (
@@ -273,8 +273,8 @@ export function PublishChanges() {
             opacity={0.84}
           >
             {selectedProjectId
-              ? `Once you've made changes to the Figma files, publish them to the connected repository`
-              : 'It looks like there are multiple projects associated with your Github account.'}
+              ? `Once changes are made to the Figma files, publish them to the connected ${getPlatformDisplayName(repository?.platform)} project.`
+              : `It looks like there are multiple projects associated with your ${getPlatformDisplayName(repository?.platform)} account.`}
           </Typography>
         )}
         {step === Step.Exporting && (
@@ -299,8 +299,7 @@ export function PublishChanges() {
           >
             The changes have been published.
             <br />
-            If you&apos;re ready for the dev to review the changes, send them the URL of your
-            branch.
+            Copy and send the URL to your developer.
           </Typography>
         )}
         {step === Step.Error && (
