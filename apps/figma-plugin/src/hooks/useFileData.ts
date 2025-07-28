@@ -1,0 +1,75 @@
+import { useEffect, useMemo, useState } from 'react';
+import { useFigma } from './useFigma';
+import type { Project } from '../services/repository';
+
+interface FileData {
+  localIconsJson: string | null;
+  localBundledJson: string | null;
+  remoteIconsJson: string | null;
+  remoteBundledJson: string | null;
+  iconsFilename: string;
+  bundledFilename: string;
+  // Legacy properties for backward compatibility
+  iconsJson: string | null;
+  bundledJson: string | null;
+}
+
+export function useFileData(selectedProject?: Project) {
+  // Local and remote file data state
+  const [localVariablesJson, setLocalVariablesJson] = useState<string | null>(null);
+  const [localIconsJson, setLocalIconsJson] = useState<string | null>(null);
+  const [remoteVariablesJson, setRemoteVariablesJson] = useState<string | null>(null);
+  const [remoteIconsJson, setRemoteIconsJson] = useState<string | null>(null);
+
+  const { recursicaVariables, svgIcons } = useFigma();
+
+  // Update local data when Figma data changes
+  useEffect(() => {
+    if (recursicaVariables) {
+      const variablesData = { ...recursicaVariables };
+      if (selectedProject && !variablesData.projectId) {
+        variablesData.projectId = selectedProject.name.replace(/\s+/g, '');
+      }
+      setLocalVariablesJson(JSON.stringify(variablesData, null, 2));
+    } else {
+      setLocalVariablesJson(null);
+    }
+  }, [recursicaVariables, selectedProject]);
+
+  useEffect(() => {
+    if (svgIcons) {
+      setLocalIconsJson(JSON.stringify(svgIcons, null, 2));
+    } else {
+      setLocalIconsJson(null);
+    }
+  }, [svgIcons]);
+
+  // Abstracted file loading logic
+  const fileLoadingData = useMemo((): FileData => {
+    const data = {
+      localIconsJson,
+      localBundledJson: localVariablesJson,
+      remoteIconsJson,
+      remoteBundledJson: remoteVariablesJson,
+      iconsFilename: 'recursica-icons.json',
+      bundledFilename: 'recursica-bundle.json',
+      // Legacy properties for backward compatibility
+      iconsJson: localIconsJson,
+      bundledJson: localVariablesJson,
+    };
+
+    return data;
+  }, [localIconsJson, localVariablesJson, remoteIconsJson, remoteVariablesJson]);
+
+  const clearRemoteData = () => {
+    setRemoteVariablesJson(null);
+    setRemoteIconsJson(null);
+  };
+
+  return {
+    fileLoadingData,
+    setRemoteVariablesJson,
+    setRemoteIconsJson,
+    clearRemoteData,
+  };
+}

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { RepositoryContext } from './RepositoryContext';
-import { useFigma } from '../../hooks/useFigma';
+import { useFigma, useFileData, useRepositoryInstance, useAdapterWorker } from '../../hooks';
 import type {
   RecursicaConfiguration,
   RecursicaVariablesSchema,
@@ -8,14 +8,7 @@ import type {
   VariableReferenceValue,
   Token,
 } from '@recursica/schemas';
-import {
-  BaseRepository,
-  GitLabRepository,
-  GitHubRepository,
-  type UserInfo,
-  type Project,
-  type CommitAction,
-} from '../../services/repository';
+import { type UserInfo, type Project, type CommitAction } from '../../services/repository';
 import { isColorOrFloatToken } from '@recursica/common';
 
 interface AdapterFile {
@@ -204,54 +197,63 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
 
   const {
     repository,
-    recursicaVariables,
-    svgIcons,
     updateRepository: { updateSelectedProject },
   } = useFigma();
 
-  const variablesJson = useMemo(() => {
-    if (recursicaVariables) {
-      if (selectedProject && !recursicaVariables.projectId) {
-        recursicaVariables.projectId = selectedProject.name.replace(/\s+/g, '');
+  // Use custom hooks
+  const { fileLoadingData, setRemoteVariablesJson, setRemoteIconsJson, clearRemoteData } =
+    useFileData(selectedProject);
+  const { repositoryInstance } = useRepositoryInstance();
+  const { runAdapter } = useAdapterWorker();
+
+  // Fetch remote files when repository is available
+  useEffect(() => {
+    const fetchRemoteFiles = async () => {
+      if (!repositoryInstance || !selectedProject) return;
+
+      try {
+        // Fetch remote icons
+        const iconsFilename = 'recursica-icons.json';
+        try {
+          const iconsFileRaw = await repositoryInstance.getSingleFile(
+            selectedProject,
+            iconsFilename,
+            selectedProject.defaultBranch
+          );
+          const remoteIconsJson = JSON.stringify(iconsFileRaw);
+          setRemoteIconsJson(remoteIconsJson);
+        } catch (error) {
+          if (error instanceof Error && error.message.includes('404')) {
+            setRemoteIconsJson('{}');
+          } else {
+            console.error('Error fetching remote icons:', error);
+          }
+        }
+
+        // Fetch remote variables
+        const bundledFilename = 'recursica-bundle.json';
+        try {
+          const bundledFileRaw = await repositoryInstance.getSingleFile<RecursicaVariablesSchema>(
+            selectedProject,
+            bundledFilename,
+            selectedProject.defaultBranch
+          );
+          const remoteBundledJson = JSON.stringify(bundledFileRaw);
+          setRemoteVariablesJson(remoteBundledJson);
+        } catch (error) {
+          if (error instanceof Error && error.message.includes('404')) {
+            setRemoteVariablesJson('{}');
+          } else {
+            console.error('Error fetching remote variables:', error);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching remote files:', error);
       }
-      return JSON.stringify(recursicaVariables, null, 2);
-    }
-    return null;
-  }, [recursicaVariables, selectedProject]);
-
-  const svgIconsJson = useMemo(() => {
-    if (svgIcons) {
-      return JSON.stringify(svgIcons, null, 2);
-    }
-    return null;
-  }, [svgIcons]);
-
-  // Abstracted file loading logic
-  const fileLoadingData = useMemo(() => {
-    const data = {
-      iconsJson: svgIconsJson,
-      bundledJson: variablesJson,
-      iconsFilename: 'recursica-icons.json',
-      bundledFilename: 'recursica-bundle.json',
     };
 
-    return data;
-  }, [svgIconsJson, variablesJson]);
-
-  // Create repository instance based on platform
-  const repositoryInstance = useMemo((): BaseRepository | null => {
-    if (!repository || !repository.accessToken || !repository.platform) return null;
-    const { accessToken, platform } = repository;
-
-    switch (platform.toLowerCase()) {
-      case 'gitlab':
-        return new GitLabRepository(accessToken);
-      case 'github':
-        return new GitHubRepository(accessToken);
-      default:
-        return null;
-    }
-  }, [repository]);
+    fetchRemoteFiles();
+  }, [repositoryInstance, selectedProject]);
 
   // Error handling helper functions
   const setRepositoryError = (message: string, details?: string, code?: string) => {
@@ -517,7 +519,34 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
       // Run adapter with proper error handling
       let adapterFiles: AdapterFile[] = [];
       try {
-        adapterFiles = await runAdapter(targetBranch, config);
+        if (!repositoryInstance) {
+          throw new Error('Repository instance not available');
+        }
+        adapterFiles = await runAdapter(
+          repositoryInstance,
+          selectedProject,
+          targetBranch,
+          config,
+          fileLoadingData,
+          (status) => {
+            if (status === 'loading') {
+              setFilesStatus((prev) => ({
+                ...prev,
+                adapter: { quantity: 1, status: FileStatus.Loading },
+              }));
+            } else if (status === 'done') {
+              setFilesStatus((prev) => ({
+                ...prev,
+                adapter: { ...prev.adapter, status: FileStatus.Done },
+              }));
+            } else if (status === 'error') {
+              setFilesStatus((prev) => ({
+                ...prev,
+                adapter: { ...prev.adapter, status: FileStatus.Error },
+              }));
+            }
+          }
+        );
       } catch (error) {
         console.error('Adapter execution failed:', error);
         setRepositoryError(
@@ -706,335 +735,6 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     return branch.name;
   };
 
-  const runAdapter = async (
-    targetBranch: string,
-    config: RecursicaConfiguration
-  ): Promise<AdapterFile[]> => {
-    if (!repositoryInstance || !selectedProjectId || !selectedProject)
-      throw new Error('Failed to run adapter');
-
-    let rootPath = '';
-    if (typeof config.project === 'object' && config.project.root) {
-      rootPath = config.project.root;
-    }
-
-    let adapterPath = 'adapter.js';
-    if (rootPath) {
-      adapterPath = rootPath + '/' + adapterPath;
-    }
-    if (typeof config.project === 'object' && config.project.adapter) {
-      adapterPath = config.project.adapter;
-    }
-    if (!selectedProject || !targetBranch) throw new Error('Failed to create branch');
-
-    let adapterFile = null;
-    try {
-      adapterFile = await repositoryInstance.getSingleFile(
-        selectedProject,
-        adapterPath,
-        targetBranch
-      );
-      setFilesStatus((prev) => ({
-        ...prev,
-        adapter: { quantity: 1, status: FileStatus.Loading },
-      }));
-    } catch (error) {
-      setFilesStatus((prev) => ({
-        ...prev,
-        adapter: { quantity: 0, status: FileStatus.Error },
-      }));
-      if (error instanceof Error && error.message.includes('404')) {
-        console.error('Adapter file not found');
-        return [];
-      }
-      throw error;
-    }
-
-    // Load local icons or search for them in the repository
-    let iconsJson = fileLoadingData.iconsJson;
-    if (!iconsJson) {
-      let iconsFilename = fileLoadingData.iconsFilename;
-      if (rootPath) {
-        iconsFilename = rootPath + '/' + iconsFilename;
-      }
-      if (typeof config.icons === 'object' && config.icons.include) {
-        try {
-          const iconsFileRaw = await repositoryInstance.getSingleFile(
-            selectedProject,
-            iconsFilename,
-            targetBranch
-          );
-          iconsJson = JSON.stringify(iconsFileRaw);
-          // Update files status with the number of icons
-          setFilesStatus((prev) => ({
-            ...prev,
-            icons: { quantity: Object.keys(iconsFileRaw).length, status: FileStatus.Loading },
-          }));
-        } catch (error) {
-          if (error instanceof Error && error.message.includes('404')) {
-            iconsJson = '{}';
-          }
-          throw error;
-        }
-      }
-    }
-
-    // Load local variables or search for them in the repository
-    let bundledJson = fileLoadingData.bundledJson;
-    if (!bundledJson) {
-      let bundledFilename = fileLoadingData.bundledFilename;
-      if (rootPath) {
-        bundledFilename = rootPath + '/' + bundledFilename;
-      }
-      try {
-        const bundledFileRaw = await repositoryInstance.getSingleFile<RecursicaVariablesSchema>(
-          selectedProject,
-          bundledFilename,
-          targetBranch
-        );
-        bundledJson = JSON.stringify(bundledFileRaw);
-        setFilesStatus((prev) => ({
-          ...prev,
-          tokens: {
-            quantity: Object.keys(bundledFileRaw.tokens).length,
-            status: FileStatus.Loading,
-          },
-          themes: {
-            quantity: Object.keys(bundledFileRaw.themes).length,
-            status: FileStatus.Loading,
-          },
-          uiKit: {
-            quantity: Object.keys(bundledFileRaw.uiKit).length,
-            status: FileStatus.Loading,
-          },
-        }));
-      } catch (error) {
-        if (error instanceof Error && error.message.includes('404')) {
-          bundledJson = '{}';
-        }
-        throw error;
-      }
-    }
-
-    return new Promise<AdapterFile[]>((resolve, reject) => {
-      let worker: Worker;
-
-      try {
-        // Create worker with error handling
-        worker = new Worker(
-          URL.createObjectURL(new Blob([adapterFile], { type: 'text/javascript' }))
-        );
-      } catch (error) {
-        console.error('❌ Failed to create worker:', error);
-        setFilesStatus((prev) => ({
-          ...prev,
-          adapter: { ...prev.adapter, status: FileStatus.Error },
-        }));
-        reject(
-          new Error(
-            `Failed to create worker: ${error instanceof Error ? error.message : 'Unknown error'}`
-          )
-        );
-        return;
-      }
-
-      // Set a timeout for the worker (5 minutes)
-      const timeoutId = setTimeout(
-        () => {
-          console.error('❌ Worker execution timed out after 5 minutes');
-          worker.terminate();
-          setFilesStatus((prev) => ({
-            ...prev,
-            adapter: { ...prev.adapter, status: FileStatus.Error },
-          }));
-          reject(new Error('Worker execution timed out after 5 minutes'));
-        },
-        5 * 60 * 1000
-      );
-
-      try {
-        worker.postMessage({
-          bundledJson,
-          srcPath: rootPath + '/src',
-          project: config.project,
-          rootPath,
-          iconsJson,
-          overrides: config.overrides,
-          iconsConfig: config.icons,
-        });
-      } catch (error) {
-        clearTimeout(timeoutId);
-        worker.terminate();
-        console.error('❌ Failed to post message to worker:', error);
-        setFilesStatus((prev) => ({
-          ...prev,
-          adapter: { ...prev.adapter, status: FileStatus.Error },
-        }));
-        reject(
-          new Error(
-            `Failed to post message to worker: ${error instanceof Error ? error.message : 'Unknown error'}`
-          )
-        );
-        return;
-      }
-
-      // Listener for messages coming FROM the worker
-      worker.onmessage = (event) => {
-        clearTimeout(timeoutId); // Clear timeout on successful response
-        worker.terminate(); // Clean up worker
-        console.log('✅ Response received from worker:', event.data);
-
-        setFilesStatus((prev) => ({
-          ...prev,
-          adapter: { ...prev.adapter, status: FileStatus.Done },
-        }));
-        const {
-          recursicaTokens,
-          vanillaExtractThemes,
-          mantineTheme,
-          uiKitObject,
-          recursicaObject,
-          colorsType,
-          iconsObject,
-          prettierignore,
-        } = event.data;
-        const newAdapterFiles: AdapterFile[] = [];
-
-        if (recursicaTokens) {
-          newAdapterFiles.push({
-            path: recursicaTokens.path,
-            content: recursicaTokens.content,
-          });
-        }
-
-        if (prettierignore) {
-          newAdapterFiles.push({
-            path: prettierignore.path,
-            content: prettierignore.content,
-          });
-        }
-
-        const {
-          availableThemes,
-          themeContract,
-          themesFileContent,
-          vanillaExtractThemes: subThemes,
-        } = vanillaExtractThemes;
-        if (availableThemes) {
-          newAdapterFiles.push({
-            path: availableThemes.path,
-            content: availableThemes.content,
-          });
-        }
-        if (themeContract) {
-          newAdapterFiles.push({
-            path: themeContract.path,
-            content: themeContract.content,
-          });
-        }
-        if (themesFileContent) {
-          newAdapterFiles.push({
-            path: themesFileContent.path,
-            content: themesFileContent.content,
-          });
-        }
-        for (const theme of subThemes) {
-          newAdapterFiles.push({
-            path: theme.path,
-            content: theme.content,
-          });
-        }
-
-        if (mantineTheme.mantineTheme) {
-          newAdapterFiles.push({
-            path: mantineTheme.mantineTheme.path,
-            content: mantineTheme.mantineTheme.content,
-          });
-        }
-        if (mantineTheme.postCss) {
-          newAdapterFiles.push({
-            path: mantineTheme.postCss.path,
-            content: mantineTheme.postCss.content,
-          });
-        }
-
-        if (uiKitObject) {
-          newAdapterFiles.push({
-            path: uiKitObject.path,
-            content: uiKitObject.content,
-          });
-        }
-
-        if (recursicaObject) {
-          newAdapterFiles.push({
-            path: recursicaObject.path,
-            content: recursicaObject.content,
-          });
-        }
-
-        if (colorsType) {
-          newAdapterFiles.push({
-            path: colorsType.path,
-            content: colorsType.content,
-          });
-        }
-
-        if (iconsObject) {
-          newAdapterFiles.push({
-            path: iconsObject.iconExports.path,
-            content: iconsObject.iconExports.content,
-          });
-          newAdapterFiles.push({
-            path: iconsObject.iconResourceMap.path,
-            content: iconsObject.iconResourceMap.content,
-          });
-          for (const icon of iconsObject.exportedIcons) {
-            newAdapterFiles.push({
-              path: icon.path,
-              content: icon.content,
-            });
-          }
-        }
-        resolve(newAdapterFiles);
-      };
-
-      // Listener for any errors that might occur inside the worker
-      worker.onerror = (error) => {
-        clearTimeout(timeoutId); // Clear timeout on error
-        worker.terminate(); // Clean up worker
-        console.error('❌ Error in worker:', error);
-
-        // Update UI status immediately
-        setFilesStatus((prev) => ({
-          ...prev,
-          adapter: { ...prev.adapter, status: FileStatus.Error },
-        }));
-
-        // Create a more detailed error message
-        const errorMessage = error.message || 'Unknown worker error';
-        const errorDetails = error.filename ? `File: ${error.filename}, Line: ${error.lineno}` : '';
-        const fullError = `Worker execution failed: ${errorMessage}${errorDetails ? ` (${errorDetails})` : ''}`;
-
-        reject(new Error(fullError));
-      };
-
-      // Handle worker message errors
-      worker.onmessageerror = (error) => {
-        clearTimeout(timeoutId); // Clear timeout on message error
-        worker.terminate(); // Clean up worker
-        console.error('❌ Message error in worker:', error);
-
-        // Update UI status immediately
-        setFilesStatus((prev) => ({
-          ...prev,
-          adapter: { ...prev.adapter, status: FileStatus.Error },
-        }));
-
-        reject(new Error(`Worker message error: Unable to process worker message`));
-      };
-    });
-  };
-
   const updateSelectedProjectId = (projectId: string) => {
     setselectedProjectId(projectId);
     updateSelectedProject(projectId);
@@ -1045,6 +745,8 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     setError(null); // Clear any existing errors
     initConfig.current = false;
     setFilesStatus(INITIAL_FILES_STATUS);
+    // Clear remote file data
+    clearRemoteData();
     return await validateProject();
   };
 
