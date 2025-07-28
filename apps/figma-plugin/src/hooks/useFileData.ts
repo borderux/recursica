@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useFigma } from './useFigma';
 import type { Project } from '../services/repository';
 
@@ -61,10 +61,10 @@ export function useFileData(selectedProject?: Project) {
     return data;
   }, [localIconsJson, localVariablesJson, remoteIconsJson, remoteVariablesJson]);
 
-  const clearRemoteData = () => {
+  const clearRemoteData = useCallback(() => {
     setRemoteVariablesJson(null);
     setRemoteIconsJson(null);
-  };
+  }, [setRemoteVariablesJson, setRemoteIconsJson]);
 
   return {
     fileLoadingData,

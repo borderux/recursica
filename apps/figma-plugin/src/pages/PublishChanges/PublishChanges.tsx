@@ -17,7 +17,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Layout } from '../../components/Layout/Layout';
-import { FileStatus, ValidationStatus } from '../../context/Repository/RepositoryProvider';
+import { FileStatus, ValidationStatus } from '../../hooks';
 
 /**
  * @description The steps of the publish changes page
