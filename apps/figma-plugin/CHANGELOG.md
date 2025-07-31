@@ -1,5 +1,11 @@
 # @recursica/figma-plugin
 
+## 0.0.7
+
+### Patch Changes
+
+- cf99c3c: fix an error when trying to trigger the auth flow (env vars were not set correctly)
+
 ## 0.0.6
 
 ### Patch Changes
