@@ -1,5 +1,5 @@
 {
-  "name": "@recursica/ui-kit",
+  "name": "@recursica/ui-kit-mantine",
   "description": "Reusable UI components for Recursica applications",
   "private": false,
   "homepage": "https://github.com/borderux/recursica#readme",
@@ -13,16 +13,16 @@
   },
   "version": "0.0.3",
   "type": "module",
-  "main": "./dist/ui-kit.cjs",
-  "module": "./dist/ui-kit.js",
+  "main": "./dist/ui-kit-mantine.cjs",
+  "module": "./dist/ui-kit-mantine.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/ui-kit.js",
-      "require": "./dist/ui-kit.cjs"
+      "import": "./dist/ui-kit-mantine.js",
+      "require": "./dist/ui-kit-mantine.cjs"
     },
-    "./style.css": "./dist/ui-kit.css"
+    "./style.css": "./dist/ui-kit-mantine.css"
   },
   "files": [
     "dist"
@@ -44,9 +44,9 @@
     "chromatic": "npx chromatic --project-token=chpt_69ae5d081be6258"
   },
   "dependencies": {
-    "@mantine/core": "~8.1.0",
-    "@mantine/dates": "^8.1.3",
-    "@mantine/hooks": "~8.1.0",
+    "@mantine/core": "~8.2.2",
+    "@mantine/dates": "^8.2.2",
+    "@mantine/hooks": "~8.2.2",
     "@repo/typescript-config": "*",
     "@vanilla-extract/css": "1.17.1",
     "@vanilla-extract/vite-plugin": "5.0.1",

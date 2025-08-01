@@ -1,4 +1,4 @@
-import { Anchor, Button, Dropdown, Flex, Logo, Typography } from '@recursica/ui-kit';
+import { Anchor, Button, Dropdown, Flex, Logo, Typography } from '@recursica/ui-kit-mantine';
 import { useEffect, useState, useRef } from 'react';
 import { apiService, pluginTokenToCode } from '../../services/auth';
 import { useNavigate } from 'react-router';

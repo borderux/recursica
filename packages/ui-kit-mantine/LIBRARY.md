@@ -7,9 +7,9 @@ This package is now configured as a Vite library that can be consumed by other p
 Since this is part of a monorepo, you can install it in other packages using:
 
 ```bash
-npm install ui-kit
+npm install ui-kit-mantine
 # or if using workspaces
-npm install ui-kit@workspace:*
+npm install ui-kit-mantine@workspace:*
 ```
 
 ## Usage
@@ -17,23 +17,23 @@ npm install ui-kit@workspace:*
 ### Importing Components
 
 ```tsx
-import { Button, Header, Page } from "ui-kit";
-import type { ButtonProps, HeaderProps } from "ui-kit";
+import { Button, Header, Page } from "ui-kit-mantine";
+import type { ButtonProps, HeaderProps } from "ui-kit-mantine";
 ```
 
 ### Importing Styles
 
 ```tsx
 // Import the bundled CSS styles
-import "ui-kit/dist/ui-kit.css";
+import "ui-kit-mantine/dist/ui-kit-mantine.css";
 ```
 
 ### Example Usage
 
 ```tsx
 import React from "react";
-import { Button, Header } from "ui-kit";
-import "ui-kit/dist/ui-kit.css";
+import { Button, Header } from "ui-kit-mantine";
+import "ui-kit-mantine/dist/ui-kit-mantine.css";
 
 function App() {
   return (

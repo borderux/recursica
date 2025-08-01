@@ -1,15 +1,15 @@
-# @recursica/ui-kit
+# @recursica/ui-kit-mantine
 
 A modern React component library built with TypeScript, Mantine, and Vanilla Extract CSS. This package provides reusable UI components with consistent design tokens and theming support.
 
 ## Installation
 
 ```bash
-npm install @recursica/ui-kit
+npm install @recursica/ui-kit-mantine
 # or
-yarn add @recursica/ui-kit
+yarn add @recursica/ui-kit-mantine
 # or
-pnpm add @recursica/ui-kit
+pnpm add @recursica/ui-kit-mantine
 ```
 
 ## Usage
@@ -18,8 +18,8 @@ pnpm add @recursica/ui-kit
 
 ```tsx
 import React from "react";
-import { Button, ThemeProvider } from "@recursica/ui-kit";
-import "@recursica/ui-kit/style.css";
+import { Button, ThemeProvider } from "@recursica/ui-kit-mantine";
+import "@recursica/ui-kit-mantine/style.css";
 
 function App() {
   return (
@@ -38,10 +38,10 @@ function App() {
 
 ```tsx
 // Named imports (recommended)
-import { Button, Textfield, Flex, Box } from "@recursica/ui-kit";
+import { Button, Textfield, Flex, Box } from "@recursica/ui-kit-mantine";
 
 // Import types
-import type { ButtonProps, TextfieldProps } from "@recursica/ui-kit";
+import type { ButtonProps, TextfieldProps } from "@recursica/ui-kit-mantine";
 ```
 
 ### Available Components

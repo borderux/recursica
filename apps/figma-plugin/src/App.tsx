@@ -1,6 +1,6 @@
 import { PublishChanges, Home, Auth, FileSynced, Error } from './pages';
 import { MemoryRouter, Route, Routes } from 'react-router';
-import { ThemeProvider, Themes } from '@recursica/ui-kit';
+import { ThemeProvider, Themes } from '@recursica/ui-kit-mantine';
 import { RepositoryProvider } from './context/Repository/RepositoryProvider';
 import { FigmaProvider } from './context';
 

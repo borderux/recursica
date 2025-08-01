@@ -1,4 +1,4 @@
-import { Flex } from '@recursica/ui-kit';
+import { Flex } from '@recursica/ui-kit-mantine';
 import { PropsWithChildren } from 'react';
 
 type LayoutProps = PropsWithChildren<{

@@ -1,4 +1,4 @@
-# @recursica/ui-kit
+# @recursica/ui-kit-mantine
 
 ## 0.0.3
 
