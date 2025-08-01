@@ -40,6 +40,8 @@
   },
   "dependencies": {
     "@figma/plugin-typings": "1.113.0",
+    "@mantine/core": "^8.2.2",
+    "@mantine/hooks": "^8.2.2",
     "@recursica/ui-kit-mantine": "*",
     "axios": "1.9.0",
     "crypto-js": "^4.2.0",
