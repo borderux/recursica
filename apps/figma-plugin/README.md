@@ -4,14 +4,14 @@ This is a simple plugin for Figma that exports all the local variables in a Figm
 
 ## Metadata collection
 
-To be able to run the plugin you will need to create a variable collection in your figma file, to specify the name of the project (eg. cymbiotika) and the project type (the current accepted values are: `ui-kit | theme + tokens | icons`).  
+To be able to run the plugin you will need to create a variable collection in your figma file, to specify the name of the project (eg. cymbiotika) and the project type (the current accepted values are: `ui-kit-mantine | theme + tokens | icons`).  
 Here's an example of the expected variable collection.
 
 **ID variables**
 | name | value |
 | ------------ | ---------- |
 | project-id | cymbiotika |
-| project-type | ui-kit |
+| project-type | ui-kit-mantine |
 
 > [!Important]
 > The name of the collection must be `ID variables`

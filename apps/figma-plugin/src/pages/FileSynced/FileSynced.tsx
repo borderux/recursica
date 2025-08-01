@@ -1,4 +1,4 @@
-import { Flex, Typography, Button } from '@recursica/ui-kit';
+import { Flex, Typography, Button } from '@recursica/ui-kit-mantine';
 import { useFigma } from '../../hooks/useFigma';
 import { Layout } from '../../components';
 import { useMemo } from 'react';

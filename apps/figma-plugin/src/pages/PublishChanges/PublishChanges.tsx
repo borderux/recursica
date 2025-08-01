@@ -13,7 +13,7 @@ import {
   Tooltip,
   Icon,
   IconName,
-} from '@recursica/ui-kit';
+} from '@recursica/ui-kit-mantine';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Layout } from '../../components/Layout/Layout';
