@@ -2,41 +2,41 @@
 
 ## Description
 
-This pull request optimizes the dependency structure of the ui-kit-mantine package by moving Mantine packages to peer dependencies and cleaning up unnecessary dependencies. This change improves the package's compatibility with consuming projects and reduces bundle size by avoiding duplicate dependencies.
+This pull request updates the Figma plugin's encryption phrase for production deployment and refactors the encryption service to use environment variables for better security and configuration management.
 
 ## Changes Made
 
-### ui-kit-mantine package:
+### Figma Plugin:
 
-- **Moved Mantine to peer dependencies**: `@mantine/core`, `@mantine/dates`, `@mantine/hooks` are now peer dependencies (>=8.0.0)
-- **Removed dayjs**: No longer needed as a direct dependency since it's provided by `@mantine/dates`
-- **Optimized vanilla-extract dependencies**: Moved `@vanilla-extract/vite-plugin` to devDependencies
-- **Lowered React version requirement**: Changed from >=18.0.0 to >=16.8.0 for better compatibility
-- **Updated package description**: Added "based on Mantine 8+" for clarity
-- **Enhanced keywords**: Added mantine, recursica, design system keywords
+- **Updated plugin phrase for production**: Changed the encryption phrase used in the plugin to the production version
+- **Refactored encryption service**: Modified `crypto.ts` to use environment variable `VITE_PLUGIN_PHRASE` instead of hardcoded values
+- **Enhanced security**: Moved sensitive configuration to environment variables for better security practices
 
-### Figma plugin:
+### Release Workflow:
 
-- **Added required Mantine dependencies**: `@mantine/core` and `@mantine/hooks` as direct dependencies
-- **Excluded unnecessary dependencies**: No `@mantine/dates` or `dayjs` since date picker isn't used
-- **Updated documentation**: Fixed README.md to reference `ui-kit-mantine` instead of `ui-kit`
+- **Added environment variable**: Updated `.github/workflows/release.yml` to include `VITE_PLUGIN_PHRASE` in the build environment
+- **Improved deployment process**: Ensures the production plugin phrase is properly injected during the release build
+
+### Changeset:
+
+- **Added changeset**: Created `fast-doodles-lose.md` changeset to track the plugin phrase update for the next release
 
 ## Testing
 
-- Verified that all React features used are compatible with React 16.8+
-- Confirmed that Mantine 8+ supports React 16.8+ as peer dependency
-- Validated that Figma plugin only uses basic UI components (no date picker)
-- Ensured no breaking changes to existing component APIs
+- Verified that the encryption service properly reads from environment variables
+- Confirmed that the release workflow includes the necessary environment variable
+- Validated that the changeset properly documents the patch update
 
 ## Checklist
 
 - [x] Code follows project style guidelines
 - [x] Self-review completed
-- [x] Dependencies properly categorized (runtime vs dev vs peer)
+- [x] Environment variables properly configured
 - [x] No breaking changes introduced
-- [x] Consuming projects updated with required dependencies
-- [x] Documentation updated to reflect package name changes
+- [x] Security improvements implemented
+- [x] Release workflow updated
+- [x] Changeset documentation added
 
 ## Additional Notes
 
-This optimization follows best practices for UI library dependencies by treating Mantine as a peer dependency, allowing consuming projects to use their own Mantine version and avoid conflicts. The changes improve the package's reusability and reduce bundle size for projects that already have Mantine installed.
+This update improves the security posture of the Figma plugin by removing hardcoded sensitive values and using environment variables instead. The changes ensure that the production plugin uses the correct encryption phrase while maintaining the same functionality for end users.
