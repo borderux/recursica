@@ -1,4 +1,4 @@
-import { Flex, Typography, Button, Logo } from '@recursica/ui-kit';
+import { Flex, Typography, Button, Logo } from '@recursica/ui-kit-mantine';
 import { NavLink, useNavigate } from 'react-router';
 import { useFigma } from '../../hooks/useFigma';
 import { Layout } from '../../components';
