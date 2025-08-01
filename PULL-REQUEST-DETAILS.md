@@ -2,31 +2,39 @@
 
 ## Description
 
-This pull request adds environment variables to the GitHub Actions build workflow to ensure proper configuration during the build process. The changes add `VITE_RECURSICA_API_URL` and `VITE_RECURSICA_UI_URL` environment variables to the build step, which are essential for the application to function correctly in different environments and fix authentication flow issues.
+This pull request optimizes the dependency structure of the ui-kit-mantine package by moving Mantine packages to peer dependencies and cleaning up unnecessary dependencies. This change improves the package's compatibility with consuming projects and reduces bundle size by avoiding duplicate dependencies.
 
 ## Changes Made
 
-- Updated `.github/workflows/release.yml` to include environment variables in the build step:
-  - Added `VITE_RECURSICA_API_URL: ${{ secrets.RECURSICA_API }}`
-  - Added `VITE_RECURSICA_UI_URL: ${{ secrets.RECURSICA_API }}`
-- These environment variables are now available during the build process and will be properly injected into the Vite build
-- Added changeset for version bump to fix authentication flow issues
+### ui-kit-mantine package:
+
+- **Moved Mantine to peer dependencies**: `@mantine/core`, `@mantine/dates`, `@mantine/hooks` are now peer dependencies (>=8.0.0)
+- **Removed dayjs**: No longer needed as a direct dependency since it's provided by `@mantine/dates`
+- **Optimized vanilla-extract dependencies**: Moved `@vanilla-extract/vite-plugin` to devDependencies
+- **Lowered React version requirement**: Changed from >=18.0.0 to >=16.8.0 for better compatibility
+- **Updated package description**: Added "based on Mantine 8+" for clarity
+- **Enhanced keywords**: Added mantine, recursica, design system keywords
+
+### Figma plugin:
+
+- **Added required Mantine dependencies**: `@mantine/core` and `@mantine/hooks` as direct dependencies
+- **Excluded unnecessary dependencies**: No `@mantine/dates` or `dayjs` since date picker isn't used
 
 ## Testing
 
-- The changes are minimal and focused on the build configuration
-- Environment variables will be validated during the next GitHub Actions run
-- No breaking changes introduced to the existing workflow
-- Changeset properly documents the patch version bump
+- Verified that all React features used are compatible with React 16.8+
+- Confirmed that Mantine 8+ supports React 16.8+ as peer dependency
+- Validated that Figma plugin only uses basic UI components (no date picker)
+- Ensured no breaking changes to existing component APIs
 
 ## Checklist
 
 - [x] Code follows project style guidelines
 - [x] Self-review completed
-- [x] Documentation updated
+- [x] Dependencies properly categorized (runtime vs dev vs peer)
 - [x] No breaking changes introduced
-- [x] Changeset added for version management
+- [x] Consuming projects updated with required dependencies
 
 ## Additional Notes
 
-This change ensures that the build process has access to the necessary environment variables, which is crucial for proper application configuration and deployment. The authentication flow error is now resolved by ensuring environment variables are properly set during the build process.
+This optimization follows best practices for UI library dependencies by treating Mantine as a peer dependency, allowing consuming projects to use their own Mantine version and avoid conflicts. The changes improve the package's reusability and reduce bundle size for projects that already have Mantine installed.
