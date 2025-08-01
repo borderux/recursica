@@ -24,7 +24,7 @@ The most important is setting `private`: `false`, which will make it visible as 
 
 ## Creating a new version
 
-From your terminal, run the command `npx @changeset/cli`. This will walk through you the package you want to create a new version for and document your change.
+From your terminal, run the command `npx @changesets/cli`. This will walk through you the package you want to create a new version for and document your change.
 
 Changesets will run a CI action that creates a new PR called `Version Packages`. This will accumulate all your versions and changes until your ready to release.
 
