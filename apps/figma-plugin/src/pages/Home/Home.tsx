@@ -33,7 +33,7 @@ export function Home() {
       label: 'Next steps',
       to: '/file-synced',
     };
-  }, [filetype]);
+  }, [filetype, target]);
 
   const getLoadingMessage = useMemo(() => {
     if (!variablesSynced) {
