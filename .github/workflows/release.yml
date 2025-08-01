@@ -96,6 +96,7 @@ jobs:
         env:
           VITE_RECURSICA_API_URL: ${{ secrets.RECURSICA_API }}
           VITE_RECURSICA_UI_URL: ${{ secrets.RECURSICA_API }}
+          VITE_PLUGIN_PHRASE: ${{ secrets.PLUGIN_PHRASE }}
 
       # This action has two modes:
       # 1. If changesets are present, it creates a "Version Packages" pull request.
