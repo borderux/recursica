@@ -19,6 +19,7 @@ This pull request optimizes the dependency structure of the ui-kit-mantine packa
 
 - **Added required Mantine dependencies**: `@mantine/core` and `@mantine/hooks` as direct dependencies
 - **Excluded unnecessary dependencies**: No `@mantine/dates` or `dayjs` since date picker isn't used
+- **Updated documentation**: Fixed README.md to reference `ui-kit-mantine` instead of `ui-kit`
 
 ## Testing
 
@@ -34,6 +35,7 @@ This pull request optimizes the dependency structure of the ui-kit-mantine packa
 - [x] Dependencies properly categorized (runtime vs dev vs peer)
 - [x] No breaking changes introduced
 - [x] Consuming projects updated with required dependencies
+- [x] Documentation updated to reflect package name changes
 
 ## Additional Notes
 
