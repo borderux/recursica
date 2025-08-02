@@ -1,6 +1,6 @@
 # @recursica/ui-kit-mantine
 
-A modern React component library built with TypeScript, Mantine, and Vanilla Extract CSS. This package provides reusable UI components with consistent design tokens and theming support.
+A modern React component library built with TypeScript, Mantine 8+, and Vanilla Extract CSS. This package provides reusable UI components for Recursica applications with consistent design tokens and theming support based on the Recursica design system.
 
 ## Installation
 
@@ -11,6 +11,17 @@ yarn add @recursica/ui-kit-mantine
 # or
 pnpm add @recursica/ui-kit-mantine
 ```
+
+## Features
+
+- **🎨 Design System Integration**: Built on the Recursica design system with consistent tokens
+- **📦 20+ Components**: Comprehensive set of UI components for modern applications
+- **🔧 TypeScript First**: Full TypeScript support with exported types
+- **🎭 Mantine 8+ Based**: Leveraging the powerful Mantine component library
+- **🎯 Zero Runtime CSS**: Using Vanilla Extract for type-safe, performant styling
+- **📚 Storybook Documentation**: Interactive component documentation and testing
+- **♿ Accessible**: Following WCAG guidelines for accessibility
+- **🌈 Themeable**: Full theming support with CSS variables
 
 ## Usage
 
@@ -26,7 +37,7 @@ function App() {
     <ThemeProvider>
       <Button
         label="Click Me"
-        variant="contained"
+        variant="solid"
         onClick={() => console.log("Clicked!")}
       />
     </ThemeProvider>
@@ -47,11 +58,12 @@ import type { ButtonProps, TextfieldProps } from "@recursica/ui-kit-mantine";
 ### Available Components
 
 - **Layout**: `Box`, `Flex`, `ThemeProvider`
-- **Form Controls**: `Button`, `Textfield`, `Checkbox`, `Dropdown`, `Chip`
-- **Navigation**: `Tabs`, `Anchor`
-- **Typography**: `Text`, `Title`, `Typography`
-- **Feedback**: `Loader`, `Accordion`
+- **Form Controls**: `Button`, `Textfield`, `Checkbox`, `Dropdown`, `Chip`, `Radio`, `Datepicker`
+- **Navigation**: `Tabs`, `Anchor`, `Breadcrumb`, `Pagination`
+- **Typography**: `Typography`
+- **Feedback**: `Accordion`, `Tooltip`
 - **Media**: `Logo`, `Icon`
+- **Data Display**: `Avatar`, `Badge`
 
 ## Adding New Components
 
