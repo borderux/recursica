@@ -1,5 +1,16 @@
 # @recursica/figma-plugin
 
+## 0.0.8
+
+### Patch Changes
+
+- 3eb444c: Update plugin phrase for production
+- cec0db5: Renamed ui-kit to ui-kit-mantine to signal proper peer reference to Mantine
+- cec0db5: Added peer dependency for mantine in the plugin
+- Updated dependencies [cec0db5]
+- Updated dependencies [cec0db5]
+  - @recursica/ui-kit-mantine@0.0.4
+
 ## 0.0.7
 
 ### Patch Changes
