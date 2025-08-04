@@ -31,7 +31,7 @@ const colors = {
  */
 function log(message, color = "") {
   // eslint-disable-next-line no-console
-  console.log(`${color}${message}${colors.reset}`);
+  console.error(`${color}${message}${colors.reset}`);
 }
 
 /**
