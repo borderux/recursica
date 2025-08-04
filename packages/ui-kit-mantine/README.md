@@ -323,7 +323,7 @@ This library includes comprehensive Storybook documentation for all components. 
 
 ### Accessing Storybook
 
-- **Online (Recommended)**: Visit the [Storybook documentation](https://recursica-ui-kit-mantine.vercel.app) for live examples and documentation
+- **Online (Recommended)**: Visit the [Storybook documentation](https://borderux.github.io/recursica/ui-kit-mantine/) for live examples and documentation
 - **For Contributors**: If you're contributing to the library, clone the repository and run `npm run storybook` in the `packages/ui-kit-mantine` directory
 
 ### Using Storybook for Development
