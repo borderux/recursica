@@ -1,5 +1,11 @@
 # @recursica/figma-plugin
 
+## 0.0.9
+
+### Patch Changes
+
+- a4670b9: Fixed a bug that only allowed exporting one variable collection per Figma file.
+
 ## 0.0.8
 
 ### Patch Changes
