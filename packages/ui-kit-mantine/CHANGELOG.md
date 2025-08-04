@@ -1,5 +1,15 @@
 # @recursica/ui-kit-mantine
 
+## 0.2.0
+
+### Minor Changes
+
+- 5e0c31f: Fixed dependency so it will import correctly
+
+### Patch Changes
+
+- 5e0c31f: Updated link to readme in package.json
+
 ## 0.1.0
 
 ### Minor Changes
