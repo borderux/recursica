@@ -2,105 +2,67 @@
 
 ## Description
 
-This pull request implements automated GitHub Pages deployment for the UI Kit Mantine Storybook documentation. The deployment will automatically build and publish the Storybook to GitHub Pages whenever changes are made to the ui-kit-mantine package on the main branch.
+This pull request updates the GitHub Action workflow that automatically populates pull request descriptions. The workflow has been modified to only populate PR descriptions when they are empty, preserving manually written descriptions and preventing overwrites of existing content.
 
 ## Changes Made
 
 ### GitHub Actions Workflow:
 
-- **Created `.github/workflows/storybook-deploy.yml`**: New CI/CD pipeline for automated Storybook deployment
-  - Triggers on pushes to main branch that affect ui-kit-mantine package
-  - Triggers on pull requests for preview builds
-  - Supports manual workflow dispatch
-  - Uses Node.js 20 with npm caching for faster builds
-  - Implements proper GitHub Pages permissions and concurrency controls
-  - Only deploys from main branch (not from pull requests)
+- **Updated `.github/workflows/pr-description.yml`**: Modified the auto-population logic to respect existing PR descriptions
+  - Added clear documentation explaining the workflow behavior
+  - Changed logic to only populate descriptions when they are empty or contain only whitespace
+  - Updated step names and logging messages for better clarity
+  - Preserves manually written PR descriptions from being overwritten
 
-### Storybook Configuration:
+### Key Improvements:
 
-- **Updated `.storybook/main.ts`**: Added Vite configuration for GitHub Pages subpath deployment
-  - Sets base path to `/ui-kit-mantine/` for production builds
-  - Maintains local development with `/` base path
-  - Ensures proper asset loading on GitHub Pages
-
-### Package Configuration:
-
-- **Updated `package.json`**: Modified build-storybook script to output to `storybook-static` directory
-  - Changed from default `storybook-static` to explicit output directory
-  - Ensures consistent build output location for GitHub Actions
-
-### Documentation Updates:
-
-- **Updated `README.md`**: Updated Storybook documentation URL
-  - Changed from Vercel deployment to GitHub Pages URL
-  - New URL: `https://borderux.github.io/recursica/ui-kit-mantine/`
-
-### GitHub Pages Setup:
-
-- **Added `.nojekyll` file**: Prevents Jekyll processing on GitHub Pages
-  - Ensures static files are served correctly
-  - Required for proper Storybook deployment
+1. **Empty Description Check**: The workflow now checks if the PR description is empty (`!currentBody || currentBody.trim() === ''`) before populating it
+2. **Documentation**: Added header comments explaining the workflow's purpose and behavior
+3. **Better Logging**: Updated console messages to clearly indicate when descriptions are populated vs. skipped
+4. **Preservation of Manual Content**: Existing PR descriptions are left untouched, regardless of whether they match the `PULL-REQUEST-DETAILS.md` content
 
 ## Technical Implementation
 
-### Deployment Process:
+### Workflow Behavior:
 
-1. **Build Job**:
+1. **Trigger**: Runs when PRs are opened or reopened
+2. **File Check**: Verifies `PULL-REQUEST-DETAILS.md` exists in the repository
+3. **Content Analysis**: Reads the current PR description and the details file content
+4. **Conditional Update**: Only updates the PR description if it's currently empty
+5. **Logging**: Provides clear feedback about whether the description was updated or skipped
 
-   - Checks out repository code
-   - Sets up Node.js 20 environment with npm caching
-   - Installs all dependencies (including monorepo packages)
-   - Builds Storybook static files to `storybook-static` directory
-   - Uploads build artifacts for deployment
+### Code Changes:
 
-2. **Deploy Job**:
-   - Only runs on main branch pushes (not pull requests)
-   - Deploys uploaded artifacts to GitHub Pages
-   - Provides deployment URL for verification
+- **Logic Update**: Changed from `currentBody !== content` to `!currentBody || currentBody.trim() === ''`
+- **Documentation**: Added workflow description comments
+- **Step Naming**: Updated step name to "Populate PR description (only if empty)"
+- **Logging**: Improved console messages for better debugging and transparency
 
-### Security & Permissions:
+## Benefits
 
-- Uses GitHub's OIDC (OpenID Connect) for secure authentication
-- Implements proper permission scoping (read contents, write pages, write id-token)
-- Prevents multiple simultaneous deployments with concurrency controls
-
-### Performance Optimizations:
-
-- Uses npm caching for faster dependency installation
-- Implements proper build artifact handling
-- Configures Vite for optimized production builds
+- **Respects Manual Work**: Developers can write their own PR descriptions without fear of them being overwritten
+- **Reduces Noise**: Prevents unnecessary API calls when descriptions already exist
+- **Clear Intent**: The workflow's behavior is now well-documented and predictable
+- **Better UX**: Developers have full control over their PR descriptions while still benefiting from auto-population when needed
 
 ## Testing & Validation
 
-- **Build Testing**: Verified Storybook builds successfully with new configuration
-- **Linting**: Confirmed no new linting errors introduced
-- **Configuration**: Validated GitHub Pages subpath configuration works correctly
-- **Documentation**: Updated README with correct deployment URL
-
-## Deployment URL
-
-Once merged to main, the Storybook will be available at:
-**https://borderux.github.io/recursica/ui-kit-mantine/**
+- **Logic Testing**: Verified the empty check logic works correctly for various scenarios:
+  - Empty description (`null` or `undefined`)
+  - Whitespace-only description
+  - Existing content (should be preserved)
+- **Documentation**: Confirmed workflow comments clearly explain the behavior
+- **No Breaking Changes**: The workflow still functions as expected for empty PR descriptions
 
 ## Checklist
 
-- [x] GitHub Actions workflow created and configured
-- [x] Storybook build configuration updated for GitHub Pages
-- [x] Package.json build script modified
-- [x] Documentation updated with correct URL
-- [x] .nojekyll file added for proper static file serving
-- [x] Build testing completed successfully
-- [x] Linting passes without errors
+- [x] GitHub Actions workflow updated with empty description check
+- [x] Documentation added to explain workflow behavior
+- [x] Step names and logging messages updated for clarity
+- [x] Logic tested for various PR description states
 - [x] No breaking changes introduced
+- [x] Workflow preserves existing PR descriptions
 
 ## Additional Notes
 
-This deployment setup provides several benefits:
-
-- **Automated**: No manual deployment required
-- **Versioned**: Each main branch push creates a new deployment
-- **Fast**: Uses caching and optimized build processes
-- **Secure**: Implements proper GitHub security practices
-- **Reliable**: Includes proper error handling and concurrency controls
-
-The deployment will automatically trigger whenever changes are made to the ui-kit-mantine package, ensuring the documentation stays up-to-date with the latest component changes.
+This change improves the developer experience by making the auto-population feature more respectful of manual work while maintaining the convenience of automatic PR description population for new PRs. The workflow now strikes a better balance between automation and developer control.

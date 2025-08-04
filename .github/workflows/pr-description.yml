@@ -1,5 +1,8 @@
 name: Auto-populate PR Description
 
+# This workflow automatically populates PR descriptions from PULL-REQUEST-DETAILS.md
+# only if the PR description is empty. It preserves manually written descriptions.
+
 on:
   pull_request:
     types: [opened, reopened]
@@ -22,7 +25,7 @@ jobs:
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Update PR description
+      - name: Populate PR description (only if empty)
         if: steps.check-file.outputs.exists == 'true'
         uses: actions/github-script@v7
         with:
@@ -40,17 +43,17 @@ jobs:
 
             const currentBody = pullRequest.body || '';
 
-            // Only update if the content is different to avoid unnecessary API calls
-            if (currentBody !== content) {
+            // Only update if the PR description is empty or null
+            if (!currentBody || currentBody.trim() === '') {
               await github.rest.pulls.update({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 pull_number: context.issue.number,
                 body: content
               });
-              console.log('PR description updated successfully');
+              console.log('PR description populated successfully');
             } else {
-              console.log('PR description already matches PULL-REQUEST-DETAILS.md content');
+              console.log('PR description is not empty, skipping update');
             }
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
