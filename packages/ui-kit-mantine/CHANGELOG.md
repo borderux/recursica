@@ -1,5 +1,11 @@
 # @recursica/ui-kit-mantine
 
+## 0.1.0
+
+### Minor Changes
+
+- be88cfc: Updated README and structure and provided Storybook builds
+
 ## 0.0.4
 
 ### Patch Changes
