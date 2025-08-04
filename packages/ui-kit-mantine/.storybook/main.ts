@@ -13,5 +13,13 @@ const config: StorybookConfig = {
     name: "@storybook/react-vite",
     options: {},
   },
+  // Configure for GitHub Pages subpath deployment
+  viteFinal: async (config) => {
+    // Set base path for GitHub Pages
+    config.base =
+      process.env.NODE_ENV === "production" ? "/ui-kit-mantine/" : "/";
+
+    return config;
+  },
 };
 export default config;
