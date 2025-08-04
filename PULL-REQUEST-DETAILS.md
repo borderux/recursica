@@ -2,41 +2,54 @@
 
 ## Description
 
-This pull request updates the Figma plugin's encryption phrase for production deployment and refactors the encryption service to use environment variables for better security and configuration management.
+This pull request fixes Vitest configuration errors in the Figma plugin and enhances the pre-push git hook to provide better error feedback and user guidance.
 
 ## Changes Made
 
-### Figma Plugin:
+### Figma Plugin - Vitest Fixes:
 
-- **Updated plugin phrase for production**: Changed the encryption phrase used in the plugin to the production version
-- **Refactored encryption service**: Modified `crypto.ts` to use environment variable `VITE_PLUGIN_PHRASE` instead of hardcoded values
-- **Enhanced security**: Moved sensitive configuration to environment variables for better security practices
+- **Removed incorrectly configured files**:
+  - Deleted `apps/figma-plugin/vitest.workspace.ts` - Was configured as regular config instead of workspace
+  - Deleted `apps/figma-plugin/vitest.shims.d.ts` - Not needed without tests
+- **Removed unused dependencies** from `package.json`:
+  - `@vitest/browser` - Only needed for browser testing
+  - `@vitest/coverage-v8` - Only needed for test coverage
+  - `vitest` - Main Vitest package
+  - `playwright` - Only used for Vitest browser testing
 
-### Release Workflow:
+### Pre-Push Hook Improvements:
 
-- **Added environment variable**: Updated `.github/workflows/release.yml` to include `VITE_PLUGIN_PHRASE` in the build environment
-- **Improved deployment process**: Ensures the production plugin phrase is properly injected during the release build
+- **Enhanced error messages**: More descriptive output with clear action items
+- **Better error handling**: Added validation for missing remote branches
+- **Step-by-step instructions**: Clear guidance for using Cursor to update PR details
+- **Clean output formatting**: Removed special characters that don't display well in git
+- **Contextual information**: Shows branch names and file paths for better debugging
 
-### Changeset:
+## Root Cause
 
-- **Added changeset**: Created `fast-doodles-lose.md` changeset to track the plugin phrase update for the next release
+The Vitest errors were caused by:
+
+- `vitest.workspace.ts` being incorrectly configured as a regular Vitest config file instead of a workspace configuration
+- Unnecessary testing dependencies in a project that doesn't have tests
+- Missing remote branch validation in the pre-push hook
 
 ## Testing
 
-- Verified that the encryption service properly reads from environment variables
-- Confirmed that the release workflow includes the necessary environment variable
-- Validated that the changeset properly documents the patch update
+- Verified that Vitest no longer throws configuration errors
+- Confirmed that the figma-plugin project doesn't have any test files
+- Tested the pre-push hook with various scenarios (missing remote, unupdated PR details)
+- Validated that error messages are clear and actionable
 
 ## Checklist
 
 - [x] Code follows project style guidelines
 - [x] Self-review completed
-- [x] Environment variables properly configured
+- [x] Vitest errors resolved
+- [x] Unused dependencies removed
+- [x] Pre-push hook improvements implemented
+- [x] Error messages are clear and actionable
 - [x] No breaking changes introduced
-- [x] Security improvements implemented
-- [x] Release workflow updated
-- [x] Changeset documentation added
 
 ## Additional Notes
 
-This update improves the security posture of the Figma plugin by removing hardcoded sensitive values and using environment variables instead. The changes ensure that the production plugin uses the correct encryption phrase while maintaining the same functionality for end users.
+The figma-plugin project doesn't require testing setup since it doesn't contain any test files. Removing the unnecessary Vitest configuration and dependencies resolves the startup errors while keeping the project clean. The enhanced pre-push hook provides better developer experience with clearer error messages and specific instructions for resolving issues.
