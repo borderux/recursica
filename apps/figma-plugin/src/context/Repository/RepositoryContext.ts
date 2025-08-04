@@ -1,6 +1,6 @@
+import { FilesStatus, RepositoryError, ValidationStatus } from '../../hooks';
 import { Project } from '../../services/repository/BaseRepository';
 import { createContext } from 'react';
-import { FilesStatus, ValidationStatus, RepositoryError } from './RepositoryProvider';
 
 interface Repository {
   /** User projects/repositories */
