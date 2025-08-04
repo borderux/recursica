@@ -11,7 +11,7 @@
     "type": "git",
     "url": "git+https://github.com/borderux/recursica.git"
   },
-  "version": "0.0.4",
+  "version": "0.1.0",
   "type": "module",
   "main": "./dist/ui-kit-mantine.cjs",
   "module": "./dist/ui-kit-mantine.js",
@@ -44,7 +44,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build",
+    "build-storybook": "storybook build -o storybook-static",
     "chromatic": "npx chromatic --project-token=chpt_69ae5d081be6258"
   },
   "dependencies": {

@@ -12,9 +12,19 @@ yarn add @recursica/ui-kit-mantine
 pnpm add @recursica/ui-kit-mantine
 ```
 
-## Usage
+## Peer Dependencies
 
-### Basic Setup
+This library requires the following peer dependencies to be installed in your project:
+
+```bash
+npm install @mantine/core@>=8.0.0 @mantine/dates@>=8.0.0 @mantine/hooks@>=8.0.0 react@>=16.8.0 react-dom@>=16.8.0
+```
+
+**Important**: Make sure you have these exact versions or higher installed, as the components rely on Mantine 8+ features and React 16.8+ hooks.
+
+## Quick Start
+
+### 1. Basic Setup
 
 ```tsx
 import React from "react";
@@ -26,7 +36,7 @@ function App() {
     <ThemeProvider>
       <Button
         label="Click Me"
-        variant="contained"
+        variant="solid"
         onClick={() => console.log("Clicked!")}
       />
     </ThemeProvider>
@@ -34,258 +44,310 @@ function App() {
 }
 ```
 
-### Importing Components
+### 2. Importing Components
 
 ```tsx
 // Named imports (recommended)
-import { Button, Textfield, Flex, Box } from "@recursica/ui-kit-mantine";
+import { Button, Textfield, Flex, Box, Badge } from "@recursica/ui-kit-mantine";
 
-// Import types
+// Import types for TypeScript
 import type { ButtonProps, TextfieldProps } from "@recursica/ui-kit-mantine";
 ```
 
-### Available Components
+## Available Components
 
-- **Layout**: `Box`, `Flex`, `ThemeProvider`
-- **Form Controls**: `Button`, `Textfield`, `Checkbox`, `Dropdown`, `Chip`
-- **Navigation**: `Tabs`, `Anchor`
-- **Typography**: `Text`, `Title`, `Typography`
-- **Feedback**: `Loader`, `Accordion`
-- **Media**: `Logo`, `Icon`
+### Layout Components
 
-## Adding New Components
+- `Box` - Basic container component
+- `Flex` - Flexbox container with common layouts
+- `ThemeProvider` - Theme context provider
 
-### 1. Component Structure
+### Form Components
 
-Create a new component following this folder structure:
+- `Button` - Interactive button with multiple variants
+- `Textfield` - Text input component
+- `Checkbox` - Checkbox input
+- `Dropdown` - Select dropdown with search
+- `Chip` - Tag/chip component
+- `Radio` - Radio button component
+- `Datepicker` - Date selection component
 
-```
-src/components/MyComponent/
-├── MyComponent.tsx          # Main component file
-├── MyComponent.css.ts       # Vanilla Extract styles (preferred)
-├── MyComponent.stories.tsx  # Storybook stories
-└── index.ts                 # Export file
-```
+### Navigation Components
 
-### 2. Component Template
+- `Tabs` - Tab navigation
+- `Anchor` - Link component
+- `Breadcrumb` - Breadcrumb navigation
+- `Pagination` - Page navigation
+
+### Display Components
+
+- `Text` - Typography component
+- `Typography` - Typography utilities
+- `Badge` - Status indicator
+- `Avatar` - User avatar
+- `Logo` - Logo component
+- `Icon` - Icon component with 240+ icons
+
+### Feedback Components
+
+- `Loader` - Loading indicator
+- `Accordion` - Collapsible content
+- `Tooltip` - Tooltip component
+
+## Component Usage Examples
+
+### Button Component
 
 ```tsx
-// src/components/MyComponent/MyComponent.tsx
-import { forwardRef, type HTMLAttributes } from "react";
-import { styles } from "./MyComponent.css";
+import { Button } from "@recursica/ui-kit-mantine";
 
-export interface MyComponentProps extends HTMLAttributes<HTMLDivElement> {
-  /** Component label */
-  label: string;
-  /** Component variant */
-  variant?: "primary" | "secondary";
-  /** Component size */
-  size?: "small" | "medium" | "large";
-}
+// Basic button
+<Button label="Click me" variant="solid" />
 
-/** Brief description of your component */
-export const MyComponent = forwardRef<HTMLDivElement, MyComponentProps>(
-  (
-    { label, variant = "primary", size = "medium", className, ...props },
-    ref,
-  ) => {
-    return (
-      <div
-        ref={ref}
-        className={`${styles.root} ${className || ""}`}
-        data-variant={variant}
-        data-size={size}
-        {...props}
-      >
-        {label}
-      </div>
-    );
+// Different variants
+<Button label="Outline" variant="outline" />
+<Button label="Text" variant="text" />
+
+// Different sizes
+<Button label="Small" size="small" />
+<Button label="Default" size="default" />
+
+// With icons
+<Button
+  label="Download"
+  leftIcon={<DownloadIcon />}
+  variant="solid"
+/>
+
+// Icon-only button
+<Button
+  leftIcon={<SettingsIcon />}
+  style="icon"
+  variant="outline"
+/>
+```
+
+### Form Components
+
+```tsx
+import { Textfield, Checkbox, Dropdown } from "@recursica/ui-kit-mantine";
+
+// Text input
+<Textfield
+  label="Email"
+  placeholder="Enter your email"
+  required
+/>
+
+// Checkbox
+<Checkbox
+  label="I agree to terms"
+  description="Please read our terms and conditions"
+/>
+
+// Dropdown
+<Dropdown
+  label="Select country"
+  placeholder="Choose a country"
+  data={[
+    { value: "us", label: "United States" },
+    { value: "uk", label: "United Kingdom" },
+  ]}
+/>
+```
+
+### Layout Components
+
+```tsx
+import { Box, Flex } from "@recursica/ui-kit-mantine";
+
+// Basic container
+<Box padding="medium" backgroundColor="background">
+  <Text>Content here</Text>
+</Box>
+
+// Flexbox layouts
+<Flex gap="medium" align="center" justify="space-between">
+  <Text>Left content</Text>
+  <Button label="Action" />
+</Flex>
+```
+
+## Styling with Vanilla Extract
+
+This library uses **Vanilla Extract** for styling, which provides:
+
+- **Type-safe CSS**: Compile-time CSS validation
+- **Zero runtime**: No CSS-in-JS overhead
+- **Design token integration**: Direct access to design system tokens
+- **Scoped styles**: Automatic CSS class generation
+
+### Why Vanilla Extract?
+
+Vanilla Extract is chosen because it:
+
+- Eliminates runtime CSS-in-JS overhead
+- Provides compile-time type safety
+- Integrates seamlessly with design tokens
+- Generates optimized CSS bundles
+- Supports CSS custom properties and themes
+
+### Customizing Component Styles
+
+You can customize component styles by extending the existing styles:
+
+```tsx
+import { style } from "@vanilla-extract/css";
+import { recursica } from "@recursica/ui-kit-mantine";
+
+// Custom button style
+const customButton = style({
+  backgroundColor: recursica["color/primary"],
+  borderRadius: recursica["border-radius/medium"],
+  padding: recursica["spacing/medium"],
+
+  ":hover": {
+    backgroundColor: recursica["color/primary-hover"],
   },
-);
+});
 
-MyComponent.displayName = "MyComponent";
+// Usage
+<Button label="Custom Button" className={customButton} />;
 ```
 
-### 3. Export the Component
+### Using Design Tokens
+
+Access design tokens directly from the Recursica system:
 
 ```tsx
-// src/components/MyComponent/index.ts
-export * from "./MyComponent";
-```
-
-```tsx
-// src/components/index.ts (add your component here)
-export * from "./MyComponent";
-```
-
-### 4. Create Storybook Stories
-
-```tsx
-// src/components/MyComponent/MyComponent.stories.tsx
-import type { Meta, StoryObj } from "@storybook/react";
-import { MyComponent } from "./MyComponent";
-
-const meta: Meta<typeof MyComponent> = {
-  title: "Components/MyComponent",
-  component: MyComponent,
-  parameters: {
-    layout: "centered",
-  },
-  tags: ["autodocs"],
-};
-
-export default meta;
-type Story = StoryObj<typeof meta>;
-
-export const Primary: Story = {
-  args: {
-    label: "My Component",
-    variant: "primary",
-  },
-};
-
-export const Secondary: Story = {
-  args: {
-    label: "My Component",
-    variant: "secondary",
-  },
-};
-```
-
-## Component Styling
-
-This UI Kit uses multiple styling approaches to provide flexibility and maintainability.
-
-### Vanilla Extract CSS
-
-**Recommended for**: Most components, design system integration
-
-```tsx
-// MyComponent.css.ts
-import { style, createVar } from "@vanilla-extract/css";
-import { recursica } from "../../recursica/Recursica";
-import { typographies } from "../Typography";
-
-const colorVar = createVar();
-
-export const styles = {
-  root: style({
-    borderRadius: recursica["border-radius/medium"],
-    padding: recursica["spacing/medium"],
-    color: colorVar,
-    ...typographies.body,
-
-    selectors: {
-      '&[data-variant="primary"]': {
-        vars: { [colorVar]: recursica["color/primary"] },
-        backgroundColor: recursica["color/primary-background"],
-      },
-      '&[data-variant="secondary"]': {
-        vars: { [colorVar]: recursica["color/secondary"] },
-        backgroundColor: recursica["color/secondary-background"],
-      },
-      '&[data-size="small"]': {
-        padding: recursica["spacing/small"],
-        fontSize: recursica["typography/small/font-size"],
-      },
-      "&:hover": {
-        opacity: 0.8,
-      },
-    },
-  }),
-};
-```
-
-### 3. Design Tokens Access
-
-The UI Kit uses the Recursica design system. Access tokens via:
-
-```tsx
-import { recursica } from "../../recursica/Recursica";
-
-// Spacing
-recursica["spacing/small"]; // 8px
-recursica["spacing/medium"]; // 16px
-recursica["spacing/large"]; // 24px
-
-// Colors
-recursica["color/primary"];
-recursica["color/secondary"];
-recursica["color/background"];
-
-// Typography
-recursica["typography/heading/font-size"];
-recursica["typography/body/line-height"];
-
-// Border Radius
-recursica["border-radius/small"]; // 4px
-recursica["border-radius/medium"]; // 8px
-recursica["border-radius/large"]; // 12px
-```
-
-### 4. Typography Utilities
-
-```tsx
-import { typographies } from "../Typography";
+import { recursica } from "@recursica/ui-kit-mantine";
 
 const myStyle = style({
-  ...typographies.heading, // Heading styles
-  ...typographies.body, // Body text styles
-  ...typographies.caption, // Small text styles
-  ...typographies.button, // Button text styles
+  // Spacing
+  padding: recursica["spacing/medium"], // 16px
+  margin: recursica["spacing/large"], // 24px
+
+  // Colors
+  backgroundColor: recursica["color/background"],
+  color: recursica["color/text"],
+
+  // Typography
+  fontSize: recursica["typography/body/font-size"],
+  lineHeight: recursica["typography/body/line-height"],
+
+  // Border radius
+  borderRadius: recursica["border-radius/medium"], // 8px
 });
 ```
 
-## Development Commands
+### Typography Utilities
 
-```bash
-# Development with hot reload
-npm run dev
+Use predefined typography styles:
 
-# Build the library
-npm run build
+```tsx
+import { typographies } from "@recursica/ui-kit-mantine";
 
-# Run Storybook for component development
-npm run storybook
+const headingStyle = style({
+  ...typographies.heading,
+  color: recursica["color/heading"],
+});
 
-# Build Storybook for deployment
-npm run build-storybook
-
-# Lint the codebase
-npm run lint
+const bodyStyle = style({
+  ...typographies.body,
+  color: recursica["color/text"],
+});
 ```
 
-## Best Practices
+## Theming
 
-### Component Development
+### Using ThemeProvider
 
-- Always use TypeScript interfaces for props
-- Include proper JSDoc comments for documentation
-- Follow the forwardRef pattern for DOM element access
-- Use semantic HTML elements when possible
+Wrap your app with the ThemeProvider to enable theming:
 
-### Styling Guidelines
+```tsx
+import { ThemeProvider } from "@recursica/ui-kit-mantine";
 
-- Prefer Vanilla Extract CSS for new components
-- Use design tokens from the Recursica system
-- Follow responsive design principles
-- Implement proper hover and focus states
+function App() {
+  return <ThemeProvider>{/* Your app components */}</ThemeProvider>;
+}
+```
 
-### Testing & Documentation
+### Custom Themes
 
-- Create comprehensive Storybook stories
-- Include accessibility considerations
-- Test component variants and edge cases
-- Document props and usage examples
+You can create custom themes by extending the base theme:
 
-## Architecture
+```tsx
+import { createTheme } from "@mantine/core";
 
-This UI Kit is built on:
+const customTheme = createTheme({
+  primaryColor: "blue",
+  fontFamily: "Inter, sans-serif",
+  // ... other theme overrides
+});
 
-- **React 18+** - Modern React with hooks and concurrent features
-- **TypeScript** - Type safety and better developer experience
-- **Mantine Core** - Base component library for consistent behavior
-- **Vanilla Extract** - Type-safe CSS-in-JS with zero runtime
-- **Vite** - Fast build tool and development server
-- **Storybook** - Component documentation and testing
-- **Recursica Design System** - Consistent design tokens and theming
+<ThemeProvider theme={customTheme}>{/* Your app */}</ThemeProvider>;
+```
+
+## TypeScript Support
+
+All components include full TypeScript support with proper prop types:
+
+```tsx
+import type { ButtonProps, TextfieldProps } from "@recursica/ui-kit-mantine";
+
+interface MyFormProps {
+  onSubmit: (data: FormData) => void;
+}
+
+const MyForm: React.FC<MyFormProps> = ({ onSubmit }) => {
+  return (
+    <form onSubmit={onSubmit}>
+      <Textfield
+        label="Name"
+        required
+        // TypeScript will provide autocomplete and type checking
+      />
+    </form>
+  );
+};
+```
+
+## Storybook Documentation
+
+This library includes comprehensive Storybook documentation for all components. You can:
+
+- **View live examples** of all components and their variants
+- **Explore component props** and their effects
+- **Test component interactions** and accessibility features
+- **Copy code examples** directly from the documentation
+
+### Accessing Storybook
+
+- **Online (Recommended)**: Visit the [Storybook documentation](https://borderux.github.io/recursica/ui-kit-mantine/) for live examples and documentation
+- **For Contributors**: If you're contributing to the library, clone the repository and run `npm run storybook` in the `packages/ui-kit-mantine` directory
+
+### Using Storybook for Development
+
+Storybook is an excellent tool for:
+
+- Understanding component capabilities and variants
+- Testing component behavior before integration
+- Exploring design system patterns
+- Copying working code examples for your implementation
+
+## Browser Support
+
+This library supports all modern browsers:
+
+- Chrome 90+
+- Firefox 88+
+- Safari 14+
+- Edge 90+
+
+## Contributing
+
+For development and contribution guidelines, see the [CONTRIBUTING.md](./CONTRIBUTING.md) file.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
