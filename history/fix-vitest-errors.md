@@ -34,3 +34,17 @@ The `vitest.workspace.ts` file in the figma-plugin was incorrectly configured as
 ## Result
 
 Vitest errors should now be resolved. The figma-plugin project no longer has unnecessary testing dependencies and configuration files that were causing conflicts.
+
+## Additional Improvement
+
+### Enhanced Pre-Push Hook Error Messages
+
+While fixing the Vitest errors, we also improved the pre-push git hook to provide better error feedback:
+
+- **More descriptive error messages** with clear action items
+- **Step-by-step quick fix instructions** for common issues
+- **Better error handling** for missing remote branches
+- **Enhanced visual formatting** with colors and emojis for better readability
+- **Contextual information** showing branch names and file paths
+
+The hook now provides clear guidance when `PULL-REQUEST-DETAILS.md` needs to be updated, making it easier for developers to understand and resolve pre-push failures.
