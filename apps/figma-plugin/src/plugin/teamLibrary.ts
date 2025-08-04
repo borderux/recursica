@@ -98,7 +98,7 @@ async function decodeFileVariables(
   const importedVariable = await importVariableByKey(tokenVariables[0].key);
   const collection = await getVariableCollectionById(importedVariable!.variableCollectionId);
 
-  if (fileCollections.length === 1) {
+  if (fileCollections.length > 0) {
     return [
       variables,
       collection?.getSharedPluginData('recursica', 'file-type') || 'unknown',
