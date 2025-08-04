@@ -2,7 +2,7 @@
   "name": "@recursica/ui-kit-mantine",
   "description": "Reusable UI components for Recursica applications based on Mantine 8+",
   "private": false,
-  "homepage": "https://github.com/borderux/recursica#readme",
+  "homepage": "https://github.com/borderux/recursica/tree/main/packages/ui-kit-mantine",
   "author": "hi@borderux.com",
   "bugs": {
     "url": "https://github.com/borderux/recursica/issues"
@@ -48,10 +48,10 @@
     "chromatic": "npx chromatic --project-token=chpt_69ae5d081be6258"
   },
   "dependencies": {
-    "@repo/typescript-config": "*",
     "@vanilla-extract/css": "1.17.1"
   },
   "devDependencies": {
+    "@repo/typescript-config": "*",
     "@chromatic-com/storybook": "^4.0.0",
     "@eslint/js": "^9.25.0",
     "@storybook/addon-a11y": "^9.0.8",
