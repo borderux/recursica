@@ -14,24 +14,13 @@ import { execSync } from "child_process";
 
 /* global console, process */
 
-// Colors for console output
-const colors = {
-  red: "\x1b[31m",
-  green: "\x1b[32m",
-  yellow: "\x1b[33m",
-  blue: "\x1b[34m",
-  reset: "\x1b[0m",
-  bold: "\x1b[1m",
-};
-
 /**
- * Logs a message with optional color formatting
+ * Logs a message
  * @param {string} message - The message to log
- * @param {string} color - The color code to apply
  */
-function log(message, color = "") {
+function log(message) {
   // eslint-disable-next-line no-console
-  console.log(`${color}${message}${colors.reset}`);
+  console.error(message);
 }
 
 /**
@@ -45,7 +34,7 @@ function getCurrentBranch() {
       encoding: "utf8",
     }).trim();
   } catch (error) {
-    log(`❌ Error getting current branch: ${error.message}`, colors.red);
+    log(`Error getting current branch: ${error.message}`);
     process.exit(1);
   }
 }
@@ -65,7 +54,7 @@ function getMainBranch() {
       execSync("git rev-parse --verify origin/master", { stdio: "ignore" });
       return "master";
     } catch {
-      log("❌ Could not find main or master branch", colors.red);
+      log("Could not find main or master branch");
       process.exit(1);
     }
   }
@@ -81,15 +70,33 @@ function main() {
 
   // Skip check for main/master branch
   if (currentBranch === "main" || currentBranch === "master") {
-    log(
-      "ℹ️  Skipping PULL-REQUEST-DETAILS.md check for main/master branch",
-      colors.blue,
-    );
+    log("Skipping PULL-REQUEST-DETAILS.md check for main/master branch");
     process.exit(0);
   }
 
   // Check if the file has been modified compared to main branch
   try {
+    // First check if we have the remote branch available
+    try {
+      execSync(`git rev-parse --verify origin/${mainBranch}`, {
+        stdio: "ignore",
+      });
+    } catch (error) {
+      log("PRE-PUSH HOOK FAILED");
+      log("");
+      log(`Cannot access remote branch 'origin/${mainBranch}'`);
+      log("");
+      log("How to fix:");
+      log("   1. git fetch origin");
+      log("   2. Try pushing again");
+      log("");
+      log("Hook Details:");
+      log(`   Branch: ${currentBranch}`);
+      log(`   Main branch: ${mainBranch}`);
+      log("");
+      process.exit(1);
+    }
+
     execSync(
       `git diff --quiet origin/${mainBranch}..HEAD -- ${prDetailsFile}`,
       {
@@ -97,32 +104,29 @@ function main() {
       },
     );
     // File has NOT been modified (exit code 0 means no differences)
-    log("", colors.reset);
-    log("❌ ERROR: PULL-REQUEST-DETAILS.md has not been updated!", colors.red);
-    log("", colors.reset);
+    log("");
+    log("PRE-PUSH HOOK FAILED");
+    log("");
     log(
-      "Please update PULL-REQUEST-DETAILS.md with the details of your changes before pushing.",
-      colors.reset,
+      `PULL-REQUEST-DETAILS.md has not been updated for branch: ${currentBranch}`,
     );
-    log("", colors.reset);
+    log("");
+    log("Required Action:");
+    log("   Update PULL-REQUEST-DETAILS.md with details of your changes");
+    log("");
+    log("How to fix:");
+    log("   1. Open Cursor chat");
     log(
-      "💡 Tip: Use Cursor chat with PULL-REQUEST-CHECK.txt as context to ensure your pull request is fully valid.",
-      colors.yellow,
+      "   2. Type in: 'Follow the instructions found in PULL-REQUEST-CHECK.txt'",
     );
-    log("   Reference: PULL-REQUEST-CHECK.txt", colors.yellow);
-    log("", colors.reset);
-    log(
-      "After updating the file, commit your changes and try pushing again.",
-      colors.reset,
-    );
-    log("", colors.reset);
+    log("   3. Let Cursor update PULL-REQUEST-DETAILS.md for you");
+    log("   4. git add PULL-REQUEST-DETAILS.md");
+    log("   5. git commit -m 'Update PR details'");
+    log("   6. git push origin ${currentBranch}");
     process.exit(1);
   } catch {
     // File HAS been modified (exit code 1 means differences found)
-    log(
-      "✅ PULL-REQUEST-DETAILS.md has been updated - proceeding with push",
-      colors.green,
-    );
+    log("PULL-REQUEST-DETAILS.md has been updated - proceeding with push");
     process.exit(0);
   }
 }
