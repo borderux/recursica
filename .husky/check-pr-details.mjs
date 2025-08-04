@@ -96,15 +96,15 @@ function main() {
         stdio: "ignore",
       });
     } catch (error) {
-      log("🚫 PRE-PUSH HOOK FAILED", colors.red + colors.bold);
+      log("PRE-PUSH HOOK FAILED", colors.red + colors.bold);
       log("", colors.reset);
-      log(`❌ Cannot access remote branch 'origin/${mainBranch}'`, colors.red);
+      log(`Cannot access remote branch 'origin/${mainBranch}'`, colors.red);
       log("", colors.reset);
-      log("💡 Quick Fix:", colors.blue);
+      log("How to fix:", colors.blue);
       log("   1. git fetch origin", colors.reset);
       log("   2. Try pushing again", colors.reset);
       log("", colors.reset);
-      log("🔧 Hook Details:", colors.blue);
+      log("Hook Details:", colors.blue);
       log(`   Branch: ${currentBranch}`, colors.reset);
       log(`   Main branch: ${mainBranch}`, colors.reset);
       log("", colors.reset);
@@ -119,33 +119,40 @@ function main() {
     );
     // File has NOT been modified (exit code 0 means no differences)
     log("", colors.reset);
-    log("🚫 PRE-PUSH HOOK FAILED", colors.red + colors.bold);
+    log("PRE-PUSH HOOK FAILED", colors.red + colors.bold);
     log("", colors.reset);
     log(
-      `❌ PULL-REQUEST-DETAILS.md has not been updated for branch: ${currentBranch}`,
+      `PULL-REQUEST-DETAILS.md has not been updated for branch: ${currentBranch}`,
       colors.red,
     );
     log("", colors.reset);
-    log("📝 Required Action:", colors.yellow + colors.bold);
+    log("Required Action:", colors.yellow + colors.bold);
     log(
       "   Update PULL-REQUEST-DETAILS.md with details of your changes",
       colors.reset,
     );
     log("", colors.reset);
-    log("💡 Quick Fix:", colors.blue);
-    log("   1. Edit PULL-REQUEST-DETAILS.md with your changes", colors.reset);
-    log("   2. git add PULL-REQUEST-DETAILS.md", colors.reset);
-    log("   3. git commit -m 'Update PR details'", colors.reset);
-    log("   4. git push origin ${currentBranch}", colors.reset);
-    log("", colors.reset);
-    log("📋 Reference:", colors.yellow);
-    log("   - PULL-REQUEST-CHECK.txt for validation guidelines", colors.reset);
+    log("How to fix:", colors.blue);
+    log("   1. Open Cursor chat", colors.reset);
     log(
-      "   - Use Cursor chat with PULL-REQUEST-CHECK.txt as context",
+      "   2. Say: 'Follow the instructions found in PULL-REQUEST-CHECK.txt'",
+      colors.reset,
+    );
+    log(
+      "   3. Let Cursor update PULL-REQUEST-DETAILS.md for you",
+      colors.reset,
+    );
+    log("   4. git add PULL-REQUEST-DETAILS.md", colors.reset);
+    log("   5. git commit -m 'Update PR details'", colors.reset);
+    log("   6. git push origin ${currentBranch}", colors.reset);
+    log("", colors.reset);
+    log("Reference:", colors.yellow);
+    log(
+      "   - PULL-REQUEST-CHECK.txt contains the validation guidelines",
       colors.reset,
     );
     log("", colors.reset);
-    log("🔧 Hook Details:", colors.blue);
+    log("Hook Details:", colors.blue);
     log(`   Branch: ${currentBranch}`, colors.reset);
     log(`   Main branch: ${mainBranch}`, colors.reset);
     log(`   File checked: ${prDetailsFile}`, colors.reset);

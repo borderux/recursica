@@ -42,9 +42,9 @@ Vitest errors should now be resolved. The figma-plugin project no longer has unn
 While fixing the Vitest errors, we also improved the pre-push git hook to provide better error feedback:
 
 - **More descriptive error messages** with clear action items
-- **Step-by-step quick fix instructions** for common issues
+- **Step-by-step instructions** for using Cursor to update PR details
 - **Better error handling** for missing remote branches
-- **Enhanced visual formatting** with colors and emojis for better readability
+- **Clean output formatting** without special characters that don't display well in git
 - **Contextual information** showing branch names and file paths
 
-The hook now provides clear guidance when `PULL-REQUEST-DETAILS.md` needs to be updated, making it easier for developers to understand and resolve pre-push failures.
+The hook now provides clear guidance when `PULL-REQUEST-DETAILS.md` needs to be updated, with specific instructions to use Cursor chat with the command "Follow the instructions found in PULL-REQUEST-CHECK.txt" to automatically update the file.
