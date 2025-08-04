@@ -2,26 +2,41 @@
 
 ## Description
 
-This pull request updates the homepage URL in the UI Kit Mantine package configuration to point directly to the package's README file in the repository. This change improves the user experience by directing users to the specific package documentation rather than the general repository README.
+This pull request fixes a critical dependency issue in the `@recursica/ui-kit-mantine` package that was preventing it from being installed from npm. The issue was caused by having `@repo/typescript-config` as a runtime dependency instead of a development dependency, which caused a 404 error when users tried to install the package from the npm registry.
 
 ## Changes Made
 
-### Package Configuration Update:
+### Package Dependency Fix:
 
-- **Updated `packages/ui-kit-mantine/package.json`**: Modified homepage URL
-  - Changed from: `https://github.com/borderux/recursica#readme`
-  - Changed to: `https://github.com/borderux/recursica/tree/main/packages/ui-kit-mantine`
-  - This directs users to the specific package directory containing the README.md file
+- **Updated `packages/ui-kit-mantine/package.json`**: Moved `@repo/typescript-config` from `dependencies` to `devDependencies`
+  - This package contains TypeScript configuration files that are only needed during development and build time
+  - As a workspace dependency, it doesn't exist in the npm registry and was causing 404 errors during installation
+  - Moving it to `devDependencies` ensures it's available during development but not included in the published package
 
 ## Technical Implementation
 
-### URL Structure:
+### Dependency Analysis:
 
-The updated homepage URL follows GitHub's standard URL structure for repository directories:
+The issue was identified by analyzing the npm installation error:
 
-- **Format**: `https://github.com/{owner}/{repo}/tree/{branch}/{path}`
-- **Purpose**: Provides direct access to the package's documentation and source code
-- **User Experience**: Users can immediately see the package structure and access the README file
+```
+npm error 404 Not Found - GET https://registry.npmjs.org/@repo%2ftypescript-config - Not found
+```
+
+This occurred because:
+
+1. `@repo/typescript-config` is a workspace dependency that only exists within the monorepo
+2. It was incorrectly placed in `dependencies` instead of `devDependencies`
+3. When npm tried to resolve this dependency during installation, it couldn't find it in the registry
+
+### Solution:
+
+Moving `@repo/typescript-config` to `devDependencies` ensures:
+
+- The dependency is available during development and build time
+- It's not included in the published package's dependency tree
+- Users can install the package from npm without encountering 404 errors
+- The TypeScript configuration is still properly applied during development
 
 ## Testing & Validation
 
