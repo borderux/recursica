@@ -23,7 +23,7 @@ export function Home() {
   }, [repository]);
 
   const getRedirect = useMemo(() => {
-    if (filetype === 'ui-kit') {
+    if (filetype === 'ui-kit' || filetype === 'icons') {
       return {
         label: 'Connect repo',
         to: target,

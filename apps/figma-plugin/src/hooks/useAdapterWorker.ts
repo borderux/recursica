@@ -156,114 +156,11 @@ export function useAdapterWorker() {
 
           onStatusUpdate('done');
           const response: WorkerResponse = event.data;
-          const {
-            recursicaTokens,
-            vanillaExtractThemes,
-            mantineTheme,
-            uiKitObject,
-            recursicaObject,
-            colorsType,
-            iconsObject,
-            prettierignore,
-          } = response;
-          const newAdapterFiles: AdapterFile[] = [];
-
-          if (recursicaTokens) {
-            newAdapterFiles.push({
-              path: recursicaTokens.path,
-              content: recursicaTokens.content,
-            });
+          if (Array.isArray(response)) {
+            resolve(response);
+          } else {
+            reject(new Error('Worker returned invalid data'));
           }
-
-          if (prettierignore) {
-            newAdapterFiles.push({
-              path: prettierignore.path,
-              content: prettierignore.content,
-            });
-          }
-
-          const {
-            availableThemes,
-            themeContract,
-            themesFileContent,
-            vanillaExtractThemes: subThemes,
-          } = vanillaExtractThemes;
-          if (availableThemes) {
-            newAdapterFiles.push({
-              path: availableThemes.path,
-              content: availableThemes.content,
-            });
-          }
-          if (themeContract) {
-            newAdapterFiles.push({
-              path: themeContract.path,
-              content: themeContract.content,
-            });
-          }
-          if (themesFileContent) {
-            newAdapterFiles.push({
-              path: themesFileContent.path,
-              content: themesFileContent.content,
-            });
-          }
-          for (const theme of subThemes) {
-            newAdapterFiles.push({
-              path: theme.path,
-              content: theme.content,
-            });
-          }
-
-          if (mantineTheme.mantineTheme) {
-            newAdapterFiles.push({
-              path: mantineTheme.mantineTheme.path,
-              content: mantineTheme.mantineTheme.content,
-            });
-          }
-          if (mantineTheme.postCss) {
-            newAdapterFiles.push({
-              path: mantineTheme.postCss.path,
-              content: mantineTheme.postCss.content,
-            });
-          }
-
-          if (uiKitObject) {
-            newAdapterFiles.push({
-              path: uiKitObject.path,
-              content: uiKitObject.content,
-            });
-          }
-
-          if (recursicaObject) {
-            newAdapterFiles.push({
-              path: recursicaObject.path,
-              content: recursicaObject.content,
-            });
-          }
-
-          if (colorsType) {
-            newAdapterFiles.push({
-              path: colorsType.path,
-              content: colorsType.content,
-            });
-          }
-
-          if (iconsObject) {
-            newAdapterFiles.push({
-              path: iconsObject.iconExports.path,
-              content: iconsObject.iconExports.content,
-            });
-            newAdapterFiles.push({
-              path: iconsObject.iconResourceMap.path,
-              content: iconsObject.iconResourceMap.content,
-            });
-            for (const icon of iconsObject.exportedIcons) {
-              newAdapterFiles.push({
-                path: icon.path,
-                content: icon.content,
-              });
-            }
-          }
-          resolve(newAdapterFiles);
         };
 
         // Listener for any errors that might occur inside the worker
