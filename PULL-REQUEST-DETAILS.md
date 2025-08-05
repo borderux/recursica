@@ -1,70 +1,63 @@
-# Pull Request Details
+# Figma Plugin Release Enhancement
 
-## Description
+## Overview
 
-This pull request fixes a critical dependency issue in the `@recursica/ui-kit-mantine` package that was preventing it from being installed from npm. The issue was caused by having `@repo/typescript-config` as a runtime dependency instead of a development dependency, which caused a 404 error when users tried to install the package from the npm registry.
+This PR enhances the figma-plugin release process to improve version tracking and release visibility in the server repository. The changes ensure that figma-plugin releases are properly identified by version number rather than just commit hashes.
 
 ## Changes Made
 
-### Package Dependency Fix:
+### 1. Enhanced Deploy-to-Server Action (`.github/actions/deploy-to-server/action.yml`)
 
-- **Updated `packages/ui-kit-mantine/package.json`**: Moved `@repo/typescript-config` from `dependencies` to `devDependencies`
+- **Added new input parameter**: `plugin_version` (optional) for version-based release naming
+- **Updated release naming logic**:
+  - When `plugin_version` is provided: Tag becomes `figma-plugin-v{version}`, title becomes `Figma Plugin Release - v{version}`
+  - Fallback behavior: Uses commit SHA for releases without version info
+- **Improved release notes**: Moved commit SHA to release body along with source repository and environment context
+- **Maintained backward compatibility**: All existing functionality preserved
 
-  - This package contains TypeScript configuration files that are only needed during development and build time
-  - As a workspace dependency, it doesn't exist in the npm registry and was causing 404 errors during installation
-  - Moving it to `devDependencies` ensures it's available during development but not included in the published package
+### 2. Updated Release Workflow (`.github/workflows/release.yml`)
 
-- Verified repository connection functionality across GitHub and GitLab platforms
-- Confirmed file status tracking works correctly through all phases
-- Tested error handling with various failure scenarios
-- Validated Web Worker processing with timeout and error recovery
-- Confirmed UI text improvements enhance user experience
+- **Enhanced version detection**: Added `figma-plugin-version` output to the existing version check step
+- **Streamlined deployment**: Removed redundant version extraction step by using the version already detected
+- **Improved parameter passing**: Now passes the detected plugin version to the deploy action
 
-### Dependency Analysis:
+## Technical Details
 
-The issue was identified by analyzing the npm installation error:
+### Release Format Example
 
-```
-npm error 404 Not Found - GET https://registry.npmjs.org/@repo%2ftypescript-config - Not found
-```
+When figma-plugin version 1.2.3 is released:
 
-This occurred because:
+- **Tag**: `figma-plugin-v1.2.3`
+- **Title**: `Figma Plugin Release - v1.2.3`
+- **Notes**:
 
-1. `@repo/typescript-config` is a workspace dependency that only exists within the monorepo
-2. It was incorrectly placed in `dependencies` instead of `devDependencies`
-3. When npm tried to resolve this dependency during installation, it couldn't find it in the registry
+  ```
+  Commit SHA: `abc123def456`
 
-### Solution:
+  Source Repository: borderux/recursica
+  Environment: prod
+  ```
 
-Moving `@repo/typescript-config` to `devDependencies` ensures:
+### Benefits
 
-- The dependency is available during development and build time
-- It's not included in the published package's dependency tree
-- Users can install the package from npm without encountering 404 errors
-- The TypeScript configuration is still properly applied during development
+1. **Better version tracking**: Releases are easily identifiable by version number
+2. **Improved traceability**: Commit SHA and source context in release notes
+3. **Enhanced user experience**: Clear, meaningful release names in server repository
+4. **Maintained compatibility**: Existing workflows continue to work unchanged
 
-## Testing & Validation
+## Testing
 
-- **URL Validation**: Verified the new URL correctly points to the ui-kit-mantine package directory
-- **Documentation**: Confirmed the README.md file is accessible at the new location
-- **Configuration**: Validated package.json syntax remains correct
+- The changes maintain backward compatibility with existing release processes
+- Version detection logic has been tested to handle edge cases (missing versions, unchanged versions)
+- Release naming logic includes fallback behavior for robustness
 
 ## Impact
 
-This change improves the developer experience by:
+- **Positive**: Improved release management and version tracking for figma-plugin
+- **No breaking changes**: All existing functionality preserved
+- **Enhanced observability**: Better release identification and traceability
 
-- **Direct Navigation**: Users can immediately access package-specific documentation
-- **Clear Context**: The URL clearly indicates which package the documentation belongs to
-- **Repository Structure**: Better reflects the monorepo structure of the project
+## Files Modified
 
-## Checklist
-
-- [x] Package.json homepage URL updated
-- [x] URL validation completed
-- [x] Documentation accessibility confirmed
-- [x] No breaking changes introduced
-- [x] Configuration syntax verified
-
-## Additional Notes
-
-This is a minor configuration improvement that enhances the discoverability and usability of the UI Kit Mantine package documentation. The change is backward compatible and doesn't affect the package's functionality or build process.
+- `.github/actions/deploy-to-server/action.yml` - Enhanced with version-based release naming
+- `.github/workflows/release.yml` - Updated to pass plugin version to deploy action
