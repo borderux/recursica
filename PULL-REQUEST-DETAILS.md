@@ -2,69 +2,98 @@
 
 ## Description
 
-This pull request fixes a critical dependency issue in the `@recursica/ui-kit-mantine` package that was preventing it from being installed from npm. The issue was caused by having `@repo/typescript-config` as a runtime dependency instead of a development dependency, which caused a 404 error when users tried to install the package from the npm registry.
+This pull request adds plugin version display functionality to the Figma plugin, enhancing the user experience by showing the current plugin version in the UI. The version information is displayed as a subtle caption in the bottom-right corner of the layout, providing users with transparency about which version of the plugin they are currently using.
 
 ## Changes Made
 
-### Package Dependency Fix:
+### Core Functionality:
 
-- **Updated `packages/ui-kit-mantine/package.json`**: Moved `@repo/typescript-config` from `dependencies` to `devDependencies`
+- **Added plugin version tracking**: Extended the Figma context to include `pluginVersion` state management
+- **Enhanced Layout component**: Added version display in the bottom-right corner using Typography component
+- **Updated context interface**: Added `pluginVersion` property to `IFigmaContext` interface
+- **Message handling**: Extended the message handler to process plugin version from metadata
 
-  - This package contains TypeScript configuration files that are only needed during development and build time
-  - As a workspace dependency, it doesn't exist in the npm registry and was causing 404 errors during installation
-  - Moving it to `devDependencies` ensures it's available during development but not included in the published package
+### Files Modified:
 
-- Verified repository connection functionality across GitHub and GitLab platforms
-- Confirmed file status tracking works correctly through all phases
-- Tested error handling with various failure scenarios
-- Validated Web Worker processing with timeout and error recovery
-- Confirmed UI text improvements enhance user experience
+1. **`apps/figma-plugin/src/components/Layout/Layout.tsx`**:
 
-### Dependency Analysis:
+   - Added imports for `Box` and `Typography` components from UI kit
+   - Added `useFigma` hook import
+   - Integrated plugin version display with proper styling and positioning
+   - Used absolute positioning to place version info in bottom-right corner
 
-The issue was identified by analyzing the npm installation error:
+2. **`apps/figma-plugin/src/context/Figma/FigmaContext.ts`**:
 
-```
-npm error 404 Not Found - GET https://registry.npmjs.org/@repo%2ftypescript-config - Not found
-```
+   - Added `pluginVersion: string | undefined` to the `IFigmaContext` interface
+   - Maintains type safety for the new version property
 
-This occurred because:
+3. **`apps/figma-plugin/src/context/Figma/FigmaProvider.tsx`**:
+   - Added `pluginVersion` state management with `useState`
+   - Extended message handler to extract version from `METADATA` payload
+   - Updated context value object to include the new `pluginVersion` property
 
-1. `@repo/typescript-config` is a workspace dependency that only exists within the monorepo
-2. It was incorrectly placed in `dependencies` instead of `devDependencies`
-3. When npm tried to resolve this dependency during installation, it couldn't find it in the registry
+### Technical Implementation:
 
-### Solution:
+- **State Management**: Plugin version is managed through React context and state
+- **Message Processing**: Version is extracted from the `METADATA` message type
+- **UI Integration**: Version display uses existing design system components
+- **Styling**: Consistent with existing UI patterns using opacity and caption typography
 
-Moving `@repo/typescript-config` to `devDependencies` ensures:
+## Code Quality Assessment
 
-- The dependency is available during development and build time
-- It's not included in the published package's dependency tree
-- Users can install the package from npm without encountering 404 errors
-- The TypeScript configuration is still properly applied during development
+### Documentation:
 
-## Testing & Validation
+- ✅ All new functions and components are properly documented
+- ✅ TypeScript interfaces are clearly defined
+- ✅ Code follows existing patterns and conventions
 
-- **URL Validation**: Verified the new URL correctly points to the ui-kit-mantine package directory
-- **Documentation**: Confirmed the README.md file is accessible at the new location
-- **Configuration**: Validated package.json syntax remains correct
+### Coding Style:
+
+- ✅ Consistent with existing codebase patterns
+- ✅ Proper TypeScript typing throughout
+- ✅ Clean component structure and separation of concerns
+- ✅ No linting errors or TypeScript compilation issues
+
+### Testing:
+
+- ⚠️ No unit tests were created for the new functionality
+- ✅ Manual testing should be performed to verify:
+  - Version display appears correctly in UI
+  - Version updates when plugin is updated
+  - Message handling works with different metadata payloads
+  - Layout positioning works across different screen sizes
 
 ## Impact
 
-This change improves the developer experience by:
+This enhancement improves the user experience by:
 
-- **Direct Navigation**: Users can immediately access package-specific documentation
-- **Clear Context**: The URL clearly indicates which package the documentation belongs to
-- **Repository Structure**: Better reflects the monorepo structure of the project
+- **Transparency**: Users can see which version of the plugin they're using
+- **Debugging**: Helps with troubleshooting by identifying plugin versions
+- **User Confidence**: Provides clear indication of plugin status and updates
+- **Maintainability**: Establishes pattern for future version-related features
+
+## Testing Recommendations
+
+To validate this functionality, test the following scenarios:
+
+1. **Version Display**: Verify the plugin version appears in the bottom-right corner
+2. **Message Handling**: Test with various metadata payloads
+3. **Responsive Design**: Check version display on different screen sizes
+4. **Update Scenarios**: Verify version updates when plugin is upgraded
+5. **Error Handling**: Test behavior when version information is missing
 
 ## Checklist
 
-- [x] Package.json homepage URL updated
-- [x] URL validation completed
-- [x] Documentation accessibility confirmed
-- [x] No breaking changes introduced
-- [x] Configuration syntax verified
+- [x] Plugin version state management implemented
+- [x] Context interface updated with proper typing
+- [x] Layout component enhanced with version display
+- [x] Message handling extended for version extraction
+- [x] No linting errors introduced
+- [x] TypeScript compilation successful
+- [x] Code follows existing patterns and conventions
+- [ ] Unit tests should be added for new functionality
+- [ ] Manual testing required for UI validation
 
 ## Additional Notes
 
-This is a minor configuration improvement that enhances the discoverability and usability of the UI Kit Mantine package documentation. The change is backward compatible and doesn't affect the package's functionality or build process.
+This is a user-facing enhancement that adds transparency to the plugin experience. The implementation is minimal and follows existing patterns, making it easy to maintain and extend. Consider adding unit tests for the message handling logic and version display component in future iterations.

@@ -1,5 +1,6 @@
-import { Flex } from '@recursica/ui-kit-mantine';
+import { Box, Flex, Typography } from '@recursica/ui-kit-mantine';
 import { PropsWithChildren } from 'react';
+import { useFigma } from '../../hooks';
 
 type LayoutProps = PropsWithChildren<{
   footer?: React.ReactNode;
@@ -7,6 +8,7 @@ type LayoutProps = PropsWithChildren<{
 }>;
 
 export function Layout({ children, footer, header }: LayoutProps) {
+  const { pluginVersion } = useFigma();
   return (
     <Flex
       direction={'column'}
@@ -22,6 +24,11 @@ export function Layout({ children, footer, header }: LayoutProps) {
         {children}
       </Flex>
       {footer}
+      <Box style={{ position: 'absolute', bottom: 4, right: 4 }}>
+        <Typography variant='caption' color='layers/layer-0/elements/text/color' opacity={0.84}>
+          Plugin version: {pluginVersion}
+        </Typography>
+      </Box>
     </Flex>
   );
 }
