@@ -1,6 +1,6 @@
-# Pull Request Details
+# Figma Plugin Release Enhancement
 
-## Description
+## Overview
 
 This pull request adds plugin version display functionality to the Figma plugin, enhancing the user experience by showing the current plugin version in the UI. The version information is displayed as a subtle caption in the bottom-right corner of the layout, providing users with transparency about which version of the plugin they are currently using.
 
