@@ -17,6 +17,7 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
   const [userId, setUserId] = useState<string | undefined>();
   const [variablesSynced, setVariablesSynced] = useState(false);
   const [filetype, setFiletype] = useState<string | undefined>();
+  const [pluginVersion, setPluginVersion] = useState<string | undefined>();
   const [error, setError] = useState<string | undefined>();
   useLayoutEffect(() => {
     window.onmessage = ({ data: { pluginMessage } }) => {
@@ -43,8 +44,9 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
         setVariablesSynced(true);
       }
       if (type === 'METADATA') {
-        const { projectType } = payload;
+        const { projectType, pluginVersion } = payload;
         setFiletype(projectType);
+        setPluginVersion(pluginVersion);
       }
       if (type === 'NO_TOKENS_FOUND' || type === 'NO_TOKENS_OR_THEMES_FOUND') {
         setError(type);
@@ -161,6 +163,7 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
     variablesSynced,
     filetype,
     error,
+    pluginVersion,
   };
 
   return <FigmaContext.Provider value={values}>{children}</FigmaContext.Provider>;

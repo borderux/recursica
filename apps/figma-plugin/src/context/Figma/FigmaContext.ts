@@ -21,6 +21,7 @@ export interface IFigmaContext {
   variablesSynced: boolean;
   filetype: string | undefined;
   error: string | undefined;
+  pluginVersion: string | undefined;
 }
 
 export const FigmaContext = createContext<IFigmaContext | null>(null);
