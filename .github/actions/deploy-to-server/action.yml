@@ -25,6 +25,9 @@ inputs:
     description: "Event type for repository dispatch"
     required: true
     default: "trigger-server-deploy"
+  plugin_version:
+    description: "Plugin version for release title and tag"
+    required: false
 
 runs:
   using: "composite"
@@ -35,8 +38,13 @@ runs:
       with:
         repository: ${{ inputs.target_repository }}
         token: ${{ inputs.token }}
-        tag_name: build-plugin-ui-${{ inputs.commit_sha }}
-        name: Build Plugin UI - ${{ inputs.commit_sha }}
+        tag_name: ${{ inputs.plugin_version && format('figma-plugin-v{0}', inputs.plugin_version) || format('build-plugin-ui-{0}', inputs.commit_sha) }}
+        name: ${{ inputs.plugin_version && format('Figma Plugin Release - v{0}', inputs.plugin_version) || format('Build Plugin UI - {0}', inputs.commit_sha) }}
+        body: |
+          Commit SHA: `${{ inputs.commit_sha }}`
+
+          Source Repository: ${{ inputs.source_repo }}
+          Environment: ${{ inputs.environment }}
         files: ${{ inputs.files_path }}
         prerelease: true
 

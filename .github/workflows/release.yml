@@ -62,6 +62,7 @@ jobs:
 
           if [ -n "$current_version" ] && [ -n "$previous_version" ] && [ "$current_version" != "$previous_version" ]; then
             echo "has-figma-changes=true" >> $GITHUB_OUTPUT
+            echo "figma-plugin-version=$current_version" >> $GITHUB_OUTPUT
             echo "✅ Figma plugin version changed: $previous_version → $current_version"
             echo "🚀 Preparing for PRODUCTION deployment"
           else
@@ -126,3 +127,4 @@ jobs:
           environment: "prod"
           files_path: "apps/figma-plugin/dist/**/*"
           event_type: "trigger-server-deploy"
+          plugin_version: ${{ steps.check-figma-plugin.outputs.figma-plugin-version }}
