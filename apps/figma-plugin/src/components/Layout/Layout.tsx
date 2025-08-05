@@ -26,7 +26,7 @@ export function Layout({ children, footer, header }: LayoutProps) {
       {footer}
       <Box style={{ position: 'absolute', bottom: 4, right: 4 }}>
         <Typography variant='caption' color='layers/layer-0/elements/text/color' opacity={0.84}>
-          Plugin version: {pluginVersion}
+          {pluginVersion}
         </Typography>
       </Box>
     </Flex>
