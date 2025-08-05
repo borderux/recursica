@@ -1,5 +1,11 @@
 # @recursica/figma-plugin
 
+## 0.0.10
+
+### Patch Changes
+
+- ad76920: added plugin version to the ui
+
 ## 0.0.9
 
 ### Patch Changes
