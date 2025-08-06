@@ -13,11 +13,10 @@ const config: StorybookConfig = {
     name: "@storybook/react-vite",
     options: {},
   },
-  // Configure for GitHub Pages subpath deployment
+  // Configure for GitHub Pages deployment
   viteFinal: async (config) => {
-    // Set base path for GitHub Pages
-    config.base =
-      process.env.NODE_ENV === "production" ? "/ui-kit-mantine/" : "/";
+    // Set base path for GitHub Pages - deployed to root of recursica site
+    config.base = process.env.NODE_ENV === "production" ? "/recursica/" : "/";
 
     return config;
   },
