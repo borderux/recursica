@@ -61,7 +61,7 @@ Implemented automated GitHub Pages deployment for the UI Kit Mantine Storybook d
 
 ### Deployment URL
 
-- **New URL**: `https://borderux.github.io/recursica/ui-kit-mantine/`
+- **New URL**: `https://borderux.github.io/recursica/`
 - **Old URL**: `https://recursica-ui-kit-mantine.vercel.app` (deprecated)
 
 ## Issues Encountered
