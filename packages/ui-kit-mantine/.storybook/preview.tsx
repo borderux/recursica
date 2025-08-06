@@ -7,6 +7,17 @@ import "@mantine/dates/styles.css";
 
 const preview: Preview = {
   parameters: {
+    options: {
+      storySort: {
+        order: [
+          "Introduction",
+          "Design System",
+          ["Getting Started", "Design Tokens", "Typography", "Colors"],
+          "Components",
+          "*",
+        ],
+      },
+    },
     controls: {
       matchers: {
         color: /(background|color)$/i,

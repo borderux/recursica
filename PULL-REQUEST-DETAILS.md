@@ -1,132 +1,157 @@
-# Figma Plugin UI Enhancement - Version Display Feature
+# Storybook Theme and Branding Enhancement
 
-## Overview
+## Summary
 
-This pull request enhances the Figma plugin user interface by adding plugin version display functionality. The version information is displayed as a subtle caption in the bottom-right corner of the layout, providing users with transparency about which version of the plugin they are currently using. This improvement enhances user experience and aids in debugging and support scenarios.
+This pull request enhances the Recursica UI Kit Mantine Storybook with proper branding, authentic theme colors, and an engaging introduction page. The changes address Storybook 9.x compatibility issues while implementing the correct Recursica brand identity (red, black, white color scheme) and improving the overall user experience for documentation visitors.
 
-## Changes Made
+## Key Changes
 
-### Core Functionality:
+### 1. Storybook 9.x Branding Implementation
 
-- **Added plugin version tracking**: Extended the Figma context to include `pluginVersion` state management
-- **Enhanced Layout component**: Added version display in the bottom-right corner using Typography component
-- **Updated context interface**: Added `pluginVersion` property to `IFigmaContext` interface
-- **Message handling**: Extended the message handler to process plugin version from metadata
+- **Files**: `.storybook/RecursicaTheme.ts`, `.storybook/manager.ts`
+- **Purpose**: Implements proper branding for Storybook 9.x using correct imports and theme structure
+- **Brand Colors**: Uses authentic Recursica red palette (`#d40d0d`, `#bd0b0b`) with clean white backgrounds and near-black text
+- **Typography**: Integrates Recursica fonts (Lexend, Quattrocento) for consistent brand experience
 
-### Files Modified:
+### 2. Enhanced Introduction Experience
 
-1. **`apps/figma-plugin/src/components/Layout/Layout.tsx`**:
+- **File**: `src/Introduction.stories.tsx`
+- **Purpose**: Creates compelling welcome page serving as sales pitch and system overview
+- **Content**: Comprehensive introduction including benefits, comparisons, testimonials, and quick start guide
+- **Structure**: Well-organized content hierarchy with proper Storybook story metadata
 
-   - Added imports for `Box` and `Typography` components from UI kit
-   - Added `useFigma` hook import to access plugin version
-   - Integrated plugin version display with proper styling and positioning
-   - Used absolute positioning to place version info in bottom-right corner
-   - Applied consistent styling with opacity and caption typography variant
+### 3. Configuration Improvements
 
-2. **`apps/figma-plugin/src/context/Figma/FigmaContext.ts`**:
+- **File**: `.storybook/main.ts`
+  - Fixed GitHub Pages base path configuration (`/recursica/` instead of `/ui-kit-mantine/`)
+  - Added TypeScript configuration for better prop documentation
+  - Removed unnecessary MDX story patterns
+- **File**: `.storybook/preview.tsx`
+  - Added story sorting for better navigation (Introduction first)
+  - Removed outdated branding configuration that wasn't working in v9.x
 
-   - Added `pluginVersion: string | undefined` to the `IFigmaContext` interface
-   - Maintains type safety for the new version property
+### 4. Documentation Updates
 
-3. **`apps/figma-plugin/src/context/Figma/FigmaProvider.tsx`**:
-   - Added `pluginVersion` state management with `useState`
-   - Extended message handler to extract version from `METADATA` payload
-   - Updated context value object to include the new `pluginVersion` property
-   - Integrated with existing metadata collection flow
+- **File**: `README.md` - Updated Storybook URL to correct GitHub Pages deployment path
+- **File**: `history/storybook-github-pages-deployment.md` - Corrected deployment URL documentation
 
-### Technical Implementation:
+## Technical Implementation
 
-- **State Management**: Plugin version is managed through React context and state
-- **Message Processing**: Version is extracted from the `METADATA` message type sent by the plugin code
-- **UI Integration**: Version display uses existing design system components from `@recursica/ui-kit-mantine`
-- **Styling**: Consistent with existing UI patterns using opacity (0.84) and caption typography
-- **Positioning**: Absolute positioning ensures version display doesn't interfere with main content
+### Theme Architecture
 
-## Code Quality Assessment
+```typescript
+// Authentic Recursica Brand Colors
+colorPrimary: "#d40d0d",    // mandy/500 - Recursica red
+colorSecondary: "#bd0b0b",  // mandy/600 - darker red
+appBg: "#ffffff",           // pure white
+textColor: "#0a0a0a",       // near black
+```
 
-### Documentation:
+### Storybook 9.x Compatibility
 
-- ✅ All new functions and components are properly documented
-- ✅ TypeScript interfaces are clearly defined with proper typing
-- ✅ Code follows existing patterns and conventions
-- ✅ Component props are well-typed with `PropsWithChildren`
+- **Correct Imports**: Uses `storybook/theming` and `storybook/manager-api` (without @ prefix)
+- **Theme Structure**: Follows v9.x theme interface, removing invalid properties
+- **Manager Configuration**: Proper separation of theme definition and application
 
-### Coding Style:
+### Brand Authenticity
 
-- ✅ Consistent with existing codebase patterns
-- ✅ Proper TypeScript typing throughout
-- ✅ Clean component structure and separation of concerns
-- ✅ No linting errors or TypeScript compilation issues
-- ✅ Follows React best practices with proper hook usage
-- ✅ Uses existing design system components appropriately
+- **Color Validation**: Verified against existing Recursica design tokens
+- **Typography**: Uses actual Recursica font families from design system
+- **Visual Hierarchy**: Clean, professional appearance matching brand guidelines
 
-### Testing:
+## Testing and Validation
 
-- ⚠️ No unit tests were created for the new functionality
-- ✅ Manual testing should be performed to verify:
-  - Version display appears correctly in UI
-  - Version updates when plugin is updated
-  - Message handling works with different metadata payloads
-  - Layout positioning works across different screen sizes
-  - Version display doesn't interfere with existing UI elements
+### Build Verification
 
-## Impact
+- ✅ Storybook builds successfully (`npm run build-storybook`)
+- ✅ No TypeScript compilation errors
+- ✅ All components render correctly with new theme
+- ✅ Introduction page displays properly with correct formatting
 
-This enhancement improves the user experience by:
+### Code Quality
 
-- **Transparency**: Users can see which version of the plugin they're using
-- **Debugging**: Helps with troubleshooting by identifying plugin versions
-- **User Confidence**: Provides clear indication of plugin status and updates
-- **Maintainability**: Establishes pattern for future version-related features
-- **Support**: Aids in customer support by easily identifying plugin versions
+- ✅ All new files pass linting with no errors
+- ✅ TypeScript strict mode compliance
+- ✅ No unused imports or variables
+- ✅ Proper component structure following Storybook CSF format
 
-## Testing Recommendations
+### Visual Verification
 
-To validate this functionality, test the following scenarios:
+- ✅ Theme correctly displays red, black, white Recursica branding
+- ✅ Typography renders with correct font families
+- ✅ Story navigation sorted correctly (Introduction → Components)
+- ✅ GitHub Pages deployment path working correctly
 
-1. **Version Display**: Verify the plugin version appears in the bottom-right corner
-2. **Message Handling**: Test with various metadata payloads
-3. **Responsive Design**: Check version display on different screen sizes
-4. **Update Scenarios**: Verify version updates when plugin is upgraded
-5. **Error Handling**: Test behavior when version information is missing
-6. **UI Integration**: Ensure version display doesn't overlap with other UI elements
-7. **Context Integration**: Verify version is properly passed through React context
+### Functional Testing
 
-## Documentation Updates
+- ✅ Custom theme loads without errors
+- ✅ Brand title and URL correctly configured
+- ✅ Introduction story renders interactive content
+- ✅ All existing component stories work with new theme
 
-The following documentation should be reviewed and potentially updated:
+## Brand Impact
 
-- **README.md**: May need updates to reflect version display feature
-- **CHANGELOG.md**: Should be updated with this new feature
-- **PLUGIN.MD**: May need updates if version display affects plugin usage
+### Authentic Recursica Identity
 
-## Checklist
+- **Color Accuracy**: Uses actual Recursica red (`#d40d0d`) from design tokens instead of generic blue
+- **Typography**: Implements Lexend and Quattrocento fonts from brand guidelines
+- **Visual Consistency**: Clean, professional appearance matching recursica.com aesthetic
 
-- [x] Plugin version state management implemented
-- [x] Context interface updated with proper typing
-- [x] Layout component enhanced with version display
-- [x] Message handling extended for version extraction
-- [x] No linting errors introduced
-- [x] TypeScript compilation successful
-- [x] Code follows existing patterns and conventions
-- [x] Uses existing design system components
-- [ ] Unit tests should be added for new functionality
-- [ ] Manual testing required for UI validation
-- [ ] Documentation updates may be needed
+### User Experience Improvements
 
-## Additional Notes
+- **Engaging Welcome**: Comprehensive introduction page serves as effective landing experience
+- **Better Navigation**: Story sorting puts most important content first
+- **Professional Appearance**: Proper branding creates credible, polished documentation
 
-This is a user-facing enhancement that adds transparency to the plugin experience. The implementation is minimal and follows existing patterns, making it easy to maintain and extend. The version display is subtle and non-intrusive, positioned to provide information without interfering with the main user interface.
+### Documentation Enhancement
 
-**Recommendations for future iterations:**
+- **Sales Pitch Content**: Introduction serves as compelling overview of Recursica's value proposition
+- **Quick Start Guide**: Practical code examples help developers get started quickly
+- **Feature Highlights**: Clear presentation of design system capabilities and benefits
 
-- Add unit tests for the message handling logic and version display component
-- Consider adding version comparison functionality for update notifications
-- Evaluate adding version information to error messages for better debugging
+## Quality Assurance
 
-## Version Information
+### Code Review Checklist
 
-- **Current Plugin Version**: 0.0.9
-- **Feature**: Plugin version display in UI
-- **Impact Level**: Low (UI enhancement only)
-- **Breaking Changes**: None
+- [x] Proper TypeScript types and interfaces used
+- [x] Storybook 9.x compatibility verified
+- [x] Brand colors match official design tokens
+- [x] Documentation updated consistently
+- [x] No breaking changes to existing functionality
+
+### Performance Considerations
+
+- [x] Theme configuration optimized for fast loading
+- [x] Introduction content structured efficiently
+- [x] No unnecessary dependencies added
+- [x] Build time remains optimal
+
+## Breaking Changes
+
+✅ **No Breaking Changes**: All existing functionality preserved while enhancing user experience and visual branding.
+
+### Migration Notes
+
+- Storybook theme now displays Recursica branding instead of default appearance
+- Introduction page provides better onboarding experience for new users
+- Documentation URL corrected for proper GitHub Pages deployment
+
+## Future Enhancements
+
+### Potential Improvements
+
+1. **Brand Assets**: Add Recursica logo/favicon for complete visual identity
+2. **Dark Theme**: Implement dark mode variant using Recursica dark color tokens
+3. **Interactive Examples**: Add more hands-on component demonstrations
+4. **Custom Domain**: Configure custom domain for branded URL experience
+
+### Content Expansion
+
+- Additional design system documentation pages
+- Component usage guidelines and best practices
+- Design token documentation with visual examples
+- Advanced theming and customization guides
+
+## Conclusion
+
+This enhancement transforms the Storybook from a generic component documentation tool into a branded, engaging showcase of the Recursica Design System. The authentic color scheme, professional typography, and compelling introduction content create a cohesive experience that properly represents the Recursica brand while providing practical value to developers and designers exploring the system.
