@@ -1,100 +1,87 @@
-# Turborepo starter
+# Recursica
 
-This Turborepo starter is maintained by the Turborepo core team.
+Recursica is a comprehensive design system and component library that helps teams build consistent, beautiful user interfaces. It provides a set of reusable components, design tokens, and tools for seamless integration with Figma and various frontend frameworks.
 
-## Using this example
+## Quick Start
 
-Run the following command:
+### Prerequisites
+
+- Node.js >= 20
+- npm >= 10.9.0
+
+### Installation
+
+1. Clone the repository:
 
 ```sh
-npx create-turbo@latest
+git clone https://github.com/borderux/recursica.git
+cd recursica
 ```
 
-## What's inside?
+2. Install dependencies:
 
-This Turborepo includes the following packages/apps:
-
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-### `@repo/recursica-schemas`
-
-This package is responsible for managing the JSON schemas and generating corresponding TypeScript type definitions for the project.
-
-To use it, you can import the schemas directly:
-
-```typescript
-import mySchema from "@repo/recursica-schemas/MySchema.json";
+```sh
+npm install
 ```
 
-You can import any generated type directly from the `@repo/recursica-schemas/types` entry point, which is an index file that exports all types.
+3. Build all packages:
 
-```typescript
-import { MyType } from "@repo/recursica-schemas/types";
+```sh
+npm run build
 ```
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+## Available Scripts
 
-### Utilities
+- `npm run build` - Build all packages and applications
+- `npm run dev` - Start development mode for all packages and applications
+- `npm run recursica` - Run the Recursica CLI tool
+- `npm run lint` - Run ESLint across all packages
+- `npm run format` - Format all files using Prettier
+- `npm run check-types` - Run TypeScript type checking
+- `npm run test` - Run tests across all packages
+- `npm run version` - Update versions using Changesets
+- `npm run release` - Publish packages to npm (requires proper authentication)
 
-This Turborepo has some additional tools already setup for you:
+## Project Structure
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+### Apps
 
-### Build
+- `apps/figma-plugin` - Figma plugin for exporting design tokens and assets from Figma to your codebase
+- `apps/ai-form-test` - Testing application for AI-driven form generation
 
-To build all apps and packages, run the following command:
+### Packages
 
-```
-cd my-turborepo
-pnpm build
-```
+- `packages/common` - Shared utilities and helper functions used across the monorepo
+- `packages/eslint-config` - Shared ESLint configurations for consistent code style
+- `packages/mantine-adapter` - Adapter for integrating Recursica with Mantine UI framework
+- `packages/schemas` - JSON schemas and TypeScript type definitions for Recursica's configuration
+- `packages/typescript-config` - Shared TypeScript configurations
+- `packages/ui-kit-mantine` - Core UI component library built with Mantine
 
-### Develop
+## Contributing
 
-To develop all apps and packages, run the following command:
+We welcome contributions of all kinds! Whether you want to report bugs, suggest enhancements, or submit code changes, your help is appreciated. Please check our [Contributing Guidelines](CONTRIBUTING.md) for:
 
-```
-cd my-turborepo
-pnpm dev
-```
+- How to submit bug reports and feature requests
+- The pull request process
+- Using changesets for version management
+- Code of conduct
 
-### Remote Caching
+## Additional Documentation
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+- [Release Process](RELEASES.md)
+- [Turborepo Setup](TURBO.md)
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
+## Development Tools
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
+This project uses several development tools to ensure code quality and consistency:
 
-```
-cd my-turborepo
-npx turbo login
-```
+- [TypeScript](https://www.typescriptlang.org/) - Static type checking
+- [ESLint](https://eslint.org/) - Code linting
+- [Prettier](https://prettier.io) - Code formatting
+- [Turborepo](https://turborepo.com/) - Monorepo build system
+- [Changesets](https://github.com/changesets/changesets) - Version management and publishing
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+## License
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-```
-npx turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+This project is licensed under the terms specified in the [LICENSE](LICENSE) file.
