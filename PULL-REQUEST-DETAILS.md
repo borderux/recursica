@@ -1,157 +1,73 @@
-# Storybook Theme and Branding Enhancement
+# Rate Limiting Implementation for File Commits
 
-## Summary
+## Overview
 
-This pull request enhances the Recursica UI Kit Mantine Storybook with proper branding, authentic theme colors, and an engaging introduction page. The changes address Storybook 9.x compatibility issues while implementing the correct Recursica brand identity (red, black, white color scheme) and improving the overall user experience for documentation visitors.
+This pull request implements automatic rate limiting for file commits to prevent hitting GitHub and GitLab API rate limits when committing large numbers of files in a short time period.
+
+## Problem
+
+Previously, when users tried to commit many files (hundreds or thousands) in a single operation, the plugin would hit GitHub's rate limits, resulting in 429 errors and failed commits. This was particularly problematic for users with large design systems or many generated files.
+
+## Solution
+
+Implemented a comprehensive rate limiting system that:
+
+1. **Batches file commits**: Splits large file sets into batches of 50 files each
+2. **Enforces rate limits**: Limits to 50 commits per minute with automatic waiting
+3. **Adds delays between batches**: Waits 60 seconds between each batch to ensure compliance
+4. **Works across platforms**: Supports both GitHub and GitLab repositories
+5. **Maintains data integrity**: All files are eventually committed successfully
 
 ## Key Changes
 
-### 1. Storybook 9.x Branding Implementation
+### New Files
 
-- **Files**: `.storybook/RecursicaTheme.ts`, `.storybook/manager.ts`
-- **Purpose**: Implements proper branding for Storybook 9.x using correct imports and theme structure
-- **Brand Colors**: Uses authentic Recursica red palette (`#d40d0d`, `#bd0b0b`) with clean white backgrounds and near-black text
-- **Typography**: Integrates Recursica fonts (Lexend, Quattrocento) for consistent brand experience
+- `apps/figma-plugin/src/services/repository/rateLimiter.ts` - Rate limiting utility class
 
-### 2. Enhanced Introduction Experience
+### Modified Files
 
-- **File**: `src/Introduction.stories.tsx`
-- **Purpose**: Creates compelling welcome page serving as sales pitch and system overview
-- **Content**: Comprehensive introduction including benefits, comparisons, testimonials, and quick start guide
-- **Structure**: Well-organized content hierarchy with proper Storybook story metadata
-
-### 3. Configuration Improvements
-
-- **File**: `.storybook/main.ts`
-  - Fixed GitHub Pages base path configuration (`/recursica/` instead of `/ui-kit-mantine/`)
-  - Added TypeScript configuration for better prop documentation
-  - Removed unnecessary MDX story patterns
-- **File**: `.storybook/preview.tsx`
-  - Added story sorting for better navigation (Introduction first)
-  - Removed outdated branding configuration that wasn't working in v9.x
-
-### 4. Documentation Updates
-
-- **File**: `README.md` - Updated Storybook URL to correct GitHub Pages deployment path
-- **File**: `history/storybook-github-pages-deployment.md` - Corrected deployment URL documentation
+- `apps/figma-plugin/src/services/repository/GitHubRepository.ts` - Added rate limiting to commit logic
+- `apps/figma-plugin/src/services/repository/GitLabRepository.ts` - Added rate limiting to commit logic
+- `apps/figma-plugin/ERROR_EXAMPLES.md` - Updated documentation to reflect automatic rate limiting
 
 ## Technical Implementation
 
-### Theme Architecture
+### Rate Limiter Class
 
-```typescript
-// Authentic Recursica Brand Colors
-colorPrimary: "#d40d0d",    // mandy/500 - Recursica red
-colorSecondary: "#bd0b0b",  // mandy/600 - darker red
-appBg: "#ffffff",           // pure white
-textColor: "#0a0a0a",       // near black
-```
+- Tracks commit count within rolling time windows
+- Automatically resets counters after time intervals
+- Provides methods for checking limits and waiting for resets
+- Includes debugging status information
 
-### Storybook 9.x Compatibility
+### Commit Batching
 
-- **Correct Imports**: Uses `storybook/theming` and `storybook/manager-api` (without @ prefix)
-- **Theme Structure**: Follows v9.x theme interface, removing invalid properties
-- **Manager Configuration**: Proper separation of theme definition and application
+- Files are automatically split into batches of 50 files
+- Each batch is committed as a separate Git commit
+- Commit messages include batch information for traceability
+- Maintains proper Git tree structure across batches
 
-### Brand Authenticity
+### Rate Limit Enforcement
 
-- **Color Validation**: Verified against existing Recursica design tokens
-- **Typography**: Uses actual Recursica font families from design system
-- **Visual Hierarchy**: Clean, professional appearance matching brand guidelines
+- 50 commits maximum per minute
+- 60-second wait between batches
+- Automatic waiting when limits are reached
+- Console logging for debugging and progress tracking
 
-## Testing and Validation
+## Benefits
 
-### Build Verification
+- **Prevents rate limit errors**: No more 429 errors during large commits
+- **Transparent to users**: Batching happens automatically without user intervention
+- **Reliable operation**: All files are committed successfully, just with delays
+- **Cross-platform support**: Works for both GitHub and GitLab
+- **Backward compatible**: No changes required to existing API or UI
 
-- ✅ Storybook builds successfully (`npm run build-storybook`)
-- ✅ No TypeScript compilation errors
-- ✅ All components render correctly with new theme
-- ✅ Introduction page displays properly with correct formatting
+## Testing
 
-### Code Quality
+- TypeScript compilation passes without errors
+- ESLint passes with no style violations
+- Build process completes successfully
+- Rate limiting logic has been tested with various file counts
 
-- ✅ All new files pass linting with no errors
-- ✅ TypeScript strict mode compliance
-- ✅ No unused imports or variables
-- ✅ Proper component structure following Storybook CSF format
+## Impact
 
-### Visual Verification
-
-- ✅ Theme correctly displays red, black, white Recursica branding
-- ✅ Typography renders with correct font families
-- ✅ Story navigation sorted correctly (Introduction → Components)
-- ✅ GitHub Pages deployment path working correctly
-
-### Functional Testing
-
-- ✅ Custom theme loads without errors
-- ✅ Brand title and URL correctly configured
-- ✅ Introduction story renders interactive content
-- ✅ All existing component stories work with new theme
-
-## Brand Impact
-
-### Authentic Recursica Identity
-
-- **Color Accuracy**: Uses actual Recursica red (`#d40d0d`) from design tokens instead of generic blue
-- **Typography**: Implements Lexend and Quattrocento fonts from brand guidelines
-- **Visual Consistency**: Clean, professional appearance matching recursica.com aesthetic
-
-### User Experience Improvements
-
-- **Engaging Welcome**: Comprehensive introduction page serves as effective landing experience
-- **Better Navigation**: Story sorting puts most important content first
-- **Professional Appearance**: Proper branding creates credible, polished documentation
-
-### Documentation Enhancement
-
-- **Sales Pitch Content**: Introduction serves as compelling overview of Recursica's value proposition
-- **Quick Start Guide**: Practical code examples help developers get started quickly
-- **Feature Highlights**: Clear presentation of design system capabilities and benefits
-
-## Quality Assurance
-
-### Code Review Checklist
-
-- [x] Proper TypeScript types and interfaces used
-- [x] Storybook 9.x compatibility verified
-- [x] Brand colors match official design tokens
-- [x] Documentation updated consistently
-- [x] No breaking changes to existing functionality
-
-### Performance Considerations
-
-- [x] Theme configuration optimized for fast loading
-- [x] Introduction content structured efficiently
-- [x] No unnecessary dependencies added
-- [x] Build time remains optimal
-
-## Breaking Changes
-
-✅ **No Breaking Changes**: All existing functionality preserved while enhancing user experience and visual branding.
-
-### Migration Notes
-
-- Storybook theme now displays Recursica branding instead of default appearance
-- Introduction page provides better onboarding experience for new users
-- Documentation URL corrected for proper GitHub Pages deployment
-
-## Future Enhancements
-
-### Potential Improvements
-
-1. **Brand Assets**: Add Recursica logo/favicon for complete visual identity
-2. **Dark Theme**: Implement dark mode variant using Recursica dark color tokens
-3. **Interactive Examples**: Add more hands-on component demonstrations
-4. **Custom Domain**: Configure custom domain for branded URL experience
-
-### Content Expansion
-
-- Additional design system documentation pages
-- Component usage guidelines and best practices
-- Design token documentation with visual examples
-- Advanced theming and customization guides
-
-## Conclusion
-
-This enhancement transforms the Storybook from a generic component documentation tool into a branded, engaging showcase of the Recursica Design System. The authentic color scheme, professional typography, and compelling introduction content create a cohesive experience that properly represents the Recursica brand while providing practical value to developers and designers exploring the system.
+This change significantly improves the reliability of the plugin when working with large repositories or many generated files, eliminating a common source of user frustration and failed operations.
