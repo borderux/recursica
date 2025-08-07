@@ -8,6 +8,7 @@ import {
   CommitAction,
   PullRequest,
 } from './BaseRepository';
+import { RateLimiter } from './rateLimiter';
 
 interface GitHubProject {
   name: string;
@@ -22,6 +23,7 @@ interface GitHubProject {
 
 export class GitHubRepository extends BaseRepository {
   private readonly baseUrl = 'https://api.github.com';
+  private readonly rateLimiter = new RateLimiter();
 
   constructor(accessToken: string) {
     super(accessToken);
@@ -143,72 +145,113 @@ export class GitHubRepository extends BaseRepository {
     message: string,
     actions: CommitAction[]
   ): Promise<void> {
-    // Get the current commit SHA
+    const MAX_FILES_PER_COMMIT = 50;
+
+    // Split actions into batches of MAX_FILES_PER_COMMIT
+    const batches: CommitAction[][] = [];
+    for (let i = 0; i < actions.length; i += MAX_FILES_PER_COMMIT) {
+      batches.push(actions.slice(i, i + MAX_FILES_PER_COMMIT));
+    }
+
+    console.log(
+      `Committing ${actions.length} files in ${batches.length} batches of max ${MAX_FILES_PER_COMMIT} files each`
+    );
+
+    // Get the initial commit SHA and tree SHA
     const branchResponse = await this.httpClient.get(
       `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/refs/heads/${branch}`
     );
-    const parentSha = branchResponse.data.object.sha;
+    let parentSha = branchResponse.data.object.sha;
 
     // Get the current tree
     const parentCommitResponse = await this.httpClient.get(
       `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/commits/${parentSha}`
     );
-    const baseTreeSha = parentCommitResponse.data.tree.sha;
+    let baseTreeSha = parentCommitResponse.data.tree.sha;
 
-    // Create blobs for each file
-    const tree = [];
-    for (const action of actions) {
-      if (action.action !== 'delete') {
-        const blobResponse = await this.httpClient.post(
-          `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/blobs`,
-          {
-            content: action.content,
-            encoding: 'utf-8',
-          }
-        );
+    // Process each batch
+    for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+      const batch = batches[batchIndex];
 
-        tree.push({
-          path: action.file_path,
-          mode: '100644',
-          type: 'blob',
-          sha: blobResponse.data.sha,
-        });
-      } else {
-        tree.push({
-          path: action.file_path,
-          mode: '100644',
-          type: 'blob',
-          sha: null, // This deletes the file
-        });
+      // Wait for rate limit if needed
+      await this.rateLimiter.waitForReset();
+
+      console.log(
+        `Processing batch ${batchIndex + 1}/${batches.length} with ${batch.length} files`
+      );
+
+      // Create blobs for each file in the batch
+      const tree = [];
+      for (const action of batch) {
+        if (action.action !== 'delete') {
+          const blobResponse = await this.httpClient.post(
+            `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/blobs`,
+            {
+              content: action.content,
+              encoding: 'utf-8',
+            }
+          );
+
+          tree.push({
+            path: action.file_path,
+            mode: '100644',
+            type: 'blob',
+            sha: blobResponse.data.sha,
+          });
+        } else {
+          tree.push({
+            path: action.file_path,
+            mode: '100644',
+            type: 'blob',
+            sha: null, // This deletes the file
+          });
+        }
+      }
+
+      // Create a new tree
+      const treeResponse = await this.httpClient.post(
+        `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/trees`,
+        {
+          base_tree: baseTreeSha,
+          tree: tree,
+        }
+      );
+
+      // Create a new commit
+      const commitResponse = await this.httpClient.post(
+        `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/commits`,
+        {
+          message: `${message} (batch ${batchIndex + 1}/${batches.length})`,
+          tree: treeResponse.data.sha,
+          parents: [parentSha],
+        }
+      );
+
+      // Update the branch reference
+      await this.httpClient.patch(
+        `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/refs/heads/${branch}`,
+        {
+          sha: commitResponse.data.sha,
+        }
+      );
+
+      // Record this commit for rate limiting
+      this.rateLimiter.recordCommit();
+
+      // Update parent SHA and tree SHA for next batch
+      parentSha = commitResponse.data.sha;
+      baseTreeSha = treeResponse.data.sha;
+
+      console.log(`Completed batch ${batchIndex + 1}/${batches.length}`);
+
+      // Wait 1 minute before starting the next batch (if there is one)
+      if (batchIndex < batches.length - 1) {
+        console.log('Waiting 60 seconds before starting next batch...');
+        await new Promise((resolve) => setTimeout(resolve, 60 * 1000));
       }
     }
 
-    // Create a new tree
-    const treeResponse = await this.httpClient.post(
-      `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/trees`,
-      {
-        base_tree: baseTreeSha,
-        tree: tree,
-      }
-    );
-
-    // Create a new commit
-    const commitResponse = await this.httpClient.post(
-      `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/commits`,
-      {
-        message: message,
-        tree: treeResponse.data.sha,
-        parents: [parentSha],
-      }
-    );
-
-    // Update the branch reference
-    await this.httpClient.patch(
-      `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/refs/heads/${branch}`,
-      {
-        sha: commitResponse.data.sha,
-      }
-    );
+    console.log(`Successfully committed all ${actions.length} files in ${batches.length} batches`);
   }
 
   async createPullRequest(
