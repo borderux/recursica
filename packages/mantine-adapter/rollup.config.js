@@ -4,39 +4,48 @@ import resolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
 import json from "@rollup/plugin-json";
 
-const external = [
-  "fs",
-  "path",
-  "process",
-  "util",
-  "os",
-  "crypto",
-  "stream",
-  "events",
-  "buffer",
-  "url",
-  "querystring",
-  "http",
-  "https",
-  "net",
-  "tls",
-  "child_process",
-  "cluster",
-  "dgram",
-  "dns",
-  "readline",
-  "repl",
-  "tty",
-  "vm",
-  "zlib",
-  "@recursica/common",
-  "@recursica/schemas",
-];
+const external = (id) => {
+  // Node.js built-in modules
+  const nodeBuiltins = [
+    "fs",
+    "path",
+    "process",
+    "util",
+    "os",
+    "crypto",
+    "stream",
+    "events",
+    "buffer",
+    "url",
+    "querystring",
+    "http",
+    "https",
+    "net",
+    "tls",
+    "child_process",
+    "cluster",
+    "dgram",
+    "dns",
+    "readline",
+    "repl",
+    "tty",
+    "vm",
+    "zlib",
+  ];
+
+  // Workspace dependencies
+  const workspaceDeps = ["@recursica/common", "@recursica/schemas"];
+
+  return (
+    nodeBuiltins.includes(id) || workspaceDeps.some((dep) => id.startsWith(dep))
+  );
+};
 
 const plugins = [
   resolve({
     preferBuiltins: true,
     exportConditions: ["node"],
+    extensions: [".ts", ".js", ".json"],
   }),
   commonjs(),
   json(),
@@ -44,6 +53,13 @@ const plugins = [
     tsconfig: "./tsconfig.json",
     sourceMap: true,
     inlineSources: true,
+    skipLibCheck: true,
+    exclude: ["node_modules/**", "dist/**", "**/node_modules/**"],
+    noEmitOnError: false,
+    compilerOptions: {
+      skipLibCheck: true,
+      noEmit: false,
+    },
   }),
 ];
 export default defineConfig([
@@ -93,5 +109,6 @@ export default defineConfig([
       exports: "auto",
     },
     plugins,
+    external,
   },
 ]);
