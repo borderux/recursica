@@ -91,18 +91,18 @@ The system enforces a three-layer architecture:
 
 ## Benefits
 
-- **Prevents rate limit errors**: No more 429 errors during large commits
-- **Transparent to users**: Batching happens automatically without user intervention
-- **Reliable operation**: All files are committed successfully, just with delays
-- **Cross-platform support**: Works for both GitHub and GitLab
-- **Backward compatible**: No changes required to existing API or UI
+- **Prevents duplicate files**: Users get cleaner output without redundant CSS generation
+- **Better data quality**: Filtered output contains only relevant design tokens
+- **Improved performance**: Faster processing through parallelization and reduced data volume
+- **Enhanced reliability**: Better fallback mechanisms prevent errors
+- **Cleaner codebase**: More maintainable and focused implementations
 
 - ✅ All validation functions compile without TypeScript errors
 - ✅ Schema loading works correctly at runtime
 - ✅ Error formatting produces clean, readable messages
 - ✅ Sample validation script runs successfully
 
-### Before (Scattered Logic)
+### Before (Inefficient Processing)
 
 - ✅ All new files pass linting with no errors
 - ✅ TypeScript strict mode compliance

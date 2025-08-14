@@ -1,5 +1,11 @@
 # @recursica/figma-plugin
 
+## 0.0.11
+
+### Patch Changes
+
+- db56af9: support legacy figma files structure
+
 ## 0.0.10
 
 ### Patch Changes
