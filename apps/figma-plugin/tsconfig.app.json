@@ -22,7 +22,12 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "typeRoots": ["../../node_modules/@types", "../../node_modules"],
-    "types": ["react", "node", "@figma/plugin-typings", "@recursica/schemas"]
+    "types": ["react", "node", "@figma/plugin-typings", "@recursica/schemas"],
+    "baseUrl": ".",
+    "paths": {
+      "@recursica/common": ["../../packages/common/src"],
+      "@recursica/common/*": ["../../packages/common/src/*"]
+    }
   },
   "include": ["src"]
 }
