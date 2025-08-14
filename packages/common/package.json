@@ -37,7 +37,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --noEmitOnError --listFiles",
     "dev": "tsc --watch",
     "clean": "rm -rf dist",
     "lint": "eslint . --max-warnings 0",
