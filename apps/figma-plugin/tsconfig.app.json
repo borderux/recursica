@@ -8,7 +8,7 @@
     "allowJs": false,
     "resolveJsonModule": true,
     /* Bundler mode */
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,
@@ -22,12 +22,7 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "typeRoots": ["../../node_modules/@types", "../../node_modules"],
-    "types": ["react", "node", "@figma/plugin-typings", "@recursica/schemas"],
-    "baseUrl": ".",
-    "paths": {
-      "@recursica/common": ["../../packages/common/src"],
-      "@recursica/common/*": ["../../packages/common/src/*"]
-    }
+    "types": ["react", "node", "@figma/plugin-typings", "@recursica/schemas"]
   },
   "include": ["src"]
 }

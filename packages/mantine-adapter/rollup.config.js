@@ -4,48 +4,37 @@ import resolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
 import json from "@rollup/plugin-json";
 
-const external = (id) => {
-  // Node.js built-in modules
-  const nodeBuiltins = [
-    "fs",
-    "path",
-    "process",
-    "util",
-    "os",
-    "crypto",
-    "stream",
-    "events",
-    "buffer",
-    "url",
-    "querystring",
-    "http",
-    "https",
-    "net",
-    "tls",
-    "child_process",
-    "cluster",
-    "dgram",
-    "dns",
-    "readline",
-    "repl",
-    "tty",
-    "vm",
-    "zlib",
-  ];
-
-  // Workspace dependencies
-  const workspaceDeps = ["@recursica/common", "@recursica/schemas"];
-
-  return (
-    nodeBuiltins.includes(id) || workspaceDeps.some((dep) => id.startsWith(dep))
-  );
-};
+const external = [
+  "fs",
+  "path",
+  "process",
+  "util",
+  "os",
+  "crypto",
+  "stream",
+  "events",
+  "buffer",
+  "url",
+  "querystring",
+  "http",
+  "https",
+  "net",
+  "tls",
+  "child_process",
+  "cluster",
+  "dgram",
+  "dns",
+  "readline",
+  "repl",
+  "tty",
+  "vm",
+  "zlib",
+];
 
 const plugins = [
   resolve({
     preferBuiltins: true,
     exportConditions: ["node"],
-    extensions: [".ts", ".js", ".json"],
   }),
   commonjs(),
   json(),
@@ -102,6 +91,5 @@ export default defineConfig([
       exports: "auto",
     },
     plugins,
-    external,
   },
 ]);
