@@ -8,6 +8,7 @@ import {
   CommitAction,
   PullRequest,
 } from './BaseRepository';
+import { RateLimiter } from './rateLimiter';
 
 interface GitLabProject {
   name: string;
@@ -20,6 +21,7 @@ interface GitLabProject {
 }
 export class GitLabRepository extends BaseRepository {
   private readonly baseUrl = 'https://gitlab.com/api/v4';
+  private readonly rateLimiter = new RateLimiter();
 
   constructor(accessToken: string) {
     super(accessToken);
@@ -119,10 +121,17 @@ export class GitLabRepository extends BaseRepository {
     message: string,
     actions: CommitAction[]
   ): Promise<void> {
-    await this.httpClient.post(`${this.baseUrl}/projects/${project.id}/repository/commits`, {
-      branch: branch,
-      commit_message: message,
-      actions: actions,
+    // Use the rate limiter to process batches automatically
+    await this.rateLimiter.processBatched({
+      items: actions,
+      processor: async (batch) => {
+        await this.httpClient.post(`${this.baseUrl}/projects/${project.id}/repository/commits`, {
+          branch: branch,
+          commit_message: `${message} (batch ${actions.indexOf(batch[0]) / this.rateLimiter.getConfig().batchSize + 1}/${Math.ceil(actions.length / this.rateLimiter.getConfig().batchSize)})`,
+          actions: batch,
+        });
+        return { success: true };
+      },
     });
   }
 
