@@ -378,8 +378,8 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
         throw error; // Re-throw to prevent further execution
       }
 
-      // Generate CSS from bundled JSON only if no adapter files were created
-      if (fileLoadingData.bundledJson && adapterFiles.length === 0) {
+      // Generate CSS from bundled JSON
+      if (fileLoadingData.bundledJson) {
         const cssContent = generateCSSFromBundledJson(fileLoadingData.bundledJson);
         if (cssContent) {
           adapterFiles.push({

@@ -11,11 +11,7 @@ async function decodeVariableCollections() {
   const objectCollections = {};
   // Get local variable collections
   const rawVariables = await figma.variables.getLocalVariableCollectionsAsync();
-
-  // Filter out "ID variables" collection
-  const filteredVariables = rawVariables.filter((collection) => collection.name !== 'ID variables');
-
-  for (const variableCollection of filteredVariables) {
+  for (const variableCollection of rawVariables) {
     Object.assign(objectCollections, await processLocalVariableCollection(variableCollection));
   }
   return objectCollections;
