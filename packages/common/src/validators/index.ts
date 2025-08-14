@@ -1,6 +1,6 @@
-export * from "./validateVariables.js";
-export * from "./validateConfiguration.js";
-export * from "./validateIcons.js";
+export * from "./validateVariables";
+export * from "./validateConfiguration";
+export * from "./validateIcons";
 
 // Re-export the ValidationResult interface for convenience
 export interface ValidationResult {
