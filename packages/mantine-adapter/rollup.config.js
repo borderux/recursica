@@ -53,13 +53,6 @@ const plugins = [
     tsconfig: "./tsconfig.json",
     sourceMap: true,
     inlineSources: true,
-    skipLibCheck: true,
-    exclude: ["node_modules/**", "dist/**", "**/node_modules/**"],
-    noEmitOnError: false,
-    compilerOptions: {
-      skipLibCheck: true,
-      noEmit: false,
-    },
   }),
 ];
 export default defineConfig([
