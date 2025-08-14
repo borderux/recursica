@@ -29,6 +29,8 @@ const external = [
   "tty",
   "vm",
   "zlib",
+  "@recursica/common",
+  "@recursica/schemas",
 ];
 
 const plugins = [
