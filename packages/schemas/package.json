@@ -37,6 +37,7 @@
     "dist"
   ],
   "scripts": {
+    "build": "npm run generate-types",
     "lint": "eslint . --max-warnings 0",
     "check-types": "tsc --noEmit",
     "generate-types": "npm test && node scripts/generate-types.js",
