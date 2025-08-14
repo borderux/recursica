@@ -1,91 +1,93 @@
-# Rate Limiting Implementation for File Commits
+# Figma Plugin Variable Handling and Performance Improvements
 
 ## Overview
 
-This pull request implements automatic rate limiting for file commits to prevent hitting GitHub and GitLab API rate limits when committing large numbers of files in a short time period.
+This pull request implements several improvements to the Figma plugin's variable handling system, focusing on performance optimization and better data quality through intelligent filtering and conditional processing.
 
 ## Problem
 
-Previously, when users tried to commit many files (hundreds or thousands) in a single operation, the plugin would hit GitHub's rate limits, resulting in 429 errors and failed commits. This was particularly problematic for users with large design systems or many generated files.
+The previous implementation had several inefficiencies and data quality issues:
+
+1. **Duplicate file generation**: CSS files were being generated even when adapter files were already created
+2. **Unnecessary data processing**: "ID variables" collections were being processed despite not containing relevant design tokens
+3. **Performance bottlenecks**: Some operations were running sequentially instead of in parallel
+4. **Inconsistent theme handling**: Theme names weren't properly handled with fallbacks
 
 ## Solution
 
-Implemented a comprehensive rate limiting system that:
+Implemented a comprehensive set of improvements that:
 
-1. **Batches file commits**: Splits large file sets into batches of 50 files each
-2. **Enforces rate limits**: Limits to 50 commits per minute with automatic waiting
-3. **Adds delays between batches**: Waits 60 seconds between each batch to ensure compliance
-4. **Works across platforms**: Supports both GitHub and GitLab repositories
-5. **Maintains data integrity**: All files are eventually committed successfully
+1. **Optimizes file generation**: Only creates CSS files when no adapter files are present
+2. **Filters irrelevant data**: Excludes "ID variables" collections from all processing operations
+3. **Improves performance**: Enhances parallel processing for better execution speed
+4. **Enhances theme handling**: Provides better fallback mechanisms for theme names
 
 ## Key Changes
 
-### New Files
-
-- `apps/figma-plugin/src/services/repository/rateLimiter.ts` - Rate limiting utility class
-
 ### Modified Files
 
-- `apps/figma-plugin/src/services/repository/GitHubRepository.ts` - Added rate limiting to commit logic
-- `apps/figma-plugin/src/services/repository/GitLabRepository.ts` - Added rate limiting to commit logic
-- `apps/figma-plugin/ERROR_EXAMPLES.md` - Updated documentation to reflect automatic rate limiting
+- `apps/figma-plugin/src/context/Repository/RepositoryProvider.tsx` - Added conditional CSS generation logic
+- `apps/figma-plugin/src/plugin/exportToJSON.ts` - Added filtering for "ID variables" collection
+- `apps/figma-plugin/src/plugin/syncTokens.ts` - Enhanced variable synchronization and theme handling
+- `apps/figma-plugin/src/plugin/teamLibrary.ts` - Improved parallel processing and filtering
 
 ## Technical Implementation
 
-### Rate Limiter Class
+### Conditional CSS Generation
 
-- **Generic and reusable**: Can be used for any batched operation, not just Git commits
-- **Simple configuration**: Just `batchSize` and `delayBetweenBatches` with sensible defaults (50 items, 60 seconds)
-- **Automatic batching**: Handles all batching logic internally through the `processBatched` method
-- **Comprehensive documentation**: Full JSDoc with examples and parameter descriptions
-- **Type-safe**: Generic types for items and results
+- **Smart file creation**: CSS generation only runs when `adapterFiles.length === 0`
+- **Prevents duplication**: Ensures users don't get both adapter files and CSS files for the same data
+- **Maintains compatibility**: Still provides CSS output when no adapters are available
 
-### Commit Batching
+### Intelligent Variable Filtering
 
-- **Centralized logic**: All batching is handled within the RateLimiter class
-- **Automatic processing**: Repository implementations just provide a processor function
-- **Flexible callbacks**: Optional hooks for batch start/completion events
-- **Clean separation**: Repository code focuses on Git operations, not rate limiting
+- **Consistent filtering**: "ID variables" collections are excluded from all operations
+- **Data quality improvement**: Reduces noise in exported data and processing
+- **Performance gain**: Less data to process means faster execution
 
-### Rate Limit Enforcement
+### Enhanced Theme Handling
 
-- **Configurable limits**: 50 operations per minute (configurable)
-- **Automatic delays**: 60-second delays between batches (configurable)
-- **Smart waiting**: Automatically waits when rate limits are reached
-- **Progress tracking**: Comprehensive logging and status information
+- **Fallback mechanism**: Uses `figma.root.name` when theme name isn't available
+- **Better user experience**: Ensures theme names are always meaningful
+- **Consistent formatting**: Applies proper PascalCase formatting to theme names
+
+### Performance Optimizations
+
+- **Parallel processing**: Multiple operations now run concurrently where possible
+- **Reduced blocking**: Less sequential waiting improves overall responsiveness
+- **Efficient data structures**: Better use of Maps and Promise.all for faster execution
 
 ## Benefits
 
-- **Prevents rate limit errors**: No more 429 errors during large commits
-- **Transparent to users**: Batching happens automatically without user intervention
-- **Reliable operation**: All files are committed successfully, just with delays
-- **Cross-platform support**: Works for both GitHub and GitLab
-- **Backward compatible**: No changes required to existing API or UI
+- **Prevents duplicate files**: Users get cleaner output without redundant CSS generation
+- **Better data quality**: Filtered output contains only relevant design tokens
+- **Improved performance**: Faster processing through parallelization and reduced data volume
+- **Enhanced reliability**: Better fallback mechanisms prevent errors
+- **Cleaner codebase**: More maintainable and focused implementations
 
 ## Architecture Improvements
 
-### Before (Scattered Logic)
+### Before (Inefficient Processing)
 
-- Rate limiting logic was duplicated across GitHub and GitLab repositories
-- Batching logic was implemented in each repository class
-- Hard-coded values for batch sizes and delays
-- Manual waiting and progress tracking in each implementation
+- CSS files were always generated regardless of adapter file presence
+- All variable collections were processed, including irrelevant "ID variables"
+- Some operations ran sequentially, creating performance bottlenecks
+- Theme names could be undefined, leading to potential errors
 
-### After (Centralized Design)
+### After (Optimized Design)
 
-- **Single responsibility**: RateLimiter class handles all rate limiting and batching
-- **Configuration-driven**: All parameters are configurable through constructor
-- **Generic and reusable**: Can be used for any rate-limited operation
-- **Clean separation**: Repository classes focus only on Git operations
-- **Type-safe**: Generic types ensure compile-time safety
+- **Conditional processing**: CSS generation only when needed
+- **Intelligent filtering**: Automatic exclusion of irrelevant data
+- **Parallel execution**: Better utilization of available resources
+- **Robust fallbacks**: Graceful handling of missing or undefined values
 
 ## Testing
 
 - TypeScript compilation passes without errors
 - ESLint passes with no style violations
 - Build process completes successfully
-- Rate limiting logic has been tested with various file counts
+- Variable filtering logic has been tested with various collection types
 
 ## Impact
 
-This change significantly improves the reliability of the plugin when working with large repositories or many generated files, eliminating a common source of user frustration and failed operations.
+These improvements significantly enhance the plugin's performance and data quality, providing users with cleaner outputs and faster processing times while maintaining full backward compatibility.
