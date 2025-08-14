@@ -4,7 +4,6 @@ export async function syncTokens() {
   const localCollections = await figma.variables.getLocalVariableCollectionsAsync();
   let fileType = 'icons';
   let themeName = '';
-
   if (localCollections.length > 0) {
     const tokensCollection = localCollections.find((collection) =>
       collection.name.toLowerCase().includes('tokens')
@@ -102,6 +101,11 @@ export async function syncTokens() {
     }
 
     collection.setSharedPluginData('recursica', 'file-type', fileType);
+    // Skip setting shared plugin data for "ID variables" collection
+    if (collection.name === 'ID variables') {
+      return Promise.resolve([]);
+    }
+
     if (fileType === 'themes') {
       // Use themeName if available, otherwise fall back to figma.root.name
       const finalThemeName = themeName || toPascalCase(figma.root.name);
