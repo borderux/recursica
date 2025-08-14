@@ -1,91 +1,77 @@
-# Rate Limiting Implementation for File Commits
+# Improve Figma Plugin Variable Handling and Performance
 
 ## Overview
 
-This pull request implements automatic rate limiting for file commits to prevent hitting GitHub and GitLab API rate limits when committing large numbers of files in a short time period.
+This pull request enhances the Figma plugin's variable processing capabilities by improving performance, filtering out unnecessary collections, and optimizing CSS generation logic.
 
 ## Problem
 
-Previously, when users tried to commit many files (hundreds or thousands) in a single operation, the plugin would hit GitHub's rate limits, resulting in 429 errors and failed commits. This was particularly problematic for users with large design systems or many generated files.
+The plugin was experiencing several issues:
+
+1. **Duplicate file generation**: CSS files were being created even when adapter files were already generated
+2. **Unnecessary processing**: "ID variables" collections were being processed despite not containing design tokens
+3. **Performance bottlenecks**: Some operations were running sequentially instead of in parallel
+4. **Inconsistent theme handling**: Theme names weren't being properly extracted from Figma variables
 
 ## Solution
 
-Implemented a comprehensive rate limiting system that:
+Implemented comprehensive improvements to variable handling:
 
-1. **Batches file commits**: Splits large file sets into batches of 50 files each
-2. **Enforces rate limits**: Limits to 50 commits per minute with automatic waiting
-3. **Adds delays between batches**: Waits 60 seconds between each batch to ensure compliance
-4. **Works across platforms**: Supports both GitHub and GitLab repositories
-5. **Maintains data integrity**: All files are eventually committed successfully
+1. **Smart CSS generation**: Only generate CSS when no adapter files exist, preventing duplicates
+2. **Collection filtering**: Exclude "ID variables" collections from all processing operations
+3. **Performance optimization**: Enhanced parallel processing for team library operations
+4. **Improved theme handling**: Better fallback logic for theme names with fallback to figma.root.name
 
 ## Key Changes
 
-### New Files
-
-- `apps/figma-plugin/src/services/repository/rateLimiter.ts` - Rate limiting utility class
-
 ### Modified Files
 
-- `apps/figma-plugin/src/services/repository/GitHubRepository.ts` - Added rate limiting to commit logic
-- `apps/figma-plugin/src/services/repository/GitLabRepository.ts` - Added rate limiting to commit logic
-- `apps/figma-plugin/ERROR_EXAMPLES.md` - Updated documentation to reflect automatic rate limiting
+- `apps/figma-plugin/src/context/Repository/RepositoryProvider.tsx` - Added conditional CSS generation logic
+- `apps/figma-plugin/src/plugin/exportToJSON.ts` - Added "ID variables" collection filtering
+- `apps/figma-plugin/src/plugin/syncTokens.ts` - Enhanced variable synchronization and theme handling
+- `apps/figma-plugin/src/plugin/teamLibrary.ts` - Improved parallel processing and collection filtering
 
 ## Technical Implementation
 
-### Rate Limiter Class
+### Conditional CSS Generation
 
-- **Generic and reusable**: Can be used for any batched operation, not just Git commits
-- **Simple configuration**: Just `batchSize` and `delayBetweenBatches` with sensible defaults (50 items, 60 seconds)
-- **Automatic batching**: Handles all batching logic internally through the `processBatched` method
-- **Comprehensive documentation**: Full JSDoc with examples and parameter descriptions
-- **Type-safe**: Generic types for items and results
+- **Smart logic**: CSS generation only runs when `adapterFiles.length === 0`
+- **Prevents duplication**: Avoids creating CSS files when adapters already handle the output
+- **Maintains functionality**: CSS generation still works for projects without custom adapters
 
-### Commit Batching
+### Collection Filtering
 
-- **Centralized logic**: All batching is handled within the RateLimiter class
-- **Automatic processing**: Repository implementations just provide a processor function
-- **Flexible callbacks**: Optional hooks for batch start/completion events
-- **Clean separation**: Repository code focuses on Git operations, not rate limiting
+- **Consistent filtering**: "ID variables" collections are excluded from all operations
+- **Performance improvement**: Reduces unnecessary processing of non-design token collections
+- **Cleaner data**: Ensures only relevant design tokens are processed and exported
 
-### Rate Limit Enforcement
+### Enhanced Theme Handling
 
-- **Configurable limits**: 50 operations per minute (configurable)
-- **Automatic delays**: 60-second delays between batches (configurable)
-- **Smart waiting**: Automatically waits when rate limits are reached
-- **Progress tracking**: Comprehensive logging and status information
+- **Better extraction**: Improved logic for extracting theme names from Figma variables
+- **Fallback support**: Uses figma.root.name as fallback when theme variable is not available
+- **Consistent naming**: Ensures theme names are properly formatted using PascalCase
+
+### Performance Optimizations
+
+- **Parallel processing**: Team library operations now run in parallel where possible
+- **Reduced blocking**: Sequential operations only where data dependencies require it
+- **Better resource utilization**: More efficient use of available processing power
 
 ## Benefits
 
-- **Prevents rate limit errors**: No more 429 errors during large commits
-- **Transparent to users**: Batching happens automatically without user intervention
-- **Reliable operation**: All files are committed successfully, just with delays
-- **Cross-platform support**: Works for both GitHub and GitLab
-- **Backward compatible**: No changes required to existing API or UI
-
-## Architecture Improvements
-
-### Before (Scattered Logic)
-
-- Rate limiting logic was duplicated across GitHub and GitLab repositories
-- Batching logic was implemented in each repository class
-- Hard-coded values for batch sizes and delays
-- Manual waiting and progress tracking in each implementation
-
-### After (Centralized Design)
-
-- **Single responsibility**: RateLimiter class handles all rate limiting and batching
-- **Configuration-driven**: All parameters are configurable through constructor
-- **Generic and reusable**: Can be used for any rate-limited operation
-- **Clean separation**: Repository classes focus only on Git operations
-- **Type-safe**: Generic types ensure compile-time safety
+- **Eliminates duplicate files**: No more redundant CSS generation
+- **Improved performance**: Faster processing through parallelization and filtering
+- **Better data quality**: Cleaner exports without irrelevant collections
+- **Enhanced reliability**: More consistent theme handling and variable processing
+- **Maintainable code**: Cleaner separation of concerns and better error handling
 
 ## Testing
 
 - TypeScript compilation passes without errors
 - ESLint passes with no style violations
 - Build process completes successfully
-- Rate limiting logic has been tested with various file counts
+- Variable processing has been tested with various Figma project structures
 
 ## Impact
 
-This change significantly improves the reliability of the plugin when working with large repositories or many generated files, eliminating a common source of user frustration and failed operations.
+These improvements enhance the plugin's reliability and performance when working with complex Figma projects, particularly those with multiple variable collections and custom adapters. Users will experience faster processing times and cleaner output files.
