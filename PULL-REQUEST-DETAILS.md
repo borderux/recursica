@@ -34,24 +34,25 @@ Implemented a comprehensive rate limiting system that:
 
 ### Rate Limiter Class
 
-- Tracks commit count within rolling time windows
-- Automatically resets counters after time intervals
-- Provides methods for checking limits and waiting for resets
-- Includes debugging status information
+- **Generic and reusable**: Can be used for any batched operation, not just Git commits
+- **Simple configuration**: Just `batchSize` and `delayBetweenBatches` with sensible defaults (50 items, 60 seconds)
+- **Automatic batching**: Handles all batching logic internally through the `processBatched` method
+- **Comprehensive documentation**: Full JSDoc with examples and parameter descriptions
+- **Type-safe**: Generic types for items and results
 
 ### Commit Batching
 
-- Files are automatically split into batches of 50 files
-- Each batch is committed as a separate Git commit
-- Commit messages include batch information for traceability
-- Maintains proper Git tree structure across batches
+- **Centralized logic**: All batching is handled within the RateLimiter class
+- **Automatic processing**: Repository implementations just provide a processor function
+- **Flexible callbacks**: Optional hooks for batch start/completion events
+- **Clean separation**: Repository code focuses on Git operations, not rate limiting
 
 ### Rate Limit Enforcement
 
-- 50 commits maximum per minute
-- 60-second wait between batches
-- Automatic waiting when limits are reached
-- Console logging for debugging and progress tracking
+- **Configurable limits**: 50 operations per minute (configurable)
+- **Automatic delays**: 60-second delays between batches (configurable)
+- **Smart waiting**: Automatically waits when rate limits are reached
+- **Progress tracking**: Comprehensive logging and status information
 
 ## Benefits
 
@@ -60,6 +61,23 @@ Implemented a comprehensive rate limiting system that:
 - **Reliable operation**: All files are committed successfully, just with delays
 - **Cross-platform support**: Works for both GitHub and GitLab
 - **Backward compatible**: No changes required to existing API or UI
+
+## Architecture Improvements
+
+### Before (Scattered Logic)
+
+- Rate limiting logic was duplicated across GitHub and GitLab repositories
+- Batching logic was implemented in each repository class
+- Hard-coded values for batch sizes and delays
+- Manual waiting and progress tracking in each implementation
+
+### After (Centralized Design)
+
+- **Single responsibility**: RateLimiter class handles all rate limiting and batching
+- **Configuration-driven**: All parameters are configurable through constructor
+- **Generic and reusable**: Can be used for any rate-limited operation
+- **Clean separation**: Repository classes focus only on Git operations
+- **Type-safe**: Generic types ensure compile-time safety
 
 ## Testing
 

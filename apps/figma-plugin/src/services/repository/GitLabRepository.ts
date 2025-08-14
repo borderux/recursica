@@ -121,48 +121,18 @@ export class GitLabRepository extends BaseRepository {
     message: string,
     actions: CommitAction[]
   ): Promise<void> {
-    const MAX_FILES_PER_COMMIT = 50;
-
-    // Split actions into batches of MAX_FILES_PER_COMMIT
-    const batches: CommitAction[][] = [];
-    for (let i = 0; i < actions.length; i += MAX_FILES_PER_COMMIT) {
-      batches.push(actions.slice(i, i + MAX_FILES_PER_COMMIT));
-    }
-
-    console.log(
-      `Committing ${actions.length} files in ${batches.length} batches of max ${MAX_FILES_PER_COMMIT} files each`
-    );
-
-    // Process each batch
-    for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
-      const batch = batches[batchIndex];
-
-      // Wait for rate limit if needed
-      await this.rateLimiter.waitForReset();
-
-      console.log(
-        `Processing batch ${batchIndex + 1}/${batches.length} with ${batch.length} files`
-      );
-
-      await this.httpClient.post(`${this.baseUrl}/projects/${project.id}/repository/commits`, {
-        branch: branch,
-        commit_message: `${message} (batch ${batchIndex + 1}/${batches.length})`,
-        actions: batch,
-      });
-
-      // Record this commit for rate limiting
-      this.rateLimiter.recordCommit();
-
-      console.log(`Completed batch ${batchIndex + 1}/${batches.length}`);
-
-      // Wait 1 minute before starting the next batch (if there is one)
-      if (batchIndex < batches.length - 1) {
-        console.log('Waiting 60 seconds before starting next batch...');
-        await new Promise((resolve) => setTimeout(resolve, 60 * 1000));
-      }
-    }
-
-    console.log(`Successfully committed all ${actions.length} files in ${batches.length} batches`);
+    // Use the rate limiter to process batches automatically
+    await this.rateLimiter.processBatched({
+      items: actions,
+      processor: async (batch) => {
+        await this.httpClient.post(`${this.baseUrl}/projects/${project.id}/repository/commits`, {
+          branch: branch,
+          commit_message: `${message} (batch ${actions.indexOf(batch[0]) / this.rateLimiter.getConfig().batchSize + 1}/${Math.ceil(actions.length / this.rateLimiter.getConfig().batchSize)})`,
+          actions: batch,
+        });
+        return { success: true };
+      },
+    });
   }
 
   async createPullRequest(
