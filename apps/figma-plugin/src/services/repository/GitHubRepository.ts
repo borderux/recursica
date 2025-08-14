@@ -8,6 +8,7 @@ import {
   CommitAction,
   PullRequest,
 } from './BaseRepository';
+import { RateLimiter } from './rateLimiter';
 
 interface GitHubProject {
   name: string;
@@ -22,6 +23,7 @@ interface GitHubProject {
 
 export class GitHubRepository extends BaseRepository {
   private readonly baseUrl = 'https://api.github.com';
+  private readonly rateLimiter = new RateLimiter();
 
   constructor(accessToken: string) {
     super(accessToken);
@@ -143,72 +145,84 @@ export class GitHubRepository extends BaseRepository {
     message: string,
     actions: CommitAction[]
   ): Promise<void> {
-    // Get the current commit SHA
+    // Get the initial commit SHA and tree SHA
     const branchResponse = await this.httpClient.get(
       `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/refs/heads/${branch}`
     );
-    const parentSha = branchResponse.data.object.sha;
+    let parentSha = branchResponse.data.object.sha;
 
     // Get the current tree
     const parentCommitResponse = await this.httpClient.get(
       `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/commits/${parentSha}`
     );
-    const baseTreeSha = parentCommitResponse.data.tree.sha;
+    let baseTreeSha = parentCommitResponse.data.tree.sha;
 
-    // Create blobs for each file
-    const tree = [];
-    for (const action of actions) {
-      if (action.action !== 'delete') {
-        const blobResponse = await this.httpClient.post(
-          `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/blobs`,
+    // Use the rate limiter to process batches automatically
+    await this.rateLimiter.processBatched({
+      items: actions,
+      processor: async (batch) => {
+        // Create blobs for each file in the batch
+        const tree = [];
+        for (const action of batch) {
+          if (action.action !== 'delete') {
+            const blobResponse = await this.httpClient.post(
+              `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/blobs`,
+              {
+                content: action.content,
+                encoding: 'utf-8',
+              }
+            );
+
+            tree.push({
+              path: action.file_path,
+              mode: '100644',
+              type: 'blob',
+              sha: blobResponse.data.sha,
+            });
+          } else {
+            tree.push({
+              path: action.file_path,
+              mode: '100644',
+              type: 'blob',
+              sha: null, // This deletes the file
+            });
+          }
+        }
+
+        // Create a new tree
+        const treeResponse = await this.httpClient.post(
+          `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/trees`,
           {
-            content: action.content,
-            encoding: 'utf-8',
+            base_tree: baseTreeSha,
+            tree: tree,
           }
         );
 
-        tree.push({
-          path: action.file_path,
-          mode: '100644',
-          type: 'blob',
-          sha: blobResponse.data.sha,
-        });
-      } else {
-        tree.push({
-          path: action.file_path,
-          mode: '100644',
-          type: 'blob',
-          sha: null, // This deletes the file
-        });
-      }
-    }
+        // Create a new commit
+        const commitResponse = await this.httpClient.post(
+          `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/commits`,
+          {
+            message: `${message} (batch ${actions.indexOf(batch[0]) / this.rateLimiter.getConfig().batchSize + 1}/${Math.ceil(actions.length / this.rateLimiter.getConfig().batchSize)})`,
+            tree: treeResponse.data.sha,
+            parents: [parentSha],
+          }
+        );
 
-    // Create a new tree
-    const treeResponse = await this.httpClient.post(
-      `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/trees`,
-      {
-        base_tree: baseTreeSha,
-        tree: tree,
-      }
-    );
+        // Update the branch reference
+        await this.httpClient.patch(
+          `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/refs/heads/${branch}`,
+          {
+            sha: commitResponse.data.sha,
+          }
+        );
 
-    // Create a new commit
-    const commitResponse = await this.httpClient.post(
-      `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/commits`,
-      {
-        message: message,
-        tree: treeResponse.data.sha,
-        parents: [parentSha],
-      }
-    );
+        // Update parent SHA and tree SHA for next batch
+        parentSha = commitResponse.data.sha;
+        baseTreeSha = treeResponse.data.sha;
 
-    // Update the branch reference
-    await this.httpClient.patch(
-      `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/refs/heads/${branch}`,
-      {
-        sha: commitResponse.data.sha,
-      }
-    );
+        return commitResponse.data;
+      },
+    });
   }
 
   async createPullRequest(

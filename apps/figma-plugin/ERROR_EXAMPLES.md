@@ -50,6 +50,8 @@ Details: Too many requests to the API in a short time period
 Code: PUBLISH_FILES_ERROR
 ```
 
+**Note**: The plugin now automatically handles rate limiting by batching file commits and adding delays between batches. This error should rarely occur in normal operation.
+
 ### Server Errors (500, 503)
 
 ```
@@ -123,6 +125,7 @@ Code: REPOSITORY_NOT_INITIALIZED
 - User makes too many requests in a short time
 - GitHub/GitLab API returns 429 error
 - Error is displayed: "Rate limit exceeded. Please try again later."
+- **Note**: The plugin now automatically prevents this by batching commits and adding delays
 
 ### Scenario 4: Permission Issues
 

@@ -90,9 +90,8 @@ export function useAdapterWorker() {
       }
 
       // Use local data if available, otherwise use remote data
-      const iconsJson = fileLoadingData.localIconsJson || fileLoadingData.remoteIconsJson || '{}';
-      const bundledJson =
-        fileLoadingData.localBundledJson || fileLoadingData.remoteBundledJson || '{}';
+      const iconsJson = fileLoadingData.localIconsJson || '{}';
+      const bundledJson = fileLoadingData.localBundledJson || '{}';
 
       return new Promise<AdapterFile[]>((resolve, reject) => {
         let worker: Worker;
