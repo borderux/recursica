@@ -1,10 +1,145 @@
 # @recursica/common
 
-Shared utility functions and type guards for Recursica design token processing.
+Shared TypeScript interfaces and types for Recursica projects.
 
-## Overview
+## Features
 
-This package provides utility functions for processing, parsing, and detecting design tokens within the Recursica ecosystem. It includes type guards for token detection, parsers for converting design token values, and string utilities for code generation.
+- **Parsers**: Utility functions for parsing and transforming data
+- **Detectors**: Functions for detecting and analyzing data types
+- **Strings**: String manipulation utilities
+- **Validators**: JSON schema validation for Recursica files
+
+## Validation
+
+The package includes validation functions for Recursica JSON files based on the schemas defined in `@recursica/schemas`. Each validation function is in its own module for better organization.
+
+### Usage
+
+```typescript
+import {
+  validateVariables,
+  validateConfiguration,
+  validateIcons,
+} from "@recursica/common";
+
+// Use specific validation functions
+const variablesResult = validateVariables(data);
+const configResult = validateConfiguration(data);
+const iconsResult = validateIcons(data);
+
+// Check validation results
+if (variablesResult.isValid) {
+  console.log("Variables are valid!");
+} else {
+  console.log("Validation errors:", variablesResult.errors);
+}
+```
+
+### Error Formatting
+
+Validation errors are returned as plain text strings with clear location information using dot notation:
+
+- **Root level errors**: `"root level: must have required property 'projectId'"`
+- **Nested property errors**: `"tokens.color.primary: must have required property 'value'"`
+- **Array index errors**: `"overrides.fontWeight.[0]: must be object"`
+
+The error messages are designed to be:
+
+- **Plain text** with no special characters or symbols
+- **Location-aware** indicating the exact path to the error in the JSON structure using dot notation
+- **Human-readable** with clear descriptions of what went wrong
+
+### Validation Functions
+
+- **`validateVariables(data)`** - Validates Recursica variables JSON files
+
+  - Schema validation against the RecursicaVariables schema
+  - **Specialized reference validation:**
+    - UI Kit variables should NOT reference Tokens (only Themes)
+    - Theme variables should ONLY reference Tokens (not other Themes)
+  - Returns validation status and detailed error messages
+
+- **`validateConfiguration(data)`** - Validates Recursica configuration JSON files
+- **`validateIcons(data)`** - Validates Recursica icons JSON files
+
+### Variable Reference Rules
+
+The `validateVariables` function includes specialized checks for proper variable reference relationships:
+
+1. **UI Kit Layer**: Should only reference variables from the **Themes** collection
+
+   - ❌ Invalid: UI Kit → Tokens reference
+   - ✅ Valid: UI Kit → Themes reference
+
+2. **Themes Layer**: Should only reference variables from the **Tokens** collection
+
+   - ❌ Invalid: Themes → Themes reference
+   - ✅ Valid: Themes → Tokens reference
+
+3. **Tokens Layer**: Contains direct values (no references)
+
+This ensures a clean separation of concerns:
+
+- **Tokens**: Raw design values (colors, sizes, etc.)
+- **Themes**: Semantic design tokens that reference raw tokens
+- **UI Kit**: Component-specific tokens that reference semantic themes
+
+### Return Type
+
+All validation functions return a `ValidationResult` object:
+
+```typescript
+interface ValidationResult {
+  isValid: boolean;
+  errors?: string[];
+}
+```
+
+### Example
+
+```typescript
+import { validateVariables } from "@recursica/common";
+
+const variablesData = {
+  projectId: "my-project",
+  pluginVersion: "1.0.0",
+  tokens: {
+    /* ... */
+  },
+  themes: {
+    /* ... */
+  },
+  uiKit: {
+    /* ... */
+  },
+};
+
+const result = validateVariables(variablesData);
+
+if (result.isValid) {
+  console.log("✅ Variables file is valid");
+} else {
+  console.log("❌ Validation errors:", result.errors);
+}
+```
+
+### Module Structure
+
+The validation functions are organized in separate modules:
+
+- `validators/validateVariables.ts` - Variables schema validation
+- `validators/validateConfiguration.ts` - Configuration schema validation
+- `validators/validateIcons.ts` - Icons schema validation
+- `validators/index.ts` - Validators directory exports
+
+### Scripts
+
+The package includes utility scripts in the `scripts/` directory:
+
+- `scripts/validate-sample.ts` - Sample file validation utility
+  - Demonstrates validation capabilities
+  - Provides detailed error reporting
+  - Categorizes violations by type
 
 ## Installation
 
@@ -12,253 +147,86 @@ This package provides utility functions for processing, parsing, and detecting d
 npm install @recursica/common
 ```
 
-## Usage
-
-### Importing All Utilities
-
-```typescript
-import * from '@recursica/common';
-```
-
-### Importing Specific Categories
-
-```typescript
-// Type guards and detectors
-import {
-  isFontFamilyToken,
-  isEffectToken,
-  isColorOrFloatToken,
-} from "@recursica/common";
-
-// Token parsers
-import { rgbToHex, toFontWeight } from "@recursica/common";
-
-// String utilities
-import { autoGeneratedFile, capitalize } from "@recursica/common";
-```
-
-## API Reference
-
-### Type Guards (`detectors.ts`)
-
-Type guard functions to detect different types of design tokens based on the `@recursica/schemas` package.
-
-#### `isFontFamilyToken(token: CollectionToken): token is FontFamilyToken`
-
-Checks if a token is a FontFamilyToken by verifying the presence of `fontFamily` and `variableName` properties.
-
-```typescript
-import { isFontFamilyToken } from "@recursica/common";
-
-if (isFontFamilyToken(token)) {
-  // token is now typed as FontFamilyToken
-  console.log(token.fontFamily, token.variableName);
-}
-```
-
-#### `isEffectToken(token: CollectionToken): token is EffectToken`
-
-Checks if a token is an EffectToken by verifying the presence of `effects` and `variableName` properties.
-
-```typescript
-import { isEffectToken } from "@recursica/common";
-
-if (isEffectToken(token)) {
-  // token is now typed as EffectToken
-  console.log(token.effects, token.variableName);
-}
-```
-
-#### `isColorOrFloatToken(token: CollectionToken): token is Token`
-
-Checks if a token is a basic Token (color or float) by verifying the presence of `mode`, `type`, `name`, and `value` properties.
-
-```typescript
-import { isColorOrFloatToken } from "@recursica/common";
-
-if (isColorOrFloatToken(token)) {
-  // token is now typed as Token
-  console.log(token.mode, token.type, token.name, token.value);
-}
-```
-
-### Parsers (`parsers/`)
-
-Utility functions for converting and parsing design token values.
-
-#### `rgbToHex(rgba: RGBA): string`
-
-Converts an RGBA object to a HEX string or RGBA string if alpha is not 1.
-
-```typescript
-import { rgbToHex } from "@recursica/common";
-
-// Convert to HEX
-const hex = rgbToHex({ r: 0.5, g: 0.8, b: 0.2, a: 1 });
-// Returns: "#80cc33"
-
-// Convert to RGBA string (when alpha < 1)
-const rgba = rgbToHex({ r: 0.5, g: 0.8, b: 0.2, a: 0.5 });
-// Returns: "rgba(128, 204, 51, 0.5000)"
-```
-
-#### `toFontWeight(value: string): number`
-
-Converts font weight names to their numeric equivalents based on CSS font-weight values.
-
-```typescript
-import { toFontWeight } from "@recursica/common";
-
-console.log(toFontWeight("thin")); // 100
-console.log(toFontWeight("light")); // 300
-console.log(toFontWeight("regular")); // 400
-console.log(toFontWeight("medium")); // 500
-console.log(toFontWeight("bold")); // 700
-console.log(toFontWeight("black")); // 900
-console.log(toFontWeight("unknown")); // 400 (default)
-```
-
-**Supported font weights:**
-
-- `thin` → 100
-- `extralight` → 200
-- `light` → 300
-- `regular` → 400
-- `medium` → 500
-- `semibold` → 600
-- `bold` → 700
-- `extrabold`, `extra bold` → 800
-- `black`, `heavy` → 900
-
-### String Utilities (`strings/`)
-
-Utility functions for string manipulation and code generation.
-
-#### `autoGeneratedFile(): string`
-
-Returns a standard header comment for auto-generated files.
-
-```typescript
-import { autoGeneratedFile } from "@recursica/common";
-
-const header = autoGeneratedFile();
-console.log(header);
-/*
-/* prettier-ignore */
-/* eslint-disable */
-/* tslint:disable */
-/*
-Auto-generated by Recursica.
-Do NOT edit these files directly
-
-For more information about Recursica, go to https://recursica.com
-*/
-```
-
-#### `capitalize(str: string): string`
-
-Capitalizes each word in a string and replaces dashes with spaces.
-
-```typescript
-import { capitalize } from "@recursica/common";
-
-console.log(capitalize("hello-world")); // "Hello World"
-console.log(capitalize("my-awesome-component")); // "My Awesome Component"
-```
-
-## Examples
-
-### Processing Design Tokens
-
-```typescript
-import {
-  isFontFamilyToken,
-  isColorOrFloatToken,
-  rgbToHex,
-  toFontWeight,
-} from "@recursica/common";
-
-function processTokens(tokens: CollectionToken[]) {
-  return tokens.map((token) => {
-    if (isFontFamilyToken(token)) {
-      return {
-        ...token,
-        fontWeight: toFontWeight(token.fontFamily),
-      };
-    }
-
-    if (isColorOrFloatToken(token) && token.type === "color") {
-      return {
-        ...token,
-        hexValue: rgbToHex(token.value as RGBA),
-      };
-    }
-
-    return token;
-  });
-}
-```
-
-### Generating Code Files
-
-```typescript
-import { autoGeneratedFile, capitalize } from "@recursica/common";
-
-function generateThemeFile(themeName: string, tokens: any[]) {
-  const header = autoGeneratedFile();
-  const displayName = capitalize(themeName);
-
-  return `${header}
-
-export const ${displayName}Theme = {
-  // Generated theme content
-};`;
-}
-```
-
 ## Development
 
-### Building
-
 ```bash
-npm run build
+npm run build         # Build the package
+npm run dev           # Watch mode for development
+npm run lint          # Run ESLint
+npm run check-types   # Type checking
+npm run test          # Run tests in watch mode
+npm run test:run      # Run tests once
+npm run test:coverage # Run tests with coverage report
+npm run validate-sample # Validate sample variables file
 ```
 
-### Type Checking
+## Testing
+
+The package uses Vitest for unit testing. Tests are located alongside the source files with `.test.ts` extensions.
+
+### Test Coverage
+
+The validation functions have comprehensive test coverage including:
+
+- Valid data validation
+- Invalid data rejection
+- Error message verification
+- Edge cases and special scenarios
+- **Real-world sample file validation** - Tests against actual Recursica JSON files
+
+Run `npm run test:coverage` to see detailed coverage reports.
+
+### Sample File Tests
+
+The package includes comprehensive tests that validate against real Recursica JSON files:
+
+- **Configuration files** (`recursica.json`) - Tests project configuration validation
+- **Icon files** (`recursica-icons.json`) - Tests icon collection validation with SVG content
+- **Variable files** (`recursica-bundle.json`) - Tests large-scale token and theme validation
+
+These tests ensure that the validation functions work correctly with real-world data and can handle large files efficiently.
+
+### Sample Validation Script
+
+The package includes a utility script for validating sample files and demonstrating the validation capabilities:
 
 ```bash
-npm run check-types
+npm run validate-sample
 ```
 
-### Linting
+This script:
 
-```bash
-npm run lint
+- **Loads and validates** the sample `recursica-bundle.json` file
+- **Categorizes violations** by type (UI Kit → Tokens, Theme → Theme)
+- **Provides detailed reporting** with summary statistics and individual error messages
+- **Demonstrates real-world usage** of the validation functions
+
+**Example Output:**
+
+```
+Validation Result: FAIL
+
+Found 302 validation errors:
+
+=== SUMMARY ===
+UI Kit → Tokens violations: 117
+Theme → Theme violations: 185
+Total violations: 302
+
+=== UI KIT → TOKENS VIOLATIONS (117) ===
+1. uiKit.[UI-Kit][Mode-1][accordion/size/padding]: UI Kit variables should not reference Tokens collection, found reference to "size/spacer/2x"
+2. uiKit.[UI-Kit][Mode-1][accordion/size/spacing]: UI Kit variables should not reference Tokens collection, found reference to "size/spacer/2x"
+...
+
+=== THEME → THEME VIOLATIONS (185) ===
+1. themes.default.[Themes][Light][layers/layer-0/elements/interactive/color]: Theme variables should only reference Tokens collection, found reference to "colors/scale-1/default/tone" in Themes collection
+2. themes.default.[Themes][Dark][layers/layer-0/elements/interactive/color]: Theme variables should only reference Tokens collection, found reference to "colors/scale-1/default/tone" in Themes collection
+...
 ```
 
-### Development Mode
+This script is useful for:
 
-```bash
-npm run dev
-```
-
-## Dependencies
-
-This package depends on:
-
-- `@recursica/schemas` - For TypeScript interfaces and types used in type guards
-
-## Contributing
-
-When adding new utilities:
-
-1. Place them in the appropriate category (`detectors.ts`, `parsers/`, or `strings/`)
-2. If creating a new category, add a new file and export it from `index.ts`
-3. Add comprehensive JSDoc documentation
-4. Include examples in this README
-5. Ensure functions are pure and have predictable behavior
-6. Add appropriate type guards and error handling
-
-## License
-
-MIT
+- **Development testing** - Quickly validate changes to the validation logic
+- **Documentation** - Show real examples of validation errors
+- **Debugging** - Identify specific issues in sample data
+- **Demonstration** - Show the capabilities of the validation system
