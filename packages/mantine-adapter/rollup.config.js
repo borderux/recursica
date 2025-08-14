@@ -29,12 +29,14 @@ const external = [
   "tty",
   "vm",
   "zlib",
+  "@recursica/common",
 ];
 
 const plugins = [
   resolve({
     preferBuiltins: true,
     exportConditions: ["node"],
+    extensions: [".js", ".ts", ".json"],
   }),
   commonjs(),
   json(),
