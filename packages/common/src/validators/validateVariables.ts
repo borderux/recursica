@@ -3,7 +3,7 @@ import addFormats from "ajv-formats";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { fileURLToPath } from "url";
-import { formatValidationErrors } from "./errorFormatter.js";
+import { formatValidationErrors } from "./errorFormatter";
 
 // Get the directory of the current module
 const __filename = fileURLToPath(import.meta.url);
