@@ -83,14 +83,9 @@ export async function getTeamLibrary(pluginVersion: string) {
 async function decodeFileVariables(
   fileCollections: { value: string; name: string }[]
 ): Promise<[GenericVariables, string, string | undefined]> {
-  // Filter out "ID variables" collections
-  const filteredCollections = fileCollections.filter(
-    (collection) => collection.name !== 'ID variables'
-  );
-
   // Run metadata and remaining collections in parallel
   const variableResults = await Promise.all(
-    filteredCollections.map((variable) => processRemoteVariableCollection(variable.value))
+    fileCollections.map((variable) => processRemoteVariableCollection(variable.value))
   );
 
   // Combine all variables
