@@ -92,7 +92,7 @@ async function createIndexFile() {
   const typeFiles = await glob(`${DIST_DIR}/*.d.ts`);
   const exports = typeFiles
     .map((file) => path.basename(file, ".d.ts"))
-    .filter((baseName) => baseName !== "index")
+    .filter((baseName) => baseName !== "index" && baseName !== "schemas")
     .map((baseName) => `export * from "./${baseName}";`)
     .join("\n");
 
@@ -107,6 +107,64 @@ async function createIndexFile() {
 }
 
 /**
+ * Builds the index.ts file to JavaScript and TypeScript declaration.
+ */
+async function buildIndexFile() {
+  console.log("Building index.ts file...");
+
+  try {
+    // Get all JSON schema files to generate dynamic exports
+    const jsonFiles = await glob(`${SRC_DIR}/**/*.json`);
+    const schemaNames = jsonFiles.map((file) => path.basename(file, ".json"));
+
+    // Generate import statements
+    const imports = schemaNames
+      .map((name) => `import ${name}Json from "./${name}.json";`)
+      .join("\n");
+
+    // Generate export statements
+    const exports = schemaNames
+      .map((name) => `export const ${name}JsonSchema = ${name}Json;`)
+      .join("\n");
+
+    // Create the index.js file
+    const jsContent = `${BANNER_COMMENT}
+
+${imports}
+
+// Export the schema JSON values
+${exports}
+`;
+
+    await fs.writeFile(path.join(DIST_DIR, "index.js"), jsContent);
+
+    // Generate type exports
+    const typeExports = schemaNames
+      .map((name) => `export * from "./${name}";`)
+      .join("\n");
+
+    // Generate JSON schema exports
+    const jsonExports = schemaNames
+      .map((name) => `export const ${name}JsonSchema: any;`)
+      .join("\n");
+
+    // Create a declaration file that exports the schemas dynamically
+    const declarationContent = `${BANNER_COMMENT}
+
+${typeExports}
+
+// Export the schema JSON values with different names to avoid conflicts
+${jsonExports}
+`;
+
+    await fs.writeFile(path.join(DIST_DIR, "index.d.ts"), declarationContent);
+    console.log("✓ Generated index.d.ts and index.js");
+  } catch (error) {
+    console.error("Failed to build index.ts:", error.message);
+  }
+}
+
+/**
  * Main build function to orchestrate the build process.
  */
 async function build() {
@@ -115,6 +173,7 @@ async function build() {
   const jsonFiles = await glob(`${SRC_DIR}/**/*.json`);
   await processSchemas(jsonFiles);
   await createIndexFile();
+  await buildIndexFile();
   console.log("\nBuild completed successfully.");
 }
 

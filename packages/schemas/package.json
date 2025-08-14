@@ -28,9 +28,14 @@
     "UX",
     "UI"
   ],
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./dist/index.d.ts",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./schemas": "./dist/schemas.d.ts",
     "./*.json": "./dist/*.json"
   },
   "files": [

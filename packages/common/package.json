@@ -43,6 +43,10 @@
     "lint": "eslint . --max-warnings 0",
     "check-types": "tsc --noEmit"
   },
+  "dependencies": {
+    "ajv": "^8.12.0",
+    "@recursica/schemas": "*"
+  },
   "devDependencies": {
     "@figma/plugin-typings": "1.113.0",
     "@humanfs/node": "0.16.6",
