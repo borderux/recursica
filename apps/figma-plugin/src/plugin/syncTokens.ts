@@ -3,6 +3,8 @@ import { toPascalCase } from '@recursica/common';
 export async function syncTokens() {
   const localCollections = await figma.variables.getLocalVariableCollectionsAsync();
   let fileType = 'icons';
+  let themeName = '';
+
   if (localCollections.length > 0) {
     const tokensCollection = localCollections.find((collection) =>
       collection.name.toLowerCase().includes('tokens')
@@ -22,6 +24,26 @@ export async function syncTokens() {
       fileType = 'themes';
     } else if (uikitCollection) {
       fileType = 'ui-kit';
+    }
+  }
+
+  // Check for "ID variables" collection and get theme value
+  const idVariablesCollection = localCollections.find(
+    (collection) => collection.name === 'ID variables'
+  );
+
+  if (idVariablesCollection) {
+    // Find the theme variable in the ID variables collection
+    for (const varId of idVariablesCollection.variableIds) {
+      const variable = await figma.variables.getVariableByIdAsync(varId);
+      if (variable && variable.name === 'theme') {
+        // Get the first mode value (assuming it's a string)
+        const firstMode = Object.values(variable.valuesByMode)[0];
+        if (typeof firstMode === 'string') {
+          themeName = firstMode;
+        }
+        break;
+      }
     }
   }
 
@@ -74,9 +96,17 @@ export async function syncTokens() {
 
   // Process local collections in parallel
   const localCollectionPromises = localCollections.map(async (collection) => {
+    // Skip setting shared plugin data for "ID variables" collection
+    if (collection.name === 'ID variables') {
+      return Promise.resolve([]);
+    }
+
     collection.setSharedPluginData('recursica', 'file-type', fileType);
-    if (fileType === 'themes')
-      collection.setSharedPluginData('recursica', 'theme-name', toPascalCase(figma.root.name));
+    if (fileType === 'themes') {
+      // Use themeName if available, otherwise fall back to figma.root.name
+      const finalThemeName = themeName || toPascalCase(figma.root.name);
+      collection.setSharedPluginData('recursica', 'theme-name', finalThemeName);
+    }
 
     const variablePromises = collection.variableIds.map(async (varId) => {
       const variable = await figma.variables.getVariableByIdAsync(varId);
