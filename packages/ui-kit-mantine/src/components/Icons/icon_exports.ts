@@ -361,6 +361,10 @@ import exclamation_triangle_solid from './Svg/exclamation_triangle_solid.svg?rea
 export { exclamation_triangle_solid };
 import exclamation_triangle_outline from './Svg/exclamation_triangle_outline.svg?react';
 export { exclamation_triangle_outline };
+import face_frown_solid from './Svg/face_frown_solid.svg?react';
+export { face_frown_solid };
+import face_frown_outline from './Svg/face_frown_outline.svg?react';
+export { face_frown_outline };
 import face_smile_solid from './Svg/face_smile_solid.svg?react';
 export { face_smile_solid };
 import face_smile_outline from './Svg/face_smile_outline.svg?react';

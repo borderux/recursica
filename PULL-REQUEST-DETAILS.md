@@ -1,93 +1,98 @@
-# Figma Plugin Variable Handling and Performance Improvements
+# Pull Request Details
 
-## Overview
+## Summary
 
-This pull request implements several improvements to the Figma plugin's variable handling system, focusing on performance optimization and better data quality through intelligent filtering and conditional processing.
+This PR enhances the Figma plugin's Error component with improved visual design, better user experience, and new icon assets. The changes focus on simplifying error messaging while providing better visual feedback to users.
 
-## Problem
+## Changes Made
 
-The previous implementation had several inefficiencies and data quality issues:
+### 1. Error Component Enhancement
 
-1. **Duplicate file generation**: CSS files were being generated even when adapter files were already created
-2. **Unnecessary data processing**: "ID variables" collections were being processed despite not containing relevant design tokens
-3. **Performance bottlenecks**: Some operations were running sequentially instead of in parallel
-4. **Inconsistent theme handling**: Theme names weren't properly handled with fallbacks
+- **Refactored Error component** in `apps/figma-plugin/src/pages/Error/Error.tsx`
+- **Simplified error messaging** for better clarity and user understanding
+- **Improved layout and styling** for better alignment and visual hierarchy
+- **Enhanced user experience** with cleaner, more focused error presentation
 
-## Solution
+### 2. New Icon Assets
 
-Implemented a comprehensive set of improvements that:
+- **Added 'face_frown' icons** to the icon library for visual error feedback
+- **New SVG files**: `face_frown_outline.svg` and `face_frown_solid.svg`
+- **Updated icon exports** and resource mapping for consistent icon usage
+- **Enhanced icon library** with new emotional feedback icons
 
-1. **Optimizes file generation**: Only creates CSS files when no adapter files are present
-2. **Filters irrelevant data**: Excludes "ID variables" collections from all processing operations
-3. **Improves performance**: Enhances parallel processing for better execution speed
-4. **Enhances theme handling**: Provides better fallback mechanisms for theme names
+### 3. Code Quality Improvements
 
-## Key Changes
+- **Simplified error handling logic** by replacing complex logic with static messaging
+- **Better component structure** with improved readability and maintainability
+- **Consistent styling** that aligns with the overall design system
 
-### Modified Files
+## Technical Details
 
-- `apps/figma-plugin/src/context/Repository/RepositoryProvider.tsx` - Added conditional CSS generation logic
-- `apps/figma-plugin/src/plugin/exportToJSON.ts` - Added filtering for "ID variables" collection
-- `apps/figma-plugin/src/plugin/syncTokens.ts` - Enhanced variable synchronization and theme handling
-- `apps/figma-plugin/src/plugin/teamLibrary.ts` - Improved parallel processing and filtering
+### Error Component Changes
 
-## Technical Implementation
+- **Before**: Complex error handling logic with dynamic messaging
+- **After**: Simplified static error message with visual icon feedback
+- **Benefit**: More predictable and maintainable error states
 
-### Conditional CSS Generation
+### Icon Integration
 
-- **Smart file creation**: CSS generation only runs when `adapterFiles.length === 0`
-- **Prevents duplication**: Ensures users don't get both adapter files and CSS files for the same data
-- **Maintains compatibility**: Still provides CSS output when no adapters are available
+- **New icons**: Added to the existing icon system for consistency
+- **Export updates**: Properly integrated into the icon library exports
+- **Resource mapping**: Added to the icon resource map for dynamic loading
 
-### Intelligent Variable Filtering
+### Styling Improvements
 
-- **Consistent filtering**: "ID variables" collections are excluded from all operations
-- **Data quality improvement**: Reduces noise in exported data and processing
-- **Performance gain**: Less data to process means faster execution
+- **Better alignment**: Improved visual hierarchy and spacing
+- **Enhanced UX**: Cleaner, more focused error presentation
+- **Design consistency**: Aligns with the overall plugin design language
 
-### Enhanced Theme Handling
+## Files Changed
 
-- **Fallback mechanism**: Uses `figma.root.name` when theme name isn't available
-- **Better user experience**: Ensures theme names are always meaningful
-- **Consistent formatting**: Applies proper PascalCase formatting to theme names
-
-### Performance Optimizations
-
-- **Parallel processing**: Multiple operations now run concurrently where possible
-- **Reduced blocking**: Less sequential waiting improves overall responsiveness
-- **Efficient data structures**: Better use of Maps and Promise.all for faster execution
+- `apps/figma-plugin/src/pages/Error/Error.tsx` - Refactored Error component
+- `packages/ui-kit-mantine/recursica-icons.json` - Updated icon configuration
+- `packages/ui-kit-mantine/src/components/Icons/Svg/face_frown_outline.svg` - New outline icon
+- `packages/ui-kit-mantine/src/components/Icons/Svg/face_frown_solid.svg` - New solid icon
+- `packages/ui-kit-mantine/src/components/Icons/icon_exports.ts` - Updated icon exports
+- `packages/ui-kit-mantine/src/components/Icons/icon_resource_map.ts` - Updated resource mapping
 
 ## Benefits
 
-- **Prevents duplicate files**: Users get cleaner output without redundant CSS generation
-- **Better data quality**: Filtered output contains only relevant design tokens
-- **Improved performance**: Faster processing through parallelization and reduced data volume
-- **Enhanced reliability**: Better fallback mechanisms prevent errors
-- **Cleaner codebase**: More maintainable and focused implementations
+- **Improved User Experience**: Clearer error messaging and visual feedback
+- **Better Visual Design**: Enhanced error component styling and layout
+- **Enhanced Icon Library**: New emotional feedback icons for better UX
+- **Code Maintainability**: Simplified error handling logic
+- **Design Consistency**: Better alignment with overall design system
 
-## Architecture Improvements
+## Testing & Validation
 
-### Before (Inefficient Processing)
+### Pre-PR Checks
 
-- CSS files were always generated regardless of adapter file presence
-- All variable collections were processed, including irrelevant "ID variables"
-- Some operations ran sequentially, creating performance bottlenecks
-- Theme names could be undefined, leading to potential errors
+- ✅ **Linting**: All ESLint rules passed
+- ✅ **Type Checking**: TypeScript compilation successful
+- ✅ **Build Process**: All packages build successfully
+- ✅ **Icon Integration**: New icons properly exported and mapped
 
-### After (Optimized Design)
+### Manual Testing
 
-- **Conditional processing**: CSS generation only when needed
-- **Intelligent filtering**: Automatic exclusion of irrelevant data
-- **Parallel execution**: Better utilization of available resources
-- **Robust fallbacks**: Graceful handling of missing or undefined values
+- **Error Component**: Verified error display and styling
+- **Icon Rendering**: Confirmed new icons display correctly
+- **Responsive Design**: Tested across different screen sizes
+- **User Experience**: Validated improved error messaging clarity
 
-## Testing
+## Breaking Changes
 
-- TypeScript compilation passes without errors
-- ESLint passes with no style violations
-- Build process completes successfully
-- Variable filtering logic has been tested with various collection types
+- **None**: All changes are backward compatible
+- **Error Display**: Error messages are now simplified and more consistent
 
-## Impact
+## Review Focus Areas
 
-These improvements significantly enhance the plugin's performance and data quality, providing users with cleaner outputs and faster processing times while maintaining full backward compatibility.
+1. **Error Component**: Verify error messaging clarity and visual design
+2. **Icon Integration**: Check that new icons are properly exported and accessible
+3. **User Experience**: Confirm improved error state presentation
+4. **Code Quality**: Review simplified error handling logic
+
+## Related Issues
+
+- Improves error handling user experience in Figma plugin
+- Enhances visual feedback for error states
+- Expands icon library with new emotional feedback icons

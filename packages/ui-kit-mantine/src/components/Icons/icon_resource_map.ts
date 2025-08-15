@@ -187,6 +187,8 @@ export const IconResourceMap = {
 	'exclamation_circle_solid': IconExports.exclamation_circle_solid,
 	'exclamation_triangle_solid': IconExports.exclamation_triangle_solid,
 	'exclamation_triangle_outline': IconExports.exclamation_triangle_outline,
+	'face_frown_solid': IconExports.face_frown_solid,
+	'face_frown_outline': IconExports.face_frown_outline,
 	'face_smile_solid': IconExports.face_smile_solid,
 	'face_smile_outline': IconExports.face_smile_outline,
 	'fire_outline': IconExports.fire_outline,
