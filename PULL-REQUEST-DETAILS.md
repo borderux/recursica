@@ -1,212 +1,182 @@
-# Common Package Validation System Implementation
+# Architectural Refactor: Move Validation System to Schemas Package
 
 ## Overview
 
-This pull request implements a comprehensive JSON schema validation system for the `@recursica/common` package. The system provides robust validation for Recursica JSON files (variables, configuration, and icons) with specialized business logic for design system architecture validation. The implementation includes comprehensive unit testing, real-world sample file validation, and detailed error reporting capabilities.
+This pull request implements a comprehensive architectural refactor to move the JSON schema validation system from the `@recursica/common` package to the `@recursica/schemas` package. This change resolves build conflicts between Node.js-specific validation code and browser-compatible utilities, creating a cleaner separation of concerns and enabling proper module bundling for both Node.js tools and browser applications.
 
 ## Key Changes
 
-### 1. Validation System Architecture
+### 1. Architectural Refactor
 
-- **Files**: `packages/common/src/validators/` directory
-- **Purpose**: Modular validation system with separate functions for each schema type
-- **Structure**:
-  - `validateVariables.ts` - Variables schema validation with specialized reference rules
-  - `validateConfiguration.ts` - Configuration schema validation
-  - `validateIcons.ts` - Icons schema validation
-  - `errorFormatter.ts` - Shared error formatting utility
-  - `index.ts` - Validators directory exports
+- **Moved validators** from `packages/common/src/validators/` to `packages/schemas/src/validators/`
+- **Moved test files** from `packages/common/src/test/` to `packages/schemas/src/test/`
+- **Moved validation script** from `packages/common/scripts/validate-sample.ts` to `packages/schemas/scripts/validate-sample.ts`
+- **Updated package exports** to reflect the new structure
 
-### 2. Specialized Variable Reference Validation
+### 2. Package Structure Improvements
 
-- **File**: `packages/common/src/validators/validateVariables.ts`
-- **Purpose**: Enforces proper design system architecture and separation of concerns
-- **Rules**:
-  - UI Kit variables should NOT reference Tokens (only Themes)
-  - Theme variables should ONLY reference Tokens (not other Themes)
-  - Tokens contain direct values (no references)
-- **Implementation**: Custom validation logic with clear error messages and dot notation paths
+#### @recursica/common (Browser-Compatible)
 
-### 3. Comprehensive Testing Suite
+- **Purpose**: Pure browser-compatible utilities only
+- **Contents**: Parsers, detectors, string utilities
+- **Removed**: All validation logic, test scripts, Node.js dependencies
+- **Benefits**: Clean, focused package that works in browser environments
 
-- **Files**: `packages/common/src/validators/*.test.ts`
-- **Coverage**: 87.93% test coverage with 38 test cases
-- **Types**:
-  - Unit tests for each validation function
-  - Real-world sample file validation tests
-  - Performance tests for large files
-  - Edge case and error scenario tests
-- **Sample Files**: Tests against actual Recursica JSON files (`recursica-bundle.json`, `recursica-icons.json`, `recursica.json`)
+#### @recursica/schemas (Node.js Tools)
 
-### 4. Error Reporting System
+- **Purpose**: Schema definitions, validation, and type generation
+- **Contents**:
+  - JSON schema files in `dist/` (for Git URL access)
+  - Compiled validators in `lib/` (not tracked in git)
+  - Test JSON files in `src/test/`
+  - Validation scripts and utilities
+- **Benefits**: Logical home for all schema-related functionality
 
-- **File**: `packages/common/src/validators/errorFormatter.ts`
-- **Purpose**: Consistent, human-readable error messages
-- **Features**:
-  - Plain text errors without special characters (CI/CD friendly)
-  - Dot notation paths for clear location information
-  - Categorized violation reporting (UI Kit → Tokens, Theme → Theme)
-  - Detailed error summaries with statistics
+### 3. Build System Enhancements
 
-### 5. Sample Validation Utility
+- **Updated build scripts** to exclude test files from schema processing
+- **Modified generate-types.js** to compile validators to separate `lib/` directory
+- **Added tsconfig.validators.json** for validator compilation
+- **Updated package.json exports** to point to correct locations
 
-- **File**: `packages/common/scripts/validate-sample.ts`
-- **Purpose**: Demonstrates validation capabilities and provides detailed error reporting
-- **Features**:
-  - Loads and validates sample `recursica-bundle.json` file
-  - Categorizes violations by type
-  - Provides summary statistics and individual error messages
-  - Serves as development and debugging tool
+### 4. Dependency Resolution
+
+- **Fixed mantine-adapter build** by properly handling `@recursica/common` as external dependency
+- **Resolved figma-plugin build** by removing Node.js-specific imports
+- **Updated rollup configuration** for better module resolution
+- **Added missing type definitions** (`@types/archiver`)
 
 ## Technical Implementation
 
-### Validation Result Interface
+### Validation System Architecture
 
-```typescript
-interface ValidationResult {
-  isValid: boolean;
-  errors?: string[];
-}
-```
+The validation system now resides in `packages/schemas/src/validators/` with:
 
-### Schema Loading
+- `validateVariables.ts` - Variables schema validation with specialized reference rules
+- `validateConfiguration.ts` - Configuration schema validation
+- `validateIcons.ts` - Icons schema validation
+- `errorFormatter.ts` - Shared error formatting utility
+- `index.ts` - Validators directory exports
 
-- Schemas loaded at runtime from `@recursica/schemas` package
-- AJV with formats support for comprehensive validation
-- Graceful error handling for schema loading failures
+### Build Process
 
-### Error Format Examples
-
-- Root level: `"root level: must have required property 'projectId'"`
-- Nested properties: `"tokens.color.primary: must have required property 'value'"`
-- Variable references: `"uiKit.button/primary: UI Kit variables should not reference Tokens collection"`
-
-### Design System Architecture Validation
-
-The system enforces a three-layer architecture:
-
-1. **Tokens Layer**: Raw design values (colors, sizes, etc.) - no references
-2. **Themes Layer**: Semantic design tokens that reference raw tokens only
-3. **UI Kit Layer**: Component-specific tokens that reference semantic themes only
-
-## Benefits
-
-- **Prevents duplicate files**: Users get cleaner output without redundant CSS generation
-- **Better data quality**: Filtered output contains only relevant design tokens
-- **Improved performance**: Faster processing through parallelization and reduced data volume
-- **Enhanced reliability**: Better fallback mechanisms prevent errors
-- **Cleaner codebase**: More maintainable and focused implementations
-
-- ✅ All validation functions compile without TypeScript errors
-- ✅ Schema loading works correctly at runtime
-- ✅ Error formatting produces clean, readable messages
-- ✅ Sample validation script runs successfully
-
-### Before (Inefficient Processing)
-
-- ✅ All new files pass linting with no errors
-- ✅ TypeScript strict mode compliance
-- ✅ Proper ES module imports with `.js` extensions
-- ✅ Comprehensive JSDoc documentation
-
-### Test Results
-
-- ✅ 38 test cases pass (16 unit tests + 12 sample file tests + 10 specialized validation tests)
-- ✅ 87.93% test coverage for validation functions
-- ✅ Real-world sample files validate successfully
-- ✅ Large files handled efficiently (under 1 second)
-- ✅ Performance validation passes
-
-### Sample File Validation Results
-
-The validation system successfully identifies design system violations in the sample data:
-
-- **302 total violations found** in `recursica-bundle.json`
-- **117 UI Kit → Tokens violations** (should reference Themes only)
-- **185 Theme → Theme violations** (should reference Tokens only)
-
-## Dependencies and Configuration
-
-### New Dependencies
-
-- `ajv` (^8.12.0) - JSON Schema validator
-- `ajv-formats` (^2.1.1) - Additional format validators
-- `@recursica/schemas` - Schema definitions
-
-### Development Dependencies
-
-- `vitest` (^3.2.3) - Testing framework
-- `@vitest/coverage-v8` (^3.2.3) - Coverage reporting
-- `tsx` (^4.19.2) - TypeScript execution for scripts
-
-### Scripts Added
-
-- `npm run test` - Run tests in watch mode
-- `npm run test:run` - Run tests once
-- `npm run test:coverage` - Run tests with coverage report
-- `npm run validate-sample` - Validate sample variables file
-
-## Documentation Updates
-
-### README.md Enhancements
-
-- Comprehensive validation usage examples
-- Error formatting documentation with examples
-- Variable reference rules explanation
-- Module structure documentation
-- Testing and development instructions
+1. **Schema Validation**: `validate-schemas.js` validates JSON schemas (excludes test files)
+2. **Type Generation**: `generate-types.js` generates TypeScript types and copies schemas to `dist/`
+3. **Validator Compilation**: Compiles validators using `tsconfig.validators.json` to `lib/`
+4. **Package Building**: Each package builds with proper dependencies
 
 ### Package Exports
 
-- `validateVariables(data)` - Variables schema validation
-- `validateConfiguration(data)` - Configuration schema validation
-- `validateIcons(data)` - Icons schema validation
-- `ValidationResult` interface for type safety
+#### @recursica/schemas
+
+```json
+{
+  ".": "./dist/index.js",
+  "./validators": "./lib/validators/index.js",
+  "./*.json": "./dist/*.json"
+}
+```
+
+#### @recursica/common
+
+```json
+{
+  ".": "./dist/index.js",
+  "./types": "./dist/types/index.d.ts"
+}
+```
+
+## Benefits
+
+### Build System Improvements
+
+- ✅ **Resolved mantine-adapter build failures** - No more "Cannot find module '@recursica/common'" errors
+- ✅ **Fixed figma-plugin build** - No more Node.js module conflicts in browser environment
+- ✅ **Clean dependency graph** - Clear separation between Node.js tools and browser utilities
+- ✅ **Proper module bundling** - Each package can be bundled correctly for its target environment
+
+### Architecture Benefits
+
+- **Separation of Concerns**: Node.js tools vs browser utilities clearly separated
+- **Maintainability**: Related functionality grouped logically
+- **Scalability**: Easy to add new validation rules or browser utilities
+- **Testing**: Validation tests co-located with validation code
+
+### Development Experience
+
+- **Faster builds**: No more circular dependency issues
+- **Clearer imports**: Developers know which package to import from
+- **Better tooling**: IDE support for proper module resolution
+- **CI/CD friendly**: All builds pass consistently
+
+## Testing and Validation
+
+### Build Verification
+
+- ✅ **`npm run build`** - All packages build successfully
+- ✅ **`npm run test`** - Only runs tests for packages that have them
+- ✅ **CI simulation** - Local CI build simulation works correctly
+
+### Package-Specific Tests
+
+- **@recursica/schemas**: Schema validation and type generation tests
+- **@recursica/common**: No tests (pure utility functions)
+- **@recursica/mantine-adapter**: Builds successfully with external dependencies
+- **@recursica/figma-plugin**: Builds successfully with browser-compatible imports
+
+## Breaking Changes
+
+⚠️ **Minor Breaking Changes**: Import paths for validators have changed
+
+- **Before**: `import { validateVariables } from '@recursica/common'`
+- **After**: `import { validateVariables } from '@recursica/schemas/validators'`
+
+### Migration Guide
+
+- Update import statements to use `@recursica/schemas/validators`
+- Update any scripts that reference the old validation locations
+- No changes needed for browser-compatible utilities from `@recursica/common`
+
+## Documentation Updates
+
+### Package READMEs
+
+- Updated `packages/common/README.md` to reflect browser-only focus
+- Updated `packages/schemas/README.md` to document validation system
+- Added clear usage examples for both packages
+
+### Scripts and Tools
+
+- **validate-sample**: Now in `packages/schemas/scripts/`
+- **CI simulation**: Added `scripts/simulate-ci-build.sh` for local testing
+- **Build scripts**: Updated to handle new package structure
 
 ## Quality Assurance
 
 ### Code Review Checklist
 
-- [x] Proper TypeScript types and interfaces used
-- [x] Comprehensive unit test coverage (87.93%)
-- [x] Real-world sample file validation
-- [x] Clear error messages and documentation
-- [x] Modular architecture with separation of concerns
-- [x] Performance optimization for large files
+- [x] All packages build successfully
+- [x] No circular dependencies
+- [x] Proper separation of Node.js vs browser code
+- [x] Updated import statements throughout codebase
+- [x] Test files moved to appropriate locations
+- [x] Build scripts updated for new structure
 
 ### Error Handling
 
-- [x] Graceful schema loading error handling
-- [x] Detailed validation error messages
-- [x] Plain text output suitable for CI/CD integration
-- [x] Clear location information using dot notation
-
-## Breaking Changes
-
-✅ **No Breaking Changes**: This is a new feature addition that doesn't affect existing functionality.
-
-### Migration Notes
-
-- New validation functions available for use in consuming applications
-- Sample validation script provides immediate value for testing
-- Error messages designed to be actionable and clear
+- [x] Graceful handling of missing dependencies
+- [x] Clear error messages for build failures
+- [x] Proper fallbacks for module resolution
 
 ## Future Enhancements
 
 ### Potential Improvements
 
-1. **Performance Optimization**: Caching for frequently used schemas
-2. **Additional Validation Rules**: More specialized design system constraints
-3. **CLI Tool**: Command-line interface for file validation
-4. **IDE Integration**: Editor plugins for real-time validation
-
-### Validation Extensions
-
-- Custom validation rules for specific project requirements
-- Integration with CI/CD pipelines for automated validation
-- Webhook support for real-time validation feedback
-- Batch validation for multiple files
+1. **CLI Tool**: Command-line interface for validation
+2. **IDE Integration**: Real-time validation in editors
+3. **Performance Optimization**: Caching for frequently used schemas
+4. **Additional Validation Rules**: More specialized design system constraints
 
 ## Conclusion
 
-This implementation provides a robust, well-tested validation system for Recursica JSON files with specialized business logic for design system architecture. The modular approach, comprehensive testing, and clear error reporting make it suitable for both development and production use. The system successfully identifies real-world violations in sample data and provides actionable feedback for maintaining proper design system structure.
+This architectural refactor successfully resolves build conflicts and creates a cleaner, more maintainable codebase. The separation of Node.js validation tools from browser-compatible utilities enables proper module bundling for all target environments while maintaining the robust validation capabilities. All builds now pass consistently, and the development experience is significantly improved.
