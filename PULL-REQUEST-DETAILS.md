@@ -1,10 +1,12 @@
 # Architectural Refactor: Move Validation System to Schemas Package
 
-## Overview
+## Summary
 
 This pull request implements a comprehensive architectural refactor to move the JSON schema validation system from the `@recursica/common` package to the `@recursica/schemas` package. This change resolves build conflicts between Node.js-specific validation code and browser-compatible utilities, creating a cleaner separation of concerns and enabling proper module bundling for both Node.js tools and browser applications.
 
-## Key Changes
+- **Simplified error handling logic** by replacing complex logic with static messaging
+- **Better component structure** with improved readability and maintainability
+- **Consistent styling** that aligns with the overall design system
 
 ### 1. Architectural Refactor
 
@@ -46,7 +48,9 @@ This pull request implements a comprehensive architectural refactor to move the 
 - **Updated rollup configuration** for better module resolution
 - **Added missing type definitions** (`@types/archiver`)
 
-## Technical Implementation
+- **Before**: Complex error handling logic with dynamic messaging
+- **After**: Simplified static error message with visual icon feedback
+- **Benefit**: More predictable and maintainable error states
 
 ### Validation System Architecture
 
