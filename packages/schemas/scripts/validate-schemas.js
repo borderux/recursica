@@ -10,7 +10,9 @@ ajv.addMetaSchema(draft7MetaSchema);
 const srcDir = path.resolve(__dirname, "../src");
 
 // Find all files ending with .json in the src directory and its subdirectories
-const schemaFiles = glob.sync(`${srcDir}/**/*.json`);
+const schemaFiles = glob.sync(`${srcDir}/**/*.json`, {
+  ignore: [`${srcDir}/test/**`],
+});
 let hasErrors = false;
 
 if (schemaFiles.length === 0) {

@@ -1,8 +1,9 @@
 {
+  "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
     "target": "ES2020",
     "module": "ESNext",
-    "lib": ["ESNext", "DOM"],
+    "lib": ["ESNext"],
     "moduleResolution": "node",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
@@ -10,12 +11,11 @@
     "strict": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "importHelpers": true,
-    "outDir": "./dist",
-    "types": ["@figma/plugin-typings", "node"],
+    "outDir": "./lib",
+    "types": ["node"],
     "declaration": true,
     "declarationMap": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "exclude": ["dist", "node_modules", "**/*.test.ts", "**/*.test.tsx"]
+  "include": ["src/validators/**/*.ts"],
+  "exclude": ["node_modules", "dist", "lib", "**/*.test.ts"]
 }
