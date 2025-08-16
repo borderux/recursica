@@ -1,4 +1,4 @@
-import { Flex, Typography, Button } from '@recursica/ui-kit-mantine';
+import { Flex, Typography, Icon } from '@recursica/ui-kit-mantine';
 import { useFigma } from '../../hooks/useFigma';
 import { Layout } from '../../components';
 import { useMemo } from 'react';
@@ -8,43 +8,27 @@ export function FileSynced() {
 
   const getNextStepDescription = useMemo(() => {
     if (filetype === 'tokens') {
-      return 'Move to brand files to continue your workflow';
+      return '#2 Brand file';
     }
     if (filetype === 'themes') {
-      return 'Move to UI kit to continue your workflow';
+      return '#4 UI kit file';
     }
     return 'You can now close the plugin and continue';
   }, [filetype]);
 
-  const closePlugin = () => {
-    parent.postMessage(
-      {
-        pluginMessage: {
-          type: 'CLOSE_PLUGIN',
-        },
-        pluginId: '*',
-      },
-      '*'
-    );
-  };
-
   return (
-    <Layout footer={<Button label='Got it' trailing='arrow_right_outline' onClick={closePlugin} />}>
+    <Layout header='default'>
       <Flex direction='column' align='center' justify='center' gap={16}>
-        <Typography
-          variant='body-1/normal'
-          textAlign='center'
-          color='layers/layer-0/elements/text/color'
-        >
-          To publish your updates correctly, initialize the repo from the UI kit.
+        <Icon name='check_circle_outline' color='layers/layer-1/elements/success-text' />
+        <Typography variant='h6' textAlign='center' color='layers/layer-1/elements/success-text'>
+          Nice! Move on from here.
         </Typography>
         <Typography
           variant='body-2/normal'
           textAlign='center'
-          color='layers/layer-0/elements/text/color'
-          opacity={0.84}
+          color='layers/layer-1/elements/success-text'
         >
-          {getNextStepDescription}
+          Finally, go to <b>{getNextStepDescription}</b> file and run the plugin once more
         </Typography>
       </Flex>
     </Layout>

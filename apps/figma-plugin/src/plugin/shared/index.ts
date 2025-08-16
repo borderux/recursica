@@ -9,5 +9,3 @@ export * from './figmaApiHelpers';
 
 // Variable processors
 export * from './variableProcessors';
-
-export * from '../syncTokens';
