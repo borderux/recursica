@@ -19,7 +19,9 @@
     "precommit": "npm run check-types && npm run lint && npm run test && npm run format",
     "test": "turbo run test",
     "version": "changeset version",
-    "release": "changeset publish --access public"
+    "release": "changeset publish --access public",
+    "pr": "node scripts/create-pr.js",
+    "pr:commit": "node scripts/commit-pr-check.js"
   },
   "packageManager": "npm@10.9.0",
   "engines": {
