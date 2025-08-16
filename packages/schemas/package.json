@@ -28,15 +28,26 @@
     "UX",
     "UI"
   ],
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./dist/index.d.ts",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./schemas": "./dist/schemas.d.ts",
+    "./validators": {
+      "types": "./lib/validators/index.d.ts",
+      "import": "./lib/validators/index.js"
+    },
     "./*.json": "./dist/*.json"
   },
   "files": [
+    "lib",
     "dist"
   ],
   "scripts": {
+    "build": "node scripts/validate-schemas.js && node scripts/generate-types.js",
     "lint": "eslint . --max-warnings 0",
     "check-types": "tsc --noEmit",
     "generate-types": "npm test && node scripts/generate-types.js",
@@ -46,6 +57,7 @@
     "@repo/eslint-config": "*",
     "@repo/typescript-config": "*",
     "ajv": "^8.12.0",
+    "ajv-formats": "^2.1.1",
     "eslint": "^9.28.0",
     "fast-uri": "^3.0.6",
     "glob": "^10.3.10",

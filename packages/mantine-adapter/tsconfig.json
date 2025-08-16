@@ -14,7 +14,8 @@
     "outDir": "./dist",
     "sourceMap": true,
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "noImplicitAny": false
   },
   "include": [
     "**/*.ts",
@@ -23,5 +24,6 @@
     "adapter/**/*",
     "utils/**/*",
     "schemas/**/*"
-  ]
+  ],
+  "exclude": ["node_modules", "dist", "**/*.d.ts"]
 }

@@ -29,12 +29,14 @@ const external = [
   "tty",
   "vm",
   "zlib",
+  "@recursica/common",
 ];
 
 const plugins = [
   resolve({
     preferBuiltins: true,
     exportConditions: ["node"],
+    extensions: [".js", ".ts", ".json"],
   }),
   commonjs(),
   json(),
@@ -87,7 +89,7 @@ export default defineConfig([
     output: {
       file: "./dist/webworker.js",
       format: "es",
-      sourcemap: false,
+      sourcemap: true,
       exports: "auto",
     },
     plugins,
