@@ -1,10 +1,10 @@
-import { Box, Flex, Typography } from '@recursica/ui-kit-mantine';
+import { Box, Flex, Logo, Typography } from '@recursica/ui-kit-mantine';
 import { PropsWithChildren } from 'react';
 import { useFigma } from '../../hooks';
 
 type LayoutProps = PropsWithChildren<{
+  header?: React.ReactNode | 'default';
   footer?: React.ReactNode;
-  header?: React.ReactNode;
 }>;
 
 export function Layout({ children, footer, header }: LayoutProps) {
@@ -19,7 +19,16 @@ export function Layout({ children, footer, header }: LayoutProps) {
       py={16}
       px={24}
     >
-      {header}
+      {header === 'default' ? (
+        <Flex direction='row' w='100%' gap={'size/spacer/1-5x'}>
+          <Logo size='small' />
+          <Typography variant='body-1/strong' color='layers/layer-1/elements/text/color'>
+            Recursica
+          </Typography>
+        </Flex>
+      ) : (
+        header
+      )}
       <Flex flex={1} direction='column' justify='center' gap={10} w='100%'>
         {children}
       </Flex>

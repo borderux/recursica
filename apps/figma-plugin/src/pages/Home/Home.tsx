@@ -5,7 +5,7 @@ import { Layout } from '../../components';
 import { useEffect, useMemo } from 'react';
 
 export function Home() {
-  const { repository, variablesSynced, filetype, error } = useFigma();
+  const { repository, syncStatus, filetype, error } = useFigma();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -13,7 +13,14 @@ export function Home() {
       navigate('/error');
     }
   }, [error]);
-  const isLoading = !repository || !variablesSynced;
+
+  useEffect(() => {
+    if (syncStatus.variablesSynced && syncStatus.metadataGenerated && filetype !== 'ui-kit') {
+      navigate('/file-synced');
+    }
+  }, [syncStatus, navigate, filetype]);
+
+  const isLoading = !repository || !syncStatus.variablesSynced || !syncStatus.metadataGenerated;
 
   const target = useMemo(() => {
     if (repository && repository.platform && repository.accessToken) {
@@ -36,14 +43,17 @@ export function Home() {
   }, [filetype, target]);
 
   const getLoadingMessage = useMemo(() => {
-    if (!variablesSynced) {
+    if (!syncStatus.variablesSynced) {
       return 'Connecting variables...';
+    }
+    if (!syncStatus.metadataGenerated) {
+      return 'Syncing metadata...';
     }
     if (!repository) {
       return 'Checking authentication...';
     }
     return 'Getting this ready for you...';
-  }, [variablesSynced, repository]);
+  }, [syncStatus.variablesSynced, syncStatus.metadataGenerated, repository]);
 
   return (
     <Layout>

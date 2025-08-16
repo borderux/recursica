@@ -15,7 +15,10 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
   const [recursicaVariables, setRecursicaVariables] = useState<RecursicaVariablesSchema>();
   const [svgIcons, setSvgIcons] = useState<Record<string, string>>();
   const [userId, setUserId] = useState<string | undefined>();
-  const [variablesSynced, setVariablesSynced] = useState(false);
+  const [syncStatus, setSyncStatus] = useState({
+    variablesSynced: false,
+    metadataGenerated: false,
+  });
   const [filetype, setFiletype] = useState<string | undefined>();
   const [pluginVersion, setPluginVersion] = useState<string | undefined>();
   const [error, setError] = useState<string | undefined>();
@@ -40,8 +43,17 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
       if (type === 'CURRENT_USER') {
         setUserId(payload);
       }
-      if (type === 'SYNC_TOKENS_COMPLETE') {
-        setVariablesSynced(true);
+      if (type === 'SYNC_VARIABLES_COMPLETE') {
+        setSyncStatus((prev) => ({
+          ...prev,
+          variablesSynced: true,
+        }));
+      }
+      if (type === 'GENERATE_METADATA_COMPLETE') {
+        setSyncStatus((prev) => ({
+          ...prev,
+          metadataGenerated: true,
+        }));
       }
       if (type === 'METADATA') {
         const { projectType, pluginVersion } = payload;
@@ -160,7 +172,7 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
     svgIcons,
     loading: !(recursicaVariables || svgIcons),
     userId,
-    variablesSynced,
+    syncStatus,
     filetype,
     error,
     pluginVersion,

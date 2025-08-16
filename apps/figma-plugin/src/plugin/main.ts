@@ -3,7 +3,7 @@ import { decodeProjectMetadataCollection } from './projectMetadataCollection';
 import { getLocalStorage, saveInStorage } from './authStorage';
 import { getTeamLibrary } from './teamLibrary';
 import { exportIcons } from './exportIcons';
-import { syncTokens } from './syncTokens';
+import { syncMetadata } from './metadata';
 const pluginVersion = packageInfo.version;
 
 if (import.meta.env.MODE === 'development') {
@@ -52,7 +52,7 @@ figma.ui.onmessage = async (e) => {
     main();
   }
   if (e.type === 'SYNC_TOKENS') {
-    syncTokens();
+    syncMetadata();
   }
   if (e.type === 'CLOSE_PLUGIN') {
     figma.closePlugin();

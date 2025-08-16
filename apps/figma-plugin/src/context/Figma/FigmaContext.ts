@@ -18,7 +18,10 @@ export interface IFigmaContext {
   svgIcons?: RecursicaIconsSchema;
   loading: boolean;
   userId: string | undefined;
-  variablesSynced: boolean;
+  syncStatus: {
+    variablesSynced: boolean;
+    metadataGenerated: boolean;
+  };
   filetype: string | undefined;
   error: string | undefined;
   pluginVersion: string | undefined;

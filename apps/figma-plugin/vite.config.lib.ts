@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => ({
   build: {
     emptyOutDir: false,
     lib: {
-      entry: 'src/plugin/code.ts',
+      entry: 'src/plugin/main.ts',
       name: 'FigmaPlugin',
       formats: ['es'],
     },
