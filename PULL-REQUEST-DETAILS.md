@@ -1,4 +1,4 @@
-# Pull Request Details
+# Architectural Refactor: Move Validation System to Schemas Package
 
 ## Summary
 
@@ -36,7 +36,7 @@ This PR enhances the Figma plugin's metadata module with comprehensive documenta
 - **Better separation** between orchestration, filtering, and utility functions
 - **Consistent API patterns** across all metadata functions
 
-## Technical Details
+### 1. Architectural Refactor
 
 ### Performance Impact
 
@@ -51,7 +51,10 @@ This PR enhances the Figma plugin's metadata module with comprehensive documenta
 - **Type Safety**: Maintained full TypeScript type safety
 - **Error Handling**: Clear error messages and validation
 
-## Testing & Validation
+- ✅ **Resolved mantine-adapter build failures** - No more "Cannot find module '@recursica/common'" errors
+- ✅ **Fixed figma-plugin build** - No more Node.js module conflicts in browser environment
+- ✅ **Clean dependency graph** - Clear separation between Node.js tools and browser utilities
+- ✅ **Proper module bundling** - Each package can be bundled correctly for its target environment
 
 ### Pre-PR Checks Passed
 
@@ -60,7 +63,7 @@ This PR enhances the Figma plugin's metadata module with comprehensive documenta
 - ✅ **Tests**: All test suites passed
 - ✅ **Schema Validation**: All JSON schemas validated successfully
 
-### Manual Testing
+### Development Experience
 
 - **Functionality**: All metadata functions work as expected
 - **Performance**: Map-based lookups show improved performance for large collections
@@ -77,14 +80,17 @@ This PR enhances the Figma plugin's metadata module with comprehensive documenta
 - **None**: All changes are backward compatible
 - **Type Changes**: `validateCollections` now expects `Map` instead of `Record` for better performance
 
-## Review Focus Areas
+- **Before**: `import { validateVariables } from '@recursica/common'`
+- **After**: `import { validateVariables } from '@recursica/schemas/validators'`
 
 1. **Documentation Quality**: Verify JSDoc clarity and completeness
 2. **Performance Impact**: Confirm Map usage provides expected performance benefits
 3. **Code Organization**: Check SRP compliance and separation of concerns
 4. **Type Safety**: Ensure all TypeScript types are properly defined
 
-## Related Issues
+- Update import statements to use `@recursica/schemas/validators`
+- Update any scripts that reference the old validation locations
+- No changes needed for browser-compatible utilities from `@recursica/common`
 
 - Improves code maintainability and developer experience
 - Addresses documentation gaps in metadata module
