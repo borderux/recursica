@@ -193,7 +193,7 @@ function main() {
     // Create the PR
     log("\n📝 Creating pull request...", "bright");
     execSync(
-      `gh pr create --title "${title}" --body-file ${filename} --base main --repo borderux/recursica`,
+      `gh pr create --title "${title}" --body-file ${filename} --base main --repo borderux/recursica --assignee @me`,
       { stdio: "inherit" },
     );
 
