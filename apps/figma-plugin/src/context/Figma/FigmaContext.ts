@@ -1,5 +1,6 @@
 import { createContext } from 'react';
 import type { RecursicaVariablesSchema, RecursicaIconsSchema } from '@recursica/schemas';
+import { FileTypes } from '../../plugin/filetype';
 
 export interface CurrentRepositoryContext {
   platform: 'gitlab' | 'github' | undefined;
@@ -22,7 +23,7 @@ export interface IFigmaContext {
     variablesSynced: boolean;
     metadataGenerated: boolean;
   };
-  filetype: string | undefined;
+  filetype: FileTypes | undefined;
   error: string | undefined;
   pluginVersion: string | undefined;
 }

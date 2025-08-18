@@ -1,9 +1,8 @@
 import packageInfo from '../../package.json' with { type: 'json' };
-import { decodeProjectMetadataCollection } from './projectMetadataCollection';
 import { getLocalStorage, saveInStorage } from './authStorage';
 import { getTeamLibrary } from './teamLibrary';
-import { exportIcons } from './exportIcons';
 import { syncMetadata } from './metadata';
+import { detectFiletype } from './filetype';
 const pluginVersion = packageInfo.version;
 
 if (import.meta.env.MODE === 'development') {
@@ -17,16 +16,6 @@ if (import.meta.env.MODE === 'development') {
     width: 370,
     height: 350,
   });
-}
-const projectType = decodeProjectMetadataCollection(pluginVersion);
-async function main() {
-  const fileType = await projectType;
-  if (fileType === 'icons') {
-    exportIcons();
-  }
-  if (fileType === 'ui-kit') {
-    getTeamLibrary(pluginVersion);
-  }
 }
 
 figma.ui.onmessage = async (e) => {
@@ -49,10 +38,33 @@ figma.ui.onmessage = async (e) => {
     saveInStorage('selectedProject', e.payload);
   }
   if (e.type === 'GET_VARIABLES') {
-    main();
+    const { fileType } = await detectFiletype();
+    if (fileType === 'ui-kit') {
+      getTeamLibrary(pluginVersion);
+    }
   }
   if (e.type === 'SYNC_TOKENS') {
     syncMetadata();
+  }
+  if (e.type === 'GET_FILETYPE') {
+    try {
+      const { fileType, themeName } = await detectFiletype();
+      figma.ui.postMessage({
+        type: 'FILETYPE_DETECTED',
+        payload: {
+          fileType,
+          themeName,
+          pluginVersion,
+        },
+      });
+    } catch (error) {
+      figma.ui.postMessage({
+        type: 'FILETYPE_ERROR',
+        payload: {
+          error: error instanceof Error ? error.message : 'Unknown error occurred',
+        },
+      });
+    }
   }
   if (e.type === 'CLOSE_PLUGIN') {
     figma.closePlugin();
