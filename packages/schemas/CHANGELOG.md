@@ -1,5 +1,11 @@
 # @repo/recursica-schemas
 
+## 1.1.0
+
+### Minor Changes
+
+- f1bf51b: Added validators
+
 ## 1.0.7
 
 ### Patch Changes

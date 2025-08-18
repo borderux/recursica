@@ -1,5 +1,11 @@
 # @recursica/figma-plugin
 
+## 0.0.12
+
+### Patch Changes
+
+- 95e1484: Fixed a bug that prevented icons from exporting properly.
+
 ## 0.0.11
 
 ### Patch Changes
