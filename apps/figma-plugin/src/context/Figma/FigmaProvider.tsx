@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { FigmaContext, CurrentRepositoryContext } from './FigmaContext';
 import type { RecursicaVariablesSchema } from '@recursica/schemas';
+import { FileTypes } from '../../plugin/filetype';
 
 export interface TokensProvidersProps {
   children: React.ReactNode;
@@ -19,7 +20,7 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
     variablesSynced: false,
     metadataGenerated: false,
   });
-  const [filetype, setFiletype] = useState<string | undefined>();
+  const [filetype, setFiletype] = useState<FileTypes | undefined>();
   const [pluginVersion, setPluginVersion] = useState<string | undefined>();
   const [error, setError] = useState<string | undefined>();
   useLayoutEffect(() => {
