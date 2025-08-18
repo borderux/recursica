@@ -37,6 +37,7 @@ export async function exportIcons() {
     payload: svgIcons,
   };
   if (Object.keys(svgIcons).length > 0) {
+    console.log('svgIcons', svgIcons);
     figma.ui.postMessage(response);
     return svgIcons;
   }

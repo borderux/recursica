@@ -118,8 +118,9 @@ class FiletypeSingleton {
           }
         }
       }
-    } else {
-      // No collections found, check if this is an icons file
+    }
+    if (fileType === undefined || fileType === 'icons') {
+      // If no file type was determined from collections, check if this is an icons file
       let iconsFound = false;
 
       for (const page of figma.root.children) {
