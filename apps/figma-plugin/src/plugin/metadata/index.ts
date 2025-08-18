@@ -1,6 +1,6 @@
 import { syncVariables } from './syncVariables';
 import { generateMetadata } from './generateMetadata';
-import { inferFiletypeFromCollections } from './inferFiletypeFromCollections';
+import { detectFiletype } from '../filetype';
 import { validateCollections } from './validateCollections';
 import { getRemoteVariables } from './getRemoteVariables';
 import { filterUnsyncedCollections } from './filterUnsyncedCollections';
@@ -31,7 +31,7 @@ export async function syncMetadata(): Promise<void> {
   const localCollections = await figma.variables.getLocalVariableCollectionsAsync();
 
   const unsyncedLocalCollections = filterUnsyncedCollections(localCollections);
-  const { fileType, themeName } = await inferFiletypeFromCollections(localCollections);
+  const { fileType, themeName } = await detectFiletype();
 
   if (unsyncedLocalCollections.length > 0) {
     const { collections, remoteVariables } = await getRemoteVariables(

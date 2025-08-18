@@ -1,5 +1,4 @@
 {
-  "$schema": "./packages/schemas/src/RecursicaConfiguration.json",
   "project": {
     "name": "Recursica",
     "root": "apps/figma-plugin",

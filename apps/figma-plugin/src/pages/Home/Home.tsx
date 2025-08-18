@@ -1,11 +1,11 @@
 import { Flex, Typography, Button, Logo } from '@recursica/ui-kit-mantine';
 import { NavLink, useNavigate } from 'react-router';
-import { useFigma } from '../../hooks/useFigma';
+import { useFigma } from '../../hooks';
 import { Layout } from '../../components';
 import { useEffect, useMemo } from 'react';
 
 export function Home() {
-  const { repository, syncStatus, filetype, error } = useFigma();
+  const { repository, syncStatus, error, filetype } = useFigma();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -15,7 +15,13 @@ export function Home() {
   }, [error]);
 
   useEffect(() => {
-    if (syncStatus.variablesSynced && syncStatus.metadataGenerated && filetype !== 'ui-kit') {
+    if (
+      syncStatus.variablesSynced &&
+      syncStatus.metadataGenerated &&
+      filetype &&
+      filetype !== 'ui-kit' &&
+      filetype !== 'icons'
+    ) {
       navigate('/file-synced');
     }
   }, [syncStatus, navigate, filetype]);
