@@ -55,12 +55,19 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
           metadataGenerated: true,
         }));
       }
-      if (type === 'METADATA') {
-        const { projectType, pluginVersion } = payload;
-        setFiletype(projectType);
+      if (type === 'FILETYPE_DETECTED') {
+        const { fileType, pluginVersion } = payload;
+        setFiletype(fileType);
         setPluginVersion(pluginVersion);
       }
-      if (type === 'NO_TOKENS_FOUND' || type === 'NO_TOKENS_OR_THEMES_FOUND') {
+      if (type === 'FILETYPE_ERROR') {
+        setError(payload.error);
+      }
+      if (
+        type === 'NO_TOKENS_FOUND' ||
+        type === 'NO_TOKENS_OR_THEMES_FOUND' ||
+        type === 'NO_VARIABLES_FOUND'
+      ) {
         setError(type);
       }
     };
@@ -71,6 +78,7 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
 
   useEffect(() => {
     syncVariables();
+    getFiletype();
   }, []);
 
   useEffect(() => {
@@ -150,6 +158,18 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
       {
         pluginMessage: {
           type: 'SYNC_TOKENS',
+        },
+        pluginId: '*',
+      },
+      '*'
+    );
+  };
+
+  const getFiletype = () => {
+    parent.postMessage(
+      {
+        pluginMessage: {
+          type: 'GET_FILETYPE',
         },
         pluginId: '*',
       },

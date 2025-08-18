@@ -36,8 +36,10 @@ export async function exportIcons() {
     type: 'SVG_ICONS',
     payload: svgIcons,
   };
-  console.log(response);
-  figma.ui.postMessage(response);
+  if (Object.keys(svgIcons).length > 0) {
+    figma.ui.postMessage(response);
+    return svgIcons;
+  }
 }
 
 export async function exportSelectedIcons(currentSelection: SceneNode[]) {

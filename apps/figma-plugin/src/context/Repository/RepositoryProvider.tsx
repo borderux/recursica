@@ -158,6 +158,7 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
   const {
     repository,
     updateRepository: { updateSelectedProject },
+    filetype,
   } = useFigma();
 
   // Use custom hooks
@@ -350,22 +351,27 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
         if (!repositoryInstance) {
           throw new Error('Repository instance not available');
         }
-        adapterFiles = await runAdapter(
-          repositoryInstance,
-          selectedProject,
-          targetBranch,
-          config,
-          fileLoadingData,
-          (status) => {
-            if (status === 'loading') {
-              updateAdapterStatus(FileStatus.Loading, 1);
-            } else if (status === 'done') {
-              updateAdapterStatus(FileStatus.Done);
-            } else if (status === 'error') {
-              updateAdapterStatus(FileStatus.Error, 0);
+        if (filetype === 'icons') {
+          adapterFiles = [];
+          updateAdapterStatus(FileStatus.Done);
+        } else {
+          adapterFiles = await runAdapter(
+            repositoryInstance,
+            selectedProject,
+            targetBranch,
+            config,
+            fileLoadingData,
+            (status) => {
+              if (status === 'loading') {
+                updateAdapterStatus(FileStatus.Loading, 1);
+              } else if (status === 'done') {
+                updateAdapterStatus(FileStatus.Done);
+              } else if (status === 'error') {
+                updateAdapterStatus(FileStatus.Error, 0);
+              }
             }
-          }
-        );
+          );
+        }
       } catch (error) {
         console.error('Adapter execution failed:', error);
         setRepositoryError(
