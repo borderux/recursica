@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
 /**
- * Git pre-push hook script to validate PULL-REQUEST-DETAILS.md updates
+ * Git pre-push hook script to validate AI agent PR check completion
  *
- * This script ensures that PULL-REQUEST-DETAILS.md has been modified
+ * This script ensures that the AI agent has performed the PR check
  * before allowing a push to prevent incomplete pull requests.
  *
  * @author Recursica Team
- * @version 1.0.0
+ * @version 2.0.0
  */
 
 import { execSync } from "child_process";
@@ -61,74 +61,161 @@ function getMainBranch() {
 }
 
 /**
- * Main function that orchestrates the pull request details validation
+ * Gets recent commit messages since the last push
+ * @param {string} mainBranch - The main branch name
+ * @returns {string[]} Array of commit messages
+ */
+function getRecentCommitMessages(mainBranch) {
+  try {
+    const commits = execSync(`git log --oneline origin/${mainBranch}..HEAD`, {
+      encoding: "utf8",
+    }).trim();
+
+    if (!commits) {
+      return [];
+    }
+
+    return commits.split("\n").filter(Boolean);
+  } catch (error) {
+    log(`Error getting commit messages: ${error.message}`);
+    return [];
+  }
+}
+
+/**
+ * Checks if there are any commits that indicate PR creation was attempted
+ * @param {string[]} commitMessages - Array of commit messages
+ * @returns {boolean} True if PR creation was attempted
+ */
+function hasPRCreationAttempt(commitMessages) {
+  const prKeywords = [
+    "pr created",
+    "pull request",
+    "create pr",
+    "npm run pr",
+    "gh pr create",
+    "pr:",
+    "pr -",
+  ];
+
+  return commitMessages.some((commit) => {
+    const message = commit.toLowerCase();
+    return prKeywords.some((keyword) => message.includes(keyword));
+  });
+}
+
+/**
+ * Checks if there are any commits that indicate the AI agent performed analysis
+ * @param {string[]} commitMessages - Array of commit messages
+ * @returns {boolean} True if AI analysis was performed
+ */
+function hasAIAnalysis(commitMessages) {
+  const aiKeywords = [
+    "ai analysis",
+    "pr check",
+    "pull request check",
+    "review changes",
+    "code review",
+    "pr details",
+    "update pr",
+  ];
+
+  return commitMessages.some((commit) => {
+    const message = commit.toLowerCase();
+    return aiKeywords.some((keyword) => message.includes(keyword));
+  });
+}
+
+/**
+ * Main function that orchestrates the AI agent PR check validation
  */
 function main() {
   const currentBranch = getCurrentBranch();
   const mainBranch = getMainBranch();
-  const prDetailsFile = "PULL-REQUEST-DETAILS.md";
 
   // Skip check for main/master branch
   if (currentBranch === "main" || currentBranch === "master") {
-    log("Skipping PULL-REQUEST-DETAILS.md check for main/master branch");
+    log("Skipping AI agent PR check for main/master branch");
     process.exit(0);
   }
 
-  // Check if the file has been modified compared to main branch
+  // Check if we have the remote branch available
   try {
-    // First check if we have the remote branch available
-    try {
-      execSync(`git rev-parse --verify origin/${mainBranch}`, {
-        stdio: "ignore",
-      });
-    } catch (error) {
-      log("PRE-PUSH HOOK FAILED");
-      log("");
-      log(`Cannot access remote branch 'origin/${mainBranch}'`);
-      log("");
-      log("How to fix:");
-      log("   1. git fetch origin");
-      log("   2. Try pushing again");
-      log("");
-      log("Hook Details:");
-      log(`   Branch: ${currentBranch}`);
-      log(`   Main branch: ${mainBranch}`);
-      log("");
-      process.exit(1);
-    }
-
-    execSync(
-      `git diff --quiet origin/${mainBranch}..HEAD -- ${prDetailsFile}`,
-      {
-        stdio: "ignore",
-      },
-    );
-    // File has NOT been modified (exit code 0 means no differences)
+    execSync(`git rev-parse --verify origin/${mainBranch}`, {
+      stdio: "ignore",
+    });
+  } catch (error) {
+    log("PRE-PUSH HOOK FAILED");
     log("");
+    log(`Cannot access remote branch 'origin/${mainBranch}'`);
+    log("");
+    log("How to fix:");
+    log("   1. git fetch origin");
+    log("   2. Try pushing again");
+    log("");
+    log("Hook Details:");
+    log(`   Branch: ${currentBranch}`);
+    log(`   Main branch: ${mainBranch}`);
+    log("");
+    process.exit(1);
+  }
+
+  // Get recent commit messages
+  const commitMessages = getRecentCommitMessages(mainBranch);
+
+  if (commitMessages.length === 0) {
+    log("PRE-PUSH HOOK FAILED");
+    log("");
+    log("No commits found since last push to main branch");
+    log("");
+    log("This usually means:");
+    log("   1. You haven't committed your changes yet");
+    log("   2. You're trying to push to the wrong branch");
+    log("");
+    log("How to fix:");
+    log("   1. git add .");
+    log("   2. git commit -m 'Your commit message'");
+    log("   3. git push origin ${currentBranch}");
+    log("");
+    process.exit(1);
+  }
+
+  // Check if PR creation was attempted
+  const hasPRCreation = hasPRCreationAttempt(commitMessages);
+  const hasAnalysis = hasAIAnalysis(commitMessages);
+
+  if (!hasPRCreation && !hasAnalysis) {
     log("PRE-PUSH HOOK FAILED");
     log("");
     log(
-      `PULL-REQUEST-DETAILS.md has not been updated for branch: ${currentBranch}`,
+      `AI agent PR check has not been performed for branch: ${currentBranch}`,
     );
     log("");
     log("Required Action:");
-    log("   Update PULL-REQUEST-DETAILS.md with details of your changes");
+    log("   The AI agent must perform a PR check before pushing");
     log("");
     log("How to fix:");
     log("   1. Open Cursor chat");
     log(
-      "   2. Type in: 'Follow the instructions found in PULL-REQUEST-CHECK.txt'",
+      "   2. Type: 'Follow the instructions found in PULL-REQUEST-CHECK.txt'",
     );
-    log("   3. Let Cursor update PULL-REQUEST-DETAILS.md for you");
-    log("   4. git add PULL-REQUEST-DETAILS.md");
-    log("   5. git commit -m 'Update PR details'");
-    log("   6. git push origin ${currentBranch}");
+    log("   3. Let the AI agent analyze your changes and create a PR");
+    log("   4. Commit any changes made by the AI agent");
+    log("   5. git push origin ${currentBranch}");
+    log("");
+    log("Recent commits:");
+    commitMessages.slice(0, 5).forEach((commit) => {
+      log(`   ${commit}`);
+    });
+    if (commitMessages.length > 5) {
+      log(`   ... and ${commitMessages.length - 5} more commits`);
+    }
+    log("");
     process.exit(1);
-  } catch {
-    // File HAS been modified (exit code 1 means differences found)
-    log("PULL-REQUEST-DETAILS.md has been updated - proceeding with push");
-    process.exit(0);
   }
+
+  log("AI agent PR check validation passed - proceeding with push");
+  process.exit(0);
 }
 
 // Execute the main function
