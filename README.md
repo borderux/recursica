@@ -8,6 +8,7 @@ Recursica is a comprehensive design system and component library that helps team
 
 - Node.js >= 20
 - npm >= 10.9.0
+- GitHub CLI - Required for pull request creation
 
 ### Installation
 
@@ -24,7 +25,17 @@ cd recursica
 npm install
 ```
 
-3. Build all packages:
+3. Install and authenticate GitHub CLI:
+
+```sh
+# macOS
+brew install gh
+
+# Or download from https://cli.github.com/
+gh auth login
+```
+
+4. Build all packages:
 
 ```sh
 npm run build
@@ -66,6 +77,8 @@ We welcome contributions of all kinds! Whether you want to report bugs, suggest 
 - The pull request process
 - Using changesets for version management
 - Code of conduct
+
+For detailed information about our AI-powered pull request workflow, see [Contributing Guidelines](CONTRIBUTING.md).
 
 ## Additional Documentation
 

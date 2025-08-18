@@ -20,6 +20,8 @@
     "test": "turbo run test",
     "version": "changeset version",
     "release": "changeset publish --access public",
+    "pr": "node scripts/create-pr.js",
+    "pr:commit": "node scripts/commit-pr-check.js",
     "simulate-ci": "./scripts/simulate-ci-build.sh"
   },
   "packageManager": "npm@10.9.0",
