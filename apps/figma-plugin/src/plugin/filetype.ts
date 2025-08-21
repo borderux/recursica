@@ -104,7 +104,7 @@ class FiletypeSingleton {
             if (typeof firstMode === 'string') {
               fileType = firstMode as FileTypes;
             }
-            break;
+            continue;
           }
           // Look for a variable specifically named 'theme'
           if (variable.name === 'theme') {
@@ -114,7 +114,7 @@ class FiletypeSingleton {
             if (typeof firstMode === 'string') {
               themeName = firstMode;
             }
-            break; // Found the theme variable, no need to continue searching
+            continue; // Found the theme variable, no need to continue searching
           }
         }
       }
