@@ -30,12 +30,6 @@ export async function generateMetadata(
 ) {
   // Process all collections in parallel for better performance
   const localCollectionPromises = localCollections.map(async (collection) => {
-    // Skip setting shared plugin data for "ID variables" collection
-    // This is a special system collection that shouldn't have metadata applied
-    if (collection.name === 'ID variables') {
-      return Promise.resolve([]);
-    }
-
     // Set the file type metadata to help identify the project type
     collection.setSharedPluginData('recursica', 'file-type', fileType);
 
@@ -44,9 +38,11 @@ export async function generateMetadata(
 
     // For theme collections, set the theme name metadata
     if (fileType === 'themes') {
+      // Clean the filename: remove special characters and numbers before converting to PascalCase
+      const cleanedRootName = figma.root.name.replace(/[^a-zA-Z\s]/g, '').replace(/\d+/g, '');
       // Use themeName if available, otherwise fall back to figma.root.name
       // Convert to PascalCase for consistent naming convention
-      const finalThemeName = themeName || toPascalCase(figma.root.name);
+      const finalThemeName = themeName || toPascalCase(cleanedRootName);
       collection.setSharedPluginData('recursica', 'theme-name', finalThemeName);
     }
   });
