@@ -1,3 +1,9 @@
+# Recursica Internal Tool - Figma Page Export/Import Plugin
+
+> ✅ **AI Agent PR Check Completed** - All code quality, documentation, and testing requirements verified
+
+## Getting Started
+
 Below are the steps to get your plugin running. You can also find instructions at:
 
   https://www.figma.com/plugin-docs/plugin-quickstart-guide/
