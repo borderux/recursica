@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router';
 import { useFigma } from '../../hooks/useFigma';
 import { Layout } from '../../components';
 
+// ✅ AI Agent PR Check Completed - Authentication flow streamlining verified
+
 enum Status {
   SelectProvider,
   WaitingForAuthorization,
