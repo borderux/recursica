@@ -16,7 +16,10 @@ export interface AnchorProps
 
 export function Anchor({ children, ...props }: AnchorProps) {
   return (
-    <ManAnchor style={{ color: "currentcolor" }} {...props}>
+    <ManAnchor
+      style={{ color: "currentcolor", fontSize: "inherit" }}
+      {...props}
+    >
       {children}
     </ManAnchor>
   );

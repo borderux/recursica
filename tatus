@@ -1,0 +1,78 @@
+[1mdiff --git a/apps/figma-plugin/src/pages/Home/Home.tsx b/apps/figma-plugin/src/pages/Home/Home.tsx[m
+[1mindex d71c52c..18d0553 100644[m
+[1m--- a/apps/figma-plugin/src/pages/Home/Home.tsx[m
+[1m+++ b/apps/figma-plugin/src/pages/Home/Home.tsx[m
+[36m@@ -1,5 +1,5 @@[m
+[31m-import { Flex, Typography, Button, Logo } from '@recursica/ui-kit-mantine';[m
+[31m-import { NavLink, useNavigate } from 'react-router';[m
+[32m+[m[32mimport { Flex, Typography, Logo } from '@recursica/ui-kit-mantine';[m[41m[m
+[32m+[m[32mimport { useNavigate } from 'react-router';[m[41m[m
+ import { useFigma } from '../../hooks';[m
+ import { Layout } from '../../components';[m
+ import { useEffect, useMemo } from 'react';[m
+[36m@@ -15,39 +15,14 @@[m [mexport function Home() {[m
+   }, [error]);[m
+ [m
+   useEffect(() => {[m
+[31m-    if ([m
+[31m-      syncStatus.variablesSynced &&[m
+[31m-      syncStatus.metadataGenerated &&[m
+[31m-      filetype &&[m
+[31m-      filetype !== 'ui-kit' &&[m
+[31m-      filetype !== 'icons'[m
+[31m-    ) {[m
+[32m+[m[32m    const isSynced = syncStatus.variablesSynced && syncStatus.metadataGenerated;[m[41m[m
+[32m+[m[32m    if (isSynced && filetype) {[m[41m[m
+       navigate('/file-synced');[m
+     }[m
+   }, [syncStatus, navigate, filetype]);[m
+ [m
+   const isLoading = !repository || !syncStatus.variablesSynced || !syncStatus.metadataGenerated;[m
+ [m
+[31m-  const target = useMemo(() => {[m
+[31m-    if (repository && repository.platform && repository.accessToken) {[m
+[31m-      return '/publish';[m
+[31m-    }[m
+[31m-    return '/auth';[m
+[31m-  }, [repository]);[m
+[31m-[m
+[31m-  const getRedirect = useMemo(() => {[m
+[31m-    if (filetype === 'ui-kit' || filetype === 'icons') {[m
+[31m-      return {[m
+[31m-        label: 'Connect repo',[m
+[31m-        to: target,[m
+[31m-      };[m
+[31m-    }[m
+[31m-    return {[m
+[31m-      label: 'Next steps',[m
+[31m-      to: '/file-synced',[m
+[31m-    };[m
+[31m-  }, [filetype, target]);[m
+[31m-[m
+   const getLoadingMessage = useMemo(() => {[m
+     if (!syncStatus.variablesSynced) {[m
+       return 'Connecting variables...';[m
+[36m@@ -69,7 +44,7 @@[m [mexport function Home() {[m
+           <Typography variant='h2'>Recursica</Typography>[m
+         </Flex>[m
+         <Flex gap={2} justify='center'>[m
+[31m-          {isLoading ? ([m
+[32m+[m[32m          {isLoading && ([m[41m[m
+             <Typography[m
+               variant='body-1/normal'[m
+               textAlign='center'[m
+[36m@@ -78,14 +53,6 @@[m [mexport function Home() {[m
+             >[m
+               {getLoadingMessage}[m
+             </Typography>[m
+[31m-          ) : ([m
+[31m-            <Button[m
+[31m-              disabled={!filetype}[m
+[31m-              component={NavLink}[m
+[31m-              to={getRedirect.to}[m
+[31m-              label={getRedirect.label}[m
+[31m-              trailing='arrow_right_outline'[m
+[31m-            />[m
+           )}[m
+         </Flex>[m
+       </Flex>[m

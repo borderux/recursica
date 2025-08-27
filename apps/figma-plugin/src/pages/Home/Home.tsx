@@ -1,5 +1,5 @@
-import { Flex, Typography, Button, Logo } from '@recursica/ui-kit-mantine';
-import { NavLink, useNavigate } from 'react-router';
+import { Flex, Typography, Logo } from '@recursica/ui-kit-mantine';
+import { useNavigate } from 'react-router';
 import { useFigma } from '../../hooks';
 import { Layout } from '../../components';
 import { useEffect, useMemo } from 'react';
@@ -15,38 +15,13 @@ export function Home() {
   }, [error]);
 
   useEffect(() => {
-    if (
-      syncStatus.variablesSynced &&
-      syncStatus.metadataGenerated &&
-      filetype &&
-      filetype !== 'ui-kit' &&
-      filetype !== 'icons'
-    ) {
+    const isSynced = syncStatus.variablesSynced && syncStatus.metadataGenerated;
+    if (isSynced && filetype) {
       navigate('/file-synced');
     }
   }, [syncStatus, navigate, filetype]);
 
   const isLoading = !repository || !syncStatus.variablesSynced || !syncStatus.metadataGenerated;
-
-  const target = useMemo(() => {
-    if (repository && repository.platform && repository.accessToken) {
-      return '/publish';
-    }
-    return '/auth';
-  }, [repository]);
-
-  const getRedirect = useMemo(() => {
-    if (filetype === 'ui-kit' || filetype === 'icons') {
-      return {
-        label: 'Connect repo',
-        to: target,
-      };
-    }
-    return {
-      label: 'Next steps',
-      to: '/file-synced',
-    };
-  }, [filetype, target]);
 
   const getLoadingMessage = useMemo(() => {
     if (!syncStatus.variablesSynced) {
@@ -69,7 +44,7 @@ export function Home() {
           <Typography variant='h2'>Recursica</Typography>
         </Flex>
         <Flex gap={2} justify='center'>
-          {isLoading ? (
+          {isLoading && (
             <Typography
               variant='body-1/normal'
               textAlign='center'
@@ -78,14 +53,6 @@ export function Home() {
             >
               {getLoadingMessage}
             </Typography>
-          ) : (
-            <Button
-              disabled={!filetype}
-              component={NavLink}
-              to={getRedirect.to}
-              label={getRedirect.label}
-              trailing='arrow_right_outline'
-            />
           )}
         </Flex>
       </Flex>
