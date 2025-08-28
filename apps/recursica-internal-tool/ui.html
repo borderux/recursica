@@ -1,0 +1,101 @@
+<h2>Page Export/Import Tool</h2>
+
+<div style="margin-bottom: 16px;">
+  <h3>Export Page</h3>
+  <p>Select a page to export its structure to JSON:</p>
+  <select id="page-select" style="width: 100%; margin-bottom: 8px;">
+    <option value="">Loading pages...</option>
+  </select>
+  <button id="export" style="width: 100%;">Export Selected Page</button>
+</div>
+
+<div style="margin-bottom: 16px;">
+  <h3>Import Page</h3>
+  <p>Upload a JSON file to import a page structure:</p>
+  <input type="file" id="import-file" accept=".json" style="width: 100%; margin-bottom: 8px;">
+  <button id="import" style="width: 100%;" disabled>Import Page from JSON</button>
+</div>
+
+<div style="margin-bottom: 16px;">
+  <h3>Quick Copy</h3>
+  <p>Copy current page and create side-by-side comparison:</p>
+  <button id="quick-copy" style="width: 100%;">Quick Copy Current Page</button>
+</div>
+
+<button id="cancel" style="width: 100%;">Cancel</button>
+
+<script>
+  // Load pages when plugin starts
+  parent.postMessage({ pluginMessage: { type: 'load-pages' } }, '*')
+
+  document.getElementById('export').onclick = () => {
+    const select = document.getElementById('page-select')
+    const pageIndex = parseInt(select.value, 10)
+    if (pageIndex >= 0) {
+      parent.postMessage({ pluginMessage: { type: 'export-page', pageIndex } }, '*')
+    } else {
+      alert('Please select a page to export')
+    }
+  }
+
+  document.getElementById('import-file').onchange = (event) => {
+    const file = event.target.files[0]
+    const importButton = document.getElementById('import')
+
+    if (file && file.type === 'application/json') {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        try {
+          const jsonData = JSON.parse(e.target.result)
+          importButton.disabled = false
+          importButton.onclick = () => {
+            parent.postMessage({ pluginMessage: { type: 'import-page', jsonData } }, '*')
+          }
+        } catch (error) {
+          alert('Invalid JSON file')
+          importButton.disabled = true
+        }
+      }
+      reader.readAsText(file)
+    } else {
+      importButton.disabled = true
+    }
+  }
+
+  document.getElementById('quick-copy').onclick = () => {
+    parent.postMessage({ pluginMessage: { type: 'quick-copy' } }, '*')
+  }
+
+  document.getElementById('cancel').onclick = () => {
+    parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*')
+  }
+
+  // Handle messages from the plugin
+  window.onmessage = (event) => {
+    const { type, pages } = event.data.pluginMessage
+
+    if (type === 'pages-loaded') {
+      const select = document.getElementById('page-select')
+      select.innerHTML = '<option value="">Select a page...</option>'
+
+      pages.forEach((page, index) => {
+        const option = document.createElement('option')
+        option.value = index
+        option.textContent = page.name
+        select.appendChild(option)
+      })
+    }
+
+    if (type === 'download-json') {
+      const { filename, jsonData } = event.data.pluginMessage
+      const blob = new Blob([jsonData], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      a.click()
+      URL.revokeObjectURL(url)
+    }
+  };
+
+</script>
