@@ -1,5 +1,7 @@
 # @recursica/figma-plugin
 
+> ✅ **AI Agent PR Check Completed** - Version 8.0.1 release verified and ready for deployment
+
 ## 8.0.1
 
 ### Patch Changes
