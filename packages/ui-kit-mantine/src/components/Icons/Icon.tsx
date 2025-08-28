@@ -23,13 +23,16 @@ export interface IconProps {
   spin?: boolean;
   /** The speed of the spin animation @default "normal" */
   spinSpeed?: "slow" | "normal" | "fast" | string;
+  /** The onClick event handler for the icon */
+  onClick?: React.MouseEventHandler<SVGSVGElement>;
 }
 
 export const Icon = (props: IconProps) => {
   const SvgComponent = IconResourceMap[props.name];
-  const colorStyles = {
+  const inlineStyles = {
     fill: props.color ? recursica[props.color] : "currentColor",
     color: props.color ? recursica[props.color] : "currentColor",
+    cursor: props.onClick ? "pointer" : "default",
   };
 
   const getSpinClass = () => {
@@ -51,8 +54,9 @@ export const Icon = (props: IconProps) => {
       width={props.size ?? DEFAULT_SIZE}
       height={props.size ?? DEFAULT_SIZE}
       title={props.title}
-      style={colorStyles}
+      style={inlineStyles}
       className={getSpinClass()}
+      onClick={props.onClick}
     />
   );
 };

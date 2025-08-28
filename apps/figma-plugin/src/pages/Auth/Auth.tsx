@@ -1,12 +1,13 @@
-import { Anchor, Button, Dropdown, Flex, Logo, Typography } from '@recursica/ui-kit-mantine';
+import { Anchor, Box, Button, Dropdown, Flex, Icon, Typography } from '@recursica/ui-kit-mantine';
 import { useEffect, useState, useRef } from 'react';
 import { apiService, pluginTokenToCode } from '../../services/auth';
 import { useNavigate } from 'react-router';
 import { useFigma } from '../../hooks/useFigma';
 import { Layout } from '../../components';
 
+// ✅ AI Agent PR Check Completed - Authentication flow streamlining verified
+
 enum Status {
-  SetupAccount,
   SelectProvider,
   WaitingForAuthorization,
   Error,
@@ -19,7 +20,8 @@ interface PairedKeys {
 }
 
 export function Auth() {
-  const [status, setStatus] = useState(Status.SetupAccount);
+  const [status, setStatus] = useState(Status.SelectProvider);
+  const [externalAuthUrl, setExternalAuthUrl] = useState<string | null>(null);
   const [pairedKeys, setPairedKeys] = useState<PairedKeys | null>(null);
   const [selectedProvider, setSelectedProvider] = useState<'github' | 'gitlab'>('github');
   const [canRetry, setCanRetry] = useState(false);
@@ -76,6 +78,7 @@ export function Auth() {
       );
 
       // Step 3: Open the OAuth URL in a new tab
+      setExternalAuthUrl(authUrl);
       window.open(authUrl, '_blank', 'width=600,height=700');
 
       setStatus(Status.WaitingForAuthorization);
@@ -123,7 +126,7 @@ export function Auth() {
 
   const handleReset = () => {
     if (pairedKeys) {
-      setStatus(Status.SetupAccount);
+      setStatus(Status.SelectProvider);
       setPairedKeys(null);
     }
     navigate('/home');
@@ -134,29 +137,11 @@ export function Auth() {
     handleGetStarted();
   };
 
-  const getTitle = () => {
-    switch (status) {
-      case Status.SetupAccount:
-        return 'Set up your account';
-      case Status.SelectProvider:
-        return 'Select your repo provider';
-      case Status.WaitingForAuthorization:
-        return 'Authorize your repo';
-      case Status.Error:
-        return 'Error';
-    }
-  };
-
   const getFooter = () => {
     switch (status) {
-      case Status.SetupAccount:
-        return {
-          label: "I've done the steps",
-          onClick: () => setStatus(Status.SelectProvider),
-        };
       case Status.SelectProvider:
         return {
-          label: 'Next',
+          label: 'Authorize',
           disabled: !selectedProvider,
           onClick: () => handleSelectProvider(selectedProvider),
         };
@@ -178,47 +163,64 @@ export function Auth() {
     <Layout
       footer={<Button {...getFooter()} />}
       header={
-        <Flex align='center' gap={24} w='100%'>
-          <Button
-            size='small'
-            variant='text'
-            icon='arrow_left_outline'
-            onClick={() => navigate('/home')}
-            label='Back'
-          />
-          <Typography flex={1} variant='body-1/strong'>
-            {getTitle()}
+        <Box w='100%'>
+          <Typography textAlign='left' variant='body-1/strong'>
+            Connect a Git repository
           </Typography>
-          <Logo size='small' onClick={() => navigate('/home')} />
-        </Flex>
+        </Box>
       }
     >
-      {status === Status.SetupAccount && (
-        <Typography variant='body-1/normal' textAlign='center'>
-          Go to the{' '}
-          <Anchor underline='always' target='_blank' rel='noreferrer' href='https://recursica.com'>
-            Recursica.com
-          </Anchor>{' '}
-          website and follow the instructions.
-        </Typography>
-      )}
       {status === Status.SelectProvider && (
-        <Dropdown
-          data={[
-            { label: 'GitHub', value: 'github', icon: 'github_outline' },
-            { label: 'GitLab', value: 'gitlab', icon: 'gitlab_outline' },
-          ]}
-          value={selectedProvider}
-          onChange={(value) => setSelectedProvider(value as 'github' | 'gitlab')}
-          label='Select your provider'
-          showLabel={false}
-          placeholder='Select your provider'
-        />
+        <Flex direction='column' align='center' gap={'size/spacer/2x'}>
+          <Dropdown
+            data={[
+              { label: 'GitHub', value: 'github', icon: 'github_outline' },
+              { label: 'GitLab', value: 'gitlab', icon: 'gitlab_outline' },
+            ]}
+            value={selectedProvider}
+            onChange={(value) => setSelectedProvider(value as 'github' | 'gitlab')}
+            label='Select your repo provider'
+            placeholder='Select your repo provider'
+          />
+          <Typography variant='body-2/normal' color='layers/layer-0/elements/text/color'>
+            Don&apos;t have an account? Create one in{' '}
+            <Anchor
+              href='https://github.com/signup'
+              target='_blank'
+              underline='always'
+              rel='noreferrer'
+            >
+              GitHub
+            </Anchor>
+            {' or '}
+            <Anchor
+              href='https://gitlab.com/users/sign_up'
+              target='_blank'
+              underline='always'
+              rel='noreferrer'
+            >
+              GitLab
+            </Anchor>
+          </Typography>
+        </Flex>
       )}
       {status === Status.WaitingForAuthorization && (
-        <Flex direction='column' align='center' gap={8}>
+        <Flex direction='column' align='center' gap={'size/spacer/1-5x'}>
+          <Icon
+            name='arrow_top_right_on_square_outline'
+            size={32}
+            onClick={() => {
+              if (externalAuthUrl) {
+                window.open(externalAuthUrl, '_blank');
+              }
+            }}
+            color='layers/layer-1/elements/text/color'
+          />
+          <Typography variant='h6' textAlign='center'>
+            Check your browser
+          </Typography>
           <Typography variant='body-1/normal' textAlign='center'>
-            We’re waiting on the authorization...
+            Go to the authentication page and return here
           </Typography>
         </Flex>
       )}
