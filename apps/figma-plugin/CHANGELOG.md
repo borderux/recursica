@@ -1,6 +1,6 @@
 # @recursica/figma-plugin
 
-## 0.0.13
+## 8.0.1
 
 ### Patch Changes
 
