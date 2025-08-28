@@ -1,5 +1,11 @@
 # @recursica/figma-plugin
 
+## 0.0.13
+
+### Patch Changes
+
+- 38424fe: Error Handling Enhancements: Users now see specific error details instead of generic messages
+
 ## 0.0.12
 
 ### Patch Changes

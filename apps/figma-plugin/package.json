@@ -1,7 +1,7 @@
 {
   "name": "@recursica/figma-plugin",
   "private": false,
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "The Figma plugin for Recursica",
   "type": "module",
   "license": "MIT",
