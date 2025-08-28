@@ -26,6 +26,7 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
   useLayoutEffect(() => {
     window.onmessage = ({ data: { pluginMessage } }) => {
       if (!pluginMessage) return;
+      console.log('New message from the plugin sandbox: ', pluginMessage);
       const { type, payload } = pluginMessage;
       if (type === 'GET_LOCAL_STORAGE') {
         const { accessToken, platform, selectedProject } = payload;
@@ -66,8 +67,11 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
       }
       if (
         type === 'NO_TOKENS_FOUND' ||
+        type === 'TOKENS_NOT_CONNECTED' ||
         type === 'NO_TOKENS_OR_THEMES_FOUND' ||
-        type === 'NO_VARIABLES_FOUND'
+        type === 'NO_VARIABLES_FOUND' ||
+        type === 'NO_THEMES_FOUND' ||
+        type === 'THEMES_NOT_CONNECTED'
       ) {
         setError(type);
       }
