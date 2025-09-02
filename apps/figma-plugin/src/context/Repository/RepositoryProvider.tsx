@@ -146,7 +146,7 @@ function generateCSSFromBundledJson(bundledJson: string): string {
 
 export function RepositoryProvider({ children }: { children: React.ReactNode }) {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-  const [selectedProjectId, setselectedProjectId] = useState<string | undefined>(undefined);
+  const [selectedProjectId, setselectedProjectId] = useState<string | null>(null);
   const [userProjects, setUserProjects] = useState<Project[]>([]);
   const [prLink, setPrLink] = useState<string | null>(null);
   const initConfig = useRef<boolean>(false);
@@ -189,7 +189,7 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
   useRemoteFiles(repositoryInstance, selectedProject, setRemoteVariablesJson, setRemoteIconsJson);
 
   const updateSelectedProjectId = useCallback(
-    (projectId: string) => {
+    (projectId: string | null) => {
       setselectedProjectId(projectId);
       updateSelectedProject(projectId);
     },
@@ -265,11 +265,6 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     };
     validateProjectAsync();
   }, [selectedProject, validateProject, repositoryInstance, getConfig]);
-
-  const initializeRepo = async () => {
-    if (!repositoryInstance) return;
-    initConfig.current = true;
-  };
 
   const publishFiles = async (): Promise<void> => {
     clearError(); // Clear any previous errors
@@ -452,10 +447,10 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     publishFiles,
     filesStatus,
     validationStatus,
-    initializeRepo,
     resetRepository,
     error,
     clearError,
+    selectedProject,
   };
 
   return <RepositoryContext.Provider value={value}>{children}</RepositoryContext.Provider>;

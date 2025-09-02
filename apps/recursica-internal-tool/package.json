@@ -2,6 +2,7 @@
   "name": "recursica-internal-tool",
   "version": "1.0.0",
   "description": "Your Figma Plugin",
+  "private": true,
   "main": "code.js",
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -22,12 +23,12 @@
   "eslintConfig": {
     "extends": [
       "eslint:recommended",
-      "plugin:@typescript-eslint/recommended",
       "plugin:@figma/figma-plugins/recommended"
     ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
-      "project": "./tsconfig.json"
+      "ecmaVersion": 2020,
+      "sourceType": "module"
     },
     "root": true,
     "rules": {

@@ -6,9 +6,11 @@ interface Repository {
   /** User projects/repositories */
   userProjects: Project[];
   /** Selected project/repository id */
-  selectedProjectId: string | undefined;
+  selectedProjectId: string | null;
+  /** Selected project/repository */
+  selectedProject: Project | undefined;
   /** Update the selected project/repository id */
-  updateSelectedProjectId: (selectedProjectId: string) => void;
+  updateSelectedProjectId: (selectedProjectId: string | null) => void;
 
   /** Pull request link */
   prLink: string | null;
@@ -21,9 +23,6 @@ interface Repository {
 
   /** Validate the project (check if the project has a valid config file) */
   validationStatus: ValidationStatus;
-
-  /** Initialize the repository */
-  initializeRepo: () => void;
 
   /** Reset the repository */
   resetRepository: () => Promise<boolean>;
