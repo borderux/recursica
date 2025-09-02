@@ -1,16 +1,43 @@
 import { useRepository } from '../../../hooks/useRepository';
-import { Typography, Flex, Button, Box, Icon, Checkbox } from '@recursica/ui-kit-mantine';
+import {
+  Typography,
+  Flex,
+  Button,
+  Box,
+  Icon,
+  Checkbox,
+  Tooltip,
+  copyToClipboard,
+} from '@recursica/ui-kit-mantine';
 import { Navigate, useNavigate } from 'react-router';
 import { Layout } from '../../../components/Layout/Layout';
 import { useFigma } from '../../../hooks/useFigma';
 import { getPlatformIcon } from './SelectProject';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { formatDate } from '@recursica/common';
 
 export function Publish() {
-  const { publishFiles, clearError, selectedProject } = useRepository();
+  const { publishFiles, clearError, selectedProject, existingPR, publishStatus } = useRepository();
   const { repository, updateAgreedPublishChanges } = useFigma();
   const [showAgreeScreen, setShowAgreeScreen] = useState(false);
   const navigate = useNavigate();
+  const copyElementRef = useRef<HTMLDivElement>(null);
+
+  const [copied, setCopied] = useState(false);
+  const handleCopyPRUrl = async () => {
+    if (existingPR?.url) {
+      try {
+        copyToClipboard(existingPR.url, copyElementRef).then(() => {
+          setCopied(true);
+          setTimeout(() => {
+            setCopied(false);
+          }, 2000);
+        });
+      } catch (error) {
+        console.error('Failed to copy URL:', error);
+      }
+    }
+  };
 
   const handleContinue = () => {
     if (repository?.agreedPublishChanges) {
@@ -117,18 +144,41 @@ export function Publish() {
           bw={1}
           bs='solid'
           p={'size/spacer/2x'}
+          w='100%'
         >
-          <Typography
-            variant='caption'
-            color='layers/layer-1/elements/text/color'
-            opacity={0.84}
-            textAlign='center'
-          >
-            Nothing has been published yet
-            <br />
-            <br />
-            Don&apos;t just stare at it. Publish your latest Figma file changes to your code.
-          </Typography>
+          {publishStatus === 'published' && existingPR ? (
+            <Flex direction='column' gap={'size/spacer/default'}>
+              <Typography variant='caption' color='layers/layer-1/elements/text/color'>
+                Last published <strong>{formatDate(existingPR.createdAt)}</strong>
+              </Typography>
+              <Tooltip label={'Copied'} opened={copied} position='top-start'>
+                <Flex
+                  ref={copyElementRef}
+                  gap={'size/spacer/0-5x'}
+                  align='center'
+                  onClick={handleCopyPRUrl}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <Icon name='link_outline' color='layers/layer-1/elements/alert-text' size={16} />
+                  <Typography variant='caption' color='layers/layer-1/elements/alert-text'>
+                    Copy pull request URL
+                  </Typography>
+                </Flex>
+              </Tooltip>
+            </Flex>
+          ) : (
+            <Typography
+              variant='caption'
+              color='layers/layer-1/elements/text/color'
+              opacity={0.84}
+              textAlign='center'
+            >
+              Nothing has been published yet
+              <br />
+              <br />
+              Don&apos;t just stare at it. Publish your latest Figma file changes to your code.
+            </Typography>
+          )}
         </Box>
       </Flex>
     </Layout>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RepositoryContext } from './RepositoryContext';
 import {
   useFigma,
@@ -6,11 +6,9 @@ import {
   useRepositoryInstance,
   useAdapterWorker,
   useRepositoryError,
-  useFileStatus,
   useRemoteFiles,
   useRepositoryOperations,
   useProjectValidation,
-  FileStatus,
 } from '../../hooks';
 import type {
   RecursicaVariablesSchema,
@@ -18,7 +16,8 @@ import type {
   VariableReferenceValue,
   Token,
 } from '@recursica/schemas';
-import { type UserInfo, type Project } from '../../services/repository';
+import { type UserInfo, type Project, type PullRequest } from '../../services/repository';
+import { PublishStatus } from './RepositoryContext';
 import { isColorOrFloatToken } from '@recursica/common';
 
 interface AdapterFile {
@@ -148,8 +147,8 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [selectedProjectId, setselectedProjectId] = useState<string | null>(null);
   const [userProjects, setUserProjects] = useState<Project[]>([]);
-  const [prLink, setPrLink] = useState<string | null>(null);
-  const initConfig = useRef<boolean>(false);
+  const [existingPR, setExistingPR] = useState<PullRequest | null>(null);
+  const [publishStatus, setPublishStatus] = useState<PublishStatus>('to-publish');
 
   const selectedProject = useMemo(() => {
     return userProjects.find((project) => project.id === selectedProjectId);
@@ -168,20 +167,14 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
   const { runAdapter } = useAdapterWorker();
   const { error, setRepositoryError, clearError, isExpectedError, getErrorMessage } =
     useRepositoryError();
-  const {
-    filesStatus,
-    updateFilesStatus,
-    updateAdapterStatus,
-    updateAllStatusesToDone,
-    resetFilesStatus,
-  } = useFileStatus();
-  const { validationStatus, validateProject, resetValidationStatus } = useProjectValidation();
+  const { validateProject, resetValidationStatus } = useProjectValidation();
   const {
     fetchUserInfo: fetchUserInfoOp,
     getUserProjects: getUserProjectsOp,
     createBranch,
     getConfig,
     commitFiles,
+    getExistingPullRequest,
     createPullRequest,
   } = useRepositoryOperations();
 
@@ -266,9 +259,78 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     validateProjectAsync();
   }, [selectedProject, validateProject, repositoryInstance, getConfig]);
 
+  // Fetch existing PR when user info and project are available
+  useEffect(() => {
+    const fetchExistingPR = async () => {
+      if (userInfo && selectedProject && repositoryInstance) {
+        try {
+          const targetBranch = `recursica-${userInfo.username}`;
+          const existingPR = await getExistingPullRequest(
+            repositoryInstance,
+            selectedProject,
+            targetBranch
+          );
+          if (existingPR) {
+            setExistingPR(existingPR);
+            setPublishStatus('published');
+          } else {
+            setPublishStatus('to-publish');
+          }
+        } catch (error) {
+          console.error('Failed to fetch existing PR:', error);
+          setPublishStatus('to-publish');
+        }
+      }
+    };
+    fetchExistingPR();
+  }, [userInfo, selectedProject, repositoryInstance, getExistingPullRequest]);
+
   const publishFiles = async (): Promise<void> => {
     clearError(); // Clear any previous errors
+    setPublishStatus('publishing');
 
+    if (!selectedProject) {
+      setRepositoryError(
+        'No project selected',
+        'Please select a project before publishing files',
+        'NO_PROJECT_SELECTED'
+      );
+      setPublishStatus('to-publish');
+      return;
+    }
+
+    if (!repositoryInstance) {
+      setRepositoryError(
+        'Repository not initialized',
+        'Please check your repository connection',
+        'REPOSITORY_NOT_INITIALIZED'
+      );
+      setPublishStatus('to-publish');
+      return;
+    }
+
+    if (!(fileLoadingData.bundledJson || fileLoadingData.iconsJson)) {
+      parent.postMessage(
+        {
+          pluginMessage: {
+            type: 'GET_VARIABLES',
+          },
+          pluginId: '*',
+        },
+        '*'
+      );
+    } else {
+      await handlePublishFiles();
+    }
+  };
+
+  useEffect(() => {
+    if (fileLoadingData.bundledJson || fileLoadingData.iconsJson) {
+      handlePublishFiles();
+    }
+  }, [fileLoadingData.bundledJson, fileLoadingData.iconsJson]);
+
+  const handlePublishFiles = async (): Promise<void> => {
     if (!selectedProject) {
       setRepositoryError(
         'No project selected',
@@ -287,57 +349,16 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
       return;
     }
 
-    if (!(fileLoadingData.bundledJson || fileLoadingData.iconsJson)) {
-      parent.postMessage(
-        {
-          pluginMessage: {
-            type: 'GET_VARIABLES',
-          },
-          pluginId: '*',
-        },
-        '*'
-      );
-    } else {
-      updateFilesStatus(fileLoadingData.bundledJson, fileLoadingData.iconsJson);
-      try {
-        await handlePublishFiles();
-      } catch (error) {
-        console.error('Publish files error:', error);
-        // The error handling is now done in handlePublishFiles, but we ensure it's logged here too
-        if (!isExpectedError(error)) {
-          setRepositoryError(
-            'Failed to publish files',
-            getErrorMessage(error),
-            'PUBLISH_FILES_ERROR'
-          );
-        }
-      }
-    }
-  };
-
-  useEffect(() => {
-    if (fileLoadingData.bundledJson || fileLoadingData.iconsJson) {
-      updateFilesStatus(fileLoadingData.bundledJson, fileLoadingData.iconsJson);
-      handlePublishFiles();
-    }
-  }, [fileLoadingData.bundledJson, fileLoadingData.iconsJson]);
-
-  const handlePublishFiles = async (): Promise<void> => {
-    if (!selectedProject) {
-      throw new Error('Selected project is not available');
-    }
-
     try {
       const targetBranch = await createBranch(
         repositoryInstance,
         selectedProject,
         userInfo?.username
       );
-      const config = await getConfig(
+      const { config, shouldCreateInit } = await getConfig(
         repositoryInstance,
         selectedProject,
-        targetBranch,
-        initConfig.current
+        targetBranch
       );
 
       // Run adapter with proper error handling
@@ -348,7 +369,6 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
         }
         if (filetype === 'icons') {
           adapterFiles = [];
-          updateAdapterStatus(FileStatus.Done);
         } else {
           adapterFiles = await runAdapter(
             repositoryInstance,
@@ -356,14 +376,8 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
             targetBranch,
             config,
             fileLoadingData,
-            (status) => {
-              if (status === 'loading') {
-                updateAdapterStatus(FileStatus.Loading, 1);
-              } else if (status === 'done') {
-                updateAdapterStatus(FileStatus.Done);
-              } else if (status === 'error') {
-                updateAdapterStatus(FileStatus.Error, 0);
-              }
+            () => {
+              // Adapter status callback - we don't need to track status anymore
             }
           );
         }
@@ -374,8 +388,6 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
           error instanceof Error ? error.message : 'Unknown adapter error',
           'ADAPTER_EXECUTION_ERROR'
         );
-        // Update files status to show error immediately
-        updateAdapterStatus(FileStatus.Error);
         throw error; // Re-throw to prevent further execution
       }
 
@@ -402,37 +414,32 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
           bundledFilename: fileLoadingData.bundledFilename,
           iconsFilename: fileLoadingData.iconsFilename,
         },
-        initConfig.current
+        shouldCreateInit
       );
 
-      updateAllStatusesToDone();
-
-      const pullRequestUrl = await createPullRequest(
-        repositoryInstance,
-        selectedProject,
-        targetBranch
-      );
-      if (pullRequestUrl) {
-        setPrLink(pullRequestUrl);
+      try {
+        await createPullRequest(repositoryInstance, selectedProject, targetBranch);
+      } catch (error) {
+        console.error('Failed to create pull request:', error);
+        // Don't fail the entire operation if PR creation fails
+        // The files were still committed successfully
       }
+
+      // Set status to published after successful completion
+      setPublishStatus('published');
     } catch (error) {
       // Ensure any error is properly handled and UI is updated
-      if (!isExpectedError(error)) {
-        setRepositoryError(
-          'Failed to publish files',
-          getErrorMessage(error),
-          'PUBLISH_FILES_ERROR'
-        );
-      }
-      throw error;
+      console.error('Publish files error:', error);
+      setRepositoryError('Failed to publish files', getErrorMessage(error), 'PUBLISH_FILES_ERROR');
+      setPublishStatus('to-publish');
+      // Don't re-throw the error to prevent unhandled promise rejections
     }
   };
 
   const resetRepository = async () => {
-    setPrLink(null);
+    setExistingPR(null);
+    setPublishStatus('to-publish');
     clearError(); // Clear any existing errors
-    initConfig.current = false;
-    resetFilesStatus();
     resetValidationStatus();
     // Clear remote file data
     clearRemoteData();
@@ -443,10 +450,11 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     selectedProjectId,
     updateSelectedProjectId,
     userProjects,
-    prLink,
+    existingPR,
+    publishStatus,
+    bundledJson: fileLoadingData.bundledJson,
+    iconsJson: fileLoadingData.iconsJson,
     publishFiles,
-    filesStatus,
-    validationStatus,
     resetRepository,
     error,
     clearError,

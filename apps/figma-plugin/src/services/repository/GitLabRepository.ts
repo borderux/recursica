@@ -193,7 +193,7 @@ export class GitLabRepository extends BaseRepository {
     }
   }
 
-  private async getExistingMergeRequest(
+  async getExistingPullRequest(
     project: Project,
     sourceBranch: string,
     targetBranch: string
@@ -205,17 +205,24 @@ export class GitLabRepository extends BaseRepository {
           params: {
             source_branch: sourceBranch,
             target_branch: targetBranch,
+            state: 'all',
           },
         }
       );
 
-      if (response.data.length > 0) {
-        const mr = response.data[0];
+      // Filter to only include open or merged MRs
+      const openOrMergedMRs = response.data.filter(
+        (mr: { state: string }) => mr.state === 'opened' || mr.state === 'merged'
+      );
+
+      if (openOrMergedMRs.length > 0) {
+        const mr = openOrMergedMRs[0];
         return {
           id: mr.iid,
           title: mr.title,
           url: mr.web_url,
           state: mr.state,
+          createdAt: mr.created_at,
         };
       }
 

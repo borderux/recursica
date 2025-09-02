@@ -117,26 +117,61 @@ export class GitHubRepository extends BaseRepository {
   }
 
   async createBranch(project: Project, branchName: string, sourceBranch: string): Promise<Branch> {
-    // First, get the SHA of the source branch
-    const sourceBranchResponse = await this.httpClient.get(
-      `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/refs/heads/${sourceBranch}`
-    );
-
-    const sourceSha = sourceBranchResponse.data.object.sha;
-
-    // Create the new branch
-    await this.httpClient.post(
-      `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/refs`,
-      {
-        ref: `refs/heads/${branchName}`,
-        sha: sourceSha,
+    try {
+      // First, check if the branch already exists
+      try {
+        await this.httpClient.get(
+          `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/refs/heads/${branchName}`
+        );
+        // Branch exists, return it
+        return {
+          name: branchName,
+          id: undefined,
+        };
+      } catch (error) {
+        // Branch doesn't exist, continue with creation
+        if (error instanceof AxiosError && error.response?.status !== 404) {
+          throw error; // Re-throw if it's not a 404 (branch not found)
+        }
       }
-    );
 
-    return {
-      name: branchName,
-      id: undefined,
-    };
+      // Get the SHA of the source branch
+      const sourceBranchResponse = await this.httpClient.get(
+        `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/refs/heads/${sourceBranch}`
+      );
+
+      const sourceSha = sourceBranchResponse.data.object.sha;
+
+      // Create the new branch
+      await this.httpClient.post(
+        `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/refs`,
+        {
+          ref: `refs/heads/${branchName}`,
+          sha: sourceSha,
+        }
+      );
+
+      return {
+        name: branchName,
+        id: undefined,
+      };
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        if (error.response?.status === 422) {
+          const errorMessage = error.response.data?.message || 'Branch creation failed';
+          if (errorMessage.includes('already exists')) {
+            // Branch already exists, return it
+            return {
+              name: branchName,
+              id: undefined,
+            };
+          }
+          throw new Error(`Branch creation failed: ${errorMessage}`);
+        }
+        throw new Error(`GitHub API error: ${error.response?.data?.message || error.message}`);
+      }
+      throw error;
+    }
   }
 
   async commitFiles(
@@ -246,6 +281,7 @@ export class GitHubRepository extends BaseRepository {
         title: response.data.title,
         url: response.data.html_url,
         state: response.data.state,
+        createdAt: response.data.created_at,
       };
     } catch (error) {
       if (error instanceof AxiosError && error.response?.status === 422) {
@@ -283,7 +319,7 @@ export class GitHubRepository extends BaseRepository {
     }
   }
 
-  private async getExistingPullRequest(
+  async getExistingPullRequest(
     project: Project,
     sourceBranch: string,
     targetBranch: string
@@ -300,13 +336,20 @@ export class GitHubRepository extends BaseRepository {
         }
       );
 
-      if (response.data.length > 0) {
-        const pr = response.data[0];
+      // Filter to only include open or merged PRs
+      const openOrMergedPRs = response.data.filter(
+        (pr: { state: string; merged_at: string | null }) =>
+          pr.state === 'open' || pr.merged_at !== null
+      );
+
+      if (openOrMergedPRs.length > 0) {
+        const pr = openOrMergedPRs[0];
         return {
           id: pr.number,
           title: pr.title,
           url: pr.html_url,
           state: pr.state,
+          createdAt: pr.created_at,
         };
       }
 
