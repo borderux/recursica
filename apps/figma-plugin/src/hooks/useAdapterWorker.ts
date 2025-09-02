@@ -52,8 +52,7 @@ export function useAdapterWorker() {
         localBundledJson: string | null;
         remoteIconsJson: string | null;
         remoteBundledJson: string | null;
-      },
-      onStatusUpdate: (status: 'loading' | 'done' | 'error') => void
+      }
     ): Promise<AdapterFile[]> => {
       if (!repositoryInstance || !selectedProject) {
         throw new Error('Failed to run adapter');
@@ -79,9 +78,7 @@ export function useAdapterWorker() {
           adapterPath,
           targetBranch
         );
-        onStatusUpdate('loading');
       } catch (error) {
-        onStatusUpdate('error');
         if (error instanceof Error && error.message.includes('404')) {
           console.error('Adapter file not found');
           return [];
@@ -103,7 +100,6 @@ export function useAdapterWorker() {
           );
         } catch (error) {
           console.error('❌ Failed to create worker:', error);
-          onStatusUpdate('error');
           reject(
             new Error(
               `Failed to create worker: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -117,7 +113,6 @@ export function useAdapterWorker() {
           () => {
             console.error('❌ Worker execution timed out after 5 minutes');
             worker.terminate();
-            onStatusUpdate('error');
             reject(new Error('Worker execution timed out after 5 minutes'));
           },
           5 * 60 * 1000
@@ -138,7 +133,6 @@ export function useAdapterWorker() {
           clearTimeout(timeoutId);
           worker.terminate();
           console.error('❌ Failed to post message to worker:', error);
-          onStatusUpdate('error');
           reject(
             new Error(
               `Failed to post message to worker: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -153,7 +147,6 @@ export function useAdapterWorker() {
           worker.terminate(); // Clean up worker
           console.log('✅ Response received from worker:', event.data);
 
-          onStatusUpdate('done');
           const response: WorkerResponse = event.data;
           if (Array.isArray(response)) {
             resolve(response);
@@ -169,7 +162,6 @@ export function useAdapterWorker() {
           console.error('❌ Error in worker:', error);
 
           // Update UI status immediately
-          onStatusUpdate('error');
 
           // Create a more detailed error message
           const errorMessage = error.message || 'Unknown worker error';
@@ -188,7 +180,6 @@ export function useAdapterWorker() {
           console.error('❌ Message error in worker:', error);
 
           // Update UI status immediately
-          onStatusUpdate('error');
 
           reject(new Error(`Worker message error: Unable to process worker message`));
         };

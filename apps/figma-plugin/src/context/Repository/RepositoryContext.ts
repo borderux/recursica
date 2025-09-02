@@ -30,7 +30,7 @@ interface Repository {
   publishFiles: () => Promise<void>;
 
   /** Reset the repository */
-  resetRepository: () => Promise<boolean>;
+  resetRepository: () => void;
 
   /** Current error state */
   error: RepositoryError | null;

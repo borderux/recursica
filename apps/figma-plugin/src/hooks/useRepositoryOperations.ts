@@ -115,8 +115,8 @@ export function useRepositoryOperations() {
       adapterFiles: AdapterFile[],
       config: RecursicaConfiguration,
       fileLoadingData: {
-        bundledJson: string | null;
-        iconsJson: string | null;
+        localBundledJson: string | null;
+        localIconsJson: string | null;
         bundledFilename: string;
         iconsFilename: string;
       },
@@ -143,7 +143,7 @@ export function useRepositoryOperations() {
 
       const actions: CommitAction[] = [];
 
-      if (fileLoadingData.bundledJson) {
+      if (fileLoadingData.localBundledJson) {
         const exists = await repositoryInstance.fileExists(
           selectedProject,
           variablesFilename,
@@ -152,7 +152,7 @@ export function useRepositoryOperations() {
         actions.push({
           action: exists ? 'update' : 'create',
           file_path: variablesFilename,
-          content: fileLoadingData.bundledJson,
+          content: fileLoadingData.localBundledJson,
         });
       }
 
@@ -164,7 +164,7 @@ export function useRepositoryOperations() {
         });
       }
 
-      if (fileLoadingData.iconsJson) {
+      if (fileLoadingData.localIconsJson) {
         const exists = await repositoryInstance.fileExists(
           selectedProject,
           svgIconsFilename,
@@ -173,7 +173,7 @@ export function useRepositoryOperations() {
         actions.push({
           action: exists ? 'update' : 'create',
           file_path: svgIconsFilename,
-          content: fileLoadingData.iconsJson,
+          content: fileLoadingData.localIconsJson,
         });
       }
 
