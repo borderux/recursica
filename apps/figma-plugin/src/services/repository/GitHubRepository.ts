@@ -281,7 +281,7 @@ export class GitHubRepository extends BaseRepository {
         title: response.data.title,
         url: response.data.html_url,
         state: response.data.state,
-        createdAt: response.data.created_at,
+        updatedAt: response.data.updated_at,
       };
     } catch (error) {
       if (error instanceof AxiosError && error.response?.status === 422) {
@@ -349,7 +349,7 @@ export class GitHubRepository extends BaseRepository {
           title: pr.title,
           url: pr.html_url,
           state: pr.state,
-          createdAt: pr.created_at,
+          updatedAt: pr.updated_at,
         };
       }
 

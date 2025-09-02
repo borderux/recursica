@@ -79,8 +79,8 @@ export interface PullRequest {
   url: string;
   /** Current state (e.g., 'open', 'merged', 'closed') */
   state: string;
-  /** Creation date of the pull/merge request */
-  createdAt: string;
+  /** Last updated date of the pull/merge request */
+  updatedAt: string;
 }
 
 export abstract class BaseRepository {

@@ -156,6 +156,7 @@ export class GitLabRepository extends BaseRepository {
         title: response.data.title,
         url: response.data.web_url,
         state: response.data.state,
+        updatedAt: response.data.updated_at,
       };
     } catch (error) {
       if (error instanceof AxiosError && error.response?.status === 409) {
@@ -222,7 +223,7 @@ export class GitLabRepository extends BaseRepository {
           title: mr.title,
           url: mr.web_url,
           state: mr.state,
-          createdAt: mr.created_at,
+          updatedAt: mr.updated_at,
         };
       }
 

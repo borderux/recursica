@@ -17,7 +17,7 @@ import { useRef, useState } from 'react';
 import { formatDate } from '@recursica/common';
 
 export function Publish() {
-  const { publishFiles, clearError, selectedProject, existingPR, publishStatus } = useRepository();
+  const { publishFiles, clearError, selectedProject, existingPR } = useRepository();
   const { repository, updateAgreedPublishChanges } = useFigma();
   const [showAgreeScreen, setShowAgreeScreen] = useState(false);
   const navigate = useNavigate();
@@ -146,10 +146,10 @@ export function Publish() {
           p={'size/spacer/2x'}
           w='100%'
         >
-          {publishStatus === 'published' && existingPR ? (
+          {existingPR ? (
             <Flex direction='column' gap={'size/spacer/default'}>
               <Typography variant='caption' color='layers/layer-1/elements/text/color'>
-                Last published <strong>{formatDate(existingPR.createdAt)}</strong>
+                Last published <strong>{formatDate(existingPR.updatedAt)}</strong>
               </Typography>
               <Tooltip label={'Copied'} opened={copied} position='top-start'>
                 <Flex

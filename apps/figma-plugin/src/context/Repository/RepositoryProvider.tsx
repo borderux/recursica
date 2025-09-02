@@ -260,28 +260,28 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
   }, [selectedProject, validateProject, repositoryInstance, getConfig]);
 
   // Fetch existing PR when user info and project are available
-  useEffect(() => {
-    const fetchExistingPR = async () => {
-      if (userInfo && selectedProject && repositoryInstance) {
-        try {
-          const targetBranch = `recursica-${userInfo.username}`;
-          const existingPR = await getExistingPullRequest(
-            repositoryInstance,
-            selectedProject,
-            targetBranch
-          );
-          if (existingPR) {
-            setExistingPR(existingPR);
-            setPublishStatus('published');
-          } else {
-            setPublishStatus('to-publish');
-          }
-        } catch (error) {
-          console.error('Failed to fetch existing PR:', error);
-          setPublishStatus('to-publish');
+  const fetchExistingPR = async () => {
+    if (userInfo && selectedProject && repositoryInstance) {
+      try {
+        const targetBranch = `recursica-${userInfo.username}`;
+        const existingPR = await getExistingPullRequest(
+          repositoryInstance,
+          selectedProject,
+          targetBranch
+        );
+        console.log('getting existing PR', existingPR);
+        if (existingPR) {
+          setExistingPR(existingPR);
         }
+      } catch (error) {
+        console.error('Failed to fetch existing PR:', error);
+        setPublishStatus('to-publish');
+      } finally {
+        setPublishStatus('to-publish');
       }
-    };
+    }
+  };
+  useEffect(() => {
     fetchExistingPR();
   }, [userInfo, selectedProject, repositoryInstance, getExistingPullRequest]);
 
@@ -437,8 +437,7 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
   };
 
   const resetRepository = async () => {
-    setExistingPR(null);
-    setPublishStatus('to-publish');
+    fetchExistingPR();
     clearError(); // Clear any existing errors
     resetValidationStatus();
     // Clear remote file data

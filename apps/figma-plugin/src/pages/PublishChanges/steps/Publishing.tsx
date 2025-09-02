@@ -3,6 +3,7 @@ import { Typography, Flex, Button, Icon, Box } from '@recursica/ui-kit-mantine';
 import { useNavigate } from 'react-router';
 import { Layout } from '../../../components/Layout/Layout';
 import { Divider, Loader } from '@mantine/core';
+import React from 'react';
 
 export function Publishing() {
   const { publishStatus, bundledJson, iconsJson, resetRepository } = useRepository();
@@ -42,11 +43,11 @@ export function Publishing() {
   };
 
   const handleNext = async () => {
-    await resetRepository();
     navigate('/publish/home');
+    resetRepository();
   };
 
-  if (publishStatus !== 'published') {
+  if (publishStatus === 'publishing') {
     return (
       <Layout
         header={
@@ -83,9 +84,9 @@ export function Publishing() {
           {Object.entries(getVariableCounts())
             .filter(([, count]) => count > 0)
             .map(([variableType, count], index) => (
-              <>
+              <React.Fragment key={variableType}>
                 {index > 0 && <Divider />}
-                <Flex gap={'size/spacer/2x'} key={variableType} align='center'>
+                <Flex gap={'size/spacer/2x'} align='center'>
                   <Icon name='check_outline' color={'layers/layer-1/elements/success-text'} />
                   <Typography variant='body-2/normal' color='layers/layer-1/elements/success-text'>
                     {count} {variableType === 'uiKit' ? 'UI Kit' : variableType}
@@ -100,7 +101,7 @@ export function Publishing() {
                     Published
                   </Typography>
                 </Flex>
-              </>
+              </React.Fragment>
             ))}
         </Flex>
       </Flex>
