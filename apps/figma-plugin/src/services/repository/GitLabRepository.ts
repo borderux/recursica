@@ -139,16 +139,29 @@ export class GitLabRepository extends BaseRepository {
     project: Project,
     sourceBranch: string,
     targetBranch: string,
-    title: string
+    title: string,
+    assignee?: string
   ): Promise<PullRequest> {
     try {
+      const requestBody: {
+        title: string;
+        source_branch: string;
+        target_branch: string;
+        assignee_id?: number;
+      } = {
+        source_branch: sourceBranch,
+        target_branch: targetBranch,
+        title: title,
+      };
+
+      // Add assignee if provided
+      if (assignee) {
+        requestBody.assignee_id = parseInt(assignee);
+      }
+
       const response = await this.httpClient.post(
         `${this.baseUrl}/projects/${project.id}/merge_requests`,
-        {
-          source_branch: sourceBranch,
-          target_branch: targetBranch,
-          title: title,
-        }
+        requestBody
       );
 
       return {
@@ -161,7 +174,7 @@ export class GitLabRepository extends BaseRepository {
     } catch (error) {
       if (error instanceof AxiosError && error.response?.status === 409) {
         // Merge request already exists, fetch it
-        const existingMR = await this.getExistingMergeRequest(project, sourceBranch, targetBranch);
+        const existingMR = await this.getExistingPullRequest(project, sourceBranch, targetBranch);
         if (existingMR) {
           return existingMR;
         }

@@ -234,11 +234,16 @@ export function useRepositoryOperations() {
       if (!repositoryInstance || !selectedProject) return null;
 
       try {
+        // Get current user info to use as assignee
+        const userInfo = await repositoryInstance.getUserInfo();
+        const assignee = userInfo.username || userInfo.name || userInfo.id.toString();
+
         const pullRequest = await repositoryInstance.createPullRequest(
           selectedProject,
           targetBranch,
           selectedProject.defaultBranch,
-          'New recursica tokens release'
+          'New recursica tokens release',
+          assignee
         );
         return pullRequest.url;
       } catch (error) {

@@ -264,16 +264,29 @@ export class GitHubRepository extends BaseRepository {
     project: Project,
     sourceBranch: string,
     targetBranch: string,
-    title: string
+    title: string,
+    assignee?: string
   ): Promise<PullRequest> {
     try {
+      const requestBody: {
+        title: string;
+        head: string;
+        base: string;
+        assignees?: string[];
+      } = {
+        title: title,
+        head: sourceBranch,
+        base: targetBranch,
+      };
+
+      // Add assignee if provided
+      if (assignee) {
+        requestBody.assignees = [assignee];
+      }
+
       const response = await this.httpClient.post(
         `${this.baseUrl}/repos/${project.owner.name}/${project.name}/pulls`,
-        {
-          title: title,
-          head: sourceBranch,
-          base: targetBranch,
-        }
+        requestBody
       );
 
       return {
@@ -305,7 +318,7 @@ export class GitHubRepository extends BaseRepository {
         `${this.baseUrl}/repos/${project.owner.name}/${project.name}/pulls`,
         {
           params: {
-            head: sourceBranch,
+            head: `${project.owner.name}:${sourceBranch}`,
             base: targetBranch,
             state: 'open',
           },
@@ -329,7 +342,7 @@ export class GitHubRepository extends BaseRepository {
         `${this.baseUrl}/repos/${project.owner.name}/${project.name}/pulls`,
         {
           params: {
-            head: sourceBranch,
+            head: `${project.owner.name}:${sourceBranch}`,
             base: targetBranch,
             state: 'all',
           },

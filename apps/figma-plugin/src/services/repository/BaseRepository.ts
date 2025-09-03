@@ -119,7 +119,8 @@ export abstract class BaseRepository {
     project: Project,
     sourceBranch: string,
     targetBranch: string,
-    title: string
+    title: string,
+    assignee?: string
   ): Promise<PullRequest>;
   abstract hasOpenPullRequest(
     project: Project,
