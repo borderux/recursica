@@ -302,9 +302,6 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
       // Run adapter with proper error handling
       let adapterFiles: AdapterFile[] = [];
       try {
-        if (!repositoryInstance) {
-          throw new Error('Repository instance not available');
-        }
         if (filetype === 'icons') {
           adapterFiles = [];
         } else {

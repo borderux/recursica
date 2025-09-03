@@ -17,29 +17,6 @@ interface WorkerMessage {
   iconsConfig?: unknown;
 }
 
-interface WorkerResponse {
-  recursicaTokens?: { path: string; content: string };
-  vanillaExtractThemes: {
-    availableThemes?: { path: string; content: string };
-    themeContract?: { path: string; content: string };
-    themesFileContent?: { path: string; content: string };
-    vanillaExtractThemes: Array<{ path: string; content: string }>;
-  };
-  mantineTheme: {
-    mantineTheme?: { path: string; content: string };
-    postCss?: { path: string; content: string };
-  };
-  uiKitObject?: { path: string; content: string };
-  recursicaObject?: { path: string; content: string };
-  colorsType?: { path: string; content: string };
-  iconsObject?: {
-    iconExports: { path: string; content: string };
-    iconResourceMap: { path: string; content: string };
-    exportedIcons: Array<{ path: string; content: string }>;
-  };
-  prettierignore?: { path: string; content: string };
-}
-
 export function useAdapterWorker() {
   const runAdapter = useCallback(
     async (
@@ -147,7 +124,7 @@ export function useAdapterWorker() {
           worker.terminate(); // Clean up worker
           console.log('✅ Response received from worker:', event.data);
 
-          const response: WorkerResponse = event.data;
+          const response = event.data;
           if (Array.isArray(response)) {
             resolve(response);
           } else {
