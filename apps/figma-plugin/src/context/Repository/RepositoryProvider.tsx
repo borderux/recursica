@@ -263,7 +263,10 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
   };
 
   useEffect(() => {
-    if (fileLoadingData.localBundledJson || fileLoadingData.localIconsJson) {
+    if (
+      publishStatus === 'publishing' &&
+      (fileLoadingData.localBundledJson || fileLoadingData.localIconsJson)
+    ) {
       handlePublishFiles();
     }
   }, [fileLoadingData.localBundledJson, fileLoadingData.localIconsJson]);
