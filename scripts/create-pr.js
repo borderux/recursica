@@ -134,6 +134,38 @@ function cleanupPRDescriptionFile() {
   }
 }
 
+function pushBranch(currentBranch) {
+  try {
+    log("📤 Pushing branch to remote...", "blue");
+
+    // Check if upstream is already set
+    const upstream = execSync(
+      `git rev-parse --abbrev-ref --symbolic-full-name @{u}`,
+      {
+        encoding: "utf8",
+        stdio: "pipe",
+      },
+    ).trim();
+
+    if (upstream && upstream !== "origin/main") {
+      // Upstream is set, just push
+      execSync(`git push`, { stdio: "inherit" });
+    } else {
+      // Set upstream and push
+      execSync(`git push --set-upstream origin ${currentBranch}`, {
+        stdio: "inherit",
+      });
+    }
+
+    log("✅ Branch pushed successfully", "green");
+  } catch (error) {
+    log("❌ Failed to push branch", "red");
+    log("Error: " + error.message, "red");
+    // eslint-disable-next-line no-undef
+    process.exit(1);
+  }
+}
+
 function main() {
   const args = process.argv.slice(2);
   const title = args.find((arg) => arg.startsWith("--title="))?.split("=")[1];
@@ -190,6 +222,9 @@ function main() {
   const filename = createPRDescriptionFile(fullDescription);
 
   try {
+    // Push the branch first
+    pushBranch(currentBranch);
+
     // Create the PR
     log("\n📝 Creating pull request...", "bright");
     execSync(
@@ -214,4 +249,5 @@ module.exports = {
   generatePRDescription,
   createPRDescriptionFile,
   cleanupPRDescriptionFile,
+  pushBranch,
 };
