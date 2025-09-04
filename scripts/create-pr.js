@@ -161,6 +161,7 @@ function pushBranch(currentBranch) {
   } catch (error) {
     log("❌ Failed to push branch", "red");
     log("Error: " + error.message, "red");
+    // eslint-disable-next-line no-undef
     process.exit(1);
   }
 }
