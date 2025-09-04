@@ -1,0 +1,12 @@
+{
+  "project": {
+    "name": "Recursica",
+    "root": "apps/figma-plugin",
+    "adapter": "apps/figma-plugin/webworker.js"
+  },
+  "overrides": {
+    "mantineTheme": {
+      "1-scale": "'colors-scale-1-default-tone'"
+    }
+  }
+}
