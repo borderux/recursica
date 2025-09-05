@@ -3,6 +3,22 @@ import { MemoryRouter, Route, Routes } from 'react-router';
 import { ThemeProvider, Themes } from '@recursica/ui-kit-mantine';
 import { RepositoryProvider } from './context/Repository/RepositoryProvider';
 import { FigmaProvider } from './context';
+import { useGTMTracking } from './hooks';
+
+// Component that tracks route changes inside the MemoryRouter context
+function AppRoutes() {
+  useGTMTracking();
+
+  return (
+    <Routes>
+      <Route path='home' element={<Home />} />
+      <Route path='auth' element={<Auth />} />
+      <Route path='file-synced' element={<FileSynced />} />
+      <Route path='publish' element={<PublishChanges />} />
+      <Route path='error' element={<Error />} />
+    </Routes>
+  );
+}
 
 function App() {
   return (
@@ -10,13 +26,7 @@ function App() {
       <FigmaProvider>
         <RepositoryProvider>
           <MemoryRouter initialEntries={['/home']}>
-            <Routes>
-              <Route path='home' element={<Home />} />
-              <Route path='auth' element={<Auth />} />
-              <Route path='file-synced' element={<FileSynced />} />
-              <Route path='publish' element={<PublishChanges />} />
-              <Route path='error' element={<Error />} />
-            </Routes>
+            <AppRoutes />
           </MemoryRouter>
         </RepositoryProvider>
       </FigmaProvider>

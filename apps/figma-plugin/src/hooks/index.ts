@@ -8,3 +8,11 @@ export { useFileStatus, type FilesStatus, FileStatus } from './useFileStatus';
 export { useRemoteFiles } from './useRemoteFiles';
 export { useRepositoryOperations } from './useRepositoryOperations';
 export { useProjectValidation, ValidationStatus } from './useProjectValidation';
+export {
+  useGTMTracking,
+  sendGTMEvent,
+  trackPluginAction,
+  trackAuthEvent,
+  trackRepositoryOperation,
+  trackSyncEvent,
+} from './useGTMTracking';

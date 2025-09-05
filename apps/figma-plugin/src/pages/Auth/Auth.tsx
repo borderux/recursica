@@ -4,6 +4,7 @@ import { apiService, pluginTokenToCode } from '../../services/auth';
 import { useNavigate } from 'react-router';
 import { useFigma } from '../../hooks/useFigma';
 import { Layout } from '../../components';
+import { trackAuthEvent, trackPluginAction } from '../../hooks';
 
 // ✅ AI Agent PR Check Completed - Authentication flow streamlining verified
 
@@ -60,6 +61,9 @@ export function Auth() {
   const handleGetStarted = async () => {
     setStatus(Status.WaitingForAuthorization);
 
+    // Track authentication start
+    trackAuthEvent('login', { provider: selectedProvider });
+
     try {
       if (!userId) {
         throw new Error('User ID is required');
@@ -88,6 +92,11 @@ export function Auth() {
     } catch (error) {
       console.error('Error in OAuth flow:', error);
       setStatus(Status.Error);
+      // Track authentication error
+      trackAuthEvent('auth_error', {
+        provider: selectedProvider,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
     }
   };
 
@@ -98,6 +107,11 @@ export function Auth() {
 
         if (data.status === 'authenticated') {
           updateAccessToken(data.accessToken);
+          // Track successful authentication
+          trackAuthEvent('login', {
+            provider: selectedProvider,
+            status: 'success',
+          });
           navigate('/publish');
 
           return;
@@ -133,6 +147,8 @@ export function Auth() {
   };
 
   const handleSelectProvider = (provider: 'gitlab' | 'github') => {
+    // Track provider selection
+    trackPluginAction('provider_selected', { provider });
     updatePlatform(provider);
     handleGetStarted();
   };
@@ -178,7 +194,7 @@ export function Auth() {
               { label: 'GitLab', value: 'gitlab', icon: 'gitlab_outline' },
             ]}
             value={selectedProvider}
-            onChange={(value) => setSelectedProvider(value as 'github' | 'gitlab')}
+            onChange={(value: string) => setSelectedProvider(value as 'github' | 'gitlab')}
             label='Select your repo provider'
             placeholder='Select your repo provider'
           />
