@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { QuickCopyResponse } from "../types/messages";
 import { extractNodeData, countTotalNodes } from "./pageExport";
 import { recreateNodeFromData } from "./pageImport";
@@ -58,9 +59,7 @@ export async function performQuickCopy(): Promise<QuickCopyResponse> {
       // Find the rightmost edge of the original content
       let maxRight = 0;
       function findMaxRight(nodes: any[]): void {
-        // eslint-disable-line @typescript-eslint/no-explicit-any
         nodes.forEach((node: any) => {
-          // eslint-disable-line @typescript-eslint/no-explicit-any
           const rightEdge = (node.x || 0) + (node.width || 0);
           if (rightEdge > maxRight) {
             maxRight = rightEdge;

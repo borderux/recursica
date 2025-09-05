@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { PageListResponse, PageExportResponse } from "../types/messages";
 
 /**
@@ -5,11 +6,9 @@ import type { PageListResponse, PageExportResponse } from "../types/messages";
  */
 
 // Function to count total nodes recursively
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function countTotalNodes(node: any): number {
   let count = 1; // Count the current node
   if (node.children && node.children.length > 0) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     node.children.forEach((child: any) => {
       count += countTotalNodes(child);
     });
@@ -18,9 +17,7 @@ export function countTotalNodes(node: any): number {
 }
 
 // Function to recursively extract all node data
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function extractNodeData(node: any): any {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const nodeData: any = {
     id: node.id,
     name: node.name,
@@ -37,7 +34,6 @@ export function extractNodeData(node: any): any {
     effects: node.effects,
     fills: node.fills
       ? node.fills.map((fill: any) => {
-          // eslint-disable-line @typescript-eslint/no-explicit-any
           const extractedFill = Object.assign({}, fill);
           if (fill.boundVariables) {
             extractedFill.boundVariables = Object.assign(
@@ -92,10 +88,8 @@ export function extractNodeData(node: any): any {
           key: mainComponent.key,
           fills: mainComponent.fills,
           children: mainComponent.children.map((child: any) => {
-            // eslint-disable-line @typescript-eslint/no-explicit-any
             const fillsWithBoundVars = child.fills
               ? child.fills.map((fill: any) => {
-                  // eslint-disable-line @typescript-eslint/no-explicit-any
                   const extractedFill = Object.assign({}, fill);
                   if (fill.boundVariables) {
                     extractedFill.boundVariables = Object.assign(
@@ -130,7 +124,6 @@ export function extractNodeData(node: any): any {
   // Recursively extract children if they exist
   if (node.children && node.children.length > 0) {
     nodeData.children = node.children.map((child: any) => {
-      // eslint-disable-line @typescript-eslint/no-explicit-any
       return extractNodeData(child);
     });
   }
@@ -181,7 +174,7 @@ export async function exportPage(
     console.log("Exporting page: " + selectedPage.name);
 
     // Extract complete page data
-    const extractedPageData = extractNodeData(selectedPage);
+    const extractedPageData = extractNodeData(selectedPage as any);
 
     // Create export data with metadata
     const exportData = {

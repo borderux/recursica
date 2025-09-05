@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { PageImportResponse } from "../types/messages";
 
 /**
@@ -6,12 +7,10 @@ import type { PageImportResponse } from "../types/messages";
 
 // Function to recursively recreate nodes from the extracted data
 export async function recreateNodeFromData(
-  nodeData: any, // eslint-disable-line @typescript-eslint/no-explicit-any
-  parentNode: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+  nodeData: any,
+  parentNode: any,
 ): Promise<any> {
-  // eslint-disable-line @typescript-eslint/no-explicit-any
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let newNode: any;
 
     // Create the appropriate node type
@@ -74,9 +73,8 @@ export async function recreateNodeFromData(
                 newNode.children.length > 0
               ) {
                 newNode.children.forEach((child: any) => {
-                  // eslint-disable-line @typescript-eslint/no-explicit-any
-                  const matchingChild = nodeData.children.find(
-                    (mcChild: any) => mcChild.name === child.name, // eslint-disable-line @typescript-eslint/no-explicit-any
+                  const matchingChild = (nodeData.children as any[]).find(
+                    (mcChild: any) => mcChild.name === child.name,
                   );
 
                   if (matchingChild) {
@@ -86,19 +84,18 @@ export async function recreateNodeFromData(
                         matchingChild.fills &&
                         matchingChild.fills.length > 0
                       ) {
-                        const fillsWithBoundVariables = matchingChild.fills.map(
-                          (fill: any) => {
-                            // eslint-disable-line @typescript-eslint/no-explicit-any
-                            const newFill = Object.assign({}, fill);
-                            if (fill.boundVariables) {
-                              newFill.boundVariables = Object.assign(
-                                {},
-                                fill.boundVariables,
-                              );
-                            }
-                            return newFill;
-                          },
-                        );
+                        const fillsWithBoundVariables = (
+                          matchingChild.fills as any[]
+                        ).map((fill: any) => {
+                          const newFill = Object.assign({}, fill);
+                          if (fill.boundVariables) {
+                            newFill.boundVariables = Object.assign(
+                              {},
+                              fill.boundVariables,
+                            );
+                          }
+                          return newFill;
+                        });
 
                         child.fills = fillsWithBoundVariables;
                       }
@@ -200,14 +197,15 @@ export async function recreateNodeFromData(
         nodeData.fills.length > 0
       ) {
         // Preserve bound variables when applying fills
-        const fillsWithBoundVariables = nodeData.fills.map((fill: any) => {
-          // eslint-disable-line @typescript-eslint/no-explicit-any
-          const newFill = Object.assign({}, fill);
-          if (fill.boundVariables) {
-            newFill.boundVariables = Object.assign({}, fill.boundVariables);
-          }
-          return newFill;
-        });
+        const fillsWithBoundVariables = (nodeData.fills as any[]).map(
+          (fill: any) => {
+            const newFill = Object.assign({}, fill);
+            if (fill.boundVariables) {
+              newFill.boundVariables = Object.assign({}, fill.boundVariables);
+            }
+            return newFill;
+          },
+        );
 
         newNode.fills = fillsWithBoundVariables;
       } else if (nodeData.type !== "INSTANCE") {
@@ -349,7 +347,6 @@ export async function recreateNodeFromData(
 }
 
 export async function importPage(jsonData: any): Promise<PageImportResponse> {
-  // eslint-disable-line @typescript-eslint/no-explicit-any
   try {
     console.log("Importing page from JSON:", jsonData);
 
