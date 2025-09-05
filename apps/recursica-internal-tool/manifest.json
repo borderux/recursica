@@ -2,12 +2,12 @@
   "name": "recursica-internal-tool",
   "id": "1540445849114956736",
   "api": "1.0.0",
-  "main": "code.js",
+  "main": "./dist/recursica-internal-tool.js",
+  "ui": "./dist/index.html",
   "capabilities": [],
   "enableProposedApi": false,
   "documentAccess": "dynamic-page",
   "editorType": ["figma"],
-  "ui": "ui.html",
   "networkAccess": {
     "allowedDomains": ["none"]
   }

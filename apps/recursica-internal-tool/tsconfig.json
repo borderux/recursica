@@ -1,8 +1,7 @@
 {
-  "compilerOptions": {
-    "target": "es6",
-    "lib": ["es6"],
-    "strict": true,
-    "typeRoots": ["./node_modules/@types", "../../node_modules/@figma"]
-  }
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
 }
