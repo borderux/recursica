@@ -118,20 +118,28 @@ export class GitHubRepository extends BaseRepository {
 
   async createBranch(project: Project, branchName: string, sourceBranch: string): Promise<Branch> {
     try {
-      // First, check if the branch already exists
-      try {
-        await this.httpClient.get(
-          `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/refs/heads/${branchName}`
-        );
-        // Branch exists, return it
-        return {
-          name: branchName,
-          id: undefined,
-        };
-      } catch (error) {
-        // Branch doesn't exist, continue with creation
-        if (error instanceof AxiosError && error.response?.status !== 404) {
-          throw error; // Re-throw if it's not a 404 (branch not found)
+      // Check if repository is empty first (before checking for existing branches)
+      const isEmpty = await this.isRepositoryEmpty(project);
+
+      if (isEmpty) {
+        // For empty repositories, we need to create an initial commit first
+        await this.createInitialCommit(project, sourceBranch);
+      } else {
+        // Only check if branch exists if repository is not empty
+        try {
+          await this.httpClient.get(
+            `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/refs/heads/${branchName}`
+          );
+          // Branch exists, return it
+          return {
+            name: branchName,
+            id: undefined,
+          };
+        } catch (error) {
+          // Branch doesn't exist, continue with creation
+          if (error instanceof AxiosError && error.response?.status !== 404) {
+            throw error; // Re-throw if it's not a 404 (branch not found)
+          }
         }
       }
 
@@ -377,5 +385,59 @@ export class GitHubRepository extends BaseRepository {
   protected async calculateMainBranch(project: Project): Promise<string> {
     const mainBranch = await super.calculateMainBranch(project);
     return mainBranch;
+  }
+
+  /**
+   * Check if the repository is empty (has no commits)
+   */
+  private async isRepositoryEmpty(project: Project): Promise<boolean> {
+    try {
+      // Try to get commits first
+      const response = await this.httpClient.get(
+        `${this.baseUrl}/repos/${project.owner.name}/${project.name}/commits`,
+        {
+          params: { per_page: 1 },
+        }
+      );
+      return response.data.length === 0;
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        if (error.response?.status === 409) {
+          // 409 Conflict means the repository is empty
+          return true;
+        }
+        if (error.response?.status === 404) {
+          // 404 might also mean empty repository
+          return true;
+        }
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Create an initial commit for an empty repository
+   */
+  private async createInitialCommit(project: Project, branchName: string): Promise<void> {
+    try {
+      // Create a simple README.md file as the initial commit
+      const readmeContent = `# ${project.name}
+
+This repository was initialized by Recursica.`;
+
+      // Use the contents API to create the initial commit and branch in one step
+      await this.httpClient.put(
+        `${this.baseUrl}/repos/${project.owner.name}/${project.name}/contents/README.md`,
+        {
+          message: 'Initial commit',
+          content: btoa(readmeContent),
+          branch: branchName,
+        }
+      );
+    } catch (error) {
+      throw new Error(
+        `Failed to create initial commit: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
   }
 }
