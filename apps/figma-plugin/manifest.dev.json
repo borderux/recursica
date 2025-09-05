@@ -15,7 +15,8 @@
       "https://fonts.googleapis.com",
       "https://raw.githubusercontent.com",
       "https://api.github.com",
-      "https://gitlab.com"
+      "https://gitlab.com",
+      "https://fonts.gstatic.com"
     ],
     "devAllowedDomains": ["http://localhost:5173", "https://dev-api.recursica.com"]
   }
