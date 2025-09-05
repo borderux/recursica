@@ -37,6 +37,9 @@ figma.ui.onmessage = async (e) => {
   if (e.type === 'UPDATE_SELECTED_PROJECT') {
     saveInStorage('selectedProject', e.payload);
   }
+  if (e.type === 'UPDATE_AGREED_PUBLISH_CHANGES') {
+    saveInStorage('agreedPublishChanges', e.payload);
+  }
   if (e.type === 'GET_VARIABLES') {
     const { fileType } = await detectFiletype();
     if (fileType === 'ui-kit') {

@@ -1,6 +1,12 @@
 import { useCallback } from 'react';
 import type { RecursicaConfiguration } from '@recursica/schemas';
-import type { BaseRepository, Project, UserInfo, CommitAction } from '../services/repository';
+import type {
+  BaseRepository,
+  Project,
+  UserInfo,
+  CommitAction,
+  PullRequest,
+} from '../services/repository';
 
 interface AdapterFile {
   path: string;
@@ -48,13 +54,21 @@ export function useRepositoryOperations() {
       project: Project,
       username: string | undefined
     ): Promise<string> => {
-      if (!repositoryInstance) throw new Error('Failed to create branch');
-      const branch = await repositoryInstance.createBranch(
-        project,
-        `recursica-${username || 'user'}-${Date.now()}`,
-        project.defaultBranch
-      );
-      return branch.name;
+      if (!repositoryInstance) {
+        throw new Error('Repository instance not available');
+      }
+
+      try {
+        const branch = await repositoryInstance.createBranch(
+          project,
+          `recursica-${username || 'user'}`,
+          project.defaultBranch
+        );
+        return branch.name;
+      } catch (error) {
+        console.error('Failed to create branch:', error);
+        throw error;
+      }
     },
     []
   );
@@ -63,28 +77,32 @@ export function useRepositoryOperations() {
     async (
       repositoryInstance: BaseRepository | null,
       selectedProject: Project | undefined,
-      targetBranch: string,
-      initConfig: boolean
-    ): Promise<RecursicaConfiguration> => {
+      targetBranch: string
+    ): Promise<{ config: RecursicaConfiguration; shouldCreateInit: boolean }> => {
       if (!repositoryInstance) throw new Error('Failed to get repository instance');
       if (!selectedProject) throw new Error('Failed to get selected project');
 
-      if (initConfig) {
-        return {
-          project: {
-            name: selectedProject.name,
-            root: '',
-          },
-        };
+      try {
+        const configFile = await repositoryInstance.getSingleFile<RecursicaConfiguration>(
+          selectedProject,
+          'recursica.json',
+          targetBranch
+        );
+        if (configFile && configFile.project !== undefined) {
+          return { config: configFile, shouldCreateInit: false };
+        }
+      } catch {
+        // Config file doesn't exist or is invalid, we need to create it
       }
 
-      const configFile = await repositoryInstance.getSingleFile<RecursicaConfiguration>(
-        selectedProject,
-        'recursica.json',
-        targetBranch
-      );
-      if (!configFile) throw new Error('Failed to get config file');
-      return configFile;
+      // Create default config
+      const defaultConfig = {
+        project: {
+          name: selectedProject.name,
+          root: '',
+        },
+      };
+      return { config: defaultConfig, shouldCreateInit: true };
     },
     []
   );
@@ -97,12 +115,12 @@ export function useRepositoryOperations() {
       adapterFiles: AdapterFile[],
       config: RecursicaConfiguration,
       fileLoadingData: {
-        bundledJson: string | null;
-        iconsJson: string | null;
+        localBundledJson: string | null;
+        localIconsJson: string | null;
         bundledFilename: string;
         iconsFilename: string;
       },
-      initConfig: boolean
+      shouldCreateInit: boolean
     ): Promise<void> => {
       if (!repositoryInstance || !selectedProject) {
         throw new Error('Repository instance or project not available');
@@ -125,7 +143,7 @@ export function useRepositoryOperations() {
 
       const actions: CommitAction[] = [];
 
-      if (fileLoadingData.bundledJson) {
+      if (fileLoadingData.localBundledJson) {
         const exists = await repositoryInstance.fileExists(
           selectedProject,
           variablesFilename,
@@ -134,11 +152,11 @@ export function useRepositoryOperations() {
         actions.push({
           action: exists ? 'update' : 'create',
           file_path: variablesFilename,
-          content: fileLoadingData.bundledJson,
+          content: fileLoadingData.localBundledJson,
         });
       }
 
-      if (initConfig) {
+      if (shouldCreateInit) {
         actions.push({
           action: 'create',
           file_path: 'recursica.json',
@@ -146,7 +164,7 @@ export function useRepositoryOperations() {
         });
       }
 
-      if (fileLoadingData.iconsJson) {
+      if (fileLoadingData.localIconsJson) {
         const exists = await repositoryInstance.fileExists(
           selectedProject,
           svgIconsFilename,
@@ -155,7 +173,7 @@ export function useRepositoryOperations() {
         actions.push({
           action: exists ? 'update' : 'create',
           file_path: svgIconsFilename,
-          content: fileLoadingData.iconsJson,
+          content: fileLoadingData.localIconsJson,
         });
       }
 
@@ -184,6 +202,29 @@ export function useRepositoryOperations() {
     []
   );
 
+  const getExistingPullRequest = useCallback(
+    async (
+      repositoryInstance: BaseRepository | null,
+      selectedProject: Project | undefined,
+      targetBranch: string
+    ): Promise<PullRequest | null> => {
+      if (!repositoryInstance || !selectedProject) return null;
+
+      try {
+        const pullRequest = await repositoryInstance.getExistingPullRequest(
+          selectedProject,
+          targetBranch,
+          selectedProject.defaultBranch
+        );
+        return pullRequest;
+      } catch (error) {
+        console.error('Failed to get existing pull request:', error);
+        return null;
+      }
+    },
+    []
+  );
+
   const createPullRequest = useCallback(
     async (
       repositoryInstance: BaseRepository | null,
@@ -193,11 +234,16 @@ export function useRepositoryOperations() {
       if (!repositoryInstance || !selectedProject) return null;
 
       try {
+        // Get current user info to use as assignee
+        const userInfo = await repositoryInstance.getUserInfo();
+        const assignee = userInfo.username || userInfo.name || userInfo.id.toString();
+
         const pullRequest = await repositoryInstance.createPullRequest(
           selectedProject,
           targetBranch,
           selectedProject.defaultBranch,
-          'New recursica tokens release'
+          'New recursica tokens release',
+          assignee
         );
         return pullRequest.url;
       } catch (error) {
@@ -225,6 +271,7 @@ export function useRepositoryOperations() {
     createBranch,
     getConfig,
     commitFiles,
+    getExistingPullRequest,
     createPullRequest,
   };
 }

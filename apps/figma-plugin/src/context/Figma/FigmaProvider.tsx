@@ -11,7 +11,8 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
   const [repository, setRepository] = useState<CurrentRepositoryContext>({
     platform: undefined,
     accessToken: undefined,
-    selectedProject: undefined,
+    selectedProject: null,
+    agreedPublishChanges: false,
   });
   const [recursicaVariables, setRecursicaVariables] = useState<RecursicaVariablesSchema>();
   const [svgIcons, setSvgIcons] = useState<Record<string, string>>();
@@ -29,11 +30,12 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
       console.log('New message from the plugin sandbox: ', pluginMessage);
       const { type, payload } = pluginMessage;
       if (type === 'GET_LOCAL_STORAGE') {
-        const { accessToken, platform, selectedProject } = payload;
+        const { accessToken, platform, selectedProject, agreedPublishChanges } = payload;
         setRepository({
           platform,
           accessToken,
           selectedProject,
+          agreedPublishChanges,
         });
       }
       if (type === 'RECURSICA_VARIABLES') {
@@ -119,7 +121,8 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
     setRepository((prev) => ({
       platform: prev.platform,
       accessToken,
-      selectedProject: undefined,
+      selectedProject: null,
+      agreedPublishChanges: prev.agreedPublishChanges,
     }));
   };
 
@@ -137,11 +140,12 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
     setRepository({
       platform,
       accessToken: undefined,
-      selectedProject: undefined,
+      selectedProject: null,
+      agreedPublishChanges: false,
     });
   };
 
-  const updateSelectedProject = (selectedProject: string) => {
+  const updateSelectedProject = (selectedProject: string | null) => {
     setRepository((prev) => ({
       ...prev,
       selectedProject,
@@ -182,12 +186,25 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
     );
   };
 
+  const updateAgreedPublishChanges = (agreedPublishChanges: boolean) => {
+    setRepository((prev) => ({
+      ...prev,
+      agreedPublishChanges,
+    }));
+    parent.postMessage(
+      {
+        pluginMessage: {
+          type: 'UPDATE_AGREED_PUBLISH_CHANGES',
+          payload: agreedPublishChanges,
+        },
+        pluginId: '*',
+      },
+      '*'
+    );
+  };
+
   const values = {
-    repository: {
-      platform: repository.platform,
-      accessToken: repository.accessToken,
-      selectedProject: repository.selectedProject,
-    },
+    repository,
     updateRepository: {
       updatePlatform,
       updateAccessToken,
@@ -201,6 +218,7 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
     filetype,
     error,
     pluginVersion,
+    updateAgreedPublishChanges,
   };
 
   return <FigmaContext.Provider value={values}>{children}</FigmaContext.Provider>;

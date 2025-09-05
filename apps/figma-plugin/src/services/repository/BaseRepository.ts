@@ -79,6 +79,8 @@ export interface PullRequest {
   url: string;
   /** Current state (e.g., 'open', 'merged', 'closed') */
   state: string;
+  /** Last updated date of the pull/merge request */
+  updatedAt: string;
 }
 
 export abstract class BaseRepository {
@@ -117,13 +119,19 @@ export abstract class BaseRepository {
     project: Project,
     sourceBranch: string,
     targetBranch: string,
-    title: string
+    title: string,
+    assignee?: string
   ): Promise<PullRequest>;
   abstract hasOpenPullRequest(
     project: Project,
     sourceBranch: string,
     targetBranch: string
   ): Promise<boolean>;
+  abstract getExistingPullRequest(
+    project: Project,
+    sourceBranch: string,
+    targetBranch: string
+  ): Promise<PullRequest | null>;
   abstract fileExists(project: Project, filePath: string, branch: string): Promise<boolean>;
 
   // Common method to calculate main branch

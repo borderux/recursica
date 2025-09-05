@@ -20,20 +20,18 @@ export function useProjectValidation() {
       getConfig: (
         repositoryInstance: BaseRepository | null,
         selectedProject: Project | undefined,
-        targetBranch: string,
-        initConfig: boolean
-      ) => Promise<RecursicaConfiguration>
+        targetBranch: string
+      ) => Promise<{ config: RecursicaConfiguration; shouldCreateInit: boolean }>
     ): Promise<boolean> => {
       if (!repositoryInstance) return false;
 
       try {
-        const config = await getConfig(
+        const { config, shouldCreateInit } = await getConfig(
           repositoryInstance,
           selectedProject,
-          selectedProject?.defaultBranch || '',
-          false
+          selectedProject?.defaultBranch || ''
         );
-        const isValid = config.project !== undefined;
+        const isValid = !shouldCreateInit && config.project !== undefined;
         setValidationStatus(isValid ? ValidationStatus.Valid : ValidationStatus.Invalid);
         return isValid;
       } catch (error) {

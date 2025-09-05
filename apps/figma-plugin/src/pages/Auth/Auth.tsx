@@ -98,7 +98,7 @@ export function Auth() {
 
         if (data.status === 'authenticated') {
           updateAccessToken(data.accessToken);
-          navigate('/publish');
+          navigate('/publish/select-project');
 
           return;
         } else if (data.status === 'pending') {

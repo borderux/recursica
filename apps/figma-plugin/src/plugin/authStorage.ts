@@ -2,6 +2,7 @@ export async function getLocalStorage() {
   const accessToken = await getLocalStorageValue('accessToken');
   const platform = await getLocalStorageValue('platform');
   const selectedProject = await getLocalStorageValue('selectedProject');
+  const agreedPublishChanges = await getLocalStorageValue('agreedPublishChanges');
 
   figma.ui.postMessage({
     type: 'GET_LOCAL_STORAGE',
@@ -9,6 +10,7 @@ export async function getLocalStorage() {
       accessToken,
       platform,
       selectedProject,
+      agreedPublishChanges,
     },
   });
 }

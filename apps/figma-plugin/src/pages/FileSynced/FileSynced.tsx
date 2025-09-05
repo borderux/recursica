@@ -43,7 +43,11 @@ export function FileSynced() {
 
   const target = useMemo(() => {
     if (repository && repository.platform && repository.accessToken) {
-      return '/publish';
+      if (repository.selectedProject) {
+        return '/publish/home';
+      } else {
+        return '/publish/select-project';
+      }
     }
     return '/auth';
   }, [repository]);

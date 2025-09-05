@@ -1,32 +1,36 @@
-import { FilesStatus, RepositoryError, ValidationStatus } from '../../hooks';
-import { Project } from '../../services/repository/BaseRepository';
+import { RepositoryError } from '../../hooks';
+import { Project, PullRequest } from '../../services/repository/BaseRepository';
 import { createContext } from 'react';
+
+export type PublishStatus = 'to-publish' | 'publishing' | 'published';
 
 interface Repository {
   /** User projects/repositories */
   userProjects: Project[];
   /** Selected project/repository id */
-  selectedProjectId: string | undefined;
+  selectedProjectId: string | null;
+  /** Selected project/repository */
+  selectedProject: Project | undefined;
   /** Update the selected project/repository id */
-  updateSelectedProjectId: (selectedProjectId: string) => void;
+  updateSelectedProjectId: (selectedProjectId: string | null) => void;
 
-  /** Pull request link */
-  prLink: string | null;
+  /** Existing pull request object */
+  existingPR: PullRequest | null;
 
-  /** Files status */
-  filesStatus: FilesStatus;
+  /** Current publish status */
+  publishStatus: PublishStatus;
+
+  /** Bundled JSON data for variable counts */
+  bundledJson: string | null;
+
+  /** Icons JSON data for icon counts */
+  iconsJson: string | null;
 
   /** Publish files to the repository */
   publishFiles: () => Promise<void>;
 
-  /** Validate the project (check if the project has a valid config file) */
-  validationStatus: ValidationStatus;
-
-  /** Initialize the repository */
-  initializeRepo: () => void;
-
   /** Reset the repository */
-  resetRepository: () => Promise<boolean>;
+  resetRepository: () => void;
 
   /** Current error state */
   error: RepositoryError | null;

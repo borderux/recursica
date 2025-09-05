@@ -14,7 +14,7 @@ function App() {
               <Route path='home' element={<Home />} />
               <Route path='auth' element={<Auth />} />
               <Route path='file-synced' element={<FileSynced />} />
-              <Route path='publish' element={<PublishChanges />} />
+              <Route path='publish/*' element={<PublishChanges />} />
               <Route path='error' element={<Error />} />
             </Routes>
           </MemoryRouter>

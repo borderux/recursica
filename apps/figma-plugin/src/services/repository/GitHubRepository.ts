@@ -117,26 +117,69 @@ export class GitHubRepository extends BaseRepository {
   }
 
   async createBranch(project: Project, branchName: string, sourceBranch: string): Promise<Branch> {
-    // First, get the SHA of the source branch
-    const sourceBranchResponse = await this.httpClient.get(
-      `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/refs/heads/${sourceBranch}`
-    );
+    try {
+      // Check if repository is empty first (before checking for existing branches)
+      const isEmpty = await this.isRepositoryEmpty(project);
 
-    const sourceSha = sourceBranchResponse.data.object.sha;
-
-    // Create the new branch
-    await this.httpClient.post(
-      `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/refs`,
-      {
-        ref: `refs/heads/${branchName}`,
-        sha: sourceSha,
+      if (isEmpty) {
+        // For empty repositories, we need to create an initial commit first
+        await this.createInitialCommit(project, sourceBranch);
+      } else {
+        // Only check if branch exists if repository is not empty
+        try {
+          await this.httpClient.get(
+            `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/refs/heads/${branchName}`
+          );
+          // Branch exists, return it
+          return {
+            name: branchName,
+            id: undefined,
+          };
+        } catch (error) {
+          // Branch doesn't exist, continue with creation
+          if (error instanceof AxiosError && error.response?.status !== 404) {
+            throw error; // Re-throw if it's not a 404 (branch not found)
+          }
+        }
       }
-    );
 
-    return {
-      name: branchName,
-      id: undefined,
-    };
+      // Get the SHA of the source branch
+      const sourceBranchResponse = await this.httpClient.get(
+        `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/refs/heads/${sourceBranch}`
+      );
+
+      const sourceSha = sourceBranchResponse.data.object.sha;
+
+      // Create the new branch
+      await this.httpClient.post(
+        `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/refs`,
+        {
+          ref: `refs/heads/${branchName}`,
+          sha: sourceSha,
+        }
+      );
+
+      return {
+        name: branchName,
+        id: undefined,
+      };
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        if (error.response?.status === 422) {
+          const errorMessage = error.response.data?.message || 'Branch creation failed';
+          if (errorMessage.includes('already exists')) {
+            // Branch already exists, return it
+            return {
+              name: branchName,
+              id: undefined,
+            };
+          }
+          throw new Error(`Branch creation failed: ${errorMessage}`);
+        }
+        throw new Error(`GitHub API error: ${error.response?.data?.message || error.message}`);
+      }
+      throw error;
+    }
   }
 
   async commitFiles(
@@ -229,16 +272,29 @@ export class GitHubRepository extends BaseRepository {
     project: Project,
     sourceBranch: string,
     targetBranch: string,
-    title: string
+    title: string,
+    assignee?: string
   ): Promise<PullRequest> {
     try {
+      const requestBody: {
+        title: string;
+        head: string;
+        base: string;
+        assignees?: string[];
+      } = {
+        title: title,
+        head: sourceBranch,
+        base: targetBranch,
+      };
+
+      // Add assignee if provided
+      if (assignee) {
+        requestBody.assignees = [assignee];
+      }
+
       const response = await this.httpClient.post(
         `${this.baseUrl}/repos/${project.owner.name}/${project.name}/pulls`,
-        {
-          title: title,
-          head: sourceBranch,
-          base: targetBranch,
-        }
+        requestBody
       );
 
       return {
@@ -246,6 +302,7 @@ export class GitHubRepository extends BaseRepository {
         title: response.data.title,
         url: response.data.html_url,
         state: response.data.state,
+        updatedAt: response.data.updated_at,
       };
     } catch (error) {
       if (error instanceof AxiosError && error.response?.status === 422) {
@@ -269,7 +326,7 @@ export class GitHubRepository extends BaseRepository {
         `${this.baseUrl}/repos/${project.owner.name}/${project.name}/pulls`,
         {
           params: {
-            head: sourceBranch,
+            head: `${project.owner.name}:${sourceBranch}`,
             base: targetBranch,
             state: 'open',
           },
@@ -283,7 +340,7 @@ export class GitHubRepository extends BaseRepository {
     }
   }
 
-  private async getExistingPullRequest(
+  async getExistingPullRequest(
     project: Project,
     sourceBranch: string,
     targetBranch: string
@@ -293,20 +350,27 @@ export class GitHubRepository extends BaseRepository {
         `${this.baseUrl}/repos/${project.owner.name}/${project.name}/pulls`,
         {
           params: {
-            head: sourceBranch,
+            head: `${project.owner.name}:${sourceBranch}`,
             base: targetBranch,
             state: 'all',
           },
         }
       );
 
-      if (response.data.length > 0) {
-        const pr = response.data[0];
+      // Filter to only include open or merged PRs
+      const openOrMergedPRs = response.data.filter(
+        (pr: { state: string; merged_at: string | null }) =>
+          pr.state === 'open' || pr.merged_at !== null
+      );
+
+      if (openOrMergedPRs.length > 0) {
+        const pr = openOrMergedPRs[0];
         return {
           id: pr.number,
           title: pr.title,
           url: pr.html_url,
           state: pr.state,
+          updatedAt: pr.updated_at,
         };
       }
 
@@ -321,5 +385,59 @@ export class GitHubRepository extends BaseRepository {
   protected async calculateMainBranch(project: Project): Promise<string> {
     const mainBranch = await super.calculateMainBranch(project);
     return mainBranch;
+  }
+
+  /**
+   * Check if the repository is empty (has no commits)
+   */
+  private async isRepositoryEmpty(project: Project): Promise<boolean> {
+    try {
+      // Try to get commits first
+      const response = await this.httpClient.get(
+        `${this.baseUrl}/repos/${project.owner.name}/${project.name}/commits`,
+        {
+          params: { per_page: 1 },
+        }
+      );
+      return response.data.length === 0;
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        if (error.response?.status === 409) {
+          // 409 Conflict means the repository is empty
+          return true;
+        }
+        if (error.response?.status === 404) {
+          // 404 might also mean empty repository
+          return true;
+        }
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Create an initial commit for an empty repository
+   */
+  private async createInitialCommit(project: Project, branchName: string): Promise<void> {
+    try {
+      // Create a simple README.md file as the initial commit
+      const readmeContent = `# ${project.name}
+
+This repository was initialized by Recursica.`;
+
+      // Use the contents API to create the initial commit and branch in one step
+      await this.httpClient.put(
+        `${this.baseUrl}/repos/${project.owner.name}/${project.name}/contents/README.md`,
+        {
+          message: 'Initial commit',
+          content: btoa(readmeContent),
+          branch: branchName,
+        }
+      );
+    } catch (error) {
+      throw new Error(
+        `Failed to create initial commit: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
   }
 }
