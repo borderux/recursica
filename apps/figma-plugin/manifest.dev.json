@@ -18,6 +18,10 @@
       "https://gitlab.com",
       "https://fonts.gstatic.com"
     ],
-    "devAllowedDomains": ["http://localhost:5173", "https://dev-api.recursica.com"]
+    "devAllowedDomains": [
+      "http://localhost:5173",
+      "https://dev-api.recursica.com",
+      "https://www.googletagmanager.com"
+    ]
   }
 }
