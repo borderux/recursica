@@ -88,18 +88,66 @@ export class GitLabRepository extends BaseRepository {
   }
 
   async createBranch(project: Project, branchName: string, sourceBranch: string): Promise<Branch> {
-    const response = await this.httpClient.post(
-      `${this.baseUrl}/projects/${project.id}/repository/branches`,
-      {
-        branch: branchName,
-        ref: sourceBranch,
-      }
-    );
+    try {
+      // Check if repository is empty (no commits)
+      const isEmpty = await this.isRepositoryEmpty(project);
 
-    return {
-      name: response.data.name,
-      id: response.data.id,
-    };
+      if (isEmpty) {
+        // For empty repositories, we need to create an initial commit first
+        await this.createInitialCommit(project, sourceBranch);
+      }
+
+      const response = await this.httpClient.post(
+        `${this.baseUrl}/projects/${project.id}/repository/branches`,
+        {
+          branch: branchName,
+          ref: sourceBranch,
+        }
+      );
+
+      return {
+        name: response.data.name,
+        id: response.data.id,
+      };
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        if (error.response?.status === 400) {
+          const errorMessage = error.response.data?.message || 'Branch creation failed';
+          if (errorMessage.includes('already exists')) {
+            // Branch already exists, try to get it
+            const branches = await this.getProjectBranches(project);
+            const existingBranch = branches.find((b) => b.name === branchName);
+            if (existingBranch) {
+              return existingBranch;
+            }
+          }
+          throw new Error(`Branch creation failed: ${errorMessage}`);
+        }
+        if (error.response?.status === 404) {
+          // Repository might be empty or branch doesn't exist
+          const errorMessage = error.response.data?.message || 'Repository or branch not found';
+          if (errorMessage.includes('empty') || errorMessage.includes('no commits')) {
+            // Try to create initial commit and retry
+            await this.createInitialCommit(project, sourceBranch);
+            // Retry branch creation
+            const retryResponse = await this.httpClient.post(
+              `${this.baseUrl}/projects/${project.id}/repository/branches`,
+              {
+                branch: branchName,
+                ref: sourceBranch,
+              }
+            );
+            return {
+              name: retryResponse.data.name,
+              id: retryResponse.data.id,
+            };
+          }
+          throw new Error(`Branch creation failed: ${errorMessage}`);
+        }
+        throw new Error(`GitLab API error: ${error.response?.data?.message || error.message}`);
+      }
+      throw error;
+    }
   }
 
   async fileExists(project: Project, filePath: string, branch: string): Promise<boolean> {
@@ -139,16 +187,29 @@ export class GitLabRepository extends BaseRepository {
     project: Project,
     sourceBranch: string,
     targetBranch: string,
-    title: string
+    title: string,
+    assignee?: string
   ): Promise<PullRequest> {
     try {
+      const requestBody: {
+        title: string;
+        source_branch: string;
+        target_branch: string;
+        assignee_id?: number;
+      } = {
+        source_branch: sourceBranch,
+        target_branch: targetBranch,
+        title: title,
+      };
+
+      // Add assignee if provided
+      if (assignee) {
+        requestBody.assignee_id = parseInt(assignee);
+      }
+
       const response = await this.httpClient.post(
         `${this.baseUrl}/projects/${project.id}/merge_requests`,
-        {
-          source_branch: sourceBranch,
-          target_branch: targetBranch,
-          title: title,
-        }
+        requestBody
       );
 
       return {
@@ -156,11 +217,12 @@ export class GitLabRepository extends BaseRepository {
         title: response.data.title,
         url: response.data.web_url,
         state: response.data.state,
+        updatedAt: response.data.updated_at,
       };
     } catch (error) {
       if (error instanceof AxiosError && error.response?.status === 409) {
         // Merge request already exists, fetch it
-        const existingMR = await this.getExistingMergeRequest(project, sourceBranch, targetBranch);
+        const existingMR = await this.getExistingPullRequest(project, sourceBranch, targetBranch);
         if (existingMR) {
           return existingMR;
         }
@@ -193,7 +255,7 @@ export class GitLabRepository extends BaseRepository {
     }
   }
 
-  private async getExistingMergeRequest(
+  async getExistingPullRequest(
     project: Project,
     sourceBranch: string,
     targetBranch: string
@@ -205,17 +267,24 @@ export class GitLabRepository extends BaseRepository {
           params: {
             source_branch: sourceBranch,
             target_branch: targetBranch,
+            state: 'all',
           },
         }
       );
 
-      if (response.data.length > 0) {
-        const mr = response.data[0];
+      // Filter to only include open or merged MRs
+      const openOrMergedMRs = response.data.filter(
+        (mr: { state: string }) => mr.state === 'opened' || mr.state === 'merged'
+      );
+
+      if (openOrMergedMRs.length > 0) {
+        const mr = openOrMergedMRs[0];
         return {
           id: mr.iid,
           title: mr.title,
           url: mr.web_url,
           state: mr.state,
+          updatedAt: mr.updated_at,
         };
       }
 
@@ -230,5 +299,54 @@ export class GitLabRepository extends BaseRepository {
   protected async calculateMainBranch(project: Project): Promise<string> {
     const mainBranch = await super.calculateMainBranch(project);
     return mainBranch;
+  }
+
+  /**
+   * Check if the repository is empty (has no commits)
+   */
+  private async isRepositoryEmpty(project: Project): Promise<boolean> {
+    try {
+      const response = await this.httpClient.get(
+        `${this.baseUrl}/projects/${project.id}/repository/commits`,
+        {
+          params: { per_page: 1 },
+        }
+      );
+      return response.data.length === 0;
+    } catch (error) {
+      if (error instanceof AxiosError && error.response?.status === 404) {
+        // 404 typically means the repository is empty or has no commits
+        return true;
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Create an initial commit for an empty repository
+   */
+  private async createInitialCommit(project: Project, branchName: string): Promise<void> {
+    try {
+      // Create a simple README.md file as the initial commit
+      const readmeContent = `# ${project.name}
+
+This repository was initialized by Recursica.`;
+
+      await this.httpClient.post(`${this.baseUrl}/projects/${project.id}/repository/commits`, {
+        branch: branchName,
+        commit_message: 'Initial commit',
+        actions: [
+          {
+            action: 'create',
+            file_path: 'README.md',
+            content: readmeContent,
+          },
+        ],
+      });
+    } catch (error) {
+      throw new Error(
+        `Failed to create initial commit: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
   }
 }

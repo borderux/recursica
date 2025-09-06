@@ -1,41 +1,31 @@
-const S = '0.0.4',
-  L = {
-    version: S,
+var k = Object.defineProperty;
+var M = (e, t, a) =>
+  t in e ? k(e, t, { enumerable: !0, configurable: !0, writable: !0, value: a }) : (e[t] = a);
+var b = (e, t, a) => M(e, typeof t != 'symbol' ? t + '' : t, a);
+const _ = '8.0.1',
+  R = {
+    version: _,
   };
-async function k(e) {
-  const t = (await figma.variables.getLocalVariableCollectionsAsync())[0].getSharedPluginData(
-    'recursica',
-    'file-type'
-  );
-  return (
-    figma.ui.postMessage({
-      type: 'METADATA',
-      payload: {
-        projectType: t,
-        pluginVersion: e,
-      },
-    }),
-    t
-  );
-}
-async function O() {
+async function F() {
   const e = await h('accessToken'),
-    a = await h('platform'),
-    t = await h('selectedProject');
+    t = await h('platform'),
+    a = await h('selectedProject'),
+    i = await h('agreedPublishChanges');
   figma.ui.postMessage({
     type: 'GET_LOCAL_STORAGE',
     payload: {
       accessToken: e,
-      platform: a,
-      selectedProject: t,
+      platform: t,
+      selectedProject: a,
+      agreedPublishChanges: i,
     },
   });
 }
 async function h(e) {
   return figma.clientStorage.getAsync(e);
 }
-async function w(e, a) {
-  await figma.clientStorage.setAsync(e, a),
+async function C(e, t) {
+  await figma.clientStorage.setAsync(e, t),
     e === 'accessToken' &&
       (await figma.clientStorage.deleteAsync('selectedProject'),
       figma.notify('Access token updated')),
@@ -45,7 +35,7 @@ async function w(e, a) {
       figma.notify('Platform updated')),
     e === 'selectedProject' && figma.notify('Selected project updated');
 }
-function N(e) {
+function j(e) {
   if (e.unit === 'AUTO')
     return {
       unit: 'AUTO',
@@ -53,10 +43,10 @@ function N(e) {
       // Default value for AUTO line height
     };
   if (e.unit === 'PERCENT') {
-    const a = e.value;
+    const t = e.value;
     return {
       unit: 'PERCENT',
-      value: a % 1 > 0.9 ? Math.ceil(a) : a,
+      value: t % 1 > 0.9 ? Math.ceil(t) : t,
     };
   }
   return {
@@ -64,407 +54,686 @@ function N(e) {
     value: e.value,
   };
 }
-function C(e, a, t) {
-  return `[${e}][${a}][${t}]`.split(' ').join('-');
+function V(e, t, a) {
+  return `[${e}][${t}][${a}]`.split(' ').join('-');
 }
-function g(e) {
-  const a = {};
+function v(e) {
+  const t = {};
   return (
-    e.forEach((t) => {
-      Object.assign(a, t);
+    e.forEach((a) => {
+      Object.assign(t, a);
     }),
-    a
+    t
   );
 }
-function _({ r: e, g: a, b: t, a: s }) {
-  if (s !== 1)
-    return `rgba(${[e, a, t].map((l) => Math.round(l * 255)).join(', ')}, ${s.toFixed(4)})`;
-  const o = (l) => {
-    const u = Math.round(l * 255).toString(16);
-    return u.length === 1 ? '0' + u : u;
+function D({ r: e, g: t, b: a, a: i }) {
+  if (i !== 1)
+    return `rgba(${[e, t, a].map((s) => Math.round(s * 255)).join(', ')}, ${i.toFixed(4)})`;
+  const n = (s) => {
+    const c = Math.round(s * 255).toString(16);
+    return c.length === 1 ? '0' + c : c;
   };
-  return `#${[o(e), o(a), o(t)].join('')}`;
+  return `#${[n(e), n(t), n(a)].join('')}`;
 }
-function I(e) {
-  const a = ['thin'],
-    t = ['extralight'],
-    s = ['light'],
-    o = ['regular'],
-    r = ['medium'],
-    l = ['semibold'],
-    u = ['bold'],
-    c = ['extra bold', 'extrabold'],
-    m = ['black', 'heavy'],
-    n = e.toLowerCase();
-  return a.some((i) => n.includes(i))
+function x(e) {
+  const t = ['thin'],
+    a = ['extralight'],
+    i = ['light'],
+    n = ['regular'],
+    l = ['medium'],
+    s = ['semibold'],
+    c = ['bold'],
+    u = ['extra bold', 'extrabold'],
+    f = ['black', 'heavy'],
+    r = e.toLowerCase();
+  return t.some((o) => r.includes(o))
     ? 100
-    : t.some((i) => n.includes(i))
+    : a.some((o) => r.includes(o))
       ? 200
-      : s.some((i) => n.includes(i))
+      : i.some((o) => r.includes(o))
         ? 300
-        : o.some((i) => n.includes(i))
+        : n.some((o) => r.includes(o))
           ? 400
-          : r.some((i) => n.includes(i))
+          : l.some((o) => r.includes(o))
             ? 500
-            : l.some((i) => n.includes(i))
+            : s.some((o) => r.includes(o))
               ? 600
-              : u.some((i) => n.includes(i))
+              : c.some((o) => r.includes(o))
                 ? 700
-                : c.some((i) => n.includes(i))
+                : u.some((o) => r.includes(o))
                   ? 800
-                  : m.some((i) => n.includes(i))
+                  : f.some((o) => r.includes(o))
                     ? 900
                     : 400;
 }
-function R(e) {
+function B(e) {
   return !e || typeof e != 'string'
     ? ''
     : e
         .split(/[\s\-_]+/)
-        .filter((t) => t.length > 0)
-        .map((t) =>
-          t
+        .filter((a) => a.length > 0)
+        .map((a) =>
+          a
             .split(/(?=[A-Z])/)
-            .map((o) => o.charAt(0).toUpperCase() + o.slice(1).toLowerCase())
+            .map((n) => n.charAt(0).toUpperCase() + n.slice(1).toLowerCase())
             .join('')
         )
         .join('');
 }
-async function j(e) {
+async function $(e) {
   try {
-    const [a, t] = await Promise.all([
+    const [t, a] = await Promise.all([
       figma.variables.getVariableByIdAsync(e.id),
       figma.variables
         .getVariableByIdAsync(e.id)
-        .then((s) =>
-          s ? figma.variables.getVariableCollectionByIdAsync(s.variableCollectionId) : null
+        .then((i) =>
+          i ? figma.variables.getVariableCollectionByIdAsync(i.variableCollectionId) : null
         ),
     ]);
-    if (a && t)
+    if (t && a)
       return {
-        collection: t.name,
-        name: a.name,
+        collection: a.name,
+        name: t.name,
       };
-  } catch (a) {
-    console.warn('Failed to resolve variable alias:', a);
+  } catch (t) {
+    console.warn('Failed to resolve variable alias:', t);
   }
   return null;
 }
-async function M(e, a) {
+async function U(e, t) {
   if (typeof e == 'object' && e !== null) {
-    if ('type' in e && e.type) return await j(e);
-    if (a === 'COLOR') return _(e);
+    if ('type' in e && e.type) return await $(e);
+    if (t === 'COLOR') return D(e);
   }
   return e;
 }
-async function A(e, a, t, s, o) {
-  const r = o.modes.find((u) => u.modeId === e);
-  if (!r) return null;
-  const l = await M(a, s);
-  return l === null
+async function T(e, t, a, i, n) {
+  const l = n.modes.find((c) => c.modeId === e);
+  if (!l) return null;
+  const s = await U(t, i);
+  return s === null
     ? null
     : {
-        collection: o.name,
-        mode: r.name,
-        name: t,
-        type: s.toLowerCase(),
-        value: l,
+        collection: n.name,
+        mode: l.name,
+        name: a,
+        type: i.toLowerCase(),
+        value: s,
       };
 }
-async function T(e) {
+async function S(e) {
   try {
     return await figma.variables.getVariableCollectionByIdAsync(e);
-  } catch (a) {
-    return console.warn(`Failed to get variable collection ${e}:`, a), null;
+  } catch (t) {
+    return console.warn(`Failed to get variable collection ${e}:`, t), null;
   }
 }
-async function V(e) {
+async function O(e) {
   try {
     return await figma.variables.importVariableByKeyAsync(e);
-  } catch (a) {
-    return console.warn(`Failed to import variable ${e}:`, a), null;
+  } catch (t) {
+    return console.warn(`Failed to import variable ${e}:`, t), null;
   }
 }
-async function F(e) {
-  const a = e.variableIds.map(async (s) => {
-      const o = await figma.variables.getVariableByIdAsync(s);
-      if (!o) return {};
-      const { valuesByMode: r, name: l, resolvedType: u } = o,
-        c = {},
-        m = Object.entries(r).map(async ([i, f]) => {
-          const y = await A(i, f, l, u, e);
-          return y ? { key: C(y.collection, y.mode, y.name), data: y } : null;
+async function G(e) {
+  const t = e.variableIds.map(async (i) => {
+      const n = await figma.variables.getVariableByIdAsync(i);
+      if (!n) return {};
+      const { valuesByMode: l, name: s, resolvedType: c } = n,
+        u = {},
+        f = Object.entries(l).map(async ([o, m]) => {
+          const y = await T(o, m, s, c, e);
+          return y ? { key: V(y.collection, y.mode, y.name), data: y } : null;
         });
       return (
-        (await Promise.all(m)).forEach((i) => {
-          i && (c[i.key] = i.data);
+        (await Promise.all(f)).forEach((o) => {
+          o && (u[o.key] = o.data);
         }),
-        c
+        u
       );
     }),
-    t = await Promise.all(a);
-  return g(t);
+    a = await Promise.all(t);
+  return v(a);
 }
-async function B(e) {
+async function W(e) {
   try {
-    const t = (await figma.teamLibrary.getVariablesInLibraryCollectionAsync(e)).map(async (o) => {
-        const r = await V(o.key);
+    const a = (await figma.teamLibrary.getVariablesInLibraryCollectionAsync(e)).map(async (n) => {
+        const l = await O(n.key);
+        if (!l) return {};
+        const { valuesByMode: s, name: c, resolvedType: u, variableCollectionId: f } = l,
+          r = await S(f);
         if (!r) return {};
-        const { valuesByMode: l, name: u, resolvedType: c, variableCollectionId: m } = r,
-          n = await T(m);
-        if (!n) return {};
-        const i = {},
-          f = Object.entries(l).map(async ([d, b]) => {
-            const p = await A(d, b, u, c, n);
-            return p ? { key: C(p.collection, p.mode, p.name), data: p } : null;
+        const o = {},
+          m = Object.entries(s).map(async ([g, I]) => {
+            const p = await T(g, I, c, u, r);
+            return p ? { key: V(p.collection, p.mode, p.name), data: p } : null;
           });
         return (
-          (await Promise.all(f)).forEach((d) => {
-            d && (i[d.key] = d.data);
+          (await Promise.all(m)).forEach((g) => {
+            g && (o[g.key] = g.data);
           }),
-          i
+          o
         );
       }),
-      s = await Promise.all(t);
-    return g(s);
-  } catch (a) {
-    return console.warn(`Failed to process remote variable collection ${e}:`, a), {};
+      i = await Promise.all(a);
+    return v(i);
+  } catch (t) {
+    return console.warn(`Failed to process remote variable collection ${e}:`, t), {};
   }
 }
-async function x() {
+async function K() {
   const e = {},
-    a = await figma.getLocalTextStylesAsync();
-  for (const t of a) {
+    t = await figma.getLocalTextStylesAsync();
+  for (const a of t) {
     const {
-      name: s,
-      fontName: { family: o, style: r },
-      fontSize: l,
-      lineHeight: u,
-      letterSpacing: c,
-      textCase: m,
-      textDecoration: n,
-    } = t;
-    e[s] = {
-      variableName: s,
-      fontFamily: o,
-      fontSize: l,
+      name: i,
+      fontName: { family: n, style: l },
+      fontSize: s,
+      lineHeight: c,
+      letterSpacing: u,
+      textCase: f,
+      textDecoration: r,
+    } = a;
+    e[i] = {
+      variableName: i,
+      fontFamily: n,
+      fontSize: s,
       fontWeight: {
-        value: I(r),
-        alias: r,
+        value: x(l),
+        alias: l,
       },
-      lineHeight: N(u),
-      letterSpacing: c,
-      textCase: m,
-      textDecoration: n,
+      lineHeight: j(c),
+      letterSpacing: u,
+      textCase: f,
+      textDecoration: r,
     };
   }
   return e;
 }
-async function U() {
+async function Y() {
   const e = {},
-    a = await figma.getLocalEffectStylesAsync();
-  for (const { name: t, effects: s } of a)
-    e[t] = {
-      variableName: t,
-      effects: s.map((o) => ({
-        type: o.type,
-        color: o.color,
-        offset: o.offset,
-        radius: 'radius' in o ? o.radius : 0,
-        spread: o.spread || 0,
+    t = await figma.getLocalEffectStylesAsync();
+  for (const { name: a, effects: i } of t)
+    e[a] = {
+      variableName: a,
+      effects: i.map((n) => ({
+        type: n.type,
+        color: n.color,
+        offset: n.offset,
+        radius: 'radius' in n ? n.radius : 0,
+        spread: n.spread || 0,
       })),
     };
   return e;
 }
-async function D() {
-  const e = await figma.variables.getLocalVariableCollectionsAsync();
-  let a = 'icons';
-  if (e.length > 0) {
-    const c = e.find((i) => i.name.toLowerCase().includes('tokens')),
-      m = e.find((i) => i.name.toLowerCase().includes('themes')),
-      n = e.find(
-        (i) => i.name.toLowerCase().includes('ui kit') || i.name.toLowerCase().includes('uikit')
-      );
-    c ? (a = 'tokens') : m ? (a = 'themes') : n && (a = 'ui-kit');
-  }
-  const t = await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
-  if (a === 'themes' && !t.some((m) => m.name.toLowerCase().includes('tokens')))
-    return figma.ui.postMessage({
-      type: 'NO_TOKENS_FOUND',
-    });
-  if (a === 'ui-kit') {
-    const c = t.some((n) => n.name.toLowerCase().includes('tokens')),
-      m = t.some((n) => n.name.toLowerCase().includes('themes'));
-    (!c || !m) &&
-      figma.ui.postMessage({
-        type: 'NO_TOKENS_OR_THEMES_FOUND',
-      });
-  }
-  t.length === 0 &&
-    figma.notify('No libraries connected to this project', {
-      timeout: 5e3,
-    });
-  const s = t.map(async (c) => {
-      const n = (await figma.teamLibrary.getVariablesInLibraryCollectionAsync(c.key)).map((i) =>
-        figma.variables.importVariableByKeyAsync(i.key)
-      );
-      return Promise.all(n);
-    }),
-    r = (await Promise.all(s)).flat(),
-    l = new Map(r.map((c) => [c.name, c])),
-    u = e.map(async (c) => {
-      c.setSharedPluginData('recursica', 'file-type', a),
-        a === 'themes' && c.setSharedPluginData('recursica', 'theme-name', R(figma.root.name));
-      const m = c.variableIds.map(async (n) => {
-        const i = await figma.variables.getVariableByIdAsync(n);
-        if (!i) return null;
-        const f = Object.entries(i.valuesByMode).map(async ([y, d]) => {
-          if (typeof d == 'object' && d !== null && 'type' in d) {
-            const b = await figma.variables.getVariableByIdAsync(d.id);
-            if (b) {
-              const p = l.get(b.name);
-              if (b.remote && p && p.key !== b.key) {
-                console.log(`syncing ${b.name} to ${p.name}`);
-                const v = {
-                  type: 'VARIABLE_ALIAS',
-                  id: p.id,
-                };
-                i.setValueForMode(y, v);
-              }
-            }
-          }
-        });
-        return await Promise.all(f), i;
-      });
-      return Promise.all(m);
-    });
-  await Promise.all(u),
-    figma.ui.postMessage({
-      type: 'SYNC_TOKENS_COMPLETE',
-    });
-}
-async function W() {
+async function H() {
   const e = {},
-    a = await figma.variables.getLocalVariableCollectionsAsync();
-  for (const t of a) Object.assign(e, await F(t));
+    a = (await figma.variables.getLocalVariableCollectionsAsync()).filter(
+      (i) => i.name !== 'ID variables'
+    );
+  for (const i of a) Object.assign(e, await G(i));
   return e;
 }
-async function $() {
-  return await x();
+async function z() {
+  return await K();
 }
-async function G() {
-  return await U();
+async function J() {
+  return await Y();
 }
-async function K() {
-  const e = await W(),
-    a = await $(),
-    t = await G();
-  return g([e, a, t]);
+async function Z() {
+  const e = await H(),
+    t = await z(),
+    a = await J();
+  return v([e, t, a]);
 }
-const Y = {
+const q = {
   'ui kit': 'ui-kit',
   tokens: 'tokens',
   themes: 'themes',
 };
-async function H(e) {
-  const a = await K(),
-    t = await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync(),
-    s = {};
-  for (const n of t)
-    s[n.libraryName] || (s[n.libraryName] = []),
-      s[n.libraryName].push({
-        value: n.key,
-        name: n.name,
+async function Q(e) {
+  const t = await Z(),
+    a = await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync(),
+    i = {};
+  for (const r of a)
+    i[r.libraryName] || (i[r.libraryName] = []),
+      i[r.libraryName].push({
+        value: r.key,
+        name: r.name,
       });
-  const o = Object.fromEntries(
-      Object.entries(s).filter(([, n]) =>
-        n == null
+  const n = Object.fromEntries(
+      Object.entries(i).filter(([, r]) =>
+        r == null
           ? void 0
-          : n.some((i) => {
-              const f = i.name.toLowerCase();
-              return Object.keys(Y).some((y) => f.includes(y.toLowerCase()));
+          : r.some((o) => {
+              const m = o.name.toLowerCase();
+              return Object.keys(q).some((y) => m.includes(y.toLowerCase()));
             })
       )
     ),
-    r = Object.entries(o).map(async ([, n]) => {
-      const [i, f, y] = await J(n);
-      return { variables: i, filetype: f, themeName: y };
+    l = Object.entries(n).map(async ([, r]) => {
+      const [o, m, y] = await X(r);
+      return { variables: o, filetype: m, themeName: y };
     }),
-    l = await Promise.all(r);
-  let u = {};
-  const c = {};
-  for (const { variables: n, filetype: i, themeName: f } of l)
-    i === 'tokens' ? (u = n) : i === 'themes' && f && (c[f] = n);
-  const m = {
+    s = await Promise.all(l);
+  let c = {};
+  const u = {};
+  for (const { variables: r, filetype: o, themeName: m } of s)
+    o === 'tokens' ? (c = r) : o === 'themes' && m && (u[m] = r);
+  const f = {
     type: 'RECURSICA_VARIABLES',
     payload: {
       pluginVersion: e,
-      tokens: u,
-      themes: c,
-      uiKit: a,
+      tokens: c,
+      themes: u,
+      uiKit: t,
     },
   };
-  return console.log(m), figma.ui.postMessage(m), s;
+  return console.log(f), figma.ui.postMessage(f), i;
 }
-async function J(e) {
-  const a = await Promise.all(e.map((l) => B(l.value))),
-    t = g(a),
-    s = await figma.teamLibrary.getVariablesInLibraryCollectionAsync(e[0].value),
-    o = await V(s[0].key),
-    r = await T(o.variableCollectionId);
-  return e.length === 1
+async function X(e) {
+  const t = e.filter((c) => c.name !== 'ID variables'),
+    a = await Promise.all(t.map((c) => W(c.value))),
+    i = v(a),
+    n = await figma.teamLibrary.getVariablesInLibraryCollectionAsync(e[0].value),
+    l = await O(n[0].key),
+    s = await S(l.variableCollectionId);
+  return e.length > 0
     ? [
-        t,
-        (r == null ? void 0 : r.getSharedPluginData('recursica', 'file-type')) || 'unknown',
-        (r == null ? void 0 : r.getSharedPluginData('recursica', 'theme-name')) || void 0,
+        i,
+        (s == null ? void 0 : s.getSharedPluginData('recursica', 'file-type')) || 'unknown',
+        (s == null ? void 0 : s.getSharedPluginData('recursica', 'theme-name')) || void 0,
       ]
-    : [t, 'icons', void 0];
+    : [i, 'icons', void 0];
 }
-async function E(e, a) {
-  var t, s;
+async function ee(e, t) {
+  const a = e.map(async (i) => {
+    const n = i.variableIds.map(async (l) => {
+      const s = await figma.variables.getVariableByIdAsync(l);
+      if (!s) return null;
+      const c = Object.entries(s.valuesByMode).map(async ([u, f]) => {
+        if (typeof f == 'object' && f !== null && 'type' in f) {
+          const r = await figma.variables.getVariableByIdAsync(f.id);
+          if (r) {
+            const o = t.get(r.name);
+            if (r.remote && o && o.key !== r.key) {
+              console.log(`syncing ${r.name} to ${o.name}`);
+              const m = {
+                type: 'VARIABLE_ALIAS',
+                id: o.id,
+              };
+              figma.variables.getVariableCollectionByIdAsync(o.variableCollectionId),
+                s.setValueForMode(u, m);
+            }
+          }
+        }
+      });
+      return await Promise.all(c), s;
+    });
+    return Promise.all(n);
+  });
+  await Promise.all(a),
+    figma.ui.postMessage({
+      type: 'SYNC_VARIABLES_COMPLETE',
+    });
+}
+async function te(e, t, a) {
+  const i = e.map(async (n) => {
+    if (
+      (n.setSharedPluginData('recursica', 'file-type', t),
+      n.setSharedPluginData('recursica', 'variables-synced', 'true'),
+      t === 'themes')
+    ) {
+      const l = figma.root.name.replace(/[^a-zA-Z\s]/g, '').replace(/\d+/g, ''),
+        s = a || B(l);
+      n.setSharedPluginData('recursica', 'theme-name', s);
+    }
+  });
+  await Promise.all(i),
+    figma.ui.postMessage({
+      type: 'GENERATE_METADATA_COMPLETE',
+    });
+}
+function N(e) {
+  if ('visible' in e && !e.visible) return !1;
+  if (e.type === 'VECTOR') {
+    const t = e,
+      a = t.fills,
+      i = Array.isArray(a) && a.length > 0,
+      n = t.strokes,
+      l = Array.isArray(n) && n.length > 0;
+    return i || l;
+  }
+  return 'children' in e ? e.children.some((t) => N(t)) : !0;
+}
+async function ae(e) {
+  var t, a;
+  try {
+    if (!N(e))
+      return console.warn(`Component "${e.name}" has no visible content, skipping export`), null;
+    const i = await e.exportAsync({ format: 'SVG' });
+    if (!i || i.length === 0)
+      return console.warn(`Component "${e.name}" exported empty SVG, skipping`), null;
+    const n = String.fromCharCode.apply(null, Array.from(i)).replace(/fill="#[0-9A-Fa-f]{6}"/g, '');
+    return !n.trim() || n.length < 50
+      ? (console.warn(`Component "${e.name}" produced invalid SVG content, skipping`), null)
+      : n;
+  } catch (i) {
+    return (
+      console.error(
+        `Failed to export component "${(t = e.parent) == null ? void 0 : t.name}[${e.name}]":`,
+        i
+      ),
+      figma.notify(
+        `Failed to export component "${(a = e.parent) == null ? void 0 : a.name}[${e.name}]":
+ ${i}`,
+        {
+          timeout: 1 / 0,
+        }
+      ),
+      null
+    );
+  }
+}
+async function L(e, t) {
+  var a, i;
   if (
     e.type === 'VECTOR' &&
-    ((t = e.parent) == null ? void 0 : t.type) === 'COMPONENT' &&
-    ((s = e.parent.parent) == null ? void 0 : s.type) === 'COMPONENT_SET'
+    ((a = e.parent) == null ? void 0 : a.type) === 'COMPONENT' &&
+    ((i = e.parent.parent) == null ? void 0 : i.type) === 'COMPONENT_SET'
   ) {
-    const o = await e.parent.exportAsync({ format: 'SVG' }),
-      r = String.fromCharCode.apply(null, Array.from(o)).replace(/fill="#[0-9A-Fa-f]{6}"/g, ''),
-      l = `${e.parent.parent.name}[${e.parent.name}]`;
-    a[l] || (a[l] = r);
+    const n = e.parent,
+      l = await ae(n);
+    if (l) {
+      const s = `${e.parent.parent.name}[${e.parent.name}]`;
+      t[s] || (t[s] = l);
+    }
   }
-  'children' in e && (await Promise.all(e.children.map((o) => E(o, a))));
+  'children' in e && (await Promise.all(e.children.map((n) => L(n, t))));
 }
-async function z() {
+async function ie() {
   const e = {};
-  await E(figma.currentPage, e);
-  const a = {
-    type: 'SVG_ICONS',
-    payload: e,
-  };
-  console.log(a), figma.ui.postMessage(a);
+  try {
+    console.log('Starting icon export from current page...'), await L(figma.currentPage, e);
+    const t = Object.keys(e).length;
+    console.log(`Icon export completed. Found ${t} valid icons.`);
+    const a = {
+      type: 'SVG_ICONS',
+      payload: e,
+    };
+    return t > 0
+      ? (console.log('svgIcons', e), figma.ui.postMessage(a), e)
+      : (console.warn('No valid icons found for export'), figma.ui.postMessage(a), e);
+  } catch (t) {
+    return (
+      console.error('Error during icon export:', t),
+      figma.ui.postMessage({
+        type: 'SVG_ICONS',
+        payload: e,
+        // Return whatever we managed to collect
+      }),
+      e
+    );
+  }
 }
-const P = L.version;
+class A extends Error {
+  constructor(t) {
+    super(t), (this.name = 'PluginError'), figma.notify(t), figma.closePlugin();
+  }
+}
+const d = class d {
+  constructor() {
+    b(this, 'cachedResult', null);
+    b(this, 'isDetecting', !1);
+    b(this, 'detectionPromise', null);
+  }
+  static getInstance() {
+    return d.instance || (d.instance = new d()), d.instance;
+  }
+  /**
+   * Detects the file type from local variable collections and falls back to icon detection if needed.
+   *
+   * This function analyzes collection names to determine the project type and extracts
+   * theme information. It uses pattern matching on collection names to classify the file.
+   *
+   * File type detection priority:
+   * 1. 'tokens' - if any collection contains 'tokens' in the name
+   * 2. 'themes' - if any collection contains 'themes' in the name
+   * 3. 'ui-kit' - if any collection contains 'ui kit' or 'uikit' in the name
+   * 4. 'icons' - if no collections found, checks for icons in pages
+   *
+   * Theme name extraction:
+   * - Looks for an "ID variables" collection
+   * - Searches for a variable named 'theme' within that collection
+   * - Extracts the first mode value as the theme name
+   *
+   * @returns Promise resolving to an object containing:
+   *   - fileType: The detected file type ('themes', 'ui-kit', 'tokens', 'icons')
+   *   - themeName: The extracted theme name (empty string if not found)
+   *
+   * @throws Error if no file type can be determined
+   *
+   * @example
+   * const { fileType, themeName } = await detectFiletype();
+   * // fileType: 'themes', themeName: 'DarkTheme'
+   */
+  async detectFiletypeInternal() {
+    const t = await figma.variables.getLocalVariableCollectionsAsync();
+    let a,
+      i = '';
+    if (t.length > 0) {
+      const n = t.find((u) => u.name.toLowerCase().includes('tokens')),
+        l = t.find((u) => u.name.toLowerCase().includes('themes')),
+        s = t.find(
+          (u) => u.name.toLowerCase().includes('ui kit') || u.name.toLowerCase().includes('uikit')
+        );
+      n ? (a = 'tokens') : l ? (a = 'themes') : s && (a = 'ui-kit');
+      const c = t.find((u) => u.name === 'ID variables');
+      if (c)
+        for (const u of c.variableIds) {
+          const f = await figma.variables.getVariableByIdAsync(u);
+          if (f) {
+            if (f.name === 'project-type') {
+              const r = Object.values(f.valuesByMode)[0];
+              typeof r == 'string' && (a = r);
+              continue;
+            }
+            if (f.name === 'theme') {
+              const r = Object.values(f.valuesByMode)[0];
+              typeof r == 'string' && (i = r);
+              continue;
+            }
+          }
+        }
+    }
+    if (a === void 0 || a === 'icons') {
+      let n = !1;
+      for (const l of figma.root.children)
+        if (l.type === 'PAGE') {
+          await figma.setCurrentPageAsync(l);
+          const s = await ie();
+          if (s && Object.keys(s).length > 0) {
+            n = !0;
+            break;
+          }
+        }
+      if (!n)
+        throw new A('This is not a recursica file: no variable collections or icons detected.');
+      a = 'icons';
+    }
+    if (!a) throw new A('This is not a recursica file: no variable collections or icons detected.');
+    return { fileType: a, themeName: i };
+  }
+  /**
+   * Gets the filetype and theme name, using cached results if available.
+   * If not cached, performs detection and caches the result.
+   *
+   * @returns Promise resolving to the filetype result
+   */
+  async getFiletype() {
+    if (this.cachedResult) return this.cachedResult;
+    if (this.isDetecting && this.detectionPromise) return this.detectionPromise;
+    (this.isDetecting = !0), (this.detectionPromise = this.detectFiletypeInternal());
+    try {
+      const t = await this.detectionPromise;
+      return (this.cachedResult = t), t;
+    } finally {
+      (this.isDetecting = !1), (this.detectionPromise = null);
+    }
+  }
+  /**
+   * Clears the cached filetype result, forcing a new detection on next call.
+   */
+  clearCache() {
+    this.cachedResult = null;
+  }
+  /**
+   * Gets the cached filetype result without performing detection.
+   * Returns null if no cached result is available.
+   *
+   * @returns Cached filetype result or null
+   */
+  getCachedFiletype() {
+    return this.cachedResult;
+  }
+};
+b(d, 'instance');
+let E = d;
+const ne = E.getInstance();
+async function w() {
+  return ne.getFiletype();
+}
+function se(e, t) {
+  if (t === 'themes') {
+    const a = Object.values(e).filter((n) => n.name.toLowerCase().includes('tokens')),
+      i = a.every((n) => n.getSharedPluginData('recursica', 'variables-synced') === 'true');
+    if (a.length === 0)
+      return {
+        isValid: !1,
+        errorMessage: 'NO_TOKENS_FOUND',
+      };
+    if (!i)
+      return {
+        isValid: !1,
+        errorMessage: 'TOKENS_NOT_CONNECTED',
+      };
+  }
+  if (t === 'ui-kit') {
+    const a = Object.values(e).filter((s) => s.name.toLowerCase().includes('tokens')),
+      i = a.every((s) => s.getSharedPluginData('recursica', 'variables-synced') === 'true'),
+      n = Object.values(e).filter((s) => s.name.toLowerCase().includes('themes')),
+      l = n.every((s) => s.getSharedPluginData('recursica', 'variables-synced') === 'true');
+    if (a.length === 0)
+      return {
+        isValid: !1,
+        errorMessage: 'NO_TOKENS_FOUND',
+      };
+    if (!i)
+      return {
+        isValid: !1,
+        errorMessage: 'TOKENS_NOT_CONNECTED',
+      };
+    if (n.length === 0)
+      return {
+        isValid: !1,
+        errorMessage: 'NO_THEMES_FOUND',
+      };
+    if (!l)
+      return {
+        isValid: !1,
+        errorMessage: 'THEMES_NOT_CONNECTED',
+      };
+  }
+  return { isValid: !0 };
+}
+async function re(e) {
+  const t = {},
+    a = e.map(async (s) => {
+      const u = (await figma.teamLibrary.getVariablesInLibraryCollectionAsync(s.key)).map(
+        async (f) => {
+          const r = await figma.variables.importVariableByKeyAsync(f.key);
+          if (!t[s.key]) {
+            const o = await figma.variables.getVariableCollectionByIdAsync(r.variableCollectionId);
+            o && (t[s.key] = o);
+          }
+          return r;
+        }
+      );
+      return Promise.all(u);
+    }),
+    n = (await Promise.all(a)).flat(),
+    l = new Map(n.map((s) => [s.name, s]));
+  return {
+    collections: t,
+    remoteVariables: l,
+  };
+}
+function oe(e) {
+  return e.filter((a) => a.getSharedPluginData('recursica', 'variables-synced') !== 'true');
+}
+async function le() {
+  const e = await figma.variables.getLocalVariableCollectionsAsync(),
+    t = oe(e),
+    { fileType: a, themeName: i } = await w();
+  if (t.length > 0) {
+    const { collections: n, remoteVariables: l } = await re(
+        await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync()
+      ),
+      s = se(n, a);
+    if (!s.isValid)
+      return figma.ui.postMessage({
+        type: s.errorMessage,
+      });
+    await ee(t, l), await te(t, a, i);
+  } else
+    figma.ui.postMessage({
+      type: 'SYNC_VARIABLES_COMPLETE',
+    }),
+      figma.ui.postMessage({
+        type: 'GENERATE_METADATA_COMPLETE',
+      });
+}
+const P = R.version;
 figma.showUI(__html__, {
   width: 370,
   height: 350,
 });
-const Z = k(P);
-async function q() {
-  const e = await Z;
-  e === 'icons' && z(), e === 'ui-kit' && H(P);
-}
 figma.ui.onmessage = async (e) => {
-  var a;
-  e.type === 'GET_LOCAL_STORAGE' && O(),
+  var t;
+  if (
+    (e.type === 'GET_LOCAL_STORAGE' && F(),
     e.type === 'GET_CURRENT_USER' &&
       figma.ui.postMessage({
         type: 'CURRENT_USER',
-        payload: (a = figma.currentUser) == null ? void 0 : a.id,
+        payload: (t = figma.currentUser) == null ? void 0 : t.id,
       }),
-    e.type === 'UPDATE_ACCESS_TOKEN' && w('accessToken', e.payload),
-    e.type === 'UPDATE_PLATFORM' && w('platform', e.payload),
-    e.type === 'UPDATE_SELECTED_PROJECT' && w('selectedProject', e.payload),
-    e.type === 'GET_VARIABLES' && q(),
-    e.type === 'SYNC_TOKENS' && D(),
-    e.type === 'CLOSE_PLUGIN' && figma.closePlugin();
+    e.type === 'UPDATE_ACCESS_TOKEN' && C('accessToken', e.payload),
+    e.type === 'UPDATE_PLATFORM' && C('platform', e.payload),
+    e.type === 'UPDATE_SELECTED_PROJECT' && C('selectedProject', e.payload),
+    e.type === 'UPDATE_AGREED_PUBLISH_CHANGES' && C('agreedPublishChanges', e.payload),
+    e.type === 'GET_VARIABLES')
+  ) {
+    const { fileType: a } = await w();
+    a === 'ui-kit' && Q(P);
+  }
+  if ((e.type === 'SYNC_TOKENS' && le(), e.type === 'GET_FILETYPE'))
+    try {
+      const { fileType: a, themeName: i } = await w();
+      figma.ui.postMessage({
+        type: 'FILETYPE_DETECTED',
+        payload: {
+          fileType: a,
+          themeName: i,
+          pluginVersion: P,
+        },
+      });
+    } catch (a) {
+      figma.ui.postMessage({
+        type: 'FILETYPE_ERROR',
+        payload: {
+          error: a instanceof Error ? a.message : 'Unknown error occurred',
+        },
+      });
+    }
+  e.type === 'CLOSE_PLUGIN' && figma.closePlugin();
 };

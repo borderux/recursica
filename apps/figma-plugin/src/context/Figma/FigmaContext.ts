@@ -5,7 +5,8 @@ import { FileTypes } from '../../plugin/filetype';
 export interface CurrentRepositoryContext {
   platform: 'gitlab' | 'github' | undefined;
   accessToken: string | undefined;
-  selectedProject: string | undefined;
+  selectedProject: string | null;
+  agreedPublishChanges: boolean;
 }
 
 export interface IFigmaContext {
@@ -13,10 +14,11 @@ export interface IFigmaContext {
   updateRepository: {
     updatePlatform: (platform: 'gitlab' | 'github') => void;
     updateAccessToken: (accessToken: string) => void;
-    updateSelectedProject: (selectedProject: string) => void;
+    updateSelectedProject: (selectedProject: string | null) => void;
   };
   recursicaVariables?: RecursicaVariablesSchema;
   svgIcons?: RecursicaIconsSchema;
+  updateAgreedPublishChanges: (agreedPublishChanges: boolean) => void;
   loading: boolean;
   userId: string | undefined;
   syncStatus: {

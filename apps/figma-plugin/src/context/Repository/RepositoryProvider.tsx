@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RepositoryContext } from './RepositoryContext';
 import {
   useFigma,
@@ -6,11 +6,10 @@ import {
   useRepositoryInstance,
   useAdapterWorker,
   useRepositoryError,
-  useFileStatus,
   useRemoteFiles,
   useRepositoryOperations,
-  useProjectValidation,
-  FileStatus,
+  useUserProjects,
+  useUserInfo,
 } from '../../hooks';
 import type {
   RecursicaVariablesSchema,
@@ -18,7 +17,8 @@ import type {
   VariableReferenceValue,
   Token,
 } from '@recursica/schemas';
-import { type UserInfo, type Project } from '../../services/repository';
+import { type PullRequest } from '../../services/repository';
+import { PublishStatus } from './RepositoryContext';
 import { isColorOrFloatToken } from '@recursica/common';
 
 interface AdapterFile {
@@ -145,15 +145,9 @@ function generateCSSFromBundledJson(bundledJson: string): string {
 }
 
 export function RepositoryProvider({ children }: { children: React.ReactNode }) {
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-  const [selectedProjectId, setselectedProjectId] = useState<string | undefined>(undefined);
-  const [userProjects, setUserProjects] = useState<Project[]>([]);
-  const [prLink, setPrLink] = useState<string | null>(null);
-  const initConfig = useRef<boolean>(false);
-
-  const selectedProject = useMemo(() => {
-    return userProjects.find((project) => project.id === selectedProjectId);
-  }, [userProjects, selectedProjectId]);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [existingPR, setExistingPR] = useState<PullRequest | null>(null);
+  const [publishStatus, setPublishStatus] = useState<PublishStatus>('to-publish');
 
   const {
     repository,
@@ -161,36 +155,31 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     filetype,
   } = useFigma();
 
+  const { repositoryInstance } = useRepositoryInstance();
+  const { runAdapter } = useAdapterWorker();
+  const { error, setRepositoryError, clearError, getErrorMessage } = useRepositoryError();
+
+  // User data hooks with auto-fetching
+  const { userInfo } = useUserInfo(repositoryInstance);
+  const { userProjects } = useUserProjects(userInfo, repositoryInstance);
+
+  const selectedProject = useMemo(() => {
+    return userProjects.find((project) => project.id === selectedProjectId);
+  }, [userProjects, selectedProjectId]);
+
   // Use custom hooks
   const { fileLoadingData, setRemoteVariablesJson, setRemoteIconsJson, clearRemoteData } =
     useFileData(selectedProject);
-  const { repositoryInstance } = useRepositoryInstance();
-  const { runAdapter } = useAdapterWorker();
-  const { error, setRepositoryError, clearError, isExpectedError, getErrorMessage } =
-    useRepositoryError();
-  const {
-    filesStatus,
-    updateFilesStatus,
-    updateAdapterStatus,
-    updateAllStatusesToDone,
-    resetFilesStatus,
-  } = useFileStatus();
-  const { validationStatus, validateProject, resetValidationStatus } = useProjectValidation();
-  const {
-    fetchUserInfo: fetchUserInfoOp,
-    getUserProjects: getUserProjectsOp,
-    createBranch,
-    getConfig,
-    commitFiles,
-    createPullRequest,
-  } = useRepositoryOperations();
+
+  const { createBranch, getConfig, commitFiles, getExistingPullRequest, createPullRequest } =
+    useRepositoryOperations();
 
   // Use remote files hook
   useRemoteFiles(repositoryInstance, selectedProject, setRemoteVariablesJson, setRemoteIconsJson);
 
   const updateSelectedProjectId = useCallback(
-    (projectId: string) => {
-      setselectedProjectId(projectId);
+    (projectId: string | null) => {
+      setSelectedProjectId(projectId);
       updateSelectedProject(projectId);
     },
     [updateSelectedProject]
@@ -198,57 +187,9 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     if (repository) {
-      setselectedProjectId(repository.selectedProject);
+      setSelectedProjectId(repository.selectedProject);
     }
   }, [repository]);
-
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      if (!repositoryInstance) return;
-      try {
-        const data = await fetchUserInfoOp(repositoryInstance);
-        if (data) {
-          setUserInfo(data);
-          clearError();
-        }
-      } catch (error) {
-        if (!isExpectedError(error)) {
-          setRepositoryError(
-            'Failed to fetch user information',
-            getErrorMessage(error),
-            'USER_INFO_FETCH_ERROR'
-          );
-        }
-      }
-    };
-
-    if (repositoryInstance) {
-      fetchUserInfo();
-    }
-  }, [repositoryInstance, fetchUserInfoOp]);
-
-  useEffect(() => {
-    const getUserProjects = async () => {
-      if (!repositoryInstance) return;
-      try {
-        const projects = await getUserProjectsOp(repositoryInstance);
-        setUserProjects(projects);
-        clearError();
-      } catch (error) {
-        if (!isExpectedError(error)) {
-          setRepositoryError(
-            'Failed to fetch user projects',
-            getErrorMessage(error),
-            'PROJECTS_FETCH_ERROR'
-          );
-        }
-      }
-    };
-
-    if (userInfo && repositoryInstance) {
-      getUserProjects();
-    }
-  }, [userInfo, repositoryInstance, getUserProjectsOp]);
 
   // Auto-select project if there's only one available and no project is currently selected
   useEffect(() => {
@@ -257,23 +198,80 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     }
   }, [userProjects, selectedProjectId, updateSelectedProjectId]);
 
-  useEffect(() => {
-    const validateProjectAsync = async () => {
-      if (selectedProject) {
-        await validateProject(repositoryInstance, selectedProject, getConfig);
+  // Fetch existing PR when user info and project are available
+  const fetchExistingPR = async () => {
+    if (userInfo && selectedProject && repositoryInstance) {
+      try {
+        const targetBranch = `recursica-${userInfo.username}`;
+        const existingPR = await getExistingPullRequest(
+          repositoryInstance,
+          selectedProject,
+          targetBranch
+        );
+        console.log('getting existing PR', existingPR);
+        if (existingPR) {
+          setExistingPR(existingPR);
+        }
+      } catch (error) {
+        console.error('Failed to fetch existing PR:', error);
+      } finally {
+        setPublishStatus('to-publish');
       }
-    };
-    validateProjectAsync();
-  }, [selectedProject, validateProject, repositoryInstance, getConfig]);
-
-  const initializeRepo = async () => {
-    if (!repositoryInstance) return;
-    initConfig.current = true;
+    }
   };
+  useEffect(() => {
+    fetchExistingPR();
+  }, [userInfo, selectedProject, repositoryInstance, getExistingPullRequest]);
 
   const publishFiles = async (): Promise<void> => {
     clearError(); // Clear any previous errors
+    setPublishStatus('publishing');
 
+    if (!selectedProject) {
+      setRepositoryError(
+        'No project selected',
+        'Please select a project before publishing files',
+        'NO_PROJECT_SELECTED'
+      );
+      setPublishStatus('to-publish');
+      return;
+    }
+
+    if (!repositoryInstance) {
+      setRepositoryError(
+        'Repository not initialized',
+        'Please check your repository connection',
+        'REPOSITORY_NOT_INITIALIZED'
+      );
+      setPublishStatus('to-publish');
+      return;
+    }
+
+    if (!(fileLoadingData.localBundledJson || fileLoadingData.localIconsJson)) {
+      parent.postMessage(
+        {
+          pluginMessage: {
+            type: 'GET_VARIABLES',
+          },
+          pluginId: '*',
+        },
+        '*'
+      );
+    } else {
+      await handlePublishFiles();
+    }
+  };
+
+  useEffect(() => {
+    if (
+      publishStatus === 'publishing' &&
+      (fileLoadingData.localBundledJson || fileLoadingData.localIconsJson)
+    ) {
+      handlePublishFiles();
+    }
+  }, [fileLoadingData.localBundledJson, fileLoadingData.localIconsJson]);
+
+  const handlePublishFiles = async (): Promise<void> => {
     if (!selectedProject) {
       setRepositoryError(
         'No project selected',
@@ -292,84 +290,30 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
       return;
     }
 
-    if (!(fileLoadingData.bundledJson || fileLoadingData.iconsJson)) {
-      parent.postMessage(
-        {
-          pluginMessage: {
-            type: 'GET_VARIABLES',
-          },
-          pluginId: '*',
-        },
-        '*'
-      );
-    } else {
-      updateFilesStatus(fileLoadingData.bundledJson, fileLoadingData.iconsJson);
-      try {
-        await handlePublishFiles();
-      } catch (error) {
-        console.error('Publish files error:', error);
-        // The error handling is now done in handlePublishFiles, but we ensure it's logged here too
-        if (!isExpectedError(error)) {
-          setRepositoryError(
-            'Failed to publish files',
-            getErrorMessage(error),
-            'PUBLISH_FILES_ERROR'
-          );
-        }
-      }
-    }
-  };
-
-  useEffect(() => {
-    if (fileLoadingData.bundledJson || fileLoadingData.iconsJson) {
-      updateFilesStatus(fileLoadingData.bundledJson, fileLoadingData.iconsJson);
-      handlePublishFiles();
-    }
-  }, [fileLoadingData.bundledJson, fileLoadingData.iconsJson]);
-
-  const handlePublishFiles = async (): Promise<void> => {
-    if (!selectedProject) {
-      throw new Error('Selected project is not available');
-    }
-
     try {
       const targetBranch = await createBranch(
         repositoryInstance,
         selectedProject,
         userInfo?.username
       );
-      const config = await getConfig(
+      const { config, shouldCreateInit } = await getConfig(
         repositoryInstance,
         selectedProject,
-        targetBranch,
-        initConfig.current
+        targetBranch
       );
 
       // Run adapter with proper error handling
       let adapterFiles: AdapterFile[] = [];
       try {
-        if (!repositoryInstance) {
-          throw new Error('Repository instance not available');
-        }
         if (filetype === 'icons') {
           adapterFiles = [];
-          updateAdapterStatus(FileStatus.Done);
         } else {
           adapterFiles = await runAdapter(
             repositoryInstance,
             selectedProject,
             targetBranch,
             config,
-            fileLoadingData,
-            (status) => {
-              if (status === 'loading') {
-                updateAdapterStatus(FileStatus.Loading, 1);
-              } else if (status === 'done') {
-                updateAdapterStatus(FileStatus.Done);
-              } else if (status === 'error') {
-                updateAdapterStatus(FileStatus.Error, 0);
-              }
-            }
+            fileLoadingData
           );
         }
       } catch (error) {
@@ -379,14 +323,12 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
           error instanceof Error ? error.message : 'Unknown adapter error',
           'ADAPTER_EXECUTION_ERROR'
         );
-        // Update files status to show error immediately
-        updateAdapterStatus(FileStatus.Error);
         throw error; // Re-throw to prevent further execution
       }
 
       // Generate CSS from bundled JSON only if no adapter files were created
-      if (fileLoadingData.bundledJson && adapterFiles.length === 0) {
-        const cssContent = generateCSSFromBundledJson(fileLoadingData.bundledJson);
+      if (fileLoadingData.localBundledJson && adapterFiles.length === 0) {
+        const cssContent = generateCSSFromBundledJson(fileLoadingData.localBundledJson);
         if (cssContent) {
           adapterFiles.push({
             path: 'recursica.css',
@@ -402,60 +344,53 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
         adapterFiles,
         config,
         {
-          bundledJson: fileLoadingData.bundledJson,
-          iconsJson: fileLoadingData.iconsJson,
+          localBundledJson: fileLoadingData.localBundledJson,
+          localIconsJson: fileLoadingData.localIconsJson,
           bundledFilename: fileLoadingData.bundledFilename,
           iconsFilename: fileLoadingData.iconsFilename,
         },
-        initConfig.current
+        shouldCreateInit
       );
 
-      updateAllStatusesToDone();
-
-      const pullRequestUrl = await createPullRequest(
-        repositoryInstance,
-        selectedProject,
-        targetBranch
-      );
-      if (pullRequestUrl) {
-        setPrLink(pullRequestUrl);
+      try {
+        await createPullRequest(repositoryInstance, selectedProject, targetBranch);
+      } catch (error) {
+        console.error('Failed to create pull request:', error);
+        // Don't fail the entire operation if PR creation fails
+        // The files were still committed successfully
       }
+
+      // Set status to published after successful completion
+      setPublishStatus('published');
     } catch (error) {
       // Ensure any error is properly handled and UI is updated
-      if (!isExpectedError(error)) {
-        setRepositoryError(
-          'Failed to publish files',
-          getErrorMessage(error),
-          'PUBLISH_FILES_ERROR'
-        );
-      }
-      throw error;
+      console.error('Publish files error:', error);
+      setRepositoryError('Failed to publish files', getErrorMessage(error), 'PUBLISH_FILES_ERROR');
+      setPublishStatus('to-publish');
+      // Don't re-throw the error to prevent unhandled promise rejections
     }
   };
 
-  const resetRepository = async () => {
-    setPrLink(null);
+  const resetRepository = () => {
+    fetchExistingPR();
     clearError(); // Clear any existing errors
-    initConfig.current = false;
-    resetFilesStatus();
-    resetValidationStatus();
     // Clear remote file data
     clearRemoteData();
-    return await validateProject(repositoryInstance, selectedProject, getConfig);
   };
 
   const value = {
     selectedProjectId,
     updateSelectedProjectId,
     userProjects,
-    prLink,
+    existingPR,
+    publishStatus,
+    bundledJson: fileLoadingData.localBundledJson,
+    iconsJson: fileLoadingData.localIconsJson,
     publishFiles,
-    filesStatus,
-    validationStatus,
-    initializeRepo,
     resetRepository,
     error,
     clearError,
+    selectedProject,
   };
 
   return <RepositoryContext.Provider value={value}>{children}</RepositoryContext.Provider>;

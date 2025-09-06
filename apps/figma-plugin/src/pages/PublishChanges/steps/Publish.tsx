@@ -1,0 +1,186 @@
+import { useRepository } from '../../../hooks/useRepository';
+import {
+  Typography,
+  Flex,
+  Button,
+  Box,
+  Icon,
+  Checkbox,
+  Tooltip,
+  copyToClipboard,
+} from '@recursica/ui-kit-mantine';
+import { Navigate, useNavigate } from 'react-router';
+import { Layout } from '../../../components/Layout/Layout';
+import { useFigma } from '../../../hooks/useFigma';
+import { getPlatformIcon } from './SelectProject';
+import { useRef, useState } from 'react';
+import { formatDate } from '@recursica/common';
+
+export function Publish() {
+  const { publishFiles, clearError, selectedProject, existingPR } = useRepository();
+  const { repository, updateAgreedPublishChanges } = useFigma();
+  const [showAgreeScreen, setShowAgreeScreen] = useState(false);
+  const navigate = useNavigate();
+  const copyElementRef = useRef<HTMLDivElement>(null);
+
+  const [copied, setCopied] = useState(false);
+  const handleCopyPRUrl = async () => {
+    if (existingPR?.url) {
+      try {
+        copyToClipboard(existingPR.url, copyElementRef).then(() => {
+          setCopied(true);
+          setTimeout(() => {
+            setCopied(false);
+          }, 2000);
+        });
+      } catch (error) {
+        console.error('Failed to copy URL:', error);
+      }
+    }
+  };
+
+  const handleContinue = () => {
+    if (repository?.agreedPublishChanges) {
+      handleConfirm();
+    } else {
+      handleAgree();
+    }
+  };
+
+  const handleAgree = () => {
+    setShowAgreeScreen(true);
+  };
+
+  const handleConfirm = async () => {
+    clearError(); // Clear any previous errors
+    try {
+      navigate('/publish/publishing');
+      await publishFiles();
+    } catch (error) {
+      console.error('Failed to publish files:', error);
+      navigate('/publish/error');
+    }
+  };
+
+  if (!selectedProject) {
+    return <Navigate to='/publish/select-project' />;
+  }
+
+  if (showAgreeScreen) {
+    return (
+      <Layout
+        header='default'
+        footer={
+          <Flex
+            direction='column'
+            align='center'
+            justify={'center'}
+            w='100%'
+            gap={'size/spacer/2x'}
+          >
+            <Checkbox
+              label="Don't show this again"
+              onChange={(e) => updateAgreedPublishChanges(e.target.checked)}
+              checked={repository?.agreedPublishChanges}
+            />
+            <Button label='Publish changes' onClick={handleConfirm} />
+          </Flex>
+        }
+      >
+        <Typography
+          variant='body-1/normal'
+          textAlign='center'
+          color='layers/layer-1/elements/text/color'
+        >
+          Publishing creates a new branch in your repo with the latest style updates for your code.
+        </Typography>
+      </Layout>
+    );
+  }
+
+  return (
+    <Layout
+      wrapperProps={{
+        justify: 'flex-start',
+      }}
+      header={
+        <Box w='100%'>
+          <Typography textAlign='left' variant='body-1/strong'>
+            Publish changes
+          </Typography>
+        </Box>
+      }
+      footer={
+        <Flex justify={'center'} w='100%' gap={'size/spacer/default'}>
+          <Button label='Publish changes' onClick={handleContinue} />
+        </Flex>
+      }
+    >
+      <Flex direction='column' gap={'size/spacer/3x'} justify='center' align='center'>
+        <Flex w='100%' gap={'size/spacer/default'} direction='column'>
+          <Flex gap={8} align='center'>
+            <Typography variant='body-2/normal' color='form/label/color/default-color'>
+              Project
+            </Typography>
+            <Icon
+              name='pencil_square_outline'
+              onClick={() => navigate('/publish/select-project')}
+              color='layers/layer-1/elements/interactive/color'
+            />
+          </Flex>
+          <Flex gap={8} align='center'>
+            <Icon
+              name={getPlatformIcon(repository?.platform)}
+              color='form/label/color/default-color'
+            />
+            <Typography variant='body-2/normal' color='form/label/color/default-color'>
+              {selectedProject.owner.name}/{selectedProject.name}
+            </Typography>
+          </Flex>
+        </Flex>
+        <Box
+          style={{ borderRadius: 16 }}
+          bc='layers/layer-2/properties/border-color'
+          bw={1}
+          bs='solid'
+          p={'size/spacer/2x'}
+          w='100%'
+        >
+          {existingPR ? (
+            <Flex direction='column' gap={'size/spacer/default'}>
+              <Typography variant='caption' color='layers/layer-1/elements/text/color'>
+                Last published <strong>{formatDate(existingPR.updatedAt)}</strong>
+              </Typography>
+              <Tooltip label={'Copied'} opened={copied} position='top-start'>
+                <Flex
+                  ref={copyElementRef}
+                  gap={'size/spacer/0-5x'}
+                  align='center'
+                  onClick={handleCopyPRUrl}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <Icon name='link_outline' color='layers/layer-1/elements/alert-text' size={16} />
+                  <Typography variant='caption' color='layers/layer-1/elements/alert-text'>
+                    Copy pull request URL
+                  </Typography>
+                </Flex>
+              </Tooltip>
+            </Flex>
+          ) : (
+            <Typography
+              variant='caption'
+              color='layers/layer-1/elements/text/color'
+              opacity={0.84}
+              textAlign='center'
+            >
+              Nothing has been published yet
+              <br />
+              <br />
+              Don&apos;t just stare at it. Publish your latest Figma file changes to your code.
+            </Typography>
+          )}
+        </Box>
+      </Flex>
+    </Layout>
+  );
+}

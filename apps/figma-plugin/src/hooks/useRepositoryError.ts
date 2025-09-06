@@ -53,7 +53,7 @@ export function useRepositoryError() {
       const axiosError = error as {
         response: {
           status: number;
-          data?: { message?: string };
+          data?: { message?: string; errors?: Array<{ message: string }> };
         };
       };
       const status = axiosError.response.status;
@@ -64,6 +64,19 @@ export function useRepositoryError() {
           return 'Access denied. You may not have permission to access this repository.';
         case 404:
           return 'Resource not found. The repository or file may not exist.';
+        case 422: {
+          const errorData = axiosError.response.data;
+          if (errorData?.message) {
+            if (errorData.message.includes('already exists')) {
+              return 'The branch already exists. Using existing branch.';
+            }
+            return `Validation error: ${errorData.message}`;
+          }
+          if (errorData?.errors && errorData.errors.length > 0) {
+            return `Validation errors: ${errorData.errors.map((e) => e.message).join(', ')}`;
+          }
+          return 'Validation error occurred.';
+        }
         case 429:
           return 'Rate limit exceeded. Please try again later.';
         case 500:

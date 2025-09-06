@@ -17,29 +17,6 @@ interface WorkerMessage {
   iconsConfig?: unknown;
 }
 
-interface WorkerResponse {
-  recursicaTokens?: { path: string; content: string };
-  vanillaExtractThemes: {
-    availableThemes?: { path: string; content: string };
-    themeContract?: { path: string; content: string };
-    themesFileContent?: { path: string; content: string };
-    vanillaExtractThemes: Array<{ path: string; content: string }>;
-  };
-  mantineTheme: {
-    mantineTheme?: { path: string; content: string };
-    postCss?: { path: string; content: string };
-  };
-  uiKitObject?: { path: string; content: string };
-  recursicaObject?: { path: string; content: string };
-  colorsType?: { path: string; content: string };
-  iconsObject?: {
-    iconExports: { path: string; content: string };
-    iconResourceMap: { path: string; content: string };
-    exportedIcons: Array<{ path: string; content: string }>;
-  };
-  prettierignore?: { path: string; content: string };
-}
-
 export function useAdapterWorker() {
   const runAdapter = useCallback(
     async (
@@ -52,8 +29,7 @@ export function useAdapterWorker() {
         localBundledJson: string | null;
         remoteIconsJson: string | null;
         remoteBundledJson: string | null;
-      },
-      onStatusUpdate: (status: 'loading' | 'done' | 'error') => void
+      }
     ): Promise<AdapterFile[]> => {
       if (!repositoryInstance || !selectedProject) {
         throw new Error('Failed to run adapter');
@@ -79,9 +55,7 @@ export function useAdapterWorker() {
           adapterPath,
           targetBranch
         );
-        onStatusUpdate('loading');
       } catch (error) {
-        onStatusUpdate('error');
         if (error instanceof Error && error.message.includes('404')) {
           console.error('Adapter file not found');
           return [];
@@ -103,7 +77,6 @@ export function useAdapterWorker() {
           );
         } catch (error) {
           console.error('❌ Failed to create worker:', error);
-          onStatusUpdate('error');
           reject(
             new Error(
               `Failed to create worker: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -117,7 +90,6 @@ export function useAdapterWorker() {
           () => {
             console.error('❌ Worker execution timed out after 5 minutes');
             worker.terminate();
-            onStatusUpdate('error');
             reject(new Error('Worker execution timed out after 5 minutes'));
           },
           5 * 60 * 1000
@@ -138,7 +110,6 @@ export function useAdapterWorker() {
           clearTimeout(timeoutId);
           worker.terminate();
           console.error('❌ Failed to post message to worker:', error);
-          onStatusUpdate('error');
           reject(
             new Error(
               `Failed to post message to worker: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -153,8 +124,7 @@ export function useAdapterWorker() {
           worker.terminate(); // Clean up worker
           console.log('✅ Response received from worker:', event.data);
 
-          onStatusUpdate('done');
-          const response: WorkerResponse = event.data;
+          const response = event.data;
           if (Array.isArray(response)) {
             resolve(response);
           } else {
@@ -169,7 +139,6 @@ export function useAdapterWorker() {
           console.error('❌ Error in worker:', error);
 
           // Update UI status immediately
-          onStatusUpdate('error');
 
           // Create a more detailed error message
           const errorMessage = error.message || 'Unknown worker error';
@@ -188,7 +157,6 @@ export function useAdapterWorker() {
           console.error('❌ Message error in worker:', error);
 
           // Update UI status immediately
-          onStatusUpdate('error');
 
           reject(new Error(`Worker message error: Unable to process worker message`));
         };

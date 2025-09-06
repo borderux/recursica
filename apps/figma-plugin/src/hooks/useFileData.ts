@@ -9,9 +9,6 @@ interface FileData {
   remoteBundledJson: string | null;
   iconsFilename: string;
   bundledFilename: string;
-  // Legacy properties for backward compatibility
-  iconsJson: string | null;
-  bundledJson: string | null;
 }
 
 export function useFileData(selectedProject?: Project) {
@@ -53,9 +50,6 @@ export function useFileData(selectedProject?: Project) {
       remoteBundledJson: remoteVariablesJson,
       iconsFilename: 'recursica-icons.json',
       bundledFilename: 'recursica-bundle.json',
-      // Legacy properties for backward compatibility
-      iconsJson: localIconsJson,
-      bundledJson: localVariablesJson,
     };
 
     return data;

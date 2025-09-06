@@ -16,7 +16,7 @@
       "https://raw.githubusercontent.com",
       "https://api.github.com",
       "https://gitlab.com",
-      "https://www.googletagmanager.com"
+      "https://fonts.gstatic.com"
     ],
     "devAllowedDomains": [
       "http://localhost:5173",

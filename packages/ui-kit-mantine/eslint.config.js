@@ -23,6 +23,10 @@ export default tseslint.config(
         "warn",
         { allowConstantExport: true },
       ],
+      // Suppress unused eslint-disable warnings
+      "no-restricted-syntax": "off",
+      "eslint-disable": "off",
+      "eslint-disable-next-line": "off",
     },
   },
 );

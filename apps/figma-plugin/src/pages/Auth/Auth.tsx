@@ -112,7 +112,7 @@ export function Auth() {
             provider: selectedProvider,
             status: 'success',
           });
-          navigate('/publish');
+          navigate('/publish/select-project');
 
           return;
         } else if (data.status === 'pending') {
