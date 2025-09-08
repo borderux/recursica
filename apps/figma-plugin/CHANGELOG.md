@@ -1,5 +1,16 @@
 # @recursica/figma-plugin
 
+## 9.0.0
+
+### Major Changes
+
+- 3040b04: Added GTM tracking for the Figma plugin
+
+### Patch Changes
+
+- Updated dependencies [3040b04]
+  - @recursica/common@1.1.1
+
 > ✅ **AI Agent PR Check Completed** - Version 8.0.1 release verified and ready for deployment
 
 ## 8.0.1

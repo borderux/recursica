@@ -1,5 +1,11 @@
 # @recursica/common
 
+## 1.1.1
+
+### Patch Changes
+
+- 3040b04: Added a function that formats a date string to show relative time with smart formatting
+
 ## 1.1.0
 
 ### Minor Changes
