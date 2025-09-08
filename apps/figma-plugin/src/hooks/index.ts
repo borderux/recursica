@@ -8,5 +8,13 @@ export { useRepositoryError, type RepositoryError } from './useRepositoryError';
 export { useRemoteFiles } from './useRemoteFiles';
 export { useRepositoryOperations } from './useRepositoryOperations';
 export { useProjectValidation, ValidationStatus } from './useProjectValidation';
+export {
+  useGTMTracking,
+  sendGTMEvent,
+  trackPluginAction,
+  trackAuthEvent,
+  trackRepositoryOperation,
+  trackSyncEvent,
+} from './useGTMTracking';
 export { useUserProjects } from './useUserProjects';
 export { useUserInfo } from './useUserInfo';
