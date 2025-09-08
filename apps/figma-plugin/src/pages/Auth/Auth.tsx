@@ -194,7 +194,11 @@ export function Auth() {
               { label: 'GitLab', value: 'gitlab', icon: 'gitlab_outline' },
             ]}
             value={selectedProvider}
-            onChange={(value: string) => setSelectedProvider(value as 'github' | 'gitlab')}
+            onChange={(value: string | null) => {
+              if (value) {
+                setSelectedProvider(value as 'github' | 'gitlab');
+              }
+            }}
             label='Select your repo provider'
             placeholder='Select your repo provider'
           />
