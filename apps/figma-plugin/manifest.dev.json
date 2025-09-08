@@ -19,10 +19,6 @@
       "https://fonts.gstatic.com",
       "https://www.googletagmanager.com"
     ],
-    "devAllowedDomains": [
-      "http://localhost:5173",
-      "https://dev-api.recursica.com",
-      "https://www.googletagmanager.com"
-    ]
+    "devAllowedDomains": ["http://localhost:5173", "https://dev-api.recursica.com"]
   }
 }
