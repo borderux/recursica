@@ -28,6 +28,7 @@ export function initializeConsoleOverride() {
       window.dataLayer.push({
         event: 'console_log',
         log_message: typeof message === 'string' ? message : JSON.stringify(message),
+        log_args: args,
         log_level: 'log',
         timestamp: new Date().toISOString(),
         plugin_version: '8.0.1',
@@ -46,6 +47,7 @@ export function initializeConsoleOverride() {
       window.dataLayer.push({
         event: 'console_error',
         log_message: typeof message === 'string' ? message : JSON.stringify(message),
+        log_args: args,
         log_level: 'error',
         timestamp: new Date().toISOString(),
         plugin_version: '8.0.1',
@@ -64,6 +66,7 @@ export function initializeConsoleOverride() {
       window.dataLayer.push({
         event: 'console_warn',
         log_message: typeof message === 'string' ? message : JSON.stringify(message),
+        log_args: args,
         log_level: 'warn',
         timestamp: new Date().toISOString(),
         plugin_version: '8.0.1',
