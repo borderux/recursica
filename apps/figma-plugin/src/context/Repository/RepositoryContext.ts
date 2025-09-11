@@ -37,6 +37,9 @@ interface Repository {
 
   /** Clear the current error */
   clearError: () => void;
+
+  /** Refetch user projects */
+  refetchUserProjects: () => void;
 }
 
 export const RepositoryContext = createContext<Repository | null>(null);

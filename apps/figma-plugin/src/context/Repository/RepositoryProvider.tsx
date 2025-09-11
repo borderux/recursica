@@ -161,7 +161,7 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
 
   // User data hooks with auto-fetching
   const { userInfo } = useUserInfo(repositoryInstance);
-  const { userProjects } = useUserProjects(userInfo, repositoryInstance);
+  const { userProjects, fetchUserProjects } = useUserProjects(userInfo, repositoryInstance);
 
   const selectedProject = useMemo(() => {
     return userProjects.find((project) => project.id === selectedProjectId);
@@ -391,6 +391,7 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     error,
     clearError,
     selectedProject,
+    refetchUserProjects: () => fetchUserProjects(userInfo, repositoryInstance),
   };
 
   return <RepositoryContext.Provider value={value}>{children}</RepositoryContext.Provider>;

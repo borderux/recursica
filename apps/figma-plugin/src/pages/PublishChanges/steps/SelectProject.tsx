@@ -9,6 +9,8 @@ import {
   ComboboxItem,
   Box,
   IconName,
+  Icon,
+  Anchor,
 } from '@recursica/ui-kit-mantine';
 import { Layout } from '../../../components/Layout/Layout';
 
@@ -23,8 +25,37 @@ export const getPlatformIcon = (platform: string | undefined): IconName => {
   }
 };
 
+function Header() {
+  return (
+    <Box w='100%'>
+      <Typography textAlign='left' variant='body-1/strong'>
+        Connect a Git repository
+      </Typography>
+    </Box>
+  );
+}
+
+function BackButton({ refetchUserProjects }: { refetchUserProjects: () => void }) {
+  const handleBack = () => {
+    console.log('refetching user projects');
+    refetchUserProjects();
+  };
+  return (
+    <Button
+      variant='outline'
+      label='Back'
+      component={NavLink}
+      to={'/file-synced'}
+      leading='arrow_left_outline'
+      rel='noopener noreferrer'
+      onClick={handleBack}
+    />
+  );
+}
+
 export function SelectProject() {
-  const { userProjects, selectedProjectId, updateSelectedProjectId } = useRepository();
+  const { userProjects, selectedProjectId, updateSelectedProjectId, refetchUserProjects } =
+    useRepository();
   const { repository } = useFigma();
   const navigate = useNavigate();
 
@@ -45,28 +76,44 @@ export function SelectProject() {
     }
   };
 
+  if (userProjects.length === 0) {
+    return (
+      <Layout header={<Header />} footer={<BackButton refetchUserProjects={refetchUserProjects} />}>
+        <Flex direction='column' align='center' gap={'size/spacer/2x'}>
+          <Icon name='face_frown_outline' size={32} />
+          <Typography variant='body-1/normal' textAlign='center'>
+            It seems like you don&apos;t have a repository project yet.
+          </Typography>
+          <Flex direction='column' align='center' gap={'size/spacer/2x'}>
+            <Typography
+              variant='body-1/normal'
+              textAlign='center'
+              color='layers/layer-1/elements/interactive/color'
+            >
+              <Anchor
+                href='https://recursica.slack.com/channels/help'
+                target='_blank'
+                underline='always'
+                rel='noreferrer'
+              >
+                Reach out to our Slack channel
+              </Anchor>
+            </Typography>
+          </Flex>
+        </Flex>
+      </Layout>
+    );
+  }
+
   return (
     <Layout
       wrapperProps={{
         justify: 'flex-start',
       }}
-      header={
-        <Box w='100%'>
-          <Typography textAlign='left' variant='body-1/strong'>
-            Connect a Git repository
-          </Typography>
-        </Box>
-      }
+      header={<Header />}
       footer={
         <Flex justify={'center'} w='100%' gap={'size/spacer/default'}>
-          <Button
-            variant='outline'
-            label='Back'
-            component={NavLink}
-            to={'/file-synced'}
-            leading='arrow_left_outline'
-            rel='noopener noreferrer'
-          />
+          <BackButton refetchUserProjects={refetchUserProjects} />
           <Button label='Continue' onClick={handleContinue} disabled={!selectedProjectId} />
         </Flex>
       }
