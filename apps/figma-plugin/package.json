@@ -25,7 +25,7 @@
   "homepage": "https://github.com/recursica/recursica-plugin#readme",
   "scripts": {
     "dev": "concurrently \"npm run dev:ui\" \"npm run watch:code\"",
-    "dev:ui": "vite dev",
+    "dev:ui": "vite dev --mode production --port 5175",
     "build": "npm run build:ui && npm run build:code",
     "build:ui": "tsc -b && vite build",
     "build:code": "tsc -b && vite build --config vite.config.lib.ts",

@@ -2,7 +2,7 @@ var k = Object.defineProperty;
 var M = (e, t, a) =>
   t in e ? k(e, t, { enumerable: !0, configurable: !0, writable: !0, value: a }) : (e[t] = a);
 var b = (e, t, a) => M(e, typeof t != 'symbol' ? t + '' : t, a);
-const _ = '8.0.1',
+const _ = '9.0.0',
   R = {
     version: _,
   };
@@ -24,7 +24,7 @@ async function F() {
 async function h(e) {
   return figma.clientStorage.getAsync(e);
 }
-async function C(e, t) {
+async function v(e, t) {
   await figma.clientStorage.setAsync(e, t),
     e === 'accessToken' &&
       (await figma.clientStorage.deleteAsync('selectedProject'),
@@ -57,7 +57,7 @@ function j(e) {
 function V(e, t, a) {
   return `[${e}][${t}][${a}]`.split(' ').join('-');
 }
-function v(e) {
+function C(e) {
   const t = {};
   return (
     e.forEach((a) => {
@@ -193,7 +193,7 @@ async function G(e) {
       );
     }),
     a = await Promise.all(t);
-  return v(a);
+  return C(a);
 }
 async function W(e) {
   try {
@@ -216,7 +216,7 @@ async function W(e) {
         );
       }),
       i = await Promise.all(a);
-    return v(i);
+    return C(i);
   } catch (t) {
     return console.warn(`Failed to process remote variable collection ${e}:`, t), {};
   }
@@ -284,7 +284,7 @@ async function Z() {
   const e = await H(),
     t = await z(),
     a = await J();
-  return v([e, t, a]);
+  return C([e, t, a]);
 }
 const q = {
   'ui kit': 'ui-kit',
@@ -334,7 +334,7 @@ async function Q(e) {
 async function X(e) {
   const t = e.filter((c) => c.name !== 'ID variables'),
     a = await Promise.all(t.map((c) => W(c.value))),
-    i = v(a),
+    i = C(a),
     n = await figma.teamLibrary.getVariablesInLibraryCollectionAsync(e[0].value),
     l = await O(n[0].key),
     s = await S(l.variableCollectionId);
@@ -694,6 +694,7 @@ async function le() {
       });
 }
 const P = R.version;
+console.log('Running in', 'development', 'mode');
 figma.showUI(__html__, {
   width: 370,
   height: 350,
@@ -707,10 +708,10 @@ figma.ui.onmessage = async (e) => {
         type: 'CURRENT_USER',
         payload: (t = figma.currentUser) == null ? void 0 : t.id,
       }),
-    e.type === 'UPDATE_ACCESS_TOKEN' && C('accessToken', e.payload),
-    e.type === 'UPDATE_PLATFORM' && C('platform', e.payload),
-    e.type === 'UPDATE_SELECTED_PROJECT' && C('selectedProject', e.payload),
-    e.type === 'UPDATE_AGREED_PUBLISH_CHANGES' && C('agreedPublishChanges', e.payload),
+    e.type === 'UPDATE_ACCESS_TOKEN' && v('accessToken', e.payload),
+    e.type === 'UPDATE_PLATFORM' && v('platform', e.payload),
+    e.type === 'UPDATE_SELECTED_PROJECT' && v('selectedProject', e.payload),
+    e.type === 'UPDATE_AGREED_PUBLISH_CHANGES' && v('agreedPublishChanges', e.payload),
     e.type === 'GET_VARIABLES')
   ) {
     const { fileType: a } = await w();

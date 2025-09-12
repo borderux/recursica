@@ -28,8 +28,19 @@ const archive = archiver('zip', {
 
 archive.pipe(output);
 
+// read original manifest.json and add ui property for development
+const manifestPath = path.join(parentDir, 'manifest.json');
+const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+
+// Add ui property for development builds
+const devManifest = {
+  ...manifest,
+  name: 'Recursica - Testing Mode',
+  ui: './dist/index.html',
+};
+
 // append files
-archive.file('manifest.dev.json', { name: 'manifest.json' });
+archive.append(JSON.stringify(devManifest, null, 2), { name: 'manifest.json' });
 archive.file('PLUGIN.md', { name: 'README.md' });
 
 // append files from a sub-directory
