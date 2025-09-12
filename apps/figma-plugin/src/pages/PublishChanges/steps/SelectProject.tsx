@@ -1,6 +1,7 @@
 import { useRepository } from '../../../hooks/useRepository';
 import { useFigma } from '../../../hooks/useFigma';
 import { NavLink, useNavigate } from 'react-router';
+import { useEffect } from 'react';
 import {
   Typography,
   Flex,
@@ -35,20 +36,15 @@ function Header() {
   );
 }
 
-function BackButton({ refetchUserProjects }: { refetchUserProjects: () => void }) {
-  const handleBack = () => {
-    console.log('refetching user projects');
-    refetchUserProjects();
-  };
+function BackButton() {
   return (
     <Button
       variant='outline'
       label='Back'
       component={NavLink}
-      to={'/file-synced'}
+      to={'/auth'}
       leading='arrow_left_outline'
       rel='noopener noreferrer'
-      onClick={handleBack}
     />
   );
 }
@@ -58,6 +54,16 @@ export function SelectProject() {
     useRepository();
   const { repository } = useFigma();
   const navigate = useNavigate();
+
+  // Refetch projects every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetchUserProjects();
+    }, 30000); // 30 seconds
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(interval);
+  }, [refetchUserProjects]);
 
   const getPlatformDisplayName = (platform: string | undefined) => {
     switch (platform?.toLowerCase()) {
@@ -78,7 +84,7 @@ export function SelectProject() {
 
   if (userProjects.length === 0) {
     return (
-      <Layout header={<Header />} footer={<BackButton refetchUserProjects={refetchUserProjects} />}>
+      <Layout header={<Header />} footer={<BackButton />}>
         <Flex direction='column' align='center' gap={'size/spacer/2x'}>
           <Icon name='face_frown_outline' size={32} />
           <Typography variant='body-1/normal' textAlign='center'>
@@ -113,7 +119,7 @@ export function SelectProject() {
       header={<Header />}
       footer={
         <Flex justify={'center'} w='100%' gap={'size/spacer/default'}>
-          <BackButton refetchUserProjects={refetchUserProjects} />
+          <BackButton />
           <Button label='Continue' onClick={handleContinue} disabled={!selectedProjectId} />
         </Flex>
       }
