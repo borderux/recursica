@@ -36,19 +36,6 @@ function Header() {
   );
 }
 
-function BackButton() {
-  return (
-    <Button
-      variant='outline'
-      label='Back'
-      component={NavLink}
-      to={'/auth'}
-      leading='arrow_left_outline'
-      rel='noopener noreferrer'
-    />
-  );
-}
-
 export function SelectProject() {
   const { userProjects, selectedProjectId, updateSelectedProjectId, refetchUserProjects } =
     useRepository();
@@ -84,7 +71,18 @@ export function SelectProject() {
 
   if (userProjects.length === 0) {
     return (
-      <Layout header={<Header />} footer={<BackButton />}>
+      <Layout
+        header={<Header />}
+        footer={
+          <Button
+            variant='outline'
+            label='Back'
+            component={NavLink}
+            to={'/auth'}
+            leading='arrow_left_outline'
+          />
+        }
+      >
         <Flex direction='column' align='center' gap={'size/spacer/2x'}>
           <Icon name='face_frown_outline' size={32} />
           <Typography variant='body-1/normal' textAlign='center'>
@@ -119,7 +117,13 @@ export function SelectProject() {
       header={<Header />}
       footer={
         <Flex justify={'center'} w='100%' gap={'size/spacer/default'}>
-          <BackButton />
+          <Button
+            variant='outline'
+            label='Back'
+            component={NavLink}
+            to={'/file-synced'}
+            leading='arrow_left_outline'
+          />
           <Button label='Continue' onClick={handleContinue} disabled={!selectedProjectId} />
         </Flex>
       }
