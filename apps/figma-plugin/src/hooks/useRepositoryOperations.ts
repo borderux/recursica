@@ -120,7 +120,8 @@ export function useRepositoryOperations() {
         bundledFilename: string;
         iconsFilename: string;
       },
-      shouldCreateInit: boolean
+      shouldCreateInit: boolean,
+      filetype?: string
     ): Promise<void> => {
       if (!repositoryInstance || !selectedProject) {
         throw new Error('Repository instance or project not available');
@@ -192,24 +193,26 @@ export function useRepositoryOperations() {
         }
       }
 
-      const outputPath = rootPath ? rootPath + '/src/recursica' : 'src/recursica';
-      // before commit, we need to clear all the data in the remote, this can be done by comparing the local and remote data, and deleting the files that are not in the local data
-      // we need to get all the files in the remote folder and delete the files that are not in the local data
-      const remoteFiles = await repositoryInstance.getRepositoryFilesByPath(
-        selectedProject,
-        targetBranch,
-        outputPath
-      );
-      const remoteFilesPaths = remoteFiles.map((file) => file.path);
+      if (filetype !== 'icons') {
+        const outputPath = rootPath ? rootPath + '/src/recursica' : 'src/recursica';
+        // before commit, we need to clear all the data in the remote, this can be done by comparing the local and remote data, and deleting the files that are not in the local data
+        // we need to get all the files in the remote folder and delete the files that are not in the local data
+        const remoteFiles = await repositoryInstance.getRepositoryFilesByPath(
+          selectedProject,
+          targetBranch,
+          outputPath
+        );
+        const remoteFilesPaths = remoteFiles.map((file) => file.path);
 
-      const localFilesPaths = actions.map((file) => file.file_path);
-      console.log('repo files and local files', remoteFilesPaths, localFilesPaths);
-      const filesToDelete = remoteFilesPaths.filter((file) => !localFilesPaths.includes(file));
-      for (const file of filesToDelete) {
-        actions.push({
-          action: 'delete',
-          file_path: file,
-        });
+        const localFilesPaths = actions.map((file) => file.file_path);
+        console.log('repo files and local files', remoteFilesPaths, localFilesPaths);
+        const filesToDelete = remoteFilesPaths.filter((file) => !localFilesPaths.includes(file));
+        for (const file of filesToDelete) {
+          actions.push({
+            action: 'delete',
+            file_path: file,
+          });
+        }
       }
 
       await repositoryInstance.commitFiles(
