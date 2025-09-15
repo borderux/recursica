@@ -75,6 +75,33 @@ export class GitLabRepository extends BaseRepository {
     }));
   }
 
+  async getRepositoryFilesByPath(
+    project: Project,
+    branch: string,
+    path: string
+  ): Promise<FileInfo[]> {
+    // Clean the path - remove leading/trailing slashes
+    const cleanPath = path.replace(/^\/+/, '').replace(/\/+$/, '');
+
+    try {
+      const response = await this.httpClient.get(
+        `${this.baseUrl}/projects/${project.id}/repository/tree/${path}`,
+        {
+          params: {
+            ref: branch,
+            recursive: true,
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      // If the path doesn't exist or there's an error, return empty array
+      console.warn(`Path ${cleanPath} not found or error occurred:`, error);
+      return [];
+    }
+  }
+
   async getSingleFile<T = string>(project: Project, filePath: string, branch: string): Promise<T> {
     const encodedFilePath = encodeURIComponent(filePath);
     const response = await this.httpClient.get(
