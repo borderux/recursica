@@ -50,6 +50,21 @@ export default function Layout() {
           </li>
           <li>
             <Link
+              to="/theme-settings"
+              style={{
+                textDecoration:
+                  location.pathname === "/theme-settings"
+                    ? "underline"
+                    : "none",
+                color:
+                  location.pathname === "/theme-settings" ? "#007acc" : "#333",
+              }}
+            >
+              Theme Settings
+            </Link>
+          </li>
+          <li>
+            <Link
               to="/reset-metadata"
               style={{
                 textDecoration:

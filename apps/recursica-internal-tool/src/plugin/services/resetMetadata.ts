@@ -10,29 +10,27 @@ export async function resetAllMetadata(): Promise<ResetMetadataResponse> {
     const localCollections =
       await figma.variables.getLocalVariableCollectionsAsync();
 
-    // Reset metadata for each collection
+    // Reset only the variables-synced metadata for each collection
     for (const collection of localCollections) {
-      // Clear collection metadata
-      const keys = collection.getSharedPluginDataKeys("recursica");
-      for (const key of keys) {
-        console.log("resetting collection " + collection.name, key);
-        collection.setSharedPluginData("recursica", key, "");
-      }
+      // Only reset the variables-synced tag, preserve file-type and theme-name
+      console.log(
+        "resetting variables-synced tag for collection " + collection.name,
+      );
+      collection.setSharedPluginData("recursica", "variables-synced", "");
 
-      // Clear metadata for each variable in the collection
+      // Clear variables-synced metadata for each variable in the collection
       for (const variableId of collection.variableIds) {
         const variable = await figma.variables.getVariableByIdAsync(variableId);
         if (variable) {
-          const keys = variable.getSharedPluginDataKeys("recursica");
-          for (const key of keys) {
-            console.log("resetting variable " + variable.name, key);
-            variable.setSharedPluginData("recursica", key, "");
-          }
+          console.log(
+            "resetting variables-synced tag for variable " + variable.name,
+          );
+          variable.setSharedPluginData("recursica", "variables-synced", "");
         }
       }
     }
     console.log(
-      "Successfully reset metadata for ",
+      "Successfully reset variables-synced metadata for ",
       localCollections.length,
       " variable collections",
     );
@@ -41,9 +39,9 @@ export async function resetAllMetadata(): Promise<ResetMetadataResponse> {
       type: "reset-metadata-response",
       success: true,
       message:
-        "Successfully reset metadata for " +
+        "Successfully reset variables-synced metadata for " +
         localCollections.length +
-        " variable collections",
+        " variable collections. File type and theme name have been preserved.",
     };
   } catch (error) {
     console.error("Error resetting metadata:", error);

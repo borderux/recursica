@@ -70,6 +70,32 @@ export interface QuickCopyResponse extends BaseMessage {
   error?: string;
 }
 
+// Theme Settings Messages
+export interface LoadThemeSettingsMessage extends BaseMessage {
+  type: "load-theme-settings";
+}
+
+export interface ThemeSettingsLoadedResponse extends BaseMessage {
+  type: "theme-settings-loaded";
+  success: boolean;
+  fileType?: string;
+  themeName?: string;
+  error?: string;
+}
+
+export interface UpdateThemeSettingsMessage extends BaseMessage {
+  type: "update-theme-settings";
+  fileType: string;
+  themeName: string;
+}
+
+export interface ThemeSettingsUpdatedResponse extends BaseMessage {
+  type: "theme-settings-updated";
+  success: boolean;
+  message?: string;
+  error?: string;
+}
+
 export interface ErrorMessage extends BaseMessage {
   type: "error";
   success: false;
@@ -81,7 +107,9 @@ export type PluginMessage =
   | LoadPagesMessage
   | ExportPageMessage
   | ImportPageMessage
-  | QuickCopyMessage;
+  | QuickCopyMessage
+  | LoadThemeSettingsMessage
+  | UpdateThemeSettingsMessage;
 
 export type PluginResponse =
   | ResetMetadataResponse
@@ -89,4 +117,6 @@ export type PluginResponse =
   | PageExportResponse
   | PageImportResponse
   | QuickCopyResponse
+  | ThemeSettingsLoadedResponse
+  | ThemeSettingsUpdatedResponse
   | ErrorMessage;
