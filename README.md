@@ -58,6 +58,7 @@ npm run build
 ### Apps
 
 - `apps/figma-plugin` - Figma plugin for exporting design tokens and assets from Figma to your codebase
+- `apps/recursica-internal-tool` - Internal Figma plugin for team operations, theme management, and page operations
 - `apps/ai-form-test` - Testing application for AI-driven form generation
 
 ### Packages

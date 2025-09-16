@@ -1,11 +1,35 @@
-# React + TypeScript + Vite
+# Recursica Internal Tool
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A Figma plugin for internal Recursica team operations, providing tools for theme management, page operations, and metadata handling.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Theme Settings**: Configure file type and theme name for your Figma projects
+- **Page Management**: Export, import, and manage Figma pages
+- **Reset Metadata**: Clear plugin metadata from collections
+- **Auto-Updater**: Cross-platform update scripts for easy deployment
+
+## Theme Settings
+
+The theme settings feature allows you to:
+
+- Set the file type for your project (themes, ui-kit, tokens, icons, other)
+- Configure theme names for theme-based projects
+- Store settings in Figma variable collections for persistence
+
+## Update Scripts
+
+Cross-platform update scripts are available in the `scripts/updater/` directory:
+
+- Windows: `update-dist.bat` or `update-dist.ps1`
+- macOS/Linux: `update-dist.sh` or `update-dist`
+- Universal: `update-dist` (auto-detects platform)
+
+See `scripts/updater/UPDATE-README.md` for detailed usage instructions.
+
+## Development
+
+Built with React + TypeScript + Vite for optimal development experience.
 
 ## Expanding the ESLint configuration
 
