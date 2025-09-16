@@ -88,6 +88,34 @@ export class GitHubRepository extends BaseRepository {
       }));
   }
 
+  async getRepositoryFilesByPath(
+    project: Project,
+    branch: string,
+    path: string
+  ): Promise<FileInfo[]> {
+    // Clean the path - remove leading/trailing slashes
+    const cleanPath = path.replace(/^\/+/, '').replace(/\/+$/, '');
+
+    try {
+      // First, get the tree for the specific path
+      const response = await this.httpClient.get<FileInfo[]>(
+        `${this.baseUrl}/repos/${project.owner.name}/${project.name}/contents/${path}`,
+        {
+          params: { ref: branch },
+          headers: {
+            Accept: 'application/vnd.github.raw+json',
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      // If the path doesn't exist or there's an error, return empty array
+      console.warn(`Path ${cleanPath} not found or error occurred:`, error);
+      return [];
+    }
+  }
+
   async getSingleFile<T = string>(project: Project, filePath: string, branch: string): Promise<T> {
     const response = await this.httpClient.get(
       `${this.baseUrl}/repos/${project.owner.name}/${project.name}/contents/${filePath}`,
