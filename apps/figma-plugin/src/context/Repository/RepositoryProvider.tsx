@@ -161,7 +161,7 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
 
   // User data hooks with auto-fetching
   const { userInfo } = useUserInfo(repositoryInstance);
-  const { userProjects } = useUserProjects(userInfo, repositoryInstance);
+  const { userProjects, fetchUserProjects } = useUserProjects(userInfo, repositoryInstance);
 
   const selectedProject = useMemo(() => {
     return userProjects.find((project) => project.id === selectedProjectId);
@@ -378,6 +378,10 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     clearRemoteData();
   };
 
+  const refetchUserProjects = useCallback(() => {
+    fetchUserProjects(userInfo, repositoryInstance);
+  }, [fetchUserProjects, userInfo, repositoryInstance]);
+
   const value = {
     selectedProjectId,
     updateSelectedProjectId,
@@ -391,6 +395,7 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
     error,
     clearError,
     selectedProject,
+    refetchUserProjects,
   };
 
   return <RepositoryContext.Provider value={value}>{children}</RepositoryContext.Provider>;
