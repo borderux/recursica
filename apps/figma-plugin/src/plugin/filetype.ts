@@ -67,17 +67,25 @@ class FiletypeSingleton {
     if (localCollections.length > 0) {
       // Look for collections that indicate the project type
       // Priority order: tokens > themes > ui-kit > icons (default)
-      const tokensCollection = localCollections.find((collection) =>
-        collection.name.toLowerCase().includes('tokens')
-      );
-      const themesCollection = localCollections.find((collection) =>
-        collection.name.toLowerCase().includes('themes')
-      );
-      const uikitCollection = localCollections.find(
-        (collection) =>
-          collection.name.toLowerCase().includes('ui kit') ||
-          collection.name.toLowerCase().includes('uikit')
-      );
+      const tokensCollection =
+        localCollections.find((collection) => collection.name.toLowerCase().includes('tokens')) ||
+        localCollections.every(
+          (collection) => collection.getSharedPluginData('recursica', 'file-type') === 'tokens'
+        );
+      const themesCollection =
+        localCollections.find((collection) => collection.name.toLowerCase().includes('themes')) ||
+        localCollections.every(
+          (collection) => collection.getSharedPluginData('recursica', 'file-type') === 'themes'
+        );
+      const uikitCollection =
+        localCollections.find(
+          (collection) =>
+            collection.name.toLowerCase().includes('ui kit') ||
+            collection.name.toLowerCase().includes('uikit')
+        ) ||
+        localCollections.every(
+          (collection) => collection.getSharedPluginData('recursica', 'file-type') === 'ui-kit'
+        );
 
       // Determine file type based on collection names found
       if (tokensCollection) {

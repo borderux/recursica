@@ -11,6 +11,10 @@ export default function Home() {
         <h3>Available Features:</h3>
         <ul>
           <li>
+            <strong>Theme Settings:</strong> Configure file type and theme name
+            for your project
+          </li>
+          <li>
             <strong>Page Management:</strong> Export, import, and copy Figma
             pages with full structure preservation
           </li>

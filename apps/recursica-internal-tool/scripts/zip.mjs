@@ -57,5 +57,18 @@ archive.file("manifest.json", { name: "manifest.json" });
 // append files from dist directory, preserving the dist/ folder structure
 archive.directory("dist/", "dist/");
 
+// append update scripts (cross-platform)
+archive.file("scripts/updater/update-dist.bat", {
+  name: "scripts/update-dist.bat",
+});
+archive.file("scripts/updater/update-dist.ps1", {
+  name: "scripts/update-dist.ps1",
+});
+archive.file("scripts/updater/update-dist.sh", {
+  name: "scripts/update-dist.sh",
+});
+archive.file("scripts/updater/update-dist", { name: "scripts/update-dist" });
+archive.file("scripts/updater/UPDATE-README.md", { name: "UPDATE-README.md" });
+
 // finalize the archive
 archive.finalize();

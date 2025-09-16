@@ -1,92 +1,91 @@
 import { useState } from "react";
+import { usePlugin } from "../context/usePlugin";
 
 export default function ResetMetadata() {
-  const [isResetting, setIsResetting] = useState(false);
+  const { resetMetadata, loading, error, clearError } = usePlugin();
   const [resetStatus, setResetStatus] = useState<"idle" | "success" | "error">(
     "idle",
   );
   const [errorMessage, setErrorMessage] = useState("");
 
   const handleResetMetadata = async () => {
-    setIsResetting(true);
     setResetStatus("idle");
     setErrorMessage("");
+    clearError();
 
     try {
-      // Send message to plugin sandbox
-      parent.postMessage(
-        {
-          pluginMessage: {
-            type: "reset-metadata",
-          },
-        },
-        "*",
-      );
-
-      // Listen for response
-      const handleMessage = (event: MessageEvent) => {
-        if (event.data.pluginMessage?.type === "reset-metadata-response") {
-          if (event.data.pluginMessage.success) {
-            setResetStatus("success");
-          } else {
-            setResetStatus("error");
-            setErrorMessage(
-              event.data.pluginMessage.error || "Unknown error occurred",
-            );
-          }
-          setIsResetting(false);
-          window.removeEventListener("message", handleMessage);
-        }
-      };
-
-      window.addEventListener("message", handleMessage);
-
-      // Timeout after 10 seconds
-      setTimeout(() => {
-        if (isResetting) {
-          setResetStatus("error");
-          setErrorMessage("Reset operation timed out");
-          setIsResetting(false);
-          window.removeEventListener("message", handleMessage);
-        }
-      }, 10000);
+      await resetMetadata();
+      setResetStatus("success");
     } catch (error) {
       setResetStatus("error");
       setErrorMessage(
         error instanceof Error ? error.message : "Failed to reset metadata",
       );
-      setIsResetting(false);
     }
   };
 
   return (
     <div>
-      <h1>Reset Metadata</h1>
-      <p>This will reset all metadata in the Figma variable collections.</p>
+      <h1>Reset Variables Sync Status</h1>
+      <p>
+        This will reset the variables-synced status in the Figma variable
+        collections, allowing them to be synced again.
+      </p>
 
       <div style={{ marginBottom: "20px" }}>
-        <h3>Warning</h3>
-        <p style={{ color: "#d32f2f", fontWeight: "bold" }}>
-          This action will permanently remove all metadata from all local
-          variable collections. This action cannot be undone.
+        <h3>What this does</h3>
+        <p style={{ color: "#1976d2", fontWeight: "bold" }}>
+          This action will reset the variables-synced tag for all local variable
+          collections, allowing them to be synchronized again. File type and
+          theme name metadata will be preserved.
         </p>
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div
+          style={{
+            marginBottom: "20px",
+            padding: "10px",
+            backgroundColor: "#ffebee",
+            color: "#c62828",
+            borderRadius: "4px",
+            border: "1px solid #ffcdd2",
+          }}
+        >
+          <p>{error}</p>
+          <button
+            onClick={clearError}
+            style={{
+              marginTop: "5px",
+              padding: "5px 10px",
+              backgroundColor: "#c62828",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+            }}
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       <div style={{ marginBottom: "20px" }}>
         <button
           onClick={handleResetMetadata}
-          disabled={isResetting}
+          disabled={loading.operations}
           style={{
             padding: "10px 20px",
-            backgroundColor: isResetting ? "#ccc" : "#d32f2f",
+            backgroundColor: loading.operations ? "#ccc" : "#1976d2",
             color: "white",
             border: "none",
             borderRadius: "4px",
-            cursor: isResetting ? "not-allowed" : "pointer",
+            cursor: loading.operations ? "not-allowed" : "pointer",
             fontSize: "16px",
           }}
         >
-          {isResetting ? "Resetting..." : "Reset All Metadata"}
+          {loading.operations ? "Resetting..." : "Reset Variables Sync Status"}
         </button>
       </div>
 
@@ -100,8 +99,9 @@ export default function ResetMetadata() {
             color: "#2e7d32",
           }}
         >
-          ✅ Metadata reset successfully! All variable collections have been
-          cleared of metadata.
+          ✅ Variables sync status reset successfully! All variable collections
+          can now be synchronized again. File type and theme name have been
+          preserved.
         </div>
       )}
 
@@ -122,9 +122,14 @@ export default function ResetMetadata() {
       <div style={{ marginTop: "30px" }}>
         <h3>What this does:</h3>
         <ul>
-          <li>Clears all metadata from all local variable collections</li>
-          <li>Resets collection-level metadata</li>
-          <li>Cannot be undone - make sure to backup if needed</li>
+          <li>
+            Resets the variables-synced tag for all local variable collections
+          </li>
+          <li>
+            Allows collections to be synchronized again with the team library
+          </li>
+          <li>Preserves file type and theme name metadata</li>
+          <li>Useful when you need to re-sync variables after changes</li>
         </ul>
       </div>
     </div>

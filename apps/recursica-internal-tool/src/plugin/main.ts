@@ -2,12 +2,21 @@ import { resetAllMetadata } from "./services/resetMetadata";
 import { loadPages, exportPage } from "./services/pageExport";
 import { importPage } from "./services/pageImport";
 import { performQuickCopy } from "./services/quickCopy";
+import {
+  loadThemeSettings,
+  updateThemeSettings,
+} from "./services/themeSettings";
 import type { PluginMessage, PluginResponse } from "./types/messages";
 
 // Plugin configuration
 figma.showUI(__html__, {
   width: 500,
   height: 500,
+});
+
+// Load initial theme settings when plugin starts
+loadThemeSettings().then((response) => {
+  figma.ui.postMessage(response);
 });
 
 // Message handler - orchestrates different plugin operations
@@ -43,6 +52,21 @@ figma.ui.onmessage = async (message: PluginMessage) => {
       case "quick-copy": {
         const quickCopyResponse = await performQuickCopy();
         figma.ui.postMessage(quickCopyResponse);
+        break;
+      }
+
+      case "load-theme-settings": {
+        const themeSettingsResponse = await loadThemeSettings();
+        figma.ui.postMessage(themeSettingsResponse);
+        break;
+      }
+
+      case "update-theme-settings": {
+        const updateResponse = await updateThemeSettings(
+          message.fileType,
+          message.themeName,
+        );
+        figma.ui.postMessage(updateResponse);
         break;
       }
 
