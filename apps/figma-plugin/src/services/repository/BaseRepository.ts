@@ -55,17 +55,26 @@ export interface FileInfo {
   path: string;
 }
 
+export interface FileToCreateOrUpdate {
+  /** The type of action to perform on the file */
+  action: 'create' | 'update';
+  /** Path of the file to create or update */
+  file_path: string;
+  /** Content of the file to create or update */
+  content: string;
+}
+
+export interface FileToDelete {
+  /** The type of action to perform on the file */
+  action: 'delete';
+  /** Path of the file to delete */
+  file_path: string;
+}
+
 /**
  * Represents an action to be performed during a commit operation
  */
-export interface CommitAction {
-  /** The type of action to perform on the file */
-  action: 'create' | 'update' | 'delete';
-  /** Path where the file should be created/updated/deleted */
-  file_path: string;
-  /** File content (ignored for delete actions) */
-  content: string;
-}
+export type CommitAction = FileToCreateOrUpdate | FileToDelete;
 
 /**
  * Represents a Pull Request (GitHub) or Merge Request (GitLab)
@@ -99,6 +108,11 @@ export abstract class BaseRepository {
   abstract getUserProjects(): Promise<Project[]>;
   abstract getProjectBranches(selectedProject: Project): Promise<Branch[]>;
   abstract getRepositoryFiles(projectId: string, branch: string): Promise<FileInfo[]>;
+  abstract getRepositoryFilesByPath(
+    project: Project,
+    branch: string,
+    path: string
+  ): Promise<FileInfo[]>;
   abstract getSingleFile<T = string>(
     project: Project,
     filePath: string,

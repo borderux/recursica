@@ -349,7 +349,8 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
           bundledFilename: fileLoadingData.bundledFilename,
           iconsFilename: fileLoadingData.iconsFilename,
         },
-        shouldCreateInit
+        shouldCreateInit,
+        filetype
       );
 
       try {
