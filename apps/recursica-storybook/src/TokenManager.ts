@@ -3,6 +3,7 @@ import type {
   Token,
   RecursicaVariablesSchema,
   CollectionToken,
+  GridToken,
 } from "@recursica/schemas";
 
 // Type the recursica bundle properly
@@ -24,20 +25,6 @@ export interface GroupedColors {
 
 export interface GroupedSizeTokens {
   [category: string]: SizeToken[];
-}
-
-export interface GridToken {
-  type: "GRID";
-  name: string;
-  description: string;
-  breakpoint: string;
-  layouts: Array<{
-    alignment: string;
-    count: number;
-    gap: number;
-    margin: number;
-    pattern: string;
-  }>;
 }
 
 class TokenManager {
@@ -111,7 +98,7 @@ class TokenManager {
     );
 
     const groupedSizeTokens = sizeTokens.reduce((acc, token) => {
-      if (!("name" in token)) {
+      if (!("name" in token && "type" in token && token.type === "float")) {
         return acc;
       }
       const nameParts = token.name.split("/");
@@ -166,35 +153,34 @@ class TokenManager {
   public getGridTokens(): GridToken[] {
     // Grid tokens have a different structure in the bundle, so we need to access them directly
     const allTokens = Object.values(recursicaBundle.tokens);
-    const gridTokens = allTokens.filter((token) => token.type === "GRID");
+    const gridTokens = allTokens.filter(
+      (token) => "type" in token && token.type === "GRID",
+    );
 
-    return gridTokens.map((token) => {
-      // Extract breakpoint from token name (e.g., "grids/xs" -> "xs")
-      const nameParts = token.name.split("/");
-      const breakpoint = nameParts[nameParts.length - 1];
-
-      return {
-        type: token.type as "GRID",
-        name: token.name,
-        description: token.description,
-        breakpoint,
-        layouts: (token as { layouts?: GridToken["layouts"] }).layouts || [],
-      } as GridToken;
-    });
+    return gridTokens
+      .filter(
+        (token): token is GridToken => "type" in token && token.type === "GRID",
+      )
+      .map((token) => {
+        return {
+          type: token.type,
+          name: token.name,
+          description: token.description,
+          layouts: (token as { layouts?: GridToken["layouts"] }).layouts || [],
+        } as GridToken;
+      });
   }
 
   /**
    * Get sorted grid breakpoints
    */
-  public getSortedGridBreakpoints(): string[] {
+  public getSortedGridBreakpoints(): GridToken[] {
     const gridTokens = this.getGridTokens();
-    return gridTokens
-      .map((token) => token.breakpoint)
-      .sort((a, b) => {
-        // Sort by breakpoint size order: xs, sm, md, lg
-        const order: Record<string, number> = { xs: 0, sm: 1, md: 2, lg: 3 };
-        return order[a] - order[b];
-      });
+    return gridTokens.sort((a, b) => {
+      // Sort by breakpoint size order: xs, sm, md, lg
+      const order: Record<string, number> = { xs: 0, sm: 1, md: 2, lg: 3 };
+      return order[a.name] - order[b.name];
+    });
   }
 }
 

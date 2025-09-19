@@ -2,7 +2,6 @@
   "projectId": "Recursica",
   "pluginVersion": "0.0.4",
   "tokens": {
-
     "[Tokens][Mode-1][grids/xs]": {
       "type": "GRID",
       "name": "xs",
