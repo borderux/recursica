@@ -1,0 +1,30 @@
+import { BoxSpacers, BoxMargins, BoxPaddings, BoxColors, BoxBorders } from './Box';
+type BoxStyles = BoxSpacers & BoxMargins & BoxPaddings & BoxColors & BoxBorders;
+export declare function getBoxStyles(props: BoxStyles): {
+    propsStyles: {
+        bg: string | undefined;
+        gap: string | number | undefined;
+        rowGap: string | number | undefined;
+        columnGap: string | number | undefined;
+        m: string | number | undefined;
+        my: string | number | undefined;
+        mx: string | number | undefined;
+        mt: string | number | undefined;
+        mb: string | number | undefined;
+        ms: string | number | undefined;
+        me: string | number | undefined;
+        ml: string | number | undefined;
+        mr: string | number | undefined;
+        p: string | number | undefined;
+        py: string | number | undefined;
+        px: string | number | undefined;
+        pt: string | number | undefined;
+        pb: string | number | undefined;
+        ps: string | number | undefined;
+        pe: string | number | undefined;
+        pl: string | number | undefined;
+        pr: string | number | undefined;
+    };
+    inlineStyles: import('../../../../../node_modules/react').CSSProperties;
+};
+export {};
