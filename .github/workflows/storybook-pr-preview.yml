@@ -1,0 +1,180 @@
+name: Storybook PR Preview
+
+# This workflow builds and deploys Storybook previews for pull requests
+# that have "preview" in the title. Each PR gets its own preview URL.
+#
+# PURPOSE:
+# - Provides on-demand Storybook previews for pull requests
+# - Allows developers to see UI changes in a live Storybook environment
+# - Helps with visual testing and design review processes
+#
+# HOW TO USE:
+# 1. Create a pull request targeting the main branch
+# 2. Include the word "preview" (case insensitive) in the PR title
+# 3. The workflow will automatically build and deploy a Storybook preview
+# 4. A comment will be posted on the PR with the preview URL
+# 5. Each new commit to the PR will update the preview automatically
+#
+# EXAMPLES OF TRIGGERING TITLES:
+# - "Add new button component - preview"
+# - "PREVIEW: Update theme colors"
+# - "Fix layout issues (Preview)"
+# - "Preview build for testing"
+#
+# PREREQUISITES:
+# 1. GitHub Pages must be enabled in repository settings
+#    (Settings → Pages → Source: GitHub Actions)
+# 2. Repository must have Pages permissions enabled
+# 3. The ui-kit-mantine package must have a working "build-storybook" script
+#
+# DEPLOYMENT:
+# - Each PR gets a unique preview URL: https://[username].github.io/recursica/pr-[pr-number]/
+# - Previews are automatically cleaned up when PRs are closed/merged
+# - Uses GitHub Pages for hosting with automatic HTTPS
+#
+# CONCURRENCY:
+# - Each PR has its own concurrency group to prevent conflicts
+# - New commits cancel previous builds for the same PR
+# - Main branch deployments use a separate concurrency group
+
+on:
+  # Trigger on pull requests targeting main branch
+  # Note: Preview builds only run if PR title contains "preview"
+  pull_request:
+    branches: [main]
+  # Allow manual triggering from GitHub Actions tab
+  workflow_dispatch:
+
+# Required permissions for GitHub Pages deployment
+permissions:
+  contents: read # Read repository contents
+  pages: write # Deploy to GitHub Pages
+  id-token: write # Generate JWT for GitHub Pages
+  pull-requests: write # Comment on PRs with preview URL
+
+# Prevent multiple PR preview deployments from running simultaneously for the same PR
+# This ensures only the latest commit gets deployed for each PR
+concurrency:
+  group: "pages-pr-${{ github.event.pull_request.number }}"
+  cancel-in-progress: true
+
+jobs:
+  # Build job: Compiles Storybook and prepares it for deployment
+  # This job only runs if the PR title contains "preview" (case insensitive)
+  build:
+    runs-on: ubuntu-latest
+    # Conditional execution: Only build if PR title contains "preview"
+    # This prevents unnecessary builds for regular PRs
+    if: contains(github.event.pull_request.title, 'preview') || contains(github.event.pull_request.title, 'Preview') || contains(github.event.pull_request.title, 'PREVIEW')
+    steps:
+      # Checkout the repository code
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Setup Node.js environment with caching for faster builds
+      # Uses Node.js 20 for consistency with the main storybook-deploy workflow
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm" # Caches node_modules for faster subsequent builds
+
+      # Install all dependencies (including monorepo packages)
+      # Uses npm ci for clean, reproducible installs from package-lock.json
+      - name: Install dependencies
+        run: npm ci
+        env:
+          # Prevents husky from installing git hooks during CI (not needed in CI environment)
+          HUSKY: 0
+
+      # Build Storybook static files
+      # This creates the storybook-static directory with all HTML/CSS/JS files
+      # Uses the build-storybook script defined in packages/ui-kit-mantine/package.json
+      - name: Build Storybook
+        run: npm run build-storybook
+        working-directory: packages/ui-kit-mantine
+
+      # Configure GitHub Pages environment for PR preview
+      # Sets up the Pages environment to receive the built Storybook files
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+        with:
+          # Use custom static site generator since we're building Storybook ourselves
+          static_site_generator: custom
+
+      # Upload the built Storybook files as a Pages artifact
+      # This makes the files available to the deploy job
+      # The artifact contains all the static HTML, CSS, and JS files from Storybook
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: packages/ui-kit-mantine/storybook-static
+
+  # Deploy job: Deploys the built Storybook to GitHub Pages
+  # This job runs after the build job completes successfully
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build # Wait for the build job to complete
+    steps:
+      # Deploy the uploaded artifact to GitHub Pages
+      # This makes the Storybook available at the configured URL
+      # The URL will be in the format: https://[username].github.io/recursica/pr-[pr-number]/
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      # Comment on the PR with the preview URL
+      # This step only runs for pull request events (not manual workflow_dispatch)
+      - name: Comment PR with preview URL
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Get all existing comments on the PR
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            // Check if we already commented on this PR (look for our bot comment)
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('Storybook preview')
+            );
+
+            // Construct the preview URL with PR-specific path
+            const previewUrl = `${{ steps.deployment.outputs.page_url }}/pr-${{ github.event.pull_request.number }}/`;
+
+            // Create the comment body with preview information
+            const commentBody = `## 📚 Storybook Preview
+
+            Your Storybook preview is ready! 🎉
+
+            **Preview URL:** ${previewUrl}
+
+            This preview will be automatically updated when you push new commits to this PR.
+
+            ---
+            *This comment is automatically generated by the Storybook PR Preview workflow.*`;
+
+            if (botComment) {
+              // Update existing comment to avoid spam
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: commentBody
+              });
+            } else {
+              // Create new comment for first-time preview
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: commentBody
+              });
+            }

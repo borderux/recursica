@@ -24,10 +24,10 @@ permissions:
   pages: write # Deploy to GitHub Pages
   id-token: write # Generate JWT for GitHub Pages
 
-# Prevent multiple deployments from running simultaneously
-# This ensures only the latest commit gets deployed
+# Prevent multiple main branch deployments from running simultaneously
+# This ensures only the latest commit gets deployed to the main Storybook
 concurrency:
-  group: "pages"
+  group: "pages-main"
   cancel-in-progress: false
 
 jobs:
