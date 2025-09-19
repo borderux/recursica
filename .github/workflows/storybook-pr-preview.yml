@@ -49,12 +49,6 @@ jobs:
         run: npm ci
         env:
           HUSKY: 0
-
-      - name: Install ui-kit-mantine dependencies
-        run: |
-          cd packages/ui-kit-mantine
-          npm install --no-package-lock
-
       - name: Build Storybook
         if: github.event.action != 'closed'
         run: npm run build-storybook
