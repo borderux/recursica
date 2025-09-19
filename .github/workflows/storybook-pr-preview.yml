@@ -1,42 +1,16 @@
 name: Deploy PR Preview
 
-# This workflow builds and deploys Storybook previews for pull requests
-# that have "preview" in the title. Each PR gets its own preview URL.
+# Builds and deploys Storybook previews for pull requests with "preview" in the title.
+# Each PR gets a unique preview URL and automatic PR comments with the link.
 #
-# PURPOSE:
-# - Provides on-demand Storybook previews for pull requests
-# - Allows developers to see UI changes in a live Storybook environment
-# - Helps with visual testing and design review processes
+# Usage: Include "preview" (case insensitive) in your PR title to trigger a preview build.
+# Example titles: "Add button component - preview", "PREVIEW: Update theme"
 #
-# HOW TO USE:
-# 1. Create a pull request targeting the main branch
-# 2. Include the word "preview" (case insensitive) in the PR title
-# 3. The workflow will automatically build and deploy a Storybook preview
-# 4. A comment will be posted on the PR with the preview URL
-# 5. Each new commit to the PR updates the preview automatically
+# Prerequisites:
+# - GitHub Pages enabled with "Deploy from a branch" (gh-pages branch)
+# - ui-kit-mantine package with working "build-storybook" script
 #
-# EXAMPLES OF TRIGGERING TITLES:
-# - "Add new button component - preview"
-# - "PREVIEW: Update theme colors"
-# - "Fix layout issues (Preview)"
-# - "Preview build for testing"
-#
-# PREREQUISITES:
-# 1. GitHub Pages must be enabled in repository settings
-#    (Settings → Pages → Source: GitHub Actions)
-# 2. Repository must have Pages permissions enabled
-# 3. The ui-kit-mantine package must have a working "build-storybook" script
-#
-# DEPLOYMENT:
-# - Each PR gets a unique preview URL: https://[username].github.io/recursica/pr-preview/pr-[pr-number]/
-# - Uses rossjrw/pr-preview-action for reliable PR preview deployment
-# - Previews are automatically cleaned up when PRs are closed/merged
-# - Uses GitHub Pages for hosting with automatic HTTPS
-#
-# CONCURRENCY:
-# - Each PR has its own concurrency group to prevent conflicts
-# - New commits cancel previous builds for the same PR
-# - Main branch deployments use a separate concurrency group
+# Preview URLs: https://[username].github.io/recursica/pr-preview/pr-[pr-number]/
 
 on:
   # Trigger on pull requests targeting main branch
@@ -58,35 +32,24 @@ permissions:
 concurrency: preview-${{ github.ref }}
 
 jobs:
-  # Deploy preview job: Builds and deploys Storybook previews
-  # This job only runs if the PR title contains "preview" (case insensitive)
   deploy-preview:
     runs-on: ubuntu-latest
-    # Conditional execution: Only build if PR title contains "preview"
-    # This prevents unnecessary builds for regular PRs
     if: contains(github.event.pull_request.title, 'preview') || contains(github.event.pull_request.title, 'Preview') || contains(github.event.pull_request.title, 'PREVIEW')
     steps:
-      # Checkout the repository code
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Setup Node.js environment with caching for faster builds
-      # Uses Node.js 20 for consistency with the main storybook-deploy workflow
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm" # Caches node_modules for faster subsequent builds
+          cache: "npm"
 
-      # Install all dependencies (including monorepo packages)
-      # Uses npm ci for clean, reproducible installs from package-lock.json
       - name: Install dependencies
         run: npm ci
         env:
-          # Prevents husky from installing git hooks during CI (not needed in CI environment)
           HUSKY: 0
 
-      # Debug: Check if Storybook dependencies are properly installed
       - name: Debug Storybook dependencies
         run: |
           echo "Checking Storybook dependencies..."
@@ -97,23 +60,16 @@ jobs:
           echo "Checking package.json dependencies..."
           cat packages/ui-kit-mantine/package.json | grep -A 20 "devDependencies"
 
-      # Ensure ui-kit-mantine dependencies are properly installed
-      # This step ensures that all dependencies for the ui-kit-mantine package are available
       - name: Install ui-kit-mantine dependencies
         run: |
           cd packages/ui-kit-mantine
           npm install --no-package-lock
 
-      # Build Storybook static files
-      # This creates the storybook-static directory with all HTML/CSS/JS files
-      # Uses the build-storybook script defined in packages/ui-kit-mantine/package.json
       - name: Build Storybook
         if: github.event.action != 'closed'
         run: npm run build-storybook
         working-directory: packages/ui-kit-mantine
 
-      # Deploy preview using the proven rossjrw/pr-preview-action
-      # This action handles all the complexity of PR preview deployment
       - name: Deploy preview
         uses: rossjrw/pr-preview-action@v1
         with:
