@@ -50,16 +50,6 @@ jobs:
         env:
           HUSKY: 0
 
-      - name: Debug Storybook dependencies
-        run: |
-          echo "Checking Storybook dependencies..."
-          ls -la node_modules/@storybook/ || echo "No @storybook in root node_modules"
-          ls -la packages/ui-kit-mantine/node_modules/@storybook/ || echo "No @storybook in ui-kit-mantine node_modules"
-          echo "Checking for @storybook/react-vite specifically..."
-          find . -name "*storybook*" -type d | head -10
-          echo "Checking package.json dependencies..."
-          cat packages/ui-kit-mantine/package.json | grep -A 20 "devDependencies"
-
       - name: Install ui-kit-mantine dependencies
         run: |
           cd packages/ui-kit-mantine
