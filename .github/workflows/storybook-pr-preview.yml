@@ -87,6 +87,24 @@ jobs:
           # Prevents husky from installing git hooks during CI (not needed in CI environment)
           HUSKY: 0
 
+      # Debug: Check if Storybook dependencies are properly installed
+      - name: Debug Storybook dependencies
+        run: |
+          echo "Checking Storybook dependencies..."
+          ls -la node_modules/@storybook/ || echo "No @storybook in root node_modules"
+          ls -la packages/ui-kit-mantine/node_modules/@storybook/ || echo "No @storybook in ui-kit-mantine node_modules"
+          echo "Checking for @storybook/react-vite specifically..."
+          find . -name "*storybook*" -type d | head -10
+          echo "Checking package.json dependencies..."
+          cat packages/ui-kit-mantine/package.json | grep -A 20 "devDependencies"
+
+      # Ensure ui-kit-mantine dependencies are properly installed
+      # This step ensures that all dependencies for the ui-kit-mantine package are available
+      - name: Install ui-kit-mantine dependencies
+        run: |
+          cd packages/ui-kit-mantine
+          npm install --no-package-lock
+
       # Build Storybook static files
       # This creates the storybook-static directory with all HTML/CSS/JS files
       # Uses the build-storybook script defined in packages/ui-kit-mantine/package.json

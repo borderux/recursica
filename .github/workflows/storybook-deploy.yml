@@ -50,6 +50,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Ensure ui-kit-mantine dependencies are properly installed
+      # This step ensures that all dependencies for the ui-kit-mantine package are available
+      - name: Install ui-kit-mantine dependencies
+        run: |
+          cd packages/ui-kit-mantine
+          npm install --no-package-lock
+
       # Build Storybook static files
       # This creates the storybook-static directory with all HTML/CSS/JS files
       - name: Build Storybook
