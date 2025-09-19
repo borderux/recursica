@@ -52,6 +52,7 @@ The built files will be available in the `storybook-static` directory.
 
 - **Colors**: Interactive color palette organized by color families
 - **Size**: Size tokens including spacers, gutters, and border radius
+- **Grid**: Responsive grid system tokens for different viewport sizes
 
 ## Token Management
 
@@ -71,6 +72,10 @@ const sizes = tokenManager.getGroupedSizeTokens();
 // Get sorted families/categories
 const colorFamilies = tokenManager.getSortedColorFamilies();
 const sizeCategories = tokenManager.getSortedSizeCategories();
+
+// Get grid tokens
+const gridTokens = tokenManager.getGridTokens();
+const gridBreakpoints = tokenManager.getSortedGridBreakpoints();
 ```
 
 ## Development

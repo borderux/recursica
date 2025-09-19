@@ -1,11 +1,31 @@
 /**
  * WARNING: This file is auto-generated from a JSON schema. Do not edit directly.
  */
-
+export interface GridToken extends Token {
+  type: "GRID";
+  name: string;
+  description: string;
+  layouts: Array<
+    | {
+        alignment: string;
+        count: number;
+        gap: number;
+        margin: number;
+        pattern: string;
+      }
+    | {
+        alignment: string;
+        count: number;
+        gap: number;
+        width: number;
+        pattern: string;
+      }
+  >;
+}
 /**
  * Union type representing any type of collection token
  */
-export type CollectionToken = Token | FontFamilyToken | EffectToken;
+export type CollectionToken = Token | FontFamilyToken | EffectToken | GridToken;
 /**
  * Represents a variable casted value
  */

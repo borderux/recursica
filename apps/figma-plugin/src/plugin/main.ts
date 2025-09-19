@@ -18,6 +18,12 @@ if (import.meta.env.MODE === 'development') {
   });
 }
 
+async function main() {
+  const grids = await figma.getLocalGridStylesAsync();
+  console.log(grids);
+}
+main();
+
 figma.ui.onmessage = async (e) => {
   if (e.type === 'GET_LOCAL_STORAGE') {
     getLocalStorage();

@@ -12,7 +12,7 @@ const preview: Preview = {
         order: [
           "Introduction",
           "Tokens",
-          ["Colors", "Size"],
+          ["Colors", "Size", "Grid"],
           "Components",
           "*",
         ],

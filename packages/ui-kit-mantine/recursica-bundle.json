@@ -2,6 +2,55 @@
   "projectId": "Recursica",
   "pluginVersion": "0.0.4",
   "tokens": {
+
+    "[Tokens][Mode-1][grids/xs]": {
+      "type": "GRID",
+      "name": "xs",
+      "description": "For viewports from 0 to 576 px.",
+      "layouts": [{
+        "alignment": "stretch",
+        "count": 4,
+        "gap": 16,
+        "margin": 16,
+        "pattern": "COLUMNS"
+      }]
+    },
+    "[Tokens][Mode-1][grids/sm]": {
+      "type": "GRID",
+      "name": "sm",
+      "description": "For viewports from 577 to 992 px.",
+      "layouts": [{
+        "alignment": "stretch",
+        "count": 6,
+        "gap": 16,
+        "margin": 80,
+        "pattern": "COLUMNS"
+      }]
+    },
+    "[Tokens][Mode-1][grids/md]": {
+      "type": "GRID",
+      "name": "md",
+      "description": "For viewports from 993 to 1200 px.",
+      "layouts": [{
+        "alignment": "center",
+        "count": 12,
+        "gap": 16,
+        "width": 64,
+        "pattern": "COLUMNS"
+      }]
+    },
+    "[Tokens][Mode-1][grids/lg]": {
+      "type": "GRID",
+      "name": "lg",
+      "description": "For viewports larger than 1200 px.",
+      "layouts": [{
+        "alignment": "center",
+        "count": 12,
+        "gap": 16,
+        "width": 64,
+        "pattern": "COLUMNS"
+      }]
+    },
     "[Tokens][Mode-1][color/salmon/600]": {
       "collection": "Tokens",
       "mode": "Mode 1",
