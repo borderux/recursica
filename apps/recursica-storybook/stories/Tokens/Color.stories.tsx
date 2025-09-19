@@ -1,18 +1,16 @@
 import React from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Box, Flex, Typography } from "@recursica/ui-kit-mantine";
+import {
+  Box,
+  Flex,
+  Typography,
+  type RecursicaColors,
+} from "@recursica/ui-kit-mantine";
 import TokenManager from "../../src/TokenManager";
 
 const tokenManager = TokenManager.getInstance();
 const groupedColors = tokenManager.getGroupedColors();
 const sortedFamilies = tokenManager.getSortedColorFamilies();
-
-console.log(
-  "Filtered colors (only color/ tokens):",
-  Object.values(groupedColors)
-    .flat()
-    .map((c) => c.name),
-);
 
 const ColorPalette = () => (
   <Box p="size/spacer/2x">
@@ -36,7 +34,7 @@ const ColorPalette = () => (
                 <Box
                   w={40}
                   h={40}
-                  style={{ backgroundColor: color.value }}
+                  bg={color.name as RecursicaColors}
                   br="size/border-radius/0-5x"
                   bw="1px"
                   bc="color/gray/200"
@@ -46,7 +44,7 @@ const ColorPalette = () => (
                     {color.family}-{color.shade}
                   </Typography>
                   <Typography variant="caption" color="color/gray/600">
-                    {color.value}
+                    {color.value.toString()}
                   </Typography>
                 </Box>
               </Flex>

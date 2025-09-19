@@ -1,20 +1,21 @@
 import recursica from "../../../packages/ui-kit-mantine/recursica-bundle.json" with { type: "json" };
-import type { Token, RecursicaVariablesSchema } from "@recursica/schemas";
+import type {
+  Token,
+  RecursicaVariablesSchema,
+  CollectionToken,
+} from "@recursica/schemas";
 
 // Type the recursica bundle properly
 const recursicaBundle = recursica as RecursicaVariablesSchema;
 
-// Extended token types that include our computed properties
 export interface ColorToken extends Token {
-  shade: number;
   family: string;
-  value: string; // Override to ensure it's a string for colors
+  shade: number;
 }
 
 export interface SizeToken extends Token {
-  variant: string;
   category: string;
-  value: number; // Override to ensure it's a number for sizes
+  variant: string;
 }
 
 export interface GroupedColors {
@@ -27,42 +28,11 @@ export interface GroupedSizeTokens {
 
 class TokenManager {
   private static instance: TokenManager;
-  private allTokens: Token[];
+  private allTokens: CollectionToken[];
+  private themes: RecursicaVariablesSchema["themes"];
 
   private constructor() {
-    this.allTokens = Object.values(recursicaBundle.tokens) as Token[];
-  }
-
-  /**
-   * Create a ColorToken from a base Token
-   */
-  private createColorToken(
-    token: Token,
-    family: string,
-    shade: number,
-  ): ColorToken {
-    return {
-      ...token,
-      value: String(token.value),
-      shade,
-      family,
-    } as ColorToken;
-  }
-
-  /**
-   * Create a SizeToken from a base Token
-   */
-  private createSizeToken(
-    token: Token,
-    category: string,
-    variant: string,
-  ): SizeToken {
-    return {
-      ...token,
-      value: Number(token.value),
-      variant,
-      category,
-    } as SizeToken;
+    this.allTokens = Object.values(recursicaBundle.tokens);
   }
 
   public static getInstance(): TokenManager {
@@ -78,6 +48,7 @@ class TokenManager {
   public getGroupedColors(): GroupedColors {
     const colors = this.allTokens.filter(
       (token) =>
+        "collection" in token &&
         token.collection === "Tokens" &&
         token.type === "color" &&
         token.name.startsWith("color/") &&
@@ -85,18 +56,22 @@ class TokenManager {
     );
 
     const groupedColors = colors.reduce((acc, token) => {
+      if (!("collection" in token)) {
+        return acc;
+      }
       const nameParts = token.name.split("/");
       if (nameParts.length >= 3 && nameParts[0] === "color") {
         const family = nameParts[1];
-        const shade = nameParts[2];
 
         if (!acc[family]) {
           acc[family] = [];
         }
 
-        acc[family].push(
-          this.createColorToken(token, family, parseInt(shade) || 0),
-        );
+        acc[family].push({
+          ...token,
+          family,
+          shade: parseInt(nameParts[2]),
+        });
       }
       return acc;
     }, {} as GroupedColors);
@@ -115,12 +90,16 @@ class TokenManager {
   public getGroupedSizeTokens(): GroupedSizeTokens {
     const sizeTokens = this.allTokens.filter(
       (token) =>
+        "collection" in token &&
         token.collection === "Tokens" &&
         token.type === "float" &&
         token.name.startsWith("size/"),
     );
 
     const groupedSizeTokens = sizeTokens.reduce((acc, token) => {
+      if (!("name" in token)) {
+        return acc;
+      }
       const nameParts = token.name.split("/");
       if (nameParts.length >= 3 && nameParts[0] === "size") {
         const category = nameParts[1];
@@ -130,14 +109,24 @@ class TokenManager {
           acc[category] = [];
         }
 
-        acc[category].push(this.createSizeToken(token, category, variant));
+        acc[category].push({
+          ...token,
+          category,
+          variant,
+        });
       }
       return acc;
     }, {} as GroupedSizeTokens);
 
     // Sort tokens within each category by value (smallest to largest)
     Object.keys(groupedSizeTokens).forEach((category) => {
-      groupedSizeTokens[category].sort((a, b) => a.value - b.value);
+      groupedSizeTokens[category].sort((a, b) => {
+        const aValue =
+          typeof a.value === "number" ? a.value : parseFloat(String(a.value));
+        const bValue =
+          typeof b.value === "number" ? b.value : parseFloat(String(b.value));
+        return aValue - bValue;
+      });
     });
 
     return groupedSizeTokens;
@@ -155,36 +144,6 @@ class TokenManager {
    */
   public getSortedSizeCategories(): string[] {
     return Object.keys(this.getGroupedSizeTokens()).sort();
-  }
-
-  /**
-   * Get all tokens by type
-   */
-  public getTokensByType(type: "color" | "float"): Token[] {
-    return this.allTokens.filter(
-      (token) => token.collection === "Tokens" && token.type === type,
-    );
-  }
-
-  /**
-   * Get tokens by name pattern
-   */
-  public getTokensByNamePattern(pattern: string): Token[] {
-    return this.allTokens.filter((token) => token.name.startsWith(pattern));
-  }
-
-  /**
-   * Get all raw tokens
-   */
-  public getAllTokens(): Token[] {
-    return [...this.allTokens];
-  }
-
-  /**
-   * Get tokens by collection
-   */
-  public getTokensByCollection(collection: string): Token[] {
-    return this.allTokens.filter((token) => token.collection === collection);
   }
 }
 
