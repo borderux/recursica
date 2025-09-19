@@ -1,0 +1,70 @@
+name: Deploy PR Preview
+
+# Builds and deploys Storybook previews for pull requests with "preview" in the title.
+# Each PR gets a unique preview URL and automatic PR comments with the link.
+#
+# Usage: Include "preview" (case insensitive) in your PR title to trigger a preview build.
+# Example titles: "Add button component - preview", "PREVIEW: Update theme"
+#
+# Prerequisites:
+# - GitHub Pages enabled with "Deploy from a branch" (gh-pages branch)
+# - ui-kit-mantine package with working "build-storybook" script
+#
+# Preview URLs: https://[username].github.io/recursica/pr-preview/pr-[pr-number]/
+
+on:
+  # Trigger on pull requests targeting main branch
+  # Note: Preview builds only run if PR title contains "preview"
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+    branches: [main]
+  # Allow manual triggering from GitHub Actions tab
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  pull-requests: write
+
+# Allow concurrent deployments for different PRs
+concurrency: preview-${{ github.ref }}
+
+jobs:
+  deploy-preview:
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.title, 'preview') || contains(github.event.pull_request.title, 'Preview') || contains(github.event.pull_request.title, 'PREVIEW')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          HUSKY: 0
+
+      # This step is needed to install in the CI environment (or else it wont work)
+      - name: Install ui-kit-mantine dependencies
+        run: |
+          cd packages/ui-kit-mantine
+          npm install --no-package-lock
+
+      - name: Build Storybook
+        if: github.event.action != 'closed'
+        run: npm run build-storybook
+        working-directory: packages/ui-kit-mantine
+
+      - name: Deploy preview
+        uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: ./packages/ui-kit-mantine/storybook-static
+          preview-branch: gh-pages
+          umbrella-dir: pr-preview
+          action: auto
