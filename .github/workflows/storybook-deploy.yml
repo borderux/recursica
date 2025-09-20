@@ -57,4 +57,25 @@ jobs:
       - name: Deploy to GitHub Pages
         run: |
           npm install --save-dev gh-pages
+          # Create a root index.html that redirects to storybook
+          mkdir -p temp-root
+          cat > temp-root/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Recursica Design System</title>
+            <meta http-equiv="refresh" content="0; url=./storybook/">
+            <link rel="canonical" href="./storybook/">
+          </head>
+          <body>
+            <h1>Recursica Design System</h1>
+            <p>Redirecting to Storybook...</p>
+            <p>If you are not redirected automatically, <a href="./storybook/">click here</a>.</p>
+          </body>
+          </html>
+          EOF
+          # Deploy both the root index and the storybook
+          npx gh-pages -d temp-root -b gh-pages --dest "." --repo "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
           npx gh-pages -d apps/recursica-storybook/storybook-static -b gh-pages --dest "storybook" --repo "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
