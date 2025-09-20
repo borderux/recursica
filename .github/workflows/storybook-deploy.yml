@@ -47,7 +47,7 @@ jobs:
         run: npm ci
 
       - name: Build Storybook
-        run: turbo run build-storybook --filter=recursica-storybook
+        run: npx turbo run build-storybook --filter=recursica-storybook
 
       - name: Deploy to GitHub Pages
         run: |
