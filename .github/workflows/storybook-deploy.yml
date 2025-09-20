@@ -57,6 +57,4 @@ jobs:
       - name: Deploy to GitHub Pages
         run: |
           npm install --save-dev gh-pages
-          npx gh-pages -d apps/recursica-storybook/storybook-static -b gh-pages --dest "storybook"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          npx gh-pages -d apps/recursica-storybook/storybook-static -b gh-pages --dest "storybook" --repo "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
