@@ -66,12 +66,12 @@ jobs:
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Recursica Design System</title>
-            <meta http-equiv="refresh" content="0; url=./storybook/">
             <link rel="canonical" href="./storybook/">
+            <script>
+              window.location.replace('./storybook/');
+            </script>
           </head>
           <body>
-            <h1>Recursica Design System</h1>
-            <p>Redirecting to Storybook...</p>
             <p>If you are not redirected automatically, <a href="./storybook/">click here</a>.</p>
           </body>
           </html>
