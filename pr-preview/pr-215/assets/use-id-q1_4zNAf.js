@@ -1,0 +1,1 @@
+import{R as o,r as u,e as i}from"./iframe-dbytajQO.js";function s(t="mantine-"){return`${t}${Math.random().toString(36).slice(2,11)}`}const a=o.useId||(()=>{});function c(){const t=a();return t?`mantine-${t.replace(/:/g,"")}`:""}function f(t){const e=c(),[n,r]=u.useState(e);return i(()=>{r(s())},[]),typeof t=="string"?t:typeof window>"u"?e:n}export{f as u};

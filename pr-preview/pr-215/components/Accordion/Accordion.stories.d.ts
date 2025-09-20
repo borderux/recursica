@@ -1,0 +1,10 @@
+import { Meta, StoryObj } from '@storybook/react';
+import { Accordion } from './Accordion';
+declare const meta: Meta<typeof Accordion>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+export declare const Default: Story;
+export declare const Multiple: Story;
+export declare const Contained: Story;
+export declare const Filled: Story;
+export declare const LeftChevron: Story;
