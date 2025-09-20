@@ -49,6 +49,11 @@ jobs:
       - name: Build Storybook
         run: npx turbo run build-storybook --filter=recursica-storybook
 
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
       - name: Deploy to GitHub Pages
         run: |
           npm install --save-dev gh-pages
