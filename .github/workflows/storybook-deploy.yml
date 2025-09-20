@@ -1,21 +1,21 @@
 name: Deploy Storybook to GitHub Pages
 
-# This workflow builds and deploys the Storybook from the ui-kit-mantine package
-# to GitHub Pages at the /ui-kit-mantine/ subpath.
+# This workflow builds and deploys the Storybook from the recursica-storybook app
+# to GitHub Pages at the /storybook/ subpath.
 #
 # Prerequisites:
 # 1. GitHub Pages must be enabled in repository settings (Settings → Pages → Source: Deploy from a branch)
 # 2. Repository must have Pages permissions enabled
 # 3. The gh-pages branch must be set as the source branch for GitHub Pages
 #
-# The Storybook will be available at: https://[username].github.io/recursica/ui-kit-mantine/
+# The Storybook will be available at: https://[username].github.io/recursica/storybook/
 
 on:
-  # Trigger on pushes to main branch that affect ui-kit-mantine package
+  # Trigger on pushes to main branch that affect recursica-storybook app
   push:
     branches: [main]
     paths:
-      - "packages/ui-kit-mantine/**"
+      - "apps/recursica-storybook/**"
   # Allow manual triggering from GitHub Actions tab
   workflow_dispatch:
 
@@ -46,16 +46,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install ui-kit-mantine dependencies
-        run: |
-          cd packages/ui-kit-mantine
-          npm install --no-package-lock
-
       - name: Build Storybook
-        run: npm run build-storybook
-        working-directory: packages/ui-kit-mantine
+        run: turbo run build-storybook --filter=recursica-storybook
 
       - name: Deploy to GitHub Pages
         run: |
           npm install --save-dev gh-pages
-          npx gh-pages -d packages/ui-kit-mantine/storybook-static -b gh-pages --dest "ui-kit-mantine"
+          npx gh-pages -d apps/recursica-storybook/storybook-static -b gh-pages --dest "storybook"
