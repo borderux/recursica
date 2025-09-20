@@ -22,7 +22,8 @@
     "release": "changeset publish --access public",
     "pr": "node scripts/create-pr.js",
     "pr:commit": "node scripts/commit-pr-check.js",
-    "simulate-ci": "./scripts/simulate-ci-build.sh"
+    "simulate-ci": "./scripts/simulate-ci-build.sh",
+    "storybook": "turbo run storybook --filter=recursica-storybook"
   },
   "packageManager": "npm@10.9.0",
   "engines": {

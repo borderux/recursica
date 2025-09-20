@@ -30,7 +30,7 @@ const WelcomeComponent = () => (
 );
 
 const meta: Meta<typeof WelcomeComponent> = {
-  title: "Introduction/Welcome",
+  title: "Introduction",
   component: WelcomeComponent,
   parameters: {
     layout: "fullscreen",
