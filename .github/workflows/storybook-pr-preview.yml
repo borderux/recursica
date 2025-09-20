@@ -8,7 +8,7 @@ name: Deploy PR Preview
 #
 # Prerequisites:
 # - GitHub Pages enabled with "Deploy from a branch" (gh-pages branch)
-# - ui-kit-mantine package with working "build-storybook" script
+# - recursica-storybook app with working "build-storybook" script
 #
 # Preview URLs: https://[username].github.io/recursica/pr-preview/pr-[pr-number]/
 
@@ -50,21 +50,14 @@ jobs:
         env:
           HUSKY: 0
 
-      # This step is needed to install in the CI environment (or else it wont work)
-      - name: Install ui-kit-mantine dependencies
-        run: |
-          cd packages/ui-kit-mantine
-          npm install --no-package-lock
-
       - name: Build Storybook
         if: github.event.action != 'closed'
-        run: npm run build-storybook
-        working-directory: packages/ui-kit-mantine
+        run: npx turbo run build-storybook --filter=recursica-storybook
 
       - name: Deploy preview
         uses: rossjrw/pr-preview-action@v1
         with:
-          source-dir: ./packages/ui-kit-mantine/storybook-static
+          source-dir: ./apps/recursica-storybook/storybook-static
           preview-branch: gh-pages
           umbrella-dir: pr-preview
           action: auto
