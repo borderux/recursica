@@ -1,5 +1,11 @@
 # @recursica/figma-plugin
 
+## 10.0.0
+
+### Major Changes
+
+- ea4b151: Refactored the file type detection module
+
 ## 9.0.0
 
 ### Major Changes
