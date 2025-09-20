@@ -5,7 +5,7 @@
 /**
  * Union type representing any type of collection token
  */
-export type CollectionToken = Token | FontFamilyToken | EffectToken;
+export type CollectionToken = Token | FontFamilyToken | EffectToken | GridToken;
 /**
  * Represents a variable casted value
  */
@@ -187,4 +187,54 @@ export interface Effect {
    * The spread radius of the effect
    */
   spread: number;
+}
+/**
+ * Represents a grid token with layout configurations
+ */
+export interface GridToken {
+  /**
+   * The token type, must be 'GRID'
+   */
+  type: "GRID";
+  /**
+   * The name of the grid token
+   */
+  name: string;
+  /**
+   * Description of the grid token
+   */
+  description: string;
+  /**
+   * Array of grid layout configurations
+   */
+  layouts: GridLayout[];
+}
+/**
+ * Represents a grid layout configuration
+ */
+export interface GridLayout {
+  /**
+   * The alignment of the grid (e.g., 'stretch', 'center')
+   */
+  alignment: string;
+  /**
+   * The number of columns in the grid
+   */
+  count: number;
+  /**
+   * The gap between grid items
+   */
+  gap: number;
+  /**
+   * The margin around the grid
+   */
+  margin?: number;
+  /**
+   * The width of grid columns
+   */
+  width?: number;
+  /**
+   * The grid pattern (e.g., 'COLUMNS')
+   */
+  pattern: string;
 }

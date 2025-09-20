@@ -43,3 +43,6 @@ yarn-error.log*
 
 # Temporary PR description files
 pr-description.md
+
+*storybook.log
+storybook-static

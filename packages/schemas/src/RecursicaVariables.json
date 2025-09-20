@@ -125,6 +125,66 @@
       "required": ["variableName", "effects"],
       "additionalProperties": false
     },
+    "GridLayout": {
+      "type": "object",
+      "description": "Represents a grid layout configuration",
+      "properties": {
+        "alignment": {
+          "type": "string",
+          "description": "The alignment of the grid (e.g., 'stretch', 'center')"
+        },
+        "count": {
+          "type": "number",
+          "description": "The number of columns in the grid"
+        },
+        "gap": {
+          "type": "number",
+          "description": "The gap between grid items"
+        },
+        "margin": {
+          "type": "number",
+          "description": "The margin around the grid"
+        },
+        "width": {
+          "type": "number",
+          "description": "The width of grid columns"
+        },
+        "pattern": {
+          "type": "string",
+          "description": "The grid pattern (e.g., 'COLUMNS')"
+        }
+      },
+      "required": ["alignment", "count", "gap", "pattern"],
+      "additionalProperties": false
+    },
+    "GridToken": {
+      "type": "object",
+      "description": "Represents a grid token with layout configurations",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "GRID",
+          "description": "The token type, must be 'GRID'"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the grid token"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the grid token"
+        },
+        "layouts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GridLayout"
+          },
+          "description": "Array of grid layout configurations"
+        }
+      },
+      "required": ["type", "name", "description", "layouts"],
+      "additionalProperties": false
+    },
     "LineHeight": {
       "type": "object",
       "description": "Line height configuration",
@@ -287,6 +347,9 @@
         },
         {
           "$ref": "#/$defs/EffectToken"
+        },
+        {
+          "$ref": "#/$defs/GridToken"
         }
       ],
       "description": "Union type representing any type of collection token"

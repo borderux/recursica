@@ -1,3 +1,5 @@
+// ESLint configuration for recursica-storybook app
+import storybook from "eslint-plugin-storybook";
 import { config } from "@repo/eslint-config/base";
 
 /** @type {import("eslint").Linter.Config} */
@@ -11,4 +13,5 @@ export default [
       "eslint-disable-next-line": "off",
     },
   },
+  ...storybook.configs["flat/recommended"],
 ];

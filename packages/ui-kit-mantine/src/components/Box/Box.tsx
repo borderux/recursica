@@ -146,6 +146,10 @@ export interface BoxProps
   hiddenFrom?: MantineBoxProps["hiddenFrom"];
   visibleFrom?: MantineBoxProps["visibleFrom"];
   className?: string;
+  /**
+   * The opacity of the box
+   */
+  opacity?: number;
 }
 
 export const Box = forwardRef<HTMLDivElement, BoxProps>((props, ref) => {
@@ -154,7 +158,13 @@ export const Box = forwardRef<HTMLDivElement, BoxProps>((props, ref) => {
   const combinedStyles = { ...inlineStyles, ...styles };
 
   return (
-    <MantineBox ref={ref} {...props} {...propsStyles} style={combinedStyles} />
+    <MantineBox
+      ref={ref}
+      {...props}
+      {...propsStyles}
+      opacity={props.opacity}
+      style={combinedStyles}
+    />
   );
 });
 
