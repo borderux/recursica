@@ -2,6 +2,15 @@
 
 Recursica is a comprehensive design system and component library that helps teams build consistent, beautiful user interfaces. It provides a set of reusable components, design tokens, and tools for seamless integration with Figma and various frontend frameworks.
 
+## Documentation
+
+Get started with Recursica using our comprehensive guides:
+
+- **[Introduction](docs/INTRODUCTION.md)** - Learn about Recursica's purpose, philosophy, and core components
+- **[Designer Guide](docs/DESIGNER-GUIDE.md)** - Complete guide for Figma designers using the plugin and git workflow
+- **[Developer Guide](docs/DEVELOPER-GUIDE.md)** - Configuration and usage guide for developers integrating the UI kit
+- **[Icons Guide](docs/ICONS-GUIDE.md)** - Managing icon exports from Figma to your codebase
+
 ## Quick Start
 
 ### Prerequisites
