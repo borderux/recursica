@@ -51,6 +51,7 @@
     "prettier": "3.5.3"
   },
   "dependencies": {
+    "playwright": "^1.55.0",
     "turbo": "^2.5.4",
     "typescript": "5.8.2"
   },
