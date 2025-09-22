@@ -19,3 +19,4 @@ export * from "./Textfield/Textfield";
 export * from "./ThemeProvider/ThemeProvider";
 export * from "./Tooltip";
 export * from "./Typography";
+export * from "./Grid/Grid";

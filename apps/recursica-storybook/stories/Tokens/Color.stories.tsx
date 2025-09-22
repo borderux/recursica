@@ -73,6 +73,6 @@ const meta: Meta<typeof ColorPalette> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const ColorPaletteStory: Story = {
-  name: "Color Palette",
+export const Default: Story = {
+  name: "Colors",
 };

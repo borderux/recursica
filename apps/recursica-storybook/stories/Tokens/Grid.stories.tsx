@@ -96,6 +96,6 @@ const meta: Meta<typeof GridTokens> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const GridTokensStory: Story = {
-  name: "Grid Tokens",
+export const Default: Story = {
+  name: "Grid",
 };
