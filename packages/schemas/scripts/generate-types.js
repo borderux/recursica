@@ -152,7 +152,7 @@ async function buildIndexFile() {
   try {
     // Get all JSON schema files to generate dynamic exports
     const jsonFiles = await glob(`${SRC_DIR}/**/*.json`, {
-      ignore: [`${SRC_DIR}/test/**`],
+      ignore: [`**/test/*.json`],
     });
     const schemaNames = jsonFiles.map((file) => path.basename(file, ".json"));
 
@@ -210,7 +210,7 @@ async function build() {
   await cleanDist();
   await createDist();
   const jsonFiles = await glob(`${SRC_DIR}/**/*.json`, {
-    ignore: [`${SRC_DIR}/test/**`],
+    ignore: [`**/test/*.json`],
   });
   await processSchemas(jsonFiles);
   await compileValidators();

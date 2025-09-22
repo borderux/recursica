@@ -1,3 +1,4 @@
+import { RecursicaColors } from "@recursica/ui-kit-mantine";
 import recursica from "../../../packages/ui-kit-mantine/recursica-bundle.json" with { type: "json" };
 import type {
   Token,
@@ -27,10 +28,24 @@ export interface GroupedSizeTokens {
   [category: string]: SizeToken[];
 }
 
+export interface ColorScaleProperty {
+  subtle?: string;
+  regular?: string;
+  tone?: RecursicaColors;
+  onTone?: RecursicaColors;
+}
+
+export interface ColorScale {
+  [variant: string]: ColorScaleProperty;
+}
+
+export interface ColorScales {
+  [scaleName: string]: ColorScale;
+}
+
 class TokenManager {
   private static instance: TokenManager;
   private allTokens: CollectionToken[];
-  private themes: RecursicaVariablesSchema["themes"];
 
   private constructor() {
     this.allTokens = Object.values(recursicaBundle.tokens);
@@ -181,6 +196,165 @@ class TokenManager {
       const order: Record<string, number> = { xs: 0, sm: 1, md: 2, lg: 3 };
       return order[a.name] - order[b.name];
     });
+  }
+
+  /**
+   * Get color scales dynamically from theme tokens
+   * Extracts scales like neutral, scale-1, scale-2 with their default properties and variants
+   */
+  public getColorScales(themeName?: string): ColorScales {
+    if (!themeName) {
+      themeName = Object.keys(recursicaBundle.themes)[0];
+    }
+
+    const themeTokens = Object.values(recursicaBundle.themes[themeName]).filter(
+      (token) => {
+        return (
+          "collection" in token &&
+          token.collection === "Themes" &&
+          token.name.startsWith("colors/") &&
+          token.name.split("/").length >= 4 // colors/scale-name/variant/property
+        );
+      },
+    );
+
+    // First, extract all scale names by looking for default/tone patterns
+    const scaleNames = new Set<string>();
+    themeTokens.forEach((token) => {
+      if (!("name" in token)) return;
+      const nameParts = token.name.split("/");
+      if (
+        nameParts.length >= 4 &&
+        nameParts[2] === "default" &&
+        nameParts[3] === "tone"
+      ) {
+        scaleNames.add(nameParts[1]);
+      }
+    });
+
+    // Initialize the color scales structure
+    const colorScales: ColorScales = {};
+    scaleNames.forEach((scaleName) => {
+      colorScales[scaleName] = {};
+    });
+
+    // Populate the scales with their properties
+    themeTokens.forEach((token) => {
+      if (!("name" in token)) return;
+
+      const nameParts = token.name.split("/");
+      if (nameParts.length < 4 || nameParts[0] !== "colors") return;
+
+      const scaleName = nameParts[1];
+      const variant = nameParts[2];
+      const property = nameParts[3];
+
+      if (!scaleNames.has(scaleName)) return;
+
+      // Map property names to our interface
+      const propertyMap: { [key: string]: keyof ColorScaleProperty } = {
+        subtle: "subtle",
+        regular: "regular",
+        tone: "tone",
+        "on-tone": "onTone",
+      };
+
+      const mappedProperty = propertyMap[property];
+      if (!mappedProperty) return;
+
+      // Initialize variant if it doesn't exist
+      if (!colorScales[scaleName][variant]) {
+        colorScales[scaleName][variant] = {};
+      }
+
+      colorScales[scaleName][variant][mappedProperty] =
+        token.name as RecursicaColors;
+    });
+
+    return colorScales;
+  }
+
+  /**
+   * Get available color scale names
+   */
+  public getColorScaleNames(themeName?: string): string[] {
+    const colorScales = this.getColorScales(themeName);
+    return Object.keys(colorScales).sort();
+  }
+
+  /**
+   * Get theme colors for a specific mode (Light/Dark)
+   */
+  public getThemeColors(themeName?: string): Array<{
+    name: string;
+    color: RecursicaColors;
+    opacity?: number;
+  }> {
+    if (!themeName) {
+      themeName = Object.keys(recursicaBundle.themes)[0];
+    }
+    let selectedMode: string;
+    // Get all theme tokens for the specified mode
+    const themeTokens = Object.values(recursicaBundle.themes[themeName]).filter(
+      (token) => {
+        if (!("mode" in token)) return false;
+        if (!selectedMode) selectedMode = token.mode;
+        return (
+          "collection" in token &&
+          token.collection === "Themes" &&
+          token.mode === selectedMode &&
+          token.name.startsWith("colors/") &&
+          token.name.split("/").length === 2
+        );
+      },
+    );
+
+    // Map the theme tokens to the expected format
+    const themeColors = themeTokens
+      .map((token) => {
+        if (!("name" in token)) return null;
+
+        const colorName = token.name.split("/")[1]; // Get the color name part
+        const displayName =
+          colorName.charAt(0).toUpperCase() + colorName.slice(1); // Capitalize first letter
+
+        // Check if this is a disabled or overlay color (which have opacity)
+        const isOpacityColor =
+          colorName === "disabled" || colorName === "overlay";
+
+        return isOpacityColor
+          ? {
+              name: `${displayName} \n(opacity)`,
+              color: "colors/black",
+              opacity: 0.38,
+            }
+          : {
+              name: displayName,
+              color: token.name,
+              opacity: undefined,
+            };
+      })
+      .filter(Boolean) as Array<{
+      name: string;
+      color: string;
+      opacity?: number;
+    }>;
+
+    // Sort colors: regular colors first, then opacity colors at the end
+    themeColors.sort((a, b) => {
+      const aHasOpacity = a.opacity !== undefined;
+      const bHasOpacity = b.opacity !== undefined;
+
+      if (aHasOpacity && !bHasOpacity) return 1; // a goes after b
+      if (!aHasOpacity && bHasOpacity) return -1; // a goes before b
+      return 0; // maintain original order within each group
+    });
+
+    return themeColors as Array<{
+      name: string;
+      color: RecursicaColors;
+      opacity?: number;
+    }>;
   }
 }
 

@@ -30,12 +30,12 @@ const SizeTokens = () => (
                 <Box
                   w={
                     token.category === "spacer" || token.category === "gutter"
-                      ? token.value
+                      ? (token.value as string | number | undefined)
                       : 60
                   }
                   h={
                     token.category === "spacer" || token.category === "gutter"
-                      ? token.value
+                      ? (token.value as string | number | undefined)
                       : 60
                   }
                   bg="color/salmon/500"
@@ -64,7 +64,7 @@ const SizeTokens = () => (
                 />
                 <Flex direction="column" align="flex-start">
                   <Typography variant="body-1/normal" color="color/gray/900">
-                    {token.value} {token.variant}
+                    {token.value as string | number | undefined} {token.variant}
                   </Typography>
                   <Typography variant="caption" color="color/gray/600">
                     {token.name}
@@ -96,6 +96,6 @@ const meta: Meta<typeof SizeTokens> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const SizeTokensStory: Story = {
-  name: "Size Tokens",
+export const Default: Story = {
+  name: "Size",
 };

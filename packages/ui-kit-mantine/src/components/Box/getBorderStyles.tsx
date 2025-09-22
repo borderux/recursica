@@ -2,14 +2,19 @@ import { type BoxBorders } from "./Box";
 import { recursica } from "../../recursica/Recursica";
 
 export function getBorderStyles(props: BoxBorders): React.CSSProperties {
-  if (props.bw && props.bs && props.bc) {
-    return {
-      borderWidth: props.bw,
-      borderColor: recursica[props.bc],
-      borderStyle: props.bs,
-    };
+  const borderStyles: React.CSSProperties = {};
+  if (props.br) {
+    borderStyles.borderRadius = props.br ? recursica[props.br] : undefined;
   }
+  if (props.bw && props.bs && props.bc) {
+    borderStyles.borderWidth = props.bw;
+    borderStyles.borderColor = recursica[props.bc];
+    borderStyles.borderStyle = props.bs;
+    return borderStyles;
+  }
+
   return {
+    ...borderStyles,
     borderRadius: props.br ? recursica[props.br] : undefined,
     borderTopWidth: props.btw ?? undefined,
     borderTopColor: props.btc ? recursica[props.btc] : undefined,
