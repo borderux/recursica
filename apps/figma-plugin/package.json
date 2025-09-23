@@ -1,17 +1,14 @@
 {
   "name": "@recursica/figma-plugin",
   "private": false,
-  "version": "10.0.0",
+  "version": "0.0.10",
   "description": "The Figma plugin for Recursica",
   "type": "module",
   "license": "MIT",
-  "author": {
-    "name": "Border UX",
-    "url": "https://borderux.com"
-  },
+  "author": "hi@borderux.com",
   "repository": {
     "type": "git",
-    "url": "https://github.com/recursica/recursica-plugin"
+    "url": "git+https://github.com/borderux/recursica.git"
   },
   "keywords": [
     "figma",
@@ -20,20 +17,20 @@
     "design"
   ],
   "bugs": {
-    "url": "https://github.com/recursica/recursica-plugin/issues"
+    "url": "https://github.com/borderux/recursica/issues"
   },
-  "homepage": "https://github.com/recursica/recursica-plugin#readme",
+  "homepage": "https://github.com/borderux/recursica",
   "scripts": {
-    "dev": "concurrently \"npm run dev:ui\" \"npm run watch:code\"",
-    "dev:ui": "vite dev --mode production --port 5175",
-    "build": "npm run build:ui && npm run build:code",
-    "build:ui": "tsc -b && vite build",
-    "build:code": "tsc -b && vite build --config vite.config.lib.ts",
-    "watch": "concurrently \"npm run watch:ui\" \"npm run watch:code\"",
-    "watch:ui": "vite build --watch",
-    "watch:code": "vite build --watch --config vite.config.lib.ts",
+    "dev": "concurrently \"npm run dev:ui\" \"npm run dev:code\"",
+    "dev:ui": "vite build --watch --mode development",
+    "dev:code": "vite build --watch --config vite.config.lib.ts --mode development",
+    "build": "npm run build:ui && npm run build:code && cp manifest.production.json dist/manifest.json",
+    "build:test": "tsc -b && vite build --mode test && vite build --config vite.config.lib.ts --mode test && cp manifest.test.json dist-test/manifest.json",
+    "build:ui": "tsc -b && vite build --mode production",
+    "build:code": "tsc -b && vite build --config vite.config.lib.ts --mode production",
     "lint": "eslint ./src",
-    "zip": "vite build --config vite.config.lib.ts --mode development && vite build --mode development && node scripts/zip.mjs",
+    "zip:test": "npm run build:test && cp manifest.json manifest.test.json && cp ../figma-plugin-test/manifest.test.json manifest.json && node scripts/zip.mjs && cp manifest.test.json manifest.json",
+    "zip:production": "npm run build && cp manifest.json manifest.test.json && cp manifest.production.json manifest.json && node scripts/zip.mjs && cp manifest.test.json manifest.json",
     "preview": "vite preview",
     "check-types": "tsc --noEmit",
     "format": "prettier --write ."
@@ -61,6 +58,7 @@
     "@types/node": "24.0.0",
     "@types/react": "19.1.7",
     "@types/react-dom": "19.1.6",
+    "@vitejs/plugin-react": "^5.0.3",
     "@vitejs/plugin-react-swc": "3.10.2",
     "archiver": "7.0.1",
     "concurrently": "9.0.1",

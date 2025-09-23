@@ -26,6 +26,7 @@ out/
 build
 dist
 
+
 # svelte specific
 .svelte-kit/
 

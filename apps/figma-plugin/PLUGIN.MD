@@ -4,7 +4,6 @@
 
 - Have [Figma Desktop](https://www.figma.com/downloads/) installed
 - Have Edit Access in the Figma file you want to export the local variables from
-- Any unzipping tool (most of the OS have one built-in)
 
 ## Download the plugin
 
@@ -22,7 +21,7 @@
 
 ## Install the plugin
 
-The plugin is currently only available for local testing, to be able to run in locally follow the next steps:
+These are the steps for local development of the plugin:
 
 1. Open Figma Desktop (see [requirements](#requirements) to download it)
 2. If you don't have a Figma file open, create a new one or open an existing one, remember that the file should be named correctly (see [Naming conventions](#naming-conventions))
