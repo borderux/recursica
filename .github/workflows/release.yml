@@ -1,0 +1,153 @@
+# Unified Release Workflow
+#
+# This workflow handles releases for ALL packages and apps in the monorepo using Changesets.
+# It replaces the previous separate release-plugin.yml and release-plugin-test.yml workflows.
+#
+# How it works:
+# 1. Triggers on changes to .changeset/ files, apps/, packages/, or package files
+# 2. Uses Changesets to detect which packages have version changes
+# 3. Runs `changeset publish` which:
+#    - Bumps version numbers in package.json files
+#    - Runs each package's `prepublishOnly` script with appropriate environment variables
+#    - Publishes packages to npm in dependency order
+# 4. Conditionally creates GitHub releases and deploys only for affected packages
+#
+# Environment Variables:
+# - Production variables (VITE_*) are used by the main figma plugin
+# - Test variables (RECURSICA_API_TEST, PLUGIN_PHRASE_TEST) are used by the test plugin
+# - Each package's prepublish script handles its own environment variable mapping
+#
+# Smart Package Detection:
+# - GitHub releases are automatically created by Changesets for all packages with changes
+# - Only deploys to production when the main figma plugin is released
+# - Test plugin releases are handled automatically by Changesets without additional steps
+
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".changeset/**"
+      - "apps/**"
+      - "packages/**"
+      - "package.json"
+      - "package-lock.json"
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # To create releases and tags
+      pull-requests: write # To create pull requests
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          HUSKY: 0
+
+      # Check what packages are being released
+      # This step analyzes the changeset files to determine which packages will be released.
+      # We use this information to conditionally run GitHub releases and deployments
+      # only for packages that actually have changes.
+      - name: Check packages to release
+        id: packages
+        run: |
+          echo "🔍 Checking which packages have changesets..."
+
+          # Check for figma plugin changesets (main plugin, not test)
+          if grep -r "@recursica/figma-plugin" .changeset/ 2>/dev/null | grep -v "@recursica/figma-plugin-test"; then
+            echo "figma-plugin=true" >> $GITHUB_OUTPUT
+            echo "✅ Main figma plugin will be released"
+          else
+            echo "figma-plugin=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  Main figma plugin not affected"
+          fi
+
+          # Check for test plugin changesets
+          if grep -r "@recursica/figma-plugin-test" .changeset/ 2>/dev/null; then
+            echo "figma-plugin-test=true" >> $GITHUB_OUTPUT
+            echo "✅ Test figma plugin will be released"
+          else
+            echo "figma-plugin-test=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  Test figma plugin not affected"
+          fi
+
+      # Caches the Turborepo build artifacts stored in the `.turbo` directory.
+      # This avoids re-running tasks on unchanged code, speeding up the build.
+      - name: Cache Turborepo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
+      # Changesets Action - The Core of Our Release System
+      #
+      # This action has two modes:
+      # 1. If changesets are present, it creates a "Version Packages" pull request.
+      # 2. When the "Version Packages" PR is merged, it runs the `publish` command.
+      #
+      # The `publish` command executes `npm run release` which runs `changeset publish --access public`.
+      # This command:
+      # - Bumps version numbers in package.json files based on changeset files
+      # - Runs each package's `prepublishOnly` script in dependency order
+      # - Publishes packages to npm with proper authentication
+      # - Creates GitHub releases automatically with changelog and links to PRs
+      # - Handles all dependency relationships automatically
+      #
+      # Environment Variables:
+      # - Production variables (VITE_*) are used by the main figma plugin's prepublish script
+      # - Test variables (RECURSICA_API_TEST, PLUGIN_PHRASE_TEST) are used by the test plugin's prepublish script
+      # - Each package's prepublish script maps these to the appropriate VITE_ variables
+      - name: Create Release Pull Request or Publish to GitHub Releases
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          publish: npm run release
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # Production environment variables (default for main plugin)
+          VITE_RECURSICA_API_URL: ${{ secrets.RECURSICA_API }}
+          VITE_RECURSICA_UI_URL: ${{ secrets.RECURSICA_API }}
+          VITE_PLUGIN_PHRASE: ${{ secrets.PLUGIN_PHRASE_PROD }}
+          # Test environment variables (used by test plugin prepublish script)
+          RECURSICA_API_TEST: ${{ secrets.RECURSICA_API_TEST }}
+          PLUGIN_PHRASE_TEST: ${{ secrets.PLUGIN_PHRASE_TEST }}
+
+      # GitHub Releases are now automatically created by Changesets
+      # when using the @changesets/changelog-github formatter.
+      # No separate GitHub Release step is needed.
+
+      # Deploy to production when Version Packages PR is merged
+      # This step only runs when the main figma plugin has changes.
+      # It deploys the built plugin files to the production server.
+      - name: Deploy Figma Plugin to Production
+        if: steps.packages.outputs.figma-plugin == 'true'
+        uses: ./.github/actions/deploy-to-server
+        with:
+          token: ${{ secrets.DISPATCH_TOKEN }}
+          target_repository: ${{ github.repository_owner }}/recursica-server
+          commit_sha: ${{ github.sha }}
+          source_repo: ${{ github.repository }}
+          environment: "prod"
+          files_path: "apps/figma-plugin/dist/**/*"
+          event_type: "trigger-server-deploy"
+          plugin_version: ${{ steps.changesets.outputs.published }}
