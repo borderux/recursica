@@ -31,6 +31,8 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@recursica/schemas": "*"
+    "@recursica/schemas": "*",
+    "@recursica/common": "*",
+    "@recursica/ui-kit-mantine": "*"
   }
 }
