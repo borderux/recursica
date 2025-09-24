@@ -130,6 +130,26 @@ jobs:
           RECURSICA_API_TEST: ${{ secrets.RECURSICA_API_TEST }}
           PLUGIN_PHRASE_TEST: ${{ secrets.PLUGIN_PHRASE_TEST }}
 
+      # Show which packages were published and extract versions
+      - name: Show Published Packages
+        if: steps.changesets.outputs.published == 'true'
+        id: published-info
+        run: |
+          echo "📦 Published packages:"
+          echo "${{ steps.changesets.outputs.publishedPackages }}"
+          
+          # Parse the JSON to show individual packages
+          echo "${{ steps.changesets.outputs.publishedPackages }}" | jq -r '.[] | "  - \(.name)@\(.version)"'
+          
+          # Extract figma plugin version for deployment
+          figma_plugin_version=$(echo "${{ steps.changesets.outputs.publishedPackages }}" | jq -r '.[] | select(.name == "@recursica/figma-plugin") | .version')
+          if [ -n "$figma_plugin_version" ]; then
+            echo "figma-plugin-version=$figma_plugin_version" >> $GITHUB_OUTPUT
+            echo "✅ Figma plugin version: $figma_plugin_version"
+          else
+            echo "ℹ️  No figma plugin version found in published packages"
+          fi
+
       # GitHub Releases are now automatically created by Changesets
       # when using the @changesets/changelog-github formatter.
       # No separate GitHub Release step is needed.
@@ -138,7 +158,7 @@ jobs:
       # This step only runs when the main figma plugin has changes.
       # It deploys the built plugin files to the production server.
       - name: Deploy Figma Plugin to Production
-        if: steps.packages.outputs.figma-plugin == 'true'
+        if: steps.packages.outputs.figma-plugin == 'true' && steps.changesets.outputs.published == 'true' && steps.published-info.outputs.figma-plugin-version != ''
         uses: ./.github/actions/deploy-to-server
         with:
           token: ${{ secrets.DISPATCH_TOKEN }}
@@ -148,4 +168,4 @@ jobs:
           environment: "prod"
           files_path: "apps/figma-plugin/dist/**/*"
           event_type: "trigger-server-deploy"
-          plugin_version: ${{ steps.changesets.outputs.published }}
+          plugin_version: ${{ steps.published-info.outputs.figma-plugin-version }}
