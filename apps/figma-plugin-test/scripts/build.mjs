@@ -21,8 +21,16 @@ try {
     throw new Error(`Main plugin directory not found: ${mainPluginDir}`);
   }
 
-  // Use Turbo to build dependencies first, then the main plugin in test mode
-  console.log("🏗️  Building dependencies and test version using Turbo...");
+  // Map test environment variables to VITE_ variables
+  process.env.VITE_RECURSICA_API_URL =
+    process.env.VITE_RECURSICA_API_URL || process.env.RECURSICA_API_TEST;
+  process.env.VITE_RECURSICA_UI_URL =
+    process.env.VITE_RECURSICA_UI_URL || process.env.RECURSICA_API_TEST;
+  process.env.VITE_PLUGIN_PHRASE =
+    process.env.VITE_PLUGIN_PHRASE || process.env.PLUGIN_PHRASE_TEST;
+  process.env.VITE_SHOW_VERSION_BANNER = "true";
+
+  console.log("🏗️  Building test version of Figma plugin...");
   console.log("📋 Environment variables being passed to build:");
   console.log(
     `  VITE_RECURSICA_API_URL: ${process.env.VITE_RECURSICA_API_URL}`,

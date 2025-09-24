@@ -111,10 +111,8 @@ jobs:
       # - Creates GitHub releases automatically with changelog and links to PRs
       # - Handles all dependency relationships automatically
       #
-      # Environment Variables:
-      # - Production variables (VITE_*) are used by the main figma plugin's prepublish script
-      # - Test variables (RECURSICA_API_TEST, PLUGIN_PHRASE_TEST) are used by the test plugin's prepublish script
-      # - Each package's prepublish script maps these to the appropriate VITE_ variables
+      # Note: Figma plugins have `publishConfig.access: "restricted"` to prevent npm publishing
+      # but still allow Changesets to handle versioning and GitHub releases
       - name: Create Release Pull Request or Publish to GitHub Releases
         id: changesets
         uses: changesets/action@v1
@@ -128,7 +126,7 @@ jobs:
           VITE_RECURSICA_API_URL: ${{ secrets.RECURSICA_API }}
           VITE_RECURSICA_UI_URL: ${{ secrets.RECURSICA_API }}
           VITE_PLUGIN_PHRASE: ${{ secrets.PLUGIN_PHRASE_PROD }}
-          # Test environment variables (used by test plugin prepublish script)
+          # Test environment variables (used by test plugin)
           RECURSICA_API_TEST: ${{ secrets.RECURSICA_API_TEST }}
           PLUGIN_PHRASE_TEST: ${{ secrets.PLUGIN_PHRASE_TEST }}
 
