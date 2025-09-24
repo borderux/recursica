@@ -1,6 +1,6 @@
 {
   "name": "@recursica/figma-plugin-test",
-  "private": false,
+  "private": true,
   "version": "0.0.2",
   "description": "Test build of the Recursica Figma plugin",
   "type": "module",
