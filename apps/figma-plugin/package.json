@@ -1,6 +1,6 @@
 {
   "name": "@recursica/figma-plugin",
-  "private": false,
+  "private": true,
   "version": "0.0.10",
   "description": "The Figma plugin for Recursica",
   "type": "module",
@@ -20,10 +20,6 @@
     "url": "https://github.com/borderux/recursica/issues"
   },
   "homepage": "https://github.com/borderux/recursica",
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org/",
-    "access": "restricted"
-  },
   "scripts": {
     "dev": "concurrently \"npm run dev:ui\" \"npm run dev:code\"",
     "dev:ui": "vite build --watch --mode development",
