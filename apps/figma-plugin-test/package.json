@@ -1,6 +1,6 @@
 {
   "name": "@recursica/figma-plugin-test",
-  "private": false,
+  "private": true,
   "version": "0.0.2",
   "description": "Test build of the Recursica Figma plugin",
   "type": "module",
@@ -21,10 +21,6 @@
     "url": "https://github.com/borderux/recursica/issues"
   },
   "homepage": "https://github.com/borderux/recursica",
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org/",
-    "access": "restricted"
-  },
   "files": [
     "dist/**/*",
     "manifest.json",
