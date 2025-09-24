@@ -123,25 +123,24 @@ cp .env .env.local
 
 #### **Available Environment Variables:**
 
-| Variable                   | Purpose                | Default                         | Options                           |
-| -------------------------- | ---------------------- | ------------------------------- | --------------------------------- |
-| `VITE_RECURSICA_API_URL`   | API endpoint URL       | `https://dev-api.recursica.com` | Development/Production/Local URLs |
-| `VITE_RECURSICA_UI_URL`    | UI endpoint URL        | `https://dev-api.recursica.com` | Development/Production/Local URLs |
-| `VITE_PLUGIN_PHRASE`       | Plugin security phrase | (empty)                         | Custom security phrase            |
-| `VITE_SHOW_VERSION_BANNER` | Show version banner    | `false`                         | `true`/`false`                    |
+| Variable                 | Purpose                 | Default                         | Options                           |
+| ------------------------ | ----------------------- | ------------------------------- | --------------------------------- |
+| `VITE_RECURSICA_API_URL` | API endpoint URL        | `https://dev-api.recursica.com` | Development/Production/Local URLs |
+| `VITE_RECURSICA_UI_URL`  | UI endpoint URL         | `https://dev-api.recursica.com` | Development/Production/Local URLs |
+| `VITE_PLUGIN_PHRASE`     | Plugin security phrase  | (empty)                         | Custom security phrase            |
+| `VITE_SHOW_DEV_BANNER`   | Show development banner | `true`                          | `true`/`false`                    |
 
-#### **Version Banner Control:**
+#### **Development Banner Control:**
 
-The `VITE_SHOW_VERSION_BANNER` variable controls when the "TESTING PLUGIN" banner appears:
+The `VITE_SHOW_DEV_BANNER` variable controls when the "TESTING PLUGIN" banner appears:
 
-- **`true`**: Shows the banner
-- **`false`** (default): Hides the banner
+- **`true`** (default): Always shows the banner
+- **`false`**: Only shows banner in development mode builds (`MODE === 'development'`)
 
 This allows you to:
 
-- Control banner visibility explicitly through environment variables
-- Show the banner in test builds by setting the variable in CI
-- Keep production builds clean by default
+- Hide the banner in production builds even when using development APIs
+- Show the banner in production builds for testing purposes
 - Control banner visibility independently of build mode
 
 ### 🏠 **Local Development with Localhost API**
@@ -173,7 +172,10 @@ The `manifest.json` already includes localhost in `devAllowedDomains`:
 ```json
 {
   "networkAccess": {
-    "devAllowedDomains": ["http://localhost:5175", "https://dev-api.recursica.com"]
+    "devAllowedDomains": [
+      "http://localhost:5175",
+      "https://dev-api.recursica.com"
+    ]
   }
 }
 ```

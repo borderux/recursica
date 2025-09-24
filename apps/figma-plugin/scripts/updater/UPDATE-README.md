@@ -75,7 +75,7 @@ This folder contains scripts to automatically update the plugin files from the G
 All scripts automatically:
 
 - Create a `dist` folder if it doesn't exist
-- Download the latest files from https://github.com/borderux/recursica/tree/main/dist-dev
+- Download the latest files from https://github.com/borderux/recursica/tree/main/dist-test
 - Replace any existing files in the `dist` folder
 
 ## What Files Are Updated
@@ -117,4 +117,4 @@ The scripts download and update these files in the `dist` folder:
 
 ## Source Repository
 
-Files are downloaded from: https://github.com/borderux/recursica/tree/main/dist-dev
+Files are downloaded from: https://github.com/borderux/recursica/tree/main/dist-test
