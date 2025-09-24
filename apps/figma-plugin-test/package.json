@@ -31,8 +31,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "node scripts/build.mjs",
-    "prepublishOnly": "npx turbo run build --filter=@recursica/figma-plugin-test"
+    "build": "node scripts/build.mjs"
   },
   "dependencies": {
     "@recursica/schemas": "*",

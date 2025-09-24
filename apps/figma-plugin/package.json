@@ -37,8 +37,7 @@
     "zip:production": "npm run build && cp manifest.json manifest.test.json && cp manifest.production.json manifest.json && node scripts/zip.mjs && cp manifest.test.json manifest.json",
     "preview": "vite preview",
     "check-types": "tsc --noEmit",
-    "format": "prettier --write .",
-    "prepublishOnly": "npx turbo run build --filter=@recursica/figma-plugin"
+    "format": "prettier --write ."
   },
   "dependencies": {
     "@figma/plugin-typings": "1.113.0",
