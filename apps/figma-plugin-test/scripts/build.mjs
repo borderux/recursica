@@ -21,9 +21,9 @@ try {
     throw new Error(`Main plugin directory not found: ${mainPluginDir}`);
   }
 
-  // Change to main plugin directory and build test version
-  console.log("🏗️  Building test version in main plugin...");
-  console.log("📋 Environment variables being passed to main plugin build:");
+  // Use Turbo to build dependencies first, then the main plugin in test mode
+  console.log("🏗️  Building dependencies and test version using Turbo...");
+  console.log("📋 Environment variables being passed to build:");
   console.log(
     `  VITE_RECURSICA_API_URL: ${process.env.VITE_RECURSICA_API_URL}`,
   );
@@ -34,7 +34,28 @@ try {
   );
 
   try {
-    const result = execSync("npm run build:test", {
+    // First, build all dependencies using Turbo
+    console.log("📦 Building dependencies with Turbo...");
+    const turboResult = execSync(
+      "npx turbo run build --filter=@recursica/ui-kit-mantine --filter=@recursica/common --filter=@recursica/schemas",
+      {
+        cwd: path.resolve(mainPluginDir, "../.."), // Go to repo root
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          VITE_RECURSICA_API_URL: process.env.VITE_RECURSICA_API_URL,
+          VITE_RECURSICA_UI_URL: process.env.VITE_RECURSICA_UI_URL,
+          VITE_PLUGIN_PHRASE: process.env.VITE_PLUGIN_PHRASE,
+          VITE_SHOW_VERSION_BANNER: process.env.VITE_SHOW_VERSION_BANNER,
+        },
+      },
+    );
+    console.log("✅ Dependencies built successfully:");
+    console.log(turboResult);
+
+    // Then build the main plugin in test mode
+    console.log("🏗️  Building main plugin in test mode...");
+    const buildResult = execSync("npm run build:test", {
       cwd: mainPluginDir,
       encoding: "utf8",
       env: {
@@ -46,9 +67,9 @@ try {
       },
     });
     console.log("✅ Main plugin build:test output:");
-    console.log(result);
+    console.log(buildResult);
   } catch (error) {
-    console.error("❌ Main plugin build:test failed:");
+    console.error("❌ Build failed:");
     console.error("Error message:", error.message);
     console.error("Error output:", error.output);
     console.error("Error stderr:", error.stderr);
