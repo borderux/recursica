@@ -40,6 +40,16 @@ console.log(
 );
 
 // Always build test version for the test plugin
-execSync("npm run build", { stdio: "inherit" });
+// Pass the environment variables to the build process
+execSync("npm run build", {
+  stdio: "inherit",
+  env: {
+    ...process.env,
+    VITE_RECURSICA_API_URL: process.env.VITE_RECURSICA_API_URL,
+    VITE_RECURSICA_UI_URL: process.env.VITE_RECURSICA_UI_URL,
+    VITE_PLUGIN_PHRASE: process.env.VITE_PLUGIN_PHRASE,
+    VITE_SHOW_VERSION_BANNER: process.env.VITE_SHOW_VERSION_BANNER,
+  },
+});
 
 console.log("✅ Test plugin build completed successfully!");
