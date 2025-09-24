@@ -44,6 +44,7 @@
     "packages/*"
   ],
   "devDependencies": {
+    "@changesets/changelog-github": "^0.5.1",
     "@changesets/cli": "^2.29.4",
     "@recursica/mantine-adapter": "*",
     "husky": "^9.1.7",

@@ -28,7 +28,7 @@
   ],
   "scripts": {
     "build": "node scripts/build.mjs",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "node scripts/prepublish.mjs"
   },
   "dependencies": {
     "@recursica/schemas": "*",

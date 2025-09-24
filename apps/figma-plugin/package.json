@@ -34,7 +34,7 @@
     "preview": "vite preview",
     "check-types": "tsc --noEmit",
     "format": "prettier --write .",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "node scripts/prepublish.mjs"
   },
   "dependencies": {
     "@figma/plugin-typings": "1.113.0",
