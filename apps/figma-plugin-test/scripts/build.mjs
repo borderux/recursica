@@ -41,8 +41,35 @@ try {
     `  VITE_SHOW_VERSION_BANNER: ${process.env.VITE_SHOW_VERSION_BANNER}`,
   );
 
+  // Build dependencies first
+  console.log("🏗️  Building dependencies first...");
+  try {
+    const depsResult = execSync(
+      "npx turbo run build --filter=@recursica/ui-kit-mantine --filter=@recursica/common --filter=@recursica/schemas",
+      {
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          VITE_RECURSICA_API_URL: process.env.VITE_RECURSICA_API_URL,
+          VITE_RECURSICA_UI_URL: process.env.VITE_RECURSICA_UI_URL,
+          VITE_PLUGIN_PHRASE: process.env.VITE_PLUGIN_PHRASE,
+          VITE_SHOW_VERSION_BANNER: process.env.VITE_SHOW_VERSION_BANNER,
+        },
+      },
+    );
+    console.log("✅ Dependencies built successfully:");
+    console.log(depsResult);
+  } catch (error) {
+    console.error("❌ Dependencies build failed:");
+    console.error("Error message:", error.message);
+    console.error("Error output:", error.output);
+    console.error("Error stderr:", error.stderr);
+    console.error("Error stdout:", error.stdout);
+    console.error("Full error object:", error);
+    throw error;
+  }
+
   // Build the main plugin in test mode
-  // Dependencies should already be built by the prepublish script
   console.log("🏗️  Building main plugin in test mode...");
   try {
     const buildResult = execSync("npm run build:test", {
