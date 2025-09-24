@@ -34,10 +34,10 @@ try {
   );
 
   try {
-    // First, build all dependencies using Turbo
-    console.log("📦 Building dependencies with Turbo...");
+    // Use Turbo to build the main plugin and all its dependencies automatically
+    console.log("📦 Building main plugin and dependencies with Turbo...");
     const turboResult = execSync(
-      "npx turbo run build --filter=@recursica/ui-kit-mantine --filter=@recursica/common --filter=@recursica/schemas",
+      "npx turbo run build:test --filter=@recursica/figma-plugin",
       {
         cwd: path.resolve(mainPluginDir, "../.."), // Go to repo root
         encoding: "utf8",
@@ -50,24 +50,8 @@ try {
         },
       },
     );
-    console.log("✅ Dependencies built successfully:");
+    console.log("✅ Main plugin and dependencies built successfully:");
     console.log(turboResult);
-
-    // Then build the main plugin in test mode
-    console.log("🏗️  Building main plugin in test mode...");
-    const buildResult = execSync("npm run build:test", {
-      cwd: mainPluginDir,
-      encoding: "utf8",
-      env: {
-        ...process.env,
-        VITE_RECURSICA_API_URL: process.env.VITE_RECURSICA_API_URL,
-        VITE_RECURSICA_UI_URL: process.env.VITE_RECURSICA_UI_URL,
-        VITE_PLUGIN_PHRASE: process.env.VITE_PLUGIN_PHRASE,
-        VITE_SHOW_VERSION_BANNER: process.env.VITE_SHOW_VERSION_BANNER,
-      },
-    });
-    console.log("✅ Main plugin build:test output:");
-    console.log(buildResult);
   } catch (error) {
     console.error("❌ Build failed:");
     console.error("Error message:", error.message);
