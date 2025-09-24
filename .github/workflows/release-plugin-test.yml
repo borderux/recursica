@@ -54,40 +54,18 @@ jobs:
           # This prevents husky from installing git hooks during the CI process
           HUSKY: 0
 
-      # Check if there are changes for the figma-plugin-test
-      - name: Check for figma-plugin-test version changes
-        id: check-figma-plugin-test
+      # Check if this workflow should run (only for test plugin changesets)
+      - name: Check if workflow should run
+        id: should-run
         run: |
-          # Get current version
-          current_version=$(jq -r '.version' apps/figma-plugin-test/package.json 2>/dev/null || echo "")
-
-          # Get previous version
-          previous_version=$(git show HEAD~1:apps/figma-plugin-test/package.json 2>/dev/null | jq -r '.version' 2>/dev/null || echo "")
-
-          if [ -n "$current_version" ] && [ -n "$previous_version" ] && [ "$current_version" != "$previous_version" ]; then
-            echo "has-figma-test-changes=true" >> $GITHUB_OUTPUT
-            echo "figma-plugin-test-version=$current_version" >> $GITHUB_OUTPUT
-            echo "✅ Figma plugin test version changed: $previous_version → $current_version"
-            echo "🚀 Preparing for TEST deployment"
+          # Check if any changeset files mention the test figma plugin
+          if grep -r "@recursica/figma-plugin-test" .changeset/ 2>/dev/null; then
+            echo "should-run=true" >> $GITHUB_OUTPUT
+            echo "✅ Changeset affects test figma plugin - proceeding"
           else
-            echo "has-figma-test-changes=false" >> $GITHUB_OUTPUT
-            echo "ℹ️  No test version changes detected"
-            
-            # Debug info
-            echo "Current version: $current_version"
-            echo "Previous version: $previous_version"
+            echo "should-run=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  Changeset does not affect test plugin - skipping"
           fi
-
-      # Build test packages
-      - name: Build Test
-        run: |
-          cd apps/figma-plugin-test
-          npm run build
-        env:
-          VITE_RECURSICA_API_URL: ${{ secrets.RECURSICA_API_TEST }}
-          VITE_RECURSICA_UI_URL: ${{ secrets.RECURSICA_API_TEST }}
-          VITE_PLUGIN_PHRASE: ${{ secrets.PLUGIN_PHRASE_TEST }}
-          VITE_SHOW_VERSION_BANNER: "true"
 
       # This action has two modes:
       # 1. If changesets are present, it creates a "Version Packages" pull request.
@@ -96,6 +74,7 @@ jobs:
       # publishes to npm, and creates a GitHub Release.
       # NODE_AUTH_TOKEN is used by the `npm publish` command for authentication.
       - name: Create Release Pull Request or Publish to GitHub Releases
+        if: steps.should-run.outputs.should-run == 'true'
         id: changesets
         uses: changesets/action@v1
         with:
@@ -104,3 +83,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          VITE_RECURSICA_API_URL: ${{ secrets.RECURSICA_API_TEST }}
+          VITE_RECURSICA_UI_URL: ${{ secrets.RECURSICA_API_TEST }}
+          VITE_PLUGIN_PHRASE: ${{ secrets.PLUGIN_PHRASE_TEST }}
+          VITE_SHOW_VERSION_BANNER: "true"

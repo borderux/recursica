@@ -55,41 +55,23 @@ jobs:
           # This prevents husky from installing git hooks during the CI process
           HUSKY: 0
 
-      # Check if there are changes for the figma-plugin
-      # Check for actual version changes (more robust)
-      - name: Check for figma-plugin version changes
-        id: check-figma-plugin
+      # Check if this workflow should run (only for main figma plugin changesets)
+      - name: Check if workflow should run
+        id: should-run
         run: |
-          # Get current version
-          current_version=$(jq -r '.version' apps/figma-plugin/package.json 2>/dev/null || echo "")
-
-          # Get previous version
-          previous_version=$(git show HEAD~1:apps/figma-plugin/package.json 2>/dev/null | jq -r '.version' 2>/dev/null || echo "")
-
-          if [ -n "$current_version" ] && [ -n "$previous_version" ] && [ "$current_version" != "$previous_version" ]; then
-            echo "has-figma-changes=true" >> $GITHUB_OUTPUT
-            echo "figma-plugin-version=$current_version" >> $GITHUB_OUTPUT
-            echo "✅ Figma plugin version changed: $previous_version → $current_version"
-            echo "🚀 Preparing for PRODUCTION deployment"
+          # Check if any changeset files mention the main figma plugin (not test)
+          if grep -r "@recursica/figma-plugin" .changeset/ 2>/dev/null | grep -v "@recursica/figma-plugin-test"; then
+            echo "should-run=true" >> $GITHUB_OUTPUT
+            echo "✅ Changeset affects main figma plugin - proceeding"
           else
-            echo "has-figma-changes=false" >> $GITHUB_OUTPUT
-            echo "ℹ️  No version changes detected"
-            
-            # Debug info
-            echo "Current version: $current_version"
-            echo "Previous version: $previous_version"
-            
-            # Check if package.json had other changes
-            package_changed=$(git diff HEAD~1 HEAD --name-only | grep "apps/figma-plugin/package.json" || true)
-            if [ -n "$package_changed" ]; then
-              echo "📝 Note: package.json was modified but version remained the same"
-              echo "    This could be dependency updates, script changes, etc."
-            fi
+            echo "should-run=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  Changeset only affects test plugin or other packages - skipping"
           fi
 
       # Caches the Turborepo build artifacts stored in the `.turbo` directory.
       # This avoids re-running tasks on unchanged code, speeding up the build.
       - name: Cache Turborepo
+        if: steps.should-run.outputs.should-run == 'true'
         uses: actions/cache@v4
         with:
           path: .turbo
@@ -97,27 +79,37 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-turbo-
 
-      # Build production packages
-      - name: Build Production
-        run: |
-          cd apps/figma-plugin
-          npm run build
+      # This action has two modes:
+      # 1. If changesets are present, it creates a "Version Packages" pull request.
+      # 2. When the "Version Packages" PR is merged, it runs the `publish` command.
+      # The `publish` command executes the `npm run release` script, which builds,
+      # publishes to npm, and creates a GitHub Release.
+      # NODE_AUTH_TOKEN is used by the `npm publish` command for authentication.
+      - name: Create Release Pull Request or Publish to GitHub Releases
+        if: steps.should-run.outputs.should-run == 'true'
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          publish: npm run release
         env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           VITE_RECURSICA_API_URL: ${{ secrets.RECURSICA_API }}
           VITE_RECURSICA_UI_URL: ${{ secrets.RECURSICA_API }}
           VITE_PLUGIN_PHRASE: ${{ secrets.PLUGIN_PHRASE_PROD }}
 
       # Create GitHub Release for the plugin
       - name: Create GitHub Release
-        if: steps.check-figma-plugin.outputs.has-figma-changes == 'true'
+        if: steps.should-run.outputs.should-run == 'true'
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
         with:
-          tag_name: figma-plugin-v${{ steps.check-figma-plugin.outputs.figma-plugin-version }}
-          release_name: Figma Plugin v${{ steps.check-figma-plugin.outputs.figma-plugin-version }}
+          tag_name: figma-plugin-v${{ steps.changesets.outputs.published }}
+          release_name: Figma Plugin v${{ steps.changesets.outputs.published }}
           body: |
-            ## Figma Plugin Release v${{ steps.check-figma-plugin.outputs.figma-plugin-version }}
+            ## Figma Plugin Release v${{ steps.changesets.outputs.published }}
 
             This release contains the latest version of the Recursica Figma plugin.
 
@@ -128,7 +120,7 @@ jobs:
 
       # Deploy to production when Version Packages PR is merged
       - name: Deploy Figma Plugin to Production
-        if: steps.check-figma-plugin.outputs.has-figma-changes == 'true'
+        if: steps.should-run.outputs.should-run == 'true'
         uses: ./.github/actions/deploy-to-server
         with:
           token: ${{ secrets.DISPATCH_TOKEN }}
@@ -138,4 +130,4 @@ jobs:
           environment: "prod"
           files_path: "apps/figma-plugin/dist/**/*"
           event_type: "trigger-server-deploy"
-          plugin_version: ${{ steps.check-figma-plugin.outputs.figma-plugin-version }}
+          plugin_version: ${{ steps.changesets.outputs.published }}
