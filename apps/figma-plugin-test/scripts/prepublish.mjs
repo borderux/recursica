@@ -41,15 +41,27 @@ console.log(
 
 // Always build test version for the test plugin
 // Pass the environment variables to the build process
-execSync("npm run build", {
-  stdio: "inherit",
-  env: {
-    ...process.env,
-    VITE_RECURSICA_API_URL: process.env.VITE_RECURSICA_API_URL,
-    VITE_RECURSICA_UI_URL: process.env.VITE_RECURSICA_UI_URL,
-    VITE_PLUGIN_PHRASE: process.env.VITE_PLUGIN_PHRASE,
-    VITE_SHOW_VERSION_BANNER: process.env.VITE_SHOW_VERSION_BANNER,
-  },
-});
+try {
+  const result = execSync("npm run build", {
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      VITE_RECURSICA_API_URL: process.env.VITE_RECURSICA_API_URL,
+      VITE_RECURSICA_UI_URL: process.env.VITE_RECURSICA_UI_URL,
+      VITE_PLUGIN_PHRASE: process.env.VITE_PLUGIN_PHRASE,
+      VITE_SHOW_VERSION_BANNER: process.env.VITE_SHOW_VERSION_BANNER,
+    },
+  });
+  console.log("✅ Test plugin build output:");
+  console.log(result);
+} catch (error) {
+  console.error("❌ Test plugin build failed:");
+  console.error("Error message:", error.message);
+  console.error("Error output:", error.output);
+  console.error("Error stderr:", error.stderr);
+  console.error("Error stdout:", error.stdout);
+  console.error("Full error object:", error);
+  throw error;
+}
 
 console.log("✅ Test plugin build completed successfully!");

@@ -34,9 +34,9 @@ try {
   );
 
   try {
-    execSync("npm run build:test", {
+    const result = execSync("npm run build:test", {
       cwd: mainPluginDir,
-      stdio: "inherit",
+      encoding: "utf8",
       env: {
         ...process.env,
         VITE_RECURSICA_API_URL: process.env.VITE_RECURSICA_API_URL,
@@ -45,12 +45,15 @@ try {
         VITE_SHOW_VERSION_BANNER: process.env.VITE_SHOW_VERSION_BANNER,
       },
     });
+    console.log("✅ Main plugin build:test output:");
+    console.log(result);
   } catch (error) {
     console.error("❌ Main plugin build:test failed:");
     console.error("Error message:", error.message);
     console.error("Error output:", error.output);
     console.error("Error stderr:", error.stderr);
     console.error("Error stdout:", error.stdout);
+    console.error("Full error object:", error);
     throw error;
   }
 
