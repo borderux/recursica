@@ -20,6 +20,10 @@
     "url": "https://github.com/borderux/recursica/issues"
   },
   "homepage": "https://github.com/borderux/recursica",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "restricted"
+  },
   "scripts": {
     "dev": "concurrently \"npm run dev:ui\" \"npm run dev:code\"",
     "dev:ui": "vite build --watch --mode development",
@@ -34,7 +38,7 @@
     "preview": "vite preview",
     "check-types": "tsc --noEmit",
     "format": "prettier --write .",
-    "prepublishOnly": "node scripts/prepublish.mjs"
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@figma/plugin-typings": "1.113.0",
