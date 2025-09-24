@@ -97,6 +97,19 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-turbo-
 
+      # Build all packages before publishing
+      # This ensures all dist/ folders are up-to-date before Changesets publishes them
+      - name: Build All Packages
+        run: npm run build
+        env:
+          # Production environment variables (default for main plugin)
+          VITE_RECURSICA_API_URL: ${{ secrets.RECURSICA_API }}
+          VITE_RECURSICA_UI_URL: ${{ secrets.RECURSICA_API }}
+          VITE_PLUGIN_PHRASE: ${{ secrets.PLUGIN_PHRASE_PROD }}
+          # Test environment variables (used by test plugin)
+          RECURSICA_API_TEST: ${{ secrets.RECURSICA_API_TEST }}
+          PLUGIN_PHRASE_TEST: ${{ secrets.PLUGIN_PHRASE_TEST }}
+
       # Changesets Action - The Core of Our Release System
       #
       # This action has two modes:
@@ -106,10 +119,13 @@ jobs:
       # The `publish` command executes `npm run release` which runs `changeset publish --access public`.
       # This command:
       # - Bumps version numbers in package.json files based on changeset files
-      # - Runs each package's `prepublishOnly` script in dependency order
+      # - Runs each package's `prepublishOnly` script in dependency order (if they have one)
       # - Publishes packages to npm with proper authentication
       # - Creates GitHub releases automatically with changelog and links to PRs
       # - Handles all dependency relationships automatically
+      #
+      # Note: All packages are built in the previous step, so this step focuses on
+      # versioning, publishing, and creating GitHub releases.
       #
       # Note: Figma plugins have `publishConfig.access: "restricted"` to prevent npm publishing
       # but still allow Changesets to handle versioning and GitHub releases
@@ -137,10 +153,10 @@ jobs:
         run: |
           echo "📦 Published packages:"
           echo "${{ steps.changesets.outputs.publishedPackages }}"
-          
+
           # Parse the JSON to show individual packages
           echo "${{ steps.changesets.outputs.publishedPackages }}" | jq -r '.[] | "  - \(.name)@\(.version)"'
-          
+
           # Extract figma plugin version for deployment
           figma_plugin_version=$(echo "${{ steps.changesets.outputs.publishedPackages }}" | jq -r '.[] | select(.name == "@recursica/figma-plugin") | .version')
           if [ -n "$figma_plugin_version" ]; then
