@@ -32,7 +32,7 @@
   ],
   "scripts": {
     "build": "node scripts/build.mjs",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npx turbo run build --filter=@recursica/figma-plugin-test"
   },
   "dependencies": {
     "@recursica/schemas": "*",
