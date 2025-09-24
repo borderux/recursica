@@ -23,10 +23,36 @@ try {
 
   // Change to main plugin directory and build test version
   console.log("🏗️  Building test version in main plugin...");
-  execSync("npm run build:test", {
-    cwd: mainPluginDir,
-    stdio: "inherit",
-  });
+  console.log("📋 Environment variables being passed to main plugin build:");
+  console.log(
+    `  VITE_RECURSICA_API_URL: ${process.env.VITE_RECURSICA_API_URL}`,
+  );
+  console.log(`  VITE_RECURSICA_UI_URL: ${process.env.VITE_RECURSICA_UI_URL}`);
+  console.log(`  VITE_PLUGIN_PHRASE: ${process.env.VITE_PLUGIN_PHRASE}`);
+  console.log(
+    `  VITE_SHOW_VERSION_BANNER: ${process.env.VITE_SHOW_VERSION_BANNER}`,
+  );
+
+  try {
+    execSync("npm run build:test", {
+      cwd: mainPluginDir,
+      stdio: "inherit",
+      env: {
+        ...process.env,
+        VITE_RECURSICA_API_URL: process.env.VITE_RECURSICA_API_URL,
+        VITE_RECURSICA_UI_URL: process.env.VITE_RECURSICA_UI_URL,
+        VITE_PLUGIN_PHRASE: process.env.VITE_PLUGIN_PHRASE,
+        VITE_SHOW_VERSION_BANNER: process.env.VITE_SHOW_VERSION_BANNER,
+      },
+    });
+  } catch (error) {
+    console.error("❌ Main plugin build:test failed:");
+    console.error("Error message:", error.message);
+    console.error("Error output:", error.output);
+    console.error("Error stderr:", error.stderr);
+    console.error("Error stdout:", error.stdout);
+    throw error;
+  }
 
   // Create dist directory in test app if it doesn't exist
   const testDistDir = path.join(testAppDir, "dist");
