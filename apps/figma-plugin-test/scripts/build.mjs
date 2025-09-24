@@ -33,27 +33,25 @@ try {
     `  VITE_SHOW_VERSION_BANNER: ${process.env.VITE_SHOW_VERSION_BANNER}`,
   );
 
+  // Build the main plugin in test mode
+  // Dependencies should already be built by the prepublish script
+  console.log("🏗️  Building main plugin in test mode...");
   try {
-    // Use Turbo to build the main plugin and all its dependencies automatically
-    console.log("📦 Building main plugin and dependencies with Turbo...");
-    const turboResult = execSync(
-      "npx turbo run build:test --filter=@recursica/figma-plugin",
-      {
-        cwd: path.resolve(mainPluginDir, "../.."), // Go to repo root
-        encoding: "utf8",
-        env: {
-          ...process.env,
-          VITE_RECURSICA_API_URL: process.env.VITE_RECURSICA_API_URL,
-          VITE_RECURSICA_UI_URL: process.env.VITE_RECURSICA_UI_URL,
-          VITE_PLUGIN_PHRASE: process.env.VITE_PLUGIN_PHRASE,
-          VITE_SHOW_VERSION_BANNER: process.env.VITE_SHOW_VERSION_BANNER,
-        },
+    const buildResult = execSync("npm run build:test", {
+      cwd: mainPluginDir,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        VITE_RECURSICA_API_URL: process.env.VITE_RECURSICA_API_URL,
+        VITE_RECURSICA_UI_URL: process.env.VITE_RECURSICA_UI_URL,
+        VITE_PLUGIN_PHRASE: process.env.VITE_PLUGIN_PHRASE,
+        VITE_SHOW_VERSION_BANNER: process.env.VITE_SHOW_VERSION_BANNER,
       },
-    );
-    console.log("✅ Main plugin and dependencies built successfully:");
-    console.log(turboResult);
+    });
+    console.log("✅ Main plugin test build completed:");
+    console.log(buildResult);
   } catch (error) {
-    console.error("❌ Build failed:");
+    console.error("❌ Main plugin test build failed:");
     console.error("Error message:", error.message);
     console.error("Error output:", error.output);
     console.error("Error stderr:", error.stderr);
