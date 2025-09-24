@@ -1,8 +1,8 @@
 {
-  "name": "Recursica - Development",
+  "name": "Recursica - Test",
   "id": "1529976075852056898",
   "api": "1.0.0",
-  "main": "./dist-dev/figma-plugin.js",
+  "main": "./dist/figma-plugin.js",
   "capabilities": [],
   "enableProposedApi": false,
   "documentAccess": "dynamic-page",

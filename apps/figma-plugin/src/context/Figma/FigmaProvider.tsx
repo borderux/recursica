@@ -221,11 +221,12 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
     pluginVersion,
     updateAgreedPublishChanges,
   };
-  const IS_TESTING_MODE = import.meta.env.MODE === 'development';
+  const SHOW_VERSION_BANNER = import.meta.env.VITE_SHOW_VERSION_BANNER === 'true';
+  const shouldShowBanner = SHOW_VERSION_BANNER;
 
   return (
     <FigmaContext.Provider value={values}>
-      {IS_TESTING_MODE && pluginVersion && (
+      {shouldShowBanner && pluginVersion && (
         <Box
           style={{ position: 'absolute', top: 0, left: 0, zIndex: 1000 }}
           w='100%'

@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => ({
 
   build: {
     emptyOutDir: false,
-    outDir: mode === 'development' ? 'dist-dev' : 'dist',
+    outDir: mode === 'development' ? 'dist-dev' : mode === 'test' ? 'dist-test' : 'dist',
   },
   css: {
     preprocessorOptions: {

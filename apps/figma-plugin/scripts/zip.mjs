@@ -32,19 +32,18 @@ archive.pipe(output);
 const manifestPath = path.join(parentDir, 'manifest.json');
 const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 
-// Add ui property for development builds
-const devManifest = {
+// Add ui property for builds
+const buildManifest = {
   ...manifest,
-  name: 'Recursica - Testing Mode',
   ui: './dist/index.html',
 };
 
 // append files
-archive.append(JSON.stringify(devManifest, null, 2), { name: 'manifest.json' });
+archive.append(JSON.stringify(buildManifest, null, 2), { name: 'manifest.json' });
 archive.file('PLUGIN.md', { name: 'README.md' });
 
 // append files from a sub-directory
-archive.directory('dist-dev/', 'dist');
+archive.directory('dist/', 'dist');
 
 // append update scripts (cross-platform)
 archive.file('scripts/updater/update-dist.bat', { name: 'scripts/update-dist.bat' });

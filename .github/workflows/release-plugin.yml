@@ -1,21 +1,27 @@
-# This workflow automates the versioning and release process using Changesets.
+# This workflow automates the production release process using Changesets.
 #
 # How it works:
-# 1. When you push `.changeset` files to the `main` branch, this workflow
+# 1. When you push `.changeset` files for production packages to the `main` branch, this workflow
 #    opens a "Version Packages" pull request. This PR contains updated package
-#    versions and changelogs.
+#    versions and changelogs for production packages only.
 # 2. When the "Version Packages" PR is merged, the workflow triggers again. This
-#    time, it builds the packages, publishes them to npm, and creates a
+#    time, it builds the production packages, publishes them to npm, and creates a
 #    corresponding GitHub Release.
 #
 # Caching for npm dependencies and Turborepo build artifacts is enabled to
 # optimize workflow speed.
-name: Release
+name: Release Figma Plugin
 
 on:
   push:
     branches:
       - main
+    paths:
+      - ".changeset/**"
+      - "apps/figma-plugin/**"
+      - "packages/**"
+      - "package.json"
+      - "package-lock.json"
 
 jobs:
   release:
@@ -83,37 +89,42 @@ jobs:
 
       # Caches the Turborepo build artifacts stored in the `.turbo` directory.
       # This avoids re-running tasks on unchanged code, speeding up the build.
-      # - name: Cache Turborepo
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: .turbo
-      #     key: ${{ runner.os }}-turbo-${{ hashFiles('**/package-lock.json') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-turbo-
+      - name: Cache Turborepo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
 
-      # Runs the build step
-      - name: Build
-        run: npm run build
+      # Build production packages
+      - name: Build Production
+        run: |
+          cd apps/figma-plugin
+          npm run build
         env:
           VITE_RECURSICA_API_URL: ${{ secrets.RECURSICA_API }}
           VITE_RECURSICA_UI_URL: ${{ secrets.RECURSICA_API }}
-          VITE_PLUGIN_PHRASE: ${{ secrets.PLUGIN_PHRASE }}
+          VITE_PLUGIN_PHRASE: ${{ secrets.PLUGIN_PHRASE_PROD }}
 
-      # This action has two modes:
-      # 1. If changesets are present, it creates a "Version Packages" pull request.
-      # 2. When the "Version Packages" PR is merged, it runs the `publish` command.
-      # The `publish` command executes the `npm run release` script, which builds,
-      # publishes to npm, and creates a GitHub Release.
-      # NODE_AUTH_TOKEN is used by the `npm publish` command for authentication.
-      - name: Create Release Pull Request or Publish to GitHub Releases
-        id: changesets
-        uses: changesets/action@v1
-        with:
-          publish: npm run release
+      # Create GitHub Release for the plugin
+      - name: Create GitHub Release
+        if: steps.check-figma-plugin.outputs.has-figma-changes == 'true'
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        with:
+          tag_name: figma-plugin-v${{ steps.check-figma-plugin.outputs.figma-plugin-version }}
+          release_name: Figma Plugin v${{ steps.check-figma-plugin.outputs.figma-plugin-version }}
+          body: |
+            ## Figma Plugin Release v${{ steps.check-figma-plugin.outputs.figma-plugin-version }}
+
+            This release contains the latest version of the Recursica Figma plugin.
+
+            ### Installation
+            Download the plugin files from the assets below and install in Figma.
+          draft: false
+          prerelease: false
 
       # Deploy to production when Version Packages PR is merged
       - name: Deploy Figma Plugin to Production
