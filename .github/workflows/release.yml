@@ -97,19 +97,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-turbo-
 
-      # Build all packages before publishing
-      # This ensures all dist/ folders are up-to-date before Changesets publishes them
-      - name: Build All Packages
-        run: npm run build
-        env:
-          # Production environment variables (default for main plugin)
-          VITE_RECURSICA_API_URL: ${{ secrets.RECURSICA_API }}
-          VITE_RECURSICA_UI_URL: ${{ secrets.RECURSICA_API }}
-          VITE_PLUGIN_PHRASE: ${{ secrets.PLUGIN_PHRASE_PROD }}
-          # Test environment variables (used by test plugin)
-          RECURSICA_API_TEST: ${{ secrets.RECURSICA_API_TEST }}
-          PLUGIN_PHRASE_TEST: ${{ secrets.PLUGIN_PHRASE_TEST }}
-
       # Changesets Action - The Core of Our Release System
       #
       # This action has two modes:
