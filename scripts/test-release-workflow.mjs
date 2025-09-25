@@ -9,7 +9,7 @@
  * Usage: node scripts/test-release-workflow.mjs [options]
  *
  * Options:
- *   --packages <packages>    Comma-separated list of packages to test (default: @recursica/figma-plugin,@recursica/figma-plugin-test)
+ *   --packages <packages>    Comma-separated list of packages to test (default: @recursica/figma-plugin,@recursica/figma-plugin-test,@recursica/ui-kit-mantine,@recursica/schemas)
  *   --dry-run               Don't actually upload to GitHub (default: true)
  *   --upload                 Actually upload to GitHub (overrides --dry-run)
  *   --help                  Show this help message
@@ -21,12 +21,16 @@
  *
  * The script:
  * 1. Creates mock published packages with version 1.0.0
- * 2. Runs the publish step to create zip files
+ * 2. Runs the publish step to create zip files (only for packages with publish commands)
  * 3. Runs the upload step (dry-run by default)
  * 4. Validates that zip files exist and are ready for upload
  *
+ * Package Types Tested:
+ * - Figma Plugins (@recursica/figma-plugin, @recursica/figma-plugin-test): Have publish commands, create zip files
+ * - NPM Libraries (@recursica/ui-kit-mantine, @recursica/schemas): No publish commands, handled by Changesets only
+ *
  * Requirements:
- * - Packages must be built (dist/ folders must exist)
+ * - Packages must be built (dist/ folders must exist for figma plugins)
  * - GitHub CLI (gh) must be authenticated for --upload mode
  * - All publish scripts must be working correctly
  */
@@ -58,7 +62,12 @@ function log(message, color = "reset") {
 function parseArguments() {
   const args = process.argv.slice(2);
   const options = {
-    packages: ["@recursica/figma-plugin", "@recursica/figma-plugin-test"],
+    packages: [
+      "@recursica/figma-plugin",
+      "@recursica/figma-plugin-test",
+      "@recursica/ui-kit-mantine",
+      "@recursica/schemas",
+    ],
     dryRun: true,
     upload: false,
   };
@@ -108,7 +117,7 @@ function showHelp() {
     "cyan",
   );
   log(
-    "                          (default: @recursica/figma-plugin,@recursica/figma-plugin-test)",
+    "                          (default: @recursica/figma-plugin,@recursica/figma-plugin-test,@recursica/ui-kit-mantine,@recursica/schemas)",
     "cyan",
   );
   log(
