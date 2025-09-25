@@ -135,7 +135,6 @@ jobs:
 
       # Show which packages were published and extract versions
       - name: Show Published Packages
-        if: steps.changesets.outputs.published == 'true'
         id: published-info
         run: |
           echo "📦 Published packages:"
