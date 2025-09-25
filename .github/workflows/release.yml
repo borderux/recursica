@@ -60,33 +60,6 @@ jobs:
         env:
           HUSKY: 0
 
-      # Check what packages are being released
-      # This step analyzes the changeset files to determine which packages will be released.
-      # We use this information to conditionally run GitHub releases and deployments
-      # only for packages that actually have changes.
-      - name: Check packages to release
-        id: packages
-        run: |
-          echo "🔍 Checking which packages have changesets..."
-
-          # Check for figma plugin changesets (main plugin, not test)
-          if grep -r "@recursica/figma-plugin" .changeset/ 2>/dev/null | grep -v "@recursica/figma-plugin-test"; then
-            echo "figma-plugin=true" >> $GITHUB_OUTPUT
-            echo "✅ Main figma plugin will be released"
-          else
-            echo "figma-plugin=false" >> $GITHUB_OUTPUT
-            echo "ℹ️  Main figma plugin not affected"
-          fi
-
-          # Check for test plugin changesets
-          if grep -r "@recursica/figma-plugin-test" .changeset/ 2>/dev/null; then
-            echo "figma-plugin-test=true" >> $GITHUB_OUTPUT
-            echo "✅ Test figma plugin will be released"
-          else
-            echo "figma-plugin-test=false" >> $GITHUB_OUTPUT
-            echo "ℹ️  Test figma plugin not affected"
-          fi
-
       # Caches the Turborepo build artifacts stored in the `.turbo` directory.
       # This avoids re-running tasks on unchanged code, speeding up the build.
       - name: Cache Turborepo
@@ -125,6 +98,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Publish packages (create zip files for figma plugins)
+      - name: Publish Packages
+        if: steps.changesets.outputs.published == 'true'
+        id: publish-packages
+        run: npm run publish -- '${{ steps.changesets.outputs.publishedPackages }}'
+        env:
           # Production environment variables (default for main plugin)
           VITE_RECURSICA_API_URL: ${{ secrets.RECURSICA_API }}
           VITE_RECURSICA_UI_URL: ${{ secrets.RECURSICA_API }}
@@ -133,34 +113,19 @@ jobs:
           RECURSICA_API_TEST: ${{ secrets.RECURSICA_API_TEST }}
           PLUGIN_PHRASE_TEST: ${{ secrets.PLUGIN_PHRASE_TEST }}
 
-      # Show which packages were published and extract versions
-      - name: Show Published Packages
-        id: published-info
-        run: |
-          echo "📦 Published packages:"
-          echo "${{ steps.changesets.outputs.publishedPackages }}"
-
-          # Parse the JSON to show individual packages
-          echo "${{ steps.changesets.outputs.publishedPackages }}" | jq -r '.[] | "  - \(.name)@\(.version)"'
-
-          # Extract figma plugin version for deployment
-          figma_plugin_version=$(echo "${{ steps.changesets.outputs.publishedPackages }}" | jq -r '.[] | select(.name == "@recursica/figma-plugin") | .version')
-          if [ -n "$figma_plugin_version" ]; then
-            echo "figma-plugin-version=$figma_plugin_version" >> $GITHUB_OUTPUT
-            echo "✅ Figma plugin version: $figma_plugin_version"
-          else
-            echo "ℹ️  No figma plugin version found in published packages"
-          fi
-
-      # GitHub Releases are now automatically created by Changesets
-      # when using the @changesets/changelog-github formatter.
-      # No separate GitHub Release step is needed.
+      # Create and upload release assets for published packages
+      - name: Create and Upload Release Assets
+        if: steps.changesets.outputs.published == 'true'
+        id: upload-assets
+        run: node scripts/upload-release-assets.mjs '${{ steps.publish-packages.outputs.PUBLISH_RESULTS }}'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Deploy to production when Version Packages PR is merged
-      # This step only runs when the main figma plugin has changes.
+      # This step only runs when the main figma plugin was successfully uploaded as a release asset.
       # It deploys the built plugin files to the production server.
       - name: Deploy Figma Plugin to Production
-        if: steps.packages.outputs.figma-plugin == 'true' && steps.changesets.outputs.published == 'true' && steps.published-info.outputs.figma-plugin-version != ''
+        if: steps.upload-assets.outputs.FIGMA_PLUGIN_PROCESSED == 'true'
         uses: ./.github/actions/deploy-to-server
         with:
           token: ${{ secrets.DISPATCH_TOKEN }}
@@ -170,4 +135,4 @@ jobs:
           environment: "prod"
           files_path: "apps/figma-plugin/dist/**/*"
           event_type: "trigger-server-deploy"
-          plugin_version: ${{ steps.published-info.outputs.figma-plugin-version }}
+          plugin_version: ${{ steps.upload-assets.outputs.FIGMA_PLUGIN_VERSION }}

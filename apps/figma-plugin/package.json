@@ -25,16 +25,16 @@
     "dev:ui": "vite build --watch --mode development",
     "dev:code": "vite build --watch --config vite.config.lib.ts --mode development",
     "build": "npm run build:ui && npm run build:code && cp manifest.production.json dist/manifest.json",
-    "build:test": "tsc -b && vite build --mode test && vite build --config vite.config.lib.ts --mode test && cp manifest.test.json dist-test/manifest.json",
+    "build:test": "node scripts/build-test.mjs",
     "build:ui": "tsc -b && vite build --mode production",
     "build:code": "tsc -b && vite build --config vite.config.lib.ts --mode production",
     "lint": "eslint ./src",
     "zip:test": "npm run build:test && cp manifest.json manifest.test.json && cp ../figma-plugin-test/manifest.test.json manifest.json && node scripts/zip.mjs && cp manifest.test.json manifest.json",
     "zip:production": "npm run build && cp manifest.json manifest.test.json && cp manifest.production.json manifest.json && node scripts/zip.mjs && cp manifest.test.json manifest.json",
+    "publish": "node scripts/publish.mjs",
     "preview": "vite preview",
     "check-types": "tsc --noEmit",
-    "format": "prettier --write .",
-    "prepublishOnly": "npx turbo run build --filter=@recursica/figma-plugin"
+    "format": "prettier --write ."
   },
   "dependencies": {
     "@figma/plugin-typings": "1.113.0",
