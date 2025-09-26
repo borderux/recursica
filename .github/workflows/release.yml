@@ -53,10 +53,14 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
+          cache-dependency-path: |
+            package-lock.json
+            package.json
+            apps/*/package-lock.json
+            apps/*/package.json
+            packages/*/package-lock.json
+            packages/*/package.json
           registry-url: "https://registry.npmjs.org"
-
-      - name: Clear npm cache
-        run: npm cache clean --force
 
       - name: Install dependencies
         run: npm ci
@@ -65,13 +69,13 @@ jobs:
 
       # Caches the Turborepo build artifacts stored in the `.turbo` directory.
       # This avoids re-running tasks on unchanged code, speeding up the build.
-      # - name: Cache Turborepo
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: .turbo
-      #     key: ${{ runner.os }}-turbo-${{ hashFiles('**/package-lock.json') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-turbo-
+      - name: Cache Turborepo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ hashFiles('**/package-lock.json', '**/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
 
       # Build all packages before publishing
       # This ensures all dist/ folders are up-to-date and prevents releases if builds fail
@@ -113,8 +117,8 @@ jobs:
           export VITE_RECURSICA_API_URL="${{ vars.RECURSICA_API }}"
           export VITE_RECURSICA_UI_URL="${{ vars.RECURSICA_API }}"
           export VITE_PLUGIN_PHRASE="${{ secrets.PLUGIN_PHRASE }}"
-          export VITE_RECURSICA_API_TEST="${{ vars.VITE_RECURSICA_API_TEST }}"
-          export VITE_PLUGIN_PHRASE_TEST="${{ secrets.VITE_PLUGIN_PHRASE_TEST }}"
+          export VITE_RECURSICA_API_TEST="${{ vars.RECURSICA_API_TEST }}"
+          export VITE_PLUGIN_PHRASE_TEST="${{ secrets.PLUGIN_PHRASE_TEST }}"
           echo ""
           echo "🔍 DEBUG: Exported environment variables:"
           echo "  VITE_RECURSICA_API_URL: '$VITE_RECURSICA_API_URL'"
