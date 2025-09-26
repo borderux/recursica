@@ -31,6 +31,19 @@ try {
     process.env.VITE_PLUGIN_PHRASE || process.env.PLUGIN_PHRASE_TEST;
   process.env.VITE_SHOW_VERSION_BANNER = "true";
 
+  // Debug: Print environment variables after mapping
+  console.log("🔍 DEBUG: Environment variables after mapping:");
+  console.log(
+    `  VITE_RECURSICA_API_URL: ${process.env.VITE_RECURSICA_API_URL}`,
+  );
+  console.log(`  VITE_RECURSICA_UI_URL: ${process.env.VITE_RECURSICA_UI_URL}`);
+  console.log(`  VITE_PLUGIN_PHRASE: ${process.env.VITE_PLUGIN_PHRASE}`);
+  console.log(
+    `  VITE_SHOW_VERSION_BANNER: ${process.env.VITE_SHOW_VERSION_BANNER}`,
+  );
+  console.log(`  RECURSICA_API_TEST: ${process.env.RECURSICA_API_TEST}`);
+  console.log(`  PLUGIN_PHRASE_TEST: ${process.env.PLUGIN_PHRASE_TEST}`);
+
   // Build dependencies first
   console.log("🏗️  Building dependencies first...");
   try {
