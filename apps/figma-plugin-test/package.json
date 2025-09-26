@@ -27,7 +27,8 @@
     "README.md"
   ],
   "scripts": {
-    "build": "node scripts/build.mjs",
+    "build": "npm run build:test",
+    "build:test": "node scripts/build.mjs",
     "publish": "node scripts/publish.mjs"
   },
   "dependencies": {
