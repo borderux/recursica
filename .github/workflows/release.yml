@@ -74,10 +74,10 @@ jobs:
       # This ensures all dist/ folders are up-to-date and prevents releases if builds fail
       - name: Build Everything
         run: |
-          echo "🔍 DEBUG: GitHub secrets values (raw):"
-          echo "  RECURSICA_API: '${{ secrets.RECURSICA_API }}'"
+          echo "🔍 DEBUG: GitHub secrets and variables values (raw):"
+          echo "  RECURSICA_API: '${{ vars.RECURSICA_API }}'"
           echo "  PLUGIN_PHRASE: '${{ secrets.PLUGIN_PHRASE }}'"
-          echo "  RECURSICA_API_TEST: '${{ secrets.RECURSICA_API_TEST }}'"
+          echo "  RECURSICA_API_TEST: '${{ vars.RECURSICA_API_TEST }}'"
           echo "  PLUGIN_PHRASE_TEST: '${{ secrets.PLUGIN_PHRASE_TEST }}'"
           echo ""
           echo "🔍 DEBUG: GitHub secrets lengths:"
@@ -86,11 +86,17 @@ jobs:
           echo "  RECURSICA_API_TEST length: ${#RECURSICA_API_TEST}"
           echo "  PLUGIN_PHRASE_TEST length: ${#PLUGIN_PHRASE_TEST}"
           echo ""
+          echo "🔍 DEBUG: GitHub secrets/variables lengths (alternative method):"
+          echo "  RECURSICA_API length: $(echo -n '${{ vars.RECURSICA_API }}' | wc -c)"
+          echo "  PLUGIN_PHRASE length: $(echo -n '${{ secrets.PLUGIN_PHRASE }}' | wc -c)"
+          echo "  RECURSICA_API_TEST length: $(echo -n '${{ vars.RECURSICA_API_TEST }}' | wc -c)"
+          echo "  PLUGIN_PHRASE_TEST length: $(echo -n '${{ secrets.PLUGIN_PHRASE_TEST }}' | wc -c)"
+          echo ""
           echo "🔍 DEBUG: Environment variables being set in workflow:"
-          echo "  VITE_RECURSICA_API_URL: '${{ secrets.RECURSICA_API }}'"
-          echo "  VITE_RECURSICA_UI_URL: '${{ secrets.RECURSICA_API }}'"
+          echo "  VITE_RECURSICA_API_URL: '${{ vars.RECURSICA_API }}'"
+          echo "  VITE_RECURSICA_UI_URL: '${{ vars.RECURSICA_API }}'"
           echo "  VITE_PLUGIN_PHRASE: '${{ secrets.PLUGIN_PHRASE }}'"
-          echo "  RECURSICA_API_TEST: '${{ secrets.RECURSICA_API_TEST }}'"
+          echo "  RECURSICA_API_TEST: '${{ vars.RECURSICA_API_TEST }}'"
           echo "  PLUGIN_PHRASE_TEST: '${{ secrets.PLUGIN_PHRASE_TEST }}'"
           echo ""
           echo "🔍 DEBUG: Environment variables from env section:"
@@ -101,10 +107,10 @@ jobs:
           echo "  PLUGIN_PHRASE_TEST: '$PLUGIN_PHRASE_TEST'"
           echo ""
           # Export environment variables to ensure they're available to all child processes
-          export VITE_RECURSICA_API_URL="${{ secrets.RECURSICA_API }}"
-          export VITE_RECURSICA_UI_URL="${{ secrets.RECURSICA_API }}"
+          export VITE_RECURSICA_API_URL="${{ vars.RECURSICA_API }}"
+          export VITE_RECURSICA_UI_URL="${{ vars.RECURSICA_API }}"
           export VITE_PLUGIN_PHRASE="${{ secrets.PLUGIN_PHRASE }}"
-          export RECURSICA_API_TEST="${{ secrets.RECURSICA_API_TEST }}"
+          export RECURSICA_API_TEST="${{ vars.RECURSICA_API_TEST }}"
           export PLUGIN_PHRASE_TEST="${{ secrets.PLUGIN_PHRASE_TEST }}"
           echo ""
           echo "🔍 DEBUG: Exported environment variables:"
@@ -131,11 +137,11 @@ jobs:
           env | grep -E "(VITE_|RECURSICA_|PLUGIN_)" | sort
         env:
           # Production environment variables (for main plugin)
-          VITE_RECURSICA_API_URL: ${{ secrets.RECURSICA_API }}
-          VITE_RECURSICA_UI_URL: ${{ secrets.RECURSICA_API }}
+          VITE_RECURSICA_API_URL: ${{ vars.RECURSICA_API }}
+          VITE_RECURSICA_UI_URL: ${{ vars.RECURSICA_API }}
           VITE_PLUGIN_PHRASE: ${{ secrets.PLUGIN_PHRASE }}
           # Test environment variables (for test plugin)
-          RECURSICA_API_TEST: ${{ secrets.RECURSICA_API_TEST }}
+          RECURSICA_API_TEST: ${{ vars.RECURSICA_API_TEST }}
           PLUGIN_PHRASE_TEST: ${{ secrets.PLUGIN_PHRASE_TEST }}
 
       # Changesets Action - The Core of Our Release System
