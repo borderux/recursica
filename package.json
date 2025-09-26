@@ -9,7 +9,7 @@
   },
   "author": "hi@borderux.com",
   "scripts": {
-    "build": "node -e \"console.log('🔍 DEBUG: Root build env vars:'); console.log('  VITE_RECURSICA_API_URL:', process.env.VITE_RECURSICA_API_URL); console.log('  VITE_PLUGIN_PHRASE:', process.env.VITE_PLUGIN_PHRASE ? process.env.VITE_PLUGIN_PHRASE.substring(0,4) + '...' : 'undefined'); console.log('  RECURSICA_API_TEST:', process.env.RECURSICA_API_TEST); console.log('  PLUGIN_PHRASE_TEST:', process.env.PLUGIN_PHRASE_TEST);\" && turbo run build --env-mode=loose",
+    "build": "node -e \"console.log('🔍 DEBUG: Root build env vars:'); console.log('  VITE_RECURSICA_API_URL:', process.env.VITE_RECURSICA_API_URL); console.log('  VITE_PLUGIN_PHRASE:', process.env.VITE_PLUGIN_PHRASE ? process.env.VITE_PLUGIN_PHRASE.substring(0,4) + '...' : 'undefined'); console.log('  RECURSICA_API_TEST:', process.env.RECURSICA_API_TEST); console.log('  PLUGIN_PHRASE_TEST:', process.env.PLUGIN_PHRASE_TEST);\" && turbo run build --env-mode=loose --summarize",
     "dev": "turbo run dev",
     "recursica": "recursica",
     "lint": "turbo run lint",
