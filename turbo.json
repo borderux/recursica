@@ -6,13 +6,7 @@
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"],
-      "env": [
-        "VITE_RECURSICA_API_URL",
-        "VITE_RECURSICA_UI_URL",
-        "VITE_PLUGIN_PHRASE",
-        "RECURSICA_API_TEST",
-        "PLUGIN_PHRASE_TEST"
-      ]
+      "env": ["VITE_*"]
     },
     "lint": {
       "dependsOn": ["^lint"]
