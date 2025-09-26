@@ -85,6 +85,12 @@ jobs:
           env | grep -E '^(VITE_|RECURSICA_|PLUGIN_)' | sort
           echo ""
           echo "🏗️  Starting build process..."
+          # Export environment variables to make them available to npm run build
+          export VITE_RECURSICA_API_URL="$VITE_RECURSICA_API_URL"
+          export VITE_RECURSICA_UI_URL="$VITE_RECURSICA_UI_URL"
+          export VITE_PLUGIN_PHRASE="$VITE_PLUGIN_PHRASE"
+          export RECURSICA_API_TEST="$RECURSICA_API_TEST"
+          export PLUGIN_PHRASE_TEST="$PLUGIN_PHRASE_TEST"
           npm run build
         env:
           # Production environment variables (default for main plugin)
