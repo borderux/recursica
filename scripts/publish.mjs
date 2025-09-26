@@ -147,9 +147,11 @@ function processPublishedPackages(publishedPackages) {
 
     // Set GitHub Actions output with comprehensive information
     console.log(`PUBLISH_RESULTS=${JSON.stringify(publishResults)}`);
+    console.log(`HAS_PACKAGES_TO_PUBLISH=true`);
   } else {
     log("⚠️  No packages were published with zip files", "yellow");
     console.log("PUBLISH_RESULTS=[]");
+    console.log(`HAS_PACKAGES_TO_PUBLISH=false`);
   }
 }
 
