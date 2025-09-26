@@ -22,15 +22,6 @@ try {
     throw new Error(`Main plugin directory not found: ${mainPluginDir}`);
   }
 
-  // Debug: Print all environment variables (for complete debugging)
-  console.log("\n🔍 DEBUG: All environment variables:");
-  Object.keys(process.env)
-    .sort()
-    .forEach((key) => {
-      const value = process.env[key];
-      console.log(`  ${key}: ${value}`);
-    });
-
   // Map test environment variables to VITE_ variables
   process.env.VITE_RECURSICA_API_URL =
     process.env.VITE_RECURSICA_API_URL || process.env.RECURSICA_API_TEST;
@@ -39,17 +30,6 @@ try {
   process.env.VITE_PLUGIN_PHRASE =
     process.env.VITE_PLUGIN_PHRASE || process.env.PLUGIN_PHRASE_TEST;
   process.env.VITE_SHOW_VERSION_BANNER = "true";
-
-  console.log("🏗️  Building test version of Figma plugin...");
-  console.log("📋 Environment variables being passed to build:");
-  console.log(
-    `  VITE_RECURSICA_API_URL: ${process.env.VITE_RECURSICA_API_URL}`,
-  );
-  console.log(`  VITE_RECURSICA_UI_URL: ${process.env.VITE_RECURSICA_UI_URL}`);
-  console.log(`  VITE_PLUGIN_PHRASE: ${process.env.VITE_PLUGIN_PHRASE}`);
-  console.log(
-    `  VITE_SHOW_VERSION_BANNER: ${process.env.VITE_SHOW_VERSION_BANNER}`,
-  );
 
   // Build dependencies first
   console.log("🏗️  Building dependencies first...");

@@ -150,46 +150,6 @@ function main() {
     log(`🚀 Starting ${colors.bright}Figma Plugin Test Build${colors.reset}`, 'bright');
     log(`📁 Working directory: ${parentDir}`, 'cyan');
 
-    // Debug: Print environment variables
-    log('', 'reset');
-    log('🔍 DEBUG: Environment variables in main plugin build-test:', 'yellow');
-    log(`  VITE_RECURSICA_API_URL: ${process.env.VITE_RECURSICA_API_URL}`, 'cyan');
-    log(`  VITE_RECURSICA_UI_URL: ${process.env.VITE_RECURSICA_UI_URL}`, 'cyan');
-    log(
-      `  VITE_PLUGIN_PHRASE: ${process.env.VITE_PLUGIN_PHRASE ? process.env.VITE_PLUGIN_PHRASE.substring(0, 4) + '...' : 'undefined'}`,
-      'cyan'
-    );
-    log(`  VITE_SHOW_VERSION_BANNER: ${process.env.VITE_SHOW_VERSION_BANNER}`, 'cyan');
-    log(`  RECURSICA_API_TEST: ${process.env.RECURSICA_API_TEST}`, 'cyan');
-    log(
-      `  PLUGIN_PHRASE_TEST: ${process.env.PLUGIN_PHRASE_TEST ? process.env.PLUGIN_PHRASE_TEST.substring(0, 4) + '...' : 'undefined'}`,
-      'cyan'
-    );
-
-    // Debug: Print all relevant environment variables
-    log('', 'reset');
-    log('🔍 DEBUG: All relevant environment variables:', 'yellow');
-    const relevantEnvVars = Object.keys(process.env)
-      .filter(
-        (key) =>
-          key.startsWith('VITE_') || key.startsWith('RECURSICA_') || key.startsWith('PLUGIN_')
-      )
-      .sort();
-
-    relevantEnvVars.forEach((key) => {
-      const value = process.env[key];
-      // Mask sensitive values
-      const displayValue =
-        key.includes('PHRASE') || key.includes('TOKEN') || key.includes('SECRET')
-          ? value
-            ? `${value.substring(0, 4)}...`
-            : 'undefined'
-          : value;
-      log(`  ${key}: ${displayValue}`, 'cyan');
-    });
-
-    log('');
-
     // Step 0: Clear dist-test folder
     clearDistTestFolder();
     log('');
