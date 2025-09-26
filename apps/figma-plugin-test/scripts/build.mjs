@@ -23,12 +23,21 @@ try {
   }
 
   // Map test environment variables to VITE_ variables
-  process.env.VITE_RECURSICA_API_URL =
-    process.env.VITE_RECURSICA_API_URL || process.env.VITE_RECURSICA_API_TEST;
-  process.env.VITE_RECURSICA_UI_URL =
-    process.env.VITE_RECURSICA_UI_URL || process.env.VITE_RECURSICA_API_TEST;
-  process.env.VITE_PLUGIN_PHRASE =
-    process.env.VITE_PLUGIN_PHRASE || process.env.VITE_PLUGIN_PHRASE_TEST;
+  // Test build MUST use test variables - fail if they're not present
+  if (!process.env.VITE_RECURSICA_API_TEST) {
+    throw new Error(
+      "VITE_RECURSICA_API_TEST environment variable is required for test build",
+    );
+  }
+  if (!process.env.VITE_PLUGIN_PHRASE_TEST) {
+    throw new Error(
+      "VITE_PLUGIN_PHRASE_TEST environment variable is required for test build",
+    );
+  }
+
+  process.env.VITE_RECURSICA_API_URL = process.env.VITE_RECURSICA_API_TEST;
+  process.env.VITE_RECURSICA_UI_URL = process.env.VITE_RECURSICA_API_TEST;
+  process.env.VITE_PLUGIN_PHRASE = process.env.VITE_PLUGIN_PHRASE_TEST;
   process.env.VITE_SHOW_VERSION_BANNER = "true";
 
   // Debug: Print environment variables after mapping
