@@ -103,7 +103,18 @@ jobs:
       - name: Publish Packages
         if: steps.changesets.outputs.published == 'true'
         id: publish-packages
-        run: npm run publish -- '${{ steps.changesets.outputs.publishedPackages }}'
+        run: |
+          # Run the publish script and capture outputs
+          node scripts/publish.mjs '${{ steps.changesets.outputs.publishedPackages }}' > publish_output.txt 2>&1
+          cat publish_output.txt
+
+          # Extract the output variables
+          PUBLISH_RESULTS=$(grep "PUBLISH_RESULTS=" publish_output.txt | cut -d'=' -f2-)
+          HAS_PACKAGES_TO_PUBLISH=$(grep "HAS_PACKAGES_TO_PUBLISH=" publish_output.txt | cut -d'=' -f2-)
+
+          # Set GitHub Actions outputs
+          echo "PUBLISH_RESULTS=$PUBLISH_RESULTS" >> $GITHUB_OUTPUT
+          echo "HAS_PACKAGES_TO_PUBLISH=$HAS_PACKAGES_TO_PUBLISH" >> $GITHUB_OUTPUT
         env:
           # Production environment variables (default for main plugin)
           VITE_RECURSICA_API_URL: ${{ secrets.RECURSICA_API }}
@@ -115,7 +126,7 @@ jobs:
 
       # Create and upload release assets for published packages
       - name: Create and Upload Release Assets
-        if: steps.changesets.outputs.published == 'true'
+        if: steps.changesets.outputs.published == 'true' && steps.publish-packages.outputs.HAS_PACKAGES_TO_PUBLISH == 'true'
         id: upload-assets
         run: node scripts/upload-release-assets.mjs '${{ steps.publish-packages.outputs.PUBLISH_RESULTS }}'
         env:
@@ -125,7 +136,7 @@ jobs:
       # This step only runs when the main figma plugin was successfully uploaded as a release asset.
       # It deploys the built plugin files to the production server.
       - name: Deploy Figma Plugin to Production
-        if: steps.upload-assets.outputs.FIGMA_PLUGIN_PROCESSED == 'true'
+        if: steps.changesets.outputs.published == 'true' && steps.publish-packages.outputs.HAS_PACKAGES_TO_PUBLISH == 'true' && steps.upload-assets.outputs.FIGMA_PLUGIN_PROCESSED == 'true'
         uses: ./.github/actions/deploy-to-server
         with:
           token: ${{ secrets.DISPATCH_TOKEN }}
