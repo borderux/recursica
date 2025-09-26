@@ -2,7 +2,7 @@
   "name": "Recursica",
   "id": "1529976075852056898",
   "api": "1.0.0",
-  "main": "./dist/figma-plugin.js",
+  "main": "./figma-plugin.js",
   "capabilities": [],
   "enableProposedApi": false,
   "documentAccess": "dynamic-page",

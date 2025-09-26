@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable turbo/no-undeclared-env-vars */
 /* eslint-disable no-undef */
 /* eslint-disable no-console */
 
@@ -21,13 +22,37 @@ try {
     throw new Error(`Main plugin directory not found: ${mainPluginDir}`);
   }
 
+  // Validate required environment variables
+  const requiredEnvVars = {
+    RECURSICA_API_TEST: process.env.RECURSICA_API_TEST,
+    PLUGIN_PHRASE_TEST: process.env.PLUGIN_PHRASE_TEST,
+  };
+
+  console.log("🔍 Validating environment variables...");
+  const missingVars = [];
+
+  for (const [varName, varValue] of Object.entries(requiredEnvVars)) {
+    if (!varValue) {
+      missingVars.push(varName);
+      console.error(`❌ Missing required environment variable: ${varName}`);
+    } else {
+      console.log(`✅ ${varName}: ${varValue}`);
+    }
+  }
+
+  if (missingVars.length > 0) {
+    console.error("❌ Build failed: Missing required environment variables");
+    console.error("Please ensure the following variables are set:");
+    missingVars.forEach((varName) => {
+      console.error(`  - ${varName}`);
+    });
+    process.exit(1);
+  }
+
   // Map test environment variables to VITE_ variables
-  process.env.VITE_RECURSICA_API_URL =
-    process.env.VITE_RECURSICA_API_URL || process.env.RECURSICA_API_TEST;
-  process.env.VITE_RECURSICA_UI_URL =
-    process.env.VITE_RECURSICA_UI_URL || process.env.RECURSICA_API_TEST;
-  process.env.VITE_PLUGIN_PHRASE =
-    process.env.VITE_PLUGIN_PHRASE || process.env.PLUGIN_PHRASE_TEST;
+  process.env.VITE_RECURSICA_API_URL = process.env.RECURSICA_API_TEST;
+  process.env.VITE_RECURSICA_UI_URL = process.env.RECURSICA_API_TEST;
+  process.env.VITE_PLUGIN_PHRASE = process.env.PLUGIN_PHRASE_TEST;
   process.env.VITE_SHOW_VERSION_BANNER = "true";
 
   console.log("🏗️  Building test version of Figma plugin...");
