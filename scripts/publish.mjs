@@ -81,6 +81,23 @@ function runTurboPublish(packageName) {
   } catch (error) {
     log(`❌ Failed to run turbo publish for ${packageName}`, "red");
     log(`Error: ${error.message}`, "red");
+
+    // Show stdout first (contains the detailed turbo output)
+    if (error.stdout) {
+      log(`📋 Turbo command output:`, "yellow");
+      console.log(error.stdout);
+    }
+
+    // Show stderr if available for more detailed error information
+    if (error.stderr) {
+      log(`📋 Turbo error output:`, "yellow");
+      console.log(error.stderr);
+    }
+
+    // Show the full error object for debugging
+    log(`📋 Full error details:`, "yellow");
+    console.log(JSON.stringify(error, null, 2));
+
     return null;
   }
 }
@@ -99,7 +116,7 @@ function extractZipPath(publishOutput) {
   return null;
 }
 
-function processPublishedPackages(publishedPackages) {
+async function processPublishedPackages(publishedPackages) {
   log("🎯 Publishing packages...", "bright");
 
   const publishResults = [];
@@ -148,14 +165,37 @@ function processPublishedPackages(publishedPackages) {
     // Set GitHub Actions output with comprehensive information
     console.log(`PUBLISH_RESULTS=${JSON.stringify(publishResults)}`);
     console.log(`HAS_PACKAGES_TO_PUBLISH=true`);
+
+    // Also output to GitHub Actions format
+    if (process.env.GITHUB_OUTPUT) {
+      const fs = await import("fs");
+      fs.appendFileSync(
+        process.env.GITHUB_OUTPUT,
+        `PUBLISH_RESULTS=${JSON.stringify(publishResults)}\n`,
+      );
+      fs.appendFileSync(
+        process.env.GITHUB_OUTPUT,
+        `HAS_PACKAGES_TO_PUBLISH=true\n`,
+      );
+    }
   } else {
     log("⚠️  No packages were published with zip files", "yellow");
     console.log("PUBLISH_RESULTS=[]");
     console.log(`HAS_PACKAGES_TO_PUBLISH=false`);
+
+    // Also output to GitHub Actions format
+    if (process.env.GITHUB_OUTPUT) {
+      const fs = await import("fs");
+      fs.appendFileSync(process.env.GITHUB_OUTPUT, `PUBLISH_RESULTS=[]\n`);
+      fs.appendFileSync(
+        process.env.GITHUB_OUTPUT,
+        `HAS_PACKAGES_TO_PUBLISH=false\n`,
+      );
+    }
   }
 }
 
-function main() {
+async function main() {
   const publishedPackagesJson = process.argv[2];
 
   log(`ARGS: "${publishedPackagesJson}"`, "cyan");
@@ -186,7 +226,7 @@ function main() {
     });
     log("");
 
-    processPublishedPackages(publishedPackages);
+    await processPublishedPackages(publishedPackages);
   } catch (error) {
     log("❌ Error parsing publishedPackagesJson", "red");
     log(`Error: ${error.message}`, "red");
@@ -195,4 +235,7 @@ function main() {
 }
 
 // Run the script
-main();
+main().catch((error) => {
+  console.error("Script failed:", error);
+  process.exit(1);
+});
