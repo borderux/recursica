@@ -24,6 +24,7 @@
     "dev": "concurrently \"npm run dev:ui\" \"npm run dev:code\"",
     "dev:ui": "vite build --watch --mode development",
     "dev:code": "vite build --watch --config vite.config.lib.ts --mode development",
+    "build": "node -e \"console.log('🔍 FIGMA-PLUGIN ENV VARS:'); console.log('VITE_RECURSICA_API_URL:', process.env.VITE_RECURSICA_API_URL); console.log('VITE_RECURSICA_UI_URL:', process.env.VITE_RECURSICA_UI_URL); console.log('VITE_PLUGIN_PHRASE:', process.env.VITE_PLUGIN_PHRASE);\"",
     "build2": "npm run build:ui && npm run build:code && cp manifest.production.json dist/manifest.json",
     "build:test": "node scripts/build-test.mjs",
     "build:ui": "node -e \"console.log('🔍 DEBUG: Environment variables in figma-plugin build:ui:'); console.log('  VITE_RECURSICA_API_URL:', process.env.VITE_RECURSICA_API_URL); console.log('  VITE_RECURSICA_UI_URL:', process.env.VITE_RECURSICA_UI_URL); console.log('  VITE_PLUGIN_PHRASE:', process.env.VITE_PLUGIN_PHRASE ? process.env.VITE_PLUGIN_PHRASE.substring(0, 4) + '...' : 'undefined');\" && tsc -b && vite build --mode production",
