@@ -87,6 +87,20 @@ jobs:
           echo "  RECURSICA_API_TEST: '${{ secrets.RECURSICA_API_TEST }}'"
           echo "  PLUGIN_PHRASE_TEST: '${{ secrets.PLUGIN_PHRASE_TEST }}'"
           echo ""
+          # Export environment variables to ensure they're available to all child processes
+          export VITE_RECURSICA_API_URL="${{ secrets.RECURSICA_API }}"
+          export VITE_RECURSICA_UI_URL="${{ secrets.RECURSICA_API }}"
+          export VITE_PLUGIN_PHRASE="${{ secrets.PLUGIN_PHRASE }}"
+          export RECURSICA_API_TEST="${{ secrets.RECURSICA_API_TEST }}"
+          export PLUGIN_PHRASE_TEST="${{ secrets.PLUGIN_PHRASE_TEST }}"
+          echo ""
+          echo "🔍 DEBUG: Exported environment variables:"
+          echo "  VITE_RECURSICA_API_URL: '$VITE_RECURSICA_API_URL'"
+          echo "  VITE_RECURSICA_UI_URL: '$VITE_RECURSICA_UI_URL'"
+          echo "  VITE_PLUGIN_PHRASE: '$VITE_PLUGIN_PHRASE'"
+          echo "  RECURSICA_API_TEST: '$RECURSICA_API_TEST'"
+          echo "  PLUGIN_PHRASE_TEST: '$PLUGIN_PHRASE_TEST'"
+          echo ""
           npm run build
         env:
           # Production environment variables (for main plugin)
