@@ -42,6 +42,14 @@ jobs:
     permissions:
       contents: write # To create releases and tags
       pull-requests: write # To create pull requests
+    env:
+      # Production environment variables (default for main plugin)
+      VITE_RECURSICA_API_URL: ${{ vars.RECURSICA_API }}
+      VITE_RECURSICA_UI_URL: ${{ vars.RECURSICA_API }}
+      VITE_PLUGIN_PHRASE: ${{ secrets.PLUGIN_PHRASE_PROD }}
+      # Test environment variables (used by test plugin)
+      RECURSICA_API_TEST: ${{ vars.RECURSICA_API_TEST }}
+      PLUGIN_PHRASE_TEST: ${{ secrets.PLUGIN_PHRASE_TEST }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -74,14 +82,6 @@ jobs:
       # This ensures all dist/ folders are up-to-date and prevents releases if builds fail
       - name: Build Everything
         run: npm run build
-        env:
-          # Production environment variables (default for main plugin)
-          VITE_RECURSICA_API_URL: ${{ vars.RECURSICA_API }}
-          VITE_RECURSICA_UI_URL: ${{ vars.RECURSICA_API }}
-          VITE_PLUGIN_PHRASE: ${{ secrets.PLUGIN_PHRASE_PROD }}
-          # Test environment variables (used by test plugin)
-          RECURSICA_API_TEST: ${{ vars.RECURSICA_API_TEST }}
-          PLUGIN_PHRASE_TEST: ${{ secrets.PLUGIN_PHRASE_TEST }}
 
       # Changesets Action - The Core of Our Release System
       #
