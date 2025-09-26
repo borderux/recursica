@@ -97,6 +97,8 @@ try {
           VITE_RECURSICA_UI_URL: process.env.VITE_RECURSICA_UI_URL,
           VITE_PLUGIN_PHRASE: process.env.VITE_PLUGIN_PHRASE,
           VITE_SHOW_VERSION_BANNER: process.env.VITE_SHOW_VERSION_BANNER,
+          RECURSICA_API_TEST: process.env.RECURSICA_API_TEST,
+          PLUGIN_PHRASE_TEST: process.env.PLUGIN_PHRASE_TEST,
         },
       },
     );
@@ -124,6 +126,8 @@ try {
         VITE_RECURSICA_UI_URL: process.env.VITE_RECURSICA_UI_URL,
         VITE_PLUGIN_PHRASE: process.env.VITE_PLUGIN_PHRASE,
         VITE_SHOW_VERSION_BANNER: process.env.VITE_SHOW_VERSION_BANNER,
+        RECURSICA_API_TEST: process.env.RECURSICA_API_TEST,
+        PLUGIN_PHRASE_TEST: process.env.PLUGIN_PHRASE_TEST,
       },
     });
     console.log("✅ Main plugin test build completed:");
