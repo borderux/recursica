@@ -22,6 +22,15 @@ try {
     throw new Error(`Main plugin directory not found: ${mainPluginDir}`);
   }
 
+  // Debug: Print all environment variables (for complete debugging)
+  console.log("\n🔍 DEBUG: All environment variables:");
+  Object.keys(process.env)
+    .sort()
+    .forEach((key) => {
+      const value = process.env[key];
+      console.log(`  ${key}: ${value}`);
+    });
+
   // Map test environment variables to VITE_ variables
   process.env.VITE_RECURSICA_API_URL =
     process.env.VITE_RECURSICA_API_URL || process.env.RECURSICA_API_TEST;
@@ -41,48 +50,6 @@ try {
   console.log(
     `  VITE_SHOW_VERSION_BANNER: ${process.env.VITE_SHOW_VERSION_BANNER}`,
   );
-
-  // Debug: Print all environment variables that start with VITE_ or RECURSICA_ or PLUGIN_
-  console.log("\n🔍 DEBUG: All relevant environment variables:");
-  const relevantEnvVars = Object.keys(process.env)
-    .filter(
-      (key) =>
-        key.startsWith("VITE_") ||
-        key.startsWith("RECURSICA_") ||
-        key.startsWith("PLUGIN_"),
-    )
-    .sort();
-
-  relevantEnvVars.forEach((key) => {
-    const value = process.env[key];
-    // Mask sensitive values
-    const displayValue =
-      key.includes("PHRASE") || key.includes("TOKEN") || key.includes("SECRET")
-        ? value
-          ? `${value.substring(0, 4)}...`
-          : "undefined"
-        : value;
-    console.log(`  ${key}: ${displayValue}`);
-  });
-
-  // Debug: Print all environment variables (for complete debugging)
-  console.log("\n🔍 DEBUG: All environment variables:");
-  Object.keys(process.env)
-    .sort()
-    .forEach((key) => {
-      const value = process.env[key];
-      // Mask sensitive values
-      const displayValue =
-        key.includes("PHRASE") ||
-        key.includes("TOKEN") ||
-        key.includes("SECRET") ||
-        key.includes("PASSWORD")
-          ? value
-            ? `${value.substring(0, 4)}...`
-            : "undefined"
-          : value;
-      console.log(`  ${key}: ${displayValue}`);
-    });
 
   // Build dependencies first
   console.log("🏗️  Building dependencies first...");
