@@ -73,7 +73,21 @@ jobs:
       # Build all packages before publishing
       # This ensures all dist/ folders are up-to-date and prevents releases if builds fail
       - name: Build Everything
-        run: npm run build
+        run: |
+          echo "🔍 DEBUG: GitHub secrets values:"
+          echo "  RECURSICA_API: '${{ secrets.RECURSICA_API }}'"
+          echo "  PLUGIN_PHRASE: '${{ secrets.PLUGIN_PHRASE }}'"
+          echo "  RECURSICA_API_TEST: '${{ secrets.RECURSICA_API_TEST }}'"
+          echo "  PLUGIN_PHRASE_TEST: '${{ secrets.PLUGIN_PHRASE_TEST }}'"
+          echo ""
+          echo "🔍 DEBUG: Environment variables being set:"
+          echo "  VITE_RECURSICA_API_URL: '${{ secrets.RECURSICA_API }}'"
+          echo "  VITE_RECURSICA_UI_URL: '${{ secrets.RECURSICA_API }}'"
+          echo "  VITE_PLUGIN_PHRASE: '${{ secrets.PLUGIN_PHRASE }}'"
+          echo "  RECURSICA_API_TEST: '${{ secrets.RECURSICA_API_TEST }}'"
+          echo "  PLUGIN_PHRASE_TEST: '${{ secrets.PLUGIN_PHRASE_TEST }}'"
+          echo ""
+          npm run build
         env:
           # Production environment variables (for main plugin)
           VITE_RECURSICA_API_URL: ${{ secrets.RECURSICA_API }}
