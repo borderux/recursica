@@ -27,7 +27,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "cross-env VITE_RECURSICA_API_URL=\"https://dummy-api.example.com\" VITE_RECURSICA_UI_URL=\"https://dummy-ui.example.com\" VITE_PLUGIN_PHRASE=\"dummy-phrase-123\" RECURSICA_API_TEST=\"https://dummy-test-api.example.com\" PLUGIN_PHRASE_TEST=\"dummy-test-phrase-456\" node scripts/build.mjs",
+    "build": "VITE_RECURSICA_API_URL=\"$VITE_RECURSICA_API_URL\" VITE_RECURSICA_UI_URL=\"$VITE_RECURSICA_UI_URL\" VITE_PLUGIN_PHRASE=\"$VITE_PLUGIN_PHRASE\" RECURSICA_API_TEST=\"$RECURSICA_API_TEST\" PLUGIN_PHRASE_TEST=\"$PLUGIN_PHRASE_TEST\" node scripts/build.mjs",
     "publish": "node scripts/publish.mjs"
   },
   "dependencies": {
