@@ -27,12 +27,15 @@
     "README.md"
   ],
   "scripts": {
-    "build": "node scripts/build.mjs",
+    "build": "cross-env node scripts/build.mjs",
     "publish": "node scripts/publish.mjs"
   },
   "dependencies": {
     "@recursica/schemas": "*",
     "@recursica/common": "*",
     "@recursica/ui-kit-mantine": "*"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3"
   }
 }
