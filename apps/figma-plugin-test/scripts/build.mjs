@@ -24,11 +24,11 @@ try {
 
   // Map test environment variables to VITE_ variables
   process.env.VITE_RECURSICA_API_URL =
-    process.env.VITE_RECURSICA_API_URL || process.env.RECURSICA_API_TEST;
+    process.env.VITE_RECURSICA_API_URL || process.env.VITE_RECURSICA_API_TEST;
   process.env.VITE_RECURSICA_UI_URL =
-    process.env.VITE_RECURSICA_UI_URL || process.env.RECURSICA_API_TEST;
+    process.env.VITE_RECURSICA_UI_URL || process.env.VITE_RECURSICA_API_TEST;
   process.env.VITE_PLUGIN_PHRASE =
-    process.env.VITE_PLUGIN_PHRASE || process.env.PLUGIN_PHRASE_TEST;
+    process.env.VITE_PLUGIN_PHRASE || process.env.VITE_PLUGIN_PHRASE_TEST;
   process.env.VITE_SHOW_VERSION_BANNER = "true";
 
   // Debug: Print environment variables after mapping
@@ -41,8 +41,12 @@ try {
   console.log(
     `  VITE_SHOW_VERSION_BANNER: ${process.env.VITE_SHOW_VERSION_BANNER}`,
   );
-  console.log(`  RECURSICA_API_TEST: ${process.env.RECURSICA_API_TEST}`);
-  console.log(`  PLUGIN_PHRASE_TEST: ${process.env.PLUGIN_PHRASE_TEST}`);
+  console.log(
+    `  VITE_RECURSICA_API_TEST: ${process.env.VITE_RECURSICA_API_TEST}`,
+  );
+  console.log(
+    `  VITE_PLUGIN_PHRASE_TEST: ${process.env.VITE_PLUGIN_PHRASE_TEST}`,
+  );
 
   // Build dependencies first
   console.log("🏗️  Building dependencies first...");
@@ -57,8 +61,8 @@ try {
           VITE_RECURSICA_UI_URL: process.env.VITE_RECURSICA_UI_URL,
           VITE_PLUGIN_PHRASE: process.env.VITE_PLUGIN_PHRASE,
           VITE_SHOW_VERSION_BANNER: process.env.VITE_SHOW_VERSION_BANNER,
-          RECURSICA_API_TEST: process.env.RECURSICA_API_TEST,
-          PLUGIN_PHRASE_TEST: process.env.PLUGIN_PHRASE_TEST,
+          VITE_RECURSICA_API_TEST: process.env.VITE_RECURSICA_API_TEST,
+          VITE_PLUGIN_PHRASE_TEST: process.env.VITE_PLUGIN_PHRASE_TEST,
         },
       },
     );
@@ -86,8 +90,8 @@ try {
         VITE_RECURSICA_UI_URL: process.env.VITE_RECURSICA_UI_URL,
         VITE_PLUGIN_PHRASE: process.env.VITE_PLUGIN_PHRASE,
         VITE_SHOW_VERSION_BANNER: process.env.VITE_SHOW_VERSION_BANNER,
-        RECURSICA_API_TEST: process.env.RECURSICA_API_TEST,
-        PLUGIN_PHRASE_TEST: process.env.PLUGIN_PHRASE_TEST,
+        VITE_RECURSICA_API_TEST: process.env.VITE_RECURSICA_API_TEST,
+        VITE_PLUGIN_PHRASE_TEST: process.env.VITE_PLUGIN_PHRASE_TEST,
       },
     });
     console.log("✅ Main plugin test build completed:");
