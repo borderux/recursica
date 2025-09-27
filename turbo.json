@@ -33,6 +33,7 @@
       "outputs": ["storybook-static/**"]
     },
     "publish": {
+      "dependsOn": ["build"],
       "outputs": ["**/*.zip", "releases/**"]
     }
   }
