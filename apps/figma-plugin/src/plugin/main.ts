@@ -5,7 +5,7 @@ import { syncMetadata } from './metadata';
 import { detectFiletype } from './filetype';
 const pluginVersion = packageInfo.version;
 
-if (import.meta.env.MODE === 'development') {
+if (import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test') {
   figma.showUI(__html__, {
     width: 370,
     height: 350,

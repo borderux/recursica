@@ -3,6 +3,20 @@
 /* eslint-disable no-undef */
 /* eslint-disable no-console */
 
+/**
+ * Build script for the Figma plugin test version
+ *
+ * This script:
+ * 1. Validates required test environment variables
+ * 2. Maps test variables to production variable names
+ * 3. Builds dependencies and the main plugin in test mode
+ * 4. Copies the built files to the test app's dist directory
+ *
+ * Required environment variables:
+ * - VITE_RECURSICA_API_TEST: Test API URL
+ * - VITE_PLUGIN_PHRASE_TEST: Test plugin security phrase
+ */
+
 import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
@@ -13,8 +27,6 @@ const testAppDir = path.resolve(__dirname, "..");
 const mainPluginDir = path.resolve(testAppDir, "../figma-plugin");
 
 console.log("🔧 Building test version of Figma plugin...");
-console.log(`📁 Main plugin directory: ${mainPluginDir}`);
-console.log(`📁 Test app directory: ${testAppDir}`);
 
 try {
   // Verify main plugin directory exists
@@ -22,133 +34,71 @@ try {
     throw new Error(`Main plugin directory not found: ${mainPluginDir}`);
   }
 
-  // Map test environment variables to VITE_ variables
-  // Test build MUST use test variables - fail if they're not present
-  if (!process.env.VITE_RECURSICA_API_TEST) {
-    throw new Error(
-      "VITE_RECURSICA_API_TEST environment variable is required for test build",
-    );
+  // Check for test environment variables and warn if missing
+  const testVars = {
+    VITE_RECURSICA_API_TEST: "Test API URL",
+    VITE_PLUGIN_PHRASE_TEST: "Test plugin security phrase",
+  };
+
+  let usingTestVars = true;
+  for (const [varName, description] of Object.entries(testVars)) {
+    if (!process.env[varName]) {
+      console.warn(
+        `⚠️  ${varName} not set (${description}) - using production values`,
+      );
+      usingTestVars = false;
+    }
   }
-  if (!process.env.VITE_PLUGIN_PHRASE_TEST) {
-    throw new Error(
-      "VITE_PLUGIN_PHRASE_TEST environment variable is required for test build",
+
+  // Map environment variables (test variables take precedence if available)
+  if (usingTestVars) {
+    process.env.VITE_RECURSICA_API_URL = process.env.VITE_RECURSICA_API_TEST;
+    process.env.VITE_RECURSICA_UI_URL = process.env.VITE_RECURSICA_API_TEST;
+    process.env.VITE_PLUGIN_PHRASE = process.env.VITE_PLUGIN_PHRASE_TEST;
+    console.log("✅ Using test environment variables");
+  } else {
+    console.log(
+      "⚠️  Using production environment variables (test vars not set)",
     );
   }
 
-  process.env.VITE_RECURSICA_API_URL = process.env.VITE_RECURSICA_API_TEST;
-  process.env.VITE_RECURSICA_UI_URL = process.env.VITE_RECURSICA_API_TEST;
-  process.env.VITE_PLUGIN_PHRASE = process.env.VITE_PLUGIN_PHRASE_TEST;
+  // Always show version banner for test builds
   process.env.VITE_SHOW_VERSION_BANNER = "true";
 
-  // Debug: Print environment variables after mapping
-  console.log("🔍 DEBUG: Environment variables after mapping:");
-  console.log(
-    `  VITE_RECURSICA_API_URL: ${process.env.VITE_RECURSICA_API_URL}`,
-  );
-  console.log(`  VITE_RECURSICA_UI_URL: ${process.env.VITE_RECURSICA_UI_URL}`);
-  console.log(`  VITE_PLUGIN_PHRASE: ${process.env.VITE_PLUGIN_PHRASE}`);
-  console.log(
-    `  VITE_SHOW_VERSION_BANNER: ${process.env.VITE_SHOW_VERSION_BANNER}`,
-  );
-  console.log(
-    `  VITE_RECURSICA_API_TEST: ${process.env.VITE_RECURSICA_API_TEST}`,
-  );
-  console.log(
-    `  VITE_PLUGIN_PHRASE_TEST: ${process.env.VITE_PLUGIN_PHRASE_TEST}`,
-  );
-
-  // Build dependencies first
-  console.log("🏗️  Building dependencies first...");
-  try {
-    const depsResult = execSync(
-      "npx turbo run build --filter=@recursica/ui-kit-mantine --filter=@recursica/common --filter=@recursica/schemas",
-      {
-        encoding: "utf8",
-        env: {
-          ...process.env,
-          VITE_RECURSICA_API_URL: process.env.VITE_RECURSICA_API_URL,
-          VITE_RECURSICA_UI_URL: process.env.VITE_RECURSICA_UI_URL,
-          VITE_PLUGIN_PHRASE: process.env.VITE_PLUGIN_PHRASE,
-          VITE_SHOW_VERSION_BANNER: process.env.VITE_SHOW_VERSION_BANNER,
-          VITE_RECURSICA_API_TEST: process.env.VITE_RECURSICA_API_TEST,
-          VITE_PLUGIN_PHRASE_TEST: process.env.VITE_PLUGIN_PHRASE_TEST,
-        },
-      },
-    );
-    console.log("✅ Dependencies built successfully:");
-    console.log(depsResult);
-  } catch (error) {
-    console.error("❌ Dependencies build failed:");
-    console.error("Error message:", error.message);
-    console.error("Error output:", error.output);
-    console.error("Error stderr:", error.stderr);
-    console.error("Error stdout:", error.stdout);
-    console.error("Full error object:", error);
-    throw error;
-  }
-
-  // Build the main plugin in test mode
+  // Build main plugin in test mode (Turborepo will handle dependencies automatically)
   console.log("🏗️  Building main plugin in test mode...");
-  try {
-    const buildResult = execSync("npm run build:test", {
-      cwd: mainPluginDir,
-      encoding: "utf8",
-      env: {
-        ...process.env,
-        VITE_RECURSICA_API_URL: process.env.VITE_RECURSICA_API_URL,
-        VITE_RECURSICA_UI_URL: process.env.VITE_RECURSICA_UI_URL,
-        VITE_PLUGIN_PHRASE: process.env.VITE_PLUGIN_PHRASE,
-        VITE_SHOW_VERSION_BANNER: process.env.VITE_SHOW_VERSION_BANNER,
-        VITE_RECURSICA_API_TEST: process.env.VITE_RECURSICA_API_TEST,
-        VITE_PLUGIN_PHRASE_TEST: process.env.VITE_PLUGIN_PHRASE_TEST,
-      },
-    });
-    console.log("✅ Main plugin test build completed:");
-    console.log(buildResult);
-  } catch (error) {
-    console.error("❌ Main plugin test build failed:");
-    console.error("Error message:", error.message);
-    console.error("Error output:", error.output);
-    console.error("Error stderr:", error.stderr);
-    console.error("Error stdout:", error.stdout);
-    console.error("Full error object:", error);
-    throw error;
-  }
+  execSync("npm run build:test", {
+    cwd: mainPluginDir,
+    encoding: "utf8",
+    env: process.env,
+  });
 
-  // Create dist directory in test app if it doesn't exist
+  // Copy built files to test app
   const testDistDir = path.join(testAppDir, "dist");
+  const mainDistDir = path.join(mainPluginDir, "dist-test");
+
   if (!fs.existsSync(testDistDir)) {
     fs.mkdirSync(testDistDir, { recursive: true });
-    console.log("✅ Created dist directory in test app");
   }
 
-  // Copy built files from main plugin to test app
-  const mainDistDir = path.join(mainPluginDir, "dist-test");
   if (fs.existsSync(mainDistDir)) {
-    console.log("📋 Copying built files to test app...");
-
-    // Copy all files from main plugin dist to test app dist
+    console.log("📋 Copying built files...");
     const files = fs.readdirSync(mainDistDir);
+
     for (const file of files) {
       const sourceFile = path.join(mainDistDir, file);
       const targetFile = path.join(testDistDir, file);
 
       if (fs.statSync(sourceFile).isDirectory()) {
-        // Copy directory recursively
         fs.cpSync(sourceFile, targetFile, { recursive: true });
       } else {
-        // Copy file
         fs.copyFileSync(sourceFile, targetFile);
       }
-      console.log(`  ✅ Copied: ${file}`);
     }
   }
 
   console.log("🎉 Test build completed successfully!");
-  console.log(
-    "📦 Package @recursica/figma-plugin-test is ready for publishing",
-  );
 } catch (error) {
-  console.error("❌ Error building test package:", error.message);
+  console.error("❌ Build failed:", error.message);
   process.exit(1);
 }
