@@ -174,7 +174,8 @@ function main() {
     log('');
 
     // Step 5: Copy updater files
-    copyUpdaterFiles();
+    // DISABLED: No need for the updater with our new Github release functionality
+    // copyUpdaterFiles();
     log('');
 
     log(`🎉 Test build completed successfully!`, 'green');
