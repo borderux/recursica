@@ -36,14 +36,8 @@ export function UpdateNotification({ updateInfo, onDismiss, onDownload }: Update
         <Flex direction='column' gap='size/spacer/2x' align='center'>
           {/* Header with icon */}
           <Flex direction='row' align='center' gap='size/spacer/0-5x'>
-            <Icon name='arrow_path_outline' size={24} />
             <Typography variant='h6' color='layers/layer-1/elements/text/color'>
               Update Available
-              {updateInfo.pluginMode !== 'production' && (
-                <span style={{ fontSize: '12px', opacity: 0.7, marginLeft: '8px' }}>
-                  ({updateInfo.pluginMode.toUpperCase()})
-                </span>
-              )}
             </Typography>
           </Flex>
 
@@ -67,24 +61,20 @@ export function UpdateNotification({ updateInfo, onDismiss, onDownload }: Update
             </Flex>
           </Flex>
 
-          {/* Release notes preview */}
-          {updateInfo.releaseNotes && (
-            <Box
-              style={{
-                backgroundColor: 'var(--mantine-color-gray-0)',
-                padding: '12px',
-                borderRadius: '4px',
-                maxHeight: '100px',
-                overflow: 'hidden',
-                width: '100%',
-              }}
-            >
-              <Typography variant='caption' color='layers/layer-1/elements/text/color'>
-                {updateInfo.releaseNotes.substring(0, 200)}
-                {updateInfo.releaseNotes.length > 200 ? '...' : ''}
-              </Typography>
-            </Box>
-          )}
+          {/* Instructions */}
+          <Box
+            style={{
+              backgroundColor: 'var(--mantine-color-gray-0)',
+              padding: '12px',
+              borderRadius: '4px',
+              width: '100%',
+            }}
+          >
+            <Typography variant='caption' color='layers/layer-1/elements/text/color'>
+              Press Download to go to the GitHub release page and download the
+              recursica-figma-plugin.zip. Extract that over the previous plugin.
+            </Typography>
+          </Box>
 
           {/* Action buttons */}
           <Flex direction='row' gap='size/spacer/1-5x' w='100%'>

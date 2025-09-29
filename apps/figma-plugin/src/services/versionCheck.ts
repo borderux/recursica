@@ -15,6 +15,7 @@ export interface VersionCheckResult {
   currentVersion: string;
   latestVersion: string;
   releaseUrl: string;
+  downloadUrl: string;
   releaseNotes: string;
   pluginMode: PluginMode;
 }
@@ -60,6 +61,7 @@ export class VersionCheckService {
         currentVersion: cleanCurrentVersion,
         latestVersion,
         releaseUrl: latestRelease.html_url,
+        downloadUrl: `${latestRelease.html_url}/download/recursica-figma-plugin.zip`,
         releaseNotes: latestRelease.body || '',
         pluginMode,
       };
@@ -71,6 +73,7 @@ export class VersionCheckService {
         currentVersion: this.cleanVersion(currentVersion),
         latestVersion: this.cleanVersion(currentVersion),
         releaseUrl: '',
+        downloadUrl: '',
         releaseNotes: '',
         pluginMode: this.getPluginMode(),
       };

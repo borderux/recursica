@@ -29,6 +29,3 @@ storybook-static
 
 tsconfig.node.tsbuildinfo
 tsconfig.app.tsbuildinfo
-
-!.env
-!.env.local
