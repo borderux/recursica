@@ -8,7 +8,7 @@ export function useVersionCheck() {
 
   const checkForUpdates = async () => {
     const pluginMode = import.meta.env.VITE_PLUGIN_MODE;
-    if (pluginMode === 'test' || pluginMode === 'development') {
+    if (pluginMode === 'test') {
       const versionCheckService = new VersionCheckService();
       const result = await versionCheckService.checkForUpdates('0.0.11');
       setUpdateInfo(result);

@@ -89,12 +89,7 @@ export function UpdateNotification({ updateInfo, onDismiss, onDownload }: Update
           {/* Action buttons */}
           <Flex direction='row' gap='size/spacer/1-5x' w='100%'>
             <Button label='Later' variant='outline' onClick={onDismiss} style={{ flex: 1 }} />
-            <Button
-              label='Download Update'
-              variant='solid'
-              onClick={onDownload}
-              style={{ flex: 1 }}
-            />
+            <Button label='Download' variant='solid' onClick={onDownload} style={{ flex: 1 }} />
           </Flex>
         </Flex>
       </Box>

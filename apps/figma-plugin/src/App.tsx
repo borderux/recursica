@@ -34,6 +34,10 @@ function AppRoutes() {
 }
 
 function App() {
+  // Debug: Log environment variables
+  console.log('VITE_PLUGIN_MODE:', import.meta.env.VITE_PLUGIN_MODE);
+  console.log('VITE_RECURSICA_API_URL:', import.meta.env.VITE_RECURSICA_API_URL);
+  console.log('VITE_RECURSICA_UI_URL:', import.meta.env.VITE_RECURSICA_UI_URL);
   return (
     <ThemeProvider themeClassname={Themes.Default.Light}>
       <FigmaProvider>

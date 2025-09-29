@@ -4,23 +4,23 @@ import { viteSingleFile } from 'vite-plugin-singlefile';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  plugins: [react(), viteSingleFile()],
-
+  plugins: [
+    react(),
+    viteSingleFile({
+      // Make inlined code more readable in development
+      removeViteModuleLoader: mode === 'development',
+      useRecommendedBuildConfig: mode === 'production',
+    }),
+  ],
   build: {
-    emptyOutDir: false,
+    emptyOutDir: false, // Don't clear manifest.json
     outDir: mode === 'development' ? 'dist-dev' : mode === 'test' ? 'dist-test' : 'dist',
     target: 'es2017', // Ensure compatibility with Figma's plugin environment
-    sourcemap: mode === 'development' || mode === 'test', // Generate source maps for dev/test
+    sourcemap: false, // Disabled for UI - inlined code makes source maps less useful
   },
   css: {
     preprocessorOptions: {
       scss: {},
     },
-  },
-  define: {
-    // Set VITE_PLUGIN_MODE based on the build mode
-    'import.meta.env.VITE_PLUGIN_MODE': JSON.stringify(
-      mode === 'development' ? 'development' : mode === 'test' ? 'test' : 'production'
-    ),
   },
 }));
