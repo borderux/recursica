@@ -11,6 +11,9 @@ name: Deploy PR Preview
 # - recursica-storybook app with working "build-storybook" script
 #
 # Preview URLs: https://[username].github.io/recursica/pr-preview/pr-[pr-number]/
+#
+# Note: The root index.html redirect is handled by the recursica-storybook app's
+# publish script when deployed via changesets, not by this PR preview workflow.
 
 on:
   # Trigger on pull requests targeting main branch

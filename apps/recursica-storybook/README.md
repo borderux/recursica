@@ -37,10 +37,30 @@ npm run storybook
 ### Building for Production
 
 ```sh
-npm run build-storybook
+npm run build
 ```
 
 The built files will be available in the `storybook-static` directory.
+
+## Available Scripts
+
+- **`npm run storybook`** - Start the development server on port 6006
+- **`npm run build`** - Build the Storybook for production (creates `storybook-static/`)
+- **`npm run publish`** - Deploy the built Storybook to GitHub Pages (used by changesets workflow)
+
+## Deployment
+
+The Storybook is automatically deployed to GitHub Pages when changes are merged to the `main` branch through the changesets release workflow. The deployment:
+
+- Builds the Storybook using the `build` script
+- Deploys a root `index.html` redirect to the repository root
+- Deploys the Storybook build to the `/storybook/` subdirectory
+- Uses GitHub Pages for hosting
+
+The deployed Storybook will be available at:
+
+- **Main site**: `https://[username].github.io/recursica/` (redirects to storybook)
+- **Direct access**: `https://[username].github.io/recursica/storybook/`
 
 ## Available Stories
 
