@@ -10,6 +10,8 @@ type LayoutProps = PropsWithChildren<{
 
 export function Layout({ children, footer, header, wrapperProps }: LayoutProps) {
   const { pluginVersion } = useFigma();
+  const pluginMode = import.meta.env.VITE_PLUGIN_MODE;
+
   return (
     <Flex
       direction={'column'}
@@ -36,7 +38,7 @@ export function Layout({ children, footer, header, wrapperProps }: LayoutProps) 
       {footer}
       <Box style={{ position: 'absolute', bottom: 4, right: 4 }}>
         <Typography variant='caption' color='layers/layer-0/elements/text/color' opacity={0.84}>
-          {pluginVersion}
+          {pluginMode === 'test' ? `TEST v${pluginVersion}` : pluginVersion}
         </Typography>
       </Box>
     </Flex>

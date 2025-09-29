@@ -24,5 +24,6 @@
     "typeRoots": ["../../node_modules/@types", "../../node_modules"],
     "types": ["react", "node", "@figma/plugin-typings"]
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/**/__tests__/**"]
 }

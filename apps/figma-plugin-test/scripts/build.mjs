@@ -62,8 +62,8 @@ try {
     );
   }
 
-  // Always show version banner for test builds
-  process.env.VITE_SHOW_VERSION_BANNER = "true";
+  // Set plugin mode for test builds
+  process.env.VITE_PLUGIN_MODE = "test";
 
   // Build main plugin in test mode (Turborepo will handle dependencies automatically)
   console.log("🏗️  Building main plugin in test mode...");

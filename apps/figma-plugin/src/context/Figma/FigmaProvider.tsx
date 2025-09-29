@@ -2,7 +2,6 @@ import { useEffect, useLayoutEffect, useState } from 'react';
 import { FigmaContext, CurrentRepositoryContext } from './FigmaContext';
 import type { RecursicaVariablesSchema } from '@recursica/schemas';
 import { FileTypes } from '../../plugin/filetype';
-import { Typography, Box } from '@recursica/ui-kit-mantine';
 
 export interface TokensProvidersProps {
   children: React.ReactNode;
@@ -221,28 +220,5 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
     pluginVersion,
     updateAgreedPublishChanges,
   };
-  const SHOW_VERSION_BANNER = import.meta.env.VITE_SHOW_VERSION_BANNER === 'true';
-  const shouldShowBanner = SHOW_VERSION_BANNER;
-
-  return (
-    <FigmaContext.Provider value={values}>
-      {shouldShowBanner && pluginVersion && (
-        <Box
-          style={{ position: 'absolute', top: 0, left: 0, zIndex: 1000 }}
-          w='100%'
-          bg='layers/layer-alternatives/warn/properties/surface'
-          p='size/spacer/default'
-        >
-          <Typography
-            variant='body-2/normal'
-            textAlign='center'
-            color='layers/layer-alternatives/warn/elements/text/color'
-          >
-            TESTING PLUGIN v{pluginVersion}
-          </Typography>
-        </Box>
-      )}
-      {children}
-    </FigmaContext.Provider>
-  );
+  return <FigmaContext.Provider value={values}>{children}</FigmaContext.Provider>;
 }

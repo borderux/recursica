@@ -1,4 +1,4 @@
-import packageInfo from '../../package.json' with { type: 'json' };
+import packageInfo from '../../package.json';
 import { getLocalStorage, saveInStorage } from './authStorage';
 import { getTeamLibrary } from './teamLibrary';
 import { syncMetadata } from './metadata';

@@ -1,36 +1,21 @@
-# Recursica JSON exporter for Figma
+# Recursica Figma Plugin
 
 This is a simple plugin for Figma that exports all the local variables in the Recursica design system files to Json in a repository, as well as supporting CSS and project files.
-
-## Metadata collection
-
-To be able to run the plugin you will need to create a variable collection in your figma file, to specify the name of the project (eg. recursica-project) and the project type (the current accepted values are: `ui-kit-mantine | theme + tokens | icons`).  
-Here's an example of the expected variable collection.
-
-**ID variables**
-| name | value |
-| ------------ | ---------- |
-| project-id | recursica-project |
-| project-type | ui-kit-mantine |
-
-> [!Important]
-> The name of the collection must be `ID variables`
 
 ## Development
 
 To develop this plugin, you need to have Node.js and npm installed. Then, you can run the following commands:
-
 [node]: https://nodejs.org/
 
 ```bash
 # Install dependencies
 npm install
 
-# Start the development server
+# Start the development system and watch
 npm run dev
 ```
 
-This will start a development server that will watch for changes in the `src` directory and automatically build the plugin for Figma.
+This will start file watch that will watch for changes in the `src` directory and automatically build the plugin for Figma.
 
 ## Build System
 
@@ -39,31 +24,23 @@ The plugin supports three distinct build types for different use cases:
 ### 🚀 **Local Development** (`npm run dev`)
 
 - **Purpose**: Local development and debugging
-- **Manifest**: `manifest.json` (points to `dist-test/`)
+- **Manifest**: `manifest..development.json` (points to `dist-test/`)
 - **Output**: `dist-test/` directory
-- **Features**: Hot reload, file watching, development banner
+- **Features**: Hot reload, file watching
 
 ### 🧪 **Test Build** (`npm run build:test`)
 
 - **Purpose**: Creating test releases for internal testing
 - **Manifest**: `manifest.test.json` (points to `dist/`)
 - **Output**: `dist/` directory
-- **Usage**: `npm run zip:test` to create test release package
+- **Usage**: `npm run build:test` to create test release package
 
 ### 🏭 **Production Build** (`npm run build`)
 
 - **Purpose**: Production releases
 - **Manifest**: `manifest.production.json` (points to `dist/`)
 - **Output**: `dist/` directory
-- **Usage**: `npm run zip:production` to create production release package
-
-### Quick Start
-
-```bash
-npm run dev           # Start local development (recommended)
-npm run zip:test      # Create test release package
-npm run zip:production # Create production release package
-```
+- **Usage**: `npm run build` to create production release package
 
 ### 📋 **Available Scripts**
 
@@ -123,26 +100,12 @@ cp .env .env.local
 
 #### **Available Environment Variables:**
 
-| Variable                   | Purpose                | Default                         | Options                           |
-| -------------------------- | ---------------------- | ------------------------------- | --------------------------------- |
-| `VITE_RECURSICA_API_URL`   | API endpoint URL       | `https://dev-api.recursica.com` | Development/Production/Local URLs |
-| `VITE_RECURSICA_UI_URL`    | UI endpoint URL        | `https://dev-api.recursica.com` | Development/Production/Local URLs |
-| `VITE_PLUGIN_PHRASE`       | Plugin security phrase | (empty)                         | Custom security phrase            |
-| `VITE_SHOW_VERSION_BANNER` | Show version banner    | `false`                         | `true`/`false`                    |
-
-#### **Version Banner Control:**
-
-The `VITE_SHOW_VERSION_BANNER` variable controls when the "TESTING PLUGIN" banner appears:
-
-- **`true`**: Shows the banner
-- **`false`** (default): Hides the banner
-
-This allows you to:
-
-- Control banner visibility explicitly through environment variables
-- Show the banner in test builds by setting the variable in CI
-- Keep production builds clean by default
-- Control banner visibility independently of build mode
+| Variable                 | Purpose                | Default                         | Options                           |
+| ------------------------ | ---------------------- | ------------------------------- | --------------------------------- |
+| `VITE_RECURSICA_API_URL` | API endpoint URL       | `https://dev-api.recursica.com` | Development/Production/Local URLs |
+| `VITE_RECURSICA_UI_URL`  | UI endpoint URL        | `https://dev-api.recursica.com` | Development/Production/Local URLs |
+| `VITE_PLUGIN_PHRASE`     | Plugin security phrase | (empty)                         | Custom security phrase            |
+| `VITE_PLUGIN_MODE`       | Selects the mode       | `production`                    | `development` / `test` / `test`   |
 
 ### 🏠 **Local Development with Localhost API**
 
@@ -166,46 +129,6 @@ cp .env .env.local
 # VITE_RECURSICA_UI_URL=http://localhost:5000
 ```
 
-#### 3. **Update Manifest for Local Development**
-
-The `manifest.json` already includes localhost in `devAllowedDomains`:
-
-```json
-{
-  "networkAccess": {
-    "devAllowedDomains": ["http://localhost:5175", "https://dev-api.recursica.com"]
-  }
-}
-```
-
-If your local API runs on a different port, you may need to add it to the manifest.
-
-#### 4. **Start Development**
-
-```bash
-# Restart the dev server to pick up environment changes
-npm run dev
-```
-
-#### 5. **Verify Configuration**
-
-Check the browser console to ensure API calls are going to `http://localhost:5000` instead of the remote servers.
-
-### 🔄 **Switching Between Environments**
-
-| Environment     | API URL                         | When to Use                 |
-| --------------- | ------------------------------- | --------------------------- |
-| **Development** | `https://dev-api.recursica.com` | Default - shared dev server |
-| **Local**       | `http://localhost:5000`         | Testing local API changes   |
-| **Production**  | `https://api.recursica.com`     | Testing production behavior |
-
-### ⚠️ **Important Notes**
-
-- **`.env.local` is gitignored** - your local settings won't be committed
-- **Restart required** - Changes to `.env.local` require restarting the dev server
-- **CORS issues** - Make sure your local API server allows requests from the plugin's origin
-- **Port conflicts** - Ensure your local API server port doesn't conflict with the dev server (5175)
-
 ### 🚀 **Installing the Plugin for Development**
 
 #### **Step 1: Start Development**
@@ -220,33 +143,8 @@ This starts both UI dev server (port 5175) and plugin code watcher.
 
 1. Open Figma Desktop
 2. Go to `Plugins` → `Development` → `Import plugin from manifest`
-3. Select `manifest.json` (for local development)
+3. Select `dist-dev/manifest.json` (for local development)
 4. The plugin will appear as "Recursica - Development"
-
-#### **Development Workflow**
-
-| Change Type                         | What Happens     | Action Required        |
-| ----------------------------------- | ---------------- | ---------------------- |
-| **UI Changes** (React components)   | Auto-rebuilds    | Reload plugin in Figma |
-| **Plugin Changes** (auth, file ops) | Auto-rebuilds    | Reload plugin in Figma |
-| **Environment Variables**           | Requires restart | Restart `npm run dev`  |
-
-#### **Manifest Files**
-
-| File                       | Purpose               | Plugin Code                 | When to Use         |
-| -------------------------- | --------------------- | --------------------------- | ------------------- |
-| `manifest.json`            | **Local Development** | `dist-test/figma-plugin.js` | Active development  |
-| `manifest.test.json`       | **Test Releases**     | `dist/figma-plugin.js`      | Internal testing    |
-| `manifest.production.json` | **Production**        | `dist/figma-plugin.js`      | Production releases |
-
-#### **Troubleshooting**
-
-**Common Issues:**
-
-- **`__html__ is not defined`**: Make sure you're using `manifest.json` for development
-- **CORS errors**: Ensure `npm run dev` is running (both UI and code watchers)
-- **White screen**: Check browser console and ensure Vite dev server is running on `localhost:5175`
-- **WebSocket errors**: The manifest includes `ws://localhost:5175` in `devAllowedDomains` for hot reload
 
 ## Publishing
 
@@ -277,3 +175,17 @@ The plugin is using [React](https://reactjs.org/) for the UI and [TypeScript](ht
 To modify the UI, you can edit the file located at `src/App.tsx` directory. To modify the logic, you can edit the files in the `src/plugin` directory.
 
 More details at [Figma Plugin API](https://www.figma.com/plugin-docs/intro/).
+
+## Metadata collection
+
+To be able to run the plugin you will need to create a variable collection in your figma file, to specify the name of the project (eg. recursica-project) and the project type (the current accepted values are: `ui-kit-mantine | theme + tokens | icons`).  
+Here's an example of the expected variable collection.
+
+**ID variables**
+| name | value |
+| ------------ | ---------- |
+| project-id | recursica-project |
+| project-type | ui-kit-mantine |
+
+> [!Important]
+> The name of the collection must be `ID variables`
