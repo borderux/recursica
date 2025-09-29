@@ -1,5 +1,11 @@
 # @recursica/figma-plugin-test
 
+## 0.1.1
+
+### Patch Changes
+
+- [`34bceed`](https://github.com/borderux/recursica/commit/34bceed92327b1d87573a1e9675877c66973f2f1) Thanks [@mattborderux](https://github.com/mattborderux)! - Version bump for testing
+
 ## 0.1.0
 
 ### Minor Changes
