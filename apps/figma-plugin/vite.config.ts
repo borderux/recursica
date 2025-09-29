@@ -9,10 +9,18 @@ export default defineConfig(({ mode }) => ({
   build: {
     emptyOutDir: false,
     outDir: mode === 'development' ? 'dist-dev' : mode === 'test' ? 'dist-test' : 'dist',
+    target: 'es2017', // Ensure compatibility with Figma's plugin environment
+    sourcemap: mode === 'development' || mode === 'test', // Generate source maps for dev/test
   },
   css: {
     preprocessorOptions: {
       scss: {},
     },
+  },
+  define: {
+    // Set VITE_PLUGIN_MODE based on the build mode
+    'import.meta.env.VITE_PLUGIN_MODE': JSON.stringify(
+      mode === 'development' ? 'development' : mode === 'test' ? 'test' : 'production'
+    ),
   },
 }));
