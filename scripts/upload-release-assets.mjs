@@ -96,7 +96,7 @@ function uploadAssetToRelease(releaseTag, zipPath) {
   }
 }
 
-function processPublishResults(publishResults) {
+async function processPublishResults(publishResults) {
   log("🎯 Uploading release assets for published packages...", "bright");
 
   const latestTag = getLatestReleaseTag();
@@ -155,13 +155,30 @@ function processPublishResults(publishResults) {
   console.log(`FIGMA_PLUGIN_TEST_PROCESSED=${figmaPluginTestProcessed}`);
   console.log(`FIGMA_PLUGIN_VERSION=${figmaPluginVersion}`);
 
+  // Also output to GitHub Actions format
+  if (process.env.GITHUB_OUTPUT) {
+    const fs = await import("fs");
+    fs.appendFileSync(
+      process.env.GITHUB_OUTPUT,
+      `FIGMA_PLUGIN_PROCESSED=${figmaPluginProcessed}\n`,
+    );
+    fs.appendFileSync(
+      process.env.GITHUB_OUTPUT,
+      `FIGMA_PLUGIN_TEST_PROCESSED=${figmaPluginTestProcessed}\n`,
+    );
+    fs.appendFileSync(
+      process.env.GITHUB_OUTPUT,
+      `FIGMA_PLUGIN_VERSION=${figmaPluginVersion}\n`,
+    );
+  }
+
   if (successCount === 0 && totalCount > 0) {
     log("⚠️  No assets were uploaded successfully", "yellow");
     process.exit(1);
   }
 }
 
-function main() {
+async function main() {
   const publishResultsJson = process.argv[2];
 
   if (!publishResultsJson) {
@@ -192,7 +209,7 @@ function main() {
     });
     log("");
 
-    processPublishResults(publishResults);
+    await processPublishResults(publishResults);
   } catch (error) {
     log("❌ Error parsing publishResultsJson", "red");
     log(`Error: ${error.message}`, "red");
@@ -201,4 +218,7 @@ function main() {
 }
 
 // Run the script
-main();
+main().catch((error) => {
+  console.error("Script failed:", error);
+  process.exit(1);
+});

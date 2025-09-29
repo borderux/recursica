@@ -145,7 +145,7 @@ jobs:
       # This step only runs when the main figma plugin was successfully uploaded as a release asset.
       # It deploys the built plugin files to the production server.
       - name: Deploy Figma Plugin to Production
-        if: steps.publish-packages.outputs.HAS_PACKAGES_TO_PUBLISH == 'true' && steps.upload-assets.outputs.FIGMA_PLUGIN_PROCESSED == 'true'
+        if: steps.upload-assets.outputs.FIGMA_PLUGIN_PROCESSED == 'true'
         uses: ./.github/actions/deploy-to-server
         with:
           token: ${{ secrets.DISPATCH_TOKEN }}
