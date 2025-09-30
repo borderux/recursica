@@ -40,12 +40,12 @@ npm run storybook
 npm run build
 ```
 
-The built files will be available in the `dist-storybook` directory.
+The built files will be available in the `dist` directory.
 
 ## Available Scripts
 
 - **`npm run storybook`** - Start the development server on port 6006
-- **`npm run build`** - Build the Storybook for production (creates `dist-storybook/`)
+- **`npm run build`** - Build the Storybook for production (creates `dist/`)
 - **`npm run publish`** - Deploy the built Storybook to GitHub Pages (used by changesets workflow)
 
 ## Deployment

@@ -12,7 +12,7 @@
  * PR previews are handled separately by the storybook-pr-preview.yml workflow.
  *
  * Prerequisites:
- * - Storybook must be built (storybook-static directory must exist)
+ * - Storybook must be built (dist directory must exist)
  * - GitHub CLI (gh) must be installed and authenticated
  * - Repository must have Pages permissions enabled
  * - The gh-pages branch must be set as the source branch for GitHub Pages
