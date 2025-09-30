@@ -107,13 +107,16 @@ function deployToGitHubPages() {
 
     log("📄 Found static root index.html redirect", "green");
 
+    // Check if we're in GitHub Actions environment
+    const isGitHubActions = process.env.GITHUB_ACTIONS === "true";
+
     // Get repository URL from environment or git config
     const repoUrl = process.env.GITHUB_REPOSITORY
       ? `https://x-access-token:${process.env.GITHUB_TOKEN}@github.com/${process.env.GITHUB_REPOSITORY}.git`
       : null;
 
     // If we're not in GitHub Actions, skip actual deployment for testing
-    if (!repoUrl) {
+    if (!isGitHubActions || !repoUrl) {
       log(
         "🧪 Not in GitHub Actions environment - skipping actual deployment",
         "yellow",
