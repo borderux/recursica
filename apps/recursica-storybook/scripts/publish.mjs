@@ -62,13 +62,10 @@ function deployToGitHubPages() {
   try {
     log("🚀 Starting Storybook deployment to GitHub Pages", "bright");
 
-    // Check if dist-storybook directory exists (should be built by turbo)
-    const storybookStaticDir = path.join(parentDir, "dist-storybook");
+    // Check if dist directory exists (should be built by turbo)
+    const storybookStaticDir = path.join(parentDir, "dist");
     if (!fs.existsSync(storybookStaticDir)) {
-      log(
-        "❌ dist-storybook directory not found. Turbo should have built it.",
-        "red",
-      );
+      log("❌ dist directory not found. Turbo should have built it.", "red");
       process.exit(1);
     }
 
@@ -101,10 +98,10 @@ function deployToGitHubPages() {
     }
 
     // Verify the static root index.html exists
-    const publicIndexPath = path.join(parentDir, "public", "index.html");
+    const rootIndexPath = path.join(parentDir, "root-html", "index.html");
 
-    if (!fs.existsSync(publicIndexPath)) {
-      log("❌ Static index.html not found in public directory", "red");
+    if (!fs.existsSync(rootIndexPath)) {
+      log("❌ Static index.html not found in root-html directory", "red");
       process.exit(1);
     }
 
@@ -131,7 +128,7 @@ function deployToGitHubPages() {
     // Deploy root index.html
     if (
       !runCommand(
-        `npx gh-pages -d public -b gh-pages --dest "." --repo "${repoUrl}"`,
+        `npx gh-pages -d root-html -b gh-pages --dest "." --repo "${repoUrl}"`,
         "Deploying root index.html",
       )
     ) {
@@ -141,7 +138,7 @@ function deployToGitHubPages() {
     // Deploy storybook
     if (
       !runCommand(
-        `npx gh-pages -d dist-storybook -b gh-pages --dest "storybook" --repo "${repoUrl}"`,
+        `npx gh-pages -d dist -b gh-pages --dest "storybook" --repo "${repoUrl}"`,
         "Deploying Storybook to /storybook/",
       )
     ) {
