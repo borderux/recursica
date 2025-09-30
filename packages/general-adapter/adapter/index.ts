@@ -46,7 +46,7 @@ export function runAdapter({
   iconsConfig,
   tokens,
 }: GenerateThemeFileParams): RunAdapterOutput {
-  const outputPath = srcPath + "/recursica";
+  const outputPath = rootPath;
 
   const tokensCss = generateTokensCss(tokens.tokens, {
     outputPath,

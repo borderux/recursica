@@ -48,7 +48,7 @@ export function useAdapterWorker() {
         adapterPath = config.project.adapter;
       }
 
-      let adapterFile = null;
+      let adapterFile: BlobPart | null = null;
       try {
         adapterFile = await repositoryInstance.getSingleFile(
           selectedProject,
@@ -73,7 +73,7 @@ export function useAdapterWorker() {
         try {
           // Create worker with error handling
           worker = new Worker(
-            URL.createObjectURL(new Blob([adapterFile], { type: 'text/javascript' }))
+            URL.createObjectURL(new Blob([adapterFile as BlobPart], { type: 'text/javascript' }))
           );
         } catch (error) {
           console.error('❌ Failed to create worker:', error);
@@ -105,6 +105,7 @@ export function useAdapterWorker() {
             overrides: config.overrides,
             iconsConfig: config.icons,
           };
+          console.log('Calling adapter worker:', message);
           worker.postMessage(message);
         } catch (error) {
           clearTimeout(timeoutId);

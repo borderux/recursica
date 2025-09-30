@@ -88,10 +88,15 @@ export function useRepositoryOperations() {
           'recursica.json',
           targetBranch
         );
+
         if (configFile && configFile.project !== undefined) {
+          console.log('✅ Recursica configuration found in recursica.json:', configFile);
           return { config: configFile, shouldCreateInit: false };
+        } else {
+          console.log('⚠️ recursica.json found but invalid format:', configFile);
         }
-      } catch {
+      } catch (error) {
+        console.log('❌ recursica.json not found or error fetching:', error);
         // Config file doesn't exist or is invalid, we need to create it
       }
 
@@ -102,6 +107,8 @@ export function useRepositoryOperations() {
           root: '',
         },
       };
+
+      console.log('🆕 Creating default Recursica configuration:', defaultConfig);
       return { config: defaultConfig, shouldCreateInit: true };
     },
     []
