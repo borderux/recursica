@@ -34,7 +34,7 @@
  *
  * Requirements:
  * - GitHub CLI (gh) must be installed and authenticated
- * - GH_TOKEN environment variable must be set (or gh auth login)
+ * - GITHUB_TOKEN environment variable must be set (or gh auth login)
  * - Zip files must exist at the specified paths
  *
  * Error Handling:

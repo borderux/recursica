@@ -139,7 +139,7 @@ The publishing system is integrated into the GitHub Actions workflow in `.github
   if: steps.changesets.outputs.published == 'true'
   run: node scripts/upload-release-assets.mjs '${{ steps.publish-packages.outputs.PUBLISH_RESULTS }}'
   env:
-    GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 ## Testing

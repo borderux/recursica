@@ -132,6 +132,9 @@ jobs:
         if: steps.changesets.outputs.published == 'true'
         id: publish-packages
         run: node scripts/publish.mjs '${{ steps.changesets.outputs.publishedPackages }}'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
 
       # Create and upload release assets for published packages
       - name: Create and Upload Release Assets
@@ -139,7 +142,7 @@ jobs:
         id: upload-assets
         run: node scripts/upload-release-assets.mjs '${{ steps.publish-packages.outputs.PUBLISH_RESULTS }}'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Deploy to production when Version Packages PR is merged
       # This step only runs when the main figma plugin was successfully uploaded as a release asset.
