@@ -1,0 +1,57 @@
+{
+  "name": "@recursica/general-adapter",
+  "description": "Recursica General Design Token Adapter - Convert design tokens to code",
+  "version": "0.9.4",
+  "private": false,
+  "homepage": "https://github.com/borderux/recursica#readme",
+  "author": "hi@borderux.com",
+  "bugs": {
+    "url": "https://github.com/borderux/recursica/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/borderux/recursica.git"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "recursica": "dist/main.cjs"
+  },
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "clean": "rm -rf dist",
+    "test": "tsx test/test.ts"
+  },
+  "keywords": [
+    "design-tokens",
+    "figma",
+    "recursica",
+    "theme",
+    "adapter"
+  ],
+  "files": [
+    "dist/**/*",
+    "README.md"
+  ],
+  "dependencies": {
+    "@recursica/common": "*",
+    "typescript": "^5.0.0"
+  },
+  "devDependencies": {
+    "@recursica/schemas": "*",
+    "@rollup/plugin-commonjs": "^28.0.3",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^12.1.2",
+    "@types/node": "^20.0.0",
+    "rollup": "^4.42.0",
+    "tsx": "^4.7.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "license": "MIT"
+}
