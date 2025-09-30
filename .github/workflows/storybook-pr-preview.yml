@@ -8,9 +8,12 @@ name: Deploy PR Preview
 #
 # Prerequisites:
 # - GitHub Pages enabled with "Deploy from a branch" (gh-pages branch)
-# - recursica-storybook app with working "build-storybook" script
+# - recursica-storybook app with working "build" script
 #
 # Preview URLs: https://[username].github.io/recursica/pr-preview/pr-[pr-number]/
+#
+# Note: The root index.html redirect is handled by the recursica-storybook app's
+# publish script when deployed via changesets, not by this PR preview workflow.
 
 on:
   # Trigger on pull requests targeting main branch
@@ -52,12 +55,12 @@ jobs:
 
       - name: Build Storybook
         if: github.event.action != 'closed'
-        run: npx turbo run build-storybook --filter=recursica-storybook
+        run: npx turbo run build --filter=recursica-storybook
 
       - name: Deploy preview
         uses: rossjrw/pr-preview-action@v1
         with:
-          source-dir: ./apps/recursica-storybook/storybook-static
+          source-dir: ./apps/recursica-storybook/dist
           preview-branch: gh-pages
           umbrella-dir: pr-preview
           action: auto
