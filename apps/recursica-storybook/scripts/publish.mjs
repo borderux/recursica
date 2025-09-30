@@ -107,26 +107,19 @@ function deployToGitHubPages() {
 
     log("📄 Found static root index.html redirect", "green");
 
-    // Check if we're in GitHub Actions environment
-    const isGitHubActions = process.env.GITHUB_ACTIONS === "true";
-
-    // Get repository URL from environment or git config
-    const repoUrl = process.env.GITHUB_REPOSITORY
-      ? `https://x-access-token:${process.env.GITHUB_TOKEN}@github.com/${process.env.GITHUB_REPOSITORY}.git`
-      : null;
-
-    // If we're not in GitHub Actions, skip actual deployment for testing
-    if (!isGitHubActions || !repoUrl) {
-      log(
-        "🧪 Not in GitHub Actions environment - skipping actual deployment",
-        "yellow",
-      );
-      log(
-        "✅ Storybook build completed successfully (deployment skipped)",
-        "green",
-      );
-      return;
+    // Validate required environment variables
+    if (!process.env.GITHUB_TOKEN) {
+      log("❌ GITHUB_TOKEN environment variable is required", "red");
+      process.exit(1);
     }
+
+    if (!process.env.GITHUB_REPOSITORY) {
+      log("❌ GITHUB_REPOSITORY environment variable is required", "red");
+      process.exit(1);
+    }
+
+    // Get repository URL from environment
+    const repoUrl = `https://x-access-token:${process.env.GITHUB_TOKEN}@github.com/${process.env.GITHUB_REPOSITORY}.git`;
 
     // Deploy root index.html
     if (
