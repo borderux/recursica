@@ -7,7 +7,7 @@
   "scripts": {
     "test": "echo \"No tests specified for Storybook app\"",
     "storybook": "storybook dev -p 6006",
-    "build": "storybook build",
+    "build": "storybook build --output-dir dist",
     "publish": "node scripts/publish.mjs"
   },
   "keywords": [],
