@@ -26,7 +26,7 @@ For more information about Recursica, go to https://recursica.com
   --color-elevation-10: rgba(0, 0, 0, 0.1000);
   --color-gray-400: #999999;
   --color-greensheen-200: #3dd67b;
-  --size-gutter-horizontal: 24px;
+  --size-gutter-horizontal: 16px;
   --color-salmon-200: #f8919a;
   --color-cornflower-700: #00363d;
   --color-cornflower-800: #001f24;
@@ -43,7 +43,7 @@ For more information about Recursica, go to https://recursica.com
   --color-elevation-12: rgba(0, 0, 0, 0.1200);
   --size-border-radius-4x: 32px;
   --color-greensheen-400: #00a945;
-  --size-gutter-vertical: 16px;
+  --size-gutter-vertical: 24px;
   --color-elevation-25: rgba(0, 0, 0, 0.2500);
   --color-gray-050: #f9f9f9;
   --color-cornflower-100: #73ceda;
@@ -86,7 +86,7 @@ For more information about Recursica, go to https://recursica.com
   --elevation-y-axis-default: 8px;
   --font-size-2xs: 10px;
   --color-mandy-400: #ec0e0e;
-  --color-mandarin-600: #cd4d0c;
+  --color-mandarin-600: #d9510d;
   --color-salmon-500: #d21e49;
   --color-greensheen-800: #013717;
   --elevation-y-axis-3x: 24px;
@@ -124,7 +124,7 @@ For more information about Recursica, go to https://recursica.com
   --color-gray-900: #0f0f0f;
   --opacity-solid: 1;
   --opacity-veiled: 0.84;
-  --color-gray-000: #fafafa;
+  --color-gray-000: #fcfcfc;
   --opacity-faint: 0.68;
   --opacity-smoky: 0.94;
   --opacity-ghost: 0.38;
@@ -150,4 +150,20 @@ For more information about Recursica, go to https://recursica.com
   --elevation-y-axis-6x: 48px;
   --elevation-spread-default: 8px;
   --elevation-x-axis-6x: 48px;
+  --font-letter-spacing-tighter: -0.5px;
+  --font-letter-spacing-widest: 0.75px;
+  --font-letter-spacing-wider: 0.5px;
+  --font-letter-spacing-wide: 0.25px;
+  --font-letter-spacing-tighest: -0.75px;
+  --font-letter-spacing-default: 0px;
+  --font-letter-spacing-tight: -0.25px;
+  --font-weight-bold: 700px;
+  --font-weight-light: 300px;
+  --font-weight-thin: 100px;
+  --font-weight-black: 900px;
+  --font-weight-medium: 500px;
+  --font-weight-semi-bold: 600px;
+  --font-weight-extra-bold: 800px;
+  --font-weight-extra-light: 200px;
+  --font-weight-regular: 400px;
 }
