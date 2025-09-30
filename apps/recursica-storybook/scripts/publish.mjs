@@ -62,11 +62,11 @@ function deployToGitHubPages() {
   try {
     log("🚀 Starting Storybook deployment to GitHub Pages", "bright");
 
-    // Check if storybook-static directory exists (should be built by turbo)
-    const storybookStaticDir = path.join(parentDir, "storybook-static");
+    // Check if dist-storybook directory exists (should be built by turbo)
+    const storybookStaticDir = path.join(parentDir, "dist-storybook");
     if (!fs.existsSync(storybookStaticDir)) {
       log(
-        "❌ storybook-static directory not found. Turbo should have built it.",
+        "❌ dist-storybook directory not found. Turbo should have built it.",
         "red",
       );
       process.exit(1);
@@ -141,7 +141,7 @@ function deployToGitHubPages() {
     // Deploy storybook
     if (
       !runCommand(
-        `npx gh-pages -d storybook-static -b gh-pages --dest "storybook" --repo "${repoUrl}"`,
+        `npx gh-pages -d dist-storybook -b gh-pages --dest "storybook" --repo "${repoUrl}"`,
         "Deploying Storybook to /storybook/",
       )
     ) {
