@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<!--
+  Recursica Design System - Root Index
+  
+  This file provides a redirect from the main GitHub Pages root to the Storybook documentation.
+  
+  Purpose:
+  - Redirects visitors from https://[username].github.io/recursica/ to ./storybook/
+  - Provides a fallback link for users with JavaScript disabled
+  - Only affects the main site root, not PR previews (which are in /pr-preview/ subdirectories)
+  
+  Deployed via: recursica-storybook publish script (changesets release workflow)
+-->
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recursica Design System</title>
+  <link rel="canonical" href="./storybook/">
+  <script>
+    // Redirect to the main Storybook documentation
+    window.location.replace('./storybook/');
+  </script>
+</head>
+
+<body>
+  <p>If you are not redirected automatically, <a href="./storybook/">click here to view the Recursica Design System</a>.
+  </p>
+</body>
+
+</html>
