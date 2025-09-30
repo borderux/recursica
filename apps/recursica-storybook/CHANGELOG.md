@@ -1,5 +1,11 @@
 # recursica-storybook
 
+## 0.0.3
+
+### Patch Changes
+
+- [`8182e52`](https://github.com/borderux/recursica/commit/8182e5264ef1919da466e1e379de25d8445e726c) Thanks [@github-actions[bot]](https://github.com/github-actions%5Bbot%5D)! - Deploy to gh pages
+
 ## 0.0.2
 
 ### Patch Changes
