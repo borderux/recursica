@@ -2,8 +2,8 @@
   "$schema": "./packages/schemas/src/RecursicaConfiguration.json",
   "project": {
     "name": "Recursica",
-    "root": "apps/figma-plugin",
-    "adapter": "apps/figma-plugin/webworker.js"
+    "root": "recursica",
+    "adapter": "general-adapter.js"
   },
   "overrides": {
     "mantineTheme": {

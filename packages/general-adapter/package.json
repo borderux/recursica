@@ -22,7 +22,8 @@
     "build": "rollup -c",
     "dev": "rollup -c -w",
     "clean": "rm -rf dist",
-    "test": "tsx test/test.ts"
+    "test": "tsx test/test.ts",
+    "publish": "node scripts/publish.mjs"
   },
   "keywords": [
     "design-tokens",
