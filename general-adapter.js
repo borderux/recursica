@@ -629,7 +629,7 @@ function runAdapter({
   iconsConfig,
   tokens,
 }) {
-  const outputPath = srcPath + "/recursica";
+  const outputPath = rootPath;
   const tokensCss = generateTokensCss(tokens.tokens, {
     outputPath,
   });

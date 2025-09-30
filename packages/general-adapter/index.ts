@@ -1,9 +1,6 @@
 // Main exports for the recursica-adapter package
 export { runAdapter } from "./adapter";
 
-// Export the recursica object type for consumers
-export type { default as RecursicaObject } from "./recursica";
-
 // Export types that consumers might need
 export type {
   Themes,
@@ -16,13 +13,6 @@ export type {
 
 // Export utility functions
 export { loadConfig } from "./utils/loadConfig";
-export {
-  getRecursica,
-  hasRecursica,
-  clearRecursicaCache,
-  setRecursica,
-  type RecursicaGlobal,
-} from "./utils/getRecursica";
 export {
   isFontFamilyToken,
   isEffectToken,
