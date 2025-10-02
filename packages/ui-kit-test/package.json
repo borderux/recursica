@@ -1,0 +1,66 @@
+{
+  "name": "@recursica/ui-kit-test",
+  "description": "Test UI components for Recursica applications with global recursica.js integration",
+  "private": false,
+  "homepage": "https://github.com/borderux/recursica/tree/main/packages/ui-kit-test",
+  "author": "hi@borderux.com",
+  "bugs": {
+    "url": "https://github.com/borderux/recursica/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/borderux/recursica.git"
+  },
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/ui-kit-test.cjs",
+  "module": "./dist/ui-kit-test.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/ui-kit-test.js",
+      "require": "./dist/ui-kit-test.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "react",
+    "ui",
+    "components",
+    "typescript",
+    "recursica",
+    "design system",
+    "design systems",
+    "test"
+  ],
+  "scripts": {
+    "dev": "npm run watch",
+    "watch": "vite build --watch",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@eslint/js": "^9.25.0",
+    "@repo/typescript-config": "*",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react": "^4.4.1",
+    "eslint": "^9.25.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.0.0",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.30.1",
+    "vite": "^6.3.5",
+    "vite-plugin-dts": "^4.5.4"
+  },
+  "peerDependencies": {
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0"
+  }
+}
