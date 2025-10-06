@@ -85,13 +85,18 @@ const COLLECTION_TYPE_MAPPING = {
   themes: 'themes',
 } as const;
 
+type Library = {
+  value: string;
+  name: string;
+};
+
 export async function getTeamLibrary(pluginVersion: string) {
   const uiKit = await exportToJSON();
   // Get the team library from the figma api
   const teamLibrary = await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
 
   // Create a record of the libraries
-  const libraries: Record<string, { value: string; name: string }[]> = {};
+  const libraries: Record<string, Library[]> = {};
   for (const library of teamLibrary) {
     if (!libraries[library.libraryName]) libraries[library.libraryName] = [];
     libraries[library.libraryName].push({
@@ -101,21 +106,21 @@ export async function getTeamLibrary(pluginVersion: string) {
   }
 
   // Filter libraries that have collections matching our type mapping
-  const validLibraries = Object.fromEntries(
-    Object.entries(libraries).filter(([, collections]) => {
-      return collections?.some(async (collection) => {
-        const remoteCollection = await getCollectionNodeFromKey(collection.value);
-        return Object.keys(COLLECTION_TYPE_MAPPING).some((key) =>
-          remoteCollection
-            ?.getSharedPluginData('recursica', 'file-type')
-            ?.includes(key.toLowerCase())
-        );
-      });
-    })
-  );
+  const validLibraries: Record<string, Library[]> = {};
+  for (const collections of Object.values(libraries)) {
+    for (const collection of collections) {
+      const remoteCollection = await getCollectionNodeFromKey(collection.value);
+      const isValid = Object.keys(COLLECTION_TYPE_MAPPING).some((key) =>
+        remoteCollection?.getSharedPluginData('recursica', 'file-type')?.includes(key.toLowerCase())
+      );
+      if (isValid) {
+        validLibraries[collection.name].push(collection);
+      }
+    }
+  }
 
   // Process all libraries in parallel instead of sequentially
-  const libraryPromises = Object.entries(validLibraries).map(async ([, collections]) => {
+  const libraryPromises = Object.values(validLibraries).map(async (collections) => {
     const [variables, filetype, themeName] = await decodeFileVariables(collections);
     return { variables, filetype, themeName };
   });

@@ -39,7 +39,7 @@ export async function runMain(): Promise<void> {
     });
 
     // check if src/recursica folder exists, if not create it
-    const outputPath = srcPath + "/recursica";
+    const outputPath = rootPath || "./";
     if (!fs.existsSync(outputPath)) {
       fs.mkdirSync(outputPath);
     }
