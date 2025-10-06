@@ -7514,6 +7514,329 @@
           "name": "color/translucent/40"
         }
       },
+      "[themes][Typography][h1]": {
+        "variableName": "h1",
+        "fontFamily": "Lexend",
+        "fontSize": 40,
+        "fontWeight": {
+          "value": 700,
+          "alias": "Bold"
+        },
+        "lineHeight": {
+          "unit": "AUTO",
+          "value": 0
+        },
+        "letterSpacing": {
+          "unit": "PIXELS",
+          "value": 0
+        },
+        "textCase": "ORIGINAL",
+        "textDecoration": "NONE"
+      },
+      "[themes][Typography][h2]": {
+        "variableName": "h2",
+        "fontFamily": "Lexend",
+        "fontSize": 36,
+        "fontWeight": {
+          "value": 600,
+          "alias": "SemiBold"
+        },
+        "lineHeight": {
+          "unit": "AUTO",
+          "value": 0
+        },
+        "letterSpacing": {
+          "unit": "PIXELS",
+          "value": 0
+        },
+        "textCase": "ORIGINAL",
+        "textDecoration": "NONE"
+      },
+      "[themes][Typography][h3]": {
+        "variableName": "h3",
+        "fontFamily": "Lexend",
+        "fontSize": 32,
+        "fontWeight": {
+          "value": 400,
+          "alias": "Regular"
+        },
+        "lineHeight": {
+          "unit": "AUTO",
+          "value": 0
+        },
+        "letterSpacing": {
+          "unit": "PIXELS",
+          "value": 0
+        },
+        "textCase": "ORIGINAL",
+        "textDecoration": "NONE"
+      },
+      "[themes][Typography][h4]": {
+        "variableName": "h4",
+        "fontFamily": "Lexend",
+        "fontSize": 28,
+        "fontWeight": {
+          "value": 300,
+          "alias": "Light"
+        },
+        "lineHeight": {
+          "unit": "AUTO",
+          "value": 0
+        },
+        "letterSpacing": {
+          "unit": "PIXELS",
+          "value": 0
+        },
+        "textCase": "ORIGINAL",
+        "textDecoration": "NONE"
+      },
+      "[themes][Typography][h5]": {
+        "variableName": "h5",
+        "fontFamily": "Lexend",
+        "fontSize": 24,
+        "fontWeight": {
+          "value": 500,
+          "alias": "Medium"
+        },
+        "lineHeight": {
+          "unit": "AUTO",
+          "value": 0
+        },
+        "letterSpacing": {
+          "unit": "PIXELS",
+          "value": 0
+        },
+        "textCase": "ORIGINAL",
+        "textDecoration": "NONE"
+      },
+      "[themes][Typography][h6]": {
+        "variableName": "h6",
+        "fontFamily": "Lexend",
+        "fontSize": 20,
+        "fontWeight": {
+          "value": 400,
+          "alias": "Regular"
+        },
+        "lineHeight": {
+          "unit": "AUTO",
+          "value": 0
+        },
+        "letterSpacing": {
+          "unit": "PIXELS",
+          "value": 0
+        },
+        "textCase": "ORIGINAL",
+        "textDecoration": "NONE"
+      },
+      "[themes][Typography][button]": {
+        "variableName": "button",
+        "fontFamily": "Lexend",
+        "fontSize": 14,
+        "fontWeight": {
+          "value": 400,
+          "alias": "Regular"
+        },
+        "lineHeight": {
+          "unit": "AUTO",
+          "value": 0
+        },
+        "letterSpacing": {
+          "unit": "PIXELS",
+          "value": 0.25
+        },
+        "textCase": "ORIGINAL",
+        "textDecoration": "NONE"
+      },
+      "[themes][Typography][caption]": {
+        "variableName": "caption",
+        "fontFamily": "Lexend",
+        "fontSize": 12,
+        "fontWeight": {
+          "value": 400,
+          "alias": "Regular"
+        },
+        "lineHeight": {
+          "unit": "AUTO",
+          "value": 0
+        },
+        "letterSpacing": {
+          "unit": "PIXELS",
+          "value": 0.25
+        },
+        "textCase": "ORIGINAL",
+        "textDecoration": "NONE"
+      },
+      "[themes][Typography][overline]": {
+        "variableName": "overline",
+        "fontFamily": "Lexend",
+        "fontSize": 10,
+        "fontWeight": {
+          "value": 500,
+          "alias": "Medium"
+        },
+        "lineHeight": {
+          "unit": "AUTO",
+          "value": 0
+        },
+        "letterSpacing": {
+          "unit": "PIXELS",
+          "value": 0.25
+        },
+        "textCase": "UPPER",
+        "textDecoration": "NONE"
+      },
+      "[themes][Typography][body-1/normal]": {
+        "variableName": "body-1/normal",
+        "fontFamily": "Bellota Text",
+        "fontSize": 16,
+        "fontWeight": {
+          "value": 400,
+          "alias": "Regular"
+        },
+        "lineHeight": {
+          "unit": "AUTO",
+          "value": 0
+        },
+        "letterSpacing": {
+          "unit": "PIXELS",
+          "value": 0
+        },
+        "textCase": "ORIGINAL",
+        "textDecoration": "NONE"
+      },
+      "[themes][Typography][body-1/strong]": {
+        "variableName": "body-1/strong",
+        "fontFamily": "Bellota Text",
+        "fontSize": 16,
+        "fontWeight": {
+          "value": 700,
+          "alias": "Bold"
+        },
+        "lineHeight": {
+          "unit": "AUTO",
+          "value": 0
+        },
+        "letterSpacing": {
+          "unit": "PIXELS",
+          "value": 0
+        },
+        "textCase": "ORIGINAL",
+        "textDecoration": "NONE"
+      },
+      "[themes][Typography][body-2/normal]": {
+        "variableName": "body-2/normal",
+        "fontFamily": "Bellota Text",
+        "fontSize": 14,
+        "fontWeight": {
+          "value": 400,
+          "alias": "Regular"
+        },
+        "lineHeight": {
+          "unit": "AUTO",
+          "value": 0
+        },
+        "letterSpacing": {
+          "unit": "PIXELS",
+          "value": 0.25
+        },
+        "textCase": "ORIGINAL",
+        "textDecoration": "NONE"
+      },
+      "[themes][Typography][body-2/strong]": {
+        "variableName": "body-2/strong",
+        "fontFamily": "Bellota Text",
+        "fontSize": 14,
+        "fontWeight": {
+          "value": 700,
+          "alias": "Bold"
+        },
+        "lineHeight": {
+          "unit": "AUTO",
+          "value": 0
+        },
+        "letterSpacing": {
+          "unit": "PIXELS",
+          "value": 0.25
+        },
+        "textCase": "ORIGINAL",
+        "textDecoration": "NONE"
+      },
+      "[themes][Typography][subtitle-1/normal]": {
+        "variableName": "subtitle-1/normal",
+        "fontFamily": "Bellota Text",
+        "fontSize": 18,
+        "fontWeight": {
+          "value": 300,
+          "alias": "Light"
+        },
+        "lineHeight": {
+          "unit": "PIXELS",
+          "value": 24
+        },
+        "letterSpacing": {
+          "unit": "PIXELS",
+          "value": 0
+        },
+        "textCase": "ORIGINAL",
+        "textDecoration": "NONE"
+      },
+      "[themes][Typography][subtitle-1/strong]": {
+        "variableName": "subtitle-1/strong",
+        "fontFamily": "Bellota Text",
+        "fontSize": 18,
+        "fontWeight": {
+          "value": 700,
+          "alias": "Bold"
+        },
+        "lineHeight": {
+          "unit": "PIXELS",
+          "value": 24
+        },
+        "letterSpacing": {
+          "unit": "PIXELS",
+          "value": 0
+        },
+        "textCase": "ORIGINAL",
+        "textDecoration": "NONE"
+      },
+      "[themes][Typography][subtitle-2/normal]": {
+        "variableName": "subtitle-2/normal",
+        "fontFamily": "Bellota Text",
+        "fontSize": 16,
+        "fontWeight": {
+          "value": 300,
+          "alias": "Light"
+        },
+        "lineHeight": {
+          "unit": "PIXELS",
+          "value": 24
+        },
+        "letterSpacing": {
+          "unit": "PIXELS",
+          "value": 0
+        },
+        "textCase": "ORIGINAL",
+        "textDecoration": "NONE"
+      },
+      "[themes][Typography][subtitle-2/strong]": {
+        "variableName": "subtitle-2/strong",
+        "fontFamily": "Bellota Text",
+        "fontSize": 16,
+        "fontWeight": {
+          "value": 700,
+          "alias": "Bold"
+        },
+        "lineHeight": {
+          "unit": "PIXELS",
+          "value": 24
+        },
+        "letterSpacing": {
+          "unit": "PIXELS",
+          "value": 0
+        },
+        "textCase": "ORIGINAL",
+        "textDecoration": "NONE"
+      },
       "[themes][Effect][elevation/elevation-0]": {
         "variableName": "elevation/elevation-0",
         "effects": [
