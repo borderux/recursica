@@ -161,7 +161,7 @@ export class Tokens {
       }
       if (isColorOrFloatToken(token)) {
         // Handle theme tokens differently
-        if (token.collection === "Themes") {
+        if (token.collection === "themes") {
           // For theme tokens, group by theme name and then by mode
           const modeName = token.mode;
           if (!jsonThemeName) return;
@@ -171,7 +171,7 @@ export class Tokens {
           // Store the token value directly by the token name
           (this.themes[jsonThemeName][modeName] as any)[token.name] =
             token.value;
-        } else if (token.collection === "UI Kit") {
+        } else if (token.collection === "ui-kit") {
           // Handle UI Kit tokens
           this.value(this.uiKit, token);
         } else {
