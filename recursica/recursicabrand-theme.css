@@ -8,10 +8,7 @@ Do NOT edit these files directly
 For more information about Recursica, go to https://recursica.com
 */
 
-/* Recursica UI Kit */
-@import "./recursica-tokens.css";
-@import "./recursicabrand-theme.css";
-
-.recursica {
+/* Recursica RecursicaBrand Theme */
+.recursicabrand-theme {
 
 }

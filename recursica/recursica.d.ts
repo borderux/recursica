@@ -17,162 +17,11 @@ For more information about Recursica, go to https://recursica.com
 
 // Token type definitions
 export type RecursicaToken = 
-  "color/salmon/600" |
-  "color/mandy/900" |
-  "color/gray/100" |
-  "color/greensheen/600" |
-  "color/salmon/900" |
-  "font/size/5xl" |
-  "color/mandy/200" |
-  "elevation/blur/5x" |
-  "color/elevation/14" |
-  "color/salmon/300" |
-  "color/salmon/800" |
-  "color/gray/300" |
-  "color/mandarin/300" |
-  "color/elevation/10" |
-  "color/gray/400" |
-  "color/greensheen/200" |
-  "size/gutter/horizontal" |
-  "color/salmon/200" |
-  "color/cornflower/700" |
-  "color/cornflower/800" |
-  "size/spacer/2x" |
-  "color/greensheen/300" |
-  "elevation/y-axis/1-5x" |
-  "color/mandy/500" |
-  "color/gray/600" |
-  "color/greensheen/100" |
-  "color/mandarin/200" |
-  "color/salmon/50" |
-  "size/border-radius/0-5x" |
-  "color/gray/1000" |
-  "color/elevation/12" |
-  "size/border-radius/4x" |
-  "color/greensheen/400" |
-  "size/gutter/vertical" |
-  "color/elevation/25" |
-  "color/gray/050" |
-  "color/cornflower/100" |
-  "color/greensheen/500" |
-  "size/border-radius/1-5x" |
-  "color/greensheen/700" |
-  "size/spacer/1-5x" |
-  "color/gray/200" |
-  "elevation/y-axis/0-5x" |
-  "color/gray/500" |
-  "color/greensheen/50" |
-  "color/cornflower/300" |
-  "color/cornflower/500" |
-  "size/spacer/default" |
-  "color/mandy/700" |
-  "size/spacer/4x" |
-  "color/cornflower/200" |
-  "color/cornflower/600" |
-  "elevation/blur/3x" |
-  "font/size/4xl" |
-  "color/mandy/800" |
-  "size/spacer/0-5x" |
-  "color/cornflower/900" |
-  "size/border-radius/3x" |
-  "color/mandarin/50" |
-  "font/size/md" |
-  "color/mandarin/100" |
-  "size/border-radius/default" |
-  "size/border-radius/2x" |
-  "font/size/6xl" |
-  "color/elevation/40" |
-  "color/elevation/08" |
-  "color/gray/800" |
-  "font/family/lexend" |
-  "color/mandarin/400" |
-  "elevation/blur/1-5x" |
-  "font/size/3xl" |
-  "color/mandy/50" |
-  "color/elevation/20" |
-  "elevation/y-axis/default" |
-  "font/size/2xs" |
-  "color/mandy/400" |
-  "color/mandarin/600" |
-  "color/salmon/500" |
-  "color/greensheen/800" |
-  "elevation/y-axis/3x" |
-  "color/mandy/100" |
-  "elevation/blur/4x" |
-  "color/mandarin/800" |
-  "font/size/2xl" |
-  "color/elevation/18" |
-  "elevation/blur/0-5x" |
-  "color/elevation/35" |
-  "color/gray/700" |
-  "color/mandy/300" |
-  "elevation/blur/6x" |
-  "color/mandarin/700" |
-  "elevation/blur/2x" |
-  "color/salmon/700" |
-  "font/size/xl" |
-  "color/mandarin/500" |
-  "elevation/blur/default" |
-  "color/salmon/100" |
-  "font/size/xs" |
-  "color/mandy/600" |
-  "color/cornflower/400" |
-  "color/cornflower/50" |
-  "size/spacer/3x" |
-  "color/salmon/400" |
-  "elevation/y-axis/4x" |
-  "color/mandarin/900" |
-  "font/size/lg" |
-  "font/size/sm" |
-  "color/greensheen/900" |
-  "elevation/y-axis/2x" |
-  "font/family/quattrocento" |
-  "font/family/bellota" |
-  "color/gray/900" |
-  "opacity/solid" |
-  "opacity/veiled" |
-  "color/gray/000" |
-  "opacity/faint" |
-  "opacity/smoky" |
-  "opacity/ghost" |
-  "elevation/spread/6x" |
-  "elevation/y-axis/5x" |
-  "elevation/spread/2x" |
-  "elevation/x-axis/1-5x" |
-  "elevation/x-axis/default" |
-  "elevation/spread/5x" |
-  "elevation/spread/0-5x" |
-  "elevation/x-axis/0-5x" |
-  "elevation/blur/0" |
-  "elevation/x-axis/2x" |
-  "elevation/x-axis/0" |
-  "elevation/x-axis/3x" |
-  "elevation/y-axis/0" |
-  "elevation/x-axis/5x" |
-  "elevation/spread/3x" |
-  "elevation/spread/0" |
-  "elevation/spread/1-5x" |
-  "elevation/x-axis/4x" |
-  "elevation/spread/4x" |
-  "elevation/y-axis/6x" |
-  "elevation/spread/default" |
-  "elevation/x-axis/6x" |
-  "font/letter-spacing/tighter" |
-  "font/letter-spacing/widest" |
-  "font/letter-spacing/wider" |
-  "font/letter-spacing/wide" |
-  "font/letter-spacing/tighest" |
-  "font/letter-spacing/default" |
-  "font/letter-spacing/tight" |
-  "font/weight/bold" |
-  "font/weight/light" |
-  "font/weight/thin" |
-  "font/weight/black" |
-  "font/weight/medium" |
-  "font/weight/semi-bold" |
-  "font/weight/extra-bold" |
-  "font/weight/extra-light" |
-  "font/weight/regular";
+  "effect/elevation/elevation-0" |
+  "effect/elevation/elevation-1" |
+  "effect/elevation/elevation-2" |
+  "effect/elevation/elevation-3" |
+  "effect/elevation/elevation-4";
 
 // UI Kit type definitions  
 export type RecursicaUiKit = 
@@ -180,10 +29,12 @@ export type RecursicaUiKit =
 
 // Theme type definitions
 export type RecursicaTheme = 
-;
+  "RecursicaBrand";
 
 // Individual theme type definitions
-
+export type RecursicaThemeRecursicaBrand = 
+    "Light" |
+    "Dark";
 
 // Main recursica object type
 export interface Recursica {
@@ -198,7 +49,7 @@ export interface Recursica {
 
 // Theme map for individual theme types
 export interface RecursicaThemeMap {
-
+  "RecursicaBrand": Record<RecursicaThemeRecursicaBrand, string>;
 }
 
 // CSS Variable type (for direct CSS variable access)
