@@ -10,10 +10,10 @@ For more information about Recursica, go to https://recursica.com
 
 /**
  * Recursica Design System Lookup Object
- * 
+ *
  * This object provides type-safe access to all CSS custom properties
  * generated from your design tokens. Use it to style components programmatically.
- * 
+ *
  * Example usage:
  * style={{ backgroundColor: recursica.tokens["color/primary/500"] }}
  * style={{ padding: recursica.uiKit["button/size/padding"] }}

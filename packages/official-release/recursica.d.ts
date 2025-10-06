@@ -10,7 +10,7 @@ For more information about Recursica, go to https://recursica.com
 
 /**
  * Recursica Design System Type Definitions
- * 
+ *
  * Type-safe interfaces for accessing design tokens, UI Kit variables, and themes.
  * These types are automatically generated from your design tokens.
  */
@@ -174,30 +174,27 @@ export type RecursicaToken =
   "font/weight/extra-light" |
   "font/weight/regular";
 
-// UI Kit type definitions  
-export type RecursicaUiKit = '';
+// UI Kit type definitions
+export type RecursicaUiKit = "";
 
 // Theme type definitions
-export type RecursicaTheme = 'default';
+export type RecursicaTheme = "default";
 
 // Individual theme type definitions
-
 
 // Main recursica object type
 export interface Recursica {
   tokens: Record<RecursicaToken, string>;
   uiKit: Record<RecursicaUiKit, string>;
   themes: {
-    [K in RecursicaTheme]: K extends keyof RecursicaThemeMap 
-      ? RecursicaThemeMap[K] 
+    [K in RecursicaTheme]: K extends keyof RecursicaThemeMap
+      ? RecursicaThemeMap[K]
       : Record<string, string>;
   };
 }
 
 // Theme map for individual theme types
-export interface RecursicaThemeMap {
-
-}
+export interface RecursicaThemeMap {}
 
 // CSS Variable type (for direct CSS variable access)
 export type RecursicaCSSVariable = `var(--${string})`;
