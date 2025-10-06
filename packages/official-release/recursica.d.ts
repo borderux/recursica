@@ -178,7 +178,7 @@ export type RecursicaToken =
 export type RecursicaUiKit = '';
 
 // Theme type definitions
-export type RecursicaTheme = RecursicaThemeMap[keyof RecursicaThemeMap];
+export type RecursicaTheme = 'default';
 
 // Individual theme type definitions
 
