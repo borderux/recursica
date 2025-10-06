@@ -66,9 +66,9 @@ export class Tokens {
           this.uiKit[`breakpoint/${key}`] = `${value.toString()}px`;
         }
       });
-    } else if (token.collection === "UI Kit") {
+    } else if (token.collection.toLowerCase() === "ui-kit") {
       this.value(this.uiKit, token);
-    } else if (token.collection === "Tokens") {
+    } else if (token.collection.toLowerCase() === "tokens") {
       this.value(this.tokens, token);
     } else {
       if (!jsonThemeName) return;
@@ -162,11 +162,15 @@ export class Tokens {
       if (isColorOrFloatToken(token)) {
         // Handle theme tokens differently
         if (token.collection === "Themes") {
-          // For theme tokens, use the mode directly
-          const modeName = token.mode.toLowerCase();
-          if (!this.themes[modeName]) this.themes[modeName] = {};
+          // For theme tokens, group by theme name and then by mode
+          const modeName = token.mode;
+          if (!jsonThemeName) return;
+          if (!this.themes[jsonThemeName]) this.themes[jsonThemeName] = {};
+          if (!this.themes[jsonThemeName][modeName])
+            this.themes[jsonThemeName][modeName] = {};
           // Store the token value directly by the token name
-          (this.themes[modeName] as any)[token.name] = token.value;
+          (this.themes[jsonThemeName][modeName] as any)[token.name] =
+            token.value;
         } else if (token.collection === "UI Kit") {
           // Handle UI Kit tokens
           this.value(this.uiKit, token);

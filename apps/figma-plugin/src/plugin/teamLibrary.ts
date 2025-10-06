@@ -1,3 +1,4 @@
+import { GridLayout } from '@recursica/schemas';
 import { toFontWeight } from '../../../../packages/common/dist/parsers/toFontWeight';
 import { exportToJSON } from './exportToJSON';
 import {
@@ -8,6 +9,30 @@ import {
   getVariableCollectionById,
   parseLineHeight,
 } from './shared';
+
+function transformGridLayout(grid: LayoutGrid): GridLayout {
+  if (grid.pattern === 'GRID') {
+    return {
+      alignment: '',
+      count: 0,
+      gap: 0,
+      margin: 0,
+      width: grid.sectionSize,
+      pattern: grid.pattern,
+    };
+  }
+  const output: GridLayout = {
+    alignment: grid.alignment,
+    count: grid.count,
+    gap: grid.gutterSize,
+    width: grid.sectionSize,
+    pattern: grid.pattern,
+  };
+  if (grid.offset) {
+    output.margin = grid.offset;
+  }
+  return output;
+}
 
 /**
  * Gets a variable collection node from a team library collection key.
@@ -177,7 +202,7 @@ async function decodeFileVariables(
           switch (style.type) {
             case 'TEXT':
               variables[varIdentifier] = {
-                variableName: name,
+                variableName: style.name,
                 fontFamily: style.fontName.family,
                 fontSize: style.fontSize,
                 fontWeight: {
@@ -202,6 +227,15 @@ async function decodeFileVariables(
                 })),
               };
               break;
+            case 'GRID':
+              variables[varIdentifier] = {
+                type: style.type,
+                name: style.name,
+                description: style.description,
+                layouts: style.layoutGrids.map((grid) => transformGridLayout(grid)),
+              };
+              break;
+            case 'PAINT':
             default:
               variables[varIdentifier] = style;
               break;

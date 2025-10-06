@@ -16,14 +16,14 @@ export function generateRecursicaObject(
     )
     .map(
       ([key]) =>
-        `  "${key}": "var(--${key.replace(/\//g, "-").toLowerCase()})"`,
+        `  "${key}": "var(--${key.replace(/[\/\s]/g, "-").toLowerCase()})"`,
     )
     .join(",\n");
 
   // Generate UI Kit object
   const uiKitEntries = Object.entries(uiKit)
     .map(([key, value]) => {
-      const cssVarName = key.replace(/\//g, "-").toLowerCase();
+      const cssVarName = key.replace(/[\/\s]/g, "-").toLowerCase();
 
       // Handle token references (objects with collection and name)
       if (
@@ -33,14 +33,14 @@ export function generateRecursicaObject(
         "name" in value
       ) {
         const tokenVarName = (value as { name: string }).name
-          .replace(/\//g, "-")
+          .replace(/[\/\s]/g, "-")
           .toLowerCase();
         return `  "${key}": "var(--${tokenVarName})"`;
       }
 
       // Handle string values that might be token references
       if (typeof value === "string" && value.includes("/")) {
-        const tokenVarName = value.replace(/\//g, "-").toLowerCase();
+        const tokenVarName = value.replace(/[\/\s]/g, "-").toLowerCase();
         return `  "${key}": "var(--${tokenVarName})"`;
       }
 
@@ -56,34 +56,46 @@ export function generateRecursicaObject(
 
   // Generate themes object
   const themesEntries = Object.entries(themes)
-    .map(([themeName, themeTokens]) => {
-      const themeEntries = Object.entries(themeTokens as Record<string, any>)
-        .map(([key, value]) => {
-          const cssVarName = key.replace(/\//g, "-").toLowerCase();
+    .map(([themeName, themeModes]) => {
+      const modeEntries = Object.entries(
+        themeModes as Record<string, Record<string, any>>,
+      )
+        .map(([mode, variables]) => {
+          const themeVariables = Object.entries(
+            variables as Record<string, any>,
+          )
+            .map(([key, value]) => {
+              const cssVarName = key.replace(/[\/\s]/g, "-").toLowerCase();
 
-          // Handle different value types
-          if (typeof value === "string" || typeof value === "number") {
-            return `    "${key}": "var(--${cssVarName})"`;
-          }
+              // Handle different value types
+              if (typeof value === "string" || typeof value === "number") {
+                return `      "${key}": "var(--${cssVarName})"`;
+              }
 
-          // Handle object references
-          if (
-            typeof value === "object" &&
-            value !== null &&
-            "collection" in value &&
-            "name" in value
-          ) {
-            const ref = value as { collection: string; name: string };
-            const refVarName = ref.name.replace(/\//g, "-").toLowerCase();
-            return `    "${key}": "var(--${refVarName})"`;
-          }
+              // Handle object references
+              if (
+                typeof value === "object" &&
+                value !== null &&
+                "collection" in value &&
+                "name" in value
+              ) {
+                const ref = value as { collection: string; name: string };
+                const refVarName = ref.name
+                  .replace(/[\/\s]/g, "-")
+                  .toLowerCase();
+                return `      "${key}": "var(--${refVarName})"`;
+              }
 
-          return null;
+              return null;
+            })
+            .filter(Boolean)
+            .join(",\n");
+
+          return `    "${mode}": {\n${themeVariables}\n    }`;
         })
-        .filter(Boolean)
         .join(",\n");
 
-      return `  "${themeName}": {\n${themeEntries}\n  }`;
+      return `  "${themeName}": {\n${modeEntries}\n  }`;
     })
     .join(",\n");
 
