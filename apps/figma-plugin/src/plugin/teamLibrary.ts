@@ -114,6 +114,7 @@ export async function getTeamLibrary(pluginVersion: string) {
         remoteCollection?.getSharedPluginData('recursica', 'file-type')?.includes(key.toLowerCase())
       );
       if (isValid) {
+        if (!validLibraries[collection.name]) validLibraries[collection.name] = [];
         validLibraries[collection.name].push(collection);
       }
     }
