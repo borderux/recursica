@@ -1,3 +1,4 @@
+import { toFontWeight } from '../../../../packages/common/dist/parsers/toFontWeight';
 import { exportToJSON } from './exportToJSON';
 import {
   GenericVariables,
@@ -5,7 +6,52 @@ import {
   combineObjects,
   importVariableByKey,
   getVariableCollectionById,
+  parseLineHeight,
 } from './shared';
+
+/**
+ * Gets a variable collection node from a team library collection key.
+ *
+ * This function performs the following steps:
+ * 1. Retrieves variables from the team library collection using the collection key
+ * 2. Imports the first variable from that collection to get access to the local collection
+ * 3. Fetches the actual variable collection node using the imported variable's collection ID
+ *
+ * This approach is necessary because team library collections are remote references,
+ * and we need to import a variable to access the local collection node that contains
+ * the shared plugin data metadata we need to read.
+ *
+ * @param collectionKey - The key of the team library collection
+ * @returns Promise<VariableCollection | null> - The local variable collection node, or null if not found
+ *
+ * @example
+ * const collection = await getCollectionNodeFromKey('collection-key-123');
+ * const fileType = collection?.getSharedPluginData('recursica', 'file-type');
+ */
+async function getCollectionNodeFromKey(collectionKey: string): Promise<VariableCollection | null> {
+  try {
+    // Get variables from the team library collection
+    const tokenVariables =
+      await figma.teamLibrary.getVariablesInLibraryCollectionAsync(collectionKey);
+
+    if (tokenVariables.length === 0) {
+      return null;
+    }
+
+    // Import the first variable to get access to the local collection
+    const importedVariable = await importVariableByKey(tokenVariables[0].key);
+
+    if (!importedVariable) {
+      return null;
+    }
+
+    // Get the actual variable collection node using the imported variable's collection ID
+    return await getVariableCollectionById(importedVariable.variableCollectionId);
+  } catch (error) {
+    console.warn(`Failed to get collection node from key ${collectionKey}:`, error);
+    return null;
+  }
+}
 
 // Collection names to detect project types (case-insensitive)
 const COLLECTION_TYPE_MAPPING = {
@@ -32,10 +78,12 @@ export async function getTeamLibrary(pluginVersion: string) {
   // Filter libraries that have collections matching our type mapping
   const validLibraries = Object.fromEntries(
     Object.entries(libraries).filter(([, collections]) => {
-      return collections?.some((collection) => {
-        const collectionName = collection.name.toLowerCase();
+      return collections?.some(async (collection) => {
+        const remoteCollection = await getCollectionNodeFromKey(collection.value);
         return Object.keys(COLLECTION_TYPE_MAPPING).some((key) =>
-          collectionName.includes(key.toLowerCase())
+          remoteCollection
+            ?.getSharedPluginData('recursica', 'file-type')
+            ?.includes(key.toLowerCase())
         );
       });
     })
@@ -93,22 +141,83 @@ async function decodeFileVariables(
     filteredCollections.map((variable) => processRemoteVariableCollection(variable.value))
   );
 
-  // Combine all variables
   const variables = combineObjects(variableResults);
 
-  const tokenVariables = await figma.teamLibrary.getVariablesInLibraryCollectionAsync(
-    fileCollections[0].value
+  const collection = await getCollectionNodeFromKey(fileCollections[0].value);
+  const fileType = collection?.getSharedPluginData('recursica', 'file-type') || 'unknown';
+  const themeName = collection?.getSharedPluginData('recursica', 'theme-name') || undefined;
+
+  // Combine all variables
+  const textStyleKeys = JSON.parse(
+    collection?.getSharedPluginData('recursica', 'textStyles') || '[]'
+  );
+  const effectStyleKeys = JSON.parse(
+    collection?.getSharedPluginData('recursica', 'effectStyles') || '[]'
+  );
+  const gridStyleKeys = JSON.parse(
+    collection?.getSharedPluginData('recursica', 'gridStyles') || '[]'
+  );
+  const paintStyleKeys = JSON.parse(
+    collection?.getSharedPluginData('recursica', 'paintStyles') || '[]'
   );
 
-  const importedVariable = await importVariableByKey(tokenVariables[0].key);
-  const collection = await getVariableCollectionById(importedVariable!.variableCollectionId);
+  /**
+   * Processes style keys and adds them to variables object
+   */
+  async function processStyleKeys(
+    styleKeys: string[],
+    styleType: 'TEXT' | 'EFFECT' | 'GRID' | 'PAINT',
+    category: 'Typography' | 'Effect' | 'Grid' | 'Paint'
+  ): Promise<void> {
+    if (styleKeys.length > 0) {
+      for (const key of styleKeys) {
+        const style = await figma.importStyleByKeyAsync(key);
+        if (style && style.type === styleType) {
+          const varIdentifier = `[${fileType}][${category}][${style.name}]`;
+          switch (style.type) {
+            case 'TEXT':
+              variables[varIdentifier] = {
+                variableName: name,
+                fontFamily: style.fontName.family,
+                fontSize: style.fontSize,
+                fontWeight: {
+                  value: toFontWeight(style.fontName.style),
+                  alias: style.fontName.style,
+                },
+                lineHeight: parseLineHeight(style.lineHeight),
+                letterSpacing: style.letterSpacing,
+                textCase: style.textCase,
+                textDecoration: style.textDecoration,
+              };
+              break;
+            case 'EFFECT':
+              variables[varIdentifier] = {
+                variableName: style.name,
+                effects: style.effects.map((eff) => ({
+                  type: eff.type,
+                  color: (eff as DropShadowEffect).color,
+                  offset: (eff as DropShadowEffect).offset,
+                  radius: 'radius' in eff ? eff.radius : 0,
+                  spread: (eff as DropShadowEffect).spread || 0,
+                })),
+              };
+              break;
+            default:
+              variables[varIdentifier] = style;
+              break;
+          }
+        }
+      }
+    }
+  }
+
+  await processStyleKeys(textStyleKeys, 'TEXT', 'Typography');
+  await processStyleKeys(effectStyleKeys, 'EFFECT', 'Effect');
+  await processStyleKeys(gridStyleKeys, 'GRID', 'Grid');
+  await processStyleKeys(paintStyleKeys, 'PAINT', 'Paint');
 
   if (fileCollections.length > 0) {
-    return [
-      variables,
-      collection?.getSharedPluginData('recursica', 'file-type') || 'unknown',
-      collection?.getSharedPluginData('recursica', 'theme-name') || undefined,
-    ];
+    return [variables, fileType, themeName];
   }
 
   return [variables, 'icons', undefined];
