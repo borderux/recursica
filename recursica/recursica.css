@@ -10,7 +10,6 @@ For more information about Recursica, go to https://recursica.com
 
 /* Recursica UI Kit */
 @import "./recursica-tokens.css";
-@import "./recursicabrand-theme.css";
 
 .recursica {
   --global-icon-style: outline;
