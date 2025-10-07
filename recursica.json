@@ -2,8 +2,7 @@
   "$schema": "./packages/schemas/src/RecursicaConfiguration.json",
   "project": {
     "name": "Recursica",
-    "root": "recursica",
-    "adapter": "general-adapter.js"
+    "root": "packages/official-release"
   },
   "overrides": {
     "mantineTheme": {
