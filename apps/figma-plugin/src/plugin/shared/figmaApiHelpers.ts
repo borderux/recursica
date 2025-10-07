@@ -71,7 +71,7 @@ export async function processVariableMode(
   if (value === null) return null;
 
   return {
-    collection: parentCollection.name,
+    collection: parentCollection.getSharedPluginData('recursica', 'file-type') || 'unknown',
     mode: mode.name,
     name: variableName,
     type: resolvedType.toLowerCase(),

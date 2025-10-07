@@ -20,6 +20,11 @@ import type {
 import { type PullRequest } from '../../services/repository';
 import { PublishStatus } from './RepositoryContext';
 import { isColorOrFloatToken } from '@recursica/common';
+import {
+  processJsonContent,
+  RecursicaConfigOverrides,
+  runAdapter as runGeneralAdapter,
+} from '@recursica/general-adapter';
 
 interface AdapterFile {
   path: string;
@@ -307,7 +312,8 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
       try {
         if (filetype === 'icons') {
           adapterFiles = [];
-        } else {
+        }
+        if (typeof config.project === 'object' && config.project.adapter) {
           adapterFiles = await runAdapter(
             repositoryInstance,
             selectedProject,
@@ -315,6 +321,25 @@ export function RepositoryProvider({ children }: { children: React.ReactNode }) 
             config,
             fileLoadingData
           );
+        } else {
+          if (!fileLoadingData.localBundledJson) {
+            throw new Error('Local bundled JSON not found');
+          }
+          let rootPath = '';
+          let overrides = undefined;
+          if (typeof config.project === 'object' && config.project.root) {
+            rootPath = config.project.root;
+          }
+          if (typeof config.overrides === 'object') {
+            overrides = config.overrides as RecursicaConfigOverrides;
+          }
+          const tokens = processJsonContent(fileLoadingData.localBundledJson, {
+            overrides,
+          });
+          adapterFiles = runGeneralAdapter({
+            rootPath,
+            tokens,
+          });
         }
       } catch (error) {
         console.error('Adapter execution failed:', error);
