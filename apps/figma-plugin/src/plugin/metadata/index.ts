@@ -4,6 +4,7 @@ import { detectFiletype } from '../filetype';
 import { validateCollections } from './validateCollections';
 import { getRemoteVariables } from './getRemoteVariables';
 import { filterUnsyncedCollections } from './filterUnsyncedCollections';
+import { saveEffectsInMetadata } from './saveEffectsInMetadata';
 
 /**
  * Synchronizes variables between local variable collections and team library collections.
@@ -29,6 +30,7 @@ import { filterUnsyncedCollections } from './filterUnsyncedCollections';
  */
 export async function syncMetadata(): Promise<void> {
   const localCollections = await figma.variables.getLocalVariableCollectionsAsync();
+  saveEffectsInMetadata(localCollections);
 
   const unsyncedLocalCollections = filterUnsyncedCollections(localCollections);
   const { fileType, themeName } = await detectFiletype();

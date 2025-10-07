@@ -216,6 +216,7 @@ export class GitHubRepository extends BaseRepository {
     message: string,
     actions: CommitAction[]
   ): Promise<void> {
+    console.log('committing files', actions);
     // Get the initial commit SHA and tree SHA
     const branchResponse = await this.httpClient.get(
       `${this.baseUrl}/repos/${project.owner.name}/${project.name}/git/refs/heads/${branch}`

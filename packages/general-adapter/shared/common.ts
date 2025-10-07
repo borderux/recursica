@@ -9,7 +9,6 @@ import { Tokens } from "./tokens";
 import { runAdapter, RunAdapterOutput } from "../adapter";
 
 export interface ProcessJsonParams {
-  project: RecursicaConfiguration["project"];
   overrides: RecursicaConfigOverrides | undefined;
 }
 
@@ -67,11 +66,8 @@ export function processIcons(iconsJsonContent: string): Record<string, string> {
 export function processAdapter({
   rootPath,
   bundledJsonContent,
-  project,
   overrides,
-  srcPath,
   iconsJsonContent,
-  iconsConfig,
 }: RunAdapterParams): RunAdapterOutput {
   let icons: Record<string, string> = {};
 
@@ -86,19 +82,13 @@ export function processAdapter({
 
   // Process the main JSON content
   const tokens = processJsonContent(bundledJsonContent, {
-    project,
     overrides,
   });
 
   // Run the adapter
   const result = runAdapter({
     rootPath,
-    overrides,
-    srcPath,
-    icons,
     tokens,
-    project,
-    iconsConfig,
   });
 
   return result;

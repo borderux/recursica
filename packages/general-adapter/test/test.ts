@@ -20,7 +20,7 @@ async function test() {
 
   try {
     // Read the actual recursica-bundle.json
-    const bundlePath = path.join(__dirname, "..", "recursica-bundle.json");
+    const bundlePath = path.join(__dirname, "test-recursica-bundle.json");
     if (!fs.existsSync(bundlePath)) {
       throw new Error(
         "recursica-bundle.json not found. Please ensure it exists in the package root.",

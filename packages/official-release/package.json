@@ -1,0 +1,36 @@
+{
+  "name": "@recursica/official-release",
+  "version": "1.0.0",
+  "description": "Official Recursica design system release package containing the complete bundle, JavaScript API, and TypeScript definitions",
+  "main": "recursica.js",
+  "types": "recursica.d.ts",
+  "files": [
+    "recursica.js",
+    "recursica.d.ts",
+    "recursica-bundle.json"
+  ],
+  "keywords": [
+    "design-system",
+    "tokens",
+    "css-variables",
+    "typescript",
+    "ui-kit",
+    "recursica"
+  ],
+  "author": "hi@borderux.com",
+  "license": "MIT",
+  "homepage": "https://github.com/borderux/recursica#readme",
+  "bugs": {
+    "url": "https://github.com/borderux/recursica/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/borderux/recursica.git"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

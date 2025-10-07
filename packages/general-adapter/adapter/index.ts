@@ -1,26 +1,15 @@
-import type {
-  RecursicaConfigOverrides,
-  RecursicaConfigIcons,
-  ExportingResult,
-} from "../types";
+import type { ExportingResult } from "../types";
 
 import { generateTokensCss } from "./generateTokensCss";
 import { generateThemeCss } from "./generateThemeCss";
 import { generateUiKitCss } from "./generateUiKitCss";
 import { generateRecursicaObject } from "./generateRecursicaObject";
 import { generateRecursicaTypes } from "./generateRecursicaTypes";
-import { generateIcons, GenerateIconsOutput } from "./generateIcons";
 import { Tokens } from "../shared/tokens";
-import type { RecursicaConfiguration } from "@recursica/schemas";
 import { generatePrettierignore } from "./generatePrettierignore";
 
 interface GenerateThemeFileParams {
-  overrides: RecursicaConfigOverrides | undefined;
   rootPath: string;
-  srcPath: string;
-  project: RecursicaConfiguration["project"];
-  icons: Record<string, string>;
-  iconsConfig: RecursicaConfigIcons | undefined;
   tokens: Tokens;
 }
 
@@ -39,49 +28,19 @@ export type RunAdapterOutput = ExportingResult[];
 
 export function runAdapter({
   rootPath,
-  overrides,
-  srcPath,
-  project,
-  icons,
-  iconsConfig,
   tokens,
 }: GenerateThemeFileParams): RunAdapterOutput {
   const outputPath = rootPath;
 
-  const tokensCss = generateTokensCss(tokens.tokens, {
-    outputPath,
-    project,
-  });
+  const tokensCss = generateTokensCss(tokens, outputPath);
 
-  const themeCssFiles = generateThemeCss(tokens.themes, {
-    outputPath,
-    project,
-  });
+  const themeCssFiles = generateThemeCss(tokens, outputPath);
 
-  const uiKitCss = generateUiKitCss(tokens.uiKit, tokens.themes, {
-    outputPath,
-    project,
-  });
+  const uiKitCss = generateUiKitCss(tokens, outputPath);
 
-  const recursicaObject = generateRecursicaObject(
-    tokens.tokens,
-    tokens.uiKit,
-    tokens.themes,
-    {
-      outputPath,
-      project,
-    },
-  );
+  const recursicaObject = generateRecursicaObject(tokens, outputPath);
 
-  const recursicaTypes = generateRecursicaTypes(
-    tokens.tokens,
-    tokens.uiKit,
-    tokens.themes,
-    {
-      outputPath,
-      project,
-    },
-  );
+  const recursicaTypes = generateRecursicaTypes(tokens, outputPath);
 
   const prettierignore = generatePrettierignore();
 
@@ -95,14 +54,6 @@ export function runAdapter({
 
   // Add theme CSS files
   files.push(...themeCssFiles);
-
-  // Add icon files if icons are provided
-  if (icons && Object.keys(icons).length > 0) {
-    const iconsObject = generateIcons(icons, srcPath, iconsConfig);
-    files.push(iconsObject.iconExports);
-    files.push(iconsObject.iconResourceMap);
-    files.push(...iconsObject.exportedIcons);
-  }
 
   return files;
 }
