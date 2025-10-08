@@ -1,10 +1,11 @@
 import React from "react";
+import "./Themes.css";
 import {
   recursica,
   type RecursicaThemeRecursicaBrand,
 } from "@recursica/official-release/recursica.js";
 import { Colors } from "./Colors";
-import "./Themes.css";
+import { Layers } from "./Layers";
 
 export type ThemesPageProps = {
   theme: RecursicaThemeRecursicaBrand;
@@ -23,6 +24,7 @@ export function ThemesPage({ theme }: ThemesPageProps) {
       }}
     >
       <Colors theme={theme} recursica={recursica} />
+      <Layers theme={theme} recursica={recursica} />
     </main>
   );
 }

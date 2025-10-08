@@ -132,17 +132,19 @@ export function Colors({ theme, recursica }: ColorsProps) {
         <h3>Neutral (Grayscale)</h3>
         <table className="color-palettes">
           <thead>
-            <th>Emphasis</th>
-            <th>900</th>
-            <th>800</th>
-            <th>700</th>
-            <th>600</th>
-            <th>500</th>
-            <th>400</th>
-            <th>300</th>
-            <th className="default">200</th>
-            <th>100</th>
-            <th>050</th>
+            <tr>
+              <th>Emphasis</th>
+              <th>900</th>
+              <th>800</th>
+              <th>700</th>
+              <th>600</th>
+              <th>500</th>
+              <th>400</th>
+              <th>300</th>
+              <th className="default">200</th>
+              <th>100</th>
+              <th>050</th>
+            </tr>
           </thead>
           <tbody>
             <tr className="high-emphasis">
