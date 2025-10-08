@@ -20,7 +20,7 @@ For more information about Recursica, go to https://recursica.com
   --font-subtitle-small-size: var(--font-size-md);
   --layer-layer-1-element-text-warning: var(--palette-warning);
   --palette-palette-2-300-on-tone: var(--palette-black);
-  --layer-layer-1-property-border-thickness: 2px;
+  --layer-layer-1-property-border-thickness: 2;
   --layer-layer-0-element-text-success: var(--palette-success);
   --layer-layer-3-property-elevation: elevations/elevation-1;
   --elevation-elevation-4-spread: var(--effect-none);
@@ -320,7 +320,7 @@ For more information about Recursica, go to https://recursica.com
   --palette-palette-1-800-tone: var(--color-salmon-800);
   --elevation-elevation-4-y-axis: var(--effect-2x);
   --palette-palette-2-500-low-emphasis: var(--opacity-smoky);
-  --layer-layer-2-property-border-thickness: 0px;
+  --layer-layer-2-property-border-thickness: 0;
   --palette-palette-2-100-on-tone: var(--palette-black);
   --palette-palette-1-400-tone: var(--color-salmon-400);
   --layer-layer-3-property-border-color: var(--palette-neutral-100-tone);
@@ -342,7 +342,7 @@ For more information about Recursica, go to https://recursica.com
   --layer-layer-alternative-primary-color-element-interactive-high-emphasis: var(
     --opacity-solid
   );
-  --layer-layer-3-property-border-thickness: 0px;
+  --layer-layer-3-property-border-thickness: 0;
   --palette-palette-1-900-tone: var(--color-salmon-900);
   --layer-layer-0-element-text-color: var(--palette-black);
   --palette-palette-1-400-on-tone: var(--palette-white);

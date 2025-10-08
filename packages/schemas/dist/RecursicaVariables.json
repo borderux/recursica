@@ -5,10 +5,6 @@
   "description": "Schema for Recursica design tokens and variables",
   "type": "object",
   "properties": {
-    "projectId": {
-      "type": "string",
-      "description": "The project ID"
-    },
     "pluginVersion": {
       "type": "string",
       "description": "The plugin version"
