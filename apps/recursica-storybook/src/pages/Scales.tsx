@@ -2,7 +2,7 @@ import React from "react";
 import {
   RecursicaThemeRecursicaBrand,
   Recursica,
-} from "@recursica/official-release/recursica.d";
+} from "@recursica/official-release";
 
 export type ScalesProps = {
   theme: RecursicaThemeRecursicaBrand;

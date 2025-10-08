@@ -34,10 +34,14 @@ export function Layers({ theme, recursica }: LayersProps) {
               `layer/${layerKey}/property/element/text/color`
             ],
           ...(layer.hasBorder && {
-            border: `${recursica.themes.RecursicaBrand[theme][`layer/${layerKey}/property/border/thickness`]} solid ${recursica.themes.RecursicaBrand[theme][`layer/${layerKey}/property/border/color`]}`,
-            borderRadius:
+            borderWidth:
               recursica.themes.RecursicaBrand[theme][
-                `layer/${layerKey}/property/border/radius`
+                `layer/${layerKey}/property/border-thickness`
+              ],
+            borderStyle: "solid",
+            borderColor:
+              recursica.themes.RecursicaBrand[theme][
+                `layer/${layerKey}/property/border-color`
               ],
           }),
         }}
