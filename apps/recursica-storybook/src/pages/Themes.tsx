@@ -8,6 +8,7 @@ import { Colors } from "./Colors";
 import { Layers } from "./Layers";
 import { AlternativeLayers } from "./AlternativeLayers";
 import { Elevation } from "./Elevation";
+import { Scales } from "./Scales";
 
 export type ThemesPageProps = {
   theme: RecursicaThemeRecursicaBrand;
@@ -26,6 +27,7 @@ export function ThemesPage({ theme }: ThemesPageProps) {
       }}
     >
       <Colors theme={theme} recursica={recursica} />
+      <Scales theme={theme} recursica={recursica} />
       <Layers theme={theme} recursica={recursica} />
       <AlternativeLayers theme={theme} recursica={recursica} />
       <Elevation theme={theme} recursica={recursica} />

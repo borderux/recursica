@@ -126,6 +126,7 @@ main h3 {
 }
 .color-palettes tbody tr:nth-child(3) td {
   padding-inline: 8px;
+  word-break: break-word;
 }
 
 /* --- Layers --- */
