@@ -51,9 +51,6 @@ const preview: Preview = {
       useEffect(() => {
         // Add recursica class to the root element
         const rootElement = document.documentElement;
-        if (!rootElement.classList.contains("recursica")) {
-          rootElement.classList.add("recursica");
-        }
 
         // Remove existing theme classes
         rootElement.classList.remove(

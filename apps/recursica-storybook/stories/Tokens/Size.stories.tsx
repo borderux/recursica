@@ -45,5 +45,5 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const SizeTokensStory: Story = {
-  name: "Size Tokens",
+  name: "Size",
 };

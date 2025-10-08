@@ -5,6 +5,13 @@ import { ThemesPage } from "../../src/pages/Themes";
 const meta: Meta<typeof ThemesPage> = {
   title: "Themes/Themes",
   component: ThemesPage,
+  argTypes: {
+    theme: {
+      table: {
+        disable: true,
+      },
+    },
+  },
   parameters: {
     layout: "fullscreen",
     docs: {
@@ -23,5 +30,5 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const ColorPaletteStory: Story = {
-  name: "Color Palette",
+  name: "Themes",
 };
