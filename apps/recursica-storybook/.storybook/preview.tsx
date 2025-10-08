@@ -54,10 +54,25 @@ const preview: Preview = {
         if (!rootElement.classList.contains("recursica")) {
           rootElement.classList.add("recursica");
         }
-        if (!rootElement.classList.contains("recursicabrand-dark-theme")) {
-          rootElement.classList.add("recursicabrand-dark-theme");
+
+        // Remove existing theme classes
+        rootElement.classList.remove(
+          "recursicabrand-dark-theme",
+          "recursicabrand-light-theme",
+        );
+
+        // Apply theme class based on context.globals?.theme
+        console.log("context.globals?.theme", context.globals?.theme);
+        const themeName = context.globals?.theme || "light";
+        const themeClass =
+          themeName === "Dark"
+            ? "recursicabrand-dark-theme"
+            : "recursicabrand-light-theme";
+
+        if (!rootElement.classList.contains(themeClass)) {
+          rootElement.classList.add(themeClass);
         }
-      }, []);
+      }, [context.globals?.theme]);
       const themeName =
         context.globals?.theme || context.parameters?.theme?.default || "light";
       const themeClassname =
