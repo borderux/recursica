@@ -39,7 +39,7 @@ const preview: Preview = {
       ],
     },
     theme: {
-      default: "light",
+      default: "Light",
       values: [
         { name: "light", value: "Light" },
         { name: "dark", value: "Dark" },
@@ -62,7 +62,6 @@ const preview: Preview = {
         );
 
         // Apply theme class based on context.globals?.theme
-        console.log("context.globals?.theme", context.globals?.theme);
         const themeName = context.globals?.theme || "light";
         const themeClass =
           themeName === "Dark"
@@ -91,7 +90,7 @@ const preview: Preview = {
     theme: {
       name: "Theme",
       description: "Global theme for components",
-      defaultValue: "light",
+      defaultValue: "Light",
       toolbar: {
         icon: "circlehollow",
         items: [

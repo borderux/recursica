@@ -9,35 +9,60 @@ export interface LayersProps {
   recursica: Recursica;
 }
 export function Layers({ theme, recursica }: LayersProps) {
-  return (
-    <div className="section">
-      <h2>Layers</h2>
+  const layers = [
+    { number: 0, name: "Layer 0 (Background)", hasBorder: false },
+    { number: 1, name: "Layer 1", hasBorder: true },
+    { number: 2, name: "Layer 2", hasBorder: true },
+    { number: 3, name: "Layer 3", hasBorder: true },
+  ];
 
+  const renderLayer = (layer: (typeof layers)[0], depth: number = 0) => {
+    const layerKey = `layer-${layer.number}`;
+    const hasNestedLayers = layer.number < 3;
+
+    return (
       <div
+        key={layer.number}
         className="layer-container"
         style={{
           backgroundColor:
             recursica.themes.RecursicaBrand[theme][
-              "layer/layer-0/property/surface"
+              `layer/${layerKey}/property/surface`
             ],
           color:
             recursica.themes.RecursicaBrand[theme][
-              "layer/layer-0/property/element/text/color"
+              `layer/${layerKey}/property/element/text/color`
             ],
-          padding:
-            recursica.themes.RecursicaBrand[theme][
-              "layer/layer-0/property/padding"
-            ],
+          ...(layer.hasBorder && {
+            border: `${recursica.themes.RecursicaBrand[theme][`layer/${layerKey}/property/border/thickness`]} solid ${recursica.themes.RecursicaBrand[theme][`layer/${layerKey}/property/border/color`]}`,
+            borderRadius:
+              recursica.themes.RecursicaBrand[theme][
+                `layer/${layerKey}/property/border/radius`
+              ],
+          }),
         }}
       >
         <div className="layer-content">
           <div className="layer-text-samples">
-            <h3>Layer 0 (Background)</h3>
+            <h3
+              style={{
+                color:
+                  recursica.themes.RecursicaBrand[theme][
+                    `layer/${layerKey}/element/text/color`
+                  ],
+              }}
+            >
+              {layer.name}
+            </h3>
             <p
               style={{
+                color:
+                  recursica.themes.RecursicaBrand[theme][
+                    `layer/${layerKey}/element/text/color`
+                  ],
                 opacity:
                   recursica.themes.RecursicaBrand[theme][
-                    "layer/layer-0/property/element/text/high-emphasis"
+                    `layer/${layerKey}/element/text/high-emphasis`
                   ],
               }}
             >
@@ -45,9 +70,13 @@ export function Layers({ theme, recursica }: LayersProps) {
             </p>
             <p
               style={{
+                color:
+                  recursica.themes.RecursicaBrand[theme][
+                    `layer/${layerKey}/element/text/color`
+                  ],
                 opacity:
                   recursica.themes.RecursicaBrand[theme][
-                    "layer/layer-0/property/element/text/low-emphasis"
+                    `layer/${layerKey}/element/text/low-emphasis`
                   ],
               }}
             >
@@ -57,11 +86,11 @@ export function Layers({ theme, recursica }: LayersProps) {
               style={{
                 color:
                   recursica.themes.RecursicaBrand[theme][
-                    "layer/layer-0/property/element/interactive/color"
+                    `layer/${layerKey}/element/interactive/color`
                   ],
                 opacity:
                   recursica.themes.RecursicaBrand[theme][
-                    "layer/layer-0/property/element/interactive/high-emphasis"
+                    `layer/${layerKey}/element/interactive/high-emphasis`
                   ],
               }}
             >
@@ -71,10 +100,24 @@ export function Layers({ theme, recursica }: LayersProps) {
               style={{
                 color:
                   recursica.themes.RecursicaBrand[theme][
-                    "layer/layer-0/property/element/interactive/color"
+                    `layer/${layerKey}/element/interactive/hover-color`
                   ],
                 opacity:
-                  recursica.themes.RecursicaBrand[theme]["palette/disabled"],
+                  recursica.themes.RecursicaBrand[theme][
+                    `layer/${layerKey}/element/interactive/hover`
+                  ],
+              }}
+            >
+              Interactive (Hover)
+            </p>
+            <p
+              style={{
+                color:
+                  recursica.themes.RecursicaBrand[theme][
+                    `layer/${layerKey}/element/interactive/color`
+                  ],
+                opacity:
+                  recursica.themes.RecursicaBrand[theme]["state/disabled"],
               }}
             >
               Disabled Interactive
@@ -83,11 +126,11 @@ export function Layers({ theme, recursica }: LayersProps) {
               style={{
                 color:
                   recursica.themes.RecursicaBrand[theme][
-                    "layer/layer-0/property/element/text/alert"
+                    `layer/${layerKey}/element/text/alert`
                   ],
                 opacity:
                   recursica.themes.RecursicaBrand[theme][
-                    "layer/layer-0/property/element/interactive/high-emphasis"
+                    `layer/${layerKey}/element/text/high-emphasis`
                   ],
               }}
             >
@@ -97,11 +140,11 @@ export function Layers({ theme, recursica }: LayersProps) {
               style={{
                 color:
                   recursica.themes.RecursicaBrand[theme][
-                    "layer/layer-0/property/element/text/warning"
+                    `layer/${layerKey}/element/text/warning`
                   ],
                 opacity:
                   recursica.themes.RecursicaBrand[theme][
-                    "layer/layer-0/property/element/interactive/high-emphasis"
+                    `layer/${layerKey}/element/text/high-emphasis`
                   ],
               }}
             >
@@ -111,11 +154,11 @@ export function Layers({ theme, recursica }: LayersProps) {
               style={{
                 color:
                   recursica.themes.RecursicaBrand[theme][
-                    "layer/layer-0/property/element/text/success"
+                    `layer/${layerKey}/element/text/success`
                   ],
                 opacity:
                   recursica.themes.RecursicaBrand[theme][
-                    "layer/layer-0/property/element/interactive/high-emphasis"
+                    `layer/${layerKey}/element/text/high-emphasis`
                   ],
               }}
             >
@@ -123,364 +166,20 @@ export function Layers({ theme, recursica }: LayersProps) {
             </p>
           </div>
 
-          <div
-            className="layer-container"
-            style={{
-              backgroundColor:
-                recursica.themes.RecursicaBrand[theme][
-                  "layer/layer-1/property/surface"
-                ],
-              color:
-                recursica.themes.RecursicaBrand[theme][
-                  "layer/layer-1/property/element/text/color"
-                ],
-              padding:
-                recursica.themes.RecursicaBrand[theme][
-                  "layer/layer-1/property/padding"
-                ],
-              border: `${recursica.themes.RecursicaBrand[theme]["layer/layer-1/property/border/thickness"]} solid ${recursica.themes.RecursicaBrand[theme]["layer/layer-1/property/border/color"]}`,
-              borderRadius:
-                recursica.themes.RecursicaBrand[theme][
-                  "layer/layer-1/property/border/radius"
-                ],
-            }}
-          >
-            <div className="layer-content">
-              <div className="layer-text-samples">
-                <h3>Layer 1</h3>
-                <p
-                  style={{
-                    opacity:
-                      recursica.themes.RecursicaBrand[theme][
-                        "layer/layer-1/property/element/text/high-emphasis"
-                      ],
-                  }}
-                >
-                  High Emphasis Text / Icon
-                </p>
-                <p
-                  style={{
-                    opacity:
-                      recursica.themes.RecursicaBrand[theme][
-                        "layer/layer-1/property/element/text/low-emphasis"
-                      ],
-                  }}
-                >
-                  Low Emphasis Text / Icon
-                </p>
-                <p
-                  style={{
-                    color:
-                      recursica.themes.RecursicaBrand[theme][
-                        "layer/layer-1/property/element/interactive/color"
-                      ],
-                    opacity:
-                      recursica.themes.RecursicaBrand[theme][
-                        "layer/layer-1/property/element/interactive/high-emphasis"
-                      ],
-                  }}
-                >
-                  Interactive (Link / Button)
-                </p>
-                <p
-                  style={{
-                    color:
-                      recursica.themes.RecursicaBrand[theme][
-                        "layer/layer-1/property/element/interactive/color"
-                      ],
-                    opacity:
-                      recursica.themes.RecursicaBrand[theme][
-                        "palette/disabled"
-                      ],
-                  }}
-                >
-                  Disabled Interactive
-                </p>
-                <p
-                  style={{
-                    color:
-                      recursica.themes.RecursicaBrand[theme][
-                        "layer/layer-1/property/element/text/alert"
-                      ],
-                    opacity:
-                      recursica.themes.RecursicaBrand[theme][
-                        "layer/layer-1/property/element/interactive/high-emphasis"
-                      ],
-                  }}
-                >
-                  Alert
-                </p>
-                <p
-                  style={{
-                    color:
-                      recursica.themes.RecursicaBrand[theme][
-                        "layer/layer-1/property/element/text/warning"
-                      ],
-                    opacity:
-                      recursica.themes.RecursicaBrand[theme][
-                        "layer/layer-1/property/element/interactive/high-emphasis"
-                      ],
-                  }}
-                >
-                  Warning
-                </p>
-                <p
-                  style={{
-                    color:
-                      recursica.themes.RecursicaBrand[theme][
-                        "layer/layer-1/property/element/text/success"
-                      ],
-                    opacity:
-                      recursica.themes.RecursicaBrand[theme][
-                        "layer/layer-1/property/element/interactive/high-emphasis"
-                      ],
-                  }}
-                >
-                  Success
-                </p>
-              </div>
-
-              <div
-                className="layer-container"
-                style={{
-                  backgroundColor:
-                    recursica.themes.RecursicaBrand[theme][
-                      "layer/layer-2/property/surface"
-                    ],
-                  color:
-                    recursica.themes.RecursicaBrand[theme][
-                      "layer/layer-2/property/element/text/color"
-                    ],
-                  padding:
-                    recursica.themes.RecursicaBrand[theme][
-                      "layer/layer-2/property/padding"
-                    ],
-                  border: `${recursica.themes.RecursicaBrand[theme]["layer/layer-2/property/border/thickness"]} solid ${recursica.themes.RecursicaBrand[theme]["layer/layer-2/property/border/color"]}`,
-                  borderRadius:
-                    recursica.themes.RecursicaBrand[theme][
-                      "layer/layer-2/property/border/radius"
-                    ],
-                }}
-              >
-                <div className="layer-content">
-                  <div className="layer-text-samples">
-                    <h3>Layer 2</h3>
-                    <p
-                      style={{
-                        opacity:
-                          recursica.themes.RecursicaBrand[theme][
-                            "layer/layer-2/property/element/text/high-emphasis"
-                          ],
-                      }}
-                    >
-                      High Emphasis Text / Icon
-                    </p>
-                    <p
-                      style={{
-                        opacity:
-                          recursica.themes.RecursicaBrand[theme][
-                            "layer/layer-2/property/element/text/low-emphasis"
-                          ],
-                      }}
-                    >
-                      Low Emphasis Text / Icon
-                    </p>
-                    <p
-                      style={{
-                        color:
-                          recursica.themes.RecursicaBrand[theme][
-                            "layer/layer-2/property/element/interactive/color"
-                          ],
-                        opacity:
-                          recursica.themes.RecursicaBrand[theme][
-                            "layer/layer-2/property/element/interactive/high-emphasis"
-                          ],
-                      }}
-                    >
-                      Interactive (Link / Button)
-                    </p>
-                    <p
-                      style={{
-                        color:
-                          recursica.themes.RecursicaBrand[theme][
-                            "layer/layer-2/property/element/interactive/color"
-                          ],
-                        opacity:
-                          recursica.themes.RecursicaBrand[theme][
-                            "palette/disabled"
-                          ],
-                      }}
-                    >
-                      Disabled Interactive
-                    </p>
-                    <p
-                      style={{
-                        color:
-                          recursica.themes.RecursicaBrand[theme][
-                            "layer/layer-2/property/element/text/alert"
-                          ],
-                        opacity:
-                          recursica.themes.RecursicaBrand[theme][
-                            "layer/layer-2/property/element/interactive/high-emphasis"
-                          ],
-                      }}
-                    >
-                      Alert
-                    </p>
-                    <p
-                      style={{
-                        color:
-                          recursica.themes.RecursicaBrand[theme][
-                            "layer/layer-2/property/element/text/warning"
-                          ],
-                        opacity:
-                          recursica.themes.RecursicaBrand[theme][
-                            "layer/layer-2/property/element/interactive/high-emphasis"
-                          ],
-                      }}
-                    >
-                      Warning
-                    </p>
-                    <p
-                      style={{
-                        color:
-                          recursica.themes.RecursicaBrand[theme][
-                            "layer/layer-2/property/element/text/success"
-                          ],
-                        opacity:
-                          recursica.themes.RecursicaBrand[theme][
-                            "layer/layer-2/property/element/interactive/high-emphasis"
-                          ],
-                      }}
-                    >
-                      Success
-                    </p>
-                  </div>
-
-                  <div
-                    className="layer-container"
-                    style={{
-                      backgroundColor:
-                        recursica.themes.RecursicaBrand[theme][
-                          "layer/layer-3/property/surface"
-                        ],
-                      color:
-                        recursica.themes.RecursicaBrand[theme][
-                          "layer/layer-3/property/element/text/color"
-                        ],
-                      padding:
-                        recursica.themes.RecursicaBrand[theme][
-                          "layer/layer-3/property/padding"
-                        ],
-                      border: `${recursica.themes.RecursicaBrand[theme]["layer/layer-3/property/border/thickness"]} solid ${recursica.themes.RecursicaBrand[theme]["layer/layer-3/property/border/color"]}`,
-                      borderRadius:
-                        recursica.themes.RecursicaBrand[theme][
-                          "layer/layer-3/property/border/radius"
-                        ],
-                    }}
-                  >
-                    <div className="layer-content">
-                      <div className="layer-text-samples">
-                        <h3>Layer 3</h3>
-                        <p
-                          style={{
-                            opacity:
-                              recursica.themes.RecursicaBrand[theme][
-                                "layer/layer-3/property/element/text/high-emphasis"
-                              ],
-                          }}
-                        >
-                          High Emphasis Text / Icon
-                        </p>
-                        <p
-                          style={{
-                            opacity:
-                              recursica.themes.RecursicaBrand[theme][
-                                "layer/layer-3/property/element/text/low-emphasis"
-                              ],
-                          }}
-                        >
-                          Low Emphasis Text / Icon
-                        </p>
-                        <p
-                          style={{
-                            color:
-                              recursica.themes.RecursicaBrand[theme][
-                                "layer/layer-3/property/element/interactive/color"
-                              ],
-                            opacity:
-                              recursica.themes.RecursicaBrand[theme][
-                                "layer/layer-3/property/element/interactive/high-emphasis"
-                              ],
-                          }}
-                        >
-                          Interactive (Link / Button)
-                        </p>
-                        <p
-                          style={{
-                            color:
-                              recursica.themes.RecursicaBrand[theme][
-                                "layer/layer-3/property/element/interactive/color"
-                              ],
-                            opacity:
-                              recursica.themes.RecursicaBrand[theme][
-                                "palette/disabled"
-                              ],
-                          }}
-                        >
-                          Disabled Interactive
-                        </p>
-                        <p
-                          style={{
-                            color:
-                              recursica.themes.RecursicaBrand[theme][
-                                "layer/layer-3/property/element/text/alert"
-                              ],
-                            opacity:
-                              recursica.themes.RecursicaBrand[theme][
-                                "layer/layer-3/property/element/interactive/high-emphasis"
-                              ],
-                          }}
-                        >
-                          Alert
-                        </p>
-                        <p
-                          style={{
-                            color:
-                              recursica.themes.RecursicaBrand[theme][
-                                "layer/layer-3/property/element/text/warning"
-                              ],
-                            opacity:
-                              recursica.themes.RecursicaBrand[theme][
-                                "layer/layer-3/property/element/interactive/high-emphasis"
-                              ],
-                          }}
-                        >
-                          Warning
-                        </p>
-                        <p
-                          style={{
-                            color:
-                              recursica.themes.RecursicaBrand[theme][
-                                "layer/layer-3/property/element/text/success"
-                              ],
-                            opacity:
-                              recursica.themes.RecursicaBrand[theme][
-                                "layer/layer-3/property/element/interactive/high-emphasis"
-                              ],
-                          }}
-                        >
-                          Success
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+          {hasNestedLayers && (
+            <div className="nested-layers">
+              {renderLayer(layers[layer.number + 1], depth + 1)}
             </div>
-          </div>
+          )}
         </div>
       </div>
+    );
+  };
+
+  return (
+    <div className="section">
+      <h2>Layers</h2>
+      {renderLayer(layers[0])}
     </div>
   );
 }

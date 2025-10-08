@@ -11,6 +11,12 @@ main {
   overflow-x: auto;
 }
 
+.layers-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
 .container-padding {
   max-width: 1400px;
   margin: 0 auto;
