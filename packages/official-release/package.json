@@ -26,6 +26,10 @@
     "./recursicabrand-dark-theme.css": "./recursicabrand-dark-theme.css"
   },
   "files": [
+    "recursica.css",
+    "recursica-tokens.css",
+    "recursicabrand-dark-theme.css",
+    "recursicabrand-light-theme.css",
     "recursica.js",
     "recursica.d.ts",
     "recursica-bundle.js",

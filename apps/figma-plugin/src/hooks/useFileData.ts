@@ -24,9 +24,6 @@ export function useFileData(selectedProject?: Project) {
   useEffect(() => {
     if (recursicaVariables) {
       const variablesData = { ...recursicaVariables };
-      if (selectedProject && !variablesData.projectId) {
-        variablesData.projectId = selectedProject.name.replace(/\s+/g, '');
-      }
       setLocalVariablesJson(JSON.stringify(variablesData, null, 2));
     } else {
       setLocalVariablesJson(null);
