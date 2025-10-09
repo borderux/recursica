@@ -1,4 +1,4 @@
-import recursica from "../../../packages/ui-kit-mantine/recursica-bundle.json" with { type: "json" };
+import recursica from "@recursica/official-release/recursica-bundle.json" with { type: "json" };
 import type {
   Token,
   RecursicaVariablesSchema,
@@ -14,17 +14,8 @@ export interface ColorToken extends Token {
   shade: number;
 }
 
-export interface SizeToken extends Token {
-  category: string;
-  variant: string;
-}
-
 export interface GroupedColors {
   [family: string]: ColorToken[];
-}
-
-export interface GroupedSizeTokens {
-  [category: string]: SizeToken[];
 }
 
 class TokenManager {
@@ -50,7 +41,7 @@ class TokenManager {
     const colors = this.allTokens.filter(
       (token) =>
         "collection" in token &&
-        token.collection === "Tokens" &&
+        token.collection === "tokens" &&
         token.type === "color" &&
         token.name.startsWith("color/") &&
         !token.name.startsWith("color/elevation/"),
@@ -88,47 +79,29 @@ class TokenManager {
   /**
    * Get all size tokens grouped by category
    */
-  public getGroupedSizeTokens(): GroupedSizeTokens {
+  public getGroupedSizeTokens(): Record<string, Token> {
     const sizeTokens = this.allTokens.filter(
       (token) =>
         "collection" in token &&
-        token.collection === "Tokens" &&
+        token.collection === "tokens" &&
         token.type === "float" &&
         token.name.startsWith("size/"),
     );
 
-    const groupedSizeTokens = sizeTokens.reduce((acc, token) => {
-      if (!("name" in token && "type" in token && token.type === "float")) {
-        return acc;
-      }
-      const nameParts = token.name.split("/");
-      if (nameParts.length >= 3 && nameParts[0] === "size") {
-        const category = nameParts[1];
-        const variant = nameParts[2];
-
-        if (!acc[category]) {
-          acc[category] = [];
+    const groupedSizeTokens = sizeTokens.reduce(
+      (acc, token) => {
+        if (!("name" in token && "type" in token && token.type === "float")) {
+          return acc;
         }
-
-        acc[category].push({
-          ...token,
-          category,
-          variant,
-        });
-      }
-      return acc;
-    }, {} as GroupedSizeTokens);
-
-    // Sort tokens within each category by value (smallest to largest)
-    Object.keys(groupedSizeTokens).forEach((category) => {
-      groupedSizeTokens[category].sort((a, b) => {
-        const aValue =
-          typeof a.value === "number" ? a.value : parseFloat(String(a.value));
-        const bValue =
-          typeof b.value === "number" ? b.value : parseFloat(String(b.value));
-        return aValue - bValue;
-      });
-    });
+        const nameParts = token.name.split("/");
+        if (nameParts.length >= 2 && nameParts[0] === "size") {
+          const variant = nameParts[1];
+          acc[variant] = token;
+        }
+        return acc;
+      },
+      {} as Record<string, Token>,
+    );
 
     return groupedSizeTokens;
   }
@@ -141,10 +114,12 @@ class TokenManager {
   }
 
   /**
-   * Get sorted size categories
+   * Get all size tokens sorted by value from smaller to bigger
    */
-  public getSortedSizeCategories(): string[] {
-    return Object.keys(this.getGroupedSizeTokens()).sort();
+  public getSortedSizeTokens(): Token[] {
+    return Object.values(this.getGroupedSizeTokens()).sort((a, b) => {
+      return (a.value as number) - (b.value as number);
+    });
   }
 
   /**

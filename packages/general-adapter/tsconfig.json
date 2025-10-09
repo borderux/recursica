@@ -22,6 +22,7 @@
     "**/*.mts",
     "adapter/**/*",
     "utils/**/*",
-    "schemas/**/*"
+    "schemas/**/*",
+    "@recursica/official-release/recursica.d.ts"
   ]
 }

@@ -49,9 +49,11 @@ const GridTokens = () => {
                       gap={layout.gap}
                       style={{
                         alignItems:
-                          layout.alignment === "stretch" ? "stretch" : "center",
+                          layout.alignment.toLowerCase() === "stretch"
+                            ? "stretch"
+                            : "center",
                         justifyContent:
-                          layout.alignment === "center"
+                          layout.alignment.toLowerCase() === "center"
                             ? "center"
                             : "flex-start",
                       }}
@@ -62,7 +64,10 @@ const GridTokens = () => {
                           h="100%"
                           bg="color/salmon/50"
                           style={{
-                            flex: layout.alignment === "stretch" ? 1 : "none",
+                            flex:
+                              layout.alignment.toLowerCase() === "stretch"
+                                ? 1
+                                : "none",
                             width: layout.width ? `${layout.width}px` : "auto",
                           }}
                         />
@@ -97,5 +102,5 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const GridTokensStory: Story = {
-  name: "Grid Tokens",
+  name: "Grid",
 };
