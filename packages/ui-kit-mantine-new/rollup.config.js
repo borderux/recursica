@@ -1,7 +1,7 @@
 import { defineConfig } from "rollup";
-import typescript from "@rollup/plugin-typescript/types/index.js";
-import resolve from "@rollup/plugin-node-resolve/types/index.js";
-import commonjs from "@rollup/plugin-commonjs/types/index.js";
+import typescript from "@rollup/plugin-typescript";
+import resolve from "@rollup/plugin-node-resolve";
+import commonjs from "@rollup/plugin-commonjs";
 import json from "@rollup/plugin-json";
 import dts from "rollup-plugin-dts";
 import babel from "@rollup/plugin-babel";

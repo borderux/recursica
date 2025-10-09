@@ -11,22 +11,9 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       react(),
-      vanillaExtractPlugin({
-        identifiers: ({ debugId, hash }) => {
-          if (!debugId) {
-            return `recursica-${hash}`;
-          }
-          return `recursica-${debugId?.replaceAll("/", "-")}`;
-        },
-      }),
+      vanillaExtractPlugin(),
       svgr(),
-      ...(isLibrary
-        ? [
-            dts({
-              insertTypesEntry: true,
-            }),
-          ]
-        : []),
+      ...(isLibrary ? [dts({ insertTypesEntry: true })] : []),
     ],
     css: {
       modules: {

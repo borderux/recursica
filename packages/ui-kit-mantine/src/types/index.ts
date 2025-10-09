@@ -9,4 +9,3 @@ export interface ComboboxItem {
 }
 
 // Export other shared types here
-export * from "./mantine";
