@@ -5,6 +5,10 @@
   "main": "recursica.js",
   "types": "recursica.d.ts",
   "files": [
+    "recursica.css",
+    "recursica-tokens.css",
+    "recursicabrand-dark-theme.css",
+    "recursicabrand-light-theme.css",
     "recursica.js",
     "recursica.d.ts",
     "recursica-bundle.json"

@@ -16,9 +16,10 @@ export type VariableCastedValue = string | boolean | number;
  */
 export interface RecursicaVariablesSchema {
   /**
-   * The project ID
+   * @deprecated
+   * The project ID (deprecated - this field is no longer used)
    */
-  projectId: string;
+  projectId?: string;
   /**
    * The plugin version
    */
