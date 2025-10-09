@@ -20,7 +20,7 @@ For more information about Recursica, go to https://recursica.com
  * style={{ color: recursica.themes.light["text/primary"] }}
  */
 
-export const recursica = {
+const recursica = {
   tokens: {
   "color/salmon/600": "var(--color-salmon-600)",
   "color/mandy/900": "var(--color-mandy-900)",
@@ -1364,4 +1364,5 @@ export const recursica = {
   }
 };
 
+export { recursica };
 export default recursica;

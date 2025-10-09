@@ -1,376 +1,359 @@
-# Recursica Mantine Adapter
+# @recursica/mantine-adapter
 
-A design token adapter that converts Figma design tokens exported via the Recursica Figma plugin into Mantine theme files, TypeScript types, and Vanilla Extract CSS-in-JS themes.
-
-## What is Recursica Mantine Adapter
-
-The Recursica Mantine Adapter processes design token JSON files and generates:
-
-- **Mantine Theme**: Complete Mantine theme configuration with colors, typography, spacing, and more
-- **Vanilla Extract Themes**: CSS-in-JS theme files with contract-based theme switching
-- **TypeScript Types**: Type-safe interfaces for colors, spacers, border radius, and other tokens
-- **React Components**: Ready-to-use Icon components with proper TypeScript definitions
-- **UI Kit Objects**: Structured objects containing all design system primitives
+A modern React component library built with TypeScript, Mantine, and Vanilla Extract CSS. This package provides reusable UI components with consistent design tokens and theming support.
 
 ## Installation
 
 ```bash
 npm install @recursica/mantine-adapter
+# or
+yarn add @recursica/mantine-adapter
+# or
+pnpm add @recursica/mantine-adapter
 ```
 
-## Usage
+## Peer Dependencies
 
-### Option 1: Using npx (Recommended)
-
-Run the adapter directly without installation:
+This library requires the following peer dependencies to be installed in your project:
 
 ```bash
-npx @recursica/mantine-adapter
+npm install @mantine/core@>=8.0.0 @mantine/dates@>=8.0.0 @mantine/hooks@>=8.0.0 react@>=16.8.0 react-dom@>=16.8.0
 ```
 
-### Option 2: Adding a script to package.json
+**Important**: Make sure you have these exact versions or higher installed, as the components rely on Mantine 8+ features and React 16.8+ hooks.
 
-Add the recursica command to your package.json scripts:
+## Quick Start
 
-```json
-{
-  "scripts": {
-    "recursica": "recursica"
-  }
-}
-```
-
-Then run:
-
-```bash
-npm run recursica
-```
-
-### Option 3: Programmatic Usage
-
-```typescript
-import { runMain } from "@recursica/mantine-adapter";
-
-await runMain();
-```
-
-## Configuration
-
-Create a `recursica.json` file in your project root:
-
-```json
-{
-  "$schema": "node_modules/@recursica/schemas/RecursicaConfiguration.json",
-  "project": "YourProjectName",
-  "srcPath": "./src",
-  "bundledJson": "./design-tokens.json",
-  "iconsJson": "./icons.json",
-  "overrides": {
-    "mantineTheme": {
-      "1-scale": "rem",
-      "background": "white"
-    },
-    "fontWeight": [
-      {
-        "fontFamily": "Inter",
-        "value": 400,
-        "alias": "regular"
-      }
-    ]
-  },
-  "iconsConfig": {
-    "include": {
-      "variants": ["Filled", "Outlined"]
-    },
-    "exclude": {
-      "names": ["deprecated_icon"]
-    }
-  }
-}
-```
-
-### Configuration Options
-
-- `project`: Must match the project name in your exported JSON files
-- `srcPath`: Output directory for generated files (default: `./src`)
-- `bundledJson`: Path to your design tokens JSON file
-- `iconsJson`: Path to your icons JSON file (optional)
-- `overrides`: Custom overrides for theme generation
-- `iconsConfig`: Configuration for icon filtering and processing
-
-## Generated Files
-
-The adapter generates the following file structure in `{srcPath}/recursica/`:
-
-```
-src/
-└── recursica/
-    ├── Recursica.ts                           # Main theme object
-    ├── RecursicaTokens.ts                     # Base design tokens
-    ├── RecursicaContractTheme.css.ts          # Vanilla Extract contract
-    ├── RecursicaThemes.css.ts                 # Theme implementations
-    ├── RecursicaMantineTheme.ts               # Mantine theme config
-    ├── RecursicaColorsType.ts                 # Color type definitions
-    ├── RecursicaSpacersType.ts                # Spacing type definitions
-    ├── RecursicaBorderRadiusType.ts           # Border radius types
-    ├── RecursicaUiKit.ts                      # UI Kit components object
-    └── components/
-        └── Icons/
-            ├── Icon.tsx                       # Main Icon component
-            ├── icon_exports.ts                # React icon components
-            ├── icon_resource_map.ts           # Icon name mappings
-            └── Svg/                           # SVG icon files
-                ├── icon1.svg
-                └── icon2.svg
-```
-
-## Icon Component Usage
-
-The generated Icon component provides type-safe icon usage:
+### 1. Basic Setup
 
 ```tsx
-import { Icon } from './recursica/components/Icons/Icon';
-import type { RecursicaColors } from './recursica/RecursicaColorsType';
+import React from "react";
+import { Button, ThemeProvider } from "@recursica/mantine-adapter";
+import "@recursica/mantine-adapter/style.css";
 
-// Basic usage
-<Icon name="check_Filled" />
+function App() {
+  return (
+    <ThemeProvider>
+      <Button
+        label="Click Me"
+        variant="solid"
+        onClick={() => console.log("Clicked!")}
+      />
+    </ThemeProvider>
+  );
+}
+```
 
-// With custom size and color
-<Icon
-  name="arrow_back_ios_new_Outlined"
-  size={32}
-  color="primary-500"
+### 2. Importing Components
+
+```tsx
+// Named imports (recommended)
+import {
+  Button,
+  Textfield,
+  Flex,
+  Box,
+  Badge,
+} from "@recursica/mantine-adapter";
+
+// Import types for TypeScript
+import type { ButtonProps, TextfieldProps } from "@recursica/mantine-adapter";
+```
+
+## Available Components
+
+### Layout Components
+
+- `Box` - Basic container component
+- `Flex` - Flexbox container with common layouts
+- `ThemeProvider` - Theme context provider
+
+### Form Components
+
+- `Button` - Interactive button with multiple variants
+- `Textfield` - Text input component
+- `Checkbox` - Checkbox input
+- `Dropdown` - Select dropdown with search
+- `Chip` - Tag/chip component
+- `Radio` - Radio button component
+- `Datepicker` - Date selection component
+
+### Navigation Components
+
+- `Tabs` - Tab navigation
+- `Anchor` - Link component
+- `Breadcrumb` - Breadcrumb navigation
+- `Pagination` - Page navigation
+
+### Display Components
+
+- `Text` - Typography component
+- `Typography` - Typography utilities
+- `Badge` - Status indicator
+- `Avatar` - User avatar
+- `Logo` - Logo component
+- `Icon` - Icon component with 240+ icons
+
+### Feedback Components
+
+- `Loader` - Loading indicator
+- `Accordion` - Collapsible content
+- `Tooltip` - Tooltip component
+
+## Component Usage Examples
+
+### Button Component
+
+```tsx
+import { Button } from "@recursica/mantine-adapter";
+
+// Basic button
+<Button label="Click me" variant="solid" />
+
+// Different variants
+<Button label="Outline" variant="outline" />
+<Button label="Text" variant="text" />
+
+// Different sizes
+<Button label="Small" size="small" />
+<Button label="Default" size="default" />
+
+// With icons
+<Button
+  label="Download"
+  leftIcon={<DownloadIcon />}
+  variant="solid"
 />
 
-// Available props
-interface IconProps {
-  name: IconName;                              // Autocompleted icon names
-  size?: 16 | 20 | 24 | 32 | 40 | 48 | "100%"; // Predefined sizes
-  title?: string;                              // Accessibility title
-  color?: RecursicaColors;                     // Theme colors
-}
+// Icon-only button
+<Button
+  leftIcon={<SettingsIcon />}
+  style="icon"
+  variant="outline"
+/>
 ```
 
-## Using with Webworker
+### Form Components
 
-For browser-based token processing, use the webworker implementation:
+```tsx
+import { Textfield, Checkbox, Dropdown } from "@recursica/mantine-adapter";
 
-### 1. Setup the Worker
+// Text input
+<Textfield
+  label="Email"
+  placeholder="Enter your email"
+  required
+/>
 
-```typescript
-// worker.ts
-import "@recursica/mantine-adapter/dist/webworker.js";
+// Checkbox
+<Checkbox
+  label="I agree to terms"
+  description="Please read our terms and conditions"
+/>
+
+// Dropdown
+<Dropdown
+  label="Select country"
+  placeholder="Choose a country"
+  data={[
+    { value: "us", label: "United States" },
+    { value: "uk", label: "United Kingdom" },
+  ]}
+/>
 ```
 
-### 2. Process Tokens in Main Thread
+### Layout Components
 
-```typescript
-// main.ts
-interface WorkerMessage {
-  bundledJson: string; // JSON content as string
-  iconsJson?: string; // Icons JSON content as string
-  project: string; // Project name
-  srcPath: string; // Output path
-  rootPath: string; // Root project path
-  overrides?: any; // Theme overrides
-  iconsConfig?: any; // Icons configuration
-}
+```tsx
+import { Box, Flex } from "@recursica/mantine-adapter";
 
-// Create and use worker
-const worker = new Worker("./worker.js");
+// Basic container
+<Box padding="medium" backgroundColor="background">
+  <Text>Content here</Text>
+</Box>
 
-worker.postMessage({
-  bundledJson: jsonFileContent,
-  iconsJson: iconsJsonContent,
-  project: "YourProject",
-  srcPath: "./src",
-  rootPath: "./",
-  overrides: undefined,
-  iconsConfig: undefined,
+// Flexbox layouts
+<Flex gap="medium" align="center" justify="space-between">
+  <Text>Left content</Text>
+  <Button label="Action" />
+</Flex>
+```
+
+## Styling with Vanilla Extract
+
+This library uses **Vanilla Extract** for styling, which provides:
+
+- **Type-safe CSS**: Compile-time CSS validation
+- **Zero runtime**: No CSS-in-JS overhead
+- **Design token integration**: Direct access to design system tokens
+- **Scoped styles**: Automatic CSS class generation
+
+### Why Vanilla Extract?
+
+Vanilla Extract is chosen because it:
+
+- Eliminates runtime CSS-in-JS overhead
+- Provides compile-time type safety
+- Integrates seamlessly with design tokens
+- Generates optimized CSS bundles
+- Supports CSS custom properties and themes
+
+### Customizing Component Styles
+
+You can customize component styles by extending the existing styles:
+
+```tsx
+import { style } from "@vanilla-extract/css";
+import { recursica } from "@recursica/mantine-adapter";
+
+// Custom button style
+const customButton = style({
+  backgroundColor: recursica["color/primary"],
+  borderRadius: recursica["border-radius/medium"],
+  padding: recursica["spacing/medium"],
+
+  ":hover": {
+    backgroundColor: recursica["color/primary-hover"],
+  },
 });
 
-worker.onmessage = (event) => {
-  const files = event.data;
-  // Process generated files
-  console.log("Generated files:", files);
+// Usage
+<Button label="Custom Button" className={customButton} />;
+```
 
-  // Files structure matches the CLI output:
-  // - files.recursicaTokens
-  // - files.vanillaExtractThemes
-  // - files.mantineTheme
-  // - files.uiKitObject
-  // - files.recursicaObject
-  // - files.colorsType
-  // - files.iconsObject
-  // etc.
+### Using Design Tokens
+
+Access design tokens directly from the Recursica system:
+
+```tsx
+import { recursica } from "@recursica/mantine-adapter";
+
+const myStyle = style({
+  // Spacing
+  padding: recursica["spacing/medium"], // 16px
+  margin: recursica["spacing/large"], // 24px
+
+  // Colors
+  backgroundColor: recursica["color/background"],
+  color: recursica["color/text"],
+
+  // Typography
+  fontSize: recursica["typography/body/font-size"],
+  lineHeight: recursica["typography/body/line-height"],
+
+  // Border radius
+  borderRadius: recursica["border-radius/medium"], // 8px
+});
+```
+
+### Typography Utilities
+
+Use predefined typography styles:
+
+```tsx
+import { typographies } from "@recursica/mantine-adapter";
+
+const headingStyle = style({
+  ...typographies.heading,
+  color: recursica["color/heading"],
+});
+
+const bodyStyle = style({
+  ...typographies.body,
+  color: recursica["color/text"],
+});
+```
+
+## Theming
+
+### Using ThemeProvider
+
+Wrap your app with the ThemeProvider to enable theming:
+
+```tsx
+import { ThemeProvider } from "@recursica/mantine-adapter";
+
+function App() {
+  return <ThemeProvider>{/* Your app components */}</ThemeProvider>;
+}
+```
+
+### Custom Themes
+
+You can create custom themes by extending the base theme:
+
+```tsx
+import { createTheme } from "@mantine/core";
+
+const customTheme = createTheme({
+  primaryColor: "blue",
+  fontFamily: "Inter, sans-serif",
+  // ... other theme overrides
+});
+
+<ThemeProvider theme={customTheme}>{/* Your app */}</ThemeProvider>;
+```
+
+## TypeScript Support
+
+All components include full TypeScript support with proper prop types:
+
+```tsx
+import type { ButtonProps, TextfieldProps } from "@recursica/mantine-adapter";
+
+interface MyFormProps {
+  onSubmit: (data: FormData) => void;
+}
+
+const MyForm: React.FC<MyFormProps> = ({ onSubmit }) => {
+  return (
+    <form onSubmit={onSubmit}>
+      <Textfield
+        label="Name"
+        required
+        // TypeScript will provide autocomplete and type checking
+      />
+    </form>
+  );
 };
 ```
 
-### 3. Handle Worker Response
+## Storybook Documentation
 
-```typescript
-interface WorkerResponse {
-  recursicaTokens: ExportingResult;
-  vanillaExtractThemes: VanillaExtractThemesOutput;
-  mantineTheme: GenerateMantineThemeOutput;
-  uiKitObject: ExportingResult;
-  recursicaObject: ExportingResult;
-  colorsType: ExportingResult;
-  spacersType: ExportingResult;
-  borderRadiusType: ExportingResult;
-  iconsObject?: GenerateIconsOutput;
-  recursicaThemes: ExportingResult;
-  prettierignore: ExportingResult;
-}
+This library includes comprehensive Storybook documentation for all components. You can:
 
-interface ExportingResult {
-  content: string; // File content
-  path: string; // Full file path
-  filename: string; // Filename only
-}
-```
+- **View live examples** of all components and their variants
+- **Explore component props** and their effects
+- **Test component interactions** and accessibility features
+- **Copy code examples** directly from the documentation
 
-## Creating Custom Adapters
+### Accessing Storybook
 
-To create your own adapter, you need to implement the core generator functions. The adapter architecture is modular and extensible.
+- **Online (Recommended)**: Visit the [Storybook documentation](https://borderux.github.io/recursica/) for live examples and documentation
+- **For Contributors**: If you're contributing to the library, clone the repository and run `npm run storybook` in the `packages/mantine-adapter` directory
 
-### 1. Adapter Structure
+### Using Storybook for Development
 
-```typescript
-// your-adapter/index.ts
-import type {
-  RecursicaConfigOverrides,
-  RecursicaConfigIcons,
-  ExportingResult,
-} from "@recursica/mantine-adapter";
+Storybook is an excellent tool for:
 
-interface CustomAdapterParams {
-  overrides: RecursicaConfigOverrides | undefined;
-  rootPath: string;
-  srcPath: string;
-  project: string;
-  icons: Record<string, string>;
-  iconsConfig: RecursicaConfigIcons | undefined;
-  processTokens: ProcessTokens;
-}
+- Understanding component capabilities and variants
+- Testing component behavior before integration
+- Exploring design system patterns
+- Copying working code examples for your implementation
 
-export function runCustomAdapter(params: CustomAdapterParams) {
-  // Your custom generation logic here
-  return {
-    // Return ExportingResult objects for each file you want to generate
-    customTheme: generateCustomTheme(params),
-    customTypes: generateCustomTypes(params),
-    // ... other generators
-  };
-}
-```
+## Browser Support
 
-### 2. Individual Generators
+This library supports all modern browsers:
 
-Each generator should follow this pattern:
+- Chrome 90+
+- Firefox 88+
+- Safari 14+
+- Edge 90+
 
-```typescript
-// generateCustomTheme.ts
-import type {
-  ExportingResult,
-  ExportingProps,
-} from "@recursica/mantine-adapter";
+## Contributing
 
-export function generateCustomTheme(
-  tokens: Record<string, any>,
-  exportingProps: ExportingProps,
-): ExportingResult {
-  const { outputPath, project } = exportingProps;
-
-  const filename = `${project}CustomTheme.ts`;
-  const path = `${outputPath}/${filename}`;
-
-  const content = `
-// Auto-generated custom theme
-export const customTheme = ${JSON.stringify(tokens, null, 2)};
-  `.trim();
-
-  return {
-    content,
-    path,
-    filename,
-  };
-}
-```
-
-### 3. Available Generator Templates
-
-The mantine-adapter provides several generator templates you can extend:
-
-- `generateRecursicaTokens`: Base token generation
-- `generateVanillaExtractThemes`: CSS-in-JS theme generation
-- `generateMantineTheme`: Mantine-specific theme generation
-- `generateColorTypes`: TypeScript color type generation
-- `generateIcons`: React icon component generation
-- `generateUiKit`: UI component object generation
-
-### 4. Token Processing
-
-Use the `ProcessTokens` class to handle token transformation:
-
-```typescript
-import { ProcessTokens } from "@recursica/mantine-adapter";
-
-const processTokens = new ProcessTokens(overrides);
-processTokens.processTokens(jsonContent.tokens);
-
-// Access processed tokens
-const colors = processTokens.colors;
-const spacers = processTokens.spacers;
-const typography = processTokens.typography;
-const themes = processTokens.themes;
-```
-
-### 5. Integration
-
-Replace the default adapter by modifying the `runAdapter` function or create a separate CLI that uses your custom adapter:
-
-```typescript
-// custom-cli.ts
-import { processJsonContent, processIcons } from "@recursica/mantine-adapter";
-import { runCustomAdapter } from "./your-adapter";
-
-// Use the same processing logic but with your custom adapter
-const processTokens = processJsonContent(bundledJsonContent, {
-  project,
-  overrides,
-});
-const icons = processIcons(iconsJsonContent);
-
-const files = runCustomAdapter({
-  rootPath,
-  overrides,
-  srcPath,
-  icons,
-  processTokens,
-  project,
-  iconsConfig,
-});
-```
-
-## API Reference
-
-### Core Functions
-
-- `runMain()`: Main CLI execution function
-- `processJsonContent()`: Process design token JSON
-- `processIcons()`: Process icons JSON
-- `processAdapter()`: Core adapter processing logic
-- `runAdapter()`: Execute the Mantine adapter
-
-### Types
-
-- `ExportingResult`: File output interface
-- `RecursicaConfigOverrides`: Theme override configuration
-- `RecursicaConfigIcons`: Icon processing configuration
-- `ThemeTokens`: Theme token structure
-- `Themes`: Multi-theme structure
+For development and contribution guidelines, see the [CONTRIBUTING.md](./CONTRIBUTING.md) file.
 
 ## License
 
-MIT
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.

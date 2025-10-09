@@ -3,95 +3,154 @@ import typescript from "@rollup/plugin-typescript";
 import resolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
 import json from "@rollup/plugin-json";
+import dts from "rollup-plugin-dts";
+import babel from "@rollup/plugin-babel";
+import svgr from "@svgr/rollup";
+import postcss from "rollup-plugin-postcss";
+import { vanillaExtractPlugin } from "@vanilla-extract/rollup-plugin";
 
 const external = [
-  "fs",
-  "path",
-  "process",
-  "util",
-  "os",
-  "crypto",
-  "stream",
-  "events",
-  "buffer",
-  "url",
-  "querystring",
-  "http",
-  "https",
-  "net",
-  "tls",
-  "child_process",
-  "cluster",
-  "dgram",
-  "dns",
-  "readline",
-  "repl",
-  "tty",
-  "vm",
-  "zlib",
-  "@recursica/common",
+  "react",
+  "react-dom",
+  "react/jsx-runtime",
+  "@mantine/core",
+  "@mantine/dates",
+  "@mantine/hooks",
+  "tabbable",
+  "@floating-ui",
+  "@vanilla-extract/css",
 ];
 
 const plugins = [
   resolve({
-    preferBuiltins: true,
-    exportConditions: ["node"],
-    extensions: [".js", ".ts", ".json"],
+    preferBuiltins: false,
+    browser: true,
   }),
   commonjs(),
   json(),
+  vanillaExtractPlugin({
+    identifiers: ({ debugId, hash }) => {
+      if (!debugId) {
+        return `recursica-${hash}`;
+      }
+      return `recursica-${debugId?.replaceAll("/", "-")}`;
+    },
+  }),
+  postcss({
+    extract: true,
+    minimize: true,
+    inject: false,
+    modules: {
+      generateScopedName: "[name]__[local]___[hash:base64:5]",
+    },
+    use: {
+      sass: {},
+    },
+  }),
+  svgr({
+    svgo: false,
+    titleProp: true,
+    ref: true,
+  }),
+  babel({
+    babelHelpers: "bundled",
+    exclude: "node_modules/**",
+    presets: [
+      [
+        "@babel/preset-react",
+        {
+          runtime: "automatic",
+        },
+      ],
+    ],
+  }),
   typescript({
     tsconfig: "./tsconfig.json",
     sourceMap: true,
     inlineSources: true,
+    declaration: false, // We'll generate .d.ts files separately
+    noEmit: false,
+    exclude: ["**/*.d.ts", "**/*.stories.*", "**/*.test.*"],
   }),
 ];
+
 export default defineConfig([
-  // Main package entry point
+  // ESM build
   {
-    input: "./index.ts",
+    input: "./src/index.ts",
     output: {
-      file: "./dist/index.js",
-      sourcemap: true,
-      exports: "auto",
-    },
-    plugins,
-    external,
-  },
-  // CLI entry point - ES Module
-  {
-    input: "./main.ts",
-    output: {
-      file: "./dist/main.js",
+      file: "./dist/mantine-adapter.js",
       format: "es",
       sourcemap: true,
       exports: "auto",
-      banner: "#!/usr/bin/env node",
     },
     plugins,
     external,
   },
-  // CLI entry point - CommonJS
+  // CommonJS build
   {
-    input: "./main.ts",
+    input: "./src/index.ts",
     output: {
-      file: "./dist/main.cjs",
+      file: "./dist/mantine-adapter.cjs",
       format: "cjs",
       sourcemap: true,
       exports: "auto",
-      banner: "#!/usr/bin/env node",
     },
     plugins,
     external,
   },
+  // CSS build - extract CSS from TypeScript imports
   {
-    input: "./webworker.ts",
+    input: "./src/index.ts",
     output: {
-      file: "./dist/webworker.js",
-      format: "es",
-      sourcemap: true,
-      exports: "auto",
+      file: "./dist/mantine-adapter.css",
     },
-    plugins,
+    plugins: [
+      resolve({
+        preferBuiltins: false,
+        browser: true,
+      }),
+      commonjs(),
+      postcss({
+        extract: true,
+        minimize: true,
+        inject: false,
+        modules: {
+          generateScopedName: "[name]__[local]___[hash:base64:5]",
+        },
+        use: {
+          sass: {},
+        },
+      }),
+      typescript({
+        tsconfig: "./tsconfig.json",
+        sourceMap: false,
+        inlineSources: false,
+        declaration: false,
+        noEmit: false,
+        exclude: ["**/*.d.ts", "**/*.stories.*", "**/*.test.*"],
+      }),
+    ],
+    external: [
+      "react",
+      "react-dom",
+      "@mantine/core",
+      "@mantine/dates",
+      "@mantine/hooks",
+    ],
+  },
+  // TypeScript declarations
+  {
+    input: "./src/index.ts",
+    output: {
+      file: "./dist/index.d.ts",
+      format: "es",
+    },
+    plugins: [
+      dts({
+        tsconfig: "./tsconfig.json",
+      }),
+    ],
+    external,
   },
 ]);
