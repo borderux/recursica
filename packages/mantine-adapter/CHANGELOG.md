@@ -1,29 +1,36 @@
 # @recursica/mantine-adapter
 
-## 0.9.4
+## 0.2.0
+
+### Minor Changes
+
+- 5e0c31f: Fixed dependency so it will import correctly
 
 ### Patch Changes
 
-- de72583: fix ignoring icons
+- 5e0c31f: Updated link to readme in package.json
 
-## 0.9.3
+## 0.1.0
+
+### Minor Changes
+
+- be88cfc: Updated README and structure and provided Storybook builds
+
+## 0.0.4
 
 ### Patch Changes
 
-- 58ddd45: Add missing distribution files
+- cec0db5: Renamed ui-kit to mantine-adapter to signal proper peer reference to Mantine
+- cec0db5: Added peer dependency for mantine in the plugin
 
-## 0.9.2
+## 0.0.3
 
 ### Patch Changes
 
 - 9aab210: update docs
-- Updated dependencies [9aab210]
-  - @recursica/common@1.0.2
 
-## 0.9.1
+## 0.0.2
 
 ### Patch Changes
 
 - c6973c2: first publish
-- Updated dependencies [c6973c2]
-  - @recursica/common@1.0.1

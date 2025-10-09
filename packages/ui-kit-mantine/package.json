@@ -38,18 +38,13 @@
     "design systems"
   ],
   "scripts": {
-    "dev": "npm run watch",
-    "watch": "vite build --watch",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview",
-    "storybook": "storybook dev -p 6006",
+    "dev": "npm run storybook",
+    "build": "vite build --mode library",
     "build-storybook": "storybook build -o storybook-static",
-    "chromatic": "npx chromatic --project-token=chpt_69ae5d081be6258"
+    "lint": "eslint .",
+    "storybook": "storybook dev -p 6006"
   },
-  "dependencies": {
-    "@vanilla-extract/css": "1.17.1"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@chromatic-com/storybook": "^4.0.0",
     "@eslint/js": "^9.25.0",

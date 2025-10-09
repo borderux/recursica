@@ -1067,9 +1067,16 @@ export interface Recursica {
   >;
 }
 
-/**
- * Default export declaration
- */
-declare const recursica: Recursica;
-export { recursica };
-export default recursica;
+// Theme map for individual theme types
+export interface RecursicaThemeMap {
+  RecursicaBrand: Record<RecursicaThemeRecursicaBrand, string>;
+}
+
+// CSS Variable type (for direct CSS variable access)
+export type RecursicaCSSVariable = `var(--${string})`;
+
+// Named export for the recursica data
+export declare const recursica: Recursica;
+
+// Named export for the recursica bundle (typed JSON data)
+export declare const recursicaBundle: Recursica;

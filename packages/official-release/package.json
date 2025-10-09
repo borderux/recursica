@@ -4,6 +4,27 @@
   "description": "Official Recursica design system release package containing the complete bundle, JavaScript API, and TypeScript definitions",
   "main": "recursica.js",
   "types": "recursica.d.ts",
+  "exports": {
+    ".": {
+      "types": "./recursica.d.ts",
+      "import": "./recursica.js",
+      "require": "./recursica.js"
+    },
+    "./recursica-bundle": {
+      "types": "./recursica.d.ts",
+      "import": "./recursica-bundle.js",
+      "require": "./recursica-bundle.js"
+    },
+    "./recursica": {
+      "types": "./recursica.d.ts",
+      "import": "./recursica.js",
+      "require": "./recursica.js"
+    },
+    "./recursica.css": "./recursica.css",
+    "./recursica-tokens.css": "./recursica-tokens.css",
+    "./recursicabrand-light-theme.css": "./recursicabrand-light-theme.css",
+    "./recursicabrand-dark-theme.css": "./recursicabrand-dark-theme.css"
+  },
   "files": [
     "recursica.css",
     "recursica-tokens.css",
@@ -11,7 +32,12 @@
     "recursicabrand-light-theme.css",
     "recursica.js",
     "recursica.d.ts",
-    "recursica-bundle.json"
+    "recursica-bundle.js",
+    "recursica-bundle.json",
+    "recursica.css",
+    "recursica-tokens.css",
+    "recursicabrand-light-theme.css",
+    "recursicabrand-dark-theme.css"
   ],
   "keywords": [
     "design-system",

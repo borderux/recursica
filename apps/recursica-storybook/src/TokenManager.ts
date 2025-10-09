@@ -1,13 +1,10 @@
-import recursica from "@recursica/official-release/recursica-bundle.json" with { type: "json" };
+import { recursicaBundle } from "@recursica/official-release/recursica-bundle";
 import type {
   Token,
   RecursicaVariablesSchema,
   CollectionToken,
   GridToken,
 } from "@recursica/schemas";
-
-// Type the recursica bundle properly
-const recursicaBundle = recursica as RecursicaVariablesSchema;
 
 export interface ColorToken extends Token {
   family: string;
