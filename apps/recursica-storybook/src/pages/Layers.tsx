@@ -1,11 +1,8 @@
 import React from "react";
-import {
-  Recursica,
-  RecursicaThemeRecursicaBrand,
-} from "@recursica/official-release";
+import { Recursica } from "@recursica/official-release";
 
 export interface LayersProps {
-  theme: RecursicaThemeRecursicaBrand;
+  theme: string;
   recursica: Recursica;
 }
 export function Layers({ theme, recursica }: LayersProps) {

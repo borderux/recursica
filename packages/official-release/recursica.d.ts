@@ -14,139 +14,148 @@ For more information about Recursica, go to https://recursica.com
  * Type-safe interfaces for accessing design tokens, UI Kit variables, and themes.
  * These types are automatically generated from your design tokens.
  */
+/**
+ * CSS Variable type (for direct CSS variable access)
+ */
+export type RecursicaCSSVariable = `var(--${string})`;
 
-// Token type definitions
-export type RecursicaToken =   "color/salmon/600" |
-  "color/mandy/900" |
-  "color/gray/100" |
-  "color/greensheen/600" |
-  "color/salmon/900" |
-  "font/size/5xl" |
-  "color/mandy/200" |
-  "effect/5x" |
-  "color/translucent/14" |
-  "color/salmon/300" |
-  "color/salmon/800" |
-  "color/gray/300" |
-  "color/mandarin/300" |
-  "color/translucent/10" |
-  "color/gray/400" |
-  "color/greensheen/200" |
-  "color/salmon/200" |
-  "color/cornflower/700" |
-  "color/cornflower/800" |
-  "size/2x" |
-  "color/greensheen/300" |
-  "color/mandy/500" |
-  "color/gray/600" |
-  "color/greensheen/100" |
-  "color/mandarin/200" |
-  "color/salmon/50" |
-  "color/gray/1000" |
-  "color/translucent/12" |
-  "color/greensheen/400" |
-  "color/translucent/25" |
-  "color/gray/050" |
-  "color/cornflower/100" |
-  "color/greensheen/500" |
-  "color/greensheen/700" |
-  "size/1-5x" |
-  "color/gray/200" |
-  "color/gray/500" |
-  "color/greensheen/50" |
-  "color/cornflower/300" |
-  "color/cornflower/500" |
-  "size/default" |
-  "color/mandy/700" |
-  "size/4x" |
-  "color/cornflower/200" |
-  "color/cornflower/600" |
-  "effect/3x" |
-  "font/size/4xl" |
-  "color/mandy/800" |
-  "size/0-5x" |
-  "color/cornflower/900" |
-  "color/mandarin/50" |
-  "font/size/md" |
-  "color/mandarin/100" |
-  "font/size/6xl" |
-  "color/translucent/40" |
-  "color/translucent/08" |
-  "color/gray/800" |
-  "font/family/lexend" |
-  "color/mandarin/400" |
-  "effect/1-5x" |
-  "font/size/3xl" |
-  "color/mandy/50" |
-  "color/translucent/20" |
-  "font/size/2xs" |
-  "color/mandy/400" |
-  "color/mandarin/600" |
-  "color/salmon/500" |
-  "color/greensheen/800" |
-  "color/mandy/100" |
-  "effect/4x" |
-  "color/mandarin/800" |
-  "font/size/2xl" |
-  "color/translucent/18" |
-  "effect/0-5x" |
-  "color/translucent/35" |
-  "color/gray/700" |
-  "color/mandy/300" |
-  "effect/6x" |
-  "color/mandarin/700" |
-  "effect/2x" |
-  "color/salmon/700" |
-  "font/size/xl" |
-  "color/mandarin/500" |
-  "effect/default" |
-  "color/salmon/100" |
-  "font/size/xs" |
-  "color/mandy/600" |
-  "color/cornflower/400" |
-  "color/cornflower/50" |
-  "size/3x" |
-  "color/salmon/400" |
-  "color/mandarin/900" |
-  "font/size/lg" |
-  "font/size/sm" |
-  "color/greensheen/900" |
-  "font/family/quattrocento" |
-  "font/family/bellota" |
-  "color/gray/900" |
-  "opacity/solid" |
-  "opacity/veiled" |
-  "color/gray/000" |
-  "opacity/faint" |
-  "opacity/smoky" |
-  "opacity/ghost" |
-  "effect/none" |
-  "font/letter-spacing/tighter" |
-  "font/letter-spacing/widest" |
-  "font/letter-spacing/wider" |
-  "font/letter-spacing/wide" |
-  "font/letter-spacing/tighest" |
-  "font/letter-spacing/default" |
-  "font/letter-spacing/tight" |
-  "font/weight/bold" |
-  "font/weight/light" |
-  "font/weight/thin" |
-  "font/weight/black" |
-  "font/weight/medium" |
-  "font/weight/semi-bold" |
-  "font/weight/extra-bold" |
-  "font/weight/extra-light" |
-  "font/weight/regular" |
-  "size/none" |
-  "size/5x" |
-  "size/6x" |
-  "effect/elevation/elevation-0" |
-  "effect/elevation/elevation-1" |
-  "effect/elevation/elevation-2" |
-  "effect/elevation/elevation-3" |
-  "effect/elevation/elevation-4";
+/**
+ * Token type definitions - union of all primitive token keys
+ */
+export type RecursicaToken =
+  | "color/salmon/600"
+  | "color/mandy/900"
+  | "color/gray/100"
+  | "color/greensheen/600"
+  | "color/salmon/900"
+  | "font/size/5xl"
+  | "color/mandy/200"
+  | "effect/5x"
+  | "color/translucent/14"
+  | "color/salmon/300"
+  | "color/salmon/800"
+  | "color/gray/300"
+  | "color/mandarin/300"
+  | "color/translucent/10"
+  | "color/gray/400"
+  | "color/greensheen/200"
+  | "color/salmon/200"
+  | "color/cornflower/700"
+  | "color/cornflower/800"
+  | "size/2x"
+  | "color/greensheen/300"
+  | "color/mandy/500"
+  | "color/gray/600"
+  | "color/greensheen/100"
+  | "color/mandarin/200"
+  | "color/salmon/50"
+  | "color/gray/1000"
+  | "color/translucent/12"
+  | "color/greensheen/400"
+  | "color/translucent/25"
+  | "color/gray/050"
+  | "color/cornflower/100"
+  | "color/greensheen/500"
+  | "color/greensheen/700"
+  | "size/1-5x"
+  | "color/gray/200"
+  | "color/gray/500"
+  | "color/greensheen/50"
+  | "color/cornflower/300"
+  | "color/cornflower/500"
+  | "size/default"
+  | "color/mandy/700"
+  | "size/4x"
+  | "color/cornflower/200"
+  | "color/cornflower/600"
+  | "effect/3x"
+  | "font/size/4xl"
+  | "color/mandy/800"
+  | "size/0-5x"
+  | "color/cornflower/900"
+  | "color/mandarin/50"
+  | "font/size/md"
+  | "color/mandarin/100"
+  | "font/size/6xl"
+  | "color/translucent/40"
+  | "color/translucent/08"
+  | "color/gray/800"
+  | "font/family/lexend"
+  | "color/mandarin/400"
+  | "effect/1-5x"
+  | "font/size/3xl"
+  | "color/mandy/50"
+  | "color/translucent/20"
+  | "font/size/2xs"
+  | "color/mandy/400"
+  | "color/mandarin/600"
+  | "color/salmon/500"
+  | "color/greensheen/800"
+  | "color/mandy/100"
+  | "effect/4x"
+  | "color/mandarin/800"
+  | "font/size/2xl"
+  | "color/translucent/18"
+  | "effect/0-5x"
+  | "color/translucent/35"
+  | "color/gray/700"
+  | "color/mandy/300"
+  | "effect/6x"
+  | "color/mandarin/700"
+  | "effect/2x"
+  | "color/salmon/700"
+  | "font/size/xl"
+  | "color/mandarin/500"
+  | "effect/default"
+  | "color/salmon/100"
+  | "font/size/xs"
+  | "color/mandy/600"
+  | "color/cornflower/400"
+  | "color/cornflower/50"
+  | "size/3x"
+  | "color/salmon/400"
+  | "color/mandarin/900"
+  | "font/size/lg"
+  | "font/size/sm"
+  | "color/greensheen/900"
+  | "font/family/quattrocento"
+  | "font/family/bellota"
+  | "color/gray/900"
+  | "opacity/solid"
+  | "opacity/veiled"
+  | "color/gray/000"
+  | "opacity/faint"
+  | "opacity/smoky"
+  | "opacity/ghost"
+  | "effect/none"
+  | "font/letter-spacing/tighter"
+  | "font/letter-spacing/widest"
+  | "font/letter-spacing/wider"
+  | "font/letter-spacing/wide"
+  | "font/letter-spacing/tighest"
+  | "font/letter-spacing/default"
+  | "font/letter-spacing/tight"
+  | "font/weight/bold"
+  | "font/weight/light"
+  | "font/weight/thin"
+  | "font/weight/black"
+  | "font/weight/medium"
+  | "font/weight/semi-bold"
+  | "font/weight/extra-bold"
+  | "font/weight/extra-light"
+  | "font/weight/regular"
+  | "size/none"
+  | "size/5x"
+  | "size/6x"
+  | "effect/elevation/elevation-0"
+  | "effect/elevation/elevation-1"
+  | "effect/elevation/elevation-2"
+  | "effect/elevation/elevation-3"
+  | "effect/elevation/elevation-4";
 
-// UI Kit type definitions
+/**
+ * UI Kit type definitions - union of all UI Kit variable keys
+ */
 export type RecursicaUiKit =
   | "global/icon/style"
   | "global/form/layout/side-by-side/label-column-width"
@@ -683,14 +692,10 @@ export type RecursicaUiKit =
   | "global/form/assistive-element/size/icon"
   | "global/form/assistive-element/size/icon-text-gap";
 
-// Theme type definitions
-export type RecursicaTheme = "RecursicaBrand";
-
-// Individual theme type definitions
-export type RecursicaThemeRecursicaBrand = "Light" | "Dark";
-
-// Individual theme variant token type definitions
-export type RecursicaThemeRecursicaBrandLight =
+/**
+ * Theme type definitions - union of all unique token keys across all themes
+ */
+export type RecursicaTheme =
   | "palette/palette-1/400/high-emphasis"
   | "layer/layer-0/element/interactive/color"
   | "palette/palette-2/050/high-emphasis"
@@ -1025,360 +1030,46 @@ export type RecursicaThemeRecursicaBrandLight =
   | "dimension/md"
   | "elevation/elevation-4/shadow-color";
 
-export type RecursicaThemeRecursicaBrandDark =
-  | "palette/palette-1/400/high-emphasis"
-  | "layer/layer-0/element/interactive/color"
-  | "palette/palette-2/050/high-emphasis"
-  | "palette/palette-2/300/high-emphasis"
-  | "elevation/elevation-0/blur"
-  | "font/subtitle-small/size"
-  | "layer/layer-1/element/text/warning"
-  | "palette/palette-2/300/on-tone"
-  | "layer/layer-1/property/border-thickness"
-  | "layer/layer-0/element/text/success"
-  | "layer/layer-3/property/elevation"
-  | "elevation/elevation-4/spread"
-  | "palette/neutral/300/low-emphasis"
-  | "palette/neutral/100/high-emphasis"
-  | "elevation/elevation-1/shadow-color"
-  | "palette/palette-2/400/low-emphasis"
-  | "font/caption/font-family"
-  | "layer/layer-2/element/text/success"
-  | "palette/neutral/200/tone"
-  | "layer/layer-1/element/text/high-emphasis"
-  | "palette/neutral/200/high-emphasis"
-  | "font/subtitle-small/font-family"
-  | "font/overline/size"
-  | "palette/palette-1/800/on-tone"
-  | "palette/neutral/400/tone"
-  | "palette/neutral/600/low-emphasis"
-  | "palette/palette-1/200/low-emphasis"
-  | "palette/palette-1/900/high-emphasis"
-  | "palette/palette-2/700/low-emphasis"
-  | "palette/palette-2/800/low-emphasis"
-  | "elevation/elevation-2/y-axis"
-  | "palette/neutral/500/low-emphasis"
-  | "elevation/elevation-4/x-axis"
-  | "palette/palette-1/400/low-emphasis"
-  | "layer/layer-alternative/high-contrast/element/text/low-emphasis"
-  | "layer/layer-0/element/interactive/high-emphasis"
-  | "palette/palette-1/600/tone"
-  | "elevation/elevation-0/x-axis"
-  | "layer/layer-1/property/elevation"
-  | "palette/palette-1/300/high-emphasis"
-  | "palette/neutral/600/tone"
-  | "palette/palette-2/300/low-emphasis"
-  | "palette/palette-1/050/on-tone"
-  | "font/h6/font-family"
-  | "palette/palette-1/500/high-emphasis"
-  | "palette/palette-1/default/tone"
-  | "palette/palette-1/300/low-emphasis"
-  | "layer/layer-alternative/success/element/text/low-emphasis"
-  | "layer/layer-3/element/text/warning"
-  | "palette/palette-1/500/on-tone"
-  | "palette/palette-1/300/on-tone"
-  | "font/h2/size"
-  | "elevation/elevation-1/x-axis"
-  | "palette/neutral/700/on-tone"
-  | "palette/black"
-  | "layer/layer-3/element/text/low-emphasis"
-  | "font/h3/font-family"
-  | "font/h4/size"
-  | "palette/palette-1/050/low-emphasis"
-  | "layer/layer-3/property/border-radius"
-  | "layer/layer-2/property/surface"
-  | "font/body/font-family"
-  | "palette/neutral/800/high-emphasis"
-  | "layer/layer-3/element/text/high-emphasis"
-  | "layer/layer-2/element/text/high-emphasis"
-  | "palette/palette-1/700/low-emphasis"
-  | "palette/palette-2/700/tone"
-  | "layer/layer-alternative/success/property/padding"
-  | "palette/palette-1/100/low-emphasis"
-  | "palette/palette-2/default/on-tone"
-  | "font/h6/size"
-  | "font/button/size"
-  | "palette/palette-2/600/tone"
-  | "layer/layer-2/element/interactive/high-emphasis"
-  | "font/h3/size"
-  | "elevation/elevation-1/blur"
-  | "layer/layer-alternative/high-contrast/element/interactive/color"
-  | "font/subtitle/size"
-  | "palette/palette-2/900/high-emphasis"
-  | "layer/layer-1/element/text/alert"
-  | "palette/neutral/300/high-emphasis"
-  | "layer/layer-alternative/primary-color/element/text/high-emphasis"
-  | "palette/neutral/800/low-emphasis"
-  | "palette/neutral/050/tone"
-  | "font/body-small/font-family"
-  | "elevation/elevation-3/y-axis"
-  | "layer/layer-alternative/success/property/surface"
-  | "elevation/elevation-4/blur"
-  | "state/disabled"
-  | "layer/layer-alternative/high-contrast/element/text/color"
-  | "palette/palette-2/100/low-emphasis"
-  | "palette/palette-2/800/on-tone"
-  | "palette/white"
-  | "layer/layer-alternative/warning/element/interactive/color"
-  | "palette/palette-1/700/on-tone"
-  | "palette/palette-2/900/tone"
-  | "layer/layer-2/element/interactive/color"
-  | "palette/palette-1/default/on-tone"
-  | "palette/palette-1/200/high-emphasis"
-  | "palette/palette-1/200/on-tone"
-  | "font/overline/font-family"
-  | "layer/layer-alternative/warning/element/text/low-emphasis"
-  | "layer/layer-1/property/surface"
-  | "palette/palette-1/default/low-emphasis"
-  | "layer/layer-2/property/padding"
-  | "layer/layer-1/property/border-radius"
-  | "palette/palette-2/800/high-emphasis"
-  | "font/h1/size"
-  | "palette/neutral/400/on-tone"
-  | "layer/layer-3/property/padding"
-  | "palette/palette-2/700/on-tone"
-  | "palette/palette-2/050/low-emphasis"
-  | "palette/palette-2/600/low-emphasis"
-  | "layer/layer-0/element/text/warning"
-  | "palette/neutral/100/on-tone"
-  | "palette/palette-2/600/high-emphasis"
-  | "palette/palette-2/600/on-tone"
-  | "palette/neutral/100/low-emphasis"
-  | "palette/palette-2/200/high-emphasis"
-  | "layer/layer-alternative/primary-color/property/padding"
-  | "palette/neutral/900/on-tone"
-  | "palette/palette-2/100/high-emphasis"
-  | "layer/layer-alternative/primary-color/property/surface"
-  | "palette/neutral/default/low-emphasis"
-  | "layer/layer-2/element/text/low-emphasis"
-  | "palette/palette-1/100/on-tone"
-  | "layer/layer-alternative/warning/element/interactive/high-emphasis"
-  | "layer/layer-0/property/surface"
-  | "palette/palette-2/500/on-tone"
-  | "layer/layer-2/element/text/alert"
-  | "palette/palette-2/400/high-emphasis"
-  | "palette/palette-2/400/on-tone"
-  | "font/h1/font-family"
-  | "palette/palette-2/800/tone"
-  | "palette/palette-1/050/tone"
-  | "palette/palette-2/200/low-emphasis"
-  | "palette/palette-1/300/tone"
-  | "palette/palette-2/050/on-tone"
-  | "font/button/font-family"
-  | "palette/palette-2/default/high-emphasis"
-  | "palette/palette-2/500/high-emphasis"
-  | "palette/palette-1/100/tone"
-  | "palette/neutral/900/low-emphasis"
-  | "layer/layer-alternative/primary-color/element/text/color"
-  | "palette/neutral/900/high-emphasis"
-  | "palette/neutral/700/high-emphasis"
-  | "palette/neutral/700/low-emphasis"
-  | "palette/neutral/800/on-tone"
-  | "palette/palette-1/800/low-emphasis"
-  | "palette/neutral/600/high-emphasis"
-  | "palette/neutral/600/on-tone"
-  | "palette/palette-1/800/high-emphasis"
-  | "layer/layer-0/element/text/low-emphasis"
-  | "layer/layer-0/property/padding"
-  | "palette/palette-1/100/high-emphasis"
-  | "layer/layer-alternative/success/element/text/high-emphasis"
-  | "palette/neutral/200/on-tone"
-  | "elevation/elevation-2/blur"
-  | "palette/neutral/800/tone"
-  | "layer/layer-3/property/surface"
-  | "palette/palette-2/500/tone"
-  | "palette/neutral/500/on-tone"
-  | "palette/palette-1/500/low-emphasis"
-  | "elevation/elevation-2/shadow-color"
-  | "palette/palette-2/default/tone"
-  | "palette/palette-1/700/high-emphasis"
-  | "layer/layer-2/element/text/color"
-  | "elevation/elevation-3/shadow-color"
-  | "layer/layer-alternative/warning/element/text/high-emphasis"
-  | "font/caption/size"
-  | "layer/layer-alternative/alert/element/text/color"
-  | "layer/layer-2/property/elevation"
-  | "palette/palette-1/700/tone"
-  | "layer/layer-0/element/text/high-emphasis"
-  | "layer/layer-1/element/text/color"
-  | "palette/neutral/200/low-emphasis"
-  | "layer/layer-1/element/interactive/color"
-  | "palette/palette-1/600/on-tone"
-  | "palette/palette-2/400/tone"
-  | "palette/neutral/050/high-emphasis"
-  | "layer/layer-alternative/high-contrast/property/padding"
-  | "layer/layer-alternative/alert/property/surface"
-  | "elevation/elevation-3/spread"
-  | "layer/layer-alternative/warning/property/padding"
-  | "font/body-small/size"
-  | "layer/layer-1/property/border-color"
-  | "layer/layer-2/property/border-color"
-  | "layer/layer-2/element/text/warning"
-  | "palette/palette-2/300/tone"
-  | "palette/neutral/050/low-emphasis"
-  | "palette/palette-1/900/low-emphasis"
-  | "palette/palette-2/900/on-tone"
-  | "layer/layer-1/property/padding"
-  | "palette/palette-1/900/on-tone"
-  | "palette/neutral/500/tone"
-  | "font/h5/size"
-  | "palette/neutral/400/low-emphasis"
-  | "layer/layer-3/element/text/alert"
-  | "layer/layer-alternative/success/element/interactive/color"
-  | "palette/palette-2/default/secondary"
-  | "elevation/elevation-0/y-axis"
-  | "font/h5/font-family"
-  | "layer/layer-3/element/text/success"
-  | "palette/palette-2/900/low-emphasis"
-  | "layer/layer-1/element/text/low-emphasis"
-  | "palette/palette-1/050/high-emphasis"
-  | "layer/layer-3/element/text/color"
-  | "palette/palette-1/600/low-emphasis"
-  | "palette/palette-2/200/tone"
-  | "font/body/size"
-  | "elevation/elevation-3/x-axis"
-  | "layer/layer-3/element/interactive/high-emphasis"
-  | "layer/layer-3/element/interactive/color"
-  | "layer/layer-alternative/high-contrast/element/text/high-emphasis"
-  | "palette/palette-2/050/tone"
-  | "layer/layer-alternative/high-contrast/element/interactive/high-emphasis"
-  | "font/h2/font-family"
-  | "layer/layer-alternative/success/element/interactive/regular"
-  | "palette/neutral/default/high-emphasis"
-  | "layer/layer-alternative/primary-color/element/interactive/color"
-  | "layer/layer-1/element/text/success"
-  | "elevation/elevation-0/spread"
-  | "layer/layer-alternative/alert/element/interactive/color"
-  | "palette/palette-2/200/on-tone"
-  | "palette/palette-1/500/tone"
-  | "layer/layer-alternative/alert/element/text/high-emphasis"
-  | "palette/neutral/default/tone"
-  | "layer/layer-alternative/alert/element/text/low-emphasis"
-  | "layer/layer-alternative/alert/element/interactive/high-emphasis"
-  | "layer/layer-1/element/interactive/high-emphasis"
-  | "layer/layer-alternative/warning/property/surface"
-  | "palette/palette-1/default/high-emphasis"
-  | "layer/layer-2/property/border-radius"
-  | "palette/palette-1/600/high-emphasis"
-  | "palette/palette-2/100/tone"
-  | "palette/neutral/050/on-tone"
-  | "font/subtitle/font-family"
-  | "elevation/elevation-3/blur"
-  | "layer/layer-alternative/warning/element/text/color"
-  | "elevation/elevation-1/spread"
-  | "state/overlay"
-  | "palette/palette-1/800/tone"
-  | "elevation/elevation-4/y-axis"
-  | "palette/palette-2/500/low-emphasis"
-  | "layer/layer-2/property/border-thickness"
-  | "palette/palette-2/100/on-tone"
-  | "palette/palette-1/400/tone"
-  | "layer/layer-3/property/border-color"
-  | "palette/neutral/400/high-emphasis"
-  | "palette/neutral/900/tone"
-  | "layer/layer-alternative/alert/property/padding"
-  | "palette/palette-2/700/high-emphasis"
-  | "layer/layer-0/element/text/alert"
-  | "layer/layer-alternative/primary-color/element/text/low-emphasis"
-  | "layer/layer-alternative/success/element/text/color"
-  | "palette/neutral/500/high-emphasis"
-  | "elevation/elevation-2/spread"
-  | "palette/neutral/300/on-tone"
-  | "palette/neutral/300/tone"
-  | "elevation/elevation-2/x-axis"
-  | "palette/neutral/default/on-tone"
-  | "layer/layer-alternative/primary-color/element/interactive/high-emphasis"
-  | "layer/layer-3/property/border-thickness"
-  | "palette/palette-1/900/tone"
-  | "layer/layer-0/element/text/color"
-  | "palette/palette-1/400/on-tone"
-  | "palette/neutral/100/tone"
-  | "layer/layer-alternative/high-contrast/property/surface"
-  | "palette/palette-1/200/tone"
-  | "font/h4/font-family"
-  | "palette/neutral/700/tone"
-  | "elevation/elevation-1/y-axis"
-  | "font/body-small/weight-strong"
-  | "font/body-small/weight-normal"
-  | "font/subtitle/weight-normal"
-  | "font/h5/weight"
-  | "font/overline/weight"
-  | "font/h5/letter-spacing"
-  | "font/h3/letter-spacing"
-  | "font/overline/letter-spacing"
-  | "font/button/letter-spacing"
-  | "font/body/letter-spacing"
-  | "font/h6/weight"
-  | "font/h2/weight"
-  | "font/caption/weight"
-  | "font/button/weight"
-  | "font/subtitle-small/weight-normal"
-  | "font/subtitle/weight-strong"
-  | "font/body-small/letter-spacing"
-  | "font/h1/letter-spacing"
-  | "font/h2/letter-spacing"
-  | "font/subtitle-small/letter-spacing"
-  | "font/h3/weight"
-  | "font/body/weight-normal"
-  | "font/h6/letter-spacing"
-  | "font/subtitle-small/weight-strong"
-  | "font/h4/letter-spacing"
-  | "font/body/weight-strong"
-  | "font/caption/letter-spacing"
-  | "font/h1/weight"
-  | "font/subtitle/letter-spacing"
-  | "font/h4/weight"
-  | "palette/alert"
-  | "palette/success"
-  | "palette/warning"
-  | "elevation/elevation-0/shadow-color"
-  | "layer/layer-alternative/warning/element/interactive/hover-color"
-  | "layer/layer-2/element/interactive/hover-color"
-  | "layer/layer-3/element/interactive/hover-color"
-  | "layer/layer-1/element/interactive/hover-color"
-  | "layer/layer-alternative/high-contrast/element/interactive/hover-color"
-  | "layer/layer-alternative/alert/element/interactive/hover-color"
-  | "layer/layer-0/element/interactive/hover-color"
-  | "layer/layer-alternative/primary-color/element/interactive/hover-color"
-  | "layer/layer-alternative/success/element/interactive/hover-color"
-  | "dimension/lg"
-  | "dimension/icon/sm"
-  | "dimension/icon/lg"
-  | "dimension/icon/default"
-  | "dimension/gutter/horizontal"
-  | "dimension/border-radius/xl"
-  | "dimension/border-radius/none"
-  | "dimension/border-radius/sm"
-  | "layer/layer-alternative/alert/element/interactive/hover-color 2"
-  | "dimension/xl"
-  | "dimension/sm"
-  | "dimension/default"
-  | "dimension/border-radius/default"
-  | "dimension/border-radius/lg"
-  | "dimension/gutter/vertical"
-  | "dimension/icon/xs"
-  | "dimension/md"
-  | "elevation/elevation-4/shadow-color";
-
-// Main recursica object type
+/**
+ * Main recursica object type
+ */
 export interface Recursica {
-  tokens: Record<RecursicaToken, string>;
-  uiKit: Record<RecursicaUiKit, string>;
-  themes: RecursicaThemeMap;
+  /**
+   * Design tokens
+   * @example
+   * {
+   *   "color/primary/500": "var(--color-primary-500)"
+   * }
+   */
+  tokens: Record<RecursicaToken, RecursicaCSSVariable>;
+  /**
+   * UI Kit components
+   * @example
+   * {
+   *   "button/size/padding": "var(--size-3x)"
+   * }
+   */
+  uiKit: Record<RecursicaUiKit, RecursicaCSSVariable>;
+  /**
+   * Themes
+   * @example
+   * {
+   *   "RecursicaBrand": {
+   *     "Light": {
+   *       "palette/neutral/100/tone": "var(--color-gray-800)"
+   *     }
+   *   }
+   * }
+   */
+  themes: Record<
+    string,
+    Record<string, Record<RecursicaTheme, RecursicaCSSVariable>>
+  >;
 }
 
-// Theme map for individual theme types
-export interface RecursicaThemeMap {
-  RecursicaBrand: {
-    Light: Record<RecursicaThemeRecursicaBrandLight, string>;
-    Dark: Record<RecursicaThemeRecursicaBrandDark, string>;
-  };
-}
-
-// CSS Variable type (for direct CSS variable access)
-export type RecursicaCSSVariable = `var(--${string})`;
-
-// Default export declaration
+/**
+ * Default export declaration
+ */
 declare const recursica: Recursica;
 export { recursica };
 export default recursica;

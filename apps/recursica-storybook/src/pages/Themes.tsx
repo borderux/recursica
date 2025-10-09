@@ -1,9 +1,6 @@
 import React from "react";
 import "./Themes.css";
-import {
-  recursica,
-  type RecursicaThemeRecursicaBrand,
-} from "@recursica/official-release";
+import { recursica } from "@recursica/official-release";
 import { Colors } from "./Colors";
 import { Layers } from "./Layers";
 import { AlternativeLayers } from "./AlternativeLayers";
@@ -11,7 +8,7 @@ import { Elevation } from "./Elevation";
 import { Scales } from "./Scales";
 
 export type ThemesPageProps = {
-  theme: RecursicaThemeRecursicaBrand;
+  theme: string;
 };
 
 export function ThemesPage({ theme }: ThemesPageProps) {

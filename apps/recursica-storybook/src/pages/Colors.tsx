@@ -1,11 +1,8 @@
 import React from "react";
-import {
-  RecursicaThemeRecursicaBrand,
-  Recursica,
-} from "@recursica/official-release";
+import { Recursica } from "@recursica/official-release";
 
 export type ColorsProps = {
-  theme: RecursicaThemeRecursicaBrand;
+  theme: string;
   recursica: Recursica;
 };
 
