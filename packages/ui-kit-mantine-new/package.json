@@ -1,0 +1,101 @@
+{
+  "name": "@recursica/ui-kit-mantine-new",
+  "description": "Reusable UI components for Recursica applications based on Mantine 8+",
+  "private": false,
+  "homepage": "https://github.com/borderux/recursica/tree/main/packages/ui-kit-mantine",
+  "author": "hi@borderux.com",
+  "bugs": {
+    "url": "https://github.com/borderux/recursica/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/borderux/recursica.git"
+  },
+  "version": "0.2.0",
+  "type": "module",
+  "main": "./dist/ui-kit-mantine.cjs",
+  "module": "./dist/ui-kit-mantine.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/ui-kit-mantine.js",
+      "require": "./dist/ui-kit-mantine.cjs"
+    },
+    "./style.css": "./dist/ui-kit-mantine.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "react",
+    "ui",
+    "components",
+    "typescript",
+    "mantine",
+    "recursica",
+    "design system",
+    "design systems"
+  ],
+  "scripts": {
+    "dev": "npm run storybook",
+    "build": "rollup -c",
+    "build-storybook": "storybook build -o storybook-static",
+    "lint": "eslint .",
+    "storybook": "storybook dev -p 6006"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@recursica/storybook-template": "*",
+    "@vanilla-extract/rollup-plugin": "^1.4.1",
+    "@vanilla-extract/vite-plugin": "^5.1.1",
+    "@babel/core": "^7.28.4",
+    "@babel/preset-react": "^7.27.1",
+    "@eslint/js": "^9.25.0",
+    "@recursica/official-release": "*",
+    "@repo/typescript-config": "*",
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-commonjs": "^28.0.6",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.2",
+    "@rollup/plugin-typescript": "^12.1.4",
+    "@storybook/addon-a11y": "^9.0.8",
+    "@storybook/addon-docs": "^9.0.8",
+    "@storybook/addon-onboarding": "^9.0.8",
+    "@storybook/addon-vitest": "^9.0.8",
+    "@storybook/react-vite": "^9.0.8",
+    "@svgr/rollup": "^8.1.0",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react": "^4.4.1",
+    "@vitest/browser": "^3.2.4",
+    "@vitest/coverage-v8": "^3.2.4",
+    "eslint": "^9.25.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "eslint-plugin-storybook": "^9.0.8",
+    "globals": "^16.0.0",
+    "playwright": "^1.53.0",
+    "postcss": "^8.4.40",
+    "postcss-preset-mantine": "^1.17.0",
+    "rollup": "^4.20.0",
+    "rollup-plugin-dts": "^6.2.3",
+    "rollup-plugin-postcss": "^4.0.2",
+    "sass": "^1.89.2",
+    "sirv": "^3.0.2",
+    "storybook": "^9.0.8",
+    "strip-literal": "^3.0.0",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.30.1",
+    "vite": "^6.3.5",
+    "vite-plugin-svgr": "^4.3.0",
+    "vitest": "^3.2.4"
+  },
+  "peerDependencies": {
+    "@mantine/core": ">=8.0.0",
+    "@mantine/dates": ">=8.0.0",
+    "@mantine/hooks": ">=8.0.0",
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0"
+  }
+}

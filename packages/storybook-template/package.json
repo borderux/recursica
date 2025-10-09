@@ -1,0 +1,67 @@
+{
+  "name": "@recursica/storybook-template",
+  "description": "Common Storybook configuration and templates for Recursica packages and apps",
+  "private": false,
+  "homepage": "https://github.com/borderux/recursica/tree/main/packages/storybook-template",
+  "author": "hi@borderux.com",
+  "bugs": {
+    "url": "https://github.com/borderux/recursica/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/borderux/recursica.git"
+  },
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/storybook-template.cjs",
+  "module": "./dist/storybook-template.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/storybook-template.js",
+      "require": "./dist/storybook-template.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "templates"
+  ],
+  "keywords": [
+    "storybook",
+    "react",
+    "typescript",
+    "recursica",
+    "design system",
+    "configuration"
+  ],
+  "scripts": {
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "dev": "tsc -b --watch"
+  },
+  "dependencies": {
+    "@recursica/official-release": "*"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.25.0",
+    "@repo/typescript-config": "*",
+    "@storybook/addon-a11y": "^9.0.8",
+    "@storybook/addon-docs": "^9.0.8",
+    "@storybook/addon-onboarding": "^9.0.8",
+    "@storybook/addon-vitest": "^9.0.8",
+    "@storybook/react-vite": "^9.0.8",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "eslint": "^9.25.0",
+    "globals": "^16.0.0",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.30.1",
+    "vite": "^6.3.5",
+    "vite-plugin-dts": "^4.5.4"
+  },
+  "peerDependencies": {
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0"
+  }
+}

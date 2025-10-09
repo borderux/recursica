@@ -53,6 +53,7 @@
     "prettier": "3.5.3"
   },
   "dependencies": {
+    "@recursica/storybook-template": "^0.1.0",
     "turbo": "^2.5.4",
     "typescript": "5.8.2"
   },

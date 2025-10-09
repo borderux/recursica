@@ -1,23 +1,12 @@
-import { defineConfig } from "vite/dist/node/index.js";
+import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
-import svgr from "vite-plugin-svgr/dist/index.js";
+import svgr from "vite-plugin-svgr";
 
 // Vite config for Storybook development only
 // Library builds are handled by Rollup (rollup.config.js)
 export default defineConfig({
-  plugins: [
-    react(),
-    vanillaExtractPlugin({
-      identifiers: ({ debugId, hash }) => {
-        if (!debugId) {
-          return `recursica-${hash}`;
-        }
-        return `recursica-${debugId?.replaceAll("/", "-")}`;
-      },
-    }),
-    svgr(),
-  ],
+  plugins: [react(), vanillaExtractPlugin(), svgr()],
   css: {
     modules: {
       generateScopedName: "[name]__[local]___[hash:base64:5]",

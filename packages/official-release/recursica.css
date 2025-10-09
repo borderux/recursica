@@ -10,10 +10,8 @@ For more information about Recursica, go to https://recursica.com
 
 /* Recursica UI Kit */
 @import "./recursica-tokens.css";
-@import "./recursicabrand-light-theme.css";
-@import "./recursicabrand-dark-theme.css";
 
-.recursica {
+:root {
   --global-icon-style: outline;
   --global-form-layout-side-by-side-label-column-width: 224px;
   --global-form-layout-side-by-side-label-height: 48px;
