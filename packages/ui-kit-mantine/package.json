@@ -24,7 +24,9 @@
     },
     "./style.css": "./dist/ui-kit-mantine.css"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "keywords": [
     "react",
     "ui",
@@ -36,13 +38,11 @@
     "design systems"
   ],
   "scripts": {
-    "dev": "npm run watch",
-    "watch": "vite build --watch",
-    "build": "tsc -b && vite build",
+    "dev": "npm run storybook",
+    "build": "vite build --mode library",
+    "build-storybook": "storybook build -o storybook-static",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build -o storybook-static"
+    "storybook": "storybook dev -p 6006"
   },
   "dependencies": {},
   "devDependencies": {

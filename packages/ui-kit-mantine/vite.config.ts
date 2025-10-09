@@ -1,33 +1,74 @@
-import { defineConfig } from "vite/dist/node/index.js";
+import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
-import svgr from "vite-plugin-svgr/dist/index.js";
+import svgr from "vite-plugin-svgr";
+import dts from "vite-plugin-dts";
+import { resolve } from "path";
 
-// Vite config for Storybook development only
-// Library builds are handled by Rollup (rollup.config.js)
-export default defineConfig({
-  plugins: [
-    react(),
-    vanillaExtractPlugin({
-      identifiers: ({ debugId, hash }) => {
-        if (!debugId) {
-          return `recursica-${hash}`;
+export default defineConfig(({ mode }) => {
+  const isLibrary = mode === "library";
+
+  return {
+    plugins: [
+      react(),
+      vanillaExtractPlugin({
+        identifiers: ({ debugId, hash }) => {
+          if (!debugId) {
+            return `recursica-${hash}`;
+          }
+          return `recursica-${debugId?.replaceAll("/", "-")}`;
+        },
+      }),
+      svgr(),
+      ...(isLibrary
+        ? [
+            dts({
+              insertTypesEntry: true,
+            }),
+          ]
+        : []),
+    ],
+    css: {
+      modules: {
+        generateScopedName: "[name]__[local]___[hash:base64:5]",
+      },
+      preprocessorOptions: {
+        scss: {
+          // Add any global SCSS variables or mixins here
+        },
+      },
+    },
+    ...(isLibrary
+      ? {
+          build: {
+            lib: {
+              entry: resolve(__dirname, "src/index.ts"),
+              name: "RecursicaUIKitMantine",
+              formats: ["es", "cjs"],
+              fileName: (format) =>
+                `ui-kit-mantine.${format === "es" ? "js" : "cjs"}`,
+            },
+            rollupOptions: {
+              external: [
+                "react",
+                "react-dom",
+                "react/jsx-runtime",
+                "@mantine/core",
+                "@mantine/dates",
+                "@mantine/hooks",
+                "@vanilla-extract/css",
+              ],
+              output: {
+                globals: {
+                  react: "React",
+                  "react-dom": "ReactDOM",
+                },
+              },
+            },
+            sourcemap: true,
+            emptyOutDir: true,
+          },
         }
-        return `recursica-${debugId?.replaceAll("/", "-")}`;
-      },
-    }),
-    svgr(),
-  ],
-  css: {
-    modules: {
-      generateScopedName: "[name]__[local]___[hash:base64:5]",
-    },
-    preprocessorOptions: {
-      scss: {
-        // Add any global SCSS variables or mixins here
-      },
-    },
-  },
-  // No build config - this is only for Storybook development
-  // Library builds are handled by Rollup
+      : {}),
+  };
 });
