@@ -36,89 +36,93 @@ export function Colors({ theme, recursica }: ColorsProps) {
               className="swatch-box"
               style={{
                 background:
-                  recursica.themes.RecursicaBrand[theme]["palette/black"],
+                  recursica.themes?.RecursicaBrand?.[theme]?.["palette/black"],
               }}
             />
             <td
               className="swatch-box"
               style={{
                 background:
-                  recursica.themes.RecursicaBrand[theme]["palette/white"],
+                  recursica.themes?.RecursicaBrand?.[theme]?.["palette/white"],
               }}
             />
             <td
               className="swatch-box"
               style={{
                 background:
-                  recursica.themes.RecursicaBrand[theme]["palette/alert"],
+                  recursica.themes?.RecursicaBrand?.[theme]?.["palette/alert"],
               }}
             />
             <td
               className="swatch-box"
               style={{
                 background:
-                  recursica.themes.RecursicaBrand[theme]["palette/warning"],
+                  recursica.themes?.RecursicaBrand?.[theme]?.[
+                    "palette/warning"
+                  ],
               }}
             />
             <td
               className="swatch-box"
               style={{
                 background:
-                  recursica.themes.RecursicaBrand[theme]["palette/success"],
+                  recursica.themes?.RecursicaBrand?.[theme]?.[
+                    "palette/success"
+                  ],
               }}
             />
             <td
               className="swatch-box"
               style={{
                 background:
-                  recursica.themes.RecursicaBrand[theme]["palette/black"],
+                  recursica.themes?.RecursicaBrand?.[theme]?.["palette/black"],
                 opacity:
-                  recursica.themes.RecursicaBrand[theme]["state/disabled"],
+                  recursica.themes?.RecursicaBrand?.[theme]?.["state/disabled"],
               }}
             />
             <td
               className="swatch-box"
               style={{
                 background:
-                  recursica.themes.RecursicaBrand[theme]["palette/black"],
+                  recursica.themes?.RecursicaBrand?.[theme]?.["palette/black"],
                 opacity:
-                  recursica.themes.RecursicaBrand[theme]["state/overlay"],
+                  recursica.themes?.RecursicaBrand?.[theme]?.["state/overlay"],
               }}
             />
           </tr>
           <tr>
             <td>
-              {recursica.themes.RecursicaBrand[theme]["palette/black"]}
+              {recursica.themes?.RecursicaBrand?.[theme]?.["palette/black"]}
               <br />
               palette/black
             </td>
             <td>
-              {recursica.themes.RecursicaBrand[theme]["palette/white"]}
+              {recursica.themes?.RecursicaBrand?.[theme]?.["palette/white"]}
               <br />
               palette/white
             </td>
             <td>
-              {recursica.themes.RecursicaBrand[theme]["palette/alert"]}
+              {recursica.themes?.RecursicaBrand?.[theme]?.["palette/alert"]}
               <br />
               palette/alert
             </td>
             <td>
-              {recursica.themes.RecursicaBrand[theme]["palette/warning"]}
+              {recursica.themes?.RecursicaBrand?.[theme]?.["palette/warning"]}
               <br />
               palette/warning
             </td>
             <td>
-              {recursica.themes.RecursicaBrand[theme]["palette/success"]}
+              {recursica.themes?.RecursicaBrand?.[theme]?.["palette/success"]}
               <br />
               palette/success
             </td>
             <td>
-              {recursica.themes.RecursicaBrand[theme]["state/disabled"]}
+              {recursica.themes?.RecursicaBrand?.[theme]?.["state/disabled"]}
               <br />
               state/disabled
             </td>
             <td>
-              {recursica.themes.RecursicaBrand[theme]["state/overlay"]}
+              {recursica.themes?.RecursicaBrand?.[theme]?.["state/overlay"]}
               <br />
               state/overlay
             </td>

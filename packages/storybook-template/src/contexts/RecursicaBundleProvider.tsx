@@ -1,17 +1,23 @@
-import React, { ReactNode } from "react";
-import type { Recursica } from "@recursica/official-release";
-import { RecursicaBundleContext } from "./RecursicaBundleContext.js";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { ReactNode, useMemo } from "react";
+import { RecursicaBundleContext } from "./RecursicaBundleContext";
 
 export interface RecursicaBundleProviderProps {
-  bundle: Recursica;
+  bundle: any;
   children: ReactNode;
 }
 
 export const RecursicaBundleProvider: React.FC<
   RecursicaBundleProviderProps
 > = ({ bundle, children }) => {
+  if (!bundle) {
+    return <>{children}</>;
+  }
+
+  const contextValue = useMemo(() => ({ bundle }), [bundle]);
+
   return (
-    <RecursicaBundleContext.Provider value={{ bundle }}>
+    <RecursicaBundleContext.Provider value={contextValue}>
       {children}
     </RecursicaBundleContext.Provider>
   );

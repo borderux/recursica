@@ -23,21 +23,21 @@ export function Layers({ theme, recursica }: LayersProps) {
         className="layer-container"
         style={{
           backgroundColor:
-            recursica.themes.RecursicaBrand[theme][
+            recursica.themes?.RecursicaBrand?.[theme]?.[
               `layer/${layerKey}/property/surface`
             ],
           color:
-            recursica.themes.RecursicaBrand[theme][
+            recursica.themes?.RecursicaBrand?.[theme]?.[
               `layer/${layerKey}/property/element/text/color`
             ],
           ...(layer.hasBorder && {
             borderWidth:
-              recursica.themes.RecursicaBrand[theme][
+              recursica.themes?.RecursicaBrand?.[theme]?.[
                 `layer/${layerKey}/property/border-thickness`
               ],
             borderStyle: "solid",
             borderColor:
-              recursica.themes.RecursicaBrand[theme][
+              recursica.themes?.RecursicaBrand?.[theme]?.[
                 `layer/${layerKey}/property/border-color`
               ],
           }),
@@ -48,7 +48,7 @@ export function Layers({ theme, recursica }: LayersProps) {
             <h3
               style={{
                 color:
-                  recursica.themes.RecursicaBrand[theme][
+                  recursica.themes?.RecursicaBrand?.[theme]?.[
                     `layer/${layerKey}/element/text/color`
                   ],
               }}
@@ -58,11 +58,11 @@ export function Layers({ theme, recursica }: LayersProps) {
             <p
               style={{
                 color:
-                  recursica.themes.RecursicaBrand[theme][
+                  recursica.themes?.RecursicaBrand?.[theme]?.[
                     `layer/${layerKey}/element/text/color`
                   ],
                 opacity:
-                  recursica.themes.RecursicaBrand[theme][
+                  recursica.themes?.RecursicaBrand?.[theme]?.[
                     `layer/${layerKey}/element/text/high-emphasis`
                   ],
               }}
@@ -72,11 +72,11 @@ export function Layers({ theme, recursica }: LayersProps) {
             <p
               style={{
                 color:
-                  recursica.themes.RecursicaBrand[theme][
+                  recursica.themes?.RecursicaBrand?.[theme]?.[
                     `layer/${layerKey}/element/text/color`
                   ],
                 opacity:
-                  recursica.themes.RecursicaBrand[theme][
+                  recursica.themes?.RecursicaBrand?.[theme]?.[
                     `layer/${layerKey}/element/text/low-emphasis`
                   ],
               }}
@@ -86,11 +86,11 @@ export function Layers({ theme, recursica }: LayersProps) {
             <p
               style={{
                 color:
-                  recursica.themes.RecursicaBrand[theme][
+                  recursica.themes?.RecursicaBrand?.[theme]?.[
                     `layer/${layerKey}/element/interactive/color`
                   ],
                 opacity:
-                  recursica.themes.RecursicaBrand[theme][
+                  recursica.themes?.RecursicaBrand?.[theme]?.[
                     `layer/${layerKey}/element/interactive/high-emphasis`
                   ],
               }}
@@ -100,11 +100,11 @@ export function Layers({ theme, recursica }: LayersProps) {
             <p
               style={{
                 color:
-                  recursica.themes.RecursicaBrand[theme][
+                  recursica.themes?.RecursicaBrand?.[theme]?.[
                     `layer/${layerKey}/element/interactive/hover-color`
                   ],
                 opacity:
-                  recursica.themes.RecursicaBrand[theme][
+                  recursica.themes?.RecursicaBrand?.[theme]?.[
                     `layer/${layerKey}/element/interactive/hover`
                   ],
               }}
@@ -114,11 +114,11 @@ export function Layers({ theme, recursica }: LayersProps) {
             <p
               style={{
                 color:
-                  recursica.themes.RecursicaBrand[theme][
+                  recursica.themes?.RecursicaBrand?.[theme]?.[
                     `layer/${layerKey}/element/interactive/color`
                   ],
                 opacity:
-                  recursica.themes.RecursicaBrand[theme]["state/disabled"],
+                  recursica.themes?.RecursicaBrand?.[theme]?.["state/disabled"],
               }}
             >
               Disabled Interactive
@@ -126,11 +126,11 @@ export function Layers({ theme, recursica }: LayersProps) {
             <p
               style={{
                 color:
-                  recursica.themes.RecursicaBrand[theme][
+                  recursica.themes?.RecursicaBrand?.[theme]?.[
                     `layer/${layerKey}/element/text/alert`
                   ],
                 opacity:
-                  recursica.themes.RecursicaBrand[theme][
+                  recursica.themes?.RecursicaBrand?.[theme]?.[
                     `layer/${layerKey}/element/text/high-emphasis`
                   ],
               }}
@@ -140,11 +140,11 @@ export function Layers({ theme, recursica }: LayersProps) {
             <p
               style={{
                 color:
-                  recursica.themes.RecursicaBrand[theme][
+                  recursica.themes?.RecursicaBrand?.[theme]?.[
                     `layer/${layerKey}/element/text/warning`
                   ],
                 opacity:
-                  recursica.themes.RecursicaBrand[theme][
+                  recursica.themes?.RecursicaBrand?.[theme]?.[
                     `layer/${layerKey}/element/text/high-emphasis`
                   ],
               }}
@@ -154,11 +154,11 @@ export function Layers({ theme, recursica }: LayersProps) {
             <p
               style={{
                 color:
-                  recursica.themes.RecursicaBrand[theme][
+                  recursica.themes?.RecursicaBrand?.[theme]?.[
                     `layer/${layerKey}/element/text/success`
                   ],
                 opacity:
-                  recursica.themes.RecursicaBrand[theme][
+                  recursica.themes?.RecursicaBrand?.[theme]?.[
                     `layer/${layerKey}/element/text/high-emphasis`
                   ],
               }}
@@ -167,9 +167,9 @@ export function Layers({ theme, recursica }: LayersProps) {
             </p>
           </div>
 
-          {hasNestedLayers && (
+          {hasNestedLayers && layers[layer.number + 1] && (
             <div className="nested-layers">
-              {renderLayer(layers[layer.number + 1], depth + 1)}
+              {renderLayer(layers[layer.number + 1]!, depth + 1)}
             </div>
           )}
         </div>
@@ -180,7 +180,7 @@ export function Layers({ theme, recursica }: LayersProps) {
   return (
     <div className="section">
       <h2>Layers</h2>
-      {renderLayer(layers[0])}
+      {renderLayer(layers[0]!)}
     </div>
   );
 }

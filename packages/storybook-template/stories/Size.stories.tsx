@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { useRecursicaBundle } from "@recursica/storybook-template";
+import { useRecursicaBundle } from "../src/contexts/RecursicaBundleContext";
 
 const SizeTokens = () => {
   const { bundle } = useRecursicaBundle();
@@ -8,6 +9,7 @@ const SizeTokens = () => {
 
   // Filter for size tokens
   const sizeTokens = allTokens.filter(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (token: any) =>
       "collection" in token &&
       token.collection === "tokens" &&

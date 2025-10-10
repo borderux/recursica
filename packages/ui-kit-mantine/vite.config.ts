@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig, type PluginOption } from "vite";
 import react from "@vitejs/plugin-react";
 import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 import svgr from "vite-plugin-svgr";
@@ -14,7 +14,7 @@ export default defineConfig(({ mode }) => {
       vanillaExtractPlugin(),
       svgr(),
       ...(isLibrary ? [dts({ insertTypesEntry: true })] : []),
-    ],
+    ] as PluginOption[],
     css: {
       modules: {
         generateScopedName: "[name]__[local]___[hash:base64:5]",

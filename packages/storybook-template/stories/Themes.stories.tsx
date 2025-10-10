@@ -1,6 +1,6 @@
 import React from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { ThemesPage } from "../../src/pages/Themes";
+import { ThemesPage } from "../src/pages/Themes";
 
 const meta: Meta<typeof ThemesPage> = {
   title: "Themes/Themes",
