@@ -1,169 +1,27 @@
 # Recursica Storybook
 
-A comprehensive Storybook application for showcasing Recursica design tokens and components in a Figma-oriented format. This application provides an interactive way to explore and understand the design system's token structure and visual representations.
+This app is a simple build and deployment wrapper for the mantine-adapter storybook. It builds the mantine-adapter storybook and deploys it to GitHub Pages.
 
-## Features
+## What it does
 
-- **Design Token Stories**: Interactive stories for colors, sizes, and other design tokens
-- **Figma-Oriented Layout**: Organized presentation similar to Figma's design token panels
-- **Theme Support**: Light and dark theme switching
-- **Token Management**: Centralized token management with grouping and sorting
-- **Visual Representations**: Visual previews of tokens with their values and names
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js >= 20
-- npm >= 10.9.0
-
-### Installation
-
-1. Install dependencies from the monorepo root:
-
-```sh
-npm install
-```
-
-2. Start the Storybook development server:
-
-```sh
-cd apps/recursica-storybook
-npm run storybook
-```
-
-3. Open your browser to `http://localhost:6006`
-
-### Building for Production
-
-```sh
-npm run build
-```
-
-The built files will be available in the `dist` directory.
+- Builds the mantine-adapter storybook using `npm run build`
+- Copies the built storybook to the `dist/` folder
+- Deploys the storybook to GitHub Pages via the `publish` script
+- Provides a root redirect from the main site to the storybook
 
 ## Available Scripts
 
-- **`npm run storybook`** - Start the development server on port 6006
-- **`npm run build`** - Build the Storybook for production (creates `dist/`)
-- **`npm run publish`** - Deploy the built Storybook to GitHub Pages (used by changesets workflow)
+- **`npm run build`** - Builds the mantine-adapter storybook and copies it to `dist/`
+- **`npm run publish`** - Deploys the built storybook to GitHub Pages
 
 ## Deployment
 
-The Storybook is automatically deployed to GitHub Pages when changes are merged to the `main` branch through the changesets release workflow. The deployment:
+The storybook is automatically deployed to GitHub Pages when changes are merged to the `main` branch through the changesets release workflow.
 
-- Builds the Storybook using the `build` script
-- Deploys a root `index.html` redirect to the repository root
-- Deploys the Storybook build to the `/storybook/` subdirectory
-- Uses GitHub Pages for hosting
-
-The deployed Storybook will be available at:
+The deployed storybook will be available at:
 
 - **Main site**: `https://[username].github.io/recursica/` (redirects to storybook)
 - **Direct access**: `https://[username].github.io/recursica/storybook/`
-
-## Available Stories
-
-### Introduction
-
-- **Welcome**: Overview of the Recursica Design System
-
-### Tokens
-
-- **Colors**: Interactive color palette organized by color families
-- **Size**: Size tokens including spacers, gutters, and border radius
-- **Grid**: Responsive grid system tokens for different viewport sizes
-
-## Token Management
-
-The `TokenManager` class provides a centralized way to access and organize design tokens:
-
-```typescript
-import TokenManager from "./src/TokenManager";
-
-const tokenManager = TokenManager.getInstance();
-
-// Get grouped color tokens
-const colors = tokenManager.getGroupedColors();
-
-// Get grouped size tokens
-const sizes = tokenManager.getGroupedSizeTokens();
-
-// Get sorted families/categories
-const colorFamilies = tokenManager.getSortedColorFamilies();
-const sizeCategories = tokenManager.getSortedSizeCategories();
-
-// Get grid tokens
-const gridTokens = tokenManager.getGridTokens();
-const gridBreakpoints = tokenManager.getSortedGridBreakpoints();
-```
-
-## Development
-
-### Adding New Stories
-
-1. Create a new story file in the `stories` directory
-2. Follow the existing pattern for story structure
-3. Use the TokenManager for accessing design tokens
-4. Ensure proper TypeScript typing
-
-### Story Structure
-
-```typescript
-import React from "react";
-import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Box, Typography } from "@recursica/ui-kit-mantine";
-
-const MyComponent = () => (
-  <Box p="size/spacer/2x">
-    <Typography variant="h1">My Story</Typography>
-  </Box>
-);
-
-const meta: Meta<typeof MyComponent> = {
-  title: "Category/MyStory",
-  component: MyComponent,
-  parameters: {
-    layout: "fullscreen",
-    docs: {
-      description: {
-        story: "Description of what this story demonstrates",
-      },
-    },
-  },
-};
-
-export default meta;
-type Story = StoryObj<typeof meta>;
-
-export const MyStory: Story = {
-  name: "My Story",
-};
-```
-
-## Configuration
-
-The Storybook configuration is located in `.storybook/`:
-
-- `main.ts`: Main configuration including addons and framework settings
-- `preview.tsx`: Global decorators, parameters, and theme configuration
-
-## Dependencies
-
-- **@storybook/react-vite**: Storybook framework for React with Vite
-- **@storybook/addon-docs**: Documentation addon for enhanced story documentation
-- **@recursica/ui-kit-mantine**: Recursica UI components
-- **@recursica/schemas**: Type definitions for design tokens
-
-## Contributing
-
-When adding new stories or modifying existing ones:
-
-1. Follow the established patterns and conventions
-2. Ensure proper TypeScript typing
-3. Add appropriate documentation
-4. Test in both light and dark themes
-5. Verify responsive behavior
 
 ## License
 
