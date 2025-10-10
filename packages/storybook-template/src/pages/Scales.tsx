@@ -70,7 +70,7 @@ export function Scales({ theme, recursica }: ScalesProps) {
                     className={`palette-box ${value === scale.defaultScale ? "default" : ""}`}
                     style={{
                       backgroundColor:
-                        recursica.themes.RecursicaBrand[theme][
+                        recursica.themes?.RecursicaBrand?.[theme]?.[
                           `palette/${scale.key}/${value}/tone`
                         ],
                     }}
@@ -79,11 +79,11 @@ export function Scales({ theme, recursica }: ScalesProps) {
                       className="palette-dot"
                       style={{
                         backgroundColor:
-                          recursica.themes.RecursicaBrand[theme][
+                          recursica?.themes?.RecursicaBrand?.[theme]?.[
                             `palette/${scale.key}/${value}/on-tone`
                           ],
                         opacity:
-                          recursica.themes.RecursicaBrand[theme][
+                          recursica.themes?.RecursicaBrand?.[theme]?.[
                             `palette/${scale.key}/${value}/${emphasis.key}`
                           ],
                       }}
@@ -100,7 +100,7 @@ export function Scales({ theme, recursica }: ScalesProps) {
                   className={value === scale.defaultScale ? "default" : ""}
                 >
                   {
-                    recursica.themes.RecursicaBrand[theme][
+                    recursica.themes?.RecursicaBrand?.[theme]?.[
                       `palette/${scale.key}/${value}/tone`
                     ]
                   }

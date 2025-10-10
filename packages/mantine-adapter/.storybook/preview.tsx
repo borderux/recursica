@@ -1,5 +1,5 @@
 import { createPreviewConfig } from "@recursica/storybook-template";
-import { ThemeProvider } from "../dist/index.js";
+import { ThemeProvider } from "../src/components/ThemeProvider/ThemeProvider";
 import { MantineProvider, createTheme } from "@mantine/core";
 import { recursicaBundle } from "@recursica/official-release/recursica-bundle";
 import "@mantine/core/styles.css";
@@ -22,7 +22,7 @@ const preview = createPreviewConfig({
   ThemeProvider: ThemeProvider,
   lightThemeClass: "recursicabrand-light-theme",
   darkThemeClass: "recursicabrand-dark-theme",
-  recursicaBundle, // Pass the recursica bundle to preview config
+  recursicaBundle,
   customParameters: {
     options: {
       storySort: {

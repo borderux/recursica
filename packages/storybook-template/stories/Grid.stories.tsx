@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { useRecursicaBundle } from "@recursica/storybook-template";
+import { useRecursicaBundle } from "../src/contexts/RecursicaBundleContext";
 
 const GridTokens = () => {
   const { bundle } = useRecursicaBundle();
