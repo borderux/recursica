@@ -1,18 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import type { Preview } from "@storybook/react-vite";
-import type { Recursica } from "@recursica/official-release";
-import {
-  withProvider,
-  withTheme,
-  withRecursicaBundle,
-} from "../decorators/index.js";
+import { withProvider, withTheme } from "../decorators/index";
+import { withRecursicaBundle } from "../decorators/withRecursicaBundle";
 import {
   commonParameters,
   accessibilityParameters,
   backgroundParameters,
   lightBackgroundParameters,
   controlParameters,
-} from "../parameters/index.js";
+} from "../parameters/index";
 
 export interface PreviewConfigOptions {
   defaultTheme?: "light" | "dark";
@@ -27,7 +24,7 @@ export interface PreviewConfigOptions {
   lightThemeClass?: string;
   darkThemeClass?: string;
   customParameters?: Record<string, any>;
-  recursicaBundle?: Recursica;
+  recursicaBundle?: any;
 }
 
 export const createPreviewConfig = (
@@ -48,6 +45,11 @@ export const createPreviewConfig = (
 
   const decorators = [];
 
+  // Add recursica bundle decorator if bundle is provided
+  if (recursicaBundle) {
+    decorators.push(withRecursicaBundle({ bundle: recursicaBundle }));
+  }
+
   // Add provider decorator if enabled
   if (enableProvider && Provider) {
     decorators.push(withProvider({ Provider, props: providerProps }));
@@ -63,11 +65,6 @@ export const createPreviewConfig = (
         darkThemeClass,
       }),
     );
-  }
-
-  // Add recursica bundle decorator if bundle is provided
-  if (recursicaBundle) {
-    decorators.push(withRecursicaBundle({ bundle: recursicaBundle }));
   }
 
   // Combine all parameters

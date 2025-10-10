@@ -17,17 +17,21 @@ export default defineConfig({
         `storybook-template.${format === "es" ? "js" : "cjs"}`,
     },
     rollupOptions: {
-      external: [
-        "react",
-        "react-dom",
-        "@storybook/react-vite",
-        "@storybook/addon-docs",
-        "@storybook/addon-a11y",
-        "@storybook/addon-onboarding",
-        "@storybook/addon-vitest",
-        "fs",
-        "path",
-      ],
+      external: (id) => {
+        // Externalize React and related packages
+        if (id === "react" || id === "react-dom" || id.startsWith("react/")) {
+          return true;
+        }
+        // Externalize Storybook packages
+        if (id.startsWith("@storybook/")) {
+          return true;
+        }
+        // Externalize Node.js built-ins
+        if (["fs", "path", "url", "util"].includes(id)) {
+          return true;
+        }
+        return false;
+      },
       output: {
         globals: {
           react: "React",

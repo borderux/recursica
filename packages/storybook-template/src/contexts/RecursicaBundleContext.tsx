@@ -1,8 +1,8 @@
-import { createContext, useContext } from "react";
-import type { Recursica } from "@recursica/official-release";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { createContext, useContext } from "react";
 
 export interface RecursicaBundleContextType {
-  bundle: Recursica;
+  bundle: any;
 }
 
 export const RecursicaBundleContext =
