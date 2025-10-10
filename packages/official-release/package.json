@@ -12,8 +12,8 @@
     },
     "./recursica-bundle": {
       "types": "./recursica.d.ts",
-      "import": "./recursica-bundle.ts",
-      "require": "./recursica-bundle.ts"
+      "import": "./recursica-bundle.js",
+      "require": "./recursica-bundle.js"
     },
     "./recursica": {
       "types": "./recursica.d.ts",
