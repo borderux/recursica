@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import type { Preview } from "@storybook/react-vite";
-import type { Recursica } from "@recursica/official-release";
+
 import {
   withProvider,
   withTheme,
@@ -27,7 +28,7 @@ export interface PreviewConfigOptions {
   lightThemeClass?: string;
   darkThemeClass?: string;
   customParameters?: Record<string, any>;
-  recursicaBundle?: Recursica;
+  recursicaBundle?: any;
 }
 
 export const createPreviewConfig = (
@@ -46,7 +47,7 @@ export const createPreviewConfig = (
     recursicaBundle,
   } = options;
 
-  const decorators = [];
+  const decorators: any[] = [];
 
   // Add provider decorator if enabled
   if (enableProvider && Provider) {
