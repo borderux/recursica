@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import type { Preview } from "@storybook/react-vite";
-import { withProvider, withTheme } from "../decorators/index";
-import { withRecursicaBundle } from "../decorators/withRecursicaBundle";
+import { withProvider, withTheme, withRecursicaBundle } from "../decorators";
 import {
   commonParameters,
   accessibilityParameters,
@@ -43,7 +42,7 @@ export const createPreviewConfig = (
     recursicaBundle,
   } = options;
 
-  const decorators = [];
+  const decorators: any[] = [];
 
   // Add recursica bundle decorator if bundle is provided
   if (recursicaBundle) {

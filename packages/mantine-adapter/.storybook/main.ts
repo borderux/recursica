@@ -5,9 +5,8 @@ const config = createMainConfig({
     "../src/**/*.stories.@(js|jsx|mjs|ts|tsx)",
     // Shared stories are automatically included by createMainConfig
   ],
-  basePath: "/recursica/", // For GitHub Pages deployment
-  enableCORS: true, // For iframe embedding
-  copyHeadersFile: true, // For GitHub Pages headers
+  basePath: "/storybook/", // For GitHub Pages deployment
+  enableCORS: true, // For iframe embedding and headers file copying
 });
 
 export default config;
