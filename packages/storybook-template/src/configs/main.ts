@@ -6,8 +6,6 @@ export interface MainConfigOptions {
   addons?: string[];
   basePath?: string;
   enableCORS?: boolean;
-  copyHeadersFile?: boolean;
-  recursicaBundle?: any; // The recursica JSON bundle
 }
 
 // Get shared story paths - resolve at runtime to avoid bundling
@@ -32,14 +30,12 @@ export const createMainConfig = (
     stories,
     addons = [
       "@storybook/addon-onboarding",
-      "@chromatic-com/storybook",
       "@storybook/addon-docs",
       "@storybook/addon-a11y",
       "@storybook/addon-vitest",
     ],
     basePath = "/",
-    enableCORS = false,
-    copyHeadersFile = false,
+    enableCORS = true,
   } = options;
 
   // Automatically include shared stories
@@ -99,7 +95,7 @@ export const createMainConfig = (
     }
 
     // Add plugin to copy _headers file during build
-    if (copyHeadersFile) {
+    if (enableCORS) {
       const { copyFileSync, existsSync } = await import("fs");
       const { join } = await import("path");
 
