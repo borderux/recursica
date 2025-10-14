@@ -4,21 +4,40 @@ import {
   type ThemeSettings,
   type PageInfo,
 } from "./PluginContext";
+import {
+  type GitHubRepo,
+  GitHubService,
+} from "../services/github/githubService";
+import { useAuth } from "./useAuth";
+
+interface PageExportData {
+  pageData: unknown;
+  metadata: {
+    exportedAt: string;
+    figmaVersion: string;
+    originalPageName: string;
+    totalNodes: number;
+    pluginVersion: string;
+  };
+}
 
 interface PluginProviderProps {
   children: React.ReactNode;
 }
 
 export function PluginProvider({ children }: PluginProviderProps) {
+  const { accessToken } = useAuth();
   const [themeSettings, setThemeSettings] = useState<ThemeSettings>({
     fileType: "",
     themeName: "",
   });
   const [pages, setPages] = useState<PageInfo[]>([]);
+  const [selectedRepo, setSelectedRepo] = useState<GitHubRepo | null>(null);
   const [loading, setLoading] = useState({
     themeSettings: true,
     pages: false,
     operations: false,
+    github: false,
   });
   const [error, setError] = useState<string | undefined>();
   console.log("themeSettings", themeSettings);
@@ -189,6 +208,70 @@ export function PluginProvider({ children }: PluginProviderProps) {
     parent.postMessage({ pluginMessage: { type: "reset-metadata" } }, "*");
   }, []);
 
+  // GitHub Integration functions
+  const pushPageToGitHub = useCallback(
+    async (pageIndex: number) => {
+      if (!selectedRepo || !accessToken) {
+        setError("No repository selected or not authenticated");
+        return;
+      }
+
+      setLoading((prev) => ({ ...prev, github: true }));
+
+      try {
+        // First, get the page data from the plugin
+        const pageData = await new Promise<PageExportData>(
+          (resolve, reject) => {
+            const handleMessage = (event: MessageEvent) => {
+              const { pluginMessage } = event.data;
+              if (pluginMessage?.type === "page-export-response") {
+                window.removeEventListener("message", handleMessage);
+                if (pluginMessage.success) {
+                  resolve(JSON.parse(pluginMessage.jsonData));
+                } else {
+                  reject(new Error(pluginMessage.error));
+                }
+              }
+            };
+
+            window.addEventListener("message", handleMessage);
+            parent.postMessage(
+              { pluginMessage: { type: "export-page", pageIndex } },
+              "*",
+            );
+
+            // Timeout after 30 seconds
+            setTimeout(() => {
+              window.removeEventListener("message", handleMessage);
+              reject(new Error("Timeout waiting for page data"));
+            }, 30000);
+          },
+        );
+
+        // Push to GitHub
+        const githubService = new GitHubService(accessToken);
+        const [owner, repo] = selectedRepo.full_name.split("/");
+        const pageName = pages[pageIndex]?.name || `page-${pageIndex}`;
+
+        await githubService.pushPageToRepo(
+          owner,
+          repo,
+          pageData.pageData,
+          pageName,
+        );
+
+        setLoading((prev) => ({ ...prev, github: false }));
+      } catch (err) {
+        console.error("Error pushing to GitHub:", err);
+        setError(
+          err instanceof Error ? err.message : "Failed to push to GitHub",
+        );
+        setLoading((prev) => ({ ...prev, github: false }));
+      }
+    },
+    [selectedRepo, accessToken, pages],
+  );
+
   // Error handling
   const clearError = useCallback(() => {
     setError(undefined);
@@ -203,6 +286,9 @@ export function PluginProvider({ children }: PluginProviderProps) {
     exportPage,
     importPage,
     quickCopy,
+    selectedRepo,
+    setSelectedRepo,
+    pushPageToGitHub,
     resetMetadata,
     loading,
     error,

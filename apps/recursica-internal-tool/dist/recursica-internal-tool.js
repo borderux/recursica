@@ -1,15 +1,15 @@
 async function x() {
   try {
     const e = await figma.variables.getLocalVariableCollectionsAsync();
-    for (const r of e) {
+    for (const s of e) {
       console.log(
-        "resetting variables-synced tag for collection " + r.name
-      ), r.setSharedPluginData("recursica", "variables-synced", "");
-      for (const t of r.variableIds) {
-        const i = await figma.variables.getVariableByIdAsync(t);
-        i && (console.log(
-          "resetting variables-synced tag for variable " + i.name
-        ), i.setSharedPluginData("recursica", "variables-synced", ""));
+        "resetting variables-synced tag for collection " + s.name
+      ), s.setSharedPluginData("recursica", "variables-synced", "");
+      for (const t of s.variableIds) {
+        const r = await figma.variables.getVariableByIdAsync(t);
+        r && (console.log(
+          "resetting variables-synced tag for variable " + r.name
+        ), r.setSharedPluginData("recursica", "variables-synced", ""));
       }
     }
     return console.log(
@@ -30,13 +30,13 @@ async function x() {
   }
 }
 function u(e) {
-  let r = 1;
+  let s = 1;
   return e.children && e.children.length > 0 && e.children.forEach((t) => {
-    r += u(t);
-  }), r;
+    s += u(t);
+  }), s;
 }
 function h(e) {
-  const r = {
+  const s = {
     id: e.id,
     name: e.name,
     type: e.type,
@@ -51,11 +51,11 @@ function h(e) {
     blendMode: e.blendMode,
     effects: e.effects,
     fills: e.fills ? e.fills.map((t) => {
-      const i = Object.assign({}, t);
-      return t.boundVariables && (i.boundVariables = Object.assign(
+      const r = Object.assign({}, t);
+      return t.boundVariables && (r.boundVariables = Object.assign(
         {},
         t.boundVariables
-      )), i;
+      )), r;
     }) : e.fills,
     strokes: e.strokes,
     strokeWeight: e.strokeWeight,
@@ -89,46 +89,46 @@ function h(e) {
   if (e.type === "INSTANCE" && typeof e.getMainComponentAsync == "function")
     try {
       const t = e.getMainComponentAsync();
-      t && (r.mainComponent = {
+      t && (s.mainComponent = {
         id: t.id,
         name: t.name,
         key: t.key,
         fills: t.fills,
-        children: t.children.map((i) => {
-          const o = i.fills ? i.fills.map((s) => {
-            const a = Object.assign({}, s);
-            return s.boundVariables && (a.boundVariables = Object.assign(
+        children: t.children.map((r) => {
+          const a = r.fills ? r.fills.map((i) => {
+            const o = Object.assign({}, i);
+            return i.boundVariables && (o.boundVariables = Object.assign(
               {},
-              s.boundVariables
-            )), a;
+              i.boundVariables
+            )), o;
           }) : [];
           return {
-            id: i.id,
-            fills: o,
-            strokes: i.strokes,
-            strokeWeight: i.strokeWeight,
-            strokeAlign: i.strokeAlign,
-            strokeCap: i.strokeCap,
-            strokeJoin: i.strokeJoin,
-            dashPattern: i.dashPattern,
-            name: i.name,
-            type: i.type
+            id: r.id,
+            fills: a,
+            strokes: r.strokes,
+            strokeWeight: r.strokeWeight,
+            strokeAlign: r.strokeAlign,
+            strokeCap: r.strokeCap,
+            strokeJoin: r.strokeJoin,
+            dashPattern: r.dashPattern,
+            name: r.name,
+            type: r.type
           };
         })
       });
     } catch (t) {
       console.log("Error getting main component for " + e.name + ":", t);
     }
-  return e.children && e.children.length > 0 && (r.children = e.children.map((t) => h(t))), r;
+  return e.children && e.children.length > 0 && (s.children = e.children.map((t) => h(t))), s;
 }
 async function E() {
   try {
     return await figma.loadAllPagesAsync(), {
       type: "pages-loaded",
       success: !0,
-      pages: figma.root.children.map((t, i) => ({
+      pages: figma.root.children.map((t, r) => ({
         name: t.name,
-        index: i
+        index: r
       }))
     };
   } catch (e) {
@@ -139,44 +139,44 @@ async function E() {
     };
   }
 }
-async function N(e) {
+async function S(e) {
   try {
     await figma.loadAllPagesAsync();
-    const r = figma.root.children;
-    if (e < 0 || e >= r.length)
+    const s = figma.root.children;
+    if (e < 0 || e >= s.length)
       return {
         type: "page-export-response",
         success: !1,
         error: "Invalid page selection"
       };
-    const t = r[e];
+    const t = s[e];
     console.log("Exporting page: " + t.name);
-    const i = h(t), o = {
+    const r = h(t), a = {
       metadata: {
         exportedAt: (/* @__PURE__ */ new Date()).toISOString(),
         figmaVersion: figma.apiVersion,
         originalPageName: t.name,
-        totalNodes: u(i),
+        totalNodes: u(r),
         pluginVersion: "1.0.0"
       },
-      pageData: i
-    }, s = JSON.stringify(o, null, 2);
+      pageData: r
+    }, i = JSON.stringify(a, null, 2);
     return {
       type: "page-export-response",
       success: !0,
       filename: t.name.replace(/[^a-z0-9]/gi, "_") + "_export.json",
-      jsonData: s,
+      jsonData: i,
       pageName: t.name
     };
-  } catch (r) {
-    return console.error("Error exporting page:", r), {
+  } catch (s) {
+    return console.error("Error exporting page:", s), {
       type: "page-export-response",
       success: !1,
-      error: r instanceof Error ? r.message : "Unknown error occurred"
+      error: s instanceof Error ? s.message : "Unknown error occurred"
     };
   }
 }
-async function y(e, r) {
+async function d(e, s) {
   try {
     let t;
     switch (e.type) {
@@ -207,46 +207,46 @@ async function y(e, r) {
       case "INSTANCE":
         if (console.log("Found instance node: " + e.name), e.mainComponent && e.mainComponent.id)
           try {
-            const i = await figma.importComponentByKeyAsync(
+            const r = await figma.importComponentByKeyAsync(
               e.mainComponent.key
             );
-            if (i && i.type === "COMPONENT") {
-              if (t = i.createInstance(), console.log(
+            if (r && r.type === "COMPONENT") {
+              if (t = r.createInstance(), console.log(
                 "Created instance from main component: " + e.mainComponent.name
               ), e.fills && e.fills.length > 0)
                 try {
                   t.fills = e.fills;
-                } catch (o) {
-                  console.log("Error applying instance fills: " + o);
+                } catch (a) {
+                  console.log("Error applying instance fills: " + a);
                 }
-              e.mainComponent.children && e.mainComponent.children.length > 0 && t.children && t.children.length > 0 && t.children.forEach((o) => {
-                const s = e.children.find(
-                  (a) => a.name === o.name
+              e.mainComponent.children && e.mainComponent.children.length > 0 && t.children && t.children.length > 0 && t.children.forEach((a) => {
+                const i = e.children.find(
+                  (o) => o.name === a.name
                 );
-                if (s)
+                if (i)
                   try {
-                    if (s.fills && s.fills.length > 0) {
-                      const a = s.fills.map((n) => {
+                    if (i.fills && i.fills.length > 0) {
+                      const o = i.fills.map((n) => {
                         const g = Object.assign({}, n);
                         return n.boundVariables && (g.boundVariables = Object.assign(
                           {},
                           n.boundVariables
                         )), g;
                       });
-                      o.fills = a;
+                      a.fills = o;
                     }
-                    s.strokes && s.strokes.length > 0 && (o.strokes = s.strokes), s.strokeWeight !== void 0 && (o.strokeWeight = s.strokeWeight), s.strokeAlign !== void 0 && (o.strokeAlign = s.strokeAlign), s.strokeCap !== void 0 && (o.strokeCap = s.strokeCap), s.strokeJoin !== void 0 && (o.strokeJoin = s.strokeJoin), s.dashPattern && s.dashPattern.length > 0 && (o.dashPattern = s.dashPattern);
-                  } catch (a) {
+                    i.strokes && i.strokes.length > 0 && (a.strokes = i.strokes), i.strokeWeight !== void 0 && (a.strokeWeight = i.strokeWeight), i.strokeAlign !== void 0 && (a.strokeAlign = i.strokeAlign), i.strokeCap !== void 0 && (a.strokeCap = i.strokeCap), i.strokeJoin !== void 0 && (a.strokeJoin = i.strokeJoin), i.dashPattern && i.dashPattern.length > 0 && (a.dashPattern = i.dashPattern);
+                  } catch (o) {
                     console.log(
-                      "Error updating child " + o.name + ": " + a
+                      "Error updating child " + a.name + ": " + o
                     );
                   }
               });
             } else
               console.log("Main component not found, creating frame fallback"), t = figma.createFrame();
-          } catch (i) {
+          } catch (r) {
             console.log(
-              "Error creating instance: " + i + ", creating frame fallback"
+              "Error creating instance: " + r + ", creating frame fallback"
             ), t = figma.createFrame();
           }
         else
@@ -271,20 +271,20 @@ async function y(e, r) {
     }
     if (t) {
       if (t.name = e.name || "Unnamed Node", t.x = e.x || 0, t.y = e.y || 0, t.resize(e.width || 100, e.height || 100), e.visible !== void 0 && (t.visible = e.visible), e.locked !== void 0 && (t.locked = e.locked), e.opacity !== void 0 && (t.opacity = e.opacity), e.rotation !== void 0 && (t.rotation = e.rotation), e.blendMode !== void 0 && (t.blendMode = e.blendMode), e.type !== "INSTANCE" && e.fills && e.fills.length > 0) {
-        const i = e.fills.map(
-          (o) => {
-            const s = Object.assign({}, o);
-            return o.boundVariables && (s.boundVariables = Object.assign({}, o.boundVariables)), s;
+        const r = e.fills.map(
+          (a) => {
+            const i = Object.assign({}, a);
+            return a.boundVariables && (i.boundVariables = Object.assign({}, a.boundVariables)), i;
           }
         );
-        t.fills = i;
+        t.fills = r;
       } else e.type !== "INSTANCE" && e.fills && e.fills.length === 0 && (t.fills = []);
       if (e.strokes && e.strokes.length > 0 && (t.strokes = e.strokes), e.strokeWeight !== void 0 && (t.strokeWeight = e.strokeWeight), e.strokeAlign !== void 0 && (t.strokeAlign = e.strokeAlign), e.cornerRadius !== void 0 && (t.cornerRadius = e.cornerRadius), e.effects && e.effects.length > 0 && (t.effects = e.effects), (e.type === "FRAME" || e.type === "COMPONENT" || e.type === "INSTANCE") && (e.layoutMode && (t.layoutMode = e.layoutMode), e.primaryAxisSizingMode && (t.primaryAxisSizingMode = e.primaryAxisSizingMode), e.counterAxisSizingMode && (t.counterAxisSizingMode = e.counterAxisSizingMode), e.primaryAxisAlignItems && (t.primaryAxisAlignItems = e.primaryAxisAlignItems), e.counterAxisAlignItems && (t.counterAxisAlignItems = e.counterAxisAlignItems), e.paddingLeft !== void 0 && (t.paddingLeft = e.paddingLeft), e.paddingRight !== void 0 && (t.paddingRight = e.paddingRight), e.paddingTop !== void 0 && (t.paddingTop = e.paddingTop), e.paddingBottom !== void 0 && (t.paddingBottom = e.paddingBottom), e.itemSpacing !== void 0 && (t.itemSpacing = e.itemSpacing)), (e.type === "VECTOR" || e.type === "LINE") && (e.strokeCap && (t.strokeCap = e.strokeCap), e.strokeJoin && (t.strokeJoin = e.strokeJoin), e.dashPattern && e.dashPattern.length > 0 && (t.dashPattern = e.dashPattern)), e.type === "TEXT" && e.characters)
         try {
           if (e.fontName)
             try {
               await figma.loadFontAsync(e.fontName), t.fontName = e.fontName;
-            } catch (i) {
+            } catch (r) {
               await figma.loadFontAsync({
                 family: "Roboto",
                 style: "Regular"
@@ -296,20 +296,20 @@ async function y(e, r) {
               style: "Regular"
             }), t.fontName = { family: "Roboto", style: "Regular" };
           t.characters = e.characters, e.fontSize && (t.fontSize = e.fontSize), e.textAlignHorizontal && (t.textAlignHorizontal = e.textAlignHorizontal), e.textAlignVertical && (t.textAlignVertical = e.textAlignVertical), e.letterSpacing && (t.letterSpacing = e.letterSpacing), e.lineHeight && (t.lineHeight = e.lineHeight), e.textCase && (t.textCase = e.textCase), e.textDecoration && (t.textDecoration = e.textDecoration), e.textAutoResize && (t.textAutoResize = e.textAutoResize);
-        } catch (i) {
-          console.log("Error setting text properties: " + i);
+        } catch (r) {
+          console.log("Error setting text properties: " + r);
           try {
             t.characters = e.characters;
-          } catch (o) {
-            console.log("Could not set text characters: " + o);
+          } catch (a) {
+            console.log("Could not set text characters: " + a);
           }
         }
       if (e.children && e.children.length > 0)
-        for (const i of e.children) {
-          const o = await y(i, t);
-          o && t.appendChild(o);
+        for (const r of e.children) {
+          const a = await d(r, t);
+          a && t.appendChild(a);
         }
-      r.appendChild(t);
+      s.appendChild(t);
     }
     return t;
   } catch (t) {
@@ -319,7 +319,7 @@ async function y(e, r) {
     ), null;
   }
 }
-async function C(e) {
+async function N(e) {
   try {
     if (console.log("Importing page from JSON:", e), !e.pageData || !e.metadata)
       return {
@@ -327,10 +327,10 @@ async function C(e) {
         success: !1,
         error: "Invalid JSON format. Expected pageData and metadata."
       };
-    const r = e.pageData, t = e.metadata, i = "Imported - " + (t.originalPageName || "Unknown"), o = figma.createPage();
-    if (o.name = i, figma.root.appendChild(o), console.log("Created new page: " + i), console.log("Importing " + (t.totalNodes || "unknown") + " nodes"), r.children && r.children.length > 0) {
-      for (const s of r.children)
-        await y(s, o);
+    const s = e.pageData, t = e.metadata, r = "Imported - " + (t.originalPageName || "Unknown"), a = figma.createPage();
+    if (a.name = r, figma.root.appendChild(a), console.log("Created new page: " + r), console.log("Importing " + (t.totalNodes || "unknown") + " nodes"), s.children && s.children.length > 0) {
+      for (const i of s.children)
+        await d(i, a);
       console.log("Successfully imported page content with all children");
     } else
       console.log("No children to import");
@@ -340,54 +340,54 @@ async function C(e) {
       pageName: t.originalPageName,
       totalNodes: t.totalNodes || 0
     };
-  } catch (r) {
-    return console.error("Error importing page:", r), {
+  } catch (s) {
+    return console.error("Error importing page:", s), {
       type: "page-import-response",
       success: !1,
-      error: r instanceof Error ? r.message : "Unknown error occurred"
+      error: s instanceof Error ? s.message : "Unknown error occurred"
     };
   }
 }
-async function S() {
+async function w() {
   try {
     await figma.loadAllPagesAsync();
     const e = figma.root.children;
     console.log("Found " + e.length + " pages in the document");
-    const r = 11, t = e[r];
+    const s = 11, t = e[s];
     if (!t)
       return {
         type: "quick-copy-response",
         success: !1,
         error: "No page found at index 11"
       };
-    const i = h(t);
+    const r = h(t);
     console.log(
-      "Selected page: " + t.name + " (index: " + r + ")"
+      "Selected page: " + t.name + " (index: " + s + ")"
     );
-    const o = JSON.stringify(i, null, 2), s = JSON.parse(o), a = "Copy - " + s.name, n = figma.createPage();
-    if (n.name = a, figma.root.appendChild(n), s.children && s.children.length > 0) {
-      let d = function(f) {
+    const a = JSON.stringify(r, null, 2), i = JSON.parse(a), o = "Copy - " + i.name, n = figma.createPage();
+    if (n.name = o, figma.root.appendChild(n), i.children && i.children.length > 0) {
+      let y = function(f) {
         f.forEach((c) => {
           const k = (c.x || 0) + (c.width || 0);
-          k > p && (p = k), c.children && c.children.length > 0 && d(c.children);
+          k > p && (p = k), c.children && c.children.length > 0 && y(c.children);
         });
       };
       console.log(
-        "Recreating " + s.children.length + " top-level children..."
+        "Recreating " + i.children.length + " top-level children..."
       );
       let p = 0;
-      d(s.children), console.log("Original content rightmost edge: " + p);
-      for (const f of s.children)
-        await y(f, n);
+      y(i.children), console.log("Original content rightmost edge: " + p);
+      for (const f of i.children)
+        await d(f, n);
       console.log("Successfully recreated page content with all children");
     } else
       console.log("No children to recreate");
-    const g = u(s);
+    const g = u(i);
     return {
       type: "quick-copy-response",
       success: !0,
-      pageName: s.name,
-      newPageName: a,
+      pageName: i.name,
+      newPageName: o,
       totalNodes: g
     };
   } catch (e) {
@@ -401,17 +401,17 @@ async function S() {
 const l = "recursica", b = "file-type", m = "theme-name";
 async function A() {
   try {
-    let e = "", r = "";
+    let e = "", s = "";
     const t = await figma.variables.getLocalVariableCollectionsAsync();
     if (t.length > 0) {
-      const i = t[0];
-      e = i.getSharedPluginData(l, b) || "", r = i.getSharedPluginData(l, m) || "";
+      const r = t[0];
+      e = r.getSharedPluginData(l, b) || "", s = r.getSharedPluginData(l, m) || "";
     }
     return {
       type: "theme-settings-loaded",
       success: !0,
       fileType: e,
-      themeName: r
+      themeName: s
     };
   } catch (e) {
     return console.error("Error loading theme settings:", e), {
@@ -421,7 +421,7 @@ async function A() {
     };
   }
 }
-async function w(e, r) {
+async function C(e, s) {
   try {
     if (!e)
       return {
@@ -429,7 +429,7 @@ async function w(e, r) {
         success: !1,
         error: "File type is required"
       };
-    if (e === "themes" && !r)
+    if (e === "themes" && !s)
       return {
         type: "theme-settings-updated",
         success: !1,
@@ -440,14 +440,14 @@ async function w(e, r) {
       type: "theme-settings-updated",
       success: !1,
       error: "No variable collections found. Please create a variable collection first."
-    } : (t.forEach((i) => {
-      i.setSharedPluginData(l, b, e), e === "themes" ? i.setSharedPluginData(
+    } : (t.forEach((r) => {
+      r.setSharedPluginData(l, b, e), e === "themes" ? r.setSharedPluginData(
         l,
         m,
-        r
-      ) : i.setSharedPluginData(l, m, "");
+        s
+      ) : r.setSharedPluginData(l, m, "");
     }), figma.notify(
-      `Theme settings updated: File type set to "${e}"${e === "themes" ? `, Theme name set to "${r}"` : ""}`
+      `Theme settings updated: File type set to "${e}"${e === "themes" ? `, Theme name set to "${s}"` : ""}`
     ), {
       type: "theme-settings-updated",
       success: !0,
@@ -469,65 +469,126 @@ A().then((e) => {
   figma.ui.postMessage(e);
 });
 figma.ui.onmessage = async (e) => {
-  console.log("Received message:", e);
+  var s;
+  console.log("Received message:", e), figma.clientStorage.keysAsync().then((t) => {
+    console.log("Keys:", t);
+  });
   try {
     switch (e.type) {
+      case "get-current-user": {
+        figma.ui.postMessage({
+          type: "current-user",
+          payload: (s = figma.currentUser) == null ? void 0 : s.id
+        });
+        break;
+      }
       case "reset-metadata": {
-        const r = await x();
-        figma.ui.postMessage(r);
+        const t = await x();
+        figma.ui.postMessage(t);
         break;
       }
       case "load-pages": {
-        const r = await E();
-        figma.ui.postMessage(r);
+        const t = await E();
+        figma.ui.postMessage(t);
         break;
       }
       case "export-page": {
-        const r = await N(e.pageIndex);
-        figma.ui.postMessage(r);
+        const t = await S(e.pageIndex);
+        figma.ui.postMessage(t);
         break;
       }
       case "import-page": {
-        const r = await C(e.jsonData);
-        figma.ui.postMessage(r);
+        const t = await N(e.jsonData);
+        figma.ui.postMessage(t);
         break;
       }
       case "quick-copy": {
-        const r = await S();
-        figma.ui.postMessage(r);
+        const t = await w();
+        figma.ui.postMessage(t);
         break;
       }
       case "load-theme-settings": {
-        const r = await A();
-        figma.ui.postMessage(r);
+        const t = await A();
+        figma.ui.postMessage(t);
         break;
       }
       case "update-theme-settings": {
-        const r = await w(
+        const t = await C(
           e.fileType,
           e.themeName
         );
-        figma.ui.postMessage(r);
+        figma.ui.postMessage(t);
+        break;
+      }
+      case "store-auth-data": {
+        try {
+          await figma.clientStorage.setAsync(
+            "accessToken",
+            e.accessToken
+          ), await figma.clientStorage.setAsync("platform", e.platform), figma.ui.postMessage({
+            type: "auth-data-stored",
+            success: !0
+          });
+        } catch (t) {
+          figma.ui.postMessage({
+            type: "auth-data-stored",
+            success: !1,
+            error: t instanceof Error ? t.message : "Failed to store auth data"
+          });
+        }
+        break;
+      }
+      case "load-auth-data": {
+        try {
+          const t = await figma.clientStorage.getAsync("accessToken"), r = await figma.clientStorage.getAsync("platform");
+          figma.ui.postMessage({
+            type: "auth-data-loaded",
+            success: !0,
+            accessToken: t || void 0,
+            platform: r || void 0
+          });
+        } catch (t) {
+          figma.ui.postMessage({
+            type: "auth-data-loaded",
+            success: !1,
+            error: t instanceof Error ? t.message : "Failed to load auth data"
+          });
+        }
+        break;
+      }
+      case "clear-auth-data": {
+        try {
+          await figma.clientStorage.deleteAsync("accessToken"), await figma.clientStorage.deleteAsync("platform"), figma.ui.postMessage({
+            type: "auth-data-cleared",
+            success: !0
+          });
+        } catch (t) {
+          figma.ui.postMessage({
+            type: "auth-data-cleared",
+            success: !1,
+            error: t instanceof Error ? t.message : "Failed to clear auth data"
+          });
+        }
         break;
       }
       default: {
         console.warn("Unknown message type:", e.type);
-        const r = {
+        const t = {
           type: "error",
           success: !1,
           error: "Unknown message type: " + e.type
           // eslint-disable-line @typescript-eslint/no-explicit-any
         };
-        figma.ui.postMessage(r);
+        figma.ui.postMessage(t);
       }
     }
-  } catch (r) {
-    console.error("Error handling message:", r);
-    const t = {
+  } catch (t) {
+    console.error("Error handling message:", t);
+    const r = {
       type: "error",
       success: !1,
-      error: r instanceof Error ? r.message : "Unknown error occurred"
+      error: t instanceof Error ? t.message : "Unknown error occurred"
     };
-    figma.ui.postMessage(t);
+    figma.ui.postMessage(r);
   }
 };

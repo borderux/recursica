@@ -6,6 +6,16 @@ export interface BaseMessage {
   type: string;
 }
 
+// Get Current User Messages
+export interface GetCurrentUserMessage extends BaseMessage {
+  type: "get-current-user";
+}
+
+export interface GetCurrentUserResponse extends BaseMessage {
+  type: "current-user";
+  payload: string;
+}
+
 // Reset Metadata Messages
 export interface ResetMetadataMessage extends BaseMessage {
   type: "reset-metadata";
@@ -96,6 +106,41 @@ export interface ThemeSettingsUpdatedResponse extends BaseMessage {
   error?: string;
 }
 
+// Auth Storage Messages
+export interface StoreAuthDataMessage extends BaseMessage {
+  type: "store-auth-data";
+  accessToken: string;
+  platform: string;
+}
+
+export interface StoreAuthDataResponse extends BaseMessage {
+  type: "auth-data-stored";
+  success: boolean;
+  error?: string;
+}
+
+export interface LoadAuthDataMessage extends BaseMessage {
+  type: "load-auth-data";
+}
+
+export interface LoadAuthDataResponse extends BaseMessage {
+  type: "auth-data-loaded";
+  success: boolean;
+  accessToken?: string;
+  platform?: string;
+  error?: string;
+}
+
+export interface ClearAuthDataMessage extends BaseMessage {
+  type: "clear-auth-data";
+}
+
+export interface ClearAuthDataResponse extends BaseMessage {
+  type: "auth-data-cleared";
+  success: boolean;
+  error?: string;
+}
+
 export interface ErrorMessage extends BaseMessage {
   type: "error";
   success: false;
@@ -103,15 +148,20 @@ export interface ErrorMessage extends BaseMessage {
 }
 
 export type PluginMessage =
+  | GetCurrentUserMessage
   | ResetMetadataMessage
   | LoadPagesMessage
   | ExportPageMessage
   | ImportPageMessage
   | QuickCopyMessage
   | LoadThemeSettingsMessage
-  | UpdateThemeSettingsMessage;
+  | UpdateThemeSettingsMessage
+  | StoreAuthDataMessage
+  | LoadAuthDataMessage
+  | ClearAuthDataMessage;
 
 export type PluginResponse =
+  | GetCurrentUserResponse
   | ResetMetadataResponse
   | PageListResponse
   | PageExportResponse
@@ -119,4 +169,7 @@ export type PluginResponse =
   | QuickCopyResponse
   | ThemeSettingsLoadedResponse
   | ThemeSettingsUpdatedResponse
+  | StoreAuthDataResponse
+  | LoadAuthDataResponse
+  | ClearAuthDataResponse
   | ErrorMessage;

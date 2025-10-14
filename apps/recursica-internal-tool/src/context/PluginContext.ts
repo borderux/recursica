@@ -1,4 +1,5 @@
 import { createContext } from "react";
+import { type GitHubRepo } from "../services/github/githubService";
 
 export interface ThemeSettings {
   fileType: string;
@@ -23,6 +24,11 @@ export interface IPluginContext {
   importPage: (jsonData: any) => Promise<void>; // eslint-disable-line @typescript-eslint/no-explicit-any
   quickCopy: () => Promise<void>;
 
+  // GitHub Integration
+  selectedRepo: GitHubRepo | null;
+  setSelectedRepo: (repo: GitHubRepo | null) => void;
+  pushPageToGitHub: (pageIndex: number) => Promise<void>;
+
   // Reset Metadata
   resetMetadata: () => Promise<void>;
 
@@ -31,6 +37,7 @@ export interface IPluginContext {
     themeSettings: boolean;
     pages: boolean;
     operations: boolean;
+    github: boolean;
   };
 
   // Error handling
