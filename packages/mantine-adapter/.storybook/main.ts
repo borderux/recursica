@@ -1,5 +1,5 @@
 import { createMainConfig } from "@recursica/storybook-template";
-import { recursicaBundle } from "@recursica/official-release/recursica-bundle";
+import { recursicaBundle } from "@recursica/official-release";
 
 const config = createMainConfig({
   stories: [

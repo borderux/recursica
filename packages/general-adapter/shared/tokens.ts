@@ -160,46 +160,28 @@ export class Tokens {
         continue;
       }
       if (isColorOrFloatToken(token)) {
-        // Handle theme tokens differently
-        if (token.collection === "themes") {
-          // For theme tokens, group by theme name and then by mode
-          const modeName = token.mode;
-          if (!jsonThemeName) return;
-          if (!this.themes[jsonThemeName]) this.themes[jsonThemeName] = {};
-          if (!this.themes[jsonThemeName][modeName])
-            this.themes[jsonThemeName][modeName] = {};
-          // Store the token value directly by the token name
-          (this.themes[jsonThemeName][modeName] as any)[token.name] =
-            token.value;
-        } else if (token.collection === "ui-kit") {
-          // Handle UI Kit tokens
-          this.value(this.uiKit, token);
-        } else {
-          // For regular tokens, process as before
-          const modeName = capitalize(token.mode)
-            .replace(/[()/]/g, "-")
-            .replace(/\s/g, "")
-            .replace(/-$/, "");
+        // For regular tokens, process as before
+        const modeName = capitalize(token.mode)
+          .replace(/[()/]/g, "-")
+          .replace(/\s/g, "")
+          .replace(/-$/, "");
 
-          // Only create theme entries for actual theme tokens, not regular tokens
-          // Regular tokens go into the base tokens collection, not themes
-          if (token.type === "color" && !this.colors.includes(token.name)) {
-            this.colors.push(token.name);
-          }
-          if (
-            token.name.startsWith("size/spacer/") &&
-            !this.spacers.includes(token.name)
-          ) {
-            this.spacers.push(token.name);
-          }
-          if (
-            token.name.startsWith("size/border-radius/") &&
-            !this.borderRadius.includes(token.name)
-          ) {
-            this.borderRadius.push(token.name);
-          }
-          this.tokenValue(token, modeName, jsonThemeName);
+        if (token.type === "color" && !this.colors.includes(token.name)) {
+          this.colors.push(token.name);
         }
+        if (
+          token.name.startsWith("size/") &&
+          !this.spacers.includes(token.name)
+        ) {
+          this.spacers.push(token.name);
+        }
+        if (
+          token.name.startsWith("size/border-radius/") &&
+          !this.borderRadius.includes(token.name)
+        ) {
+          this.borderRadius.push(token.name);
+        }
+        this.tokenValue(token, modeName, jsonThemeName);
       } else {
         console.warn(
           `${JSON.stringify(token, null, 2)} could not be processed`,

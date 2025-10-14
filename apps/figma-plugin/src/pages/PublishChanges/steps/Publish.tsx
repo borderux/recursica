@@ -62,6 +62,18 @@ export function Publish() {
     }
   };
 
+  const handleDownloadManual = () => {
+    parent.postMessage(
+      {
+        pluginMessage: {
+          type: 'GET_VARIABLES',
+        },
+        pluginId: '*',
+      },
+      '*'
+    );
+  };
+
   if (!selectedProject) {
     return <Navigate to='/publish/select-project' />;
   }
@@ -112,6 +124,7 @@ export function Publish() {
       }
       footer={
         <Flex justify={'center'} w='100%' gap={'size/spacer/default'}>
+          <Button variant='outline' label='Download manual' onClick={handleDownloadManual} />
           <Button label='Publish changes' onClick={handleContinue} />
         </Flex>
       }

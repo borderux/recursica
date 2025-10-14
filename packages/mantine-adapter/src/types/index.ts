@@ -1,8 +1,10 @@
+import { IconName } from "../components/Icons/Icon";
+
 export interface ComboboxItem {
   value: string;
   label: string;
   disabled?: boolean;
-  icon?: string; // Use string for now, can be IconName later
+  icon?: IconName; // Use string for now, can be IconName later
   onClick?: () => void;
 }
 

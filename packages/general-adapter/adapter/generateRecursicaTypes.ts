@@ -79,7 +79,7 @@ function processThemesData(themes: Record<string, any>): string[] {
  * @returns ExportingResult containing the generated content and file information
  */
 export function generateRecursicaTypes(
-  { tokens, uiKit, themes }: Tokens,
+  { tokens, uiKit, themes, colors, spacers }: Tokens,
   outputPath: string,
 ): ExportingResult {
   const recursicaTypesFilename = "recursica.d.ts";
@@ -130,6 +130,16 @@ export type RecursicaCSSVariable = \`var(--\${string})\`;
 export type RecursicaToken = ${tokenKeys};
 
 /**
+ * Spacers type definitions - union of all spacers token keys
+ */
+export type RecursicaSpacersType = "${spacers.join('" |\n\t"')}";
+
+/**
+ * Colors type definitions - union of all color token keys
+ */
+export type RecursicaColors = \n\t"${colors.join('" |\n\t"')}";\n;
+
+/**
  * UI Kit type definitions - union of all UI Kit variable keys
  */
 export type RecursicaUiKit = ${uiKitKeys};
@@ -173,12 +183,16 @@ export interface Recursica {
   themes: Record<string, Record<string, Record<RecursicaTheme, RecursicaCSSVariable>>>;
 }
 
-/**
- * Default export declaration
- */
-declare const recursica: Recursica;
-export { recursica };
-export default recursica;
+// Theme map for individual theme types
+export interface RecursicaThemeMap {
+  RecursicaBrand: Record<RecursicaTheme, string>;
+}
+
+// Named export for the recursica data
+export declare const recursica: Recursica;
+
+// Named export for the recursica bundle (typed JSON data)
+export declare const recursicaBundle: Recursica;
 `;
 
   return {
