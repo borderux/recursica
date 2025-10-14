@@ -4,7 +4,7 @@ import { createMainConfig } from "@recursica/storybook-template";
 // For PR previews, we need to use relative path, for main deployment use /storybook/
 const getBasePath = () => {
   // Check if this is a PR preview build (set by the PR preview workflow)
-  if (process.env.STORYBOOK_PR_PREVIEW === "true") {
+  if (process.env.VITE_STORYBOOK_PR_PREVIEW === "true") {
     return "./"; // Use relative path for PR previews
   }
   // For main deployment, use /storybook/
