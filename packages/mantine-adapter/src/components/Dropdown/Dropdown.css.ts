@@ -36,7 +36,9 @@ const input = style({
   border: "none",
   minWidth: recursica.uiKit["dropdown/size/min-width"],
   maxWidth: recursica.uiKit["dropdown/size/max-width"],
-  outline: `1px solid ${recursica.uiKit["dropdown/color/border"]}`,
+  outlineWidth: 1,
+  outlineStyle: "solid",
+  outlineColor: recursica.uiKit["dropdown/color/border"],
   borderRadius: recursica.uiKit["dropdown/size/border-radius"],
   paddingBlock: recursica.uiKit["dropdown/size/vertical-padding"],
   paddingInline: recursica.uiKit["dropdown/size/horizontal-padding"],
@@ -116,14 +118,12 @@ const section = style({
 const dropdown = style({
   padding: 0,
   borderRadius: recursica.uiKit["menu/size/border-radius"],
-  maxHeight: 250,
   overflowY: "auto",
 });
 
 export const optionStyle = style({
   gap: recursica.uiKit["menu-item/size/spacing"],
   color: recursica.uiKit["menu-item/color/text"],
-  borderRadius: 0,
   width: "100%",
   padding: recursica.uiKit["menu-item/size/padding"],
   backgroundColor: recursica.uiKit["menu-item/color/enabled"],
@@ -143,6 +143,7 @@ export const optionStyle = style({
 
 const option = style({
   padding: 0,
+  // Default hover behavior is to show the parent background color
   ":hover": {
     backgroundColor: "transparent",
   },
@@ -152,16 +153,6 @@ export const errorContainer = style({
   alignItems: "center",
   color: recursica.uiKit["global/form/assistive-element/error/text-color"],
   gap: recursica.uiKit["global/form/assistive-element/size/icon-text-gap"],
-});
-
-const checkbox = style({
-  backgroundColor: recursica.uiKit["dropdown/color/background"],
-  color: recursica.uiKit["checkbox/color/icon"],
-  width: 20,
-  height: 20,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
 });
 
 const label = style({
@@ -174,7 +165,6 @@ export const styles = {
   input,
   section,
   dropdown,
-  checkbox,
   option,
   label,
 };
