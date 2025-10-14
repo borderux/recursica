@@ -1,4 +1,8 @@
-import { type SelectProps, Select } from "@mantine/core";
+import {
+  type SelectProps,
+  ComboboxLikeRenderOptionInput,
+  Select,
+} from "@mantine/core";
 import { Flex } from "../Flex/Flex";
 import { styles, errorContainer, optionStyle } from "./Dropdown.css";
 import { Icon, type IconName } from "../Icons/Icon";
@@ -23,7 +27,9 @@ type FigmaVariantProps = {
 export type DropdownProps = Omit<SelectProps, "data" | "label"> &
   FigmaVariantProps;
 
-const renderSelectOption: SelectProps["renderOption"] = ({ option }) => (
+const renderSelectOption: (
+  item: ComboboxLikeRenderOptionInput<ComboboxItem>,
+) => React.ReactNode = ({ option }) => (
   <Flex className={optionStyle} align="center" onClick={option.onClick}>
     {option.icon ? <Icon name={option.icon} /> : undefined}
     {option.label}

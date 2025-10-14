@@ -14,10 +14,14 @@ export function getRecursicaColor(color: RecursicaColors) {
   }
 
   // Check if color is a key in any theme
-  for (const themeGroup of Object.values(recursica.themes)) {
-    for (const theme of Object.values(themeGroup)) {
-      if (color in theme) {
-        return theme[color as keyof typeof theme];
+  if (recursica.themes) {
+    for (const themeGroup of Object.values(recursica.themes)) {
+      if (themeGroup) {
+        for (const theme of Object.values(themeGroup)) {
+          if (theme && color in theme) {
+            return theme[color as keyof typeof theme];
+          }
+        }
       }
     }
   }

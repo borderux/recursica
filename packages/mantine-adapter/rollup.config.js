@@ -51,6 +51,7 @@ const plugins = [
     svgo: false,
     titleProp: true,
     ref: true,
+    include: "**/*.svg",
   }),
   babel({
     babelHelpers: "bundled",
@@ -111,6 +112,12 @@ export default defineConfig([
         browser: true,
       }),
       commonjs(),
+      svgr({
+        svgo: false,
+        titleProp: true,
+        ref: true,
+        include: "**/*.svg",
+      }),
       postcss({
         extract: true,
         minimize: true,

@@ -20,7 +20,8 @@
     "noFallthroughCasesInSwitch": true,
 
     /* Vitest */
-    "types": ["vitest/globals", "react"]
+    "types": ["vitest/globals", "react"],
+    "typeRoots": ["./node_modules/@types", "./src/types"]
   },
   "include": ["src"]
 }
