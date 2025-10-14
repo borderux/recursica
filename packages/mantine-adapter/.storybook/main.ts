@@ -5,7 +5,7 @@ const config = createMainConfig({
     "../src/**/*.stories.@(js|jsx|mjs|ts|tsx)",
     // Shared stories are automatically included by createMainConfig
   ],
-  basePath: "/storybook/", // For GitHub Pages deployment
+  basePath: "./", // For GitHub Pages deployment and pr-preview feature
   enableCORS: true, // For iframe embedding and headers file copying
 });
 
