@@ -91,7 +91,6 @@ const inner = style({
 });
 
 const label = style({
-  // ...typographies.button,
   display: "block",
   height: "auto",
   overflow: "hidden",
