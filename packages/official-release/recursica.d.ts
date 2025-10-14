@@ -1515,10 +1515,17 @@ export interface Recursica {
    *   }
    * }
    */
-  themes: Record<
-    string,
-    Record<string, Record<RecursicaTheme, RecursicaCSSVariable>>
-  >;
+  themes?: {
+    [brand: string]:
+      | {
+          [theme: string]:
+            | {
+                [token: string]: RecursicaCSSVariable;
+              }
+            | undefined;
+        }
+      | undefined;
+  };
 }
 
 // Theme map for individual theme types
@@ -1530,4 +1537,4 @@ export interface RecursicaThemeMap {
 export declare const recursica: Recursica;
 
 // Named export for the recursica bundle (typed JSON data)
-export declare const recursicaBundle: Recursica;
+export declare const recursicaBundle: any;

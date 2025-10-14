@@ -1,3 +1,3 @@
-export * from "./provider.js";
-export * from "./theme.js";
-export * from "./withRecursicaBundle.js";
+export * from "./provider";
+export * from "./theme";
+export * from "./withRecursicaBundle";

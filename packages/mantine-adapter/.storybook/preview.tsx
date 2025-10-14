@@ -21,7 +21,7 @@ const preview = createPreviewConfig({
   ThemeProvider: ThemeProvider,
   lightThemeClass: "recursicabrand-light-theme",
   darkThemeClass: "recursicabrand-dark-theme",
-  recursicaBundle, // Pass the recursica bundle to preview config
+  recursicaBundle,
   customParameters: {
     options: {
       storySort: {

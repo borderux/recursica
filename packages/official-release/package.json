@@ -32,7 +32,7 @@
     "recursicabrand-light-theme.css",
     "recursica.js",
     "recursica.d.ts",
-    "recursica-bundle.js",
+    "recursica-bundle.ts",
     "recursica-bundle.json",
     "recursica.css",
     "recursica-tokens.css",

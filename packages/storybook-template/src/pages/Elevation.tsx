@@ -19,27 +19,27 @@ export function Elevation({ theme, recursica }: ElevationProps) {
             className="card text-center elevation-card"
             style={{
               backgroundColor:
-                recursica.themes.RecursicaBrand[theme][
+                recursica.themes?.RecursicaBrand?.[theme]?.[
                   "layer/layer-0/property/surface"
                 ],
               boxShadow: `${
-                recursica.themes.RecursicaBrand[theme][
+                recursica.themes?.RecursicaBrand?.[theme]?.[
                   `elevation/elevation-${elevation}/x-axis`
                 ]
               } ${
-                recursica.themes.RecursicaBrand[theme][
+                recursica.themes?.RecursicaBrand?.[theme]?.[
                   `elevation/elevation-${elevation}/y-axis`
                 ]
               } ${
-                recursica.themes.RecursicaBrand[theme][
+                recursica.themes?.RecursicaBrand?.[theme]?.[
                   `elevation/elevation-${elevation}/blur`
                 ]
               } ${
-                recursica.themes.RecursicaBrand[theme][
+                recursica.themes?.RecursicaBrand?.[theme]?.[
                   `elevation/elevation-${elevation}/spread`
                 ]
               } ${
-                recursica.themes.RecursicaBrand[theme][
+                recursica.themes?.RecursicaBrand?.[theme]?.[
                   `elevation/elevation-${elevation}/shadow-color`
                 ]
               }`,
@@ -47,7 +47,8 @@ export function Elevation({ theme, recursica }: ElevationProps) {
           >
             <span
               style={{
-                color: recursica.themes.RecursicaBrand[theme]["color/black"],
+                color:
+                  recursica.themes?.RecursicaBrand?.[theme]?.["color/black"],
               }}
             >
               {elevation}
