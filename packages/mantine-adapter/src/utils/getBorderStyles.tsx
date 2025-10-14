@@ -1,6 +1,6 @@
-import { type BoxBorders } from "./Box";
 import { recursica } from "@recursica/official-release";
-import { getRecursicaColor } from "../../utils";
+import { type BoxBorders } from "../components/Box/Box";
+import { getRecursicaColor } from "./getRecursicaColor";
 
 export function getBorderStyles(props: BoxBorders): React.CSSProperties {
   if (props.bw && props.bs && props.bc) {

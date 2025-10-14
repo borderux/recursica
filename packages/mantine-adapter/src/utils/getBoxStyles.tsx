@@ -6,9 +6,9 @@ import {
   type BoxPaddings,
   type BoxColors,
   type BoxBorders,
-} from "./Box";
-import { getBorderStyles } from "./getBorderStyles";
-import { getRecursicaColor } from "../../utils";
+} from "../components/Box/Box";
+import { getBorderStyles } from "../utils/getBorderStyles";
+import { getRecursicaColor } from "./getRecursicaColor";
 
 type BoxStyles = BoxSpacers & BoxMargins & BoxPaddings & BoxColors & BoxBorders;
 

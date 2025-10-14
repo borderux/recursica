@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Button } from "./Button";
+import { Button, ButtonProps } from "./Button";
 import { IconNames } from "../Icons/Icon";
+import { fn } from "storybook/test";
 
 // Get some common icon names for the select options
 
@@ -31,6 +32,11 @@ const meta: Meta<typeof Button> = {
       control: { type: "text" },
       description: "The label of the button",
     },
+    Icon: {
+      control: { type: "select" },
+      options: IconNames,
+      description: "The icon for icon variant",
+    },
     LeadingIcon: {
       control: { type: "select" },
       options: IconNames,
@@ -56,10 +62,13 @@ const meta: Meta<typeof Button> = {
       ],
     },
   },
+  args: {
+    onClick: fn(),
+  },
 };
 
 export default meta;
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<ButtonProps>;
 
 export const Default: Story = {
   args: {
@@ -109,7 +118,7 @@ export const IconOnly: Story = {
     Label: "Settings",
     LeadingIcon: undefined,
     TrailingIcon: undefined,
-    Icon: "",
+    Icon: "archive_box_solid",
   },
 };
 

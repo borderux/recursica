@@ -14,7 +14,7 @@ import {
   type PositionProps,
   type BoxSizes,
 } from "../Box/Box";
-import { getBoxStyles } from "../Box/getBoxStyles";
+import { getBoxStyles } from "../../utils/getBoxStyles";
 
 export interface FlexProps
   extends BoxColors,

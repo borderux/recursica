@@ -44,6 +44,7 @@
     "lint": "eslint .",
     "storybook": "storybook dev -p 6006"
   },
+  "dependencies": {},
   "devDependencies": {
     "@recursica/storybook-template": "*",
     "@vanilla-extract/rollup-plugin": "^1.4.1",

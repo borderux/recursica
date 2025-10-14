@@ -7,8 +7,7 @@ import "@mantine/dates/styles.css";
 import "@recursica/official-release/recursica.css";
 import "@recursica/official-release/recursicabrand-light-theme.css";
 import "@recursica/official-release/recursicabrand-dark-theme.css";
-// import "../dist/mantine-adapter.css";
-// import "../src/index.css";
+import "../src/index.css";
 
 // Create Mantine theme
 const theme = createTheme({});

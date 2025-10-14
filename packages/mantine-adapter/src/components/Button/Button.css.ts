@@ -15,8 +15,6 @@ const root = style({
     border: "none",
   },
   ":disabled": {
-    cursor: "not-allowed",
-    pointerEvents: "none",
     opacity: recursica.uiKit["button/color/disabled"],
   },
   selectors: {

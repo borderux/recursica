@@ -8,7 +8,7 @@ import {
   type StyleProp,
 } from "@mantine/core";
 import { forwardRef } from "react";
-import { getBoxStyles } from "./getBoxStyles";
+import { getBoxStyles } from "../../utils/getBoxStyles";
 
 export interface BoxColors {
   /** Background color, theme key: RecursicaColors */
