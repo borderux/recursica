@@ -1,3 +1,7 @@
+/**
+ * Issues found:
+ * 1. Missing border width for: default, focused, with value, and error
+ */
 import { style } from "@vanilla-extract/css";
 import { recursica } from "@recursica/official-release";
 
@@ -57,38 +61,38 @@ const input = style({
       paddingRight: `calc(${recursica.uiKit["dropdown/size/horizontal-padding"]} + 24px + 8px)`,
     },
     "&:focus-visible": {
-      outlineWidth: 1,
+      outlineWidth: 1, // this needs to be a variable
       outlineStyle: "solid",
       outlineColor: recursica.uiKit["dropdown/color/border"],
     },
     '&[data-expanded="true"]': {
-      outlineWidth: 2,
+      outlineWidth: 2, // this needs to be a variable
       outlineStyle: "solid",
       outlineColor: recursica.uiKit["dropdown/color/border-selected"],
     },
     '&[value]:not([value=""]):not([disabled])': {
-      outlineWidth: 1,
+      outlineWidth: 1, // this needs to be a variable
       outlineStyle: "solid",
       outlineColor: recursica.uiKit["dropdown/color/border-selected"],
     },
     '&[value]:not([value=""]):not([disabled]):focus-visible': {
-      outlineWidth: 2,
+      outlineWidth: 2, // this needs to be a variable
       outlineStyle: "solid",
       outlineColor: recursica.uiKit["dropdown/color/border-selected"],
     },
     '&[data-error="true"]': {
-      outlineWidth: 1,
+      outlineWidth: 1, // this needs to be a variable
       outlineStyle: "solid",
       outlineColor: recursica.uiKit["dropdown/color/border-error"],
     },
     '&[data-error="true"][value]:not([value=""]):not([disabled])': {
-      outlineWidth: 1,
+      outlineWidth: 1, // this needs to be a variable
       outlineStyle: "solid",
       outlineColor: recursica.uiKit["dropdown/color/border-error"],
     },
     '&[data-error="true"]:focus-visible, &[data-error="true"][data-expanded="true"]':
       {
-        outlineWidth: 2,
+        outlineWidth: 2, // this needs to be a variable
         outlineStyle: "solid",
         outlineColor: recursica.uiKit["dropdown/color/border-error"],
       },

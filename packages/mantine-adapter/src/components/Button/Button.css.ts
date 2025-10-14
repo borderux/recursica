@@ -1,3 +1,8 @@
+/**
+ * Issues found:
+ * 1. Default state with no border has no variable
+ * 2. Hardcoded height for inner section (icon and label wrapper)
+ */
 import { style } from "@vanilla-extract/css";
 import { recursica } from "@recursica/official-release";
 
@@ -80,10 +85,10 @@ const inner = style({
   height: 24,
   selectors: {
     [`${root}[data-size="default"] &`]: {
-      gap: recursica.uiKit["button/size/default/icon"],
+      gap: recursica.uiKit["button/size/default/icon-text-gap"],
     },
     [`${root}[data-size="small"] &`]: {
-      gap: recursica.uiKit["button/size/small/icon"],
+      gap: recursica.uiKit["button/size/small/icon-text-gap"],
     },
   },
 });
