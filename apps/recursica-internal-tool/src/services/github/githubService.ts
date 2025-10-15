@@ -14,6 +14,34 @@ interface GitHubUser {
   id: number;
   name: string | null;
   email: string | null;
+  avatar_url: string;
+}
+
+interface GitHubFileContent {
+  sha: string;
+  content: string;
+  size: number;
+  url: string;
+  html_url: string;
+  git_url: string;
+  download_url: string;
+  type: string;
+  name: string;
+  path: string;
+}
+
+interface GitHubCreateFileRequest {
+  message: string;
+  content: string;
+  sha?: string;
+}
+
+interface FigmaNode {
+  id: string;
+  name: string;
+  type: string;
+  children?: FigmaNode[];
+  [key: string]: unknown;
 }
 
 export class GitHubService {
@@ -52,7 +80,11 @@ export class GitHubService {
     );
   }
 
-  async getRepoContents(owner: string, repo: string, path: string = "") {
+  async getRepoContents(
+    owner: string,
+    repo: string,
+    path: string = "",
+  ): Promise<GitHubFileContent | GitHubFileContent[]> {
     const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
     return this.makeRequest(url);
   }
@@ -64,10 +96,10 @@ export class GitHubService {
     content: string,
     message: string,
     sha?: string,
-  ) {
+  ): Promise<GitHubFileContent> {
     const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
 
-    const body: any = {
+    const body: GitHubCreateFileRequest = {
       message,
       content: btoa(content), // Base64 encode
     };
@@ -85,9 +117,9 @@ export class GitHubService {
   async pushPageToRepo(
     owner: string,
     repo: string,
-    pageData: any,
+    pageData: FigmaNode,
     pageName: string,
-  ) {
+  ): Promise<GitHubFileContent> {
     const filename = `${pageName.replace(/[^a-z0-9]/gi, "_")}_export.json`;
     const filePath = `figma-exports/${filename}`;
 
@@ -108,6 +140,9 @@ export class GitHubService {
     try {
       // Check if file already exists
       const existingFile = await this.getRepoContents(owner, repo, filePath);
+      if (Array.isArray(existingFile)) {
+        throw new Error("Expected single file, got directory");
+      }
       const sha = existingFile.sha;
 
       return await this.createOrUpdateFile(
@@ -118,7 +153,7 @@ export class GitHubService {
         message,
         sha,
       );
-    } catch (error) {
+    } catch {
       // File doesn't exist, create new one
       return await this.createOrUpdateFile(
         owner,
@@ -130,10 +165,10 @@ export class GitHubService {
     }
   }
 
-  private countTotalNodes(node: any): number {
+  private countTotalNodes(node: FigmaNode): number {
     let count = 1;
     if (node.children && node.children.length > 0) {
-      node.children.forEach((child: any) => {
+      node.children.forEach((child: FigmaNode) => {
         count += this.countTotalNodes(child);
       });
     }
@@ -141,4 +176,10 @@ export class GitHubService {
   }
 }
 
-export type { GitHubRepo, GitHubUser };
+export type {
+  GitHubRepo,
+  GitHubUser,
+  GitHubFileContent,
+  GitHubCreateFileRequest,
+  FigmaNode,
+};

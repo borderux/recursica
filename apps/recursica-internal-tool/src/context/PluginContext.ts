@@ -26,9 +26,10 @@ export interface IPluginContext {
 
   // GitHub Integration
   selectedRepo: GitHubRepo | null;
-  setSelectedRepo: (repo: GitHubRepo | null) => void;
-  pushPageToGitHub: (pageIndex: number) => Promise<void>;
-
+  saveSelectedRepo: (repo: GitHubRepo) => void;
+  saveAccessToken: (accessToken: string) => void;
+  accessToken: string | null;
+  deleteAccessToken: () => void;
   // Reset Metadata
   resetMetadata: () => Promise<void>;
 
@@ -39,6 +40,9 @@ export interface IPluginContext {
     operations: boolean;
     github: boolean;
   };
+
+  // User ID
+  userId: string | null;
 
   // Error handling
   error: string | undefined;

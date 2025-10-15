@@ -111,6 +111,7 @@ export interface StoreAuthDataMessage extends BaseMessage {
   type: "store-auth-data";
   accessToken: string;
   platform: string;
+  selectedRepo?: string;
 }
 
 export interface StoreAuthDataResponse extends BaseMessage {
@@ -128,6 +129,7 @@ export interface LoadAuthDataResponse extends BaseMessage {
   success: boolean;
   accessToken?: string;
   platform?: string;
+  selectedRepo?: string;
   error?: string;
 }
 
@@ -137,6 +139,18 @@ export interface ClearAuthDataMessage extends BaseMessage {
 
 export interface ClearAuthDataResponse extends BaseMessage {
   type: "auth-data-cleared";
+  success: boolean;
+  error?: string;
+}
+
+// Selected Repository Messages
+export interface StoreSelectedRepoMessage extends BaseMessage {
+  type: "store-selected-repo";
+  selectedRepo: string;
+}
+
+export interface StoreSelectedRepoResponse extends BaseMessage {
+  type: "selected-repo-stored";
   success: boolean;
   error?: string;
 }
@@ -158,7 +172,8 @@ export type PluginMessage =
   | UpdateThemeSettingsMessage
   | StoreAuthDataMessage
   | LoadAuthDataMessage
-  | ClearAuthDataMessage;
+  | ClearAuthDataMessage
+  | StoreSelectedRepoMessage;
 
 export type PluginResponse =
   | GetCurrentUserResponse
@@ -172,4 +187,5 @@ export type PluginResponse =
   | StoreAuthDataResponse
   | LoadAuthDataResponse
   | ClearAuthDataResponse
+  | StoreSelectedRepoResponse
   | ErrorMessage;

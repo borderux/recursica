@@ -4,6 +4,7 @@ export interface AuthUser {
   id: string;
   name: string;
   email?: string;
+  avatar_url?: string;
 }
 
 export interface IAuthContext {
@@ -13,12 +14,8 @@ export interface IAuthContext {
   accessToken: string | null;
 
   // Authentication actions
-  login: (accessToken: string, user: AuthUser) => void;
+  login: (accessToken: string) => void;
   logout: () => void;
-
-  // Loading states
-  loading: boolean;
-  setLoading: (loading: boolean) => void;
 }
 
 export const AuthContext = createContext<IAuthContext | null>(null);

@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { usePlugin } from "../context/usePlugin";
 import { useAuth } from "../context/useAuth";
-import { RepoSelection } from "./RepoSelection";
 
 export default function PageManagement() {
   const {
@@ -11,8 +10,6 @@ export default function PageManagement() {
     importPage,
     quickCopy,
     selectedRepo,
-    setSelectedRepo,
-    pushPageToGitHub,
     loading,
     error,
     clearError,
@@ -40,21 +37,21 @@ export default function PageManagement() {
     setStatus({ type: "idle", message: "" });
 
     try {
-      if (isAuthenticated && selectedRepo) {
-        // Push to GitHub
-        await pushPageToGitHub(selectedPageIndex);
-        setStatus({
-          type: "success",
-          message: `Page pushed to GitHub repository: ${selectedRepo.full_name}`,
-        });
-      } else {
-        // Fallback to local export
-        await exportPage(selectedPageIndex);
-        setStatus({
-          type: "success",
-          message: "Page exported successfully! Check your downloads.",
-        });
-      }
+      // if (isAuthenticated && selectedRepo) {
+      //   // Push to GitHub
+      //   // await pushPageToGitHub(selectedPageIndex);
+      //   setStatus({
+      //     type: "success",
+      //     message: `Page pushed to GitHub repository: ${selectedRepo.full_name}`,
+      //   });
+      // } else {
+      //   // Fallback to local export
+      // }
+      await exportPage(selectedPageIndex);
+      setStatus({
+        type: "success",
+        message: "Page exported successfully! Check your downloads.",
+      });
     } catch (error) {
       setStatus({
         type: "error",
@@ -111,46 +108,6 @@ export default function PageManagement() {
       <p>
         Export, import, and copy Figma pages with full structure preservation.
       </p>
-
-      {/* GitHub Integration Section */}
-      {isAuthenticated && (
-        <div
-          style={{
-            marginBottom: "20px",
-            padding: "15px",
-            backgroundColor: "#f5f5f5",
-            borderRadius: "4px",
-          }}
-        >
-          <h3>GitHub Integration</h3>
-          {selectedRepo ? (
-            <div>
-              <p>
-                Selected repository: <strong>{selectedRepo.full_name}</strong>
-              </p>
-              <p style={{ fontSize: "14px", color: "#666" }}>
-                Pages will be pushed to: <code>figma-exports/</code> folder
-              </p>
-              <button
-                onClick={() => setSelectedRepo(null)}
-                style={{
-                  padding: "5px 10px",
-                  backgroundColor: "#ff6b6b",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                  fontSize: "12px",
-                }}
-              >
-                Change Repository
-              </button>
-            </div>
-          ) : (
-            <RepoSelection onRepoSelected={setSelectedRepo} />
-          )}
-        </div>
-      )}
 
       {/* Error Message */}
       {error && (

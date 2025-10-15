@@ -16,6 +16,19 @@ export function countTotalNodes(node: any): number {
   return count;
 }
 
+function extractFills(fills: any): any {
+  if (!fills) return [];
+  if (Array.isArray(fills)) {
+    return fills.map((fill: any) => {
+      const extractedFill = Object.assign({}, fill);
+      if (fill.boundVariables) {
+        extractedFill.boundVariables = Object.assign({}, fill.boundVariables);
+      }
+    });
+  }
+  return fills;
+}
+
 // Function to recursively extract all node data
 export function extractNodeData(node: any): any {
   const nodeData: any = {
@@ -32,18 +45,7 @@ export function extractNodeData(node: any): any {
     opacity: node.opacity,
     blendMode: node.blendMode,
     effects: node.effects,
-    fills: node.fills
-      ? node.fills.map((fill: any) => {
-          const extractedFill = Object.assign({}, fill);
-          if (fill.boundVariables) {
-            extractedFill.boundVariables = Object.assign(
-              {},
-              fill.boundVariables,
-            );
-          }
-          return extractedFill;
-        })
-      : node.fills,
+    fills: extractFills(node?.fills),
     strokes: node.strokes,
     strokeWeight: node.strokeWeight,
     strokeAlign: node.strokeAlign,
@@ -192,6 +194,7 @@ export async function exportPage(
     const filename =
       selectedPage.name.replace(/[^a-z0-9]/gi, "_") + "_export.json";
 
+    console.log(extractedPageData);
     return {
       type: "page-export-response",
       success: true,

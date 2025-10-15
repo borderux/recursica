@@ -35,6 +35,12 @@ function u(e) {
     s += u(t);
   }), s;
 }
+function S(e) {
+  return e ? Array.isArray(e) ? e.map((s) => {
+    const t = Object.assign({}, s);
+    s.boundVariables && (t.boundVariables = Object.assign({}, s.boundVariables));
+  }) : e : [];
+}
 function h(e) {
   const s = {
     id: e.id,
@@ -50,13 +56,7 @@ function h(e) {
     opacity: e.opacity,
     blendMode: e.blendMode,
     effects: e.effects,
-    fills: e.fills ? e.fills.map((t) => {
-      const r = Object.assign({}, t);
-      return t.boundVariables && (r.boundVariables = Object.assign(
-        {},
-        t.boundVariables
-      )), r;
-    }) : e.fills,
+    fills: S(e == null ? void 0 : e.fills),
     strokes: e.strokes,
     strokeWeight: e.strokeWeight,
     strokeAlign: e.strokeAlign,
@@ -139,7 +139,7 @@ async function E() {
     };
   }
 }
-async function S(e) {
+async function N(e) {
   try {
     await figma.loadAllPagesAsync();
     const s = figma.root.children;
@@ -160,11 +160,11 @@ async function S(e) {
         pluginVersion: "1.0.0"
       },
       pageData: r
-    }, i = JSON.stringify(a, null, 2);
-    return {
+    }, i = JSON.stringify(a, null, 2), o = t.name.replace(/[^a-z0-9]/gi, "_") + "_export.json";
+    return console.log(r), {
       type: "page-export-response",
       success: !0,
-      filename: t.name.replace(/[^a-z0-9]/gi, "_") + "_export.json",
+      filename: o,
       jsonData: i,
       pageName: t.name
     };
@@ -319,7 +319,7 @@ async function d(e, s) {
     ), null;
   }
 }
-async function N(e) {
+async function w(e) {
   try {
     if (console.log("Importing page from JSON:", e), !e.pageData || !e.metadata)
       return {
@@ -348,7 +348,7 @@ async function N(e) {
     };
   }
 }
-async function w() {
+async function C() {
   try {
     await figma.loadAllPagesAsync();
     const e = figma.root.children;
@@ -421,7 +421,7 @@ async function A() {
     };
   }
 }
-async function C(e, s) {
+async function R(e, s) {
   try {
     if (!e)
       return {
@@ -463,16 +463,14 @@ async function C(e, s) {
 }
 figma.showUI(__html__, {
   width: 500,
-  height: 500
+  height: 650
 });
 A().then((e) => {
   figma.ui.postMessage(e);
 });
 figma.ui.onmessage = async (e) => {
   var s;
-  console.log("Received message:", e), figma.clientStorage.keysAsync().then((t) => {
-    console.log("Keys:", t);
-  });
+  console.log("Received message:", e);
   try {
     switch (e.type) {
       case "get-current-user": {
@@ -493,17 +491,17 @@ figma.ui.onmessage = async (e) => {
         break;
       }
       case "export-page": {
-        const t = await S(e.pageIndex);
+        const t = await N(e.pageIndex);
         figma.ui.postMessage(t);
         break;
       }
       case "import-page": {
-        const t = await N(e.jsonData);
+        const t = await w(e.jsonData);
         figma.ui.postMessage(t);
         break;
       }
       case "quick-copy": {
-        const t = await w();
+        const t = await C();
         figma.ui.postMessage(t);
         break;
       }
@@ -513,7 +511,7 @@ figma.ui.onmessage = async (e) => {
         break;
       }
       case "update-theme-settings": {
-        const t = await C(
+        const t = await R(
           e.fileType,
           e.themeName
         );
@@ -521,31 +519,23 @@ figma.ui.onmessage = async (e) => {
         break;
       }
       case "store-auth-data": {
-        try {
-          await figma.clientStorage.setAsync(
-            "accessToken",
-            e.accessToken
-          ), await figma.clientStorage.setAsync("platform", e.platform), figma.ui.postMessage({
-            type: "auth-data-stored",
-            success: !0
-          });
-        } catch (t) {
-          figma.ui.postMessage({
-            type: "auth-data-stored",
-            success: !1,
-            error: t instanceof Error ? t.message : "Failed to store auth data"
-          });
-        }
+        await figma.clientStorage.setAsync("accessToken", e.accessToken), e.selectedRepo && await figma.clientStorage.setAsync(
+          "selectedRepo",
+          e.selectedRepo
+        ), figma.ui.postMessage({
+          type: "auth-data-stored",
+          success: !0
+        });
         break;
       }
       case "load-auth-data": {
         try {
-          const t = await figma.clientStorage.getAsync("accessToken"), r = await figma.clientStorage.getAsync("platform");
+          const t = await figma.clientStorage.getAsync("accessToken"), r = await figma.clientStorage.getAsync("selectedRepo");
           figma.ui.postMessage({
             type: "auth-data-loaded",
             success: !0,
             accessToken: t || void 0,
-            platform: r || void 0
+            selectedRepo: r || void 0
           });
         } catch (t) {
           figma.ui.postMessage({
@@ -557,18 +547,20 @@ figma.ui.onmessage = async (e) => {
         break;
       }
       case "clear-auth-data": {
-        try {
-          await figma.clientStorage.deleteAsync("accessToken"), await figma.clientStorage.deleteAsync("platform"), figma.ui.postMessage({
-            type: "auth-data-cleared",
-            success: !0
-          });
-        } catch (t) {
-          figma.ui.postMessage({
-            type: "auth-data-cleared",
-            success: !1,
-            error: t instanceof Error ? t.message : "Failed to clear auth data"
-          });
-        }
+        await figma.clientStorage.deleteAsync("accessToken"), await figma.clientStorage.deleteAsync("selectedRepo"), figma.ui.postMessage({
+          type: "auth-data-cleared",
+          success: !0
+        });
+        break;
+      }
+      case "store-selected-repo": {
+        await figma.clientStorage.setAsync(
+          "selectedRepo",
+          e.selectedRepo
+        ), figma.ui.postMessage({
+          type: "selected-repo-stored",
+          success: !0
+        });
         break;
       }
       default: {

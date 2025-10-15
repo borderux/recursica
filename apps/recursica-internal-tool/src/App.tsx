@@ -10,8 +10,8 @@ import { AuthProvider } from "./context/AuthProvider";
 
 function App() {
   return (
-    <AuthProvider>
-      <PluginProvider>
+    <PluginProvider>
+      <AuthProvider>
         <MemoryRouter initialEntries={["/"]}>
           <Routes>
             <Route path="/" element={<Layout />}>
@@ -23,8 +23,8 @@ function App() {
             </Route>
           </Routes>
         </MemoryRouter>
-      </PluginProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </PluginProvider>
   );
 }
 

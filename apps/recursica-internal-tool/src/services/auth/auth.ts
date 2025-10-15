@@ -3,6 +3,7 @@ import Base64 from "crypto-js/enc-base64";
 import Utf8 from "crypto-js/enc-utf8";
 
 const BASE_URL = import.meta.env.VITE_RECURSICA_API_URL;
+const PLUGIN_PHRASE = import.meta.env.VITE_PLUGIN_PHRASE || "default-phrase";
 
 const getSecureHeaders = (): HeadersInit => ({
   "Content-Type": "application/json",
@@ -54,11 +55,16 @@ export const apiService = {
     readKey: string,
     writeKey: string,
     code: string,
-    provider: string,
   ) => {
     const response = await secureApiCall(API_ENDPOINTS.authorize, {
       method: "POST",
-      body: JSON.stringify({ userId, readKey, writeKey, code, provider }),
+      body: JSON.stringify({
+        userId,
+        readKey,
+        writeKey,
+        code,
+        provider: "github",
+      }),
     });
 
     if (!response.ok) {
@@ -97,8 +103,6 @@ export const apiService = {
     }
   },
 };
-
-const PLUGIN_PHRASE = import.meta.env.VITE_PLUGIN_PHRASE || "default-phrase";
 
 export function encrypt(value: string): string {
   if (!value) {

@@ -1,9 +1,7 @@
 import { Outlet, Link, useLocation } from "react-router";
-import { useAuth } from "../context/useAuth";
 
 export default function Layout() {
   const location = useLocation();
-  const { isAuthenticated } = useAuth();
 
   return (
     <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
@@ -80,21 +78,18 @@ export default function Layout() {
               Reset Metadata
             </Link>
           </li>
-          {!isAuthenticated && (
-            <li>
-              <Link
-                to="/auth"
-                style={{
-                  textDecoration:
-                    location.pathname === "/auth" ? "underline" : "none",
-                  color: location.pathname === "/auth" ? "#4caf50" : "#4caf50",
-                  fontWeight: "bold",
-                }}
-              >
-                🐙 GitHub
-              </Link>
-            </li>
-          )}
+          <li>
+            <Link
+              to="/auth"
+              style={{
+                textDecoration:
+                  location.pathname === "/auth" ? "underline" : "none",
+                color: location.pathname === "/auth" ? "#007acc" : "#333",
+              }}
+            >
+              GitHub
+            </Link>
+          </li>
         </ul>
       </nav>
       <main>

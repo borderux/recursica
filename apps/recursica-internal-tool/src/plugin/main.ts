@@ -11,7 +11,7 @@ import type { PluginMessage, PluginResponse } from "./types/messages";
 // Plugin configuration
 figma.showUI(__html__, {
   width: 500,
-  height: 500,
+  height: 650,
 });
 
 // Load initial theme settings when plugin starts
@@ -22,9 +22,6 @@ loadThemeSettings().then((response) => {
 // Message handler - orchestrates different plugin operations
 figma.ui.onmessage = async (message: PluginMessage) => {
   console.log("Received message:", message);
-  figma.clientStorage.keysAsync().then((keys) => {
-    console.log("Keys:", keys);
-  });
 
   try {
     switch (message.type) {
@@ -82,38 +79,30 @@ figma.ui.onmessage = async (message: PluginMessage) => {
       }
 
       case "store-auth-data": {
-        try {
+        await figma.clientStorage.setAsync("accessToken", message.accessToken);
+        if (message.selectedRepo) {
           await figma.clientStorage.setAsync(
-            "accessToken",
-            message.accessToken,
+            "selectedRepo",
+            message.selectedRepo,
           );
-          await figma.clientStorage.setAsync("platform", message.platform);
-          figma.ui.postMessage({
-            type: "auth-data-stored",
-            success: true,
-          });
-        } catch (error) {
-          figma.ui.postMessage({
-            type: "auth-data-stored",
-            success: false,
-            error:
-              error instanceof Error
-                ? error.message
-                : "Failed to store auth data",
-          });
         }
+        figma.ui.postMessage({
+          type: "auth-data-stored",
+          success: true,
+        });
         break;
       }
 
       case "load-auth-data": {
         try {
           const accessToken = await figma.clientStorage.getAsync("accessToken");
-          const platform = await figma.clientStorage.getAsync("platform");
+          const selectedRepo =
+            await figma.clientStorage.getAsync("selectedRepo");
           figma.ui.postMessage({
             type: "auth-data-loaded",
             success: true,
             accessToken: accessToken || undefined,
-            platform: platform || undefined,
+            selectedRepo: selectedRepo || undefined,
           });
         } catch (error) {
           figma.ui.postMessage({
@@ -129,23 +118,24 @@ figma.ui.onmessage = async (message: PluginMessage) => {
       }
 
       case "clear-auth-data": {
-        try {
-          await figma.clientStorage.deleteAsync("accessToken");
-          await figma.clientStorage.deleteAsync("platform");
-          figma.ui.postMessage({
-            type: "auth-data-cleared",
-            success: true,
-          });
-        } catch (error) {
-          figma.ui.postMessage({
-            type: "auth-data-cleared",
-            success: false,
-            error:
-              error instanceof Error
-                ? error.message
-                : "Failed to clear auth data",
-          });
-        }
+        await figma.clientStorage.deleteAsync("accessToken");
+        await figma.clientStorage.deleteAsync("selectedRepo");
+        figma.ui.postMessage({
+          type: "auth-data-cleared",
+          success: true,
+        });
+        break;
+      }
+
+      case "store-selected-repo": {
+        await figma.clientStorage.setAsync(
+          "selectedRepo",
+          message.selectedRepo,
+        );
+        figma.ui.postMessage({
+          type: "selected-repo-stored",
+          success: true,
+        });
         break;
       }
 
