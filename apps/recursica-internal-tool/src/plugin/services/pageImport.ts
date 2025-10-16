@@ -84,19 +84,8 @@ export async function recreateNodeFromData(
                         matchingChild.fills &&
                         matchingChild.fills.length > 0
                       ) {
-                        // const fillsWithBoundVariables = (
-                        //   matchingChild.fills as any[]
-                        // ).map((fill: any) => {
-                        //   const newFill = Object.assign({}, fill);
-                        //   if (fill?.boundVariables) {
-                        //     // newFill.boundVariables = Object.assign(
-                        //     //   {},
-                        //     //   fill?.boundVariables,
-                        //     // );
-                        //   }
-                        //   return newFill;
-                        // });
-                        // child.fills = fillsWithBoundVariables;
+                        // Note: Fill application is currently disabled due to Figma API limitations
+                        // with bound variables in instance children
                       }
 
                       // Apply other properties
@@ -195,17 +184,8 @@ export async function recreateNodeFromData(
         nodeData.fills &&
         nodeData.fills.length > 0
       ) {
-        // Preserve bound variables when applying fills
-        // const fillsWithBoundVariables = (nodeData.fills as any[]).map(
-        //   (fill: any) => {
-        //     const newFill = Object.assign({}, fill);
-        //     if (fill?.boundVariables) {
-        //       // newFill.boundVariables = Object.assign({}, fill?.boundVariables);
-        //     }
-        //     return newFill;
-        //   },
-        // );
-        // newNode.fills = fillsWithBoundVariables;
+        // Note: Fill application is currently disabled due to Figma API limitations
+        // with bound variables and complex fill structures
       } else if (nodeData.type !== "INSTANCE") {
         // Check if Figma added default fills and remove them if original had no fills
         if (nodeData.fills && nodeData.fills.length === 0) {
