@@ -1,13 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
-import { usePlugin } from "../context/usePlugin";
 import { useAuth } from "../context/useAuth";
 import { GitHubService } from "../services/github/githubService";
 import { useNavigate } from "react-router";
 
 export default function PageManagement() {
-  const { selectedRepo, accessToken } = usePlugin();
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, selectedRepo, accessToken } = useAuth();
 
   const [selectedPageIndex, setSelectedPageIndex] = useState<number>(-1);
   const [pages, setPages] = useState<{ name: string; index: number }[]>([]);
@@ -20,11 +18,10 @@ export default function PageManagement() {
     content: string;
     name: string;
   } | null>(null);
-
-  // Page Management functions
-  const loadPages = useCallback(async () => {
-    parent.postMessage({ pluginMessage: { type: "load-pages" } }, "*");
-  }, []);
+  const [remoteFiles, setRemoteFiles] = useState<string[]>([]);
+  const [selectedRemoteFile, setSelectedRemoteFile] = useState<string>("");
+  const [isFetchingFiles, setIsFetchingFiles] = useState<boolean>(false);
+  const [isImportingRemote, setIsImportingRemote] = useState<boolean>(false);
 
   const importPage = useCallback(async (jsonData: string) => {
     parent.postMessage(
@@ -35,8 +32,8 @@ export default function PageManagement() {
 
   // Load pages on component mount
   useEffect(() => {
-    loadPages();
-  }, [loadPages]);
+    parent.postMessage({ pluginMessage: { type: "load-pages" } }, "*");
+  }, []);
 
   // Listen for page export response
   useEffect(() => {
@@ -165,14 +162,9 @@ export default function PageManagement() {
         selectedRepo.default_branch,
       );
 
-      // Check if this is a new PR or existing one by looking at the creation date
-      const prCreatedAt = new Date(result.pr.created_at);
-      const now = new Date();
-      const isNewPR = now.getTime() - prCreatedAt.getTime() < 60000; // Less than 1 minute old
-
       setStatus({
         type: "success",
-        message: `Successfully pushed to GitHub! ${isNewPR ? "PR" : "Existing PR"} #${result.pr.number} ${isNewPR ? "created" : "updated"}: ${result.pr.html_url}`,
+        message: `Successfully pushed to GitHub! PR #${result.pr.number}: ${result.pr.html_url}`,
       });
 
       // Clear the page data after successful push
@@ -189,29 +181,120 @@ export default function PageManagement() {
     }
   };
 
-  const handleImportPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || file.type !== "application/json") {
-      setStatus({ type: "error", message: "Please select a valid JSON file" });
+  const handleFetchRemoteFiles = async () => {
+    if (!selectedRepo) {
+      setStatus({ type: "error", message: "No repository selected" });
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        const jsonData = JSON.parse(e.target?.result as string);
-        setStatus({ type: "idle", message: "" });
+    if (!accessToken) {
+      setStatus({ type: "error", message: "No access token available" });
+      return;
+    }
 
-        await importPage(jsonData);
+    setStatus({ type: "idle", message: "" });
+    setIsFetchingFiles(true);
+
+    try {
+      const githubService = new GitHubService(accessToken);
+      const [owner, repo] = selectedRepo.full_name.split("/");
+
+      // Fetch contents of the figma-exports folder
+      const contents = await githubService.getRepoContents(
+        owner,
+        repo,
+        "figma-exports",
+      );
+
+      if (Array.isArray(contents)) {
+        // Filter for JSON files only
+        const jsonFiles = contents
+          .filter((file: { name: string }) => file.name.endsWith(".json"))
+          .map((file: { name: string }) => file.name);
+
+        setRemoteFiles(jsonFiles);
         setStatus({
           type: "success",
-          message: "Page imported successfully!",
+          message: `Found ${jsonFiles.length} JSON files in figma-exports folder`,
         });
-      } catch {
-        setStatus({ type: "error", message: "Invalid JSON file" });
+      } else {
+        setStatus({
+          type: "error",
+          message: "figma-exports folder not found or is not a directory",
+        });
       }
-    };
-    reader.readAsText(file);
+    } catch (error) {
+      console.error("Error fetching remote files:", error);
+      setStatus({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to fetch remote files",
+      });
+    } finally {
+      setIsFetchingFiles(false);
+    }
+  };
+
+  const handleImportRemoteFile = async () => {
+    if (!selectedRemoteFile) {
+      setStatus({ type: "error", message: "Please select a file to import" });
+      return;
+    }
+
+    if (!selectedRepo) {
+      setStatus({ type: "error", message: "No repository selected" });
+      return;
+    }
+
+    if (!accessToken) {
+      setStatus({ type: "error", message: "No access token available" });
+      return;
+    }
+
+    setStatus({ type: "idle", message: "" });
+    setIsImportingRemote(true);
+
+    try {
+      const githubService = new GitHubService(accessToken);
+      const [owner, repo] = selectedRepo.full_name.split("/");
+
+      // Fetch the specific file content
+      const fileContent = await githubService.getRepoContents(
+        owner,
+        repo,
+        `figma-exports/${selectedRemoteFile}`,
+      );
+
+      if (typeof fileContent === "object" && "content" in fileContent) {
+        // Decode base64 content
+        const jsonData = atob(fileContent.content);
+        const parsedData = JSON.parse(jsonData);
+
+        await importPage(parsedData);
+        setStatus({
+          type: "success",
+          message: `Successfully imported ${selectedRemoteFile}`,
+        });
+      } else {
+        setStatus({
+          type: "error",
+          message: "Failed to fetch file content",
+        });
+      }
+    } catch (error) {
+      console.error("Error importing remote file:", error);
+      setStatus({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to import remote file",
+      });
+    } finally {
+      setIsImportingRemote(false);
+    }
   };
 
   if (!isAuthenticated) {
@@ -303,16 +386,71 @@ export default function PageManagement() {
         )}
       </div>
 
-      {/* Import Section */}
-      <div style={{ marginBottom: "20px" }}>
-        <h3>Import Page</h3>
-        <p>Upload a JSON file to import a page structure:</p>
-        <input
-          type="file"
-          accept=".json"
-          onChange={handleImportPage}
-          style={{ width: "100%", marginBottom: "10px", padding: "8px" }}
-        />
+      {/* Remote File Import */}
+      <div>
+        <h4>From Remote Repository</h4>
+        <p>
+          Fetch and import files from the figma-exports folder in your
+          repository:
+        </p>
+
+        <button
+          onClick={handleFetchRemoteFiles}
+          disabled={isFetchingFiles || !selectedRepo}
+          style={{
+            width: "100%",
+            padding: "10px",
+            marginBottom: "10px",
+            backgroundColor:
+              isFetchingFiles || !selectedRepo ? "#ccc" : "#007acc",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor:
+              isFetchingFiles || !selectedRepo ? "not-allowed" : "pointer",
+          }}
+        >
+          {isFetchingFiles ? "Fetching files..." : "Fetch Remote Files"}
+        </button>
+
+        {remoteFiles.length > 0 && (
+          <div>
+            <select
+              value={selectedRemoteFile}
+              onChange={(e) => setSelectedRemoteFile(e.target.value)}
+              style={{ width: "100%", marginBottom: "10px", padding: "8px" }}
+            >
+              <option value="">Select a file...</option>
+              {remoteFiles.map((filename) => (
+                <option key={filename} value={filename}>
+                  {filename}
+                </option>
+              ))}
+            </select>
+
+            <button
+              onClick={handleImportRemoteFile}
+              disabled={!selectedRemoteFile || isImportingRemote}
+              style={{
+                width: "100%",
+                padding: "10px",
+                backgroundColor:
+                  !selectedRemoteFile || isImportingRemote ? "#ccc" : "#4caf50",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor:
+                  !selectedRemoteFile || isImportingRemote
+                    ? "not-allowed"
+                    : "pointer",
+              }}
+            >
+              {isImportingRemote
+                ? "Importing..."
+                : `Import ${selectedRemoteFile}`}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
