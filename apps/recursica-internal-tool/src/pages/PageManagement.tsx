@@ -1,32 +1,106 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { usePlugin } from "../context/usePlugin";
 import { useAuth } from "../context/useAuth";
+import { GitHubService } from "../services/github/githubService";
+import { useNavigate } from "react-router";
 
 export default function PageManagement() {
-  const {
-    pages,
-    loadPages,
-    exportPage,
-    importPage,
-    quickCopy,
-    selectedRepo,
-    loading,
-    error,
-    clearError,
-  } = usePlugin();
-
-  const { isAuthenticated } = useAuth();
+  const { selectedRepo, accessToken } = usePlugin();
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
 
   const [selectedPageIndex, setSelectedPageIndex] = useState<number>(-1);
+  const [pages, setPages] = useState<{ name: string; index: number }[]>([]);
   const [status, setStatus] = useState<{
     type: "success" | "error" | "idle";
     message: string;
   }>({ type: "idle", message: "" });
+  const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [pageData, setPageData] = useState<{
+    content: string;
+    name: string;
+  } | null>(null);
+
+  // Page Management functions
+  const loadPages = useCallback(async () => {
+    parent.postMessage({ pluginMessage: { type: "load-pages" } }, "*");
+  }, []);
+
+  const importPage = useCallback(async (jsonData: string) => {
+    parent.postMessage(
+      { pluginMessage: { type: "import-page", jsonData } },
+      "*",
+    );
+  }, []);
 
   // Load pages on component mount
   useEffect(() => {
     loadPages();
   }, [loadPages]);
+
+  // Listen for page export response
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      const { pluginMessage } = event.data;
+      if (!pluginMessage) return;
+
+      switch (pluginMessage.type) {
+        case "page-export-response":
+          setIsExporting(false);
+
+          if (pluginMessage.success) {
+            // Console.log the page data as requested
+            setPageData({
+              content: pluginMessage.jsonData,
+              name: pluginMessage.pageName,
+            });
+
+            setStatus({
+              type: "success",
+              message: "Page data received successfully",
+            });
+          } else {
+            setStatus({
+              type: "error",
+              message: pluginMessage.error || "Export failed",
+            });
+          }
+          break;
+
+        case "page-import-response":
+          if (pluginMessage.success) {
+            console.log("Page imported successfully:", pluginMessage.pageName);
+            // Reload pages after import
+            setStatus({
+              type: "success",
+              message: "Page imported successfully",
+            });
+          } else {
+            setStatus({
+              type: "error",
+              message: pluginMessage.error || "Failed to import page",
+            });
+          }
+          break;
+
+        case "pages-loaded":
+          if (pluginMessage.success) {
+            setPages(pluginMessage.pages || []);
+          } else {
+            setStatus({
+              type: "error",
+              message: pluginMessage.error || "Failed to load pages",
+            });
+          }
+          break;
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => {
+      window.removeEventListener("message", handleMessage);
+    };
+  }, []);
 
   const handleExportPage = async () => {
     if (selectedPageIndex < 0) {
@@ -35,28 +109,83 @@ export default function PageManagement() {
     }
 
     setStatus({ type: "idle", message: "" });
+    setIsExporting(true);
+
+    parent.postMessage(
+      {
+        pluginMessage: { type: "export-page", pageIndex: selectedPageIndex },
+      },
+      "*",
+    );
+  };
+
+  const handlePushToGithub = async () => {
+    if (!pageData) {
+      setStatus({ type: "error", message: "No page data to push" });
+      return;
+    }
+
+    if (!selectedRepo) {
+      setStatus({ type: "error", message: "No repository selected" });
+      return;
+    }
+
+    if (!accessToken) {
+      setStatus({ type: "error", message: "No access token available" });
+      return;
+    }
+
+    if (!user) {
+      setStatus({ type: "error", message: "User not authenticated" });
+      return;
+    }
+
+    setStatus({ type: "idle", message: "" });
+    setIsExporting(true);
 
     try {
-      // if (isAuthenticated && selectedRepo) {
-      //   // Push to GitHub
-      //   // await pushPageToGitHub(selectedPageIndex);
-      //   setStatus({
-      //     type: "success",
-      //     message: `Page pushed to GitHub repository: ${selectedRepo.full_name}`,
-      //   });
-      // } else {
-      //   // Fallback to local export
-      // }
-      await exportPage(selectedPageIndex);
+      const githubService = new GitHubService(accessToken);
+
+      // Parse the page data
+      const pageDataParsed = JSON.parse(pageData.content);
+
+      // Extract owner and repo from full_name (format: "owner/repo")
+      const [owner, repo] = selectedRepo.full_name.split("/");
+
+      // Get username from user data
+      const username = user.name || user.id;
+
+      // Push to GitHub with branch creation and PR
+      const result = await githubService.pushPageToRepoWithBranch(
+        owner,
+        repo,
+        pageDataParsed,
+        pageData.name,
+        username,
+        selectedRepo.default_branch,
+      );
+
+      // Check if this is a new PR or existing one by looking at the creation date
+      const prCreatedAt = new Date(result.pr.created_at);
+      const now = new Date();
+      const isNewPR = now.getTime() - prCreatedAt.getTime() < 60000; // Less than 1 minute old
+
       setStatus({
         type: "success",
-        message: "Page exported successfully! Check your downloads.",
+        message: `Successfully pushed to GitHub! ${isNewPR ? "PR" : "Existing PR"} #${result.pr.number} ${isNewPR ? "created" : "updated"}: ${result.pr.html_url}`,
       });
+
+      // Clear the page data after successful push
+      setPageData(null);
     } catch (error) {
+      console.error("Error pushing to GitHub:", error);
       setStatus({
         type: "error",
-        message: error instanceof Error ? error.message : "Export failed",
+        message:
+          error instanceof Error ? error.message : "Failed to push to GitHub",
       });
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -85,22 +214,15 @@ export default function PageManagement() {
     reader.readAsText(file);
   };
 
-  const handleQuickCopy = async () => {
-    setStatus({ type: "idle", message: "" });
-
-    try {
-      await quickCopy();
-      setStatus({
-        type: "success",
-        message: "Page copied successfully!",
-      });
-    } catch (error) {
-      setStatus({
-        type: "error",
-        message: error instanceof Error ? error.message : "Quick copy failed",
-      });
-    }
-  };
+  if (!isAuthenticated) {
+    return (
+      <div>
+        <h1>Page Management</h1>
+        <p>Please authenticate to use this feature</p>
+        <button onClick={() => navigate("/auth")}>Authenticate</button>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -108,36 +230,6 @@ export default function PageManagement() {
       <p>
         Export, import, and copy Figma pages with full structure preservation.
       </p>
-
-      {/* Error Message */}
-      {error && (
-        <div
-          style={{
-            marginBottom: "20px",
-            padding: "10px",
-            backgroundColor: "#ffebee",
-            color: "#c62828",
-            borderRadius: "4px",
-            border: "1px solid #ffcdd2",
-          }}
-        >
-          <p>{error}</p>
-          <button
-            onClick={clearError}
-            style={{
-              marginTop: "5px",
-              padding: "5px 10px",
-              backgroundColor: "#c62828",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
-          >
-            Dismiss
-          </button>
-        </div>
-      )}
 
       {/* Status Message */}
       {status.type !== "idle" && (
@@ -163,7 +255,6 @@ export default function PageManagement() {
           value={selectedPageIndex}
           onChange={(e) => setSelectedPageIndex(parseInt(e.target.value))}
           style={{ width: "100%", marginBottom: "10px", padding: "8px" }}
-          disabled={loading.operations || loading.pages}
         >
           <option value={-1}>Select a page...</option>
           {pages.map((page, index) => (
@@ -174,30 +265,42 @@ export default function PageManagement() {
         </select>
         <button
           onClick={handleExportPage}
-          disabled={
-            loading.operations ||
-            loading.pages ||
-            loading.github ||
-            selectedPageIndex < 0
-          }
+          disabled={selectedPageIndex < 0 || isExporting}
           style={{
             width: "100%",
             padding: "10px",
-            backgroundColor:
-              loading.operations || loading.github ? "#ccc" : "#007acc",
+            backgroundColor: isExporting ? "#ccc" : "#007acc",
             color: "white",
             border: "none",
             borderRadius: "4px",
-            cursor:
-              loading.operations || loading.github ? "not-allowed" : "pointer",
+            cursor: isExporting ? "not-allowed" : "pointer",
           }}
         >
-          {loading.operations || loading.github
-            ? "Processing..."
-            : isAuthenticated && selectedRepo
-              ? "Push to GitHub"
-              : "Export Selected Page"}
+          Get page data
         </button>
+        {pageData && (
+          <button
+            disabled={!pageData || isExporting || !selectedRepo}
+            onClick={handlePushToGithub}
+            style={{
+              width: "100%",
+              padding: "10px",
+              backgroundColor:
+                !pageData || isExporting || !selectedRepo ? "#ccc" : "#4caf50",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor:
+                !pageData || isExporting || !selectedRepo
+                  ? "not-allowed"
+                  : "pointer",
+            }}
+          >
+            {isExporting
+              ? "Pushing to GitHub..."
+              : `Push ${pageData?.name} to GitHub`}
+          </button>
+        )}
       </div>
 
       {/* Import Section */}
@@ -208,48 +311,9 @@ export default function PageManagement() {
           type="file"
           accept=".json"
           onChange={handleImportPage}
-          disabled={loading.operations}
           style={{ width: "100%", marginBottom: "10px", padding: "8px" }}
         />
       </div>
-
-      {/* Quick Copy Section */}
-      <div style={{ marginBottom: "20px" }}>
-        <h3>Quick Copy</h3>
-        <p>Copy current page and create side-by-side comparison:</p>
-        <button
-          onClick={handleQuickCopy}
-          disabled={loading.operations}
-          style={{
-            width: "100%",
-            padding: "10px",
-            backgroundColor: loading.operations ? "#ccc" : "#4caf50",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            cursor: loading.operations ? "not-allowed" : "pointer",
-          }}
-        >
-          {loading.operations ? "Processing..." : "Quick Copy Current Page"}
-        </button>
-      </div>
-
-      {/* Refresh Button */}
-      <button
-        onClick={loadPages}
-        disabled={loading.pages}
-        style={{
-          width: "100%",
-          padding: "10px",
-          backgroundColor: loading.pages ? "#ccc" : "#666",
-          color: "white",
-          border: "none",
-          borderRadius: "4px",
-          cursor: loading.pages ? "not-allowed" : "pointer",
-        }}
-      >
-        {loading.pages ? "Loading..." : "Refresh Pages"}
-      </button>
     </div>
   );
 }

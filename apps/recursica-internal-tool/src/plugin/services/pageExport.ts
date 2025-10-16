@@ -89,19 +89,8 @@ export function extractNodeData(node: any): any {
           name: mainComponent.name,
           key: mainComponent.key,
           fills: mainComponent.fills,
-          children: mainComponent.children.map((child: any) => {
-            const fillsWithBoundVars = child.fills
-              ? child.fills.map((fill: any) => {
-                  const extractedFill = Object.assign({}, fill);
-                  if (fill.boundVariables) {
-                    extractedFill.boundVariables = Object.assign(
-                      {},
-                      fill.boundVariables,
-                    );
-                  }
-                  return extractedFill;
-                })
-              : [];
+          children: mainComponent?.children?.map((child: any) => {
+            const fillsWithBoundVars = extractFills(child?.fills);
 
             return {
               id: child.id,

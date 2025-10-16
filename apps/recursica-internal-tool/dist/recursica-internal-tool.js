@@ -1,4 +1,4 @@
-async function x() {
+async function S() {
   try {
     const e = await figma.variables.getLocalVariableCollectionsAsync();
     for (const s of e) {
@@ -35,13 +35,14 @@ function u(e) {
     s += u(t);
   }), s;
 }
-function S(e) {
+function A(e) {
   return e ? Array.isArray(e) ? e.map((s) => {
     const t = Object.assign({}, s);
     s.boundVariables && (t.boundVariables = Object.assign({}, s.boundVariables));
   }) : e : [];
 }
 function h(e) {
+  var t;
   const s = {
     id: e.id,
     name: e.name,
@@ -56,7 +57,7 @@ function h(e) {
     opacity: e.opacity,
     blendMode: e.blendMode,
     effects: e.effects,
-    fills: S(e == null ? void 0 : e.fills),
+    fills: A(e == null ? void 0 : e.fills),
     strokes: e.strokes,
     strokeWeight: e.strokeWeight,
     strokeAlign: e.strokeAlign,
@@ -88,38 +89,32 @@ function h(e) {
   };
   if (e.type === "INSTANCE" && typeof e.getMainComponentAsync == "function")
     try {
-      const t = e.getMainComponentAsync();
-      t && (s.mainComponent = {
-        id: t.id,
-        name: t.name,
-        key: t.key,
-        fills: t.fills,
-        children: t.children.map((r) => {
-          const a = r.fills ? r.fills.map((i) => {
-            const o = Object.assign({}, i);
-            return i.boundVariables && (o.boundVariables = Object.assign(
-              {},
-              i.boundVariables
-            )), o;
-          }) : [];
+      const r = e.getMainComponentAsync();
+      r && (s.mainComponent = {
+        id: r.id,
+        name: r.name,
+        key: r.key,
+        fills: r.fills,
+        children: (t = r == null ? void 0 : r.children) == null ? void 0 : t.map((i) => {
+          const a = A(i == null ? void 0 : i.fills);
           return {
-            id: r.id,
+            id: i.id,
             fills: a,
-            strokes: r.strokes,
-            strokeWeight: r.strokeWeight,
-            strokeAlign: r.strokeAlign,
-            strokeCap: r.strokeCap,
-            strokeJoin: r.strokeJoin,
-            dashPattern: r.dashPattern,
-            name: r.name,
-            type: r.type
+            strokes: i.strokes,
+            strokeWeight: i.strokeWeight,
+            strokeAlign: i.strokeAlign,
+            strokeCap: i.strokeCap,
+            strokeJoin: i.strokeJoin,
+            dashPattern: i.dashPattern,
+            name: i.name,
+            type: i.type
           };
         })
       });
-    } catch (t) {
-      console.log("Error getting main component for " + e.name + ":", t);
+    } catch (r) {
+      console.log("Error getting main component for " + e.name + ":", r);
     }
-  return e.children && e.children.length > 0 && (s.children = e.children.map((t) => h(t))), s;
+  return e.children && e.children.length > 0 && (s.children = e.children.map((r) => h(r))), s;
 }
 async function E() {
   try {
@@ -151,7 +146,7 @@ async function N(e) {
       };
     const t = s[e];
     console.log("Exporting page: " + t.name);
-    const r = h(t), a = {
+    const r = h(t), i = {
       metadata: {
         exportedAt: (/* @__PURE__ */ new Date()).toISOString(),
         figmaVersion: figma.apiVersion,
@@ -160,12 +155,12 @@ async function N(e) {
         pluginVersion: "1.0.0"
       },
       pageData: r
-    }, i = JSON.stringify(a, null, 2), o = t.name.replace(/[^a-z0-9]/gi, "_") + "_export.json";
+    }, a = JSON.stringify(i, null, 2), o = t.name.replace(/[^a-z0-9]/gi, "_") + "_export.json";
     return console.log(r), {
       type: "page-export-response",
       success: !0,
       filename: o,
-      jsonData: i,
+      jsonData: a,
       pageName: t.name
     };
   } catch (s) {
@@ -216,29 +211,29 @@ async function d(e, s) {
               ), e.fills && e.fills.length > 0)
                 try {
                   t.fills = e.fills;
-                } catch (a) {
-                  console.log("Error applying instance fills: " + a);
+                } catch (i) {
+                  console.log("Error applying instance fills: " + i);
                 }
-              e.mainComponent.children && e.mainComponent.children.length > 0 && t.children && t.children.length > 0 && t.children.forEach((a) => {
-                const i = e.children.find(
-                  (o) => o.name === a.name
+              e.mainComponent.children && e.mainComponent.children.length > 0 && t.children && t.children.length > 0 && t.children.forEach((i) => {
+                const a = e.children.find(
+                  (o) => o.name === i.name
                 );
-                if (i)
+                if (a)
                   try {
-                    if (i.fills && i.fills.length > 0) {
-                      const o = i.fills.map((n) => {
+                    if (a.fills && a.fills.length > 0) {
+                      const o = a.fills.map((n) => {
                         const g = Object.assign({}, n);
                         return n.boundVariables && (g.boundVariables = Object.assign(
                           {},
                           n.boundVariables
                         )), g;
                       });
-                      a.fills = o;
+                      i.fills = o;
                     }
-                    i.strokes && i.strokes.length > 0 && (a.strokes = i.strokes), i.strokeWeight !== void 0 && (a.strokeWeight = i.strokeWeight), i.strokeAlign !== void 0 && (a.strokeAlign = i.strokeAlign), i.strokeCap !== void 0 && (a.strokeCap = i.strokeCap), i.strokeJoin !== void 0 && (a.strokeJoin = i.strokeJoin), i.dashPattern && i.dashPattern.length > 0 && (a.dashPattern = i.dashPattern);
+                    a.strokes && a.strokes.length > 0 && (i.strokes = a.strokes), a.strokeWeight !== void 0 && (i.strokeWeight = a.strokeWeight), a.strokeAlign !== void 0 && (i.strokeAlign = a.strokeAlign), a.strokeCap !== void 0 && (i.strokeCap = a.strokeCap), a.strokeJoin !== void 0 && (i.strokeJoin = a.strokeJoin), a.dashPattern && a.dashPattern.length > 0 && (i.dashPattern = a.dashPattern);
                   } catch (o) {
                     console.log(
-                      "Error updating child " + a.name + ": " + o
+                      "Error updating child " + i.name + ": " + o
                     );
                   }
               });
@@ -272,9 +267,9 @@ async function d(e, s) {
     if (t) {
       if (t.name = e.name || "Unnamed Node", t.x = e.x || 0, t.y = e.y || 0, t.resize(e.width || 100, e.height || 100), e.visible !== void 0 && (t.visible = e.visible), e.locked !== void 0 && (t.locked = e.locked), e.opacity !== void 0 && (t.opacity = e.opacity), e.rotation !== void 0 && (t.rotation = e.rotation), e.blendMode !== void 0 && (t.blendMode = e.blendMode), e.type !== "INSTANCE" && e.fills && e.fills.length > 0) {
         const r = e.fills.map(
-          (a) => {
-            const i = Object.assign({}, a);
-            return a.boundVariables && (i.boundVariables = Object.assign({}, a.boundVariables)), i;
+          (i) => {
+            const a = Object.assign({}, i);
+            return i.boundVariables && (a.boundVariables = Object.assign({}, i.boundVariables)), a;
           }
         );
         t.fills = r;
@@ -300,14 +295,14 @@ async function d(e, s) {
           console.log("Error setting text properties: " + r);
           try {
             t.characters = e.characters;
-          } catch (a) {
-            console.log("Could not set text characters: " + a);
+          } catch (i) {
+            console.log("Could not set text characters: " + i);
           }
         }
       if (e.children && e.children.length > 0)
         for (const r of e.children) {
-          const a = await d(r, t);
-          a && t.appendChild(a);
+          const i = await d(r, t);
+          i && t.appendChild(i);
         }
       s.appendChild(t);
     }
@@ -327,10 +322,10 @@ async function w(e) {
         success: !1,
         error: "Invalid JSON format. Expected pageData and metadata."
       };
-    const s = e.pageData, t = e.metadata, r = "Imported - " + (t.originalPageName || "Unknown"), a = figma.createPage();
-    if (a.name = r, figma.root.appendChild(a), console.log("Created new page: " + r), console.log("Importing " + (t.totalNodes || "unknown") + " nodes"), s.children && s.children.length > 0) {
-      for (const i of s.children)
-        await d(i, a);
+    const s = e.pageData, t = e.metadata, r = "Imported - " + (t.originalPageName || "Unknown"), i = figma.createPage();
+    if (i.name = r, figma.root.appendChild(i), console.log("Created new page: " + r), console.log("Importing " + (t.totalNodes || "unknown") + " nodes"), s.children && s.children.length > 0) {
+      for (const a of s.children)
+        await d(a, i);
       console.log("Successfully imported page content with all children");
     } else
       console.log("No children to import");
@@ -364,8 +359,8 @@ async function C() {
     console.log(
       "Selected page: " + t.name + " (index: " + s + ")"
     );
-    const a = JSON.stringify(r, null, 2), i = JSON.parse(a), o = "Copy - " + i.name, n = figma.createPage();
-    if (n.name = o, figma.root.appendChild(n), i.children && i.children.length > 0) {
+    const i = JSON.stringify(r, null, 2), a = JSON.parse(i), o = "Copy - " + a.name, n = figma.createPage();
+    if (n.name = o, figma.root.appendChild(n), a.children && a.children.length > 0) {
       let y = function(f) {
         f.forEach((c) => {
           const k = (c.x || 0) + (c.width || 0);
@@ -373,20 +368,20 @@ async function C() {
         });
       };
       console.log(
-        "Recreating " + i.children.length + " top-level children..."
+        "Recreating " + a.children.length + " top-level children..."
       );
       let p = 0;
-      y(i.children), console.log("Original content rightmost edge: " + p);
-      for (const f of i.children)
+      y(a.children), console.log("Original content rightmost edge: " + p);
+      for (const f of a.children)
         await d(f, n);
       console.log("Successfully recreated page content with all children");
     } else
       console.log("No children to recreate");
-    const g = u(i);
+    const g = u(a);
     return {
       type: "quick-copy-response",
       success: !0,
-      pageName: i.name,
+      pageName: a.name,
       newPageName: o,
       totalNodes: g
     };
@@ -399,7 +394,7 @@ async function C() {
   }
 }
 const l = "recursica", b = "file-type", m = "theme-name";
-async function A() {
+async function x() {
   try {
     let e = "", s = "";
     const t = await figma.variables.getLocalVariableCollectionsAsync();
@@ -465,7 +460,7 @@ figma.showUI(__html__, {
   width: 500,
   height: 650
 });
-A().then((e) => {
+x().then((e) => {
   figma.ui.postMessage(e);
 });
 figma.ui.onmessage = async (e) => {
@@ -481,7 +476,7 @@ figma.ui.onmessage = async (e) => {
         break;
       }
       case "reset-metadata": {
-        const t = await x();
+        const t = await S();
         figma.ui.postMessage(t);
         break;
       }
@@ -506,7 +501,7 @@ figma.ui.onmessage = async (e) => {
         break;
       }
       case "load-theme-settings": {
-        const t = await A();
+        const t = await x();
         figma.ui.postMessage(t);
         break;
       }

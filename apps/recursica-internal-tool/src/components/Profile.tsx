@@ -1,14 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../context/useAuth";
-import { usePlugin } from "../context/usePlugin";
 import {
   GitHubService,
   type GitHubRepo,
 } from "../services/github/githubService";
 
 export function Profile() {
-  const { user, logout, accessToken } = useAuth();
-  const { selectedRepo, saveSelectedRepo } = usePlugin();
+  const { user, logout, accessToken, selectedRepo, saveSelectedRepo } =
+    useAuth();
   const [repos, setRepos] = useState<GitHubRepo[]>([]);
   const [loading, setLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
