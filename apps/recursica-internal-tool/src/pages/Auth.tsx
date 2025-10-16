@@ -122,24 +122,23 @@ export function Auth() {
         </div>
       )}
 
-      {!isAuthenticated ||
-        (status !== Status.WaitingForAuthorization && (
-          <button
-            onClick={handleLogin}
-            disabled={false}
-            style={{
-              width: "100%",
-              padding: "12px",
-              backgroundColor: "#007acc",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
-          >
-            Login with GitHub
-          </button>
-        ))}
+      {!isAuthenticated && (
+        <button
+          onClick={handleLogin}
+          disabled={false}
+          style={{
+            width: "100%",
+            padding: "12px",
+            backgroundColor: "#007acc",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+          }}
+        >
+          Login with GitHub
+        </button>
+      )}
     </div>
   );
 }
