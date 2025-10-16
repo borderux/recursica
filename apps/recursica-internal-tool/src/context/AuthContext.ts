@@ -16,7 +16,6 @@ export interface IAuthContext {
   selectedRepo: GitHubRepo | null;
   saveAccessToken: (accessToken: string) => void;
   saveSelectedRepo: (repo: GitHubRepo) => void;
-  deleteAccessToken: () => void;
   // Authentication actions
   login: (accessToken: string) => void;
   logout: () => void;

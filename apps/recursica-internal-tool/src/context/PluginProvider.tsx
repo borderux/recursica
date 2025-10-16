@@ -14,27 +14,14 @@ export function PluginProvider({ children }: PluginProviderProps) {
     themeSettings: true,
     pages: false,
     operations: false,
-    github: false,
     currentUser: false,
   });
-  const [userId, setUserId] = useState<string | null>(null);
   const [error, setError] = useState<string | undefined>();
-  console.log("themeSettings", themeSettings);
 
   // Theme Settings functions
   const loadThemeSettings = useCallback(async () => {
     setLoading((prev) => ({ ...prev, themeSettings: true }));
     parent.postMessage({ pluginMessage: { type: "load-theme-settings" } }, "*");
-  }, []);
-
-  const loadCurrentUser = useCallback(async () => {
-    setLoading((prev) => ({ ...prev, currentUser: true }));
-    parent.postMessage({ pluginMessage: { type: "get-current-user" } }, "*");
-  }, []);
-
-  const loadAuthData = useCallback(async () => {
-    setLoading((prev) => ({ ...prev, github: true }));
-    parent.postMessage({ pluginMessage: { type: "load-auth-data" } }, "*");
   }, []);
 
   // Message handler - centralized message processing
@@ -46,12 +33,6 @@ export function PluginProvider({ children }: PluginProviderProps) {
       console.log("New message from plugin sandbox:", pluginMessage);
 
       switch (pluginMessage.type) {
-        case "current-user": {
-          setUserId(pluginMessage.payload || null);
-          setLoading((prev) => ({ ...prev, currentUser: false }));
-          break;
-        }
-
         case "theme-settings-loaded":
           if (pluginMessage.success) {
             setThemeSettings({
@@ -123,9 +104,7 @@ export function PluginProvider({ children }: PluginProviderProps) {
   // Load initial data
   useEffect(() => {
     loadThemeSettings();
-    loadAuthData();
-    loadCurrentUser();
-  }, [loadThemeSettings, loadCurrentUser, loadAuthData]);
+  }, [loadThemeSettings]);
 
   // Reset Metadata function
   const resetMetadata = useCallback(async () => {
@@ -145,7 +124,6 @@ export function PluginProvider({ children }: PluginProviderProps) {
     resetMetadata,
     loading,
     error,
-    userId,
     clearError,
   };
 

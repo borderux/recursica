@@ -24,6 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
     window.addEventListener("message", handleMessage);
+    parent.postMessage({ pluginMessage: { type: "load-auth-data" } }, "*");
     return () => window.removeEventListener("message", handleMessage);
   }, []);
 
@@ -106,7 +107,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     selectedRepo,
     saveAccessToken,
     saveSelectedRepo,
-    deleteAccessToken,
     login,
     logout,
   };

@@ -18,11 +18,7 @@ export interface IPluginContext {
     themeSettings: boolean;
     pages: boolean;
     operations: boolean;
-    github: boolean;
   };
-
-  // User ID
-  userId: string | null;
 
   // Error handling
   error: string | undefined;

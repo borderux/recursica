@@ -84,8 +84,21 @@ export async function recreateNodeFromData(
                         matchingChild.fills &&
                         matchingChild.fills.length > 0
                       ) {
-                        // Note: Fill application is currently disabled due to Figma API limitations
-                        // with bound variables in instance children
+                        // Preserve bound variables when applying fills
+                        const fillsWithBoundVariables = (
+                          matchingChild.fills as any[]
+                        ).map((fill: any) => {
+                          const newFill = Object.assign({}, fill);
+                          if (fill?.boundVariables) {
+                            newFill.boundVariables = Object.assign(
+                              {},
+                              fill.boundVariables,
+                            );
+                          }
+                          return newFill;
+                        });
+
+                        child.fills = fillsWithBoundVariables ?? {};
                       }
 
                       // Apply other properties
@@ -179,14 +192,7 @@ export async function recreateNodeFromData(
         newNode.blendMode = nodeData.blendMode;
 
       // Set fills if they exist and are not empty (skip instances, they're handled separately)
-      if (
-        nodeData.type !== "INSTANCE" &&
-        nodeData.fills &&
-        nodeData.fills.length > 0
-      ) {
-        // Note: Fill application is currently disabled due to Figma API limitations
-        // with bound variables and complex fill structures
-      } else if (nodeData.type !== "INSTANCE") {
+      if (nodeData.type !== "INSTANCE") {
         // Check if Figma added default fills and remove them if original had no fills
         if (nodeData.fills && nodeData.fills.length === 0) {
           newNode.fills = [];

@@ -1,8 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useLayoutEffect } from "react";
 import { useAuth } from "../context/useAuth";
 import { apiService, pluginTokenToCode } from "../services/auth/auth";
 import { Profile } from "../components/Profile";
-import { usePlugin } from "../context/usePlugin";
 
 const Status = {
   Login: "Login",
@@ -14,7 +13,7 @@ type StatusType = (typeof Status)[keyof typeof Status];
 
 export function Auth() {
   const [status, setStatus] = useState<StatusType>(Status.Login);
-  const { userId } = usePlugin();
+  const [userId, setUserId] = useState<string | null>(null);
   const { login, isAuthenticated } = useAuth();
 
   const pollForToken = useCallback(
@@ -80,6 +79,26 @@ export function Auth() {
     }
   };
 
+  useLayoutEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      const { pluginMessage } = event.data;
+      console.log("[Auth] New message from plugin sandbox:", pluginMessage);
+      if (!pluginMessage) return;
+
+      switch (pluginMessage.type) {
+        case "current-user": {
+          setUserId(pluginMessage.payload || null);
+          break;
+        }
+        default:
+          break;
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    parent.postMessage({ pluginMessage: { type: "get-current-user" } }, "*");
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
+
   if (isAuthenticated) {
     return <Profile />;
   }
@@ -103,23 +122,24 @@ export function Auth() {
         </div>
       )}
 
-      {!isAuthenticated && (
-        <button
-          onClick={handleLogin}
-          disabled={false}
-          style={{
-            width: "100%",
-            padding: "12px",
-            backgroundColor: "#007acc",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-          }}
-        >
-          Login with GitHub
-        </button>
-      )}
+      {!isAuthenticated ||
+        (status !== Status.WaitingForAuthorization && (
+          <button
+            onClick={handleLogin}
+            disabled={false}
+            style={{
+              width: "100%",
+              padding: "12px",
+              backgroundColor: "#007acc",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+            }}
+          >
+            Login with GitHub
+          </button>
+        ))}
     </div>
   );
 }

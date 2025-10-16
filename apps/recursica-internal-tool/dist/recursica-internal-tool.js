@@ -29,19 +29,19 @@ async function S() {
     };
   }
 }
-function m(e) {
+function u(e) {
   let s = 1;
   return e.children && e.children.length > 0 && e.children.forEach((t) => {
-    s += m(t);
+    s += u(t);
   }), s;
 }
-function k(e) {
+function A(e) {
   return e ? Array.isArray(e) ? e.map((s) => {
     const t = Object.assign({}, s);
     s.boundVariables && (t.boundVariables = Object.assign({}, s.boundVariables));
   }) : e : [];
 }
-function u(e) {
+function h(e) {
   var t;
   const s = {
     id: e.id,
@@ -57,7 +57,7 @@ function u(e) {
     opacity: e.opacity,
     blendMode: e.blendMode,
     effects: e.effects,
-    fills: k(e == null ? void 0 : e.fills),
+    fills: A(e == null ? void 0 : e.fills),
     strokes: e.strokes,
     strokeWeight: e.strokeWeight,
     strokeAlign: e.strokeAlign,
@@ -96,7 +96,7 @@ function u(e) {
         key: r.key,
         fills: r.fills,
         children: (t = r == null ? void 0 : r.children) == null ? void 0 : t.map((i) => {
-          const a = k(i == null ? void 0 : i.fills);
+          const a = A(i == null ? void 0 : i.fills);
           return {
             id: i.id,
             fills: a,
@@ -114,7 +114,7 @@ function u(e) {
     } catch (r) {
       console.log("Error getting main component for " + e.name + ":", r);
     }
-  return e.children && e.children.length > 0 && (s.children = e.children.map((r) => u(r))), s;
+  return e.children && e.children.length > 0 && (s.children = e.children.map((r) => h(r))), s;
 }
 async function E() {
   try {
@@ -146,12 +146,12 @@ async function N(e) {
       };
     const t = s[e];
     console.log("Exporting page: " + t.name);
-    const r = u(t), i = {
+    const r = h(t), i = {
       metadata: {
         exportedAt: (/* @__PURE__ */ new Date()).toISOString(),
         figmaVersion: figma.apiVersion,
         originalPageName: t.name,
-        totalNodes: m(r),
+        totalNodes: u(r),
         pluginVersion: "1.0.0"
       },
       pageData: r
@@ -171,7 +171,7 @@ async function N(e) {
     };
   }
 }
-async function h(e, s) {
+async function d(e, s) {
   try {
     let t;
     switch (e.type) {
@@ -220,7 +220,17 @@ async function h(e, s) {
                 );
                 if (a)
                   try {
-                    a.fills && a.fills.length > 0, a.strokes && a.strokes.length > 0 && (i.strokes = a.strokes), a.strokeWeight !== void 0 && (i.strokeWeight = a.strokeWeight), a.strokeAlign !== void 0 && (i.strokeAlign = a.strokeAlign), a.strokeCap !== void 0 && (i.strokeCap = a.strokeCap), a.strokeJoin !== void 0 && (i.strokeJoin = a.strokeJoin), a.dashPattern && a.dashPattern.length > 0 && (i.dashPattern = a.dashPattern);
+                    if (a.fills && a.fills.length > 0) {
+                      const o = a.fills.map((n) => {
+                        const g = Object.assign({}, n);
+                        return n != null && n.boundVariables && (g.boundVariables = Object.assign(
+                          {},
+                          n.boundVariables
+                        )), g;
+                      });
+                      i.fills = o != null ? o : {};
+                    }
+                    a.strokes && a.strokes.length > 0 && (i.strokes = a.strokes), a.strokeWeight !== void 0 && (i.strokeWeight = a.strokeWeight), a.strokeAlign !== void 0 && (i.strokeAlign = a.strokeAlign), a.strokeCap !== void 0 && (i.strokeCap = a.strokeCap), a.strokeJoin !== void 0 && (i.strokeJoin = a.strokeJoin), a.dashPattern && a.dashPattern.length > 0 && (i.dashPattern = a.dashPattern);
                   } catch (o) {
                     console.log(
                       "Error updating child " + i.name + ": " + o
@@ -255,7 +265,7 @@ async function h(e, s) {
         break;
     }
     if (t) {
-      if (t.name = e.name || "Unnamed Node", t.x = e.x || 0, t.y = e.y || 0, t.resize(e.width || 100, e.height || 100), e.visible !== void 0 && (t.visible = e.visible), e.locked !== void 0 && (t.locked = e.locked), e.opacity !== void 0 && (t.opacity = e.opacity), e.rotation !== void 0 && (t.rotation = e.rotation), e.blendMode !== void 0 && (t.blendMode = e.blendMode), e.type !== "INSTANCE" && e.fills && e.fills.length > 0 || e.type !== "INSTANCE" && e.fills && e.fills.length === 0 && (t.fills = []), e.strokes && e.strokes.length > 0 && (t.strokes = e.strokes), e.strokeWeight !== void 0 && (t.strokeWeight = e.strokeWeight), e.strokeAlign !== void 0 && (t.strokeAlign = e.strokeAlign), e.cornerRadius !== void 0 && (t.cornerRadius = e.cornerRadius), e.effects && e.effects.length > 0 && (t.effects = e.effects), (e.type === "FRAME" || e.type === "COMPONENT" || e.type === "INSTANCE") && (e.layoutMode && (t.layoutMode = e.layoutMode), e.primaryAxisSizingMode && (t.primaryAxisSizingMode = e.primaryAxisSizingMode), e.counterAxisSizingMode && (t.counterAxisSizingMode = e.counterAxisSizingMode), e.primaryAxisAlignItems && (t.primaryAxisAlignItems = e.primaryAxisAlignItems), e.counterAxisAlignItems && (t.counterAxisAlignItems = e.counterAxisAlignItems), e.paddingLeft !== void 0 && (t.paddingLeft = e.paddingLeft), e.paddingRight !== void 0 && (t.paddingRight = e.paddingRight), e.paddingTop !== void 0 && (t.paddingTop = e.paddingTop), e.paddingBottom !== void 0 && (t.paddingBottom = e.paddingBottom), e.itemSpacing !== void 0 && (t.itemSpacing = e.itemSpacing)), (e.type === "VECTOR" || e.type === "LINE") && (e.strokeCap && (t.strokeCap = e.strokeCap), e.strokeJoin && (t.strokeJoin = e.strokeJoin), e.dashPattern && e.dashPattern.length > 0 && (t.dashPattern = e.dashPattern)), e.type === "TEXT" && e.characters)
+      if (t.name = e.name || "Unnamed Node", t.x = e.x || 0, t.y = e.y || 0, t.resize(e.width || 100, e.height || 100), e.visible !== void 0 && (t.visible = e.visible), e.locked !== void 0 && (t.locked = e.locked), e.opacity !== void 0 && (t.opacity = e.opacity), e.rotation !== void 0 && (t.rotation = e.rotation), e.blendMode !== void 0 && (t.blendMode = e.blendMode), e.type !== "INSTANCE" && e.fills && e.fills.length === 0 && (t.fills = []), e.strokes && e.strokes.length > 0 && (t.strokes = e.strokes), e.strokeWeight !== void 0 && (t.strokeWeight = e.strokeWeight), e.strokeAlign !== void 0 && (t.strokeAlign = e.strokeAlign), e.cornerRadius !== void 0 && (t.cornerRadius = e.cornerRadius), e.effects && e.effects.length > 0 && (t.effects = e.effects), (e.type === "FRAME" || e.type === "COMPONENT" || e.type === "INSTANCE") && (e.layoutMode && (t.layoutMode = e.layoutMode), e.primaryAxisSizingMode && (t.primaryAxisSizingMode = e.primaryAxisSizingMode), e.counterAxisSizingMode && (t.counterAxisSizingMode = e.counterAxisSizingMode), e.primaryAxisAlignItems && (t.primaryAxisAlignItems = e.primaryAxisAlignItems), e.counterAxisAlignItems && (t.counterAxisAlignItems = e.counterAxisAlignItems), e.paddingLeft !== void 0 && (t.paddingLeft = e.paddingLeft), e.paddingRight !== void 0 && (t.paddingRight = e.paddingRight), e.paddingTop !== void 0 && (t.paddingTop = e.paddingTop), e.paddingBottom !== void 0 && (t.paddingBottom = e.paddingBottom), e.itemSpacing !== void 0 && (t.itemSpacing = e.itemSpacing)), (e.type === "VECTOR" || e.type === "LINE") && (e.strokeCap && (t.strokeCap = e.strokeCap), e.strokeJoin && (t.strokeJoin = e.strokeJoin), e.dashPattern && e.dashPattern.length > 0 && (t.dashPattern = e.dashPattern)), e.type === "TEXT" && e.characters)
         try {
           if (e.fontName)
             try {
@@ -282,7 +292,7 @@ async function h(e, s) {
         }
       if (e.children && e.children.length > 0)
         for (const r of e.children) {
-          const i = await h(r, t);
+          const i = await d(r, t);
           i && t.appendChild(i);
         }
       s.appendChild(t);
@@ -306,7 +316,7 @@ async function w(e) {
     const s = e.pageData, t = e.metadata, i = "Imported - " + (e.metadata.originalPageName.replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") || "Unknown"), a = figma.createPage();
     if (a.name = i, figma.root.appendChild(a), console.log("Created new page: " + i), console.log("Importing " + (t.totalNodes || "unknown") + " nodes"), s.children && s.children.length > 0) {
       for (const o of s.children)
-        await h(o, a);
+        await d(o, a);
       console.log("Successfully imported page content with all children");
     } else
       console.log("No children to import");
@@ -336,35 +346,35 @@ async function C() {
         success: !1,
         error: "No page found at index 11"
       };
-    const r = u(t);
+    const r = h(t);
     console.log(
       "Selected page: " + t.name + " (index: " + s + ")"
     );
-    const i = JSON.stringify(r, null, 2), a = JSON.parse(i), o = "Copy - " + a.name, l = figma.createPage();
-    if (l.name = o, figma.root.appendChild(l), a.children && a.children.length > 0) {
-      let y = function(p) {
-        p.forEach((n) => {
-          const d = (n.x || 0) + (n.width || 0);
-          d > g && (g = d), n.children && n.children.length > 0 && y(n.children);
+    const i = JSON.stringify(r, null, 2), a = JSON.parse(i), o = "Copy - " + a.name, n = figma.createPage();
+    if (n.name = o, figma.root.appendChild(n), a.children && a.children.length > 0) {
+      let y = function(f) {
+        f.forEach((c) => {
+          const k = (c.x || 0) + (c.width || 0);
+          k > p && (p = k), c.children && c.children.length > 0 && y(c.children);
         });
       };
       console.log(
         "Recreating " + a.children.length + " top-level children..."
       );
-      let g = 0;
-      y(a.children), console.log("Original content rightmost edge: " + g);
-      for (const p of a.children)
-        await h(p, l);
+      let p = 0;
+      y(a.children), console.log("Original content rightmost edge: " + p);
+      for (const f of a.children)
+        await d(f, n);
       console.log("Successfully recreated page content with all children");
     } else
       console.log("No children to recreate");
-    const b = m(a);
+    const g = u(a);
     return {
       type: "quick-copy-response",
       success: !0,
       pageName: a.name,
       newPageName: o,
-      totalNodes: b
+      totalNodes: g
     };
   } catch (e) {
     return console.error("Error performing quick copy:", e), {
@@ -374,14 +384,14 @@ async function C() {
     };
   }
 }
-const c = "recursica", A = "file-type", f = "theme-name";
+const l = "recursica", b = "file-type", m = "theme-name";
 async function x() {
   try {
     let e = "", s = "";
     const t = await figma.variables.getLocalVariableCollectionsAsync();
     if (t.length > 0) {
       const r = t[0];
-      e = r.getSharedPluginData(c, A) || "", s = r.getSharedPluginData(c, f) || "";
+      e = r.getSharedPluginData(l, b) || "", s = r.getSharedPluginData(l, m) || "";
     }
     return {
       type: "theme-settings-loaded",
@@ -417,11 +427,11 @@ async function R(e, s) {
       success: !1,
       error: "No variable collections found. Please create a variable collection first."
     } : (t.forEach((r) => {
-      r.setSharedPluginData(c, A, e), e === "themes" ? r.setSharedPluginData(
-        c,
-        f,
+      r.setSharedPluginData(l, b, e), e === "themes" ? r.setSharedPluginData(
+        l,
+        m,
         s
-      ) : r.setSharedPluginData(c, f, "");
+      ) : r.setSharedPluginData(l, m, "");
     }), figma.notify(
       `Theme settings updated: File type set to "${e}"${e === "themes" ? `, Theme name set to "${s}"` : ""}`
     ), {
