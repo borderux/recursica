@@ -84,20 +84,19 @@ export async function recreateNodeFromData(
                         matchingChild.fills &&
                         matchingChild.fills.length > 0
                       ) {
-                        const fillsWithBoundVariables = (
-                          matchingChild.fills as any[]
-                        ).map((fill: any) => {
-                          const newFill = Object.assign({}, fill);
-                          if (fill.boundVariables) {
-                            newFill.boundVariables = Object.assign(
-                              {},
-                              fill.boundVariables,
-                            );
-                          }
-                          return newFill;
-                        });
-
-                        child.fills = fillsWithBoundVariables;
+                        // const fillsWithBoundVariables = (
+                        //   matchingChild.fills as any[]
+                        // ).map((fill: any) => {
+                        //   const newFill = Object.assign({}, fill);
+                        //   if (fill?.boundVariables) {
+                        //     // newFill.boundVariables = Object.assign(
+                        //     //   {},
+                        //     //   fill?.boundVariables,
+                        //     // );
+                        //   }
+                        //   return newFill;
+                        // });
+                        // child.fills = fillsWithBoundVariables;
                       }
 
                       // Apply other properties
@@ -197,17 +196,16 @@ export async function recreateNodeFromData(
         nodeData.fills.length > 0
       ) {
         // Preserve bound variables when applying fills
-        const fillsWithBoundVariables = (nodeData.fills as any[]).map(
-          (fill: any) => {
-            const newFill = Object.assign({}, fill);
-            if (fill.boundVariables) {
-              newFill.boundVariables = Object.assign({}, fill.boundVariables);
-            }
-            return newFill;
-          },
-        );
-
-        newNode.fills = fillsWithBoundVariables;
+        // const fillsWithBoundVariables = (nodeData.fills as any[]).map(
+        //   (fill: any) => {
+        //     const newFill = Object.assign({}, fill);
+        //     if (fill?.boundVariables) {
+        //       // newFill.boundVariables = Object.assign({}, fill?.boundVariables);
+        //     }
+        //     return newFill;
+        //   },
+        // );
+        // newNode.fills = fillsWithBoundVariables;
       } else if (nodeData.type !== "INSTANCE") {
         // Check if Figma added default fills and remove them if original had no fills
         if (nodeData.fills && nodeData.fills.length === 0) {
@@ -361,10 +359,14 @@ export async function importPage(jsonData: any): Promise<PageImportResponse> {
 
     const pageData = jsonData.pageData;
     const metadata = jsonData.metadata;
+    const sanitizedPageName = jsonData.metadata.originalPageName
+      .replace(/[^\w\s-]/g, "") // Remove emojis and special characters except word chars, spaces, and hyphens
+      .replace(/\s+/g, "-") // Replace spaces with hyphens
+      .replace(/-+/g, "-") // Replace multiple hyphens with single hyphen
+      .replace(/^-|-$/g, ""); // Remove leading/trailing hyphens
 
     // Create a new page for the imported content
-    const newPageName =
-      "Imported - " + (metadata.originalPageName || "Unknown");
+    const newPageName = "Imported - " + (sanitizedPageName || "Unknown");
     const newPage = figma.createPage();
     newPage.name = newPageName;
     figma.root.appendChild(newPage);

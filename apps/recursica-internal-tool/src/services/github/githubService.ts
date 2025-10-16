@@ -160,14 +160,19 @@ export class GitHubService {
     pageData: FigmaNode,
     pageName: string,
   ): Promise<GitHubFileContent> {
-    const filename = `${pageName.replace(/[^a-z0-9]/gi, "_")}_export.json`;
+    const sanitizedPageName = pageName
+      .replace(/[^\w\s-]/g, "") // Remove emojis and special characters except word chars, spaces, and hyphens
+      .replace(/\s+/g, "-") // Replace spaces with hyphens
+      .replace(/-+/g, "-") // Replace multiple hyphens with single hyphen
+      .replace(/^-|-$/g, ""); // Remove leading/trailing hyphens
+    const filename = `${sanitizedPageName}_export.json`;
     const filePath = `figma-exports/${filename}`;
 
     // Create the export data with metadata
     const exportData = {
       metadata: {
         exportedAt: new Date().toISOString(),
-        originalPageName: pageName,
+        originalPageName: sanitizedPageName,
         totalNodes: this.countTotalNodes(pageData),
         pluginVersion: "1.0.0",
       },
@@ -342,7 +347,16 @@ export class GitHubService {
   async pushPageToRepoWithBranch(
     owner: string,
     repo: string,
-    pageData: FigmaNode,
+    pageData: {
+      metadata: {
+        exportedAt: string;
+        originalPageName: string;
+        totalNodes: number;
+        pluginVersion: string;
+        exportedBy: string;
+      };
+      pageData: FigmaNode;
+    },
     pageName: string,
     username: string,
     baseBranch: string,
@@ -362,19 +376,7 @@ export class GitHubService {
     const filename = `${sanitizedPageName}.json`;
     const filePath = `figma-exports/${filename}`;
 
-    // Create the export data with metadata
-    const exportData = {
-      metadata: {
-        exportedAt: new Date().toISOString(),
-        originalPageName: pageName,
-        totalNodes: this.countTotalNodes(pageData),
-        pluginVersion: "1.0.0",
-        exportedBy: username,
-      },
-      pageData: pageData,
-    };
-
-    const content = JSON.stringify(exportData, null, 2);
+    const content = JSON.stringify(pageData, null, 2);
     const message = `Export Figma page: ${pageName}`;
 
     // Ensure the branch exists
