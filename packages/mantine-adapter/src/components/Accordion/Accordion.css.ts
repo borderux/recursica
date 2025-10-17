@@ -26,7 +26,7 @@ export const label = style({
 export const item = style({
   minWidth: recursica.uiKit["accordion/size/min-width"],
   maxWidth: recursica.uiKit["accordion/size/max-width"],
-  borderColor: recursica.uiKit["accordion/color/border"],
+  borderColor: recursica.uiKit["accordion/color/divider"],
   border: "1px solid",
   padding: "0",
   //flexDirection: "column",

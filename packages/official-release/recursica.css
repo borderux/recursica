@@ -16,10 +16,10 @@ For more information about Recursica, go to https://recursica.com
   --global-form-layout-side-by-side-label-column-width: 224px;
   --global-form-layout-side-by-side-label-height: 48px;
   --global-form-layout-side-by-side-gutter: var(--dimension-gutter-horizontal);
+  --global-form-layout-side-by-side-vertical-padding: 3px;
   --global-form-indicator-color-optional-text: var(
     --layer-layer-3-element-text-low-emphasis
   );
-  --global-form-layout-side-by-side-vertical-padding: 3px;
   --global-form-layout-stacked-label-field-gap: 3px;
   --global-form-indicator-color-required-asterisk: var(
     --layer-layer-3-element-text-alert
@@ -40,13 +40,13 @@ For more information about Recursica, go to https://recursica.com
   );
   --global-form-field-size-border-thickness-default: 1px;
   --global-form-field-size-border-thickness-focus: 2px;
-  --global-form-field-color-icon: var(--layer-layer-3-element-text-color);
   --global-form-field-size-icon-text-gap: var(--dimension-default);
+  --global-form-field-color-icon: var(--layer-layer-3-element-text-color);
   --global-form-field-size-single-line-input-height: 48px;
-  --global-form-field-size-horizontal-padding: var(--dimension-lg);
   --global-form-field-color-text-valued: var(
     --layer-layer-3-element-text-color
   );
+  --global-form-field-size-horizontal-padding: var(--dimension-lg);
   --global-form-field-size-icon: var(--dimension-icon-default);
   --global-form-field-size-max-width: 464px;
   --global-form-field-size-min-width: 140px;
@@ -56,7 +56,6 @@ For more information about Recursica, go to https://recursica.com
   --global-form-field-color-disabled: var(--state-disabled);
   --global-form-field-size-vertical-padding: var(--dimension-md);
   --global-form-field-size-vertical-gutter: var(--dimension-default);
-  --accordion-color-label: var(--layer-layer-3-element-text-color);
   --global-form-label-color-default: var(--layer-layer-3-element-text-color);
   --global-form-label-color-required-asterisk: var(
     --global-form-indicator-color-required-asterisk
@@ -94,8 +93,9 @@ For more information about Recursica, go to https://recursica.com
   --global-form-assistive-element-error-icon-color: var(
     --layer-layer-3-element-text-alert
   );
+  --accordion-color-label: var(--layer-layer-3-element-text-color);
   --accordion-color-icon: var(--layer-layer-3-element-text-color);
-  --accordion-color-border: var(--layer-layer-3-property-border-color);
+  --accordion-color-divider: var(--layer-layer-3-property-border-color);
   --accordion-size-padding: var(--dimension-lg);
   --accordion-size-text-icon-gap: var(--dimension-lg);
   --accordion-size-header-content-gap: var(--dimension-lg);
@@ -109,12 +109,12 @@ For more information about Recursica, go to https://recursica.com
   --avatar-color-border-primary: var(
     --layer-layer-alternative-primary-color-element-text-color
   );
-  --avatar-color-label-primary: var(
+  --avatar-color-initials-primary: var(
     --layer-layer-alternative-primary-color-element-text-color
   );
   --avatar-color-background-ghost: var(--layer-layer-3-property-surface);
   --avatar-color-border-ghost: var(--layer-layer-3-property-border-color);
-  --avatar-color-label-ghost: var(--layer-layer-3-element-text-color);
+  --avatar-color-initials-ghost: var(--layer-layer-3-element-text-color);
   --avatar-color-border-image: var(--layer-layer-3-property-border-color);
   --avatar-size-small: 24px;
   --avatar-size-default: 32px;
@@ -215,7 +215,7 @@ For more information about Recursica, go to https://recursica.com
   --date-picker-calendar-size-border-radius: var(--size-border-radius-default);
   --date-picker-calendar-size-date-border-radius: var(--dimension-xl);
   --date-picker-calendar-size-date-padding: var(--dimension-sm);
-  --divider-color-border: var(--layer-layer-3-property-border-color);
+  --divider-color-default: var(--layer-layer-3-property-border-color);
   --dropdown-color-background: var(--global-form-field-color-background);
   --dropdown-size-border-radius: var(--global-form-field-size-border-radius);
   --dropdown-size-field-height: var(
@@ -312,9 +312,9 @@ For more information about Recursica, go to https://recursica.com
   --file-upload-file-color-error-border: var(
     --layer-layer-3-element-text-alert
   );
-  --hover-card-color-background: var(--palette-neutral-050-tone);
-  --hover-card-color-border: var(--palette-neutral-100-tone);
-  --hover-card-color-text: var(--palette-neutral-900-tone);
+  --hover-card-color-background: var(--layer-layer-3-property-surface);
+  --hover-card-color-border: var(--layer-layer-3-property-border-color);
+  --hover-card-color-text: var(--layer-layer-3-element-text-color);
   --hover-card-size-padding: var(--dimension-lg);
   --hover-card-size-radius: var(--dimension-border-radius-sm);
   --link-color-text-default: var(--layer-layer-3-element-interactive-color);
@@ -344,9 +344,9 @@ For more information about Recursica, go to https://recursica.com
     --layer-layer-1-element-text-low-emphasis
   );
   --menu-item-color-border-bottom: var(--layer-layer-3-property-border-color);
-  --menu-item-size-item-vertical-padding: var(--size-2x);
+  --menu-item-size-padding: var(--dimension-lg);
   --menu-item-size-label-top-padding: 3px;
-  --menu-item-size-spacing: var(--size-default);
+  --menu-item-size-spacing: var(--dimension-default);
   --modal-color-background: var(--layer-layer-3-property-surface);
   --modal-color-scroll-divider: var(--layer-layer-3-property-border-color);
   --modal-color-title: var(--layer-layer-3-element-text-color);
@@ -419,25 +419,17 @@ For more information about Recursica, go to https://recursica.com
   --panel-size-content-padding: var(--dimension-xl);
   --popover-color-background: var(--layer-layer-3-property-surface);
   --popover-color-text: var(--layer-layer-3-element-text-color);
-  --popover-size-beak-padding-alignment: var(--dimension-default);
+  --popover-size-beak-inset: var(--dimension-default);
   --popover-size-border-radius: var(--dimension-border-radius-sm);
   --popover-size-padding: var(--dimension-md);
   --radio-color-default: var(--layer-layer-3-element-text-color);
   --radio-color-text-value: var(--global-form-field-color-text-valued);
-  --read-only-color-icon: var(--layer-layer-2-element-text-color);
+  --read-only-color-leading-icon: var(--layer-layer-2-element-text-color);
   --read-only-color-edit-icon: var(--layer-layer-3-element-interactive-color);
-  --read-only-color-value-text: var(--layer-layer-2-element-text-color);
-  --read-only-size-icon: 24px;
-  --read-only-size-icon-bottom-padding: 1px;
-  --read-only-size-edit-icon: 16px;
-  --read-only-size-label-top-placement-bottom-padding: var(--size-0-5x);
-  --read-only-size-label-edit-icon-spacing: var(--size-default);
-  --read-only-size-left-placement-column-width: var(
-    --global-form-layout-side-by-side-label-column-width
-  );
-  --read-only-size-label-left-placement-horizontal-gutter: var(
-    --global-form-layout-side-by-side-gutter
-  );
+  --read-only-color-text-value: var(--layer-layer-2-element-text-color);
+  --read-only-size-leading-icon: var(--dimension-icon-default);
+  --read-only-size-edit-icon: var(--dimension-icon-sm);
+  --read-only-size-label-edit-icon-gap: var(--dimension-default);
   --read-only-size-max-width: var(--global-form-field-size-max-width);
   --radio-color-disabled: var(--state-disabled);
   --radio-size-dot: var(--dimension-default);
@@ -448,8 +440,10 @@ For more information about Recursica, go to https://recursica.com
   --radio-size-options-vertical-gutter: var(--dimension-sm);
   --panel-size-header-horizontal-padding: var(--dimension-xl);
   --panel-size-header-vertical-padding: var(--dimension-lg);
+  --panel-size-title-close-button-gap: var(--dimension-lg);
+  --panel-size-footer-horizontal-padding: var(--dimension-xl);
+  --panel-size-footer-vertical-padding: var(--dimension-lg);
   --search-color-background: var(--global-form-field-color-background);
-  --panel-size-header-close-button-gap: var(--dimension-lg);
   --search-color-border: var(--global-form-field-color-border);
   --search-color-border-focus: var(--global-form-field-color-border-focus);
   --search-color-border-selected: var(
@@ -477,7 +471,7 @@ For more information about Recursica, go to https://recursica.com
   --search-size-vertical-padding: var(
     --global-form-field-size-vertical-padding
   );
-  --panel-size-button-row-gap: var(--dimension-lg);
+  --panel-size-footer-buttons-gap: var(--dimension-lg);
   --segmented-control-color-background-default: var(
     --layer-layer-3-property-surface
   );
@@ -494,48 +488,34 @@ For more information about Recursica, go to https://recursica.com
   --segmented-control-size-control-horizontal-padding: var(--dimension-lg);
   --segmented-control-size-padding: var(--dimension-sm);
   --segmented-control-size-max-width: 468px;
-  --stepper-color-done-step-background: var(
-    --layer-layer-alternative-primary-color-property-surface
-  );
-  --stepper-color-done-step-icon: var(
-    --layer-layer-alternative-primary-color-element-text-color
-  );
-  --stepper-color-current-step-background: var(
-    --layer-layer-3-property-surface
-  );
-  --stepper-color-current-step-stroke: var(--palette-palette-1-default-tone);
-  --stepper-color-current-step-text: var(--layer-layer-1-element-text-color);
-  --stepper-color-label-text: var(--layer-layer-1-element-text-color);
-  --stepper-color-next-step-background-enabled: var(
-    --layer-layer-3-property-surface
-  );
-  --stepper-color-next-step-stroke-enabled: var(
-    --layer-layer-3-property-border-color
-  );
-  --stepper-color-next-step-enabled-text: var(
-    --layer-layer-3-element-text-color
-  );
-  --stepper-color-step-disabled: var(--state-disabled);
-  --stepper-color-step-number-label: var(
-    --layer-layer-3-element-text-low-emphasis
-  );
-  --stepper-size-progress-indicator-large: 40px;
-  --stepper-size-progress-indicator-small: 24px;
-  --stepper-size-border-radius: var(--size-border-radius-3x);
-  --stepper-size-vertical-spacing: var(--size-default);
-  --stepper-size-label-spacing: var(--size-0-5x);
-  --stepper-size-label-horizontal-padding: var(--size-default);
-  --stepper-size-icon-size-large: 24px;
-  --stepper-size-icon-size-small: 16px;
-  --stepper-size-horizontal-min-width: 463px;
-  --stepper-size-vertical-min-width: 144px;
   --slider-color-discrete-steps-default: var(--palette-neutral-050-tone);
   --slider-color-track-selected: var(--palette-palette-1-default-tone);
   --slider-color-track-unselected: var(--palette-neutral-700-tone);
+  --stepper-color-step-background-current: var(
+    --layer-layer-3-property-surface
+  );
   --slider-color-handle: var(--palette-neutral-900-tone);
+  --stepper-color-step-background-done: var(
+    --layer-layer-alternative-primary-color-property-surface
+  );
+  --stepper-color-step-background-next-enabled: var(
+    --layer-layer-3-property-surface
+  );
   --slider-color-handle-hovered: var(--palette-neutral-800-tone);
+  --stepper-color-step-border-current: var(--palette-palette-1-default-tone);
+  --stepper-color-step-border-next-enabled: var(
+    --layer-layer-3-property-border-color
+  );
+  --stepper-color-step-icon-on-done: var(
+    --layer-layer-alternative-primary-color-element-text-color
+  );
+  --stepper-color-step-label: var(--layer-layer-1-element-text-color);
   --slider-color-disabled: var(--state-disabled);
+  --stepper-color-step-text-on-current: var(--layer-layer-1-element-text-color);
   --slider-size-discrete-step-size: 2px;
+  --stepper-color-step-text-on-next-enabled: var(
+    --layer-layer-3-element-text-color
+  );
   --slider-size-discrete-steps-vertical-padding: var(--dimension-sm);
   --slider-size-handle-border-radius: var(--dimension-border-radius-xl);
   --slider-size-handle-size: var(--dimension-xl);
@@ -545,6 +525,24 @@ For more information about Recursica, go to https://recursica.com
   --slider-size-track-height: var(--dimension-sm);
   --slider-size-layout-stacked-max-width: 620px;
   --slider-size-layout-side-by-side-max-width: 874px;
+  --stepper-color-step-disabled: var(--state-disabled);
+  --stepper-color-step-supporting-text: var(
+    --layer-layer-3-element-text-low-emphasis
+  );
+  --stepper-size-progress-indicator-border-radius: var(
+    --dimension-border-radius-xl
+  );
+  --stepper-size-progress-indicator-large: 40px;
+  --stepper-size-progress-indicator-icon-size-large: var(
+    --dimension-icon-default
+  );
+  --stepper-size-progress-indicator-small: 24px;
+  --stepper-size-label-horizontal-padding: var(--dimension-default);
+  --stepper-size-supporting-text-label-gap: var(--dimension-sm);
+  --stepper-size-progress-indicator-icon-size-small: var(--dimension-icon-sm);
+  --stepper-size-progress-indicator-label-gap: var(--dimension-default);
+  --stepper-size-horizontal-min-width: 463px;
+  --stepper-size-vertical-min-width: 144px;
   --switch-color-thumb: var(--layer-layer-3-property-surface);
   --switch-size-border-radius: var(--dimension-border-radius-xl);
   --switch-size-label-switch-gap: var(--dimension-default);
@@ -570,18 +568,18 @@ For more information about Recursica, go to https://recursica.com
   --table-size-header-padding: var(--dimension-lg);
   --table-size-footer-padding: var(--dimension-lg);
   --table-size-icon: var(--dimension-icon-sm);
-  --tab-color-border-unselected: var(--palette-neutral-default-tone);
-  --tab-color-border-selected: var(--palette-palette-1-default-tone);
-  --tab-color-hover: var(--palette-neutral-100-tone);
-  --tab-color-pill-selected: var(--palette-palette-1-default-tone);
+  --tab-color-border-default: var(--palette-neutral-default-tone);
+  --tab-color-border-focus: var(--palette-palette-1-default-tone);
+  --tab-color-outline-hover: var(--palette-neutral-100-tone);
+  --tab-color-pill-background: var(--palette-palette-1-default-tone);
   --tab-color-pill-selected-icon: var(--palette-palette-1-default-on-tone);
+  --tab-color-pill-selected-label: var(--palette-palette-1-default-on-tone);
   --tab-color-outline-border: var(--layer-layer-3-property-border-color);
   --tab-color-divider: var(--layer-layer-3-property-border-color);
+  --tab-color-label-default: var(--layer-layer-0-element-text-low-emphasis);
   --tab-color-label: var(--layer-layer-3-element-text-color);
   --tab-color-icon: var(--layer-layer-3-element-text-color);
-  --tab-color-pill-selected-label: var(--palette-palette-1-default-on-tone);
   --tab-color-label-selected: var(--layer-layer-0-element-text-high-emphasis);
-  --tab-color-label-unselected: var(--layer-layer-0-element-text-low-emphasis);
   --tab-color-label-disabled: var(--state-disabled);
   --tab-size-horizontal-padding: var(--dimension-lg);
   --tab-size-icon-label-gap: var(--dimension-default);
@@ -593,24 +591,28 @@ For more information about Recursica, go to https://recursica.com
   --button-size-small-horizontal-padding: 12px;
   --button-size-small-icon-padding: var(--dimension-sm);
   --button-size-small-icon-text-gap: var(--dimension-sm);
-  --button-size-border-radius: var(--size-border-radius-4x);
-  --button-size-border-radius-no-text: var(--size-border-radius-3x);
+  --button-size-border-radius: var(--dimension-border-radius-xl);
+  --button-size-border-radius-no-text: var(--dimension-border-radius-xl);
   --button-size-content-max-width: 320px;
-  --text-area-color-background: var(--global-form-field-color-background);
+  --text-area-color-background-default: var(
+    --global-form-field-color-background
+  );
   --text-area-color-background-read-only: var(
     --global-form-field-color-background-read-only
   );
-  --text-area-color-border: var(--global-form-field-color-border);
+  --text-area-color-border-default: var(--global-form-field-color-border);
+  --text-area-color-background-disabled: var(
+    --global-form-field-color-disabled
+  );
   --text-area-color-border-focus: var(--global-form-field-color-border-focus);
   --text-area-color-border-error: var(--global-form-field-color-border-error);
   --text-area-color-text-valued: var(--global-form-field-color-text-valued);
   --text-area-color-text-character-count: var(
     --global-form-field-color-text-valued
   );
-  --text-area-color-placeholder-text-opacity: var(
+  --text-area-color-text-placeholder: var(
     --global-form-field-color-placeholder-text-opacity
   );
-  --text-area-color-disabled: var(--global-form-field-color-disabled);
   --text-area-size-border-radius: var(--global-form-field-size-border-radius);
   --text-area-size-horizontal-padding: var(
     --global-form-field-size-horizontal-padding
@@ -622,20 +624,24 @@ For more information about Recursica, go to https://recursica.com
   --text-area-size-vertical-padding: var(
     --global-form-field-size-vertical-padding
   );
-  --text-field-color-background: var(--global-form-field-color-background);
+  --text-field-color-background-default: var(
+    --global-form-field-color-background
+  );
   --text-field-color-background-read-only: var(
     --global-form-field-color-background-read-only
   );
-  --text-field-color-border: var(--global-form-field-color-border);
+  --text-field-color-border-default: var(--global-form-field-color-border);
   --text-field-color-border-focus: var(--global-form-field-color-border-focus);
   --text-field-color-border-error: var(--global-form-field-color-border-error);
   --text-field-color-leading-icon: var(--global-form-field-color-icon);
   --text-field-color-trailing-icon: var(--global-form-field-color-icon);
   --text-field-color-text-valued: var(--global-form-field-color-text-valued);
-  --text-field-color-placeholder-text-opacity: var(
+  --text-field-color-text-placeholder: var(
     --global-form-field-color-placeholder-text-opacity
   );
-  --text-field-color-disabled: var(--global-form-field-color-disabled);
+  --text-field-color-background-disabled: var(
+    --global-form-field-color-disabled
+  );
   --text-field-size-border-radius: var(--global-form-field-size-border-radius);
   --text-field-size-icon-text-gap: var(--global-form-field-size-icon-text-gap);
   --text-field-size-height: var(
@@ -650,88 +656,92 @@ For more information about Recursica, go to https://recursica.com
   --text-field-size-vertical-padding: var(
     --global-form-field-size-vertical-padding
   );
-  --timeline-color-bullet-default-background: var(
+  --timeline-bullet-color-background-default: var(
     --layer-layer-3-property-surface
   );
-  --timeline-color-item-text: var(--layer-layer-3-element-text-color);
-  --timeline-color-item-text-subtle: var(
+  --timeline-bullet-size-border-radius: 100px;
+  --timeline-bullet-size-default: var(--dimension-xl);
+  --timeline-bullet-size-icon: var(--dimension-icon-sm);
+  --timeline-bullet-color-background-icon: var(--palette-neutral-100-tone);
+  --timeline-note-color-text: var(--layer-layer-3-element-text-color);
+  --timeline-note-color-timestamp: var(
     --layer-layer-1-element-text-low-emphasis
   );
-  --timeline-color-bullet-default-border: var(
-    --layer-layer-3-property-border-color
-  );
-  --timeline-color-bullet-icon: var(--palette-neutral-100-on-tone);
-  --timeline-color-bullet-icon-background: var(--palette-neutral-100-tone);
-  --timeline-color-bullet-theme-background: var(
+  --timeline-note-size-width: 344px;
+  --timeline-note-size-horizontal-padding: var(--dimension-default);
+  --timeline-note-size-line-content-gap: var(--dimension-lg);
+  --timeline-note-size-title-content-gap: var(--dimension-sm);
+  --timeline-note-size-body-top-padding: var(--dimension-sm);
+  --timeline-note-size-body-bottom-padding: var(--dimension-xl);
+  --timeline-bullet-color-background-alternative: var(
     --layer-layer-alternative-high-contrast-property-surface
   );
-  --timeline-color-bullet-theme-icon: var(
+  --timeline-bullet-color-border-default: var(
+    --layer-layer-3-property-border-color
+  );
+  --timeline-bullet-color-border-active: var(--palette-palette-1-default-tone);
+  --timeline-bullet-color-icon-on-default: var(--palette-neutral-100-on-tone);
+  --timeline-bullet-color-icon-on-alternative: var(
     --layer-layer-alternative-high-contrast-element-text-color
   );
-  --timeline-color-line-inactive: var(--layer-layer-3-property-border-color);
-  --timeline-color-line-active: var(--palette-palette-1-default-tone);
-  --timeline-size-bullet-size: var(--dimension-xl);
-  --timeline-size-bullet-icon-size: var(--dimension-icon-sm);
-  --timeline-size-bullet-border-radius: 100px;
-  --timeline-size-item-width: 344px;
-  --timeline-size-item-horizontal-padding: var(--dimension-default);
-  --timeline-size-item-line-content-gap: var(--dimension-lg);
-  --timeline-size-item-title-content-gap: var(--dimension-sm);
-  --timeline-size-item-body-top-padding: var(--dimension-sm);
-  --timeline-size-item-body-bottom-padding: var(--dimension-xl);
-  --time-picker-color-background: var(--global-form-field-color-background);
+  --timeline-inactive: var(--layer-layer-3-property-border-color);
+  --timeline-active: var(--palette-palette-1-default-tone);
+  --time-picker-color-background-default: var(
+    --global-form-field-color-background
+  );
   --time-picker-color-background-read-only: var(
     --global-form-field-color-background-read-only
   );
-  --time-picker-color-border: var(--global-form-field-color-border);
+  --time-picker-color-border-default: var(--global-form-field-color-border);
   --time-picker-color-border-focus: var(--global-form-field-color-border-focus);
   --time-picker-color-border-error: var(--global-form-field-color-border-error);
   --time-picker-color-leading-icon: var(--global-form-field-color-icon);
   --time-picker-color-trailing-icon: var(--global-form-field-color-icon);
   --time-picker-color-text-valued: var(--global-form-field-color-text-valued);
-  --time-picker-color-placeholder-text-opacity: var(
+  --time-picker-color-text-placeholder: var(
     --global-form-field-color-placeholder-text-opacity
   );
-  --time-picker-color-disabled: var(--global-form-field-color-disabled);
+  --time-picker-color-background-disabled: var(
+    --global-form-field-color-disabled
+  );
   --time-picker-size-border-radius: var(--global-form-field-size-border-radius);
   --time-picker-size-icon-text-gap: var(--global-form-field-size-icon-text-gap);
-  --time-picker-size-field-fixed-width: 140px;
+  --time-picker-size-field-width: 140px;
   --time-picker-size-field-height: var(
     --global-form-field-size-single-line-input-height
   );
-  --time-picker-size-label-left-placement-assistive-text-left-padding: 240px;
   --time-picker-size-horizontal-padding: var(
     --global-form-field-size-horizontal-padding
   );
-  --time-picker-size-icon: var(--global-form-field-size-icon);
   --time-picker-size-vertical-padding: var(
     --global-form-field-size-vertical-padding
   );
-  --toast-color-background-default: var(--layer-layer-3-property-surface);
+  --time-picker-size-icon: var(--global-form-field-size-icon);
+  --toast-color-default-background: var(--layer-layer-3-property-surface);
   --toast-size-vertical-padding: var(--dimension-default);
   --toast-size-horizontal-padding: var(--dimension-lg);
   --toast-size-spacing: var(--dimension-md);
   --toast-size-min-width: 384px;
   --toast-size-max-width: 624px;
-  --toast-size-icon-size: var(--dimension-icon-default);
-  --toast-color-background-success: var(
+  --toast-size-icon: var(--dimension-icon-default);
+  --toast-color-default-text: var(--layer-layer-1-element-text-color);
+  --toast-color-success-background: var(
     --layer-layer-alternative-success-property-surface
   );
-  --toast-color-background-error: var(
+  --toast-color-error-background: var(
     --layer-layer-alternative-alert-property-surface
   );
-  --toast-color-button-on-success: var(
-    --layer-layer-alternative-success-element-interactive-color
-  );
-  --toast-color-button-on-error: var(
+  --toast-color-error-button: var(
     --layer-layer-alternative-alert-element-interactive-color
   );
-  --toast-color-text-default: var(--layer-layer-1-element-text-color);
-  --toast-color-text-success: var(
-    --layer-layer-alternative-success-element-text-color
-  );
-  --toast-color-text-error: var(
+  --toast-color-error-text: var(
     --layer-layer-alternative-alert-element-text-color
+  );
+  --toast-color-success-button: var(
+    --layer-layer-alternative-success-element-interactive-color
+  );
+  --toast-color-success-text: var(
+    --layer-layer-alternative-success-element-text-color
   );
   --tooltip-color-background: var(
     --layer-layer-alternative-high-contrast-property-surface
@@ -766,19 +776,17 @@ For more information about Recursica, go to https://recursica.com
   --transfer-list-size-control-icon: var(--global-form-field-size-icon);
   --transfer-list-size-control-padding: var(--dimension-md);
   --transfer-list-size-input-left-padding: var(--dimension-lg);
-  --transfer-list-size-checkbox-menu-item-gap: var(--dimension-lg);
   --transfer-list-size-menu-vertical-padding: var(--dimension-default);
-  --transfer-list-size-menu-item-padding: var(--dimension-lg);
   --transfer-list-size-menu-empty-vertical-padding: var(--dimension-xl);
   --transfer-list-size-search-input-height: var(
     --global-form-field-size-single-line-input-height
   );
-  --transfer-list-size-menu-fixed-height: 200px;
-  --transfer-list-size-list-fixed-width: 364px;
+  --transfer-list-size-height: 200px;
+  --transfer-list-size-width: 364px;
   --tooltip-color-text: var(
     --layer-layer-alternative-high-contrast-element-text-color
   );
-  --tooltip-size-beak-padding-alignment: var(--dimension-default);
+  --tooltip-size-beak-inset: var(--dimension-default);
   --tooltip-size-border-radius: var(--dimension-border-radius-sm);
   --tooltip-size-horizontal-padding: var(--dimension-md);
   --tooltip-size-vertical-padding: var(--dimension-default);
@@ -786,4 +794,12 @@ For more information about Recursica, go to https://recursica.com
   --tooltip-size-min-width: 106px;
   --global-form-assistive-element-size-icon: var(--dimension-icon-sm);
   --global-form-assistive-element-size-icon-text-gap: var(--dimension-sm);
+  --layout-size-mobile-max-width: var(--layout-grid-mobile-max-width);
+  --layout-size-mobile-gutter: var(--layout-grid-mobile-gutter);
+  --layout-size-tablet-max-width: var(--layout-grid-tablet-max-width);
+  --layout-size-tablet-min-width: var(--layout-grid-mobile-max-width);
+  --layout-size-tablet-gutter: var(--layout-grid-tablet-gutter);
+  --layout-size-desktop-max-width: var(--layout-grid-desktop-max-width);
+  --layout-size-desktop-min-width: var(--layout-grid-tablet-max-width);
+  --layout-size-desktop-gutter: var(--layout-grid-desktop-gutter);
 }

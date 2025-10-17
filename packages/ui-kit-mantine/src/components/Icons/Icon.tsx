@@ -14,7 +14,7 @@ export const IconNames = Object.keys(IconResourceMap);
 export interface IconProps {
   name: IconName;
   /** Icon size @default 24 */
-  size?: 16 | 20 | 24 | 32 | 40 | 48 | "100%";
+  size?: number | "100%";
   /** The title to apply to the icon. */
   title?: string;
   /** The color to apply to the icon. If not set, it inherits from the parent */

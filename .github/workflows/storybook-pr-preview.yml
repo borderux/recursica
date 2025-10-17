@@ -56,7 +56,6 @@ jobs:
       - name: Build Storybook
         if: github.event.action != 'closed'
         run: npx turbo run build --filter=recursica-storybook
-
       - name: Deploy preview
         uses: rossjrw/pr-preview-action@v1
         with:
