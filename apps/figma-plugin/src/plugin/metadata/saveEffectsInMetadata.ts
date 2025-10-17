@@ -20,6 +20,9 @@ function updateStyleDataIfChanged(
       collection.setSharedPluginData('recursica', dataKey, newData);
     }
   }
+  if (styleKeys.length === 0) {
+    collection.setSharedPluginData('recursica', dataKey, '');
+  }
 }
 
 /**
