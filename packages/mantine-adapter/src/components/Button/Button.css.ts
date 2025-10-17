@@ -31,13 +31,13 @@ const root = style({
     },
     // Button styles
     // Icon
-    '&[data-style="icon"]': {
+    '&[data-content="Icon"]': {
       paddingInline: 0,
       minWidth: 0,
       width: recursica.uiKit["button/size/default/height"],
       height: recursica.uiKit["button/size/default/height"],
     },
-    '&[data-style="icon"][data-size="small"]': {
+    '&[data-content="Icon"][data-size="small"]': {
       width: recursica.uiKit["button/size/small/height"],
       height: recursica.uiKit["button/size/small/height"],
     },
@@ -67,15 +67,15 @@ const root = style({
     '&[data-variant="outline"]:disabled': {
       opacity: recursica.uiKit["button/color/disabled"],
     },
-    // Text
-    '&[data-variant="text"]': {
+    // Ghost
+    '&[data-variant="ghost"]': {
       backgroundColor: "transparent",
       color: recursica.uiKit["button/color/outline"],
     },
-    '&[data-variant="text"]:hover': {
+    '&[data-variant="ghost"]:hover': {
       color: recursica.uiKit["button/color/outline-hover"],
     },
-    '&[data-variant="text"]:disabled': {
+    '&[data-variant="ghost"]:disabled': {
       opacity: recursica.uiKit["button/color/disabled"],
     },
   },
@@ -104,7 +104,7 @@ const label = style({
     [`${root}[data-isloading="true"] &`]: {
       color: "transparent",
     },
-    [`${root}[data-style="icon"] &`]: {
+    [`${root}[data-content="Icon"] &`]: {
       display: "none",
     },
   },

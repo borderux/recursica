@@ -32,7 +32,7 @@ export const Icon = (props: IconProps) => {
   const inlineStyles = {
     fill: props.color ? getRecursicaColor(props.color) : "currentColor",
     color: props.color ? getRecursicaColor(props.color) : "currentColor",
-    cursor: props.onClick ? "pointer" : "default",
+    cursor: props.onClick ? "pointer" : "inherit",
   };
 
   const getSpinClass = () => {

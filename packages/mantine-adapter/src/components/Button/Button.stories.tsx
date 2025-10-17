@@ -8,11 +8,10 @@ import { fn } from "storybook/test";
 const meta: Meta<typeof Button> = {
   title: "UI Kit/Button",
   component: Button,
-
   argTypes: {
     Style: {
       control: { type: "select" },
-      options: ["solid", "outline", "text"],
+      options: ["solid", "outline", "ghost"],
       description: "The style of the button",
     },
     Size: {
@@ -23,6 +22,11 @@ const meta: Meta<typeof Button> = {
     Disabled: {
       control: { type: "boolean" },
       description: "The disabled state of the button",
+    },
+    Content: {
+      control: { type: "select" },
+      options: ["Icon", "Text", "IconText"],
+      description: "The content of the button",
     },
     Loading: {
       control: { type: "boolean" },
@@ -36,22 +40,27 @@ const meta: Meta<typeof Button> = {
       control: { type: "select" },
       options: IconNames,
       description: "The icon for icon variant",
+      if: { arg: "Content", eq: "Icon" },
     },
     LeadingIcon: {
       control: { type: "select" },
       options: IconNames,
       description: "The leading icon for iconText variant",
+      if: { arg: "Content", eq: "IconText" },
     },
     TrailingIcon: {
       control: { type: "select" },
       options: IconNames,
       description: "The trailing icon for iconText variant",
+      if: { arg: "Content", neq: "Icon" },
     },
   },
   parameters: {
+    layout: "centered",
     controls: {
       include: [
         "Style",
+        "Content",
         "Size",
         "Disabled",
         "Loading",
@@ -64,6 +73,15 @@ const meta: Meta<typeof Button> = {
   },
   args: {
     onClick: fn(),
+    TrailingIcon: undefined,
+    LeadingIcon: "archive_box_solid",
+    Icon: "academic_cap_outline",
+    Style: "solid",
+    Size: "default",
+    Disabled: false,
+    Loading: false,
+    Label: "Button",
+    Content: "Text",
   },
 };
 
@@ -71,79 +89,6 @@ export default meta;
 type Story = StoryObj<ButtonProps>;
 
 export const Default: Story = {
-  args: {
-    Style: "solid",
-    Size: "default",
-    Disabled: false,
-    Loading: false,
-    Label: "Button",
-    LeadingIcon: undefined,
-    TrailingIcon: undefined,
-    Icon: undefined,
-  },
-};
-
-export const WithLeadingIcon: Story = {
-  args: {
-    Style: "solid",
-    Size: "default",
-    Disabled: false,
-    Loading: false,
-    Label: "Download",
-    LeadingIcon: "arrow_down_outline",
-    TrailingIcon: undefined,
-    Icon: undefined,
-  },
-};
-
-export const WithTrailingIcon: Story = {
-  args: {
-    Style: "outline",
-    Size: "default",
-    Disabled: false,
-    Loading: false,
-    Label: "Next",
-    LeadingIcon: undefined,
-    TrailingIcon: "arrow_right_outline",
-    Icon: undefined,
-  },
-};
-
-export const IconOnly: Story = {
-  args: {
-    Style: "text",
-    Size: "default",
-    Disabled: false,
-    Loading: false,
-    Label: "Settings",
-    LeadingIcon: undefined,
-    TrailingIcon: undefined,
-    Icon: "archive_box_solid",
-  },
-};
-
-export const Loading: Story = {
-  args: {
-    Style: "solid",
-    Size: "default",
-    Disabled: false,
-    Loading: true,
-    Label: "Saving...",
-    LeadingIcon: undefined,
-    TrailingIcon: undefined,
-    Icon: undefined,
-  },
-};
-
-export const Disabled: Story = {
-  args: {
-    Style: "solid",
-    Size: "default",
-    Disabled: true,
-    Loading: false,
-    Label: "Disabled Button",
-    LeadingIcon: undefined,
-    TrailingIcon: undefined,
-    Icon: undefined,
-  },
+  name: "Button",
+  args: {},
 };

@@ -7,99 +7,109 @@ import { forwardRef } from "react";
 import { styles } from "./Button.css";
 import { type IconName, Icon } from "../Icons/Icon";
 
-type FigmaVariantProps = {
+type IconStyle = {
+  /** The content of the button */
+  Content: "Icon";
+  /** The icon of the button */
+  Icon: IconName;
+};
+
+type TextStyle = {
+  /** The content of the button */
+  Content: "Text";
+  /** The trailing icon of the button */
+  TrailingIcon?: IconName;
+};
+
+type IconTextStyle = {
+  /** The content of the button */
+  Content: "IconText";
+  /** The leading icon of the button */
+  LeadingIcon: IconName;
+  /** The trailing icon of the button */
+  TrailingIcon?: IconName;
+};
+
+type FigmaProps = {
   /** The style of the button */
-  Style?: "solid" | "outline" | "text";
+  Style?: "solid" | "outline" | "ghost";
   /** The size of the button */
   Size?: "default" | "small";
   /** The disabled state of the button */
   Disabled?: boolean;
   /** The loading state of the button */
   Loading?: boolean;
-  /** The trailing icon for iconText variant */
-  TrailingIcon?: IconName;
   /** The label of the button */
   Label: string;
-  /** The leading icon for iconText variant */
-  LeadingIcon?: IconName;
-  /** The icon for icon variant */
-  Icon?: IconName;
-};
+  /** The content of the button */
+  Content: "Icon" | "Text" | "IconText";
+} & (IconStyle | TextStyle | IconTextStyle);
 
-export type ButtonProps = Omit<
-  ManButtonProps,
-  | "variant"
-  | "size"
-  | "disabled"
-  | "loading"
-  | "rightSection"
-  | "label"
-  | "leftSection"
-> &
-  FigmaVariantProps;
+export type ButtonProps = ManButtonProps & FigmaProps;
 
 /** Primary UI component for user interaction */
 export const ForwardedButton = forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
-      Style: variant = "solid",
-      Size: size = "default",
-      Disabled: disabled = false,
-      Loading: loading = false,
-      TrailingIcon: trailing,
-      Label: label,
-      LeadingIcon: leading,
-      Icon: icon,
+      Style = "solid",
+      Size = "default",
+      Disabled = false,
+      Loading = false,
+      Label,
+      Content,
       ...props
     },
     ref,
   ) => {
-    // Detect buttonStyle based on props
-    const hasIcon = !!icon;
-    const hasLeading = !!leading;
-    const hasTrailing = !!trailing;
-
-    let buttonStyle: "text" | "iconText" | "icon";
     let rightSection: React.ReactNode | undefined;
     let leftSection: React.ReactNode | undefined;
     let showText: boolean;
 
-    if (hasIcon && !hasLeading && !hasTrailing) {
-      // Icon buttonStyle: label + icon
-      buttonStyle = "icon";
-      rightSection = <Icon name={icon!} />;
-      showText = false;
-    } else if (hasLeading || hasTrailing) {
-      // IconText buttonStyle: label + leading/trailing icons
-      buttonStyle = "iconText";
-      rightSection = hasTrailing ? <Icon name={trailing!} /> : undefined;
-      leftSection = hasLeading ? <Icon name={leading!} /> : undefined;
-      showText = true;
-    } else {
-      // Text buttonStyle: label only
-      buttonStyle = "text";
-      showText = true;
+    switch (Content) {
+      case "Icon": {
+        const { Icon: iconName } = props as IconStyle;
+        rightSection = <Icon size={20} name={iconName} />;
+        showText = false;
+        break;
+      }
+      case "IconText": {
+        const { LeadingIcon: leadingIconName, TrailingIcon: trailingIconName } =
+          props as IconTextStyle;
+        leftSection = <Icon size={20} name={leadingIconName} />;
+        rightSection = trailingIconName ? (
+          <Icon size={20} name={trailingIconName} />
+        ) : undefined;
+        showText = true;
+        break;
+      }
+      default: {
+        const { TrailingIcon: trailingIconName } = props as TextStyle;
+        rightSection = trailingIconName ? (
+          <Icon size={20} name={trailingIconName} />
+        ) : undefined;
+        showText = true;
+        break;
+      }
     }
-
     // If loading is true, disabled should also be true
-    const isDisabled = disabled || loading;
+    const isDisabled = Disabled || Loading;
 
     return (
       <ManButton
+        {...props}
         ref={ref}
-        variant={variant}
-        size={size}
-        aria-label={label}
-        loading={loading}
-        loaderProps={{ children: <Icon name="arrow_path_outline" /> }}
+        variant={Style}
+        size={Size}
+        aria-label={Label}
+        loading={Loading}
+        loaderProps={{ children: <Icon size={20} name="arrow_path_outline" /> }}
         disabled={isDisabled}
-        data-style={buttonStyle}
+        data-content={Content}
         rightSection={rightSection}
         leftSection={leftSection}
         classNames={styles}
-        {...props}
       >
-        {showText ? label : null}
+        {showText ? Label : null}
       </ManButton>
     );
   },
@@ -107,6 +117,9 @@ export const ForwardedButton = forwardRef<HTMLButtonElement, ButtonProps>(
 
 ForwardedButton.displayName = "Button";
 
+/**
+ * Make the button polymorphic to any component
+ */
 export const Button = createPolymorphicComponent<"button", ButtonProps>(
   ForwardedButton,
 );

@@ -1,38 +1,18 @@
-/**
- * Issues found:
- * 1. Missing border width for: default, focused, with value, and error
- */
 import { style } from "@vanilla-extract/css";
 import { recursica } from "@recursica/official-release";
+import {
+  root as formControlLayoutRoot,
+  wrapper as formControlLayoutWrapper,
+} from "../base/FormControlLayout/FormControlLayout.css";
 
 const root = style({
-  display: "grid",
-  width: "100%",
+  ...formControlLayoutRoot,
   minWidth: recursica.uiKit["dropdown/size/min-width"],
   maxWidth: recursica.uiKit["dropdown/size/max-width"],
-  gap: `${recursica.uiKit["global/form/label/size/stacked/bottom-padding"]} ${recursica.uiKit["global/form/label/size/side-by-side-large/gutter"]}`,
-  selectors: {
-    "&[data-label-placement='Side by Side']": {
-      gridTemplateColumns: `auto 1fr`,
-      gridTemplateAreas: `"label input" "label error"`,
-      alignItems: "start",
-    },
-    "&[data-label-placement='Stacked']": {
-      gridTemplateColumns: "1fr",
-      gridTemplateAreas: `"label" "input" "error"`,
-    },
-  },
 });
 
 const wrapper = style({
-  selectors: {
-    [`${root}[data-label-placement='Side by Side'] &`]: {
-      gridArea: "input",
-    },
-    [`${root}[data-label-placement='Stacked'] &`]: {
-      gridArea: "input",
-    },
-  },
+  ...formControlLayoutWrapper,
 });
 
 const input = style({
@@ -47,6 +27,7 @@ const input = style({
   paddingBlock: recursica.uiKit["dropdown/size/vertical-padding"],
   paddingInline: recursica.uiKit["dropdown/size/horizontal-padding"],
   backgroundColor: recursica.uiKit["dropdown/color/background"],
+  color: recursica.uiKit["dropdown/color/text-valued"],
   selectors: {
     "&::placeholder": {
       opacity: recursica.uiKit["dropdown/color/text-placeholder-opacity"],
@@ -54,61 +35,37 @@ const input = style({
     "&:disabled::placeholder": {
       opacity: recursica.uiKit["dropdown/color/disabled"],
     },
+    // The leading and trailing icons are 24px wide and 8px apart, we need to set padding to don't overlap with the text
+    // When leading icon is present, add padding to the left
     [`${wrapper}[data-with-left-section="true"] &`]: {
       paddingLeft: `calc(${recursica.uiKit["dropdown/size/horizontal-padding"]} + 24px + 8px)`,
     },
+    // When trailing icon is present, add padding to the right
     [`${wrapper}[data-with-right-section="true"] &`]: {
       paddingRight: `calc(${recursica.uiKit["dropdown/size/horizontal-padding"]} + 24px + 8px)`,
     },
     "&:focus-visible": {
-      outlineWidth: 1, // this needs to be a variable
-      outlineStyle: "solid",
-      outlineColor: recursica.uiKit["dropdown/color/border"],
-    },
-    '&[data-expanded="true"]': {
-      outlineWidth: 2, // this needs to be a variable
-      outlineStyle: "solid",
-      outlineColor: recursica.uiKit["dropdown/color/border-selected"],
-    },
-    '&[value]:not([value=""]):not([disabled])': {
-      outlineWidth: 1, // this needs to be a variable
-      outlineStyle: "solid",
-      outlineColor: recursica.uiKit["dropdown/color/border-selected"],
-    },
-    '&[value]:not([value=""]):not([disabled]):focus-visible': {
-      outlineWidth: 2, // this needs to be a variable
+      outlineWidth: 2,
       outlineStyle: "solid",
       outlineColor: recursica.uiKit["dropdown/color/border-selected"],
     },
     '&[data-error="true"]': {
-      outlineWidth: 1, // this needs to be a variable
-      outlineStyle: "solid",
       outlineColor: recursica.uiKit["dropdown/color/border-error"],
     },
-    '&[data-error="true"][value]:not([value=""]):not([disabled])': {
-      outlineWidth: 1, // this needs to be a variable
-      outlineStyle: "solid",
-      outlineColor: recursica.uiKit["dropdown/color/border-error"],
-    },
-    '&[data-error="true"]:focus-visible, &[data-error="true"][data-expanded="true"]':
-      {
-        outlineWidth: 2, // this needs to be a variable
-        outlineStyle: "solid",
-        outlineColor: recursica.uiKit["dropdown/color/border-error"],
-      },
   },
 });
 
+// This is the section that contains the leading and trailing icons
 const section = style({
   width: "auto",
   color: "currentcolor",
   paddingBlock: recursica.uiKit["dropdown/size/vertical-padding"],
   paddingInline: recursica.uiKit["dropdown/size/horizontal-padding"],
   selectors: {
-    '&[data-position="side-by-side"]': {
+    '&[data-position="left"]': {
       paddingRight: 0,
     },
-    '&[data-position="stacked"]': {
+    '&[data-position="right"]': {
       paddingLeft: 0,
     },
     [`${input}[data-expanded="true"] ~ &`]: {
@@ -161,6 +118,7 @@ export const errorContainer = style({
 
 const label = style({
   gridArea: "label",
+  color: recursica.uiKit["global/form/label/color/default"],
 });
 
 export const styles = {

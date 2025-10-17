@@ -10,9 +10,11 @@ export interface RecursicaBundleDecoratorOptions {
 export const withRecursicaBundle = ({
   bundle,
 }: RecursicaBundleDecoratorOptions): Decorator => {
-  return (Story) => (
-    <RecursicaBundleProvider bundle={bundle}>
-      <Story />
-    </RecursicaBundleProvider>
-  );
+  return (Story) => {
+    return (
+      <RecursicaBundleProvider bundle={bundle}>
+        <Story />
+      </RecursicaBundleProvider>
+    );
+  };
 };

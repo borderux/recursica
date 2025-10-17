@@ -1,3 +1,3 @@
 export * from "./Accordion/Accordion";
 export * from "./ThemeProvider/ThemeProvider";
-export * from "./Dropdown/Dropdown";
+export * from "./Dropdown/Multiselect";

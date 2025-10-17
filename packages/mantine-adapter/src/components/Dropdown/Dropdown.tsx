@@ -1,89 +1,30 @@
-import {
-  type SelectProps,
-  ComboboxLikeRenderOptionInput,
-  Select,
-} from "@mantine/core";
-import { Flex } from "../Flex/Flex";
-import { styles, errorContainer, optionStyle } from "./Dropdown.css";
-import { Icon, type IconName } from "../Icons/Icon";
-import { forwardRef } from "react";
-import type { ComboboxItem } from "../../types";
+import { Select, type SelectProps } from "./Select";
+import { Multiselect, type MultiselectProps } from "./Multiselect";
+import { IconName } from "../Icons/Icon";
+import { ComboboxItem } from "../../types";
+import { type LayoutProps } from "../base/FormControlLayout/FormControlLayout";
 
-type FigmaVariantProps = {
-  /** The label of the dropdown */
-  Layout: "Stacked" | "Side by Side";
+export type FigmaProps = LayoutProps & {
   /** The icon to display in the left section of the dropdown */
   LeadIcon?: IconName;
   /** The label of the dropdown */
   Label: string;
   /** The error text of the dropdown */
-  ErrorText?: string;
+  Error?: string;
+  /** Whether the dropdown is disabled */
+  Disabled: boolean;
   /**
    * The data to display in the dropdown.
    */
   data: ComboboxItem[];
 };
 
-export type DropdownProps = Omit<SelectProps, "data" | "label"> &
-  FigmaVariantProps;
+export type DropdownProps = SelectProps | MultiselectProps;
 
-const renderSelectOption: (
-  item: ComboboxLikeRenderOptionInput<ComboboxItem>,
-) => React.ReactNode = ({ option }) => (
-  <Flex className={optionStyle} align="center" onClick={option.onClick}>
-    {option.icon ? <Icon name={option.icon} /> : undefined}
-    {option.label}
-  </Flex>
-);
-
-export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
-  (
-    {
-      Label: label,
-      error,
-      LeadIcon: leadingIcon,
-      Layout: labelPlacement = "Stacked",
-      data,
-      value,
-      ...props
-    },
-    ref,
-  ) => {
-    const selectedOption = data.find((item) => item.value === value);
-    const displayIcon = selectedOption?.icon || leadingIcon;
-
-    return (
-      <Select
-        comboboxProps={{
-          offset: 2,
-        }}
-        ref={ref}
-        withCheckIcon={false}
-        withScrollArea={false}
-        classNames={styles}
-        wrapperProps={{
-          "data-label-placement": labelPlacement,
-        }}
-        label={label}
-        aria-label={label}
-        error={
-          error ? (
-            <Flex className={errorContainer}>
-              <Icon name="exclamation_circle_outline" size={16} />
-              <span>{error}</span>
-            </Flex>
-          ) : undefined
-        }
-        renderOption={renderSelectOption}
-        leftSectionPointerEvents="none"
-        leftSection={displayIcon ? <Icon name={displayIcon} /> : undefined}
-        rightSection={<Icon name="chevron_down_outline" />}
-        data={data}
-        value={value}
-        {...props}
-      />
-    );
-  },
-);
-
-Dropdown.displayName = "Dropdown";
+export function Dropdown(props: DropdownProps) {
+  return props.Content === "Value" ? (
+    <Select {...props} />
+  ) : (
+    <Multiselect {...props} />
+  );
+}
