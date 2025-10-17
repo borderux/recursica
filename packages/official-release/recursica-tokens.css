@@ -18,12 +18,12 @@ For more information about Recursica, go to https://recursica.com
   --font-size-5xl: 36px;
   --color-mandy-200: #f46e6e;
   --effect-5x: 40px;
-  --color-translucent-14: rgba(0, 0, 0, 0.14);
+  --color-translucent-14: rgba(0, 0, 0, 0.1400);
   --color-salmon-300: #e55d78;
   --color-salmon-800: #5e0312;
   --color-gray-300: #c0c0c0;
   --color-mandarin-300: #ffa052;
-  --color-translucent-10: rgba(0, 0, 0, 0.1);
+  --color-translucent-10: rgba(0, 0, 0, 0.1000);
   --color-gray-400: #999999;
   --color-greensheen-200: #3dd67b;
   --color-salmon-200: #f8919a;
@@ -37,9 +37,9 @@ For more information about Recursica, go to https://recursica.com
   --color-mandarin-200: #fdb981;
   --color-salmon-50: #f6d5d8;
   --color-gray-1000: #0a0a0a;
-  --color-translucent-12: rgba(0, 0, 0, 0.12);
+  --color-translucent-12: rgba(0, 0, 0, 0.1200);
   --color-greensheen-400: #00a945;
-  --color-translucent-25: rgba(0, 0, 0, 0.25);
+  --color-translucent-25: rgba(0, 0, 0, 0.2500);
   --color-gray-050: #f9f9f9;
   --color-cornflower-100: #73ceda;
   --color-greensheen-500: #008b38;
@@ -64,15 +64,15 @@ For more information about Recursica, go to https://recursica.com
   --font-size-md: 16px;
   --color-mandarin-100: #fcd2ac;
   --font-size-6xl: 40px;
-  --color-translucent-40: rgba(0, 0, 0, 0.4);
-  --color-translucent-08: rgba(0, 0, 0, 0.08);
+  --color-translucent-40: rgba(0, 0, 0, 0.4000);
+  --color-translucent-08: rgba(0, 0, 0, 0.0800);
   --color-gray-800: #2c2c2c;
   --font-family-lexend: Lexend;
   --color-mandarin-400: #fc853b;
   --effect-1-5x: 12px;
   --font-size-3xl: 28px;
   --color-mandy-50: #fbcfcf;
-  --color-translucent-20: rgba(0, 0, 0, 0.2);
+  --color-translucent-20: rgba(0, 0, 0, 0.2000);
   --font-size-2xs: 10px;
   --color-mandy-400: #ec0e0e;
   --color-mandarin-600: #d9510d;
@@ -82,9 +82,9 @@ For more information about Recursica, go to https://recursica.com
   --effect-4x: 32px;
   --color-mandarin-800: #82360c;
   --font-size-2xl: 24px;
-  --color-translucent-18: rgba(0, 0, 0, 0.18);
+  --color-translucent-18: rgba(0, 0, 0, 0.1800);
   --effect-0-5x: 4px;
-  --color-translucent-35: rgba(0, 0, 0, 0.35);
+  --color-translucent-35: rgba(0, 0, 0, 0.3500);
   --color-gray-700: #454545;
   --color-mandy-300: #f03e3e;
   --effect-6x: 48px;
@@ -135,12 +135,8 @@ For more information about Recursica, go to https://recursica.com
   --size-5x: 40px;
   --size-6x: 48px;
   --effect-elevation-elevation-0: 0px 0px 0px 0px rgba(0, 0, 0, 0);
-  --effect-elevation-elevation-1: 0px 4px 4px 0px
-    rgba(0, 0, 0, 0.14000000059604645);
-  --effect-elevation-elevation-2: 0px 8px 8px 0px
-    rgba(0, 0, 0, 0.14000000059604645);
-  --effect-elevation-elevation-3: 0px 12px 16px 0px
-    rgba(0, 0, 0, 0.14000000059604645);
-  --effect-elevation-elevation-4: 0px 16px 32px 0px
-    rgba(0, 0, 0, 0.14000000059604645);
+  --effect-elevation-elevation-1: 0px 4px 4px 0px rgba(0, 0, 0, 0.14000000059604645);
+  --effect-elevation-elevation-2: 0px 8px 8px 0px rgba(0, 0, 0, 0.14000000059604645);
+  --effect-elevation-elevation-3: 0px 12px 16px 0px rgba(0, 0, 0, 0.14000000059604645);
+  --effect-elevation-elevation-4: 0px 16px 32px 0px rgba(0, 0, 0, 0.14000000059604645);
 }
