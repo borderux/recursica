@@ -438,5 +438,14 @@ For more information about Recursica, go to https://recursica.com
   --dimension-gutter-vertical: var(--size-3x);
   --dimension-icon-xs: var(--size-1-5x);
   --dimension-md: var(--size-1-5x);
+  --layout-grid-tablet-max-width: 810;
+  --layout-grid-tablet-columns: 6;
+  --layout-grid-mobile-max-width: 480;
+  --layout-grid-tablet-gutter: var(--dimension-gutter-horizontal);
+  --layout-grid-mobile-gutter: var(--dimension-gutter-horizontal);
+  --layout-grid-mobile-columns: 4;
+  --layout-grid-desktop-max-width: 1280;
+  --layout-grid-desktop-gutter: var(--dimension-gutter-horizontal);
+  --layout-grid-desktop-columns: 6;
   --elevation-elevation-4-shadow-color: var(--color-translucent-40);
 }

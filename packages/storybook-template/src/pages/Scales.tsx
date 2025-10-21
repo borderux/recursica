@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import { Recursica } from "@recursica/official-release";
 
@@ -69,23 +70,20 @@ export function Scales({ theme, recursica }: ScalesProps) {
                     key={`${emphasis.key}-${value}`}
                     className={`palette-box ${value === scale.defaultScale ? "default" : ""}`}
                     style={{
-                      backgroundColor:
-                        recursica.themes?.RecursicaBrand?.[theme]?.[
-                          `palette/${scale.key}/${value}/tone`
-                        ],
+                      backgroundColor: (recursica.themes as any)?.[
+                        `palette/${scale.key}/${value}/tone`
+                      ],
                     }}
                   >
                     <div
                       className="palette-dot"
                       style={{
-                        backgroundColor:
-                          recursica?.themes?.RecursicaBrand?.[theme]?.[
-                            `palette/${scale.key}/${value}/on-tone`
-                          ],
-                        opacity:
-                          recursica.themes?.RecursicaBrand?.[theme]?.[
-                            `palette/${scale.key}/${value}/${emphasis.key}`
-                          ],
+                        backgroundColor: (recursica?.themes as any)?.[
+                          `palette/${scale.key}/${value}/on-tone`
+                        ],
+                        opacity: (recursica.themes as any)?.[
+                          `palette/${scale.key}/${value}/${emphasis.key}`
+                        ],
                       }}
                     ></div>
                   </td>
@@ -100,7 +98,7 @@ export function Scales({ theme, recursica }: ScalesProps) {
                   className={value === scale.defaultScale ? "default" : ""}
                 >
                   {
-                    recursica.themes?.RecursicaBrand?.[theme]?.[
+                    (recursica.themes as any)?.[
                       `palette/${scale.key}/${value}/tone`
                     ]
                   }

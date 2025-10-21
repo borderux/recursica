@@ -202,7 +202,13 @@ async function decodeFileVariables(
   ): Promise<void> {
     if (styleKeys.length > 0) {
       for (const key of styleKeys) {
-        const style = await figma.importStyleByKeyAsync(key);
+        let style: BaseStyle | null = null;
+        try {
+          style = await figma.importStyleByKeyAsync(key);
+        } catch (error) {
+          console.error(`Error importing style ${key}:`, error);
+          continue;
+        }
         if (style && style.type === styleType) {
           const varIdentifier = `[${fileType}][${category}][${style.name}]`;
           switch (style.type) {

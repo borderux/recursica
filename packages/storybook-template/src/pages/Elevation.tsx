@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import { Recursica } from "@recursica/official-release";
 
@@ -18,28 +19,27 @@ export function Elevation({ theme, recursica }: ElevationProps) {
             key={elevation}
             className="card text-center elevation-card"
             style={{
-              backgroundColor:
-                recursica.themes?.RecursicaBrand?.[theme]?.[
-                  "layer/layer-0/property/surface"
-                ],
+              backgroundColor: (recursica.themes as any)?.[
+                "layer/layer-0/property/surface"
+              ],
               boxShadow: `${
-                recursica.themes?.RecursicaBrand?.[theme]?.[
+                (recursica.themes as any)?.[
                   `elevation/elevation-${elevation}/x-axis`
                 ]
               } ${
-                recursica.themes?.RecursicaBrand?.[theme]?.[
+                (recursica.themes as any)?.[
                   `elevation/elevation-${elevation}/y-axis`
                 ]
               } ${
-                recursica.themes?.RecursicaBrand?.[theme]?.[
+                (recursica.themes as any)?.[
                   `elevation/elevation-${elevation}/blur`
                 ]
               } ${
-                recursica.themes?.RecursicaBrand?.[theme]?.[
+                (recursica.themes as any)?.[
                   `elevation/elevation-${elevation}/spread`
                 ]
               } ${
-                recursica.themes?.RecursicaBrand?.[theme]?.[
+                (recursica.themes as any)?.[
                   `elevation/elevation-${elevation}/shadow-color`
                 ]
               }`,
@@ -47,8 +47,7 @@ export function Elevation({ theme, recursica }: ElevationProps) {
           >
             <span
               style={{
-                color:
-                  recursica.themes?.RecursicaBrand?.[theme]?.["color/black"],
+                color: (recursica.themes as any)?.["color/black"],
               }}
             >
               {elevation}
