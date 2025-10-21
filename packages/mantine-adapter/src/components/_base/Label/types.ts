@@ -28,4 +28,3 @@ interface FigmaProps {
 }
 
 export type LabelProps = FigmaProps & InputLabelProps;
-
