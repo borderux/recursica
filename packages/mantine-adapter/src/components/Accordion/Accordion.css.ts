@@ -62,12 +62,6 @@ export const itemNoDivider = style({
 });
 
 export const content = style({
-  // Typography styles from design tokens
-  fontFamily: "var(--typography-body-1-normal-font-family)",
-  fontSize: "var(--typography-body-1-normal-font-size)",
-  fontWeight: "var(--typography-body-1-normal-font-weight)",
-  lineHeight: "var(--typography-body-1-normal-line-height)",
-  letterSpacing: "var(--typography-body-1-normal-letter-spacing)",
   padding: recursica.uiKit["accordion/size/padding"],
   paddingTop: 0,
 });
