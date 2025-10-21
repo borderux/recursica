@@ -4,20 +4,19 @@ import {
 } from "@mantine/core";
 import * as styles from "./Accordion.css";
 
-// interface FigmaVariantProps {
-//   Open?: boolean;
-//   Divider?: boolean;
-//   Title?: string;
-// }
+interface FigmaProps {
+  Divider?: boolean;
+}
 
-export type AccordionProps = MantineAccordionProps;
+export type AccordionProps = FigmaProps & MantineAccordionProps;
 
-const AccordionWrapper = (props: AccordionProps) => {
+const AccordionWrapper = ({ Divider = true, ...props }: AccordionProps) => {
   return (
     <MantineAccordion
       {...props}
       classNames={{
         ...styles,
+        item: Divider ? styles.item : styles.itemNoDivider,
         ...props.classNames,
       }}
     />
