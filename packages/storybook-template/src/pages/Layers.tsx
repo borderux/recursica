@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import { Recursica } from "@recursica/official-release";
 
@@ -22,24 +23,20 @@ export function Layers({ theme, recursica }: LayersProps) {
         key={layer.number}
         className="layer-container"
         style={{
-          backgroundColor:
-            recursica.themes?.RecursicaBrand?.[theme]?.[
-              `layer/${layerKey}/property/surface`
-            ],
-          color:
-            recursica.themes?.RecursicaBrand?.[theme]?.[
-              `layer/${layerKey}/property/element/text/color`
-            ],
+          backgroundColor: (recursica.themes as any)?.[
+            `layer/${layerKey}/property/surface`
+          ],
+          color: (recursica.themes as any)?.[
+            `layer/${layerKey}/property/element/text/color`
+          ],
           ...(layer.hasBorder && {
-            borderWidth:
-              recursica.themes?.RecursicaBrand?.[theme]?.[
-                `layer/${layerKey}/property/border-thickness`
-              ],
+            borderWidth: (recursica.themes as any)?.[
+              `layer/${layerKey}/property/border-thickness`
+            ],
             borderStyle: "solid",
-            borderColor:
-              recursica.themes?.RecursicaBrand?.[theme]?.[
-                `layer/${layerKey}/property/border-color`
-              ],
+            borderColor: (recursica.themes as any)?.[
+              `layer/${layerKey}/property/border-color`
+            ],
           }),
         }}
       >
@@ -47,120 +44,103 @@ export function Layers({ theme, recursica }: LayersProps) {
           <div className="layer-text-samples">
             <h3
               style={{
-                color:
-                  recursica.themes?.RecursicaBrand?.[theme]?.[
-                    `layer/${layerKey}/element/text/color`
-                  ],
+                color: (recursica.themes as any)?.[
+                  `layer/${layerKey}/element/text/color`
+                ],
               }}
             >
               {layer.name}
             </h3>
             <p
               style={{
-                color:
-                  recursica.themes?.RecursicaBrand?.[theme]?.[
-                    `layer/${layerKey}/element/text/color`
-                  ],
-                opacity:
-                  recursica.themes?.RecursicaBrand?.[theme]?.[
-                    `layer/${layerKey}/element/text/high-emphasis`
-                  ],
+                color: (recursica.themes as any)?.[
+                  `layer/${layerKey}/element/text/color`
+                ],
+                opacity: (recursica.themes as any)?.[
+                  `layer/${layerKey}/element/text/high-emphasis`
+                ],
               }}
             >
               High Emphasis Text / Icon
             </p>
             <p
               style={{
-                color:
-                  recursica.themes?.RecursicaBrand?.[theme]?.[
-                    `layer/${layerKey}/element/text/color`
-                  ],
-                opacity:
-                  recursica.themes?.RecursicaBrand?.[theme]?.[
-                    `layer/${layerKey}/element/text/low-emphasis`
-                  ],
+                color: (recursica.themes as any)?.[
+                  `layer/${layerKey}/element/text/color`
+                ],
+                opacity: (recursica.themes as any)?.[
+                  `layer/${layerKey}/element/text/low-emphasis`
+                ],
               }}
             >
               Low Emphasis Text / Icon
             </p>
             <p
               style={{
-                color:
-                  recursica.themes?.RecursicaBrand?.[theme]?.[
-                    `layer/${layerKey}/element/interactive/color`
-                  ],
-                opacity:
-                  recursica.themes?.RecursicaBrand?.[theme]?.[
-                    `layer/${layerKey}/element/interactive/high-emphasis`
-                  ],
+                color: (recursica.themes as any)?.[
+                  `layer/${layerKey}/element/interactive/color`
+                ],
+                opacity: (recursica.themes as any)?.[
+                  `layer/${layerKey}/element/interactive/high-emphasis`
+                ],
               }}
             >
               Interactive (Link / Button)
             </p>
             <p
               style={{
-                color:
-                  recursica.themes?.RecursicaBrand?.[theme]?.[
-                    `layer/${layerKey}/element/interactive/hover-color`
-                  ],
-                opacity:
-                  recursica.themes?.RecursicaBrand?.[theme]?.[
-                    `layer/${layerKey}/element/interactive/hover`
-                  ],
+                color: (recursica.themes as any)?.[
+                  `layer/${layerKey}/element/interactive/hover-color`
+                ],
+                opacity: (recursica.themes as any)?.[
+                  `layer/${layerKey}/element/interactive/hover`
+                ],
               }}
             >
               Interactive (Hover)
             </p>
             <p
               style={{
-                color:
-                  recursica.themes?.RecursicaBrand?.[theme]?.[
-                    `layer/${layerKey}/element/interactive/color`
-                  ],
-                opacity:
-                  recursica.themes?.RecursicaBrand?.[theme]?.["state/disabled"],
+                color: (recursica.themes as any)?.[
+                  `layer/${layerKey}/element/interactive/color`
+                ],
+                opacity: (recursica.themes as any)?.["state/disabled"],
               }}
             >
               Disabled Interactive
             </p>
             <p
               style={{
-                color:
-                  recursica.themes?.RecursicaBrand?.[theme]?.[
-                    `layer/${layerKey}/element/text/alert`
-                  ],
-                opacity:
-                  recursica.themes?.RecursicaBrand?.[theme]?.[
-                    `layer/${layerKey}/element/text/high-emphasis`
-                  ],
+                color: (recursica.themes as any)?.[
+                  `layer/${layerKey}/element/text/alert`
+                ],
+                opacity: (recursica.themes as any)?.[
+                  `layer/${layerKey}/element/text/high-emphasis`
+                ],
               }}
             >
               Alert
             </p>
             <p
               style={{
-                color:
-                  recursica.themes?.RecursicaBrand?.[theme]?.[
-                    `layer/${layerKey}/element/text/warning`
-                  ],
-                opacity:
-                  recursica.themes?.RecursicaBrand?.[theme]?.[
-                    `layer/${layerKey}/element/text/high-emphasis`
-                  ],
+                color: (recursica.themes as any)?.[
+                  `layer/${layerKey}/element/text/warning`
+                ],
+                opacity: (recursica.themes as any)?.[
+                  `layer/${layerKey}/element/text/high-emphasis`
+                ],
               }}
             >
               Warning
             </p>
             <p
               style={{
-                color:
-                  recursica.themes?.RecursicaBrand?.[theme]?.[
-                    `layer/${layerKey}/element/text/success`
-                  ],
-                opacity:
-                  recursica.themes?.RecursicaBrand?.[theme]?.[
-                    `layer/${layerKey}/element/text/high-emphasis`
-                  ],
+                color: (recursica.themes as any)?.[
+                  `layer/${layerKey}/element/text/success`
+                ],
+                opacity: (recursica.themes as any)?.[
+                  `layer/${layerKey}/element/text/high-emphasis`
+                ],
               }}
             >
               Success
