@@ -45,6 +45,8 @@ export interface FormFieldLayoutProps {
   LabelProps?: LabelProps & DataAttributes;
   /** Sets if the field is required.  Passed down to the underlying component */
   required?: boolean;
+  /** Sets if the field is disabled.  Passed down to the underlying component */
+  disabled?: boolean;
   /** Optional.  Set to true if field is optional */
   Indicator?: LabelIndicatorType;
   /** Help text to be shown.  Maps to the mantine description prop */
@@ -175,8 +177,24 @@ export const FormFieldLayout = forwardRef<HTMLElement, FormFieldLayoutProps>(
       Show_label,
     );
 
+    // We want to explicitly remove the props that are handled by FormFieldLayout so that they don't get passed down to the underlying component
+    const removeProps = {
+      Label: undefined,
+      Layout: undefined,
+      LabelProps: undefined,
+      Help_text: undefined,
+      Help_textProps: undefined,
+      Error_text: undefined,
+      Error_textProps: undefined,
+      Show_label: undefined,
+      Indicator: undefined,
+    };
+
     const fieldElement = cloneElement(children, {
       ref,
+      ...removeProps,
+      // Only pass through the required prop from FormFieldLayoutProps
+      required,
       // Pass the label content and label props separately
       label: label.label,
       labelProps: label.labelProps,
@@ -191,14 +209,14 @@ export const FormFieldLayout = forwardRef<HTMLElement, FormFieldLayoutProps>(
           "",
         ...(Layout === "Stacked" && {
           wrapper: `${styles.wrapperStacked} ${children.props.classNames?.wrapper || ""}`,
-          description: `${styles.descriptionStacked} ${Error_text || Error_textProps ? styles.descriptionStackedWithError : ""} ${children.props.classNames?.description || ""}`,
-          error: `${styles.errorStacked} ${children.props.classNames?.error || ""}`,
+          description: `${styles.descriptionStacked} ${styles.descriptionText} ${Error_text || Error_textProps ? styles.descriptionStackedWithError : ""} ${children.props.classNames?.description || ""}`,
+          error: `${styles.errorStacked} ${styles.errorText} ${children.props.classNames?.error || ""}`,
         }),
         // For side-by-side layout, apply column-specific styles
         ...(Layout === "Side-by-side" && {
           wrapper: `${styles.wrapperHorizontal} ${children.props.classNames?.wrapper || ""}`,
-          description: `${styles.descriptionHorizontal} ${Error_text || Error_textProps ? styles.descriptionHorizontalWithError : ""} ${children.props.classNames?.description || ""}`,
-          error: `${styles.errorHorizontal} ${children.props.classNames?.error || ""}`,
+          description: `${styles.descriptionHorizontal} ${styles.descriptionText} ${Error_text || Error_textProps ? styles.descriptionHorizontalWithError : ""} ${children.props.classNames?.description || ""}`,
+          error: `${styles.errorHorizontal} ${styles.errorText} ${children.props.classNames?.error || ""}`,
         }),
         ...children.props.classNames,
       },

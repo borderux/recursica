@@ -1,4 +1,4 @@
-import { style } from "@vanilla-extract/css";
+import { style, globalStyle } from "@vanilla-extract/css";
 import { recursica } from "@recursica/official-release/recursica";
 
 export const root = style({
@@ -16,16 +16,17 @@ export const labelStacked = style({
 
 export const wrapperStacked = style({
   gridRow: "2",
+  margin: 0,
 });
 
 export const descriptionStacked = style({
   gridRow: "3", // After label (row 1) and wrapper (row 2)
-  marginTop: recursica.uiKit["global/form/layout/stacked/label-field-gap"],
+  margin: 0,
 });
 
 export const errorStacked = style({
   gridRow: "3", // Same row as description - error will overlay it
-  marginTop: recursica.uiKit["global/form/layout/stacked/label-field-gap"],
+  margin: 0,
 });
 
 // Hide description when error is present in the same row
@@ -54,23 +55,63 @@ export const labelHorizontal = style({
 export const wrapperHorizontal = style({
   gridColumn: "2",
   gridRow: "1",
+  margin: 0,
 });
 
 export const descriptionHorizontal = style({
   gridColumn: "2",
   gridRow: "2",
-  marginTop: recursica.uiKit["global/form/layout/stacked/label-field-gap"],
+  margin: 0,
 });
 
 export const errorHorizontal = style({
   gridColumn: "2",
   gridRow: "2", // Same row as description - error will overlay it
-  marginTop: recursica.uiKit["global/form/layout/stacked/label-field-gap"],
+  margin: 0,
 });
 
 // Hide description when error is present in the same row for horizontal layout
 export const descriptionHorizontalWithError = style({
   display: "none",
+});
+
+// Common error text styling
+export const errorText = style({
+  fontFamily: recursica.themes["font/caption/font-family"],
+  fontSize: recursica.themes["font/caption/size"],
+  fontWeight: recursica.themes["font/caption/weight"],
+  color: recursica.uiKit["global/form/assistive-element/error/text-color"],
+  gap: recursica.uiKit["global/form/assistive-element/size/icon-text-gap"],
+  padding: 0,
+  paddingTop: recursica.uiKit["global/form/field/size/vertical-gutter"],
+});
+
+// Common description text styling
+export const descriptionText = style({
+  fontFamily: recursica.themes["font/caption/font-family"],
+  fontSize: recursica.themes["font/caption/size"],
+  fontWeight: recursica.themes["font/caption/weight"],
+  color: recursica.uiKit["global/form/assistive-element/help/text-color"],
+  gap: recursica.uiKit["global/form/assistive-element/size/icon-text-gap"],
+  padding: 0,
+  paddingTop: recursica.uiKit["global/form/field/size/vertical-gutter"],
+});
+
+// Completely remove Mantine's focus styles for all input controls
+globalStyle(`[data-mantine-color-scheme='light'] [data-variant='default']`, {
+  vars: {
+    "--input-bd": "unset !important",
+    "--input-bg": "unset !important",
+    "--input-bd-focus": "unset !important",
+  },
+});
+
+globalStyle(`[data-mantine-color-scheme='dark'] [data-variant='default']`, {
+  vars: {
+    "--input-bd": "unset !important",
+    "--input-bg": "unset !important",
+    "--input-bd-focus": "unset !important",
+  },
 });
 
 export const styles = {
@@ -86,4 +127,6 @@ export const styles = {
   descriptionHorizontal,
   descriptionHorizontalWithError,
   errorHorizontal,
+  errorText,
+  descriptionText,
 };

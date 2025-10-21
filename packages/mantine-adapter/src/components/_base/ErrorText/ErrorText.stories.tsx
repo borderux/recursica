@@ -17,6 +17,9 @@ const meta: Meta<typeof ErrorText> = {
       control: "text",
       description: "Icon content (when Has_icon is true)",
     },
+    useInputError: {
+      control: false,
+    },
   },
 };
 
@@ -27,5 +30,6 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   args: {
     Text: "This field is required",
+    useInputError: true,
   },
 };

@@ -9,7 +9,7 @@ interface HelpTextProps {
 
 export const HelpText = forwardRef<HTMLSpanElement, HelpTextProps>(
   (props, ref) => {
-    const { Text, Has_icon, Icon } = props;
+    const { Text } = props;
     return <span ref={ref}>{Text || props.children}</span>;
   },
 );

@@ -9,6 +9,11 @@ export const labelStyleRule = {
   opacity: recursica.uiKit["global/form/label/color/optional-text-opacity"],
   gap: recursica.uiKit["global/form/label/size/required-indicator-gap"],
   padding: 0,
+  paddingBottom:
+    recursica.uiKit["global/form/label/size/stacked/bottom-padding"],
+  fontFamily: recursica.themes["font/body-small/font-family"],
+  fontSize: recursica.themes["font/body-small/size"],
+  fontWeight: recursica.themes["font/body-small/weight-strong"],
 };
 
 export const label = style(labelStyleRule);
@@ -27,6 +32,10 @@ export const labelNone = style(labelStyleRule);
 globalStyle(`${labelOptional} [data-optional-text]`, {
   color: recursica.uiKit["global/form/label/color/default"],
   display: "block", // Block display to put it below the label
+  fontFamily: recursica.themes["font/caption/font-family"],
+  fontSize: recursica.themes["font/caption/size"],
+  fontWeight: recursica.themes["font/caption/weight"],
+  opacity: `${recursica.uiKit["global/form/label/color/optional-text-opacity"]}`,
 });
 
 globalStyle(`${labelOptional} [data-asterisk]`, {
@@ -65,6 +74,7 @@ export const labelLeft = style([
     alignItems: "flex-end",
     textAlign: "right",
     padding: 0,
+    paddingBottom: 0, // Override bottom padding for left layout
     paddingRight:
       recursica.uiKit["global/form/label/size/side-by-side-large/gutter"],
     width:
@@ -151,4 +161,8 @@ globalStyle(`${labelLeft}.${labelTruncate} [data-label-text]`, {
 // Override for left layout - optional text should be inline
 globalStyle(`${labelLeft}.${labelOptional} [data-optional-text]`, {
   display: "inline",
+  fontFamily: recursica.themes["font/caption/font-family"],
+  fontSize: recursica.themes["font/caption/size"],
+  fontWeight: recursica.themes["font/caption/weight"],
+  opacity: `${recursica.uiKit["global/form/label/color/optional-text-opacity"]}`,
 });
