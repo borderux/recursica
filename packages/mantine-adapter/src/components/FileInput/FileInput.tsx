@@ -13,6 +13,7 @@ import {
   FormFieldLayout,
   FormFieldLayoutProps,
 } from "../FormFieldLayout/FormFieldLayout";
+import { MultiFileValueComponent } from "./MultiFileValueComponent";
 import * as styles from "./FileInput.css";
 
 interface FigmaProps {
@@ -30,7 +31,25 @@ export type FileInputProps = FigmaProps &
 
 export const FileInput = forwardRef<HTMLButtonElement, FileInputProps>(
   (props, ref) => {
-    const { State, Upload_icon, Clear_icon, disabled, error, ...rest } = props;
+    const {
+      State,
+      Upload_icon,
+      Clear_icon,
+      disabled,
+      error,
+      value,
+      onChange,
+      ...rest
+    } = props;
+
+    // Handle file removal for custom chips
+    const handleRemoveFile = (indexToRemove: number) => {
+      if (Array.isArray(value) && onChange) {
+        const newValue = value.filter((_, index) => index !== indexToRemove);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onChange(newValue as any);
+      }
+    };
 
     // Determine the actual state based on props
     const getActualState = () => {
@@ -90,6 +109,23 @@ export const FileInput = forwardRef<HTMLButtonElement, FileInputProps>(
           ref={ref}
           disabled={disabled}
           error={error}
+          value={value}
+          onChange={onChange}
+          valueComponent={
+            props.multiple
+              ? (valueProps: { value: File | File[] | null }) => {
+                  const files = Array.isArray(valueProps.value)
+                    ? valueProps.value
+                    : null;
+                  return (
+                    <MultiFileValueComponent
+                      value={files}
+                      onRemove={handleRemoveFile}
+                    />
+                  );
+                }
+              : undefined
+          }
           classNames={{
             ...(typeof rest.classNames === "object" ? rest.classNames : {}),
             wrapper: `${styles.wrapper} ${getStateStyle(actualState)} ${focusStyle} ${typeof rest.classNames === "object" ? rest.classNames?.wrapper || "" : ""}`,
