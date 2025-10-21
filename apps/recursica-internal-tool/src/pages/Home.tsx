@@ -3,6 +3,7 @@ export default function Home() {
     <div>
       <h1>Recursica Internal Tool</h1>
       <p>Welcome to the Recursica Figma Plugin</p>
+
       <p>
         Use the navigation above to explore different sections of the plugin.
       </p>
@@ -21,6 +22,10 @@ export default function Home() {
           <li>
             <strong>Reset Metadata:</strong> Clear all metadata from variable
             collections
+          </li>
+          <li>
+            <strong>GitHub profile:</strong> Link your GitHub account to push to
+            a repository
           </li>
         </ul>
       </div>
