@@ -1,2 +1,2 @@
 export { FormFieldLayout } from "./FormFieldLayout";
-export type { FormFieldLayoutProps, IndicatorType } from "./FormFieldLayout";
+export type { FormFieldLayoutProps } from "./FormFieldLayout";

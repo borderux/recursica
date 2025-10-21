@@ -6,10 +6,10 @@
 import { Input } from "@mantine/core";
 import { forwardRef } from "react";
 import { mapInputLabelProps } from "./mapInputLabelProps";
-import { LabelProps, LabelIndicatorType } from "./types";
+import { LabelProps, LabelIndicatorType, FigmaProps } from "./types";
 
 // Re-export types for backward compatibility
-export type { LabelProps, LabelIndicatorType };
+export type { LabelProps, LabelIndicatorType, FigmaProps };
 
 export const Label = forwardRef<HTMLLabelElement, LabelProps>((props, ref) => {
   const mappedProps = mapInputLabelProps(props);

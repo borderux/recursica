@@ -6,7 +6,7 @@ export type LabelIndicatorType =
   | "asterisk / truncate overflow"
   | "asterisk / full label text";
 
-interface FigmaProps {
+export interface FigmaProps {
   /** Defines the required indicator and behavior.  Default is none */
   Indicator?: LabelIndicatorType;
   /** Boolean to show/hide the label */

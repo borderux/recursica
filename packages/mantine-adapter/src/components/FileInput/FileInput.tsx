@@ -14,7 +14,6 @@ import {
   FormFieldLayoutProps,
 } from "../FormFieldLayout/FormFieldLayout";
 import * as styles from "./FileInput.css";
-import { recursica } from "@recursica/official-release/recursica";
 
 interface FigmaProps {
   /** Visual state for visual testing purposes.  Not used for actual logic*/
