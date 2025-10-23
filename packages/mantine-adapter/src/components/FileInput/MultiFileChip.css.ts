@@ -4,29 +4,6 @@
 import { style } from "@vanilla-extract/css";
 import { recursica } from "@recursica/official-release/recursica";
 
-/*
-  | "file-upload/drop-zone/color/background"
-  | "file-input/color/background"
-  | "file-input/color/background-read-only"
-  | "file-input/color/border"
-  | "file-input/color/border-focus"
-  | "file-input/color/border-selected"
-  | "file-input/color/border-error"
-  | "file-input/color/upload-icon"
-  | "file-input/color/clear-icon"
-  | "file-input/color/text-valued"
-  | "file-input/color/placeholder-text-opacity"
-  | "file-input/color/disabled"
-  | "file-input/size/border-radius"
-  | "file-input/size/icon-text-gap"
-  | "file-input/size/field-height"
-  | "file-input/size/horizontal-padding"
-  | "file-input/size/icon"
-  | "file-input/size/max-width"
-  | "file-input/size/min-width"
-  | "file-input/size/vertical-padding"
-*/
-
 const root = style({
   display: "inline-flex",
   alignItems: "center",
