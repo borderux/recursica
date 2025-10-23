@@ -5,7 +5,7 @@ import commonjs from "@rollup/plugin-commonjs";
 import json from "@rollup/plugin-json";
 import dts from "rollup-plugin-dts";
 import babel from "@rollup/plugin-babel";
-import svgr from "@svgr/rollup";
+import svgr from "vite-plugin-svgr";
 import postcss from "rollup-plugin-postcss";
 import { vanillaExtractPlugin } from "@vanilla-extract/rollup-plugin";
 
@@ -47,11 +47,7 @@ const plugins = [
       sass: {},
     },
   }),
-  svgr({
-    svgo: false,
-    titleProp: true,
-    ref: true,
-  }),
+  svgr(),
   babel({
     babelHelpers: "bundled",
     exclude: "node_modules/**",
@@ -111,6 +107,7 @@ export default defineConfig([
         browser: true,
       }),
       commonjs(),
+      svgr(),
       postcss({
         extract: true,
         minimize: true,
@@ -150,6 +147,7 @@ export default defineConfig([
       dts({
         tsconfig: "./tsconfig.json",
       }),
+      svgr(),
     ],
     external,
   },
