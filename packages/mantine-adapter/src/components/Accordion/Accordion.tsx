@@ -1,4 +1,3 @@
-import React from "react";
 import {
   Accordion as MantineAccordion,
   type AccordionProps as MantineAccordionProps,
