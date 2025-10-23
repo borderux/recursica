@@ -1,1 +1,0 @@
-import{r}from"./iframe-KUC0fElV.js";const t=r.createContext(null),u=()=>{const e=r.useContext(t);if(!e)throw new Error("useRecursicaBundle must be used within a RecursicaBundleProvider. Please pass recursicaBundle to createPreviewConfig.");return e};export{u};
