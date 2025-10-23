@@ -1,8 +1,11 @@
+import React from "react";
 import {
   Accordion as MantineAccordion,
   type AccordionProps as MantineAccordionProps,
 } from "@mantine/core";
 import * as styles from "./Accordion.css";
+import { Icon } from "../Icon/Icon";
+import { recursica } from "@recursica/official-release/recursica";
 
 interface FigmaProps {
   Divider?: boolean;
@@ -19,6 +22,15 @@ const AccordionWrapper = ({ Divider = true, ...props }: AccordionProps) => {
         item: Divider ? styles.item : styles.itemNoDivider,
         ...props.classNames,
       }}
+      chevron={
+        props.chevron || (
+          <Icon
+            name="chevron_down_solid"
+            color={recursica.uiKit["accordion/color/icon"]}
+            size={recursica.uiKit["accordion/size/icon"]}
+          />
+        )
+      }
     />
   );
 };

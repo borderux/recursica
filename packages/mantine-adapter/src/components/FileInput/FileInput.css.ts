@@ -42,6 +42,9 @@ export const wrapper = style({
   minWidth: recursica.uiKit["file-input/size/min-width"],
   maxWidth: recursica.uiKit["file-input/size/max-width"],
   color: recursica.uiKit["file-input/color/text-valued"],
+  padding: recursica.uiKit["file-input/size/vertical-padding"],
+  paddingLeft: recursica.uiKit["file-input/size/horizontal-padding"],
+  paddingRight: recursica.uiKit["file-input/size/horizontal-padding"],
   margin: 0,
   borderWidth: 1,
   borderStyle: "solid",
@@ -58,7 +61,22 @@ export const input = style({
       color: recursica.uiKit["file-input/color/text-valued"],
       opacity: recursica.uiKit["file-input/color/placeholder-text-opacity"],
     },
+    "&:disabled": {
+      backgroundColor: "unset !important",
+    },
   },
+  paddingInlineStart: 0,
+  paddingInlineEnd: 0,
+  height: "unset",
+  minHeight: "unset",
+});
+
+export const inputWithUploadIcon = style({
+  paddingInlineStart: `calc(${recursica.uiKit["file-input/size/icon"]} + ${recursica.uiKit["file-input/size/icon-text-gap"]})`,
+});
+
+export const inputWithClearIcon = style({
+  paddingInlineEnd: `calc(${recursica.uiKit["file-input/size/icon"]} + ${recursica.uiKit["file-input/size/icon-text-gap"]})`,
 });
 
 // State-specific styles
@@ -101,6 +119,27 @@ export const wrapperWithErrorFocus = style({
   selectors: {
     "&:focus-within": {
       boxShadow: `0 0 0 1px ${recursica.uiKit["file-input/color/border-error"]}`,
+    },
+  },
+});
+
+export const sectionOverride = style({
+  padding: 0,
+  width: "auto",
+});
+
+export const sectionWithUploadIcon = style({
+  selectors: {
+    '&[data-position="left"]': {
+      insetInlineStart: recursica.uiKit["file-input/size/horizontal-padding"],
+    },
+  },
+});
+
+export const sectionWithClearIcon = style({
+  selectors: {
+    '&[data-position="right"]': {
+      insetInlineEnd: recursica.uiKit["file-input/size/horizontal-padding"],
     },
   },
 });

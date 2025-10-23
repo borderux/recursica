@@ -15,6 +15,8 @@ import {
 } from "../FormFieldLayout/FormFieldLayout";
 import { MultiFileValueComponent } from "./MultiFileValueComponent";
 import * as styles from "./FileInput.css";
+import { Icon } from "../Icon/Icon";
+import { recursica } from "@recursica/official-release";
 
 interface FigmaProps {
   /** Visual state for visual testing purposes.  Not used for actual logic*/
@@ -33,8 +35,8 @@ export const FileInput = forwardRef<HTMLButtonElement, FileInputProps>(
   (props, ref) => {
     const {
       State,
-      Upload_icon,
-      Clear_icon,
+      Upload_icon = true,
+      Clear_icon = true,
       disabled,
       error,
       value,
@@ -111,6 +113,36 @@ export const FileInput = forwardRef<HTMLButtonElement, FileInputProps>(
           error={error}
           value={value}
           onChange={onChange}
+          leftSection={
+            Upload_icon ? (
+              <Icon
+                name="arrow_up_tray_solid"
+                size={recursica.uiKit["file-input/size/icon"]}
+                color={recursica.uiKit["file-input/color/upload-icon"]}
+              />
+            ) : (
+              props.leftSection
+            )
+          }
+          leftSectionPointerEvents={
+            Upload_icon ? "none" : props.leftSectionPointerEvents
+          }
+          rightSection={
+            Clear_icon && !props.multiple ? (
+              <Icon
+                name="x_mark_solid"
+                size={recursica.uiKit["file-input/size/icon"]}
+                color={recursica.uiKit["file-input/color/clear-icon"]}
+                onClick={() => {
+                  if (onChange) {
+                    onChange(null);
+                  }
+                }}
+              />
+            ) : (
+              props.rightSection
+            )
+          }
           valueComponent={
             props.multiple
               ? (valueProps: { value: File | File[] | null }) => {
@@ -129,7 +161,8 @@ export const FileInput = forwardRef<HTMLButtonElement, FileInputProps>(
           classNames={{
             ...(typeof rest.classNames === "object" ? rest.classNames : {}),
             wrapper: `${styles.wrapper} ${getStateStyle(actualState)} ${focusStyle} ${typeof rest.classNames === "object" ? rest.classNames?.wrapper || "" : ""}`,
-            input: `${styles.input} ${typeof rest.classNames === "object" ? rest.classNames?.input || "" : ""}`,
+            input: `${styles.input} ${Upload_icon ? styles.inputWithUploadIcon : ""} ${Clear_icon ? styles.inputWithClearIcon : ""} ${typeof rest.classNames === "object" ? rest.classNames?.input || "" : ""}`,
+            section: `${styles.sectionOverride} ${Upload_icon ? styles.sectionWithUploadIcon : ""} ${Clear_icon ? styles.sectionWithClearIcon : ""}`,
           }}
         />
       </FormFieldLayout>
