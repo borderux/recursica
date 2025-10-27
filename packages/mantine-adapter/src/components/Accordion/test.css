@@ -1,0 +1,16 @@
+/* CSS Variable overrides for different layer classes */
+.layer-0 {
+  --accordion-color-label: var(--layer-layer-0-element-text-color);
+}
+
+.layer-1 {
+  --accordion-color-label: var(--layer-layer-1-element-text-color);
+}
+
+.layer-2 {
+  --accordion-color-label: var(--layer-layer-2-element-text-color);
+}
+
+.layer-3 {
+  --accordion-color-label: var(--layer-layer-3-element-text-color);
+}
