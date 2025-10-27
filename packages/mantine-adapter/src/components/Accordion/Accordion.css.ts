@@ -56,6 +56,11 @@ export const item = style({
   border: "none",
   borderBottom: "1px solid",
   borderColor: recursica.uiKit["accordion/color/divider"],
+  selectors: {
+    "&:last-child": {
+      borderBottom: "none",
+    },
+  },
 });
 
 export const itemNoDivider = style({
