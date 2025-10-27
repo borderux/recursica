@@ -80,14 +80,7 @@ jobs:
       # Build all packages before publishing
       # This ensures all dist/ folders are up-to-date and prevents releases if builds fail
       - name: Build Everything
-        run: |
-          # Export environment variables to ensure they're available to all child processes
-          export VITE_RECURSICA_API_URL="${{ vars.RECURSICA_API }}"
-          export VITE_RECURSICA_UI_URL="${{ vars.RECURSICA_API }}"
-          export VITE_PLUGIN_PHRASE="${{ secrets.PLUGIN_PHRASE }}"
-          export VITE_RECURSICA_API_TEST="${{ vars.RECURSICA_API_TEST }}"
-          export VITE_PLUGIN_PHRASE_TEST="${{ secrets.PLUGIN_PHRASE_TEST }}"
-          npm run build
+        run: npm run build
         env:
           # Production environment variables (for main plugin)
           VITE_RECURSICA_API_URL: ${{ vars.RECURSICA_API }}
