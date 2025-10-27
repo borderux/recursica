@@ -1,5 +1,11 @@
 # @recursica/figma-plugin
 
+## 0.1.3
+
+### Patch Changes
+
+- [#270](https://github.com/borderux/recursica/pull/270) [`6459f9d`](https://github.com/borderux/recursica/commit/6459f9d4358de37cba1e3d1b7a70096fb1530037) Thanks [@mlmassey](https://github.com/mlmassey)! - New patch release to ensure distribution variables set correctly
+
 ## 0.1.2
 
 ### Patch Changes
