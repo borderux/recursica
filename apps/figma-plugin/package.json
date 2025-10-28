@@ -24,7 +24,7 @@
     "dev": "node scripts/development.mjs",
     "dev:ui": "vite build --watch --mode development",
     "dev:code": "vite build --watch --config vite.config.lib.ts --mode development",
-    "build": "npm run build:ui && npm run build:code && cp manifest.production.json dist/manifest.json",
+    "build": "node -e \"console.log('🔍 Environment variables in figma-plugin build:'); console.log('  VITE_RECURSICA_API_URL:', process.env.VITE_RECURSICA_API_URL); console.log('  VITE_RECURSICA_UI_URL:', process.env.VITE_RECURSICA_UI_URL); console.log('  VITE_PLUGIN_PHRASE:', process.env.VITE_PLUGIN_PHRASE); console.log('  VITE_RECURSICA_API_TEST:', process.env.VITE_RECURSICA_API_TEST); console.log('  VITE_PLUGIN_PHRASE_TEST:', process.env.VITE_PLUGIN_PHRASE_TEST); console.log('');\" && npm run build:ui && npm run build:code && cp manifest.production.json dist/manifest.json",
     "build:test": "node scripts/build-test.mjs",
     "build:ui": "tsc -b && vite build --mode production",
     "build:code": "tsc -b && vite build --config vite.config.lib.ts --mode production",
