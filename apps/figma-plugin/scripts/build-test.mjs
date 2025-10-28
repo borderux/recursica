@@ -107,45 +107,6 @@ function clearDistTestFolder() {
   }
 }
 
-function copyUpdaterFiles() {
-  try {
-    log(`📁 Copying updater files...`, 'blue');
-
-    const updaterDir = path.join(parentDir, 'scripts', 'updater');
-    const distTestDir = path.join(parentDir, 'dist-test');
-
-    // Check if updater directory exists
-    if (!fs.existsSync(updaterDir)) {
-      log(`⚠️  Updater directory not found: ${updaterDir}`, 'yellow');
-      return;
-    }
-
-    // Ensure dist-test directory exists
-    if (!fs.existsSync(distTestDir)) {
-      fs.mkdirSync(distTestDir, { recursive: true });
-    }
-
-    // Read all files in updater directory
-    const files = fs.readdirSync(updaterDir);
-
-    for (const file of files) {
-      const sourcePath = path.join(updaterDir, file);
-      const destPath = path.join(distTestDir, file);
-
-      // Skip directories, only copy files
-      if (fs.statSync(sourcePath).isFile()) {
-        fs.copyFileSync(sourcePath, destPath);
-        log(`  📄 Copied ${file}`, 'cyan');
-      }
-    }
-
-    log(`✅ Updater files copied (${files.length} files)`, 'green');
-  } catch (error) {
-    log(`❌ Failed to copy updater files: ${error.message}`, 'red');
-    process.exit(1);
-  }
-}
-
 function main() {
   try {
     log(`🚀 Starting ${colors.bright}Figma Plugin Test Build${colors.reset}`, 'bright');

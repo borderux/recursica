@@ -1,0 +1,25 @@
+Figma Plug-in Publishing Instructions
+
+When publishing to Figma, all questions should be answered except for the following:
+
+Data Security
+
+> Check I agree to share this information
+
+1. Do you host a backend service for your plugin/widget?
+A: Yes, but my plugin/widget does not send any data read/derived
+
+2. Does your plugin/widget make any network requests with services you do not host
+A: (multiple)
+ > My plugin/widget makes network requests for static assets
+ > My plugin/widget makes network requests for to analytics tools
+
+ 3. Does your plugin/widget use any user authentication?
+ A: Yes, my plugin/widget has user authentication
+ Further: User credentials are not kept. Standard OAUTH flow is used for temporary tokens
+
+ 4. Do you store any data read/derived from Fimga's plugin API?
+ A: Yes, my plugin/widget stores read/derived from Fimga's plugin API locally
+
+ 5. How do you manage updates to your plugin/widget?
+ A: I work on a team
