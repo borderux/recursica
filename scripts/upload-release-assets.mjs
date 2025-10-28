@@ -62,21 +62,9 @@ function log(message, color = "reset") {
   console.log(`${colors[color]}${message}${colors.reset}`);
 }
 
-function getLatestReleaseTag() {
-  try {
-    const tag = execSync(
-      "git describe --tags `git rev-list --tags --max-count=1`",
-      {
-        encoding: "utf8",
-        stdio: "pipe",
-      },
-    ).trim();
-    return tag;
-  } catch (error) {
-    log("❌ Failed to get latest release tag", "red");
-    log(`Error: ${error.message}`, "red");
-    process.exit(1);
-  }
+function getReleaseTagForPackage(packageName, version) {
+  // Changesets creates release tags in the format: @scope/package-name@version
+  return `${packageName}@${version}`;
 }
 
 function uploadAssetToRelease(releaseTag, zipPath) {
@@ -99,9 +87,6 @@ function uploadAssetToRelease(releaseTag, zipPath) {
 async function processPublishResults(publishResults) {
   log("🎯 Uploading release assets for published packages...", "bright");
 
-  const latestTag = getLatestReleaseTag();
-  log(`📋 Latest release tag: ${latestTag}`, "cyan");
-
   let successCount = 0;
   let totalCount = 0;
   const processedPackages = [];
@@ -119,8 +104,12 @@ async function processPublishResults(publishResults) {
 
     log(`📦 Found zip file: ${result.zipPath}`, "green");
 
+    // Get the specific release tag for this package
+    const releaseTag = getReleaseTagForPackage(result.name, result.version);
+    log(`📋 Release tag: ${releaseTag}`, "cyan");
+
     // Upload to GitHub release
-    const uploadSuccess = uploadAssetToRelease(latestTag, result.zipPath);
+    const uploadSuccess = uploadAssetToRelease(releaseTag, result.zipPath);
     if (uploadSuccess) {
       successCount++;
       processedPackages.push(result.name);
