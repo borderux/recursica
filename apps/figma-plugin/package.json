@@ -24,7 +24,7 @@
     "dev": "node scripts/development.mjs",
     "dev:ui": "vite build --watch --mode development",
     "dev:code": "vite build --watch --config vite.config.lib.ts --mode development",
-    "build": "npm run build:ui && npm run build:code && cp manifest.production.json dist/manifest.json",
+    "build": "npm run build:ui && npm run build:code && cp manifest.production.json dist/manifest.json && cp PUBLISHING_INSTRUCTIONS.txt dist/",
     "build:test": "node scripts/build-test.mjs",
     "build:ui": "tsc -b && vite build --mode production",
     "build:code": "tsc -b && vite build --config vite.config.lib.ts --mode production",
