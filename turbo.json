@@ -29,7 +29,6 @@
       "persistent": true
     },
     "publish": {
-      "dependsOn": ["build"],
       "outputs": ["**/*.zip", "releases/**"]
     }
   }
