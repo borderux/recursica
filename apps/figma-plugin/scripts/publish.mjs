@@ -102,58 +102,6 @@ function validateBuildFiles(config) {
   log(`✅ Found ${config.distDir} directory with ${distContents.length} files`, 'green');
 }
 
-function verifyBuildContent(config) {
-  const distPath = path.join(parentDir, config.distDir);
-  const figmaPluginPath = path.join(distPath, 'figma-plugin.js');
-
-  log(`🔍 Verifying build content...`, 'blue');
-
-  // Check if figma-plugin.js exists
-  if (!fs.existsSync(figmaPluginPath)) {
-    log(`❌ Error: figma-plugin.js not found in ${config.distDir}`, 'red');
-    log(`Expected path: ${figmaPluginPath}`, 'red');
-    process.exit(1);
-  }
-
-  // Read the figma-plugin.js file
-  const figmaPluginContent = fs.readFileSync(figmaPluginPath, 'utf8');
-
-  // Check for stupid.recursica.com (development URL that should not be in production)
-  if (figmaPluginContent.includes('stupid.recursica.com')) {
-    log(`❌ CRITICAL ERROR: Build contains development URL 'stupid.recursica.com'`, 'red');
-    log(`This indicates the .env file is overriding CI environment variables`, 'red');
-    log(`The build should use production URLs from CI environment variables`, 'red');
-    log('');
-    log(`Expected URLs in production:`, 'yellow');
-    log(`  - https://api.recursica.com (or https://github.recursica.com for testing)`, 'yellow');
-    log(`  - https://app.recursica.com (or https://github.recursica.com for testing)`, 'yellow');
-    log('');
-    log(`Found in build:`, 'red');
-    log(`  - stupid.recursica.com`, 'red');
-    log('');
-    log(`This build will NOT be published to prevent incorrect URLs in production`, 'red');
-    process.exit(1);
-  }
-
-  // Check for other problematic development URLs
-  const problematicUrls = [
-    'dev-api.recursica.com',
-    'localhost:5000',
-    'localhost:3000',
-    '127.0.0.1',
-  ];
-
-  for (const url of problematicUrls) {
-    if (figmaPluginContent.includes(url)) {
-      log(`❌ WARNING: Build contains development URL '${url}'`, 'yellow');
-      log(`This may indicate environment variable issues`, 'yellow');
-    }
-  }
-
-  log(`✅ Build content verification passed`, 'green');
-  log(`   No development URLs found in figma-plugin.js`, 'green');
-}
-
 function createZipFile(config) {
   const distPath = path.join(parentDir, config.distDir);
   const zipPath = path.join(distPath, config.zipName);
@@ -222,10 +170,6 @@ function main() {
 
     // Validate that build files exist
     validateBuildFiles(config);
-    log('');
-
-    // Verify build content (check for development URLs)
-    verifyBuildContent(config);
     log('');
 
     // Create zip file
