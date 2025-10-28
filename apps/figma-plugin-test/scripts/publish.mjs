@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+/* eslint-disable no-undef */
+/* eslint-disable no-console */
 
 /**
  * Publish Script for Figma Plugin Test
@@ -8,7 +10,7 @@
  * Usage: node scripts/publish.mjs
  *
  * Output:
- * - Creates recursica-figma-plugin.zip in the dist/ folder
+ * - Creates recursica-figma-plugin-test.zip in the dist/ folder
  * - Outputs ZIP_PATH=<path> for use by parent scripts
  * - Exits with code 0 on success, code 1 on failure
  *
@@ -71,11 +73,11 @@ function validateBuildFiles() {
 
 function createZipFile() {
   const distPath = path.join(parentDir, "dist");
-  const zipPath = path.join(distPath, "recursica-figma-plugin.zip");
+  const zipPath = path.join(distPath, "recursica-figma-plugin-test.zip");
 
   log(`📦 Creating test zip file...`, "blue");
   log(`   Source: dist/`, "cyan");
-  log(`   Output: dist/recursica-figma-plugin.zip`, "cyan");
+  log(`   Output: dist/recursica-figma-plugin-test.zip`, "cyan");
 
   return new Promise((resolve, reject) => {
     // Remove existing zip file if it exists
@@ -131,7 +133,7 @@ function main() {
     );
     log(`📋 Mode: Test`, "cyan");
     log(`📁 Dist Directory: dist`, "cyan");
-    log(`📦 Zip Name: recursica-figma-plugin.zip`, "cyan");
+    log(`📦 Zip Name: recursica-figma-plugin-test.zip`, "cyan");
     log("");
 
     // Validate that build files exist
