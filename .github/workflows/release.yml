@@ -100,7 +100,7 @@ jobs:
         env:
           # Production environment variables (for main plugin)
           VITE_RECURSICA_API_URL: ${{ vars.RECURSICA_API }}
-          VITE_RECURSICA_UI_URL: https://app.recursica.com
+          VITE_RECURSICA_UI_URL: ${{ vars.RECURSICA_API }}
           VITE_PLUGIN_PHRASE: ${{ secrets.PLUGIN_PHRASE }}
           # Test environment variables (for test plugin)
           VITE_RECURSICA_API_TEST: ${{ vars.RECURSICA_API_TEST }}
