@@ -1,5 +1,11 @@
 # @recursica/figma-plugin
 
+## 0.3.0
+
+### Minor Changes
+
+- [`26ba9e3`](https://github.com/borderux/recursica/commit/26ba9e3b5d4bcef1732d8278d8af5aebf21a91a1) Thanks [@github-actions[bot]](https://github.com/github-actions%5Bbot%5D)! - Added publishing instructions and changed test zip filename
+
 ## 0.2.1
 
 ### Patch Changes
