@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable no-undef */
 
 /**
  * Publish Script for Figma Plugin
@@ -27,7 +28,6 @@
  * - Outputs clean ZIP_PATH without color codes
  */
 
-import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import archiver from 'archiver';
@@ -72,7 +72,7 @@ function getBuildConfig(mode) {
     },
     test: {
       distDir: 'dist-test',
-      zipName: 'recursica-figma-plugin.zip',
+      zipName: 'recursica-figma-plugin-test.zip',
       description: 'Test',
     },
   };
