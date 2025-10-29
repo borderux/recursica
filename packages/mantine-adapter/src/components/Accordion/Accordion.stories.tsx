@@ -21,10 +21,15 @@ const meta: Meta<typeof Accordion> = {
     // Hide all actual component props from controls
     children: { table: { disable: true } },
     classNames: { table: { disable: true } },
+    Divider: {
+      control: { type: "boolean" },
+      description: "Whether to show a divider between accordion items",
+      defaultValue: true,
+    },
   },
   parameters: {
     controls: {
-      include: ["Title"],
+      include: ["Title", "Divider"],
     },
   },
 };
@@ -39,11 +44,17 @@ type Story = StoryObj<typeof meta> & {
 export const Default: Story = {
   args: {
     Title: "Accordion",
+    Divider: true,
   },
   argTypes: {
     Title: {
       control: { type: "text" },
       description: "Title for accordion items",
+    },
+    Divider: {
+      control: { type: "boolean" },
+      description: "Whether to show a divider between accordion items",
+      defaultValue: true,
     },
   } as any,
   render: (args) => {
