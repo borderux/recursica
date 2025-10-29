@@ -10,8 +10,8 @@ export function validateCollections(
   fileType: string
 ): { isValid: boolean; errorMessage?: string } {
   if (fileType === 'themes') {
-    const tokensCollections = Object.values(libraries).filter((collection) =>
-      collection.name.toLowerCase().includes('tokens')
+    const tokensCollections = Object.values(libraries).filter(
+      (collection) => collection.getSharedPluginData('recursica', 'file-type') === 'tokens'
     );
     const tokensConnected = tokensCollections.every(
       (collection) => collection.getSharedPluginData('recursica', 'variables-synced') === 'true'
@@ -31,14 +31,14 @@ export function validateCollections(
   }
 
   if (fileType === 'ui-kit') {
-    const tokensCollections = Object.values(libraries).filter((collection) =>
-      collection.name.toLowerCase().includes('tokens')
+    const tokensCollections = Object.values(libraries).filter(
+      (collection) => collection.getSharedPluginData('recursica', 'file-type') === 'tokens'
     );
     const tokensConnected = tokensCollections.every(
       (collection) => collection.getSharedPluginData('recursica', 'variables-synced') === 'true'
     );
-    const themesCollections = Object.values(libraries).filter((collection) =>
-      collection.name.toLowerCase().includes('themes')
+    const themesCollections = Object.values(libraries).filter(
+      (collection) => collection.getSharedPluginData('recursica', 'file-type') === 'themes'
     );
     const themesConnected = themesCollections.every(
       (collection) => collection.getSharedPluginData('recursica', 'variables-synced') === 'true'
