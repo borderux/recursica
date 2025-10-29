@@ -1,5 +1,11 @@
 # @recursica/figma-plugin
 
+## 0.3.1
+
+### Patch Changes
+
+- [#289](https://github.com/borderux/recursica/pull/289) [`8e0fa4a`](https://github.com/borderux/recursica/commit/8e0fa4a092b5864879e0ab2c3aef9fea084073f1) Thanks [@jonathan-mojica](https://github.com/jonathan-mojica)! - Proper handling of metadata collections to sync figma metadata
+
 ## 0.3.0
 
 ### Minor Changes
