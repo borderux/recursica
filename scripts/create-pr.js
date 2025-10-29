@@ -139,13 +139,19 @@ function pushBranch(currentBranch) {
     log("📤 Pushing branch to remote...", "blue");
 
     // Check if upstream is already set
-    const upstream = execSync(
-      `git rev-parse --abbrev-ref --symbolic-full-name @{u}`,
-      {
-        encoding: "utf8",
-        stdio: "pipe",
-      },
-    ).trim();
+    let upstream = null;
+    try {
+      upstream = execSync(
+        `git rev-parse --abbrev-ref --symbolic-full-name @{u}`,
+        {
+          encoding: "utf8",
+          stdio: "pipe",
+        },
+      ).trim();
+    } catch (upstreamError) {
+      // No upstream configured, this is expected for new branches
+      upstream = null;
+    }
 
     if (upstream && upstream !== "origin/main") {
       // Upstream is set, just push
