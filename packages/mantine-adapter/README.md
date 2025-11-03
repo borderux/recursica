@@ -72,6 +72,8 @@ import type { ButtonProps, TextfieldProps } from "@recursica/mantine-adapter";
 
 - `Button` - Interactive button with multiple variants
 - `Textfield` - Text input component
+- `FileInput` - File upload input component
+- `FormFieldLayout` - Generic wrapper for form components with consistent layout
 - `Checkbox` - Checkbox input
 - `Dropdown` - Select dropdown with search
 - `Chip` - Tag/chip component
@@ -99,6 +101,12 @@ import type { ButtonProps, TextfieldProps } from "@recursica/mantine-adapter";
 - `Loader` - Loading indicator
 - `Accordion` - Collapsible content
 - `Tooltip` - Tooltip component
+
+### Base Components
+
+- `Label` - Form label component with indicator support
+- `HelpText` - Help text component for form fields
+- `ErrorText` - Error text component for form validation
 
 ## Component Usage Examples
 
@@ -133,10 +141,10 @@ import { Button } from "@recursica/mantine-adapter";
 />
 ```
 
-### Form Components
+### Form Component Examples
 
 ```tsx
-import { Textfield, Checkbox, Dropdown } from "@recursica/mantine-adapter";
+import { Textfield, Checkbox, Dropdown, FileInput, FormFieldLayout } from "@recursica/mantine-adapter";
 
 // Text input
 <Textfield
@@ -144,6 +152,23 @@ import { Textfield, Checkbox, Dropdown } from "@recursica/mantine-adapter";
   placeholder="Enter your email"
   required
 />
+
+// File input
+<FileInput
+  label="Upload Document"
+  placeholder="Select a file"
+  accept=".pdf,.doc,.docx"
+  required
+/>
+
+// Form field layout wrapper
+<FormFieldLayout
+  label="Email Address"
+  help_text="We'll never share your email"
+  required
+>
+  <TextInput placeholder="Enter your email" />
+</FormFieldLayout>
 
 // Checkbox
 <Checkbox
@@ -162,7 +187,7 @@ import { Textfield, Checkbox, Dropdown } from "@recursica/mantine-adapter";
 />
 ```
 
-### Layout Components
+### Layout Component Examples
 
 ```tsx
 import { Box, Flex } from "@recursica/mantine-adapter";
