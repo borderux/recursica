@@ -1,4 +1,10 @@
-import { forwardRef, ReactElement, cloneElement, isValidElement } from "react";
+import {
+  forwardRef,
+  ReactElement,
+  cloneElement,
+  isValidElement,
+  type ReactNode,
+} from "react";
 import { styles } from "./FormFieldLayout.css";
 import { Label as LabelComponent } from "../_base/Label";
 import { LabelProps } from "../_base/Label/types";
@@ -14,18 +20,18 @@ import { ErrorText, ErrorTextProps } from "../_base/ErrorText/ErrorText";
 import { LayerTypeProps } from "../Layer";
 
 // Define HelpTextProps locally since it's not exported
-interface HelpTextProps {
-  Text?: React.ReactNode;
+export interface HelpTextProps {
+  Text?: ReactNode;
   Has_icon?: boolean;
-  Icon?: React.ReactNode;
-  children?: React.ReactNode;
+  Icon?: ReactNode;
+  children?: ReactNode;
 }
 
 /**
  * 1. For the label, we want to use our own label component and pass its props that it expects to layout.
  */
 
-interface MantineComponentProps {
+export interface MantineComponentProps {
   classNames?: {
     root?: string;
     label?: string;
@@ -41,7 +47,7 @@ export type FormFieldLayoutProps = LayerTypeProps & {
   /** Layout orientation - stacked (top) or side-by-side (left).  Default is stacked */
   Layout?: "Stacked" | "Side-by-side";
   /** The label component.  This is typically just a string, but if you want to use your own label component, you can */
-  Label?: React.ReactNode;
+  Label?: ReactNode;
   /** Props to be passed to the label component if its a custom component */
   LabelProps?: LabelProps & DataAttributes;
   /** Sets if the field is required.  Passed down to the underlying component */
@@ -51,11 +57,11 @@ export type FormFieldLayoutProps = LayerTypeProps & {
   /** Optional.  Set to true if field is optional */
   Indicator?: LabelIndicatorType;
   /** Help text to be shown.  Maps to the mantine description prop */
-  Help_text?: React.ReactNode;
+  Help_text?: ReactNode;
   /** Custom help text component.  If provided, the Help_text prop will be ignored */
   Help_textProps?: HelpTextProps & DataAttributes;
   /** Error text to be shown.  Maps to the mantine error prop */
-  Error_text?: React.ReactNode;
+  Error_text?: ReactNode;
   /** Custom error text component.  If provided, the Error_text prop will be ignored */
   Error_textProps?: ErrorTextProps & DataAttributes;
   /** Shows/hides the label */
@@ -65,13 +71,13 @@ export type FormFieldLayoutProps = LayerTypeProps & {
 };
 
 interface LabelReturnProps {
-  label?: React.ReactNode;
+  label?: ReactNode;
   labelProps?: InputLabelProps & DataAttributes;
 }
 
 const renderLabelProps = (
   Layout?: "Stacked" | "Side-by-side",
-  Label?: React.ReactNode,
+  Label?: ReactNode,
   LabelProps?: LabelProps & DataAttributes,
   Indicator?: LabelIndicatorType,
   required?: boolean,
@@ -104,12 +110,12 @@ const renderLabelProps = (
 };
 
 interface DescriptionReturnProps {
-  description?: React.ReactNode;
+  description?: ReactNode;
   descriptionProps?: InputDescriptionProps & DataAttributes;
 }
 
 const renderDescriptionProps = (
-  Help_text?: React.ReactNode,
+  Help_text?: ReactNode,
   Help_textProps?: HelpTextProps,
 ) => {
   const returnProps: DescriptionReturnProps = {
@@ -126,12 +132,12 @@ const renderDescriptionProps = (
 };
 
 interface ErrorReturnProps {
-  error?: React.ReactNode;
+  error?: ReactNode;
   errorProps?: DataAttributes;
 }
 
 const renderErrorProps = (
-  Error_text?: React.ReactNode,
+  Error_text?: ReactNode,
   Error_textProps?: ErrorTextProps,
 ) => {
   const returnProps: ErrorReturnProps = {

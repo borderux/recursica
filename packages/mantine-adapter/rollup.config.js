@@ -155,6 +155,7 @@ export default defineConfig([
       },
       dts({
         tsconfig: "./tsconfig.json",
+        respectExternal: true,
       }),
       svgr(),
     ],
