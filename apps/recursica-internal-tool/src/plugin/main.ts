@@ -11,7 +11,7 @@ import type { PluginMessage, PluginResponse } from "./types/messages";
 // Plugin configuration
 figma.showUI(__html__, {
   width: 500,
-  height: 500,
+  height: 650,
 });
 
 // Load initial theme settings when plugin starts
@@ -25,6 +25,14 @@ figma.ui.onmessage = async (message: PluginMessage) => {
 
   try {
     switch (message.type) {
+      case "get-current-user": {
+        figma.ui.postMessage({
+          type: "current-user",
+          payload: figma.currentUser?.id,
+        });
+        break;
+      }
+
       case "reset-metadata": {
         const resetResponse = await resetAllMetadata();
         figma.ui.postMessage(resetResponse);
@@ -67,6 +75,67 @@ figma.ui.onmessage = async (message: PluginMessage) => {
           message.themeName,
         );
         figma.ui.postMessage(updateResponse);
+        break;
+      }
+
+      case "store-auth-data": {
+        await figma.clientStorage.setAsync("accessToken", message.accessToken);
+        if (message.selectedRepo) {
+          await figma.clientStorage.setAsync(
+            "selectedRepo",
+            message.selectedRepo,
+          );
+        }
+        figma.ui.postMessage({
+          type: "auth-data-stored",
+          success: true,
+        });
+        break;
+      }
+
+      case "load-auth-data": {
+        try {
+          const accessToken = await figma.clientStorage.getAsync("accessToken");
+          const selectedRepo =
+            await figma.clientStorage.getAsync("selectedRepo");
+          figma.ui.postMessage({
+            type: "auth-data-loaded",
+            success: true,
+            accessToken: accessToken || undefined,
+            selectedRepo: selectedRepo || undefined,
+          });
+        } catch (error) {
+          figma.ui.postMessage({
+            type: "auth-data-loaded",
+            success: false,
+            error:
+              error instanceof Error
+                ? error.message
+                : "Failed to load auth data",
+          });
+        }
+        break;
+      }
+
+      case "clear-auth-data": {
+        await figma.clientStorage.deleteAsync("accessToken");
+        await figma.clientStorage.deleteAsync("selectedRepo");
+        figma.ui.postMessage({
+          type: "auth-data-cleared",
+          success: true,
+        });
+        break;
+      }
+
+      case "store-selected-repo": {
+        await figma.clientStorage.setAsync(
+          "selectedRepo",
+          message.selectedRepo,
+        );
+        figma.ui.postMessage({
+          type: "selected-repo-stored",
+          success: true,
+        });
         break;
       }
 

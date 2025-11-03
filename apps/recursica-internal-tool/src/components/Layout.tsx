@@ -78,6 +78,18 @@ export default function Layout() {
               Reset Metadata
             </Link>
           </li>
+          <li>
+            <Link
+              to="/auth"
+              style={{
+                textDecoration:
+                  location.pathname === "/auth" ? "underline" : "none",
+                color: location.pathname === "/auth" ? "#007acc" : "#333",
+              }}
+            >
+              GitHub
+            </Link>
+          </li>
         </ul>
       </nav>
       <main>
