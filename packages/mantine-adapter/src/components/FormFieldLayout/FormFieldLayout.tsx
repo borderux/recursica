@@ -11,6 +11,7 @@ import {
 import { LabelIndicatorType } from "../_base/Label/types";
 import { HelpText } from "../_base/HelpText/HelpText";
 import { ErrorText, ErrorTextProps } from "../_base/ErrorText/ErrorText";
+import { LayerTypeProps } from "../Layer";
 
 // Define HelpTextProps locally since it's not exported
 interface HelpTextProps {
@@ -36,7 +37,7 @@ interface MantineComponentProps {
   [key: string]: unknown;
 }
 
-export interface FormFieldLayoutProps {
+export type FormFieldLayoutProps = LayerTypeProps & {
   /** Layout orientation - stacked (top) or side-by-side (left).  Default is stacked */
   Layout?: "Stacked" | "Side-by-side";
   /** The label component.  This is typically just a string, but if you want to use your own label component, you can */
@@ -61,7 +62,7 @@ export interface FormFieldLayoutProps {
   Show_label?: boolean;
   /** The Mantine form component to wrap (e.g., TextInput, Select, etc.) */
   children: ReactElement<MantineComponentProps>;
-}
+};
 
 interface LabelReturnProps {
   label?: React.ReactNode;

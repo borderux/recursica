@@ -17,6 +17,7 @@ import { MultiFileValueComponent } from "./MultiFileValueComponent";
 import * as styles from "./FileInput.css";
 import { Icon } from "../Icon/Icon";
 import { recursica } from "@recursica/official-release";
+import { getLayerClassname } from "../Layer";
 
 interface FigmaProps {
   /** Visual state for visual testing purposes.  Not used for actual logic*/
@@ -41,6 +42,7 @@ export const FileInput = forwardRef<HTMLButtonElement, FileInputProps>(
       error,
       value,
       onChange,
+      Layer,
       ...rest
     } = props;
 
@@ -105,9 +107,10 @@ export const FileInput = forwardRef<HTMLButtonElement, FileInputProps>(
     const focusStyle = getFocusStyle();
 
     return (
-      <FormFieldLayout {...props}>
+      <FormFieldLayout {...props} Layer={Layer}>
         <MantineFileInput
           {...rest}
+          className={`${getLayerClassname(Layer)} ${rest.classNames}`}
           ref={ref}
           disabled={disabled}
           error={error}

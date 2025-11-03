@@ -445,3 +445,118 @@ For more information about Recursica, go to https://recursica.com
   --layout-grid-desktop-columns: 6;
   --elevation-elevation-4-shadow-color: var(--color-translucent-14);
 }
+
+.recursicabrand-light-theme {
+  --layer-element-interactive-color: var(--palette-palette-1-default-tone);
+  --layer-element-interactive-high-emphasis: var(--opacity-solid);
+  --layer-element-interactive-hover-color: var(--palette-palette-1-600-tone);
+  --layer-element-text-alert: var(--palette-alert);
+  --layer-element-text-color: var(--palette-black);
+  --layer-element-text-high-emphasis: var(--opacity-solid);
+  --layer-element-text-low-emphasis: var(--opacity-veiled);
+  --layer-element-text-success: var(--palette-success);
+  --layer-element-text-warning: var(--palette-warning);
+  --layer-property-padding: var(--size-3x);
+  --layer-property-surface: var(--palette-neutral-050-tone);
+}
+
+.recursicabrand-light-theme .layer-1 {
+  --layer-element-interactive-color: var(--palette-palette-1-default-tone);
+  --layer-element-interactive-high-emphasis: var(--opacity-solid);
+  --layer-element-interactive-hover-color: var(--palette-palette-1-200-tone);
+  --layer-element-text-alert: var(--palette-alert);
+  --layer-element-text-color: var(--palette-neutral-050-on-tone);
+  --layer-element-text-high-emphasis: var(--palette-neutral-050-high-emphasis);
+  --layer-element-text-low-emphasis: var(--palette-neutral-050-low-emphasis);
+  --layer-element-text-success: var(--palette-success);
+  --layer-element-text-warning: var(--palette-warning);
+  --layer-property-border-color: var(--palette-neutral-200-tone);
+  --layer-property-border-radius: var(--size-border-radius-3x);
+  --layer-property-border-thickness: 2;
+  --layer-property-elevation: var(--elevations-elevation-0);
+  --layer-property-padding: var(--size-3x);
+  --layer-property-surface: var(--palette-neutral-050-tone);
+  --global-form-field-color-border: var(--palette-neutral-200-tone);
+}
+
+.recursicabrand-light-theme .layer-2 {
+  --layer-element-interactive-color: var(--palette-palette-1-500-tone);
+  --layer-element-interactive-high-emphasis: var(--opacity-solid);
+  --layer-element-interactive-hover-color: var(--palette-palette-1-400-tone);
+  --layer-element-text-alert: var(--palette-alert);
+  --layer-element-text-color: var(--palette-neutral-050-on-tone);
+  --layer-element-text-high-emphasis: var(--palette-neutral-050-high-emphasis);
+  --layer-element-text-low-emphasis: var(--palette-neutral-050-low-emphasis);
+  --layer-element-text-success: var(--palette-success);
+  --layer-element-text-warning: var(--palette-warning);
+  --layer-property-border-color: var(--palette-neutral-200-tone);
+  --layer-property-border-radius: var(--size-border-radius-2x);
+  --layer-property-border-thickness: 0;
+  --layer-property-elevation: var(--elevations-elevation-0);
+  --layer-property-padding: var(--size-2x);
+  --layer-property-surface: var(--palette-neutral-100-tone);
+}
+
+.recursicabrand-light-theme .layer-3 {
+  --layer-element-interactive-color: var(--palette-palette-1-400-tone);
+  --layer-element-interactive-high-emphasis: var(--opacity-solid);
+  --layer-element-interactive-hover-color: var(--palette-palette-1-300-tone);
+  --layer-element-text-alert: var(--palette-alert);
+  --layer-element-text-color: var(--palette-black);
+  --layer-element-text-high-emphasis: var(--opacity-solid);
+  --layer-element-text-low-emphasis: var(--opacity-veiled);
+  --layer-element-text-success: var(--palette-success);
+  --layer-element-text-warning: var(--palette-warning);
+  --layer-property-border-color: var(--palette-neutral-100-tone);
+  --layer-property-border-radius: var(--size-border-radius-default);
+  --layer-property-border-thickness: 0;
+  --layer-property-elevation: var(--elevations-elevation-1);
+  --layer-property-padding: var(--size-2x);
+  --layer-property-surface: var(--palette-neutral-050-tone);
+}
+
+.recursicabrand-light-theme .layer-alternative-alert {
+  --layer-element-interactive-color: var(--palette-white);
+  --layer-element-interactive-high-emphasis: var(--opacity-solid);
+  --layer-element-interactive-hover-color: var(--palette-palette-1-200-tone);
+  --layer-element-interactive-hover-color-2: var(--palette-palette-1-300-tone);
+  --layer-element-text-color: var(--palette-white);
+  --layer-element-text-high-emphasis: var(--opacity-solid);
+  --layer-element-text-low-emphasis: var(--opacity-smoky);
+  --layer-property-padding: var(--size-3x);
+  --layer-property-surface: var(--palette-alert);
+}
+
+.recursicabrand-light-theme .layer-alternative-high-contrast {
+  --layer-element-interactive-color: var(--palette-palette-1-200-tone);
+  --layer-element-interactive-hover-color: var(--palette-palette-1-100-tone);
+  --layer-element-interactive-high-emphasis: var(--opacity-solid);
+  --layer-element-text-color: var(--palette-white);
+  --layer-element-text-high-emphasis: var(--opacity-solid);
+  --layer-element-text-low-emphasis: var(--opacity-veiled);
+  --layer-property-padding: var(--size-3x);
+  --layer-property-surface: var(--palette-palette-1-900-tone);
+}
+
+.recursicabrand-light-theme .layer-alternative-primary-color {
+  --layer-element-interactive-color: var(--palette-white);
+  --layer-element-interactive-high-emphasis: var(--opacity-solid);
+  --layer-element-interactive-hover-color: var(--palette-palette-1-200-tone);
+  --layer-element-text-color: var(--palette-white);
+  --layer-element-text-high-emphasis: var(--opacity-solid);
+  --layer-element-text-low-emphasis: var(--opacity-smoky);
+  --layer-property-padding: var(--size-3x);
+  --layer-property-surface: var(--palette-palette-1-default-tone);
+}
+
+.recursicabrand-light-theme .layer-alternative-warning {
+  --layer-element-interactive-color: var(--palette-white);
+  --layer-element-interactive-high-emphasis: var(--opacity-solid);
+  --layer-element-interactive-hover-color: var(--palette-palette-1-200-tone);
+  --layer-element-interactive-hover-color-2: var(--palette-palette-1-300-tone);
+  --layer-element-text-color: var(--palette-white);
+  --layer-element-text-high-emphasis: var(--opacity-solid);
+  --layer-element-text-low-emphasis: var(--opacity-smoky);
+  --layer-property-padding: var(--size-3x);
+  --layer-property-surface: var(--palette-warning);
+}

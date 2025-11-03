@@ -3,38 +3,42 @@ import {
   type AccordionProps as MantineAccordionProps,
 } from "@mantine/core";
 import * as styles from "./Accordion.css";
-import "./test.css";
 import { Icon } from "../Icon/Icon";
 import { recursica } from "@recursica/official-release/recursica";
+import { LayerTypeProps, getLayerClassname } from "../Layer";
 
 interface FigmaProps {
   Divider?: boolean;
 }
 
-export type AccordionProps = FigmaProps & MantineAccordionProps;
+export type AccordionProps = FigmaProps &
+  MantineAccordionProps &
+  LayerTypeProps;
 
-const AccordionWrapper = ({ Divider = true, ...props }: AccordionProps) => {
+const AccordionWrapper = ({
+  Divider = true,
+  Layer,
+  ...props
+}: AccordionProps) => {
   return (
-    <div className="layer-2">
-      <MantineAccordion
-        {...props}
-        className={`${props.className || ""}`}
-        classNames={{
-          ...styles,
-          item: Divider ? styles.item : styles.itemNoDivider,
-          ...props.classNames,
-        }}
-        chevron={
-          props.chevron || (
-            <Icon
-              name="chevron_down_solid"
-              color={recursica.uiKit["accordion/color/icon"]}
-              size={recursica.uiKit["accordion/size/icon"]}
-            />
-          )
-        }
-      />
-    </div>
+    <MantineAccordion
+      {...props}
+      className={`${getLayerClassname(Layer) + " " + (props.className || "")}`}
+      classNames={{
+        ...styles,
+        item: Divider ? styles.item : styles.itemNoDivider,
+        ...props.classNames,
+      }}
+      chevron={
+        props.chevron || (
+          <Icon
+            name="chevron_down_solid"
+            color={recursica.uiKit["accordion/color/icon"]}
+            size={recursica.uiKit["accordion/size/icon"]}
+          />
+        )
+      }
+    />
   );
 };
 

@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { useState } from "react";
 import { FileInput } from "./FileInput";
-import { formFieldLayoutArgTypes } from "../FormFieldLayout/FormFieldLayout.stories.helper";
+import { formFieldLayoutArgTypes } from "../FormFieldLayout/stories.util";
+import { Layer } from "../Layer";
 
 const meta: Meta<typeof FileInput> = {
   title: "Components/FileInput",
@@ -34,8 +35,11 @@ type Story = StoryObj<typeof meta>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const FileInputDemo = (args: any) => {
   const [value, setValue] = useState<File | File[] | null>(null);
-
-  return <FileInput {...args} value={value} onChange={setValue} />;
+  return (
+    <Layer Layer={args.Layer}>
+      <FileInput {...args} value={value} onChange={setValue} />
+    </Layer>
+  );
 };
 
 export const Default: Story = {
@@ -50,6 +54,7 @@ export const Default: Story = {
     disabled: false,
     multiple: false,
     placeholder: "Select a file",
+    Layer: "layer-0",
   },
   render: FileInputDemo,
 };

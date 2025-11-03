@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { TextInput } from "@mantine/core";
 import { FormFieldLayout } from "./FormFieldLayout";
-import { formFieldLayoutArgTypes } from "./FormFieldLayout.stories.helper";
+import { formFieldLayoutArgTypes } from "./stories.util";
 
 const meta: Meta<typeof FormFieldLayout> = {
   title: "Components/FormFieldLayout",

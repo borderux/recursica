@@ -21,7 +21,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    layer: "0",
+    Layer: "layer-0",
     children: "Layer 0 content",
   },
 };

@@ -1,5 +1,6 @@
 import type { ArgTypes } from "@storybook/react";
 import { FormFieldLayoutProps } from "./FormFieldLayout";
+import { LAYER_ARG_TYPES } from "../Layer/stories.util";
 
 export const formFieldLayoutArgTypes: ArgTypes<FormFieldLayoutProps> = {
   Layout: {
@@ -47,6 +48,7 @@ export const formFieldLayoutArgTypes: ArgTypes<FormFieldLayoutProps> = {
     description: "Indicator to display next to the label",
     defaultValue: "none",
   },
+  ...LAYER_ARG_TYPES,
   children: {
     table: { disable: true },
   },

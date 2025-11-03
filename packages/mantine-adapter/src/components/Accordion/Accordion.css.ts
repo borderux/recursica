@@ -1,26 +1,5 @@
-/**
- * 1. No letter spacing for subtitle
- * 2. In Figma, font subtitle/normal, but in recursica.d.ts its just subtitle (no normal)
- * 3. Does the last item in the accordion have a border bottom?
- * 4. What is the focus color?  Right now its using Mantine default
- * 5. What happens when the accordion title gets too long?
- */
-
 import { style } from "@vanilla-extract/css";
 import { recursica } from "@recursica/official-release/recursica";
-
-/*
-  | "accordion/color/label"
-  | "accordion/color/icon"
-  | "accordion/color/divider"
-  | "accordion/size/padding"
-  | "accordion/size/text-icon-gap"
-  | "accordion/size/header-content-gap"
-  | "accordion/size/collapsed-height"
-  | "accordion/size/icon"
-  | "accordion/size/min-width"
-  | "accordion/size/max-width"
-*/
 
 export const control = style({
   minWidth: recursica.uiKit["accordion/size/min-width"],
@@ -29,11 +8,12 @@ export const control = style({
   paddingBottom: recursica.uiKit["accordion/size/header-content-gap"],
   height: recursica.uiKit["accordion/size/collapsed-height"],
   gap: recursica.uiKit["accordion/size/text-icon-gap"],
-  alignItems: "center",
-  overflow: "hidden",
+  alignItems: "center", // Ensures vertical centering
+  overflow: "hidden", // Prevents content overflow
+  backgroundColor: "transparent", // Ensures override of background color
   selectors: {
     "&:hover": {
-      backgroundColor: "transparent",
+      backgroundColor: "transparent", // Overrides mantine hover states
     },
   },
 });
@@ -43,23 +23,22 @@ export const label = style({
   fontSize: recursica.themes["font/subtitle/size"],
   fontWeight: recursica.themes["font/subtitle/weight-normal"],
   letterSpacing: recursica.themes["font/subtitle/letter-spacing"],
-  // color: recursica.uiKit["accordion/color/label"],
-  color: "var(--accordion-color-label)",
-  padding: 0,
-  textOverflow: "ellipsis",
-  whiteSpace: "nowrap",
-  overflow: "hidden",
+  color: recursica.uiKit["accordion/color/label"],
+  padding: 0, // Removes default padding from mantine
+  textOverflow: "ellipsis", // Truncates text if it overflows
+  whiteSpace: "nowrap", // Prevents text from wrapping to the next line
+  overflow: "hidden", // Prevents text from wrapping to the next line
 });
 
 export const item = style({
   minWidth: recursica.uiKit["accordion/size/min-width"],
   maxWidth: recursica.uiKit["accordion/size/max-width"],
-  border: "none",
-  borderBottom: "1px solid",
+  border: "none", // Removes default border from mantine to allow for divider
+  borderBottom: "1px solid", // Adds a divider between items but hard-coded to 1px.  Should be a variable
   borderColor: recursica.uiKit["accordion/color/divider"],
   selectors: {
     "&:last-child": {
-      borderBottom: "none",
+      borderBottom: "none", // Removes the divider from the last item
     },
   },
 });
@@ -67,10 +46,10 @@ export const item = style({
 export const itemNoDivider = style({
   minWidth: recursica.uiKit["accordion/size/min-width"],
   maxWidth: recursica.uiKit["accordion/size/max-width"],
-  border: "none",
+  border: "none", // Turns off the divider for the item
 });
 
 export const content = style({
   padding: recursica.uiKit["accordion/size/padding"],
-  paddingTop: 0,
+  paddingTop: 0, // Removes the default padding from the content so we can use our header-content-gap variable
 });
