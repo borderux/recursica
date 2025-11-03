@@ -23,3 +23,5 @@ dev-releases
 *.njsproj
 *.sln
 *.sw?
+
+.env

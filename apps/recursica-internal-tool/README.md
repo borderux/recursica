@@ -5,9 +5,26 @@ A Figma plugin for internal Recursica team operations, providing tools for theme
 ## Features
 
 - **Theme Settings**: Configure file type and theme name for your Figma projects
-- **Page Management**: Export, import, and manage Figma pages
+- **Page Management**: Export, import, and manage Figma pages with full structure preservation
+- **GitHub Integration**: Seamlessly export pages to GitHub repositories with automated PR creation
+- **Remote Import**: Import previously exported pages from remote repositories
+- **Authentication**: Secure GitHub OAuth integration for repository access
 - **Reset Metadata**: Clear plugin metadata from collections
 - **Auto-Updater**: Cross-platform update scripts for easy deployment
+
+## Page Management & GitHub Integration
+
+The page management feature provides comprehensive Figma page operations:
+
+- **Export Pages**: Extract complete page structure including all nodes, properties, and relationships
+- **Import Pages**: Recreate pages from previously exported JSON data with full fidelity
+- **GitHub Integration**:
+  - Authenticate with GitHub using personal access tokens
+  - Select repositories for page exports
+  - Automatically create branches and pull requests
+  - Export pages to `figma-exports/` folder in your repository
+- **Remote Import**: Fetch and import pages from remote repositories
+- **Structure Preservation**: Maintains all Figma node properties including fills, strokes, text properties, and layout settings
 
 ## Theme Settings
 

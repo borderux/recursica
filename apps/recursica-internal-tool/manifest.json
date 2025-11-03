@@ -8,7 +8,14 @@
   "enableProposedApi": false,
   "documentAccess": "dynamic-page",
   "editorType": ["figma"],
+  "permissions": ["currentuser"],
   "networkAccess": {
-    "allowedDomains": ["none"]
+    "allowedDomains": [
+      "https://api.recursica.com",
+      "https://api.github.com",
+      "https://avatars.githubusercontent.com",
+      "https://raw.githubusercontent.com"
+    ],
+    "devAllowedDomains": ["https://dev-api.recursica.com"]
   }
 }
