@@ -20,8 +20,8 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
 
-    /* Vitest */
-    "types": ["vitest/globals"]
+    /* Types */
+    "types": ["vitest/globals", "@types/react"]
   },
   "include": ["src"]
 }
