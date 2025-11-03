@@ -144,11 +144,20 @@ export default defineConfig([
       format: "es",
     },
     plugins: [
+      {
+        name: "ignore-css",
+        resolveId(id) {
+          if (id.endsWith(".css")) {
+            return { id, external: true };
+          }
+          return null;
+        },
+      },
       dts({
         tsconfig: "./tsconfig.json",
       }),
       svgr(),
     ],
-    external,
+    external: [...external, "*.css"],
   },
 ]);
