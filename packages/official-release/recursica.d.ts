@@ -1041,7 +1041,22 @@ export type RecursicaTheme =
   | "layout-grid/desktop/max-width"
   | "layout-grid/desktop/gutter"
   | "layout-grid/desktop/columns"
-  | "elevation/elevation-4/shadow-color";
+  | "elevation/elevation-4/shadow-color"
+  | "layer/element/interactive/color"
+  | "layer/element/interactive/high-emphasis"
+  | "layer/element/interactive/hover-color"
+  | "layer/element/text/color"
+  | "layer/element/text/high-emphasis"
+  | "layer/element/text/low-emphasis"
+  | "layer/element/text/success"
+  | "layer/element/text/warning"
+  | "layer/element/text/alert"
+  | "layer/property/padding"
+  | "layer/property/surface"
+  | "layer/property/border-color"
+  | "layer/property/border-radius"
+  | "layer/property/border-thickness"
+  | "layer/property/elevation";
 
 /**
  * Main recursica object type

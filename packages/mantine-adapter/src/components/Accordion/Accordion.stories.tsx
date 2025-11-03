@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Meta, StoryObj } from "@storybook/react";
 import { Accordion } from "./Accordion";
+import { LAYER_ARG_TYPES } from "../Layer/stories.util";
+import { Layer as LayerComponent } from "../Layer";
 
 const PlaceholderContent = () => (
   <span
@@ -21,10 +23,16 @@ const meta: Meta<typeof Accordion> = {
     // Hide all actual component props from controls
     children: { table: { disable: true } },
     classNames: { table: { disable: true } },
+    Divider: {
+      control: { type: "boolean" },
+      description: "Whether to show a divider between accordion items",
+      defaultValue: true,
+    },
+    ...LAYER_ARG_TYPES,
   },
   parameters: {
     controls: {
-      include: ["Title"],
+      include: ["Title", "Divider", "Layer"],
     },
   },
 };
@@ -39,37 +47,35 @@ type Story = StoryObj<typeof meta> & {
 export const Default: Story = {
   args: {
     Title: "Accordion",
+    Divider: true,
+    Layer: "layer-0",
   },
-  argTypes: {
-    Title: {
-      control: { type: "text" },
-      description: "Title for accordion items",
-    },
-  } as any,
   render: (args) => {
     // Transform custom controls into component behavior
-    const { Title, ...accordionProps } = args as any;
+    const { Title, Layer, ...accordionProps } = args as any;
     return (
-      <Accordion {...accordionProps}>
-        <Accordion.Item value="item-1">
-          <Accordion.Control>{Title}</Accordion.Control>
-          <Accordion.Panel>
-            <PlaceholderContent />
-          </Accordion.Panel>
-        </Accordion.Item>
-        <Accordion.Item value="item-2">
-          <Accordion.Control>{Title}</Accordion.Control>
-          <Accordion.Panel>
-            <PlaceholderContent />
-          </Accordion.Panel>
-        </Accordion.Item>
-        <Accordion.Item value="item-3">
-          <Accordion.Control>{Title}</Accordion.Control>
-          <Accordion.Panel>
-            <PlaceholderContent />
-          </Accordion.Panel>
-        </Accordion.Item>
-      </Accordion>
+      <LayerComponent Layer={Layer}>
+        <Accordion {...accordionProps}>
+          <Accordion.Item value="item-1">
+            <Accordion.Control>{Title}</Accordion.Control>
+            <Accordion.Panel>
+              <PlaceholderContent />
+            </Accordion.Panel>
+          </Accordion.Item>
+          <Accordion.Item value="item-2">
+            <Accordion.Control>{Title}</Accordion.Control>
+            <Accordion.Panel>
+              <PlaceholderContent />
+            </Accordion.Panel>
+          </Accordion.Item>
+          <Accordion.Item value="item-3">
+            <Accordion.Control>{Title}</Accordion.Control>
+            <Accordion.Panel>
+              <PlaceholderContent />
+            </Accordion.Panel>
+          </Accordion.Item>
+        </Accordion>
+      </LayerComponent>
     );
   },
 };
