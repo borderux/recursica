@@ -1,0 +1,21 @@
+{
+  "name": "Recursica Publisher",
+  "id": "1567687728010187317",
+  "api": "1.0.0",
+  "main": "./dist/recursica-publisher.js",
+  "ui": "./dist/index.html",
+  "capabilities": [],
+  "enableProposedApi": false,
+  "documentAccess": "dynamic-page",
+  "editorType": ["figma"],
+  "permissions": ["currentuser", "teamlibrary"],
+  "networkAccess": {
+    "allowedDomains": [
+      "https://api.recursica.com",
+      "https://api.github.com",
+      "https://avatars.githubusercontent.com",
+      "https://raw.githubusercontent.com"
+    ],
+    "devAllowedDomains": ["https://dev-api.recursica.com"]
+  }
+}
