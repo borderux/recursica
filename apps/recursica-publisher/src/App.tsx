@@ -7,17 +7,46 @@ import { AuthProvider } from "./context/AuthProvider";
 
 function App() {
   return (
-    <AuthProvider>
-      <MemoryRouter initialEntries={["/"]}>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Home />} />
-            <Route path="auth" element={<Auth />} />
-            <Route path="page-management" element={<PageManagement />} />
-          </Route>
-        </Routes>
-      </MemoryRouter>
-    </AuthProvider>
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        boxSizing: "border-box",
+        margin: 0,
+        padding: 0,
+      }}
+    >
+      <style>
+        {`
+          * {
+            box-sizing: border-box;
+          }
+          html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+          }
+          #root {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+          }
+        `}
+      </style>
+      <AuthProvider>
+        <MemoryRouter initialEntries={["/"]}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route element={<Layout />}>
+              <Route path="auth" element={<Auth />} />
+              <Route path="page-management" element={<PageManagement />} />
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </AuthProvider>
+    </div>
   );
 }
 
