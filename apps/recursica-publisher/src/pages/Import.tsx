@@ -81,7 +81,6 @@ export default function Import() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          padding: "40px",
           boxSizing: "border-box",
           backgroundColor: isDragging ? "#f0f0f0" : "transparent",
           border: isDragging ? "2px dashed #d40d0d" : "2px dashed transparent",

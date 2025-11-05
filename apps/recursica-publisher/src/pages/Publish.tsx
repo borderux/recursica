@@ -46,7 +46,6 @@ export default function Publish() {
         style={{
           width: "100%",
           height: "100%",
-          padding: "40px",
           boxSizing: "border-box",
           display: "flex",
           flexDirection: "column",

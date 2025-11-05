@@ -14,7 +14,6 @@ export default function Home() {
           alignItems: "center",
           justifyContent: "center",
           minHeight: "100%",
-          padding: "40px",
           width: "100%",
         }}
       >

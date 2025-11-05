@@ -25,17 +25,6 @@ export default function PageLayout({
         boxSizing: "border-box",
       }}
     >
-      {/* Hidden Header - maintains spacing */}
-      <header
-        style={{
-          width: "100%",
-          height: "40px",
-          flexShrink: 0,
-          boxSizing: "border-box",
-          visibility: "hidden",
-        }}
-      />
-
       {/* Main Content */}
       <main
         style={{
@@ -45,6 +34,7 @@ export default function PageLayout({
           width: "100%",
           boxSizing: "border-box",
           minHeight: 0,
+          padding: "40px",
         }}
       >
         {children}
