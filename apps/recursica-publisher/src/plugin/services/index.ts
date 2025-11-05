@@ -7,6 +7,7 @@ import { storeAuthData } from "./storeAuthData";
 import { loadAuthData } from "./loadAuthData";
 import { clearAuthData } from "./clearAuthData";
 import { storeSelectedRepo } from "./storeSelectedRepo";
+import { getComponentMetadata } from "./getComponentMetadata";
 
 // Services map - all service functions indexed by their names
 // This is the single source of truth for available services
@@ -20,6 +21,7 @@ export const services = {
   loadAuthData,
   clearAuthData,
   storeSelectedRepo,
+  getComponentMetadata,
 } as const;
 
 // Re-export individual services for convenience
@@ -33,4 +35,5 @@ export {
   loadAuthData,
   clearAuthData,
   storeSelectedRepo,
+  getComponentMetadata,
 };

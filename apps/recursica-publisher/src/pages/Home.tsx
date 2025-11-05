@@ -47,7 +47,7 @@ export default function Home() {
 
         {/* Publish Button */}
         <button
-          onClick={() => navigate("/page-management")}
+          onClick={() => navigate("/publish")}
           style={{
             width: "200px",
             padding: "20px",
