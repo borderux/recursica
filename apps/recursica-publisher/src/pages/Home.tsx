@@ -20,7 +20,7 @@ export default function Home() {
       >
         {/* Import Button */}
         <button
-          onClick={() => navigate("/page-management")}
+          onClick={() => navigate("/import")}
           style={{
             width: "200px",
             padding: "20px",
