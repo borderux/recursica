@@ -730,7 +730,55 @@ Track which node properties are not explicitly handled by parsers. This helps id
    - Requires external collection to be published
    - No automatic publishing/syncing
 
+## Services
+
+### getAllComponents Service
+
+**Purpose**: Traverse all pages and collect component metadata for each page.
+
+**Implementation**:
+
+- Loads all pages using `figma.loadAllPagesAsync()`
+- Iterates through all nodes in `figma.root.children`
+- For each node:
+  - Type checks to ensure it's a PAGE node (`node.type === "PAGE"`)
+  - Skips non-PAGE nodes with a warning (defensive programming)
+  - Retrieves component metadata from plugin data (key: `RecursicaPublishedMetadata`)
+  - If no metadata exists, creates an empty entry with the cleaned component name
+  - If parsing fails, falls back to empty entry with cleaned name
+- Returns an object with `{ components: ComponentMetadata[] }`
+
+**Return Format**:
+
+```typescript
+{
+  components: ComponentMetadata[]
+}
+```
+
+Each `ComponentMetadata` entry includes:
+
+- `_ver`: Version number (1 or greater)
+- `id`: GUID (empty string if not published)
+- `name`: Cleaned component name
+- `version`: Version number (0 if not published)
+- `publishDate`: ISO date string (empty if not published)
+- `history`: History object (empty if not published)
+
+**Behavior**:
+
+- Pages without metadata still get an entry with empty fields but populated `name`
+- Handles parse errors gracefully by falling back to empty metadata
+- Uses the same `getComponentName` utility for name cleaning as `getComponentMetadata`
+- Includes defensive type checking to ensure only PAGE nodes are processed (though API guarantees all root children are pages)
+
 ## Change Log
+
+### 2024-12-XX: Added getAllComponents Service
+
+- Added `getAllComponents` service to traverse all pages and collect component metadata
+- Returns array of component metadata with empty entries for pages without metadata
+- Service automatically registered in services map and available via message routing
 
 ### 2024-12-XX: Version 2.4.0
 

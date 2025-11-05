@@ -8,6 +8,7 @@ import { loadAuthData } from "./loadAuthData";
 import { clearAuthData } from "./clearAuthData";
 import { storeSelectedRepo } from "./storeSelectedRepo";
 import { getComponentMetadata } from "./getComponentMetadata";
+import { getAllComponents } from "./getAllComponents";
 import { pluginPromptResponse } from "./pluginPromptResponse";
 
 // Services map - all service functions indexed by their names
@@ -23,6 +24,7 @@ export const services = {
   clearAuthData,
   storeSelectedRepo,
   getComponentMetadata,
+  getAllComponents,
   pluginPromptResponse,
 } as const;
 
@@ -38,5 +40,6 @@ export {
   clearAuthData,
   storeSelectedRepo,
   getComponentMetadata,
+  getAllComponents,
   pluginPromptResponse,
 };

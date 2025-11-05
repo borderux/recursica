@@ -12,7 +12,7 @@ export interface ComponentMetadata {
   history: Record<string, unknown>; // Object to be described later
 }
 
-const PLUGIN_DATA_KEY = "RecursicaPublishedMetadata";
+export const PLUGIN_DATA_KEY = "RecursicaPublishedMetadata";
 
 /**
  * Service for getting component metadata from the current page
