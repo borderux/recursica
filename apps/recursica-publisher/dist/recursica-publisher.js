@@ -1,48 +1,63 @@
-var ne = Object.defineProperty, se = Object.defineProperties;
-var ce = Object.getOwnPropertyDescriptors;
-var K = Object.getOwnPropertySymbols;
-var le = Object.prototype.hasOwnProperty, fe = Object.prototype.propertyIsEnumerable;
-var F = (e, a, t) => a in e ? ne(e, a, { enumerable: !0, configurable: !0, writable: !0, value: t }) : e[a] = t, k = (e, a) => {
-  for (var t in a || (a = {}))
-    le.call(a, t) && F(e, t, a[t]);
-  if (K)
-    for (var t of K(a))
-      fe.call(a, t) && F(e, t, a[t]);
+var Z = Object.defineProperty, D = Object.defineProperties;
+var ee = Object.getOwnPropertyDescriptors;
+var F = Object.getOwnPropertySymbols;
+var te = Object.prototype.hasOwnProperty, re = Object.prototype.propertyIsEnumerable;
+var B = (e, a, r) => a in e ? Z(e, a, { enumerable: !0, configurable: !0, writable: !0, value: r }) : e[a] = r, v = (e, a) => {
+  for (var r in a || (a = {}))
+    te.call(a, r) && B(e, r, a[r]);
+  if (F)
+    for (var r of F(a))
+      re.call(a, r) && B(e, r, a[r]);
   return e;
-}, w = (e, a) => se(e, ce(a));
-var N = (e, a, t) => F(e, typeof a != "symbol" ? a + "" : a, t);
-async function pe() {
+}, I = (e, a) => D(e, ee(a));
+var P = (e, a, r) => B(e, typeof a != "symbol" ? a + "" : a, r);
+async function ie(e) {
+  var a;
   try {
-    const e = await figma.variables.getLocalVariableCollectionsAsync();
-    for (const a of e) {
-      console.log(
-        "resetting variables-synced tag for collection " + a.name
-      ), a.setSharedPluginData("recursica", "variables-synced", "");
-      for (const t of a.variableIds) {
-        const r = await figma.variables.getVariableByIdAsync(t);
-        r && (console.log(
-          "resetting variables-synced tag for variable " + r.name
-        ), r.setSharedPluginData("recursica", "variables-synced", ""));
-      }
-    }
-    return console.log(
-      "Successfully reset variables-synced metadata for ",
-      e.length,
-      " variable collections"
-    ), {
-      type: "reset-metadata-response",
+    return {
+      type: "getCurrentUser",
       success: !0,
-      message: "Successfully reset variables-synced metadata for " + e.length + " variable collections. File type and theme name have been preserved."
+      error: !1,
+      message: "Current user retrieved successfully",
+      data: {
+        userId: ((a = figma.currentUser) == null ? void 0 : a.id) || null
+      }
     };
-  } catch (e) {
-    return console.error("Error resetting metadata:", e), {
-      type: "reset-metadata-response",
+  } catch (r) {
+    return {
+      type: "getCurrentUser",
       success: !1,
-      error: e instanceof Error ? e.message : "Unknown error occurred"
+      error: !0,
+      message: r instanceof Error ? r.message : "Unknown error occurred",
+      data: {}
     };
   }
 }
-const x = {
+async function ae(e) {
+  try {
+    return await figma.loadAllPagesAsync(), {
+      type: "loadPages",
+      success: !0,
+      error: !1,
+      message: "Pages loaded successfully",
+      data: {
+        pages: figma.root.children.map((i, o) => ({
+          name: i.name,
+          index: o
+        }))
+      }
+    };
+  } catch (a) {
+    return console.error("Error loading pages:", a), {
+      type: "loadPages",
+      success: !1,
+      error: !0,
+      message: a instanceof Error ? a.message : "Unknown error occurred",
+      data: {}
+    };
+  }
+}
+const C = {
   visible: !0,
   locked: !1,
   opacity: 1,
@@ -56,7 +71,7 @@ const x = {
   strokeCap: "NONE",
   strokeJoin: "MITER",
   dashPattern: []
-}, v = w(k({}, x), {
+}, x = I(v({}, C), {
   layoutMode: "NONE",
   primaryAxisSizingMode: "AUTO",
   counterAxisSizingMode: "AUTO",
@@ -71,7 +86,7 @@ const x = {
   clipsContent: !1,
   layoutWrap: "NO_WRAP",
   layoutGrow: 0
-}), E = w(k({}, x), {
+}), E = I(v({}, C), {
   textAlignHorizontal: "LEFT",
   textAlignVertical: "TOP",
   letterSpacing: { value: 0, unit: "PIXELS" },
@@ -82,48 +97,48 @@ const x = {
   paragraphSpacing: 0,
   paragraphIndent: 0,
   listOptions: null
-}), I = w(k({}, x), {
+}), N = I(v({}, C), {
   fillGeometry: null,
   strokeGeometry: null,
   strokeCap: "NONE",
   strokeJoin: "MITER",
   dashPattern: []
-}), W = w(k({}, x), {
+}), H = I(v({}, C), {
   cornerRadius: 0
-}), ge = w(k({}, x), {
+}), oe = I(v({}, C), {
   strokeCap: "NONE",
   strokeJoin: "MITER",
   dashPattern: []
 });
-function de(e) {
+function ne(e) {
   switch (e) {
     case "FRAME":
     case "COMPONENT":
     case "INSTANCE":
-      return v;
+      return x;
     case "TEXT":
       return E;
     case "VECTOR":
-      return I;
+      return N;
     case "LINE":
-      return ge;
+      return oe;
     case "RECTANGLE":
     case "ELLIPSE":
     case "STAR":
     case "POLYGON":
-      return W;
+      return H;
     default:
-      return x;
+      return C;
   }
 }
-function g(e, a) {
+function f(e, a) {
   if (Array.isArray(e))
-    return Array.isArray(a) ? e.length !== a.length || e.some((t, r) => g(t, a[r])) : e.length > 0;
+    return Array.isArray(a) ? e.length !== a.length || e.some((r, i) => f(r, a[i])) : e.length > 0;
   if (typeof e == "object" && e !== null) {
     if (typeof a == "object" && a !== null) {
-      const t = Object.keys(e), r = Object.keys(a);
-      return t.length !== r.length ? !0 : t.some(
-        (o) => !(o in a) || g(e[o], a[o])
+      const r = Object.keys(e), i = Object.keys(a);
+      return r.length !== i.length ? !0 : r.some(
+        (o) => !(o in a) || f(e[o], a[o])
       );
     }
     return !0;
@@ -132,11 +147,11 @@ function g(e, a) {
 }
 class T {
   constructor() {
-    N(this, "collectionMap");
+    P(this, "collectionMap");
     // collectionId -> index
-    N(this, "collections");
+    P(this, "collections");
     // index -> collection data
-    N(this, "nextIndex");
+    P(this, "nextIndex");
     this.collectionMap = /* @__PURE__ */ new Map(), this.collections = [], this.nextIndex = 0;
   }
   /**
@@ -144,19 +159,19 @@ class T {
    * Returns the index of the collection (existing or newly added)
    */
   addCollection(a) {
-    const t = a.collectionId;
-    if (this.collectionMap.has(t))
-      return this.collectionMap.get(t);
-    const r = this.nextIndex++;
-    return this.collectionMap.set(t, r), this.collections[r] = a, r;
+    const r = a.collectionId;
+    if (this.collectionMap.has(r))
+      return this.collectionMap.get(r);
+    const i = this.nextIndex++;
+    return this.collectionMap.set(r, i), this.collections[i] = a, i;
   }
   /**
    * Gets the index of a collection by its collectionId
    * Returns -1 if not found
    */
   getCollectionIndex(a) {
-    var t;
-    return (t = this.collectionMap.get(a)) != null ? t : -1;
+    var r;
+    return (r = this.collectionMap.get(a)) != null ? r : -1;
   }
   /**
    * Gets a collection entry by index
@@ -170,25 +185,25 @@ class T {
    */
   getTable() {
     const a = {};
-    for (let t = 0; t < this.collections.length; t++)
-      a[String(t)] = this.collections[t];
+    for (let r = 0; r < this.collections.length; r++)
+      a[String(r)] = this.collections[r];
     return a;
   }
   /**
    * Reconstructs a CollectionTable from a serialized table object
    */
   static fromTable(a) {
-    const t = new T(), r = Object.entries(a).sort(
-      (o, i) => parseInt(o[0], 10) - parseInt(i[0], 10)
+    const r = new T(), i = Object.entries(a).sort(
+      (o, t) => parseInt(o[0], 10) - parseInt(t[0], 10)
     );
-    for (const [o, i] of r) {
+    for (const [o, t] of i) {
       const n = parseInt(o, 10);
-      t.collectionMap.set(i.collectionId, n), t.collections[n] = i, t.nextIndex = Math.max(
-        t.nextIndex,
+      r.collectionMap.set(t.collectionId, n), r.collections[n] = t, r.nextIndex = Math.max(
+        r.nextIndex,
         n + 1
       );
     }
-    return t;
+    return r;
   }
   /**
    * Gets the total number of collections in the table
@@ -199,11 +214,11 @@ class T {
 }
 class O {
   constructor() {
-    N(this, "variableMap");
+    P(this, "variableMap");
     // variableKey -> index
-    N(this, "variables");
+    P(this, "variables");
     // index -> variable data
-    N(this, "nextIndex");
+    P(this, "nextIndex");
     this.variableMap = /* @__PURE__ */ new Map(), this.variables = [], this.nextIndex = 0;
   }
   /**
@@ -211,21 +226,21 @@ class O {
    * Returns the index of the variable (existing or newly added)
    */
   addVariable(a) {
-    const t = a.variableKey;
-    if (!t)
+    const r = a.variableKey;
+    if (!r)
       return -1;
-    if (this.variableMap.has(t))
-      return this.variableMap.get(t);
-    const r = this.nextIndex++;
-    return this.variableMap.set(t, r), this.variables[r] = a, r;
+    if (this.variableMap.has(r))
+      return this.variableMap.get(r);
+    const i = this.nextIndex++;
+    return this.variableMap.set(r, i), this.variables[i] = a, i;
   }
   /**
    * Gets the index of a variable by its variableKey
    * Returns -1 if not found
    */
   getVariableIndex(a) {
-    var t;
-    return (t = this.variableMap.get(a)) != null ? t : -1;
+    var r;
+    return (r = this.variableMap.get(a)) != null ? r : -1;
   }
   /**
    * Gets a variable entry by index
@@ -240,8 +255,8 @@ class O {
    */
   getTable() {
     const a = {};
-    for (let t = 0; t < this.variables.length; t++)
-      a[String(t)] = this.variables[t];
+    for (let r = 0; r < this.variables.length; r++)
+      a[String(r)] = this.variables[r];
     return a;
   }
   /**
@@ -252,14 +267,14 @@ class O {
    */
   getSerializedTable() {
     const a = {};
-    for (let t = 0; t < this.variables.length; t++) {
-      const r = this.variables[t], o = k(k(k(k(k(k({
-        variableName: r.variableName,
-        variableType: r.variableType
-      }, r._colRef !== void 0 && { _colRef: r._colRef }), r.valuesByMode && { valuesByMode: r.valuesByMode }), r._colRef === void 0 && r.collectionRef !== void 0 && {
-        collectionRef: r.collectionRef
-      }), r._colRef === void 0 && r.collectionName && { collectionName: r.collectionName }), r._colRef === void 0 && r.collectionId && { collectionId: r.collectionId }), r._colRef === void 0 && r.isLocal !== void 0 && { isLocal: r.isLocal });
-      a[String(t)] = o;
+    for (let r = 0; r < this.variables.length; r++) {
+      const i = this.variables[r], o = v(v(v(v(v(v({
+        variableName: i.variableName,
+        variableType: i.variableType
+      }, i._colRef !== void 0 && { _colRef: i._colRef }), i.valuesByMode && { valuesByMode: i.valuesByMode }), i._colRef === void 0 && i.collectionRef !== void 0 && {
+        collectionRef: i.collectionRef
+      }), i._colRef === void 0 && i.collectionName && { collectionName: i.collectionName }), i._colRef === void 0 && i.collectionId && { collectionId: i.collectionId }), i._colRef === void 0 && i.isLocal !== void 0 && { isLocal: i.isLocal });
+      a[String(r)] = o;
     }
     return a;
   }
@@ -269,19 +284,19 @@ class O {
    */
   static fromTable(a) {
     var o;
-    const t = new O(), r = Object.entries(a).sort(
-      (i, n) => parseInt(i[0], 10) - parseInt(n[0], 10)
+    const r = new O(), i = Object.entries(a).sort(
+      (t, n) => parseInt(t[0], 10) - parseInt(n[0], 10)
     );
-    for (const [i, n] of r) {
-      const s = parseInt(i, 10);
-      n.variableKey && t.variableMap.set(n.variableKey, s);
-      const l = w(k({}, n), {
+    for (const [t, n] of i) {
+      const s = parseInt(t, 10);
+      n.variableKey && r.variableMap.set(n.variableKey, s);
+      const d = I(v({}, n), {
         // Prefer _colRef, fallback to collectionRef for backward compatibility
         _colRef: (o = n._colRef) != null ? o : n.collectionRef
       });
-      t.variables[s] = l, t.nextIndex = Math.max(t.nextIndex, s + 1);
+      r.variables[s] = d, r.nextIndex = Math.max(r.nextIndex, s + 1);
     }
-    return t;
+    return r;
   }
   /**
    * Gets the total number of variables in the table
@@ -290,268 +305,268 @@ class O {
     return this.variables.length;
   }
 }
-function me(e) {
+function se(e) {
   return {
     _varRef: e
   };
 }
-function V(e) {
+function M(e) {
   return e && typeof e == "object" && typeof e._varRef == "number" && !("type" in e);
 }
-async function J(e, a, t, r = /* @__PURE__ */ new Set()) {
+async function W(e, a, r, i = /* @__PURE__ */ new Set()) {
   const o = {};
-  for (const [i, n] of Object.entries(e)) {
+  for (const [t, n] of Object.entries(e)) {
     if (n == null) {
-      o[i] = n;
+      o[t] = n;
       continue;
     }
     if (typeof n == "string" || typeof n == "number" || typeof n == "boolean") {
-      o[i] = n;
+      o[t] = n;
       continue;
     }
     if (typeof n == "object" && n !== null && "type" in n && n.type === "VARIABLE_ALIAS" && "id" in n) {
       const s = n.id;
-      if (r.has(s)) {
-        o[i] = {
+      if (i.has(s)) {
+        o[t] = {
           type: "VARIABLE_ALIAS",
           id: s
         };
         continue;
       }
       try {
-        const l = await figma.variables.getVariableByIdAsync(s);
-        if (!l) {
-          o[i] = {
+        const d = await figma.variables.getVariableByIdAsync(s);
+        if (!d) {
+          o[t] = {
             type: "VARIABLE_ALIAS",
             id: s
           };
           continue;
         }
-        const m = new Set(r);
-        m.add(s);
+        const u = new Set(i);
+        u.add(s);
         const c = await figma.variables.getVariableCollectionByIdAsync(
-          l.variableCollectionId
-        ), u = l.key;
-        if (!u) {
-          o[i] = {
+          d.variableCollectionId
+        ), g = d.key;
+        if (!g) {
+          o[t] = {
             type: "VARIABLE_ALIAS",
             id: s
           };
           continue;
         }
         const A = {
-          variableName: l.name,
-          variableType: l.resolvedType,
+          variableName: d.name,
+          variableType: d.resolvedType,
           collectionName: c == null ? void 0 : c.name,
-          collectionId: l.variableCollectionId,
-          variableKey: u,
+          collectionId: d.variableCollectionId,
+          variableKey: g,
           id: s,
-          isLocal: !l.remote
-        }, f = await figma.variables.getVariableCollectionByIdAsync(
-          l.variableCollectionId
+          isLocal: !d.remote
+        }, l = await figma.variables.getVariableCollectionByIdAsync(
+          d.variableCollectionId
         );
-        if (f) {
-          const y = await q(
-            f,
-            t
+        if (l) {
+          const y = await J(
+            l,
+            r
           );
           A._colRef = y;
         }
-        l.valuesByMode && (A.valuesByMode = await J(
-          l.valuesByMode,
+        d.valuesByMode && (A.valuesByMode = await W(
+          d.valuesByMode,
           a,
-          t,
-          m
+          r,
+          u
         ));
-        const b = a.addVariable(A);
-        o[i] = {
+        const h = a.addVariable(A);
+        o[t] = {
           type: "VARIABLE_ALIAS",
           id: s,
-          _varRef: b
+          _varRef: h
         };
-      } catch (l) {
+      } catch (d) {
         console.log(
           "Could not resolve variable alias in valuesByMode:",
           s,
-          l
-        ), o[i] = {
+          d
+        ), o[t] = {
           type: "VARIABLE_ALIAS",
           id: s
         };
       }
     } else
-      o[i] = n;
+      o[t] = n;
   }
   return o;
 }
-async function q(e, a) {
-  const t = {};
+async function J(e, a) {
+  const r = {};
   for (const o of e.modes)
-    t[o.modeId] = o.name;
-  const r = {
+    r[o.modeId] = o.name;
+  const i = {
     collectionName: e.name,
     collectionId: e.id,
     isLocal: !e.remote,
-    modes: t
+    modes: r
   };
-  return a.addCollection(r);
+  return a.addCollection(i);
 }
-async function $(e, a, t) {
+async function $(e, a, r) {
   if (!e || typeof e != "object" || e.type !== "VARIABLE_ALIAS")
     return null;
   try {
-    const r = await figma.variables.getVariableByIdAsync(e.id);
-    if (!r)
+    const i = await figma.variables.getVariableByIdAsync(e.id);
+    if (!i)
       return console.log("Could not resolve variable alias:", e.id), null;
     const o = await figma.variables.getVariableCollectionByIdAsync(
-      r.variableCollectionId
+      i.variableCollectionId
     );
     if (!o)
       return console.log("Could not resolve collection for variable:", e.id), null;
-    const i = r.key;
-    if (!i)
+    const t = i.key;
+    if (!t)
       return console.log("Variable missing key:", e.id), null;
-    const n = await q(
+    const n = await J(
       o,
-      t
+      r
     ), s = {
-      variableName: r.name,
-      variableType: r.resolvedType,
+      variableName: i.name,
+      variableType: i.resolvedType,
       _colRef: n,
       // Reference to collection table (v2.4.0+)
-      variableKey: i,
+      variableKey: t,
       // Internal-only: used for deduplication during export
       id: e.id
       // Internal-only: used for fallback in legacy scenarios
       // Legacy fields kept for backward compatibility (only if needed)
     };
-    r.valuesByMode && (s.valuesByMode = await J(
-      r.valuesByMode,
+    i.valuesByMode && (s.valuesByMode = await W(
+      i.valuesByMode,
       a,
-      t,
+      r,
       /* @__PURE__ */ new Set([e.id])
       // Start with current variable ID in visited set
     ));
-    const l = a.addVariable(s);
-    return me(l);
-  } catch (r) {
-    return console.log("Could not resolve variable alias:", e.id, r), null;
+    const d = a.addVariable(s);
+    return se(d);
+  } catch (i) {
+    return console.log("Could not resolve variable alias:", e.id, i), null;
   }
 }
-async function L(e, a, t) {
+async function V(e, a, r) {
   if (!e || typeof e != "object") return e;
-  const r = {};
+  const i = {};
   for (const o in e)
     if (Object.prototype.hasOwnProperty.call(e, o)) {
-      const i = e[o];
-      if (i && typeof i == "object" && !Array.isArray(i))
-        if (i.type === "VARIABLE_ALIAS") {
+      const t = e[o];
+      if (t && typeof t == "object" && !Array.isArray(t))
+        if (t.type === "VARIABLE_ALIAS") {
           const n = await $(
-            i,
+            t,
             a,
-            t
+            r
           );
-          n && (r[o] = n);
+          n && (i[o] = n);
         } else
-          r[o] = await L(
-            i,
+          i[o] = await V(
+            t,
             a,
-            t
+            r
           );
-      else Array.isArray(i) ? r[o] = await Promise.all(
-        i.map(async (n) => (n == null ? void 0 : n.type) === "VARIABLE_ALIAS" ? await $(
+      else Array.isArray(t) ? i[o] = await Promise.all(
+        t.map(async (n) => (n == null ? void 0 : n.type) === "VARIABLE_ALIAS" ? await $(
           n,
           a,
-          t
-        ) || n : n && typeof n == "object" ? await L(
+          r
+        ) || n : n && typeof n == "object" ? await V(
           n,
           a,
-          t
+          r
         ) : n)
-      ) : r[o] = i;
+      ) : i[o] = t;
     }
-  return r;
+  return i;
 }
-async function ye(e, a, t) {
+async function ce(e, a, r) {
   return !e || !Array.isArray(e) ? [] : Promise.all(
-    e.map(async (r) => {
-      if (!r || typeof r != "object") return r;
+    e.map(async (i) => {
+      if (!i || typeof i != "object") return i;
       const o = {};
-      for (const i in r)
-        Object.prototype.hasOwnProperty.call(r, i) && (i === "boundVariables" ? o[i] = await L(
-          r[i],
+      for (const t in i)
+        Object.prototype.hasOwnProperty.call(i, t) && (t === "boundVariables" ? o[t] = await V(
+          i[t],
           a,
-          t
-        ) : o[i] = r[i]);
+          r
+        ) : o[t] = i[t]);
       return o;
     })
   );
 }
-async function ue(e, a) {
-  const t = {}, r = /* @__PURE__ */ new Set();
-  if (e.type && (t.type = e.type, r.add("type")), e.id && (t.id = e.id, r.add("id")), e.name !== void 0 && e.name !== "" && (t.name = e.name, r.add("name")), e.x !== void 0 && e.x !== 0 && (t.x = e.x, r.add("x")), e.y !== void 0 && e.y !== 0 && (t.y = e.y, r.add("y")), e.width !== void 0 && (t.width = e.width, r.add("width")), e.height !== void 0 && (t.height = e.height, r.add("height")), e.visible !== void 0 && g(e.visible, x.visible) && (t.visible = e.visible, r.add("visible")), e.locked !== void 0 && g(e.locked, x.locked) && (t.locked = e.locked, r.add("locked")), e.opacity !== void 0 && g(e.opacity, x.opacity) && (t.opacity = e.opacity, r.add("opacity")), e.rotation !== void 0 && g(e.rotation, x.rotation) && (t.rotation = e.rotation, r.add("rotation")), e.blendMode !== void 0 && g(e.blendMode, x.blendMode) && (t.blendMode = e.blendMode, r.add("blendMode")), e.effects !== void 0 && g(e.effects, x.effects) && (t.effects = e.effects, r.add("effects")), e.fills !== void 0) {
-    const o = await ye(
+async function le(e, a) {
+  const r = {}, i = /* @__PURE__ */ new Set();
+  if (e.type && (r.type = e.type, i.add("type")), e.id && (r.id = e.id, i.add("id")), e.name !== void 0 && e.name !== "" && (r.name = e.name, i.add("name")), e.x !== void 0 && e.x !== 0 && (r.x = e.x, i.add("x")), e.y !== void 0 && e.y !== 0 && (r.y = e.y, i.add("y")), e.width !== void 0 && (r.width = e.width, i.add("width")), e.height !== void 0 && (r.height = e.height, i.add("height")), e.visible !== void 0 && f(e.visible, C.visible) && (r.visible = e.visible, i.add("visible")), e.locked !== void 0 && f(e.locked, C.locked) && (r.locked = e.locked, i.add("locked")), e.opacity !== void 0 && f(e.opacity, C.opacity) && (r.opacity = e.opacity, i.add("opacity")), e.rotation !== void 0 && f(e.rotation, C.rotation) && (r.rotation = e.rotation, i.add("rotation")), e.blendMode !== void 0 && f(e.blendMode, C.blendMode) && (r.blendMode = e.blendMode, i.add("blendMode")), e.effects !== void 0 && f(e.effects, C.effects) && (r.effects = e.effects, i.add("effects")), e.fills !== void 0) {
+    const o = await ce(
       e.fills,
       a.variableTable,
       a.collectionTable
     );
-    g(o, x.fills) && (t.fills = o), r.add("fills");
+    f(o, C.fills) && (r.fills = o), i.add("fills");
   }
-  if (e.strokes !== void 0 && g(e.strokes, x.strokes) && (t.strokes = e.strokes, r.add("strokes")), e.strokeWeight !== void 0 && g(e.strokeWeight, x.strokeWeight) && (t.strokeWeight = e.strokeWeight, r.add("strokeWeight")), e.strokeAlign !== void 0 && g(e.strokeAlign, x.strokeAlign) && (t.strokeAlign = e.strokeAlign, r.add("strokeAlign")), e.boundVariables !== void 0 && e.boundVariables !== null) {
-    const o = await L(
+  if (e.strokes !== void 0 && f(e.strokes, C.strokes) && (r.strokes = e.strokes, i.add("strokes")), e.strokeWeight !== void 0 && f(e.strokeWeight, C.strokeWeight) && (r.strokeWeight = e.strokeWeight, i.add("strokeWeight")), e.strokeAlign !== void 0 && f(e.strokeAlign, C.strokeAlign) && (r.strokeAlign = e.strokeAlign, i.add("strokeAlign")), e.boundVariables !== void 0 && e.boundVariables !== null) {
+    const o = await V(
       e.boundVariables,
       a.variableTable,
       a.collectionTable
     );
-    Object.keys(o).length > 0 && (t.boundVariables = o), r.add("boundVariables");
+    Object.keys(o).length > 0 && (r.boundVariables = o), i.add("boundVariables");
   }
-  return t;
+  return r;
 }
-async function U(e, a) {
-  const t = {}, r = /* @__PURE__ */ new Set();
-  return e.layoutMode !== void 0 && g(e.layoutMode, v.layoutMode) && (t.layoutMode = e.layoutMode, r.add("layoutMode")), e.primaryAxisSizingMode !== void 0 && g(
+async function j(e, a) {
+  const r = {}, i = /* @__PURE__ */ new Set();
+  return e.layoutMode !== void 0 && f(e.layoutMode, x.layoutMode) && (r.layoutMode = e.layoutMode, i.add("layoutMode")), e.primaryAxisSizingMode !== void 0 && f(
     e.primaryAxisSizingMode,
-    v.primaryAxisSizingMode
-  ) && (t.primaryAxisSizingMode = e.primaryAxisSizingMode, r.add("primaryAxisSizingMode")), e.counterAxisSizingMode !== void 0 && g(
+    x.primaryAxisSizingMode
+  ) && (r.primaryAxisSizingMode = e.primaryAxisSizingMode, i.add("primaryAxisSizingMode")), e.counterAxisSizingMode !== void 0 && f(
     e.counterAxisSizingMode,
-    v.counterAxisSizingMode
-  ) && (t.counterAxisSizingMode = e.counterAxisSizingMode, r.add("counterAxisSizingMode")), e.primaryAxisAlignItems !== void 0 && g(
+    x.counterAxisSizingMode
+  ) && (r.counterAxisSizingMode = e.counterAxisSizingMode, i.add("counterAxisSizingMode")), e.primaryAxisAlignItems !== void 0 && f(
     e.primaryAxisAlignItems,
-    v.primaryAxisAlignItems
-  ) && (t.primaryAxisAlignItems = e.primaryAxisAlignItems, r.add("primaryAxisAlignItems")), e.counterAxisAlignItems !== void 0 && g(
+    x.primaryAxisAlignItems
+  ) && (r.primaryAxisAlignItems = e.primaryAxisAlignItems, i.add("primaryAxisAlignItems")), e.counterAxisAlignItems !== void 0 && f(
     e.counterAxisAlignItems,
-    v.counterAxisAlignItems
-  ) && (t.counterAxisAlignItems = e.counterAxisAlignItems, r.add("counterAxisAlignItems")), e.paddingLeft !== void 0 && g(e.paddingLeft, v.paddingLeft) && (t.paddingLeft = e.paddingLeft, r.add("paddingLeft")), e.paddingRight !== void 0 && g(e.paddingRight, v.paddingRight) && (t.paddingRight = e.paddingRight, r.add("paddingRight")), e.paddingTop !== void 0 && g(e.paddingTop, v.paddingTop) && (t.paddingTop = e.paddingTop, r.add("paddingTop")), e.paddingBottom !== void 0 && g(e.paddingBottom, v.paddingBottom) && (t.paddingBottom = e.paddingBottom, r.add("paddingBottom")), e.itemSpacing !== void 0 && g(e.itemSpacing, v.itemSpacing) && (t.itemSpacing = e.itemSpacing, r.add("itemSpacing")), e.cornerRadius !== void 0 && g(e.cornerRadius, v.cornerRadius) && (t.cornerRadius = e.cornerRadius, r.add("cornerRadius")), e.clipsContent !== void 0 && g(e.clipsContent, v.clipsContent) && (t.clipsContent = e.clipsContent, r.add("clipsContent")), e.layoutWrap !== void 0 && g(e.layoutWrap, v.layoutWrap) && (t.layoutWrap = e.layoutWrap, r.add("layoutWrap")), e.layoutGrow !== void 0 && g(e.layoutGrow, v.layoutGrow) && (t.layoutGrow = e.layoutGrow, r.add("layoutGrow")), t;
+    x.counterAxisAlignItems
+  ) && (r.counterAxisAlignItems = e.counterAxisAlignItems, i.add("counterAxisAlignItems")), e.paddingLeft !== void 0 && f(e.paddingLeft, x.paddingLeft) && (r.paddingLeft = e.paddingLeft, i.add("paddingLeft")), e.paddingRight !== void 0 && f(e.paddingRight, x.paddingRight) && (r.paddingRight = e.paddingRight, i.add("paddingRight")), e.paddingTop !== void 0 && f(e.paddingTop, x.paddingTop) && (r.paddingTop = e.paddingTop, i.add("paddingTop")), e.paddingBottom !== void 0 && f(e.paddingBottom, x.paddingBottom) && (r.paddingBottom = e.paddingBottom, i.add("paddingBottom")), e.itemSpacing !== void 0 && f(e.itemSpacing, x.itemSpacing) && (r.itemSpacing = e.itemSpacing, i.add("itemSpacing")), e.cornerRadius !== void 0 && f(e.cornerRadius, x.cornerRadius) && (r.cornerRadius = e.cornerRadius, i.add("cornerRadius")), e.clipsContent !== void 0 && f(e.clipsContent, x.clipsContent) && (r.clipsContent = e.clipsContent, i.add("clipsContent")), e.layoutWrap !== void 0 && f(e.layoutWrap, x.layoutWrap) && (r.layoutWrap = e.layoutWrap, i.add("layoutWrap")), e.layoutGrow !== void 0 && f(e.layoutGrow, x.layoutGrow) && (r.layoutGrow = e.layoutGrow, i.add("layoutGrow")), r;
 }
-async function he(e, a) {
-  const t = {}, r = /* @__PURE__ */ new Set();
-  return e.characters !== void 0 && e.characters !== "" && (t.characters = e.characters, r.add("characters")), e.fontName !== void 0 && (t.fontName = e.fontName, r.add("fontName")), e.fontSize !== void 0 && (t.fontSize = e.fontSize, r.add("fontSize")), e.textAlignHorizontal !== void 0 && g(
+async function de(e, a) {
+  const r = {}, i = /* @__PURE__ */ new Set();
+  return e.characters !== void 0 && e.characters !== "" && (r.characters = e.characters, i.add("characters")), e.fontName !== void 0 && (r.fontName = e.fontName, i.add("fontName")), e.fontSize !== void 0 && (r.fontSize = e.fontSize, i.add("fontSize")), e.textAlignHorizontal !== void 0 && f(
     e.textAlignHorizontal,
     E.textAlignHorizontal
-  ) && (t.textAlignHorizontal = e.textAlignHorizontal, r.add("textAlignHorizontal")), e.textAlignVertical !== void 0 && g(
+  ) && (r.textAlignHorizontal = e.textAlignHorizontal, i.add("textAlignHorizontal")), e.textAlignVertical !== void 0 && f(
     e.textAlignVertical,
     E.textAlignVertical
-  ) && (t.textAlignVertical = e.textAlignVertical, r.add("textAlignVertical")), e.letterSpacing !== void 0 && g(e.letterSpacing, E.letterSpacing) && (t.letterSpacing = e.letterSpacing, r.add("letterSpacing")), e.lineHeight !== void 0 && g(e.lineHeight, E.lineHeight) && (t.lineHeight = e.lineHeight, r.add("lineHeight")), e.textCase !== void 0 && g(e.textCase, E.textCase) && (t.textCase = e.textCase, r.add("textCase")), e.textDecoration !== void 0 && g(e.textDecoration, E.textDecoration) && (t.textDecoration = e.textDecoration, r.add("textDecoration")), e.textAutoResize !== void 0 && g(e.textAutoResize, E.textAutoResize) && (t.textAutoResize = e.textAutoResize, r.add("textAutoResize")), e.paragraphSpacing !== void 0 && g(
+  ) && (r.textAlignVertical = e.textAlignVertical, i.add("textAlignVertical")), e.letterSpacing !== void 0 && f(e.letterSpacing, E.letterSpacing) && (r.letterSpacing = e.letterSpacing, i.add("letterSpacing")), e.lineHeight !== void 0 && f(e.lineHeight, E.lineHeight) && (r.lineHeight = e.lineHeight, i.add("lineHeight")), e.textCase !== void 0 && f(e.textCase, E.textCase) && (r.textCase = e.textCase, i.add("textCase")), e.textDecoration !== void 0 && f(e.textDecoration, E.textDecoration) && (r.textDecoration = e.textDecoration, i.add("textDecoration")), e.textAutoResize !== void 0 && f(e.textAutoResize, E.textAutoResize) && (r.textAutoResize = e.textAutoResize, i.add("textAutoResize")), e.paragraphSpacing !== void 0 && f(
     e.paragraphSpacing,
     E.paragraphSpacing
-  ) && (t.paragraphSpacing = e.paragraphSpacing, r.add("paragraphSpacing")), e.paragraphIndent !== void 0 && g(e.paragraphIndent, E.paragraphIndent) && (t.paragraphIndent = e.paragraphIndent, r.add("paragraphIndent")), e.listOptions !== void 0 && g(e.listOptions, E.listOptions) && (t.listOptions = e.listOptions, r.add("listOptions")), t;
+  ) && (r.paragraphSpacing = e.paragraphSpacing, i.add("paragraphSpacing")), e.paragraphIndent !== void 0 && f(e.paragraphIndent, E.paragraphIndent) && (r.paragraphIndent = e.paragraphIndent, i.add("paragraphIndent")), e.listOptions !== void 0 && f(e.listOptions, E.listOptions) && (r.listOptions = e.listOptions, i.add("listOptions")), r;
 }
-async function be(e, a) {
-  const t = {}, r = /* @__PURE__ */ new Set();
-  return e.fillGeometry !== void 0 && g(e.fillGeometry, I.fillGeometry) && (t.fillGeometry = e.fillGeometry, r.add("fillGeometry")), e.strokeGeometry !== void 0 && g(e.strokeGeometry, I.strokeGeometry) && (t.strokeGeometry = e.strokeGeometry, r.add("strokeGeometry")), e.strokeCap !== void 0 && g(e.strokeCap, I.strokeCap) && (t.strokeCap = e.strokeCap, r.add("strokeCap")), e.strokeJoin !== void 0 && g(e.strokeJoin, I.strokeJoin) && (t.strokeJoin = e.strokeJoin, r.add("strokeJoin")), e.dashPattern !== void 0 && g(e.dashPattern, I.dashPattern) && (t.dashPattern = e.dashPattern, r.add("dashPattern")), t;
+async function pe(e, a) {
+  const r = {}, i = /* @__PURE__ */ new Set();
+  return e.fillGeometry !== void 0 && f(e.fillGeometry, N.fillGeometry) && (r.fillGeometry = e.fillGeometry, i.add("fillGeometry")), e.strokeGeometry !== void 0 && f(e.strokeGeometry, N.strokeGeometry) && (r.strokeGeometry = e.strokeGeometry, i.add("strokeGeometry")), e.strokeCap !== void 0 && f(e.strokeCap, N.strokeCap) && (r.strokeCap = e.strokeCap, i.add("strokeCap")), e.strokeJoin !== void 0 && f(e.strokeJoin, N.strokeJoin) && (r.strokeJoin = e.strokeJoin, i.add("strokeJoin")), e.dashPattern !== void 0 && f(e.dashPattern, N.dashPattern) && (r.dashPattern = e.dashPattern, i.add("dashPattern")), r;
 }
-async function Ae(e, a) {
-  const t = {}, r = /* @__PURE__ */ new Set();
-  return e.cornerRadius !== void 0 && g(e.cornerRadius, W.cornerRadius) && (t.cornerRadius = e.cornerRadius, r.add("cornerRadius")), e.pointCount !== void 0 && (t.pointCount = e.pointCount, r.add("pointCount")), e.innerRadius !== void 0 && (t.innerRadius = e.innerRadius, r.add("innerRadius")), e.pointCount !== void 0 && (t.pointCount = e.pointCount, r.add("pointCount")), t;
+async function fe(e, a) {
+  const r = {}, i = /* @__PURE__ */ new Set();
+  return e.cornerRadius !== void 0 && f(e.cornerRadius, H.cornerRadius) && (r.cornerRadius = e.cornerRadius, i.add("cornerRadius")), e.pointCount !== void 0 && (r.pointCount = e.pointCount, i.add("pointCount")), e.innerRadius !== void 0 && (r.innerRadius = e.innerRadius, i.add("innerRadius")), e.pointCount !== void 0 && (r.pointCount = e.pointCount, i.add("pointCount")), r;
 }
-function ve(e) {
+function ge(e) {
   const a = [];
-  let t = e.parent;
+  let r = e.parent;
   try {
-    for (; t; ) {
-      let r, o, i;
+    for (; r; ) {
+      let i, o, t;
       try {
-        r = t.type, o = t.name, i = t.parent;
+        i = r.type, o = r.name, t = r.parent;
       } catch (n) {
         console.log(
           "Error accessing parent node properties in buildParentPath:",
@@ -559,266 +574,266 @@ function ve(e) {
         );
         break;
       }
-      if (r === "PAGE" || !i)
+      if (i === "PAGE" || !t)
         break;
-      o && o.trim() !== "" && a.unshift(o), t = i;
+      o && o.trim() !== "" && a.unshift(o), r = t;
     }
-  } catch (r) {
-    console.log("Error during parent path traversal:", r);
+  } catch (i) {
+    console.log("Error during parent path traversal:", i);
   }
   return a.join("/");
 }
-async function xe(e, a) {
-  const t = {}, r = /* @__PURE__ */ new Set();
-  if (t._isInstance = !0, r.add("_isInstance"), e.type === "INSTANCE" && typeof e.getMainComponentAsync == "function")
+async function me(e, a) {
+  const r = {}, i = /* @__PURE__ */ new Set();
+  if (r._isInstance = !0, i.add("_isInstance"), e.type === "INSTANCE" && typeof e.getMainComponentAsync == "function")
     try {
       const o = await e.getMainComponentAsync();
       if (o) {
-        const i = {};
+        const t = {};
         try {
-          i.instanceNodeName = e.name, i.instanceNodeId = e.id, i.instanceNodeType = e.type, i.componentName = o.name, i.componentType = o.type, i.componentId = o.id;
+          t.instanceNodeName = e.name, t.instanceNodeId = e.id, t.instanceNodeType = e.type, t.componentName = o.name, t.componentType = o.type, t.componentId = o.id;
           try {
-            i.componentKey = o.key;
+            t.componentKey = o.key;
           } catch (p) {
-            i.componentKey = "(cannot access)";
+            t.componentKey = "(cannot access)";
           }
           try {
-            i.componentRemote = o.remote;
+            t.componentRemote = o.remote;
           } catch (p) {
-            i.componentRemote = "(cannot access)";
+            t.componentRemote = "(cannot access)";
           }
-          let f = [];
+          let l = [];
           try {
-            f = Object.getOwnPropertyNames(o), i.ownProperties = f;
+            l = Object.getOwnPropertyNames(o), t.ownProperties = l;
           } catch (p) {
-            i.ownProperties = "(cannot access)";
-          }
-          const b = [];
-          try {
-            let p = Object.getPrototypeOf(o);
-            for (; p && p !== Object.prototype; )
-              b.push(
-                ...Object.getOwnPropertyNames(p).filter(
-                  (C) => !b.includes(C)
-                )
-              ), p = Object.getPrototypeOf(p);
-            i.prototypeProperties = b;
-          } catch (p) {
-            i.prototypeProperties = "(cannot access)";
-          }
-          let y = [];
-          try {
-            y = Object.keys(o), i.enumerableProperties = y;
-          } catch (p) {
-            i.enumerableProperties = "(cannot access)";
+            t.ownProperties = "(cannot access)";
           }
           const h = [];
           try {
-            for (const p of [...f, ...b])
+            let p = Object.getPrototypeOf(o);
+            for (; p && p !== Object.prototype; )
+              h.push(
+                ...Object.getOwnPropertyNames(p).filter(
+                  (S) => !h.includes(S)
+                )
+              ), p = Object.getPrototypeOf(p);
+            t.prototypeProperties = h;
+          } catch (p) {
+            t.prototypeProperties = "(cannot access)";
+          }
+          let y = [];
+          try {
+            y = Object.keys(o), t.enumerableProperties = y;
+          } catch (p) {
+            t.enumerableProperties = "(cannot access)";
+          }
+          const b = [];
+          try {
+            for (const p of [...l, ...h])
               if (!(p === "instances" || p === "children" || p === "parent"))
                 try {
-                  typeof o[p] == "function" && h.push(p);
-                } catch (C) {
+                  typeof o[p] == "function" && b.push(p);
+                } catch (S) {
                 }
-            i.availableMethods = h;
+            t.availableMethods = b;
           } catch (p) {
-            i.availableMethods = "(cannot access)";
+            t.availableMethods = "(cannot access)";
           }
-          const d = [];
+          const m = [];
           try {
-            for (const p of [...f, ...b])
-              (p.toLowerCase().includes("library") || p.toLowerCase().includes("remote") || p.toLowerCase().includes("file")) && d.push(p);
-            i.libraryRelatedProperties = d;
+            for (const p of [...l, ...h])
+              (p.toLowerCase().includes("library") || p.toLowerCase().includes("remote") || p.toLowerCase().includes("file")) && m.push(p);
+            t.libraryRelatedProperties = m;
           } catch (p) {
-            i.libraryRelatedProperties = "(cannot access)";
-          }
-          try {
-            o.remote !== void 0 && (i.remoteValue = o.remote);
-          } catch (p) {
+            t.libraryRelatedProperties = "(cannot access)";
           }
           try {
-            o.libraryName !== void 0 && (i.libraryNameValue = o.libraryName);
+            o.remote !== void 0 && (t.remoteValue = o.remote);
           } catch (p) {
           }
           try {
-            o.libraryKey !== void 0 && (i.libraryKeyValue = o.libraryKey);
+            o.libraryName !== void 0 && (t.libraryNameValue = o.libraryName);
+          } catch (p) {
+          }
+          try {
+            o.libraryKey !== void 0 && (t.libraryKeyValue = o.libraryKey);
           } catch (p) {
           }
           try {
             if (o.parent !== void 0) {
               const p = o.parent;
               if (p) {
-                i.mainComponentHasParent = !0;
+                t.mainComponentHasParent = !0;
                 try {
-                  i.mainComponentParentType = p.type, i.mainComponentParentName = p.name, i.mainComponentParentId = p.id;
-                } catch (C) {
-                  i.mainComponentParentAccessError = String(C);
+                  t.mainComponentParentType = p.type, t.mainComponentParentName = p.name, t.mainComponentParentId = p.id;
+                } catch (S) {
+                  t.mainComponentParentAccessError = String(S);
                 }
               } else
-                i.mainComponentHasParent = !1;
+                t.mainComponentHasParent = !1;
             } else
-              i.mainComponentParentUndefined = !0;
+              t.mainComponentParentUndefined = !0;
           } catch (p) {
-            i.mainComponentParentCheckError = String(p);
+            t.mainComponentParentCheckError = String(p);
           }
           try {
-            o.variantProperties !== void 0 && (i.mainComponentVariantProperties = o.variantProperties);
+            o.variantProperties !== void 0 && (t.mainComponentVariantProperties = o.variantProperties);
           } catch (p) {
           }
           try {
-            o.componentPropertyDefinitions !== void 0 && (i.mainComponentPropertyDefinitions = Object.keys(
+            o.componentPropertyDefinitions !== void 0 && (t.mainComponentPropertyDefinitions = Object.keys(
               o.componentPropertyDefinitions
             ));
           } catch (p) {
           }
-        } catch (f) {
-          i.debugError = String(f);
+        } catch (l) {
+          t.debugError = String(l);
         }
         let n, s;
         try {
-          e.variantProperties && (n = e.variantProperties, i.instanceVariantProperties = n), e.componentProperties && (s = e.componentProperties, i.instanceComponentProperties = s);
-        } catch (f) {
-          i.propertiesError = String(f);
+          e.variantProperties && (n = e.variantProperties, t.instanceVariantProperties = n), e.componentProperties && (s = e.componentProperties, t.instanceComponentProperties = s);
+        } catch (l) {
+          t.propertiesError = String(l);
         }
-        let l, m;
+        let d, u;
         const c = [];
         try {
-          let f = o.parent;
-          const b = [];
+          let l = o.parent;
+          const h = [];
           let y = 0;
-          const h = 20;
-          if (f)
+          const b = 20;
+          if (l)
             try {
-              if (i.mainComponentParentExists = !0, i.mainComponentParentType = f.type, i.mainComponentParentName = f.name, i.mainComponentParentId = f.id, f.type === "COMPONENT_SET")
+              if (t.mainComponentParentExists = !0, t.mainComponentParentType = l.type, t.mainComponentParentName = l.name, t.mainComponentParentId = l.id, l.type === "COMPONENT_SET")
                 try {
-                  const d = f.parent;
-                  if (d === null)
-                    i.componentSetParentIsNull = !0;
-                  else if (d === void 0)
-                    i.componentSetParentIsUndefined = !0;
+                  const m = l.parent;
+                  if (m === null)
+                    t.componentSetParentIsNull = !0;
+                  else if (m === void 0)
+                    t.componentSetParentIsUndefined = !0;
                   else {
-                    i.componentSetParentExists = !0;
+                    t.componentSetParentExists = !0;
                     try {
-                      i.componentSetParentType = d.type, i.componentSetParentName = d.name;
+                      t.componentSetParentType = m.type, t.componentSetParentName = m.name;
                     } catch (p) {
-                      i.componentSetParentPropertyAccessError = String(p);
+                      t.componentSetParentPropertyAccessError = String(p);
                     }
                   }
-                } catch (d) {
-                  i.componentSetParentCheckError = String(d);
+                } catch (m) {
+                  t.componentSetParentCheckError = String(m);
                 }
-            } catch (d) {
-              i.mainComponentParentDebugError = String(d);
+            } catch (m) {
+              t.mainComponentParentDebugError = String(m);
             }
           else
-            i.mainComponentParentExists = !1;
-          for (; f && y < h; )
+            t.mainComponentParentExists = !1;
+          for (; l && y < b; )
             try {
-              const d = f.type, p = f.name;
+              const m = l.type, p = l.name;
               if (c.push(
-                `${d}:${p || "(unnamed)"}`
-              ), d === "COMPONENT_SET" && !m && (m = p, i.componentSetName = p, i.componentSetFound = !0), d === "PAGE")
+                `${m}:${p || "(unnamed)"}`
+              ), m === "COMPONENT_SET" && !u && (u = p, t.componentSetName = p, t.componentSetFound = !0), m === "PAGE")
                 break;
-              p && p.trim() !== "" && b.unshift(p);
-              let C, M = !1;
+              p && p.trim() !== "" && h.unshift(p);
+              let S, R = !1;
               try {
-                "parent" in f ? (M = !0, i[`hasParentPropertyAtDepth${y}`] = !0, C = f.parent, C === null ? i[`parentIsNullAtDepth${y}`] = !0 : C === void 0 ? i[`parentIsUndefinedAtDepth${y}`] = !0 : i[`parentExistsAtDepth${y}`] = !0) : i[`noParentPropertyAtDepth${y}`] = !0;
-              } catch (S) {
-                i.parentAccessErrorAtDepth = y, i.parentAccessError = String(S), i.parentAccessErrorName = S instanceof Error ? S.name : "Unknown", i.parentAccessErrorMessage = S instanceof Error ? S.message : String(S);
+                "parent" in l ? (R = !0, t[`hasParentPropertyAtDepth${y}`] = !0, S = l.parent, S === null ? t[`parentIsNullAtDepth${y}`] = !0 : S === void 0 ? t[`parentIsUndefinedAtDepth${y}`] = !0 : t[`parentExistsAtDepth${y}`] = !0) : t[`noParentPropertyAtDepth${y}`] = !0;
+              } catch (w) {
+                t.parentAccessErrorAtDepth = y, t.parentAccessError = String(w), t.parentAccessErrorName = w instanceof Error ? w.name : "Unknown", t.parentAccessErrorMessage = w instanceof Error ? w.message : String(w);
                 break;
               }
-              if (!C) {
-                i.noParentAtDepth = y, i.parentAccessAttemptedAtDepth = M;
+              if (!S) {
+                t.noParentAtDepth = y, t.parentAccessAttemptedAtDepth = R;
                 break;
               }
               try {
-                const S = C.type, oe = C.name;
-                i[`parentAtDepth${y + 1}Type`] = S, i[`parentAtDepth${y + 1}Name`] = oe;
-              } catch (S) {
-                i.nextParentAccessErrorAtDepth = y, i.nextParentAccessError = String(S);
+                const w = S.type, Q = S.name;
+                t[`parentAtDepth${y + 1}Type`] = w, t[`parentAtDepth${y + 1}Name`] = Q;
+              } catch (w) {
+                t.nextParentAccessErrorAtDepth = y, t.nextParentAccessError = String(w);
               }
-              f = C, y++;
-            } catch (d) {
-              i.parentTraverseErrorAtDepth = y, i.parentTraverseError = String(d), i.parentTraverseErrorName = d instanceof Error ? d.name : "Unknown", i.parentTraverseErrorMessage = d instanceof Error ? d.message : String(d);
+              l = S, y++;
+            } catch (m) {
+              t.parentTraverseErrorAtDepth = y, t.parentTraverseError = String(m), t.parentTraverseErrorName = m instanceof Error ? m.name : "Unknown", t.parentTraverseErrorMessage = m instanceof Error ? m.message : String(m);
               break;
             }
-          l = b.join("/"), i.mainComponentParentChain = c, i.mainComponentParentChainDepth = y, i.mainComponentParentPath = l, i.mainComponentParentPathParts = b;
-        } catch (f) {
-          i.mainComponentParentPathError = String(f);
+          d = h.join("/"), t.mainComponentParentChain = c, t.mainComponentParentChainDepth = y, t.mainComponentParentPath = d, t.mainComponentParentPathParts = h;
+        } catch (l) {
+          t.mainComponentParentPathError = String(l);
         }
-        const u = ve(e);
-        if (i.instanceParentPath = u, t.mainComponent = {
+        const g = ge(e);
+        if (t.instanceParentPath = g, r.mainComponent = {
           id: o.id,
           name: o.name,
           key: o.key,
           // Component key for reference
           type: o.type
-        }, m && (t.mainComponent.componentSetName = m), n && (t.mainComponent.variantProperties = n), s && (t.mainComponent.componentProperties = s), l && (t.mainComponent._path = l), u && (t.mainComponent._instancePath = u), o.remote === !0) {
-          t.mainComponent.remote = !0;
+        }, u && (r.mainComponent.componentSetName = u), n && (r.mainComponent.variantProperties = n), s && (r.mainComponent.componentProperties = s), d && (r.mainComponent._path = d), g && (r.mainComponent._instancePath = g), o.remote === !0) {
+          r.mainComponent.remote = !0;
           try {
             if (typeof o.getPublishStatusAsync == "function")
               try {
-                const f = await o.getPublishStatusAsync();
-                if (f && (i.publishStatus = f, f && typeof f == "object")) {
-                  f.libraryName && (t.mainComponent.libraryName = f.libraryName), f.libraryKey && (t.mainComponent.libraryKey = f.libraryKey), f.fileKey && (t.mainComponent.fileKey = f.fileKey);
-                  const b = {};
-                  Object.keys(f).forEach((y) => {
-                    (y.toLowerCase().includes("library") || y.toLowerCase().includes("file")) && (b[y] = f[y]);
-                  }), Object.keys(b).length > 0 && (i.libraryRelatedFromPublishStatus = b);
+                const l = await o.getPublishStatusAsync();
+                if (l && (t.publishStatus = l, l && typeof l == "object")) {
+                  l.libraryName && (r.mainComponent.libraryName = l.libraryName), l.libraryKey && (r.mainComponent.libraryKey = l.libraryKey), l.fileKey && (r.mainComponent.fileKey = l.fileKey);
+                  const h = {};
+                  Object.keys(l).forEach((y) => {
+                    (y.toLowerCase().includes("library") || y.toLowerCase().includes("file")) && (h[y] = l[y]);
+                  }), Object.keys(h).length > 0 && (t.libraryRelatedFromPublishStatus = h);
                 }
-              } catch (f) {
-                i.publishStatusError = String(f);
+              } catch (l) {
+                t.publishStatusError = String(l);
               }
             try {
-              const f = figma.teamLibrary, b = Object.getOwnPropertyNames(
-                f
-              ).filter((y) => typeof f[y] == "function");
-              if (i.teamLibraryAvailableMethods = b, typeof (f == null ? void 0 : f.getAvailableLibraryComponentSetsAsync) == "function") {
-                const y = await f.getAvailableLibraryComponentSetsAsync();
-                if (i.availableComponentSetsCount = (y == null ? void 0 : y.length) || 0, y && Array.isArray(y)) {
-                  const h = [];
-                  for (const d of y)
+              const l = figma.teamLibrary, h = Object.getOwnPropertyNames(
+                l
+              ).filter((y) => typeof l[y] == "function");
+              if (t.teamLibraryAvailableMethods = h, typeof (l == null ? void 0 : l.getAvailableLibraryComponentSetsAsync) == "function") {
+                const y = await l.getAvailableLibraryComponentSetsAsync();
+                if (t.availableComponentSetsCount = (y == null ? void 0 : y.length) || 0, y && Array.isArray(y)) {
+                  const b = [];
+                  for (const m of y)
                     try {
                       const p = {
-                        name: d.name,
-                        key: d.key,
-                        libraryName: d.libraryName,
-                        libraryKey: d.libraryKey
+                        name: m.name,
+                        key: m.key,
+                        libraryName: m.libraryName,
+                        libraryKey: m.libraryKey
                       };
-                      if (h.push(p), d.key === o.key || d.name === o.name) {
-                        i.matchingComponentSet = p, d.libraryName && (t.mainComponent.libraryName = d.libraryName), d.libraryKey && (t.mainComponent.libraryKey = d.libraryKey);
+                      if (b.push(p), m.key === o.key || m.name === o.name) {
+                        t.matchingComponentSet = p, m.libraryName && (r.mainComponent.libraryName = m.libraryName), m.libraryKey && (r.mainComponent.libraryKey = m.libraryKey);
                         break;
                       }
                     } catch (p) {
-                      h.push({
+                      b.push({
                         error: String(p)
                       });
                     }
-                  i.componentSets = h;
+                  t.componentSets = b;
                 }
               } else
-                i.componentSetsApiNote = "getAvailableLibraryComponentSetsAsync not available";
-            } catch (f) {
-              i.teamLibrarySearchError = String(f);
+                t.componentSetsApiNote = "getAvailableLibraryComponentSetsAsync not available";
+            } catch (l) {
+              t.teamLibrarySearchError = String(l);
             }
             try {
-              const f = await figma.importComponentByKeyAsync(
+              const l = await figma.importComponentByKeyAsync(
                 o.key
               );
-              f && (i.importedComponentInfo = {
-                id: f.id,
-                name: f.name,
-                type: f.type,
-                remote: f.remote
-              }, f.libraryName && (t.mainComponent.libraryName = f.libraryName, i.importedComponentLibraryName = f.libraryName), f.libraryKey && (t.mainComponent.libraryKey = f.libraryKey, i.importedComponentLibraryKey = f.libraryKey));
-            } catch (f) {
-              i.importComponentError = String(f);
+              l && (t.importedComponentInfo = {
+                id: l.id,
+                name: l.name,
+                type: l.type,
+                remote: l.remote
+              }, l.libraryName && (r.mainComponent.libraryName = l.libraryName, t.importedComponentLibraryName = l.libraryName), l.libraryKey && (r.mainComponent.libraryKey = l.libraryKey, t.importedComponentLibraryKey = l.libraryKey));
+            } catch (l) {
+              t.importComponentError = String(l);
             }
-          } catch (f) {
-            i.libraryInfoError = String(f);
+          } catch (l) {
+            t.libraryInfoError = String(l);
           }
         }
-        Object.keys(i).length > 0 && (t.mainComponent._debug = i), r.add("mainComponent");
+        Object.keys(t).length > 0 && (r.mainComponent._debug = t), i.add("mainComponent");
       }
     } catch (o) {
       console.log(
@@ -826,84 +841,84 @@ async function xe(e, a) {
         o
       );
     }
-  return t;
+  return r;
 }
-function _(e) {
+function L(e) {
   let a = 1;
-  return e.children && e.children.length > 0 && e.children.forEach((t) => {
-    a += _(t);
+  return e.children && e.children.length > 0 && e.children.forEach((r) => {
+    a += L(r);
   }), a;
 }
-async function X(e, a = /* @__PURE__ */ new WeakSet(), t = {}) {
-  var u, A, f, b, y;
+async function z(e, a = /* @__PURE__ */ new WeakSet(), r = {}) {
+  var g, A, l, h, y;
   if (!e || typeof e != "object")
     return e;
-  const r = (u = t.maxNodes) != null ? u : 1e4, o = (A = t.nodeCount) != null ? A : 0;
-  if (o >= r)
+  const i = (g = r.maxNodes) != null ? g : 1e4, o = (A = r.nodeCount) != null ? A : 0;
+  if (o >= i)
     return {
       _truncated: !0,
-      _reason: `Maximum node count (${r}) reached`,
+      _reason: `Maximum node count (${i}) reached`,
       _nodeCount: o
     };
-  const i = {
-    visited: (f = t.visited) != null ? f : /* @__PURE__ */ new WeakSet(),
-    depth: (b = t.depth) != null ? b : 0,
-    maxDepth: (y = t.maxDepth) != null ? y : 100,
+  const t = {
+    visited: (l = r.visited) != null ? l : /* @__PURE__ */ new WeakSet(),
+    depth: (h = r.depth) != null ? h : 0,
+    maxDepth: (y = r.maxDepth) != null ? y : 100,
     nodeCount: o + 1,
-    maxNodes: r,
+    maxNodes: i,
     unhandledKeys: /* @__PURE__ */ new Set(),
-    variableTable: t.variableTable,
-    collectionTable: t.collectionTable
+    variableTable: r.variableTable,
+    collectionTable: r.collectionTable
   };
   if (a.has(e))
     return "[Circular Reference]";
-  a.add(e), i.visited = a;
-  const n = {}, s = await ue(e, i);
+  a.add(e), t.visited = a;
+  const n = {}, s = await le(e, t);
   Object.assign(n, s);
-  const l = e.type;
-  if (l)
-    switch (l) {
+  const d = e.type;
+  if (d)
+    switch (d) {
       case "FRAME":
       case "COMPONENT": {
-        const h = await U(e);
-        Object.assign(n, h);
+        const b = await j(e);
+        Object.assign(n, b);
         break;
       }
       case "INSTANCE": {
-        const h = await xe(
+        const b = await me(
           e
         );
-        Object.assign(n, h);
-        const d = await U(
+        Object.assign(n, b);
+        const m = await j(
           e
         );
-        Object.assign(n, d);
+        Object.assign(n, m);
         break;
       }
       case "TEXT": {
-        const h = await he(e);
-        Object.assign(n, h);
+        const b = await de(e);
+        Object.assign(n, b);
         break;
       }
       case "VECTOR":
       case "LINE": {
-        const h = await be(e);
-        Object.assign(n, h);
+        const b = await pe(e);
+        Object.assign(n, b);
         break;
       }
       case "RECTANGLE":
       case "ELLIPSE":
       case "STAR":
       case "POLYGON": {
-        const h = await Ae(e);
-        Object.assign(n, h);
+        const b = await fe(e);
+        Object.assign(n, b);
         break;
       }
       default:
-        i.unhandledKeys.add("_unknownType");
+        t.unhandledKeys.add("_unknownType");
         break;
     }
-  const m = Object.getOwnPropertyNames(e), c = /* @__PURE__ */ new Set([
+  const u = Object.getOwnPropertyNames(e), c = /* @__PURE__ */ new Set([
     "type",
     "id",
     "name",
@@ -940,171 +955,170 @@ async function X(e, a = /* @__PURE__ */ new WeakSet(), t = {}) {
     "toString",
     "valueOf"
   ]);
-  (l === "FRAME" || l === "COMPONENT" || l === "INSTANCE") && (c.add("layoutMode"), c.add("primaryAxisSizingMode"), c.add("counterAxisSizingMode"), c.add("primaryAxisAlignItems"), c.add("counterAxisAlignItems"), c.add("paddingLeft"), c.add("paddingRight"), c.add("paddingTop"), c.add("paddingBottom"), c.add("itemSpacing"), c.add("cornerRadius"), c.add("clipsContent"), c.add("layoutWrap"), c.add("layoutGrow")), l === "TEXT" && (c.add("characters"), c.add("fontName"), c.add("fontSize"), c.add("textAlignHorizontal"), c.add("textAlignVertical"), c.add("letterSpacing"), c.add("lineHeight"), c.add("textCase"), c.add("textDecoration"), c.add("textAutoResize"), c.add("paragraphSpacing"), c.add("paragraphIndent"), c.add("listOptions")), (l === "VECTOR" || l === "LINE") && (c.add("fillGeometry"), c.add("strokeGeometry")), (l === "RECTANGLE" || l === "ELLIPSE" || l === "STAR" || l === "POLYGON") && (c.add("pointCount"), c.add("innerRadius"), c.add("arcData")), l === "INSTANCE" && (c.add("mainComponent"), c.add("componentProperties"));
-  for (const h of m)
-    typeof e[h] != "function" && (c.has(h) || i.unhandledKeys.add(h));
-  if (i.unhandledKeys.size > 0 && (n._unhandledKeys = Array.from(i.unhandledKeys).sort()), e.children && Array.isArray(e.children)) {
-    const h = i.maxDepth;
-    if (i.depth >= h)
+  (d === "FRAME" || d === "COMPONENT" || d === "INSTANCE") && (c.add("layoutMode"), c.add("primaryAxisSizingMode"), c.add("counterAxisSizingMode"), c.add("primaryAxisAlignItems"), c.add("counterAxisAlignItems"), c.add("paddingLeft"), c.add("paddingRight"), c.add("paddingTop"), c.add("paddingBottom"), c.add("itemSpacing"), c.add("cornerRadius"), c.add("clipsContent"), c.add("layoutWrap"), c.add("layoutGrow")), d === "TEXT" && (c.add("characters"), c.add("fontName"), c.add("fontSize"), c.add("textAlignHorizontal"), c.add("textAlignVertical"), c.add("letterSpacing"), c.add("lineHeight"), c.add("textCase"), c.add("textDecoration"), c.add("textAutoResize"), c.add("paragraphSpacing"), c.add("paragraphIndent"), c.add("listOptions")), (d === "VECTOR" || d === "LINE") && (c.add("fillGeometry"), c.add("strokeGeometry")), (d === "RECTANGLE" || d === "ELLIPSE" || d === "STAR" || d === "POLYGON") && (c.add("pointCount"), c.add("innerRadius"), c.add("arcData")), d === "INSTANCE" && (c.add("mainComponent"), c.add("componentProperties"));
+  for (const b of u)
+    typeof e[b] != "function" && (c.has(b) || t.unhandledKeys.add(b));
+  if (t.unhandledKeys.size > 0 && (n._unhandledKeys = Array.from(t.unhandledKeys).sort()), e.children && Array.isArray(e.children)) {
+    const b = t.maxDepth;
+    if (t.depth >= b)
       n.children = {
         _truncated: !0,
-        _reason: `Maximum depth (${h}) reached`,
+        _reason: `Maximum depth (${b}) reached`,
         _count: e.children.length
       };
-    else if (i.nodeCount >= r)
+    else if (t.nodeCount >= i)
       n.children = {
         _truncated: !0,
-        _reason: `Maximum node count (${r}) reached`,
+        _reason: `Maximum node count (${i}) reached`,
         _count: e.children.length,
         _processed: 0
       };
     else {
-      const d = w(k({}, i), {
-        depth: i.depth + 1
+      const m = I(v({}, t), {
+        depth: t.depth + 1
       }), p = [];
-      let C = !1;
-      for (const M of e.children) {
-        if (d.nodeCount >= r) {
+      let S = !1;
+      for (const R of e.children) {
+        if (m.nodeCount >= i) {
           n.children = {
             _truncated: !0,
-            _reason: `Maximum node count (${r}) reached during children processing`,
+            _reason: `Maximum node count (${i}) reached during children processing`,
             _processed: p.length,
             _total: e.children.length,
             children: p
-          }, C = !0;
+          }, S = !0;
           break;
         }
-        const S = await X(M, a, d);
-        p.push(S), d.nodeCount && (i.nodeCount = d.nodeCount);
+        const w = await z(R, a, m);
+        p.push(w), m.nodeCount && (t.nodeCount = m.nodeCount);
       }
-      C || (n.children = p);
+      S || (n.children = p);
     }
   }
   return n;
 }
-async function Ce() {
+async function ue(e) {
   try {
-    return await figma.loadAllPagesAsync(), {
-      type: "pages-loaded",
-      success: !0,
-      pages: figma.root.children.map((t, r) => ({
-        name: t.name,
-        index: r
-      }))
-    };
-  } catch (e) {
-    return console.error("Error loading pages:", e), {
-      type: "pages-loaded",
-      success: !1,
-      error: e instanceof Error ? e.message : "Unknown error occurred"
-    };
-  }
-}
-async function ke(e) {
-  try {
-    await figma.loadAllPagesAsync();
-    const a = figma.root.children;
-    if (e < 0 || e >= a.length)
+    const a = e.pageIndex;
+    if (a === void 0 || typeof a != "number")
       return {
-        type: "page-export-response",
+        type: "exportPage",
         success: !1,
-        error: "Invalid page selection"
+        error: !0,
+        message: "Invalid page selection",
+        data: {}
       };
-    const t = a[e];
-    console.log("Exporting page: " + t.name);
-    const r = new O(), o = new T();
-    let i = [];
+    await figma.loadAllPagesAsync();
+    const r = figma.root.children;
+    if (a < 0 || a >= r.length)
+      return {
+        type: "exportPage",
+        success: !1,
+        error: !0,
+        message: "Invalid page selection",
+        data: {}
+      };
+    const i = r[a];
+    console.log("Exporting page: " + i.name);
+    const o = new O(), t = new T();
+    let n = [];
     try {
-      i = (await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync()).map((u) => ({
-        libraryName: u.libraryName,
-        key: u.key,
-        name: u.name
+      n = (await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync()).map((A) => ({
+        libraryName: A.libraryName,
+        key: A.key,
+        name: A.name
       }));
-    } catch (c) {
+    } catch (g) {
       console.log(
         "Could not get library variable collections:",
-        c instanceof Error ? c.message : String(c)
+        g instanceof Error ? g.message : String(g)
       );
     }
-    const n = await X(
-      t,
+    const s = await z(
+      i,
       /* @__PURE__ */ new WeakSet(),
       {
-        variableTable: r,
-        collectionTable: o
+        variableTable: o,
+        collectionTable: t
       }
-    ), s = {
+    ), d = {
       metadata: {
         exportedAt: (/* @__PURE__ */ new Date()).toISOString(),
         exportFormatVersion: "2.4.0",
         // Updated version for simplified variable table (removed unnecessary fields)
         figmaApiVersion: figma.apiVersion,
-        originalPageName: t.name,
-        totalNodes: _(n),
+        originalPageName: i.name,
+        totalNodes: L(s),
         pluginVersion: "1.0.0"
       },
-      collections: o.getTable(),
-      variables: r.getSerializedTable(),
-      libraries: i,
-      pageData: n
-    }, l = JSON.stringify(s, null, 2), m = t.name.replace(/[^a-z0-9]/gi, "_") + "_export.json";
+      collections: t.getTable(),
+      variables: o.getSerializedTable(),
+      libraries: n,
+      pageData: s
+    }, u = JSON.stringify(d, null, 2), c = i.name.replace(/[^a-z0-9]/gi, "_") + "_export.json";
     return console.log(
       "Export complete. Total nodes:",
-      _(n)
+      L(s)
     ), {
-      type: "page-export-response",
+      type: "exportPage",
       success: !0,
-      filename: m,
-      jsonData: l,
-      pageName: t.name
+      error: !1,
+      message: "Page exported successfully",
+      data: {
+        filename: c,
+        jsonData: u,
+        pageName: i.name
+      }
     };
   } catch (a) {
     return console.error("Error exporting page:", a), {
-      type: "page-export-response",
+      type: "exportPage",
       success: !1,
-      error: a instanceof Error ? a.message : "Unknown error occurred"
+      error: !0,
+      message: a instanceof Error ? a.message : "Unknown error occurred",
+      data: {}
     };
   }
 }
-async function Se(e, a) {
-  const t = /* @__PURE__ */ new Map();
-  for (const [r, o] of Object.entries(a)) {
-    const i = e.modes.find((n) => n.name === o);
-    if (i)
-      t.set(r, i.modeId);
+async function ye(e, a) {
+  const r = /* @__PURE__ */ new Map();
+  for (const [i, o] of Object.entries(a)) {
+    const t = e.modes.find((n) => n.name === o);
+    if (t)
+      r.set(i, t.modeId);
     else {
       const n = e.addMode(o);
-      t.set(r, n);
+      r.set(i, n);
     }
   }
-  return t;
+  return r;
 }
-async function Y(e) {
+async function q(e) {
   let a;
   if (e.isLocal) {
     const o = (await figma.variables.getLocalVariableCollectionsAsync()).find(
-      (i) => i.name === e.collectionName
+      (t) => t.name === e.collectionName
     );
     o ? a = o : a = figma.variables.createVariableCollection(
       e.collectionName
     );
   } else {
     const o = (await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync()).find(
-      (l) => l.name === e.collectionName
+      (d) => d.name === e.collectionName
     );
     if (!o)
       throw new Error(
         `External collection "${e.collectionName}" not found in team library. Please ensure the collection is published and available.`
       );
-    const i = await figma.teamLibrary.getVariablesInLibraryCollectionAsync(
+    const t = await figma.teamLibrary.getVariablesInLibraryCollectionAsync(
       o.key
     );
-    if (i.length === 0)
+    if (t.length === 0)
       throw new Error(
         `External collection "${e.collectionName}" exists but has no variables. Cannot import.`
       );
     const n = await figma.variables.importVariableByKeyAsync(
-      i[0].key
+      t[0].key
     ), s = await figma.variables.getVariableCollectionByIdAsync(
       n.variableCollectionId
     );
@@ -1114,37 +1128,37 @@ async function Y(e) {
       );
     a = s;
   }
-  const t = await Se(
+  const r = await ye(
     a,
     e.modes
   );
-  return { collection: a, modeMapping: t };
+  return { collection: a, modeMapping: r };
 }
-async function z(e, a) {
+async function _(e, a) {
   if (a) {
-    const r = (await figma.variables.getLocalVariableCollectionsAsync()).find(
+    const i = (await figma.variables.getLocalVariableCollectionsAsync()).find(
       (o) => o.name === e
     );
-    return r || figma.variables.createVariableCollection(e);
+    return i || figma.variables.createVariableCollection(e);
   } else {
-    const r = (await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync()).find(
+    const i = (await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync()).find(
       (s) => s.name === e
     );
-    if (!r)
+    if (!i)
       throw new Error(
         `External collection "${e}" not found in team library. Please ensure the collection is published and available.`
       );
     const o = await figma.teamLibrary.getVariablesInLibraryCollectionAsync(
-      r.key
+      i.key
     );
     if (o.length === 0)
       throw new Error(
         `External collection "${e}" exists but has no variables. Cannot import.`
       );
-    const i = await figma.variables.importVariableByKeyAsync(
+    const t = await figma.variables.importVariableByKeyAsync(
       o[0].key
     ), n = await figma.variables.getVariableCollectionByIdAsync(
-      i.variableCollectionId
+      t.variableCollectionId
     );
     if (!n)
       throw new Error(
@@ -1153,29 +1167,29 @@ async function z(e, a) {
     return n;
   }
 }
-async function P(e, a) {
-  for (const t of e.variableIds)
+async function k(e, a) {
+  for (const r of e.variableIds)
     try {
-      const r = await figma.variables.getVariableByIdAsync(t);
-      if (r && r.name === a)
-        return r;
-    } catch (r) {
+      const i = await figma.variables.getVariableByIdAsync(r);
+      if (i && i.name === a)
+        return i;
+    } catch (i) {
       continue;
     }
   return null;
 }
-function j(e, a) {
-  const t = e.resolvedType.toUpperCase(), r = a.toUpperCase();
-  return t !== r ? (console.warn(
-    `Variable type mismatch: Variable "${e.name}" has type "${t}" but expected "${r}". Skipping binding.`
+function U(e, a) {
+  const r = e.resolvedType.toUpperCase(), i = a.toUpperCase();
+  return r !== i ? (console.warn(
+    `Variable type mismatch: Variable "${e.name}" has type "${r}" but expected "${i}". Skipping binding.`
   ), !1) : !0;
 }
-async function Ee(e, a, t, r, o) {
-  for (const [i, n] of Object.entries(a)) {
-    const s = r.get(i);
+async function be(e, a, r, i, o) {
+  for (const [t, n] of Object.entries(a)) {
+    const s = i.get(t);
     if (!s) {
       console.warn(
-        `Mode ID ${i} not found in mode mapping for variable "${e.name}". Skipping.`
+        `Mode ID ${t} not found in mode mapping for variable "${e.name}". Skipping.`
       );
       continue;
     }
@@ -1187,229 +1201,229 @@ async function Ee(e, a, t, r, o) {
         continue;
       }
       if (typeof n == "object" && n !== null && "type" in n && n.type === "VARIABLE_ALIAS") {
-        const l = n;
-        let m = null;
-        if (l._varRef !== void 0) {
-          const c = t.getVariableByIndex(
-            l._varRef
+        const d = n;
+        let u = null;
+        if (d._varRef !== void 0) {
+          const c = r.getVariableByIndex(
+            d._varRef
           );
           if (c) {
-            let u = null;
+            let g = null;
             if (o && c._colRef !== void 0) {
               const A = o.getCollectionByIndex(
                 c._colRef
               );
-              A && (u = (await Y(A)).collection);
+              A && (g = (await q(A)).collection);
             }
-            !u && c.collectionName && c.isLocal !== void 0 && (u = await z(
+            !g && c.collectionName && c.isLocal !== void 0 && (g = await _(
               c.collectionName,
               c.isLocal
-            )), u && (m = await P(
-              u,
+            )), g && (u = await k(
+              g,
               c.variableName
             ));
           }
         }
-        if (!m && l.id)
+        if (!u && d.id)
           try {
-            m = await figma.variables.getVariableByIdAsync(
-              l.id
+            u = await figma.variables.getVariableByIdAsync(
+              d.id
             );
           } catch (c) {
           }
-        if (m) {
+        if (u) {
           const c = {
             type: "VARIABLE_ALIAS",
-            id: m.id
+            id: u.id
           };
           e.setValueForMode(s, c);
         } else
           console.warn(
-            `Could not resolve variable alias for mode ${i} (mapped to ${s}) in variable "${e.name}". Original ID: ${l.id}`
+            `Could not resolve variable alias for mode ${t} (mapped to ${s}) in variable "${e.name}". Original ID: ${d.id}`
           );
       }
-    } catch (l) {
+    } catch (d) {
       console.warn(
-        `Error setting value for mode ${i} (mapped to ${s}) in variable "${e.name}":`,
-        l
+        `Error setting value for mode ${t} (mapped to ${s}) in variable "${e.name}":`,
+        d
       );
     }
   }
 }
-async function G(e, a, t, r, o) {
-  const i = figma.variables.createVariable(
+async function G(e, a, r, i, o) {
+  const t = figma.variables.createVariable(
     e.variableName,
     a,
     e.variableType
   );
-  return e.valuesByMode && await Ee(
-    i,
-    e.valuesByMode,
+  return e.valuesByMode && await be(
     t,
+    e.valuesByMode,
     r,
+    i,
     o
-  ), i;
+  ), t;
 }
-async function Q(e, a, t) {
+async function X(e, a, r) {
   var o;
-  const r = a.getVariableByIndex(e._varRef);
-  if (!r)
+  const i = a.getVariableByIndex(e._varRef);
+  if (!i)
     return console.warn(`Variable not found in table at index ${e._varRef}`), null;
   try {
-    let i;
-    const n = (o = r._colRef) != null ? o : r.collectionRef;
-    if (n !== void 0 && (i = t.getCollectionByIndex(n)), !i && r.collectionId && r.isLocal !== void 0) {
-      const c = t.getCollectionIndex(
-        r.collectionId
+    let t;
+    const n = (o = i._colRef) != null ? o : i.collectionRef;
+    if (n !== void 0 && (t = r.getCollectionByIndex(n)), !t && i.collectionId && i.isLocal !== void 0) {
+      const c = r.getCollectionIndex(
+        i.collectionId
       );
-      c >= 0 && (i = t.getCollectionByIndex(c));
+      c >= 0 && (t = r.getCollectionByIndex(c));
     }
-    if (!i) {
-      const c = await z(
-        r.collectionName || "",
-        r.isLocal || !1
+    if (!t) {
+      const c = await _(
+        i.collectionName || "",
+        i.isLocal || !1
       );
-      let u = await P(c, r.variableName);
-      return u ? j(u, r.variableType) ? u : null : r.valuesByMode ? (u = await G(
-        r,
+      let g = await k(c, i.variableName);
+      return g ? U(g, i.variableType) ? g : null : i.valuesByMode ? (g = await G(
+        i,
         c,
         a,
         /* @__PURE__ */ new Map(),
         // Empty mode mapping for legacy
-        t
+        r
         // Pass collection table for alias resolution
-      ), u) : (console.warn(
-        `Cannot create variable "${r.variableName}" without valuesByMode data`
+      ), g) : (console.warn(
+        `Cannot create variable "${i.variableName}" without valuesByMode data`
       ), null);
     }
-    const { collection: s, modeMapping: l } = await Y(i);
-    let m = await P(s, r.variableName);
-    return m ? j(m, r.variableType) ? m : null : r.valuesByMode ? (m = await G(
-      r,
+    const { collection: s, modeMapping: d } = await q(t);
+    let u = await k(s, i.variableName);
+    return u ? U(u, i.variableType) ? u : null : i.valuesByMode ? (u = await G(
+      i,
       s,
       a,
-      l,
-      t
+      d,
+      r
       // Pass collection table for alias resolution
-    ), m) : (console.warn(
-      `Cannot create variable "${r.variableName}" without valuesByMode data`
+    ), u) : (console.warn(
+      `Cannot create variable "${i.variableName}" without valuesByMode data`
     ), null);
-  } catch (i) {
+  } catch (t) {
     if (console.error(
-      `Error resolving variable reference for "${r.variableName}":`,
-      i
-    ), i instanceof Error && i.message.includes("External collection"))
-      throw i;
+      `Error resolving variable reference for "${i.variableName}":`,
+      t
+    ), t instanceof Error && t.message.includes("External collection"))
+      throw t;
     return null;
   }
 }
-function we(e, a) {
-  if (!a || !V(e))
+function he(e, a) {
+  if (!a || !M(e))
     return null;
-  const t = a.getVariableByIndex(e._varRef);
-  return t ? {
+  const r = a.getVariableByIndex(e._varRef);
+  return r ? {
     type: "VARIABLE_ALIAS",
-    id: t.id || "",
+    id: r.id || "",
     // Fallback to empty string if id not available (new format)
-    variableName: t.variableName,
-    variableType: t.variableType,
-    isLocal: t.isLocal || !1,
-    collectionName: t.collectionName,
-    collectionId: t.collectionId,
-    variableKey: t.variableKey
+    variableName: r.variableName,
+    variableType: r.variableType,
+    isLocal: r.isLocal || !1,
+    collectionName: r.collectionName,
+    collectionId: r.collectionId,
+    variableKey: r.variableKey
   } : (console.log(`Variable not found in table at index ${e._varRef}`), null);
 }
-async function Ne(e, a, t, r, o) {
+async function Ae(e, a, r, i, o) {
   if (!(!a || typeof a != "object"))
     try {
-      const i = e[t];
-      if (!i || !Array.isArray(i))
+      const t = e[r];
+      if (!t || !Array.isArray(t))
         return;
       for (const [n, s] of Object.entries(a))
         if (n === "fills" && Array.isArray(s))
-          for (let l = 0; l < s.length && l < i.length; l++) {
-            let m = null;
-            const c = s[l];
-            if (V(c) && r && o) {
-              const u = await Q(
+          for (let d = 0; d < s.length && d < t.length; d++) {
+            let u = null;
+            const c = s[d];
+            if (M(c) && i && o) {
+              const g = await X(
                 c,
-                r,
+                i,
                 o
               );
-              u && i[l].boundVariables && (i[l].boundVariables[t] = {
+              g && t[d].boundVariables && (t[d].boundVariables[r] = {
                 type: "VARIABLE_ALIAS",
-                id: u.id
+                id: g.id
               });
-            } else c && typeof c == "object" && "type" in c && c.type === "VARIABLE_ALIAS" && (m = c, m && await Ie(
-              i[l],
-              m,
-              t,
-              r
+            } else c && typeof c == "object" && "type" in c && c.type === "VARIABLE_ALIAS" && (u = c, u && await ve(
+              t[d],
+              u,
+              r,
+              i
             ));
           }
         else {
-          let l = null;
-          V(s) ? l = we(s, r) : s && typeof s == "object" && "type" in s && s.type === "VARIABLE_ALIAS" && (l = s), l && await Z(e, n, l, r);
+          let d = null;
+          M(s) ? d = he(s, i) : s && typeof s == "object" && "type" in s && s.type === "VARIABLE_ALIAS" && (d = s), d && await Y(e, n, d, i);
         }
-    } catch (i) {
-      console.log(`Error restoring bound variables for ${t}:`, i);
+    } catch (t) {
+      console.log(`Error restoring bound variables for ${r}:`, t);
     }
 }
-async function Z(e, a, t, r) {
+async function Y(e, a, r, i) {
   try {
     let o = null;
     try {
-      o = await figma.variables.getVariableByIdAsync(t.id);
-    } catch (i) {
+      o = await figma.variables.getVariableByIdAsync(r.id);
+    } catch (t) {
     }
-    if (!o && r) {
-      if (t.isLocal) {
-        const i = await z(
-          t.collectionName || "",
+    if (!o && i) {
+      if (r.isLocal) {
+        const t = await _(
+          r.collectionName || "",
           !0
         );
-        o = await P(
-          i,
-          t.variableName || ""
-        ), !o && t.variableName && t.variableType && console.warn(
-          `Cannot create variable "${t.variableName}" without valuesByMode. Use resolveVariableReferenceOnImport instead.`
+        o = await k(
+          t,
+          r.variableName || ""
+        ), !o && r.variableName && r.variableType && console.warn(
+          `Cannot create variable "${r.variableName}" without valuesByMode. Use resolveVariableReferenceOnImport instead.`
         );
-      } else if (t.variableKey)
+      } else if (r.variableKey)
         try {
           o = await figma.variables.importVariableByKeyAsync(
-            t.variableKey
+            r.variableKey
           );
-        } catch (i) {
+        } catch (t) {
           console.log(
-            `Could not import team variable: ${t.variableName}`
+            `Could not import team variable: ${r.variableName}`
           );
         }
     }
     if (o) {
-      const i = {
+      const t = {
         type: "VARIABLE_ALIAS",
         id: o.id
       };
-      e.boundVariables || (e.boundVariables = {}), e.boundVariables[a] || (e.boundVariables[a] = i);
+      e.boundVariables || (e.boundVariables = {}), e.boundVariables[a] || (e.boundVariables[a] = t);
     }
   } catch (o) {
     console.log(`Error binding variable to property ${a}:`, o);
   }
 }
-async function Ie(e, a, t, r) {
+async function ve(e, a, r, i) {
   if (!(!e || typeof e != "object"))
     try {
       let o = null;
       try {
         o = await figma.variables.getVariableByIdAsync(a.id);
-      } catch (i) {
-        if (r) {
+      } catch (t) {
+        if (i) {
           if (a.isLocal) {
-            const n = await z(
+            const n = await _(
               a.collectionName || "",
               !0
             );
-            o = await P(
+            o = await k(
               n,
               a.variableName || ""
             );
@@ -1425,7 +1439,7 @@ async function Ie(e, a, t, r) {
             }
         }
       }
-      o && e.boundVariables && (e.boundVariables[t] = {
+      o && e.boundVariables && (e.boundVariables[r] = {
         type: "VARIABLE_ALIAS",
         id: o.id
       });
@@ -1433,337 +1447,19 @@ async function Ie(e, a, t, r) {
       console.log("Error binding variable to property object:", o);
     }
 }
-function Re(e, a) {
-  const t = de(a);
-  if (e.visible === void 0 && (e.visible = t.visible), e.locked === void 0 && (e.locked = t.locked), e.opacity === void 0 && (e.opacity = t.opacity), e.rotation === void 0 && (e.rotation = t.rotation), e.blendMode === void 0 && (e.blendMode = t.blendMode), a === "FRAME" || a === "COMPONENT" || a === "INSTANCE") {
-    const r = v;
-    e.layoutMode === void 0 && (e.layoutMode = r.layoutMode), e.primaryAxisSizingMode === void 0 && (e.primaryAxisSizingMode = r.primaryAxisSizingMode), e.counterAxisSizingMode === void 0 && (e.counterAxisSizingMode = r.counterAxisSizingMode), e.primaryAxisAlignItems === void 0 && (e.primaryAxisAlignItems = r.primaryAxisAlignItems), e.counterAxisAlignItems === void 0 && (e.counterAxisAlignItems = r.counterAxisAlignItems), e.paddingLeft === void 0 && (e.paddingLeft = r.paddingLeft), e.paddingRight === void 0 && (e.paddingRight = r.paddingRight), e.paddingTop === void 0 && (e.paddingTop = r.paddingTop), e.paddingBottom === void 0 && (e.paddingBottom = r.paddingBottom), e.itemSpacing === void 0 && (e.itemSpacing = r.itemSpacing);
+function xe(e, a) {
+  const r = ne(a);
+  if (e.visible === void 0 && (e.visible = r.visible), e.locked === void 0 && (e.locked = r.locked), e.opacity === void 0 && (e.opacity = r.opacity), e.rotation === void 0 && (e.rotation = r.rotation), e.blendMode === void 0 && (e.blendMode = r.blendMode), a === "FRAME" || a === "COMPONENT" || a === "INSTANCE") {
+    const i = x;
+    e.layoutMode === void 0 && (e.layoutMode = i.layoutMode), e.primaryAxisSizingMode === void 0 && (e.primaryAxisSizingMode = i.primaryAxisSizingMode), e.counterAxisSizingMode === void 0 && (e.counterAxisSizingMode = i.counterAxisSizingMode), e.primaryAxisAlignItems === void 0 && (e.primaryAxisAlignItems = i.primaryAxisAlignItems), e.counterAxisAlignItems === void 0 && (e.counterAxisAlignItems = i.counterAxisAlignItems), e.paddingLeft === void 0 && (e.paddingLeft = i.paddingLeft), e.paddingRight === void 0 && (e.paddingRight = i.paddingRight), e.paddingTop === void 0 && (e.paddingTop = i.paddingTop), e.paddingBottom === void 0 && (e.paddingBottom = i.paddingBottom), e.itemSpacing === void 0 && (e.itemSpacing = i.itemSpacing);
   }
   if (a === "TEXT") {
-    const r = E;
-    e.textAlignHorizontal === void 0 && (e.textAlignHorizontal = r.textAlignHorizontal), e.textAlignVertical === void 0 && (e.textAlignVertical = r.textAlignVertical), e.textCase === void 0 && (e.textCase = r.textCase), e.textDecoration === void 0 && (e.textDecoration = r.textDecoration), e.textAutoResize === void 0 && (e.textAutoResize = r.textAutoResize);
+    const i = E;
+    e.textAlignHorizontal === void 0 && (e.textAlignHorizontal = i.textAlignHorizontal), e.textAlignVertical === void 0 && (e.textAlignVertical = i.textAlignVertical), e.textCase === void 0 && (e.textCase = i.textCase), e.textDecoration === void 0 && (e.textDecoration = i.textDecoration), e.textAutoResize === void 0 && (e.textAutoResize = i.textAutoResize);
   }
 }
-async function D(e, a, t = null, r = null) {
+async function K(e, a, r = null, i = null) {
   var o;
-  try {
-    let i;
-    switch (e.type) {
-      case "FRAME":
-        i = figma.createFrame();
-        break;
-      case "RECTANGLE":
-        i = figma.createRectangle();
-        break;
-      case "ELLIPSE":
-        i = figma.createEllipse();
-        break;
-      case "TEXT":
-        i = figma.createText();
-        break;
-      case "VECTOR":
-        i = figma.createVector();
-        break;
-      case "STAR":
-        i = figma.createStar();
-        break;
-      case "LINE":
-        i = figma.createLine();
-        break;
-      case "COMPONENT":
-        i = figma.createComponent();
-        break;
-      case "INSTANCE":
-        if (console.log("Found instance node: " + e.name), e.mainComponent && e.mainComponent.key)
-          try {
-            const n = await figma.importComponentByKeyAsync(
-              e.mainComponent.key
-            );
-            n && n.type === "COMPONENT" ? (i = n.createInstance(), console.log(
-              "Created instance from main component: " + e.mainComponent.name
-            )) : (console.log("Main component not found, creating frame fallback"), i = figma.createFrame());
-          } catch (n) {
-            console.log(
-              "Error creating instance: " + n + ", creating frame fallback"
-            ), i = figma.createFrame();
-          }
-        else
-          console.log("No main component info, creating frame fallback"), i = figma.createFrame();
-        break;
-      case "GROUP":
-        i = figma.createFrame();
-        break;
-      case "BOOLEAN_OPERATION":
-        console.log(
-          "Boolean operation found: " + e.name + ", creating frame fallback"
-        ), i = figma.createFrame();
-        break;
-      case "POLYGON":
-        i = figma.createPolygon();
-        break;
-      default:
-        console.log(
-          "Unsupported node type: " + e.type + ", creating frame instead"
-        ), i = figma.createFrame();
-        break;
-    }
-    if (!i)
-      return null;
-    if (Re(i, e.type || "FRAME"), e.name !== void 0 && (i.name = e.name || "Unnamed Node"), e.x !== void 0 && (i.x = e.x), e.y !== void 0 && (i.y = e.y), e.width !== void 0 && e.height !== void 0 && i.resize(e.width, e.height), e.visible !== void 0 && (i.visible = e.visible), e.locked !== void 0 && (i.locked = e.locked), e.opacity !== void 0 && (i.opacity = e.opacity), e.rotation !== void 0 && (i.rotation = e.rotation), e.blendMode !== void 0 && (i.blendMode = e.blendMode), e.type !== "INSTANCE" && e.fills !== void 0)
-      try {
-        let n = e.fills;
-        Array.isArray(n) && t && (n = n.map((s) => {
-          if (s && typeof s == "object" && s.boundVariables) {
-            const l = {};
-            for (const [m, c] of Object.entries(
-              s.boundVariables
-            ))
-              l[m] = c;
-            return w(k({}, s), { boundVariables: l });
-          }
-          return s;
-        })), i.fills = n, (o = e.boundVariables) != null && o.fills && await Ne(
-          i,
-          e.boundVariables,
-          "fills",
-          t,
-          r
-        );
-      } catch (n) {
-        console.log("Error setting fills:", n);
-      }
-    if (e.strokes !== void 0 && e.strokes.length > 0)
-      try {
-        i.strokes = e.strokes;
-      } catch (n) {
-        console.log("Error setting strokes:", n);
-      }
-    if (e.strokeWeight !== void 0 && (i.strokeWeight = e.strokeWeight), e.strokeAlign !== void 0 && (i.strokeAlign = e.strokeAlign), e.cornerRadius !== void 0 && (i.cornerRadius = e.cornerRadius), e.effects !== void 0 && e.effects.length > 0 && (i.effects = e.effects), (e.type === "FRAME" || e.type === "COMPONENT" || e.type === "INSTANCE") && (e.layoutMode !== void 0 && (i.layoutMode = e.layoutMode), e.primaryAxisSizingMode !== void 0 && (i.primaryAxisSizingMode = e.primaryAxisSizingMode), e.counterAxisSizingMode !== void 0 && (i.counterAxisSizingMode = e.counterAxisSizingMode), e.primaryAxisAlignItems !== void 0 && (i.primaryAxisAlignItems = e.primaryAxisAlignItems), e.counterAxisAlignItems !== void 0 && (i.counterAxisAlignItems = e.counterAxisAlignItems), e.paddingLeft !== void 0 && (i.paddingLeft = e.paddingLeft), e.paddingRight !== void 0 && (i.paddingRight = e.paddingRight), e.paddingTop !== void 0 && (i.paddingTop = e.paddingTop), e.paddingBottom !== void 0 && (i.paddingBottom = e.paddingBottom), e.itemSpacing !== void 0 && (i.itemSpacing = e.itemSpacing)), (e.type === "VECTOR" || e.type === "LINE") && (e.strokeCap !== void 0 && (i.strokeCap = e.strokeCap), e.strokeJoin !== void 0 && (i.strokeJoin = e.strokeJoin), e.dashPattern !== void 0 && e.dashPattern.length > 0 && (i.dashPattern = e.dashPattern)), e.type === "TEXT" && e.characters !== void 0)
-      try {
-        if (e.fontName)
-          try {
-            await figma.loadFontAsync(e.fontName), i.fontName = e.fontName;
-          } catch (n) {
-            await figma.loadFontAsync({
-              family: "Roboto",
-              style: "Regular"
-            }), i.fontName = { family: "Roboto", style: "Regular" };
-          }
-        else
-          await figma.loadFontAsync({
-            family: "Roboto",
-            style: "Regular"
-          }), i.fontName = { family: "Roboto", style: "Regular" };
-        i.characters = e.characters, e.fontSize !== void 0 && (i.fontSize = e.fontSize), e.textAlignHorizontal !== void 0 && (i.textAlignHorizontal = e.textAlignHorizontal), e.textAlignVertical !== void 0 && (i.textAlignVertical = e.textAlignVertical), e.letterSpacing !== void 0 && (i.letterSpacing = e.letterSpacing), e.lineHeight !== void 0 && (i.lineHeight = e.lineHeight), e.textCase !== void 0 && (i.textCase = e.textCase), e.textDecoration !== void 0 && (i.textDecoration = e.textDecoration), e.textAutoResize !== void 0 && (i.textAutoResize = e.textAutoResize);
-      } catch (n) {
-        console.log("Error setting text properties: " + n);
-        try {
-          i.characters = e.characters;
-        } catch (s) {
-          console.log("Could not set text characters: " + s);
-        }
-      }
-    if (e.boundVariables) {
-      for (const [n, s] of Object.entries(
-        e.boundVariables
-      ))
-        if (n !== "fills")
-          if (V(s) && t && r) {
-            const l = await Q(
-              s,
-              t,
-              r
-            );
-            if (l) {
-              const m = {
-                type: "VARIABLE_ALIAS",
-                id: l.id
-              };
-              i.boundVariables || (i.boundVariables = {}), i.boundVariables[n] || (i.boundVariables[n] = m);
-            }
-          } else s && typeof s == "object" && "type" in s && s.type === "VARIABLE_ALIAS" && await Z(
-            i,
-            n,
-            s,
-            t
-          );
-    }
-    if (e.children && Array.isArray(e.children))
-      for (const n of e.children) {
-        if (n._truncated) {
-          console.log(
-            `Skipping truncated children: ${n._reason || "Unknown"}`
-          );
-          continue;
-        }
-        const s = await D(
-          n,
-          i,
-          t,
-          r
-        );
-        s && i.appendChild(s);
-      }
-    return a && a.appendChild(i), i;
-  } catch (i) {
-    return console.log(
-      "Error recreating node " + (e.name || e.type) + ":",
-      i
-    ), null;
-  }
-}
-async function Pe(e) {
-  try {
-    if (console.log("Importing page from JSON"), !e.pageData || !e.metadata)
-      return {
-        type: "page-import-response",
-        success: !1,
-        error: "Invalid JSON format. Expected pageData and metadata."
-      };
-    const a = e.pageData, t = e.metadata;
-    let r = null;
-    if (e.collections)
-      try {
-        r = T.fromTable(e.collections), console.log(
-          `Loaded collections table with ${r.getSize()} collections`
-        );
-      } catch (c) {
-        console.warn("Failed to load collections table:", c);
-      }
-    let o = null;
-    if (e.variables)
-      try {
-        o = O.fromTable(e.variables), console.log(
-          `Loaded variable table with ${o.getSize()} variables`
-        );
-      } catch (c) {
-        console.warn("Failed to load variable table:", c);
-      }
-    const i = "2.3.0", n = t.exportFormatVersion || "1.0.0";
-    n !== i && console.warn(
-      `Export format version mismatch: exported with ${n}, current version is ${i}. Import may have compatibility issues.`
-    );
-    const l = "Imported - " + (t.originalPageName ? t.originalPageName.replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") : "Unknown"), m = figma.createPage();
-    if (m.name = l, figma.root.appendChild(m), console.log("Created new page: " + l), console.log("Importing " + (t.totalNodes || "unknown") + " nodes"), a.children && Array.isArray(a.children)) {
-      for (const c of a.children) {
-        if (c._truncated) {
-          console.log(
-            `Skipping truncated children: ${c._reason || "Unknown"}`
-          );
-          continue;
-        }
-        await D(
-          c,
-          m,
-          o,
-          r
-        );
-      }
-      console.log("Successfully imported page content with all children");
-    } else
-      console.log("No children to import");
-    return {
-      type: "page-import-response",
-      success: !0,
-      pageName: t.originalPageName,
-      totalNodes: t.totalNodes || 0
-    };
-  } catch (a) {
-    return console.error("Error importing page:", a), {
-      type: "page-import-response",
-      success: !1,
-      error: a instanceof Error ? a.message : "Unknown error occurred"
-    };
-  }
-}
-function ee(e) {
-  let a = 1;
-  return e.children && e.children.length > 0 && e.children.forEach((t) => {
-    a += ee(t);
-  }), a;
-}
-function H(e) {
-  return e ? Array.isArray(e) ? e.map((a) => {
-    const t = Object.assign({}, a);
-    a.boundVariables && (t.boundVariables = Object.assign({}, a.boundVariables));
-  }) : e : [];
-}
-function te(e) {
-  var t;
-  const a = {
-    id: e.id,
-    name: e.name,
-    type: e.type,
-    visible: e.visible,
-    locked: e.locked,
-    x: e.x,
-    y: e.y,
-    width: e.width,
-    height: e.height,
-    rotation: e.rotation,
-    opacity: e.opacity,
-    blendMode: e.blendMode,
-    effects: e.effects,
-    fills: H(e == null ? void 0 : e.fills),
-    strokes: e.strokes,
-    strokeWeight: e.strokeWeight,
-    strokeAlign: e.strokeAlign,
-    strokeCap: e.strokeCap,
-    strokeJoin: e.strokeJoin,
-    dashPattern: e.dashPattern,
-    cornerRadius: e.cornerRadius,
-    characters: e.characters,
-    fontSize: e.fontSize,
-    fontName: e.fontName,
-    textAlignHorizontal: e.textAlignHorizontal,
-    textAlignVertical: e.textAlignVertical,
-    letterSpacing: e.letterSpacing,
-    lineHeight: e.lineHeight,
-    textCase: e.textCase,
-    textDecoration: e.textDecoration,
-    textAutoResize: e.textAutoResize,
-    layoutMode: e.layoutMode,
-    primaryAxisSizingMode: e.primaryAxisSizingMode,
-    counterAxisSizingMode: e.counterAxisSizingMode,
-    primaryAxisAlignItems: e.primaryAxisAlignItems,
-    counterAxisAlignItems: e.counterAxisAlignItems,
-    paddingLeft: e.paddingLeft,
-    paddingRight: e.paddingRight,
-    paddingTop: e.paddingTop,
-    paddingBottom: e.paddingBottom,
-    itemSpacing: e.itemSpacing,
-    children: []
-  };
-  if (e.type === "INSTANCE" && typeof e.getMainComponentAsync == "function")
-    try {
-      const r = e.getMainComponentAsync();
-      r && (a.mainComponent = {
-        id: r.id,
-        name: r.name,
-        key: r.key,
-        fills: r.fills,
-        children: (t = r == null ? void 0 : r.children) == null ? void 0 : t.map((o) => {
-          const i = H(o == null ? void 0 : o.fills);
-          return {
-            id: o.id,
-            fills: i,
-            strokes: o.strokes,
-            strokeWeight: o.strokeWeight,
-            strokeAlign: o.strokeAlign,
-            strokeCap: o.strokeCap,
-            strokeJoin: o.strokeJoin,
-            dashPattern: o.dashPattern,
-            name: o.name,
-            type: o.type
-          };
-        })
-      });
-    } catch (r) {
-      console.log("Error getting main component for " + e.name + ":", r);
-    }
-  return e.children && e.children.length > 0 && (a.children = e.children.map((r) => te(r))), a;
-}
-async function ie(e, a) {
   try {
     let t;
     switch (e.type) {
@@ -1792,48 +1488,17 @@ async function ie(e, a) {
         t = figma.createComponent();
         break;
       case "INSTANCE":
-        if (console.log("Found instance node: " + e.name), e.mainComponent && e.mainComponent.id)
+        if (console.log("Found instance node: " + e.name), e.mainComponent && e.mainComponent.key)
           try {
-            const r = await figma.importComponentByKeyAsync(
+            const n = await figma.importComponentByKeyAsync(
               e.mainComponent.key
             );
-            if (r && r.type === "COMPONENT") {
-              if (t = r.createInstance(), console.log(
-                "Created instance from main component: " + e.mainComponent.name
-              ), e.fills && e.fills.length > 0)
-                try {
-                  t.fills = e.fills;
-                } catch (o) {
-                  console.log("Error applying instance fills: " + o);
-                }
-              e.mainComponent.children && e.mainComponent.children.length > 0 && t.children && t.children.length > 0 && t.children.forEach((o) => {
-                const i = e.children.find(
-                  (n) => n.name === o.name
-                );
-                if (i)
-                  try {
-                    if (i.fills && i.fills.length > 0) {
-                      const n = i.fills.map((s) => {
-                        const l = Object.assign({}, s);
-                        return s != null && s.boundVariables && (l.boundVariables = Object.assign(
-                          {},
-                          s.boundVariables
-                        )), l;
-                      });
-                      o.fills = n != null ? n : {};
-                    }
-                    i.strokes && i.strokes.length > 0 && (o.strokes = i.strokes), i.strokeWeight !== void 0 && (o.strokeWeight = i.strokeWeight), i.strokeAlign !== void 0 && (o.strokeAlign = i.strokeAlign), i.strokeCap !== void 0 && (o.strokeCap = i.strokeCap), i.strokeJoin !== void 0 && (o.strokeJoin = i.strokeJoin), i.dashPattern && i.dashPattern.length > 0 && (o.dashPattern = i.dashPattern);
-                  } catch (n) {
-                    console.log(
-                      "Error updating child " + o.name + ": " + n
-                    );
-                  }
-              });
-            } else
-              console.log("Main component not found, creating frame fallback"), t = figma.createFrame();
-          } catch (r) {
+            n && n.type === "COMPONENT" ? (t = n.createInstance(), console.log(
+              "Created instance from main component: " + e.mainComponent.name
+            )) : (console.log("Main component not found, creating frame fallback"), t = figma.createFrame());
+          } catch (n) {
             console.log(
-              "Error creating instance: " + r + ", creating frame fallback"
+              "Error creating instance: " + n + ", creating frame fallback"
             ), t = figma.createFrame();
           }
         else
@@ -1856,40 +1521,104 @@ async function ie(e, a) {
         ), t = figma.createFrame();
         break;
     }
-    if (t) {
-      if (t.name = e.name || "Unnamed Node", t.x = e.x || 0, t.y = e.y || 0, t.resize(e.width || 100, e.height || 100), e.visible !== void 0 && (t.visible = e.visible), e.locked !== void 0 && (t.locked = e.locked), e.opacity !== void 0 && (t.opacity = e.opacity), e.rotation !== void 0 && (t.rotation = e.rotation), e.blendMode !== void 0 && (t.blendMode = e.blendMode), e.type !== "INSTANCE" && e.fills && e.fills.length === 0 && (t.fills = []), e.strokes && e.strokes.length > 0 && (t.strokes = e.strokes), e.strokeWeight !== void 0 && (t.strokeWeight = e.strokeWeight), e.strokeAlign !== void 0 && (t.strokeAlign = e.strokeAlign), e.cornerRadius !== void 0 && (t.cornerRadius = e.cornerRadius), e.effects && e.effects.length > 0 && (t.effects = e.effects), (e.type === "FRAME" || e.type === "COMPONENT" || e.type === "INSTANCE") && (e.layoutMode && (t.layoutMode = e.layoutMode), e.primaryAxisSizingMode && (t.primaryAxisSizingMode = e.primaryAxisSizingMode), e.counterAxisSizingMode && (t.counterAxisSizingMode = e.counterAxisSizingMode), e.primaryAxisAlignItems && (t.primaryAxisAlignItems = e.primaryAxisAlignItems), e.counterAxisAlignItems && (t.counterAxisAlignItems = e.counterAxisAlignItems), e.paddingLeft !== void 0 && (t.paddingLeft = e.paddingLeft), e.paddingRight !== void 0 && (t.paddingRight = e.paddingRight), e.paddingTop !== void 0 && (t.paddingTop = e.paddingTop), e.paddingBottom !== void 0 && (t.paddingBottom = e.paddingBottom), e.itemSpacing !== void 0 && (t.itemSpacing = e.itemSpacing)), (e.type === "VECTOR" || e.type === "LINE") && (e.strokeCap && (t.strokeCap = e.strokeCap), e.strokeJoin && (t.strokeJoin = e.strokeJoin), e.dashPattern && e.dashPattern.length > 0 && (t.dashPattern = e.dashPattern)), e.type === "TEXT" && e.characters)
-        try {
-          if (e.fontName)
-            try {
-              await figma.loadFontAsync(e.fontName), t.fontName = e.fontName;
-            } catch (r) {
-              await figma.loadFontAsync({
-                family: "Roboto",
-                style: "Regular"
-              }), t.fontName = { family: "Roboto", style: "Regular" };
-            }
-          else
+    if (!t)
+      return null;
+    if (xe(t, e.type || "FRAME"), e.name !== void 0 && (t.name = e.name || "Unnamed Node"), e.x !== void 0 && (t.x = e.x), e.y !== void 0 && (t.y = e.y), e.width !== void 0 && e.height !== void 0 && t.resize(e.width, e.height), e.visible !== void 0 && (t.visible = e.visible), e.locked !== void 0 && (t.locked = e.locked), e.opacity !== void 0 && (t.opacity = e.opacity), e.rotation !== void 0 && (t.rotation = e.rotation), e.blendMode !== void 0 && (t.blendMode = e.blendMode), e.type !== "INSTANCE" && e.fills !== void 0)
+      try {
+        let n = e.fills;
+        Array.isArray(n) && r && (n = n.map((s) => {
+          if (s && typeof s == "object" && s.boundVariables) {
+            const d = {};
+            for (const [u, c] of Object.entries(
+              s.boundVariables
+            ))
+              d[u] = c;
+            return I(v({}, s), { boundVariables: d });
+          }
+          return s;
+        })), t.fills = n, (o = e.boundVariables) != null && o.fills && await Ae(
+          t,
+          e.boundVariables,
+          "fills",
+          r,
+          i
+        );
+      } catch (n) {
+        console.log("Error setting fills:", n);
+      }
+    if (e.strokes !== void 0 && e.strokes.length > 0)
+      try {
+        t.strokes = e.strokes;
+      } catch (n) {
+        console.log("Error setting strokes:", n);
+      }
+    if (e.strokeWeight !== void 0 && (t.strokeWeight = e.strokeWeight), e.strokeAlign !== void 0 && (t.strokeAlign = e.strokeAlign), e.cornerRadius !== void 0 && (t.cornerRadius = e.cornerRadius), e.effects !== void 0 && e.effects.length > 0 && (t.effects = e.effects), (e.type === "FRAME" || e.type === "COMPONENT" || e.type === "INSTANCE") && (e.layoutMode !== void 0 && (t.layoutMode = e.layoutMode), e.primaryAxisSizingMode !== void 0 && (t.primaryAxisSizingMode = e.primaryAxisSizingMode), e.counterAxisSizingMode !== void 0 && (t.counterAxisSizingMode = e.counterAxisSizingMode), e.primaryAxisAlignItems !== void 0 && (t.primaryAxisAlignItems = e.primaryAxisAlignItems), e.counterAxisAlignItems !== void 0 && (t.counterAxisAlignItems = e.counterAxisAlignItems), e.paddingLeft !== void 0 && (t.paddingLeft = e.paddingLeft), e.paddingRight !== void 0 && (t.paddingRight = e.paddingRight), e.paddingTop !== void 0 && (t.paddingTop = e.paddingTop), e.paddingBottom !== void 0 && (t.paddingBottom = e.paddingBottom), e.itemSpacing !== void 0 && (t.itemSpacing = e.itemSpacing)), (e.type === "VECTOR" || e.type === "LINE") && (e.strokeCap !== void 0 && (t.strokeCap = e.strokeCap), e.strokeJoin !== void 0 && (t.strokeJoin = e.strokeJoin), e.dashPattern !== void 0 && e.dashPattern.length > 0 && (t.dashPattern = e.dashPattern)), e.type === "TEXT" && e.characters !== void 0)
+      try {
+        if (e.fontName)
+          try {
+            await figma.loadFontAsync(e.fontName), t.fontName = e.fontName;
+          } catch (n) {
             await figma.loadFontAsync({
               family: "Roboto",
               style: "Regular"
             }), t.fontName = { family: "Roboto", style: "Regular" };
-          t.characters = e.characters, e.fontSize && (t.fontSize = e.fontSize), e.textAlignHorizontal && (t.textAlignHorizontal = e.textAlignHorizontal), e.textAlignVertical && (t.textAlignVertical = e.textAlignVertical), e.letterSpacing && (t.letterSpacing = e.letterSpacing), e.lineHeight && (t.lineHeight = e.lineHeight), e.textCase && (t.textCase = e.textCase), e.textDecoration && (t.textDecoration = e.textDecoration), e.textAutoResize && (t.textAutoResize = e.textAutoResize);
-        } catch (r) {
-          console.log("Error setting text properties: " + r);
-          try {
-            t.characters = e.characters;
-          } catch (o) {
-            console.log("Could not set text characters: " + o);
           }
+        else
+          await figma.loadFontAsync({
+            family: "Roboto",
+            style: "Regular"
+          }), t.fontName = { family: "Roboto", style: "Regular" };
+        t.characters = e.characters, e.fontSize !== void 0 && (t.fontSize = e.fontSize), e.textAlignHorizontal !== void 0 && (t.textAlignHorizontal = e.textAlignHorizontal), e.textAlignVertical !== void 0 && (t.textAlignVertical = e.textAlignVertical), e.letterSpacing !== void 0 && (t.letterSpacing = e.letterSpacing), e.lineHeight !== void 0 && (t.lineHeight = e.lineHeight), e.textCase !== void 0 && (t.textCase = e.textCase), e.textDecoration !== void 0 && (t.textDecoration = e.textDecoration), e.textAutoResize !== void 0 && (t.textAutoResize = e.textAutoResize);
+      } catch (n) {
+        console.log("Error setting text properties: " + n);
+        try {
+          t.characters = e.characters;
+        } catch (s) {
+          console.log("Could not set text characters: " + s);
         }
-      if (e.children && e.children.length > 0)
-        for (const r of e.children) {
-          const o = await ie(r, t);
-          o && t.appendChild(o);
-        }
-      a.appendChild(t);
+      }
+    if (e.boundVariables) {
+      for (const [n, s] of Object.entries(
+        e.boundVariables
+      ))
+        if (n !== "fills")
+          if (M(s) && r && i) {
+            const d = await X(
+              s,
+              r,
+              i
+            );
+            if (d) {
+              const u = {
+                type: "VARIABLE_ALIAS",
+                id: d.id
+              };
+              t.boundVariables || (t.boundVariables = {}), t.boundVariables[n] || (t.boundVariables[n] = u);
+            }
+          } else s && typeof s == "object" && "type" in s && s.type === "VARIABLE_ALIAS" && await Y(
+            t,
+            n,
+            s,
+            r
+          );
     }
-    return t;
+    if (e.children && Array.isArray(e.children))
+      for (const n of e.children) {
+        if (n._truncated) {
+          console.log(
+            `Skipping truncated children: ${n._reason || "Unknown"}`
+          );
+          continue;
+        }
+        const s = await K(
+          n,
+          t,
+          r,
+          i
+        );
+        s && t.appendChild(s);
+      }
+    return a && a.appendChild(t), t;
   } catch (t) {
     return console.log(
       "Error recreating node " + (e.name || e.type) + ":",
@@ -1897,399 +1626,288 @@ async function ie(e, a) {
     ), null;
   }
 }
-async function Me() {
+async function Ce(e) {
+  try {
+    const a = e.jsonData;
+    if (!a)
+      return {
+        type: "importPage",
+        success: !1,
+        error: !0,
+        message: "JSON data is required",
+        data: {}
+      };
+    if (console.log("Importing page from JSON"), !a.pageData || !a.metadata)
+      return {
+        type: "importPage",
+        success: !1,
+        error: !0,
+        message: "Invalid JSON format. Expected pageData and metadata.",
+        data: {}
+      };
+    const r = a.pageData, i = a.metadata;
+    let o = null;
+    if (a.collections)
+      try {
+        o = T.fromTable(a.collections), console.log(
+          `Loaded collections table with ${o.getSize()} collections`
+        );
+      } catch (g) {
+        console.warn("Failed to load collections table:", g);
+      }
+    let t = null;
+    if (a.variables)
+      try {
+        t = O.fromTable(a.variables), console.log(
+          `Loaded variable table with ${t.getSize()} variables`
+        );
+      } catch (g) {
+        console.warn("Failed to load variable table:", g);
+      }
+    const n = "2.3.0", s = i.exportFormatVersion || "1.0.0";
+    s !== n && console.warn(
+      `Export format version mismatch: exported with ${s}, current version is ${n}. Import may have compatibility issues.`
+    );
+    const u = "Imported - " + (i.originalPageName ? i.originalPageName.replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") : "Unknown"), c = figma.createPage();
+    if (c.name = u, figma.root.appendChild(c), console.log("Created new page: " + u), console.log("Importing " + (i.totalNodes || "unknown") + " nodes"), r.children && Array.isArray(r.children)) {
+      for (const g of r.children) {
+        if (g._truncated) {
+          console.log(
+            `Skipping truncated children: ${g._reason || "Unknown"}`
+          );
+          continue;
+        }
+        await K(
+          g,
+          c,
+          t,
+          o
+        );
+      }
+      console.log("Successfully imported page content with all children");
+    } else
+      console.log("No children to import");
+    return {
+      type: "importPage",
+      success: !0,
+      error: !1,
+      message: "Page imported successfully",
+      data: {
+        pageName: i.originalPageName,
+        totalNodes: i.totalNodes || 0
+      }
+    };
+  } catch (a) {
+    return console.error("Error importing page:", a), {
+      type: "importPage",
+      success: !1,
+      error: !0,
+      message: a instanceof Error ? a.message : "Unknown error occurred",
+      data: {}
+    };
+  }
+}
+async function Se(e) {
   try {
     await figma.loadAllPagesAsync();
-    const e = figma.root.children;
-    console.log("Found " + e.length + " pages in the document");
-    const a = 11, t = e[a];
-    if (!t)
+    const a = figma.root.children;
+    console.log("Found " + a.length + " pages in the document");
+    const r = 11, i = a[r];
+    if (!i)
       return {
-        type: "quick-copy-response",
+        type: "quickCopy",
         success: !1,
-        error: "No page found at index 11"
+        error: !0,
+        message: "No page found at index 11",
+        data: {}
       };
-    const r = te(t);
-    console.log(
-      "Selected page: " + t.name + " (index: " + a + ")"
+    const o = await z(
+      i,
+      /* @__PURE__ */ new WeakSet(),
+      {}
     );
-    const o = JSON.stringify(r, null, 2), i = JSON.parse(o), n = "Copy - " + i.name, s = figma.createPage();
-    if (s.name = n, figma.root.appendChild(s), i.children && i.children.length > 0) {
-      let m = function(u) {
-        u.forEach((A) => {
-          const f = (A.x || 0) + (A.width || 0);
-          f > c && (c = f), A.children && A.children.length > 0 && m(A.children);
+    console.log(
+      "Selected page: " + i.name + " (index: " + r + ")"
+    );
+    const t = JSON.stringify(o, null, 2), n = JSON.parse(t), s = "Copy - " + n.name, d = figma.createPage();
+    if (d.name = s, figma.root.appendChild(d), n.children && n.children.length > 0) {
+      let c = function(A) {
+        A.forEach((l) => {
+          const h = (l.x || 0) + (l.width || 0);
+          h > g && (g = h), l.children && l.children.length > 0 && c(l.children);
         });
       };
       console.log(
-        "Recreating " + i.children.length + " top-level children..."
+        "Recreating " + n.children.length + " top-level children..."
       );
-      let c = 0;
-      m(i.children), console.log("Original content rightmost edge: " + c);
-      for (const u of i.children)
-        await ie(u, s);
+      let g = 0;
+      c(n.children), console.log("Original content rightmost edge: " + g);
+      for (const A of n.children)
+        await K(A, d, null, null);
       console.log("Successfully recreated page content with all children");
     } else
       console.log("No children to recreate");
-    const l = ee(i);
+    const u = L(n);
     return {
-      type: "quick-copy-response",
+      type: "quickCopy",
       success: !0,
-      pageName: i.name,
-      newPageName: n,
-      totalNodes: l
+      error: !1,
+      message: "Quick copy completed successfully",
+      data: {
+        pageName: n.name,
+        newPageName: s,
+        totalNodes: u
+      }
     };
-  } catch (e) {
-    return console.error("Error performing quick copy:", e), {
-      type: "quick-copy-response",
+  } catch (a) {
+    return console.error("Error performing quick copy:", a), {
+      type: "quickCopy",
       success: !1,
-      error: e instanceof Error ? e.message : "Unknown error occurred"
+      error: !0,
+      message: a instanceof Error ? a.message : "Unknown error occurred",
+      data: {}
     };
   }
 }
-const R = "recursica", re = "file-type", B = "theme-name";
-async function ae() {
+async function we(e) {
   try {
-    let e = "", a = "";
-    const t = await figma.variables.getLocalVariableCollectionsAsync();
-    if (t.length > 0) {
-      const r = t[0];
-      e = r.getSharedPluginData(R, re) || "", a = r.getSharedPluginData(R, B) || "";
-    }
+    const a = e.accessToken, r = e.selectedRepo;
+    return a ? (await figma.clientStorage.setAsync("accessToken", a), r && await figma.clientStorage.setAsync("selectedRepo", r), {
+      type: "storeAuthData",
+      success: !0,
+      error: !1,
+      message: "Auth data stored successfully",
+      data: {}
+    }) : {
+      type: "storeAuthData",
+      success: !1,
+      error: !0,
+      message: "Access token is required",
+      data: {}
+    };
+  } catch (a) {
     return {
-      type: "theme-settings-loaded",
-      success: !0,
-      fileType: e,
-      themeName: a
-    };
-  } catch (e) {
-    return console.error("Error loading theme settings:", e), {
-      type: "theme-settings-loaded",
+      type: "storeAuthData",
       success: !1,
-      error: e instanceof Error ? e.message : "Failed to load theme settings"
+      error: !0,
+      message: a instanceof Error ? a.message : "Unknown error occurred",
+      data: {}
     };
   }
 }
-async function Ve(e, a) {
+async function Ee(e) {
   try {
-    if (!e)
-      return {
-        type: "theme-settings-updated",
-        success: !1,
-        error: "File type is required"
-      };
-    if (e === "themes" && !a)
-      return {
-        type: "theme-settings-updated",
-        success: !1,
-        error: "Theme name is required when file type is 'themes'"
-      };
-    const t = await figma.variables.getLocalVariableCollectionsAsync();
-    return t.length === 0 ? {
-      type: "theme-settings-updated",
-      success: !1,
-      error: "No variable collections found. Please create a variable collection first."
-    } : (t.forEach((r) => {
-      r.setSharedPluginData(R, re, e), e === "themes" ? r.setSharedPluginData(
-        R,
-        B,
-        a
-      ) : r.setSharedPluginData(R, B, "");
-    }), figma.notify(
-      `Theme settings updated: File type set to "${e}"${e === "themes" ? `, Theme name set to "${a}"` : ""}`
-    ), {
-      type: "theme-settings-updated",
+    const a = await figma.clientStorage.getAsync("accessToken"), r = await figma.clientStorage.getAsync("selectedRepo");
+    return {
+      type: "loadAuthData",
       success: !0,
-      message: "Theme settings updated successfully"
-    });
-  } catch (t) {
-    return console.error("Error updating theme settings:", t), {
-      type: "theme-settings-updated",
+      error: !1,
+      message: "Auth data loaded successfully",
+      data: {
+        accessToken: a || void 0,
+        selectedRepo: r || void 0
+      }
+    };
+  } catch (a) {
+    return {
+      type: "loadAuthData",
       success: !1,
-      error: t instanceof Error ? t.message : "Failed to update theme settings"
+      error: !0,
+      message: a instanceof Error ? a.message : "Unknown error occurred",
+      data: {}
     };
   }
 }
+async function Ie(e) {
+  try {
+    return await figma.clientStorage.deleteAsync("accessToken"), await figma.clientStorage.deleteAsync("selectedRepo"), {
+      type: "clearAuthData",
+      success: !0,
+      error: !1,
+      message: "Auth data cleared successfully",
+      data: {}
+    };
+  } catch (a) {
+    return {
+      type: "clearAuthData",
+      success: !1,
+      error: !0,
+      message: a instanceof Error ? a.message : "Unknown error occurred",
+      data: {}
+    };
+  }
+}
+async function Pe(e) {
+  try {
+    const a = e.selectedRepo;
+    return a ? (await figma.clientStorage.setAsync("selectedRepo", a), {
+      type: "storeSelectedRepo",
+      success: !0,
+      error: !1,
+      message: "Selected repo stored successfully",
+      data: {}
+    }) : {
+      type: "storeSelectedRepo",
+      success: !1,
+      error: !0,
+      message: "Selected repo is required",
+      data: {}
+    };
+  } catch (a) {
+    return {
+      type: "storeSelectedRepo",
+      success: !1,
+      error: !0,
+      message: a instanceof Error ? a.message : "Unknown error occurred",
+      data: {}
+    };
+  }
+}
+const Ne = {
+  getCurrentUser: ie,
+  loadPages: ae,
+  exportPage: ue,
+  importPage: Ce,
+  quickCopy: Se,
+  storeAuthData: we,
+  loadAuthData: Ee,
+  clearAuthData: Ie,
+  storeSelectedRepo: Pe
+}, ke = Ne;
 figma.showUI(__html__, {
   width: 500,
   height: 650
 });
-ae().then((e) => {
-  figma.ui.postMessage(e);
-});
 figma.ui.onmessage = async (e) => {
-  var a;
   console.log("Received message:", e);
   try {
-    switch (e.type) {
-      case "get-current-user": {
-        figma.ui.postMessage({
-          type: "current-user",
-          payload: (a = figma.currentUser) == null ? void 0 : a.id
-        });
-        break;
-      }
-      case "reset-metadata": {
-        const t = await pe();
-        figma.ui.postMessage(t);
-        break;
-      }
-      case "load-pages": {
-        const t = await Ce();
-        figma.ui.postMessage(t);
-        break;
-      }
-      case "export-page": {
-        const t = await ke(e.pageIndex);
-        figma.ui.postMessage(t);
-        break;
-      }
-      case "import-page": {
-        const t = await Pe(e.jsonData);
-        figma.ui.postMessage(t);
-        break;
-      }
-      case "quick-copy": {
-        const t = await Me();
-        figma.ui.postMessage(t);
-        break;
-      }
-      case "load-theme-settings": {
-        const t = await ae();
-        figma.ui.postMessage(t);
-        break;
-      }
-      case "update-theme-settings": {
-        const t = await Ve(
-          e.fileType,
-          e.themeName
-        );
-        figma.ui.postMessage(t);
-        break;
-      }
-      case "store-auth-data": {
-        await figma.clientStorage.setAsync("accessToken", e.accessToken), e.selectedRepo && await figma.clientStorage.setAsync(
-          "selectedRepo",
-          e.selectedRepo
-        ), figma.ui.postMessage({
-          type: "auth-data-stored",
-          success: !0
-        });
-        break;
-      }
-      case "load-auth-data": {
-        try {
-          const t = await figma.clientStorage.getAsync("accessToken"), r = await figma.clientStorage.getAsync("selectedRepo");
-          figma.ui.postMessage({
-            type: "auth-data-loaded",
-            success: !0,
-            accessToken: t || void 0,
-            selectedRepo: r || void 0
-          });
-        } catch (t) {
-          figma.ui.postMessage({
-            type: "auth-data-loaded",
-            success: !1,
-            error: t instanceof Error ? t.message : "Failed to load auth data"
-          });
-        }
-        break;
-      }
-      case "clear-auth-data": {
-        await figma.clientStorage.deleteAsync("accessToken"), await figma.clientStorage.deleteAsync("selectedRepo"), figma.ui.postMessage({
-          type: "auth-data-cleared",
-          success: !0
-        });
-        break;
-      }
-      case "store-selected-repo": {
-        await figma.clientStorage.setAsync(
-          "selectedRepo",
-          e.selectedRepo
-        ), figma.ui.postMessage({
-          type: "selected-repo-stored",
-          success: !0
-        });
-        break;
-      }
-      case "load-reference-files": {
-        try {
-          const t = await figma.clientStorage.getAsync("referenceFiles") || [];
-          figma.ui.postMessage({
-            type: "reference-files-loaded",
-            success: !0,
-            files: t
-          });
-        } catch (t) {
-          figma.ui.postMessage({
-            type: "reference-files-loaded",
-            success: !1,
-            error: t instanceof Error ? t.message : "Failed to load reference files"
-          });
-        }
-        break;
-      }
-      case "add-reference-file": {
-        try {
-          const t = figma.fileKey;
-          if (!t) {
-            figma.notify(
-              "Please save the file first before adding it as a reference. Go to File > Save or press Cmd/Ctrl+S",
-              { error: !0, timeout: 5e3 }
-            ), figma.ui.postMessage({
-              type: "reference-file-added",
-              success: !1,
-              error: "This file is not saved. Please save the file first (File > Save or Cmd/Ctrl+S) before adding it as a reference."
-            });
-            break;
-          }
-          const r = figma.root.name, o = `https://www.figma.com/file/${t}/${encodeURIComponent(r)}`, i = await figma.clientStorage.getAsync("referenceFiles") || [], n = i.findIndex(
-            (l) => l.fileKey === t
-          );
-          if (n >= 0) {
-            const l = i[n];
-            figma.notify(
-              `"${l.fileName}" is already in your reference files list.`,
-              { timeout: 3e3 }
-            ), figma.ui.postMessage({
-              type: "reference-file-added",
-              success: !1,
-              error: "This file is already in your reference files list."
-            });
-            break;
-          }
-          const s = {
-            fileKey: t,
-            fileName: r,
-            fileUrl: o
-          };
-          i.push(s), await figma.clientStorage.setAsync("referenceFiles", i), figma.notify(`Successfully added "${r}" to reference files`, {
-            timeout: 3e3
-          }), figma.ui.postMessage({
-            type: "reference-file-added",
-            success: !0,
-            file: s
-          });
-        } catch (t) {
-          const r = t instanceof Error ? t.message : "Failed to add reference file";
-          figma.notify(r, { error: !0, timeout: 5e3 }), figma.ui.postMessage({
-            type: "reference-file-added",
-            success: !1,
-            error: r
-          });
-        }
-        break;
-      }
-      case "add-reference-file-manual": {
-        try {
-          const { fileKey: t, fileName: r, fileUrl: o } = e;
-          if (!t || !t.trim()) {
-            figma.notify("File key is required", {
-              error: !0,
-              timeout: 3e3
-            }), figma.ui.postMessage({
-              type: "reference-file-added",
-              success: !1,
-              error: "File key is required"
-            });
-            break;
-          }
-          const i = await figma.clientStorage.getAsync("referenceFiles") || [], n = i.findIndex(
-            (l) => l.fileKey === t
-          );
-          if (n >= 0) {
-            const l = i[n];
-            figma.notify(
-              `"${l.fileName}" is already in your reference files list.`,
-              { timeout: 3e3 }
-            ), figma.ui.postMessage({
-              type: "reference-file-added",
-              success: !1,
-              error: "This file is already in your reference files list."
-            });
-            break;
-          }
-          const s = {
-            fileKey: t.trim(),
-            fileName: r || "Unknown File",
-            fileUrl: o
-          };
-          i.push(s), await figma.clientStorage.setAsync("referenceFiles", i), figma.notify(
-            `Successfully added "${s.fileName}" to reference files`,
-            {
-              timeout: 3e3
-            }
-          ), figma.ui.postMessage({
-            type: "reference-file-added",
-            success: !0,
-            file: s
-          });
-        } catch (t) {
-          const r = t instanceof Error ? t.message : "Failed to add reference file";
-          figma.notify(r, { error: !0, timeout: 5e3 }), figma.ui.postMessage({
-            type: "reference-file-added",
-            success: !1,
-            error: r
-          });
-        }
-        break;
-      }
-      case "remove-reference-file": {
-        try {
-          const r = (await figma.clientStorage.getAsync("referenceFiles") || []).filter(
-            (o) => o.fileKey !== e.fileKey
-          );
-          await figma.clientStorage.setAsync("referenceFiles", r), figma.ui.postMessage({
-            type: "reference-file-removed",
-            success: !0
-          });
-        } catch (t) {
-          figma.ui.postMessage({
-            type: "reference-file-removed",
-            success: !1,
-            error: t instanceof Error ? t.message : "Failed to remove reference file"
-          });
-        }
-        break;
-      }
-      case "open-external-url": {
-        try {
-          const t = e.url;
-          if (console.log("Opening external URL:", t), !t || typeof t != "string")
-            throw new Error("Invalid URL provided");
-          const r = decodeURIComponent(t);
-          console.log("Decoded URL:", r), await figma.openExternal(r), console.log("URL opened successfully"), figma.notify("Opening file in browser...", { timeout: 2e3 });
-        } catch (t) {
-          console.error("Error opening URL:", t);
-          const r = t instanceof Error ? t.message : "Unknown error";
-          figma.notify(`Failed to open URL: ${r}`, {
-            error: !0,
-            timeout: 5e3
-          }), figma.ui.postMessage({
-            type: "error",
-            success: !1,
-            error: `Failed to open URL: ${r}`
-          });
-        }
-        break;
-      }
-      default: {
-        console.warn("Unknown message type:", e.type);
-        const t = {
-          type: "error",
-          success: !1,
-          error: "Unknown message type: " + e.type
-          // eslint-disable-line @typescript-eslint/no-explicit-any
-        };
-        figma.ui.postMessage(t);
-      }
+    const a = e.type, r = ke[a];
+    if (!r) {
+      console.warn("Unknown message type:", e.type);
+      const o = {
+        type: e.type,
+        success: !1,
+        error: !0,
+        message: "Unknown message type: " + e.type,
+        data: {},
+        requestId: e.requestId
+      };
+      figma.ui.postMessage(o);
+      return;
     }
-  } catch (t) {
-    console.error("Error handling message:", t);
+    const i = await r(e.data);
+    figma.ui.postMessage(I(v({}, i), {
+      requestId: e.requestId
+    }));
+  } catch (a) {
+    console.error("Error handling message:", a);
     const r = {
-      type: "error",
+      type: e.type,
       success: !1,
-      error: t instanceof Error ? t.message : "Unknown error occurred"
+      error: !0,
+      message: a instanceof Error ? a.message : "Unknown error occurred",
+      data: {},
+      requestId: e.requestId
     };
     figma.ui.postMessage(r);
   }

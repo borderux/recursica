@@ -1,13 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { QuickCopyResponse } from "../types/messages";
-import { extractNodeData, countTotalNodes } from "./pageExport";
-import { recreateNodeFromData } from "./pageImport";
+import type { ResponseMessage } from "../types/messages";
+import { extractNodeData, countTotalNodes } from "./pageExportNew";
+import { recreateNodeFromData } from "./pageImportNew";
 
 /**
  * Service for quick copy operations
  */
-
-export async function performQuickCopy(): Promise<QuickCopyResponse> {
+export async function quickCopy(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _data: Record<string, unknown>,
+): Promise<ResponseMessage> {
   try {
     // Load all pages first to access their children
     await figma.loadAllPagesAsync();
@@ -22,14 +24,20 @@ export async function performQuickCopy(): Promise<QuickCopyResponse> {
 
     if (!randomPage) {
       return {
-        type: "quick-copy-response",
+        type: "quickCopy",
         success: false,
-        error: "No page found at index 11",
+        error: true,
+        message: "No page found at index 11",
+        data: {},
       };
     }
 
     // Extract complete page data with all nested children
-    const extractedPageData = extractNodeData(randomPage);
+    const extractedPageData = await extractNodeData(
+      randomPage,
+      new WeakSet(),
+      {},
+    );
 
     console.log(
       "Selected page: " + randomPage.name + " (index: " + randomPageIndex + ")",
@@ -77,7 +85,7 @@ export async function performQuickCopy(): Promise<QuickCopyResponse> {
 
       // Recreate children sequentially to properly handle async font loading
       for (const childData of parsedPageContent.children) {
-        await recreateNodeFromData(childData, newPage);
+        await recreateNodeFromData(childData, newPage, null, null);
       }
       console.log("Successfully recreated page content with all children");
     } else {
@@ -87,18 +95,25 @@ export async function performQuickCopy(): Promise<QuickCopyResponse> {
     const totalNodes = countTotalNodes(parsedPageContent);
 
     return {
-      type: "quick-copy-response",
+      type: "quickCopy",
       success: true,
-      pageName: parsedPageContent.name,
-      newPageName: newPageName,
-      totalNodes: totalNodes,
+      error: false,
+      message: "Quick copy completed successfully",
+      data: {
+        pageName: parsedPageContent.name,
+        newPageName: newPageName,
+        totalNodes: totalNodes,
+      },
     };
   } catch (error) {
     console.error("Error performing quick copy:", error);
     return {
-      type: "quick-copy-response",
+      type: "quickCopy",
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error occurred",
+      error: true,
+      message:
+        error instanceof Error ? error.message : "Unknown error occurred",
+      data: {},
     };
   }
 }

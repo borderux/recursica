@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { PageImportResponse } from "../types/messages";
+import type { ResponseMessage } from "../types/messages";
 import {
   getDefaultsForNodeType,
   FRAME_DEFAULTS,
@@ -1242,16 +1242,32 @@ export async function recreateNodeFromData(
   }
 }
 
-export async function importPage(jsonData: any): Promise<PageImportResponse> {
+export async function importPage(
+  data: Record<string, unknown>,
+): Promise<ResponseMessage> {
   try {
+    const jsonData = data.jsonData as any;
+
+    if (!jsonData) {
+      return {
+        type: "importPage",
+        success: false,
+        error: true,
+        message: "JSON data is required",
+        data: {},
+      };
+    }
+
     console.log("Importing page from JSON");
 
     // Validate JSON structure
     if (!jsonData.pageData || !jsonData.metadata) {
       return {
-        type: "page-import-response",
+        type: "importPage",
         success: false,
-        error: "Invalid JSON format. Expected pageData and metadata.",
+        error: true,
+        message: "Invalid JSON format. Expected pageData and metadata.",
+        data: {},
       };
     }
 
@@ -1333,17 +1349,24 @@ export async function importPage(jsonData: any): Promise<PageImportResponse> {
     }
 
     return {
-      type: "page-import-response",
+      type: "importPage",
       success: true,
-      pageName: metadata.originalPageName,
-      totalNodes: metadata.totalNodes || 0,
+      error: false,
+      message: "Page imported successfully",
+      data: {
+        pageName: metadata.originalPageName,
+        totalNodes: metadata.totalNodes || 0,
+      },
     };
   } catch (error) {
     console.error("Error importing page:", error);
     return {
-      type: "page-import-response",
+      type: "importPage",
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error occurred",
+      error: true,
+      message:
+        error instanceof Error ? error.message : "Unknown error occurred",
+      data: {},
     };
   }
 }

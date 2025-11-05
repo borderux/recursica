@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { PageListResponse, PageExportResponse } from "../types/messages";
+import type { ResponseMessage } from "../types/messages";
 import {
   parseBaseNodeProperties,
   type ParserContext,
@@ -300,42 +300,32 @@ export async function extractNodeData(
   return nodeData;
 }
 
-export async function loadPages(): Promise<PageListResponse> {
-  try {
-    await figma.loadAllPagesAsync();
-    const pages = figma.root.children;
-    const pageList = pages.map((page, index) => ({
-      name: page.name,
-      index: index,
-    }));
-
-    return {
-      type: "pages-loaded",
-      success: true,
-      pages: pageList,
-    };
-  } catch (error) {
-    console.error("Error loading pages:", error);
-    return {
-      type: "pages-loaded",
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error occurred",
-    };
-  }
-}
-
 export async function exportPage(
-  pageIndex: number,
-): Promise<PageExportResponse> {
+  data: Record<string, unknown>,
+): Promise<ResponseMessage> {
   try {
+    const pageIndex = data.pageIndex as number | undefined;
+
+    if (pageIndex === undefined || typeof pageIndex !== "number") {
+      return {
+        type: "exportPage",
+        success: false,
+        error: true,
+        message: "Invalid page selection",
+        data: {},
+      };
+    }
+
     await figma.loadAllPagesAsync();
     const pages = figma.root.children;
 
     if (pageIndex < 0 || pageIndex >= pages.length) {
       return {
-        type: "page-export-response",
+        type: "exportPage",
         success: false,
-        error: "Invalid page selection",
+        error: true,
+        message: "Invalid page selection",
+        data: {},
       };
     }
 
@@ -400,18 +390,25 @@ export async function exportPage(
       countTotalNodes(extractedPageData),
     );
     return {
-      type: "page-export-response",
+      type: "exportPage",
       success: true,
-      filename: filename,
-      jsonData: jsonString,
-      pageName: selectedPage.name,
+      error: false,
+      message: "Page exported successfully",
+      data: {
+        filename,
+        jsonData: jsonString,
+        pageName: selectedPage.name,
+      },
     };
   } catch (error) {
     console.error("Error exporting page:", error);
     return {
-      type: "page-export-response",
+      type: "exportPage",
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error occurred",
+      error: true,
+      message:
+        error instanceof Error ? error.message : "Unknown error occurred",
+      data: {},
     };
   }
 }
