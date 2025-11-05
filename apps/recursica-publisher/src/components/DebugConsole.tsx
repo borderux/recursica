@@ -1,5 +1,6 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useDebugConsole } from "../context/useDebugConsole";
+import React from "react";
 
 interface DebugConsoleProps {
   height?: string;
@@ -25,7 +26,7 @@ export default function DebugConsole({
   }, [clear, clearOnMount]);
 
   return (
-    <div style={{ marginBottom: "20px" }}>
+    <div style={{ marginBottom: "5px" }}>
       <div
         style={{
           display: "flex",

@@ -268,7 +268,7 @@ export async function extractNodeData(
           ...updatedContext,
           depth: updatedContext.depth + 1,
         };
-        const processedChildren = [];
+        const processedChildren: any[] = [];
         let truncated = false;
         for (const child of node.children) {
           // Check node count before each child

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import PageLayout from "../components/PageLayout";
 import DebugConsole from "../components/DebugConsole";
+import PluginPrompt from "../components/PluginPrompt";
 
 interface PublishedFile {
   name: string;
@@ -40,6 +41,8 @@ export default function Publishing() {
         <h1 style={{ marginTop: 0, marginBottom: "20px" }}>Publishing</h1>
 
         <DebugConsole />
+
+        <PluginPrompt />
 
         <div>
           <h2 style={{ marginTop: 0, marginBottom: "12px", fontSize: "18px" }}>

@@ -1,14 +1,12 @@
 import { getCurrentUser } from "./getCurrentUser";
 import { loadPages } from "./loadPages";
-import { exportPage } from "./pageExportNew";
-import { importPage } from "./pageImportNew";
+import { exportPage } from "./pageExport";
+import { importPage } from "./pageImport";
 import { quickCopy } from "./quickCopy";
 import { storeAuthData } from "./storeAuthData";
 import { loadAuthData } from "./loadAuthData";
 import { clearAuthData } from "./clearAuthData";
 import { storeSelectedRepo } from "./storeSelectedRepo";
-import { getComponentMetadata } from "./getComponentMetadata";
-import { pluginPromptResponse } from "./pluginPromptResponse";
 
 // Services map - all service functions indexed by their names
 // This is the single source of truth for available services
@@ -22,8 +20,6 @@ export const services = {
   loadAuthData,
   clearAuthData,
   storeSelectedRepo,
-  getComponentMetadata,
-  pluginPromptResponse,
 } as const;
 
 // Re-export individual services for convenience
@@ -37,6 +33,4 @@ export {
   loadAuthData,
   clearAuthData,
   storeSelectedRepo,
-  getComponentMetadata,
-  pluginPromptResponse,
 };
