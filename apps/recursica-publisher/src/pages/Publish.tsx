@@ -51,7 +51,7 @@ export default function Publish() {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          justifyContent: "center",
+          justifyContent: "flex-start",
         }}
       >
         {loading && <p>Loading component metadata...</p>}

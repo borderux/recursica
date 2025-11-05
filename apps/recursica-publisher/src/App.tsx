@@ -7,6 +7,7 @@ import Publishing from "./pages/Publishing";
 import PageManagement from "./pages/PageManagement";
 import { Auth } from "./pages/Auth";
 import { AuthProvider } from "./context/AuthProvider";
+import { DebugConsoleProvider } from "./context/DebugConsoleProvider";
 
 function App() {
   return (
@@ -39,18 +40,20 @@ function App() {
         `}
       </style>
       <AuthProvider>
-        <MemoryRouter initialEntries={["/"]}>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/import" element={<Import />} />
-            <Route path="/publish" element={<Publish />} />
-            <Route path="/publishing" element={<Publishing />} />
-            <Route element={<Layout />}>
-              <Route path="auth" element={<Auth />} />
-              <Route path="page-management" element={<PageManagement />} />
-            </Route>
-          </Routes>
-        </MemoryRouter>
+        <DebugConsoleProvider>
+          <MemoryRouter initialEntries={["/"]}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/import" element={<Import />} />
+              <Route path="/publish" element={<Publish />} />
+              <Route path="/publishing" element={<Publishing />} />
+              <Route element={<Layout />}>
+                <Route path="auth" element={<Auth />} />
+                <Route path="page-management" element={<PageManagement />} />
+              </Route>
+            </Routes>
+          </MemoryRouter>
+        </DebugConsoleProvider>
       </AuthProvider>
     </div>
   );

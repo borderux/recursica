@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import PageLayout from "../components/PageLayout";
+import DebugConsole from "../components/DebugConsole";
 
 interface PublishedFile {
   name: string;
@@ -7,7 +8,6 @@ interface PublishedFile {
 }
 
 export default function Publishing() {
-  const [debugLogs] = useState<string>("");
   const [publishedFiles] = useState<PublishedFile[]>([]);
 
   const handleDownload = (file: PublishedFile) => {
@@ -40,41 +40,7 @@ export default function Publishing() {
       >
         <h1 style={{ marginTop: 0, marginBottom: "20px" }}>Publishing</h1>
 
-        <div style={{ marginBottom: "20px" }}>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "8px",
-              fontSize: "14px",
-              fontWeight: "bold",
-            }}
-          >
-            Publishing Log:
-          </label>
-          <textarea
-            readOnly
-            value={debugLogs}
-            style={{
-              width: "100%",
-              height: "100px",
-              padding: "10px",
-              boxSizing: "border-box",
-              fontFamily: "monospace",
-              fontSize: "12px",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              resize: "none",
-              backgroundColor: "#f5f5f5",
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = "#d40d0d";
-              e.currentTarget.style.outline = "none";
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = "#ccc";
-            }}
-          />
-        </div>
+        <DebugConsole />
 
         <div>
           <h2 style={{ marginTop: 0, marginBottom: "12px", fontSize: "18px" }}>
