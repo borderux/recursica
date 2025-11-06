@@ -89,10 +89,68 @@ function createModeMapping(
 }
 
 /**
+ * Plugin data key for storing collection GUID
+ */
+const COLLECTION_GUID_KEY = "recursica:collectionId";
+
+/**
+ * Gets or generates a GUID for a collection
+ * GUIDs are stored as plugin data on the collection for persistence across files
+ * @param collection - The variable collection
+ * @returns The GUID for the collection
+ */
+function getOrGenerateCollectionGuid(collection: VariableCollection): string {
+  // Try to get existing GUID from plugin data
+  const existingGuid = collection.getSharedPluginData(
+    "recursica",
+    COLLECTION_GUID_KEY,
+  );
+
+  if (existingGuid && existingGuid.trim() !== "") {
+    return existingGuid;
+  }
+
+  // Generate new GUID (UUID v4)
+  // Using crypto.randomUUID() which is available in modern environments
+  const newGuid = crypto.randomUUID();
+
+  // Store GUID in plugin data for future use
+  collection.setSharedPluginData("recursica", COLLECTION_GUID_KEY, newGuid);
+
+  return newGuid;
+}
+
+/**
+ * Validates that non-local collections have allowed names
+ * Only "Token"/"Tokens" or "Theme"/"Themes" are allowed for non-local collections (case-insensitive)
+ * @throws Error if collection is non-local and has an invalid name
+ */
+function validateCollectionName(
+  collectionName: string,
+  isLocal: boolean,
+): void {
+  if (isLocal) {
+    // Local collections can have any name
+    return;
+  }
+
+  // For non-local collections, only allow Token/Tokens or Theme/Themes (case-insensitive)
+  const normalizedName = collectionName.trim().toLowerCase();
+  const allowedNames = ["token", "tokens", "theme", "themes"];
+
+  if (!allowedNames.includes(normalizedName)) {
+    throw new Error(
+      `Invalid collection name: "${collectionName}". Non-local collections must be named "Token", "Tokens", "Theme", or "Themes" (case-insensitive).`,
+    );
+  }
+}
+
+/**
  * Finds or creates a variable collection using collection table entry
  * Ensures all modes exist by name before returning
  * For local collections: finds existing or creates new
  * For external collections: validates existence in team library, throws error if not found
+ * Validates non-local collection names before processing
  */
 async function findOrCreateCollectionFromEntry(
   collectionEntry: CollectionTableEntry,
@@ -100,30 +158,153 @@ async function findOrCreateCollectionFromEntry(
   collection: VariableCollection;
 }> {
   let collection: VariableCollection;
+  const normalizedName = collectionEntry.collectionName.trim().toLowerCase();
+  const allowedNonLocalNames = ["token", "tokens", "theme", "themes"];
 
-  if (collectionEntry.isLocal) {
-    // For local collections, find existing or create new
+  // Determine if collection is local or non-local
+  // If isLocal is explicitly set, use it; otherwise infer from context
+  const isLocal = collectionEntry.isLocal;
+  const couldBeNonLocal =
+    isLocal === false ||
+    (isLocal === undefined && allowedNonLocalNames.includes(normalizedName));
+
+  // If it could be non-local, try to find in team library first
+  if (couldBeNonLocal) {
+    try {
+      const libraryCollections =
+        await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
+      const libraryCollection = libraryCollections.find((c) => {
+        const cName = c.name.trim().toLowerCase();
+        return cName === normalizedName;
+      });
+
+      if (libraryCollection) {
+        // Validate collection name for non-local collections
+        validateCollectionName(collectionEntry.collectionName, false);
+
+        // Found in team library - import it
+        const variables =
+          await figma.teamLibrary.getVariablesInLibraryCollectionAsync(
+            libraryCollection.key,
+          );
+
+        if (variables.length > 0) {
+          const importedVariable =
+            await figma.variables.importVariableByKeyAsync(variables[0].key);
+
+          const importedCollection =
+            await figma.variables.getVariableCollectionByIdAsync(
+              importedVariable.variableCollectionId,
+            );
+
+          if (importedCollection) {
+            collection = importedCollection;
+            // Set GUID on imported collection if available
+            if (collectionEntry.collectionGuid) {
+              const currentGuid = collection.getSharedPluginData(
+                "recursica",
+                COLLECTION_GUID_KEY,
+              );
+              if (!currentGuid || currentGuid.trim() === "") {
+                collection.setSharedPluginData(
+                  "recursica",
+                  COLLECTION_GUID_KEY,
+                  collectionEntry.collectionGuid,
+                );
+              }
+            } else {
+              getOrGenerateCollectionGuid(collection);
+            }
+
+            // Ensure all modes exist
+            await ensureCollectionModes(collection, collectionEntry.modes);
+            return { collection };
+          }
+        }
+      }
+    } catch (error) {
+      // If external import fails and isLocal was explicitly false, throw error
+      if (isLocal === false) {
+        throw new Error(
+          `External collection "${collectionEntry.collectionName}" not found in team library. Please ensure the collection is published and available.`,
+        );
+      }
+      // Otherwise, fall through to local collection handling
+      console.log("Could not import external collection, trying local:", error);
+    }
+  }
+
+  // Handle as local collection (either explicitly local, or fallback from non-local attempt)
+  if (isLocal !== false) {
+    // For local collections, find existing by GUID first, then by name
     const localCollections =
       await figma.variables.getLocalVariableCollectionsAsync();
-    const existingCollection = localCollections.find(
-      (c) => c.name === collectionEntry.collectionName,
-    );
+
+    let existingCollection: VariableCollection | undefined;
+
+    // First, try to match by GUID if available
+    if (collectionEntry.collectionGuid) {
+      existingCollection = localCollections.find((c) => {
+        const guid = c.getSharedPluginData("recursica", COLLECTION_GUID_KEY);
+        return guid === collectionEntry.collectionGuid;
+      });
+    }
+
+    // If no GUID match, fall back to name matching
+    if (!existingCollection) {
+      existingCollection = localCollections.find(
+        (c) => c.name === collectionEntry.collectionName,
+      );
+    }
 
     if (existingCollection) {
       collection = existingCollection;
+      // Ensure GUID is set on the collection (in case it was matched by name)
+      if (collectionEntry.collectionGuid) {
+        const currentGuid = collection.getSharedPluginData(
+          "recursica",
+          COLLECTION_GUID_KEY,
+        );
+        if (!currentGuid || currentGuid.trim() === "") {
+          collection.setSharedPluginData(
+            "recursica",
+            COLLECTION_GUID_KEY,
+            collectionEntry.collectionGuid,
+          );
+        }
+      } else {
+        // Generate GUID if not present in entry (backward compatibility)
+        getOrGenerateCollectionGuid(collection);
+      }
     } else {
       // Create new local collection
       collection = figma.variables.createVariableCollection(
         collectionEntry.collectionName,
       );
+      // Set GUID on newly created collection
+      if (collectionEntry.collectionGuid) {
+        collection.setSharedPluginData(
+          "recursica",
+          COLLECTION_GUID_KEY,
+          collectionEntry.collectionGuid,
+        );
+      } else {
+        // Generate GUID if not present in entry (backward compatibility)
+        getOrGenerateCollectionGuid(collection);
+      }
     }
   } else {
     // For external collections, validate existence in team library
+    // Match by name case-insensitively for Token/Tokens/Theme/Themes
     const libraryCollections =
       await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
-    const libraryCollection = libraryCollections.find(
-      (c) => c.name === collectionEntry.collectionName,
-    );
+    const normalizedTargetName = collectionEntry.collectionName
+      .trim()
+      .toLowerCase();
+    const libraryCollection = libraryCollections.find((c) => {
+      const normalizedName = c.name.trim().toLowerCase();
+      return normalizedName === normalizedTargetName;
+    });
 
     if (!libraryCollection) {
       throw new Error(
@@ -162,6 +343,25 @@ async function findOrCreateCollectionFromEntry(
     }
 
     collection = importedCollection;
+
+    // Set GUID on imported collection if available (for future matching)
+    // External collections become local after import, so we can store GUID
+    if (collectionEntry.collectionGuid) {
+      const currentGuid = collection.getSharedPluginData(
+        "recursica",
+        COLLECTION_GUID_KEY,
+      );
+      if (!currentGuid || currentGuid.trim() === "") {
+        collection.setSharedPluginData(
+          "recursica",
+          COLLECTION_GUID_KEY,
+          collectionEntry.collectionGuid,
+        );
+      }
+    } else {
+      // Generate GUID if not present in entry (backward compatibility)
+      getOrGenerateCollectionGuid(collection);
+    }
   }
 
   // Ensure all modes exist
@@ -173,11 +373,15 @@ async function findOrCreateCollectionFromEntry(
 /**
  * Legacy function for backward compatibility
  * Finds or creates a variable collection by name
+ * Validates non-local collection names before processing
  */
 async function findOrCreateCollection(
   collectionName: string,
   isLocal: boolean,
 ): Promise<VariableCollection> {
+  // Validate collection name for non-local collections
+  validateCollectionName(collectionName, isLocal);
+
   if (isLocal) {
     const localCollections =
       await figma.variables.getLocalVariableCollectionsAsync();

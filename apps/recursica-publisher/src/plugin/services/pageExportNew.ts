@@ -380,13 +380,13 @@ export async function exportPage(
     const exportData = {
       metadata: {
         exportedAt: new Date().toISOString(),
-        exportFormatVersion: "2.4.0", // Updated version for simplified variable table (removed unnecessary fields)
+        exportFormatVersion: "2.5.0", // Updated version for collection GUID system and serialized collection table
         figmaApiVersion: figma.apiVersion,
         originalPageName: selectedPage.name,
         totalNodes: countTotalNodes(extractedPageData),
         pluginVersion: "1.0.0",
       },
-      collections: collectionTable.getTable(),
+      collections: collectionTable.getSerializedTable(),
       variables: variableTable.getSerializedTable(),
       libraries: libraries,
       pageData: extractedPageData,

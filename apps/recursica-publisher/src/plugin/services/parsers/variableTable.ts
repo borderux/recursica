@@ -14,6 +14,7 @@ export interface CollectionTableEntry {
   collectionId: string; // Original collection ID
   isLocal: boolean;
   modes: string[]; // Array of mode names
+  collectionGuid?: string; // Globally unique identifier for cross-file matching (v2.5.0+)
 }
 
 /**
@@ -67,7 +68,7 @@ export class CollectionTable {
 
   /**
    * Gets the complete table as an object with string keys
-   * Used for JSON serialization
+   * Used for internal operations (includes all fields)
    */
   getTable(): Record<string, CollectionTableEntry> {
     const table: Record<string, CollectionTableEntry> = {};
@@ -78,10 +79,39 @@ export class CollectionTable {
   }
 
   /**
+   * Gets the table with only serialized fields (excludes internal-only fields)
+   * Used for JSON serialization to reduce size
+   * Filters out: collectionId, isLocal (internal-only fields)
+   * Keeps: collectionName, collectionGuid, modes
+   */
+  getSerializedTable(): Record<
+    string,
+    Omit<CollectionTableEntry, "collectionId" | "isLocal">
+  > {
+    const table: Record<
+      string,
+      Omit<CollectionTableEntry, "collectionId" | "isLocal">
+    > = {};
+    for (let i = 0; i < this.collections.length; i++) {
+      const entry = this.collections[i];
+      // Create a new object without internal-only fields
+      const serialized: Omit<CollectionTableEntry, "collectionId" | "isLocal"> =
+        {
+          collectionName: entry.collectionName,
+          modes: entry.modes,
+          ...(entry.collectionGuid && { collectionGuid: entry.collectionGuid }),
+        };
+      table[String(i)] = serialized;
+    }
+    return table;
+  }
+
+  /**
    * Reconstructs a CollectionTable from a serialized table object
+   * Handles both new format (without collectionId/isLocal) and legacy format (with collectionId/isLocal)
    */
   static fromTable(
-    table: Record<string, CollectionTableEntry>,
+    table: Record<string, Partial<CollectionTableEntry>>,
   ): CollectionTable {
     const collectionTable = new CollectionTable();
     const entries = Object.entries(table).sort(
@@ -90,8 +120,31 @@ export class CollectionTable {
 
     for (const [indexStr, collection] of entries) {
       const index = parseInt(indexStr, 10);
-      collectionTable.collectionMap.set(collection.collectionId, index);
-      collectionTable.collections[index] = collection;
+
+      // Infer isLocal from collection name if not present (new format)
+      // Default to true (local), and let the import logic determine if it's actually non-local
+      // based on whether it can be found in the team library
+      const isLocal = collection.isLocal ?? true;
+
+      // Generate a temporary collectionId if not present (for internal map)
+      // Use GUID if available, otherwise generate a temporary ID
+      const collectionId =
+        collection.collectionId ||
+        collection.collectionGuid ||
+        `temp:${index}:${collection.collectionName || "unknown"}`;
+
+      const fullEntry: CollectionTableEntry = {
+        collectionName: collection.collectionName || "",
+        collectionId,
+        isLocal,
+        modes: collection.modes || [],
+        ...(collection.collectionGuid && {
+          collectionGuid: collection.collectionGuid,
+        }),
+      };
+
+      collectionTable.collectionMap.set(collectionId, index);
+      collectionTable.collections[index] = fullEntry;
       collectionTable.nextIndex = Math.max(
         collectionTable.nextIndex,
         index + 1,

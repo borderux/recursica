@@ -176,12 +176,79 @@ async function resolveVariableValuesRecursively(
 }
 
 /**
+ * Plugin data key for storing collection GUID
+ */
+const COLLECTION_GUID_KEY = "recursica:collectionId";
+
+/**
+ * Gets or generates a GUID for a collection
+ * GUIDs are stored as plugin data on the collection for persistence across files
+ * @param collection - The variable collection
+ * @returns The GUID for the collection
+ */
+function getOrGenerateCollectionGuid(collection: VariableCollection): string {
+  // Try to get existing GUID from plugin data
+  const existingGuid = collection.getSharedPluginData(
+    "recursica",
+    COLLECTION_GUID_KEY,
+  );
+
+  if (existingGuid && existingGuid.trim() !== "") {
+    return existingGuid;
+  }
+
+  // Generate new GUID (UUID v4)
+  // Using crypto.randomUUID() which is available in modern environments
+  const newGuid = crypto.randomUUID();
+
+  // Store GUID in plugin data for future use
+  collection.setSharedPluginData("recursica", COLLECTION_GUID_KEY, newGuid);
+
+  return newGuid;
+}
+
+/**
+ * Validates that non-local collections have allowed names
+ * Only "Token"/"Tokens" or "Theme"/"Themes" are allowed for non-local collections (case-insensitive)
+ * @throws Error if collection is non-local and has an invalid name
+ */
+function validateCollectionName(
+  collectionName: string,
+  isLocal: boolean,
+): void {
+  if (isLocal) {
+    // Local collections can have any name
+    return;
+  }
+
+  // For non-local collections, only allow Token/Tokens or Theme/Themes (case-insensitive)
+  const normalizedName = collectionName.trim().toLowerCase();
+  const allowedNames = ["token", "tokens", "theme", "themes"];
+
+  if (!allowedNames.includes(normalizedName)) {
+    throw new Error(
+      `Invalid collection name: "${collectionName}". Non-local collections must be named "Token", "Tokens", "Theme", or "Themes" (case-insensitive).`,
+    );
+  }
+}
+
+/**
  * Adds a collection to the collections table, extracting mode information
+ * Validates non-local collection names before adding
+ * Generates or retrieves GUID for the collection
  */
 async function addCollectionToTable(
   collection: VariableCollection,
   collectionTable: CollectionTable,
 ): Promise<number> {
+  const isLocal = !collection.remote;
+
+  // Validate collection name for non-local collections
+  validateCollectionName(collection.name, isLocal);
+
+  // Get or generate GUID for the collection
+  const collectionGuid = getOrGenerateCollectionGuid(collection);
+
   // Extract mode names as an array
   const modes: string[] = collection.modes.map((mode) => mode.name);
 
@@ -189,8 +256,9 @@ async function addCollectionToTable(
   const collectionEntry: CollectionTableEntry = {
     collectionName: collection.name,
     collectionId: collection.id,
-    isLocal: !collection.remote,
+    isLocal,
     modes,
+    collectionGuid,
   };
 
   // Add to table and return index

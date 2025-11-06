@@ -63,6 +63,16 @@ This document tracks all design decisions, implementation details, and changes m
 - Added `getSerializedTable()` method to `VariableTable` that filters out internal-only fields
 - Reduced JSON size by excluding fields that can be inferred from collection table references
 
+### Version 2.5.0
+
+- Introduced collection GUID system for reliable cross-file collection matching
+- Collections now store a globally unique identifier (GUID) as plugin data
+- GUIDs enable matching collections across files even when multiple collections share the same name
+- Added `collectionGuid` field to `CollectionTableEntry` interface
+- During export: Collections get or generate GUIDs and store them in plugin data
+- During import: Collections are matched by GUID first, then fall back to name matching (backward compatible)
+- Solves the problem of ambiguous collection matching when multiple collections have the same name
+
 ## Collections Table System
 
 ### Design Rationale
@@ -77,6 +87,71 @@ Collections are shared across multiple variables, and each collection has its ow
   - `collectionId`: Original collection ID
   - `isLocal`: Whether the collection is local or team-bound
   - `modes`: Record mapping modeId -> modeName (for mode ID mapping)
+
+### Collection Name Validation
+
+**Non-Local Collection Restrictions**:
+
+- Non-local (remote/team-bound) collections must have specific names to be valid
+- Only the following names are allowed for non-local collections:
+  - `"Token"` or `"Tokens"` (case-sensitive)
+  - `"Theme"` or `"Themes"` (case-sensitive)
+- Local collections can have any name (no restrictions)
+- If a non-local collection is encountered with an invalid name during export or import, an error is thrown with the invalid collection name
+
+**Validation Behavior**:
+
+- **During Export**: When adding a collection to the collections table, if the collection is non-local and has an invalid name, an error is thrown immediately
+- **During Import**: When processing a collection table entry, if the collection is non-local and has an invalid name, an error is thrown before attempting to find or create the collection
+
+**Multiple Collections with Same Name**:
+
+- In Figma, collections are uniquely identified by their `collectionId`, not by name
+- Multiple collections can have the same name (e.g., three separate collections all named "Theme")
+- Each collection with the same name appears as a separate collection in the Figma UI
+- The collections table uses `collectionId` as the unique identifier, so multiple collections with the same name are stored separately
+
+### Collection GUID System (v2.5.0+)
+
+**Problem**: When importing JSON, if multiple collections have the same name, we cannot reliably determine which collection to link to. Collection IDs change between files, so they cannot be used for cross-file matching.
+
+**Solution**: Store a globally unique identifier (GUID) as plugin data on each collection, similar to how components are handled.
+
+**Implementation**:
+
+- **GUID Storage**: GUIDs are stored as plugin data on collections using key `"recursica:collectionId"`
+- **GUID Generation**: UUID v4 is generated using `crypto.randomUUID()` if a collection doesn't already have a GUID
+- **GUID Persistence**: GUIDs persist across file saves, copies, and other operations
+- **CollectionTableEntry**: Added optional `collectionGuid` field to store GUID in exported JSON
+
+**During Export**:
+
+- When adding a collection to the collections table, get or generate a GUID for the collection
+- Store the GUID in the collection table entry
+- GUID is stored on the collection itself as plugin data for future exports
+
+**During Import**:
+
+- **For Local Collections**:
+
+  1. First, try to match existing collections by GUID (if GUID is present in the entry)
+  2. If no GUID match, fall back to name matching (for backward compatibility)
+  3. If collection is matched by name and has a GUID in the entry, set the GUID on the collection
+  4. If no matching collection is found, create a new one and set the GUID
+  5. If GUID is missing from entry (legacy format), generate a new GUID
+
+- **For External Collections**:
+  1. Match by name in team library (required for external collections)
+  2. Import the collection (which creates a local copy)
+  3. Set GUID on the imported collection if available in the entry
+  4. If GUID is missing, generate a new GUID
+
+**Benefits**:
+
+- **Reliable Matching**: Collections can be matched across files even when multiple collections share the same name
+- **Backward Compatible**: Falls back to name matching if GUID is not present (legacy JSON support)
+- **Automatic Migration**: Collections without GUIDs get them automatically during export/import
+- **Cross-File Consistency**: Same collection in different files can be reliably identified and reused
 
 ### Collection Reference Format
 
