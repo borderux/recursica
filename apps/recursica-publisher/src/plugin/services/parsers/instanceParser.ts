@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ParsedNodeData, ParserContext } from "./baseNodeParser";
+import { debugConsole } from "../../services/debugConsole";
 
 /**
  * Builds a file-path-like string by traversing up the parent chain
@@ -480,7 +481,14 @@ export async function parseInstanceProperties(
 
         // Check if component is from a remote library (different file)
         const isRemote = (mainComponent as any).remote === true;
+
+        // Log instance type
+        const instanceName = node.name || "(unnamed)";
+        const componentName = mainComponent.name || "(unnamed)";
         if (isRemote) {
+          await debugConsole.log(
+            `  Found INSTANCE: "${instanceName}" -> REMOTE component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...)`,
+          );
           (result.mainComponent as any).remote = true;
 
           // Try to get library/file name and key information
@@ -647,6 +655,12 @@ export async function parseInstanceProperties(
             // Library information might not be available, continue without it
             debugInfo.libraryInfoError = String(libError);
           }
+        } else {
+          // Try to determine if it's internal (same page) or normal (different page)
+          // For now, just log as local
+          await debugConsole.log(
+            `  Found INSTANCE: "${instanceName}" -> LOCAL component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...)`,
+          );
         }
 
         // Add debug info to mainComponent object

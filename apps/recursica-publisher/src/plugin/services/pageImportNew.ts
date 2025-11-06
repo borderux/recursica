@@ -35,11 +35,16 @@ export interface ImportPageResponseData {
 /**
  * Ensures a collection has all required modes by name
  * Creates modes if they don't exist
+ * Handles the default mode that Figma creates automatically
  */
 async function ensureCollectionModes(
   collection: VariableCollection,
   exportedModeNames: string[], // Array of mode names
 ): Promise<void> {
+  // When a collection is created, Figma automatically adds a default mode (usually "Mode 1")
+  // Check if the default mode exists and if it's not in our exported modes, we can rename it
+  // or leave it as-is (it won't be used if not in exportedModeNames)
+
   // Ensure all exported mode names exist in the collection
   for (const modeName of exportedModeNames) {
     // Check if mode already exists by name
@@ -50,45 +55,9 @@ async function ensureCollectionModes(
       collection.addMode(modeName);
     }
   }
-}
 
-/**
- * Creates a mapping from old mode IDs to new mode IDs
- * Matches old modeIds (from valuesByMode keys) to mode names by index
- *
- * Note: This assumes the order of keys in valuesByMode matches the order
- * of mode names in the exported modes array.
- */
-function createModeMapping(
-  collection: VariableCollection,
-  exportedModeNames: string[], // Array of mode names
-  exportedValuesByMode: Record<string, any>, // oldModeId -> value
-): Map<string, string> {
-  // Map: oldModeId -> newModeId
-  const modeMapping = new Map<string, string>();
-
-  // Get old mode IDs from valuesByMode keys
-  const oldModeIds = Object.keys(exportedValuesByMode);
-
-  // Match mode names to old mode IDs by index
-  // This assumes the order is preserved between exportedModeNames and oldModeIds
-  for (let i = 0; i < exportedModeNames.length && i < oldModeIds.length; i++) {
-    const modeName = exportedModeNames[i];
-    const oldModeId = oldModeIds[i];
-
-    // Find the mode by name (should exist after ensureCollectionModes)
-    const mode = collection.modes.find((m) => m.name === modeName);
-
-    if (mode) {
-      modeMapping.set(oldModeId, mode.modeId);
-    } else {
-      console.warn(
-        `Mode "${modeName}" not found in collection "${collection.name}" after ensuring modes exist.`,
-      );
-    }
-  }
-
-  return modeMapping;
+  // Note: We don't remove the default mode if it's not in exportedModeNames
+  // It will just remain unused, which is fine
 }
 
 /**
@@ -395,7 +364,6 @@ async function findOrCreateCollectionFromEntry(
 }
 
 /**
- * Legacy function for backward compatibility
  * Finds or creates a variable collection by name
  * Validates non-local collection names before processing
  */
@@ -507,7 +475,7 @@ function validateVariableType(
 /**
  * Restores variable mode values when creating a variable
  * Handles both primitive values and VARIABLE_ALIAS references
- * Uses mode mapping to convert old mode IDs to new mode IDs
+ * Uses mode names directly (valuesByMode keys are now mode names, not IDs)
  */
 async function restoreVariableModeValues(
   variable: Variable,
@@ -516,18 +484,19 @@ async function restoreVariableModeValues(
     string | number | boolean | VariableAliasSerialized
   >,
   variableTable: VariableTable,
-  modeMapping: Map<string, string>, // oldModeId -> newModeId
+  collection: VariableCollection, // Collection to look up mode by name
   collectionTable?: CollectionTable, // Optional: for resolving variable aliases by collection
 ): Promise<void> {
-  for (const [oldModeId, value] of Object.entries(valuesByMode)) {
-    // Map old mode ID to new mode ID
-    const newModeId = modeMapping.get(oldModeId);
-    if (!newModeId) {
+  for (const [modeName, value] of Object.entries(valuesByMode)) {
+    // Find mode by name (valuesByMode now uses mode names as keys)
+    const mode = collection.modes.find((m) => m.name === modeName);
+    if (!mode) {
       console.warn(
-        `Mode ID ${oldModeId} not found in mode mapping for variable "${variable.name}". Skipping.`,
+        `Mode "${modeName}" not found in collection "${collection.name}" for variable "${variable.name}". Skipping.`,
       );
       continue;
     }
+    const modeId = mode.modeId;
     try {
       if (value === null || value === undefined) {
         continue;
@@ -539,66 +508,43 @@ async function restoreVariableModeValues(
         typeof value === "number" ||
         typeof value === "boolean"
       ) {
-        variable.setValueForMode(newModeId, value);
+        variable.setValueForMode(modeId, value);
         continue;
       }
 
-      // Handle VARIABLE_ALIAS
+      // Handle VARIABLE_ALIAS - detect by presence of _varRef
       if (
         typeof value === "object" &&
         value !== null &&
-        "type" in value &&
-        value.type === "VARIABLE_ALIAS"
+        "_varRef" in value &&
+        typeof (value as any)._varRef === "number"
       ) {
-        const aliasValue = value as VariableAliasSerialized;
+        const aliasValue = value as { _varRef: number };
         let targetVariable: Variable | null = null;
 
-        // Try to resolve by table reference first
-        if (aliasValue._varRef !== undefined) {
-          const referencedEntry = variableTable.getVariableByIndex(
-            aliasValue._varRef,
-          );
-          if (referencedEntry) {
-            // Get collection from collection table if available
-            let refCollection: VariableCollection | null = null;
-            if (collectionTable && referencedEntry._colRef !== undefined) {
-              const collectionEntry = collectionTable.getCollectionByIndex(
-                referencedEntry._colRef,
-              );
-              if (collectionEntry) {
-                const result =
-                  await findOrCreateCollectionFromEntry(collectionEntry);
-                refCollection = result.collection;
-              }
-            }
-            // Fallback to legacy fields if collection table not available
-            if (
-              !refCollection &&
-              referencedEntry.collectionName &&
-              referencedEntry.isLocal !== undefined
-            ) {
-              refCollection = await findOrCreateCollection(
-                referencedEntry.collectionName,
-                referencedEntry.isLocal,
-              );
-            }
-            if (refCollection) {
-              targetVariable = await findVariableByName(
-                refCollection,
-                referencedEntry.variableName,
-              );
+        // Resolve by table reference
+        const referencedEntry = variableTable.getVariableByIndex(
+          aliasValue._varRef,
+        );
+        if (referencedEntry) {
+          // Get collection from collection table
+          let refCollection: VariableCollection | null = null;
+          if (collectionTable && referencedEntry._colRef !== undefined) {
+            const collectionEntry = collectionTable.getCollectionByIndex(
+              referencedEntry._colRef,
+            );
+            if (collectionEntry) {
+              const result =
+                await findOrCreateCollectionFromEntry(collectionEntry);
+              refCollection = result.collection;
             }
           }
-        }
 
-        // Fallback: try to find by original ID
-        if (!targetVariable && aliasValue.id) {
-          try {
-            targetVariable = await figma.variables.getVariableByIdAsync(
-              aliasValue.id,
+          if (refCollection) {
+            targetVariable = await findVariableByName(
+              refCollection,
+              referencedEntry.variableName,
             );
-          } catch {
-            // Variable doesn't exist by ID, will log warning below
           }
         }
 
@@ -607,16 +553,16 @@ async function restoreVariableModeValues(
             type: "VARIABLE_ALIAS",
             id: targetVariable.id,
           };
-          variable.setValueForMode(newModeId, alias);
+          variable.setValueForMode(modeId, alias);
         } else {
           console.warn(
-            `Could not resolve variable alias for mode ${oldModeId} (mapped to ${newModeId}) in variable "${variable.name}". Original ID: ${aliasValue.id}`,
+            `Could not resolve variable alias for mode "${modeName}" in variable "${variable.name}". Variable reference index: ${aliasValue._varRef}`,
           );
         }
       }
     } catch (error) {
       console.warn(
-        `Error setting value for mode ${oldModeId} (mapped to ${newModeId}) in variable "${variable.name}":`,
+        `Error setting value for mode "${modeName}" in variable "${variable.name}":`,
         error,
       );
     }
@@ -630,7 +576,6 @@ async function createVariableFromEntry(
   entry: VariableTableEntry,
   collection: VariableCollection,
   variableTable: VariableTable,
-  modeMapping: Map<string, string>, // oldModeId -> newModeId
   collectionTable?: CollectionTable, // Optional: for resolving variable aliases
 ): Promise<Variable> {
   const variable = figma.variables.createVariable(
@@ -645,7 +590,7 @@ async function createVariableFromEntry(
       variable,
       entry.valuesByMode,
       variableTable,
-      modeMapping,
+      collection, // Pass collection to look up modes by name
       collectionTable,
     );
   }
@@ -672,57 +617,21 @@ async function resolveVariableReferenceOnImport(
   }
 
   try {
-    // Get collection entry - prefer _colRef (v2.4.0+), fallback to collectionRef (v2.3.0), then legacy fields
-    let collectionEntry: CollectionTableEntry | undefined;
-    const colRef = entry._colRef ?? entry.collectionRef;
-    if (colRef !== undefined) {
-      collectionEntry = collectionTable.getCollectionByIndex(colRef);
-    }
-
-    // Fallback to legacy fields if _colRef/collectionRef not available
-    if (!collectionEntry && entry.collectionId && entry.isLocal !== undefined) {
-      // Try to find collection entry by collectionId
-      const collectionIndex = collectionTable.getCollectionIndex(
-        entry.collectionId,
+    // Get collection entry from collection table
+    const colRef = entry._colRef;
+    if (colRef === undefined) {
+      console.warn(
+        `Variable "${entry.variableName}" missing collection reference (_colRef)`,
       );
-      if (collectionIndex >= 0) {
-        collectionEntry = collectionTable.getCollectionByIndex(collectionIndex);
-      }
+      return null;
     }
 
+    const collectionEntry = collectionTable.getCollectionByIndex(colRef);
     if (!collectionEntry) {
-      // Legacy format - use legacy findOrCreateCollection
-      const collection = await findOrCreateCollection(
-        entry.collectionName || "",
-        entry.isLocal || false,
+      console.warn(
+        `Collection not found at index ${colRef} for variable "${entry.variableName}"`,
       );
-
-      // Find existing variable by name
-      let variable = await findVariableByName(collection, entry.variableName);
-
-      if (variable) {
-        if (!validateVariableType(variable, entry.variableType)) {
-          return null;
-        }
-        return variable;
-      }
-
-      if (!entry.valuesByMode) {
-        console.warn(
-          `Cannot create variable "${entry.variableName}" without valuesByMode data`,
-        );
-        return null;
-      }
-
-      // Legacy: create without mode mapping (may fail for mode IDs)
-      variable = await createVariableFromEntry(
-        entry,
-        collection,
-        variableTable,
-        new Map(), // Empty mode mapping for legacy
-        collectionTable, // Pass collection table for alias resolution
-      );
-      return variable;
+      return null;
     }
 
     // Use collections table entry
@@ -749,18 +658,11 @@ async function resolveVariableReferenceOnImport(
         return null;
       }
 
-      // Create mode mapping from exported mode names and valuesByMode
-      const modeMapping = createModeMapping(
-        collection,
-        collectionEntry.modes,
-        entry.valuesByMode,
-      );
-
+      // valuesByMode now uses mode names as keys, so no mapping needed
       variable = await createVariableFromEntry(
         entry,
         collection,
         variableTable,
-        modeMapping,
         collectionTable, // Pass collection table for alias resolution
       );
       return variable;
@@ -837,9 +739,7 @@ async function restoreBoundVariables(
       if (key === "fills" && Array.isArray(varInfo)) {
         // Handle fills array binding
         for (let i = 0; i < varInfo.length && i < propertyValue.length; i++) {
-          let varAlias: BoundVariableInfo | null = null;
-
-          // Check if it's a variable reference or full object
+          // Check if it's a variable reference
           const varItem = varInfo[i];
           if (
             isVariableReference(varItem) &&
@@ -858,39 +758,15 @@ async function restoreBoundVariables(
                 id: variable.id,
               };
             }
-          } else if (
-            varItem &&
-            typeof varItem === "object" &&
-            "type" in varItem &&
-            varItem.type === "VARIABLE_ALIAS"
-          ) {
-            // Legacy format: full variable object
-            varAlias = varItem as BoundVariableInfo;
-            if (varAlias) {
-              await bindVariableToProperty(
-                propertyValue[i],
-                varAlias,
-                propertyName,
-                variableTable,
-              );
-            }
           }
         }
       } else {
         // Handle direct property binding
         let varAlias: BoundVariableInfo | null = null;
 
-        // Check if it's a variable reference or full object
+        // Check if it's a variable reference
         if (isVariableReference(varInfo)) {
           varAlias = resolveVariableReference(varInfo, variableTable);
-        } else if (
-          varInfo &&
-          typeof varInfo === "object" &&
-          "type" in varInfo &&
-          varInfo.type === "VARIABLE_ALIAS"
-        ) {
-          // Legacy format: full variable object
-          varAlias = varInfo as BoundVariableInfo;
         }
 
         if (varAlias) {
@@ -916,15 +792,8 @@ async function bindVariableToNodeProperty(
   try {
     let variable: Variable | null = null;
 
-    // First, try to get variable by ID (for legacy format)
-    try {
-      variable = await figma.variables.getVariableByIdAsync(varInfo.id);
-    } catch {
-      // Variable doesn't exist by ID - will resolve below
-    }
-
     // If we have a variable table, use the new resolution system
-    if (!variable && variableTable) {
+    if (variableTable) {
       // For now, use the old logic but with new helpers
       if (varInfo.isLocal) {
         const collection = await findOrCreateCollection(
@@ -973,63 +842,6 @@ async function bindVariableToNodeProperty(
     }
   } catch (error) {
     console.log(`Error binding variable to property ${propertyName}:`, error);
-  }
-}
-
-/**
- * Binds a variable to a specific fill/stroke object
- */
-async function bindVariableToProperty(
-  propertyObject: any,
-  varInfo: BoundVariableInfo,
-  propertyName: string,
-  variableTable: VariableTable | null,
-): Promise<void> {
-  if (!propertyObject || typeof propertyObject !== "object") {
-    return;
-  }
-
-  try {
-    // Similar logic to bindVariableToNodeProperty but for individual fill/stroke objects
-    let variable: Variable | null = null;
-    try {
-      variable = await figma.variables.getVariableByIdAsync(varInfo.id);
-    } catch {
-      // Try to find or create variable using new resolution system
-      if (variableTable) {
-        if (varInfo.isLocal) {
-          const collection = await findOrCreateCollection(
-            varInfo.collectionName || "",
-            true,
-          );
-          variable = await findVariableByName(
-            collection,
-            varInfo.variableName || "",
-          );
-        } else {
-          if (varInfo.variableKey) {
-            try {
-              variable = await figma.variables.importVariableByKeyAsync(
-                varInfo.variableKey,
-              );
-            } catch {
-              console.log(
-                `Could not import team variable: ${varInfo.variableName}`,
-              );
-            }
-          }
-        }
-      }
-    }
-
-    if (variable && propertyObject.boundVariables) {
-      propertyObject.boundVariables[propertyName] = {
-        type: "VARIABLE_ALIAS",
-        id: variable.id,
-      };
-    }
-  } catch (error) {
-    console.log(`Error binding variable to property object:`, error);
   }
 }
 
@@ -1456,20 +1268,6 @@ export async function recreateNodeFromData(
                 newNode.boundVariables[propertyName] = alias;
               }
             }
-          } else if (
-            varInfo &&
-            typeof varInfo === "object" &&
-            "type" in varInfo &&
-            varInfo.type === "VARIABLE_ALIAS"
-          ) {
-            // Legacy format: full variable object
-            const varAlias = varInfo as BoundVariableInfo;
-            await bindVariableToNodeProperty(
-              newNode,
-              propertyName,
-              varAlias,
-              variableTable,
-            );
           }
         }
       }

@@ -65,11 +65,6 @@ export async function extractNodeData(
     };
   }
 
-  // Log progress every 500 nodes to avoid too much verbosity
-  if (currentNodeCount > 0 && currentNodeCount % 500 === 0) {
-    await debugConsole.log(`Processing node ${currentNodeCount}...`);
-  }
-
   // Increment node count
   const updatedContext: ParserContext = {
     visited: context.visited ?? new WeakSet(),
@@ -402,6 +397,9 @@ export async function exportPage(
     await debugConsole.log("Extracting node data from page...");
     await debugConsole.log(
       `Starting recursive node extraction (max nodes: 10000)...`,
+    );
+    await debugConsole.log(
+      "Collections will be discovered as variables are processed:",
     );
     const extractedPageData = await extractNodeData(
       selectedPage as any,

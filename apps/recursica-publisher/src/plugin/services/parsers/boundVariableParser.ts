@@ -29,14 +29,27 @@ export interface BoundVariableInfo {
 }
 
 /**
+ * Converts mode IDs to mode names using the collection's mode information
+ */
+function convertModeIdToName(
+  modeId: string,
+  collection: VariableCollection,
+): string {
+  const mode = collection.modes.find((m) => m.modeId === modeId);
+  return mode ? mode.name : modeId; // Fallback to modeId if not found
+}
+
+/**
  * Recursively resolves VARIABLE_ALIAS values in valuesByMode
  * Adds all referenced variables to the table and returns serialized valuesByMode
+ * Uses mode names instead of mode IDs as keys
  * Prevents infinite loops by tracking visited variable IDs
  */
 async function resolveVariableValuesRecursively(
   valuesByMode: Record<string, any>,
   variableTable: VariableTable,
   collectionTable: CollectionTable,
+  collection: VariableCollection, // Collection to convert mode IDs to names
   visitedIds: Set<string> = new Set(),
 ): Promise<
   Record<string, string | number | boolean | VariableAliasSerialized>
@@ -47,8 +60,10 @@ async function resolveVariableValuesRecursively(
   > = {};
 
   for (const [modeId, value] of Object.entries(valuesByMode)) {
+    // Convert mode ID to mode name
+    const modeName = convertModeIdToName(modeId, collection);
     if (value === null || value === undefined) {
-      serialized[modeId] = value;
+      serialized[modeName] = value;
       continue;
     }
 
@@ -58,7 +73,7 @@ async function resolveVariableValuesRecursively(
       typeof value === "number" ||
       typeof value === "boolean"
     ) {
-      serialized[modeId] = value;
+      serialized[modeName] = value;
       continue;
     }
 
@@ -75,7 +90,7 @@ async function resolveVariableValuesRecursively(
       // Prevent infinite loops
       if (visitedIds.has(aliasId)) {
         // Reference to already visited variable - store with just ID
-        serialized[modeId] = {
+        serialized[modeName] = {
           type: "VARIABLE_ALIAS",
           id: aliasId,
         };
@@ -87,7 +102,7 @@ async function resolveVariableValuesRecursively(
         await figma.variables.getVariableByIdAsync(aliasId);
       if (!referencedVariable) {
         // Cannot resolve - store with just ID (non-critical, continue)
-        serialized[modeId] = {
+        serialized[modeName] = {
           type: "VARIABLE_ALIAS",
           id: aliasId,
         };
@@ -98,15 +113,16 @@ async function resolveVariableValuesRecursively(
       const newVisitedIds = new Set(visitedIds);
       newVisitedIds.add(aliasId);
 
-      // Get collection info
-      const collection = await figma.variables.getVariableCollectionByIdAsync(
-        referencedVariable.variableCollectionId,
-      );
+      // Get collection info for the referenced variable
+      const refCollection =
+        await figma.variables.getVariableCollectionByIdAsync(
+          referencedVariable.variableCollectionId,
+        );
 
       const variableKey = (referencedVariable as any).key;
       if (!variableKey) {
         // Missing key - store with just ID (non-critical, continue)
-        serialized[modeId] = {
+        serialized[modeName] = {
           type: "VARIABLE_ALIAS",
           id: aliasId,
         };
@@ -117,7 +133,7 @@ async function resolveVariableValuesRecursively(
       const referencedEntry: VariableTableEntry = {
         variableName: referencedVariable.name,
         variableType: referencedVariable.resolvedType,
-        collectionName: collection?.name,
+        collectionName: refCollection?.name,
         collectionId: referencedVariable.variableCollectionId,
         variableKey: variableKey,
         id: aliasId,
@@ -126,40 +142,37 @@ async function resolveVariableValuesRecursively(
 
       // Add collection to collections table
       // This can throw if collection has invalid name - let it bubble up
-      const refCollection =
-        await figma.variables.getVariableCollectionByIdAsync(
-          referencedVariable.variableCollectionId,
-        );
       if (refCollection) {
         const refCollectionRef = await addCollectionToTable(
           refCollection,
           collectionTable,
         );
         referencedEntry._colRef = refCollectionRef;
-      }
 
-      // Recursively resolve this variable's values if it has any
-      if (referencedVariable.valuesByMode) {
-        referencedEntry.valuesByMode = await resolveVariableValuesRecursively(
-          referencedVariable.valuesByMode,
-          variableTable,
-          collectionTable,
-          newVisitedIds,
-        );
+        // Recursively resolve this variable's values if it has any
+        if (referencedVariable.valuesByMode) {
+          referencedEntry.valuesByMode = await resolveVariableValuesRecursively(
+            referencedVariable.valuesByMode,
+            variableTable,
+            collectionTable,
+            refCollection, // Pass collection for mode ID to name conversion
+            newVisitedIds,
+          );
+        }
       }
 
       // Add to table and get index
       const refIndex = variableTable.addVariable(referencedEntry);
 
       // Store serialized alias with both ID and table reference
-      serialized[modeId] = {
+      serialized[modeName] = {
         type: "VARIABLE_ALIAS",
         id: aliasId,
         _varRef: refIndex,
       };
     } else {
       // Unknown value type - store as-is (shouldn't happen normally)
-      serialized[modeId] = value;
+      serialized[modeName] = value;
     }
   }
 
@@ -255,6 +268,13 @@ async function addCollectionToTable(
 ): Promise<number> {
   const isLocal = !collection.remote;
 
+  // Check if collection already exists in table
+  const existingIndex = collectionTable.getCollectionIndex(collection.id);
+  if (existingIndex !== -1) {
+    // Collection already in table, return existing index
+    return existingIndex;
+  }
+
   // Validate collection name for non-local collections
   validateCollectionName(collection.name, isLocal);
 
@@ -274,7 +294,15 @@ async function addCollectionToTable(
   };
 
   // Add to table and return index
-  return collectionTable.addCollection(collectionEntry);
+  const index = collectionTable.addCollection(collectionEntry);
+
+  // Log when a new collection is added
+  const collectionType = isLocal ? "local" : "remote";
+  await debugConsole.log(
+    `  Added ${collectionType} collection: "${collection.name}" (ID: ${collection.id.substring(0, 20)}...)`,
+  );
+
+  return index;
 }
 
 /**
@@ -337,6 +365,7 @@ export async function resolveVariableAliasMetadata(
         variable.valuesByMode,
         variableTable,
         collectionTable,
+        collection, // Pass collection for mode ID to name conversion
         new Set([alias.id]), // Start with current variable ID in visited set
       );
     }

@@ -20,9 +20,11 @@ async function yieldToEventLoop(): Promise<void> {
 /**
  * Debug console utility for posting messages to the UI
  * Messages are sent and then control is yielded to allow real-time updates
+ * Also logs to the browser console for debugging
  */
 export const debugConsole = {
   clear: async () => {
+    console.clear();
     figma.ui.postMessage({
       type: "DebugConsole",
       payload: {
@@ -34,6 +36,7 @@ export const debugConsole = {
   },
 
   log: async (message: string) => {
+    console.log(message);
     figma.ui.postMessage({
       type: "DebugConsole",
       payload: {
@@ -45,6 +48,7 @@ export const debugConsole = {
   },
 
   warning: async (message: string) => {
+    console.warn(message);
     figma.ui.postMessage({
       type: "DebugConsole",
       payload: {
@@ -56,6 +60,7 @@ export const debugConsole = {
   },
 
   error: async (message: string) => {
+    console.error(message);
     figma.ui.postMessage({
       type: "DebugConsole",
       payload: {

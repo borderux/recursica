@@ -270,27 +270,93 @@ export class VariableTable {
   }
 
   /**
+   * Serializes valuesByMode, removing type and id from VariableAliasSerialized objects
+   * Only keeps _varRef since that's sufficient to identify a variable reference
+   */
+  private serializeValuesByMode(
+    valuesByMode?: Record<
+      string,
+      string | number | boolean | VariableAliasSerialized
+    >,
+  ):
+    | Record<string, string | number | boolean | { _varRef: number }>
+    | undefined {
+    if (!valuesByMode) {
+      return undefined;
+    }
+
+    const serialized: Record<
+      string,
+      string | number | boolean | { _varRef: number }
+    > = {};
+
+    for (const [modeName, value] of Object.entries(valuesByMode)) {
+      // Check if it's a VariableAliasSerialized (has _varRef)
+      if (
+        typeof value === "object" &&
+        value !== null &&
+        "_varRef" in value &&
+        typeof (value as any)._varRef === "number"
+      ) {
+        // Only include _varRef, exclude type and id
+        serialized[modeName] = {
+          _varRef: (value as VariableAliasSerialized)._varRef!,
+        };
+      } else {
+        // Primitive value, keep as-is
+        serialized[modeName] = value as string | number | boolean;
+      }
+    }
+
+    return serialized;
+  }
+
+  /**
    * Gets the table with only serialized fields (excludes internal-only fields)
    * Used for JSON serialization to reduce size
    * Filters out: variableKey, id, collectionName, collectionId, isLocal
+   * Also removes type and id from VariableAliasSerialized in valuesByMode (only keeps _varRef)
    * Keeps: variableName, variableType, _colRef, valuesByMode, and legacy collectionRef
    */
   getSerializedTable(): Record<
     string,
-    Omit<VariableTableEntry, "variableKey" | "id">
+    Omit<VariableTableEntry, "variableKey" | "id" | "valuesByMode"> & {
+      valuesByMode?: Record<
+        string,
+        string | number | boolean | { _varRef: number }
+      >;
+    }
   > {
     const table: Record<
       string,
-      Omit<VariableTableEntry, "variableKey" | "id">
+      Omit<VariableTableEntry, "variableKey" | "id" | "valuesByMode"> & {
+        valuesByMode?: Record<
+          string,
+          string | number | boolean | { _varRef: number }
+        >;
+      }
     > = {};
     for (let i = 0; i < this.variables.length; i++) {
       const entry = this.variables[i];
       // Create a new object without internal-only fields
-      const serialized: Omit<VariableTableEntry, "variableKey" | "id"> = {
+      const serializedValuesByMode = this.serializeValuesByMode(
+        entry.valuesByMode,
+      );
+
+      // Build serialized entry with correct types
+      const serialized: Omit<
+        VariableTableEntry,
+        "variableKey" | "id" | "valuesByMode"
+      > & {
+        valuesByMode?: Record<
+          string,
+          string | number | boolean | { _varRef: number }
+        >;
+      } = {
         variableName: entry.variableName,
         variableType: entry.variableType,
         ...(entry._colRef !== undefined && { _colRef: entry._colRef }),
-        ...(entry.valuesByMode && { valuesByMode: entry.valuesByMode }),
+        ...(serializedValuesByMode && { valuesByMode: serializedValuesByMode }),
         // Only include legacy fields if _colRef is not present (for backward compatibility)
         ...(entry._colRef === undefined &&
           entry.collectionRef !== undefined && {
