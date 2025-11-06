@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { useDebugConsole } from "../context/useDebugConsole";
-import React from "react";
 
 interface DebugConsoleProps {
   height?: string;

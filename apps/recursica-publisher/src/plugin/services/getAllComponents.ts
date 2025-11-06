@@ -5,13 +5,20 @@ import { getComponentName } from "../utils/getComponentName";
 import type { ComponentMetadata } from "./getComponentMetadata";
 import { PLUGIN_DATA_KEY } from "./getComponentMetadata";
 
+import type { NoData } from "./getCurrentUser";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+export interface GetAllComponentsResponseData {
+  components: ComponentMetadata[];
+}
+
 /**
  * Service for getting component metadata from all pages
  * Returns an array of component metadata, with empty entries for pages without metadata
  */
 export async function getAllComponents(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _data: Record<string, unknown>,
+  _data: NoData,
 ): Promise<ResponseMessage> {
   try {
     // Load all pages
@@ -72,9 +79,11 @@ export async function getAllComponents(
       }
     }
 
-    return retSuccess("getAllComponents", {
+    const responseData: GetAllComponentsResponseData = {
       components,
-    });
+    };
+
+    return retSuccess("getAllComponents", responseData as any);
   } catch (error) {
     console.error("Error getting all components:", error);
     return retError(

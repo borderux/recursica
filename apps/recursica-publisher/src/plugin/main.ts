@@ -34,7 +34,10 @@ figma.ui.onmessage = async (message: PluginMessage) => {
       return;
     }
 
-    const response = await service(message.data);
+    // Cast data as any since it comes from the UI proxy call
+    // The service function will have the correct type for its data parameter
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const response = await service(message.data as any);
     // Include requestId in response so UI can match it to the pending promise
     figma.ui.postMessage({
       ...response,

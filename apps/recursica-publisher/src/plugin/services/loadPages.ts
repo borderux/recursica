@@ -1,11 +1,16 @@
 import type { ResponseMessage } from "../types/messages";
+import type { NoData } from "./getCurrentUser";
+
+export interface LoadPagesResponseData {
+  pages: Array<{ name: string; index: number }>;
+}
 
 /**
  * Service for loading pages
  */
 export async function loadPages(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _data: Record<string, unknown>,
+  _data: NoData,
 ): Promise<ResponseMessage> {
   try {
     await figma.loadAllPagesAsync();
@@ -15,14 +20,17 @@ export async function loadPages(
       index: index,
     }));
 
+    const responseData: LoadPagesResponseData = {
+      pages: pageList,
+    };
+
     return {
       type: "loadPages",
       success: true,
       error: false,
       message: "Pages loaded successfully",
-      data: {
-        pages: pageList,
-      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      data: responseData as any,
     };
   } catch (error) {
     console.error("Error loading pages:", error);

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import PageLayout from "../components/PageLayout";
 import DebugConsole from "../components/DebugConsole";
 import PluginPrompt from "../components/PluginPrompt";

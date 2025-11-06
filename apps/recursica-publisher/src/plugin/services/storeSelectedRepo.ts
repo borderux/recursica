@@ -1,13 +1,20 @@
 import type { ResponseMessage } from "../types/messages";
 
+export interface StoreSelectedRepoData {
+  selectedRepo: string;
+}
+
+// Empty - store selected repo doesn't return data on success
+export type StoreSelectedRepoResponseData = Record<string, never>;
+
 /**
  * Service for storing selected repository
  */
 export async function storeSelectedRepo(
-  data: Record<string, unknown>,
+  data: StoreSelectedRepoData,
 ): Promise<ResponseMessage> {
   try {
-    const selectedRepo = data.selectedRepo as string | undefined;
+    const selectedRepo = data.selectedRepo;
 
     if (!selectedRepo) {
       return {
@@ -21,12 +28,15 @@ export async function storeSelectedRepo(
 
     await figma.clientStorage.setAsync("selectedRepo", selectedRepo);
 
+    const responseData: StoreSelectedRepoResponseData = {};
+
     return {
       type: "storeSelectedRepo",
       success: true,
       error: false,
       message: "Selected repo stored successfully",
-      data: {},
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      data: responseData as any,
     };
   } catch (error) {
     return {

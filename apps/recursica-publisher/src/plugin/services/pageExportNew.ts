@@ -11,6 +11,16 @@ import { parseShapeProperties } from "./parsers/shapeParser";
 import { parseInstanceProperties } from "./parsers/instanceParser";
 import { VariableTable, CollectionTable } from "./parsers/variableTable";
 
+export interface ExportPageData {
+  pageIndex: number;
+}
+
+export interface ExportPageResponseData {
+  filename: string;
+  jsonData: string;
+  pageName: string;
+}
+
 /**
  * Service for page export operations (new implementation with type-specific parsers)
  */
@@ -301,10 +311,10 @@ export async function extractNodeData(
 }
 
 export async function exportPage(
-  data: Record<string, unknown>,
+  data: ExportPageData,
 ): Promise<ResponseMessage> {
   try {
-    const pageIndex = data.pageIndex as number | undefined;
+    const pageIndex = data.pageIndex;
 
     if (pageIndex === undefined || typeof pageIndex !== "number") {
       return {
@@ -389,16 +399,19 @@ export async function exportPage(
       "Export complete. Total nodes:",
       countTotalNodes(extractedPageData),
     );
+
+    const responseData: ExportPageResponseData = {
+      filename,
+      jsonData: jsonString,
+      pageName: selectedPage.name,
+    };
+
     return {
       type: "exportPage",
       success: true,
       error: false,
       message: "Page exported successfully",
-      data: {
-        filename,
-        jsonData: jsonString,
-        pageName: selectedPage.name,
-      },
+      data: responseData as any,
     };
   } catch (error) {
     console.error("Error exporting page:", error);

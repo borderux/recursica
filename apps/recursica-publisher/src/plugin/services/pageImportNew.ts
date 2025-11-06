@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ResponseMessage } from "../types/messages";
 import {
   getDefaultsForNodeType,
@@ -15,6 +14,16 @@ import {
   type VariableAliasSerialized,
   type CollectionTableEntry,
 } from "./parsers/variableTable";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+export interface ImportPageData {
+  jsonData: any; // The full exported JSON structure
+}
+
+export interface ImportPageResponseData {
+  pageName: string;
+  totalNodes: number;
+}
 
 /**
  * Service for page import operations (new implementation with default value handling)
@@ -1243,10 +1252,10 @@ export async function recreateNodeFromData(
 }
 
 export async function importPage(
-  data: Record<string, unknown>,
+  data: ImportPageData,
 ): Promise<ResponseMessage> {
   try {
-    const jsonData = data.jsonData as any;
+    const jsonData = data.jsonData;
 
     if (!jsonData) {
       return {
@@ -1348,15 +1357,17 @@ export async function importPage(
       console.log("No children to import");
     }
 
+    const responseData: ImportPageResponseData = {
+      pageName: metadata.originalPageName,
+      totalNodes: metadata.totalNodes || 0,
+    };
+
     return {
       type: "importPage",
       success: true,
       error: false,
       message: "Page imported successfully",
-      data: {
-        pageName: metadata.originalPageName,
-        totalNodes: metadata.totalNodes || 0,
-      },
+      data: responseData as any,
     };
   } catch (error) {
     console.error("Error importing page:", error);

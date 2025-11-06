@@ -1,15 +1,23 @@
 import type { ResponseMessage } from "../types/messages";
 import { pluginPrompt } from "../utils/pluginPrompt";
 
+export interface PluginPromptResponseData {
+  requestId: string;
+  action: "ok" | "cancel";
+}
+
+// Empty - plugin prompt response doesn't return data on success
+export type PluginPromptResponseResponseData = Record<string, never>;
+
 /**
  * Service for handling plugin prompt responses from the UI
  */
 export async function pluginPromptResponse(
-  data: Record<string, unknown>,
+  data: PluginPromptResponseData,
 ): Promise<ResponseMessage> {
   try {
-    const requestId = data.requestId as string | undefined;
-    const action = data.action as "ok" | "cancel" | undefined;
+    const requestId = data.requestId;
+    const action = data.action;
 
     if (!requestId || !action) {
       return {
@@ -24,12 +32,15 @@ export async function pluginPromptResponse(
     // Handle the response using the utility
     pluginPrompt.handleResponse({ requestId, action });
 
+    const responseData: PluginPromptResponseResponseData = {};
+
     return {
       type: "pluginPromptResponse",
       success: true,
       error: false,
       message: "Prompt response handled successfully",
-      data: {},
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      data: responseData as any,
     };
   } catch (error) {
     return {

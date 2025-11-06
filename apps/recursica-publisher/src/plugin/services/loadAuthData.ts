@@ -1,25 +1,34 @@
 import type { ResponseMessage } from "../types/messages";
+import type { NoData } from "./getCurrentUser";
+
+export interface LoadAuthDataResponseData {
+  accessToken?: string;
+  selectedRepo?: string;
+}
 
 /**
  * Service for loading authentication data
  */
 export async function loadAuthData(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _data: Record<string, unknown>,
+  _data: NoData,
 ): Promise<ResponseMessage> {
   try {
     const accessToken = await figma.clientStorage.getAsync("accessToken");
     const selectedRepo = await figma.clientStorage.getAsync("selectedRepo");
+
+    const responseData: LoadAuthDataResponseData = {
+      accessToken: accessToken || undefined,
+      selectedRepo: selectedRepo || undefined,
+    };
 
     return {
       type: "loadAuthData",
       success: true,
       error: false,
       message: "Auth data loaded successfully",
-      data: {
-        accessToken: accessToken || undefined,
-        selectedRepo: selectedRepo || undefined,
-      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      data: responseData as any,
     };
   } catch (error) {
     return {

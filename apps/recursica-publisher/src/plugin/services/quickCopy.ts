@@ -2,13 +2,20 @@
 import type { ResponseMessage } from "../types/messages";
 import { extractNodeData, countTotalNodes } from "./pageExportNew";
 import { recreateNodeFromData } from "./pageImportNew";
+import type { NoData } from "./getCurrentUser";
+
+export interface QuickCopyResponseData {
+  pageName: string;
+  newPageName: string;
+  totalNodes: number;
+}
 
 /**
  * Service for quick copy operations
  */
 export async function quickCopy(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _data: Record<string, unknown>,
+  _data: NoData,
 ): Promise<ResponseMessage> {
   try {
     // Load all pages first to access their children
@@ -94,16 +101,18 @@ export async function quickCopy(
 
     const totalNodes = countTotalNodes(parsedPageContent);
 
+    const responseData: QuickCopyResponseData = {
+      pageName: parsedPageContent.name,
+      newPageName: newPageName,
+      totalNodes: totalNodes,
+    };
+
     return {
       type: "quickCopy",
       success: true,
       error: false,
       message: "Quick copy completed successfully",
-      data: {
-        pageName: parsedPageContent.name,
-        newPageName: newPageName,
-        totalNodes: totalNodes,
-      },
+      data: responseData as any,
     };
   } catch (error) {
     console.error("Error performing quick copy:", error);

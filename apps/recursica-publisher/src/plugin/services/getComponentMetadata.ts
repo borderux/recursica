@@ -2,6 +2,8 @@
 import type { ResponseMessage } from "../types/messages";
 import { retSuccess, retError } from "../utils/response";
 import { getComponentName } from "../utils/getComponentName";
+import type { NoData } from "./getCurrentUser";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 export interface ComponentMetadata {
   _ver: number; // Revision number, must be 1 or greater
@@ -14,12 +16,16 @@ export interface ComponentMetadata {
 
 export const PLUGIN_DATA_KEY = "RecursicaPublishedMetadata";
 
+export interface GetComponentMetadataResponseData {
+  componentMetadata: ComponentMetadata;
+}
+
 /**
  * Service for getting component metadata from the current page
  */
 export async function getComponentMetadata(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _data: Record<string, unknown>,
+  _data: NoData,
 ): Promise<ResponseMessage> {
   try {
     // Get the current page
@@ -40,17 +46,21 @@ export async function getComponentMetadata(
         history: {},
       };
 
-      return retSuccess("getComponentMetadata", {
+      const responseData: GetComponentMetadataResponseData = {
         componentMetadata: emptyMetadata,
-      });
+      };
+
+      return retSuccess("getComponentMetadata", responseData as any);
     }
 
     // Parse the plugin data
     const metadata: ComponentMetadata = JSON.parse(pluginData);
 
-    return retSuccess("getComponentMetadata", {
+    const responseData: GetComponentMetadataResponseData = {
       componentMetadata: metadata,
-    });
+    };
+
+    return retSuccess("getComponentMetadata", responseData as any);
   } catch (error) {
     console.error("Error getting component metadata:", error);
     return retError(
