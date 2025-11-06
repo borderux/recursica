@@ -16,6 +16,7 @@ import {
 } from "./parsers/variableTable";
 import { requestGuidFromUI } from "../utils/requestGuidFromUI";
 import { REGISTERED_REMOTE_COLLECTIONS } from "../../const/RegisteredCollections";
+import { debugConsole } from "./debugConsole";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export interface ImportPageData {
@@ -129,13 +130,15 @@ async function getOrGenerateCollectionGuid(
   } else {
     // For remote collections, we can't write plugin data
     // Remote collections must be registered in REGISTERED_REMOTE_COLLECTIONS
-    const registeredGuid = REGISTERED_REMOTE_COLLECTIONS[collection.id];
+    const registeredCollection = REGISTERED_REMOTE_COLLECTIONS[collection.id];
 
-    if (!registeredGuid) {
-      throw new Error(
-        "Unrecognized remote variable collection. Please contact the developers to register your collection to proceed",
-      );
+    if (!registeredCollection) {
+      const errorMessage = `Unrecognized remote variable collection. Please contact the developers to register your collection to proceed. Collection Name: "${collection.name}", Collection ID: ${collection.id}`;
+      await debugConsole.error(errorMessage);
+      throw new Error(errorMessage);
     }
+
+    const registeredGuid = registeredCollection.guid;
 
     return registeredGuid;
   }

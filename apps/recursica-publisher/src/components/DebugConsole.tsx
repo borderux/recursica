@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useDebugConsole } from "../context/useDebugConsole";
 
 interface DebugConsoleProps {
@@ -16,6 +16,7 @@ export default function DebugConsole({
 }: DebugConsoleProps) {
   const { getFormattedLog, clear } = useDebugConsole();
   const debugLogs = getFormattedLog();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Clear debug console when component mounts if clearOnMount is true
   useEffect(() => {
@@ -23,6 +24,13 @@ export default function DebugConsole({
       clear();
     }
   }, [clear, clearOnMount]);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.scrollTop = textareaRef.current.scrollHeight;
+    }
+  }, [debugLogs]);
 
   return (
     <div style={{ marginBottom: "5px" }}>
@@ -66,6 +74,7 @@ export default function DebugConsole({
         )}
       </div>
       <textarea
+        ref={textareaRef}
         readOnly
         value={debugLogs}
         style={{

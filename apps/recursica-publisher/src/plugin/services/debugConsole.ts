@@ -8,10 +8,21 @@ export interface DebugConsolePayload {
 }
 
 /**
+ * Yields control to the event loop to allow UI updates to process
+ * This ensures debug console messages appear in real-time
+ */
+async function yieldToEventLoop(): Promise<void> {
+  // Use setTimeout with 0 delay to yield to the event loop
+  // This allows the UI to process queued messages
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+/**
  * Debug console utility for posting messages to the UI
+ * Messages are sent and then control is yielded to allow real-time updates
  */
 export const debugConsole = {
-  clear: () => {
+  clear: async () => {
     figma.ui.postMessage({
       type: "DebugConsole",
       payload: {
@@ -19,9 +30,10 @@ export const debugConsole = {
         message: "__CLEAR__",
       },
     } as { type: "DebugConsole"; payload: DebugConsolePayload });
+    await yieldToEventLoop();
   },
 
-  log: (message: string) => {
+  log: async (message: string) => {
     figma.ui.postMessage({
       type: "DebugConsole",
       payload: {
@@ -29,9 +41,10 @@ export const debugConsole = {
         message,
       },
     } as { type: "DebugConsole"; payload: DebugConsolePayload });
+    await yieldToEventLoop();
   },
 
-  warning: (message: string) => {
+  warning: async (message: string) => {
     figma.ui.postMessage({
       type: "DebugConsole",
       payload: {
@@ -39,9 +52,10 @@ export const debugConsole = {
         message,
       },
     } as { type: "DebugConsole"; payload: DebugConsolePayload });
+    await yieldToEventLoop();
   },
 
-  error: (message: string) => {
+  error: async (message: string) => {
     figma.ui.postMessage({
       type: "DebugConsole",
       payload: {
@@ -49,5 +63,6 @@ export const debugConsole = {
         message,
       },
     } as { type: "DebugConsole"; payload: DebugConsolePayload });
+    await yieldToEventLoop();
   },
 };
