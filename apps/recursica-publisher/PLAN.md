@@ -153,6 +153,59 @@ Collections are shared across multiple variables, and each collection has its ow
 - **Automatic Migration**: Collections without GUIDs get them automatically during export/import
 - **Cross-File Consistency**: Same collection in different files can be reliably identified and reused
 
+### Registered Remote Collections (v2.5.0+)
+
+**Problem**: Remote collections cannot have plugin data written to them (Figma API restriction). This means we cannot store GUIDs directly on remote collections like we do for local collections.
+
+**Solution**: Maintain a code-based registry of remote collection IDs mapped to their GUIDs. Remote collections must be explicitly registered before they can be exported.
+
+**Implementation**:
+
+- **Registry Location**: `src/const/RegisteredCollections.ts`
+- **Registry Format**: `Record<string, string>` mapping collection ID → GUID
+- **Collection ID**: The full collection ID string from Figma (e.g., `"VariableCollectionId:eac91903ad8b04eed20f4bf2f0444ac6069c6da3/2151:0"`)
+- **GUID**: UUID v4 string for the collection
+
+**During Export**:
+
+- When processing a remote collection, check if its `collection.id` exists in `REGISTERED_REMOTE_COLLECTIONS`
+- If registered: Use the GUID from the registry
+- If not registered: Throw error: `"Unrecognized remote variable collection. Please contact the developers to register your collection to proceed"`
+- Export fails immediately if an unregistered remote collection is encountered
+
+**During Import**:
+
+- Same validation: Remote collections must be registered
+- If not registered: Throw the same error and fail import
+
+**Registration Process**:
+
+To add a new remote collection:
+
+1. Get the collection ID from Figma (from error message or collection object's `id` property)
+2. Generate a UUID v4 GUID for it
+3. Add the mapping to `RegisteredCollections.ts`:
+
+   ```typescript
+   export const REGISTERED_REMOTE_COLLECTIONS: Record<string, string> = {
+     "VariableCollectionId:example123/2151:0":
+       "550e8400-e29b-41d4-a716-446655440000",
+   };
+   ```
+
+**Benefits**:
+
+- **Explicit Control**: Only approved remote collections can be exported/imported
+- **Security**: Prevents accidental export of unauthorized remote collections
+- **Consistency**: Ensures all remote collections have stable GUIDs across files
+- **Developer Control**: Requires code changes to add new remote collections, ensuring review process
+
+**Error Handling**:
+
+- Errors are caught and logged to the debug console with full stack traces
+- Export/import operations fail gracefully with user-friendly error messages
+- Error message: `"Unrecognized remote variable collection. Please contact the developers to register your collection to proceed"`
+
 ### Collection Reference Format
 
 Variables reference collections by index in the collections table:

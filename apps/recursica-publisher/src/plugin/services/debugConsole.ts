@@ -11,6 +11,16 @@ export interface DebugConsolePayload {
  * Debug console utility for posting messages to the UI
  */
 export const debugConsole = {
+  clear: () => {
+    figma.ui.postMessage({
+      type: "DebugConsole",
+      payload: {
+        type: undefined,
+        message: "__CLEAR__",
+      },
+    } as { type: "DebugConsole"; payload: DebugConsolePayload });
+  },
+
   log: (message: string) => {
     figma.ui.postMessage({
       type: "DebugConsole",

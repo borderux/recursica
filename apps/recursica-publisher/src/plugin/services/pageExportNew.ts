@@ -10,6 +10,7 @@ import { parseVectorProperties } from "./parsers/vectorParser";
 import { parseShapeProperties } from "./parsers/shapeParser";
 import { parseInstanceProperties } from "./parsers/instanceParser";
 import { VariableTable, CollectionTable } from "./parsers/variableTable";
+import { debugConsole } from "./debugConsole";
 
 export interface ExportPageData {
   pageIndex: number;
@@ -54,11 +55,19 @@ export async function extractNodeData(
   const maxNodes = context.maxNodes ?? 10000;
   const currentNodeCount = context.nodeCount ?? 0;
   if (currentNodeCount >= maxNodes) {
+    debugConsole.warning(
+      `Maximum node count (${maxNodes}) reached. Export truncated.`,
+    );
     return {
       _truncated: true,
       _reason: `Maximum node count (${maxNodes}) reached`,
       _nodeCount: currentNodeCount,
     };
+  }
+
+  // Log progress every 500 nodes to avoid too much verbosity
+  if (currentNodeCount > 0 && currentNodeCount % 500 === 0) {
+    debugConsole.log(`Processing node ${currentNodeCount}...`);
   }
 
   // Increment node count
@@ -314,10 +323,17 @@ export async function extractNodeData(
 export async function exportPage(
   data: ExportPageData,
 ): Promise<ResponseMessage> {
+  // Clear debug console at the start
+  debugConsole.clear();
+  debugConsole.log("=== Starting Page Export ===");
+
   try {
     const pageIndex = data.pageIndex;
 
     if (pageIndex === undefined || typeof pageIndex !== "number") {
+      debugConsole.error(
+        "Invalid page selection: pageIndex is undefined or not a number",
+      );
       return {
         type: "exportPage",
         success: false,
@@ -327,10 +343,15 @@ export async function exportPage(
       };
     }
 
+    debugConsole.log(`Loading all pages...`);
     await figma.loadAllPagesAsync();
     const pages = figma.root.children;
+    debugConsole.log(`Loaded ${pages.length} page(s)`);
 
     if (pageIndex < 0 || pageIndex >= pages.length) {
+      debugConsole.error(
+        `Invalid page index: ${pageIndex} (valid range: 0-${pages.length - 1})`,
+      );
       return {
         type: "exportPage",
         success: false,
@@ -341,13 +362,17 @@ export async function exportPage(
     }
 
     const selectedPage = pages[pageIndex];
-    console.log("Exporting page: " + selectedPage.name);
+    debugConsole.log(
+      `Selected page: "${selectedPage.name}" (index: ${pageIndex})`,
+    );
 
     // Create variable table and collection table for storing unique variables and collections
+    debugConsole.log("Initializing variable and collection tables...");
     const variableTable = new VariableTable();
     const collectionTable = new CollectionTable();
 
     // Get available library variable collections
+    debugConsole.log("Fetching team library variable collections...");
     let libraries: any[] = [];
     try {
       const libraryCollections =
@@ -358,15 +383,26 @@ export async function exportPage(
         key: library.key,
         name: library.name,
       }));
+      debugConsole.log(
+        `Found ${libraries.length} library collection(s) in team library`,
+      );
+      if (libraries.length > 0) {
+        libraries.forEach((lib) => {
+          debugConsole.log(`  - ${lib.name} (from ${lib.libraryName})`);
+        });
+      }
     } catch (error) {
-      console.log(
-        "Could not get library variable collections:",
-        error instanceof Error ? error.message : String(error),
+      debugConsole.warning(
+        `Could not get library variable collections: ${error instanceof Error ? error.message : String(error)}`,
       );
       // Continue without library info if it fails
     }
 
     // Extract complete page data with limits to prevent hanging
+    debugConsole.log("Extracting node data from page...");
+    debugConsole.log(
+      `Starting recursive node extraction (max nodes: 10000)...`,
+    );
     const extractedPageData = await extractNodeData(
       selectedPage as any,
       new WeakSet(),
@@ -375,15 +411,39 @@ export async function exportPage(
         collectionTable,
       },
     );
+    debugConsole.log("Node extraction finished");
+
+    const totalNodes = countTotalNodes(extractedPageData);
+    const totalVariables = variableTable.getSize();
+    const totalCollections = collectionTable.getSize();
+
+    debugConsole.log(`Extraction complete:`);
+    debugConsole.log(`  - Total nodes: ${totalNodes}`);
+    debugConsole.log(`  - Unique variables: ${totalVariables}`);
+    debugConsole.log(`  - Unique collections: ${totalCollections}`);
+
+    if (totalCollections > 0) {
+      debugConsole.log("Collections found:");
+      const collections = collectionTable.getTable();
+      Object.values(collections).forEach((entry, idx) => {
+        const guidInfo = entry.collectionGuid
+          ? ` (GUID: ${entry.collectionGuid.substring(0, 8)}...)`
+          : "";
+        debugConsole.log(
+          `  ${idx}: ${entry.collectionName}${guidInfo} - ${entry.modes.length} mode(s)`,
+        );
+      });
+    }
 
     // Create export data with metadata, collections table, variable table, libraries, and page data
+    debugConsole.log("Creating export data structure...");
     const exportData = {
       metadata: {
         exportedAt: new Date().toISOString(),
         exportFormatVersion: "2.5.0", // Updated version for collection GUID system and serialized collection table
         figmaApiVersion: figma.apiVersion,
         originalPageName: selectedPage.name,
-        totalNodes: countTotalNodes(extractedPageData),
+        totalNodes: totalNodes,
         pluginVersion: "1.0.0",
       },
       collections: collectionTable.getSerializedTable(),
@@ -392,14 +452,15 @@ export async function exportPage(
       pageData: extractedPageData,
     };
 
+    debugConsole.log("Serializing to JSON...");
     const jsonString = JSON.stringify(exportData, null, 2);
+    const jsonSizeKB = (jsonString.length / 1024).toFixed(2);
     const filename =
       selectedPage.name.replace(/[^a-z0-9]/gi, "_") + "_export.json";
 
-    console.log(
-      "Export complete. Total nodes:",
-      countTotalNodes(extractedPageData),
-    );
+    debugConsole.log(`JSON serialization complete: ${jsonSizeKB} KB`);
+    debugConsole.log(`Export file: ${filename}`);
+    debugConsole.log("=== Export Complete ===");
 
     const responseData: ExportPageResponseData = {
       filename,
@@ -416,6 +477,12 @@ export async function exportPage(
       data: responseData as any,
     };
   } catch (error) {
+    debugConsole.error(
+      `Export failed: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
+    );
+    if (error instanceof Error && error.stack) {
+      debugConsole.error(`Stack trace: ${error.stack}`);
+    }
     console.error("Error exporting page:", error);
     return {
       type: "exportPage",

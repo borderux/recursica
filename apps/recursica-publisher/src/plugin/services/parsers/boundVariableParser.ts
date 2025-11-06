@@ -8,6 +8,8 @@ import {
   CollectionTable,
   type CollectionTableEntry,
 } from "./variableTable";
+import { requestGuidFromUI } from "../../utils/requestGuidFromUI";
+import { REGISTERED_REMOTE_COLLECTIONS } from "../../../const/RegisteredCollections";
 
 /**
  * Parser for handling bound variables in Figma nodes
@@ -80,92 +82,80 @@ async function resolveVariableValuesRecursively(
       }
 
       // Resolve the referenced variable
-      try {
-        const referencedVariable =
-          await figma.variables.getVariableByIdAsync(aliasId);
-        if (!referencedVariable) {
-          // Cannot resolve - store with just ID
-          serialized[modeId] = {
-            type: "VARIABLE_ALIAS",
-            id: aliasId,
-          };
-          continue;
-        }
+      const referencedVariable =
+        await figma.variables.getVariableByIdAsync(aliasId);
+      if (!referencedVariable) {
+        // Cannot resolve - store with just ID (non-critical, continue)
+        serialized[modeId] = {
+          type: "VARIABLE_ALIAS",
+          id: aliasId,
+        };
+        continue;
+      }
 
-        // Add to visited set
-        const newVisitedIds = new Set(visitedIds);
-        newVisitedIds.add(aliasId);
+      // Add to visited set
+      const newVisitedIds = new Set(visitedIds);
+      newVisitedIds.add(aliasId);
 
-        // Get collection info
-        const collection = await figma.variables.getVariableCollectionByIdAsync(
+      // Get collection info
+      const collection = await figma.variables.getVariableCollectionByIdAsync(
+        referencedVariable.variableCollectionId,
+      );
+
+      const variableKey = (referencedVariable as any).key;
+      if (!variableKey) {
+        // Missing key - store with just ID (non-critical, continue)
+        serialized[modeId] = {
+          type: "VARIABLE_ALIAS",
+          id: aliasId,
+        };
+        continue;
+      }
+
+      // Create entry for referenced variable
+      const referencedEntry: VariableTableEntry = {
+        variableName: referencedVariable.name,
+        variableType: referencedVariable.resolvedType,
+        collectionName: collection?.name,
+        collectionId: referencedVariable.variableCollectionId,
+        variableKey: variableKey,
+        id: aliasId,
+        isLocal: !referencedVariable.remote,
+      };
+
+      // Add collection to collections table
+      // This can throw if collection has invalid name - let it bubble up
+      const refCollection =
+        await figma.variables.getVariableCollectionByIdAsync(
           referencedVariable.variableCollectionId,
         );
-
-        const variableKey = (referencedVariable as any).key;
-        if (!variableKey) {
-          // Missing key - store with just ID
-          serialized[modeId] = {
-            type: "VARIABLE_ALIAS",
-            id: aliasId,
-          };
-          continue;
-        }
-
-        // Create entry for referenced variable
-        const referencedEntry: VariableTableEntry = {
-          variableName: referencedVariable.name,
-          variableType: referencedVariable.resolvedType,
-          collectionName: collection?.name,
-          collectionId: referencedVariable.variableCollectionId,
-          variableKey: variableKey,
-          id: aliasId,
-          isLocal: !referencedVariable.remote,
-        };
-
-        // Add collection to collections table
-        const refCollection =
-          await figma.variables.getVariableCollectionByIdAsync(
-            referencedVariable.variableCollectionId,
-          );
-        if (refCollection) {
-          const refCollectionRef = await addCollectionToTable(
-            refCollection,
-            collectionTable,
-          );
-          referencedEntry._colRef = refCollectionRef;
-        }
-
-        // Recursively resolve this variable's values if it has any
-        if (referencedVariable.valuesByMode) {
-          referencedEntry.valuesByMode = await resolveVariableValuesRecursively(
-            referencedVariable.valuesByMode,
-            variableTable,
-            collectionTable,
-            newVisitedIds,
-          );
-        }
-
-        // Add to table and get index
-        const refIndex = variableTable.addVariable(referencedEntry);
-
-        // Store serialized alias with both ID and table reference
-        serialized[modeId] = {
-          type: "VARIABLE_ALIAS",
-          id: aliasId,
-          _varRef: refIndex,
-        };
-      } catch (error) {
-        // Error resolving - store with just ID
-        console.log(
-          "Could not resolve variable alias in valuesByMode:",
-          aliasId,
-          error,
+      if (refCollection) {
+        const refCollectionRef = await addCollectionToTable(
+          refCollection,
+          collectionTable,
         );
-        serialized[modeId] = {
-          type: "VARIABLE_ALIAS",
-          id: aliasId,
-        };
+        referencedEntry._colRef = refCollectionRef;
       }
+
+      // Recursively resolve this variable's values if it has any
+      if (referencedVariable.valuesByMode) {
+        referencedEntry.valuesByMode = await resolveVariableValuesRecursively(
+          referencedVariable.valuesByMode,
+          variableTable,
+          collectionTable,
+          newVisitedIds,
+        );
+      }
+
+      // Add to table and get index
+      const refIndex = variableTable.addVariable(referencedEntry);
+
+      // Store serialized alias with both ID and table reference
+      serialized[modeId] = {
+        type: "VARIABLE_ALIAS",
+        id: aliasId,
+        _varRef: refIndex,
+      };
     } else {
       // Unknown value type - store as-is (shouldn't happen normally)
       serialized[modeId] = value;
@@ -186,25 +176,44 @@ const COLLECTION_GUID_KEY = "recursica:collectionId";
  * @param collection - The variable collection
  * @returns The GUID for the collection
  */
-function getOrGenerateCollectionGuid(collection: VariableCollection): string {
-  // Try to get existing GUID from plugin data
-  const existingGuid = collection.getSharedPluginData(
-    "recursica",
-    COLLECTION_GUID_KEY,
-  );
+async function getOrGenerateCollectionGuid(
+  collection: VariableCollection,
+): Promise<string> {
+  // Check if collection is remote - we can't write plugin data to remote collections
+  const isRemote = collection.remote === true;
 
-  if (existingGuid && existingGuid.trim() !== "") {
-    return existingGuid;
+  if (!isRemote) {
+    // For local collections, try to get existing GUID from plugin data
+    const existingGuid = collection.getSharedPluginData(
+      "recursica",
+      COLLECTION_GUID_KEY,
+    );
+
+    if (existingGuid && existingGuid.trim() !== "") {
+      return existingGuid;
+    }
+
+    // Generate new GUID (UUID v4)
+    // Request GUID from UI which has access to crypto.randomUUID()
+    const newGuid = await requestGuidFromUI();
+
+    // Store GUID in plugin data for future use (only for local collections)
+    collection.setSharedPluginData("recursica", COLLECTION_GUID_KEY, newGuid);
+
+    return newGuid;
+  } else {
+    // For remote collections, we can't write plugin data
+    // Remote collections must be registered in REGISTERED_REMOTE_COLLECTIONS
+    const registeredGuid = REGISTERED_REMOTE_COLLECTIONS[collection.id];
+
+    if (!registeredGuid) {
+      throw new Error(
+        "Unrecognized remote variable collection. Please contact the developers to register your collection to proceed",
+      );
+    }
+
+    return registeredGuid;
   }
-
-  // Generate new GUID (UUID v4)
-  // Using crypto.randomUUID() which is available in modern environments
-  const newGuid = crypto.randomUUID();
-
-  // Store GUID in plugin data for future use
-  collection.setSharedPluginData("recursica", COLLECTION_GUID_KEY, newGuid);
-
-  return newGuid;
 }
 
 /**
@@ -247,7 +256,7 @@ async function addCollectionToTable(
   validateCollectionName(collection.name, isLocal);
 
   // Get or generate GUID for the collection
-  const collectionGuid = getOrGenerateCollectionGuid(collection);
+  const collectionGuid = await getOrGenerateCollectionGuid(collection);
 
   // Extract mode names as an array
   const modes: string[] = collection.modes.map((mode) => mode.name);
@@ -335,8 +344,12 @@ export async function resolveVariableAliasMetadata(
     // Return reference
     return createVariableReference(index);
   } catch (error) {
-    console.log("Could not resolve variable alias:", alias.id, error);
-    return null;
+    // Log error and rethrow to bubble up to exportPage
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Could not resolve variable alias:", alias.id, error);
+    throw new Error(
+      `Failed to resolve variable alias ${alias.id}: ${errorMessage}`,
+    );
   }
 }
 

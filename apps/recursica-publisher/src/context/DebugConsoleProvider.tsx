@@ -36,6 +36,13 @@ export function DebugConsoleProvider({
       if (!pluginMessage || pluginMessage.type !== "DebugConsole") return;
 
       const { payload } = pluginMessage;
+
+      // Handle clear message
+      if (payload.message === "__CLEAR__") {
+        setMessages([]);
+        return;
+      }
+
       const messageType: "error" | "warning" | "log" =
         payload.type === "error"
           ? "error"

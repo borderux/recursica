@@ -1,6 +1,7 @@
 import { services } from "./services";
 import type { PluginMessage, PluginResponse } from "./types/messages";
 import type { ServiceName } from "./types/ServiceName";
+import { handleGuidResponse } from "./utils/requestGuidFromUI";
 
 // Service map - automatically derived from services export
 // This ensures any service added to services/index.ts is automatically available
@@ -13,22 +14,32 @@ figma.showUI(__html__, {
 });
 
 // Message handler - routes messages to services based on type
-figma.ui.onmessage = async (message: PluginMessage) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+figma.ui.onmessage = async (message: PluginMessage | any) => {
   console.log("Received message:", message);
 
+  // Handle GUID response messages (from UI to plugin)
+  if (message.type === "GenerateGuidResponse") {
+    handleGuidResponse(message);
+    return;
+  }
+
+  // At this point, message should be a PluginMessage
+  const pluginMessage = message as PluginMessage;
+
   try {
-    const serviceName = message.type as ServiceName;
+    const serviceName = pluginMessage.type as ServiceName;
     const service = serviceMap[serviceName];
 
     if (!service) {
-      console.warn("Unknown message type:", message.type);
+      console.warn("Unknown message type:", pluginMessage.type);
       const errorResponse: PluginResponse = {
-        type: message.type,
+        type: pluginMessage.type,
         success: false,
         error: true,
-        message: "Unknown message type: " + message.type,
+        message: "Unknown message type: " + pluginMessage.type,
         data: {},
-        requestId: message.requestId,
+        requestId: pluginMessage.requestId,
       };
       figma.ui.postMessage(errorResponse);
       return;
@@ -37,22 +48,22 @@ figma.ui.onmessage = async (message: PluginMessage) => {
     // Cast data as any since it comes from the UI proxy call
     // The service function will have the correct type for its data parameter
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const response = await service(message.data as any);
+    const response = await service(pluginMessage.data as any);
     // Include requestId in response so UI can match it to the pending promise
     figma.ui.postMessage({
       ...response,
-      requestId: message.requestId,
+      requestId: pluginMessage.requestId,
     });
   } catch (error) {
     console.error("Error handling message:", error);
     const errorResponse: PluginResponse = {
-      type: message.type,
+      type: pluginMessage.type,
       success: false,
       error: true,
       message:
         error instanceof Error ? error.message : "Unknown error occurred",
       data: {},
-      requestId: message.requestId,
+      requestId: pluginMessage.requestId,
     };
     figma.ui.postMessage(errorResponse);
   }

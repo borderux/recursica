@@ -14,6 +14,8 @@ import {
   type VariableAliasSerialized,
   type CollectionTableEntry,
 } from "./parsers/variableTable";
+import { requestGuidFromUI } from "../utils/requestGuidFromUI";
+import { REGISTERED_REMOTE_COLLECTIONS } from "../../const/RegisteredCollections";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export interface ImportPageData {
@@ -99,25 +101,44 @@ const COLLECTION_GUID_KEY = "recursica:collectionId";
  * @param collection - The variable collection
  * @returns The GUID for the collection
  */
-function getOrGenerateCollectionGuid(collection: VariableCollection): string {
-  // Try to get existing GUID from plugin data
-  const existingGuid = collection.getSharedPluginData(
-    "recursica",
-    COLLECTION_GUID_KEY,
-  );
+async function getOrGenerateCollectionGuid(
+  collection: VariableCollection,
+): Promise<string> {
+  // Check if collection is remote - we can't write plugin data to remote collections
+  const isRemote = collection.remote === true;
 
-  if (existingGuid && existingGuid.trim() !== "") {
-    return existingGuid;
+  if (!isRemote) {
+    // For local collections, try to get existing GUID from plugin data
+    const existingGuid = collection.getSharedPluginData(
+      "recursica",
+      COLLECTION_GUID_KEY,
+    );
+
+    if (existingGuid && existingGuid.trim() !== "") {
+      return existingGuid;
+    }
+
+    // Generate new GUID (UUID v4)
+    // Request GUID from UI which has access to crypto.randomUUID()
+    const newGuid = await requestGuidFromUI();
+
+    // Store GUID in plugin data for future use (only for local collections)
+    collection.setSharedPluginData("recursica", COLLECTION_GUID_KEY, newGuid);
+
+    return newGuid;
+  } else {
+    // For remote collections, we can't write plugin data
+    // Remote collections must be registered in REGISTERED_REMOTE_COLLECTIONS
+    const registeredGuid = REGISTERED_REMOTE_COLLECTIONS[collection.id];
+
+    if (!registeredGuid) {
+      throw new Error(
+        "Unrecognized remote variable collection. Please contact the developers to register your collection to proceed",
+      );
+    }
+
+    return registeredGuid;
   }
-
-  // Generate new GUID (UUID v4)
-  // Using crypto.randomUUID() which is available in modern environments
-  const newGuid = crypto.randomUUID();
-
-  // Store GUID in plugin data for future use
-  collection.setSharedPluginData("recursica", COLLECTION_GUID_KEY, newGuid);
-
-  return newGuid;
 }
 
 /**
@@ -213,7 +234,7 @@ async function findOrCreateCollectionFromEntry(
                 );
               }
             } else {
-              getOrGenerateCollectionGuid(collection);
+              await getOrGenerateCollectionGuid(collection);
             }
 
             // Ensure all modes exist
@@ -274,7 +295,7 @@ async function findOrCreateCollectionFromEntry(
         }
       } else {
         // Generate GUID if not present in entry (backward compatibility)
-        getOrGenerateCollectionGuid(collection);
+        await getOrGenerateCollectionGuid(collection);
       }
     } else {
       // Create new local collection
@@ -290,7 +311,7 @@ async function findOrCreateCollectionFromEntry(
         );
       } else {
         // Generate GUID if not present in entry (backward compatibility)
-        getOrGenerateCollectionGuid(collection);
+        await getOrGenerateCollectionGuid(collection);
       }
     }
   } else {
