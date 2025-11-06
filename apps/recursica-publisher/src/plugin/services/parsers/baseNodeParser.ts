@@ -2,6 +2,7 @@
 import { BASE_NODE_DEFAULTS, isDifferentFromDefault } from "./nodeDefaults";
 import { extractBoundVariables, serializeFills } from "./boundVariableParser";
 import type { VariableTable, CollectionTable } from "./variableTable";
+import type { InstanceTable } from "./instanceTable";
 
 /**
  * Parser for common base node properties shared across all node types
@@ -15,6 +16,7 @@ export interface ParserContext {
   unhandledKeys: Set<string>;
   variableTable: VariableTable;
   collectionTable: CollectionTable;
+  instanceTable: InstanceTable;
 }
 
 export interface ParsedNodeData {

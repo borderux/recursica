@@ -72,6 +72,19 @@ This document tracks all design decisions, implementation details, and changes m
 - During export: Collections get or generate GUIDs and store them in plugin data
 - During import: Collections are matched by GUID first, then fall back to name matching (backward compatible)
 - Solves the problem of ambiguous collection matching when multiple collections have the same name
+- Removed `type` and `id` fields from variable alias serialization in `valuesByMode` (only `_varRef` is stored)
+- Variable references in JSON now use minimal format: `{ _varRef: number }` instead of `{ type: "VARIABLE_ALIAS", id: string, _varRef: number }`
+
+### Version 2.6.0
+
+- Introduced instance table system for component instance deduplication
+- Instances stored once in a table, referenced by index throughout JSON using `_instanceRef`
+- Instance table stored at root level: `{ metadata, collections, variables, instances, libraries, pageData }`
+- Instances classified into three types: `internal` (same page), `normal` (different page, same file), `remote` (different file)
+- Internal instances store only component node ID (minimal storage)
+- Normal instances store component GUID and version from page metadata (for cross-page resolution)
+- Remote instances store full visual structure (fallback when reference cannot be resolved)
+- Reduces JSON size by deduplicating component references when the same component is used multiple times
 
 ## Collections Table System
 
@@ -364,10 +377,16 @@ INSTANCE nodes are classified into three categories based on their main componen
 ### Implementation
 
 - **InstanceTable Class**: Manages unique instances using a composite key based on instance type:
-  - For `internal`: Uses component node ID as the unique identifier
-  - For `normal`: Uses component GUID + version as the unique identifier
-  - For `remote`: Uses component key or generates a unique identifier based on component metadata
+  - For `internal`: Uses `internal:${componentNodeId}` as the unique key
+  - For `normal`: Uses `normal:${componentGuid}:${componentVersion}` as the unique key
+  - For `remote`: Uses `remote:${remoteLibraryKey}:${componentName}` as the unique key (fallback to component name and type if library key unavailable)
+  - Provides `addInstance()` method that returns the index (existing or newly added)
+  - Provides `getInstanceByIndex()` for lookup during import
+  - Provides `getSerializedTable()` for JSON export
+  - Provides static `fromTable()` method for reconstruction during import
 - **InstanceTableEntry Interface**: Contains metadata needed to recreate an instance (see interface definition above)
+- **Key Generation**: The `generateKey()` method creates unique keys based on instance type to ensure proper deduplication
+- **Serialization**: All fields in `InstanceTableEntry` are included in the serialized JSON (no filtering needed, unlike variable table)
 
 ```typescript
 interface InstanceTableEntry {
@@ -518,8 +537,11 @@ if (isRemote) {
 
 5. **Store Instance Reference**:
 
+   - Add instance entry to `InstanceTable` using `context.instanceTable.addInstance(entry)`
+   - Get the returned index from `addInstance()` (will return existing index if instance already in table)
    - Add `_instanceRef` to node data pointing to instance table index
-   - Replace the instance node's mainComponent reference in the JSON with the `_instanceRef` to point to the instance table entry
+   - Replace the instance node's `mainComponent` reference in the JSON with `_instanceRef` to point to the instance table entry
+   - The `_instanceRef` field is stored directly in the node data (e.g., `{ type: "INSTANCE", _instanceRef: 0, ... }`)
 
 6. **Handle Unpublished Components** (After Export):
    - If any unpublished components were collected during export:
@@ -596,6 +618,51 @@ When processing instances of type "normal" (different page, same file):
    - Each published component page gets its own JSON file with the `.comp.json` extension
    - The main page export continues regardless of whether components are published or not
 
+### Implementation Details
+
+**Export Process** (`instanceParser.ts`):
+
+1. When an `INSTANCE` node is encountered during export:
+
+   - Get main component via `await node.getMainComponentAsync()`
+   - Determine instance type using `getPageFromNode()` helper:
+     - Check if `mainComponent.remote === true` → `remote`
+     - Check if component page ID === instance page ID → `internal`
+     - Otherwise → `normal`
+   - Extract variant properties and component properties from instance node
+   - Build parent paths for both instance and component
+   - Create `InstanceTableEntry` with appropriate fields based on type
+   - For `normal` instances: Retrieve component metadata from page using `getSharedPluginData("recursica", "RecursicaPublishedMetadata")`
+   - For `remote` instances: Attempt to get library info via `getPublishStatusAsync()` and team library APIs, then extract full structure using `extractNodeData()`
+   - Add entry to instance table: `const index = context.instanceTable.addInstance(entry)`
+   - Return `{ _instanceRef: index }` instead of `mainComponent` object
+
+2. Instance table is included in JSON export at root level:
+
+   ```json
+   {
+     "metadata": { ... },
+     "collections": { ... },
+     "variables": { ... },
+     "instances": {
+       "0": { "instanceType": "internal", "componentNodeId": "...", ... },
+       "1": { "instanceType": "normal", "componentGuid": "...", ... },
+       ...
+     },
+     "libraries": [ ... ],
+     "pageData": { ... }
+   }
+   ```
+
+3. **Key Generation Logic**:
+
+   The `InstanceTable.generateKey()` method creates unique keys for deduplication:
+
+   - `internal:${componentNodeId}` - Simple node ID for same-page components
+   - `normal:${componentGuid}:${componentVersion}` - GUID + version for cross-page components
+   - `remote:${remoteLibraryKey}:${componentName}` - Library key + name for remote components
+   - Fallback: `${instanceType}:${componentName}:${componentType}` if required fields missing
+
 ### Benefits
 
 - **Component Deduplication**: Each unique component stored once, referenced by index
@@ -603,6 +670,7 @@ When processing instances of type "normal" (different page, same file):
 - **Reference Preservation**: Normal components can be resolved by GUID and version from component metadata
 - **Interactive Publishing**: Prompts users to publish unpublished component pages during export, allowing them to publish dependencies on-the-fly
 - **Efficient Storage**: Internal instances only store node ID; normal components store GUID + version; remote instances store full structure only when needed
+- **Reduced JSON Size**: When the same component is used multiple times, it's stored once in the instance table and referenced by index
 - **Multiple JSON Outputs**: Can generate multiple JSON files in one export session (main page + published component pages)
 - **Fast Lookup**: In-memory index enables O(1) component resolution during import
 - **Fallback Support**: Structure available for remote components when reference fails

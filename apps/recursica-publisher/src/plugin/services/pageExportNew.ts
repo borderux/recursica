@@ -10,6 +10,7 @@ import { parseVectorProperties } from "./parsers/vectorParser";
 import { parseShapeProperties } from "./parsers/shapeParser";
 import { parseInstanceProperties } from "./parsers/instanceParser";
 import { VariableTable, CollectionTable } from "./parsers/variableTable";
+import { InstanceTable } from "./parsers/instanceTable";
 import { debugConsole } from "./debugConsole";
 
 export interface ExportPageData {
@@ -75,6 +76,7 @@ export async function extractNodeData(
     unhandledKeys: new Set<string>(),
     variableTable: context.variableTable!,
     collectionTable: context.collectionTable!,
+    instanceTable: context.instanceTable!,
   };
 
   // Handle circular references
@@ -361,10 +363,13 @@ export async function exportPage(
       `Selected page: "${selectedPage.name}" (index: ${pageIndex})`,
     );
 
-    // Create variable table and collection table for storing unique variables and collections
-    await debugConsole.log("Initializing variable and collection tables...");
+    // Create variable table, collection table, and instance table for storing unique references
+    await debugConsole.log(
+      "Initializing variable, collection, and instance tables...",
+    );
     const variableTable = new VariableTable();
     const collectionTable = new CollectionTable();
+    const instanceTable = new InstanceTable();
 
     // Get available library variable collections
     await debugConsole.log("Fetching team library variable collections...");
@@ -407,6 +412,7 @@ export async function exportPage(
       {
         variableTable,
         collectionTable,
+        instanceTable,
       },
     );
     await debugConsole.log("Node extraction finished");
@@ -415,10 +421,12 @@ export async function exportPage(
     const totalVariables = variableTable.getSize();
     const totalCollections = collectionTable.getSize();
 
+    const totalInstances = instanceTable.getSize();
     await debugConsole.log(`Extraction complete:`);
     await debugConsole.log(`  - Total nodes: ${totalNodes}`);
     await debugConsole.log(`  - Unique variables: ${totalVariables}`);
     await debugConsole.log(`  - Unique collections: ${totalCollections}`);
+    await debugConsole.log(`  - Unique instances: ${totalInstances}`);
 
     if (totalCollections > 0) {
       await debugConsole.log("Collections found:");
@@ -433,12 +441,12 @@ export async function exportPage(
       }
     }
 
-    // Create export data with metadata, collections table, variable table, libraries, and page data
+    // Create export data with metadata, collections table, variable table, instance table, libraries, and page data
     await debugConsole.log("Creating export data structure...");
     const exportData = {
       metadata: {
         exportedAt: new Date().toISOString(),
-        exportFormatVersion: "2.5.0", // Updated version for collection GUID system and serialized collection table
+        exportFormatVersion: "2.6.0", // Updated version for instance table system
         figmaApiVersion: figma.apiVersion,
         originalPageName: selectedPage.name,
         totalNodes: totalNodes,
@@ -446,6 +454,7 @@ export async function exportPage(
       },
       collections: collectionTable.getSerializedTable(),
       variables: variableTable.getSerializedTable(),
+      instances: instanceTable.getSerializedTable(),
       libraries: libraries,
       pageData: extractedPageData,
     };
