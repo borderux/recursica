@@ -208,62 +208,65 @@ Components are identified using a GUID (Globally Unique Identifier) stored as pl
 
 INSTANCE nodes are classified into three categories based on their main component's location:
 
-#### 1. Remote Components (Different File)
+#### 1. Internal (Same Page)
+
+- **Detection**: `mainComponent.remote === false` AND component's page ID === instance's page ID
+- **Characteristics**: Component exists on the same page as the instance being exported
+- **Storage Strategy**: Store only the node ID of the component in the instance table entry
+- **Reference Resolution**: On import, resolve by looking up the component node ID within the same page
+- **Instance Table Entry**: Minimal - just the component node ID reference
+
+#### 2. Normal (Different Page, Same File)
+
+- **Detection**: `mainComponent.remote === false` AND component's page ID ≠ instance's page ID
+- **Characteristics**: Component exists on a different page within the same file. This page will be exported as a separate component file and referenced using its GUID.
+- **Storage Strategy**: Store the GUID and version number from the component's published metadata (stored as plugin data on the PAGE node using key `RecursicaPublishedMetadata`)
+- **Publishing Requirement**: The page should be published (have component metadata with non-empty `id` and `version > 0`). If not published, the page is collected for publishing prompts at the end of export.
+- **Reference Resolution**: On import, resolve by looking up the component page using the stored GUID and version number
+- **Instance Table Entry**: Store `componentGuid` (from metadata.id), `componentVersion` (from metadata.version), and component name. If not published, store the page reference for later publishing.
+
+#### 3. Remote (Different File)
 
 - **Detection**: `mainComponent.remote === true`
 - **Characteristics**: Component exists in a different file (team library or external file)
-- **Reference Resolution**: Cannot resolve reference on import (component doesn't exist in target file)
-- **Storage Strategy**: Store full visual structure in instance table (acts as fallback)
-
-#### 2. Top-Level Components (Different Page, Same File)
-
-- **Detection**: `mainComponent.remote === false` AND component's page ID ≠ instance's page ID
-- **Characteristics**: Component exists on a different page within the same file
-- **Reference Resolution**: Can resolve reference on import using GUID (component exists in file, can search all pages)
-- **Storage Strategy**: Store reference only (GUID, name, variant properties, component properties)
-
-#### 3. Internal Components (Same Page)
-
-- **Detection**: `mainComponent.remote === false` AND component's page ID === instance's page ID
-- **Characteristics**: Component exists on the same page as the instance
-- **Reference Resolution**: Can resolve reference on import using GUID (component exists on same page)
-- **Storage Strategy**: Store reference only (GUID, name, variant properties, component properties)
+- **Storage Strategy**: Store a complete visual representation of the instance in the instance table (all node information needed to visually render it). This is a fallback since the reference cannot be resolved.
+- **Reference Resolution**: Cannot resolve reference on import (component doesn't exist in target file). The visual representation is used to recreate the instance.
+- **Instance Table Entry**: Store full visual structure (recursively exported using `extractNodeData()`) plus reference metadata (name, path, etc.)
 
 ### Implementation
 
-- **InstanceTable Class**: Manages unique components using `globalComponentId` (GUID) as the unique identifier
-- **InstanceTableEntry Interface**: Contains metadata needed to recreate an instance:
+- **InstanceTable Class**: Manages unique instances using a composite key based on instance type:
+  - For `internal`: Uses component node ID as the unique identifier
+  - For `normal`: Uses component GUID + version as the unique identifier
+  - For `remote`: Uses component key or generates a unique identifier based on component metadata
+- **InstanceTableEntry Interface**: Contains metadata needed to recreate an instance (see interface definition above)
 
 ```typescript
 interface InstanceTableEntry {
-  // Globally unique identifier (GUID stored as plugin data)
-  globalComponentId: string; // UUID v4 format
+  // Instance type classification
+  instanceType: "internal" | "normal" | "remote";
 
-  // Component identification
+  // For internal instances (same page)
+  componentNodeId?: string; // Node ID of the component on the same page
+
+  // For normal instances (different page, same file)
+  componentGuid?: string; // GUID from component metadata (RecursicaPublishedMetadata.id)
+  componentVersion?: number; // Version number from component metadata (RecursicaPublishedMetadata.version)
+  componentPageName?: string; // Name of the page that contains the component
+
+  // For remote instances (different file)
+  structure?: any; // Full visual structure (recursively exported using extractNodeData())
+  remoteLibraryName?: string; // Library name if available
+  remoteLibraryKey?: string; // Library key if available
+
+  // Common fields (used for all types)
   componentName: string; // Component name (may be variant property string)
   componentSetName?: string; // Actual component set name (if variant)
-  componentType: string; // Component type (COMPONENT, COMPONENT_SET)
-  componentKey?: string; // Component key (for same-file matching, optional)
-
-  // Classification
-  isRemote: boolean; // Whether component is from different file
-  isTopLevel: boolean; // Whether component is on different page (same file)
-  isInternal: boolean; // Whether component is on same page
-
-  // Path information
-  _path?: string; // Path within library/file (for remote/top-level)
+  componentType?: string; // Component type (COMPONENT, COMPONENT_SET) - mainly for remote
+  _path?: string; // Path within library/file (for remote/normal components)
   _instancePath?: string; // Path of instance in current file (for reference)
-
-  // Variant/Property information
   variantProperties?: Record<string, string>; // Variant property values
   componentProperties?: Record<string, any>; // Component property values
-
-  // Full structure (for remote components only)
-  structure?: any; // Full visual structure (recursively exported)
-
-  // Remote library information (if applicable)
-  remoteLibraryName?: string;
-  remoteLibraryKey?: string;
 }
 ```
 
@@ -279,49 +282,26 @@ Instances reference components in JSON using:
 
 Similar to `_varRef`, the presence of `_instanceRef` indicates it's an instance reference pointing to the instance table index.
 
-### GUID Management
+### Component Identification
 
-**During Export**:
+**For Internal Instances**:
 
-1. **Get or Create GUID**:
+- Use the component's node ID directly (same page, simple reference)
 
-   ```typescript
-   const PLUGIN_DATA_KEY = "recursica:componentId";
-   let guid = mainComponent.getPluginData(PLUGIN_DATA_KEY);
+**For Normal Instances (Different Page, Same File)**:
 
-   if (!guid) {
-     guid = generateUUID(); // Generate UUID v4
-     mainComponent.setPluginData(PLUGIN_DATA_KEY, guid);
-   }
-   ```
+- Use the component metadata stored on the PAGE node (plugin data key: `RecursicaPublishedMetadata`)
+- The metadata contains:
+  - `id`: GUID (globally unique identifier for the component)
+  - `version`: Version number of the published component
+- This metadata is set when a page is published as a component
+- The GUID and version are stored in the instance table entry for reference resolution on import
+- The page will be exported as a separate component file (`.comp.json`)
 
-2. **Store in Instance Table**:
-   - Add component to instance table with `globalComponentId: guid`
-   - Store reference index in instance node data as `_instanceRef`
+**For Remote Instances**:
 
-**During Import**:
-
-1. **Build Component Index**:
-
-   ```typescript
-   const componentIdIndex = new Map<string, ComponentNode>();
-   ```
-
-2. **Search for Existing Components**:
-
-   - Before creating components, search all pages for components with matching GUIDs
-   - Populate index: `componentIdIndex.set(guid, component)`
-
-3. **Create or Reuse Components**:
-
-   - If component exists in index: Reuse it
-   - If not: Create new component and store GUID on it
-   - Add to index for future lookups
-
-4. **Create Instances**:
-   - Look up component by GUID from index
-   - Create instance from component
-   - Apply variant properties and component properties
+- Cannot use GUID resolution (component doesn't exist in target file)
+- Store full visual structure instead
 
 ### Page Detection Logic
 
@@ -349,16 +329,26 @@ const instancePage = getPageFromNode(instanceNode);
 const componentPage = getPageFromNode(mainComponent);
 
 const isRemote = mainComponent.remote === true;
-const isTopLevel =
-  !isRemote &&
-  componentPage &&
-  instancePage &&
-  componentPage.id !== instancePage.id;
 const isInternal =
   !isRemote &&
   componentPage &&
   instancePage &&
   componentPage.id === instancePage.id;
+const isNormal =
+  !isRemote &&
+  componentPage &&
+  instancePage &&
+  componentPage.id !== instancePage.id;
+
+// Determine instance type
+let instanceType: "internal" | "normal" | "remote";
+if (isRemote) {
+  instanceType = "remote";
+} else if (isInternal) {
+  instanceType = "internal";
+} else if (isNormal) {
+  instanceType = "normal";
+}
 ```
 
 ### Export Strategy
@@ -368,56 +358,127 @@ const isInternal =
 1. **Encounter INSTANCE node**:
 
    - Get main component via `getMainComponentAsync()`
-   - Get or create GUID for component (store as plugin data if new)
-   - Determine classification (remote/top-level/internal)
-   - Get or add component to instance table
+   - Determine classification (internal/normal/remote)
+   - Get or add component to instance table based on classification
 
-2. **For Remote Components**:
+2. **For Internal Instances (Same Page)**:
 
-   - Recursively export full visual structure using `extractNodeData()`
+   - Store only the component's node ID in the instance table entry
+   - Set `instanceType: "internal"` and `componentNodeId: mainComponent.id`
+   - Store variant properties and component properties if present
+   - Minimal storage - just enough to resolve on import
+
+3. **For Normal Instances (Different Page, Same File)**:
+
+   - Get the page node that contains the main component
+   - Retrieve component metadata from the page using plugin data key `RecursicaPublishedMetadata`
+   - **Check Publishing Status**: Check if metadata exists and has `id` (non-empty) and `version > 0`
+   - **If published**: Store `componentGuid` (from metadata.id), `componentVersion` (from metadata.version), and `componentPageName` (from page.name)
+   - **If not published**: Store the page reference (page node and page name) in an unpublished components list for later processing. Continue with export but note that this component needs publishing.
+   - Set `instanceType: "normal"`
+   - Store variant properties and component properties if present
+   - Do NOT store full structure (can be resolved by GUID and version on import)
+
+4. **For Remote Instances (Different File)**:
+
+   - Recursively export full visual structure using `extractNodeData()` (excluding the instance reference itself to avoid circular references)
    - Store structure in instance table entry
-   - Store reference metadata (GUID, name, path, etc.)
+   - Set `instanceType: "remote"`
+   - Store reference metadata (name, path, library info if available)
+   - Store variant properties and component properties if present
+   - This visual representation serves as the fallback when the reference cannot be resolved
 
-3. **For Top-Level/Internal Components**:
+5. **Store Instance Reference**:
 
-   - Store reference metadata only (GUID, name, variant props, component props, path)
-   - Do NOT store full structure (can be resolved by GUID on import)
-
-4. **Store Instance Reference**:
    - Add `_instanceRef` to node data pointing to instance table index
+   - Replace the instance node's mainComponent reference in the JSON with the `_instanceRef` to point to the instance table entry
+
+6. **Handle Unpublished Components** (After Export):
+   - If any unpublished components were collected during export:
+     - Step through each unpublished page in the list
+     - For each page, prompt the user using the plugin's prompt feature: "Would you like to publish [Page Name] as a component?"
+     - If user says "Yes":
+       - Call `exportPageNew` for that page to generate its JSON export
+       - The exported JSON file will be saved with filename: `<component-name>.comp.json` (where component-name is the cleaned page name)
+       - This publishes the page as a component, storing the component metadata on the page node
+       - The export process can generate multiple JSON files: one for the main page being exported, plus one for each published component page
+     - If user says "No": Skip that page and continue with the next one
+   - After all prompts are complete, the main page export continues or completes
 
 ### Import Strategy
 
 **During Import**:
 
-1. **Build Component Index** (First Pass):
-
-   - Search all pages in file for components with `recursica:componentId` plugin data
-   - Build index: `Map<guid, ComponentNode>`
-
-2. **Process Instance Table** (Second Pass):
+1. **Process Instance Table** (First Pass):
 
    - For each instance table entry:
-     - If `isRemote` and has `structure`: Recreate component from structure, store GUID
-     - If `isTopLevel` or `isInternal`: Look up component by GUID in index
-     - If component not found: Log warning, create from structure (if available) or skip
+     - **If `instanceType === "internal"`**: Look up component by `componentNodeId` on the same page (will be resolved when recreating nodes on that page)
+     - **If `instanceType === "normal"`**:
+       - Search all pages for a page with component metadata matching `componentGuid` and `componentVersion`
+       - If found: Extract the component node from that page (typically the first component on the page)
+       - If not found: Log error and skip (should not happen if export validation worked)
+     - **If `instanceType === "remote"`**:
+       - Recreate component from the stored `structure` (visual representation)
+       - This creates a local copy of the remote component that can be used for the instance
 
-3. **Create Instances** (Third Pass):
-   - When encountering `_instanceRef` in node data:
-     - Look up component by GUID from index
-     - Create instance from component
-     - Apply variant properties and component properties
+2. **Create Instances** (Second Pass):
+   - When encountering `_instanceRef` in node data during node recreation:
+     - Look up the instance table entry by index
+     - Get the resolved component (from step 1 above)
+     - Create instance from the component
+     - Apply variant properties and component properties from the instance table entry
+     - Replace the `_instanceRef` in the JSON node data with the actual instance reference
+
+### Unpublished Component Publishing Flow
+
+**During Export** (`pageExportNew`):
+
+When processing instances of type "normal" (different page, same file):
+
+1. **Collect Unpublished Components**:
+
+   - For each instance that references a component on a different page:
+     - Get the page node containing the main component
+     - Retrieve component metadata using `RecursicaPublishedMetadata` plugin data key
+     - Check if metadata exists and has valid `id` (non-empty string) and `version > 0`
+     - If not published, add the page reference (page node, page name, page index) to an unpublished components list
+   - Continue with export (do not fail)
+
+2. **Publishing Prompts** (After Export):
+
+   - After the main page export completes, if any unpublished components were collected:
+     - Iterate through each unpublished page in the list
+     - For each page, show a prompt dialog: `"Would you like to publish [Page Name] as a component?"`
+     - Wait for user response
+     - **If user confirms ("Yes")**:
+       - Call `exportPageNew` for that page to generate its component JSON
+       - Save the exported JSON file with filename: `<component-name>.comp.json`
+         - Where `component-name` is the cleaned page name (e.g., "Button" → "Button.comp.json")
+       - The `exportPageNew` function will store component metadata on the page node (GUID, version, etc.)
+       - This publishes the page as a component
+     - **If user declines ("No")**:
+       - Skip that page and continue with the next one
+     - Continue until all unpublished pages have been processed
+
+3. **Multiple JSON Files**:
+
+   - `exportPageNew` can generate multiple JSON files:
+     - One for the main page being exported (e.g., `MyPage_export.json`)
+     - One for each component page that gets published (e.g., `Button.comp.json`, `Input.comp.json`)
+   - Each published component page gets its own JSON file with the `.comp.json` extension
+   - The main page export continues regardless of whether components are published or not
 
 ### Benefits
 
 - **Component Deduplication**: Each unique component stored once, referenced by index
-- **Selective Structure Storage**: Only remote components store full structure (saves space)
-- **Reference Preservation**: Top-level/internal components can be resolved by GUID
-- **Cross-File Compatibility**: GUIDs work across different files and users
-- **Persistence**: GUIDs stored on components survive file operations
+- **Selective Structure Storage**: Only remote components store full structure (saves space). Internal and normal components use minimal references
+- **Reference Preservation**: Normal components can be resolved by GUID and version from component metadata
+- **Interactive Publishing**: Prompts users to publish unpublished component pages during export, allowing them to publish dependencies on-the-fly
+- **Efficient Storage**: Internal instances only store node ID; normal components store GUID + version; remote instances store full structure only when needed
+- **Multiple JSON Outputs**: Can generate multiple JSON files in one export session (main page + published component pages)
 - **Fast Lookup**: In-memory index enables O(1) component resolution during import
 - **Fallback Support**: Structure available for remote components when reference fails
-- **Variant Handling**: Variant properties and component properties preserved
+- **Variant Handling**: Variant properties and component properties preserved for all instance types
 
 ### Known Limitations
 
@@ -425,16 +486,20 @@ const isInternal =
 
    - Cannot access parent chain beyond COMPONENT_SET for remote components
    - Path information may be limited to component set name only
+   - Full visual structure must be stored since reference cannot be resolved
 
-2. **Plugin Data Scope**:
+2. **Component Publishing Requirement**:
 
-   - Plugin data is file-specific, so GUIDs are only available within the same file
-   - For remote components, GUID lookup won't work (must use structure)
+   - Components referenced from other pages should be published for proper resolution
+   - If unpublished, the user is prompted to publish them during export
+   - Users can choose to publish or skip each component page
+   - Export continues regardless of publishing decisions
 
-3. **Component Key Uniqueness**:
+3. **Component Metadata Dependency**:
 
-   - Component keys are file-specific, not universally unique
-   - GUID provides the globally unique identifier needed for cross-file scenarios
+   - Other component references rely on component metadata being stored on PAGE nodes
+   - If metadata is missing or corrupted, the reference cannot be resolved
+   - Export validation prevents this scenario by failing early
 
 4. **Library Dependencies**:
    - Remote components require full structure storage
