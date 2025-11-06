@@ -7,13 +7,13 @@
 
 /**
  * Collection table entry stores collection metadata including modes
- * Modes are stored as modeId -> modeName mapping for accurate recreation
+ * Modes are stored as an array of mode names
  */
 export interface CollectionTableEntry {
   collectionName: string;
   collectionId: string; // Original collection ID
   isLocal: boolean;
-  modes: Record<string, string>; // modeId -> modeName mapping
+  modes: string[]; // Array of mode names
 }
 
 /**

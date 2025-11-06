@@ -31,27 +31,57 @@ export interface ImportPageResponseData {
 
 /**
  * Ensures a collection has all required modes by name
- * Creates modes if they don't exist, returns mapping of old mode IDs to new mode IDs
+ * Creates modes if they don't exist
  */
 async function ensureCollectionModes(
   collection: VariableCollection,
-  exportedModes: Record<string, string>, // oldModeId -> modeName
-): Promise<Map<string, string>> {
-  // Map: oldModeId -> newModeId
-  const modeMapping = new Map<string, string>();
-
-  for (const [oldModeId, modeName] of Object.entries(exportedModes)) {
+  exportedModeNames: string[], // Array of mode names
+): Promise<void> {
+  // Ensure all exported mode names exist in the collection
+  for (const modeName of exportedModeNames) {
     // Check if mode already exists by name
     const existingMode = collection.modes.find((m) => m.name === modeName);
 
-    if (existingMode) {
-      // Mode exists - use its ID
-      modeMapping.set(oldModeId, existingMode.modeId);
-    } else {
+    if (!existingMode) {
       // Mode doesn't exist - create it
-      // addMode returns the modeId string directly
-      const newModeId = collection.addMode(modeName);
-      modeMapping.set(oldModeId, newModeId);
+      collection.addMode(modeName);
+    }
+  }
+}
+
+/**
+ * Creates a mapping from old mode IDs to new mode IDs
+ * Matches old modeIds (from valuesByMode keys) to mode names by index
+ *
+ * Note: This assumes the order of keys in valuesByMode matches the order
+ * of mode names in the exported modes array.
+ */
+function createModeMapping(
+  collection: VariableCollection,
+  exportedModeNames: string[], // Array of mode names
+  exportedValuesByMode: Record<string, any>, // oldModeId -> value
+): Map<string, string> {
+  // Map: oldModeId -> newModeId
+  const modeMapping = new Map<string, string>();
+
+  // Get old mode IDs from valuesByMode keys
+  const oldModeIds = Object.keys(exportedValuesByMode);
+
+  // Match mode names to old mode IDs by index
+  // This assumes the order is preserved between exportedModeNames and oldModeIds
+  for (let i = 0; i < exportedModeNames.length && i < oldModeIds.length; i++) {
+    const modeName = exportedModeNames[i];
+    const oldModeId = oldModeIds[i];
+
+    // Find the mode by name (should exist after ensureCollectionModes)
+    const mode = collection.modes.find((m) => m.name === modeName);
+
+    if (mode) {
+      modeMapping.set(oldModeId, mode.modeId);
+    } else {
+      console.warn(
+        `Mode "${modeName}" not found in collection "${collection.name}" after ensuring modes exist.`,
+      );
     }
   }
 
@@ -68,7 +98,6 @@ async function findOrCreateCollectionFromEntry(
   collectionEntry: CollectionTableEntry,
 ): Promise<{
   collection: VariableCollection;
-  modeMapping: Map<string, string>;
 }> {
   let collection: VariableCollection;
 
@@ -135,13 +164,10 @@ async function findOrCreateCollectionFromEntry(
     collection = importedCollection;
   }
 
-  // Ensure all modes exist and get mode mapping
-  const modeMapping = await ensureCollectionModes(
-    collection,
-    collectionEntry.modes,
-  );
+  // Ensure all modes exist
+  await ensureCollectionModes(collection, collectionEntry.modes);
 
-  return { collection, modeMapping };
+  return { collection };
 }
 
 /**
@@ -472,7 +498,7 @@ async function resolveVariableReferenceOnImport(
     }
 
     // Use collections table entry
-    const { collection, modeMapping } =
+    const { collection } =
       await findOrCreateCollectionFromEntry(collectionEntry);
 
     // Find existing variable by name
@@ -494,6 +520,13 @@ async function resolveVariableReferenceOnImport(
         );
         return null;
       }
+
+      // Create mode mapping from exported mode names and valuesByMode
+      const modeMapping = createModeMapping(
+        collection,
+        collectionEntry.modes,
+        entry.valuesByMode,
+      );
 
       variable = await createVariableFromEntry(
         entry,

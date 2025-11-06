@@ -4,7 +4,6 @@ import { ServiceName } from "../plugin/types/ServiceName";
 interface PendingCall {
   resolve: (value: ResponseMessage) => void;
   reject: (reason: Error) => void;
-  timeout: ReturnType<typeof setTimeout> | null;
 }
 
 // Map to store pending calls by their request ID
@@ -32,9 +31,6 @@ function initializeMessageHandler(): void {
     const requestId = pluginMessage.requestId;
     if (requestId && pendingCalls.has(requestId)) {
       const pendingCall = pendingCalls.get(requestId)!;
-      if (pendingCall.timeout) {
-        clearTimeout(pendingCall.timeout);
-      }
       pendingCalls.delete(requestId);
 
       // Convert the response to our ResponseMessage format
@@ -67,41 +63,38 @@ function initializeMessageHandler(): void {
   messageHandlerInitialized = true;
 }
 
+export interface CallPluginResult {
+  promise: Promise<ResponseMessage>;
+  cancel: (errorOnCancel?: boolean) => void;
+}
+
 /**
  * Call a plugin service and wait for the response
  * @param serviceName - The name of the service (from ServiceName enum)
  * @param data - The payload data to send to the service
- * @param timeoutMs - Timeout in milliseconds. Defaults to 30000 (30 seconds). Set to -1 for no timeout.
- * @returns Promise that resolves with the ResponseMessage
+ * @returns Object with a promise and a cancel function
  */
-export async function callPlugin(
+export function callPlugin(
   serviceName: ServiceName,
   data: Record<string, unknown> = {},
-  timeoutMs: number = 30000,
-): Promise<ResponseMessage> {
+): CallPluginResult {
   // Initialize the message handler on first call
   initializeMessageHandler();
 
   // Generate unique request ID
   const requestId = generateRequestId();
 
-  // Create promise that will be resolved/rejected when response arrives
-  return new Promise<ResponseMessage>((resolve, reject) => {
-    // Set up timeout only if not -1 (which means no timeout)
-    const timeout =
-      timeoutMs === -1
-        ? null
-        : setTimeout(() => {
-            pendingCalls.delete(requestId);
-            reject(new Error(`Plugin request timeout: ${serviceName}`));
-          }, timeoutMs);
+  let pendingCall: PendingCall | null = null;
 
+  // Create promise that will be resolved/rejected when response arrives
+  const promise = new Promise<ResponseMessage>((resolve, reject) => {
     // Store the promise handlers
-    pendingCalls.set(requestId, {
+    pendingCall = {
       resolve,
       reject,
-      timeout,
-    });
+    };
+
+    pendingCalls.set(requestId, pendingCall);
 
     // Send the message to the plugin
     // Note: We use parent.postMessage() here because this function runs in the UI iframe.
@@ -118,4 +111,20 @@ export async function callPlugin(
       "*",
     );
   });
+
+  // Cancel function
+  const cancel = (errorOnCancel?: boolean): void => {
+    if (pendingCalls.has(requestId)) {
+      const call = pendingCalls.get(requestId)!;
+      pendingCalls.delete(requestId);
+
+      if (errorOnCancel) {
+        call.reject(new Error(`Service call cancelled: ${serviceName}`));
+      }
+      // If errorOnCancel is false/undefined, we just remove the call
+      // and don't resolve or reject the promise (it will be abandoned)
+    }
+  };
+
+  return { promise, cancel };
 }

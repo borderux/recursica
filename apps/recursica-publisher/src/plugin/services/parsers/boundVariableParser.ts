@@ -182,11 +182,8 @@ async function addCollectionToTable(
   collection: VariableCollection,
   collectionTable: CollectionTable,
 ): Promise<number> {
-  // Build mode mapping: modeId -> modeName
-  const modes: Record<string, string> = {};
-  for (const mode of collection.modes) {
-    modes[mode.modeId] = mode.name;
-  }
+  // Extract mode names as an array
+  const modes: string[] = collection.modes.map((mode) => mode.name);
 
   // Create collection entry
   const collectionEntry: CollectionTableEntry = {

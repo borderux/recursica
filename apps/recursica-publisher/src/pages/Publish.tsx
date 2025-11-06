@@ -9,36 +9,44 @@ export default function Publish() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [componentName, setComponentName] = useState<string>("");
+  const [currentPageIndex, setCurrentPageIndex] = useState<number | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
+    const loadMetadata = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const { promise } = callPlugin("getComponentMetadata", {});
+        const response = await promise;
+        if (response.success && response.data) {
+          const responseData = response.data as {
+            componentMetadata: ComponentMetadata;
+            currentPageIndex: number;
+          };
+          const metadata = responseData.componentMetadata;
+          setComponentName(metadata.name);
+          // Check if metadata is actually published (has an id and publishDate)
+          const isPublished = metadata.id && metadata.publishDate;
+          setMetadata(isPublished ? metadata : null);
+          // Set the current page index from the response
+          setCurrentPageIndex(responseData.currentPageIndex);
+        } else {
+          setMetadata(null);
+        }
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to load component metadata",
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadMetadata();
   }, []);
-
-  const loadMetadata = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await callPlugin("getComponentMetadata", {});
-      if (response.success && response.data.componentMetadata) {
-        const metadata = response.data.componentMetadata as ComponentMetadata;
-        setComponentName(metadata.name);
-        // Check if metadata is actually published (has an id and publishDate)
-        const isPublished = metadata.id && metadata.publishDate;
-        setMetadata(isPublished ? metadata : null);
-      } else {
-        setMetadata(null);
-      }
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to load component metadata",
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <PageLayout showBackButton={true}>
@@ -114,7 +122,7 @@ export default function Publish() {
                 )}
                 <p style={{ textAlign: "center", fontSize: "16px" }}>
                   It appears the current page has never been published. Would
-                  you like to proceed to publish it?
+                  you like to publish it?
                 </p>
                 <div
                   style={{
@@ -147,7 +155,14 @@ export default function Publish() {
                     Cancel
                   </button>
                   <button
-                    onClick={() => navigate("/publishing")}
+                    onClick={() => {
+                      if (currentPageIndex !== null) {
+                        navigate(`/publishing?pageIndex=${currentPageIndex}`);
+                      } else {
+                        // Fallback: navigate without pageIndex (will show error)
+                        navigate("/publishing");
+                      }
+                    }}
                     style={{
                       padding: "12px 24px",
                       fontSize: "16px",

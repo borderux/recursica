@@ -19,6 +19,7 @@ export interface ExportPageResponseData {
   filename: string;
   jsonData: string;
   pageName: string;
+  additionalPages: ExportPageResponseData[];
 }
 
 /**
@@ -404,6 +405,7 @@ export async function exportPage(
       filename,
       jsonData: jsonString,
       pageName: selectedPage.name,
+      additionalPages: [], // Will be populated when publishing referenced component pages
     };
 
     return {

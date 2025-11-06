@@ -18,6 +18,7 @@ export const PLUGIN_DATA_KEY = "RecursicaPublishedMetadata";
 
 export interface GetComponentMetadataResponseData {
   componentMetadata: ComponentMetadata;
+  currentPageIndex: number;
 }
 
 /**
@@ -30,6 +31,13 @@ export async function getComponentMetadata(
   try {
     // Get the current page
     const currentPage = figma.currentPage;
+
+    // Load all pages to find the current page index
+    await figma.loadAllPagesAsync();
+    const pages = figma.root.children;
+    const currentPageIndex = pages.findIndex(
+      (page) => page.id === currentPage.id,
+    );
 
     // Get plugin data from the page node
     const pluginData = currentPage.getPluginData(PLUGIN_DATA_KEY);
@@ -48,6 +56,7 @@ export async function getComponentMetadata(
 
       const responseData: GetComponentMetadataResponseData = {
         componentMetadata: emptyMetadata,
+        currentPageIndex,
       };
 
       return retSuccess("getComponentMetadata", responseData as any);
@@ -58,6 +67,7 @@ export async function getComponentMetadata(
 
     const responseData: GetComponentMetadataResponseData = {
       componentMetadata: metadata,
+      currentPageIndex,
     };
 
     return retSuccess("getComponentMetadata", responseData as any);
