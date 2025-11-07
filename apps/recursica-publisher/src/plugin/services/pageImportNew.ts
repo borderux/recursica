@@ -1867,28 +1867,33 @@ export async function importPage(
     // Step 9: Match and create variables
     await debugConsole.log("Matching and creating variables in collections...");
     const variables = variableTable.getTable();
-    let variablesProcessed = 0;
-    let variablesMatched = 0;
-    let variablesCreated = 0;
+
+    // Track counts per collection
+    const collectionStats = new Map<
+      string,
+      { collectionName: string; existing: number; created: number }
+    >();
 
     for (const [index, entry] of Object.entries(variables)) {
-      variablesProcessed++;
-
       // Get the collection for this variable using _colRef
       if (entry._colRef === undefined) {
-        await debugConsole.log(
-          `⚠ Skipping variable "${entry.variableName}" (index ${index}): No collection reference`,
-        );
         continue;
       }
 
       const collection = recognizedCollections.get(String(entry._colRef));
       if (!collection) {
-        await debugConsole.log(
-          `⚠ Skipping variable "${entry.variableName}" (index ${index}): Collection not found (index ${entry._colRef})`,
-        );
         continue;
       }
+
+      // Initialize collection stats if not present
+      if (!collectionStats.has(collection.id)) {
+        collectionStats.set(collection.id, {
+          collectionName: collection.name,
+          existing: 0,
+          created: 0,
+        });
+      }
+      const stats = collectionStats.get(collection.id)!;
 
       // Check if this collection was newly created
       const isNewlyCreatedCollection = newlyCreatedCollectionIds.has(
@@ -1921,12 +1926,12 @@ export async function importPage(
         if (variableTypeMatches(existingVariable, variableType)) {
           // Type matches - use existing variable
           recognizedVariables.set(index, existingVariable);
-          variablesMatched++;
-          await debugConsole.log(
-            `✓ Matched existing variable: "${entry.variableName}" (type: ${variableType}) in collection "${collection.name}"`,
-          );
+          stats.existing++;
         } else {
-          // Type doesn't match - create new variable with incremented name
+          // Type doesn't match - warn and create new variable with incremented name
+          await debugConsole.warning(
+            `Type mismatch for variable "${entry.variableName}" in collection "${collection.name}": expected ${variableType}, found ${existingVariable.resolvedType}. Creating new variable with incremented name.`,
+          );
           const uniqueName = await findUniqueVariableName(
             collection,
             entry.variableName,
@@ -1946,10 +1951,7 @@ export async function importPage(
             newlyCreatedVariables.push(newVariable);
           }
           recognizedVariables.set(index, newVariable);
-          variablesCreated++;
-          await debugConsole.log(
-            `✗ Type mismatch for "${entry.variableName}" (expected: ${variableType}, found: ${existingVariable.resolvedType}) - created "${uniqueName}"`,
-          );
+          stats.created++;
         }
       } else {
         // Variable doesn't exist - create it
@@ -1967,19 +1969,24 @@ export async function importPage(
           newlyCreatedVariables.push(newVariable);
         }
         recognizedVariables.set(index, newVariable);
-        variablesCreated++;
-        await debugConsole.log(
-          `✓ Created variable: "${entry.variableName}" (type: ${variableType}) in collection "${collection.name}"`,
-        );
+        stats.created++;
       }
     }
 
-    await debugConsole.log(
-      `Variable processing complete: ${variablesProcessed} processed, ${variablesMatched} matched, ${variablesCreated} created`,
-    );
+    // Print summary per collection
+    await debugConsole.log("Variable processing complete:");
+    let totalExisting = 0;
+    let totalCreated = 0;
+    for (const stats of collectionStats.values()) {
+      await debugConsole.log(
+        `  "${stats.collectionName}": ${stats.existing} existing, ${stats.created} created`,
+      );
+      totalExisting += stats.existing;
+      totalCreated += stats.created;
+    }
     await debugConsole.log("=== Import Complete ===");
     await debugConsole.log(
-      `Successfully processed ${recognizedCollections.size} collection(s) and ${variablesProcessed} variable(s)`,
+      `Successfully processed ${recognizedCollections.size} collection(s) and ${totalExisting + totalCreated} variable(s)`,
     );
 
     // For now, stop here - consider import done once collections and variables are created
