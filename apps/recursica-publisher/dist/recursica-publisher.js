@@ -825,8 +825,9 @@ async function qe(e, t) {
         );
       else if (l === "normal") {
         if (d) {
+          w.componentPageName = d.name;
           const x = De(d);
-          x != null && x.id && x.version !== void 0 && (w.componentGuid = x.id, w.componentVersion = x.version, w.componentPageName = d.name);
+          x != null && x.id && x.version !== void 0 && (w.componentGuid = x.id, w.componentVersion = x.version);
         }
         m === void 0 && console.warn(
           `Failed to build path for normal instance "${n}" -> component "${i}". Path is required for resolution.`

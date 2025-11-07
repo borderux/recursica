@@ -196,11 +196,13 @@ export async function parseInstanceProperties(
       } else if (instanceType === "normal") {
         // Get component metadata from the component's page
         if (componentPage) {
+          // Always set componentPageName for normal instances (needed for import)
+          entry.componentPageName = componentPage.name;
+
           const metadata = getComponentMetadataFromPage(componentPage);
           if (metadata?.id && metadata.version !== undefined) {
             entry.componentGuid = metadata.id;
             entry.componentVersion = metadata.version;
-            entry.componentPageName = componentPage.name;
           }
         }
         // path is REQUIRED for normal instances to locate the specific component on the referenced page
