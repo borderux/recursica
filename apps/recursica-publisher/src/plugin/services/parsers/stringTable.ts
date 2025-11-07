@@ -8,6 +8,84 @@
  */
 
 /**
+ * Unified type enum mapping: maps all Figma type enum values to numbers for compression
+ * Covers: node types, fill types, effect types, component property types, etc.
+ * Unknown types are stored as strings
+ */
+const TYPE_ENUM_MAP: Record<string, number> = {
+  // Node types
+  FRAME: 1,
+  TEXT: 2,
+  INSTANCE: 3,
+  COMPONENT: 4,
+  VECTOR: 5,
+  RECTANGLE: 6,
+  ELLIPSE: 7,
+  STAR: 8,
+  LINE: 9,
+  GROUP: 10,
+  BOOLEAN_OPERATION: 11,
+  POLYGON: 12,
+  PAGE: 13,
+  COMPONENT_SET: 14,
+  // Fill types
+  SOLID: 15,
+  GRADIENT_LINEAR: 16,
+  GRADIENT_RADIAL: 17,
+  GRADIENT_ANGULAR: 18,
+  GRADIENT_DIAMOND: 19,
+  IMAGE: 20,
+  // Effect types
+  DROP_SHADOW: 21,
+  INNER_SHADOW: 22,
+  LAYER_BLUR: 23,
+  BACKGROUND_BLUR: 24,
+  // Component property types
+  BOOLEAN: 25,
+  VARIANT: 26,
+  INSTANCE_SWAP: 27,
+  // Note: TEXT is already mapped as node type (2), component property type uses same value
+  // Variable types
+  VARIABLE_ALIAS: 29,
+  // Blend modes (if used as type)
+  NORMAL: 30,
+  PASS_THROUGH: 31,
+};
+
+/**
+ * Generates reverse map from the forward map dynamically
+ * This ensures we only maintain one source of truth
+ */
+function getReverseTypeEnumMap(): Record<number, string> {
+  const reverse: Record<number, string> = {};
+  for (const [key, value] of Object.entries(TYPE_ENUM_MAP)) {
+    reverse[value] = key;
+  }
+  return reverse;
+}
+
+/**
+ * Compresses a type enum value to a number if it's a known type, otherwise returns the string
+ * Works for any "type" field value (node types, fill types, effect types, etc.)
+ */
+function compressTypeEnum(type: string): number | string {
+  return TYPE_ENUM_MAP[type] ?? type;
+}
+
+/**
+ * Expands a type enum value from a number or string back to the full type name
+ * Works for any "type" field value
+ * Dynamically generates the reverse map from the forward map
+ */
+function expandTypeEnum(type: number | string): string {
+  if (typeof type === "number") {
+    const reverseMap = getReverseTypeEnumMap();
+    return reverseMap[type] ?? type.toString();
+  }
+  return type;
+}
+
+/**
  * Predefined mapping of long names to short abbreviations (5 chars or less)
  * These are human-readable abbreviations that make sense
  */
@@ -143,6 +221,7 @@ export class StringTable {
    * Recursively replaces all keys in an object with their short names
    * Handles nested objects and arrays
    * Collision detection: if a short name already exists as a key, keep the original key
+   * Also compresses special values: node "type" field values and variable "type" field values
    */
   compressObject(obj: any): any {
     if (obj === null || obj === undefined) {
@@ -169,10 +248,24 @@ export class StringTable {
         // If the short key is different from the original AND the short key doesn't already exist as an original key
         // then we can safely compress. Otherwise, keep the original key.
         if (shortKey !== key && !usedKeys.has(shortKey)) {
-          compressed[shortKey] = this.compressObject(value);
+          let compressedValue = this.compressObject(value);
+
+          // Special handling: compress "type" field values (works for any type enum: node types, fill types, etc.)
+          if (shortKey === "type" && typeof compressedValue === "string") {
+            compressedValue = compressTypeEnum(compressedValue);
+          }
+
+          compressed[shortKey] = compressedValue;
         } else {
           // Keep original key (either it's already short or there's a collision)
-          compressed[key] = this.compressObject(value);
+          let compressedValue = this.compressObject(value);
+
+          // Special handling: compress "type" field values even if key wasn't compressed
+          if (key === "type" && typeof compressedValue === "string") {
+            compressedValue = compressTypeEnum(compressedValue);
+          }
+
+          compressed[key] = compressedValue;
         }
       }
       return compressed;
@@ -184,6 +277,7 @@ export class StringTable {
   /**
    * Recursively replaces all keys in an object with their long names
    * Handles nested objects and arrays
+   * Also expands special values: node "type" field values and variable "type" field values
    */
   expandObject(obj: any): any {
     if (obj === null || obj === undefined) {
@@ -198,7 +292,18 @@ export class StringTable {
       const expanded: any = {};
       for (const [key, value] of Object.entries(obj)) {
         const longKey = this.getLongName(key);
-        expanded[longKey] = this.expandObject(value);
+        let expandedValue = this.expandObject(value);
+
+        // Special handling: expand node "type" field values
+        if (
+          (longKey === "type" || key === "type") &&
+          (typeof expandedValue === "number" ||
+            typeof expandedValue === "string")
+        ) {
+          expandedValue = expandTypeEnum(expandedValue);
+        }
+
+        expanded[longKey] = expandedValue;
       }
       return expanded;
     }
