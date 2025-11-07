@@ -13,6 +13,8 @@ import { VariableTable, CollectionTable } from "./parsers/variableTable";
 import { InstanceTable } from "./parsers/instanceTable";
 import { StringTable } from "./parsers/stringTable";
 import { debugConsole } from "./debugConsole";
+import { compressJsonData } from "../utils/jsonCompression";
+import { requestGuidFromUI } from "../utils/requestGuidFromUI";
 
 export interface ExportPageData {
   pageIndex: number;
@@ -469,7 +471,6 @@ export async function exportPage(
     // If no GUID exists, generate one and store it
     if (!pageGuid) {
       await debugConsole.log("Generating new GUID for page...");
-      const { requestGuidFromUI } = await import("../utils/requestGuidFromUI");
       pageGuid = await requestGuidFromUI();
       // Store the GUID in page metadata (create minimal metadata if it doesn't exist)
       const newMetadata = {
@@ -509,7 +510,6 @@ export async function exportPage(
 
     // Compress the entire JSON at the very last stage
     await debugConsole.log("Compressing JSON data...");
-    const { compressJsonData } = await import("../utils/jsonCompression");
     const compressedExportData = compressJsonData(exportData, stringTable);
 
     await debugConsole.log("Serializing to JSON...");

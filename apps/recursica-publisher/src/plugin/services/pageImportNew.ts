@@ -19,10 +19,18 @@ import { StringTable } from "./parsers/stringTable";
 import { requestGuidFromUI } from "../utils/requestGuidFromUI";
 import { REGISTERED_REMOTE_COLLECTIONS } from "../../const/RegisteredCollections";
 import { debugConsole } from "./debugConsole";
+import { expandJsonData } from "../utils/jsonCompression";
+import { pluginPrompt } from "../utils/pluginPrompt";
+import {
+  normalizeCollectionName,
+  isStandardCollection,
+  getFixedGuidForCollection,
+} from "../../const/CollectionConstants";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export interface ImportPageData {
   jsonData: any; // The full exported JSON structure
+  deleteScratchPagesOnFailure?: boolean; // If true, delete scratch pages if import fails (default: false)
 }
 
 export interface ImportPageResponseData {
@@ -1313,13 +1321,203 @@ export async function recreateNodeFromData(
   }
 }
 
+/**
+ * Finds a unique page name by appending a numeric suffix if needed
+ * @param baseName - The base name to use
+ * @returns A unique page name that doesn't exist in the file
+ */
+async function findUniquePageName(baseName: string): Promise<string> {
+  await figma.loadAllPagesAsync();
+  const pages = figma.root.children;
+  const existingNames = new Set(pages.map((page) => page.name));
+
+  if (!existingNames.has(baseName)) {
+    return baseName;
+  }
+
+  // Try with numeric suffix
+  let counter = 1;
+  let candidateName = `${baseName} ${counter}`;
+  while (existingNames.has(candidateName)) {
+    counter++;
+    candidateName = `${baseName} ${counter}`;
+  }
+
+  return candidateName;
+}
+
+/**
+ * Finds a unique collection name by appending an underscore and numeric suffix if needed
+ * Format: <Collection Name>_<incrementing number>
+ * @param baseName - The base name to use
+ * @returns A unique collection name that doesn't exist in the file
+ */
+async function findUniqueCollectionName(baseName: string): Promise<string> {
+  const localCollections =
+    await figma.variables.getLocalVariableCollectionsAsync();
+  const existingNames = new Set(localCollections.map((c) => c.name));
+
+  if (!existingNames.has(baseName)) {
+    return baseName;
+  }
+
+  // Try with underscore and numeric suffix: <Collection Name>_1, <Collection Name>_2, etc.
+  let counter = 1;
+  let candidateName = `${baseName}_${counter}`;
+  while (existingNames.has(candidateName)) {
+    counter++;
+    candidateName = `${baseName}_${counter}`;
+  }
+
+  return candidateName;
+}
+
+/**
+ * Finds a unique variable name within a collection by appending an underscore and numeric suffix if needed
+ * Format: <Variable Name>_<incrementing number>
+ * @param collection - The variable collection to check
+ * @param baseName - The base variable name to use
+ * @returns A unique variable name that doesn't exist in the collection
+ */
+async function findUniqueVariableName(
+  collection: VariableCollection,
+  baseName: string,
+): Promise<string> {
+  // Get all variables in the collection
+  const existingVariableNames = new Set<string>();
+  for (const varId of collection.variableIds) {
+    try {
+      const variable = await figma.variables.getVariableByIdAsync(varId);
+      if (variable) {
+        existingVariableNames.add(variable.name);
+      }
+    } catch {
+      // Variable might not exist anymore, continue
+      continue;
+    }
+  }
+
+  if (!existingVariableNames.has(baseName)) {
+    return baseName;
+  }
+
+  // Try with underscore and numeric suffix: <Variable Name>_1, <Variable Name>_2, etc.
+  let counter = 1;
+  let candidateName = `${baseName}_${counter}`;
+  while (existingVariableNames.has(candidateName)) {
+    counter++;
+    candidateName = `${baseName}_${counter}`;
+  }
+
+  return candidateName;
+}
+
+/**
+ * Checks if a variable's type matches the expected type
+ * @param variable - The variable to check
+ * @param expectedType - The expected variable type (COLOR, FLOAT, STRING, BOOLEAN)
+ * @returns true if types match, false otherwise
+ */
+function variableTypeMatches(
+  variable: Variable,
+  expectedType: string,
+): boolean {
+  // Normalize types for comparison (case-insensitive)
+  const variableType = variable.resolvedType.toUpperCase();
+  const normalizedExpectedType = expectedType.toUpperCase();
+  return variableType === normalizedExpectedType;
+}
+
+/**
+ * Collection matching result
+ */
+interface CollectionMatchResult {
+  collection: VariableCollection | null;
+  matchType: "recognized" | "potential" | "none";
+}
+
+/**
+ * Matches a collection entry to an existing local collection
+ * For standard collections (Theme, Tokens, Layer): Check by normalized name first, always prompt
+ * For other collections: Check by GUID first (recognized), then by exact name (potential match)
+ */
+async function matchCollection(
+  entry: CollectionTableEntry,
+): Promise<CollectionMatchResult> {
+  const localCollections =
+    await figma.variables.getLocalVariableCollectionsAsync();
+
+  // Normalize the entry's collection name
+  const normalizedEntryName = normalizeCollectionName(entry.collectionName);
+
+  // For standard collections (Theme, Tokens, Layer), always check by normalized name first
+  // and treat as potential match (will prompt user)
+  if (isStandardCollection(entry.collectionName)) {
+    for (const collection of localCollections) {
+      const normalizedCollectionName = normalizeCollectionName(collection.name);
+      if (normalizedCollectionName === normalizedEntryName) {
+        // Found by normalized name - always prompt user for standard collections
+        return {
+          collection,
+          matchType: "potential",
+        };
+      }
+    }
+    // No match found by normalized name
+    return {
+      collection: null,
+      matchType: "none",
+    };
+  }
+
+  // For non-standard collections, use GUID first, then exact name
+  // First pass: Check by GUID (recognized collections)
+  if (entry.collectionGuid) {
+    for (const collection of localCollections) {
+      const guid = collection.getSharedPluginData(
+        "recursica",
+        COLLECTION_GUID_KEY,
+      );
+      if (guid === entry.collectionGuid) {
+        return {
+          collection,
+          matchType: "recognized",
+        };
+      }
+    }
+  }
+
+  // Second pass: Check by exact name (potential matches for non-standard collections)
+  for (const collection of localCollections) {
+    if (collection.name === entry.collectionName) {
+      return {
+        collection,
+        matchType: "potential",
+      };
+    }
+  }
+
+  return {
+    collection: null,
+    matchType: "none",
+  };
+}
+
 export async function importPage(
   data: ImportPageData,
 ): Promise<ResponseMessage> {
+  // Clear debug console at the start
+  await debugConsole.clear();
+  await debugConsole.log("=== Starting Page Import ===");
+
+  // Track newly created collections for potential cleanup on failure
+  const newlyCreatedCollections: VariableCollection[] = [];
+
   try {
     const jsonData = data.jsonData;
 
     if (!jsonData) {
+      await debugConsole.error("JSON data is required");
       return {
         type: "importPage",
         success: false,
@@ -1329,10 +1527,12 @@ export async function importPage(
       };
     }
 
-    console.log("Importing page from JSON");
+    await debugConsole.log("Starting import process");
 
-    // Metadata is never compressed, so we can read it directly
+    // Step 1: Validate metadata (check for guid and name)
+    await debugConsole.log("Validating metadata...");
     if (!jsonData.metadata) {
+      await debugConsole.error("Invalid JSON format. Expected metadata.");
       return {
         type: "importPage",
         success: false,
@@ -1343,9 +1543,42 @@ export async function importPage(
     }
 
     const metadata = jsonData.metadata;
+    if (!metadata.guid || typeof metadata.guid !== "string") {
+      await debugConsole.error(
+        "Invalid metadata. Missing or invalid 'guid' field.",
+      );
+      return {
+        type: "importPage",
+        success: false,
+        error: true,
+        message: "Invalid metadata. Missing or invalid 'guid' field.",
+        data: {},
+      };
+    }
 
-    // Load string table (required for format 2.7.0+)
+    if (!metadata.name || typeof metadata.name !== "string") {
+      await debugConsole.error(
+        "Invalid metadata. Missing or invalid 'name' field.",
+      );
+      return {
+        type: "importPage",
+        success: false,
+        error: true,
+        message: "Invalid metadata. Missing or invalid 'name' field.",
+        data: {},
+      };
+    }
+
+    await debugConsole.log(
+      `Metadata validated: guid=${metadata.guid}, name=${metadata.name}`,
+    );
+
+    // Step 2: Expand JSON using expandJsonData
+    await debugConsole.log("Loading string table...");
     if (!jsonData.stringTable) {
+      await debugConsole.error(
+        "Invalid JSON format. String table is required.",
+      );
       return {
         type: "importPage",
         success: false,
@@ -1358,157 +1591,418 @@ export async function importPage(
     let stringTable: StringTable;
     try {
       stringTable = StringTable.fromTable(jsonData.stringTable);
-      console.log("Loaded string table for key expansion");
+      await debugConsole.log("String table loaded successfully");
     } catch (error) {
+      const errorMessage = `Failed to load string table: ${error instanceof Error ? error.message : "Unknown error"}`;
+      await debugConsole.error(errorMessage);
       return {
         type: "importPage",
         success: false,
         error: true,
-        message: `Failed to load string table: ${error instanceof Error ? error.message : "Unknown error"}`,
+        message: errorMessage,
         data: {},
       };
     }
 
-    // Expand only the parts we need, not the entire JSON
-    // This is more efficient and allows us to read metadata without expansion
-    const { expandJsonData } = await import("../utils/jsonCompression");
+    // Expand the entire JSON
+    await debugConsole.log("Expanding JSON data...");
+    const expandedJsonData = expandJsonData(jsonData, stringTable);
+    await debugConsole.log("JSON expanded successfully");
 
-    // Validate JSON structure
-    if (!jsonData.pageData) {
+    // Step 3: Load collection table
+    await debugConsole.log("Loading collections table...");
+    if (!expandedJsonData.collections) {
+      await debugConsole.log("No collections table found in JSON");
+      await debugConsole.log("=== Import Complete ===");
+      return {
+        type: "importPage",
+        success: true,
+        error: false,
+        message: "Import complete (no collections to process)",
+        data: { pageName: metadata.name },
+      };
+    }
+
+    let collectionTable: CollectionTable;
+    try {
+      collectionTable = CollectionTable.fromTable(expandedJsonData.collections);
+      await debugConsole.log(
+        `Loaded collections table with ${collectionTable.getSize()} collection(s)`,
+      );
+    } catch (error) {
+      const errorMessage = `Failed to load collections table: ${error instanceof Error ? error.message : "Unknown error"}`;
+      await debugConsole.error(errorMessage);
       return {
         type: "importPage",
         success: false,
         error: true,
-        message: "Invalid JSON format. Expected pageData.",
+        message: errorMessage,
         data: {},
       };
     }
 
-    // Load collections table if present (format 2.3.0+)
-    // Expand only this part as needed
-    let collectionTable: CollectionTable | null = null;
-    if (jsonData.collections) {
-      try {
-        const expandedCollections = expandJsonData(
-          jsonData.collections,
-          stringTable,
+    // Step 4: Match collections (first pass: by GUID, second pass: by name)
+    await debugConsole.log(
+      "Matching collections with existing local collections...",
+    );
+    const collections = collectionTable.getTable();
+    const recognizedCollections = new Map<string, VariableCollection>(); // entry index -> collection
+    const potentialMatches = new Map<
+      string,
+      { entry: CollectionTableEntry; collection: VariableCollection }
+    >(); // entry index -> {entry, collection}
+    const collectionsToCreate = new Map<string, CollectionTableEntry>(); // entry index -> entry
+
+    // Track all newly created collections for potential cleanup
+    // (already initialized at function start, but keeping for clarity)
+
+    for (const [index, entry] of Object.entries(collections)) {
+      // Skip remote collections (they're handled separately)
+      if (entry.isLocal === false) {
+        await debugConsole.log(
+          `Skipping remote collection: "${entry.collectionName}" (index ${index})`,
         );
-        collectionTable = CollectionTable.fromTable(expandedCollections);
-        console.log(
-          `Loaded collections table with ${collectionTable.getSize()} collections`,
+        continue;
+      }
+
+      const match = await matchCollection(entry);
+
+      if (match.matchType === "recognized") {
+        await debugConsole.log(
+          `✓ Recognized collection by GUID: "${entry.collectionName}" (index ${index})`,
         );
-      } catch (error) {
-        console.warn("Failed to load collections table:", error);
+        recognizedCollections.set(index, match.collection!);
+      } else if (match.matchType === "potential") {
+        await debugConsole.log(
+          `? Potential match by name: "${entry.collectionName}" (index ${index})`,
+        );
+        potentialMatches.set(index, {
+          entry,
+          collection: match.collection!,
+        });
+      } else {
+        await debugConsole.log(
+          `✗ No match found for collection: "${entry.collectionName}" (index ${index}) - will create new`,
+        );
+        collectionsToCreate.set(index, entry);
       }
     }
 
-    // Load variable table if present (format 2.1.0+)
-    // Expand only this part as needed
-    let variableTable: VariableTable | null = null;
-    if (jsonData.variables) {
-      try {
-        const expandedVariables = expandJsonData(
-          jsonData.variables,
-          stringTable,
-        );
-        variableTable = VariableTable.fromTable(expandedVariables);
-        console.log(
-          `Loaded variable table with ${variableTable.getSize()} variables`,
-        );
-      } catch (error) {
-        console.warn("Failed to load variable table:", error);
-      }
-    }
+    await debugConsole.log(
+      `Collection matching complete: ${recognizedCollections.size} recognized, ${potentialMatches.size} potential matches, ${collectionsToCreate.size} to create`,
+    );
 
-    // Load instance table if present (format 2.6.0+)
-    // Expand only this part as needed
-    let instanceTable: InstanceTable | null = null;
-    if (jsonData.instances) {
-      try {
-        const expandedInstances = expandJsonData(
-          jsonData.instances,
-          stringTable,
-        );
-        instanceTable = InstanceTable.fromTable(expandedInstances);
-        console.log(
-          `Loaded instance table with ${instanceTable.getSize()} instances`,
-        );
-      } catch (error) {
-        console.warn("Failed to load instance table:", error);
-      }
-    }
-
-    // Version validation and compatibility checks
-    const currentExportFormatVersion = "2.7.0";
-    const exportedVersion = metadata.exportFormatVersion || "1.0.0";
-
-    if (exportedVersion !== currentExportFormatVersion) {
-      console.warn(
-        `Export format version mismatch: exported with ${exportedVersion}, current version is ${currentExportFormatVersion}. Import may have compatibility issues.`,
+    // Step 5: Prompt user for potential matches
+    if (potentialMatches.size > 0) {
+      await debugConsole.log(
+        `Prompting user for ${potentialMatches.size} potential match(es)...`,
       );
     }
+    for (const [index, { entry, collection }] of potentialMatches.entries()) {
+      try {
+        // For standard collections, use normalized name; for others, use actual collection name
+        const displayName = isStandardCollection(entry.collectionName)
+          ? normalizeCollectionName(entry.collectionName)
+          : collection.name;
 
-    const sanitizedPageName = metadata.name
-      ? metadata.name
-          .replace(/[^\w\s-]/g, "") // Remove emojis and special characters except word chars, spaces, and hyphens
-          .replace(/\s+/g, "-") // Replace spaces with hyphens
-          .replace(/-+/g, "-") // Replace multiple hyphens with single hyphen
-          .replace(/^-|-$/g, "") // Remove leading/trailing hyphens
-      : "Unknown";
-
-    // Create a new page for the imported content
-    const newPageName = "Imported - " + sanitizedPageName;
-    const newPage = figma.createPage();
-    newPage.name = newPageName;
-    figma.root.appendChild(newPage);
-
-    console.log("Created new page: " + newPageName);
-
-    // Expand page data only when needed
-    const expandedPageData = expandJsonData(jsonData.pageData, stringTable);
-
-    // Recreate the page content
-    if (expandedPageData.children && Array.isArray(expandedPageData.children)) {
-      for (const childData of expandedPageData.children) {
-        if (childData._truncated) {
-          console.log(
-            `Skipping truncated children: ${childData._reason || "Unknown"}`,
-          );
-          continue;
-        }
-        await recreateNodeFromData(
-          childData,
-          newPage,
-          variableTable,
-          collectionTable,
-          instanceTable,
+        const message = `Found existing "${displayName}" variable collection. Should I use it?`;
+        await debugConsole.log(
+          `Prompting user about potential match: "${displayName}"`,
         );
+        await pluginPrompt.prompt(message, {
+          okLabel: "Yes",
+          cancelLabel: "No",
+          timeoutMs: -1, // No timeout
+        });
+        // User said Yes - use the potential match and store the collection reference
+        await debugConsole.log(
+          `✓ User confirmed: Using existing collection "${displayName}" (index ${index})`,
+        );
+        recognizedCollections.set(index, collection);
+
+        // Ensure modes exist for this collection
+        await ensureCollectionModes(collection, entry.modes);
+        await debugConsole.log(
+          `  ✓ Ensured modes for collection "${displayName}" (${entry.modes.length} mode(s))`,
+        );
+      } catch {
+        // User said No or cancelled - mark for creation
+        await debugConsole.log(
+          `✗ User rejected: Will create new collection for "${entry.collectionName}" (index ${index})`,
+        );
+        collectionsToCreate.set(index, entry);
       }
-      console.log("Successfully imported page content with all children");
-    } else {
-      console.log("No children to import");
     }
 
-    const responseData: ImportPageResponseData = {
-      pageName: metadata.name,
-      totalNodes: 0, // totalNodes removed from metadata
-    };
+    // Step 6: Ensure modes exist for recognized collections (matched by GUID)
+    // (Collections confirmed by user already had their modes ensured above)
+    if (recognizedCollections.size > 0) {
+      await debugConsole.log(
+        `Ensuring modes exist for recognized collections...`,
+      );
+      for (const [index, collection] of recognizedCollections.entries()) {
+        const entry = collections[index];
+        if (entry) {
+          // Check if modes were already ensured (for user-confirmed collections)
+          // by checking if this collection was in potentialMatches
+          const wasUserConfirmed = potentialMatches.has(index);
+          if (!wasUserConfirmed) {
+            // This was matched by GUID, ensure modes now
+            await ensureCollectionModes(collection, entry.modes);
+            await debugConsole.log(
+              `  ✓ Ensured modes for collection "${collection.name}" (${entry.modes.length} mode(s))`,
+            );
+          }
+        }
+      }
+    }
 
+    // Step 7: Create collections that need to be created
+    if (collectionsToCreate.size > 0) {
+      await debugConsole.log(
+        `Creating ${collectionsToCreate.size} new collection(s)...`,
+      );
+    }
+    for (const [index, entry] of collectionsToCreate.entries()) {
+      // Normalize the collection name for standard collections
+      const normalizedName = normalizeCollectionName(entry.collectionName);
+      const uniqueName = await findUniqueCollectionName(normalizedName);
+      if (uniqueName !== normalizedName) {
+        await debugConsole.log(
+          `Creating collection: "${uniqueName}" (normalized: "${normalizedName}" - name conflict resolved)`,
+        );
+      } else {
+        await debugConsole.log(`Creating collection: "${uniqueName}"`);
+      }
+
+      const newCollection =
+        figma.variables.createVariableCollection(uniqueName);
+
+      // Track newly created collection
+      newlyCreatedCollections.push(newCollection);
+
+      // Determine GUID to use
+      let guidToStore: string | undefined;
+      if (isStandardCollection(entry.collectionName)) {
+        // For standard collections (Layer, Theme, Tokens), use fixed GUID
+        const fixedGuid = getFixedGuidForCollection(entry.collectionName);
+        if (fixedGuid) {
+          guidToStore = fixedGuid;
+        }
+      } else if (entry.collectionGuid) {
+        // Use GUID from entry for non-standard collections
+        guidToStore = entry.collectionGuid;
+      }
+
+      // Store GUID if available
+      if (guidToStore) {
+        newCollection.setSharedPluginData(
+          "recursica",
+          COLLECTION_GUID_KEY,
+          guidToStore,
+        );
+        await debugConsole.log(
+          `  Stored GUID: ${guidToStore.substring(0, 8)}...`,
+        );
+      }
+
+      // Ensure all modes exist
+      await ensureCollectionModes(newCollection, entry.modes);
+      await debugConsole.log(
+        `  ✓ Created collection "${uniqueName}" with ${entry.modes.length} mode(s)`,
+      );
+
+      // Add the newly created collection to recognizedCollections map
+      // so variables can find it when processing
+      recognizedCollections.set(index, newCollection);
+    }
+
+    await debugConsole.log("Collection creation complete");
+
+    // Step 8: Create variables from variable table
+    await debugConsole.log("Loading variables table...");
+    if (!expandedJsonData.variables) {
+      await debugConsole.log("No variables table found in JSON");
+      await debugConsole.log("=== Import Complete ===");
+      return {
+        type: "importPage",
+        success: true,
+        error: false,
+        message: "Import complete (no variables to process)",
+        data: { pageName: metadata.name },
+      };
+    }
+
+    let variableTable: VariableTable;
+    try {
+      variableTable = VariableTable.fromTable(expandedJsonData.variables);
+      await debugConsole.log(
+        `Loaded variables table with ${variableTable.getSize()} variable(s)`,
+      );
+    } catch (error) {
+      const errorMessage = `Failed to load variables table: ${error instanceof Error ? error.message : "Unknown error"}`;
+      await debugConsole.error(errorMessage);
+      return {
+        type: "importPage",
+        success: false,
+        error: true,
+        message: errorMessage,
+        data: {},
+      };
+    }
+
+    // Track all newly created variables for potential cleanup
+    // Only track variables created in existing collections (not in newly created collections)
+    // since deleting a collection automatically deletes all its variables
+    const newlyCreatedVariables: Variable[] = [];
+
+    // Map to store variable entry index -> Variable object for later reference
+    const recognizedVariables = new Map<string, Variable>(); // entry index -> variable
+
+    // Create a set of newly created collection IDs for quick lookup
+    const newlyCreatedCollectionIds = new Set(
+      newlyCreatedCollections.map((c) => c.id),
+    );
+
+    // Step 9: Match and create variables
+    await debugConsole.log("Matching and creating variables in collections...");
+    const variables = variableTable.getTable();
+    let variablesProcessed = 0;
+    let variablesMatched = 0;
+    let variablesCreated = 0;
+
+    for (const [index, entry] of Object.entries(variables)) {
+      variablesProcessed++;
+
+      // Get the collection for this variable using _colRef
+      if (entry._colRef === undefined) {
+        await debugConsole.log(
+          `⚠ Skipping variable "${entry.variableName}" (index ${index}): No collection reference`,
+        );
+        continue;
+      }
+
+      const collection = recognizedCollections.get(String(entry._colRef));
+      if (!collection) {
+        await debugConsole.log(
+          `⚠ Skipping variable "${entry.variableName}" (index ${index}): Collection not found (index ${entry._colRef})`,
+        );
+        continue;
+      }
+
+      // Check if this collection was newly created
+      const isNewlyCreatedCollection = newlyCreatedCollectionIds.has(
+        collection.id,
+      );
+
+      // Expand variable type if it's compressed (number -> string)
+      let variableType: string;
+      if (typeof entry.variableType === "number") {
+        const typeMap: Record<number, string> = {
+          1: "COLOR",
+          2: "FLOAT",
+          3: "STRING",
+          4: "BOOLEAN",
+        };
+        variableType =
+          typeMap[entry.variableType] || String(entry.variableType);
+      } else {
+        variableType = entry.variableType;
+      }
+
+      // Check if variable exists by name in the collection
+      const existingVariable = await findVariableByName(
+        collection,
+        entry.variableName,
+      );
+
+      if (existingVariable) {
+        // Variable exists - check if type matches
+        if (variableTypeMatches(existingVariable, variableType)) {
+          // Type matches - use existing variable
+          recognizedVariables.set(index, existingVariable);
+          variablesMatched++;
+          await debugConsole.log(
+            `✓ Matched existing variable: "${entry.variableName}" (type: ${variableType}) in collection "${collection.name}"`,
+          );
+        } else {
+          // Type doesn't match - create new variable with incremented name
+          const uniqueName = await findUniqueVariableName(
+            collection,
+            entry.variableName,
+          );
+          const newVariable = await createVariableFromEntry(
+            {
+              ...entry,
+              variableName: uniqueName,
+              variableType,
+            },
+            collection,
+            variableTable,
+            collectionTable,
+          );
+          // Only track if collection was not newly created (deleting collection deletes its variables)
+          if (!isNewlyCreatedCollection) {
+            newlyCreatedVariables.push(newVariable);
+          }
+          recognizedVariables.set(index, newVariable);
+          variablesCreated++;
+          await debugConsole.log(
+            `✗ Type mismatch for "${entry.variableName}" (expected: ${variableType}, found: ${existingVariable.resolvedType}) - created "${uniqueName}"`,
+          );
+        }
+      } else {
+        // Variable doesn't exist - create it
+        const newVariable = await createVariableFromEntry(
+          {
+            ...entry,
+            variableType,
+          },
+          collection,
+          variableTable,
+          collectionTable,
+        );
+        // Only track if collection was not newly created (deleting collection deletes its variables)
+        if (!isNewlyCreatedCollection) {
+          newlyCreatedVariables.push(newVariable);
+        }
+        recognizedVariables.set(index, newVariable);
+        variablesCreated++;
+        await debugConsole.log(
+          `✓ Created variable: "${entry.variableName}" (type: ${variableType}) in collection "${collection.name}"`,
+        );
+      }
+    }
+
+    await debugConsole.log(
+      `Variable processing complete: ${variablesProcessed} processed, ${variablesMatched} matched, ${variablesCreated} created`,
+    );
+    await debugConsole.log("=== Import Complete ===");
+    await debugConsole.log(
+      `Successfully processed ${recognizedCollections.size} collection(s) and ${variablesProcessed} variable(s)`,
+    );
+
+    // For now, stop here - consider import done once collections and variables are created
     return {
       type: "importPage",
       success: true,
       error: false,
-      message: "Page imported successfully",
-      data: responseData as any,
+      message: "Collections and variables imported successfully",
+      data: { pageName: metadata.name },
     };
   } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred";
+    await debugConsole.error(`Import failed: ${errorMessage}`);
+    if (error instanceof Error && error.stack) {
+      await debugConsole.error(`Stack trace: ${error.stack}`);
+    }
     console.error("Error importing page:", error);
     return {
       type: "importPage",
       success: false,
       error: true,
-      message:
-        error instanceof Error ? error.message : "Unknown error occurred",
+      message: errorMessage,
       data: {},
     };
   }

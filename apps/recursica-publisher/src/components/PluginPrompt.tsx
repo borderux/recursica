@@ -1,17 +1,24 @@
 import { usePluginPrompt } from "../context/usePluginPrompt";
+import { useEffect, useRef } from "react";
 
 export default function PluginPrompt() {
   const { prompt, ok, cancel } = usePluginPrompt();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Calculate height based on content
   const lineHeight = 20; // Line height for multi-line text
-  const messageLines = prompt
-    ? Math.max(1, prompt.message.split("\n").length)
-    : 1;
   const padding = 10; // Container padding
   const iconHeight = 20; // Icon height (matches question mark icon line height)
 
   const hasPrompt = !!prompt;
+
+  // Auto-resize textarea to fit content
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [prompt?.message]);
 
   return (
     <div
@@ -67,11 +74,11 @@ export default function PluginPrompt() {
           }}
         >
           <textarea
+            ref={textareaRef}
             readOnly
             value={prompt?.message ?? ""}
             style={{
               width: "100%",
-              height: `${messageLines * lineHeight}px`,
               minHeight: `${lineHeight}px`,
               padding: "0",
               margin: "0",
@@ -83,11 +90,13 @@ export default function PluginPrompt() {
               resize: "none",
               color: hasPrompt ? "#333" : "#d0d0d0",
               overflow: "hidden",
+              overflowWrap: "break-word",
+              wordWrap: "break-word",
+              whiteSpace: "pre-wrap",
               lineHeight: `${lineHeight}px`,
               cursor: "default",
               transition: "color 0.2s ease-in-out",
             }}
-            rows={1}
             disabled={!hasPrompt}
           />
         </div>

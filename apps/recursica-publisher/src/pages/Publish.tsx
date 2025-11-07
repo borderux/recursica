@@ -89,7 +89,10 @@ export default function Publish() {
           >
             {metadata && metadata.id && metadata.publishDate ? (
               <div>
-                <h2>Component Metadata</h2>
+                <h1>Publishing</h1>
+                <h2 style={{ marginTop: "20px", fontSize: "18px" }}>
+                  Component Metadata
+                </h2>
                 <div style={{ marginTop: "20px" }}>
                   <p>
                     <strong>Component ID:</strong> {metadata.id}
@@ -104,6 +107,67 @@ export default function Publish() {
                     <strong>Publish Date:</strong>{" "}
                     {new Date(metadata.publishDate).toLocaleString()}
                   </p>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "12px",
+                    marginTop: "30px",
+                  }}
+                >
+                  <button
+                    onClick={() => navigate("/")}
+                    style={{
+                      padding: "12px 24px",
+                      fontSize: "16px",
+                      fontWeight: "bold",
+                      backgroundColor: "transparent",
+                      color: "#d40d0d",
+                      border: "2px solid #d40d0d",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.backgroundColor = "#d40d0d";
+                      e.currentTarget.style.color = "white";
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.backgroundColor = "transparent";
+                      e.currentTarget.style.color = "#d40d0d";
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (currentPageIndex !== null) {
+                        navigate(`/publishing?pageIndex=${currentPageIndex}`);
+                      } else {
+                        // Fallback: navigate without pageIndex (will show error)
+                        navigate("/publishing");
+                      }
+                    }}
+                    style={{
+                      padding: "12px 24px",
+                      fontSize: "16px",
+                      fontWeight: "bold",
+                      backgroundColor: "transparent",
+                      color: "#d40d0d",
+                      border: "2px solid #d40d0d",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.backgroundColor = "#d40d0d";
+                      e.currentTarget.style.color = "white";
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.backgroundColor = "transparent";
+                      e.currentTarget.style.color = "#d40d0d";
+                    }}
+                  >
+                    Publish
+                  </button>
                 </div>
               </div>
             ) : (

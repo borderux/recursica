@@ -1,4 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import {
+  normalizeCollectionName,
+  isStandardCollection,
+  getFixedGuidForCollection,
+} from "../../../const/CollectionConstants";
 
 /**
  * Variable table for storing unique variables and referencing them by index
@@ -24,30 +29,94 @@ export interface CollectionTableEntry {
 export class CollectionTable {
   private collectionMap: Map<string, number>; // collectionId -> index
   private collections: CollectionTableEntry[]; // index -> collection data
+  private normalizedNameMap: Map<string, number>; // normalized name -> index (for standard collections)
   private nextIndex: number;
 
   constructor() {
     this.collectionMap = new Map();
     this.collections = [];
+    this.normalizedNameMap = new Map();
     this.nextIndex = 0;
   }
 
   /**
+   * Finds a collection by normalized name (for standard collections)
+   * Returns the index if found, -1 otherwise
+   */
+  private findCollectionByNormalizedName(
+    normalizedName: string,
+  ): number | undefined {
+    return this.normalizedNameMap.get(normalizedName);
+  }
+
+  /**
+   * Merges modes from a new collection into an existing collection entry
+   * Ensures all unique modes are present
+   */
+  private mergeModes(existingModes: string[], newModes: string[]): string[] {
+    const modeSet = new Set(existingModes);
+    for (const mode of newModes) {
+      modeSet.add(mode);
+    }
+    return Array.from(modeSet);
+  }
+
+  /**
    * Adds a collection to the table if it doesn't already exist
+   * For standard collections (Layer, Tokens, Theme), merges by normalized name
    * Returns the index of the collection (existing or newly added)
    */
   addCollection(collectionInfo: CollectionTableEntry): number {
     const key = collectionInfo.collectionId;
 
-    // Check if collection already exists
+    // Check if collection already exists by ID
     if (this.collectionMap.has(key)) {
       return this.collectionMap.get(key)!;
+    }
+
+    // For standard collections, check if we already have one with the same normalized name
+    const normalizedName = normalizeCollectionName(
+      collectionInfo.collectionName,
+    );
+    if (isStandardCollection(collectionInfo.collectionName)) {
+      const existingIndex = this.findCollectionByNormalizedName(normalizedName);
+      if (existingIndex !== undefined) {
+        // Merge into existing collection
+        const existingEntry = this.collections[existingIndex];
+        // Merge modes
+        existingEntry.modes = this.mergeModes(
+          existingEntry.modes,
+          collectionInfo.modes,
+        );
+        // Map this collection ID to the existing index
+        this.collectionMap.set(key, existingIndex);
+        return existingIndex;
+      }
     }
 
     // Add new collection
     const index = this.nextIndex++;
     this.collectionMap.set(key, index);
-    this.collections[index] = collectionInfo;
+
+    // Normalize the collection name for standard collections
+    const entry: CollectionTableEntry = {
+      ...collectionInfo,
+      collectionName: normalizedName,
+    };
+
+    // Use fixed GUID for standard collections
+    if (isStandardCollection(collectionInfo.collectionName)) {
+      const fixedGuid = getFixedGuidForCollection(
+        collectionInfo.collectionName,
+      );
+      if (fixedGuid) {
+        entry.collectionGuid = fixedGuid;
+      }
+      // Track by normalized name for future merges
+      this.normalizedNameMap.set(normalizedName, index);
+    }
+
+    this.collections[index] = entry;
     return index;
   }
 
@@ -126,15 +195,20 @@ export class CollectionTable {
       // based on whether it can be found in the team library
       const isLocal = collection.isLocal ?? true;
 
+      // Normalize collection name
+      const normalizedName = normalizeCollectionName(
+        collection.collectionName || "",
+      );
+
       // Generate a temporary collectionId if not present (for internal map)
       // Use GUID if available, otherwise generate a temporary ID
       const collectionId =
         collection.collectionId ||
         collection.collectionGuid ||
-        `temp:${index}:${collection.collectionName || "unknown"}`;
+        `temp:${index}:${normalizedName}`;
 
       const fullEntry: CollectionTableEntry = {
-        collectionName: collection.collectionName || "",
+        collectionName: normalizedName,
         collectionId,
         isLocal,
         modes: collection.modes || [],
@@ -145,6 +219,12 @@ export class CollectionTable {
 
       collectionTable.collectionMap.set(collectionId, index);
       collectionTable.collections[index] = fullEntry;
+
+      // Rebuild normalized name map for standard collections
+      if (isStandardCollection(normalizedName)) {
+        collectionTable.normalizedNameMap.set(normalizedName, index);
+      }
+
       collectionTable.nextIndex = Math.max(
         collectionTable.nextIndex,
         index + 1,

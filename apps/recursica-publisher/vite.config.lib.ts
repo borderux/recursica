@@ -17,6 +17,7 @@ export default defineConfig(({ mode }) => ({
       output: {
         format: "es",
         entryFileNames: "recursica-publisher.js",
+        inlineDynamicImports: true,
       },
     },
     outDir: mode === "development" ? "dist-dev" : "dist",

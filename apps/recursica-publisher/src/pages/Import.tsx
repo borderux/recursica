@@ -1,19 +1,12 @@
 import React, { useState, useRef, useMemo } from "react";
+import { useNavigate } from "react-router";
 import PageLayout from "../components/PageLayout";
 import { validateImport } from "../utils/validateExportFile";
 import {
   getRequiredImportFiles,
   fileMatchesRequired,
 } from "../utils/getRequiredImportFiles";
-
-interface ImportedFile {
-  id: string;
-  name: string;
-  size: number;
-  data: unknown;
-  status: "pending" | "success" | "error";
-  error?: string;
-}
+import { useImportData, type ImportedFile } from "../context/ImportDataContext";
 
 interface FileListItemProps {
   name: string;
@@ -380,6 +373,8 @@ function ReferencedFilesArea({
 }
 
 export default function Import() {
+  const navigate = useNavigate();
+  const { setImportData } = useImportData();
   const [isDragging, setIsDragging] = useState(false);
   const [mainFile, setMainFile] = useState<ImportedFile | null>(null);
   const [additionalFiles, setAdditionalFiles] = useState<ImportedFile[]>([]);
@@ -686,56 +681,39 @@ export default function Import() {
         >
           <button
             onClick={() => {
-              // TODO: Handle import action
-              console.log("Importing files:", { mainFile, additionalFiles });
+              // Store import data in context and navigate to importing page
+              if (mainFile && mainFile.status === "success") {
+                setImportData({
+                  mainFile,
+                  additionalFiles,
+                });
+                navigate("/importing");
+              }
             }}
-            disabled={
-              !mainFile ||
-              mainFile.status !== "success" ||
-              requiredFiles.length > matchedRequiredFiles.size
-            }
+            disabled={!mainFile || mainFile.status !== "success"}
             style={{
               width: "100%",
               padding: "12px 24px",
               fontSize: "16px",
               fontWeight: "bold",
               backgroundColor:
-                !mainFile ||
-                mainFile.status !== "success" ||
-                requiredFiles.length > matchedRequiredFiles.size
-                  ? "#ccc"
-                  : "#d40d0d",
+                !mainFile || mainFile.status !== "success" ? "#ccc" : "#d40d0d",
               color: "white",
               border: "none",
               borderRadius: "8px",
               cursor:
-                !mainFile ||
-                mainFile.status !== "success" ||
-                requiredFiles.length > matchedRequiredFiles.size
+                !mainFile || mainFile.status !== "success"
                   ? "not-allowed"
                   : "pointer",
-              opacity:
-                !mainFile ||
-                mainFile.status !== "success" ||
-                requiredFiles.length > matchedRequiredFiles.size
-                  ? 0.6
-                  : 1,
+              opacity: !mainFile || mainFile.status !== "success" ? 0.6 : 1,
             }}
             onMouseOver={(e) => {
-              if (
-                mainFile &&
-                mainFile.status === "success" &&
-                requiredFiles.length === matchedRequiredFiles.size
-              ) {
+              if (mainFile && mainFile.status === "success") {
                 e.currentTarget.style.backgroundColor = "#b30b0b";
               }
             }}
             onMouseOut={(e) => {
-              if (
-                mainFile &&
-                mainFile.status === "success" &&
-                requiredFiles.length === matchedRequiredFiles.size
-              ) {
+              if (mainFile && mainFile.status === "success") {
                 e.currentTarget.style.backgroundColor = "#d40d0d";
               }
             }}

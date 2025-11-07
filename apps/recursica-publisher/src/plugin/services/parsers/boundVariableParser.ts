@@ -11,6 +11,10 @@ import {
 import { requestGuidFromUI } from "../../utils/requestGuidFromUI";
 import { REGISTERED_REMOTE_COLLECTIONS } from "../../../const/RegisteredCollections";
 import { debugConsole } from "../debugConsole";
+import {
+  isStandardCollection,
+  getFixedGuidForCollection,
+} from "../../../const/CollectionConstants";
 
 /**
  * Parser for handling bound variables in Figma nodes
@@ -197,6 +201,26 @@ async function getOrGenerateCollectionGuid(
   const isRemote = collection.remote === true;
 
   if (!isRemote) {
+    // For standard collections, use fixed GUID
+    if (isStandardCollection(collection.name)) {
+      const fixedGuid = getFixedGuidForCollection(collection.name);
+      if (fixedGuid) {
+        // Store fixed GUID on collection if not already set
+        const existingGuid = collection.getSharedPluginData(
+          "recursica",
+          COLLECTION_GUID_KEY,
+        );
+        if (!existingGuid || existingGuid.trim() === "") {
+          collection.setSharedPluginData(
+            "recursica",
+            COLLECTION_GUID_KEY,
+            fixedGuid,
+          );
+        }
+        return fixedGuid;
+      }
+    }
+
     // For local collections, try to get existing GUID from plugin data
     const existingGuid = collection.getSharedPluginData(
       "recursica",

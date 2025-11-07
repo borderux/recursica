@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "exportedAt": "2025-11-07T18:52:52.047Z",
+    "exportedAt": "2025-11-07T20:14:18.012Z",
     "exportFormatVersion": "2.7.0",
     "figmaApiVersion": "1.0.0",
     "guid": "960ca48f-fdb6-4788-87fb-33d64d292b0a",
@@ -96,62 +96,16 @@
         "Light",
         "Dark"
       ],
-      "colGu": "f56276ba-eae3-49a0-81c0-b28a17cba12b"
+      "colGu": "00000000-0000-0000-0000-000000000003"
     },
     "1": {
       "colNm": "Tokens",
       "modes": [
         "Mode 1"
       ],
-      "colGu": "1d35ec3e-03d3-4236-a823-62008be5f8bb"
+      "colGu": "00000000-0000-0000-0000-000000000002"
     },
     "2": {
-      "colNm": "Theme",
-      "modes": [
-        "Light",
-        "Dark"
-      ],
-      "colGu": "e3a98c30-3985-4e3c-9aaf-c7d61f50f380"
-    },
-    "3": {
-      "colNm": "Themes",
-      "modes": [
-        "Light",
-        "Dark"
-      ],
-      "colGu": "a7c3d9f2-4b1e-4a8c-9d5f-3e8a2b7c4d1e"
-    },
-    "4": {
-      "colNm": "Theme",
-      "modes": [
-        "Light",
-        "Dark"
-      ],
-      "colGu": "bbf8e196-850c-4ebd-ab84-97ae61f308d8"
-    },
-    "5": {
-      "colNm": "Tokens",
-      "modes": [
-        "Mode 1"
-      ],
-      "colGu": "b8d4e0a3-5c2f-4b9d-ae6f-4f9b3c8d5e2f"
-    },
-    "6": {
-      "colNm": "Tokens",
-      "modes": [
-        "Mode 1"
-      ],
-      "colGu": "d0f6a2c5-7e4b-4d1f-c08b-6b1d5e0a7f4b"
-    },
-    "7": {
-      "colNm": "Themes",
-      "modes": [
-        "Light",
-        "Dark"
-      ],
-      "colGu": "c9e5f1b4-6d3a-4c0e-bf7a-5a0c4d9e6f3a"
-    },
-    "8": {
       "colNm": "Layer",
       "modes": [
         "0",
@@ -159,7 +113,7 @@
         "2",
         "3"
       ],
-      "colGu": "afc707ee-c722-4a5a-b98b-28fd3a2b9043"
+      "colGu": "00000000-0000-0000-0000-000000000001"
     }
   },
   "variables": {
@@ -351,7 +305,7 @@
     "15": {
       "varNm": "font/h1/letter-spacing",
       "varTy": 2,
-      "_colRef": 2,
+      "_colRef": 0,
       "vByMd": {
         "Light": {
           "_varRef": 14
@@ -372,7 +326,7 @@
     "17": {
       "varNm": "font/h1/size",
       "varTy": 2,
-      "_colRef": 2,
+      "_colRef": 0,
       "vByMd": {
         "Light": {
           "_varRef": 16
@@ -393,7 +347,7 @@
     "19": {
       "varNm": "font/h1/font-family",
       "varTy": 3,
-      "_colRef": 2,
+      "_colRef": 0,
       "vByMd": {
         "Light": {
           "_varRef": 18
@@ -414,7 +368,7 @@
     "21": {
       "varNm": "font/h1/weight",
       "varTy": 2,
-      "_colRef": 2,
+      "_colRef": 0,
       "vByMd": {
         "Light": {
           "_varRef": 20
@@ -448,7 +402,7 @@
     "24": {
       "varNm": "font/body/letter-spacing",
       "varTy": 2,
-      "_colRef": 4,
+      "_colRef": 0,
       "vByMd": {
         "Light": {
           "_varRef": 14
@@ -461,7 +415,7 @@
     "25": {
       "varNm": "font/size/md",
       "varTy": 2,
-      "_colRef": 5,
+      "_colRef": 1,
       "vByMd": {
         "Mode 1": 16
       }
@@ -469,7 +423,7 @@
     "26": {
       "varNm": "fonts/body-1/size",
       "varTy": 2,
-      "_colRef": 3,
+      "_colRef": 0,
       "vByMd": {
         "Light": {
           "_varRef": 25
@@ -490,7 +444,7 @@
     "28": {
       "varNm": "fonts/body-1/font-family",
       "varTy": 3,
-      "_colRef": 3,
+      "_colRef": 0,
       "vByMd": {
         "Light": {
           "_varRef": 18
@@ -503,7 +457,7 @@
     "29": {
       "varNm": "font/weight/regular",
       "varTy": 2,
-      "_colRef": 5,
+      "_colRef": 1,
       "vByMd": {
         "Mode 1": 400
       }
@@ -511,7 +465,7 @@
     "30": {
       "varNm": "fonts/body-1/weight-normal",
       "varTy": 2,
-      "_colRef": 3,
+      "_colRef": 0,
       "vByMd": {
         "Light": {
           "_varRef": 29
@@ -532,7 +486,7 @@
     "32": {
       "varNm": "size/spacer/3x",
       "varTy": 2,
-      "_colRef": 6,
+      "_colRef": 1,
       "vByMd": {
         "Mode 1": 24
       }
@@ -540,7 +494,7 @@
     "33": {
       "varNm": "global/form/field/size/min-width",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": 140,
         "1": 140,
@@ -551,7 +505,7 @@
     "34": {
       "varNm": "dropdown/size/min-width",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 33
@@ -570,7 +524,7 @@
     "35": {
       "varNm": "global/form/field/size/max-width",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": 464,
         "1": 464,
@@ -581,7 +535,7 @@
     "36": {
       "varNm": "dropdown/size/max-width",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 35
@@ -613,7 +567,7 @@
     "38": {
       "varNm": "global/form/field/size/vertical-gutter",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 37
@@ -632,7 +586,7 @@
     "39": {
       "varNm": "global/form/label/size/stacked/bottom-padding",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 38
@@ -729,7 +683,7 @@
     "46": {
       "varNm": "global/form/label/color/default",
       "varTy": 1,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 13
@@ -756,7 +710,7 @@
     "48": {
       "varNm": "font/body-small/letter-spacing",
       "varTy": 2,
-      "_colRef": 4,
+      "_colRef": 0,
       "vByMd": {
         "Light": {
           "_varRef": 47
@@ -777,7 +731,7 @@
     "50": {
       "varNm": "font/body-small/size",
       "varTy": 2,
-      "_colRef": 4,
+      "_colRef": 0,
       "vByMd": {
         "Light": {
           "_varRef": 49
@@ -790,7 +744,7 @@
     "51": {
       "varNm": "font/body-small/font-family",
       "varTy": 3,
-      "_colRef": 4,
+      "_colRef": 0,
       "vByMd": {
         "Light": {
           "_varRef": 27
@@ -811,7 +765,7 @@
     "53": {
       "varNm": "font/body-small/weight-strong",
       "varTy": 2,
-      "_colRef": 4,
+      "_colRef": 0,
       "vByMd": {
         "Light": {
           "_varRef": 52
@@ -980,7 +934,7 @@
     "66": {
       "varNm": "global/form/field/color/background",
       "varTy": 1,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 4
@@ -999,7 +953,7 @@
     "67": {
       "varNm": "dropdown/color/background",
       "varTy": 1,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 66
@@ -1018,7 +972,7 @@
     "68": {
       "varNm": "global/form/field/size/icon-text-gap",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 37
@@ -1037,7 +991,7 @@
     "69": {
       "varNm": "dropdown/size/icon-text-gap",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 68
@@ -1069,7 +1023,7 @@
     "71": {
       "varNm": "global/form/field/size/horizontal-padding",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 70
@@ -1088,7 +1042,7 @@
     "72": {
       "varNm": "dropdown/size/horizontal-padding",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 71
@@ -1128,7 +1082,7 @@
     "75": {
       "varNm": "global/form/field/size/vertical-padding",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 74
@@ -1147,7 +1101,7 @@
     "76": {
       "varNm": "dropdown/size/vertical-padding",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 75
@@ -1166,7 +1120,7 @@
     "77": {
       "varNm": "global/form/field/size/single-line-input-height",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": 48,
         "1": 48,
@@ -1177,7 +1131,7 @@
     "78": {
       "varNm": "dropdown/size/field-height",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 77
@@ -1209,7 +1163,7 @@
     "80": {
       "varNm": "global/form/field/size/border-radius",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 79
@@ -1228,7 +1182,7 @@
     "81": {
       "varNm": "dropdown/size/border-radius",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 80
@@ -1351,7 +1305,7 @@
     "90": {
       "varNm": "global/form/field/color/border",
       "varTy": 1,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 83
@@ -1370,7 +1324,7 @@
     "91": {
       "varNm": "dropdown/color/border",
       "varTy": 1,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 90
@@ -1402,7 +1356,7 @@
     "93": {
       "varNm": "global/form/field/size/icon",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 92
@@ -1421,7 +1375,7 @@
     "94": {
       "varNm": "dropdown/size/icon",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 93
@@ -1440,7 +1394,7 @@
     "95": {
       "varNm": "global/icon/style",
       "varTy": 3,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": "outline",
         "1": "outline",
@@ -1451,7 +1405,7 @@
     "96": {
       "varNm": "global/form/field/color/icon",
       "varTy": 1,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 13
@@ -1470,7 +1424,7 @@
     "97": {
       "varNm": "dropdown/color/leading-icon",
       "varTy": 1,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 96
@@ -1489,7 +1443,7 @@
     "98": {
       "varNm": "global/form/field/color/text-valued",
       "varTy": 1,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 13
@@ -1508,7 +1462,7 @@
     "99": {
       "varNm": "dropdown/color/text-valued",
       "varTy": 1,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 98
@@ -1527,7 +1481,7 @@
     "100": {
       "varNm": "fonts/body-2/weight-normal",
       "varTy": 2,
-      "_colRef": 3,
+      "_colRef": 0,
       "vByMd": {
         "Light": {
           "_varRef": 29
@@ -1540,7 +1494,7 @@
     "101": {
       "varNm": "dropdown/color/trailing-icon",
       "varTy": 1,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 96
@@ -1572,7 +1526,7 @@
     "103": {
       "varNm": "global/form/assistive-element/size/icon-text-gap",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 102
@@ -1604,7 +1558,7 @@
     "105": {
       "varNm": "global/form/assistive-element/size/icon",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 104
@@ -1657,7 +1611,7 @@
     "109": {
       "varNm": "form (WILL DELETE)/label/color/assistive-text",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 108
@@ -1676,7 +1630,7 @@
     "110": {
       "varNm": "global/form/assistive-element/help/icon-color",
       "varTy": 1,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 13
@@ -1695,7 +1649,7 @@
     "111": {
       "varNm": "global/form/assistive-element/help/text-color",
       "varTy": 1,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 13
@@ -1714,7 +1668,7 @@
     "112": {
       "varNm": "font/caption/letter-spacing",
       "varTy": 2,
-      "_colRef": 2,
+      "_colRef": 0,
       "vByMd": {
         "Light": {
           "_varRef": 47
@@ -1735,7 +1689,7 @@
     "114": {
       "varNm": "font/caption/size",
       "varTy": 2,
-      "_colRef": 2,
+      "_colRef": 0,
       "vByMd": {
         "Light": {
           "_varRef": 113
@@ -1748,7 +1702,7 @@
     "115": {
       "varNm": "font/caption/font-family",
       "varTy": 3,
-      "_colRef": 2,
+      "_colRef": 0,
       "vByMd": {
         "Light": {
           "_varRef": 18
@@ -1761,7 +1715,7 @@
     "116": {
       "varNm": "font/caption/weight",
       "varTy": 2,
-      "_colRef": 2,
+      "_colRef": 0,
       "vByMd": {
         "Light": {
           "_varRef": 29
@@ -1774,7 +1728,7 @@
     "117": {
       "varNm": "global/form/field/color/border-selected",
       "varTy": 1,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 12
@@ -1793,7 +1747,7 @@
     "118": {
       "varNm": "dropdown/color/border-selected",
       "varTy": 1,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 117
@@ -1812,7 +1766,7 @@
     "119": {
       "varNm": "menu/color/background",
       "varTy": 1,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 4
@@ -1831,7 +1785,7 @@
     "120": {
       "varNm": "menu/size/vertical-padding",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 37
@@ -1850,7 +1804,7 @@
     "121": {
       "varNm": "menu/size/border-radius",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 79
@@ -1869,7 +1823,7 @@
     "122": {
       "varNm": "menu/size/min-width",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": 140,
         "1": 140,
@@ -1880,7 +1834,7 @@
     "123": {
       "varNm": "menu/size/max-width",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": 464,
         "1": 464,
@@ -1933,7 +1887,7 @@
     "128": {
       "varNm": "elevation/elevation-2/blur",
       "varTy": 2,
-      "_colRef": 2,
+      "_colRef": 0,
       "vByMd": {
         "Light": {
           "_varRef": 124
@@ -1946,7 +1900,7 @@
     "129": {
       "varNm": "elevation/elevation-2/shadow-color",
       "varTy": 1,
-      "_colRef": 2,
+      "_colRef": 0,
       "vByMd": {
         "Light": {
           "_varRef": 125
@@ -1959,7 +1913,7 @@
     "130": {
       "varNm": "elevation/elevation-2/y-axis",
       "varTy": 2,
-      "_colRef": 2,
+      "_colRef": 0,
       "vByMd": {
         "Light": {
           "_varRef": 124
@@ -1972,7 +1926,7 @@
     "131": {
       "varNm": "elevation/elevation-2/spread",
       "varTy": 2,
-      "_colRef": 2,
+      "_colRef": 0,
       "vByMd": {
         "Light": {
           "_varRef": 126
@@ -1985,7 +1939,7 @@
     "132": {
       "varNm": "elevation/elevation-2/x-axis",
       "varTy": 2,
-      "_colRef": 2,
+      "_colRef": 0,
       "vByMd": {
         "Light": {
           "_varRef": 126
@@ -1998,7 +1952,7 @@
     "133": {
       "varNm": "menu-item/color/enabled",
       "varTy": 1,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 4
@@ -2017,7 +1971,7 @@
     "134": {
       "varNm": "menu-item/size/padding",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 70
@@ -2036,7 +1990,7 @@
     "135": {
       "varNm": "menu-item/size/spacing",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 37
@@ -2055,7 +2009,7 @@
     "136": {
       "varNm": "menu-item/size/label-top-padding",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": 3,
         "1": 3,
@@ -2066,7 +2020,7 @@
     "137": {
       "varNm": "menu-item/color/text",
       "varTy": 1,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 13
@@ -2085,7 +2039,7 @@
     "138": {
       "varNm": "menu-item/color/supporting-text",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 108
@@ -2104,7 +2058,7 @@
     "139": {
       "varNm": "menu-item/color/border-bottom",
       "varTy": 1,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 83
@@ -2123,7 +2077,7 @@
     "140": {
       "varNm": "global/form/field/color/border-focus",
       "varTy": 1,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 12
@@ -2142,7 +2096,7 @@
     "141": {
       "varNm": "dropdown/color/border-focus",
       "varTy": 1,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 140
@@ -2200,7 +2154,7 @@
     "145": {
       "varNm": "global/form/field/color/border-error",
       "varTy": 1,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 144
@@ -2219,7 +2173,7 @@
     "146": {
       "varNm": "dropdown/color/border-error",
       "varTy": 1,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 145
@@ -2290,7 +2244,7 @@
     "151": {
       "varNm": "global/form/assistive-element/error/icon-color",
       "varTy": 1,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 147
@@ -2309,7 +2263,7 @@
     "152": {
       "varNm": "global/form/assistive-element/error/text-color",
       "varTy": 1,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 147
@@ -2349,7 +2303,7 @@
     "155": {
       "varNm": "global/form/field/color/disabled",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 154
@@ -2368,7 +2322,7 @@
     "156": {
       "varNm": "dropdown/color/disabled",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 155
@@ -2400,7 +2354,7 @@
     "158": {
       "varNm": "global/form/layout/side-by-side/gutter",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 157
@@ -2419,7 +2373,7 @@
     "159": {
       "varNm": "global/form/label/size/side-by-side-large/gutter",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 158
@@ -2438,7 +2392,7 @@
     "160": {
       "varNm": "global/form/layout/side-by-side/label-column-width",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": 224,
         "1": 224,
@@ -2449,7 +2403,7 @@
     "161": {
       "varNm": "global/form/label/size/side-by-side-large/column-width",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 160
@@ -2468,7 +2422,7 @@
     "162": {
       "varNm": "global/form/layout/side-by-side/label-height",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": 48,
         "1": 48,
@@ -2479,7 +2433,7 @@
     "163": {
       "varNm": "global/form/label/size/side-by-side-large/height",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 162
@@ -2498,7 +2452,7 @@
     "164": {
       "varNm": "dropdown/size/input-min-width",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": 140,
         "1": 140,
@@ -2509,7 +2463,7 @@
     "165": {
       "varNm": "dropdown/size/spacing-stacked",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 5
@@ -2528,7 +2482,7 @@
     "166": {
       "varNm": "dropdown/size/input-max-width",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": 464,
         "1": 464,
@@ -2539,7 +2493,7 @@
     "167": {
       "varNm": "dropdown/size/input-height",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": 48,
         "1": 48,
@@ -2550,7 +2504,7 @@
     "168": {
       "varNm": "size/border-radius/default",
       "varTy": 2,
-      "_colRef": 5,
+      "_colRef": 1,
       "vByMd": {
         "Mode 1": 8
       }
@@ -2623,7 +2577,7 @@
     "174": {
       "varNm": "global/form/field/color/placeholder-text-opacity",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 169
@@ -2642,7 +2596,7 @@
     "175": {
       "varNm": "dropdown/color/text-placeholder-opacity",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 174
@@ -2661,7 +2615,7 @@
     "176": {
       "varNm": "chip-row/size/chip-gap",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 102
@@ -2680,7 +2634,7 @@
     "177": {
       "varNm": "chip/color/unselected/background",
       "varTy": 1,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 4
@@ -2699,7 +2653,7 @@
     "178": {
       "varNm": "chip/size/icon-text-gap",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 102
@@ -2718,7 +2672,7 @@
     "179": {
       "varNm": "chip/size/vertical-padding",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 37
@@ -2737,7 +2691,7 @@
     "180": {
       "varNm": "chip/size/horizontal-padding",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 102
@@ -2769,7 +2723,7 @@
     "182": {
       "varNm": "chip/size/border-radius",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 181
@@ -2788,7 +2742,7 @@
     "183": {
       "varNm": "chip/size/max-width",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": 200,
         "1": 200,
@@ -2799,7 +2753,7 @@
     "184": {
       "varNm": "chip/color/unselected/border",
       "varTy": 1,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 83
@@ -2818,7 +2772,7 @@
     "185": {
       "varNm": "chip/color/unselected/text",
       "varTy": 1,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 13
@@ -2837,7 +2791,7 @@
     "186": {
       "varNm": "chip/size/icon",
       "varTy": 2,
-      "_colRef": 8,
+      "_colRef": 2,
       "vByMd": {
         "0": {
           "_varRef": 104
@@ -3823,18 +3777,7 @@
       "cPage": "✅ Chip"
     }
   },
-  "libraries": [
-    {
-      "libraryName": "Recursica Brand",
-      "key": "eac91903ad8b04eed20f4bf2f0444ac6069c6da3",
-      "name": "Theme"
-    },
-    {
-      "libraryName": "Recursica Tokens",
-      "key": "31c5f6bbb52cef5990baeb9894f2c1a6ce32ad8e",
-      "name": "Tokens"
-    }
-  ],
+  "libraries": [],
   "pageData": {
     "type": 13,
     "id": "2992:4117",

@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import Layout from "./components/Layout";
 import Home from "./pages/Home";
 import Import from "./pages/Import";
+import Importing from "./pages/Importing";
 import Publish from "./pages/Publish";
 import Publishing from "./pages/Publishing";
 import PageManagement from "./pages/PageManagement";
@@ -10,6 +11,7 @@ import { Auth } from "./pages/Auth";
 import { AuthProvider } from "./context/AuthProvider";
 import { DebugConsoleProvider } from "./context/DebugConsoleProvider";
 import { PluginPromptProvider } from "./context/PluginPromptProvider";
+import { ImportDataProvider } from "./context/ImportDataProvider";
 
 /**
  * Generates a proper UUID v4 using Web Crypto API
@@ -140,18 +142,24 @@ function App() {
       <AuthProvider>
         <DebugConsoleProvider>
           <PluginPromptProvider>
-            <MemoryRouter initialEntries={["/"]}>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/import" element={<Import />} />
-                <Route path="/publish" element={<Publish />} />
-                <Route path="/publishing" element={<Publishing />} />
-                <Route element={<Layout />}>
-                  <Route path="auth" element={<Auth />} />
-                  <Route path="page-management" element={<PageManagement />} />
-                </Route>
-              </Routes>
-            </MemoryRouter>
+            <ImportDataProvider>
+              <MemoryRouter initialEntries={["/"]}>
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/import" element={<Import />} />
+                  <Route path="/importing" element={<Importing />} />
+                  <Route path="/publish" element={<Publish />} />
+                  <Route path="/publishing" element={<Publishing />} />
+                  <Route element={<Layout />}>
+                    <Route path="auth" element={<Auth />} />
+                    <Route
+                      path="page-management"
+                      element={<PageManagement />}
+                    />
+                  </Route>
+                </Routes>
+              </MemoryRouter>
+            </ImportDataProvider>
           </PluginPromptProvider>
         </DebugConsoleProvider>
       </AuthProvider>
