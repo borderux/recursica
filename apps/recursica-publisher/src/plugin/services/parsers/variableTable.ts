@@ -206,6 +206,43 @@ export function isLocalVariable(collectionId: string): boolean {
 }
 
 /**
+ * Variable type mapping: maps Figma variable types to numbers for compression
+ * COLOR=1, FLOAT=2, STRING=3, BOOLEAN=4
+ * Unknown types are stored as strings
+ */
+const VARIABLE_TYPE_MAP: Record<string, number> = {
+  COLOR: 1,
+  FLOAT: 2,
+  STRING: 3,
+  BOOLEAN: 4,
+};
+
+const VARIABLE_TYPE_REVERSE_MAP: Record<number, string> = {
+  1: "COLOR",
+  2: "FLOAT",
+  3: "STRING",
+  4: "BOOLEAN",
+};
+
+/**
+ * Compresses a variable type to a number if it's a known type, otherwise returns the string
+ */
+function compressVariableType(type: string): number | string {
+  const upperType = type.toUpperCase();
+  return VARIABLE_TYPE_MAP[upperType] ?? type;
+}
+
+/**
+ * Expands a variable type from a number or string back to the full type name
+ */
+function expandVariableType(type: number | string): string {
+  if (typeof type === "number") {
+    return VARIABLE_TYPE_REVERSE_MAP[type] ?? type.toString();
+  }
+  return type;
+}
+
+/**
  * VariableTable manages a collection of unique variables and provides index-based access
  */
 export class VariableTable {
@@ -316,11 +353,16 @@ export class VariableTable {
    * Used for JSON serialization to reduce size
    * Filters out: variableKey, id, collectionName, collectionId, isLocal
    * Also removes type and id from VariableAliasSerialized in valuesByMode (only keeps _varRef)
-   * Keeps: variableName, variableType, _colRef, valuesByMode, and legacy collectionRef
+   * Compresses variableType: known types (COLOR, FLOAT, STRING, BOOLEAN) become numbers (1-4), unknown types stay as strings
+   * Keeps: variableName, variableType (compressed), _colRef, valuesByMode
    */
   getSerializedTable(): Record<
     string,
-    Omit<VariableTableEntry, "variableKey" | "id" | "valuesByMode"> & {
+    Omit<
+      VariableTableEntry,
+      "variableKey" | "id" | "valuesByMode" | "variableType"
+    > & {
+      variableType: number | string; // Compressed: number for known types, string for unknown
       valuesByMode?: Record<
         string,
         string | number | boolean | { _varRef: number }
@@ -329,7 +371,11 @@ export class VariableTable {
   > {
     const table: Record<
       string,
-      Omit<VariableTableEntry, "variableKey" | "id" | "valuesByMode"> & {
+      Omit<
+        VariableTableEntry,
+        "variableKey" | "id" | "valuesByMode" | "variableType"
+      > & {
+        variableType: number | string; // Compressed: number for known types, string for unknown
         valuesByMode?: Record<
           string,
           string | number | boolean | { _varRef: number }
@@ -344,17 +390,19 @@ export class VariableTable {
       );
 
       // Build serialized entry with correct types
+      // Compress variableType to number if it's a known type
       const serialized: Omit<
         VariableTableEntry,
-        "variableKey" | "id" | "valuesByMode"
+        "variableKey" | "id" | "valuesByMode" | "variableType"
       > & {
+        variableType: number | string; // Compressed: number for known types, string for unknown
         valuesByMode?: Record<
           string,
           string | number | boolean | { _varRef: number }
         >;
       } = {
         variableName: entry.variableName,
-        variableType: entry.variableType,
+        variableType: compressVariableType(entry.variableType),
         ...(entry._colRef !== undefined && { _colRef: entry._colRef }),
         ...(serializedValuesByMode && { valuesByMode: serializedValuesByMode }),
       };
@@ -366,8 +414,16 @@ export class VariableTable {
   /**
    * Reconstructs a VariableTable from a serialized table object
    * Handles both new format (without variableKey) and legacy format (with variableKey)
+   * Expands compressed variable types (numbers) back to strings
    */
-  static fromTable(table: Record<string, VariableTableEntry>): VariableTable {
+  static fromTable(
+    table: Record<
+      string,
+      Omit<VariableTableEntry, "variableKey" | "id" | "variableType"> & {
+        variableType: number | string; // Can be compressed (number) or string
+      }
+    >,
+  ): VariableTable {
     const variableTable = new VariableTable();
     const entries = Object.entries(table).sort(
       (a, b) => parseInt(a[0], 10) - parseInt(b[0], 10),
@@ -375,16 +431,11 @@ export class VariableTable {
 
     for (const [indexStr, variable] of entries) {
       const index = parseInt(indexStr, 10);
-      // Only rebuild variableMap if variableKey is present (legacy format)
-      // New format doesn't need variableMap during import (we match by name)
-      if (variable.variableKey) {
-        variableTable.variableMap.set(variable.variableKey, index);
-      }
-      // Handle legacy collectionRef -> _colRef migration
+      // Expand variableType from number to string if compressed
+      const expandedType = expandVariableType(variable.variableType);
       const entry: VariableTableEntry = {
         ...variable,
-        // Prefer _colRef, fallback to collectionRef for backward compatibility
-        _colRef: variable._colRef ?? variable.collectionRef,
+        variableType: expandedType, // Always a string after expansion
       };
       variableTable.variables[index] = entry;
       variableTable.nextIndex = Math.max(variableTable.nextIndex, index + 1);
