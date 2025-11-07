@@ -442,21 +442,9 @@ export async function exportPage(
       }
     }
 
-    // Create string table and compress all data
-    await debugConsole.log("Creating string table and compressing data...");
+    // Create string table for compression
+    await debugConsole.log("Creating string table...");
     const stringTable = new StringTable();
-
-    // Compress all tables and page data
-    const compressedCollections = stringTable.compressObject(
-      collectionTable.getSerializedTable(),
-    );
-    const compressedVariables = stringTable.compressObject(
-      variableTable.getSerializedTable(),
-    );
-    const compressedInstances = stringTable.compressObject(
-      instanceTable.getSerializedTable(),
-    );
-    const compressedPageData = stringTable.compressObject(extractedPageData);
 
     // Get or generate page metadata (GUID and version)
     await debugConsole.log("Getting page metadata...");
@@ -499,6 +487,7 @@ export async function exportPage(
     }
 
     // Create export data with metadata, collections table, variable table, instance table, libraries, and page data
+    // All data uses full key names at this point
     await debugConsole.log("Creating export data structure...");
     const exportData = {
       metadata: {
@@ -511,15 +500,20 @@ export async function exportPage(
         pluginVersion: "1.0.0",
       },
       stringTable: stringTable.getSerializedTable(),
-      collections: compressedCollections,
-      variables: compressedVariables,
-      instances: compressedInstances,
+      collections: collectionTable.getSerializedTable(),
+      variables: variableTable.getSerializedTable(),
+      instances: instanceTable.getSerializedTable(),
       libraries: libraries, // Libraries might not need compression, but could be added later
-      pageData: compressedPageData,
+      pageData: extractedPageData,
     };
 
+    // Compress the entire JSON at the very last stage
+    await debugConsole.log("Compressing JSON data...");
+    const { compressJsonData } = await import("../utils/jsonCompression");
+    const compressedExportData = compressJsonData(exportData, stringTable);
+
     await debugConsole.log("Serializing to JSON...");
-    const jsonString = JSON.stringify(exportData, null, 2);
+    const jsonString = JSON.stringify(compressedExportData, null, 2);
     const jsonSizeKB = (jsonString.length / 1024).toFixed(2);
     const filename =
       selectedPage.name.replace(/[^a-z0-9]/gi, "_") + "_export.json";

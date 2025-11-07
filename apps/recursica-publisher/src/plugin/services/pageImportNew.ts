@@ -1331,18 +1331,17 @@ export async function importPage(
 
     console.log("Importing page from JSON");
 
-    // Validate JSON structure
-    if (!jsonData.pageData || !jsonData.metadata) {
+    // Metadata is never compressed, so we can read it directly
+    if (!jsonData.metadata) {
       return {
         type: "importPage",
         success: false,
         error: true,
-        message: "Invalid JSON format. Expected pageData and metadata.",
+        message: "Invalid JSON format. Expected metadata.",
         data: {},
       };
     }
 
-    const pageData = jsonData.pageData;
     const metadata = jsonData.metadata;
 
     // Load string table (required for format 2.7.0+)
@@ -1370,16 +1369,30 @@ export async function importPage(
       };
     }
 
-    // Expand compressed data using string table
-    const expandData = (data: any) => {
-      return stringTable.expandObject(data);
-    };
+    // Expand only the parts we need, not the entire JSON
+    // This is more efficient and allows us to read metadata without expansion
+    const { expandJsonData } = await import("../utils/jsonCompression");
+
+    // Validate JSON structure
+    if (!jsonData.pageData) {
+      return {
+        type: "importPage",
+        success: false,
+        error: true,
+        message: "Invalid JSON format. Expected pageData.",
+        data: {},
+      };
+    }
 
     // Load collections table if present (format 2.3.0+)
+    // Expand only this part as needed
     let collectionTable: CollectionTable | null = null;
     if (jsonData.collections) {
       try {
-        const expandedCollections = expandData(jsonData.collections);
+        const expandedCollections = expandJsonData(
+          jsonData.collections,
+          stringTable,
+        );
         collectionTable = CollectionTable.fromTable(expandedCollections);
         console.log(
           `Loaded collections table with ${collectionTable.getSize()} collections`,
@@ -1390,10 +1403,14 @@ export async function importPage(
     }
 
     // Load variable table if present (format 2.1.0+)
+    // Expand only this part as needed
     let variableTable: VariableTable | null = null;
     if (jsonData.variables) {
       try {
-        const expandedVariables = expandData(jsonData.variables);
+        const expandedVariables = expandJsonData(
+          jsonData.variables,
+          stringTable,
+        );
         variableTable = VariableTable.fromTable(expandedVariables);
         console.log(
           `Loaded variable table with ${variableTable.getSize()} variables`,
@@ -1404,10 +1421,14 @@ export async function importPage(
     }
 
     // Load instance table if present (format 2.6.0+)
+    // Expand only this part as needed
     let instanceTable: InstanceTable | null = null;
     if (jsonData.instances) {
       try {
-        const expandedInstances = expandData(jsonData.instances);
+        const expandedInstances = expandJsonData(
+          jsonData.instances,
+          stringTable,
+        );
         instanceTable = InstanceTable.fromTable(expandedInstances);
         console.log(
           `Loaded instance table with ${instanceTable.getSize()} instances`,
@@ -1443,8 +1464,8 @@ export async function importPage(
 
     console.log("Created new page: " + newPageName);
 
-    // Expand page data if compressed
-    const expandedPageData = expandData(pageData);
+    // Expand page data only when needed
+    const expandedPageData = expandJsonData(jsonData.pageData, stringTable);
 
     // Recreate the page content
     if (expandedPageData.children && Array.isArray(expandedPageData.children)) {

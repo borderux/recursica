@@ -1,6 +1,8 @@
 /**
  * Recursively expands compressed keys using the string table
  * The string table maps short -> long keys (e.g., "instT" -> "instanceType")
+ * This is a simplified version for UI code - for full expansion including type enums,
+ * use the StringTable.expandObject method from the plugin code
  */
 function expandData(
   data: unknown,
@@ -54,6 +56,17 @@ export function getRequiredImportFiles(
 
   const data = jsonData as Record<string, unknown>;
 
+  // Check if instances table exists
+  if (!data.instances || typeof data.instances !== "object") {
+    console.log("[getRequiredImportFiles] No instances table found");
+    return [];
+  }
+
+  console.log(
+    "[getRequiredImportFiles] Instances table found, keys:",
+    Object.keys(data.instances),
+  );
+
   // Expand string table if present
   let stringTable: Record<string, string> | undefined;
   if (data.stringTable && typeof data.stringTable === "object") {
@@ -67,18 +80,7 @@ export function getRequiredImportFiles(
     console.log("[getRequiredImportFiles] No string table found");
   }
 
-  // Check if instances table exists
-  if (!data.instances || typeof data.instances !== "object") {
-    console.log("[getRequiredImportFiles] No instances table found");
-    return [];
-  }
-
-  console.log(
-    "[getRequiredImportFiles] Instances table found, keys:",
-    Object.keys(data.instances),
-  );
-
-  // Expand instances table using string table
+  // Expand only the instances table (not the whole JSON)
   const expandedInstances = expandData(data.instances, stringTable);
   if (
     !expandedInstances ||
