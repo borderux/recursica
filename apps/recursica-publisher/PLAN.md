@@ -394,7 +394,7 @@ interface InstanceTableEntry {
   instanceType: "internal" | "normal" | "remote";
 
   // For internal instances (same page)
-  componentNodeId?: string; // Node ID of the component on the same page
+  componentNodeId?: string; // Node ID of the component on the same page (used during import with ID mapping)
 
   // For normal instances (different page, same file)
   componentGuid?: string; // GUID from component metadata (RecursicaPublishedMetadata.id)
@@ -409,8 +409,8 @@ interface InstanceTableEntry {
   // Common fields (used for all types)
   componentName: string; // Component name (may be variant property string)
   componentSetName?: string; // Actual component set name (if variant)
-  componentType?: string; // Component type (COMPONENT, COMPONENT_SET) - mainly for remote
-  path?: string[]; // Path within library/file (for remote/normal components) - REQUIRED for normal instances to locate the specific component on the referenced page. Array of node names from page root to component. Empty array means component is at page root. Empty names are represented as empty strings in the array. Duplicate names are allowed but may require validation during import to resolve ambiguity.
+  // Note: componentType is not stored - instances always reference COMPONENT nodes (never COMPONENT_SET directly)
+  path?: string[]; // Path within library/file - REQUIRED for normal instances to locate the specific component on the referenced page. Array of node names from page root to component. Empty array means component is at page root. Empty names are represented as empty strings in the array. Duplicate names are allowed but may require validation during import to resolve ambiguity. For internal instances, componentNodeId is used instead (simpler since everything is on the same page).
   variantProperties?: Record<string, string>; // Variant property values
   componentProperties?: Record<string, any>; // Component property values
 }
@@ -561,7 +561,11 @@ if (isRemote) {
 1. **Process Instance Table** (First Pass):
 
    - For each instance table entry:
-     - **If `instanceType === "internal"`**: Look up component by `componentNodeId` on the same page (will be resolved when recreating nodes on that page)
+     - **If `instanceType === "internal"`**: Look up component by `componentNodeId` using the ID mapping
+       - During import, maintain a map of old node ID -> new node as nodes are recreated
+       - When creating an instance, look up the component using `componentNodeId` in the mapping
+       - This is simpler than using paths since everything is on the same page
+       - Components are created before instances (depth-first traversal), so the mapping will be available
      - **If `instanceType === "normal"`**:
        - Search all pages for a page with component metadata matching `componentGuid` and `componentVersion`
        - If found: Use `path` array to navigate from the page root to the specific component node
@@ -574,8 +578,8 @@ if (isRemote) {
            - If multiple matches found, try each path and validate at the end
            - Handle empty strings by finding nodes with empty or whitespace-only names
          - **Validation**: After navigating to the final node, verify:
-           - Node type matches `componentType` (COMPONENT or COMPONENT_SET)
-           - Node name matches `componentName` (or if `componentSetName` is present, the node should be a COMPONENT_SET with that name, and we'll need to find the specific variant component within it)
+           - Node type is COMPONENT (instances always reference COMPONENT nodes, never COMPONENT_SET directly)
+           - Node name matches `componentName` (or if `componentSetName` is present, the node's parent should be a COMPONENT_SET with that name)
          - If validation fails and multiple paths exist: Try the next matching path
          - If all paths fail validation: Log error and skip (path resolution found wrong node, possibly due to structure changes)
          - The validated node at the end of the path is the component to use for the instance
@@ -672,10 +676,10 @@ When processing instances of type "normal" (different page, same file):
 
    The `InstanceTable.generateKey()` method creates unique keys for deduplication:
 
-   - `internal:${componentNodeId}` - Simple node ID for same-page components
+   - `internal:${componentNodeId}` - Node ID for same-page components (simpler than path, resolved via ID mapping during import)
    - `normal:${componentGuid}:${componentVersion}` - GUID + version for cross-page components (path is not part of key since GUID+version uniquely identifies the page)
    - `remote:${remoteLibraryKey}:${componentName}` - Library key + name for remote components
-   - Fallback: `${instanceType}:${componentName}:${componentType}` if required fields missing
+   - Fallback: `${instanceType}:${componentName}:COMPONENT` if required fields missing (componentType is always COMPONENT for instances)
 
 4. **Path Resolution and Validation**:
 
@@ -686,12 +690,12 @@ When processing instances of type "normal" (different page, same file):
    - Path is stored as array of node names to avoid separator conflicts
    - For each segment in the path array:
      - Find child nodes with matching name (may be multiple if names are duplicated)
-     - Handle `"<*EMPTY*>"` by finding nodes with empty or whitespace-only names
+     - Handle empty strings by finding nodes with empty or whitespace-only names
      - If multiple matches found at any level, try each path and validate at the end
    - **Validation is critical**: After navigating to the node, verify:
-     - Node type matches `componentType` (must be COMPONENT or COMPONENT_SET)
+     - Node type is COMPONENT (instances always reference COMPONENT nodes, never COMPONENT_SET directly)
      - Node name matches `componentName` (for regular components) OR
-     - If `componentSetName` is present, the node should be a COMPONENT_SET with name matching `componentSetName`, and we need to find the specific variant component within the set that matches `componentName` and `variantProperties`
+     - If `componentSetName` is present, the node's parent should be a COMPONENT_SET with name matching `componentSetName`, and the node should match `componentName` and `variantProperties`
    - If validation fails and multiple paths exist: Try the next matching path
    - If all paths fail validation: Log an error and skip the instance (path resolution found wrong node, possibly due to structure changes)
    - This validation ensures we're using the correct component even if the page structure has changed slightly or names are duplicated

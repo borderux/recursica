@@ -798,8 +798,7 @@ async function Ve(e, a) {
       }
       const x = h(h(h(h({
         instanceType: l,
-        componentName: n,
-        componentType: o.type
+        componentName: n
       }, w && { componentSetName: w }), m && { variantProperties: m }), f && { componentProperties: f }), l === "normal" ? { path: b || [] } : b && b.length > 0 && {
         path: b
       });
@@ -887,7 +886,7 @@ class j {
    * Generates a unique key for an instance based on its type
    */
   generateKey(a) {
-    return a.instanceType === "internal" && a.componentNodeId ? `internal:${a.componentNodeId}` : a.instanceType === "normal" && a.componentGuid && a.componentVersion !== void 0 ? `normal:${a.componentGuid}:${a.componentVersion}` : a.instanceType === "remote" && a.remoteLibraryKey ? `remote:${a.remoteLibraryKey}:${a.componentName}` : `${a.instanceType}:${a.componentName}:${a.componentType || "unknown"}`;
+    return a.instanceType === "internal" && a.componentNodeId ? `internal:${a.componentNodeId}` : a.instanceType === "normal" && a.componentGuid && a.componentVersion !== void 0 ? `normal:${a.componentGuid}:${a.componentVersion}` : a.instanceType === "remote" && a.remoteLibraryKey ? `remote:${a.remoteLibraryKey}:${a.componentName}` : `${a.instanceType}:${a.componentName}:COMPONENT`;
   }
   /**
    * Adds an instance to the table if it doesn't already exist

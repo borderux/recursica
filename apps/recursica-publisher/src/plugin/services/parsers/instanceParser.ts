@@ -167,15 +167,15 @@ export async function parseInstanceProperties(
       }
 
       // Create instance table entry
+      // Note: componentType is not stored - instances always reference COMPONENT nodes
       const entry: InstanceTableEntry = {
         instanceType,
         componentName,
-        componentType: mainComponent.type,
         ...(componentSetName && { componentSetName }),
         ...(variantProperties && { variantProperties }),
         ...(componentProperties && { componentProperties }),
         // Always include path for normal instances (even if empty array for page root)
-        // For internal instances, path is optional (not needed for resolution)
+        // For internal instances, we use componentNodeId instead (simpler since everything is on the same page)
         // For remote instances, path is optional (structure is used instead)
         ...(instanceType === "normal"
           ? { path: mainComponentParentPath || [] }
@@ -187,6 +187,8 @@ export async function parseInstanceProperties(
 
       // Add type-specific fields
       if (instanceType === "internal") {
+        // For internal instances, store the component node ID
+        // During import, we maintain a mapping of old ID -> new node to resolve this
         entry.componentNodeId = mainComponent.id;
         await debugConsole.log(
           `  Found INSTANCE: "${instanceName}" -> INTERNAL component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...)`,

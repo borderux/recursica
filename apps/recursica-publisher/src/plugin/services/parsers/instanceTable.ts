@@ -14,7 +14,7 @@ export interface InstanceTableEntry {
   instanceType: "internal" | "normal" | "remote";
 
   // For internal instances (same page)
-  componentNodeId?: string; // Node ID of the component on the same page
+  componentNodeId?: string; // Node ID of the component on the same page (used during import with ID mapping)
 
   // For normal instances (different page, same file)
   componentGuid?: string; // GUID from component metadata (RecursicaPublishedMetadata.id)
@@ -29,8 +29,8 @@ export interface InstanceTableEntry {
   // Common fields (used for all types)
   componentName: string; // Component name (may be variant property string)
   componentSetName?: string; // Actual component set name (if variant)
-  componentType?: string; // Component type (COMPONENT, COMPONENT_SET) - mainly for remote
-  path?: string[]; // Path within library/file (for remote/normal components) - REQUIRED for normal instances to locate the specific component on the referenced page. Array of node names from page root to component. Empty array means component is at page root. Empty names are represented as empty strings in the array. Duplicate names are allowed but may require validation during import to resolve ambiguity.
+  // Note: componentType is not stored - instances always reference COMPONENT nodes (never COMPONENT_SET directly)
+  path?: string[]; // Path within library/file - REQUIRED for normal instances to locate the specific component on the referenced page. Array of node names from page root to component. Empty array means component is at page root. Empty names are represented as empty strings in the array. Duplicate names are allowed but may require validation during import to resolve ambiguity. For internal instances, componentNodeId is used instead (simpler since everything is on the same page).
   variantProperties?: Record<string, string>; // Variant property values
   componentProperties?: Record<string, any>; // Component property values
 }
@@ -55,6 +55,8 @@ export class InstanceTable {
    */
   private generateKey(entry: InstanceTableEntry): string {
     if (entry.instanceType === "internal" && entry.componentNodeId) {
+      // For internal instances, use node ID (simpler since everything is on the same page)
+      // During import, we maintain a mapping of old ID -> new node
       return `internal:${entry.componentNodeId}`;
     } else if (
       entry.instanceType === "normal" &&
@@ -65,8 +67,8 @@ export class InstanceTable {
     } else if (entry.instanceType === "remote" && entry.remoteLibraryKey) {
       return `remote:${entry.remoteLibraryKey}:${entry.componentName}`;
     }
-    // Fallback: use component name and type
-    return `${entry.instanceType}:${entry.componentName}:${entry.componentType || "unknown"}`;
+    // Fallback: use component name (componentType is always COMPONENT for instances)
+    return `${entry.instanceType}:${entry.componentName}:COMPONENT`;
   }
 
   /**
