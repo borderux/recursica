@@ -11,6 +11,7 @@ import { parseShapeProperties } from "./parsers/shapeParser";
 import { parseInstanceProperties } from "./parsers/instanceParser";
 import { VariableTable, CollectionTable } from "./parsers/variableTable";
 import { InstanceTable } from "./parsers/instanceTable";
+import { StringTable } from "./parsers/stringTable";
 import { debugConsole } from "./debugConsole";
 
 export interface ExportPageData {
@@ -441,22 +442,39 @@ export async function exportPage(
       }
     }
 
+    // Create string table and compress all data
+    await debugConsole.log("Creating string table and compressing data...");
+    const stringTable = new StringTable();
+
+    // Compress all tables and page data
+    const compressedCollections = stringTable.compressObject(
+      collectionTable.getSerializedTable(),
+    );
+    const compressedVariables = stringTable.compressObject(
+      variableTable.getSerializedTable(),
+    );
+    const compressedInstances = stringTable.compressObject(
+      instanceTable.getSerializedTable(),
+    );
+    const compressedPageData = stringTable.compressObject(extractedPageData);
+
     // Create export data with metadata, collections table, variable table, instance table, libraries, and page data
     await debugConsole.log("Creating export data structure...");
     const exportData = {
       metadata: {
         exportedAt: new Date().toISOString(),
-        exportFormatVersion: "2.6.0", // Updated version for instance table system
+        exportFormatVersion: "2.7.0", // Updated version for string table compression
         figmaApiVersion: figma.apiVersion,
         originalPageName: selectedPage.name,
         totalNodes: totalNodes,
         pluginVersion: "1.0.0",
       },
-      collections: collectionTable.getSerializedTable(),
-      variables: variableTable.getSerializedTable(),
-      instances: instanceTable.getSerializedTable(),
-      libraries: libraries,
-      pageData: extractedPageData,
+      stringTable: stringTable.getSerializedTable(),
+      collections: compressedCollections,
+      variables: compressedVariables,
+      instances: compressedInstances,
+      libraries: libraries, // Libraries might not need compression, but could be added later
+      pageData: compressedPageData,
     };
 
     await debugConsole.log("Serializing to JSON...");

@@ -357,17 +357,6 @@ export class VariableTable {
         variableType: entry.variableType,
         ...(entry._colRef !== undefined && { _colRef: entry._colRef }),
         ...(serializedValuesByMode && { valuesByMode: serializedValuesByMode }),
-        // Only include legacy fields if _colRef is not present (for backward compatibility)
-        ...(entry._colRef === undefined &&
-          entry.collectionRef !== undefined && {
-            collectionRef: entry.collectionRef,
-          }),
-        ...(entry._colRef === undefined &&
-          entry.collectionName && { collectionName: entry.collectionName }),
-        ...(entry._colRef === undefined &&
-          entry.collectionId && { collectionId: entry.collectionId }),
-        ...(entry._colRef === undefined &&
-          entry.isLocal !== undefined && { isLocal: entry.isLocal }),
       };
       table[String(i)] = serialized;
     }

@@ -14,6 +14,8 @@ import {
   type VariableAliasSerialized,
   type CollectionTableEntry,
 } from "./parsers/variableTable";
+import { InstanceTable } from "./parsers/instanceTable";
+import { StringTable } from "./parsers/stringTable";
 import { requestGuidFromUI } from "../utils/requestGuidFromUI";
 import { REGISTERED_REMOTE_COLLECTIONS } from "../../const/RegisteredCollections";
 import { debugConsole } from "./debugConsole";
@@ -936,6 +938,7 @@ export async function recreateNodeFromData(
   parentNode: any,
   variableTable: VariableTable | null = null,
   collectionTable: CollectionTable | null = null,
+  instanceTable: InstanceTable | null = null,
 ): Promise<any> {
   try {
     let newNode: any;
@@ -1342,11 +1345,42 @@ export async function importPage(
     const pageData = jsonData.pageData;
     const metadata = jsonData.metadata;
 
+    // Load string table (required for format 2.7.0+)
+    if (!jsonData.stringTable) {
+      return {
+        type: "importPage",
+        success: false,
+        error: true,
+        message: "Invalid JSON format. String table is required.",
+        data: {},
+      };
+    }
+
+    let stringTable: StringTable;
+    try {
+      stringTable = StringTable.fromTable(jsonData.stringTable);
+      console.log("Loaded string table for key expansion");
+    } catch (error) {
+      return {
+        type: "importPage",
+        success: false,
+        error: true,
+        message: `Failed to load string table: ${error instanceof Error ? error.message : "Unknown error"}`,
+        data: {},
+      };
+    }
+
+    // Expand compressed data using string table
+    const expandData = (data: any) => {
+      return stringTable.expandObject(data);
+    };
+
     // Load collections table if present (format 2.3.0+)
     let collectionTable: CollectionTable | null = null;
     if (jsonData.collections) {
       try {
-        collectionTable = CollectionTable.fromTable(jsonData.collections);
+        const expandedCollections = expandData(jsonData.collections);
+        collectionTable = CollectionTable.fromTable(expandedCollections);
         console.log(
           `Loaded collections table with ${collectionTable.getSize()} collections`,
         );
@@ -1359,7 +1393,8 @@ export async function importPage(
     let variableTable: VariableTable | null = null;
     if (jsonData.variables) {
       try {
-        variableTable = VariableTable.fromTable(jsonData.variables);
+        const expandedVariables = expandData(jsonData.variables);
+        variableTable = VariableTable.fromTable(expandedVariables);
         console.log(
           `Loaded variable table with ${variableTable.getSize()} variables`,
         );
@@ -1368,8 +1403,22 @@ export async function importPage(
       }
     }
 
+    // Load instance table if present (format 2.6.0+)
+    let instanceTable: InstanceTable | null = null;
+    if (jsonData.instances) {
+      try {
+        const expandedInstances = expandData(jsonData.instances);
+        instanceTable = InstanceTable.fromTable(expandedInstances);
+        console.log(
+          `Loaded instance table with ${instanceTable.getSize()} instances`,
+        );
+      } catch (error) {
+        console.warn("Failed to load instance table:", error);
+      }
+    }
+
     // Version validation and compatibility checks
-    const currentExportFormatVersion = "2.3.0";
+    const currentExportFormatVersion = "2.7.0";
     const exportedVersion = metadata.exportFormatVersion || "1.0.0";
 
     if (exportedVersion !== currentExportFormatVersion) {
@@ -1395,9 +1444,12 @@ export async function importPage(
     console.log("Created new page: " + newPageName);
     console.log("Importing " + (metadata.totalNodes || "unknown") + " nodes");
 
+    // Expand page data if compressed
+    const expandedPageData = expandData(pageData);
+
     // Recreate the page content
-    if (pageData.children && Array.isArray(pageData.children)) {
-      for (const childData of pageData.children) {
+    if (expandedPageData.children && Array.isArray(expandedPageData.children)) {
+      for (const childData of expandedPageData.children) {
         if (childData._truncated) {
           console.log(
             `Skipping truncated children: ${childData._reason || "Unknown"}`,
@@ -1409,6 +1461,7 @@ export async function importPage(
           newPage,
           variableTable,
           collectionTable,
+          instanceTable,
         );
       }
       console.log("Successfully imported page content with all children");
