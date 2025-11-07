@@ -28,47 +28,6 @@ function getPageFromNode(node: any): any | null {
 }
 
 /**
- * Builds a file-path-like string by traversing up the parent chain
- * from an instance node. Stops at the top (PAGE node or null parent).
- * @param node - The instance node to start from
- * @returns A path string with parent names joined by "/" (e.g., "Frame1/Frame2/Container")
- */
-function buildParentPath(node: any): string {
-  const pathParts: string[] = [];
-  let current: any = node.parent;
-
-  try {
-    while (current) {
-      let nodeType: string | undefined;
-      let nodeName: string | undefined;
-      let nextParent: any;
-
-      try {
-        nodeType = current.type;
-        nodeName = current.name;
-        nextParent = current.parent;
-      } catch (error) {
-        break;
-      }
-
-      if (nodeType === "PAGE" || !nextParent) {
-        break;
-      }
-
-      if (nodeName && nodeName.trim() !== "") {
-        pathParts.unshift(nodeName);
-      }
-
-      current = nextParent;
-    }
-  } catch (error) {
-    // Return what we have so far
-  }
-
-  return pathParts.join("/");
-}
-
-/**
  * Gets component metadata from a page node
  */
 function getComponentMetadataFromPage(page: any): {
@@ -162,14 +121,18 @@ export async function parseInstanceProperties(
         // Properties might not be accessible
       }
 
-      // Build paths
-      const instanceParentPath = buildParentPath(node);
-      let mainComponentParentPath: string | undefined;
+      // Build path using node names
+      // Note: We cannot use node IDs for normal instances because IDs differ across files/users
+      // We handle:
+      // 1. Empty names: Represented as empty strings in the array
+      // 2. Duplicate names: Store them, validation during import will check multiple paths
+      // 3. Path is stored as array to avoid separator conflicts
+      let mainComponentParentPath: string[] | undefined;
       let componentSetName: string | undefined;
 
       try {
         let current: any = mainComponent.parent;
-        const pathParts: string[] = [];
+        const pathNames: string[] = [];
         let depth = 0;
         const maxDepth = 20;
 
@@ -186,9 +149,10 @@ export async function parseInstanceProperties(
               break;
             }
 
-            if (nodeName && nodeName.trim() !== "") {
-              pathParts.unshift(nodeName);
-            }
+            // Use node name for path, empty names are represented as empty strings
+            // Store as array to avoid separator conflicts
+            const pathSegment = nodeName || "";
+            pathNames.unshift(pathSegment);
 
             current = current.parent;
             depth++;
@@ -197,7 +161,7 @@ export async function parseInstanceProperties(
           }
         }
 
-        mainComponentParentPath = pathParts.join("/");
+        mainComponentParentPath = pathNames;
       } catch {
         // Path building failed, continue without it
       }
@@ -210,8 +174,15 @@ export async function parseInstanceProperties(
         ...(componentSetName && { componentSetName }),
         ...(variantProperties && { variantProperties }),
         ...(componentProperties && { componentProperties }),
-        ...(mainComponentParentPath && { _path: mainComponentParentPath }),
-        ...(instanceParentPath && { _instancePath: instanceParentPath }),
+        // Always include path for normal instances (even if empty array for page root)
+        // For internal instances, path is optional (not needed for resolution)
+        // For remote instances, path is optional (structure is used instead)
+        ...(instanceType === "normal"
+          ? { path: mainComponentParentPath || [] }
+          : mainComponentParentPath &&
+            mainComponentParentPath.length > 0 && {
+              path: mainComponentParentPath,
+            }),
       };
 
       // Add type-specific fields
@@ -230,8 +201,24 @@ export async function parseInstanceProperties(
             entry.componentPageName = componentPage.name;
           }
         }
+        // path is REQUIRED for normal instances to locate the specific component on the referenced page
+        // Path is stored as array of node names (cannot use IDs as they differ across files/users)
+        // Empty names are represented as empty strings in the array
+        // Duplicate names are allowed but require validation during import
+        // If mainComponentParentPath is empty array, the component is at the page root
+        // This is valid - during import, empty array means search page's direct children
+        if (mainComponentParentPath === undefined) {
+          // Path building failed - this is a problem for normal instances
+          console.warn(
+            `Failed to build path for normal instance "${instanceName}" -> component "${componentName}". Path is required for resolution.`,
+          );
+        }
+        const pathDisplay =
+          mainComponentParentPath && mainComponentParentPath.length > 0
+            ? ` at path [${mainComponentParentPath.join(" → ")}]`
+            : " at page root";
         await debugConsole.log(
-          `  Found INSTANCE: "${instanceName}" -> NORMAL component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...)`,
+          `  Found INSTANCE: "${instanceName}" -> NORMAL component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...)${pathDisplay}`,
         );
       } else if (instanceType === "remote") {
         // Try to get library information

@@ -30,8 +30,7 @@ export interface InstanceTableEntry {
   componentName: string; // Component name (may be variant property string)
   componentSetName?: string; // Actual component set name (if variant)
   componentType?: string; // Component type (COMPONENT, COMPONENT_SET) - mainly for remote
-  _path?: string; // Path within library/file (for remote/normal components)
-  _instancePath?: string; // Path of instance in current file (for reference)
+  path?: string[]; // Path within library/file (for remote/normal components) - REQUIRED for normal instances to locate the specific component on the referenced page. Array of node names from page root to component. Empty array means component is at page root. Empty names are represented as empty strings in the array. Duplicate names are allowed but may require validation during import to resolve ambiguity.
   variantProperties?: Record<string, string>; // Variant property values
   componentProperties?: Record<string, any>; // Component property values
 }

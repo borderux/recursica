@@ -410,8 +410,7 @@ interface InstanceTableEntry {
   componentName: string; // Component name (may be variant property string)
   componentSetName?: string; // Actual component set name (if variant)
   componentType?: string; // Component type (COMPONENT, COMPONENT_SET) - mainly for remote
-  _path?: string; // Path within library/file (for remote/normal components)
-  _instancePath?: string; // Path of instance in current file (for reference)
+  path?: string[]; // Path within library/file (for remote/normal components) - REQUIRED for normal instances to locate the specific component on the referenced page. Array of node names from page root to component. Empty array means component is at page root. Empty names are represented as empty strings in the array. Duplicate names are allowed but may require validation during import to resolve ambiguity.
   variantProperties?: Record<string, string>; // Variant property values
   componentProperties?: Record<string, any>; // Component property values
 }
@@ -565,8 +564,23 @@ if (isRemote) {
      - **If `instanceType === "internal"`**: Look up component by `componentNodeId` on the same page (will be resolved when recreating nodes on that page)
      - **If `instanceType === "normal"`**:
        - Search all pages for a page with component metadata matching `componentGuid` and `componentVersion`
-       - If found: Extract the component node from that page (typically the first component on the page)
+       - If found: Use `path` array to navigate from the page root to the specific component node
+         - `path` is an array of node names (e.g., ["Frame1", "Container", "Button"])
+         - **Cannot use node IDs** because IDs differ across files/users
+         - Empty names in path are represented as empty strings `""`
+         - If `path` is empty array, the component is at the page root (search page's direct children)
+         - Starting from the page, navigate by name: for each segment in the path array:
+           - Find child nodes with matching name (may be multiple if names are duplicated)
+           - If multiple matches found, try each path and validate at the end
+           - Handle empty strings by finding nodes with empty or whitespace-only names
+         - **Validation**: After navigating to the final node, verify:
+           - Node type matches `componentType` (COMPONENT or COMPONENT_SET)
+           - Node name matches `componentName` (or if `componentSetName` is present, the node should be a COMPONENT_SET with that name, and we'll need to find the specific variant component within it)
+         - If validation fails and multiple paths exist: Try the next matching path
+         - If all paths fail validation: Log error and skip (path resolution found wrong node, possibly due to structure changes)
+         - The validated node at the end of the path is the component to use for the instance
        - If not found: Log error and skip (should not happen if export validation worked)
+       - **Note**: `path` is essential for normal instances because a page can contain multiple components, and we need to identify the specific one. Using names (as array) avoids separator conflicts, and validation ensures we find the correct component even with duplicate names.
      - **If `instanceType === "remote"`**:
        - Recreate component from the stored `structure` (visual representation)
        - This creates a local copy of the remote component that can be used for the instance
@@ -659,9 +673,29 @@ When processing instances of type "normal" (different page, same file):
    The `InstanceTable.generateKey()` method creates unique keys for deduplication:
 
    - `internal:${componentNodeId}` - Simple node ID for same-page components
-   - `normal:${componentGuid}:${componentVersion}` - GUID + version for cross-page components
+   - `normal:${componentGuid}:${componentVersion}` - GUID + version for cross-page components (path is not part of key since GUID+version uniquely identifies the page)
    - `remote:${remoteLibraryKey}:${componentName}` - Library key + name for remote components
    - Fallback: `${instanceType}:${componentName}:${componentType}` if required fields missing
+
+4. **Path Resolution and Validation**:
+
+   When resolving a normal instance during import:
+
+   - Navigate the `path` array from the page root to find the target node
+   - **Cannot use node IDs** because IDs differ across files/users - must use names
+   - Path is stored as array of node names to avoid separator conflicts
+   - For each segment in the path array:
+     - Find child nodes with matching name (may be multiple if names are duplicated)
+     - Handle `"<*EMPTY*>"` by finding nodes with empty or whitespace-only names
+     - If multiple matches found at any level, try each path and validate at the end
+   - **Validation is critical**: After navigating to the node, verify:
+     - Node type matches `componentType` (must be COMPONENT or COMPONENT_SET)
+     - Node name matches `componentName` (for regular components) OR
+     - If `componentSetName` is present, the node should be a COMPONENT_SET with name matching `componentSetName`, and we need to find the specific variant component within the set that matches `componentName` and `variantProperties`
+   - If validation fails and multiple paths exist: Try the next matching path
+   - If all paths fail validation: Log an error and skip the instance (path resolution found wrong node, possibly due to structure changes)
+   - This validation ensures we're using the correct component even if the page structure has changed slightly or names are duplicated
+   - **Note**: Duplicate names are handled by trying all matching paths and validating each one. The first path that passes validation is used.
 
 ### Benefits
 
