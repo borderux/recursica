@@ -49,8 +49,8 @@ export function validateImport(jsonData: unknown): ValidationResult {
 
   const metadataObj = metadata as Record<string, unknown>;
 
-  // Check for required metadata fields
-  const requiredMetadataFields = ["exportFormatVersion", "originalPageName"];
+  // Check for required metadata fields (only guid and name are required)
+  const requiredMetadataFields = ["guid", "name"];
 
   for (const field of requiredMetadataFields) {
     if (!(field in metadataObj)) {
@@ -61,30 +61,21 @@ export function validateImport(jsonData: unknown): ValidationResult {
     }
   }
 
-  // Validate exportFormatVersion
-  const exportFormatVersion = metadataObj.exportFormatVersion;
-  if (typeof exportFormatVersion !== "string") {
+  // Validate guid
+  const guid = metadataObj.guid;
+  if (typeof guid !== "string") {
     return {
       valid: false,
-      error: "Invalid exportFormatVersion: Expected a string",
+      error: "Invalid guid: Expected a string",
     };
   }
 
-  // Check if version format is valid (semantic versioning: x.y.z)
-  const versionPattern = /^\d+\.\d+\.\d+$/;
-  if (!versionPattern.test(exportFormatVersion)) {
+  // Validate name
+  const name = metadataObj.name;
+  if (typeof name !== "string") {
     return {
       valid: false,
-      error: `Invalid exportFormatVersion format: ${exportFormatVersion}. Expected format: x.y.z`,
-    };
-  }
-
-  // Validate originalPageName
-  const originalPageName = metadataObj.originalPageName;
-  if (typeof originalPageName !== "string") {
-    return {
-      valid: false,
-      error: "Invalid originalPageName: Expected a string",
+      error: "Invalid name: Expected a string",
     };
   }
 

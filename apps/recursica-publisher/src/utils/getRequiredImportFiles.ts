@@ -257,9 +257,9 @@ export function fileMatchesRequired(
   }
 
   // Fallback: Try to match by page name (less reliable)
-  const originalPageName = metadata.originalPageName;
-  if (typeof originalPageName === "string" && requiredFile.componentPageName) {
-    return originalPageName === requiredFile.componentPageName;
+  const pageName = metadata.name;
+  if (typeof pageName === "string" && requiredFile.componentPageName) {
+    return pageName === requiredFile.componentPageName;
   }
 
   return false;

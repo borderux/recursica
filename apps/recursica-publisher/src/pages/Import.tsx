@@ -109,6 +109,19 @@ interface MainFileAreaProps {
 }
 
 function MainFileArea({ mainFile, onRemove }: MainFileAreaProps) {
+  // Get display name from metadata if available, otherwise use filename
+  const displayName = React.useMemo(() => {
+    if (!mainFile || mainFile.status !== "success" || !mainFile.data) {
+      return mainFile?.name || "";
+    }
+    const data = mainFile.data as Record<string, unknown>;
+    const metadata = data.metadata as Record<string, unknown> | undefined;
+    if (metadata && typeof metadata.name === "string") {
+      return metadata.name;
+    }
+    return mainFile.name;
+  }, [mainFile]);
+
   return (
     <div
       style={{
@@ -130,7 +143,7 @@ function MainFileArea({ mainFile, onRemove }: MainFileAreaProps) {
       </h2>
       {mainFile ? (
         <FileListItem
-          name={mainFile.name}
+          name={displayName}
           status={mainFile.status}
           onRemove={onRemove}
         />
@@ -315,6 +328,7 @@ function ReferencedFilesArea({
               ? `${requiredFile.componentGuid}:${requiredFile.componentVersion}`
               : key,
           );
+          // Use componentPageName as the display name for referenced files
           const displayName =
             requiredFile.componentPageName ||
             requiredFile.componentName ||

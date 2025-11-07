@@ -1427,8 +1427,8 @@ export async function importPage(
       );
     }
 
-    const sanitizedPageName = metadata.originalPageName
-      ? metadata.originalPageName
+    const sanitizedPageName = metadata.name
+      ? metadata.name
           .replace(/[^\w\s-]/g, "") // Remove emojis and special characters except word chars, spaces, and hyphens
           .replace(/\s+/g, "-") // Replace spaces with hyphens
           .replace(/-+/g, "-") // Replace multiple hyphens with single hyphen
@@ -1442,7 +1442,6 @@ export async function importPage(
     figma.root.appendChild(newPage);
 
     console.log("Created new page: " + newPageName);
-    console.log("Importing " + (metadata.totalNodes || "unknown") + " nodes");
 
     // Expand page data if compressed
     const expandedPageData = expandData(pageData);
@@ -1470,8 +1469,8 @@ export async function importPage(
     }
 
     const responseData: ImportPageResponseData = {
-      pageName: metadata.originalPageName,
-      totalNodes: metadata.totalNodes || 0,
+      pageName: metadata.name,
+      totalNodes: 0, // totalNodes removed from metadata
     };
 
     return {

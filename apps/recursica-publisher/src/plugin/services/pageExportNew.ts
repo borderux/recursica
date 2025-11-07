@@ -458,6 +458,46 @@ export async function exportPage(
     );
     const compressedPageData = stringTable.compressObject(extractedPageData);
 
+    // Get or generate page metadata (GUID and version)
+    await debugConsole.log("Getting page metadata...");
+    const pageMetadataStr = selectedPage.getPluginData(
+      "RecursicaPublishedMetadata",
+    );
+    let pageGuid = "";
+    let pageVersion = 0;
+
+    if (pageMetadataStr) {
+      try {
+        const pageMetadata = JSON.parse(pageMetadataStr);
+        pageGuid = pageMetadata.id || "";
+        pageVersion = pageMetadata.version || 0;
+      } catch {
+        await debugConsole.warning(
+          "Failed to parse page metadata, generating new GUID",
+        );
+      }
+    }
+
+    // If no GUID exists, generate one and store it
+    if (!pageGuid) {
+      await debugConsole.log("Generating new GUID for page...");
+      const { requestGuidFromUI } = await import("../utils/requestGuidFromUI");
+      pageGuid = await requestGuidFromUI();
+      // Store the GUID in page metadata (create minimal metadata if it doesn't exist)
+      const newMetadata = {
+        _ver: 1,
+        id: pageGuid,
+        name: selectedPage.name,
+        version: pageVersion,
+        publishDate: new Date().toISOString(),
+        history: {},
+      };
+      selectedPage.setPluginData(
+        "RecursicaPublishedMetadata",
+        JSON.stringify(newMetadata),
+      );
+    }
+
     // Create export data with metadata, collections table, variable table, instance table, libraries, and page data
     await debugConsole.log("Creating export data structure...");
     const exportData = {
@@ -465,8 +505,9 @@ export async function exportPage(
         exportedAt: new Date().toISOString(),
         exportFormatVersion: "2.7.0", // Updated version for string table compression
         figmaApiVersion: figma.apiVersion,
-        originalPageName: selectedPage.name,
-        totalNodes: totalNodes,
+        guid: pageGuid,
+        version: pageVersion,
+        name: selectedPage.name,
         pluginVersion: "1.0.0",
       },
       stringTable: stringTable.getSerializedTable(),
