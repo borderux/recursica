@@ -726,6 +726,71 @@ function resolveVariableReference(
  * Restores bound variables to a node property
  * Handles both local and team variables, and variable table references
  */
+/**
+ * Restores bound variables for fills property using recognizedVariables map
+ * For fills, boundVariables structure is: { fills: [{ color: { _varRef: ... } }, ...] }
+ * Each fill item can have boundVariables with properties like "color"
+ */
+async function restoreBoundVariablesForFills(
+  node: any,
+  boundVariables: any,
+  propertyName: string,
+  recognizedVariables: Map<string, Variable>,
+): Promise<void> {
+  if (!boundVariables || typeof boundVariables !== "object") {
+    return;
+  }
+
+  try {
+    // Get the property value (e.g., fills array)
+    const propertyValue = node[propertyName];
+    if (!propertyValue || !Array.isArray(propertyValue)) {
+      return;
+    }
+
+    // Handle fills array binding
+    // boundVariables.fills is an array where each element is an object with properties like { color: { _varRef: ... } }
+    const fillsBinding = boundVariables[propertyName];
+    if (Array.isArray(fillsBinding)) {
+      for (
+        let i = 0;
+        i < fillsBinding.length && i < propertyValue.length;
+        i++
+      ) {
+        const fillBinding = fillsBinding[i];
+        if (fillBinding && typeof fillBinding === "object") {
+          // Each fill binding can have properties like "color", "opacity", etc.
+          // Initialize boundVariables on the fill if it doesn't exist
+          if (!propertyValue[i].boundVariables) {
+            propertyValue[i].boundVariables = {};
+          }
+
+          // Iterate over each property in the fill binding (e.g., "color")
+          for (const [fillPropertyName, varInfo] of Object.entries(
+            fillBinding,
+          )) {
+            if (isVariableReference(varInfo)) {
+              const varRef = (varInfo as VariableReference)._varRef;
+              if (varRef !== undefined) {
+                const variable = recognizedVariables.get(String(varRef));
+                if (variable) {
+                  // Set the boundVariable with the correct structure
+                  propertyValue[i].boundVariables[fillPropertyName] = {
+                    type: "VARIABLE_ALIAS",
+                    id: variable.id,
+                  };
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.log(`Error restoring bound variables for ${propertyName}:`, error);
+  }
+}
+
 async function restoreBoundVariables(
   node: any,
   boundVariables: any,
@@ -947,6 +1012,7 @@ export async function recreateNodeFromData(
   variableTable: VariableTable | null = null,
   collectionTable: CollectionTable | null = null,
   instanceTable: InstanceTable | null = null,
+  recognizedVariables: Map<string, Variable> | null = null,
 ): Promise<any> {
   try {
     let newNode: any;
@@ -1073,34 +1139,30 @@ export async function recreateNodeFromData(
     // Set fills if they exist (skip instances, they're handled separately)
     if (nodeData.type !== "INSTANCE" && nodeData.fills !== undefined) {
       try {
-        // Process fills array to resolve variable references
+        // Process fills array - remove boundVariables that contain _varRef
+        // We'll restore them properly after setting the fills
         let fills = nodeData.fills;
-        if (Array.isArray(fills) && variableTable) {
+        if (Array.isArray(fills)) {
           fills = fills.map((fill: any) => {
-            if (fill && typeof fill === "object" && fill.boundVariables) {
-              // Resolve variable references in boundVariables
-              const resolvedBoundVars: any = {};
-              for (const [key, varInfo] of Object.entries(
-                fill.boundVariables,
-              )) {
-                // Keep references as-is - will be resolved during restoreBoundVariables
-                resolvedBoundVars[key] = varInfo;
-              }
-              return { ...fill, boundVariables: resolvedBoundVars };
+            if (fill && typeof fill === "object") {
+              // Create a copy without boundVariables (they may contain _varRef which is invalid)
+              const { boundVariables, ...fillWithoutBoundVars } = fill;
+              return fillWithoutBoundVars;
             }
             return fill;
           });
         }
 
+        // Set fills without boundVariables first
         newNode.fills = fills;
-        // Restore bound variables for fills
-        if (nodeData.boundVariables?.fills) {
-          await restoreBoundVariables(
+
+        // Now restore bound variables for fills properly
+        if (nodeData.boundVariables?.fills && recognizedVariables) {
+          await restoreBoundVariablesForFills(
             newNode,
             nodeData.boundVariables,
             "fills",
-            variableTable,
-            collectionTable,
+            recognizedVariables,
           );
         }
       } catch (error) {
@@ -1259,24 +1321,23 @@ export async function recreateNodeFromData(
           if (
             isVariableReference(varInfo) &&
             variableTable &&
-            collectionTable
+            recognizedVariables
           ) {
-            // New format: use intelligent resolution
-            const variable = await resolveVariableReferenceOnImport(
-              varInfo as VariableReference,
-              variableTable,
-              collectionTable,
-            );
-            if (variable) {
-              const alias: VariableAlias = {
-                type: "VARIABLE_ALIAS",
-                id: variable.id,
-              };
-              if (!newNode.boundVariables) {
-                newNode.boundVariables = {};
-              }
-              if (!newNode.boundVariables[propertyName]) {
-                newNode.boundVariables[propertyName] = alias;
+            // Use recognizedVariables map to resolve variable references
+            const varRef = (varInfo as VariableReference)._varRef;
+            if (varRef !== undefined) {
+              const variable = recognizedVariables.get(String(varRef));
+              if (variable) {
+                const alias: VariableAlias = {
+                  type: "VARIABLE_ALIAS",
+                  id: variable.id,
+                };
+                if (!newNode.boundVariables) {
+                  newNode.boundVariables = {};
+                }
+                if (!newNode.boundVariables[propertyName]) {
+                  newNode.boundVariables[propertyName] = alias;
+                }
               }
             }
           }
@@ -1335,12 +1396,12 @@ async function findUniquePageName(baseName: string): Promise<string> {
     return baseName;
   }
 
-  // Try with numeric suffix
+  // Try with underscore and numeric suffix: <PageName>_1, <PageName>_2, etc.
   let counter = 1;
-  let candidateName = `${baseName} ${counter}`;
+  let candidateName = `${baseName}_${counter}`;
   while (existingNames.has(candidateName)) {
     counter++;
-    candidateName = `${baseName} ${counter}`;
+    candidateName = `${baseName}_${counter}`;
   }
 
   return candidateName;
@@ -1984,18 +2045,144 @@ export async function importPage(
       totalExisting += stats.existing;
       totalCreated += stats.created;
     }
-    await debugConsole.log("=== Import Complete ===");
+    // Step 10: Skip instance creation for now
+    await debugConsole.log("Skipping instance creation (not yet implemented)");
+
+    // Step 11: Create the main page
+    await debugConsole.log("Creating page from JSON...");
+
+    // Check if a page with the same GUID or name already exists
+    await figma.loadAllPagesAsync();
+    const allPages = figma.root.children;
+    const PAGE_METADATA_KEY = "RecursicaPublishedMetadata";
+
+    // Check for existing page by GUID
+    let pageWithSameGuid: PageNode | null = null;
+    for (const page of allPages) {
+      const pageMetadataStr = page.getPluginData(PAGE_METADATA_KEY);
+      if (pageMetadataStr) {
+        try {
+          const pageMetadata = JSON.parse(pageMetadataStr);
+          if (pageMetadata.id === metadata.guid) {
+            pageWithSameGuid = page;
+            break;
+          }
+        } catch {
+          // Invalid metadata, skip
+          continue;
+        }
+      }
+    }
+
+    if (pageWithSameGuid) {
+      await debugConsole.log(
+        `Found existing page with same GUID: "${pageWithSameGuid.name}". Will create new page to avoid overwriting.`,
+      );
+    }
+
+    // Check for existing page by name
+    const existingPageByName = allPages.find((p) => p.name === metadata.name);
+    if (existingPageByName) {
+      await debugConsole.log(
+        `Found existing page with same name: "${metadata.name}". Will create new page with unique name.`,
+      );
+    }
+
+    // Determine the page name to use
+    let pageName: string;
+    if (pageWithSameGuid || existingPageByName) {
+      // Use scratch page naming: __<PageName> or __<PageName>_<number>
+      const scratchBaseName = `__${metadata.name}`;
+      pageName = await findUniquePageName(scratchBaseName);
+      await debugConsole.log(
+        `Creating scratch page: "${pageName}" (will be renamed to "${metadata.name}" on success)`,
+      );
+    } else {
+      pageName = metadata.name;
+      await debugConsole.log(`Creating page: "${pageName}"`);
+    }
+
+    // Create the new page
+    const newPage = figma.createPage();
+    newPage.name = pageName;
+
+    // Switch to the new page so user can watch it being built
+    await figma.setCurrentPageAsync(newPage);
+    await debugConsole.log(`Switched to page: "${pageName}"`);
+
+    // Track newly created page for potential cleanup
+    const newlyCreatedPages: PageNode[] = [newPage];
+
+    // Create the page structure from JSON
+    if (!expandedJsonData.pageData) {
+      await debugConsole.error("No page data found in JSON");
+      return {
+        type: "importPage",
+        success: false,
+        error: true,
+        message: "No page data found in JSON",
+        data: {},
+      };
+    }
+
+    // Recreate nodes from the page data
+    // We need to pass the recognizedVariables map to resolve variable references
+    await debugConsole.log("Recreating page structure...");
+    const pageData = expandedJsonData.pageData;
+
+    // Recreate children nodes
+    if (pageData.children && Array.isArray(pageData.children)) {
+      for (const childData of pageData.children) {
+        const childNode = await recreateNodeFromData(
+          childData,
+          newPage,
+          variableTable,
+          collectionTable,
+          null, // instanceTable - skipping for now
+          recognizedVariables,
+        );
+        if (childNode) {
+          newPage.appendChild(childNode);
+        }
+      }
+    }
+
+    await debugConsole.log("Page structure recreated successfully");
+
+    // Store page metadata (GUID and name) on the page
+    const pageMetadata = {
+      _ver: 1,
+      id: metadata.guid,
+      name: metadata.name,
+      version: metadata.version || 0,
+      publishDate: new Date().toISOString(),
+      history: {},
+    };
+    newPage.setPluginData(PAGE_METADATA_KEY, JSON.stringify(pageMetadata));
     await debugConsole.log(
-      `Successfully processed ${recognizedCollections.size} collection(s) and ${totalExisting + totalCreated} variable(s)`,
+      `Stored page metadata (GUID: ${metadata.guid.substring(0, 8)}...)`,
     );
 
-    // For now, stop here - consider import done once collections and variables are created
+    // If we used a scratch page name, rename it to the final name (with unique suffix if needed)
+    if (pageName.startsWith("__")) {
+      const finalName = await findUniquePageName(metadata.name);
+      newPage.name = finalName;
+      await debugConsole.log(
+        `Renamed page from "${pageName}" to "${finalName}"`,
+      );
+    }
+
+    await debugConsole.log("=== Import Complete ===");
+    await debugConsole.log(
+      `Successfully processed ${recognizedCollections.size} collection(s), ${totalExisting + totalCreated} variable(s), and created page "${newPage.name}"`,
+    );
+
     return {
       type: "importPage",
       success: true,
       error: false,
-      message: "Collections and variables imported successfully",
-      data: { pageName: metadata.name },
+      message: "Import completed successfully",
+      data: { pageName: newPage.name },
     };
   } catch (error) {
     const errorMessage =
