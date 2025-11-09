@@ -12,8 +12,8 @@ export default function Home() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          minHeight: "100%",
           width: "100%",
+          minHeight: "100%",
         }}
       >
         {/* Import Button */}
