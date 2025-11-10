@@ -35,6 +35,11 @@ export interface ImportPageData {
 export interface ImportPageResponseData {
   pageName: string;
   totalNodes: number;
+  createdEntities?: {
+    pageIds: string[];
+    collectionIds: string[];
+    variableIds: string[];
+  };
 }
 
 /**
@@ -2591,7 +2596,14 @@ export async function importPage(
       success: true,
       error: false,
       message: "Import completed successfully",
-      data: { pageName: newPage.name },
+      data: {
+        pageName: newPage.name,
+        createdEntities: {
+          pageIds: [newPage.id],
+          collectionIds: newlyCreatedCollections.map((c) => c.id),
+          variableIds: newlyCreatedVariables.map((v) => v.id),
+        },
+      },
     };
   } catch (error) {
     const errorMessage =
@@ -2603,6 +2615,108 @@ export async function importPage(
     console.error("Error importing page:", error);
     return {
       type: "importPage",
+      success: false,
+      error: true,
+      message: errorMessage,
+      data: {},
+    };
+  }
+}
+
+export interface CleanupCreatedEntitiesData {
+  pageIds: string[];
+  collectionIds: string[];
+  variableIds: string[];
+}
+
+/**
+ * Cleans up created entities (pages, collections, variables) by their IDs
+ * Used when import fails to remove partially created entities
+ */
+export async function cleanupCreatedEntities(
+  data: CleanupCreatedEntitiesData,
+): Promise<ResponseMessage> {
+  await debugConsole.log("=== Cleaning up created entities ===");
+
+  try {
+    const { pageIds, collectionIds, variableIds } = data;
+
+    // Delete variables first (before collections)
+    let deletedVariables = 0;
+    for (const variableId of variableIds) {
+      try {
+        const variable = figma.variables.getVariableById(variableId);
+        if (variable) {
+          // Check if variable's collection is in our list to be deleted
+          // If so, we don't need to delete it explicitly (it will be deleted with the collection)
+          const collectionId = variable.variableCollectionId;
+          if (!collectionIds.includes(collectionId)) {
+            variable.remove();
+            deletedVariables++;
+          }
+        }
+      } catch (error) {
+        await debugConsole.warning(
+          `Could not delete variable ${variableId.substring(0, 8)}...: ${error}`,
+        );
+      }
+    }
+
+    // Delete collections (this will also delete variables in those collections)
+    let deletedCollections = 0;
+    for (const collectionId of collectionIds) {
+      try {
+        const collection =
+          figma.variables.getVariableCollectionById(collectionId);
+        if (collection) {
+          collection.remove();
+          deletedCollections++;
+        }
+      } catch (error) {
+        await debugConsole.warning(
+          `Could not delete collection ${collectionId.substring(0, 8)}...: ${error}`,
+        );
+      }
+    }
+
+    // Delete pages
+    await figma.loadAllPagesAsync();
+    let deletedPages = 0;
+    for (const pageId of pageIds) {
+      try {
+        const page = figma.getNodeById(pageId) as PageNode | null;
+        if (page && page.type === "PAGE") {
+          page.remove();
+          deletedPages++;
+        }
+      } catch (error) {
+        await debugConsole.warning(
+          `Could not delete page ${pageId.substring(0, 8)}...: ${error}`,
+        );
+      }
+    }
+
+    await debugConsole.log(
+      `Cleanup complete: Deleted ${deletedPages} page(s), ${deletedCollections} collection(s), ${deletedVariables} variable(s)`,
+    );
+
+    return {
+      type: "cleanupCreatedEntities",
+      success: true,
+      error: false,
+      message: "Cleanup completed successfully",
+      data: {
+        deletedPages,
+        deletedCollections,
+        deletedVariables,
+      },
+    };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred";
+    await debugConsole.error(`Cleanup failed: ${errorMessage}`);
+    return {
+      type: "cleanupCreatedEntities",
       success: false,
       error: true,
       message: errorMessage,

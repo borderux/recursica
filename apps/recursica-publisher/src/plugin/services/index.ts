@@ -1,7 +1,7 @@
 import { getCurrentUser } from "./getCurrentUser";
 import { loadPages } from "./loadPages";
 import { exportPage } from "./pageExportNew";
-import { importPage } from "./pageImportNew";
+import { importPage, cleanupCreatedEntities } from "./pageImportNew";
 import { quickCopy } from "./quickCopy";
 import { storeAuthData } from "./storeAuthData";
 import { loadAuthData } from "./loadAuthData";
@@ -18,6 +18,7 @@ export const services = {
   loadPages,
   exportPage,
   importPage,
+  cleanupCreatedEntities,
   quickCopy,
   storeAuthData,
   loadAuthData,
@@ -34,6 +35,7 @@ export {
   loadPages,
   exportPage,
   importPage,
+  cleanupCreatedEntities,
   quickCopy,
   storeAuthData,
   loadAuthData,

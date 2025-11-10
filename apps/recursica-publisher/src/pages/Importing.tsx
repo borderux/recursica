@@ -80,6 +80,13 @@ export default function Importing() {
     let isMounted = true;
 
     const startImporting = async () => {
+      // Track all created entity IDs across all imports for cleanup
+      const allCreatedEntityIds = {
+        pageIds: [] as string[],
+        collectionIds: [] as string[],
+        variableIds: [] as string[],
+      };
+
       try {
         setIsImporting(true);
         setError(null);
@@ -88,8 +95,65 @@ export default function Importing() {
         const files = prepareFiles();
         setImportedFiles(files);
 
-        // Import main file first
+        // Import referenced files first (before main file)
+        // This ensures they're available when the main file references them
+        const additionalFiles = importData.additionalFiles.filter(
+          (file) => file.status === "success" && file.data,
+        );
+
+        for (const additionalFile of additionalFiles) {
+          if (!isMounted) {
+            return;
+          }
+
+          const { promise, cancel } = callPlugin("importPage", {
+            jsonData: additionalFile.data,
+            deleteScratchPagesOnFailure: false,
+          });
+          cancelFn = cancel;
+
+          const response = await promise;
+
+          // Check if component is still mounted before updating state
+          if (!isMounted) {
+            return;
+          }
+
+          if (!response.success) {
+            // Import failed - cleanup all created entities
+            await callPlugin("cleanupCreatedEntities", allCreatedEntityIds);
+            setError(
+              response.message ||
+                `Failed to import referenced file. Please try again.`,
+            );
+            return;
+          }
+
+          // Track created entity IDs from this import
+          if (response.data?.createdEntities) {
+            const entities = response.data.createdEntities as {
+              pageIds?: string[];
+              collectionIds?: string[];
+              variableIds?: string[];
+            };
+            if (entities.pageIds) {
+              allCreatedEntityIds.pageIds.push(...entities.pageIds);
+            }
+            if (entities.collectionIds) {
+              allCreatedEntityIds.collectionIds.push(...entities.collectionIds);
+            }
+            if (entities.variableIds) {
+              allCreatedEntityIds.variableIds.push(...entities.variableIds);
+            }
+          }
+        }
+
+        // Import main file last
         if (importData.mainFile && importData.mainFile.data) {
+          if (!isMounted) {
+            return;
+          }
+
           const mainFileData = importData.mainFile.data;
           const { promise, cancel } = callPlugin("importPage", {
             jsonData: mainFileData,
@@ -105,14 +169,41 @@ export default function Importing() {
           }
 
           if (!response.success) {
+            // Import failed - cleanup all created entities
+            await callPlugin("cleanupCreatedEntities", allCreatedEntityIds);
             setError(
               response.message || "Failed to import page. Please try again.",
             );
+            return;
+          }
+
+          // Track created entity IDs from main file import
+          if (response.data?.createdEntities) {
+            const entities = response.data.createdEntities as {
+              pageIds?: string[];
+              collectionIds?: string[];
+              variableIds?: string[];
+            };
+            if (entities.pageIds) {
+              allCreatedEntityIds.pageIds.push(...entities.pageIds);
+            }
+            if (entities.collectionIds) {
+              allCreatedEntityIds.collectionIds.push(...entities.collectionIds);
+            }
+            if (entities.variableIds) {
+              allCreatedEntityIds.variableIds.push(...entities.variableIds);
+            }
           }
         }
-
-        // TODO: Import additional files if needed
       } catch (err) {
+        // Import failed with exception - cleanup all created entities
+        if (
+          allCreatedEntityIds.pageIds.length > 0 ||
+          allCreatedEntityIds.collectionIds.length > 0 ||
+          allCreatedEntityIds.variableIds.length > 0
+        ) {
+          await callPlugin("cleanupCreatedEntities", allCreatedEntityIds);
+        }
         // Only set error if component is still mounted
         if (isMounted) {
           setError(
