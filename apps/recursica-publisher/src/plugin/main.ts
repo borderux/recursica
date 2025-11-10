@@ -10,7 +10,7 @@ const serviceMap = services;
 // Plugin configuration
 figma.showUI(__html__, {
   width: 500,
-  height: 650,
+  height: 500,
 });
 
 // Message handler - routes messages to services based on type

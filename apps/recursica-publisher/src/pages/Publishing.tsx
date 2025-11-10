@@ -136,11 +136,12 @@ export default function Publishing() {
           boxSizing: "border-box",
           display: "flex",
           flexDirection: "column",
+          minHeight: 0,
         }}
       >
         <h1 style={{ marginTop: 0, marginBottom: "20px" }}>Publishing</h1>
 
-        <DebugConsole />
+        <DebugConsole showClearButton={false} />
 
         <PluginPrompt />
 

@@ -15,6 +15,9 @@ import { StringTable } from "./parsers/stringTable";
 import { debugConsole } from "./debugConsole";
 import { compressJsonData } from "../utils/jsonCompression";
 import { requestGuidFromUI } from "../utils/requestGuidFromUI";
+import { pluginPrompt } from "../utils/pluginPrompt";
+import type { InstanceTableEntry } from "./parsers/instanceTable";
+import { getComponentName } from "../utils/getComponentName";
 
 export interface ExportPageData {
   pageIndex: number;
@@ -322,10 +325,14 @@ export async function extractNodeData(
 
 export async function exportPage(
   data: ExportPageData,
+  processedPages: Set<string> = new Set(),
+  isRecursive: boolean = false,
 ): Promise<ResponseMessage> {
-  // Clear debug console at the start
-  await debugConsole.clear();
-  await debugConsole.log("=== Starting Page Export ===");
+  // Clear debug console only on initial call, not recursive calls
+  if (!isRecursive) {
+    await debugConsole.clear();
+    await debugConsole.log("=== Starting Page Export ===");
+  }
 
   try {
     const pageIndex = data.pageIndex;
@@ -362,6 +369,26 @@ export async function exportPage(
     }
 
     const selectedPage = pages[pageIndex];
+    const selectedPageId = selectedPage.id;
+
+    // Check if this page has already been processed
+    if (processedPages.has(selectedPageId)) {
+      await debugConsole.log(
+        `Page "${selectedPage.name}" has already been processed, skipping...`,
+      );
+      // Return empty response for already processed pages
+      return {
+        type: "exportPage",
+        success: false,
+        error: true,
+        message: "Page already processed",
+        data: {},
+      };
+    }
+
+    // Mark this page as processed
+    processedPages.add(selectedPageId);
+
     await debugConsole.log(
       `Selected page: "${selectedPage.name}" (index: ${pageIndex})`,
     );
@@ -444,6 +471,143 @@ export async function exportPage(
       }
     }
 
+    // Handle referenced normal component pages
+    await debugConsole.log("Checking for referenced component pages...");
+    const additionalPages: ExportPageResponseData[] = [];
+    const instanceTableEntries = instanceTable.getSerializedTable();
+    const normalInstances = Object.values(instanceTableEntries).filter(
+      (entry): entry is InstanceTableEntry => entry.instanceType === "normal",
+    );
+
+    if (normalInstances.length > 0) {
+      await debugConsole.log(
+        `Found ${normalInstances.length} normal instance(s) to check`,
+      );
+
+      // Get unique referenced pages (only those not already processed)
+      // Use page ID as key to ensure uniqueness, not page name
+      const referencedPages = new Map<string, any>(); // page ID -> page node
+      for (const entry of normalInstances) {
+        if (entry.componentPageName) {
+          const page = pages.find((p) => p.name === entry.componentPageName);
+          if (page && !processedPages.has(page.id)) {
+            // Only add if not already in the map (by ID) and not already processed
+            if (!referencedPages.has(page.id)) {
+              referencedPages.set(page.id, page);
+            }
+          } else if (!page) {
+            // Page not found - hard failure
+            const errorMessage = `Normal instance references component "${entry.componentName || "(unnamed)"}" on page "${entry.componentPageName}", but that page was not found. Cannot export.`;
+            await debugConsole.error(errorMessage);
+            throw new Error(errorMessage);
+          }
+        } else {
+          // componentPageName is missing - hard failure
+          const errorMessage = `Normal instance references component "${entry.componentName || "(unnamed)"}" but has no componentPageName. Cannot export.`;
+          await debugConsole.error(errorMessage);
+          throw new Error(errorMessage);
+        }
+      }
+
+      await debugConsole.log(
+        `Found ${referencedPages.size} unique referenced page(s)`,
+      );
+
+      // Process each referenced page
+      for (const [pageId, referencedPage] of referencedPages.entries()) {
+        const pageName = referencedPage.name;
+
+        // Double-check that this page hasn't been processed (shouldn't happen, but safety check)
+        if (processedPages.has(pageId)) {
+          await debugConsole.log(`Skipping "${pageName}" - already processed`);
+          continue;
+        }
+        // Check if page has metadata
+        const pageMetadataStr = referencedPage.getPluginData(
+          "RecursicaPublishedMetadata",
+        );
+        let hasMetadata = false;
+        if (pageMetadataStr) {
+          try {
+            const pageMetadata = JSON.parse(pageMetadataStr);
+            hasMetadata = !!(
+              pageMetadata.id && pageMetadata.version !== undefined
+            );
+          } catch {
+            // Invalid metadata, treat as no metadata
+          }
+        }
+
+        // Prompt user
+        const message = `Do you want to also publish referenced component "${pageName}"?`;
+        try {
+          await pluginPrompt.prompt(message, {
+            okLabel: "Yes",
+            cancelLabel: "No",
+            timeoutMs: 300000, // 5 minutes
+          });
+
+          // User said Yes - export the referenced page
+          await debugConsole.log(`Exporting referenced page: "${pageName}"`);
+          const referencedPageIndex = pages.findIndex(
+            (p) => p.id === referencedPage.id,
+          );
+          if (referencedPageIndex === -1) {
+            await debugConsole.error(
+              `Could not find page index for "${pageName}"`,
+            );
+            throw new Error(`Could not find page index for "${pageName}"`);
+          }
+
+          // Recursively export the referenced page (pass along processedPages set)
+          const referencedExportResponse = await exportPage(
+            {
+              pageIndex: referencedPageIndex,
+            },
+            processedPages, // Pass the same set to track all processed pages
+            true, // Mark as recursive call
+          );
+
+          if (
+            referencedExportResponse.success &&
+            referencedExportResponse.data
+          ) {
+            const referencedExportData =
+              referencedExportResponse.data as unknown as ExportPageResponseData;
+            additionalPages.push(referencedExportData);
+            await debugConsole.log(
+              `Successfully exported referenced page: "${pageName}"`,
+            );
+          } else {
+            throw new Error(
+              `Failed to export referenced page "${pageName}": ${referencedExportResponse.message}`,
+            );
+          }
+        } catch (error) {
+          // User said No or prompt was cancelled
+          if (error instanceof Error && error.message === "User cancelled") {
+            if (!hasMetadata) {
+              // No metadata and user said No - cancel export
+              await debugConsole.error(
+                `Export cancelled: Referenced page "${pageName}" has no metadata and user declined to publish it.`,
+              );
+              throw new Error(
+                `Cannot continue export: Referenced component "${pageName}" has no metadata. Please publish it first or choose to publish it now.`,
+              );
+            } else {
+              // Has metadata, user said No - continue with existing metadata
+              await debugConsole.log(
+                `User declined to publish "${pageName}", but page has existing metadata. Continuing with existing metadata.`,
+              );
+            }
+          } else {
+            // Some other error occurred
+            throw error;
+          }
+        }
+      }
+    }
+
     // Create string table for compression
     await debugConsole.log("Creating string table...");
     const stringTable = new StringTable();
@@ -515,8 +679,9 @@ export async function exportPage(
     await debugConsole.log("Serializing to JSON...");
     const jsonString = JSON.stringify(compressedExportData, null, 2);
     const jsonSizeKB = (jsonString.length / 1024).toFixed(2);
-    const filename =
-      selectedPage.name.replace(/[^a-z0-9]/gi, "_") + "_export.json";
+    // Clean component name and create filename
+    const cleanedName = getComponentName(selectedPage.name).trim();
+    const filename = cleanedName.replace(/\s+/g, "_") + ".rec.json";
 
     await debugConsole.log(`JSON serialization complete: ${jsonSizeKB} KB`);
     await debugConsole.log(`Export file: ${filename}`);
@@ -526,7 +691,7 @@ export async function exportPage(
       filename,
       jsonData: jsonString,
       pageName: selectedPage.name,
-      additionalPages: [], // Will be populated when publishing referenced component pages
+      additionalPages, // Populated with referenced component pages
     };
 
     return {
@@ -537,20 +702,23 @@ export async function exportPage(
       data: responseData as any,
     };
   } catch (error) {
-    await debugConsole.error(
-      `Export failed: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
-    );
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred";
+    console.error("EXPORT ERROR CAUGHT:", error);
+    console.error("Error message:", errorMessage);
+    await debugConsole.error(`Export failed: ${errorMessage}`);
     if (error instanceof Error && error.stack) {
+      console.error("Stack trace:", error.stack);
       await debugConsole.error(`Stack trace: ${error.stack}`);
     }
-    console.error("Error exporting page:", error);
-    return {
-      type: "exportPage",
+    const errorResponse = {
+      type: "exportPage" as const,
       success: false,
       error: true,
-      message:
-        error instanceof Error ? error.message : "Unknown error occurred",
+      message: errorMessage,
       data: {},
     };
+    console.error("Returning error response:", errorResponse);
+    return errorResponse;
   }
 }

@@ -159,12 +159,14 @@ function MainFileArea({ mainFile, onRemove }: MainFileAreaProps) {
 interface ReferencedFileItemProps {
   displayName: string;
   isMatched: boolean;
+  onBrowse?: () => void;
   onRemove?: () => void;
 }
 
 function ReferencedFileItem({
   displayName,
   isMatched,
+  onBrowse,
   onRemove,
 }: ReferencedFileItemProps) {
   return (
@@ -190,27 +192,44 @@ function ReferencedFileItem({
         }}
       >
         {displayName}
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-        {isMatched ? (
+        {isMatched && (
           <span
             style={{
+              marginLeft: "8px",
               color: "#28a745",
               fontSize: "12px",
               fontWeight: "500",
             }}
           >
-            Ready
+            (Valid)
           </span>
-        ) : (
-          <span
+        )}
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        {!isMatched && onBrowse && (
+          <button
+            onClick={onBrowse}
             style={{
-              color: "#666",
+              padding: "4px 12px",
               fontSize: "12px",
+              fontWeight: "500",
+              backgroundColor: "transparent",
+              color: "#d40d0d",
+              border: "1px solid #d40d0d",
+              borderRadius: "4px",
+              cursor: "pointer",
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = "#d40d0d";
+              e.currentTarget.style.color = "white";
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+              e.currentTarget.style.color = "#d40d0d";
             }}
           >
-            (Missing)
-          </span>
+            Browse
+          </button>
         )}
         {onRemove && (
           <button
@@ -265,6 +284,12 @@ interface ReferencedFilesAreaProps {
   }>;
   matchedRequiredFiles: Set<string>;
   additionalFiles: ImportedFile[];
+  onBrowseForFile: (requiredFile: {
+    componentGuid: string;
+    componentVersion: number;
+    componentName: string;
+    componentPageName?: string;
+  }) => void;
   onRemoveAdditionalFile: (fileId: string) => void;
 }
 
@@ -272,6 +297,7 @@ function ReferencedFilesArea({
   requiredFiles,
   matchedRequiredFiles,
   additionalFiles,
+  onBrowseForFile,
   onRemoveAdditionalFile,
 }: ReferencedFilesAreaProps) {
   if (requiredFiles.length === 0) {
@@ -340,6 +366,9 @@ function ReferencedFilesArea({
               key={key}
               displayName={displayName}
               isMatched={isMatched}
+              onBrowse={
+                !isMatched ? () => onBrowseForFile(requiredFile) : undefined
+              }
               onRemove={
                 matchingFile
                   ? () => onRemoveAdditionalFile(matchingFile.id)
@@ -380,6 +409,13 @@ export default function Import() {
   const [additionalFiles, setAdditionalFiles] = useState<ImportedFile[]>([]);
   const [validationError, setValidationError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const referencedFileInputRef = useRef<HTMLInputElement>(null);
+  const [browsingForRequiredFile, setBrowsingForRequiredFile] = useState<{
+    componentGuid: string;
+    componentVersion: number;
+    componentName: string;
+    componentPageName?: string;
+  } | null>(null);
 
   // Extract required files from main file
   const requiredFiles = useMemo(() => {
@@ -432,14 +468,25 @@ export default function Import() {
     e.stopPropagation();
     setIsDragging(false);
 
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      const file = files[0];
-      if (file.type === "application/json" || file.name.endsWith(".json")) {
-        // First file becomes main file if no main file exists
-        handleFile(file, !mainFile);
+    const files = Array.from(e.dataTransfer.files);
+    const jsonFiles = files.filter(
+      (file) => file.type === "application/json" || file.name.endsWith(".json"),
+    );
+
+    if (jsonFiles.length === 0) {
+      alert("Please drop JSON files");
+      return;
+    }
+
+    // Process all dropped files
+    for (const file of jsonFiles) {
+      // First file becomes main file if no main file exists
+      // Otherwise, try to match it to a required file
+      if (!mainFile) {
+        handleFile(file, true);
       } else {
-        alert("Please drop a JSON file");
+        // Try to match to a required file, otherwise add as additional
+        handleFile(file, false);
       }
     }
   };
@@ -449,12 +496,32 @@ export default function Import() {
     if (files && files.length > 0) {
       const file = files[0];
       if (file.type === "application/json" || file.name.endsWith(".json")) {
-        // First file becomes main file if no main file exists
-        handleFile(file, !mainFile);
+        if (browsingForRequiredFile) {
+          // User is browsing for a specific required file
+          handleFile(file, false);
+          setBrowsingForRequiredFile(null);
+        } else {
+          // First file becomes main file if no main file exists
+          handleFile(file, !mainFile);
+        }
       } else {
         alert("Please select a JSON file");
       }
     }
+    // Reset the input so the same file can be selected again
+    if (e.target) {
+      e.target.value = "";
+    }
+  };
+
+  const handleBrowseForReferencedFile = (requiredFile: {
+    componentGuid: string;
+    componentVersion: number;
+    componentName: string;
+    componentPageName?: string;
+  }) => {
+    setBrowsingForRequiredFile(requiredFile);
+    referencedFileInputRef.current?.click();
   };
 
   const handleBrowseClick = () => {
@@ -552,12 +619,22 @@ export default function Import() {
   return (
     <PageLayout showBackButton={true}>
       <div
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
         style={{
           width: "100%",
           display: "flex",
           flexDirection: "column",
           alignItems: "flex-start",
           boxSizing: "border-box",
+          minHeight: "100%",
+          position: "relative",
+          backgroundColor: isDragging
+            ? "rgba(212, 13, 13, 0.05)"
+            : "transparent",
+          transition: "background-color 0.2s ease",
         }}
       >
         <h1
@@ -573,10 +650,6 @@ export default function Import() {
         </h1>
 
         <div
-          onDragEnter={handleDragEnter}
-          onDragLeave={handleDragLeave}
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
           style={{
             width: "100%",
             maxWidth: "500px",
@@ -596,6 +669,13 @@ export default function Import() {
         >
           <input
             ref={fileInputRef}
+            type="file"
+            accept=".json,application/json"
+            onChange={handleFileInputChange}
+            style={{ display: "none" }}
+          />
+          <input
+            ref={referencedFileInputRef}
             type="file"
             accept=".json,application/json"
             onChange={handleFileInputChange}
@@ -667,6 +747,7 @@ export default function Import() {
           requiredFiles={requiredFiles}
           matchedRequiredFiles={matchedRequiredFiles}
           additionalFiles={additionalFiles}
+          onBrowseForFile={handleBrowseForReferencedFile}
           onRemoveAdditionalFile={handleRemoveAdditionalFile}
         />
 

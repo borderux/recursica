@@ -243,14 +243,16 @@ export function fileMatchesRequired(
 
   const metadata = data.metadata as Record<string, unknown>;
 
-  // Check if metadata has componentGuid and componentVersion
-  // TODO: These need to be added to the export metadata during export
-  const fileComponentGuid = metadata.componentGuid;
-  const fileComponentVersion = metadata.componentVersion;
+  // Check if metadata has guid (the page GUID) and version
+  // The metadata.guid is the page GUID, which matches componentGuid for normal instances
+  const fileComponentGuid = metadata.guid;
+  const fileComponentVersion = metadata.version;
 
   if (
     typeof fileComponentGuid === "string" &&
-    typeof fileComponentVersion === "number"
+    typeof fileComponentVersion === "number" &&
+    requiredFile.componentGuid &&
+    requiredFile.componentVersion !== 0
   ) {
     return (
       fileComponentGuid === requiredFile.componentGuid &&
