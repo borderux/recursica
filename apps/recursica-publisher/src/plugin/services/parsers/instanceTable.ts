@@ -66,6 +66,10 @@ export class InstanceTable {
       return `normal:${entry.componentGuid}:${entry.componentVersion}`;
     } else if (entry.instanceType === "remote" && entry.remoteLibraryKey) {
       return `remote:${entry.remoteLibraryKey}:${entry.componentName}`;
+    } else if (entry.instanceType === "remote" && entry.componentNodeId) {
+      // Detached instances treated as remote - use component ID for uniqueness
+      // This ensures multiple detached components with the same name don't collide
+      return `remote:detached:${entry.componentNodeId}`;
     }
     // Fallback: use component name (componentType is always COMPONENT for instances)
     return `${entry.instanceType}:${entry.componentName}:COMPONENT`;

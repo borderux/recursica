@@ -55,16 +55,15 @@ function getPageFromNode(node: any): {
 
 /**
  * Gets component metadata from a page node
+ * Note: Uses getPluginData (not getSharedPluginData) to match how metadata is stored
  */
 function getComponentMetadataFromPage(page: any): {
   id?: string;
   version?: number;
 } | null {
   try {
-    const metadataStr = page.getSharedPluginData(
-      "recursica",
-      COMPONENT_METADATA_KEY,
-    );
+    // Metadata is stored using setPluginData (no namespace), not setSharedPluginData
+    const metadataStr = page.getPluginData(COMPONENT_METADATA_KEY);
     if (!metadataStr || metadataStr.trim() === "") {
       return null;
     }
@@ -208,9 +207,39 @@ export async function parseInstanceProperties(
     const componentPage = componentPageResult.page;
 
     // Classify instance type
+    // Special case: If component is remote BUT also exists on a local page with metadata,
+    // treat it as "normal" so it shows up as a referenced file
     let instanceType: "internal" | "normal" | "remote";
+    let effectiveComponentPage = componentPage; // Use this instead of reassigning componentPage
+
     if (isRemote) {
-      instanceType = "remote";
+      // Component is from a library
+      // Only treat as "normal" if the component also exists on a local page with metadata
+      // (This can happen if the component was synced from a library but also exists locally)
+      if (componentPage) {
+        // Component exists on a local page - check for metadata
+        const metadata = getComponentMetadataFromPage(componentPage);
+        if (metadata?.id) {
+          // Found a local page with metadata - treat as "normal" so it shows up as a referenced file
+          instanceType = "normal";
+          effectiveComponentPage = componentPage;
+          await debugConsole.log(
+            `  Component "${componentName}" is from library but also exists on local page "${componentPage.name}" with metadata. Treating as "normal" instance.`,
+          );
+        } else {
+          // Component is on a local page but has no metadata - treat as "remote"
+          instanceType = "remote";
+          await debugConsole.log(
+            `  Component "${componentName}" is from library and exists on local page "${componentPage.name}" but has no metadata. Treating as "remote" instance.`,
+          );
+        }
+      } else {
+        // Component is not on a local page - treat as "remote"
+        instanceType = "remote";
+        await debugConsole.log(
+          `  Component "${componentName}" is from library and not on a local page. Treating as "remote" instance.`,
+        );
+      }
     } else if (
       componentPage &&
       instancePage &&
@@ -223,9 +252,75 @@ export async function parseInstanceProperties(
       componentPage.id !== instancePage.id
     ) {
       instanceType = "normal";
-    } else {
-      // Fallback: if we can't determine, assume normal
+    } else if (componentPage && !instancePage) {
+      // Component is on a page but instance page couldn't be determined
+      // This is unusual but treat as normal
       instanceType = "normal";
+    } else {
+      // componentPage is null - check if it's a detached component
+      if (!isRemote && componentPageResult.reason === "detached") {
+        // Detached component - check if we've already handled this component
+        const componentId = mainComponent.id;
+
+        if (context.detachedComponentsHandled.has(componentId)) {
+          // Already prompted for this component - treat as remote
+          instanceType = "remote";
+          await debugConsole.log(
+            `Treating detached instance "${instanceName}" -> component "${componentName}" as remote instance (already prompted)`,
+          );
+        } else {
+          // First time seeing this detached component - prompt user
+          await debugConsole.warning(
+            `Found detached instance: "${instanceName}" -> component "${componentName}" (component is not on any page)`,
+          );
+
+          // Try to scroll to the component to help user find it
+          try {
+            await figma.viewport.scrollAndZoomIntoView([mainComponent]);
+          } catch (scrollError) {
+            console.warn("Could not scroll to component:", scrollError);
+          }
+
+          // Prompt user
+          const message = `Found detached instance "${instanceName}" attached to component "${componentName}". This should be fixed. Continue to publish?`;
+          try {
+            await pluginPrompt.prompt(message, {
+              okLabel: "Ok",
+              cancelLabel: "Cancel",
+              timeoutMs: 300000, // 5 minutes
+            });
+
+            // User said Ok - mark as handled and treat as remote instance
+            // This allows us to store the component structure and create it on REMOTES page
+            context.detachedComponentsHandled.add(componentId);
+            instanceType = "remote";
+            await debugConsole.log(
+              `Treating detached instance "${instanceName}" as remote instance (will be created on REMOTES page)`,
+            );
+          } catch (error) {
+            // User said Cancel or prompt was cancelled
+            if (error instanceof Error && error.message === "User cancelled") {
+              const errorMessage = `Export cancelled: Detached instance "${instanceName}" found. The component "${componentName}" is not on any page. Please fix the instance before exporting.`;
+              await debugConsole.error(errorMessage);
+              throw new Error(errorMessage);
+            } else {
+              // Some other error occurred
+              throw error;
+            }
+          }
+        }
+      } else {
+        // componentPage is null but not detached - can't classify as normal or internal
+        // If it's not remote, this is an error condition
+        if (!isRemote) {
+          await debugConsole.warning(
+            `  Instance "${instanceName}" -> component "${componentName}": componentPage is null but component is not remote. Reason: ${componentPageResult.reason}. Cannot determine instance type.`,
+          );
+        }
+        // Fallback: if we can't determine and it's not remote, assume normal
+        // (This will be handled later when we try to set componentGuid)
+        instanceType = "normal";
+      }
     }
 
     // Extract variant properties and component properties
@@ -316,119 +411,65 @@ export async function parseInstanceProperties(
       );
     } else if (instanceType === "normal") {
       // Get component metadata from the component's page
-      if (componentPage) {
+      // Use effectiveComponentPage (which may have been found for remote components)
+      const pageToUse = effectiveComponentPage || componentPage;
+      if (pageToUse) {
         // Always set componentPageName for normal instances (needed for import)
-        entry.componentPageName = componentPage.name;
+        entry.componentPageName = pageToUse.name;
 
-        const metadata = getComponentMetadataFromPage(componentPage);
+        const metadata = getComponentMetadataFromPage(pageToUse);
         if (metadata?.id && metadata.version !== undefined) {
           entry.componentGuid = metadata.id;
           entry.componentVersion = metadata.version;
-        }
-      } else {
-        // componentPage is null - check if it's a detached component
-        const mainComponentId = mainComponent.id;
-
-        if (componentPageResult.reason === "detached") {
-          // Detached component - check if we've already handled this component
-          const componentId = mainComponent.id;
-
-          if (context.detachedComponentsHandled.has(componentId)) {
-            // Already prompted for this component - treat as internal
-            await debugConsole.log(
-              `Treating detached instance "${instanceName}" -> component "${componentName}" as internal instance (already prompted)`,
-            );
-          } else {
-            // First time seeing this detached component - prompt user
-            await debugConsole.warning(
-              `Found detached instance: "${instanceName}" -> component "${componentName}" (component is not on any page)`,
-            );
-
-            // Try to scroll to the component to help user find it
-            try {
-              await figma.viewport.scrollAndZoomIntoView([mainComponent]);
-            } catch (scrollError) {
-              console.warn("Could not scroll to component:", scrollError);
-            }
-
-            // Prompt user
-            const message = `Found detached instance "${instanceName}" attached to component "${componentName}". This should be fixed. Continue to publish?`;
-            try {
-              await pluginPrompt.prompt(message, {
-                okLabel: "Ok",
-                cancelLabel: "Cancel",
-                timeoutMs: 300000, // 5 minutes
-              });
-
-              // User said Ok - mark as handled and treat as internal instance
-              context.detachedComponentsHandled.add(componentId);
-              await debugConsole.log(
-                `Treating detached instance "${instanceName}" as internal instance`,
-              );
-            } catch (error) {
-              // User said Cancel or prompt was cancelled
-              if (
-                error instanceof Error &&
-                error.message === "User cancelled"
-              ) {
-                const errorMessage = `Export cancelled: Detached instance "${instanceName}" found. The component "${componentName}" is not on any page. Please fix the instance before exporting.`;
-                await debugConsole.error(errorMessage);
-                throw new Error(errorMessage);
-              } else {
-                // Some other error occurred
-                throw error;
-              }
-            }
-          }
-
-          // Update the entry to be an internal instance
-          entry.instanceType = "internal";
-          entry.componentNodeId = mainComponent.id;
-          // Remove path since it's now internal
-          delete (entry as any).path;
-
           await debugConsole.log(
-            `  Exported detached INSTANCE: "${instanceName}" -> component "${componentName}" as internal instance (ID: ${mainComponent.id.substring(0, 8)}...)`,
+            `  Found INSTANCE: "${instanceName}" -> NORMAL component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...) at path [${(mainComponentParentPath || []).join(" → ")}]`,
           );
         } else {
-          // Other reasons (broken_chain, access_error, etc.) - these are hard failures
-          let reasonMessage = "";
-          let actionMessage = "";
-
-          switch (componentPageResult.reason) {
-            case "broken_chain":
-              reasonMessage =
-                "The component's parent chain is broken and cannot be traversed to find the page";
-              actionMessage =
-                "Please ensure the component is properly nested within the document structure.";
-              break;
-            case "access_error":
-              reasonMessage =
-                "Cannot access the component's parent chain (access error)";
-              actionMessage =
-                "The component may be in an invalid state. Please check the component structure.";
-              break;
-            default:
-              reasonMessage = "Cannot determine which page the component is on";
-              actionMessage =
-                "Please ensure the component is properly placed on a page.";
-          }
-
-          // Try to scroll to the component to help user find it
-          try {
-            await figma.viewport.scrollAndZoomIntoView([mainComponent]);
-          } catch (scrollError) {
-            // If scrolling fails, component might not be accessible
-            console.warn("Could not scroll to component:", scrollError);
-          }
-
-          const errorMessage = `Normal instance "${instanceName}" -> component "${componentName}" (ID: ${mainComponentId}) has no componentPage. ${reasonMessage}. ${actionMessage} Component has been focused in the viewport.`;
-          console.error("FATAL EXPORT ERROR:", errorMessage);
-          await debugConsole.error(errorMessage);
-          const error = new Error(errorMessage);
-          console.error("Throwing error:", error);
-          throw error;
+          await debugConsole.warning(
+            `  Instance "${instanceName}" -> component "${componentName}" is classified as normal but page "${pageToUse.name}" has no metadata. This instance will not be importable.`,
+          );
         }
+      } else {
+        // componentPage is null - this shouldn't happen for normal instances
+        // (Detached components should have been handled during classification)
+        // Log detailed error information
+        const mainComponentId = mainComponent.id;
+        let reasonMessage = "";
+        let actionMessage = "";
+
+        switch (componentPageResult.reason) {
+          case "broken_chain":
+            reasonMessage =
+              "The component's parent chain is broken and cannot be traversed to find the page";
+            actionMessage =
+              "Please ensure the component is properly nested within the document structure.";
+            break;
+          case "access_error":
+            reasonMessage =
+              "Cannot access the component's parent chain (access error)";
+            actionMessage =
+              "The component may be in an invalid state. Please check the component structure.";
+            break;
+          default:
+            reasonMessage = "Cannot determine which page the component is on";
+            actionMessage =
+              "Please ensure the component is properly placed on a page.";
+        }
+
+        // Try to scroll to the component to help user find it
+        try {
+          await figma.viewport.scrollAndZoomIntoView([mainComponent]);
+        } catch (scrollError) {
+          // If scrolling fails, component might not be accessible
+          console.warn("Could not scroll to component:", scrollError);
+        }
+
+        const errorMessage = `Normal instance "${instanceName}" -> component "${componentName}" (ID: ${mainComponentId}) has no componentPage. ${reasonMessage}. ${actionMessage} Component has been focused in the viewport.`;
+        console.error("FATAL EXPORT ERROR:", errorMessage);
+        await debugConsole.error(errorMessage);
+        const error = new Error(errorMessage);
+        console.error("Throwing error:", error);
+        throw error;
       }
       // path is REQUIRED for normal instances to locate the specific component on the referenced page
       // Path is stored as array of node names (cannot use IDs as they differ across files/users)
@@ -454,79 +495,92 @@ export async function parseInstanceProperties(
       let remoteLibraryName: string | undefined;
       let remoteLibraryKey: string | undefined;
 
-      try {
-        // Try getPublishStatusAsync
-        if (
-          typeof (mainComponent as any).getPublishStatusAsync === "function"
-        ) {
-          try {
-            const publishStatus = await (
-              mainComponent as any
-            ).getPublishStatusAsync();
-            if (publishStatus && typeof publishStatus === "object") {
-              if ((publishStatus as any).libraryName) {
-                remoteLibraryName = (publishStatus as any).libraryName;
-              }
-              if ((publishStatus as any).libraryKey) {
-                remoteLibraryKey = (publishStatus as any).libraryKey;
-              }
-            }
-          } catch {
-            // getPublishStatusAsync might not be available
-          }
-        }
+      // Check if this is a detached instance (component is not on any page)
+      const isDetachedInstance = context.detachedComponentsHandled.has(
+        mainComponent.id,
+      );
 
-        // Try searching team libraries
+      if (!isDetachedInstance) {
+        // Only try to get library info for actual remote (library) components
         try {
-          const teamLibraryApi = figma.teamLibrary as any;
+          // Try getPublishStatusAsync
           if (
-            typeof teamLibraryApi?.getAvailableLibraryComponentSetsAsync ===
-            "function"
+            typeof (mainComponent as any).getPublishStatusAsync === "function"
           ) {
-            const componentSets =
-              await teamLibraryApi.getAvailableLibraryComponentSetsAsync();
-            if (componentSets && Array.isArray(componentSets)) {
-              for (const componentSet of componentSets) {
-                if (
-                  componentSet.key === (mainComponent as any).key ||
-                  componentSet.name === mainComponent.name
-                ) {
-                  if (componentSet.libraryName) {
-                    remoteLibraryName = componentSet.libraryName;
+            try {
+              const publishStatus = await (
+                mainComponent as any
+              ).getPublishStatusAsync();
+              if (publishStatus && typeof publishStatus === "object") {
+                if ((publishStatus as any).libraryName) {
+                  remoteLibraryName = (publishStatus as any).libraryName;
+                }
+                if ((publishStatus as any).libraryKey) {
+                  remoteLibraryKey = (publishStatus as any).libraryKey;
+                }
+              }
+            } catch {
+              // getPublishStatusAsync might not be available
+            }
+          }
+
+          // Try searching team libraries
+          try {
+            const teamLibraryApi = figma.teamLibrary as any;
+            if (
+              typeof teamLibraryApi?.getAvailableLibraryComponentSetsAsync ===
+              "function"
+            ) {
+              const componentSets =
+                await teamLibraryApi.getAvailableLibraryComponentSetsAsync();
+              if (componentSets && Array.isArray(componentSets)) {
+                for (const componentSet of componentSets) {
+                  if (
+                    componentSet.key === (mainComponent as any).key ||
+                    componentSet.name === mainComponent.name
+                  ) {
+                    if (componentSet.libraryName) {
+                      remoteLibraryName = componentSet.libraryName;
+                    }
+                    if (componentSet.libraryKey) {
+                      remoteLibraryKey = componentSet.libraryKey;
+                    }
+                    break;
                   }
-                  if (componentSet.libraryKey) {
-                    remoteLibraryKey = componentSet.libraryKey;
-                  }
-                  break;
                 }
               }
             }
+          } catch {
+            // Library lookup might fail
           }
-        } catch {
-          // Library lookup might fail
-        }
-
-        // For remote instances, we need to store the full structure
-        // This is a fallback since we can't resolve the reference
-        // We'll extract the component's structure recursively
-        try {
-          // Extract the main component's structure
-          // Note: This might be expensive, but it's necessary for remote components
-          entry.structure = await extractNodeData(
-            mainComponent,
-            new WeakSet(),
-            context,
-          );
-        } catch (extractError) {
+        } catch (libError) {
           console.warn(
-            `Failed to extract structure for remote component "${componentName}":`,
-            extractError,
+            `Error getting library info for remote component "${componentName}":`,
+            libError,
           );
         }
-      } catch (libError) {
+      }
+
+      // For remote instances (including detached), we need to store the full structure
+      // This is necessary since we can't resolve the reference
+      // We'll extract the component's structure recursively
+      try {
+        // Extract the main component's structure
+        // Note: This might be expensive, but it's necessary for remote/detached components
+        entry.structure = await extractNodeData(
+          mainComponent,
+          new WeakSet(),
+          context,
+        );
+        if (isDetachedInstance) {
+          await debugConsole.log(
+            `  Extracted structure for detached component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...)`,
+          );
+        }
+      } catch (extractError) {
         console.warn(
-          `Error getting library info for remote component "${componentName}":`,
-          libError,
+          `Failed to extract structure for remote component "${componentName}":`,
+          extractError,
         );
       }
 
@@ -537,8 +591,14 @@ export async function parseInstanceProperties(
         entry.remoteLibraryKey = remoteLibraryKey;
       }
 
+      // For detached instances, store the component ID to ensure unique keys
+      // This prevents collisions when multiple detached components have the same name
+      if (isDetachedInstance) {
+        entry.componentNodeId = mainComponent.id;
+      }
+
       await debugConsole.log(
-        `  Found INSTANCE: "${instanceName}" -> REMOTE component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...)`,
+        `  Found INSTANCE: "${instanceName}" -> REMOTE component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...)${isDetachedInstance ? " [DETACHED]" : ""}`,
       );
     }
 

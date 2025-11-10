@@ -704,516 +704,875 @@ export async function recreateNodeFromData(
   isRemoteStructure: boolean = false, // If true, don't resolve instance references, just recreate as frames
   remoteComponentMap: Map<number, ComponentNode> | null = null, // instance table index -> component node on REMOTES page
 ): Promise<any> {
-  try {
-    let newNode: any;
+  let newNode: any;
 
-    // Create the appropriate node type
-    switch (nodeData.type) {
-      case "FRAME":
-        newNode = figma.createFrame();
-        break;
-      case "RECTANGLE":
-        newNode = figma.createRectangle();
-        break;
-      case "ELLIPSE":
-        newNode = figma.createEllipse();
-        break;
-      case "TEXT":
-        newNode = figma.createText();
-        break;
-      case "VECTOR":
-        newNode = figma.createVector();
-        break;
-      case "STAR":
-        newNode = figma.createStar();
-        break;
-      case "LINE":
-        newNode = figma.createLine();
-        break;
-      case "COMPONENT":
+  // Create the appropriate node type
+  switch (nodeData.type) {
+    case "FRAME":
+      newNode = figma.createFrame();
+      break;
+    case "RECTANGLE":
+      newNode = figma.createRectangle();
+      break;
+    case "ELLIPSE":
+      newNode = figma.createEllipse();
+      break;
+    case "TEXT":
+      newNode = figma.createText();
+      break;
+    case "VECTOR":
+      newNode = figma.createVector();
+      break;
+    case "STAR":
+      newNode = figma.createStar();
+      break;
+    case "LINE":
+      newNode = figma.createLine();
+      break;
+    case "COMPONENT":
+      // Check if component already exists in mapping (might have been created in first pass)
+      if (nodeData.id && nodeIdMapping && nodeIdMapping.has(nodeData.id)) {
+        newNode = nodeIdMapping.get(nodeData.id);
+        await debugConsole.log(
+          `Reusing existing COMPONENT "${nodeData.name || "Unnamed"}" (ID: ${nodeData.id.substring(0, 8)}...)`,
+        );
+        // Don't return early - we still need to process children and append to parent
+        // But skip the node creation since it already exists
+      } else {
         newNode = figma.createComponent();
-        break;
-      case "INSTANCE":
-        // For remote structures, always create a frame instead of trying to resolve instances
-        if (isRemoteStructure) {
-          newNode = figma.createFrame();
-          // Copy the name from the instance data
-          if (nodeData.name) {
-            newNode.name = nodeData.name;
-          }
-        } else if (
-          nodeData._instanceRef !== undefined &&
-          instanceTable &&
-          nodeIdMapping
-        ) {
+        await debugConsole.log(
+          `Created COMPONENT "${nodeData.name || "Unnamed"}" (ID: ${nodeData.id ? nodeData.id.substring(0, 8) + "..." : "no ID"})`,
+        );
+
+        // Try to set component property definitions immediately after creation
+        // The API documentation says they're read-only, but let's try anyway
+        if (nodeData.componentPropertyDefinitions) {
           try {
-            const instanceEntry = instanceTable.getInstanceByIndex(
-              nodeData._instanceRef,
+            // Try direct assignment first (might work immediately after creation)
+            (newNode as any).componentPropertyDefinitions =
+              nodeData.componentPropertyDefinitions;
+            await debugConsole.log(
+              `  Set component property definitions for "${nodeData.name || "Unnamed"}" via direct assignment`,
             );
-            if (instanceEntry && instanceEntry.instanceType === "internal") {
-              // Internal instance - use componentNodeId to find the component
-              if (instanceEntry.componentNodeId) {
-                const componentNode = nodeIdMapping.get(
-                  instanceEntry.componentNodeId,
-                );
-                if (componentNode && componentNode.type === "COMPONENT") {
-                  // Create instance from the component
-                  newNode = componentNode.createInstance();
-                  await debugConsole.log(
-                    `✓ Created internal instance "${nodeData.name}" from component "${instanceEntry.componentName}"`,
-                  );
-
-                  // Apply variant properties if they exist
-                  if (
-                    instanceEntry.variantProperties &&
-                    Object.keys(instanceEntry.variantProperties).length > 0
-                  ) {
-                    try {
-                      newNode.setProperties(instanceEntry.variantProperties);
-                    } catch (error) {
-                      await debugConsole.warning(
-                        `Error setting variant properties for instance "${nodeData.name}": ${error}`,
-                      );
-                    }
-                  }
-
-                  // Apply component properties if they exist
-                  if (
-                    instanceEntry.componentProperties &&
-                    Object.keys(instanceEntry.componentProperties).length > 0
-                  ) {
-                    try {
-                      for (const [propName, propValue] of Object.entries(
-                        instanceEntry.componentProperties,
-                      )) {
-                        try {
-                          newNode.setProperties({ [propName]: propValue });
-                        } catch (error) {
-                          await debugConsole.warning(
-                            `Error setting component property "${propName}" for instance "${nodeData.name}": ${error}`,
-                          );
-                        }
-                      }
-                    } catch (error) {
-                      await debugConsole.warning(
-                        `Error setting component properties for instance "${nodeData.name}": ${error}`,
-                      );
-                    }
-                  }
-                } else {
-                  await debugConsole.warning(
-                    `Component not found for internal instance "${nodeData.name}" (ID: ${instanceEntry.componentNodeId.substring(0, 8)}...), creating frame fallback`,
-                  );
-                  newNode = figma.createFrame();
-                }
-              } else {
-                await debugConsole.warning(
-                  `Internal instance "${nodeData.name}" missing componentNodeId, creating frame fallback`,
-                );
-                newNode = figma.createFrame();
-              }
-            } else if (
-              instanceEntry &&
-              instanceEntry.instanceType === "remote"
-            ) {
-              // Remote instance - resolve from remoteComponentMap
-              if (remoteComponentMap) {
-                const remoteComponent = remoteComponentMap.get(
-                  nodeData._instanceRef,
-                );
-                if (remoteComponent) {
-                  newNode = remoteComponent.createInstance();
-                  await debugConsole.log(
-                    `✓ Created remote instance "${nodeData.name}" from component "${instanceEntry.componentName}" on REMOTES page`,
-                  );
-
-                  // Apply variant properties if they exist
-                  if (
-                    instanceEntry.variantProperties &&
-                    Object.keys(instanceEntry.variantProperties).length > 0
-                  ) {
-                    try {
-                      newNode.setProperties(instanceEntry.variantProperties);
-                    } catch (error) {
-                      await debugConsole.warning(
-                        `Error setting variant properties for remote instance "${nodeData.name}": ${error}`,
-                      );
-                    }
-                  }
-
-                  // Apply component properties if they exist
-                  if (
-                    instanceEntry.componentProperties &&
-                    Object.keys(instanceEntry.componentProperties).length > 0
-                  ) {
-                    try {
-                      for (const [propName, propValue] of Object.entries(
-                        instanceEntry.componentProperties,
-                      )) {
-                        try {
-                          newNode.setProperties({ [propName]: propValue });
-                        } catch (error) {
-                          await debugConsole.warning(
-                            `Error setting component property "${propName}" for remote instance "${nodeData.name}": ${error}`,
-                          );
-                        }
-                      }
-                    } catch (error) {
-                      await debugConsole.warning(
-                        `Error setting component properties for remote instance "${nodeData.name}": ${error}`,
-                      );
-                    }
-                  }
-                } else {
-                  await debugConsole.warning(
-                    `Remote component not found for instance "${nodeData.name}" (index ${nodeData._instanceRef}), creating frame fallback`,
-                  );
-                  newNode = figma.createFrame();
-                }
-              } else {
-                await debugConsole.warning(
-                  `Remote instance "${nodeData.name}" cannot be resolved (no remoteComponentMap), creating frame fallback`,
-                );
-                newNode = figma.createFrame();
-              }
-            } else {
-              // Not an internal instance, or instance entry not found - create frame fallback
+          } catch {
+            try {
+              // Try using setProperties (might work for component definitions)
+              (newNode as any).setProperties(
+                nodeData.componentPropertyDefinitions,
+              );
               await debugConsole.log(
-                `Instance "${nodeData.name}" is not internal (type: ${instanceEntry?.instanceType || "unknown"}), creating frame fallback`,
+                `  Set component property definitions for "${nodeData.name || "Unnamed"}" via setProperties`,
+              );
+            } catch {
+              // Both methods failed - property definitions cannot be set
+              await debugConsole.warning(
+                `  Component "${nodeData.name || "Unnamed"}" has property definitions in JSON, but they cannot be recreated via API. Instances may not be able to set variant properties.`,
+              );
+            }
+          }
+        }
+      }
+      break;
+    case "COMPONENT_SET": {
+      // COMPONENT_SET cannot be created via API, so we convert it to a frame
+      // and import its children (the component variants) as components
+      const childCount = nodeData.children ? nodeData.children.length : 0;
+      const componentChildren = nodeData.children
+        ? nodeData.children.filter((c: any) => c.type === "COMPONENT").length
+        : 0;
+      await debugConsole.log(
+        `Converting COMPONENT_SET "${nodeData.name || "Unnamed"}" to frame (COMPONENT_SET cannot be created via API). Has ${childCount} children (${componentChildren} COMPONENT children)`,
+      );
+      if (nodeData.children && Array.isArray(nodeData.children)) {
+        for (const child of nodeData.children) {
+          if (child.type === "COMPONENT" && child.id) {
+            await debugConsole.log(
+              `  COMPONENT child: "${child.name || "Unnamed"}" (ID: ${child.id.substring(0, 8)}...)`,
+            );
+          }
+        }
+      }
+      newNode = figma.createFrame();
+      break;
+    }
+    case "INSTANCE":
+      // For remote structures, always create a frame instead of trying to resolve instances
+      if (isRemoteStructure) {
+        newNode = figma.createFrame();
+        // Copy the name from the instance data
+        if (nodeData.name) {
+          newNode.name = nodeData.name;
+        }
+      } else if (
+        nodeData._instanceRef !== undefined &&
+        instanceTable &&
+        nodeIdMapping
+      ) {
+        const instanceEntry = instanceTable.getInstanceByIndex(
+          nodeData._instanceRef,
+        );
+        if (instanceEntry && instanceEntry.instanceType === "internal") {
+          // Internal instance - use componentNodeId to find the component
+          if (instanceEntry.componentNodeId) {
+            // Special case: If componentNodeId matches the instance's own ID,
+            // this is a detached instance that was exported as an internal instance.
+            // The component doesn't actually exist, so we need to create a frame fallback.
+            if (instanceEntry.componentNodeId === nodeData.id) {
+              await debugConsole.warning(
+                `Instance "${nodeData.name}" has componentNodeId matching its own ID (detached instance). Creating frame fallback.`,
               );
               newNode = figma.createFrame();
+              // Copy basic properties from the instance data
+              if (nodeData.name) {
+                newNode.name = nodeData.name;
+              }
+              // Skip the rest of the instance handling and continue with normal node property application
+            } else {
+              // Normal internal instance - look up the component
+              const componentNode = nodeIdMapping.get(
+                instanceEntry.componentNodeId,
+              );
+              if (!componentNode) {
+                // Component not found in mapping - log available IDs for debugging
+                const availableIds = Array.from(nodeIdMapping.keys()).slice(
+                  0,
+                  20,
+                );
+                // Also check if the component exists in the pageData but wasn't created
+                await debugConsole.error(
+                  `Component not found for internal instance "${nodeData.name}" (ID: ${instanceEntry.componentNodeId.substring(0, 8)}...). The component should have been created during import.`,
+                );
+                await debugConsole.error(
+                  `Looking for component ID: ${instanceEntry.componentNodeId}`,
+                );
+                await debugConsole.error(
+                  `Available IDs in mapping (first 20): ${availableIds.map((id) => id.substring(0, 8) + "...").join(", ")}`,
+                );
+
+                // Check if the component ID exists in the pageData at all
+                // We'll check if we can find it in the current node's children
+                const checkForComponentInNode = (
+                  node: any,
+                  targetId: string,
+                ): boolean => {
+                  if (node.type === "COMPONENT" && node.id === targetId) {
+                    return true;
+                  }
+                  if (node.children && Array.isArray(node.children)) {
+                    for (const child of node.children) {
+                      if (
+                        !child._truncated &&
+                        checkForComponentInNode(child, targetId)
+                      ) {
+                        return true;
+                      }
+                    }
+                  }
+                  return false;
+                };
+
+                // Check in the current node's children (if we can access it)
+                // This is a best-effort check
+                const componentExistsInPageData = checkForComponentInNode(
+                  nodeData,
+                  instanceEntry.componentNodeId,
+                );
+
+                await debugConsole.error(
+                  `Component ID ${instanceEntry.componentNodeId.substring(0, 8)}... exists in current node tree: ${componentExistsInPageData}`,
+                );
+
+                // Log possible reasons why the component wasn't found
+                await debugConsole.error(
+                  `WARNING: Component ID ${instanceEntry.componentNodeId.substring(0, 8)}... not found in nodeIdMapping. This might indicate:`,
+                );
+                await debugConsole.error(
+                  `  1. The component doesn't exist in the pageData (detached component?)`,
+                );
+                await debugConsole.error(
+                  `  2. The component wasn't collected in the first pass`,
+                );
+                await debugConsole.error(
+                  `  3. The component ID in the instance table doesn't match the actual component ID`,
+                );
+
+                // Check if any available ID starts with the same prefix
+                const matchingPrefix = availableIds.filter((id) =>
+                  id.startsWith(instanceEntry.componentNodeId!.substring(0, 8)),
+                );
+                if (matchingPrefix.length > 0) {
+                  await debugConsole.error(
+                    `Found IDs with matching prefix: ${matchingPrefix.map((id) => id.substring(0, 8) + "...").join(", ")}`,
+                  );
+                }
+
+                // Component should exist but doesn't - this is a real error
+                // Note: Detached instances are now treated as remote, so they won't reach this code
+                const errorMessage = `Component not found for internal instance "${nodeData.name}" (ID: ${instanceEntry.componentNodeId.substring(0, 8)}...). The component should have been created during import. Available IDs in mapping (first 20): ${availableIds.map((id) => id.substring(0, 8) + "...").join(", ")}`;
+                throw new Error(errorMessage);
+              }
+              if (componentNode && componentNode.type === "COMPONENT") {
+                // Create instance from the component
+                newNode = componentNode.createInstance();
+                await debugConsole.log(
+                  `✓ Created internal instance "${nodeData.name}" from component "${instanceEntry.componentName}"`,
+                );
+
+                // Apply variant properties if they exist
+                // Note: We can only set properties that exist on the component
+                // Recreated components may not have all the same properties as the original
+                if (
+                  instanceEntry.variantProperties &&
+                  Object.keys(instanceEntry.variantProperties).length > 0
+                ) {
+                  try {
+                    // Get the component's property definitions (async method required)
+                    const mainComponent = await newNode.getMainComponentAsync();
+                    if (mainComponent) {
+                      const componentProperties =
+                        mainComponent.componentPropertyDefinitions;
+                      const validProperties: Record<string, string> = {};
+
+                      // Only include properties that exist on the component
+                      for (const [propName, propValue] of Object.entries(
+                        instanceEntry.variantProperties,
+                      )) {
+                        if (componentProperties[propName]) {
+                          validProperties[propName] = propValue as string;
+                        } else {
+                          await debugConsole.warning(
+                            `Skipping variant property "${propName}" for internal instance "${nodeData.name}" - property does not exist on recreated component`,
+                          );
+                        }
+                      }
+
+                      // Only set properties if we have valid ones
+                      if (Object.keys(validProperties).length > 0) {
+                        newNode.setProperties(validProperties);
+                      }
+                    } else {
+                      await debugConsole.warning(
+                        `Cannot set variant properties for internal instance "${nodeData.name}" - main component not found`,
+                      );
+                    }
+                  } catch (error) {
+                    const errorMessage = `Failed to set variant properties for instance "${nodeData.name}": ${error}`;
+                    await debugConsole.error(errorMessage);
+                    throw new Error(errorMessage);
+                  }
+                }
+
+                // Apply component properties if they exist
+                // Note: We can only set properties that exist on the component
+                // Recreated components may not have all the same properties as the original
+                if (
+                  instanceEntry.componentProperties &&
+                  Object.keys(instanceEntry.componentProperties).length > 0
+                ) {
+                  try {
+                    // Get the component's property definitions (async method required)
+                    const mainComponent = await newNode.getMainComponentAsync();
+                    if (mainComponent) {
+                      const componentProperties =
+                        mainComponent.componentPropertyDefinitions;
+
+                      // Only set properties that exist on the component
+                      for (const [propName, propValue] of Object.entries(
+                        instanceEntry.componentProperties,
+                      )) {
+                        if (componentProperties[propName]) {
+                          try {
+                            newNode.setProperties({ [propName]: propValue });
+                          } catch (error) {
+                            const errorMessage = `Failed to set component property "${propName}" for internal instance "${nodeData.name}": ${error}`;
+                            await debugConsole.error(errorMessage);
+                            throw new Error(errorMessage);
+                          }
+                        } else {
+                          await debugConsole.warning(
+                            `Skipping component property "${propName}" for internal instance "${nodeData.name}" - property does not exist on recreated component`,
+                          );
+                        }
+                      }
+                    } else {
+                      await debugConsole.warning(
+                        `Cannot set component properties for internal instance "${nodeData.name}" - main component not found`,
+                      );
+                    }
+                  } catch (error) {
+                    // Re-throw if it's already our error, otherwise wrap it
+                    if (error instanceof Error) {
+                      throw error;
+                    }
+                    const errorMessage = `Failed to set component properties for instance "${nodeData.name}": ${error}`;
+                    await debugConsole.error(errorMessage);
+                    throw new Error(errorMessage);
+                  }
+                }
+              } else if (!newNode && componentNode) {
+                // componentNode exists but is not a COMPONENT type
+                const errorMessage = `Component node found but is not a COMPONENT type for internal instance "${nodeData.name}" (ID: ${instanceEntry.componentNodeId.substring(0, 8)}...).`;
+                await debugConsole.error(errorMessage);
+                throw new Error(errorMessage);
+              }
+              // If newNode is already set (from frame fallback), continue to process children and properties
             }
-          } catch (error) {
-            await debugConsole.warning(
-              `Error resolving instance "${nodeData.name}": ${error}, creating frame fallback`,
+          } else {
+            const errorMessage = `Internal instance "${nodeData.name}" missing componentNodeId. This is required for internal instances.`;
+            await debugConsole.error(errorMessage);
+            throw new Error(errorMessage);
+          }
+        } else if (instanceEntry && instanceEntry.instanceType === "remote") {
+          // Remote instance - resolve from remoteComponentMap
+          if (remoteComponentMap) {
+            const remoteComponent = remoteComponentMap.get(
+              nodeData._instanceRef,
+            );
+            if (remoteComponent) {
+              newNode = remoteComponent.createInstance();
+              await debugConsole.log(
+                `✓ Created remote instance "${nodeData.name}" from component "${instanceEntry.componentName}" on REMOTES page`,
+              );
+
+              // Apply variant properties if they exist
+              // Note: We can only set properties that exist on the component
+              // Remote components recreated from structure may not have all the same properties
+              if (
+                instanceEntry.variantProperties &&
+                Object.keys(instanceEntry.variantProperties).length > 0
+              ) {
+                try {
+                  // Get the component's property definitions (async method required)
+                  const mainComponent = await newNode.getMainComponentAsync();
+                  if (mainComponent) {
+                    const componentProperties =
+                      mainComponent.componentPropertyDefinitions;
+                    const validProperties: Record<string, string> = {};
+
+                    // Only include properties that exist on the component
+                    for (const [propName, propValue] of Object.entries(
+                      instanceEntry.variantProperties,
+                    )) {
+                      if (componentProperties[propName]) {
+                        validProperties[propName] = propValue as string;
+                      } else {
+                        await debugConsole.warning(
+                          `Skipping variant property "${propName}" for remote instance "${nodeData.name}" - property does not exist on recreated component`,
+                        );
+                      }
+                    }
+
+                    // Only set properties if we have valid ones
+                    if (Object.keys(validProperties).length > 0) {
+                      newNode.setProperties(validProperties);
+                    }
+                  } else {
+                    await debugConsole.warning(
+                      `Cannot set variant properties for remote instance "${nodeData.name}" - main component not found`,
+                    );
+                  }
+                } catch (error) {
+                  const errorMessage = `Failed to set variant properties for remote instance "${nodeData.name}": ${error}`;
+                  await debugConsole.error(errorMessage);
+                  throw new Error(errorMessage);
+                }
+              }
+
+              // Apply component properties if they exist
+              // Note: We can only set properties that exist on the component
+              // Remote components recreated from structure may not have all the same properties
+              if (
+                instanceEntry.componentProperties &&
+                Object.keys(instanceEntry.componentProperties).length > 0
+              ) {
+                try {
+                  // Get the component's property definitions (async method required)
+                  const mainComponent = await newNode.getMainComponentAsync();
+                  if (mainComponent) {
+                    const componentProperties =
+                      mainComponent.componentPropertyDefinitions;
+
+                    // Only set properties that exist on the component
+                    for (const [propName, propValue] of Object.entries(
+                      instanceEntry.componentProperties,
+                    )) {
+                      if (componentProperties[propName]) {
+                        try {
+                          newNode.setProperties({ [propName]: propValue });
+                        } catch (error) {
+                          const errorMessage = `Failed to set component property "${propName}" for remote instance "${nodeData.name}": ${error}`;
+                          await debugConsole.error(errorMessage);
+                          throw new Error(errorMessage);
+                        }
+                      } else {
+                        await debugConsole.warning(
+                          `Skipping component property "${propName}" for remote instance "${nodeData.name}" - property does not exist on recreated component`,
+                        );
+                      }
+                    }
+                  } else {
+                    await debugConsole.warning(
+                      `Cannot set component properties for remote instance "${nodeData.name}" - main component not found`,
+                    );
+                  }
+                } catch (error) {
+                  // Re-throw if it's already our error, otherwise wrap it
+                  if (error instanceof Error) {
+                    throw error;
+                  }
+                  const errorMessage = `Failed to set component properties for remote instance "${nodeData.name}": ${error}`;
+                  await debugConsole.error(errorMessage);
+                  throw new Error(errorMessage);
+                }
+              }
+            } else {
+              const errorMessage = `Remote component not found for instance "${nodeData.name}" (index ${nodeData._instanceRef}). The remote component should have been created on the REMOTES page.`;
+              await debugConsole.error(errorMessage);
+              throw new Error(errorMessage);
+            }
+          } else {
+            const errorMessage = `Remote instance "${nodeData.name}" cannot be resolved (no remoteComponentMap). Remote instances require a remoteComponentMap.`;
+            await debugConsole.error(errorMessage);
+            throw new Error(errorMessage);
+          }
+        } else {
+          // Normal instances are not yet implemented - this is expected for now
+          if (instanceEntry?.instanceType === "normal") {
+            await debugConsole.log(
+              `Instance "${nodeData.name}" is a normal instance (not yet implemented), creating frame fallback`,
             );
             newNode = figma.createFrame();
+          } else {
+            // Unknown instance type or missing entry - this is an error
+            const errorMessage = `Instance "${nodeData.name}" has unknown or missing instance type: ${instanceEntry?.instanceType || "unknown"}`;
+            await debugConsole.error(errorMessage);
+            throw new Error(errorMessage);
           }
-        } else {
-          // No _instanceRef or missing instance table - create frame fallback
-          await debugConsole.log(
-            `Instance "${nodeData.name}" missing _instanceRef or instance table, creating frame fallback`,
-          );
-          newNode = figma.createFrame();
         }
-        break;
-      case "GROUP":
-        newNode = figma.createFrame();
-        break;
-      case "BOOLEAN_OPERATION":
-        console.log(
-          "Boolean operation found: " +
-            nodeData.name +
-            ", creating frame fallback",
-        );
-        newNode = figma.createFrame();
-        break;
-      case "POLYGON":
-        newNode = figma.createPolygon();
-        break;
-      default:
-        console.log(
-          "Unsupported node type: " +
-            nodeData.type +
-            ", creating frame instead",
-        );
-        newNode = figma.createFrame();
-        break;
+      } else {
+        // No _instanceRef or missing instance table - this is an error
+        const errorMessage = `Instance "${nodeData.name}" missing _instanceRef or instance table. This is required for instance resolution.`;
+        await debugConsole.error(errorMessage);
+        throw new Error(errorMessage);
+      }
+      break;
+    case "GROUP":
+      newNode = figma.createFrame();
+      break;
+    case "BOOLEAN_OPERATION": {
+      const booleanError = `Boolean operation nodes cannot be imported. Found boolean operation: "${nodeData.name}".`;
+      await debugConsole.error(booleanError);
+      throw new Error(booleanError);
     }
+    case "POLYGON":
+      newNode = figma.createPolygon();
+      break;
+    default: {
+      const errorMessage = `Unsupported node type: ${nodeData.type}. This node type cannot be imported.`;
+      await debugConsole.error(errorMessage);
+      throw new Error(errorMessage);
+    }
+  }
 
-    if (!newNode) {
-      return null;
-    }
+  if (!newNode) {
+    return null;
+  }
 
-    // Store node ID mapping for internal instance resolution
-    if (nodeData.id && nodeIdMapping) {
-      nodeIdMapping.set(nodeData.id, newNode);
+  // Store node ID mapping for internal instance resolution
+  if (nodeData.id && nodeIdMapping) {
+    nodeIdMapping.set(nodeData.id, newNode);
+    if (newNode.type === "COMPONENT") {
+      await debugConsole.log(
+        `  Stored COMPONENT "${nodeData.name || "Unnamed"}" in nodeIdMapping (ID: ${nodeData.id.substring(0, 8)}...)`,
+      );
     }
+  }
 
-    // Apply defaults first
-    applyDefaultsToNode(newNode, nodeData.type || "FRAME");
+  // Apply defaults first
+  applyDefaultsToNode(newNode, nodeData.type || "FRAME");
 
-    // Set basic properties (override defaults with serialized values)
-    if (nodeData.name !== undefined) {
-      newNode.name = nodeData.name || "Unnamed Node";
-    }
-    if (nodeData.x !== undefined) {
-      newNode.x = nodeData.x;
-    }
-    if (nodeData.y !== undefined) {
-      newNode.y = nodeData.y;
-    }
-    if (nodeData.width !== undefined && nodeData.height !== undefined) {
-      newNode.resize(nodeData.width, nodeData.height);
-    }
+  // Set basic properties (override defaults with serialized values)
+  if (nodeData.name !== undefined) {
+    newNode.name = nodeData.name || "Unnamed Node";
+  }
+  if (nodeData.x !== undefined) {
+    newNode.x = nodeData.x;
+  }
+  if (nodeData.y !== undefined) {
+    newNode.y = nodeData.y;
+  }
+  if (nodeData.width !== undefined && nodeData.height !== undefined) {
+    newNode.resize(nodeData.width, nodeData.height);
+  }
 
-    // Set visual properties if they exist
-    if (nodeData.visible !== undefined) {
-      newNode.visible = nodeData.visible;
-    }
-    if (nodeData.locked !== undefined) {
-      newNode.locked = nodeData.locked;
-    }
-    if (nodeData.opacity !== undefined) {
-      newNode.opacity = nodeData.opacity;
-    }
-    if (nodeData.rotation !== undefined) {
-      newNode.rotation = nodeData.rotation;
-    }
-    if (nodeData.blendMode !== undefined) {
-      newNode.blendMode = nodeData.blendMode;
-    }
+  // Set visual properties if they exist
+  if (nodeData.visible !== undefined) {
+    newNode.visible = nodeData.visible;
+  }
+  if (nodeData.locked !== undefined) {
+    newNode.locked = nodeData.locked;
+  }
+  if (nodeData.opacity !== undefined) {
+    newNode.opacity = nodeData.opacity;
+  }
+  if (nodeData.rotation !== undefined) {
+    newNode.rotation = nodeData.rotation;
+  }
+  if (nodeData.blendMode !== undefined) {
+    newNode.blendMode = nodeData.blendMode;
+  }
 
-    // Set fills if they exist (skip instances, they're handled separately)
-    if (nodeData.type !== "INSTANCE" && nodeData.fills !== undefined) {
-      try {
-        // Process fills array - remove boundVariables that contain _varRef
-        // We'll restore them properly after setting the fills
-        let fills = nodeData.fills;
-        if (Array.isArray(fills)) {
-          fills = fills.map((fill: any) => {
-            if (fill && typeof fill === "object") {
-              // Create a copy without boundVariables (they may contain _varRef which is invalid)
-              const fillWithoutBoundVars = { ...fill };
-              delete fillWithoutBoundVars.boundVariables;
-              return fillWithoutBoundVars;
-            }
-            return fill;
-          });
-        }
-
-        // Set fills without boundVariables first
-        newNode.fills = fills;
-
-        // Now restore bound variables for fills properly
-        if (nodeData.boundVariables?.fills && recognizedVariables) {
-          await restoreBoundVariablesForFills(
-            newNode,
-            nodeData.boundVariables,
-            "fills",
-            recognizedVariables,
-          );
-        }
-      } catch (error) {
-        console.log("Error setting fills:", error);
-      }
-    }
-
-    // Set strokes if they exist
-    if (nodeData.strokes !== undefined && nodeData.strokes.length > 0) {
-      try {
-        newNode.strokes = nodeData.strokes;
-      } catch (error) {
-        console.log("Error setting strokes:", error);
-      }
-    }
-
-    // Set additional properties for better visual similarity
-    if (nodeData.strokeWeight !== undefined) {
-      newNode.strokeWeight = nodeData.strokeWeight;
-    }
-    if (nodeData.strokeAlign !== undefined) {
-      newNode.strokeAlign = nodeData.strokeAlign;
-    }
-    if (nodeData.cornerRadius !== undefined) {
-      newNode.cornerRadius = nodeData.cornerRadius;
-    }
-    if (nodeData.effects !== undefined && nodeData.effects.length > 0) {
-      newNode.effects = nodeData.effects;
-    }
-
-    // Set layout properties for frames, components, and instances
-    if (
-      nodeData.type === "FRAME" ||
-      nodeData.type === "COMPONENT" ||
-      nodeData.type === "INSTANCE"
-    ) {
-      if (nodeData.layoutMode !== undefined) {
-        newNode.layoutMode = nodeData.layoutMode;
-      }
-      if (nodeData.primaryAxisSizingMode !== undefined) {
-        newNode.primaryAxisSizingMode = nodeData.primaryAxisSizingMode;
-      }
-      if (nodeData.counterAxisSizingMode !== undefined) {
-        newNode.counterAxisSizingMode = nodeData.counterAxisSizingMode;
-      }
-      if (nodeData.primaryAxisAlignItems !== undefined) {
-        newNode.primaryAxisAlignItems = nodeData.primaryAxisAlignItems;
-      }
-      if (nodeData.counterAxisAlignItems !== undefined) {
-        newNode.counterAxisAlignItems = nodeData.counterAxisAlignItems;
-      }
-      if (nodeData.paddingLeft !== undefined) {
-        newNode.paddingLeft = nodeData.paddingLeft;
-      }
-      if (nodeData.paddingRight !== undefined) {
-        newNode.paddingRight = nodeData.paddingRight;
-      }
-      if (nodeData.paddingTop !== undefined) {
-        newNode.paddingTop = nodeData.paddingTop;
-      }
-      if (nodeData.paddingBottom !== undefined) {
-        newNode.paddingBottom = nodeData.paddingBottom;
-      }
-      if (nodeData.itemSpacing !== undefined) {
-        newNode.itemSpacing = nodeData.itemSpacing;
-      }
-    }
-
-    // Set vector and line properties
-    if (nodeData.type === "VECTOR" || nodeData.type === "LINE") {
-      if (nodeData.strokeCap !== undefined) {
-        newNode.strokeCap = nodeData.strokeCap;
-      }
-      if (nodeData.strokeJoin !== undefined) {
-        newNode.strokeJoin = nodeData.strokeJoin;
-      }
-      if (
-        nodeData.dashPattern !== undefined &&
-        nodeData.dashPattern.length > 0
-      ) {
-        newNode.dashPattern = nodeData.dashPattern;
-      }
-    }
-
-    // Set text properties for text nodes
-    if (nodeData.type === "TEXT" && nodeData.characters !== undefined) {
-      try {
-        // Load font first if available, otherwise use default
-        if (nodeData.fontName) {
-          try {
-            await figma.loadFontAsync(nodeData.fontName);
-            newNode.fontName = nodeData.fontName;
-          } catch {
-            // Load default font as fallback
-            await figma.loadFontAsync({
-              family: "Roboto",
-              style: "Regular",
-            });
-            newNode.fontName = { family: "Roboto", style: "Regular" };
+  // Set fills if they exist (skip instances, they're handled separately)
+  if (nodeData.type !== "INSTANCE" && nodeData.fills !== undefined) {
+    try {
+      // Process fills array - remove boundVariables that contain _varRef
+      // We'll restore them properly after setting the fills
+      let fills = nodeData.fills;
+      if (Array.isArray(fills)) {
+        fills = fills.map((fill: any) => {
+          if (fill && typeof fill === "object") {
+            // Create a copy without boundVariables (they may contain _varRef which is invalid)
+            const fillWithoutBoundVars = { ...fill };
+            delete fillWithoutBoundVars.boundVariables;
+            return fillWithoutBoundVars;
           }
-        } else {
-          // Load default font if no font specified
+          return fill;
+        });
+      }
+
+      // Set fills without boundVariables first
+      newNode.fills = fills;
+
+      // Now restore bound variables for fills properly
+      if (nodeData.boundVariables?.fills && recognizedVariables) {
+        await restoreBoundVariablesForFills(
+          newNode,
+          nodeData.boundVariables,
+          "fills",
+          recognizedVariables,
+        );
+      }
+    } catch (error) {
+      console.log("Error setting fills:", error);
+    }
+  }
+
+  // Set strokes if they exist
+  if (nodeData.strokes !== undefined && nodeData.strokes.length > 0) {
+    try {
+      newNode.strokes = nodeData.strokes;
+    } catch (error) {
+      console.log("Error setting strokes:", error);
+    }
+  }
+
+  // Set additional properties for better visual similarity
+  if (nodeData.strokeWeight !== undefined) {
+    newNode.strokeWeight = nodeData.strokeWeight;
+  }
+  if (nodeData.strokeAlign !== undefined) {
+    newNode.strokeAlign = nodeData.strokeAlign;
+  }
+  if (nodeData.cornerRadius !== undefined) {
+    newNode.cornerRadius = nodeData.cornerRadius;
+  }
+  if (nodeData.effects !== undefined && nodeData.effects.length > 0) {
+    newNode.effects = nodeData.effects;
+  }
+
+  // Set layout properties for frames, components, and instances
+  if (
+    nodeData.type === "FRAME" ||
+    nodeData.type === "COMPONENT" ||
+    nodeData.type === "INSTANCE"
+  ) {
+    if (nodeData.layoutMode !== undefined) {
+      newNode.layoutMode = nodeData.layoutMode;
+    }
+    if (nodeData.primaryAxisSizingMode !== undefined) {
+      newNode.primaryAxisSizingMode = nodeData.primaryAxisSizingMode;
+    }
+    if (nodeData.counterAxisSizingMode !== undefined) {
+      newNode.counterAxisSizingMode = nodeData.counterAxisSizingMode;
+    }
+    if (nodeData.primaryAxisAlignItems !== undefined) {
+      newNode.primaryAxisAlignItems = nodeData.primaryAxisAlignItems;
+    }
+    if (nodeData.counterAxisAlignItems !== undefined) {
+      newNode.counterAxisAlignItems = nodeData.counterAxisAlignItems;
+    }
+    if (nodeData.paddingLeft !== undefined) {
+      newNode.paddingLeft = nodeData.paddingLeft;
+    }
+    if (nodeData.paddingRight !== undefined) {
+      newNode.paddingRight = nodeData.paddingRight;
+    }
+    if (nodeData.paddingTop !== undefined) {
+      newNode.paddingTop = nodeData.paddingTop;
+    }
+    if (nodeData.paddingBottom !== undefined) {
+      newNode.paddingBottom = nodeData.paddingBottom;
+    }
+    if (nodeData.itemSpacing !== undefined) {
+      newNode.itemSpacing = nodeData.itemSpacing;
+    }
+  }
+
+  // Set vector and line properties
+  if (nodeData.type === "VECTOR" || nodeData.type === "LINE") {
+    if (nodeData.strokeCap !== undefined) {
+      newNode.strokeCap = nodeData.strokeCap;
+    }
+    if (nodeData.strokeJoin !== undefined) {
+      newNode.strokeJoin = nodeData.strokeJoin;
+    }
+    if (nodeData.dashPattern !== undefined && nodeData.dashPattern.length > 0) {
+      newNode.dashPattern = nodeData.dashPattern;
+    }
+  }
+
+  // Set text properties for text nodes
+  if (nodeData.type === "TEXT" && nodeData.characters !== undefined) {
+    try {
+      // Load font first if available, otherwise use default
+      if (nodeData.fontName) {
+        try {
+          await figma.loadFontAsync(nodeData.fontName);
+          newNode.fontName = nodeData.fontName;
+        } catch {
+          // Load default font as fallback
           await figma.loadFontAsync({
             family: "Roboto",
             style: "Regular",
           });
           newNode.fontName = { family: "Roboto", style: "Regular" };
         }
+      } else {
+        // Load default font if no font specified
+        await figma.loadFontAsync({
+          family: "Roboto",
+          style: "Regular",
+        });
+        newNode.fontName = { family: "Roboto", style: "Regular" };
+      }
 
-        // Set text content
+      // Set text content
+      newNode.characters = nodeData.characters;
+
+      // Set other text properties if they exist
+      if (nodeData.fontSize !== undefined) {
+        newNode.fontSize = nodeData.fontSize;
+      }
+      if (nodeData.textAlignHorizontal !== undefined) {
+        newNode.textAlignHorizontal = nodeData.textAlignHorizontal;
+      }
+      if (nodeData.textAlignVertical !== undefined) {
+        newNode.textAlignVertical = nodeData.textAlignVertical;
+      }
+      if (nodeData.letterSpacing !== undefined) {
+        newNode.letterSpacing = nodeData.letterSpacing;
+      }
+      if (nodeData.lineHeight !== undefined) {
+        newNode.lineHeight = nodeData.lineHeight;
+      }
+      if (nodeData.textCase !== undefined) {
+        newNode.textCase = nodeData.textCase;
+      }
+      if (nodeData.textDecoration !== undefined) {
+        newNode.textDecoration = nodeData.textDecoration;
+      }
+      if (nodeData.textAutoResize !== undefined) {
+        newNode.textAutoResize = nodeData.textAutoResize;
+      }
+    } catch (error) {
+      console.log("Error setting text properties: " + error);
+      // Final fallback: just set the text with basic properties
+      try {
         newNode.characters = nodeData.characters;
-
-        // Set other text properties if they exist
-        if (nodeData.fontSize !== undefined) {
-          newNode.fontSize = nodeData.fontSize;
-        }
-        if (nodeData.textAlignHorizontal !== undefined) {
-          newNode.textAlignHorizontal = nodeData.textAlignHorizontal;
-        }
-        if (nodeData.textAlignVertical !== undefined) {
-          newNode.textAlignVertical = nodeData.textAlignVertical;
-        }
-        if (nodeData.letterSpacing !== undefined) {
-          newNode.letterSpacing = nodeData.letterSpacing;
-        }
-        if (nodeData.lineHeight !== undefined) {
-          newNode.lineHeight = nodeData.lineHeight;
-        }
-        if (nodeData.textCase !== undefined) {
-          newNode.textCase = nodeData.textCase;
-        }
-        if (nodeData.textDecoration !== undefined) {
-          newNode.textDecoration = nodeData.textDecoration;
-        }
-        if (nodeData.textAutoResize !== undefined) {
-          newNode.textAutoResize = nodeData.textAutoResize;
-        }
-      } catch (error) {
-        console.log("Error setting text properties: " + error);
-        // Final fallback: just set the text with basic properties
-        try {
-          newNode.characters = nodeData.characters;
-        } catch (textError) {
-          console.log("Could not set text characters: " + textError);
-        }
+      } catch (textError) {
+        console.log("Could not set text characters: " + textError);
       }
     }
+  }
 
-    // Restore bound variables (if any)
-    if (nodeData.boundVariables) {
-      for (const [propertyName, varInfo] of Object.entries(
-        nodeData.boundVariables,
-      )) {
-        if (propertyName !== "fills") {
-          // Handle non-fills bound variables
-          if (
-            isVariableReference(varInfo) &&
-            variableTable &&
-            recognizedVariables
-          ) {
-            // Use recognizedVariables map to resolve variable references
-            const varRef = (varInfo as VariableReference)._varRef;
-            if (varRef !== undefined) {
-              const variable = recognizedVariables.get(String(varRef));
-              if (variable) {
-                const alias: VariableAlias = {
-                  type: "VARIABLE_ALIAS",
-                  id: variable.id,
-                };
-                if (!newNode.boundVariables) {
-                  newNode.boundVariables = {};
-                }
-                if (!newNode.boundVariables[propertyName]) {
-                  newNode.boundVariables[propertyName] = alias;
-                }
+  // Restore bound variables (if any)
+  if (nodeData.boundVariables) {
+    for (const [propertyName, varInfo] of Object.entries(
+      nodeData.boundVariables,
+    )) {
+      if (propertyName !== "fills") {
+        // Handle non-fills bound variables
+        if (
+          isVariableReference(varInfo) &&
+          variableTable &&
+          recognizedVariables
+        ) {
+          // Use recognizedVariables map to resolve variable references
+          const varRef = (varInfo as VariableReference)._varRef;
+          if (varRef !== undefined) {
+            const variable = recognizedVariables.get(String(varRef));
+            if (variable) {
+              const alias: VariableAlias = {
+                type: "VARIABLE_ALIAS",
+                id: variable.id,
+              };
+              if (!newNode.boundVariables) {
+                newNode.boundVariables = {};
+              }
+              if (!newNode.boundVariables[propertyName]) {
+                newNode.boundVariables[propertyName] = alias;
               }
             }
           }
         }
       }
     }
+  }
 
-    // Recursively recreate children
-    if (nodeData.children && Array.isArray(nodeData.children)) {
-      for (const childData of nodeData.children) {
-        // Skip truncated children markers
-        if (childData._truncated) {
-          console.log(
-            `Skipping truncated children: ${childData._reason || "Unknown"}`,
-          );
+  // Recursively recreate children
+  // Note: INSTANCE nodes cannot have children appended - they are read-only representations
+  // of their main component, so we skip children for INSTANCE nodes
+  if (
+    nodeData.children &&
+    Array.isArray(nodeData.children) &&
+    newNode.type !== "INSTANCE"
+  ) {
+    // Two-pass approach: First create all COMPONENT nodes recursively (so they're in nodeIdMapping),
+    // then create all other nodes (including INSTANCE nodes that reference the components)
+    const componentChildren: any[] = [];
+    const otherChildren: any[] = [];
+
+    // Helper function to recursively collect all COMPONENT nodes
+    // Note: This function cannot be async, so we log after collection
+    const collectComponents = (children: any[]): any[] => {
+      const components: any[] = [];
+      for (const child of children) {
+        if (child._truncated) {
           continue;
         }
-        const childNode = await recreateNodeFromData(
-          childData,
-          newNode,
-          variableTable,
-          collectionTable,
-          instanceTable,
-          recognizedVariables,
-          nodeIdMapping,
-          isRemoteStructure, // Pass the flag down to children
-          remoteComponentMap, // Pass the remote component map down to children
-        );
-        if (childNode) {
-          newNode.appendChild(childNode);
+        if (child.type === "COMPONENT") {
+          components.push(child);
+          // Also collect components from this component's children
+          if (child.children && Array.isArray(child.children)) {
+            components.push(...collectComponents(child.children));
+          }
+        } else if (child.children && Array.isArray(child.children)) {
+          // Recursively collect components from nested structures
+          components.push(...collectComponents(child.children));
         }
+      }
+      return components;
+    };
+
+    for (const childData of nodeData.children) {
+      // Skip truncated children markers
+      if (childData._truncated) {
+        console.log(
+          `Skipping truncated children: ${childData._reason || "Unknown"}`,
+        );
+        continue;
+      }
+      // Separate COMPONENT children from others
+      if (childData.type === "COMPONENT") {
+        componentChildren.push(childData);
+      } else {
+        otherChildren.push(childData);
       }
     }
 
-    // Add the node to the parent
-    if (parentNode) {
-      parentNode.appendChild(newNode);
+    // First pass: Recursively create all COMPONENT nodes (including nested ones)
+    // This ensures all components are in nodeIdMapping before any instances reference them
+    // We only create the component nodes themselves, not their children (that happens in second pass)
+    const allComponents = collectComponents(nodeData.children);
+    await debugConsole.log(
+      `  First pass: Creating ${allComponents.length} COMPONENT node(s) (without children)...`,
+    );
+    // Log all collected components for debugging
+    for (const comp of allComponents) {
+      await debugConsole.log(
+        `  Collected COMPONENT "${comp.name || "Unnamed"}" (ID: ${comp.id ? comp.id.substring(0, 8) + "..." : "no ID"}) for first pass`,
+      );
+    }
+    for (const componentData of allComponents) {
+      // Only create if not already created (check nodeIdMapping)
+      if (
+        componentData.id &&
+        nodeIdMapping &&
+        !nodeIdMapping.has(componentData.id)
+      ) {
+        // Create just the component node itself (no children processing yet)
+        const componentNode = figma.createComponent();
+        if (componentData.name !== undefined) {
+          componentNode.name = componentData.name || "Unnamed Node";
+        }
+
+        // Try to set component property definitions immediately after creation
+        // The API documentation says they're read-only, but let's try anyway
+        if (componentData.componentPropertyDefinitions) {
+          try {
+            // Try direct assignment first (might work immediately after creation)
+            (componentNode as any).componentPropertyDefinitions =
+              componentData.componentPropertyDefinitions;
+            await debugConsole.log(
+              `  Set component property definitions for "${componentData.name || "Unnamed"}" via direct assignment in first pass`,
+            );
+          } catch {
+            try {
+              // Try using setProperties (might work for component definitions)
+              (componentNode as any).setProperties(
+                componentData.componentPropertyDefinitions,
+              );
+              await debugConsole.log(
+                `  Set component property definitions for "${componentData.name || "Unnamed"}" via setProperties in first pass`,
+              );
+            } catch {
+              // Both methods failed - property definitions cannot be set
+              await debugConsole.warning(
+                `  Component "${componentData.name || "Unnamed"}" has property definitions in JSON, but they cannot be recreated via API. Instances may not be able to set variant properties.`,
+              );
+            }
+          }
+        }
+
+        // Store in mapping immediately so instances can find it
+        nodeIdMapping.set(componentData.id, componentNode);
+        await debugConsole.log(
+          `  Created COMPONENT "${componentData.name || "Unnamed"}" (ID: ${componentData.id.substring(0, 8)}...) in first pass`,
+        );
+        // Don't append to parent yet - that happens in second pass
+        // Don't process children yet - that also happens in second pass
+      }
     }
 
-    return newNode;
-  } catch (error) {
-    console.log(
-      "Error recreating node " + (nodeData.name || nodeData.type) + ":",
-      error,
-    );
-    return null;
+    // Second pass: Process all children normally (components will be skipped if already created,
+    // but their children will be processed, and instances can now find the components)
+    for (const childData of nodeData.children) {
+      if (childData._truncated) {
+        continue;
+      }
+      const childNode = await recreateNodeFromData(
+        childData,
+        newNode,
+        variableTable,
+        collectionTable,
+        instanceTable,
+        recognizedVariables,
+        nodeIdMapping,
+        isRemoteStructure,
+        remoteComponentMap,
+      );
+      if (childNode) {
+        newNode.appendChild(childNode);
+      }
+    }
   }
+
+  // Add the node to the parent
+  if (parentNode) {
+    parentNode.appendChild(newNode);
+  }
+
+  return newNode;
 }
 
 /**
@@ -2330,6 +2689,38 @@ async function createPageAndRecreateStructure(
   const pageData = expandedJsonData.pageData;
   const nodeIdMapping = new Map<string, any>();
 
+  // Helper function to recursively find all component IDs in the page data
+  const findAllComponentIds = (node: any, ids: string[] = []): string[] => {
+    if (node.type === "COMPONENT" && node.id) {
+      ids.push(node.id);
+    }
+    if (node.children && Array.isArray(node.children)) {
+      for (const child of node.children) {
+        if (!child._truncated) {
+          findAllComponentIds(child, ids);
+        }
+      }
+    }
+    return ids;
+  };
+
+  // Log all component IDs found in the page data for debugging
+  const allComponentIds = findAllComponentIds(pageData);
+  await debugConsole.log(
+    `Found ${allComponentIds.length} COMPONENT node(s) in page data`,
+  );
+  if (allComponentIds.length > 0) {
+    await debugConsole.log(
+      `Component IDs in page data (first 20): ${allComponentIds
+        .slice(0, 20)
+        .map((id) => id.substring(0, 8) + "...")
+        .join(", ")}`,
+    );
+    // Also check if we can find the specific ID we're looking for later
+    // Store this for later reference
+    (pageData as any)._allComponentIds = allComponentIds;
+  }
+
   if (pageData.children && Array.isArray(pageData.children)) {
     for (const childData of pageData.children) {
       const childNode = await recreateNodeFromData(
@@ -2684,7 +3075,7 @@ export async function cleanupCreatedEntities(
     let deletedPages = 0;
     for (const pageId of pageIds) {
       try {
-        const page = figma.getNodeById(pageId) as PageNode | null;
+        const page = (await figma.getNodeByIdAsync(pageId)) as PageNode | null;
         if (page && page.type === "PAGE") {
           page.remove();
           deletedPages++;

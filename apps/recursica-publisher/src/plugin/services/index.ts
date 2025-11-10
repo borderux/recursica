@@ -10,6 +10,7 @@ import { storeSelectedRepo } from "./storeSelectedRepo";
 import { getComponentMetadata } from "./getComponentMetadata";
 import { getAllComponents } from "./getAllComponents";
 import { pluginPromptResponse } from "./pluginPromptResponse";
+import { switchToPage } from "./switchToPage";
 
 // Services map - all service functions indexed by their names
 // This is the single source of truth for available services
@@ -27,6 +28,7 @@ export const services = {
   getComponentMetadata,
   getAllComponents,
   pluginPromptResponse,
+  switchToPage,
 } as const;
 
 // Re-export individual services for convenience
@@ -44,4 +46,5 @@ export {
   getComponentMetadata,
   getAllComponents,
   pluginPromptResponse,
+  switchToPage,
 };

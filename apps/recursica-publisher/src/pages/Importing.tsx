@@ -1,69 +1,26 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import PageLayout from "../components/PageLayout";
 import DebugConsole from "../components/DebugConsole";
 import PluginPrompt from "../components/PluginPrompt";
 import { callPlugin } from "../utils/callPlugin";
 import { useImportData } from "../context/ImportDataContext";
+import {
+  getRequiredImportFiles,
+  fileMatchesRequired,
+} from "../utils/getRequiredImportFiles";
 
-interface ImportedFile {
+interface ImportedComponent {
   name: string;
-  jsonContent: string;
-  filename: string;
+  pageId: string;
 }
 
 export default function Importing() {
   const { importData } = useImportData();
-  const [importedFiles, setImportedFiles] = useState<ImportedFile[]>([]);
+  const [importedComponents, setImportedComponents] = useState<
+    ImportedComponent[]
+  >([]);
   const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Convert import data to file list
-  const prepareFiles = useCallback(() => {
-    if (!importData) {
-      return [];
-    }
-
-    const files: ImportedFile[] = [];
-
-    // Add main file
-    if (
-      importData.mainFile &&
-      importData.mainFile.status === "success" &&
-      importData.mainFile.data
-    ) {
-      const metadata = (importData.mainFile.data as Record<string, unknown>)
-        .metadata as Record<string, unknown> | undefined;
-      const displayName =
-        metadata && typeof metadata.name === "string"
-          ? metadata.name
-          : importData.mainFile.name;
-      files.push({
-        name: displayName,
-        jsonContent: JSON.stringify(importData.mainFile.data),
-        filename: importData.mainFile.name,
-      });
-    }
-
-    // Add additional files
-    for (const file of importData.additionalFiles) {
-      if (file.status === "success" && file.data) {
-        const metadata = (file.data as Record<string, unknown>).metadata as
-          | Record<string, unknown>
-          | undefined;
-        const displayName =
-          metadata && typeof metadata.name === "string"
-            ? metadata.name
-            : file.name;
-        files.push({
-          name: displayName,
-          jsonContent: JSON.stringify(file.data),
-          filename: file.name,
-        });
-      }
-    }
-
-    return files;
-  }, [importData]);
 
   // Start importing when component mounts
   useEffect(() => {
@@ -91,15 +48,28 @@ export default function Importing() {
         setIsImporting(true);
         setError(null);
 
-        // Prepare files list
-        const files = prepareFiles();
-        setImportedFiles(files);
+        // Track imported components (will be populated as imports complete)
+        const components: ImportedComponent[] = [];
+
+        // Get required files from the main file
+        // We already checked that mainFile exists and has status "success" at the start of useEffect
+        const mainFileData = importData.mainFile!.data!;
+        const requiredFiles = getRequiredImportFiles(mainFileData);
 
         // Import referenced files first (before main file)
         // This ensures they're available when the main file references them
-        const additionalFiles = importData.additionalFiles.filter(
-          (file) => file.status === "success" && file.data,
-        );
+        // Only import files that are actually referenced (match a required file)
+        const additionalFiles = importData.additionalFiles.filter((file) => {
+          // Only process successfully loaded files
+          if (file.status !== "success" || !file.data) {
+            return false;
+          }
+
+          // Check if this file matches any required file
+          return requiredFiles.some((requiredFile) =>
+            fileMatchesRequired(file.data, requiredFile),
+          );
+        });
 
         for (const additionalFile of additionalFiles) {
           if (!isMounted) {
@@ -144,6 +114,20 @@ export default function Importing() {
             }
             if (entities.variableIds) {
               allCreatedEntityIds.variableIds.push(...entities.variableIds);
+            }
+          }
+
+          // Track imported component (use the actual page name from response)
+          if (response.data?.pageName && response.data?.createdEntities) {
+            const entities = response.data.createdEntities as {
+              pageIds?: string[];
+            };
+            if (entities.pageIds && entities.pageIds.length > 0) {
+              components.push({
+                name: response.data.pageName as string,
+                pageId: entities.pageIds[0],
+              });
+              setImportedComponents([...components]);
             }
           }
         }
@@ -194,6 +178,20 @@ export default function Importing() {
               allCreatedEntityIds.variableIds.push(...entities.variableIds);
             }
           }
+
+          // Track imported component (use the actual page name from response)
+          if (response.data?.pageName && response.data?.createdEntities) {
+            const entities = response.data.createdEntities as {
+              pageIds?: string[];
+            };
+            if (entities.pageIds && entities.pageIds.length > 0) {
+              components.push({
+                name: response.data.pageName as string,
+                pageId: entities.pageIds[0],
+              });
+              setImportedComponents([...components]);
+            }
+          }
         }
       } catch (err) {
         // Import failed with exception - cleanup all created entities
@@ -226,21 +224,13 @@ export default function Importing() {
         cancelFn(false); // Cancel without error since user navigated away
       }
     };
-  }, [importData, prepareFiles]);
+  }, [importData]);
 
-  const handleDownload = (file: ImportedFile) => {
+  const handleView = async (component: ImportedComponent) => {
     try {
-      const blob = new Blob([file.jsonContent], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = file.filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      await callPlugin("switchToPage", { pageId: component.pageId });
     } catch (error) {
-      console.error("Error downloading file:", error);
+      console.error("Error switching to page:", error);
     }
   };
 
@@ -264,13 +254,13 @@ export default function Importing() {
       >
         <h1 style={{ marginTop: 0, marginBottom: "20px" }}>Importing</h1>
 
-        <DebugConsole />
+        <DebugConsole label="Import Logs:" showClearButton={false} />
 
         <PluginPrompt />
 
         <div>
           <h2 style={{ marginTop: 0, marginBottom: "12px", fontSize: "18px" }}>
-            Imported Files:
+            Imported Components:
           </h2>
           {isImporting ? (
             <div
@@ -296,7 +286,7 @@ export default function Importing() {
             </div>
           ) : error ? (
             <p style={{ color: "#c62828", fontStyle: "italic" }}>{error}</p>
-          ) : importedFiles.length === 0 ? (
+          ) : importedComponents.length === 0 ? (
             <p style={{ color: "#666", fontStyle: "italic" }}>
               Waiting for import to complete...
             </p>
@@ -308,9 +298,9 @@ export default function Importing() {
                 margin: 0,
               }}
             >
-              {importedFiles.map((file, index) => (
+              {importedComponents.map((component) => (
                 <li
-                  key={index}
+                  key={component.pageId}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -322,9 +312,9 @@ export default function Importing() {
                     backgroundColor: "#fff",
                   }}
                 >
-                  <span style={{ fontSize: "14px" }}>{file.name}</span>
+                  <span style={{ fontSize: "14px" }}>{component.name}</span>
                   <button
-                    onClick={() => handleDownload(file)}
+                    onClick={() => handleView(component)}
                     style={{
                       padding: "6px 12px",
                       fontSize: "12px",
@@ -344,7 +334,7 @@ export default function Importing() {
                       e.currentTarget.style.color = "#d40d0d";
                     }}
                   >
-                    Download
+                    View
                   </button>
                 </li>
               ))}

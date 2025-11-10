@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDebugConsole } from "../context/useDebugConsole";
 
 interface DebugConsoleProps {
@@ -17,6 +17,7 @@ export default function DebugConsole({
   const { getFormattedLog, clear } = useDebugConsole();
   const debugLogs = getFormattedLog();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [copySuccess, setCopySuccess] = useState(false);
 
   // Clear debug console when component mounts if clearOnMount is true
   useEffect(() => {
@@ -31,6 +32,37 @@ export default function DebugConsole({
       textareaRef.current.scrollTop = textareaRef.current.scrollHeight;
     }
   }, [debugLogs]);
+
+  const handleCopy = async () => {
+    // Check if clipboard API is available
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(debugLogs);
+        setCopySuccess(true);
+        setTimeout(() => setCopySuccess(false), 2000);
+        return;
+      } catch (error) {
+        console.error("Failed to copy to clipboard:", error);
+        // Fall through to fallback method
+      }
+    }
+
+    // Fallback for browsers without clipboard API or when it fails
+    if (textareaRef.current) {
+      try {
+        textareaRef.current.select();
+        const success = document.execCommand("copy");
+        if (success) {
+          setCopySuccess(true);
+          setTimeout(() => setCopySuccess(false), 2000);
+        } else {
+          console.error("Failed to copy using execCommand");
+        }
+      } catch (error) {
+        console.error("Failed to copy to clipboard:", error);
+      }
+    }
+  };
 
   return (
     <div style={{ marginBottom: "5px" }}>
@@ -50,28 +82,54 @@ export default function DebugConsole({
         >
           {label}
         </label>
-        {showClearButton && (
+        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
           <button
-            onClick={clear}
+            onClick={handleCopy}
             style={{
               padding: "4px 12px",
               fontSize: "12px",
               backgroundColor: "transparent",
-              color: "#666",
-              border: "1px solid #ccc",
+              color: copySuccess ? "#28a745" : "#666",
+              border: `1px solid ${copySuccess ? "#28a745" : "#ccc"}`,
               borderRadius: "4px",
               cursor: "pointer",
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = "#f0f0f0";
+              if (!copySuccess) {
+                e.currentTarget.style.backgroundColor = "#f0f0f0";
+              }
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = "transparent";
+              if (!copySuccess) {
+                e.currentTarget.style.backgroundColor = "transparent";
+              }
             }}
           >
-            Clear
+            {copySuccess ? "Copied!" : "Copy"}
           </button>
-        )}
+          {showClearButton && (
+            <button
+              onClick={clear}
+              style={{
+                padding: "4px 12px",
+                fontSize: "12px",
+                backgroundColor: "transparent",
+                color: "#666",
+                border: "1px solid #ccc",
+                borderRadius: "4px",
+                cursor: "pointer",
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = "#f0f0f0";
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent";
+              }}
+            >
+              Clear
+            </button>
+          )}
+        </div>
       </div>
       <textarea
         ref={textareaRef}

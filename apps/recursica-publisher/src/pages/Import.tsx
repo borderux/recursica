@@ -5,6 +5,7 @@ import { validateImport } from "../utils/validateExportFile";
 import {
   getRequiredImportFiles,
   fileMatchesRequired,
+  type RequiredImportFile,
 } from "../utils/getRequiredImportFiles";
 import { useImportData, type ImportedFile } from "../context/ImportDataContext";
 
@@ -417,13 +418,45 @@ export default function Import() {
     componentPageName?: string;
   } | null>(null);
 
-  // Extract required files from main file
+  // Recursively extract all required files (including nested dependencies)
   const requiredFiles = useMemo(() => {
-    if (!mainFile || mainFile.status !== "success" || !mainFile.data) {
-      return [];
+    const allRequiredFiles: RequiredImportFile[] = [];
+    const seen = new Set<string>(); // Track unique files to avoid duplicates
+
+    // Helper function to add a file if not already seen
+    const addIfNotSeen = (file: RequiredImportFile) => {
+      const key =
+        file.componentGuid && file.componentVersion !== 0
+          ? `${file.componentGuid}:${file.componentVersion}`
+          : `page:${file.componentPageName || "unknown"}:${file.componentName}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        allRequiredFiles.push(file);
+        return true;
+      }
+      return false;
+    };
+
+    // Start with main file dependencies
+    if (mainFile && mainFile.status === "success" && mainFile.data) {
+      const mainDeps = getRequiredImportFiles(mainFile.data);
+      for (const dep of mainDeps) {
+        addIfNotSeen(dep);
+      }
     }
-    return getRequiredImportFiles(mainFile.data);
-  }, [mainFile]);
+
+    // Check all additional files for their dependencies
+    for (const additionalFile of additionalFiles) {
+      if (additionalFile.status === "success" && additionalFile.data) {
+        const nestedDeps = getRequiredImportFiles(additionalFile.data);
+        for (const dep of nestedDeps) {
+          addIfNotSeen(dep);
+        }
+      }
+    }
+
+    return allRequiredFiles;
+  }, [mainFile, additionalFiles]);
 
   // Check which required files are matched by additional files
   const matchedRequiredFiles = useMemo(() => {

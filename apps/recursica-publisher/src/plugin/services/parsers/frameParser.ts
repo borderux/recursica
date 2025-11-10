@@ -13,6 +13,21 @@ export async function parseFrameProperties(
   const result: Partial<ParsedNodeData> = {};
   const handledKeys = new Set<string>();
 
+  // For COMPONENT nodes, export component property definitions
+  // This is needed to recreate components with the same properties during import
+  if (node.type === "COMPONENT") {
+    try {
+      if ((node as any).componentPropertyDefinitions) {
+        result.componentPropertyDefinitions = (
+          node as any
+        ).componentPropertyDefinitions;
+        handledKeys.add("componentPropertyDefinitions");
+      }
+    } catch {
+      // Property definitions might not be accessible
+    }
+  }
+
   // Layout properties
   if (
     node.layoutMode !== undefined &&

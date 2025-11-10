@@ -188,6 +188,7 @@ export async function extractNodeData(
     "stuckNodes",
     "attachedConnectors",
     "componentPropertyReferences",
+    "componentPropertyDefinitions",
     "variableConsumptionMap",
     "resolvedVariableModes",
     "inferredVariables",
