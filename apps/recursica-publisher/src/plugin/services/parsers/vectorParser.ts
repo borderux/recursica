@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { VECTOR_DEFAULTS, isDifferentFromDefault } from "./nodeDefaults";
 import type { ParsedNodeData, ParserContext } from "./baseNodeParser";
+import { normalizeVectorGeometry } from "../utils/svgPathNormalizer";
 
 /**
  * Parser for VECTOR and LINE node types
@@ -18,14 +19,16 @@ export async function parseVectorProperties(
     node.fillGeometry !== undefined &&
     isDifferentFromDefault(node.fillGeometry, VECTOR_DEFAULTS.fillGeometry)
   ) {
-    result.fillGeometry = node.fillGeometry;
+    // Normalize path data during export to ensure clean, consistent format
+    result.fillGeometry = normalizeVectorGeometry(node.fillGeometry);
     handledKeys.add("fillGeometry");
   }
   if (
     node.strokeGeometry !== undefined &&
     isDifferentFromDefault(node.strokeGeometry, VECTOR_DEFAULTS.strokeGeometry)
   ) {
-    result.strokeGeometry = node.strokeGeometry;
+    // Normalize path data during export to ensure clean, consistent format
+    result.strokeGeometry = normalizeVectorGeometry(node.strokeGeometry);
     handledKeys.add("strokeGeometry");
   }
 

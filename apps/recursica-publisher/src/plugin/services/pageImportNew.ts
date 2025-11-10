@@ -1329,6 +1329,62 @@ export async function recreateNodeFromData(
     if (nodeData.dashPattern !== undefined && nodeData.dashPattern.length > 0) {
       newNode.dashPattern = nodeData.dashPattern;
     }
+    // Set vector paths for VECTOR nodes (critical for displaying paths)
+    // fillGeometry is read-only, so we need to use vectorPaths instead
+    if (nodeData.type === "VECTOR") {
+      if (nodeData.fillGeometry !== undefined) {
+        try {
+          // fillGeometry is read-only, but vectorPaths is writable
+          // fillGeometry format: [{ data: string, windRule: string }]
+          // vectorPaths format: [{ data: string, windingRule: string }]
+          // Import the normalization utility (paths should already be normalized during export,
+          // but we normalize again as a safety measure for backwards compatibility)
+          const { normalizeSvgPath } = await import(
+            "./utils/svgPathNormalizer"
+          );
+
+          const vectorPaths = nodeData.fillGeometry.map((path: any) => {
+            const originalData = path.data;
+            // Normalize path data (should already be normalized from export, but normalize again for safety)
+            const normalizedData = normalizeSvgPath(originalData);
+            return {
+              data: normalizedData,
+              windingRule: path.windRule || path.windingRule || "NONZERO",
+            };
+          });
+          // Debug: log if normalization changed anything (should be rare if export normalization works)
+          for (let i = 0; i < nodeData.fillGeometry.length; i++) {
+            const originalData = nodeData.fillGeometry[i].data;
+            const normalizedData = vectorPaths[i].data;
+            if (originalData !== normalizedData) {
+              await debugConsole.log(
+                `  Normalized path ${i + 1} for "${nodeData.name || "Unnamed"}": ${originalData.substring(0, 50)}... -> ${normalizedData.substring(0, 50)}...`,
+              );
+            }
+          }
+          (newNode as any).vectorPaths = vectorPaths;
+          await debugConsole.log(
+            `  Set vectorPaths for VECTOR "${nodeData.name || "Unnamed"}" (${vectorPaths.length} path(s))`,
+          );
+        } catch (error) {
+          await debugConsole.warning(
+            `Error setting vectorPaths for VECTOR "${nodeData.name || "Unnamed"}": ${error}`,
+          );
+        }
+      }
+      // Note: strokeGeometry might also need similar handling, but it's less common
+      if (nodeData.strokeGeometry !== undefined) {
+        try {
+          // strokeGeometry might also be read-only, but let's try setting it
+          // If it fails, we'll log a warning
+          (newNode as any).strokeGeometry = nodeData.strokeGeometry;
+        } catch (error) {
+          await debugConsole.warning(
+            `Error setting strokeGeometry for VECTOR "${nodeData.name || "Unnamed"}": ${error}`,
+          );
+        }
+      }
+    }
   }
 
   // Set text properties for text nodes
@@ -2245,6 +2301,87 @@ function loadInstanceTable(expandedJsonData: any): InstanceTable | null {
 }
 
 /**
+ * Normalizes node type from numeric enum to string
+ * Handles cases where type enums weren't expanded during JSON expansion
+ */
+function normalizeNodeType(type: number | string): string {
+  if (typeof type === "number") {
+    const typeMap: Record<number, string> = {
+      1: "FRAME",
+      2: "TEXT",
+      3: "INSTANCE",
+      4: "COMPONENT",
+      5: "VECTOR",
+      6: "RECTANGLE",
+      7: "ELLIPSE",
+      8: "STAR",
+      9: "LINE",
+      10: "GROUP",
+      11: "BOOLEAN_OPERATION",
+      12: "POLYGON",
+      13: "PAGE",
+      14: "COMPONENT_SET",
+    };
+    return typeMap[type] || String(type);
+  }
+  return type;
+}
+
+/**
+ * Recursively normalizes types in a node structure
+ */
+function normalizeStructureTypes(nodeData: any): void {
+  if (!nodeData || typeof nodeData !== "object") {
+    return;
+  }
+
+  // Normalize this node's type
+  if (nodeData.type !== undefined) {
+    nodeData.type = normalizeNodeType(nodeData.type);
+  }
+
+  // Handle both "child" (compressed) and "children" (expanded) keys
+  const childrenKey =
+    nodeData.children !== undefined
+      ? "children"
+      : nodeData.child !== undefined
+        ? "child"
+        : null;
+  if (childrenKey) {
+    // Normalize the key to "children" if it's "child"
+    if (childrenKey === "child" && !nodeData.children) {
+      nodeData.children = nodeData.child;
+      delete nodeData.child;
+    }
+
+    // Recursively normalize children
+    if (Array.isArray(nodeData.children)) {
+      for (const child of nodeData.children) {
+        normalizeStructureTypes(child);
+      }
+    }
+  }
+
+  // Normalize compressed keys that might not have been expanded
+  // Handle fillG -> fillGeometry and strkG -> strokeGeometry
+  if (nodeData.fillG !== undefined && nodeData.fillGeometry === undefined) {
+    nodeData.fillGeometry = nodeData.fillG;
+    delete nodeData.fillG;
+  }
+  if (nodeData.strkG !== undefined && nodeData.strokeGeometry === undefined) {
+    nodeData.strokeGeometry = nodeData.strkG;
+    delete nodeData.strkG;
+  }
+
+  // Ensure children array exists after normalization
+  // If we still have "child" key after normalization, convert it
+  if (nodeData.child && !nodeData.children) {
+    nodeData.children = nodeData.child;
+    delete nodeData.child;
+  }
+}
+
+/**
  * Finds or creates a unique frame name on a page
  * If a frame with the same name exists, appends an incrementing number
  */
@@ -2376,8 +2513,20 @@ async function createRemoteInstances(
       continue;
     }
 
+    // Normalize structure types: expand numeric types to strings recursively
+    // This handles cases where the type enum wasn't expanded during JSON expansion
+    normalizeStructureTypes(entry.structure);
+
+    // Debug: Check what keys exist after normalization
+    const hasChildren = entry.structure.children !== undefined;
+    const hasChild = entry.structure.child !== undefined;
+    const childrenCount = entry.structure.children
+      ? entry.structure.children.length
+      : entry.structure.child
+        ? entry.structure.child.length
+        : 0;
     await debugConsole.log(
-      `  Structure type: ${entry.structure.type || "unknown"}, has children: ${entry.structure.children ? entry.structure.children.length : 0}`,
+      `  Structure type: ${entry.structure.type || "unknown"}, has children: ${childrenCount} (children key: ${hasChildren}, child key: ${hasChild})`,
     );
 
     // Generate frame name from path and component name
@@ -2406,6 +2555,7 @@ async function createRemoteInstances(
     // The structure should be a COMPONENT node, so we'll recreate it as a component
     try {
       // Check if the structure type is COMPONENT
+      // Type should already be normalized above, but double-check
       if (entry.structure.type !== "COMPONENT") {
         await debugConsole.warning(
           `Remote instance "${entry.componentName}" structure is not a COMPONENT (type: ${entry.structure.type}), creating frame fallback`,
@@ -2448,6 +2598,32 @@ async function createRemoteInstances(
       // We need to apply all properties from the structure to the component
       // and recreate its children
       try {
+        // Apply component property definitions FIRST (must be set before children are added)
+        if (entry.structure.componentPropertyDefinitions) {
+          try {
+            // Try direct assignment first (might work immediately after creation)
+            (componentNode as any).componentPropertyDefinitions =
+              entry.structure.componentPropertyDefinitions;
+            await debugConsole.log(
+              `  Set component property definitions for "${entry.componentName}" via direct assignment`,
+            );
+          } catch {
+            try {
+              // Try using setProperties (might work for component definitions)
+              (componentNode as any).setProperties(
+                entry.structure.componentPropertyDefinitions,
+              );
+              await debugConsole.log(
+                `  Set component property definitions for "${entry.componentName}" via setProperties`,
+              );
+            } catch (error) {
+              await debugConsole.warning(
+                `  Component "${entry.componentName}" has property definitions in JSON, but they cannot be recreated via API: ${error}`,
+              );
+            }
+          }
+        }
+
         // Apply basic properties
         if (entry.structure.name !== undefined) {
           componentNode.name = entry.structure.name;
@@ -2555,20 +2731,39 @@ async function createRemoteInstances(
         }
 
         // Recreate children
+        // Handle both "child" (compressed) and "children" (expanded) keys
+        // Debug: Log structure keys before accessing children
+        await debugConsole.log(
+          `  DEBUG: Structure keys: ${Object.keys(entry.structure).join(", ")}, has children: ${!!entry.structure.children}, has child: ${!!entry.structure.child}`,
+        );
+        const childrenArray =
+          entry.structure.children ||
+          (entry.structure.child ? entry.structure.child : null);
+        await debugConsole.log(
+          `  DEBUG: childrenArray exists: ${!!childrenArray}, isArray: ${Array.isArray(childrenArray)}, length: ${childrenArray ? childrenArray.length : 0}`,
+        );
         if (
-          entry.structure.children &&
-          Array.isArray(entry.structure.children)
+          childrenArray &&
+          Array.isArray(childrenArray) &&
+          childrenArray.length > 0
         ) {
           await debugConsole.log(
-            `  Recreating ${entry.structure.children.length} child(ren) for component "${entry.componentName}"`,
+            `  Recreating ${childrenArray.length} child(ren) for component "${entry.componentName}"`,
           );
-          for (const childData of entry.structure.children) {
+          for (let i = 0; i < childrenArray.length; i++) {
+            const childData = childrenArray[i];
+            await debugConsole.log(
+              `  DEBUG: Processing child ${i + 1}/${childrenArray.length}: ${JSON.stringify({ name: childData?.name, type: childData?.type, hasTruncated: !!childData?._truncated })}`,
+            );
             if (childData._truncated) {
               await debugConsole.log(
                 `  Skipping truncated child: ${childData._reason || "Unknown"}`,
               );
               continue;
             }
+            await debugConsole.log(
+              `  Recreating child: "${childData.name || "Unnamed"}" (type: ${childData.type})`,
+            );
             const childNode = await recreateNodeFromData(
               childData,
               componentNode,
@@ -2581,6 +2776,13 @@ async function createRemoteInstances(
             );
             if (childNode) {
               componentNode.appendChild(childNode);
+              await debugConsole.log(
+                `  ✓ Appended child "${childData.name || "Unnamed"}" to component "${entry.componentName}"`,
+              );
+            } else {
+              await debugConsole.warning(
+                `  ✗ Failed to create child "${childData.name || "Unnamed"}" (type: ${childData.type})`,
+              );
             }
           }
         }
