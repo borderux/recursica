@@ -17,6 +17,7 @@ export interface ParserContext {
   variableTable: VariableTable;
   collectionTable: CollectionTable;
   instanceTable: InstanceTable;
+  detachedComponentsHandled: Set<string>; // Component IDs we've already prompted for and decided to treat as internal
 }
 
 export interface ParsedNodeData {

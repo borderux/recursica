@@ -4,6 +4,7 @@ import type { ParsedNodeData, ParserContext } from "./baseNodeParser";
 import { debugConsole } from "../../services/debugConsole";
 import type { InstanceTableEntry } from "./instanceTable";
 import { extractNodeData } from "../pageExportNew";
+import { pluginPrompt } from "../../utils/pluginPrompt";
 
 const COMPONENT_METADATA_KEY = "RecursicaPublishedMetadata";
 
@@ -99,6 +100,100 @@ export async function parseInstanceProperties(
   ) {
     const mainComponent = await node.getMainComponentAsync();
     if (!mainComponent) {
+      // Detached instance - the main component is missing
+      const instanceName = node.name || "(unnamed)";
+      const instanceId = node.id;
+
+      // Check if we've already handled this detached instance
+      if (context.detachedComponentsHandled.has(instanceId)) {
+        // Already prompted for this instance - treat as internal
+        await debugConsole.log(
+          `Treating detached instance "${instanceName}" as internal instance (already prompted)`,
+        );
+      } else {
+        // First time seeing this detached instance - prompt user
+        await debugConsole.warning(
+          `Found detached instance: "${instanceName}" (main component is missing)`,
+        );
+
+        const message = `Found detached instance "${instanceName}". The main component this instance references is missing. This should be fixed. Continue to publish?`;
+        try {
+          await pluginPrompt.prompt(message, {
+            okLabel: "Ok",
+            cancelLabel: "Cancel",
+            timeoutMs: 300000, // 5 minutes
+          });
+
+          // User said Ok - mark as handled and treat as internal instance
+          context.detachedComponentsHandled.add(instanceId);
+          await debugConsole.log(
+            `Treating detached instance "${instanceName}" as internal instance`,
+          );
+        } catch (error) {
+          // User said Cancel or prompt was cancelled
+          if (error instanceof Error && error.message === "User cancelled") {
+            const errorMessage = `Export cancelled: Detached instance "${instanceName}" found. Please fix the instance before exporting.`;
+            await debugConsole.error(errorMessage);
+            // Try to scroll to the instance to help user find it
+            try {
+              await figma.viewport.scrollAndZoomIntoView([node]);
+            } catch (scrollError) {
+              console.warn("Could not scroll to instance:", scrollError);
+            }
+            throw new Error(errorMessage);
+          } else {
+            // Some other error occurred
+            throw error;
+          }
+        }
+      }
+
+      // Extract the instance's own structure (since there's no main component)
+      // We'll treat it as an internal instance with its current structure
+      const instancePageResult = getPageFromNode(node);
+      const instancePage = instancePageResult.page;
+
+      if (!instancePage) {
+        // Instance itself is detached from page - this is a problem
+        const errorMessage = `Detached instance "${instanceName}" is not on any page. Cannot export.`;
+        await debugConsole.error(errorMessage);
+        throw new Error(errorMessage);
+      }
+
+      // Extract variant properties and component properties if available
+      let variantProperties: Record<string, string> | undefined;
+      let componentProperties: Record<string, any> | undefined;
+      try {
+        if ((node as any).variantProperties) {
+          variantProperties = (node as any).variantProperties;
+        }
+        if ((node as any).componentProperties) {
+          componentProperties = (node as any).componentProperties;
+        }
+      } catch {
+        // Properties might not be accessible
+      }
+
+      // Create instance table entry as internal instance
+      // We'll use the instance's own ID as the componentNodeId
+      // During import, we'll need to handle this specially
+      const entry: InstanceTableEntry = {
+        instanceType: "internal",
+        componentName: instanceName,
+        componentNodeId: node.id, // Use instance's own ID
+        ...(variantProperties && { variantProperties }),
+        ...(componentProperties && { componentProperties }),
+      };
+
+      // Add instance to table and get reference
+      const instanceIndex = context.instanceTable.addInstance(entry);
+      result._instanceRef = instanceIndex;
+      handledKeys.add("_instanceRef");
+
+      await debugConsole.log(
+        `  Exported detached INSTANCE: "${instanceName}" as internal instance (ID: ${node.id.substring(0, 8)}...)`,
+      );
+
       return result;
     }
 
@@ -231,51 +326,109 @@ export async function parseInstanceProperties(
           entry.componentVersion = metadata.version;
         }
       } else {
-        // componentPage is null - this is a hard failure for normal instances
-        // Get diagnostic information based on why page couldn't be found
+        // componentPage is null - check if it's a detached component
         const mainComponentId = mainComponent.id;
-        let reasonMessage = "";
-        let actionMessage = "";
 
-        switch (componentPageResult.reason) {
-          case "detached":
-            reasonMessage =
-              "The component is detached (not placed on any page)";
-            actionMessage =
-              "Please place the component on a page before exporting.";
-            break;
-          case "broken_chain":
-            reasonMessage =
-              "The component's parent chain is broken and cannot be traversed to find the page";
-            actionMessage =
-              "Please ensure the component is properly nested within the document structure.";
-            break;
-          case "access_error":
-            reasonMessage =
-              "Cannot access the component's parent chain (access error)";
-            actionMessage =
-              "The component may be in an invalid state. Please check the component structure.";
-            break;
-          default:
-            reasonMessage = "Cannot determine which page the component is on";
-            actionMessage =
-              "Please ensure the component is properly placed on a page.";
+        if (componentPageResult.reason === "detached") {
+          // Detached component - check if we've already handled this component
+          const componentId = mainComponent.id;
+
+          if (context.detachedComponentsHandled.has(componentId)) {
+            // Already prompted for this component - treat as internal
+            await debugConsole.log(
+              `Treating detached instance "${instanceName}" -> component "${componentName}" as internal instance (already prompted)`,
+            );
+          } else {
+            // First time seeing this detached component - prompt user
+            await debugConsole.warning(
+              `Found detached instance: "${instanceName}" -> component "${componentName}" (component is not on any page)`,
+            );
+
+            // Try to scroll to the component to help user find it
+            try {
+              await figma.viewport.scrollAndZoomIntoView([mainComponent]);
+            } catch (scrollError) {
+              console.warn("Could not scroll to component:", scrollError);
+            }
+
+            // Prompt user
+            const message = `Found detached instance "${instanceName}" attached to component "${componentName}". This should be fixed. Continue to publish?`;
+            try {
+              await pluginPrompt.prompt(message, {
+                okLabel: "Ok",
+                cancelLabel: "Cancel",
+                timeoutMs: 300000, // 5 minutes
+              });
+
+              // User said Ok - mark as handled and treat as internal instance
+              context.detachedComponentsHandled.add(componentId);
+              await debugConsole.log(
+                `Treating detached instance "${instanceName}" as internal instance`,
+              );
+            } catch (error) {
+              // User said Cancel or prompt was cancelled
+              if (
+                error instanceof Error &&
+                error.message === "User cancelled"
+              ) {
+                const errorMessage = `Export cancelled: Detached instance "${instanceName}" found. The component "${componentName}" is not on any page. Please fix the instance before exporting.`;
+                await debugConsole.error(errorMessage);
+                throw new Error(errorMessage);
+              } else {
+                // Some other error occurred
+                throw error;
+              }
+            }
+          }
+
+          // Update the entry to be an internal instance
+          entry.instanceType = "internal";
+          entry.componentNodeId = mainComponent.id;
+          // Remove path since it's now internal
+          delete (entry as any).path;
+
+          await debugConsole.log(
+            `  Exported detached INSTANCE: "${instanceName}" -> component "${componentName}" as internal instance (ID: ${mainComponent.id.substring(0, 8)}...)`,
+          );
+        } else {
+          // Other reasons (broken_chain, access_error, etc.) - these are hard failures
+          let reasonMessage = "";
+          let actionMessage = "";
+
+          switch (componentPageResult.reason) {
+            case "broken_chain":
+              reasonMessage =
+                "The component's parent chain is broken and cannot be traversed to find the page";
+              actionMessage =
+                "Please ensure the component is properly nested within the document structure.";
+              break;
+            case "access_error":
+              reasonMessage =
+                "Cannot access the component's parent chain (access error)";
+              actionMessage =
+                "The component may be in an invalid state. Please check the component structure.";
+              break;
+            default:
+              reasonMessage = "Cannot determine which page the component is on";
+              actionMessage =
+                "Please ensure the component is properly placed on a page.";
+          }
+
+          // Try to scroll to the component to help user find it
+          try {
+            await figma.viewport.scrollAndZoomIntoView([mainComponent]);
+          } catch (scrollError) {
+            // If scrolling fails, component might not be accessible
+            console.warn("Could not scroll to component:", scrollError);
+          }
+
+          const errorMessage = `Normal instance "${instanceName}" -> component "${componentName}" (ID: ${mainComponentId}) has no componentPage. ${reasonMessage}. ${actionMessage} Component has been focused in the viewport.`;
+          console.error("FATAL EXPORT ERROR:", errorMessage);
+          await debugConsole.error(errorMessage);
+          const error = new Error(errorMessage);
+          console.error("Throwing error:", error);
+          throw error;
         }
-
-        // Try to scroll to the component to help user find it
-        try {
-          await figma.viewport.scrollAndZoomIntoView([mainComponent]);
-        } catch (scrollError) {
-          // If scrolling fails, component might not be accessible
-          console.warn("Could not scroll to component:", scrollError);
-        }
-
-        const errorMessage = `Normal instance "${instanceName}" -> component "${componentName}" (ID: ${mainComponentId}) has no componentPage. ${reasonMessage}. ${actionMessage} Component has been focused in the viewport.`;
-        console.error("FATAL EXPORT ERROR:", errorMessage);
-        await debugConsole.error(errorMessage);
-        const error = new Error(errorMessage);
-        console.error("Throwing error:", error);
-        throw error;
       }
       // path is REQUIRED for normal instances to locate the specific component on the referenced page
       // Path is stored as array of node names (cannot use IDs as they differ across files/users)

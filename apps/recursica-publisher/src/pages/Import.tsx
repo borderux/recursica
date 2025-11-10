@@ -446,6 +446,38 @@ export default function Import() {
     return matched;
   }, [additionalFiles, requiredFiles]);
 
+  // Calculate missing files count
+  const missingFilesCount = useMemo(() => {
+    if (requiredFiles.length === 0) {
+      return 0;
+    }
+    let missing = 0;
+    for (let i = 0; i < requiredFiles.length; i++) {
+      const requiredFile = requiredFiles[i];
+      const key =
+        requiredFile.componentGuid && requiredFile.componentVersion !== 0
+          ? `${requiredFile.componentGuid}:${requiredFile.componentVersion}`
+          : `${requiredFile.componentPageName || "unknown"}:${requiredFile.componentName}:${i}`;
+      if (!matchedRequiredFiles.has(key)) {
+        missing++;
+      }
+    }
+    return missing;
+  }, [requiredFiles, matchedRequiredFiles]);
+
+  // Check if we can import (main file is valid and all referenced files are present)
+  const canImport = useMemo(() => {
+    if (!mainFile || mainFile.status !== "success") {
+      return false;
+    }
+    // If there are no required files, we can import with just the main file
+    if (requiredFiles.length === 0) {
+      return true;
+    }
+    // If there are required files, all must be present
+    return missingFilesCount === 0;
+  }, [mainFile, requiredFiles.length, missingFilesCount]);
+
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -763,43 +795,43 @@ export default function Import() {
           <button
             onClick={() => {
               // Store import data in context and navigate to importing page
-              if (mainFile && mainFile.status === "success") {
+              if (canImport) {
                 setImportData({
-                  mainFile,
+                  mainFile: mainFile!,
                   additionalFiles,
                 });
                 navigate("/importing");
               }
             }}
-            disabled={!mainFile || mainFile.status !== "success"}
+            disabled={!canImport}
             style={{
               width: "100%",
               padding: "12px 24px",
               fontSize: "16px",
               fontWeight: "bold",
-              backgroundColor:
-                !mainFile || mainFile.status !== "success" ? "#ccc" : "#d40d0d",
+              backgroundColor: !canImport ? "#ccc" : "#d40d0d",
               color: "white",
               border: "none",
               borderRadius: "8px",
-              cursor:
-                !mainFile || mainFile.status !== "success"
-                  ? "not-allowed"
-                  : "pointer",
-              opacity: !mainFile || mainFile.status !== "success" ? 0.6 : 1,
+              cursor: !canImport ? "not-allowed" : "pointer",
+              opacity: !canImport ? 0.6 : 1,
             }}
             onMouseOver={(e) => {
-              if (mainFile && mainFile.status === "success") {
+              if (canImport) {
                 e.currentTarget.style.backgroundColor = "#b30b0b";
               }
             }}
             onMouseOut={(e) => {
-              if (mainFile && mainFile.status === "success") {
+              if (canImport) {
                 e.currentTarget.style.backgroundColor = "#d40d0d";
               }
             }}
           >
-            Ready to Import
+            {canImport
+              ? "Ready to Import"
+              : missingFilesCount > 0
+                ? `Missing references (${missingFilesCount})`
+                : "Ready to Import"}
           </button>
         </div>
       </div>

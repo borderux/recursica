@@ -83,6 +83,7 @@ export async function extractNodeData(
     variableTable: context.variableTable!,
     collectionTable: context.collectionTable!,
     instanceTable: context.instanceTable!,
+    detachedComponentsHandled: context.detachedComponentsHandled ?? new Set(),
   };
 
   // Handle circular references
