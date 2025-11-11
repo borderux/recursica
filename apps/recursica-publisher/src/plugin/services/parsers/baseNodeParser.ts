@@ -168,6 +168,12 @@ export async function parseBaseNodeProperties(
     handledKeys.add("boundVariables");
   }
 
+  // Page backgrounds - special property for PAGE nodes
+  if (node.backgrounds !== undefined) {
+    result.backgrounds = node.backgrounds;
+    handledKeys.add("backgrounds");
+  }
+
   // Note: Unhandled keys are tracked centrally in extractNodeData
   // after all parsers have run
 

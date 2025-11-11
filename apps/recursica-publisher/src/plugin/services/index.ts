@@ -1,7 +1,18 @@
 import { getCurrentUser } from "./getCurrentUser";
 import { loadPages } from "./loadPages";
 import { exportPage } from "./pageExportNew";
-import { importPage, cleanupCreatedEntities } from "./pageImportNew";
+import {
+  importPage,
+  cleanupCreatedEntities,
+  resolveDeferredNormalInstances,
+} from "./pageImportNew";
+import {
+  determineImportOrder,
+  buildDependencyGraph,
+  resolveImportOrder,
+  importPagesInOrder,
+  type PageDependency,
+} from "./dependencyResolver";
 import { quickCopy } from "./quickCopy";
 import { storeAuthData } from "./storeAuthData";
 import { loadAuthData } from "./loadAuthData";
@@ -20,6 +31,11 @@ export const services = {
   exportPage,
   importPage,
   cleanupCreatedEntities,
+  resolveDeferredNormalInstances,
+  determineImportOrder,
+  buildDependencyGraph,
+  resolveImportOrder,
+  importPagesInOrder,
   quickCopy,
   storeAuthData,
   loadAuthData,
@@ -38,6 +54,11 @@ export {
   exportPage,
   importPage,
   cleanupCreatedEntities,
+  resolveDeferredNormalInstances,
+  determineImportOrder,
+  buildDependencyGraph,
+  resolveImportOrder,
+  importPagesInOrder,
   quickCopy,
   storeAuthData,
   loadAuthData,
@@ -48,3 +69,5 @@ export {
   pluginPromptResponse,
   switchToPage,
 };
+
+export type { PageDependency };

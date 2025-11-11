@@ -563,25 +563,141 @@ export async function parseInstanceProperties(
 
       // For remote instances (including detached), we need to store the full structure
       // This is necessary since we can't resolve the reference
-      // We'll extract the component's structure recursively
+      // IMPORTANT: Extract from the instance node itself (not mainComponent) to preserve
+      // size overrides and other instance-specific properties. The instance may have been
+      // resized or have different child sizes due to constraints.
       try {
-        // Extract the main component's structure
-        // Note: This might be expensive, but it's necessary for remote/detached components
-        entry.structure = await extractNodeData(
-          mainComponent,
-          new WeakSet(),
-          context,
-        );
+        // Extract base properties from the instance (preserves size overrides)
+        const { parseBaseNodeProperties } = await import("./baseNodeParser");
+        const baseProps = await parseBaseNodeProperties(node, context);
+
+        // Extract frame properties from the instance
+        const { parseFrameProperties } = await import("./frameParser");
+        const frameProps = await parseFrameProperties(node, context);
+
+        // Build the structure manually to avoid circular references
+        // We'll extract children directly from the instance (which have the correct sizes)
+        // IMPORTANT: Set type to COMPONENT AFTER spreading baseProps, since baseProps includes type: "INSTANCE"
+        const structure: any = {
+          ...baseProps,
+          ...frameProps,
+          type: "COMPONENT", // Convert to COMPONENT type for recreation (must be after baseProps to override)
+        };
+
+        // Extract children from the instance (preserves size overrides and constraints)
+        // For nested instances, we need to extract their full structure too (not just references)
+        if (
+          node.children &&
+          Array.isArray(node.children) &&
+          node.children.length > 0
+        ) {
+          const childContext: Partial<ParserContext> = {
+            ...context,
+            depth: (context.depth || 0) + 1,
+          };
+          const { extractNodeData } = await import("../pageExportNew");
+          const children: any[] = [];
+          for (const child of node.children) {
+            try {
+              // For nested instances, we want the full structure, not a reference
+              // So we extract from the child directly, treating it as a regular node
+              // (not as an instance that should be processed by parseInstanceProperties)
+              let childData;
+              if (child.type === "INSTANCE") {
+                // For nested instances, extract their structure too (recursively)
+                // Get the main component and extract from it, but use the instance's size
+                try {
+                  const nestedMainComponent = await (
+                    child as any
+                  ).getMainComponentAsync();
+                  if (nestedMainComponent) {
+                    // Extract from main component but preserve instance size
+                    const nestedBaseProps = await parseBaseNodeProperties(
+                      child,
+                      context,
+                    );
+                    const nestedFrameProps = await parseFrameProperties(
+                      child,
+                      context,
+                    );
+                    const nestedStructure = await extractNodeData(
+                      nestedMainComponent,
+                      new WeakSet(),
+                      childContext,
+                    );
+                    // Override with instance's actual properties (size, position, etc.)
+                    childData = {
+                      ...nestedStructure,
+                      ...nestedBaseProps,
+                      ...nestedFrameProps,
+                      type: "COMPONENT", // Convert to COMPONENT
+                    };
+                  } else {
+                    // Fallback: extract from child directly
+                    childData = await extractNodeData(
+                      child,
+                      new WeakSet(),
+                      childContext,
+                    );
+                    if (childData.type === "INSTANCE") {
+                      childData.type = "COMPONENT";
+                    }
+                    delete childData._instanceRef;
+                  }
+                } catch {
+                  // Fallback: extract from child directly
+                  childData = await extractNodeData(
+                    child,
+                    new WeakSet(),
+                    childContext,
+                  );
+                  if (childData.type === "INSTANCE") {
+                    childData.type = "COMPONENT";
+                  }
+                  delete childData._instanceRef;
+                }
+              } else {
+                // Regular child - extract normally
+                childData = await extractNodeData(
+                  child,
+                  new WeakSet(),
+                  childContext,
+                );
+              }
+              children.push(childData);
+            } catch (childError) {
+              console.warn(
+                `Failed to extract child "${child.name || "Unnamed"}" for remote component "${componentName}":`,
+                childError,
+              );
+              // Continue with other children even if one fails
+            }
+          }
+          structure.children = children;
+        }
+
+        // Ensure structure is set
+        if (!structure) {
+          throw new Error("Failed to build structure for remote instance");
+        }
+
+        entry.structure = structure;
+
         if (isDetachedInstance) {
           await debugConsole.log(
             `  Extracted structure for detached component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...)`,
           );
+        } else {
+          await debugConsole.log(
+            `  Extracted structure from instance for remote component "${componentName}" (preserving size overrides: ${node.width}x${node.height})`,
+          );
         }
       } catch (extractError) {
-        console.warn(
-          `Failed to extract structure for remote component "${componentName}":`,
-          extractError,
-        );
+        const errorMessage = `Failed to extract structure for remote component "${componentName}": ${extractError instanceof Error ? extractError.message : String(extractError)}`;
+        console.error(errorMessage, extractError);
+        await debugConsole.error(errorMessage);
+        // Don't set structure if extraction failed - this will cause import to skip it
+        // which is better than importing incorrect data
       }
 
       if (remoteLibraryName) {
