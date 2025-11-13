@@ -748,8 +748,9 @@ export async function recreateNodeFromData(
         await debugConsole.log(
           `Reusing existing COMPONENT "${nodeData.name || "Unnamed"}" (ID: ${nodeData.id.substring(0, 8)}...)`,
         );
-        // Don't return early - we still need to process children and append to parent
-        // But skip the node creation since it already exists
+        // If component already has children, it was fully created in a previous second-pass iteration
+        // We'll skip children processing below - just use the existing component as-is
+        // If component has no children yet, it was created in first pass and needs children processing
       } else {
         newNode = figma.createComponent();
         await debugConsole.log(
@@ -1090,30 +1091,58 @@ export async function recreateNodeFromData(
                     // Get the component's property definitions (async method required)
                     const mainComponent = await newNode.getMainComponentAsync();
                     if (mainComponent) {
-                      const componentProperties =
-                        mainComponent.componentPropertyDefinitions;
-                      const validProperties: Record<string, string> = {};
-
-                      // Only include properties that exist on the component
-                      for (const [propName, propValue] of Object.entries(
-                        instanceEntry.variantProperties,
-                      )) {
-                        // Property names in JSON may include IDs - extract clean name
-                        const cleanPropName = propName.split("#")[0];
-                        if (componentProperties[cleanPropName]) {
-                          validProperties[cleanPropName] = propValue as string;
-                        } else {
-                          // Expected: Component property definitions cannot be recreated via Figma API
-                          // This is a known limitation - properties are skipped silently
-                          // await debugConsole.warning(
-                          //   `Skipping variant property "${propName}" for internal instance "${nodeData.name}" - property does not exist on recreated component`,
-                          // );
-                        }
+                      // If the main component is a variant (inside a COMPONENT_SET),
+                      // get property definitions from the parent COMPONENT_SET instead
+                      // Variant components don't have componentPropertyDefinitions - only COMPONENT_SETs do
+                      let componentProperties: ComponentPropertyDefinitions | null =
+                        null;
+                      const mainComponentType = (mainComponent as any).type;
+                      if (mainComponentType === "COMPONENT_SET") {
+                        // Instance was created from a COMPONENT_SET directly
+                        const componentSet =
+                          mainComponent as unknown as ComponentSetNode;
+                        componentProperties =
+                          componentSet.componentPropertyDefinitions;
+                      } else if (
+                        mainComponentType === "COMPONENT" &&
+                        mainComponent.parent &&
+                        mainComponent.parent.type === "COMPONENT_SET"
+                      ) {
+                        // Instance was created from a variant component - get properties from parent COMPONENT_SET
+                        componentProperties =
+                          mainComponent.parent.componentPropertyDefinitions;
+                      } else {
+                        // Instance was created from a non-variant component - no variant properties to set
+                        await debugConsole.warning(
+                          `Cannot set variant properties for internal instance "${nodeData.name}" - main component is not a COMPONENT_SET or variant`,
+                        );
                       }
 
-                      // Only set properties if we have valid ones
-                      if (Object.keys(validProperties).length > 0) {
-                        newNode.setProperties(validProperties);
+                      if (componentProperties) {
+                        const validProperties: Record<string, string> = {};
+
+                        // Only include properties that exist on the component
+                        for (const [propName, propValue] of Object.entries(
+                          instanceEntry.variantProperties,
+                        )) {
+                          // Property names in JSON may include IDs - extract clean name
+                          const cleanPropName = propName.split("#")[0];
+                          if (componentProperties[cleanPropName]) {
+                            validProperties[cleanPropName] =
+                              propValue as string;
+                          } else {
+                            // Expected: Component property definitions cannot be recreated via Figma API
+                            // This is a known limitation - properties are skipped silently
+                            // await debugConsole.warning(
+                            //   `Skipping variant property "${propName}" for internal instance "${nodeData.name}" - property does not exist on recreated component`,
+                            // );
+                          }
+                        }
+
+                        // Only set properties if we have valid ones
+                        if (Object.keys(validProperties).length > 0) {
+                          newNode.setProperties(validProperties);
+                        }
                       }
                     } else {
                       await debugConsole.warning(
@@ -1138,32 +1167,66 @@ export async function recreateNodeFromData(
                     // Get the component's property definitions (async method required)
                     const mainComponent = await newNode.getMainComponentAsync();
                     if (mainComponent) {
-                      const componentProperties =
-                        mainComponent.componentPropertyDefinitions;
+                      // Variant components don't have componentPropertyDefinitions - only COMPONENT_SETs and non-variant components do
+                      let componentProperties: ComponentPropertyDefinitions | null =
+                        null;
+                      const mainComponentType = (mainComponent as any).type;
+                      if (mainComponentType === "COMPONENT_SET") {
+                        const componentSet =
+                          mainComponent as unknown as ComponentSetNode;
+                        componentProperties =
+                          componentSet.componentPropertyDefinitions;
+                      } else if (
+                        mainComponentType === "COMPONENT" &&
+                        mainComponent.parent &&
+                        mainComponent.parent.type === "COMPONENT_SET"
+                      ) {
+                        // Instance was created from a variant - get properties from parent COMPONENT_SET
+                        componentProperties =
+                          mainComponent.parent.componentPropertyDefinitions;
+                      } else if (mainComponentType === "COMPONENT") {
+                        // Non-variant component - can access componentPropertyDefinitions directly
+                        componentProperties =
+                          mainComponent.componentPropertyDefinitions;
+                      }
 
                       // Only set properties that exist on the component
-                      for (const [propName, propValue] of Object.entries(
-                        instanceEntry.componentProperties,
-                      )) {
-                        // Property names in JSON may include IDs (e.g., "Show trailing icon#318:0")
-                        // Extract just the property name part (before the #) to match component property definitions
-                        const cleanPropName = propName.split("#")[0];
-                        if (componentProperties[cleanPropName]) {
-                          try {
-                            newNode.setProperties({
-                              [cleanPropName]: propValue,
-                            });
-                          } catch (error) {
-                            const errorMessage = `Failed to set component property "${cleanPropName}" for internal instance "${nodeData.name}": ${error}`;
-                            await debugConsole.error(errorMessage);
-                            throw new Error(errorMessage);
+                      if (componentProperties) {
+                        for (const [propName, propValue] of Object.entries(
+                          instanceEntry.componentProperties,
+                        )) {
+                          // Property names in JSON may include IDs (e.g., "Show trailing icon#318:0")
+                          // Extract just the property name part (before the #) to match component property definitions
+                          const cleanPropName = propName.split("#")[0];
+                          if (componentProperties[cleanPropName]) {
+                            try {
+                              // Extract the actual value from propValue
+                              // propValue might be an object with 'value' and 'boundVariables' keys
+                              // or it might be a primitive value directly
+                              let actualValue: any = propValue;
+                              if (
+                                propValue &&
+                                typeof propValue === "object" &&
+                                "value" in propValue
+                              ) {
+                                actualValue = (propValue as any).value;
+                              }
+
+                              newNode.setProperties({
+                                [cleanPropName]: actualValue,
+                              });
+                            } catch (error) {
+                              const errorMessage = `Failed to set component property "${cleanPropName}" for internal instance "${nodeData.name}": ${error}`;
+                              await debugConsole.error(errorMessage);
+                              throw new Error(errorMessage);
+                            }
+                          } else {
+                            // Expected: Component property definitions cannot be recreated via Figma API
+                            // This is a known limitation - properties are skipped silently
+                            // await debugConsole.warning(
+                            //   `Skipping component property "${propName}" for internal instance "${nodeData.name}" - property does not exist on recreated component`,
+                            // );
                           }
-                        } else {
-                          // Expected: Component property definitions cannot be recreated via Figma API
-                          // This is a known limitation - properties are skipped silently
-                          // await debugConsole.warning(
-                          //   `Skipping component property "${propName}" for internal instance "${nodeData.name}" - property does not exist on recreated component`,
-                          // );
                         }
                       }
                     } else {
@@ -1217,30 +1280,53 @@ export async function recreateNodeFromData(
                   // Get the component's property definitions (async method required)
                   const mainComponent = await newNode.getMainComponentAsync();
                   if (mainComponent) {
-                    const componentProperties =
-                      mainComponent.componentPropertyDefinitions;
-                    const validProperties: Record<string, string> = {};
-
-                    // Only include properties that exist on the component
-                    for (const [propName, propValue] of Object.entries(
-                      instanceEntry.variantProperties,
-                    )) {
-                      // Property names in JSON may include IDs - extract clean name
-                      const cleanPropName = propName.split("#")[0];
-                      if (componentProperties[cleanPropName]) {
-                        validProperties[cleanPropName] = propValue as string;
-                      } else {
-                        // Expected: Component property definitions cannot be recreated via Figma API
-                        // This is a known limitation - properties are skipped silently
-                        // await debugConsole.warning(
-                        //   `Skipping variant property "${propName}" for remote instance "${nodeData.name}" - property does not exist on recreated component`,
-                        // );
-                      }
+                    // Variant components don't have componentPropertyDefinitions - only COMPONENT_SETs do
+                    let componentProperties: ComponentPropertyDefinitions | null =
+                      null;
+                    const mainComponentType = (mainComponent as any).type;
+                    if (mainComponentType === "COMPONENT_SET") {
+                      const componentSet =
+                        mainComponent as unknown as ComponentSetNode;
+                      componentProperties =
+                        componentSet.componentPropertyDefinitions;
+                    } else if (
+                      mainComponentType === "COMPONENT" &&
+                      mainComponent.parent &&
+                      mainComponent.parent.type === "COMPONENT_SET"
+                    ) {
+                      // Instance was created from a variant - get properties from parent COMPONENT_SET
+                      componentProperties =
+                        mainComponent.parent.componentPropertyDefinitions;
+                    } else {
+                      await debugConsole.warning(
+                        `Cannot set variant properties for remote instance "${nodeData.name}" - main component is not a COMPONENT_SET or variant`,
+                      );
                     }
 
-                    // Only set properties if we have valid ones
-                    if (Object.keys(validProperties).length > 0) {
-                      newNode.setProperties(validProperties);
+                    if (componentProperties) {
+                      const validProperties: Record<string, string> = {};
+
+                      // Only include properties that exist on the component
+                      for (const [propName, propValue] of Object.entries(
+                        instanceEntry.variantProperties,
+                      )) {
+                        // Property names in JSON may include IDs - extract clean name
+                        const cleanPropName = propName.split("#")[0];
+                        if (componentProperties[cleanPropName]) {
+                          validProperties[cleanPropName] = propValue as string;
+                        } else {
+                          // Expected: Component property definitions cannot be recreated via Figma API
+                          // This is a known limitation - properties are skipped silently
+                          // await debugConsole.warning(
+                          //   `Skipping variant property "${propName}" for remote instance "${nodeData.name}" - property does not exist on recreated component`,
+                          // );
+                        }
+                      }
+
+                      // Only set properties if we have valid ones
+                      if (Object.keys(validProperties).length > 0) {
+                        newNode.setProperties(validProperties);
+                      }
                     }
                   } else {
                     await debugConsole.warning(
@@ -1265,30 +1351,66 @@ export async function recreateNodeFromData(
                   // Get the component's property definitions (async method required)
                   const mainComponent = await newNode.getMainComponentAsync();
                   if (mainComponent) {
-                    const componentProperties =
-                      mainComponent.componentPropertyDefinitions;
+                    // Variant components don't have componentPropertyDefinitions - only COMPONENT_SETs and non-variant components do
+                    let componentProperties: ComponentPropertyDefinitions | null =
+                      null;
+                    const mainComponentType = (mainComponent as any).type;
+                    if (mainComponentType === "COMPONENT_SET") {
+                      const componentSet =
+                        mainComponent as unknown as ComponentSetNode;
+                      componentProperties =
+                        componentSet.componentPropertyDefinitions;
+                    } else if (
+                      mainComponentType === "COMPONENT" &&
+                      mainComponent.parent &&
+                      mainComponent.parent.type === "COMPONENT_SET"
+                    ) {
+                      // Instance was created from a variant - get properties from parent COMPONENT_SET
+                      componentProperties =
+                        mainComponent.parent.componentPropertyDefinitions;
+                    } else if (mainComponentType === "COMPONENT") {
+                      // Non-variant component - can access componentPropertyDefinitions directly
+                      componentProperties =
+                        mainComponent.componentPropertyDefinitions;
+                    }
 
                     // Only set properties that exist on the component
-                    for (const [propName, propValue] of Object.entries(
-                      instanceEntry.componentProperties,
-                    )) {
-                      // Property names in JSON may include IDs (e.g., "Show trailing icon#318:0")
-                      // Extract just the property name part (before the #) to match component property definitions
-                      const cleanPropName = propName.split("#")[0];
-                      if (componentProperties[cleanPropName]) {
-                        try {
-                          newNode.setProperties({ [cleanPropName]: propValue });
-                        } catch (error) {
-                          const errorMessage = `Failed to set component property "${cleanPropName}" for remote instance "${nodeData.name}": ${error}`;
-                          await debugConsole.error(errorMessage);
-                          throw new Error(errorMessage);
+                    if (componentProperties) {
+                      for (const [propName, propValue] of Object.entries(
+                        instanceEntry.componentProperties,
+                      )) {
+                        // Property names in JSON may include IDs (e.g., "Show trailing icon#318:0")
+                        // Extract just the property name part (before the #) to match component property definitions
+                        const cleanPropName = propName.split("#")[0];
+                        if (componentProperties[cleanPropName]) {
+                          try {
+                            // Extract the actual value from propValue
+                            // propValue might be an object with 'value' and 'boundVariables' keys
+                            // or it might be a primitive value directly
+                            let actualValue: any = propValue;
+                            if (
+                              propValue &&
+                              typeof propValue === "object" &&
+                              "value" in propValue
+                            ) {
+                              actualValue = (propValue as any).value;
+                            }
+
+                            newNode.setProperties({
+                              [cleanPropName]: actualValue,
+                            });
+                          } catch (error) {
+                            const errorMessage = `Failed to set component property "${cleanPropName}" for remote instance "${nodeData.name}": ${error}`;
+                            await debugConsole.error(errorMessage);
+                            throw new Error(errorMessage);
+                          }
+                        } else {
+                          // Expected: Component property definitions cannot be recreated via Figma API
+                          // This is a known limitation - properties are skipped silently
+                          // await debugConsole.warning(
+                          //   `Skipping component property "${propName}" for remote instance "${nodeData.name}" - property does not exist on recreated component`,
+                          // );
                         }
-                      } else {
-                        // Expected: Component property definitions cannot be recreated via Figma API
-                        // This is a known limitation - properties are skipped silently
-                        // await debugConsole.warning(
-                        //   `Skipping component property "${propName}" for remote instance "${nodeData.name}" - property does not exist on recreated component`,
-                        // );
                       }
                     }
                   } else {
@@ -1643,34 +1765,48 @@ export async function recreateNodeFromData(
               if (mainComponent) {
                 // If the main component is a variant (inside a COMPONENT_SET),
                 // get property definitions from the parent COMPONENT_SET instead
-                let componentProperties: ComponentPropertyDefinitions;
-                if (
+                // Variant components don't have componentPropertyDefinitions - only COMPONENT_SETs do
+                let componentProperties: ComponentPropertyDefinitions | null =
+                  null;
+                const mainComponentType = (mainComponent as any).type;
+                if (mainComponentType === "COMPONENT_SET") {
+                  const componentSet =
+                    mainComponent as unknown as ComponentSetNode;
+                  componentProperties =
+                    componentSet.componentPropertyDefinitions;
+                } else if (
+                  mainComponentType === "COMPONENT" &&
                   mainComponent.parent &&
                   mainComponent.parent.type === "COMPONENT_SET"
                 ) {
+                  // Instance was created from a variant - get properties from parent COMPONENT_SET
                   componentProperties =
                     mainComponent.parent.componentPropertyDefinitions;
                 } else {
-                  componentProperties =
-                    mainComponent.componentPropertyDefinitions;
+                  // Instance was created from a non-variant component - no variant properties to set
+                  await debugConsole.warning(
+                    `Cannot set variant properties for normal instance "${nodeData.name}" - main component is not a COMPONENT_SET or variant`,
+                  );
                 }
 
-                const validProperties: Record<string, string> = {};
+                if (componentProperties) {
+                  const validProperties: Record<string, string> = {};
 
-                // Only include properties that exist on the component
-                for (const [propName, propValue] of Object.entries(
-                  instanceEntry.variantProperties,
-                )) {
-                  // Property names in JSON may include IDs - extract clean name
-                  const cleanPropName = propName.split("#")[0];
-                  if (componentProperties[cleanPropName]) {
-                    validProperties[cleanPropName] = propValue as string;
+                  // Only include properties that exist on the component
+                  for (const [propName, propValue] of Object.entries(
+                    instanceEntry.variantProperties,
+                  )) {
+                    // Property names in JSON may include IDs - extract clean name
+                    const cleanPropName = propName.split("#")[0];
+                    if (componentProperties[cleanPropName]) {
+                      validProperties[cleanPropName] = propValue as string;
+                    }
                   }
-                }
 
-                // Only set properties if we have valid ones
-                if (Object.keys(validProperties).length > 0) {
-                  newNode.setProperties(validProperties);
+                  // Only set properties if we have valid ones
+                  if (Object.keys(validProperties).length > 0) {
+                    newNode.setProperties(validProperties);
+                  }
                 }
               }
             } catch (error) {
@@ -1690,88 +1826,105 @@ export async function recreateNodeFromData(
               if (mainComponent) {
                 // If the main component is a variant (inside a COMPONENT_SET),
                 // get property definitions from the parent COMPONENT_SET instead
-                let componentProperties: ComponentPropertyDefinitions;
-                if (
+                // Variant components don't have componentPropertyDefinitions - only COMPONENT_SETs and non-variant components do
+                let componentProperties: ComponentPropertyDefinitions | null =
+                  null;
+                const mainComponentType = (mainComponent as any).type;
+                if (mainComponentType === "COMPONENT_SET") {
+                  const componentSet =
+                    mainComponent as unknown as ComponentSetNode;
+                  componentProperties =
+                    componentSet.componentPropertyDefinitions;
+                } else if (
+                  mainComponentType === "COMPONENT" &&
                   mainComponent.parent &&
                   mainComponent.parent.type === "COMPONENT_SET"
                 ) {
+                  // Instance was created from a variant - get properties from parent COMPONENT_SET
                   componentProperties =
                     mainComponent.parent.componentPropertyDefinitions;
-                } else {
+                } else if (mainComponentType === "COMPONENT") {
+                  // Non-variant component - can access componentPropertyDefinitions directly
                   componentProperties =
                     mainComponent.componentPropertyDefinitions;
                 }
 
                 // Only set properties that exist on the component
-                const propertiesToSet: Record<string, any> = {};
-                for (const [propName, propValue] of Object.entries(
-                  instanceEntry.componentProperties,
-                )) {
-                  // Property names in JSON may include IDs - extract clean name
-                  const cleanPropName = propName.split("#")[0];
+                if (componentProperties) {
+                  const propertiesToSet: Record<string, any> = {};
+                  for (const [propName, propValue] of Object.entries(
+                    instanceEntry.componentProperties,
+                  )) {
+                    // Property names in JSON may include IDs - extract clean name
+                    const cleanPropName = propName.split("#")[0];
 
-                  // Check if property exists - Figma may return property keys with or without ID suffixes
-                  // Try exact match first, then try matching by base name
-                  let matchingPropKey: string | undefined = undefined;
-                  if (componentProperties[propName]) {
-                    // Exact match (with ID suffix)
-                    matchingPropKey = propName;
-                  } else if (componentProperties[cleanPropName]) {
-                    // Match by clean name (without ID suffix)
-                    matchingPropKey = cleanPropName;
-                  } else {
-                    // Try to find a property that starts with the clean name (in case ID format differs)
-                    matchingPropKey = Object.keys(componentProperties).find(
-                      (key) => key.split("#")[0] === cleanPropName,
-                    );
+                    // Check if property exists - Figma may return property keys with or without ID suffixes
+                    // Try exact match first, then try matching by base name
+                    let matchingPropKey: string | undefined = undefined;
+                    if (componentProperties[propName]) {
+                      // Exact match (with ID suffix)
+                      matchingPropKey = propName;
+                    } else if (componentProperties[cleanPropName]) {
+                      // Match by clean name (without ID suffix)
+                      matchingPropKey = cleanPropName;
+                    } else {
+                      // Try to find a property that starts with the clean name (in case ID format differs)
+                      matchingPropKey = Object.keys(componentProperties).find(
+                        (key) => key.split("#")[0] === cleanPropName,
+                      );
+                    }
+
+                    if (matchingPropKey) {
+                      // Extract the actual value from the property object
+                      // Component properties in JSON are stored as { value: ..., type: ..., bndVar: ... }
+                      // but setProperties expects just the value
+                      const actualValue =
+                        propValue &&
+                        typeof propValue === "object" &&
+                        "value" in propValue
+                          ? propValue.value
+                          : propValue;
+                      // Use the matching property key (which may have ID suffix) for setProperties
+                      // Figma API requires the exact property key as it exists on the component
+                      propertiesToSet[matchingPropKey] = actualValue;
+                    } else {
+                      await debugConsole.warning(
+                        `Component property "${cleanPropName}" (from "${propName}") does not exist on component "${instanceEntry.componentName}" for normal instance "${nodeData.name}". Available properties: ${Object.keys(componentProperties).join(", ") || "none"}`,
+                      );
+                    }
                   }
 
-                  if (matchingPropKey) {
-                    // Extract the actual value from the property object
-                    // Component properties in JSON are stored as { value: ..., type: ..., bndVar: ... }
-                    // but setProperties expects just the value
-                    const actualValue =
-                      propValue &&
-                      typeof propValue === "object" &&
-                      "value" in propValue
-                        ? propValue.value
-                        : propValue;
-                    // Use the matching property key (which may have ID suffix) for setProperties
-                    // Figma API requires the exact property key as it exists on the component
-                    propertiesToSet[matchingPropKey] = actualValue;
-                  } else {
-                    await debugConsole.warning(
-                      `Component property "${cleanPropName}" (from "${propName}") does not exist on component "${instanceEntry.componentName}" for normal instance "${nodeData.name}". Available properties: ${Object.keys(componentProperties).join(", ") || "none"}`,
-                    );
+                  // Set all properties at once
+                  if (Object.keys(propertiesToSet).length > 0) {
+                    try {
+                      // Log what we're trying to set and what's available
+                      await debugConsole.log(
+                        `  Attempting to set component properties for normal instance "${nodeData.name}": ${Object.keys(propertiesToSet).join(", ")}`,
+                      );
+                      await debugConsole.log(
+                        `  Available component properties: ${Object.keys(componentProperties).join(", ")}`,
+                      );
+                      newNode.setProperties(propertiesToSet);
+                      await debugConsole.log(
+                        `  ✓ Successfully set component properties for normal instance "${nodeData.name}": ${Object.keys(propertiesToSet).join(", ")}`,
+                      );
+                    } catch (error) {
+                      await debugConsole.warning(
+                        `Failed to set component properties for normal instance "${nodeData.name}": ${error}`,
+                      );
+                      await debugConsole.warning(
+                        `  Properties attempted: ${JSON.stringify(propertiesToSet)}`,
+                      );
+                      await debugConsole.warning(
+                        `  Available properties: ${JSON.stringify(Object.keys(componentProperties))}`,
+                      );
+                    }
                   }
                 }
-
-                // Set all properties at once
-                if (Object.keys(propertiesToSet).length > 0) {
-                  try {
-                    // Log what we're trying to set and what's available
-                    await debugConsole.log(
-                      `  Attempting to set component properties for normal instance "${nodeData.name}": ${Object.keys(propertiesToSet).join(", ")}`,
-                    );
-                    await debugConsole.log(
-                      `  Available component properties: ${Object.keys(componentProperties).join(", ")}`,
-                    );
-                    newNode.setProperties(propertiesToSet);
-                    await debugConsole.log(
-                      `  ✓ Successfully set component properties for normal instance "${nodeData.name}": ${Object.keys(propertiesToSet).join(", ")}`,
-                    );
-                  } catch (error) {
-                    await debugConsole.warning(
-                      `Failed to set component properties for normal instance "${nodeData.name}": ${error}`,
-                    );
-                    await debugConsole.warning(
-                      `  Properties attempted: ${JSON.stringify(propertiesToSet)}`,
-                    );
-                    await debugConsole.warning(
-                      `  Available properties: ${JSON.stringify(Object.keys(componentProperties))}`,
-                    );
-                  }
-                }
+              } else {
+                await debugConsole.warning(
+                  `Cannot set component properties for normal instance "${nodeData.name}" - main component not found`,
+                );
               }
             } catch (error) {
               await debugConsole.warning(
@@ -2192,10 +2345,20 @@ export async function recreateNodeFromData(
   // Recursively recreate children
   // Note: INSTANCE nodes cannot have children appended - they are read-only representations
   // of their main component, so we skip children for INSTANCE nodes
+  // Also skip if this is a reused component that already has children (fully created in previous iteration)
+  const isReusedComponentWithChildren =
+    nodeData.id &&
+    nodeIdMapping &&
+    nodeIdMapping.has(nodeData.id) &&
+    newNode.type === "COMPONENT" &&
+    newNode.children &&
+    newNode.children.length > 0;
+
   if (
     nodeData.children &&
     Array.isArray(nodeData.children) &&
-    newNode.type !== "INSTANCE"
+    newNode.type !== "INSTANCE" &&
+    !isReusedComponentWithChildren // Skip if component already fully created
   ) {
     // Two-pass approach: First create all COMPONENT nodes recursively (so they're in nodeIdMapping),
     // then create all other nodes (including INSTANCE nodes that reference the components)
@@ -2349,15 +2512,53 @@ export async function recreateNodeFromData(
         null, // deferredInstances - not needed for remote structures
       );
       if (childNode) {
-        newNode.appendChild(childNode);
+        // Only append if the child doesn't already have this node as its parent
+        // This prevents duplicates but allows moving children to the correct parent
+        if (childNode.parent !== newNode) {
+          // If child has a different parent, remove it first (this moves it, not duplicates it)
+          // Only remove if the parent supports removeChild (PageNode, FrameNode, GroupNode, ComponentNode, ComponentSetNode)
+          if (
+            childNode.parent &&
+            typeof (childNode.parent as any).removeChild === "function"
+          ) {
+            try {
+              (childNode.parent as any).removeChild(childNode);
+            } catch (error) {
+              // If removeChild fails, log a warning but continue
+              await debugConsole.warning(
+                `Failed to remove child "${childNode.name || "Unnamed"}" from parent "${childNode.parent.name || "Unnamed"}": ${error}`,
+              );
+            }
+          }
+          newNode.appendChild(childNode);
+        }
+        // If childNode.parent === newNode, it's already correctly parented, so do nothing
       }
     }
   }
 
   // Add the node to the parent
-  if (parentNode) {
+  // Only append if the node doesn't already have this node as its parent
+  // This prevents duplicates but allows moving nodes to the correct parent
+  if (parentNode && newNode.parent !== parentNode) {
+    // If node has a different parent, remove it first (this moves it, not duplicates it)
+    // Only remove if the parent supports removeChild (PageNode, FrameNode, GroupNode, ComponentNode, ComponentSetNode)
+    if (
+      newNode.parent &&
+      typeof (newNode.parent as any).removeChild === "function"
+    ) {
+      try {
+        (newNode.parent as any).removeChild(newNode);
+      } catch (error) {
+        // If removeChild fails, log a warning but continue
+        await debugConsole.warning(
+          `Failed to remove node "${newNode.name || "Unnamed"}" from parent "${newNode.parent.name || "Unnamed"}": ${error}`,
+        );
+      }
+    }
     parentNode.appendChild(newNode);
   }
+  // If newNode.parent === parentNode, it's already correctly parented, so do nothing
 
   return newNode;
 }
@@ -4249,21 +4450,45 @@ export async function resolveDeferredNormalInstances(
         try {
           const mainComponent = await instanceNode.getMainComponentAsync();
           if (mainComponent) {
-            const componentProperties =
-              mainComponent.componentPropertyDefinitions;
-            const validProperties: Record<string, string> = {};
-
-            for (const [propName, propValue] of Object.entries(
-              instanceEntry.variantProperties,
-            )) {
-              const cleanPropName = propName.split("#")[0];
-              if (componentProperties[cleanPropName]) {
-                validProperties[cleanPropName] = propValue as string;
-              }
+            // If the main component is a variant (inside a COMPONENT_SET),
+            // get property definitions from the parent COMPONENT_SET instead
+            // Variant components don't have componentPropertyDefinitions - only COMPONENT_SETs do
+            let componentProperties: ComponentPropertyDefinitions | null = null;
+            const mainComponentType = (mainComponent as any).type;
+            if (mainComponentType === "COMPONENT_SET") {
+              // Instance was created from a COMPONENT_SET directly
+              const componentSet = mainComponent as unknown as ComponentSetNode;
+              componentProperties = componentSet.componentPropertyDefinitions;
+            } else if (
+              mainComponentType === "COMPONENT" &&
+              mainComponent.parent &&
+              mainComponent.parent.type === "COMPONENT_SET"
+            ) {
+              // Instance was created from a variant component - get properties from parent COMPONENT_SET
+              componentProperties =
+                mainComponent.parent.componentPropertyDefinitions;
+            } else {
+              // Instance was created from a non-variant component - no variant properties to set
+              await debugConsole.warning(
+                `Cannot set variant properties for resolved instance "${nodeData.name}" - main component is not a COMPONENT_SET or variant`,
+              );
             }
 
-            if (Object.keys(validProperties).length > 0) {
-              instanceNode.setProperties(validProperties);
+            if (componentProperties) {
+              const validProperties: Record<string, string> = {};
+
+              for (const [propName, propValue] of Object.entries(
+                instanceEntry.variantProperties,
+              )) {
+                const cleanPropName = propName.split("#")[0];
+                if (componentProperties[cleanPropName]) {
+                  validProperties[cleanPropName] = propValue as string;
+                }
+              }
+
+              if (Object.keys(validProperties).length > 0) {
+                instanceNode.setProperties(validProperties);
+              }
             }
           }
         } catch (error) {
@@ -4281,22 +4506,40 @@ export async function resolveDeferredNormalInstances(
         try {
           const mainComponent = await instanceNode.getMainComponentAsync();
           if (mainComponent) {
-            const componentProperties =
-              mainComponent.componentPropertyDefinitions;
+            // Variant components don't have componentPropertyDefinitions - only COMPONENT_SETs and non-variant components do
+            let componentProperties: ComponentPropertyDefinitions | null = null;
+            const mainComponentType = (mainComponent as any).type;
+            if (mainComponentType === "COMPONENT_SET") {
+              const componentSet = mainComponent as unknown as ComponentSetNode;
+              componentProperties = componentSet.componentPropertyDefinitions;
+            } else if (
+              mainComponentType === "COMPONENT" &&
+              mainComponent.parent &&
+              mainComponent.parent.type === "COMPONENT_SET"
+            ) {
+              // Instance was created from a variant - get properties from parent COMPONENT_SET
+              componentProperties =
+                mainComponent.parent.componentPropertyDefinitions;
+            } else if (mainComponentType === "COMPONENT") {
+              // Non-variant component - can access componentPropertyDefinitions directly
+              componentProperties = mainComponent.componentPropertyDefinitions;
+            }
 
-            for (const [propName, propValue] of Object.entries(
-              instanceEntry.componentProperties,
-            )) {
-              const cleanPropName = propName.split("#")[0];
-              if (componentProperties[cleanPropName]) {
-                try {
-                  instanceNode.setProperties({
-                    [cleanPropName]: propValue as string | boolean,
-                  });
-                } catch (error) {
-                  await debugConsole.warning(
-                    `Failed to set component property "${cleanPropName}" for resolved instance "${nodeData.name}": ${error}`,
-                  );
+            if (componentProperties) {
+              for (const [propName, propValue] of Object.entries(
+                instanceEntry.componentProperties,
+              )) {
+                const cleanPropName = propName.split("#")[0];
+                if (componentProperties[cleanPropName]) {
+                  try {
+                    instanceNode.setProperties({
+                      [cleanPropName]: propValue as string | boolean,
+                    });
+                  } catch (error) {
+                    await debugConsole.warning(
+                      `Failed to set component property "${cleanPropName}" for resolved instance "${nodeData.name}": ${error}`,
+                    );
+                  }
                 }
               }
             }
