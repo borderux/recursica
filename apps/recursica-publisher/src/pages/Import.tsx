@@ -9,6 +9,49 @@ import {
 } from "../utils/getRequiredImportFiles";
 import { useImportData, type ImportedFile } from "../context/ImportDataContext";
 
+/**
+ * Gets the file GUID and version from a file's metadata
+ * @param fileData - The parsed JSON data from an imported file
+ * @returns Object with guid and version, or null if not available
+ */
+function getFileGuid(fileData: unknown): {
+  guid: string;
+  version: number;
+} | null {
+  if (!fileData || typeof fileData !== "object" || Array.isArray(fileData)) {
+    return null;
+  }
+
+  const data = fileData as Record<string, unknown>;
+  if (!data.metadata || typeof data.metadata !== "object") {
+    return null;
+  }
+
+  const metadata = data.metadata as Record<string, unknown>;
+  const guid = metadata.guid;
+  const version = metadata.version;
+
+  if (typeof guid === "string" && typeof version === "number") {
+    return { guid, version };
+  }
+
+  return null;
+}
+
+/**
+ * Generates a consistent key for a required file
+ * This key is used for matching and should be consistent across all uses
+ * Uses GUID only for deduplication (not version)
+ */
+function getRequiredFileKey(requiredFile: RequiredImportFile): string {
+  if (requiredFile.componentGuid && requiredFile.componentGuid.length > 0) {
+    return requiredFile.componentGuid;
+  }
+  // For unpublished files, use a stable key that doesn't depend on array index
+  // Use componentPageName and componentName for uniqueness
+  return `page:${requiredFile.componentPageName || "unknown"}:${requiredFile.componentName}`;
+}
+
 interface FileListItemProps {
   name: string;
   status: "pending" | "success" | "error";
@@ -335,19 +378,10 @@ function ReferencedFilesArea({
         }}
       >
         {/* Show required files with their status */}
-        {requiredFiles.map((requiredFile, index) => {
-          // Generate a unique key for each required file
-          // For published components, use GUID:version
-          // For unpublished/unknown, use a combination that ensures uniqueness
-          const key =
-            requiredFile.componentGuid && requiredFile.componentVersion !== 0
-              ? `${requiredFile.componentGuid}:${requiredFile.componentVersion}`
-              : `${requiredFile.componentPageName || "unknown"}:${requiredFile.componentName}:${index}`;
-          const isMatched = matchedRequiredFiles.has(
-            requiredFile.componentGuid && requiredFile.componentVersion !== 0
-              ? `${requiredFile.componentGuid}:${requiredFile.componentVersion}`
-              : key,
-          );
+        {requiredFiles.map((requiredFile) => {
+          // Generate a consistent key for each required file
+          const key = getRequiredFileKey(requiredFile);
+          const isMatched = matchedRequiredFiles.has(key);
           // Use componentPageName as the display name for referenced files
           const displayName =
             requiredFile.componentPageName ||
@@ -419,16 +453,16 @@ export default function Import() {
   } | null>(null);
 
   // Recursively extract all required files (including nested dependencies)
+  // Shows all required files so they can be marked as "Valid" when matched
   const requiredFiles = useMemo(() => {
     const allRequiredFiles: RequiredImportFile[] = [];
     const seen = new Set<string>(); // Track unique files to avoid duplicates
 
     // Helper function to add a file if not already seen
+    // Note: We still show required files even if they're already imported,
+    // so they can be marked as "Valid" in the UI
     const addIfNotSeen = (file: RequiredImportFile) => {
-      const key =
-        file.componentGuid && file.componentVersion !== 0
-          ? `${file.componentGuid}:${file.componentVersion}`
-          : `page:${file.componentPageName || "unknown"}:${file.componentName}`;
+      const key = getRequiredFileKey(file);
       if (!seen.has(key)) {
         seen.add(key);
         allRequiredFiles.push(file);
@@ -458,26 +492,34 @@ export default function Import() {
     return allRequiredFiles;
   }, [mainFile, additionalFiles]);
 
-  // Check which required files are matched by additional files
+  // Check which required files are matched by additional files or main file
   const matchedRequiredFiles = useMemo(() => {
     const matched = new Set<string>();
+
+    // Check main file against required files
+    if (mainFile && mainFile.status === "success" && mainFile.data) {
+      for (const requiredFile of requiredFiles) {
+        const key = getRequiredFileKey(requiredFile);
+        if (fileMatchesRequired(mainFile.data, requiredFile)) {
+          matched.add(key);
+        }
+      }
+    }
+
+    // Check additional files against required files
     for (const additionalFile of additionalFiles) {
       if (additionalFile.status === "success" && additionalFile.data) {
-        for (let i = 0; i < requiredFiles.length; i++) {
-          const requiredFile = requiredFiles[i];
-          // Generate the same key format as in ReferencedFilesArea
-          const key =
-            requiredFile.componentGuid && requiredFile.componentVersion !== 0
-              ? `${requiredFile.componentGuid}:${requiredFile.componentVersion}`
-              : `${requiredFile.componentPageName || "unknown"}:${requiredFile.componentName}:${i}`;
+        for (const requiredFile of requiredFiles) {
+          const key = getRequiredFileKey(requiredFile);
           if (fileMatchesRequired(additionalFile.data, requiredFile)) {
             matched.add(key);
           }
         }
       }
     }
+
     return matched;
-  }, [additionalFiles, requiredFiles]);
+  }, [mainFile, additionalFiles, requiredFiles]);
 
   // Calculate missing files count
   const missingFilesCount = useMemo(() => {
@@ -485,12 +527,8 @@ export default function Import() {
       return 0;
     }
     let missing = 0;
-    for (let i = 0; i < requiredFiles.length; i++) {
-      const requiredFile = requiredFiles[i];
-      const key =
-        requiredFile.componentGuid && requiredFile.componentVersion !== 0
-          ? `${requiredFile.componentGuid}:${requiredFile.componentVersion}`
-          : `${requiredFile.componentPageName || "unknown"}:${requiredFile.componentName}:${i}`;
+    for (const requiredFile of requiredFiles) {
+      const key = getRequiredFileKey(requiredFile);
       if (!matchedRequiredFiles.has(key)) {
         missing++;
       }
@@ -603,13 +641,6 @@ export default function Import() {
       status: "pending",
     };
 
-    // Add file to appropriate list immediately with pending status
-    if (isMain || !mainFile) {
-      setMainFile(newFile);
-    } else {
-      setAdditionalFiles((prev) => [...prev, newFile]);
-    }
-
     try {
       const text = await file.text();
       const jsonData = JSON.parse(text);
@@ -626,6 +657,37 @@ export default function Import() {
       // Clear validation error if file is valid
       setValidationError(null);
 
+      // Check for duplicates before adding (using GUID only, not version)
+      const fileGuid = getFileGuid(jsonData);
+      if (fileGuid) {
+        const fileGuidKey = fileGuid.guid;
+
+        // Check if this file matches the main file
+        if (mainFile && mainFile.status === "success" && mainFile.data) {
+          const mainFileGuid = getFileGuid(mainFile.data);
+          if (mainFileGuid && mainFileGuid.guid === fileGuidKey) {
+            alert("This file is already set as the main import file.");
+            return;
+          }
+        }
+
+        // Check if this file is already in additionalFiles
+        const isDuplicate = additionalFiles.some((additionalFile) => {
+          if (additionalFile.status === "success" && additionalFile.data) {
+            const additionalFileGuid = getFileGuid(additionalFile.data);
+            if (additionalFileGuid) {
+              return additionalFileGuid.guid === fileGuidKey;
+            }
+          }
+          return false;
+        });
+
+        if (isDuplicate) {
+          alert("This file is already in the imported files list.");
+          return;
+        }
+      }
+
       console.log("Imported JSON:", jsonData);
 
       // Update file status to success
@@ -635,16 +697,12 @@ export default function Import() {
         data: jsonData,
       };
 
+      // Add file to appropriate list after validation and duplicate check
       if (isMain || !mainFile) {
         setMainFile(updatedFile);
       } else {
-        setAdditionalFiles((prev) =>
-          prev.map((f) => (f.id === fileId ? updatedFile : f)),
-        );
+        setAdditionalFiles((prev) => [...prev, updatedFile]);
       }
-
-      // TODO: Handle the imported JSON data
-      // You can dispatch an action, call a service, etc.
     } catch (error) {
       console.error("Error reading file:", error);
       const errorMessage =
@@ -660,9 +718,7 @@ export default function Import() {
       if (isMain || !mainFile) {
         setMainFile(errorFile);
       } else {
-        setAdditionalFiles((prev) =>
-          prev.map((f) => (f.id === fileId ? errorFile : f)),
-        );
+        setAdditionalFiles((prev) => [...prev, errorFile]);
       }
     }
   };

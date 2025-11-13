@@ -146,22 +146,22 @@ export function getRequiredImportFiles(
       instanceEntry.componentPageName || instanceEntry.cPage;
 
     // For normal instances, we need either:
-    // 1. componentGuid + componentVersion (for published components)
-    // 2. componentPageName (for unpublished components on different pages)
-    // If we have componentGuid + componentVersion, use that for matching
+    // 1. componentGuid (for components with GUID, deduplicate by GUID only)
+    // 2. componentPageName (for unpublished components on different pages without GUID)
+    // If we have componentGuid, use that for matching and deduplication (GUID only, not version)
     // If we only have componentPageName, we can still show it but matching will be by page name
     if (typeof componentName === "string") {
-      if (
-        typeof componentGuid === "string" &&
-        typeof componentVersion === "number"
-      ) {
-        // Published component - use GUID + version for matching
-        const uniqueKey = `${componentGuid}:${componentVersion}`;
+      if (typeof componentGuid === "string" && componentGuid.length > 0) {
+        // Component with GUID - use GUID only for deduplication
+        // Multiple variants of the same component should be deduplicated by GUID
+        const uniqueKey = componentGuid;
         if (!seen.has(uniqueKey)) {
           seen.add(uniqueKey);
+          const version =
+            typeof componentVersion === "number" ? componentVersion : 0;
           requiredFiles.push({
             componentGuid,
-            componentVersion,
+            componentVersion: version,
             componentName,
             componentPageName:
               typeof componentPageName === "string"
@@ -169,12 +169,17 @@ export function getRequiredImportFiles(
                 : undefined,
           });
           console.log(
-            `[getRequiredImportFiles] Added required file (published):`,
+            `[getRequiredImportFiles] Added required file (GUID-based):`,
+            uniqueKey,
+          );
+        } else {
+          console.log(
+            `[getRequiredImportFiles] Skipping duplicate file (already seen):`,
             uniqueKey,
           );
         }
       } else if (typeof componentPageName === "string") {
-        // Unpublished component - use page name for matching
+        // Unpublished component without GUID - use page name for matching
         // Create a unique key based on page name + component name
         const uniqueKey = `page:${componentPageName}:${componentName}`;
         if (!seen.has(uniqueKey)) {
@@ -187,6 +192,11 @@ export function getRequiredImportFiles(
           });
           console.log(
             `[getRequiredImportFiles] Added required file (unpublished):`,
+            uniqueKey,
+          );
+        } else {
+          console.log(
+            `[getRequiredImportFiles] Skipping duplicate file (already seen):`,
             uniqueKey,
           );
         }
@@ -220,8 +230,7 @@ export function getRequiredImportFiles(
 
 /**
  * Checks if an imported file matches a required import file
- * Currently matches by checking if the file's metadata contains componentGuid and componentVersion
- * Note: This requires that componentGuid and componentVersion are added to the export metadata
+ * Matches by checking if the file's metadata contains componentGuid (GUID only, not version)
  * @param fileData - The parsed JSON data from an imported file
  * @param requiredFile - The required file identifier
  * @returns true if the file matches the required file
@@ -236,33 +245,32 @@ export function fileMatchesRequired(
 
   const data = fileData as Record<string, unknown>;
 
-  // Check metadata for component GUID and version
+  // Check metadata for component GUID
   if (!data.metadata || typeof data.metadata !== "object") {
     return false;
   }
 
   const metadata = data.metadata as Record<string, unknown>;
 
-  // Check if metadata has guid (the page GUID) and version
+  // Match by GUID only (not version)
   // The metadata.guid is the page GUID, which matches componentGuid for normal instances
   const fileComponentGuid = metadata.guid;
-  const fileComponentVersion = metadata.version;
 
   if (
     typeof fileComponentGuid === "string" &&
-    typeof fileComponentVersion === "number" &&
     requiredFile.componentGuid &&
-    requiredFile.componentVersion !== 0
+    requiredFile.componentGuid.length > 0
   ) {
-    return (
-      fileComponentGuid === requiredFile.componentGuid &&
-      fileComponentVersion === requiredFile.componentVersion
-    );
+    return fileComponentGuid === requiredFile.componentGuid;
   }
 
-  // Fallback: Try to match by page name (less reliable)
+  // Fallback: Try to match by page name (less reliable, only if no GUID available)
   const pageName = metadata.name;
-  if (typeof pageName === "string" && requiredFile.componentPageName) {
+  if (
+    typeof pageName === "string" &&
+    requiredFile.componentPageName &&
+    (!requiredFile.componentGuid || requiredFile.componentGuid.length === 0)
+  ) {
     return pageName === requiredFile.componentPageName;
   }
 
