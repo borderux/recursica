@@ -16,7 +16,6 @@ import {
 import { InstanceTable } from "./parsers/instanceTable";
 import { StringTable } from "./parsers/stringTable";
 import { requestGuidFromUI } from "../utils/requestGuidFromUI";
-import { REGISTERED_REMOTE_COLLECTIONS } from "../../const/RegisteredCollections";
 import { debugConsole } from "./debugConsole";
 import { expandJsonData } from "../utils/jsonCompression";
 import { pluginPrompt } from "../utils/pluginPrompt";
@@ -123,18 +122,19 @@ async function getOrGenerateCollectionGuid(
     return newGuid;
   } else {
     // For remote collections, we can't write plugin data
-    // Remote collections must be registered in REGISTERED_REMOTE_COLLECTIONS
-    const registeredCollection = REGISTERED_REMOTE_COLLECTIONS[collection.id];
+    // Only special collections (Token, Tokens, Theme, Themes) are supported
+    const normalizedName = collection.name.trim().toLowerCase();
+    const supportedCollectionNames = ["token", "tokens", "theme", "themes"];
 
-    if (!registeredCollection) {
-      const errorMessage = `Unrecognized remote variable collection. Please contact the developers to register your collection to proceed. Collection Name: "${collection.name}", Collection ID: ${collection.id}`;
+    if (!supportedCollectionNames.includes(normalizedName)) {
+      const errorMessage = `Remote variable collections are not supported. Only "Token", "Tokens", "Theme", or "Themes" collections are allowed. Collection Name: "${collection.name}", Collection ID: ${collection.id}`;
       await debugConsole.error(errorMessage);
       throw new Error(errorMessage);
     }
 
-    const registeredGuid = registeredCollection.guid;
-
-    return registeredGuid;
+    // For supported remote collections, use the collection ID as a stable identifier
+    // The collection ID is already unique and stable across exports
+    return collection.id;
   }
 }
 
