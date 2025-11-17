@@ -84,6 +84,7 @@ export async function extractNodeData(
     collectionTable: context.collectionTable!,
     instanceTable: context.instanceTable!,
     detachedComponentsHandled: context.detachedComponentsHandled ?? new Set(),
+    exportedIds: context.exportedIds ?? new Map<string, string>(),
   };
 
   // Handle circular references
@@ -99,6 +100,27 @@ export async function extractNodeData(
   // Parse base properties (common to all nodes)
   const baseProps = await parseBaseNodeProperties(node, updatedContext);
   Object.assign(nodeData, baseProps);
+
+  // Validate ID uniqueness
+  if (nodeData.id && updatedContext.exportedIds) {
+    const existingName = updatedContext.exportedIds.get(nodeData.id);
+    if (existingName !== undefined) {
+      const currentNodeName = nodeData.name || "Unnamed";
+      if (existingName !== currentNodeName) {
+        const errorMessage = `Duplicate ID detected during export: ID "${nodeData.id.substring(0, 8)}..." is used by both "${existingName}" and "${currentNodeName}". Each node must have a unique ID.`;
+        await debugConsole.error(errorMessage);
+        throw new Error(errorMessage);
+      }
+      // Same ID and same name - this is the same node being encountered again
+      // This shouldn't happen due to visited WeakSet, but log a warning if it does
+      await debugConsole.warning(
+        `Node "${currentNodeName}" (ID: ${nodeData.id.substring(0, 8)}...) was encountered multiple times during export. This may indicate a structural issue.`,
+      );
+    } else {
+      // First time seeing this ID - record it
+      updatedContext.exportedIds.set(nodeData.id, nodeData.name || "Unnamed");
+    }
+  }
 
   // Parse type-specific properties
   const nodeType = node.type;

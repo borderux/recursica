@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { BASE_NODE_DEFAULTS, isDifferentFromDefault } from "./nodeDefaults";
-import { extractBoundVariables, serializeFills } from "./boundVariableParser";
+import {
+  extractBoundVariables,
+  serializeFills,
+  serializeBackgrounds,
+} from "./boundVariableParser";
 import type { VariableTable, CollectionTable } from "./variableTable";
 import type { InstanceTable } from "./instanceTable";
 
@@ -18,6 +22,7 @@ export interface ParserContext {
   collectionTable: CollectionTable;
   instanceTable: InstanceTable;
   detachedComponentsHandled: Set<string>; // Component IDs we've already prompted for and decided to treat as internal
+  exportedIds: Map<string, string>; // node ID -> node name (for duplicate detection)
 }
 
 export interface ParsedNodeData {
@@ -168,9 +173,18 @@ export async function parseBaseNodeProperties(
     handledKeys.add("boundVariables");
   }
 
-  // Page backgrounds - special property for PAGE nodes
+  // Backgrounds - special handling with bound variables (similar to fills)
+  // "Selection colors" might be stored in backgrounds with bound variables
   if (node.backgrounds !== undefined) {
-    result.backgrounds = node.backgrounds;
+    const backgrounds = await serializeBackgrounds(
+      node.backgrounds,
+      context.variableTable,
+      context.collectionTable,
+    );
+    // Only include if different from default (empty array)
+    if (backgrounds && Array.isArray(backgrounds) && backgrounds.length > 0) {
+      result.backgrounds = backgrounds;
+    }
     handledKeys.add("backgrounds");
   }
 

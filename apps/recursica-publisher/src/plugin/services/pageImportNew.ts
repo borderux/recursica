@@ -540,6 +540,66 @@ async function createVariableFromEntry(
 }
 
 /**
+ * Resolves a variable reference from the variable table, even if it's not in recognizedVariables
+ * This is used as a fallback when a variable reference exists in the table but wasn't matched/created
+ * during the initial variable matching phase
+ */
+async function resolveVariableFromTable(
+  varRef: number,
+  variableTable: VariableTable,
+  collectionTable: CollectionTable,
+  recognizedCollections: Map<string, VariableCollection>,
+): Promise<Variable | null> {
+  const entry = variableTable.getVariableByIndex(varRef);
+  if (!entry) {
+    return null;
+  }
+  // Get the collection
+  if (entry._colRef === undefined) {
+    return null;
+  }
+
+  const collection = recognizedCollections.get(String(entry._colRef));
+  if (!collection) {
+    return null;
+  }
+
+  // Try to find existing variable by name
+  const existingVariable = await findVariableByName(
+    collection,
+    entry.variableName,
+  );
+
+  if (existingVariable) {
+    // Check if type matches
+    let variableType: string;
+    if (typeof entry.variableType === "number") {
+      const typeMap: Record<number, string> = {
+        1: "COLOR",
+        2: "FLOAT",
+        3: "STRING",
+        4: "BOOLEAN",
+      };
+      variableType = typeMap[entry.variableType] || String(entry.variableType);
+    } else {
+      variableType = entry.variableType;
+    }
+
+    if (variableTypeMatches(existingVariable, variableType)) {
+      return existingVariable;
+    }
+  }
+
+  // Variable doesn't exist or type doesn't match - create it
+  return await createVariableFromEntry(
+    entry,
+    collection,
+    variableTable,
+    collectionTable,
+  );
+}
+
+/**
  * Main orchestration function for resolving variable references during import
  * Handles finding/creating collections, matching variables by name, type validation,
  * and creating variables if needed
@@ -556,7 +616,7 @@ async function createVariableFromEntry(
  * For fills, boundVariables structure is: { fills: [{ color: { _varRef: ... } }, ...] }
  * Each fill item can have boundVariables with properties like "color"
  */
-async function restoreBoundVariablesForFills(
+export async function restoreBoundVariablesForFills(
   node: any,
   boundVariables: any,
   propertyName: string,
@@ -574,7 +634,9 @@ async function restoreBoundVariablesForFills(
     }
 
     // Handle fills array binding
-    // boundVariables.fills is an array where each element is an object with properties like { color: { _varRef: ... } }
+    // boundVariables.fills can be:
+    // 1. An array where each element is an object with properties like { color: { _varRef: ... } }
+    // 2. An array where each element is a direct variable reference like { _varRef: 57 }
     const fillsBinding = boundVariables[propertyName];
     if (Array.isArray(fillsBinding)) {
       for (
@@ -584,26 +646,43 @@ async function restoreBoundVariablesForFills(
       ) {
         const fillBinding = fillsBinding[i];
         if (fillBinding && typeof fillBinding === "object") {
-          // Each fill binding can have properties like "color", "opacity", etc.
           // Initialize boundVariables on the fill if it doesn't exist
           if (!propertyValue[i].boundVariables) {
             propertyValue[i].boundVariables = {};
           }
 
-          // Iterate over each property in the fill binding (e.g., "color")
-          for (const [fillPropertyName, varInfo] of Object.entries(
-            fillBinding,
-          )) {
-            if (isVariableReference(varInfo)) {
-              const varRef = (varInfo as VariableReference)._varRef;
-              if (varRef !== undefined) {
-                const variable = recognizedVariables.get(String(varRef));
-                if (variable) {
-                  // Set the boundVariable with the correct structure
-                  propertyValue[i].boundVariables[fillPropertyName] = {
-                    type: "VARIABLE_ALIAS",
-                    id: variable.id,
-                  };
+          // Check if this is a direct variable reference (e.g., { _varRef: 57 })
+          // In Figma, binding an entire fill typically means binding the color property
+          if (isVariableReference(fillBinding)) {
+            const varRef = (fillBinding as VariableReference)._varRef;
+            if (varRef !== undefined) {
+              const variable = recognizedVariables.get(String(varRef));
+              if (variable) {
+                // For direct variable references in fills array, bind to the color property
+                // This is the most common case when a fill is bound to a variable
+                propertyValue[i].boundVariables.color = {
+                  type: "VARIABLE_ALIAS",
+                  id: variable.id,
+                };
+              }
+            }
+          } else {
+            // Each fill binding can have properties like "color", "opacity", etc.
+            // Iterate over each property in the fill binding (e.g., "color")
+            for (const [fillPropertyName, varInfo] of Object.entries(
+              fillBinding,
+            )) {
+              if (isVariableReference(varInfo)) {
+                const varRef = (varInfo as VariableReference)._varRef;
+                if (varRef !== undefined) {
+                  const variable = recognizedVariables.get(String(varRef));
+                  if (variable) {
+                    // Set the boundVariable with the correct structure
+                    propertyValue[i].boundVariables[fillPropertyName] = {
+                      type: "VARIABLE_ALIAS",
+                      id: variable.id,
+                    };
+                  }
                 }
               }
             }
@@ -715,6 +794,8 @@ export async function recreateNodeFromData(
   isRemoteStructure: boolean = false, // If true, don't resolve instance references, just recreate as frames
   remoteComponentMap: Map<number, ComponentNode> | null = null, // instance table index -> component node on REMOTES page
   deferredInstances: DeferredNormalInstance[] | null = null, // Array to collect deferred normal instances
+  parentNodeData: any = null, // Parent's nodeData - used to check if parent has auto-layout
+  recognizedCollections: Map<string, VariableCollection> | null = null, // For resolving variables from table
 ): Promise<any> {
   let newNode: any;
 
@@ -876,6 +957,8 @@ export async function recreateNodeFromData(
                 isRemoteStructure,
                 remoteComponentMap,
                 null, // deferredInstances - not needed for component set creation
+                null, // parentNodeData - not needed here, will be passed correctly in recursive calls
+                recognizedCollections,
               );
               if (componentNode && componentNode.type === "COMPONENT") {
                 componentVariants.push(componentNode);
@@ -1088,66 +1171,86 @@ export async function recreateNodeFromData(
                   Object.keys(instanceEntry.variantProperties).length > 0
                 ) {
                   try {
-                    // Get the component's property definitions (async method required)
-                    const mainComponent = await newNode.getMainComponentAsync();
-                    if (mainComponent) {
-                      // If the main component is a variant (inside a COMPONENT_SET),
-                      // get property definitions from the parent COMPONENT_SET instead
-                      // Variant components don't have componentPropertyDefinitions - only COMPONENT_SETs do
-                      let componentProperties: ComponentPropertyDefinitions | null =
-                        null;
-                      const mainComponentType = (mainComponent as any).type;
-                      if (mainComponentType === "COMPONENT_SET") {
-                        // Instance was created from a COMPONENT_SET directly
-                        const componentSet =
-                          mainComponent as unknown as ComponentSetNode;
-                        componentProperties =
-                          componentSet.componentPropertyDefinitions;
-                      } else if (
-                        mainComponentType === "COMPONENT" &&
-                        mainComponent.parent &&
-                        mainComponent.parent.type === "COMPONENT_SET"
-                      ) {
-                        // Instance was created from a variant component - get properties from parent COMPONENT_SET
-                        componentProperties =
-                          mainComponent.parent.componentPropertyDefinitions;
-                      } else {
-                        // Instance was created from a non-variant component - no variant properties to set
-                        await debugConsole.warning(
-                          `Cannot set variant properties for internal instance "${nodeData.name}" - main component is not a COMPONENT_SET or variant`,
-                        );
-                      }
+                    // Check if the component we looked up is inside a component set
+                    // (This is more reliable than checking the instance's main component's parent)
+                    let componentProperties: ComponentPropertyDefinitions | null =
+                      null;
 
-                      if (componentProperties) {
-                        const validProperties: Record<string, string> = {};
-
-                        // Only include properties that exist on the component
-                        for (const [propName, propValue] of Object.entries(
-                          instanceEntry.variantProperties,
-                        )) {
-                          // Property names in JSON may include IDs - extract clean name
-                          const cleanPropName = propName.split("#")[0];
-                          if (componentProperties[cleanPropName]) {
-                            validProperties[cleanPropName] =
-                              propValue as string;
-                          } else {
-                            // Expected: Component property definitions cannot be recreated via Figma API
-                            // This is a known limitation - properties are skipped silently
-                            // await debugConsole.warning(
-                            //   `Skipping variant property "${propName}" for internal instance "${nodeData.name}" - property does not exist on recreated component`,
-                            // );
-                          }
-                        }
-
-                        // Only set properties if we have valid ones
-                        if (Object.keys(validProperties).length > 0) {
-                          newNode.setProperties(validProperties);
-                        }
-                      }
-                    } else {
-                      await debugConsole.warning(
-                        `Cannot set variant properties for internal instance "${nodeData.name}" - main component not found`,
+                    // First, check if the componentNode itself is inside a component set
+                    if (
+                      componentNode.parent &&
+                      componentNode.parent.type === "COMPONENT_SET"
+                    ) {
+                      // Component is inside a component set - get properties from the component set
+                      componentProperties =
+                        componentNode.parent.componentPropertyDefinitions;
+                      await debugConsole.log(
+                        `  DEBUG: Component "${instanceEntry.componentName}" is inside component set "${componentNode.parent.name}" with ${Object.keys(componentProperties || {}).length} property definitions`,
                       );
+                    } else {
+                      // Component is not yet in a component set (may be moved later during component set creation)
+                      // Check the instance's main component as a fallback
+                      const mainComponent =
+                        await newNode.getMainComponentAsync();
+                      if (mainComponent) {
+                        const mainComponentType = (mainComponent as any).type;
+                        await debugConsole.log(
+                          `  DEBUG: Internal instance "${nodeData.name}" - componentNode parent: ${componentNode.parent ? (componentNode.parent as any).type : "N/A"}, mainComponent type: ${mainComponentType}, mainComponent parent: ${mainComponent.parent ? (mainComponent.parent as any).type : "N/A"}`,
+                        );
+                        if (mainComponentType === "COMPONENT_SET") {
+                          // Instance was created from a COMPONENT_SET directly
+                          const componentSet =
+                            mainComponent as unknown as ComponentSetNode;
+                          componentProperties =
+                            componentSet.componentPropertyDefinitions;
+                        } else if (
+                          mainComponentType === "COMPONENT" &&
+                          mainComponent.parent &&
+                          mainComponent.parent.type === "COMPONENT_SET"
+                        ) {
+                          // Instance was created from a variant component - get properties from parent COMPONENT_SET
+                          componentProperties =
+                            mainComponent.parent.componentPropertyDefinitions;
+                          await debugConsole.log(
+                            `  DEBUG: Found component set parent "${(mainComponent.parent as any).name}" with ${Object.keys(componentProperties || {}).length} property definitions`,
+                          );
+                        } else {
+                          // Component is not yet in a component set - this is expected during import
+                          // The component will be moved into a component set later, but variant properties
+                          // can only be set after the component is in the set
+                          // We'll skip setting variant properties for now - they'll be set correctly
+                          // when the component is moved into the component set
+                          await debugConsole.log(
+                            `  Skipping variant properties for internal instance "${nodeData.name}" - component "${instanceEntry.componentName}" is not yet in a COMPONENT_SET (will be moved later during component set creation)`,
+                          );
+                        }
+                      }
+                    }
+
+                    if (componentProperties) {
+                      const validProperties: Record<string, string> = {};
+
+                      // Only include properties that exist on the component
+                      for (const [propName, propValue] of Object.entries(
+                        instanceEntry.variantProperties,
+                      )) {
+                        // Property names in JSON may include IDs - extract clean name
+                        const cleanPropName = propName.split("#")[0];
+                        if (componentProperties[cleanPropName]) {
+                          validProperties[cleanPropName] = propValue as string;
+                        } else {
+                          // Expected: Component property definitions cannot be recreated via Figma API
+                          // This is a known limitation - properties are skipped silently
+                          // await debugConsole.warning(
+                          //   `Skipping variant property "${propName}" for internal instance "${nodeData.name}" - property does not exist on recreated component`,
+                          // );
+                        }
+                      }
+
+                      // Only set properties if we have valid ones
+                      if (Object.keys(validProperties).length > 0) {
+                        newNode.setProperties(validProperties);
+                      }
                     }
                   } catch (error) {
                     const errorMessage = `Failed to set variant properties for instance "${nodeData.name}": ${error}`;
@@ -1298,8 +1401,11 @@ export async function recreateNodeFromData(
                       componentProperties =
                         mainComponent.parent.componentPropertyDefinitions;
                     } else {
-                      await debugConsole.warning(
-                        `Cannot set variant properties for remote instance "${nodeData.name}" - main component is not a COMPONENT_SET or variant`,
+                      // Expected: Remote components are recreated as standalone COMPONENT nodes,
+                      // not as part of a COMPONENT_SET, so variant properties cannot be set.
+                      // Component properties (if any) will be set separately below.
+                      await debugConsole.log(
+                        `Skipping variant properties for remote instance "${nodeData.name}" - main component is not a COMPONENT_SET or variant (expected for remote components)`,
                       );
                     }
 
@@ -1506,12 +1612,13 @@ export async function recreateNodeFromData(
           // Find the component on the referenced page using path and component name
           let targetComponent: ComponentNode | null = null;
 
-          // Helper function to find component by path and name
+          // Helper function to find component by path, component set name, and component name
           const findComponentByPath = (
             parent: any,
             path: string[],
             componentName: string,
             componentGuid?: string,
+            componentSetName?: string,
           ): ComponentNode | null => {
             // If path is empty, search direct children of parent
             if (path.length === 0) {
@@ -1547,6 +1654,12 @@ export async function recreateNodeFromData(
                     }
                   }
                 } else if (child.type === "COMPONENT_SET") {
+                  // Only search in this component set if componentSetName matches (if provided)
+                  // This ensures we find the correct variant when multiple component sets have variants with the same name
+                  if (componentSetName && child.name !== componentSetName) {
+                    continue; // Skip this component set if name doesn't match
+                  }
+
                   // Check if component name matches a variant in the component set
                   for (const variant of child.children || []) {
                     if (
@@ -1573,6 +1686,12 @@ export async function recreateNodeFromData(
                           // Metadata check failed, continue searching
                         }
                       } else {
+                        // If componentSetName was provided and matched, return immediately
+                        // (we've already filtered to the correct component set)
+                        if (componentSetName) {
+                          return variant;
+                        }
+                        // Otherwise, continue searching to find the best match
                         return variant;
                       }
                     }
@@ -1599,6 +1718,11 @@ export async function recreateNodeFromData(
                   remainingPath.length === 0 &&
                   child.type === "COMPONENT_SET"
                 ) {
+                  // Verify component set name matches if provided
+                  if (componentSetName && child.name !== componentSetName) {
+                    continue; // Skip this component set if name doesn't match
+                  }
+
                   // Search for the component variant in this COMPONENT_SET
                   for (const variant of child.children || []) {
                     if (
@@ -1634,6 +1758,7 @@ export async function recreateNodeFromData(
                   remainingPath,
                   componentName,
                   componentGuid,
+                  componentSetName,
                 );
               }
             }
@@ -1682,6 +1807,7 @@ export async function recreateNodeFromData(
             instanceEntry.path || [],
             instanceEntry.componentName,
             instanceEntry.componentGuid,
+            instanceEntry.componentSetName,
           );
 
           // Log if we used name match fallback (GUID verification failed)
@@ -1989,6 +2115,27 @@ export async function recreateNodeFromData(
     }
   }
 
+  // Store instance table index mapping for variant property setting in third pass
+  // This allows us to match instances to their specific instance table entries
+  // even when multiple instances reference the same component
+  if (nodeData._instanceRef !== undefined && newNode.type === "INSTANCE") {
+    // Store mapping: new instance node ID -> instance table index
+    if (!(nodeIdMapping as any)._instanceTableMap) {
+      (nodeIdMapping as any)._instanceTableMap = new Map<string, number>();
+    }
+    (nodeIdMapping as any)._instanceTableMap.set(
+      newNode.id,
+      nodeData._instanceRef,
+    );
+    await debugConsole.log(
+      `  Stored instance table mapping: instance "${newNode.name}" (ID: ${newNode.id.substring(0, 8)}...) -> instance table index ${nodeData._instanceRef}`,
+    );
+  } else if (newNode.type === "INSTANCE") {
+    await debugConsole.log(
+      `  WARNING: Instance "${newNode.name}" (ID: ${newNode.id.substring(0, 8)}...) has no _instanceRef in nodeData - will use fallback matching in third pass`,
+    );
+  }
+
   // Apply defaults first
   applyDefaultsToNode(newNode, nodeData.type || "FRAME");
 
@@ -1996,12 +2143,33 @@ export async function recreateNodeFromData(
   if (nodeData.name !== undefined) {
     newNode.name = nodeData.name || "Unnamed Node";
   }
-  if (nodeData.x !== undefined) {
-    newNode.x = nodeData.x;
+
+  // Only set x/y positions if:
+  // 1. The node is not a child of an auto-layout parent, OR
+  // 2. The node itself doesn't have auto-layout enabled
+  // When auto-layout is enabled, children should be positioned automatically
+  // Check both parentNode.layoutMode (if already set) and parentNodeData.layoutMode (from nodeData)
+  const parentHasAutoLayoutFromNode =
+    parentNodeData &&
+    parentNodeData.layoutMode !== undefined &&
+    parentNodeData.layoutMode !== "NONE";
+  const parentHasAutoLayoutFromProperty =
+    parentNode &&
+    "layoutMode" in parentNode &&
+    parentNode.layoutMode !== "NONE";
+  const parentHasAutoLayout =
+    parentHasAutoLayoutFromNode || parentHasAutoLayoutFromProperty;
+
+  // Only set x/y if parent doesn't have auto-layout (or if this is a top-level node)
+  if (!parentHasAutoLayout) {
+    if (nodeData.x !== undefined) {
+      newNode.x = nodeData.x;
+    }
+    if (nodeData.y !== undefined) {
+      newNode.y = nodeData.y;
+    }
   }
-  if (nodeData.y !== undefined) {
-    newNode.y = nodeData.y;
-  }
+  // If parent has auto-layout, don't set x/y - auto-layout will position children automatically
   // For VECTOR nodes, we need to set size AFTER vectorPaths are set,
   // because setting vectorPaths can auto-resize the vector to fit the path bounds.
   // For other node types, set size now.
@@ -2034,6 +2202,17 @@ export async function recreateNodeFromData(
   // For FRAME and COMPONENT nodes, if fills are undefined, explicitly clear them
   // to prevent default white fills from appearing
   if (nodeData.type !== "INSTANCE") {
+    // DEBUG: Log bound variables for VECTOR nodes (for "Selection colors" issue)
+    if (nodeData.type === "VECTOR" && nodeData.boundVariables) {
+      await debugConsole.log(
+        `  DEBUG: VECTOR "${nodeData.name || "Unnamed"}" (ID: ${nodeData.id?.substring(0, 8) || "unknown"}...) has boundVariables: ${Object.keys(nodeData.boundVariables).join(", ")}`,
+      );
+      if (nodeData.boundVariables.fills) {
+        await debugConsole.log(
+          `  DEBUG:   boundVariables.fills: ${JSON.stringify(nodeData.boundVariables.fills)}`,
+        );
+      }
+    }
     if (nodeData.fills !== undefined) {
       try {
         // Process fills array - remove boundVariables that contain _varRef
@@ -2051,16 +2230,190 @@ export async function recreateNodeFromData(
           });
         }
 
-        // Set fills without boundVariables first
-        newNode.fills = fills;
+        // Restore bound variables from fill items themselves (e.g., fills[0].bndVar.color)
+        // This handles cases where bound variables are stored directly in fill items
+        // We need to create new fill objects with boundVariables included, not modify existing ones
+        if (
+          nodeData.fills &&
+          Array.isArray(nodeData.fills) &&
+          recognizedVariables
+        ) {
+          // DEBUG: Log fill items for VECTOR nodes
+          if (nodeData.type === "VECTOR") {
+            await debugConsole.log(
+              `  DEBUG: VECTOR "${nodeData.name || "Unnamed"}" has ${nodeData.fills.length} fill(s)`,
+            );
+            for (let i = 0; i < nodeData.fills.length; i++) {
+              const fillData = nodeData.fills[i];
+              if (fillData && typeof fillData === "object") {
+                const fillBoundVars =
+                  fillData.boundVariables || fillData.bndVar;
+                if (fillBoundVars) {
+                  await debugConsole.log(
+                    `  DEBUG:   fill[${i}] has boundVariables: ${JSON.stringify(fillBoundVars)}`,
+                  );
+                } else {
+                  await debugConsole.log(
+                    `  DEBUG:   fill[${i}] has no boundVariables`,
+                  );
+                }
+              }
+            }
+          }
 
-        // Now restore bound variables for fills properly
-        if (nodeData.boundVariables?.fills && recognizedVariables) {
-          await restoreBoundVariablesForFills(
-            newNode,
-            nodeData.boundVariables,
-            "fills",
-            recognizedVariables,
+          // Create new fill objects with boundVariables
+          const fillsWithBoundVars: any[] = [];
+          for (let i = 0; i < fills.length; i++) {
+            const fill = fills[i];
+            const fillData = nodeData.fills[i];
+
+            if (!fillData || typeof fillData !== "object") {
+              fillsWithBoundVars.push(fill);
+              continue;
+            }
+
+            // Check for boundVariables in fill items (decompressed from bndVar in JSON)
+            const fillBoundVars = fillData.boundVariables || fillData.bndVar;
+            if (!fillBoundVars) {
+              fillsWithBoundVars.push(fill);
+              continue;
+            }
+
+            // Create a new fill object with boundVariables
+            const newFill = { ...fill };
+            newFill.boundVariables = {};
+
+            // Restore bound variables from boundVariables/bndVar (e.g., boundVariables.color)
+            for (const [propName, varInfo] of Object.entries(fillBoundVars)) {
+              // DEBUG: Log what we're processing
+              if (nodeData.type === "VECTOR") {
+                await debugConsole.log(
+                  `  DEBUG: Processing fill[${i}].${propName} on VECTOR "${newNode.name || "Unnamed"}": varInfo=${JSON.stringify(varInfo)}`,
+                );
+              }
+              if (isVariableReference(varInfo)) {
+                const varRef = (varInfo as VariableReference)._varRef;
+                if (varRef !== undefined) {
+                  // DEBUG: Log variable lookup
+                  if (nodeData.type === "VECTOR") {
+                    await debugConsole.log(
+                      `  DEBUG: Looking up variable reference ${varRef} in recognizedVariables (map has ${recognizedVariables.size} entries)`,
+                    );
+                    // DEBUG: List available variable references
+                    const availableRefs = Array.from(
+                      recognizedVariables.keys(),
+                    ).slice(0, 10);
+                    await debugConsole.log(
+                      `  DEBUG: Available variable references (first 10): ${availableRefs.join(", ")}`,
+                    );
+                    // Check if the specific variable reference exists
+                    const hasVarRef = recognizedVariables.has(String(varRef));
+                    await debugConsole.log(
+                      `  DEBUG: Variable reference ${varRef} ${hasVarRef ? "found" : "NOT FOUND"} in recognizedVariables`,
+                    );
+                    if (!hasVarRef) {
+                      // List all available references to help debug
+                      const allRefs = Array.from(
+                        recognizedVariables.keys(),
+                      ).sort((a, b) => parseInt(a) - parseInt(b));
+                      await debugConsole.log(
+                        `  DEBUG: All available variable references: ${allRefs.join(", ")}`,
+                      );
+                    }
+                  }
+                  let variable = recognizedVariables.get(String(varRef));
+                  // If not found in recognizedVariables, try to resolve from variable table
+                  if (!variable) {
+                    if (nodeData.type === "VECTOR") {
+                      await debugConsole.log(
+                        `  DEBUG: Variable ${varRef} not in recognizedVariables. variableTable=${!!variableTable}, collectionTable=${!!collectionTable}, recognizedCollections=${!!recognizedCollections}`,
+                      );
+                    }
+                    if (
+                      variableTable &&
+                      collectionTable &&
+                      recognizedCollections
+                    ) {
+                      await debugConsole.log(
+                        `  Variable reference ${varRef} not in recognizedVariables, attempting to resolve from variable table...`,
+                      );
+                      const resolvedVariable = await resolveVariableFromTable(
+                        varRef,
+                        variableTable,
+                        collectionTable,
+                        recognizedCollections,
+                      );
+                      variable = resolvedVariable || undefined;
+                      if (variable) {
+                        // Add to recognizedVariables for future lookups
+                        recognizedVariables.set(String(varRef), variable);
+                        await debugConsole.log(
+                          `  ✓ Resolved variable ${variable.name} from variable table and added to recognizedVariables`,
+                        );
+                      } else {
+                        await debugConsole.warning(
+                          `  Failed to resolve variable ${varRef} from variable table`,
+                        );
+                      }
+                    } else {
+                      if (nodeData.type === "VECTOR") {
+                        await debugConsole.warning(
+                          `  Cannot resolve variable ${varRef} from table - missing required parameters`,
+                        );
+                      }
+                    }
+                  }
+                  if (variable) {
+                    newFill.boundVariables[propName] = {
+                      type: "VARIABLE_ALIAS",
+                      id: variable.id,
+                    };
+                    await debugConsole.log(
+                      `  ✓ Restored bound variable for fill[${i}].${propName} on "${newNode.name || "Unnamed"}" (${nodeData.type}): variable ${variable.name} (ID: ${variable.id.substring(0, 8)}...)`,
+                    );
+                  } else {
+                    await debugConsole.warning(
+                      `  Variable reference ${varRef} not found in recognizedVariables for fill[${i}].${propName} on "${newNode.name || "Unnamed"}"`,
+                    );
+                  }
+                } else {
+                  if (nodeData.type === "VECTOR") {
+                    await debugConsole.warning(
+                      `  DEBUG: Variable reference ${varRef} is undefined for fill[${i}].${propName} on VECTOR "${newNode.name || "Unnamed"}"`,
+                    );
+                  }
+                }
+              } else {
+                if (nodeData.type === "VECTOR") {
+                  await debugConsole.warning(
+                    `  DEBUG: fill[${i}].${propName} on VECTOR "${newNode.name || "Unnamed"}" is not a variable reference: ${JSON.stringify(varInfo)}`,
+                  );
+                }
+              }
+            }
+
+            fillsWithBoundVars.push(newFill);
+          }
+
+          // Set fills with boundVariables
+          newNode.fills = fillsWithBoundVars;
+          await debugConsole.log(
+            `  ✓ Set fills with boundVariables on "${newNode.name || "Unnamed"}" (${nodeData.type})`,
+          );
+        } else {
+          // Set fills without boundVariables if we can't restore them
+          newNode.fills = fills;
+        }
+
+        // Note: Bound variables for fills are already restored above from fillData.boundVariables
+        // We only need to check for other boundVariables (not fills) at the node level
+        if (
+          nodeData.boundVariables &&
+          Object.keys(nodeData.boundVariables).length > 0 &&
+          !nodeData.boundVariables.fills
+        ) {
+          await debugConsole.log(
+            `  Node "${newNode.name || "Unnamed"}" (${nodeData.type}) has boundVariables but not for fills: ${Object.keys(nodeData.boundVariables).join(", ")}`,
           );
         }
       } catch (error) {
@@ -2124,14 +2477,21 @@ export async function recreateNodeFromData(
   }
 
   // Set layout properties for frames, components, and instances
+  // Order matters: fixed dimensions first (already set above), then auto-layout, then wrap
   if (
     nodeData.type === "FRAME" ||
     nodeData.type === "COMPONENT" ||
     nodeData.type === "INSTANCE"
   ) {
+    // Step 1: Set auto-layout mode (must be set before wrap)
     if (nodeData.layoutMode !== undefined) {
       newNode.layoutMode = nodeData.layoutMode;
     }
+    // Step 2: Set wrap (must be set after layoutMode)
+    if (nodeData.layoutWrap !== undefined) {
+      newNode.layoutWrap = nodeData.layoutWrap;
+    }
+    // Step 3: Set other layout properties
     if (nodeData.primaryAxisSizingMode !== undefined) {
       newNode.primaryAxisSizingMode = nodeData.primaryAxisSizingMode;
     }
@@ -2158,6 +2518,9 @@ export async function recreateNodeFromData(
     }
     if (nodeData.itemSpacing !== undefined) {
       newNode.itemSpacing = nodeData.itemSpacing;
+    }
+    if (nodeData.layoutGrow !== undefined) {
+      newNode.layoutGrow = nodeData.layoutGrow;
     }
   }
 
@@ -2510,6 +2873,8 @@ export async function recreateNodeFromData(
         isRemoteStructure,
         remoteComponentMap,
         null, // deferredInstances - not needed for remote structures
+        nodeData, // parentNodeData - pass the parent's nodeData so children can check for auto-layout
+        recognizedCollections,
       );
       if (childNode) {
         // Only append if the child doesn't already have this node as its parent
@@ -2561,6 +2926,168 @@ export async function recreateNodeFromData(
   // If newNode.parent === parentNode, it's already correctly parented, so do nothing
 
   return newNode;
+}
+
+/**
+ * Third pass: Set variant properties on all instances after component sets are created
+ * This is needed because instances are created before component sets are combined,
+ * so variant properties can't be set until after component sets exist
+ */
+async function setVariantPropertiesOnInstances(
+  page: PageNode,
+  instanceTable: InstanceTable,
+  nodeIdMapping: Map<string, any>,
+): Promise<void> {
+  let processedCount = 0;
+  let skippedCount = 0;
+  let errorCount = 0;
+
+  // Recursively find all instances on the page
+  const findInstances = (node: PageNode | SceneNode): InstanceNode[] => {
+    const instances: InstanceNode[] = [];
+    if (node.type === "INSTANCE") {
+      instances.push(node);
+    }
+    if ("children" in node && node.children) {
+      for (const child of node.children) {
+        instances.push(...findInstances(child));
+      }
+    }
+    return instances;
+  };
+
+  const allInstances = findInstances(page);
+  await debugConsole.log(
+    `  Found ${allInstances.length} instance(s) to process for variant properties`,
+  );
+
+  for (const instanceNode of allInstances) {
+    try {
+      // Get the instance's main component
+      const mainComponent = await instanceNode.getMainComponentAsync();
+      if (!mainComponent) {
+        skippedCount++;
+        continue;
+      }
+
+      // Find the instance entry that matches this instance
+      // First, try to use the instance table index mapping stored during creation
+      const allInstancesData = instanceTable.getSerializedTable();
+      let matchingEntry: any = null;
+      let instanceTableIndex: number | undefined = undefined;
+
+      // Check if we have a mapping from instance node ID to instance table index
+      if ((nodeIdMapping as any)._instanceTableMap) {
+        instanceTableIndex = (nodeIdMapping as any)._instanceTableMap.get(
+          instanceNode.id,
+        );
+        if (instanceTableIndex !== undefined) {
+          matchingEntry = allInstancesData[instanceTableIndex];
+          await debugConsole.log(
+            `  Found instance table index ${instanceTableIndex} for instance "${instanceNode.name}" (ID: ${instanceNode.id.substring(0, 8)}...)`,
+          );
+        } else {
+          await debugConsole.log(
+            `  No instance table index mapping found for instance "${instanceNode.name}" (ID: ${instanceNode.id.substring(0, 8)}...), using fallback matching`,
+          );
+        }
+      } else {
+        await debugConsole.log(
+          `  No instance table map found, using fallback matching for instance "${instanceNode.name}"`,
+        );
+      }
+
+      // Fallback: If no mapping found, try to match by component (less precise)
+      if (!matchingEntry) {
+        for (const [indexStr, entry] of Object.entries(allInstancesData)) {
+          if (entry.instanceType === "internal") {
+            // For internal instances, check if the componentNodeId matches
+            if (
+              entry.componentNodeId &&
+              nodeIdMapping.has(entry.componentNodeId)
+            ) {
+              const componentNode = nodeIdMapping.get(entry.componentNodeId);
+              if (componentNode && componentNode.id === mainComponent.id) {
+                matchingEntry = entry;
+                await debugConsole.log(
+                  `  Matched instance "${instanceNode.name}" to instance table entry ${indexStr} by component (less precise)`,
+                );
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      if (!matchingEntry) {
+        await debugConsole.log(
+          `  No matching entry found for instance "${instanceNode.name}" (main component: ${mainComponent.name}, ID: ${mainComponent.id.substring(0, 8)}...)`,
+        );
+        skippedCount++;
+        continue;
+      }
+
+      if (!matchingEntry.variantProperties) {
+        await debugConsole.log(
+          `  Instance table entry for "${instanceNode.name}" has no variant properties`,
+        );
+        skippedCount++;
+        continue;
+      }
+
+      await debugConsole.log(
+        `  Instance "${instanceNode.name}" matched to entry with variant properties: ${JSON.stringify(matchingEntry.variantProperties)}`,
+      );
+
+      // Now set variant properties
+      let componentProperties: ComponentPropertyDefinitions | null = null;
+
+      // Check if the main component is inside a component set
+      if (
+        mainComponent.parent &&
+        mainComponent.parent.type === "COMPONENT_SET"
+      ) {
+        componentProperties = mainComponent.parent.componentPropertyDefinitions;
+      }
+
+      if (componentProperties) {
+        const validProperties: Record<string, string> = {};
+
+        // Only include properties that exist on the component
+        for (const [propName, propValue] of Object.entries(
+          matchingEntry.variantProperties,
+        )) {
+          // Property names in JSON may include IDs - extract clean name
+          const cleanPropName = propName.split("#")[0];
+          if (componentProperties[cleanPropName]) {
+            validProperties[cleanPropName] = propValue as string;
+          }
+        }
+
+        // Only set properties if we have valid ones
+        if (Object.keys(validProperties).length > 0) {
+          instanceNode.setProperties(validProperties);
+          processedCount++;
+          await debugConsole.log(
+            `  ✓ Set variant properties on instance "${instanceNode.name}": ${JSON.stringify(validProperties)}`,
+          );
+        } else {
+          skippedCount++;
+        }
+      } else {
+        skippedCount++;
+      }
+    } catch (error) {
+      errorCount++;
+      await debugConsole.warning(
+        `  Failed to set variant properties on instance "${instanceNode.name}": ${error}`,
+      );
+    }
+  }
+
+  await debugConsole.log(
+    `  Variant properties set: ${processedCount} processed, ${skippedCount} skipped, ${errorCount} errors`,
+  );
 }
 
 /**
@@ -3262,7 +3789,7 @@ function normalizeNodeType(type: number | string): string {
 /**
  * Recursively normalizes types in a node structure
  */
-function normalizeStructureTypes(nodeData: any): void {
+export function normalizeStructureTypes(nodeData: any): void {
   if (!nodeData || typeof nodeData !== "object") {
     return;
   }
@@ -3351,6 +3878,7 @@ async function createRemoteInstances(
   variableTable: VariableTable,
   collectionTable: CollectionTable,
   recognizedVariables: Map<string, Variable>,
+  recognizedCollections: Map<string, VariableCollection>,
 ): Promise<Map<number, ComponentNode>> {
   const allInstances = instanceTable.getSerializedTable();
   const remoteInstances = Object.values(allInstances).filter(
@@ -3506,6 +4034,8 @@ async function createRemoteInstances(
           true, // isRemoteStructure: true
           null, // remoteComponentMap - not needed here
           null, // deferredInstances - not needed for remote instances
+          null, // parentNodeData - not available for remote structures
+          recognizedCollections,
         );
         if (recreatedNode) {
           containerFrame.appendChild(recreatedNode);
@@ -3738,6 +4268,8 @@ async function createRemoteInstances(
               true, // isRemoteStructure: true
               null, // remoteComponentMap - not needed here
               null, // deferredInstances - not needed for remote instances
+              entry.structure, // parentNodeData - pass the component's structure so children can check for auto-layout
+              recognizedCollections,
             );
             if (childNode) {
               componentNode.appendChild(childNode);
@@ -3789,6 +4321,7 @@ async function createPageAndRecreateStructure(
   remoteComponentMap: Map<number, ComponentNode> | null = null,
   deferredInstances: DeferredNormalInstance[] | null = null,
   isMainPage: boolean = false, // If true, always create a copy (no prompt). If false, prompt for existing pages.
+  recognizedCollections: Map<string, VariableCollection> | null = null,
 ): Promise<{
   success: boolean;
   page?: PageNode;
@@ -3984,6 +4517,8 @@ async function createPageAndRecreateStructure(
         false, // isRemoteStructure: false - we're creating the main page
         remoteComponentMap,
         deferredInstances,
+        pageData, // parentNodeData - pass the page's nodeData so children can check for auto-layout
+        recognizedCollections,
       );
       if (childNode) {
         newPage.appendChild(childNode);
@@ -3992,6 +4527,20 @@ async function createPageAndRecreateStructure(
   }
 
   await debugConsole.log("Page structure recreated successfully");
+
+  // Third pass: Set variant properties on all instances now that component sets are created
+  // This is needed because instances are created before component sets are combined,
+  // so variant properties can't be set until after component sets exist
+  if (instanceTable) {
+    await debugConsole.log(
+      "Third pass: Setting variant properties on instances...",
+    );
+    await setVariantPropertiesOnInstances(
+      newPage,
+      instanceTable,
+      nodeIdMapping,
+    );
+  }
 
   const pageMetadata = {
     _ver: 1,
@@ -4203,6 +4752,7 @@ export async function importPage(
         variableTable,
         collectionTable,
         recognizedVariables,
+        recognizedCollections,
       );
     }
 
@@ -4219,6 +4769,7 @@ export async function importPage(
       remoteComponentMap,
       deferredInstances,
       isMainPage,
+      recognizedCollections,
     );
 
     if (!pageResult.success) {
@@ -4322,12 +4873,13 @@ export async function resolveDeferredNormalInstances(
         continue;
       }
 
-      // Helper function to find component by path and name (reuse from recreateNodeFromData)
+      // Helper function to find component by path, component set name, and component name
       const findComponentByPath = (
         parent: any,
         path: string[],
         componentName: string,
         componentGuid?: string,
+        componentSetName?: string,
       ): ComponentNode | null => {
         if (path.length === 0) {
           let nameMatch: ComponentNode | null = null;
@@ -4357,6 +4909,11 @@ export async function resolveDeferredNormalInstances(
                 }
               }
             } else if (child.type === "COMPONENT_SET") {
+              // Only search in this component set if componentSetName matches (if provided)
+              if (componentSetName && child.name !== componentSetName) {
+                continue; // Skip this component set if name doesn't match
+              }
+
               for (const variant of child.children || []) {
                 if (
                   variant.type === "COMPONENT" &&
@@ -4380,6 +4937,10 @@ export async function resolveDeferredNormalInstances(
                       // Continue searching
                     }
                   } else {
+                    // If componentSetName was provided and matched, return immediately
+                    if (componentSetName) {
+                      return variant;
+                    }
                     return variant;
                   }
                 }
@@ -4396,11 +4957,49 @@ export async function resolveDeferredNormalInstances(
         const [firstSegment, ...remainingPath] = path;
         for (const child of parent.children || []) {
           if (child.name === firstSegment) {
+            // If we've reached the end of the path and this is a COMPONENT_SET,
+            // search for the component inside it
+            if (remainingPath.length === 0 && child.type === "COMPONENT_SET") {
+              // Verify component set name matches if provided
+              if (componentSetName && child.name !== componentSetName) {
+                continue; // Skip this component set if name doesn't match
+              }
+
+              // Search for the component variant in this COMPONENT_SET
+              for (const variant of child.children || []) {
+                if (
+                  variant.type === "COMPONENT" &&
+                  variant.name === componentName
+                ) {
+                  // Found the variant - check GUID if provided
+                  if (componentGuid) {
+                    try {
+                      const metadataStr = variant.getPluginData(
+                        "RecursicaPublishedMetadata",
+                      );
+                      if (metadataStr) {
+                        const metadata = JSON.parse(metadataStr);
+                        if (metadata.id === componentGuid) {
+                          return variant;
+                        }
+                      }
+                    } catch {
+                      // Continue searching
+                    }
+                  }
+                  // Return variant (GUID check passed or no GUID provided)
+                  return variant;
+                }
+              }
+              // Component not found in COMPONENT_SET
+              return null;
+            }
             return findComponentByPath(
               child,
               remainingPath,
               componentName,
               componentGuid,
+              componentSetName,
             );
           }
         }
@@ -4412,6 +5011,7 @@ export async function resolveDeferredNormalInstances(
         instanceEntry.path || [],
         instanceEntry.componentName,
         instanceEntry.componentGuid,
+        instanceEntry.componentSetName,
       );
 
       if (!targetComponent) {

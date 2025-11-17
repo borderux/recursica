@@ -3,7 +3,6 @@
 import type { ParsedNodeData, ParserContext } from "./baseNodeParser";
 import { debugConsole } from "../../services/debugConsole";
 import type { InstanceTableEntry } from "./instanceTable";
-import { extractNodeData } from "../pageExportNew";
 import { pluginPrompt } from "../../utils/pluginPrompt";
 
 const COMPONENT_METADATA_KEY = "RecursicaPublishedMetadata";
@@ -327,11 +326,124 @@ export async function parseInstanceProperties(
     let variantProperties: Record<string, string> | undefined;
     let componentProperties: Record<string, any> | undefined;
     try {
+      // Try multiple ways to get variant properties
       if ((node as any).variantProperties) {
         variantProperties = (node as any).variantProperties;
+        await debugConsole.log(
+          `  Instance "${instanceName}" -> variantProperties from instance: ${JSON.stringify(variantProperties)}`,
+        );
       }
+
+      // Also try getProperties() if available (some Figma API versions use this)
+      if (typeof (node as any).getProperties === "function") {
+        try {
+          const props = await (node as any).getProperties();
+          if (props && props.variantProperties) {
+            await debugConsole.log(
+              `  Instance "${instanceName}" -> variantProperties from getProperties(): ${JSON.stringify(props.variantProperties)}`,
+            );
+            // Use getProperties() result if it's different/more complete
+            if (
+              props.variantProperties &&
+              Object.keys(props.variantProperties).length > 0
+            ) {
+              variantProperties = props.variantProperties;
+            }
+          }
+        } catch (getPropsError) {
+          // getProperties() might not be available or might fail
+          await debugConsole.log(
+            `  Instance "${instanceName}" -> getProperties() not available or failed: ${getPropsError}`,
+          );
+        }
+      }
+
       if ((node as any).componentProperties) {
         componentProperties = (node as any).componentProperties;
+      }
+
+      // If the main component is part of a component set, check if we can get variant properties from there
+      // Sometimes the instance's variantProperties might be incomplete
+      if (
+        mainComponent.parent &&
+        mainComponent.parent.type === "COMPONENT_SET"
+      ) {
+        const componentSet = mainComponent.parent;
+        // Check if the main component has variant properties that we're missing
+        // The component name might encode variant information (e.g., "Content=Icon")
+        // But we should also check the component set's variant properties
+        try {
+          // Get the component set's property definitions to see what variant properties exist
+          const componentSetProps = (componentSet as any)
+            .componentPropertyDefinitions;
+          if (componentSetProps) {
+            await debugConsole.log(
+              `  Component set "${componentSet.name}" has property definitions: ${JSON.stringify(Object.keys(componentSetProps))}`,
+            );
+          }
+
+          // Parse variant properties from component name (e.g., "Content=Icon" -> {"Content": "Icon"})
+          // Component names in component sets often encode variant information
+          // Format can be: "Property=Value" or "Property1=Value1, Property2=Value2"
+          const nameBasedVariantProps: Record<string, string> = {};
+
+          // First, try to split by comma to handle multiple properties
+          const propertyPairs = componentName
+            .split(",")
+            .map((p: string) => p.trim());
+
+          for (const pair of propertyPairs) {
+            const nameParts = pair.split("=").map((p: string) => p.trim());
+            if (nameParts.length >= 2) {
+              const propertyName = nameParts[0];
+              const propertyValue = nameParts.slice(1).join("=").trim(); // Join in case value contains "="
+
+              // Check if this property exists in the component set's property definitions
+              if (componentSetProps && componentSetProps[propertyName]) {
+                nameBasedVariantProps[propertyName] = propertyValue;
+              }
+            }
+          }
+
+          if (Object.keys(nameBasedVariantProps).length > 0) {
+            await debugConsole.log(
+              `  Parsed variant properties from component name "${componentName}": ${JSON.stringify(nameBasedVariantProps)}`,
+            );
+          }
+
+          // Priority order for variant properties:
+          // 1. Instance's variantProperties (most accurate - reflects user's current selection)
+          // 2. Component name parsing (fallback if instance properties are missing)
+          // 3. Main component's variantProperties (last resort)
+
+          if (variantProperties && Object.keys(variantProperties).length > 0) {
+            // Instance has variant properties - use them as the source of truth
+            // This reflects the actual variant state the user has set in Figma
+            await debugConsole.log(
+              `  Using variant properties from instance (source of truth): ${JSON.stringify(variantProperties)}`,
+            );
+          } else if (Object.keys(nameBasedVariantProps).length > 0) {
+            // No instance variant properties, but we parsed from component name - use those
+            variantProperties = nameBasedVariantProps;
+            await debugConsole.log(
+              `  Using variant properties from component name (fallback): ${JSON.stringify(variantProperties)}`,
+            );
+          } else {
+            // Fallback: if we couldn't parse from name, check main component's variant properties
+            if ((mainComponent as any).variantProperties) {
+              const mainComponentVariantProps = (mainComponent as any)
+                .variantProperties;
+              await debugConsole.log(
+                `  Main component "${componentName}" has variantProperties: ${JSON.stringify(mainComponentVariantProps)}`,
+              );
+              variantProperties = mainComponentVariantProps;
+            }
+          }
+        } catch (error) {
+          await debugConsole.warning(
+            `  Could not get variant properties from component set: ${error}`,
+          );
+        }
       }
     } catch {
       // Properties might not be accessible
@@ -409,6 +521,157 @@ export async function parseInstanceProperties(
       await debugConsole.log(
         `  Found INSTANCE: "${instanceName}" -> INTERNAL component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...)`,
       );
+
+      // DEBUG: Check boundVariables on internal instances (for "Selection colors" etc.)
+      const instanceBoundVars = (node as any).boundVariables;
+      const mainComponentBoundVars = (mainComponent as any).boundVariables;
+      if (instanceBoundVars && typeof instanceBoundVars === "object") {
+        const boundVarKeys = Object.keys(instanceBoundVars);
+        await debugConsole.log(
+          `  DEBUG: Internal instance "${instanceName}" -> boundVariables keys: ${boundVarKeys.length > 0 ? boundVarKeys.join(", ") : "none"}`,
+        );
+        // Log each bound variable key and its type
+        for (const key of boundVarKeys) {
+          const boundVar = instanceBoundVars[key];
+          const boundVarType = boundVar?.type || typeof boundVar;
+          await debugConsole.log(
+            `  DEBUG:   boundVariables.${key}: type=${boundVarType}, value=${JSON.stringify(boundVar)}`,
+          );
+        }
+        // Check for specific properties that might be "Selection colors"
+        const potentialSelectionColorKeys = [
+          "backgrounds",
+          "selectionColor",
+          "selectionColors",
+          "selection",
+          "selectColor",
+        ];
+        for (const potentialKey of potentialSelectionColorKeys) {
+          if (instanceBoundVars[potentialKey] !== undefined) {
+            await debugConsole.log(
+              `  DEBUG:   Found potential "Selection colors" property: boundVariables.${potentialKey} = ${JSON.stringify(instanceBoundVars[potentialKey])}`,
+            );
+          }
+        }
+      } else {
+        await debugConsole.log(
+          `  DEBUG: Internal instance "${instanceName}" -> No boundVariables found on instance node`,
+        );
+      }
+      if (
+        mainComponentBoundVars &&
+        typeof mainComponentBoundVars === "object"
+      ) {
+        const mainBoundVarKeys = Object.keys(mainComponentBoundVars);
+        await debugConsole.log(
+          `  DEBUG: Main component "${componentName}" -> boundVariables keys: ${mainBoundVarKeys.length > 0 ? mainBoundVarKeys.join(", ") : "none"}`,
+        );
+      }
+
+      // DEBUG: Check backgrounds property for bound variables (for "Selection colors")
+      const instanceBackgrounds = (node as any).backgrounds;
+      if (instanceBackgrounds && Array.isArray(instanceBackgrounds)) {
+        await debugConsole.log(
+          `  DEBUG: Internal instance "${instanceName}" -> backgrounds array length: ${instanceBackgrounds.length}`,
+        );
+        for (let i = 0; i < instanceBackgrounds.length; i++) {
+          const bg = instanceBackgrounds[i];
+          if (bg && typeof bg === "object") {
+            // Log the entire background object structure
+            await debugConsole.log(
+              `  DEBUG:   backgrounds[${i}] structure: ${JSON.stringify(Object.keys(bg))}`,
+            );
+            if (bg.boundVariables) {
+              const bgBoundVarKeys = Object.keys(bg.boundVariables);
+              await debugConsole.log(
+                `  DEBUG:   backgrounds[${i}].boundVariables keys: ${bgBoundVarKeys.length > 0 ? bgBoundVarKeys.join(", ") : "none"}`,
+              );
+              for (const key of bgBoundVarKeys) {
+                const bgBoundVar = bg.boundVariables[key];
+                await debugConsole.log(
+                  `  DEBUG:     backgrounds[${i}].boundVariables.${key}: ${JSON.stringify(bgBoundVar)}`,
+                );
+              }
+            }
+            // Check if the background itself has a color property that might be bound
+            if (bg.color) {
+              await debugConsole.log(
+                `  DEBUG:   backgrounds[${i}].color: ${JSON.stringify(bg.color)}`,
+              );
+            }
+          }
+        }
+      }
+
+      // DEBUG: List all enumerable properties on internal instance to find "Selection colors" or similar
+      // Filter out functions, internal properties, and common properties we already handle
+      const instanceAllProps = Object.keys(node).filter(
+        (key) =>
+          !key.startsWith("_") &&
+          key !== "parent" &&
+          key !== "removed" &&
+          typeof (node as any)[key] !== "function" &&
+          key !== "type" &&
+          key !== "id" &&
+          key !== "name" &&
+          key !== "boundVariables" &&
+          key !== "backgrounds" &&
+          key !== "fills",
+      );
+      const mainComponentAllProps = Object.keys(mainComponent).filter(
+        (key) =>
+          !key.startsWith("_") &&
+          key !== "parent" &&
+          key !== "removed" &&
+          typeof (mainComponent as any)[key] !== "function" &&
+          key !== "type" &&
+          key !== "id" &&
+          key !== "name" &&
+          key !== "boundVariables" &&
+          key !== "backgrounds" &&
+          key !== "fills",
+      );
+
+      // Find properties that might be related to selection colors
+      const selectionRelatedProps = [
+        ...new Set([...instanceAllProps, ...mainComponentAllProps]),
+      ].filter(
+        (key) =>
+          key.toLowerCase().includes("selection") ||
+          key.toLowerCase().includes("select") ||
+          (key.toLowerCase().includes("color") &&
+            !key.toLowerCase().includes("fill") &&
+            !key.toLowerCase().includes("stroke")),
+      );
+
+      if (selectionRelatedProps.length > 0) {
+        await debugConsole.log(
+          `  DEBUG: Found selection/color-related properties: ${selectionRelatedProps.join(", ")}`,
+        );
+        // Log values for these properties
+        for (const key of selectionRelatedProps) {
+          try {
+            if (instanceAllProps.includes(key)) {
+              const value = (node as any)[key];
+              await debugConsole.log(
+                `  DEBUG:   Instance.${key}: ${JSON.stringify(value)}`,
+              );
+            }
+            if (mainComponentAllProps.includes(key)) {
+              const value = (mainComponent as any)[key];
+              await debugConsole.log(
+                `  DEBUG:   MainComponent.${key}: ${JSON.stringify(value)}`,
+              );
+            }
+          } catch (e) {
+            // Skip properties that can't be accessed
+          }
+        }
+      } else {
+        await debugConsole.log(
+          `  DEBUG: No selection/color-related properties found on instance or main component`,
+        );
+      }
     } else if (instanceType === "normal") {
       // Get component metadata from the component's page
       // Use effectiveComponentPage (which may have been found for remote components)
@@ -561,145 +824,7 @@ export async function parseInstanceProperties(
         }
       }
 
-      // For remote instances (including detached), we need to store the full structure
-      // This is necessary since we can't resolve the reference
-      // IMPORTANT: Extract from the instance node itself (not mainComponent) to preserve
-      // size overrides and other instance-specific properties. The instance may have been
-      // resized or have different child sizes due to constraints.
-      try {
-        // Extract base properties from the instance (preserves size overrides)
-        const { parseBaseNodeProperties } = await import("./baseNodeParser");
-        const baseProps = await parseBaseNodeProperties(node, context);
-
-        // Extract frame properties from the instance
-        const { parseFrameProperties } = await import("./frameParser");
-        const frameProps = await parseFrameProperties(node, context);
-
-        // Build the structure manually to avoid circular references
-        // We'll extract children directly from the instance (which have the correct sizes)
-        // IMPORTANT: Set type to COMPONENT AFTER spreading baseProps, since baseProps includes type: "INSTANCE"
-        const structure: any = {
-          ...baseProps,
-          ...frameProps,
-          type: "COMPONENT", // Convert to COMPONENT type for recreation (must be after baseProps to override)
-        };
-
-        // Extract children from the instance (preserves size overrides and constraints)
-        // For nested instances, we need to extract their full structure too (not just references)
-        if (
-          node.children &&
-          Array.isArray(node.children) &&
-          node.children.length > 0
-        ) {
-          const childContext: Partial<ParserContext> = {
-            ...context,
-            depth: (context.depth || 0) + 1,
-          };
-          const { extractNodeData } = await import("../pageExportNew");
-          const children: any[] = [];
-          for (const child of node.children) {
-            try {
-              // For nested instances, we want the full structure, not a reference
-              // So we extract from the child directly, treating it as a regular node
-              // (not as an instance that should be processed by parseInstanceProperties)
-              let childData;
-              if (child.type === "INSTANCE") {
-                // For nested instances, extract their structure too (recursively)
-                // Get the main component and extract from it, but use the instance's size
-                try {
-                  const nestedMainComponent = await (
-                    child as any
-                  ).getMainComponentAsync();
-                  if (nestedMainComponent) {
-                    // Extract from main component but preserve instance size
-                    const nestedBaseProps = await parseBaseNodeProperties(
-                      child,
-                      context,
-                    );
-                    const nestedFrameProps = await parseFrameProperties(
-                      child,
-                      context,
-                    );
-                    const nestedStructure = await extractNodeData(
-                      nestedMainComponent,
-                      new WeakSet(),
-                      childContext,
-                    );
-                    // Override with instance's actual properties (size, position, etc.)
-                    childData = {
-                      ...nestedStructure,
-                      ...nestedBaseProps,
-                      ...nestedFrameProps,
-                      type: "COMPONENT", // Convert to COMPONENT
-                    };
-                  } else {
-                    // Fallback: extract from child directly
-                    childData = await extractNodeData(
-                      child,
-                      new WeakSet(),
-                      childContext,
-                    );
-                    if (childData.type === "INSTANCE") {
-                      childData.type = "COMPONENT";
-                    }
-                    delete childData._instanceRef;
-                  }
-                } catch {
-                  // Fallback: extract from child directly
-                  childData = await extractNodeData(
-                    child,
-                    new WeakSet(),
-                    childContext,
-                  );
-                  if (childData.type === "INSTANCE") {
-                    childData.type = "COMPONENT";
-                  }
-                  delete childData._instanceRef;
-                }
-              } else {
-                // Regular child - extract normally
-                childData = await extractNodeData(
-                  child,
-                  new WeakSet(),
-                  childContext,
-                );
-              }
-              children.push(childData);
-            } catch (childError) {
-              console.warn(
-                `Failed to extract child "${child.name || "Unnamed"}" for remote component "${componentName}":`,
-                childError,
-              );
-              // Continue with other children even if one fails
-            }
-          }
-          structure.children = children;
-        }
-
-        // Ensure structure is set
-        if (!structure) {
-          throw new Error("Failed to build structure for remote instance");
-        }
-
-        entry.structure = structure;
-
-        if (isDetachedInstance) {
-          await debugConsole.log(
-            `  Extracted structure for detached component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...)`,
-          );
-        } else {
-          await debugConsole.log(
-            `  Extracted structure from instance for remote component "${componentName}" (preserving size overrides: ${node.width}x${node.height})`,
-          );
-        }
-      } catch (extractError) {
-        const errorMessage = `Failed to extract structure for remote component "${componentName}": ${extractError instanceof Error ? extractError.message : String(extractError)}`;
-        console.error(errorMessage, extractError);
-        await debugConsole.error(errorMessage);
-        // Don't set structure if extraction failed - this will cause import to skip it
-        // which is better than importing incorrect data
-      }
-
+      // Add remote-specific fields to entry BEFORE checking table (needed for key generation)
       if (remoteLibraryName) {
         entry.remoteLibraryName = remoteLibraryName;
       }
@@ -713,9 +838,625 @@ export async function parseInstanceProperties(
         entry.componentNodeId = mainComponent.id;
       }
 
-      await debugConsole.log(
-        `  Found INSTANCE: "${instanceName}" -> REMOTE component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...)${isDetachedInstance ? " [DETACHED]" : ""}`,
-      );
+      // Check if this remote instance already exists in the table BEFORE extracting structure
+      // This prevents duplicate structure extraction for the same remote component
+      const existingIndex = context.instanceTable.getInstanceIndex(entry);
+      if (existingIndex !== -1) {
+        // Instance already exists - reuse it without extracting structure again
+        await debugConsole.log(
+          `  Found INSTANCE: "${instanceName}" -> REMOTE component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...)${isDetachedInstance ? " [DETACHED]" : ""}`,
+        );
+        // Skip structure extraction and go directly to adding to table
+        // (addInstance will return the existing index)
+      } else {
+        // Instance doesn't exist yet - extract structure
+        // For remote instances (including detached), we need to store the full structure
+        // This is necessary since we can't resolve the reference
+        // IMPORTANT: Extract from the instance node itself (not mainComponent) to preserve
+        // size overrides and other instance-specific properties. The instance may have been
+        // resized or have different child sizes due to constraints.
+        try {
+          // Extract base properties from the instance (preserves size overrides)
+          const { parseBaseNodeProperties } = await import("./baseNodeParser");
+          const baseProps = await parseBaseNodeProperties(node, context);
+
+          // Extract frame properties from the instance
+          const { parseFrameProperties } = await import("./frameParser");
+          const frameProps = await parseFrameProperties(node, context);
+
+          // Build the structure manually to avoid circular references
+          // We'll extract children directly from the instance (which have the correct sizes)
+          // IMPORTANT: Set type to COMPONENT AFTER spreading baseProps, since baseProps includes type: "INSTANCE"
+          const structure: any = {
+            ...baseProps,
+            ...frameProps,
+            type: "COMPONENT", // Convert to COMPONENT type for recreation (must be after baseProps to override)
+          };
+
+          // Extract children from the instance (preserves size overrides and constraints)
+          // For nested instances, we need to extract their full structure too (not just references)
+          if (
+            node.children &&
+            Array.isArray(node.children) &&
+            node.children.length > 0
+          ) {
+            const childContext: Partial<ParserContext> = {
+              ...context,
+              depth: (context.depth || 0) + 1,
+            };
+            const { extractNodeData } = await import("../pageExportNew");
+            const children: any[] = [];
+            for (const child of node.children) {
+              try {
+                // For nested instances, we want the full structure, not a reference
+                // So we extract from the child directly, treating it as a regular node
+                // (not as an instance that should be processed by parseInstanceProperties)
+                let childData;
+                if (child.type === "INSTANCE") {
+                  // For nested instances, extract their structure too (recursively)
+                  // Get the main component and extract from it, but use the instance's size
+                  try {
+                    const nestedMainComponent = await (
+                      child as any
+                    ).getMainComponentAsync();
+                    if (nestedMainComponent) {
+                      // Extract from main component but preserve instance size
+                      const nestedBaseProps = await parseBaseNodeProperties(
+                        child,
+                        context,
+                      );
+                      const nestedFrameProps = await parseFrameProperties(
+                        child,
+                        context,
+                      );
+                      const nestedStructure = await extractNodeData(
+                        nestedMainComponent,
+                        new WeakSet(),
+                        childContext,
+                      );
+                      // Override with instance's actual properties (size, position, etc.)
+                      childData = {
+                        ...nestedStructure,
+                        ...nestedBaseProps,
+                        ...nestedFrameProps,
+                        type: "COMPONENT", // Convert to COMPONENT
+                      };
+                    } else {
+                      // Fallback: extract from child directly
+                      childData = await extractNodeData(
+                        child,
+                        new WeakSet(),
+                        childContext,
+                      );
+                      if (childData.type === "INSTANCE") {
+                        childData.type = "COMPONENT";
+                      }
+                      delete childData._instanceRef;
+                    }
+                  } catch {
+                    // Fallback: extract from child directly
+                    childData = await extractNodeData(
+                      child,
+                      new WeakSet(),
+                      childContext,
+                    );
+                    if (childData.type === "INSTANCE") {
+                      childData.type = "COMPONENT";
+                    }
+                    delete childData._instanceRef;
+                  }
+                } else {
+                  // Regular child - extract normally
+                  childData = await extractNodeData(
+                    child,
+                    new WeakSet(),
+                    childContext,
+                  );
+
+                  // DEBUG: Check if child has boundVariables for backgrounds (for "Selection colors")
+                  // This is important for remote components where "Selection colors" might be bound
+                  // on the main component's child but not visible on the instance's child
+                  const childBoundVars = (child as any).boundVariables;
+                  if (childBoundVars && typeof childBoundVars === "object") {
+                    const childBoundVarKeys = Object.keys(childBoundVars);
+                    if (childBoundVarKeys.length > 0) {
+                      await debugConsole.log(
+                        `  DEBUG: Child "${child.name || "Unnamed"}" -> boundVariables keys: ${childBoundVarKeys.join(", ")}`,
+                      );
+                      // Check specifically for backgrounds
+                      if (childBoundVars.backgrounds !== undefined) {
+                        await debugConsole.log(
+                          `  DEBUG:   Child "${child.name || "Unnamed"}" -> boundVariables.backgrounds: ${JSON.stringify(childBoundVars.backgrounds)}`,
+                        );
+                      }
+                    }
+                  }
+
+                  // Also check the main component's corresponding child for bound variables
+                  // "Selection colors" might be bound on the main component's child
+                  if (
+                    mainComponent.children &&
+                    Array.isArray(mainComponent.children)
+                  ) {
+                    const mainComponentChild = mainComponent.children.find(
+                      (mcChild: any) => mcChild.name === child.name,
+                    );
+                    if (mainComponentChild) {
+                      const mainChildBoundVars = (mainComponentChild as any)
+                        .boundVariables;
+                      if (
+                        mainChildBoundVars &&
+                        typeof mainChildBoundVars === "object"
+                      ) {
+                        const mainChildBoundVarKeys =
+                          Object.keys(mainChildBoundVars);
+                        if (mainChildBoundVarKeys.length > 0) {
+                          await debugConsole.log(
+                            `  DEBUG: Main component child "${mainComponentChild.name || "Unnamed"}" -> boundVariables keys: ${mainChildBoundVarKeys.join(", ")}`,
+                          );
+                          // Check specifically for backgrounds
+                          if (mainChildBoundVars.backgrounds !== undefined) {
+                            await debugConsole.log(
+                              `  DEBUG:   Main component child "${mainComponentChild.name || "Unnamed"}" -> boundVariables.backgrounds: ${JSON.stringify(mainChildBoundVars.backgrounds)}`,
+                            );
+                            // If instance child doesn't have boundVariables.backgrounds but main component child does,
+                            // we should preserve it in the extracted childData
+                            if (
+                              !childBoundVars ||
+                              !childBoundVars.backgrounds
+                            ) {
+                              await debugConsole.log(
+                                `  DEBUG:   Instance child doesn't have boundVariables.backgrounds, but main component child does - preserving from main component`,
+                              );
+                              // Extract and merge boundVariables from main component child
+                              const { extractBoundVariables } = await import(
+                                "./boundVariableParser"
+                              );
+                              const mainChildBoundVarsExtracted =
+                                await extractBoundVariables(
+                                  mainChildBoundVars,
+                                  context.variableTable,
+                                  context.collectionTable,
+                                );
+                              // Merge into childData's boundVariables
+                              if (!childData.boundVariables) {
+                                childData.boundVariables = {};
+                              }
+                              if (mainChildBoundVarsExtracted.backgrounds) {
+                                childData.boundVariables.backgrounds =
+                                  mainChildBoundVarsExtracted.backgrounds;
+                                await debugConsole.log(
+                                  `  DEBUG:   ✓ Added boundVariables.backgrounds to childData from main component child`,
+                                );
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                children.push(childData);
+              } catch (childError) {
+                console.warn(
+                  `Failed to extract child "${child.name || "Unnamed"}" for remote component "${componentName}":`,
+                  childError,
+                );
+                // Continue with other children even if one fails
+              }
+            }
+            structure.children = children;
+          }
+
+          // Ensure structure is set
+          if (!structure) {
+            throw new Error("Failed to build structure for remote instance");
+          }
+
+          // CRITICAL: Handle fills and bound variables for the instance node
+          // The instance may have boundVariables.fills even if it doesn't override fills
+          // In that case, we need to get fills from the main component but preserve the instance's boundVariables
+          try {
+            // Check if instance has boundVariables for fills
+            const instanceBoundVars = (node as any).boundVariables;
+
+            // DEBUG: Log all boundVariables keys to see what properties are bound
+            if (instanceBoundVars && typeof instanceBoundVars === "object") {
+              const boundVarKeys = Object.keys(instanceBoundVars);
+              await debugConsole.log(
+                `  DEBUG: Instance "${instanceName}" -> boundVariables keys: ${boundVarKeys.length > 0 ? boundVarKeys.join(", ") : "none"}`,
+              );
+              // Log each bound variable key and its type
+              for (const key of boundVarKeys) {
+                const boundVar = instanceBoundVars[key];
+                const boundVarType = boundVar?.type || typeof boundVar;
+                await debugConsole.log(
+                  `  DEBUG:   boundVariables.${key}: type=${boundVarType}, value=${JSON.stringify(boundVar)}`,
+                );
+
+                // DEBUG: Check for nested structures that might contain variable 57 (avatar/color/initials-ghost)
+                // This helps us find where "Selection colors" might be stored
+                if (
+                  boundVar &&
+                  typeof boundVar === "object" &&
+                  !Array.isArray(boundVar)
+                ) {
+                  const nestedKeys = Object.keys(boundVar);
+                  if (nestedKeys.length > 0) {
+                    await debugConsole.log(
+                      `  DEBUG:     boundVariables.${key} has nested keys: ${nestedKeys.join(", ")}`,
+                    );
+                    // Check if any nested value is a VARIABLE_ALIAS that might be variable 57
+                    for (const nestedKey of nestedKeys) {
+                      const nestedValue = boundVar[nestedKey];
+                      if (
+                        nestedValue &&
+                        typeof nestedValue === "object" &&
+                        nestedValue.type === "VARIABLE_ALIAS"
+                      ) {
+                        await debugConsole.log(
+                          `  DEBUG:       boundVariables.${key}.${nestedKey}: VARIABLE_ALIAS id=${nestedValue.id}`,
+                        );
+                      }
+                    }
+                  }
+                }
+              }
+
+              // DEBUG: Check for specific properties that might be "Selection colors"
+              // "Selection colors" might be stored as boundVariables.backgrounds, boundVariables.selectionColor, etc.
+              const potentialSelectionColorKeys = [
+                "backgrounds",
+                "selectionColor",
+                "selectionColors",
+                "selection",
+                "selectColor",
+              ];
+              for (const potentialKey of potentialSelectionColorKeys) {
+                if (instanceBoundVars[potentialKey] !== undefined) {
+                  await debugConsole.log(
+                    `  DEBUG:   Found potential "Selection colors" property: boundVariables.${potentialKey} = ${JSON.stringify(instanceBoundVars[potentialKey])}`,
+                  );
+                }
+              }
+            } else {
+              await debugConsole.log(
+                `  DEBUG: Instance "${instanceName}" -> No boundVariables found on instance node`,
+              );
+            }
+
+            const hasInstanceFillsBoundVar =
+              instanceBoundVars &&
+              instanceBoundVars.fills !== undefined &&
+              instanceBoundVars.fills !== null;
+
+            // Check if structure already has fills
+            const structureHasFills =
+              structure.fills !== undefined &&
+              Array.isArray(structure.fills) &&
+              structure.fills.length > 0;
+
+            // Check if instance node has explicit fills
+            const instanceHasFills =
+              (node as any).fills !== undefined &&
+              Array.isArray((node as any).fills) &&
+              (node as any).fills.length > 0;
+
+            // Check if main component has fills
+            const mainComponentHasFills =
+              mainComponent.fills !== undefined &&
+              Array.isArray(mainComponent.fills) &&
+              mainComponent.fills.length > 0;
+
+            await debugConsole.log(
+              `  DEBUG: Instance "${instanceName}" -> fills check: instanceHasFills=${instanceHasFills}, structureHasFills=${structureHasFills}, mainComponentHasFills=${mainComponentHasFills}, hasInstanceFillsBoundVar=${!!hasInstanceFillsBoundVar}`,
+            );
+
+            // If instance has boundVariables.fills but structure doesn't have fills,
+            // we need to get fills from either the instance or main component
+            if (hasInstanceFillsBoundVar && !structureHasFills) {
+              await debugConsole.log(
+                `  DEBUG: Instance has boundVariables.fills but structure has no fills - attempting to get fills`,
+              );
+              try {
+                // First try instance node's fills (if it has explicit fills)
+                if (instanceHasFills) {
+                  const { serializeFills } = await import(
+                    "./boundVariableParser"
+                  );
+                  const instanceFills = await serializeFills(
+                    (node as any).fills,
+                    context.variableTable,
+                    context.collectionTable,
+                  );
+                  structure.fills = instanceFills;
+                  await debugConsole.log(
+                    `  DEBUG: Got ${instanceFills.length} fill(s) from instance node`,
+                  );
+                } else if (mainComponentHasFills) {
+                  // Fallback: get fills from main component (instance inherits fills)
+                  const { serializeFills } = await import(
+                    "./boundVariableParser"
+                  );
+                  const mainComponentFills = await serializeFills(
+                    mainComponent.fills,
+                    context.variableTable,
+                    context.collectionTable,
+                  );
+                  structure.fills = mainComponentFills;
+                  await debugConsole.log(
+                    `  DEBUG: Got ${mainComponentFills.length} fill(s) from main component`,
+                  );
+                } else {
+                  await debugConsole.warning(
+                    `  DEBUG: Instance has boundVariables.fills but neither instance nor main component has fills`,
+                  );
+                }
+              } catch (fillsError) {
+                await debugConsole.warning(
+                  `  Failed to get fills: ${fillsError}`,
+                );
+              }
+            }
+
+            // DEBUG: Check for selectionColor or other properties that might be bound to variables
+            // but not stored in boundVariables
+            const instanceSelectionColor = (node as any).selectionColor;
+            const mainComponentSelectionColor = (mainComponent as any)
+              .selectionColor;
+            if (instanceSelectionColor !== undefined) {
+              await debugConsole.log(
+                `  DEBUG: Instance "${instanceName}" -> selectionColor: ${JSON.stringify(instanceSelectionColor)}`,
+              );
+            }
+            if (mainComponentSelectionColor !== undefined) {
+              await debugConsole.log(
+                `  DEBUG: Main component "${componentName}" -> selectionColor: ${JSON.stringify(mainComponentSelectionColor)}`,
+              );
+            }
+
+            // DEBUG: List all enumerable properties on instance to find "Selection colors" or similar
+            // Filter out functions, internal properties, and common properties we already handle
+            const instanceAllProps = Object.keys(node).filter(
+              (key) =>
+                !key.startsWith("_") &&
+                key !== "parent" &&
+                key !== "removed" &&
+                typeof (node as any)[key] !== "function" &&
+                key !== "type" &&
+                key !== "id" &&
+                key !== "name",
+            );
+            const mainComponentAllProps = Object.keys(mainComponent).filter(
+              (key) =>
+                !key.startsWith("_") &&
+                key !== "parent" &&
+                key !== "removed" &&
+                typeof (mainComponent as any)[key] !== "function" &&
+                key !== "type" &&
+                key !== "id" &&
+                key !== "name",
+            );
+
+            // Find properties that might be related to selection colors
+            const selectionRelatedProps = [
+              ...new Set([...instanceAllProps, ...mainComponentAllProps]),
+            ].filter(
+              (key) =>
+                key.toLowerCase().includes("selection") ||
+                key.toLowerCase().includes("select") ||
+                (key.toLowerCase().includes("color") &&
+                  !key.toLowerCase().includes("fill") &&
+                  !key.toLowerCase().includes("stroke")),
+            );
+
+            if (selectionRelatedProps.length > 0) {
+              await debugConsole.log(
+                `  DEBUG: Found selection/color-related properties: ${selectionRelatedProps.join(", ")}`,
+              );
+              // Log values for these properties
+              for (const key of selectionRelatedProps) {
+                try {
+                  if (instanceAllProps.includes(key)) {
+                    const value = (node as any)[key];
+                    await debugConsole.log(
+                      `  DEBUG:   Instance.${key}: ${JSON.stringify(value)}`,
+                    );
+                  }
+                  if (mainComponentAllProps.includes(key)) {
+                    const value = (mainComponent as any)[key];
+                    await debugConsole.log(
+                      `  DEBUG:   MainComponent.${key}: ${JSON.stringify(value)}`,
+                    );
+                  }
+                } catch (e) {
+                  // Skip properties that can't be accessed
+                }
+              }
+            } else {
+              await debugConsole.log(
+                `  DEBUG: No selection/color-related properties found on instance or main component`,
+              );
+            }
+
+            // Check main component's boundVariables (may have properties like selectionColor that instance inherits)
+            const mainComponentBoundVars = (mainComponent as any)
+              .boundVariables;
+            if (
+              mainComponentBoundVars &&
+              typeof mainComponentBoundVars === "object"
+            ) {
+              const mainBoundVarKeys = Object.keys(mainComponentBoundVars);
+              if (mainBoundVarKeys.length > 0) {
+                await debugConsole.log(
+                  `  DEBUG: Main component "${componentName}" -> boundVariables keys: ${mainBoundVarKeys.join(", ")}`,
+                );
+                // Log each bound variable key
+                for (const key of mainBoundVarKeys) {
+                  const boundVar = mainComponentBoundVars[key];
+                  const boundVarType = boundVar?.type || typeof boundVar;
+                  await debugConsole.log(
+                    `  DEBUG:   Main component boundVariables.${key}: type=${boundVarType}, value=${JSON.stringify(boundVar)}`,
+                  );
+                }
+              }
+            }
+
+            // Always preserve ALL boundVariables from the instance if they exist
+            // This is critical - the instance may have boundVariables for fills, selectionColor, or other properties
+            // that need to be preserved even if the structure already has some boundVariables from baseProps
+            if (
+              instanceBoundVars &&
+              Object.keys(instanceBoundVars).length > 0
+            ) {
+              await debugConsole.log(
+                `  DEBUG: Preserving instance's boundVariables in structure (${Object.keys(instanceBoundVars).length} key(s))`,
+              );
+              // Extract boundVariables from instance node
+              const { extractBoundVariables } = await import(
+                "./boundVariableParser"
+              );
+              const instanceBoundVarsExtracted = await extractBoundVariables(
+                instanceBoundVars,
+                context.variableTable,
+                context.collectionTable,
+              );
+
+              // Merge instance's boundVariables into structure's boundVariables
+              // Structure may already have boundVariables from baseProps, so we merge rather than replace
+              if (!structure.boundVariables) {
+                structure.boundVariables = {};
+              }
+
+              // Preserve ALL boundVariables from instance (fills, selectionColor, width, height, etc.)
+              // Instance's boundVariables take precedence over baseProps since they reflect the actual instance state
+              for (const [key, value] of Object.entries(
+                instanceBoundVarsExtracted,
+              )) {
+                if (value !== undefined) {
+                  // Check if structure already has this boundVariable (from baseProps)
+                  if (structure.boundVariables[key] !== undefined) {
+                    await debugConsole.log(
+                      `  DEBUG: Structure already has boundVariables.${key} from baseProps, but instance also has it - using instance's boundVariables.${key}`,
+                    );
+                  }
+                  structure.boundVariables[key] = value;
+                  await debugConsole.log(
+                    `  DEBUG: Set boundVariables.${key} in structure: ${JSON.stringify(value)}`,
+                  );
+                }
+              }
+
+              // Special handling for fills - log separately for clarity
+              if (instanceBoundVarsExtracted.fills !== undefined) {
+                await debugConsole.log(
+                  `  DEBUG: ✓ Preserved boundVariables.fills from instance`,
+                );
+              } else if (hasInstanceFillsBoundVar) {
+                await debugConsole.warning(
+                  `  DEBUG: Instance has boundVariables.fills but extractBoundVariables didn't extract it`,
+                );
+              }
+
+              // Special handling for backgrounds - "Selection colors" might be stored here
+              if (instanceBoundVarsExtracted.backgrounds !== undefined) {
+                await debugConsole.log(
+                  `  DEBUG: ✓ Preserved boundVariables.backgrounds from instance: ${JSON.stringify(instanceBoundVarsExtracted.backgrounds)}`,
+                );
+              } else if (
+                instanceBoundVars &&
+                instanceBoundVars.backgrounds !== undefined
+              ) {
+                await debugConsole.warning(
+                  `  DEBUG: Instance has boundVariables.backgrounds but extractBoundVariables didn't extract it`,
+                );
+              }
+            }
+
+            // Also preserve boundVariables from main component if instance doesn't override them
+            // This is important for properties like selectionColor that may be bound on the main component
+            // but not explicitly overridden on the instance
+            if (
+              mainComponentBoundVars &&
+              Object.keys(mainComponentBoundVars).length > 0
+            ) {
+              await debugConsole.log(
+                `  DEBUG: Checking main component's boundVariables for properties not in instance (${Object.keys(mainComponentBoundVars).length} key(s))`,
+              );
+              const { extractBoundVariables } = await import(
+                "./boundVariableParser"
+              );
+              const mainComponentBoundVarsExtracted =
+                await extractBoundVariables(
+                  mainComponentBoundVars,
+                  context.variableTable,
+                  context.collectionTable,
+                );
+
+              // Merge main component's boundVariables into structure's boundVariables
+              // Only add properties that aren't already set (instance takes precedence)
+              if (!structure.boundVariables) {
+                structure.boundVariables = {};
+              }
+
+              for (const [key, value] of Object.entries(
+                mainComponentBoundVarsExtracted,
+              )) {
+                if (value !== undefined) {
+                  // Only add if instance doesn't have this boundVariable (main component is fallback)
+                  if (structure.boundVariables[key] === undefined) {
+                    structure.boundVariables[key] = value;
+                    await debugConsole.log(
+                      `  DEBUG: Added boundVariables.${key} from main component (not in instance): ${JSON.stringify(value)}`,
+                    );
+                  } else {
+                    await debugConsole.log(
+                      `  DEBUG: Skipped boundVariables.${key} from main component (instance already has it)`,
+                    );
+                  }
+                }
+              }
+            }
+
+            // Final debug: log what we have in the structure
+            await debugConsole.log(
+              `  DEBUG: Final structure for "${componentName}": hasFills=${!!structure.fills}, fillsCount=${structure.fills?.length || 0}, hasBoundVars=${!!structure.boundVariables}, boundVarsKeys=${structure.boundVariables ? Object.keys(structure.boundVariables).join(", ") : "none"}`,
+            );
+            if (structure.boundVariables?.fills) {
+              await debugConsole.log(
+                `  DEBUG: Structure boundVariables.fills: ${JSON.stringify(structure.boundVariables.fills)}`,
+              );
+            }
+          } catch (boundVarError) {
+            await debugConsole.warning(
+              `  Failed to handle bound variables for fills: ${boundVarError}`,
+            );
+            // Continue anyway - structure is still valid without bound variables
+          }
+
+          entry.structure = structure;
+
+          if (isDetachedInstance) {
+            await debugConsole.log(
+              `  Extracted structure for detached component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...)`,
+            );
+          } else {
+            await debugConsole.log(
+              `  Extracted structure from instance for remote component "${componentName}" (preserving size overrides: ${node.width}x${node.height})`,
+            );
+          }
+
+          await debugConsole.log(
+            `  Found INSTANCE: "${instanceName}" -> REMOTE component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...)${isDetachedInstance ? " [DETACHED]" : ""}`,
+          );
+        } catch (extractError) {
+          const errorMessage = `Failed to extract structure for remote component "${componentName}": ${extractError instanceof Error ? extractError.message : String(extractError)}`;
+          console.error(errorMessage, extractError);
+          await debugConsole.error(errorMessage);
+          // Don't set structure if extraction failed - this will cause import to skip it
+          // which is better than importing incorrect data
+        }
+      }
     }
 
     // Add instance to table and get reference

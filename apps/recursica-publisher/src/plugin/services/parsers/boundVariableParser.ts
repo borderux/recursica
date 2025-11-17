@@ -503,3 +503,36 @@ export async function serializeFills(
     }),
   );
 }
+
+/**
+ * Serializes backgrounds, handling bound variables with variable table references
+ * Similar to serializeFills, but for backgrounds property
+ */
+export async function serializeBackgrounds(
+  backgrounds: any,
+  variableTable: VariableTable,
+  collectionTable: CollectionTable,
+): Promise<any> {
+  if (!backgrounds || !Array.isArray(backgrounds)) return [];
+
+  return Promise.all(
+    backgrounds.map(async (background: any) => {
+      if (!background || typeof background !== "object") return background;
+      const serializedBackground: any = {};
+      for (const key in background) {
+        if (Object.prototype.hasOwnProperty.call(background, key)) {
+          if (key === "boundVariables") {
+            serializedBackground[key] = await extractBoundVariables(
+              background[key],
+              variableTable,
+              collectionTable,
+            );
+          } else {
+            serializedBackground[key] = background[key];
+          }
+        }
+      }
+      return serializedBackground;
+    }),
+  );
+}

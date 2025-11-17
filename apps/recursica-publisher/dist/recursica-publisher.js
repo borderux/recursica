@@ -1,17 +1,17 @@
-var Xe = Object.defineProperty, Ze = Object.defineProperties;
-var Qe = Object.getOwnPropertyDescriptors;
-var Ee = Object.getOwnPropertySymbols;
-var De = Object.prototype.hasOwnProperty, et = Object.prototype.propertyIsEnumerable;
-var ue = (e, t, n) => t in e ? Xe(e, t, { enumerable: !0, configurable: !0, writable: !0, value: n }) : e[t] = n, I = (e, t) => {
+var lt = Object.defineProperty, dt = Object.defineProperties;
+var pt = Object.getOwnPropertyDescriptors;
+var Be = Object.getOwnPropertySymbols;
+var ft = Object.prototype.hasOwnProperty, mt = Object.prototype.propertyIsEnumerable;
+var Ae = (e, t, n) => t in e ? lt(e, t, { enumerable: !0, configurable: !0, writable: !0, value: n }) : e[t] = n, L = (e, t) => {
   for (var n in t || (t = {}))
-    De.call(t, n) && ue(e, n, t[n]);
-  if (Ee)
-    for (var n of Ee(t))
-      et.call(t, n) && ue(e, n, t[n]);
+    ft.call(t, n) && Ae(e, n, t[n]);
+  if (Be)
+    for (var n of Be(t))
+      mt.call(t, n) && Ae(e, n, t[n]);
   return e;
-}, V = (e, t) => Ze(e, Qe(t));
-var F = (e, t, n) => ue(e, typeof t != "symbol" ? t + "" : t, n);
-async function tt(e) {
+}, q = (e, t) => dt(e, pt(t));
+var D = (e, t, n) => Ae(e, typeof t != "symbol" ? t + "" : t, n);
+async function ut(e) {
   var t;
   try {
     return {
@@ -34,7 +34,7 @@ async function tt(e) {
     };
   }
 }
-async function nt(e) {
+async function gt(e) {
   try {
     return await figma.loadAllPagesAsync(), {
       type: "loadPages",
@@ -43,9 +43,9 @@ async function nt(e) {
       message: "Pages loaded successfully",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       data: {
-        pages: figma.root.children.map((o, l) => ({
+        pages: figma.root.children.map((o, s) => ({
           name: o.name,
-          index: l
+          index: s
         }))
       }
     };
@@ -59,7 +59,7 @@ async function nt(e) {
     };
   }
 }
-const z = {
+const W = {
   visible: !0,
   locked: !1,
   opacity: 1,
@@ -73,7 +73,7 @@ const z = {
   strokeCap: "NONE",
   strokeJoin: "MITER",
   dashPattern: []
-}, L = V(I({}, z), {
+}, H = q(L({}, W), {
   layoutMode: "NONE",
   primaryAxisSizingMode: "AUTO",
   counterAxisSizingMode: "AUTO",
@@ -88,7 +88,7 @@ const z = {
   clipsContent: !1,
   layoutWrap: "NO_WRAP",
   layoutGrow: 0
-}), U = V(I({}, z), {
+}), Y = q(L({}, W), {
   textAlignHorizontal: "LEFT",
   textAlignVertical: "TOP",
   letterSpacing: { value: 0, unit: "PIXELS" },
@@ -99,89 +99,89 @@ const z = {
   paragraphSpacing: 0,
   paragraphIndent: 0,
   listOptions: null
-}), H = V(I({}, z), {
+}), ae = q(L({}, W), {
   fillGeometry: null,
   strokeGeometry: null,
   strokeCap: "NONE",
   strokeJoin: "MITER",
   dashPattern: []
-}), xe = V(I({}, z), {
+}), Je = q(L({}, W), {
   cornerRadius: 0
-}), rt = V(I({}, z), {
+}), ht = q(L({}, W), {
   strokeCap: "NONE",
   strokeJoin: "MITER",
   dashPattern: []
 });
-function at(e) {
+function yt(e) {
   switch (e) {
     case "FRAME":
     case "COMPONENT":
     case "INSTANCE":
-      return L;
-    case "TEXT":
-      return U;
-    case "VECTOR":
       return H;
+    case "TEXT":
+      return Y;
+    case "VECTOR":
+      return ae;
     case "LINE":
-      return rt;
+      return ht;
     case "RECTANGLE":
     case "ELLIPSE":
     case "STAR":
     case "POLYGON":
-      return xe;
+      return Je;
     default:
-      return z;
+      return W;
   }
 }
-function T(e, t) {
+function _(e, t) {
   if (Array.isArray(e))
-    return Array.isArray(t) ? e.length !== t.length || e.some((n, r) => T(n, t[r])) : e.length > 0;
+    return Array.isArray(t) ? e.length !== t.length || e.some((n, i) => _(n, t[i])) : e.length > 0;
   if (typeof e == "object" && e !== null) {
     if (typeof t == "object" && t !== null) {
-      const n = Object.keys(e), r = Object.keys(t);
-      return n.length !== r.length ? !0 : n.some(
-        (o) => !(o in t) || T(e[o], t[o])
+      const n = Object.keys(e), i = Object.keys(t);
+      return n.length !== i.length ? !0 : n.some(
+        (o) => !(o in t) || _(e[o], t[o])
       );
     }
     return !0;
   }
   return e !== t;
 }
-const he = {
+const Pe = {
   LAYER: "00000000-0000-0000-0000-000000000001",
   TOKENS: "00000000-0000-0000-0000-000000000002",
   THEME: "00000000-0000-0000-0000-000000000003"
-}, B = {
+}, ee = {
   LAYER: "Layer",
   TOKENS: "Tokens",
   THEME: "Theme"
 };
-function K(e) {
+function te(e) {
   const t = e.trim(), n = t.toLowerCase();
-  return n === "themes" ? B.THEME : n === "token" ? B.TOKENS : n === "layer" ? B.LAYER : n === "tokens" ? B.TOKENS : n === "theme" ? B.THEME : t;
+  return n === "themes" ? ee.THEME : n === "token" ? ee.TOKENS : n === "layer" ? ee.LAYER : n === "tokens" ? ee.TOKENS : n === "theme" ? ee.THEME : t;
 }
-function W(e) {
-  const t = K(e);
-  return t === B.LAYER || t === B.TOKENS || t === B.THEME;
+function ne(e) {
+  const t = te(e);
+  return t === ee.LAYER || t === ee.TOKENS || t === ee.THEME;
 }
-function Ae(e) {
-  const t = K(e);
-  if (t === B.LAYER)
-    return he.LAYER;
-  if (t === B.TOKENS)
-    return he.TOKENS;
-  if (t === B.THEME)
-    return he.THEME;
+function ke(e) {
+  const t = te(e);
+  if (t === ee.LAYER)
+    return Pe.LAYER;
+  if (t === ee.TOKENS)
+    return Pe.TOKENS;
+  if (t === ee.THEME)
+    return Pe.THEME;
 }
-class ce {
+class we {
   constructor() {
-    F(this, "collectionMap");
+    D(this, "collectionMap");
     // collectionId -> index
-    F(this, "collections");
+    D(this, "collections");
     // index -> collection data
-    F(this, "normalizedNameMap");
+    D(this, "normalizedNameMap");
     // normalized name -> index (for standard collections)
-    F(this, "nextIndex");
+    D(this, "nextIndex");
     this.collectionMap = /* @__PURE__ */ new Map(), this.collections = [], this.normalizedNameMap = /* @__PURE__ */ new Map(), this.nextIndex = 0;
   }
   /**
@@ -196,10 +196,10 @@ class ce {
    * Ensures all unique modes are present
    */
   mergeModes(t, n) {
-    const r = new Set(t);
+    const i = new Set(t);
     for (const o of n)
-      r.add(o);
-    return Array.from(r);
+      i.add(o);
+    return Array.from(i);
   }
   /**
    * Adds a collection to the table if it doesn't already exist
@@ -210,31 +210,31 @@ class ce {
     const n = t.collectionId;
     if (this.collectionMap.has(n))
       return this.collectionMap.get(n);
-    const r = K(
+    const i = te(
       t.collectionName
     );
-    if (W(t.collectionName)) {
-      const i = this.findCollectionByNormalizedName(r);
-      if (i !== void 0) {
-        const m = this.collections[i];
-        return m.modes = this.mergeModes(
-          m.modes,
+    if (ne(t.collectionName)) {
+      const r = this.findCollectionByNormalizedName(i);
+      if (r !== void 0) {
+        const p = this.collections[r];
+        return p.modes = this.mergeModes(
+          p.modes,
           t.modes
-        ), this.collectionMap.set(n, i), i;
+        ), this.collectionMap.set(n, r), r;
       }
     }
     const o = this.nextIndex++;
     this.collectionMap.set(n, o);
-    const l = V(I({}, t), {
-      collectionName: r
+    const s = q(L({}, t), {
+      collectionName: i
     });
-    if (W(t.collectionName)) {
-      const i = Ae(
+    if (ne(t.collectionName)) {
+      const r = ke(
         t.collectionName
       );
-      i && (l.collectionGuid = i), this.normalizedNameMap.set(r, o);
+      r && (s.collectionGuid = r), this.normalizedNameMap.set(i, o);
     }
-    return this.collections[o] = l, o;
+    return this.collections[o] = s, o;
   }
   /**
    * Gets the index of a collection by its collectionId
@@ -269,10 +269,10 @@ class ce {
   getSerializedTable() {
     const t = {};
     for (let n = 0; n < this.collections.length; n++) {
-      const r = this.collections[n], o = I({
-        collectionName: r.collectionName,
-        modes: r.modes
-      }, r.collectionGuid && { collectionGuid: r.collectionGuid });
+      const i = this.collections[n], o = L({
+        collectionName: i.collectionName,
+        modes: i.modes
+      }, i.collectionGuid && { collectionGuid: i.collectionGuid });
       t[String(n)] = o;
     }
     return t;
@@ -283,23 +283,23 @@ class ce {
    */
   static fromTable(t) {
     var o;
-    const n = new ce(), r = Object.entries(t).sort(
-      (l, i) => parseInt(l[0], 10) - parseInt(i[0], 10)
+    const n = new we(), i = Object.entries(t).sort(
+      (s, r) => parseInt(s[0], 10) - parseInt(r[0], 10)
     );
-    for (const [l, i] of r) {
-      const m = parseInt(l, 10), h = (o = i.isLocal) != null ? o : !0, N = K(
-        i.collectionName || ""
-      ), s = i.collectionId || i.collectionGuid || `temp:${m}:${N}`, A = I({
-        collectionName: N,
-        collectionId: s,
-        isLocal: h,
-        modes: i.modes || []
-      }, i.collectionGuid && {
-        collectionGuid: i.collectionGuid
+    for (const [s, r] of i) {
+      const p = parseInt(s, 10), m = (o = r.isLocal) != null ? o : !0, b = te(
+        r.collectionName || ""
+      ), w = r.collectionId || r.collectionGuid || `temp:${p}:${b}`, A = L({
+        collectionName: b,
+        collectionId: w,
+        isLocal: m,
+        modes: r.modes || []
+      }, r.collectionGuid && {
+        collectionGuid: r.collectionGuid
       });
-      n.collectionMap.set(s, m), n.collections[m] = A, W(N) && n.normalizedNameMap.set(N, m), n.nextIndex = Math.max(
+      n.collectionMap.set(w, p), n.collections[p] = A, ne(b) && n.normalizedNameMap.set(b, p), n.nextIndex = Math.max(
         n.nextIndex,
-        m + 1
+        p + 1
       );
     }
     return n;
@@ -311,33 +311,33 @@ class ce {
     return this.collections.length;
   }
 }
-const ot = {
+const bt = {
   COLOR: 1,
   FLOAT: 2,
   STRING: 3,
   BOOLEAN: 4
-}, it = {
+}, wt = {
   1: "COLOR",
   2: "FLOAT",
   3: "STRING",
   4: "BOOLEAN"
 };
-function st(e) {
+function Nt(e) {
   var n;
   const t = e.toUpperCase();
-  return (n = ot[t]) != null ? n : e;
+  return (n = bt[t]) != null ? n : e;
 }
-function ct(e) {
+function $t(e) {
   var t;
-  return typeof e == "number" ? (t = it[e]) != null ? t : e.toString() : e;
+  return typeof e == "number" ? (t = wt[e]) != null ? t : e.toString() : e;
 }
-class le {
+class Ne {
   constructor() {
-    F(this, "variableMap");
+    D(this, "variableMap");
     // variableKey -> index
-    F(this, "variables");
+    D(this, "variables");
     // index -> variable data
-    F(this, "nextIndex");
+    D(this, "nextIndex");
     this.variableMap = /* @__PURE__ */ new Map(), this.variables = [], this.nextIndex = 0;
   }
   /**
@@ -350,8 +350,8 @@ class le {
       return -1;
     if (this.variableMap.has(n))
       return this.variableMap.get(n);
-    const r = this.nextIndex++;
-    return this.variableMap.set(n, r), this.variables[r] = t, r;
+    const i = this.nextIndex++;
+    return this.variableMap.set(n, i), this.variables[i] = t, i;
   }
   /**
    * Gets the index of a variable by its variableKey
@@ -386,10 +386,10 @@ class le {
     if (!t)
       return;
     const n = {};
-    for (const [r, o] of Object.entries(t))
-      typeof o == "object" && o !== null && "_varRef" in o && typeof o._varRef == "number" ? n[r] = {
+    for (const [i, o] of Object.entries(t))
+      typeof o == "object" && o !== null && "_varRef" in o && typeof o._varRef == "number" ? n[i] = {
         _varRef: o._varRef
-      } : n[r] = o;
+      } : n[i] = o;
     return n;
   }
   /**
@@ -403,13 +403,13 @@ class le {
   getSerializedTable() {
     const t = {};
     for (let n = 0; n < this.variables.length; n++) {
-      const r = this.variables[n], o = this.serializeValuesByMode(
-        r.valuesByMode
-      ), l = I(I({
-        variableName: r.variableName,
-        variableType: st(r.variableType)
-      }, r._colRef !== void 0 && { _colRef: r._colRef }), o && { valuesByMode: o });
-      t[String(n)] = l;
+      const i = this.variables[n], o = this.serializeValuesByMode(
+        i.valuesByMode
+      ), s = L(L({
+        variableName: i.variableName,
+        variableType: Nt(i.variableType)
+      }, i._colRef !== void 0 && { _colRef: i._colRef }), o && { valuesByMode: o });
+      t[String(n)] = s;
     }
     return t;
   }
@@ -419,15 +419,15 @@ class le {
    * Expands compressed variable types (numbers) back to strings
    */
   static fromTable(t) {
-    const n = new le(), r = Object.entries(t).sort(
-      (o, l) => parseInt(o[0], 10) - parseInt(l[0], 10)
+    const n = new Ne(), i = Object.entries(t).sort(
+      (o, s) => parseInt(o[0], 10) - parseInt(s[0], 10)
     );
-    for (const [o, l] of r) {
-      const i = parseInt(o, 10), m = ct(l.variableType), h = V(I({}, l), {
-        variableType: m
+    for (const [o, s] of i) {
+      const r = parseInt(o, 10), p = $t(s.variableType), m = q(L({}, s), {
+        variableType: p
         // Always a string after expansion
       });
-      n.variables[i] = h, n.nextIndex = Math.max(n.nextIndex, i + 1);
+      n.variables[r] = m, n.nextIndex = Math.max(n.nextIndex, r + 1);
     }
     return n;
   }
@@ -438,36 +438,36 @@ class le {
     return this.variables.length;
   }
 }
-function lt(e) {
+function vt(e) {
   return {
     _varRef: e
   };
 }
-function Re(e) {
+function ye(e) {
   return e && typeof e == "object" && typeof e._varRef == "number" && !("type" in e);
 }
-let dt = 0;
-const X = /* @__PURE__ */ new Map();
-function pt(e) {
+let Et = 0;
+const le = /* @__PURE__ */ new Map();
+function Ct(e) {
   if (e.type !== "GenerateGuidResponse" || !e.requestId)
     return;
-  const t = X.get(e.requestId);
-  t && (X.delete(e.requestId), e.error || !e.guid ? t.reject(
+  const t = le.get(e.requestId);
+  t && (le.delete(e.requestId), e.error || !e.guid ? t.reject(
     new Error(e.message || "Failed to generate GUID from UI")
   ) : t.resolve(e.guid));
 }
-function Ce() {
+function Ve() {
   return new Promise((e, t) => {
-    const n = `guid_${Date.now()}_${++dt}`;
-    X.set(n, { resolve: e, reject: t }), figma.ui.postMessage({
+    const n = `guid_${Date.now()}_${++Et}`;
+    le.set(n, { resolve: e, reject: t }), figma.ui.postMessage({
       type: "GenerateGuidRequest",
       requestId: n
     }), setTimeout(() => {
-      X.has(n) && (X.delete(n), t(new Error("Timeout waiting for GUID from UI")));
+      le.has(n) && (le.delete(n), t(new Error("Timeout waiting for GUID from UI")));
     }, 5e3);
   });
 }
-async function ne() {
+async function me() {
   return new Promise((e) => setTimeout(e, 0));
 }
 const a = {
@@ -478,7 +478,7 @@ const a = {
         type: void 0,
         message: "__CLEAR__"
       }
-    }), await ne();
+    }), await me();
   },
   log: async (e) => {
     console.log(e), figma.ui.postMessage({
@@ -487,7 +487,7 @@ const a = {
         type: void 0,
         message: e
       }
-    }), await ne();
+    }), await me();
   },
   warning: async (e) => {
     console.warn(e), figma.ui.postMessage({
@@ -496,7 +496,7 @@ const a = {
         type: "warning",
         message: e
       }
-    }), await ne();
+    }), await me();
   },
   error: async (e) => {
     console.error(e), figma.ui.postMessage({
@@ -505,90 +505,90 @@ const a = {
         type: "error",
         message: e
       }
-    }), await ne();
+    }), await me();
   }
 };
-function mt(e, t) {
-  const n = t.modes.find((r) => r.modeId === e);
+function At(e, t) {
+  const n = t.modes.find((i) => i.modeId === e);
   return n ? n.name : e;
 }
-async function ke(e, t, n, r, o = /* @__PURE__ */ new Set()) {
-  const l = {};
-  for (const [i, m] of Object.entries(e)) {
-    const h = mt(i, r);
-    if (m == null) {
-      l[h] = m;
+async function Ke(e, t, n, i, o = /* @__PURE__ */ new Set()) {
+  const s = {};
+  for (const [r, p] of Object.entries(e)) {
+    const m = At(r, i);
+    if (p == null) {
+      s[m] = p;
       continue;
     }
-    if (typeof m == "string" || typeof m == "number" || typeof m == "boolean") {
-      l[h] = m;
+    if (typeof p == "string" || typeof p == "number" || typeof p == "boolean") {
+      s[m] = p;
       continue;
     }
-    if (typeof m == "object" && m !== null && "type" in m && m.type === "VARIABLE_ALIAS" && "id" in m) {
-      const N = m.id;
-      if (o.has(N)) {
-        l[h] = {
+    if (typeof p == "object" && p !== null && "type" in p && p.type === "VARIABLE_ALIAS" && "id" in p) {
+      const b = p.id;
+      if (o.has(b)) {
+        s[m] = {
           type: "VARIABLE_ALIAS",
-          id: N
+          id: b
         };
         continue;
       }
-      const s = await figma.variables.getVariableByIdAsync(N);
-      if (!s) {
-        l[h] = {
+      const w = await figma.variables.getVariableByIdAsync(b);
+      if (!w) {
+        s[m] = {
           type: "VARIABLE_ALIAS",
-          id: N
+          id: b
         };
         continue;
       }
       const A = new Set(o);
-      A.add(N);
-      const $ = await figma.variables.getVariableCollectionByIdAsync(
-        s.variableCollectionId
-      ), c = s.key;
-      if (!c) {
-        l[h] = {
+      A.add(b);
+      const d = await figma.variables.getVariableCollectionByIdAsync(
+        w.variableCollectionId
+      ), I = w.key;
+      if (!I) {
+        s[m] = {
           type: "VARIABLE_ALIAS",
-          id: N
+          id: b
         };
         continue;
       }
-      const g = {
-        variableName: s.name,
-        variableType: s.resolvedType,
-        collectionName: $ == null ? void 0 : $.name,
-        collectionId: s.variableCollectionId,
-        variableKey: c,
-        id: N,
-        isLocal: !s.remote
+      const u = {
+        variableName: w.name,
+        variableType: w.resolvedType,
+        collectionName: d == null ? void 0 : d.name,
+        collectionId: w.variableCollectionId,
+        variableKey: I,
+        id: b,
+        isLocal: !w.remote
       };
-      if ($) {
-        const u = await _e(
-          $,
+      if (d) {
+        const S = await He(
+          d,
           n
         );
-        g._colRef = u, s.valuesByMode && (g.valuesByMode = await ke(
-          s.valuesByMode,
+        u._colRef = S, w.valuesByMode && (u.valuesByMode = await Ke(
+          w.valuesByMode,
           t,
           n,
-          $,
+          d,
           // Pass collection for mode ID to name conversion
           A
         ));
       }
-      const d = t.addVariable(g);
-      l[h] = {
+      const O = t.addVariable(u);
+      s[m] = {
         type: "VARIABLE_ALIAS",
-        id: N,
-        _varRef: d
+        id: b,
+        _varRef: O
       };
     } else
-      l[h] = m;
+      s[m] = p;
   }
-  return l;
+  return s;
 }
-const re = "recursica:collectionId";
-async function ft(e) {
+const ue = "recursica:collectionId";
+async function Pt(e) {
   if (e.remote === !0) {
     const n = e.name.trim().toLowerCase();
     if (!["token", "tokens", "theme", "themes"].includes(n)) {
@@ -597,31 +597,31 @@ async function ft(e) {
     }
     return e.id;
   } else {
-    if (W(e.name)) {
-      const o = Ae(e.name);
+    if (ne(e.name)) {
+      const o = ke(e.name);
       if (o) {
-        const l = e.getSharedPluginData(
+        const s = e.getSharedPluginData(
           "recursica",
-          re
+          ue
         );
-        return (!l || l.trim() === "") && e.setSharedPluginData(
+        return (!s || s.trim() === "") && e.setSharedPluginData(
           "recursica",
-          re,
+          ue,
           o
         ), o;
       }
     }
     const n = e.getSharedPluginData(
       "recursica",
-      re
+      ue
     );
     if (n && n.trim() !== "")
       return n;
-    const r = await Ce();
-    return e.setSharedPluginData("recursica", re, r), r;
+    const i = await Ve();
+    return e.setSharedPluginData("recursica", ue, i), i;
   }
 }
-function gt(e, t) {
+function Tt(e, t) {
   if (t)
     return;
   const n = e.trim().toLowerCase();
@@ -630,53 +630,53 @@ function gt(e, t) {
       `Invalid collection name: "${e}". Non-local collections must be named "Token", "Tokens", "Theme", or "Themes" (case-insensitive).`
     );
 }
-async function _e(e, t) {
-  const n = !e.remote, r = t.getCollectionIndex(e.id);
-  if (r !== -1)
-    return r;
-  gt(e.name, n);
-  const o = await ft(e), l = e.modes.map((N) => N.name), i = {
+async function He(e, t) {
+  const n = !e.remote, i = t.getCollectionIndex(e.id);
+  if (i !== -1)
+    return i;
+  Tt(e.name, n);
+  const o = await Pt(e), s = e.modes.map((b) => b.name), r = {
     collectionName: e.name,
     collectionId: e.id,
     isLocal: n,
-    modes: l,
+    modes: s,
     collectionGuid: o
-  }, m = t.addCollection(i), h = n ? "local" : "remote";
+  }, p = t.addCollection(r), m = n ? "local" : "remote";
   return await a.log(
-    `  Added ${h} collection: "${e.name}" (ID: ${e.id.substring(0, 20)}...)`
-  ), m;
+    `  Added ${m} collection: "${e.name}" (ID: ${e.id.substring(0, 20)}...)`
+  ), p;
 }
-async function Te(e, t, n) {
+async function Oe(e, t, n) {
   if (!e || typeof e != "object" || e.type !== "VARIABLE_ALIAS")
     return null;
   try {
-    const r = await figma.variables.getVariableByIdAsync(e.id);
-    if (!r)
+    const i = await figma.variables.getVariableByIdAsync(e.id);
+    if (!i)
       return console.log("Could not resolve variable alias:", e.id), null;
     const o = await figma.variables.getVariableCollectionByIdAsync(
-      r.variableCollectionId
+      i.variableCollectionId
     );
     if (!o)
       return console.log("Could not resolve collection for variable:", e.id), null;
-    const l = r.key;
-    if (!l)
+    const s = i.key;
+    if (!s)
       return console.log("Variable missing key:", e.id), null;
-    const i = await _e(
+    const r = await He(
       o,
       n
-    ), m = {
-      variableName: r.name,
-      variableType: r.resolvedType,
-      _colRef: i,
+    ), p = {
+      variableName: i.name,
+      variableType: i.resolvedType,
+      _colRef: r,
       // Reference to collection table (v2.4.0+)
-      variableKey: l,
+      variableKey: s,
       // Internal-only: used for deduplication during export
       id: e.id
       // Internal-only: used for fallback in legacy scenarios
       // Legacy fields kept for backward compatibility (only if needed)
     };
-    r.valuesByMode && (m.valuesByMode = await ke(
-      r.valuesByMode,
+    i.valuesByMode && (p.valuesByMode = await Ke(
+      i.valuesByMode,
       t,
       n,
       o,
@@ -684,176 +684,206 @@ async function Te(e, t, n) {
       /* @__PURE__ */ new Set([e.id])
       // Start with current variable ID in visited set
     ));
-    const h = t.addVariable(m);
-    return lt(h);
-  } catch (r) {
-    const o = r instanceof Error ? r.message : String(r);
-    throw console.error("Could not resolve variable alias:", e.id, r), new Error(
+    const m = t.addVariable(p);
+    return vt(m);
+  } catch (i) {
+    const o = i instanceof Error ? i.message : String(i);
+    throw console.error("Could not resolve variable alias:", e.id, i), new Error(
       `Failed to resolve variable alias ${e.id}: ${o}`
     );
   }
 }
 async function ie(e, t, n) {
   if (!e || typeof e != "object") return e;
-  const r = {};
+  const i = {};
   for (const o in e)
     if (Object.prototype.hasOwnProperty.call(e, o)) {
-      const l = e[o];
-      if (l && typeof l == "object" && !Array.isArray(l))
-        if (l.type === "VARIABLE_ALIAS") {
-          const i = await Te(
-            l,
+      const s = e[o];
+      if (s && typeof s == "object" && !Array.isArray(s))
+        if (s.type === "VARIABLE_ALIAS") {
+          const r = await Oe(
+            s,
             t,
             n
           );
-          i && (r[o] = i);
+          r && (i[o] = r);
         } else
-          r[o] = await ie(
-            l,
+          i[o] = await ie(
+            s,
             t,
             n
           );
-      else Array.isArray(l) ? r[o] = await Promise.all(
-        l.map(async (i) => (i == null ? void 0 : i.type) === "VARIABLE_ALIAS" ? await Te(
-          i,
+      else Array.isArray(s) ? i[o] = await Promise.all(
+        s.map(async (r) => (r == null ? void 0 : r.type) === "VARIABLE_ALIAS" ? await Oe(
+          r,
           t,
           n
-        ) || i : i && typeof i == "object" ? await ie(
-          i,
+        ) || r : r && typeof r == "object" ? await ie(
+          r,
           t,
           n
-        ) : i)
-      ) : r[o] = l;
+        ) : r)
+      ) : i[o] = s;
     }
-  return r;
+  return i;
 }
-async function ut(e, t, n) {
+async function We(e, t, n) {
   return !e || !Array.isArray(e) ? [] : Promise.all(
-    e.map(async (r) => {
-      if (!r || typeof r != "object") return r;
+    e.map(async (i) => {
+      if (!i || typeof i != "object") return i;
       const o = {};
-      for (const l in r)
-        Object.prototype.hasOwnProperty.call(r, l) && (l === "boundVariables" ? o[l] = await ie(
-          r[l],
+      for (const s in i)
+        Object.prototype.hasOwnProperty.call(i, s) && (s === "boundVariables" ? o[s] = await ie(
+          i[s],
           t,
           n
-        ) : o[l] = r[l]);
+        ) : o[s] = i[s]);
       return o;
     })
   );
 }
-async function Le(e, t) {
-  const n = {}, r = /* @__PURE__ */ new Set();
-  if (e.type && (n.type = e.type, r.add("type")), e.id && (n.id = e.id, r.add("id")), e.name !== void 0 && e.name !== "" && (n.name = e.name, r.add("name")), e.x !== void 0 && e.x !== 0 && (n.x = e.x, r.add("x")), e.y !== void 0 && e.y !== 0 && (n.y = e.y, r.add("y")), e.width !== void 0 && (n.width = e.width, r.add("width")), e.height !== void 0 && (n.height = e.height, r.add("height")), e.visible !== void 0 && T(e.visible, z.visible) && (n.visible = e.visible, r.add("visible")), e.locked !== void 0 && T(e.locked, z.locked) && (n.locked = e.locked, r.add("locked")), e.opacity !== void 0 && T(e.opacity, z.opacity) && (n.opacity = e.opacity, r.add("opacity")), e.rotation !== void 0 && T(e.rotation, z.rotation) && (n.rotation = e.rotation, r.add("rotation")), e.blendMode !== void 0 && T(e.blendMode, z.blendMode) && (n.blendMode = e.blendMode, r.add("blendMode")), e.effects !== void 0 && T(e.effects, z.effects) && (n.effects = e.effects, r.add("effects")), e.fills !== void 0) {
-    const o = await ut(
+async function qe(e, t, n) {
+  return !e || !Array.isArray(e) ? [] : Promise.all(
+    e.map(async (i) => {
+      if (!i || typeof i != "object") return i;
+      const o = {};
+      for (const s in i)
+        Object.prototype.hasOwnProperty.call(i, s) && (s === "boundVariables" ? o[s] = await ie(
+          i[s],
+          t,
+          n
+        ) : o[s] = i[s]);
+      return o;
+    })
+  );
+}
+const ce = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  extractBoundVariables: ie,
+  resolveVariableAliasMetadata: Oe,
+  serializeBackgrounds: qe,
+  serializeFills: We
+}, Symbol.toStringTag, { value: "Module" }));
+async function De(e, t) {
+  const n = {}, i = /* @__PURE__ */ new Set();
+  if (e.type && (n.type = e.type, i.add("type")), e.id && (n.id = e.id, i.add("id")), e.name !== void 0 && e.name !== "" && (n.name = e.name, i.add("name")), e.x !== void 0 && e.x !== 0 && (n.x = e.x, i.add("x")), e.y !== void 0 && e.y !== 0 && (n.y = e.y, i.add("y")), e.width !== void 0 && (n.width = e.width, i.add("width")), e.height !== void 0 && (n.height = e.height, i.add("height")), e.visible !== void 0 && _(e.visible, W.visible) && (n.visible = e.visible, i.add("visible")), e.locked !== void 0 && _(e.locked, W.locked) && (n.locked = e.locked, i.add("locked")), e.opacity !== void 0 && _(e.opacity, W.opacity) && (n.opacity = e.opacity, i.add("opacity")), e.rotation !== void 0 && _(e.rotation, W.rotation) && (n.rotation = e.rotation, i.add("rotation")), e.blendMode !== void 0 && _(e.blendMode, W.blendMode) && (n.blendMode = e.blendMode, i.add("blendMode")), e.effects !== void 0 && _(e.effects, W.effects) && (n.effects = e.effects, i.add("effects")), e.fills !== void 0) {
+    const o = await We(
       e.fills,
       t.variableTable,
       t.collectionTable
     );
-    T(o, z.fills) && (n.fills = o), r.add("fills");
+    _(o, W.fills) && (n.fills = o), i.add("fills");
   }
-  if (e.strokes !== void 0 && T(e.strokes, z.strokes) && (n.strokes = e.strokes, r.add("strokes")), e.strokeWeight !== void 0 && T(e.strokeWeight, z.strokeWeight) && (n.strokeWeight = e.strokeWeight, r.add("strokeWeight")), e.strokeAlign !== void 0 && T(e.strokeAlign, z.strokeAlign) && (n.strokeAlign = e.strokeAlign, r.add("strokeAlign")), e.boundVariables !== void 0 && e.boundVariables !== null) {
+  if (e.strokes !== void 0 && _(e.strokes, W.strokes) && (n.strokes = e.strokes, i.add("strokes")), e.strokeWeight !== void 0 && _(e.strokeWeight, W.strokeWeight) && (n.strokeWeight = e.strokeWeight, i.add("strokeWeight")), e.strokeAlign !== void 0 && _(e.strokeAlign, W.strokeAlign) && (n.strokeAlign = e.strokeAlign, i.add("strokeAlign")), e.boundVariables !== void 0 && e.boundVariables !== null) {
     const o = await ie(
       e.boundVariables,
       t.variableTable,
       t.collectionTable
     );
-    Object.keys(o).length > 0 && (n.boundVariables = o), r.add("boundVariables");
+    Object.keys(o).length > 0 && (n.boundVariables = o), i.add("boundVariables");
   }
-  return e.backgrounds !== void 0 && (n.backgrounds = e.backgrounds, r.add("backgrounds")), n;
+  if (e.backgrounds !== void 0) {
+    const o = await qe(
+      e.backgrounds,
+      t.variableTable,
+      t.collectionTable
+    );
+    o && Array.isArray(o) && o.length > 0 && (n.backgrounds = o), i.add("backgrounds");
+  }
+  return n;
 }
-const ht = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Ot = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  parseBaseNodeProperties: Le
+  parseBaseNodeProperties: De
 }, Symbol.toStringTag, { value: "Module" }));
-async function we(e, t) {
-  const n = {}, r = /* @__PURE__ */ new Set();
+async function Se(e, t) {
+  const n = {}, i = /* @__PURE__ */ new Set();
   if (e.type === "COMPONENT")
     try {
-      e.componentPropertyDefinitions && (n.componentPropertyDefinitions = e.componentPropertyDefinitions, r.add("componentPropertyDefinitions"));
+      e.componentPropertyDefinitions && (n.componentPropertyDefinitions = e.componentPropertyDefinitions, i.add("componentPropertyDefinitions"));
     } catch (o) {
     }
-  return e.layoutMode !== void 0 && T(e.layoutMode, L.layoutMode) && (n.layoutMode = e.layoutMode, r.add("layoutMode")), e.primaryAxisSizingMode !== void 0 && T(
+  return e.layoutMode !== void 0 && _(e.layoutMode, H.layoutMode) && (n.layoutMode = e.layoutMode, i.add("layoutMode")), e.primaryAxisSizingMode !== void 0 && _(
     e.primaryAxisSizingMode,
-    L.primaryAxisSizingMode
-  ) && (n.primaryAxisSizingMode = e.primaryAxisSizingMode, r.add("primaryAxisSizingMode")), e.counterAxisSizingMode !== void 0 && T(
+    H.primaryAxisSizingMode
+  ) && (n.primaryAxisSizingMode = e.primaryAxisSizingMode, i.add("primaryAxisSizingMode")), e.counterAxisSizingMode !== void 0 && _(
     e.counterAxisSizingMode,
-    L.counterAxisSizingMode
-  ) && (n.counterAxisSizingMode = e.counterAxisSizingMode, r.add("counterAxisSizingMode")), e.primaryAxisAlignItems !== void 0 && T(
+    H.counterAxisSizingMode
+  ) && (n.counterAxisSizingMode = e.counterAxisSizingMode, i.add("counterAxisSizingMode")), e.primaryAxisAlignItems !== void 0 && _(
     e.primaryAxisAlignItems,
-    L.primaryAxisAlignItems
-  ) && (n.primaryAxisAlignItems = e.primaryAxisAlignItems, r.add("primaryAxisAlignItems")), e.counterAxisAlignItems !== void 0 && T(
+    H.primaryAxisAlignItems
+  ) && (n.primaryAxisAlignItems = e.primaryAxisAlignItems, i.add("primaryAxisAlignItems")), e.counterAxisAlignItems !== void 0 && _(
     e.counterAxisAlignItems,
-    L.counterAxisAlignItems
-  ) && (n.counterAxisAlignItems = e.counterAxisAlignItems, r.add("counterAxisAlignItems")), e.paddingLeft !== void 0 && T(e.paddingLeft, L.paddingLeft) && (n.paddingLeft = e.paddingLeft, r.add("paddingLeft")), e.paddingRight !== void 0 && T(e.paddingRight, L.paddingRight) && (n.paddingRight = e.paddingRight, r.add("paddingRight")), e.paddingTop !== void 0 && T(e.paddingTop, L.paddingTop) && (n.paddingTop = e.paddingTop, r.add("paddingTop")), e.paddingBottom !== void 0 && T(e.paddingBottom, L.paddingBottom) && (n.paddingBottom = e.paddingBottom, r.add("paddingBottom")), e.itemSpacing !== void 0 && T(e.itemSpacing, L.itemSpacing) && (n.itemSpacing = e.itemSpacing, r.add("itemSpacing")), e.cornerRadius !== void 0 && T(e.cornerRadius, L.cornerRadius) && (n.cornerRadius = e.cornerRadius, r.add("cornerRadius")), e.clipsContent !== void 0 && T(e.clipsContent, L.clipsContent) && (n.clipsContent = e.clipsContent, r.add("clipsContent")), e.layoutWrap !== void 0 && T(e.layoutWrap, L.layoutWrap) && (n.layoutWrap = e.layoutWrap, r.add("layoutWrap")), e.layoutGrow !== void 0 && T(e.layoutGrow, L.layoutGrow) && (n.layoutGrow = e.layoutGrow, r.add("layoutGrow")), n;
+    H.counterAxisAlignItems
+  ) && (n.counterAxisAlignItems = e.counterAxisAlignItems, i.add("counterAxisAlignItems")), e.paddingLeft !== void 0 && _(e.paddingLeft, H.paddingLeft) && (n.paddingLeft = e.paddingLeft, i.add("paddingLeft")), e.paddingRight !== void 0 && _(e.paddingRight, H.paddingRight) && (n.paddingRight = e.paddingRight, i.add("paddingRight")), e.paddingTop !== void 0 && _(e.paddingTop, H.paddingTop) && (n.paddingTop = e.paddingTop, i.add("paddingTop")), e.paddingBottom !== void 0 && _(e.paddingBottom, H.paddingBottom) && (n.paddingBottom = e.paddingBottom, i.add("paddingBottom")), e.itemSpacing !== void 0 && _(e.itemSpacing, H.itemSpacing) && (n.itemSpacing = e.itemSpacing, i.add("itemSpacing")), e.cornerRadius !== void 0 && _(e.cornerRadius, H.cornerRadius) && (n.cornerRadius = e.cornerRadius, i.add("cornerRadius")), e.clipsContent !== void 0 && _(e.clipsContent, H.clipsContent) && (n.clipsContent = e.clipsContent, i.add("clipsContent")), e.layoutWrap !== void 0 && _(e.layoutWrap, H.layoutWrap) && (n.layoutWrap = e.layoutWrap, i.add("layoutWrap")), e.layoutGrow !== void 0 && _(e.layoutGrow, H.layoutGrow) && (n.layoutGrow = e.layoutGrow, i.add("layoutGrow")), n;
 }
-const yt = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const St = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  parseFrameProperties: we
+  parseFrameProperties: Se
 }, Symbol.toStringTag, { value: "Module" }));
-async function wt(e, t) {
-  const n = {}, r = /* @__PURE__ */ new Set();
-  return e.characters !== void 0 && e.characters !== "" && (n.characters = e.characters, r.add("characters")), e.fontName !== void 0 && (n.fontName = e.fontName, r.add("fontName")), e.fontSize !== void 0 && (n.fontSize = e.fontSize, r.add("fontSize")), e.textAlignHorizontal !== void 0 && T(
+async function It(e, t) {
+  const n = {}, i = /* @__PURE__ */ new Set();
+  return e.characters !== void 0 && e.characters !== "" && (n.characters = e.characters, i.add("characters")), e.fontName !== void 0 && (n.fontName = e.fontName, i.add("fontName")), e.fontSize !== void 0 && (n.fontSize = e.fontSize, i.add("fontSize")), e.textAlignHorizontal !== void 0 && _(
     e.textAlignHorizontal,
-    U.textAlignHorizontal
-  ) && (n.textAlignHorizontal = e.textAlignHorizontal, r.add("textAlignHorizontal")), e.textAlignVertical !== void 0 && T(
+    Y.textAlignHorizontal
+  ) && (n.textAlignHorizontal = e.textAlignHorizontal, i.add("textAlignHorizontal")), e.textAlignVertical !== void 0 && _(
     e.textAlignVertical,
-    U.textAlignVertical
-  ) && (n.textAlignVertical = e.textAlignVertical, r.add("textAlignVertical")), e.letterSpacing !== void 0 && T(e.letterSpacing, U.letterSpacing) && (n.letterSpacing = e.letterSpacing, r.add("letterSpacing")), e.lineHeight !== void 0 && T(e.lineHeight, U.lineHeight) && (n.lineHeight = e.lineHeight, r.add("lineHeight")), e.textCase !== void 0 && T(e.textCase, U.textCase) && (n.textCase = e.textCase, r.add("textCase")), e.textDecoration !== void 0 && T(e.textDecoration, U.textDecoration) && (n.textDecoration = e.textDecoration, r.add("textDecoration")), e.textAutoResize !== void 0 && T(e.textAutoResize, U.textAutoResize) && (n.textAutoResize = e.textAutoResize, r.add("textAutoResize")), e.paragraphSpacing !== void 0 && T(
+    Y.textAlignVertical
+  ) && (n.textAlignVertical = e.textAlignVertical, i.add("textAlignVertical")), e.letterSpacing !== void 0 && _(e.letterSpacing, Y.letterSpacing) && (n.letterSpacing = e.letterSpacing, i.add("letterSpacing")), e.lineHeight !== void 0 && _(e.lineHeight, Y.lineHeight) && (n.lineHeight = e.lineHeight, i.add("lineHeight")), e.textCase !== void 0 && _(e.textCase, Y.textCase) && (n.textCase = e.textCase, i.add("textCase")), e.textDecoration !== void 0 && _(e.textDecoration, Y.textDecoration) && (n.textDecoration = e.textDecoration, i.add("textDecoration")), e.textAutoResize !== void 0 && _(e.textAutoResize, Y.textAutoResize) && (n.textAutoResize = e.textAutoResize, i.add("textAutoResize")), e.paragraphSpacing !== void 0 && _(
     e.paragraphSpacing,
-    U.paragraphSpacing
-  ) && (n.paragraphSpacing = e.paragraphSpacing, r.add("paragraphSpacing")), e.paragraphIndent !== void 0 && T(e.paragraphIndent, U.paragraphIndent) && (n.paragraphIndent = e.paragraphIndent, r.add("paragraphIndent")), e.listOptions !== void 0 && T(e.listOptions, U.listOptions) && (n.listOptions = e.listOptions, r.add("listOptions")), n;
+    Y.paragraphSpacing
+  ) && (n.paragraphSpacing = e.paragraphSpacing, i.add("paragraphSpacing")), e.paragraphIndent !== void 0 && _(e.paragraphIndent, Y.paragraphIndent) && (n.paragraphIndent = e.paragraphIndent, i.add("paragraphIndent")), e.listOptions !== void 0 && _(e.listOptions, Y.listOptions) && (n.listOptions = e.listOptions, i.add("listOptions")), n;
 }
-function Nt(e) {
+function Mt(e) {
   const t = e.match(/^(\d+\.?\d*)[eE]([+-]?\d+)$/);
   if (t) {
-    const n = parseFloat(t[1]), r = parseInt(t[2]), o = n * Math.pow(10, r);
+    const n = parseFloat(t[1]), i = parseInt(t[2]), o = n * Math.pow(10, i);
     return Math.abs(o) < 1e-10 ? "0" : o.toFixed(6).replace(/\.?0+$/, "") || "0";
   }
   return e;
 }
-function ze(e) {
+function Ye(e) {
   if (!e || typeof e != "string")
     return e;
-  let t = e.replace(/(\d+\.?\d*)[eE]([+-]?\d+)/g, (n) => Nt(n));
+  let t = e.replace(/(\d+\.?\d*)[eE]([+-]?\d+)/g, (n) => Mt(n));
   return t = t.replace(
     /(\d+\.\d{7,})/g,
     // Match numbers with more than 6 decimal places
     (n) => {
-      const r = parseFloat(n);
-      return Math.abs(r) < 1e-10 ? "0" : r.toFixed(6).replace(/\.?0+$/, "") || "0";
+      const i = parseFloat(n);
+      return Math.abs(i) < 1e-10 ? "0" : i.toFixed(6).replace(/\.?0+$/, "") || "0";
     }
   ), t = t.replace(
     /([MmLlHhVvCcSsQqTtAaZz])([-\d])/g,
-    (n, r, o) => `${r} ${o}`
+    (n, i, o) => `${i} ${o}`
   ), t = t.replace(/\s+/g, " ").trim(), t;
 }
-function Ne(e) {
+function Ie(e) {
   return Array.isArray(e) ? e.map((t) => ({
-    data: ze(t.data),
+    data: Ye(t.data),
     // Normalize winding rule key (use windRule consistently)
     windRule: t.windRule || t.windingRule || "NONZERO"
   })) : e;
 }
-const bt = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const xt = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  normalizeSvgPath: ze,
-  normalizeVectorGeometry: Ne
+  normalizeSvgPath: Ye,
+  normalizeVectorGeometry: Ie
 }, Symbol.toStringTag, { value: "Module" }));
-async function vt(e, t) {
-  const n = {}, r = /* @__PURE__ */ new Set();
-  return e.fillGeometry !== void 0 && T(e.fillGeometry, H.fillGeometry) && (n.fillGeometry = Ne(e.fillGeometry), r.add("fillGeometry")), e.strokeGeometry !== void 0 && T(e.strokeGeometry, H.strokeGeometry) && (n.strokeGeometry = Ne(e.strokeGeometry), r.add("strokeGeometry")), e.strokeCap !== void 0 && T(e.strokeCap, H.strokeCap) && (n.strokeCap = e.strokeCap, r.add("strokeCap")), e.strokeJoin !== void 0 && T(e.strokeJoin, H.strokeJoin) && (n.strokeJoin = e.strokeJoin, r.add("strokeJoin")), e.dashPattern !== void 0 && T(e.dashPattern, H.dashPattern) && (n.dashPattern = e.dashPattern, r.add("dashPattern")), n;
+async function Rt(e, t) {
+  const n = {}, i = /* @__PURE__ */ new Set();
+  return e.fillGeometry !== void 0 && _(e.fillGeometry, ae.fillGeometry) && (n.fillGeometry = Ie(e.fillGeometry), i.add("fillGeometry")), e.strokeGeometry !== void 0 && _(e.strokeGeometry, ae.strokeGeometry) && (n.strokeGeometry = Ie(e.strokeGeometry), i.add("strokeGeometry")), e.strokeCap !== void 0 && _(e.strokeCap, ae.strokeCap) && (n.strokeCap = e.strokeCap, i.add("strokeCap")), e.strokeJoin !== void 0 && _(e.strokeJoin, ae.strokeJoin) && (n.strokeJoin = e.strokeJoin, i.add("strokeJoin")), e.dashPattern !== void 0 && _(e.dashPattern, ae.dashPattern) && (n.dashPattern = e.dashPattern, i.add("dashPattern")), n;
 }
-async function At(e, t) {
-  const n = {}, r = /* @__PURE__ */ new Set();
-  return e.cornerRadius !== void 0 && T(e.cornerRadius, xe.cornerRadius) && (n.cornerRadius = e.cornerRadius, r.add("cornerRadius")), e.pointCount !== void 0 && (n.pointCount = e.pointCount, r.add("pointCount")), e.innerRadius !== void 0 && (n.innerRadius = e.innerRadius, r.add("innerRadius")), e.pointCount !== void 0 && (n.pointCount = e.pointCount, r.add("pointCount")), n;
+async function kt(e, t) {
+  const n = {}, i = /* @__PURE__ */ new Set();
+  return e.cornerRadius !== void 0 && _(e.cornerRadius, Je.cornerRadius) && (n.cornerRadius = e.cornerRadius, i.add("cornerRadius")), e.pointCount !== void 0 && (n.pointCount = e.pointCount, i.add("pointCount")), e.innerRadius !== void 0 && (n.innerRadius = e.innerRadius, i.add("innerRadius")), e.pointCount !== void 0 && (n.pointCount = e.pointCount, i.add("pointCount")), n;
 }
-const ae = /* @__PURE__ */ new Map();
-let Ct = 0;
-function $t() {
-  return `prompt_${Date.now()}_${++Ct}`;
+const ge = /* @__PURE__ */ new Map();
+let Vt = 0;
+function _t() {
+  return `prompt_${Date.now()}_${++Vt}`;
 }
-const q = {
+const re = {
   /**
    * Prompt the user with a message and wait for OK or Cancel response
    * @param message - The message to display to the user
@@ -864,22 +894,22 @@ const q = {
    * @returns Promise that resolves on OK, rejects on Cancel or timeout
    */
   prompt: (e, t) => {
-    var m;
-    const n = typeof t == "number" ? { timeoutMs: t } : t, r = (m = n == null ? void 0 : n.timeoutMs) != null ? m : 3e5, o = n == null ? void 0 : n.okLabel, l = n == null ? void 0 : n.cancelLabel, i = $t();
-    return new Promise((h, N) => {
-      const s = r === -1 ? null : setTimeout(() => {
-        ae.delete(i), N(new Error(`Plugin prompt timeout: ${e}`));
-      }, r);
-      ae.set(i, {
-        resolve: h,
-        reject: N,
-        timeout: s
+    var p;
+    const n = typeof t == "number" ? { timeoutMs: t } : t, i = (p = n == null ? void 0 : n.timeoutMs) != null ? p : 3e5, o = n == null ? void 0 : n.okLabel, s = n == null ? void 0 : n.cancelLabel, r = _t();
+    return new Promise((m, b) => {
+      const w = i === -1 ? null : setTimeout(() => {
+        ge.delete(r), b(new Error(`Plugin prompt timeout: ${e}`));
+      }, i);
+      ge.set(r, {
+        resolve: m,
+        reject: b,
+        timeout: w
       }), figma.ui.postMessage({
         type: "PluginPrompt",
-        payload: I(I({
+        payload: L(L({
           message: e,
-          requestId: i
-        }, o && { okLabel: o }), l && { cancelLabel: l })
+          requestId: r
+        }, o && { okLabel: o }), s && { cancelLabel: s })
       });
     });
   },
@@ -897,41 +927,41 @@ const q = {
    * @param data - The response data containing requestId and action
    */
   handleResponse: (e) => {
-    const { requestId: t, action: n } = e, r = ae.get(t);
-    if (!r) {
+    const { requestId: t, action: n } = e, i = ge.get(t);
+    if (!i) {
       console.warn(
         `Received response for unknown prompt request: ${t}`
       );
       return;
     }
-    r.timeout && clearTimeout(r.timeout), ae.delete(t), n === "ok" ? r.resolve() : r.reject(new Error("User cancelled"));
+    i.timeout && clearTimeout(i.timeout), ge.delete(t), n === "ok" ? i.resolve() : i.reject(new Error("User cancelled"));
   }
-}, Pt = "RecursicaPublishedMetadata";
-function ye(e) {
+}, Lt = "RecursicaPublishedMetadata";
+function Te(e) {
   let t = e, n = !1;
   try {
     if (n = t.parent !== null && t.parent !== void 0, !n)
       return { page: null, reason: "detached" };
-  } catch (r) {
+  } catch (i) {
     return { page: null, reason: "detached" };
   }
   for (; t; ) {
     if (t.type === "PAGE")
       return { page: t, reason: "found" };
     try {
-      const r = t.parent;
-      if (!r)
+      const i = t.parent;
+      if (!i)
         return { page: null, reason: "broken_chain" };
-      t = r;
-    } catch (r) {
+      t = i;
+    } catch (i) {
       return { page: null, reason: "access_error" };
     }
   }
   return { page: null, reason: "broken_chain" };
 }
-function Se(e) {
+function ze(e) {
   try {
-    const t = e.getPluginData(Pt);
+    const t = e.getPluginData(Lt);
     if (!t || t.trim() === "")
       return null;
     const n = JSON.parse(t);
@@ -943,319 +973,704 @@ function Se(e) {
     return null;
   }
 }
-async function Et(e, t) {
-  const n = {}, r = /* @__PURE__ */ new Set();
-  if (n._isInstance = !0, r.add("_isInstance"), e.type === "INSTANCE" && typeof e.getMainComponentAsync == "function") {
-    const o = await e.getMainComponentAsync();
-    if (!o) {
-      const p = e.name || "(unnamed)", y = e.id;
+async function Gt(e, t) {
+  var o, s;
+  const n = {}, i = /* @__PURE__ */ new Set();
+  if (n._isInstance = !0, i.add("_isInstance"), e.type === "INSTANCE" && typeof e.getMainComponentAsync == "function") {
+    const r = await e.getMainComponentAsync();
+    if (!r) {
+      const c = e.name || "(unnamed)", y = e.id;
       if (t.detachedComponentsHandled.has(y))
         await a.log(
-          `Treating detached instance "${p}" as internal instance (already prompted)`
+          `Treating detached instance "${c}" as internal instance (already prompted)`
         );
       else {
         await a.warning(
-          `Found detached instance: "${p}" (main component is missing)`
+          `Found detached instance: "${c}" (main component is missing)`
         );
-        const k = `Found detached instance "${p}". The main component this instance references is missing. This should be fixed. Continue to publish?`;
+        const P = `Found detached instance "${c}". The main component this instance references is missing. This should be fixed. Continue to publish?`;
         try {
-          await q.prompt(k, {
+          await re.prompt(P, {
             okLabel: "Ok",
             cancelLabel: "Cancel",
             timeoutMs: 3e5
             // 5 minutes
           }), t.detachedComponentsHandled.add(y), await a.log(
-            `Treating detached instance "${p}" as internal instance`
+            `Treating detached instance "${c}" as internal instance`
           );
-        } catch (G) {
-          if (G instanceof Error && G.message === "User cancelled") {
-            const x = `Export cancelled: Detached instance "${p}" found. Please fix the instance before exporting.`;
+        } catch (T) {
+          if (T instanceof Error && T.message === "User cancelled") {
+            const x = `Export cancelled: Detached instance "${c}" found. Please fix the instance before exporting.`;
             await a.error(x);
             try {
               await figma.viewport.scrollAndZoomIntoView([e]);
-            } catch (R) {
-              console.warn("Could not scroll to instance:", R);
+            } catch (V) {
+              console.warn("Could not scroll to instance:", V);
             }
             throw new Error(x);
           } else
-            throw G;
+            throw T;
         }
       }
-      if (!ye(e).page) {
-        const k = `Detached instance "${p}" is not on any page. Cannot export.`;
-        throw await a.error(k), new Error(k);
+      if (!Te(e).page) {
+        const P = `Detached instance "${c}" is not on any page. Cannot export.`;
+        throw await a.error(P), new Error(P);
       }
-      let P, E;
+      let E, C;
       try {
-        e.variantProperties && (P = e.variantProperties), e.componentProperties && (E = e.componentProperties);
-      } catch (k) {
+        e.variantProperties && (E = e.variantProperties), e.componentProperties && (C = e.componentProperties);
+      } catch (P) {
       }
-      const S = I(I({
+      const $ = L(L({
         instanceType: "internal",
-        componentName: p,
+        componentName: c,
         componentNodeId: e.id
-      }, P && { variantProperties: P }), E && { componentProperties: E }), O = t.instanceTable.addInstance(S);
-      return n._instanceRef = O, r.add("_instanceRef"), await a.log(
-        `  Exported detached INSTANCE: "${p}" as internal instance (ID: ${e.id.substring(0, 8)}...)`
+      }, E && { variantProperties: E }), C && { componentProperties: C }), k = t.instanceTable.addInstance($);
+      return n._instanceRef = k, i.add("_instanceRef"), await a.log(
+        `  Exported detached INSTANCE: "${c}" as internal instance (ID: ${e.id.substring(0, 8)}...)`
       ), n;
     }
-    const l = e.name || "(unnamed)", i = o.name || "(unnamed)", m = o.remote === !0, N = ye(e).page, s = ye(o), A = s.page;
-    let $, c = A;
-    if (m)
-      if (A) {
-        const p = Se(A);
-        p != null && p.id ? ($ = "normal", c = A, await a.log(
-          `  Component "${i}" is from library but also exists on local page "${A.name}" with metadata. Treating as "normal" instance.`
-        )) : ($ = "remote", await a.log(
-          `  Component "${i}" is from library and exists on local page "${A.name}" but has no metadata. Treating as "remote" instance.`
+    const p = e.name || "(unnamed)", m = r.name || "(unnamed)", b = r.remote === !0, A = Te(e).page, d = Te(r), I = d.page;
+    let u, O = I;
+    if (b)
+      if (I) {
+        const c = ze(I);
+        c != null && c.id ? (u = "normal", O = I, await a.log(
+          `  Component "${m}" is from library but also exists on local page "${I.name}" with metadata. Treating as "normal" instance.`
+        )) : (u = "remote", await a.log(
+          `  Component "${m}" is from library and exists on local page "${I.name}" but has no metadata. Treating as "remote" instance.`
         ));
       } else
-        $ = "remote", await a.log(
-          `  Component "${i}" is from library and not on a local page. Treating as "remote" instance.`
+        u = "remote", await a.log(
+          `  Component "${m}" is from library and not on a local page. Treating as "remote" instance.`
         );
-    else if (A && N && A.id === N.id)
-      $ = "internal";
-    else if (A && N && A.id !== N.id)
-      $ = "normal";
-    else if (A && !N)
-      $ = "normal";
-    else if (!m && s.reason === "detached") {
-      const p = o.id;
-      if (t.detachedComponentsHandled.has(p))
-        $ = "remote", await a.log(
-          `Treating detached instance "${l}" -> component "${i}" as remote instance (already prompted)`
+    else if (I && A && I.id === A.id)
+      u = "internal";
+    else if (I && A && I.id !== A.id)
+      u = "normal";
+    else if (I && !A)
+      u = "normal";
+    else if (!b && d.reason === "detached") {
+      const c = r.id;
+      if (t.detachedComponentsHandled.has(c))
+        u = "remote", await a.log(
+          `Treating detached instance "${p}" -> component "${m}" as remote instance (already prompted)`
         );
       else {
         await a.warning(
-          `Found detached instance: "${l}" -> component "${i}" (component is not on any page)`
+          `Found detached instance: "${p}" -> component "${m}" (component is not on any page)`
         );
         try {
-          await figma.viewport.scrollAndZoomIntoView([o]);
-        } catch (w) {
-          console.warn("Could not scroll to component:", w);
+          await figma.viewport.scrollAndZoomIntoView([r]);
+        } catch (f) {
+          console.warn("Could not scroll to component:", f);
         }
-        const y = `Found detached instance "${l}" attached to component "${i}". This should be fixed. Continue to publish?`;
+        const y = `Found detached instance "${p}" attached to component "${m}". This should be fixed. Continue to publish?`;
         try {
-          await q.prompt(y, {
+          await re.prompt(y, {
             okLabel: "Ok",
             cancelLabel: "Cancel",
             timeoutMs: 3e5
             // 5 minutes
-          }), t.detachedComponentsHandled.add(p), $ = "remote", await a.log(
-            `Treating detached instance "${l}" as remote instance (will be created on REMOTES page)`
+          }), t.detachedComponentsHandled.add(c), u = "remote", await a.log(
+            `Treating detached instance "${p}" as remote instance (will be created on REMOTES page)`
           );
-        } catch (w) {
-          if (w instanceof Error && w.message === "User cancelled") {
-            const b = `Export cancelled: Detached instance "${l}" found. The component "${i}" is not on any page. Please fix the instance before exporting.`;
-            throw await a.error(b), new Error(b);
+        } catch (f) {
+          if (f instanceof Error && f.message === "User cancelled") {
+            const N = `Export cancelled: Detached instance "${p}" found. The component "${m}" is not on any page. Please fix the instance before exporting.`;
+            throw await a.error(N), new Error(N);
           } else
-            throw w;
+            throw f;
         }
       }
     } else
-      m || await a.warning(
-        `  Instance "${l}" -> component "${i}": componentPage is null but component is not remote. Reason: ${s.reason}. Cannot determine instance type.`
-      ), $ = "normal";
-    let g, d;
+      b || await a.warning(
+        `  Instance "${p}" -> component "${m}": componentPage is null but component is not remote. Reason: ${d.reason}. Cannot determine instance type.`
+      ), u = "normal";
+    let S, M;
     try {
-      e.variantProperties && (g = e.variantProperties), e.componentProperties && (d = e.componentProperties);
-    } catch (p) {
-    }
-    let u, v;
-    try {
-      let p = o.parent;
-      const y = [];
-      let w = 0;
-      const b = 20;
-      for (; p && w < b; )
+      if (e.variantProperties && (S = e.variantProperties, await a.log(
+        `  Instance "${p}" -> variantProperties from instance: ${JSON.stringify(S)}`
+      )), typeof e.getProperties == "function")
         try {
-          const P = p.type, E = p.name;
-          if (P === "COMPONENT_SET" && !v && (v = E), P === "PAGE")
+          const c = await e.getProperties();
+          c && c.variantProperties && (await a.log(
+            `  Instance "${p}" -> variantProperties from getProperties(): ${JSON.stringify(c.variantProperties)}`
+          ), c.variantProperties && Object.keys(c.variantProperties).length > 0 && (S = c.variantProperties));
+        } catch (c) {
+          await a.log(
+            `  Instance "${p}" -> getProperties() not available or failed: ${c}`
+          );
+        }
+      if (e.componentProperties && (M = e.componentProperties), r.parent && r.parent.type === "COMPONENT_SET") {
+        const c = r.parent;
+        try {
+          const y = c.componentPropertyDefinitions;
+          y && await a.log(
+            `  Component set "${c.name}" has property definitions: ${JSON.stringify(Object.keys(y))}`
+          );
+          const f = {}, N = m.split(",").map((E) => E.trim());
+          for (const E of N) {
+            const C = E.split("=").map(($) => $.trim());
+            if (C.length >= 2) {
+              const $ = C[0], k = C.slice(1).join("=").trim();
+              y && y[$] && (f[$] = k);
+            }
+          }
+          if (Object.keys(f).length > 0 && await a.log(
+            `  Parsed variant properties from component name "${m}": ${JSON.stringify(f)}`
+          ), S && Object.keys(S).length > 0)
+            await a.log(
+              `  Using variant properties from instance (source of truth): ${JSON.stringify(S)}`
+            );
+          else if (Object.keys(f).length > 0)
+            S = f, await a.log(
+              `  Using variant properties from component name (fallback): ${JSON.stringify(S)}`
+            );
+          else if (r.variantProperties) {
+            const E = r.variantProperties;
+            await a.log(
+              `  Main component "${m}" has variantProperties: ${JSON.stringify(E)}`
+            ), S = E;
+          }
+        } catch (y) {
+          await a.warning(
+            `  Could not get variant properties from component set: ${y}`
+          );
+        }
+      }
+    } catch (c) {
+    }
+    let h, v;
+    try {
+      let c = r.parent;
+      const y = [];
+      let f = 0;
+      const N = 20;
+      for (; c && f < N; )
+        try {
+          const E = c.type, C = c.name;
+          if (E === "COMPONENT_SET" && !v && (v = C), E === "PAGE")
             break;
-          const S = E || "";
-          y.unshift(S), p = p.parent, w++;
-        } catch (P) {
+          const $ = C || "";
+          y.unshift($), c = c.parent, f++;
+        } catch (E) {
           break;
         }
-      u = y;
-    } catch (p) {
+      h = y;
+    } catch (c) {
     }
-    const C = I(I(I(I({
-      instanceType: $,
-      componentName: i
-    }, v && { componentSetName: v }), g && { variantProperties: g }), d && { componentProperties: d }), $ === "normal" ? { path: u || [] } : u && u.length > 0 && {
-      path: u
+    const l = L(L(L(L({
+      instanceType: u,
+      componentName: m
+    }, v && { componentSetName: v }), S && { variantProperties: S }), M && { componentProperties: M }), u === "normal" ? { path: h || [] } : h && h.length > 0 && {
+      path: h
     });
-    if ($ === "internal")
-      C.componentNodeId = o.id, await a.log(
-        `  Found INSTANCE: "${l}" -> INTERNAL component "${i}" (ID: ${o.id.substring(0, 8)}...)`
+    if (u === "internal") {
+      l.componentNodeId = r.id, await a.log(
+        `  Found INSTANCE: "${p}" -> INTERNAL component "${m}" (ID: ${r.id.substring(0, 8)}...)`
       );
-    else if ($ === "normal") {
-      const p = c || A;
-      if (p) {
-        C.componentPageName = p.name;
-        const w = Se(p);
-        w != null && w.id && w.version !== void 0 ? (C.componentGuid = w.id, C.componentVersion = w.version, await a.log(
-          `  Found INSTANCE: "${l}" -> NORMAL component "${i}" (ID: ${o.id.substring(0, 8)}...) at path [${(u || []).join(" → ")}]`
+      const c = e.boundVariables, y = r.boundVariables;
+      if (c && typeof c == "object") {
+        const $ = Object.keys(c);
+        await a.log(
+          `  DEBUG: Internal instance "${p}" -> boundVariables keys: ${$.length > 0 ? $.join(", ") : "none"}`
+        );
+        for (const P of $) {
+          const T = c[P], x = (T == null ? void 0 : T.type) || typeof T;
+          await a.log(
+            `  DEBUG:   boundVariables.${P}: type=${x}, value=${JSON.stringify(T)}`
+          );
+        }
+        const k = [
+          "backgrounds",
+          "selectionColor",
+          "selectionColors",
+          "selection",
+          "selectColor"
+        ];
+        for (const P of k)
+          c[P] !== void 0 && await a.log(
+            `  DEBUG:   Found potential "Selection colors" property: boundVariables.${P} = ${JSON.stringify(c[P])}`
+          );
+      } else
+        await a.log(
+          `  DEBUG: Internal instance "${p}" -> No boundVariables found on instance node`
+        );
+      if (y && typeof y == "object") {
+        const $ = Object.keys(y);
+        await a.log(
+          `  DEBUG: Main component "${m}" -> boundVariables keys: ${$.length > 0 ? $.join(", ") : "none"}`
+        );
+      }
+      const f = e.backgrounds;
+      if (f && Array.isArray(f)) {
+        await a.log(
+          `  DEBUG: Internal instance "${p}" -> backgrounds array length: ${f.length}`
+        );
+        for (let $ = 0; $ < f.length; $++) {
+          const k = f[$];
+          if (k && typeof k == "object") {
+            if (await a.log(
+              `  DEBUG:   backgrounds[${$}] structure: ${JSON.stringify(Object.keys(k))}`
+            ), k.boundVariables) {
+              const P = Object.keys(k.boundVariables);
+              await a.log(
+                `  DEBUG:   backgrounds[${$}].boundVariables keys: ${P.length > 0 ? P.join(", ") : "none"}`
+              );
+              for (const T of P) {
+                const x = k.boundVariables[T];
+                await a.log(
+                  `  DEBUG:     backgrounds[${$}].boundVariables.${T}: ${JSON.stringify(x)}`
+                );
+              }
+            }
+            k.color && await a.log(
+              `  DEBUG:   backgrounds[${$}].color: ${JSON.stringify(k.color)}`
+            );
+          }
+        }
+      }
+      const N = Object.keys(e).filter(
+        ($) => !$.startsWith("_") && $ !== "parent" && $ !== "removed" && typeof e[$] != "function" && $ !== "type" && $ !== "id" && $ !== "name" && $ !== "boundVariables" && $ !== "backgrounds" && $ !== "fills"
+      ), E = Object.keys(r).filter(
+        ($) => !$.startsWith("_") && $ !== "parent" && $ !== "removed" && typeof r[$] != "function" && $ !== "type" && $ !== "id" && $ !== "name" && $ !== "boundVariables" && $ !== "backgrounds" && $ !== "fills"
+      ), C = [
+        .../* @__PURE__ */ new Set([...N, ...E])
+      ].filter(
+        ($) => $.toLowerCase().includes("selection") || $.toLowerCase().includes("select") || $.toLowerCase().includes("color") && !$.toLowerCase().includes("fill") && !$.toLowerCase().includes("stroke")
+      );
+      if (C.length > 0) {
+        await a.log(
+          `  DEBUG: Found selection/color-related properties: ${C.join(", ")}`
+        );
+        for (const $ of C)
+          try {
+            if (N.includes($)) {
+              const k = e[$];
+              await a.log(
+                `  DEBUG:   Instance.${$}: ${JSON.stringify(k)}`
+              );
+            }
+            if (E.includes($)) {
+              const k = r[$];
+              await a.log(
+                `  DEBUG:   MainComponent.${$}: ${JSON.stringify(k)}`
+              );
+            }
+          } catch (k) {
+          }
+      } else
+        await a.log(
+          "  DEBUG: No selection/color-related properties found on instance or main component"
+        );
+    } else if (u === "normal") {
+      const c = O || I;
+      if (c) {
+        l.componentPageName = c.name;
+        const f = ze(c);
+        f != null && f.id && f.version !== void 0 ? (l.componentGuid = f.id, l.componentVersion = f.version, await a.log(
+          `  Found INSTANCE: "${p}" -> NORMAL component "${m}" (ID: ${r.id.substring(0, 8)}...) at path [${(h || []).join(" → ")}]`
         )) : await a.warning(
-          `  Instance "${l}" -> component "${i}" is classified as normal but page "${p.name}" has no metadata. This instance will not be importable.`
+          `  Instance "${p}" -> component "${m}" is classified as normal but page "${c.name}" has no metadata. This instance will not be importable.`
         );
       } else {
-        const w = o.id;
-        let b = "", P = "";
-        switch (s.reason) {
+        const f = r.id;
+        let N = "", E = "";
+        switch (d.reason) {
           case "broken_chain":
-            b = "The component's parent chain is broken and cannot be traversed to find the page", P = "Please ensure the component is properly nested within the document structure.";
+            N = "The component's parent chain is broken and cannot be traversed to find the page", E = "Please ensure the component is properly nested within the document structure.";
             break;
           case "access_error":
-            b = "Cannot access the component's parent chain (access error)", P = "The component may be in an invalid state. Please check the component structure.";
+            N = "Cannot access the component's parent chain (access error)", E = "The component may be in an invalid state. Please check the component structure.";
             break;
           default:
-            b = "Cannot determine which page the component is on", P = "Please ensure the component is properly placed on a page.";
+            N = "Cannot determine which page the component is on", E = "Please ensure the component is properly placed on a page.";
         }
         try {
-          await figma.viewport.scrollAndZoomIntoView([o]);
-        } catch (O) {
-          console.warn("Could not scroll to component:", O);
+          await figma.viewport.scrollAndZoomIntoView([r]);
+        } catch (k) {
+          console.warn("Could not scroll to component:", k);
         }
-        const E = `Normal instance "${l}" -> component "${i}" (ID: ${w}) has no componentPage. ${b}. ${P} Component has been focused in the viewport.`;
-        console.error("FATAL EXPORT ERROR:", E), await a.error(E);
-        const S = new Error(E);
-        throw console.error("Throwing error:", S), S;
+        const C = `Normal instance "${p}" -> component "${m}" (ID: ${f}) has no componentPage. ${N}. ${E} Component has been focused in the viewport.`;
+        console.error("FATAL EXPORT ERROR:", C), await a.error(C);
+        const $ = new Error(C);
+        throw console.error("Throwing error:", $), $;
       }
-      u === void 0 && console.warn(
-        `Failed to build path for normal instance "${l}" -> component "${i}". Path is required for resolution.`
+      h === void 0 && console.warn(
+        `Failed to build path for normal instance "${p}" -> component "${m}". Path is required for resolution.`
       );
-      const y = u && u.length > 0 ? ` at path [${u.join(" → ")}]` : " at page root";
+      const y = h && h.length > 0 ? ` at path [${h.join(" → ")}]` : " at page root";
       await a.log(
-        `  Found INSTANCE: "${l}" -> NORMAL component "${i}" (ID: ${o.id.substring(0, 8)}...)${y}`
+        `  Found INSTANCE: "${p}" -> NORMAL component "${m}" (ID: ${r.id.substring(0, 8)}...)${y}`
       );
-    } else if ($ === "remote") {
-      let p, y;
-      const w = t.detachedComponentsHandled.has(
-        o.id
+    } else if (u === "remote") {
+      let c, y;
+      const f = t.detachedComponentsHandled.has(
+        r.id
       );
-      if (!w)
+      if (!f)
         try {
-          if (typeof o.getPublishStatusAsync == "function")
+          if (typeof r.getPublishStatusAsync == "function")
             try {
-              const b = await o.getPublishStatusAsync();
-              b && typeof b == "object" && (b.libraryName && (p = b.libraryName), b.libraryKey && (y = b.libraryKey));
-            } catch (b) {
+              const E = await r.getPublishStatusAsync();
+              E && typeof E == "object" && (E.libraryName && (c = E.libraryName), E.libraryKey && (y = E.libraryKey));
+            } catch (E) {
             }
           try {
-            const b = figma.teamLibrary;
-            if (typeof (b == null ? void 0 : b.getAvailableLibraryComponentSetsAsync) == "function") {
-              const P = await b.getAvailableLibraryComponentSetsAsync();
-              if (P && Array.isArray(P)) {
-                for (const E of P)
-                  if (E.key === o.key || E.name === o.name) {
-                    E.libraryName && (p = E.libraryName), E.libraryKey && (y = E.libraryKey);
+            const E = figma.teamLibrary;
+            if (typeof (E == null ? void 0 : E.getAvailableLibraryComponentSetsAsync) == "function") {
+              const C = await E.getAvailableLibraryComponentSetsAsync();
+              if (C && Array.isArray(C)) {
+                for (const $ of C)
+                  if ($.key === r.key || $.name === r.name) {
+                    $.libraryName && (c = $.libraryName), $.libraryKey && (y = $.libraryKey);
                     break;
                   }
               }
             }
-          } catch (b) {
+          } catch (E) {
           }
-        } catch (b) {
+        } catch (E) {
           console.warn(
-            `Error getting library info for remote component "${i}":`,
-            b
+            `Error getting library info for remote component "${m}":`,
+            E
           );
         }
-      try {
-        const { parseBaseNodeProperties: b } = await Promise.resolve().then(() => ht), P = await b(e, t), { parseFrameProperties: E } = await Promise.resolve().then(() => yt), S = await E(e, t), O = V(I(I({}, P), S), {
-          type: "COMPONENT"
-          // Convert to COMPONENT type for recreation (must be after baseProps to override)
-        });
-        if (e.children && Array.isArray(e.children) && e.children.length > 0) {
-          const k = V(I({}, t), {
-            depth: (t.depth || 0) + 1
-          }), { extractNodeData: G } = await Promise.resolve().then(() => Mt), x = [];
-          for (const R of e.children)
-            try {
-              let M;
-              if (R.type === "INSTANCE")
-                try {
-                  const _ = await R.getMainComponentAsync();
-                  if (_) {
-                    const D = await b(
-                      R,
-                      t
-                    ), ee = await E(
-                      R,
-                      t
-                    ), fe = await G(
-                      _,
+      if (c && (l.remoteLibraryName = c), y && (l.remoteLibraryKey = y), f && (l.componentNodeId = r.id), t.instanceTable.getInstanceIndex(l) !== -1)
+        await a.log(
+          `  Found INSTANCE: "${p}" -> REMOTE component "${m}" (ID: ${r.id.substring(0, 8)}...)${f ? " [DETACHED]" : ""}`
+        );
+      else
+        try {
+          const { parseBaseNodeProperties: E } = await Promise.resolve().then(() => Ot), C = await E(e, t), { parseFrameProperties: $ } = await Promise.resolve().then(() => St), k = await $(e, t), P = q(L(L({}, C), k), {
+            type: "COMPONENT"
+            // Convert to COMPONENT type for recreation (must be after baseProps to override)
+          });
+          if (e.children && Array.isArray(e.children) && e.children.length > 0) {
+            const T = q(L({}, t), {
+              depth: (t.depth || 0) + 1
+            }), { extractNodeData: x } = await Promise.resolve().then(() => jt), V = [];
+            for (const U of e.children)
+              try {
+                let B;
+                if (U.type === "INSTANCE")
+                  try {
+                    const K = await U.getMainComponentAsync();
+                    if (K) {
+                      const z = await E(
+                        U,
+                        t
+                      ), J = await $(
+                        U,
+                        t
+                      ), Z = await x(
+                        K,
+                        /* @__PURE__ */ new WeakSet(),
+                        T
+                      );
+                      B = q(L(L(L({}, Z), z), J), {
+                        type: "COMPONENT"
+                        // Convert to COMPONENT
+                      });
+                    } else
+                      B = await x(
+                        U,
+                        /* @__PURE__ */ new WeakSet(),
+                        T
+                      ), B.type === "INSTANCE" && (B.type = "COMPONENT"), delete B._instanceRef;
+                  } catch (K) {
+                    B = await x(
+                      U,
                       /* @__PURE__ */ new WeakSet(),
-                      k
-                    );
-                    M = V(I(I(I({}, fe), D), ee), {
-                      type: "COMPONENT"
-                      // Convert to COMPONENT
-                    });
-                  } else
-                    M = await G(
-                      R,
-                      /* @__PURE__ */ new WeakSet(),
-                      k
-                    ), M.type === "INSTANCE" && (M.type = "COMPONENT"), delete M._instanceRef;
-                } catch (_) {
-                  M = await G(
-                    R,
+                      T
+                    ), B.type === "INSTANCE" && (B.type = "COMPONENT"), delete B._instanceRef;
+                  }
+                else {
+                  B = await x(
+                    U,
                     /* @__PURE__ */ new WeakSet(),
-                    k
-                  ), M.type === "INSTANCE" && (M.type = "COMPONENT"), delete M._instanceRef;
+                    T
+                  );
+                  const K = U.boundVariables;
+                  if (K && typeof K == "object") {
+                    const z = Object.keys(K);
+                    z.length > 0 && (await a.log(
+                      `  DEBUG: Child "${U.name || "Unnamed"}" -> boundVariables keys: ${z.join(", ")}`
+                    ), K.backgrounds !== void 0 && await a.log(
+                      `  DEBUG:   Child "${U.name || "Unnamed"}" -> boundVariables.backgrounds: ${JSON.stringify(K.backgrounds)}`
+                    ));
+                  }
+                  if (r.children && Array.isArray(r.children)) {
+                    const z = r.children.find(
+                      (J) => J.name === U.name
+                    );
+                    if (z) {
+                      const J = z.boundVariables;
+                      if (J && typeof J == "object") {
+                        const Z = Object.keys(J);
+                        if (Z.length > 0 && (await a.log(
+                          `  DEBUG: Main component child "${z.name || "Unnamed"}" -> boundVariables keys: ${Z.join(", ")}`
+                        ), J.backgrounds !== void 0 && (await a.log(
+                          `  DEBUG:   Main component child "${z.name || "Unnamed"}" -> boundVariables.backgrounds: ${JSON.stringify(J.backgrounds)}`
+                        ), !K || !K.backgrounds))) {
+                          await a.log(
+                            "  DEBUG:   Instance child doesn't have boundVariables.backgrounds, but main component child does - preserving from main component"
+                          );
+                          const { extractBoundVariables: se } = await Promise.resolve().then(() => ce), Q = await se(
+                            J,
+                            t.variableTable,
+                            t.collectionTable
+                          );
+                          B.boundVariables || (B.boundVariables = {}), Q.backgrounds && (B.boundVariables.backgrounds = Q.backgrounds, await a.log(
+                            "  DEBUG:   ✓ Added boundVariables.backgrounds to childData from main component child"
+                          ));
+                        }
+                      }
+                    }
+                  }
                 }
-              else
-                M = await G(
-                  R,
-                  /* @__PURE__ */ new WeakSet(),
-                  k
+                V.push(B);
+              } catch (B) {
+                console.warn(
+                  `Failed to extract child "${U.name || "Unnamed"}" for remote component "${m}":`,
+                  B
                 );
-              x.push(M);
-            } catch (M) {
-              console.warn(
-                `Failed to extract child "${R.name || "Unnamed"}" for remote component "${i}":`,
-                M
+              }
+            P.children = V;
+          }
+          if (!P)
+            throw new Error("Failed to build structure for remote instance");
+          try {
+            const T = e.boundVariables;
+            if (T && typeof T == "object") {
+              const R = Object.keys(T);
+              await a.log(
+                `  DEBUG: Instance "${p}" -> boundVariables keys: ${R.length > 0 ? R.join(", ") : "none"}`
+              );
+              for (const G of R) {
+                const j = T[G], ct = (j == null ? void 0 : j.type) || typeof j;
+                if (await a.log(
+                  `  DEBUG:   boundVariables.${G}: type=${ct}, value=${JSON.stringify(j)}`
+                ), j && typeof j == "object" && !Array.isArray(j)) {
+                  const Ce = Object.keys(j);
+                  if (Ce.length > 0) {
+                    await a.log(
+                      `  DEBUG:     boundVariables.${G} has nested keys: ${Ce.join(", ")}`
+                    );
+                    for (const Ue of Ce) {
+                      const fe = j[Ue];
+                      fe && typeof fe == "object" && fe.type === "VARIABLE_ALIAS" && await a.log(
+                        `  DEBUG:       boundVariables.${G}.${Ue}: VARIABLE_ALIAS id=${fe.id}`
+                      );
+                    }
+                  }
+                }
+              }
+              const F = [
+                "backgrounds",
+                "selectionColor",
+                "selectionColors",
+                "selection",
+                "selectColor"
+              ];
+              for (const G of F)
+                T[G] !== void 0 && await a.log(
+                  `  DEBUG:   Found potential "Selection colors" property: boundVariables.${G} = ${JSON.stringify(T[G])}`
+                );
+            } else
+              await a.log(
+                `  DEBUG: Instance "${p}" -> No boundVariables found on instance node`
+              );
+            const x = T && T.fills !== void 0 && T.fills !== null, V = P.fills !== void 0 && Array.isArray(P.fills) && P.fills.length > 0, U = e.fills !== void 0 && Array.isArray(e.fills) && e.fills.length > 0, B = r.fills !== void 0 && Array.isArray(r.fills) && r.fills.length > 0;
+            if (await a.log(
+              `  DEBUG: Instance "${p}" -> fills check: instanceHasFills=${U}, structureHasFills=${V}, mainComponentHasFills=${B}, hasInstanceFillsBoundVar=${!!x}`
+            ), x && !V) {
+              await a.log(
+                "  DEBUG: Instance has boundVariables.fills but structure has no fills - attempting to get fills"
+              );
+              try {
+                if (U) {
+                  const { serializeFills: R } = await Promise.resolve().then(() => ce), F = await R(
+                    e.fills,
+                    t.variableTable,
+                    t.collectionTable
+                  );
+                  P.fills = F, await a.log(
+                    `  DEBUG: Got ${F.length} fill(s) from instance node`
+                  );
+                } else if (B) {
+                  const { serializeFills: R } = await Promise.resolve().then(() => ce), F = await R(
+                    r.fills,
+                    t.variableTable,
+                    t.collectionTable
+                  );
+                  P.fills = F, await a.log(
+                    `  DEBUG: Got ${F.length} fill(s) from main component`
+                  );
+                } else
+                  await a.warning(
+                    "  DEBUG: Instance has boundVariables.fills but neither instance nor main component has fills"
+                  );
+              } catch (R) {
+                await a.warning(
+                  `  Failed to get fills: ${R}`
+                );
+              }
+            }
+            const K = e.selectionColor, z = r.selectionColor;
+            K !== void 0 && await a.log(
+              `  DEBUG: Instance "${p}" -> selectionColor: ${JSON.stringify(K)}`
+            ), z !== void 0 && await a.log(
+              `  DEBUG: Main component "${m}" -> selectionColor: ${JSON.stringify(z)}`
+            );
+            const J = Object.keys(e).filter(
+              (R) => !R.startsWith("_") && R !== "parent" && R !== "removed" && typeof e[R] != "function" && R !== "type" && R !== "id" && R !== "name"
+            ), Z = Object.keys(r).filter(
+              (R) => !R.startsWith("_") && R !== "parent" && R !== "removed" && typeof r[R] != "function" && R !== "type" && R !== "id" && R !== "name"
+            ), se = [
+              .../* @__PURE__ */ new Set([...J, ...Z])
+            ].filter(
+              (R) => R.toLowerCase().includes("selection") || R.toLowerCase().includes("select") || R.toLowerCase().includes("color") && !R.toLowerCase().includes("fill") && !R.toLowerCase().includes("stroke")
+            );
+            if (se.length > 0) {
+              await a.log(
+                `  DEBUG: Found selection/color-related properties: ${se.join(", ")}`
+              );
+              for (const R of se)
+                try {
+                  if (J.includes(R)) {
+                    const F = e[R];
+                    await a.log(
+                      `  DEBUG:   Instance.${R}: ${JSON.stringify(F)}`
+                    );
+                  }
+                  if (Z.includes(R)) {
+                    const F = r[R];
+                    await a.log(
+                      `  DEBUG:   MainComponent.${R}: ${JSON.stringify(F)}`
+                    );
+                  }
+                } catch (F) {
+                }
+            } else
+              await a.log(
+                "  DEBUG: No selection/color-related properties found on instance or main component"
+              );
+            const Q = r.boundVariables;
+            if (Q && typeof Q == "object") {
+              const R = Object.keys(Q);
+              if (R.length > 0) {
+                await a.log(
+                  `  DEBUG: Main component "${m}" -> boundVariables keys: ${R.join(", ")}`
+                );
+                for (const F of R) {
+                  const G = Q[F], j = (G == null ? void 0 : G.type) || typeof G;
+                  await a.log(
+                    `  DEBUG:   Main component boundVariables.${F}: type=${j}, value=${JSON.stringify(G)}`
+                  );
+                }
+              }
+            }
+            if (T && Object.keys(T).length > 0) {
+              await a.log(
+                `  DEBUG: Preserving instance's boundVariables in structure (${Object.keys(T).length} key(s))`
+              );
+              const { extractBoundVariables: R } = await Promise.resolve().then(() => ce), F = await R(
+                T,
+                t.variableTable,
+                t.collectionTable
+              );
+              P.boundVariables || (P.boundVariables = {});
+              for (const [G, j] of Object.entries(
+                F
+              ))
+                j !== void 0 && (P.boundVariables[G] !== void 0 && await a.log(
+                  `  DEBUG: Structure already has boundVariables.${G} from baseProps, but instance also has it - using instance's boundVariables.${G}`
+                ), P.boundVariables[G] = j, await a.log(
+                  `  DEBUG: Set boundVariables.${G} in structure: ${JSON.stringify(j)}`
+                ));
+              F.fills !== void 0 ? await a.log(
+                "  DEBUG: ✓ Preserved boundVariables.fills from instance"
+              ) : x && await a.warning(
+                "  DEBUG: Instance has boundVariables.fills but extractBoundVariables didn't extract it"
+              ), F.backgrounds !== void 0 ? await a.log(
+                `  DEBUG: ✓ Preserved boundVariables.backgrounds from instance: ${JSON.stringify(F.backgrounds)}`
+              ) : T && T.backgrounds !== void 0 && await a.warning(
+                "  DEBUG: Instance has boundVariables.backgrounds but extractBoundVariables didn't extract it"
               );
             }
-          O.children = x;
+            if (Q && Object.keys(Q).length > 0) {
+              await a.log(
+                `  DEBUG: Checking main component's boundVariables for properties not in instance (${Object.keys(Q).length} key(s))`
+              );
+              const { extractBoundVariables: R } = await Promise.resolve().then(() => ce), F = await R(
+                Q,
+                t.variableTable,
+                t.collectionTable
+              );
+              P.boundVariables || (P.boundVariables = {});
+              for (const [G, j] of Object.entries(
+                F
+              ))
+                j !== void 0 && (P.boundVariables[G] === void 0 ? (P.boundVariables[G] = j, await a.log(
+                  `  DEBUG: Added boundVariables.${G} from main component (not in instance): ${JSON.stringify(j)}`
+                )) : await a.log(
+                  `  DEBUG: Skipped boundVariables.${G} from main component (instance already has it)`
+                ));
+            }
+            await a.log(
+              `  DEBUG: Final structure for "${m}": hasFills=${!!P.fills}, fillsCount=${((o = P.fills) == null ? void 0 : o.length) || 0}, hasBoundVars=${!!P.boundVariables}, boundVarsKeys=${P.boundVariables ? Object.keys(P.boundVariables).join(", ") : "none"}`
+            ), (s = P.boundVariables) != null && s.fills && await a.log(
+              `  DEBUG: Structure boundVariables.fills: ${JSON.stringify(P.boundVariables.fills)}`
+            );
+          } catch (T) {
+            await a.warning(
+              `  Failed to handle bound variables for fills: ${T}`
+            );
+          }
+          l.structure = P, f ? await a.log(
+            `  Extracted structure for detached component "${m}" (ID: ${r.id.substring(0, 8)}...)`
+          ) : await a.log(
+            `  Extracted structure from instance for remote component "${m}" (preserving size overrides: ${e.width}x${e.height})`
+          ), await a.log(
+            `  Found INSTANCE: "${p}" -> REMOTE component "${m}" (ID: ${r.id.substring(0, 8)}...)${f ? " [DETACHED]" : ""}`
+          );
+        } catch (E) {
+          const C = `Failed to extract structure for remote component "${m}": ${E instanceof Error ? E.message : String(E)}`;
+          console.error(C, E), await a.error(C);
         }
-        if (!O)
-          throw new Error("Failed to build structure for remote instance");
-        C.structure = O, w ? await a.log(
-          `  Extracted structure for detached component "${i}" (ID: ${o.id.substring(0, 8)}...)`
-        ) : await a.log(
-          `  Extracted structure from instance for remote component "${i}" (preserving size overrides: ${e.width}x${e.height})`
-        );
-      } catch (b) {
-        const P = `Failed to extract structure for remote component "${i}": ${b instanceof Error ? b.message : String(b)}`;
-        console.error(P, b), await a.error(P);
-      }
-      p && (C.remoteLibraryName = p), y && (C.remoteLibraryKey = y), w && (C.componentNodeId = o.id), await a.log(
-        `  Found INSTANCE: "${l}" -> REMOTE component "${i}" (ID: ${o.id.substring(0, 8)}...)${w ? " [DETACHED]" : ""}`
-      );
     }
-    const f = t.instanceTable.addInstance(C);
-    n._instanceRef = f, r.add("_instanceRef");
+    const g = t.instanceTable.addInstance(l);
+    n._instanceRef = g, i.add("_instanceRef");
   }
   return n;
 }
-class Q {
+class pe {
   constructor() {
-    F(this, "instanceMap");
+    D(this, "instanceMap");
     // unique key -> index
-    F(this, "instances");
+    D(this, "instances");
     // index -> instance data
-    F(this, "nextIndex");
+    D(this, "nextIndex");
     this.instanceMap = /* @__PURE__ */ new Map(), this.instances = [], this.nextIndex = 0;
   }
   /**
    * Generates a unique key for an instance based on its type
    */
   generateKey(t) {
-    return t.instanceType === "internal" && t.componentNodeId ? `internal:${t.componentNodeId}` : t.instanceType === "normal" && t.componentGuid && t.componentVersion !== void 0 ? `normal:${t.componentGuid}:${t.componentVersion}` : t.instanceType === "remote" && t.remoteLibraryKey ? `remote:${t.remoteLibraryKey}:${t.componentName}` : t.instanceType === "remote" && t.componentNodeId ? `remote:detached:${t.componentNodeId}` : `${t.instanceType}:${t.componentName}:COMPONENT`;
+    if (t.instanceType === "internal" && t.componentNodeId) {
+      const n = t.variantProperties ? `:${JSON.stringify(t.variantProperties)}` : "";
+      return `internal:${t.componentNodeId}${n}`;
+    } else {
+      if (t.instanceType === "normal" && t.componentGuid && t.componentVersion !== void 0)
+        return `normal:${t.componentGuid}:${t.componentVersion}`;
+      if (t.instanceType === "remote" && t.remoteLibraryKey)
+        return `remote:${t.remoteLibraryKey}:${t.componentName}`;
+      if (t.instanceType === "remote" && t.componentNodeId)
+        return `remote:detached:${t.componentNodeId}`;
+    }
+    return t.instanceType === "remote" ? `remote:${t.componentName}:COMPONENT` : `${t.instanceType}:${t.componentName}:COMPONENT`;
   }
   /**
    * Adds an instance to the table if it doesn't already exist
@@ -1265,17 +1680,17 @@ class Q {
     const n = this.generateKey(t);
     if (this.instanceMap.has(n))
       return this.instanceMap.get(n);
-    const r = this.nextIndex++;
-    return this.instanceMap.set(n, r), this.instances[r] = t, r;
+    const i = this.nextIndex++;
+    return this.instanceMap.set(n, i), this.instances[i] = t, i;
   }
   /**
    * Gets the index of an instance by its unique key
    * Returns -1 if not found
    */
   getInstanceIndex(t) {
-    var r;
+    var i;
     const n = this.generateKey(t);
-    return (r = this.instanceMap.get(n)) != null ? r : -1;
+    return (i = this.instanceMap.get(n)) != null ? i : -1;
   }
   /**
    * Gets an instance entry by index
@@ -1297,12 +1712,12 @@ class Q {
    * Reconstructs an InstanceTable from a serialized table object
    */
   static fromTable(t) {
-    const n = new Q(), r = Object.entries(t).sort(
-      (o, l) => parseInt(o[0], 10) - parseInt(l[0], 10)
+    const n = new pe(), i = Object.entries(t).sort(
+      (o, s) => parseInt(o[0], 10) - parseInt(s[0], 10)
     );
-    for (const [o, l] of r) {
-      const i = parseInt(o, 10), m = n.generateKey(l);
-      n.instanceMap.set(m, i), n.instances[i] = l, n.nextIndex = Math.max(n.nextIndex, i + 1);
+    for (const [o, s] of i) {
+      const r = parseInt(o, 10), p = n.generateKey(s);
+      n.instanceMap.set(p, r), n.instances[r] = s, n.nextIndex = Math.max(n.nextIndex, r + 1);
     }
     return n;
   }
@@ -1313,7 +1728,7 @@ class Q {
     return this.instances.length;
   }
 }
-const Ve = {
+const Xe = {
   // Node types
   FRAME: 1,
   TEXT: 2,
@@ -1352,21 +1767,21 @@ const Ve = {
   NORMAL: 30,
   PASS_THROUGH: 31
 };
-function Tt() {
+function Ut() {
   const e = {};
-  for (const [t, n] of Object.entries(Ve))
+  for (const [t, n] of Object.entries(Xe))
     e[n] = t;
   return e;
 }
-function Oe(e) {
+function Fe(e) {
   var t;
-  return (t = Ve[e]) != null ? t : e;
+  return (t = Xe[e]) != null ? t : e;
 }
-function St(e) {
+function Bt(e) {
   var t;
-  return typeof e == "number" ? (t = Tt()[e]) != null ? t : e.toString() : e;
+  return typeof e == "number" ? (t = Ut()[e]) != null ? t : e.toString() : e;
 }
-const Ge = {
+const Ze = {
   // Collection table keys
   collectionName: "colNm",
   collectionId: "colId",
@@ -1458,14 +1873,14 @@ const Ge = {
   width: "w",
   libraryName: "libNm"
   // Different from remoteLibraryName (rLibN)
-}, be = {};
-for (const [e, t] of Object.entries(Ge))
-  be[t] = e;
-class de {
+}, Me = {};
+for (const [e, t] of Object.entries(Ze))
+  Me[t] = e;
+class $e {
   constructor() {
-    F(this, "shortToLong");
-    F(this, "longToShort");
-    this.shortToLong = I({}, be), this.longToShort = I({}, Ge);
+    D(this, "shortToLong");
+    D(this, "longToShort");
+    this.shortToLong = L({}, Me), this.longToShort = L({}, Ze);
   }
   /**
    * Gets the short name for a long property name
@@ -1493,17 +1908,17 @@ class de {
     if (Array.isArray(t))
       return t.map((n) => this.compressObject(n));
     if (typeof t == "object") {
-      const n = {}, r = /* @__PURE__ */ new Set();
+      const n = {}, i = /* @__PURE__ */ new Set();
       for (const o of Object.keys(t))
-        r.add(o);
-      for (const [o, l] of Object.entries(t)) {
-        const i = this.getShortName(o);
-        if (i !== o && !r.has(i)) {
-          let m = this.compressObject(l);
-          i === "type" && typeof m == "string" && (m = Oe(m)), n[i] = m;
+        i.add(o);
+      for (const [o, s] of Object.entries(t)) {
+        const r = this.getShortName(o);
+        if (r !== o && !i.has(r)) {
+          let p = this.compressObject(s);
+          r === "type" && typeof p == "string" && (p = Fe(p)), n[r] = p;
         } else {
-          let m = this.compressObject(l);
-          o === "type" && typeof m == "string" && (m = Oe(m)), n[o] = m;
+          let p = this.compressObject(s);
+          o === "type" && typeof p == "string" && (p = Fe(p)), n[o] = p;
         }
       }
       return n;
@@ -1522,10 +1937,10 @@ class de {
       return t.map((n) => this.expandObject(n));
     if (typeof t == "object") {
       const n = {};
-      for (const [r, o] of Object.entries(t)) {
-        const l = this.getLongName(r);
-        let i = this.expandObject(o);
-        (l === "type" || r === "type") && (typeof i == "number" || typeof i == "string") && (i = St(i)), n[l] = i;
+      for (const [i, o] of Object.entries(t)) {
+        const s = this.getLongName(i);
+        let r = this.expandObject(o);
+        (s === "type" || i === "type") && (typeof r == "number" || typeof r == "string") && (r = Bt(r)), n[s] = r;
       }
       return n;
     }
@@ -1536,117 +1951,131 @@ class de {
    * Returns the mapping of short -> long names
    */
   getSerializedTable() {
-    return I({}, this.shortToLong);
+    return L({}, this.shortToLong);
   }
   /**
    * Reconstructs a StringTable from a serialized table object
    */
   static fromTable(t) {
-    const n = new de();
-    n.shortToLong = I(I({}, be), t), n.longToShort = {};
-    for (const [r, o] of Object.entries(
+    const n = new $e();
+    n.shortToLong = L(L({}, Me), t), n.longToShort = {};
+    for (const [i, o] of Object.entries(
       n.shortToLong
     ))
-      n.longToShort[o] = r;
+      n.longToShort[o] = i;
     return n;
   }
 }
-function Ot(e, t) {
+function zt(e, t) {
   if (!e || typeof e != "object" || Array.isArray(e))
     return e;
   const n = {};
   e.metadata && (n.metadata = e.metadata);
-  for (const [r, o] of Object.entries(e))
-    r !== "metadata" && (n[r] = t.compressObject(o));
+  for (const [i, o] of Object.entries(e))
+    i !== "metadata" && (n[i] = t.compressObject(o));
   return n;
 }
-function It(e, t) {
+function Ft(e, t) {
   return t.expandObject(e);
 }
-function se(e) {
+function be(e) {
   return e.replace(/[^a-zA-Z0-9_\-\s]/g, "");
 }
-function pe(e) {
+function ve(e) {
   let t = 1;
   return e.children && e.children.length > 0 && e.children.forEach((n) => {
-    t += pe(n);
+    t += ve(n);
   }), t;
 }
-async function me(e, t = /* @__PURE__ */ new WeakSet(), n = {}) {
-  var c, g, d, u, v, C;
+async function Ee(e, t = /* @__PURE__ */ new WeakSet(), n = {}) {
+  var I, u, O, S, M, h, v;
   if (!e || typeof e != "object")
     return e;
-  const r = (c = n.maxNodes) != null ? c : 1e4, o = (g = n.nodeCount) != null ? g : 0;
-  if (o >= r)
+  const i = (I = n.maxNodes) != null ? I : 1e4, o = (u = n.nodeCount) != null ? u : 0;
+  if (o >= i)
     return await a.warning(
-      `Maximum node count (${r}) reached. Export truncated.`
+      `Maximum node count (${i}) reached. Export truncated.`
     ), {
       _truncated: !0,
-      _reason: `Maximum node count (${r}) reached`,
+      _reason: `Maximum node count (${i}) reached`,
       _nodeCount: o
     };
-  const l = {
-    visited: (d = n.visited) != null ? d : /* @__PURE__ */ new WeakSet(),
-    depth: (u = n.depth) != null ? u : 0,
-    maxDepth: (v = n.maxDepth) != null ? v : 100,
+  const s = {
+    visited: (O = n.visited) != null ? O : /* @__PURE__ */ new WeakSet(),
+    depth: (S = n.depth) != null ? S : 0,
+    maxDepth: (M = n.maxDepth) != null ? M : 100,
     nodeCount: o + 1,
-    maxNodes: r,
+    maxNodes: i,
     unhandledKeys: /* @__PURE__ */ new Set(),
     variableTable: n.variableTable,
     collectionTable: n.collectionTable,
     instanceTable: n.instanceTable,
-    detachedComponentsHandled: (C = n.detachedComponentsHandled) != null ? C : /* @__PURE__ */ new Set()
+    detachedComponentsHandled: (h = n.detachedComponentsHandled) != null ? h : /* @__PURE__ */ new Set(),
+    exportedIds: (v = n.exportedIds) != null ? v : /* @__PURE__ */ new Map()
   };
   if (t.has(e))
     return "[Circular Reference]";
-  t.add(e), l.visited = t;
-  const i = {}, m = await Le(e, l);
-  Object.assign(i, m);
-  const h = e.type;
-  if (h)
-    switch (h) {
+  t.add(e), s.visited = t;
+  const r = {}, p = await De(e, s);
+  if (Object.assign(r, p), r.id && s.exportedIds) {
+    const l = s.exportedIds.get(r.id);
+    if (l !== void 0) {
+      const g = r.name || "Unnamed";
+      if (l !== g) {
+        const c = `Duplicate ID detected during export: ID "${r.id.substring(0, 8)}..." is used by both "${l}" and "${g}". Each node must have a unique ID.`;
+        throw await a.error(c), new Error(c);
+      }
+      await a.warning(
+        `Node "${g}" (ID: ${r.id.substring(0, 8)}...) was encountered multiple times during export. This may indicate a structural issue.`
+      );
+    } else
+      s.exportedIds.set(r.id, r.name || "Unnamed");
+  }
+  const m = e.type;
+  if (m)
+    switch (m) {
       case "FRAME":
       case "COMPONENT": {
-        const f = await we(e);
-        Object.assign(i, f);
+        const l = await Se(e);
+        Object.assign(r, l);
         break;
       }
       case "INSTANCE": {
-        const f = await Et(
+        const l = await Gt(
           e,
-          l
+          s
         );
-        Object.assign(i, f);
-        const p = await we(
+        Object.assign(r, l);
+        const g = await Se(
           e
         );
-        Object.assign(i, p);
+        Object.assign(r, g);
         break;
       }
       case "TEXT": {
-        const f = await wt(e);
-        Object.assign(i, f);
+        const l = await It(e);
+        Object.assign(r, l);
         break;
       }
       case "VECTOR":
       case "LINE": {
-        const f = await vt(e);
-        Object.assign(i, f);
+        const l = await Rt(e);
+        Object.assign(r, l);
         break;
       }
       case "RECTANGLE":
       case "ELLIPSE":
       case "STAR":
       case "POLYGON": {
-        const f = await At(e);
-        Object.assign(i, f);
+        const l = await kt(e);
+        Object.assign(r, l);
         break;
       }
       default:
-        l.unhandledKeys.add("_unknownType");
+        s.unhandledKeys.add("_unknownType");
         break;
     }
-  const N = Object.getOwnPropertyNames(e), s = /* @__PURE__ */ new Set([
+  const b = Object.getOwnPropertyNames(e), w = /* @__PURE__ */ new Set([
     "type",
     "id",
     "name",
@@ -1684,64 +2113,64 @@ async function me(e, t = /* @__PURE__ */ new WeakSet(), n = {}) {
     "toString",
     "valueOf"
   ]);
-  (h === "FRAME" || h === "COMPONENT" || h === "INSTANCE") && (s.add("layoutMode"), s.add("primaryAxisSizingMode"), s.add("counterAxisSizingMode"), s.add("primaryAxisAlignItems"), s.add("counterAxisAlignItems"), s.add("paddingLeft"), s.add("paddingRight"), s.add("paddingTop"), s.add("paddingBottom"), s.add("itemSpacing"), s.add("cornerRadius"), s.add("clipsContent"), s.add("layoutWrap"), s.add("layoutGrow")), h === "TEXT" && (s.add("characters"), s.add("fontName"), s.add("fontSize"), s.add("textAlignHorizontal"), s.add("textAlignVertical"), s.add("letterSpacing"), s.add("lineHeight"), s.add("textCase"), s.add("textDecoration"), s.add("textAutoResize"), s.add("paragraphSpacing"), s.add("paragraphIndent"), s.add("listOptions")), (h === "VECTOR" || h === "LINE") && (s.add("fillGeometry"), s.add("strokeGeometry")), (h === "RECTANGLE" || h === "ELLIPSE" || h === "STAR" || h === "POLYGON") && (s.add("pointCount"), s.add("innerRadius"), s.add("arcData")), h === "INSTANCE" && (s.add("mainComponent"), s.add("componentProperties"));
-  for (const f of N)
-    typeof e[f] != "function" && (s.has(f) || l.unhandledKeys.add(f));
-  l.unhandledKeys.size > 0 && (i._unhandledKeys = Array.from(l.unhandledKeys).sort());
-  const A = i._instanceRef !== void 0 && l.instanceTable && h === "INSTANCE";
-  let $ = !1;
+  (m === "FRAME" || m === "COMPONENT" || m === "INSTANCE") && (w.add("layoutMode"), w.add("primaryAxisSizingMode"), w.add("counterAxisSizingMode"), w.add("primaryAxisAlignItems"), w.add("counterAxisAlignItems"), w.add("paddingLeft"), w.add("paddingRight"), w.add("paddingTop"), w.add("paddingBottom"), w.add("itemSpacing"), w.add("cornerRadius"), w.add("clipsContent"), w.add("layoutWrap"), w.add("layoutGrow")), m === "TEXT" && (w.add("characters"), w.add("fontName"), w.add("fontSize"), w.add("textAlignHorizontal"), w.add("textAlignVertical"), w.add("letterSpacing"), w.add("lineHeight"), w.add("textCase"), w.add("textDecoration"), w.add("textAutoResize"), w.add("paragraphSpacing"), w.add("paragraphIndent"), w.add("listOptions")), (m === "VECTOR" || m === "LINE") && (w.add("fillGeometry"), w.add("strokeGeometry")), (m === "RECTANGLE" || m === "ELLIPSE" || m === "STAR" || m === "POLYGON") && (w.add("pointCount"), w.add("innerRadius"), w.add("arcData")), m === "INSTANCE" && (w.add("mainComponent"), w.add("componentProperties"));
+  for (const l of b)
+    typeof e[l] != "function" && (w.has(l) || s.unhandledKeys.add(l));
+  s.unhandledKeys.size > 0 && (r._unhandledKeys = Array.from(s.unhandledKeys).sort());
+  const A = r._instanceRef !== void 0 && s.instanceTable && m === "INSTANCE";
+  let d = !1;
   if (A) {
-    const f = l.instanceTable.getInstanceByIndex(
-      i._instanceRef
+    const l = s.instanceTable.getInstanceByIndex(
+      r._instanceRef
     );
-    f && f.instanceType === "normal" && ($ = !0, await a.log(
-      `  Skipping children extraction for normal instance "${i.name || "Unnamed"}" - will be resolved from referenced component`
+    l && l.instanceType === "normal" && (d = !0, await a.log(
+      `  Skipping children extraction for normal instance "${r.name || "Unnamed"}" - will be resolved from referenced component`
     ));
   }
-  if (!$ && e.children && Array.isArray(e.children)) {
-    const f = l.maxDepth;
-    if (l.depth >= f)
-      i.children = {
+  if (!d && e.children && Array.isArray(e.children)) {
+    const l = s.maxDepth;
+    if (s.depth >= l)
+      r.children = {
         _truncated: !0,
-        _reason: `Maximum depth (${f}) reached`,
+        _reason: `Maximum depth (${l}) reached`,
         _count: e.children.length
       };
-    else if (l.nodeCount >= r)
-      i.children = {
+    else if (s.nodeCount >= i)
+      r.children = {
         _truncated: !0,
-        _reason: `Maximum node count (${r}) reached`,
+        _reason: `Maximum node count (${i}) reached`,
         _count: e.children.length,
         _processed: 0
       };
     else {
-      const p = V(I({}, l), {
-        depth: l.depth + 1
-      }), y = [];
-      let w = !1;
-      for (const b of e.children) {
-        if (p.nodeCount >= r) {
-          i.children = {
+      const g = q(L({}, s), {
+        depth: s.depth + 1
+      }), c = [];
+      let y = !1;
+      for (const f of e.children) {
+        if (g.nodeCount >= i) {
+          r.children = {
             _truncated: !0,
-            _reason: `Maximum node count (${r}) reached during children processing`,
-            _processed: y.length,
+            _reason: `Maximum node count (${i}) reached during children processing`,
+            _processed: c.length,
             _total: e.children.length,
-            children: y
-          }, w = !0;
+            children: c
+          }, y = !0;
           break;
         }
-        const P = await me(b, t, p);
-        y.push(P), p.nodeCount && (l.nodeCount = p.nodeCount);
+        const N = await Ee(f, t, g);
+        c.push(N), g.nodeCount && (s.nodeCount = g.nodeCount);
       }
-      w || (i.children = y);
+      y || (r.children = c);
     }
   }
-  return i;
+  return r;
 }
-async function $e(e, t = /* @__PURE__ */ new Set(), n = !1) {
+async function _e(e, t = /* @__PURE__ */ new Set(), n = !1) {
   n || (await a.clear(), await a.log("=== Starting Page Export ==="));
   try {
-    const r = e.pageIndex;
-    if (r === void 0 || typeof r != "number")
+    const i = e.pageIndex;
+    if (i === void 0 || typeof i != "number")
       return await a.error(
         "Invalid page selection: pageIndex is undefined or not a number"
       ), {
@@ -1753,9 +2182,9 @@ async function $e(e, t = /* @__PURE__ */ new Set(), n = !1) {
       };
     await a.log("Loading all pages..."), await figma.loadAllPagesAsync();
     const o = figma.root.children;
-    if (await a.log(`Loaded ${o.length} page(s)`), r < 0 || r >= o.length)
+    if (await a.log(`Loaded ${o.length} page(s)`), i < 0 || i >= o.length)
       return await a.error(
-        `Invalid page index: ${r} (valid range: 0-${o.length - 1})`
+        `Invalid page index: ${i} (valid range: 0-${o.length - 1})`
       ), {
         type: "exportPage",
         success: !1,
@@ -1763,10 +2192,10 @@ async function $e(e, t = /* @__PURE__ */ new Set(), n = !1) {
         message: "Invalid page selection",
         data: {}
       };
-    const l = o[r], i = l.id;
-    if (t.has(i))
+    const s = o[i], r = s.id;
+    if (t.has(r))
       return await a.log(
-        `Page "${l.name}" has already been processed, skipping...`
+        `Page "${s.name}" has already been processed, skipping...`
       ), {
         type: "exportPage",
         success: !1,
@@ -1774,27 +2203,27 @@ async function $e(e, t = /* @__PURE__ */ new Set(), n = !1) {
         message: "Page already processed",
         data: {}
       };
-    t.add(i), await a.log(
-      `Selected page: "${l.name}" (index: ${r})`
+    t.add(r), await a.log(
+      `Selected page: "${s.name}" (index: ${i})`
     ), await a.log(
       "Initializing variable, collection, and instance tables..."
     );
-    const m = new le(), h = new ce(), N = new Q();
+    const p = new Ne(), m = new we(), b = new pe();
     await a.log("Fetching team library variable collections...");
-    let s = [];
+    let w = [];
     try {
-      if (s = (await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync()).map((R) => ({
-        libraryName: R.libraryName,
-        key: R.key,
-        name: R.name
+      if (w = (await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync()).map((T) => ({
+        libraryName: T.libraryName,
+        key: T.key,
+        name: T.name
       })), await a.log(
-        `Found ${s.length} library collection(s) in team library`
-      ), s.length > 0)
-        for (const R of s)
-          await a.log(`  - ${R.name} (from ${R.libraryName})`);
-    } catch (x) {
+        `Found ${w.length} library collection(s) in team library`
+      ), w.length > 0)
+        for (const T of w)
+          await a.log(`  - ${T.name} (from ${T.libraryName})`);
+    } catch (P) {
       await a.warning(
-        `Could not get library variable collections: ${x instanceof Error ? x.message : String(x)}`
+        `Could not get library variable collections: ${P instanceof Error ? P.message : String(P)}`
       );
     }
     await a.log("Extracting node data from page..."), await a.log(
@@ -1802,211 +2231,211 @@ async function $e(e, t = /* @__PURE__ */ new Set(), n = !1) {
     ), await a.log(
       "Collections will be discovered as variables are processed:"
     );
-    const A = await me(
-      l,
+    const A = await Ee(
+      s,
       /* @__PURE__ */ new WeakSet(),
       {
-        variableTable: m,
-        collectionTable: h,
-        instanceTable: N
+        variableTable: p,
+        collectionTable: m,
+        instanceTable: b
       }
     );
     await a.log("Node extraction finished");
-    const $ = pe(A), c = m.getSize(), g = h.getSize(), d = N.getSize();
-    if (await a.log("Extraction complete:"), await a.log(`  - Total nodes: ${$}`), await a.log(`  - Unique variables: ${c}`), await a.log(`  - Unique collections: ${g}`), await a.log(`  - Unique instances: ${d}`), g > 0) {
+    const d = ve(A), I = p.getSize(), u = m.getSize(), O = b.getSize();
+    if (await a.log("Extraction complete:"), await a.log(`  - Total nodes: ${d}`), await a.log(`  - Unique variables: ${I}`), await a.log(`  - Unique collections: ${u}`), await a.log(`  - Unique instances: ${O}`), u > 0) {
       await a.log("Collections found:");
-      const x = h.getTable();
-      for (const [R, M] of Object.values(x).entries()) {
-        const _ = M.collectionGuid ? ` (GUID: ${M.collectionGuid.substring(0, 8)}...)` : "";
+      const P = m.getTable();
+      for (const [T, x] of Object.values(P).entries()) {
+        const V = x.collectionGuid ? ` (GUID: ${x.collectionGuid.substring(0, 8)}...)` : "";
         await a.log(
-          `  ${R}: ${M.collectionName}${_} - ${M.modes.length} mode(s)`
+          `  ${T}: ${x.collectionName}${V} - ${x.modes.length} mode(s)`
         );
       }
     }
     await a.log("Checking for referenced component pages...");
-    const u = [], v = N.getSerializedTable(), C = Object.values(v).filter(
-      (x) => x.instanceType === "normal"
+    const S = [], M = b.getSerializedTable(), h = Object.values(M).filter(
+      (P) => P.instanceType === "normal"
     );
-    if (C.length > 0) {
+    if (h.length > 0) {
       await a.log(
-        `Found ${C.length} normal instance(s) to check`
+        `Found ${h.length} normal instance(s) to check`
       );
-      const x = /* @__PURE__ */ new Map();
-      for (const R of C)
-        if (R.componentPageName) {
-          const M = o.find((_) => _.name === R.componentPageName);
-          if (M && !t.has(M.id))
-            x.has(M.id) || x.set(M.id, M);
-          else if (!M) {
-            const _ = `Normal instance references component "${R.componentName || "(unnamed)"}" on page "${R.componentPageName}", but that page was not found. Cannot export.`;
-            throw await a.error(_), new Error(_);
+      const P = /* @__PURE__ */ new Map();
+      for (const T of h)
+        if (T.componentPageName) {
+          const x = o.find((V) => V.name === T.componentPageName);
+          if (x && !t.has(x.id))
+            P.has(x.id) || P.set(x.id, x);
+          else if (!x) {
+            const V = `Normal instance references component "${T.componentName || "(unnamed)"}" on page "${T.componentPageName}", but that page was not found. Cannot export.`;
+            throw await a.error(V), new Error(V);
           }
         } else {
-          const M = `Normal instance references component "${R.componentName || "(unnamed)"}" but has no componentPageName. Cannot export.`;
-          throw await a.error(M), new Error(M);
+          const x = `Normal instance references component "${T.componentName || "(unnamed)"}" but has no componentPageName. Cannot export.`;
+          throw await a.error(x), new Error(x);
         }
       await a.log(
-        `Found ${x.size} unique referenced page(s)`
+        `Found ${P.size} unique referenced page(s)`
       );
-      for (const [R, M] of x.entries()) {
-        const _ = M.name;
-        if (t.has(R)) {
-          await a.log(`Skipping "${_}" - already processed`);
+      for (const [T, x] of P.entries()) {
+        const V = x.name;
+        if (t.has(T)) {
+          await a.log(`Skipping "${V}" - already processed`);
           continue;
         }
-        const D = M.getPluginData(
+        const U = x.getPluginData(
           "RecursicaPublishedMetadata"
         );
-        let ee = !1;
-        if (D)
+        let B = !1;
+        if (U)
           try {
-            const J = JSON.parse(D);
-            ee = !!(J.id && J.version !== void 0);
-          } catch (J) {
+            const z = JSON.parse(U);
+            B = !!(z.id && z.version !== void 0);
+          } catch (z) {
           }
-        const fe = `Do you want to also publish referenced component "${_}"?`;
+        const K = `Do you want to also publish referenced component "${V}"?`;
         try {
-          await q.prompt(fe, {
+          await re.prompt(K, {
             okLabel: "Yes",
             cancelLabel: "No",
             timeoutMs: 3e5
             // 5 minutes
-          }), await a.log(`Exporting referenced page: "${_}"`);
-          const J = o.findIndex(
-            (ge) => ge.id === M.id
+          }), await a.log(`Exporting referenced page: "${V}"`);
+          const z = o.findIndex(
+            (Z) => Z.id === x.id
           );
-          if (J === -1)
+          if (z === -1)
             throw await a.error(
-              `Could not find page index for "${_}"`
-            ), new Error(`Could not find page index for "${_}"`);
-          const te = await $e(
+              `Could not find page index for "${V}"`
+            ), new Error(`Could not find page index for "${V}"`);
+          const J = await _e(
             {
-              pageIndex: J
+              pageIndex: z
             },
             t,
             // Pass the same set to track all processed pages
             !0
             // Mark as recursive call
           );
-          if (te.success && te.data) {
-            const ge = te.data;
-            u.push(ge), await a.log(
-              `Successfully exported referenced page: "${_}"`
+          if (J.success && J.data) {
+            const Z = J.data;
+            S.push(Z), await a.log(
+              `Successfully exported referenced page: "${V}"`
             );
           } else
             throw new Error(
-              `Failed to export referenced page "${_}": ${te.message}`
+              `Failed to export referenced page "${V}": ${J.message}`
             );
-        } catch (J) {
-          if (J instanceof Error && J.message === "User cancelled")
-            if (ee)
+        } catch (z) {
+          if (z instanceof Error && z.message === "User cancelled")
+            if (B)
               await a.log(
-                `User declined to publish "${_}", but page has existing metadata. Continuing with existing metadata.`
+                `User declined to publish "${V}", but page has existing metadata. Continuing with existing metadata.`
               );
             else
               throw await a.error(
-                `Export cancelled: Referenced page "${_}" has no metadata and user declined to publish it.`
+                `Export cancelled: Referenced page "${V}" has no metadata and user declined to publish it.`
               ), new Error(
-                `Cannot continue export: Referenced component "${_}" has no metadata. Please publish it first or choose to publish it now.`
+                `Cannot continue export: Referenced component "${V}" has no metadata. Please publish it first or choose to publish it now.`
               );
           else
-            throw J;
+            throw z;
         }
       }
     }
     await a.log("Creating string table...");
-    const f = new de();
+    const v = new $e();
     await a.log("Getting page metadata...");
-    const p = l.getPluginData(
+    const l = s.getPluginData(
       "RecursicaPublishedMetadata"
     );
-    let y = "", w = 0;
-    if (p)
+    let g = "", c = 0;
+    if (l)
       try {
-        const x = JSON.parse(p);
-        y = x.id || "", w = x.version || 0;
-      } catch (x) {
+        const P = JSON.parse(l);
+        g = P.id || "", c = P.version || 0;
+      } catch (P) {
         await a.warning(
           "Failed to parse page metadata, generating new GUID"
         );
       }
-    if (!y) {
-      await a.log("Generating new GUID for page..."), y = await Ce();
-      const x = {
+    if (!g) {
+      await a.log("Generating new GUID for page..."), g = await Ve();
+      const P = {
         _ver: 1,
-        id: y,
-        name: l.name,
-        version: w,
+        id: g,
+        name: s.name,
+        version: c,
         publishDate: (/* @__PURE__ */ new Date()).toISOString(),
         history: {}
       };
-      l.setPluginData(
+      s.setPluginData(
         "RecursicaPublishedMetadata",
-        JSON.stringify(x)
+        JSON.stringify(P)
       );
     }
     await a.log("Creating export data structure...");
-    const b = {
+    const y = {
       metadata: {
         exportedAt: (/* @__PURE__ */ new Date()).toISOString(),
         exportFormatVersion: "2.7.0",
         // Updated version for string table compression
         figmaApiVersion: figma.apiVersion,
-        guid: y,
-        version: w,
-        name: l.name,
+        guid: g,
+        version: c,
+        name: s.name,
         pluginVersion: "1.0.0"
       },
-      stringTable: f.getSerializedTable(),
-      collections: h.getSerializedTable(),
-      variables: m.getSerializedTable(),
-      instances: N.getSerializedTable(),
-      libraries: s,
+      stringTable: v.getSerializedTable(),
+      collections: m.getSerializedTable(),
+      variables: p.getSerializedTable(),
+      instances: b.getSerializedTable(),
+      libraries: w,
       // Libraries might not need compression, but could be added later
       pageData: A
     };
     await a.log("Compressing JSON data...");
-    const P = Ot(b, f);
+    const f = zt(y, v);
     await a.log("Serializing to JSON...");
-    const E = JSON.stringify(P, null, 2), S = (E.length / 1024).toFixed(2), k = se(l.name).trim().replace(/\s+/g, "_") + ".rec.json";
-    return await a.log(`JSON serialization complete: ${S} KB`), await a.log(`Export file: ${k}`), await a.log("=== Export Complete ==="), {
+    const N = JSON.stringify(f, null, 2), E = (N.length / 1024).toFixed(2), $ = be(s.name).trim().replace(/\s+/g, "_") + ".rec.json";
+    return await a.log(`JSON serialization complete: ${E} KB`), await a.log(`Export file: ${$}`), await a.log("=== Export Complete ==="), {
       type: "exportPage",
       success: !0,
       error: !1,
       message: "Page exported successfully",
       data: {
-        filename: k,
-        jsonData: E,
-        pageName: l.name,
-        additionalPages: u
+        filename: $,
+        jsonData: N,
+        pageName: s.name,
+        additionalPages: S
         // Populated with referenced component pages
       }
     };
-  } catch (r) {
-    const o = r instanceof Error ? r.message : "Unknown error occurred";
-    console.error("EXPORT ERROR CAUGHT:", r), console.error("Error message:", o), await a.error(`Export failed: ${o}`), r instanceof Error && r.stack && (console.error("Stack trace:", r.stack), await a.error(`Stack trace: ${r.stack}`));
-    const l = {
+  } catch (i) {
+    const o = i instanceof Error ? i.message : "Unknown error occurred";
+    console.error("EXPORT ERROR CAUGHT:", i), console.error("Error message:", o), await a.error(`Export failed: ${o}`), i instanceof Error && i.stack && (console.error("Stack trace:", i.stack), await a.error(`Stack trace: ${i.stack}`));
+    const s = {
       type: "exportPage",
       success: !1,
       error: !0,
       message: o,
       data: {}
     };
-    return console.error("Returning error response:", l), l;
+    return console.error("Returning error response:", s), s;
   }
 }
-const Mt = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const jt = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  countTotalNodes: pe,
-  exportPage: $e,
-  extractNodeData: me
+  countTotalNodes: ve,
+  exportPage: _e,
+  extractNodeData: Ee
 }, Symbol.toStringTag, { value: "Module" }));
-async function Z(e, t) {
+async function de(e, t) {
   for (const n of t)
     e.modes.find((o) => o.name === n) || e.addMode(n);
 }
-const j = "recursica:collectionId";
-async function oe(e) {
+const X = "recursica:collectionId";
+async function he(e) {
   if (e.remote === !0) {
     const n = e.name.trim().toLowerCase();
     if (!["token", "tokens", "theme", "themes"].includes(n)) {
@@ -2017,286 +2446,323 @@ async function oe(e) {
   } else {
     const n = e.getSharedPluginData(
       "recursica",
-      j
+      X
     );
     if (n && n.trim() !== "")
       return n;
-    const r = await Ce();
-    return e.setSharedPluginData("recursica", j, r), r;
+    const i = await Ve();
+    return e.setSharedPluginData("recursica", X, i), i;
   }
 }
-function xt(e, t) {
+function Jt(e, t) {
   const n = e.trim().toLowerCase();
   if (!["token", "tokens", "theme", "themes"].includes(n))
     throw new Error(
       `Invalid collection name: "${e}". Non-local collections must be named "Token", "Tokens", "Theme", or "Themes" (case-insensitive).`
     );
 }
-async function Rt(e) {
+async function Kt(e) {
   let t;
-  const n = e.collectionName.trim().toLowerCase(), r = ["token", "tokens", "theme", "themes"], o = e.isLocal;
-  if (o === !1 || o === void 0 && r.includes(n))
+  const n = e.collectionName.trim().toLowerCase(), i = ["token", "tokens", "theme", "themes"], o = e.isLocal;
+  if (o === !1 || o === void 0 && i.includes(n))
     try {
-      const m = (await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync()).find((h) => h.name.trim().toLowerCase() === n);
-      if (m) {
-        xt(e.collectionName, !1);
-        const h = await figma.teamLibrary.getVariablesInLibraryCollectionAsync(
-          m.key
+      const p = (await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync()).find((m) => m.name.trim().toLowerCase() === n);
+      if (p) {
+        Jt(e.collectionName, !1);
+        const m = await figma.teamLibrary.getVariablesInLibraryCollectionAsync(
+          p.key
         );
-        if (h.length > 0) {
-          const N = await figma.variables.importVariableByKeyAsync(h[0].key), s = await figma.variables.getVariableCollectionByIdAsync(
-            N.variableCollectionId
+        if (m.length > 0) {
+          const b = await figma.variables.importVariableByKeyAsync(m[0].key), w = await figma.variables.getVariableCollectionByIdAsync(
+            b.variableCollectionId
           );
-          if (s) {
-            if (t = s, e.collectionGuid) {
+          if (w) {
+            if (t = w, e.collectionGuid) {
               const A = t.getSharedPluginData(
                 "recursica",
-                j
+                X
               );
               (!A || A.trim() === "") && t.setSharedPluginData(
                 "recursica",
-                j,
+                X,
                 e.collectionGuid
               );
             } else
-              await oe(t);
-            return await Z(t, e.modes), { collection: t };
+              await he(t);
+            return await de(t, e.modes), { collection: t };
           }
         }
       }
-    } catch (i) {
+    } catch (r) {
       if (o === !1)
         throw new Error(
           `External collection "${e.collectionName}" not found in team library. Please ensure the collection is published and available.`
         );
-      console.log("Could not import external collection, trying local:", i);
+      console.log("Could not import external collection, trying local:", r);
     }
   if (o !== !1) {
-    const i = await figma.variables.getLocalVariableCollectionsAsync();
-    let m;
-    if (e.collectionGuid && (m = i.find((h) => h.getSharedPluginData("recursica", j) === e.collectionGuid)), m || (m = i.find(
-      (h) => h.name === e.collectionName
-    )), m)
-      if (t = m, e.collectionGuid) {
-        const h = t.getSharedPluginData(
+    const r = await figma.variables.getLocalVariableCollectionsAsync();
+    let p;
+    if (e.collectionGuid && (p = r.find((m) => m.getSharedPluginData("recursica", X) === e.collectionGuid)), p || (p = r.find(
+      (m) => m.name === e.collectionName
+    )), p)
+      if (t = p, e.collectionGuid) {
+        const m = t.getSharedPluginData(
           "recursica",
-          j
+          X
         );
-        (!h || h.trim() === "") && t.setSharedPluginData(
+        (!m || m.trim() === "") && t.setSharedPluginData(
           "recursica",
-          j,
+          X,
           e.collectionGuid
         );
       } else
-        await oe(t);
+        await he(t);
     else
       t = figma.variables.createVariableCollection(
         e.collectionName
       ), e.collectionGuid ? t.setSharedPluginData(
         "recursica",
-        j,
+        X,
         e.collectionGuid
-      ) : await oe(t);
+      ) : await he(t);
   } else {
-    const i = await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync(), m = e.collectionName.trim().toLowerCase(), h = i.find(($) => $.name.trim().toLowerCase() === m);
-    if (!h)
+    const r = await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync(), p = e.collectionName.trim().toLowerCase(), m = r.find((d) => d.name.trim().toLowerCase() === p);
+    if (!m)
       throw new Error(
         `External collection "${e.collectionName}" not found in team library. Please ensure the collection is published and available.`
       );
-    const N = await figma.teamLibrary.getVariablesInLibraryCollectionAsync(
-      h.key
+    const b = await figma.teamLibrary.getVariablesInLibraryCollectionAsync(
+      m.key
     );
-    if (N.length === 0)
+    if (b.length === 0)
       throw new Error(
         `External collection "${e.collectionName}" exists but has no variables. Cannot import.`
       );
-    const s = await figma.variables.importVariableByKeyAsync(
-      N[0].key
+    const w = await figma.variables.importVariableByKeyAsync(
+      b[0].key
     ), A = await figma.variables.getVariableCollectionByIdAsync(
-      s.variableCollectionId
+      w.variableCollectionId
     );
     if (!A)
       throw new Error(
         `Failed to import external collection "${e.collectionName}"`
       );
     if (t = A, e.collectionGuid) {
-      const $ = t.getSharedPluginData(
+      const d = t.getSharedPluginData(
         "recursica",
-        j
+        X
       );
-      (!$ || $.trim() === "") && t.setSharedPluginData(
+      (!d || d.trim() === "") && t.setSharedPluginData(
         "recursica",
-        j,
+        X,
         e.collectionGuid
       );
     } else
-      oe(t);
+      he(t);
   }
-  return await Z(t, e.modes), { collection: t };
+  return await de(t, e.modes), { collection: t };
 }
-async function Fe(e, t) {
+async function Le(e, t) {
   for (const n of e.variableIds)
     try {
-      const r = await figma.variables.getVariableByIdAsync(n);
-      if (r && r.name === t)
-        return r;
-    } catch (r) {
+      const i = await figma.variables.getVariableByIdAsync(n);
+      if (i && i.name === t)
+        return i;
+    } catch (i) {
       continue;
     }
   return null;
 }
-async function kt(e, t, n, r, o) {
-  for (const [l, i] of Object.entries(t)) {
-    const m = r.modes.find((N) => N.name === l);
-    if (!m) {
+async function Ht(e, t, n, i, o) {
+  for (const [s, r] of Object.entries(t)) {
+    const p = i.modes.find((b) => b.name === s);
+    if (!p) {
       console.warn(
-        `Mode "${l}" not found in collection "${r.name}" for variable "${e.name}". Skipping.`
+        `Mode "${s}" not found in collection "${i.name}" for variable "${e.name}". Skipping.`
       );
       continue;
     }
-    const h = m.modeId;
+    const m = p.modeId;
     try {
-      if (i == null)
+      if (r == null)
         continue;
-      if (typeof i == "string" || typeof i == "number" || typeof i == "boolean") {
-        e.setValueForMode(h, i);
+      if (typeof r == "string" || typeof r == "number" || typeof r == "boolean") {
+        e.setValueForMode(m, r);
         continue;
       }
-      if (typeof i == "object" && i !== null && "_varRef" in i && typeof i._varRef == "number") {
-        const N = i;
-        let s = null;
+      if (typeof r == "object" && r !== null && "_varRef" in r && typeof r._varRef == "number") {
+        const b = r;
+        let w = null;
         const A = n.getVariableByIndex(
-          N._varRef
+          b._varRef
         );
         if (A) {
-          let $ = null;
+          let d = null;
           if (o && A._colRef !== void 0) {
-            const c = o.getCollectionByIndex(
+            const I = o.getCollectionByIndex(
               A._colRef
             );
-            c && ($ = (await Rt(c)).collection);
+            I && (d = (await Kt(I)).collection);
           }
-          $ && (s = await Fe(
-            $,
+          d && (w = await Le(
+            d,
             A.variableName
           ));
         }
-        if (s) {
-          const $ = {
+        if (w) {
+          const d = {
             type: "VARIABLE_ALIAS",
-            id: s.id
+            id: w.id
           };
-          e.setValueForMode(h, $);
+          e.setValueForMode(m, d);
         } else
           console.warn(
-            `Could not resolve variable alias for mode "${l}" in variable "${e.name}". Variable reference index: ${N._varRef}`
+            `Could not resolve variable alias for mode "${s}" in variable "${e.name}". Variable reference index: ${b._varRef}`
           );
       }
-    } catch (N) {
+    } catch (b) {
       console.warn(
-        `Error setting value for mode "${l}" in variable "${e.name}":`,
-        N
+        `Error setting value for mode "${s}" in variable "${e.name}":`,
+        b
       );
     }
   }
 }
-async function Ie(e, t, n, r) {
+async function xe(e, t, n, i) {
   const o = figma.variables.createVariable(
     e.variableName,
     t,
     e.variableType
   );
-  return e.valuesByMode && await kt(
+  return e.valuesByMode && await Ht(
     o,
     e.valuesByMode,
     n,
     t,
     // Pass collection to look up modes by name
-    r
+    i
   ), o;
 }
-async function Ue(e, t, n, r) {
+async function Wt(e, t, n, i) {
+  const o = t.getVariableByIndex(e);
+  if (!o || o._colRef === void 0)
+    return null;
+  const s = i.get(String(o._colRef));
+  if (!s)
+    return null;
+  const r = await Le(
+    s,
+    o.variableName
+  );
+  if (r) {
+    let p;
+    if (typeof o.variableType == "number" ? p = {
+      1: "COLOR",
+      2: "FLOAT",
+      3: "STRING",
+      4: "BOOLEAN"
+    }[o.variableType] || String(o.variableType) : p = o.variableType, Qe(r, p))
+      return r;
+  }
+  return await xe(
+    o,
+    s,
+    t,
+    n
+  );
+}
+async function qt(e, t, n, i) {
   if (!(!t || typeof t != "object"))
     try {
       const o = e[n];
       if (!o || !Array.isArray(o))
         return;
-      const l = t[n];
-      if (Array.isArray(l))
-        for (let i = 0; i < l.length && i < o.length; i++) {
-          const m = l[i];
-          if (m && typeof m == "object") {
-            o[i].boundVariables || (o[i].boundVariables = {});
-            for (const [h, N] of Object.entries(
-              m
-            ))
-              if (Re(N)) {
-                const s = N._varRef;
-                if (s !== void 0) {
-                  const A = r.get(String(s));
-                  A && (o[i].boundVariables[h] = {
-                    type: "VARIABLE_ALIAS",
-                    id: A.id
-                  });
-                }
+      const s = t[n];
+      if (Array.isArray(s))
+        for (let r = 0; r < s.length && r < o.length; r++) {
+          const p = s[r];
+          if (p && typeof p == "object") {
+            if (o[r].boundVariables || (o[r].boundVariables = {}), ye(p)) {
+              const m = p._varRef;
+              if (m !== void 0) {
+                const b = i.get(String(m));
+                b && (o[r].boundVariables.color = {
+                  type: "VARIABLE_ALIAS",
+                  id: b.id
+                });
               }
+            } else
+              for (const [m, b] of Object.entries(
+                p
+              ))
+                if (ye(b)) {
+                  const w = b._varRef;
+                  if (w !== void 0) {
+                    const A = i.get(String(w));
+                    A && (o[r].boundVariables[m] = {
+                      type: "VARIABLE_ALIAS",
+                      id: A.id
+                    });
+                  }
+                }
           }
         }
     } catch (o) {
       console.log(`Error restoring bound variables for ${n}:`, o);
     }
 }
-function _t(e, t) {
-  const n = at(t);
+function Dt(e, t) {
+  const n = yt(t);
   if (e.visible === void 0 && (e.visible = n.visible), e.locked === void 0 && (e.locked = n.locked), e.opacity === void 0 && (e.opacity = n.opacity), e.rotation === void 0 && (e.rotation = n.rotation), e.blendMode === void 0 && (e.blendMode = n.blendMode), t === "FRAME" || t === "COMPONENT" || t === "INSTANCE") {
-    const r = L;
-    e.layoutMode === void 0 && (e.layoutMode = r.layoutMode), e.primaryAxisSizingMode === void 0 && (e.primaryAxisSizingMode = r.primaryAxisSizingMode), e.counterAxisSizingMode === void 0 && (e.counterAxisSizingMode = r.counterAxisSizingMode), e.primaryAxisAlignItems === void 0 && (e.primaryAxisAlignItems = r.primaryAxisAlignItems), e.counterAxisAlignItems === void 0 && (e.counterAxisAlignItems = r.counterAxisAlignItems), e.paddingLeft === void 0 && (e.paddingLeft = r.paddingLeft), e.paddingRight === void 0 && (e.paddingRight = r.paddingRight), e.paddingTop === void 0 && (e.paddingTop = r.paddingTop), e.paddingBottom === void 0 && (e.paddingBottom = r.paddingBottom), e.itemSpacing === void 0 && (e.itemSpacing = r.itemSpacing);
+    const i = H;
+    e.layoutMode === void 0 && (e.layoutMode = i.layoutMode), e.primaryAxisSizingMode === void 0 && (e.primaryAxisSizingMode = i.primaryAxisSizingMode), e.counterAxisSizingMode === void 0 && (e.counterAxisSizingMode = i.counterAxisSizingMode), e.primaryAxisAlignItems === void 0 && (e.primaryAxisAlignItems = i.primaryAxisAlignItems), e.counterAxisAlignItems === void 0 && (e.counterAxisAlignItems = i.counterAxisAlignItems), e.paddingLeft === void 0 && (e.paddingLeft = i.paddingLeft), e.paddingRight === void 0 && (e.paddingRight = i.paddingRight), e.paddingTop === void 0 && (e.paddingTop = i.paddingTop), e.paddingBottom === void 0 && (e.paddingBottom = i.paddingBottom), e.itemSpacing === void 0 && (e.itemSpacing = i.itemSpacing);
   }
   if (t === "TEXT") {
-    const r = U;
-    e.textAlignHorizontal === void 0 && (e.textAlignHorizontal = r.textAlignHorizontal), e.textAlignVertical === void 0 && (e.textAlignVertical = r.textAlignVertical), e.textCase === void 0 && (e.textCase = r.textCase), e.textDecoration === void 0 && (e.textDecoration = r.textDecoration), e.textAutoResize === void 0 && (e.textAutoResize = r.textAutoResize);
+    const i = Y;
+    e.textAlignHorizontal === void 0 && (e.textAlignHorizontal = i.textAlignHorizontal), e.textAlignVertical === void 0 && (e.textAlignVertical = i.textAlignVertical), e.textCase === void 0 && (e.textCase = i.textCase), e.textDecoration === void 0 && (e.textDecoration = i.textDecoration), e.textAutoResize === void 0 && (e.textAutoResize = i.textAutoResize);
   }
 }
-async function Y(e, t, n = null, r = null, o = null, l = null, i = null, m = !1, h = null, N = null) {
-  var $;
-  let s;
+async function oe(e, t, n = null, i = null, o = null, s = null, r = null, p = !1, m = null, b = null, w = null, A = null) {
+  var M;
+  let d;
   switch (e.type) {
     case "FRAME":
-      s = figma.createFrame();
+      d = figma.createFrame();
       break;
     case "RECTANGLE":
-      s = figma.createRectangle();
+      d = figma.createRectangle();
       break;
     case "ELLIPSE":
-      s = figma.createEllipse();
+      d = figma.createEllipse();
       break;
     case "TEXT":
-      s = figma.createText();
+      d = figma.createText();
       break;
     case "VECTOR":
-      s = figma.createVector();
+      d = figma.createVector();
       break;
     case "STAR":
-      s = figma.createStar();
+      d = figma.createStar();
       break;
     case "LINE":
-      s = figma.createLine();
+      d = figma.createLine();
       break;
     case "COMPONENT":
-      if (e.id && i && i.has(e.id))
-        s = i.get(e.id), await a.log(
+      if (e.id && r && r.has(e.id))
+        d = r.get(e.id), await a.log(
           `Reusing existing COMPONENT "${e.name || "Unnamed"}" (ID: ${e.id.substring(0, 8)}...)`
         );
-      else if (s = figma.createComponent(), await a.log(
+      else if (d = figma.createComponent(), await a.log(
         `Created COMPONENT "${e.name || "Unnamed"}" (ID: ${e.id ? e.id.substring(0, 8) + "..." : "no ID"})`
       ), e.componentPropertyDefinitions) {
-        const c = e.componentPropertyDefinitions;
-        let g = 0, d = 0;
-        for (const [u, v] of Object.entries(c))
+        const h = e.componentPropertyDefinitions;
+        let v = 0, l = 0;
+        for (const [g, c] of Object.entries(h))
           try {
-            const C = v.type;
+            const y = c.type;
             let f = null;
-            if (typeof C == "string" ? (C === "TEXT" || C === "BOOLEAN" || C === "INSTANCE_SWAP" || C === "VARIANT") && (f = C) : typeof C == "number" && (f = {
+            if (typeof y == "string" ? (y === "TEXT" || y === "BOOLEAN" || y === "INSTANCE_SWAP" || y === "VARIANT") && (f = y) : typeof y == "number" && (f = {
               2: "TEXT",
               // Text property
               25: "BOOLEAN",
@@ -2305,133 +2771,136 @@ async function Y(e, t, n = null, r = null, o = null, l = null, i = null, m = !1,
               // Instance swap property
               26: "VARIANT"
               // Variant property
-            }[C] || null), !f) {
+            }[y] || null), !f) {
               await a.warning(
-                `  Unknown property type ${C} (${typeof C}) for property "${u}" in component "${e.name || "Unnamed"}"`
-              ), d++;
+                `  Unknown property type ${y} (${typeof y}) for property "${g}" in component "${e.name || "Unnamed"}"`
+              ), l++;
               continue;
             }
-            const p = v.defaultValue, y = u.split("#")[0];
-            s.addComponentProperty(
-              y,
+            const N = c.defaultValue, E = g.split("#")[0];
+            d.addComponentProperty(
+              E,
               f,
-              p
-            ), g++;
-          } catch (C) {
+              N
+            ), v++;
+          } catch (y) {
             await a.warning(
-              `  Failed to add component property "${u}" to "${e.name || "Unnamed"}": ${C}`
-            ), d++;
+              `  Failed to add component property "${g}" to "${e.name || "Unnamed"}": ${y}`
+            ), l++;
           }
-        g > 0 && await a.log(
-          `  Added ${g} component property definition(s) to "${e.name || "Unnamed"}"${d > 0 ? ` (${d} failed)` : ""}`
+        v > 0 && await a.log(
+          `  Added ${v} component property definition(s) to "${e.name || "Unnamed"}"${l > 0 ? ` (${l} failed)` : ""}`
         );
       }
       break;
     case "COMPONENT_SET": {
-      const c = e.children ? e.children.filter((u) => u.type === "COMPONENT").length : 0;
+      const h = e.children ? e.children.filter((g) => g.type === "COMPONENT").length : 0;
       await a.log(
-        `Creating COMPONENT_SET "${e.name || "Unnamed"}" by combining ${c} component variant(s)`
+        `Creating COMPONENT_SET "${e.name || "Unnamed"}" by combining ${h} component variant(s)`
       );
-      const g = [];
-      let d = null;
+      const v = [];
+      let l = null;
       if (e.children && Array.isArray(e.children)) {
-        d = figma.createFrame(), d.name = `_temp_${e.name || "COMPONENT_SET"}`, d.visible = !1, ((t == null ? void 0 : t.type) === "PAGE" ? t : figma.currentPage).appendChild(d);
-        for (const v of e.children)
-          if (v.type === "COMPONENT" && !v._truncated)
+        l = figma.createFrame(), l.name = `_temp_${e.name || "COMPONENT_SET"}`, l.visible = !1, ((t == null ? void 0 : t.type) === "PAGE" ? t : figma.currentPage).appendChild(l);
+        for (const c of e.children)
+          if (c.type === "COMPONENT" && !c._truncated)
             try {
-              const C = await Y(
-                v,
-                d,
+              const y = await oe(
+                c,
+                l,
                 // Use temp parent for now
                 n,
-                r,
-                o,
-                l,
                 i,
+                o,
+                s,
+                r,
+                p,
                 m,
-                h,
-                null
+                null,
                 // deferredInstances - not needed for component set creation
+                null,
+                // parentNodeData - not needed here, will be passed correctly in recursive calls
+                A
               );
-              C && C.type === "COMPONENT" && (g.push(C), await a.log(
-                `  Created component variant: "${C.name || "Unnamed"}"`
+              y && y.type === "COMPONENT" && (v.push(y), await a.log(
+                `  Created component variant: "${y.name || "Unnamed"}"`
               ));
-            } catch (C) {
+            } catch (y) {
               await a.warning(
-                `  Failed to create component variant "${v.name || "Unnamed"}": ${C}`
+                `  Failed to create component variant "${c.name || "Unnamed"}": ${y}`
               );
             }
       }
-      if (g.length > 0)
+      if (v.length > 0)
         try {
-          const u = t || figma.currentPage, v = figma.combineAsVariants(
-            g,
-            u
+          const g = t || figma.currentPage, c = figma.combineAsVariants(
+            v,
+            g
           );
-          e.name && (v.name = e.name), e.x !== void 0 && (v.x = e.x), e.y !== void 0 && (v.y = e.y), d && d.parent && d.remove(), await a.log(
-            `  ✓ Successfully created COMPONENT_SET "${v.name}" with ${g.length} variant(s)`
-          ), s = v;
-        } catch (u) {
+          e.name && (c.name = e.name), e.x !== void 0 && (c.x = e.x), e.y !== void 0 && (c.y = e.y), l && l.parent && l.remove(), await a.log(
+            `  ✓ Successfully created COMPONENT_SET "${c.name}" with ${v.length} variant(s)`
+          ), d = c;
+        } catch (g) {
           if (await a.warning(
-            `  Failed to combine components into COMPONENT_SET "${e.name || "Unnamed"}": ${u}. Falling back to frame.`
-          ), s = figma.createFrame(), e.name && (s.name = e.name), d && d.children.length > 0) {
-            for (const v of d.children)
-              s.appendChild(v);
-            d.remove();
+            `  Failed to combine components into COMPONENT_SET "${e.name || "Unnamed"}": ${g}. Falling back to frame.`
+          ), d = figma.createFrame(), e.name && (d.name = e.name), l && l.children.length > 0) {
+            for (const c of l.children)
+              d.appendChild(c);
+            l.remove();
           }
         }
       else
         await a.warning(
           `  No valid component variants found for COMPONENT_SET "${e.name || "Unnamed"}". Creating frame instead.`
-        ), s = figma.createFrame(), e.name && (s.name = e.name), d && d.remove();
+        ), d = figma.createFrame(), e.name && (d.name = e.name), l && l.remove();
       break;
     }
     case "INSTANCE":
-      if (m)
-        s = figma.createFrame(), e.name && (s.name = e.name);
-      else if (e._instanceRef !== void 0 && o && i) {
-        const c = o.getInstanceByIndex(
+      if (p)
+        d = figma.createFrame(), e.name && (d.name = e.name);
+      else if (e._instanceRef !== void 0 && o && r) {
+        const h = o.getInstanceByIndex(
           e._instanceRef
         );
-        if (c && c.instanceType === "internal")
-          if (c.componentNodeId)
-            if (c.componentNodeId === e.id)
+        if (h && h.instanceType === "internal")
+          if (h.componentNodeId)
+            if (h.componentNodeId === e.id)
               await a.warning(
                 `Instance "${e.name}" has componentNodeId matching its own ID (detached instance). Creating frame fallback.`
-              ), s = figma.createFrame(), e.name && (s.name = e.name);
+              ), d = figma.createFrame(), e.name && (d.name = e.name);
             else {
-              const g = i.get(
-                c.componentNodeId
+              const v = r.get(
+                h.componentNodeId
               );
-              if (!g) {
-                const d = Array.from(i.keys()).slice(
+              if (!v) {
+                const l = Array.from(r.keys()).slice(
                   0,
                   20
                 );
                 await a.error(
-                  `Component not found for internal instance "${e.name}" (ID: ${c.componentNodeId.substring(0, 8)}...). The component should have been created during import.`
+                  `Component not found for internal instance "${e.name}" (ID: ${h.componentNodeId.substring(0, 8)}...). The component should have been created during import.`
                 ), await a.error(
-                  `Looking for component ID: ${c.componentNodeId}`
+                  `Looking for component ID: ${h.componentNodeId}`
                 ), await a.error(
-                  `Available IDs in mapping (first 20): ${d.map((p) => p.substring(0, 8) + "...").join(", ")}`
+                  `Available IDs in mapping (first 20): ${l.map((N) => N.substring(0, 8) + "...").join(", ")}`
                 );
-                const u = (p, y) => {
-                  if (p.type === "COMPONENT" && p.id === y)
+                const g = (N, E) => {
+                  if (N.type === "COMPONENT" && N.id === E)
                     return !0;
-                  if (p.children && Array.isArray(p.children)) {
-                    for (const w of p.children)
-                      if (!w._truncated && u(w, y))
+                  if (N.children && Array.isArray(N.children)) {
+                    for (const C of N.children)
+                      if (!C._truncated && g(C, E))
                         return !0;
                   }
                   return !1;
-                }, v = u(
+                }, c = g(
                   e,
-                  c.componentNodeId
+                  h.componentNodeId
                 );
                 await a.error(
-                  `Component ID ${c.componentNodeId.substring(0, 8)}... exists in current node tree: ${v}`
+                  `Component ID ${h.componentNodeId.substring(0, 8)}... exists in current node tree: ${c}`
                 ), await a.error(
-                  `WARNING: Component ID ${c.componentNodeId.substring(0, 8)}... not found in nodeIdMapping. This might indicate:`
+                  `WARNING: Component ID ${h.componentNodeId.substring(0, 8)}... not found in nodeIdMapping. This might indicate:`
                 ), await a.error(
                   "  1. The component doesn't exist in the pageData (detached component?)"
                 ), await a.error(
@@ -2439,338 +2908,352 @@ async function Y(e, t, n = null, r = null, o = null, l = null, i = null, m = !1,
                 ), await a.error(
                   "  3. The component ID in the instance table doesn't match the actual component ID"
                 );
-                const C = d.filter(
-                  (p) => p.startsWith(c.componentNodeId.substring(0, 8))
+                const y = l.filter(
+                  (N) => N.startsWith(h.componentNodeId.substring(0, 8))
                 );
-                C.length > 0 && await a.error(
-                  `Found IDs with matching prefix: ${C.map((p) => p.substring(0, 8) + "...").join(", ")}`
+                y.length > 0 && await a.error(
+                  `Found IDs with matching prefix: ${y.map((N) => N.substring(0, 8) + "...").join(", ")}`
                 );
-                const f = `Component not found for internal instance "${e.name}" (ID: ${c.componentNodeId.substring(0, 8)}...). The component should have been created during import. Available IDs in mapping (first 20): ${d.map((p) => p.substring(0, 8) + "...").join(", ")}`;
+                const f = `Component not found for internal instance "${e.name}" (ID: ${h.componentNodeId.substring(0, 8)}...). The component should have been created during import. Available IDs in mapping (first 20): ${l.map((N) => N.substring(0, 8) + "...").join(", ")}`;
                 throw new Error(f);
               }
-              if (g && g.type === "COMPONENT") {
-                if (s = g.createInstance(), await a.log(
-                  `✓ Created internal instance "${e.name}" from component "${c.componentName}"`
-                ), c.variantProperties && Object.keys(c.variantProperties).length > 0)
+              if (v && v.type === "COMPONENT") {
+                if (d = v.createInstance(), await a.log(
+                  `✓ Created internal instance "${e.name}" from component "${h.componentName}"`
+                ), h.variantProperties && Object.keys(h.variantProperties).length > 0)
                   try {
-                    const d = await s.getMainComponentAsync();
-                    if (d) {
-                      let u = null;
-                      const v = d.type;
-                      if (v === "COMPONENT_SET" ? u = d.componentPropertyDefinitions : v === "COMPONENT" && d.parent && d.parent.type === "COMPONENT_SET" ? u = d.parent.componentPropertyDefinitions : await a.warning(
-                        `Cannot set variant properties for internal instance "${e.name}" - main component is not a COMPONENT_SET or variant`
-                      ), u) {
-                        const C = {};
-                        for (const [f, p] of Object.entries(
-                          c.variantProperties
-                        )) {
-                          const y = f.split("#")[0];
-                          u[y] && (C[y] = p);
-                        }
-                        Object.keys(C).length > 0 && s.setProperties(C);
-                      }
-                    } else
-                      await a.warning(
-                        `Cannot set variant properties for internal instance "${e.name}" - main component not found`
+                    let l = null;
+                    if (v.parent && v.parent.type === "COMPONENT_SET")
+                      l = v.parent.componentPropertyDefinitions, await a.log(
+                        `  DEBUG: Component "${h.componentName}" is inside component set "${v.parent.name}" with ${Object.keys(l || {}).length} property definitions`
                       );
-                  } catch (d) {
-                    const u = `Failed to set variant properties for instance "${e.name}": ${d}`;
-                    throw await a.error(u), new Error(u);
+                    else {
+                      const g = await d.getMainComponentAsync();
+                      if (g) {
+                        const c = g.type;
+                        await a.log(
+                          `  DEBUG: Internal instance "${e.name}" - componentNode parent: ${v.parent ? v.parent.type : "N/A"}, mainComponent type: ${c}, mainComponent parent: ${g.parent ? g.parent.type : "N/A"}`
+                        ), c === "COMPONENT_SET" ? l = g.componentPropertyDefinitions : c === "COMPONENT" && g.parent && g.parent.type === "COMPONENT_SET" ? (l = g.parent.componentPropertyDefinitions, await a.log(
+                          `  DEBUG: Found component set parent "${g.parent.name}" with ${Object.keys(l || {}).length} property definitions`
+                        )) : await a.log(
+                          `  Skipping variant properties for internal instance "${e.name}" - component "${h.componentName}" is not yet in a COMPONENT_SET (will be moved later during component set creation)`
+                        );
+                      }
+                    }
+                    if (l) {
+                      const g = {};
+                      for (const [c, y] of Object.entries(
+                        h.variantProperties
+                      )) {
+                        const f = c.split("#")[0];
+                        l[f] && (g[f] = y);
+                      }
+                      Object.keys(g).length > 0 && d.setProperties(g);
+                    }
+                  } catch (l) {
+                    const g = `Failed to set variant properties for instance "${e.name}": ${l}`;
+                    throw await a.error(g), new Error(g);
                   }
-                if (c.componentProperties && Object.keys(c.componentProperties).length > 0)
+                if (h.componentProperties && Object.keys(h.componentProperties).length > 0)
                   try {
-                    const d = await s.getMainComponentAsync();
-                    if (d) {
-                      let u = null;
-                      const v = d.type;
-                      if (v === "COMPONENT_SET" ? u = d.componentPropertyDefinitions : v === "COMPONENT" && d.parent && d.parent.type === "COMPONENT_SET" ? u = d.parent.componentPropertyDefinitions : v === "COMPONENT" && (u = d.componentPropertyDefinitions), u)
-                        for (const [C, f] of Object.entries(
-                          c.componentProperties
+                    const l = await d.getMainComponentAsync();
+                    if (l) {
+                      let g = null;
+                      const c = l.type;
+                      if (c === "COMPONENT_SET" ? g = l.componentPropertyDefinitions : c === "COMPONENT" && l.parent && l.parent.type === "COMPONENT_SET" ? g = l.parent.componentPropertyDefinitions : c === "COMPONENT" && (g = l.componentPropertyDefinitions), g)
+                        for (const [y, f] of Object.entries(
+                          h.componentProperties
                         )) {
-                          const p = C.split("#")[0];
-                          if (u[p])
+                          const N = y.split("#")[0];
+                          if (g[N])
                             try {
-                              let y = f;
-                              f && typeof f == "object" && "value" in f && (y = f.value), s.setProperties({
-                                [p]: y
+                              let E = f;
+                              f && typeof f == "object" && "value" in f && (E = f.value), d.setProperties({
+                                [N]: E
                               });
-                            } catch (y) {
-                              const w = `Failed to set component property "${p}" for internal instance "${e.name}": ${y}`;
-                              throw await a.error(w), new Error(w);
+                            } catch (E) {
+                              const C = `Failed to set component property "${N}" for internal instance "${e.name}": ${E}`;
+                              throw await a.error(C), new Error(C);
                             }
                         }
                     } else
                       await a.warning(
                         `Cannot set component properties for internal instance "${e.name}" - main component not found`
                       );
-                  } catch (d) {
-                    if (d instanceof Error)
-                      throw d;
-                    const u = `Failed to set component properties for instance "${e.name}": ${d}`;
-                    throw await a.error(u), new Error(u);
+                  } catch (l) {
+                    if (l instanceof Error)
+                      throw l;
+                    const g = `Failed to set component properties for instance "${e.name}": ${l}`;
+                    throw await a.error(g), new Error(g);
                   }
-              } else if (!s && g) {
-                const d = `Component node found but is not a COMPONENT type for internal instance "${e.name}" (ID: ${c.componentNodeId.substring(0, 8)}...).`;
-                throw await a.error(d), new Error(d);
+              } else if (!d && v) {
+                const l = `Component node found but is not a COMPONENT type for internal instance "${e.name}" (ID: ${h.componentNodeId.substring(0, 8)}...).`;
+                throw await a.error(l), new Error(l);
               }
             }
           else {
-            const g = `Internal instance "${e.name}" missing componentNodeId. This is required for internal instances.`;
-            throw await a.error(g), new Error(g);
+            const v = `Internal instance "${e.name}" missing componentNodeId. This is required for internal instances.`;
+            throw await a.error(v), new Error(v);
           }
-        else if (c && c.instanceType === "remote")
-          if (h) {
-            const g = h.get(
+        else if (h && h.instanceType === "remote")
+          if (m) {
+            const v = m.get(
               e._instanceRef
             );
-            if (g) {
-              if (s = g.createInstance(), await a.log(
-                `✓ Created remote instance "${e.name}" from component "${c.componentName}" on REMOTES page`
-              ), c.variantProperties && Object.keys(c.variantProperties).length > 0)
+            if (v) {
+              if (d = v.createInstance(), await a.log(
+                `✓ Created remote instance "${e.name}" from component "${h.componentName}" on REMOTES page`
+              ), h.variantProperties && Object.keys(h.variantProperties).length > 0)
                 try {
-                  const d = await s.getMainComponentAsync();
-                  if (d) {
-                    let u = null;
-                    const v = d.type;
-                    if (v === "COMPONENT_SET" ? u = d.componentPropertyDefinitions : v === "COMPONENT" && d.parent && d.parent.type === "COMPONENT_SET" ? u = d.parent.componentPropertyDefinitions : await a.warning(
-                      `Cannot set variant properties for remote instance "${e.name}" - main component is not a COMPONENT_SET or variant`
-                    ), u) {
-                      const C = {};
-                      for (const [f, p] of Object.entries(
-                        c.variantProperties
+                  const l = await d.getMainComponentAsync();
+                  if (l) {
+                    let g = null;
+                    const c = l.type;
+                    if (c === "COMPONENT_SET" ? g = l.componentPropertyDefinitions : c === "COMPONENT" && l.parent && l.parent.type === "COMPONENT_SET" ? g = l.parent.componentPropertyDefinitions : await a.log(
+                      `Skipping variant properties for remote instance "${e.name}" - main component is not a COMPONENT_SET or variant (expected for remote components)`
+                    ), g) {
+                      const y = {};
+                      for (const [f, N] of Object.entries(
+                        h.variantProperties
                       )) {
-                        const y = f.split("#")[0];
-                        u[y] && (C[y] = p);
+                        const E = f.split("#")[0];
+                        g[E] && (y[E] = N);
                       }
-                      Object.keys(C).length > 0 && s.setProperties(C);
+                      Object.keys(y).length > 0 && d.setProperties(y);
                     }
                   } else
                     await a.warning(
                       `Cannot set variant properties for remote instance "${e.name}" - main component not found`
                     );
-                } catch (d) {
-                  const u = `Failed to set variant properties for remote instance "${e.name}": ${d}`;
-                  throw await a.error(u), new Error(u);
+                } catch (l) {
+                  const g = `Failed to set variant properties for remote instance "${e.name}": ${l}`;
+                  throw await a.error(g), new Error(g);
                 }
-              if (c.componentProperties && Object.keys(c.componentProperties).length > 0)
+              if (h.componentProperties && Object.keys(h.componentProperties).length > 0)
                 try {
-                  const d = await s.getMainComponentAsync();
-                  if (d) {
-                    let u = null;
-                    const v = d.type;
-                    if (v === "COMPONENT_SET" ? u = d.componentPropertyDefinitions : v === "COMPONENT" && d.parent && d.parent.type === "COMPONENT_SET" ? u = d.parent.componentPropertyDefinitions : v === "COMPONENT" && (u = d.componentPropertyDefinitions), u)
-                      for (const [C, f] of Object.entries(
-                        c.componentProperties
+                  const l = await d.getMainComponentAsync();
+                  if (l) {
+                    let g = null;
+                    const c = l.type;
+                    if (c === "COMPONENT_SET" ? g = l.componentPropertyDefinitions : c === "COMPONENT" && l.parent && l.parent.type === "COMPONENT_SET" ? g = l.parent.componentPropertyDefinitions : c === "COMPONENT" && (g = l.componentPropertyDefinitions), g)
+                      for (const [y, f] of Object.entries(
+                        h.componentProperties
                       )) {
-                        const p = C.split("#")[0];
-                        if (u[p])
+                        const N = y.split("#")[0];
+                        if (g[N])
                           try {
-                            let y = f;
-                            f && typeof f == "object" && "value" in f && (y = f.value), s.setProperties({
-                              [p]: y
+                            let E = f;
+                            f && typeof f == "object" && "value" in f && (E = f.value), d.setProperties({
+                              [N]: E
                             });
-                          } catch (y) {
-                            const w = `Failed to set component property "${p}" for remote instance "${e.name}": ${y}`;
-                            throw await a.error(w), new Error(w);
+                          } catch (E) {
+                            const C = `Failed to set component property "${N}" for remote instance "${e.name}": ${E}`;
+                            throw await a.error(C), new Error(C);
                           }
                       }
                   } else
                     await a.warning(
                       `Cannot set component properties for remote instance "${e.name}" - main component not found`
                     );
-                } catch (d) {
-                  if (d instanceof Error)
-                    throw d;
-                  const u = `Failed to set component properties for remote instance "${e.name}": ${d}`;
-                  throw await a.error(u), new Error(u);
+                } catch (l) {
+                  if (l instanceof Error)
+                    throw l;
+                  const g = `Failed to set component properties for remote instance "${e.name}": ${l}`;
+                  throw await a.error(g), new Error(g);
                 }
               if (e.width !== void 0 && e.height !== void 0)
                 try {
-                  s.resize(e.width, e.height);
-                } catch (d) {
+                  d.resize(e.width, e.height);
+                } catch (l) {
                   await a.log(
                     `Note: Could not resize remote instance "${e.name}" to ${e.width}x${e.height} (may be constrained by component)`
                   );
                 }
             } else {
-              const d = `Remote component not found for instance "${e.name}" (index ${e._instanceRef}). The remote component should have been created on the REMOTES page.`;
-              throw await a.error(d), new Error(d);
+              const l = `Remote component not found for instance "${e.name}" (index ${e._instanceRef}). The remote component should have been created on the REMOTES page.`;
+              throw await a.error(l), new Error(l);
             }
           } else {
-            const g = `Remote instance "${e.name}" cannot be resolved (no remoteComponentMap). Remote instances require a remoteComponentMap.`;
-            throw await a.error(g), new Error(g);
+            const v = `Remote instance "${e.name}" cannot be resolved (no remoteComponentMap). Remote instances require a remoteComponentMap.`;
+            throw await a.error(v), new Error(v);
           }
-        else if ((c == null ? void 0 : c.instanceType) === "normal") {
-          if (!c.componentPageName) {
+        else if ((h == null ? void 0 : h.instanceType) === "normal") {
+          if (!h.componentPageName) {
             const f = `Normal instance "${e.name}" missing componentPageName. Cannot resolve.`;
             throw await a.error(f), new Error(f);
           }
           await figma.loadAllPagesAsync();
-          const g = figma.root.children.find(
-            (f) => f.name === c.componentPageName
+          const v = figma.root.children.find(
+            (f) => f.name === h.componentPageName
           );
-          if (!g) {
+          if (!v) {
             await a.log(
-              `  Deferring normal instance "${e.name}" - referenced page "${c.componentPageName}" does not exist yet (may be circular reference or not yet imported)`
+              `  Deferring normal instance "${e.name}" - referenced page "${h.componentPageName}" does not exist yet (may be circular reference or not yet imported)`
             );
             const f = figma.createFrame();
-            f.name = `[Deferred: ${e.name}]`, e.x !== void 0 && (f.x = e.x), e.y !== void 0 && (f.y = e.y), e.width !== void 0 && e.height !== void 0 ? f.resize(e.width, e.height) : e.w !== void 0 && e.h !== void 0 && f.resize(e.w, e.h), N && N.push({
+            f.name = `[Deferred: ${e.name}]`, e.x !== void 0 && (f.x = e.x), e.y !== void 0 && (f.y = e.y), e.width !== void 0 && e.height !== void 0 ? f.resize(e.width, e.height) : e.w !== void 0 && e.h !== void 0 && f.resize(e.w, e.h), b && b.push({
               placeholderFrame: f,
-              instanceEntry: c,
+              instanceEntry: h,
               nodeData: e,
               parentNode: t,
               instanceIndex: e._instanceRef
-            }), s = f;
+            }), d = f;
             break;
           }
-          let d = null;
-          const u = (f, p, y, w) => {
-            if (p.length === 0) {
-              let E = null;
-              for (const S of f.children || [])
-                if (S.type === "COMPONENT") {
-                  if (S.name === y)
-                    if (E || (E = S), w)
+          let l = null;
+          const g = (f, N, E, C, $) => {
+            if (N.length === 0) {
+              let T = null;
+              for (const x of f.children || [])
+                if (x.type === "COMPONENT") {
+                  if (x.name === E)
+                    if (T || (T = x), C)
                       try {
-                        const O = S.getPluginData(
+                        const V = x.getPluginData(
                           "RecursicaPublishedMetadata"
                         );
-                        if (O && JSON.parse(O).id === w)
-                          return S;
-                      } catch (O) {
+                        if (V && JSON.parse(V).id === C)
+                          return x;
+                      } catch (V) {
                       }
                     else
-                      return S;
-                } else if (S.type === "COMPONENT_SET") {
-                  for (const O of S.children || [])
-                    if (O.type === "COMPONENT" && O.name === y)
-                      if (E || (E = O), w)
+                      return x;
+                } else if (x.type === "COMPONENT_SET") {
+                  if ($ && x.name !== $)
+                    continue;
+                  for (const V of x.children || [])
+                    if (V.type === "COMPONENT" && V.name === E)
+                      if (T || (T = V), C)
                         try {
-                          const k = O.getPluginData(
+                          const U = V.getPluginData(
                             "RecursicaPublishedMetadata"
                           );
-                          if (k && JSON.parse(k).id === w)
-                            return O;
-                        } catch (k) {
+                          if (U && JSON.parse(U).id === C)
+                            return V;
+                        } catch (U) {
                         }
                       else
-                        return O;
+                        return V;
                 }
-              return E;
+              return T;
             }
-            const [b, ...P] = p;
-            for (const E of f.children || [])
-              if (E.name === b) {
-                if (P.length === 0 && E.type === "COMPONENT_SET") {
-                  for (const S of E.children || [])
-                    if (S.type === "COMPONENT" && S.name === y) {
-                      if (w)
+            const [k, ...P] = N;
+            for (const T of f.children || [])
+              if (T.name === k) {
+                if (P.length === 0 && T.type === "COMPONENT_SET") {
+                  if ($ && T.name !== $)
+                    continue;
+                  for (const x of T.children || [])
+                    if (x.type === "COMPONENT" && x.name === E) {
+                      if (C)
                         try {
-                          const O = S.getPluginData(
+                          const V = x.getPluginData(
                             "RecursicaPublishedMetadata"
                           );
-                          if (O && JSON.parse(O).id === w)
-                            return S;
-                        } catch (O) {
+                          if (V && JSON.parse(V).id === C)
+                            return x;
+                        } catch (V) {
                         }
-                      return S;
+                      return x;
                     }
                   return null;
                 }
-                return u(
-                  E,
+                return g(
+                  T,
                   P,
-                  y,
-                  w
+                  E,
+                  C,
+                  $
                 );
               }
             return null;
           };
           await a.log(
-            `  Looking for component "${c.componentName}" on page "${c.componentPageName}"${c.path && c.path.length > 0 ? ` at path [${c.path.join(" → ")}]` : " at page root"}${c.componentGuid ? ` (GUID: ${c.componentGuid.substring(0, 8)}...)` : ""}`
+            `  Looking for component "${h.componentName}" on page "${h.componentPageName}"${h.path && h.path.length > 0 ? ` at path [${h.path.join(" → ")}]` : " at page root"}${h.componentGuid ? ` (GUID: ${h.componentGuid.substring(0, 8)}...)` : ""}`
           );
-          const v = [], C = (f, p = 0) => {
-            const y = "  ".repeat(p);
+          const c = [], y = (f, N = 0) => {
+            const E = "  ".repeat(N);
             if (f.type === "COMPONENT")
-              v.push(`${y}COMPONENT: "${f.name}"`);
+              c.push(`${E}COMPONENT: "${f.name}"`);
             else if (f.type === "COMPONENT_SET") {
-              v.push(
-                `${y}COMPONENT_SET: "${f.name}"`
+              c.push(
+                `${E}COMPONENT_SET: "${f.name}"`
               );
-              for (const w of f.children || [])
-                w.type === "COMPONENT" && v.push(
-                  `${y}  └─ COMPONENT: "${w.name}"`
+              for (const C of f.children || [])
+                C.type === "COMPONENT" && c.push(
+                  `${E}  └─ COMPONENT: "${C.name}"`
                 );
             }
-            for (const w of f.children || [])
-              C(w, p + 1);
+            for (const C of f.children || [])
+              y(C, N + 1);
           };
-          if (C(g), v.length > 0 ? await a.log(
-            `  Available components on page "${c.componentPageName}":
-${v.slice(0, 20).join(`
-`)}${v.length > 20 ? `
-  ... and ${v.length - 20} more` : ""}`
+          if (y(v), c.length > 0 ? await a.log(
+            `  Available components on page "${h.componentPageName}":
+${c.slice(0, 20).join(`
+`)}${c.length > 20 ? `
+  ... and ${c.length - 20} more` : ""}`
           ) : await a.warning(
-            `  No components found on page "${c.componentPageName}"`
-          ), d = u(
-            g,
-            c.path || [],
-            c.componentName,
-            c.componentGuid
-          ), d && c.componentGuid)
+            `  No components found on page "${h.componentPageName}"`
+          ), l = g(
+            v,
+            h.path || [],
+            h.componentName,
+            h.componentGuid,
+            h.componentSetName
+          ), l && h.componentGuid)
             try {
-              const f = d.getPluginData(
+              const f = l.getPluginData(
                 "RecursicaPublishedMetadata"
               );
               if (f) {
-                const p = JSON.parse(f);
-                p.id !== c.componentGuid ? await a.warning(
-                  `  Found component "${c.componentName}" by name but GUID verification failed (expected ${c.componentGuid.substring(0, 8)}..., got ${p.id ? p.id.substring(0, 8) + "..." : "none"}). Using name match as fallback.`
+                const N = JSON.parse(f);
+                N.id !== h.componentGuid ? await a.warning(
+                  `  Found component "${h.componentName}" by name but GUID verification failed (expected ${h.componentGuid.substring(0, 8)}..., got ${N.id ? N.id.substring(0, 8) + "..." : "none"}). Using name match as fallback.`
                 ) : await a.log(
-                  `  Found component "${c.componentName}" with matching GUID ${c.componentGuid.substring(0, 8)}...`
+                  `  Found component "${h.componentName}" with matching GUID ${h.componentGuid.substring(0, 8)}...`
                 );
               } else
                 await a.warning(
-                  `  Found component "${c.componentName}" by name but no metadata found. Using name match as fallback.`
+                  `  Found component "${h.componentName}" by name but no metadata found. Using name match as fallback.`
                 );
             } catch (f) {
               await a.warning(
-                `  Found component "${c.componentName}" by name but GUID verification failed. Using name match as fallback.`
+                `  Found component "${h.componentName}" by name but GUID verification failed. Using name match as fallback.`
               );
             }
-          if (!d) {
+          if (!l) {
             await a.log(
-              `  Deferring normal instance "${e.name}" - component "${c.componentName}" not found on page "${c.componentPageName}" (may not be created yet due to circular reference)`
+              `  Deferring normal instance "${e.name}" - component "${h.componentName}" not found on page "${h.componentPageName}" (may not be created yet due to circular reference)`
             );
             const f = figma.createFrame();
-            f.name = `[Deferred: ${e.name}]`, e.x !== void 0 && (f.x = e.x), e.y !== void 0 && (f.y = e.y), e.width !== void 0 && e.height !== void 0 ? f.resize(e.width, e.height) : e.w !== void 0 && e.h !== void 0 && f.resize(e.w, e.h), N && N.push({
+            f.name = `[Deferred: ${e.name}]`, e.x !== void 0 && (f.x = e.x), e.y !== void 0 && (f.y = e.y), e.width !== void 0 && e.height !== void 0 ? f.resize(e.width, e.height) : e.w !== void 0 && e.h !== void 0 && f.resize(e.w, e.h), b && b.push({
               placeholderFrame: f,
-              instanceEntry: c,
+              instanceEntry: h,
               nodeData: e,
               parentNode: t,
               instanceIndex: e._instanceRef
-            }), s = f;
+            }), d = f;
             break;
           }
-          if (s = d.createInstance(), await a.log(
-            `  Created normal instance "${e.name}" from component "${c.componentName}" on page "${c.componentPageName}"`
-          ), c.variantProperties && Object.keys(c.variantProperties).length > 0)
+          if (d = l.createInstance(), await a.log(
+            `  Created normal instance "${e.name}" from component "${h.componentName}" on page "${h.componentPageName}"`
+          ), h.variantProperties && Object.keys(h.variantProperties).length > 0)
             try {
-              const f = await s.getMainComponentAsync();
+              const f = await d.getMainComponentAsync();
               if (f) {
-                let p = null;
-                const y = f.type;
-                if (y === "COMPONENT_SET" ? p = f.componentPropertyDefinitions : y === "COMPONENT" && f.parent && f.parent.type === "COMPONENT_SET" ? p = f.parent.componentPropertyDefinitions : await a.warning(
+                let N = null;
+                const E = f.type;
+                if (E === "COMPONENT_SET" ? N = f.componentPropertyDefinitions : E === "COMPONENT" && f.parent && f.parent.type === "COMPONENT_SET" ? N = f.parent.componentPropertyDefinitions : await a.warning(
                   `Cannot set variant properties for normal instance "${e.name}" - main component is not a COMPONENT_SET or variant`
-                ), p) {
-                  const w = {};
-                  for (const [b, P] of Object.entries(
-                    c.variantProperties
+                ), N) {
+                  const C = {};
+                  for (const [$, k] of Object.entries(
+                    h.variantProperties
                   )) {
-                    const E = b.split("#")[0];
-                    p[E] && (w[E] = P);
+                    const P = $.split("#")[0];
+                    N[P] && (C[P] = k);
                   }
-                  Object.keys(w).length > 0 && s.setProperties(w);
+                  Object.keys(C).length > 0 && d.setProperties(C);
                 }
               }
             } catch (f) {
@@ -2778,45 +3261,45 @@ ${v.slice(0, 20).join(`
                 `Failed to set variant properties for normal instance "${e.name}": ${f}`
               );
             }
-          if (c.componentProperties && Object.keys(c.componentProperties).length > 0)
+          if (h.componentProperties && Object.keys(h.componentProperties).length > 0)
             try {
-              const f = await s.getMainComponentAsync();
+              const f = await d.getMainComponentAsync();
               if (f) {
-                let p = null;
-                const y = f.type;
-                if (y === "COMPONENT_SET" ? p = f.componentPropertyDefinitions : y === "COMPONENT" && f.parent && f.parent.type === "COMPONENT_SET" ? p = f.parent.componentPropertyDefinitions : y === "COMPONENT" && (p = f.componentPropertyDefinitions), p) {
-                  const w = {};
-                  for (const [b, P] of Object.entries(
-                    c.componentProperties
+                let N = null;
+                const E = f.type;
+                if (E === "COMPONENT_SET" ? N = f.componentPropertyDefinitions : E === "COMPONENT" && f.parent && f.parent.type === "COMPONENT_SET" ? N = f.parent.componentPropertyDefinitions : E === "COMPONENT" && (N = f.componentPropertyDefinitions), N) {
+                  const C = {};
+                  for (const [$, k] of Object.entries(
+                    h.componentProperties
                   )) {
-                    const E = b.split("#")[0];
-                    let S;
-                    if (p[b] ? S = b : p[E] ? S = E : S = Object.keys(p).find(
-                      (O) => O.split("#")[0] === E
-                    ), S) {
-                      const O = P && typeof P == "object" && "value" in P ? P.value : P;
-                      w[S] = O;
+                    const P = $.split("#")[0];
+                    let T;
+                    if (N[$] ? T = $ : N[P] ? T = P : T = Object.keys(N).find(
+                      (x) => x.split("#")[0] === P
+                    ), T) {
+                      const x = k && typeof k == "object" && "value" in k ? k.value : k;
+                      C[T] = x;
                     } else
                       await a.warning(
-                        `Component property "${E}" (from "${b}") does not exist on component "${c.componentName}" for normal instance "${e.name}". Available properties: ${Object.keys(p).join(", ") || "none"}`
+                        `Component property "${P}" (from "${$}") does not exist on component "${h.componentName}" for normal instance "${e.name}". Available properties: ${Object.keys(N).join(", ") || "none"}`
                       );
                   }
-                  if (Object.keys(w).length > 0)
+                  if (Object.keys(C).length > 0)
                     try {
                       await a.log(
-                        `  Attempting to set component properties for normal instance "${e.name}": ${Object.keys(w).join(", ")}`
+                        `  Attempting to set component properties for normal instance "${e.name}": ${Object.keys(C).join(", ")}`
                       ), await a.log(
-                        `  Available component properties: ${Object.keys(p).join(", ")}`
-                      ), s.setProperties(w), await a.log(
-                        `  ✓ Successfully set component properties for normal instance "${e.name}": ${Object.keys(w).join(", ")}`
+                        `  Available component properties: ${Object.keys(N).join(", ")}`
+                      ), d.setProperties(C), await a.log(
+                        `  ✓ Successfully set component properties for normal instance "${e.name}": ${Object.keys(C).join(", ")}`
                       );
-                    } catch (b) {
+                    } catch ($) {
                       await a.warning(
-                        `Failed to set component properties for normal instance "${e.name}": ${b}`
+                        `Failed to set component properties for normal instance "${e.name}": ${$}`
                       ), await a.warning(
-                        `  Properties attempted: ${JSON.stringify(w)}`
+                        `  Properties attempted: ${JSON.stringify(C)}`
                       ), await a.warning(
-                        `  Available properties: ${JSON.stringify(Object.keys(p))}`
+                        `  Available properties: ${JSON.stringify(Object.keys(N))}`
                       );
                     }
                 }
@@ -2831,117 +3314,225 @@ ${v.slice(0, 20).join(`
             }
           if (e.width !== void 0 && e.height !== void 0)
             try {
-              s.resize(e.width, e.height);
+              d.resize(e.width, e.height);
             } catch (f) {
               await a.log(
                 `Note: Could not resize normal instance "${e.name}" to ${e.width}x${e.height} (may be constrained by component)`
               );
             }
         } else {
-          const g = `Instance "${e.name}" has unknown or missing instance type: ${(c == null ? void 0 : c.instanceType) || "unknown"}`;
-          throw await a.error(g), new Error(g);
+          const v = `Instance "${e.name}" has unknown or missing instance type: ${(h == null ? void 0 : h.instanceType) || "unknown"}`;
+          throw await a.error(v), new Error(v);
         }
       } else {
-        const c = `Instance "${e.name}" missing _instanceRef or instance table. This is required for instance resolution.`;
-        throw await a.error(c), new Error(c);
+        const h = `Instance "${e.name}" missing _instanceRef or instance table. This is required for instance resolution.`;
+        throw await a.error(h), new Error(h);
       }
       break;
     case "GROUP":
-      s = figma.createFrame();
+      d = figma.createFrame();
       break;
     case "BOOLEAN_OPERATION": {
-      const c = `Boolean operation nodes cannot be imported. Found boolean operation: "${e.name}".`;
-      throw await a.error(c), new Error(c);
+      const h = `Boolean operation nodes cannot be imported. Found boolean operation: "${e.name}".`;
+      throw await a.error(h), new Error(h);
     }
     case "POLYGON":
-      s = figma.createPolygon();
+      d = figma.createPolygon();
       break;
     default: {
-      const c = `Unsupported node type: ${e.type}. This node type cannot be imported.`;
-      throw await a.error(c), new Error(c);
+      const h = `Unsupported node type: ${e.type}. This node type cannot be imported.`;
+      throw await a.error(h), new Error(h);
     }
   }
-  if (!s)
+  if (!d)
     return null;
-  if (e.id && i && (i.set(e.id, s), s.type === "COMPONENT" && await a.log(
+  e.id && r && (r.set(e.id, d), d.type === "COMPONENT" && await a.log(
     `  Stored COMPONENT "${e.name || "Unnamed"}" in nodeIdMapping (ID: ${e.id.substring(0, 8)}...)`
-  )), _t(s, e.type || "FRAME"), e.name !== void 0 && (s.name = e.name || "Unnamed Node"), e.x !== void 0 && (s.x = e.x), e.y !== void 0 && (s.y = e.y), e.type !== "VECTOR" && e.width !== void 0 && e.height !== void 0 && s.resize(e.width, e.height), e.visible !== void 0 && (s.visible = e.visible), e.locked !== void 0 && (s.locked = e.locked), e.opacity !== void 0 && (s.opacity = e.opacity), e.rotation !== void 0 && (s.rotation = e.rotation), e.blendMode !== void 0 && (s.blendMode = e.blendMode), e.type !== "INSTANCE") {
-    if (e.fills !== void 0)
+  )), e._instanceRef !== void 0 && d.type === "INSTANCE" ? (r._instanceTableMap || (r._instanceTableMap = /* @__PURE__ */ new Map()), r._instanceTableMap.set(
+    d.id,
+    e._instanceRef
+  ), await a.log(
+    `  Stored instance table mapping: instance "${d.name}" (ID: ${d.id.substring(0, 8)}...) -> instance table index ${e._instanceRef}`
+  )) : d.type === "INSTANCE" && await a.log(
+    `  WARNING: Instance "${d.name}" (ID: ${d.id.substring(0, 8)}...) has no _instanceRef in nodeData - will use fallback matching in third pass`
+  ), Dt(d, e.type || "FRAME"), e.name !== void 0 && (d.name = e.name || "Unnamed Node");
+  const I = w && w.layoutMode !== void 0 && w.layoutMode !== "NONE", u = t && "layoutMode" in t && t.layoutMode !== "NONE";
+  if (I || u || (e.x !== void 0 && (d.x = e.x), e.y !== void 0 && (d.y = e.y)), e.type !== "VECTOR" && e.width !== void 0 && e.height !== void 0 && d.resize(e.width, e.height), e.visible !== void 0 && (d.visible = e.visible), e.locked !== void 0 && (d.locked = e.locked), e.opacity !== void 0 && (d.opacity = e.opacity), e.rotation !== void 0 && (d.rotation = e.rotation), e.blendMode !== void 0 && (d.blendMode = e.blendMode), e.type !== "INSTANCE") {
+    if (e.type === "VECTOR" && e.boundVariables && (await a.log(
+      `  DEBUG: VECTOR "${e.name || "Unnamed"}" (ID: ${((M = e.id) == null ? void 0 : M.substring(0, 8)) || "unknown"}...) has boundVariables: ${Object.keys(e.boundVariables).join(", ")}`
+    ), e.boundVariables.fills && await a.log(
+      `  DEBUG:   boundVariables.fills: ${JSON.stringify(e.boundVariables.fills)}`
+    )), e.fills !== void 0)
       try {
-        let c = e.fills;
-        Array.isArray(c) && (c = c.map((g) => {
-          if (g && typeof g == "object") {
-            const d = I({}, g);
-            return delete d.boundVariables, d;
+        let h = e.fills;
+        if (Array.isArray(h) && (h = h.map((v) => {
+          if (v && typeof v == "object") {
+            const l = L({}, v);
+            return delete l.boundVariables, l;
           }
-          return g;
-        })), s.fills = c, ($ = e.boundVariables) != null && $.fills && l && await Ue(
-          s,
-          e.boundVariables,
-          "fills",
-          l
+          return v;
+        })), e.fills && Array.isArray(e.fills) && s) {
+          if (e.type === "VECTOR") {
+            await a.log(
+              `  DEBUG: VECTOR "${e.name || "Unnamed"}" has ${e.fills.length} fill(s)`
+            );
+            for (let l = 0; l < e.fills.length; l++) {
+              const g = e.fills[l];
+              if (g && typeof g == "object") {
+                const c = g.boundVariables || g.bndVar;
+                c ? await a.log(
+                  `  DEBUG:   fill[${l}] has boundVariables: ${JSON.stringify(c)}`
+                ) : await a.log(
+                  `  DEBUG:   fill[${l}] has no boundVariables`
+                );
+              }
+            }
+          }
+          const v = [];
+          for (let l = 0; l < h.length; l++) {
+            const g = h[l], c = e.fills[l];
+            if (!c || typeof c != "object") {
+              v.push(g);
+              continue;
+            }
+            const y = c.boundVariables || c.bndVar;
+            if (!y) {
+              v.push(g);
+              continue;
+            }
+            const f = L({}, g);
+            f.boundVariables = {};
+            for (const [N, E] of Object.entries(y))
+              if (e.type === "VECTOR" && await a.log(
+                `  DEBUG: Processing fill[${l}].${N} on VECTOR "${d.name || "Unnamed"}": varInfo=${JSON.stringify(E)}`
+              ), ye(E)) {
+                const C = E._varRef;
+                if (C !== void 0) {
+                  if (e.type === "VECTOR") {
+                    await a.log(
+                      `  DEBUG: Looking up variable reference ${C} in recognizedVariables (map has ${s.size} entries)`
+                    );
+                    const k = Array.from(
+                      s.keys()
+                    ).slice(0, 10);
+                    await a.log(
+                      `  DEBUG: Available variable references (first 10): ${k.join(", ")}`
+                    );
+                    const P = s.has(String(C));
+                    if (await a.log(
+                      `  DEBUG: Variable reference ${C} ${P ? "found" : "NOT FOUND"} in recognizedVariables`
+                    ), !P) {
+                      const T = Array.from(
+                        s.keys()
+                      ).sort((x, V) => parseInt(x) - parseInt(V));
+                      await a.log(
+                        `  DEBUG: All available variable references: ${T.join(", ")}`
+                      );
+                    }
+                  }
+                  let $ = s.get(String(C));
+                  $ || (e.type === "VECTOR" && await a.log(
+                    `  DEBUG: Variable ${C} not in recognizedVariables. variableTable=${!!n}, collectionTable=${!!i}, recognizedCollections=${!!A}`
+                  ), n && i && A ? (await a.log(
+                    `  Variable reference ${C} not in recognizedVariables, attempting to resolve from variable table...`
+                  ), $ = await Wt(
+                    C,
+                    n,
+                    i,
+                    A
+                  ) || void 0, $ ? (s.set(String(C), $), await a.log(
+                    `  ✓ Resolved variable ${$.name} from variable table and added to recognizedVariables`
+                  )) : await a.warning(
+                    `  Failed to resolve variable ${C} from variable table`
+                  )) : e.type === "VECTOR" && await a.warning(
+                    `  Cannot resolve variable ${C} from table - missing required parameters`
+                  )), $ ? (f.boundVariables[N] = {
+                    type: "VARIABLE_ALIAS",
+                    id: $.id
+                  }, await a.log(
+                    `  ✓ Restored bound variable for fill[${l}].${N} on "${d.name || "Unnamed"}" (${e.type}): variable ${$.name} (ID: ${$.id.substring(0, 8)}...)`
+                  )) : await a.warning(
+                    `  Variable reference ${C} not found in recognizedVariables for fill[${l}].${N} on "${d.name || "Unnamed"}"`
+                  );
+                } else
+                  e.type === "VECTOR" && await a.warning(
+                    `  DEBUG: Variable reference ${C} is undefined for fill[${l}].${N} on VECTOR "${d.name || "Unnamed"}"`
+                  );
+              } else
+                e.type === "VECTOR" && await a.warning(
+                  `  DEBUG: fill[${l}].${N} on VECTOR "${d.name || "Unnamed"}" is not a variable reference: ${JSON.stringify(E)}`
+                );
+            v.push(f);
+          }
+          d.fills = v, await a.log(
+            `  ✓ Set fills with boundVariables on "${d.name || "Unnamed"}" (${e.type})`
+          );
+        } else
+          d.fills = h;
+        e.boundVariables && Object.keys(e.boundVariables).length > 0 && !e.boundVariables.fills && await a.log(
+          `  Node "${d.name || "Unnamed"}" (${e.type}) has boundVariables but not for fills: ${Object.keys(e.boundVariables).join(", ")}`
         );
-      } catch (c) {
-        console.log("Error setting fills:", c);
+      } catch (h) {
+        console.log("Error setting fills:", h);
       }
     else if (e.type === "FRAME" || e.type === "COMPONENT" || e.type === "GROUP")
       try {
-        s.fills = [];
-      } catch (c) {
-        console.log("Error clearing fills:", c);
+        d.fills = [];
+      } catch (h) {
+        console.log("Error clearing fills:", h);
       }
   }
   if (e.strokes !== void 0)
     try {
-      e.strokes.length > 0 ? s.strokes = e.strokes : s.strokes = [];
-    } catch (c) {
-      console.log("Error setting strokes:", c);
+      e.strokes.length > 0 ? d.strokes = e.strokes : d.strokes = [];
+    } catch (h) {
+      console.log("Error setting strokes:", h);
     }
   else if (e.type === "VECTOR")
     try {
-      s.strokes = [];
-    } catch (c) {
+      d.strokes = [];
+    } catch (h) {
     }
-  if (e.strokeWeight !== void 0 ? s.strokeWeight = e.strokeWeight : e.type === "VECTOR" && (e.strokes === void 0 || e.strokes.length === 0) && (s.strokeWeight = 0), e.strokeAlign !== void 0 && (s.strokeAlign = e.strokeAlign), e.cornerRadius !== void 0 && (s.cornerRadius = e.cornerRadius), e.effects !== void 0 && e.effects.length > 0 && (s.effects = e.effects), (e.type === "FRAME" || e.type === "COMPONENT" || e.type === "INSTANCE") && (e.layoutMode !== void 0 && (s.layoutMode = e.layoutMode), e.primaryAxisSizingMode !== void 0 && (s.primaryAxisSizingMode = e.primaryAxisSizingMode), e.counterAxisSizingMode !== void 0 && (s.counterAxisSizingMode = e.counterAxisSizingMode), e.primaryAxisAlignItems !== void 0 && (s.primaryAxisAlignItems = e.primaryAxisAlignItems), e.counterAxisAlignItems !== void 0 && (s.counterAxisAlignItems = e.counterAxisAlignItems), e.paddingLeft !== void 0 && (s.paddingLeft = e.paddingLeft), e.paddingRight !== void 0 && (s.paddingRight = e.paddingRight), e.paddingTop !== void 0 && (s.paddingTop = e.paddingTop), e.paddingBottom !== void 0 && (s.paddingBottom = e.paddingBottom), e.itemSpacing !== void 0 && (s.itemSpacing = e.itemSpacing)), (e.type === "VECTOR" || e.type === "LINE") && (e.strokeCap !== void 0 && (s.strokeCap = e.strokeCap), e.strokeJoin !== void 0 && (s.strokeJoin = e.strokeJoin), e.dashPattern !== void 0 && e.dashPattern.length > 0 && (s.dashPattern = e.dashPattern), e.type === "VECTOR")) {
+  if (e.strokeWeight !== void 0 ? d.strokeWeight = e.strokeWeight : e.type === "VECTOR" && (e.strokes === void 0 || e.strokes.length === 0) && (d.strokeWeight = 0), e.strokeAlign !== void 0 && (d.strokeAlign = e.strokeAlign), e.cornerRadius !== void 0 && (d.cornerRadius = e.cornerRadius), e.effects !== void 0 && e.effects.length > 0 && (d.effects = e.effects), (e.type === "FRAME" || e.type === "COMPONENT" || e.type === "INSTANCE") && (e.layoutMode !== void 0 && (d.layoutMode = e.layoutMode), e.layoutWrap !== void 0 && (d.layoutWrap = e.layoutWrap), e.primaryAxisSizingMode !== void 0 && (d.primaryAxisSizingMode = e.primaryAxisSizingMode), e.counterAxisSizingMode !== void 0 && (d.counterAxisSizingMode = e.counterAxisSizingMode), e.primaryAxisAlignItems !== void 0 && (d.primaryAxisAlignItems = e.primaryAxisAlignItems), e.counterAxisAlignItems !== void 0 && (d.counterAxisAlignItems = e.counterAxisAlignItems), e.paddingLeft !== void 0 && (d.paddingLeft = e.paddingLeft), e.paddingRight !== void 0 && (d.paddingRight = e.paddingRight), e.paddingTop !== void 0 && (d.paddingTop = e.paddingTop), e.paddingBottom !== void 0 && (d.paddingBottom = e.paddingBottom), e.itemSpacing !== void 0 && (d.itemSpacing = e.itemSpacing), e.layoutGrow !== void 0 && (d.layoutGrow = e.layoutGrow)), (e.type === "VECTOR" || e.type === "LINE") && (e.strokeCap !== void 0 && (d.strokeCap = e.strokeCap), e.strokeJoin !== void 0 && (d.strokeJoin = e.strokeJoin), e.dashPattern !== void 0 && e.dashPattern.length > 0 && (d.dashPattern = e.dashPattern), e.type === "VECTOR")) {
     if (e.fillGeometry !== void 0)
       try {
-        const { normalizeSvgPath: c } = await Promise.resolve().then(() => bt), g = e.fillGeometry.map((d) => {
-          const u = d.data;
+        const { normalizeSvgPath: h } = await Promise.resolve().then(() => xt), v = e.fillGeometry.map((l) => {
+          const g = l.data;
           return {
-            data: c(u),
-            windingRule: d.windingRule || d.windRule || "NONZERO"
+            data: h(g),
+            windingRule: l.windingRule || l.windRule || "NONZERO"
           };
         });
-        for (let d = 0; d < e.fillGeometry.length; d++) {
-          const u = e.fillGeometry[d].data, v = g[d].data;
-          u !== v && await a.log(
-            `  Normalized path ${d + 1} for "${e.name || "Unnamed"}": ${u.substring(0, 50)}... -> ${v.substring(0, 50)}...`
+        for (let l = 0; l < e.fillGeometry.length; l++) {
+          const g = e.fillGeometry[l].data, c = v[l].data;
+          g !== c && await a.log(
+            `  Normalized path ${l + 1} for "${e.name || "Unnamed"}": ${g.substring(0, 50)}... -> ${c.substring(0, 50)}...`
           );
         }
-        s.vectorPaths = g, await a.log(
-          `  Set vectorPaths for VECTOR "${e.name || "Unnamed"}" (${g.length} path(s))`
+        d.vectorPaths = v, await a.log(
+          `  Set vectorPaths for VECTOR "${e.name || "Unnamed"}" (${v.length} path(s))`
         );
-      } catch (c) {
+      } catch (h) {
         await a.warning(
-          `Error setting vectorPaths for VECTOR "${e.name || "Unnamed"}": ${c}`
+          `Error setting vectorPaths for VECTOR "${e.name || "Unnamed"}": ${h}`
         );
       }
     if (e.strokeGeometry !== void 0)
       try {
-        s.strokeGeometry = e.strokeGeometry;
-      } catch (c) {
+        d.strokeGeometry = e.strokeGeometry;
+      } catch (h) {
         await a.warning(
-          `Error setting strokeGeometry for VECTOR "${e.name || "Unnamed"}": ${c}`
+          `Error setting strokeGeometry for VECTOR "${e.name || "Unnamed"}": ${h}`
         );
       }
     if (e.width !== void 0 && e.height !== void 0)
       try {
-        s.resize(e.width, e.height), await a.log(
+        d.resize(e.width, e.height), await a.log(
           `  Set size for VECTOR "${e.name || "Unnamed"}" to ${e.width}x${e.height}`
         );
-      } catch (c) {
+      } catch (h) {
         await a.warning(
-          `Error setting size for VECTOR "${e.name || "Unnamed"}": ${c}`
+          `Error setting size for VECTOR "${e.name || "Unnamed"}": ${h}`
         );
       }
   }
@@ -2949,79 +3540,79 @@ ${v.slice(0, 20).join(`
     try {
       if (e.fontName)
         try {
-          await figma.loadFontAsync(e.fontName), s.fontName = e.fontName;
-        } catch (c) {
+          await figma.loadFontAsync(e.fontName), d.fontName = e.fontName;
+        } catch (h) {
           await figma.loadFontAsync({
             family: "Roboto",
             style: "Regular"
-          }), s.fontName = { family: "Roboto", style: "Regular" };
+          }), d.fontName = { family: "Roboto", style: "Regular" };
         }
       else
         await figma.loadFontAsync({
           family: "Roboto",
           style: "Regular"
-        }), s.fontName = { family: "Roboto", style: "Regular" };
-      s.characters = e.characters, e.fontSize !== void 0 && (s.fontSize = e.fontSize), e.textAlignHorizontal !== void 0 && (s.textAlignHorizontal = e.textAlignHorizontal), e.textAlignVertical !== void 0 && (s.textAlignVertical = e.textAlignVertical), e.letterSpacing !== void 0 && (s.letterSpacing = e.letterSpacing), e.lineHeight !== void 0 && (s.lineHeight = e.lineHeight), e.textCase !== void 0 && (s.textCase = e.textCase), e.textDecoration !== void 0 && (s.textDecoration = e.textDecoration), e.textAutoResize !== void 0 && (s.textAutoResize = e.textAutoResize);
-    } catch (c) {
-      console.log("Error setting text properties: " + c);
+        }), d.fontName = { family: "Roboto", style: "Regular" };
+      d.characters = e.characters, e.fontSize !== void 0 && (d.fontSize = e.fontSize), e.textAlignHorizontal !== void 0 && (d.textAlignHorizontal = e.textAlignHorizontal), e.textAlignVertical !== void 0 && (d.textAlignVertical = e.textAlignVertical), e.letterSpacing !== void 0 && (d.letterSpacing = e.letterSpacing), e.lineHeight !== void 0 && (d.lineHeight = e.lineHeight), e.textCase !== void 0 && (d.textCase = e.textCase), e.textDecoration !== void 0 && (d.textDecoration = e.textDecoration), e.textAutoResize !== void 0 && (d.textAutoResize = e.textAutoResize);
+    } catch (h) {
+      console.log("Error setting text properties: " + h);
       try {
-        s.characters = e.characters;
-      } catch (g) {
-        console.log("Could not set text characters: " + g);
+        d.characters = e.characters;
+      } catch (v) {
+        console.log("Could not set text characters: " + v);
       }
     }
   if (e.boundVariables) {
-    for (const [c, g] of Object.entries(
+    for (const [h, v] of Object.entries(
       e.boundVariables
     ))
-      if (c !== "fills" && Re(g) && n && l) {
-        const d = g._varRef;
-        if (d !== void 0) {
-          const u = l.get(String(d));
-          if (u) {
-            const v = {
+      if (h !== "fills" && ye(v) && n && s) {
+        const l = v._varRef;
+        if (l !== void 0) {
+          const g = s.get(String(l));
+          if (g) {
+            const c = {
               type: "VARIABLE_ALIAS",
-              id: u.id
+              id: g.id
             };
-            s.boundVariables || (s.boundVariables = {}), s.boundVariables[c] || (s.boundVariables[c] = v);
+            d.boundVariables || (d.boundVariables = {}), d.boundVariables[h] || (d.boundVariables[h] = c);
           }
         }
       }
   }
-  const A = e.id && i && i.has(e.id) && s.type === "COMPONENT" && s.children && s.children.length > 0;
-  if (e.children && Array.isArray(e.children) && s.type !== "INSTANCE" && !A) {
-    const c = (d) => {
-      const u = [];
-      for (const v of d)
-        v._truncated || (v.type === "COMPONENT" ? (u.push(v), v.children && Array.isArray(v.children) && u.push(...c(v.children))) : v.children && Array.isArray(v.children) && u.push(...c(v.children)));
-      return u;
+  const S = e.id && r && r.has(e.id) && d.type === "COMPONENT" && d.children && d.children.length > 0;
+  if (e.children && Array.isArray(e.children) && d.type !== "INSTANCE" && !S) {
+    const h = (l) => {
+      const g = [];
+      for (const c of l)
+        c._truncated || (c.type === "COMPONENT" ? (g.push(c), c.children && Array.isArray(c.children) && g.push(...h(c.children))) : c.children && Array.isArray(c.children) && g.push(...h(c.children)));
+      return g;
     };
-    for (const d of e.children) {
-      if (d._truncated) {
+    for (const l of e.children) {
+      if (l._truncated) {
         console.log(
-          `Skipping truncated children: ${d._reason || "Unknown"}`
+          `Skipping truncated children: ${l._reason || "Unknown"}`
         );
         continue;
       }
-      d.type;
+      l.type;
     }
-    const g = c(e.children);
+    const v = h(e.children);
     await a.log(
-      `  First pass: Creating ${g.length} COMPONENT node(s) (without children)...`
+      `  First pass: Creating ${v.length} COMPONENT node(s) (without children)...`
     );
-    for (const d of g)
+    for (const l of v)
       await a.log(
-        `  Collected COMPONENT "${d.name || "Unnamed"}" (ID: ${d.id ? d.id.substring(0, 8) + "..." : "no ID"}) for first pass`
+        `  Collected COMPONENT "${l.name || "Unnamed"}" (ID: ${l.id ? l.id.substring(0, 8) + "..." : "no ID"}) for first pass`
       );
-    for (const d of g)
-      if (d.id && i && !i.has(d.id)) {
-        const u = figma.createComponent();
-        if (d.name !== void 0 && (u.name = d.name || "Unnamed Node"), d.componentPropertyDefinitions) {
-          const v = d.componentPropertyDefinitions;
-          let C = 0, f = 0;
-          for (const [p, y] of Object.entries(v))
+    for (const l of v)
+      if (l.id && r && !r.has(l.id)) {
+        const g = figma.createComponent();
+        if (l.name !== void 0 && (g.name = l.name || "Unnamed Node"), l.componentPropertyDefinitions) {
+          const c = l.componentPropertyDefinitions;
+          let y = 0, f = 0;
+          for (const [N, E] of Object.entries(c))
             try {
-              const b = {
+              const $ = {
                 2: "TEXT",
                 // Text property
                 25: "BOOLEAN",
@@ -3030,120 +3621,202 @@ ${v.slice(0, 20).join(`
                 // Instance swap property
                 26: "VARIANT"
                 // Variant property
-              }[y.type];
-              if (!b) {
+              }[E.type];
+              if (!$) {
                 await a.warning(
-                  `  Unknown property type ${y.type} for property "${p}" in component "${d.name || "Unnamed"}"`
+                  `  Unknown property type ${E.type} for property "${N}" in component "${l.name || "Unnamed"}"`
                 ), f++;
                 continue;
               }
-              const P = y.defaultValue, E = p.split("#")[0];
-              u.addComponentProperty(
-                E,
-                b,
-                P
-              ), C++;
-            } catch (w) {
+              const k = E.defaultValue, P = N.split("#")[0];
+              g.addComponentProperty(
+                P,
+                $,
+                k
+              ), y++;
+            } catch (C) {
               await a.warning(
-                `  Failed to add component property "${p}" to "${d.name || "Unnamed"}" in first pass: ${w}`
+                `  Failed to add component property "${N}" to "${l.name || "Unnamed"}" in first pass: ${C}`
               ), f++;
             }
-          C > 0 && await a.log(
-            `  Added ${C} component property definition(s) to "${d.name || "Unnamed"}" in first pass${f > 0 ? ` (${f} failed)` : ""}`
+          y > 0 && await a.log(
+            `  Added ${y} component property definition(s) to "${l.name || "Unnamed"}" in first pass${f > 0 ? ` (${f} failed)` : ""}`
           );
         }
-        i.set(d.id, u), await a.log(
-          `  Created COMPONENT "${d.name || "Unnamed"}" (ID: ${d.id.substring(0, 8)}...) in first pass`
+        r.set(l.id, g), await a.log(
+          `  Created COMPONENT "${l.name || "Unnamed"}" (ID: ${l.id.substring(0, 8)}...) in first pass`
         );
       }
-    for (const d of e.children) {
-      if (d._truncated)
+    for (const l of e.children) {
+      if (l._truncated)
         continue;
-      const u = await Y(
-        d,
-        s,
-        n,
-        r,
-        o,
+      const g = await oe(
         l,
+        d,
+        n,
         i,
+        o,
+        s,
+        r,
+        p,
         m,
-        h,
-        null
+        null,
         // deferredInstances - not needed for remote structures
+        e,
+        // parentNodeData - pass the parent's nodeData so children can check for auto-layout
+        A
       );
-      if (u && u.parent !== s) {
-        if (u.parent && typeof u.parent.removeChild == "function")
+      if (g && g.parent !== d) {
+        if (g.parent && typeof g.parent.removeChild == "function")
           try {
-            u.parent.removeChild(u);
-          } catch (v) {
+            g.parent.removeChild(g);
+          } catch (c) {
             await a.warning(
-              `Failed to remove child "${u.name || "Unnamed"}" from parent "${u.parent.name || "Unnamed"}": ${v}`
+              `Failed to remove child "${g.name || "Unnamed"}" from parent "${g.parent.name || "Unnamed"}": ${c}`
             );
           }
-        s.appendChild(u);
+        d.appendChild(g);
       }
     }
   }
-  if (t && s.parent !== t) {
-    if (s.parent && typeof s.parent.removeChild == "function")
+  if (t && d.parent !== t) {
+    if (d.parent && typeof d.parent.removeChild == "function")
       try {
-        s.parent.removeChild(s);
-      } catch (c) {
+        d.parent.removeChild(d);
+      } catch (h) {
         await a.warning(
-          `Failed to remove node "${s.name || "Unnamed"}" from parent "${s.parent.name || "Unnamed"}": ${c}`
+          `Failed to remove node "${d.name || "Unnamed"}" from parent "${d.parent.name || "Unnamed"}": ${h}`
         );
       }
-    t.appendChild(s);
+    t.appendChild(d);
   }
-  return s;
+  return d;
 }
-async function Me(e) {
-  await figma.loadAllPagesAsync();
-  const t = figma.root.children, n = new Set(t.map((l) => l.name));
-  if (!n.has(e))
-    return e;
-  let r = 1, o = `${e}_${r}`;
-  for (; n.has(o); )
-    r++, o = `${e}_${r}`;
-  return o;
-}
-async function Lt(e) {
-  const t = await figma.variables.getLocalVariableCollectionsAsync(), n = new Set(t.map((l) => l.name));
-  if (!n.has(e))
-    return e;
-  let r = 1, o = `${e}_${r}`;
-  for (; n.has(o); )
-    r++, o = `${e}_${r}`;
-  return o;
-}
-async function zt(e, t) {
-  const n = /* @__PURE__ */ new Set();
-  for (const l of e.variableIds)
+async function Yt(e, t, n) {
+  let i = 0, o = 0, s = 0;
+  const r = (m) => {
+    const b = [];
+    if (m.type === "INSTANCE" && b.push(m), "children" in m && m.children)
+      for (const w of m.children)
+        b.push(...r(w));
+    return b;
+  }, p = r(e);
+  await a.log(
+    `  Found ${p.length} instance(s) to process for variant properties`
+  );
+  for (const m of p)
     try {
-      const i = await figma.variables.getVariableByIdAsync(l);
-      i && n.add(i.name);
-    } catch (i) {
+      const b = await m.getMainComponentAsync();
+      if (!b) {
+        o++;
+        continue;
+      }
+      const w = t.getSerializedTable();
+      let A = null, d;
+      if (n._instanceTableMap ? (d = n._instanceTableMap.get(
+        m.id
+      ), d !== void 0 ? (A = w[d], await a.log(
+        `  Found instance table index ${d} for instance "${m.name}" (ID: ${m.id.substring(0, 8)}...)`
+      )) : await a.log(
+        `  No instance table index mapping found for instance "${m.name}" (ID: ${m.id.substring(0, 8)}...), using fallback matching`
+      )) : await a.log(
+        `  No instance table map found, using fallback matching for instance "${m.name}"`
+      ), !A) {
+        for (const [u, O] of Object.entries(w))
+          if (O.instanceType === "internal" && O.componentNodeId && n.has(O.componentNodeId)) {
+            const S = n.get(O.componentNodeId);
+            if (S && S.id === b.id) {
+              A = O, await a.log(
+                `  Matched instance "${m.name}" to instance table entry ${u} by component (less precise)`
+              );
+              break;
+            }
+          }
+      }
+      if (!A) {
+        await a.log(
+          `  No matching entry found for instance "${m.name}" (main component: ${b.name}, ID: ${b.id.substring(0, 8)}...)`
+        ), o++;
+        continue;
+      }
+      if (!A.variantProperties) {
+        await a.log(
+          `  Instance table entry for "${m.name}" has no variant properties`
+        ), o++;
+        continue;
+      }
+      await a.log(
+        `  Instance "${m.name}" matched to entry with variant properties: ${JSON.stringify(A.variantProperties)}`
+      );
+      let I = null;
+      if (b.parent && b.parent.type === "COMPONENT_SET" && (I = b.parent.componentPropertyDefinitions), I) {
+        const u = {};
+        for (const [O, S] of Object.entries(
+          A.variantProperties
+        )) {
+          const M = O.split("#")[0];
+          I[M] && (u[M] = S);
+        }
+        Object.keys(u).length > 0 ? (m.setProperties(u), i++, await a.log(
+          `  ✓ Set variant properties on instance "${m.name}": ${JSON.stringify(u)}`
+        )) : o++;
+      } else
+        o++;
+    } catch (b) {
+      s++, await a.warning(
+        `  Failed to set variant properties on instance "${m.name}": ${b}`
+      );
+    }
+  await a.log(
+    `  Variant properties set: ${i} processed, ${o} skipped, ${s} errors`
+  );
+}
+async function je(e) {
+  await figma.loadAllPagesAsync();
+  const t = figma.root.children, n = new Set(t.map((s) => s.name));
+  if (!n.has(e))
+    return e;
+  let i = 1, o = `${e}_${i}`;
+  for (; n.has(o); )
+    i++, o = `${e}_${i}`;
+  return o;
+}
+async function Xt(e) {
+  const t = await figma.variables.getLocalVariableCollectionsAsync(), n = new Set(t.map((s) => s.name));
+  if (!n.has(e))
+    return e;
+  let i = 1, o = `${e}_${i}`;
+  for (; n.has(o); )
+    i++, o = `${e}_${i}`;
+  return o;
+}
+async function Zt(e, t) {
+  const n = /* @__PURE__ */ new Set();
+  for (const s of e.variableIds)
+    try {
+      const r = await figma.variables.getVariableByIdAsync(s);
+      r && n.add(r.name);
+    } catch (r) {
       continue;
     }
   if (!n.has(t))
     return t;
-  let r = 1, o = `${t}_${r}`;
+  let i = 1, o = `${t}_${i}`;
   for (; n.has(o); )
-    r++, o = `${t}_${r}`;
+    i++, o = `${t}_${i}`;
   return o;
 }
-function Vt(e, t) {
-  const n = e.resolvedType.toUpperCase(), r = t.toUpperCase();
-  return n === r;
+function Qe(e, t) {
+  const n = e.resolvedType.toUpperCase(), i = t.toUpperCase();
+  return n === i;
 }
-async function Gt(e) {
-  const t = await figma.variables.getLocalVariableCollectionsAsync(), n = K(e.collectionName);
-  if (W(e.collectionName)) {
-    for (const r of t)
-      if (K(r.name) === n)
+async function Qt(e) {
+  const t = await figma.variables.getLocalVariableCollectionsAsync(), n = te(e.collectionName);
+  if (ne(e.collectionName)) {
+    for (const i of t)
+      if (te(i.name) === n)
         return {
-          collection: r,
+          collection: i,
           matchType: "potential"
         };
     return {
@@ -3152,20 +3825,20 @@ async function Gt(e) {
     };
   }
   if (e.collectionGuid) {
-    for (const r of t)
-      if (r.getSharedPluginData(
+    for (const i of t)
+      if (i.getSharedPluginData(
         "recursica",
-        j
+        X
       ) === e.collectionGuid)
         return {
-          collection: r,
+          collection: i,
           matchType: "recognized"
         };
   }
-  for (const r of t)
-    if (r.name === e.collectionName)
+  for (const i of t)
+    if (i.name === e.collectionName)
       return {
-        collection: r,
+        collection: i,
         matchType: "potential"
       };
   return {
@@ -3173,7 +3846,7 @@ async function Gt(e) {
     matchType: "none"
   };
 }
-function Ft(e) {
+function en(e) {
   if (!e.metadata)
     return {
       success: !1,
@@ -3195,7 +3868,7 @@ function Ft(e) {
     }
   };
 }
-function je(e) {
+function et(e) {
   if (!e.stringTable)
     return {
       success: !1,
@@ -3203,21 +3876,21 @@ function je(e) {
     };
   let t;
   try {
-    t = de.fromTable(e.stringTable);
-  } catch (r) {
+    t = $e.fromTable(e.stringTable);
+  } catch (i) {
     return {
       success: !1,
-      error: `Failed to load string table: ${r instanceof Error ? r.message : "Unknown error"}`
+      error: `Failed to load string table: ${i instanceof Error ? i.message : "Unknown error"}`
     };
   }
-  const n = It(e, t);
+  const n = Ft(e, t);
   return {
     success: !0,
     stringTable: t,
     expandedJsonData: n
   };
 }
-function Ut(e) {
+function tn(e) {
   if (!e.collections)
     return {
       success: !1,
@@ -3226,7 +3899,7 @@ function Ut(e) {
   try {
     return {
       success: !0,
-      collectionTable: ce.fromTable(
+      collectionTable: we.fromTable(
         e.collections
       )
     };
@@ -3237,104 +3910,104 @@ function Ut(e) {
     };
   }
 }
-async function jt(e) {
-  const t = /* @__PURE__ */ new Map(), n = /* @__PURE__ */ new Map(), r = /* @__PURE__ */ new Map(), o = e.getTable();
-  for (const [l, i] of Object.entries(o)) {
-    if (i.isLocal === !1) {
+async function nn(e) {
+  const t = /* @__PURE__ */ new Map(), n = /* @__PURE__ */ new Map(), i = /* @__PURE__ */ new Map(), o = e.getTable();
+  for (const [s, r] of Object.entries(o)) {
+    if (r.isLocal === !1) {
       await a.log(
-        `Skipping remote collection: "${i.collectionName}" (index ${l})`
+        `Skipping remote collection: "${r.collectionName}" (index ${s})`
       );
       continue;
     }
-    const m = await Gt(i);
-    m.matchType === "recognized" ? (await a.log(
-      `✓ Recognized collection by GUID: "${i.collectionName}" (index ${l})`
-    ), t.set(l, m.collection)) : m.matchType === "potential" ? (await a.log(
-      `? Potential match by name: "${i.collectionName}" (index ${l})`
-    ), n.set(l, {
-      entry: i,
-      collection: m.collection
+    const p = await Qt(r);
+    p.matchType === "recognized" ? (await a.log(
+      `✓ Recognized collection by GUID: "${r.collectionName}" (index ${s})`
+    ), t.set(s, p.collection)) : p.matchType === "potential" ? (await a.log(
+      `? Potential match by name: "${r.collectionName}" (index ${s})`
+    ), n.set(s, {
+      entry: r,
+      collection: p.collection
     })) : (await a.log(
-      `✗ No match found for collection: "${i.collectionName}" (index ${l}) - will create new`
-    ), r.set(l, i));
+      `✗ No match found for collection: "${r.collectionName}" (index ${s}) - will create new`
+    ), i.set(s, r));
   }
   return await a.log(
-    `Collection matching complete: ${t.size} recognized, ${n.size} potential matches, ${r.size} to create`
+    `Collection matching complete: ${t.size} recognized, ${n.size} potential matches, ${i.size} to create`
   ), {
     recognizedCollections: t,
     potentialMatches: n,
-    collectionsToCreate: r
+    collectionsToCreate: i
   };
 }
-async function Bt(e, t, n) {
+async function an(e, t, n) {
   if (e.size !== 0) {
     await a.log(
       `Prompting user for ${e.size} potential match(es)...`
     );
-    for (const [r, { entry: o, collection: l }] of e.entries())
+    for (const [i, { entry: o, collection: s }] of e.entries())
       try {
-        const i = W(o.collectionName) ? K(o.collectionName) : l.name, m = `Found existing "${i}" variable collection. Should I use it?`;
+        const r = ne(o.collectionName) ? te(o.collectionName) : s.name, p = `Found existing "${r}" variable collection. Should I use it?`;
         await a.log(
-          `Prompting user about potential match: "${i}"`
-        ), await q.prompt(m, {
+          `Prompting user about potential match: "${r}"`
+        ), await re.prompt(p, {
           okLabel: "Yes",
           cancelLabel: "No",
           timeoutMs: -1
         }), await a.log(
-          `✓ User confirmed: Using existing collection "${i}" (index ${r})`
-        ), t.set(r, l), await Z(l, o.modes), await a.log(
-          `  ✓ Ensured modes for collection "${i}" (${o.modes.length} mode(s))`
+          `✓ User confirmed: Using existing collection "${r}" (index ${i})`
+        ), t.set(i, s), await de(s, o.modes), await a.log(
+          `  ✓ Ensured modes for collection "${r}" (${o.modes.length} mode(s))`
         );
-      } catch (i) {
+      } catch (r) {
         await a.log(
-          `✗ User rejected: Will create new collection for "${o.collectionName}" (index ${r})`
-        ), n.set(r, o);
+          `✗ User rejected: Will create new collection for "${o.collectionName}" (index ${i})`
+        ), n.set(i, o);
       }
   }
 }
-async function Jt(e, t, n) {
+async function rn(e, t, n) {
   if (e.size === 0)
     return;
   await a.log("Ensuring modes exist for recognized collections...");
-  const r = t.getTable();
-  for (const [o, l] of e.entries()) {
-    const i = r[o];
-    i && (n.has(o) || (await Z(l, i.modes), await a.log(
-      `  ✓ Ensured modes for collection "${l.name}" (${i.modes.length} mode(s))`
+  const i = t.getTable();
+  for (const [o, s] of e.entries()) {
+    const r = i[o];
+    r && (n.has(o) || (await de(s, r.modes), await a.log(
+      `  ✓ Ensured modes for collection "${s.name}" (${r.modes.length} mode(s))`
     )));
   }
 }
-async function Kt(e, t, n) {
+async function on(e, t, n) {
   if (e.size !== 0) {
     await a.log(
       `Creating ${e.size} new collection(s)...`
     );
-    for (const [r, o] of e.entries()) {
-      const l = K(o.collectionName), i = await Lt(l);
-      i !== l ? await a.log(
-        `Creating collection: "${i}" (normalized: "${l}" - name conflict resolved)`
-      ) : await a.log(`Creating collection: "${i}"`);
-      const m = figma.variables.createVariableCollection(i);
-      n.push(m);
-      let h;
-      if (W(o.collectionName)) {
-        const N = Ae(o.collectionName);
-        N && (h = N);
-      } else o.collectionGuid && (h = o.collectionGuid);
-      h && (m.setSharedPluginData(
+    for (const [i, o] of e.entries()) {
+      const s = te(o.collectionName), r = await Xt(s);
+      r !== s ? await a.log(
+        `Creating collection: "${r}" (normalized: "${s}" - name conflict resolved)`
+      ) : await a.log(`Creating collection: "${r}"`);
+      const p = figma.variables.createVariableCollection(r);
+      n.push(p);
+      let m;
+      if (ne(o.collectionName)) {
+        const b = ke(o.collectionName);
+        b && (m = b);
+      } else o.collectionGuid && (m = o.collectionGuid);
+      m && (p.setSharedPluginData(
         "recursica",
-        j,
-        h
+        X,
+        m
       ), await a.log(
-        `  Stored GUID: ${h.substring(0, 8)}...`
-      )), await Z(m, o.modes), await a.log(
-        `  ✓ Created collection "${i}" with ${o.modes.length} mode(s)`
-      ), t.set(r, m);
+        `  Stored GUID: ${m.substring(0, 8)}...`
+      )), await de(p, o.modes), await a.log(
+        `  ✓ Created collection "${r}" with ${o.modes.length} mode(s)`
+      ), t.set(i, p);
     }
     await a.log("Collection creation complete");
   }
 }
-function Wt(e) {
+function sn(e) {
   if (!e.variables)
     return {
       success: !1,
@@ -3343,7 +4016,7 @@ function Wt(e) {
   try {
     return {
       success: !0,
-      variableTable: le.fromTable(e.variables)
+      variableTable: Ne.fromTable(e.variables)
     };
   } catch (t) {
     return {
@@ -3352,90 +4025,90 @@ function Wt(e) {
     };
   }
 }
-async function Ht(e, t, n, r) {
-  const o = /* @__PURE__ */ new Map(), l = [], i = new Set(
-    r.map((N) => N.id)
+async function cn(e, t, n, i) {
+  const o = /* @__PURE__ */ new Map(), s = [], r = new Set(
+    i.map((b) => b.id)
   );
   await a.log("Matching and creating variables in collections...");
-  const m = e.getTable(), h = /* @__PURE__ */ new Map();
-  for (const [N, s] of Object.entries(m)) {
-    if (s._colRef === void 0)
+  const p = e.getTable(), m = /* @__PURE__ */ new Map();
+  for (const [b, w] of Object.entries(p)) {
+    if (w._colRef === void 0)
       continue;
-    const A = n.get(String(s._colRef));
+    const A = n.get(String(w._colRef));
     if (!A)
       continue;
-    h.has(A.id) || h.set(A.id, {
+    m.has(A.id) || m.set(A.id, {
       collectionName: A.name,
       existing: 0,
       created: 0
     });
-    const $ = h.get(A.id), c = i.has(
+    const d = m.get(A.id), I = r.has(
       A.id
     );
-    let g;
-    typeof s.variableType == "number" ? g = {
+    let u;
+    typeof w.variableType == "number" ? u = {
       1: "COLOR",
       2: "FLOAT",
       3: "STRING",
       4: "BOOLEAN"
-    }[s.variableType] || String(s.variableType) : g = s.variableType;
-    const d = await Fe(
+    }[w.variableType] || String(w.variableType) : u = w.variableType;
+    const O = await Le(
       A,
-      s.variableName
+      w.variableName
     );
-    if (d)
-      if (Vt(d, g))
-        o.set(N, d), $.existing++;
+    if (O)
+      if (Qe(O, u))
+        o.set(b, O), d.existing++;
       else {
         await a.warning(
-          `Type mismatch for variable "${s.variableName}" in collection "${A.name}": expected ${g}, found ${d.resolvedType}. Creating new variable with incremented name.`
+          `Type mismatch for variable "${w.variableName}" in collection "${A.name}": expected ${u}, found ${O.resolvedType}. Creating new variable with incremented name.`
         );
-        const u = await zt(
+        const S = await Zt(
           A,
-          s.variableName
-        ), v = await Ie(
-          V(I({}, s), {
-            variableName: u,
-            variableType: g
+          w.variableName
+        ), M = await xe(
+          q(L({}, w), {
+            variableName: S,
+            variableType: u
           }),
           A,
           e,
           t
         );
-        c || l.push(v), o.set(N, v), $.created++;
+        I || s.push(M), o.set(b, M), d.created++;
       }
     else {
-      const u = await Ie(
-        V(I({}, s), {
-          variableType: g
+      const S = await xe(
+        q(L({}, w), {
+          variableType: u
         }),
         A,
         e,
         t
       );
-      c || l.push(u), o.set(N, u), $.created++;
+      I || s.push(S), o.set(b, S), d.created++;
     }
   }
   await a.log("Variable processing complete:");
-  for (const N of h.values())
+  for (const b of m.values())
     await a.log(
-      `  "${N.collectionName}": ${N.existing} existing, ${N.created} created`
+      `  "${b.collectionName}": ${b.existing} existing, ${b.created} created`
     );
   return {
     recognizedVariables: o,
-    newlyCreatedVariables: l
+    newlyCreatedVariables: s
   };
 }
-function qt(e) {
+function ln(e) {
   if (!e.instances)
     return null;
   try {
-    return Q.fromTable(e.instances);
+    return pe.fromTable(e.instances);
   } catch (t) {
     return null;
   }
 }
-function Yt(e) {
+function dn(e) {
   return typeof e == "number" ? {
     1: "FRAME",
     2: "TEXT",
@@ -3453,118 +4126,121 @@ function Yt(e) {
     14: "COMPONENT_SET"
   }[e] || String(e) : e;
 }
-function Pe(e) {
+function Ge(e) {
   if (!e || typeof e != "object")
     return;
-  e.type !== void 0 && (e.type = Yt(e.type));
+  e.type !== void 0 && (e.type = dn(e.type));
   const t = e.children !== void 0 ? "children" : e.child !== void 0 ? "child" : null;
   if (t && (t === "child" && !e.children && (e.children = e.child, delete e.child), Array.isArray(e.children)))
     for (const n of e.children)
-      Pe(n);
+      Ge(n);
   e.fillG !== void 0 && e.fillGeometry === void 0 && (e.fillGeometry = e.fillG, delete e.fillG), e.strkG !== void 0 && e.strokeGeometry === void 0 && (e.strokeGeometry = e.strkG, delete e.strkG), e.child && !e.children && (e.children = e.child, delete e.child);
 }
-async function Xt(e, t) {
+async function pn(e, t) {
   const n = /* @__PURE__ */ new Set();
-  for (const l of e.children)
-    (l.type === "FRAME" || l.type === "COMPONENT") && n.add(l.name);
+  for (const s of e.children)
+    (s.type === "FRAME" || s.type === "COMPONENT") && n.add(s.name);
   if (!n.has(t))
     return t;
-  let r = 1, o = `${t}_${r}`;
+  let i = 1, o = `${t}_${i}`;
   for (; n.has(o); )
-    r++, o = `${t}_${r}`;
+    i++, o = `${t}_${i}`;
   return o;
 }
-async function Zt(e, t, n, r) {
-  var A;
-  const o = e.getSerializedTable(), l = Object.values(o).filter(
-    ($) => $.instanceType === "remote"
-  ), i = /* @__PURE__ */ new Map();
-  if (l.length === 0)
-    return await a.log("No remote instances found"), i;
+async function fn(e, t, n, i, o) {
+  var d;
+  const s = e.getSerializedTable(), r = Object.values(s).filter(
+    (I) => I.instanceType === "remote"
+  ), p = /* @__PURE__ */ new Map();
+  if (r.length === 0)
+    return await a.log("No remote instances found"), p;
   await a.log(
-    `Processing ${l.length} remote instance(s)...`
+    `Processing ${r.length} remote instance(s)...`
   ), await figma.loadAllPagesAsync();
-  let h = figma.root.children.find(($) => $.name === "REMOTES");
-  if (h ? await a.log("Found existing REMOTES page") : (h = figma.createPage(), h.name = "REMOTES", await a.log("Created REMOTES page")), !h.children.some(
-    ($) => $.type === "FRAME" && $.name === "Title"
+  let b = figma.root.children.find((I) => I.name === "REMOTES");
+  if (b ? await a.log("Found existing REMOTES page") : (b = figma.createPage(), b.name = "REMOTES", await a.log("Created REMOTES page")), !b.children.some(
+    (I) => I.type === "FRAME" && I.name === "Title"
   )) {
-    const $ = { family: "Inter", style: "Bold" }, c = { family: "Inter", style: "Regular" };
-    await figma.loadFontAsync($), await figma.loadFontAsync(c);
-    const g = figma.createFrame();
-    g.name = "Title", g.layoutMode = "VERTICAL", g.paddingTop = 20, g.paddingBottom = 20, g.paddingLeft = 20, g.paddingRight = 20, g.fills = [];
-    const d = figma.createText();
-    d.fontName = $, d.characters = "REMOTE INSTANCES", d.fontSize = 24, d.fills = [{ type: "SOLID", color: { r: 0, g: 0, b: 0 } }], g.appendChild(d);
-    const u = figma.createText();
-    u.fontName = c, u.characters = "These are remotely connected component instances found in our different component pages.", u.fontSize = 14, u.fills = [
+    const I = { family: "Inter", style: "Bold" }, u = { family: "Inter", style: "Regular" };
+    await figma.loadFontAsync(I), await figma.loadFontAsync(u);
+    const O = figma.createFrame();
+    O.name = "Title", O.layoutMode = "VERTICAL", O.paddingTop = 20, O.paddingBottom = 20, O.paddingLeft = 20, O.paddingRight = 20, O.fills = [];
+    const S = figma.createText();
+    S.fontName = I, S.characters = "REMOTE INSTANCES", S.fontSize = 24, S.fills = [{ type: "SOLID", color: { r: 0, g: 0, b: 0 } }], O.appendChild(S);
+    const M = figma.createText();
+    M.fontName = u, M.characters = "These are remotely connected component instances found in our different component pages.", M.fontSize = 14, M.fills = [
       { type: "SOLID", color: { r: 0.5, g: 0.5, b: 0.5 } }
-    ], g.appendChild(u), h.appendChild(g), await a.log("Created title and description on REMOTES page");
+    ], O.appendChild(M), b.appendChild(O), await a.log("Created title and description on REMOTES page");
   }
-  const s = /* @__PURE__ */ new Map();
-  for (const [$, c] of Object.entries(o)) {
-    if (c.instanceType !== "remote")
+  const A = /* @__PURE__ */ new Map();
+  for (const [I, u] of Object.entries(s)) {
+    if (u.instanceType !== "remote")
       continue;
-    const g = parseInt($, 10);
+    const O = parseInt(I, 10);
     if (await a.log(
-      `Processing remote instance ${g}: "${c.componentName}"`
-    ), !c.structure) {
+      `Processing remote instance ${O}: "${u.componentName}"`
+    ), !u.structure) {
       await a.warning(
-        `Remote instance "${c.componentName}" missing structure data, skipping`
+        `Remote instance "${u.componentName}" missing structure data, skipping`
       );
       continue;
     }
-    Pe(c.structure);
-    const d = c.structure.children !== void 0, u = c.structure.child !== void 0, v = c.structure.children ? c.structure.children.length : c.structure.child ? c.structure.child.length : 0;
+    Ge(u.structure);
+    const S = u.structure.children !== void 0, M = u.structure.child !== void 0, h = u.structure.children ? u.structure.children.length : u.structure.child ? u.structure.child.length : 0;
     await a.log(
-      `  Structure type: ${c.structure.type || "unknown"}, has children: ${v} (children key: ${d}, child key: ${u})`
+      `  Structure type: ${u.structure.type || "unknown"}, has children: ${h} (children key: ${S}, child key: ${M})`
     );
-    let C = c.componentName;
-    if (c.path && c.path.length > 0) {
-      const p = c.path.filter((y) => y !== "").join(" / ");
-      p && (C = `${p} / ${c.componentName}`);
+    let v = u.componentName;
+    if (u.path && u.path.length > 0) {
+      const g = u.path.filter((c) => c !== "").join(" / ");
+      g && (v = `${g} / ${u.componentName}`);
     }
-    const f = await Xt(
-      h,
-      C
+    const l = await pn(
+      b,
+      v
     );
-    f !== C && await a.log(
-      `Component name conflict: "${C}" -> "${f}"`
+    l !== v && await a.log(
+      `Component name conflict: "${v}" -> "${l}"`
     );
     try {
-      if (c.structure.type !== "COMPONENT") {
+      if (u.structure.type !== "COMPONENT") {
         await a.warning(
-          `Remote instance "${c.componentName}" structure is not a COMPONENT (type: ${c.structure.type}), creating frame fallback`
+          `Remote instance "${u.componentName}" structure is not a COMPONENT (type: ${u.structure.type}), creating frame fallback`
         );
-        const y = figma.createFrame();
-        y.name = f;
-        const w = await Y(
-          c.structure,
-          y,
+        const c = figma.createFrame();
+        c.name = l;
+        const y = await oe(
+          u.structure,
+          c,
           t,
           n,
           null,
-          r,
-          s,
+          i,
+          A,
           !0,
           // isRemoteStructure: true
           null,
           // remoteComponentMap - not needed here
-          null
+          null,
           // deferredInstances - not needed for remote instances
+          null,
+          // parentNodeData - not available for remote structures
+          o
         );
-        w ? (y.appendChild(w), h.appendChild(y), await a.log(
-          `✓ Created remote instance frame fallback: "${f}"`
-        )) : y.remove();
+        y ? (c.appendChild(y), b.appendChild(c), await a.log(
+          `✓ Created remote instance frame fallback: "${l}"`
+        )) : c.remove();
         continue;
       }
-      const p = figma.createComponent();
-      p.name = f, h.appendChild(p), await a.log(
-        `  Created component node: "${f}"`
+      const g = figma.createComponent();
+      g.name = l, b.appendChild(g), await a.log(
+        `  Created component node: "${l}"`
       );
       try {
-        if (c.structure.componentPropertyDefinitions) {
-          const w = c.structure.componentPropertyDefinitions;
-          let b = 0, P = 0;
-          for (const [E, S] of Object.entries(w))
+        if (u.structure.componentPropertyDefinitions) {
+          const y = u.structure.componentPropertyDefinitions;
+          let f = 0, N = 0;
+          for (const [E, C] of Object.entries(y))
             try {
               const k = {
                 2: "TEXT",
@@ -3575,231 +4251,243 @@ async function Zt(e, t, n, r) {
                 // Instance swap property
                 26: "VARIANT"
                 // Variant property
-              }[S.type];
+              }[C.type];
               if (!k) {
                 await a.warning(
-                  `  Unknown property type ${S.type} for property "${E}" in component "${c.componentName}"`
-                ), P++;
+                  `  Unknown property type ${C.type} for property "${E}" in component "${u.componentName}"`
+                ), N++;
                 continue;
               }
-              const G = S.defaultValue, x = E.split("#")[0];
-              p.addComponentProperty(
-                x,
+              const P = C.defaultValue, T = E.split("#")[0];
+              g.addComponentProperty(
+                T,
                 k,
-                G
-              ), b++;
-            } catch (O) {
+                P
+              ), f++;
+            } catch ($) {
               await a.warning(
-                `  Failed to add component property "${E}" to "${c.componentName}": ${O}`
-              ), P++;
+                `  Failed to add component property "${E}" to "${u.componentName}": ${$}`
+              ), N++;
             }
-          b > 0 && await a.log(
-            `  Added ${b} component property definition(s) to "${c.componentName}"${P > 0 ? ` (${P} failed)` : ""}`
+          f > 0 && await a.log(
+            `  Added ${f} component property definition(s) to "${u.componentName}"${N > 0 ? ` (${N} failed)` : ""}`
           );
         }
-        if (c.structure.name !== void 0 && (p.name = c.structure.name), c.structure.width !== void 0 && c.structure.height !== void 0 && p.resize(c.structure.width, c.structure.height), c.structure.x !== void 0 && (p.x = c.structure.x), c.structure.y !== void 0 && (p.y = c.structure.y), c.structure.visible !== void 0 && (p.visible = c.structure.visible), c.structure.opacity !== void 0 && (p.opacity = c.structure.opacity), c.structure.rotation !== void 0 && (p.rotation = c.structure.rotation), c.structure.blendMode !== void 0 && (p.blendMode = c.structure.blendMode), c.structure.fills !== void 0)
+        if (u.structure.name !== void 0 && (g.name = u.structure.name), u.structure.width !== void 0 && u.structure.height !== void 0 && g.resize(u.structure.width, u.structure.height), u.structure.x !== void 0 && (g.x = u.structure.x), u.structure.y !== void 0 && (g.y = u.structure.y), u.structure.visible !== void 0 && (g.visible = u.structure.visible), u.structure.opacity !== void 0 && (g.opacity = u.structure.opacity), u.structure.rotation !== void 0 && (g.rotation = u.structure.rotation), u.structure.blendMode !== void 0 && (g.blendMode = u.structure.blendMode), u.structure.fills !== void 0)
           try {
-            let w = c.structure.fills;
-            Array.isArray(w) && (w = w.map((b) => {
-              if (b && typeof b == "object") {
-                const P = I({}, b);
-                return delete P.boundVariables, P;
+            let y = u.structure.fills;
+            Array.isArray(y) && (y = y.map((f) => {
+              if (f && typeof f == "object") {
+                const N = L({}, f);
+                return delete N.boundVariables, N;
               }
-              return b;
-            })), p.fills = w, (A = c.structure.boundVariables) != null && A.fills && r && await Ue(
-              p,
-              c.structure.boundVariables,
+              return f;
+            })), g.fills = y, (d = u.structure.boundVariables) != null && d.fills && i && await qt(
+              g,
+              u.structure.boundVariables,
               "fills",
-              r
+              i
             );
-          } catch (w) {
+          } catch (y) {
             await a.warning(
-              `Error setting fills for remote component "${c.componentName}": ${w}`
+              `Error setting fills for remote component "${u.componentName}": ${y}`
             );
           }
-        if (c.structure.strokes !== void 0)
+        if (u.structure.strokes !== void 0)
           try {
-            p.strokes = c.structure.strokes;
-          } catch (w) {
+            g.strokes = u.structure.strokes;
+          } catch (y) {
             await a.warning(
-              `Error setting strokes for remote component "${c.componentName}": ${w}`
+              `Error setting strokes for remote component "${u.componentName}": ${y}`
             );
           }
-        c.structure.layoutMode !== void 0 && (p.layoutMode = c.structure.layoutMode), c.structure.primaryAxisSizingMode !== void 0 && (p.primaryAxisSizingMode = c.structure.primaryAxisSizingMode), c.structure.counterAxisSizingMode !== void 0 && (p.counterAxisSizingMode = c.structure.counterAxisSizingMode), c.structure.paddingLeft !== void 0 && (p.paddingLeft = c.structure.paddingLeft), c.structure.paddingRight !== void 0 && (p.paddingRight = c.structure.paddingRight), c.structure.paddingTop !== void 0 && (p.paddingTop = c.structure.paddingTop), c.structure.paddingBottom !== void 0 && (p.paddingBottom = c.structure.paddingBottom), c.structure.itemSpacing !== void 0 && (p.itemSpacing = c.structure.itemSpacing), c.structure.cornerRadius !== void 0 && (p.cornerRadius = c.structure.cornerRadius), await a.log(
-          `  DEBUG: Structure keys: ${Object.keys(c.structure).join(", ")}, has children: ${!!c.structure.children}, has child: ${!!c.structure.child}`
+        u.structure.layoutMode !== void 0 && (g.layoutMode = u.structure.layoutMode), u.structure.primaryAxisSizingMode !== void 0 && (g.primaryAxisSizingMode = u.structure.primaryAxisSizingMode), u.structure.counterAxisSizingMode !== void 0 && (g.counterAxisSizingMode = u.structure.counterAxisSizingMode), u.structure.paddingLeft !== void 0 && (g.paddingLeft = u.structure.paddingLeft), u.structure.paddingRight !== void 0 && (g.paddingRight = u.structure.paddingRight), u.structure.paddingTop !== void 0 && (g.paddingTop = u.structure.paddingTop), u.structure.paddingBottom !== void 0 && (g.paddingBottom = u.structure.paddingBottom), u.structure.itemSpacing !== void 0 && (g.itemSpacing = u.structure.itemSpacing), u.structure.cornerRadius !== void 0 && (g.cornerRadius = u.structure.cornerRadius), await a.log(
+          `  DEBUG: Structure keys: ${Object.keys(u.structure).join(", ")}, has children: ${!!u.structure.children}, has child: ${!!u.structure.child}`
         );
-        const y = c.structure.children || (c.structure.child ? c.structure.child : null);
+        const c = u.structure.children || (u.structure.child ? u.structure.child : null);
         if (await a.log(
-          `  DEBUG: childrenArray exists: ${!!y}, isArray: ${Array.isArray(y)}, length: ${y ? y.length : 0}`
-        ), y && Array.isArray(y) && y.length > 0) {
+          `  DEBUG: childrenArray exists: ${!!c}, isArray: ${Array.isArray(c)}, length: ${c ? c.length : 0}`
+        ), c && Array.isArray(c) && c.length > 0) {
           await a.log(
-            `  Recreating ${y.length} child(ren) for component "${c.componentName}"`
+            `  Recreating ${c.length} child(ren) for component "${u.componentName}"`
           );
-          for (let w = 0; w < y.length; w++) {
-            const b = y[w];
+          for (let y = 0; y < c.length; y++) {
+            const f = c[y];
             if (await a.log(
-              `  DEBUG: Processing child ${w + 1}/${y.length}: ${JSON.stringify({ name: b == null ? void 0 : b.name, type: b == null ? void 0 : b.type, hasTruncated: !!(b != null && b._truncated) })}`
-            ), b._truncated) {
+              `  DEBUG: Processing child ${y + 1}/${c.length}: ${JSON.stringify({ name: f == null ? void 0 : f.name, type: f == null ? void 0 : f.type, hasTruncated: !!(f != null && f._truncated) })}`
+            ), f._truncated) {
               await a.log(
-                `  Skipping truncated child: ${b._reason || "Unknown"}`
+                `  Skipping truncated child: ${f._reason || "Unknown"}`
               );
               continue;
             }
             await a.log(
-              `  Recreating child: "${b.name || "Unnamed"}" (type: ${b.type})`
+              `  Recreating child: "${f.name || "Unnamed"}" (type: ${f.type})`
             );
-            const P = await Y(
-              b,
-              p,
+            const N = await oe(
+              f,
+              g,
               t,
               n,
               null,
-              r,
-              s,
+              i,
+              A,
               !0,
               // isRemoteStructure: true
               null,
               // remoteComponentMap - not needed here
-              null
+              null,
               // deferredInstances - not needed for remote instances
+              u.structure,
+              // parentNodeData - pass the component's structure so children can check for auto-layout
+              o
             );
-            P ? (p.appendChild(P), await a.log(
-              `  ✓ Appended child "${b.name || "Unnamed"}" to component "${c.componentName}"`
+            N ? (g.appendChild(N), await a.log(
+              `  ✓ Appended child "${f.name || "Unnamed"}" to component "${u.componentName}"`
             )) : await a.warning(
-              `  ✗ Failed to create child "${b.name || "Unnamed"}" (type: ${b.type})`
+              `  ✗ Failed to create child "${f.name || "Unnamed"}" (type: ${f.type})`
             );
           }
         }
-        i.set(g, p), await a.log(
-          `✓ Created remote component: "${f}" (index ${g})`
+        p.set(O, g), await a.log(
+          `✓ Created remote component: "${l}" (index ${O})`
         );
-      } catch (y) {
+      } catch (c) {
         await a.warning(
-          `Error populating remote component "${c.componentName}": ${y instanceof Error ? y.message : "Unknown error"}`
-        ), p.remove();
+          `Error populating remote component "${u.componentName}": ${c instanceof Error ? c.message : "Unknown error"}`
+        ), g.remove();
       }
-    } catch (p) {
+    } catch (g) {
       await a.warning(
-        `Error recreating remote instance "${c.componentName}": ${p instanceof Error ? p.message : "Unknown error"}`
+        `Error recreating remote instance "${u.componentName}": ${g instanceof Error ? g.message : "Unknown error"}`
       );
     }
   }
   return await a.log(
-    `Remote instance processing complete: ${i.size} component(s) created`
-  ), i;
+    `Remote instance processing complete: ${p.size} component(s) created`
+  ), p;
 }
-async function Qt(e, t, n, r, o, l, i = null, m = null, h = !1) {
+async function mn(e, t, n, i, o, s, r = null, p = null, m = !1, b = null) {
   await a.log("Creating page from JSON..."), await figma.loadAllPagesAsync();
-  const N = figma.root.children, s = "RecursicaPublishedMetadata";
-  let A = null;
-  for (const y of N) {
-    const w = y.getPluginData(s);
-    if (w)
+  const w = figma.root.children, A = "RecursicaPublishedMetadata";
+  let d = null;
+  for (const c of w) {
+    const y = c.getPluginData(A);
+    if (y)
       try {
-        if (JSON.parse(w).id === e.guid) {
-          A = y;
+        if (JSON.parse(y).id === e.guid) {
+          d = c;
           break;
         }
-      } catch (b) {
+      } catch (f) {
         continue;
       }
   }
-  let $ = !1;
-  if (A && !h) {
-    let y;
+  let I = !1;
+  if (d && !m) {
+    let c;
     try {
-      const P = A.getPluginData(s);
-      P && (y = JSON.parse(P).version);
-    } catch (P) {
+      const N = d.getPluginData(A);
+      N && (c = JSON.parse(N).version);
+    } catch (N) {
     }
-    const w = y !== void 0 ? ` v${y}` : "", b = `Found existing component "${A.name}${w}". Should I use it or create a copy?`;
+    const y = c !== void 0 ? ` v${c}` : "", f = `Found existing component "${d.name}${y}". Should I use it or create a copy?`;
     await a.log(
-      `Found existing page with same GUID: "${A.name}". Prompting user...`
+      `Found existing page with same GUID: "${d.name}". Prompting user...`
     );
     try {
-      await q.prompt(b, {
+      await re.prompt(f, {
         okLabel: "Use",
         cancelLabel: "Copy",
         timeoutMs: 3e5
         // 5 minutes
-      }), $ = !0, await a.log(
-        `User chose to use existing page: "${A.name}"`
+      }), I = !0, await a.log(
+        `User chose to use existing page: "${d.name}"`
       );
-    } catch (P) {
+    } catch (N) {
       await a.log(
         "User chose to create a copy. Will create new page."
       );
     }
   }
-  if ($ && A)
-    return await figma.setCurrentPageAsync(A), await a.log(
-      `Using existing page: "${A.name}" (GUID: ${e.guid.substring(0, 8)}...)`
+  if (I && d)
+    return await figma.setCurrentPageAsync(d), await a.log(
+      `Using existing page: "${d.name}" (GUID: ${e.guid.substring(0, 8)}...)`
     ), await a.log(
-      `  Instances from other pages will resolve to components on this existing page using componentPageName: "${A.name}"`
+      `  Instances from other pages will resolve to components on this existing page using componentPageName: "${d.name}"`
     ), {
       success: !0,
-      page: A,
+      page: d,
       // Include pageId so it can be tracked in importedPages
-      pageId: A.id
+      pageId: d.id
     };
-  const c = N.find((y) => y.name === e.name);
-  c && await a.log(
+  const u = w.find((c) => c.name === e.name);
+  u && await a.log(
     `Found existing page with same name: "${e.name}". Will create new page with unique name.`
   );
-  let g;
-  if (A || c) {
-    const y = `__${e.name}`;
-    g = await Me(y), await a.log(
-      `Creating scratch page: "${g}" (will be renamed to "${e.name}" on success)`
+  let O;
+  if (d || u) {
+    const c = `__${e.name}`;
+    O = await je(c), await a.log(
+      `Creating scratch page: "${O}" (will be renamed to "${e.name}" on success)`
     );
   } else
-    g = e.name, await a.log(`Creating page: "${g}"`);
-  const d = figma.createPage();
-  if (d.name = g, await figma.setCurrentPageAsync(d), await a.log(`Switched to page: "${g}"`), !t.pageData)
+    O = e.name, await a.log(`Creating page: "${O}"`);
+  const S = figma.createPage();
+  if (S.name = O, await figma.setCurrentPageAsync(S), await a.log(`Switched to page: "${O}"`), !t.pageData)
     return {
       success: !1,
       error: "No page data found in JSON"
     };
   await a.log("Recreating page structure...");
-  const u = t.pageData;
-  if (u.backgrounds !== void 0)
+  const M = t.pageData;
+  if (M.backgrounds !== void 0)
     try {
-      d.backgrounds = u.backgrounds, await a.log(
-        `Set page background: ${JSON.stringify(u.backgrounds)}`
+      S.backgrounds = M.backgrounds, await a.log(
+        `Set page background: ${JSON.stringify(M.backgrounds)}`
       );
-    } catch (y) {
-      await a.warning(`Failed to set page background: ${y}`);
+    } catch (c) {
+      await a.warning(`Failed to set page background: ${c}`);
     }
-  Pe(u);
-  const v = /* @__PURE__ */ new Map(), C = (y, w = []) => {
-    if (y.type === "COMPONENT" && y.id && w.push(y.id), y.children && Array.isArray(y.children))
-      for (const b of y.children)
-        b._truncated || C(b, w);
-    return w;
-  }, f = C(u);
+  Ge(M);
+  const h = /* @__PURE__ */ new Map(), v = (c, y = []) => {
+    if (c.type === "COMPONENT" && c.id && y.push(c.id), c.children && Array.isArray(c.children))
+      for (const f of c.children)
+        f._truncated || v(f, y);
+    return y;
+  }, l = v(M);
   if (await a.log(
-    `Found ${f.length} COMPONENT node(s) in page data`
-  ), f.length > 0 && (await a.log(
-    `Component IDs in page data (first 20): ${f.slice(0, 20).map((y) => y.substring(0, 8) + "...").join(", ")}`
-  ), u._allComponentIds = f), u.children && Array.isArray(u.children))
-    for (const y of u.children) {
-      const w = await Y(
-        y,
-        d,
+    `Found ${l.length} COMPONENT node(s) in page data`
+  ), l.length > 0 && (await a.log(
+    `Component IDs in page data (first 20): ${l.slice(0, 20).map((c) => c.substring(0, 8) + "...").join(", ")}`
+  ), M._allComponentIds = l), M.children && Array.isArray(M.children))
+    for (const c of M.children) {
+      const y = await oe(
+        c,
+        S,
         n,
-        r,
+        i,
         o,
-        l,
-        v,
+        s,
+        h,
         !1,
         // isRemoteStructure: false - we're creating the main page
-        i,
-        m
+        r,
+        p,
+        M,
+        // parentNodeData - pass the page's nodeData so children can check for auto-layout
+        b
       );
-      w && d.appendChild(w);
+      y && S.appendChild(y);
     }
-  await a.log("Page structure recreated successfully");
-  const p = {
+  await a.log("Page structure recreated successfully"), o && (await a.log(
+    "Third pass: Setting variant properties on instances..."
+  ), await Yt(
+    S,
+    o,
+    h
+  ));
+  const g = {
     _ver: 1,
     id: e.guid,
     name: e.name,
@@ -3807,19 +4495,19 @@ async function Qt(e, t, n, r, o, l, i = null, m = null, h = !1) {
     publishDate: (/* @__PURE__ */ new Date()).toISOString(),
     history: {}
   };
-  if (d.setPluginData(s, JSON.stringify(p)), await a.log(
+  if (S.setPluginData(A, JSON.stringify(g)), await a.log(
     `Stored page metadata (GUID: ${e.guid.substring(0, 8)}...)`
-  ), g.startsWith("__")) {
-    const y = await Me(e.name);
-    d.name = y, await a.log(`Renamed page from "${g}" to "${y}"`);
+  ), O.startsWith("__")) {
+    const c = await je(e.name);
+    S.name = c, await a.log(`Renamed page from "${O}" to "${c}"`);
   }
   return {
     success: !0,
-    page: d
+    page: S
   };
 }
-async function Be(e) {
-  var r;
+async function tt(e) {
+  var i;
   e.clearConsole !== !1 && await a.clear(), await a.log("=== Starting Page Import ===");
   const n = [];
   try {
@@ -3833,350 +4521,375 @@ async function Be(e) {
         data: {}
       };
     await a.log("Validating metadata...");
-    const l = Ft(o);
-    if (!l.success)
-      return await a.error(l.error), {
+    const s = en(o);
+    if (!s.success)
+      return await a.error(s.error), {
         type: "importPage",
         success: !1,
         error: !0,
-        message: l.error,
+        message: s.error,
         data: {}
       };
-    const i = l.metadata;
+    const r = s.metadata;
     await a.log(
-      `Metadata validated: guid=${i.guid}, name=${i.name}`
+      `Metadata validated: guid=${r.guid}, name=${r.name}`
     ), await a.log("Loading string table...");
-    const m = je(o);
-    if (!m.success)
-      return await a.error(m.error), {
+    const p = et(o);
+    if (!p.success)
+      return await a.error(p.error), {
         type: "importPage",
         success: !1,
         error: !0,
-        message: m.error,
+        message: p.error,
         data: {}
       };
     await a.log("String table loaded successfully"), await a.log("Expanding JSON data...");
-    const h = m.expandedJsonData;
+    const m = p.expandedJsonData;
     await a.log("JSON expanded successfully"), await a.log("Loading collections table...");
-    const N = Ut(h);
-    if (!N.success)
-      return N.error === "No collections table found in JSON" ? (await a.log(N.error), await a.log("=== Import Complete ==="), {
+    const b = tn(m);
+    if (!b.success)
+      return b.error === "No collections table found in JSON" ? (await a.log(b.error), await a.log("=== Import Complete ==="), {
         type: "importPage",
         success: !0,
         error: !1,
         message: "Import complete (no collections to process)",
-        data: { pageName: i.name }
-      }) : (await a.error(N.error), {
+        data: { pageName: r.name }
+      }) : (await a.error(b.error), {
         type: "importPage",
         success: !1,
         error: !0,
-        message: N.error,
+        message: b.error,
         data: {}
       });
-    const s = N.collectionTable;
+    const w = b.collectionTable;
     await a.log(
-      `Loaded collections table with ${s.getSize()} collection(s)`
+      `Loaded collections table with ${w.getSize()} collection(s)`
     ), await a.log(
       "Matching collections with existing local collections..."
     );
-    const { recognizedCollections: A, potentialMatches: $, collectionsToCreate: c } = await jt(s);
-    await Bt(
-      $,
+    const { recognizedCollections: A, potentialMatches: d, collectionsToCreate: I } = await nn(w);
+    await an(
+      d,
       A,
-      c
-    ), await Jt(
+      I
+    ), await rn(
       A,
-      s,
-      $
-    ), await Kt(
-      c,
+      w,
+      d
+    ), await on(
+      I,
       A,
       n
     ), await a.log("Loading variables table...");
-    const g = Wt(h);
-    if (!g.success)
-      return g.error === "No variables table found in JSON" ? (await a.log(g.error), await a.log("=== Import Complete ==="), {
+    const u = sn(m);
+    if (!u.success)
+      return u.error === "No variables table found in JSON" ? (await a.log(u.error), await a.log("=== Import Complete ==="), {
         type: "importPage",
         success: !0,
         error: !1,
         message: "Import complete (no variables to process)",
-        data: { pageName: i.name }
-      }) : (await a.error(g.error), {
+        data: { pageName: r.name }
+      }) : (await a.error(u.error), {
         type: "importPage",
         success: !1,
         error: !0,
-        message: g.error,
+        message: u.error,
         data: {}
       });
-    const d = g.variableTable;
+    const O = u.variableTable;
     await a.log(
-      `Loaded variables table with ${d.getSize()} variable(s)`
+      `Loaded variables table with ${O.getSize()} variable(s)`
     );
-    const { recognizedVariables: u, newlyCreatedVariables: v } = await Ht(
-      d,
-      s,
+    const { recognizedVariables: S, newlyCreatedVariables: M } = await cn(
+      O,
+      w,
       A,
       n
     );
     await a.log("Loading instance table...");
-    const C = qt(h);
-    if (C) {
-      const O = C.getSerializedTable(), k = Object.values(O).filter(
-        (x) => x.instanceType === "internal"
-      ), G = Object.values(O).filter(
-        (x) => x.instanceType === "remote"
+    const h = ln(m);
+    if (h) {
+      const C = h.getSerializedTable(), $ = Object.values(C).filter(
+        (P) => P.instanceType === "internal"
+      ), k = Object.values(C).filter(
+        (P) => P.instanceType === "remote"
       );
       await a.log(
-        `Loaded instance table with ${C.getSize()} instance(s) (${k.length} internal, ${G.length} remote)`
+        `Loaded instance table with ${h.getSize()} instance(s) (${$.length} internal, ${k.length} remote)`
       );
     } else
       await a.log("No instance table found in JSON");
-    let f = null;
-    C && (f = await Zt(
-      C,
-      d,
-      s,
-      u
-    ));
-    const p = [], y = (r = e.isMainPage) != null ? r : !0, w = await Qt(
-      i,
+    let v = null;
+    h && (v = await fn(
       h,
-      d,
-      s,
-      C,
-      u,
-      f,
-      p,
-      y
+      O,
+      w,
+      S,
+      A
+    ));
+    const l = [], g = (i = e.isMainPage) != null ? i : !0, c = await mn(
+      r,
+      m,
+      O,
+      w,
+      h,
+      S,
+      v,
+      l,
+      g,
+      A
     );
-    if (!w.success)
-      return await a.error(w.error), {
+    if (!c.success)
+      return await a.error(c.error), {
         type: "importPage",
         success: !1,
         error: !0,
-        message: w.error,
+        message: c.error,
         data: {}
       };
-    const b = w.page, P = u.size + v.length, E = p.length;
+    const y = c.page, f = S.size + M.length, N = l.length;
     await a.log("=== Import Complete ==="), await a.log(
-      `Successfully processed ${A.size} collection(s), ${P} variable(s), and created page "${b.name}"${E > 0 ? ` (${E} deferred normal instance(s) - will need to be resolved after all pages are imported)` : ""}`
+      `Successfully processed ${A.size} collection(s), ${f} variable(s), and created page "${y.name}"${N > 0 ? ` (${N} deferred normal instance(s) - will need to be resolved after all pages are imported)` : ""}`
     );
-    const S = w.pageId || b.id;
+    const E = c.pageId || y.id;
     return {
       type: "importPage",
       success: !0,
       error: !1,
       message: "Import completed successfully",
       data: {
-        pageName: b.name,
-        pageId: S,
+        pageName: y.name,
+        pageId: E,
         // Include pageId for tracking (used for both new and reused pages)
-        deferredInstances: E > 0 ? p : void 0,
+        deferredInstances: N > 0 ? l : void 0,
         createdEntities: {
-          pageIds: [b.id],
-          collectionIds: n.map((O) => O.id),
-          variableIds: v.map((O) => O.id)
+          pageIds: [y.id],
+          collectionIds: n.map((C) => C.id),
+          variableIds: M.map((C) => C.id)
         }
       }
     };
   } catch (o) {
-    const l = o instanceof Error ? o.message : "Unknown error occurred";
-    return await a.error(`Import failed: ${l}`), o instanceof Error && o.stack && await a.error(`Stack trace: ${o.stack}`), console.error("Error importing page:", o), {
+    const s = o instanceof Error ? o.message : "Unknown error occurred";
+    return await a.error(`Import failed: ${s}`), o instanceof Error && o.stack && await a.error(`Stack trace: ${o.stack}`), console.error("Error importing page:", o), {
       type: "importPage",
       success: !1,
       error: !0,
-      message: l,
+      message: s,
       data: {}
     };
   }
 }
-async function Je(e) {
+async function nt(e) {
   if (e.length === 0)
     return { resolved: 0, failed: 0, errors: [] };
   await a.log(
     `=== Resolving ${e.length} deferred normal instance(s) ===`
   );
   let t = 0, n = 0;
-  const r = [];
+  const i = [];
   await figma.loadAllPagesAsync();
   for (const o of e)
     try {
-      const { placeholderFrame: l, instanceEntry: i, nodeData: m, parentNode: h } = o, N = figma.root.children.find(
-        (g) => g.name === i.componentPageName
+      const { placeholderFrame: s, instanceEntry: r, nodeData: p, parentNode: m } = o, b = figma.root.children.find(
+        (u) => u.name === r.componentPageName
       );
-      if (!N) {
-        const g = `Deferred instance "${m.name}" still cannot find referenced page "${i.componentPageName}"`;
-        await a.error(g), r.push(g), n++;
+      if (!b) {
+        const u = `Deferred instance "${p.name}" still cannot find referenced page "${r.componentPageName}"`;
+        await a.error(u), i.push(u), n++;
         continue;
       }
-      const s = (g, d, u, v) => {
-        if (d.length === 0) {
-          let p = null;
-          for (const y of g.children || [])
-            if (y.type === "COMPONENT") {
-              if (y.name === u)
-                if (p || (p = y), v)
+      const w = (u, O, S, M, h) => {
+        if (O.length === 0) {
+          let g = null;
+          for (const c of u.children || [])
+            if (c.type === "COMPONENT") {
+              if (c.name === S)
+                if (g || (g = c), M)
                   try {
-                    const w = y.getPluginData(
+                    const y = c.getPluginData(
                       "RecursicaPublishedMetadata"
                     );
-                    if (w && JSON.parse(w).id === v)
-                      return y;
-                  } catch (w) {
+                    if (y && JSON.parse(y).id === M)
+                      return c;
+                  } catch (y) {
                   }
                 else
-                  return y;
-            } else if (y.type === "COMPONENT_SET") {
-              for (const w of y.children || [])
-                if (w.type === "COMPONENT" && w.name === u)
-                  if (p || (p = w), v)
+                  return c;
+            } else if (c.type === "COMPONENT_SET") {
+              if (h && c.name !== h)
+                continue;
+              for (const y of c.children || [])
+                if (y.type === "COMPONENT" && y.name === S)
+                  if (g || (g = y), M)
                     try {
-                      const b = w.getPluginData(
+                      const f = y.getPluginData(
                         "RecursicaPublishedMetadata"
                       );
-                      if (b && JSON.parse(b).id === v)
-                        return w;
-                    } catch (b) {
+                      if (f && JSON.parse(f).id === M)
+                        return y;
+                    } catch (f) {
                     }
                   else
-                    return w;
+                    return y;
             }
-          return p;
+          return g;
         }
-        const [C, ...f] = d;
-        for (const p of g.children || [])
-          if (p.name === C)
-            return s(
-              p,
-              f,
-              u,
-              v
+        const [v, ...l] = O;
+        for (const g of u.children || [])
+          if (g.name === v) {
+            if (l.length === 0 && g.type === "COMPONENT_SET") {
+              if (h && g.name !== h)
+                continue;
+              for (const c of g.children || [])
+                if (c.type === "COMPONENT" && c.name === S) {
+                  if (M)
+                    try {
+                      const y = c.getPluginData(
+                        "RecursicaPublishedMetadata"
+                      );
+                      if (y && JSON.parse(y).id === M)
+                        return c;
+                    } catch (y) {
+                    }
+                  return c;
+                }
+              return null;
+            }
+            return w(
+              g,
+              l,
+              S,
+              M,
+              h
             );
+          }
         return null;
-      }, A = s(
-        N,
-        i.path || [],
-        i.componentName,
-        i.componentGuid
+      }, A = w(
+        b,
+        r.path || [],
+        r.componentName,
+        r.componentGuid,
+        r.componentSetName
       );
       if (!A) {
-        const g = i.path && i.path.length > 0 ? ` at path [${i.path.join(" → ")}]` : " at page root", d = `Deferred instance "${m.name}" still cannot find component "${i.componentName}" on page "${i.componentPageName}"${g}`;
-        await a.error(d), r.push(d), n++;
+        const u = r.path && r.path.length > 0 ? ` at path [${r.path.join(" → ")}]` : " at page root", O = `Deferred instance "${p.name}" still cannot find component "${r.componentName}" on page "${r.componentPageName}"${u}`;
+        await a.error(O), i.push(O), n++;
         continue;
       }
-      const $ = A.createInstance();
-      if ($.name = m.name || l.name.replace("[Deferred: ", "").replace("]", ""), $.x = l.x, $.y = l.y, l.width !== void 0 && l.height !== void 0 && $.resize(l.width, l.height), i.variantProperties && Object.keys(i.variantProperties).length > 0)
+      const d = A.createInstance();
+      if (d.name = p.name || s.name.replace("[Deferred: ", "").replace("]", ""), d.x = s.x, d.y = s.y, s.width !== void 0 && s.height !== void 0 && d.resize(s.width, s.height), r.variantProperties && Object.keys(r.variantProperties).length > 0)
         try {
-          const g = await $.getMainComponentAsync();
-          if (g) {
-            let d = null;
-            const u = g.type;
-            if (u === "COMPONENT_SET" ? d = g.componentPropertyDefinitions : u === "COMPONENT" && g.parent && g.parent.type === "COMPONENT_SET" ? d = g.parent.componentPropertyDefinitions : await a.warning(
-              `Cannot set variant properties for resolved instance "${m.name}" - main component is not a COMPONENT_SET or variant`
-            ), d) {
-              const v = {};
-              for (const [C, f] of Object.entries(
-                i.variantProperties
+          const u = await d.getMainComponentAsync();
+          if (u) {
+            let O = null;
+            const S = u.type;
+            if (S === "COMPONENT_SET" ? O = u.componentPropertyDefinitions : S === "COMPONENT" && u.parent && u.parent.type === "COMPONENT_SET" ? O = u.parent.componentPropertyDefinitions : await a.warning(
+              `Cannot set variant properties for resolved instance "${p.name}" - main component is not a COMPONENT_SET or variant`
+            ), O) {
+              const M = {};
+              for (const [h, v] of Object.entries(
+                r.variantProperties
               )) {
-                const p = C.split("#")[0];
-                d[p] && (v[p] = f);
+                const l = h.split("#")[0];
+                O[l] && (M[l] = v);
               }
-              Object.keys(v).length > 0 && $.setProperties(v);
+              Object.keys(M).length > 0 && d.setProperties(M);
             }
           }
-        } catch (g) {
+        } catch (u) {
           await a.warning(
-            `Failed to set variant properties for resolved instance "${m.name}": ${g}`
+            `Failed to set variant properties for resolved instance "${p.name}": ${u}`
           );
         }
-      if (i.componentProperties && Object.keys(i.componentProperties).length > 0)
+      if (r.componentProperties && Object.keys(r.componentProperties).length > 0)
         try {
-          const g = await $.getMainComponentAsync();
-          if (g) {
-            let d = null;
-            const u = g.type;
-            if (u === "COMPONENT_SET" ? d = g.componentPropertyDefinitions : u === "COMPONENT" && g.parent && g.parent.type === "COMPONENT_SET" ? d = g.parent.componentPropertyDefinitions : u === "COMPONENT" && (d = g.componentPropertyDefinitions), d)
-              for (const [v, C] of Object.entries(
-                i.componentProperties
+          const u = await d.getMainComponentAsync();
+          if (u) {
+            let O = null;
+            const S = u.type;
+            if (S === "COMPONENT_SET" ? O = u.componentPropertyDefinitions : S === "COMPONENT" && u.parent && u.parent.type === "COMPONENT_SET" ? O = u.parent.componentPropertyDefinitions : S === "COMPONENT" && (O = u.componentPropertyDefinitions), O)
+              for (const [M, h] of Object.entries(
+                r.componentProperties
               )) {
-                const f = v.split("#")[0];
-                if (d[f])
+                const v = M.split("#")[0];
+                if (O[v])
                   try {
-                    $.setProperties({
-                      [f]: C
+                    d.setProperties({
+                      [v]: h
                     });
-                  } catch (p) {
+                  } catch (l) {
                     await a.warning(
-                      `Failed to set component property "${f}" for resolved instance "${m.name}": ${p}`
+                      `Failed to set component property "${v}" for resolved instance "${p.name}": ${l}`
                     );
                   }
               }
           }
-        } catch (g) {
+        } catch (u) {
           await a.warning(
-            `Failed to set component properties for resolved instance "${m.name}": ${g}`
+            `Failed to set component properties for resolved instance "${p.name}": ${u}`
           );
         }
-      const c = h.children.indexOf(l);
-      h.insertChild(c, $), l.remove(), await a.log(
-        `  ✓ Resolved deferred instance "${m.name}" from component "${i.componentName}" on page "${i.componentPageName}"`
+      const I = m.children.indexOf(s);
+      m.insertChild(I, d), s.remove(), await a.log(
+        `  ✓ Resolved deferred instance "${p.name}" from component "${r.componentName}" on page "${r.componentPageName}"`
       ), t++;
-    } catch (l) {
-      const i = l instanceof Error ? l.message : String(l), m = `Failed to resolve deferred instance "${o.nodeData.name}": ${i}`;
-      await a.error(m), r.push(m), n++;
+    } catch (s) {
+      const r = s instanceof Error ? s.message : String(s), p = `Failed to resolve deferred instance "${o.nodeData.name}": ${r}`;
+      await a.error(p), i.push(p), n++;
     }
   return await a.log(
     `=== Deferred Resolution Complete: ${t} resolved, ${n} failed ===`
-  ), { resolved: t, failed: n, errors: r };
+  ), { resolved: t, failed: n, errors: i };
 }
-async function Dt(e) {
+async function un(e) {
   await a.log("=== Cleaning up created entities ===");
   try {
-    const { pageIds: t, collectionIds: n, variableIds: r } = e;
+    const { pageIds: t, collectionIds: n, variableIds: i } = e;
     let o = 0;
-    for (const m of r)
+    for (const p of i)
       try {
-        const h = figma.variables.getVariableById(m);
-        if (h) {
-          const N = h.variableCollectionId;
-          n.includes(N) || (h.remove(), o++);
+        const m = figma.variables.getVariableById(p);
+        if (m) {
+          const b = m.variableCollectionId;
+          n.includes(b) || (m.remove(), o++);
         }
-      } catch (h) {
+      } catch (m) {
         await a.warning(
-          `Could not delete variable ${m.substring(0, 8)}...: ${h}`
+          `Could not delete variable ${p.substring(0, 8)}...: ${m}`
         );
       }
-    let l = 0;
-    for (const m of n)
+    let s = 0;
+    for (const p of n)
       try {
-        const h = figma.variables.getVariableCollectionById(m);
-        h && (h.remove(), l++);
-      } catch (h) {
+        const m = figma.variables.getVariableCollectionById(p);
+        m && (m.remove(), s++);
+      } catch (m) {
         await a.warning(
-          `Could not delete collection ${m.substring(0, 8)}...: ${h}`
+          `Could not delete collection ${p.substring(0, 8)}...: ${m}`
         );
       }
     await figma.loadAllPagesAsync();
-    let i = 0;
-    for (const m of t)
+    let r = 0;
+    for (const p of t)
       try {
-        const h = await figma.getNodeByIdAsync(m);
-        h && h.type === "PAGE" && (h.remove(), i++);
-      } catch (h) {
+        const m = await figma.getNodeByIdAsync(p);
+        m && m.type === "PAGE" && (m.remove(), r++);
+      } catch (m) {
         await a.warning(
-          `Could not delete page ${m.substring(0, 8)}...: ${h}`
+          `Could not delete page ${p.substring(0, 8)}...: ${m}`
         );
       }
     return await a.log(
-      `Cleanup complete: Deleted ${i} page(s), ${l} collection(s), ${o} variable(s)`
+      `Cleanup complete: Deleted ${r} page(s), ${s} collection(s), ${o} variable(s)`
     ), {
       type: "cleanupCreatedEntities",
       success: !0,
       error: !1,
       message: "Cleanup completed successfully",
       data: {
-        deletedPages: i,
-        deletedCollections: l,
+        deletedPages: r,
+        deletedCollections: s,
         deletedVariables: o
       }
     };
@@ -4191,41 +4904,41 @@ async function Dt(e) {
     };
   }
 }
-async function Ke(e) {
+async function at(e) {
   const t = [];
-  for (const { fileName: n, jsonData: r } of e)
+  for (const { fileName: n, jsonData: i } of e)
     try {
-      const o = je(r);
+      const o = et(i);
       if (!o.success || !o.expandedJsonData) {
         await a.warning(
           `Skipping ${n} - failed to expand JSON: ${o.error || "Unknown error"}`
         );
         continue;
       }
-      const l = o.expandedJsonData, i = l.metadata;
-      if (!i || !i.name || !i.guid) {
+      const s = o.expandedJsonData, r = s.metadata;
+      if (!r || !r.name || !r.guid) {
         await a.warning(
           `Skipping ${n} - missing or invalid metadata`
         );
         continue;
       }
-      const m = [];
-      if (l.instances) {
-        const N = Q.fromTable(
-          l.instances
+      const p = [];
+      if (s.instances) {
+        const b = pe.fromTable(
+          s.instances
         ).getSerializedTable();
-        for (const s of Object.values(N))
-          s.instanceType === "normal" && s.componentPageName && (m.includes(s.componentPageName) || m.push(s.componentPageName));
+        for (const w of Object.values(b))
+          w.instanceType === "normal" && w.componentPageName && (p.includes(w.componentPageName) || p.push(w.componentPageName));
       }
       t.push({
         fileName: n,
-        pageName: i.name,
-        pageGuid: i.guid,
-        dependencies: m,
-        jsonData: r
+        pageName: r.name,
+        pageGuid: r.guid,
+        dependencies: p,
+        jsonData: i
         // Store original JSON data for import
       }), await a.log(
-        `  ${n}: "${i.name}" depends on: ${m.length > 0 ? m.join(", ") : "none"}`
+        `  ${n}: "${r.name}" depends on: ${p.length > 0 ? p.join(", ") : "none"}`
       );
     } catch (o) {
       await a.error(
@@ -4234,50 +4947,50 @@ async function Ke(e) {
     }
   return t;
 }
-function We(e) {
-  const t = [], n = [], r = [], o = /* @__PURE__ */ new Map();
-  for (const N of e)
-    o.set(N.pageName, N);
-  const l = /* @__PURE__ */ new Set(), i = /* @__PURE__ */ new Set(), m = [], h = (N) => {
-    if (l.has(N.pageName))
+function it(e) {
+  const t = [], n = [], i = [], o = /* @__PURE__ */ new Map();
+  for (const b of e)
+    o.set(b.pageName, b);
+  const s = /* @__PURE__ */ new Set(), r = /* @__PURE__ */ new Set(), p = [], m = (b) => {
+    if (s.has(b.pageName))
       return !1;
-    if (i.has(N.pageName)) {
-      const s = m.findIndex(
-        (A) => A.pageName === N.pageName
+    if (r.has(b.pageName)) {
+      const w = p.findIndex(
+        (A) => A.pageName === b.pageName
       );
-      if (s !== -1) {
-        const A = m.slice(s).concat([N]);
+      if (w !== -1) {
+        const A = p.slice(w).concat([b]);
         return n.push(A), !0;
       }
       return !1;
     }
-    i.add(N.pageName), m.push(N);
-    for (const s of N.dependencies) {
-      const A = o.get(s);
-      A && h(A);
+    r.add(b.pageName), p.push(b);
+    for (const w of b.dependencies) {
+      const A = o.get(w);
+      A && m(A);
     }
-    return i.delete(N.pageName), m.pop(), l.add(N.pageName), t.push(N), !1;
+    return r.delete(b.pageName), p.pop(), s.add(b.pageName), t.push(b), !1;
   };
-  for (const N of e)
-    l.has(N.pageName) || h(N);
-  for (const N of e)
-    for (const s of N.dependencies)
-      o.has(s) || r.push(
-        `Page "${N.pageName}" (${N.fileName}) depends on "${s}" which is not in the import set`
+  for (const b of e)
+    s.has(b.pageName) || m(b);
+  for (const b of e)
+    for (const w of b.dependencies)
+      o.has(w) || i.push(
+        `Page "${b.pageName}" (${b.fileName}) depends on "${w}" which is not in the import set`
       );
-  return { order: t, cycles: n, errors: r };
+  return { order: t, cycles: n, errors: i };
 }
-async function He(e) {
+async function rt(e) {
   await a.log("=== Building Dependency Graph ===");
-  const t = await Ke(e);
+  const t = await at(e);
   await a.log("=== Resolving Import Order ===");
-  const n = We(t);
+  const n = it(t);
   if (n.cycles.length > 0) {
     await a.log(
       `Detected ${n.cycles.length} circular dependency cycle(s):`
     );
-    for (const r of n.cycles) {
-      const o = r.map((l) => `"${l.pageName}"`).join(" → ");
+    for (const i of n.cycles) {
+      const o = i.map((s) => `"${s.pageName}"`).join(" → ");
       await a.log(`  Cycle: ${o} → (back to start)`);
     }
     await a.log(
@@ -4288,20 +5001,20 @@ async function He(e) {
     await a.warning(
       `Found ${n.errors.length} missing dependency warning(s):`
     );
-    for (const r of n.errors)
-      await a.warning(`  ${r}`);
+    for (const i of n.errors)
+      await a.warning(`  ${i}`);
   }
   await a.log(
     `Import order determined: ${n.order.length} page(s)`
   );
-  for (let r = 0; r < n.order.length; r++) {
-    const o = n.order[r];
-    await a.log(`  ${r + 1}. ${o.fileName} ("${o.pageName}")`);
+  for (let i = 0; i < n.order.length; i++) {
+    const o = n.order[i];
+    await a.log(`  ${i + 1}. ${o.fileName} ("${o.pageName}")`);
   }
   return n;
 }
-async function en(e) {
-  var g, d, u, v, C;
+async function gn(e) {
+  var u, O, S, M, h;
   const { jsonFiles: t } = e;
   if (!t || !Array.isArray(t))
     return {
@@ -4314,96 +5027,96 @@ async function en(e) {
   await a.log("=== Determining Import Order ===");
   const {
     order: n,
-    cycles: r,
+    cycles: i,
     errors: o
-  } = await He(t);
+  } = await rt(t);
   o.length > 0 && await a.warning(
     `Found ${o.length} dependency warning(s) - some dependencies may be missing`
-  ), r.length > 0 && await a.log(
-    `Detected ${r.length} circular dependency cycle(s) - will use deferred resolution`
+  ), i.length > 0 && await a.log(
+    `Detected ${i.length} circular dependency cycle(s) - will use deferred resolution`
   ), await a.log("=== Importing Pages in Order ===");
-  let l = 0, i = 0;
-  const m = [...o], h = [], N = {
+  let s = 0, r = 0;
+  const p = [...o], m = [], b = {
     pageIds: [],
     collectionIds: [],
     variableIds: []
-  }, s = [], A = e.mainFileName;
-  for (let f = 0; f < n.length; f++) {
-    const p = n[f], y = A ? p.fileName === A : f === n.length - 1;
+  }, w = [], A = e.mainFileName;
+  for (let v = 0; v < n.length; v++) {
+    const l = n[v], g = A ? l.fileName === A : v === n.length - 1;
     await a.log(
-      `[${f + 1}/${n.length}] Importing ${p.fileName} ("${p.pageName}")${y ? " [MAIN]" : " [DEPENDENCY]"}...`
+      `[${v + 1}/${n.length}] Importing ${l.fileName} ("${l.pageName}")${g ? " [MAIN]" : " [DEPENDENCY]"}...`
     );
     try {
-      const w = f === 0, b = await Be({
-        jsonData: p.jsonData,
-        isMainPage: y,
-        clearConsole: w
+      const c = v === 0, y = await tt({
+        jsonData: l.jsonData,
+        isMainPage: g,
+        clearConsole: c
       });
-      if (b.success) {
-        if (l++, (g = b.data) != null && g.deferredInstances) {
-          const P = b.data.deferredInstances;
-          Array.isArray(P) && h.push(...P);
+      if (y.success) {
+        if (s++, (u = y.data) != null && u.deferredInstances) {
+          const f = y.data.deferredInstances;
+          Array.isArray(f) && m.push(...f);
         }
-        if ((d = b.data) != null && d.createdEntities) {
-          const P = b.data.createdEntities;
-          P.pageIds && N.pageIds.push(...P.pageIds), P.collectionIds && N.collectionIds.push(...P.collectionIds), P.variableIds && N.variableIds.push(...P.variableIds);
-          const E = ((u = P.pageIds) == null ? void 0 : u[0]) || ((v = b.data) == null ? void 0 : v.pageId);
-          (C = b.data) != null && C.pageName && E && s.push({
-            name: b.data.pageName,
-            pageId: E
+        if ((O = y.data) != null && O.createdEntities) {
+          const f = y.data.createdEntities;
+          f.pageIds && b.pageIds.push(...f.pageIds), f.collectionIds && b.collectionIds.push(...f.collectionIds), f.variableIds && b.variableIds.push(...f.variableIds);
+          const N = ((S = f.pageIds) == null ? void 0 : S[0]) || ((M = y.data) == null ? void 0 : M.pageId);
+          (h = y.data) != null && h.pageName && N && w.push({
+            name: y.data.pageName,
+            pageId: N
           });
         }
       } else
-        i++, m.push(
-          `Failed to import ${p.fileName}: ${b.message || "Unknown error"}`
+        r++, p.push(
+          `Failed to import ${l.fileName}: ${y.message || "Unknown error"}`
         );
-    } catch (w) {
-      i++;
-      const b = w instanceof Error ? w.message : String(w);
-      m.push(`Failed to import ${p.fileName}: ${b}`);
+    } catch (c) {
+      r++;
+      const y = c instanceof Error ? c.message : String(c);
+      p.push(`Failed to import ${l.fileName}: ${y}`);
     }
   }
-  if (h.length > 0) {
+  if (m.length > 0) {
     await a.log(
-      `=== Resolving ${h.length} Deferred Instance(s) ===`
+      `=== Resolving ${m.length} Deferred Instance(s) ===`
     );
     try {
-      const f = await Je(h);
+      const v = await nt(m);
       await a.log(
-        `  Resolved: ${f.resolved}, Failed: ${f.failed}`
-      ), f.errors.length > 0 && m.push(...f.errors);
-    } catch (f) {
-      m.push(
-        `Failed to resolve deferred instances: ${f instanceof Error ? f.message : String(f)}`
+        `  Resolved: ${v.resolved}, Failed: ${v.failed}`
+      ), v.errors.length > 0 && p.push(...v.errors);
+    } catch (v) {
+      p.push(
+        `Failed to resolve deferred instances: ${v instanceof Error ? v.message : String(v)}`
       );
     }
   }
   await a.log("=== Import Summary ==="), await a.log(
-    `  Imported: ${l}, Failed: ${i}, Deferred instances: ${h.length}`
+    `  Imported: ${s}, Failed: ${r}, Deferred instances: ${m.length}`
   );
-  const $ = i === 0, c = $ ? `Successfully imported ${l} page(s)${h.length > 0 ? ` (${h.length} deferred instance(s) resolved)` : ""}` : `Import completed with ${i} failure(s). ${m.join("; ")}`;
+  const d = r === 0, I = d ? `Successfully imported ${s} page(s)${m.length > 0 ? ` (${m.length} deferred instance(s) resolved)` : ""}` : `Import completed with ${r} failure(s). ${p.join("; ")}`;
   return {
     type: "importPagesInOrder",
-    success: $,
-    error: !$,
-    message: c,
+    success: d,
+    error: !d,
+    message: I,
     data: {
-      imported: l,
-      failed: i,
-      deferred: h.length,
-      errors: m,
-      importedPages: s,
-      createdEntities: N
+      imported: s,
+      failed: r,
+      deferred: m.length,
+      errors: p,
+      importedPages: w,
+      createdEntities: b
     }
   };
 }
-async function tn(e) {
+async function hn(e) {
   try {
     await figma.loadAllPagesAsync();
     const t = figma.root.children;
     console.log("Found " + t.length + " pages in the document");
-    const n = 11, r = t[n];
-    if (!r)
+    const n = 11, i = t[n];
+    if (!i)
       return {
         type: "quickCopy",
         success: !1,
@@ -4411,42 +5124,42 @@ async function tn(e) {
         message: "No page found at index 11",
         data: {}
       };
-    const o = await me(
-      r,
+    const o = await Ee(
+      i,
       /* @__PURE__ */ new WeakSet(),
       {}
     );
     console.log(
-      "Selected page: " + r.name + " (index: " + n + ")"
+      "Selected page: " + i.name + " (index: " + n + ")"
     );
-    const l = JSON.stringify(o, null, 2), i = JSON.parse(l), m = "Copy - " + i.name, h = figma.createPage();
-    if (h.name = m, figma.root.appendChild(h), i.children && i.children.length > 0) {
-      let A = function(c) {
-        c.forEach((g) => {
-          const d = (g.x || 0) + (g.width || 0);
-          d > $ && ($ = d), g.children && g.children.length > 0 && A(g.children);
+    const s = JSON.stringify(o, null, 2), r = JSON.parse(s), p = "Copy - " + r.name, m = figma.createPage();
+    if (m.name = p, figma.root.appendChild(m), r.children && r.children.length > 0) {
+      let A = function(I) {
+        I.forEach((u) => {
+          const O = (u.x || 0) + (u.width || 0);
+          O > d && (d = O), u.children && u.children.length > 0 && A(u.children);
         });
       };
       console.log(
-        "Recreating " + i.children.length + " top-level children..."
+        "Recreating " + r.children.length + " top-level children..."
       );
-      let $ = 0;
-      A(i.children), console.log("Original content rightmost edge: " + $);
-      for (const c of i.children)
-        await Y(c, h, null, null);
+      let d = 0;
+      A(r.children), console.log("Original content rightmost edge: " + d);
+      for (const I of r.children)
+        await oe(I, m, null, null);
       console.log("Successfully recreated page content with all children");
     } else
       console.log("No children to recreate");
-    const N = pe(i);
+    const b = ve(r);
     return {
       type: "quickCopy",
       success: !0,
       error: !1,
       message: "Quick copy completed successfully",
       data: {
-        pageName: i.name,
-        newPageName: m,
-        totalNodes: N
+        pageName: r.name,
+        newPageName: p,
+        totalNodes: b
       }
     };
   } catch (t) {
@@ -4459,7 +5172,7 @@ async function tn(e) {
     };
   }
 }
-async function nn(e) {
+async function yn(e) {
   try {
     const t = e.accessToken, n = e.selectedRepo;
     return t ? (await figma.clientStorage.setAsync("accessToken", t), n && await figma.clientStorage.setAsync("selectedRepo", n), {
@@ -4486,7 +5199,7 @@ async function nn(e) {
     };
   }
 }
-async function rn(e) {
+async function bn(e) {
   try {
     const t = await figma.clientStorage.getAsync("accessToken"), n = await figma.clientStorage.getAsync("selectedRepo");
     return {
@@ -4510,7 +5223,7 @@ async function rn(e) {
     };
   }
 }
-async function an(e) {
+async function wn(e) {
   try {
     return await figma.clientStorage.deleteAsync("accessToken"), await figma.clientStorage.deleteAsync("selectedRepo"), {
       type: "clearAuthData",
@@ -4530,7 +5243,7 @@ async function an(e) {
     };
   }
 }
-async function on(e) {
+async function Nn(e) {
   try {
     const t = e.selectedRepo;
     return t ? (await figma.clientStorage.setAsync("selectedRepo", t), {
@@ -4557,7 +5270,7 @@ async function on(e) {
     };
   }
 }
-function ve(e, t = {}) {
+function Re(e, t = {}) {
   return {
     type: e,
     success: !0,
@@ -4566,51 +5279,51 @@ function ve(e, t = {}) {
     data: t
   };
 }
-function qe(e, t, n = {}) {
-  const r = t instanceof Error ? t.message : t;
+function ot(e, t, n = {}) {
+  const i = t instanceof Error ? t.message : t;
   return {
     type: e,
     success: !1,
     error: !0,
-    message: r,
+    message: i,
     data: n
   };
 }
-const Ye = "RecursicaPublishedMetadata";
-async function sn(e) {
+const st = "RecursicaPublishedMetadata";
+async function $n(e) {
   try {
     const t = figma.currentPage;
     await figma.loadAllPagesAsync();
-    const r = figma.root.children.findIndex(
-      (m) => m.id === t.id
-    ), o = t.getPluginData(Ye);
+    const i = figma.root.children.findIndex(
+      (p) => p.id === t.id
+    ), o = t.getPluginData(st);
     if (!o) {
-      const N = {
+      const b = {
         componentMetadata: {
           _ver: 1,
           id: "",
-          name: se(t.name),
+          name: be(t.name),
           version: 0,
           publishDate: "",
           history: {}
         },
-        currentPageIndex: r
+        currentPageIndex: i
       };
-      return ve("getComponentMetadata", N);
+      return Re("getComponentMetadata", b);
     }
-    const i = {
+    const r = {
       componentMetadata: JSON.parse(o),
-      currentPageIndex: r
+      currentPageIndex: i
     };
-    return ve("getComponentMetadata", i);
+    return Re("getComponentMetadata", r);
   } catch (t) {
-    return console.error("Error getting component metadata:", t), qe(
+    return console.error("Error getting component metadata:", t), ot(
       "getComponentMetadata",
       t instanceof Error ? t : "Unknown error occurred"
     );
   }
 }
-async function cn(e) {
+async function vn(e) {
   try {
     await figma.loadAllPagesAsync();
     const t = figma.root.children, n = [];
@@ -4621,49 +5334,49 @@ async function cn(e) {
         );
         continue;
       }
-      const l = o, i = l.getPluginData(Ye);
-      if (i)
+      const s = o, r = s.getPluginData(st);
+      if (r)
         try {
-          const m = JSON.parse(i);
-          n.push(m);
-        } catch (m) {
+          const p = JSON.parse(r);
+          n.push(p);
+        } catch (p) {
           console.warn(
-            `Failed to parse metadata for page "${l.name}":`,
-            m
+            `Failed to parse metadata for page "${s.name}":`,
+            p
           );
-          const N = {
+          const b = {
             _ver: 1,
             id: "",
-            name: se(l.name),
+            name: be(s.name),
             version: 0,
             publishDate: "",
             history: {}
           };
-          n.push(N);
+          n.push(b);
         }
       else {
-        const h = {
+        const m = {
           _ver: 1,
           id: "",
-          name: se(l.name),
+          name: be(s.name),
           version: 0,
           publishDate: "",
           history: {}
         };
-        n.push(h);
+        n.push(m);
       }
     }
-    return ve("getAllComponents", {
+    return Re("getAllComponents", {
       components: n
     });
   } catch (t) {
-    return console.error("Error getting all components:", t), qe(
+    return console.error("Error getting all components:", t), ot(
       "getAllComponents",
       t instanceof Error ? t : "Unknown error occurred"
     );
   }
 }
-async function ln(e) {
+async function En(e) {
   try {
     const t = e.requestId, n = e.action;
     return !t || !n ? {
@@ -4672,7 +5385,7 @@ async function ln(e) {
       error: !0,
       message: "Request ID and action are required",
       data: {}
-    } : (q.handleResponse({ requestId: t, action: n }), {
+    } : (re.handleResponse({ requestId: t, action: n }), {
       type: "pluginPromptResponse",
       success: !0,
       error: !1,
@@ -4690,7 +5403,7 @@ async function ln(e) {
     };
   }
 }
-async function dn(e) {
+async function Cn(e) {
   try {
     const { pageId: t } = e;
     await figma.loadAllPagesAsync();
@@ -4720,42 +5433,42 @@ async function dn(e) {
     };
   }
 }
-const pn = {
-  getCurrentUser: tt,
-  loadPages: nt,
-  exportPage: $e,
-  importPage: Be,
-  cleanupCreatedEntities: Dt,
-  resolveDeferredNormalInstances: Je,
-  determineImportOrder: He,
-  buildDependencyGraph: Ke,
-  resolveImportOrder: We,
-  importPagesInOrder: en,
-  quickCopy: tn,
-  storeAuthData: nn,
-  loadAuthData: rn,
-  clearAuthData: an,
-  storeSelectedRepo: on,
-  getComponentMetadata: sn,
-  getAllComponents: cn,
-  pluginPromptResponse: ln,
-  switchToPage: dn
-}, mn = pn;
+const An = {
+  getCurrentUser: ut,
+  loadPages: gt,
+  exportPage: _e,
+  importPage: tt,
+  cleanupCreatedEntities: un,
+  resolveDeferredNormalInstances: nt,
+  determineImportOrder: rt,
+  buildDependencyGraph: at,
+  resolveImportOrder: it,
+  importPagesInOrder: gn,
+  quickCopy: hn,
+  storeAuthData: yn,
+  loadAuthData: bn,
+  clearAuthData: wn,
+  storeSelectedRepo: Nn,
+  getComponentMetadata: $n,
+  getAllComponents: vn,
+  pluginPromptResponse: En,
+  switchToPage: Cn
+}, Pn = An;
 figma.showUI(__html__, {
   width: 500,
   height: 500
 });
 figma.ui.onmessage = async (e) => {
   if (console.log("Received message:", e), e.type === "GenerateGuidResponse") {
-    pt(e);
+    Ct(e);
     return;
   }
   const t = e;
   try {
-    const n = t.type, r = mn[n];
-    if (!r) {
+    const n = t.type, i = Pn[n];
+    if (!i) {
       console.warn("Unknown message type:", t.type);
-      const l = {
+      const s = {
         type: t.type,
         success: !1,
         error: !0,
@@ -4763,16 +5476,16 @@ figma.ui.onmessage = async (e) => {
         data: {},
         requestId: t.requestId
       };
-      figma.ui.postMessage(l);
+      figma.ui.postMessage(s);
       return;
     }
-    const o = await r(t.data);
-    figma.ui.postMessage(V(I({}, o), {
+    const o = await i(t.data);
+    figma.ui.postMessage(q(L({}, o), {
       requestId: t.requestId
     }));
   } catch (n) {
     console.error("Error handling message:", n);
-    const r = {
+    const i = {
       type: t.type,
       success: !1,
       error: !0,
@@ -4780,6 +5493,6 @@ figma.ui.onmessage = async (e) => {
       data: {},
       requestId: t.requestId
     };
-    figma.ui.postMessage(r);
+    figma.ui.postMessage(i);
   }
 };

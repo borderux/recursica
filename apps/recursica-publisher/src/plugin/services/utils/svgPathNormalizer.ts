@@ -77,7 +77,7 @@ export function normalizeSvgPath(pathData: string): string {
   // But preserve existing spacing to avoid breaking valid paths
   normalized = normalized.replace(
     /([MmLlHhVvCcSsQqTtAaZz])([-\d])/g,
-    (match, command, number) => {
+    (_match, command, number) => {
       // Only add space if there isn't already whitespace
       return `${command} ${number}`;
     },

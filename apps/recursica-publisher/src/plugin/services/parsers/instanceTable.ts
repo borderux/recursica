@@ -55,9 +55,13 @@ export class InstanceTable {
    */
   private generateKey(entry: InstanceTableEntry): string {
     if (entry.instanceType === "internal" && entry.componentNodeId) {
-      // For internal instances, use node ID (simpler since everything is on the same page)
+      // For internal instances, use node ID + variant properties to ensure uniqueness
+      // Instances of the same component with different variant properties should be separate entries
       // During import, we maintain a mapping of old ID -> new node
-      return `internal:${entry.componentNodeId}`;
+      const variantPropsKey = entry.variantProperties
+        ? `:${JSON.stringify(entry.variantProperties)}`
+        : "";
+      return `internal:${entry.componentNodeId}${variantPropsKey}`;
     } else if (
       entry.instanceType === "normal" &&
       entry.componentGuid &&
@@ -72,6 +76,12 @@ export class InstanceTable {
       return `remote:detached:${entry.componentNodeId}`;
     }
     // Fallback: use component name (componentType is always COMPONENT for instances)
+    // For remote instances without library key, use main component ID if available for better uniqueness
+    if (entry.instanceType === "remote") {
+      // Try to use the main component's key if available (for library components)
+      // This helps deduplicate the same library component referenced multiple times
+      return `remote:${entry.componentName}:COMPONENT`;
+    }
     return `${entry.instanceType}:${entry.componentName}:COMPONENT`;
   }
 
