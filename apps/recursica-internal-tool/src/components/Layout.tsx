@@ -80,6 +80,21 @@ export default function Layout() {
           </li>
           <li>
             <Link
+              to="/used-libraries"
+              style={{
+                textDecoration:
+                  location.pathname === "/used-libraries"
+                    ? "underline"
+                    : "none",
+                color:
+                  location.pathname === "/used-libraries" ? "#007acc" : "#333",
+              }}
+            >
+              Used Libraries
+            </Link>
+          </li>
+          <li>
+            <Link
               to="/auth"
               style={{
                 textDecoration:

@@ -1,4 +1,16 @@
-async function S() {
+var V = Object.defineProperty, L = Object.defineProperties;
+var O = Object.getOwnPropertyDescriptors;
+var C = Object.getOwnPropertySymbols;
+var z = Object.prototype.hasOwnProperty, U = Object.prototype.propertyIsEnumerable;
+var v = (e, s, t) => s in e ? V(e, s, { enumerable: !0, configurable: !0, writable: !0, value: t }) : e[s] = t, k = (e, s) => {
+  for (var t in s || (s = {}))
+    z.call(s, t) && v(e, t, s[t]);
+  if (C)
+    for (var t of C(s))
+      U.call(s, t) && v(e, t, s[t]);
+  return e;
+}, A = (e, s) => L(e, O(s));
+async function B() {
   try {
     const e = await figma.variables.getLocalVariableCollectionsAsync();
     for (const s of e) {
@@ -6,10 +18,10 @@ async function S() {
         "resetting variables-synced tag for collection " + s.name
       ), s.setSharedPluginData("recursica", "variables-synced", "");
       for (const t of s.variableIds) {
-        const r = await figma.variables.getVariableByIdAsync(t);
-        r && (console.log(
-          "resetting variables-synced tag for variable " + r.name
-        ), r.setSharedPluginData("recursica", "variables-synced", ""));
+        const i = await figma.variables.getVariableByIdAsync(t);
+        i && (console.log(
+          "resetting variables-synced tag for variable " + i.name
+        ), i.setSharedPluginData("recursica", "variables-synced", ""));
       }
     }
     return console.log(
@@ -29,19 +41,19 @@ async function S() {
     };
   }
 }
-function u(e) {
+function x(e) {
   let s = 1;
   return e.children && e.children.length > 0 && e.children.forEach((t) => {
-    s += u(t);
+    s += x(t);
   }), s;
 }
-function A(e) {
+function P(e) {
   return e ? Array.isArray(e) ? e.map((s) => {
     const t = Object.assign({}, s);
     s.boundVariables && (t.boundVariables = Object.assign({}, s.boundVariables));
   }) : e : [];
 }
-function h(e) {
+function S(e) {
   var t;
   const s = {
     id: e.id,
@@ -57,7 +69,7 @@ function h(e) {
     opacity: e.opacity,
     blendMode: e.blendMode,
     effects: e.effects,
-    fills: A(e == null ? void 0 : e.fills),
+    fills: P(e == null ? void 0 : e.fills),
     strokes: e.strokes,
     strokeWeight: e.strokeWeight,
     strokeAlign: e.strokeAlign,
@@ -89,41 +101,41 @@ function h(e) {
   };
   if (e.type === "INSTANCE" && typeof e.getMainComponentAsync == "function")
     try {
-      const r = e.getMainComponentAsync();
-      r && (s.mainComponent = {
-        id: r.id,
-        name: r.name,
-        key: r.key,
-        fills: r.fills,
-        children: (t = r == null ? void 0 : r.children) == null ? void 0 : t.map((i) => {
-          const a = A(i == null ? void 0 : i.fills);
+      const i = e.getMainComponentAsync();
+      i && (s.mainComponent = {
+        id: i.id,
+        name: i.name,
+        key: i.key,
+        fills: i.fills,
+        children: (t = i == null ? void 0 : i.children) == null ? void 0 : t.map((r) => {
+          const a = P(r == null ? void 0 : r.fills);
           return {
-            id: i.id,
+            id: r.id,
             fills: a,
-            strokes: i.strokes,
-            strokeWeight: i.strokeWeight,
-            strokeAlign: i.strokeAlign,
-            strokeCap: i.strokeCap,
-            strokeJoin: i.strokeJoin,
-            dashPattern: i.dashPattern,
-            name: i.name,
-            type: i.type
+            strokes: r.strokes,
+            strokeWeight: r.strokeWeight,
+            strokeAlign: r.strokeAlign,
+            strokeCap: r.strokeCap,
+            strokeJoin: r.strokeJoin,
+            dashPattern: r.dashPattern,
+            name: r.name,
+            type: r.type
           };
         })
       });
-    } catch (r) {
-      console.log("Error getting main component for " + e.name + ":", r);
+    } catch (i) {
+      console.log("Error getting main component for " + e.name + ":", i);
     }
-  return e.children && e.children.length > 0 && (s.children = e.children.map((r) => h(r))), s;
+  return e.children && e.children.length > 0 && (s.children = e.children.map((i) => S(i))), s;
 }
-async function E() {
+async function J() {
   try {
     return await figma.loadAllPagesAsync(), {
       type: "pages-loaded",
       success: !0,
-      pages: figma.root.children.map((t, r) => ({
+      pages: figma.root.children.map((t, i) => ({
         name: t.name,
-        index: r
+        index: i
       }))
     };
   } catch (e) {
@@ -134,7 +146,7 @@ async function E() {
     };
   }
 }
-async function N(e) {
+async function _(e) {
   try {
     await figma.loadAllPagesAsync();
     const s = figma.root.children;
@@ -146,20 +158,20 @@ async function N(e) {
       };
     const t = s[e];
     console.log("Exporting page: " + t.name);
-    const r = h(t), i = {
+    const i = S(t), r = {
       metadata: {
         exportedAt: (/* @__PURE__ */ new Date()).toISOString(),
         figmaVersion: figma.apiVersion,
         originalPageName: t.name,
-        totalNodes: u(r),
+        totalNodes: x(i),
         pluginVersion: "1.0.0"
       },
-      pageData: r
-    }, a = JSON.stringify(i, null, 2), o = t.name.replace(/[^a-z0-9]/gi, "_") + "_export.json";
-    return console.log(r), {
+      pageData: i
+    }, a = JSON.stringify(r, null, 2), n = t.name.replace(/[^a-z0-9]/gi, "_") + "_export.json";
+    return console.log(i), {
       type: "page-export-response",
       success: !0,
-      filename: o,
+      filename: n,
       jsonData: a,
       pageName: t.name
     };
@@ -171,7 +183,7 @@ async function N(e) {
     };
   }
 }
-async function d(e, s) {
+async function E(e, s) {
   try {
     let t;
     switch (e.type) {
@@ -202,46 +214,46 @@ async function d(e, s) {
       case "INSTANCE":
         if (console.log("Found instance node: " + e.name), e.mainComponent && e.mainComponent.id)
           try {
-            const r = await figma.importComponentByKeyAsync(
+            const i = await figma.importComponentByKeyAsync(
               e.mainComponent.key
             );
-            if (r && r.type === "COMPONENT") {
-              if (t = r.createInstance(), console.log(
+            if (i && i.type === "COMPONENT") {
+              if (t = i.createInstance(), console.log(
                 "Created instance from main component: " + e.mainComponent.name
               ), e.fills && e.fills.length > 0)
                 try {
                   t.fills = e.fills;
-                } catch (i) {
-                  console.log("Error applying instance fills: " + i);
+                } catch (r) {
+                  console.log("Error applying instance fills: " + r);
                 }
-              e.mainComponent.children && e.mainComponent.children.length > 0 && t.children && t.children.length > 0 && t.children.forEach((i) => {
+              e.mainComponent.children && e.mainComponent.children.length > 0 && t.children && t.children.length > 0 && t.children.forEach((r) => {
                 const a = e.children.find(
-                  (o) => o.name === i.name
+                  (n) => n.name === r.name
                 );
                 if (a)
                   try {
                     if (a.fills && a.fills.length > 0) {
-                      const o = a.fills.map((n) => {
-                        const g = Object.assign({}, n);
-                        return n != null && n.boundVariables && (g.boundVariables = Object.assign(
+                      const n = a.fills.map((c) => {
+                        const p = Object.assign({}, c);
+                        return c != null && c.boundVariables && (p.boundVariables = Object.assign(
                           {},
-                          n.boundVariables
-                        )), g;
+                          c.boundVariables
+                        )), p;
                       });
-                      i.fills = o != null ? o : {};
+                      r.fills = n != null ? n : {};
                     }
-                    a.strokes && a.strokes.length > 0 && (i.strokes = a.strokes), a.strokeWeight !== void 0 && (i.strokeWeight = a.strokeWeight), a.strokeAlign !== void 0 && (i.strokeAlign = a.strokeAlign), a.strokeCap !== void 0 && (i.strokeCap = a.strokeCap), a.strokeJoin !== void 0 && (i.strokeJoin = a.strokeJoin), a.dashPattern && a.dashPattern.length > 0 && (i.dashPattern = a.dashPattern);
-                  } catch (o) {
+                    a.strokes && a.strokes.length > 0 && (r.strokes = a.strokes), a.strokeWeight !== void 0 && (r.strokeWeight = a.strokeWeight), a.strokeAlign !== void 0 && (r.strokeAlign = a.strokeAlign), a.strokeCap !== void 0 && (r.strokeCap = a.strokeCap), a.strokeJoin !== void 0 && (r.strokeJoin = a.strokeJoin), a.dashPattern && a.dashPattern.length > 0 && (r.dashPattern = a.dashPattern);
+                  } catch (n) {
                     console.log(
-                      "Error updating child " + i.name + ": " + o
+                      "Error updating child " + r.name + ": " + n
                     );
                   }
               });
             } else
               console.log("Main component not found, creating frame fallback"), t = figma.createFrame();
-          } catch (r) {
+          } catch (i) {
             console.log(
-              "Error creating instance: " + r + ", creating frame fallback"
+              "Error creating instance: " + i + ", creating frame fallback"
             ), t = figma.createFrame();
           }
         else
@@ -270,7 +282,7 @@ async function d(e, s) {
           if (e.fontName)
             try {
               await figma.loadFontAsync(e.fontName), t.fontName = e.fontName;
-            } catch (r) {
+            } catch (i) {
               await figma.loadFontAsync({
                 family: "Roboto",
                 style: "Regular"
@@ -282,18 +294,18 @@ async function d(e, s) {
               style: "Regular"
             }), t.fontName = { family: "Roboto", style: "Regular" };
           t.characters = e.characters, e.fontSize && (t.fontSize = e.fontSize), e.textAlignHorizontal && (t.textAlignHorizontal = e.textAlignHorizontal), e.textAlignVertical && (t.textAlignVertical = e.textAlignVertical), e.letterSpacing && (t.letterSpacing = e.letterSpacing), e.lineHeight && (t.lineHeight = e.lineHeight), e.textCase && (t.textCase = e.textCase), e.textDecoration && (t.textDecoration = e.textDecoration), e.textAutoResize && (t.textAutoResize = e.textAutoResize);
-        } catch (r) {
-          console.log("Error setting text properties: " + r);
+        } catch (i) {
+          console.log("Error setting text properties: " + i);
           try {
             t.characters = e.characters;
-          } catch (i) {
-            console.log("Could not set text characters: " + i);
+          } catch (r) {
+            console.log("Could not set text characters: " + r);
           }
         }
       if (e.children && e.children.length > 0)
-        for (const r of e.children) {
-          const i = await d(r, t);
-          i && t.appendChild(i);
+        for (const i of e.children) {
+          const r = await E(i, t);
+          r && t.appendChild(r);
         }
       s.appendChild(t);
     }
@@ -305,7 +317,7 @@ async function d(e, s) {
     ), null;
   }
 }
-async function w(e) {
+async function H(e) {
   try {
     if (console.log("Importing page from JSON:", e), !e.pageData || !e.metadata)
       return {
@@ -313,10 +325,10 @@ async function w(e) {
         success: !1,
         error: "Invalid JSON format. Expected pageData and metadata."
       };
-    const s = e.pageData, t = e.metadata, i = "Imported - " + (e.metadata.originalPageName.replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") || "Unknown"), a = figma.createPage();
-    if (a.name = i, figma.root.appendChild(a), console.log("Created new page: " + i), console.log("Importing " + (t.totalNodes || "unknown") + " nodes"), s.children && s.children.length > 0) {
-      for (const o of s.children)
-        await d(o, a);
+    const s = e.pageData, t = e.metadata, r = "Imported - " + (e.metadata.originalPageName.replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") || "Unknown"), a = figma.createPage();
+    if (a.name = r, figma.root.appendChild(a), console.log("Created new page: " + r), console.log("Importing " + (t.totalNodes || "unknown") + " nodes"), s.children && s.children.length > 0) {
+      for (const n of s.children)
+        await E(n, a);
       console.log("Successfully imported page content with all children");
     } else
       console.log("No children to import");
@@ -334,7 +346,7 @@ async function w(e) {
     };
   }
 }
-async function C() {
+async function W() {
   try {
     await figma.loadAllPagesAsync();
     const e = figma.root.children;
@@ -346,35 +358,35 @@ async function C() {
         success: !1,
         error: "No page found at index 11"
       };
-    const r = h(t);
+    const i = S(t);
     console.log(
       "Selected page: " + t.name + " (index: " + s + ")"
     );
-    const i = JSON.stringify(r, null, 2), a = JSON.parse(i), o = "Copy - " + a.name, n = figma.createPage();
-    if (n.name = o, figma.root.appendChild(n), a.children && a.children.length > 0) {
-      let y = function(f) {
-        f.forEach((c) => {
-          const k = (c.x || 0) + (c.width || 0);
-          k > p && (p = k), c.children && c.children.length > 0 && y(c.children);
+    const r = JSON.stringify(i, null, 2), a = JSON.parse(r), n = "Copy - " + a.name, c = figma.createPage();
+    if (c.name = n, figma.root.appendChild(c), a.children && a.children.length > 0) {
+      let m = function(f) {
+        f.forEach((l) => {
+          const u = (l.x || 0) + (l.width || 0);
+          u > g && (g = u), l.children && l.children.length > 0 && m(l.children);
         });
       };
       console.log(
         "Recreating " + a.children.length + " top-level children..."
       );
-      let p = 0;
-      y(a.children), console.log("Original content rightmost edge: " + p);
+      let g = 0;
+      m(a.children), console.log("Original content rightmost edge: " + g);
       for (const f of a.children)
-        await d(f, n);
+        await E(f, c);
       console.log("Successfully recreated page content with all children");
     } else
       console.log("No children to recreate");
-    const g = u(a);
+    const p = x(a);
     return {
       type: "quick-copy-response",
       success: !0,
       pageName: a.name,
-      newPageName: o,
-      totalNodes: g
+      newPageName: n,
+      totalNodes: p
     };
   } catch (e) {
     return console.error("Error performing quick copy:", e), {
@@ -384,14 +396,14 @@ async function C() {
     };
   }
 }
-const l = "recursica", b = "file-type", m = "theme-name";
-async function x() {
+const d = "recursica", M = "file-type", w = "theme-name";
+async function R() {
   try {
     let e = "", s = "";
     const t = await figma.variables.getLocalVariableCollectionsAsync();
     if (t.length > 0) {
-      const r = t[0];
-      e = r.getSharedPluginData(l, b) || "", s = r.getSharedPluginData(l, m) || "";
+      const i = t[0];
+      e = i.getSharedPluginData(d, M) || "", s = i.getSharedPluginData(d, w) || "";
     }
     return {
       type: "theme-settings-loaded",
@@ -407,7 +419,7 @@ async function x() {
     };
   }
 }
-async function R(e, s) {
+async function q(e, s) {
   try {
     if (!e)
       return {
@@ -426,12 +438,12 @@ async function R(e, s) {
       type: "theme-settings-updated",
       success: !1,
       error: "No variable collections found. Please create a variable collection first."
-    } : (t.forEach((r) => {
-      r.setSharedPluginData(l, b, e), e === "themes" ? r.setSharedPluginData(
-        l,
-        m,
+    } : (t.forEach((i) => {
+      i.setSharedPluginData(d, M, e), e === "themes" ? i.setSharedPluginData(
+        d,
+        w,
         s
-      ) : r.setSharedPluginData(l, m, "");
+      ) : i.setSharedPluginData(d, w, "");
     }), figma.notify(
       `Theme settings updated: File type set to "${e}"${e === "themes" ? `, Theme name set to "${s}"` : ""}`
     ), {
@@ -447,11 +459,161 @@ async function R(e, s) {
     };
   }
 }
+async function G() {
+  var e;
+  try {
+    const s = await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync(), t = /* @__PURE__ */ new Set(), i = /* @__PURE__ */ new Map();
+    for (const o of s)
+      t.add(o.libraryName), i.has(o.libraryName) || i.set(o.libraryName, []), (e = i.get(o.libraryName)) == null || e.push(o.key);
+    const r = {};
+    for (const o of t)
+      r[o] = {
+        libraryName: o,
+        usedIn: {
+          components: 0,
+          styles: 0,
+          variables: 0
+        }
+      };
+    await figma.loadAllPagesAsync();
+    const a = figma.root.children.filter(
+      (o) => o.type === "PAGE"
+    ), n = [], c = [], p = /* @__PURE__ */ new Set();
+    for (const o of a)
+      for (const y of o.children)
+        await T(
+          y,
+          n,
+          c,
+          p
+        );
+    const m = /* @__PURE__ */ new Map();
+    for (const o of n)
+      m.has(o.key) ? m.get(o.key).nodeIds.push(...o.nodeIds) : m.set(o.key, A(k({}, o), { nodeIds: [...o.nodeIds] }));
+    const g = Array.from(m.values()), f = /* @__PURE__ */ new Map();
+    for (const o of c)
+      f.has(o.key) ? f.get(o.key).nodeIds.push(...o.nodeIds) : f.set(o.key, A(k({}, o), { nodeIds: [...o.nodeIds] }));
+    const l = Array.from(f.values());
+    for (const o of p)
+      try {
+        const y = await figma.variables.getVariableByIdAsync(o);
+        if (y)
+          for (const I of s)
+            try {
+              if ((await figma.teamLibrary.getVariablesInLibraryCollectionAsync(
+                I.key
+              )).find(
+                (h) => h.name === y.name
+              )) {
+                const h = I.libraryName;
+                r[h] && r[h].usedIn.variables++;
+                break;
+              }
+            } catch (F) {
+            }
+      } catch (y) {
+      }
+    const u = Object.values(r).filter(
+      (o) => o.usedIn.variables > 0
+    );
+    let N = `Found ${u.length} library file(s) with variables in use`;
+    return (g.length > 0 || l.length > 0) && (N += `. Also detected ${g.length} remote component(s) and ${l.length} remote style(s) (library names not available due to API limitations).`), {
+      type: "used-libraries-response",
+      success: !0,
+      libraries: u,
+      remoteComponents: g.length > 0 ? g : void 0,
+      remoteStyles: l.length > 0 ? l : void 0,
+      message: N
+    };
+  } catch (s) {
+    return console.error("Error detecting used libraries:", s), {
+      type: "used-libraries-response",
+      success: !1,
+      libraries: [],
+      error: s instanceof Error ? s.message : "Unknown error occurred"
+    };
+  }
+}
+async function T(e, s, t, i) {
+  if (e.type === "INSTANCE")
+    try {
+      const r = await e.getMainComponentAsync();
+      r && r.remote && s.push({
+        key: r.key,
+        name: r.name,
+        nodeIds: [e.id]
+      });
+    } catch (r) {
+      console.warn("Could not get main component:", r);
+    }
+  if ("fillStyleId" in e && e.fillStyleId && typeof e.fillStyleId == "string")
+    try {
+      const r = await figma.getStyleByIdAsync(e.fillStyleId);
+      r && r.remote && (r.type === "PAINT" || r.type === "TEXT" || r.type === "EFFECT" || r.type === "GRID") && t.push({
+        key: r.key,
+        name: r.name,
+        type: r.type,
+        nodeIds: [e.id]
+      });
+    } catch (r) {
+    }
+  if ("textStyleId" in e && e.textStyleId && typeof e.textStyleId == "string")
+    try {
+      const r = await figma.getStyleByIdAsync(e.textStyleId);
+      r && r.remote && (r.type === "PAINT" || r.type === "TEXT" || r.type === "EFFECT" || r.type === "GRID") && t.push({
+        key: r.key,
+        name: r.name,
+        type: r.type,
+        nodeIds: [e.id]
+      });
+    } catch (r) {
+    }
+  if ("effectStyleId" in e && e.effectStyleId && typeof e.effectStyleId == "string")
+    try {
+      const r = await figma.getStyleByIdAsync(e.effectStyleId);
+      r && r.remote && (r.type === "PAINT" || r.type === "TEXT" || r.type === "EFFECT" || r.type === "GRID") && t.push({
+        key: r.key,
+        name: r.name,
+        type: r.type,
+        nodeIds: [e.id]
+      });
+    } catch (r) {
+    }
+  if ("fills" in e && Array.isArray(e.fills))
+    for (const r of e.fills)
+      r.type === "SOLID" && "boundVariables" in r && b(r.boundVariables, i);
+  if ("strokes" in e && Array.isArray(e.strokes))
+    for (const r of e.strokes)
+      "boundVariables" in r && b(r.boundVariables, i);
+  if ("effects" in e && Array.isArray(e.effects))
+    for (const r of e.effects)
+      "boundVariables" in r && b(r.boundVariables, i);
+  if (e.type === "TEXT" && "boundVariables" in e && b(e.boundVariables, i), "children" in e) {
+    if ("loadAsync" in e && typeof e.loadAsync == "function")
+      try {
+        await e.loadAsync();
+      } catch (r) {
+        console.warn("Could not load node:", r);
+      }
+    for (const r of e.children)
+      await T(
+        r,
+        s,
+        t,
+        i
+      );
+  }
+}
+function b(e, s) {
+  if (!(!e || typeof e != "object"))
+    for (const t of Object.values(e))
+      t && typeof t == "object" && "type" in t && t.type === "VARIABLE_ALIAS" && "id" in t && s.add(t.id);
+}
 figma.showUI(__html__, {
   width: 500,
   height: 650
 });
-x().then((e) => {
+R().then((e) => {
   figma.ui.postMessage(e);
 });
 figma.ui.onmessage = async (e) => {
@@ -467,37 +629,37 @@ figma.ui.onmessage = async (e) => {
         break;
       }
       case "reset-metadata": {
-        const t = await S();
+        const t = await B();
         figma.ui.postMessage(t);
         break;
       }
       case "load-pages": {
-        const t = await E();
+        const t = await J();
         figma.ui.postMessage(t);
         break;
       }
       case "export-page": {
-        const t = await N(e.pageIndex);
+        const t = await _(e.pageIndex);
         figma.ui.postMessage(t);
         break;
       }
       case "import-page": {
-        const t = await w(e.jsonData);
+        const t = await H(e.jsonData);
         figma.ui.postMessage(t);
         break;
       }
       case "quick-copy": {
-        const t = await C();
+        const t = await W();
         figma.ui.postMessage(t);
         break;
       }
       case "load-theme-settings": {
-        const t = await x();
+        const t = await R();
         figma.ui.postMessage(t);
         break;
       }
       case "update-theme-settings": {
-        const t = await R(
+        const t = await q(
           e.fileType,
           e.themeName
         );
@@ -516,12 +678,12 @@ figma.ui.onmessage = async (e) => {
       }
       case "load-auth-data": {
         try {
-          const t = await figma.clientStorage.getAsync("accessToken"), r = await figma.clientStorage.getAsync("selectedRepo");
+          const t = await figma.clientStorage.getAsync("accessToken"), i = await figma.clientStorage.getAsync("selectedRepo");
           figma.ui.postMessage({
             type: "auth-data-loaded",
             success: !0,
             accessToken: t || void 0,
-            selectedRepo: r || void 0
+            selectedRepo: i || void 0
           });
         } catch (t) {
           figma.ui.postMessage({
@@ -549,6 +711,41 @@ figma.ui.onmessage = async (e) => {
         });
         break;
       }
+      case "detect-used-libraries": {
+        const t = await G();
+        figma.ui.postMessage(t);
+        break;
+      }
+      case "select-node": {
+        try {
+          const t = await figma.getNodeByIdAsync(e.nodeId);
+          if (t) {
+            let i = null, r = t;
+            for (; r && r.type !== "PAGE"; )
+              r = r.parent;
+            r && r.type === "PAGE" && (i = r), i ? (await figma.setCurrentPageAsync(i), t.type !== "DOCUMENT" && (figma.currentPage.selection = [t], figma.viewport.scrollAndZoomIntoView([t])), figma.ui.postMessage({
+              type: "select-node-response",
+              success: !0
+            })) : figma.ui.postMessage({
+              type: "select-node-response",
+              success: !1,
+              error: "Could not find page containing node"
+            });
+          } else
+            figma.ui.postMessage({
+              type: "select-node-response",
+              success: !1,
+              error: "Node not found"
+            });
+        } catch (t) {
+          figma.ui.postMessage({
+            type: "select-node-response",
+            success: !1,
+            error: t instanceof Error ? t.message : "Failed to select node"
+          });
+        }
+        break;
+      }
       default: {
         console.warn("Unknown message type:", e.type);
         const t = {
@@ -562,11 +759,11 @@ figma.ui.onmessage = async (e) => {
     }
   } catch (t) {
     console.error("Error handling message:", t);
-    const r = {
+    const i = {
       type: "error",
       success: !1,
       error: t instanceof Error ? t.message : "Unknown error occurred"
     };
-    figma.ui.postMessage(r);
+    figma.ui.postMessage(i);
   }
 };

@@ -1,4 +1,10 @@
 import { createContext } from "react";
+import type {
+  LibraryUsage,
+  RemoteComponent,
+  RemoteStyle,
+} from "../plugin/types/messages";
+
 export interface ThemeSettings {
   fileType: string;
   themeName: string;
@@ -12,6 +18,12 @@ export interface IPluginContext {
 
   // Reset Metadata
   resetMetadata: () => Promise<void>;
+
+  // Used Libraries
+  detectUsedLibraries: () => Promise<void>;
+  usedLibraries: LibraryUsage[];
+  remoteComponents: RemoteComponent[];
+  remoteStyles: RemoteStyle[];
 
   // Loading states
   loading: {

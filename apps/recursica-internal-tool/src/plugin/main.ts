@@ -6,6 +6,7 @@ import {
   loadThemeSettings,
   updateThemeSettings,
 } from "./services/themeSettings";
+import { detectUsedLibraries } from "./services/detectUsedLibraries";
 import type { PluginMessage, PluginResponse } from "./types/messages";
 
 // Plugin configuration
@@ -136,6 +137,63 @@ figma.ui.onmessage = async (message: PluginMessage) => {
           type: "selected-repo-stored",
           success: true,
         });
+        break;
+      }
+
+      case "detect-used-libraries": {
+        const librariesResponse = await detectUsedLibraries();
+        figma.ui.postMessage(librariesResponse);
+        break;
+      }
+
+      case "select-node": {
+        try {
+          const node = await figma.getNodeByIdAsync(message.nodeId);
+          if (node) {
+            // Find the page that contains this node
+            let page: PageNode | null = null;
+            let current: BaseNode | null = node;
+            while (current && current.type !== "PAGE") {
+              current = current.parent;
+            }
+            if (current && current.type === "PAGE") {
+              page = current as PageNode;
+            }
+
+            if (page) {
+              // Switch to the page containing the node
+              await figma.setCurrentPageAsync(page);
+              // Select the node and scroll to it (node must be a SceneNode to be selectable)
+              if (node.type !== "DOCUMENT") {
+                figma.currentPage.selection = [node as SceneNode];
+                figma.viewport.scrollAndZoomIntoView([node as SceneNode]);
+              }
+              figma.ui.postMessage({
+                type: "select-node-response",
+                success: true,
+              });
+            } else {
+              figma.ui.postMessage({
+                type: "select-node-response",
+                success: false,
+                error: "Could not find page containing node",
+              });
+            }
+          } else {
+            figma.ui.postMessage({
+              type: "select-node-response",
+              success: false,
+              error: "Node not found",
+            });
+          }
+        } catch (error) {
+          figma.ui.postMessage({
+            type: "select-node-response",
+            success: false,
+            error:
+              error instanceof Error ? error.message : "Failed to select node",
+          });
+        }
         break;
       }
 

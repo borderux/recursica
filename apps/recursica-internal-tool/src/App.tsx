@@ -2,6 +2,7 @@ import { MemoryRouter, Routes, Route } from "react-router";
 import Layout from "./components/Layout";
 import Home from "./pages/Home";
 import ResetMetadata from "./pages/ResetMetadata";
+import UsedLibraries from "./pages/UsedLibraries";
 import PageManagement from "./pages/PageManagement";
 import ThemeSettings from "./pages/ThemeSettings";
 import { Auth } from "./pages/Auth";
@@ -18,6 +19,7 @@ function App() {
               <Route index element={<Home />} />
               <Route path="auth" element={<Auth />} />
               <Route path="reset-metadata" element={<ResetMetadata />} />
+              <Route path="used-libraries" element={<UsedLibraries />} />
               <Route path="page-management" element={<PageManagement />} />
               <Route path="theme-settings" element={<ThemeSettings />} />
             </Route>

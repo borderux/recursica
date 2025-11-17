@@ -1,5 +1,10 @@
 import { useEffect, useLayoutEffect, useState, useCallback } from "react";
 import { PluginContext, type ThemeSettings } from "./PluginContext";
+import type {
+  LibraryUsage,
+  RemoteComponent,
+  RemoteStyle,
+} from "../plugin/types/messages";
 
 interface PluginProviderProps {
   children: React.ReactNode;
@@ -17,6 +22,11 @@ export function PluginProvider({ children }: PluginProviderProps) {
     currentUser: false,
   });
   const [error, setError] = useState<string | undefined>();
+  const [usedLibraries, setUsedLibraries] = useState<LibraryUsage[]>([]);
+  const [remoteComponents, setRemoteComponents] = useState<RemoteComponent[]>(
+    [],
+  );
+  const [remoteStyles, setRemoteStyles] = useState<RemoteStyle[]>([]);
 
   // Theme Settings functions
   const loadThemeSettings = useCallback(async () => {
@@ -71,6 +81,18 @@ export function PluginProvider({ children }: PluginProviderProps) {
           }
           break;
 
+        case "used-libraries-response":
+          if (pluginMessage.success) {
+            setUsedLibraries(pluginMessage.libraries || []);
+            setRemoteComponents(pluginMessage.remoteComponents || []);
+            setRemoteStyles(pluginMessage.remoteStyles || []);
+            setLoading((prev) => ({ ...prev, operations: false }));
+          } else {
+            setError(pluginMessage.error || "Failed to detect used libraries");
+            setLoading((prev) => ({ ...prev, operations: false }));
+          }
+          break;
+
         case "error":
           setError(pluginMessage.error || "An unknown error occurred");
           setLoading((prev) => ({ ...prev, operations: false }));
@@ -112,6 +134,15 @@ export function PluginProvider({ children }: PluginProviderProps) {
     parent.postMessage({ pluginMessage: { type: "reset-metadata" } }, "*");
   }, []);
 
+  // Detect Used Libraries function
+  const detectUsedLibraries = useCallback(async () => {
+    setLoading((prev) => ({ ...prev, operations: true }));
+    parent.postMessage(
+      { pluginMessage: { type: "detect-used-libraries" } },
+      "*",
+    );
+  }, []);
+
   // Error handling
   const clearError = useCallback(() => {
     setError(undefined);
@@ -122,6 +153,10 @@ export function PluginProvider({ children }: PluginProviderProps) {
     updateThemeSettings,
     loadThemeSettings,
     resetMetadata,
+    detectUsedLibraries,
+    usedLibraries,
+    remoteComponents,
+    remoteStyles,
     loading,
     error,
     clearError,

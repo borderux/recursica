@@ -155,6 +155,55 @@ export interface StoreSelectedRepoResponse extends BaseMessage {
   error?: string;
 }
 
+// Select Node Messages
+export interface SelectNodeMessage extends BaseMessage {
+  type: "select-node";
+  nodeId: string;
+}
+
+export interface SelectNodeResponse extends BaseMessage {
+  type: "select-node-response";
+  success: boolean;
+  error?: string;
+}
+
+// Used Libraries Messages
+export interface DetectUsedLibrariesMessage extends BaseMessage {
+  type: "detect-used-libraries";
+}
+
+export interface LibraryUsage {
+  libraryName: string;
+  usedIn: {
+    components: number;
+    styles: number;
+    variables: number;
+  };
+}
+
+export interface RemoteComponent {
+  key: string;
+  name: string;
+  nodeIds: string[]; // IDs of nodes using this component
+}
+
+export interface RemoteStyle {
+  key: string;
+  name: string;
+  type: "PAINT" | "TEXT" | "EFFECT" | "GRID";
+  nodeIds: string[]; // IDs of nodes using this style
+}
+
+export interface UsedLibrariesResponse extends BaseMessage {
+  type: "used-libraries-response";
+  success: boolean;
+  libraries: LibraryUsage[];
+  remoteComponents?: RemoteComponent[];
+  remoteStyles?: RemoteStyle[];
+  message?: string;
+  error?: string;
+}
+
 export interface ErrorMessage extends BaseMessage {
   type: "error";
   success: false;
@@ -173,7 +222,9 @@ export type PluginMessage =
   | StoreAuthDataMessage
   | LoadAuthDataMessage
   | ClearAuthDataMessage
-  | StoreSelectedRepoMessage;
+  | StoreSelectedRepoMessage
+  | DetectUsedLibrariesMessage
+  | SelectNodeMessage;
 
 export type PluginResponse =
   | GetCurrentUserResponse
@@ -188,4 +239,6 @@ export type PluginResponse =
   | LoadAuthDataResponse
   | ClearAuthDataResponse
   | StoreSelectedRepoResponse
+  | UsedLibrariesResponse
+  | SelectNodeResponse
   | ErrorMessage;

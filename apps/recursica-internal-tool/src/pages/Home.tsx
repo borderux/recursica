@@ -24,6 +24,10 @@ export default function Home() {
             collections
           </li>
           <li>
+            <strong>Used Libraries:</strong> Detect which team libraries are
+            actually being used in your file
+          </li>
+          <li>
             <strong>GitHub profile:</strong> Link your GitHub account to push to
             a repository
           </li>
