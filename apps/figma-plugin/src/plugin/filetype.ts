@@ -1,4 +1,3 @@
-import { exportIcons } from './exportIcons';
 export class PluginError extends Error {
   constructor(message: string) {
     super(message);
@@ -61,39 +60,124 @@ class FiletypeSingleton {
     // Get local variable collections
     const localCollections = await figma.variables.getLocalVariableCollectionsAsync();
 
+    console.log('[detectFiletype] Found', localCollections.length, 'local collections');
+    localCollections.forEach((collection, index) => {
+      const metadataFileType = collection.getSharedPluginData('recursica', 'file-type');
+      console.log(`[detectFiletype] Collection ${index + 1}:`, {
+        name: collection.name,
+        key: collection.key,
+        metadataFileType: metadataFileType || '(none)',
+      });
+    });
+
     let fileType: FileTypes | undefined;
     let themeName = '';
 
     if (localCollections.length > 0) {
       // Look for collections that indicate the project type
-      // Priority order: tokens > themes > ui-kit > icons (default)
-      const tokensCollection =
-        localCollections.find((collection) => collection.name.toLowerCase().includes('tokens')) ||
-        localCollections.every(
-          (collection) => collection.getSharedPluginData('recursica', 'file-type') === 'tokens'
-        );
-      const themesCollection =
-        localCollections.find((collection) => collection.name.toLowerCase().includes('themes')) ||
-        localCollections.every(
-          (collection) => collection.getSharedPluginData('recursica', 'file-type') === 'themes'
-        );
-      const uikitCollection =
-        localCollections.find(
-          (collection) =>
-            collection.name.toLowerCase().includes('ui kit') ||
-            collection.name.toLowerCase().includes('uikit')
-        ) ||
-        localCollections.every(
-          (collection) => collection.getSharedPluginData('recursica', 'file-type') === 'ui-kit'
-        );
+      // Priority order: tokens > ui-kit > themes > icons (default)
+      // Check metadata first (most reliable), then fall back to name patterns
+
+      // Check for tokens: collection name contains "tokens" (prioritize name over metadata)
+      const tokensCollection = localCollections.find((collection) => {
+        const name = collection.name.toLowerCase();
+        const nameMatches = name.includes('tokens');
+        const metadataFileType = collection.getSharedPluginData('recursica', 'file-type');
+        const metadataMatches = metadataFileType === 'tokens';
+
+        // Only trust metadata if name also matches, or trust name if it matches
+        if (nameMatches && metadataMatches) {
+          console.log(
+            '[detectFiletype] Found tokens collection by name and metadata:',
+            collection.name
+          );
+          return true;
+        }
+        if (nameMatches) {
+          console.log('[detectFiletype] Found tokens collection by name:', collection.name);
+          return true;
+        }
+        // Don't trust metadata alone if name doesn't match
+        if (metadataMatches) {
+          console.log(
+            '[detectFiletype] Ignoring tokens metadata (name does not match):',
+            collection.name
+          );
+        }
+        return false;
+      });
+
+      // Check for ui-kit: collection name contains "layer", "ui kit", or "uikit" (prioritize name over metadata)
+      // UI Kit collection is named "Layer"
+      const uikitCollection = localCollections.find((collection) => {
+        const name = collection.name.toLowerCase();
+        const nameMatches = name === 'layer' || name.includes('ui kit') || name.includes('uikit');
+        const metadataFileType = collection.getSharedPluginData('recursica', 'file-type');
+        const metadataMatches = metadataFileType === 'ui-kit';
+
+        // Only trust metadata if name also matches, or trust name if it matches
+        if (nameMatches && metadataMatches) {
+          console.log(
+            '[detectFiletype] Found ui-kit collection by name and metadata:',
+            collection.name
+          );
+          return true;
+        }
+        if (nameMatches) {
+          console.log('[detectFiletype] Found ui-kit collection by name:', collection.name);
+          return true;
+        }
+        // Don't trust metadata alone if name doesn't match
+        if (metadataMatches) {
+          console.log(
+            '[detectFiletype] Ignoring ui-kit metadata (name does not match):',
+            collection.name
+          );
+        }
+        return false;
+      });
+
+      // Check for themes: collection name contains "theme" or "themes" (prioritize name over metadata)
+      const themesCollection = localCollections.find((collection) => {
+        const name = collection.name.toLowerCase();
+        const nameMatches = name.includes('theme') || name.includes('themes');
+        const metadataFileType = collection.getSharedPluginData('recursica', 'file-type');
+        const metadataMatches = metadataFileType === 'themes';
+
+        // Only trust metadata if name also matches, or trust name if it matches
+        if (nameMatches && metadataMatches) {
+          console.log(
+            '[detectFiletype] Found themes collection by name and metadata:',
+            collection.name
+          );
+          return true;
+        }
+        if (nameMatches) {
+          console.log('[detectFiletype] Found themes collection by name:', collection.name);
+          return true;
+        }
+        // Don't trust metadata alone if name doesn't match
+        if (metadataMatches) {
+          console.log(
+            '[detectFiletype] Ignoring themes metadata (name does not match):',
+            collection.name
+          );
+        }
+        return false;
+      });
 
       // Determine file type based on collection names found
       if (tokensCollection) {
         fileType = 'tokens';
-      } else if (themesCollection) {
-        fileType = 'themes';
+        console.log('[detectFiletype] Selected file type: tokens');
       } else if (uikitCollection) {
         fileType = 'ui-kit';
+        console.log('[detectFiletype] Selected file type: ui-kit');
+      } else if (themesCollection) {
+        fileType = 'themes';
+        console.log('[detectFiletype] Selected file type: themes');
+      } else {
+        console.log('[detectFiletype] No matching collection found for tokens/ui-kit/themes');
       }
 
       // Extract theme name from the "ID variables" collection if it exists
@@ -129,16 +213,26 @@ class FiletypeSingleton {
     }
     if (fileType === undefined || fileType === 'icons') {
       // If no file type was determined from collections, check if this is an icons file
+      // Lightweight check: just look for component sets without exporting
       let iconsFound = false;
 
+      // Load all pages first
+      await figma.loadAllPagesAsync();
+
+      function hasIconComponents(node: BaseNode): boolean {
+        if (node.type === 'COMPONENT_SET') {
+          return true;
+        }
+        if ('children' in node) {
+          return node.children.some((child) => hasIconComponents(child));
+        }
+        return false;
+      }
+
       for (const page of figma.root.children) {
-        if (page.type === 'PAGE') {
-          await figma.setCurrentPageAsync(page);
-          const icons = await exportIcons();
-          if (icons && Object.keys(icons).length > 0) {
-            iconsFound = true;
-            break;
-          }
+        if (page.type === 'PAGE' && hasIconComponents(page)) {
+          iconsFound = true;
+          break;
         }
       }
 

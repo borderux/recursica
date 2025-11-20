@@ -79,7 +79,7 @@ async function safeExportComponent(component: ComponentNode): Promise<string | n
   }
 }
 
-async function collectIconsFromNodes(node: BaseNode, svgIcons: SvgMetadata): Promise<void> {
+export async function collectIconsFromNodes(node: BaseNode, svgIcons: SvgMetadata): Promise<void> {
   if (node.type === 'VECTOR') {
     if (node.parent?.type === 'COMPONENT' && node.parent.parent?.type === 'COMPONENT_SET') {
       const component = node.parent as ComponentNode;

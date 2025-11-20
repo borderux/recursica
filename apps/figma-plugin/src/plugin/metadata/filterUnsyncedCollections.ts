@@ -1,18 +1,12 @@
 /**
- * Checks which local variable collections have not been marked as synced.
+ * @deprecated This function is no longer used. Sync status is now tracked in global plugin metadata
+ * (figma.clientStorage) instead of collection-level metadata.
  *
- * This function filters the provided array of local variable collections and returns
- * those collections where the shared plugin data key 'variables-synced' (under the 'recursica' namespace)
- * is not set to the string 'true'.
- *
- * @param {VariableCollection[]} localCollections - The array of local variable collections to check.
- * @returns {VariableCollection[]} An array of collections that are not marked as synced.
+ * This file is kept for reference but the function is not used anywhere in the codebase.
  */
 export function filterUnsyncedCollections(
   localCollections: VariableCollection[]
 ): VariableCollection[] {
-  const unsynced = localCollections.filter(
-    (collection) => collection.getSharedPluginData('recursica', 'variables-synced') !== 'true'
-  );
-  return unsynced;
+  // Return all collections since we no longer track sync status at collection level
+  return localCollections;
 }
