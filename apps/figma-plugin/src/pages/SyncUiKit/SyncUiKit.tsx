@@ -1,63 +1,77 @@
 import { Flex, Typography, Button } from '@recursica/ui-kit-mantine';
 import { Layout } from '../../components';
 import { useFigma } from '../../hooks';
-import { useNavigate, useSearchParams } from 'react-router';
+import { useNavigate } from 'react-router';
 import { useEffect, useState } from 'react';
 
 export function SyncUiKit() {
-  const { syncStatus, filetype, error } = useFigma();
+  const { syncStatus, filetype, error, syncMetadata } = useFigma();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const ignoreError = searchParams.get('ignore-error') === 'true';
-  const [hasTriggeredSync, setHasTriggeredSync] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
-    console.log('[SyncUiKit] Page loaded', { ignoreError });
-  }, [ignoreError]);
+    console.log('[SyncUiKit] Page loaded');
+  }, []);
 
-  // Check if not in UI Kit file (unless ignoring error)
+  // Check if not in UI Kit file
   useEffect(() => {
-    if (!ignoreError && filetype && filetype !== 'ui-kit') {
+    if (filetype && filetype !== 'ui-kit') {
       console.log('[SyncUiKit] Not in UI Kit file, navigating to error page');
       navigate('/sync-ui-kit-error');
     }
-  }, [filetype, navigate, ignoreError]);
+  }, [filetype, navigate]);
 
-  // If ignore-error is set, trigger sync immediately
+  // Check if UI Kit is already synced
   useEffect(() => {
-    if (ignoreError && !hasTriggeredSync && filetype === 'ui-kit') {
-      console.log('[SyncUiKit] ignore-error=true, triggering sync with error ignored');
-      setHasTriggeredSync(true);
-      parent.postMessage(
-        {
-          pluginMessage: {
-            type: 'SYNC_UI_KIT_IGNORE_ERROR',
-          },
-          pluginId: '*',
-        },
-        '*'
-      );
-    }
-  }, [ignoreError, hasTriggeredSync, filetype]);
+    if (syncMetadata?.uiKit?.synchronized === true) {
+      // Check if all files are synchronized - if so, go to file-synced page
+      const tokensSynced = syncMetadata?.tokens?.synchronized === true;
+      const brandSynced = syncMetadata?.brand?.synchronized === true;
+      const iconsSynced = syncMetadata?.icons !== undefined;
+      const uiKitSynced = syncMetadata?.uiKit?.synchronized === true;
+      const allSynced = tokensSynced && brandSynced && iconsSynced && uiKitSynced;
 
-  // Navigate to error page if there's an error (unless ignoring error)
-  useEffect(() => {
-    if (!ignoreError && error && filetype === 'ui-kit') {
-      console.log('[SyncUiKit] Error detected, navigating to error page');
-      navigate('/sync-ui-kit-error');
+      if (allSynced) {
+        console.log('[SyncUiKit] All files synchronized, navigating to file-synced page');
+        navigate('/file-synced', { replace: true });
+      }
     }
-  }, [error, filetype, navigate, ignoreError]);
+  }, [syncMetadata, navigate]);
+
+  // Navigate to error page if there's an error
+  useEffect(() => {
+    if (error && filetype === 'ui-kit') {
+      setIsSyncing(false); // Stop loading on error
+      // Check if error is about Brand not being published or not accessible
+      const isBrandNotPublished =
+        error.includes('Brand file has not been published') ||
+        error.includes('Brand library collection is not accessible') ||
+        error.includes('import at least one variable from the Brand library') ||
+        error.includes('BRAND_NOT_PUBLISHED');
+      if (isBrandNotPublished) {
+        console.log(
+          '[SyncUiKit] Brand not published/accessible error detected, navigating to brand not published page'
+        );
+        navigate('/sync-ui-kit-brand-not-published');
+      } else {
+        console.log('[SyncUiKit] Error detected, navigating to error page');
+        navigate('/sync-ui-kit-error');
+      }
+    }
+  }, [error, filetype, navigate]);
 
   // Navigate to success page when sync completes
   useEffect(() => {
     const isSynced = syncStatus.variablesSynced && syncStatus.metadataGenerated;
     if (isSynced && filetype === 'ui-kit') {
+      setIsSyncing(false); // Stop loading on completion
       console.log('[SyncUiKit] Sync completed, navigating to success page');
       navigate('/file-synced');
     }
   }, [syncStatus, filetype, navigate]);
 
   const handleSync = () => {
+    setIsSyncing(true);
     parent.postMessage(
       {
         pluginMessage: {
@@ -83,7 +97,11 @@ export function SyncUiKit() {
         >
           Press sync below to begin
         </Typography>
-        <Button label='Sync' onClick={handleSync} />
+        <Button
+          label={isSyncing ? 'Syncing...' : 'Sync'}
+          onClick={handleSync}
+          disabled={isSyncing}
+        />
       </Flex>
     </Layout>
   );

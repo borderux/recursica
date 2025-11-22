@@ -25,6 +25,11 @@ export function Error() {
     error?.includes('TOKENS_NOT_CONNECTED') ||
     error?.includes('THEMES_NOT_CONNECTED') ||
     error?.includes("You're in the wrong file");
+  // Check if error is about Tokens not being published
+  const isTokensNotPublished =
+    error?.includes('not been published') || error?.includes('TOKENS_NOT_PUBLISHED');
+  // Only show Continue button for missing variables, not for publish errors
+  const showContinueButton = isMissingVariables && !isTokensNotPublished;
 
   const title = isMissingVariables
     ? 'Missing Variables'
@@ -50,7 +55,7 @@ export function Error() {
 
   return (
     <Layout
-      footer={isMissingVariables ? <Button label='Continue' onClick={handleContinue} /> : undefined}
+      footer={showContinueButton ? <Button label='Continue' onClick={handleContinue} /> : undefined}
     >
       <Flex direction='column' gap={'size/spacer/1-5x'} align='center'>
         <Icon name='face_frown_outline' size={32} />

@@ -8,13 +8,14 @@
 export interface SyncMetadata {
   tokens?: {
     collectionKey: string;
-    needsConnection: boolean;
     synchronized: boolean;
+    variableNameToKey?: Record<string, string>; // Map of variable name -> variable key for importing
   };
   brand?: {
     collectionKey: string;
     synchronized: boolean;
-    published: boolean;
+    sampleVariableKey?: string; // Key of a variable to import to activate the collection
+    variableNameToKey?: Record<string, string>; // Map of variable name -> variable key for importing
   };
   icons?: {};
   uiKit?: {
@@ -50,19 +51,7 @@ export async function getSyncMetadata(): Promise<SyncMetadata | null> {
 export async function saveSyncMetadata(metadata: SyncMetadata): Promise<void> {
   try {
     const jsonString = JSON.stringify(metadata);
-    console.log('[saveSyncMetadata] Writing to global plugin storage:');
-    console.log('[saveSyncMetadata] Storage key:', STORAGE_KEY);
-    console.log('[saveSyncMetadata] Metadata object:', metadata);
-    console.log('[saveSyncMetadata] JSON string:', jsonString);
     await figma.clientStorage.setAsync(STORAGE_KEY, jsonString);
-
-    // Verify what was written
-    const verifyData = await figma.clientStorage.getAsync(STORAGE_KEY);
-    console.log('[saveSyncMetadata] Verified written data:', verifyData);
-    if (verifyData) {
-      const parsed = JSON.parse(verifyData as string);
-      console.log('[saveSyncMetadata] Parsed verified data:', parsed);
-    }
   } catch (error) {
     console.error('[saveSyncMetadata] Error saving sync metadata:', error);
     throw error;
@@ -95,58 +84,105 @@ export async function updateSyncMetadata(updates: Partial<SyncMetadata>): Promis
   }
 
   // Apply updates - deep merge nested objects
-  if (updates.tokens) {
-    const existingTokens = existing?.tokens;
-    merged.tokens = {
-      collectionKey: updates.tokens.collectionKey || existingTokens?.collectionKey || '',
-      needsConnection:
-        updates.tokens.needsConnection !== undefined
-          ? updates.tokens.needsConnection
-          : existingTokens?.needsConnection || false,
-      synchronized:
-        updates.tokens.synchronized !== undefined
-          ? updates.tokens.synchronized
-          : existingTokens?.synchronized || false,
-    };
+  // If a property is explicitly set to undefined, remove it from the merged result
+  if ('tokens' in updates) {
+    if (updates.tokens === undefined) {
+      // Explicitly remove tokens entry
+      delete merged.tokens;
+    } else if (updates.tokens) {
+      const existingTokens = existing?.tokens;
+      // Create new object with only the fields we want - this strips out any old fields
+      // like uniqueId or needsConnection that may exist in stored metadata
+      merged.tokens = {
+        collectionKey: updates.tokens.collectionKey || existingTokens?.collectionKey || '',
+        synchronized:
+          updates.tokens.synchronized !== undefined
+            ? updates.tokens.synchronized
+            : existingTokens?.synchronized || false,
+      };
+
+      // Handle variableNameToKey - use new value if provided, otherwise keep existing
+      if (updates.tokens.variableNameToKey !== undefined) {
+        merged.tokens.variableNameToKey = updates.tokens.variableNameToKey;
+      } else if (existingTokens?.variableNameToKey !== undefined) {
+        merged.tokens.variableNameToKey = existingTokens.variableNameToKey;
+      }
+    }
   }
 
-  if (updates.brand) {
-    const existingBrand = existing?.brand;
-    const brandSynchronized =
-      updates.brand.synchronized !== undefined
-        ? updates.brand.synchronized
-        : existingBrand?.synchronized || false;
-    merged.brand = {
-      collectionKey: updates.brand.collectionKey || existingBrand?.collectionKey || '',
-      synchronized: brandSynchronized,
-      published:
-        updates.brand.published !== undefined
-          ? updates.brand.published
-          : existingBrand?.published || false,
-    };
-    console.log('[updateSyncMetadata] Brand update - synchronized value:', brandSynchronized);
-    console.log(
-      '[updateSyncMetadata] Brand update - updates.brand.synchronized:',
-      updates.brand.synchronized
-    );
-    console.log(
-      '[updateSyncMetadata] Brand update - existingBrand?.synchronized:',
-      existingBrand?.synchronized
-    );
+  if ('brand' in updates) {
+    if (updates.brand === undefined) {
+      // Explicitly remove brand entry
+      delete merged.brand;
+    } else if (updates.brand) {
+      const existingBrand = existing?.brand;
+      const brandSynchronized =
+        updates.brand.synchronized !== undefined
+          ? updates.brand.synchronized
+          : existingBrand?.synchronized || false;
+      const brandData: {
+        collectionKey: string;
+        synchronized: boolean;
+        sampleVariableKey?: string;
+        variableNameToKey?: Record<string, string>;
+      } = {
+        collectionKey: updates.brand.collectionKey || existingBrand?.collectionKey || '',
+        synchronized: brandSynchronized,
+      };
+
+      // Handle sampleVariableKey - use new value if provided, otherwise keep existing
+      if (updates.brand.sampleVariableKey !== undefined) {
+        brandData.sampleVariableKey = updates.brand.sampleVariableKey;
+      } else if (existingBrand?.sampleVariableKey !== undefined) {
+        brandData.sampleVariableKey = existingBrand.sampleVariableKey;
+      }
+
+      // Handle variableNameToKey - use new value if provided, otherwise keep existing
+      if (updates.brand.variableNameToKey !== undefined) {
+        brandData.variableNameToKey = updates.brand.variableNameToKey;
+      } else if (existingBrand?.variableNameToKey !== undefined) {
+        brandData.variableNameToKey = existingBrand.variableNameToKey;
+      }
+
+      merged.brand = brandData;
+      console.log(
+        '[updateSyncMetadata] Brand update - sampleVariableKey:',
+        merged.brand.sampleVariableKey
+      );
+      console.log('[updateSyncMetadata] Brand update - synchronized value:', brandSynchronized);
+      console.log(
+        '[updateSyncMetadata] Brand update - updates.brand.synchronized:',
+        updates.brand.synchronized
+      );
+      console.log(
+        '[updateSyncMetadata] Brand update - existingBrand?.synchronized:',
+        existingBrand?.synchronized
+      );
+    }
   }
 
-  if (updates.icons) {
-    merged.icons = {};
+  if ('icons' in updates) {
+    if (updates.icons === undefined) {
+      // Explicitly remove icons entry
+      delete merged.icons;
+    } else if (updates.icons) {
+      merged.icons = {};
+    }
   }
 
-  if (updates.uiKit) {
-    const existingUiKit = existing?.uiKit;
-    merged.uiKit = {
-      synchronized:
-        updates.uiKit.synchronized !== undefined
-          ? updates.uiKit.synchronized
-          : existingUiKit?.synchronized || false,
-    };
+  if ('uiKit' in updates) {
+    if (updates.uiKit === undefined) {
+      // Explicitly remove uiKit entry
+      delete merged.uiKit;
+    } else if (updates.uiKit) {
+      const existingUiKit = existing?.uiKit;
+      merged.uiKit = {
+        synchronized:
+          updates.uiKit.synchronized !== undefined
+            ? updates.uiKit.synchronized
+            : existingUiKit?.synchronized || false,
+      };
+    }
   }
 
   await saveSyncMetadata(merged);

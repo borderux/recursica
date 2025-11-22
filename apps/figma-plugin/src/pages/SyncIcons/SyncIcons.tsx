@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router';
 import { useEffect } from 'react';
 
 export function SyncIcons() {
-  const { syncStatus, filetype } = useFigma();
+  const { syncStatus, filetype, syncMetadata } = useFigma();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,9 +22,20 @@ export function SyncIcons() {
 
   // Check if icons are already synced
   useEffect(() => {
-    // Icons don't have a synchronized flag, just check if metadata exists
-    // This will be handled by the Home page routing
-  }, []);
+    // Check if all files are synchronized - if so, go to file-synced page
+    if (syncMetadata?.icons) {
+      const tokensSynced = syncMetadata?.tokens?.synchronized === true;
+      const brandSynced = syncMetadata?.brand?.synchronized === true;
+      const iconsSynced = syncMetadata?.icons !== undefined;
+      const uiKitSynced = syncMetadata?.uiKit?.synchronized === true;
+      const allSynced = tokensSynced && brandSynced && iconsSynced && uiKitSynced;
+
+      if (allSynced) {
+        console.log('[SyncIcons] All files synchronized, navigating to file-synced page');
+        navigate('/file-synced', { replace: true });
+      }
+    }
+  }, [syncMetadata, navigate]);
 
   // Navigate to success page when sync completes
   useEffect(() => {

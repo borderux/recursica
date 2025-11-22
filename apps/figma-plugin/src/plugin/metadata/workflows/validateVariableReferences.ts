@@ -4,12 +4,14 @@
  * @param sourceCollection - The collection containing variables that reference target
  * @param targetCollection - The collection that should contain the referenced variables
  * @param targetCollectionName - Name for error messages
+ * @param targetVariablesMap - Optional map of target variables (if provided, uses this instead of collection.variableIds)
  * @returns Object with validation result and missing variable names
  */
 export async function validateVariableReferences(
   sourceCollection: VariableCollection,
   targetCollection: VariableCollection,
-  targetCollectionName: string
+  targetCollectionName: string,
+  targetVariablesMap?: Map<string, Variable>
 ): Promise<{
   isValid: boolean;
   missingVariables: string[];
@@ -17,11 +19,17 @@ export async function validateVariableReferences(
   const missingVariables = new Set<string>();
 
   // Get all variables in target collection, indexed by name
-  const targetVariables = new Map<string, Variable>();
-  for (const varId of targetCollection.variableIds) {
-    const variable = await figma.variables.getVariableByIdAsync(varId);
-    if (variable) {
-      targetVariables.set(variable.name, variable);
+  // Use provided map if available (contains all library variables), otherwise use collection.variableIds (only locally imported)
+  let targetVariables: Map<string, Variable>;
+  if (targetVariablesMap) {
+    targetVariables = targetVariablesMap;
+  } else {
+    targetVariables = new Map<string, Variable>();
+    for (const varId of targetCollection.variableIds) {
+      const variable = await figma.variables.getVariableByIdAsync(varId);
+      if (variable) {
+        targetVariables.set(variable.name, variable);
+      }
     }
   }
 
@@ -62,6 +70,10 @@ export async function validateVariableReferences(
   }
 
   const missingArray = Array.from(missingVariables);
+  if (missingArray.length > 0) {
+    console.log(`[validateVariableReferences] Missing variables:`, missingArray.sort());
+  }
+
   return {
     isValid: missingArray.length === 0,
     missingVariables: missingArray,

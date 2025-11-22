@@ -26,8 +26,8 @@ export interface IFigmaContext {
     metadataGenerated: boolean;
   };
   syncMetadata: {
-    tokens?: { collectionKey: string; needsConnection: boolean; synchronized: boolean };
-    brand?: { collectionKey: string; synchronized: boolean; published: boolean };
+    tokens?: { collectionKey: string; synchronized: boolean };
+    brand?: { collectionKey: string; synchronized: boolean };
     icons?: {};
     uiKit?: { synchronized: boolean };
   } | null;

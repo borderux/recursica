@@ -22,8 +22,11 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
     metadataGenerated: false,
   });
   const [syncMetadata, setSyncMetadata] = useState<{
-    tokens?: { collectionKey: string; needsConnection: boolean; synchronized: boolean };
-    brand?: { collectionKey: string; synchronized: boolean; published: boolean };
+    tokens?: {
+      collectionKey: string;
+      synchronized: boolean;
+    };
+    brand?: { collectionKey: string; synchronized: boolean };
     icons?: {};
     uiKit?: { synchronized: boolean };
   } | null>(null);
@@ -131,13 +134,15 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
         type === 'TOKENS_NOT_FOUND' ||
         type === 'BRAND_NOT_FOUND' ||
         type === 'TOKENS_NOT_ACCESSIBLE' ||
+        type === 'TOKENS_NOT_PUBLISHED' ||
+        type === 'BRAND_NOT_PUBLISHED' ||
         type === 'BRAND_NOT_ACCESSIBLE' ||
         type === 'TOKENS_COLLECTION_NOT_FOUND' ||
         type === 'BRAND_COLLECTION_NOT_FOUND' ||
         type === 'UI_KIT_COLLECTIONS_NOT_FOUND' ||
         type === 'ICONS_FILE_ERROR'
       ) {
-        setError(type);
+        setError(payload?.message || type);
       }
     };
     return () => {

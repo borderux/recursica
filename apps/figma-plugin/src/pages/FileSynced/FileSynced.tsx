@@ -5,52 +5,8 @@ import { useMemo } from 'react';
 import { NavLink, useNavigate } from 'react-router';
 
 export function FileSynced() {
-  const { repository, filetype } = useFigma();
+  const { repository } = useFigma();
   const navigate = useNavigate();
-
-  const getNextStepTitle = useMemo(() => {
-    if (filetype === 'tokens') {
-      return 'All done here';
-    }
-    if (filetype === 'themes') {
-      return 'Nice! Move on from here.';
-    }
-    if (filetype === 'icons') {
-      return 'All done here';
-    }
-    if (filetype === 'ui-kit') {
-      return "If you're a designer, your work is done here";
-    }
-    return 'You can now close the plugin and continue';
-  }, [filetype]);
-
-  const getNextStepDescription = useMemo(() => {
-    if (filetype === 'tokens') {
-      return (
-        <>
-          Finally, go to <b>#2 Brand file</b> file and run the plugin once more
-        </>
-      );
-    }
-    if (filetype === 'themes') {
-      return (
-        <>
-          Finally, go to <b>#3 Icons file</b> file and run the plugin once more
-        </>
-      );
-    }
-    if (filetype === 'icons') {
-      return (
-        <>
-          Finally, go to <b>#4 UI kit file</b> file and run the plugin once more
-        </>
-      );
-    }
-    if (filetype === 'ui-kit') {
-      return 'Feeling brave? Connect a repo';
-    }
-    return 'You can now close the plugin and continue';
-  }, [filetype]);
 
   const target = useMemo(() => {
     if (repository && repository.platform && repository.accessToken) {
@@ -86,14 +42,7 @@ export function FileSynced() {
       header='default'
       footer={
         <Flex direction='column' gap={8} w='100%'>
-          {filetype === 'ui-kit' && (
-            <Button
-              disabled={!filetype}
-              component={NavLink}
-              to={target}
-              label='Connect Git repository'
-            />
-          )}
+          <Button component={NavLink} to={target} label='Connect Git repository' />
           <Button variant='text' label='Resync Files' onClick={handleResync} />
         </Flex>
       }
@@ -101,14 +50,14 @@ export function FileSynced() {
       <Flex direction='column' align='center' justify='center' gap={16}>
         <Icon name='check_circle_outline' color='layers/layer-1/elements/success-text' />
         <Typography variant='h6' textAlign='center' color='layers/layer-1/elements/success-text'>
-          {getNextStepTitle}
+          All files synchronized!
         </Typography>
         <Typography
           variant='body-2/normal'
           textAlign='center'
           color='layers/layer-1/elements/success-text'
         >
-          {getNextStepDescription}
+          All your design files have been successfully synchronized.
         </Typography>
       </Flex>
     </Layout>

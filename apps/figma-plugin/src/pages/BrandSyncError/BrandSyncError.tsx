@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router';
 import { useEffect } from 'react';
 
 export function BrandSyncError() {
-  const { error, filetype } = useFigma();
+  const { error, filetype, clearError } = useFigma();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -14,17 +14,27 @@ export function BrandSyncError() {
 
   // Show warning if not in Brand file
   const isWrongFile = filetype && filetype !== 'themes';
+  // Only show Continue button if it's not wrong file
+  const showContinueButton = !isWrongFile;
 
   const handleContinue = () => {
-    console.log(
-      '[BrandSyncError] Continue button clicked, navigating to sync-brand with ignore-error=true'
+    console.log('[BrandSyncError] Continue button clicked, marking Brand as synchronized');
+    clearError(); // Clear error to prevent Home page from redirecting to /error
+    parent.postMessage(
+      {
+        pluginMessage: {
+          type: 'MARK_BRAND_SYNCHRONIZED',
+        },
+        pluginId: '*',
+      },
+      '*'
     );
-    navigate('/sync-brand?ignore-error=true');
+    navigate('/home?skip-splash=true');
   };
 
   return (
     <Layout
-      footer={!isWrongFile ? <Button label='Continue' onClick={handleContinue} /> : undefined}
+      footer={showContinueButton ? <Button label='Continue' onClick={handleContinue} /> : undefined}
     >
       <Flex direction='column' h='100%' align='center' justify='center' gap={16}>
         <Icon name='face_frown_outline' size={48} color='layers/layer-1/elements/alert-text' />

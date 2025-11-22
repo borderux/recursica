@@ -17,11 +17,18 @@ export function UiKitSyncError() {
   const isSyncError = !isWrongFile; // If not wrong file, it's a sync error
 
   const handleContinue = () => {
-    console.log(
-      '[UiKitSyncError] Continue button clicked, navigating to /sync-ui-kit?ignore-error=true'
-    );
+    console.log('[UiKitSyncError] Continue button clicked, marking UI Kit as synchronized');
     clearError(); // Clear error to prevent flash
-    navigate('/sync-ui-kit?ignore-error=true');
+    parent.postMessage(
+      {
+        pluginMessage: {
+          type: 'MARK_UI_KIT_SYNCHRONIZED',
+        },
+        pluginId: '*',
+      },
+      '*'
+    );
+    navigate('/home?skip-splash=true');
   };
 
   return (
@@ -38,7 +45,7 @@ export function UiKitSyncError() {
           opacity={0.84}
         >
           {isWrongFile
-            ? 'Please download the UI Kit page and run this plugin again'
+            ? 'Please download the #4 UI Kit file and run this plugin again'
             : error || 'An error occurred while syncing UI Kit. Please try again.'}
         </Typography>
       </Flex>

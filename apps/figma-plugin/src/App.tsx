@@ -4,6 +4,7 @@ import {
   Auth,
   FileSynced,
   Error,
+  Introduction,
   SyncTokens,
   SyncBrand,
   SyncIcons,
@@ -12,9 +13,11 @@ import {
   TokensSyncError,
   BrandSyncSuccess,
   BrandSyncError,
+  BrandTokensNotPublished,
   IconsSyncSuccess,
   IconsSyncError,
   UiKitSyncError,
+  UiKitBrandNotPublished,
   SyncComplete,
 } from './pages';
 import { MemoryRouter, Route, Routes } from 'react-router';
@@ -34,6 +37,7 @@ function AppRoutes() {
   return (
     <>
       <Routes>
+        <Route path='introduction' element={<Introduction />} />
         <Route path='home' element={<Home />} />
         <Route path='sync-tokens' element={<SyncTokens />} />
         <Route path='sync-tokens-success' element={<TokensSyncSuccess />} />
@@ -41,11 +45,13 @@ function AppRoutes() {
         <Route path='sync-brand' element={<SyncBrand />} />
         <Route path='sync-brand-success' element={<BrandSyncSuccess />} />
         <Route path='sync-brand-error' element={<BrandSyncError />} />
+        <Route path='sync-brand-tokens-not-published' element={<BrandTokensNotPublished />} />
         <Route path='sync-icons' element={<SyncIcons />} />
         <Route path='sync-icons-success' element={<IconsSyncSuccess />} />
         <Route path='sync-icons-error' element={<IconsSyncError />} />
         <Route path='sync-ui-kit' element={<SyncUiKit />} />
         <Route path='sync-ui-kit-error' element={<UiKitSyncError />} />
+        <Route path='sync-ui-kit-brand-not-published' element={<UiKitBrandNotPublished />} />
         <Route path='sync-complete' element={<SyncComplete />} />
         <Route path='auth' element={<Auth />} />
         <Route path='file-synced' element={<FileSynced />} />

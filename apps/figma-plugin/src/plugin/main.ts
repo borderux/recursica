@@ -3,8 +3,8 @@ import { getLocalStorage, saveInStorage } from './authStorage';
 import { getTeamLibrary } from './teamLibrary';
 import { syncMetadata } from './metadata';
 import { detectFiletype } from './filetype';
-import { continueBrandSync } from './metadata/workflows/syncBrandFile';
-import { continueUiKitSync } from './metadata/workflows/syncUiKitFile';
+import { continueBrandSync, markBrandSynchronized } from './metadata/workflows/syncBrandFile';
+import { continueUiKitSync, markUiKitSynchronized } from './metadata/workflows/syncUiKitFile';
 import { getSyncMetadata, clearSyncMetadata } from './metadata/syncMetadataStorage';
 const pluginVersion = packageInfo.version;
 
@@ -27,6 +27,107 @@ if (import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test') {
     height: 350,
   });
 }
+
+// DEBUG: Check what getAvailableLibraryVariableCollectionsAsync returns
+(async () => {
+  try {
+    console.log('[main] DEBUG: Calling getAvailableLibraryVariableCollectionsAsync()...');
+    const availableLibraries =
+      await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
+    console.log(
+      '[main] DEBUG: getAvailableLibraryVariableCollectionsAsync() returned:',
+      availableLibraries
+    );
+    console.log('[main] DEBUG: Count:', availableLibraries.length);
+    console.log(
+      '[main] DEBUG: Full details:',
+      availableLibraries.map((lib) => ({
+        name: lib.name,
+        key: lib.key,
+        libraryName: lib.libraryName,
+      }))
+    );
+
+    // Check variable count for each library collection
+    console.log('[main] DEBUG: Checking variable counts for each library...');
+    for (const lib of availableLibraries) {
+      try {
+        const variables = await figma.teamLibrary.getVariablesInLibraryCollectionAsync(lib.key);
+        console.log(
+          `[main] DEBUG: Library "${lib.name}" (library key: ${lib.key}): ${variables.length} variables`
+        );
+
+        if (variables.length > 0) {
+          console.log(
+            `[main] DEBUG: First few variable keys for "${lib.name}":`,
+            variables.slice(0, 3).map((v) => v.key)
+          );
+
+          // Import first variable to get the collection and compare keys
+          try {
+            const importedVar = await figma.variables.importVariableByKeyAsync(variables[0].key);
+            const collection = await figma.variables.getVariableCollectionByIdAsync(
+              importedVar.variableCollectionId
+            );
+            if (collection) {
+              console.log(`[main] DEBUG: Key comparison for "${lib.name}":`);
+              console.log(
+                `[main] DEBUG:   - Library key (from getAvailableLibraryVariableCollectionsAsync): ${lib.key}`
+              );
+              console.log(
+                `[main] DEBUG:   - Collection key (from getVariableCollectionByIdAsync): ${collection.key}`
+              );
+              console.log(`[main] DEBUG:   - Keys match: ${lib.key === collection.key}`);
+              console.log(
+                `[main] DEBUG:   - Collection has ${collection.variableIds.length} local variable IDs`
+              );
+            }
+          } catch (error) {
+            console.warn(
+              `[main] DEBUG: Could not import variable to get collection for "${lib.name}":`,
+              error
+            );
+          }
+        } else {
+          console.warn(
+            `[main] DEBUG: Library "${lib.name}" has 0 variables - may not be fully published or accessible`
+          );
+        }
+      } catch (error) {
+        console.error(`[main] DEBUG: Error getting variables for library "${lib.name}":`, error);
+      }
+    }
+
+    // Also check stored metadata keys
+    try {
+      const syncMetadata = await getSyncMetadata();
+      if (syncMetadata) {
+        console.log('[main] DEBUG: Stored metadata keys:');
+        if (syncMetadata.tokens?.collectionKey) {
+          console.log(`[main] DEBUG:   - Tokens stored key: ${syncMetadata.tokens.collectionKey}`);
+        }
+        if (syncMetadata.brand?.collectionKey) {
+          console.log(`[main] DEBUG:   - Brand stored key: ${syncMetadata.brand.collectionKey}`);
+        }
+      }
+    } catch (error) {
+      console.warn('[main] DEBUG: Could not get stored metadata:', error);
+    }
+
+    // Also check local collections for comparison
+    const localCollections = await figma.variables.getLocalVariableCollectionsAsync();
+    console.log(
+      '[main] DEBUG: Local collections:',
+      localCollections.map((col) => ({
+        name: col.name,
+        key: col.key,
+        variableCount: col.variableIds.length,
+      }))
+    );
+  } catch (error) {
+    console.error('[main] DEBUG ERROR:', error);
+  }
+})();
 
 // Send sync metadata to UI when plugin loads
 (async () => {
@@ -143,6 +244,12 @@ figma.ui.onmessage = async (e) => {
   }
   if (e.type === 'SYNC_BRAND_IGNORE_ERROR') {
     continueBrandSync();
+  }
+  if (e.type === 'MARK_BRAND_SYNCHRONIZED') {
+    markBrandSynchronized();
+  }
+  if (e.type === 'MARK_UI_KIT_SYNCHRONIZED') {
+    markUiKitSynchronized();
   }
   if (e.type === 'NAVIGATE_TO_FILE') {
     const { fileId } = e.payload;
