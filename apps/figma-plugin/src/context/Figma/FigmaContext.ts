@@ -25,9 +25,16 @@ export interface IFigmaContext {
     variablesSynced: boolean;
     metadataGenerated: boolean;
   };
+  syncMetadata: {
+    tokens?: { collectionKey: string; synchronized: boolean };
+    brand?: { collectionKey: string; synchronized: boolean };
+    icons?: {};
+    uiKit?: { synchronized: boolean };
+  } | null;
   filetype: FileTypes | undefined;
   error: string | undefined;
   pluginVersion: string | undefined;
+  clearError: () => void;
 }
 
 export const FigmaContext = createContext<IFigmaContext | null>(null);
