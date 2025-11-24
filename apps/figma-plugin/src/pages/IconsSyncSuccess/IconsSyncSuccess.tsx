@@ -16,11 +16,20 @@ export function IconsSyncSuccess() {
         </Typography>
         <Typography
           variant='body-2/normal'
-          textAlign='center'
+          textAlign='left'
           color='layers/layer-0/elements/text/color'
           opacity={0.84}
         >
-          All done. Go to #4 UI Kit file and run the plugin again
+          Next steps:
+          <br />-{' '}
+          <a
+            href='https://help.figma.com/hc/en-us/articles/360025508373-Publish-a-library'
+            target='_blank'
+            rel='noopener noreferrer'
+          >
+            Publish the Icons library
+          </a>{' '}
+          <br />- Go to #4 UI Kit file and run the plugin again
         </Typography>
       </Flex>
     </Layout>

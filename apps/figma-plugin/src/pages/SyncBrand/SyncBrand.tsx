@@ -91,11 +91,28 @@ export function SyncBrand() {
         </Typography>
         <Typography
           variant='body-2/normal'
-          textAlign='center'
+          textAlign='left'
           color='layers/layer-0/elements/text/color'
           opacity={0.84}
         >
-          Press sync below to begin
+          Before you begin <br />- Make sure the Tokens library is{' '}
+          <a
+            href='https://help.figma.com/hc/en-us/articles/360025508373-Publish-a-library'
+            target='_blank'
+            rel='noopener noreferrer'
+          >
+            published
+          </a>{' '}
+          <br />-{' '}
+          <a
+            href='https://help.figma.com/hc/en-us/articles/1500008731201-Add-or-remove-a-library-from-a-design-file'
+            target='_blank'
+            rel='noopener noreferrer'
+          >
+            Add the Tokens library to the this file
+          </a>{' '}
+          <br />
+          - Press sync below to begin <br />
         </Typography>
         <Button
           label={isSyncing ? 'Syncing...' : 'Sync'}
