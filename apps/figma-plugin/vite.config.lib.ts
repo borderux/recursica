@@ -66,6 +66,7 @@ export default defineConfig(({ mode }) => ({
   build: {
     emptyOutDir: false,
     sourcemap: false, // Disabled - not useful in Figma's sandbox environment
+    target: 'es2018', // Target ES2018 to avoid optional catch binding (ES2019 feature)
     lib: {
       entry: 'src/plugin/main.ts',
       name: 'FigmaPlugin',

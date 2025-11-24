@@ -21,6 +21,15 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
     variablesSynced: false,
     metadataGenerated: false,
   });
+  const [syncMetadata, setSyncMetadata] = useState<{
+    tokens?: {
+      collectionKey: string;
+      synchronized: boolean;
+    };
+    brand?: { collectionKey: string; synchronized: boolean };
+    icons?: {};
+    uiKit?: { synchronized: boolean };
+  } | null>(null);
   const [filetype, setFiletype] = useState<FileTypes | undefined>();
   const [pluginVersion, setPluginVersion] = useState<string | undefined>();
   const [error, setError] = useState<string | undefined>();
@@ -59,13 +68,61 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
           metadataGenerated: true,
         }));
       }
+      // New sync workflow completion messages
+      if (type === 'TOKENS_SYNC_COMPLETE' || type === 'TOKENS_SYNC_COMPLETE_WITH_WARNING') {
+        setSyncStatus({
+          variablesSynced: true,
+          metadataGenerated: true,
+        });
+        setError(undefined); // Clear any errors when sync completes
+      }
+      if (type === 'TOKENS_SYNC_ERROR') {
+        setError(payload.message || 'Failed to sync tokens');
+      }
+      if (type === 'BRAND_SYNC_COMPLETE') {
+        setSyncStatus({
+          variablesSynced: true,
+          metadataGenerated: true,
+        });
+        setError(undefined); // Clear any errors when sync completes
+      }
+      if (type === 'BRAND_SYNC_ERROR') {
+        setError(payload.message || 'Failed to sync brand');
+      }
+      if (type === 'UI_KIT_SYNC_COMPLETE') {
+        setSyncStatus({
+          variablesSynced: true,
+          metadataGenerated: true,
+        });
+        setError(undefined); // Clear any errors when sync completes
+      }
+      if (type === 'ICONS_SYNC_COMPLETE') {
+        setSyncStatus({
+          variablesSynced: true,
+          metadataGenerated: true,
+        });
+        setError(undefined); // Clear any errors when sync completes
+      }
       if (type === 'FILETYPE_DETECTED') {
         const { fileType, pluginVersion } = payload;
         setFiletype(fileType);
         setPluginVersion(pluginVersion);
       }
+      if (type === 'SYNC_METADATA_LOADED') {
+        setSyncMetadata(payload);
+      }
       if (type === 'FILETYPE_ERROR') {
         setError(payload.error);
+      }
+      if (type === 'MISSING_VARIABLES') {
+        const { count, collectionName, missingVariables } = payload;
+        console.error(
+          `Missing ${count} variables in ${collectionName} collection:`,
+          missingVariables
+        );
+        setError(
+          `${count} variable${count > 1 ? 's' : ''} missing from ${collectionName} collection. Check console for details.`
+        );
       }
       if (
         type === 'NO_TOKENS_FOUND' ||
@@ -73,9 +130,19 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
         type === 'NO_TOKENS_OR_THEMES_FOUND' ||
         type === 'NO_VARIABLES_FOUND' ||
         type === 'NO_THEMES_FOUND' ||
-        type === 'THEMES_NOT_CONNECTED'
+        type === 'THEMES_NOT_CONNECTED' ||
+        type === 'TOKENS_NOT_FOUND' ||
+        type === 'BRAND_NOT_FOUND' ||
+        type === 'TOKENS_NOT_ACCESSIBLE' ||
+        type === 'TOKENS_NOT_PUBLISHED' ||
+        type === 'BRAND_NOT_PUBLISHED' ||
+        type === 'BRAND_NOT_ACCESSIBLE' ||
+        type === 'TOKENS_COLLECTION_NOT_FOUND' ||
+        type === 'BRAND_COLLECTION_NOT_FOUND' ||
+        type === 'UI_KIT_COLLECTIONS_NOT_FOUND' ||
+        type === 'ICONS_FILE_ERROR'
       ) {
-        setError(type);
+        setError(payload?.message || type);
       }
     };
     return () => {
@@ -84,8 +151,9 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
   }, []);
 
   useEffect(() => {
-    syncVariables();
     getFiletype();
+    // Don't auto-sync - wait for user to click sync button for Tokens file
+    // For other files, sync will be triggered when needed
   }, []);
 
   useEffect(() => {
@@ -162,18 +230,6 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
     );
   };
 
-  const syncVariables = () => {
-    parent.postMessage(
-      {
-        pluginMessage: {
-          type: 'SYNC_TOKENS',
-        },
-        pluginId: '*',
-      },
-      '*'
-    );
-  };
-
   const getFiletype = () => {
     parent.postMessage(
       {
@@ -203,6 +259,10 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
     );
   };
 
+  const clearError = () => {
+    setError(undefined);
+  };
+
   const values = {
     repository,
     updateRepository: {
@@ -215,10 +275,12 @@ export function FigmaProvider({ children }: TokensProvidersProps) {
     loading: !(recursicaVariables || svgIcons),
     userId,
     syncStatus,
+    syncMetadata,
     filetype,
     error,
     pluginVersion,
     updateAgreedPublishChanges,
+    clearError,
   };
   return <FigmaContext.Provider value={values}>{children}</FigmaContext.Provider>;
 }

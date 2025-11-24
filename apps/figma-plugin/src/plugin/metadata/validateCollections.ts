@@ -13,19 +13,10 @@ export function validateCollections(
     const tokensCollections = Object.values(libraries).filter(
       (collection) => collection.getSharedPluginData('recursica', 'file-type') === 'tokens'
     );
-    const tokensConnected = tokensCollections.every(
-      (collection) => collection.getSharedPluginData('recursica', 'variables-synced') === 'true'
-    );
     if (tokensCollections.length === 0) {
       return {
         isValid: false,
         errorMessage: 'NO_TOKENS_FOUND',
-      };
-    }
-    if (!tokensConnected) {
-      return {
-        isValid: false,
-        errorMessage: 'TOKENS_NOT_CONNECTED',
       };
     }
   }
@@ -34,14 +25,8 @@ export function validateCollections(
     const tokensCollections = Object.values(libraries).filter(
       (collection) => collection.getSharedPluginData('recursica', 'file-type') === 'tokens'
     );
-    const tokensConnected = tokensCollections.every(
-      (collection) => collection.getSharedPluginData('recursica', 'variables-synced') === 'true'
-    );
     const themesCollections = Object.values(libraries).filter(
       (collection) => collection.getSharedPluginData('recursica', 'file-type') === 'themes'
-    );
-    const themesConnected = themesCollections.every(
-      (collection) => collection.getSharedPluginData('recursica', 'variables-synced') === 'true'
     );
     if (tokensCollections.length === 0) {
       return {
@@ -49,22 +34,10 @@ export function validateCollections(
         errorMessage: 'NO_TOKENS_FOUND',
       };
     }
-    if (!tokensConnected) {
-      return {
-        isValid: false,
-        errorMessage: 'TOKENS_NOT_CONNECTED',
-      };
-    }
     if (themesCollections.length === 0) {
       return {
         isValid: false,
         errorMessage: 'NO_THEMES_FOUND',
-      };
-    }
-    if (!themesConnected) {
-      return {
-        isValid: false,
-        errorMessage: 'THEMES_NOT_CONNECTED',
       };
     }
   }

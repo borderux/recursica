@@ -3,14 +3,14 @@ import { toPascalCase } from '@recursica/common';
 /**
  * Generates and sets metadata on local variable collections.
  *
- * This function sets shared plugin data on collections including file type, sync status,
- * and theme name. It processes all collections in parallel for efficiency.
+ * This function sets shared plugin data on collections including file type and theme name.
+ * It processes all collections in parallel for efficiency.
  *
  * Metadata set:
- * - 'file-type': The inferred file type (themes, ui-kit, tokens, icons)
- * - 'variables-synced': Set to 'true' to mark collection as synchronized
+ * - 'file-type': The inferred file type (themes, ui-kit, tokens, icons) - Used for detection
  * - 'theme-name': For theme collections, sets the theme name (falls back to root name if not provided)
  *
+ * Note: Sync status is now tracked in global plugin metadata (figma.clientStorage), not on collections.
  * Note: The "ID variables" collection is skipped as it's a special system collection
  * that shouldn't have metadata applied.
  *
@@ -21,7 +21,7 @@ import { toPascalCase } from '@recursica/common';
  *
  * @example
  * await generateMetadata(collections, 'themes', 'DarkTheme');
- * // Collections now have metadata set and are marked as synced
+ * // Collections now have file-type and theme-name metadata set
  */
 export async function generateMetadata(
   localCollections: VariableCollection[],
@@ -32,9 +32,6 @@ export async function generateMetadata(
   const localCollectionPromises = localCollections.map(async (collection) => {
     // Set the file type metadata to help identify the project type
     collection.setSharedPluginData('recursica', 'file-type', fileType);
-
-    // Mark this collection as synchronized to prevent future sync operations
-    collection.setSharedPluginData('recursica', 'variables-synced', 'true');
 
     // For theme collections, set the theme name metadata
     if (fileType === 'themes') {

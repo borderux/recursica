@@ -21,6 +21,14 @@ const CONFIG = [
     rules: {
       'react/react-in-jsx-scope': 'off',
       '@typescript-eslint/no-empty-object-type': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
     },
     ignores: ['**/node_modules/**', '**/dist/**'],
   },
