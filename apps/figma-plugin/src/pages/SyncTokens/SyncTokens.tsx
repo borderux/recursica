@@ -75,7 +75,7 @@ export function SyncTokens() {
             color='layers/layer-0/elements/text/color'
             opacity={0.84}
           >
-            Please download the Tokens page and run this plugin again
+            Please go to the Tokens page and run this plugin again
           </Typography>
         </Flex>
       </Layout>

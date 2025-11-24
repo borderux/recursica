@@ -48,7 +48,7 @@ export function BrandSyncError() {
           opacity={0.84}
         >
           {isWrongFile
-            ? 'Please download the #2 Brand file and run this plugin again'
+            ? 'Please go to the #2 Brand file and run this plugin again'
             : error || 'An error occurred while syncing brand. Please try again.'}
         </Typography>
       </Flex>
