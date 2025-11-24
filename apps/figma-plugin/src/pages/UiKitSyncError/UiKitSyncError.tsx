@@ -45,7 +45,7 @@ export function UiKitSyncError() {
           opacity={0.84}
         >
           {isWrongFile
-            ? 'Please download the #4 UI Kit file and run this plugin again'
+            ? 'Please go to the #4 UI Kit file and run this plugin again'
             : error || 'An error occurred while syncing UI Kit. Please try again.'}
         </Typography>
       </Flex>

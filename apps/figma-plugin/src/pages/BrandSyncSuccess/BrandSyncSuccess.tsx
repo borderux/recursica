@@ -21,15 +21,16 @@ export function BrandSyncSuccess() {
           opacity={0.84}
         >
           Next steps:
-          <br />-{' '}
+          <br />
           <a
             href='https://help.figma.com/hc/en-us/articles/360025508373-Publish-a-library'
             target='_blank'
             rel='noopener noreferrer'
           >
-            Publish the Brand library
+            1. Publish the Brand library
           </a>
-          <br />- Go to #3 Icons file and run the plugin again
+          <br />
+          2. Go to #3 Icons file and run the plugin again
         </Typography>
       </Flex>
     </Layout>

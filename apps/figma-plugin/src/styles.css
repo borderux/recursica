@@ -3,3 +3,17 @@
 #root {
   height: 100vh;
 }
+
+/* Link styling - use recursica red instead of default blue */
+a {
+  color: #d40d0d; /* mandy/500 - Recursica red */
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+a:visited {
+  color: #d40d0d; /* Keep recursica red even for visited links */
+}

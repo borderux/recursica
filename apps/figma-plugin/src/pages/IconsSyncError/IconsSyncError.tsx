@@ -27,7 +27,7 @@ export function IconsSyncError() {
           opacity={0.84}
         >
           {isWrongFile
-            ? 'Please download the Icons page and run this plugin again'
+            ? 'Please go to the the Icons page and run this plugin again'
             : 'An error occurred while syncing icons. Please try again.'}
         </Typography>
       </Flex>

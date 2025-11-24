@@ -20,24 +20,24 @@ export function BrandTokensNotPublished() {
           color='layers/layer-0/elements/text/color'
           opacity={0.84}
         >
-          Ensure you did the following steps: <br />-{' '}
+          Ensure you did the following steps: <br />
           <a
             href='https://help.figma.com/hc/en-us/articles/360025508373-Publish-a-library'
             target='_blank'
             rel='noopener noreferrer'
           >
-            Publish the #1 Tokens file as a library
+            1. Publish the #1 Tokens file as a library
           </a>{' '}
-          <br />-{' '}
+          <br />
           <a
             href='https://help.figma.com/hc/en-us/articles/1500008731201-Add-or-remove-a-library-from-a-design-file'
             target='_blank'
             rel='noopener noreferrer'
           >
-            Add the Tokens library to the this file
+            2. Add the Tokens library to the this file
           </a>
           <br />
-          - Run the plugin again in the Tokens file
+          3. Run the plugin again in the Tokens file
           <br />
           <br />
           NOTE: You may need to close and reopen the file
