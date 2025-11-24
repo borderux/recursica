@@ -2,44 +2,11 @@ import { Flex, Typography, Icon, Button } from '@recursica/ui-kit-mantine';
 import { useFigma } from '../../hooks/useFigma';
 import { Layout } from '../../components';
 import { useMemo } from 'react';
-import { NavLink } from 'react-router';
+import { NavLink, useNavigate } from 'react-router';
 
 export function FileSynced() {
-  const { repository, filetype } = useFigma();
-
-  const getNextStepTitle = useMemo(() => {
-    if (filetype === 'tokens') {
-      return 'All done here';
-    }
-    if (filetype === 'themes') {
-      return 'Nice! Move on from here.';
-    }
-    if (filetype === 'icons' || filetype === 'ui-kit') {
-      return 'If you’re a designer, your work is done here';
-    }
-    return 'You can now close the plugin and continue';
-  }, [filetype]);
-
-  const getNextStepDescription = useMemo(() => {
-    if (filetype === 'tokens') {
-      return (
-        <>
-          Finally, go to <b>#2 Brand file</b> file and run the plugin once more
-        </>
-      );
-    }
-    if (filetype === 'themes') {
-      return (
-        <>
-          Finally, go to <b>#4 UI kit file</b> file and run the plugin once more
-        </>
-      );
-    }
-    if (filetype === 'icons' || filetype === 'ui-kit') {
-      return 'Feeling brave? Connect a repo';
-    }
-    return 'You can now close the plugin and continue';
-  }, [filetype]);
+  const { repository } = useFigma();
+  const navigate = useNavigate();
 
   const target = useMemo(() => {
     if (repository && repository.platform && repository.accessToken) {
@@ -52,31 +19,45 @@ export function FileSynced() {
     return '/auth';
   }, [repository]);
 
+  const handleResync = () => {
+    console.log('[FileSynced] Resync Files button clicked');
+
+    // Clear sync metadata
+    parent.postMessage(
+      {
+        pluginMessage: {
+          type: 'CLEAR_SYNC_METADATA',
+        },
+        pluginId: '*',
+      },
+      '*'
+    );
+
+    // Navigate to home page, which will route to the appropriate sync page
+    navigate('/home');
+  };
+
   return (
     <Layout
       header='default'
       footer={
-        (filetype === 'icons' || filetype === 'ui-kit') && (
-          <Button
-            disabled={!filetype}
-            component={NavLink}
-            to={target}
-            label='Connect Git repository'
-          />
-        )
+        <Flex direction='column' gap={8} w='100%'>
+          <Button component={NavLink} to={target} label='Connect Git repository' />
+          <Button variant='text' label='Resync Files' onClick={handleResync} />
+        </Flex>
       }
     >
       <Flex direction='column' align='center' justify='center' gap={16}>
         <Icon name='check_circle_outline' color='layers/layer-1/elements/success-text' />
         <Typography variant='h6' textAlign='center' color='layers/layer-1/elements/success-text'>
-          {getNextStepTitle}
+          All files synchronized!
         </Typography>
         <Typography
           variant='body-2/normal'
           textAlign='center'
           color='layers/layer-1/elements/success-text'
         >
-          {getNextStepDescription}
+          Next we can connect to your git repository to start publishing
         </Typography>
       </Flex>
     </Layout>

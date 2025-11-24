@@ -1,6 +1,7 @@
-import { Box, Flex, FlexProps, Logo, Typography } from '@recursica/ui-kit-mantine';
+import { Flex, FlexProps, Logo, Typography } from '@recursica/ui-kit-mantine';
 import { PropsWithChildren } from 'react';
 import { useFigma } from '../../hooks';
+import { useNavigate } from 'react-router';
 
 type LayoutProps = PropsWithChildren<{
   header?: React.ReactNode | 'default';
@@ -10,7 +11,22 @@ type LayoutProps = PropsWithChildren<{
 
 export function Layout({ children, footer, header, wrapperProps }: LayoutProps) {
   const { pluginVersion } = useFigma();
+  const navigate = useNavigate();
   const pluginMode = import.meta.env.VITE_PLUGIN_MODE;
+
+  const handleVersionClick = () => {
+    console.log('[Layout] Version clicked, clearing sync metadata');
+    parent.postMessage(
+      {
+        pluginMessage: {
+          type: 'CLEAR_SYNC_METADATA',
+        },
+        pluginId: '*',
+      },
+      '*'
+    );
+    navigate('/home');
+  };
 
   return (
     <Flex
@@ -36,11 +52,14 @@ export function Layout({ children, footer, header, wrapperProps }: LayoutProps) 
         {children}
       </Flex>
       {footer}
-      <Box style={{ position: 'absolute', bottom: 4, right: 4 }}>
+      <div
+        style={{ position: 'absolute', bottom: 4, right: 4, cursor: 'pointer' }}
+        onClick={handleVersionClick}
+      >
         <Typography variant='caption' color='layers/layer-0/elements/text/color' opacity={0.84}>
           {pluginMode === 'test' ? `TEST v${pluginVersion}` : pluginVersion}
         </Typography>
-      </Box>
+      </div>
     </Flex>
   );
 }

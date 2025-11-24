@@ -1,5 +1,17 @@
 # @recursica/figma-plugin-test
 
+## 0.5.0
+
+### Minor Changes
+
+- [#295](https://github.com/borderux/recursica/pull/295) [`20c598b`](https://github.com/borderux/recursica/commit/20c598bb5700a4dad57c65289b8cf938b52a5f0b) Thanks [@mlmassey](https://github.com/mlmassey)! - Updated information for each page with better and more clear instructions
+
+## 0.4.0
+
+### Minor Changes
+
+- [#292](https://github.com/borderux/recursica/pull/292) [`e0351d7`](https://github.com/borderux/recursica/commit/e0351d7f1f09a0f67f8a624bfacf90dbef7cc369) Thanks [@mlmassey](https://github.com/mlmassey)! - Reworked plugin sync flow for better user experience
+
 ## 0.3.2
 
 ### Patch Changes

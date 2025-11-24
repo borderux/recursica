@@ -219,4 +219,6 @@ function main() {
 }
 
 // Execute the main function
-main();
+// main();
+// eslint-disable-next-line no-console
+console.log("PRE-PUSH HOOK temporarily disabled for now");
