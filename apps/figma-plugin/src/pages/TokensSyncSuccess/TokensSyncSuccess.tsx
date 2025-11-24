@@ -27,12 +27,12 @@ export function TokensSyncSuccess() {
             target='_blank'
             rel='noopener noreferrer'
           >
-            Publish this file as a libraryBoo
+            Publish this file as a library
           </a>
           <br />
-          - Make sure to close this file
+          1. Make sure to close this file
           <br />
-          - Go to #2 Brand file and run the plugin again
+          2. Go to #2 Brand file and run the plugin again
           <br />
         </Typography>
       </Flex>

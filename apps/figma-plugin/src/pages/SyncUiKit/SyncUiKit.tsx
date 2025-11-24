@@ -95,7 +95,8 @@ export function SyncUiKit() {
           color='layers/layer-0/elements/text/color'
           opacity={0.84}
         >
-          Before you begin <br />- Make sure the Brand library is{' '}
+          Before you begin: <br />
+          1. Make sure the Brand library is{' '}
           <a
             href='https://help.figma.com/hc/en-us/articles/360025508373-Publish-a-library'
             target='_blank'
@@ -103,16 +104,18 @@ export function SyncUiKit() {
           >
             published
           </a>{' '}
-          <br />-{' '}
+          <br />
           <a
             href='https://help.figma.com/hc/en-us/articles/1500008731201-Add-or-remove-a-library-from-a-design-file'
             target='_blank'
             rel='noopener noreferrer'
           >
-            Add the Brand library to the this file
+            2. Add the Brand library to the this file
           </a>{' '}
           <br />
-          - Make sure the Icons library is published <br />- Press sync below to begin <br />
+          3. Make sure the Icons library is published <br />
+          4. Add the Icons library to the this file <br />
+          5. Press sync below to begin <br />
         </Typography>
         <Button
           label={isSyncing ? 'Syncing...' : 'Sync'}
