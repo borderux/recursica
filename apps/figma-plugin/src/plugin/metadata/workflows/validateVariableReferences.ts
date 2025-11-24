@@ -5,7 +5,7 @@
  * @param targetCollection - The collection that should contain the referenced variables
  * @param targetCollectionName - Name for error messages
  * @param targetVariablesMap - Optional map of target variables (if provided, uses this instead of collection.variableIds)
- * @returns Object with validation result and missing variable names
+ * @returns Object with validation result, missing variable names, and mapping of missing variables to their source references
  */
 export async function validateVariableReferences(
   sourceCollection: VariableCollection,
@@ -15,8 +15,10 @@ export async function validateVariableReferences(
 ): Promise<{
   isValid: boolean;
   missingVariables: string[];
+  missingVariablesWithReferences: Map<string, string[]>; // Map of missing variable name -> array of source variable names that reference it
 }> {
   const missingVariables = new Set<string>();
+  const missingVariablesWithReferences = new Map<string, string[]>();
 
   // Get all variables in target collection, indexed by name
   // Use provided map if available (contains all library variables), otherwise use collection.variableIds (only locally imported)
@@ -62,6 +64,12 @@ export async function validateVariableReferences(
             // Verify variable exists in target collection by name
             if (!targetVariables.has(referencedVar.name)) {
               missingVariables.add(referencedVar.name);
+              // Track which source variable references this missing variable
+              const existingRefs = missingVariablesWithReferences.get(referencedVar.name) || [];
+              if (!existingRefs.includes(sourceVariable.name)) {
+                existingRefs.push(sourceVariable.name);
+                missingVariablesWithReferences.set(referencedVar.name, existingRefs);
+              }
             }
           }
         }
@@ -77,5 +85,6 @@ export async function validateVariableReferences(
   return {
     isValid: missingArray.length === 0,
     missingVariables: missingArray,
+    missingVariablesWithReferences,
   };
 }

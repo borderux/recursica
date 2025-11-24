@@ -260,26 +260,21 @@ export async function syncBrandFile(brandCollection: VariableCollection): Promis
   const validation = await validateVariableReferences(brandCollection, tokensCollection, 'tokens');
 
   if (!validation.isValid) {
+    // Format missing variables with their reference names
+    const missingWithRefs = Array.from(validation.missingVariablesWithReferences.entries())
+      .map(([missingVar, refs]) => `${missingVar} (referenced by: ${refs.join(', ')})`)
+      .sort();
+
     console.error(
-      `[syncBrandFile] Missing variables in Tokens collection:`,
-      validation.missingVariables.sort()
+      `[syncBrandFile] Missing ${validation.missingVariables.length} variable(s) in Tokens collection:`,
+      missingWithRefs
     );
-
-    figma.ui.postMessage({
-      type: 'MISSING_VARIABLES',
-      payload: {
-        count: validation.missingVariables.length,
-        collectionName: 'Tokens',
-        missingVariables: validation.missingVariables, // For console logging in UI
-        brandCollectionKey: brandCollection.key, // Store collection key for continue
-      },
-    });
-    return;
+    // Note: Missing variables are logged but do not prevent sync from completing
+  } else {
+    console.log(
+      '[syncBrandFile] ✅ Validation passed: All Brand variables reference valid Tokens variables'
+    );
   }
-
-  console.log(
-    '[syncBrandFile] ✅ Validation passed: All Brand variables reference valid Tokens variables'
-  );
 
   try {
     // Set collection metadata
@@ -287,6 +282,20 @@ export async function syncBrandFile(brandCollection: VariableCollection): Promis
     brandCollection.setSharedPluginData('recursica', 'file-type', 'themes');
     await saveEffectsInMetadata([brandCollection]);
     await generateMetadata([brandCollection], 'themes', themeName);
+
+    // Update metadata to mark Brand as synchronized
+    const currentMetadata = await getSyncMetadata();
+    if (currentMetadata?.brand) {
+      await updateSyncMetadata({
+        brand: {
+          collectionKey: currentMetadata.brand.collectionKey,
+          synchronized: true, // Set to true on successful sync
+          sampleVariableKey: currentMetadata.brand.sampleVariableKey,
+          variableNameToKey: currentMetadata.brand.variableNameToKey,
+        },
+      });
+      console.log('[syncBrandFile] Updated Brand metadata: synchronized = true');
+    }
 
     // Notify completion
     figma.ui.postMessage({

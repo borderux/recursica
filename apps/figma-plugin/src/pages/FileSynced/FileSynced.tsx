@@ -57,7 +57,7 @@ export function FileSynced() {
           textAlign='center'
           color='layers/layer-1/elements/success-text'
         >
-          All your design files have been successfully synchronized.
+          Next we can connect to your git repository to start publishing
         </Typography>
       </Flex>
     </Layout>

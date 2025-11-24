@@ -6,6 +6,17 @@ export function Introduction() {
   const navigate = useNavigate();
 
   const handleStartSync = () => {
+    console.log('[Introduction] Start Sync button clicked');
+    // Mark introduction as synchronized
+    parent.postMessage(
+      {
+        pluginMessage: {
+          type: 'MARK_INTRODUCTION_SYNCHRONIZED',
+        },
+        pluginId: '*',
+      },
+      '*'
+    );
     navigate('/sync-tokens');
   };
 

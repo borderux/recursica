@@ -63,6 +63,11 @@ export async function syncVariableReferences(
                   console.log(
                     `${logPrefix} Updated ${targetKey} reference: "${sourceVariable.name}" -> "${targetVar.name}"`
                   );
+                } else {
+                  // Target variable not found - log error
+                  console.error(
+                    `${logPrefix} Variable not found in ${targetKey} collection: "${referencedVar.name}" (referenced by "${sourceVariable.name}")`
+                  );
                 }
                 break; // Found matching collection, no need to check others
               }

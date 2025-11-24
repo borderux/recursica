@@ -5,7 +5,11 @@ import { syncMetadata } from './metadata';
 import { detectFiletype } from './filetype';
 import { continueBrandSync, markBrandSynchronized } from './metadata/workflows/syncBrandFile';
 import { continueUiKitSync, markUiKitSynchronized } from './metadata/workflows/syncUiKitFile';
-import { getSyncMetadata, clearSyncMetadata } from './metadata/syncMetadataStorage';
+import {
+  getSyncMetadata,
+  clearSyncMetadata,
+  updateSyncMetadata,
+} from './metadata/syncMetadataStorage';
 const pluginVersion = packageInfo.version;
 
 console.log('📦 Figma Plugin loaded with version:', pluginVersion);
@@ -250,6 +254,20 @@ figma.ui.onmessage = async (e) => {
   }
   if (e.type === 'MARK_UI_KIT_SYNCHRONIZED') {
     markUiKitSynchronized();
+  }
+  if (e.type === 'MARK_INTRODUCTION_SYNCHRONIZED') {
+    console.log('[main] Marking Introduction as synchronized');
+    await updateSyncMetadata({
+      introduction: {
+        synchronized: true,
+      },
+    });
+    // Reload metadata and send to UI
+    const syncMetadata = await getSyncMetadata();
+    figma.ui.postMessage({
+      type: 'SYNC_METADATA_LOADED',
+      payload: syncMetadata,
+    });
   }
   if (e.type === 'NAVIGATE_TO_FILE') {
     const { fileId } = e.payload;

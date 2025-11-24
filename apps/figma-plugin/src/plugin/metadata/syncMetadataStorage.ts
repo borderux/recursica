@@ -6,6 +6,9 @@
  */
 
 export interface SyncMetadata {
+  introduction?: {
+    synchronized: boolean;
+  };
   tokens?: {
     collectionKey: string;
     synchronized: boolean;
@@ -69,6 +72,9 @@ export async function updateSyncMetadata(updates: Partial<SyncMetadata>): Promis
 
   // Merge top-level properties from existing
   if (existing) {
+    if (existing.introduction) {
+      merged.introduction = existing.introduction;
+    }
     if (existing.tokens) {
       merged.tokens = existing.tokens;
     }
@@ -85,6 +91,21 @@ export async function updateSyncMetadata(updates: Partial<SyncMetadata>): Promis
 
   // Apply updates - deep merge nested objects
   // If a property is explicitly set to undefined, remove it from the merged result
+  if ('introduction' in updates) {
+    if (updates.introduction === undefined) {
+      // Explicitly remove introduction entry
+      delete merged.introduction;
+    } else if (updates.introduction) {
+      const existingIntroduction = existing?.introduction;
+      merged.introduction = {
+        synchronized:
+          updates.introduction.synchronized !== undefined
+            ? updates.introduction.synchronized
+            : existingIntroduction?.synchronized || false,
+      };
+    }
+  }
+
   if ('tokens' in updates) {
     if (updates.tokens === undefined) {
       // Explicitly remove tokens entry

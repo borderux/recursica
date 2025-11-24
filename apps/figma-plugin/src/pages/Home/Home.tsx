@@ -86,16 +86,17 @@ export function Home() {
 
     // Use default empty metadata if not loaded yet
     const metadata = syncMetadata || {
+      introduction: undefined,
       tokens: undefined,
       brand: undefined,
       icons: undefined,
       uiKit: undefined,
     };
 
-    // Check if there's any metadata at all - if not, go to Introduction
-    const hasAnyMetadata = metadata.tokens || metadata.brand || metadata.icons || metadata.uiKit;
-    if (!hasAnyMetadata) {
-      console.log('[Home] No metadata entries found, navigating to Introduction');
+    // Check if introduction is not synchronized or doesn't exist - if so, go to Introduction
+    const introductionSynced = metadata.introduction?.synchronized === true;
+    if (!introductionSynced) {
+      console.log('[Home] Introduction not synchronized, navigating to Introduction');
       navigate('/introduction');
       return;
     }

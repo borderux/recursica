@@ -642,35 +642,29 @@ export async function syncUiKitFile(uiKitCollections: VariableCollection[]): Pro
   );
 
   if (!tokensValidation.isValid) {
+    // Format missing variables with their reference names
+    const missingWithRefs = Array.from(tokensValidation.missingVariablesWithReferences.entries())
+      .map(([missingVar, refs]) => `${missingVar} (referenced by: ${refs.join(', ')})`)
+      .sort();
+
     console.error(
-      `[syncUiKitFile] Missing variables in Tokens collection:`,
-      tokensValidation.missingVariables
+      `[syncUiKitFile] Missing ${tokensValidation.missingVariables.length} variable(s) in Tokens collection:`,
+      missingWithRefs
     );
-    figma.ui.postMessage({
-      type: 'MISSING_VARIABLES',
-      payload: {
-        count: tokensValidation.missingVariables.length,
-        collectionName: 'Tokens',
-        missingVariables: tokensValidation.missingVariables,
-      },
-    });
-    return;
+    // Note: Missing variables are logged but do not prevent sync from completing
   }
 
   if (!brandValidation.isValid) {
+    // Format missing variables with their reference names
+    const missingWithRefs = Array.from(brandValidation.missingVariablesWithReferences.entries())
+      .map(([missingVar, refs]) => `${missingVar} (referenced by: ${refs.join(', ')})`)
+      .sort();
+
     console.error(
-      `[syncUiKitFile] Missing variables in Brand collection:`,
-      brandValidation.missingVariables
+      `[syncUiKitFile] Missing ${brandValidation.missingVariables.length} variable(s) in Brand collection:`,
+      missingWithRefs
     );
-    figma.ui.postMessage({
-      type: 'MISSING_VARIABLES',
-      payload: {
-        count: brandValidation.missingVariables.length,
-        collectionName: 'Brand',
-        missingVariables: brandValidation.missingVariables,
-      },
-    });
-    return;
+    // Note: Missing variables are logged but do not prevent sync from completing
   }
 
   // Update metadata (set synchronized = false initially, will be set to true when user clicks Continue)
