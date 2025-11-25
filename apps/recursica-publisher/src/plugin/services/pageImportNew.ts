@@ -699,8 +699,14 @@ export async function restoreBoundVariablesForFills(
 
 /**
  * Applies default values to a newly created node
+ * @param skipPaddingDefaults - If true, skip setting default padding/itemSpacing values
+ *                              (used when bound variables will be set for these properties)
  */
-function applyDefaultsToNode(node: any, nodeType: string): void {
+function applyDefaultsToNode(
+  node: any,
+  nodeType: string,
+  skipPaddingDefaults: boolean = false,
+): void {
   const defaults = getDefaultsForNodeType(nodeType);
 
   // Apply base defaults
@@ -742,20 +748,23 @@ function applyDefaultsToNode(node: any, nodeType: string): void {
     if (node.counterAxisAlignItems === undefined) {
       node.counterAxisAlignItems = frameDefaults.counterAxisAlignItems;
     }
-    if (node.paddingLeft === undefined) {
-      node.paddingLeft = frameDefaults.paddingLeft;
-    }
-    if (node.paddingRight === undefined) {
-      node.paddingRight = frameDefaults.paddingRight;
-    }
-    if (node.paddingTop === undefined) {
-      node.paddingTop = frameDefaults.paddingTop;
-    }
-    if (node.paddingBottom === undefined) {
-      node.paddingBottom = frameDefaults.paddingBottom;
-    }
-    if (node.itemSpacing === undefined) {
-      node.itemSpacing = frameDefaults.itemSpacing;
+    // Skip padding defaults if bound variables will be set (prevents interference)
+    if (!skipPaddingDefaults) {
+      if (node.paddingLeft === undefined) {
+        node.paddingLeft = frameDefaults.paddingLeft;
+      }
+      if (node.paddingRight === undefined) {
+        node.paddingRight = frameDefaults.paddingRight;
+      }
+      if (node.paddingTop === undefined) {
+        node.paddingTop = frameDefaults.paddingTop;
+      }
+      if (node.paddingBottom === undefined) {
+        node.paddingBottom = frameDefaults.paddingBottom;
+      }
+      if (node.itemSpacing === undefined) {
+        node.itemSpacing = frameDefaults.itemSpacing;
+      }
     }
   }
 
@@ -2136,8 +2145,25 @@ export async function recreateNodeFromData(
     );
   }
 
-  // Apply defaults first
-  applyDefaultsToNode(newNode, nodeData.type || "FRAME");
+  // Note: Bound variables for padding/itemSpacing must be set AFTER layoutMode is set,
+  // because padding properties don't exist until layoutMode is enabled.
+  // This will be done later in the code, right after layoutMode is set.
+
+  // Apply defaults first, but skip padding/itemSpacing if they have bound variables
+  // This prevents defaults from interfering with bound variable restoration
+  const hasBoundVariablesForPadding =
+    nodeData.boundVariables &&
+    typeof nodeData.boundVariables === "object" &&
+    (nodeData.boundVariables.paddingLeft ||
+      nodeData.boundVariables.paddingRight ||
+      nodeData.boundVariables.paddingTop ||
+      nodeData.boundVariables.paddingBottom ||
+      nodeData.boundVariables.itemSpacing);
+  applyDefaultsToNode(
+    newNode,
+    nodeData.type || "FRAME",
+    hasBoundVariablesForPadding,
+  );
 
   // Set basic properties (override defaults with serialized values)
   if (nodeData.name !== undefined) {
@@ -2173,28 +2199,46 @@ export async function recreateNodeFromData(
   // For VECTOR nodes, we need to set size AFTER vectorPaths are set,
   // because setting vectorPaths can auto-resize the vector to fit the path bounds.
   // For other node types, set size now.
+  // Check for bound variables before setting width/height
+  const hasBoundVariablesForSize =
+    nodeData.boundVariables &&
+    typeof nodeData.boundVariables === "object" &&
+    (nodeData.boundVariables.width || nodeData.boundVariables.height);
   if (
     nodeData.type !== "VECTOR" &&
     nodeData.width !== undefined &&
-    nodeData.height !== undefined
+    nodeData.height !== undefined &&
+    !hasBoundVariablesForSize
   ) {
     newNode.resize(nodeData.width, nodeData.height);
   }
 
   // Set visual properties if they exist
+  // Check for bound variables before setting direct values
+  const hasBoundVariables =
+    nodeData.boundVariables && typeof nodeData.boundVariables === "object";
   if (nodeData.visible !== undefined) {
     newNode.visible = nodeData.visible;
   }
   if (nodeData.locked !== undefined) {
     newNode.locked = nodeData.locked;
   }
-  if (nodeData.opacity !== undefined) {
+  if (
+    nodeData.opacity !== undefined &&
+    (!hasBoundVariables || !nodeData.boundVariables.opacity)
+  ) {
     newNode.opacity = nodeData.opacity;
   }
-  if (nodeData.rotation !== undefined) {
+  if (
+    nodeData.rotation !== undefined &&
+    (!hasBoundVariables || !nodeData.boundVariables.rotation)
+  ) {
     newNode.rotation = nodeData.rotation;
   }
-  if (nodeData.blendMode !== undefined) {
+  if (
+    nodeData.blendMode !== undefined &&
+    (!hasBoundVariables || !nodeData.boundVariables.blendMode)
+  ) {
     newNode.blendMode = nodeData.blendMode;
   }
 
@@ -2457,19 +2501,43 @@ export async function recreateNodeFromData(
   }
 
   // Set additional properties for better visual similarity
+  // Check for bound variables before setting direct values
+  const hasBoundVariablesForStroke =
+    nodeData.boundVariables &&
+    typeof nodeData.boundVariables === "object" &&
+    (nodeData.boundVariables.strokeWeight ||
+      nodeData.boundVariables.strokeAlign);
   if (nodeData.strokeWeight !== undefined) {
-    newNode.strokeWeight = nodeData.strokeWeight;
+    if (!hasBoundVariablesForStroke || !nodeData.boundVariables.strokeWeight) {
+      newNode.strokeWeight = nodeData.strokeWeight;
+    }
   } else if (
     nodeData.type === "VECTOR" &&
-    (nodeData.strokes === undefined || nodeData.strokes.length === 0)
+    (nodeData.strokes === undefined || nodeData.strokes.length === 0) &&
+    (!hasBoundVariablesForStroke || !nodeData.boundVariables.strokeWeight)
   ) {
     // If no strokes, ensure strokeWeight is 0 (vectors might have default strokeWeight)
     newNode.strokeWeight = 0;
   }
-  if (nodeData.strokeAlign !== undefined) {
+  if (
+    nodeData.strokeAlign !== undefined &&
+    (!hasBoundVariablesForStroke || !nodeData.boundVariables.strokeAlign)
+  ) {
     newNode.strokeAlign = nodeData.strokeAlign;
   }
-  if (nodeData.cornerRadius !== undefined) {
+  // Check for bound variables for corner radius properties
+  const hasBoundVariablesForCornerRadius =
+    nodeData.boundVariables &&
+    typeof nodeData.boundVariables === "object" &&
+    (nodeData.boundVariables.cornerRadius ||
+      nodeData.boundVariables.topLeftRadius ||
+      nodeData.boundVariables.topRightRadius ||
+      nodeData.boundVariables.bottomLeftRadius ||
+      nodeData.boundVariables.bottomRightRadius);
+  if (
+    nodeData.cornerRadius !== undefined &&
+    (!hasBoundVariablesForCornerRadius || !nodeData.boundVariables.cornerRadius)
+  ) {
     newNode.cornerRadius = nodeData.cornerRadius;
   }
   if (nodeData.effects !== undefined && nodeData.effects.length > 0) {
@@ -2487,16 +2555,128 @@ export async function recreateNodeFromData(
     if (nodeData.layoutMode !== undefined) {
       newNode.layoutMode = nodeData.layoutMode;
     }
+
+    // CRITICAL: Set bound variables for padding/itemSpacing IMMEDIATELY after layoutMode
+    // Padding properties only exist after layoutMode is set, so we must set them here
+    // This must happen BEFORE any direct values are set, as direct values prevent bound variables
+    if (
+      nodeData.layoutMode !== undefined &&
+      nodeData.layoutMode !== "NONE" &&
+      nodeData.boundVariables &&
+      recognizedVariables
+    ) {
+      const paddingProps: Array<
+        | "paddingLeft"
+        | "paddingRight"
+        | "paddingTop"
+        | "paddingBottom"
+        | "itemSpacing"
+      > = [
+        "paddingLeft",
+        "paddingRight",
+        "paddingTop",
+        "paddingBottom",
+        "itemSpacing",
+      ];
+      for (const propName of paddingProps) {
+        const varInfo = nodeData.boundVariables[propName];
+        if (varInfo && isVariableReference(varInfo)) {
+          const varRef = (varInfo as VariableReference)._varRef;
+          if (varRef !== undefined) {
+            const variable = recognizedVariables.get(String(varRef));
+            if (variable) {
+              const alias: VariableAlias = {
+                type: "VARIABLE_ALIAS",
+                id: variable.id,
+              };
+              if (!(newNode as any).boundVariables) {
+                (newNode as any).boundVariables = {};
+              }
+
+              // CRITICAL: In Figma, you cannot set a bound variable if the property has a direct value
+              // The property must not have a direct value before we can bind it to a variable
+              // Since we can't set padding to undefined, we need to ensure the property doesn't have
+              // a direct value by checking and handling it appropriately
+              // However, we cannot clear padding properties (they require a value)
+              // The issue is that Figma sets default padding (0) when creating components,
+              // so properties already have direct values when we try to bind variables
+
+              // Log the current state before attempting to set bound variable
+              const currentValue = (newNode as any)[propName];
+              const currentBoundVar = (newNode as any).boundVariables?.[
+                propName
+              ];
+
+              await debugConsole.log(
+                `  DEBUG: Attempting to set bound variable for ${propName} on "${nodeData.name || "Unnamed"}": current value=${currentValue}, current boundVar=${JSON.stringify(currentBoundVar)}`,
+              );
+
+              // Delete any existing bound variable entry first to start fresh
+              try {
+                delete (newNode as any).boundVariables[propName];
+              } catch {
+                // Ignore errors when deleting
+              }
+
+              // Set the bound variable directly
+              // Note: This may fail silently if the property has a direct value
+              // Figma's API doesn't allow bound variables on properties with direct values
+              try {
+                (newNode as any).boundVariables[propName] = alias;
+
+                // Immediately check if it was set
+                const immediatelyAfter = (newNode as any).boundVariables?.[
+                  propName
+                ];
+                await debugConsole.log(
+                  `  DEBUG: Immediately after setting ${propName} bound variable: ${JSON.stringify(immediatelyAfter)}`,
+                );
+              } catch (error) {
+                await debugConsole.warning(
+                  `  Error setting bound variable for ${propName}: ${error}`,
+                );
+              }
+
+              // Verify the bound variable was actually set and persisted
+              const setBoundVar = (newNode as any).boundVariables?.[propName];
+              if (
+                setBoundVar &&
+                typeof setBoundVar === "object" &&
+                setBoundVar.type === "VARIABLE_ALIAS" &&
+                setBoundVar.id === variable.id
+              ) {
+                await debugConsole.log(
+                  `  ✓ Set bound variable for ${propName} on "${nodeData.name || "Unnamed"}" (${nodeData.type}): variable ${variable.name} (ID: ${variable.id.substring(0, 8)}...)`,
+                );
+              } else {
+                await debugConsole.warning(
+                  `  Failed to set bound variable for ${propName} on "${nodeData.name || "Unnamed"}" - verification failed. Expected: ${JSON.stringify(alias)}, Got: ${JSON.stringify(setBoundVar)}`,
+                );
+              }
+            }
+          }
+        }
+      }
+    }
+
     // Step 2: Set wrap (must be set after layoutMode)
     if (nodeData.layoutWrap !== undefined) {
       newNode.layoutWrap = nodeData.layoutWrap;
     }
     // Step 3: Set other layout properties
+    // Always set sizing modes - if not in data, use defaults (AUTO = "Hug")
+    // This ensures "Hug" property is always set correctly
     if (nodeData.primaryAxisSizingMode !== undefined) {
       newNode.primaryAxisSizingMode = nodeData.primaryAxisSizingMode;
+    } else {
+      // Default to AUTO (Hug) if not specified
+      newNode.primaryAxisSizingMode = "AUTO";
     }
     if (nodeData.counterAxisSizingMode !== undefined) {
       newNode.counterAxisSizingMode = nodeData.counterAxisSizingMode;
+    } else {
+      // Default to AUTO (Hug) if not specified
+      newNode.counterAxisSizingMode = "AUTO";
     }
     if (nodeData.primaryAxisAlignItems !== undefined) {
       newNode.primaryAxisAlignItems = nodeData.primaryAxisAlignItems;
@@ -2504,19 +2684,58 @@ export async function recreateNodeFromData(
     if (nodeData.counterAxisAlignItems !== undefined) {
       newNode.counterAxisAlignItems = nodeData.counterAxisAlignItems;
     }
-    if (nodeData.paddingLeft !== undefined) {
+
+    // Note: Bound variables for padding/itemSpacing are already set above (right after layoutMode)
+    // to ensure they're set before any direct values that might block them
+
+    // Check for bound variables before setting direct values
+    // Setting a property directly overwrites variable bindings, so we need to check first
+    const hasBoundVariables =
+      nodeData.boundVariables && typeof nodeData.boundVariables === "object";
+    // Debug: Log padding bound variables if they exist
+    if (hasBoundVariables) {
+      const paddingBoundVars = [
+        "paddingLeft",
+        "paddingRight",
+        "paddingTop",
+        "paddingBottom",
+        "itemSpacing",
+      ].filter((prop) => nodeData.boundVariables[prop]);
+      if (paddingBoundVars.length > 0) {
+        await debugConsole.log(
+          `  DEBUG: Node "${nodeData.name || "Unnamed"}" (${nodeData.type}) has bound variables for: ${paddingBoundVars.join(", ")}`,
+        );
+      }
+    }
+    // Set direct values only if bound variables don't exist
+    if (
+      nodeData.paddingLeft !== undefined &&
+      (!hasBoundVariables || !nodeData.boundVariables.paddingLeft)
+    ) {
       newNode.paddingLeft = nodeData.paddingLeft;
     }
-    if (nodeData.paddingRight !== undefined) {
+    if (
+      nodeData.paddingRight !== undefined &&
+      (!hasBoundVariables || !nodeData.boundVariables.paddingRight)
+    ) {
       newNode.paddingRight = nodeData.paddingRight;
     }
-    if (nodeData.paddingTop !== undefined) {
+    if (
+      nodeData.paddingTop !== undefined &&
+      (!hasBoundVariables || !nodeData.boundVariables.paddingTop)
+    ) {
       newNode.paddingTop = nodeData.paddingTop;
     }
-    if (nodeData.paddingBottom !== undefined) {
+    if (
+      nodeData.paddingBottom !== undefined &&
+      (!hasBoundVariables || !nodeData.boundVariables.paddingBottom)
+    ) {
       newNode.paddingBottom = nodeData.paddingBottom;
     }
-    if (nodeData.itemSpacing !== undefined) {
+    if (
+      nodeData.itemSpacing !== undefined &&
+      (!hasBoundVariables || !nodeData.boundVariables.itemSpacing)
+    ) {
       newNode.itemSpacing = nodeData.itemSpacing;
     }
     if (nodeData.layoutGrow !== undefined) {
@@ -2592,7 +2811,16 @@ export async function recreateNodeFromData(
       }
       // Set size AFTER vectorPaths are set, because setting vectorPaths can auto-resize the vector
       // Setting size after ensures the vector has the correct dimensions
-      if (nodeData.width !== undefined && nodeData.height !== undefined) {
+      // Check for bound variables before setting width/height
+      const hasBoundVariablesForVectorSize =
+        nodeData.boundVariables &&
+        typeof nodeData.boundVariables === "object" &&
+        (nodeData.boundVariables.width || nodeData.boundVariables.height);
+      if (
+        nodeData.width !== undefined &&
+        nodeData.height !== undefined &&
+        !hasBoundVariablesForVectorSize
+      ) {
         try {
           newNode.resize(nodeData.width, nodeData.height);
           await debugConsole.log(
@@ -2636,7 +2864,17 @@ export async function recreateNodeFromData(
       newNode.characters = nodeData.characters;
 
       // Set other text properties if they exist
-      if (nodeData.fontSize !== undefined) {
+      // Check for bound variables before setting direct values
+      const hasBoundVariablesForText =
+        nodeData.boundVariables &&
+        typeof nodeData.boundVariables === "object" &&
+        (nodeData.boundVariables.fontSize ||
+          nodeData.boundVariables.letterSpacing ||
+          nodeData.boundVariables.lineHeight);
+      if (
+        nodeData.fontSize !== undefined &&
+        (!hasBoundVariablesForText || !nodeData.boundVariables.fontSize)
+      ) {
         newNode.fontSize = nodeData.fontSize;
       }
       if (nodeData.textAlignHorizontal !== undefined) {
@@ -2645,10 +2883,16 @@ export async function recreateNodeFromData(
       if (nodeData.textAlignVertical !== undefined) {
         newNode.textAlignVertical = nodeData.textAlignVertical;
       }
-      if (nodeData.letterSpacing !== undefined) {
+      if (
+        nodeData.letterSpacing !== undefined &&
+        (!hasBoundVariablesForText || !nodeData.boundVariables.letterSpacing)
+      ) {
         newNode.letterSpacing = nodeData.letterSpacing;
       }
-      if (nodeData.lineHeight !== undefined) {
+      if (
+        nodeData.lineHeight !== undefined &&
+        (!hasBoundVariablesForText || !nodeData.boundVariables.lineHeight)
+      ) {
         newNode.lineHeight = nodeData.lineHeight;
       }
       if (nodeData.textCase !== undefined) {
@@ -2671,13 +2915,24 @@ export async function recreateNodeFromData(
     }
   }
 
-  // Restore bound variables (if any)
-  if (nodeData.boundVariables) {
+  // CRITICAL: Restore bound variables as the FINAL step, after all properties are set
+  // This ensures nothing can clear the bound variables after they're set
+  // IMPORTANT: Padding/itemSpacing bound variables are already set earlier (right after layoutMode)
+  // to ensure they're set before any direct values that might clear them
+  if (nodeData.boundVariables && recognizedVariables) {
+    const paddingProps = [
+      "paddingLeft",
+      "paddingRight",
+      "paddingTop",
+      "paddingBottom",
+      "itemSpacing",
+    ];
     for (const [propertyName, varInfo] of Object.entries(
       nodeData.boundVariables,
     )) {
-      if (propertyName !== "fills") {
-        // Handle non-fills bound variables
+      // Skip fills (handled separately earlier) and padding properties (set earlier)
+      if (propertyName !== "fills" && !paddingProps.includes(propertyName)) {
+        // Handle all bound variables (including padding/itemSpacing)
         if (
           isVariableReference(varInfo) &&
           variableTable &&
@@ -2688,18 +2943,112 @@ export async function recreateNodeFromData(
           if (varRef !== undefined) {
             const variable = recognizedVariables.get(String(varRef));
             if (variable) {
-              const alias: VariableAlias = {
-                type: "VARIABLE_ALIAS",
-                id: variable.id,
-              };
-              if (!newNode.boundVariables) {
-                newNode.boundVariables = {};
+              // CRITICAL: In Figma, you cannot set a bound variable if the property has a direct value
+              // We need to ensure the property doesn't have a direct value before setting the bound variable
+              // The key is to set the bound variable directly without setting a direct value first
+              try {
+                const alias: VariableAlias = {
+                  type: "VARIABLE_ALIAS",
+                  id: variable.id,
+                };
+                if (!newNode.boundVariables) {
+                  newNode.boundVariables = {};
+                }
+
+                // Check if property currently has a direct value that might block the binding
+                const currentValue = (newNode as any)[propertyName];
+                const hasDirectValue =
+                  currentValue !== undefined &&
+                  newNode.boundVariables[propertyName] === undefined;
+
+                if (hasDirectValue) {
+                  await debugConsole.warning(
+                    `  Property ${propertyName} has direct value ${currentValue} which may prevent bound variable from being set`,
+                  );
+                }
+
+                // Set the bound variable - this should work if no direct value conflicts
+                // If there's a direct value, Figma will reject this, but we've already skipped setting
+                // direct values when bound variables exist, so this should work
+                (newNode as any).boundVariables[propertyName] = alias;
+
+                // Verify the bound variable was set by checking if it exists and matches
+                // Re-read boundVariables to ensure we get the actual state from Figma
+                const setBoundVar = (newNode as any).boundVariables?.[
+                  propertyName
+                ];
+                if (
+                  setBoundVar &&
+                  typeof setBoundVar === "object" &&
+                  setBoundVar.type === "VARIABLE_ALIAS" &&
+                  setBoundVar.id === variable.id
+                ) {
+                  await debugConsole.log(
+                    `  ✓ Set bound variable for ${propertyName} on "${nodeData.name || "Unnamed"}" (${nodeData.type}): variable ${variable.name} (ID: ${variable.id.substring(0, 8)}...)`,
+                  );
+                } else {
+                  // Check what we actually got back
+                  const actualBoundVar = (newNode as any).boundVariables?.[
+                    propertyName
+                  ];
+                  await debugConsole.warning(
+                    `  Failed to set bound variable for ${propertyName} on "${nodeData.name || "Unnamed"}" - bound variable not persisted. Property value: ${currentValue}, Expected: ${JSON.stringify(alias)}, Got: ${JSON.stringify(actualBoundVar)}`,
+                  );
+                }
+              } catch (error) {
+                await debugConsole.warning(
+                  `  Error setting bound variable for ${propertyName} on "${nodeData.name || "Unnamed"}": ${error}`,
+                );
               }
-              if (!newNode.boundVariables[propertyName]) {
-                newNode.boundVariables[propertyName] = alias;
-              }
+            } else {
+              await debugConsole.warning(
+                `  Variable reference ${varRef} not found in recognizedVariables for ${propertyName} on "${nodeData.name || "Unnamed"}"`,
+              );
             }
           }
+        }
+      }
+    }
+  }
+
+  // Special handling for width/height bound variables (need to set after resize)
+  // If width or height are bound to variables, we need to set them after any resize calls
+  if (
+    nodeData.boundVariables &&
+    recognizedVariables &&
+    (nodeData.boundVariables.width || nodeData.boundVariables.height)
+  ) {
+    const widthVar = nodeData.boundVariables.width;
+    const heightVar = nodeData.boundVariables.height;
+    if (widthVar && isVariableReference(widthVar)) {
+      const varRef = (widthVar as VariableReference)._varRef;
+      if (varRef !== undefined) {
+        const variable = recognizedVariables.get(String(varRef));
+        if (variable) {
+          const alias: VariableAlias = {
+            type: "VARIABLE_ALIAS",
+            id: variable.id,
+          };
+          if (!newNode.boundVariables) {
+            newNode.boundVariables = {};
+          }
+          newNode.boundVariables.width = alias;
+        }
+      }
+    }
+    if (heightVar && isVariableReference(heightVar)) {
+      const varRef = (heightVar as VariableReference)._varRef;
+      if (varRef !== undefined) {
+        const variable = recognizedVariables.get(String(varRef));
+        if (variable) {
+          const alias: VariableAlias = {
+            type: "VARIABLE_ALIAS",
+            id: variable.id,
+          };
+          if (!newNode.boundVariables) {
+            newNode.boundVariables = {};
+          }
+          newNode.boundVariables.height = alias;
         }
       }
     }
@@ -4121,9 +4470,16 @@ async function createRemoteInstances(
         if (entry.structure.name !== undefined) {
           componentNode.name = entry.structure.name;
         }
+        // Check for bound variables before setting width/height
+        const hasBoundVariablesForSize =
+          entry.structure.boundVariables &&
+          typeof entry.structure.boundVariables === "object" &&
+          (entry.structure.boundVariables.width ||
+            entry.structure.boundVariables.height);
         if (
           entry.structure.width !== undefined &&
-          entry.structure.height !== undefined
+          entry.structure.height !== undefined &&
+          !hasBoundVariablesForSize
         ) {
           componentNode.resize(entry.structure.width, entry.structure.height);
         }
@@ -4135,16 +4491,32 @@ async function createRemoteInstances(
         }
 
         // Apply visual properties
+        // Check for bound variables before setting direct values
+        const hasBoundVariablesForVisual =
+          entry.structure.boundVariables &&
+          typeof entry.structure.boundVariables === "object";
         if (entry.structure.visible !== undefined) {
           componentNode.visible = entry.structure.visible;
         }
-        if (entry.structure.opacity !== undefined) {
+        if (
+          entry.structure.opacity !== undefined &&
+          (!hasBoundVariablesForVisual ||
+            !entry.structure.boundVariables.opacity)
+        ) {
           componentNode.opacity = entry.structure.opacity;
         }
-        if (entry.structure.rotation !== undefined) {
+        if (
+          entry.structure.rotation !== undefined &&
+          (!hasBoundVariablesForVisual ||
+            !entry.structure.boundVariables.rotation)
+        ) {
           componentNode.rotation = entry.structure.rotation;
         }
-        if (entry.structure.blendMode !== undefined) {
+        if (
+          entry.structure.blendMode !== undefined &&
+          (!hasBoundVariablesForVisual ||
+            !entry.structure.boundVariables.blendMode)
+        ) {
           componentNode.blendMode = entry.structure.blendMode;
         }
 
@@ -4192,6 +4564,27 @@ async function createRemoteInstances(
           }
         }
 
+        // Apply stroke properties (check for bound variables)
+        const hasBoundVariablesForStroke =
+          entry.structure.boundVariables &&
+          typeof entry.structure.boundVariables === "object" &&
+          (entry.structure.boundVariables.strokeWeight ||
+            entry.structure.boundVariables.strokeAlign);
+        if (
+          entry.structure.strokeWeight !== undefined &&
+          (!hasBoundVariablesForStroke ||
+            !entry.structure.boundVariables.strokeWeight)
+        ) {
+          componentNode.strokeWeight = entry.structure.strokeWeight;
+        }
+        if (
+          entry.structure.strokeAlign !== undefined &&
+          (!hasBoundVariablesForStroke ||
+            !entry.structure.boundVariables.strokeAlign)
+        ) {
+          componentNode.strokeAlign = entry.structure.strokeAlign;
+        }
+
         // Apply layout properties
         if (entry.structure.layoutMode !== undefined) {
           componentNode.layoutMode = entry.structure.layoutMode;
@@ -4204,23 +4597,119 @@ async function createRemoteInstances(
           componentNode.counterAxisSizingMode =
             entry.structure.counterAxisSizingMode;
         }
-        if (entry.structure.paddingLeft !== undefined) {
+        // Check for bound variables before setting direct values
+        // Setting a property directly overwrites variable bindings, so we need to check first
+        const hasBoundVariables =
+          entry.structure.boundVariables &&
+          typeof entry.structure.boundVariables === "object";
+        if (
+          entry.structure.paddingLeft !== undefined &&
+          (!hasBoundVariables || !entry.structure.boundVariables.paddingLeft)
+        ) {
           componentNode.paddingLeft = entry.structure.paddingLeft;
         }
-        if (entry.structure.paddingRight !== undefined) {
+        if (
+          entry.structure.paddingRight !== undefined &&
+          (!hasBoundVariables || !entry.structure.boundVariables.paddingRight)
+        ) {
           componentNode.paddingRight = entry.structure.paddingRight;
         }
-        if (entry.structure.paddingTop !== undefined) {
+        if (
+          entry.structure.paddingTop !== undefined &&
+          (!hasBoundVariables || !entry.structure.boundVariables.paddingTop)
+        ) {
           componentNode.paddingTop = entry.structure.paddingTop;
         }
-        if (entry.structure.paddingBottom !== undefined) {
+        if (
+          entry.structure.paddingBottom !== undefined &&
+          (!hasBoundVariables || !entry.structure.boundVariables.paddingBottom)
+        ) {
           componentNode.paddingBottom = entry.structure.paddingBottom;
         }
-        if (entry.structure.itemSpacing !== undefined) {
+        if (
+          entry.structure.itemSpacing !== undefined &&
+          (!hasBoundVariables || !entry.structure.boundVariables.itemSpacing)
+        ) {
           componentNode.itemSpacing = entry.structure.itemSpacing;
         }
-        if (entry.structure.cornerRadius !== undefined) {
+        // Check for bound variables for corner radius properties
+        const hasBoundVariablesForCornerRadius =
+          entry.structure.boundVariables &&
+          typeof entry.structure.boundVariables === "object" &&
+          (entry.structure.boundVariables.cornerRadius ||
+            entry.structure.boundVariables.topLeftRadius ||
+            entry.structure.boundVariables.topRightRadius ||
+            entry.structure.boundVariables.bottomLeftRadius ||
+            entry.structure.boundVariables.bottomRightRadius);
+        if (
+          entry.structure.cornerRadius !== undefined &&
+          (!hasBoundVariablesForCornerRadius ||
+            !entry.structure.boundVariables.cornerRadius)
+        ) {
           componentNode.cornerRadius = entry.structure.cornerRadius;
+        }
+
+        // Restore bound variables for all properties (if any)
+        if (entry.structure.boundVariables && recognizedVariables) {
+          const boundVars = entry.structure.boundVariables;
+          const allBindableProps: Array<
+            | "paddingLeft"
+            | "paddingRight"
+            | "paddingTop"
+            | "paddingBottom"
+            | "itemSpacing"
+            | "opacity"
+            | "rotation"
+            | "blendMode"
+            | "strokeWeight"
+            | "strokeAlign"
+            | "cornerRadius"
+            | "topLeftRadius"
+            | "topRightRadius"
+            | "bottomLeftRadius"
+            | "bottomRightRadius"
+            | "width"
+            | "height"
+          > = [
+            "paddingLeft",
+            "paddingRight",
+            "paddingTop",
+            "paddingBottom",
+            "itemSpacing",
+            "opacity",
+            "rotation",
+            "blendMode",
+            "strokeWeight",
+            "strokeAlign",
+            "cornerRadius",
+            "topLeftRadius",
+            "topRightRadius",
+            "bottomLeftRadius",
+            "bottomRightRadius",
+            "width",
+            "height",
+          ];
+          for (const propName of allBindableProps) {
+            if (
+              boundVars[propName] &&
+              isVariableReference(boundVars[propName])
+            ) {
+              const varRef = (boundVars[propName] as VariableReference)._varRef;
+              if (varRef !== undefined) {
+                const variable = recognizedVariables.get(String(varRef));
+                if (variable) {
+                  const alias = {
+                    type: "VARIABLE_ALIAS" as const,
+                    id: variable.id,
+                  };
+                  if (!(componentNode as any).boundVariables) {
+                    (componentNode as any).boundVariables = {};
+                  }
+                  (componentNode as any).boundVariables[propName] = alias;
+                }
+              }
+            }
+          }
         }
 
         // Recreate children

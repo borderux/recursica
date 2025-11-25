@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { InstanceTable } from "./parsers/instanceTable";
-import { VariableTable, CollectionTable } from "./parsers/variableTable";
+import {
+  VariableTable,
+  CollectionTable,
+  isVariableReference,
+  type VariableReference,
+} from "./parsers/variableTable";
 import { debugConsole } from "./debugConsole";
 import {
   recreateNodeFromData,
@@ -378,9 +383,16 @@ export async function createRemoteInstances(
         if (entry.structure.name !== undefined) {
           componentNode.name = entry.structure.name;
         }
+        // Check for bound variables before setting width/height
+        const hasBoundVariablesForSize =
+          entry.structure.boundVariables &&
+          typeof entry.structure.boundVariables === "object" &&
+          (entry.structure.boundVariables.width ||
+            entry.structure.boundVariables.height);
         if (
           entry.structure.width !== undefined &&
-          entry.structure.height !== undefined
+          entry.structure.height !== undefined &&
+          !hasBoundVariablesForSize
         ) {
           componentNode.resize(entry.structure.width, entry.structure.height);
         }
@@ -392,16 +404,29 @@ export async function createRemoteInstances(
         }
 
         // Apply visual properties
+        // Check for bound variables before setting direct values
+        const hasBoundVariables =
+          entry.structure.boundVariables &&
+          typeof entry.structure.boundVariables === "object";
         if (entry.structure.visible !== undefined) {
           componentNode.visible = entry.structure.visible;
         }
-        if (entry.structure.opacity !== undefined) {
+        if (
+          entry.structure.opacity !== undefined &&
+          (!hasBoundVariables || !entry.structure.boundVariables.opacity)
+        ) {
           componentNode.opacity = entry.structure.opacity;
         }
-        if (entry.structure.rotation !== undefined) {
+        if (
+          entry.structure.rotation !== undefined &&
+          (!hasBoundVariables || !entry.structure.boundVariables.rotation)
+        ) {
           componentNode.rotation = entry.structure.rotation;
         }
-        if (entry.structure.blendMode !== undefined) {
+        if (
+          entry.structure.blendMode !== undefined &&
+          (!hasBoundVariables || !entry.structure.boundVariables.blendMode)
+        ) {
           componentNode.blendMode = entry.structure.blendMode;
         }
 
@@ -449,6 +474,27 @@ export async function createRemoteInstances(
           }
         }
 
+        // Apply stroke properties (check for bound variables)
+        const hasBoundVariablesForStroke =
+          entry.structure.boundVariables &&
+          typeof entry.structure.boundVariables === "object" &&
+          (entry.structure.boundVariables.strokeWeight ||
+            entry.structure.boundVariables.strokeAlign);
+        if (
+          entry.structure.strokeWeight !== undefined &&
+          (!hasBoundVariablesForStroke ||
+            !entry.structure.boundVariables.strokeWeight)
+        ) {
+          componentNode.strokeWeight = entry.structure.strokeWeight;
+        }
+        if (
+          entry.structure.strokeAlign !== undefined &&
+          (!hasBoundVariablesForStroke ||
+            !entry.structure.boundVariables.strokeAlign)
+        ) {
+          componentNode.strokeAlign = entry.structure.strokeAlign;
+        }
+
         // Apply layout properties
         if (entry.structure.layoutMode !== undefined) {
           componentNode.layoutMode = entry.structure.layoutMode;
@@ -461,23 +507,117 @@ export async function createRemoteInstances(
           componentNode.counterAxisSizingMode =
             entry.structure.counterAxisSizingMode;
         }
-        if (entry.structure.paddingLeft !== undefined) {
+        // Check for bound variables before setting direct values
+        // Setting a property directly overwrites variable bindings, so we need to check first
+        // Reuse hasBoundVariables declared earlier in this scope
+        if (
+          entry.structure.paddingLeft !== undefined &&
+          (!hasBoundVariables || !entry.structure.boundVariables.paddingLeft)
+        ) {
           componentNode.paddingLeft = entry.structure.paddingLeft;
         }
-        if (entry.structure.paddingRight !== undefined) {
+        if (
+          entry.structure.paddingRight !== undefined &&
+          (!hasBoundVariables || !entry.structure.boundVariables.paddingRight)
+        ) {
           componentNode.paddingRight = entry.structure.paddingRight;
         }
-        if (entry.structure.paddingTop !== undefined) {
+        if (
+          entry.structure.paddingTop !== undefined &&
+          (!hasBoundVariables || !entry.structure.boundVariables.paddingTop)
+        ) {
           componentNode.paddingTop = entry.structure.paddingTop;
         }
-        if (entry.structure.paddingBottom !== undefined) {
+        if (
+          entry.structure.paddingBottom !== undefined &&
+          (!hasBoundVariables || !entry.structure.boundVariables.paddingBottom)
+        ) {
           componentNode.paddingBottom = entry.structure.paddingBottom;
         }
-        if (entry.structure.itemSpacing !== undefined) {
+        if (
+          entry.structure.itemSpacing !== undefined &&
+          (!hasBoundVariables || !entry.structure.boundVariables.itemSpacing)
+        ) {
           componentNode.itemSpacing = entry.structure.itemSpacing;
         }
-        if (entry.structure.cornerRadius !== undefined) {
+        // Check for bound variables for corner radius properties
+        const hasBoundVariablesForCornerRadius =
+          entry.structure.boundVariables &&
+          typeof entry.structure.boundVariables === "object" &&
+          (entry.structure.boundVariables.cornerRadius ||
+            entry.structure.boundVariables.topLeftRadius ||
+            entry.structure.boundVariables.topRightRadius ||
+            entry.structure.boundVariables.bottomLeftRadius ||
+            entry.structure.boundVariables.bottomRightRadius);
+        if (
+          entry.structure.cornerRadius !== undefined &&
+          (!hasBoundVariablesForCornerRadius ||
+            !entry.structure.boundVariables.cornerRadius)
+        ) {
           componentNode.cornerRadius = entry.structure.cornerRadius;
+        }
+
+        // Restore bound variables for all properties (if any)
+        if (entry.structure.boundVariables && recognizedVariables) {
+          const boundVars = entry.structure.boundVariables;
+          const allBindableProps: Array<
+            | "paddingLeft"
+            | "paddingRight"
+            | "paddingTop"
+            | "paddingBottom"
+            | "itemSpacing"
+            | "opacity"
+            | "rotation"
+            | "blendMode"
+            | "strokeWeight"
+            | "strokeAlign"
+            | "cornerRadius"
+            | "topLeftRadius"
+            | "topRightRadius"
+            | "bottomLeftRadius"
+            | "bottomRightRadius"
+            | "width"
+            | "height"
+          > = [
+            "paddingLeft",
+            "paddingRight",
+            "paddingTop",
+            "paddingBottom",
+            "itemSpacing",
+            "opacity",
+            "rotation",
+            "blendMode",
+            "strokeWeight",
+            "strokeAlign",
+            "cornerRadius",
+            "topLeftRadius",
+            "topRightRadius",
+            "bottomLeftRadius",
+            "bottomRightRadius",
+            "width",
+            "height",
+          ];
+          for (const propName of allBindableProps) {
+            if (
+              boundVars[propName] &&
+              isVariableReference(boundVars[propName])
+            ) {
+              const varRef = (boundVars[propName] as VariableReference)._varRef;
+              if (varRef !== undefined) {
+                const variable = recognizedVariables.get(String(varRef));
+                if (variable) {
+                  const alias = {
+                    type: "VARIABLE_ALIAS" as const,
+                    id: variable.id,
+                  };
+                  if (!(componentNode as any).boundVariables) {
+                    (componentNode as any).boundVariables = {};
+                  }
+                  (componentNode as any).boundVariables[propName] = alias;
+                }
+              }
+            }
+          }
         }
 
         // Recreate children
