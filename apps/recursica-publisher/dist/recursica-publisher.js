@@ -2397,7 +2397,7 @@ async function Le(e, t = /* @__PURE__ */ new Set(), n = !1) {
     await a.log("Compressing JSON data...");
     const T = Ft(A, B);
     await a.log("Serializing to JSON...");
-    const U = JSON.stringify(T, null, 2), k = (U.length / 1024).toFixed(2), d = be(c.name).trim().replace(/\s+/g, "_") + ".rec.json";
+    const U = JSON.stringify(T, null, 2), k = (U.length / 1024).toFixed(2), d = be(c.name).trim().replace(/\s+/g, "_") + ".figma.json";
     return await a.log(`JSON serialization complete: ${k} KB`), await a.log(`Export file: ${d}`), await a.log("=== Export Complete ==="), {
       type: "exportPage",
       success: !0,

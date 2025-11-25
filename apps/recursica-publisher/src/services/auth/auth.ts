@@ -3,17 +3,34 @@ import Base64 from "crypto-js/enc-base64";
 import Utf8 from "crypto-js/enc-utf8";
 
 const BASE_URL = import.meta.env.VITE_RECURSICA_API_URL;
-const PLUGIN_PHRASE = import.meta.env.VITE_PLUGIN_PHRASE || "default-phrase";
+const PLUGIN_PHRASE = import.meta.env.VITE_PLUGIN_PHRASE;
+
+// Validate BASE_URL at runtime
+const getBaseUrl = (): string => {
+  if (!BASE_URL) {
+    const errorMessage =
+      "VITE_RECURSICA_API_URL environment variable is not set. Please configure this in your environment or .env file.";
+    console.error(errorMessage);
+    throw new Error(errorMessage);
+  }
+  return BASE_URL;
+};
 
 const getSecureHeaders = (): HeadersInit => ({
   "Content-Type": "application/json",
 });
 
-// API endpoints configuration
+// API endpoints configuration - validate BASE_URL when accessed
 export const API_ENDPOINTS = {
-  keys: `${BASE_URL}/api/plugin/keys`,
-  authorize: `${BASE_URL}/api/plugin/authorize`,
-  token: `${BASE_URL}/api/plugin/token`,
+  get keys() {
+    return `${getBaseUrl()}/api/plugin/keys`;
+  },
+  get authorize() {
+    return `${getBaseUrl()}/api/plugin/authorize`;
+  },
+  get token() {
+    return `${getBaseUrl()}/api/plugin/token`;
+  },
 } as const;
 
 // Secure fetch wrapper with built-in security headers

@@ -1,7 +1,8 @@
-import { useState, useCallback, useLayoutEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "../context/useAuth";
 import { apiService, pluginTokenToCode } from "../services/auth/auth";
 import { Profile } from "../components/Profile";
+import { callPlugin } from "../utils/callPlugin";
 
 const Status = {
   Login: "Login",
@@ -79,24 +80,21 @@ export function Auth() {
     }
   };
 
-  useLayoutEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      const { pluginMessage } = event.data;
-      console.log("[Auth] New message from plugin sandbox:", pluginMessage);
-      if (!pluginMessage) return;
-
-      switch (pluginMessage.type) {
-        case "current-user": {
-          setUserId(pluginMessage.payload || null);
-          break;
+  // Get user ID from plugin using callPlugin
+  useEffect(() => {
+    const fetchUserId = async () => {
+      try {
+        const { promise } = callPlugin("getCurrentUser", {});
+        const response = await promise;
+        if (response.success && response.data) {
+          const data = response.data as { userId: string | null };
+          setUserId(data.userId || null);
         }
-        default:
-          break;
+      } catch (error) {
+        console.error("Error fetching user ID:", error);
       }
     };
-    window.addEventListener("message", handleMessage);
-    parent.postMessage({ pluginMessage: { type: "get-current-user" } }, "*");
-    return () => window.removeEventListener("message", handleMessage);
+    fetchUserId();
   }, []);
 
   if (isAuthenticated) {

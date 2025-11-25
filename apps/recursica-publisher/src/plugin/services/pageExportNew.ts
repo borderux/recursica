@@ -723,7 +723,7 @@ export async function exportPage(
     const jsonSizeKB = (jsonString.length / 1024).toFixed(2);
     // Clean component name and create filename
     const cleanedName = getComponentName(selectedPage.name).trim();
-    const filename = cleanedName.replace(/\s+/g, "_") + ".rec.json";
+    const filename = cleanedName.replace(/\s+/g, "_") + ".figma.json";
 
     await debugConsole.log(`JSON serialization complete: ${jsonSizeKB} KB`);
     await debugConsole.log(`Export file: ${filename}`);

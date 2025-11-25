@@ -8,6 +8,8 @@ import Publish from "./pages/Publish";
 import Publishing from "./pages/Publishing";
 import PageManagement from "./pages/PageManagement";
 import { Auth } from "./pages/Auth";
+import { PublishAuth } from "./pages/PublishAuth";
+import Unauthorized from "./pages/Unauthorized";
 import { AuthProvider } from "./context/AuthProvider";
 import { DebugConsoleProvider } from "./context/DebugConsoleProvider";
 import { PluginPromptProvider } from "./context/PluginPromptProvider";
@@ -149,6 +151,11 @@ function App() {
                   <Route path="/import" element={<Import />} />
                   <Route path="/importing" element={<Importing />} />
                   <Route path="/publish" element={<Publish />} />
+                  <Route path="/publish/auth" element={<PublishAuth />} />
+                  <Route
+                    path="/publish/unauthorized"
+                    element={<Unauthorized />}
+                  />
                   <Route path="/publishing" element={<Publishing />} />
                   <Route element={<Layout />}>
                     <Route path="auth" element={<Auth />} />

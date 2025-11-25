@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import PageLayout from "../components/PageLayout";
 import { callPlugin } from "../utils/callPlugin";
 import type { ComponentMetadata } from "../plugin/services/getComponentMetadata";
+import { useAuth } from "../context/useAuth";
 
 export default function Publish() {
   const [metadata, setMetadata] = useState<ComponentMetadata | null>(null);
@@ -11,6 +12,14 @@ export default function Publish() {
   const [componentName, setComponentName] = useState<string>("");
   const [currentPageIndex, setCurrentPageIndex] = useState<number | null>(null);
   const navigate = useNavigate();
+  const { isAuthenticated, accessToken } = useAuth();
+
+  // Check authentication on mount
+  useEffect(() => {
+    if (!isAuthenticated || !accessToken) {
+      navigate("/publish/auth", { replace: true });
+    }
+  }, [isAuthenticated, accessToken, navigate]);
 
   useEffect(() => {
     const loadMetadata = async () => {
@@ -47,6 +56,11 @@ export default function Publish() {
 
     loadMetadata();
   }, []);
+
+  // Don't render if not authenticated
+  if (!isAuthenticated || !accessToken) {
+    return null;
+  }
 
   return (
     <PageLayout showBackButton={true}>

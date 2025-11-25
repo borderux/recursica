@@ -76,6 +76,8 @@ interface GitHubCreatePullRequestRequest {
   base: string;
 }
 
+import type { ExportPageResponseData } from "../../plugin/services/pageExportNew";
+
 interface FigmaNode {
   id: string;
   name: string;
@@ -124,8 +126,12 @@ export class GitHubService {
     owner: string,
     repo: string,
     path: string = "",
+    ref?: string,
   ): Promise<GitHubFileContent | GitHubFileContent[]> {
-    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+    let url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+    if (ref) {
+      url += `?ref=${ref}`;
+    }
     return this.makeRequest(url);
   }
 
@@ -217,6 +223,251 @@ export class GitHubService {
   ): Promise<GitHubBranch> {
     const url = `https://api.github.com/repos/${owner}/${repo}/branches/${branchName}`;
     return this.makeRequest(url);
+  }
+
+  async getAllBranches(owner: string, repo: string): Promise<GitHubBranch[]> {
+    const url = `https://api.github.com/repos/${owner}/${repo}/branches`;
+    return this.makeRequest(url);
+  }
+
+  /**
+   * Sanitizes a page name to be a valid Git branch name
+   * @param pageName The original page name
+   * @returns Sanitized branch name (lowercase, hyphens instead of spaces/special chars)
+   */
+  private sanitizeBranchName(pageName: string): string {
+    return pageName
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, "") // Remove special characters except word chars, spaces, and hyphens
+      .replace(/\s+/g, "-") // Replace spaces with hyphens
+      .replace(/-+/g, "-") // Replace multiple hyphens with single hyphen
+      .replace(/^-|-$/g, ""); // Remove leading/trailing hyphens
+  }
+
+  /**
+   * Sanitizes a page name to be a valid folder name
+   * Matches the filename convention: underscores instead of hyphens, preserves case
+   * @param pageName The original page name
+   * @returns Sanitized folder name (preserves case, underscores instead of spaces)
+   */
+  private sanitizeFolderName(pageName: string): string {
+    // Match the filename convention: clean to alphanumeric, underscore, dash, or space
+    // then replace spaces with underscores
+    return pageName
+      .replace(/[^a-zA-Z0-9_\-\s]/g, "") // Remove special characters except alphanumeric, underscore, dash, or space
+      .trim()
+      .replace(/\s+/g, "_"); // Replace spaces with underscores
+  }
+
+  /**
+   * Finds a unique branch name by appending incrementing suffixes if needed
+   * @param owner Repository owner
+   * @param repo Repository name
+   * @param baseName Base branch name (e.g., "publishing/page-name")
+   * @returns Unique branch name
+   */
+  async findUniqueBranchName(
+    owner: string,
+    repo: string,
+    baseName: string,
+  ): Promise<string> {
+    // Get all existing branches
+    const branches = await this.getAllBranches(owner, repo);
+    const branchNames = new Set(branches.map((b) => b.name));
+
+    // Check if base name is available
+    if (!branchNames.has(baseName)) {
+      return baseName;
+    }
+
+    // Try incrementing suffixes
+    let counter = 1;
+    let candidateName = `${baseName}_${counter}`;
+    while (branchNames.has(candidateName)) {
+      counter++;
+      candidateName = `${baseName}_${counter}`;
+    }
+
+    return candidateName;
+  }
+
+  /**
+   * Flattens the recursive ExportPageResponseData structure into a flat array
+   * @param pageData The export page response data
+   * @returns Array of flattened page data with name, jsonData, and filename
+   */
+  private flattenPageExports(
+    pageData: ExportPageResponseData,
+  ): Array<{ name: string; jsonData: string; filename: string }> {
+    const files: Array<{ name: string; jsonData: string; filename: string }> = [
+      {
+        name: pageData.pageName,
+        jsonData: pageData.jsonData,
+        filename: pageData.filename,
+      },
+    ];
+
+    // Recursively add additional pages
+    for (const additionalPage of pageData.additionalPages) {
+      files.push(...this.flattenPageExports(additionalPage));
+    }
+
+    return files;
+  }
+
+  /**
+   * Publishes page exports to GitHub by creating a branch, committing files, and creating a PR
+   * @param owner Repository owner
+   * @param repo Repository name
+   * @param exportData The export page response data from pageExportNew
+   * @param baseBranch Base branch to create the new branch from (e.g., "main")
+   * @returns Branch name and pull request
+   */
+  async publishPageExports(
+    owner: string,
+    repo: string,
+    exportData: ExportPageResponseData,
+    baseBranch: string = "main",
+  ): Promise<{ branch: string; pr: GitHubPullRequest }> {
+    // Sanitize page name for branch naming
+    const sanitizedPageName = this.sanitizeBranchName(exportData.pageName);
+    const baseBranchName = `publishing/${sanitizedPageName}`;
+
+    // Find unique branch name
+    const branchName = await this.findUniqueBranchName(
+      owner,
+      repo,
+      baseBranchName,
+    );
+
+    // Create the branch
+    await this.createBranch(owner, repo, branchName, baseBranch);
+
+    // Flatten all exported pages
+    const files = this.flattenPageExports(exportData);
+
+    // Build components mapping for index.json
+    const components: Record<string, { name: string; path: string }> = {};
+
+    // Commit each file to the branch
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      // Sanitize page name for folder name
+      const sanitizedPageName = this.sanitizeFolderName(file.name);
+      const filePath = `components/${sanitizedPageName}/${file.filename}`;
+      const commitMessage =
+        i === 0
+          ? `Publishing ${exportData.pageName}`
+          : `Publishing ${exportData.pageName} (additional: ${file.name})`;
+
+      // Parse jsonData to extract GUID from metadata
+      try {
+        const parsedData = JSON.parse(file.jsonData);
+        const guid = parsedData.metadata?.guid;
+        if (guid) {
+          components[guid] = {
+            name: file.name,
+            path: filePath,
+          };
+        }
+      } catch (error) {
+        console.warn(
+          `Failed to parse jsonData for file ${file.filename}:`,
+          error,
+        );
+      }
+
+      // Check if file already exists in the branch
+      let fileSha: string | undefined;
+      try {
+        const existingFile = await this.getRepoContents(
+          owner,
+          repo,
+          filePath,
+          branchName,
+        );
+        if (!Array.isArray(existingFile)) {
+          fileSha = existingFile.sha;
+        }
+      } catch {
+        // File doesn't exist, that's fine
+      }
+
+      // Create or update the file in the branch
+      await this.createOrUpdateFileInBranch(
+        owner,
+        repo,
+        filePath,
+        file.jsonData,
+        commitMessage,
+        branchName,
+        fileSha,
+      );
+    }
+
+    // Read existing index.json if it exists, merge with new components, and write it back
+    let indexJson: {
+      components?: Record<string, { name: string; path: string }>;
+    } = {};
+    let indexSha: string | undefined;
+    try {
+      const existingIndex = await this.getRepoContents(
+        owner,
+        repo,
+        "index.json",
+        branchName,
+      );
+      if (!Array.isArray(existingIndex)) {
+        const indexContent = await fetch(existingIndex.download_url).then(
+          (res) => res.text(),
+        );
+        indexJson = JSON.parse(indexContent);
+        indexSha = existingIndex.sha;
+      }
+    } catch {
+      // index.json doesn't exist, that's fine - we'll create it
+    }
+
+    // Merge new components into existing index.json
+    if (!indexJson.components) {
+      indexJson.components = {};
+    }
+    Object.assign(indexJson.components, components);
+
+    // Write index.json to root of repo
+    const indexContent = JSON.stringify(indexJson, null, 2);
+    await this.createOrUpdateFileInBranch(
+      owner,
+      repo,
+      "index.json",
+      indexContent,
+      `Update index.json with ${exportData.pageName} and related components`,
+      branchName,
+      indexSha,
+    );
+
+    // Create PR body with list of exported files
+    const fileList = files
+      .map((file) => `- \`${file.filename}\` (${file.name})`)
+      .join("\n");
+    const prBody = `This PR publishes the Figma page "${exportData.pageName}" and related pages to the repository.
+
+**Exported files:**
+${fileList}
+
+**Export date:** ${new Date().toLocaleString()}`;
+
+    // Create pull request
+    const pr = await this.createPullRequest(
+      owner,
+      repo,
+      `Publishing ${exportData.pageName}`,
+      prBody,
+      branchName,
+      baseBranch,
+    );
+
+    return { branch: branchName, pr };
   }
 
   async createBranch(
@@ -373,8 +624,8 @@ export class GitHubService {
       .replace(/\s+/g, "-") // Replace spaces with hyphens
       .replace(/-+/g, "-") // Replace multiple hyphens with single hyphen
       .replace(/^-|-$/g, ""); // Remove leading/trailing hyphens
-    const filename = `${sanitizedPageName}.json`;
-    const filePath = `figma-exports/${filename}`;
+    const filename = `${sanitizedPageName}.figma.json`;
+    const filePath = `components/${filename}`;
 
     const content = JSON.stringify(pageData, null, 2);
     const message = `Export Figma page: ${pageName}`;
@@ -468,6 +719,35 @@ export class GitHubService {
       });
     }
     return count;
+  }
+
+  /**
+   * Check if the user has write access to a repository
+   * @param owner Repository owner (username or organization)
+   * @param repo Repository name
+   * @returns true if user has write/push permissions, false otherwise
+   */
+  async checkRepositoryAccess(owner: string, repo: string): Promise<boolean> {
+    try {
+      const response = await this.makeRequest(
+        `https://api.github.com/repos/${owner}/${repo}`,
+      );
+
+      // Check if user has push permissions
+      const permissions = (response as { permissions?: { push?: boolean } })
+        .permissions;
+      return permissions?.push === true;
+    } catch (error) {
+      // 404 means repository doesn't exist or user doesn't have access
+      // 403 means forbidden (no access)
+      if (error instanceof Error) {
+        if (error.message.includes("404") || error.message.includes("403")) {
+          return false;
+        }
+      }
+      console.error("Error checking repository access:", error);
+      return false;
+    }
   }
 }
 

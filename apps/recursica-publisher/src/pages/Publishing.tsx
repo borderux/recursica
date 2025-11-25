@@ -5,6 +5,11 @@ import DebugConsole from "../components/DebugConsole";
 import PluginPrompt from "../components/PluginPrompt";
 import { callPlugin } from "../utils/callPlugin";
 import type { ExportPageResponseData } from "../plugin/services/pageExportNew";
+import { useAuth } from "../context/useAuth";
+import { GitHubService } from "../services/github/githubService";
+
+const RECURSICA_FIGMA_OWNER = "borderux";
+const RECURSICA_FIGMA_REPO = "recursica-figma";
 
 interface PublishedFile {
   name: string;
@@ -12,11 +17,22 @@ interface PublishedFile {
   filename: string;
 }
 
+type PublishingStatus =
+  | "exporting"
+  | "uploading"
+  | "creating-pr"
+  | "complete"
+  | "error";
+
 export default function Publishing() {
   const [searchParams] = useSearchParams();
   const [publishedFiles, setPublishedFiles] = useState<PublishedFile[]>([]);
   const [isPublishing, setIsPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [publishingStatus, setPublishingStatus] =
+    useState<PublishingStatus>("exporting");
+  const [prUrl, setPrUrl] = useState<string | null>(null);
+  const { accessToken } = useAuth();
 
   // Flatten the recursive ExportPageResponseData structure into a flat array
   const flattenPublishedPages = useCallback(
@@ -74,10 +90,48 @@ export default function Publishing() {
           const exportData = response.data as unknown as ExportPageResponseData;
           const files = flattenPublishedPages(exportData);
           setPublishedFiles(files);
+
+          // After successful export, publish to GitHub
+          if (accessToken) {
+            setPublishingStatus("uploading");
+            try {
+              const githubService = new GitHubService(accessToken);
+              const result = await githubService.publishPageExports(
+                RECURSICA_FIGMA_OWNER,
+                RECURSICA_FIGMA_REPO,
+                exportData,
+                "main",
+              );
+
+              if (isMounted) {
+                setPublishingStatus("complete");
+                setPrUrl(result.pr.html_url);
+                setIsPublishing(false);
+              }
+            } catch (publishError) {
+              if (isMounted) {
+                setPublishingStatus("error");
+                setIsPublishing(false);
+                setError(
+                  publishError instanceof Error
+                    ? publishError.message
+                    : "Failed to publish to GitHub. Please try again.",
+                );
+              }
+            }
+          } else {
+            if (isMounted) {
+              setError("No access token available. Please authenticate first.");
+              setPublishingStatus("error");
+            }
+          }
         } else {
           setError(
             response.message || "Failed to export page. Please try again.",
           );
+          if (isMounted) {
+            setPublishingStatus("error");
+          }
         }
       } catch (err) {
         // Only set error if component is still mounted
@@ -85,10 +139,17 @@ export default function Publishing() {
           setError(
             err instanceof Error ? err.message : "Failed to export page",
           );
+          setPublishingStatus("error");
         }
       } finally {
         if (isMounted) {
-          setIsPublishing(false);
+          // Only set isPublishing to false if we're not in the middle of uploading
+          if (
+            publishingStatus !== "uploading" &&
+            publishingStatus !== "creating-pr"
+          ) {
+            setIsPublishing(false);
+          }
         }
       }
     };
@@ -149,7 +210,7 @@ export default function Publishing() {
           <h2 style={{ marginTop: 0, marginBottom: "12px", fontSize: "18px" }}>
             Published Files:
           </h2>
-          {isPublishing ? (
+          {isPublishing || publishingStatus === "uploading" ? (
             <div
               style={{
                 display: "flex",
@@ -168,11 +229,42 @@ export default function Publishing() {
                 }}
               />
               <p style={{ color: "#666", fontStyle: "italic", margin: 0 }}>
-                Waiting for publish to complete...
+                {publishingStatus === "exporting"
+                  ? "Exporting page..."
+                  : publishingStatus === "uploading"
+                    ? "Uploading to GitHub..."
+                    : publishingStatus === "creating-pr"
+                      ? "Creating pull request..."
+                      : "Waiting for publish to complete..."}
               </p>
             </div>
           ) : error ? (
             <p style={{ color: "#c62828", fontStyle: "italic" }}>{error}</p>
+          ) : publishingStatus === "complete" && prUrl ? (
+            <div
+              style={{
+                padding: "12px",
+                marginBottom: "12px",
+                backgroundColor: "#e8f5e9",
+                border: "1px solid #4caf50",
+                borderRadius: "4px",
+              }}
+            >
+              <p style={{ margin: "0 0 8px 0", color: "#2e7d32" }}>
+                ✓ Successfully published to GitHub!
+              </p>
+              <a
+                href={prUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: "#1976d2",
+                  textDecoration: "underline",
+                }}
+              >
+                View Pull Request
+              </a>
+            </div>
           ) : publishedFiles.length === 0 ? (
             <p style={{ color: "#666", fontStyle: "italic" }}>
               Waiting for publish to complete...
