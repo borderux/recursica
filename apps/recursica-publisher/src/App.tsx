@@ -6,6 +6,8 @@ import Import from "./pages/Import";
 import Importing from "./pages/Importing";
 import Publish from "./pages/Publish";
 import Publishing from "./pages/Publishing";
+import PublishingComplete from "./pages/PublishingComplete";
+import PublishingWizard from "./pages/PublishingWizard";
 import PageManagement from "./pages/PageManagement";
 import { Auth } from "./pages/Auth";
 import { PublishAuth } from "./pages/PublishAuth";
@@ -157,6 +159,14 @@ function App() {
                     element={<Unauthorized />}
                   />
                   <Route path="/publishing" element={<Publishing />} />
+                  <Route
+                    path="/publishing-complete"
+                    element={<PublishingComplete />}
+                  />
+                  <Route
+                    path="/publishing-wizard"
+                    element={<PublishingWizard />}
+                  />
                   <Route element={<Layout />}>
                     <Route path="auth" element={<Auth />} />
                     <Route

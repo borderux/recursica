@@ -4,6 +4,7 @@ import { apiService, pluginTokenToCode } from "../services/auth/auth";
 import { useNavigate } from "react-router";
 import { GitHubService } from "../services/github/githubService";
 import { callPlugin } from "../utils/callPlugin";
+import PageLayout from "../components/PageLayout";
 
 const Status = {
   Login: "Login",
@@ -214,64 +215,87 @@ export function PublishAuth() {
   }, [isAuthenticated, accessToken, checkRepositoryAccess, navigate]);
 
   return (
-    <div style={{ padding: "20px", maxWidth: "400px", margin: "0 auto" }}>
-      <h1>Publish Authentication</h1>
-      <p style={{ marginBottom: "20px" }}>
-        To publish to the recursica Figma component library, you need to
-        authenticate with GitHub and have write access to the repository.
-      </p>
-      {status === Status.WaitingForAuthorization && (
-        <div style={{ textAlign: "center", marginBottom: "20px" }}>
-          <div style={{ fontSize: "32px", marginBottom: "10px" }}>🔗</div>
-          <h3>Check your browser</h3>
-          <p>Go to the authentication page and return here</p>
-        </div>
-      )}
+    <PageLayout showBackButton={false}>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "100%",
+          minHeight: "100%",
+          maxWidth: "400px",
+          margin: "0 auto",
+        }}
+      >
+        <h1 style={{ marginBottom: "20px" }}>Publish Authentication</h1>
+        <p style={{ marginBottom: "20px", textAlign: "center" }}>
+          To publish to the recursica Figma component library, you need to
+          authenticate with GitHub and have write access to the repository.
+        </p>
+        {status === Status.WaitingForAuthorization && (
+          <div style={{ textAlign: "center", marginBottom: "20px" }}>
+            <div style={{ fontSize: "32px", marginBottom: "10px" }}>🔗</div>
+            <h3>Check your browser</h3>
+            <p>Go to the authentication page and return here</p>
+          </div>
+        )}
 
-      {status === Status.CheckingAccess && (
-        <div style={{ textAlign: "center", marginBottom: "20px" }}>
-          <div style={{ fontSize: "32px", marginBottom: "10px" }}>⏳</div>
-          <h3>Checking access...</h3>
-          <p>Verifying your permissions to publish</p>
-        </div>
-      )}
+        {status === Status.CheckingAccess && (
+          <div style={{ textAlign: "center", marginBottom: "20px" }}>
+            <div style={{ fontSize: "32px", marginBottom: "10px" }}>⏳</div>
+            <h3>Checking access...</h3>
+            <p>Verifying your permissions to publish</p>
+          </div>
+        )}
 
-      {status === Status.Error && (
-        <div style={{ textAlign: "center", marginBottom: "20px" }}>
-          <p style={{ color: "#c62828", marginBottom: "10px" }}>
-            Seems like there was an error connecting
-          </p>
-          <p
+        {status === Status.Error && (
+          <div style={{ textAlign: "center", marginBottom: "20px" }}>
+            <p style={{ color: "#c62828", marginBottom: "10px" }}>
+              Seems like there was an error connecting
+            </p>
+            <p
+              style={{
+                color: "#666",
+                fontSize: "12px",
+                marginTop: "10px",
+              }}
+            >
+              Check the browser console for more details. If you see an error
+              about VITE_RECURSICA_API_URL, please ensure the environment
+              variable is set.
+            </p>
+          </div>
+        )}
+
+        {!isAuthenticated && status === Status.Login && (
+          <button
+            onClick={handleLogin}
+            disabled={false}
             style={{
-              color: "#666",
-              fontSize: "12px",
-              marginTop: "10px",
+              width: "200px",
+              padding: "20px",
+              fontSize: "18px",
+              fontWeight: "bold",
+              backgroundColor: "transparent",
+              color: "#d40d0d",
+              border: "2px solid #d40d0d",
+              borderRadius: "8px",
+              cursor: "pointer",
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = "#d40d0d";
+              e.currentTarget.style.color = "white";
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+              e.currentTarget.style.color = "#d40d0d";
             }}
           >
-            Check the browser console for more details. If you see an error
-            about VITE_RECURSICA_API_URL, please ensure the environment variable
-            is set.
-          </p>
-        </div>
-      )}
-
-      {!isAuthenticated && status === Status.Login && (
-        <button
-          onClick={handleLogin}
-          disabled={false}
-          style={{
-            width: "100%",
-            padding: "12px",
-            backgroundColor: "#007acc",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-          }}
-        >
-          Login with GitHub
-        </button>
-      )}
-    </div>
+            Login with GitHub
+          </button>
+        )}
+      </div>
+    </PageLayout>
   );
 }

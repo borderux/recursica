@@ -25,7 +25,7 @@ export interface ExportPageData {
 
 export interface ExportPageResponseData {
   filename: string;
-  jsonData: string;
+  pageData: any; // Parsed JSON object (was jsonData as string)
   pageName: string;
   additionalPages: ExportPageResponseData[];
 }
@@ -699,7 +699,7 @@ export async function exportPage(
     const exportData = {
       metadata: {
         exportedAt: new Date().toISOString(),
-        exportFormatVersion: "2.7.0", // Updated version for string table compression
+        exportFormatVersion: "1.0.0",
         figmaApiVersion: figma.apiVersion,
         guid: pageGuid,
         version: pageVersion,
@@ -729,9 +729,12 @@ export async function exportPage(
     await debugConsole.log(`Export file: ${filename}`);
     await debugConsole.log("=== Export Complete ===");
 
+    // Parse the JSON string back to object for easier manipulation
+    const parsedPageData = JSON.parse(jsonString);
+
     const responseData: ExportPageResponseData = {
       filename,
-      jsonData: jsonString,
+      pageData: parsedPageData,
       pageName: selectedPage.name,
       additionalPages, // Populated with referenced component pages
     };

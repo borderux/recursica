@@ -76,6 +76,23 @@ interface GitHubCreatePullRequestRequest {
   base: string;
 }
 
+interface ComponentInfo {
+  guid: string;
+  name: string;
+  path: string;
+  version: number;
+}
+
+interface IndexJsonComponent {
+  name: string;
+  path: string;
+  version: number;
+}
+
+interface IndexJson {
+  components?: Record<string, IndexJsonComponent>;
+}
+
 import type { ExportPageResponseData } from "../../plugin/services/pageExportNew";
 
 interface FigmaNode {
@@ -299,10 +316,39 @@ export class GitHubService {
   private flattenPageExports(
     pageData: ExportPageResponseData,
   ): Array<{ name: string; jsonData: string; filename: string }> {
+    // Stringify the pageData object at the last moment before publishing
+    const pageDataObj = pageData.pageData;
+    if (!pageDataObj) {
+      console.error(
+        `[flattenPageExports] ERROR: pageData.pageData is undefined for ${pageData.pageName}`,
+      );
+      throw new Error(
+        `pageData.pageData is undefined for ${pageData.pageName}. Cannot flatten exports.`,
+      );
+    }
+
+    console.log(
+      `[flattenPageExports] Stringifying pageData for ${pageData.pageName}...`,
+    );
+    const jsonData = JSON.stringify(pageDataObj, null, 2);
+
+    if (!jsonData || jsonData.trim().length === 0) {
+      console.error(
+        `[flattenPageExports] ERROR: jsonData is empty for ${pageData.pageName}`,
+      );
+      throw new Error(
+        `jsonData is empty for ${pageData.pageName}. Cannot publish empty file.`,
+      );
+    }
+
+    console.log(
+      `[flattenPageExports] Successfully stringified ${pageData.pageName} (${(jsonData.length / 1024).toFixed(2)} KB)`,
+    );
+
     const files: Array<{ name: string; jsonData: string; filename: string }> = [
       {
         name: pageData.pageName,
-        jsonData: pageData.jsonData,
+        jsonData,
         filename: pageData.filename,
       },
     ];
@@ -321,6 +367,8 @@ export class GitHubService {
    * @param repo Repository name
    * @param exportData The export page response data from pageExportNew
    * @param baseBranch Base branch to create the new branch from (e.g., "main")
+   * @param changeMessage Optional change message to use in commit messages and PR body
+   * @param pageDecisions Optional map of page decisions to determine which components to include in index.json
    * @returns Branch name and pull request
    */
   async publishPageExports(
@@ -328,6 +376,11 @@ export class GitHubService {
     repo: string,
     exportData: ExportPageResponseData,
     baseBranch: string = "main",
+    changeMessage?: string,
+    pageDecisions?: Map<
+      string,
+      { pageName: string; publishNewVersion: boolean; newVersion: number }
+    >,
   ): Promise<{ branch: string; pr: GitHubPullRequest }> {
     // Sanitize page name for branch naming
     const sanitizedPageName = this.sanitizeBranchName(exportData.pageName);
@@ -344,37 +397,91 @@ export class GitHubService {
     await this.createBranch(owner, repo, branchName, baseBranch);
 
     // Flatten all exported pages
+    console.log("[publishPageExports] Flattening exported pages...");
     const files = this.flattenPageExports(exportData);
+    console.log(`[publishPageExports] Flattened ${files.length} files`);
 
-    // Build components mapping for index.json
-    const components: Record<string, { name: string; path: string }> = {};
+    // Build components mapping for index.json (only include components that were published)
+    const components: Record<
+      string,
+      { name: string; path: string; version: number }
+    > = {};
 
     // Commit each file to the branch
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
+      console.log(
+        `[publishPageExports] Processing file ${i + 1}/${files.length}: ${file.filename} (${file.name})`,
+      );
+
       // Sanitize page name for folder name
       const sanitizedPageName = this.sanitizeFolderName(file.name);
       const filePath = `components/${sanitizedPageName}/${file.filename}`;
-      const commitMessage =
+      const baseCommitMessage =
         i === 0
           ? `Publishing ${exportData.pageName}`
           : `Publishing ${exportData.pageName} (additional: ${file.name})`;
+      const commitMessage = changeMessage
+        ? `${baseCommitMessage}\n\n${changeMessage}`
+        : baseCommitMessage;
 
-      // Parse jsonData to extract GUID from metadata
+      // Parse jsonData to extract GUID and version from metadata
       try {
         const parsedData = JSON.parse(file.jsonData);
+        console.log(
+          `[publishPageExports] Parsed JSON data for ${file.filename}, checking metadata...`,
+        );
+
+        // Validate that the JSON data is not empty
+        if (!parsedData || Object.keys(parsedData).length === 0) {
+          console.error(
+            `[publishPageExports] ERROR: JSON data for ${file.filename} is empty!`,
+          );
+          throw new Error(
+            `JSON data for ${file.filename} is empty. This should not happen.`,
+          );
+        }
+
         const guid = parsedData.metadata?.guid;
+        const version = parsedData.metadata?.version;
+        const pageName = parsedData.metadata?.name || file.name;
+
+        console.log(
+          `[publishPageExports] File ${file.filename}: GUID=${guid}, version=${version}, name=${pageName}`,
+        );
+
         if (guid) {
-          components[guid] = {
-            name: file.name,
-            path: filePath,
-          };
+          // Only include in index.json if this component was published (publishNewVersion = true)
+          const shouldIncludeInIndex =
+            !pageDecisions ||
+            !pageDecisions.has(pageName) ||
+            pageDecisions.get(pageName)?.publishNewVersion === true;
+
+          if (shouldIncludeInIndex) {
+            console.log(
+              `[publishPageExports] Including ${pageName} (GUID: ${guid}) in index.json with version ${version}`,
+            );
+            components[guid] = {
+              name: pageName,
+              path: filePath,
+              version: version || 1,
+            };
+          } else {
+            console.log(
+              `[publishPageExports] Skipping ${pageName} (GUID: ${guid}) from index.json (keep current version was selected)`,
+            );
+          }
+        } else {
+          console.warn(
+            `[publishPageExports] No GUID found in metadata for ${file.filename}`,
+          );
         }
       } catch (error) {
-        console.warn(
-          `Failed to parse jsonData for file ${file.filename}:`,
+        console.error(
+          `[publishPageExports] Failed to parse jsonData for file ${file.filename}:`,
           error,
         );
+        throw error; // Re-throw to fail the publish if we can't parse the data
       }
 
       // Check if file already exists in the branch
@@ -393,6 +500,20 @@ export class GitHubService {
         // File doesn't exist, that's fine
       }
 
+      // Validate jsonData is not empty before committing
+      if (!file.jsonData || file.jsonData.trim().length === 0) {
+        console.error(
+          `[publishPageExports] ERROR: jsonData for ${file.filename} is empty!`,
+        );
+        throw new Error(
+          `JSON data for ${file.filename} is empty. This should not happen.`,
+        );
+      }
+
+      console.log(
+        `[publishPageExports] Committing file ${file.filename} (${(file.jsonData.length / 1024).toFixed(2)} KB) to branch ${branchName}`,
+      );
+
       // Create or update the file in the branch
       await this.createOrUpdateFileInBranch(
         owner,
@@ -403,11 +524,19 @@ export class GitHubService {
         branchName,
         fileSha,
       );
+
+      console.log(
+        `[publishPageExports] Successfully committed ${file.filename}`,
+      );
     }
 
     // Read existing index.json if it exists, merge with new components, and write it back
+    console.log("[publishPageExports] Reading existing index.json...");
     let indexJson: {
-      components?: Record<string, { name: string; path: string }>;
+      components?: Record<
+        string,
+        { name: string; path: string; version: number }
+      >;
     } = {};
     let indexSha: string | undefined;
     try {
@@ -423,19 +552,45 @@ export class GitHubService {
         );
         indexJson = JSON.parse(indexContent);
         indexSha = existingIndex.sha;
+        console.log(
+          `[publishPageExports] Loaded existing index.json with ${Object.keys(indexJson.components || {}).length} components`,
+        );
       }
     } catch {
       // index.json doesn't exist, that's fine - we'll create it
+      console.log(
+        "[publishPageExports] No existing index.json found, creating new one",
+      );
     }
 
     // Merge new components into existing index.json
     if (!indexJson.components) {
       indexJson.components = {};
     }
+
+    const componentsBeforeMerge = Object.keys(indexJson.components).length;
     Object.assign(indexJson.components, components);
+    const componentsAfterMerge = Object.keys(indexJson.components).length;
+
+    console.log(
+      `[publishPageExports] Updated index.json: ${componentsBeforeMerge} -> ${componentsAfterMerge} components (added ${componentsAfterMerge - componentsBeforeMerge})`,
+    );
+    console.log(
+      `[publishPageExports] Components in index.json: ${Object.keys(
+        indexJson.components,
+      )
+        .map(
+          (guid) =>
+            `${indexJson.components![guid].name} (v${indexJson.components![guid].version})`,
+        )
+        .join(", ")}`,
+    );
 
     // Write index.json to root of repo
     const indexContent = JSON.stringify(indexJson, null, 2);
+    console.log(
+      `[publishPageExports] Writing index.json (${(indexContent.length / 1024).toFixed(2)} KB)`,
+    );
     await this.createOrUpdateFileInBranch(
       owner,
       repo,
@@ -445,6 +600,7 @@ export class GitHubService {
       branchName,
       indexSha,
     );
+    console.log("[publishPageExports] Successfully updated index.json");
 
     // Create PR body with list of exported files
     const fileList = files
@@ -455,7 +611,7 @@ export class GitHubService {
 **Exported files:**
 ${fileList}
 
-**Export date:** ${new Date().toLocaleString()}`;
+${changeMessage ? `**Change message:**\n${changeMessage}\n\n` : ""}**Export date:** ${new Date().toLocaleString()}`;
 
     // Create pull request
     const pr = await this.createPullRequest(
@@ -749,6 +905,81 @@ ${fileList}
       return false;
     }
   }
+
+  /**
+   * Loads index.json from a specific branch and returns a list of components
+   * @param owner Repository owner
+   * @param repo Repository name
+   * @param branchIdentifier Branch name, commit SHA, or tag to load index.json from
+   * @returns Array of component information with GUID, name, path, and version
+   */
+  async loadComponentsFromBranch(
+    owner: string,
+    repo: string,
+    branchIdentifier: string,
+  ): Promise<ComponentInfo[]> {
+    try {
+      // Fetch index.json from the specified branch
+      const indexFile = await this.getRepoContents(
+        owner,
+        repo,
+        "index.json",
+        branchIdentifier,
+      );
+
+      if (Array.isArray(indexFile)) {
+        throw new Error("Expected index.json to be a file, got directory");
+      }
+
+      // Download and parse the file content
+      const indexContent = await fetch(indexFile.download_url).then((res) => {
+        if (!res.ok) {
+          throw new Error(
+            `Failed to download index.json: ${res.status} ${res.statusText}`,
+          );
+        }
+        return res.text();
+      });
+
+      const indexJson: IndexJson = JSON.parse(indexContent);
+
+      // Convert the components object to an array of ComponentInfo
+      const components: ComponentInfo[] = [];
+
+      if (indexJson.components) {
+        for (const [guid, component] of Object.entries(indexJson.components)) {
+          components.push({
+            guid,
+            name: component.name,
+            path: component.path,
+            version: component.version ?? 0, // Default to 0 if version is missing
+          });
+        }
+      }
+
+      return components;
+    } catch (error) {
+      if (error instanceof Error) {
+        // Check if it's a 404 (file not found) or 403 (forbidden/no access)
+        if (
+          error.message.includes("404") ||
+          error.message.includes("403") ||
+          error.message.includes("Not Found") ||
+          error.message.includes("Forbidden")
+        ) {
+          throw new Error(
+            `index.json not found in branch "${branchIdentifier}". The branch may not exist, you may not have access, or index.json may not have been created yet.`,
+          );
+        }
+        throw new Error(
+          `Failed to load components from branch "${branchIdentifier}": ${error.message}`,
+        );
+      }
+      throw new Error(
+        `Failed to load components from branch "${branchIdentifier}": Unknown error`,
+      );
+    }
+  }
 }
 
 export type {
@@ -761,4 +992,5 @@ export type {
   GitHubPullRequest,
   GitHubCreatePullRequestRequest,
   FigmaNode,
+  ComponentInfo,
 };

@@ -6,11 +6,13 @@ import { useAuth } from "../context/useAuth";
 interface PageLayoutProps {
   children: React.ReactNode;
   showBackButton?: boolean;
+  onBack?: () => void;
 }
 
 export default function PageLayout({
   children,
   showBackButton = false,
+  onBack,
 }: PageLayoutProps) {
   const navigate = useNavigate();
   const { isAuthenticated, logout } = useAuth();
@@ -20,6 +22,14 @@ export default function PageLayout({
       logout();
     } else {
       navigate("/auth");
+    }
+  };
+
+  const handleBackClick = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      navigate(-1);
     }
   };
 
@@ -68,7 +78,7 @@ export default function PageLayout({
       >
         {showBackButton ? (
           <button
-            onClick={() => navigate(-1)}
+            onClick={handleBackClick}
             style={{
               background: "none",
               border: "none",
