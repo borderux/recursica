@@ -3,6 +3,9 @@ import { useEffect } from "react";
 import Layout from "./components/Layout";
 import Home from "./pages/Home";
 import Import from "./pages/Import";
+import ImportMain from "./pages/ImportMain";
+import ImportBranch from "./pages/ImportBranch";
+import ImportFiles from "./pages/ImportFiles";
 import Importing from "./pages/Importing";
 import Publish from "./pages/Publish";
 import Publishing from "./pages/Publishing";
@@ -151,6 +154,9 @@ function App() {
                 <Routes>
                   <Route path="/" element={<Home />} />
                   <Route path="/import" element={<Import />} />
+                  <Route path="/import-main" element={<ImportMain />} />
+                  <Route path="/import-branch" element={<ImportBranch />} />
+                  <Route path="/import-files" element={<ImportFiles />} />
                   <Route path="/importing" element={<Importing />} />
                   <Route path="/publish" element={<Publish />} />
                   <Route path="/publish/auth" element={<PublishAuth />} />

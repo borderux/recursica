@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
+import { useNavigate } from "react-router";
 import { useAuth } from "../context/useAuth";
 import { apiService, pluginTokenToCode } from "../services/auth/auth";
-import { Profile } from "../components/Profile";
 import { callPlugin } from "../utils/callPlugin";
 
 const Status = {
@@ -16,6 +16,7 @@ export function Auth() {
   const [status, setStatus] = useState<StatusType>(Status.Login);
   const [userId, setUserId] = useState<string | null>(null);
   const { login, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   const pollForToken = useCallback(
     async (userId: string, readKey: string, code: string) => {
@@ -26,6 +27,8 @@ export function Auth() {
           if (data.status === "authenticated") {
             console.log("Authentication successful!");
             login(data.accessToken);
+            // Navigate to Home page after successful authentication
+            navigate("/");
           } else if (data.status === "pending") {
             console.log("Still pending, continuing to poll...");
             setTimeout(poll, 5000); // Poll every 5 seconds
@@ -41,7 +44,7 @@ export function Auth() {
       // Start polling after a short delay
       setTimeout(poll, 2000);
     },
-    [login],
+    [login, navigate],
   );
 
   const handleLogin = async () => {
@@ -97,13 +100,16 @@ export function Auth() {
     fetchUserId();
   }, []);
 
-  if (isAuthenticated) {
-    return <Profile />;
-  }
+  // If already authenticated, redirect to Home
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/");
+    }
+  }, [isAuthenticated, navigate]);
 
   return (
     <div style={{ padding: "20px", maxWidth: "400px", margin: "0 auto" }}>
-      <h1>GitHub</h1>
+      <h1>Login to GitHub</h1>
       {status === Status.WaitingForAuthorization && (
         <div style={{ textAlign: "center", marginBottom: "20px" }}>
           <div style={{ fontSize: "32px", marginBottom: "10px" }}>🔗</div>
@@ -127,14 +133,24 @@ export function Auth() {
           style={{
             width: "100%",
             padding: "12px",
-            backgroundColor: "#007acc",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
+            fontSize: "16px",
+            fontWeight: "bold",
+            backgroundColor: "transparent",
+            color: "#d40d0d",
+            border: "2px solid #d40d0d",
+            borderRadius: "8px",
             cursor: "pointer",
           }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = "#d40d0d";
+            e.currentTarget.style.color = "white";
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = "transparent";
+            e.currentTarget.style.color = "#d40d0d";
+          }}
         >
-          Login with GitHub
+          Login to GitHub
         </button>
       )}
     </div>

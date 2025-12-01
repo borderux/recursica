@@ -1,8 +1,10 @@
 import { useNavigate } from "react-router";
 import PageLayout from "../components/PageLayout";
+import { useAuth } from "../context/useAuth";
 
 export default function Home() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   return (
     <PageLayout showBackButton={false}>
@@ -18,7 +20,13 @@ export default function Home() {
       >
         {/* Import Button */}
         <button
-          onClick={() => navigate("/import")}
+          onClick={() => {
+            if (isAuthenticated) {
+              navigate("/import");
+            } else {
+              navigate("/import-main");
+            }
+          }}
           style={{
             width: "200px",
             padding: "20px",

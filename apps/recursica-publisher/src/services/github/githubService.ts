@@ -81,12 +81,14 @@ interface ComponentInfo {
   name: string;
   path: string;
   version: number;
+  publishDate?: string;
 }
 
 interface IndexJsonComponent {
   name: string;
   path: string;
   version: number;
+  publishDate?: string;
 }
 
 interface IndexJson {
@@ -445,9 +447,10 @@ export class GitHubService {
         const guid = parsedData.metadata?.guid;
         const version = parsedData.metadata?.version;
         const pageName = parsedData.metadata?.name || file.name;
+        const publishDate = parsedData.metadata?.publishDate;
 
         console.log(
-          `[publishPageExports] File ${file.filename}: GUID=${guid}, version=${version}, name=${pageName}`,
+          `[publishPageExports] File ${file.filename}: GUID=${guid}, version=${version}, name=${pageName}, publishDate=${publishDate || "undefined"}`,
         );
 
         if (guid) {
@@ -459,12 +462,13 @@ export class GitHubService {
 
           if (shouldIncludeInIndex) {
             console.log(
-              `[publishPageExports] Including ${pageName} (GUID: ${guid}) in index.json with version ${version}`,
+              `[publishPageExports] Including ${pageName} (GUID: ${guid}) in index.json with version ${version} and publishDate ${publishDate || "undefined"}`,
             );
             components[guid] = {
               name: pageName,
               path: filePath,
               version: version || 1,
+              ...(publishDate && { publishDate }),
             };
           } else {
             console.log(
@@ -691,6 +695,116 @@ ${changeMessage ? `**Change message:**\n${changeMessage}\n\n` : ""}**Export date
     }
 
     return this.makeRequest(url);
+  }
+
+  async getPullRequestByNumber(
+    owner: string,
+    repo: string,
+    prNumber: number,
+  ): Promise<GitHubPullRequest> {
+    const url = `https://api.github.com/repos/${owner}/${repo}/pulls/${prNumber}`;
+    return this.makeRequest(url);
+  }
+
+  /**
+   * Gets the commit SHA from a PR URL or branch name
+   * Works with or without authentication (for public repos)
+   * @param owner Repository owner
+   * @param repo Repository name
+   * @param input PR URL or branch name
+   * @returns Commit SHA (branch name or PR head SHA)
+   */
+  async getCommitFromInput(
+    owner: string,
+    repo: string,
+    input: string,
+  ): Promise<{ commitSha: string; branchName?: string }> {
+    // Helper function to make request with or without auth
+    const makePublicRequest = async <T>(url: string): Promise<T> => {
+      const headers: Record<string, string> = {
+        Accept: "application/vnd.github.v3+json",
+      };
+
+      // Add auth header if we have a token
+      if (this.accessToken) {
+        headers.Authorization = `Bearer ${this.accessToken}`;
+      }
+
+      const response = await fetch(url, { headers });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(
+          error.message || `GitHub API error: ${response.status}`,
+        );
+      }
+
+      return response.json() as Promise<T>;
+    };
+
+    // Check if input is a URL
+    if (input.includes("https://github.com")) {
+      // Extract PR number from URL
+      // URL format: https://github.com/owner/repo/pull/123
+      const prMatch = input.match(/\/pull\/(\d+)/);
+      if (!prMatch) {
+        throw new Error(
+          `Invalid PR URL format. Expected: https://github.com/${owner}/${repo}/pull/123`,
+        );
+      }
+
+      const prNumber = parseInt(prMatch[1], 10);
+      if (isNaN(prNumber)) {
+        throw new Error(`Invalid PR number in URL: ${prMatch[1]}`);
+      }
+
+      try {
+        const url = `https://api.github.com/repos/${owner}/${repo}/pulls/${prNumber}`;
+        const pr = await makePublicRequest<GitHubPullRequest>(url);
+        return {
+          commitSha: pr.head.sha,
+          branchName: pr.head.ref,
+        };
+      } catch (error) {
+        if (error instanceof Error) {
+          if (
+            error.message.includes("404") ||
+            error.message.includes("Not Found")
+          ) {
+            throw new Error(
+              `Pull Request #${prNumber} not found in ${owner}/${repo}`,
+            );
+          }
+          throw new Error(
+            `Failed to fetch Pull Request #${prNumber}: ${error.message}`,
+          );
+        }
+        throw new Error(`Failed to fetch Pull Request #${prNumber}`);
+      }
+    } else {
+      // Assume it's a branch name
+      try {
+        const url = `https://api.github.com/repos/${owner}/${repo}/branches/${input}`;
+        const branch = await makePublicRequest<GitHubBranch>(url);
+        return {
+          commitSha: branch.commit.sha,
+          branchName: input,
+        };
+      } catch (error) {
+        if (error instanceof Error) {
+          if (
+            error.message.includes("404") ||
+            error.message.includes("Not Found")
+          ) {
+            throw new Error(`Branch "${input}" not found in ${owner}/${repo}`);
+          }
+          throw new Error(
+            `Failed to fetch branch "${input}": ${error.message}`,
+          );
+        }
+        throw new Error(`Failed to fetch branch "${input}"`);
+      }
+    }
   }
 
   async createPullRequest(
@@ -953,6 +1067,7 @@ ${changeMessage ? `**Change message:**\n${changeMessage}\n\n` : ""}**Export date
             name: component.name,
             path: component.path,
             version: component.version ?? 0, // Default to 0 if version is missing
+            publishDate: component.publishDate,
           });
         }
       }
