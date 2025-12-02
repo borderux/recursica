@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router";
+import { useSearchParams, useNavigate } from "react-router";
 import PageLayout from "../components/PageLayout";
 
 const RECURSICA_FIGMA_OWNER = "borderux";
@@ -27,6 +27,7 @@ interface IndexJson {
 
 export default function ImportMain() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [components, setComponents] = useState<ComponentInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -240,8 +241,11 @@ export default function ImportMain() {
               <button
                 key={component.guid}
                 onClick={() => {
-                  // TODO: Implement component selection
-                  console.log("Selected component:", component);
+                  // Navigate to ImportRepoComponent with the component GUID and ref
+                  const ref = searchParams.get("ref") || "main";
+                  navigate(
+                    `/import-repo-component?guid=${encodeURIComponent(component.guid)}&ref=${encodeURIComponent(ref)}`,
+                  );
                 }}
                 style={{
                   width: "100%",

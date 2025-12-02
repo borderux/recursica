@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router";
 import PageLayout from "../components/PageLayout";
 import { callPlugin } from "../utils/callPlugin";
@@ -130,6 +130,18 @@ export default function Publish() {
     loadPublishedVersion();
   }, [metadata?.id, metadata?.name, accessToken]);
 
+  // Helper to check if version is invalid for publishing
+  const isVersionInvalid = useMemo(() => {
+    if (
+      publishedVersion === null ||
+      publishedVersion === "UNPUBLISHED" ||
+      typeof publishedVersion !== "number"
+    ) {
+      return false;
+    }
+    return (metadata?.version || 0) < publishedVersion;
+  }, [publishedVersion, metadata?.version]);
+
   // Don't render if not authenticated
   if (!isAuthenticated || !accessToken) {
     return null;
@@ -216,24 +228,21 @@ export default function Publish() {
                 )}
 
                 {/* Show error if version is same or older */}
-                {publishedVersion !== null &&
-                  publishedVersion !== "UNPUBLISHED" &&
-                  typeof publishedVersion === "number" &&
-                  (metadata.version || 0) < publishedVersion && (
-                    <div
-                      style={{
-                        padding: "12px",
-                        marginTop: "20px",
-                        backgroundColor: "#ffebee",
-                        border: "1px solid #f44336",
-                        borderRadius: "4px",
-                        color: "#c62828",
-                      }}
-                    >
-                      Cannot publish because this version is or older than the
-                      currently published version.
-                    </div>
-                  )}
+                {isVersionInvalid && (
+                  <div
+                    style={{
+                      padding: "12px",
+                      marginTop: "20px",
+                      backgroundColor: "#ffebee",
+                      border: "1px solid #f44336",
+                      borderRadius: "4px",
+                      color: "#c62828",
+                    }}
+                  >
+                    Cannot publish because this version is or older than the
+                    currently published version.
+                  </div>
+                )}
 
                 <div
                   style={{
@@ -274,70 +283,26 @@ export default function Publish() {
                         navigate("/publishing");
                       }
                     }}
-                    disabled={
-                      publishedVersion !== null &&
-                      publishedVersion !== "UNPUBLISHED" &&
-                      typeof publishedVersion === "number" &&
-                      (metadata.version || 0) <= publishedVersion
-                    }
+                    disabled={isVersionInvalid}
                     style={{
                       padding: "12px 24px",
                       fontSize: "16px",
                       fontWeight: "bold",
                       backgroundColor: "transparent",
-                      color:
-                        publishedVersion !== null &&
-                        publishedVersion !== "UNPUBLISHED" &&
-                        typeof publishedVersion === "number" &&
-                        (metadata.version || 0) <= publishedVersion
-                          ? "#999"
-                          : "#d40d0d",
-                      border: `2px solid ${
-                        publishedVersion !== null &&
-                        publishedVersion !== "UNPUBLISHED" &&
-                        typeof publishedVersion === "number" &&
-                        (metadata.version || 0) <= publishedVersion
-                          ? "#999"
-                          : "#d40d0d"
-                      }`,
+                      color: isVersionInvalid ? "#999" : "#d40d0d",
+                      border: `2px solid ${isVersionInvalid ? "#999" : "#d40d0d"}`,
                       borderRadius: "8px",
-                      cursor:
-                        publishedVersion !== null &&
-                        publishedVersion !== "UNPUBLISHED" &&
-                        typeof publishedVersion === "number" &&
-                        (metadata.version || 0) <= publishedVersion
-                          ? "not-allowed"
-                          : "pointer",
-                      opacity:
-                        publishedVersion !== null &&
-                        publishedVersion !== "UNPUBLISHED" &&
-                        typeof publishedVersion === "number" &&
-                        (metadata.version || 0) <= publishedVersion
-                          ? 0.6
-                          : 1,
+                      cursor: isVersionInvalid ? "not-allowed" : "pointer",
+                      opacity: isVersionInvalid ? 0.6 : 1,
                     }}
                     onMouseOver={(e) => {
-                      if (
-                        !(
-                          publishedVersion !== null &&
-                          publishedVersion !== "UNPUBLISHED" &&
-                          typeof publishedVersion === "number" &&
-                          (metadata.version || 0) <= publishedVersion
-                        )
-                      ) {
+                      if (!isVersionInvalid) {
                         e.currentTarget.style.backgroundColor = "#d40d0d";
                         e.currentTarget.style.color = "white";
                       }
                     }}
                     onMouseOut={(e) => {
-                      if (
-                        !(
-                          publishedVersion !== null &&
-                          publishedVersion !== "UNPUBLISHED" &&
-                          typeof publishedVersion === "number" &&
-                          (metadata.version || 0) <= publishedVersion
-                        )
-                      ) {
+                      if (!isVersionInvalid) {
                         e.currentTarget.style.backgroundColor = "transparent";
                         e.currentTarget.style.color = "#d40d0d";
                       }

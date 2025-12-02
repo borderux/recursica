@@ -6,15 +6,11 @@ import PluginPrompt from "../components/PluginPrompt";
 import { callPlugin } from "../utils/callPlugin";
 import type { ExportPageResponseData } from "../plugin/services/pageExportNew";
 
-type PublishingStatus = "exporting" | "error";
-
 export default function Publishing() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [isPublishing, setIsPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [publishingStatus, setPublishingStatus] =
-    useState<PublishingStatus>("exporting");
 
   // Extract version from export data metadata
   const getCurrentVersion = useCallback(
@@ -64,7 +60,6 @@ export default function Publishing() {
 
           if (isMounted) {
             setIsPublishing(false);
-            setPublishingStatus("exporting");
 
             // Navigate to PublishingComplete with export data
             // Components will be loaded in the Publish page
@@ -79,9 +74,6 @@ export default function Publishing() {
           setError(
             response.message || "Failed to export page. Please try again.",
           );
-          if (isMounted) {
-            setPublishingStatus("error");
-          }
         }
       } catch (err) {
         // Only set error if component is still mounted
@@ -89,10 +81,9 @@ export default function Publishing() {
           setError(
             err instanceof Error ? err.message : "Failed to export page",
           );
-          setPublishingStatus("error");
         }
       } finally {
-        if (isMounted && publishingStatus !== "exporting") {
+        if (isMounted) {
           setIsPublishing(false);
         }
       }
