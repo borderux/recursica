@@ -33,7 +33,7 @@ export function normalizeCollectionName(name: string): string {
   if (lower === "token") {
     return VALID_COLLECTION_NAMES.TOKENS;
   }
-  if (lower === "layer") {
+  if (lower === "layer" || lower === "layers") {
     return VALID_COLLECTION_NAMES.LAYER;
   }
   if (lower === "tokens") {

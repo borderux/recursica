@@ -8,6 +8,7 @@ import ImportBranch from "./pages/ImportBranch";
 import ImportFiles from "./pages/ImportFiles";
 import ImportRepoComponent from "./pages/ImportRepoComponent";
 import Importing from "./pages/Importing";
+import ImportWizard from "./pages/ImportWizard";
 import Publish from "./pages/Publish";
 import Publishing from "./pages/Publishing";
 import PublishingComplete from "./pages/PublishingComplete";
@@ -163,6 +164,7 @@ function App() {
                     element={<ImportRepoComponent />}
                   />
                   <Route path="/importing" element={<Importing />} />
+                  <Route path="/import-wizard/*" element={<ImportWizard />} />
                   <Route path="/publish" element={<Publish />} />
                   <Route path="/publish/auth" element={<PublishAuth />} />
                   <Route

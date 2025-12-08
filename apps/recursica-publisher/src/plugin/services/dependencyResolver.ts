@@ -7,6 +7,11 @@ import {
   loadAndExpandJson,
 } from "./pageImportNew";
 import type { ResponseMessage } from "../types/messages";
+import {
+  getFixedGuidForCollection,
+  isStandardCollection,
+} from "../../const/CollectionConstants";
+import type { VariableCollection } from "@figma/plugin-typings";
 
 /**
  * Represents a page and its dependencies
@@ -233,6 +238,13 @@ export async function determineImportOrder(
 export interface ImportPagesInOrderData {
   jsonFiles: Array<{ fileName: string; jsonData: any }>;
   mainFileName?: string; // Optional: name of the main file (always creates copy, no prompt)
+  collectionChoices?: {
+    tokens: "new" | "existing";
+    theme: "new" | "existing";
+    layers: "new" | "existing";
+  }; // Wizard selections for collection matching (if provided, skips prompts)
+  skipUniqueNaming?: boolean; // If true, skip adding _<number> suffix to page names. Used for wizard imports.
+  constructionIcon?: string; // If provided, prepend this icon to page name. Used for wizard imports.
 }
 
 /**
@@ -274,6 +286,93 @@ export async function importPagesInOrder(
     );
   }
 
+  // Pre-create collections if "new" is selected for any collection type
+  const preCreatedCollections = new Map<string, VariableCollection>();
+  await debugConsole.log(
+    `Checking collectionChoices: ${data.collectionChoices ? "exists" : "undefined"}`,
+  );
+  if (data.collectionChoices) {
+    await debugConsole.log("=== Pre-creating Collections ===");
+    await debugConsole.log(
+      `Collection choices: tokens=${data.collectionChoices.tokens}, theme=${data.collectionChoices.theme}, layers=${data.collectionChoices.layers}`,
+    );
+
+    const COLLECTION_GUID_KEY = "recursica:collectionId";
+
+    // Helper to find unique collection name
+    const findUniqueCollectionName = async (
+      baseName: string,
+    ): Promise<string> => {
+      const localCollections =
+        await figma.variables.getLocalVariableCollectionsAsync();
+      const existingNames = new Set(localCollections.map((c) => c.name));
+
+      if (!existingNames.has(baseName)) {
+        return baseName;
+      }
+
+      let counter = 1;
+      let candidateName = `${baseName}_${counter}`;
+      while (existingNames.has(candidateName)) {
+        counter++;
+        candidateName = `${baseName}_${counter}`;
+      }
+
+      return candidateName;
+    };
+
+    // Create collections for each type that needs "new"
+    const collectionTypes = [
+      { choice: data.collectionChoices.tokens, normalizedName: "Tokens" },
+      { choice: data.collectionChoices.theme, normalizedName: "Theme" },
+      { choice: data.collectionChoices.layers, normalizedName: "Layer" },
+    ];
+
+    for (const { choice, normalizedName } of collectionTypes) {
+      if (choice === "new") {
+        await debugConsole.log(
+          `Processing collection type: "${normalizedName}" (choice: "new") - will create new collection`,
+        );
+
+        // When "new" is selected, always create a new collection
+        // Use findUniqueCollectionName to ensure uniqueness
+        const uniqueName = await findUniqueCollectionName(normalizedName);
+        const newCollection =
+          figma.variables.createVariableCollection(uniqueName);
+
+        // Store fixed GUID if it's a standard collection
+        if (isStandardCollection(normalizedName)) {
+          const fixedGuid = getFixedGuidForCollection(normalizedName);
+          if (fixedGuid) {
+            newCollection.setSharedPluginData(
+              "recursica",
+              COLLECTION_GUID_KEY,
+              fixedGuid,
+            );
+            await debugConsole.log(
+              `  Stored fixed GUID: ${fixedGuid.substring(0, 8)}...`,
+            );
+          }
+        }
+
+        preCreatedCollections.set(normalizedName, newCollection);
+        await debugConsole.log(
+          `✓ Pre-created collection: "${uniqueName}" (normalized: "${normalizedName}", id: ${newCollection.id.substring(0, 8)}...)`,
+        );
+      } else {
+        await debugConsole.log(
+          `Skipping collection type: "${normalizedName}" (choice: "existing")`,
+        );
+      }
+    }
+
+    if (preCreatedCollections.size > 0) {
+      await debugConsole.log(
+        `Pre-created ${preCreatedCollections.size} collection(s) for reuse across all imports`,
+      );
+    }
+  }
+
   // Import pages in dependency order
   await debugConsole.log("=== Importing Pages in Order ===");
   let imported = 0;
@@ -286,6 +385,16 @@ export async function importPagesInOrder(
     variableIds: [] as string[],
   };
   const importedPages: Array<{ name: string; pageId: string }> = [];
+
+  // Add pre-created collections to the created entities list
+  if (preCreatedCollections.size > 0) {
+    for (const collection of preCreatedCollections.values()) {
+      allCreatedEntityIds.collectionIds.push(collection.id);
+      await debugConsole.log(
+        `Tracking pre-created collection: "${collection.name}" (${collection.id.substring(0, 8)}...)`,
+      );
+    }
+  }
 
   // Determine which page is the main page (last in order, or match by fileName if provided)
   const mainFileName = data.mainFileName;
@@ -307,6 +416,11 @@ export async function importPagesInOrder(
         jsonData: page.jsonData,
         isMainPage,
         clearConsole,
+        collectionChoices: data.collectionChoices,
+        alwaysCreateCopy: true, // Wizard imports always create copies (no prompts)
+        skipUniqueNaming: data.skipUniqueNaming ?? false,
+        constructionIcon: data.constructionIcon || "",
+        preCreatedCollections, // Pass pre-created collections for reuse
       });
 
       if (result.success) {
@@ -380,10 +494,40 @@ export async function importPagesInOrder(
     }
   }
 
+  // Deduplicate collection IDs (in case pre-created collections were also added by individual imports)
+  const uniqueCollectionIds = Array.from(
+    new Set(allCreatedEntityIds.collectionIds),
+  );
+  const uniqueVariableIds = Array.from(
+    new Set(allCreatedEntityIds.variableIds),
+  );
+  const uniquePageIds = Array.from(new Set(allCreatedEntityIds.pageIds));
+
   await debugConsole.log("=== Import Summary ===");
   await debugConsole.log(
     `  Imported: ${imported}, Failed: ${failed}, Deferred instances: ${allDeferredInstances.length}`,
   );
+  await debugConsole.log(
+    `  Collections in allCreatedEntityIds: ${allCreatedEntityIds.collectionIds.length}, Unique: ${uniqueCollectionIds.length}`,
+  );
+  if (uniqueCollectionIds.length > 0) {
+    await debugConsole.log(
+      `  Created ${uniqueCollectionIds.length} collection(s)`,
+    );
+    for (const collectionId of uniqueCollectionIds) {
+      try {
+        const collection =
+          await figma.variables.getVariableCollectionByIdAsync(collectionId);
+        if (collection) {
+          await debugConsole.log(
+            `    - "${collection.name}" (${collectionId.substring(0, 8)}...)`,
+          );
+        }
+      } catch {
+        // Collection might not exist, skip
+      }
+    }
+  }
 
   const success = failed === 0;
   const message = success
@@ -401,7 +545,11 @@ export async function importPagesInOrder(
       deferred: allDeferredInstances.length,
       errors: allErrors,
       importedPages,
-      createdEntities: allCreatedEntityIds,
+      createdEntities: {
+        pageIds: uniquePageIds,
+        collectionIds: uniqueCollectionIds,
+        variableIds: uniqueVariableIds,
+      },
     },
   };
 }

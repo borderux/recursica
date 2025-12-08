@@ -31,6 +31,15 @@ export interface ImportPageData {
   deleteScratchPagesOnFailure?: boolean; // If true, delete scratch pages if import fails (default: false)
   isMainPage?: boolean; // If true, always create a copy (no prompt). If false, prompt for existing pages.
   clearConsole?: boolean; // If true, clear the debug console before import (default: true for single page, false for multi-page)
+  collectionChoices?: {
+    tokens: "new" | "existing";
+    theme: "new" | "existing";
+    layers: "new" | "existing";
+  }; // Wizard selections for collection matching (if provided, skips prompts)
+  alwaysCreateCopy?: boolean; // If true, always create a copy (no prompt) even if page exists. Used for wizard imports.
+  skipUniqueNaming?: boolean; // If true, skip adding _<number> suffix to page names. Used for wizard imports.
+  constructionIcon?: string; // If provided, prepend this icon to page name. Used for wizard imports.
+  preCreatedCollections?: Map<string, VariableCollection>; // Pre-created collections by normalized name (e.g., "Tokens", "Theme", "Layer")
 }
 
 export interface DeferredNormalInstance {
@@ -3730,7 +3739,10 @@ function loadCollectionTable(expandedJsonData: any): {
 /**
  * Stage 4: Match collections with existing local collections
  */
-async function matchCollections(collectionTable: CollectionTable): Promise<{
+async function matchCollections(
+  collectionTable: CollectionTable,
+  preCreatedCollections?: Map<string, VariableCollection>,
+): Promise<{
   recognizedCollections: Map<string, VariableCollection>;
   potentialMatches: Map<
     string,
@@ -3753,6 +3765,18 @@ async function matchCollections(collectionTable: CollectionTable): Promise<{
       await debugConsole.log(
         `Skipping remote collection: "${entry.collectionName}" (index ${index})`,
       );
+      continue;
+    }
+
+    // First check if we have a pre-created collection for this normalized name
+    const normalizedName = normalizeCollectionName(entry.collectionName);
+    const preCreated = preCreatedCollections?.get(normalizedName);
+
+    if (preCreated) {
+      await debugConsole.log(
+        `✓ Using pre-created collection: "${normalizedName}" (index ${index})`,
+      );
+      recognizedCollections.set(index, preCreated);
       continue;
     }
 
@@ -3791,7 +3815,7 @@ async function matchCollections(collectionTable: CollectionTable): Promise<{
 }
 
 /**
- * Stage 5: Prompt user for potential collection matches
+ * Stage 5: Prompt user for potential collection matches (or use wizard selections)
  */
 async function promptForPotentialMatches(
   potentialMatches: Map<
@@ -3800,11 +3824,61 @@ async function promptForPotentialMatches(
   >,
   recognizedCollections: Map<string, VariableCollection>,
   collectionsToCreate: Map<string, CollectionTableEntry>,
+  collectionChoices?: {
+    tokens: "new" | "existing";
+    theme: "new" | "existing";
+    layers: "new" | "existing";
+  },
 ): Promise<void> {
   if (potentialMatches.size === 0) {
     return;
   }
 
+  // If collection choices are provided (from wizard), use them instead of prompting
+  if (collectionChoices) {
+    await debugConsole.log(
+      `Using wizard selections for ${potentialMatches.size} potential match(es)...`,
+    );
+
+    for (const [index, { entry, collection }] of potentialMatches.entries()) {
+      const normalizedName = normalizeCollectionName(
+        entry.collectionName,
+      ).toLowerCase();
+      let shouldUseExisting = false;
+
+      if (normalizedName === "tokens" || normalizedName === "token") {
+        shouldUseExisting = collectionChoices.tokens === "existing";
+      } else if (normalizedName === "theme" || normalizedName === "themes") {
+        shouldUseExisting = collectionChoices.theme === "existing";
+      } else if (normalizedName === "layer" || normalizedName === "layers") {
+        shouldUseExisting = collectionChoices.layers === "existing";
+      }
+
+      const displayName = isStandardCollection(entry.collectionName)
+        ? normalizeCollectionName(entry.collectionName)
+        : collection.name;
+
+      if (shouldUseExisting) {
+        await debugConsole.log(
+          `✓ Wizard selection: Using existing collection "${displayName}" (index ${index})`,
+        );
+        recognizedCollections.set(index, collection);
+
+        await ensureCollectionModes(collection, entry.modes);
+        await debugConsole.log(
+          `  ✓ Ensured modes for collection "${displayName}" (${entry.modes.length} mode(s))`,
+        );
+      } else {
+        await debugConsole.log(
+          `✗ Wizard selection: Will create new collection for "${entry.collectionName}" (index ${index})`,
+        );
+        collectionsToCreate.set(index, entry);
+      }
+    }
+    return;
+  }
+
+  // Otherwise, prompt the user (legacy behavior)
   await debugConsole.log(
     `Prompting user for ${potentialMatches.size} potential match(es)...`,
   );
@@ -3876,23 +3950,40 @@ async function ensureModesForRecognizedCollections(
 }
 
 /**
- * Stage 7: Create new collections
+ * Stage 7: Create new collections (or reuse pre-created ones)
  */
 async function createNewCollections(
   collectionsToCreate: Map<string, CollectionTableEntry>,
   recognizedCollections: Map<string, VariableCollection>,
   newlyCreatedCollections: VariableCollection[],
+  preCreatedCollections?: Map<string, VariableCollection>,
 ): Promise<void> {
   if (collectionsToCreate.size === 0) {
     return;
   }
 
   await debugConsole.log(
-    `Creating ${collectionsToCreate.size} new collection(s)...`,
+    `Processing ${collectionsToCreate.size} collection(s) to create...`,
   );
 
   for (const [index, entry] of collectionsToCreate.entries()) {
     const normalizedName = normalizeCollectionName(entry.collectionName);
+
+    // Check if we have a pre-created collection for this normalized name
+    const preCreated = preCreatedCollections?.get(normalizedName);
+    if (preCreated) {
+      await debugConsole.log(
+        `Reusing pre-created collection: "${normalizedName}" (index ${index}, id: ${preCreated.id.substring(0, 8)}...)`,
+      );
+      recognizedCollections.set(index, preCreated);
+      // Ensure modes match
+      await ensureCollectionModes(preCreated, entry.modes);
+      // IMPORTANT: Add pre-created collection to newlyCreatedCollections so it's tracked
+      newlyCreatedCollections.push(preCreated);
+      continue;
+    }
+
+    // No pre-created collection, create a new one
     const uniqueName = await findUniqueCollectionName(normalizedName);
     if (uniqueName !== normalizedName) {
       await debugConsole.log(
@@ -4228,6 +4319,7 @@ async function createRemoteInstances(
   collectionTable: CollectionTable,
   recognizedVariables: Map<string, Variable>,
   recognizedCollections: Map<string, VariableCollection>,
+  constructionIcon: string = "", // If provided, prepend this icon to REMOTES page name. Used for wizard imports.
 ): Promise<Map<number, ComponentNode>> {
   const allInstances = instanceTable.getSerializedTable();
   const remoteInstances = Object.values(allInstances).filter(
@@ -4249,14 +4341,30 @@ async function createRemoteInstances(
   // Find or create REMOTES page
   await figma.loadAllPagesAsync();
   const allPages = figma.root.children;
-  let remotesPage = allPages.find((p) => p.name === "REMOTES");
+  const remotesPageName = constructionIcon
+    ? `${constructionIcon} REMOTES`
+    : "REMOTES";
+  let remotesPage = allPages.find(
+    (p) => p.name === "REMOTES" || p.name === remotesPageName,
+  );
 
   if (!remotesPage) {
     remotesPage = figma.createPage();
-    remotesPage.name = "REMOTES";
+    remotesPage.name = remotesPageName;
     await debugConsole.log("Created REMOTES page");
   } else {
     await debugConsole.log("Found existing REMOTES page");
+    // Update name if it doesn't have the construction icon but we're in a wizard import
+    if (constructionIcon && !remotesPage.name.startsWith(constructionIcon)) {
+      remotesPage.name = remotesPageName;
+    }
+  }
+
+  // Mark REMOTES page as "under review" if remote instances are being created
+  // (This indicates it's being used as part of a wizard import)
+  if (remoteInstances.length > 0) {
+    remotesPage.setPluginData("RecursicaUnderReview", "true");
+    await debugConsole.log("Marked REMOTES page as under review");
   }
 
   // Check if title/description already exist
@@ -4811,6 +4919,9 @@ async function createPageAndRecreateStructure(
   deferredInstances: DeferredNormalInstance[] | null = null,
   isMainPage: boolean = false, // If true, always create a copy (no prompt). If false, prompt for existing pages.
   recognizedCollections: Map<string, VariableCollection> | null = null,
+  alwaysCreateCopy: boolean = false, // If true, always create a copy (no prompt) even if page exists. Used for wizard imports.
+  skipUniqueNaming: boolean = false, // If true, skip adding _<number> suffix to page names. Used for wizard imports.
+  constructionIcon: string = "", // If provided, prepend this icon to page name. Used for wizard imports.
 ): Promise<{
   success: boolean;
   page?: PageNode;
@@ -4842,8 +4953,9 @@ async function createPageAndRecreateStructure(
 
   // Check if we should use existing page or create a copy
   // Main page always creates a copy (no prompt). Only referenced/dependency pages prompt.
+  // If alwaysCreateCopy is true (from wizard), always create a copy without prompting.
   let useExistingPage = false;
-  if (pageWithSameGuid && !isMainPage) {
+  if (pageWithSameGuid && !isMainPage && !alwaysCreateCopy) {
     // Get version from existing page metadata
     let existingVersion: number | undefined;
     try {
@@ -5045,9 +5157,22 @@ async function createPageAndRecreateStructure(
   );
 
   if (pageName.startsWith("__")) {
-    const finalName = await findUniquePageName(metadata.name);
+    let finalName: string;
+    if (skipUniqueNaming) {
+      // For wizard imports, use base name with construction icon, no _<number> suffix
+      finalName = constructionIcon
+        ? `${constructionIcon} ${metadata.name}`
+        : metadata.name;
+    } else {
+      finalName = await findUniquePageName(metadata.name);
+    }
     newPage.name = finalName;
     await debugConsole.log(`Renamed page from "${pageName}" to "${finalName}"`);
+  } else if (skipUniqueNaming && constructionIcon) {
+    // For wizard imports, ensure construction icon is present
+    if (!newPage.name.startsWith(constructionIcon)) {
+      newPage.name = `${constructionIcon} ${newPage.name}`;
+    }
   }
 
   return {
@@ -5154,13 +5279,14 @@ export async function importPage(
       "Matching collections with existing local collections...",
     );
     const { recognizedCollections, potentialMatches, collectionsToCreate } =
-      await matchCollections(collectionTable);
+      await matchCollections(collectionTable, data.preCreatedCollections);
 
-    // Stage 5: Prompt for potential matches
+    // Stage 5: Prompt for potential matches (or use wizard selections)
     await promptForPotentialMatches(
       potentialMatches,
       recognizedCollections,
       collectionsToCreate,
+      data.collectionChoices,
     );
 
     // Stage 6: Ensure modes for recognized collections
@@ -5170,11 +5296,12 @@ export async function importPage(
       potentialMatches,
     );
 
-    // Stage 7: Create new collections
+    // Stage 7: Create new collections (or reuse pre-created ones)
     await createNewCollections(
       collectionsToCreate,
       recognizedCollections,
       newlyCreatedCollections,
+      data.preCreatedCollections,
     );
 
     // Stage 8: Load variable table
@@ -5233,6 +5360,13 @@ export async function importPage(
       await debugConsole.log("No instance table found in JSON");
     }
 
+    // Stage 11: Create page and recreate structure
+    const deferredInstances: DeferredNormalInstance[] = [];
+    const isMainPage = data.isMainPage ?? true; // Default to true for single page imports
+    const alwaysCreateCopy = data.alwaysCreateCopy ?? false;
+    const skipUniqueNaming = data.skipUniqueNaming ?? false;
+    const constructionIcon = data.constructionIcon || "";
+
     // Stage 10.5: Create remote instances on REMOTES page
     let remoteComponentMap: Map<number, ComponentNode> | null = null;
     if (instanceTable) {
@@ -5242,12 +5376,9 @@ export async function importPage(
         collectionTable,
         recognizedVariables,
         recognizedCollections,
+        constructionIcon,
       );
     }
-
-    // Stage 11: Create page and recreate structure
-    const deferredInstances: DeferredNormalInstance[] = [];
-    const isMainPage = data.isMainPage ?? true; // Default to true for single page imports
     const pageResult = await createPageAndRecreateStructure(
       metadata,
       expandedJsonData,
@@ -5259,6 +5390,9 @@ export async function importPage(
       deferredInstances,
       isMainPage,
       recognizedCollections,
+      alwaysCreateCopy,
+      skipUniqueNaming,
+      constructionIcon,
     );
 
     if (!pageResult.success) {
@@ -5688,7 +5822,7 @@ export async function cleanupCreatedEntities(
     let deletedVariables = 0;
     for (const variableId of variableIds) {
       try {
-        const variable = figma.variables.getVariableById(variableId);
+        const variable = await figma.variables.getVariableByIdAsync(variableId);
         if (variable) {
           // Check if variable's collection is in our list to be deleted
           // If so, we don't need to delete it explicitly (it will be deleted with the collection)
@@ -5710,7 +5844,7 @@ export async function cleanupCreatedEntities(
     for (const collectionId of collectionIds) {
       try {
         const collection =
-          figma.variables.getVariableCollectionById(collectionId);
+          await figma.variables.getVariableCollectionByIdAsync(collectionId);
         if (collection) {
           collection.remove();
           deletedCollections++;

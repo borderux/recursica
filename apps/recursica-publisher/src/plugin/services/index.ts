@@ -22,6 +22,15 @@ import { getComponentMetadata } from "./getComponentMetadata";
 import { getAllComponents } from "./getAllComponents";
 import { pluginPromptResponse } from "./pluginPromptResponse";
 import { switchToPage } from "./switchToPage";
+import {
+  checkForExistingPrimaryImport,
+  createImportDividers,
+  importSingleComponentWithWizard,
+  deleteImportGroup,
+  clearImportMetadata,
+  cleanupFailedImport,
+} from "./singleComponentImportService";
+import { summarizeVariablesForWizard } from "./summarizeVariablesForWizard";
 
 // Services map - all service functions indexed by their names
 // This is the single source of truth for available services
@@ -45,6 +54,13 @@ export const services = {
   getAllComponents,
   pluginPromptResponse,
   switchToPage,
+  checkForExistingPrimaryImport,
+  createImportDividers,
+  importSingleComponentWithWizard,
+  deleteImportGroup,
+  clearImportMetadata,
+  cleanupFailedImport,
+  summarizeVariablesForWizard,
 } as const;
 
 // Re-export individual services for convenience
@@ -68,6 +84,13 @@ export {
   getAllComponents,
   pluginPromptResponse,
   switchToPage,
+  checkForExistingPrimaryImport,
+  createImportDividers,
+  importSingleComponentWithWizard,
+  deleteImportGroup,
+  clearImportMetadata,
+  cleanupFailedImport,
+  summarizeVariablesForWizard,
 };
 
 export type { PageDependency };
