@@ -11,7 +11,10 @@ import {
   getFixedGuidForCollection,
   isStandardCollection,
 } from "../../const/CollectionConstants";
-import type { VariableCollection } from "@figma/plugin-typings";
+// VariableCollection type from Figma API
+type VariableCollection = ReturnType<
+  typeof figma.variables.createVariableCollection
+>;
 
 /**
  * Represents a page and its dependencies

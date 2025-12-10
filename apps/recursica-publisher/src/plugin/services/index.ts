@@ -31,6 +31,11 @@ import {
   cleanupFailedImport,
 } from "./singleComponentImportService";
 import { summarizeVariablesForWizard } from "./summarizeVariablesForWizard";
+import {
+  getLocalVariableCollections,
+  getCollectionGuids,
+  mergeImportGroup,
+} from "./mergeImportService";
 
 // Services map - all service functions indexed by their names
 // This is the single source of truth for available services
@@ -61,6 +66,9 @@ export const services = {
   clearImportMetadata,
   cleanupFailedImport,
   summarizeVariablesForWizard,
+  getLocalVariableCollections,
+  getCollectionGuids,
+  mergeImportGroup,
 } as const;
 
 // Re-export individual services for convenience
@@ -91,6 +99,9 @@ export {
   clearImportMetadata,
   cleanupFailedImport,
   summarizeVariablesForWizard,
+  getLocalVariableCollections,
+  getCollectionGuids,
+  mergeImportGroup,
 };
 
 export type { PageDependency };

@@ -9,6 +9,7 @@ import Step3VariableCollections from "./ImportWizard/Step3VariableCollections";
 import Step4Summary from "./ImportWizard/Step4Summary";
 import Step5Importing from "./ImportWizard/Step5Importing";
 import ExistingImport from "./ImportWizard/ExistingImport";
+import Step1CollectionMerge from "./ImportWizard/MergeWizard/Step1CollectionMerge";
 
 export default function ImportWizard() {
   const navigate = useNavigate();
@@ -83,6 +84,7 @@ export default function ImportWizard() {
           <Route path="/step4" element={<Step4Summary />} />
           <Route path="/step5" element={<Step5Importing />} />
           <Route path="/existing" element={<ExistingImport />} />
+          <Route path="/merge/step1" element={<Step1CollectionMerge />} />
         </Routes>
       </PageLayout>
     </ImportWizardProvider>

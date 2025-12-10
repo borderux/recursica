@@ -443,33 +443,6 @@ export async function exportPage(
     const collectionTable = new CollectionTable();
     const instanceTable = new InstanceTable();
 
-    // Get available library variable collections
-    await debugConsole.log("Fetching team library variable collections...");
-    let libraries: any[] = [];
-    try {
-      const libraryCollections =
-        await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
-      // Transform to include only the information we need
-      libraries = libraryCollections.map((library) => ({
-        libraryName: library.libraryName,
-        key: library.key,
-        name: library.name,
-      }));
-      await debugConsole.log(
-        `Found ${libraries.length} library collection(s) in team library`,
-      );
-      if (libraries.length > 0) {
-        for (const lib of libraries) {
-          await debugConsole.log(`  - ${lib.name} (from ${lib.libraryName})`);
-        }
-      }
-    } catch (error) {
-      await debugConsole.warning(
-        `Could not get library variable collections: ${error instanceof Error ? error.message : String(error)}`,
-      );
-      // Continue without library info if it fails
-    }
-
     // Extract complete page data with limits to prevent hanging
     await debugConsole.log("Extracting node data from page...");
     await debugConsole.log(
@@ -693,7 +666,7 @@ export async function exportPage(
       );
     }
 
-    // Create export data with metadata, collections table, variable table, instance table, libraries, and page data
+    // Create export data with metadata, collections table, variable table, instance table, and page data
     // All data uses full key names at this point
     await debugConsole.log("Creating export data structure...");
     const exportData = {
@@ -710,7 +683,6 @@ export async function exportPage(
       collections: collectionTable.getSerializedTable(),
       variables: variableTable.getSerializedTable(),
       instances: instanceTable.getSerializedTable(),
-      libraries: libraries, // Libraries might not need compression, but could be added later
       pageData: extractedPageData,
     };
 

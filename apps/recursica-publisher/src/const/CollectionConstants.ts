@@ -21,26 +21,24 @@ export const VALID_COLLECTION_NAMES = {
  * Normalizes a collection name to a standard name
  * - "Themes" -> "Theme"
  * - "Token" -> "Tokens"
+ * - "Theme_1" -> "Theme"
+ * - "Layer_1" -> "Layer"
  * - Other names are returned as-is
  */
 export function normalizeCollectionName(name: string): string {
   const normalized = name.trim();
-  const lower = normalized.toLowerCase();
+  // Remove suffix patterns like "_1", "_2", etc.
+  const withoutSuffix = normalized.replace(/_\d+$/, "");
+  const lower = withoutSuffix.toLowerCase();
 
-  if (lower === "themes") {
+  if (lower === "themes" || lower === "theme") {
     return VALID_COLLECTION_NAMES.THEME;
   }
-  if (lower === "token") {
+  if (lower === "token" || lower === "tokens") {
     return VALID_COLLECTION_NAMES.TOKENS;
   }
   if (lower === "layer" || lower === "layers") {
     return VALID_COLLECTION_NAMES.LAYER;
-  }
-  if (lower === "tokens") {
-    return VALID_COLLECTION_NAMES.TOKENS;
-  }
-  if (lower === "theme") {
-    return VALID_COLLECTION_NAMES.THEME;
   }
 
   // Return original name if not a standard collection

@@ -7,14 +7,14 @@ import { normalizeCollectionName } from "../../const/CollectionConstants";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-const PRIMARY_IMPORT_KEY = "RecursicaPrimaryImport";
-const UNDER_REVIEW_KEY = "RecursicaUnderReview";
-const IMPORT_START_DIVIDER = "---";
-const IMPORT_END_DIVIDER = "---";
-const DIVIDER_PLUGIN_DATA_KEY = "RecursicaImportDivider";
-const DIVIDER_TYPE_START = "start";
-const DIVIDER_TYPE_END = "end";
-const CONSTRUCTION_ICON = "⚠️";
+export const PRIMARY_IMPORT_KEY = "RecursicaPrimaryImport";
+export const UNDER_REVIEW_KEY = "RecursicaUnderReview";
+export const IMPORT_START_DIVIDER = "---";
+export const IMPORT_END_DIVIDER = "---";
+export const DIVIDER_PLUGIN_DATA_KEY = "RecursicaImportDivider";
+export const DIVIDER_TYPE_START = "start";
+export const DIVIDER_TYPE_END = "end";
+export const CONSTRUCTION_ICON = "⚠️";
 
 export interface PrimaryImportMetadata {
   componentGuid: string;
@@ -663,15 +663,10 @@ export async function importSingleComponentWithWizard(
       }
     }
 
-    // TEST ERROR: Comment out the line below to disable test error
-    // This error is thrown at the very end to test cleanup of all created entities
-    throw new Error(
-      "TEST ERROR: Simulated import failure for testing cleanup functionality",
-    );
-
+    // Note: mainPage is already validated at line 415, so it's guaranteed to be non-null here
     const responseData: ImportSingleComponentWithWizardResponseData = {
       success: true,
-      mainPageId: mainPage.id,
+      mainPageId: mainPage!.id,
       importedPageIds,
       createdCollections,
       createdVariables,

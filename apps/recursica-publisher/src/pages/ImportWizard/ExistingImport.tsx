@@ -335,8 +335,34 @@ export default function ExistingImport() {
           style={{
             padding: "12px 24px",
             fontSize: "16px",
+            fontWeight: "normal",
+            backgroundColor: loading || clearingMetadata ? "#ccc" : "#fff",
+            color: loading || clearingMetadata ? "#999" : "#333",
+            border: "1px solid #e0e0e0",
+            borderRadius: "8px",
+            cursor: loading || clearingMetadata ? "not-allowed" : "pointer",
+          }}
+          onMouseOver={(e) => {
+            if (!loading && !clearingMetadata) {
+              e.currentTarget.style.backgroundColor = "#f5f5f5";
+            }
+          }}
+          onMouseOut={(e) => {
+            if (!loading && !clearingMetadata) {
+              e.currentTarget.style.backgroundColor = "#fff";
+            }
+          }}
+        >
+          {loading ? "Deleting..." : "Delete"}
+        </button>
+        <button
+          onClick={() => navigate("/import-wizard/merge/step1")}
+          disabled={loading || clearingMetadata}
+          style={{
+            padding: "12px 24px",
+            fontSize: "16px",
             fontWeight: "bold",
-            backgroundColor: loading || clearingMetadata ? "#ccc" : "#d40d0d",
+            backgroundColor: loading || clearingMetadata ? "#ccc" : "#007AFF",
             color: "white",
             border: "none",
             borderRadius: "8px",
@@ -353,7 +379,7 @@ export default function ExistingImport() {
             }
           }}
         >
-          {loading ? "Deleting..." : "Delete"}
+          Merge
         </button>
       </div>
     </div>

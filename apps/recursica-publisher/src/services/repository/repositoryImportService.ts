@@ -42,12 +42,15 @@ interface ImportedComponentFile {
 
 /**
  * Fetches index.json from the repository for a specific branch/ref
+ * Note: This makes unauthenticated requests for public repositories.
+ * No authentication is needed or used for public repos.
  */
 async function fetchIndexJson(ref: string): Promise<IndexJson> {
   const url = `https://api.github.com/repos/${RECURSICA_FIGMA_OWNER}/${RECURSICA_FIGMA_REPO}/contents/index.json?ref=${encodeURIComponent(ref)}`;
   const response = await fetch(url, {
     headers: {
       Accept: "application/vnd.github.v3+json",
+      // Intentionally no Authorization header - public repo doesn't need authentication
     },
   });
 
@@ -57,8 +60,15 @@ async function fetchIndexJson(ref: string): Promise<IndexJson> {
         "index.json not found. The repository may not have been initialized yet.",
       );
     } else if (response.status === 403) {
+      // 403 on a public repo usually means rate limiting or the file doesn't exist
+      const rateLimitRemaining = response.headers.get("x-ratelimit-remaining");
+      if (rateLimitRemaining === "0") {
+        throw new Error(
+          "GitHub API rate limit exceeded. Please wait a few minutes and try again.",
+        );
+      }
       throw new Error(
-        "Cannot access index.json. The repository may be private or you may not have access.",
+        `Cannot access index.json (403 Forbidden). This may be due to rate limiting or the repository may be private.`,
       );
     }
     throw new Error(
@@ -83,18 +93,32 @@ async function fetchIndexJson(ref: string): Promise<IndexJson> {
 
 /**
  * Fetches a figma.json file from the repository by path
+ * Note: This makes unauthenticated requests for public repositories.
+ * No authentication is needed or used for public repos.
  */
 async function fetchFigmaJson(path: string, ref: string): Promise<unknown> {
   const url = `https://api.github.com/repos/${RECURSICA_FIGMA_OWNER}/${RECURSICA_FIGMA_REPO}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(ref)}`;
   const response = await fetch(url, {
     headers: {
       Accept: "application/vnd.github.v3+json",
+      // Intentionally no Authorization header - public repo doesn't need authentication
     },
   });
 
   if (!response.ok) {
     if (response.status === 404) {
       throw new Error(`File not found: ${path}`);
+    } else if (response.status === 403) {
+      // 403 on a public repo usually means rate limiting or the file doesn't exist
+      const rateLimitRemaining = response.headers.get("x-ratelimit-remaining");
+      if (rateLimitRemaining === "0") {
+        throw new Error(
+          `GitHub API rate limit exceeded while fetching ${path}. Please wait a few minutes and try again.`,
+        );
+      }
+      throw new Error(
+        `Cannot access ${path} (403 Forbidden). This may be due to rate limiting or the file may not exist.`,
+      );
     }
     throw new Error(
       `Failed to load ${path}: ${response.status} ${response.statusText}`,
