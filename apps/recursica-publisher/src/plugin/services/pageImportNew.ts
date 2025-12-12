@@ -19,6 +19,7 @@ import { requestGuidFromUI } from "../utils/requestGuidFromUI";
 import { debugConsole } from "./debugConsole";
 import { expandJsonData } from "../utils/jsonCompression";
 import { pluginPrompt } from "../utils/pluginPrompt";
+import { getComponentCleanName } from "../utils/getComponentCleanName";
 import {
   normalizeCollectionName,
   isStandardCollection,
@@ -43,10 +44,10 @@ export interface ImportPageData {
 }
 
 export interface DeferredNormalInstance {
-  placeholderFrame: FrameNode; // Placeholder frame created during import
+  placeholderFrameId: string; // ID of placeholder frame created during import (for serialization)
   instanceEntry: any; // Instance table entry
   nodeData: any; // Original node data
-  parentNode: any; // Parent node where placeholder was created
+  parentNodeId: string; // ID of parent node where placeholder was created (for serialization)
   instanceIndex: number; // Instance table index
 }
 
@@ -1150,7 +1151,7 @@ export async function recreateNodeFromData(
                 nodeIdMapping,
                 isRemoteStructure,
                 remoteComponentMap,
-                null, // deferredInstances - not needed for component set creation
+                deferredInstances, // Pass deferredInstances through for component set creation
                 null, // parentNodeData - not needed here, will be passed correctly in recursive calls
                 recognizedCollections,
               );
@@ -1788,15 +1789,23 @@ export async function recreateNodeFromData(
               placeholderFrame.resize(nodeData.w, nodeData.h);
             }
 
-            // Store deferred instance info
+            // Store deferred instance info (using IDs for serialization)
             if (deferredInstances) {
-              deferredInstances.push({
-                placeholderFrame,
+              const deferred = {
+                placeholderFrameId: placeholderFrame.id,
                 instanceEntry,
                 nodeData,
-                parentNode,
+                parentNodeId: parentNode.id,
                 instanceIndex: nodeData._instanceRef,
-              });
+              };
+              deferredInstances.push(deferred);
+              await debugConsole.log(
+                `  [DEBUG] Added deferred instance "${nodeData.name}" to array (array length: ${deferredInstances.length})`,
+              );
+            } else {
+              await debugConsole.log(
+                `  [DEBUG] deferredInstances array is null/undefined - cannot store deferred instance "${nodeData.name}"`,
+              );
             }
 
             newNode = placeholderFrame;
@@ -2054,15 +2063,23 @@ export async function recreateNodeFromData(
               placeholderFrame.resize(nodeData.w, nodeData.h);
             }
 
-            // Store deferred instance info
+            // Store deferred instance info (using IDs for serialization)
             if (deferredInstances) {
-              deferredInstances.push({
-                placeholderFrame,
+              const deferred = {
+                placeholderFrameId: placeholderFrame.id,
                 instanceEntry,
                 nodeData,
-                parentNode,
+                parentNodeId: parentNode.id,
                 instanceIndex: nodeData._instanceRef,
-              });
+              };
+              deferredInstances.push(deferred);
+              await debugConsole.log(
+                `  [DEBUG] Added deferred instance "${nodeData.name}" to array (array length: ${deferredInstances.length})`,
+              );
+            } else {
+              await debugConsole.log(
+                `  [DEBUG] deferredInstances array is null/undefined - cannot store deferred instance "${nodeData.name}"`,
+              );
             }
 
             newNode = placeholderFrame;
@@ -3473,7 +3490,7 @@ export async function recreateNodeFromData(
         nodeIdMapping,
         isRemoteStructure,
         remoteComponentMap,
-        null, // deferredInstances - not needed for remote structures
+        deferredInstances, // Pass deferredInstances through for recursive calls
         nodeData, // parentNodeData - pass the parent's nodeData so children can check for auto-layout
         recognizedCollections,
       );
@@ -5513,6 +5530,7 @@ async function createPageAndRecreateStructure(
   return {
     success: true,
     page: newPage,
+    deferredInstances: deferredInstances || undefined,
   };
 }
 
@@ -5745,11 +5763,25 @@ export async function importPage(
     const totalVariables =
       recognizedVariables.size + newlyCreatedVariables.length;
 
-    const deferredCount = deferredInstances.length;
+    // Get deferred instances from pageResult (they were populated during page creation)
+    const deferredInstancesFromResult =
+      pageResult.deferredInstances || deferredInstances;
+    const deferredCount = deferredInstancesFromResult?.length || 0;
     await debugConsole.log("=== Import Complete ===");
     await debugConsole.log(
       `Successfully processed ${recognizedCollections.size} collection(s), ${totalVariables} variable(s), and created page "${newPage.name}"${deferredCount > 0 ? ` (${deferredCount} deferred normal instance(s) - will need to be resolved after all pages are imported)` : ""}`,
     );
+
+    if (deferredCount > 0) {
+      await debugConsole.log(
+        `  [DEBUG] Returning ${deferredCount} deferred instance(s) in response`,
+      );
+      for (const deferred of deferredInstancesFromResult) {
+        await debugConsole.log(
+          `    - "${deferred.nodeData.name}" from page "${deferred.instanceEntry.componentPageName}"`,
+        );
+      }
+    }
 
     // Include pageId in response (either from pageResult.pageId for reused pages, or newPage.id for new pages)
     const pageId = pageResult.pageId || newPage.id;
@@ -5762,7 +5794,8 @@ export async function importPage(
       data: {
         pageName: newPage.name,
         pageId: pageId, // Include pageId for tracking (used for both new and reused pages)
-        deferredInstances: deferredCount > 0 ? deferredInstances : undefined,
+        deferredInstances:
+          deferredCount > 0 ? deferredInstancesFromResult : undefined,
         createdEntities: {
           pageIds: [newPage.id],
           collectionIds: newlyCreatedCollections.map((c) => c.id),
@@ -5794,6 +5827,7 @@ export async function importPage(
  */
 export async function resolveDeferredNormalInstances(
   deferredInstances: DeferredNormalInstance[],
+  constructionIcon: string = "",
 ): Promise<{
   resolved: number;
   failed: number;
@@ -5815,16 +5849,65 @@ export async function resolveDeferredNormalInstances(
 
   for (const deferred of deferredInstances) {
     try {
-      const { placeholderFrame, instanceEntry, nodeData, parentNode } =
+      const { placeholderFrameId, instanceEntry, nodeData, parentNodeId } =
         deferred;
 
+      // Look up nodes by ID (they were serialized as IDs)
+      const placeholderFrame = (await figma.getNodeByIdAsync(
+        placeholderFrameId,
+      )) as FrameNode | null;
+      const parentNode = (await figma.getNodeByIdAsync(
+        parentNodeId,
+      )) as SceneNode | null;
+
+      if (!placeholderFrame || !parentNode) {
+        const error = `Deferred instance "${nodeData.name}" - could not find placeholder frame (${placeholderFrameId}) or parent node (${parentNodeId})`;
+        await debugConsole.error(error);
+        errors.push(error);
+        failed++;
+        continue;
+      }
+
       // Find the referenced page
-      const referencedPage = figma.root.children.find(
-        (page) => page.name === instanceEntry.componentPageName,
-      );
+      // Try multiple matching strategies:
+      // 1. Exact name match
+      // 2. Name with construction icon prefix
+      // 3. Clean name match (alphanumeric only) - handles renamed pages or formatting differences
+      let referencedPage = figma.root.children.find((page) => {
+        const exactMatch = page.name === instanceEntry.componentPageName;
+        const iconMatch =
+          constructionIcon &&
+          page.name ===
+            `${constructionIcon} ${instanceEntry.componentPageName}`;
+        return exactMatch || iconMatch;
+      });
+
+      // If exact match failed, try clean name matching
+      if (!referencedPage) {
+        const cleanTargetName = getComponentCleanName(
+          instanceEntry.componentPageName,
+        );
+        referencedPage = figma.root.children.find((page) => {
+          const cleanPageName = getComponentCleanName(page.name);
+          return cleanPageName === cleanTargetName;
+        });
+      }
+
+      if (!referencedPage && constructionIcon) {
+        // Debug: log available page names to help diagnose
+        const availablePageNames = figma.root.children
+          .map((p) => p.name)
+          .slice(0, 10);
+        await debugConsole.log(
+          `  [DEBUG] Looking for page "${instanceEntry.componentPageName}" (or "${constructionIcon} ${instanceEntry.componentPageName}"). Available pages (first 10): ${availablePageNames.join(", ")}`,
+        );
+      }
 
       if (!referencedPage) {
-        const error = `Deferred instance "${nodeData.name}" still cannot find referenced page "${instanceEntry.componentPageName}"`;
+        const expectedNames = constructionIcon
+          ? `"${instanceEntry.componentPageName}" or "${constructionIcon} ${instanceEntry.componentPageName}"`
+          : `"${instanceEntry.componentPageName}"`;
+        const error = `Deferred instance "${nodeData.name}" still cannot find referenced page (tried: ${expectedNames}, and clean name matching)`;
         await debugConsole.error(error);
         errors.push(error);
         failed++;
@@ -5841,14 +5924,20 @@ export async function resolveDeferredNormalInstances(
       ): ComponentNode | null => {
         if (path.length === 0) {
           let nameMatch: ComponentNode | null = null;
+          const cleanTargetName = getComponentCleanName(componentName);
 
           for (const child of parent.children || []) {
             if (child.type === "COMPONENT") {
-              if (child.name === componentName) {
+              const exactMatch = child.name === componentName;
+              const cleanMatch =
+                getComponentCleanName(child.name) === cleanTargetName;
+
+              if (exactMatch || cleanMatch) {
                 if (!nameMatch) {
                   nameMatch = child;
                 }
-                if (componentGuid) {
+                // Prefer exact match if available
+                if (exactMatch && componentGuid) {
                   try {
                     const metadataStr = child.getPluginData(
                       "RecursicaPublishedMetadata",
@@ -5862,44 +5951,55 @@ export async function resolveDeferredNormalInstances(
                   } catch {
                     // Continue searching
                   }
-                } else {
+                } else if (exactMatch) {
                   return child;
                 }
               }
             } else if (child.type === "COMPONENT_SET") {
               // Only search in this component set if componentSetName matches (if provided)
-              if (componentSetName && child.name !== componentSetName) {
-                continue; // Skip this component set if name doesn't match
+              // Try both exact and clean name matching for component set name
+              if (componentSetName) {
+                const setExactMatch = child.name === componentSetName;
+                const setCleanMatch =
+                  getComponentCleanName(child.name) ===
+                  getComponentCleanName(componentSetName);
+                if (!setExactMatch && !setCleanMatch) {
+                  continue; // Skip this component set if name doesn't match
+                }
               }
 
               for (const variant of child.children || []) {
-                if (
-                  variant.type === "COMPONENT" &&
-                  variant.name === componentName
-                ) {
-                  if (!nameMatch) {
-                    nameMatch = variant;
-                  }
-                  if (componentGuid) {
-                    try {
-                      const metadataStr = variant.getPluginData(
-                        "RecursicaPublishedMetadata",
-                      );
-                      if (metadataStr) {
-                        const metadata = JSON.parse(metadataStr);
-                        if (metadata.id === componentGuid) {
-                          return variant;
-                        }
-                      }
-                    } catch {
-                      // Continue searching
+                if (variant.type === "COMPONENT") {
+                  const exactMatch = variant.name === componentName;
+                  const cleanMatch =
+                    getComponentCleanName(variant.name) === cleanTargetName;
+
+                  if (exactMatch || cleanMatch) {
+                    if (!nameMatch) {
+                      nameMatch = variant;
                     }
-                  } else {
-                    // If componentSetName was provided and matched, return immediately
-                    if (componentSetName) {
+                    // Prefer exact match if available
+                    if (exactMatch && componentGuid) {
+                      try {
+                        const metadataStr = variant.getPluginData(
+                          "RecursicaPublishedMetadata",
+                        );
+                        if (metadataStr) {
+                          const metadata = JSON.parse(metadataStr);
+                          if (metadata.id === componentGuid) {
+                            return variant;
+                          }
+                        }
+                      } catch {
+                        // Continue searching
+                      }
+                    } else if (exactMatch) {
+                      // If componentSetName was provided and matched, return immediately
+                      if (componentSetName) {
+                        return variant;
+                      }
                       return variant;
                     }
-                    return variant;
                   }
                 }
               }
@@ -5913,40 +6013,58 @@ export async function resolveDeferredNormalInstances(
         }
 
         const [firstSegment, ...remainingPath] = path;
+        const cleanFirstSegment = getComponentCleanName(firstSegment);
         for (const child of parent.children || []) {
-          if (child.name === firstSegment) {
+          const exactMatch = child.name === firstSegment;
+          const cleanMatch =
+            getComponentCleanName(child.name) === cleanFirstSegment;
+
+          if (exactMatch || cleanMatch) {
             // If we've reached the end of the path and this is a COMPONENT_SET,
             // search for the component inside it
             if (remainingPath.length === 0 && child.type === "COMPONENT_SET") {
-              // Verify component set name matches if provided
-              if (componentSetName && child.name !== componentSetName) {
-                continue; // Skip this component set if name doesn't match
+              // Verify component set name matches if provided (try both exact and clean)
+              if (componentSetName) {
+                const setExactMatch = child.name === componentSetName;
+                const setCleanMatch =
+                  getComponentCleanName(child.name) ===
+                  getComponentCleanName(componentSetName);
+                if (!setExactMatch && !setCleanMatch) {
+                  continue; // Skip this component set if name doesn't match
+                }
               }
 
               // Search for the component variant in this COMPONENT_SET
+              const cleanTargetName = getComponentCleanName(componentName);
               for (const variant of child.children || []) {
-                if (
-                  variant.type === "COMPONENT" &&
-                  variant.name === componentName
-                ) {
-                  // Found the variant - check GUID if provided
-                  if (componentGuid) {
-                    try {
-                      const metadataStr = variant.getPluginData(
-                        "RecursicaPublishedMetadata",
-                      );
-                      if (metadataStr) {
-                        const metadata = JSON.parse(metadataStr);
-                        if (metadata.id === componentGuid) {
-                          return variant;
+                if (variant.type === "COMPONENT") {
+                  const variantExactMatch = variant.name === componentName;
+                  const variantCleanMatch =
+                    getComponentCleanName(variant.name) === cleanTargetName;
+
+                  if (variantExactMatch || variantCleanMatch) {
+                    // Found the variant - check GUID if provided
+                    if (componentGuid) {
+                      try {
+                        const metadataStr = variant.getPluginData(
+                          "RecursicaPublishedMetadata",
+                        );
+                        if (metadataStr) {
+                          const metadata = JSON.parse(metadataStr);
+                          if (metadata.id === componentGuid) {
+                            return variant;
+                          }
                         }
+                      } catch {
+                        // Continue searching
                       }
-                    } catch {
-                      // Continue searching
+                    }
+                    // Return variant (GUID check passed or no GUID provided)
+                    // Prefer exact match
+                    if (variantExactMatch) {
+                      return variant;
                     }
                   }
-                  // Return variant (GUID check passed or no GUID provided)
-                  return variant;
                 }
               }
               // Component not found in COMPONENT_SET
