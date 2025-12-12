@@ -35,12 +35,15 @@ export default function Step5Importing() {
       const metadata = mainFileData?.metadata;
 
       if (metadata?.guid && metadata?.name) {
+        // Extract values after the check so TypeScript knows they're defined
+        const guid = metadata.guid;
+        const name = metadata.name;
         const ref = importData.source?.branch || "main";
         setWizardState((prev) => ({
           ...prev,
           selectedComponent: {
-            guid: metadata.guid,
-            name: metadata.name,
+            guid,
+            name,
             version: metadata.version || 0,
             ref,
           },
