@@ -1,0 +1,773 @@
+# Page Import Summary
+
+This document summarizes the import steps and logic for `pageImportNew.ts`, which handles importing JSON-exported Figma pages back into Figma.
+
+## Overview
+
+The import process is a multi-stage pipeline that:
+
+1. Validates and loads JSON data
+2. Processes collections (variable collections)
+3. Processes variables
+4. Processes component instances
+5. Recreates the page structure with all nodes
+
+## Import Stages
+
+### Stage 1: Validate Metadata
+
+- Validates that the JSON contains required metadata fields
+- Extracts page GUID, name, and version information
+- **Failure**: Returns error and stops import
+
+### Stage 2: Load and Expand JSON
+
+- Loads the string table (for compressed string references)
+- Expands compressed JSON data using `expandJsonData()`
+- Converts string table references back to actual strings
+- **Failure**: Returns error and stops import
+
+### Stage 3: Load Collection Table
+
+- Loads the collections table from JSON
+- Creates a `CollectionTable` instance from the serialized data
+- Collections are stored once in a table, referenced by index
+- **Note**: If no collections table exists, import completes early (no collections to process)
+
+### Stage 4: Match Collections
+
+- For each collection in the table:
+  - **Local collections**: Attempts to match with existing local collections
+    - First tries matching by GUID (if present in entry)
+    - Falls back to name matching (for backward compatibility)
+  - **Remote collections**: Skipped (handled separately, must be registered)
+- Categorizes collections into:
+  - `recognizedCollections`: Matched by GUID (exact match)
+  - `potentialMatches`: Matched by name only (requires user confirmation)
+  - `collectionsToCreate`: No match found (will create new)
+
+### Stage 5: Prompt for Potential Matches
+
+- For each potential match (name-only match):
+  - Prompts user: "Found existing [collection name] variable collection. Should I use it?"
+  - If user confirms: Adds to `recognizedCollections`
+  - If user rejects: Moves to `collectionsToCreate`
+- Ensures modes exist for user-confirmed collections
+
+### Stage 6: Ensure Modes for Recognized Collections
+
+- For each recognized collection (GUID-matched, not user-confirmed):
+  - Ensures all modes from the exported collection exist in the target collection
+  - Creates missing modes by name
+  - Builds mode ID mapping: old modeId → new modeId
+- **Note**: User-confirmed collections already had modes ensured in Stage 5
+
+### Stage 7: Create New Collections
+
+- For each collection in `collectionsToCreate`:
+  - Normalizes collection name (handles standard names like "Token"/"Theme")
+  - Finds unique name (handles conflicts) by appending an underscore and incrementing number. Ex: "Tokens_1"
+  - Creates new `VariableCollection` via Figma API
+  - Stores GUID on collection (from entry or generates new)
+  - Ensures all modes exist (creates by name)
+  - Adds to `recognizedCollections` for variable processing
+
+### Stage 8: Load Variable Table
+
+- Loads the variables table from JSON
+- Creates a `VariableTable` instance from the serialized data
+- Variables are stored once in a table, referenced by index
+- **Note**: If no variables table exists, import completes early (no variables to process)
+
+### Stage 9: Match and Create Variables
+
+- For each variable in the table:
+  - Gets the collection using `_colRef` (collection table index)
+  - Searches for existing variable by name within the collection
+  - **If variable exists**:
+    - Validates type matches
+    - If type matches: Uses existing variable
+    - If type mismatches: Creates new variable with incremented name, logs warning
+  - **If variable doesn't exist**:
+    - Creates new variable with the specified type
+  - Restores `valuesByMode` (all mode values)
+    - Resolves VARIABLE_ALIAS references recursively
+    - Uses mode ID mapping to convert old mode IDs to new mode IDs
+- Categorizes variables into:
+  - `recognizedVariables`: Existing variables (reused)
+  - `newlyCreatedVariables`: New variables created during import
+    The goal is to never overwrite existing variables. If a match exists, it will try to use it, otherwise it will
+    create a new variable.
+
+### Stage 10: Load Instance Table
+
+- Loads the instance table from JSON (if present)
+- Creates an `InstanceTable` instance from the serialized data
+- Instances are stored once in a table, referenced by index
+- **Note**: Instance table is optional (may not exist in older JSON formats)
+
+### Stage 10.5: Create Remote Instances
+
+- Processes all `instanceType === "remote"` entries from instance table. Remote instances are references to Team libraries (aka Icons)
+- Creates or finds "REMOTES" page
+- For each remote instance:
+  - Recreates the component from stored `structure` (full visual representation). This will only be visual, and cannot contain references to other components.
+  - Creates component on REMOTES page
+  - Stores mapping: instance table index → component node
+- Returns `remoteComponentMap` for use in Stage 11
+- **Note**: Remote instances cannot be resolved by reference (component doesn't exist in target file), so full structure is stored and recreated
+
+### Stage 11: Create Page and Recreate Structure
+
+#### Page Creation Logic
+
+1. **Check for existing page by GUID**:
+
+   - Searches all pages for one with matching GUID in plugin data
+   - If found and `isMainPage === false`: Prompts user "Found existing component [name]. Should I use it or create a copy?"
+     - User chooses "Use": Returns existing page (skips structure recreation)
+     - User chooses "Copy": Proceeds to create new page
+   - If `isMainPage === true`: Always creates a copy (no prompt). This means we always create a new page for the component that is being imported. It will have a unique name by appending underscore and an incrementing number (Ex: Accordion_1)
+
+2. **Check for existing page by name**:
+
+   - If page with same name exists, creates scratch page with unique name
+   - Scratch page name format: `__[originalName]` (will be renamed on success)
+
+3. **Create new page**:
+   - Creates new `PageNode`
+   - Sets page name (original or scratch name)
+   - Sets page background if specified in JSON
+   - Switches to the new page
+
+#### Structure Recreation
+
+1. **Normalize structure types**:
+
+   - Converts numeric node type enums to strings recursively
+   - Handles both `children` (expanded) and `child` (compressed) keys
+
+2. **Build node ID mapping**:
+
+   - Maintains map: old node ID → new node
+   - Used for resolving internal instance references
+
+3. **Recursively recreate nodes** (Two-Pass Approach):
+
+   The import uses a **two-pass approach** to handle component dependencies:
+
+   **First Pass: Create All Components**
+
+   - Recursively collects ALL COMPONENT nodes from the entire tree (including nested components)
+   - Creates each component node (without children) and adds component property definitions
+   - Stores each component in `nodeIdMapping` immediately
+   - **Result**: All components exist in the mapping before any instances try to reference them
+
+   **Second Pass: Process All Nodes**
+
+   - Processes all children normally (depth-first traversal)
+   - When encountering a COMPONENT that was created in first pass:
+     - Reuses the existing component from `nodeIdMapping`
+     - Processes its children recursively
+   - When encountering an INSTANCE:
+     - Can immediately find the referenced component in `nodeIdMapping` (for internal instances)
+     - Creates instance from the component
+
+   **Example**: If Accordion references Logo:
+
+   - Logo component is created in **first pass** (along with all other components)
+   - Accordion is processed in **second pass**
+   - When Accordion's Logo instance is encountered, Logo already exists in `nodeIdMapping`
+   - Instance is created successfully from the existing Logo component
+
+   For each node:
+
+   - Creates node of appropriate type (FRAME, TEXT, COMPONENT, etc.)
+   - Applies default values first
+   - Applies non-default properties from JSON
+   - Handles special cases:
+     - **COMPONENT**: Adds component property definitions (first pass) or reuses existing (second pass)
+     - **COMPONENT_SET**: Creates component variants, then combines using `combineAsVariants()`
+     - **INSTANCE**: Resolves instance reference (see below)
+   - Recursively processes children (second pass only)
+   - Restores bound variables (fills, strokes, effects, etc.)
+
+4. **Instance Resolution**:
+
+   - When encountering `_instanceRef` in node data:
+     - Looks up instance table entry by index
+     - Resolves component based on `instanceType`:
+       - **`internal`**: Looks up component by `componentNodeId` in node ID mapping
+       - **`normal`**:
+         - Searches all pages for page with matching `componentGuid` and `componentVersion` in metadata
+         - Navigates `path` array (node names) from page root to component
+         - Validates: node type is COMPONENT, name matches
+         - If not found: Creates placeholder frame, defers resolution (added to `deferredInstances`)
+       - **`remote`**: Looks up component in `remoteComponentMap` (created in Stage 10.5)
+     - Creates instance from resolved component
+     - Applies variant properties and component properties
+     - Replaces `_instanceRef` with actual instance reference
+
+5. **Variable Resolution**:
+
+   - When encountering `_varRef` in node data:
+     - Looks up variable in `recognizedVariables` map by table index
+     - Binds variable to the property (fill, stroke, effect, etc.)
+     - Handles VARIABLE_ALIAS values recursively
+
+6. **Final Steps**:
+   - Renames scratch page to original name (if was scratch page)
+   - Stores page metadata (GUID, version) on page node
+   - Returns page and deferred instances (if any)
+
+## Post-Import: Deferred Instance Resolution
+
+After all pages are imported, deferred normal instances can be resolved:
+
+- **`resolveDeferredNormalInstances()`**:
+  - Processes all deferred instances collected during import
+  - Searches for referenced pages by `componentPageName`
+  - Resolves component using path navigation
+  - Replaces placeholder frames with actual instances
+  - Handles circular dependencies by resolving after all pages exist
+
+This is needed because many components create circular references to each other, which is hard to resolve.
+
+## Key Design Patterns
+
+[LOG] === Starting Page Import ===
+[LOG] Validating metadata...
+[LOG] Metadata validated: guid=d4ee2a70-422d-4e12-8202-d20af6aa0aa7, name=Component title
+[LOG] Loading string table...
+[LOG] String table loaded successfully
+[LOG] Expanding JSON data...
+[LOG] JSON expanded successfully
+[LOG] Loading collections table...
+[LOG] Loaded collections table with 2 collection(s)
+[LOG] Matching collections with existing local collections...
+[LOG] ✗ No match found for collection: "Tokens" (index 0) - will create new
+[LOG] ✗ No match found for collection: "Theme" (index 1) - will create new
+[LOG] Collection matching complete: 0 recognized, 0 potential matches, 2 to create
+[LOG] Creating 2 new collection(s)...
+[LOG] Creating collection: "Tokens"
+[LOG] Stored GUID: 00000000...
+[LOG] ✓ Created collection "Tokens" with 1 mode(s)
+[LOG] Creating collection: "Theme"
+[LOG] Stored GUID: 00000000...
+[LOG] ✓ Created collection "Theme" with 2 mode(s)
+[LOG] Collection creation complete
+[LOG] Loading variables table...
+[LOG] Loaded variables table with 32 variable(s)
+[LOG] Matching and creating variables in collections...
+[LOG] Variable processing complete:
+[LOG] "Tokens": 0 existing, 17 created
+[LOG] "Theme": 0 existing, 15 created
+[LOG] Loading instance table...
+[LOG] Loaded instance table with 2 instance(s) (0 internal, 1 remote)
+[LOG] Processing 1 remote instance(s)...
+[LOG] Created REMOTES page
+[LOG] Created title and description on REMOTES page
+[LOG] Processing remote instance 1: "Style=outline"
+[LOG] Structure type: COMPONENT, has children: 1 (children key: true, child key: false)
+[LOG] Created component node: "arrow-top-right-on-square / Style=outline"
+[LOG] DEBUG: Structure keys: type, id, name, x, y, width, height, strokeAlign, boundVariables, counterAxisSizingMode, children, has children: true, has child: false
+[LOG] DEBUG: childrenArray exists: true, isArray: true, length: 1
+[LOG] Recreating 1 child(ren) for component "Style=outline"
+[LOG] DEBUG: Processing child 1/1: {"name":"Icon","type":"VECTOR","hasTruncated":false}
+[LOG] Recreating child: "Icon" (type: VECTOR)
+[LOG] DEBUG: VECTOR "Icon" (ID: I3041:35...) has boundVariables: fills
+[LOG] DEBUG: boundVariables.fills: [{"_varRef":22}]
+[LOG] DEBUG: VECTOR "Icon" has 1 fill(s)
+[LOG] DEBUG: fill[0] has boundVariables: {"color":{"\_varRef":22}}
+[LOG] DEBUG: Processing fill[0].color on VECTOR "Icon": varInfo={"\_varRef":22}
+[LOG] DEBUG: Looking up variable reference 22 in recognizedVariables (map has 32 entries)
+[LOG] DEBUG: Available variable references (first 10): 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+[LOG] DEBUG: Variable reference 22 found in recognizedVariables
+[LOG] ✓ Restored bound variable for fill[0].color on "Icon" (VECTOR): variable layer/layer-0/element/interactive/color (ID: Variable...)
+[LOG] ✓ Set fills with boundVariables on "Icon" (VECTOR)
+[LOG] Set vectorPaths for VECTOR "Icon" (2 path(s))
+[LOG] Set size for VECTOR "Icon" to 13x13
+[LOG] ✓ Appended child "Icon" to component "Style=outline"
+[LOG] ✓ Created remote component: "arrow-top-right-on-square / Style=outline" (index 1)
+[LOG] Remote instance processing complete: 1 component(s) created
+[LOG] Creating page from JSON...
+[LOG] Creating page: "Component title"
+[LOG] Switched to page: "Component title"
+[LOG] Recreating page structure...
+[LOG] Set page background: [{"type":"SOLID","visible":true,"opacity":1,"blendMode":"NORMAL","color":{"r":0.7193278670310974,"g":0.7265506982803345,"b":0.7644693851470947},"boundVariables":{}}]
+[LOG] Found 1 COMPONENT node(s) in page data
+[LOG] Component IDs in page data (first 20): 3041:362...
+[LOG] Created COMPONENT ".Component title" (ID: 3041:362...)
+[LOG] Added 2 component property definition(s) to ".Component title"
+[LOG] Stored COMPONENT ".Component title" in nodeIdMapping (ID: 3041:362...)
+[LOG] DEBUG: Attempting to set bound variable for itemSpacing on ".Component title": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting itemSpacing bound variable: undefined
+[WARN] Failed to set bound variable for itemSpacing on ".Component title" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:7464:19"}, Got: undefined
+[LOG] DEBUG: Node ".Component title" (COMPONENT) has bound variables for: itemSpacing
+[LOG] First pass: Creating 0 COMPONENT node(s) (without children)...
+[LOG] Deferring normal instance "Logo" - referenced page "✅ Logo" does not exist yet (may be circular reference or not yet imported)
+[LOG] ✓ Restored bound variable for fill[0].color on "Title" (TEXT): variable layer/layer-0/element/text/color (ID: Variable...)
+[LOG] ✓ Set fills with boundVariables on "Title" (TEXT)
+[LOG] DEBUG: Attempting to set bound variable for itemSpacing on "Link": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting itemSpacing bound variable: undefined
+[WARN] Failed to set bound variable for itemSpacing on "Link" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:7464:33"}, Got: undefined
+[LOG] DEBUG: Node "Link" (FRAME) has bound variables for: itemSpacing
+[LOG] First pass: Creating 0 COMPONENT node(s) (without children)...
+[LOG] ✓ Restored bound variable for fill[0].color on "Title" (TEXT): variable layer/layer-0/element/interactive/color (ID: Variable...)
+[LOG] ✓ Set fills with boundVariables on "Title" (TEXT)
+[LOG] ✓ Created remote instance "arrow-top-right-on-square" from component "Style=outline" on REMOTES page
+[LOG] Skipping variant properties for remote instance "arrow-top-right-on-square" - main component is not a COMPONENT_SET or variant (expected for remote components)
+[LOG] Stored instance table mapping: instance "arrow-top-right-on-square" (ID: 7464:63...) -> instance table index 1
+[WARN] Property width has direct value 16 which may prevent bound variable from being set
+[WARN] Failed to set bound variable for width on "arrow-top-right-on-square" - bound variable not persisted. Property value: 16, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:7464:49"}, Got: undefined
+[WARN] Property height has direct value 16 which may prevent bound variable from being set
+[WARN] Failed to set bound variable for height on "arrow-top-right-on-square" - bound variable not persisted. Property value: 16, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:7464:49"}, Got: undefined
+[LOG] Page structure recreated successfully
+[LOG] Third pass: Setting variant properties on instances...
+[LOG] Found 1 instance(s) to process for variant properties
+[LOG] Found instance table index 1 for instance "arrow-top-right-on-square" (ID: 7464:63...)
+[LOG] Instance "arrow-top-right-on-square" matched to entry with variant properties: {"Style":"outline"}
+[LOG] Variant properties set: 0 processed, 1 skipped, 0 errors
+[LOG] Stored page metadata (GUID: d4ee2a70...)
+[LOG] === Import Complete ===
+[LOG] Successfully processed 2 collection(s), 32 variable(s), and created page "Component title"
+[LOG] [2/3] Importing Slot.rec.json ("Slot") [DEPENDENCY]...
+[LOG] === Starting Page Import ===
+[LOG] Validating metadata...
+[LOG] Metadata validated: guid=69a17294-ea41-40fd-b4b9-4e85db4ca7ff, name=Slot
+[LOG] Loading string table...
+[LOG] String table loaded successfully
+[LOG] Expanding JSON data...
+[LOG] JSON expanded successfully
+[LOG] Loading collections table...
+[LOG] Loaded collections table with 2 collection(s)
+[LOG] Matching collections with existing local collections...
+[LOG] ? Potential match by name: "Theme" (index 0)
+[LOG] ? Potential match by name: "Tokens" (index 1)
+[LOG] Collection matching complete: 0 recognized, 2 potential matches, 0 to create
+[LOG] Prompting user for 2 potential match(es)...
+[LOG] Prompting user about potential match: "Theme"
+[LOG] ✓ User confirmed: Using existing collection "Theme" (index 0)
+[LOG] ✓ Ensured modes for collection "Theme" (2 mode(s))
+[LOG] Prompting user about potential match: "Tokens"
+[LOG] ✓ User confirmed: Using existing collection "Tokens" (index 1)
+[LOG] ✓ Ensured modes for collection "Tokens" (1 mode(s))
+[LOG] Ensuring modes exist for recognized collections...
+[LOG] Loading variables table...
+[LOG] Loaded variables table with 21 variable(s)
+[LOG] Matching and creating variables in collections...
+[LOG] Variable processing complete:
+[LOG] "Tokens": 6 existing, 4 created
+[LOG] "Theme": 6 existing, 5 created
+[LOG] Loading instance table...
+[LOG] Loaded instance table with 0 instance(s) (0 internal, 0 remote)
+[LOG] No remote instances found
+[LOG] Creating page from JSON...
+[LOG] Creating page: "Slot"
+[LOG] Switched to page: "Slot"
+[LOG] Recreating page structure...
+[LOG] Set page background: [{"type":"SOLID","visible":true,"opacity":1,"blendMode":"NORMAL","color":{"r":0.7193278670310974,"g":0.7265506982803345,"b":0.7644693851470947},"boundVariables":{}}]
+[LOG] Found 1 COMPONENT node(s) in page data
+[LOG] Component IDs in page data (first 20): 390:1353...
+[LOG] Created COMPONENT ".Slot" (ID: 390:1353...)
+[LOG] Stored COMPONENT ".Slot" in nodeIdMapping (ID: 390:1353...)
+[LOG] ✓ Restored bound variable for fill[0].color on ".Slot" (COMPONENT): variable palette/palette-1/050/tone (ID: Variable...)
+[LOG] ✓ Set fills with boundVariables on ".Slot" (COMPONENT)
+[LOG] First pass: Creating 0 COMPONENT node(s) (without children)...
+[LOG] ✓ Restored bound variable for fill[0].color on "Replace slot with content (component instance)" (TEXT): variable palette/palette-1/050/on-tone (ID: Variable...)
+[LOG] ✓ Set fills with boundVariables on "Replace slot with content (component instance)" (TEXT)
+[WARN] Property opacity has direct value 1 which may prevent bound variable from being set
+[WARN] Failed to set bound variable for opacity on "Replace slot with content (component instance)" - bound variable not persisted. Property value: 1, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:7464:73"}, Got: undefined
+[LOG] Page structure recreated successfully
+[LOG] Third pass: Setting variant properties on instances...
+[LOG] Found 0 instance(s) to process for variant properties
+[LOG] Variant properties set: 0 processed, 0 skipped, 0 errors
+[LOG] Stored page metadata (GUID: 69a17294...)
+[LOG] === Import Complete ===
+[LOG] Successfully processed 2 collection(s), 30 variable(s), and created page "Slot"
+[LOG] [3/3] Importing Accordion.rec.json ("✅ Accordion") [MAIN]...
+[LOG] === Starting Page Import ===
+[LOG] Validating metadata...
+[LOG] Metadata validated: guid=45c0b913-0e5b-46a4-a860-d9051f446869, name=✅ Accordion
+[LOG] Loading string table...
+[LOG] String table loaded successfully
+[LOG] Expanding JSON data...
+[LOG] JSON expanded successfully
+[LOG] Loading collections table...
+[LOG] Loaded collections table with 3 collection(s)
+[LOG] Matching collections with existing local collections...
+[LOG] ? Potential match by name: "Theme" (index 0)
+[LOG] ? Potential match by name: "Tokens" (index 1)
+[LOG] ? Potential match by name: "Layer" (index 2)
+[LOG] Collection matching complete: 0 recognized, 3 potential matches, 0 to create
+[LOG] Prompting user for 3 potential match(es)...
+[LOG] Prompting user about potential match: "Theme"
+[LOG] ✓ User confirmed: Using existing collection "Theme" (index 0)
+[LOG] ✓ Ensured modes for collection "Theme" (2 mode(s))
+[LOG] Prompting user about potential match: "Tokens"
+[LOG] ✓ User confirmed: Using existing collection "Tokens" (index 1)
+[LOG] ✓ Ensured modes for collection "Tokens" (1 mode(s))
+[LOG] Prompting user about potential match: "Layer"
+[LOG] ✓ User confirmed: Using existing collection "Layer" (index 2)
+[LOG] ✓ Ensured modes for collection "Layer" (4 mode(s))
+[LOG] Ensuring modes exist for recognized collections...
+[LOG] Loading variables table...
+[LOG] Loaded variables table with 62 variable(s)
+[LOG] Matching and creating variables in collections...
+[LOG] Variable processing complete:
+[LOG] "Tokens": 9 existing, 12 created
+[LOG] "Theme": 4 existing, 25 created
+[LOG] "Layer": 12 existing, 0 created
+[LOG] Loading instance table...
+[LOG] Loaded instance table with 4 instance(s) (1 internal, 1 remote)
+[LOG] Processing 1 remote instance(s)...
+[LOG] Found existing REMOTES page
+[LOG] Processing remote instance 1: "Style=outline"
+[LOG] Structure type: COMPONENT, has children: 1 (children key: true, child key: false)
+[LOG] Created component node: "chevron-down / Style=outline"
+[LOG] DEBUG: Structure keys: type, id, name, x, y, width, height, strokeAlign, boundVariables, backgrounds, counterAxisSizingMode, clipsContent, children, has children: true, has child: false
+[LOG] DEBUG: childrenArray exists: true, isArray: true, length: 1
+[LOG] Recreating 1 child(ren) for component "Style=outline"
+[LOG] DEBUG: Processing child 1/1: {"name":"Icon","type":"VECTOR","hasTruncated":false}
+[LOG] Recreating child: "Icon" (type: VECTOR)
+[LOG] DEBUG: VECTOR "Icon" (ID: I166:257...) has boundVariables: fills
+[LOG] DEBUG: boundVariables.fills: [{"_varRef":53}]
+[LOG] DEBUG: VECTOR "Icon" has 1 fill(s)
+[LOG] DEBUG: fill[0] has boundVariables: {"color":{"\_varRef":53}}
+[LOG] DEBUG: Processing fill[0].color on VECTOR "Icon": varInfo={"\_varRef":53}
+[LOG] DEBUG: Looking up variable reference 53 in recognizedVariables (map has 62 entries)
+[LOG] DEBUG: Available variable references (first 10): 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+[LOG] DEBUG: Variable reference 53 found in recognizedVariables
+[LOG] ✓ Restored bound variable for fill[0].color on "Icon" (VECTOR): variable accordion/color/icon (ID: Variable...)
+[LOG] ✓ Set fills with boundVariables on "Icon" (VECTOR)
+[LOG] Set vectorPaths for VECTOR "Icon" (1 path(s))
+[LOG] Set size for VECTOR "Icon" to 16.5x9
+[LOG] ✓ Appended child "Icon" to component "Style=outline"
+[LOG] ✓ Created remote component: "chevron-down / Style=outline" (index 1)
+[LOG] Remote instance processing complete: 1 component(s) created
+[LOG] Creating page from JSON...
+[LOG] Found existing page with same name: "✅ Accordion". Will create new page with unique name.
+[LOG] Creating scratch page: "**✅ Accordion" (will be renamed to "✅ Accordion" on success)
+[LOG] Switched to page: "**✅ Accordion"
+[LOG] Recreating page structure...
+[LOG] Set page background: [{"type":"SOLID","visible":true,"opacity":1,"blendMode":"NORMAL","color":{"r":0.7193278670310974,"g":0.7265506982803345,"b":0.7644693851470947},"boundVariables":{}}]
+[LOG] Found 4 COMPONENT node(s) in page data
+[LOG] Component IDs in page data (first 20): 166:254..., 1028:411..., 552:1054..., 1028:412...
+[LOG] ✓ Restored bound variable for fill[0].color on "Accordion" (FRAME): variable layer/layer-0/property/surface (ID: Variable...)
+[LOG] ✓ Set fills with boundVariables on "Accordion" (FRAME)
+[LOG] First pass: Creating 4 COMPONENT node(s) (without children)...
+[LOG] Collected COMPONENT "Open=False, Divider=True" (ID: 166:254...) for first pass
+[LOG] Collected COMPONENT "Open=False, Divider=False" (ID: 1028:411...) for first pass
+[LOG] Collected COMPONENT "Open=True, Divider=True" (ID: 552:1054...) for first pass
+[LOG] Collected COMPONENT "Open=True, Divider=False" (ID: 1028:412...) for first pass
+[LOG] Created COMPONENT "Open=False, Divider=True" (ID: 166:254...) in first pass
+[LOG] Created COMPONENT "Open=False, Divider=False" (ID: 1028:411...) in first pass
+[LOG] Created COMPONENT "Open=True, Divider=True" (ID: 552:1054...) in first pass
+[LOG] Created COMPONENT "Open=True, Divider=False" (ID: 1028:412...) in first pass
+[LOG] Looking for component ".Component title" on page "Component title" at page root (GUID: d4ee2a70...)
+[LOG] Available components on page "Component title":
+COMPONENT: ".Component title"
+[WARN] Found component ".Component title" by name but no metadata found. Using name match as fallback.
+[LOG] Created normal instance "Page header" from component ".Component title" on page "Component title"
+[LOG] Attempting to set component properties for normal instance "Page header": Component name#7464:0, Has link#7464:1
+[LOG] Available component properties: Component name#7464:0, Has link#7464:1
+[LOG] ✓ Successfully set component properties for normal instance "Page header": Component name#7464:0, Has link#7464:1
+[LOG] Stored instance table mapping: instance ".Component title" (ID: 7464:122...) -> instance table index 0
+[LOG] DEBUG: Attempting to set bound variable for itemSpacing on "Page header": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting itemSpacing bound variable: undefined
+[WARN] Failed to set bound variable for itemSpacing on "Page header" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:7464:19"}, Got: undefined
+[LOG] DEBUG: Node "Page header" (INSTANCE) has bound variables for: itemSpacing
+[LOG] Creating COMPONENT_SET "Accordion-row" by combining 4 component variant(s)
+[LOG] Reusing existing COMPONENT "Open=False, Divider=True" (ID: 166:254...)
+[LOG] Stored COMPONENT "Open=False, Divider=True" in nodeIdMapping (ID: 166:254...)
+[LOG] DEBUG: Attempting to set bound variable for paddingLeft on "Open=False, Divider=True": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting paddingLeft bound variable: undefined
+[WARN] Failed to set bound variable for paddingLeft on "Open=False, Divider=True" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1153"}, Got: undefined
+[LOG] DEBUG: Attempting to set bound variable for paddingRight on "Open=False, Divider=True": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting paddingRight bound variable: undefined
+[WARN] Failed to set bound variable for paddingRight on "Open=False, Divider=True" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1153"}, Got: undefined
+[LOG] DEBUG: Attempting to set bound variable for itemSpacing on "Open=False, Divider=True": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting itemSpacing bound variable: undefined
+[WARN] Failed to set bound variable for itemSpacing on "Open=False, Divider=True" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1154"}, Got: undefined
+[LOG] DEBUG: Node "Open=False, Divider=True" (COMPONENT) has bound variables for: paddingLeft, paddingRight, itemSpacing
+[WARN] Property height has direct value 100 which may prevent bound variable from being set
+[WARN] Failed to set bound variable for height on "Open=False, Divider=True" - bound variable not persisted. Property value: 100, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:552:10534"}, Got: undefined
+[WARN] Property minWidth has direct value null which may prevent bound variable from being set
+[WARN] Failed to set bound variable for minWidth on "Open=False, Divider=True" - bound variable not persisted. Property value: null, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:390:1558"}, Got: undefined
+[WARN] Property maxWidth has direct value null which may prevent bound variable from being set
+[WARN] Failed to set bound variable for maxWidth on "Open=False, Divider=True" - bound variable not persisted. Property value: null, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:390:1559"}, Got: undefined
+[LOG] First pass: Creating 0 COMPONENT node(s) (without children)...
+[LOG] ✓ Restored bound variable for fill[0].color on "Title" (TEXT): variable accordion/color/label (ID: Variable...)
+[LOG] ✓ Set fills with boundVariables on "Title" (TEXT)
+[WARN] Property opacity has direct value 1 which may prevent bound variable from being set
+[WARN] Failed to set bound variable for opacity on "Title" - bound variable not persisted. Property value: 1, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:7464:99"}, Got: undefined
+[LOG] ✓ Created remote instance "chevron-down" from component "Style=outline" on REMOTES page
+[LOG] Skipping variant properties for remote instance "chevron-down" - main component is not a COMPONENT_SET or variant (expected for remote components)
+[LOG] Stored instance table mapping: instance "chevron-down" (ID: 7464:131...) -> instance table index 1
+[WARN] Property width has direct value 24 which may prevent bound variable from being set
+[WARN] Failed to set bound variable for width on "chevron-down" - bound variable not persisted. Property value: 24, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:1057:5036"}, Got: undefined
+[WARN] Property height has direct value 24 which may prevent bound variable from being set
+[WARN] Failed to set bound variable for height on "chevron-down" - bound variable not persisted. Property value: 24, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:1057:5036"}, Got: undefined
+[LOG] Created component variant: "Open=False, Divider=True"
+[LOG] Reusing existing COMPONENT "Open=False, Divider=False" (ID: 1028:411...)
+[LOG] Stored COMPONENT "Open=False, Divider=False" in nodeIdMapping (ID: 1028:411...)
+[LOG] DEBUG: Attempting to set bound variable for paddingLeft on "Open=False, Divider=False": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting paddingLeft bound variable: undefined
+[WARN] Failed to set bound variable for paddingLeft on "Open=False, Divider=False" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1153"}, Got: undefined
+[LOG] DEBUG: Attempting to set bound variable for paddingRight on "Open=False, Divider=False": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting paddingRight bound variable: undefined
+[WARN] Failed to set bound variable for paddingRight on "Open=False, Divider=False" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1153"}, Got: undefined
+[LOG] DEBUG: Attempting to set bound variable for itemSpacing on "Open=False, Divider=False": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting itemSpacing bound variable: undefined
+[WARN] Failed to set bound variable for itemSpacing on "Open=False, Divider=False" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1154"}, Got: undefined
+[LOG] DEBUG: Node "Open=False, Divider=False" (COMPONENT) has bound variables for: paddingLeft, paddingRight, itemSpacing
+[WARN] Property height has direct value 100 which may prevent bound variable from being set
+[WARN] Failed to set bound variable for height on "Open=False, Divider=False" - bound variable not persisted. Property value: 100, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:552:10534"}, Got: undefined
+[WARN] Property minWidth has direct value null which may prevent bound variable from being set
+[WARN] Failed to set bound variable for minWidth on "Open=False, Divider=False" - bound variable not persisted. Property value: null, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:390:1558"}, Got: undefined
+[WARN] Property maxWidth has direct value null which may prevent bound variable from being set
+[WARN] Failed to set bound variable for maxWidth on "Open=False, Divider=False" - bound variable not persisted. Property value: null, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:390:1559"}, Got: undefined
+[LOG] First pass: Creating 0 COMPONENT node(s) (without children)...
+[LOG] ✓ Restored bound variable for fill[0].color on "Title" (TEXT): variable accordion/color/label (ID: Variable...)
+[LOG] ✓ Set fills with boundVariables on "Title" (TEXT)
+[WARN] Property opacity has direct value 1 which may prevent bound variable from being set
+[WARN] Failed to set bound variable for opacity on "Title" - bound variable not persisted. Property value: 1, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:7464:99"}, Got: undefined
+[LOG] ✓ Created remote instance "chevron-down" from component "Style=outline" on REMOTES page
+[LOG] Skipping variant properties for remote instance "chevron-down" - main component is not a COMPONENT_SET or variant (expected for remote components)
+[LOG] Stored instance table mapping: instance "chevron-down" (ID: 7464:134...) -> instance table index 1
+[WARN] Property width has direct value 24 which may prevent bound variable from being set
+[WARN] Failed to set bound variable for width on "chevron-down" - bound variable not persisted. Property value: 24, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:1057:5036"}, Got: undefined
+[WARN] Property height has direct value 24 which may prevent bound variable from being set
+[WARN] Failed to set bound variable for height on "chevron-down" - bound variable not persisted. Property value: 24, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:1057:5036"}, Got: undefined
+[LOG] Created component variant: "Open=False, Divider=False"
+[LOG] Reusing existing COMPONENT "Open=True, Divider=True" (ID: 552:1054...)
+[LOG] Stored COMPONENT "Open=True, Divider=True" in nodeIdMapping (ID: 552:1054...)
+[LOG] DEBUG: Attempting to set bound variable for paddingLeft on "Open=True, Divider=True": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting paddingLeft bound variable: undefined
+[WARN] Failed to set bound variable for paddingLeft on "Open=True, Divider=True" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1153"}, Got: undefined
+[LOG] DEBUG: Attempting to set bound variable for paddingRight on "Open=True, Divider=True": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting paddingRight bound variable: undefined
+[WARN] Failed to set bound variable for paddingRight on "Open=True, Divider=True" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1153"}, Got: undefined
+[LOG] DEBUG: Attempting to set bound variable for paddingTop on "Open=True, Divider=True": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting paddingTop bound variable: undefined
+[WARN] Failed to set bound variable for paddingTop on "Open=True, Divider=True" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1153"}, Got: undefined
+[LOG] DEBUG: Attempting to set bound variable for paddingBottom on "Open=True, Divider=True": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting paddingBottom bound variable: undefined
+[WARN] Failed to set bound variable for paddingBottom on "Open=True, Divider=True" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1153"}, Got: undefined
+[LOG] DEBUG: Attempting to set bound variable for itemSpacing on "Open=True, Divider=True": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting itemSpacing bound variable: undefined
+[WARN] Failed to set bound variable for itemSpacing on "Open=True, Divider=True" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:3871:15980"}, Got: undefined
+[LOG] DEBUG: Node "Open=True, Divider=True" (COMPONENT) has bound variables for: paddingLeft, paddingRight, paddingTop, paddingBottom, itemSpacing
+[WARN] Property minWidth has direct value null which may prevent bound variable from being set
+[WARN] Failed to set bound variable for minWidth on "Open=True, Divider=True" - bound variable not persisted. Property value: null, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:390:1558"}, Got: undefined
+[WARN] Property maxWidth has direct value null which may prevent bound variable from being set
+[WARN] Failed to set bound variable for maxWidth on "Open=True, Divider=True" - bound variable not persisted. Property value: null, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:390:1559"}, Got: undefined
+[LOG] First pass: Creating 0 COMPONENT node(s) (without children)...
+[LOG] DEBUG: Attempting to set bound variable for itemSpacing on "Header": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting itemSpacing bound variable: undefined
+[WARN] Failed to set bound variable for itemSpacing on "Header" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1153"}, Got: undefined
+[LOG] DEBUG: Node "Header" (FRAME) has bound variables for: itemSpacing
+[LOG] First pass: Creating 0 COMPONENT node(s) (without children)...
+[LOG] ✓ Restored bound variable for fill[0].color on "Title" (TEXT): variable accordion/color/label (ID: Variable...)
+[LOG] ✓ Set fills with boundVariables on "Title" (TEXT)
+[WARN] Property opacity has direct value 1 which may prevent bound variable from being set
+[WARN] Failed to set bound variable for opacity on "Title" - bound variable not persisted. Property value: 1, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:7464:99"}, Got: undefined
+[LOG] ✓ Created remote instance "chevron-up" from component "Style=outline" on REMOTES page
+[LOG] Skipping variant properties for remote instance "chevron-up" - main component is not a COMPONENT_SET or variant (expected for remote components)
+[LOG] Stored instance table mapping: instance "chevron-down" (ID: 7464:138...) -> instance table index 1
+[WARN] Property width has direct value 24 which may prevent bound variable from being set
+[WARN] Failed to set bound variable for width on "chevron-up" - bound variable not persisted. Property value: 24, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:1057:5036"}, Got: undefined
+[WARN] Property height has direct value 24 which may prevent bound variable from being set
+[WARN] Failed to set bound variable for height on "chevron-up" - bound variable not persisted. Property value: 24, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:1057:5036"}, Got: undefined
+[LOG] Looking for component ".Slot" on page "Slot" at page root (GUID: 69a17294...)
+[LOG] Available components on page "Slot":
+COMPONENT: ".Slot"
+[WARN] Found component ".Slot" by name but no metadata found. Using name match as fallback.
+[LOG] Created normal instance ".Slot" from component ".Slot" on page "Slot"
+[LOG] Stored instance table mapping: instance ".Slot" (ID: 7464:140...) -> instance table index 2
+[LOG] Created component variant: "Open=True, Divider=True"
+[LOG] Reusing existing COMPONENT "Open=True, Divider=False" (ID: 1028:412...)
+[LOG] Stored COMPONENT "Open=True, Divider=False" in nodeIdMapping (ID: 1028:412...)
+[LOG] DEBUG: Attempting to set bound variable for paddingLeft on "Open=True, Divider=False": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting paddingLeft bound variable: undefined
+[WARN] Failed to set bound variable for paddingLeft on "Open=True, Divider=False" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1153"}, Got: undefined
+[LOG] DEBUG: Attempting to set bound variable for paddingRight on "Open=True, Divider=False": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting paddingRight bound variable: undefined
+[WARN] Failed to set bound variable for paddingRight on "Open=True, Divider=False" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1153"}, Got: undefined
+[LOG] DEBUG: Attempting to set bound variable for paddingTop on "Open=True, Divider=False": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting paddingTop bound variable: undefined
+[WARN] Failed to set bound variable for paddingTop on "Open=True, Divider=False" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1153"}, Got: undefined
+[LOG] DEBUG: Attempting to set bound variable for paddingBottom on "Open=True, Divider=False": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting paddingBottom bound variable: undefined
+[WARN] Failed to set bound variable for paddingBottom on "Open=True, Divider=False" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1153"}, Got: undefined
+[LOG] DEBUG: Attempting to set bound variable for itemSpacing on "Open=True, Divider=False": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting itemSpacing bound variable: undefined
+[WARN] Failed to set bound variable for itemSpacing on "Open=True, Divider=False" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:3871:15980"}, Got: undefined
+[LOG] DEBUG: Node "Open=True, Divider=False" (COMPONENT) has bound variables for: paddingLeft, paddingRight, paddingTop, paddingBottom, itemSpacing
+[WARN] Property minWidth has direct value null which may prevent bound variable from being set
+[WARN] Failed to set bound variable for minWidth on "Open=True, Divider=False" - bound variable not persisted. Property value: null, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:390:1558"}, Got: undefined
+[WARN] Property maxWidth has direct value null which may prevent bound variable from being set
+[WARN] Failed to set bound variable for maxWidth on "Open=True, Divider=False" - bound variable not persisted. Property value: null, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:390:1559"}, Got: undefined
+[LOG] First pass: Creating 0 COMPONENT node(s) (without children)...
+[LOG] DEBUG: Attempting to set bound variable for itemSpacing on "Header": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting itemSpacing bound variable: undefined
+[WARN] Failed to set bound variable for itemSpacing on "Header" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1154"}, Got: undefined
+[LOG] DEBUG: Node "Header" (FRAME) has bound variables for: itemSpacing
+[LOG] First pass: Creating 0 COMPONENT node(s) (without children)...
+[LOG] ✓ Restored bound variable for fill[0].color on "Title" (TEXT): variable accordion/color/label (ID: Variable...)
+[LOG] ✓ Set fills with boundVariables on "Title" (TEXT)
+[WARN] Property opacity has direct value 1 which may prevent bound variable from being set
+[WARN] Failed to set bound variable for opacity on "Title" - bound variable not persisted. Property value: 1, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:7464:99"}, Got: undefined
+[LOG] ✓ Created remote instance "chevron-up" from component "Style=outline" on REMOTES page
+[LOG] Skipping variant properties for remote instance "chevron-up" - main component is not a COMPONENT_SET or variant (expected for remote components)
+[LOG] Stored instance table mapping: instance "chevron-down" (ID: 7464:144...) -> instance table index 1
+[WARN] Property width has direct value 24 which may prevent bound variable from being set
+[WARN] Failed to set bound variable for width on "chevron-up" - bound variable not persisted. Property value: 24, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:1057:5036"}, Got: undefined
+[WARN] Property height has direct value 24 which may prevent bound variable from being set
+[WARN] Failed to set bound variable for height on "chevron-up" - bound variable not persisted. Property value: 24, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:1057:5036"}, Got: undefined
+[LOG] Looking for component ".Slot" on page "Slot" at page root (GUID: 69a17294...)
+[LOG] Available components on page "Slot":
+COMPONENT: ".Slot"
+[WARN] Found component ".Slot" by name but no metadata found. Using name match as fallback.
+[LOG] Created normal instance ".Slot" from component ".Slot" on page "Slot"
+[LOG] Stored instance table mapping: instance ".Slot" (ID: 7464:146...) -> instance table index 2
+[LOG] Created component variant: "Open=True, Divider=False"
+[LOG] ✓ Successfully created COMPONENT_SET "Accordion-row" with 4 variant(s)
+[LOG] First pass: Creating 4 COMPONENT node(s) (without children)...
+[LOG] Collected COMPONENT "Open=False, Divider=True" (ID: 166:254...) for first pass
+[LOG] Collected COMPONENT "Open=False, Divider=False" (ID: 1028:411...) for first pass
+[LOG] Collected COMPONENT "Open=True, Divider=True" (ID: 552:1054...) for first pass
+[LOG] Collected COMPONENT "Open=True, Divider=False" (ID: 1028:412...) for first pass
+[LOG] Reusing existing COMPONENT "Open=False, Divider=True" (ID: 166:254...)
+[LOG] Stored COMPONENT "Open=False, Divider=True" in nodeIdMapping (ID: 166:254...)
+[LOG] DEBUG: Attempting to set bound variable for paddingLeft on "Open=False, Divider=True": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting paddingLeft bound variable: undefined
+[WARN] Failed to set bound variable for paddingLeft on "Open=False, Divider=True" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1153"}, Got: undefined
+[LOG] DEBUG: Attempting to set bound variable for paddingRight on "Open=False, Divider=True": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting paddingRight bound variable: undefined
+[WARN] Failed to set bound variable for paddingRight on "Open=False, Divider=True" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1153"}, Got: undefined
+[LOG] DEBUG: Attempting to set bound variable for itemSpacing on "Open=False, Divider=True": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting itemSpacing bound variable: undefined
+[WARN] Failed to set bound variable for itemSpacing on "Open=False, Divider=True" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1154"}, Got: undefined
+[LOG] DEBUG: Node "Open=False, Divider=True" (COMPONENT) has bound variables for: paddingLeft, paddingRight, itemSpacing
+[WARN] Property height has direct value 100 which may prevent bound variable from being set
+[WARN] Failed to set bound variable for height on "Open=False, Divider=True" - bound variable not persisted. Property value: 100, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:552:10534"}, Got: undefined
+[WARN] Property minWidth has direct value null which may prevent bound variable from being set
+[WARN] Failed to set bound variable for minWidth on "Open=False, Divider=True" - bound variable not persisted. Property value: null, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:390:1558"}, Got: undefined
+[WARN] Property maxWidth has direct value null which may prevent bound variable from being set
+[WARN] Failed to set bound variable for maxWidth on "Open=False, Divider=True" - bound variable not persisted. Property value: null, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:390:1559"}, Got: undefined
+[LOG] Reusing existing COMPONENT "Open=False, Divider=False" (ID: 1028:411...)
+[LOG] Stored COMPONENT "Open=False, Divider=False" in nodeIdMapping (ID: 1028:411...)
+[LOG] DEBUG: Attempting to set bound variable for paddingLeft on "Open=False, Divider=False": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting paddingLeft bound variable: undefined
+[WARN] Failed to set bound variable for paddingLeft on "Open=False, Divider=False" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1153"}, Got: undefined
+[LOG] DEBUG: Attempting to set bound variable for paddingRight on "Open=False, Divider=False": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting paddingRight bound variable: undefined
+[WARN] Failed to set bound variable for paddingRight on "Open=False, Divider=False" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1153"}, Got: undefined
+[LOG] DEBUG: Attempting to set bound variable for itemSpacing on "Open=False, Divider=False": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting itemSpacing bound variable: undefined
+[WARN] Failed to set bound variable for itemSpacing on "Open=False, Divider=False" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1154"}, Got: undefined
+[LOG] DEBUG: Node "Open=False, Divider=False" (COMPONENT) has bound variables for: paddingLeft, paddingRight, itemSpacing
+[WARN] Property height has direct value 100 which may prevent bound variable from being set
+[WARN] Failed to set bound variable for height on "Open=False, Divider=False" - bound variable not persisted. Property value: 100, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:552:10534"}, Got: undefined
+[WARN] Property minWidth has direct value null which may prevent bound variable from being set
+[WARN] Failed to set bound variable for minWidth on "Open=False, Divider=False" - bound variable not persisted. Property value: null, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:390:1558"}, Got: undefined
+[WARN] Property maxWidth has direct value null which may prevent bound variable from being set
+[WARN] Failed to set bound variable for maxWidth on "Open=False, Divider=False" - bound variable not persisted. Property value: null, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:390:1559"}, Got: undefined
+[LOG] Reusing existing COMPONENT "Open=True, Divider=True" (ID: 552:1054...)
+[LOG] Stored COMPONENT "Open=True, Divider=True" in nodeIdMapping (ID: 552:1054...)
+[LOG] DEBUG: Attempting to set bound variable for paddingLeft on "Open=True, Divider=True": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting paddingLeft bound variable: undefined
+[WARN] Failed to set bound variable for paddingLeft on "Open=True, Divider=True" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1153"}, Got: undefined
+[LOG] DEBUG: Attempting to set bound variable for paddingRight on "Open=True, Divider=True": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting paddingRight bound variable: undefined
+[WARN] Failed to set bound variable for paddingRight on "Open=True, Divider=True" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1153"}, Got: undefined
+[LOG] DEBUG: Attempting to set bound variable for paddingTop on "Open=True, Divider=True": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting paddingTop bound variable: undefined
+[WARN] Failed to set bound variable for paddingTop on "Open=True, Divider=True" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1153"}, Got: undefined
+[LOG] DEBUG: Attempting to set bound variable for paddingBottom on "Open=True, Divider=True": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting paddingBottom bound variable: undefined
+[WARN] Failed to set bound variable for paddingBottom on "Open=True, Divider=True" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1153"}, Got: undefined
+[LOG] DEBUG: Attempting to set bound variable for itemSpacing on "Open=True, Divider=True": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting itemSpacing bound variable: undefined
+[WARN] Failed to set bound variable for itemSpacing on "Open=True, Divider=True" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:3871:15980"}, Got: undefined
+[LOG] DEBUG: Node "Open=True, Divider=True" (COMPONENT) has bound variables for: paddingLeft, paddingRight, paddingTop, paddingBottom, itemSpacing
+[WARN] Property minWidth has direct value null which may prevent bound variable from being set
+[WARN] Failed to set bound variable for minWidth on "Open=True, Divider=True" - bound variable not persisted. Property value: null, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:390:1558"}, Got: undefined
+[WARN] Property maxWidth has direct value null which may prevent bound variable from being set
+[WARN] Failed to set bound variable for maxWidth on "Open=True, Divider=True" - bound variable not persisted. Property value: null, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:390:1559"}, Got: undefined
+[LOG] Reusing existing COMPONENT "Open=True, Divider=False" (ID: 1028:412...)
+[LOG] Stored COMPONENT "Open=True, Divider=False" in nodeIdMapping (ID: 1028:412...)
+[LOG] DEBUG: Attempting to set bound variable for paddingLeft on "Open=True, Divider=False": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting paddingLeft bound variable: undefined
+[WARN] Failed to set bound variable for paddingLeft on "Open=True, Divider=False" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1153"}, Got: undefined
+[LOG] DEBUG: Attempting to set bound variable for paddingRight on "Open=True, Divider=False": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting paddingRight bound variable: undefined
+[WARN] Failed to set bound variable for paddingRight on "Open=True, Divider=False" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1153"}, Got: undefined
+[LOG] DEBUG: Attempting to set bound variable for paddingTop on "Open=True, Divider=False": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting paddingTop bound variable: undefined
+[WARN] Failed to set bound variable for paddingTop on "Open=True, Divider=False" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1153"}, Got: undefined
+[LOG] DEBUG: Attempting to set bound variable for paddingBottom on "Open=True, Divider=False": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting paddingBottom bound variable: undefined
+[WARN] Failed to set bound variable for paddingBottom on "Open=True, Divider=False" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1153"}, Got: undefined
+[LOG] DEBUG: Attempting to set bound variable for itemSpacing on "Open=True, Divider=False": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting itemSpacing bound variable: undefined
+[WARN] Failed to set bound variable for itemSpacing on "Open=True, Divider=False" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:3871:15980"}, Got: undefined
+[LOG] DEBUG: Node "Open=True, Divider=False" (COMPONENT) has bound variables for: paddingLeft, paddingRight, paddingTop, paddingBottom, itemSpacing
+[WARN] Property minWidth has direct value null which may prevent bound variable from being set
+[WARN] Failed to set bound variable for minWidth on "Open=True, Divider=False" - bound variable not persisted. Property value: null, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:390:1558"}, Got: undefined
+[WARN] Property maxWidth has direct value null which may prevent bound variable from being set
+[WARN] Failed to set bound variable for maxWidth on "Open=True, Divider=False" - bound variable not persisted. Property value: null, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:390:1559"}, Got: undefined
+[LOG] ✓ Restored bound variable for fill[0].color on "Frame 1" (FRAME): variable layer/layer-1/property/surface (ID: Variable...)
+[LOG] ✓ Set fills with boundVariables on "Frame 1" (FRAME)
+[LOG] First pass: Creating 0 COMPONENT node(s) (without children)...
+[LOG] ✓ Created internal instance "Accordion-row" from component "Open=False, Divider=True"
+[LOG] DEBUG: Component "Open=False, Divider=True" is inside component set "Accordion-row" with 2 property definitions
+[LOG] Stored instance table mapping: instance "Accordion-row" (ID: 7464:150...) -> instance table index 3
+[LOG] DEBUG: Attempting to set bound variable for paddingLeft on "Accordion-row": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting paddingLeft bound variable: undefined
+[WARN] Failed to set bound variable for paddingLeft on "Accordion-row" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1153"}, Got: undefined
+[LOG] DEBUG: Attempting to set bound variable for paddingRight on "Accordion-row": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting paddingRight bound variable: undefined
+[WARN] Failed to set bound variable for paddingRight on "Accordion-row" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1153"}, Got: undefined
+[LOG] DEBUG: Attempting to set bound variable for itemSpacing on "Accordion-row": current value=0, current boundVar=undefined
+[LOG] DEBUG: Immediately after setting itemSpacing bound variable: undefined
+[WARN] Failed to set bound variable for itemSpacing on "Accordion-row" - verification failed. Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:389:1154"}, Got: undefined
+[LOG] DEBUG: Node "Accordion-row" (INSTANCE) has bound variables for: paddingLeft, paddingRight, itemSpacing
+[WARN] Property height has direct value 100 which may prevent bound variable from being set
+[WARN] Failed to set bound variable for height on "Accordion-row" - bound variable not persisted. Property value: 100, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:552:10534"}, Got: undefined
+[WARN] Property minWidth has direct value null which may prevent bound variable from being set
+[WARN] Failed to set bound variable for minWidth on "Accordion-row" - bound variable not persisted. Property value: null, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:390:1558"}, Got: undefined
+[WARN] Property maxWidth has direct value null which may prevent bound variable from being set
+[WARN] Failed to set bound variable for maxWidth on "Accordion-row" - bound variable not persisted. Property value: null, Expected: {"type":"VARIABLE_ALIAS","id":"VariableID:390:1559"}, Got: undefined
+[LOG] Page structure recreated successfully
+[LOG] Third pass: Setting variant properties on instances...
+[LOG] Found 10 instance(s) to process for variant properties
+[LOG] Found instance table index 0 for instance "Page header" (ID: 7464:122...)
+[LOG] Instance table entry for "Page header" has no variant properties
+[LOG] No instance table index mapping found for instance "arrow-top-right-on-square" (ID: I7464:12...), using fallback matching
+[LOG] No matching entry found for instance "arrow-top-right-on-square" (main component: arrow-top-right-on-square, ID: 7464:55...)
+[LOG] Found instance table index 1 for instance "chevron-down" (ID: 7464:131...)
+[LOG] Instance "chevron-down" matched to entry with variant properties: {"Style":"outline"}
+[LOG] Found instance table index 1 for instance "chevron-down" (ID: 7464:134...)
+[LOG] Instance "chevron-down" matched to entry with variant properties: {"Style":"outline"}
+[LOG] Found instance table index 1 for instance "chevron-up" (ID: 7464:138...)
+[LOG] Instance "chevron-up" matched to entry with variant properties: {"Style":"outline"}
+[LOG] Found instance table index 2 for instance ".Slot" (ID: 7464:140...)
+[LOG] Instance table entry for ".Slot" has no variant properties
+[LOG] Found instance table index 1 for instance "chevron-up" (ID: 7464:144...)
+[LOG] Instance "chevron-up" matched to entry with variant properties: {"Style":"outline"}
+[LOG] Found instance table index 2 for instance ".Slot" (ID: 7464:146...)
+[LOG] Instance table entry for ".Slot" has no variant properties
+[LOG] Found instance table index 3 for instance "Accordion-row" (ID: 7464:150...)
+[LOG] Instance "Accordion-row" matched to entry with variant properties: {"Open":"False","Divider":"True"}
+[LOG] ✓ Set variant properties on instance "Accordion-row": {"Open":"False","Divider":"True"}
+[LOG] No instance table index mapping found for instance "chevron-down" (ID: I7464:15...), using fallback matching
+[LOG] No matching entry found for instance "chevron-down" (main component: chevron-down, ID: 7464:114...)
+[LOG] Variant properties set: 1 processed, 9 skipped, 0 errors
+[LOG] Stored page metadata (GUID: 45c0b913...)
+[LOG] Renamed page from "\_\_✅ Accordion" to "✅ Accordion_1"
+[LOG] === Import Complete ===
+[LOG] Successfully processed 3 collection(s), 99 variable(s), and created page "✅ Accordion_1"
+[LOG] === Import Summary ===
+[LOG] Imported: 3, Failed: 0, Deferred instances: 0
