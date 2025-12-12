@@ -432,8 +432,15 @@ export async function importPagesInOrder(
         if (result.data?.deferredInstances) {
           const deferred = result.data.deferredInstances;
           if (Array.isArray(deferred)) {
+            await debugConsole.log(
+              `  [DEBUG] Collected ${deferred.length} deferred instance(s) from ${page.fileName}`,
+            );
             allDeferredInstances.push(...deferred);
           }
+        } else {
+          await debugConsole.log(
+            `  [DEBUG] No deferred instances in response for ${page.fileName}`,
+          );
         }
         // Collect created entity IDs
         if (result.data?.createdEntities) {
@@ -482,8 +489,10 @@ export async function importPagesInOrder(
       `=== Resolving ${allDeferredInstances.length} Deferred Instance(s) ===`,
     );
     try {
-      const resolveResult =
-        await resolveDeferredNormalInstances(allDeferredInstances);
+      const resolveResult = await resolveDeferredNormalInstances(
+        allDeferredInstances,
+        data.constructionIcon || "",
+      );
       await debugConsole.log(
         `  Resolved: ${resolveResult.resolved}, Failed: ${resolveResult.failed}`,
       );
