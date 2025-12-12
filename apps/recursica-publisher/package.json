@@ -12,7 +12,8 @@
     "build:lib": "tsc -b && vite build --config vite.config.lib.ts",
     "zip": "npm run build && node scripts/zip.mjs",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "publish": "node scripts/publish.mjs"
   },
   "dependencies": {
     "crypto-js": "^4.2.0",

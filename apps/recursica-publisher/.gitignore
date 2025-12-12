@@ -24,5 +24,4 @@ dev-releases
 *.sln
 *.sw?
 
-.env
 export/
