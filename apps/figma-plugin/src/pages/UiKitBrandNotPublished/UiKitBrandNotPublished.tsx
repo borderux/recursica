@@ -19,24 +19,24 @@ export function UiKitBrandNotPublished() {
           color='layers/layer-0/elements/text/color'
           opacity={0.84}
         >
-          Ensure you did the following steps: <br />-{' '}
+          Ensure you did the following steps: <br />
           <a
             href='https://help.figma.com/hc/en-us/articles/360025508373-Publish-a-library'
             target='_blank'
             rel='noopener noreferrer'
           >
-            Publish the #2 Brand file as a library
+            1. Publish the #2 Brand file as a library
           </a>{' '}
-          <br />-{' '}
+          <br />
           <a
             href='https://help.figma.com/hc/en-us/articles/1500008731201-Add-or-remove-a-library-from-a-design-file'
             target='_blank'
             rel='noopener noreferrer'
           >
-            Add the Brand library to the this file
+            2. Add the Brand library to the this file
           </a>{' '}
           <br />
-          - Run the plugin again in the Brand file
+          3. Run the plugin again in the Brand file
           <br />
           <br />
           NOTE: You may need to close and re-open the file
