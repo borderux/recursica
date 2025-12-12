@@ -3,6 +3,7 @@ import type { ResponseMessage } from "../types/messages";
 export interface StoreAuthDataData {
   accessToken: string;
   selectedRepo?: string;
+  hasWriteAccess?: boolean;
 }
 
 // Empty - store auth data doesn't return data on success
@@ -31,6 +32,9 @@ export async function storeAuthData(
     await figma.clientStorage.setAsync("accessToken", accessToken);
     if (selectedRepo) {
       await figma.clientStorage.setAsync("selectedRepo", selectedRepo);
+    }
+    if (data.hasWriteAccess !== undefined) {
+      await figma.clientStorage.setAsync("hasWriteAccess", data.hasWriteAccess);
     }
 
     const responseData: StoreAuthDataResponseData = {};

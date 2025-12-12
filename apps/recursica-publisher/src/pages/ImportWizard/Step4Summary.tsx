@@ -1,11 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useImportWizard } from "../../context/ImportWizardContext";
-import { callPlugin } from "../../utils/callPlugin";
+import {
+  useImportData,
+  type ImportedFile,
+} from "../../context/ImportDataContext";
 
 export default function Step4Summary() {
   const navigate = useNavigate();
-  const { wizardState, setWizardState, setImportPromise } = useImportWizard();
+  const { wizardState, setWizardState } = useImportWizard();
+  const { setImportData } = useImportData();
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,23 +23,48 @@ export default function Step4Summary() {
     setError(null);
 
     try {
-      // Prepare import data
-      const importData = {
-        mainComponent: wizardState.componentData.mainComponent,
-        dependencies: wizardState.dependencies
-          .filter((dep) => !dep.useExisting)
-          .map((dep) => {
-            const componentData = wizardState.componentData.dependencies.find(
+      // Convert wizard component data to ImportedFile format
+      const timestamp = Date.now();
+      const mainFile: ImportedFile = {
+        id: `${wizardState.componentData.mainComponent.guid}-${timestamp}-0`,
+        name: `${wizardState.componentData.mainComponent.name}.json`,
+        size: JSON.stringify(wizardState.componentData.mainComponent.jsonData)
+          .length,
+        data: wizardState.componentData.mainComponent.jsonData,
+        status: "success",
+      };
+
+      const additionalFiles: ImportedFile[] =
+        wizardState.componentData.dependencies
+          .filter((dep) => {
+            // Only include dependencies that should be imported (not using existing)
+            const depSelection = wizardState.dependencies.find(
               (d) => d.guid === dep.guid,
             );
-            return {
-              guid: dep.guid,
-              name: dep.name,
-              version: dep.version,
-              jsonData: componentData?.jsonData || {},
-              useExisting: dep.useExisting,
-            };
-          }),
+            return depSelection && !depSelection.useExisting;
+          })
+          .map((dep, index) => ({
+            id: `${dep.guid}-${timestamp}-${index + 1}`,
+            name: `${dep.name}.json`,
+            size: JSON.stringify(dep.jsonData).length,
+            data: dep.jsonData,
+            status: "success" as const,
+          }));
+
+      // Determine source info from wizard state
+      const ref = wizardState.selectedComponent?.ref || "main";
+      const source = {
+        type: "repo" as const,
+        branch: ref,
+        owner: "borderux",
+        repo: "recursica-figma",
+      };
+
+      // Set import data with wizard selections and source info
+      setImportData({
+        mainFile,
+        additionalFiles,
+        source,
         wizardSelections: {
           dependencies: wizardState.dependencies.map((dep) => ({
             guid: dep.guid,
@@ -51,18 +80,10 @@ export default function Step4Summary() {
           theme: { existing: 0, new: 0 },
           layers: { existing: 0, new: 0 },
         },
-      };
+        importStatus: "pending", // Mark as pending - will be set to "in_progress" when import starts
+      });
 
-      // Start import service (don't await - let it run in background)
-      const { promise } = callPlugin(
-        "importSingleComponentWithWizard",
-        importData,
-      );
-
-      // Store the promise in context so Step5Importing can monitor it
-      setImportPromise(promise);
-
-      // Navigate to importing page immediately
+      // Navigate to wizard step 5 (importing)
       setWizardState((prev) => ({
         ...prev,
         currentStep: 5,
@@ -149,7 +170,12 @@ export default function Step4Summary() {
                 Component Name
               </td>
               <td
-                style={{ padding: "12px", borderBottom: "1px solid #e0e0e0" }}
+                style={{
+                  padding: "12px",
+                  borderBottom: "1px solid #e0e0e0",
+                  fontFamily:
+                    "system-ui, -apple-system, 'Segoe UI', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif",
+                }}
               >
                 {wizardState.selectedComponent?.name}
               </td>

@@ -23,6 +23,7 @@ interface IndexJson {
 interface GitHubFileContent {
   sha: string;
   content?: string;
+  encoding?: string;
   size: number;
   url: string;
   html_url: string;
@@ -78,15 +79,32 @@ async function fetchIndexJson(ref: string): Promise<IndexJson> {
 
   const fileData = (await response.json()) as GitHubFileContent;
 
-  // Download and parse the file content
-  const indexContent = await fetch(fileData.download_url).then((res) => {
-    if (!res.ok) {
-      throw new Error(
-        `Failed to download index.json: ${res.status} ${res.statusText}`,
-      );
+  // Use base64 content from API response to avoid CDN caching issues
+  // GitHub API includes content for files under 1MB (index.json is small)
+  let indexContent: string;
+  if (fileData.content && fileData.encoding === "base64") {
+    // Decode base64 content directly from API response (avoids CDN cache)
+    // Properly handle UTF-8 encoding for Unicode characters (emojis, etc.)
+    const binaryString = atob(fileData.content.replace(/\s/g, ""));
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
     }
-    return res.text();
-  });
+    indexContent = new TextDecoder("utf-8").decode(bytes);
+  } else {
+    // Fallback: use download_url with cache-busting using SHA
+    const cacheBustUrl = `${fileData.download_url}?sha=${fileData.sha}`;
+    indexContent = await fetch(cacheBustUrl, {
+      cache: "no-store", // Explicitly disable caching
+    }).then((res) => {
+      if (!res.ok) {
+        throw new Error(
+          `Failed to download index.json: ${res.status} ${res.statusText}`,
+        );
+      }
+      return res.text();
+    });
+  }
 
   return JSON.parse(indexContent) as IndexJson;
 }

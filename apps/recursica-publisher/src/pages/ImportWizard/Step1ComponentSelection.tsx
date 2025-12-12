@@ -67,15 +67,32 @@ export default function Step1ComponentSelection() {
 
         const fileData = await response.json();
 
-        // Download and parse the file content
-        const indexContent = await fetch(fileData.download_url).then((res) => {
-          if (!res.ok) {
-            throw new Error(
-              `Failed to download index.json: ${res.status} ${res.statusText}`,
-            );
+        // Use base64 content from API response to avoid CDN caching issues
+        // GitHub API includes content for files under 1MB (index.json is small)
+        let indexContent: string;
+        if (fileData.content && fileData.encoding === "base64") {
+          // Decode base64 content directly from API response (avoids CDN cache)
+          // Properly handle UTF-8 encoding for Unicode characters (emojis, etc.)
+          const binaryString = atob(fileData.content.replace(/\s/g, ""));
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
           }
-          return res.text();
-        });
+          indexContent = new TextDecoder("utf-8").decode(bytes);
+        } else {
+          // Fallback: use download_url with cache-busting using SHA
+          const cacheBustUrl = `${fileData.download_url}?sha=${fileData.sha}`;
+          indexContent = await fetch(cacheBustUrl, {
+            cache: "no-store", // Explicitly disable caching
+          }).then((res) => {
+            if (!res.ok) {
+              throw new Error(
+                `Failed to download index.json: ${res.status} ${res.statusText}`,
+              );
+            }
+            return res.text();
+          });
+        }
 
         const indexJson: IndexJson = JSON.parse(indexContent);
 
@@ -117,6 +134,31 @@ export default function Step1ComponentSelection() {
 
     loadComponents();
   }, [searchParams]);
+
+  // Auto-select component if guid is provided in query params (from ImportMain)
+  useEffect(() => {
+    const componentGuid = searchParams.get("guid");
+    if (componentGuid && components.length > 0 && !loading) {
+      const preSelectedComponent = components.find(
+        (c) => c.guid === componentGuid,
+      );
+      if (preSelectedComponent) {
+        // Auto-select and navigate to step 2
+        const ref = searchParams.get("ref") || "main";
+        setWizardState((prev) => ({
+          ...prev,
+          selectedComponent: {
+            guid: preSelectedComponent.guid,
+            name: preSelectedComponent.name,
+            version: preSelectedComponent.version,
+            ref,
+          },
+          currentStep: 2,
+        }));
+        navigate("/import-wizard/step2");
+      }
+    }
+  }, [components, searchParams, loading, setWizardState, navigate]);
 
   const handleComponentSelect = (component: ComponentInfo) => {
     const ref = searchParams.get("ref") || "main";
@@ -290,6 +332,8 @@ export default function Step1ComponentSelection() {
                   fontSize: "16px",
                   fontWeight: "bold",
                   flex: 1,
+                  fontFamily:
+                    "system-ui, -apple-system, 'Segoe UI', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif",
                 }}
               >
                 {component.name}

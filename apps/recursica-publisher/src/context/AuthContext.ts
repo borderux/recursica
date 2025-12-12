@@ -14,6 +14,7 @@ export interface IAuthContext {
   user: AuthUser | null;
   accessToken: string | null;
   selectedRepo: GitHubRepo | null;
+  hasWriteAccess: boolean | null;
   saveAccessToken: (accessToken: string) => void;
   saveSelectedRepo: (repo: GitHubRepo) => void;
   // Authentication actions

@@ -235,6 +235,7 @@ export async function extractNodeData(
     handledKeys.add("paddingTop");
     handledKeys.add("paddingBottom");
     handledKeys.add("itemSpacing");
+    handledKeys.add("counterAxisSpacing");
     handledKeys.add("cornerRadius");
     handledKeys.add("clipsContent");
     handledKeys.add("layoutWrap");
@@ -473,6 +474,154 @@ export async function exportPage(
     await debugConsole.log(`  - Unique collections: ${totalCollections}`);
     await debugConsole.log(`  - Unique instances: ${totalInstances}`);
 
+    // Check for remote instances - not supported during publishing
+    const instanceTableEntries = instanceTable.getSerializedTable();
+
+    // Create a map of instance index to entry for remote instances
+    const remoteInstanceMap = new Map<number, InstanceTableEntry>();
+    for (const [indexStr, entry] of Object.entries(instanceTableEntries)) {
+      if (entry.instanceType === "remote") {
+        const index = parseInt(indexStr, 10);
+        remoteInstanceMap.set(index, entry);
+      }
+    }
+
+    if (remoteInstanceMap.size > 0) {
+      await debugConsole.error(
+        `Found ${remoteInstanceMap.size} remote instance(s) - remote instances are not supported during publishing`,
+      );
+
+      // Helper function to find all locations where a remote instance is used in the page
+      // Note: extractedPageData is the page node itself, so we need to search its children
+      const findInstanceLocations = (
+        node: any,
+        targetInstanceIndex: number,
+        currentPath: string[] = [],
+        isPageNode: boolean = false,
+      ): Array<{ path: string[]; nodeName: string }> => {
+        const locations: Array<{ path: string[]; nodeName: string }> = [];
+
+        if (!node || typeof node !== "object") {
+          return locations;
+        }
+
+        // Skip the page node itself - start from its children
+        // The page node type should be "PAGE" or we can check if it's the root
+        if (isPageNode || node.type === "PAGE") {
+          const children = node.children || node.child;
+          if (Array.isArray(children)) {
+            for (const child of children) {
+              if (child && typeof child === "object") {
+                locations.push(
+                  ...findInstanceLocations(
+                    child,
+                    targetInstanceIndex,
+                    [],
+                    false,
+                  ),
+                );
+              }
+            }
+          }
+          return locations;
+        }
+
+        // Get the node name for this level
+        const nodeName = node.name || "";
+
+        // Check if this node is an instance reference to our target
+        if (
+          typeof node._instanceRef === "number" &&
+          node._instanceRef === targetInstanceIndex
+        ) {
+          // Found the instance - currentPath is the path to the parent, nodeName is the instance
+          const instanceName = nodeName || "(unnamed)";
+          const fullPath =
+            currentPath.length > 0
+              ? [...currentPath, instanceName]
+              : [instanceName];
+          locations.push({
+            path: fullPath,
+            nodeName: instanceName,
+          });
+          // Don't recurse into instance children - the instance is the target, not its structure
+          return locations;
+        }
+
+        // Build path for children: include this node's name if it exists
+        const childPath = nodeName ? [...currentPath, nodeName] : currentPath;
+
+        // Recursively search children (only if this isn't an instance)
+        const children = node.children || node.child;
+        if (Array.isArray(children)) {
+          for (const child of children) {
+            if (child && typeof child === "object") {
+              locations.push(
+                ...findInstanceLocations(
+                  child,
+                  targetInstanceIndex,
+                  childPath,
+                  false,
+                ),
+              );
+            }
+          }
+        }
+
+        return locations;
+      };
+
+      // Build detailed error message with component names and instance locations
+      const remoteInstanceDetails: string[] = [];
+      let detailIndex = 1;
+      for (const [instanceIndex, entry] of remoteInstanceMap.entries()) {
+        const componentName = entry.componentName || "(unnamed)";
+        const componentSetName = entry.componentSetName;
+
+        // Find where this instance is used in the page
+        // Start from the page node (extractedPageData is the page itself)
+        const locations = findInstanceLocations(
+          extractedPageData,
+          instanceIndex,
+          [],
+          true,
+        );
+
+        let locationInfo = "";
+        if (locations.length > 0) {
+          const locationStrings = locations.map((loc) => {
+            const pathStr =
+              loc.path.length > 0 ? loc.path.join(" → ") : "page root";
+            return `"${loc.nodeName}" at ${pathStr}`;
+          });
+          locationInfo = `\n   Location(s): ${locationStrings.join(", ")}`;
+        } else {
+          locationInfo =
+            "\n   Location: (unable to determine - instance may be deeply nested)";
+        }
+
+        // Include component set name if it's a variant
+        const componentInfo = componentSetName
+          ? `Component: "${componentName}" (from component set "${componentSetName}")`
+          : `Component: "${componentName}"`;
+
+        // Include library info if available
+        const libraryInfo = entry.remoteLibraryName
+          ? `\n   Library: ${entry.remoteLibraryName}`
+          : "";
+
+        remoteInstanceDetails.push(
+          `${detailIndex}. ${componentInfo}${libraryInfo}${locationInfo}`,
+        );
+        detailIndex++;
+      }
+
+      const errorMessage = `Cannot publish: Remote instances are not supported. Please remove all remote instances before publishing.\n\nFound ${remoteInstanceMap.size} remote instance(s):\n${remoteInstanceDetails.join("\n\n")}\n\nTo fix this:\n1. Locate each remote instance component listed above using the path(s) shown\n2. Replace it with a local component or remove it\n3. Try publishing again`;
+
+      await debugConsole.error(errorMessage);
+      throw new Error(errorMessage);
+    }
+
     if (totalCollections > 0) {
       await debugConsole.log("Collections found:");
       const collections = collectionTable.getTable();
@@ -489,7 +638,6 @@ export async function exportPage(
     // Handle referenced normal component pages
     await debugConsole.log("Checking for referenced component pages...");
     const additionalPages: ExportPageResponseData[] = [];
-    const instanceTableEntries = instanceTable.getSerializedTable();
     const normalInstances = Object.values(instanceTableEntries).filter(
       (entry): entry is InstanceTableEntry => entry.instanceType === "normal",
     );

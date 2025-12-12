@@ -17,6 +17,9 @@ import { quickCopy } from "./quickCopy";
 import { storeAuthData } from "./storeAuthData";
 import { loadAuthData } from "./loadAuthData";
 import { clearAuthData } from "./clearAuthData";
+import { storeImportData } from "./storeImportData";
+import { loadImportData } from "./loadImportData";
+import { clearImportData } from "./clearImportData";
 import { storeSelectedRepo } from "./storeSelectedRepo";
 import { getComponentMetadata } from "./getComponentMetadata";
 import { getAllComponents } from "./getAllComponents";
@@ -54,6 +57,9 @@ export const services = {
   storeAuthData,
   loadAuthData,
   clearAuthData,
+  storeImportData,
+  loadImportData,
+  clearImportData,
   storeSelectedRepo,
   getComponentMetadata,
   getAllComponents,
@@ -87,6 +93,9 @@ export {
   storeAuthData,
   loadAuthData,
   clearAuthData,
+  storeImportData,
+  loadImportData,
+  clearImportData,
   storeSelectedRepo,
   getComponentMetadata,
   getAllComponents,

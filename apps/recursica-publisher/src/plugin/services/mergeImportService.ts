@@ -72,7 +72,10 @@ export async function getLocalVariableCollections(
         };
       }),
     };
-    return retSuccess("getLocalVariableCollections", responseData);
+    return retSuccess(
+      "getLocalVariableCollections",
+      responseData as unknown as Record<string, unknown>,
+    );
   } catch (error) {
     return retError(
       "getLocalVariableCollections",
@@ -127,7 +130,10 @@ export async function getCollectionGuids(
     const responseData: GetCollectionGuidsResponseData = {
       collectionGuids,
     };
-    return retSuccess("getCollectionGuids", responseData);
+    return retSuccess(
+      "getCollectionGuids",
+      responseData as unknown as Record<string, unknown>,
+    );
   } catch (error) {
     return retError(
       "getCollectionGuids",
@@ -550,7 +556,10 @@ export async function mergeImportGroup(
       `=== Merge Complete ===\n  Merged: ${mergedCollections} collection(s)\n  Kept: ${keptCollections} collection(s)\n  Renamed: ${pagesRenamed} page(s)`,
     );
 
-    return retSuccess("mergeImportGroup", responseData);
+    return retSuccess(
+      "mergeImportGroup",
+      responseData as unknown as Record<string, unknown>,
+    );
   } catch (error) {
     await debugConsole.error(
       `Merge failed: ${error instanceof Error ? error.message : String(error)}`,

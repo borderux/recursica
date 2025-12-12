@@ -2,34 +2,32 @@
 import type { ResponseMessage } from "../types/messages";
 import type { NoData } from "./getCurrentUser";
 
-// Empty - clear auth data doesn't return data on success
-export type ClearAuthDataResponseData = Record<string, never>;
+// Empty - clear import data doesn't return data on success
+export type ClearImportDataResponseData = Record<string, never>;
 
 /**
- * Service for clearing authentication data
+ * Service for clearing import data
  */
-export async function clearAuthData(
+export async function clearImportData(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _data: NoData,
 ): Promise<ResponseMessage> {
   try {
-    await figma.clientStorage.deleteAsync("accessToken");
-    await figma.clientStorage.deleteAsync("selectedRepo");
-    await figma.clientStorage.deleteAsync("hasWriteAccess");
+    await figma.clientStorage.deleteAsync("importData");
 
-    const responseData: ClearAuthDataResponseData = {};
+    const responseData: ClearImportDataResponseData = {};
 
     return {
-      type: "clearAuthData",
+      type: "clearImportData",
       success: true,
       error: false,
-      message: "Auth data cleared successfully",
+      message: "Import data cleared successfully",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       data: responseData as any,
     };
   } catch (error) {
     return {
-      type: "clearAuthData",
+      type: "clearImportData",
       success: false,
       error: true,
       message:

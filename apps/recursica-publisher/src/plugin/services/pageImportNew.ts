@@ -70,13 +70,45 @@ export interface ImportPageResponseData {
  * Creates modes if they don't exist
  * Handles the default mode that Figma creates automatically
  */
+/**
+ * Maps old mode names to new mode names after renaming
+ * Used to handle cases where "Mode 1" was renamed to match exported mode names
+ */
+const modeNameMapping = new Map<string, string>();
+
 async function ensureCollectionModes(
   collection: VariableCollection,
   exportedModeNames: string[], // Array of mode names
 ): Promise<void> {
   // When a collection is created, Figma automatically adds a default mode (usually "Mode 1")
-  // Check if the default mode exists and if it's not in our exported modes, we can rename it
-  // or leave it as-is (it won't be used if not in exportedModeNames)
+  // If the default mode name is not in our exported modes, we should rename it to the first exported mode
+  // This prevents having an extra "Mode 1" mode that shouldn't exist
+
+  if (exportedModeNames.length === 0) {
+    return; // No modes to ensure
+  }
+
+  // Check if there's a default mode that doesn't match any exported mode
+  const defaultMode = collection.modes.find(
+    (m) => m.name === "Mode 1" || m.name === "Default",
+  );
+  if (defaultMode && !exportedModeNames.includes(defaultMode.name)) {
+    // Rename the default mode to the first exported mode name
+    const firstExportedMode = exportedModeNames[0];
+    try {
+      const oldName = defaultMode.name;
+      collection.renameMode(defaultMode.modeId, firstExportedMode);
+      // Track the rename mapping so we can map "Mode 1" -> firstExportedMode when looking up modes
+      modeNameMapping.set(`${collection.id}:${oldName}`, firstExportedMode);
+      await debugConsole.log(
+        `  Renamed default mode "${oldName}" to "${firstExportedMode}"`,
+      );
+    } catch (error) {
+      await debugConsole.warning(
+        `  Failed to rename default mode "${defaultMode.name}" to "${firstExportedMode}": ${error}`,
+      );
+    }
+  }
 
   // Ensure all exported mode names exist in the collection
   for (const modeName of exportedModeNames) {
@@ -88,9 +120,6 @@ async function ensureCollectionModes(
       collection.addMode(modeName);
     }
   }
-
-  // Note: We don't remove the default mode if it's not in exportedModeNames
-  // It will just remain unused, which is fine
 }
 
 /**
@@ -437,20 +466,43 @@ async function restoreVariableModeValues(
   collection: VariableCollection, // Collection to look up mode by name
   collectionTable?: CollectionTable, // Optional: for resolving variable aliases by collection
 ): Promise<void> {
+  await debugConsole.log(
+    `Restoring values for variable "${variable.name}" (type: ${variable.resolvedType}):`,
+  );
+  await debugConsole.log(
+    `  valuesByMode keys: ${Object.keys(valuesByMode).join(", ")}`,
+  );
   for (const [modeName, value] of Object.entries(valuesByMode)) {
     // Find mode by name (valuesByMode now uses mode names as keys)
-    const mode = collection.modes.find((m) => m.name === modeName);
+    // Check if we renamed this mode (e.g., "Mode 1" -> "0" or "Light")
+    const mappedModeName =
+      modeNameMapping.get(`${collection.id}:${modeName}`) || modeName;
+    let mode = collection.modes.find((m) => m.name === mappedModeName);
+
+    // If still not found, try the original modeName (in case it wasn't renamed)
     if (!mode) {
-      console.warn(
-        `Mode "${modeName}" not found in collection "${collection.name}" for variable "${variable.name}". Skipping.`,
+      mode = collection.modes.find((m) => m.name === modeName);
+    }
+
+    if (!mode) {
+      await debugConsole.warning(
+        `Mode "${modeName}" (mapped: "${mappedModeName}") not found in collection "${collection.name}" for variable "${variable.name}". Available modes: ${collection.modes.map((m) => m.name).join(", ")}. Skipping.`,
       );
       continue;
     }
     const modeId = mode.modeId;
     try {
       if (value === null || value === undefined) {
+        await debugConsole.log(
+          `  Mode "${modeName}": value is null/undefined, skipping`,
+        );
         continue;
       }
+
+      // Debug: Log the value type and content
+      await debugConsole.log(
+        `  Mode "${modeName}": value type=${typeof value}, value=${JSON.stringify(value)}`,
+      );
 
       // Handle primitive values
       if (
@@ -459,6 +511,81 @@ async function restoreVariableModeValues(
         typeof value === "boolean"
       ) {
         variable.setValueForMode(modeId, value);
+        continue;
+      }
+
+      // Handle RGB color objects (for COLOR variable type)
+      // Color values are objects with r, g, b properties (and optionally a for alpha)
+      if (
+        typeof value === "object" &&
+        value !== null &&
+        "r" in value &&
+        "g" in value &&
+        "b" in value &&
+        typeof (value as any).r === "number" &&
+        typeof (value as any).g === "number" &&
+        typeof (value as any).b === "number"
+      ) {
+        // This is an RGB color object - set it directly
+        // Figma expects RGB objects with r, g, b (0-1 range) and optional a (0-1 range)
+        const colorValue = value as {
+          r: number;
+          g: number;
+          b: number;
+          a?: number;
+        };
+
+        // Ensure we have a valid RGB object (Figma requires r, g, b to be numbers between 0-1)
+        const rgbValue: { r: number; g: number; b: number; a?: number } = {
+          r: colorValue.r,
+          g: colorValue.g,
+          b: colorValue.b,
+        };
+        if (colorValue.a !== undefined) {
+          rgbValue.a = colorValue.a;
+        }
+
+        variable.setValueForMode(modeId, rgbValue);
+
+        // Immediately read back to verify it was set correctly
+        const readBackValue = variable.valuesByMode[modeId];
+        await debugConsole.log(
+          `  Set color value for "${variable.name}" mode "${modeName}": r=${rgbValue.r.toFixed(3)}, g=${rgbValue.g.toFixed(3)}, b=${rgbValue.b.toFixed(3)}${rgbValue.a !== undefined ? `, a=${rgbValue.a.toFixed(3)}` : ""}`,
+        );
+        await debugConsole.log(
+          `  Read back value: ${JSON.stringify(readBackValue)}`,
+        );
+
+        // Verify the read-back value matches what we set
+        if (
+          typeof readBackValue === "object" &&
+          readBackValue !== null &&
+          "r" in readBackValue &&
+          "g" in readBackValue &&
+          "b" in readBackValue
+        ) {
+          const readBackRgb = readBackValue as {
+            r: number;
+            g: number;
+            b: number;
+          };
+          const rMatch = Math.abs(readBackRgb.r - rgbValue.r) < 0.001;
+          const gMatch = Math.abs(readBackRgb.g - rgbValue.g) < 0.001;
+          const bMatch = Math.abs(readBackRgb.b - rgbValue.b) < 0.001;
+          if (!rMatch || !gMatch || !bMatch) {
+            await debugConsole.warning(
+              `  ⚠️ Value mismatch! Set: r=${rgbValue.r}, g=${rgbValue.g}, b=${rgbValue.b}, Read back: r=${readBackRgb.r}, g=${readBackRgb.g}, b=${readBackRgb.b}`,
+            );
+          } else {
+            await debugConsole.log(
+              `  ✓ Value verified: read-back matches what we set`,
+            );
+          }
+        } else {
+          await debugConsole.warning(
+            `  ⚠️ Read-back value is not an RGB object: ${JSON.stringify(readBackValue)}`,
+          );
+        }
         continue;
       }
 
@@ -511,6 +638,17 @@ async function restoreVariableModeValues(
         }
       }
     } catch (error) {
+      // Log warning for any unhandled value types
+      if (
+        typeof value === "object" &&
+        value !== null &&
+        !("_varRef" in value) &&
+        !("r" in value && "g" in value && "b" in value)
+      ) {
+        await debugConsole.warning(
+          `Unhandled value type for mode "${modeName}" in variable "${variable.name}": ${JSON.stringify(value)}`,
+        );
+      }
       console.warn(
         `Error setting value for mode "${modeName}" in variable "${variable.name}":`,
         error,
@@ -528,6 +666,25 @@ async function createVariableFromEntry(
   variableTable: VariableTable,
   collectionTable?: CollectionTable, // Optional: for resolving variable aliases
 ): Promise<Variable> {
+  await debugConsole.log(
+    `Creating variable "${entry.variableName}" (type: ${entry.variableType})`,
+  );
+  if (entry.valuesByMode) {
+    await debugConsole.log(
+      `  valuesByMode has ${Object.keys(entry.valuesByMode).length} mode(s): ${Object.keys(entry.valuesByMode).join(", ")}`,
+    );
+    // Log the actual values for debugging
+    for (const [modeName, value] of Object.entries(entry.valuesByMode)) {
+      await debugConsole.log(
+        `  Mode "${modeName}": ${JSON.stringify(value)} (type: ${typeof value})`,
+      );
+    }
+  } else {
+    await debugConsole.log(
+      `  No valuesByMode found for variable "${entry.variableName}"`,
+    );
+  }
+
   const variable = figma.variables.createVariable(
     entry.variableName,
     collection,
@@ -543,6 +700,22 @@ async function createVariableFromEntry(
       collection, // Pass collection to look up modes by name
       collectionTable,
     );
+  }
+
+  // Verify the values were set correctly
+  if (entry.valuesByMode && variable.valuesByMode) {
+    await debugConsole.log(`  Verifying values for "${entry.variableName}":`);
+    for (const [modeName, expectedValue] of Object.entries(
+      entry.valuesByMode,
+    )) {
+      const mode = collection.modes.find((m) => m.name === modeName);
+      if (mode) {
+        const actualValue = variable.valuesByMode[mode.modeId];
+        await debugConsole.log(
+          `    Mode "${modeName}": expected=${JSON.stringify(expectedValue)}, actual=${JSON.stringify(actualValue)}`,
+        );
+      }
+    }
   }
 
   return variable;
@@ -773,6 +946,9 @@ function applyDefaultsToNode(
       }
       if (node.itemSpacing === undefined) {
         node.itemSpacing = frameDefaults.itemSpacing;
+      }
+      if (node.counterAxisSpacing === undefined) {
+        node.counterAxisSpacing = frameDefaults.counterAxisSpacing;
       }
     }
   }
@@ -2562,7 +2738,15 @@ export async function recreateNodeFromData(
   ) {
     // Step 1: Set auto-layout mode (must be set before wrap)
     if (nodeData.layoutMode !== undefined) {
-      newNode.layoutMode = nodeData.layoutMode;
+      // Ensure layoutMode is a valid value
+      const validLayoutModes = ["NONE", "HORIZONTAL", "VERTICAL"];
+      if (validLayoutModes.includes(nodeData.layoutMode)) {
+        newNode.layoutMode = nodeData.layoutMode;
+      } else {
+        await debugConsole.warning(
+          `Invalid layoutMode value "${nodeData.layoutMode}" for node "${nodeData.name || "Unnamed"}", skipping layoutMode setting`,
+        );
+      }
     }
 
     // CRITICAL: Set bound variables for padding/itemSpacing IMMEDIATELY after layoutMode
@@ -2668,6 +2852,44 @@ export async function recreateNodeFromData(
       }
     }
 
+    // CRITICAL: Set itemSpacing IMMEDIATELY after layoutMode (if not bound to a variable)
+    // itemSpacing property only exists after layoutMode is set
+    // This must happen before other layout properties to ensure it's set correctly
+    if (
+      nodeData.layoutMode !== undefined &&
+      nodeData.layoutMode !== "NONE" &&
+      nodeData.itemSpacing !== undefined
+    ) {
+      const hasBoundVariableForItemSpacing =
+        nodeData.boundVariables &&
+        typeof nodeData.boundVariables === "object" &&
+        nodeData.boundVariables.itemSpacing;
+
+      if (!hasBoundVariableForItemSpacing) {
+        await debugConsole.log(
+          `  Setting itemSpacing to ${nodeData.itemSpacing} for "${nodeData.name || "Unnamed"}" (${nodeData.type})`,
+        );
+        newNode.itemSpacing = nodeData.itemSpacing;
+        await debugConsole.log(
+          `  ✓ Set itemSpacing to ${newNode.itemSpacing} (verified)`,
+        );
+      } else {
+        await debugConsole.log(
+          `  Skipping itemSpacing (bound to variable) for "${nodeData.name || "Unnamed"}"`,
+        );
+      }
+    } else {
+      if (
+        nodeData.type === "FRAME" ||
+        nodeData.type === "COMPONENT" ||
+        nodeData.type === "INSTANCE"
+      ) {
+        await debugConsole.log(
+          `  DEBUG: Not setting itemSpacing for "${nodeData.name || "Unnamed"}": layoutMode=${nodeData.layoutMode}, itemSpacing=${nodeData.itemSpacing}`,
+        );
+      }
+    }
+
     // Step 2: Set wrap (must be set after layoutMode)
     if (nodeData.layoutWrap !== undefined) {
       newNode.layoutWrap = nodeData.layoutWrap;
@@ -2741,11 +2963,32 @@ export async function recreateNodeFromData(
     ) {
       newNode.paddingBottom = nodeData.paddingBottom;
     }
+    // Set itemSpacing (only if not already set earlier and not bound to a variable)
+    // Note: We already set itemSpacing right after layoutMode, but this ensures it's set
+    // if the earlier code didn't run (e.g., if layoutMode was already set)
     if (
       nodeData.itemSpacing !== undefined &&
-      (!hasBoundVariables || !nodeData.boundVariables.itemSpacing)
+      (!hasBoundVariables || !nodeData.boundVariables.itemSpacing) &&
+      newNode.layoutMode !== undefined &&
+      newNode.layoutMode !== "NONE"
     ) {
-      newNode.itemSpacing = nodeData.itemSpacing;
+      // Only set if it's different from what we already set, or if it wasn't set earlier
+      // This prevents overriding a value we already set correctly
+      if (newNode.itemSpacing !== nodeData.itemSpacing) {
+        await debugConsole.log(
+          `  Setting itemSpacing to ${nodeData.itemSpacing} for "${nodeData.name || "Unnamed"}" (late setting)`,
+        );
+        newNode.itemSpacing = nodeData.itemSpacing;
+      }
+    }
+    // Set counterAxisSpacing (vertical gap for horizontal layouts, horizontal gap for vertical layouts)
+    if (
+      nodeData.counterAxisSpacing !== undefined &&
+      (!hasBoundVariables || !nodeData.boundVariables.counterAxisSpacing) &&
+      newNode.layoutMode !== undefined &&
+      newNode.layoutMode !== "NONE"
+    ) {
+      newNode.counterAxisSpacing = nodeData.counterAxisSpacing;
     }
     if (nodeData.layoutGrow !== undefined) {
       newNode.layoutGrow = nodeData.layoutGrow;
@@ -3282,6 +3525,39 @@ export async function recreateNodeFromData(
     parentNode.appendChild(newNode);
   }
   // If newNode.parent === parentNode, it's already correctly parented, so do nothing
+
+  // FINAL CHECK: Ensure itemSpacing is set correctly after all operations
+  // Sometimes Figma resets itemSpacing when children are appended or other operations occur
+  if (
+    (newNode.type === "FRAME" ||
+      newNode.type === "COMPONENT" ||
+      newNode.type === "INSTANCE") &&
+    nodeData.layoutMode !== undefined &&
+    nodeData.layoutMode !== "NONE" &&
+    nodeData.itemSpacing !== undefined
+  ) {
+    const hasBoundVariableForItemSpacing =
+      nodeData.boundVariables &&
+      typeof nodeData.boundVariables === "object" &&
+      nodeData.boundVariables.itemSpacing;
+
+    if (!hasBoundVariableForItemSpacing) {
+      const currentValue = newNode.itemSpacing;
+      if (currentValue !== nodeData.itemSpacing) {
+        await debugConsole.log(
+          `  FINAL FIX: Resetting itemSpacing to ${nodeData.itemSpacing} for "${nodeData.name || "Unnamed"}" (was ${currentValue})`,
+        );
+        newNode.itemSpacing = nodeData.itemSpacing;
+        await debugConsole.log(
+          `  FINAL FIX: Verified itemSpacing is now ${newNode.itemSpacing}`,
+        );
+      } else {
+        await debugConsole.log(
+          `  FINAL CHECK: itemSpacing is already correct (${currentValue}) for "${nodeData.name || "Unnamed"}"`,
+        );
+      }
+    }
+  }
 
   return newNode;
 }
@@ -4176,6 +4452,65 @@ async function matchAndCreateVariables(
       `  "${stats.collectionName}": ${stats.existing} existing, ${stats.created} created`,
     );
   }
+
+  // Final verification: Read back all COLOR variables to ensure values persisted
+  await debugConsole.log(
+    "Final verification: Reading back all COLOR variables...",
+  );
+  let verifiedCount = 0;
+  let whiteCount = 0;
+  for (const variable of newlyCreatedVariables) {
+    if (variable.resolvedType === "COLOR") {
+      // Get the collection using the variable's collection ID
+      const collection = await figma.variables.getVariableCollectionByIdAsync(
+        variable.variableCollectionId,
+      );
+      if (!collection) {
+        await debugConsole.warning(
+          `  ⚠️ Variable "${variable.name}" has no variableCollection (ID: ${variable.variableCollectionId})`,
+        );
+        continue;
+      }
+      const allModes = collection.modes;
+      if (!allModes || allModes.length === 0) {
+        await debugConsole.warning(
+          `  ⚠️ Variable "${variable.name}" collection has no modes`,
+        );
+        continue;
+      }
+      for (const mode of allModes) {
+        const value = variable.valuesByMode[mode.modeId];
+        if (value && typeof value === "object" && "r" in value) {
+          const rgb = value as { r: number; g: number; b: number };
+          // Check if it's white (r=1, g=1, b=1) or near-white
+          const isWhite =
+            Math.abs(rgb.r - 1) < 0.01 &&
+            Math.abs(rgb.g - 1) < 0.01 &&
+            Math.abs(rgb.b - 1) < 0.01;
+          if (isWhite) {
+            whiteCount++;
+            await debugConsole.warning(
+              `  ⚠️ Variable "${variable.name}" mode "${mode.name}" is WHITE: r=${rgb.r.toFixed(3)}, g=${rgb.g.toFixed(3)}, b=${rgb.b.toFixed(3)}`,
+            );
+          } else {
+            verifiedCount++;
+            await debugConsole.log(
+              `  ✓ Variable "${variable.name}" mode "${mode.name}" has color: r=${rgb.r.toFixed(3)}, g=${rgb.g.toFixed(3)}, b=${rgb.b.toFixed(3)}`,
+            );
+          }
+        } else if (value && typeof value === "object" && "type" in value) {
+          // Variable alias - skip
+        } else {
+          await debugConsole.warning(
+            `  ⚠️ Variable "${variable.name}" mode "${mode.name}" has unexpected value type: ${JSON.stringify(value)}`,
+          );
+        }
+      }
+    }
+  }
+  await debugConsole.log(
+    `Final verification complete: ${verifiedCount} color variables verified, ${whiteCount} white variables found`,
+  );
 
   return {
     recognizedVariables,

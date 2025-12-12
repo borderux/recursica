@@ -1,4 +1,4 @@
-import { MemoryRouter, Routes, Route } from "react-router";
+import { MemoryRouter, Routes, Route, useLocation } from "react-router";
 import { useEffect } from "react";
 import Layout from "./components/Layout";
 import Home from "./pages/Home";
@@ -58,6 +58,19 @@ function generateUUID(): string {
     hex.slice(16, 20),
     hex.slice(20, 32),
   ].join("-");
+}
+
+// Component to log route changes
+function RouteLogger() {
+  const location = useLocation();
+
+  useEffect(() => {
+    console.log(
+      `[Route] Navigated to: ${location.pathname}${location.search || ""}`,
+    );
+  }, [location]);
+
+  return null;
 }
 
 function App() {
@@ -140,6 +153,7 @@ function App() {
             width: 100%;
             height: 100%;
             overflow: hidden;
+            font-family: system-ui, -apple-system, "Segoe UI", "Segoe UI Emoji", "Segoe UI Symbol", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
           }
           #root {
             width: 100%;
@@ -153,6 +167,7 @@ function App() {
           <PluginPromptProvider>
             <ImportDataProvider>
               <MemoryRouter initialEntries={["/"]}>
+                <RouteLogger />
                 <Routes>
                   <Route path="/" element={<Home />} />
                   <Route path="/import" element={<Import />} />

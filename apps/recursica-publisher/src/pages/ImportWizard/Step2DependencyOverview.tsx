@@ -4,6 +4,7 @@ import {
   useImportWizard,
   type DependencySelection,
 } from "../../context/ImportWizardContext";
+import { useImportData } from "../../context/ImportDataContext";
 import { fetchComponentWithDependencies } from "../../services/repository/repositoryImportService";
 import { callPlugin } from "../../utils/callPlugin";
 import { validateImport } from "../../utils/validateExportFile";
@@ -11,14 +12,180 @@ import { validateImport } from "../../utils/validateExportFile";
 export default function Step2DependencyOverview() {
   const navigate = useNavigate();
   const { wizardState, setWizardState } = useImportWizard();
+  const { importData } = useImportData();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dependencies, setDependencies] = useState<DependencySelection[]>([]);
 
   useEffect(() => {
     const loadDependencies = async () => {
+      // If no selected component but we have importData, populate wizard state from it
       if (!wizardState.selectedComponent) {
+        if (importData?.mainFile?.data) {
+          const mainFileData = importData.mainFile.data as {
+            metadata?: { guid?: string; name?: string; version?: number };
+          };
+          const metadata = mainFileData?.metadata;
+
+          if (metadata?.guid && metadata?.name) {
+            const ref = importData.source?.branch || "main";
+            setWizardState((prev) => ({
+              ...prev,
+              selectedComponent: {
+                guid: metadata.guid,
+                name: metadata.name,
+                version: metadata.version || 0,
+                ref,
+              },
+              componentData: {
+                mainComponent: {
+                  guid: metadata.guid,
+                  name: metadata.name,
+                  version: metadata.version || 0,
+                  jsonData: mainFileData,
+                },
+                dependencies: importData.additionalFiles
+                  .filter((file) => file.status === "success" && file.data)
+                  .map((file) => {
+                    const fileData = file.data as {
+                      metadata?: {
+                        guid?: string;
+                        name?: string;
+                        version?: number;
+                      };
+                    };
+                    const fileMetadata = fileData?.metadata;
+                    return {
+                      guid: fileMetadata?.guid || "",
+                      name:
+                        fileMetadata?.name || file.name.replace(".json", ""),
+                      version: fileMetadata?.version || 0,
+                      jsonData: fileData,
+                    };
+                  }),
+              },
+            }));
+            // State will be updated, but we need to wait for the next render
+            // Return here and let the effect run again with the updated state
+            return;
+          }
+        }
+        // No importData or can't extract component info, go to step 1
         navigate("/import-wizard/step1");
+        return;
+      }
+
+      // Check if component data is already loaded (from importData)
+      if (
+        wizardState.componentData.mainComponent &&
+        wizardState.componentData.mainComponent.guid ===
+          wizardState.selectedComponent.guid &&
+        wizardState.componentData.dependencies.length > 0
+      ) {
+        // Component data already loaded, process it
+        try {
+          setLoading(true);
+          setError(null);
+
+          const fetchedDeps = wizardState.componentData.dependencies;
+
+          // Get existing components in file
+          const { promise: getAllComponentsPromise } = callPlugin(
+            "getAllComponents",
+            {},
+          );
+          const existingComponentsResponse = await getAllComponentsPromise;
+
+          let existingComponents: Array<{
+            id: string;
+            name: string;
+            version: number;
+          }> = [];
+
+          if (
+            existingComponentsResponse.success &&
+            existingComponentsResponse.data
+          ) {
+            const data = existingComponentsResponse.data as {
+              components: Array<{
+                id: string;
+                name: string;
+                version: number;
+              }>;
+            };
+            existingComponents = data.components.filter((c) => c.id !== "");
+          }
+
+          // Extract version from JSON metadata
+          const getVersionFromJson = (jsonData: unknown): number => {
+            if (
+              !jsonData ||
+              typeof jsonData !== "object" ||
+              Array.isArray(jsonData)
+            ) {
+              return 0;
+            }
+            const data = jsonData as Record<string, unknown>;
+            if (data.metadata && typeof data.metadata === "object") {
+              const metadata = data.metadata as Record<string, unknown>;
+              if (typeof metadata.version === "number") {
+                return metadata.version;
+              }
+            }
+            return 0;
+          };
+
+          // Build dependency selections
+          const dependencySelections: DependencySelection[] = fetchedDeps.map(
+            (dep) => {
+              const depVersion = getVersionFromJson(dep.jsonData);
+              const existing = existingComponents.find(
+                (c) => c.id === dep.guid,
+              );
+
+              let status: "NEW" | "UPDATED" | "SAME" = "NEW";
+              let useExisting = false;
+
+              if (existing) {
+                if (depVersion > existing.version) {
+                  status = "UPDATED";
+                } else if (depVersion === existing.version) {
+                  status = "SAME";
+                  useExisting = true; // Default to using existing if versions match
+                }
+              }
+
+              return {
+                guid: dep.guid,
+                name: dep.name,
+                version: depVersion,
+                currentVersionInFile: existing?.version,
+                status,
+                useExisting,
+              };
+            },
+          );
+
+          setDependencies(dependencySelections);
+
+          // Update wizard state with dependencies
+          setWizardState((prev) => ({
+            ...prev,
+            dependencies: dependencySelections,
+          }));
+        } catch (processError) {
+          const errorMessage =
+            processError instanceof Error
+              ? processError.message
+              : "Failed to process component data";
+          setError(errorMessage);
+          console.error(
+            "[Step2DependencyOverview] Failed to process component data:",
+            processError,
+          );
+        } finally {
+          setLoading(false);
+        }
         return;
       }
 
@@ -178,7 +345,14 @@ export default function Step2DependencyOverview() {
     };
 
     loadDependencies();
-  }, [wizardState.selectedComponent, navigate, setWizardState]);
+  }, [
+    wizardState.selectedComponent,
+    wizardState.componentData.dependencies,
+    wizardState.componentData.mainComponent,
+    navigate,
+    setWizardState,
+    importData,
+  ]);
 
   const handleToggle = (guid: string, useExisting: boolean) => {
     setDependencies((prev) =>
@@ -257,7 +431,15 @@ export default function Step2DependencyOverview() {
         >
           Import Overview
         </h1>
-        <p style={{ fontSize: "14px", color: "#666", margin: 0 }}>
+        <p
+          style={{
+            fontSize: "14px",
+            color: "#666",
+            margin: 0,
+            fontFamily:
+              "system-ui, -apple-system, 'Segoe UI', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif",
+          }}
+        >
           Component: {wizardState.selectedComponent?.name} (Version:{" "}
           {wizardState.selectedComponent?.version})
         </p>
@@ -332,6 +514,8 @@ export default function Step2DependencyOverview() {
                       fontSize: "16px",
                       fontWeight: "bold",
                       marginBottom: "2px",
+                      fontFamily:
+                        "system-ui, -apple-system, 'Segoe UI', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif",
                     }}
                   >
                     {dep.name}

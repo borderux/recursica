@@ -79,6 +79,8 @@ function FileListItem({ name, status, onRemove }: FileListItemProps) {
           textOverflow: "ellipsis",
           whiteSpace: "nowrap",
           flex: 1,
+          fontFamily:
+            "system-ui, -apple-system, 'Segoe UI', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif",
         }}
       >
         {name}
@@ -888,7 +890,11 @@ export default function Import() {
                 setImportData({
                   mainFile: mainFile!,
                   additionalFiles,
+                  source: {
+                    type: "local",
+                  },
                 });
+                // Navigate to importing page which will redirect to wizard
                 navigate("/importing");
               }
             }}

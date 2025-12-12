@@ -66,15 +66,32 @@ export default function ImportMain() {
 
         const fileData = await response.json();
 
-        // Download and parse the file content
-        const indexContent = await fetch(fileData.download_url).then((res) => {
-          if (!res.ok) {
-            throw new Error(
-              `Failed to download index.json: ${res.status} ${res.statusText}`,
-            );
+        // Use base64 content from API response to avoid CDN caching issues
+        // GitHub API includes content for files under 1MB (index.json is small)
+        let indexContent: string;
+        if (fileData.content && fileData.encoding === "base64") {
+          // Decode base64 content directly from API response (avoids CDN cache)
+          // Properly handle UTF-8 encoding for Unicode characters (emojis, etc.)
+          const binaryString = atob(fileData.content.replace(/\s/g, ""));
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
           }
-          return res.text();
-        });
+          indexContent = new TextDecoder("utf-8").decode(bytes);
+        } else {
+          // Fallback: use download_url with cache-busting using SHA
+          const cacheBustUrl = `${fileData.download_url}?sha=${fileData.sha}`;
+          indexContent = await fetch(cacheBustUrl, {
+            cache: "no-store", // Explicitly disable caching
+          }).then((res) => {
+            if (!res.ok) {
+              throw new Error(
+                `Failed to download index.json: ${res.status} ${res.statusText}`,
+              );
+            }
+            return res.text();
+          });
+        }
 
         const indexJson: IndexJson = JSON.parse(indexContent);
 
@@ -241,10 +258,10 @@ export default function ImportMain() {
               <button
                 key={component.guid}
                 onClick={() => {
-                  // Navigate to ImportRepoComponent with the component GUID and ref
+                  // Navigate to wizard step 1 with component pre-selected
                   const ref = searchParams.get("ref") || "main";
                   navigate(
-                    `/import-repo-component?guid=${encodeURIComponent(component.guid)}&ref=${encodeURIComponent(ref)}`,
+                    `/import-wizard/step1?guid=${encodeURIComponent(component.guid)}&ref=${encodeURIComponent(ref)}`,
                   );
                 }}
                 style={{
@@ -278,6 +295,8 @@ export default function ImportMain() {
                     fontSize: "16px",
                     fontWeight: "bold",
                     flex: 1,
+                    fontFamily:
+                      "system-ui, -apple-system, 'Segoe UI', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif",
                   }}
                 >
                   {component.name}

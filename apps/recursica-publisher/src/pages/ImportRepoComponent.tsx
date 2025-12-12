@@ -80,10 +80,16 @@ export default function ImportRepoComponent() {
           }),
         );
 
-        // Set import data and navigate to importing page
+        // Set import data with source info and navigate to importing page
         setImportData({
           mainFile,
           additionalFiles,
+          source: {
+            type: "repo",
+            branch: ref,
+            owner: "borderux",
+            repo: "recursica-figma",
+          },
         });
 
         setProgress("Redirecting to import page...");

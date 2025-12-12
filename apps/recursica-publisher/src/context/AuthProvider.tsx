@@ -6,11 +6,15 @@ import {
 } from "../services/github/githubService";
 import { callPlugin } from "../utils/callPlugin";
 
+const RECURSICA_FIGMA_OWNER = "borderux";
+const RECURSICA_FIGMA_REPO = "recursica-figma";
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [selectedRepo, setSelectedRepo] = useState<GitHubRepo | null>(null);
+  const [hasWriteAccess, setHasWriteAccess] = useState<boolean | null>(null);
 
   // Load auth data on mount using callPlugin
   useEffect(() => {
@@ -22,9 +26,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const data = response.data as {
             accessToken?: string;
             selectedRepo?: GitHubRepo;
+            hasWriteAccess?: boolean;
           };
           setAccessToken(data.accessToken || null);
           setSelectedRepo(data.selectedRepo || null);
+          setHasWriteAccess(data.hasWriteAccess ?? null);
         }
       } catch (error) {
         console.error("Error loading auth data:", error);
@@ -101,11 +107,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (token: string) => {
     saveAccessToken(token);
     getUser();
+
+    // Check and store write access when logging in
+    try {
+      const githubService = new GitHubService(token);
+      const hasAccess = await githubService.checkRepositoryAccess(
+        RECURSICA_FIGMA_OWNER,
+        RECURSICA_FIGMA_REPO,
+      );
+      setHasWriteAccess(hasAccess);
+      // Store the write access flag
+      await callPlugin("storeAuthData", {
+        accessToken: token,
+        hasWriteAccess: hasAccess,
+      }).promise;
+    } catch (error) {
+      console.error("Error checking repository access:", error);
+      setHasWriteAccess(false);
+      // Store false on error
+      await callPlugin("storeAuthData", {
+        accessToken: token,
+        hasWriteAccess: false,
+      }).promise;
+    }
   };
 
   const logout = async () => {
     setUser(null);
     setIsAuthenticated(false);
+    setHasWriteAccess(null);
     deleteAccessToken();
   };
 
@@ -114,6 +144,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     accessToken,
     selectedRepo,
+    hasWriteAccess,
     saveAccessToken,
     saveSelectedRepo,
     login,

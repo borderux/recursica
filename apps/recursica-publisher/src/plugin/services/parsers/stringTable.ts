@@ -140,6 +140,7 @@ const STRING_TABLE_MAP: Record<string, string> = {
   counterAxisSizingMode: "cAxSz",
   primaryAxisAlignItems: "pAxAl",
   counterAxisAlignItems: "cAxAl",
+  counterAxisSpacing: "cAxSp",
   textAutoResize: "txtAr",
   letterSpacing: "letSp",
   lineHeight: "linHt",

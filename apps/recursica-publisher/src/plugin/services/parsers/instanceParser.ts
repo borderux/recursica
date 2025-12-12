@@ -203,7 +203,52 @@ export async function parseInstanceProperties(
     const instancePageResult = getPageFromNode(node);
     const instancePage = instancePageResult.page;
     const componentPageResult = getPageFromNode(mainComponent);
-    const componentPage = componentPageResult.page;
+    let componentPage = componentPageResult.page;
+
+    // If componentPage is null and component is marked as remote, try to find it by ID prefix
+    // This handles cases where components inside COMPONENT_SET nodes can't traverse to their page
+    // In Figma, nodes on the same page share the same ID prefix (before the colon)
+    if (!componentPage && isRemote) {
+      try {
+        await figma.loadAllPagesAsync();
+        const allPages = figma.root.children;
+
+        // Try to find the component by searching pages
+        let foundOnPage: any = null;
+        for (const page of allPages) {
+          try {
+            const component = page.findOne(
+              (n: any) => n.id === mainComponent.id,
+            );
+            if (component) {
+              foundOnPage = page;
+              break;
+            }
+          } catch {
+            // Search might fail, continue
+          }
+        }
+
+        // If not found by search, try matching by ID prefix
+        if (!foundOnPage) {
+          const componentIdPrefix = mainComponent.id.split(":")[0];
+          for (const page of allPages) {
+            const pageIdPrefix = page.id.split(":")[0];
+            if (componentIdPrefix === pageIdPrefix) {
+              foundOnPage = page;
+              break;
+            }
+          }
+        }
+
+        if (foundOnPage) {
+          // Update componentPage to the found page so it gets treated as normal
+          componentPage = foundOnPage;
+        }
+      } catch {
+        // If page lookup fails, continue with componentPage as null
+      }
+    }
 
     // Classify instance type
     // Special case: If component is remote BUT also exists on a local page with metadata,
@@ -213,27 +258,26 @@ export async function parseInstanceProperties(
 
     if (isRemote) {
       // Component is from a library
-      // Only treat as "normal" if the component also exists on a local page with metadata
-      // (This can happen if the component was synced from a library but also exists locally)
+      // If component exists on a local page (same file), treat as "normal" even without metadata
+      // This allows components from other files in the same project to be used
+      // Only truly external library components (not on any local page) should be "remote"
       if (componentPage) {
-        // Component exists on a local page - check for metadata
+        // Component exists on a local page - treat as "normal" so it can be referenced
+        // Metadata check is for determining if we can properly reference it, but doesn't make it "remote"
         const metadata = getComponentMetadataFromPage(componentPage);
+        instanceType = "normal";
+        effectiveComponentPage = componentPage;
         if (metadata?.id) {
-          // Found a local page with metadata - treat as "normal" so it shows up as a referenced file
-          instanceType = "normal";
-          effectiveComponentPage = componentPage;
           await debugConsole.log(
             `  Component "${componentName}" is from library but also exists on local page "${componentPage.name}" with metadata. Treating as "normal" instance.`,
           );
         } else {
-          // Component is on a local page but has no metadata - treat as "remote"
-          instanceType = "remote";
           await debugConsole.log(
-            `  Component "${componentName}" is from library and exists on local page "${componentPage.name}" but has no metadata. Treating as "remote" instance.`,
+            `  Component "${componentName}" is from library and exists on local page "${componentPage.name}" (no metadata). Treating as "normal" instance - page should be published first.`,
           );
         }
       } else {
-        // Component is not on a local page - treat as "remote"
+        // Component is not on a local page - truly external library, treat as "remote"
         instanceType = "remote";
         await debugConsole.log(
           `  Component "${componentName}" is from library and not on a local page. Treating as "remote" instance.`,

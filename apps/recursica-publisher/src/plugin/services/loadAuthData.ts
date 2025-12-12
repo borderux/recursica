@@ -4,6 +4,7 @@ import type { NoData } from "./getCurrentUser";
 export interface LoadAuthDataResponseData {
   accessToken?: string;
   selectedRepo?: string;
+  hasWriteAccess?: boolean;
 }
 
 /**
@@ -16,10 +17,12 @@ export async function loadAuthData(
   try {
     const accessToken = await figma.clientStorage.getAsync("accessToken");
     const selectedRepo = await figma.clientStorage.getAsync("selectedRepo");
+    const hasWriteAccess = await figma.clientStorage.getAsync("hasWriteAccess");
 
     const responseData: LoadAuthDataResponseData = {
       accessToken: accessToken || undefined,
       selectedRepo: selectedRepo || undefined,
+      hasWriteAccess: hasWriteAccess ?? undefined,
     };
 
     return {

@@ -34,6 +34,7 @@ export const FRAME_DEFAULTS = {
   paddingTop: 0,
   paddingBottom: 0,
   itemSpacing: 0,
+  counterAxisSpacing: 0,
   cornerRadius: 0,
   clipsContent: false,
   layoutWrap: "NO_WRAP",

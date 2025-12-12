@@ -40,7 +40,8 @@ export default function PageLayout({
         flexDirection: "column",
         height: "100%",
         width: "100%",
-        fontFamily: "Arial, sans-serif",
+        fontFamily:
+          "system-ui, -apple-system, 'Segoe UI', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif",
         overflow: "hidden",
         boxSizing: "border-box",
       }}
@@ -162,7 +163,8 @@ export default function PageLayout({
               padding: "4px 8px",
               fontSize: "12px",
               color: "#333",
-              fontFamily: "Arial, sans-serif",
+              fontFamily:
+                "system-ui, -apple-system, 'Segoe UI', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif",
             }}
             onMouseOver={(e) => {
               e.currentTarget.style.opacity = "0.7";

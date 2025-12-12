@@ -398,20 +398,92 @@ export async function importSingleComponentWithWizard(
       throw new Error("No pages were imported");
     }
 
-    // Find the main page by matching fileName
-    const mainPageId = importResultData.importedPages.find(
-      (p) =>
-        p.name === data.mainComponent.name ||
-        p.name === `${CONSTRUCTION_ICON} ${data.mainComponent.name}`,
-    )?.pageId;
+    // Find the main page by GUID from page metadata (more reliable than name matching)
+    // This avoids issues with special characters, encoding, or name changes
+    const PAGE_METADATA_KEY = "RecursicaPublishedMetadata";
+    const targetGuid = data.mainComponent.guid;
 
+    await debugConsole.log(
+      `Looking for main page by GUID: ${targetGuid.substring(0, 8)}...`,
+    );
+
+    let mainPageId: string | undefined;
+    let mainPage: PageNode | null = null;
+
+    // First, try to find by GUID in the imported pages
+    for (const importedPage of importResultData.importedPages) {
+      try {
+        const page = (await figma.getNodeByIdAsync(
+          importedPage.pageId,
+        )) as PageNode | null;
+        if (page && page.type === "PAGE") {
+          const pageMetadataStr = page.getPluginData(PAGE_METADATA_KEY);
+          if (pageMetadataStr) {
+            try {
+              const pageMetadata = JSON.parse(pageMetadataStr);
+              if (pageMetadata.id === targetGuid) {
+                mainPageId = importedPage.pageId;
+                mainPage = page;
+                await debugConsole.log(
+                  `Found main page by GUID: "${page.name}" (ID: ${importedPage.pageId.substring(0, 12)}...)`,
+                );
+                break;
+              }
+            } catch {
+              // Invalid metadata, continue
+            }
+          }
+        }
+      } catch (err) {
+        await debugConsole.warning(
+          `Error checking page ${importedPage.pageId}: ${err}`,
+        );
+      }
+    }
+
+    // Fallback: If not found by GUID, search all pages (in case page wasn't in importedPages list)
     if (!mainPageId) {
+      await debugConsole.log(
+        "Main page not found in importedPages list, searching all pages by GUID...",
+      );
+      await figma.loadAllPagesAsync();
+      const allPages = figma.root.children;
+      for (const page of allPages) {
+        if (page.type === "PAGE") {
+          const pageMetadataStr = page.getPluginData(PAGE_METADATA_KEY);
+          if (pageMetadataStr) {
+            try {
+              const pageMetadata = JSON.parse(pageMetadataStr);
+              if (pageMetadata.id === targetGuid) {
+                mainPageId = page.id;
+                mainPage = page;
+                await debugConsole.log(
+                  `Found main page by GUID in all pages: "${page.name}" (ID: ${page.id.substring(0, 12)}...)`,
+                );
+                break;
+              }
+            } catch {
+              // Invalid metadata, continue
+            }
+          }
+        }
+      }
+    }
+
+    if (!mainPageId || !mainPage) {
+      await debugConsole.error(
+        `Failed to find imported main page by GUID: ${targetGuid.substring(0, 8)}...`,
+      );
+      await debugConsole.log("Imported pages were:");
+      for (const importedPage of importResultData.importedPages) {
+        await debugConsole.log(
+          `  - "${importedPage.name}" (ID: ${importedPage.pageId.substring(0, 12)}...)`,
+        );
+      }
       throw new Error("Failed to find imported main page ID");
     }
 
-    const mainPage = (await figma.getNodeByIdAsync(
-      mainPageId,
-    )) as PageNode | null;
+    // mainPage is already set from the GUID lookup above
     if (!mainPage || mainPage.type !== "PAGE") {
       throw new Error("Failed to get main page node");
     }

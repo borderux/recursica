@@ -112,6 +112,16 @@ export async function parseFrameProperties(
     handledKeys.add("itemSpacing");
   }
   if (
+    node.counterAxisSpacing !== undefined &&
+    isDifferentFromDefault(
+      node.counterAxisSpacing,
+      FRAME_DEFAULTS.counterAxisSpacing,
+    )
+  ) {
+    result.counterAxisSpacing = node.counterAxisSpacing;
+    handledKeys.add("counterAxisSpacing");
+  }
+  if (
     node.cornerRadius !== undefined &&
     isDifferentFromDefault(node.cornerRadius, FRAME_DEFAULTS.cornerRadius)
   ) {
