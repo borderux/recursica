@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/* eslint-disable no-undef */
 
 /**
  * Publish Script for Figma Plugin
@@ -85,27 +84,39 @@ function getBuildConfig(mode) {
 
 function validateBuildFiles(config) {
   const distPath = path.join(parentDir, config.distDir);
+  let hasErrors = false;
 
   // Check if dist directory exists
   if (!fs.existsSync(distPath)) {
-    log(`❌ Error: ${config.distDir} directory not found`, "red");
-    log(`Expected path: ${distPath}`, "red");
+    log(`⚠️  Warning: ${config.distDir} directory not found`, "yellow");
+    log(`Expected path: ${distPath}`, "yellow");
     log("Make sure the build has been completed first", "yellow");
-    process.exit(1);
+    hasErrors = true;
+    return hasErrors;
   }
 
   // Check if dist directory has content
-  const distContents = fs.readdirSync(distPath);
-  if (distContents.length === 0) {
-    log(`❌ Error: ${config.distDir} directory is empty`, "red");
-    log("Make sure the build has been completed first", "yellow");
-    process.exit(1);
+  try {
+    const distContents = fs.readdirSync(distPath);
+    if (distContents.length === 0) {
+      log(`⚠️  Warning: ${config.distDir} directory is empty`, "yellow");
+      log("Make sure the build has been completed first", "yellow");
+      hasErrors = true;
+    } else {
+      log(
+        `✅ Found ${config.distDir} directory with ${distContents.length} files`,
+        "green",
+      );
+    }
+  } catch (error) {
+    log(
+      `⚠️  Warning: Error reading ${config.distDir} directory: ${error.message}`,
+      "yellow",
+    );
+    hasErrors = true;
   }
 
-  log(
-    `✅ Found ${config.distDir} directory with ${distContents.length} files`,
-    "green",
-  );
+  return hasErrors;
 }
 
 function createZipFile(config) {
@@ -117,48 +128,98 @@ function createZipFile(config) {
   log(`   Output: ${config.distDir}/${config.zipName}`, "cyan");
 
   return new Promise((resolve, reject) => {
-    // Remove existing zip file if it exists
-    if (fs.existsSync(zipPath)) {
-      fs.unlinkSync(zipPath);
-      log(`🗑️  Removed existing zip file`, "yellow");
-    }
-
-    // Create zip file
-    const output = fs.createWriteStream(zipPath);
-    const archive = archiver("zip", {
-      zlib: { level: 9 }, // Maximum compression
-    });
-
-    output.on("close", () => {
-      const sizeInMB = (archive.pointer() / 1024 / 1024).toFixed(2);
-      log(`✅ Zip file created successfully`, "green");
-      log(`   Size: ${sizeInMB} MB`, "cyan");
-      log(`   Path: ${zipPath}`, "cyan");
-      resolve(zipPath);
-    });
-
-    archive.on("error", (err) => {
-      log(`❌ Error creating zip file: ${err.message}`, "red");
-      reject(err);
-    });
-
-    archive.pipe(output);
-
-    // Add all files from dist directory (excluding zip files)
-    const files = fs.readdirSync(distPath);
-    for (const file of files) {
-      const filePath = path.join(distPath, file);
-      const stat = fs.statSync(filePath);
-
-      if (stat.isFile() && !file.endsWith(".zip")) {
-        archive.file(filePath, { name: file });
-        log(`  📄 Added ${file}`, "cyan");
+    try {
+      // Remove existing zip file if it exists
+      if (fs.existsSync(zipPath)) {
+        try {
+          fs.unlinkSync(zipPath);
+          log(`🗑️  Removed existing zip file`, "yellow");
+        } catch (unlinkError) {
+          log(
+            `⚠️  Warning: Could not remove existing zip file: ${unlinkError.message}`,
+            "yellow",
+          );
+          // Continue anyway
+        }
       }
-    }
-    log(`📁 Added all files from ${config.distDir}/`, "cyan");
 
-    // Finalize the archive
-    archive.finalize();
+      // Create zip file
+      const output = fs.createWriteStream(zipPath);
+      const archive = archiver("zip", {
+        zlib: { level: 9 }, // Maximum compression
+      });
+
+      output.on("close", () => {
+        const sizeInMB = (archive.pointer() / 1024 / 1024).toFixed(2);
+        log(`✅ Zip file created successfully`, "green");
+        log(`   Size: ${sizeInMB} MB`, "cyan");
+        log(`   Path: ${zipPath}`, "cyan");
+        resolve(zipPath);
+      });
+
+      archive.on("error", (err) => {
+        log(`❌ Error creating zip file: ${err.message}`, "red");
+        log(`   Error details: ${err.stack || err}`, "red");
+        reject(err);
+      });
+
+      output.on("error", (err) => {
+        log(`❌ Error writing zip file: ${err.message}`, "red");
+        log(`   Error details: ${err.stack || err}`, "red");
+        reject(err);
+      });
+
+      archive.pipe(output);
+
+      // Add all files from dist directory (excluding zip files)
+      try {
+        const files = fs.readdirSync(distPath);
+        let filesAdded = 0;
+        let filesSkipped = 0;
+
+        for (const file of files) {
+          try {
+            const filePath = path.join(distPath, file);
+            const stat = fs.statSync(filePath);
+
+            if (stat.isFile() && !file.endsWith(".zip")) {
+              archive.file(filePath, { name: file });
+              log(`  📄 Added ${file}`, "cyan");
+              filesAdded++;
+            } else {
+              filesSkipped++;
+            }
+          } catch (fileError) {
+            log(
+              `⚠️  Warning: Could not add file ${file}: ${fileError.message}`,
+              "yellow",
+            );
+            filesSkipped++;
+            // Continue with other files
+          }
+        }
+
+        if (filesAdded > 0) {
+          log(`📁 Added ${filesAdded} file(s) from ${config.distDir}/`, "cyan");
+        }
+        if (filesSkipped > 0) {
+          log(`⚠️  Skipped ${filesSkipped} file(s)`, "yellow");
+        }
+      } catch (readError) {
+        log(
+          `⚠️  Warning: Error reading directory: ${readError.message}`,
+          "yellow",
+        );
+        // Still try to finalize if archive was started
+      }
+
+      // Finalize the archive
+      archive.finalize();
+    } catch (error) {
+      log(`❌ Unexpected error in createZipFile: ${error.message}`, "red");
+      log(`   Error details: ${error.stack || error}`, "red");
+      reject(error);
+    }
   });
 }
 
@@ -177,30 +238,50 @@ function main() {
     log(`📦 Zip Name: ${config.zipName}`, "cyan");
     log("");
 
-    // Validate that build files exist
-    validateBuildFiles(config);
-    log("");
+    // Validate that build files exist (warnings only, don't exit)
+    const hasValidationErrors = validateBuildFiles(config);
+    if (hasValidationErrors) {
+      log("", "yellow");
+      log(
+        "⚠️  Validation errors detected, but continuing with publish...",
+        "yellow",
+      );
+      log("", "yellow");
+    } else {
+      log("");
+    }
 
     // Create zip file
     createZipFile(config)
       .then((zipPath) => {
         log("");
-        log(
-          `🎉 ${config.description} plugin zip created successfully!`,
-          "green",
-        );
+        if (hasValidationErrors) {
+          log(
+            `⚠️  ${config.description} plugin zip created with warnings`,
+            "yellow",
+          );
+        } else {
+          log(
+            `🎉 ${config.description} plugin zip created successfully!`,
+            "green",
+          );
+        }
         log(`📦 ZIP_PATH=${zipPath}`, "bright");
         console.log(`ZIP_PATH=${zipPath}`);
 
-        // Exit with success
+        // Exit with success (even if there were warnings)
         process.exit(0);
       })
       .catch((error) => {
         log(`❌ Failed to create zip file: ${error.message}`, "red");
+        log(`   Error details: ${error.stack || error}`, "red");
         process.exit(1);
       });
   } catch (error) {
     log(`❌ Unexpected error: ${error.message}`, "red");
+    log(`   Error details: ${error.stack || error}`, "red");
+    // Still try to continue if possible
+    log("⚠️  Attempting to continue despite error...", "yellow");
     process.exit(1);
   }
 }

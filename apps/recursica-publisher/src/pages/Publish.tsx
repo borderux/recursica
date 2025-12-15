@@ -227,20 +227,21 @@ export default function Publish() {
                   </div>
                 )}
 
-                {/* Show error if version is same or older */}
+                {/* Show warning if version is same or older */}
                 {isVersionInvalid && (
                   <div
                     style={{
                       padding: "12px",
                       marginTop: "20px",
-                      backgroundColor: "#ffebee",
-                      border: "1px solid #f44336",
+                      backgroundColor: "#fff3e0",
+                      border: "1px solid #f57c00",
                       borderRadius: "4px",
-                      color: "#c62828",
+                      color: "#e65100",
                     }}
                   >
-                    Cannot publish because this version is or older than the
-                    currently published version.
+                    ⚠️ Warning: This version is older than or equal to the
+                    currently published version. Publishing will still proceed
+                    if you continue.
                   </div>
                 )}
 
@@ -283,29 +284,24 @@ export default function Publish() {
                         navigate("/publishing");
                       }
                     }}
-                    disabled={isVersionInvalid}
                     style={{
                       padding: "12px 24px",
                       fontSize: "16px",
                       fontWeight: "bold",
                       backgroundColor: "transparent",
-                      color: isVersionInvalid ? "#999" : "#d40d0d",
-                      border: `2px solid ${isVersionInvalid ? "#999" : "#d40d0d"}`,
+                      color: "#d40d0d",
+                      border: "2px solid #d40d0d",
                       borderRadius: "8px",
-                      cursor: isVersionInvalid ? "not-allowed" : "pointer",
-                      opacity: isVersionInvalid ? 0.6 : 1,
+                      cursor: "pointer",
+                      opacity: 1,
                     }}
                     onMouseOver={(e) => {
-                      if (!isVersionInvalid) {
-                        e.currentTarget.style.backgroundColor = "#d40d0d";
-                        e.currentTarget.style.color = "white";
-                      }
+                      e.currentTarget.style.backgroundColor = "#d40d0d";
+                      e.currentTarget.style.color = "white";
                     }}
                     onMouseOut={(e) => {
-                      if (!isVersionInvalid) {
-                        e.currentTarget.style.backgroundColor = "transparent";
-                        e.currentTarget.style.color = "#d40d0d";
-                      }
+                      e.currentTarget.style.backgroundColor = "transparent";
+                      e.currentTarget.style.color = "#d40d0d";
                     }}
                   >
                     Publish

@@ -526,14 +526,43 @@ export async function parseInstanceProperties(
           const pathSegment = nodeName || "";
           pathNames.unshift(pathSegment);
 
+          // Debug: log path building for components in Icons page
+          if (
+            componentSetName === "arrow-top-right-on-square" ||
+            componentName === "arrow-top-right-on-square"
+          ) {
+            await debugConsole.log(
+              `  [PATH BUILD] Added segment: "${pathSegment}" (type: ${nodeType}) to path for component "${componentName}"`,
+            );
+          }
+
           current = current.parent;
           depth++;
-        } catch {
+        } catch (error) {
+          // Debug: log errors during path building
+          if (
+            componentSetName === "arrow-top-right-on-square" ||
+            componentName === "arrow-top-right-on-square"
+          ) {
+            await debugConsole.warning(
+              `  [PATH BUILD] Error building path for "${componentName}": ${error}`,
+            );
+          }
           break;
         }
       }
 
       mainComponentParentPath = pathNames;
+
+      // Debug: log final path for components in Icons page
+      if (
+        componentSetName === "arrow-top-right-on-square" ||
+        componentName === "arrow-top-right-on-square"
+      ) {
+        await debugConsole.log(
+          `  [PATH BUILD] Final path for component "${componentName}": [${pathNames.join(" → ")}]`,
+        );
+      }
     } catch {
       // Path building failed, continue without it
     }
