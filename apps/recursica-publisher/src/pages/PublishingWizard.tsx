@@ -847,17 +847,21 @@ export default function PublishingWizard() {
             </span>
           </p>
           {isVersionInvalid && (
-            <p
+            <div
               style={{
                 margin: "12px 0 0 0",
+                padding: "12px",
                 fontSize: "14px",
-                color: "#c62828",
+                backgroundColor: "#fff3e0",
+                border: "1px solid #f57c00",
+                borderRadius: "4px",
+                color: "#e65100",
                 fontWeight: "bold",
               }}
             >
-              Unable to publish because the version is the same or older than
-              what is already published.
-            </p>
+              ⚠️ Warning: This version is older than or equal to the currently
+              published version. Publishing will still proceed if you continue.
+            </div>
           )}
           {typeof currentVersion === "number" &&
             newVersion < currentVersion && (
@@ -873,43 +877,41 @@ export default function PublishingWizard() {
             )}
         </div>
 
-        {!isVersionInvalid && (
-          <div>
-            <label
-              htmlFor="change-message-main"
-              style={{
-                display: "block",
-                marginBottom: "8px",
-                fontSize: "16px",
-                fontWeight: "bold",
-              }}
-            >
-              Change Message <span style={{ color: "#c62828" }}>*</span>
-            </label>
-            <textarea
-              id="change-message-main"
-              value={currentDecision.changeMessage}
-              onChange={(e) => {
-                updatePageDecision(exportData.pageName, {
-                  changeMessage: e.target.value,
-                });
-              }}
-              placeholder="Describe the changes you made component..."
-              required
-              style={{
-                width: "100%",
-                minHeight: "120px",
-                padding: "12px",
-                fontSize: "14px",
-                fontFamily: "inherit",
-                border: "1px solid #e0e0e0",
-                borderRadius: "4px",
-                boxSizing: "border-box",
-                resize: "vertical",
-              }}
-            />
-          </div>
-        )}
+        <div>
+          <label
+            htmlFor="change-message-main"
+            style={{
+              display: "block",
+              marginBottom: "8px",
+              fontSize: "16px",
+              fontWeight: "bold",
+            }}
+          >
+            Change Message <span style={{ color: "#c62828" }}>*</span>
+          </label>
+          <textarea
+            id="change-message-main"
+            value={currentDecision.changeMessage}
+            onChange={(e) => {
+              updatePageDecision(exportData.pageName, {
+                changeMessage: e.target.value,
+              });
+            }}
+            placeholder="Describe the changes you made component..."
+            required
+            style={{
+              width: "100%",
+              minHeight: "120px",
+              padding: "12px",
+              fontSize: "14px",
+              fontFamily: "inherit",
+              border: "1px solid #e0e0e0",
+              borderRadius: "4px",
+              boxSizing: "border-box",
+              resize: "vertical",
+            }}
+          />
+        </div>
 
         {prUrl ? (
           <div
@@ -937,31 +939,6 @@ export default function PublishingWizard() {
               View Pull Request
             </a>
           </div>
-        ) : isVersionInvalid ? (
-          <button
-            onClick={() => navigate("/")}
-            style={{
-              padding: "12px 24px",
-              fontSize: "16px",
-              fontWeight: "bold",
-              backgroundColor: "transparent",
-              color: "#d40d0d",
-              border: "2px solid #d40d0d",
-              borderRadius: "8px",
-              cursor: "pointer",
-              alignSelf: "flex-start",
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = "#d40d0d";
-              e.currentTarget.style.color = "white";
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = "transparent";
-              e.currentTarget.style.color = "#d40d0d";
-            }}
-          >
-            Cancel
-          </button>
         ) : (
           <button
             onClick={handlePublishToGitHub}

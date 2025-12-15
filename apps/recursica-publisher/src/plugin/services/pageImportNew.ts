@@ -6022,67 +6022,119 @@ export async function resolveDeferredNormalInstances(
           if (exactMatch || cleanMatch) {
             // If we've reached the end of the path and this is a COMPONENT_SET,
             // search for the component inside it
-            if (remainingPath.length === 0 && child.type === "COMPONENT_SET") {
-              // Verify component set name matches if provided (try both exact and clean)
-              if (componentSetName) {
-                const setExactMatch = child.name === componentSetName;
-                const setCleanMatch =
-                  getComponentCleanName(child.name) ===
-                  getComponentCleanName(componentSetName);
-                if (!setExactMatch && !setCleanMatch) {
-                  continue; // Skip this component set if name doesn't match
+            if (remainingPath.length === 0) {
+              // Debug: log what we found
+              // Note: Can't use await here since this function isn't async, but we'll log via the caller
+              if (child.type === "COMPONENT_SET") {
+                // Verify component set name matches if provided (try both exact and clean)
+                if (componentSetName) {
+                  const setExactMatch = child.name === componentSetName;
+                  const setCleanMatch =
+                    getComponentCleanName(child.name) ===
+                    getComponentCleanName(componentSetName);
+                  if (!setExactMatch && !setCleanMatch) {
+                    continue; // Skip this component set if name doesn't match
+                  }
                 }
-              }
 
-              // Search for the component variant in this COMPONENT_SET
-              const cleanTargetName = getComponentCleanName(componentName);
-              for (const variant of child.children || []) {
-                if (variant.type === "COMPONENT") {
-                  const variantExactMatch = variant.name === componentName;
-                  const variantCleanMatch =
-                    getComponentCleanName(variant.name) === cleanTargetName;
+                // Search for the component variant in this COMPONENT_SET
+                const cleanTargetName = getComponentCleanName(componentName);
+                let nameMatch: ComponentNode | null = null; // Store first name match as fallback
+                for (const variant of child.children || []) {
+                  if (variant.type === "COMPONENT") {
+                    const variantExactMatch = variant.name === componentName;
+                    const variantCleanMatch =
+                      getComponentCleanName(variant.name) === cleanTargetName;
 
-                  if (variantExactMatch || variantCleanMatch) {
-                    // Found the variant - check GUID if provided
-                    if (componentGuid) {
-                      try {
-                        const metadataStr = variant.getPluginData(
-                          "RecursicaPublishedMetadata",
-                        );
-                        if (metadataStr) {
-                          const metadata = JSON.parse(metadataStr);
-                          if (metadata.id === componentGuid) {
-                            return variant;
-                          }
-                        }
-                      } catch {
-                        // Continue searching
+                    if (variantExactMatch || variantCleanMatch) {
+                      // Store as name match (fallback if GUID check fails)
+                      if (!nameMatch) {
+                        nameMatch = variant;
                       }
-                    }
-                    // Return variant (GUID check passed or no GUID provided)
-                    // Prefer exact match
-                    if (variantExactMatch) {
-                      return variant;
+                      // Found the variant - check GUID if provided
+                      if (componentGuid) {
+                        try {
+                          const metadataStr = variant.getPluginData(
+                            "RecursicaPublishedMetadata",
+                          );
+                          if (metadataStr) {
+                            const metadata = JSON.parse(metadataStr);
+                            if (metadata.id === componentGuid) {
+                              return variant;
+                            }
+                          }
+                        } catch {
+                          // Continue searching
+                        }
+                      }
+                      // Return variant (GUID check passed or no GUID provided)
+                      // Prefer exact match
+                      if (variantExactMatch) {
+                        return variant;
+                      }
                     }
                   }
                 }
+                // Return name match if found (clean match fallback)
+                if (nameMatch) {
+                  return nameMatch;
+                }
+                // Component not found in COMPONENT_SET
+                return null;
               }
-              // Component not found in COMPONENT_SET
+              // If we're at the end of the path but it's not a COMPONENT_SET, this is an error
+              // (we expected to find a COMPONENT_SET to search within)
               return null;
             }
-            return findComponentByPath(
-              child,
-              remainingPath,
-              componentName,
-              componentGuid,
-              componentSetName,
-            );
+            // Continue searching recursively if there are more path segments
+            if (remainingPath.length > 0) {
+              return findComponentByPath(
+                child,
+                remainingPath,
+                componentName,
+                componentGuid,
+                componentSetName,
+              );
+            }
+            // If we matched the path segment but have no remaining path and it's not a COMPONENT_SET,
+            // we can't proceed (should have been handled above)
+            return null;
           }
         }
         return null;
       };
 
-      const targetComponent = findComponentByPath(
+      // Debug: log what we're searching for
+      await debugConsole.log(
+        `  [DEBUG] Searching for component "${instanceEntry.componentName}" on page "${referencedPage.name}"`,
+      );
+      if (instanceEntry.path && instanceEntry.path.length > 0) {
+        await debugConsole.log(
+          `  [DEBUG] Component path: [${instanceEntry.path.join(" → ")}]`,
+        );
+      } else {
+        await debugConsole.log(`  [DEBUG] Component is at page root`);
+      }
+      if (instanceEntry.componentSetName) {
+        await debugConsole.log(
+          `  [DEBUG] Component set name: "${instanceEntry.componentSetName}"`,
+        );
+      }
+      if (instanceEntry.componentGuid) {
+        await debugConsole.log(
+          `  [DEBUG] Component GUID: ${instanceEntry.componentGuid.substring(0, 8)}...`,
+        );
+      }
+
+      // Debug: log available top-level nodes on the page
+      const topLevelNodes = referencedPage.children.slice(0, 10).map((node) => {
+        return `${node.type}: "${node.name}"${node.type === "COMPONENT_SET" ? ` (${(node as ComponentSetNode).children.length} variants)` : ""}`;
+      });
+      await debugConsole.log(
+        `  [DEBUG] Top-level nodes on page "${referencedPage.name}" (first 10): ${topLevelNodes.join(", ")}`,
+      );
+
+      let targetComponent = findComponentByPath(
         referencedPage,
         instanceEntry.path || [],
         instanceEntry.componentName,
@@ -6090,11 +6142,104 @@ export async function resolveDeferredNormalInstances(
         instanceEntry.componentSetName,
       );
 
+      // If path-based search failed, try searching recursively through all FRAMEs
+      // This handles cases where the path doesn't match the actual structure
+      // (e.g., component is inside an "Icons" FRAME but path doesn't include it)
+      if (!targetComponent && instanceEntry.componentSetName) {
+        await debugConsole.log(
+          `  [DEBUG] Path-based search failed, trying recursive search for COMPONENT_SET "${instanceEntry.componentSetName}"`,
+        );
+        const recursiveSearch = (
+          node: any,
+          depth = 0,
+        ): ComponentNode | null => {
+          if (depth > 5) return null; // Limit depth
+          for (const child of node.children || []) {
+            if (child.type === "COMPONENT_SET") {
+              const setExactMatch =
+                child.name === instanceEntry.componentSetName;
+              const setCleanMatch =
+                getComponentCleanName(child.name) ===
+                getComponentCleanName(instanceEntry.componentSetName || "");
+              if (setExactMatch || setCleanMatch) {
+                // Found the component set, now search for the variant
+                const cleanTargetName = getComponentCleanName(
+                  instanceEntry.componentName,
+                );
+                for (const variant of child.children || []) {
+                  if (variant.type === "COMPONENT") {
+                    const variantExactMatch =
+                      variant.name === instanceEntry.componentName;
+                    const variantCleanMatch =
+                      getComponentCleanName(variant.name) === cleanTargetName;
+                    if (variantExactMatch || variantCleanMatch) {
+                      // Check GUID if provided
+                      if (instanceEntry.componentGuid) {
+                        try {
+                          const metadataStr = variant.getPluginData(
+                            "RecursicaPublishedMetadata",
+                          );
+                          if (metadataStr) {
+                            const metadata = JSON.parse(metadataStr);
+                            if (metadata.id === instanceEntry.componentGuid) {
+                              return variant;
+                            }
+                          }
+                        } catch {
+                          // Continue
+                        }
+                      }
+                      // Return variant (prefer exact match)
+                      if (variantExactMatch) {
+                        return variant;
+                      }
+                      // Return clean match as fallback
+                      return variant;
+                    }
+                  }
+                }
+              }
+            }
+            // Recurse into FRAMEs and GROUPs
+            if (child.type === "FRAME" || child.type === "GROUP") {
+              const found = recursiveSearch(child, depth + 1);
+              if (found) return found;
+            }
+          }
+          return null;
+        };
+        targetComponent = recursiveSearch(referencedPage);
+        if (targetComponent) {
+          await debugConsole.log(
+            `  [DEBUG] Found component via recursive search: "${targetComponent.name}"`,
+          );
+        }
+      }
+
       if (!targetComponent) {
         const pathDisplay =
           instanceEntry.path && instanceEntry.path.length > 0
             ? ` at path [${instanceEntry.path.join(" → ")}]`
             : " at page root";
+        // Debug: log available components on the page
+        const availableComponents: string[] = [];
+        const collectComponentNames = (node: any, depth = 0): void => {
+          if (depth > 3) return; // Limit depth to avoid too much output
+          if (node.type === "COMPONENT" || node.type === "COMPONENT_SET") {
+            availableComponents.push(
+              `${node.type}: "${node.name}"${node.type === "COMPONENT_SET" ? ` (${node.children.length} variants)` : ""}`,
+            );
+          }
+          if (node.children && Array.isArray(node.children)) {
+            for (const child of node.children.slice(0, 10)) {
+              collectComponentNames(child, depth + 1);
+            }
+          }
+        };
+        collectComponentNames(referencedPage);
+        await debugConsole.log(
+          `  [DEBUG] Available components on page "${referencedPage.name}" (first 20): ${availableComponents.slice(0, 20).join(", ")}`,
+        );
         const error = `Deferred instance "${nodeData.name}" still cannot find component "${instanceEntry.componentName}" on page "${instanceEntry.componentPageName}"${pathDisplay}`;
         await debugConsole.error(error);
         errors.push(error);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router";
 import {
   useImportWizard,
@@ -16,9 +16,19 @@ export default function Step2DependencyOverview() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dependencies, setDependencies] = useState<DependencySelection[]>([]);
+  const processedRef = useRef<string | null>(null);
 
   useEffect(() => {
     const loadDependencies = async () => {
+      // Reset processed ref when component changes
+      const currentComponentGuid = wizardState.selectedComponent?.guid;
+      if (
+        processedRef.current &&
+        currentComponentGuid &&
+        !processedRef.current.startsWith(currentComponentGuid)
+      ) {
+        processedRef.current = null;
+      }
       // If no selected component but we have importData, populate wizard state from it
       if (!wizardState.selectedComponent) {
         if (importData?.mainFile?.data) {
@@ -82,13 +92,32 @@ export default function Step2DependencyOverview() {
       if (
         wizardState.componentData.mainComponent &&
         wizardState.componentData.mainComponent.guid ===
-          wizardState.selectedComponent.guid &&
-        wizardState.componentData.dependencies.length > 0
+          wizardState.selectedComponent.guid
       ) {
+        // Check if we've already processed this component to prevent loops
+        const componentKey = `${wizardState.selectedComponent.guid}-${wizardState.componentData.dependencies.length}`;
+        if (processedRef.current === componentKey) {
+          // Already processed, skip
+          return;
+        }
+
+        // If there are no dependencies, just set empty array and return
+        if (wizardState.componentData.dependencies.length === 0) {
+          setDependencies([]);
+          setWizardState((prev) => ({
+            ...prev,
+            dependencies: [],
+          }));
+          setLoading(false);
+          processedRef.current = componentKey;
+          return;
+        }
+
         // Component data already loaded, process it
         try {
           setLoading(true);
           setError(null);
+          processedRef.current = componentKey;
 
           const fetchedDeps = wizardState.componentData.dependencies;
 
@@ -192,9 +221,17 @@ export default function Step2DependencyOverview() {
         return;
       }
 
+      // Check if we've already processed this component to prevent loops
+      const componentKey = `${wizardState.selectedComponent.guid}-fetch`;
+      if (processedRef.current === componentKey) {
+        // Already processed, skip
+        return;
+      }
+
       try {
         setLoading(true);
         setError(null);
+        processedRef.current = componentKey;
 
         const ref = wizardState.selectedComponent.ref || "main";
 
@@ -349,9 +386,8 @@ export default function Step2DependencyOverview() {
 
     loadDependencies();
   }, [
-    wizardState.selectedComponent,
-    wizardState.componentData.dependencies,
-    wizardState.componentData.mainComponent,
+    wizardState.selectedComponent?.guid,
+    wizardState.componentData.mainComponent?.guid,
     navigate,
     setWizardState,
     importData,
