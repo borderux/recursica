@@ -1182,19 +1182,26 @@ export async function cleanupFailedImport(
       return await deleteImportGroup({ pageId: pageWithMetadata.id });
     }
 
-    // Otherwise, just delete all pages with UNDER_REVIEW_KEY
+    // Otherwise, look for pages with UNDER_REVIEW_KEY or pages with PAGE_METADATA_KEY
+    // (new import system uses PAGE_METADATA_KEY, old system uses UNDER_REVIEW_KEY)
     await debugConsole.log(
-      "No metadata found, deleting pages with UNDER_REVIEW_KEY",
+      "No primary metadata found, looking for pages with UNDER_REVIEW_KEY or PAGE_METADATA_KEY",
     );
+    const PAGE_METADATA_KEY = "RecursicaPublishedMetadata";
     const pagesToDelete: Array<{ id: string; name: string }> = [];
     for (const page of allPages) {
       if (page.type !== "PAGE") {
         continue;
       }
       const underReview = page.getPluginData(UNDER_REVIEW_KEY);
-      if (underReview === "true") {
+      const pageMetadata = page.getPluginData(PAGE_METADATA_KEY);
+      // Delete if marked as under review OR if it has page metadata (new import system)
+      if (underReview === "true" || pageMetadata) {
         // Store page info before deletion
         pagesToDelete.push({ id: page.id, name: page.name });
+        await debugConsole.log(
+          `Found page to delete: "${page.name}" (underReview: ${underReview === "true"}, hasMetadata: ${!!pageMetadata})`,
+        );
       }
     }
 

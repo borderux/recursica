@@ -242,9 +242,17 @@ export default function Step5Importing() {
         console.error(
           `[Step5Importing] Cleanup failed: ${result.message || "Unknown error"}`,
         );
+      } else {
+        // Clear import data state after successful cleanup
+        setImportData(null);
+        console.log(
+          `[Step5Importing] Cleanup successful: deleted ${result.data?.deletedPages || 0} page(s)`,
+        );
       }
     } catch (err) {
       console.error("[Step5Importing] Cleanup error:", err);
+      // Still clear import data even if cleanup had an error
+      setImportData(null);
     } finally {
       setIsCleaningUp(false);
       resetWizard();

@@ -9,7 +9,12 @@ import {
   testItemSpacingVariableBindingFailure,
   testItemSpacingVariableBindingFix,
 } from "./test/testItemSpacingVariableBinding";
-import { testConstraints } from "./test/testConstraints";
+import {
+  testConstraints,
+  testConstraintsVectorInComponentFailure,
+  testConstraintsVectorInComponentFix,
+  testConstraintsVectorStandalone,
+} from "./test/testConstraints";
 
 export interface RunTestResponseData {
   testResults: {
@@ -174,6 +179,68 @@ export async function runTest(
       details: test5Results.details,
     });
 
+    // Clean up test frame for next test
+    testFrame5.remove();
+    const testFrame6 = figma.createFrame();
+    testFrame6.name = "Test";
+    testPage.appendChild(testFrame6);
+
+    // Test 6: Constraints on VECTOR in COMPONENT - Failure Case
+    await debugConsole.log("\n" + "=".repeat(60));
+    await debugConsole.log(
+      "TEST 6: Constraints on VECTOR in COMPONENT (FAILURE CASE)",
+    );
+    await debugConsole.log("=".repeat(60));
+    const test6Results = await testConstraintsVectorInComponentFailure(
+      testPage.id,
+    );
+    allTests.push({
+      name: "Constraints VECTOR in COMPONENT (Failure)",
+      success: test6Results.success,
+      message: test6Results.message,
+      details: test6Results.details,
+    });
+
+    // Clean up test frame for next test
+    testFrame6.remove();
+    const testFrame7 = figma.createFrame();
+    testFrame7.name = "Test";
+    testPage.appendChild(testFrame7);
+
+    // Test 7: Constraints on VECTOR in COMPONENT - Fix Case
+    await debugConsole.log("\n" + "=".repeat(60));
+    await debugConsole.log(
+      "TEST 7: Constraints on VECTOR in COMPONENT (FIX CASE)",
+    );
+    await debugConsole.log("=".repeat(60));
+    const test7Results = await testConstraintsVectorInComponentFix(testPage.id);
+    allTests.push({
+      name: "Constraints VECTOR in COMPONENT (Fix)",
+      success: test7Results.success,
+      message: test7Results.message,
+      details: test7Results.details,
+    });
+
+    // Clean up test frame for next test
+    testFrame7.remove();
+    const testFrame8 = figma.createFrame();
+    testFrame8.name = "Test";
+    testPage.appendChild(testFrame8);
+
+    // Test 8: Constraints on standalone VECTOR (not in COMPONENT)
+    await debugConsole.log("\n" + "=".repeat(60));
+    await debugConsole.log(
+      "TEST 8: Constraints on Standalone VECTOR (not in COMPONENT)",
+    );
+    await debugConsole.log("=".repeat(60));
+    const test8Results = await testConstraintsVectorStandalone(testPage.id);
+    allTests.push({
+      name: "Constraints VECTOR Standalone",
+      success: test8Results.success,
+      message: test8Results.message,
+      details: test8Results.details,
+    });
+
     // Overall summary
     await debugConsole.log("\n" + "=".repeat(60));
     await debugConsole.log("=== ALL TESTS COMPLETE ===");
@@ -190,13 +257,17 @@ export async function runTest(
     }
 
     // Overall success if all critical tests pass
-    // Test 1, 2, 4, and 5 should pass. Test 3 should "pass" (demonstrate failure)
+    // Test 1, 2, 4, 5, 6, 7, and 8 should pass. Test 3 should "pass" (demonstrate failure)
+    // Test 6 should "pass" (demonstrate the failure case)
     const overallSuccess =
       test1Results.success &&
       test2Results.success &&
       test3Results.success && // This "success" means we demonstrated the failure
       test4Results.success &&
-      test5Results.success;
+      test5Results.success &&
+      test6Results.success && // This "success" means we demonstrated the failure
+      test7Results.success &&
+      test8Results.success;
 
     const responseData: RunTestResponseData = {
       testResults: {

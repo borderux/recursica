@@ -978,6 +978,12 @@ function applyDefaultsToNode(
  * Recursively recreates nodes from the extracted data
  * Uses defaults when properties are missing
  */
+/**
+ * Note: The Figma Plugin API uses the same constraint values as we export:
+ * MIN, CENTER, MAX, STRETCH, SCALE
+ * No mapping is needed - we can use the exported values directly.
+ */
+
 export async function recreateNodeFromData(
   nodeData: any,
   parentNode: any,
@@ -2316,6 +2322,11 @@ export async function recreateNodeFromData(
     return null;
   }
 
+  // ISSUE #4: Note: For VECTOR nodes, constraints are set using the constraints object API
+  // AFTER vectorPaths and size are set. The constraints object API works even after
+  // appending to COMPONENTs (as proven by tests), so no special timing is required.
+  // This is handled later in the code (after vectorPaths and size are set).
+
   // Store node ID mapping for internal instance resolution
   if (nodeData.id && nodeIdMapping) {
     nodeIdMapping.set(nodeData.id, newNode);
@@ -2456,129 +2467,245 @@ export async function recreateNodeFromData(
       );
     }
 
-    // ISSUE #4 DEBUG: Check constraints after resize
-    const constraintsAfter = (newNode as any).constraints;
-    const constraintHorizontalAfter = (newNode as any).constraintHorizontal;
-    const constraintVerticalAfter = (newNode as any).constraintVertical;
-    if (constraintsAfter !== undefined) {
-      await debugConsole.log(
-        `  [ISSUE #4 DEBUG] "${nodeName}" constraints after resize: ${JSON.stringify(constraintsAfter)}`,
-      );
-    }
+    // ISSUE #4: Log constraints from nodeData (what we're trying to import)
+    const expectedConstraintH =
+      nodeData.constraintHorizontal || nodeData.constraints?.horizontal;
+    const expectedConstraintV =
+      nodeData.constraintVertical || nodeData.constraints?.vertical;
     if (
-      constraintHorizontalAfter !== undefined ||
-      constraintVerticalAfter !== undefined
+      expectedConstraintH !== undefined ||
+      expectedConstraintV !== undefined
     ) {
       await debugConsole.log(
-        `  [ISSUE #4 DEBUG] "${nodeName}" constraintHorizontal: ${constraintHorizontalAfter}, constraintVertical: ${constraintVerticalAfter}`,
+        `  [ISSUE #4] "${nodeName}" (${nodeData.type}) - Expected constraints from JSON: H=${expectedConstraintH || "undefined"}, V=${expectedConstraintV || "undefined"}`,
       );
     }
+
+    // ISSUE #4 DEBUG: Check constraints after resize (before we set them)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const constraintHorizontalAfter = (newNode as any).constraints?.horizontal;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const constraintVerticalAfter = (newNode as any).constraints?.vertical;
+    if (
+      expectedConstraintH !== undefined ||
+      expectedConstraintV !== undefined
+    ) {
+      await debugConsole.log(
+        `  [ISSUE #4] "${nodeName}" (${nodeData.type}) - Constraints after resize (before setting): H=${constraintHorizontalAfter || "undefined"}, V=${constraintVerticalAfter || "undefined"}`,
+      );
+    }
+
     // ISSUE #4: Set constraints if they exist in nodeData
-    // Constraints must be set after resize, as resize may reset them
-    if (nodeData.constraintHorizontal !== undefined) {
-      const expectedHorizontal = nodeData.constraintHorizontal;
-      if (constraintHorizontalAfter !== expectedHorizontal) {
+    // Use the constraints object API: node.constraints = { horizontal: 'SCALE', vertical: 'SCALE' }
+    // Note: Figma API uses the same values we export: MIN, CENTER, MAX, STRETCH, SCALE
+    const hasConstraintH =
+      nodeData.constraintHorizontal !== undefined ||
+      nodeData.constraints?.horizontal !== undefined;
+    const hasConstraintV =
+      nodeData.constraintVertical !== undefined ||
+      nodeData.constraints?.vertical !== undefined;
+
+    if (hasConstraintH || hasConstraintV) {
+      const exportedH =
+        nodeData.constraintHorizontal || nodeData.constraints?.horizontal;
+      const exportedV =
+        nodeData.constraintVertical || nodeData.constraints?.vertical;
+
+      // Use exported values directly (no mapping needed - Figma API uses same values)
+      const apiH = exportedH || constraintHorizontalAfter || "MIN";
+      const apiV = exportedV || constraintVerticalAfter || "MIN";
+
+      try {
         await debugConsole.log(
-          `  [ISSUE #4] Setting constraintHorizontal to ${expectedHorizontal} for "${nodeName}" (was ${constraintHorizontalAfter})`,
+          `  [ISSUE #4] Setting constraints for "${nodeName}" (${nodeData.type}): H=${apiH} (from ${exportedH || "default"}), V=${apiV} (from ${exportedV || "default"})`,
         );
-        (newNode as any).constraintHorizontal = expectedHorizontal;
-      } else {
-        await debugConsole.log(
-          `  [ISSUE #4] constraintHorizontal already correct (${expectedHorizontal}) for "${nodeName}"`,
+
+        // Use the constraints object API
+        (newNode as any).constraints = {
+          horizontal: apiH,
+          vertical: apiV,
+        };
+
+        // Verify immediately after setting
+        const verifyH = (newNode as any).constraints?.horizontal;
+        const verifyV = (newNode as any).constraints?.vertical;
+        if (verifyH === apiH && verifyV === apiV) {
+          await debugConsole.log(
+            `  [ISSUE #4] ✓ Constraints set successfully: H=${verifyH}, V=${verifyV} for "${nodeName}"`,
+          );
+        } else {
+          await debugConsole.warning(
+            `  [ISSUE #4] ⚠️ Constraints set but verification failed! Expected H=${apiH}, V=${apiV}, got H=${verifyH || "undefined"}, V=${verifyV || "undefined"} for "${nodeName}"`,
+          );
+        }
+      } catch (error) {
+        await debugConsole.warning(
+          `  [ISSUE #4] ✗ Failed to set constraints for "${nodeName}" (${nodeData.type}): ${error instanceof Error ? error.message : String(error)}`,
         );
-      }
-    } else if (nodeData.constraints?.horizontal !== undefined) {
-      // Support legacy constraints object format
-      const expectedHorizontal = nodeData.constraints.horizontal;
-      if (constraintHorizontalAfter !== expectedHorizontal) {
-        await debugConsole.log(
-          `  [ISSUE #4] Setting constraintHorizontal to ${expectedHorizontal} for "${nodeName}" (was ${constraintHorizontalAfter}) from constraints object`,
-        );
-        (newNode as any).constraintHorizontal = expectedHorizontal;
       }
     }
 
-    if (nodeData.constraintVertical !== undefined) {
-      const expectedVertical = nodeData.constraintVertical;
-      if (constraintVerticalAfter !== expectedVertical) {
-        await debugConsole.log(
-          `  [ISSUE #4] Setting constraintVertical to ${expectedVertical} for "${nodeName}" (was ${constraintVerticalAfter})`,
-        );
-        (newNode as any).constraintVertical = expectedVertical;
-      } else {
-        await debugConsole.log(
-          `  [ISSUE #4] constraintVertical already correct (${expectedVertical}) for "${nodeName}"`,
-        );
-      }
-    } else if (nodeData.constraints?.vertical !== undefined) {
-      // Support legacy constraints object format
-      const expectedVertical = nodeData.constraints.vertical;
-      if (constraintVerticalAfter !== expectedVertical) {
-        await debugConsole.log(
-          `  [ISSUE #4] Setting constraintVertical to ${expectedVertical} for "${nodeName}" (was ${constraintVerticalAfter}) from constraints object`,
-        );
-        (newNode as any).constraintVertical = expectedVertical;
-      }
-    }
-
-    // Verify constraints were set correctly
+    // Final verification of constraints
     const finalConstraintH = (newNode as any).constraintHorizontal;
     const finalConstraintV = (newNode as any).constraintVertical;
     if (
-      nodeData.constraintHorizontal !== undefined ||
-      nodeData.constraintVertical !== undefined ||
-      nodeData.constraints !== undefined
+      expectedConstraintH !== undefined ||
+      expectedConstraintV !== undefined
     ) {
-      const expectedH =
-        nodeData.constraintHorizontal || nodeData.constraints?.horizontal;
-      const expectedV =
-        nodeData.constraintVertical || nodeData.constraints?.vertical;
-      if (expectedH !== undefined && finalConstraintH !== expectedH) {
+      await debugConsole.log(
+        `  [ISSUE #4] "${nodeName}" (${nodeData.type}) - Final constraints: H=${finalConstraintH || "undefined"}, V=${finalConstraintV || "undefined"}`,
+      );
+      if (
+        expectedConstraintH !== undefined &&
+        finalConstraintH !== expectedConstraintH
+      ) {
         await debugConsole.warning(
-          `  ⚠️ ISSUE #4: "${nodeName}" constraintHorizontal mismatch after setting! Expected: ${expectedH}, Got: ${finalConstraintH}`,
-        );
-      }
-      if (expectedV !== undefined && finalConstraintV !== expectedV) {
-        await debugConsole.warning(
-          `  ⚠️ ISSUE #4: "${nodeName}" constraintVertical mismatch after setting! Expected: ${expectedV}, Got: ${finalConstraintV}`,
+          `  ⚠️ ISSUE #4: "${nodeName}" constraintHorizontal mismatch! Expected: ${expectedConstraintH}, Got: ${finalConstraintH || "undefined"}`,
         );
       }
       if (
-        expectedH !== undefined &&
-        expectedV !== undefined &&
-        finalConstraintH === expectedH &&
-        finalConstraintV === expectedV
+        expectedConstraintV !== undefined &&
+        finalConstraintV !== expectedConstraintV
+      ) {
+        await debugConsole.warning(
+          `  ⚠️ ISSUE #4: "${nodeName}" constraintVertical mismatch! Expected: ${expectedConstraintV}, Got: ${finalConstraintV || "undefined"}`,
+        );
+      }
+      if (
+        expectedConstraintH !== undefined &&
+        expectedConstraintV !== undefined &&
+        finalConstraintH === expectedConstraintH &&
+        finalConstraintV === expectedConstraintV
       ) {
         await debugConsole.log(
-          `  ✓ ISSUE #4: "${nodeName}" constraints set correctly: H=${finalConstraintH}, V=${finalConstraintV}`,
+          `  ✓ ISSUE #4: "${nodeName}" constraints correctly set: H=${finalConstraintH}, V=${finalConstraintV}`,
         );
       }
     }
   } else {
     // No resize happened, but we still need to set constraints if they exist
     // ISSUE #4: Set constraints even if no resize
-    if (nodeData.constraintHorizontal !== undefined) {
-      await debugConsole.log(
-        `  [ISSUE #4] Setting constraintHorizontal to ${nodeData.constraintHorizontal} for "${nodeName}" (no resize)`,
-      );
-      (newNode as any).constraintHorizontal = nodeData.constraintHorizontal;
-    } else if (nodeData.constraints?.horizontal !== undefined) {
-      await debugConsole.log(
-        `  [ISSUE #4] Setting constraintHorizontal to ${nodeData.constraints.horizontal} for "${nodeName}" from constraints object (no resize)`,
-      );
-      (newNode as any).constraintHorizontal = nodeData.constraints.horizontal;
+    // Note: VECTOR nodes have constraints set earlier (right after size is set) to avoid "not extensible" errors
+    // Note: Some nodes (e.g., inside components) may be "not extensible" - wrap in try-catch
+    const expectedConstraintH =
+      nodeData.constraintHorizontal || nodeData.constraints?.horizontal;
+    const expectedConstraintV =
+      nodeData.constraintVertical || nodeData.constraints?.vertical;
+    if (
+      expectedConstraintH !== undefined ||
+      expectedConstraintV !== undefined
+    ) {
+      // Skip VECTOR nodes - constraints are set earlier to avoid "not extensible" errors
+      if (nodeData.type === "VECTOR") {
+        await debugConsole.log(
+          `  [ISSUE #4] "${nodeName}" (VECTOR) - Constraints already set earlier (skipping "no resize" path)`,
+        );
+      } else {
+        await debugConsole.log(
+          `  [ISSUE #4] "${nodeName}" (${nodeData.type}) - Setting constraints (no resize): Expected H=${expectedConstraintH || "undefined"}, V=${expectedConstraintV || "undefined"}`,
+        );
+      }
     }
 
-    if (nodeData.constraintVertical !== undefined) {
+    // Skip VECTOR nodes - constraints are set earlier
+    // Use the same constraints object API for the "no resize" path
+    if (nodeData.type !== "VECTOR") {
+      const hasConstraintHNoResize =
+        nodeData.constraintHorizontal !== undefined ||
+        nodeData.constraints?.horizontal !== undefined;
+      const hasConstraintVNoResize =
+        nodeData.constraintVertical !== undefined ||
+        nodeData.constraints?.vertical !== undefined;
+
+      if (hasConstraintHNoResize || hasConstraintVNoResize) {
+        const exportedHNoResize =
+          nodeData.constraintHorizontal || nodeData.constraints?.horizontal;
+        const exportedVNoResize =
+          nodeData.constraintVertical || nodeData.constraints?.vertical;
+
+        // Get current constraints to preserve one if only setting the other
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const currentConstraints = (newNode as any).constraints || {};
+        const currentH = currentConstraints.horizontal || "MIN";
+        const currentV = currentConstraints.vertical || "MIN";
+
+        // Use exported values directly (no mapping needed - Figma API uses same values)
+        const apiHNoResize = exportedHNoResize || currentH;
+        const apiVNoResize = exportedVNoResize || currentV;
+
+        try {
+          await debugConsole.log(
+            `  [ISSUE #4] Setting constraints for "${nodeName}" (${nodeData.type}) (no resize): H=${apiHNoResize} (from ${exportedHNoResize || "current"}), V=${apiVNoResize} (from ${exportedVNoResize || "current"})`,
+          );
+
+          // Use the constraints object API
+          (newNode as any).constraints = {
+            horizontal: apiHNoResize,
+            vertical: apiVNoResize,
+          };
+
+          // Verify immediately after setting
+          const verifyHNoResize = (newNode as any).constraints?.horizontal;
+          const verifyVNoResize = (newNode as any).constraints?.vertical;
+          if (
+            verifyHNoResize === apiHNoResize &&
+            verifyVNoResize === apiVNoResize
+          ) {
+            await debugConsole.log(
+              `  [ISSUE #4] ✓ Constraints set successfully (no resize): H=${verifyHNoResize}, V=${verifyVNoResize} for "${nodeName}"`,
+            );
+          } else {
+            await debugConsole.warning(
+              `  [ISSUE #4] ⚠️ Constraints set but verification failed (no resize)! Expected H=${apiHNoResize}, V=${apiVNoResize}, got H=${verifyHNoResize || "undefined"}, V=${verifyVNoResize || "undefined"} for "${nodeName}"`,
+            );
+          }
+        } catch (error) {
+          await debugConsole.warning(
+            `  [ISSUE #4] ✗ Failed to set constraints for "${nodeName}" (${nodeData.type}) (no resize): ${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
+      }
+    }
+
+    // Final verification for no-resize case (skip VECTOR nodes - already verified earlier)
+    if (
+      nodeData.type !== "VECTOR" &&
+      (expectedConstraintH !== undefined || expectedConstraintV !== undefined)
+    ) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const finalConstraintH = (newNode as any).constraints?.horizontal;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const finalConstraintV = (newNode as any).constraints?.vertical;
       await debugConsole.log(
-        `  [ISSUE #4] Setting constraintVertical to ${nodeData.constraintVertical} for "${nodeName}" (no resize)`,
+        `  [ISSUE #4] "${nodeName}" (${nodeData.type}) - Final constraints (no resize): H=${finalConstraintH || "undefined"}, V=${finalConstraintV || "undefined"}`,
       );
-      (newNode as any).constraintVertical = nodeData.constraintVertical;
-    } else if (nodeData.constraints?.vertical !== undefined) {
-      await debugConsole.log(
-        `  [ISSUE #4] Setting constraintVertical to ${nodeData.constraints.vertical} for "${nodeName}" from constraints object (no resize)`,
-      );
-      (newNode as any).constraintVertical = nodeData.constraints.vertical;
+      if (
+        expectedConstraintH !== undefined &&
+        finalConstraintH !== expectedConstraintH
+      ) {
+        await debugConsole.warning(
+          `  ⚠️ ISSUE #4: "${nodeName}" constraintHorizontal mismatch! Expected: ${expectedConstraintH}, Got: ${finalConstraintH || "undefined"}`,
+        );
+      }
+      if (
+        expectedConstraintV !== undefined &&
+        finalConstraintV !== expectedConstraintV
+      ) {
+        await debugConsole.warning(
+          `  ⚠️ ISSUE #4: "${nodeName}" constraintVertical mismatch! Expected: ${expectedConstraintV}, Got: ${finalConstraintV || "undefined"}`,
+        );
+      }
+      // Compare directly (no mapping needed - Figma API uses same values)
+      if (
+        expectedConstraintH !== undefined &&
+        expectedConstraintV !== undefined &&
+        finalConstraintH === expectedConstraintH &&
+        finalConstraintV === expectedConstraintV
+      ) {
+        await debugConsole.log(
+          `  ✓ ISSUE #4: "${nodeName}" constraints correctly set (no resize): H=${finalConstraintH}, V=${finalConstraintV}`,
+        );
+      }
     }
   }
 
@@ -3377,6 +3504,95 @@ export async function recreateNodeFromData(
         } catch (error) {
           await debugConsole.warning(
             `Error setting size for VECTOR "${nodeData.name || "Unnamed"}": ${error}`,
+          );
+        }
+      }
+
+      // ISSUE #4: Set constraints for VECTOR nodes IMMEDIATELY after size is set
+      // Use the constraints object API: node.constraints = { horizontal: 'SCALE', vertical: 'SCALE' }
+      // Note: Figma API uses the same values we export: MIN, CENTER, MAX, STRETCH, SCALE
+      // The constraints object API works even after appending to COMPONENTs (as proven by tests)
+      const expectedConstraintH =
+        nodeData.constraintHorizontal || nodeData.constraints?.horizontal;
+      const expectedConstraintV =
+        nodeData.constraintVertical || nodeData.constraints?.vertical;
+      if (
+        expectedConstraintH !== undefined ||
+        expectedConstraintV !== undefined
+      ) {
+        await debugConsole.log(
+          `  [ISSUE #4] "${nodeData.name || "Unnamed"}" (VECTOR) - Setting constraints immediately after size: Expected H=${expectedConstraintH || "undefined"}, V=${expectedConstraintV || "undefined"}`,
+        );
+
+        // Get current constraints to preserve one if only setting the other
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const currentConstraints = (newNode as any).constraints || {};
+        const currentH = currentConstraints.horizontal || "MIN";
+        const currentV = currentConstraints.vertical || "MIN";
+
+        // Use exported values directly (no mapping needed - Figma API uses same values)
+        const apiH = expectedConstraintH || currentH;
+        const apiV = expectedConstraintV || currentV;
+
+        try {
+          // Use the constraints object API
+          (newNode as any).constraints = {
+            horizontal: apiH,
+            vertical: apiV,
+          };
+
+          // Verify immediately after setting
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const verifyH = (newNode as any).constraints?.horizontal;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const verifyV = (newNode as any).constraints?.vertical;
+          if (verifyH === apiH && verifyV === apiV) {
+            await debugConsole.log(
+              `  [ISSUE #4] ✓ Constraints set successfully for "${nodeData.name || "Unnamed"}" (VECTOR): H=${verifyH}, V=${verifyV}`,
+            );
+          } else {
+            await debugConsole.warning(
+              `  [ISSUE #4] ⚠️ Constraints set but verification failed! Expected H=${apiH}, V=${apiV}, got H=${verifyH || "undefined"}, V=${verifyV || "undefined"} for "${nodeData.name || "Unnamed"}"`,
+            );
+          }
+        } catch (error) {
+          await debugConsole.warning(
+            `  [ISSUE #4] ✗ Failed to set constraints for "${nodeData.name || "Unnamed"}" (VECTOR): ${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
+
+        // Final verification for VECTOR constraints
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const finalConstraintH = (newNode as any).constraints?.horizontal;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const finalConstraintV = (newNode as any).constraints?.vertical;
+        await debugConsole.log(
+          `  [ISSUE #4] "${nodeData.name || "Unnamed"}" (VECTOR) - Final constraints after immediate setting: H=${finalConstraintH || "undefined"}, V=${finalConstraintV || "undefined"}`,
+        );
+        if (
+          expectedConstraintH !== undefined &&
+          finalConstraintH !== expectedConstraintH
+        ) {
+          await debugConsole.warning(
+            `  ⚠️ ISSUE #4: "${nodeData.name || "Unnamed"}" constraintHorizontal mismatch! Expected: ${expectedConstraintH}, Got: ${finalConstraintH || "undefined"}`,
+          );
+        }
+        if (
+          expectedConstraintV !== undefined &&
+          finalConstraintV !== expectedConstraintV
+        ) {
+          await debugConsole.warning(
+            `  ⚠️ ISSUE #4: "${nodeData.name || "Unnamed"}" constraintVertical mismatch! Expected: ${expectedConstraintV}, Got: ${finalConstraintV || "undefined"}`,
+          );
+        }
+        if (
+          expectedConstraintH !== undefined &&
+          expectedConstraintV !== undefined &&
+          finalConstraintH === expectedConstraintH &&
+          finalConstraintV === expectedConstraintV
+        ) {
+          await debugConsole.log(
+            `  ✓ ISSUE #4: "${nodeData.name || "Unnamed"}" (VECTOR) constraints correctly set: H=${finalConstraintH}, V=${finalConstraintV}`,
           );
         }
       }
