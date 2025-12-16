@@ -21,6 +21,15 @@ import { getComponentName } from "../utils/getComponentName";
 
 export interface ExportPageData {
   pageIndex: number;
+  skipPrompts?: boolean; // If true, automatically include all referenced pages without prompting
+}
+
+export interface ReferencedPageInfo {
+  pageId: string;
+  pageName: string;
+  pageIndex: number;
+  hasMetadata: boolean;
+  componentName?: string;
 }
 
 export interface ExportPageResponseData {
@@ -28,6 +37,7 @@ export interface ExportPageResponseData {
   pageData: any; // Parsed JSON object (was jsonData as string)
   pageName: string;
   additionalPages: ExportPageResponseData[];
+  discoveredReferencedPages?: ReferencedPageInfo[]; // Referenced pages discovered but not yet exported
 }
 
 /**
@@ -638,6 +648,8 @@ export async function exportPage(
     // Handle referenced normal component pages
     await debugConsole.log("Checking for referenced component pages...");
     const additionalPages: ExportPageResponseData[] = [];
+    // Collect discovered referenced pages info (for wizard to ask user)
+    const discoveredReferencedPages: ReferencedPageInfo[] = [];
     const normalInstances = Object.values(instanceTableEntries).filter(
       (entry): entry is InstanceTableEntry => entry.instanceType === "normal",
     );
@@ -701,71 +713,103 @@ export async function exportPage(
           }
         }
 
-        // Prompt user
-        const message = `Do you want to also publish referenced component "${pageName}"?`;
-        try {
-          await pluginPrompt.prompt(message, {
-            okLabel: "Yes",
-            cancelLabel: "No",
-            timeoutMs: 300000, // 5 minutes
+        const referencedPageIndex = pages.findIndex(
+          (p) => p.id === referencedPage.id,
+        );
+        if (referencedPageIndex === -1) {
+          await debugConsole.error(
+            `Could not find page index for "${pageName}"`,
+          );
+          throw new Error(`Could not find page index for "${pageName}"`);
+        }
+
+        // Find component name from instance table
+        const instanceEntry = Array.from(normalInstances).find(
+          (entry) => entry.componentPageName === pageName,
+        );
+        const componentName = instanceEntry?.componentName;
+
+        // If skipPrompts is true, collect info but don't export (wizard will handle)
+        // Otherwise, prompt the user
+        if (data.skipPrompts) {
+          // Just collect the info - wizard will ask user and export selected pages
+          discoveredReferencedPages.push({
+            pageId,
+            pageName,
+            pageIndex: referencedPageIndex,
+            hasMetadata,
+            componentName,
           });
-
-          // User said Yes - export the referenced page
-          await debugConsole.log(`Exporting referenced page: "${pageName}"`);
-          const referencedPageIndex = pages.findIndex(
-            (p) => p.id === referencedPage.id,
+          await debugConsole.log(
+            `Discovered referenced page: "${pageName}" (will be handled by wizard)`,
           );
-          if (referencedPageIndex === -1) {
-            await debugConsole.error(
-              `Could not find page index for "${pageName}"`,
-            );
-            throw new Error(`Could not find page index for "${pageName}"`);
-          }
+        } else {
+          // Prompt user
+          const message = `Do you want to also publish referenced component "${pageName}"?`;
+          try {
+            await pluginPrompt.prompt(message, {
+              okLabel: "Yes",
+              cancelLabel: "No",
+              timeoutMs: 300000, // 5 minutes
+            });
 
-          // Recursively export the referenced page (pass along processedPages set)
-          const referencedExportResponse = await exportPage(
-            {
-              pageIndex: referencedPageIndex,
-            },
-            processedPages, // Pass the same set to track all processed pages
-            true, // Mark as recursive call
-          );
-
-          if (
-            referencedExportResponse.success &&
-            referencedExportResponse.data
-          ) {
-            const referencedExportData =
-              referencedExportResponse.data as unknown as ExportPageResponseData;
-            additionalPages.push(referencedExportData);
-            await debugConsole.log(
-              `Successfully exported referenced page: "${pageName}"`,
+            // User said Yes - export the referenced page
+            await debugConsole.log(`Exporting referenced page: "${pageName}"`);
+            const referencedPageIndex = pages.findIndex(
+              (p) => p.id === referencedPage.id,
             );
-          } else {
-            throw new Error(
-              `Failed to export referenced page "${pageName}": ${referencedExportResponse.message}`,
-            );
-          }
-        } catch (error) {
-          // User said No or prompt was cancelled
-          if (error instanceof Error && error.message === "User cancelled") {
-            if (!hasMetadata) {
-              // No metadata and user said No - cancel export
+            if (referencedPageIndex === -1) {
               await debugConsole.error(
-                `Export cancelled: Referenced page "${pageName}" has no metadata and user declined to publish it.`,
+                `Could not find page index for "${pageName}"`,
               );
-              throw new Error(
-                `Cannot continue export: Referenced component "${pageName}" has no metadata. Please publish it first or choose to publish it now.`,
+              throw new Error(`Could not find page index for "${pageName}"`);
+            }
+
+            // Recursively export the referenced page (pass along processedPages set)
+            const referencedExportResponse = await exportPage(
+              {
+                pageIndex: referencedPageIndex,
+              },
+              processedPages, // Pass the same set to track all processed pages
+              true, // Mark as recursive call
+            );
+
+            if (
+              referencedExportResponse.success &&
+              referencedExportResponse.data
+            ) {
+              const referencedExportData =
+                referencedExportResponse.data as unknown as ExportPageResponseData;
+              additionalPages.push(referencedExportData);
+              await debugConsole.log(
+                `Successfully exported referenced page: "${pageName}"`,
               );
             } else {
-              // Has metadata, user said No - continue with existing metadata
-              await debugConsole.log(
-                `User declined to publish "${pageName}", but page has existing metadata. Continuing with existing metadata.`,
+              throw new Error(
+                `Failed to export referenced page "${pageName}": ${referencedExportResponse.message}`,
               );
             }
-          } else {
-            // Some other error occurred
-            throw error;
+          } catch (error) {
+            // User said No or prompt was cancelled
+            if (error instanceof Error && error.message === "User cancelled") {
+              if (!hasMetadata) {
+                // No metadata and user said No - cancel export
+                await debugConsole.error(
+                  `Export cancelled: Referenced page "${pageName}" has no metadata and user declined to publish it.`,
+                );
+                throw new Error(
+                  `Cannot continue export: Referenced component "${pageName}" has no metadata. Please publish it first or choose to publish it now.`,
+                );
+              } else {
+                // Has metadata, user said No - continue with existing metadata
+                await debugConsole.log(
+                  `User declined to publish "${pageName}", but page has existing metadata. Continuing with existing metadata.`,
+                );
+              }
+            } else {
+              // Some other error occurred
+              throw error;
+            }
           }
         }
       }
@@ -857,6 +901,10 @@ export async function exportPage(
       pageData: parsedPageData,
       pageName: selectedPage.name,
       additionalPages, // Populated with referenced component pages
+      discoveredReferencedPages:
+        discoveredReferencedPages.length > 0
+          ? discoveredReferencedPages
+          : undefined, // Only include if there are discovered pages
     };
 
     return {

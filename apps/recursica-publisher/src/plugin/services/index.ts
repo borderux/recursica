@@ -39,6 +39,7 @@ import {
   getCollectionGuids,
   mergeImportGroup,
 } from "./mergeImportService";
+import { runTest } from "./runTest";
 
 // Services map - all service functions indexed by their names
 // This is the single source of truth for available services
@@ -75,6 +76,7 @@ export const services = {
   getLocalVariableCollections,
   getCollectionGuids,
   mergeImportGroup,
+  runTest,
 } as const;
 
 // Re-export individual services for convenience
@@ -111,6 +113,7 @@ export {
   getLocalVariableCollections,
   getCollectionGuids,
   mergeImportGroup,
+  runTest,
 };
 
 export type { PageDependency };

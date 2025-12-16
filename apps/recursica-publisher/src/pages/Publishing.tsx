@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import PageLayout from "../components/PageLayout";
 import DebugConsole from "../components/DebugConsole";
-import PluginPrompt from "../components/PluginPrompt";
 import { callPlugin } from "../utils/callPlugin";
 import type { ExportPageResponseData } from "../plugin/services/pageExportNew";
 
@@ -45,35 +44,51 @@ export default function Publishing() {
       try {
         setIsPublishing(true);
         setError(null);
-        const { promise, cancel } = callPlugin("exportPage", { pageIndex });
+        const { promise, cancel } = callPlugin("exportPage", {
+          pageIndex,
+          skipPrompts: true, // Skip prompts - wizard will handle questions
+        });
         cancelFn = cancel;
 
         const response = await promise;
 
+        console.log("[Publishing] Export response:", {
+          success: response.success,
+          hasData: !!response.data,
+          message: response.message,
+        });
+
         // Check if component is still mounted before updating state
         if (!isMounted) {
+          console.log("[Publishing] Component unmounted, skipping navigation");
           return;
         }
 
         if (response.success && response.data) {
           const exportData = response.data as unknown as ExportPageResponseData;
 
+          console.log("[Publishing] Export successful, navigating to wizard", {
+            pageName: exportData?.pageName,
+            hasAdditionalPages: exportData?.additionalPages?.length > 0,
+          });
+
           if (isMounted) {
             setIsPublishing(false);
 
-            // Navigate to PublishingComplete with export data
-            // Components will be loaded in the Publish page
-            navigate("/publishing-complete", {
+            // Navigate directly to publishing wizard with export data
+            navigate("/publishing-wizard", {
               state: {
                 exportData,
                 pageIndex,
               },
+              replace: true,
             });
           }
         } else {
-          setError(
-            response.message || "Failed to export page. Please try again.",
-          );
+          const errorMessage =
+            response.message || "Failed to export page. Please try again.";
+          console.error("[Publishing] Export failed:", errorMessage);
+          setError(errorMessage);
         }
       } catch (err) {
         // Only set error if component is still mounted
@@ -122,8 +137,6 @@ export default function Publishing() {
         <h1 style={{ marginTop: 0, marginBottom: "20px" }}>Publishing</h1>
 
         <DebugConsole showClearButton={false} />
-
-        <PluginPrompt />
 
         <div>
           {isPublishing ? (

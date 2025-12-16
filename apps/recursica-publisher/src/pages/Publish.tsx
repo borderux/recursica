@@ -277,11 +277,19 @@ export default function Publish() {
                   </button>
                   <button
                     onClick={() => {
+                      console.log("[Publish] Publish button clicked", {
+                        currentPageIndex,
+                      });
                       if (currentPageIndex !== null) {
-                        navigate(`/publishing?pageIndex=${currentPageIndex}`);
+                        const targetUrl = `/publishing-wizard?pageIndex=${currentPageIndex}`;
+                        console.log("[Publish] Navigating to:", targetUrl);
+                        navigate(targetUrl);
                       } else {
                         // Fallback: navigate without pageIndex (will show error)
-                        navigate("/publishing");
+                        console.log(
+                          "[Publish] Navigating to: /publishing-wizard (no pageIndex)",
+                        );
+                        navigate("/publishing-wizard");
                       }
                     }}
                     style={{
@@ -358,11 +366,19 @@ export default function Publish() {
                   </button>
                   <button
                     onClick={() => {
+                      console.log("[Publish] Ok button clicked", {
+                        currentPageIndex,
+                      });
                       if (currentPageIndex !== null) {
-                        navigate(`/publishing?pageIndex=${currentPageIndex}`);
+                        const targetUrl = `/publishing-wizard?pageIndex=${currentPageIndex}`;
+                        console.log("[Publish] Navigating to:", targetUrl);
+                        navigate(targetUrl);
                       } else {
                         // Fallback: navigate without pageIndex (will show error)
-                        navigate("/publishing");
+                        console.log(
+                          "[Publish] Navigating to: /publishing-wizard (no pageIndex)",
+                        );
+                        navigate("/publishing-wizard");
                       }
                     }}
                     style={{

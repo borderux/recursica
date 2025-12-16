@@ -13,13 +13,13 @@ import Publish from "./pages/Publish";
 import Publishing from "./pages/Publishing";
 import PublishingComplete from "./pages/PublishingComplete";
 import PublishingWizard from "./pages/PublishingWizard";
+import Test from "./pages/Test";
 import PageManagement from "./pages/PageManagement";
 import { Auth } from "./pages/Auth";
 import { PublishAuth } from "./pages/PublishAuth";
 import Unauthorized from "./pages/Unauthorized";
 import { AuthProvider } from "./context/AuthProvider";
 import { DebugConsoleProvider } from "./context/DebugConsoleProvider";
-import { PluginPromptProvider } from "./context/PluginPromptProvider";
 import { ImportDataProvider } from "./context/ImportDataProvider";
 
 /**
@@ -164,48 +164,44 @@ function App() {
       </style>
       <AuthProvider>
         <DebugConsoleProvider>
-          <PluginPromptProvider>
-            <ImportDataProvider>
-              <MemoryRouter initialEntries={["/"]}>
-                <RouteLogger />
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/import" element={<Import />} />
-                  <Route path="/import-main" element={<ImportMain />} />
-                  <Route path="/import-branch" element={<ImportBranch />} />
-                  <Route path="/import-files" element={<ImportFiles />} />
-                  <Route
-                    path="/import-repo-component"
-                    element={<ImportRepoComponent />}
-                  />
-                  <Route path="/importing" element={<Importing />} />
-                  <Route path="/import-wizard/*" element={<ImportWizard />} />
-                  <Route path="/publish" element={<Publish />} />
-                  <Route path="/publish/auth" element={<PublishAuth />} />
-                  <Route
-                    path="/publish/unauthorized"
-                    element={<Unauthorized />}
-                  />
-                  <Route path="/publishing" element={<Publishing />} />
-                  <Route
-                    path="/publishing-complete"
-                    element={<PublishingComplete />}
-                  />
-                  <Route
-                    path="/publishing-wizard"
-                    element={<PublishingWizard />}
-                  />
-                  <Route element={<Layout />}>
-                    <Route path="auth" element={<Auth />} />
-                    <Route
-                      path="page-management"
-                      element={<PageManagement />}
-                    />
-                  </Route>
-                </Routes>
-              </MemoryRouter>
-            </ImportDataProvider>
-          </PluginPromptProvider>
+          <ImportDataProvider>
+            <MemoryRouter initialEntries={["/"]}>
+              <RouteLogger />
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/import" element={<Import />} />
+                <Route path="/import-main" element={<ImportMain />} />
+                <Route path="/import-branch" element={<ImportBranch />} />
+                <Route path="/import-files" element={<ImportFiles />} />
+                <Route
+                  path="/import-repo-component"
+                  element={<ImportRepoComponent />}
+                />
+                <Route path="/importing" element={<Importing />} />
+                <Route path="/import-wizard/*" element={<ImportWizard />} />
+                <Route path="/publish" element={<Publish />} />
+                <Route path="/publish/auth" element={<PublishAuth />} />
+                <Route
+                  path="/publish/unauthorized"
+                  element={<Unauthorized />}
+                />
+                <Route path="/publishing" element={<Publishing />} />
+                <Route
+                  path="/publishing-complete"
+                  element={<PublishingComplete />}
+                />
+                <Route
+                  path="/publishing-wizard"
+                  element={<PublishingWizard />}
+                />
+                <Route path="/test" element={<Test />} />
+                <Route element={<Layout />}>
+                  <Route path="auth" element={<Auth />} />
+                  <Route path="page-management" element={<PageManagement />} />
+                </Route>
+              </Routes>
+            </MemoryRouter>
+          </ImportDataProvider>
         </DebugConsoleProvider>
       </AuthProvider>
     </div>

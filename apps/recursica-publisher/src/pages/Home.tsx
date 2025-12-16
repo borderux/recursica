@@ -140,6 +140,11 @@ export default function Home() {
     navigate("/import-main");
   };
 
+  const handleTestClick = () => {
+    console.log("[Home] Test button clicked");
+    navigate("/test");
+  };
+
   return (
     <PageLayout showBackButton={false}>
       <div
@@ -192,6 +197,7 @@ export default function Home() {
             border: "2px solid #d40d0d",
             borderRadius: "8px",
             cursor: "pointer",
+            marginBottom: "20px",
           }}
           onMouseOver={(e) => {
             e.currentTarget.style.backgroundColor = "#d40d0d";
@@ -203,6 +209,32 @@ export default function Home() {
           }}
         >
           Publish
+        </button>
+
+        {/* Test Button */}
+        <button
+          onClick={handleTestClick}
+          style={{
+            width: "200px",
+            padding: "20px",
+            fontSize: "18px",
+            fontWeight: "bold",
+            backgroundColor: "transparent",
+            color: "#d40d0d",
+            border: "2px solid #d40d0d",
+            borderRadius: "8px",
+            cursor: "pointer",
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = "#d40d0d";
+            e.currentTarget.style.color = "white";
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = "transparent";
+            e.currentTarget.style.color = "#d40d0d";
+          }}
+        >
+          Test
         </button>
       </div>
     </PageLayout>

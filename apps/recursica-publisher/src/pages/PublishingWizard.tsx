@@ -1,23 +1,27 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
 import PageLayout from "../components/PageLayout";
-import type { ExportPageResponseData } from "../plugin/services/pageExportNew";
+import type {
+  ExportPageResponseData,
+  ReferencedPageInfo,
+} from "../plugin/services/pageExportNew";
 import { useAuth } from "../context/useAuth";
 import {
   GitHubService,
   type ComponentInfo,
 } from "../services/github/githubService";
+import { callPlugin } from "../utils/callPlugin";
 
 const RECURSICA_FIGMA_OWNER = "borderux";
 const RECURSICA_FIGMA_REPO = "recursica-figma";
 
 interface PublishingWizardLocationState {
-  exportData: ExportPageResponseData;
-  pageIndex: number;
+  exportData?: ExportPageResponseData;
+  pageIndex?: number;
   mainBranchComponents?: ComponentInfo[];
 }
 
-type WizardStep = "initial" | "dependency" | "main";
+type WizardStep = "initial" | "selectReferencedPages" | "dependency" | "main";
 
 interface PagePublishDecision {
   pageName: string;
@@ -43,10 +47,38 @@ export default function PublishingWizard() {
   const [mainBranchComponents, setMainBranchComponents] = useState<
     ComponentInfo[] | null
   >(null);
+  const [exportData, setExportData] = useState<ExportPageResponseData | null>(
+    null,
+  );
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [discoveredReferencedPages, setDiscoveredReferencedPages] = useState<
+    ReferencedPageInfo[]
+  >([]);
+  const [selectedReferencedPageIds, setSelectedReferencedPageIds] = useState<
+    Set<string>
+  >(new Set());
+  const [isExportingReferencedPages, setIsExportingReferencedPages] =
+    useState(false);
 
-  // Get data from location state
+  // Get data from location state or search params
   const state = location.state as PublishingWizardLocationState | null;
-  const exportData = state?.exportData;
+  const [searchParams] = useSearchParams();
+  const pageIndexFromState = state?.pageIndex;
+  const pageIndexFromParams = searchParams.get("pageIndex");
+  const pageIndex =
+    pageIndexFromState ??
+    (pageIndexFromParams ? parseInt(pageIndexFromParams, 10) : undefined);
+
+  // Initialize exportData from location state if available
+  useEffect(() => {
+    if (state?.exportData) {
+      setExportData(state.exportData);
+      console.log(
+        `[PublishingWizard] Loaded export data from location state for page: ${state.exportData.pageName}`,
+      );
+    }
+  }, [state?.exportData]);
 
   // Initialize mainBranchComponents from location state if available
   useEffect(() => {
@@ -57,6 +89,83 @@ export default function PublishingWizard() {
       );
     }
   }, [state?.mainBranchComponents]);
+
+  // If we have pageIndex but no exportData, export the page
+  useEffect(() => {
+    if (
+      pageIndex !== undefined &&
+      !isNaN(pageIndex) &&
+      !exportData &&
+      !isExporting &&
+      !exportError
+    ) {
+      const doExport = async () => {
+        try {
+          setIsExporting(true);
+          setExportError(null);
+          console.log(
+            `[PublishingWizard] Exporting page with index: ${pageIndex}`,
+          );
+
+          const { promise } = callPlugin("exportPage", {
+            pageIndex,
+            skipPrompts: true, // Skip prompts - wizard will handle questions
+          });
+          const response = await promise;
+
+          if (response.success && response.data) {
+            const exportedData =
+              response.data as unknown as ExportPageResponseData;
+            setExportData(exportedData);
+            console.log(
+              `[PublishingWizard] Export successful for page: ${exportedData.pageName}`,
+            );
+
+            // Check if there are discovered referenced pages to ask user about
+            if (
+              exportedData.discoveredReferencedPages &&
+              exportedData.discoveredReferencedPages.length > 0
+            ) {
+              console.log(
+                `[PublishingWizard] Found ${exportedData.discoveredReferencedPages.length} discovered referenced pages`,
+              );
+              setDiscoveredReferencedPages(
+                exportedData.discoveredReferencedPages,
+              );
+              // Pre-select all pages by default
+              setSelectedReferencedPageIds(
+                new Set(
+                  exportedData.discoveredReferencedPages.map((p) => p.pageId),
+                ),
+              );
+              setWizardStep("selectReferencedPages");
+            } else if (exportedData.additionalPages.length > 0) {
+              // Has additional pages already exported, go to dependency step
+              setWizardStep("dependency");
+              setCurrentDependencyIndex(0);
+            } else {
+              // No dependencies, go straight to main
+              setWizardStep("main");
+            }
+          } else {
+            const errorMessage =
+              response.message || "Failed to export page. Please try again.";
+            setExportError(errorMessage);
+            console.error("[PublishingWizard] Export failed:", errorMessage);
+          }
+        } catch (err) {
+          const errorMessage =
+            err instanceof Error ? err.message : "Failed to export page";
+          setExportError(errorMessage);
+          console.error("[PublishingWizard] Export error:", errorMessage);
+        } finally {
+          setIsExporting(false);
+        }
+      };
+
+      doExport();
+    }
+  }, [pageIndex, exportData, isExporting, exportError]);
 
   // Get all pages that will be published (flattened list)
   const getAllPages = useCallback(
@@ -302,7 +411,112 @@ export default function PublishingWizard() {
   );
 
   // Early return after all hooks
-  if (!state || !exportData) {
+  if (pageIndex === undefined || isNaN(pageIndex)) {
+    return (
+      <PageLayout showBackButton={true}>
+        <div
+          style={{
+            width: "100%",
+            boxSizing: "border-box",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <h1 style={{ marginTop: 0, marginBottom: "20px" }}>
+            Publishing Wizard
+          </h1>
+          <p style={{ color: "#c62828" }}>
+            Error: No page index provided. Please go back and try again.
+          </p>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  if (isExporting) {
+    return (
+      <PageLayout showBackButton={true}>
+        <style>
+          {`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}
+        </style>
+        <div
+          style={{
+            width: "100%",
+            boxSizing: "border-box",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "20px",
+            minHeight: "200px",
+          }}
+        >
+          <h1 style={{ marginTop: 0, marginBottom: "20px" }}>
+            Publishing Wizard
+          </h1>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+            }}
+          >
+            <div
+              style={{
+                width: "20px",
+                height: "20px",
+                border: "2px solid #e0e0e0",
+                borderTop: "2px solid #d40d0d",
+                borderRadius: "50%",
+                animation: "spin 1s linear infinite",
+              }}
+            />
+            <p style={{ color: "#666", fontStyle: "italic", margin: 0 }}>
+              Exporting page...
+            </p>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  if (exportError) {
+    return (
+      <PageLayout showBackButton={true}>
+        <div
+          style={{
+            width: "100%",
+            boxSizing: "border-box",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <h1 style={{ marginTop: 0, marginBottom: "20px" }}>
+            Publishing Wizard
+          </h1>
+          <div
+            style={{
+              padding: "16px",
+              backgroundColor: "#ffebee",
+              border: "1px solid #f44336",
+              borderRadius: "8px",
+              color: "#c62828",
+            }}
+          >
+            <p style={{ margin: 0, fontWeight: "bold" }}>Export Failed</p>
+            <p style={{ margin: "8px 0 0 0" }}>{exportError}</p>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  if (!exportData) {
     return (
       <PageLayout showBackButton={true}>
         <div
@@ -323,6 +537,88 @@ export default function PublishingWizard() {
       </PageLayout>
     );
   }
+
+  // Handle exporting selected referenced pages
+  const handleExportSelectedReferencedPages = async () => {
+    if (selectedReferencedPageIds.size === 0) {
+      setError("Please select at least one referenced page to include.");
+      return;
+    }
+
+    setIsExportingReferencedPages(true);
+    setError(null);
+
+    try {
+      const selectedPages = discoveredReferencedPages.filter((p) =>
+        selectedReferencedPageIds.has(p.pageId),
+      );
+      const exportedPages: ExportPageResponseData[] = [];
+
+      for (const pageInfo of selectedPages) {
+        console.log(
+          `[PublishingWizard] Exporting selected referenced page: ${pageInfo.pageName}`,
+        );
+        const { promise } = callPlugin("exportPage", {
+          pageIndex: pageInfo.pageIndex,
+          skipPrompts: true, // Skip prompts for nested references too
+        });
+        const response = await promise;
+
+        if (response.success && response.data) {
+          const exportedPageData =
+            response.data as unknown as ExportPageResponseData;
+          exportedPages.push(exportedPageData);
+          console.log(
+            `[PublishingWizard] Successfully exported: ${exportedPageData.pageName}`,
+          );
+        } else {
+          throw new Error(
+            `Failed to export "${pageInfo.pageName}": ${response.message}`,
+          );
+        }
+      }
+
+      // Update exportData with exported referenced pages
+      if (exportData) {
+        setExportData({
+          ...exportData,
+          additionalPages: exportedPages,
+        });
+      }
+
+      // Move to next step
+      if (exportedPages.length > 0) {
+        setWizardStep("dependency");
+        setCurrentDependencyIndex(0);
+        // Initialize decision for first dependency
+        const firstDep = exportedPages[0];
+        const { currentVersion, newVersion } = getVersionInfo(firstDep);
+        updatePageDecision(firstDep.pageName, {
+          currentVersion,
+          newVersion,
+          publishNewVersion: false, // Default to not publishing
+        });
+      } else {
+        // No pages selected, go straight to main
+        setWizardStep("main");
+        const { currentVersion, newVersion } = getVersionInfo(exportData!);
+        updatePageDecision(exportData!.pageName, {
+          currentVersion,
+          newVersion,
+          publishNewVersion: true,
+        });
+      }
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Failed to export referenced pages";
+      setError(errorMessage);
+      console.error("[PublishingWizard] Export error:", errorMessage);
+    } finally {
+      setIsExportingReferencedPages(false);
+    }
+  };
 
   // Handle start publishing
   const handleStartPublishing = () => {
@@ -351,14 +647,21 @@ export default function PublishingWizard() {
 
   // Handle back button
   const handleBack = () => {
-    if (wizardStep === "dependency") {
+    if (wizardStep === "selectReferencedPages") {
+      // Go back to initial screen
+      setWizardStep("initial");
+    } else if (wizardStep === "dependency") {
       if (currentDependencyIndex > 0) {
         // Go back to previous dependency
         const prevIndex = currentDependencyIndex - 1;
         setCurrentDependencyIndex(prevIndex);
       } else {
-        // Go back to initial screen
-        setWizardStep("initial");
+        // Go back to select referenced pages if we have them, otherwise initial
+        if (discoveredReferencedPages.length > 0) {
+          setWizardStep("selectReferencedPages");
+        } else {
+          setWizardStep("initial");
+        }
       }
     } else if (wizardStep === "main") {
       if (exportData.additionalPages.length > 0) {
@@ -366,8 +669,12 @@ export default function PublishingWizard() {
         setWizardStep("dependency");
         setCurrentDependencyIndex(exportData.additionalPages.length - 1);
       } else {
-        // Go back to initial screen
-        setWizardStep("initial");
+        // Go back to select referenced pages if we have them, otherwise initial
+        if (discoveredReferencedPages.length > 0) {
+          setWizardStep("selectReferencedPages");
+        } else {
+          setWizardStep("initial");
+        }
       }
     } else {
       // From initial screen, go back to PublishingComplete
@@ -511,6 +818,170 @@ export default function PublishingWizard() {
       );
     }
   };
+
+  // Render select referenced pages screen
+  const renderSelectReferencedPagesScreen = () => (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "20px",
+      }}
+    >
+      <h2 style={{ marginTop: 0, marginBottom: "10px" }}>
+        Select Referenced Pages
+      </h2>
+      <p style={{ color: "#666", marginBottom: "20px" }}>
+        The following pages are referenced by your component. Select which ones
+        you want to include in this publication:
+      </p>
+
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "12px",
+          marginBottom: "20px",
+        }}
+      >
+        {discoveredReferencedPages.map((pageInfo) => {
+          const isSelected = selectedReferencedPageIds.has(pageInfo.pageId);
+          return (
+            <div
+              key={pageInfo.pageId}
+              style={{
+                padding: "16px",
+                border: `2px solid ${isSelected ? "#1976d2" : "#e0e0e0"}`,
+                borderRadius: "8px",
+                backgroundColor: isSelected ? "#e3f2fd" : "#fafafa",
+                cursor: "pointer",
+                transition: "all 0.2s",
+              }}
+              onClick={() => {
+                setSelectedReferencedPageIds((prev) => {
+                  const newSet = new Set(prev);
+                  if (isSelected) {
+                    newSet.delete(pageInfo.pageId);
+                  } else {
+                    newSet.add(pageInfo.pageId);
+                  }
+                  return newSet;
+                });
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={() => {
+                    setSelectedReferencedPageIds((prev) => {
+                      const newSet = new Set(prev);
+                      if (isSelected) {
+                        newSet.delete(pageInfo.pageId);
+                      } else {
+                        newSet.add(pageInfo.pageId);
+                      }
+                      return newSet;
+                    });
+                  }}
+                  style={{
+                    width: "20px",
+                    height: "20px",
+                    cursor: "pointer",
+                  }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: "bold", marginBottom: "4px" }}>
+                    {pageInfo.componentName || pageInfo.pageName}
+                  </div>
+                  <div style={{ fontSize: "14px", color: "#666" }}>
+                    Page: {pageInfo.pageName}
+                  </div>
+                  {!pageInfo.hasMetadata && (
+                    <div
+                      style={{
+                        fontSize: "12px",
+                        color: "#f57c00",
+                        marginTop: "4px",
+                      }}
+                    >
+                      ⚠️ No metadata found - will need to be published
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {error && (
+        <div
+          style={{
+            padding: "12px",
+            backgroundColor: "#ffebee",
+            border: "1px solid #f44336",
+            borderRadius: "8px",
+            color: "#c62828",
+          }}
+        >
+          {error}
+        </div>
+      )}
+
+      <div
+        style={{
+          display: "flex",
+          gap: "12px",
+          justifyContent: "flex-end",
+        }}
+      >
+        <button
+          onClick={handleBack}
+          style={{
+            padding: "10px 20px",
+            backgroundColor: "#f5f5f5",
+            border: "1px solid #ddd",
+            borderRadius: "6px",
+            cursor: "pointer",
+            fontSize: "14px",
+          }}
+        >
+          Back
+        </button>
+        <button
+          onClick={handleExportSelectedReferencedPages}
+          disabled={isExportingReferencedPages}
+          style={{
+            padding: "10px 20px",
+            backgroundColor:
+              isExportingReferencedPages || selectedReferencedPageIds.size === 0
+                ? "#ccc"
+                : "#1976d2",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            cursor:
+              isExportingReferencedPages || selectedReferencedPageIds.size === 0
+                ? "not-allowed"
+                : "pointer",
+            fontSize: "14px",
+            fontWeight: "bold",
+          }}
+        >
+          {isExportingReferencedPages
+            ? "Exporting..."
+            : `Continue (${selectedReferencedPageIds.size} selected)`}
+        </button>
+      </div>
+    </div>
+  );
 
   // Render initial screen
   const renderInitialScreen = () => (
@@ -1063,6 +1534,8 @@ export default function PublishingWizard() {
         )}
 
         {wizardStep === "initial" && renderInitialScreen()}
+        {wizardStep === "selectReferencedPages" &&
+          renderSelectReferencedPagesScreen()}
         {wizardStep === "dependency" && renderDependencyScreen()}
         {wizardStep === "main" && renderMainScreen()}
       </div>

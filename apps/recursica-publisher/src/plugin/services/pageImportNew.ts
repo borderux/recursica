@@ -2406,13 +2406,180 @@ export async function recreateNodeFromData(
     nodeData.boundVariables &&
     typeof nodeData.boundVariables === "object" &&
     (nodeData.boundVariables.width || nodeData.boundVariables.height);
+
+  // ISSUE #3 & #4 DEBUG: Check for preserveRatio and constraints before resize
+  const nodeName = nodeData.name || "Unnamed";
+  if (nodeData.preserveRatio !== undefined) {
+    await debugConsole.log(
+      `  [ISSUE #3 DEBUG] "${nodeName}" has preserveRatio in nodeData: ${nodeData.preserveRatio}`,
+    );
+  }
+  if (nodeData.constraints !== undefined) {
+    await debugConsole.log(
+      `  [ISSUE #4 DEBUG] "${nodeName}" has constraints in nodeData: ${JSON.stringify(nodeData.constraints)}`,
+    );
+  }
+  if (
+    nodeData.constraintHorizontal !== undefined ||
+    nodeData.constraintVertical !== undefined
+  ) {
+    await debugConsole.log(
+      `  [ISSUE #4 DEBUG] "${nodeName}" has constraintHorizontal: ${nodeData.constraintHorizontal}, constraintVertical: ${nodeData.constraintVertical}`,
+    );
+  }
+
   if (
     nodeData.type !== "VECTOR" &&
     nodeData.width !== undefined &&
     nodeData.height !== undefined &&
     !hasBoundVariablesForSize
   ) {
+    // ISSUE #3 DEBUG: Check preserveRatio before resize
+    const preserveRatioBefore = (newNode as any).preserveRatio;
+    if (preserveRatioBefore !== undefined) {
+      await debugConsole.log(
+        `  [ISSUE #3 DEBUG] "${nodeName}" preserveRatio before resize: ${preserveRatioBefore}`,
+      );
+    }
+
     newNode.resize(nodeData.width, nodeData.height);
+
+    // ISSUE #3 DEBUG: Check preserveRatio after resize
+    const preserveRatioAfter = (newNode as any).preserveRatio;
+    if (preserveRatioAfter !== undefined) {
+      await debugConsole.log(
+        `  [ISSUE #3 DEBUG] "${nodeName}" preserveRatio after resize: ${preserveRatioAfter}`,
+      );
+    } else if (nodeData.preserveRatio !== undefined) {
+      await debugConsole.warning(
+        `  ⚠️ ISSUE #3: "${nodeName}" preserveRatio was in nodeData (${nodeData.preserveRatio}) but not set on node!`,
+      );
+    }
+
+    // ISSUE #4 DEBUG: Check constraints after resize
+    const constraintsAfter = (newNode as any).constraints;
+    const constraintHorizontalAfter = (newNode as any).constraintHorizontal;
+    const constraintVerticalAfter = (newNode as any).constraintVertical;
+    if (constraintsAfter !== undefined) {
+      await debugConsole.log(
+        `  [ISSUE #4 DEBUG] "${nodeName}" constraints after resize: ${JSON.stringify(constraintsAfter)}`,
+      );
+    }
+    if (
+      constraintHorizontalAfter !== undefined ||
+      constraintVerticalAfter !== undefined
+    ) {
+      await debugConsole.log(
+        `  [ISSUE #4 DEBUG] "${nodeName}" constraintHorizontal: ${constraintHorizontalAfter}, constraintVertical: ${constraintVerticalAfter}`,
+      );
+    }
+    // ISSUE #4: Set constraints if they exist in nodeData
+    // Constraints must be set after resize, as resize may reset them
+    if (nodeData.constraintHorizontal !== undefined) {
+      const expectedHorizontal = nodeData.constraintHorizontal;
+      if (constraintHorizontalAfter !== expectedHorizontal) {
+        await debugConsole.log(
+          `  [ISSUE #4] Setting constraintHorizontal to ${expectedHorizontal} for "${nodeName}" (was ${constraintHorizontalAfter})`,
+        );
+        (newNode as any).constraintHorizontal = expectedHorizontal;
+      } else {
+        await debugConsole.log(
+          `  [ISSUE #4] constraintHorizontal already correct (${expectedHorizontal}) for "${nodeName}"`,
+        );
+      }
+    } else if (nodeData.constraints?.horizontal !== undefined) {
+      // Support legacy constraints object format
+      const expectedHorizontal = nodeData.constraints.horizontal;
+      if (constraintHorizontalAfter !== expectedHorizontal) {
+        await debugConsole.log(
+          `  [ISSUE #4] Setting constraintHorizontal to ${expectedHorizontal} for "${nodeName}" (was ${constraintHorizontalAfter}) from constraints object`,
+        );
+        (newNode as any).constraintHorizontal = expectedHorizontal;
+      }
+    }
+
+    if (nodeData.constraintVertical !== undefined) {
+      const expectedVertical = nodeData.constraintVertical;
+      if (constraintVerticalAfter !== expectedVertical) {
+        await debugConsole.log(
+          `  [ISSUE #4] Setting constraintVertical to ${expectedVertical} for "${nodeName}" (was ${constraintVerticalAfter})`,
+        );
+        (newNode as any).constraintVertical = expectedVertical;
+      } else {
+        await debugConsole.log(
+          `  [ISSUE #4] constraintVertical already correct (${expectedVertical}) for "${nodeName}"`,
+        );
+      }
+    } else if (nodeData.constraints?.vertical !== undefined) {
+      // Support legacy constraints object format
+      const expectedVertical = nodeData.constraints.vertical;
+      if (constraintVerticalAfter !== expectedVertical) {
+        await debugConsole.log(
+          `  [ISSUE #4] Setting constraintVertical to ${expectedVertical} for "${nodeName}" (was ${constraintVerticalAfter}) from constraints object`,
+        );
+        (newNode as any).constraintVertical = expectedVertical;
+      }
+    }
+
+    // Verify constraints were set correctly
+    const finalConstraintH = (newNode as any).constraintHorizontal;
+    const finalConstraintV = (newNode as any).constraintVertical;
+    if (
+      nodeData.constraintHorizontal !== undefined ||
+      nodeData.constraintVertical !== undefined ||
+      nodeData.constraints !== undefined
+    ) {
+      const expectedH =
+        nodeData.constraintHorizontal || nodeData.constraints?.horizontal;
+      const expectedV =
+        nodeData.constraintVertical || nodeData.constraints?.vertical;
+      if (expectedH !== undefined && finalConstraintH !== expectedH) {
+        await debugConsole.warning(
+          `  ⚠️ ISSUE #4: "${nodeName}" constraintHorizontal mismatch after setting! Expected: ${expectedH}, Got: ${finalConstraintH}`,
+        );
+      }
+      if (expectedV !== undefined && finalConstraintV !== expectedV) {
+        await debugConsole.warning(
+          `  ⚠️ ISSUE #4: "${nodeName}" constraintVertical mismatch after setting! Expected: ${expectedV}, Got: ${finalConstraintV}`,
+        );
+      }
+      if (
+        expectedH !== undefined &&
+        expectedV !== undefined &&
+        finalConstraintH === expectedH &&
+        finalConstraintV === expectedV
+      ) {
+        await debugConsole.log(
+          `  ✓ ISSUE #4: "${nodeName}" constraints set correctly: H=${finalConstraintH}, V=${finalConstraintV}`,
+        );
+      }
+    }
+  } else {
+    // No resize happened, but we still need to set constraints if they exist
+    // ISSUE #4: Set constraints even if no resize
+    if (nodeData.constraintHorizontal !== undefined) {
+      await debugConsole.log(
+        `  [ISSUE #4] Setting constraintHorizontal to ${nodeData.constraintHorizontal} for "${nodeName}" (no resize)`,
+      );
+      (newNode as any).constraintHorizontal = nodeData.constraintHorizontal;
+    } else if (nodeData.constraints?.horizontal !== undefined) {
+      await debugConsole.log(
+        `  [ISSUE #4] Setting constraintHorizontal to ${nodeData.constraints.horizontal} for "${nodeName}" from constraints object (no resize)`,
+      );
+      (newNode as any).constraintHorizontal = nodeData.constraints.horizontal;
+    }
+
+    if (nodeData.constraintVertical !== undefined) {
+      await debugConsole.log(
+        `  [ISSUE #4] Setting constraintVertical to ${nodeData.constraintVertical} for "${nodeName}" (no resize)`,
+      );
+      (newNode as any).constraintVertical = nodeData.constraintVertical;
+    } else if (nodeData.constraints?.vertical !== undefined) {
+      await debugConsole.log(
+        `  [ISSUE #4] Setting constraintVertical to ${nodeData.constraints.vertical} for "${nodeName}" from constraints object (no resize)`,
+      );
+      (newNode as any).constraintVertical = nodeData.constraints.vertical;
+    }
   }
 
   // Set visual properties if they exist
@@ -2464,12 +2631,44 @@ export async function recreateNodeFromData(
         // Process fills array - remove boundVariables that contain _varRef
         // We'll restore them properly after setting the fills
         let fills = nodeData.fills;
+
+        // ISSUE #2 DEBUG: Check for selectionColor in fills before processing
+        const nodeName = nodeData.name || "Unnamed";
         if (Array.isArray(fills)) {
+          for (let i = 0; i < fills.length; i++) {
+            const fill = fills[i];
+            if (fill && typeof fill === "object") {
+              if ((fill as any).selectionColor !== undefined) {
+                await debugConsole.log(
+                  `  [ISSUE #2 DEBUG] "${nodeName}" fill[${i}] has selectionColor: ${JSON.stringify((fill as any).selectionColor)}`,
+                );
+              }
+            }
+          }
+        }
+
+        if (Array.isArray(fills)) {
+          const nodeName = nodeData.name || "Unnamed";
+          // ISSUE #2 DEBUG: Check for selectionColor before processing
+          for (let i = 0; i < fills.length; i++) {
+            const fill = fills[i];
+            if (
+              fill &&
+              typeof fill === "object" &&
+              fill.selectionColor !== undefined
+            ) {
+              await debugConsole.warning(
+                `  ⚠️ ISSUE #2: "${nodeName}" fill[${i}] has selectionColor that will be preserved: ${JSON.stringify(fill.selectionColor)}`,
+              );
+            }
+          }
           fills = fills.map((fill: any) => {
             if (fill && typeof fill === "object") {
               // Create a copy without boundVariables (they may contain _varRef which is invalid)
               const fillWithoutBoundVars = { ...fill };
               delete fillWithoutBoundVars.boundVariables;
+              // ISSUE #2: Don't delete selectionColor - we need to preserve it
+              // delete fillWithoutBoundVars.selectionColor; // REMOVED - preserve selectionColor
               return fillWithoutBoundVars;
             }
             return fill;
@@ -2646,9 +2845,41 @@ export async function recreateNodeFromData(
           await debugConsole.log(
             `  ✓ Set fills with boundVariables on "${newNode.name || "Unnamed"}" (${nodeData.type})`,
           );
+
+          // ISSUE #2 DEBUG: Check for selectionColor after setting fills with boundVariables
+          const fillsAfter = newNode.fills;
+          const nodeName = nodeData.name || "Unnamed";
+          if (Array.isArray(fillsAfter)) {
+            for (let i = 0; i < fillsAfter.length; i++) {
+              const fill = fillsAfter[i];
+              if (fill && typeof fill === "object") {
+                if ((fill as any).selectionColor !== undefined) {
+                  await debugConsole.warning(
+                    `  ⚠️ ISSUE #2: "${nodeName}" fill[${i}] has selectionColor AFTER setting with boundVariables: ${JSON.stringify((fill as any).selectionColor)}`,
+                  );
+                }
+              }
+            }
+          }
         } else {
           // Set fills without boundVariables if we can't restore them
           newNode.fills = fills;
+
+          // ISSUE #2 DEBUG: Check for selectionColor after setting fills
+          const fillsAfter = newNode.fills;
+          const nodeName = nodeData.name || "Unnamed";
+          if (Array.isArray(fillsAfter)) {
+            for (let i = 0; i < fillsAfter.length; i++) {
+              const fill = fillsAfter[i];
+              if (fill && typeof fill === "object") {
+                if ((fill as any).selectionColor !== undefined) {
+                  await debugConsole.warning(
+                    `  ⚠️ ISSUE #2: "${nodeName}" fill[${i}] has selectionColor AFTER setting: ${JSON.stringify((fill as any).selectionColor)}`,
+                  );
+                }
+              }
+            }
+          }
         }
 
         // Note: Bound variables for fills are already restored above from fillData.boundVariables
@@ -2821,18 +3052,19 @@ export async function recreateNodeFromData(
                 `  DEBUG: Attempting to set bound variable for ${propName} on "${nodeData.name || "Unnamed"}": current value=${currentValue}, current boundVar=${JSON.stringify(currentBoundVar)}`,
               );
 
-              // Delete any existing bound variable entry first to start fresh
+              // Use Figma's setBoundVariable API method (not direct assignment)
+              // Based on test results, all approaches work, but using the API method is the correct way
+              // First, try to remove any existing binding by setting to null
               try {
-                delete (newNode as any).boundVariables[propName];
+                (newNode as any).setBoundVariable(propName, null);
               } catch {
-                // Ignore errors when deleting
+                // Ignore errors when removing (might not exist)
               }
 
-              // Set the bound variable directly
-              // Note: This may fail silently if the property has a direct value
-              // Figma's API doesn't allow bound variables on properties with direct values
+              // Set the bound variable using Figma's API
+              // This is the correct way to bind variables - direct assignment to boundVariables doesn't work
               try {
-                (newNode as any).boundVariables[propName] = alias;
+                (newNode as any).setBoundVariable(propName, variable);
 
                 // Immediately check if it was set
                 const immediatelyAfter = (newNode as any).boundVariables?.[
@@ -2843,12 +3075,45 @@ export async function recreateNodeFromData(
                 );
               } catch (error) {
                 await debugConsole.warning(
-                  `  Error setting bound variable for ${propName}: ${error}`,
+                  `  Error setting bound variable for ${propName}: ${error instanceof Error ? error.message : String(error)}`,
                 );
               }
 
               // Verify the bound variable was actually set and persisted
               const setBoundVar = (newNode as any).boundVariables?.[propName];
+
+              // ISSUE #1 DEBUG: Enhanced logging for itemSpacing variable binding
+              if (propName === "itemSpacing") {
+                const finalValue = (newNode as any)[propName];
+                const finalBoundVar = (newNode as any).boundVariables?.[
+                  propName
+                ];
+                await debugConsole.log(
+                  `  [ISSUE #1 DEBUG] itemSpacing variable binding for "${nodeData.name || "Unnamed"}":`,
+                );
+                await debugConsole.log(
+                  `    - Expected variable ref: ${varRef}`,
+                );
+                await debugConsole.log(
+                  `    - Final itemSpacing value: ${finalValue}`,
+                );
+                await debugConsole.log(
+                  `    - Final boundVariable: ${JSON.stringify(finalBoundVar)}`,
+                );
+                await debugConsole.log(
+                  `    - Variable found: ${variable ? `Yes (ID: ${variable.id})` : "No"}`,
+                );
+                if (!setBoundVar || !setBoundVar.id) {
+                  await debugConsole.warning(
+                    `    ⚠️ ISSUE #1: itemSpacing variable binding FAILED - boundVariable not set correctly!`,
+                  );
+                } else {
+                  await debugConsole.log(
+                    `    ✓ itemSpacing variable binding SUCCESS`,
+                  );
+                }
+              }
+
               if (
                 setBoundVar &&
                 typeof setBoundVar === "object" &&
@@ -2983,19 +3248,33 @@ export async function recreateNodeFromData(
     // Set itemSpacing (only if not already set earlier and not bound to a variable)
     // Note: We already set itemSpacing right after layoutMode, but this ensures it's set
     // if the earlier code didn't run (e.g., if layoutMode was already set)
+    // CRITICAL: Check if itemSpacing is actually bound to a variable on the node itself,
+    // not just in nodeData, to avoid overriding a successfully set binding
     if (
       nodeData.itemSpacing !== undefined &&
-      (!hasBoundVariables || !nodeData.boundVariables.itemSpacing) &&
       newNode.layoutMode !== undefined &&
       newNode.layoutMode !== "NONE"
     ) {
-      // Only set if it's different from what we already set, or if it wasn't set earlier
-      // This prevents overriding a value we already set correctly
-      if (newNode.itemSpacing !== nodeData.itemSpacing) {
+      // Check if itemSpacing is actually bound to a variable on the node
+      const isActuallyBound =
+        (newNode as any).boundVariables?.itemSpacing !== undefined;
+
+      if (
+        !isActuallyBound &&
+        (!hasBoundVariables || !nodeData.boundVariables.itemSpacing)
+      ) {
+        // Only set if it's different from what we already set, or if it wasn't set earlier
+        // This prevents overriding a value we already set correctly
+        if (newNode.itemSpacing !== nodeData.itemSpacing) {
+          await debugConsole.log(
+            `  Setting itemSpacing to ${nodeData.itemSpacing} for "${nodeData.name || "Unnamed"}" (late setting)`,
+          );
+          newNode.itemSpacing = nodeData.itemSpacing;
+        }
+      } else if (isActuallyBound) {
         await debugConsole.log(
-          `  Setting itemSpacing to ${nodeData.itemSpacing} for "${nodeData.name || "Unnamed"}" (late setting)`,
+          `  Skipping late setting of itemSpacing for "${nodeData.name || "Unnamed"}" - already bound to variable`,
         );
-        newNode.itemSpacing = nodeData.itemSpacing;
       }
     }
     // Set counterAxisSpacing (vertical gap for horizontal layouts, horizontal gap for vertical layouts)
@@ -3545,6 +3824,7 @@ export async function recreateNodeFromData(
 
   // FINAL CHECK: Ensure itemSpacing is set correctly after all operations
   // Sometimes Figma resets itemSpacing when children are appended or other operations occur
+  // CRITICAL: Only fix if itemSpacing is NOT bound to a variable - never override a binding!
   if (
     (newNode.type === "FRAME" ||
       newNode.type === "COMPONENT" ||
@@ -3553,12 +3833,23 @@ export async function recreateNodeFromData(
     nodeData.layoutMode !== "NONE" &&
     nodeData.itemSpacing !== undefined
   ) {
-    const hasBoundVariableForItemSpacing =
+    // Check if itemSpacing is actually bound to a variable on the node itself
+    // This is the definitive check - if it's bound, we must NOT override it
+    const isActuallyBound =
+      (newNode as any).boundVariables?.itemSpacing !== undefined;
+
+    // Also check if it should be bound according to nodeData
+    const shouldBeBound =
       nodeData.boundVariables &&
       typeof nodeData.boundVariables === "object" &&
       nodeData.boundVariables.itemSpacing;
 
-    if (!hasBoundVariableForItemSpacing) {
+    if (isActuallyBound) {
+      await debugConsole.log(
+        `  FINAL CHECK: itemSpacing is bound to variable for "${nodeData.name || "Unnamed"}" - skipping direct value fix`,
+      );
+    } else if (!shouldBeBound) {
+      // Only fix if it's not bound and shouldn't be bound
       const currentValue = newNode.itemSpacing;
       if (currentValue !== nodeData.itemSpacing) {
         await debugConsole.log(
@@ -3573,6 +3864,11 @@ export async function recreateNodeFromData(
           `  FINAL CHECK: itemSpacing is already correct (${currentValue}) for "${nodeData.name || "Unnamed"}"`,
         );
       }
+    } else {
+      // Should be bound but isn't - this is the bug we're trying to fix
+      await debugConsole.warning(
+        `  FINAL CHECK: itemSpacing should be bound to variable for "${nodeData.name || "Unnamed"}" but binding is missing!`,
+      );
     }
   }
 
@@ -6373,9 +6669,17 @@ export async function resolveDeferredNormalInstances(
       }
 
       // Replace placeholder with actual instance
-      const placeholderIndex = parentNode.children.indexOf(placeholderFrame);
-      parentNode.insertChild(placeholderIndex, instanceNode);
-      placeholderFrame.remove();
+      // Check if parentNode supports children (ChildrenMixin)
+      if ("children" in parentNode && "insertChild" in parentNode) {
+        const placeholderIndex = parentNode.children.indexOf(placeholderFrame);
+        parentNode.insertChild(placeholderIndex, instanceNode);
+        placeholderFrame.remove();
+      } else {
+        const error = `Parent node does not support children operations for deferred instance "${nodeData.name}"`;
+        await debugConsole.error(error);
+        errors.push(error);
+        continue;
+      }
 
       await debugConsole.log(
         `  ✓ Resolved deferred instance "${nodeData.name}" from component "${instanceEntry.componentName}" on page "${instanceEntry.componentPageName}"`,

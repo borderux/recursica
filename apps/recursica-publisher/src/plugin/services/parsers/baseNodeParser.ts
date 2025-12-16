@@ -78,6 +78,42 @@ export async function parseBaseNodeProperties(
     handledKeys.add("height");
   }
 
+  // ISSUE #3 DEBUG: Check for preserveRatio (may not be exported)
+  // Note: debugConsole is not available in baseNodeParser, so we'll add this check in pageExportNew.ts instead
+  // For now, just log to console if this property exists
+  const nodeName = node.name || "Unnamed";
+  if ((node as any).preserveRatio !== undefined) {
+    console.log(
+      `[ISSUE #3 EXPORT DEBUG] "${nodeName}" has preserveRatio: ${(node as any).preserveRatio} (NOT being exported - needs to be added!)`,
+    );
+  }
+
+  // ISSUE #4: Export constraints (constraintHorizontal and constraintVertical)
+  // Figma nodes have constraintHorizontal and constraintVertical properties
+  // Valid values: "MIN", "CENTER", "MAX", "STRETCH", "SCALE"
+  // Default is "MIN" for both (Left/Top)
+  if ((node as any).constraintHorizontal !== undefined) {
+    const constraintH = (node as any).constraintHorizontal;
+    if (
+      isDifferentFromDefault(
+        constraintH,
+        BASE_NODE_DEFAULTS.constraintHorizontal,
+      )
+    ) {
+      result.constraintHorizontal = constraintH;
+      handledKeys.add("constraintHorizontal");
+    }
+  }
+  if ((node as any).constraintVertical !== undefined) {
+    const constraintV = (node as any).constraintVertical;
+    if (
+      isDifferentFromDefault(constraintV, BASE_NODE_DEFAULTS.constraintVertical)
+    ) {
+      result.constraintVertical = constraintV;
+      handledKeys.add("constraintVertical");
+    }
+  }
+
   // Visual properties - only if different from defaults
   if (
     node.visible !== undefined &&
