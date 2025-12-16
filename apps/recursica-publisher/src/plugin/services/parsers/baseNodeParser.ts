@@ -89,29 +89,83 @@ export async function parseBaseNodeProperties(
   }
 
   // ISSUE #4: Export constraints (constraintHorizontal and constraintVertical)
-  // Figma nodes have constraintHorizontal and constraintVertical properties
+  // Constraints only exist on certain node types (FrameNode, ComponentNode, InstanceNode, etc.)
+  // Not all nodes have constraints (e.g., VectorNode, TextNode don't have them)
   // Valid values: "MIN", "CENTER", "MAX", "STRETCH", "SCALE"
   // Default is "MIN" for both (Left/Top)
-  if ((node as any).constraintHorizontal !== undefined) {
-    const constraintH = (node as any).constraintHorizontal;
-    if (
-      isDifferentFromDefault(
+  // Only check for constraints on node types that support them
+  const nodeType = node.type;
+  const hasConstraints =
+    nodeType === "FRAME" ||
+    nodeType === "COMPONENT" ||
+    nodeType === "INSTANCE" ||
+    nodeType === "GROUP" ||
+    nodeType === "BOOLEAN_OPERATION" ||
+    nodeType === "VECTOR" ||
+    nodeType === "STAR" ||
+    nodeType === "LINE" ||
+    nodeType === "ELLIPSE" ||
+    nodeType === "POLYGON" ||
+    nodeType === "RECTANGLE" ||
+    nodeType === "TEXT";
+
+  if (hasConstraints) {
+    // Try direct properties first, then fall back to constraints object
+    const constraintH: string | undefined =
+      (node as any).constraintHorizontal !== undefined
+        ? (node as any).constraintHorizontal
+        : (node as any).constraints?.horizontal;
+    const constraintV: string | undefined =
+      (node as any).constraintVertical !== undefined
+        ? (node as any).constraintVertical
+        : (node as any).constraints?.vertical;
+
+    if (constraintH !== undefined) {
+      const isDifferent = isDifferentFromDefault(
         constraintH,
         BASE_NODE_DEFAULTS.constraintHorizontal,
-      )
-    ) {
-      result.constraintHorizontal = constraintH;
-      handledKeys.add("constraintHorizontal");
+      );
+      if (isDifferent) {
+        result.constraintHorizontal = constraintH;
+        handledKeys.add("constraintHorizontal");
+        console.log(
+          `[ISSUE #4 EXPORT] "${nodeName}" (${nodeType}) exporting constraintHorizontal: ${constraintH} (different from default: ${BASE_NODE_DEFAULTS.constraintHorizontal})`,
+        );
+      } else {
+        console.log(
+          `[ISSUE #4 EXPORT DEBUG] "${nodeName}" (${nodeType}) has constraintHorizontal: ${constraintH} (default, not exporting)`,
+        );
+      }
+    } else {
+      console.log(
+        `[ISSUE #4 EXPORT DEBUG] "${nodeName}" (${nodeType}) constraintHorizontal is undefined (checked both direct property and constraints.horizontal)`,
+      );
     }
-  }
-  if ((node as any).constraintVertical !== undefined) {
-    const constraintV = (node as any).constraintVertical;
-    if (
-      isDifferentFromDefault(constraintV, BASE_NODE_DEFAULTS.constraintVertical)
-    ) {
-      result.constraintVertical = constraintV;
-      handledKeys.add("constraintVertical");
+
+    if (constraintV !== undefined) {
+      const isDifferent = isDifferentFromDefault(
+        constraintV,
+        BASE_NODE_DEFAULTS.constraintVertical,
+      );
+      if (isDifferent) {
+        result.constraintVertical = constraintV;
+        handledKeys.add("constraintVertical");
+        console.log(
+          `[ISSUE #4 EXPORT] "${nodeName}" (${nodeType}) exporting constraintVertical: ${constraintV} (different from default: ${BASE_NODE_DEFAULTS.constraintVertical})`,
+        );
+      } else {
+        console.log(
+          `[ISSUE #4 EXPORT DEBUG] "${nodeName}" (${nodeType}) has constraintVertical: ${constraintV} (default, not exporting)`,
+        );
+      }
+    } else {
+      console.log(
+        `[ISSUE #4 EXPORT DEBUG] "${nodeName}" (${nodeType}) constraintVertical is undefined (checked both direct property and constraints.vertical)`,
+      );
     }
+  } else {
+    // Node type doesn't support constraints, skip logging to reduce noise
+    // console.log(`[ISSUE #4 EXPORT DEBUG] "${nodeName}" (${nodeType}) does not support constraints`);
   }
 
   // Visual properties - only if different from defaults

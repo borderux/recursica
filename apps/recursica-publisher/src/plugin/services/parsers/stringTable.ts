@@ -177,6 +177,8 @@ const STRING_TABLE_MAP: Record<string, string> = {
   height: "h",
   width: "w",
   libraryName: "libNm", // Different from remoteLibraryName (rLibN)
+  constraintHorizontal: "cnsHr", // Constraint horizontal (5 chars)
+  constraintVertical: "cnsVr", // Constraint vertical (5 chars)
 };
 
 /**

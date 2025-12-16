@@ -380,6 +380,7 @@ export async function exportPage(
   data: ExportPageData,
   processedPages: Set<string> = new Set(),
   isRecursive: boolean = false,
+  discoveredPages: Set<string> = new Set(), // Track discovered pages to avoid infinite loops during discovery
 ): Promise<ResponseMessage> {
   // Clear debug console only on initial call, not recursive calls
   if (!isRecursive) {
@@ -424,23 +425,49 @@ export async function exportPage(
     const selectedPage = pages[pageIndex];
     const selectedPageId = selectedPage.id;
 
-    // Check if this page has already been processed
-    if (processedPages.has(selectedPageId)) {
-      await debugConsole.log(
-        `Page "${selectedPage.name}" has already been processed, skipping...`,
-      );
-      // Return empty response for already processed pages
-      return {
-        type: "exportPage",
-        success: false,
-        error: true,
-        message: "Page already processed",
-        data: {},
-      };
+    // Check if this page has already been processed (for actual exports)
+    // or discovered (for discovery phase when skipPrompts is true)
+    if (data.skipPrompts) {
+      // During discovery phase, use discoveredPages set to avoid infinite loops
+      if (discoveredPages.has(selectedPageId)) {
+        await debugConsole.log(
+          `Page "${selectedPage.name}" already discovered, skipping discovery...`,
+        );
+        // Return empty response but with any discovered pages we might have
+        return {
+          type: "exportPage",
+          success: true,
+          error: false,
+          message: "Page already discovered",
+          data: {
+            filename: "",
+            pageData: {},
+            pageName: selectedPage.name,
+            additionalPages: [],
+            discoveredReferencedPages: [],
+          } as unknown as Record<string, unknown>,
+        };
+      }
+      // Mark as discovered (not processed, since we're not exporting)
+      discoveredPages.add(selectedPageId);
+    } else {
+      // During actual export, use processedPages set
+      if (processedPages.has(selectedPageId)) {
+        await debugConsole.log(
+          `Page "${selectedPage.name}" has already been processed, skipping...`,
+        );
+        // Return empty response for already processed pages
+        return {
+          type: "exportPage",
+          success: false,
+          error: true,
+          message: "Page already processed",
+          data: {},
+        };
+      }
+      // Mark this page as processed (actually exported)
+      processedPages.add(selectedPageId);
     }
-
-    // Mark this page as processed
-    processedPages.add(selectedPageId);
 
     await debugConsole.log(
       `Selected page: "${selectedPage.name}" (index: ${pageIndex})`,
@@ -733,16 +760,82 @@ export async function exportPage(
         // Otherwise, prompt the user
         if (data.skipPrompts) {
           // Just collect the info - wizard will ask user and export selected pages
-          discoveredReferencedPages.push({
-            pageId,
-            pageName,
-            pageIndex: referencedPageIndex,
-            hasMetadata,
-            componentName,
-          });
+          // Don't include the original page in discovered pages (it's the one being published)
+          if (pageId === selectedPageId) {
+            await debugConsole.log(
+              `Skipping "${pageName}" - this is the original page being published`,
+            );
+          } else {
+            // Check if we already have this page (avoid duplicates)
+            const existingPage = discoveredReferencedPages.find(
+              (p) => p.pageId === pageId,
+            );
+            if (!existingPage) {
+              discoveredReferencedPages.push({
+                pageId,
+                pageName,
+                pageIndex: referencedPageIndex,
+                hasMetadata,
+                componentName,
+              });
+              await debugConsole.log(
+                `Discovered referenced page: "${pageName}" (will be handled by wizard)`,
+              );
+            }
+          }
+
+          // Recursively discover dependencies of this referenced page
+          // This ensures we find all transitive dependencies (dependencies of dependencies)
           await debugConsole.log(
-            `Discovered referenced page: "${pageName}" (will be handled by wizard)`,
+            `Checking dependencies of "${pageName}" for transitive dependencies...`,
           );
+          try {
+            const recursiveExportResponse = await exportPage(
+              {
+                pageIndex: referencedPageIndex,
+                skipPrompts: true, // Keep skipPrompts true to just discover, not export
+              },
+              processedPages, // Pass the same set (won't be used during discovery)
+              true, // Mark as recursive call
+              discoveredPages, // Pass the same discoveredPages set to avoid infinite loops
+            );
+
+            if (
+              recursiveExportResponse.success &&
+              recursiveExportResponse.data
+            ) {
+              const recursiveExportData =
+                recursiveExportResponse.data as unknown as ExportPageResponseData;
+              // Merge discovered pages from recursive call
+              if (recursiveExportData.discoveredReferencedPages) {
+                for (const discoveredPage of recursiveExportData.discoveredReferencedPages) {
+                  // Don't include the original page (it's the one being published)
+                  if (discoveredPage.pageId === selectedPageId) {
+                    await debugConsole.log(
+                      `  Skipping "${discoveredPage.pageName}" - this is the original page being published`,
+                    );
+                    continue;
+                  }
+                  // Check if we already have this page (avoid duplicates)
+                  const existingPage = discoveredReferencedPages.find(
+                    (p) => p.pageId === discoveredPage.pageId,
+                  );
+                  if (!existingPage) {
+                    discoveredReferencedPages.push(discoveredPage);
+                    await debugConsole.log(
+                      `  Discovered transitive dependency: "${discoveredPage.pageName}" (from ${pageName})`,
+                    );
+                  }
+                }
+              }
+            }
+          } catch (error) {
+            // If recursive discovery fails, log but don't fail the whole export
+            // The page might not be exportable, but we still want to show it in the wizard
+            await debugConsole.warning(
+              `Could not discover dependencies of "${pageName}": ${error instanceof Error ? error.message : String(error)}`,
+            );
+          }
         } else {
           // Prompt user
           const message = `Do you want to also publish referenced component "${pageName}"?`;
@@ -772,6 +865,7 @@ export async function exportPage(
               },
               processedPages, // Pass the same set to track all processed pages
               true, // Mark as recursive call
+              discoveredPages, // Pass discovered pages set (empty during actual export)
             );
 
             if (
@@ -903,7 +997,8 @@ export async function exportPage(
       additionalPages, // Populated with referenced component pages
       discoveredReferencedPages:
         discoveredReferencedPages.length > 0
-          ? discoveredReferencedPages
+          ? // Filter out the original page - it shouldn't be in the discovered list since it's the one being published
+            discoveredReferencedPages.filter((p) => p.pageId !== selectedPageId)
           : undefined, // Only include if there are discovered pages
     };
 

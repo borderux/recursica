@@ -113,7 +113,10 @@ export class GitHubService {
     this.accessToken = accessToken;
   }
 
-  private async makeRequest(url: string, options: RequestInit = {}) {
+  private async makeRequest<T = unknown>(
+    url: string,
+    options: RequestInit = {},
+  ): Promise<T> {
     const response = await fetch(url, {
       ...options,
       headers: {
@@ -126,7 +129,15 @@ export class GitHubService {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `GitHub API error: ${response.status}`);
+      const errorMessage =
+        error.message || `GitHub API error: ${response.status}`;
+      const errorWithStatus = new Error(errorMessage) as Error & {
+        status?: number;
+        response?: Response;
+      };
+      errorWithStatus.status = response.status;
+      errorWithStatus.response = response;
+      throw errorWithStatus;
     }
 
     return response.json();
