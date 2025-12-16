@@ -199,19 +199,34 @@ export default function Test() {
                 >
                   {testResults.message}
                 </p>
-                {testResults.details?.summary && (
-                  <p
-                    style={{
-                      color: "#666",
-                      margin: "0 0 8px 0",
-                      fontSize: "12px",
-                    }}
-                  >
-                    Total: {testResults.details.summary.total} | Passed:{" "}
-                    {testResults.details.summary.passed} | Failed:{" "}
-                    {testResults.details.summary.failed}
-                  </p>
-                )}
+                {testResults.details &&
+                  "summary" in testResults.details &&
+                  typeof testResults.details.summary === "object" &&
+                  testResults.details.summary !== null && (
+                    <p
+                      style={{
+                        color: "#666",
+                        margin: "0 0 8px 0",
+                        fontSize: "12px",
+                      }}
+                    >
+                      Total:{" "}
+                      {String(
+                        (testResults.details.summary as Record<string, unknown>)
+                          .total || 0,
+                      )}{" "}
+                      | Passed:{" "}
+                      {String(
+                        (testResults.details.summary as Record<string, unknown>)
+                          .passed || 0,
+                      )}{" "}
+                      | Failed:{" "}
+                      {String(
+                        (testResults.details.summary as Record<string, unknown>)
+                          .failed || 0,
+                      )}
+                    </p>
+                  )}
                 {testResults.details && (
                   <details
                     style={{
