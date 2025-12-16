@@ -2304,9 +2304,15 @@ export async function recreateNodeFromData(
       newNode = figma.createFrame();
       break;
     case "BOOLEAN_OPERATION": {
-      const booleanError = `Boolean operation nodes cannot be imported. Found boolean operation: "${nodeData.name}".`;
-      await debugConsole.error(booleanError);
-      throw new Error(booleanError);
+      // Boolean operations cannot be created directly in Figma API
+      // They are typically represented as VECTOR nodes with specific paths
+      // Import as VECTOR node to preserve the visual appearance
+      await debugConsole.log(
+        `Converting BOOLEAN_OPERATION "${nodeData.name}" to VECTOR node (boolean operations cannot be created directly in Figma API)`,
+      );
+      newNode = figma.createVector();
+      // Note: vectorPaths will be set later if they exist in nodeData
+      break;
     }
     case "POLYGON":
       newNode = figma.createPolygon();
@@ -2441,6 +2447,7 @@ export async function recreateNodeFromData(
 
   if (
     nodeData.type !== "VECTOR" &&
+    nodeData.type !== "BOOLEAN_OPERATION" &&
     nodeData.width !== undefined &&
     nodeData.height !== undefined &&
     !hasBoundVariablesForSize
@@ -2595,8 +2602,8 @@ export async function recreateNodeFromData(
       expectedConstraintH !== undefined ||
       expectedConstraintV !== undefined
     ) {
-      // Skip VECTOR nodes - constraints are set earlier to avoid "not extensible" errors
-      if (nodeData.type === "VECTOR") {
+      // Skip VECTOR and BOOLEAN_OPERATION nodes - constraints are set earlier to avoid "not extensible" errors
+      if (nodeData.type === "VECTOR" || nodeData.type === "BOOLEAN_OPERATION") {
         await debugConsole.log(
           `  [ISSUE #4] "${nodeName}" (VECTOR) - Constraints already set earlier (skipping "no resize" path)`,
         );
@@ -2667,9 +2674,10 @@ export async function recreateNodeFromData(
       }
     }
 
-    // Final verification for no-resize case (skip VECTOR nodes - already verified earlier)
+    // Final verification for no-resize case (skip VECTOR and BOOLEAN_OPERATION nodes - already verified earlier)
     if (
       nodeData.type !== "VECTOR" &&
+      nodeData.type !== "BOOLEAN_OPERATION" &&
       (expectedConstraintH !== undefined || expectedConstraintV !== undefined)
     ) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -3419,7 +3427,11 @@ export async function recreateNodeFromData(
   }
 
   // Set vector and line properties
-  if (nodeData.type === "VECTOR" || nodeData.type === "LINE") {
+  if (
+    nodeData.type === "VECTOR" ||
+    nodeData.type === "BOOLEAN_OPERATION" ||
+    nodeData.type === "LINE"
+  ) {
     if (nodeData.strokeCap !== undefined) {
       newNode.strokeCap = nodeData.strokeCap;
     }
@@ -3429,9 +3441,9 @@ export async function recreateNodeFromData(
     if (nodeData.dashPattern !== undefined && nodeData.dashPattern.length > 0) {
       newNode.dashPattern = nodeData.dashPattern;
     }
-    // Set vector paths for VECTOR nodes (critical for displaying paths)
+    // Set vector paths for VECTOR and BOOLEAN_OPERATION nodes (critical for displaying paths)
     // fillGeometry is read-only, so we need to use vectorPaths instead
-    if (nodeData.type === "VECTOR") {
+    if (nodeData.type === "VECTOR" || nodeData.type === "BOOLEAN_OPERATION") {
       if (nodeData.fillGeometry !== undefined) {
         try {
           // fillGeometry is read-only, but vectorPaths is writable

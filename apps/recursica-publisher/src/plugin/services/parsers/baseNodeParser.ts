@@ -7,6 +7,7 @@ import {
 } from "./boundVariableParser";
 import type { VariableTable, CollectionTable } from "./variableTable";
 import type { InstanceTable } from "./instanceTable";
+import { debugConsole } from "../debugConsole";
 
 /**
  * Parser for common base node properties shared across all node types
@@ -79,11 +80,9 @@ export async function parseBaseNodeProperties(
   }
 
   // ISSUE #3 DEBUG: Check for preserveRatio (may not be exported)
-  // Note: debugConsole is not available in baseNodeParser, so we'll add this check in pageExportNew.ts instead
-  // For now, just log to console if this property exists
   const nodeName = node.name || "Unnamed";
   if ((node as any).preserveRatio !== undefined) {
-    console.log(
+    await debugConsole.log(
       `[ISSUE #3 EXPORT DEBUG] "${nodeName}" has preserveRatio: ${(node as any).preserveRatio} (NOT being exported - needs to be added!)`,
     );
   }
@@ -128,18 +127,7 @@ export async function parseBaseNodeProperties(
       if (isDifferent) {
         result.constraintHorizontal = constraintH;
         handledKeys.add("constraintHorizontal");
-        console.log(
-          `[ISSUE #4 EXPORT] "${nodeName}" (${nodeType}) exporting constraintHorizontal: ${constraintH} (different from default: ${BASE_NODE_DEFAULTS.constraintHorizontal})`,
-        );
-      } else {
-        console.log(
-          `[ISSUE #4 EXPORT DEBUG] "${nodeName}" (${nodeType}) has constraintHorizontal: ${constraintH} (default, not exporting)`,
-        );
       }
-    } else {
-      console.log(
-        `[ISSUE #4 EXPORT DEBUG] "${nodeName}" (${nodeType}) constraintHorizontal is undefined (checked both direct property and constraints.horizontal)`,
-      );
     }
 
     if (constraintV !== undefined) {
@@ -150,18 +138,7 @@ export async function parseBaseNodeProperties(
       if (isDifferent) {
         result.constraintVertical = constraintV;
         handledKeys.add("constraintVertical");
-        console.log(
-          `[ISSUE #4 EXPORT] "${nodeName}" (${nodeType}) exporting constraintVertical: ${constraintV} (different from default: ${BASE_NODE_DEFAULTS.constraintVertical})`,
-        );
-      } else {
-        console.log(
-          `[ISSUE #4 EXPORT DEBUG] "${nodeName}" (${nodeType}) has constraintVertical: ${constraintV} (default, not exporting)`,
-        );
       }
-    } else {
-      console.log(
-        `[ISSUE #4 EXPORT DEBUG] "${nodeName}" (${nodeType}) constraintVertical is undefined (checked both direct property and constraints.vertical)`,
-      );
     }
   } else {
     // Node type doesn't support constraints, skip logging to reduce noise

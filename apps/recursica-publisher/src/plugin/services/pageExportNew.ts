@@ -537,11 +537,15 @@ export async function exportPage(
     const totalCollections = collectionTable.getSize();
 
     const totalInstances = instanceTable.getSize();
+    const nodesWithConstraints = countNodesWithConstraints(extractedPageData);
     await debugConsole.log(`Extraction complete:`);
     await debugConsole.log(`  - Total nodes: ${totalNodes}`);
     await debugConsole.log(`  - Unique variables: ${totalVariables}`);
     await debugConsole.log(`  - Unique collections: ${totalCollections}`);
     await debugConsole.log(`  - Unique instances: ${totalInstances}`);
+    await debugConsole.log(
+      `  - Nodes with constraints exported: ${nodesWithConstraints}`,
+    );
 
     // Check for remote instances - not supported during publishing
     const instanceTableEntries = instanceTable.getSerializedTable();
