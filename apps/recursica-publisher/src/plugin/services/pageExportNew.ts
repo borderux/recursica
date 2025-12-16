@@ -82,6 +82,31 @@ export function countTotalNodes(node: any): number {
   return count;
 }
 
+// Function to count nodes with constraints exported
+function countNodesWithConstraints(node: any): number {
+  let count = 0;
+  // Check if this node has constraints exported (using string table abbreviations)
+  if (node.cnsHr !== undefined || node.cnsVr !== undefined) {
+    count = 1;
+  }
+  // Also check for full property names (in case string table wasn't applied)
+  if (
+    node.constraintHorizontal !== undefined ||
+    node.constraintVertical !== undefined
+  ) {
+    if (count === 0) count = 1;
+  }
+  // Recursively count children
+  if (node.children && Array.isArray(node.children)) {
+    for (const child of node.children) {
+      if (child && typeof child === "object") {
+        count += countNodesWithConstraints(child);
+      }
+    }
+  }
+  return count;
+}
+
 /**
  * Recursively extracts node data using type-specific parsers
  * Only serializes non-default values to reduce JSON size
