@@ -3679,6 +3679,37 @@ export async function recreateNodeFromData(
     }
   }
 
+  // ISSUE #2: Set selectionColor property (node-level property, not on fills)
+  // selectionColor can be:
+  // 1. A direct color value (RGB object) - set it directly
+  // 2. Bound to a variable (via boundVariables.selectionColor - handled below)
+  if (nodeData.selectionColor !== undefined) {
+    const nodeName = nodeData.name || "Unnamed";
+    // Check if selectionColor is bound to a variable
+    const isBoundToVariable =
+      nodeData.boundVariables &&
+      typeof nodeData.boundVariables === "object" &&
+      nodeData.boundVariables.selectionColor !== undefined;
+
+    if (!isBoundToVariable) {
+      // Set direct value only if not bound to a variable
+      try {
+        (newNode as any).selectionColor = nodeData.selectionColor;
+        await debugConsole.log(
+          `  [ISSUE #2] Set selectionColor (direct value) on "${nodeName}": ${JSON.stringify(nodeData.selectionColor)}`,
+        );
+      } catch (error) {
+        await debugConsole.warning(
+          `  [ISSUE #2] Failed to set selectionColor on "${nodeName}": ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    } else {
+      await debugConsole.log(
+        `  [ISSUE #2] Skipping direct selectionColor value for "${nodeName}" - will be set via bound variable`,
+      );
+    }
+  }
+
   // CRITICAL: Restore bound variables as the FINAL step, after all properties are set
   // This ensures nothing can clear the bound variables after they're set
   // IMPORTANT: Padding/itemSpacing bound variables are already set earlier (right after layoutMode)
@@ -3696,6 +3727,13 @@ export async function recreateNodeFromData(
     )) {
       // Skip fills (handled separately earlier) and padding properties (set earlier)
       if (propertyName !== "fills" && !paddingProps.includes(propertyName)) {
+        // ISSUE #2: Log when we're restoring selectionColor bound variable
+        if (propertyName === "selectionColor") {
+          const nodeName = nodeData.name || "Unnamed";
+          await debugConsole.log(
+            `  [ISSUE #2] Restoring bound variable for selectionColor on "${nodeName}"`,
+          );
+        }
         // Handle all bound variables (including padding/itemSpacing)
         if (
           isVariableReference(varInfo) &&

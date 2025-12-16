@@ -278,6 +278,42 @@ export async function parseBaseNodeProperties(
     handledKeys.add("backgrounds");
   }
 
+  // ISSUE #2: Export selectionColor property (node-level property that can be bound to variables)
+  // selectionColor is a property on nodes (not on fills) that can be:
+  // 1. A direct color value (RGB object) - export the value
+  // 2. Bound to a variable (via boundVariables.selectionColor - already handled above in boundVariables export)
+  // When bound to a variable, Figma may still have a resolved/computed value in node.selectionColor
+  // We should export it if it exists, but the binding is preserved via boundVariables.selectionColor
+  const selectionColor = (node as any).selectionColor;
+  const hasSelectionColorBinding =
+    node.boundVariables &&
+    typeof node.boundVariables === "object" &&
+    (node.boundVariables as any).selectionColor !== undefined;
+
+  if (selectionColor !== undefined) {
+    // Export selectionColor if it exists (default is undefined)
+    // This could be a direct value OR a resolved value from a bound variable
+    result.selectionColor = selectionColor;
+    handledKeys.add("selectionColor");
+    const nodeName = node.name || "Unnamed";
+    if (hasSelectionColorBinding) {
+      console.log(
+        `[ISSUE #2 EXPORT] "${nodeName}" exporting selectionColor (bound to variable, resolved value): ${JSON.stringify(selectionColor)}`,
+      );
+    } else {
+      console.log(
+        `[ISSUE #2 EXPORT] "${nodeName}" exporting selectionColor (direct value): ${JSON.stringify(selectionColor)}`,
+      );
+    }
+  } else if (hasSelectionColorBinding) {
+    // selectionColor is bound but has no resolved value yet - this is fine,
+    // the binding will be restored via boundVariables.selectionColor during import
+    const nodeName = node.name || "Unnamed";
+    console.log(
+      `[ISSUE #2 EXPORT] "${nodeName}" has selectionColor bound to variable (no resolved value to export)`,
+    );
+  }
+
   // Note: Unhandled keys are tracked centrally in extractNodeData
   // after all parsers have run
 

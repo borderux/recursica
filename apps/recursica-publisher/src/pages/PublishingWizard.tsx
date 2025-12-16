@@ -1,6 +1,7 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 import PageLayout from "../components/PageLayout";
+import DebugConsole from "../components/DebugConsole";
 import type {
   ExportPageResponseData,
   ReferencedPageInfo,
@@ -21,7 +22,13 @@ interface PublishingWizardLocationState {
   mainBranchComponents?: ComponentInfo[];
 }
 
-type WizardStep = "initial" | "selectReferencedPages" | "dependency" | "main";
+type WizardStep =
+  | "initial"
+  | "validationErrors"
+  | "selectReferencedPages"
+  | "publishing"
+  | "componentRevision"
+  | "finalPublish";
 
 interface PagePublishDecision {
   pageName: string;
@@ -36,7 +43,7 @@ export default function PublishingWizard() {
   const navigate = useNavigate();
   const { accessToken } = useAuth();
   const [wizardStep, setWizardStep] = useState<WizardStep>("initial");
-  const [currentDependencyIndex, setCurrentDependencyIndex] = useState(0);
+  const [currentComponentIndex, setCurrentComponentIndex] = useState(0);
   const [pageDecisions, setPageDecisions] = useState<
     Map<string, PagePublishDecision>
   >(new Map());
@@ -59,6 +66,8 @@ export default function PublishingWizard() {
     Set<string>
   >(new Set());
   const [isExportingReferencedPages, setIsExportingReferencedPages] =
+    useState(false);
+  const [hasExportedReferencedPages, setHasExportedReferencedPages] =
     useState(false);
 
   // Get data from location state or search params
@@ -121,11 +130,20 @@ export default function PublishingWizard() {
               `[PublishingWizard] Export successful for page: ${exportedData.pageName}`,
             );
 
-            // Check if there are discovered referenced pages to ask user about
+            // Check for validation errors first
             if (
+              exportedData.validationResult &&
+              exportedData.validationResult.hasErrors
+            ) {
+              console.log(
+                `[PublishingWizard] Validation errors found: ${exportedData.validationResult.errors.length} error(s)`,
+              );
+              setWizardStep("validationErrors");
+            } else if (
               exportedData.discoveredReferencedPages &&
               exportedData.discoveredReferencedPages.length > 0
             ) {
+              // Check if there are discovered referenced pages to ask user about
               console.log(
                 `[PublishingWizard] Found ${exportedData.discoveredReferencedPages.length} discovered referenced pages`,
               );
@@ -139,13 +157,18 @@ export default function PublishingWizard() {
                 ),
               );
               setWizardStep("selectReferencedPages");
-            } else if (exportedData.additionalPages.length > 0) {
-              // Has additional pages already exported, go to dependency step
-              setWizardStep("dependency");
-              setCurrentDependencyIndex(0);
             } else {
-              // No dependencies, go straight to main
-              setWizardStep("main");
+              // No discovered referenced pages, initialize main page decision and go to publishing
+              const { currentVersion, newVersion } =
+                getVersionInfo(exportedData);
+              updatePageDecision(exportedData.pageName, {
+                currentVersion,
+                newVersion,
+                publishNewVersion: true,
+                changeMessage: "",
+              });
+              setWizardStep("publishing");
+              setHasExportedReferencedPages(true); // No pages to export, so mark as done
             }
           } else {
             const errorMessage =
@@ -165,38 +188,58 @@ export default function PublishingWizard() {
 
       doExport();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageIndex, exportData, isExporting, exportError]);
-
-  // Get all pages that will be published (flattened list)
-  const getAllPages = useCallback(
-    (pageData: ExportPageResponseData): ExportPageResponseData[] => {
-      const pages = [pageData];
-      for (const additionalPage of pageData.additionalPages) {
-        pages.push(...getAllPages(additionalPage));
-      }
-      return pages;
-    },
-    [],
-  );
-
-  const allPages = useMemo(
-    () => (exportData ? getAllPages(exportData) : []),
-    [exportData, getAllPages],
-  );
 
   // Get current page being processed
   const getCurrentPage = useCallback(() => {
     if (!exportData) return null;
-    if (wizardStep === "dependency") {
-      return exportData.additionalPages[currentDependencyIndex];
-    }
-    if (wizardStep === "main") {
-      return exportData;
+    if (wizardStep === "componentRevision") {
+      // Get all pages that will be published (main + selected referenced pages)
+      const pagesToPublish: ExportPageResponseData[] = [exportData];
+      // Add selected referenced pages that were exported
+      for (const pageInfo of discoveredReferencedPages) {
+        if (selectedReferencedPageIds.has(pageInfo.pageId)) {
+          const exportedPage = exportData.additionalPages.find(
+            (p) => p.pageName === pageInfo.pageName,
+          );
+          if (exportedPage) {
+            pagesToPublish.push(exportedPage);
+          }
+        }
+      }
+      if (currentComponentIndex < pagesToPublish.length) {
+        return pagesToPublish[currentComponentIndex];
+      }
     }
     return null;
-  }, [wizardStep, currentDependencyIndex, exportData]);
+  }, [
+    wizardStep,
+    currentComponentIndex,
+    exportData,
+    discoveredReferencedPages,
+    selectedReferencedPageIds,
+  ]);
 
   const currentPage = getCurrentPage();
+
+  // Get all pages that will be published (main + selected referenced pages)
+  const getPagesToPublish = useCallback((): ExportPageResponseData[] => {
+    if (!exportData) return [];
+    const pages: ExportPageResponseData[] = [exportData]; // Main page always included
+    // Add selected referenced pages that were exported
+    for (const pageInfo of discoveredReferencedPages) {
+      if (selectedReferencedPageIds.has(pageInfo.pageId)) {
+        const exportedPage = exportData.additionalPages.find(
+          (p) => p.pageName === pageInfo.pageName,
+        );
+        if (exportedPage) {
+          pages.push(exportedPage);
+        }
+      }
+    }
+    return pages;
+  }, [exportData, discoveredReferencedPages, selectedReferencedPageIds]);
 
   // Get version info for a page
   const getVersionInfo = useCallback(
@@ -410,6 +453,113 @@ export default function PublishingWizard() {
     [],
   );
 
+  // Export selected referenced pages when publishing step is shown
+  // This must be after all useCallback hooks are defined
+  useEffect(() => {
+    if (
+      wizardStep === "publishing" &&
+      !hasExportedReferencedPages &&
+      !isExportingReferencedPages &&
+      discoveredReferencedPages.length > 0
+    ) {
+      const doExport = async () => {
+        setIsExportingReferencedPages(true);
+        setError(null);
+
+        try {
+          const selectedPages = discoveredReferencedPages.filter((p) =>
+            selectedReferencedPageIds.has(p.pageId),
+          );
+          const exportedPages: ExportPageResponseData[] = [];
+
+          // Export all selected referenced pages sequentially
+          // Note: Each exportPage call may clear the console, but we want to see all logs
+          // So we'll export them one by one and the DebugConsole will show the final export's logs
+          // plus any logs that accumulate during the process
+          console.log(
+            `[PublishingWizard] Starting export of ${selectedPages.length} selected referenced page(s)...`,
+          );
+
+          for (let i = 0; i < selectedPages.length; i++) {
+            const pageInfo = selectedPages[i];
+            console.log(
+              `[PublishingWizard] Exporting referenced page ${i + 1}/${selectedPages.length}: ${pageInfo.pageName}`,
+            );
+
+            const { promise } = callPlugin("exportPage", {
+              pageIndex: pageInfo.pageIndex,
+              skipPrompts: true, // Skip prompts for nested references too
+              clearConsole: false, // Don't clear console so we can see all exports
+            });
+            const response = await promise;
+
+            if (response.success && response.data) {
+              const exportedPageData =
+                response.data as unknown as ExportPageResponseData;
+              exportedPages.push(exportedPageData);
+              console.log(
+                `[PublishingWizard] ✓ Successfully exported: ${exportedPageData.pageName}`,
+              );
+            } else {
+              throw new Error(
+                `Failed to export "${pageInfo.pageName}": ${response.message}`,
+              );
+            }
+          }
+
+          console.log(
+            `[PublishingWizard] ✓ Completed export of all ${exportedPages.length} referenced page(s)`,
+          );
+
+          // Update exportData with exported referenced pages
+          if (exportData) {
+            setExportData({
+              ...exportData,
+              additionalPages: exportedPages,
+            });
+          }
+
+          // Initialize decisions for selected referenced pages
+          for (const exportedPage of exportedPages) {
+            const { currentVersion, newVersion } = getVersionInfo(exportedPage);
+            updatePageDecision(exportedPage.pageName, {
+              currentVersion,
+              newVersion,
+              publishNewVersion: true,
+              changeMessage: "",
+            });
+          }
+
+          setHasExportedReferencedPages(true);
+          console.log(
+            `[PublishingWizard] Finished exporting ${exportedPages.length} referenced page(s)`,
+          );
+        } catch (err) {
+          const errorMessage =
+            err instanceof Error
+              ? err.message
+              : "Failed to export referenced pages";
+          setError(errorMessage);
+          console.error("[PublishingWizard] Export error:", errorMessage);
+        } finally {
+          setIsExportingReferencedPages(false);
+        }
+      };
+
+      doExport();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    wizardStep,
+    hasExportedReferencedPages,
+    isExportingReferencedPages,
+    discoveredReferencedPages,
+    selectedReferencedPageIds,
+    exportData,
+    getVersionInfo,
+    updatePageDecision,
+  ]);
+
   // Early return after all hooks
   if (pageIndex === undefined || isNaN(pageIndex)) {
     return (
@@ -538,240 +688,76 @@ export default function PublishingWizard() {
     );
   }
 
-  // Handle exporting selected referenced pages
-  const handleExportSelectedReferencedPages = async () => {
-    if (selectedReferencedPageIds.size === 0) {
-      setError("Please select at least one referenced page to include.");
-      return;
-    }
+  // Handle exporting selected referenced pages - just move to publishing step
+  // The actual export will happen in the publishing step so logs are visible
+  const handleExportSelectedReferencedPages = () => {
+    // Initialize decisions for main page (will be published)
+    const { currentVersion, newVersion } = getVersionInfo(exportData!);
+    updatePageDecision(exportData!.pageName, {
+      currentVersion,
+      newVersion,
+      publishNewVersion: true, // Main page always publishes
+      changeMessage: "",
+    });
 
-    setIsExportingReferencedPages(true);
-    setError(null);
-
-    try {
-      const selectedPages = discoveredReferencedPages.filter((p) =>
-        selectedReferencedPageIds.has(p.pageId),
-      );
-      const exportedPages: ExportPageResponseData[] = [];
-
-      for (const pageInfo of selectedPages) {
-        console.log(
-          `[PublishingWizard] Exporting selected referenced page: ${pageInfo.pageName}`,
-        );
-        const { promise } = callPlugin("exportPage", {
-          pageIndex: pageInfo.pageIndex,
-          skipPrompts: true, // Skip prompts for nested references too
-        });
-        const response = await promise;
-
-        if (response.success && response.data) {
-          const exportedPageData =
-            response.data as unknown as ExportPageResponseData;
-          exportedPages.push(exportedPageData);
-          console.log(
-            `[PublishingWizard] Successfully exported: ${exportedPageData.pageName}`,
-          );
-        } else {
-          throw new Error(
-            `Failed to export "${pageInfo.pageName}": ${response.message}`,
-          );
-        }
-      }
-
-      // Update exportData with exported referenced pages
-      if (exportData) {
-        setExportData({
-          ...exportData,
-          additionalPages: exportedPages,
-        });
-      }
-
-      // Move to next step
-      if (exportedPages.length > 0) {
-        setWizardStep("dependency");
-        setCurrentDependencyIndex(0);
-        // Initialize decision for first dependency
-        const firstDep = exportedPages[0];
-        const { currentVersion, newVersion } = getVersionInfo(firstDep);
-        updatePageDecision(firstDep.pageName, {
-          currentVersion,
-          newVersion,
-          publishNewVersion: false, // Default to not publishing
-        });
-      } else {
-        // No pages selected, go straight to main
-        setWizardStep("main");
-        const { currentVersion, newVersion } = getVersionInfo(exportData!);
-        updatePageDecision(exportData!.pageName, {
-          currentVersion,
-          newVersion,
-          publishNewVersion: true,
-        });
-      }
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : "Failed to export referenced pages";
-      setError(errorMessage);
-      console.error("[PublishingWizard] Export error:", errorMessage);
-    } finally {
-      setIsExportingReferencedPages(false);
-    }
+    // Move to publishing step (will trigger export there)
+    setWizardStep("publishing");
+    setHasExportedReferencedPages(false);
   };
 
-  // Handle start publishing
-  const handleStartPublishing = () => {
-    if (exportData.additionalPages.length > 0) {
-      setWizardStep("dependency");
-      setCurrentDependencyIndex(0);
-      // Initialize decision for first dependency
-      const firstDep = exportData.additionalPages[0];
-      const { currentVersion, newVersion } = getVersionInfo(firstDep);
-      updatePageDecision(firstDep.pageName, {
-        currentVersion,
-        newVersion,
-        publishNewVersion: false, // Default to not publishing
-      });
-    } else {
-      // No dependencies, go straight to main page
-      setWizardStep("main");
-      const { currentVersion, newVersion } = getVersionInfo(exportData);
-      updatePageDecision(exportData.pageName, {
-        currentVersion,
-        newVersion,
-        publishNewVersion: true,
-      });
+  // Handle continue from publishing step (move to componentRevision)
+  const handleContinueFromPublishing = () => {
+    if (!hasExportedReferencedPages || isExportingReferencedPages) {
+      return; // Don't allow continuing if export is not complete
+    }
+    const pagesToPublish = getPagesToPublish();
+    if (pagesToPublish.length > 0) {
+      setWizardStep("componentRevision");
+      setCurrentComponentIndex(0);
     }
   };
 
   // Handle back button
   const handleBack = () => {
-    if (wizardStep === "selectReferencedPages") {
+    if (wizardStep === "validationErrors") {
+      // Go back to initial screen
+      navigate(-1);
+    } else if (wizardStep === "selectReferencedPages") {
       // Go back to initial screen
       setWizardStep("initial");
-    } else if (wizardStep === "dependency") {
-      if (currentDependencyIndex > 0) {
-        // Go back to previous dependency
-        const prevIndex = currentDependencyIndex - 1;
-        setCurrentDependencyIndex(prevIndex);
+    } else if (wizardStep === "publishing") {
+      // Go back to select referenced pages
+      setWizardStep("selectReferencedPages");
+    } else if (wizardStep === "componentRevision") {
+      if (currentComponentIndex > 0) {
+        // Go back to previous component
+        setCurrentComponentIndex(currentComponentIndex - 1);
       } else {
-        // Go back to select referenced pages if we have them, otherwise initial
-        if (discoveredReferencedPages.length > 0) {
-          setWizardStep("selectReferencedPages");
-        } else {
-          setWizardStep("initial");
-        }
+        // Go back to publishing step
+        setWizardStep("publishing");
       }
-    } else if (wizardStep === "main") {
-      if (exportData.additionalPages.length > 0) {
-        // Go back to last dependency
-        setWizardStep("dependency");
-        setCurrentDependencyIndex(exportData.additionalPages.length - 1);
-      } else {
-        // Go back to select referenced pages if we have them, otherwise initial
-        if (discoveredReferencedPages.length > 0) {
-          setWizardStep("selectReferencedPages");
-        } else {
-          setWizardStep("initial");
-        }
-      }
+    } else if (wizardStep === "finalPublish") {
+      // Go back to last component revision
+      const pagesToPublish = getPagesToPublish();
+      setWizardStep("componentRevision");
+      setCurrentComponentIndex(Math.max(0, pagesToPublish.length - 1));
     } else {
-      // From initial screen, go back to PublishingComplete
+      // From initial screen, go back
       navigate(-1);
     }
   };
 
-  // Handle next in dependency wizard
-  const handleNextDependency = () => {
-    const currentDep = exportData.additionalPages[currentDependencyIndex];
-    const decision = getPageDecision(currentDep.pageName);
-
-    if (
-      decision &&
-      decision.publishNewVersion &&
-      !decision.changeMessage.trim()
-    ) {
-      setError("Please enter a change message for this component.");
-      return;
-    }
-
-    // Move to next dependency or main page
-    if (currentDependencyIndex < exportData.additionalPages.length - 1) {
-      const nextIndex = currentDependencyIndex + 1;
-      setCurrentDependencyIndex(nextIndex);
-      const nextDep = exportData.additionalPages[nextIndex];
-      const { currentVersion, newVersion } = getVersionInfo(nextDep);
-      updatePageDecision(nextDep.pageName, {
-        currentVersion,
-        newVersion,
-        publishNewVersion: false,
-      });
-    } else {
-      // Move to main page
-      setWizardStep("main");
-      const { currentVersion, newVersion } = getVersionInfo(exportData);
-      updatePageDecision(exportData.pageName, {
-        currentVersion,
-        newVersion,
-        publishNewVersion: true,
-      });
-    }
-    setError(null);
-  };
-
-  // Handle keep current version for dependency
-  const handleKeepCurrentVersion = () => {
-    const currentDep = exportData.additionalPages[currentDependencyIndex];
-    const { currentVersion, newVersion } = getVersionInfo(currentDep);
-    updatePageDecision(currentDep.pageName, {
-      publishNewVersion: false,
-      changeMessage: "",
-      currentVersion,
-      newVersion,
-    });
-
-    // Move to next
-    if (currentDependencyIndex < exportData.additionalPages.length - 1) {
-      const nextIndex = currentDependencyIndex + 1;
-      setCurrentDependencyIndex(nextIndex);
-      const nextDep = exportData.additionalPages[nextIndex];
-      const { currentVersion: nextCurrent, newVersion: nextNew } =
-        getVersionInfo(nextDep);
-      updatePageDecision(nextDep.pageName, {
-        currentVersion: nextCurrent,
-        newVersion: nextNew,
-        publishNewVersion: false,
-      });
-    } else {
-      setWizardStep("main");
-      const { currentVersion, newVersion } = getVersionInfo(exportData);
-      updatePageDecision(exportData.pageName, {
-        currentVersion,
-        newVersion,
-        publishNewVersion: true,
-      });
-    }
-    setError(null);
-  };
-
-  // Handle publish new version button click
-  const handlePublishNewVersion = () => {
-    if (!currentPage) return;
-    const { currentVersion, newVersion } = getVersionInfo(currentPage);
-    updatePageDecision(currentPage.pageName, {
-      publishNewVersion: true,
-      currentVersion,
-      newVersion,
-    });
-  };
-
   // Handle publish to GitHub
   const handlePublishToGitHub = async () => {
-    const mainDecision = getPageDecision(exportData.pageName);
-    if (!mainDecision || !mainDecision.changeMessage.trim()) {
-      setError("Please enter a change message for the main component.");
-      return;
+    const pagesToPublish = getPagesToPublish();
+
+    // Validate all components have change messages
+    for (const page of pagesToPublish) {
+      const decision = getPageDecision(page.pageName);
+      if (!decision || !decision.changeMessage.trim()) {
+        setError(`Please enter revision history for "${page.pageName}".`);
+        return;
+      }
     }
 
     if (!accessToken) {
@@ -797,13 +783,18 @@ export default function PublishingWizard() {
         "[handlePublishToGitHub] Export data updated, passing to GitHub service (will stringify at commit time)",
       );
 
+      // Use main page's change message as the PR message
+      const mainDecision = getPageDecision(exportData.pageName);
+      const prMessage =
+        mainDecision?.changeMessage.trim() || "Publish components";
+
       const githubService = new GitHubService(accessToken);
       const result = await githubService.publishPageExports(
         RECURSICA_FIGMA_OWNER,
         RECURSICA_FIGMA_REPO,
         updatedExportData,
         "main",
-        mainDecision.changeMessage.trim(),
+        prMessage,
         pageDecisions,
       );
 
@@ -819,6 +810,128 @@ export default function PublishingWizard() {
     }
   };
 
+  // Render validation errors screen
+  const renderValidationErrorsScreen = () => {
+    if (!exportData?.validationResult) {
+      return null;
+    }
+
+    const validationResult = exportData.validationResult;
+
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "20px",
+        }}
+      >
+        <div>
+          <h2 style={{ marginTop: 0, marginBottom: "12px", color: "#c62828" }}>
+            Validation Errors
+          </h2>
+          <p style={{ margin: 0, color: "#666" }}>
+            The following errors were found during validation. Please fix these
+            issues before publishing:
+          </p>
+        </div>
+
+        <div
+          style={{
+            backgroundColor: "#ffebee",
+            border: "1px solid #f44336",
+            borderRadius: "8px",
+            padding: "16px",
+          }}
+        >
+          <h3 style={{ marginTop: 0, marginBottom: "12px", color: "#c62828" }}>
+            External References ({validationResult.externalReferences.length})
+          </h3>
+          {validationResult.externalReferences.length > 0 ? (
+            <ul style={{ margin: 0, paddingLeft: "20px" }}>
+              {validationResult.externalReferences.map(
+                (
+                  ref: { componentName: string; pageName: string },
+                  index: number,
+                ) => (
+                  <li key={index} style={{ marginBottom: "8px" }}>
+                    <strong>"{ref.componentName}"</strong> on page{" "}
+                    <strong>"{ref.pageName}"</strong> references a component
+                    from another file. External references are not allowed.
+                  </li>
+                ),
+              )}
+            </ul>
+          ) : (
+            <p style={{ margin: 0, color: "#666" }}>
+              No external references found.
+            </p>
+          )}
+        </div>
+
+        <div
+          style={{
+            backgroundColor: "#ffebee",
+            border: "1px solid #f44336",
+            borderRadius: "8px",
+            padding: "16px",
+          }}
+        >
+          <h3 style={{ marginTop: 0, marginBottom: "12px", color: "#c62828" }}>
+            Unknown Collections ({validationResult.unknownCollections.length})
+          </h3>
+          {validationResult.unknownCollections.length > 0 ? (
+            <ul style={{ margin: 0, paddingLeft: "20px" }}>
+              {validationResult.unknownCollections.map(
+                (
+                  collection: {
+                    collectionName: string;
+                    collectionId: string;
+                    pageName: string;
+                  },
+                  index: number,
+                ) => (
+                  <li key={index} style={{ marginBottom: "8px" }}>
+                    Page <strong>"{collection.pageName}"</strong> uses
+                    collection <strong>"{collection.collectionName}"</strong>{" "}
+                    which is not a known collection. Remote collections must be
+                    named "Token", "Tokens", "Theme", or "Themes".
+                  </li>
+                ),
+              )}
+            </ul>
+          ) : (
+            <p style={{ margin: 0, color: "#666" }}>
+              No unknown collections found.
+            </p>
+          )}
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            gap: "12px",
+            justifyContent: "flex-end",
+          }}
+        >
+          <button
+            onClick={() => navigate(-1)}
+            style={{
+              padding: "10px 20px",
+              backgroundColor: "#f5f5f5",
+              border: "1px solid #ddd",
+              borderRadius: "4px",
+              cursor: "pointer",
+              fontSize: "14px",
+            }}
+          >
+            Back
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   // Render select referenced pages screen
   const renderSelectReferencedPagesScreen = () => (
     <div
@@ -831,9 +944,10 @@ export default function PublishingWizard() {
       <h2 style={{ marginTop: 0, marginBottom: "10px" }}>
         Select Referenced Pages
       </h2>
-      <p style={{ color: "#666", marginBottom: "20px" }}>
+      <p style={{ color: "#666", margin: 0 }}>
         The following pages are referenced by your component. Select which ones
-        you want to include in this publication:
+        you want to publish a new version of. Unselected pages will keep their
+        current version reference:
       </p>
 
       <div
@@ -846,6 +960,7 @@ export default function PublishingWizard() {
       >
         {discoveredReferencedPages.map((pageInfo) => {
           const isSelected = selectedReferencedPageIds.has(pageInfo.pageId);
+          const localVersion = pageInfo.localVersion ?? 0;
           return (
             <div
               key={pageInfo.pageId}
@@ -898,22 +1013,11 @@ export default function PublishingWizard() {
                 />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: "bold", marginBottom: "4px" }}>
-                    {pageInfo.componentName || pageInfo.pageName}
+                    {pageInfo.pageName}
                   </div>
                   <div style={{ fontSize: "14px", color: "#666" }}>
-                    Page: {pageInfo.pageName}
+                    Local Version: {localVersion}
                   </div>
-                  {!pageInfo.hasMetadata && (
-                    <div
-                      style={{
-                        fontSize: "12px",
-                        color: "#f57c00",
-                        marginTop: "4px",
-                      }}
-                    >
-                      ⚠️ No metadata found - will need to be published
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -960,109 +1064,33 @@ export default function PublishingWizard() {
           disabled={isExportingReferencedPages}
           style={{
             padding: "10px 20px",
-            backgroundColor:
-              isExportingReferencedPages || selectedReferencedPageIds.size === 0
-                ? "#ccc"
-                : "#1976d2",
+            backgroundColor: isExportingReferencedPages ? "#ccc" : "#1976d2",
             color: "white",
             border: "none",
             borderRadius: "6px",
-            cursor:
-              isExportingReferencedPages || selectedReferencedPageIds.size === 0
-                ? "not-allowed"
-                : "pointer",
+            cursor: isExportingReferencedPages ? "not-allowed" : "pointer",
             fontSize: "14px",
             fontWeight: "bold",
           }}
         >
-          {isExportingReferencedPages
-            ? "Exporting..."
-            : `Continue (${selectedReferencedPageIds.size} selected)`}
+          {isExportingReferencedPages ? "Exporting..." : "Continue"}
         </button>
       </div>
     </div>
   );
 
-  // Render initial screen
-  const renderInitialScreen = () => (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "20px",
-      }}
-    >
-      <div>
-        <h2 style={{ marginTop: 0, marginBottom: "12px", fontSize: "18px" }}>
-          Success! Your Recursica files are ready to be published...
-        </h2>
-        <p style={{ margin: 0, fontSize: "14px", color: "#666" }}>
-          The following files will be published as part of this wizard:
-        </p>
-        <ul
-          style={{
-            margin: "12px 0",
-            paddingLeft: "20px",
-            fontSize: "12px",
-            color: "#666",
-          }}
-        >
-          {allPages.map((page, index) => (
-            <li key={index}>{page.pageName}</li>
-          ))}
-        </ul>
-      </div>
-      <button
-        onClick={handleStartPublishing}
-        style={{
-          padding: "12px 24px",
-          fontSize: "16px",
-          fontWeight: "bold",
-          backgroundColor: "transparent",
-          color: "#d40d0d",
-          border: "2px solid #d40d0d",
-          borderRadius: "8px",
-          cursor: "pointer",
-          alignSelf: "flex-start",
-        }}
-        onMouseOver={(e) => {
-          e.currentTarget.style.backgroundColor = "#d40d0d";
-          e.currentTarget.style.color = "white";
-        }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.backgroundColor = "transparent";
-          e.currentTarget.style.color = "#d40d0d";
-        }}
-      >
-        Start Publishing
-      </button>
-    </div>
-  );
+  // OLD RENDER FUNCTIONS REMOVED - replaced by new flow:
+  // - renderPublishingScreen (shows Debug Console)
+  // - renderComponentRevisionScreen (shows revision history for each component)
+  // - renderFinalPublishScreen (shows final publish button)
 
-  // Render dependency page screen
-  const renderDependencyScreen = () => {
-    if (!currentPage) return null;
-
-    const decision = getPageDecision(currentPage.pageName);
-    const { currentVersion, newVersion } = getVersionInfo(currentPage);
-    const mainPageName = exportData.pageName;
-
-    // Initialize decision if not exists
-    if (!decision) {
-      updatePageDecision(currentPage.pageName, {
-        currentVersion,
-        newVersion,
-        publishNewVersion: false,
-      });
-    }
-
-    const currentDecision = decision || {
-      pageName: currentPage.pageName,
-      publishNewVersion: false,
-      changeMessage: "",
-      currentVersion,
-      newVersion,
-    };
+  // Render publishing screen (shows Debug Console)
+  const renderPublishingScreen = () => {
+    const isExporting =
+      isExportingReferencedPages ||
+      (discoveredReferencedPages.length > 0 && !hasExportedReferencedPages);
+    const canContinue =
+      hasExportedReferencedPages && !isExportingReferencedPages;
 
     return (
       <div
@@ -1072,213 +1100,107 @@ export default function PublishingWizard() {
           gap: "20px",
         }}
       >
-        <p style={{ margin: "12px 0", fontSize: "14px" }}>
-          This component is a dependency of <strong>{mainPageName}</strong>,
-          should we publish it too?
-        </p>
-
-        <div>
-          <p style={{ margin: "4px 0", fontSize: "12px", color: "#666" }}>
-            Current Version:{" "}
-            <span style={{ color: "#333" }}>
-              {currentVersion === "UNPUBLISHED"
-                ? "UNPUBLISHED"
-                : currentVersion}
-            </span>
+        <h2 style={{ marginTop: 0, marginBottom: "10px" }}>
+          Publishing Components
+        </h2>
+        {isExporting && (
+          <p style={{ color: "#666", margin: 0 }}>
+            Exporting selected components. Check the console below for logs:
           </p>
-          <p style={{ margin: "4px 0", fontSize: "12px", color: "#666" }}>
-            New Version:{" "}
-            <span
-              style={{
-                color:
-                  typeof currentVersion === "number" &&
-                  newVersion < currentVersion
-                    ? "#c62828"
-                    : "#333",
-              }}
-            >
-              {newVersion}
-              {typeof currentVersion === "number" &&
-                newVersion === currentVersion &&
-                " (SAME)"}
-            </span>
-          </p>
-          {typeof currentVersion === "number" &&
-            newVersion < currentVersion && (
-              <p
-                style={{
-                  margin: "4px 0 0 0",
-                  fontSize: "12px",
-                  color: "#c62828",
-                }}
-              >
-                WARNING: This version is older than our published version.
-              </p>
-            )}
-        </div>
-
-        <div style={{ display: "flex", gap: "12px" }}>
-          <button
-            onClick={handleKeepCurrentVersion}
-            disabled={currentVersion === "UNPUBLISHED"}
-            style={{
-              padding: "10px 20px",
-              fontSize: "14px",
-              fontWeight: "bold",
-              backgroundColor: "transparent",
-              color: currentVersion === "UNPUBLISHED" ? "#999" : "#666",
-              border: "2px solid",
-              borderColor: currentVersion === "UNPUBLISHED" ? "#ccc" : "#666",
-              borderRadius: "8px",
-              cursor:
-                currentVersion === "UNPUBLISHED" ? "not-allowed" : "pointer",
-              opacity: currentVersion === "UNPUBLISHED" ? 0.5 : 1,
-            }}
-            onMouseOver={(e) => {
-              if (currentVersion !== "UNPUBLISHED") {
-                e.currentTarget.style.backgroundColor = "#666";
-                e.currentTarget.style.color = "white";
-              }
-            }}
-            onMouseOut={(e) => {
-              if (currentVersion !== "UNPUBLISHED") {
-                e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.color = "#666";
-              }
-            }}
-          >
-            Keep Current Version
-          </button>
-          <button
-            onClick={handlePublishNewVersion}
-            style={{
-              padding: "10px 20px",
-              fontSize: "14px",
-              fontWeight: "bold",
-              backgroundColor: "transparent",
-              color: "#d40d0d",
-              border: "2px solid #d40d0d",
-              borderRadius: "8px",
-              cursor: "pointer",
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = "#d40d0d";
-              e.currentTarget.style.color = "white";
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = "transparent";
-              e.currentTarget.style.color = "#d40d0d";
-            }}
-          >
-            Publish New Version
-          </button>
-        </div>
-
-        {currentDecision.publishNewVersion && (
-          <>
-            <div>
-              <label
-                htmlFor="change-message"
-                style={{
-                  display: "block",
-                  marginBottom: "8px",
-                  fontSize: "16px",
-                  fontWeight: "bold",
-                }}
-              >
-                Change Message <span style={{ color: "#c62828" }}>*</span>
-              </label>
-              <textarea
-                id="change-message"
-                value={currentDecision.changeMessage}
-                onChange={(e) => {
-                  updatePageDecision(currentPage.pageName, {
-                    changeMessage: e.target.value,
-                  });
-                }}
-                placeholder="Describe the changes you made component..."
-                required
-                style={{
-                  width: "100%",
-                  minHeight: "120px",
-                  padding: "12px",
-                  fontSize: "14px",
-                  fontFamily: "inherit",
-                  border: "1px solid #e0e0e0",
-                  borderRadius: "4px",
-                  boxSizing: "border-box",
-                  resize: "vertical",
-                }}
-              />
-            </div>
-
-            <button
-              onClick={handleNextDependency}
-              disabled={!currentDecision.changeMessage.trim()}
-              style={{
-                padding: "12px 24px",
-                fontSize: "16px",
-                fontWeight: "bold",
-                backgroundColor: "transparent",
-                color: !currentDecision.changeMessage.trim()
-                  ? "#999"
-                  : "#d40d0d",
-                border: `2px solid ${
-                  !currentDecision.changeMessage.trim() ? "#999" : "#d40d0d"
-                }`,
-                borderRadius: "8px",
-                cursor: !currentDecision.changeMessage.trim()
-                  ? "not-allowed"
-                  : "pointer",
-                opacity: !currentDecision.changeMessage.trim() ? 0.6 : 1,
-                alignSelf: "flex-start",
-              }}
-              onMouseOver={(e) => {
-                if (currentDecision.changeMessage.trim()) {
-                  e.currentTarget.style.backgroundColor = "#d40d0d";
-                  e.currentTarget.style.color = "white";
-                }
-              }}
-              onMouseOut={(e) => {
-                if (currentDecision.changeMessage.trim()) {
-                  e.currentTarget.style.backgroundColor = "transparent";
-                  e.currentTarget.style.color = "#d40d0d";
-                }
-              }}
-            >
-              Next
-            </button>
-          </>
         )}
+        <DebugConsole
+          height="200px"
+          label="Publishing Log:"
+          clearOnMount={false}
+        />
+        {error && (
+          <div
+            style={{
+              padding: "12px",
+              backgroundColor: "#ffebee",
+              border: "1px solid #f44336",
+              borderRadius: "8px",
+              color: "#c62828",
+            }}
+          >
+            {error}
+          </div>
+        )}
+        <div
+          style={{
+            display: "flex",
+            gap: "12px",
+            justifyContent: "flex-end",
+          }}
+        >
+          <button
+            onClick={handleBack}
+            disabled={isExporting}
+            style={{
+              padding: "10px 20px",
+              backgroundColor: "#f5f5f5",
+              border: "1px solid #ddd",
+              borderRadius: "6px",
+              cursor: isExporting ? "not-allowed" : "pointer",
+              fontSize: "14px",
+              opacity: isExporting ? 0.6 : 1,
+            }}
+          >
+            Back
+          </button>
+          <button
+            onClick={handleContinueFromPublishing}
+            disabled={!canContinue}
+            style={{
+              padding: "10px 20px",
+              backgroundColor: canContinue ? "#1976d2" : "#ccc",
+              color: "white",
+              border: "none",
+              borderRadius: "6px",
+              cursor: canContinue ? "pointer" : "not-allowed",
+              fontSize: "14px",
+              fontWeight: "bold",
+            }}
+          >
+            {isExporting ? "Exporting..." : "Continue"}
+          </button>
+        </div>
       </div>
     );
   };
 
-  // Render main page screen
-  const renderMainScreen = () => {
-    const decision = getPageDecision(exportData.pageName);
-    const { currentVersion, newVersion } = getVersionInfo(exportData);
+  // Render component revision screen (replaces dependency screen)
+  const renderComponentRevisionScreen = () => {
+    const pagesToPublish = getPagesToPublish();
+    if (currentComponentIndex >= pagesToPublish.length) {
+      // All components processed, move to final publish
+      setWizardStep("finalPublish");
+      return null;
+    }
+
+    const currentComponent = pagesToPublish[currentComponentIndex];
+    const decision = getPageDecision(currentComponent.pageName);
+    const { currentVersion, newVersion } = getVersionInfo(currentComponent);
 
     // Initialize decision if not exists
     if (!decision) {
-      updatePageDecision(exportData.pageName, {
+      updatePageDecision(currentComponent.pageName, {
         currentVersion,
         newVersion,
         publishNewVersion: true,
+        changeMessage: "",
       });
     }
 
     const currentDecision = decision || {
-      pageName: exportData.pageName,
+      pageName: currentComponent.pageName,
       publishNewVersion: true,
       changeMessage: "",
       currentVersion,
       newVersion,
     };
 
-    // Check if version is invalid (same or older than current)
-    const isVersionInvalid =
-      typeof currentVersion === "number" && newVersion <= currentVersion;
+    const isLastComponent = currentComponentIndex === pagesToPublish.length - 1;
 
     return (
       <div
@@ -1289,8 +1211,12 @@ export default function PublishingWizard() {
         }}
       >
         <div>
-          <p style={{ margin: 0, fontSize: "12px", color: "#666" }}>
-            Page: <span style={{ color: "#333" }}>{exportData.pageName}</span>
+          <h2 style={{ marginTop: 0, marginBottom: "10px" }}>
+            Revision History
+          </h2>
+          <p style={{ color: "#666", marginBottom: "20px" }}>
+            Component {currentComponentIndex + 1} of {pagesToPublish.length}:{" "}
+            <strong>{currentComponent.pageName}</strong>
           </p>
           <p style={{ margin: "4px 0", fontSize: "12px", color: "#666" }}>
             Current Version:{" "}
@@ -1301,56 +1227,13 @@ export default function PublishingWizard() {
             </span>
           </p>
           <p style={{ margin: "4px 0", fontSize: "12px", color: "#666" }}>
-            New Version:{" "}
-            <span
-              style={{
-                color:
-                  typeof currentVersion === "number" &&
-                  newVersion < currentVersion
-                    ? "#c62828"
-                    : "#333",
-              }}
-            >
-              {newVersion}
-              {typeof currentVersion === "number" &&
-                newVersion === currentVersion &&
-                " (SAME)"}
-            </span>
+            New Version: <span style={{ color: "#333" }}>{newVersion}</span>
           </p>
-          {isVersionInvalid && (
-            <div
-              style={{
-                margin: "12px 0 0 0",
-                padding: "12px",
-                fontSize: "14px",
-                backgroundColor: "#fff3e0",
-                border: "1px solid #f57c00",
-                borderRadius: "4px",
-                color: "#e65100",
-                fontWeight: "bold",
-              }}
-            >
-              ⚠️ Warning: This version is older than or equal to the currently
-              published version. Publishing will still proceed if you continue.
-            </div>
-          )}
-          {typeof currentVersion === "number" &&
-            newVersion < currentVersion && (
-              <p
-                style={{
-                  margin: "4px 0 0 0",
-                  fontSize: "12px",
-                  color: "#c62828",
-                }}
-              >
-                WARNING: This version is older than our published version.
-              </p>
-            )}
         </div>
 
         <div>
           <label
-            htmlFor="change-message-main"
+            htmlFor="change-message"
             style={{
               display: "block",
               marginBottom: "8px",
@@ -1358,17 +1241,17 @@ export default function PublishingWizard() {
               fontWeight: "bold",
             }}
           >
-            Change Message <span style={{ color: "#c62828" }}>*</span>
+            Revision History <span style={{ color: "#c62828" }}>*</span>
           </label>
           <textarea
-            id="change-message-main"
+            id="change-message"
             value={currentDecision.changeMessage}
             onChange={(e) => {
-              updatePageDecision(exportData.pageName, {
+              updatePageDecision(currentComponent.pageName, {
                 changeMessage: e.target.value,
               });
             }}
-            placeholder="Describe the changes you made component..."
+            placeholder="Describe the changes made to this component..."
             required
             style={{
               width: "100%",
@@ -1383,6 +1266,80 @@ export default function PublishingWizard() {
             }}
           />
         </div>
+
+        <div
+          style={{
+            display: "flex",
+            gap: "12px",
+            justifyContent: "flex-end",
+          }}
+        >
+          <button
+            onClick={handleBack}
+            style={{
+              padding: "10px 20px",
+              backgroundColor: "#f5f5f5",
+              border: "1px solid #ddd",
+              borderRadius: "6px",
+              cursor: "pointer",
+              fontSize: "14px",
+            }}
+          >
+            Back
+          </button>
+          <button
+            onClick={() => {
+              if (!currentDecision.changeMessage.trim()) {
+                setError("Please enter revision history for this component.");
+                return;
+              }
+              setError(null);
+              if (isLastComponent) {
+                setWizardStep("finalPublish");
+              } else {
+                setCurrentComponentIndex(currentComponentIndex + 1);
+              }
+            }}
+            disabled={!currentDecision.changeMessage.trim()}
+            style={{
+              padding: "10px 20px",
+              backgroundColor: !currentDecision.changeMessage.trim()
+                ? "#ccc"
+                : "#1976d2",
+              color: "white",
+              border: "none",
+              borderRadius: "6px",
+              cursor: !currentDecision.changeMessage.trim()
+                ? "not-allowed"
+                : "pointer",
+              fontSize: "14px",
+              fontWeight: "bold",
+            }}
+          >
+            {isLastComponent ? "Continue to Publish" : "Next"}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // Render final publish screen
+  const renderFinalPublishScreen = () => {
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "20px",
+        }}
+      >
+        <h2 style={{ marginTop: 0, marginBottom: "10px" }}>
+          Publish to GitHub
+        </h2>
+        <p style={{ color: "#666", marginBottom: "20px" }}>
+          Ready to publish all components to GitHub. Click the button below to
+          create a pull request with all changes.
+        </p>
 
         {prUrl ? (
           <div
@@ -1413,41 +1370,18 @@ export default function PublishingWizard() {
         ) : (
           <button
             onClick={handlePublishToGitHub}
-            disabled={isPublishing || !currentDecision.changeMessage.trim()}
+            disabled={isPublishing}
             style={{
               padding: "12px 24px",
               fontSize: "16px",
               fontWeight: "bold",
-              backgroundColor: "transparent",
-              color:
-                isPublishing || !currentDecision.changeMessage.trim()
-                  ? "#999"
-                  : "#d40d0d",
-              border: `2px solid ${
-                isPublishing || !currentDecision.changeMessage.trim()
-                  ? "#999"
-                  : "#d40d0d"
-              }`,
+              backgroundColor: isPublishing ? "#ccc" : "#d40d0d",
+              color: "white",
+              border: "none",
               borderRadius: "8px",
-              cursor:
-                isPublishing || !currentDecision.changeMessage.trim()
-                  ? "not-allowed"
-                  : "pointer",
-              opacity:
-                isPublishing || !currentDecision.changeMessage.trim() ? 0.6 : 1,
+              cursor: isPublishing ? "not-allowed" : "pointer",
+              opacity: isPublishing ? 0.6 : 1,
               alignSelf: "flex-start",
-            }}
-            onMouseOver={(e) => {
-              if (!isPublishing && currentDecision.changeMessage.trim()) {
-                e.currentTarget.style.backgroundColor = "#d40d0d";
-                e.currentTarget.style.color = "white";
-              }
-            }}
-            onMouseOut={(e) => {
-              if (!isPublishing && currentDecision.changeMessage.trim()) {
-                e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.color = "#d40d0d";
-              }
             }}
           >
             {isPublishing ? (
@@ -1483,10 +1417,13 @@ export default function PublishingWizard() {
     if (wizardStep === "initial") {
       return `Publishing: ${exportData.pageName}`;
     }
-    if (wizardStep === "dependency" && currentPage) {
+    if (wizardStep === "componentRevision" && currentPage) {
       return `Publishing: ${currentPage.pageName}`;
     }
-    if (wizardStep === "main") {
+    if (wizardStep === "publishing") {
+      return `Publishing: ${exportData.pageName}`;
+    }
+    if (wizardStep === "finalPublish") {
       return `Publishing: ${exportData.pageName}`;
     }
     return `Publishing: ${exportData.pageName}`;
@@ -1533,11 +1470,12 @@ export default function PublishingWizard() {
           </div>
         )}
 
-        {wizardStep === "initial" && renderInitialScreen()}
+        {wizardStep === "validationErrors" && renderValidationErrorsScreen()}
         {wizardStep === "selectReferencedPages" &&
           renderSelectReferencedPagesScreen()}
-        {wizardStep === "dependency" && renderDependencyScreen()}
-        {wizardStep === "main" && renderMainScreen()}
+        {wizardStep === "publishing" && renderPublishingScreen()}
+        {wizardStep === "componentRevision" && renderComponentRevisionScreen()}
+        {wizardStep === "finalPublish" && renderFinalPublishScreen()}
       </div>
     </PageLayout>
   );

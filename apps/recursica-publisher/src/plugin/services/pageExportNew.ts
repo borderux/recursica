@@ -22,6 +22,8 @@ import { getComponentName } from "../utils/getComponentName";
 export interface ExportPageData {
   pageIndex: number;
   skipPrompts?: boolean; // If true, automatically include all referenced pages without prompting
+  validateOnly?: boolean; // If true, only extract instances, collections, and variables for validation (no full export)
+  clearConsole?: boolean; // If false, don't clear the console (default: true for initial exports, false for referenced pages)
 }
 
 export interface ReferencedPageInfo {
@@ -30,6 +32,30 @@ export interface ReferencedPageInfo {
   pageIndex: number;
   hasMetadata: boolean;
   componentName?: string;
+  localVersion?: number; // Version number from local page metadata (0 if no metadata)
+}
+
+export interface ValidationError {
+  type: "externalReference" | "unknownCollection";
+  message: string;
+  componentName?: string;
+  collectionName?: string;
+  pageName: string;
+}
+
+export interface ValidationResult {
+  hasErrors: boolean;
+  errors: ValidationError[];
+  externalReferences: Array<{
+    componentName: string;
+    pageName: string;
+  }>;
+  unknownCollections: Array<{
+    collectionName: string;
+    collectionId: string;
+    pageName: string;
+  }>;
+  discoveredCollections: string[]; // Collection names discovered during validation
 }
 
 export interface ExportPageResponseData {
@@ -38,6 +64,7 @@ export interface ExportPageResponseData {
   pageName: string;
   additionalPages: ExportPageResponseData[];
   discoveredReferencedPages?: ReferencedPageInfo[]; // Referenced pages discovered but not yet exported
+  validationResult?: ValidationResult; // Validation results if validateOnly was true
 }
 
 /**
@@ -383,8 +410,13 @@ export async function exportPage(
   discoveredPages: Set<string> = new Set(), // Track discovered pages to avoid infinite loops during discovery
 ): Promise<ResponseMessage> {
   // Clear debug console only on initial call, not recursive calls
-  if (!isRecursive) {
+  // Also respect clearConsole parameter if provided
+  const shouldClearConsole = data.clearConsole !== false && !isRecursive;
+  if (shouldClearConsole) {
     await debugConsole.clear();
+    await debugConsole.log("=== Starting Page Export ===");
+  } else if (!isRecursive) {
+    // Don't clear, but still log the start
     await debugConsole.log("=== Starting Page Export ===");
   }
 
@@ -521,6 +553,129 @@ export async function exportPage(
         const index = parseInt(indexStr, 10);
         remoteInstanceMap.set(index, entry);
       }
+    }
+
+    // If validateOnly mode, perform validation and return early
+    if (data.validateOnly) {
+      await debugConsole.log("=== Validation Mode ===");
+
+      // Get known collections (local collections + standard remote collections)
+      const localCollections =
+        await figma.variables.getLocalVariableCollectionsAsync();
+      const knownCollectionIds = new Set<string>();
+      const knownCollectionNames = new Set<string>();
+
+      // Add all local collections
+      for (const collection of localCollections) {
+        knownCollectionIds.add(collection.id);
+        knownCollectionNames.add(collection.name);
+      }
+
+      // Add standard remote collection names (case-sensitive)
+      knownCollectionNames.add("Token");
+      knownCollectionNames.add("Tokens");
+      knownCollectionNames.add("Theme");
+      knownCollectionNames.add("Themes");
+
+      // Check for external references (remote instances)
+      const externalReferences: Array<{
+        componentName: string;
+        pageName: string;
+      }> = [];
+      const validationErrors: ValidationError[] = [];
+
+      for (const entry of remoteInstanceMap.values()) {
+        const componentName = entry.componentName || "(unnamed)";
+        externalReferences.push({
+          componentName,
+          pageName: selectedPage.name,
+        });
+        validationErrors.push({
+          type: "externalReference",
+          message: `External reference found: "${componentName}" references a component from another file`,
+          componentName,
+          pageName: selectedPage.name,
+        });
+      }
+
+      // Check for unknown collections
+      const unknownCollections: Array<{
+        collectionName: string;
+        collectionId: string;
+        pageName: string;
+      }> = [];
+      const collections = collectionTable.getTable();
+
+      for (const entry of Object.values(collections)) {
+        // Local collections are always known (they're in knownCollectionIds)
+        if (entry.isLocal) {
+          if (!knownCollectionIds.has(entry.collectionId)) {
+            // This shouldn't happen, but check anyway
+            unknownCollections.push({
+              collectionName: entry.collectionName,
+              collectionId: entry.collectionId,
+              pageName: selectedPage.name,
+            });
+            validationErrors.push({
+              type: "unknownCollection",
+              message: `Unknown local collection: "${entry.collectionName}"`,
+              collectionName: entry.collectionName,
+              pageName: selectedPage.name,
+            });
+          }
+        } else {
+          // Remote/team-bound collections must have specific names
+          if (!knownCollectionNames.has(entry.collectionName)) {
+            unknownCollections.push({
+              collectionName: entry.collectionName,
+              collectionId: entry.collectionId,
+              pageName: selectedPage.name,
+            });
+            validationErrors.push({
+              type: "unknownCollection",
+              message: `Unknown remote collection: "${entry.collectionName}". Remote collections must be named "Token", "Tokens", "Theme", or "Themes"`,
+              collectionName: entry.collectionName,
+              pageName: selectedPage.name,
+            });
+          }
+        }
+      }
+
+      // Get discovered collection names
+      const discoveredCollections = Object.values(collections).map(
+        (entry) => entry.collectionName,
+      );
+
+      const validationResult: ValidationResult = {
+        hasErrors: validationErrors.length > 0,
+        errors: validationErrors,
+        externalReferences,
+        unknownCollections,
+        discoveredCollections,
+      };
+
+      await debugConsole.log(`Validation complete:`);
+      await debugConsole.log(
+        `  - External references: ${externalReferences.length}`,
+      );
+      await debugConsole.log(
+        `  - Unknown collections: ${unknownCollections.length}`,
+      );
+      await debugConsole.log(`  - Has errors: ${validationResult.hasErrors}`);
+
+      return {
+        type: "exportPage",
+        success: true,
+        error: false,
+        message: "Validation complete",
+        data: {
+          filename: "",
+          pageData: {},
+          pageName: selectedPage.name,
+          additionalPages: [],
+          validationResult,
+        } as unknown as Record<string, unknown>,
+      };
     }
 
     if (remoteInstanceMap.size > 0) {
@@ -672,6 +827,47 @@ export async function exportPage(
       }
     }
 
+    // If skipPrompts is true (discovery mode), run validation on the main page
+    let aggregatedValidationResult: ValidationResult | undefined;
+    if (data.skipPrompts) {
+      await debugConsole.log("Running validation on main page...");
+      try {
+        const mainPageValidationResponse = await exportPage(
+          {
+            pageIndex,
+            validateOnly: true,
+          },
+          processedPages,
+          true, // Mark as recursive call
+          discoveredPages,
+        );
+
+        if (
+          mainPageValidationResponse.success &&
+          mainPageValidationResponse.data
+        ) {
+          const mainPageValidationData =
+            mainPageValidationResponse.data as unknown as ExportPageResponseData;
+          if (mainPageValidationData.validationResult) {
+            aggregatedValidationResult =
+              mainPageValidationData.validationResult;
+            await debugConsole.log(
+              `Main page validation: ${aggregatedValidationResult.hasErrors ? "FAILED" : "PASSED"}`,
+            );
+            if (aggregatedValidationResult.hasErrors) {
+              await debugConsole.warning(
+                `Found ${aggregatedValidationResult.errors.length} validation error(s) in main page`,
+              );
+            }
+          }
+        }
+      } catch (error) {
+        await debugConsole.warning(
+          `Could not validate main page: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
+
     // Handle referenced normal component pages
     await debugConsole.log("Checking for referenced component pages...");
     const additionalPages: ExportPageResponseData[] = [];
@@ -724,17 +920,19 @@ export async function exportPage(
           await debugConsole.log(`Skipping "${pageName}" - already processed`);
           continue;
         }
-        // Check if page has metadata
+        // Check if page has metadata and get local version
         const pageMetadataStr = referencedPage.getPluginData(
           "RecursicaPublishedMetadata",
         );
         let hasMetadata = false;
+        let localVersion = 0;
         if (pageMetadataStr) {
           try {
             const pageMetadata = JSON.parse(pageMetadataStr);
             hasMetadata = !!(
               pageMetadata.id && pageMetadata.version !== undefined
             );
+            localVersion = pageMetadata.version || 0;
           } catch {
             // Invalid metadata, treat as no metadata
           }
@@ -777,11 +975,87 @@ export async function exportPage(
                 pageIndex: referencedPageIndex,
                 hasMetadata,
                 componentName,
+                localVersion,
               });
               await debugConsole.log(
-                `Discovered referenced page: "${pageName}" (will be handled by wizard)`,
+                `Discovered referenced page: "${pageName}" (local version: ${localVersion}) (will be handled by wizard)`,
               );
             }
+          }
+
+          // Run validation on this discovered page
+          await debugConsole.log(
+            `Validating "${pageName}" for external references and unknown collections...`,
+          );
+          try {
+            const validationResponse = await exportPage(
+              {
+                pageIndex: referencedPageIndex,
+                validateOnly: true, // Run validation only
+              },
+              processedPages,
+              true, // Mark as recursive call
+              discoveredPages,
+            );
+
+            if (validationResponse.success && validationResponse.data) {
+              const validationData =
+                validationResponse.data as unknown as ExportPageResponseData;
+              if (validationData.validationResult) {
+                // Aggregate validation results
+                if (!aggregatedValidationResult) {
+                  aggregatedValidationResult = {
+                    hasErrors: false,
+                    errors: [],
+                    externalReferences: [],
+                    unknownCollections: [],
+                    discoveredCollections: [],
+                  };
+                }
+
+                // Merge validation results
+                aggregatedValidationResult.errors.push(
+                  ...validationData.validationResult.errors,
+                );
+                aggregatedValidationResult.externalReferences.push(
+                  ...validationData.validationResult.externalReferences,
+                );
+                aggregatedValidationResult.unknownCollections.push(
+                  ...validationData.validationResult.unknownCollections,
+                );
+                // Merge discovered collections (avoid duplicates)
+                for (const collectionName of validationData.validationResult
+                  .discoveredCollections) {
+                  if (
+                    !aggregatedValidationResult.discoveredCollections.includes(
+                      collectionName,
+                    )
+                  ) {
+                    aggregatedValidationResult.discoveredCollections.push(
+                      collectionName,
+                    );
+                  }
+                }
+
+                // Update hasErrors flag
+                aggregatedValidationResult.hasErrors =
+                  aggregatedValidationResult.errors.length > 0;
+
+                await debugConsole.log(
+                  `  Validation for "${pageName}": ${validationData.validationResult.hasErrors ? "FAILED" : "PASSED"}`,
+                );
+                if (validationData.validationResult.hasErrors) {
+                  await debugConsole.warning(
+                    `  Found ${validationData.validationResult.errors.length} validation error(s) in "${pageName}"`,
+                  );
+                }
+              }
+            }
+          } catch (error) {
+            // If validation fails, log but continue discovery
+            await debugConsole.warning(
+              `Could not validate "${pageName}": ${error instanceof Error ? error.message : String(error)}`,
+            );
           }
 
           // Recursively discover dependencies of this referenced page
@@ -1000,6 +1274,7 @@ export async function exportPage(
           ? // Filter out the original page - it shouldn't be in the discovered list since it's the one being published
             discoveredReferencedPages.filter((p) => p.pageId !== selectedPageId)
           : undefined, // Only include if there are discovered pages
+      validationResult: aggregatedValidationResult, // Include aggregated validation results if in discovery mode
     };
 
     return {
