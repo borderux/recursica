@@ -388,6 +388,9 @@ export default function Step2DependencyOverview() {
   }, [
     wizardState.selectedComponent?.guid,
     wizardState.componentData.mainComponent?.guid,
+    wizardState.componentData.dependencies,
+    wizardState.componentData.mainComponent,
+    wizardState.selectedComponent,
     navigate,
     setWizardState,
     importData,

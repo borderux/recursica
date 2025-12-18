@@ -383,11 +383,20 @@ export async function importSingleComponentWithWizard(
       await debugConsole.log(
         `  Collection IDs: ${importResultData.createdEntities.collectionIds?.length || 0}`,
       );
+      if (importResultData.createdEntities.collectionIds?.length) {
+        await debugConsole.log(
+          `  Collection IDs: ${importResultData.createdEntities.collectionIds.map((id) => id.substring(0, 8) + "...").join(", ")}`,
+        );
+      }
       await debugConsole.log(
         `  Variable IDs: ${importResultData.createdEntities.variableIds?.length || 0}`,
       );
       await debugConsole.log(
         `  Page IDs: ${importResultData.createdEntities.pageIds?.length || 0}`,
+      );
+    } else {
+      await debugConsole.warning(
+        "Import result does not have createdEntities - cleanup may not work correctly",
       );
     }
 
@@ -569,6 +578,8 @@ export async function importSingleComponentWithWizard(
     }
 
     // Step 6: Collect created entities from import
+    // Use the IDs directly from importResultData - no need to look them up
+    // We'll look them up during cleanup if needed
 
     const createdCollections: Array<{
       collectionId: string;
@@ -581,7 +592,7 @@ export async function importSingleComponentWithWizard(
       collectionName: string;
     }> = [];
 
-    // Extract created collections
+    // Extract created collections - look them up to get names for metadata
     await debugConsole.log(
       `[EXTRACTION] Starting collection extraction. Collection IDs in result: ${importResultData?.createdEntities?.collectionIds?.length || 0}`,
     );
@@ -603,13 +614,24 @@ export async function importSingleComponentWithWizard(
               `[EXTRACTION] ✓ Extracted collection: "${collection.name}" (${collectionId.substring(0, 8)}...)`,
             );
           } else {
+            // Collection not found - still track it by ID for cleanup
+            // This can happen if collection was deleted or ID is invalid
+            createdCollections.push({
+              collectionId: collectionId,
+              collectionName: `Unknown (${collectionId.substring(0, 8)}...)`,
+            });
             await debugConsole.warning(
-              `[EXTRACTION] Collection ${collectionId.substring(0, 8)}... not found`,
+              `[EXTRACTION] Collection ${collectionId.substring(0, 8)}... not found - will still track for cleanup`,
             );
           }
         } catch (err) {
+          // Even if lookup fails, track the ID for cleanup
+          createdCollections.push({
+            collectionId: collectionId,
+            collectionName: `Unknown (${collectionId.substring(0, 8)}...)`,
+          });
           await debugConsole.warning(
-            `[EXTRACTION] Failed to get collection ${collectionId.substring(0, 8)}...: ${err}`,
+            `[EXTRACTION] Failed to get collection ${collectionId.substring(0, 8)}...: ${err} - will still track for cleanup`,
           );
         }
       }
@@ -628,32 +650,40 @@ export async function importSingleComponentWithWizard(
     }
 
     // Extract created variables
-    // Only track variables created in existing collections (not in newly created collections)
-    // Variables in newly created collections will be deleted when we delete the collection
-    const createdCollectionIds = new Set(
-      createdCollections.map((c) => c.collectionId),
-    );
+    // Track ALL variables that were created, regardless of whether they're in new or existing collections
+    // The cleanup logic will handle deleting collections (which deletes their variables) separately
 
     if (importResultData?.createdEntities?.variableIds) {
+      await debugConsole.log(
+        `[EXTRACTION] Processing ${importResultData.createdEntities.variableIds.length} variable ID(s)...`,
+      );
       for (const variableId of importResultData.createdEntities.variableIds) {
         try {
           const variable =
             await figma.variables.getVariableByIdAsync(variableId);
           if (variable && variable.resolvedType) {
-            // Only track if variable is in an existing collection (not a newly created one)
-            if (!createdCollectionIds.has(variable.variableCollectionId)) {
-              const collection =
-                await figma.variables.getVariableCollectionByIdAsync(
-                  variable.variableCollectionId,
-                );
-              if (collection) {
-                createdVariables.push({
-                  variableId: variable.id,
-                  variableName: variable.name,
-                  collectionId: variable.variableCollectionId,
-                  collectionName: collection.name,
-                });
-              }
+            // Track ALL variables, not just those in existing collections
+            // Variables in newly created collections will be deleted when we delete the collection,
+            // but we still track them in case the collection deletion fails
+            const collection =
+              await figma.variables.getVariableCollectionByIdAsync(
+                variable.variableCollectionId,
+              );
+            if (collection) {
+              createdVariables.push({
+                variableId: variable.id,
+                variableName: variable.name,
+                collectionId: variable.variableCollectionId,
+                collectionName: collection.name,
+              });
+            } else {
+              // Collection not found - still track variable for cleanup
+              createdVariables.push({
+                variableId: variable.id,
+                variableName: variable.name,
+                collectionId: variable.variableCollectionId,
+                collectionName: `Unknown (${variable.variableCollectionId.substring(0, 8)}...)`,
+              });
             }
           }
         } catch (error) {
@@ -662,10 +692,52 @@ export async function importSingleComponentWithWizard(
           );
         }
       }
+      await debugConsole.log(
+        `[EXTRACTION] Total variables extracted: ${createdVariables.length}`,
+      );
+    } else {
+      await debugConsole.warning(
+        "[EXTRACTION] No variableIds found in importResultData.createdEntities",
+      );
     }
 
     // Step 6: Store primary import metadata on main page
     // Store metadata immediately after collecting entities so it's available even if import fails later
+
+    // Fallback: If extraction failed but we have IDs, create entries with just IDs
+    // This ensures cleanup can still work even if lookups failed
+    if (
+      createdCollections.length === 0 &&
+      importResultData?.createdEntities?.collectionIds?.length
+    ) {
+      await debugConsole.warning(
+        "[EXTRACTION] Collection extraction failed, but IDs are available - creating fallback entries",
+      );
+      for (const collectionId of importResultData.createdEntities
+        .collectionIds) {
+        createdCollections.push({
+          collectionId: collectionId,
+          collectionName: `Unknown (${collectionId.substring(0, 8)}...)`,
+        });
+      }
+    }
+    if (
+      createdVariables.length === 0 &&
+      importResultData?.createdEntities?.variableIds?.length
+    ) {
+      await debugConsole.warning(
+        "[EXTRACTION] Variable extraction failed, but IDs are available - creating fallback entries",
+      );
+      for (const variableId of importResultData.createdEntities.variableIds) {
+        createdVariables.push({
+          variableId: variableId,
+          variableName: `Unknown (${variableId.substring(0, 8)}...)`,
+          collectionId: "unknown",
+          collectionName: "Unknown",
+        });
+      }
+    }
+
     const primaryImportMetadata: PrimaryImportMetadata = {
       componentGuid: data.mainComponent.guid,
       componentVersion: data.mainComponent.version,
@@ -1161,40 +1233,120 @@ export async function cleanupFailedImport(
     await figma.loadAllPagesAsync();
     const allPages = figma.root.children;
 
-    // Try to find a page with primary import metadata
-    let pageWithMetadata: PageNode | null = null;
+    const PAGE_METADATA_KEY = "RecursicaPublishedMetadata";
+    const CREATED_ENTITIES_KEY = "RecursicaCreatedEntities";
+
+    // First, check for pages with RecursicaCreatedEntities (new import system)
+    let hasNewSystemPages = false;
     for (const page of allPages) {
       if (page.type !== "PAGE") {
         continue;
       }
-      const primaryImportData = page.getPluginData(PRIMARY_IMPORT_KEY);
-      if (primaryImportData) {
-        pageWithMetadata = page;
+      const createdEntitiesStr = page.getPluginData(CREATED_ENTITIES_KEY);
+      if (createdEntitiesStr) {
+        hasNewSystemPages = true;
         break;
       }
     }
 
-    // If we found a page with metadata, use deleteImportGroup for full cleanup
-    if (pageWithMetadata) {
+    // If we found pages with new system metadata, use the new cleanup logic
+    if (hasNewSystemPages) {
       await debugConsole.log(
-        "Found page with metadata, using deleteImportGroup",
+        "Found pages with RecursicaCreatedEntities, using new cleanup logic",
       );
-      return await deleteImportGroup({ pageId: pageWithMetadata.id });
+    } else {
+      // Try to find a page with primary import metadata (old system)
+      let pageWithMetadata: PageNode | null = null;
+      for (const page of allPages) {
+        if (page.type !== "PAGE") {
+          continue;
+        }
+        const primaryImportData = page.getPluginData(PRIMARY_IMPORT_KEY);
+        if (primaryImportData) {
+          pageWithMetadata = page;
+          break;
+        }
+      }
+
+      // If we found a page with old metadata, use deleteImportGroup for full cleanup
+      if (pageWithMetadata) {
+        await debugConsole.log(
+          "Found page with PRIMARY_IMPORT_KEY (old system), using deleteImportGroup",
+        );
+        return await deleteImportGroup({ pageId: pageWithMetadata.id });
+      }
+
+      // Otherwise, look for pages with UNDER_REVIEW_KEY or pages with PAGE_METADATA_KEY
+      await debugConsole.log(
+        "No primary metadata found, looking for pages with UNDER_REVIEW_KEY or PAGE_METADATA_KEY",
+      );
+    }
+    const pagesToDelete: Array<{ id: string; name: string }> = [];
+    const allCollectionIds = new Set<string>();
+    const allVariableIds = new Set<string>();
+
+    // First, collect created entities from ALL pages (not just pages to delete)
+    // This ensures we find created entities even if they're stored on a different page
+    await debugConsole.log(
+      `Scanning ${allPages.length} page(s) for created entities...`,
+    );
+
+    for (const page of allPages) {
+      if (page.type !== "PAGE") {
+        continue;
+      }
+      const createdEntitiesStr = page.getPluginData(CREATED_ENTITIES_KEY);
+
+      if (createdEntitiesStr) {
+        try {
+          const createdEntities = JSON.parse(createdEntitiesStr) as {
+            pageIds?: string[];
+            collectionIds?: string[];
+            variableIds?: string[];
+          };
+
+          if (createdEntities.collectionIds) {
+            for (const collectionId of createdEntities.collectionIds) {
+              allCollectionIds.add(collectionId);
+            }
+            await debugConsole.log(
+              `  Found ${createdEntities.collectionIds.length} collection ID(s) on page "${page.name}"`,
+            );
+          }
+          if (createdEntities.variableIds) {
+            for (const variableId of createdEntities.variableIds) {
+              allVariableIds.add(variableId);
+            }
+            await debugConsole.log(
+              `  Found ${createdEntities.variableIds.length} variable ID(s) on page "${page.name}"`,
+            );
+          }
+        } catch (error) {
+          await debugConsole.warning(
+            `  Failed to parse created entities from page "${page.name}": ${error}`,
+          );
+        }
+      }
     }
 
-    // Otherwise, look for pages with UNDER_REVIEW_KEY or pages with PAGE_METADATA_KEY
-    // (new import system uses PAGE_METADATA_KEY, old system uses UNDER_REVIEW_KEY)
+    // Now, find pages to delete
     await debugConsole.log(
-      "No primary metadata found, looking for pages with UNDER_REVIEW_KEY or PAGE_METADATA_KEY",
+      `Scanning ${allPages.length} page(s) for pages to delete...`,
     );
-    const PAGE_METADATA_KEY = "RecursicaPublishedMetadata";
-    const pagesToDelete: Array<{ id: string; name: string }> = [];
+
     for (const page of allPages) {
       if (page.type !== "PAGE") {
         continue;
       }
       const underReview = page.getPluginData(UNDER_REVIEW_KEY);
       const pageMetadata = page.getPluginData(PAGE_METADATA_KEY);
+      const createdEntitiesStr = page.getPluginData(CREATED_ENTITIES_KEY);
+
+      // Log every page for debugging
+      await debugConsole.log(
+        `  Checking page "${page.name}": underReview=${underReview === "true"}, hasMetadata=${!!pageMetadata}, hasCreatedEntities=${!!createdEntitiesStr}`,
+      );
+
       // Delete if marked as under review OR if it has page metadata (new import system)
       if (underReview === "true" || pageMetadata) {
         // Store page info before deletion
@@ -1202,8 +1354,114 @@ export async function cleanupFailedImport(
         await debugConsole.log(
           `Found page to delete: "${page.name}" (underReview: ${underReview === "true"}, hasMetadata: ${!!pageMetadata})`,
         );
+
+        // Extract created entity IDs from the page (in case we missed them in the first pass)
+        if (createdEntitiesStr) {
+          try {
+            const createdEntities = JSON.parse(createdEntitiesStr) as {
+              pageIds?: string[];
+              collectionIds?: string[];
+              variableIds?: string[];
+            };
+
+            // Also include pageIds from createdEntities (in case there are multiple pages)
+            if (createdEntities.pageIds) {
+              for (const pageId of createdEntities.pageIds) {
+                // Only add if not already in pagesToDelete
+                if (!pagesToDelete.some((p) => p.id === pageId)) {
+                  const additionalPage = (await figma.getNodeByIdAsync(
+                    pageId,
+                  )) as PageNode | null;
+                  if (additionalPage && additionalPage.type === "PAGE") {
+                    pagesToDelete.push({
+                      id: additionalPage.id,
+                      name: additionalPage.name,
+                    });
+                    await debugConsole.log(
+                      `  Added additional page from createdEntities.pageIds: "${additionalPage.name}"`,
+                    );
+
+                    // Also extract created entities from this additional page
+                    const additionalPageCreatedEntitiesStr =
+                      additionalPage.getPluginData(CREATED_ENTITIES_KEY);
+                    if (additionalPageCreatedEntitiesStr) {
+                      try {
+                        const additionalPageCreatedEntities = JSON.parse(
+                          additionalPageCreatedEntitiesStr,
+                        ) as {
+                          collectionIds?: string[];
+                          variableIds?: string[];
+                        };
+                        if (additionalPageCreatedEntities.collectionIds) {
+                          for (const collectionId of additionalPageCreatedEntities.collectionIds) {
+                            allCollectionIds.add(collectionId);
+                          }
+                          await debugConsole.log(
+                            `  Extracted ${additionalPageCreatedEntities.collectionIds.length} collection ID(s) from additional page "${additionalPage.name}"`,
+                          );
+                        }
+                        if (additionalPageCreatedEntities.variableIds) {
+                          for (const variableId of additionalPageCreatedEntities.variableIds) {
+                            allVariableIds.add(variableId);
+                          }
+                          await debugConsole.log(
+                            `  Extracted ${additionalPageCreatedEntities.variableIds.length} variable ID(s) from additional page "${additionalPage.name}"`,
+                          );
+                        }
+                      } catch (error) {
+                        await debugConsole.warning(
+                          `  Failed to parse created entities from additional page "${additionalPage.name}": ${error}`,
+                        );
+                      }
+                    }
+                  }
+                }
+              }
+            }
+
+            if (createdEntities.collectionIds) {
+              for (const collectionId of createdEntities.collectionIds) {
+                allCollectionIds.add(collectionId);
+              }
+              await debugConsole.log(
+                `  Extracted ${createdEntities.collectionIds.length} collection ID(s) from page "${page.name}": ${createdEntities.collectionIds.map((id) => id.substring(0, 8) + "...").join(", ")}`,
+              );
+            } else {
+              await debugConsole.log(
+                `  No collectionIds found in createdEntities for page "${page.name}"`,
+              );
+            }
+            if (createdEntities.variableIds) {
+              for (const variableId of createdEntities.variableIds) {
+                allVariableIds.add(variableId);
+              }
+              await debugConsole.log(
+                `  Extracted ${createdEntities.variableIds.length} variable ID(s) from page "${page.name}": ${createdEntities.variableIds.map((id) => id.substring(0, 8) + "...").join(", ")}`,
+              );
+            } else {
+              await debugConsole.log(
+                `  No variableIds found in createdEntities for page "${page.name}"`,
+              );
+            }
+          } catch (error) {
+            await debugConsole.warning(
+              `  Failed to parse created entities from page "${page.name}": ${error}`,
+            );
+            await debugConsole.warning(
+              `  Created entities string: ${createdEntitiesStr.substring(0, 200)}...`,
+            );
+          }
+        } else {
+          await debugConsole.log(
+            `  No created entities data found on page "${page.name}"`,
+          );
+        }
       }
     }
+
+    await debugConsole.log(
+      `Cleanup summary: Found ${pagesToDelete.length} page(s) to delete, ${allCollectionIds.size} collection(s) to delete, ${allVariableIds.size} variable(s) to delete`,
+    );
 
     // Switch away from any pages we're about to delete
     const currentPage = figma.currentPage;
@@ -1267,13 +1525,59 @@ export async function cleanupFailedImport(
       }
     }
 
+    // Delete collections and variables that were created during the import
+    let deletedCollectionsCount = 0;
+    let deletedVariablesCount = 0;
+
+    // Delete variables first (before collections)
+    for (const variableId of allVariableIds) {
+      try {
+        const variable = await figma.variables.getVariableByIdAsync(variableId);
+        if (variable) {
+          // Check if variable's collection is in our list to be deleted
+          // If so, we don't need to delete it explicitly (it will be deleted with the collection)
+          const collectionId = variable.variableCollectionId;
+          if (!allCollectionIds.has(collectionId)) {
+            variable.remove();
+            deletedVariablesCount++;
+            await debugConsole.log(
+              `Deleted variable: ${variable.name} (${variableId.substring(0, 8)}...)`,
+            );
+          }
+        }
+      } catch (error) {
+        await debugConsole.warning(
+          `Could not delete variable ${variableId.substring(0, 8)}...: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
+
+    // Delete collections (this will also delete variables in those collections)
+    for (const collectionId of allCollectionIds) {
+      try {
+        const collection =
+          await figma.variables.getVariableCollectionByIdAsync(collectionId);
+        if (collection) {
+          collection.remove();
+          deletedCollectionsCount++;
+          await debugConsole.log(
+            `Deleted collection: "${collection.name}" (${collectionId.substring(0, 8)}...)`,
+          );
+        }
+      } catch (error) {
+        await debugConsole.warning(
+          `Could not delete collection ${collectionId.substring(0, 8)}...: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
+
     await debugConsole.log("=== Failed Import Cleanup Complete ===");
 
     const responseData: CleanupFailedImportResponseData = {
       success: true,
       deletedPages: deletedPagesCount,
-      deletedCollections: 0, // Can't clean up without metadata
-      deletedVariables: 0, // Can't clean up without metadata
+      deletedCollections: deletedCollectionsCount,
+      deletedVariables: deletedVariablesCount,
     };
 
     return retSuccess("cleanupFailedImport", responseData as any);

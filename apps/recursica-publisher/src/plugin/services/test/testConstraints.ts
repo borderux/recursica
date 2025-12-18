@@ -105,7 +105,6 @@ export async function testConstraints(pageId: string): Promise<TestResult> {
       "  Setting constraints using constraints object API...",
     );
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (originalFrame as any).constraints = {
         horizontal: "SCALE",
         vertical: "SCALE",
@@ -121,9 +120,7 @@ export async function testConstraints(pageId: string): Promise<TestResult> {
     }
 
     // Verify constraints were set
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const constraintH = (originalFrame as any).constraints?.horizontal;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const constraintV = (originalFrame as any).constraints?.vertical;
     await debugConsole.log(
       `  Original constraints: H=${constraintH}, V=${constraintV}`,
@@ -136,9 +133,7 @@ export async function testConstraints(pageId: string): Promise<TestResult> {
     }
 
     // Verify constraints were set (read from constraints object)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const originalConstraintH = (originalFrame as any).constraints?.horizontal;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const originalConstraintV = (originalFrame as any).constraints?.vertical;
     await debugConsole.log(
       `  Original constraints: H=${originalConstraintH}, V=${originalConstraintV}`,
@@ -159,9 +154,7 @@ export async function testConstraints(pageId: string): Promise<TestResult> {
     await debugConsole.log(
       "\n--- Step 2: Simulate Export (read constraints) ---",
     );
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const exportedConstraintH = (originalFrame as any).constraints?.horizontal;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const exportedConstraintV = (originalFrame as any).constraints?.vertical;
     await debugConsole.log(
       `  Exported constraints: H=${exportedConstraintH}, V=${exportedConstraintV}`,
@@ -187,10 +180,8 @@ export async function testConstraints(pageId: string): Promise<TestResult> {
     testFrame.appendChild(importedFrame);
 
     // Check constraints before setting (should be MIN/MIN by default)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const importedConstraintHBefore = (importedFrame as any).constraints
       ?.horizontal;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const importedConstraintVBefore = (importedFrame as any).constraints
       ?.vertical;
     await debugConsole.log(
@@ -198,7 +189,6 @@ export async function testConstraints(pageId: string): Promise<TestResult> {
     );
 
     // Set constraints from nodeData using the constraints object API
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (importedFrame as any).constraints = {
       horizontal: exportedConstraintH,
       vertical: exportedConstraintV,
@@ -209,9 +199,7 @@ export async function testConstraints(pageId: string): Promise<TestResult> {
 
     // Step 4: Verify imported constraints
     await debugConsole.log("\n--- Step 4: Verify Imported Constraints ---");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const importedConstraintH = (importedFrame as any).constraints?.horizontal;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const importedConstraintV = (importedFrame as any).constraints?.vertical;
     await debugConsole.log(
       `  Imported constraints: H=${importedConstraintH}, V=${importedConstraintV}`,
@@ -251,15 +239,12 @@ export async function testConstraints(pageId: string): Promise<TestResult> {
       testFrame.appendChild(testCaseFrame);
 
       // Use exported values directly (no mapping needed - Figma API uses same values)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (testCaseFrame as any).constraints = {
         horizontal: testCase.h,
         vertical: testCase.v,
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const resultH = (testCaseFrame as any).constraints?.horizontal;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const resultV = (testCaseFrame as any).constraints?.vertical;
 
       const testSuccess = resultH === testCase.h && resultV === testCase.v;
@@ -408,14 +393,11 @@ export async function testConstraintsVectorInComponentFailure(
 
     // Try using constraints object API (this should work, but we're testing the old broken approach)
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (vector as any).constraints = {
         horizontal: "SCALE",
         vertical: "SCALE",
       };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const verifyH = (vector as any).constraints?.horizontal;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const verifyV = (vector as any).constraints?.vertical;
       if (verifyH === "SCALE" && verifyV === "SCALE") {
         constraintHSet = true;
@@ -438,9 +420,7 @@ export async function testConstraintsVectorInComponentFailure(
 
     // Step 5: Verify final state
     await debugConsole.log("\n--- Step 5: Verify Final State ---");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const finalConstraintH = (vector as any).constraints?.horizontal;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const finalConstraintV = (vector as any).constraints?.vertical;
     await debugConsole.log(
       `  Final constraints: H=${finalConstraintH || "undefined"}, V=${finalConstraintV || "undefined"}`,
@@ -588,14 +568,11 @@ export async function testConstraintsVectorInComponentFix(
 
     // Try using constraints object API (this should work)
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (vector as any).constraints = {
         horizontal: "SCALE",
         vertical: "SCALE",
       };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const verifyH = (vector as any).constraints?.horizontal;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const verifyV = (vector as any).constraints?.vertical;
       if (verifyH === "SCALE" && verifyV === "SCALE") {
         constraintHSet = true;
@@ -618,9 +595,7 @@ export async function testConstraintsVectorInComponentFix(
 
     // Step 7: Verify constraints are set
     await debugConsole.log("\n--- Step 7: Verify constraints are set ---");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const finalConstraintH = (vector as any).constraints?.horizontal;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const finalConstraintV = (vector as any).constraints?.vertical;
     await debugConsole.log(
       `  Final constraints: H=${finalConstraintH || "undefined"}, V=${finalConstraintV || "undefined"}`,
@@ -746,14 +721,11 @@ export async function testConstraintsVectorStandalone(
       "  Attempting to set constraints using constraints object API...",
     );
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (vector as any).constraints = {
         horizontal: "SCALE",
         vertical: "SCALE",
       };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const verifyH = (vector as any).constraints?.horizontal;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const verifyV = (vector as any).constraints?.vertical;
       if (verifyH === "SCALE" && verifyV === "SCALE") {
         constraintHSet = true;
@@ -776,9 +748,7 @@ export async function testConstraintsVectorStandalone(
 
     // Verify final state
     await debugConsole.log("\n--- Step 5: Verify Final State ---");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const finalConstraintH = (vector as any).constraints?.horizontal;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const finalConstraintV = (vector as any).constraints?.vertical;
     await debugConsole.log(
       `  Final constraints: H=${finalConstraintH || "undefined"}, V=${finalConstraintV || "undefined"}`,

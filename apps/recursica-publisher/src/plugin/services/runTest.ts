@@ -3,18 +3,20 @@ import type { ResponseMessage } from "../types/messages";
 import type { NoData } from "./getCurrentUser";
 import { retSuccess, retError } from "../utils/response";
 import { debugConsole } from "./debugConsole";
-import {
-  testItemSpacingVariableBinding,
-  testItemSpacingVariableBindingImportSimulation,
-  testItemSpacingVariableBindingFailure,
-  testItemSpacingVariableBindingFix,
-} from "./test/testItemSpacingVariableBinding";
-import {
-  testConstraints,
-  testConstraintsVectorInComponentFailure,
-  testConstraintsVectorInComponentFix,
-  testConstraintsVectorStandalone,
-} from "./test/testConstraints";
+// Previous test imports commented out - only running testInstanceChildrenAndOverrides
+// import {
+//   testItemSpacingVariableBinding,
+//   testItemSpacingVariableBindingImportSimulation,
+//   testItemSpacingVariableBindingFailure,
+//   testItemSpacingVariableBindingFix,
+// } from "./test/testItemSpacingVariableBinding";
+// import {
+//   testConstraints,
+//   testConstraintsVectorInComponentFailure,
+//   testConstraintsVectorInComponentFix,
+//   testConstraintsVectorStandalone,
+// } from "./test/testConstraints";
+import { testInstanceChildrenAndOverrides } from "./test/testInstanceChildrenAndOverrides";
 
 export interface RunTestResponseData {
   testResults: {
@@ -40,6 +42,28 @@ export async function runTest(
 ): Promise<ResponseMessage> {
   try {
     await debugConsole.log("=== Starting Test ===");
+
+    // Delete any existing "Test" variable collection before running tests
+    // This ensures a clean slate for each test run
+    await debugConsole.log('Cleaning up "Test" variable collection...');
+    const localCollections =
+      await figma.variables.getLocalVariableCollectionsAsync();
+    for (const collection of localCollections) {
+      if (collection.name === "Test") {
+        await debugConsole.log(
+          `  Found existing "Test" collection (ID: ${collection.id.substring(0, 8)}...), deleting...`,
+        );
+        // Delete all variables in the collection first
+        const variables = await figma.variables.getLocalVariablesAsync();
+        for (const variable of variables) {
+          if (variable.variableCollectionId === collection.id) {
+            variable.remove();
+          }
+        }
+        collection.remove();
+        await debugConsole.log('  Deleted "Test" collection');
+      }
+    }
 
     // Load all pages
     await figma.loadAllPagesAsync();
@@ -89,6 +113,8 @@ export async function runTest(
       details?: Record<string, unknown>;
     }> = [];
 
+    // Previous tests commented out for reference - only running new test
+    /*
     // Test 1: Original 5 approaches (proves binding can work in isolation)
     await debugConsole.log("\n" + "=".repeat(60));
     await debugConsole.log("TEST 1: Original 5 Approaches");
@@ -241,6 +267,25 @@ export async function runTest(
       details: test8Results.details,
     });
 
+    // Clean up test frame for next test
+    testFrame8.remove();
+    const testFrame9 = figma.createFrame();
+    testFrame9.name = "Test";
+    testPage.appendChild(testFrame9);
+    */
+
+    // Test 9: Instance Children and Overrides Behavior
+    await debugConsole.log("\n" + "=".repeat(60));
+    await debugConsole.log("TEST 9: Instance Children and Overrides Behavior");
+    await debugConsole.log("=".repeat(60));
+    const test9Results = await testInstanceChildrenAndOverrides(testPage.id);
+    allTests.push({
+      name: "Instance Children and Overrides",
+      success: test9Results.success,
+      message: test9Results.message,
+      details: test9Results.details,
+    });
+
     // Overall summary
     await debugConsole.log("\n" + "=".repeat(60));
     await debugConsole.log("=== ALL TESTS COMPLETE ===");
@@ -257,17 +302,8 @@ export async function runTest(
     }
 
     // Overall success if all critical tests pass
-    // Test 1, 2, 4, 5, 6, 7, and 8 should pass. Test 3 should "pass" (demonstrate failure)
-    // Test 6 should "pass" (demonstrate the failure case)
-    const overallSuccess =
-      test1Results.success &&
-      test2Results.success &&
-      test3Results.success && // This "success" means we demonstrated the failure
-      test4Results.success &&
-      test5Results.success &&
-      test6Results.success && // This "success" means we demonstrated the failure
-      test7Results.success &&
-      test8Results.success;
+    // Currently only running Test 9 (previous tests commented out for reference)
+    const overallSuccess = test9Results.success;
 
     const responseData: RunTestResponseData = {
       testResults: {

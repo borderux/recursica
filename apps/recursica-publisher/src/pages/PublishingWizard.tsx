@@ -548,7 +548,6 @@ export default function PublishingWizard() {
 
       doExport();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     wizardStep,
     hasExportedReferencedPages,

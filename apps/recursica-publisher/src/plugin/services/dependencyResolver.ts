@@ -10,6 +10,7 @@ import type { ResponseMessage } from "../types/messages";
 import {
   getFixedGuidForCollection,
   isStandardCollection,
+  normalizeCollectionName,
 } from "../../const/CollectionConstants";
 // VariableCollection type from Figma API
 type VariableCollection = ReturnType<
@@ -484,25 +485,171 @@ export async function importPagesInOrder(
   }
 
   // Resolve all deferred instances after all pages are imported
+  let deferredResolutionFailed = 0;
   if (allDeferredInstances.length > 0) {
     await debugConsole.log(
       `=== Resolving ${allDeferredInstances.length} Deferred Instance(s) ===`,
     );
     try {
+      // Build recognizedVariables map from all imported pages
+      // We need this to apply child overrides with bound variables
+      // Rebuild variable and collection tables from all JSON files
+      await debugConsole.log(
+        `  Rebuilding variable and collection tables from imported JSON files...`,
+      );
+
+      // Import the necessary functions
+      const {
+        loadAndExpandJson,
+        loadCollectionTable,
+        loadVariableTable,
+        matchAndCreateVariables,
+      } = await import("./pageImportNew");
+
+      // Collect all variable and collection tables from all imported JSON files
+      const allVariableTables: any[] = [];
+      const allCollectionTables: any[] = [];
+
+      // Process all JSON files to build merged variable and collection tables
+      for (const page of order) {
+        try {
+          const jsonResult = loadAndExpandJson(page.jsonData);
+          if (jsonResult.success && jsonResult.expandedJsonData) {
+            const expandedJsonData = jsonResult.expandedJsonData;
+
+            // Load collection table
+            const collectionTableResult = loadCollectionTable(expandedJsonData);
+            if (
+              collectionTableResult.success &&
+              collectionTableResult.collectionTable
+            ) {
+              allCollectionTables.push(collectionTableResult.collectionTable);
+            }
+
+            // Load variable table
+            const variableTableResult = loadVariableTable(expandedJsonData);
+            if (
+              variableTableResult.success &&
+              variableTableResult.variableTable
+            ) {
+              allVariableTables.push(variableTableResult.variableTable);
+            }
+          }
+        } catch (error) {
+          await debugConsole.warning(
+            `  Could not load tables from ${page.fileName}: ${error}`,
+          );
+        }
+      }
+
+      // Merge all variable tables (use the first one as base, or create a merged one)
+      // For now, we'll use the last variable table (should have all variables from all imports)
+      // In practice, all imports should have the same variable table entries
+      let mergedVariableTable: any = null;
+      let mergedCollectionTable: any = null;
+
+      if (allVariableTables.length > 0) {
+        // Use the last variable table (should be the most complete)
+        mergedVariableTable = allVariableTables[allVariableTables.length - 1];
+        await debugConsole.log(
+          `  Using variable table with ${mergedVariableTable.getSize()} variable(s)`,
+        );
+      }
+
+      if (allCollectionTables.length > 0) {
+        // Use the last collection table
+        mergedCollectionTable =
+          allCollectionTables[allCollectionTables.length - 1];
+        await debugConsole.log(
+          `  Using collection table with ${mergedCollectionTable.getSize()} collection(s)`,
+        );
+      }
+
+      // Build recognizedCollections map keyed by collection table index
+      // This is required because matchAndCreateVariables expects collections to be keyed by index
+      const recognizedCollections = new Map<string, VariableCollection>();
+      if (mergedCollectionTable) {
+        // Get all local collections (they should already be created/matched from imports)
+        const localCollections =
+          await figma.variables.getLocalVariableCollectionsAsync();
+
+        // Build a lookup map by normalized name for fast matching
+        const collectionsByName = new Map<string, VariableCollection>();
+        for (const collection of localCollections) {
+          const normalizedName = normalizeCollectionName(collection.name);
+          collectionsByName.set(normalizedName, collection);
+        }
+
+        // Iterate through collection table entries and match them to actual collections
+        const collectionTableEntries = mergedCollectionTable.getTable();
+        for (const [indexStr, entry] of Object.entries(
+          collectionTableEntries,
+        )) {
+          const collectionEntry = entry as {
+            collectionName: string;
+            collectionId?: string;
+            isLocal?: boolean;
+            modes?: string[];
+            collectionGuid?: string;
+          };
+          const normalizedName = normalizeCollectionName(
+            collectionEntry.collectionName,
+          );
+          const collection = collectionsByName.get(normalizedName);
+
+          if (collection) {
+            // Store by collection table index (as string) for matchAndCreateVariables
+            recognizedCollections.set(indexStr, collection);
+            await debugConsole.log(
+              `  Matched collection table index ${indexStr} ("${collectionEntry.collectionName}") to collection "${collection.name}"`,
+            );
+          } else {
+            await debugConsole.warning(
+              `  Could not find collection for table index ${indexStr} ("${collectionEntry.collectionName}")`,
+            );
+          }
+        }
+      }
+
+      // Build recognizedVariables map using matchAndCreateVariables
+      let recognizedVariables = new Map<string, Variable>();
+      if (mergedVariableTable && mergedCollectionTable) {
+        const { recognizedVariables: builtRecognizedVariables } =
+          await matchAndCreateVariables(
+            mergedVariableTable,
+            mergedCollectionTable,
+            recognizedCollections,
+            [], // newlyCreatedCollections - empty since they're already created
+          );
+        recognizedVariables = builtRecognizedVariables;
+        await debugConsole.log(
+          `  Built recognizedVariables map with ${recognizedVariables.size} variable(s)`,
+        );
+      } else {
+        await debugConsole.warning(
+          `  Could not build recognizedVariables map - variable or collection table missing`,
+        );
+      }
+
       const resolveResult = await resolveDeferredNormalInstances(
         allDeferredInstances,
         data.constructionIcon || "",
+        recognizedVariables,
+        mergedVariableTable || null,
+        mergedCollectionTable || null,
+        recognizedCollections,
       );
       await debugConsole.log(
         `  Resolved: ${resolveResult.resolved}, Failed: ${resolveResult.failed}`,
       );
       if (resolveResult.errors.length > 0) {
         allErrors.push(...resolveResult.errors);
+        deferredResolutionFailed = resolveResult.failed;
       }
     } catch (error) {
-      allErrors.push(
-        `Failed to resolve deferred instances: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      const errorMessage = `Failed to resolve deferred instances: ${error instanceof Error ? error.message : String(error)}`;
+      allErrors.push(errorMessage);
+      deferredResolutionFailed = allDeferredInstances.length; // Mark all as failed if resolution threw
     }
   }
 
@@ -517,7 +664,7 @@ export async function importPagesInOrder(
 
   await debugConsole.log("=== Import Summary ===");
   await debugConsole.log(
-    `  Imported: ${imported}, Failed: ${failed}, Deferred instances: ${allDeferredInstances.length}`,
+    `  Imported: ${imported}, Failed: ${failed}, Deferred instances: ${allDeferredInstances.length}, Deferred resolution failed: ${deferredResolutionFailed}`,
   );
   await debugConsole.log(
     `  Collections in allCreatedEntityIds: ${allCreatedEntityIds.collectionIds.length}, Unique: ${uniqueCollectionIds.length}`,
@@ -541,7 +688,8 @@ export async function importPagesInOrder(
     }
   }
 
-  const success = failed === 0;
+  // Import fails if page imports failed OR if deferred instance resolution failed
+  const success = failed === 0 && deferredResolutionFailed === 0;
   const message = success
     ? `Successfully imported ${imported} page(s)${allDeferredInstances.length > 0 ? ` (${allDeferredInstances.length} deferred instance(s) resolved)` : ""}`
     : `Import completed with ${failed} failure(s). ${allErrors.join("; ")}`;

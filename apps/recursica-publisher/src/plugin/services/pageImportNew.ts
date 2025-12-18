@@ -48,6 +48,7 @@ export interface DeferredNormalInstance {
   instanceEntry: any; // Instance table entry
   nodeData: any; // Original node data
   parentNodeId: string; // ID of parent node where placeholder was created (for serialization)
+  parentPlaceholderId?: string; // ID of parent placeholder if parent is also a deferred instance
   instanceIndex: number; // Instance table index
 }
 
@@ -997,6 +998,8 @@ export async function recreateNodeFromData(
   deferredInstances: DeferredNormalInstance[] | null = null, // Array to collect deferred normal instances
   parentNodeData: any = null, // Parent's nodeData - used to check if parent has auto-layout
   recognizedCollections: Map<string, VariableCollection> | null = null, // For resolving variables from table
+  placeholderFrameIds: Set<string> | null = null, // Track placeholder frame IDs as we create them
+  currentPlaceholderId?: string, // ID of placeholder we're currently inside (for nested deferred instances)
 ): Promise<any> {
   let newNode: any;
 
@@ -1160,6 +1163,8 @@ export async function recreateNodeFromData(
                 deferredInstances, // Pass deferredInstances through for component set creation
                 null, // parentNodeData - not needed here, will be passed correctly in recursive calls
                 recognizedCollections,
+                placeholderFrameIds, // Pass placeholderFrameIds through for component set creation
+                undefined, // currentPlaceholderId - component set creation is not inside a placeholder
               );
               if (componentNode && componentNode.type === "COMPONENT") {
                 componentVariants.push(componentNode);
@@ -1795,23 +1800,52 @@ export async function recreateNodeFromData(
               placeholderFrame.resize(nodeData.w, nodeData.h);
             }
 
+            // Add placeholder frame ID to Set immediately so we can check if parent is a placeholder
+            if (placeholderFrameIds) {
+              placeholderFrameIds.add(placeholderFrame.id);
+            }
+
             // Store deferred instance info (using IDs for serialization)
             if (deferredInstances) {
+              // Use currentPlaceholderId if we're inside a placeholder (nested deferred instance)
+              // This is passed down through recursive calls, so we know if we're inside a placeholder
+              const parentPlaceholderId = currentPlaceholderId;
+
+              if (parentPlaceholderId) {
+                await debugConsole.log(
+                  `[NESTED] Creating child deferred instance "${nodeData.name}" with parent placeholder ID ${parentPlaceholderId.substring(0, 8)}... (immediate parent: "${parentNode.name}" ${parentNode.id.substring(0, 8)}...)`,
+                );
+              } else {
+                await debugConsole.log(
+                  `[NESTED] Creating top-level deferred instance "${nodeData.name}" - parent "${parentNode.name}" (${parentNode.id.substring(0, 8)}...)`,
+                );
+              }
+
+              // If we're inside a placeholder, use the placeholder's parent as parentNodeId
+              // This ensures we can find the actual parent node even after the placeholder is removed
+              let actualParentNodeId = parentNode.id;
+              if (parentPlaceholderId) {
+                try {
+                  const placeholderNode =
+                    await figma.getNodeByIdAsync(parentPlaceholderId);
+                  if (placeholderNode && placeholderNode.parent) {
+                    actualParentNodeId = placeholderNode.parent.id;
+                  }
+                } catch {
+                  // Placeholder might not exist yet, fall back to parentNode.id
+                  actualParentNodeId = parentNode.id;
+                }
+              }
+
               const deferred = {
                 placeholderFrameId: placeholderFrame.id,
                 instanceEntry,
                 nodeData,
-                parentNodeId: parentNode.id,
+                parentNodeId: actualParentNodeId,
+                parentPlaceholderId,
                 instanceIndex: nodeData._instanceRef,
               };
               deferredInstances.push(deferred);
-              await debugConsole.log(
-                `  [DEBUG] Added deferred instance "${nodeData.name}" to array (array length: ${deferredInstances.length})`,
-              );
-            } else {
-              await debugConsole.log(
-                `  [DEBUG] deferredInstances array is null/undefined - cannot store deferred instance "${nodeData.name}"`,
-              );
             }
 
             newNode = placeholderFrame;
@@ -2069,23 +2103,52 @@ export async function recreateNodeFromData(
               placeholderFrame.resize(nodeData.w, nodeData.h);
             }
 
+            // Add placeholder frame ID to Set immediately so we can check if parent is a placeholder
+            if (placeholderFrameIds) {
+              placeholderFrameIds.add(placeholderFrame.id);
+            }
+
             // Store deferred instance info (using IDs for serialization)
             if (deferredInstances) {
+              // Use currentPlaceholderId if we're inside a placeholder (nested deferred instance)
+              // This is passed down through recursive calls, so we know if we're inside a placeholder
+              const parentPlaceholderId = currentPlaceholderId;
+
+              if (parentPlaceholderId) {
+                await debugConsole.log(
+                  `[NESTED] Creating child deferred instance "${nodeData.name}" with parent placeholder ID ${parentPlaceholderId.substring(0, 8)}... (immediate parent: "${parentNode.name}" ${parentNode.id.substring(0, 8)}...)`,
+                );
+              } else {
+                await debugConsole.log(
+                  `[NESTED] Creating top-level deferred instance "${nodeData.name}" - parent "${parentNode.name}" (${parentNode.id.substring(0, 8)}...)`,
+                );
+              }
+
+              // If we're inside a placeholder, use the placeholder's parent as parentNodeId
+              // This ensures we can find the actual parent node even after the placeholder is removed
+              let actualParentNodeId = parentNode.id;
+              if (parentPlaceholderId) {
+                try {
+                  const placeholderNode =
+                    await figma.getNodeByIdAsync(parentPlaceholderId);
+                  if (placeholderNode && placeholderNode.parent) {
+                    actualParentNodeId = placeholderNode.parent.id;
+                  }
+                } catch {
+                  // Placeholder might not exist yet, fall back to parentNode.id
+                  actualParentNodeId = parentNode.id;
+                }
+              }
+
               const deferred = {
                 placeholderFrameId: placeholderFrame.id,
                 instanceEntry,
                 nodeData,
-                parentNodeId: parentNode.id,
+                parentNodeId: actualParentNodeId,
+                parentPlaceholderId,
                 instanceIndex: nodeData._instanceRef,
               };
               deferredInstances.push(deferred);
-              await debugConsole.log(
-                `  [DEBUG] Added deferred instance "${nodeData.name}" to array (array length: ${deferredInstances.length})`,
-              );
-            } else {
-              await debugConsole.log(
-                `  [DEBUG] deferredInstances array is null/undefined - cannot store deferred instance "${nodeData.name}"`,
-              );
             }
 
             newNode = placeholderFrame;
@@ -2489,9 +2552,7 @@ export async function recreateNodeFromData(
     }
 
     // ISSUE #4 DEBUG: Check constraints after resize (before we set them)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const constraintHorizontalAfter = (newNode as any).constraints?.horizontal;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const constraintVerticalAfter = (newNode as any).constraints?.vertical;
     if (
       expectedConstraintH !== undefined ||
@@ -2631,7 +2692,6 @@ export async function recreateNodeFromData(
           nodeData.constraintVertical || nodeData.constraints?.vertical;
 
         // Get current constraints to preserve one if only setting the other
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const currentConstraints = (newNode as any).constraints || {};
         const currentH = currentConstraints.horizontal || "MIN";
         const currentV = currentConstraints.vertical || "MIN";
@@ -2680,9 +2740,7 @@ export async function recreateNodeFromData(
       nodeData.type !== "BOOLEAN_OPERATION" &&
       (expectedConstraintH !== undefined || expectedConstraintV !== undefined)
     ) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const finalConstraintH = (newNode as any).constraints?.horizontal;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const finalConstraintV = (newNode as any).constraints?.vertical;
       await debugConsole.log(
         `  [ISSUE #4] "${nodeName}" (${nodeData.type}) - Final constraints (no resize): H=${finalConstraintH || "undefined"}, V=${finalConstraintV || "undefined"}`,
@@ -3537,7 +3595,6 @@ export async function recreateNodeFromData(
         );
 
         // Get current constraints to preserve one if only setting the other
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const currentConstraints = (newNode as any).constraints || {};
         const currentH = currentConstraints.horizontal || "MIN";
         const currentV = currentConstraints.vertical || "MIN";
@@ -3554,9 +3611,7 @@ export async function recreateNodeFromData(
           };
 
           // Verify immediately after setting
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const verifyH = (newNode as any).constraints?.horizontal;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const verifyV = (newNode as any).constraints?.vertical;
           if (verifyH === apiH && verifyV === apiV) {
             await debugConsole.log(
@@ -3574,9 +3629,7 @@ export async function recreateNodeFromData(
         }
 
         // Final verification for VECTOR constraints
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const finalConstraintH = (newNode as any).constraints?.horizontal;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const finalConstraintV = (newNode as any).constraints?.vertical;
         await debugConsole.log(
           `  [ISSUE #4] "${nodeData.name || "Unnamed"}" (VECTOR) - Final constraints after immediate setting: H=${finalConstraintH || "undefined"}, V=${finalConstraintV || "undefined"}`,
@@ -4025,6 +4078,13 @@ export async function recreateNodeFromData(
       if (childData._truncated) {
         continue;
       }
+      // Determine currentPlaceholderId for children:
+      // - If newNode is a placeholder, use its ID
+      // - Otherwise, pass down the currentPlaceholderId we received
+      const childPlaceholderId =
+        newNode && placeholderFrameIds && placeholderFrameIds.has(newNode.id)
+          ? newNode.id
+          : currentPlaceholderId;
       const childNode = await recreateNodeFromData(
         childData,
         newNode,
@@ -4038,6 +4098,8 @@ export async function recreateNodeFromData(
         deferredInstances, // Pass deferredInstances through for recursive calls
         nodeData, // parentNodeData - pass the parent's nodeData so children can check for auto-layout
         recognizedCollections,
+        placeholderFrameIds, // Pass placeholderFrameIds through for recursive calls
+        childPlaceholderId, // Pass currentPlaceholderId down (or placeholder ID if newNode is a placeholder)
       );
       if (childNode) {
         // Only append if the child doesn't already have this node as its parent
@@ -4563,7 +4625,7 @@ export function loadAndExpandJson(jsonData: any): {
 /**
  * Stage 3: Load collection table
  */
-function loadCollectionTable(expandedJsonData: any): {
+export function loadCollectionTable(expandedJsonData: any): {
   success: boolean;
   collectionTable?: CollectionTable;
   error?: string;
@@ -4886,7 +4948,7 @@ async function createNewCollections(
 /**
  * Stage 8: Load variable table
  */
-function loadVariableTable(expandedJsonData: any): {
+export function loadVariableTable(expandedJsonData: any): {
   success: boolean;
   variableTable?: VariableTable;
   error?: string;
@@ -4915,7 +4977,7 @@ function loadVariableTable(expandedJsonData: any): {
 /**
  * Stage 9: Match and create variables
  */
-async function matchAndCreateVariables(
+export async function matchAndCreateVariables(
   variableTable: VariableTable,
   collectionTable: CollectionTable,
   recognizedCollections: Map<string, VariableCollection>,
@@ -5407,6 +5469,8 @@ async function createRemoteInstances(
           null, // deferredInstances - not needed for remote instances
           null, // parentNodeData - not available for remote structures
           recognizedCollections,
+          null, // placeholderFrameIds - not needed for remote instances
+          undefined, // currentPlaceholderId - remote instances are not inside placeholders
         );
         if (recreatedNode) {
           containerFrame.appendChild(recreatedNode);
@@ -5781,6 +5845,8 @@ async function createRemoteInstances(
               null, // deferredInstances - not needed for remote instances
               entry.structure, // parentNodeData - pass the component's structure so children can check for auto-layout
               recognizedCollections,
+              null, // placeholderFrameIds - not needed for remote instances
+              undefined, // currentPlaceholderId - remote instances are not inside placeholders
             );
             if (childNode) {
               componentNode.appendChild(childNode);
@@ -5831,6 +5897,7 @@ async function createPageAndRecreateStructure(
   recognizedVariables: Map<string, Variable>,
   remoteComponentMap: Map<number, ComponentNode> | null = null,
   deferredInstances: DeferredNormalInstance[] | null = null,
+  placeholderFrameIds: Set<string> | null = null, // Track placeholder frame IDs as we create them
   isMainPage: boolean = false, // If true, always create a copy (no prompt). If false, prompt for existing pages.
   recognizedCollections: Map<string, VariableCollection> | null = null,
   alwaysCreateCopy: boolean = false, // If true, always create a copy (no prompt) even if page exists. Used for wizard imports.
@@ -6034,6 +6101,8 @@ async function createPageAndRecreateStructure(
         deferredInstances,
         pageData, // parentNodeData - pass the page's nodeData so children can check for auto-layout
         recognizedCollections,
+        placeholderFrameIds,
+        undefined, // currentPlaceholderId - page root is not inside a placeholder
       );
       if (childNode) {
         newPage.appendChild(childNode);
@@ -6277,6 +6346,9 @@ export async function importPage(
 
     // Stage 11: Create page and recreate structure
     const deferredInstances: DeferredNormalInstance[] = [];
+    // Track placeholder frame IDs as we create them, so we can check if parent is a placeholder
+    // even before the deferred instance is added to the array
+    const placeholderFrameIds = new Set<string>();
     const isMainPage = data.isMainPage ?? true; // Default to true for single page imports
     const alwaysCreateCopy = data.alwaysCreateCopy ?? false;
     const skipUniqueNaming = data.skipUniqueNaming ?? false;
@@ -6303,6 +6375,7 @@ export async function importPage(
       recognizedVariables,
       remoteComponentMap,
       deferredInstances,
+      placeholderFrameIds,
       isMainPage,
       recognizedCollections,
       alwaysCreateCopy,
@@ -6335,9 +6408,6 @@ export async function importPage(
     );
 
     if (deferredCount > 0) {
-      await debugConsole.log(
-        `  [DEBUG] Returning ${deferredCount} deferred instance(s) in response`,
-      );
       for (const deferred of deferredInstancesFromResult) {
         await debugConsole.log(
           `    - "${deferred.nodeData.name}" from page "${deferred.instanceEntry.componentPageName}"`,
@@ -6384,17 +6454,288 @@ export async function importPage(
 }
 
 /**
+ * Helper function to apply fill bound variables to instance children
+ * This handles the case where instance children have fill bound variables that need to be applied
+ * during deferred instance resolution (instance override scenario)
+ */
+async function applyFillBoundVariablesToInstanceChildren(
+  instanceNode: InstanceNode,
+  nodeData: any,
+  recognizedVariables: Map<string, Variable> | null,
+): Promise<void> {
+  if (
+    !recognizedVariables ||
+    !nodeData.children ||
+    !Array.isArray(nodeData.children) ||
+    !instanceNode.children ||
+    instanceNode.children.length === 0
+  ) {
+    return;
+  }
+
+  // Iterate through instance children and apply fill bound variables
+  await debugConsole.log(
+    `[FILL-BOUND] Applying fill bound variables to instance "${instanceNode.name}" children. Instance has ${instanceNode.children.length} child(ren), JSON has ${nodeData.children?.length || 0} child(ren)`,
+  );
+
+  for (const instanceChild of instanceNode.children) {
+    // Only process nodes that have fills (VectorNode, TextNode, etc.)
+    if (!("fills" in instanceChild) || !Array.isArray(instanceChild.fills)) {
+      await debugConsole.log(
+        `[FILL-BOUND] Skipping child "${instanceChild.name}" - no fills property`,
+      );
+      continue;
+    }
+
+    // Find matching child data by name
+    const childData = nodeData.children.find(
+      (cd: any) => cd.name === instanceChild.name,
+    );
+
+    if (!childData) {
+      await debugConsole.log(
+        `[FILL-BOUND] No JSON data found for child "${instanceChild.name}" in instance "${instanceNode.name}"`,
+      );
+      continue;
+    }
+
+    if (!childData.boundVariables?.fills) {
+      await debugConsole.log(
+        `[FILL-BOUND] Child "${instanceChild.name}" in instance "${instanceNode.name}" has no fill bound variables in JSON`,
+      );
+      continue;
+    }
+
+    await debugConsole.log(
+      `[FILL-BOUND] Found fill bound variables for child "${instanceChild.name}" in instance "${instanceNode.name}"`,
+    );
+
+    // Apply fill bound variables using setBoundVariableForPaint
+    // This is the correct Figma API approach: create new Paint objects and bind variables
+    try {
+      if (!recognizedVariables) {
+        await debugConsole.warning(
+          `[FILL-BOUND] Cannot apply fill bound variables: recognizedVariables is null`,
+        );
+        continue;
+      }
+
+      const fillsBoundVariables = childData.boundVariables.fills;
+      if (!Array.isArray(fillsBoundVariables)) {
+        continue;
+      }
+
+      // Create new fills array with bound variables
+      const boundFills: Paint[] = [];
+      for (
+        let i = 0;
+        i < instanceChild.fills.length && i < fillsBoundVariables.length;
+        i++
+      ) {
+        const instanceFill = instanceChild.fills[i];
+        const fillBoundVars = fillsBoundVariables[i];
+
+        if (fillBoundVars && typeof fillBoundVars === "object") {
+          // Check if this is a direct variable reference (e.g., { _varRef: 55 })
+          // In Figma, binding an entire fill typically means binding the color property
+          let variable: Variable | null = null;
+
+          if ((fillBoundVars as any)._varRef !== undefined) {
+            // Direct variable reference
+            const varRef = (fillBoundVars as any)._varRef;
+            variable = recognizedVariables.get(String(varRef)) || null;
+          } else if ((fillBoundVars as any).color) {
+            // Nested color property
+            const colorVarInfo = (fillBoundVars as any).color;
+            if (colorVarInfo._varRef !== undefined) {
+              variable =
+                recognizedVariables.get(String(colorVarInfo._varRef)) || null;
+            } else if (
+              colorVarInfo.type === "VARIABLE_ALIAS" &&
+              colorVarInfo.id
+            ) {
+              variable = await figma.variables.getVariableByIdAsync(
+                colorVarInfo.id,
+              );
+            }
+          } else if (
+            (fillBoundVars as any).type === "VARIABLE_ALIAS" &&
+            (fillBoundVars as any).id
+          ) {
+            // VARIABLE_ALIAS format
+            variable = await figma.variables.getVariableByIdAsync(
+              (fillBoundVars as any).id,
+            );
+          }
+
+          if (variable && instanceFill.type === "SOLID") {
+            // Create a new SolidPaint based on the existing fill
+            const solidFill = instanceFill as SolidPaint;
+            const newSolidPaint: SolidPaint = {
+              type: "SOLID",
+              visible: solidFill.visible,
+              opacity: solidFill.opacity,
+              blendMode: solidFill.blendMode,
+              color: { ...solidFill.color }, // This will be overridden by the variable
+            };
+
+            // Use setBoundVariableForPaint to bind the variable to the color property
+            const boundPaint = figma.variables.setBoundVariableForPaint(
+              newSolidPaint,
+              "color",
+              variable,
+            ) as SolidPaint;
+
+            boundFills.push(boundPaint);
+            await debugConsole.log(
+              `[FILL-BOUND] ✓ Bound variable "${variable.name}" (${variable.id}) to fill[${i}].color on child "${instanceChild.name}"`,
+            );
+          } else if (variable) {
+            // For non-solid fills or if variable not found, use fill as-is
+            // TODO: Handle gradient fills with bound variables on gradient stops
+            boundFills.push(instanceFill);
+            if (!variable) {
+              await debugConsole.warning(
+                `[FILL-BOUND] Could not resolve variable for fill[${i}] on child "${instanceChild.name}"`,
+              );
+            } else if (instanceFill.type !== "SOLID") {
+              await debugConsole.log(
+                `[FILL-BOUND] Fill[${i}] on child "${instanceChild.name}" is type "${instanceFill.type}" - variable binding for non-solid fills not yet implemented`,
+              );
+            }
+          } else {
+            // No variable to bind, use fill as-is
+            boundFills.push(instanceFill);
+          }
+        } else {
+          // No bound variables for this fill, use as-is
+          boundFills.push(instanceFill);
+        }
+      }
+
+      // Assign the new fills array with bound variables
+      instanceChild.fills = boundFills;
+
+      await debugConsole.log(
+        `[FILL-BOUND] ✓ Applied fill bound variables to child "${instanceChild.name}" in instance "${instanceNode.name}" (${boundFills.length} fill(s))`,
+      );
+    } catch (error) {
+      await debugConsole.warning(
+        `Error applying fill bound variables to instance child "${instanceChild.name}": ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  await debugConsole.log(
+    `[FILL-BOUND] Finished applying fill bound variables to instance "${instanceNode.name}" children`,
+  );
+}
+
+/**
+ * Updates instance children from JSON data to preserve bound variables and other properties
+ * CRITICAL: We can only modify existing children in place - cannot add/replace children in instances
+ *
+ * This function:
+ * - Matches children by name (recursive search) and updates properties (fills, bound variables, etc.)
+ * - Warns (not errors) if JSON child doesn't match instance tree - continues processing
+ * - Keeps default children that aren't in JSON (don't delete them - they're part of component)
+ * - Cannot add children that exist only in JSON (Figma limitation)
+ */
+async function updateInstanceChildrenFromJson(
+  instanceNode: InstanceNode,
+  nodeData: any,
+): Promise<void> {
+  if (
+    !nodeData.children ||
+    !Array.isArray(nodeData.children) ||
+    !instanceNode.children ||
+    instanceNode.children.length === 0
+  ) {
+    return;
+  }
+
+  // Helper to recursively find a child by name
+  const findChildRecursively = (
+    node: SceneNode | ChildrenMixin,
+    targetName: string,
+  ): SceneNode | null => {
+    if ("children" in node && Array.isArray(node.children)) {
+      for (const child of node.children) {
+        if (child.name === targetName) {
+          return child;
+        }
+        const found = findChildRecursively(child, targetName);
+        if (found) {
+          return found;
+        }
+      }
+    }
+    return null;
+  };
+
+  // Process each child in JSON
+  for (const jsonChild of nodeData.children) {
+    if (!jsonChild || !jsonChild.name) {
+      continue;
+    }
+
+    // Find matching child in instance by name (recursive search)
+    const matchingInstanceChild = findChildRecursively(
+      instanceNode,
+      jsonChild.name,
+    );
+
+    if (matchingInstanceChild) {
+      // Match found - update properties in place
+      // Note: We already apply fill bound variables in applyFillBoundVariablesToInstanceChildren
+      // This function can be extended to update other properties if needed
+      // For now, we rely on applyFillBoundVariablesToInstanceChildren for fills
+      // and this function serves as a placeholder for future property updates
+    } else {
+      // No match - JSON child doesn't exist in instance tree
+      // This is expected (instance overrides, Figma limitations) - warn and continue
+      await debugConsole.warning(
+        `Child "${jsonChild.name}" in JSON does not exist in instance "${instanceNode.name}" - skipping (instance override or Figma limitation)`,
+      );
+    }
+  }
+
+  // Check for instance children not in JSON (we keep these - they're part of component)
+  const jsonChildNames = new Set(
+    (nodeData.children || []).map((c: any) => c?.name).filter(Boolean),
+  );
+  const instanceChildrenNotInJson = instanceNode.children.filter(
+    (child) => !jsonChildNames.has(child.name),
+  );
+
+  if (instanceChildrenNotInJson.length > 0) {
+    await debugConsole.log(
+      `Instance "${instanceNode.name}" has ${instanceChildrenNotInJson.length} child(ren) not in JSON - keeping default children: ${instanceChildrenNotInJson.map((c) => c.name).join(", ")}`,
+    );
+  }
+}
+
+/**
  * Resolves deferred normal instances after all pages have been imported
  * This handles circular references by resolving instances once all components are available
  */
 export async function resolveDeferredNormalInstances(
   deferredInstances: DeferredNormalInstance[],
   constructionIcon: string = "",
+  recognizedVariables: Map<string, Variable> | null = null,
+  _variableTable: VariableTable | null = null,
+  _collectionTable: CollectionTable | null = null,
+  _recognizedCollections: Map<string, VariableCollection> | null = null,
 ): Promise<{
   resolved: number;
   failed: number;
   errors: string[];
 }> {
+  // Mark unused parameters as intentionally unused (kept for API consistency)
+  void _variableTable;
+  void _collectionTable;
+  void _recognizedCollections;
+
   if (deferredInstances.length === 0) {
     return { resolved: 0, failed: 0, errors: [] };
   }
@@ -6409,7 +6750,81 @@ export async function resolveDeferredNormalInstances(
 
   await figma.loadAllPagesAsync();
 
+  // Sort deferred instances bottom-up (deepest first, shallowest last)
+  // This ensures children are resolved before parents, preventing loss of nested placeholders
+  const calculateDepth = (
+    deferred: DeferredNormalInstance,
+    allDeferred: DeferredNormalInstance[],
+    visited: Set<string> = new Set(),
+  ): number => {
+    if (!deferred.parentPlaceholderId) {
+      return 0; // Root level
+    }
+
+    // Prevent infinite loops
+    if (visited.has(deferred.placeholderFrameId)) {
+      return 0;
+    }
+    visited.add(deferred.placeholderFrameId);
+
+    // Find parent deferred instance
+    const parentDeferred = allDeferred.find(
+      (d) => d.placeholderFrameId === deferred.parentPlaceholderId,
+    );
+
+    if (!parentDeferred) {
+      return 0; // Parent not found (shouldn't happen, but handle gracefully)
+    }
+
+    return 1 + calculateDepth(parentDeferred, allDeferred, visited);
+  };
+
+  // Calculate depth for each deferred instance
+  const deferredWithDepth = deferredInstances.map((deferred) => ({
+    deferred,
+    depth: calculateDepth(deferred, deferredInstances),
+  }));
+
+  // Sort by depth (deepest first = bottom-up)
+  deferredWithDepth.sort((a, b) => b.depth - a.depth);
+
+  await debugConsole.log(
+    `[BOTTOM-UP] Sorted ${deferredInstances.length} deferred instance(s) by depth (deepest first)`,
+  );
+  if (deferredWithDepth.length > 0) {
+    const maxDepth = Math.max(...deferredWithDepth.map((d) => d.depth));
+    await debugConsole.log(
+      `[BOTTOM-UP] Depth range: 0 (root) to ${maxDepth} (deepest)`,
+    );
+  }
+
+  // Track which deferred instances have been processed as children to avoid double-processing
+  const processedAsChildren = new Set<string>();
+
+  // Pre-mark all child deferred instances (those with parentPlaceholderId) so they don't get processed
+  // in the main loop. They will be resolved when their parent is resolved.
   for (const deferred of deferredInstances) {
+    if (deferred.parentPlaceholderId) {
+      processedAsChildren.add(deferred.placeholderFrameId);
+      await debugConsole.log(
+        `[NESTED] Pre-marked child deferred instance "${deferred.nodeData.name}" (placeholder: ${deferred.placeholderFrameId.substring(0, 8)}..., parent placeholder: ${deferred.parentPlaceholderId.substring(0, 8)}...)`,
+      );
+    }
+  }
+  await debugConsole.log(
+    `[NESTED] Pre-marked ${processedAsChildren.size} child deferred instance(s) to skip in main loop`,
+  );
+
+  // Process deferred instances in bottom-up order
+  for (const { deferred } of deferredWithDepth) {
+    // Skip if this deferred instance was already processed as a child of another deferred instance
+    if (processedAsChildren.has(deferred.placeholderFrameId)) {
+      await debugConsole.log(
+        `[NESTED] Skipping child deferred instance "${deferred.nodeData.name}" (placeholder: ${deferred.placeholderFrameId.substring(0, 8)}...) - will be resolved when parent is resolved`,
+      );
+      continue;
+    }
+
     try {
       const { placeholderFrameId, instanceEntry, nodeData, parentNodeId } =
         deferred;
@@ -6423,8 +6838,16 @@ export async function resolveDeferredNormalInstances(
       )) as SceneNode | null;
 
       if (!placeholderFrame || !parentNode) {
-        const error = `Deferred instance "${nodeData.name}" - could not find placeholder frame (${placeholderFrameId}) or parent node (${parentNodeId})`;
+        // Check if this was a child deferred instance that should have been skipped
+        const wasChildDeferred = deferred.parentPlaceholderId !== undefined;
+        const wasMarked = processedAsChildren.has(placeholderFrameId);
+        const error = `Deferred instance "${nodeData.name}" - could not find placeholder frame (${placeholderFrameId.substring(0, 8)}...) or parent node (${parentNodeId.substring(0, 8)}...). Was child deferred: ${wasChildDeferred}, Was marked: ${wasMarked}`;
         await debugConsole.error(error);
+        if (wasChildDeferred && !wasMarked) {
+          await debugConsole.error(
+            `[NESTED] BUG: Child deferred instance "${nodeData.name}" was not properly marked! parentPlaceholderId: ${deferred.parentPlaceholderId?.substring(0, 8)}...`,
+          );
+        }
         errors.push(error);
         failed++;
         continue;
@@ -6457,12 +6880,6 @@ export async function resolveDeferredNormalInstances(
 
       if (!referencedPage && constructionIcon) {
         // Debug: log available page names to help diagnose
-        const availablePageNames = figma.root.children
-          .map((p) => p.name)
-          .slice(0, 10);
-        await debugConsole.log(
-          `  [DEBUG] Looking for page "${instanceEntry.componentPageName}" (or "${constructionIcon} ${instanceEntry.componentPageName}"). Available pages (first 10): ${availablePageNames.join(", ")}`,
-        );
       }
 
       if (!referencedPage) {
@@ -6666,36 +7083,6 @@ export async function resolveDeferredNormalInstances(
         return null;
       };
 
-      // Debug: log what we're searching for
-      await debugConsole.log(
-        `  [DEBUG] Searching for component "${instanceEntry.componentName}" on page "${referencedPage.name}"`,
-      );
-      if (instanceEntry.path && instanceEntry.path.length > 0) {
-        await debugConsole.log(
-          `  [DEBUG] Component path: [${instanceEntry.path.join(" → ")}]`,
-        );
-      } else {
-        await debugConsole.log(`  [DEBUG] Component is at page root`);
-      }
-      if (instanceEntry.componentSetName) {
-        await debugConsole.log(
-          `  [DEBUG] Component set name: "${instanceEntry.componentSetName}"`,
-        );
-      }
-      if (instanceEntry.componentGuid) {
-        await debugConsole.log(
-          `  [DEBUG] Component GUID: ${instanceEntry.componentGuid.substring(0, 8)}...`,
-        );
-      }
-
-      // Debug: log available top-level nodes on the page
-      const topLevelNodes = referencedPage.children.slice(0, 10).map((node) => {
-        return `${node.type}: "${node.name}"${node.type === "COMPONENT_SET" ? ` (${(node as ComponentSetNode).children.length} variants)` : ""}`;
-      });
-      await debugConsole.log(
-        `  [DEBUG] Top-level nodes on page "${referencedPage.name}" (first 10): ${topLevelNodes.join(", ")}`,
-      );
-
       let targetComponent = findComponentByPath(
         referencedPage,
         instanceEntry.path || [],
@@ -6708,9 +7095,6 @@ export async function resolveDeferredNormalInstances(
       // This handles cases where the path doesn't match the actual structure
       // (e.g., component is inside an "Icons" FRAME but path doesn't include it)
       if (!targetComponent && instanceEntry.componentSetName) {
-        await debugConsole.log(
-          `  [DEBUG] Path-based search failed, trying recursive search for COMPONENT_SET "${instanceEntry.componentSetName}"`,
-        );
         const recursiveSearch = (
           node: any,
           depth = 0,
@@ -6771,11 +7155,6 @@ export async function resolveDeferredNormalInstances(
           return null;
         };
         targetComponent = recursiveSearch(referencedPage);
-        if (targetComponent) {
-          await debugConsole.log(
-            `  [DEBUG] Found component via recursive search: "${targetComponent.name}"`,
-          );
-        }
       }
 
       if (!targetComponent) {
@@ -6799,9 +7178,6 @@ export async function resolveDeferredNormalInstances(
           }
         };
         collectComponentNames(referencedPage);
-        await debugConsole.log(
-          `  [DEBUG] Available components on page "${referencedPage.name}" (first 20): ${availableComponents.slice(0, 20).join(", ")}`,
-        );
         const error = `Deferred instance "${nodeData.name}" still cannot find component "${instanceEntry.componentName}" on page "${instanceEntry.componentPageName}"${pathDisplay}`;
         await debugConsole.error(error);
         errors.push(error);
@@ -6934,6 +7310,81 @@ export async function resolveDeferredNormalInstances(
         }
       }
 
+      // Apply fill bound variables to instance children
+      await applyFillBoundVariablesToInstanceChildren(
+        instanceNode,
+        nodeData,
+        recognizedVariables,
+      );
+
+      // Update children from JSON to preserve bound variables and other properties
+      // This handles mismatches between JSON tree and instance tree with warnings (not errors)
+      await updateInstanceChildrenFromJson(instanceNode, nodeData);
+
+      // Extract child deferred instances before replacing parent placeholder
+      // This handles nested deferred instances (child deferred inside parent deferred)
+      // We check both:
+      // 1. If parentPlaceholderId matches (explicit parent relationship)
+      // 2. If the placeholder is actually inside the current placeholder (structural relationship)
+      await debugConsole.log(
+        `[NESTED] Extracting child deferred instances for placeholder "${nodeData.name}" (${placeholderFrameId.substring(0, 8)}...). Total deferred instances: ${deferredInstances.length}`,
+      );
+
+      // Helper to check if a node is a descendant of the placeholder
+      const isDescendantOfPlaceholder = async (
+        nodeId: string,
+      ): Promise<boolean> => {
+        try {
+          const node = await figma.getNodeByIdAsync(nodeId);
+          if (!node || !node.parent) return false;
+
+          let current: any = node.parent;
+          while (current) {
+            if (current.id === placeholderFrameId) {
+              return true;
+            }
+            if (current.type === "PAGE") {
+              break;
+            }
+            current = current.parent;
+          }
+          return false;
+        } catch {
+          return false;
+        }
+      };
+
+      const childDeferredInstances: DeferredNormalInstance[] = [];
+      for (const childDeferred of deferredInstances) {
+        // Check explicit parent relationship
+        if (childDeferred.parentPlaceholderId === placeholderFrameId) {
+          childDeferredInstances.push(childDeferred);
+          await debugConsole.log(
+            `[NESTED]   - Found child by parentPlaceholderId: "${childDeferred.nodeData.name}" (placeholder: ${childDeferred.placeholderFrameId.substring(0, 8)}...)`,
+          );
+        } else {
+          // Check structural relationship (placeholder is inside current placeholder)
+          const isInside = await isDescendantOfPlaceholder(
+            childDeferred.placeholderFrameId,
+          );
+          if (isInside) {
+            childDeferredInstances.push(childDeferred);
+            await debugConsole.log(
+              `[NESTED]   - Found child by structural check: "${childDeferred.nodeData.name}" (placeholder: ${childDeferred.placeholderFrameId.substring(0, 8)}...) - placeholder is inside current placeholder`,
+            );
+          }
+        }
+      }
+
+      await debugConsole.log(
+        `[NESTED] Found ${childDeferredInstances.length} child deferred instance(s) for placeholder "${nodeData.name}"`,
+      );
+
+      // Mark child deferred instances as processed so they don't get processed again in the main loop
+      for (const childDeferred of childDeferredInstances) {
+        processedAsChildren.add(childDeferred.placeholderFrameId);
+      }
+
       // Replace placeholder with actual instance
       // Check if parentNode supports children (ChildrenMixin)
       if ("children" in parentNode && "insertChild" in parentNode) {
@@ -6945,6 +7396,363 @@ export async function resolveDeferredNormalInstances(
         await debugConsole.error(error);
         errors.push(error);
         continue;
+      }
+
+      // Resolve child deferred instances after parent is replaced
+      // Match children by name only (exact match) - this is an instance override scenario
+      // Helper function to recursively find a child by name
+      const findChildRecursively = (
+        node: SceneNode,
+        targetName: string,
+      ): SceneNode[] => {
+        const matches: SceneNode[] = [];
+        if (node.name === targetName) {
+          matches.push(node);
+        }
+        if ("children" in node) {
+          for (const child of node.children) {
+            matches.push(...findChildRecursively(child, targetName));
+          }
+        }
+        return matches;
+      };
+
+      for (const childDeferred of childDeferredInstances) {
+        try {
+          // Find matching children in actual instance by name (recursive search)
+          // This handles nested children (e.g., "arrow-top-right-on-square" inside "Link")
+          const matchingChildren = findChildRecursively(
+            instanceNode,
+            childDeferred.nodeData.name,
+          );
+
+          if (matchingChildren.length === 0) {
+            await debugConsole.warning(
+              `  Could not find matching child "${childDeferred.nodeData.name}" in resolved instance "${nodeData.name}" - child may not exist in component`,
+            );
+            continue;
+          }
+
+          if (matchingChildren.length > 1) {
+            // Duplicate names - cannot resolve ambiguity
+            const error = `Cannot resolve child deferred instance "${childDeferred.nodeData.name}": multiple children with same name in instance "${nodeData.name}"`;
+            await debugConsole.error(error);
+            errors.push(error);
+            failed++;
+            continue;
+          }
+
+          // Single match - proceed with resolution
+          const matchingChild = matchingChildren[0];
+
+          // Find the component for the child deferred instance
+          const childInstanceEntry = childDeferred.instanceEntry;
+          let childReferencedPage = figma.root.children.find((page) => {
+            const exactMatch =
+              page.name === childInstanceEntry.componentPageName;
+            const iconMatch =
+              constructionIcon &&
+              page.name ===
+                `${constructionIcon} ${childInstanceEntry.componentPageName}`;
+            return exactMatch || iconMatch;
+          });
+
+          if (!childReferencedPage) {
+            const cleanTargetName = getComponentCleanName(
+              childInstanceEntry.componentPageName,
+            );
+            childReferencedPage = figma.root.children.find((page) => {
+              const cleanPageName = getComponentCleanName(page.name);
+              return cleanPageName === cleanTargetName;
+            });
+          }
+
+          if (!childReferencedPage) {
+            await debugConsole.warning(
+              `  Could not find referenced page for child deferred instance "${childDeferred.nodeData.name}"`,
+            );
+            continue;
+          }
+
+          // Find the component (same logic as parent resolution)
+          const findChildComponent = (
+            parent: any,
+            path: string[],
+            componentName: string,
+            componentGuid?: string,
+            componentSetName?: string,
+          ): ComponentNode | null => {
+            if (path.length === 0) {
+              let nameMatch: ComponentNode | null = null;
+              for (const child of parent.children || []) {
+                if (child.type === "COMPONENT") {
+                  const cleanChildName = getComponentCleanName(child.name);
+                  const cleanTargetName = getComponentCleanName(componentName);
+                  if (cleanChildName === cleanTargetName) {
+                    if (!nameMatch) {
+                      nameMatch = child as ComponentNode;
+                    }
+                    // If componentGuid is provided, verify it matches
+                    if (componentGuid) {
+                      try {
+                        const metadataStr = child.getPluginData(
+                          "RecursicaPublishedMetadata",
+                        );
+                        if (metadataStr) {
+                          const metadata = JSON.parse(metadataStr);
+                          if (metadata.id === componentGuid) {
+                            return child as ComponentNode;
+                          }
+                        }
+                      } catch {
+                        // Metadata check failed, continue searching
+                      }
+                    } else {
+                      // No GUID check needed, return first match
+                      return child as ComponentNode;
+                    }
+                  }
+                } else if (child.type === "COMPONENT_SET" && componentSetName) {
+                  const cleanSetName = getComponentCleanName(child.name);
+                  const cleanTargetSetName =
+                    getComponentCleanName(componentSetName);
+                  if (cleanSetName === cleanTargetSetName) {
+                    // Find variant by component name
+                    for (const variant of child.children) {
+                      if (variant.type === "COMPONENT") {
+                        const cleanVariantName = getComponentCleanName(
+                          variant.name,
+                        );
+                        const cleanTargetName =
+                          getComponentCleanName(componentName);
+                        if (cleanVariantName === cleanTargetName) {
+                          if (!nameMatch) {
+                            nameMatch = variant as ComponentNode;
+                          }
+                          // If componentGuid is provided, verify it matches
+                          if (componentGuid) {
+                            try {
+                              const metadataStr = variant.getPluginData(
+                                "RecursicaPublishedMetadata",
+                              );
+                              if (metadataStr) {
+                                const metadata = JSON.parse(metadataStr);
+                                if (metadata.id === componentGuid) {
+                                  return variant as ComponentNode;
+                                }
+                              }
+                            } catch {
+                              // Metadata check failed, continue searching
+                            }
+                          } else {
+                            // No GUID check needed, return first match
+                            return variant as ComponentNode;
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              // Return name match if GUID check failed or no GUID provided
+              return nameMatch;
+            }
+
+            let current = parent;
+            for (const pathSegment of path) {
+              const cleanSegment = getComponentCleanName(pathSegment);
+              const found = (current.children || []).find(
+                (child: any) =>
+                  getComponentCleanName(child.name) === cleanSegment,
+              );
+              if (!found) return null;
+              current = found;
+            }
+
+            if (current.type === "COMPONENT") {
+              const cleanCurrentName = getComponentCleanName(current.name);
+              const cleanTargetName = getComponentCleanName(componentName);
+              if (cleanCurrentName === cleanTargetName) {
+                // If componentGuid is provided, verify it matches
+                if (componentGuid) {
+                  try {
+                    const metadataStr = current.getPluginData(
+                      "RecursicaPublishedMetadata",
+                    );
+                    if (metadataStr) {
+                      const metadata = JSON.parse(metadataStr);
+                      if (metadata.id === componentGuid) {
+                        return current as ComponentNode;
+                      }
+                    }
+                  } catch {
+                    // Metadata check failed, return null
+                    return null;
+                  }
+                } else {
+                  return current as ComponentNode;
+                }
+              }
+            } else if (current.type === "COMPONENT_SET" && componentSetName) {
+              for (const variant of current.children) {
+                if (variant.type === "COMPONENT") {
+                  const cleanVariantName = getComponentCleanName(variant.name);
+                  const cleanTargetName = getComponentCleanName(componentName);
+                  if (cleanVariantName === cleanTargetName) {
+                    // If componentGuid is provided, verify it matches
+                    if (componentGuid) {
+                      try {
+                        const metadataStr = variant.getPluginData(
+                          "RecursicaPublishedMetadata",
+                        );
+                        if (metadataStr) {
+                          const metadata = JSON.parse(metadataStr);
+                          if (metadata.id === componentGuid) {
+                            return variant as ComponentNode;
+                          }
+                        }
+                      } catch {
+                        // Metadata check failed, continue searching
+                        continue;
+                      }
+                    } else {
+                      return variant as ComponentNode;
+                    }
+                  }
+                }
+              }
+            }
+            return null;
+          };
+
+          // If componentSetName is not provided, try using the child's name as the component set name
+          // This handles cases where the instance entry doesn't have the component set name set
+          let componentSetName = childInstanceEntry.componentSetName;
+          if (!componentSetName && childDeferred.nodeData.name) {
+            componentSetName = childDeferred.nodeData.name;
+            await debugConsole.log(
+              `  [NESTED] componentSetName not provided, using child name "${componentSetName}" as fallback`,
+            );
+          }
+
+          await debugConsole.log(
+            `  [NESTED] Looking for component: page="${childReferencedPage.name}", componentSet="${componentSetName}", component="${childInstanceEntry.componentName}", path=[${(childInstanceEntry.path || []).join(", ")}]`,
+          );
+
+          // Debug: List all component sets on the page (recursively search)
+          const findAllComponentSets = (node: any): any[] => {
+            const sets: any[] = [];
+            if (node.type === "COMPONENT_SET") {
+              sets.push(node);
+            }
+            if ("children" in node && Array.isArray(node.children)) {
+              for (const child of node.children) {
+                sets.push(...findAllComponentSets(child));
+              }
+            }
+            return sets;
+          };
+          const allComponentSets = findAllComponentSets(childReferencedPage);
+          await debugConsole.log(
+            `  [NESTED] Found ${allComponentSets.length} component set(s) on page "${childReferencedPage.name}" (recursive search): ${allComponentSets.map((cs) => cs.name).join(", ")}`,
+          );
+
+          // Debug: List all direct children of the page to see structure
+          const directChildren = childReferencedPage.children.map(
+            (child) => `${child.type}:${child.name}`,
+          );
+          await debugConsole.log(
+            `  [NESTED] Direct children of page "${childReferencedPage.name}" (${directChildren.length}): ${directChildren.slice(0, 10).join(", ")}${directChildren.length > 10 ? "..." : ""}`,
+          );
+
+          const childTargetComponent = findChildComponent(
+            childReferencedPage,
+            childInstanceEntry.path || [],
+            childInstanceEntry.componentName,
+            childInstanceEntry.componentGuid,
+            componentSetName,
+          );
+
+          if (!childTargetComponent) {
+            await debugConsole.warning(
+              `  Could not find component "${childInstanceEntry.componentName}" (componentSet: "${componentSetName}") for child deferred instance "${childDeferred.nodeData.name}" on page "${childReferencedPage.name}"`,
+            );
+            // Debug: Try to find what component sets exist that might match
+            if (componentSetName) {
+              const cleanTargetSetName =
+                getComponentCleanName(componentSetName);
+              const matchingSets = allComponentSets.filter((cs) => {
+                const cleanSetName = getComponentCleanName(cs.name);
+                return cleanSetName === cleanTargetSetName;
+              });
+              if (matchingSets.length > 0) {
+                await debugConsole.log(
+                  `  [NESTED] Found ${matchingSets.length} component set(s) with matching clean name "${cleanTargetSetName}": ${matchingSets.map((cs) => cs.name).join(", ")}`,
+                );
+                // List variants in the matching set
+                for (const set of matchingSets) {
+                  const variants = (set as ComponentSetNode).children.filter(
+                    (c) => c.type === "COMPONENT",
+                  );
+                  await debugConsole.log(
+                    `  [NESTED] Component set "${set.name}" has ${variants.length} variant(s): ${variants.map((v) => v.name).join(", ")}`,
+                  );
+                }
+              }
+            }
+            continue;
+          }
+
+          // Create child instance
+          const childInstanceNode = childTargetComponent.createInstance();
+          childInstanceNode.name =
+            childDeferred.nodeData.name || matchingChild.name;
+
+          // Copy position and size from matching child
+          childInstanceNode.x = matchingChild.x;
+          childInstanceNode.y = matchingChild.y;
+          if (
+            matchingChild.width !== undefined &&
+            matchingChild.height !== undefined
+          ) {
+            childInstanceNode.resize(matchingChild.width, matchingChild.height);
+          }
+
+          // Apply fill bound variables to child instance children (recursive)
+          await applyFillBoundVariablesToInstanceChildren(
+            childInstanceNode,
+            childDeferred.nodeData,
+            recognizedVariables,
+          );
+
+          // Update children from JSON to preserve bound variables and other properties
+          await updateInstanceChildrenFromJson(
+            childInstanceNode,
+            childDeferred.nodeData,
+          );
+
+          // Replace matching child with actual child instance
+          // Handle nested children - get the actual parent of the matching child
+          const actualParent = matchingChild.parent;
+          if (!actualParent || !("children" in actualParent)) {
+            const error = `Cannot replace child "${childDeferred.nodeData.name}": parent does not support children`;
+            await debugConsole.error(error);
+            errors.push(error);
+            failed++;
+            continue;
+          }
+          const childIndex = actualParent.children.indexOf(matchingChild);
+          actualParent.insertChild(childIndex, childInstanceNode);
+          matchingChild.remove();
+
+          await debugConsole.log(
+            `  ✓ Resolved nested child deferred instance "${childDeferred.nodeData.name}" in "${nodeData.name}"`,
+          );
+        } catch (error) {
+          await debugConsole.warning(
+            `  Error resolving child deferred instance "${childDeferred.nodeData.name}": ${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
       }
 
       await debugConsole.log(

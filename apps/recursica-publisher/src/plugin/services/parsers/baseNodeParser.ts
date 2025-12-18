@@ -229,11 +229,32 @@ export async function parseBaseNodeProperties(
 
   // Bound variables - special handling
   if (node.boundVariables !== undefined && node.boundVariables !== null) {
+    // ISSUE #2: Debug log all bound variables to see what's being exported
+    const nodeName = node.name || "Unnamed";
+    const boundVarKeys = Object.keys(node.boundVariables);
+    if (boundVarKeys.length > 0) {
+      await debugConsole.log(
+        `[ISSUE #2 EXPORT DEBUG] "${nodeName}" (${node.type}) has boundVariables for: ${boundVarKeys.join(", ")}`,
+      );
+    } else {
+      await debugConsole.log(
+        `[ISSUE #2 EXPORT DEBUG] "${nodeName}" (${node.type}) has no boundVariables`,
+      );
+    }
+
     const boundVars = await extractBoundVariables(
       node.boundVariables,
       context.variableTable,
       context.collectionTable,
     );
+
+    const extractedKeys = Object.keys(boundVars);
+    if (extractedKeys.length > 0) {
+      await debugConsole.log(
+        `[ISSUE #2 EXPORT DEBUG] "${nodeName}" extracted boundVariables: ${extractedKeys.join(", ")}`,
+      );
+    }
+
     if (Object.keys(boundVars).length > 0) {
       result.boundVariables = boundVars;
     }
@@ -255,40 +276,14 @@ export async function parseBaseNodeProperties(
     handledKeys.add("backgrounds");
   }
 
-  // ISSUE #2: Export selectionColor property (node-level property that can be bound to variables)
-  // selectionColor is a property on nodes (not on fills) that can be:
-  // 1. A direct color value (RGB object) - export the value
-  // 2. Bound to a variable (via boundVariables.selectionColor - already handled above in boundVariables export)
-  // When bound to a variable, Figma may still have a resolved/computed value in node.selectionColor
-  // We should export it if it exists, but the binding is preserved via boundVariables.selectionColor
+  // Note: selectionColor is not actually a node property - it's just a UI indicator in Figma
+  // showing that a child node has a fill color bound to a variable. The child's fills binding
+  // is already handled by the normal export/import process for bound variables on fills.
+  // We only export selectionColor if it exists as a direct property (rare, for backwards compatibility)
   const selectionColor = (node as any).selectionColor;
-  const hasSelectionColorBinding =
-    node.boundVariables &&
-    typeof node.boundVariables === "object" &&
-    (node.boundVariables as any).selectionColor !== undefined;
-
   if (selectionColor !== undefined) {
-    // Export selectionColor if it exists (default is undefined)
-    // This could be a direct value OR a resolved value from a bound variable
     result.selectionColor = selectionColor;
     handledKeys.add("selectionColor");
-    const nodeName = node.name || "Unnamed";
-    if (hasSelectionColorBinding) {
-      console.log(
-        `[ISSUE #2 EXPORT] "${nodeName}" exporting selectionColor (bound to variable, resolved value): ${JSON.stringify(selectionColor)}`,
-      );
-    } else {
-      console.log(
-        `[ISSUE #2 EXPORT] "${nodeName}" exporting selectionColor (direct value): ${JSON.stringify(selectionColor)}`,
-      );
-    }
-  } else if (hasSelectionColorBinding) {
-    // selectionColor is bound but has no resolved value yet - this is fine,
-    // the binding will be restored via boundVariables.selectionColor during import
-    const nodeName = node.name || "Unnamed";
-    console.log(
-      `[ISSUE #2 EXPORT] "${nodeName}" has selectionColor bound to variable (no resolved value to export)`,
-    );
   }
 
   // Note: Unhandled keys are tracked centrally in extractNodeData

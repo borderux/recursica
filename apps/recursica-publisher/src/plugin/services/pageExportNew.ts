@@ -354,25 +354,9 @@ export async function extractNodeData(
   }
 
   // Handle children recursively
-  // Skip children for normal instances - they should be resolved from the referenced component, not recreated from structure
-  const isNormalInstance =
-    nodeData._instanceRef !== undefined &&
-    updatedContext.instanceTable &&
-    nodeType === "INSTANCE";
-  let shouldSkipChildren = false;
-  if (isNormalInstance) {
-    const instanceEntry = updatedContext.instanceTable.getInstanceByIndex(
-      nodeData._instanceRef,
-    );
-    if (instanceEntry && instanceEntry.instanceType === "normal") {
-      shouldSkipChildren = true;
-      await debugConsole.log(
-        `  Skipping children extraction for normal instance "${nodeData.name || "Unnamed"}" - will be resolved from referenced component`,
-      );
-    }
-  }
-
-  if (!shouldSkipChildren && node.children && Array.isArray(node.children)) {
+  // Note: Instances can have children with overrides (e.g., bound variables on child nodes)
+  // We need to export these children to capture the overrides, even for normal instances
+  if (node.children && Array.isArray(node.children)) {
     const maxDepth = updatedContext.maxDepth;
     if (updatedContext.depth >= maxDepth) {
       // Too deep - just store the count instead of recursing

@@ -1364,6 +1364,16 @@ export async function parseInstanceProperties(
                 await debugConsole.log(
                   `  DEBUG: Main component "${componentName}" -> boundVariables keys: ${mainBoundVarKeys.join(", ")}`,
                 );
+                // ISSUE #2: Special logging for selectionColor
+                if (mainBoundVarKeys.includes("selectionColor")) {
+                  await debugConsole.log(
+                    `[ISSUE #2 EXPORT] Main component "${componentName}" HAS selectionColor in boundVariables: ${JSON.stringify(mainComponentBoundVars.selectionColor)}`,
+                  );
+                } else {
+                  await debugConsole.log(
+                    `[ISSUE #2 EXPORT] Main component "${componentName}" does NOT have selectionColor in boundVariables (has: ${mainBoundVarKeys.join(", ")})`,
+                  );
+                }
                 // Log each bound variable key
                 for (const key of mainBoundVarKeys) {
                   const boundVar = mainComponentBoundVars[key];
@@ -1372,7 +1382,17 @@ export async function parseInstanceProperties(
                     `  DEBUG:   Main component boundVariables.${key}: type=${boundVarType}, value=${JSON.stringify(boundVar)}`,
                   );
                 }
+              } else {
+                // ISSUE #2: Log when main component has no boundVariables
+                await debugConsole.log(
+                  `[ISSUE #2 EXPORT] Main component "${componentName}" has no boundVariables`,
+                );
               }
+            } else {
+              // ISSUE #2: Log when main component boundVariables is null/undefined
+              await debugConsole.log(
+                `[ISSUE #2 EXPORT] Main component "${componentName}" boundVariables is null/undefined`,
+              );
             }
 
             // Always preserve ALL boundVariables from the instance if they exist
@@ -1479,13 +1499,27 @@ export async function parseInstanceProperties(
                   // Only add if instance doesn't have this boundVariable (main component is fallback)
                   if (structure.boundVariables[key] === undefined) {
                     structure.boundVariables[key] = value;
-                    await debugConsole.log(
-                      `  DEBUG: Added boundVariables.${key} from main component (not in instance): ${JSON.stringify(value)}`,
-                    );
+                    // ISSUE #2: Special logging for selectionColor
+                    if (key === "selectionColor") {
+                      await debugConsole.log(
+                        `[ISSUE #2 EXPORT] Added boundVariables.selectionColor from main component "${componentName}" to instance "${instanceName}": ${JSON.stringify(value)}`,
+                      );
+                    } else {
+                      await debugConsole.log(
+                        `  DEBUG: Added boundVariables.${key} from main component (not in instance): ${JSON.stringify(value)}`,
+                      );
+                    }
                   } else {
-                    await debugConsole.log(
-                      `  DEBUG: Skipped boundVariables.${key} from main component (instance already has it)`,
-                    );
+                    // ISSUE #2: Special logging for selectionColor
+                    if (key === "selectionColor") {
+                      await debugConsole.log(
+                        `[ISSUE #2 EXPORT] Skipped boundVariables.selectionColor from main component "${componentName}" (instance "${instanceName}" already has it)`,
+                      );
+                    } else {
+                      await debugConsole.log(
+                        `  DEBUG: Skipped boundVariables.${key} from main component (instance already has it)`,
+                      );
+                    }
                   }
                 }
               }
@@ -1529,6 +1563,205 @@ export async function parseInstanceProperties(
           // Don't set structure if extraction failed - this will cause import to skip it
           // which is better than importing incorrect data
         }
+      }
+    }
+
+    // ISSUE #2: For normal instances, check main component's boundVariables and merge them
+    // This is important for properties like selectionColor that may be bound on the main component
+    // but not explicitly overridden on the instance
+    if (instanceType === "normal" && mainComponent) {
+      // Debug: Check if instance has children (it shouldn't for normal instances)
+      if (
+        node.children &&
+        Array.isArray(node.children) &&
+        node.children.length > 0
+      ) {
+        await debugConsole.log(
+          `[DEBUG] Normal instance "${instanceName}" has ${node.children.length} child(ren) (unexpected for normal instance):`,
+        );
+        for (let i = 0; i < Math.min(node.children.length, 5); i++) {
+          const child = node.children[i];
+          if (child) {
+            const childName = (child as any).name || `Child ${i}`;
+            const childType = (child as any).type || "UNKNOWN";
+            const childBoundVars = (child as any).boundVariables;
+            const childFills = (child as any).fills;
+            await debugConsole.log(
+              `[DEBUG]   Child ${i}: "${childName}" (${childType}) - hasBoundVars=${!!childBoundVars}, hasFills=${!!childFills}`,
+            );
+            if (childBoundVars) {
+              const childBoundVarKeys = Object.keys(childBoundVars);
+              await debugConsole.log(
+                `[DEBUG]     boundVariables: ${childBoundVarKeys.join(", ")}`,
+              );
+            }
+          }
+        }
+      }
+
+      // Debug: Check main component's children for bound variables
+      // Also compare with instance children to detect overrides
+      if (
+        mainComponent.children &&
+        Array.isArray(mainComponent.children) &&
+        mainComponent.children.length > 0
+      ) {
+        await debugConsole.log(
+          `[DEBUG] Main component "${componentName}" has ${mainComponent.children.length} child(ren):`,
+        );
+        for (let i = 0; i < Math.min(mainComponent.children.length, 5); i++) {
+          const mainChild = mainComponent.children[i];
+          if (mainChild) {
+            const mainChildName = (mainChild as any).name || `Child ${i}`;
+            const mainChildType = (mainChild as any).type || "UNKNOWN";
+            const mainChildBoundVars = (mainChild as any).boundVariables;
+            const mainChildFills = (mainChild as any).fills;
+            await debugConsole.log(
+              `[DEBUG]   Main component child ${i}: "${mainChildName}" (${mainChildType}) - hasBoundVars=${!!mainChildBoundVars}, hasFills=${!!mainChildFills}`,
+            );
+            if (mainChildBoundVars) {
+              const mainChildBoundVarKeys = Object.keys(mainChildBoundVars);
+              await debugConsole.log(
+                `[DEBUG]     boundVariables: ${mainChildBoundVarKeys.join(", ")}`,
+              );
+              if (mainChildBoundVars.fills) {
+                await debugConsole.log(
+                  `[DEBUG]     boundVariables.fills: ${JSON.stringify(mainChildBoundVars.fills)}`,
+                );
+              }
+            }
+            if (
+              mainChildFills &&
+              Array.isArray(mainChildFills) &&
+              mainChildFills.length > 0
+            ) {
+              const firstFill = mainChildFills[0];
+              if (firstFill && typeof firstFill === "object") {
+                await debugConsole.log(
+                  `[DEBUG]     fills[0]: type=${firstFill.type}, color=${JSON.stringify((firstFill as any).color)}`,
+                );
+              }
+            }
+
+            // Check if instance has a matching child with different bound variables (instance override)
+            if (
+              node.children &&
+              Array.isArray(node.children) &&
+              i < node.children.length
+            ) {
+              const instanceChild = node.children[i];
+              if (
+                instanceChild &&
+                (instanceChild as any).name === mainChildName
+              ) {
+                const instanceChildBoundVars = (instanceChild as any)
+                  .boundVariables;
+                const instanceChildBoundVarKeys = instanceChildBoundVars
+                  ? Object.keys(instanceChildBoundVars)
+                  : [];
+                const mainChildBoundVarKeys = mainChildBoundVars
+                  ? Object.keys(mainChildBoundVars)
+                  : [];
+
+                // Check if instance child has bound variables that main component child doesn't have
+                const instanceOnlyBoundVars = instanceChildBoundVarKeys.filter(
+                  (key) => !mainChildBoundVarKeys.includes(key),
+                );
+                if (instanceOnlyBoundVars.length > 0) {
+                  await debugConsole.log(
+                    `[DEBUG] Instance "${instanceName}" child "${mainChildName}" has instance override bound variables: ${instanceOnlyBoundVars.join(", ")} (will be exported with instance children)`,
+                  );
+                  for (const key of instanceOnlyBoundVars) {
+                    await debugConsole.log(
+                      `[DEBUG]   Instance child boundVariables.${key}: ${JSON.stringify(instanceChildBoundVars[key])}`,
+                    );
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      try {
+        const mainComponentBoundVars = (mainComponent as any).boundVariables;
+        if (
+          mainComponentBoundVars &&
+          typeof mainComponentBoundVars === "object"
+        ) {
+          const mainBoundVarKeys = Object.keys(mainComponentBoundVars);
+          if (mainBoundVarKeys.length > 0) {
+            await debugConsole.log(
+              `[ISSUE #2 EXPORT] Normal instance "${instanceName}" -> checking main component "${componentName}" boundVariables (${mainBoundVarKeys.length} key(s))`,
+            );
+            // ISSUE #2: Special logging for selectionColor
+            if (mainBoundVarKeys.includes("selectionColor")) {
+              await debugConsole.log(
+                `[ISSUE #2 EXPORT] Main component "${componentName}" HAS selectionColor in boundVariables: ${JSON.stringify(mainComponentBoundVars.selectionColor)}`,
+              );
+            } else {
+              await debugConsole.log(
+                `[ISSUE #2 EXPORT] Main component "${componentName}" does NOT have selectionColor in boundVariables (has: ${mainBoundVarKeys.join(", ")})`,
+              );
+            }
+
+            // Extract boundVariables from main component
+            const { extractBoundVariables } = await import(
+              "./boundVariableParser"
+            );
+            const mainComponentBoundVarsExtracted = await extractBoundVariables(
+              mainComponentBoundVars,
+              context.variableTable,
+              context.collectionTable,
+            );
+
+            // Merge main component's boundVariables into result's boundVariables
+            // Only add properties that aren't already set (instance takes precedence)
+            if (!result.boundVariables) {
+              result.boundVariables = {};
+            }
+
+            for (const [key, value] of Object.entries(
+              mainComponentBoundVarsExtracted,
+            )) {
+              if (value !== undefined) {
+                // Only add if instance doesn't have this boundVariable (main component is fallback)
+                if (result.boundVariables[key] === undefined) {
+                  result.boundVariables[key] = value;
+                  // ISSUE #2: Special logging for selectionColor
+                  if (key === "selectionColor") {
+                    await debugConsole.log(
+                      `[ISSUE #2 EXPORT] Added boundVariables.selectionColor from main component "${componentName}" to normal instance "${instanceName}": ${JSON.stringify(value)}`,
+                    );
+                  } else {
+                    await debugConsole.log(
+                      `  DEBUG: Added boundVariables.${key} from main component to normal instance: ${JSON.stringify(value)}`,
+                    );
+                  }
+                } else {
+                  // ISSUE #2: Special logging for selectionColor
+                  if (key === "selectionColor") {
+                    await debugConsole.log(
+                      `[ISSUE #2 EXPORT] Skipped boundVariables.selectionColor from main component "${componentName}" (normal instance "${instanceName}" already has it)`,
+                    );
+                  }
+                }
+              }
+            }
+          } else {
+            await debugConsole.log(
+              `[ISSUE #2 EXPORT] Main component "${componentName}" has no boundVariables`,
+            );
+          }
+        } else {
+          await debugConsole.log(
+            `[ISSUE #2 EXPORT] Main component "${componentName}" boundVariables is null/undefined`,
+          );
+        }
+      } catch (error) {
+        await debugConsole.warning(
+          `[ISSUE #2 EXPORT] Error checking main component boundVariables for normal instance "${instanceName}": ${error}`,
+        );
       }
     }
 

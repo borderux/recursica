@@ -24,11 +24,22 @@ The test infrastructure provides a way to:
 ### What Happens When You Run Tests
 
 1. The `runTest` service (`apps/recursica-publisher/src/plugin/services/runTest.ts`) is called
-2. A fixed "Test" page is found or created in your Figma file
-3. A "Test" frame container is created (or recreated if it exists)
-4. All registered tests are run in sequence
-5. Each test creates its own test frames within the container
-6. Results are logged to the Debug Console and returned to the UI
+2. **Any existing "Test" variable collection is deleted** (ensures clean slate for each test run)
+3. A fixed "Test" page is found or created in your Figma file
+4. A "Test" frame container is created (or recreated if it exists)
+5. All registered tests are run in sequence
+6. Each test creates its own test frames within the container
+7. Results are logged to the Debug Console and returned to the UI
+
+### Variable Collection Cleanup
+
+**IMPORTANT**: Before each test run, the `runTest` service automatically deletes any existing variable collection named "Test". This ensures:
+
+- Each test run starts with a clean slate
+- No leftover variables or collections from previous test runs
+- Consistent test results across multiple runs
+
+**All tests must use a collection named "Test"** - do not use any other collection name in tests.
 
 ## Test Structure
 
