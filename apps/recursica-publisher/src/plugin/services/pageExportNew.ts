@@ -11,6 +11,7 @@ import { parseShapeProperties } from "./parsers/shapeParser";
 import { parseInstanceProperties } from "./parsers/instanceParser";
 import { VariableTable, CollectionTable } from "./parsers/variableTable";
 import { InstanceTable } from "./parsers/instanceTable";
+import { StyleTable } from "./parsers/styleTable";
 import { StringTable } from "./parsers/stringTable";
 import { debugConsole } from "./debugConsole";
 import { compressJsonData } from "../utils/jsonCompression";
@@ -145,6 +146,7 @@ export async function extractNodeData(
     variableTable: context.variableTable!,
     collectionTable: context.collectionTable!,
     instanceTable: context.instanceTable!,
+    styleTable: context.styleTable!,
     detachedComponentsHandled: context.detachedComponentsHandled ?? new Set(),
     exportedIds: context.exportedIds ?? new Map<string, string>(),
   };
@@ -521,6 +523,7 @@ export async function exportPage(
     const variableTable = new VariableTable();
     const collectionTable = new CollectionTable();
     const instanceTable = new InstanceTable();
+    const styleTable = new StyleTable();
 
     // Extract complete page data with limits to prevent hanging
     await debugConsole.log("Extracting node data from page...");
@@ -537,6 +540,7 @@ export async function exportPage(
         variableTable,
         collectionTable,
         instanceTable,
+        styleTable,
       },
     );
     await debugConsole.log("Node extraction finished");
@@ -1256,6 +1260,7 @@ export async function exportPage(
       collections: collectionTable.getSerializedTable(),
       variables: variableTable.getSerializedTable(),
       instances: instanceTable.getSerializedTable(),
+      styles: styleTable.getSerializedTable(),
       pageData: extractedPageData,
     };
 

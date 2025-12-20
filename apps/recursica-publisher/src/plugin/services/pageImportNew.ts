@@ -14,6 +14,7 @@ import {
   type CollectionTableEntry,
 } from "./parsers/variableTable";
 import { InstanceTable } from "./parsers/instanceTable";
+import { StyleTable } from "./parsers/styleTable";
 import { StringTable } from "./parsers/stringTable";
 import { requestGuidFromUI } from "../utils/requestGuidFromUI";
 import { debugConsole } from "./debugConsole";
@@ -882,6 +883,308 @@ export async function restoreBoundVariablesForFills(
 // Removed unused function: bindVariableToNodeProperty
 
 /**
+ * Recursively checks if any node in the data has a style reference
+ * Returns true if any _styleRef, _fillStyleRef, _effectStyleRef, or _gridStyleRef is found
+ */
+function checkForStyleReferences(nodeData: any): boolean {
+  if (!nodeData || typeof nodeData !== "object") {
+    return false;
+  }
+
+  // Check this node for style references
+  if (
+    nodeData._styleRef !== undefined ||
+    nodeData._fillStyleRef !== undefined ||
+    nodeData._effectStyleRef !== undefined ||
+    nodeData._gridStyleRef !== undefined
+  ) {
+    return true;
+  }
+
+  // Check fills for style references
+  if (Array.isArray(nodeData.fills)) {
+    for (const fill of nodeData.fills) {
+      if (fill && typeof fill === "object" && fill._styleRef !== undefined) {
+        return true;
+      }
+    }
+  }
+
+  // Check backgrounds for style references
+  if (Array.isArray(nodeData.backgrounds)) {
+    for (const bg of nodeData.backgrounds) {
+      if (bg && typeof bg === "object" && bg._styleRef !== undefined) {
+        return true;
+      }
+    }
+  }
+
+  // Recursively check children
+  if (Array.isArray(nodeData.children)) {
+    for (const child of nodeData.children) {
+      if (checkForStyleReferences(child)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Import styles from the style table
+ */
+async function importStyles(
+  stylesData: Record<string, any>,
+  recognizedVariables: Map<string, Variable>,
+): Promise<Map<number, BaseStyle>> {
+  const styleMapping = new Map<number, BaseStyle>();
+  await debugConsole.log(
+    `Importing ${Object.keys(stylesData).length} styles...`,
+  );
+
+  const sortedEntries = Object.entries(stylesData).sort(
+    (a, b) => parseInt(a[0], 10) - parseInt(b[0], 10),
+  );
+
+  for (const [indexStr, styleData] of sortedEntries) {
+    const index = parseInt(indexStr, 10);
+    const styleName = styleData.name || "Unnamed Style";
+    const styleType = styleData.type;
+
+    // Check if a style with the same name and type already exists
+    let existingStyle: BaseStyle | null = null;
+    switch (styleType) {
+      case "TEXT":
+        existingStyle =
+          (await figma.getLocalTextStylesAsync()).find(
+            (s) => s.name === styleName,
+          ) || null;
+        break;
+      case "PAINT":
+        existingStyle =
+          (await figma.getLocalPaintStylesAsync()).find(
+            (s) => s.name === styleName,
+          ) || null;
+        break;
+      case "EFFECT":
+        existingStyle =
+          (await figma.getLocalEffectStylesAsync()).find(
+            (s) => s.name === styleName,
+          ) || null;
+        break;
+      case "GRID":
+        existingStyle =
+          (await figma.getLocalGridStylesAsync()).find(
+            (s) => s.name === styleName,
+          ) || null;
+        break;
+    }
+
+    if (existingStyle) {
+      await debugConsole.log(
+        `  Skipping creation of style "${styleName}" (type: ${styleType}) as it already exists. Reusing existing style.`,
+      );
+      styleMapping.set(index, existingStyle);
+      continue;
+    }
+
+    let newStyle: BaseStyle | null = null;
+    try {
+      switch (styleType) {
+        case "TEXT":
+          newStyle = await createTextStyle(styleData, recognizedVariables);
+          break;
+        case "PAINT":
+          newStyle = await createPaintStyle(styleData, recognizedVariables);
+          break;
+        case "EFFECT":
+          newStyle = await createEffectStyle(styleData, recognizedVariables);
+          break;
+        case "GRID":
+          newStyle = await createGridStyle(styleData, recognizedVariables);
+          break;
+        default:
+          await debugConsole.warning(
+            `  Unknown style type "${styleType}" for style "${styleName}". Skipping.`,
+          );
+          break;
+      }
+      if (newStyle) {
+        styleMapping.set(index, newStyle);
+        await debugConsole.log(
+          `  ✓ Created style "${styleName}" (type: ${styleType})`,
+        );
+      }
+    } catch (error) {
+      await debugConsole.warning(
+        `  Failed to create style "${styleName}" (type: ${styleType}): ${error}`,
+      );
+    }
+  }
+  return styleMapping;
+}
+
+/**
+ * Create a text style from serialized data
+ */
+async function createTextStyle(
+  styleData: any,
+  recognizedVariables: Map<string, Variable>,
+): Promise<TextStyle> {
+  const style = figma.createTextStyle();
+  style.name = styleData.name;
+
+  if (styleData.textStyle) {
+    // Apply properties (only non-defaults should be in styleData)
+    // IMPORTANT: Load font FIRST before setting fontSize or other font-dependent properties
+    if (
+      styleData.textStyle.fontName !== undefined &&
+      !styleData.textStyle.boundVariables?.fontName
+    ) {
+      await figma.loadFontAsync(styleData.textStyle.fontName);
+      style.fontName = styleData.textStyle.fontName;
+    }
+    // Now we can set fontSize after font is loaded
+    if (
+      styleData.textStyle.fontSize !== undefined &&
+      !styleData.textStyle.boundVariables?.fontSize
+    ) {
+      style.fontSize = styleData.textStyle.fontSize;
+    }
+    if (
+      styleData.textStyle.letterSpacing !== undefined &&
+      !styleData.textStyle.boundVariables?.letterSpacing
+    ) {
+      style.letterSpacing = styleData.textStyle.letterSpacing;
+    }
+    if (
+      styleData.textStyle.lineHeight !== undefined &&
+      !styleData.textStyle.boundVariables?.lineHeight
+    ) {
+      style.lineHeight = styleData.textStyle.lineHeight;
+    }
+    if (
+      styleData.textStyle.textCase !== undefined &&
+      !styleData.textStyle.boundVariables?.textCase
+    ) {
+      style.textCase = styleData.textStyle.textCase;
+    }
+    if (
+      styleData.textStyle.textDecoration !== undefined &&
+      !styleData.textStyle.boundVariables?.textDecoration
+    ) {
+      style.textDecoration = styleData.textStyle.textDecoration;
+    }
+    if (
+      styleData.textStyle.paragraphSpacing !== undefined &&
+      !styleData.textStyle.boundVariables?.paragraphSpacing
+    ) {
+      style.paragraphSpacing = styleData.textStyle.paragraphSpacing;
+    }
+    if (
+      styleData.textStyle.paragraphIndent !== undefined &&
+      !styleData.textStyle.boundVariables?.paragraphIndent
+    ) {
+      style.paragraphIndent = styleData.textStyle.paragraphIndent;
+    }
+
+    // Handle bound variables
+    if (styleData.textStyle.boundVariables) {
+      for (const [property, varRef] of Object.entries(
+        styleData.textStyle.boundVariables,
+      )) {
+        // varRef might be a variable table index (_varRef format) or variable ID
+        // Resolve from recognizedVariables
+        let variable: Variable | undefined;
+        if (
+          typeof varRef === "object" &&
+          varRef !== null &&
+          "_varRef" in varRef
+        ) {
+          // Variable table reference format
+          const varRefIndex = (varRef as any)._varRef;
+          variable = recognizedVariables.get(String(varRefIndex));
+        } else {
+          // Direct variable ID or string reference
+          const varKey = typeof varRef === "string" ? varRef : String(varRef);
+          variable = recognizedVariables.get(varKey);
+        }
+        if (variable) {
+          try {
+            // setBoundVariable expects a Variable object, not an ID
+            style.setBoundVariable(property as any, variable);
+          } catch (error) {
+            await debugConsole.warning(
+              `Could not bind variable to text style property "${property}": ${error}`,
+            );
+          }
+        }
+      }
+    }
+  }
+
+  return style;
+}
+
+/**
+ * Create a paint style from serialized data
+ */
+async function createPaintStyle(
+  styleData: any,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _recognizedVariables: Map<string, Variable>,
+): Promise<PaintStyle> {
+  const style = figma.createPaintStyle();
+  style.name = styleData.name;
+
+  if (styleData.paintStyle && styleData.paintStyle.paints) {
+    style.paints = styleData.paintStyle.paints;
+  }
+
+  // Handle bound variables (would be in paints themselves)
+  // This is handled at the fill level during export/import
+
+  return style;
+}
+
+/**
+ * Create an effect style from serialized data
+ */
+async function createEffectStyle(
+  styleData: any,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _recognizedVariables: Map<string, Variable>,
+): Promise<EffectStyle> {
+  const style = figma.createEffectStyle();
+  style.name = styleData.name;
+
+  if (styleData.effectStyle && styleData.effectStyle.effects) {
+    style.effects = styleData.effectStyle.effects;
+  }
+
+  return style;
+}
+
+/**
+ * Create a grid style from serialized data
+ */
+async function createGridStyle(
+  styleData: any,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _recognizedVariables: Map<string, Variable>,
+): Promise<GridStyle> {
+  const style = figma.createGridStyle();
+  style.name = styleData.name;
+
+  if (styleData.gridStyle && styleData.gridStyle.layoutGrids) {
+    style.layoutGrids = styleData.gridStyle.layoutGrids;
+  }
+
+  return style;
+}
+
+/**
  * Applies default values to a newly created node
  * @param skipPaddingDefaults - If true, skip setting default padding/itemSpacing values
  *                              (used when bound variables will be set for these properties)
@@ -1000,6 +1303,7 @@ export async function recreateNodeFromData(
   recognizedCollections: Map<string, VariableCollection> | null = null, // For resolving variables from table
   placeholderFrameIds: Set<string> | null = null, // Track placeholder frame IDs as we create them
   currentPlaceholderId?: string, // ID of placeholder we're currently inside (for nested deferred instances)
+  styleMapping: Map<number, BaseStyle> | null = null, // Map of old style table index -> new style instance
 ): Promise<any> {
   let newNode: any;
 
@@ -1165,6 +1469,7 @@ export async function recreateNodeFromData(
                 recognizedCollections,
                 placeholderFrameIds, // Pass placeholderFrameIds through for component set creation
                 undefined, // currentPlaceholderId - component set creation is not inside a placeholder
+                styleMapping, // Pass styleMapping to apply styles
               );
               if (componentNode && componentNode.type === "COMPONENT") {
                 componentVariants.push(componentNode);
@@ -3667,71 +3972,171 @@ export async function recreateNodeFromData(
   // Set text properties for text nodes
   if (nodeData.type === "TEXT" && nodeData.characters !== undefined) {
     try {
-      // Load font first if available, otherwise use default
-      if (nodeData.fontName) {
-        try {
-          await figma.loadFontAsync(nodeData.fontName);
-          newNode.fontName = nodeData.fontName;
-        } catch {
-          // Load default font as fallback
+      // Check for _styleRef first (new format with style table)
+      let styleApplied = false;
+      await debugConsole.log(
+        `  Processing TEXT node "${nodeData.name || "Unnamed"}": has _styleRef=${nodeData._styleRef !== undefined}, has styleMapping=${styleMapping !== null && styleMapping !== undefined}`,
+      );
+      if (nodeData._styleRef !== undefined) {
+        if (!styleMapping) {
+          // Style reference found but no style mapping - this should have been caught earlier
+          // but handle gracefully by falling through to individual properties
+          await debugConsole.warning(
+            `Text node "${nodeData.name || "Unnamed"}" has _styleRef but styles table was not imported. Using individual properties instead.`,
+          );
+        } else {
+          const style = styleMapping.get(nodeData._styleRef);
+          if (style && style.type === "TEXT") {
+            // Load font from style before setting textStyleId or characters
+            // This is required even though the font is in the style
+            try {
+              const textStyle = style as TextStyle;
+              await debugConsole.log(
+                `  Applying text style "${style.name}" to text node "${nodeData.name || "Unnamed"}" (font: ${textStyle.fontName.family} ${textStyle.fontName.style})`,
+              );
+              // Try to load the font from the style
+              // Even if fontName is bound to a variable, we can still try to load the current resolved font
+              try {
+                await figma.loadFontAsync(textStyle.fontName);
+                await debugConsole.log(
+                  `  ✓ Loaded font "${textStyle.fontName.family} ${textStyle.fontName.style}" for style "${style.name}"`,
+                );
+              } catch (fontLoadError) {
+                // If font loading fails (e.g., font not available or bound to variable),
+                // try to load a default font as fallback
+                await debugConsole.warning(
+                  `  Could not load font "${textStyle.fontName.family} ${textStyle.fontName.style}" for style "${style.name}": ${fontLoadError}. Trying fallback font.`,
+                );
+                try {
+                  await figma.loadFontAsync({
+                    family: "Roboto",
+                    style: "Regular",
+                  });
+                  await debugConsole.log(
+                    `  ✓ Loaded fallback font "Roboto Regular"`,
+                  );
+                } catch {
+                  // If even default font fails, log warning but continue
+                  await debugConsole.warning(
+                    `  Could not load fallback font for style "${style.name}" on text node "${nodeData.name || "Unnamed"}"`,
+                  );
+                }
+              }
+
+              // Set style first - this applies all style properties including font
+              // Use setTextStyleIdAsync when document access is "dynamic-page"
+              await newNode.setTextStyleIdAsync(style.id);
+              await debugConsole.log(
+                `  ✓ Set textStyleId to "${style.id}" for style "${style.name}"`,
+              );
+              // Now we can safely set characters after font is loaded (or attempted)
+              newNode.characters = nodeData.characters;
+              await debugConsole.log(
+                `  ✓ Set characters: "${nodeData.characters.substring(0, 50)}${nodeData.characters.length > 50 ? "..." : ""}"`,
+              );
+              // Mark style as successfully applied
+              styleApplied = true;
+
+              // Even when a style is applied, we still need to set node-level properties
+              // that are NOT part of the style (alignment, auto-resize, list options, etc.)
+              // These properties are on the TextNode itself, not in the TextStyle
+              if (nodeData.textAlignHorizontal !== undefined) {
+                newNode.textAlignHorizontal = nodeData.textAlignHorizontal;
+              }
+              if (nodeData.textAlignVertical !== undefined) {
+                newNode.textAlignVertical = nodeData.textAlignVertical;
+              }
+              if (nodeData.textAutoResize !== undefined) {
+                newNode.textAutoResize = nodeData.textAutoResize;
+              }
+              if (nodeData.listOptions !== undefined) {
+                newNode.listOptions = nodeData.listOptions;
+              }
+            } catch (styleError) {
+              // If style application fails, try to fall back to individual properties
+              await debugConsole.warning(
+                `Failed to apply style "${style.name}" on text node "${nodeData.name || "Unnamed"}": ${styleError}. Falling back to individual properties.`,
+              );
+              // Fall through to individual properties (styleApplied remains false)
+            }
+          } else {
+            // Style reference invalid, fall through to individual properties
+            await debugConsole.warning(
+              `Text node "${nodeData.name || "Unnamed"}" has invalid _styleRef (${nodeData._styleRef}). Using individual properties instead.`,
+            );
+          }
+        }
+      }
+
+      // Only set individual properties if no valid style was applied
+      if (!styleApplied) {
+        // No style reference, use individual properties
+        // Load font first if available, otherwise use default
+        if (nodeData.fontName) {
+          try {
+            await figma.loadFontAsync(nodeData.fontName);
+            newNode.fontName = nodeData.fontName;
+          } catch {
+            // Load default font as fallback
+            await figma.loadFontAsync({
+              family: "Roboto",
+              style: "Regular",
+            });
+            newNode.fontName = { family: "Roboto", style: "Regular" };
+          }
+        } else {
+          // Load default font if no font specified
           await figma.loadFontAsync({
             family: "Roboto",
             style: "Regular",
           });
           newNode.fontName = { family: "Roboto", style: "Regular" };
         }
-      } else {
-        // Load default font if no font specified
-        await figma.loadFontAsync({
-          family: "Roboto",
-          style: "Regular",
-        });
-        newNode.fontName = { family: "Roboto", style: "Regular" };
-      }
 
-      // Set text content
-      newNode.characters = nodeData.characters;
+        // Set text content
+        newNode.characters = nodeData.characters;
 
-      // Set other text properties if they exist
-      // Check for bound variables before setting direct values
-      const hasBoundVariablesForText =
-        nodeData.boundVariables &&
-        typeof nodeData.boundVariables === "object" &&
-        (nodeData.boundVariables.fontSize ||
-          nodeData.boundVariables.letterSpacing ||
-          nodeData.boundVariables.lineHeight);
-      if (
-        nodeData.fontSize !== undefined &&
-        (!hasBoundVariablesForText || !nodeData.boundVariables.fontSize)
-      ) {
-        newNode.fontSize = nodeData.fontSize;
-      }
-      if (nodeData.textAlignHorizontal !== undefined) {
-        newNode.textAlignHorizontal = nodeData.textAlignHorizontal;
-      }
-      if (nodeData.textAlignVertical !== undefined) {
-        newNode.textAlignVertical = nodeData.textAlignVertical;
-      }
-      if (
-        nodeData.letterSpacing !== undefined &&
-        (!hasBoundVariablesForText || !nodeData.boundVariables.letterSpacing)
-      ) {
-        newNode.letterSpacing = nodeData.letterSpacing;
-      }
-      if (
-        nodeData.lineHeight !== undefined &&
-        (!hasBoundVariablesForText || !nodeData.boundVariables.lineHeight)
-      ) {
-        newNode.lineHeight = nodeData.lineHeight;
-      }
-      if (nodeData.textCase !== undefined) {
-        newNode.textCase = nodeData.textCase;
-      }
-      if (nodeData.textDecoration !== undefined) {
-        newNode.textDecoration = nodeData.textDecoration;
-      }
-      if (nodeData.textAutoResize !== undefined) {
-        newNode.textAutoResize = nodeData.textAutoResize;
+        // Set other text properties if they exist
+        // Check for bound variables before setting direct values
+        const hasBoundVariablesForText =
+          nodeData.boundVariables &&
+          typeof nodeData.boundVariables === "object" &&
+          (nodeData.boundVariables.fontSize ||
+            nodeData.boundVariables.letterSpacing ||
+            nodeData.boundVariables.lineHeight);
+        if (
+          nodeData.fontSize !== undefined &&
+          (!hasBoundVariablesForText || !nodeData.boundVariables.fontSize)
+        ) {
+          newNode.fontSize = nodeData.fontSize;
+        }
+        if (nodeData.textAlignHorizontal !== undefined) {
+          newNode.textAlignHorizontal = nodeData.textAlignHorizontal;
+        }
+        if (nodeData.textAlignVertical !== undefined) {
+          newNode.textAlignVertical = nodeData.textAlignVertical;
+        }
+        if (
+          nodeData.letterSpacing !== undefined &&
+          (!hasBoundVariablesForText || !nodeData.boundVariables.letterSpacing)
+        ) {
+          newNode.letterSpacing = nodeData.letterSpacing;
+        }
+        if (
+          nodeData.lineHeight !== undefined &&
+          (!hasBoundVariablesForText || !nodeData.boundVariables.lineHeight)
+        ) {
+          newNode.lineHeight = nodeData.lineHeight;
+        }
+        if (nodeData.textCase !== undefined) {
+          newNode.textCase = nodeData.textCase;
+        }
+        if (nodeData.textDecoration !== undefined) {
+          newNode.textDecoration = nodeData.textDecoration;
+        }
+        if (nodeData.textAutoResize !== undefined) {
+          newNode.textAutoResize = nodeData.textAutoResize;
+        }
       }
     } catch (error) {
       console.log("Error setting text properties: " + error);
@@ -4100,6 +4505,7 @@ export async function recreateNodeFromData(
         recognizedCollections,
         placeholderFrameIds, // Pass placeholderFrameIds through for recursive calls
         childPlaceholderId, // Pass currentPlaceholderId down (or placeholder ID if newNode is a placeholder)
+        styleMapping, // Pass styleMapping to apply styles
       );
       if (childNode) {
         // Only append if the child doesn't already have this node as its parent
@@ -5296,6 +5702,7 @@ async function createRemoteInstances(
   recognizedVariables: Map<string, Variable>,
   recognizedCollections: Map<string, VariableCollection>,
   constructionIcon: string = "", // If provided, prepend this icon to REMOTES page name. Used for wizard imports.
+  styleMapping: Map<number, BaseStyle> | null = null, // Map of old style table index -> new style instance
 ): Promise<Map<number, ComponentNode>> {
   const allInstances = instanceTable.getSerializedTable();
   const remoteInstances = Object.values(allInstances).filter(
@@ -5471,6 +5878,7 @@ async function createRemoteInstances(
           recognizedCollections,
           null, // placeholderFrameIds - not needed for remote instances
           undefined, // currentPlaceholderId - remote instances are not inside placeholders
+          styleMapping, // Pass styleMapping to apply styles
         );
         if (recreatedNode) {
           containerFrame.appendChild(recreatedNode);
@@ -5847,6 +6255,7 @@ async function createRemoteInstances(
               recognizedCollections,
               null, // placeholderFrameIds - not needed for remote instances
               undefined, // currentPlaceholderId - remote instances are not inside placeholders
+              styleMapping, // Pass styleMapping to apply styles
             );
             if (childNode) {
               componentNode.appendChild(childNode);
@@ -5903,6 +6312,7 @@ async function createPageAndRecreateStructure(
   alwaysCreateCopy: boolean = false, // If true, always create a copy (no prompt) even if page exists. Used for wizard imports.
   skipUniqueNaming: boolean = false, // If true, skip adding _<number> suffix to page names. Used for wizard imports.
   constructionIcon: string = "", // If provided, prepend this icon to page name. Used for wizard imports.
+  styleMapping: Map<number, BaseStyle> | null = null, // Map of old style table index -> new style instance
 ): Promise<{
   success: boolean;
   page?: PageNode;
@@ -6103,6 +6513,7 @@ async function createPageAndRecreateStructure(
         recognizedCollections,
         placeholderFrameIds,
         undefined, // currentPlaceholderId - page root is not inside a placeholder
+        styleMapping, // Pass styleMapping to apply styles
       );
       if (childNode) {
         newPage.appendChild(childNode);
@@ -6326,6 +6737,49 @@ export async function importPage(
         newlyCreatedCollections,
       );
 
+    // Stage 9.5: Import styles (after variables so styles can bind to variables)
+    await debugConsole.log("Checking for styles table...");
+    const hasStylesTable =
+      expandedJsonData.styles !== undefined && expandedJsonData.styles !== null;
+
+    // Check if style references exist in pageData but styles table is missing
+    if (!hasStylesTable) {
+      const hasStyleReferences = checkForStyleReferences(
+        expandedJsonData.pageData,
+      );
+      if (hasStyleReferences) {
+        const errorMessage =
+          "Style references found in page data but styles table is missing from JSON. Cannot import styles.";
+        await debugConsole.error(errorMessage);
+        return {
+          type: "importPage",
+          success: false,
+          error: true,
+          message: errorMessage,
+          data: {},
+        };
+      }
+      await debugConsole.log(
+        "No styles table found in JSON (and no style references detected)",
+      );
+    }
+
+    let styleMapping: Map<number, BaseStyle> | null = null;
+    if (hasStylesTable) {
+      await debugConsole.log("Loading styles table...");
+      const styleTable = StyleTable.fromTable(expandedJsonData.styles);
+      await debugConsole.log(
+        `Loaded styles table with ${styleTable.getSize()} style(s)`,
+      );
+      styleMapping = await importStyles(
+        styleTable.getTable(),
+        recognizedVariables,
+      );
+      await debugConsole.log(
+        `Imported ${styleMapping.size} style(s) (some may have been skipped if they already exist)`,
+      );
+    }
+
     // Stage 10: Load instance table
     await debugConsole.log("Loading instance table...");
     const instanceTable = loadInstanceTable(expandedJsonData);
@@ -6364,6 +6818,7 @@ export async function importPage(
         recognizedVariables,
         recognizedCollections,
         constructionIcon,
+        styleMapping, // Pass styleMapping to apply styles
       );
     }
     const pageResult = await createPageAndRecreateStructure(
@@ -6381,6 +6836,7 @@ export async function importPage(
       alwaysCreateCopy,
       skipUniqueNaming,
       constructionIcon,
+      styleMapping, // Pass styleMapping to apply styles
     );
 
     if (!pageResult.success) {

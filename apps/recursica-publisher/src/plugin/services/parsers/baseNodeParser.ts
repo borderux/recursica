@@ -7,6 +7,7 @@ import {
 } from "./boundVariableParser";
 import type { VariableTable, CollectionTable } from "./variableTable";
 import type { InstanceTable } from "./instanceTable";
+import type { StyleTable } from "./styleTable";
 import { debugConsole } from "../debugConsole";
 
 /**
@@ -22,6 +23,7 @@ export interface ParserContext {
   variableTable: VariableTable;
   collectionTable: CollectionTable;
   instanceTable: InstanceTable;
+  styleTable: StyleTable;
   detachedComponentsHandled: Set<string>; // Component IDs we've already prompted for and decided to treat as internal
   exportedIds: Map<string, string>; // node ID -> node name (for duplicate detection)
 }

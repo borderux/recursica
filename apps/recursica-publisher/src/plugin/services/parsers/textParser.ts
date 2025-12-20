@@ -1,17 +1,66 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { TEXT_DEFAULTS, isDifferentFromDefault } from "./nodeDefaults";
 import type { ParsedNodeData, ParserContext } from "./baseNodeParser";
+import { parseTextStyle } from "./styleParsers";
+import { debugConsole } from "../debugConsole";
 
 /**
  * Parser for TEXT node type
  */
 export async function parseTextProperties(
   node: any,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _context: ParserContext,
+  context: ParserContext,
 ): Promise<Partial<ParsedNodeData>> {
   const result: Partial<ParsedNodeData> = {};
   const handledKeys = new Set<string>();
+
+  // Check for textStyleId first and replace with _styleRef
+  if (node.textStyleId !== undefined && node.textStyleId !== "") {
+    try {
+      const style = await figma.getStyleByIdAsync(node.textStyleId);
+      if (style && style.type === "TEXT") {
+        // Check if style is already in styleTable
+        let styleIndex = context.styleTable.getStyleIndex(style.key);
+        if (styleIndex < 0) {
+          // Style not in table yet - parse and add it
+          const parsed = await parseTextStyle(style as TextStyle, context);
+          styleIndex = context.styleTable.addStyle({
+            type: "TEXT",
+            name: style.name,
+            styleKey: style.key,
+            textStyle: parsed,
+            boundVariables: parsed.boundVariables,
+          });
+          await debugConsole.log(
+            `  [EXPORT] Added text style "${style.name}" to style table at index ${styleIndex} for text node "${node.name || "Unnamed"}"`,
+          );
+        } else {
+          await debugConsole.log(
+            `  [EXPORT] Reusing existing text style "${style.name}" from style table at index ${styleIndex} for text node "${node.name || "Unnamed"}"`,
+          );
+        }
+        result._styleRef = styleIndex;
+        handledKeys.add("_styleRef");
+        handledKeys.add("textStyleId"); // Mark original textStyleId as handled
+        await debugConsole.log(
+          `  [EXPORT] ✓ Exported text node "${node.name || "Unnamed"}" with _styleRef=${styleIndex} (style: "${style.name}")`,
+        );
+      } else {
+        await debugConsole.warning(
+          `  [EXPORT] Text node "${node.name || "Unnamed"}" has textStyleId but style lookup returned null or wrong type`,
+        );
+      }
+    } catch (error) {
+      // If style lookup fails, continue with individual properties
+      await debugConsole.warning(
+        `  [EXPORT] Could not look up text style for node "${node.name || "Unnamed"}": ${error}`,
+      );
+    }
+  } else {
+    await debugConsole.log(
+      `  [EXPORT] Text node "${node.name || "Unnamed"}" has no textStyleId (textStyleId=${node.textStyleId})`,
+    );
+  }
 
   // Text content
   if (node.characters !== undefined && node.characters !== "") {
