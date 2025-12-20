@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { TEXT_STYLE_DEFAULTS } from "./styleDefaults";
 import type { ParserContext } from "./baseNodeParser";
+import { extractBoundVariables } from "./boundVariableParser";
 
 /**
  * Serialized text style (only non-default properties)
@@ -46,8 +47,7 @@ export interface SerializedGridStyle {
  */
 export async function parseTextStyle(
   style: TextStyle,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _context: ParserContext,
+  context: ParserContext,
 ): Promise<SerializedTextStyle> {
   const result: SerializedTextStyle = {};
 
@@ -93,12 +93,18 @@ export async function parseTextStyle(
     result.paragraphIndent = style.paragraphIndent;
   }
 
-  // Extract bound variables
-  // Note: TextStyle doesn't have getBoundVariable method in the Figma API
-  // Bound variables on styles are handled differently - they're stored in the style itself
-  // For now, we'll skip extracting bound variables from styles during export
-  // They will be preserved when the style is recreated during import
-  // TODO: Find a way to extract bound variables from TextStyle if needed
+  // Extract bound variables from style properties
+  // Styles can have bound variables on properties like fontSize, fontName, letterSpacing, etc.
+  if ((style as any).boundVariables) {
+    const boundVars = await extractBoundVariables(
+      (style as any).boundVariables,
+      context.variableTable,
+      context.collectionTable,
+    );
+    if (Object.keys(boundVars).length > 0) {
+      result.boundVariables = boundVars;
+    }
+  }
 
   return result;
 }
@@ -108,8 +114,7 @@ export async function parseTextStyle(
  */
 export async function parsePaintStyle(
   style: PaintStyle,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _context: ParserContext,
+  context: ParserContext,
 ): Promise<SerializedPaintStyle> {
   const result: SerializedPaintStyle = {};
 
@@ -117,8 +122,18 @@ export async function parsePaintStyle(
     result.paints = [...style.paints];
   }
 
-  // Extract bound variables (would be in paints themselves)
-  // This is handled at the fill level during export
+  // Extract bound variables from style properties
+  // Paint styles can have bound variables on paints
+  if ((style as any).boundVariables) {
+    const boundVars = await extractBoundVariables(
+      (style as any).boundVariables,
+      context.variableTable,
+      context.collectionTable,
+    );
+    if (Object.keys(boundVars).length > 0) {
+      result.boundVariables = boundVars;
+    }
+  }
 
   return result;
 }
@@ -128,13 +143,24 @@ export async function parsePaintStyle(
  */
 export async function parseEffectStyle(
   style: EffectStyle,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _context: ParserContext,
+  context: ParserContext,
 ): Promise<SerializedEffectStyle> {
   const result: SerializedEffectStyle = {};
 
   if (style.effects && style.effects.length > 0) {
     result.effects = [...style.effects];
+  }
+
+  // Extract bound variables from style properties
+  if ((style as any).boundVariables) {
+    const boundVars = await extractBoundVariables(
+      (style as any).boundVariables,
+      context.variableTable,
+      context.collectionTable,
+    );
+    if (Object.keys(boundVars).length > 0) {
+      result.boundVariables = boundVars;
+    }
   }
 
   return result;
@@ -145,13 +171,24 @@ export async function parseEffectStyle(
  */
 export async function parseGridStyle(
   style: GridStyle,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _context: ParserContext,
+  context: ParserContext,
 ): Promise<SerializedGridStyle> {
   const result: SerializedGridStyle = {};
 
   if (style.layoutGrids && style.layoutGrids.length > 0) {
     result.layoutGrids = [...style.layoutGrids];
+  }
+
+  // Extract bound variables from style properties
+  if ((style as any).boundVariables) {
+    const boundVars = await extractBoundVariables(
+      (style as any).boundVariables,
+      context.variableTable,
+      context.collectionTable,
+    );
+    if (Object.keys(boundVars).length > 0) {
+      result.boundVariables = boundVars;
+    }
   }
 
   return result;
