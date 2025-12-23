@@ -105,12 +105,12 @@ export async function parseInstanceProperties(
       // Check if we've already handled this detached instance
       if (context.detachedComponentsHandled.has(instanceId)) {
         // Already prompted for this instance - treat as internal
-        await debugConsole.log(
+        debugConsole.log(
           `Treating detached instance "${instanceName}" as internal instance (already prompted)`,
         );
       } else {
         // First time seeing this detached instance - prompt user
-        await debugConsole.warning(
+        debugConsole.warning(
           `Found detached instance: "${instanceName}" (main component is missing)`,
         );
 
@@ -124,14 +124,14 @@ export async function parseInstanceProperties(
 
           // User said Ok - mark as handled and treat as internal instance
           context.detachedComponentsHandled.add(instanceId);
-          await debugConsole.log(
+          debugConsole.log(
             `Treating detached instance "${instanceName}" as internal instance`,
           );
         } catch (error) {
           // User said Cancel or prompt was cancelled
           if (error instanceof Error && error.message === "User cancelled") {
             const errorMessage = `Export cancelled: Detached instance "${instanceName}" found. Please fix the instance before exporting.`;
-            await debugConsole.error(errorMessage);
+            debugConsole.error(errorMessage);
             // Try to scroll to the instance to help user find it
             try {
               await figma.viewport.scrollAndZoomIntoView([node]);
@@ -154,7 +154,7 @@ export async function parseInstanceProperties(
       if (!instancePage) {
         // Instance itself is detached from page - this is a problem
         const errorMessage = `Detached instance "${instanceName}" is not on any page. Cannot export.`;
-        await debugConsole.error(errorMessage);
+        debugConsole.error(errorMessage);
         throw new Error(errorMessage);
       }
 
@@ -188,7 +188,7 @@ export async function parseInstanceProperties(
       result._instanceRef = instanceIndex;
       handledKeys.add("_instanceRef");
 
-      await debugConsole.log(
+      debugConsole.log(
         `  Exported detached INSTANCE: "${instanceName}" as internal instance (ID: ${node.id.substring(0, 8)}...)`,
       );
 
@@ -268,18 +268,18 @@ export async function parseInstanceProperties(
         instanceType = "normal";
         effectiveComponentPage = componentPage;
         if (metadata?.id) {
-          await debugConsole.log(
+          debugConsole.log(
             `  Component "${componentName}" is from library but also exists on local page "${componentPage.name}" with metadata. Treating as "normal" instance.`,
           );
         } else {
-          await debugConsole.log(
+          debugConsole.log(
             `  Component "${componentName}" is from library and exists on local page "${componentPage.name}" (no metadata). Treating as "normal" instance - page should be published first.`,
           );
         }
       } else {
         // Component is not on a local page - truly external library, treat as "remote"
         instanceType = "remote";
-        await debugConsole.log(
+        debugConsole.log(
           `  Component "${componentName}" is from library and not on a local page. Treating as "remote" instance.`,
         );
       }
@@ -308,12 +308,12 @@ export async function parseInstanceProperties(
         if (context.detachedComponentsHandled.has(componentId)) {
           // Already prompted for this component - treat as remote
           instanceType = "remote";
-          await debugConsole.log(
+          debugConsole.log(
             `Treating detached instance "${instanceName}" -> component "${componentName}" as remote instance (already prompted)`,
           );
         } else {
           // First time seeing this detached component - prompt user
-          await debugConsole.warning(
+          debugConsole.warning(
             `Found detached instance: "${instanceName}" -> component "${componentName}" (component is not on any page)`,
           );
 
@@ -337,14 +337,14 @@ export async function parseInstanceProperties(
             // This allows us to store the component structure and create it on REMOTES page
             context.detachedComponentsHandled.add(componentId);
             instanceType = "remote";
-            await debugConsole.log(
+            debugConsole.log(
               `Treating detached instance "${instanceName}" as remote instance (will be created on REMOTES page)`,
             );
           } catch (error) {
             // User said Cancel or prompt was cancelled
             if (error instanceof Error && error.message === "User cancelled") {
               const errorMessage = `Export cancelled: Detached instance "${instanceName}" found. The component "${componentName}" is not on any page. Please fix the instance before exporting.`;
-              await debugConsole.error(errorMessage);
+              debugConsole.error(errorMessage);
               throw new Error(errorMessage);
             } else {
               // Some other error occurred
@@ -356,7 +356,7 @@ export async function parseInstanceProperties(
         // componentPage is null but not detached - can't classify as normal or internal
         // If it's not remote, this is an error condition
         if (!isRemote) {
-          await debugConsole.warning(
+          debugConsole.warning(
             `  Instance "${instanceName}" -> component "${componentName}": componentPage is null but component is not remote. Reason: ${componentPageResult.reason}. Cannot determine instance type.`,
           );
         }
@@ -373,7 +373,7 @@ export async function parseInstanceProperties(
       // Try multiple ways to get variant properties
       if ((node as any).variantProperties) {
         variantProperties = (node as any).variantProperties;
-        await debugConsole.log(
+        debugConsole.log(
           `  Instance "${instanceName}" -> variantProperties from instance: ${JSON.stringify(variantProperties)}`,
         );
       }
@@ -383,7 +383,7 @@ export async function parseInstanceProperties(
         try {
           const props = await (node as any).getProperties();
           if (props && props.variantProperties) {
-            await debugConsole.log(
+            debugConsole.log(
               `  Instance "${instanceName}" -> variantProperties from getProperties(): ${JSON.stringify(props.variantProperties)}`,
             );
             // Use getProperties() result if it's different/more complete
@@ -396,7 +396,7 @@ export async function parseInstanceProperties(
           }
         } catch (getPropsError) {
           // getProperties() might not be available or might fail
-          await debugConsole.log(
+          debugConsole.log(
             `  Instance "${instanceName}" -> getProperties() not available or failed: ${getPropsError}`,
           );
         }
@@ -421,7 +421,7 @@ export async function parseInstanceProperties(
           const componentSetProps = (componentSet as any)
             .componentPropertyDefinitions;
           if (componentSetProps) {
-            await debugConsole.log(
+            debugConsole.log(
               `  Component set "${componentSet.name}" has property definitions: ${JSON.stringify(Object.keys(componentSetProps))}`,
             );
           }
@@ -450,7 +450,7 @@ export async function parseInstanceProperties(
           }
 
           if (Object.keys(nameBasedVariantProps).length > 0) {
-            await debugConsole.log(
+            debugConsole.log(
               `  Parsed variant properties from component name "${componentName}": ${JSON.stringify(nameBasedVariantProps)}`,
             );
           }
@@ -463,13 +463,13 @@ export async function parseInstanceProperties(
           if (variantProperties && Object.keys(variantProperties).length > 0) {
             // Instance has variant properties - use them as the source of truth
             // This reflects the actual variant state the user has set in Figma
-            await debugConsole.log(
+            debugConsole.log(
               `  Using variant properties from instance (source of truth): ${JSON.stringify(variantProperties)}`,
             );
           } else if (Object.keys(nameBasedVariantProps).length > 0) {
             // No instance variant properties, but we parsed from component name - use those
             variantProperties = nameBasedVariantProps;
-            await debugConsole.log(
+            debugConsole.log(
               `  Using variant properties from component name (fallback): ${JSON.stringify(variantProperties)}`,
             );
           } else {
@@ -477,14 +477,14 @@ export async function parseInstanceProperties(
             if ((mainComponent as any).variantProperties) {
               const mainComponentVariantProps = (mainComponent as any)
                 .variantProperties;
-              await debugConsole.log(
+              debugConsole.log(
                 `  Main component "${componentName}" has variantProperties: ${JSON.stringify(mainComponentVariantProps)}`,
               );
               variantProperties = mainComponentVariantProps;
             }
           }
         } catch (error) {
-          await debugConsole.warning(
+          debugConsole.warning(
             `  Could not get variant properties from component set: ${error}`,
           );
         }
@@ -531,7 +531,7 @@ export async function parseInstanceProperties(
             componentSetName === "arrow-top-right-on-square" ||
             componentName === "arrow-top-right-on-square"
           ) {
-            await debugConsole.log(
+            debugConsole.log(
               `  [PATH BUILD] Added segment: "${pathSegment}" (type: ${nodeType}) to path for component "${componentName}"`,
             );
           }
@@ -544,7 +544,7 @@ export async function parseInstanceProperties(
             componentSetName === "arrow-top-right-on-square" ||
             componentName === "arrow-top-right-on-square"
           ) {
-            await debugConsole.warning(
+            debugConsole.warning(
               `  [PATH BUILD] Error building path for "${componentName}": ${error}`,
             );
           }
@@ -559,7 +559,7 @@ export async function parseInstanceProperties(
         componentSetName === "arrow-top-right-on-square" ||
         componentName === "arrow-top-right-on-square"
       ) {
-        await debugConsole.log(
+        debugConsole.log(
           `  [PATH BUILD] Final path for component "${componentName}": [${pathNames.join(" → ")}]`,
         );
       }
@@ -591,7 +591,7 @@ export async function parseInstanceProperties(
       // For internal instances, store the component node ID
       // During import, we maintain a mapping of old ID -> new node to resolve this
       entry.componentNodeId = mainComponent.id;
-      await debugConsole.log(
+      debugConsole.log(
         `  Found INSTANCE: "${instanceName}" -> INTERNAL component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...)`,
       );
 
@@ -600,14 +600,14 @@ export async function parseInstanceProperties(
       const mainComponentBoundVars = (mainComponent as any).boundVariables;
       if (instanceBoundVars && typeof instanceBoundVars === "object") {
         const boundVarKeys = Object.keys(instanceBoundVars);
-        await debugConsole.log(
+        debugConsole.log(
           `  DEBUG: Internal instance "${instanceName}" -> boundVariables keys: ${boundVarKeys.length > 0 ? boundVarKeys.join(", ") : "none"}`,
         );
         // Log each bound variable key and its type
         for (const key of boundVarKeys) {
           const boundVar = instanceBoundVars[key];
           const boundVarType = boundVar?.type || typeof boundVar;
-          await debugConsole.log(
+          debugConsole.log(
             `  DEBUG:   boundVariables.${key}: type=${boundVarType}, value=${JSON.stringify(boundVar)}`,
           );
         }
@@ -621,13 +621,13 @@ export async function parseInstanceProperties(
         ];
         for (const potentialKey of potentialSelectionColorKeys) {
           if (instanceBoundVars[potentialKey] !== undefined) {
-            await debugConsole.log(
+            debugConsole.log(
               `  DEBUG:   Found potential "Selection colors" property: boundVariables.${potentialKey} = ${JSON.stringify(instanceBoundVars[potentialKey])}`,
             );
           }
         }
       } else {
-        await debugConsole.log(
+        debugConsole.log(
           `  DEBUG: Internal instance "${instanceName}" -> No boundVariables found on instance node`,
         );
       }
@@ -636,7 +636,7 @@ export async function parseInstanceProperties(
         typeof mainComponentBoundVars === "object"
       ) {
         const mainBoundVarKeys = Object.keys(mainComponentBoundVars);
-        await debugConsole.log(
+        debugConsole.log(
           `  DEBUG: Main component "${componentName}" -> boundVariables keys: ${mainBoundVarKeys.length > 0 ? mainBoundVarKeys.join(", ") : "none"}`,
         );
       }
@@ -644,31 +644,31 @@ export async function parseInstanceProperties(
       // DEBUG: Check backgrounds property for bound variables (for "Selection colors")
       const instanceBackgrounds = (node as any).backgrounds;
       if (instanceBackgrounds && Array.isArray(instanceBackgrounds)) {
-        await debugConsole.log(
+        debugConsole.log(
           `  DEBUG: Internal instance "${instanceName}" -> backgrounds array length: ${instanceBackgrounds.length}`,
         );
         for (let i = 0; i < instanceBackgrounds.length; i++) {
           const bg = instanceBackgrounds[i];
           if (bg && typeof bg === "object") {
             // Log the entire background object structure
-            await debugConsole.log(
+            debugConsole.log(
               `  DEBUG:   backgrounds[${i}] structure: ${JSON.stringify(Object.keys(bg))}`,
             );
             if (bg.boundVariables) {
               const bgBoundVarKeys = Object.keys(bg.boundVariables);
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG:   backgrounds[${i}].boundVariables keys: ${bgBoundVarKeys.length > 0 ? bgBoundVarKeys.join(", ") : "none"}`,
               );
               for (const key of bgBoundVarKeys) {
                 const bgBoundVar = bg.boundVariables[key];
-                await debugConsole.log(
+                debugConsole.log(
                   `  DEBUG:     backgrounds[${i}].boundVariables.${key}: ${JSON.stringify(bgBoundVar)}`,
                 );
               }
             }
             // Check if the background itself has a color property that might be bound
             if (bg.color) {
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG:   backgrounds[${i}].color: ${JSON.stringify(bg.color)}`,
               );
             }
@@ -718,7 +718,7 @@ export async function parseInstanceProperties(
       );
 
       if (selectionRelatedProps.length > 0) {
-        await debugConsole.log(
+        debugConsole.log(
           `  DEBUG: Found selection/color-related properties: ${selectionRelatedProps.join(", ")}`,
         );
         // Log values for these properties
@@ -726,13 +726,13 @@ export async function parseInstanceProperties(
           try {
             if (instanceAllProps.includes(key)) {
               const value = (node as any)[key];
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG:   Instance.${key}: ${JSON.stringify(value)}`,
               );
             }
             if (mainComponentAllProps.includes(key)) {
               const value = (mainComponent as any)[key];
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG:   MainComponent.${key}: ${JSON.stringify(value)}`,
               );
             }
@@ -741,7 +741,7 @@ export async function parseInstanceProperties(
           }
         }
       } else {
-        await debugConsole.log(
+        debugConsole.log(
           `  DEBUG: No selection/color-related properties found on instance or main component`,
         );
       }
@@ -757,11 +757,11 @@ export async function parseInstanceProperties(
         if (metadata?.id && metadata.version !== undefined) {
           entry.componentGuid = metadata.id;
           entry.componentVersion = metadata.version;
-          await debugConsole.log(
+          debugConsole.log(
             `  Found INSTANCE: "${instanceName}" -> NORMAL component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...) at path [${(mainComponentParentPath || []).join(" → ")}]`,
           );
         } else {
-          await debugConsole.warning(
+          debugConsole.warning(
             `  Instance "${instanceName}" -> component "${componentName}" is classified as normal but page "${pageToUse.name}" has no metadata. This instance will not be importable.`,
           );
         }
@@ -802,7 +802,7 @@ export async function parseInstanceProperties(
 
         const errorMessage = `Normal instance "${instanceName}" -> component "${componentName}" (ID: ${mainComponentId}) has no componentPage. ${reasonMessage}. ${actionMessage} Component has been focused in the viewport.`;
         console.error("FATAL EXPORT ERROR:", errorMessage);
-        await debugConsole.error(errorMessage);
+        debugConsole.error(errorMessage);
         const error = new Error(errorMessage);
         console.error("Throwing error:", error);
         throw error;
@@ -823,7 +823,7 @@ export async function parseInstanceProperties(
         mainComponentParentPath && mainComponentParentPath.length > 0
           ? ` at path [${mainComponentParentPath.join(" → ")}]`
           : " at page root";
-      await debugConsole.log(
+      debugConsole.log(
         `  Found INSTANCE: "${instanceName}" -> NORMAL component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...)${pathDisplay}`,
       );
     } else if (instanceType === "remote") {
@@ -916,7 +916,7 @@ export async function parseInstanceProperties(
       const existingIndex = context.instanceTable.getInstanceIndex(entry);
       if (existingIndex !== -1) {
         // Instance already exists - reuse it without extracting structure again
-        await debugConsole.log(
+        debugConsole.log(
           `  Found INSTANCE: "${instanceName}" -> REMOTE component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...)${isDetachedInstance ? " [DETACHED]" : ""}`,
         );
         // Skip structure extraction and go directly to adding to table
@@ -1033,12 +1033,12 @@ export async function parseInstanceProperties(
                   if (childBoundVars && typeof childBoundVars === "object") {
                     const childBoundVarKeys = Object.keys(childBoundVars);
                     if (childBoundVarKeys.length > 0) {
-                      await debugConsole.log(
+                      debugConsole.log(
                         `  DEBUG: Child "${child.name || "Unnamed"}" -> boundVariables keys: ${childBoundVarKeys.join(", ")}`,
                       );
                       // Check specifically for backgrounds
                       if (childBoundVars.backgrounds !== undefined) {
-                        await debugConsole.log(
+                        debugConsole.log(
                           `  DEBUG:   Child "${child.name || "Unnamed"}" -> boundVariables.backgrounds: ${JSON.stringify(childBoundVars.backgrounds)}`,
                         );
                       }
@@ -1064,12 +1064,12 @@ export async function parseInstanceProperties(
                         const mainChildBoundVarKeys =
                           Object.keys(mainChildBoundVars);
                         if (mainChildBoundVarKeys.length > 0) {
-                          await debugConsole.log(
+                          debugConsole.log(
                             `  DEBUG: Main component child "${mainComponentChild.name || "Unnamed"}" -> boundVariables keys: ${mainChildBoundVarKeys.join(", ")}`,
                           );
                           // Check specifically for backgrounds
                           if (mainChildBoundVars.backgrounds !== undefined) {
-                            await debugConsole.log(
+                            debugConsole.log(
                               `  DEBUG:   Main component child "${mainComponentChild.name || "Unnamed"}" -> boundVariables.backgrounds: ${JSON.stringify(mainChildBoundVars.backgrounds)}`,
                             );
                             // If instance child doesn't have boundVariables.backgrounds but main component child does,
@@ -1078,7 +1078,7 @@ export async function parseInstanceProperties(
                               !childBoundVars ||
                               !childBoundVars.backgrounds
                             ) {
-                              await debugConsole.log(
+                              debugConsole.log(
                                 `  DEBUG:   Instance child doesn't have boundVariables.backgrounds, but main component child does - preserving from main component`,
                               );
                               // Extract and merge boundVariables from main component child
@@ -1098,7 +1098,7 @@ export async function parseInstanceProperties(
                               if (mainChildBoundVarsExtracted.backgrounds) {
                                 childData.boundVariables.backgrounds =
                                   mainChildBoundVarsExtracted.backgrounds;
-                                await debugConsole.log(
+                                debugConsole.log(
                                   `  DEBUG:   ✓ Added boundVariables.backgrounds to childData from main component child`,
                                 );
                               }
@@ -1136,14 +1136,14 @@ export async function parseInstanceProperties(
             // DEBUG: Log all boundVariables keys to see what properties are bound
             if (instanceBoundVars && typeof instanceBoundVars === "object") {
               const boundVarKeys = Object.keys(instanceBoundVars);
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG: Instance "${instanceName}" -> boundVariables keys: ${boundVarKeys.length > 0 ? boundVarKeys.join(", ") : "none"}`,
               );
               // Log each bound variable key and its type
               for (const key of boundVarKeys) {
                 const boundVar = instanceBoundVars[key];
                 const boundVarType = boundVar?.type || typeof boundVar;
-                await debugConsole.log(
+                debugConsole.log(
                   `  DEBUG:   boundVariables.${key}: type=${boundVarType}, value=${JSON.stringify(boundVar)}`,
                 );
 
@@ -1156,7 +1156,7 @@ export async function parseInstanceProperties(
                 ) {
                   const nestedKeys = Object.keys(boundVar);
                   if (nestedKeys.length > 0) {
-                    await debugConsole.log(
+                    debugConsole.log(
                       `  DEBUG:     boundVariables.${key} has nested keys: ${nestedKeys.join(", ")}`,
                     );
                     // Check if any nested value is a VARIABLE_ALIAS that might be variable 57
@@ -1167,7 +1167,7 @@ export async function parseInstanceProperties(
                         typeof nestedValue === "object" &&
                         nestedValue.type === "VARIABLE_ALIAS"
                       ) {
-                        await debugConsole.log(
+                        debugConsole.log(
                           `  DEBUG:       boundVariables.${key}.${nestedKey}: VARIABLE_ALIAS id=${nestedValue.id}`,
                         );
                       }
@@ -1187,13 +1187,13 @@ export async function parseInstanceProperties(
               ];
               for (const potentialKey of potentialSelectionColorKeys) {
                 if (instanceBoundVars[potentialKey] !== undefined) {
-                  await debugConsole.log(
+                  debugConsole.log(
                     `  DEBUG:   Found potential "Selection colors" property: boundVariables.${potentialKey} = ${JSON.stringify(instanceBoundVars[potentialKey])}`,
                   );
                 }
               }
             } else {
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG: Instance "${instanceName}" -> No boundVariables found on instance node`,
               );
             }
@@ -1221,14 +1221,14 @@ export async function parseInstanceProperties(
               Array.isArray(mainComponent.fills) &&
               mainComponent.fills.length > 0;
 
-            await debugConsole.log(
+            debugConsole.log(
               `  DEBUG: Instance "${instanceName}" -> fills check: instanceHasFills=${instanceHasFills}, structureHasFills=${structureHasFills}, mainComponentHasFills=${mainComponentHasFills}, hasInstanceFillsBoundVar=${!!hasInstanceFillsBoundVar}`,
             );
 
             // If instance has boundVariables.fills but structure doesn't have fills,
             // we need to get fills from either the instance or main component
             if (hasInstanceFillsBoundVar && !structureHasFills) {
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG: Instance has boundVariables.fills but structure has no fills - attempting to get fills`,
               );
               try {
@@ -1243,7 +1243,7 @@ export async function parseInstanceProperties(
                     context.collectionTable,
                   );
                   structure.fills = instanceFills;
-                  await debugConsole.log(
+                  debugConsole.log(
                     `  DEBUG: Got ${instanceFills.length} fill(s) from instance node`,
                   );
                 } else if (mainComponentHasFills) {
@@ -1257,18 +1257,16 @@ export async function parseInstanceProperties(
                     context.collectionTable,
                   );
                   structure.fills = mainComponentFills;
-                  await debugConsole.log(
+                  debugConsole.log(
                     `  DEBUG: Got ${mainComponentFills.length} fill(s) from main component`,
                   );
                 } else {
-                  await debugConsole.warning(
+                  debugConsole.warning(
                     `  DEBUG: Instance has boundVariables.fills but neither instance nor main component has fills`,
                   );
                 }
               } catch (fillsError) {
-                await debugConsole.warning(
-                  `  Failed to get fills: ${fillsError}`,
-                );
+                debugConsole.warning(`  Failed to get fills: ${fillsError}`);
               }
             }
 
@@ -1278,12 +1276,12 @@ export async function parseInstanceProperties(
             const mainComponentSelectionColor = (mainComponent as any)
               .selectionColor;
             if (instanceSelectionColor !== undefined) {
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG: Instance "${instanceName}" -> selectionColor: ${JSON.stringify(instanceSelectionColor)}`,
               );
             }
             if (mainComponentSelectionColor !== undefined) {
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG: Main component "${componentName}" -> selectionColor: ${JSON.stringify(mainComponentSelectionColor)}`,
               );
             }
@@ -1324,7 +1322,7 @@ export async function parseInstanceProperties(
             );
 
             if (selectionRelatedProps.length > 0) {
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG: Found selection/color-related properties: ${selectionRelatedProps.join(", ")}`,
               );
               // Log values for these properties
@@ -1332,13 +1330,13 @@ export async function parseInstanceProperties(
                 try {
                   if (instanceAllProps.includes(key)) {
                     const value = (node as any)[key];
-                    await debugConsole.log(
+                    debugConsole.log(
                       `  DEBUG:   Instance.${key}: ${JSON.stringify(value)}`,
                     );
                   }
                   if (mainComponentAllProps.includes(key)) {
                     const value = (mainComponent as any)[key];
-                    await debugConsole.log(
+                    debugConsole.log(
                       `  DEBUG:   MainComponent.${key}: ${JSON.stringify(value)}`,
                     );
                   }
@@ -1347,7 +1345,7 @@ export async function parseInstanceProperties(
                 }
               }
             } else {
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG: No selection/color-related properties found on instance or main component`,
               );
             }
@@ -1361,16 +1359,16 @@ export async function parseInstanceProperties(
             ) {
               const mainBoundVarKeys = Object.keys(mainComponentBoundVars);
               if (mainBoundVarKeys.length > 0) {
-                await debugConsole.log(
+                debugConsole.log(
                   `  DEBUG: Main component "${componentName}" -> boundVariables keys: ${mainBoundVarKeys.join(", ")}`,
                 );
                 // ISSUE #2: Special logging for selectionColor
                 if (mainBoundVarKeys.includes("selectionColor")) {
-                  await debugConsole.log(
+                  debugConsole.log(
                     `[ISSUE #2 EXPORT] Main component "${componentName}" HAS selectionColor in boundVariables: ${JSON.stringify(mainComponentBoundVars.selectionColor)}`,
                   );
                 } else {
-                  await debugConsole.log(
+                  debugConsole.log(
                     `[ISSUE #2 EXPORT] Main component "${componentName}" does NOT have selectionColor in boundVariables (has: ${mainBoundVarKeys.join(", ")})`,
                   );
                 }
@@ -1378,19 +1376,19 @@ export async function parseInstanceProperties(
                 for (const key of mainBoundVarKeys) {
                   const boundVar = mainComponentBoundVars[key];
                   const boundVarType = boundVar?.type || typeof boundVar;
-                  await debugConsole.log(
+                  debugConsole.log(
                     `  DEBUG:   Main component boundVariables.${key}: type=${boundVarType}, value=${JSON.stringify(boundVar)}`,
                   );
                 }
               } else {
                 // ISSUE #2: Log when main component has no boundVariables
-                await debugConsole.log(
+                debugConsole.log(
                   `[ISSUE #2 EXPORT] Main component "${componentName}" has no boundVariables`,
                 );
               }
             } else {
               // ISSUE #2: Log when main component boundVariables is null/undefined
-              await debugConsole.log(
+              debugConsole.log(
                 `[ISSUE #2 EXPORT] Main component "${componentName}" boundVariables is null/undefined`,
               );
             }
@@ -1402,7 +1400,7 @@ export async function parseInstanceProperties(
               instanceBoundVars &&
               Object.keys(instanceBoundVars).length > 0
             ) {
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG: Preserving instance's boundVariables in structure (${Object.keys(instanceBoundVars).length} key(s))`,
               );
               // Extract boundVariables from instance node
@@ -1429,12 +1427,12 @@ export async function parseInstanceProperties(
                 if (value !== undefined) {
                   // Check if structure already has this boundVariable (from baseProps)
                   if (structure.boundVariables[key] !== undefined) {
-                    await debugConsole.log(
+                    debugConsole.log(
                       `  DEBUG: Structure already has boundVariables.${key} from baseProps, but instance also has it - using instance's boundVariables.${key}`,
                     );
                   }
                   structure.boundVariables[key] = value;
-                  await debugConsole.log(
+                  debugConsole.log(
                     `  DEBUG: Set boundVariables.${key} in structure: ${JSON.stringify(value)}`,
                   );
                 }
@@ -1442,25 +1440,25 @@ export async function parseInstanceProperties(
 
               // Special handling for fills - log separately for clarity
               if (instanceBoundVarsExtracted.fills !== undefined) {
-                await debugConsole.log(
+                debugConsole.log(
                   `  DEBUG: ✓ Preserved boundVariables.fills from instance`,
                 );
               } else if (hasInstanceFillsBoundVar) {
-                await debugConsole.warning(
+                debugConsole.warning(
                   `  DEBUG: Instance has boundVariables.fills but extractBoundVariables didn't extract it`,
                 );
               }
 
               // Special handling for backgrounds - "Selection colors" might be stored here
               if (instanceBoundVarsExtracted.backgrounds !== undefined) {
-                await debugConsole.log(
+                debugConsole.log(
                   `  DEBUG: ✓ Preserved boundVariables.backgrounds from instance: ${JSON.stringify(instanceBoundVarsExtracted.backgrounds)}`,
                 );
               } else if (
                 instanceBoundVars &&
                 instanceBoundVars.backgrounds !== undefined
               ) {
-                await debugConsole.warning(
+                debugConsole.warning(
                   `  DEBUG: Instance has boundVariables.backgrounds but extractBoundVariables didn't extract it`,
                 );
               }
@@ -1473,7 +1471,7 @@ export async function parseInstanceProperties(
               mainComponentBoundVars &&
               Object.keys(mainComponentBoundVars).length > 0
             ) {
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG: Checking main component's boundVariables for properties not in instance (${Object.keys(mainComponentBoundVars).length} key(s))`,
               );
               const { extractBoundVariables } = await import(
@@ -1501,22 +1499,22 @@ export async function parseInstanceProperties(
                     structure.boundVariables[key] = value;
                     // ISSUE #2: Special logging for selectionColor
                     if (key === "selectionColor") {
-                      await debugConsole.log(
+                      debugConsole.log(
                         `[ISSUE #2 EXPORT] Added boundVariables.selectionColor from main component "${componentName}" to instance "${instanceName}": ${JSON.stringify(value)}`,
                       );
                     } else {
-                      await debugConsole.log(
+                      debugConsole.log(
                         `  DEBUG: Added boundVariables.${key} from main component (not in instance): ${JSON.stringify(value)}`,
                       );
                     }
                   } else {
                     // ISSUE #2: Special logging for selectionColor
                     if (key === "selectionColor") {
-                      await debugConsole.log(
+                      debugConsole.log(
                         `[ISSUE #2 EXPORT] Skipped boundVariables.selectionColor from main component "${componentName}" (instance "${instanceName}" already has it)`,
                       );
                     } else {
-                      await debugConsole.log(
+                      debugConsole.log(
                         `  DEBUG: Skipped boundVariables.${key} from main component (instance already has it)`,
                       );
                     }
@@ -1526,16 +1524,16 @@ export async function parseInstanceProperties(
             }
 
             // Final debug: log what we have in the structure
-            await debugConsole.log(
+            debugConsole.log(
               `  DEBUG: Final structure for "${componentName}": hasFills=${!!structure.fills}, fillsCount=${structure.fills?.length || 0}, hasBoundVars=${!!structure.boundVariables}, boundVarsKeys=${structure.boundVariables ? Object.keys(structure.boundVariables).join(", ") : "none"}`,
             );
             if (structure.boundVariables?.fills) {
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG: Structure boundVariables.fills: ${JSON.stringify(structure.boundVariables.fills)}`,
               );
             }
           } catch (boundVarError) {
-            await debugConsole.warning(
+            debugConsole.warning(
               `  Failed to handle bound variables for fills: ${boundVarError}`,
             );
             // Continue anyway - structure is still valid without bound variables
@@ -1544,22 +1542,22 @@ export async function parseInstanceProperties(
           entry.structure = structure;
 
           if (isDetachedInstance) {
-            await debugConsole.log(
+            debugConsole.log(
               `  Extracted structure for detached component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...)`,
             );
           } else {
-            await debugConsole.log(
+            debugConsole.log(
               `  Extracted structure from instance for remote component "${componentName}" (preserving size overrides: ${node.width}x${node.height})`,
             );
           }
 
-          await debugConsole.log(
+          debugConsole.log(
             `  Found INSTANCE: "${instanceName}" -> REMOTE component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...)${isDetachedInstance ? " [DETACHED]" : ""}`,
           );
         } catch (extractError) {
           const errorMessage = `Failed to extract structure for remote component "${componentName}": ${extractError instanceof Error ? extractError.message : String(extractError)}`;
           console.error(errorMessage, extractError);
-          await debugConsole.error(errorMessage);
+          debugConsole.error(errorMessage);
           // Don't set structure if extraction failed - this will cause import to skip it
           // which is better than importing incorrect data
         }
@@ -1576,7 +1574,7 @@ export async function parseInstanceProperties(
         Array.isArray(node.children) &&
         node.children.length > 0
       ) {
-        await debugConsole.log(
+        debugConsole.log(
           `[DEBUG] Normal instance "${instanceName}" has ${node.children.length} child(ren) (unexpected for normal instance):`,
         );
         for (let i = 0; i < Math.min(node.children.length, 5); i++) {
@@ -1586,12 +1584,12 @@ export async function parseInstanceProperties(
             const childType = (child as any).type || "UNKNOWN";
             const childBoundVars = (child as any).boundVariables;
             const childFills = (child as any).fills;
-            await debugConsole.log(
+            debugConsole.log(
               `[DEBUG]   Child ${i}: "${childName}" (${childType}) - hasBoundVars=${!!childBoundVars}, hasFills=${!!childFills}`,
             );
             if (childBoundVars) {
               const childBoundVarKeys = Object.keys(childBoundVars);
-              await debugConsole.log(
+              debugConsole.log(
                 `[DEBUG]     boundVariables: ${childBoundVarKeys.join(", ")}`,
               );
             }
@@ -1606,7 +1604,7 @@ export async function parseInstanceProperties(
         Array.isArray(mainComponent.children) &&
         mainComponent.children.length > 0
       ) {
-        await debugConsole.log(
+        debugConsole.log(
           `[DEBUG] Main component "${componentName}" has ${mainComponent.children.length} child(ren):`,
         );
         for (let i = 0; i < Math.min(mainComponent.children.length, 5); i++) {
@@ -1616,16 +1614,16 @@ export async function parseInstanceProperties(
             const mainChildType = (mainChild as any).type || "UNKNOWN";
             const mainChildBoundVars = (mainChild as any).boundVariables;
             const mainChildFills = (mainChild as any).fills;
-            await debugConsole.log(
+            debugConsole.log(
               `[DEBUG]   Main component child ${i}: "${mainChildName}" (${mainChildType}) - hasBoundVars=${!!mainChildBoundVars}, hasFills=${!!mainChildFills}`,
             );
             if (mainChildBoundVars) {
               const mainChildBoundVarKeys = Object.keys(mainChildBoundVars);
-              await debugConsole.log(
+              debugConsole.log(
                 `[DEBUG]     boundVariables: ${mainChildBoundVarKeys.join(", ")}`,
               );
               if (mainChildBoundVars.fills) {
-                await debugConsole.log(
+                debugConsole.log(
                   `[DEBUG]     boundVariables.fills: ${JSON.stringify(mainChildBoundVars.fills)}`,
                 );
               }
@@ -1637,7 +1635,7 @@ export async function parseInstanceProperties(
             ) {
               const firstFill = mainChildFills[0];
               if (firstFill && typeof firstFill === "object") {
-                await debugConsole.log(
+                debugConsole.log(
                   `[DEBUG]     fills[0]: type=${firstFill.type}, color=${JSON.stringify((firstFill as any).color)}`,
                 );
               }
@@ -1668,11 +1666,11 @@ export async function parseInstanceProperties(
                   (key) => !mainChildBoundVarKeys.includes(key),
                 );
                 if (instanceOnlyBoundVars.length > 0) {
-                  await debugConsole.log(
+                  debugConsole.log(
                     `[DEBUG] Instance "${instanceName}" child "${mainChildName}" has instance override bound variables: ${instanceOnlyBoundVars.join(", ")} (will be exported with instance children)`,
                   );
                   for (const key of instanceOnlyBoundVars) {
-                    await debugConsole.log(
+                    debugConsole.log(
                       `[DEBUG]   Instance child boundVariables.${key}: ${JSON.stringify(instanceChildBoundVars[key])}`,
                     );
                   }
@@ -1691,16 +1689,16 @@ export async function parseInstanceProperties(
         ) {
           const mainBoundVarKeys = Object.keys(mainComponentBoundVars);
           if (mainBoundVarKeys.length > 0) {
-            await debugConsole.log(
+            debugConsole.log(
               `[ISSUE #2 EXPORT] Normal instance "${instanceName}" -> checking main component "${componentName}" boundVariables (${mainBoundVarKeys.length} key(s))`,
             );
             // ISSUE #2: Special logging for selectionColor
             if (mainBoundVarKeys.includes("selectionColor")) {
-              await debugConsole.log(
+              debugConsole.log(
                 `[ISSUE #2 EXPORT] Main component "${componentName}" HAS selectionColor in boundVariables: ${JSON.stringify(mainComponentBoundVars.selectionColor)}`,
               );
             } else {
-              await debugConsole.log(
+              debugConsole.log(
                 `[ISSUE #2 EXPORT] Main component "${componentName}" does NOT have selectionColor in boundVariables (has: ${mainBoundVarKeys.join(", ")})`,
               );
             }
@@ -1730,18 +1728,18 @@ export async function parseInstanceProperties(
                   result.boundVariables[key] = value;
                   // ISSUE #2: Special logging for selectionColor
                   if (key === "selectionColor") {
-                    await debugConsole.log(
+                    debugConsole.log(
                       `[ISSUE #2 EXPORT] Added boundVariables.selectionColor from main component "${componentName}" to normal instance "${instanceName}": ${JSON.stringify(value)}`,
                     );
                   } else {
-                    await debugConsole.log(
+                    debugConsole.log(
                       `  DEBUG: Added boundVariables.${key} from main component to normal instance: ${JSON.stringify(value)}`,
                     );
                   }
                 } else {
                   // ISSUE #2: Special logging for selectionColor
                   if (key === "selectionColor") {
-                    await debugConsole.log(
+                    debugConsole.log(
                       `[ISSUE #2 EXPORT] Skipped boundVariables.selectionColor from main component "${componentName}" (normal instance "${instanceName}" already has it)`,
                     );
                   }
@@ -1749,17 +1747,17 @@ export async function parseInstanceProperties(
               }
             }
           } else {
-            await debugConsole.log(
+            debugConsole.log(
               `[ISSUE #2 EXPORT] Main component "${componentName}" has no boundVariables`,
             );
           }
         } else {
-          await debugConsole.log(
+          debugConsole.log(
             `[ISSUE #2 EXPORT] Main component "${componentName}" boundVariables is null/undefined`,
           );
         }
       } catch (error) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `[ISSUE #2 EXPORT] Error checking main component boundVariables for normal instance "${instanceName}": ${error}`,
         );
       }

@@ -115,10 +115,10 @@ export default function Test() {
         </h2>
 
         <DebugConsole
-          label="Test Output:"
-          height="300px"
-          showClearButton={true}
-          clearOnMount={false}
+          title="Test Output"
+          isActive={isRunning}
+          isComplete={!isRunning && testResults !== null && !error}
+          error={error}
         />
 
         <div style={{ marginTop: "20px" }}>

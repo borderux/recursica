@@ -14,6 +14,7 @@ import { InstanceTable } from "./parsers/instanceTable";
 import { StyleTable } from "./parsers/styleTable";
 import { StringTable } from "./parsers/stringTable";
 import { debugConsole } from "./debugConsole";
+import { checkCancellation } from "../utils/cancellation";
 import { compressJsonData } from "../utils/jsonCompression";
 import { requestGuidFromUI } from "../utils/requestGuidFromUI";
 import { pluginPrompt } from "../utils/pluginPrompt";
@@ -125,7 +126,7 @@ export async function extractNodeData(
   const maxNodes = context.maxNodes ?? 10000;
   const currentNodeCount = context.nodeCount ?? 0;
   if (currentNodeCount >= maxNodes) {
-    await debugConsole.warning(
+    debugConsole.warning(
       `Maximum node count (${maxNodes}) reached. Export truncated.`,
     );
     return {
@@ -172,12 +173,12 @@ export async function extractNodeData(
       const currentNodeName = nodeData.name || "Unnamed";
       if (existingName !== currentNodeName) {
         const errorMessage = `Duplicate ID detected during export: ID "${nodeData.id.substring(0, 8)}..." is used by both "${existingName}" and "${currentNodeName}". Each node must have a unique ID.`;
-        await debugConsole.error(errorMessage);
+        debugConsole.error(errorMessage);
         throw new Error(errorMessage);
       }
       // Same ID and same name - this is the same node being encountered again
       // This shouldn't happen due to visited WeakSet, but log a warning if it does
-      await debugConsole.warning(
+      debugConsole.warning(
         `Node "${currentNodeName}" (ID: ${nodeData.id.substring(0, 8)}...) was encountered multiple times during export. This may indicate a structural issue.`,
       );
     } else {
@@ -419,23 +420,26 @@ export async function exportPage(
   processedPages: Set<string> = new Set(),
   isRecursive: boolean = false,
   discoveredPages: Set<string> = new Set(), // Track discovered pages to avoid infinite loops during discovery
+  requestId?: string, // Optional request ID for cancellation support
 ): Promise<ResponseMessage> {
+  // Check for cancellation at the start
+  checkCancellation(requestId);
   // Clear debug console only on initial call, not recursive calls
   // Also respect clearConsole parameter if provided
   const shouldClearConsole = data.clearConsole !== false && !isRecursive;
   if (shouldClearConsole) {
-    await debugConsole.clear();
-    await debugConsole.log("=== Starting Page Export ===");
+    debugConsole.clear();
+    debugConsole.log("=== Starting Page Export ===");
   } else if (!isRecursive) {
     // Don't clear, but still log the start
-    await debugConsole.log("=== Starting Page Export ===");
+    debugConsole.log("=== Starting Page Export ===");
   }
 
   try {
     const pageIndex = data.pageIndex;
 
     if (pageIndex === undefined || typeof pageIndex !== "number") {
-      await debugConsole.error(
+      debugConsole.error(
         "Invalid page selection: pageIndex is undefined or not a number",
       );
       return {
@@ -447,13 +451,15 @@ export async function exportPage(
       };
     }
 
-    await debugConsole.log(`Loading all pages...`);
+    checkCancellation(requestId);
+    debugConsole.log(`Loading all pages...`);
     await figma.loadAllPagesAsync();
+    checkCancellation(requestId);
     const pages = figma.root.children;
-    await debugConsole.log(`Loaded ${pages.length} page(s)`);
+    debugConsole.log(`Loaded ${pages.length} page(s)`);
 
     if (pageIndex < 0 || pageIndex >= pages.length) {
-      await debugConsole.error(
+      debugConsole.error(
         `Invalid page index: ${pageIndex} (valid range: 0-${pages.length - 1})`,
       );
       return {
@@ -473,7 +479,7 @@ export async function exportPage(
     if (data.skipPrompts) {
       // During discovery phase, use discoveredPages set to avoid infinite loops
       if (discoveredPages.has(selectedPageId)) {
-        await debugConsole.log(
+        debugConsole.log(
           `Page "${selectedPage.name}" already discovered, skipping discovery...`,
         );
         // Return empty response but with any discovered pages we might have
@@ -496,7 +502,7 @@ export async function exportPage(
     } else {
       // During actual export, use processedPages set
       if (processedPages.has(selectedPageId)) {
-        await debugConsole.log(
+        debugConsole.log(
           `Page "${selectedPage.name}" has already been processed, skipping...`,
         );
         // Return empty response for already processed pages
@@ -512,12 +518,12 @@ export async function exportPage(
       processedPages.add(selectedPageId);
     }
 
-    await debugConsole.log(
+    debugConsole.log(
       `Selected page: "${selectedPage.name}" (index: ${pageIndex})`,
     );
 
     // Create variable table, collection table, and instance table for storing unique references
-    await debugConsole.log(
+    debugConsole.log(
       "Initializing variable, collection, and instance tables...",
     );
     const variableTable = new VariableTable();
@@ -526,11 +532,11 @@ export async function exportPage(
     const styleTable = new StyleTable();
 
     // Extract complete page data with limits to prevent hanging
-    await debugConsole.log("Extracting node data from page...");
-    await debugConsole.log(
+    debugConsole.log("Extracting node data from page...");
+    debugConsole.log(
       `Starting recursive node extraction (max nodes: 10000)...`,
     );
-    await debugConsole.log(
+    debugConsole.log(
       "Collections will be discovered as variables are processed:",
     );
     const extractedPageData = await extractNodeData(
@@ -543,7 +549,8 @@ export async function exportPage(
         styleTable,
       },
     );
-    await debugConsole.log("Node extraction finished");
+    checkCancellation(requestId);
+    debugConsole.log("Node extraction finished");
 
     const totalNodes = countTotalNodes(extractedPageData);
     const totalVariables = variableTable.getSize();
@@ -551,12 +558,12 @@ export async function exportPage(
 
     const totalInstances = instanceTable.getSize();
     const nodesWithConstraints = countNodesWithConstraints(extractedPageData);
-    await debugConsole.log(`Extraction complete:`);
-    await debugConsole.log(`  - Total nodes: ${totalNodes}`);
-    await debugConsole.log(`  - Unique variables: ${totalVariables}`);
-    await debugConsole.log(`  - Unique collections: ${totalCollections}`);
-    await debugConsole.log(`  - Unique instances: ${totalInstances}`);
-    await debugConsole.log(
+    debugConsole.log(`Extraction complete:`);
+    debugConsole.log(`  - Total nodes: ${totalNodes}`);
+    debugConsole.log(`  - Unique variables: ${totalVariables}`);
+    debugConsole.log(`  - Unique collections: ${totalCollections}`);
+    debugConsole.log(`  - Unique instances: ${totalInstances}`);
+    debugConsole.log(
       `  - Nodes with constraints exported: ${nodesWithConstraints}`,
     );
 
@@ -574,7 +581,7 @@ export async function exportPage(
 
     // If validateOnly mode, perform validation and return early
     if (data.validateOnly) {
-      await debugConsole.log("=== Validation Mode ===");
+      debugConsole.log("=== Validation Mode ===");
 
       // Get known collections (local collections + standard remote collections)
       const localCollections =
@@ -671,14 +678,10 @@ export async function exportPage(
         discoveredCollections,
       };
 
-      await debugConsole.log(`Validation complete:`);
-      await debugConsole.log(
-        `  - External references: ${externalReferences.length}`,
-      );
-      await debugConsole.log(
-        `  - Unknown collections: ${unknownCollections.length}`,
-      );
-      await debugConsole.log(`  - Has errors: ${validationResult.hasErrors}`);
+      debugConsole.log(`Validation complete:`);
+      debugConsole.log(`  - External references: ${externalReferences.length}`);
+      debugConsole.log(`  - Unknown collections: ${unknownCollections.length}`);
+      debugConsole.log(`  - Has errors: ${validationResult.hasErrors}`);
 
       return {
         type: "exportPage",
@@ -696,7 +699,7 @@ export async function exportPage(
     }
 
     if (remoteInstanceMap.size > 0) {
-      await debugConsole.error(
+      debugConsole.error(
         `Found ${remoteInstanceMap.size} remote instance(s) - remote instances are not supported during publishing`,
       );
 
@@ -827,18 +830,18 @@ export async function exportPage(
 
       const errorMessage = `Cannot publish: Remote instances are not supported. Please remove all remote instances before publishing.\n\nFound ${remoteInstanceMap.size} remote instance(s):\n${remoteInstanceDetails.join("\n\n")}\n\nTo fix this:\n1. Locate each remote instance component listed above using the path(s) shown\n2. Replace it with a local component or remove it\n3. Try publishing again`;
 
-      await debugConsole.error(errorMessage);
+      debugConsole.error(errorMessage);
       throw new Error(errorMessage);
     }
 
     if (totalCollections > 0) {
-      await debugConsole.log("Collections found:");
+      debugConsole.log("Collections found:");
       const collections = collectionTable.getTable();
       for (const [idx, entry] of Object.values(collections).entries()) {
         const guidInfo = entry.collectionGuid
           ? ` (GUID: ${entry.collectionGuid.substring(0, 8)}...)`
           : "";
-        await debugConsole.log(
+        debugConsole.log(
           `  ${idx}: ${entry.collectionName}${guidInfo} - ${entry.modes.length} mode(s)`,
         );
       }
@@ -847,8 +850,9 @@ export async function exportPage(
     // If skipPrompts is true (discovery mode), run validation on the main page
     let aggregatedValidationResult: ValidationResult | undefined;
     if (data.skipPrompts) {
-      await debugConsole.log("Running validation on main page...");
+      debugConsole.log("Running validation on main page...");
       try {
+        checkCancellation(requestId);
         const mainPageValidationResponse = await exportPage(
           {
             pageIndex,
@@ -857,6 +861,7 @@ export async function exportPage(
           processedPages,
           true, // Mark as recursive call
           discoveredPages,
+          requestId, // Pass requestId for cancellation
         );
 
         if (
@@ -868,25 +873,25 @@ export async function exportPage(
           if (mainPageValidationData.validationResult) {
             aggregatedValidationResult =
               mainPageValidationData.validationResult;
-            await debugConsole.log(
+            debugConsole.log(
               `Main page validation: ${aggregatedValidationResult.hasErrors ? "FAILED" : "PASSED"}`,
             );
             if (aggregatedValidationResult.hasErrors) {
-              await debugConsole.warning(
+              debugConsole.warning(
                 `Found ${aggregatedValidationResult.errors.length} validation error(s) in main page`,
               );
             }
           }
         }
       } catch (error) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Could not validate main page: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
     }
 
     // Handle referenced normal component pages
-    await debugConsole.log("Checking for referenced component pages...");
+    debugConsole.log("Checking for referenced component pages...");
     const additionalPages: ExportPageResponseData[] = [];
     // Collect discovered referenced pages info (for wizard to ask user)
     const discoveredReferencedPages: ReferencedPageInfo[] = [];
@@ -895,7 +900,7 @@ export async function exportPage(
     );
 
     if (normalInstances.length > 0) {
-      await debugConsole.log(
+      debugConsole.log(
         `Found ${normalInstances.length} normal instance(s) to check`,
       );
 
@@ -913,28 +918,29 @@ export async function exportPage(
           } else if (!page) {
             // Page not found - hard failure
             const errorMessage = `Normal instance references component "${entry.componentName || "(unnamed)"}" on page "${entry.componentPageName}", but that page was not found. Cannot export.`;
-            await debugConsole.error(errorMessage);
+            debugConsole.error(errorMessage);
             throw new Error(errorMessage);
           }
         } else {
           // componentPageName is missing - hard failure
           const errorMessage = `Normal instance references component "${entry.componentName || "(unnamed)"}" but has no componentPageName. Cannot export.`;
-          await debugConsole.error(errorMessage);
+          debugConsole.error(errorMessage);
           throw new Error(errorMessage);
         }
       }
 
-      await debugConsole.log(
+      debugConsole.log(
         `Found ${referencedPages.size} unique referenced page(s)`,
       );
 
       // Process each referenced page
       for (const [pageId, referencedPage] of referencedPages.entries()) {
+        checkCancellation(requestId);
         const pageName = referencedPage.name;
 
         // Double-check that this page hasn't been processed (shouldn't happen, but safety check)
         if (processedPages.has(pageId)) {
-          await debugConsole.log(`Skipping "${pageName}" - already processed`);
+          debugConsole.log(`Skipping "${pageName}" - already processed`);
           continue;
         }
         // Check if page has metadata and get local version
@@ -959,9 +965,7 @@ export async function exportPage(
           (p) => p.id === referencedPage.id,
         );
         if (referencedPageIndex === -1) {
-          await debugConsole.error(
-            `Could not find page index for "${pageName}"`,
-          );
+          debugConsole.error(`Could not find page index for "${pageName}"`);
           throw new Error(`Could not find page index for "${pageName}"`);
         }
 
@@ -977,7 +981,7 @@ export async function exportPage(
           // Just collect the info - wizard will ask user and export selected pages
           // Don't include the original page in discovered pages (it's the one being published)
           if (pageId === selectedPageId) {
-            await debugConsole.log(
+            debugConsole.log(
               `Skipping "${pageName}" - this is the original page being published`,
             );
           } else {
@@ -994,17 +998,18 @@ export async function exportPage(
                 componentName,
                 localVersion,
               });
-              await debugConsole.log(
+              debugConsole.log(
                 `Discovered referenced page: "${pageName}" (local version: ${localVersion}) (will be handled by wizard)`,
               );
             }
           }
 
           // Run validation on this discovered page
-          await debugConsole.log(
+          debugConsole.log(
             `Validating "${pageName}" for external references and unknown collections...`,
           );
           try {
+            checkCancellation(requestId);
             const validationResponse = await exportPage(
               {
                 pageIndex: referencedPageIndex,
@@ -1013,6 +1018,7 @@ export async function exportPage(
               processedPages,
               true, // Mark as recursive call
               discoveredPages,
+              requestId, // Pass requestId for cancellation
             );
 
             if (validationResponse.success && validationResponse.data) {
@@ -1058,11 +1064,11 @@ export async function exportPage(
                 aggregatedValidationResult.hasErrors =
                   aggregatedValidationResult.errors.length > 0;
 
-                await debugConsole.log(
+                debugConsole.log(
                   `  Validation for "${pageName}": ${validationData.validationResult.hasErrors ? "FAILED" : "PASSED"}`,
                 );
                 if (validationData.validationResult.hasErrors) {
-                  await debugConsole.warning(
+                  debugConsole.warning(
                     `  Found ${validationData.validationResult.errors.length} validation error(s) in "${pageName}"`,
                   );
                 }
@@ -1070,17 +1076,18 @@ export async function exportPage(
             }
           } catch (error) {
             // If validation fails, log but continue discovery
-            await debugConsole.warning(
+            debugConsole.warning(
               `Could not validate "${pageName}": ${error instanceof Error ? error.message : String(error)}`,
             );
           }
 
           // Recursively discover dependencies of this referenced page
           // This ensures we find all transitive dependencies (dependencies of dependencies)
-          await debugConsole.log(
+          debugConsole.log(
             `Checking dependencies of "${pageName}" for transitive dependencies...`,
           );
           try {
+            checkCancellation(requestId);
             const recursiveExportResponse = await exportPage(
               {
                 pageIndex: referencedPageIndex,
@@ -1089,6 +1096,7 @@ export async function exportPage(
               processedPages, // Pass the same set (won't be used during discovery)
               true, // Mark as recursive call
               discoveredPages, // Pass the same discoveredPages set to avoid infinite loops
+              requestId, // Pass requestId for cancellation
             );
 
             if (
@@ -1102,7 +1110,7 @@ export async function exportPage(
                 for (const discoveredPage of recursiveExportData.discoveredReferencedPages) {
                   // Don't include the original page (it's the one being published)
                   if (discoveredPage.pageId === selectedPageId) {
-                    await debugConsole.log(
+                    debugConsole.log(
                       `  Skipping "${discoveredPage.pageName}" - this is the original page being published`,
                     );
                     continue;
@@ -1113,7 +1121,7 @@ export async function exportPage(
                   );
                   if (!existingPage) {
                     discoveredReferencedPages.push(discoveredPage);
-                    await debugConsole.log(
+                    debugConsole.log(
                       `  Discovered transitive dependency: "${discoveredPage.pageName}" (from ${pageName})`,
                     );
                   }
@@ -1123,7 +1131,7 @@ export async function exportPage(
           } catch (error) {
             // If recursive discovery fails, log but don't fail the whole export
             // The page might not be exportable, but we still want to show it in the wizard
-            await debugConsole.warning(
+            debugConsole.warning(
               `Could not discover dependencies of "${pageName}": ${error instanceof Error ? error.message : String(error)}`,
             );
           }
@@ -1138,18 +1146,17 @@ export async function exportPage(
             });
 
             // User said Yes - export the referenced page
-            await debugConsole.log(`Exporting referenced page: "${pageName}"`);
+            debugConsole.log(`Exporting referenced page: "${pageName}"`);
             const referencedPageIndex = pages.findIndex(
               (p) => p.id === referencedPage.id,
             );
             if (referencedPageIndex === -1) {
-              await debugConsole.error(
-                `Could not find page index for "${pageName}"`,
-              );
+              debugConsole.error(`Could not find page index for "${pageName}"`);
               throw new Error(`Could not find page index for "${pageName}"`);
             }
 
             // Recursively export the referenced page (pass along processedPages set)
+            checkCancellation(requestId);
             const referencedExportResponse = await exportPage(
               {
                 pageIndex: referencedPageIndex,
@@ -1157,6 +1164,7 @@ export async function exportPage(
               processedPages, // Pass the same set to track all processed pages
               true, // Mark as recursive call
               discoveredPages, // Pass discovered pages set (empty during actual export)
+              requestId, // Pass requestId for cancellation
             );
 
             if (
@@ -1166,7 +1174,7 @@ export async function exportPage(
               const referencedExportData =
                 referencedExportResponse.data as unknown as ExportPageResponseData;
               additionalPages.push(referencedExportData);
-              await debugConsole.log(
+              debugConsole.log(
                 `Successfully exported referenced page: "${pageName}"`,
               );
             } else {
@@ -1179,7 +1187,7 @@ export async function exportPage(
             if (error instanceof Error && error.message === "User cancelled") {
               if (!hasMetadata) {
                 // No metadata and user said No - cancel export
-                await debugConsole.error(
+                debugConsole.error(
                   `Export cancelled: Referenced page "${pageName}" has no metadata and user declined to publish it.`,
                 );
                 throw new Error(
@@ -1187,7 +1195,7 @@ export async function exportPage(
                 );
               } else {
                 // Has metadata, user said No - continue with existing metadata
-                await debugConsole.log(
+                debugConsole.log(
                   `User declined to publish "${pageName}", but page has existing metadata. Continuing with existing metadata.`,
                 );
               }
@@ -1201,11 +1209,11 @@ export async function exportPage(
     }
 
     // Create string table for compression
-    await debugConsole.log("Creating string table...");
+    debugConsole.log("Creating string table...");
     const stringTable = new StringTable();
 
     // Get or generate page metadata (GUID and version)
-    await debugConsole.log("Getting page metadata...");
+    debugConsole.log("Getting page metadata...");
     const pageMetadataStr = selectedPage.getPluginData(
       "RecursicaPublishedMetadata",
     );
@@ -1218,7 +1226,7 @@ export async function exportPage(
         pageGuid = pageMetadata.id || "";
         pageVersion = pageMetadata.version || 0;
       } catch {
-        await debugConsole.warning(
+        debugConsole.warning(
           "Failed to parse page metadata, generating new GUID",
         );
       }
@@ -1226,7 +1234,7 @@ export async function exportPage(
 
     // If no GUID exists, generate one and store it
     if (!pageGuid) {
-      await debugConsole.log("Generating new GUID for page...");
+      debugConsole.log("Generating new GUID for page...");
       pageGuid = await requestGuidFromUI();
       // Store the GUID in page metadata (create minimal metadata if it doesn't exist)
       const newMetadata = {
@@ -1245,7 +1253,7 @@ export async function exportPage(
 
     // Create export data with metadata, collections table, variable table, instance table, and page data
     // All data uses full key names at this point
-    await debugConsole.log("Creating export data structure...");
+    debugConsole.log("Creating export data structure...");
     const exportData = {
       metadata: {
         exportedAt: new Date().toISOString(),
@@ -1265,19 +1273,19 @@ export async function exportPage(
     };
 
     // Compress the entire JSON at the very last stage
-    await debugConsole.log("Compressing JSON data...");
+    debugConsole.log("Compressing JSON data...");
     const compressedExportData = compressJsonData(exportData, stringTable);
 
-    await debugConsole.log("Serializing to JSON...");
+    debugConsole.log("Serializing to JSON...");
     const jsonString = JSON.stringify(compressedExportData, null, 2);
     const jsonSizeKB = (jsonString.length / 1024).toFixed(2);
     // Clean component name and create filename
     const cleanedName = getComponentName(selectedPage.name).trim();
     const filename = cleanedName.replace(/\s+/g, "_") + ".figma.json";
 
-    await debugConsole.log(`JSON serialization complete: ${jsonSizeKB} KB`);
-    await debugConsole.log(`Export file: ${filename}`);
-    await debugConsole.log("=== Export Complete ===");
+    debugConsole.log(`JSON serialization complete: ${jsonSizeKB} KB`);
+    debugConsole.log(`Export file: ${filename}`);
+    debugConsole.log("=== Export Complete ===");
 
     // Parse the JSON string back to object for easier manipulation
     const parsedPageData = JSON.parse(jsonString);
@@ -1295,29 +1303,40 @@ export async function exportPage(
       validationResult: aggregatedValidationResult, // Include aggregated validation results if in discovery mode
     };
 
+    // Include debug logs in response
+    const debugLogs = debugConsole.getLogs();
+    const responseDataWithLogs = {
+      ...responseData,
+      ...(debugLogs.length > 0 && { debugLogs }),
+    };
+
     return {
       type: "exportPage",
       success: true,
       error: false,
       message: "Page exported successfully",
-      data: responseData as any,
+      data: responseDataWithLogs as any,
     };
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
     console.error("EXPORT ERROR CAUGHT:", error);
     console.error("Error message:", errorMessage);
-    await debugConsole.error(`Export failed: ${errorMessage}`);
+    debugConsole.error(`Export failed: ${errorMessage}`);
     if (error instanceof Error && error.stack) {
       console.error("Stack trace:", error.stack);
-      await debugConsole.error(`Stack trace: ${error.stack}`);
+      debugConsole.error(`Stack trace: ${error.stack}`);
     }
+    // Include debug logs in error response
+    const debugLogs = debugConsole.getLogs();
     const errorResponse = {
       type: "exportPage" as const,
       success: false,
       error: true,
       message: errorMessage,
-      data: {},
+      data: {
+        ...(debugLogs.length > 0 && { debugLogs }),
+      },
     };
     console.error("Returning error response:", errorResponse);
     return errorResponse;

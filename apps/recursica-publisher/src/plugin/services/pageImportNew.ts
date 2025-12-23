@@ -18,6 +18,7 @@ import { StyleTable } from "./parsers/styleTable";
 import { StringTable } from "./parsers/stringTable";
 import { requestGuidFromUI } from "../utils/requestGuidFromUI";
 import { debugConsole } from "./debugConsole";
+import { checkCancellation } from "../utils/cancellation";
 import { expandJsonData } from "../utils/jsonCompression";
 import { pluginPrompt } from "../utils/pluginPrompt";
 import { getComponentCleanName } from "../utils/getComponentCleanName";
@@ -103,11 +104,11 @@ async function ensureCollectionModes(
       collection.renameMode(defaultMode.modeId, firstExportedMode);
       // Track the rename mapping so we can map "Mode 1" -> firstExportedMode when looking up modes
       modeNameMapping.set(`${collection.id}:${oldName}`, firstExportedMode);
-      await debugConsole.log(
+      debugConsole.log(
         `  Renamed default mode "${oldName}" to "${firstExportedMode}"`,
       );
     } catch (error) {
-      await debugConsole.warning(
+      debugConsole.warning(
         `  Failed to rename default mode "${defaultMode.name}" to "${firstExportedMode}": ${error}`,
       );
     }
@@ -169,7 +170,7 @@ async function getOrGenerateCollectionGuid(
 
     if (!supportedCollectionNames.includes(normalizedName)) {
       const errorMessage = `Remote variable collections are not supported. Only "Token", "Tokens", "Theme", or "Themes" collections are allowed. Collection Name: "${collection.name}", Collection ID: ${collection.id}`;
-      await debugConsole.error(errorMessage);
+      debugConsole.error(errorMessage);
       throw new Error(errorMessage);
     }
 
@@ -469,10 +470,10 @@ async function restoreVariableModeValues(
   collection: VariableCollection, // Collection to look up mode by name
   collectionTable?: CollectionTable, // Optional: for resolving variable aliases by collection
 ): Promise<void> {
-  await debugConsole.log(
+  debugConsole.log(
     `Restoring values for variable "${variable.name}" (type: ${variable.resolvedType}):`,
   );
-  await debugConsole.log(
+  debugConsole.log(
     `  valuesByMode keys: ${Object.keys(valuesByMode).join(", ")}`,
   );
   for (const [modeName, value] of Object.entries(valuesByMode)) {
@@ -488,7 +489,7 @@ async function restoreVariableModeValues(
     }
 
     if (!mode) {
-      await debugConsole.warning(
+      debugConsole.warning(
         `Mode "${modeName}" (mapped: "${mappedModeName}") not found in collection "${collection.name}" for variable "${variable.name}". Available modes: ${collection.modes.map((m) => m.name).join(", ")}. Skipping.`,
       );
       continue;
@@ -496,14 +497,14 @@ async function restoreVariableModeValues(
     const modeId = mode.modeId;
     try {
       if (value === null || value === undefined) {
-        await debugConsole.log(
+        debugConsole.log(
           `  Mode "${modeName}": value is null/undefined, skipping`,
         );
         continue;
       }
 
       // Debug: Log the value type and content
-      await debugConsole.log(
+      debugConsole.log(
         `  Mode "${modeName}": value type=${typeof value}, value=${JSON.stringify(value)}`,
       );
 
@@ -552,12 +553,10 @@ async function restoreVariableModeValues(
 
         // Immediately read back to verify it was set correctly
         const readBackValue = variable.valuesByMode[modeId];
-        await debugConsole.log(
+        debugConsole.log(
           `  Set color value for "${variable.name}" mode "${modeName}": r=${rgbValue.r.toFixed(3)}, g=${rgbValue.g.toFixed(3)}, b=${rgbValue.b.toFixed(3)}${rgbValue.a !== undefined ? `, a=${rgbValue.a.toFixed(3)}` : ""}`,
         );
-        await debugConsole.log(
-          `  Read back value: ${JSON.stringify(readBackValue)}`,
-        );
+        debugConsole.log(`  Read back value: ${JSON.stringify(readBackValue)}`);
 
         // Verify the read-back value matches what we set
         if (
@@ -576,16 +575,16 @@ async function restoreVariableModeValues(
           const gMatch = Math.abs(readBackRgb.g - rgbValue.g) < 0.001;
           const bMatch = Math.abs(readBackRgb.b - rgbValue.b) < 0.001;
           if (!rMatch || !gMatch || !bMatch) {
-            await debugConsole.warning(
+            debugConsole.warning(
               `  ⚠️ Value mismatch! Set: r=${rgbValue.r}, g=${rgbValue.g}, b=${rgbValue.b}, Read back: r=${readBackRgb.r}, g=${readBackRgb.g}, b=${readBackRgb.b}`,
             );
           } else {
-            await debugConsole.log(
+            debugConsole.log(
               `  ✓ Value verified: read-back matches what we set`,
             );
           }
         } else {
-          await debugConsole.warning(
+          debugConsole.warning(
             `  ⚠️ Read-back value is not an RGB object: ${JSON.stringify(readBackValue)}`,
           );
         }
@@ -648,7 +647,7 @@ async function restoreVariableModeValues(
         !("_varRef" in value) &&
         !("r" in value && "g" in value && "b" in value)
       ) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Unhandled value type for mode "${modeName}" in variable "${variable.name}": ${JSON.stringify(value)}`,
         );
       }
@@ -669,21 +668,21 @@ async function createVariableFromEntry(
   variableTable: VariableTable,
   collectionTable?: CollectionTable, // Optional: for resolving variable aliases
 ): Promise<Variable> {
-  await debugConsole.log(
+  debugConsole.log(
     `Creating variable "${entry.variableName}" (type: ${entry.variableType})`,
   );
   if (entry.valuesByMode) {
-    await debugConsole.log(
+    debugConsole.log(
       `  valuesByMode has ${Object.keys(entry.valuesByMode).length} mode(s): ${Object.keys(entry.valuesByMode).join(", ")}`,
     );
     // Log the actual values for debugging
     for (const [modeName, value] of Object.entries(entry.valuesByMode)) {
-      await debugConsole.log(
+      debugConsole.log(
         `  Mode "${modeName}": ${JSON.stringify(value)} (type: ${typeof value})`,
       );
     }
   } else {
-    await debugConsole.log(
+    debugConsole.log(
       `  No valuesByMode found for variable "${entry.variableName}"`,
     );
   }
@@ -707,14 +706,14 @@ async function createVariableFromEntry(
 
   // Verify the values were set correctly
   if (entry.valuesByMode && variable.valuesByMode) {
-    await debugConsole.log(`  Verifying values for "${entry.variableName}":`);
+    debugConsole.log(`  Verifying values for "${entry.variableName}":`);
     for (const [modeName, expectedValue] of Object.entries(
       entry.valuesByMode,
     )) {
       const mode = collection.modes.find((m) => m.name === modeName);
       if (mode) {
         const actualValue = variable.valuesByMode[mode.modeId];
-        await debugConsole.log(
+        debugConsole.log(
           `    Mode "${modeName}": expected=${JSON.stringify(expectedValue)}, actual=${JSON.stringify(actualValue)}`,
         );
       }
@@ -939,9 +938,7 @@ async function importStyles(
   recognizedVariables: Map<string, Variable>,
 ): Promise<Map<number, BaseStyle>> {
   const styleMapping = new Map<number, BaseStyle>();
-  await debugConsole.log(
-    `Importing ${Object.keys(stylesData).length} styles...`,
-  );
+  debugConsole.log(`Importing ${Object.keys(stylesData).length} styles...`);
 
   const sortedEntries = Object.entries(stylesData).sort(
     (a, b) => parseInt(a[0], 10) - parseInt(b[0], 10),
@@ -982,7 +979,7 @@ async function importStyles(
     }
 
     if (existingStyle) {
-      await debugConsole.log(
+      debugConsole.log(
         `  Skipping creation of style "${styleName}" (type: ${styleType}) as it already exists. Reusing existing style.`,
       );
       styleMapping.set(index, existingStyle);
@@ -1005,19 +1002,19 @@ async function importStyles(
           newStyle = await createGridStyle(styleData, recognizedVariables);
           break;
         default:
-          await debugConsole.warning(
+          debugConsole.warning(
             `  Unknown style type "${styleType}" for style "${styleName}". Skipping.`,
           );
           break;
       }
       if (newStyle) {
         styleMapping.set(index, newStyle);
-        await debugConsole.log(
+        debugConsole.log(
           `  ✓ Created style "${styleName}" (type: ${styleType})`,
         );
       }
     } catch (error) {
-      await debugConsole.warning(
+      debugConsole.warning(
         `  Failed to create style "${styleName}" (type: ${styleType}): ${error}`,
       );
     }
@@ -1115,7 +1112,7 @@ async function createTextStyle(
             // setBoundVariable expects a Variable object, not an ID
             style.setBoundVariable(property as any, variable);
           } catch (error) {
-            await debugConsole.warning(
+            debugConsole.warning(
               `Could not bind variable to text style property "${property}": ${error}`,
             );
           }
@@ -1334,7 +1331,7 @@ export async function recreateNodeFromData(
       // Check if component already exists in mapping (might have been created in first pass)
       if (nodeData.id && nodeIdMapping && nodeIdMapping.has(nodeData.id)) {
         newNode = nodeIdMapping.get(nodeData.id);
-        await debugConsole.log(
+        debugConsole.log(
           `Reusing existing COMPONENT "${nodeData.name || "Unnamed"}" (ID: ${nodeData.id.substring(0, 8)}...)`,
         );
         // If component already has children, it was fully created in a previous second-pass iteration
@@ -1342,7 +1339,7 @@ export async function recreateNodeFromData(
         // If component has no children yet, it was created in first pass and needs children processing
       } else {
         newNode = figma.createComponent();
-        await debugConsole.log(
+        debugConsole.log(
           `Created COMPONENT "${nodeData.name || "Unnamed"}" (ID: ${nodeData.id ? nodeData.id.substring(0, 8) + "..." : "no ID"})`,
         );
 
@@ -1390,7 +1387,7 @@ export async function recreateNodeFromData(
               }
 
               if (!propType) {
-                await debugConsole.warning(
+                debugConsole.warning(
                   `  Unknown property type ${typeValue} (${typeof typeValue}) for property "${propName}" in component "${nodeData.name || "Unnamed"}"`,
                 );
                 failedCount++;
@@ -1408,7 +1405,7 @@ export async function recreateNodeFromData(
               );
               addedCount++;
             } catch (error) {
-              await debugConsole.warning(
+              debugConsole.warning(
                 `  Failed to add component property "${propName}" to "${nodeData.name || "Unnamed"}": ${error}`,
               );
               failedCount++;
@@ -1416,7 +1413,7 @@ export async function recreateNodeFromData(
           }
 
           if (addedCount > 0) {
-            await debugConsole.log(
+            debugConsole.log(
               `  Added ${addedCount} component property definition(s) to "${nodeData.name || "Unnamed"}"${failedCount > 0 ? ` (${failedCount} failed)` : ""}`,
             );
           }
@@ -1429,7 +1426,7 @@ export async function recreateNodeFromData(
       const componentChildren = nodeData.children
         ? nodeData.children.filter((c: any) => c.type === "COMPONENT").length
         : 0;
-      await debugConsole.log(
+      debugConsole.log(
         `Creating COMPONENT_SET "${nodeData.name || "Unnamed"}" by combining ${componentChildren} component variant(s)`,
       );
 
@@ -1473,12 +1470,12 @@ export async function recreateNodeFromData(
               );
               if (componentNode && componentNode.type === "COMPONENT") {
                 componentVariants.push(componentNode);
-                await debugConsole.log(
+                debugConsole.log(
                   `  Created component variant: "${componentNode.name || "Unnamed"}"`,
                 );
               }
             } catch (error) {
-              await debugConsole.warning(
+              debugConsole.warning(
                 `  Failed to create component variant "${childData.name || "Unnamed"}": ${error}`,
               );
             }
@@ -1515,12 +1512,12 @@ export async function recreateNodeFromData(
             tempParent.remove();
           }
 
-          await debugConsole.log(
+          debugConsole.log(
             `  ✓ Successfully created COMPONENT_SET "${componentSet.name}" with ${componentVariants.length} variant(s)`,
           );
           newNode = componentSet;
         } catch (error) {
-          await debugConsole.warning(
+          debugConsole.warning(
             `  Failed to combine components into COMPONENT_SET "${nodeData.name || "Unnamed"}": ${error}. Falling back to frame.`,
           );
           // Fallback: create a frame and keep the components as children
@@ -1538,7 +1535,7 @@ export async function recreateNodeFromData(
         }
       } else {
         // No valid component children, just create a frame
-        await debugConsole.warning(
+        debugConsole.warning(
           `  No valid component variants found for COMPONENT_SET "${nodeData.name || "Unnamed"}". Creating frame instead.`,
         );
         newNode = figma.createFrame();
@@ -1574,7 +1571,7 @@ export async function recreateNodeFromData(
             // this is a detached instance that was exported as an internal instance.
             // The component doesn't actually exist, so we need to create a frame fallback.
             if (instanceEntry.componentNodeId === nodeData.id) {
-              await debugConsole.warning(
+              debugConsole.warning(
                 `Instance "${nodeData.name}" has componentNodeId matching its own ID (detached instance). Creating frame fallback.`,
               );
               newNode = figma.createFrame();
@@ -1595,13 +1592,13 @@ export async function recreateNodeFromData(
                   20,
                 );
                 // Also check if the component exists in the pageData but wasn't created
-                await debugConsole.error(
+                debugConsole.error(
                   `Component not found for internal instance "${nodeData.name}" (ID: ${instanceEntry.componentNodeId.substring(0, 8)}...). The component should have been created during import.`,
                 );
-                await debugConsole.error(
+                debugConsole.error(
                   `Looking for component ID: ${instanceEntry.componentNodeId}`,
                 );
-                await debugConsole.error(
+                debugConsole.error(
                   `Available IDs in mapping (first 20): ${availableIds.map((id) => id.substring(0, 8) + "...").join(", ")}`,
                 );
 
@@ -1634,21 +1631,21 @@ export async function recreateNodeFromData(
                   instanceEntry.componentNodeId,
                 );
 
-                await debugConsole.error(
+                debugConsole.error(
                   `Component ID ${instanceEntry.componentNodeId.substring(0, 8)}... exists in current node tree: ${componentExistsInPageData}`,
                 );
 
                 // Log possible reasons why the component wasn't found
-                await debugConsole.error(
+                debugConsole.error(
                   `WARNING: Component ID ${instanceEntry.componentNodeId.substring(0, 8)}... not found in nodeIdMapping. This might indicate:`,
                 );
-                await debugConsole.error(
+                debugConsole.error(
                   `  1. The component doesn't exist in the pageData (detached component?)`,
                 );
-                await debugConsole.error(
+                debugConsole.error(
                   `  2. The component wasn't collected in the first pass`,
                 );
-                await debugConsole.error(
+                debugConsole.error(
                   `  3. The component ID in the instance table doesn't match the actual component ID`,
                 );
 
@@ -1657,7 +1654,7 @@ export async function recreateNodeFromData(
                   id.startsWith(instanceEntry.componentNodeId!.substring(0, 8)),
                 );
                 if (matchingPrefix.length > 0) {
-                  await debugConsole.error(
+                  debugConsole.error(
                     `Found IDs with matching prefix: ${matchingPrefix.map((id) => id.substring(0, 8) + "...").join(", ")}`,
                   );
                 }
@@ -1670,7 +1667,7 @@ export async function recreateNodeFromData(
               if (componentNode && componentNode.type === "COMPONENT") {
                 // Create instance from the component
                 newNode = componentNode.createInstance();
-                await debugConsole.log(
+                debugConsole.log(
                   `✓ Created internal instance "${nodeData.name}" from component "${instanceEntry.componentName}"`,
                 );
 
@@ -1695,7 +1692,7 @@ export async function recreateNodeFromData(
                       // Component is inside a component set - get properties from the component set
                       componentProperties =
                         componentNode.parent.componentPropertyDefinitions;
-                      await debugConsole.log(
+                      debugConsole.log(
                         `  DEBUG: Component "${instanceEntry.componentName}" is inside component set "${componentNode.parent.name}" with ${Object.keys(componentProperties || {}).length} property definitions`,
                       );
                     } else {
@@ -1705,7 +1702,7 @@ export async function recreateNodeFromData(
                         await newNode.getMainComponentAsync();
                       if (mainComponent) {
                         const mainComponentType = (mainComponent as any).type;
-                        await debugConsole.log(
+                        debugConsole.log(
                           `  DEBUG: Internal instance "${nodeData.name}" - componentNode parent: ${componentNode.parent ? (componentNode.parent as any).type : "N/A"}, mainComponent type: ${mainComponentType}, mainComponent parent: ${mainComponent.parent ? (mainComponent.parent as any).type : "N/A"}`,
                         );
                         if (mainComponentType === "COMPONENT_SET") {
@@ -1722,7 +1719,7 @@ export async function recreateNodeFromData(
                           // Instance was created from a variant component - get properties from parent COMPONENT_SET
                           componentProperties =
                             mainComponent.parent.componentPropertyDefinitions;
-                          await debugConsole.log(
+                          debugConsole.log(
                             `  DEBUG: Found component set parent "${(mainComponent.parent as any).name}" with ${Object.keys(componentProperties || {}).length} property definitions`,
                           );
                         } else {
@@ -1731,7 +1728,7 @@ export async function recreateNodeFromData(
                           // can only be set after the component is in the set
                           // We'll skip setting variant properties for now - they'll be set correctly
                           // when the component is moved into the component set
-                          await debugConsole.log(
+                          debugConsole.log(
                             `  Skipping variant properties for internal instance "${nodeData.name}" - component "${instanceEntry.componentName}" is not yet in a COMPONENT_SET (will be moved later during component set creation)`,
                           );
                         }
@@ -1752,7 +1749,7 @@ export async function recreateNodeFromData(
                         } else {
                           // Expected: Component property definitions cannot be recreated via Figma API
                           // This is a known limitation - properties are skipped silently
-                          // await debugConsole.warning(
+                          // debugConsole.warning(
                           //   `Skipping variant property "${propName}" for internal instance "${nodeData.name}" - property does not exist on recreated component`,
                           // );
                         }
@@ -1765,7 +1762,7 @@ export async function recreateNodeFromData(
                     }
                   } catch (error) {
                     const errorMessage = `Failed to set variant properties for instance "${nodeData.name}": ${error}`;
-                    await debugConsole.error(errorMessage);
+                    debugConsole.error(errorMessage);
                     throw new Error(errorMessage);
                   }
                 }
@@ -1831,20 +1828,20 @@ export async function recreateNodeFromData(
                               });
                             } catch (error) {
                               const errorMessage = `Failed to set component property "${cleanPropName}" for internal instance "${nodeData.name}": ${error}`;
-                              await debugConsole.error(errorMessage);
+                              debugConsole.error(errorMessage);
                               throw new Error(errorMessage);
                             }
                           } else {
                             // Expected: Component property definitions cannot be recreated via Figma API
                             // This is a known limitation - properties are skipped silently
-                            // await debugConsole.warning(
+                            // debugConsole.warning(
                             //   `Skipping component property "${propName}" for internal instance "${nodeData.name}" - property does not exist on recreated component`,
                             // );
                           }
                         }
                       }
                     } else {
-                      await debugConsole.warning(
+                      debugConsole.warning(
                         `Cannot set component properties for internal instance "${nodeData.name}" - main component not found`,
                       );
                     }
@@ -1854,21 +1851,21 @@ export async function recreateNodeFromData(
                       throw error;
                     }
                     const errorMessage = `Failed to set component properties for instance "${nodeData.name}": ${error}`;
-                    await debugConsole.error(errorMessage);
+                    debugConsole.error(errorMessage);
                     throw new Error(errorMessage);
                   }
                 }
               } else if (!newNode && componentNode) {
                 // componentNode exists but is not a COMPONENT type
                 const errorMessage = `Component node found but is not a COMPONENT type for internal instance "${nodeData.name}" (ID: ${instanceEntry.componentNodeId.substring(0, 8)}...).`;
-                await debugConsole.error(errorMessage);
+                debugConsole.error(errorMessage);
                 throw new Error(errorMessage);
               }
               // If newNode is already set (from frame fallback), continue to process children and properties
             }
           } else {
             const errorMessage = `Internal instance "${nodeData.name}" missing componentNodeId. This is required for internal instances.`;
-            await debugConsole.error(errorMessage);
+            debugConsole.error(errorMessage);
             throw new Error(errorMessage);
           }
         } else if (instanceEntry && instanceEntry.instanceType === "remote") {
@@ -1879,7 +1876,7 @@ export async function recreateNodeFromData(
             );
             if (remoteComponent) {
               newNode = remoteComponent.createInstance();
-              await debugConsole.log(
+              debugConsole.log(
                 `✓ Created remote instance "${nodeData.name}" from component "${instanceEntry.componentName}" on REMOTES page`,
               );
 
@@ -1915,7 +1912,7 @@ export async function recreateNodeFromData(
                       // Expected: Remote components are recreated as standalone COMPONENT nodes,
                       // not as part of a COMPONENT_SET, so variant properties cannot be set.
                       // Component properties (if any) will be set separately below.
-                      await debugConsole.log(
+                      debugConsole.log(
                         `Skipping variant properties for remote instance "${nodeData.name}" - main component is not a COMPONENT_SET or variant (expected for remote components)`,
                       );
                     }
@@ -1934,7 +1931,7 @@ export async function recreateNodeFromData(
                         } else {
                           // Expected: Component property definitions cannot be recreated via Figma API
                           // This is a known limitation - properties are skipped silently
-                          // await debugConsole.warning(
+                          // debugConsole.warning(
                           //   `Skipping variant property "${propName}" for remote instance "${nodeData.name}" - property does not exist on recreated component`,
                           // );
                         }
@@ -1946,13 +1943,13 @@ export async function recreateNodeFromData(
                       }
                     }
                   } else {
-                    await debugConsole.warning(
+                    debugConsole.warning(
                       `Cannot set variant properties for remote instance "${nodeData.name}" - main component not found`,
                     );
                   }
                 } catch (error) {
                   const errorMessage = `Failed to set variant properties for remote instance "${nodeData.name}": ${error}`;
-                  await debugConsole.error(errorMessage);
+                  debugConsole.error(errorMessage);
                   throw new Error(errorMessage);
                 }
               }
@@ -2018,20 +2015,20 @@ export async function recreateNodeFromData(
                             });
                           } catch (error) {
                             const errorMessage = `Failed to set component property "${cleanPropName}" for remote instance "${nodeData.name}": ${error}`;
-                            await debugConsole.error(errorMessage);
+                            debugConsole.error(errorMessage);
                             throw new Error(errorMessage);
                           }
                         } else {
                           // Expected: Component property definitions cannot be recreated via Figma API
                           // This is a known limitation - properties are skipped silently
-                          // await debugConsole.warning(
+                          // debugConsole.warning(
                           //   `Skipping component property "${propName}" for remote instance "${nodeData.name}" - property does not exist on recreated component`,
                           // );
                         }
                       }
                     }
                   } else {
-                    await debugConsole.warning(
+                    debugConsole.warning(
                       `Cannot set component properties for remote instance "${nodeData.name}" - main component not found`,
                     );
                   }
@@ -2041,7 +2038,7 @@ export async function recreateNodeFromData(
                     throw error;
                   }
                   const errorMessage = `Failed to set component properties for remote instance "${nodeData.name}": ${error}`;
-                  await debugConsole.error(errorMessage);
+                  debugConsole.error(errorMessage);
                   throw new Error(errorMessage);
                 }
               }
@@ -2055,26 +2052,26 @@ export async function recreateNodeFromData(
                   newNode.resize(nodeData.width, nodeData.height);
                 } catch {
                   // Size might be constrained by component - this is okay
-                  await debugConsole.log(
+                  debugConsole.log(
                     `Note: Could not resize remote instance "${nodeData.name}" to ${nodeData.width}x${nodeData.height} (may be constrained by component)`,
                   );
                 }
               }
             } else {
               const errorMessage = `Remote component not found for instance "${nodeData.name}" (index ${nodeData._instanceRef}). The remote component should have been created on the REMOTES page.`;
-              await debugConsole.error(errorMessage);
+              debugConsole.error(errorMessage);
               throw new Error(errorMessage);
             }
           } else {
             const errorMessage = `Remote instance "${nodeData.name}" cannot be resolved (no remoteComponentMap). Remote instances require a remoteComponentMap.`;
-            await debugConsole.error(errorMessage);
+            debugConsole.error(errorMessage);
             throw new Error(errorMessage);
           }
         } else if (instanceEntry?.instanceType === "normal") {
           // Normal instance - resolve from component on referenced page
           if (!instanceEntry.componentPageName) {
             const errorMessage = `Normal instance "${nodeData.name}" missing componentPageName. Cannot resolve.`;
-            await debugConsole.error(errorMessage);
+            debugConsole.error(errorMessage);
             throw new Error(errorMessage);
           }
 
@@ -2086,7 +2083,7 @@ export async function recreateNodeFromData(
 
           if (!referencedPage) {
             // Page doesn't exist yet - defer resolution (circular reference or not yet imported)
-            await debugConsole.log(
+            debugConsole.log(
               `  Deferring normal instance "${nodeData.name}" - referenced page "${instanceEntry.componentPageName}" does not exist yet (may be circular reference or not yet imported)`,
             );
 
@@ -2117,11 +2114,11 @@ export async function recreateNodeFromData(
               const parentPlaceholderId = currentPlaceholderId;
 
               if (parentPlaceholderId) {
-                await debugConsole.log(
+                debugConsole.log(
                   `[NESTED] Creating child deferred instance "${nodeData.name}" with parent placeholder ID ${parentPlaceholderId.substring(0, 8)}... (immediate parent: "${parentNode.name}" ${parentNode.id.substring(0, 8)}...)`,
                 );
               } else {
-                await debugConsole.log(
+                debugConsole.log(
                   `[NESTED] Creating top-level deferred instance "${nodeData.name}" - parent "${parentNode.name}" (${parentNode.id.substring(0, 8)}...)`,
                 );
               }
@@ -2313,7 +2310,7 @@ export async function recreateNodeFromData(
             return null;
           };
 
-          await debugConsole.log(
+          debugConsole.log(
             `  Looking for component "${instanceEntry.componentName}" on page "${instanceEntry.componentPageName}"${instanceEntry.path && instanceEntry.path.length > 0 ? ` at path [${instanceEntry.path.join(" → ")}]` : " at page root"}${instanceEntry.componentGuid ? ` (GUID: ${instanceEntry.componentGuid.substring(0, 8)}...)` : ""}`,
           );
 
@@ -2341,11 +2338,11 @@ export async function recreateNodeFromData(
           };
           listComponents(referencedPage);
           if (availableComponents.length > 0) {
-            await debugConsole.log(
+            debugConsole.log(
               `  Available components on page "${instanceEntry.componentPageName}":\n${availableComponents.slice(0, 20).join("\n")}${availableComponents.length > 20 ? `\n  ... and ${availableComponents.length - 20} more` : ""}`,
             );
           } else {
-            await debugConsole.warning(
+            debugConsole.warning(
               `  No components found on page "${instanceEntry.componentPageName}"`,
             );
           }
@@ -2367,21 +2364,21 @@ export async function recreateNodeFromData(
               if (metadataStr) {
                 const metadata = JSON.parse(metadataStr);
                 if (metadata.id !== instanceEntry.componentGuid) {
-                  await debugConsole.warning(
+                  debugConsole.warning(
                     `  Found component "${instanceEntry.componentName}" by name but GUID verification failed (expected ${instanceEntry.componentGuid.substring(0, 8)}..., got ${metadata.id ? metadata.id.substring(0, 8) + "..." : "none"}). Using name match as fallback.`,
                   );
                 } else {
-                  await debugConsole.log(
+                  debugConsole.log(
                     `  Found component "${instanceEntry.componentName}" with matching GUID ${instanceEntry.componentGuid.substring(0, 8)}...`,
                   );
                 }
               } else {
-                await debugConsole.warning(
+                debugConsole.warning(
                   `  Found component "${instanceEntry.componentName}" by name but no metadata found. Using name match as fallback.`,
                 );
               }
             } catch {
-              await debugConsole.warning(
+              debugConsole.warning(
                 `  Found component "${instanceEntry.componentName}" by name but GUID verification failed. Using name match as fallback.`,
               );
             }
@@ -2389,7 +2386,7 @@ export async function recreateNodeFromData(
 
           if (!targetComponent) {
             // Component not found - defer resolution (may not be created yet due to circular reference)
-            await debugConsole.log(
+            debugConsole.log(
               `  Deferring normal instance "${nodeData.name}" - component "${instanceEntry.componentName}" not found on page "${instanceEntry.componentPageName}" (may not be created yet due to circular reference)`,
             );
 
@@ -2420,11 +2417,11 @@ export async function recreateNodeFromData(
               const parentPlaceholderId = currentPlaceholderId;
 
               if (parentPlaceholderId) {
-                await debugConsole.log(
+                debugConsole.log(
                   `[NESTED] Creating child deferred instance "${nodeData.name}" with parent placeholder ID ${parentPlaceholderId.substring(0, 8)}... (immediate parent: "${parentNode.name}" ${parentNode.id.substring(0, 8)}...)`,
                 );
               } else {
-                await debugConsole.log(
+                debugConsole.log(
                   `[NESTED] Creating top-level deferred instance "${nodeData.name}" - parent "${parentNode.name}" (${parentNode.id.substring(0, 8)}...)`,
                 );
               }
@@ -2462,7 +2459,7 @@ export async function recreateNodeFromData(
 
           // Create instance of the component
           newNode = targetComponent.createInstance();
-          await debugConsole.log(
+          debugConsole.log(
             `  Created normal instance "${nodeData.name}" from component "${instanceEntry.componentName}" on page "${instanceEntry.componentPageName}"`,
           );
 
@@ -2495,7 +2492,7 @@ export async function recreateNodeFromData(
                     mainComponent.parent.componentPropertyDefinitions;
                 } else {
                   // Instance was created from a non-variant component - no variant properties to set
-                  await debugConsole.warning(
+                  debugConsole.warning(
                     `Cannot set variant properties for normal instance "${nodeData.name}" - main component is not a COMPONENT_SET or variant`,
                   );
                 }
@@ -2521,7 +2518,7 @@ export async function recreateNodeFromData(
                 }
               }
             } catch (error) {
-              await debugConsole.warning(
+              debugConsole.warning(
                 `Failed to set variant properties for normal instance "${nodeData.name}": ${error}`,
               );
             }
@@ -2599,7 +2596,7 @@ export async function recreateNodeFromData(
                       // Figma API requires the exact property key as it exists on the component
                       propertiesToSet[matchingPropKey] = actualValue;
                     } else {
-                      await debugConsole.warning(
+                      debugConsole.warning(
                         `Component property "${cleanPropName}" (from "${propName}") does not exist on component "${instanceEntry.componentName}" for normal instance "${nodeData.name}". Available properties: ${Object.keys(componentProperties).join(", ") || "none"}`,
                       );
                     }
@@ -2609,36 +2606,36 @@ export async function recreateNodeFromData(
                   if (Object.keys(propertiesToSet).length > 0) {
                     try {
                       // Log what we're trying to set and what's available
-                      await debugConsole.log(
+                      debugConsole.log(
                         `  Attempting to set component properties for normal instance "${nodeData.name}": ${Object.keys(propertiesToSet).join(", ")}`,
                       );
-                      await debugConsole.log(
+                      debugConsole.log(
                         `  Available component properties: ${Object.keys(componentProperties).join(", ")}`,
                       );
                       newNode.setProperties(propertiesToSet);
-                      await debugConsole.log(
+                      debugConsole.log(
                         `  ✓ Successfully set component properties for normal instance "${nodeData.name}": ${Object.keys(propertiesToSet).join(", ")}`,
                       );
                     } catch (error) {
-                      await debugConsole.warning(
+                      debugConsole.warning(
                         `Failed to set component properties for normal instance "${nodeData.name}": ${error}`,
                       );
-                      await debugConsole.warning(
+                      debugConsole.warning(
                         `  Properties attempted: ${JSON.stringify(propertiesToSet)}`,
                       );
-                      await debugConsole.warning(
+                      debugConsole.warning(
                         `  Available properties: ${JSON.stringify(Object.keys(componentProperties))}`,
                       );
                     }
                   }
                 }
               } else {
-                await debugConsole.warning(
+                debugConsole.warning(
                   `Cannot set component properties for normal instance "${nodeData.name}" - main component not found`,
                 );
               }
             } catch (error) {
-              await debugConsole.warning(
+              debugConsole.warning(
                 `Failed to set component properties for normal instance "${nodeData.name}": ${error}`,
               );
             }
@@ -2650,7 +2647,7 @@ export async function recreateNodeFromData(
               newNode.resize(nodeData.width, nodeData.height);
             } catch {
               // Size might be constrained by component - this is okay
-              await debugConsole.log(
+              debugConsole.log(
                 `Note: Could not resize normal instance "${nodeData.name}" to ${nodeData.width}x${nodeData.height} (may be constrained by component)`,
               );
             }
@@ -2658,13 +2655,13 @@ export async function recreateNodeFromData(
         } else {
           // Unknown instance type or missing entry - this is an error
           const errorMessage = `Instance "${nodeData.name}" has unknown or missing instance type: ${instanceEntry?.instanceType || "unknown"}`;
-          await debugConsole.error(errorMessage);
+          debugConsole.error(errorMessage);
           throw new Error(errorMessage);
         }
       } else {
         // No _instanceRef or missing instance table - this is an error
         const errorMessage = `Instance "${nodeData.name}" missing _instanceRef or instance table. This is required for instance resolution.`;
-        await debugConsole.error(errorMessage);
+        debugConsole.error(errorMessage);
         throw new Error(errorMessage);
       }
       break;
@@ -2675,7 +2672,7 @@ export async function recreateNodeFromData(
       // Boolean operations cannot be created directly in Figma API
       // They are typically represented as VECTOR nodes with specific paths
       // Import as VECTOR node to preserve the visual appearance
-      await debugConsole.log(
+      debugConsole.log(
         `Converting BOOLEAN_OPERATION "${nodeData.name}" to VECTOR node (boolean operations cannot be created directly in Figma API)`,
       );
       newNode = figma.createVector();
@@ -2687,7 +2684,7 @@ export async function recreateNodeFromData(
       break;
     default: {
       const errorMessage = `Unsupported node type: ${nodeData.type}. This node type cannot be imported.`;
-      await debugConsole.error(errorMessage);
+      debugConsole.error(errorMessage);
       throw new Error(errorMessage);
     }
   }
@@ -2705,7 +2702,7 @@ export async function recreateNodeFromData(
   if (nodeData.id && nodeIdMapping) {
     nodeIdMapping.set(nodeData.id, newNode);
     if (newNode.type === "COMPONENT") {
-      await debugConsole.log(
+      debugConsole.log(
         `  Stored COMPONENT "${nodeData.name || "Unnamed"}" in nodeIdMapping (ID: ${nodeData.id.substring(0, 8)}...)`,
       );
     }
@@ -2723,11 +2720,11 @@ export async function recreateNodeFromData(
       newNode.id,
       nodeData._instanceRef,
     );
-    await debugConsole.log(
+    debugConsole.log(
       `  Stored instance table mapping: instance "${newNode.name}" (ID: ${newNode.id.substring(0, 8)}...) -> instance table index ${nodeData._instanceRef}`,
     );
   } else if (newNode.type === "INSTANCE") {
-    await debugConsole.log(
+    debugConsole.log(
       `  WARNING: Instance "${newNode.name}" (ID: ${newNode.id.substring(0, 8)}...) has no _instanceRef in nodeData - will use fallback matching in third pass`,
     );
   }
@@ -2795,12 +2792,12 @@ export async function recreateNodeFromData(
   // ISSUE #3 & #4 DEBUG: Check for preserveRatio and constraints before resize
   const nodeName = nodeData.name || "Unnamed";
   if (nodeData.preserveRatio !== undefined) {
-    await debugConsole.log(
+    debugConsole.log(
       `  [ISSUE #3 DEBUG] "${nodeName}" has preserveRatio in nodeData: ${nodeData.preserveRatio}`,
     );
   }
   if (nodeData.constraints !== undefined) {
-    await debugConsole.log(
+    debugConsole.log(
       `  [ISSUE #4 DEBUG] "${nodeName}" has constraints in nodeData: ${JSON.stringify(nodeData.constraints)}`,
     );
   }
@@ -2808,7 +2805,7 @@ export async function recreateNodeFromData(
     nodeData.constraintHorizontal !== undefined ||
     nodeData.constraintVertical !== undefined
   ) {
-    await debugConsole.log(
+    debugConsole.log(
       `  [ISSUE #4 DEBUG] "${nodeName}" has constraintHorizontal: ${nodeData.constraintHorizontal}, constraintVertical: ${nodeData.constraintVertical}`,
     );
   }
@@ -2823,7 +2820,7 @@ export async function recreateNodeFromData(
     // ISSUE #3 DEBUG: Check preserveRatio before resize
     const preserveRatioBefore = (newNode as any).preserveRatio;
     if (preserveRatioBefore !== undefined) {
-      await debugConsole.log(
+      debugConsole.log(
         `  [ISSUE #3 DEBUG] "${nodeName}" preserveRatio before resize: ${preserveRatioBefore}`,
       );
     }
@@ -2833,11 +2830,11 @@ export async function recreateNodeFromData(
     // ISSUE #3 DEBUG: Check preserveRatio after resize
     const preserveRatioAfter = (newNode as any).preserveRatio;
     if (preserveRatioAfter !== undefined) {
-      await debugConsole.log(
+      debugConsole.log(
         `  [ISSUE #3 DEBUG] "${nodeName}" preserveRatio after resize: ${preserveRatioAfter}`,
       );
     } else if (nodeData.preserveRatio !== undefined) {
-      await debugConsole.warning(
+      debugConsole.warning(
         `  ⚠️ ISSUE #3: "${nodeName}" preserveRatio was in nodeData (${nodeData.preserveRatio}) but not set on node!`,
       );
     }
@@ -2851,7 +2848,7 @@ export async function recreateNodeFromData(
       expectedConstraintH !== undefined ||
       expectedConstraintV !== undefined
     ) {
-      await debugConsole.log(
+      debugConsole.log(
         `  [ISSUE #4] "${nodeName}" (${nodeData.type}) - Expected constraints from JSON: H=${expectedConstraintH || "undefined"}, V=${expectedConstraintV || "undefined"}`,
       );
     }
@@ -2863,7 +2860,7 @@ export async function recreateNodeFromData(
       expectedConstraintH !== undefined ||
       expectedConstraintV !== undefined
     ) {
-      await debugConsole.log(
+      debugConsole.log(
         `  [ISSUE #4] "${nodeName}" (${nodeData.type}) - Constraints after resize (before setting): H=${constraintHorizontalAfter || "undefined"}, V=${constraintVerticalAfter || "undefined"}`,
       );
     }
@@ -2889,7 +2886,7 @@ export async function recreateNodeFromData(
       const apiV = exportedV || constraintVerticalAfter || "MIN";
 
       try {
-        await debugConsole.log(
+        debugConsole.log(
           `  [ISSUE #4] Setting constraints for "${nodeName}" (${nodeData.type}): H=${apiH} (from ${exportedH || "default"}), V=${apiV} (from ${exportedV || "default"})`,
         );
 
@@ -2903,16 +2900,16 @@ export async function recreateNodeFromData(
         const verifyH = (newNode as any).constraints?.horizontal;
         const verifyV = (newNode as any).constraints?.vertical;
         if (verifyH === apiH && verifyV === apiV) {
-          await debugConsole.log(
+          debugConsole.log(
             `  [ISSUE #4] ✓ Constraints set successfully: H=${verifyH}, V=${verifyV} for "${nodeName}"`,
           );
         } else {
-          await debugConsole.warning(
+          debugConsole.warning(
             `  [ISSUE #4] ⚠️ Constraints set but verification failed! Expected H=${apiH}, V=${apiV}, got H=${verifyH || "undefined"}, V=${verifyV || "undefined"} for "${nodeName}"`,
           );
         }
       } catch (error) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `  [ISSUE #4] ✗ Failed to set constraints for "${nodeName}" (${nodeData.type}): ${error instanceof Error ? error.message : String(error)}`,
         );
       }
@@ -2925,14 +2922,14 @@ export async function recreateNodeFromData(
       expectedConstraintH !== undefined ||
       expectedConstraintV !== undefined
     ) {
-      await debugConsole.log(
+      debugConsole.log(
         `  [ISSUE #4] "${nodeName}" (${nodeData.type}) - Final constraints: H=${finalConstraintH || "undefined"}, V=${finalConstraintV || "undefined"}`,
       );
       if (
         expectedConstraintH !== undefined &&
         finalConstraintH !== expectedConstraintH
       ) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `  ⚠️ ISSUE #4: "${nodeName}" constraintHorizontal mismatch! Expected: ${expectedConstraintH}, Got: ${finalConstraintH || "undefined"}`,
         );
       }
@@ -2940,7 +2937,7 @@ export async function recreateNodeFromData(
         expectedConstraintV !== undefined &&
         finalConstraintV !== expectedConstraintV
       ) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `  ⚠️ ISSUE #4: "${nodeName}" constraintVertical mismatch! Expected: ${expectedConstraintV}, Got: ${finalConstraintV || "undefined"}`,
         );
       }
@@ -2950,7 +2947,7 @@ export async function recreateNodeFromData(
         finalConstraintH === expectedConstraintH &&
         finalConstraintV === expectedConstraintV
       ) {
-        await debugConsole.log(
+        debugConsole.log(
           `  ✓ ISSUE #4: "${nodeName}" constraints correctly set: H=${finalConstraintH}, V=${finalConstraintV}`,
         );
       }
@@ -2970,11 +2967,11 @@ export async function recreateNodeFromData(
     ) {
       // Skip VECTOR and BOOLEAN_OPERATION nodes - constraints are set earlier to avoid "not extensible" errors
       if (nodeData.type === "VECTOR" || nodeData.type === "BOOLEAN_OPERATION") {
-        await debugConsole.log(
+        debugConsole.log(
           `  [ISSUE #4] "${nodeName}" (VECTOR) - Constraints already set earlier (skipping "no resize" path)`,
         );
       } else {
-        await debugConsole.log(
+        debugConsole.log(
           `  [ISSUE #4] "${nodeName}" (${nodeData.type}) - Setting constraints (no resize): Expected H=${expectedConstraintH || "undefined"}, V=${expectedConstraintV || "undefined"}`,
         );
       }
@@ -3006,7 +3003,7 @@ export async function recreateNodeFromData(
         const apiVNoResize = exportedVNoResize || currentV;
 
         try {
-          await debugConsole.log(
+          debugConsole.log(
             `  [ISSUE #4] Setting constraints for "${nodeName}" (${nodeData.type}) (no resize): H=${apiHNoResize} (from ${exportedHNoResize || "current"}), V=${apiVNoResize} (from ${exportedVNoResize || "current"})`,
           );
 
@@ -3023,16 +3020,16 @@ export async function recreateNodeFromData(
             verifyHNoResize === apiHNoResize &&
             verifyVNoResize === apiVNoResize
           ) {
-            await debugConsole.log(
+            debugConsole.log(
               `  [ISSUE #4] ✓ Constraints set successfully (no resize): H=${verifyHNoResize}, V=${verifyVNoResize} for "${nodeName}"`,
             );
           } else {
-            await debugConsole.warning(
+            debugConsole.warning(
               `  [ISSUE #4] ⚠️ Constraints set but verification failed (no resize)! Expected H=${apiHNoResize}, V=${apiVNoResize}, got H=${verifyHNoResize || "undefined"}, V=${verifyVNoResize || "undefined"} for "${nodeName}"`,
             );
           }
         } catch (error) {
-          await debugConsole.warning(
+          debugConsole.warning(
             `  [ISSUE #4] ✗ Failed to set constraints for "${nodeName}" (${nodeData.type}) (no resize): ${error instanceof Error ? error.message : String(error)}`,
           );
         }
@@ -3047,14 +3044,14 @@ export async function recreateNodeFromData(
     ) {
       const finalConstraintH = (newNode as any).constraints?.horizontal;
       const finalConstraintV = (newNode as any).constraints?.vertical;
-      await debugConsole.log(
+      debugConsole.log(
         `  [ISSUE #4] "${nodeName}" (${nodeData.type}) - Final constraints (no resize): H=${finalConstraintH || "undefined"}, V=${finalConstraintV || "undefined"}`,
       );
       if (
         expectedConstraintH !== undefined &&
         finalConstraintH !== expectedConstraintH
       ) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `  ⚠️ ISSUE #4: "${nodeName}" constraintHorizontal mismatch! Expected: ${expectedConstraintH}, Got: ${finalConstraintH || "undefined"}`,
         );
       }
@@ -3062,7 +3059,7 @@ export async function recreateNodeFromData(
         expectedConstraintV !== undefined &&
         finalConstraintV !== expectedConstraintV
       ) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `  ⚠️ ISSUE #4: "${nodeName}" constraintVertical mismatch! Expected: ${expectedConstraintV}, Got: ${finalConstraintV || "undefined"}`,
         );
       }
@@ -3073,7 +3070,7 @@ export async function recreateNodeFromData(
         finalConstraintH === expectedConstraintH &&
         finalConstraintV === expectedConstraintV
       ) {
-        await debugConsole.log(
+        debugConsole.log(
           `  ✓ ISSUE #4: "${nodeName}" constraints correctly set (no resize): H=${finalConstraintH}, V=${finalConstraintV}`,
         );
       }
@@ -3115,11 +3112,11 @@ export async function recreateNodeFromData(
   if (nodeData.type !== "INSTANCE") {
     // DEBUG: Log bound variables for VECTOR nodes (for "Selection colors" issue)
     if (nodeData.type === "VECTOR" && nodeData.boundVariables) {
-      await debugConsole.log(
+      debugConsole.log(
         `  DEBUG: VECTOR "${nodeData.name || "Unnamed"}" (ID: ${nodeData.id?.substring(0, 8) || "unknown"}...) has boundVariables: ${Object.keys(nodeData.boundVariables).join(", ")}`,
       );
       if (nodeData.boundVariables.fills) {
-        await debugConsole.log(
+        debugConsole.log(
           `  DEBUG:   boundVariables.fills: ${JSON.stringify(nodeData.boundVariables.fills)}`,
         );
       }
@@ -3137,7 +3134,7 @@ export async function recreateNodeFromData(
             const fill = fills[i];
             if (fill && typeof fill === "object") {
               if ((fill as any).selectionColor !== undefined) {
-                await debugConsole.log(
+                debugConsole.log(
                   `  [ISSUE #2 DEBUG] "${nodeName}" fill[${i}] has selectionColor: ${JSON.stringify((fill as any).selectionColor)}`,
                 );
               }
@@ -3155,7 +3152,7 @@ export async function recreateNodeFromData(
               typeof fill === "object" &&
               fill.selectionColor !== undefined
             ) {
-              await debugConsole.warning(
+              debugConsole.warning(
                 `  ⚠️ ISSUE #2: "${nodeName}" fill[${i}] has selectionColor that will be preserved: ${JSON.stringify(fill.selectionColor)}`,
               );
             }
@@ -3183,7 +3180,7 @@ export async function recreateNodeFromData(
         ) {
           // DEBUG: Log fill items for VECTOR nodes
           if (nodeData.type === "VECTOR") {
-            await debugConsole.log(
+            debugConsole.log(
               `  DEBUG: VECTOR "${nodeData.name || "Unnamed"}" has ${nodeData.fills.length} fill(s)`,
             );
             for (let i = 0; i < nodeData.fills.length; i++) {
@@ -3192,11 +3189,11 @@ export async function recreateNodeFromData(
                 const fillBoundVars =
                   fillData.boundVariables || fillData.bndVar;
                 if (fillBoundVars) {
-                  await debugConsole.log(
+                  debugConsole.log(
                     `  DEBUG:   fill[${i}] has boundVariables: ${JSON.stringify(fillBoundVars)}`,
                   );
                 } else {
-                  await debugConsole.log(
+                  debugConsole.log(
                     `  DEBUG:   fill[${i}] has no boundVariables`,
                   );
                 }
@@ -3230,7 +3227,7 @@ export async function recreateNodeFromData(
             for (const [propName, varInfo] of Object.entries(fillBoundVars)) {
               // DEBUG: Log what we're processing
               if (nodeData.type === "VECTOR") {
-                await debugConsole.log(
+                debugConsole.log(
                   `  DEBUG: Processing fill[${i}].${propName} on VECTOR "${newNode.name || "Unnamed"}": varInfo=${JSON.stringify(varInfo)}`,
                 );
               }
@@ -3239,19 +3236,19 @@ export async function recreateNodeFromData(
                 if (varRef !== undefined) {
                   // DEBUG: Log variable lookup
                   if (nodeData.type === "VECTOR") {
-                    await debugConsole.log(
+                    debugConsole.log(
                       `  DEBUG: Looking up variable reference ${varRef} in recognizedVariables (map has ${recognizedVariables.size} entries)`,
                     );
                     // DEBUG: List available variable references
                     const availableRefs = Array.from(
                       recognizedVariables.keys(),
                     ).slice(0, 10);
-                    await debugConsole.log(
+                    debugConsole.log(
                       `  DEBUG: Available variable references (first 10): ${availableRefs.join(", ")}`,
                     );
                     // Check if the specific variable reference exists
                     const hasVarRef = recognizedVariables.has(String(varRef));
-                    await debugConsole.log(
+                    debugConsole.log(
                       `  DEBUG: Variable reference ${varRef} ${hasVarRef ? "found" : "NOT FOUND"} in recognizedVariables`,
                     );
                     if (!hasVarRef) {
@@ -3259,7 +3256,7 @@ export async function recreateNodeFromData(
                       const allRefs = Array.from(
                         recognizedVariables.keys(),
                       ).sort((a, b) => parseInt(a) - parseInt(b));
-                      await debugConsole.log(
+                      debugConsole.log(
                         `  DEBUG: All available variable references: ${allRefs.join(", ")}`,
                       );
                     }
@@ -3268,7 +3265,7 @@ export async function recreateNodeFromData(
                   // If not found in recognizedVariables, try to resolve from variable table
                   if (!variable) {
                     if (nodeData.type === "VECTOR") {
-                      await debugConsole.log(
+                      debugConsole.log(
                         `  DEBUG: Variable ${varRef} not in recognizedVariables. variableTable=${!!variableTable}, collectionTable=${!!collectionTable}, recognizedCollections=${!!recognizedCollections}`,
                       );
                     }
@@ -3277,7 +3274,7 @@ export async function recreateNodeFromData(
                       collectionTable &&
                       recognizedCollections
                     ) {
-                      await debugConsole.log(
+                      debugConsole.log(
                         `  Variable reference ${varRef} not in recognizedVariables, attempting to resolve from variable table...`,
                       );
                       const resolvedVariable = await resolveVariableFromTable(
@@ -3290,17 +3287,17 @@ export async function recreateNodeFromData(
                       if (variable) {
                         // Add to recognizedVariables for future lookups
                         recognizedVariables.set(String(varRef), variable);
-                        await debugConsole.log(
+                        debugConsole.log(
                           `  ✓ Resolved variable ${variable.name} from variable table and added to recognizedVariables`,
                         );
                       } else {
-                        await debugConsole.warning(
+                        debugConsole.warning(
                           `  Failed to resolve variable ${varRef} from variable table`,
                         );
                       }
                     } else {
                       if (nodeData.type === "VECTOR") {
-                        await debugConsole.warning(
+                        debugConsole.warning(
                           `  Cannot resolve variable ${varRef} from table - missing required parameters`,
                         );
                       }
@@ -3311,24 +3308,24 @@ export async function recreateNodeFromData(
                       type: "VARIABLE_ALIAS",
                       id: variable.id,
                     };
-                    await debugConsole.log(
+                    debugConsole.log(
                       `  ✓ Restored bound variable for fill[${i}].${propName} on "${newNode.name || "Unnamed"}" (${nodeData.type}): variable ${variable.name} (ID: ${variable.id.substring(0, 8)}...)`,
                     );
                   } else {
-                    await debugConsole.warning(
+                    debugConsole.warning(
                       `  Variable reference ${varRef} not found in recognizedVariables for fill[${i}].${propName} on "${newNode.name || "Unnamed"}"`,
                     );
                   }
                 } else {
                   if (nodeData.type === "VECTOR") {
-                    await debugConsole.warning(
+                    debugConsole.warning(
                       `  DEBUG: Variable reference ${varRef} is undefined for fill[${i}].${propName} on VECTOR "${newNode.name || "Unnamed"}"`,
                     );
                   }
                 }
               } else {
                 if (nodeData.type === "VECTOR") {
-                  await debugConsole.warning(
+                  debugConsole.warning(
                     `  DEBUG: fill[${i}].${propName} on VECTOR "${newNode.name || "Unnamed"}" is not a variable reference: ${JSON.stringify(varInfo)}`,
                   );
                 }
@@ -3340,7 +3337,7 @@ export async function recreateNodeFromData(
 
           // Set fills with boundVariables
           newNode.fills = fillsWithBoundVars;
-          await debugConsole.log(
+          debugConsole.log(
             `  ✓ Set fills with boundVariables on "${newNode.name || "Unnamed"}" (${nodeData.type})`,
           );
 
@@ -3352,7 +3349,7 @@ export async function recreateNodeFromData(
               const fill = fillsAfter[i];
               if (fill && typeof fill === "object") {
                 if ((fill as any).selectionColor !== undefined) {
-                  await debugConsole.warning(
+                  debugConsole.warning(
                     `  ⚠️ ISSUE #2: "${nodeName}" fill[${i}] has selectionColor AFTER setting with boundVariables: ${JSON.stringify((fill as any).selectionColor)}`,
                   );
                 }
@@ -3371,7 +3368,7 @@ export async function recreateNodeFromData(
               const fill = fillsAfter[i];
               if (fill && typeof fill === "object") {
                 if ((fill as any).selectionColor !== undefined) {
-                  await debugConsole.warning(
+                  debugConsole.warning(
                     `  ⚠️ ISSUE #2: "${nodeName}" fill[${i}] has selectionColor AFTER setting: ${JSON.stringify((fill as any).selectionColor)}`,
                   );
                 }
@@ -3387,7 +3384,7 @@ export async function recreateNodeFromData(
           Object.keys(nodeData.boundVariables).length > 0 &&
           !nodeData.boundVariables.fills
         ) {
-          await debugConsole.log(
+          debugConsole.log(
             `  Node "${newNode.name || "Unnamed"}" (${nodeData.type}) has boundVariables but not for fills: ${Object.keys(nodeData.boundVariables).join(", ")}`,
           );
         }
@@ -3489,7 +3486,7 @@ export async function recreateNodeFromData(
       if (validLayoutModes.includes(nodeData.layoutMode)) {
         newNode.layoutMode = nodeData.layoutMode;
       } else {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Invalid layoutMode value "${nodeData.layoutMode}" for node "${nodeData.name || "Unnamed"}", skipping layoutMode setting`,
         );
       }
@@ -3546,7 +3543,7 @@ export async function recreateNodeFromData(
                 propName
               ];
 
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG: Attempting to set bound variable for ${propName} on "${nodeData.name || "Unnamed"}": current value=${currentValue}, current boundVar=${JSON.stringify(currentBoundVar)}`,
               );
 
@@ -3568,11 +3565,11 @@ export async function recreateNodeFromData(
                 const immediatelyAfter = (newNode as any).boundVariables?.[
                   propName
                 ];
-                await debugConsole.log(
+                debugConsole.log(
                   `  DEBUG: Immediately after setting ${propName} bound variable: ${JSON.stringify(immediatelyAfter)}`,
                 );
               } catch (error) {
-                await debugConsole.warning(
+                debugConsole.warning(
                   `  Error setting bound variable for ${propName}: ${error instanceof Error ? error.message : String(error)}`,
                 );
               }
@@ -3586,27 +3583,25 @@ export async function recreateNodeFromData(
                 const finalBoundVar = (newNode as any).boundVariables?.[
                   propName
                 ];
-                await debugConsole.log(
+                debugConsole.log(
                   `  [ISSUE #1 DEBUG] itemSpacing variable binding for "${nodeData.name || "Unnamed"}":`,
                 );
-                await debugConsole.log(
-                  `    - Expected variable ref: ${varRef}`,
-                );
-                await debugConsole.log(
+                debugConsole.log(`    - Expected variable ref: ${varRef}`);
+                debugConsole.log(
                   `    - Final itemSpacing value: ${finalValue}`,
                 );
-                await debugConsole.log(
+                debugConsole.log(
                   `    - Final boundVariable: ${JSON.stringify(finalBoundVar)}`,
                 );
-                await debugConsole.log(
+                debugConsole.log(
                   `    - Variable found: ${variable ? `Yes (ID: ${variable.id})` : "No"}`,
                 );
                 if (!setBoundVar || !setBoundVar.id) {
-                  await debugConsole.warning(
+                  debugConsole.warning(
                     `    ⚠️ ISSUE #1: itemSpacing variable binding FAILED - boundVariable not set correctly!`,
                   );
                 } else {
-                  await debugConsole.log(
+                  debugConsole.log(
                     `    ✓ itemSpacing variable binding SUCCESS`,
                   );
                 }
@@ -3618,11 +3613,11 @@ export async function recreateNodeFromData(
                 setBoundVar.type === "VARIABLE_ALIAS" &&
                 setBoundVar.id === variable.id
               ) {
-                await debugConsole.log(
+                debugConsole.log(
                   `  ✓ Set bound variable for ${propName} on "${nodeData.name || "Unnamed"}" (${nodeData.type}): variable ${variable.name} (ID: ${variable.id.substring(0, 8)}...)`,
                 );
               } else {
-                await debugConsole.warning(
+                debugConsole.warning(
                   `  Failed to set bound variable for ${propName} on "${nodeData.name || "Unnamed"}" - verification failed. Expected: ${JSON.stringify(alias)}, Got: ${JSON.stringify(setBoundVar)}`,
                 );
               }
@@ -3646,15 +3641,15 @@ export async function recreateNodeFromData(
         nodeData.boundVariables.itemSpacing;
 
       if (!hasBoundVariableForItemSpacing) {
-        await debugConsole.log(
+        debugConsole.log(
           `  Setting itemSpacing to ${nodeData.itemSpacing} for "${nodeData.name || "Unnamed"}" (${nodeData.type})`,
         );
         newNode.itemSpacing = nodeData.itemSpacing;
-        await debugConsole.log(
+        debugConsole.log(
           `  ✓ Set itemSpacing to ${newNode.itemSpacing} (verified)`,
         );
       } else {
-        await debugConsole.log(
+        debugConsole.log(
           `  Skipping itemSpacing (bound to variable) for "${nodeData.name || "Unnamed"}"`,
         );
       }
@@ -3664,7 +3659,7 @@ export async function recreateNodeFromData(
         nodeData.type === "COMPONENT" ||
         nodeData.type === "INSTANCE"
       ) {
-        await debugConsole.log(
+        debugConsole.log(
           `  DEBUG: Not setting itemSpacing for "${nodeData.name || "Unnamed"}": layoutMode=${nodeData.layoutMode}, itemSpacing=${nodeData.itemSpacing}`,
         );
       }
@@ -3713,7 +3708,7 @@ export async function recreateNodeFromData(
         "itemSpacing",
       ].filter((prop) => nodeData.boundVariables[prop]);
       if (paddingBoundVars.length > 0) {
-        await debugConsole.log(
+        debugConsole.log(
           `  DEBUG: Node "${nodeData.name || "Unnamed"}" (${nodeData.type}) has bound variables for: ${paddingBoundVars.join(", ")}`,
         );
       }
@@ -3764,13 +3759,13 @@ export async function recreateNodeFromData(
         // Only set if it's different from what we already set, or if it wasn't set earlier
         // This prevents overriding a value we already set correctly
         if (newNode.itemSpacing !== nodeData.itemSpacing) {
-          await debugConsole.log(
+          debugConsole.log(
             `  Setting itemSpacing to ${nodeData.itemSpacing} for "${nodeData.name || "Unnamed"}" (late setting)`,
           );
           newNode.itemSpacing = nodeData.itemSpacing;
         }
       } else if (isActuallyBound) {
-        await debugConsole.log(
+        debugConsole.log(
           `  Skipping late setting of itemSpacing for "${nodeData.name || "Unnamed"}" - already bound to variable`,
         );
       }
@@ -3832,17 +3827,17 @@ export async function recreateNodeFromData(
             const originalData = nodeData.fillGeometry[i].data;
             const normalizedData = vectorPaths[i].data;
             if (originalData !== normalizedData) {
-              await debugConsole.log(
+              debugConsole.log(
                 `  Normalized path ${i + 1} for "${nodeData.name || "Unnamed"}": ${originalData.substring(0, 50)}... -> ${normalizedData.substring(0, 50)}...`,
               );
             }
           }
           (newNode as any).vectorPaths = vectorPaths;
-          await debugConsole.log(
+          debugConsole.log(
             `  Set vectorPaths for VECTOR "${nodeData.name || "Unnamed"}" (${vectorPaths.length} path(s))`,
           );
         } catch (error) {
-          await debugConsole.warning(
+          debugConsole.warning(
             `Error setting vectorPaths for VECTOR "${nodeData.name || "Unnamed"}": ${error}`,
           );
         }
@@ -3854,7 +3849,7 @@ export async function recreateNodeFromData(
           // If it fails, we'll log a warning
           (newNode as any).strokeGeometry = nodeData.strokeGeometry;
         } catch (error) {
-          await debugConsole.warning(
+          debugConsole.warning(
             `Error setting strokeGeometry for VECTOR "${nodeData.name || "Unnamed"}": ${error}`,
           );
         }
@@ -3873,11 +3868,11 @@ export async function recreateNodeFromData(
       ) {
         try {
           newNode.resize(nodeData.width, nodeData.height);
-          await debugConsole.log(
+          debugConsole.log(
             `  Set size for VECTOR "${nodeData.name || "Unnamed"}" to ${nodeData.width}x${nodeData.height}`,
           );
         } catch (error) {
-          await debugConsole.warning(
+          debugConsole.warning(
             `Error setting size for VECTOR "${nodeData.name || "Unnamed"}": ${error}`,
           );
         }
@@ -3895,7 +3890,7 @@ export async function recreateNodeFromData(
         expectedConstraintH !== undefined ||
         expectedConstraintV !== undefined
       ) {
-        await debugConsole.log(
+        debugConsole.log(
           `  [ISSUE #4] "${nodeData.name || "Unnamed"}" (VECTOR) - Setting constraints immediately after size: Expected H=${expectedConstraintH || "undefined"}, V=${expectedConstraintV || "undefined"}`,
         );
 
@@ -3919,16 +3914,16 @@ export async function recreateNodeFromData(
           const verifyH = (newNode as any).constraints?.horizontal;
           const verifyV = (newNode as any).constraints?.vertical;
           if (verifyH === apiH && verifyV === apiV) {
-            await debugConsole.log(
+            debugConsole.log(
               `  [ISSUE #4] ✓ Constraints set successfully for "${nodeData.name || "Unnamed"}" (VECTOR): H=${verifyH}, V=${verifyV}`,
             );
           } else {
-            await debugConsole.warning(
+            debugConsole.warning(
               `  [ISSUE #4] ⚠️ Constraints set but verification failed! Expected H=${apiH}, V=${apiV}, got H=${verifyH || "undefined"}, V=${verifyV || "undefined"} for "${nodeData.name || "Unnamed"}"`,
             );
           }
         } catch (error) {
-          await debugConsole.warning(
+          debugConsole.warning(
             `  [ISSUE #4] ✗ Failed to set constraints for "${nodeData.name || "Unnamed"}" (VECTOR): ${error instanceof Error ? error.message : String(error)}`,
           );
         }
@@ -3936,14 +3931,14 @@ export async function recreateNodeFromData(
         // Final verification for VECTOR constraints
         const finalConstraintH = (newNode as any).constraints?.horizontal;
         const finalConstraintV = (newNode as any).constraints?.vertical;
-        await debugConsole.log(
+        debugConsole.log(
           `  [ISSUE #4] "${nodeData.name || "Unnamed"}" (VECTOR) - Final constraints after immediate setting: H=${finalConstraintH || "undefined"}, V=${finalConstraintV || "undefined"}`,
         );
         if (
           expectedConstraintH !== undefined &&
           finalConstraintH !== expectedConstraintH
         ) {
-          await debugConsole.warning(
+          debugConsole.warning(
             `  ⚠️ ISSUE #4: "${nodeData.name || "Unnamed"}" constraintHorizontal mismatch! Expected: ${expectedConstraintH}, Got: ${finalConstraintH || "undefined"}`,
           );
         }
@@ -3951,7 +3946,7 @@ export async function recreateNodeFromData(
           expectedConstraintV !== undefined &&
           finalConstraintV !== expectedConstraintV
         ) {
-          await debugConsole.warning(
+          debugConsole.warning(
             `  ⚠️ ISSUE #4: "${nodeData.name || "Unnamed"}" constraintVertical mismatch! Expected: ${expectedConstraintV}, Got: ${finalConstraintV || "undefined"}`,
           );
         }
@@ -3961,7 +3956,7 @@ export async function recreateNodeFromData(
           finalConstraintH === expectedConstraintH &&
           finalConstraintV === expectedConstraintV
         ) {
-          await debugConsole.log(
+          debugConsole.log(
             `  ✓ ISSUE #4: "${nodeData.name || "Unnamed"}" (VECTOR) constraints correctly set: H=${finalConstraintH}, V=${finalConstraintV}`,
           );
         }
@@ -3974,14 +3969,14 @@ export async function recreateNodeFromData(
     try {
       // Check for _styleRef first (new format with style table)
       let styleApplied = false;
-      await debugConsole.log(
+      debugConsole.log(
         `  Processing TEXT node "${nodeData.name || "Unnamed"}": has _styleRef=${nodeData._styleRef !== undefined}, has styleMapping=${styleMapping !== null && styleMapping !== undefined}`,
       );
       if (nodeData._styleRef !== undefined) {
         if (!styleMapping) {
           // Style reference found but no style mapping - this should have been caught earlier
           // but handle gracefully by falling through to individual properties
-          await debugConsole.warning(
+          debugConsole.warning(
             `Text node "${nodeData.name || "Unnamed"}" has _styleRef but styles table was not imported. Using individual properties instead.`,
           );
         } else {
@@ -3991,20 +3986,20 @@ export async function recreateNodeFromData(
             // This is required even though the font is in the style
             try {
               const textStyle = style as TextStyle;
-              await debugConsole.log(
+              debugConsole.log(
                 `  Applying text style "${style.name}" to text node "${nodeData.name || "Unnamed"}" (font: ${textStyle.fontName.family} ${textStyle.fontName.style})`,
               );
               // Try to load the font from the style
               // Even if fontName is bound to a variable, we can still try to load the current resolved font
               try {
                 await figma.loadFontAsync(textStyle.fontName);
-                await debugConsole.log(
+                debugConsole.log(
                   `  ✓ Loaded font "${textStyle.fontName.family} ${textStyle.fontName.style}" for style "${style.name}"`,
                 );
               } catch (fontLoadError) {
                 // If font loading fails (e.g., font not available or bound to variable),
                 // try to load a default font as fallback
-                await debugConsole.warning(
+                debugConsole.warning(
                   `  Could not load font "${textStyle.fontName.family} ${textStyle.fontName.style}" for style "${style.name}": ${fontLoadError}. Trying fallback font.`,
                 );
                 try {
@@ -4012,12 +4007,10 @@ export async function recreateNodeFromData(
                     family: "Roboto",
                     style: "Regular",
                   });
-                  await debugConsole.log(
-                    `  ✓ Loaded fallback font "Roboto Regular"`,
-                  );
+                  debugConsole.log(`  ✓ Loaded fallback font "Roboto Regular"`);
                 } catch {
                   // If even default font fails, log warning but continue
-                  await debugConsole.warning(
+                  debugConsole.warning(
                     `  Could not load fallback font for style "${style.name}" on text node "${nodeData.name || "Unnamed"}"`,
                   );
                 }
@@ -4026,12 +4019,12 @@ export async function recreateNodeFromData(
               // Set style first - this applies all style properties including font
               // Use setTextStyleIdAsync when document access is "dynamic-page"
               await newNode.setTextStyleIdAsync(style.id);
-              await debugConsole.log(
+              debugConsole.log(
                 `  ✓ Set textStyleId to "${style.id}" for style "${style.name}"`,
               );
               // Now we can safely set characters after font is loaded (or attempted)
               newNode.characters = nodeData.characters;
-              await debugConsole.log(
+              debugConsole.log(
                 `  ✓ Set characters: "${nodeData.characters.substring(0, 50)}${nodeData.characters.length > 50 ? "..." : ""}"`,
               );
               // Mark style as successfully applied
@@ -4054,14 +4047,14 @@ export async function recreateNodeFromData(
               }
             } catch (styleError) {
               // If style application fails, try to fall back to individual properties
-              await debugConsole.warning(
+              debugConsole.warning(
                 `Failed to apply style "${style.name}" on text node "${nodeData.name || "Unnamed"}": ${styleError}. Falling back to individual properties.`,
               );
               // Fall through to individual properties (styleApplied remains false)
             }
           } else {
             // Style reference invalid, fall through to individual properties
-            await debugConsole.warning(
+            debugConsole.warning(
               `Text node "${nodeData.name || "Unnamed"}" has invalid _styleRef (${nodeData._styleRef}). Using individual properties instead.`,
             );
           }
@@ -4165,16 +4158,16 @@ export async function recreateNodeFromData(
       // Set direct value only if not bound to a variable
       try {
         (newNode as any).selectionColor = nodeData.selectionColor;
-        await debugConsole.log(
+        debugConsole.log(
           `  [ISSUE #2] Set selectionColor (direct value) on "${nodeName}": ${JSON.stringify(nodeData.selectionColor)}`,
         );
       } catch (error) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `  [ISSUE #2] Failed to set selectionColor on "${nodeName}": ${error instanceof Error ? error.message : String(error)}`,
         );
       }
     } else {
-      await debugConsole.log(
+      debugConsole.log(
         `  [ISSUE #2] Skipping direct selectionColor value for "${nodeName}" - will be set via bound variable`,
       );
     }
@@ -4200,7 +4193,7 @@ export async function recreateNodeFromData(
         // ISSUE #2: Log when we're restoring selectionColor bound variable
         if (propertyName === "selectionColor") {
           const nodeName = nodeData.name || "Unnamed";
-          await debugConsole.log(
+          debugConsole.log(
             `  [ISSUE #2] Restoring bound variable for selectionColor on "${nodeName}"`,
           );
         }
@@ -4234,7 +4227,7 @@ export async function recreateNodeFromData(
                   newNode.boundVariables[propertyName] === undefined;
 
                 if (hasDirectValue) {
-                  await debugConsole.warning(
+                  debugConsole.warning(
                     `  Property ${propertyName} has direct value ${currentValue} which may prevent bound variable from being set`,
                   );
                 }
@@ -4255,7 +4248,7 @@ export async function recreateNodeFromData(
                   setBoundVar.type === "VARIABLE_ALIAS" &&
                   setBoundVar.id === variable.id
                 ) {
-                  await debugConsole.log(
+                  debugConsole.log(
                     `  ✓ Set bound variable for ${propertyName} on "${nodeData.name || "Unnamed"}" (${nodeData.type}): variable ${variable.name} (ID: ${variable.id.substring(0, 8)}...)`,
                   );
                 } else {
@@ -4263,17 +4256,17 @@ export async function recreateNodeFromData(
                   const actualBoundVar = (newNode as any).boundVariables?.[
                     propertyName
                   ];
-                  await debugConsole.warning(
+                  debugConsole.warning(
                     `  Failed to set bound variable for ${propertyName} on "${nodeData.name || "Unnamed"}" - bound variable not persisted. Property value: ${currentValue}, Expected: ${JSON.stringify(alias)}, Got: ${JSON.stringify(actualBoundVar)}`,
                   );
                 }
               } catch (error) {
-                await debugConsole.warning(
+                debugConsole.warning(
                   `  Error setting bound variable for ${propertyName} on "${nodeData.name || "Unnamed"}": ${error}`,
                 );
               }
             } else {
-              await debugConsole.warning(
+              debugConsole.warning(
                 `  Variable reference ${varRef} not found in recognizedVariables for ${propertyName} on "${nodeData.name || "Unnamed"}"`,
               );
             }
@@ -4391,12 +4384,12 @@ export async function recreateNodeFromData(
     // This ensures all components are in nodeIdMapping before any instances reference them
     // We only create the component nodes themselves, not their children (that happens in second pass)
     const allComponents = collectComponents(nodeData.children);
-    await debugConsole.log(
+    debugConsole.log(
       `  First pass: Creating ${allComponents.length} COMPONENT node(s) (without children)...`,
     );
     // Log all collected components for debugging
     for (const comp of allComponents) {
-      await debugConsole.log(
+      debugConsole.log(
         `  Collected COMPONENT "${comp.name || "Unnamed"}" (ID: ${comp.id ? comp.id.substring(0, 8) + "..." : "no ID"}) for first pass`,
       );
     }
@@ -4435,7 +4428,7 @@ export async function recreateNodeFromData(
 
               const propType = typeMap[(propDef as any).type];
               if (!propType) {
-                await debugConsole.warning(
+                debugConsole.warning(
                   `  Unknown property type ${(propDef as any).type} for property "${propName}" in component "${componentData.name || "Unnamed"}"`,
                 );
                 failedCount++;
@@ -4453,7 +4446,7 @@ export async function recreateNodeFromData(
               );
               addedCount++;
             } catch (error) {
-              await debugConsole.warning(
+              debugConsole.warning(
                 `  Failed to add component property "${propName}" to "${componentData.name || "Unnamed"}" in first pass: ${error}`,
               );
               failedCount++;
@@ -4461,7 +4454,7 @@ export async function recreateNodeFromData(
           }
 
           if (addedCount > 0) {
-            await debugConsole.log(
+            debugConsole.log(
               `  Added ${addedCount} component property definition(s) to "${componentData.name || "Unnamed"}" in first pass${failedCount > 0 ? ` (${failedCount} failed)` : ""}`,
             );
           }
@@ -4469,7 +4462,7 @@ export async function recreateNodeFromData(
 
         // Store in mapping immediately so instances can find it
         nodeIdMapping.set(componentData.id, componentNode);
-        await debugConsole.log(
+        debugConsole.log(
           `  Created COMPONENT "${componentData.name || "Unnamed"}" (ID: ${componentData.id.substring(0, 8)}...) in first pass`,
         );
         // Don't append to parent yet - that happens in second pass
@@ -4521,7 +4514,7 @@ export async function recreateNodeFromData(
               (childNode.parent as any).removeChild(childNode);
             } catch (error) {
               // If removeChild fails, log a warning but continue
-              await debugConsole.warning(
+              debugConsole.warning(
                 `Failed to remove child "${childNode.name || "Unnamed"}" from parent "${childNode.parent.name || "Unnamed"}": ${error}`,
               );
             }
@@ -4547,7 +4540,7 @@ export async function recreateNodeFromData(
         (newNode.parent as any).removeChild(newNode);
       } catch (error) {
         // If removeChild fails, log a warning but continue
-        await debugConsole.warning(
+        debugConsole.warning(
           `Failed to remove node "${newNode.name || "Unnamed"}" from parent "${newNode.parent.name || "Unnamed"}": ${error}`,
         );
       }
@@ -4579,28 +4572,28 @@ export async function recreateNodeFromData(
       nodeData.boundVariables.itemSpacing;
 
     if (isActuallyBound) {
-      await debugConsole.log(
+      debugConsole.log(
         `  FINAL CHECK: itemSpacing is bound to variable for "${nodeData.name || "Unnamed"}" - skipping direct value fix`,
       );
     } else if (!shouldBeBound) {
       // Only fix if it's not bound and shouldn't be bound
       const currentValue = newNode.itemSpacing;
       if (currentValue !== nodeData.itemSpacing) {
-        await debugConsole.log(
+        debugConsole.log(
           `  FINAL FIX: Resetting itemSpacing to ${nodeData.itemSpacing} for "${nodeData.name || "Unnamed"}" (was ${currentValue})`,
         );
         newNode.itemSpacing = nodeData.itemSpacing;
-        await debugConsole.log(
+        debugConsole.log(
           `  FINAL FIX: Verified itemSpacing is now ${newNode.itemSpacing}`,
         );
       } else {
-        await debugConsole.log(
+        debugConsole.log(
           `  FINAL CHECK: itemSpacing is already correct (${currentValue}) for "${nodeData.name || "Unnamed"}"`,
         );
       }
     } else {
       // Should be bound but isn't - this is the bug we're trying to fix
-      await debugConsole.warning(
+      debugConsole.warning(
         `  FINAL CHECK: itemSpacing should be bound to variable for "${nodeData.name || "Unnamed"}" but binding is missing!`,
       );
     }
@@ -4638,7 +4631,7 @@ async function setVariantPropertiesOnInstances(
   };
 
   const allInstances = findInstances(page);
-  await debugConsole.log(
+  debugConsole.log(
     `  Found ${allInstances.length} instance(s) to process for variant properties`,
   );
 
@@ -4664,16 +4657,16 @@ async function setVariantPropertiesOnInstances(
         );
         if (instanceTableIndex !== undefined) {
           matchingEntry = allInstancesData[instanceTableIndex];
-          await debugConsole.log(
+          debugConsole.log(
             `  Found instance table index ${instanceTableIndex} for instance "${instanceNode.name}" (ID: ${instanceNode.id.substring(0, 8)}...)`,
           );
         } else {
-          await debugConsole.log(
+          debugConsole.log(
             `  No instance table index mapping found for instance "${instanceNode.name}" (ID: ${instanceNode.id.substring(0, 8)}...), using fallback matching`,
           );
         }
       } else {
-        await debugConsole.log(
+        debugConsole.log(
           `  No instance table map found, using fallback matching for instance "${instanceNode.name}"`,
         );
       }
@@ -4690,7 +4683,7 @@ async function setVariantPropertiesOnInstances(
               const componentNode = nodeIdMapping.get(entry.componentNodeId);
               if (componentNode && componentNode.id === mainComponent.id) {
                 matchingEntry = entry;
-                await debugConsole.log(
+                debugConsole.log(
                   `  Matched instance "${instanceNode.name}" to instance table entry ${indexStr} by component (less precise)`,
                 );
                 break;
@@ -4701,7 +4694,7 @@ async function setVariantPropertiesOnInstances(
       }
 
       if (!matchingEntry) {
-        await debugConsole.log(
+        debugConsole.log(
           `  No matching entry found for instance "${instanceNode.name}" (main component: ${mainComponent.name}, ID: ${mainComponent.id.substring(0, 8)}...)`,
         );
         skippedCount++;
@@ -4709,14 +4702,14 @@ async function setVariantPropertiesOnInstances(
       }
 
       if (!matchingEntry.variantProperties) {
-        await debugConsole.log(
+        debugConsole.log(
           `  Instance table entry for "${instanceNode.name}" has no variant properties`,
         );
         skippedCount++;
         continue;
       }
 
-      await debugConsole.log(
+      debugConsole.log(
         `  Instance "${instanceNode.name}" matched to entry with variant properties: ${JSON.stringify(matchingEntry.variantProperties)}`,
       );
 
@@ -4749,7 +4742,7 @@ async function setVariantPropertiesOnInstances(
         if (Object.keys(validProperties).length > 0) {
           instanceNode.setProperties(validProperties);
           processedCount++;
-          await debugConsole.log(
+          debugConsole.log(
             `  ✓ Set variant properties on instance "${instanceNode.name}": ${JSON.stringify(validProperties)}`,
           );
         } else {
@@ -4760,13 +4753,13 @@ async function setVariantPropertiesOnInstances(
       }
     } catch (error) {
       errorCount++;
-      await debugConsole.warning(
+      debugConsole.warning(
         `  Failed to set variant properties on instance "${instanceNode.name}": ${error}`,
       );
     }
   }
 
-  await debugConsole.log(
+  debugConsole.log(
     `  Variant properties set: ${processedCount} processed, ${skippedCount} skipped, ${errorCount} errors`,
   );
 }
@@ -5085,7 +5078,7 @@ async function matchCollections(
   for (const [index, entry] of Object.entries(collections)) {
     // Skip remote collections (they're handled separately)
     if (entry.isLocal === false) {
-      await debugConsole.log(
+      debugConsole.log(
         `Skipping remote collection: "${entry.collectionName}" (index ${index})`,
       );
       continue;
@@ -5096,7 +5089,7 @@ async function matchCollections(
     const preCreated = preCreatedCollections?.get(normalizedName);
 
     if (preCreated) {
-      await debugConsole.log(
+      debugConsole.log(
         `✓ Using pre-created collection: "${normalizedName}" (index ${index})`,
       );
       recognizedCollections.set(index, preCreated);
@@ -5106,12 +5099,12 @@ async function matchCollections(
     const match = await matchCollection(entry);
 
     if (match.matchType === "recognized") {
-      await debugConsole.log(
+      debugConsole.log(
         `✓ Recognized collection by GUID: "${entry.collectionName}" (index ${index})`,
       );
       recognizedCollections.set(index, match.collection!);
     } else if (match.matchType === "potential") {
-      await debugConsole.log(
+      debugConsole.log(
         `? Potential match by name: "${entry.collectionName}" (index ${index})`,
       );
       potentialMatches.set(index, {
@@ -5119,14 +5112,14 @@ async function matchCollections(
         collection: match.collection!,
       });
     } else {
-      await debugConsole.log(
+      debugConsole.log(
         `✗ No match found for collection: "${entry.collectionName}" (index ${index}) - will create new`,
       );
       collectionsToCreate.set(index, entry);
     }
   }
 
-  await debugConsole.log(
+  debugConsole.log(
     `Collection matching complete: ${recognizedCollections.size} recognized, ${potentialMatches.size} potential matches, ${collectionsToCreate.size} to create`,
   );
 
@@ -5159,7 +5152,7 @@ async function promptForPotentialMatches(
 
   // If collection choices are provided (from wizard), use them instead of prompting
   if (collectionChoices) {
-    await debugConsole.log(
+    debugConsole.log(
       `Using wizard selections for ${potentialMatches.size} potential match(es)...`,
     );
 
@@ -5182,17 +5175,17 @@ async function promptForPotentialMatches(
         : collection.name;
 
       if (shouldUseExisting) {
-        await debugConsole.log(
+        debugConsole.log(
           `✓ Wizard selection: Using existing collection "${displayName}" (index ${index})`,
         );
         recognizedCollections.set(index, collection);
 
         await ensureCollectionModes(collection, entry.modes);
-        await debugConsole.log(
+        debugConsole.log(
           `  ✓ Ensured modes for collection "${displayName}" (${entry.modes.length} mode(s))`,
         );
       } else {
-        await debugConsole.log(
+        debugConsole.log(
           `✗ Wizard selection: Will create new collection for "${entry.collectionName}" (index ${index})`,
         );
         collectionsToCreate.set(index, entry);
@@ -5202,7 +5195,7 @@ async function promptForPotentialMatches(
   }
 
   // Otherwise, prompt the user (legacy behavior)
-  await debugConsole.log(
+  debugConsole.log(
     `Prompting user for ${potentialMatches.size} potential match(es)...`,
   );
 
@@ -5213,7 +5206,7 @@ async function promptForPotentialMatches(
         : collection.name;
 
       const message = `Found existing "${displayName}" variable collection. Should I use it?`;
-      await debugConsole.log(
+      debugConsole.log(
         `Prompting user about potential match: "${displayName}"`,
       );
       await pluginPrompt.prompt(message, {
@@ -5222,17 +5215,17 @@ async function promptForPotentialMatches(
         timeoutMs: -1,
       });
 
-      await debugConsole.log(
+      debugConsole.log(
         `✓ User confirmed: Using existing collection "${displayName}" (index ${index})`,
       );
       recognizedCollections.set(index, collection);
 
       await ensureCollectionModes(collection, entry.modes);
-      await debugConsole.log(
+      debugConsole.log(
         `  ✓ Ensured modes for collection "${displayName}" (${entry.modes.length} mode(s))`,
       );
     } catch {
-      await debugConsole.log(
+      debugConsole.log(
         `✗ User rejected: Will create new collection for "${entry.collectionName}" (index ${index})`,
       );
       collectionsToCreate.set(index, entry);
@@ -5255,7 +5248,7 @@ async function ensureModesForRecognizedCollections(
     return;
   }
 
-  await debugConsole.log(`Ensuring modes exist for recognized collections...`);
+  debugConsole.log(`Ensuring modes exist for recognized collections...`);
 
   const collections = collectionTable.getTable();
   for (const [index, collection] of recognizedCollections.entries()) {
@@ -5264,7 +5257,7 @@ async function ensureModesForRecognizedCollections(
       const wasUserConfirmed = potentialMatches.has(index);
       if (!wasUserConfirmed) {
         await ensureCollectionModes(collection, entry.modes);
-        await debugConsole.log(
+        debugConsole.log(
           `  ✓ Ensured modes for collection "${collection.name}" (${entry.modes.length} mode(s))`,
         );
       }
@@ -5285,7 +5278,7 @@ async function createNewCollections(
     return;
   }
 
-  await debugConsole.log(
+  debugConsole.log(
     `Processing ${collectionsToCreate.size} collection(s) to create...`,
   );
 
@@ -5295,7 +5288,7 @@ async function createNewCollections(
     // Check if we have a pre-created collection for this normalized name
     const preCreated = preCreatedCollections?.get(normalizedName);
     if (preCreated) {
-      await debugConsole.log(
+      debugConsole.log(
         `Reusing pre-created collection: "${normalizedName}" (index ${index}, id: ${preCreated.id.substring(0, 8)}...)`,
       );
       recognizedCollections.set(index, preCreated);
@@ -5309,11 +5302,11 @@ async function createNewCollections(
     // No pre-created collection, create a new one
     const uniqueName = await findUniqueCollectionName(normalizedName);
     if (uniqueName !== normalizedName) {
-      await debugConsole.log(
+      debugConsole.log(
         `Creating collection: "${uniqueName}" (normalized: "${normalizedName}" - name conflict resolved)`,
       );
     } else {
-      await debugConsole.log(`Creating collection: "${uniqueName}"`);
+      debugConsole.log(`Creating collection: "${uniqueName}"`);
     }
 
     const newCollection = figma.variables.createVariableCollection(uniqueName);
@@ -5335,20 +5328,18 @@ async function createNewCollections(
         COLLECTION_GUID_KEY,
         guidToStore,
       );
-      await debugConsole.log(
-        `  Stored GUID: ${guidToStore.substring(0, 8)}...`,
-      );
+      debugConsole.log(`  Stored GUID: ${guidToStore.substring(0, 8)}...`);
     }
 
     await ensureCollectionModes(newCollection, entry.modes);
-    await debugConsole.log(
+    debugConsole.log(
       `  ✓ Created collection "${uniqueName}" with ${entry.modes.length} mode(s)`,
     );
 
     recognizedCollections.set(index, newCollection);
   }
 
-  await debugConsole.log("Collection creation complete");
+  debugConsole.log("Collection creation complete");
 }
 
 /**
@@ -5398,7 +5389,7 @@ export async function matchAndCreateVariables(
     newlyCreatedCollections.map((c) => c.id),
   );
 
-  await debugConsole.log("Matching and creating variables in collections...");
+  debugConsole.log("Matching and creating variables in collections...");
 
   const variables = variableTable.getTable();
   const collectionStats = new Map<
@@ -5452,7 +5443,7 @@ export async function matchAndCreateVariables(
         recognizedVariables.set(index, existingVariable);
         stats.existing++;
       } else {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Type mismatch for variable "${entry.variableName}" in collection "${collection.name}": expected ${variableType}, found ${existingVariable.resolvedType}. Creating new variable with incremented name.`,
         );
         const uniqueName = await findUniqueVariableName(
@@ -5493,17 +5484,15 @@ export async function matchAndCreateVariables(
     }
   }
 
-  await debugConsole.log("Variable processing complete:");
+  debugConsole.log("Variable processing complete:");
   for (const stats of collectionStats.values()) {
-    await debugConsole.log(
+    debugConsole.log(
       `  "${stats.collectionName}": ${stats.existing} existing, ${stats.created} created`,
     );
   }
 
   // Final verification: Read back all COLOR variables to ensure values persisted
-  await debugConsole.log(
-    "Final verification: Reading back all COLOR variables...",
-  );
+  debugConsole.log("Final verification: Reading back all COLOR variables...");
   let verifiedCount = 0;
   let whiteCount = 0;
   for (const variable of newlyCreatedVariables) {
@@ -5513,14 +5502,14 @@ export async function matchAndCreateVariables(
         variable.variableCollectionId,
       );
       if (!collection) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `  ⚠️ Variable "${variable.name}" has no variableCollection (ID: ${variable.variableCollectionId})`,
         );
         continue;
       }
       const allModes = collection.modes;
       if (!allModes || allModes.length === 0) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `  ⚠️ Variable "${variable.name}" collection has no modes`,
         );
         continue;
@@ -5536,26 +5525,26 @@ export async function matchAndCreateVariables(
             Math.abs(rgb.b - 1) < 0.01;
           if (isWhite) {
             whiteCount++;
-            await debugConsole.warning(
+            debugConsole.warning(
               `  ⚠️ Variable "${variable.name}" mode "${mode.name}" is WHITE: r=${rgb.r.toFixed(3)}, g=${rgb.g.toFixed(3)}, b=${rgb.b.toFixed(3)}`,
             );
           } else {
             verifiedCount++;
-            await debugConsole.log(
+            debugConsole.log(
               `  ✓ Variable "${variable.name}" mode "${mode.name}" has color: r=${rgb.r.toFixed(3)}, g=${rgb.g.toFixed(3)}, b=${rgb.b.toFixed(3)}`,
             );
           }
         } else if (value && typeof value === "object" && "type" in value) {
           // Variable alias - skip
         } else {
-          await debugConsole.warning(
+          debugConsole.warning(
             `  ⚠️ Variable "${variable.name}" mode "${mode.name}" has unexpected value type: ${JSON.stringify(value)}`,
           );
         }
       }
     }
   }
-  await debugConsole.log(
+  debugConsole.log(
     `Final verification complete: ${verifiedCount} color variables verified, ${whiteCount} white variables found`,
   );
 
@@ -5713,11 +5702,11 @@ async function createRemoteInstances(
   const remoteComponentMap = new Map<number, ComponentNode>();
 
   if (remoteInstances.length === 0) {
-    await debugConsole.log("No remote instances found");
+    debugConsole.log("No remote instances found");
     return remoteComponentMap;
   }
 
-  await debugConsole.log(
+  debugConsole.log(
     `Processing ${remoteInstances.length} remote instance(s)...`,
   );
 
@@ -5734,9 +5723,9 @@ async function createRemoteInstances(
   if (!remotesPage) {
     remotesPage = figma.createPage();
     remotesPage.name = remotesPageName;
-    await debugConsole.log("Created REMOTES page");
+    debugConsole.log("Created REMOTES page");
   } else {
-    await debugConsole.log("Found existing REMOTES page");
+    debugConsole.log("Found existing REMOTES page");
     // Update name if it doesn't have the construction icon but we're in a wizard import
     if (constructionIcon && !remotesPage.name.startsWith(constructionIcon)) {
       remotesPage.name = remotesPageName;
@@ -5747,7 +5736,7 @@ async function createRemoteInstances(
   // (This indicates it's being used as part of a wizard import)
   if (remoteInstances.length > 0) {
     remotesPage.setPluginData("RecursicaUnderReview", "true");
-    await debugConsole.log("Marked REMOTES page as under review");
+    debugConsole.log("Marked REMOTES page as under review");
   }
 
   // Check if title/description already exist
@@ -5790,7 +5779,7 @@ async function createRemoteInstances(
     titleFrame.appendChild(descriptionText);
 
     remotesPage.appendChild(titleFrame);
-    await debugConsole.log("Created title and description on REMOTES page");
+    debugConsole.log("Created title and description on REMOTES page");
   }
 
   // Process each remote instance
@@ -5802,12 +5791,12 @@ async function createRemoteInstances(
     }
 
     const instanceIndex = parseInt(indexStr, 10);
-    await debugConsole.log(
+    debugConsole.log(
       `Processing remote instance ${instanceIndex}: "${entry.componentName}"`,
     );
 
     if (!entry.structure) {
-      await debugConsole.warning(
+      debugConsole.warning(
         `Remote instance "${entry.componentName}" missing structure data, skipping`,
       );
       continue;
@@ -5825,7 +5814,7 @@ async function createRemoteInstances(
       : entry.structure.child
         ? entry.structure.child.length
         : 0;
-    await debugConsole.log(
+    debugConsole.log(
       `  Structure type: ${entry.structure.type || "unknown"}, has children: ${childrenCount} (children key: ${hasChildren}, child key: ${hasChild})`,
     );
 
@@ -5846,7 +5835,7 @@ async function createRemoteInstances(
       frameName,
     );
     if (uniqueComponentName !== frameName) {
-      await debugConsole.log(
+      debugConsole.log(
         `Component name conflict: "${frameName}" -> "${uniqueComponentName}"`,
       );
     }
@@ -5857,7 +5846,7 @@ async function createRemoteInstances(
       // Check if the structure type is COMPONENT
       // Type should already be normalized above, but double-check
       if (entry.structure.type !== "COMPONENT") {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Remote instance "${entry.componentName}" structure is not a COMPONENT (type: ${entry.structure.type}), creating frame fallback`,
         );
         // Create a frame container as fallback
@@ -5883,7 +5872,7 @@ async function createRemoteInstances(
         if (recreatedNode) {
           containerFrame.appendChild(recreatedNode);
           remotesPage.appendChild(containerFrame);
-          await debugConsole.log(
+          debugConsole.log(
             `✓ Created remote instance frame fallback: "${uniqueComponentName}"`,
           );
         } else {
@@ -5897,9 +5886,7 @@ async function createRemoteInstances(
       const componentNode = figma.createComponent();
       componentNode.name = uniqueComponentName;
       remotesPage.appendChild(componentNode);
-      await debugConsole.log(
-        `  Created component node: "${uniqueComponentName}"`,
-      );
+      debugConsole.log(`  Created component node: "${uniqueComponentName}"`);
 
       // Now recreate the structure's children and properties into the component
       // We need to apply all properties from the structure to the component
@@ -5928,7 +5915,7 @@ async function createRemoteInstances(
 
               const propType = typeMap[(propDef as any).type];
               if (!propType) {
-                await debugConsole.warning(
+                debugConsole.warning(
                   `  Unknown property type ${(propDef as any).type} for property "${propName}" in component "${entry.componentName}"`,
                 );
                 failedCount++;
@@ -5946,7 +5933,7 @@ async function createRemoteInstances(
               );
               addedCount++;
             } catch (error) {
-              await debugConsole.warning(
+              debugConsole.warning(
                 `  Failed to add component property "${propName}" to "${entry.componentName}": ${error}`,
               );
               failedCount++;
@@ -5954,7 +5941,7 @@ async function createRemoteInstances(
           }
 
           if (addedCount > 0) {
-            await debugConsole.log(
+            debugConsole.log(
               `  Added ${addedCount} component property definition(s) to "${entry.componentName}"${failedCount > 0 ? ` (${failedCount} failed)` : ""}`,
             );
           }
@@ -6041,7 +6028,7 @@ async function createRemoteInstances(
               );
             }
           } catch (error) {
-            await debugConsole.warning(
+            debugConsole.warning(
               `Error setting fills for remote component "${entry.componentName}": ${error}`,
             );
           }
@@ -6052,7 +6039,7 @@ async function createRemoteInstances(
           try {
             componentNode.strokes = entry.structure.strokes;
           } catch (error) {
-            await debugConsole.warning(
+            debugConsole.warning(
               `Error setting strokes for remote component "${entry.componentName}": ${error}`,
             );
           }
@@ -6209,13 +6196,13 @@ async function createRemoteInstances(
         // Recreate children
         // Handle both "child" (compressed) and "children" (expanded) keys
         // Debug: Log structure keys before accessing children
-        await debugConsole.log(
+        debugConsole.log(
           `  DEBUG: Structure keys: ${Object.keys(entry.structure).join(", ")}, has children: ${!!entry.structure.children}, has child: ${!!entry.structure.child}`,
         );
         const childrenArray =
           entry.structure.children ||
           (entry.structure.child ? entry.structure.child : null);
-        await debugConsole.log(
+        debugConsole.log(
           `  DEBUG: childrenArray exists: ${!!childrenArray}, isArray: ${Array.isArray(childrenArray)}, length: ${childrenArray ? childrenArray.length : 0}`,
         );
         if (
@@ -6223,21 +6210,21 @@ async function createRemoteInstances(
           Array.isArray(childrenArray) &&
           childrenArray.length > 0
         ) {
-          await debugConsole.log(
+          debugConsole.log(
             `  Recreating ${childrenArray.length} child(ren) for component "${entry.componentName}"`,
           );
           for (let i = 0; i < childrenArray.length; i++) {
             const childData = childrenArray[i];
-            await debugConsole.log(
+            debugConsole.log(
               `  DEBUG: Processing child ${i + 1}/${childrenArray.length}: ${JSON.stringify({ name: childData?.name, type: childData?.type, hasTruncated: !!childData?._truncated })}`,
             );
             if (childData._truncated) {
-              await debugConsole.log(
+              debugConsole.log(
                 `  Skipping truncated child: ${childData._reason || "Unknown"}`,
               );
               continue;
             }
-            await debugConsole.log(
+            debugConsole.log(
               `  Recreating child: "${childData.name || "Unnamed"}" (type: ${childData.type})`,
             );
             const childNode = await recreateNodeFromData(
@@ -6259,11 +6246,11 @@ async function createRemoteInstances(
             );
             if (childNode) {
               componentNode.appendChild(childNode);
-              await debugConsole.log(
+              debugConsole.log(
                 `  ✓ Appended child "${childData.name || "Unnamed"}" to component "${entry.componentName}"`,
               );
             } else {
-              await debugConsole.warning(
+              debugConsole.warning(
                 `  ✗ Failed to create child "${childData.name || "Unnamed"}" (type: ${childData.type})`,
               );
             }
@@ -6271,23 +6258,23 @@ async function createRemoteInstances(
         }
 
         remoteComponentMap.set(instanceIndex, componentNode);
-        await debugConsole.log(
+        debugConsole.log(
           `✓ Created remote component: "${uniqueComponentName}" (index ${instanceIndex})`,
         );
       } catch (error) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Error populating remote component "${entry.componentName}": ${error instanceof Error ? error.message : "Unknown error"}`,
         );
         componentNode.remove();
       }
     } catch (error) {
-      await debugConsole.warning(
+      debugConsole.warning(
         `Error recreating remote instance "${entry.componentName}": ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
 
-  await debugConsole.log(
+  debugConsole.log(
     `Remote instance processing complete: ${remoteComponentMap.size} component(s) created`,
   );
 
@@ -6320,7 +6307,7 @@ async function createPageAndRecreateStructure(
   error?: string;
   deferredInstances?: DeferredNormalInstance[];
 }> {
-  await debugConsole.log("Creating page from JSON...");
+  debugConsole.log("Creating page from JSON...");
 
   await figma.loadAllPagesAsync();
   const allPages = figma.root.children;
@@ -6364,7 +6351,7 @@ async function createPageAndRecreateStructure(
       existingVersion !== undefined ? ` v${existingVersion}` : "";
     const message = `Found existing component "${pageWithSameGuid.name}${versionText}". Should I use it or create a copy?`;
 
-    await debugConsole.log(
+    debugConsole.log(
       `Found existing page with same GUID: "${pageWithSameGuid.name}". Prompting user...`,
     );
 
@@ -6378,14 +6365,12 @@ async function createPageAndRecreateStructure(
 
       // User chose "Use" - return existing page
       useExistingPage = true;
-      await debugConsole.log(
+      debugConsole.log(
         `User chose to use existing page: "${pageWithSameGuid.name}"`,
       );
     } catch {
       // User chose "Copy" or cancelled - proceed with creating new page
-      await debugConsole.log(
-        `User chose to create a copy. Will create new page.`,
-      );
+      debugConsole.log(`User chose to create a copy. Will create new page.`);
     }
   }
 
@@ -6395,10 +6380,10 @@ async function createPageAndRecreateStructure(
   // (componentPageName) during their import process.
   if (useExistingPage && pageWithSameGuid) {
     await figma.setCurrentPageAsync(pageWithSameGuid);
-    await debugConsole.log(
+    debugConsole.log(
       `Using existing page: "${pageWithSameGuid.name}" (GUID: ${metadata.guid.substring(0, 8)}...)`,
     );
-    await debugConsole.log(
+    debugConsole.log(
       `  Instances from other pages will resolve to components on this existing page using componentPageName: "${pageWithSameGuid.name}"`,
     );
     return {
@@ -6412,7 +6397,7 @@ async function createPageAndRecreateStructure(
   // Otherwise, proceed with creating a new page
   const existingPageByName = allPages.find((p) => p.name === metadata.name);
   if (existingPageByName) {
-    await debugConsole.log(
+    debugConsole.log(
       `Found existing page with same name: "${metadata.name}". Will create new page with unique name.`,
     );
   }
@@ -6421,19 +6406,19 @@ async function createPageAndRecreateStructure(
   if (pageWithSameGuid || existingPageByName) {
     const scratchBaseName = `__${metadata.name}`;
     pageName = await findUniquePageName(scratchBaseName);
-    await debugConsole.log(
+    debugConsole.log(
       `Creating scratch page: "${pageName}" (will be renamed to "${metadata.name}" on success)`,
     );
   } else {
     pageName = metadata.name;
-    await debugConsole.log(`Creating page: "${pageName}"`);
+    debugConsole.log(`Creating page: "${pageName}"`);
   }
 
   const newPage = figma.createPage();
   newPage.name = pageName;
 
   await figma.setCurrentPageAsync(newPage);
-  await debugConsole.log(`Switched to page: "${pageName}"`);
+  debugConsole.log(`Switched to page: "${pageName}"`);
 
   if (!expandedJsonData.pageData) {
     return {
@@ -6442,7 +6427,7 @@ async function createPageAndRecreateStructure(
     };
   }
 
-  await debugConsole.log("Recreating page structure...");
+  debugConsole.log("Recreating page structure...");
   const pageData = expandedJsonData.pageData;
 
   // Apply page-level properties (like backgrounds) if they exist
@@ -6450,11 +6435,11 @@ async function createPageAndRecreateStructure(
   if (pageData.backgrounds !== undefined) {
     try {
       newPage.backgrounds = pageData.backgrounds;
-      await debugConsole.log(
+      debugConsole.log(
         `Set page background: ${JSON.stringify(pageData.backgrounds)}`,
       );
     } catch (error) {
-      await debugConsole.warning(`Failed to set page background: ${error}`);
+      debugConsole.warning(`Failed to set page background: ${error}`);
     }
   }
 
@@ -6481,11 +6466,11 @@ async function createPageAndRecreateStructure(
 
   // Log all component IDs found in the page data for debugging
   const allComponentIds = findAllComponentIds(pageData);
-  await debugConsole.log(
+  debugConsole.log(
     `Found ${allComponentIds.length} COMPONENT node(s) in page data`,
   );
   if (allComponentIds.length > 0) {
-    await debugConsole.log(
+    debugConsole.log(
       `Component IDs in page data (first 20): ${allComponentIds
         .slice(0, 20)
         .map((id) => id.substring(0, 8) + "...")
@@ -6521,15 +6506,13 @@ async function createPageAndRecreateStructure(
     }
   }
 
-  await debugConsole.log("Page structure recreated successfully");
+  debugConsole.log("Page structure recreated successfully");
 
   // Third pass: Set variant properties on all instances now that component sets are created
   // This is needed because instances are created before component sets are combined,
   // so variant properties can't be set until after component sets exist
   if (instanceTable) {
-    await debugConsole.log(
-      "Third pass: Setting variant properties on instances...",
-    );
+    debugConsole.log("Third pass: Setting variant properties on instances...");
     await setVariantPropertiesOnInstances(
       newPage,
       instanceTable,
@@ -6546,7 +6529,7 @@ async function createPageAndRecreateStructure(
     history: {},
   };
   newPage.setPluginData(PAGE_METADATA_KEY, JSON.stringify(pageMetadata));
-  await debugConsole.log(
+  debugConsole.log(
     `Stored page metadata (GUID: ${metadata.guid.substring(0, 8)}...)`,
   );
 
@@ -6561,7 +6544,7 @@ async function createPageAndRecreateStructure(
       finalName = await findUniquePageName(metadata.name);
     }
     newPage.name = finalName;
-    await debugConsole.log(`Renamed page from "${pageName}" to "${finalName}"`);
+    debugConsole.log(`Renamed page from "${pageName}" to "${finalName}"`);
   } else if (skipUniqueNaming && constructionIcon) {
     // For wizard imports, ensure construction icon is present
     if (!newPage.name.startsWith(constructionIcon)) {
@@ -6578,13 +6561,16 @@ async function createPageAndRecreateStructure(
 
 export async function importPage(
   data: ImportPageData,
+  requestId?: string, // Optional request ID for cancellation support
 ): Promise<ResponseMessage> {
+  // Check for cancellation at the start
+  checkCancellation(requestId);
   // Only clear console if explicitly requested (default: true for single page imports)
   const shouldClearConsole = data.clearConsole !== false;
   if (shouldClearConsole) {
-    await debugConsole.clear();
+    debugConsole.clear();
   }
-  await debugConsole.log("=== Starting Page Import ===");
+  debugConsole.log("=== Starting Page Import ===");
 
   const newlyCreatedCollections: VariableCollection[] = [];
 
@@ -6592,7 +6578,7 @@ export async function importPage(
     const jsonData = data.jsonData;
 
     if (!jsonData) {
-      await debugConsole.error("JSON data is required");
+      debugConsole.error("JSON data is required");
       return {
         type: "importPage",
         success: false,
@@ -6603,10 +6589,10 @@ export async function importPage(
     }
 
     // Stage 1: Validate metadata
-    await debugConsole.log("Validating metadata...");
+    debugConsole.log("Validating metadata...");
     const metadataResult = validateMetadata(jsonData);
     if (!metadataResult.success) {
-      await debugConsole.error(metadataResult.error!);
+      debugConsole.error(metadataResult.error!);
       return {
         type: "importPage",
         success: false,
@@ -6616,15 +6602,16 @@ export async function importPage(
       };
     }
     const metadata = metadataResult.metadata!;
-    await debugConsole.log(
+    debugConsole.log(
       `Metadata validated: guid=${metadata.guid}, name=${metadata.name}`,
     );
+    checkCancellation(requestId);
 
     // Stage 2: Load and expand JSON
-    await debugConsole.log("Loading string table...");
+    debugConsole.log("Loading string table...");
     const jsonResult = loadAndExpandJson(jsonData);
     if (!jsonResult.success) {
-      await debugConsole.error(jsonResult.error!);
+      debugConsole.error(jsonResult.error!);
       return {
         type: "importPage",
         success: false,
@@ -6633,20 +6620,21 @@ export async function importPage(
         data: {},
       };
     }
-    await debugConsole.log("String table loaded successfully");
-    await debugConsole.log("Expanding JSON data...");
+    debugConsole.log("String table loaded successfully");
+    debugConsole.log("Expanding JSON data...");
     const expandedJsonData = jsonResult.expandedJsonData!;
-    await debugConsole.log("JSON expanded successfully");
+    debugConsole.log("JSON expanded successfully");
+    checkCancellation(requestId);
 
     // Stage 3: Load collection table
-    await debugConsole.log("Loading collections table...");
+    debugConsole.log("Loading collections table...");
     const collectionTableResult = loadCollectionTable(expandedJsonData);
     if (!collectionTableResult.success) {
       if (
         collectionTableResult.error === "No collections table found in JSON"
       ) {
-        await debugConsole.log(collectionTableResult.error);
-        await debugConsole.log("=== Import Complete ===");
+        debugConsole.log(collectionTableResult.error);
+        debugConsole.log("=== Import Complete ===");
         return {
           type: "importPage",
           success: true,
@@ -6655,7 +6643,7 @@ export async function importPage(
           data: { pageName: metadata.name },
         };
       }
-      await debugConsole.error(collectionTableResult.error!);
+      debugConsole.error(collectionTableResult.error!);
       return {
         type: "importPage",
         success: false,
@@ -6665,14 +6653,13 @@ export async function importPage(
       };
     }
     const collectionTable = collectionTableResult.collectionTable!;
-    await debugConsole.log(
+    debugConsole.log(
       `Loaded collections table with ${collectionTable.getSize()} collection(s)`,
     );
+    checkCancellation(requestId);
 
     // Stage 4: Match collections
-    await debugConsole.log(
-      "Matching collections with existing local collections...",
-    );
+    debugConsole.log("Matching collections with existing local collections...");
     const { recognizedCollections, potentialMatches, collectionsToCreate } =
       await matchCollections(collectionTable, data.preCreatedCollections);
 
@@ -6698,14 +6685,15 @@ export async function importPage(
       newlyCreatedCollections,
       data.preCreatedCollections,
     );
+    checkCancellation(requestId);
 
     // Stage 8: Load variable table
-    await debugConsole.log("Loading variables table...");
+    debugConsole.log("Loading variables table...");
     const variableTableResult = loadVariableTable(expandedJsonData);
     if (!variableTableResult.success) {
       if (variableTableResult.error === "No variables table found in JSON") {
-        await debugConsole.log(variableTableResult.error);
-        await debugConsole.log("=== Import Complete ===");
+        debugConsole.log(variableTableResult.error);
+        debugConsole.log("=== Import Complete ===");
         return {
           type: "importPage",
           success: true,
@@ -6714,7 +6702,7 @@ export async function importPage(
           data: { pageName: metadata.name },
         };
       }
-      await debugConsole.error(variableTableResult.error!);
+      debugConsole.error(variableTableResult.error!);
       return {
         type: "importPage",
         success: false,
@@ -6724,10 +6712,11 @@ export async function importPage(
       };
     }
     const variableTable = variableTableResult.variableTable!;
-    await debugConsole.log(
+    debugConsole.log(
       `Loaded variables table with ${variableTable.getSize()} variable(s)`,
     );
 
+    checkCancellation(requestId);
     // Stage 9: Match and create variables
     const { recognizedVariables, newlyCreatedVariables } =
       await matchAndCreateVariables(
@@ -6738,7 +6727,7 @@ export async function importPage(
       );
 
     // Stage 9.5: Import styles (after variables so styles can bind to variables)
-    await debugConsole.log("Checking for styles table...");
+    debugConsole.log("Checking for styles table...");
     const hasStylesTable =
       expandedJsonData.styles !== undefined && expandedJsonData.styles !== null;
 
@@ -6750,7 +6739,7 @@ export async function importPage(
       if (hasStyleReferences) {
         const errorMessage =
           "Style references found in page data but styles table is missing from JSON. Cannot import styles.";
-        await debugConsole.error(errorMessage);
+        debugConsole.error(errorMessage);
         return {
           type: "importPage",
           success: false,
@@ -6759,29 +6748,30 @@ export async function importPage(
           data: {},
         };
       }
-      await debugConsole.log(
+      debugConsole.log(
         "No styles table found in JSON (and no style references detected)",
       );
     }
 
     let styleMapping: Map<number, BaseStyle> | null = null;
     if (hasStylesTable) {
-      await debugConsole.log("Loading styles table...");
+      debugConsole.log("Loading styles table...");
       const styleTable = StyleTable.fromTable(expandedJsonData.styles);
-      await debugConsole.log(
+      debugConsole.log(
         `Loaded styles table with ${styleTable.getSize()} style(s)`,
       );
       styleMapping = await importStyles(
         styleTable.getTable(),
         recognizedVariables,
       );
-      await debugConsole.log(
+      debugConsole.log(
         `Imported ${styleMapping.size} style(s) (some may have been skipped if they already exist)`,
       );
     }
 
+    checkCancellation(requestId);
     // Stage 10: Load instance table
-    await debugConsole.log("Loading instance table...");
+    debugConsole.log("Loading instance table...");
     const instanceTable = loadInstanceTable(expandedJsonData);
     if (instanceTable) {
       const allInstances = instanceTable.getSerializedTable();
@@ -6791,13 +6781,14 @@ export async function importPage(
       const remoteInstances = Object.values(allInstances).filter(
         (entry: any) => entry.instanceType === "remote",
       );
-      await debugConsole.log(
+      debugConsole.log(
         `Loaded instance table with ${instanceTable.getSize()} instance(s) (${internalInstances.length} internal, ${remoteInstances.length} remote)`,
       );
     } else {
-      await debugConsole.log("No instance table found in JSON");
+      debugConsole.log("No instance table found in JSON");
     }
 
+    checkCancellation(requestId);
     // Stage 11: Create page and recreate structure
     const deferredInstances: DeferredNormalInstance[] = [];
     // Track placeholder frame IDs as we create them, so we can check if parent is a placeholder
@@ -6840,7 +6831,7 @@ export async function importPage(
     );
 
     if (!pageResult.success) {
-      await debugConsole.error(pageResult.error!);
+      debugConsole.error(pageResult.error!);
       return {
         type: "importPage",
         success: false,
@@ -6858,14 +6849,14 @@ export async function importPage(
     const deferredInstancesFromResult =
       pageResult.deferredInstances || deferredInstances;
     const deferredCount = deferredInstancesFromResult?.length || 0;
-    await debugConsole.log("=== Import Complete ===");
-    await debugConsole.log(
+    debugConsole.log("=== Import Complete ===");
+    debugConsole.log(
       `Successfully processed ${recognizedCollections.size} collection(s), ${totalVariables} variable(s), and created page "${newPage.name}"${deferredCount > 0 ? ` (${deferredCount} deferred normal instance(s) - will need to be resolved after all pages are imported)` : ""}`,
     );
 
     if (deferredCount > 0) {
       for (const deferred of deferredInstancesFromResult) {
-        await debugConsole.log(
+        debugConsole.log(
           `    - "${deferred.nodeData.name}" from page "${deferred.instanceEntry.componentPageName}"`,
         );
       }
@@ -6874,37 +6865,46 @@ export async function importPage(
     // Include pageId in response (either from pageResult.pageId for reused pages, or newPage.id for new pages)
     const pageId = pageResult.pageId || newPage.id;
 
+    // Include debug logs in response
+    const debugLogs = debugConsole.getLogs();
+    const responseData = {
+      pageName: newPage.name,
+      pageId: pageId, // Include pageId for tracking (used for both new and reused pages)
+      deferredInstances:
+        deferredCount > 0 ? deferredInstancesFromResult : undefined,
+      createdEntities: {
+        pageIds: [newPage.id],
+        collectionIds: newlyCreatedCollections.map((c) => c.id),
+        variableIds: newlyCreatedVariables.map((v) => v.id),
+      },
+      ...(debugLogs.length > 0 && { debugLogs }),
+    };
+
     return {
       type: "importPage",
       success: true,
       error: false,
       message: "Import completed successfully",
-      data: {
-        pageName: newPage.name,
-        pageId: pageId, // Include pageId for tracking (used for both new and reused pages)
-        deferredInstances:
-          deferredCount > 0 ? deferredInstancesFromResult : undefined,
-        createdEntities: {
-          pageIds: [newPage.id],
-          collectionIds: newlyCreatedCollections.map((c) => c.id),
-          variableIds: newlyCreatedVariables.map((v) => v.id),
-        },
-      },
+      data: responseData,
     };
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
-    await debugConsole.error(`Import failed: ${errorMessage}`);
+    debugConsole.error(`Import failed: ${errorMessage}`);
     if (error instanceof Error && error.stack) {
-      await debugConsole.error(`Stack trace: ${error.stack}`);
+      debugConsole.error(`Stack trace: ${error.stack}`);
     }
     console.error("Error importing page:", error);
+    // Include debug logs in error response
+    const debugLogs = debugConsole.getLogs();
     return {
       type: "importPage",
       success: false,
       error: true,
       message: errorMessage,
-      data: {},
+      data: {
+        ...(debugLogs.length > 0 && { debugLogs }),
+      },
     };
   }
 }
@@ -6930,14 +6930,14 @@ async function applyFillBoundVariablesToInstanceChildren(
   }
 
   // Iterate through instance children and apply fill bound variables
-  await debugConsole.log(
+  debugConsole.log(
     `[FILL-BOUND] Applying fill bound variables to instance "${instanceNode.name}" children. Instance has ${instanceNode.children.length} child(ren), JSON has ${nodeData.children?.length || 0} child(ren)`,
   );
 
   for (const instanceChild of instanceNode.children) {
     // Only process nodes that have fills (VectorNode, TextNode, etc.)
     if (!("fills" in instanceChild) || !Array.isArray(instanceChild.fills)) {
-      await debugConsole.log(
+      debugConsole.log(
         `[FILL-BOUND] Skipping child "${instanceChild.name}" - no fills property`,
       );
       continue;
@@ -6949,20 +6949,20 @@ async function applyFillBoundVariablesToInstanceChildren(
     );
 
     if (!childData) {
-      await debugConsole.log(
+      debugConsole.log(
         `[FILL-BOUND] No JSON data found for child "${instanceChild.name}" in instance "${instanceNode.name}"`,
       );
       continue;
     }
 
     if (!childData.boundVariables?.fills) {
-      await debugConsole.log(
+      debugConsole.log(
         `[FILL-BOUND] Child "${instanceChild.name}" in instance "${instanceNode.name}" has no fill bound variables in JSON`,
       );
       continue;
     }
 
-    await debugConsole.log(
+    debugConsole.log(
       `[FILL-BOUND] Found fill bound variables for child "${instanceChild.name}" in instance "${instanceNode.name}"`,
     );
 
@@ -6970,7 +6970,7 @@ async function applyFillBoundVariablesToInstanceChildren(
     // This is the correct Figma API approach: create new Paint objects and bind variables
     try {
       if (!recognizedVariables) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `[FILL-BOUND] Cannot apply fill bound variables: recognizedVariables is null`,
         );
         continue;
@@ -7043,7 +7043,7 @@ async function applyFillBoundVariablesToInstanceChildren(
             ) as SolidPaint;
 
             boundFills.push(boundPaint);
-            await debugConsole.log(
+            debugConsole.log(
               `[FILL-BOUND] ✓ Bound variable "${variable.name}" (${variable.id}) to fill[${i}].color on child "${instanceChild.name}"`,
             );
           } else if (variable) {
@@ -7051,11 +7051,11 @@ async function applyFillBoundVariablesToInstanceChildren(
             // TODO: Handle gradient fills with bound variables on gradient stops
             boundFills.push(instanceFill);
             if (!variable) {
-              await debugConsole.warning(
+              debugConsole.warning(
                 `[FILL-BOUND] Could not resolve variable for fill[${i}] on child "${instanceChild.name}"`,
               );
             } else if (instanceFill.type !== "SOLID") {
-              await debugConsole.log(
+              debugConsole.log(
                 `[FILL-BOUND] Fill[${i}] on child "${instanceChild.name}" is type "${instanceFill.type}" - variable binding for non-solid fills not yet implemented`,
               );
             }
@@ -7072,17 +7072,17 @@ async function applyFillBoundVariablesToInstanceChildren(
       // Assign the new fills array with bound variables
       instanceChild.fills = boundFills;
 
-      await debugConsole.log(
+      debugConsole.log(
         `[FILL-BOUND] ✓ Applied fill bound variables to child "${instanceChild.name}" in instance "${instanceNode.name}" (${boundFills.length} fill(s))`,
       );
     } catch (error) {
-      await debugConsole.warning(
+      debugConsole.warning(
         `Error applying fill bound variables to instance child "${instanceChild.name}": ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }
 
-  await debugConsole.log(
+  debugConsole.log(
     `[FILL-BOUND] Finished applying fill bound variables to instance "${instanceNode.name}" children`,
   );
 }
@@ -7150,7 +7150,7 @@ async function updateInstanceChildrenFromJson(
     } else {
       // No match - JSON child doesn't exist in instance tree
       // This is expected (instance overrides, Figma limitations) - warn and continue
-      await debugConsole.warning(
+      debugConsole.warning(
         `Child "${jsonChild.name}" in JSON does not exist in instance "${instanceNode.name}" - skipping (instance override or Figma limitation)`,
       );
     }
@@ -7165,7 +7165,7 @@ async function updateInstanceChildrenFromJson(
   );
 
   if (instanceChildrenNotInJson.length > 0) {
-    await debugConsole.log(
+    debugConsole.log(
       `Instance "${instanceNode.name}" has ${instanceChildrenNotInJson.length} child(ren) not in JSON - keeping default children: ${instanceChildrenNotInJson.map((c) => c.name).join(", ")}`,
     );
   }
@@ -7196,7 +7196,7 @@ export async function resolveDeferredNormalInstances(
     return { resolved: 0, failed: 0, errors: [] };
   }
 
-  await debugConsole.log(
+  debugConsole.log(
     `=== Resolving ${deferredInstances.length} deferred normal instance(s) ===`,
   );
 
@@ -7244,12 +7244,12 @@ export async function resolveDeferredNormalInstances(
   // Sort by depth (deepest first = bottom-up)
   deferredWithDepth.sort((a, b) => b.depth - a.depth);
 
-  await debugConsole.log(
+  debugConsole.log(
     `[BOTTOM-UP] Sorted ${deferredInstances.length} deferred instance(s) by depth (deepest first)`,
   );
   if (deferredWithDepth.length > 0) {
     const maxDepth = Math.max(...deferredWithDepth.map((d) => d.depth));
-    await debugConsole.log(
+    debugConsole.log(
       `[BOTTOM-UP] Depth range: 0 (root) to ${maxDepth} (deepest)`,
     );
   }
@@ -7262,12 +7262,12 @@ export async function resolveDeferredNormalInstances(
   for (const deferred of deferredInstances) {
     if (deferred.parentPlaceholderId) {
       processedAsChildren.add(deferred.placeholderFrameId);
-      await debugConsole.log(
+      debugConsole.log(
         `[NESTED] Pre-marked child deferred instance "${deferred.nodeData.name}" (placeholder: ${deferred.placeholderFrameId.substring(0, 8)}..., parent placeholder: ${deferred.parentPlaceholderId.substring(0, 8)}...)`,
       );
     }
   }
-  await debugConsole.log(
+  debugConsole.log(
     `[NESTED] Pre-marked ${processedAsChildren.size} child deferred instance(s) to skip in main loop`,
   );
 
@@ -7275,7 +7275,7 @@ export async function resolveDeferredNormalInstances(
   for (const { deferred } of deferredWithDepth) {
     // Skip if this deferred instance was already processed as a child of another deferred instance
     if (processedAsChildren.has(deferred.placeholderFrameId)) {
-      await debugConsole.log(
+      debugConsole.log(
         `[NESTED] Skipping child deferred instance "${deferred.nodeData.name}" (placeholder: ${deferred.placeholderFrameId.substring(0, 8)}...) - will be resolved when parent is resolved`,
       );
       continue;
@@ -7298,9 +7298,9 @@ export async function resolveDeferredNormalInstances(
         const wasChildDeferred = deferred.parentPlaceholderId !== undefined;
         const wasMarked = processedAsChildren.has(placeholderFrameId);
         const error = `Deferred instance "${nodeData.name}" - could not find placeholder frame (${placeholderFrameId.substring(0, 8)}...) or parent node (${parentNodeId.substring(0, 8)}...). Was child deferred: ${wasChildDeferred}, Was marked: ${wasMarked}`;
-        await debugConsole.error(error);
+        debugConsole.error(error);
         if (wasChildDeferred && !wasMarked) {
-          await debugConsole.error(
+          debugConsole.error(
             `[NESTED] BUG: Child deferred instance "${nodeData.name}" was not properly marked! parentPlaceholderId: ${deferred.parentPlaceholderId?.substring(0, 8)}...`,
           );
         }
@@ -7343,7 +7343,7 @@ export async function resolveDeferredNormalInstances(
           ? `"${instanceEntry.componentPageName}" or "${constructionIcon} ${instanceEntry.componentPageName}"`
           : `"${instanceEntry.componentPageName}"`;
         const error = `Deferred instance "${nodeData.name}" still cannot find referenced page (tried: ${expectedNames}, and clean name matching)`;
-        await debugConsole.error(error);
+        debugConsole.error(error);
         errors.push(error);
         failed++;
         continue;
@@ -7635,7 +7635,7 @@ export async function resolveDeferredNormalInstances(
         };
         collectComponentNames(referencedPage);
         const error = `Deferred instance "${nodeData.name}" still cannot find component "${instanceEntry.componentName}" on page "${instanceEntry.componentPageName}"${pathDisplay}`;
-        await debugConsole.error(error);
+        debugConsole.error(error);
         errors.push(error);
         failed++;
         continue;
@@ -7684,7 +7684,7 @@ export async function resolveDeferredNormalInstances(
                 mainComponent.parent.componentPropertyDefinitions;
             } else {
               // Instance was created from a non-variant component - no variant properties to set
-              await debugConsole.warning(
+              debugConsole.warning(
                 `Cannot set variant properties for resolved instance "${nodeData.name}" - main component is not a COMPONENT_SET or variant`,
               );
             }
@@ -7707,7 +7707,7 @@ export async function resolveDeferredNormalInstances(
             }
           }
         } catch (error) {
-          await debugConsole.warning(
+          debugConsole.warning(
             `Failed to set variant properties for resolved instance "${nodeData.name}": ${error}`,
           );
         }
@@ -7751,7 +7751,7 @@ export async function resolveDeferredNormalInstances(
                       [cleanPropName]: propValue as string | boolean,
                     });
                   } catch (error) {
-                    await debugConsole.warning(
+                    debugConsole.warning(
                       `Failed to set component property "${cleanPropName}" for resolved instance "${nodeData.name}": ${error}`,
                     );
                   }
@@ -7760,7 +7760,7 @@ export async function resolveDeferredNormalInstances(
             }
           }
         } catch (error) {
-          await debugConsole.warning(
+          debugConsole.warning(
             `Failed to set component properties for resolved instance "${nodeData.name}": ${error}`,
           );
         }
@@ -7782,7 +7782,7 @@ export async function resolveDeferredNormalInstances(
       // We check both:
       // 1. If parentPlaceholderId matches (explicit parent relationship)
       // 2. If the placeholder is actually inside the current placeholder (structural relationship)
-      await debugConsole.log(
+      debugConsole.log(
         `[NESTED] Extracting child deferred instances for placeholder "${nodeData.name}" (${placeholderFrameId.substring(0, 8)}...). Total deferred instances: ${deferredInstances.length}`,
       );
 
@@ -7815,7 +7815,7 @@ export async function resolveDeferredNormalInstances(
         // Check explicit parent relationship
         if (childDeferred.parentPlaceholderId === placeholderFrameId) {
           childDeferredInstances.push(childDeferred);
-          await debugConsole.log(
+          debugConsole.log(
             `[NESTED]   - Found child by parentPlaceholderId: "${childDeferred.nodeData.name}" (placeholder: ${childDeferred.placeholderFrameId.substring(0, 8)}...)`,
           );
         } else {
@@ -7825,14 +7825,14 @@ export async function resolveDeferredNormalInstances(
           );
           if (isInside) {
             childDeferredInstances.push(childDeferred);
-            await debugConsole.log(
+            debugConsole.log(
               `[NESTED]   - Found child by structural check: "${childDeferred.nodeData.name}" (placeholder: ${childDeferred.placeholderFrameId.substring(0, 8)}...) - placeholder is inside current placeholder`,
             );
           }
         }
       }
 
-      await debugConsole.log(
+      debugConsole.log(
         `[NESTED] Found ${childDeferredInstances.length} child deferred instance(s) for placeholder "${nodeData.name}"`,
       );
 
@@ -7849,7 +7849,7 @@ export async function resolveDeferredNormalInstances(
         placeholderFrame.remove();
       } else {
         const error = `Parent node does not support children operations for deferred instance "${nodeData.name}"`;
-        await debugConsole.error(error);
+        debugConsole.error(error);
         errors.push(error);
         continue;
       }
@@ -7883,7 +7883,7 @@ export async function resolveDeferredNormalInstances(
           );
 
           if (matchingChildren.length === 0) {
-            await debugConsole.warning(
+            debugConsole.warning(
               `  Could not find matching child "${childDeferred.nodeData.name}" in resolved instance "${nodeData.name}" - child may not exist in component`,
             );
             continue;
@@ -7892,7 +7892,7 @@ export async function resolveDeferredNormalInstances(
           if (matchingChildren.length > 1) {
             // Duplicate names - cannot resolve ambiguity
             const error = `Cannot resolve child deferred instance "${childDeferred.nodeData.name}": multiple children with same name in instance "${nodeData.name}"`;
-            await debugConsole.error(error);
+            debugConsole.error(error);
             errors.push(error);
             failed++;
             continue;
@@ -7924,7 +7924,7 @@ export async function resolveDeferredNormalInstances(
           }
 
           if (!childReferencedPage) {
-            await debugConsole.warning(
+            debugConsole.warning(
               `  Could not find referenced page for child deferred instance "${childDeferred.nodeData.name}"`,
             );
             continue;
@@ -8086,12 +8086,12 @@ export async function resolveDeferredNormalInstances(
           let componentSetName = childInstanceEntry.componentSetName;
           if (!componentSetName && childDeferred.nodeData.name) {
             componentSetName = childDeferred.nodeData.name;
-            await debugConsole.log(
+            debugConsole.log(
               `  [NESTED] componentSetName not provided, using child name "${componentSetName}" as fallback`,
             );
           }
 
-          await debugConsole.log(
+          debugConsole.log(
             `  [NESTED] Looking for component: page="${childReferencedPage.name}", componentSet="${componentSetName}", component="${childInstanceEntry.componentName}", path=[${(childInstanceEntry.path || []).join(", ")}]`,
           );
 
@@ -8109,7 +8109,7 @@ export async function resolveDeferredNormalInstances(
             return sets;
           };
           const allComponentSets = findAllComponentSets(childReferencedPage);
-          await debugConsole.log(
+          debugConsole.log(
             `  [NESTED] Found ${allComponentSets.length} component set(s) on page "${childReferencedPage.name}" (recursive search): ${allComponentSets.map((cs) => cs.name).join(", ")}`,
           );
 
@@ -8117,7 +8117,7 @@ export async function resolveDeferredNormalInstances(
           const directChildren = childReferencedPage.children.map(
             (child) => `${child.type}:${child.name}`,
           );
-          await debugConsole.log(
+          debugConsole.log(
             `  [NESTED] Direct children of page "${childReferencedPage.name}" (${directChildren.length}): ${directChildren.slice(0, 10).join(", ")}${directChildren.length > 10 ? "..." : ""}`,
           );
 
@@ -8130,7 +8130,7 @@ export async function resolveDeferredNormalInstances(
           );
 
           if (!childTargetComponent) {
-            await debugConsole.warning(
+            debugConsole.warning(
               `  Could not find component "${childInstanceEntry.componentName}" (componentSet: "${componentSetName}") for child deferred instance "${childDeferred.nodeData.name}" on page "${childReferencedPage.name}"`,
             );
             // Debug: Try to find what component sets exist that might match
@@ -8142,7 +8142,7 @@ export async function resolveDeferredNormalInstances(
                 return cleanSetName === cleanTargetSetName;
               });
               if (matchingSets.length > 0) {
-                await debugConsole.log(
+                debugConsole.log(
                   `  [NESTED] Found ${matchingSets.length} component set(s) with matching clean name "${cleanTargetSetName}": ${matchingSets.map((cs) => cs.name).join(", ")}`,
                 );
                 // List variants in the matching set
@@ -8150,7 +8150,7 @@ export async function resolveDeferredNormalInstances(
                   const variants = (set as ComponentSetNode).children.filter(
                     (c) => c.type === "COMPONENT",
                   );
-                  await debugConsole.log(
+                  debugConsole.log(
                     `  [NESTED] Component set "${set.name}" has ${variants.length} variant(s): ${variants.map((v) => v.name).join(", ")}`,
                   );
                 }
@@ -8192,7 +8192,7 @@ export async function resolveDeferredNormalInstances(
           const actualParent = matchingChild.parent;
           if (!actualParent || !("children" in actualParent)) {
             const error = `Cannot replace child "${childDeferred.nodeData.name}": parent does not support children`;
-            await debugConsole.error(error);
+            debugConsole.error(error);
             errors.push(error);
             failed++;
             continue;
@@ -8201,17 +8201,17 @@ export async function resolveDeferredNormalInstances(
           actualParent.insertChild(childIndex, childInstanceNode);
           matchingChild.remove();
 
-          await debugConsole.log(
+          debugConsole.log(
             `  ✓ Resolved nested child deferred instance "${childDeferred.nodeData.name}" in "${nodeData.name}"`,
           );
         } catch (error) {
-          await debugConsole.warning(
+          debugConsole.warning(
             `  Error resolving child deferred instance "${childDeferred.nodeData.name}": ${error instanceof Error ? error.message : String(error)}`,
           );
         }
       }
 
-      await debugConsole.log(
+      debugConsole.log(
         `  ✓ Resolved deferred instance "${nodeData.name}" from component "${instanceEntry.componentName}" on page "${instanceEntry.componentPageName}"`,
       );
       resolved++;
@@ -8219,13 +8219,13 @@ export async function resolveDeferredNormalInstances(
       const errorMessage =
         error instanceof Error ? error.message : String(error);
       const fullError = `Failed to resolve deferred instance "${deferred.nodeData.name}": ${errorMessage}`;
-      await debugConsole.error(fullError);
+      debugConsole.error(fullError);
       errors.push(fullError);
       failed++;
     }
   }
 
-  await debugConsole.log(
+  debugConsole.log(
     `=== Deferred Resolution Complete: ${resolved} resolved, ${failed} failed ===`,
   );
 
@@ -8245,7 +8245,7 @@ export interface CleanupCreatedEntitiesData {
 export async function cleanupCreatedEntities(
   data: CleanupCreatedEntitiesData,
 ): Promise<ResponseMessage> {
-  await debugConsole.log("=== Cleaning up created entities ===");
+  debugConsole.log("=== Cleaning up created entities ===");
 
   try {
     const { pageIds, collectionIds, variableIds } = data;
@@ -8265,7 +8265,7 @@ export async function cleanupCreatedEntities(
           }
         }
       } catch (error) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Could not delete variable ${variableId.substring(0, 8)}...: ${error}`,
         );
       }
@@ -8282,7 +8282,7 @@ export async function cleanupCreatedEntities(
           deletedCollections++;
         }
       } catch (error) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Could not delete collection ${collectionId.substring(0, 8)}...: ${error}`,
         );
       }
@@ -8299,13 +8299,13 @@ export async function cleanupCreatedEntities(
           deletedPages++;
         }
       } catch (error) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Could not delete page ${pageId.substring(0, 8)}...: ${error}`,
         );
       }
     }
 
-    await debugConsole.log(
+    debugConsole.log(
       `Cleanup complete: Deleted ${deletedPages} page(s), ${deletedCollections} collection(s), ${deletedVariables} variable(s)`,
     );
 
@@ -8323,7 +8323,7 @@ export async function cleanupCreatedEntities(
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
-    await debugConsole.error(`Cleanup failed: ${errorMessage}`);
+    debugConsole.error(`Cleanup failed: ${errorMessage}`);
     return {
       type: "cleanupCreatedEntities",
       success: false,

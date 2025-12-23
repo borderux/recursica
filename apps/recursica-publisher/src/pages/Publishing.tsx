@@ -4,12 +4,16 @@ import PageLayout from "../components/PageLayout";
 import DebugConsole from "../components/DebugConsole";
 import { callPlugin } from "../utils/callPlugin";
 import type { ExportPageResponseData } from "../plugin/services/pageExportNew";
+import type { DebugConsoleMessage } from "../plugin/services/debugConsole";
 
 export default function Publishing() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [isPublishing, setIsPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [debugLogs, setDebugLogs] = useState<DebugConsoleMessage[] | undefined>(
+    undefined,
+  );
 
   // Extract version from export data metadata
   const getCurrentVersion = useCallback(
@@ -89,13 +93,33 @@ export default function Publishing() {
             response.message || "Failed to export page. Please try again.";
           console.error("[Publishing] Export failed:", errorMessage);
           setError(errorMessage);
+          // Extract debug logs from response if available
+          if (response.data?.debugLogs) {
+            setDebugLogs(response.data.debugLogs as DebugConsoleMessage[]);
+          }
         }
       } catch (err) {
         // Only set error if component is still mounted
         if (isMounted) {
-          setError(
-            err instanceof Error ? err.message : "Failed to export page",
-          );
+          const errorMessage =
+            err instanceof Error ? err.message : "Failed to export page";
+          setError(errorMessage);
+          // Try to extract debug logs from error response if available
+          if (
+            err &&
+            typeof err === "object" &&
+            "response" in err &&
+            err.response &&
+            typeof err.response === "object" &&
+            "data" in err.response
+          ) {
+            const errorResponse = err.response as {
+              data?: { debugLogs?: DebugConsoleMessage[] };
+            };
+            if (errorResponse.data?.debugLogs) {
+              setDebugLogs(errorResponse.data.debugLogs);
+            }
+          }
         }
       } finally {
         if (isMounted) {
@@ -117,14 +141,6 @@ export default function Publishing() {
 
   return (
     <PageLayout showBackButton={true}>
-      <style>
-        {`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}
-      </style>
       <div
         style={{
           width: "100%",
@@ -136,37 +152,14 @@ export default function Publishing() {
       >
         <h1 style={{ marginTop: 0, marginBottom: "20px" }}>Publishing</h1>
 
-        <DebugConsole showClearButton={false} />
-
-        <div>
-          {isPublishing ? (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-              }}
-            >
-              <div
-                style={{
-                  width: "16px",
-                  height: "16px",
-                  border: "2px solid #e0e0e0",
-                  borderTop: "2px solid #666",
-                  borderRadius: "50%",
-                  animation: "spin 1s linear infinite",
-                }}
-              />
-              <p style={{ color: "#666", fontStyle: "italic", margin: 0 }}>
-                Exporting page...
-              </p>
-            </div>
-          ) : error ? (
-            <p style={{ color: "#c62828", fontStyle: "italic", margin: 0 }}>
-              {error}
-            </p>
-          ) : null}
-        </div>
+        <DebugConsole
+          title="Exporting Page"
+          isActive={isPublishing}
+          isComplete={!isPublishing && !error}
+          error={error}
+          debugLogs={debugLogs}
+          successMessage="Page exported successfully"
+        />
       </div>
     </PageLayout>
   );

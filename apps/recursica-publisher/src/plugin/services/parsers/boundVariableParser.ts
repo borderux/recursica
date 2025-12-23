@@ -246,7 +246,7 @@ async function getOrGenerateCollectionGuid(
 
     if (!supportedCollectionNames.includes(normalizedName)) {
       const errorMessage = `Remote variable collections are not supported. Only "Token", "Tokens", "Theme", or "Themes" collections are allowed. Collection Name: "${collection.name}", Collection ID: ${collection.id}`;
-      await debugConsole.error(errorMessage);
+      debugConsole.error(errorMessage);
       throw new Error(errorMessage);
     }
 
@@ -322,7 +322,7 @@ async function addCollectionToTable(
 
   // Log when a new collection is added
   const collectionType = isLocal ? "local" : "remote";
-  await debugConsole.log(
+  debugConsole.log(
     `  Added ${collectionType} collection: "${collection.name}" (ID: ${collection.id.substring(0, 20)}...)`,
   );
 

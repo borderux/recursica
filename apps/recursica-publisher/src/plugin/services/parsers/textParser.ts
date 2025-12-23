@@ -31,33 +31,33 @@ export async function parseTextProperties(
             textStyle: parsed,
             boundVariables: parsed.boundVariables,
           });
-          await debugConsole.log(
+          debugConsole.log(
             `  [EXPORT] Added text style "${style.name}" to style table at index ${styleIndex} for text node "${node.name || "Unnamed"}"`,
           );
         } else {
-          await debugConsole.log(
+          debugConsole.log(
             `  [EXPORT] Reusing existing text style "${style.name}" from style table at index ${styleIndex} for text node "${node.name || "Unnamed"}"`,
           );
         }
         result._styleRef = styleIndex;
         handledKeys.add("_styleRef");
         handledKeys.add("textStyleId"); // Mark original textStyleId as handled
-        await debugConsole.log(
+        debugConsole.log(
           `  [EXPORT] ✓ Exported text node "${node.name || "Unnamed"}" with _styleRef=${styleIndex} (style: "${style.name}")`,
         );
       } else {
-        await debugConsole.warning(
+        debugConsole.warning(
           `  [EXPORT] Text node "${node.name || "Unnamed"}" has textStyleId but style lookup returned null or wrong type`,
         );
       }
     } catch (error) {
       // If style lookup fails, continue with individual properties
-      await debugConsole.warning(
+      debugConsole.warning(
         `  [EXPORT] Could not look up text style for node "${node.name || "Unnamed"}": ${error}`,
       );
     }
   } else {
-    await debugConsole.log(
+    debugConsole.log(
       `  [EXPORT] Text node "${node.name || "Unnamed"}" has no textStyleId (textStyleId=${node.textStyleId})`,
     );
   }

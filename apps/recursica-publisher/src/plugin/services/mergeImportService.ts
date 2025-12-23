@@ -117,7 +117,7 @@ export async function getCollectionGuids(
           });
         }
       } catch (err) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Failed to get GUID for collection ${collectionId}: ${err instanceof Error ? err.message : String(err)}`,
         );
         collectionGuids.push({
@@ -153,7 +153,7 @@ export async function mergeImportGroup(
   data: MergeImportGroupData,
 ): Promise<ResponseMessage> {
   try {
-    await debugConsole.log("=== Starting Import Group Merge ===");
+    debugConsole.log("=== Starting Import Group Merge ===");
 
     // Step 1: Get the main page and metadata
     await figma.loadAllPagesAsync();
@@ -170,7 +170,7 @@ export async function mergeImportGroup(
     }
 
     const metadata: PrimaryImportMetadata = JSON.parse(primaryImportData);
-    await debugConsole.log(
+    debugConsole.log(
       `Found metadata for component: ${metadata.componentName} (Version: ${metadata.componentVersion})`,
     );
 
@@ -188,7 +188,7 @@ export async function mergeImportGroup(
             );
 
           if (!newCollection) {
-            await debugConsole.warning(
+            debugConsole.warning(
               `New collection ${choice.newCollectionId} not found, skipping merge`,
             );
             continue;
@@ -272,7 +272,7 @@ export async function mergeImportGroup(
                     COLLECTION_GUID_KEY,
                     newCollectionGuid,
                   );
-                  await debugConsole.log(
+                  debugConsole.log(
                     `Created new standard collection: "${standardName}"`,
                   );
                 }
@@ -281,13 +281,13 @@ export async function mergeImportGroup(
           }
 
           if (!existingCollection) {
-            await debugConsole.warning(
+            debugConsole.warning(
               `Could not find or create existing collection for merge, skipping`,
             );
             continue;
           }
 
-          await debugConsole.log(
+          debugConsole.log(
             `Merging collection "${newCollection.name}" (${choice.newCollectionId.substring(0, 8)}...) into "${existingCollection.name}" (${existingCollection.id.substring(0, 8)}...)`,
           );
 
@@ -313,7 +313,7 @@ export async function mergeImportGroup(
               // Check if variable with same name exists in existing collection
               if (existingVariableNames.has(variable.name)) {
                 // Variable exists, skip it (we can't update existing variables)
-                await debugConsole.warning(
+                debugConsole.warning(
                   `Variable "${variable.name}" already exists in collection "${existingCollection.name}", skipping`,
                 );
                 continue;
@@ -344,11 +344,11 @@ export async function mergeImportGroup(
                 }
               }
 
-              await debugConsole.log(
+              debugConsole.log(
                 `  ✓ Copied variable "${variable.name}" to collection "${existingCollection.name}"`,
               );
             } catch (err) {
-              await debugConsole.warning(
+              debugConsole.warning(
                 `Failed to copy variable "${variable.name}": ${err instanceof Error ? err.message : String(err)}`,
               );
             }
@@ -357,23 +357,23 @@ export async function mergeImportGroup(
           // Delete the new collection (since we've merged its variables)
           newCollection.remove();
           mergedCollections++;
-          await debugConsole.log(
+          debugConsole.log(
             `✓ Merged and deleted collection: ${newCollection.name}`,
           );
         } catch (err) {
-          await debugConsole.warning(
+          debugConsole.warning(
             `Failed to merge collection: ${err instanceof Error ? err.message : String(err)}`,
           );
         }
       } else {
         // Keep the collection as-is
         keptCollections++;
-        await debugConsole.log(`Kept collection: ${choice.newCollectionId}`);
+        debugConsole.log(`Kept collection: ${choice.newCollectionId}`);
       }
     }
 
     // Step 3: Remove dividers
-    await debugConsole.log("Removing dividers...");
+    debugConsole.log("Removing dividers...");
     const allPages = figma.root.children;
     const dividersToDelete: PageNode[] = [];
 
@@ -409,17 +409,17 @@ export async function mergeImportGroup(
       try {
         divider.remove();
       } catch (err) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Failed to delete divider: ${err instanceof Error ? err.message : String(err)}`,
         );
       }
     }
     for (const name of dividerNames) {
-      await debugConsole.log(`Deleted divider: ${name}`);
+      debugConsole.log(`Deleted divider: ${name}`);
     }
 
     // Step 4: Remove construction icons and rename pages with version numbers
-    await debugConsole.log("Removing construction icons and renaming pages...");
+    debugConsole.log("Removing construction icons and renaming pages...");
     await figma.loadAllPagesAsync();
     const pagesAfterDividerRemoval = figma.root.children;
     let pagesRenamed = 0;
@@ -458,7 +458,7 @@ export async function mergeImportGroup(
         }
       } catch (err) {
         // Page might have been deleted, skip
-        await debugConsole.warning(
+        debugConsole.warning(
           `Failed to process page: ${err instanceof Error ? err.message : String(err)}`,
         );
       }
@@ -471,7 +471,7 @@ export async function mergeImportGroup(
           pageInfo.pageId,
         )) as PageNode | null;
         if (!page || page.type !== "PAGE") {
-          await debugConsole.warning(
+          debugConsole.warning(
             `Page ${pageInfo.pageId} not found, skipping rename`,
           );
           continue;
@@ -487,7 +487,7 @@ export async function mergeImportGroup(
         if (newName === "REMOTES" || newName.includes("REMOTES")) {
           page.name = "REMOTES";
           pagesRenamed++;
-          await debugConsole.log(`Renamed page: "${page.name}" -> "REMOTES"`);
+          debugConsole.log(`Renamed page: "${page.name}" -> "REMOTES"`);
           continue;
         }
 
@@ -512,21 +512,21 @@ export async function mergeImportGroup(
         const finalName = `${componentName} (VERSION: ${version})`;
         page.name = finalName;
         pagesRenamed++;
-        await debugConsole.log(`Renamed page: "${newName}" -> "${finalName}"`);
+        debugConsole.log(`Renamed page: "${newName}" -> "${finalName}"`);
       } catch (err) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Failed to rename page ${pageInfo.pageId}: ${err instanceof Error ? err.message : String(err)}`,
         );
       }
     }
 
     // Step 5: Clear import metadata (only from main page, keep page metadata)
-    await debugConsole.log("Clearing import metadata...");
+    debugConsole.log("Clearing import metadata...");
     if (mainPage) {
       try {
         mainPage.setPluginData(PRIMARY_IMPORT_KEY, "");
       } catch (err) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Failed to clear primary import metadata: ${err instanceof Error ? err.message : String(err)}`,
         );
       }
@@ -540,7 +540,7 @@ export async function mergeImportGroup(
           page.setPluginData(UNDER_REVIEW_KEY, "");
         }
       } catch (err) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Failed to clear under review metadata for page ${pageInfo.pageId}: ${err instanceof Error ? err.message : String(err)}`,
         );
       }
@@ -552,7 +552,7 @@ export async function mergeImportGroup(
       pagesRenamed,
     };
 
-    await debugConsole.log(
+    debugConsole.log(
       `=== Merge Complete ===\n  Merged: ${mergedCollections} collection(s)\n  Kept: ${keptCollections} collection(s)\n  Renamed: ${pagesRenamed} page(s)`,
     );
 
@@ -561,7 +561,7 @@ export async function mergeImportGroup(
       responseData as unknown as Record<string, unknown>,
     );
   } catch (error) {
-    await debugConsole.error(
+    debugConsole.error(
       `Merge failed: ${error instanceof Error ? error.message : String(error)}`,
     );
     return retError(

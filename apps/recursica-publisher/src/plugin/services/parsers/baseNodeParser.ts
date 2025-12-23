@@ -84,7 +84,7 @@ export async function parseBaseNodeProperties(
   // ISSUE #3 DEBUG: Check for preserveRatio (may not be exported)
   const nodeName = node.name || "Unnamed";
   if ((node as any).preserveRatio !== undefined) {
-    await debugConsole.log(
+    debugConsole.log(
       `[ISSUE #3 EXPORT DEBUG] "${nodeName}" has preserveRatio: ${(node as any).preserveRatio} (NOT being exported - needs to be added!)`,
     );
   }
@@ -235,11 +235,11 @@ export async function parseBaseNodeProperties(
     const nodeName = node.name || "Unnamed";
     const boundVarKeys = Object.keys(node.boundVariables);
     if (boundVarKeys.length > 0) {
-      await debugConsole.log(
+      debugConsole.log(
         `[ISSUE #2 EXPORT DEBUG] "${nodeName}" (${node.type}) has boundVariables for: ${boundVarKeys.join(", ")}`,
       );
     } else {
-      await debugConsole.log(
+      debugConsole.log(
         `[ISSUE #2 EXPORT DEBUG] "${nodeName}" (${node.type}) has no boundVariables`,
       );
     }
@@ -252,7 +252,7 @@ export async function parseBaseNodeProperties(
 
     const extractedKeys = Object.keys(boundVars);
     if (extractedKeys.length > 0) {
-      await debugConsole.log(
+      debugConsole.log(
         `[ISSUE #2 EXPORT DEBUG] "${nodeName}" extracted boundVariables: ${extractedKeys.join(", ")}`,
       );
     }

@@ -40,7 +40,7 @@ export async function summarizeVariablesForWizard(
   data: SummarizeVariablesForWizardData,
 ): Promise<ResponseMessage> {
   try {
-    await debugConsole.log("=== Summarizing Variables for Wizard ===");
+    debugConsole.log("=== Summarizing Variables for Wizard ===");
 
     // Step 1: Extract all variables from all JSON files
     const allVariables: Array<{
@@ -53,7 +53,7 @@ export async function summarizeVariablesForWizard(
         // Expand JSON to get readable keys
         const jsonResult = loadAndExpandJson(jsonData);
         if (!jsonResult.success || !jsonResult.expandedJsonData) {
-          await debugConsole.warning(
+          debugConsole.warning(
             `Skipping ${fileName} - failed to expand JSON: ${jsonResult.error || "Unknown error"}`,
           );
           continue;
@@ -108,7 +108,7 @@ export async function summarizeVariablesForWizard(
           }
         }
       } catch (error) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Error processing ${fileName}: ${error instanceof Error ? error.message : String(error)}`,
         );
         continue;
@@ -252,7 +252,7 @@ export async function summarizeVariablesForWizard(
       layersSummary.new = layersVars.length;
     }
 
-    await debugConsole.log(
+    debugConsole.log(
       `Variable summary: Tokens - ${tokensSummary.existing} existing, ${tokensSummary.new} new; Theme - ${themeSummary.existing} existing, ${themeSummary.new} new; Layers - ${layersSummary.existing} existing, ${layersSummary.new} new`,
     );
 
@@ -266,7 +266,7 @@ export async function summarizeVariablesForWizard(
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
-    await debugConsole.error(`Summarize failed: ${errorMessage}`);
+    debugConsole.error(`Summarize failed: ${errorMessage}`);
     return retError(
       "summarizeVariablesForWizard",
       error instanceof Error ? error : new Error(String(error)),

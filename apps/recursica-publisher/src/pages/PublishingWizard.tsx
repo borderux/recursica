@@ -12,6 +12,7 @@ import {
   type ComponentInfo,
 } from "../services/github/githubService";
 import { callPlugin } from "../utils/callPlugin";
+import type { DebugConsoleMessage } from "../plugin/services/debugConsole";
 
 const RECURSICA_FIGMA_OWNER = "borderux";
 const RECURSICA_FIGMA_REPO = "recursica-figma";
@@ -59,6 +60,9 @@ export default function PublishingWizard() {
   );
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [exportDebugLogs, setExportDebugLogs] = useState<
+    DebugConsoleMessage[] | undefined
+  >(undefined);
   const [discoveredReferencedPages, setDiscoveredReferencedPages] = useState<
     ReferencedPageInfo[]
   >([]);
@@ -175,12 +179,34 @@ export default function PublishingWizard() {
               response.message || "Failed to export page. Please try again.";
             setExportError(errorMessage);
             console.error("[PublishingWizard] Export failed:", errorMessage);
+            // Extract debug logs from response if available
+            if (response.data?.debugLogs) {
+              setExportDebugLogs(
+                response.data.debugLogs as DebugConsoleMessage[],
+              );
+            }
           }
         } catch (err) {
           const errorMessage =
             err instanceof Error ? err.message : "Failed to export page";
           setExportError(errorMessage);
           console.error("[PublishingWizard] Export error:", errorMessage);
+          // Try to extract debug logs from error response if available
+          if (
+            err &&
+            typeof err === "object" &&
+            "response" in err &&
+            err.response &&
+            typeof err.response === "object" &&
+            "data" in err.response
+          ) {
+            const errorResponse = err.response as {
+              data?: { debugLogs?: DebugConsoleMessage[] };
+            };
+            if (errorResponse.data?.debugLogs) {
+              setExportDebugLogs(errorResponse.data.debugLogs);
+            }
+          }
         } finally {
           setIsExporting(false);
         }
@@ -501,6 +527,12 @@ export default function PublishingWizard() {
                 `[PublishingWizard] ✓ Successfully exported: ${exportedPageData.pageName}`,
               );
             } else {
+              // Extract debug logs before throwing
+              if (response.data?.debugLogs) {
+                setExportDebugLogs(
+                  response.data.debugLogs as DebugConsoleMessage[],
+                );
+              }
               throw new Error(
                 `Failed to export "${pageInfo.pageName}": ${response.message}`,
               );
@@ -630,6 +662,13 @@ export default function PublishingWizard() {
             </p>
           </div>
         </div>
+        <DebugConsole
+          title="Exporting Page"
+          isActive={true}
+          isComplete={false}
+          error={null}
+          debugLogs={undefined}
+        />
       </PageLayout>
     );
   }
@@ -654,11 +693,16 @@ export default function PublishingWizard() {
               backgroundColor: "#ffebee",
               border: "1px solid #f44336",
               borderRadius: "8px",
-              color: "#c62828",
+              marginBottom: "16px",
             }}
           >
-            <p style={{ margin: 0, fontWeight: "bold" }}>Export Failed</p>
-            <p style={{ margin: "8px 0 0 0" }}>{exportError}</p>
+            <DebugConsole
+              title="Exporting Page"
+              isActive={false}
+              isComplete={false}
+              error={exportError}
+              debugLogs={exportDebugLogs}
+            />
           </div>
         </div>
       </PageLayout>
@@ -1102,29 +1146,14 @@ export default function PublishingWizard() {
         <h2 style={{ marginTop: 0, marginBottom: "10px" }}>
           Publishing Components
         </h2>
-        {isExporting && (
-          <p style={{ color: "#666", margin: 0 }}>
-            Exporting selected components. Check the console below for logs:
-          </p>
-        )}
         <DebugConsole
-          height="200px"
-          label="Publishing Log:"
-          clearOnMount={false}
+          title="Exporting Selected Components"
+          isActive={isExporting}
+          isComplete={!isExporting && !error}
+          error={error}
+          debugLogs={exportDebugLogs}
+          successMessage="Components exported successfully"
         />
-        {error && (
-          <div
-            style={{
-              padding: "12px",
-              backgroundColor: "#ffebee",
-              border: "1px solid #f44336",
-              borderRadius: "8px",
-              color: "#c62828",
-            }}
-          >
-            {error}
-          </div>
-        )}
         <div
           style={{
             display: "flex",

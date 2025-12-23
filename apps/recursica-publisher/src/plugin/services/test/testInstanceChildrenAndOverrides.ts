@@ -38,9 +38,7 @@ export async function testInstanceChildrenAndOverrides(
   pageId: string,
 ): Promise<TestResult> {
   try {
-    await debugConsole.log(
-      "=== Test: Instance Children and Overrides Behavior ===",
-    );
+    debugConsole.log("=== Test: Instance Children and Overrides Behavior ===");
 
     // Get the test page
     const page = (await figma.getNodeByIdAsync(pageId)) as PageNode;
@@ -64,7 +62,7 @@ export async function testInstanceChildrenAndOverrides(
     }> = [];
 
     // Test 1: Create a component with children, then create an instance
-    await debugConsole.log(
+    debugConsole.log(
       "\n--- Test 1: Component with children → Create instance ---",
     );
 
@@ -89,10 +87,10 @@ export async function testInstanceChildrenAndOverrides(
     child2.y = 10;
     component.appendChild(child2);
 
-    await debugConsole.log(
+    debugConsole.log(
       `  Created component "${component.name}" with ${component.children.length} children`,
     );
-    await debugConsole.log(
+    debugConsole.log(
       `  Component children: ${component.children.map((c) => c.name).join(", ")}`,
     );
 
@@ -101,30 +99,28 @@ export async function testInstanceChildrenAndOverrides(
     instance1.name = "Instance 1 - From Component";
     testFrame.appendChild(instance1);
 
-    await debugConsole.log(
-      `  Created instance "${instance1.name}" from component`,
-    );
+    debugConsole.log(`  Created instance "${instance1.name}" from component`);
 
     // Check if instance has children immediately
     const instance1ChildrenCount = instance1.children.length;
-    await debugConsole.log(
+    debugConsole.log(
       `  Instance children count immediately after creation: ${instance1ChildrenCount}`,
     );
 
     if (instance1ChildrenCount > 0) {
-      await debugConsole.log(
+      debugConsole.log(
         `  Instance children: ${instance1.children.map((c) => c.name).join(", ")}`,
       );
-      await debugConsole.log(
+      debugConsole.log(
         `  Instance child types: ${instance1.children.map((c) => c.type).join(", ")}`,
       );
 
       // Check if children are actual nodes or references
       const firstChild = instance1.children[0];
-      await debugConsole.log(
+      debugConsole.log(
         `  First child: name="${firstChild.name}", type="${firstChild.type}", id="${firstChild.id}"`,
       );
-      await debugConsole.log(
+      debugConsole.log(
         `  First child parent: ${firstChild.parent?.name} (id: ${firstChild.parent?.id})`,
       );
 
@@ -133,26 +129,26 @@ export async function testInstanceChildrenAndOverrides(
         const childMainComponent = await (
           firstChild as InstanceNode
         ).getMainComponentAsync();
-        await debugConsole.log(
+        debugConsole.log(
           `  First child mainComponent: ${childMainComponent?.name || "none"}`,
         );
       }
 
       // Compare instance children to component children
-      await debugConsole.log(
+      debugConsole.log(
         `  Component children IDs: ${component.children.map((c) => c.id).join(", ")}`,
       );
-      await debugConsole.log(
+      debugConsole.log(
         `  Instance children IDs: ${instance1.children.map((c) => c.id).join(", ")}`,
       );
 
       const areDifferentNodes =
         instance1.children[0].id !== component.children[0].id;
-      await debugConsole.log(
+      debugConsole.log(
         `  Are instance children different nodes from component children? ${areDifferentNodes}`,
       );
     } else {
-      await debugConsole.log(
+      debugConsole.log(
         "  ⚠️ Instance has NO children immediately after creation",
       );
     }
@@ -172,13 +168,13 @@ export async function testInstanceChildrenAndOverrides(
     });
 
     // Test 2: Create an override by replacing a child
-    await debugConsole.log(
+    debugConsole.log(
       "\n--- Test 2: Create instance override by replacing child ---",
     );
 
     if (instance1ChildrenCount > 0) {
       const originalChild = instance1.children[0];
-      await debugConsole.log(
+      debugConsole.log(
         `  Original child to replace: "${originalChild.name}" (id: ${originalChild.id})`,
       );
 
@@ -193,7 +189,7 @@ export async function testInstanceChildrenAndOverrides(
       // Append to testFrame (the "Test" frame container) - never create at root
       testFrame.appendChild(overrideChild);
 
-      await debugConsole.log(
+      debugConsole.log(
         `  Created override child "${overrideChild.name}" as child of Test frame`,
       );
 
@@ -206,18 +202,18 @@ export async function testInstanceChildrenAndOverrides(
         instance1.insertChild(childIndex, overrideChild);
         originalChild.remove();
         overrideSuccess = true;
-        await debugConsole.log(
+        debugConsole.log(
           `  ✓ Successfully replaced child at index ${childIndex}`,
         );
       } catch (error) {
         overrideError = error instanceof Error ? error.message : String(error);
-        await debugConsole.log(
+        debugConsole.log(
           `  ✗ Cannot move node into instance: ${overrideError}`,
         );
-        await debugConsole.log(
+        debugConsole.log(
           "  → This means we cannot directly move placeholder children into instances",
         );
-        await debugConsole.log(
+        debugConsole.log(
           "  → We must create NEW nodes and copy properties instead",
         );
         // Clean up the override child we created (it's in testFrame, so it will be cleaned up)
@@ -225,18 +221,18 @@ export async function testInstanceChildrenAndOverrides(
       }
 
       if (overrideSuccess) {
-        await debugConsole.log(
+        debugConsole.log(
           `  Instance children after override: ${instance1.children.map((c) => c.name).join(", ")}`,
         );
-        await debugConsole.log(
+        debugConsole.log(
           `  Instance children count after override: ${instance1.children.length}`,
         );
 
         // Check if component children changed (they shouldn't)
-        await debugConsole.log(
+        debugConsole.log(
           `  Component children after override: ${component.children.map((c) => c.name).join(", ")}`,
         );
-        await debugConsole.log(
+        debugConsole.log(
           `  Component children count after override: ${component.children.length}`,
         );
 
@@ -263,7 +259,7 @@ export async function testInstanceChildrenAndOverrides(
         });
       } else {
         // Override failed - this is expected behavior
-        await debugConsole.log(
+        debugConsole.log(
           "  → Cannot move nodes into instances - must create new nodes instead",
         );
         testResults.push({
@@ -277,7 +273,7 @@ export async function testInstanceChildrenAndOverrides(
         });
       }
     } else {
-      await debugConsole.log(
+      debugConsole.log(
         "  ⚠️ Skipping override test - instance has no children",
       );
       testResults.push({
@@ -288,7 +284,7 @@ export async function testInstanceChildrenAndOverrides(
     }
 
     // Test 3: Create a placeholder frame with children, then try to merge into instance
-    await debugConsole.log(
+    debugConsole.log(
       "\n--- Test 3: Merge placeholder children into instance ---",
     );
 
@@ -298,7 +294,7 @@ export async function testInstanceChildrenAndOverrides(
     instance2.x = 250;
     testFrame.appendChild(instance2);
 
-    await debugConsole.log(
+    debugConsole.log(
       `  Created instance "${instance2.name}" with ${instance2.children.length} children`,
     );
 
@@ -323,10 +319,10 @@ export async function testInstanceChildrenAndOverrides(
     placeholderChild2.y = 10;
     placeholder.appendChild(placeholderChild2);
 
-    await debugConsole.log(
+    debugConsole.log(
       `  Created placeholder with ${placeholder.children.length} children: ${placeholder.children.map((c) => c.name).join(", ")}`,
     );
-    await debugConsole.log(
+    debugConsole.log(
       `  Instance has ${instance2.children.length} children: ${instance2.children.map((c) => c.name).join(", ")}`,
     );
 
@@ -337,8 +333,8 @@ export async function testInstanceChildrenAndOverrides(
     let mergeError: string | undefined;
 
     if (instance2.children.length > 0 && placeholder.children.length > 0) {
-      await debugConsole.log("  Attempting to merge placeholder children...");
-      await debugConsole.log(
+      debugConsole.log("  Attempting to merge placeholder children...");
+      debugConsole.log(
         "  → Since we cannot move nodes into instances, we'll test creating new nodes",
       );
 
@@ -355,7 +351,7 @@ export async function testInstanceChildrenAndOverrides(
         );
 
         if (matchingChild) {
-          await debugConsole.log(
+          debugConsole.log(
             `  Found matching child "${placeholderChild.name}" in instance - attempting to replace`,
           );
           try {
@@ -367,16 +363,16 @@ export async function testInstanceChildrenAndOverrides(
               name: placeholderChild.name,
               source: "replaced existing",
             });
-            await debugConsole.log(
+            debugConsole.log(
               `    ✓ Successfully replaced "${placeholderChild.name}"`,
             );
           } catch (error) {
             const errorMsg =
               error instanceof Error ? error.message : String(error);
-            await debugConsole.log(
+            debugConsole.log(
               `    ✗ Cannot move "${placeholderChild.name}" into instance: ${errorMsg}`,
             );
-            await debugConsole.log(
+            debugConsole.log(
               `    → Must create new node and copy properties instead`,
             );
             mergedChildren.push({
@@ -387,7 +383,7 @@ export async function testInstanceChildrenAndOverrides(
             mergeError = errorMsg;
           }
         } else {
-          await debugConsole.log(
+          debugConsole.log(
             `  No matching child for "${placeholderChild.name}" - attempting to append`,
           );
           try {
@@ -396,16 +392,16 @@ export async function testInstanceChildrenAndOverrides(
               name: placeholderChild.name,
               source: "appended new",
             });
-            await debugConsole.log(
+            debugConsole.log(
               `    ✓ Successfully appended "${placeholderChild.name}"`,
             );
           } catch (error) {
             const errorMsg =
               error instanceof Error ? error.message : String(error);
-            await debugConsole.log(
+            debugConsole.log(
               `    ✗ Cannot append "${placeholderChild.name}" to instance: ${errorMsg}`,
             );
-            await debugConsole.log(
+            debugConsole.log(
               `    → Must create new node and copy properties instead`,
             );
             mergedChildren.push({
@@ -418,7 +414,7 @@ export async function testInstanceChildrenAndOverrides(
         }
       }
 
-      await debugConsole.log(
+      debugConsole.log(
         `  After merge attempt, instance has ${instance2.children.length} children: ${instance2.children.map((c) => c.name).join(", ")}`,
       );
 
@@ -431,10 +427,10 @@ export async function testInstanceChildrenAndOverrides(
       );
 
       if (mergeError) {
-        await debugConsole.log(
+        debugConsole.log(
           `  → Merge failed: Cannot move nodes into instances (expected behavior)`,
         );
-        await debugConsole.log(
+        debugConsole.log(
           `  → Solution: Must create NEW nodes and copy properties from placeholder children`,
         );
         mergeSuccess = true; // This is expected behavior - we learned something
@@ -458,7 +454,7 @@ export async function testInstanceChildrenAndOverrides(
           : "Merge succeeded",
       };
     } else {
-      await debugConsole.log(
+      debugConsole.log(
         "  ⚠️ Cannot merge - instance or placeholder has no children",
       );
       mergeDetails = {
@@ -474,24 +470,22 @@ export async function testInstanceChildrenAndOverrides(
     });
 
     // Test 4: Check getMainComponent behavior
-    await debugConsole.log("\n--- Test 4: getMainComponent behavior ---");
+    debugConsole.log("\n--- Test 4: getMainComponent behavior ---");
 
     const mainComponent = await instance1.getMainComponentAsync();
-    await debugConsole.log(
+    debugConsole.log(
       `  Instance mainComponent: ${mainComponent?.name || "none"} (id: ${mainComponent?.id || "none"})`,
     );
-    await debugConsole.log(
-      `  MainComponent type: ${mainComponent?.type || "none"}`,
-    );
+    debugConsole.log(`  MainComponent type: ${mainComponent?.type || "none"}`);
 
     if (mainComponent) {
-      await debugConsole.log(
+      debugConsole.log(
         `  MainComponent children: ${mainComponent.children.map((c) => c.name).join(", ")}`,
       );
-      await debugConsole.log(
+      debugConsole.log(
         `  MainComponent children count: ${mainComponent.children.length}`,
       );
-      await debugConsole.log(
+      debugConsole.log(
         `  Instance children count: ${instance1.children.length}`,
       );
 
@@ -502,7 +496,7 @@ export async function testInstanceChildrenAndOverrides(
           (child, index) => child.name === mainComponent.children[index].name,
         );
 
-      await debugConsole.log(
+      debugConsole.log(
         `  Do instance children match mainComponent children? ${childrenMatch}`,
       );
 
@@ -526,7 +520,7 @@ export async function testInstanceChildrenAndOverrides(
     }
 
     // Test 5: Recreate children from JSON (simulating deferred instance resolution)
-    await debugConsole.log(
+    debugConsole.log(
       "\n--- Test 5: Recreate children from JSON (simulating deferred resolution) ---",
     );
 
@@ -554,10 +548,10 @@ export async function testInstanceChildrenAndOverrides(
     defaultChild3.fills = [{ type: "SOLID", color: { r: 0, g: 0, b: 1 } }]; // Blue
     component3.appendChild(defaultChild3);
 
-    await debugConsole.log(
+    debugConsole.log(
       `  Created component "${component3.name}" with ${component3.children.length} default children`,
     );
-    await debugConsole.log(
+    debugConsole.log(
       `  Default children: ${component3.children.map((c) => c.name).join(", ")}`,
     );
 
@@ -567,10 +561,10 @@ export async function testInstanceChildrenAndOverrides(
     instance3.x = 350;
     testFrame.appendChild(instance3);
 
-    await debugConsole.log(
+    debugConsole.log(
       `  Created instance "${instance3.name}" with ${instance3.children.length} default children`,
     );
-    await debugConsole.log(
+    debugConsole.log(
       `  Instance default children: ${instance3.children.map((c) => c.name).join(", ")}`,
     );
 
@@ -592,10 +586,10 @@ export async function testInstanceChildrenAndOverrides(
       },
     ];
 
-    await debugConsole.log(
+    debugConsole.log(
       `  JSON children to recreate: ${jsonChildren.map((c) => c.name).join(", ")}`,
     );
-    await debugConsole.log(
+    debugConsole.log(
       `  Strategy: Match by name, update matches in place, cannot add new ones (Figma limitation), keep defaults not in JSON`,
     );
 
@@ -623,7 +617,7 @@ export async function testInstanceChildrenAndOverrides(
 
       if (matchingDefaultChild) {
         // Match found - try to update it in place
-        await debugConsole.log(
+        debugConsole.log(
           `  Found matching child "${jsonChild.name}" - attempting to update in place`,
         );
         try {
@@ -632,7 +626,7 @@ export async function testInstanceChildrenAndOverrides(
             // Check current fills before update
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const fillsBefore = (matchingDefaultChild as any).fills;
-            await debugConsole.log(
+            debugConsole.log(
               `    Current fills before update: ${JSON.stringify(fillsBefore)}`,
             );
 
@@ -643,7 +637,7 @@ export async function testInstanceChildrenAndOverrides(
             // Check fills after update
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const fillsAfter = (matchingDefaultChild as any).fills;
-            await debugConsole.log(
+            debugConsole.log(
               `    Fills after update: ${JSON.stringify(fillsAfter)}`,
             );
 
@@ -657,35 +651,35 @@ export async function testInstanceChildrenAndOverrides(
               fillsAfter[0].color.b === jsonChild.fills[0].color.b;
 
             if (updateWorked) {
-              await debugConsole.log(
+              debugConsole.log(
                 `    ✓ Successfully updated "${jsonChild.name}" fills in place`,
               );
               updatedChildren.push(jsonChild.name);
             } else {
-              await debugConsole.log(
+              debugConsole.log(
                 `    ✗ Update assignment succeeded but fills didn't change (read-only?)`,
               );
               recreationSuccess = false;
             }
           } else {
-            await debugConsole.log(
+            debugConsole.log(
               `    ⚠ Cannot update "${jsonChild.name}" - node type doesn't support fills`,
             );
           }
         } catch (error) {
           const errorMsg =
             error instanceof Error ? error.message : String(error);
-          await debugConsole.log(
+          debugConsole.log(
             `    ✗ Cannot update "${jsonChild.name}": ${errorMsg}`,
           );
           recreationSuccess = false;
         }
       } else {
         // No match - cannot add new children to instances (Figma limitation)
-        await debugConsole.log(
+        debugConsole.log(
           `  No matching child for "${jsonChild.name}" - cannot add to instance (Figma limitation)`,
         );
-        await debugConsole.log(
+        debugConsole.log(
           `    → Children that exist only in JSON cannot be added to instances`,
         );
         skippedChildren.push(jsonChild.name);
@@ -693,7 +687,7 @@ export async function testInstanceChildrenAndOverrides(
     }
 
     // Test: Can we modify other properties of instance children?
-    await debugConsole.log(
+    debugConsole.log(
       `  Testing: Can we modify other properties (like name, size) of instance children?`,
     );
     let canModifyProperties = false;
@@ -708,7 +702,7 @@ export async function testInstanceChildrenAndOverrides(
           childToModify.resize(originalWidth + 10, childToModify.height);
         }
         canModifyProperties = true;
-        await debugConsole.log(
+        debugConsole.log(
           `    ✓ Can modify properties (name, size) of instance children`,
         );
         // Restore original values
@@ -718,7 +712,7 @@ export async function testInstanceChildrenAndOverrides(
         }
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
-        await debugConsole.log(
+        debugConsole.log(
           `    ✗ Cannot modify properties of instance children: ${errorMsg}`,
         );
       }
@@ -729,13 +723,13 @@ export async function testInstanceChildrenAndOverrides(
       (child) => !jsonChildren.some((jc) => jc.name === child.name),
     );
 
-    await debugConsole.log(
+    debugConsole.log(
       `  Kept default children (not in JSON): ${keptDefaultChildren.map((c) => c.name).join(", ")}`,
     );
-    await debugConsole.log(
+    debugConsole.log(
       `  Final instance children: ${instance3.children.map((c) => c.name).join(", ")}`,
     );
-    await debugConsole.log(
+    debugConsole.log(
       `  Final instance children count: ${instance3.children.length}`,
     );
 
@@ -803,12 +797,12 @@ export async function testInstanceChildrenAndOverrides(
       hasDefaultChild3 &&
       instance3.children.length === 3; // Should still be 3 (can't add new ones)
 
-    await debugConsole.log(`  Meets expectations: ${meetsExpectations}`);
-    await debugConsole.log(`    - "Default Child 1" updated: ${child1Updated}`);
-    await debugConsole.log(
+    debugConsole.log(`  Meets expectations: ${meetsExpectations}`);
+    debugConsole.log(`    - "Default Child 1" updated: ${child1Updated}`);
+    debugConsole.log(
       `    - "JSON Only Child" added: ${hasJsonOnlyChild} (expected: false - cannot add new children)`,
     );
-    await debugConsole.log(
+    debugConsole.log(
       `    - Default children kept: ${hasDefaultChild2 && hasDefaultChild3}`,
     );
 
@@ -831,7 +825,7 @@ export async function testInstanceChildrenAndOverrides(
     });
 
     // Test 6: Bottom-up resolution order (simulating nested deferred instances)
-    await debugConsole.log(
+    debugConsole.log(
       "\n--- Test 6: Bottom-up resolution order (nested deferred instances) ---",
     );
 
@@ -856,13 +850,13 @@ export async function testInstanceChildrenAndOverrides(
     grandchildPlaceholder.y = 10;
     childPlaceholder.appendChild(grandchildPlaceholder);
 
-    await debugConsole.log(
+    debugConsole.log(
       `  Created nested structure: Parent -> Child -> Grandchild`,
     );
-    await debugConsole.log(
+    debugConsole.log(
       `  Parent placeholder has ${parentPlaceholder.children.length} child(ren)`,
     );
-    await debugConsole.log(
+    debugConsole.log(
       `  Child placeholder has ${childPlaceholder.children.length} child(ren)`,
     );
 
@@ -875,7 +869,7 @@ export async function testInstanceChildrenAndOverrides(
     const bottomUpDetails: Record<string, unknown> = {};
 
     // Step 1: Resolve grandchild (leaf node - no children)
-    await debugConsole.log(`  Step 1: Resolving grandchild (leaf node)...`);
+    debugConsole.log(`  Step 1: Resolving grandchild (leaf node)...`);
     const grandchildComponent = figma.createComponent();
     grandchildComponent.name = "Grandchild Component";
     grandchildComponent.resize(50, 50);
@@ -893,17 +887,17 @@ export async function testInstanceChildrenAndOverrides(
       );
       grandchildParent.insertChild(grandchildIndex, grandchildInstance);
       grandchildPlaceholder.remove();
-      await debugConsole.log(
+      debugConsole.log(
         `    ✓ Resolved grandchild - replaced placeholder with instance`,
       );
       bottomUpDetails.grandchildResolved = true;
     } else {
-      await debugConsole.log(`    ✗ Could not resolve grandchild`);
+      debugConsole.log(`    ✗ Could not resolve grandchild`);
       bottomUpSuccess = false;
     }
 
     // Step 2: Resolve child (now has resolved grandchild inside)
-    await debugConsole.log(
+    debugConsole.log(
       `  Step 2: Resolving child (has resolved grandchild inside)...`,
     );
     const childComponent = figma.createComponent();
@@ -920,14 +914,12 @@ export async function testInstanceChildrenAndOverrides(
       (c) => c.name === "[Deferred: Child]",
     );
     if (!childPlaceholderAfterGrandchild) {
-      await debugConsole.log(
+      debugConsole.log(
         `    ✗ Child placeholder lost after resolving grandchild`,
       );
       bottomUpSuccess = false;
     } else if (!("children" in childPlaceholderAfterGrandchild)) {
-      await debugConsole.log(
-        `    ✗ Child placeholder does not support children`,
-      );
+      debugConsole.log(`    ✗ Child placeholder does not support children`);
       bottomUpSuccess = false;
     } else {
       // Grandchild should be inside the child placeholder
@@ -936,12 +928,12 @@ export async function testInstanceChildrenAndOverrides(
           (c: SceneNode) => c.name === "Grandchild Instance",
         );
       if (grandchildInsideChild) {
-        await debugConsole.log(
+        debugConsole.log(
           `    ✓ Grandchild still accessible inside child placeholder`,
         );
         bottomUpDetails.grandchildStillAccessible = true;
       } else {
-        await debugConsole.log(
+        debugConsole.log(
           `    ⚠ Grandchild not found inside child placeholder (may have been moved)`,
         );
       }
@@ -960,7 +952,7 @@ export async function testInstanceChildrenAndOverrides(
         );
         childParent.insertChild(childIndex, childInstance);
         childPlaceholderAfterGrandchild.remove();
-        await debugConsole.log(
+        debugConsole.log(
           `    ✓ Resolved child - replaced placeholder with instance`,
         );
         bottomUpDetails.childResolved = true;
@@ -970,22 +962,22 @@ export async function testInstanceChildrenAndOverrides(
         // This is actually correct - the child instance is in the parent, and grandchild is lost
         // This demonstrates why we need to handle nested deferred instances differently
         if (grandchildToMove) {
-          await debugConsole.log(
+          debugConsole.log(
             `    ⚠ Grandchild instance was in child placeholder and is now lost`,
           );
-          await debugConsole.log(
+          debugConsole.log(
             `    → This demonstrates the need to extract children before replacing placeholders`,
           );
           bottomUpDetails.grandchildLost = true;
         }
       } else {
-        await debugConsole.log(`    ✗ Could not resolve child`);
+        debugConsole.log(`    ✗ Could not resolve child`);
         bottomUpSuccess = false;
       }
     }
 
     // Step 3: Resolve parent (now has resolved child inside)
-    await debugConsole.log(
+    debugConsole.log(
       `  Step 3: Resolving parent (has resolved child inside)...`,
     );
     const parentComponent = figma.createComponent();
@@ -1003,7 +995,7 @@ export async function testInstanceChildrenAndOverrides(
       (c) => c.name === "Child Instance",
     );
     if (childInsideParent) {
-      await debugConsole.log(
+      debugConsole.log(
         `    ✓ Child still accessible inside parent placeholder`,
       );
       bottomUpDetails.childStillAccessible = true;
@@ -1011,12 +1003,12 @@ export async function testInstanceChildrenAndOverrides(
       // Extract child instance before replacing parent placeholder
       // Move it to testFrame temporarily (we can't add it to parentInstance yet)
       testFrame.appendChild(childInsideParent);
-      await debugConsole.log(
+      debugConsole.log(
         `    ✓ Extracted child instance from parent placeholder`,
       );
       bottomUpDetails.childExtracted = true;
     } else {
-      await debugConsole.log(
+      debugConsole.log(
         `    ✗ Child not found inside parent placeholder - cannot extract`,
       );
       bottomUpSuccess = false;
@@ -1028,7 +1020,7 @@ export async function testInstanceChildrenAndOverrides(
       const parentIndex = parentParent.children.indexOf(parentPlaceholder);
       parentParent.insertChild(parentIndex, parentInstance);
       parentPlaceholder.remove();
-      await debugConsole.log(
+      debugConsole.log(
         `    ✓ Resolved parent - replaced placeholder with instance`,
       );
       bottomUpDetails.parentResolved = true;
@@ -1039,20 +1031,18 @@ export async function testInstanceChildrenAndOverrides(
       if (childInsideParent) {
         try {
           parentInstance.appendChild(childInsideParent);
-          await debugConsole.log(
-            `    ✓ Added child instance to parent instance`,
-          );
+          debugConsole.log(`    ✓ Added child instance to parent instance`);
           bottomUpDetails.childAddedToParent = true;
         } catch (error) {
           const errorMsg =
             error instanceof Error ? error.message : String(error);
-          await debugConsole.log(
+          debugConsole.log(
             `    ✗ Cannot add child to parent instance: ${errorMsg}`,
           );
-          await debugConsole.log(
+          debugConsole.log(
             `    → This is the Figma limitation - cannot add children to instances`,
           );
-          await debugConsole.log(
+          debugConsole.log(
             `    → Child instance remains in testFrame (not in final structure)`,
           );
           bottomUpDetails.childAddedToParent = false;
@@ -1060,7 +1050,7 @@ export async function testInstanceChildrenAndOverrides(
         }
       }
     } else {
-      await debugConsole.log(`    ✗ Could not resolve parent`);
+      debugConsole.log(`    ✗ Could not resolve parent`);
       bottomUpSuccess = false;
     }
 
@@ -1068,7 +1058,7 @@ export async function testInstanceChildrenAndOverrides(
     // NOTE: Due to Figma limitations, we cannot add children to instances
     // So the final structure won't have children inside instances
     // But we can verify that bottom-up resolution worked (children resolved before parents)
-    await debugConsole.log(`  Verifying bottom-up resolution worked...`);
+    debugConsole.log(`  Verifying bottom-up resolution worked...`);
     const finalParent = testFrame.children.find(
       (c) => c.name === "Parent Instance",
     );
@@ -1080,18 +1070,18 @@ export async function testInstanceChildrenAndOverrides(
     if (finalParent && childInTestFrame) {
       // Bottom-up worked: parent was resolved, child was extracted (but can't be added to instance)
       bottomUpWorked = true;
-      await debugConsole.log(
+      debugConsole.log(
         `    ✓ Bottom-up resolution worked: Parent resolved, child extracted`,
       );
-      await debugConsole.log(
+      debugConsole.log(
         `    ⚠ Child cannot be added to parent instance (Figma limitation)`,
       );
     } else if (finalParent) {
-      await debugConsole.log(
+      debugConsole.log(
         `    ⚠ Parent resolved but child not found (may have been lost)`,
       );
     } else {
-      await debugConsole.log(`    ✗ Parent not resolved`);
+      debugConsole.log(`    ✗ Parent not resolved`);
     }
 
     bottomUpDetails.bottomUpWorked = bottomUpWorked;
@@ -1109,16 +1099,14 @@ export async function testInstanceChildrenAndOverrides(
     });
 
     // Summary
-    await debugConsole.log("\n--- Test Summary ---");
+    debugConsole.log("\n--- Test Summary ---");
     const allPassed = testResults.every((r) => r.success);
     const passedCount = testResults.filter((r) => r.success).length;
 
-    await debugConsole.log(
-      `  Tests passed: ${passedCount}/${testResults.length}`,
-    );
+    debugConsole.log(`  Tests passed: ${passedCount}/${testResults.length}`);
 
     for (const result of testResults) {
-      await debugConsole.log(
+      debugConsole.log(
         `  ${result.success ? "✓" : "✗"} ${result.test}: ${result.success ? "PASS" : "FAIL"}`,
       );
     }
@@ -1140,7 +1128,7 @@ export async function testInstanceChildrenAndOverrides(
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
-    await debugConsole.error(`Test failed: ${errorMessage}`);
+    debugConsole.error(`Test failed: ${errorMessage}`);
     return {
       success: false,
       message: `Test error: ${errorMessage}`,

@@ -92,7 +92,7 @@ export async function checkForExistingPrimaryImport(
             responseData as any,
           );
         } catch (parseError) {
-          await debugConsole.warning(
+          debugConsole.warning(
             `Failed to parse primary import metadata on page "${page.name}": ${parseError}`,
           );
           continue;
@@ -121,7 +121,7 @@ export async function checkForExistingPrimaryImport(
           }
         } else {
           // Page is under review but no primary import metadata - this shouldn't happen, but handle it
-          await debugConsole.warning(
+          debugConsole.warning(
             `Found page "${page.name}" marked as under review but missing primary import metadata`,
           );
         }
@@ -198,7 +198,7 @@ export async function createImportDividers(
     const startIndex = figma.root.children.indexOf(startDivider);
     figma.root.insertChild(startIndex + 1, endDivider);
 
-    await debugConsole.log("Created import dividers");
+    debugConsole.log("Created import dividers");
 
     const responseData: CreateImportDividersResponseData = {
       startDividerId: startDivider.id,
@@ -265,10 +265,10 @@ export async function importSingleComponentWithWizard(
   data: ImportSingleComponentWithWizardData,
 ): Promise<ResponseMessage> {
   try {
-    await debugConsole.log("=== Starting Single Component Import ===");
+    debugConsole.log("=== Starting Single Component Import ===");
 
     // Step 1: Create start divider only (end divider will be created after pages)
-    await debugConsole.log("Creating start divider...");
+    debugConsole.log("Creating start divider...");
     await figma.loadAllPagesAsync();
 
     // Check if start divider already exists
@@ -283,7 +283,7 @@ export async function importSingleComponentWithWizard(
       startDivider.name = IMPORT_START_DIVIDER;
       startDivider.setPluginData(DIVIDER_PLUGIN_DATA_KEY, DIVIDER_TYPE_START);
       startDivider.setPluginData(UNDER_REVIEW_KEY, "true"); // Mark as under review so it gets deleted
-      await debugConsole.log("Created start divider");
+      debugConsole.log("Created start divider");
     }
 
     // Step 2: Prepare files to import
@@ -305,7 +305,7 @@ export async function importSingleComponentWithWizard(
     ];
 
     // Step 3: Import pages in order
-    await debugConsole.log(
+    debugConsole.log(
       `Importing ${allFilesToImport.length} file(s) in dependency order...`,
     );
     const importResult = await importPagesInOrder({
@@ -361,11 +361,11 @@ export async function importSingleComponentWithWizard(
         }
       }
       figma.root.insertChild(insertIndex, endDividerAfterImport);
-      await debugConsole.log("Created end divider");
+      debugConsole.log("Created end divider");
     }
 
     // Step 5: Get page IDs from import result and mark them as "under review"
-    await debugConsole.log(
+    debugConsole.log(
       `Import result data structure: ${JSON.stringify(Object.keys(importResult.data || {}))}`,
     );
     const importResultData = importResult.data as {
@@ -376,26 +376,26 @@ export async function importSingleComponentWithWizard(
         pageIds?: string[];
       };
     };
-    await debugConsole.log(
+    debugConsole.log(
       `Import result has createdEntities: ${!!importResultData?.createdEntities}`,
     );
     if (importResultData?.createdEntities) {
-      await debugConsole.log(
+      debugConsole.log(
         `  Collection IDs: ${importResultData.createdEntities.collectionIds?.length || 0}`,
       );
       if (importResultData.createdEntities.collectionIds?.length) {
-        await debugConsole.log(
+        debugConsole.log(
           `  Collection IDs: ${importResultData.createdEntities.collectionIds.map((id) => id.substring(0, 8) + "...").join(", ")}`,
         );
       }
-      await debugConsole.log(
+      debugConsole.log(
         `  Variable IDs: ${importResultData.createdEntities.variableIds?.length || 0}`,
       );
-      await debugConsole.log(
+      debugConsole.log(
         `  Page IDs: ${importResultData.createdEntities.pageIds?.length || 0}`,
       );
     } else {
-      await debugConsole.warning(
+      debugConsole.warning(
         "Import result does not have createdEntities - cleanup may not work correctly",
       );
     }
@@ -412,7 +412,7 @@ export async function importSingleComponentWithWizard(
     const PAGE_METADATA_KEY = "RecursicaPublishedMetadata";
     const targetGuid = data.mainComponent.guid;
 
-    await debugConsole.log(
+    debugConsole.log(
       `Looking for main page by GUID: ${targetGuid.substring(0, 8)}...`,
     );
 
@@ -433,7 +433,7 @@ export async function importSingleComponentWithWizard(
               if (pageMetadata.id === targetGuid) {
                 mainPageId = importedPage.pageId;
                 mainPage = page;
-                await debugConsole.log(
+                debugConsole.log(
                   `Found main page by GUID: "${page.name}" (ID: ${importedPage.pageId.substring(0, 12)}...)`,
                 );
                 break;
@@ -444,7 +444,7 @@ export async function importSingleComponentWithWizard(
           }
         }
       } catch (err) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Error checking page ${importedPage.pageId}: ${err}`,
         );
       }
@@ -452,7 +452,7 @@ export async function importSingleComponentWithWizard(
 
     // Fallback: If not found by GUID, search all pages (in case page wasn't in importedPages list)
     if (!mainPageId) {
-      await debugConsole.log(
+      debugConsole.log(
         "Main page not found in importedPages list, searching all pages by GUID...",
       );
       await figma.loadAllPagesAsync();
@@ -466,7 +466,7 @@ export async function importSingleComponentWithWizard(
               if (pageMetadata.id === targetGuid) {
                 mainPageId = page.id;
                 mainPage = page;
-                await debugConsole.log(
+                debugConsole.log(
                   `Found main page by GUID in all pages: "${page.name}" (ID: ${page.id.substring(0, 12)}...)`,
                 );
                 break;
@@ -480,12 +480,12 @@ export async function importSingleComponentWithWizard(
     }
 
     if (!mainPageId || !mainPage) {
-      await debugConsole.error(
+      debugConsole.error(
         `Failed to find imported main page by GUID: ${targetGuid.substring(0, 8)}...`,
       );
-      await debugConsole.log("Imported pages were:");
+      debugConsole.log("Imported pages were:");
       for (const importedPage of importResultData.importedPages) {
-        await debugConsole.log(
+        debugConsole.log(
           `  - "${importedPage.name}" (ID: ${importedPage.pageId.substring(0, 12)}...)`,
         );
       }
@@ -520,7 +520,7 @@ export async function importSingleComponentWithWizard(
           }
         }
       } catch (err) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Failed to mark page ${importedPage.pageId} as under review: ${err}`,
         );
       }
@@ -541,7 +541,7 @@ export async function importSingleComponentWithWizard(
       if (!remotesPage.name.startsWith(CONSTRUCTION_ICON)) {
         remotesPage.name = `${CONSTRUCTION_ICON} REMOTES`;
       }
-      await debugConsole.log(
+      debugConsole.log(
         "Marked REMOTES page as under review and ensured construction icon",
       );
     }
@@ -569,7 +569,7 @@ export async function importSingleComponentWithWizard(
           const underReview = page.getPluginData(UNDER_REVIEW_KEY);
           if (underReview !== "true") {
             page.setPluginData(UNDER_REVIEW_KEY, "true");
-            await debugConsole.log(
+            debugConsole.log(
               `Marked page "${page.name}" as under review (found between dividers)`,
             );
           }
@@ -593,11 +593,11 @@ export async function importSingleComponentWithWizard(
     }> = [];
 
     // Extract created collections - look them up to get names for metadata
-    await debugConsole.log(
+    debugConsole.log(
       `[EXTRACTION] Starting collection extraction. Collection IDs in result: ${importResultData?.createdEntities?.collectionIds?.length || 0}`,
     );
     if (importResultData?.createdEntities?.collectionIds) {
-      await debugConsole.log(
+      debugConsole.log(
         `[EXTRACTION] Collection IDs to process: ${importResultData.createdEntities.collectionIds.map((id) => id.substring(0, 8) + "...").join(", ")}`,
       );
       for (const collectionId of importResultData.createdEntities
@@ -610,7 +610,7 @@ export async function importSingleComponentWithWizard(
               collectionId: collection.id,
               collectionName: collection.name,
             });
-            await debugConsole.log(
+            debugConsole.log(
               `[EXTRACTION] ✓ Extracted collection: "${collection.name}" (${collectionId.substring(0, 8)}...)`,
             );
           } else {
@@ -620,7 +620,7 @@ export async function importSingleComponentWithWizard(
               collectionId: collectionId,
               collectionName: `Unknown (${collectionId.substring(0, 8)}...)`,
             });
-            await debugConsole.warning(
+            debugConsole.warning(
               `[EXTRACTION] Collection ${collectionId.substring(0, 8)}... not found - will still track for cleanup`,
             );
           }
@@ -630,21 +630,21 @@ export async function importSingleComponentWithWizard(
             collectionId: collectionId,
             collectionName: `Unknown (${collectionId.substring(0, 8)}...)`,
           });
-          await debugConsole.warning(
+          debugConsole.warning(
             `[EXTRACTION] Failed to get collection ${collectionId.substring(0, 8)}...: ${err} - will still track for cleanup`,
           );
         }
       }
     } else {
-      await debugConsole.warning(
+      debugConsole.warning(
         "[EXTRACTION] No collectionIds found in importResultData.createdEntities",
       );
     }
-    await debugConsole.log(
+    debugConsole.log(
       `[EXTRACTION] Total collections extracted: ${createdCollections.length}`,
     );
     if (createdCollections.length > 0) {
-      await debugConsole.log(
+      debugConsole.log(
         `[EXTRACTION] Extracted collections: ${createdCollections.map((c) => `"${c.collectionName}" (${c.collectionId.substring(0, 8)}...)`).join(", ")}`,
       );
     }
@@ -654,7 +654,7 @@ export async function importSingleComponentWithWizard(
     // The cleanup logic will handle deleting collections (which deletes their variables) separately
 
     if (importResultData?.createdEntities?.variableIds) {
-      await debugConsole.log(
+      debugConsole.log(
         `[EXTRACTION] Processing ${importResultData.createdEntities.variableIds.length} variable ID(s)...`,
       );
       for (const variableId of importResultData.createdEntities.variableIds) {
@@ -687,16 +687,16 @@ export async function importSingleComponentWithWizard(
             }
           }
         } catch (error) {
-          await debugConsole.warning(
+          debugConsole.warning(
             `Failed to get variable ${variableId}: ${error}`,
           );
         }
       }
-      await debugConsole.log(
+      debugConsole.log(
         `[EXTRACTION] Total variables extracted: ${createdVariables.length}`,
       );
     } else {
-      await debugConsole.warning(
+      debugConsole.warning(
         "[EXTRACTION] No variableIds found in importResultData.createdEntities",
       );
     }
@@ -710,7 +710,7 @@ export async function importSingleComponentWithWizard(
       createdCollections.length === 0 &&
       importResultData?.createdEntities?.collectionIds?.length
     ) {
-      await debugConsole.warning(
+      debugConsole.warning(
         "[EXTRACTION] Collection extraction failed, but IDs are available - creating fallback entries",
       );
       for (const collectionId of importResultData.createdEntities
@@ -725,7 +725,7 @@ export async function importSingleComponentWithWizard(
       createdVariables.length === 0 &&
       importResultData?.createdEntities?.variableIds?.length
     ) {
-      await debugConsole.warning(
+      debugConsole.warning(
         "[EXTRACTION] Variable extraction failed, but IDs are available - creating fallback entries",
       );
       for (const variableId of importResultData.createdEntities.variableIds) {
@@ -750,7 +750,7 @@ export async function importSingleComponentWithWizard(
       importError: undefined, // No error yet
     };
 
-    await debugConsole.log(
+    debugConsole.log(
       `Storing metadata with ${createdCollections.length} collection(s) and ${createdVariables.length} variable(s)`,
     );
     mainPage.setPluginData(
@@ -758,7 +758,7 @@ export async function importSingleComponentWithWizard(
       JSON.stringify(primaryImportMetadata),
     );
     mainPage.setPluginData(UNDER_REVIEW_KEY, "true"); // Ensure main page is marked as under review
-    await debugConsole.log(
+    debugConsole.log(
       "Stored primary import metadata on main page and marked as under review",
     );
 
@@ -770,16 +770,16 @@ export async function importSingleComponentWithWizard(
       );
     }
 
-    await debugConsole.log("=== Single Component Import Complete ===");
+    debugConsole.log("=== Single Component Import Complete ===");
 
     // Store metadata before any potential errors
     // Update metadata with success status (no error)
     primaryImportMetadata.importError = undefined;
-    await debugConsole.log(
+    debugConsole.log(
       `[METADATA] About to store metadata with ${createdCollections.length} collection(s) and ${createdVariables.length} variable(s)`,
     );
     if (createdCollections.length > 0) {
-      await debugConsole.log(
+      debugConsole.log(
         `[METADATA] Collections to store: ${createdCollections.map((c) => `"${c.collectionName}" (${c.collectionId.substring(0, 8)}...)`).join(", ")}`,
       );
     }
@@ -787,7 +787,7 @@ export async function importSingleComponentWithWizard(
       PRIMARY_IMPORT_KEY,
       JSON.stringify(primaryImportMetadata),
     );
-    await debugConsole.log(
+    debugConsole.log(
       `[METADATA] Stored metadata: ${createdCollections.length} collection(s), ${createdVariables.length} variable(s)`,
     );
 
@@ -797,13 +797,11 @@ export async function importSingleComponentWithWizard(
       try {
         const storedMetadata: PrimaryImportMetadata =
           JSON.parse(storedMetadataJson);
-        await debugConsole.log(
+        debugConsole.log(
           `[METADATA] Verification: Stored metadata has ${storedMetadata.createdCollections.length} collection(s) and ${storedMetadata.createdVariables.length} variable(s)`,
         );
       } catch {
-        await debugConsole.warning(
-          "[METADATA] Failed to verify stored metadata",
-        );
+        debugConsole.warning("[METADATA] Failed to verify stored metadata");
       }
     }
 
@@ -820,7 +818,7 @@ export async function importSingleComponentWithWizard(
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
-    await debugConsole.error(`Import failed: ${errorMessage}`);
+    debugConsole.error(`Import failed: ${errorMessage}`);
 
     // Try to store metadata with error information if we have a main page
     try {
@@ -855,7 +853,7 @@ export async function importSingleComponentWithWizard(
           try {
             const existingMetadata: PrimaryImportMetadata =
               JSON.parse(existingMetadataJson);
-            await debugConsole.log(
+            debugConsole.log(
               `[CATCH] Found existing metadata with ${existingMetadata.createdCollections.length} collection(s) and ${existingMetadata.createdVariables.length} variable(s)`,
             );
             existingMetadata.importError = errorMessage;
@@ -863,19 +861,17 @@ export async function importSingleComponentWithWizard(
               PRIMARY_IMPORT_KEY,
               JSON.stringify(existingMetadata),
             );
-            await debugConsole.log(
+            debugConsole.log(
               `[CATCH] Updated existing metadata with error. Collections: ${existingMetadata.createdCollections.length}, Variables: ${existingMetadata.createdVariables.length}`,
             );
           } catch (err) {
-            await debugConsole.warning(
-              `[CATCH] Failed to update metadata: ${err}`,
-            );
+            debugConsole.warning(`[CATCH] Failed to update metadata: ${err}`);
           }
         }
       } else {
         // No existing metadata, try to create it with what we know
         // We need to collect created entities even on error
-        await debugConsole.log(
+        debugConsole.log(
           "No existing metadata found, attempting to collect created entities for cleanup...",
         );
 
@@ -929,7 +925,7 @@ export async function importSingleComponentWithWizard(
                   collectionId: collection.id,
                   collectionName: collection.name,
                 });
-                await debugConsole.log(
+                debugConsole.log(
                   `Found created collection: "${collection.name}" (${collection.id.substring(0, 8)}...)`,
                 );
               }
@@ -968,13 +964,13 @@ export async function importSingleComponentWithWizard(
             PRIMARY_IMPORT_KEY,
             JSON.stringify(fallbackMetadata),
           );
-          await debugConsole.log(
+          debugConsole.log(
             `Created fallback metadata with ${createdCollections.length} collection(s) and error information`,
           );
         }
       }
     } catch (metadataError) {
-      await debugConsole.warning(
+      debugConsole.warning(
         `Failed to store error metadata: ${metadataError instanceof Error ? metadataError.message : String(metadataError)}`,
       );
     }
@@ -1004,7 +1000,7 @@ export async function deleteImportGroup(
   data: DeleteImportGroupData,
 ): Promise<ResponseMessage> {
   try {
-    await debugConsole.log("=== Starting Import Group Deletion ===");
+    debugConsole.log("=== Starting Import Group Deletion ===");
 
     // Step 1: Get the main page and its metadata
     await figma.loadAllPagesAsync();
@@ -1023,7 +1019,7 @@ export async function deleteImportGroup(
 
     const metadata: PrimaryImportMetadata = JSON.parse(primaryImportData);
 
-    await debugConsole.log(
+    debugConsole.log(
       `Found metadata: ${metadata.createdCollections.length} collection(s), ${metadata.createdVariables.length} variable(s) to delete`,
     );
 
@@ -1042,14 +1038,12 @@ export async function deleteImportGroup(
       const underReview = page.getPluginData(UNDER_REVIEW_KEY);
       if (underReview === "true") {
         pagesToDelete.push(page);
-        await debugConsole.log(
-          `Found page to delete: "${page.name}" (under review)`,
-        );
+        debugConsole.log(`Found page to delete: "${page.name}" (under review)`);
       }
     }
 
     // Step 4: Delete created variables in existing collections
-    await debugConsole.log(
+    debugConsole.log(
       `Deleting ${metadata.createdVariables.length} variable(s) from existing collections...`,
     );
     let deletedVariablesCount = 0;
@@ -1061,23 +1055,23 @@ export async function deleteImportGroup(
         if (variable) {
           variable.remove();
           deletedVariablesCount++;
-          await debugConsole.log(
+          debugConsole.log(
             `Deleted variable: ${variableInfo.variableName} from collection ${variableInfo.collectionName}`,
           );
         } else {
-          await debugConsole.warning(
+          debugConsole.warning(
             `Variable ${variableInfo.variableName} (${variableInfo.variableId}) not found - may have already been deleted`,
           );
         }
       } catch (error) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Failed to delete variable ${variableInfo.variableName}: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
     }
 
     // Step 5: Delete created collections (this will also delete all variables in those collections)
-    await debugConsole.log(
+    debugConsole.log(
       `Deleting ${metadata.createdCollections.length} collection(s)...`,
     );
     let deletedCollectionsCount = 0;
@@ -1089,16 +1083,16 @@ export async function deleteImportGroup(
         if (collection) {
           collection.remove();
           deletedCollectionsCount++;
-          await debugConsole.log(
+          debugConsole.log(
             `Deleted collection: ${collectionInfo.collectionName} (${collectionInfo.collectionId})`,
           );
         } else {
-          await debugConsole.warning(
+          debugConsole.warning(
             `Collection ${collectionInfo.collectionName} (${collectionInfo.collectionId}) not found - may have already been deleted`,
           );
         }
       } catch (error) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Failed to delete collection ${collectionInfo.collectionName}: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
@@ -1129,11 +1123,11 @@ export async function deleteImportGroup(
 
       if (safePage) {
         await figma.setCurrentPageAsync(safePage);
-        await debugConsole.log(
+        debugConsole.log(
           `Switched away from page "${currentPage.name}" before deletion`,
         );
       } else {
-        await debugConsole.warning(
+        debugConsole.warning(
           "No safe page to switch to - all pages are being deleted",
         );
       }
@@ -1154,7 +1148,7 @@ export async function deleteImportGroup(
         }
 
         if (!pageStillExists) {
-          await debugConsole.log(`Page "${name}" already deleted, skipping`);
+          debugConsole.log(`Page "${name}" already deleted, skipping`);
           continue;
         }
 
@@ -1176,15 +1170,15 @@ export async function deleteImportGroup(
         }
 
         page.remove();
-        await debugConsole.log(`Deleted page: "${name}"`);
+        debugConsole.log(`Deleted page: "${name}"`);
       } catch (error) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Failed to delete page "${name}": ${error instanceof Error ? error.message : String(error)}`,
         );
       }
     }
 
-    await debugConsole.log("=== Import Group Deletion Complete ===");
+    debugConsole.log("=== Import Group Deletion Complete ===");
 
     const responseData: DeleteImportGroupResponseData = {
       success: true,
@@ -1197,7 +1191,7 @@ export async function deleteImportGroup(
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
-    await debugConsole.error(`Delete failed: ${errorMessage}`);
+    debugConsole.error(`Delete failed: ${errorMessage}`);
     return retError(
       "deleteImportGroup",
       error instanceof Error ? error : new Error(String(error)),
@@ -1228,7 +1222,7 @@ export async function cleanupFailedImport(
   _data: CleanupFailedImportData,
 ): Promise<ResponseMessage> {
   try {
-    await debugConsole.log("=== Cleaning up failed import ===");
+    debugConsole.log("=== Cleaning up failed import ===");
 
     await figma.loadAllPagesAsync();
     const allPages = figma.root.children;
@@ -1251,7 +1245,7 @@ export async function cleanupFailedImport(
 
     // If we found pages with new system metadata, use the new cleanup logic
     if (hasNewSystemPages) {
-      await debugConsole.log(
+      debugConsole.log(
         "Found pages with RecursicaCreatedEntities, using new cleanup logic",
       );
     } else {
@@ -1270,14 +1264,14 @@ export async function cleanupFailedImport(
 
       // If we found a page with old metadata, use deleteImportGroup for full cleanup
       if (pageWithMetadata) {
-        await debugConsole.log(
+        debugConsole.log(
           "Found page with PRIMARY_IMPORT_KEY (old system), using deleteImportGroup",
         );
         return await deleteImportGroup({ pageId: pageWithMetadata.id });
       }
 
       // Otherwise, look for pages with UNDER_REVIEW_KEY or pages with PAGE_METADATA_KEY
-      await debugConsole.log(
+      debugConsole.log(
         "No primary metadata found, looking for pages with UNDER_REVIEW_KEY or PAGE_METADATA_KEY",
       );
     }
@@ -1287,7 +1281,7 @@ export async function cleanupFailedImport(
 
     // First, collect created entities from ALL pages (not just pages to delete)
     // This ensures we find created entities even if they're stored on a different page
-    await debugConsole.log(
+    debugConsole.log(
       `Scanning ${allPages.length} page(s) for created entities...`,
     );
 
@@ -1309,7 +1303,7 @@ export async function cleanupFailedImport(
             for (const collectionId of createdEntities.collectionIds) {
               allCollectionIds.add(collectionId);
             }
-            await debugConsole.log(
+            debugConsole.log(
               `  Found ${createdEntities.collectionIds.length} collection ID(s) on page "${page.name}"`,
             );
           }
@@ -1317,12 +1311,12 @@ export async function cleanupFailedImport(
             for (const variableId of createdEntities.variableIds) {
               allVariableIds.add(variableId);
             }
-            await debugConsole.log(
+            debugConsole.log(
               `  Found ${createdEntities.variableIds.length} variable ID(s) on page "${page.name}"`,
             );
           }
         } catch (error) {
-          await debugConsole.warning(
+          debugConsole.warning(
             `  Failed to parse created entities from page "${page.name}": ${error}`,
           );
         }
@@ -1330,7 +1324,7 @@ export async function cleanupFailedImport(
     }
 
     // Now, find pages to delete
-    await debugConsole.log(
+    debugConsole.log(
       `Scanning ${allPages.length} page(s) for pages to delete...`,
     );
 
@@ -1343,7 +1337,7 @@ export async function cleanupFailedImport(
       const createdEntitiesStr = page.getPluginData(CREATED_ENTITIES_KEY);
 
       // Log every page for debugging
-      await debugConsole.log(
+      debugConsole.log(
         `  Checking page "${page.name}": underReview=${underReview === "true"}, hasMetadata=${!!pageMetadata}, hasCreatedEntities=${!!createdEntitiesStr}`,
       );
 
@@ -1351,7 +1345,7 @@ export async function cleanupFailedImport(
       if (underReview === "true" || pageMetadata) {
         // Store page info before deletion
         pagesToDelete.push({ id: page.id, name: page.name });
-        await debugConsole.log(
+        debugConsole.log(
           `Found page to delete: "${page.name}" (underReview: ${underReview === "true"}, hasMetadata: ${!!pageMetadata})`,
         );
 
@@ -1377,7 +1371,7 @@ export async function cleanupFailedImport(
                       id: additionalPage.id,
                       name: additionalPage.name,
                     });
-                    await debugConsole.log(
+                    debugConsole.log(
                       `  Added additional page from createdEntities.pageIds: "${additionalPage.name}"`,
                     );
 
@@ -1396,7 +1390,7 @@ export async function cleanupFailedImport(
                           for (const collectionId of additionalPageCreatedEntities.collectionIds) {
                             allCollectionIds.add(collectionId);
                           }
-                          await debugConsole.log(
+                          debugConsole.log(
                             `  Extracted ${additionalPageCreatedEntities.collectionIds.length} collection ID(s) from additional page "${additionalPage.name}"`,
                           );
                         }
@@ -1404,12 +1398,12 @@ export async function cleanupFailedImport(
                           for (const variableId of additionalPageCreatedEntities.variableIds) {
                             allVariableIds.add(variableId);
                           }
-                          await debugConsole.log(
+                          debugConsole.log(
                             `  Extracted ${additionalPageCreatedEntities.variableIds.length} variable ID(s) from additional page "${additionalPage.name}"`,
                           );
                         }
                       } catch (error) {
-                        await debugConsole.warning(
+                        debugConsole.warning(
                           `  Failed to parse created entities from additional page "${additionalPage.name}": ${error}`,
                         );
                       }
@@ -1423,11 +1417,11 @@ export async function cleanupFailedImport(
               for (const collectionId of createdEntities.collectionIds) {
                 allCollectionIds.add(collectionId);
               }
-              await debugConsole.log(
+              debugConsole.log(
                 `  Extracted ${createdEntities.collectionIds.length} collection ID(s) from page "${page.name}": ${createdEntities.collectionIds.map((id) => id.substring(0, 8) + "...").join(", ")}`,
               );
             } else {
-              await debugConsole.log(
+              debugConsole.log(
                 `  No collectionIds found in createdEntities for page "${page.name}"`,
               );
             }
@@ -1435,31 +1429,31 @@ export async function cleanupFailedImport(
               for (const variableId of createdEntities.variableIds) {
                 allVariableIds.add(variableId);
               }
-              await debugConsole.log(
+              debugConsole.log(
                 `  Extracted ${createdEntities.variableIds.length} variable ID(s) from page "${page.name}": ${createdEntities.variableIds.map((id) => id.substring(0, 8) + "...").join(", ")}`,
               );
             } else {
-              await debugConsole.log(
+              debugConsole.log(
                 `  No variableIds found in createdEntities for page "${page.name}"`,
               );
             }
           } catch (error) {
-            await debugConsole.warning(
+            debugConsole.warning(
               `  Failed to parse created entities from page "${page.name}": ${error}`,
             );
-            await debugConsole.warning(
+            debugConsole.warning(
               `  Created entities string: ${createdEntitiesStr.substring(0, 200)}...`,
             );
           }
         } else {
-          await debugConsole.log(
+          debugConsole.log(
             `  No created entities data found on page "${page.name}"`,
           );
         }
       }
     }
 
-    await debugConsole.log(
+    debugConsole.log(
       `Cleanup summary: Found ${pagesToDelete.length} page(s) to delete, ${allCollectionIds.size} collection(s) to delete, ${allVariableIds.size} variable(s) to delete`,
     );
 
@@ -1478,7 +1472,7 @@ export async function cleanupFailedImport(
 
       if (safePage) {
         await figma.setCurrentPageAsync(safePage);
-        await debugConsole.log(
+        debugConsole.log(
           `Switched away from page "${currentPage.name}" before deletion`,
         );
       }
@@ -1517,9 +1511,9 @@ export async function cleanupFailedImport(
 
         page.remove();
         deletedPagesCount++;
-        await debugConsole.log(`Deleted page: "${pageInfo.name}"`);
+        debugConsole.log(`Deleted page: "${pageInfo.name}"`);
       } catch (error) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Failed to delete page "${pageInfo.name}" (${pageInfo.id.substring(0, 8)}...): ${error instanceof Error ? error.message : String(error)}`,
         );
       }
@@ -1540,13 +1534,13 @@ export async function cleanupFailedImport(
           if (!allCollectionIds.has(collectionId)) {
             variable.remove();
             deletedVariablesCount++;
-            await debugConsole.log(
+            debugConsole.log(
               `Deleted variable: ${variable.name} (${variableId.substring(0, 8)}...)`,
             );
           }
         }
       } catch (error) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Could not delete variable ${variableId.substring(0, 8)}...: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
@@ -1560,18 +1554,18 @@ export async function cleanupFailedImport(
         if (collection) {
           collection.remove();
           deletedCollectionsCount++;
-          await debugConsole.log(
+          debugConsole.log(
             `Deleted collection: "${collection.name}" (${collectionId.substring(0, 8)}...)`,
           );
         }
       } catch (error) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Could not delete collection ${collectionId.substring(0, 8)}...: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
     }
 
-    await debugConsole.log("=== Failed Import Cleanup Complete ===");
+    debugConsole.log("=== Failed Import Cleanup Complete ===");
 
     const responseData: CleanupFailedImportResponseData = {
       success: true,
@@ -1584,7 +1578,7 @@ export async function cleanupFailedImport(
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
-    await debugConsole.error(`Cleanup failed: ${errorMessage}`);
+    debugConsole.error(`Cleanup failed: ${errorMessage}`);
     return retError(
       "cleanupFailedImport",
       error instanceof Error ? error : new Error(String(error)),
@@ -1608,7 +1602,7 @@ export async function clearImportMetadata(
   data: ClearImportMetadataData,
 ): Promise<ResponseMessage> {
   try {
-    await debugConsole.log("=== Clearing Import Metadata ===");
+    debugConsole.log("=== Clearing Import Metadata ===");
 
     // Get the main page
     await figma.loadAllPagesAsync();
@@ -1653,9 +1647,7 @@ export async function clearImportMetadata(
       }
     }
 
-    await debugConsole.log(
-      "Cleared import metadata from page and related pages",
-    );
+    debugConsole.log("Cleared import metadata from page and related pages");
 
     const responseData: ClearImportMetadataResponseData = {
       success: true,
@@ -1665,7 +1657,7 @@ export async function clearImportMetadata(
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
-    await debugConsole.error(`Clear metadata failed: ${errorMessage}`);
+    debugConsole.error(`Clear metadata failed: ${errorMessage}`);
     return retError(
       "clearImportMetadata",
       error instanceof Error ? error : new Error(String(error)),

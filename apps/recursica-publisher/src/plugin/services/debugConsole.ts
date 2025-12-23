@@ -1,73 +1,61 @@
 /// <reference types="@figma/plugin-typings" />
 
-export type DebugConsoleMessageType = "error" | "warning" | undefined;
-
-export interface DebugConsolePayload {
-  type: DebugConsoleMessageType;
+export interface DebugConsoleMessage {
+  type: "error" | "warning" | "log";
   message: string;
 }
 
-/**
- * Yields control to the event loop to allow UI updates to process
- * This ensures debug console messages appear in real-time
- */
-async function yieldToEventLoop(): Promise<void> {
-  // Use setTimeout with 0 delay to yield to the event loop
-  // This allows the UI to process queued messages
-  return new Promise((resolve) => setTimeout(resolve, 0));
-}
+// In-memory log buffer
+const logBuffer: DebugConsoleMessage[] = [];
 
 /**
- * Debug console utility for posting messages to the UI
- * Messages are sent and then control is yielded to allow real-time updates
+ * Debug console utility for collecting logs in memory
+ * Logs are collected and sent only when operations complete
  * Also logs to the browser console for debugging
  */
 export const debugConsole = {
-  clear: async () => {
+  clear: () => {
     console.clear();
-    figma.ui.postMessage({
-      type: "DebugConsole",
-      payload: {
-        type: undefined,
-        message: "__CLEAR__",
-      },
-    } as { type: "DebugConsole"; payload: DebugConsolePayload });
-    await yieldToEventLoop();
+    logBuffer.length = 0; // Clear the buffer
   },
 
-  log: async (message: string) => {
+  log: (message: string) => {
     console.log(message);
-    figma.ui.postMessage({
-      type: "DebugConsole",
-      payload: {
-        type: undefined,
-        message,
-      },
-    } as { type: "DebugConsole"; payload: DebugConsolePayload });
-    await yieldToEventLoop();
+    logBuffer.push({
+      type: "log",
+      message,
+    });
   },
 
-  warning: async (message: string) => {
+  warning: (message: string) => {
     console.warn(message);
-    figma.ui.postMessage({
-      type: "DebugConsole",
-      payload: {
-        type: "warning",
-        message,
-      },
-    } as { type: "DebugConsole"; payload: DebugConsolePayload });
-    await yieldToEventLoop();
+    logBuffer.push({
+      type: "warning",
+      message,
+    });
   },
 
-  error: async (message: string) => {
+  error: (message: string) => {
     console.error(message);
-    figma.ui.postMessage({
-      type: "DebugConsole",
-      payload: {
-        type: "error",
-        message,
-      },
-    } as { type: "DebugConsole"; payload: DebugConsolePayload });
-    await yieldToEventLoop();
+    logBuffer.push({
+      type: "error",
+      message,
+    });
+  },
+
+  /**
+   * Get all collected logs without clearing the buffer
+   */
+  getLogs: (): DebugConsoleMessage[] => {
+    return [...logBuffer];
+  },
+
+  /**
+   * Get all collected logs and clear the buffer
+   */
+  flush: (): DebugConsoleMessage[] => {
+    const logs = [...logBuffer];
+    logBuffer.length = 0;
+    return logs;
   },
 };

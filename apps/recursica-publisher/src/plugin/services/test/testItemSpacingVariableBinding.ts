@@ -67,7 +67,7 @@ export async function testItemSpacingVariableBinding(
   pageId: string,
 ): Promise<TestResult> {
   try {
-    await debugConsole.log("=== Test: itemSpacing Variable Binding ===");
+    debugConsole.log("=== Test: itemSpacing Variable Binding ===");
 
     // Get the test page
     const page = (await figma.getNodeByIdAsync(pageId)) as PageNode;
@@ -85,7 +85,7 @@ export async function testItemSpacingVariableBinding(
     }
 
     // Create a variable collection and a dimension variable
-    await debugConsole.log("Creating test variable collection and variable...");
+    debugConsole.log("Creating test variable collection and variable...");
     const collection = figma.variables.createVariableCollection("Test");
     const defaultMode = collection.modes[0];
     const spacingVariable = figma.variables.createVariable(
@@ -95,7 +95,7 @@ export async function testItemSpacingVariableBinding(
     );
     spacingVariable.setValueForMode(defaultMode.modeId, 16);
 
-    await debugConsole.log(
+    debugConsole.log(
       `Created variable: "${spacingVariable.name}" = ${spacingVariable.valuesByMode[defaultMode.modeId]} in collection "${collection.name}"`,
     );
 
@@ -120,7 +120,7 @@ export async function testItemSpacingVariableBinding(
      * 4. Check if binding succeeded
      */
     // Approach 1: Set layoutMode, then immediately set bound variable before any other operations
-    await debugConsole.log(
+    debugConsole.log(
       "\n--- Approach 1: Set layoutMode, then immediately bind ---",
     );
     try {
@@ -130,22 +130,20 @@ export async function testItemSpacingVariableBinding(
 
       // Set layoutMode
       frame1.layoutMode = "VERTICAL";
-      await debugConsole.log("  Set layoutMode to VERTICAL");
+      debugConsole.log("  Set layoutMode to VERTICAL");
 
       // Immediately set bound variable
       frame1.setBoundVariable("itemSpacing", spacingVariable);
-      await debugConsole.log(
-        "  Set bound variable immediately after layoutMode",
-      );
+      debugConsole.log("  Set bound variable immediately after layoutMode");
 
       // Check if it worked
       const boundVar1 = frame1.boundVariables?.itemSpacing;
       const itemSpacing1 = frame1.itemSpacing;
 
       const success1 = boundVar1 !== undefined;
-      await debugConsole.log(`  Result: ${success1 ? "SUCCESS" : "FAILED"}`);
-      await debugConsole.log(`  itemSpacing value: ${itemSpacing1}`);
-      await debugConsole.log(`  boundVariable: ${JSON.stringify(boundVar1)}`);
+      debugConsole.log(`  Result: ${success1 ? "SUCCESS" : "FAILED"}`);
+      debugConsole.log(`  itemSpacing value: ${itemSpacing1}`);
+      debugConsole.log(`  boundVariable: ${JSON.stringify(boundVar1)}`);
 
       results.push({
         approach: "1 - Immediate bind after layoutMode",
@@ -159,7 +157,7 @@ export async function testItemSpacingVariableBinding(
         },
       });
     } catch (error) {
-      await debugConsole.error(
+      debugConsole.error(
         `  Approach 1 failed with error: ${error instanceof Error ? error.message : String(error)}`,
       );
       results.push({
@@ -183,7 +181,7 @@ export async function testItemSpacingVariableBinding(
      * 5. Check if binding succeeded
      */
     // Approach 2: Set layoutMode, try to clear itemSpacing, then set bound variable
-    await debugConsole.log(
+    debugConsole.log(
       "\n--- Approach 2: Set layoutMode, clear itemSpacing, then bind ---",
     );
     try {
@@ -193,28 +191,26 @@ export async function testItemSpacingVariableBinding(
 
       // Set layoutMode
       frame2.layoutMode = "VERTICAL";
-      await debugConsole.log("  Set layoutMode to VERTICAL");
-      await debugConsole.log(
-        `  itemSpacing after layoutMode: ${frame2.itemSpacing}`,
-      );
+      debugConsole.log("  Set layoutMode to VERTICAL");
+      debugConsole.log(`  itemSpacing after layoutMode: ${frame2.itemSpacing}`);
 
       // Try to clear itemSpacing by setting to 0 or undefined
       // Note: We can't set to undefined, but we can try setting to 0 first
       frame2.itemSpacing = 0;
-      await debugConsole.log("  Set itemSpacing to 0");
+      debugConsole.log("  Set itemSpacing to 0");
 
       // Now try to set bound variable
       frame2.setBoundVariable("itemSpacing", spacingVariable);
-      await debugConsole.log("  Set bound variable after clearing");
+      debugConsole.log("  Set bound variable after clearing");
 
       // Check if it worked
       const boundVar2 = frame2.boundVariables?.itemSpacing;
       const itemSpacing2 = frame2.itemSpacing;
 
       const success2 = boundVar2 !== undefined;
-      await debugConsole.log(`  Result: ${success2 ? "SUCCESS" : "FAILED"}`);
-      await debugConsole.log(`  itemSpacing value: ${itemSpacing2}`);
-      await debugConsole.log(`  boundVariable: ${JSON.stringify(boundVar2)}`);
+      debugConsole.log(`  Result: ${success2 ? "SUCCESS" : "FAILED"}`);
+      debugConsole.log(`  itemSpacing value: ${itemSpacing2}`);
+      debugConsole.log(`  boundVariable: ${JSON.stringify(boundVar2)}`);
 
       results.push({
         approach: "2 - Clear then bind",
@@ -228,7 +224,7 @@ export async function testItemSpacingVariableBinding(
         },
       });
     } catch (error) {
-      await debugConsole.error(
+      debugConsole.error(
         `  Approach 2 failed with error: ${error instanceof Error ? error.message : String(error)}`,
       );
       results.push({
@@ -254,7 +250,7 @@ export async function testItemSpacingVariableBinding(
      * until layoutMode is set, but we test if the binding can be established afterward.
      */
     // Approach 3: Set bound variable in boundVariables object first, then enable layoutMode
-    await debugConsole.log(
+    debugConsole.log(
       "\n--- Approach 3: Set boundVariable first, then layoutMode ---",
     );
     try {
@@ -266,25 +262,25 @@ export async function testItemSpacingVariableBinding(
       // This might not work because itemSpacing doesn't exist until layoutMode is set
       try {
         frame3.setBoundVariable("itemSpacing", spacingVariable);
-        await debugConsole.log("  Set bound variable before layoutMode");
+        debugConsole.log("  Set bound variable before layoutMode");
       } catch (error) {
-        await debugConsole.log(
+        debugConsole.log(
           `  Could not set bound variable before layoutMode (expected): ${error instanceof Error ? error.message : String(error)}`,
         );
       }
 
       // Set layoutMode
       frame3.layoutMode = "VERTICAL";
-      await debugConsole.log("  Set layoutMode to VERTICAL");
+      debugConsole.log("  Set layoutMode to VERTICAL");
 
       // Check if the bound variable persisted
       const boundVar3 = frame3.boundVariables?.itemSpacing;
       const itemSpacing3 = frame3.itemSpacing;
 
       const success3 = boundVar3 !== undefined;
-      await debugConsole.log(`  Result: ${success3 ? "SUCCESS" : "FAILED"}`);
-      await debugConsole.log(`  itemSpacing value: ${itemSpacing3}`);
-      await debugConsole.log(`  boundVariable: ${JSON.stringify(boundVar3)}`);
+      debugConsole.log(`  Result: ${success3 ? "SUCCESS" : "FAILED"}`);
+      debugConsole.log(`  itemSpacing value: ${itemSpacing3}`);
+      debugConsole.log(`  boundVariable: ${JSON.stringify(boundVar3)}`);
 
       results.push({
         approach: "3 - Bind before layoutMode",
@@ -298,7 +294,7 @@ export async function testItemSpacingVariableBinding(
         },
       });
     } catch (error) {
-      await debugConsole.error(
+      debugConsole.error(
         `  Approach 3 failed with error: ${error instanceof Error ? error.message : String(error)}`,
       );
       results.push({
@@ -323,9 +319,7 @@ export async function testItemSpacingVariableBinding(
      * 5. Check if binding succeeded
      */
     // Approach 4: Set layoutMode, then use removeBoundVariable and setBoundVariable
-    await debugConsole.log(
-      "\n--- Approach 4: Remove then set bound variable ---",
-    );
+    debugConsole.log("\n--- Approach 4: Remove then set bound variable ---");
     try {
       const frame4 = figma.createFrame();
       frame4.name = "Test Frame 4 - Remove Then Bind";
@@ -333,33 +327,31 @@ export async function testItemSpacingVariableBinding(
 
       // Set layoutMode
       frame4.layoutMode = "VERTICAL";
-      await debugConsole.log("  Set layoutMode to VERTICAL");
-      await debugConsole.log(
-        `  itemSpacing after layoutMode: ${frame4.itemSpacing}`,
-      );
+      debugConsole.log("  Set layoutMode to VERTICAL");
+      debugConsole.log(`  itemSpacing after layoutMode: ${frame4.itemSpacing}`);
 
       // Try to remove any existing binding first by setting to null
       try {
         frame4.setBoundVariable("itemSpacing", null);
-        await debugConsole.log("  Removed bound variable (if any)");
+        debugConsole.log("  Removed bound variable (if any)");
       } catch (error) {
-        await debugConsole.log(
+        debugConsole.log(
           `  No bound variable to remove (expected): ${error instanceof Error ? error.message : String(error)}`,
         );
       }
 
       // Now set the bound variable
       frame4.setBoundVariable("itemSpacing", spacingVariable);
-      await debugConsole.log("  Set bound variable after remove");
+      debugConsole.log("  Set bound variable after remove");
 
       // Check if it worked
       const boundVar4 = frame4.boundVariables?.itemSpacing;
       const itemSpacing4 = frame4.itemSpacing;
 
       const success4 = boundVar4 !== undefined;
-      await debugConsole.log(`  Result: ${success4 ? "SUCCESS" : "FAILED"}`);
-      await debugConsole.log(`  itemSpacing value: ${itemSpacing4}`);
-      await debugConsole.log(`  boundVariable: ${JSON.stringify(boundVar4)}`);
+      debugConsole.log(`  Result: ${success4 ? "SUCCESS" : "FAILED"}`);
+      debugConsole.log(`  itemSpacing value: ${itemSpacing4}`);
+      debugConsole.log(`  boundVariable: ${JSON.stringify(boundVar4)}`);
 
       results.push({
         approach: "4 - Remove then bind",
@@ -373,7 +365,7 @@ export async function testItemSpacingVariableBinding(
         },
       });
     } catch (error) {
-      await debugConsole.error(
+      debugConsole.error(
         `  Approach 4 failed with error: ${error instanceof Error ? error.message : String(error)}`,
       );
       results.push({
@@ -401,9 +393,7 @@ export async function testItemSpacingVariableBinding(
      * complete internal initialization before binding can succeed.
      */
     // Approach 5: Set layoutMode, wait a tick, then set bound variable
-    await debugConsole.log(
-      "\n--- Approach 5: Set layoutMode, wait, then bind ---",
-    );
+    debugConsole.log("\n--- Approach 5: Set layoutMode, wait, then bind ---");
     try {
       const frame5 = figma.createFrame();
       frame5.name = "Test Frame 5 - Wait Then Bind";
@@ -411,24 +401,24 @@ export async function testItemSpacingVariableBinding(
 
       // Set layoutMode
       frame5.layoutMode = "VERTICAL";
-      await debugConsole.log("  Set layoutMode to VERTICAL");
+      debugConsole.log("  Set layoutMode to VERTICAL");
 
       // Wait a bit (using a promise delay)
       await new Promise((resolve) => setTimeout(resolve, 10));
-      await debugConsole.log("  Waited 10ms");
+      debugConsole.log("  Waited 10ms");
 
       // Now set the bound variable
       frame5.setBoundVariable("itemSpacing", spacingVariable);
-      await debugConsole.log("  Set bound variable after wait");
+      debugConsole.log("  Set bound variable after wait");
 
       // Check if it worked
       const boundVar5 = frame5.boundVariables?.itemSpacing;
       const itemSpacing5 = frame5.itemSpacing;
 
       const success5 = boundVar5 !== undefined;
-      await debugConsole.log(`  Result: ${success5 ? "SUCCESS" : "FAILED"}`);
-      await debugConsole.log(`  itemSpacing value: ${itemSpacing5}`);
-      await debugConsole.log(`  boundVariable: ${JSON.stringify(boundVar5)}`);
+      debugConsole.log(`  Result: ${success5 ? "SUCCESS" : "FAILED"}`);
+      debugConsole.log(`  itemSpacing value: ${itemSpacing5}`);
+      debugConsole.log(`  boundVariable: ${JSON.stringify(boundVar5)}`);
 
       results.push({
         approach: "5 - Wait then bind",
@@ -442,7 +432,7 @@ export async function testItemSpacingVariableBinding(
         },
       });
     } catch (error) {
-      await debugConsole.error(
+      debugConsole.error(
         `  Approach 5 failed with error: ${error instanceof Error ? error.message : String(error)}`,
       );
       results.push({
@@ -453,15 +443,15 @@ export async function testItemSpacingVariableBinding(
     }
 
     // Summary
-    await debugConsole.log("\n=== Test Summary ===");
+    debugConsole.log("\n=== Test Summary ===");
     const successfulApproaches = results.filter((r) => r.success);
     const failedApproaches = results.filter((r) => !r.success);
 
-    await debugConsole.log(
+    debugConsole.log(
       `Successful approaches: ${successfulApproaches.length}/${results.length}`,
     );
     for (const result of results) {
-      await debugConsole.log(
+      debugConsole.log(
         `  ${result.approach}: ${result.success ? "✓ SUCCESS" : "✗ FAILED"} - ${result.message}`,
       );
     }
@@ -478,7 +468,7 @@ export async function testItemSpacingVariableBinding(
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
-    await debugConsole.error(`Test failed: ${errorMessage}`);
+    debugConsole.error(`Test failed: ${errorMessage}`);
     return {
       success: false,
       message: `Test error: ${errorMessage}`,
@@ -509,7 +499,7 @@ export async function testItemSpacingVariableBindingImportSimulation(
   pageId: string,
 ): Promise<TestResult> {
   try {
-    await debugConsole.log(
+    debugConsole.log(
       "=== Test: itemSpacing Variable Binding - Import Simulation ===",
     );
 
@@ -529,7 +519,7 @@ export async function testItemSpacingVariableBindingImportSimulation(
     }
 
     // Create a variable collection and a dimension variable
-    await debugConsole.log("Creating test variable collection and variable...");
+    debugConsole.log("Creating test variable collection and variable...");
     const collection = figma.variables.createVariableCollection("Test");
     const defaultMode = collection.modes[0];
     const spacingVariable = figma.variables.createVariable(
@@ -539,28 +529,26 @@ export async function testItemSpacingVariableBindingImportSimulation(
     );
     spacingVariable.setValueForMode(defaultMode.modeId, 16);
 
-    await debugConsole.log(
+    debugConsole.log(
       `Created variable: "${spacingVariable.name}" = ${spacingVariable.valuesByMode[defaultMode.modeId]} in collection "${collection.name}"`,
     );
 
     // Simulate import process
-    await debugConsole.log("\n--- Simulating Import Process ---");
+    debugConsole.log("\n--- Simulating Import Process ---");
 
     // Step 1: Create frame (simulating newNode creation)
     const frame = figma.createFrame();
     frame.name = "Import Simulation Frame";
     testFrame.appendChild(frame);
-    await debugConsole.log("  Created frame");
+    debugConsole.log("  Created frame");
 
     // Step 2: Set layoutMode (as done in import)
     frame.layoutMode = "VERTICAL";
-    await debugConsole.log("  Set layoutMode to VERTICAL");
-    await debugConsole.log(
-      `  itemSpacing after layoutMode: ${frame.itemSpacing}`,
-    );
+    debugConsole.log("  Set layoutMode to VERTICAL");
+    debugConsole.log(`  itemSpacing after layoutMode: ${frame.itemSpacing}`);
 
     // Step 3: Set bound variable using setBoundVariable() API (as we do in import now)
-    await debugConsole.log(
+    debugConsole.log(
       "  Setting bound variable using setBoundVariable() API...",
     );
     try {
@@ -570,14 +558,12 @@ export async function testItemSpacingVariableBindingImportSimulation(
       // Ignore if no binding exists
     }
     frame.setBoundVariable("itemSpacing", spacingVariable);
-    await debugConsole.log(
-      "  Called setBoundVariable('itemSpacing', variable)",
-    );
+    debugConsole.log("  Called setBoundVariable('itemSpacing', variable)");
 
     // Verify binding was set
     const boundVarAfterSet = frame.boundVariables?.itemSpacing;
     const itemSpacingAfterSet = frame.itemSpacing;
-    await debugConsole.log(
+    debugConsole.log(
       `  After setting binding: itemSpacing=${itemSpacingAfterSet}, boundVar=${JSON.stringify(boundVarAfterSet)}`,
     );
 
@@ -593,39 +579,39 @@ export async function testItemSpacingVariableBindingImportSimulation(
     }
 
     // Step 4: Set other layout properties (as done in import)
-    await debugConsole.log("  Setting other layout properties...");
+    debugConsole.log("  Setting other layout properties...");
     frame.primaryAxisSizingMode = "AUTO";
     frame.counterAxisSizingMode = "AUTO";
     frame.primaryAxisAlignItems = "MIN";
     frame.counterAxisAlignItems = "MIN";
-    await debugConsole.log(
+    debugConsole.log(
       "  Set primaryAxisSizingMode, counterAxisSizingMode, alignItems",
     );
 
     // Check binding after setting layout properties
     const boundVarAfterLayout = frame.boundVariables?.itemSpacing;
     const itemSpacingAfterLayout = frame.itemSpacing;
-    await debugConsole.log(
+    debugConsole.log(
       `  After layout properties: itemSpacing=${itemSpacingAfterLayout}, boundVar=${JSON.stringify(boundVarAfterLayout)}`,
     );
 
     // Step 5: Set padding properties (as done in import)
-    await debugConsole.log("  Setting padding properties...");
+    debugConsole.log("  Setting padding properties...");
     frame.paddingLeft = 0;
     frame.paddingRight = 0;
     frame.paddingTop = 0;
     frame.paddingBottom = 0;
-    await debugConsole.log("  Set padding to 0");
+    debugConsole.log("  Set padding to 0");
 
     // Check binding after setting padding
     const boundVarAfterPadding = frame.boundVariables?.itemSpacing;
     const itemSpacingAfterPadding = frame.itemSpacing;
-    await debugConsole.log(
+    debugConsole.log(
       `  After padding: itemSpacing=${itemSpacingAfterPadding}, boundVar=${JSON.stringify(boundVarAfterPadding)}`,
     );
 
     // Step 6: Simulate "late setting" code (the problematic code that might override)
-    await debugConsole.log("  Simulating 'late setting' code...");
+    debugConsole.log("  Simulating 'late setting' code...");
     const nodeDataItemSpacing = 0; // Simulate nodeData.itemSpacing = 0
     const hasBoundVariables = true; // Simulate hasBoundVariables check
     const nodeDataBoundVariables = { itemSpacing: true }; // Simulate nodeData.boundVariables.itemSpacing exists
@@ -638,24 +624,22 @@ export async function testItemSpacingVariableBindingImportSimulation(
         !isActuallyBound &&
         (!hasBoundVariables || !nodeDataBoundVariables.itemSpacing)
       ) {
-        await debugConsole.log("  ⚠️ Late setting would override binding!");
+        debugConsole.log("  ⚠️ Late setting would override binding!");
         frame.itemSpacing = nodeDataItemSpacing;
       } else if (isActuallyBound) {
-        await debugConsole.log(
-          "  ✓ Late setting correctly skipped (binding exists)",
-        );
+        debugConsole.log("  ✓ Late setting correctly skipped (binding exists)");
       }
     }
 
     // Check binding after late setting
     const boundVarAfterLate = frame.boundVariables?.itemSpacing;
     const itemSpacingAfterLate = frame.itemSpacing;
-    await debugConsole.log(
+    debugConsole.log(
       `  After late setting: itemSpacing=${itemSpacingAfterLate}, boundVar=${JSON.stringify(boundVarAfterLate)}`,
     );
 
     // Step 7: Append children (which might reset itemSpacing)
-    await debugConsole.log("  Appending children (might reset itemSpacing)...");
+    debugConsole.log("  Appending children (might reset itemSpacing)...");
     const child1 = figma.createFrame();
     child1.name = "Child 1";
     child1.resize(50, 50);
@@ -666,48 +650,44 @@ export async function testItemSpacingVariableBindingImportSimulation(
     child2.resize(50, 50);
     frame.appendChild(child2);
 
-    await debugConsole.log("  Appended 2 children");
+    debugConsole.log("  Appended 2 children");
 
     // Check binding after appending children
     const boundVarAfterChildren = frame.boundVariables?.itemSpacing;
     const itemSpacingAfterChildren = frame.itemSpacing;
-    await debugConsole.log(
+    debugConsole.log(
       `  After appending children: itemSpacing=${itemSpacingAfterChildren}, boundVar=${JSON.stringify(boundVarAfterChildren)}`,
     );
 
     // Step 8: Simulate "FINAL FIX" code (the problematic code that might override)
-    await debugConsole.log("  Simulating 'FINAL FIX' code...");
+    debugConsole.log("  Simulating 'FINAL FIX' code...");
     const finalIsActuallyBound =
       frame.boundVariables?.itemSpacing !== undefined;
     const finalShouldBeBound = true; // nodeData.boundVariables.itemSpacing exists
 
     if (finalIsActuallyBound) {
-      await debugConsole.log(
-        "  ✓ FINAL FIX correctly skipped (binding exists)",
-      );
+      debugConsole.log("  ✓ FINAL FIX correctly skipped (binding exists)");
     } else if (!finalShouldBeBound) {
-      await debugConsole.log(
+      debugConsole.log(
         "  FINAL FIX would set direct value (but shouldn't be bound)",
       );
       // This is the code that would run - but we skip it if binding exists
     } else {
-      await debugConsole.log(
-        "  ⚠️ FINAL FIX: Binding should exist but doesn't!",
-      );
+      debugConsole.log("  ⚠️ FINAL FIX: Binding should exist but doesn't!");
     }
 
     // Final check
     const finalBoundVar = frame.boundVariables?.itemSpacing;
     const finalItemSpacing = frame.itemSpacing;
-    await debugConsole.log(
+    debugConsole.log(
       `  FINAL: itemSpacing=${finalItemSpacing}, boundVar=${JSON.stringify(finalBoundVar)}`,
     );
 
     // Summary
     const success =
       finalBoundVar !== undefined && finalBoundVar.id === spacingVariable.id;
-    await debugConsole.log("\n=== Import Simulation Summary ===");
-    await debugConsole.log(
+    debugConsole.log("\n=== Import Simulation Summary ===");
+    debugConsole.log(
       `Result: ${success ? "SUCCESS" : "FAILED"} - Binding ${success ? "survived" : "was lost"} through import simulation`,
     );
 
@@ -746,7 +726,7 @@ export async function testItemSpacingVariableBindingImportSimulation(
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
-    await debugConsole.error(`Import simulation test failed: ${errorMessage}`);
+    debugConsole.error(`Import simulation test failed: ${errorMessage}`);
     return {
       success: false,
       message: `Test error: ${errorMessage}`,
@@ -775,10 +755,10 @@ export async function testItemSpacingVariableBindingFailure(
   pageId: string,
 ): Promise<TestResult> {
   try {
-    await debugConsole.log(
+    debugConsole.log(
       "=== Test: itemSpacing Variable Binding - FAILURE DEMONSTRATION ===",
     );
-    await debugConsole.log(
+    debugConsole.log(
       "This test demonstrates the OLD BROKEN approach that was causing the issue.",
     );
 
@@ -798,7 +778,7 @@ export async function testItemSpacingVariableBindingFailure(
     }
 
     // Create a variable collection and a dimension variable
-    await debugConsole.log("Creating test variable collection and variable...");
+    debugConsole.log("Creating test variable collection and variable...");
     const collection = figma.variables.createVariableCollection("Test");
     const defaultMode = collection.modes[0];
     const spacingVariable = figma.variables.createVariable(
@@ -808,29 +788,27 @@ export async function testItemSpacingVariableBindingFailure(
     );
     spacingVariable.setValueForMode(defaultMode.modeId, 16);
 
-    await debugConsole.log(
+    debugConsole.log(
       `Created variable: "${spacingVariable.name}" = ${spacingVariable.valuesByMode[defaultMode.modeId]} in collection "${collection.name}"`,
     );
 
     // Simulate OLD BROKEN import process
-    await debugConsole.log("\n--- Simulating OLD BROKEN Import Process ---");
+    debugConsole.log("\n--- Simulating OLD BROKEN Import Process ---");
 
     // Step 1: Create frame
     const frame = figma.createFrame();
     frame.name = "Failure Demo Frame";
     testFrame.appendChild(frame);
-    await debugConsole.log("  Created frame");
+    debugConsole.log("  Created frame");
 
     // Step 2: Set layoutMode
     frame.layoutMode = "VERTICAL";
-    await debugConsole.log("  Set layoutMode to VERTICAL");
-    await debugConsole.log(
-      `  itemSpacing after layoutMode: ${frame.itemSpacing}`,
-    );
+    debugConsole.log("  Set layoutMode to VERTICAL");
+    debugConsole.log(`  itemSpacing after layoutMode: ${frame.itemSpacing}`);
 
     // Step 3: BROKEN APPROACH - Try to set bound variable using direct assignment
     // (This is what the old code was doing - it doesn't work!)
-    await debugConsole.log(
+    debugConsole.log(
       "  ⚠️ BROKEN: Attempting to set bound variable using direct assignment...",
     );
     try {
@@ -843,11 +821,11 @@ export async function testItemSpacingVariableBindingFailure(
           id: spacingVariable.id,
         },
       };
-      await debugConsole.log(
+      debugConsole.log(
         "  Called (frame as any).boundVariables.itemSpacing = alias (BROKEN APPROACH)",
       );
     } catch (error) {
-      await debugConsole.log(
+      debugConsole.log(
         `  Direct assignment failed (expected): ${error instanceof Error ? error.message : String(error)}`,
       );
     }
@@ -855,21 +833,17 @@ export async function testItemSpacingVariableBindingFailure(
     // Check if binding was set (it probably wasn't)
     const boundVarAfterBrokenSet = frame.boundVariables?.itemSpacing;
     const itemSpacingAfterBrokenSet = frame.itemSpacing;
-    await debugConsole.log(
+    debugConsole.log(
       `  After broken set: itemSpacing=${itemSpacingAfterBrokenSet}, boundVar=${JSON.stringify(boundVarAfterBrokenSet)}`,
     );
 
     // Step 4: Try to set using setBoundVariable (the correct way, but let's see if it works now)
-    await debugConsole.log(
-      "  Attempting to fix by using setBoundVariable() API...",
-    );
+    debugConsole.log("  Attempting to fix by using setBoundVariable() API...");
     try {
       frame.setBoundVariable("itemSpacing", spacingVariable);
-      await debugConsole.log(
-        "  Called setBoundVariable('itemSpacing', variable)",
-      );
+      debugConsole.log("  Called setBoundVariable('itemSpacing', variable)");
     } catch (error) {
-      await debugConsole.log(
+      debugConsole.log(
         `  setBoundVariable failed: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
@@ -877,19 +851,19 @@ export async function testItemSpacingVariableBindingFailure(
     // Check binding after correct API call
     const boundVarAfterCorrectSet = frame.boundVariables?.itemSpacing;
     const itemSpacingAfterCorrectSet = frame.itemSpacing;
-    await debugConsole.log(
+    debugConsole.log(
       `  After correct set: itemSpacing=${itemSpacingAfterCorrectSet}, boundVar=${JSON.stringify(boundVarAfterCorrectSet)}`,
     );
 
     // Step 5: BROKEN APPROACH - "Late setting" code that overrides without checking
-    await debugConsole.log(
+    debugConsole.log(
       "  ⚠️ BROKEN: Simulating 'late setting' code WITHOUT checking if bound...",
     );
     const nodeDataItemSpacing = 0; // Simulate nodeData.itemSpacing = 0
 
     // OLD BROKEN CODE: Just set it directly without checking if it's bound
     if (nodeDataItemSpacing !== undefined && frame.layoutMode !== undefined) {
-      await debugConsole.log(
+      debugConsole.log(
         "  ⚠️ Late setting OVERRIDING itemSpacing without checking if bound!",
       );
       frame.itemSpacing = nodeDataItemSpacing; // This breaks the binding!
@@ -898,12 +872,12 @@ export async function testItemSpacingVariableBindingFailure(
     // Check binding after late setting (it should be lost)
     const boundVarAfterLate = frame.boundVariables?.itemSpacing;
     const itemSpacingAfterLate = frame.itemSpacing;
-    await debugConsole.log(
+    debugConsole.log(
       `  After broken late setting: itemSpacing=${itemSpacingAfterLate}, boundVar=${JSON.stringify(boundVarAfterLate)}`,
     );
 
     // Step 6: BROKEN APPROACH - "FINAL FIX" code that overrides without checking
-    await debugConsole.log(
+    debugConsole.log(
       "  ⚠️ BROKEN: Simulating 'FINAL FIX' code WITHOUT checking if bound...",
     );
     const finalNodeDataItemSpacing = 0;
@@ -913,7 +887,7 @@ export async function testItemSpacingVariableBindingFailure(
       (frame.layoutMode === "VERTICAL" || frame.layoutMode === "HORIZONTAL") &&
       finalNodeDataItemSpacing !== undefined
     ) {
-      await debugConsole.log(
+      debugConsole.log(
         "  ⚠️ FINAL FIX OVERRIDING itemSpacing without checking if bound!",
       );
       frame.itemSpacing = finalNodeDataItemSpacing; // This breaks the binding again!
@@ -922,14 +896,14 @@ export async function testItemSpacingVariableBindingFailure(
     // Final check
     const finalBoundVar = frame.boundVariables?.itemSpacing;
     const finalItemSpacing = frame.itemSpacing;
-    await debugConsole.log(
+    debugConsole.log(
       `  FINAL: itemSpacing=${finalItemSpacing}, boundVar=${JSON.stringify(finalBoundVar)}`,
     );
 
     // Summary - This test is EXPECTED TO FAIL (demonstrating the bug)
     const bindingLost = finalBoundVar === undefined;
-    await debugConsole.log("\n=== Failure Demonstration Summary ===");
-    await debugConsole.log(
+    debugConsole.log("\n=== Failure Demonstration Summary ===");
+    debugConsole.log(
       `Result: ${bindingLost ? "FAILURE DEMONSTRATED ✓" : "UNEXPECTED - Binding survived"} - ${bindingLost ? "Binding was lost as expected (demonstrating the bug)" : "Binding survived (unexpected - bug may be fixed)"}`,
     );
 
@@ -961,9 +935,7 @@ export async function testItemSpacingVariableBindingFailure(
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
-    await debugConsole.error(
-      `Failure demonstration test failed: ${errorMessage}`,
-    );
+    debugConsole.error(`Failure demonstration test failed: ${errorMessage}`);
     return {
       success: false,
       message: `Test error: ${errorMessage}`,
@@ -992,10 +964,10 @@ export async function testItemSpacingVariableBindingFix(
   pageId: string,
 ): Promise<TestResult> {
   try {
-    await debugConsole.log(
+    debugConsole.log(
       "=== Test: itemSpacing Variable Binding - FIX DEMONSTRATION ===",
     );
-    await debugConsole.log(
+    debugConsole.log(
       "This test demonstrates the NEW FIXED approach that correctly preserves binding.",
     );
 
@@ -1015,7 +987,7 @@ export async function testItemSpacingVariableBindingFix(
     }
 
     // Create a variable collection and a dimension variable
-    await debugConsole.log("Creating test variable collection and variable...");
+    debugConsole.log("Creating test variable collection and variable...");
     const collection = figma.variables.createVariableCollection("Test");
     const defaultMode = collection.modes[0];
     const spacingVariable = figma.variables.createVariable(
@@ -1025,28 +997,26 @@ export async function testItemSpacingVariableBindingFix(
     );
     spacingVariable.setValueForMode(defaultMode.modeId, 16);
 
-    await debugConsole.log(
+    debugConsole.log(
       `Created variable: "${spacingVariable.name}" = ${spacingVariable.valuesByMode[defaultMode.modeId]} in collection "${collection.name}"`,
     );
 
     // Simulate NEW FIXED import process
-    await debugConsole.log("\n--- Simulating NEW FIXED Import Process ---");
+    debugConsole.log("\n--- Simulating NEW FIXED Import Process ---");
 
     // Step 1: Create frame
     const frame = figma.createFrame();
     frame.name = "Fix Demo Frame";
     testFrame.appendChild(frame);
-    await debugConsole.log("  Created frame");
+    debugConsole.log("  Created frame");
 
     // Step 2: Set layoutMode
     frame.layoutMode = "VERTICAL";
-    await debugConsole.log("  Set layoutMode to VERTICAL");
-    await debugConsole.log(
-      `  itemSpacing after layoutMode: ${frame.itemSpacing}`,
-    );
+    debugConsole.log("  Set layoutMode to VERTICAL");
+    debugConsole.log(`  itemSpacing after layoutMode: ${frame.itemSpacing}`);
 
     // Step 3: FIXED APPROACH - Use setBoundVariable() API (the correct way)
-    await debugConsole.log(
+    debugConsole.log(
       "  ✓ FIXED: Setting bound variable using setBoundVariable() API...",
     );
     try {
@@ -1056,14 +1026,14 @@ export async function testItemSpacingVariableBindingFix(
       // Ignore if no binding exists
     }
     frame.setBoundVariable("itemSpacing", spacingVariable);
-    await debugConsole.log(
+    debugConsole.log(
       "  Called setBoundVariable('itemSpacing', variable) (CORRECT APPROACH)",
     );
 
     // Verify binding was set
     const boundVarAfterSet = frame.boundVariables?.itemSpacing;
     const itemSpacingAfterSet = frame.itemSpacing;
-    await debugConsole.log(
+    debugConsole.log(
       `  After setting binding: itemSpacing=${itemSpacingAfterSet}, boundVar=${JSON.stringify(boundVarAfterSet)}`,
     );
 
@@ -1079,39 +1049,39 @@ export async function testItemSpacingVariableBindingFix(
     }
 
     // Step 4: Set other layout properties
-    await debugConsole.log("  Setting other layout properties...");
+    debugConsole.log("  Setting other layout properties...");
     frame.primaryAxisSizingMode = "AUTO";
     frame.counterAxisSizingMode = "AUTO";
     frame.primaryAxisAlignItems = "MIN";
     frame.counterAxisAlignItems = "MIN";
-    await debugConsole.log(
+    debugConsole.log(
       "  Set primaryAxisSizingMode, counterAxisSizingMode, alignItems",
     );
 
     // Check binding after setting layout properties
     const boundVarAfterLayout = frame.boundVariables?.itemSpacing;
     const itemSpacingAfterLayout = frame.itemSpacing;
-    await debugConsole.log(
+    debugConsole.log(
       `  After layout properties: itemSpacing=${itemSpacingAfterLayout}, boundVar=${JSON.stringify(boundVarAfterLayout)}`,
     );
 
     // Step 5: Set padding properties
-    await debugConsole.log("  Setting padding properties...");
+    debugConsole.log("  Setting padding properties...");
     frame.paddingLeft = 0;
     frame.paddingRight = 0;
     frame.paddingTop = 0;
     frame.paddingBottom = 0;
-    await debugConsole.log("  Set padding to 0");
+    debugConsole.log("  Set padding to 0");
 
     // Check binding after setting padding
     const boundVarAfterPadding = frame.boundVariables?.itemSpacing;
     const itemSpacingAfterPadding = frame.itemSpacing;
-    await debugConsole.log(
+    debugConsole.log(
       `  After padding: itemSpacing=${itemSpacingAfterPadding}, boundVar=${JSON.stringify(boundVarAfterPadding)}`,
     );
 
     // Step 6: FIXED APPROACH - "Late setting" code that CHECKS if bound before overriding
-    await debugConsole.log(
+    debugConsole.log(
       "  ✓ FIXED: Simulating 'late setting' code WITH check if bound...",
     );
     const nodeDataItemSpacing = 0; // Simulate nodeData.itemSpacing = 0
@@ -1126,12 +1096,12 @@ export async function testItemSpacingVariableBindingFix(
         !isActuallyBound &&
         (!hasBoundVariables || !nodeDataBoundVariables.itemSpacing)
       ) {
-        await debugConsole.log(
+        debugConsole.log(
           "  Late setting would override (but binding doesn't exist, so OK)",
         );
         frame.itemSpacing = nodeDataItemSpacing;
       } else if (isActuallyBound) {
-        await debugConsole.log(
+        debugConsole.log(
           "  ✓ Late setting correctly skipped (binding exists) - FIXED!",
         );
         // Don't override - binding exists!
@@ -1141,12 +1111,12 @@ export async function testItemSpacingVariableBindingFix(
     // Check binding after late setting (it should still be bound)
     const boundVarAfterLate = frame.boundVariables?.itemSpacing;
     const itemSpacingAfterLate = frame.itemSpacing;
-    await debugConsole.log(
+    debugConsole.log(
       `  After fixed late setting: itemSpacing=${itemSpacingAfterLate}, boundVar=${JSON.stringify(boundVarAfterLate)}`,
     );
 
     // Step 7: Append children (which might reset itemSpacing)
-    await debugConsole.log("  Appending children (might reset itemSpacing)...");
+    debugConsole.log("  Appending children (might reset itemSpacing)...");
     const child1 = figma.createFrame();
     child1.name = "Child 1";
     child1.resize(50, 50);
@@ -1157,17 +1127,17 @@ export async function testItemSpacingVariableBindingFix(
     child2.resize(50, 50);
     frame.appendChild(child2);
 
-    await debugConsole.log("  Appended 2 children");
+    debugConsole.log("  Appended 2 children");
 
     // Check binding after appending children
     const boundVarAfterChildren = frame.boundVariables?.itemSpacing;
     const itemSpacingAfterChildren = frame.itemSpacing;
-    await debugConsole.log(
+    debugConsole.log(
       `  After appending children: itemSpacing=${itemSpacingAfterChildren}, boundVar=${JSON.stringify(boundVarAfterChildren)}`,
     );
 
     // Step 8: FIXED APPROACH - "FINAL FIX" code that CHECKS if bound before overriding
-    await debugConsole.log(
+    debugConsole.log(
       "  ✓ FIXED: Simulating 'FINAL FIX' code WITH check if bound...",
     );
     const finalIsActuallyBound =
@@ -1184,12 +1154,12 @@ export async function testItemSpacingVariableBindingFix(
     ) {
       if (!finalIsActuallyBound) {
         // Only apply final fix if not bound
-        await debugConsole.log(
+        debugConsole.log(
           "  FINAL FIX would set direct value (but binding doesn't exist, so OK)",
         );
         frame.itemSpacing = finalNodeDataItemSpacing;
       } else {
-        await debugConsole.log(
+        debugConsole.log(
           "  ✓ FINAL FIX correctly skipped (binding exists) - FIXED!",
         );
         // Don't override - binding exists!
@@ -1199,15 +1169,15 @@ export async function testItemSpacingVariableBindingFix(
     // Final check
     const finalBoundVar = frame.boundVariables?.itemSpacing;
     const finalItemSpacing = frame.itemSpacing;
-    await debugConsole.log(
+    debugConsole.log(
       `  FINAL: itemSpacing=${finalItemSpacing}, boundVar=${JSON.stringify(finalBoundVar)}`,
     );
 
     // Summary - This test should SUCCEED (demonstrating the fix works)
     const success =
       finalBoundVar !== undefined && finalBoundVar.id === spacingVariable.id;
-    await debugConsole.log("\n=== Fix Demonstration Summary ===");
-    await debugConsole.log(
+    debugConsole.log("\n=== Fix Demonstration Summary ===");
+    debugConsole.log(
       `Result: ${success ? "SUCCESS ✓" : "FAILED ✗"} - Binding ${success ? "survived" : "was lost"} through fixed import simulation`,
     );
 
@@ -1247,7 +1217,7 @@ export async function testItemSpacingVariableBindingFix(
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
-    await debugConsole.error(`Fix demonstration test failed: ${errorMessage}`);
+    debugConsole.error(`Fix demonstration test failed: ${errorMessage}`);
     return {
       success: false,
       message: `Test error: ${errorMessage}`,

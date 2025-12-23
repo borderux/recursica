@@ -4,6 +4,7 @@ import DebugConsole from "../../components/DebugConsole";
 import { useImportWizard } from "../../context/ImportWizardContext";
 import { useImportData } from "../../context/ImportDataContext";
 import { callPlugin } from "../../utils/callPlugin";
+import type { DebugConsoleMessage } from "../../plugin/services/debugConsole";
 
 export default function Step5Importing() {
   const navigate = useNavigate();
@@ -13,6 +14,9 @@ export default function Step5Importing() {
   const [importError, setImportError] = useState<string | null>(null);
   const [isCleaningUp, setIsCleaningUp] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [importDebugLogs, setImportDebugLogs] = useState<
+    DebugConsoleMessage[] | undefined
+  >(undefined);
 
   useEffect(() => {
     // Check if import is already in progress or failed
@@ -157,6 +161,12 @@ export default function Step5Importing() {
             if (!result.success) {
               const errorMsg = result.message || "Import failed";
               setImportError(errorMsg);
+              // Extract debug logs from response if available
+              if (result.data?.debugLogs) {
+                setImportDebugLogs(
+                  result.data.debugLogs as DebugConsoleMessage[],
+                );
+              }
               // Mark import as failed
               setImportData((prev) => {
                 if (!prev) return prev;
@@ -184,6 +194,22 @@ export default function Step5Importing() {
             const errorMessage =
               err instanceof Error ? err.message : "Import failed";
             setImportError(errorMessage);
+            // Try to extract debug logs from error response if available
+            if (
+              err &&
+              typeof err === "object" &&
+              "response" in err &&
+              err.response &&
+              typeof err.response === "object" &&
+              "data" in err.response
+            ) {
+              const errorResponse = err.response as {
+                data?: { debugLogs?: DebugConsoleMessage[] };
+              };
+              if (errorResponse.data?.debugLogs) {
+                setImportDebugLogs(errorResponse.data.debugLogs);
+              }
+            }
             // Mark import as failed
             setImportData((prev) => {
               if (!prev) return prev;
@@ -200,6 +226,22 @@ export default function Step5Importing() {
         const errorMessage =
           err instanceof Error ? err.message : "Failed to start import";
         setImportError(errorMessage);
+        // Try to extract debug logs from error response if available
+        if (
+          err &&
+          typeof err === "object" &&
+          "response" in err &&
+          err.response &&
+          typeof err.response === "object" &&
+          "data" in err.response
+        ) {
+          const errorResponse = err.response as {
+            data?: { debugLogs?: DebugConsoleMessage[] };
+          };
+          if (errorResponse.data?.debugLogs) {
+            setImportDebugLogs(errorResponse.data.debugLogs);
+          }
+        }
         // Mark import as failed
         setImportData((prev) => {
           if (!prev) return prev;
@@ -260,6 +302,11 @@ export default function Step5Importing() {
     }
   };
 
+  const componentName =
+    wizardState.selectedComponent?.name ||
+    importData?.mainFile?.name?.replace(".json", "") ||
+    "component";
+
   return (
     <div
       style={{
@@ -269,56 +316,30 @@ export default function Step5Importing() {
         gap: "20px",
       }}
     >
-      <div>
-        <h1
-          style={{
-            fontSize: "24px",
-            fontWeight: "bold",
-            color: "#333",
-            marginBottom: "8px",
-            marginTop: "0",
-          }}
-        >
-          Importing
-        </h1>
-        <p
-          style={{
-            fontSize: "14px",
-            color: "#666",
-            margin: 0,
-            fontFamily:
-              "system-ui, -apple-system, 'Segoe UI', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif",
-          }}
-        >
-          {importData?.importStatus === "completed"
-            ? `Import complete: ${wizardState.selectedComponent?.name || importData?.mainFile?.name?.replace(".json", "") || "component"}`
-            : isImporting
-              ? `Importing ${wizardState.selectedComponent?.name || "component"}...`
-              : importError
-                ? "Import failed"
-                : "Ready to import"}
-        </p>
-      </div>
+      <h1
+        style={{
+          fontSize: "24px",
+          fontWeight: "bold",
+          color: "#333",
+          marginBottom: "8px",
+          marginTop: "0",
+        }}
+      >
+        Importing
+      </h1>
 
-      <DebugConsole label="Import Logs:" showClearButton={false} />
-
-      {importError && (
-        <div
-          style={{
-            padding: "16px",
-            backgroundColor: "#ffebee",
-            border: "1px solid #f44336",
-            borderRadius: "8px",
-            color: "#c62828",
-            fontSize: "14px",
-          }}
-        >
-          <div style={{ fontWeight: "bold", marginBottom: "8px" }}>
-            Import Failed
-          </div>
-          <div>{importError}</div>
-        </div>
-      )}
+      <DebugConsole
+        title={`Importing ${componentName}`}
+        isActive={isImporting}
+        isComplete={
+          importData?.importStatus === "completed" &&
+          !isImporting &&
+          !importError
+        }
+        error={importError}
+        debugLogs={importDebugLogs}
+        successMessage={`Import complete: ${componentName}`}
+      />
 
       <div
         style={{

@@ -1,160 +1,209 @@
-import { useEffect, useRef, useState } from "react";
-import { useDebugConsole } from "../context/useDebugConsole";
+import { useState } from "react";
+import { formatLogsForClipboard } from "../utils/formatLogsForClipboard";
+import type { DebugConsoleMessage } from "../plugin/services/debugConsole";
 
 interface DebugConsoleProps {
-  height?: string;
-  label?: string;
-  showClearButton?: boolean;
-  clearOnMount?: boolean;
+  title: string; // Title describing the action being performed
+  isActive: boolean; // Whether operation is in progress
+  isComplete?: boolean; // Whether operation completed successfully
+  error?: string | null; // Error message if operation failed
+  debugLogs?: DebugConsoleMessage[]; // Debug logs to copy
+  successMessage?: string; // Optional success message when complete
 }
 
 export default function DebugConsole({
-  height = "100px",
-  label = "Publishing Log:",
-  showClearButton = true,
-  clearOnMount = true,
+  title,
+  isActive,
+  isComplete = false,
+  error = null,
+  debugLogs,
+  successMessage,
 }: DebugConsoleProps) {
-  const { getFormattedLog, clear } = useDebugConsole();
-  const debugLogs = getFormattedLog();
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [copySuccess, setCopySuccess] = useState(false);
 
-  // Clear debug console when component mounts if clearOnMount is true
-  useEffect(() => {
-    if (clearOnMount) {
-      clear();
-    }
-  }, [clear, clearOnMount]);
-
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.scrollTop = textareaRef.current.scrollHeight;
-    }
-  }, [debugLogs]);
-
-  const handleCopy = async () => {
-    // Check if clipboard API is available
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      try {
-        await navigator.clipboard.writeText(debugLogs);
-        setCopySuccess(true);
-        setTimeout(() => setCopySuccess(false), 2000);
-        return;
-      } catch (error) {
-        console.error("Failed to copy to clipboard:", error);
-        // Fall through to fallback method
-      }
+  const handleCopyLogs = async () => {
+    const logsText = formatLogsForClipboard(debugLogs);
+    if (!logsText) {
+      alert("No logs available to copy");
+      return;
     }
 
-    // Fallback for browsers without clipboard API or when it fails
-    if (textareaRef.current) {
-      try {
-        textareaRef.current.select();
-        const success = document.execCommand("copy");
-        if (success) {
-          setCopySuccess(true);
-          setTimeout(() => setCopySuccess(false), 2000);
-        } else {
-          console.error("Failed to copy using execCommand");
-        }
-      } catch (error) {
-        console.error("Failed to copy to clipboard:", error);
-      }
+    try {
+      await navigator.clipboard.writeText(logsText);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy logs:", err);
+      alert("Failed to copy logs to clipboard");
     }
   };
 
+  const hasLogs = debugLogs && debugLogs.length > 0;
+  const showCopyButton = hasLogs && (isComplete || error);
+
   return (
-    <div style={{ marginBottom: "5px" }}>
+    <>
+      <style>
+        {`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}
+      </style>
       <div
         style={{
+          width: "100%",
           display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "8px",
+          flexDirection: "column",
+          gap: "16px",
         }}
       >
-        <label
+        {/* Title and Status */}
+        <div
           style={{
-            fontSize: "14px",
-            fontWeight: "bold",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
           }}
         >
-          {label}
-        </label>
-        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-          <button
-            onClick={handleCopy}
-            style={{
-              padding: "4px 12px",
-              fontSize: "12px",
-              backgroundColor: "transparent",
-              color: copySuccess ? "#28a745" : "#666",
-              border: `1px solid ${copySuccess ? "#28a745" : "#ccc"}`,
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
-            onMouseOver={(e) => {
-              if (!copySuccess) {
-                e.currentTarget.style.backgroundColor = "#f0f0f0";
-              }
-            }}
-            onMouseOut={(e) => {
-              if (!copySuccess) {
-                e.currentTarget.style.backgroundColor = "transparent";
-              }
-            }}
-          >
-            {copySuccess ? "Copied!" : "Copy"}
-          </button>
-          {showClearButton && (
+          <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "bold" }}>
+            {title}
+          </h2>
+          {showCopyButton && (
             <button
-              onClick={clear}
+              onClick={handleCopyLogs}
               style={{
-                padding: "4px 12px",
+                padding: "6px 12px",
                 fontSize: "12px",
-                backgroundColor: "transparent",
-                color: "#666",
-                border: "1px solid #ccc",
+                fontWeight: "bold",
+                backgroundColor: copySuccess ? "#28a745" : "#d40d0d",
+                color: "white",
+                border: "none",
                 borderRadius: "4px",
                 cursor: "pointer",
+                transition: "background-color 0.2s",
               }}
               onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = "#f0f0f0";
+                if (!copySuccess) {
+                  e.currentTarget.style.backgroundColor = "#b00b0b";
+                }
               }}
               onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent";
+                if (!copySuccess) {
+                  e.currentTarget.style.backgroundColor = "#d40d0d";
+                }
               }}
             >
-              Clear
+              {copySuccess ? "Copied!" : "Copy Logs"}
             </button>
           )}
         </div>
+
+        {/* Activity Spinner */}
+        {isActive && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "12px",
+              backgroundColor: "#f5f5f5",
+              borderRadius: "4px",
+            }}
+          >
+            <div
+              style={{
+                width: "16px",
+                height: "16px",
+                border: "2px solid #e0e0e0",
+                borderTop: "2px solid #666",
+                borderRadius: "50%",
+                animation: "spin 1s linear infinite",
+              }}
+            />
+            <p style={{ margin: 0, color: "#666", fontStyle: "italic" }}>
+              {title}...
+            </p>
+          </div>
+        )}
+
+        {/* Success Message */}
+        {isComplete && !error && (
+          <div
+            style={{
+              padding: "12px",
+              backgroundColor: "#e8f5e9",
+              border: "1px solid #4caf50",
+              borderRadius: "4px",
+              color: "#2e7d32",
+              fontSize: "14px",
+            }}
+          >
+            {successMessage || `${title} completed successfully`}
+          </div>
+        )}
+
+        {/* Error Area */}
+        {error && (
+          <div
+            style={{
+              padding: "16px",
+              backgroundColor: "#ffebee",
+              border: "1px solid #f44336",
+              borderRadius: "8px",
+            }}
+          >
+            <div
+              style={{
+                fontWeight: "bold",
+                marginBottom: "8px",
+                color: "#c62828",
+                fontSize: "14px",
+              }}
+            >
+              {title} Failed
+            </div>
+            <div
+              style={{
+                color: "#c62828",
+                fontSize: "14px",
+                marginBottom: showCopyButton ? "12px" : "0",
+              }}
+            >
+              {error}
+            </div>
+            {showCopyButton && (
+              <button
+                onClick={handleCopyLogs}
+                style={{
+                  padding: "8px 16px",
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                  backgroundColor: copySuccess ? "#28a745" : "#d40d0d",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  transition: "background-color 0.2s",
+                }}
+                onMouseOver={(e) => {
+                  if (!copySuccess) {
+                    e.currentTarget.style.backgroundColor = "#b00b0b";
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (!copySuccess) {
+                    e.currentTarget.style.backgroundColor = "#d40d0d";
+                  }
+                }}
+              >
+                {copySuccess ? "Copied!" : "Copy Logs"}
+              </button>
+            )}
+          </div>
+        )}
       </div>
-      <textarea
-        ref={textareaRef}
-        readOnly
-        value={debugLogs}
-        style={{
-          width: "100%",
-          height,
-          padding: "10px",
-          boxSizing: "border-box",
-          fontFamily: "monospace",
-          fontSize: "12px",
-          border: "1px solid #ccc",
-          borderRadius: "4px",
-          resize: "none",
-          backgroundColor: "#f5f5f5",
-        }}
-        onFocus={(e) => {
-          e.currentTarget.style.borderColor = "#d40d0d";
-          e.currentTarget.style.outline = "none";
-        }}
-        onBlur={(e) => {
-          e.currentTarget.style.borderColor = "#ccc";
-        }}
-      />
-    </div>
+    </>
   );
 }

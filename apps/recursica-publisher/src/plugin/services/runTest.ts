@@ -41,16 +41,16 @@ export async function runTest(
   _data: NoData,
 ): Promise<ResponseMessage> {
   try {
-    await debugConsole.log("=== Starting Test ===");
+    debugConsole.log("=== Starting Test ===");
 
     // Delete any existing "Test" variable collection before running tests
     // This ensures a clean slate for each test run
-    await debugConsole.log('Cleaning up "Test" variable collection...');
+    debugConsole.log('Cleaning up "Test" variable collection...');
     const localCollections =
       await figma.variables.getLocalVariableCollectionsAsync();
     for (const collection of localCollections) {
       if (collection.name === "Test") {
-        await debugConsole.log(
+        debugConsole.log(
           `  Found existing "Test" collection (ID: ${collection.id.substring(0, 8)}...), deleting...`,
         );
         // Delete all variables in the collection first
@@ -61,7 +61,7 @@ export async function runTest(
           }
         }
         collection.remove();
-        await debugConsole.log('  Deleted "Test" collection');
+        debugConsole.log('  Deleted "Test" collection');
       }
     }
 
@@ -78,9 +78,9 @@ export async function runTest(
       // Create new "Test" page if it doesn't exist
       testPage = figma.createPage();
       testPage.name = "Test";
-      await debugConsole.log('Created "Test" page');
+      debugConsole.log('Created "Test" page');
     } else {
-      await debugConsole.log('Found existing "Test" page');
+      debugConsole.log('Found existing "Test" page');
     }
 
     // Switch to the test page
@@ -92,18 +92,18 @@ export async function runTest(
     ) as FrameNode | undefined;
 
     if (existingTestFrame) {
-      await debugConsole.log(
+      debugConsole.log(
         'Found existing "Test" frame, deleting it and all children...',
       );
       existingTestFrame.remove();
-      await debugConsole.log('Deleted existing "Test" frame');
+      debugConsole.log('Deleted existing "Test" frame');
     }
 
     // Create new "Test" frame container
     const testFrame = figma.createFrame();
     testFrame.name = "Test";
     testPage.appendChild(testFrame);
-    await debugConsole.log('Created new "Test" frame container');
+    debugConsole.log('Created new "Test" frame container');
 
     // Run all tests in sequence
     const allTests: Array<{
@@ -116,9 +116,9 @@ export async function runTest(
     // Previous tests commented out for reference - only running new test
     /*
     // Test 1: Original 5 approaches (proves binding can work in isolation)
-    await debugConsole.log("\n" + "=".repeat(60));
-    await debugConsole.log("TEST 1: Original 5 Approaches");
-    await debugConsole.log("=".repeat(60));
+    debugConsole.log("\n" + "=".repeat(60));
+    debugConsole.log("TEST 1: Original 5 Approaches");
+    debugConsole.log("=".repeat(60));
     const test1Results = await testItemSpacingVariableBinding(testPage.id);
     allTests.push({
       name: "Original 5 Approaches",
@@ -134,9 +134,9 @@ export async function runTest(
     testPage.appendChild(testFrame2);
 
     // Test 2: Import simulation (proves binding survives import operations)
-    await debugConsole.log("\n" + "=".repeat(60));
-    await debugConsole.log("TEST 2: Import Simulation");
-    await debugConsole.log("=".repeat(60));
+    debugConsole.log("\n" + "=".repeat(60));
+    debugConsole.log("TEST 2: Import Simulation");
+    debugConsole.log("=".repeat(60));
     const test2Results = await testItemSpacingVariableBindingImportSimulation(
       testPage.id,
     );
@@ -154,11 +154,11 @@ export async function runTest(
     testPage.appendChild(testFrame3);
 
     // Test 3: Failure demonstration (proves old broken approach fails)
-    await debugConsole.log("\n" + "=".repeat(60));
-    await debugConsole.log(
+    debugConsole.log("\n" + "=".repeat(60));
+    debugConsole.log(
       "TEST 3: Failure Demonstration (Old Broken Approach)",
     );
-    await debugConsole.log("=".repeat(60));
+    debugConsole.log("=".repeat(60));
     const test3Results = await testItemSpacingVariableBindingFailure(
       testPage.id,
     );
@@ -176,9 +176,9 @@ export async function runTest(
     testPage.appendChild(testFrame4);
 
     // Test 4: Fix demonstration (proves new fixed approach works)
-    await debugConsole.log("\n" + "=".repeat(60));
-    await debugConsole.log("TEST 4: Fix Demonstration (New Fixed Approach)");
-    await debugConsole.log("=".repeat(60));
+    debugConsole.log("\n" + "=".repeat(60));
+    debugConsole.log("TEST 4: Fix Demonstration (New Fixed Approach)");
+    debugConsole.log("=".repeat(60));
     const test4Results = await testItemSpacingVariableBindingFix(testPage.id);
     allTests.push({
       name: "Fix Demonstration",
@@ -194,9 +194,9 @@ export async function runTest(
     testPage.appendChild(testFrame5);
 
     // Test 5: Constraints (Issue #4)
-    await debugConsole.log("\n" + "=".repeat(60));
-    await debugConsole.log("TEST 5: Constraints Import/Export (Issue #4)");
-    await debugConsole.log("=".repeat(60));
+    debugConsole.log("\n" + "=".repeat(60));
+    debugConsole.log("TEST 5: Constraints Import/Export (Issue #4)");
+    debugConsole.log("=".repeat(60));
     const test5Results = await testConstraints(testPage.id);
     allTests.push({
       name: "Constraints Import/Export",
@@ -212,11 +212,11 @@ export async function runTest(
     testPage.appendChild(testFrame6);
 
     // Test 6: Constraints on VECTOR in COMPONENT - Failure Case
-    await debugConsole.log("\n" + "=".repeat(60));
-    await debugConsole.log(
+    debugConsole.log("\n" + "=".repeat(60));
+    debugConsole.log(
       "TEST 6: Constraints on VECTOR in COMPONENT (FAILURE CASE)",
     );
-    await debugConsole.log("=".repeat(60));
+    debugConsole.log("=".repeat(60));
     const test6Results = await testConstraintsVectorInComponentFailure(
       testPage.id,
     );
@@ -234,11 +234,11 @@ export async function runTest(
     testPage.appendChild(testFrame7);
 
     // Test 7: Constraints on VECTOR in COMPONENT - Fix Case
-    await debugConsole.log("\n" + "=".repeat(60));
-    await debugConsole.log(
+    debugConsole.log("\n" + "=".repeat(60));
+    debugConsole.log(
       "TEST 7: Constraints on VECTOR in COMPONENT (FIX CASE)",
     );
-    await debugConsole.log("=".repeat(60));
+    debugConsole.log("=".repeat(60));
     const test7Results = await testConstraintsVectorInComponentFix(testPage.id);
     allTests.push({
       name: "Constraints VECTOR in COMPONENT (Fix)",
@@ -254,11 +254,11 @@ export async function runTest(
     testPage.appendChild(testFrame8);
 
     // Test 8: Constraints on standalone VECTOR (not in COMPONENT)
-    await debugConsole.log("\n" + "=".repeat(60));
-    await debugConsole.log(
+    debugConsole.log("\n" + "=".repeat(60));
+    debugConsole.log(
       "TEST 8: Constraints on Standalone VECTOR (not in COMPONENT)",
     );
-    await debugConsole.log("=".repeat(60));
+    debugConsole.log("=".repeat(60));
     const test8Results = await testConstraintsVectorStandalone(testPage.id);
     allTests.push({
       name: "Constraints VECTOR Standalone",
@@ -275,9 +275,9 @@ export async function runTest(
     */
 
     // Test 9: Instance Children and Overrides Behavior
-    await debugConsole.log("\n" + "=".repeat(60));
-    await debugConsole.log("TEST 9: Instance Children and Overrides Behavior");
-    await debugConsole.log("=".repeat(60));
+    debugConsole.log("\n" + "=".repeat(60));
+    debugConsole.log("TEST 9: Instance Children and Overrides Behavior");
+    debugConsole.log("=".repeat(60));
     const test9Results = await testInstanceChildrenAndOverrides(testPage.id);
     allTests.push({
       name: "Instance Children and Overrides",
@@ -287,16 +287,16 @@ export async function runTest(
     });
 
     // Overall summary
-    await debugConsole.log("\n" + "=".repeat(60));
-    await debugConsole.log("=== ALL TESTS COMPLETE ===");
-    await debugConsole.log("=".repeat(60));
+    debugConsole.log("\n" + "=".repeat(60));
+    debugConsole.log("=== ALL TESTS COMPLETE ===");
+    debugConsole.log("=".repeat(60));
     const successfulTests = allTests.filter((t) => t.success);
     const failedTests = allTests.filter((t) => !t.success);
-    await debugConsole.log(
+    debugConsole.log(
       `Total: ${allTests.length} | Passed: ${successfulTests.length} | Failed: ${failedTests.length}`,
     );
     for (const test of allTests) {
-      await debugConsole.log(
+      debugConsole.log(
         `  ${test.success ? "✓" : "✗"} ${test.name}: ${test.message}`,
       );
     }
@@ -326,7 +326,7 @@ export async function runTest(
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
-    await debugConsole.error(`Test failed: ${errorMessage}`);
+    debugConsole.error(`Test failed: ${errorMessage}`);
     return retError("runTest", errorMessage);
   }
 }

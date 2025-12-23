@@ -72,9 +72,7 @@ export async function testConstraints(pageId: string): Promise<TestResult> {
   // Note: constraintHorizontal/constraintVertical are not in Figma's TypeScript types,
   // so we use 'as any' throughout this test function
   try {
-    await debugConsole.log(
-      "=== Test: Constraints Import/Export (Issue #4) ===",
-    );
+    debugConsole.log("=== Test: Constraints Import/Export (Issue #4) ===");
 
     // Get the test page
     const page = (await figma.getNodeByIdAsync(pageId)) as PageNode;
@@ -92,37 +90,31 @@ export async function testConstraints(pageId: string): Promise<TestResult> {
     }
 
     // Step 1: Create a frame with SCALE constraints (simulating original design)
-    await debugConsole.log(
-      "\n--- Step 1: Create frame with SCALE constraints ---",
-    );
+    debugConsole.log("\n--- Step 1: Create frame with SCALE constraints ---");
     const originalFrame = figma.createFrame();
     originalFrame.name = "Original Frame - SCALE Constraints";
     originalFrame.resize(100, 100);
     testFrame.appendChild(originalFrame);
 
     // Set constraints using the correct API: constraints object
-    await debugConsole.log(
-      "  Setting constraints using constraints object API...",
-    );
+    debugConsole.log("  Setting constraints using constraints object API...");
     try {
       (originalFrame as any).constraints = {
         horizontal: "SCALE",
         vertical: "SCALE",
       };
-      await debugConsole.log("  ✓ Set constraints using constraints object");
+      debugConsole.log("  ✓ Set constraints using constraints object");
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      await debugConsole.warning(
-        `  ✗ Failed to set constraints: ${errorMessage}`,
-      );
+      debugConsole.warning(`  ✗ Failed to set constraints: ${errorMessage}`);
       throw new Error(`Failed to set constraints on frame: ${errorMessage}`);
     }
 
     // Verify constraints were set
     const constraintH = (originalFrame as any).constraints?.horizontal;
     const constraintV = (originalFrame as any).constraints?.vertical;
-    await debugConsole.log(
+    debugConsole.log(
       `  Original constraints: H=${constraintH}, V=${constraintV}`,
     );
 
@@ -135,7 +127,7 @@ export async function testConstraints(pageId: string): Promise<TestResult> {
     // Verify constraints were set (read from constraints object)
     const originalConstraintH = (originalFrame as any).constraints?.horizontal;
     const originalConstraintV = (originalFrame as any).constraints?.vertical;
-    await debugConsole.log(
+    debugConsole.log(
       `  Original constraints: H=${originalConstraintH}, V=${originalConstraintV}`,
     );
 
@@ -151,12 +143,10 @@ export async function testConstraints(pageId: string): Promise<TestResult> {
     }
 
     // Step 2: Simulate export - read constraints (as export code would)
-    await debugConsole.log(
-      "\n--- Step 2: Simulate Export (read constraints) ---",
-    );
+    debugConsole.log("\n--- Step 2: Simulate Export (read constraints) ---");
     const exportedConstraintH = (originalFrame as any).constraints?.horizontal;
     const exportedConstraintV = (originalFrame as any).constraints?.vertical;
-    await debugConsole.log(
+    debugConsole.log(
       `  Exported constraints: H=${exportedConstraintH}, V=${exportedConstraintV}`,
     );
 
@@ -171,7 +161,7 @@ export async function testConstraints(pageId: string): Promise<TestResult> {
     };
 
     // Step 3: Simulate import - create new frame and set constraints
-    await debugConsole.log(
+    debugConsole.log(
       "\n--- Step 3: Simulate Import (create frame and set constraints) ---",
     );
     const importedFrame = figma.createFrame();
@@ -184,7 +174,7 @@ export async function testConstraints(pageId: string): Promise<TestResult> {
       ?.horizontal;
     const importedConstraintVBefore = (importedFrame as any).constraints
       ?.vertical;
-    await debugConsole.log(
+    debugConsole.log(
       `  Constraints before setting: H=${importedConstraintHBefore}, V=${importedConstraintVBefore} (expected: MIN, MIN)`,
     );
 
@@ -193,32 +183,32 @@ export async function testConstraints(pageId: string): Promise<TestResult> {
       horizontal: exportedConstraintH,
       vertical: exportedConstraintV,
     };
-    await debugConsole.log(
+    debugConsole.log(
       `  Set constraints using constraints object: H=${exportedConstraintH}, V=${exportedConstraintV}`,
     );
 
     // Step 4: Verify imported constraints
-    await debugConsole.log("\n--- Step 4: Verify Imported Constraints ---");
+    debugConsole.log("\n--- Step 4: Verify Imported Constraints ---");
     const importedConstraintH = (importedFrame as any).constraints?.horizontal;
     const importedConstraintV = (importedFrame as any).constraints?.vertical;
-    await debugConsole.log(
+    debugConsole.log(
       `  Imported constraints: H=${importedConstraintH}, V=${importedConstraintV}`,
     );
-    await debugConsole.log(`  Expected constraints: H=SCALE, V=SCALE`);
+    debugConsole.log(`  Expected constraints: H=SCALE, V=SCALE`);
 
     const success =
       importedConstraintH === "SCALE" && importedConstraintV === "SCALE";
 
     if (success) {
-      await debugConsole.log("  ✓ Constraints correctly imported as SCALE");
+      debugConsole.log("  ✓ Constraints correctly imported as SCALE");
     } else {
-      await debugConsole.warning(
+      debugConsole.warning(
         `  ⚠️ Constraints mismatch! Expected SCALE, got H=${importedConstraintH}, V=${importedConstraintV}`,
       );
     }
 
     // Test other constraint values to ensure they work too
-    await debugConsole.log("\n--- Step 5: Test Other Constraint Values ---");
+    debugConsole.log("\n--- Step 5: Test Other Constraint Values ---");
     const testCases = [
       { h: "MIN", v: "MIN", name: "MIN/MIN" },
       { h: "CENTER", v: "CENTER", name: "CENTER/CENTER" },
@@ -259,11 +249,11 @@ export async function testConstraints(pageId: string): Promise<TestResult> {
       });
 
       if (testSuccess) {
-        await debugConsole.log(
+        debugConsole.log(
           `  ✓ ${testCase.name}: Correctly set to H=${resultH}, V=${resultV}`,
         );
       } else {
-        await debugConsole.warning(
+        debugConsole.warning(
           `  ⚠️ ${testCase.name}: Expected H=${testCase.h}, V=${testCase.v}, got H=${resultH}, V=${resultV}`,
         );
       }
@@ -297,7 +287,7 @@ export async function testConstraints(pageId: string): Promise<TestResult> {
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
-    await debugConsole.error(`Constraints test failed: ${errorMessage}`);
+    debugConsole.error(`Constraints test failed: ${errorMessage}`);
     return {
       success: false,
       message: `Test error: ${errorMessage}`,
@@ -323,7 +313,7 @@ export async function testConstraintsVectorInComponentFailure(
 ): Promise<TestResult> {
   /* eslint-disable @typescript-eslint/no-explicit-any */
   try {
-    await debugConsole.log(
+    debugConsole.log(
       "=== Test: Constraints on VECTOR in COMPONENT (FAILURE CASE) ===",
     );
 
@@ -343,26 +333,22 @@ export async function testConstraintsVectorInComponentFailure(
     }
 
     // Step 1: Create a COMPONENT
-    await debugConsole.log(
-      "\n--- Step 1: Create COMPONENT (parent for VECTOR) ---",
-    );
+    debugConsole.log("\n--- Step 1: Create COMPONENT (parent for VECTOR) ---");
     const component = figma.createComponent();
     component.name = "Test Component - Vector Constraints";
     component.resize(100, 100);
     testFrame.appendChild(component);
-    await debugConsole.log("  Created COMPONENT");
+    debugConsole.log("  Created COMPONENT");
 
     // Step 2: Create a VECTOR as a child of the COMPONENT
-    await debugConsole.log(
-      "\n--- Step 2: Create VECTOR as child of COMPONENT ---",
-    );
+    debugConsole.log("\n--- Step 2: Create VECTOR as child of COMPONENT ---");
     const vector = figma.createVector();
     vector.name = "Test Vector - Should Have SCALE Constraints";
     component.appendChild(vector);
-    await debugConsole.log("  Created VECTOR and appended to COMPONENT");
+    debugConsole.log("  Created VECTOR and appended to COMPONENT");
 
     // Step 3: Set vectorPaths and size (simulating the import process)
-    await debugConsole.log(
+    debugConsole.log(
       "\n--- Step 3: Set vectorPaths and size (simulating import) ---",
     );
     // Create a simple path
@@ -373,16 +359,16 @@ export async function testConstraintsVectorInComponentFailure(
       },
     ];
     vector.resize(50, 50);
-    await debugConsole.log("  Set vectorPaths and size");
+    debugConsole.log("  Set vectorPaths and size");
 
     // Step 4: Try to set constraints AFTER vectorPaths and size using constraints object API
-    await debugConsole.log(
+    debugConsole.log(
       "\n--- Step 4: Try to set constraints (AFTER vectorPaths/size) ---",
     );
-    await debugConsole.log(
+    debugConsole.log(
       "  This simulates setting constraints after the node is fully created",
     );
-    await debugConsole.log(
+    debugConsole.log(
       "  Using constraints object API (should work even after appending to COMPONENT)",
     );
 
@@ -402,27 +388,27 @@ export async function testConstraintsVectorInComponentFailure(
       if (verifyH === "SCALE" && verifyV === "SCALE") {
         constraintHSet = true;
         constraintVSet = true;
-        await debugConsole.log(
+        debugConsole.log(
           "  ✓ Constraints set successfully using constraints object (unexpected - should have failed with old approach)",
         );
       } else {
-        await debugConsole.warning(
+        debugConsole.warning(
           `  ⚠️ Constraints set but values are H=${verifyH || "undefined"}, V=${verifyV || "undefined"}`,
         );
       }
     } catch (error) {
       constraintHError = error instanceof Error ? error.message : String(error);
       constraintVError = constraintHError; // Same error for both
-      await debugConsole.warning(
+      debugConsole.warning(
         `  ✗ Failed to set constraints: ${constraintHError}`,
       );
     }
 
     // Step 5: Verify final state
-    await debugConsole.log("\n--- Step 5: Verify Final State ---");
+    debugConsole.log("\n--- Step 5: Verify Final State ---");
     const finalConstraintH = (vector as any).constraints?.horizontal;
     const finalConstraintV = (vector as any).constraints?.vertical;
-    await debugConsole.log(
+    debugConsole.log(
       `  Final constraints: H=${finalConstraintH || "undefined"}, V=${finalConstraintV || "undefined"}`,
     );
 
@@ -434,11 +420,11 @@ export async function testConstraintsVectorInComponentFailure(
       finalConstraintV === "SCALE";
 
     if (success) {
-      await debugConsole.log(
+      debugConsole.log(
         "  ✓ Constraints successfully set using constraints object API (even after appending to COMPONENT)",
       );
     } else {
-      await debugConsole.warning(
+      debugConsole.warning(
         `  ⚠️ Constraints could not be set. H=${finalConstraintH || "undefined"}, V=${finalConstraintV || "undefined"}`,
       );
     }
@@ -461,7 +447,7 @@ export async function testConstraintsVectorInComponentFailure(
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
-    await debugConsole.error(
+    debugConsole.error(
       `Constraints vector in component failure test error: ${errorMessage}`,
     );
     return {
@@ -486,7 +472,7 @@ export async function testConstraintsVectorInComponentFix(
 ): Promise<TestResult> {
   /* eslint-disable @typescript-eslint/no-explicit-any */
   try {
-    await debugConsole.log(
+    debugConsole.log(
       "=== Test: Constraints on VECTOR in COMPONENT (FIX CASE) ===",
     );
 
@@ -506,25 +492,21 @@ export async function testConstraintsVectorInComponentFix(
     }
 
     // Step 1: Create a COMPONENT
-    await debugConsole.log(
-      "\n--- Step 1: Create COMPONENT (parent for VECTOR) ---",
-    );
+    debugConsole.log("\n--- Step 1: Create COMPONENT (parent for VECTOR) ---");
     const component = figma.createComponent();
     component.name = "Test Component - Vector Constraints (Fixed)";
     component.resize(100, 100);
     testFrame.appendChild(component);
-    await debugConsole.log("  Created COMPONENT");
+    debugConsole.log("  Created COMPONENT");
 
     // Step 2: Create a VECTOR (but DON'T append it yet)
-    await debugConsole.log(
-      "\n--- Step 2: Create VECTOR (NOT appended yet) ---",
-    );
+    debugConsole.log("\n--- Step 2: Create VECTOR (NOT appended yet) ---");
     const vector = figma.createVector();
     vector.name = "Test Vector - SCALE Constraints (Fixed)";
-    await debugConsole.log("  Created VECTOR (not yet appended to COMPONENT)");
+    debugConsole.log("  Created VECTOR (not yet appended to COMPONENT)");
 
     // Step 3: Set vectorPaths FIRST (required before constraints)
-    await debugConsole.log(
+    debugConsole.log(
       "\n--- Step 3: Set vectorPaths FIRST (required before constraints) ---",
     );
     vector.vectorPaths = [
@@ -533,31 +515,31 @@ export async function testConstraintsVectorInComponentFix(
         data: "M 0 0 L 50 0 L 50 50 L 0 50 Z",
       },
     ];
-    await debugConsole.log("  Set vectorPaths");
+    debugConsole.log("  Set vectorPaths");
 
     // Step 4: Set size (after vectorPaths, before constraints)
-    await debugConsole.log(
+    debugConsole.log(
       "\n--- Step 4: Set size (after vectorPaths, before constraints) ---",
     );
     vector.resize(50, 50);
-    await debugConsole.log("  Set size to 50x50");
+    debugConsole.log("  Set size to 50x50");
 
     // Step 5: Append to COMPONENT FIRST (before setting constraints)
     // NOTE: Based on test results, it seems VECTOR nodes may need to be in the tree before constraints can be set
-    await debugConsole.log(
+    debugConsole.log(
       "\n--- Step 5: Append VECTOR to COMPONENT (before setting constraints) ---",
     );
-    await debugConsole.log(
+    debugConsole.log(
       "  NOTE: Testing if constraints can be set after appending (alternative approach)",
     );
     component.appendChild(vector);
-    await debugConsole.log("  Appended VECTOR to COMPONENT");
+    debugConsole.log("  Appended VECTOR to COMPONENT");
 
     // Step 6: Try to set constraints AFTER appending
-    await debugConsole.log(
+    debugConsole.log(
       "\n--- Step 6: Try to set constraints AFTER appending (FIX ATTEMPT) ---",
     );
-    await debugConsole.log(
+    debugConsole.log(
       "  This tests if constraints can be set after the node is in the tree",
     );
 
@@ -577,30 +559,30 @@ export async function testConstraintsVectorInComponentFix(
       if (verifyH === "SCALE" && verifyV === "SCALE") {
         constraintHSet = true;
         constraintVSet = true;
-        await debugConsole.log(
+        debugConsole.log(
           "  ✓ Constraints set successfully using constraints object: H=SCALE, V=SCALE",
         );
       } else {
-        await debugConsole.warning(
+        debugConsole.warning(
           `  ⚠️ Constraints set but values are H=${verifyH || "undefined"}, V=${verifyV || "undefined"} (expected SCALE)`,
         );
       }
     } catch (error) {
       constraintHError = error instanceof Error ? error.message : String(error);
       constraintVError = constraintHError; // Same error for both
-      await debugConsole.warning(
+      debugConsole.warning(
         `  ✗ Failed to set constraints: ${constraintHError}`,
       );
     }
 
     // Step 7: Verify constraints are set
-    await debugConsole.log("\n--- Step 7: Verify constraints are set ---");
+    debugConsole.log("\n--- Step 7: Verify constraints are set ---");
     const finalConstraintH = (vector as any).constraints?.horizontal;
     const finalConstraintV = (vector as any).constraints?.vertical;
-    await debugConsole.log(
+    debugConsole.log(
       `  Final constraints: H=${finalConstraintH || "undefined"}, V=${finalConstraintV || "undefined"}`,
     );
-    await debugConsole.log("  Expected: H=SCALE, V=SCALE");
+    debugConsole.log("  Expected: H=SCALE, V=SCALE");
 
     const success =
       constraintHSet &&
@@ -609,11 +591,11 @@ export async function testConstraintsVectorInComponentFix(
       finalConstraintV === "SCALE";
 
     if (success) {
-      await debugConsole.log(
+      debugConsole.log(
         "  ✓ Constraints correctly set and preserved through all operations",
       );
     } else {
-      await debugConsole.warning(
+      debugConsole.warning(
         `  ⚠️ Constraints test failed! Expected SCALE/SCALE, got H=${finalConstraintH || "undefined"}, V=${finalConstraintV || "undefined"}`,
       );
     }
@@ -636,7 +618,7 @@ export async function testConstraintsVectorInComponentFix(
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
-    await debugConsole.error(
+    debugConsole.error(
       `Constraints vector in component fix test error: ${errorMessage}`,
     );
     return {
@@ -659,7 +641,7 @@ export async function testConstraintsVectorStandalone(
 ): Promise<TestResult> {
   /* eslint-disable @typescript-eslint/no-explicit-any */
   try {
-    await debugConsole.log(
+    debugConsole.log(
       "=== Test: Constraints on Standalone VECTOR (not in COMPONENT) ===",
     );
 
@@ -679,15 +661,15 @@ export async function testConstraintsVectorStandalone(
     }
 
     // Create a standalone VECTOR (not in a COMPONENT)
-    await debugConsole.log(
+    debugConsole.log(
       "\n--- Step 1: Create standalone VECTOR (not in COMPONENT) ---",
     );
     const vector = figma.createVector();
     vector.name = "Test Vector - Standalone";
-    await debugConsole.log("  Created VECTOR (standalone, not in COMPONENT)");
+    debugConsole.log("  Created VECTOR (standalone, not in COMPONENT)");
 
     // Set vectorPaths and size
-    await debugConsole.log("\n--- Step 2: Set vectorPaths and size ---");
+    debugConsole.log("\n--- Step 2: Set vectorPaths and size ---");
     vector.vectorPaths = [
       {
         windingRule: "NONZERO",
@@ -695,20 +677,20 @@ export async function testConstraintsVectorStandalone(
       },
     ];
     vector.resize(50, 50);
-    await debugConsole.log("  Set vectorPaths and size");
+    debugConsole.log("  Set vectorPaths and size");
 
     // Append to testFrame (not a COMPONENT)
-    await debugConsole.log(
+    debugConsole.log(
       "\n--- Step 3: Append VECTOR to testFrame (not COMPONENT) ---",
     );
     testFrame.appendChild(vector);
-    await debugConsole.log("  Appended VECTOR to testFrame");
+    debugConsole.log("  Appended VECTOR to testFrame");
 
     // Try to set constraints using different approaches
-    await debugConsole.log(
+    debugConsole.log(
       "\n--- Step 4: Try to set constraints on standalone VECTOR ---",
     );
-    await debugConsole.log(
+    debugConsole.log(
       "  Testing multiple approaches: constraints object, then direct properties",
     );
     let constraintHSet = false;
@@ -717,7 +699,7 @@ export async function testConstraintsVectorStandalone(
     let constraintVError: string | undefined;
 
     // Try using constraints object API
-    await debugConsole.log(
+    debugConsole.log(
       "  Attempting to set constraints using constraints object API...",
     );
     try {
@@ -730,27 +712,27 @@ export async function testConstraintsVectorStandalone(
       if (verifyH === "SCALE" && verifyV === "SCALE") {
         constraintHSet = true;
         constraintVSet = true;
-        await debugConsole.log(
+        debugConsole.log(
           "  ✓ Constraints set successfully via constraints object: H=SCALE, V=SCALE",
         );
       } else {
-        await debugConsole.warning(
+        debugConsole.warning(
           `  ⚠️ Constraints set but values are H=${verifyH || "undefined"}, V=${verifyV || "undefined"}`,
         );
       }
     } catch (error) {
       constraintHError = error instanceof Error ? error.message : String(error);
       constraintVError = constraintHError; // Same error for both
-      await debugConsole.warning(
+      debugConsole.warning(
         `  ✗ Failed to set constraints: ${constraintHError}`,
       );
     }
 
     // Verify final state
-    await debugConsole.log("\n--- Step 5: Verify Final State ---");
+    debugConsole.log("\n--- Step 5: Verify Final State ---");
     const finalConstraintH = (vector as any).constraints?.horizontal;
     const finalConstraintV = (vector as any).constraints?.vertical;
-    await debugConsole.log(
+    debugConsole.log(
       `  Final constraints: H=${finalConstraintH || "undefined"}, V=${finalConstraintV || "undefined"}`,
     );
 
@@ -761,17 +743,15 @@ export async function testConstraintsVectorStandalone(
       finalConstraintV === "SCALE";
 
     if (success) {
-      await debugConsole.log(
-        "  ✓ Constraints can be set on standalone VECTOR nodes",
-      );
-      await debugConsole.log(
+      debugConsole.log("  ✓ Constraints can be set on standalone VECTOR nodes");
+      debugConsole.log(
         "  → This suggests the issue is specific to VECTOR nodes in COMPONENTs",
       );
     } else {
-      await debugConsole.warning(
+      debugConsole.warning(
         "  ⚠️ Constraints cannot be set on standalone VECTOR nodes either",
       );
-      await debugConsole.warning(
+      debugConsole.warning(
         "  → This suggests VECTOR nodes may not support constraints at all, or there's a different issue",
       );
     }
@@ -794,7 +774,7 @@ export async function testConstraintsVectorStandalone(
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
-    await debugConsole.error(
+    debugConsole.error(
       `Constraints standalone vector test error: ${errorMessage}`,
     );
     return {
