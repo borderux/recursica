@@ -3,12 +3,14 @@ import type { ResponseMessage } from "../types/messages";
 import { retSuccess, retError } from "../utils/response";
 import { debugConsole } from "./debugConsole";
 import { importPagesInOrder } from "./dependencyResolver";
+import type { SanitizedPageImportResult } from "./pageImportNew";
 import { normalizeCollectionName } from "../../const/CollectionConstants";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export const PRIMARY_IMPORT_KEY = "RecursicaPrimaryImport";
 export const UNDER_REVIEW_KEY = "RecursicaUnderReview";
+export const IMPORT_RESULT_KEY = "RecursicaImportResult"; // Global key for storing importResult on figma.root
 export const IMPORT_START_DIVIDER = "---";
 export const IMPORT_END_DIVIDER = "---";
 export const DIVIDER_PLUGIN_DATA_KEY = "RecursicaImportDivider";
@@ -99,10 +101,10 @@ export async function checkForExistingPrimaryImport(
         }
       }
 
-      // Also check for "under review" status (in case primary import metadata is missing)
-      const underReviewData = page.getPluginData(UNDER_REVIEW_KEY);
-      if (underReviewData === "true") {
-        // Found a page under review, try to get primary import metadata
+      // Also check for global importResult (indicates import in progress)
+      const globalImportResultStr = figma.root.getPluginData(IMPORT_RESULT_KEY);
+      if (globalImportResultStr) {
+        // Found global importResult, try to get primary import metadata
         const primaryData = page.getPluginData(PRIMARY_IMPORT_KEY);
         if (primaryData) {
           try {
@@ -119,11 +121,6 @@ export async function checkForExistingPrimaryImport(
           } catch {
             // Continue searching
           }
-        } else {
-          // Page is under review but no primary import metadata - this shouldn't happen, but handle it
-          debugConsole.warning(
-            `Found page "${page.name}" marked as under review but missing primary import metadata`,
-          );
         }
       }
     }
@@ -186,13 +183,13 @@ export async function createImportDividers(
     const startDivider = figma.createPage();
     startDivider.name = IMPORT_START_DIVIDER;
     startDivider.setPluginData(DIVIDER_PLUGIN_DATA_KEY, DIVIDER_TYPE_START);
-    startDivider.setPluginData(UNDER_REVIEW_KEY, "true"); // Mark as under review so it gets deleted
+    // Dividers are identified by DIVIDER_PLUGIN_DATA_KEY and will be deleted based on importResult
 
     // Create end divider
     const endDivider = figma.createPage();
     endDivider.name = IMPORT_END_DIVIDER;
     endDivider.setPluginData(DIVIDER_PLUGIN_DATA_KEY, DIVIDER_TYPE_END);
-    endDivider.setPluginData(UNDER_REVIEW_KEY, "true"); // Mark as under review so it gets deleted
+    // Dividers are identified by DIVIDER_PLUGIN_DATA_KEY and will be deleted based on importResult
 
     // Position end divider after start divider
     const startIndex = figma.root.children.indexOf(startDivider);
@@ -282,7 +279,7 @@ export async function importSingleComponentWithWizard(
       startDivider = figma.createPage();
       startDivider.name = IMPORT_START_DIVIDER;
       startDivider.setPluginData(DIVIDER_PLUGIN_DATA_KEY, DIVIDER_TYPE_START);
-      startDivider.setPluginData(UNDER_REVIEW_KEY, "true"); // Mark as under review so it gets deleted
+      // Dividers are identified by DIVIDER_PLUGIN_DATA_KEY and will be deleted based on importResult
       debugConsole.log("Created start divider");
     }
 
@@ -344,7 +341,7 @@ export async function importSingleComponentWithWizard(
         DIVIDER_PLUGIN_DATA_KEY,
         DIVIDER_TYPE_END,
       );
-      endDividerAfterImport.setPluginData(UNDER_REVIEW_KEY, "true"); // Mark as under review so it gets deleted
+      // Dividers are identified by DIVIDER_PLUGIN_DATA_KEY and will be deleted based on importResult
 
       // Position end divider after all imported pages (after start divider)
       // Find the last page that's not a divider
@@ -364,41 +361,70 @@ export async function importSingleComponentWithWizard(
       debugConsole.log("Created end divider");
     }
 
-    // Step 5: Get page IDs from import result and mark them as "under review"
+    // Step 4.5: Add divider IDs to global importResult so they're included in cleanup
+    // Dividers are part of the import process and should be tracked for cleanup
+    const globalImportResultStr = figma.root.getPluginData(IMPORT_RESULT_KEY);
+    if (globalImportResultStr) {
+      try {
+        const importResults = JSON.parse(
+          globalImportResultStr,
+        ) as SanitizedPageImportResult[];
+        // Collect divider IDs (both start and end, whether newly created or existing)
+        const dividerIds: string[] = [];
+        if (startDivider) {
+          dividerIds.push(startDivider.id);
+        }
+        if (endDividerAfterImport) {
+          dividerIds.push(endDividerAfterImport.id);
+        }
+
+        if (dividerIds.length > 0) {
+          // Add divider IDs to each importResult's createdPageIds
+          for (const importResult of importResults) {
+            // Ensure createdPageIds array exists
+            if (!importResult.createdPageIds) {
+              importResult.createdPageIds = [];
+            }
+            // Add divider IDs if not already present
+            const existingPageIds = new Set(importResult.createdPageIds);
+            for (const dividerId of dividerIds) {
+              if (!existingPageIds.has(dividerId)) {
+                importResult.createdPageIds.push(dividerId);
+              }
+            }
+          }
+          // Update global importResult with divider IDs included (already sanitized)
+          figma.root.setPluginData(
+            IMPORT_RESULT_KEY,
+            JSON.stringify(importResults),
+          );
+          debugConsole.log(
+            `Added ${dividerIds.length} divider ID(s) to global importResult: ${dividerIds.map((id) => id.substring(0, 8) + "...").join(", ")}`,
+          );
+        }
+      } catch (error) {
+        debugConsole.warning(
+          `Failed to add divider IDs to importResult: ${error}`,
+        );
+      }
+    } else {
+      debugConsole.warning(
+        "No global importResult found - dividers will not be tracked for cleanup",
+      );
+    }
+
+    // Step 5: Get page IDs from import result
     debugConsole.log(
       `Import result data structure: ${JSON.stringify(Object.keys(importResult.data || {}))}`,
     );
     const importResultData = importResult.data as {
       importedPages?: Array<{ name: string; pageId: string }>;
-      createdEntities?: {
-        collectionIds?: string[];
-        variableIds?: string[];
-        pageIds?: string[];
-      };
     };
+    // Note: importResult objects are now stored globally on figma.root for cleanup/delete operations
+    // Individual importResult objects contain detailed information per page
     debugConsole.log(
-      `Import result has createdEntities: ${!!importResultData?.createdEntities}`,
+      `Import completed. ImportResult objects are stored globally for cleanup/delete operations.`,
     );
-    if (importResultData?.createdEntities) {
-      debugConsole.log(
-        `  Collection IDs: ${importResultData.createdEntities.collectionIds?.length || 0}`,
-      );
-      if (importResultData.createdEntities.collectionIds?.length) {
-        debugConsole.log(
-          `  Collection IDs: ${importResultData.createdEntities.collectionIds.map((id) => id.substring(0, 8) + "...").join(", ")}`,
-        );
-      }
-      debugConsole.log(
-        `  Variable IDs: ${importResultData.createdEntities.variableIds?.length || 0}`,
-      );
-      debugConsole.log(
-        `  Page IDs: ${importResultData.createdEntities.pageIds?.length || 0}`,
-      );
-    } else {
-      debugConsole.warning(
-        "Import result does not have createdEntities - cleanup may not work correctly",
-      );
-    }
 
     if (
       !importResultData?.importedPages ||
@@ -504,8 +530,7 @@ export async function importSingleComponentWithWizard(
           importedPage.pageId,
         )) as PageNode | null;
         if (page && page.type === "PAGE") {
-          // Set "under review" metadata
-          page.setPluginData(UNDER_REVIEW_KEY, "true");
+          // Pages are identified by importResult.createdPageIds, no need for UNDER_REVIEW_KEY
 
           // Ensure construction icon is on the name
           const baseName = page.name.replace(/_\d+$/, ""); // Remove _<number> suffix if present
@@ -521,7 +546,7 @@ export async function importSingleComponentWithWizard(
         }
       } catch (err) {
         debugConsole.warning(
-          `Failed to mark page ${importedPage.pageId} as under review: ${err}`,
+          `Failed to process page ${importedPage.pageId}: ${err}`,
         );
       }
     }
@@ -536,14 +561,12 @@ export async function importSingleComponentWithWizard(
         (p.name === "REMOTES" || p.name === `${CONSTRUCTION_ICON} REMOTES`),
     ) as PageNode | undefined;
     if (remotesPage) {
-      remotesPage.setPluginData(UNDER_REVIEW_KEY, "true");
+      // REMOTES page is identified by importResult.createdPageIds if it was created, no need for UNDER_REVIEW_KEY
       // Ensure construction icon is on the name
       if (!remotesPage.name.startsWith(CONSTRUCTION_ICON)) {
         remotesPage.name = `${CONSTRUCTION_ICON} REMOTES`;
       }
-      debugConsole.log(
-        "Marked REMOTES page as under review and ensured construction icon",
-      );
+      debugConsole.log("Ensured construction icon on REMOTES page");
     }
 
     // Double-check: Find any pages between dividers that might have been missed
@@ -566,13 +589,11 @@ export async function importSingleComponentWithWizard(
       for (let i = startIndex + 1; i < endIndex; i++) {
         const page = allPagesForMarking[i];
         if (page.type === "PAGE") {
-          const underReview = page.getPluginData(UNDER_REVIEW_KEY);
-          if (underReview !== "true") {
-            page.setPluginData(UNDER_REVIEW_KEY, "true");
-            debugConsole.log(
-              `Marked page "${page.name}" as under review (found between dividers)`,
-            );
-          }
+          // Pages are identified by importResult.createdPageIds, no need for UNDER_REVIEW_KEY
+          // Just log that we found a page between dividers
+          debugConsole.log(
+            `Found page "${page.name}" between dividers (will be identified by importResult)`,
+          );
         }
       }
     }
@@ -592,16 +613,43 @@ export async function importSingleComponentWithWizard(
       collectionName: string;
     }> = [];
 
-    // Extract created collections - look them up to get names for metadata
+    // Extract created collections - get them from global importResult
+    const globalImportResultStrForCollections =
+      figma.root.getPluginData(IMPORT_RESULT_KEY);
+    const allCollectionIdsFromImport: string[] = [];
+    const allVariableIdsFromImport: string[] = [];
+
+    if (globalImportResultStrForCollections) {
+      try {
+        const importResults = JSON.parse(
+          globalImportResultStrForCollections,
+        ) as Array<{
+          createdCollectionIds?: string[];
+          createdVariableIds?: string[];
+        }>;
+        for (const ir of importResults) {
+          if (ir.createdCollectionIds) {
+            allCollectionIdsFromImport.push(...ir.createdCollectionIds);
+          }
+          if (ir.createdVariableIds) {
+            allVariableIdsFromImport.push(...ir.createdVariableIds);
+          }
+        }
+      } catch (error) {
+        debugConsole.warning(
+          `[EXTRACTION] Failed to parse global importResult: ${error}`,
+        );
+      }
+    }
+
     debugConsole.log(
-      `[EXTRACTION] Starting collection extraction. Collection IDs in result: ${importResultData?.createdEntities?.collectionIds?.length || 0}`,
+      `[EXTRACTION] Starting collection extraction. Collection IDs from global importResult: ${allCollectionIdsFromImport.length}`,
     );
-    if (importResultData?.createdEntities?.collectionIds) {
+    if (allCollectionIdsFromImport.length > 0) {
       debugConsole.log(
-        `[EXTRACTION] Collection IDs to process: ${importResultData.createdEntities.collectionIds.map((id) => id.substring(0, 8) + "...").join(", ")}`,
+        `[EXTRACTION] Collection IDs to process: ${allCollectionIdsFromImport.map((id) => id.substring(0, 8) + "...").join(", ")}`,
       );
-      for (const collectionId of importResultData.createdEntities
-        .collectionIds) {
+      for (const collectionId of allCollectionIdsFromImport) {
         try {
           const collection =
             await figma.variables.getVariableCollectionByIdAsync(collectionId);
@@ -637,7 +685,7 @@ export async function importSingleComponentWithWizard(
       }
     } else {
       debugConsole.warning(
-        "[EXTRACTION] No collectionIds found in importResultData.createdEntities",
+        "[EXTRACTION] No collectionIds found in global importResult",
       );
     }
     debugConsole.log(
@@ -653,11 +701,11 @@ export async function importSingleComponentWithWizard(
     // Track ALL variables that were created, regardless of whether they're in new or existing collections
     // The cleanup logic will handle deleting collections (which deletes their variables) separately
 
-    if (importResultData?.createdEntities?.variableIds) {
+    if (allVariableIdsFromImport.length > 0) {
       debugConsole.log(
-        `[EXTRACTION] Processing ${importResultData.createdEntities.variableIds.length} variable ID(s)...`,
+        `[EXTRACTION] Processing ${allVariableIdsFromImport.length} variable ID(s)...`,
       );
-      for (const variableId of importResultData.createdEntities.variableIds) {
+      for (const variableId of allVariableIdsFromImport) {
         try {
           const variable =
             await figma.variables.getVariableByIdAsync(variableId);
@@ -697,7 +745,7 @@ export async function importSingleComponentWithWizard(
       );
     } else {
       debugConsole.warning(
-        "[EXTRACTION] No variableIds found in importResultData.createdEntities",
+        "[EXTRACTION] No variableIds found in global importResult",
       );
     }
 
@@ -708,27 +756,23 @@ export async function importSingleComponentWithWizard(
     // This ensures cleanup can still work even if lookups failed
     if (
       createdCollections.length === 0 &&
-      importResultData?.createdEntities?.collectionIds?.length
+      allCollectionIdsFromImport.length > 0
     ) {
       debugConsole.warning(
-        "[EXTRACTION] Collection extraction failed, but IDs are available - creating fallback entries",
+        "[EXTRACTION] Collection extraction failed, but IDs are available in global importResult - creating fallback entries",
       );
-      for (const collectionId of importResultData.createdEntities
-        .collectionIds) {
+      for (const collectionId of allCollectionIdsFromImport) {
         createdCollections.push({
           collectionId: collectionId,
           collectionName: `Unknown (${collectionId.substring(0, 8)}...)`,
         });
       }
     }
-    if (
-      createdVariables.length === 0 &&
-      importResultData?.createdEntities?.variableIds?.length
-    ) {
+    if (createdVariables.length === 0 && allVariableIdsFromImport.length > 0) {
       debugConsole.warning(
-        "[EXTRACTION] Variable extraction failed, but IDs are available - creating fallback entries",
+        "[EXTRACTION] Variable extraction failed, but IDs are available in global importResult - creating fallback entries",
       );
-      for (const variableId of importResultData.createdEntities.variableIds) {
+      for (const variableId of allVariableIdsFromImport) {
         createdVariables.push({
           variableId: variableId,
           variableName: `Unknown (${variableId.substring(0, 8)}...)`,
@@ -757,10 +801,8 @@ export async function importSingleComponentWithWizard(
       PRIMARY_IMPORT_KEY,
       JSON.stringify(primaryImportMetadata),
     );
-    mainPage.setPluginData(UNDER_REVIEW_KEY, "true"); // Ensure main page is marked as under review
-    debugConsole.log(
-      "Stored primary import metadata on main page and marked as under review",
-    );
+    // Main page is identified by importResult.createdPageIds, no need for UNDER_REVIEW_KEY
+    debugConsole.log("Stored primary import metadata on main page");
 
     // Step 7: Collect all imported page IDs from import result
     const importedPageIds: string[] = [];
@@ -823,7 +865,7 @@ export async function importSingleComponentWithWizard(
     // Try to store metadata with error information if we have a main page
     try {
       await figma.loadAllPagesAsync();
-      // Try to find the main page by looking for pages with UNDER_REVIEW_KEY
+      // Try to find the main page by looking for pages with PRIMARY_IMPORT_KEY
       const allPages = figma.root.children;
       let mainPageWithMetadata: PageNode | null = null;
 
@@ -875,12 +917,34 @@ export async function importSingleComponentWithWizard(
           "No existing metadata found, attempting to collect created entities for cleanup...",
         );
 
-        // Find pages marked as under review
+        // Find pages that are part of the import using global importResult
         const pagesUnderReview: PageNode[] = [];
+        const PAGE_METADATA_KEY = "RecursicaPublishedMetadata";
+        const globalImportResultStrForCleanup =
+          figma.root.getPluginData(IMPORT_RESULT_KEY);
+        const importResultPageIds: string[] = [];
+        if (globalImportResultStrForCleanup) {
+          try {
+            const importResults = JSON.parse(
+              globalImportResultStrForCleanup,
+            ) as Array<{
+              createdPageIds?: string[];
+            }>;
+            for (const ir of importResults) {
+              if (ir.createdPageIds) {
+                importResultPageIds.push(...ir.createdPageIds);
+              }
+            }
+          } catch {
+            // Failed to parse, continue
+          }
+        }
         for (const page of allPages) {
           if (page.type !== "PAGE") continue;
-          const underReview = page.getPluginData(UNDER_REVIEW_KEY);
-          if (underReview === "true") {
+          // Check if page is in importResult or has page metadata
+          const hasPageMetadata = !!page.getPluginData(PAGE_METADATA_KEY);
+          const isInImportResult = importResultPageIds.includes(page.id);
+          if (hasPageMetadata || isInImportResult) {
             pagesUnderReview.push(page);
           }
         }
@@ -1023,22 +1087,67 @@ export async function deleteImportGroup(
       `Found metadata: ${metadata.createdCollections.length} collection(s), ${metadata.createdVariables.length} variable(s) to delete`,
     );
 
-    // Step 2: Find all pages marked as "under review" - delete any page with this metadata
-    // This includes main component, dependencies, REMOTES page, and dividers
+    // Step 2: Find all pages to delete using importResult
+    // This includes main component, dependencies, REMOTES page (if created), and dividers
     await figma.loadAllPagesAsync();
     const allPages = figma.root.children;
     const pagesToDelete: PageNode[] = [];
+    const PAGE_METADATA_KEY = "RecursicaPublishedMetadata";
 
-    for (const page of allPages) {
-      if (page.type !== "PAGE") {
-        continue;
+    // Get global importResult to find pages to delete
+    const globalImportResultStr = figma.root.getPluginData(IMPORT_RESULT_KEY);
+    const importResultPageIds: string[] = [];
+    if (globalImportResultStr) {
+      try {
+        const importResults = JSON.parse(globalImportResultStr) as Array<{
+          createdPageIds?: string[];
+        }>;
+        for (const ir of importResults) {
+          if (ir.createdPageIds) {
+            importResultPageIds.push(...ir.createdPageIds);
+          }
+        }
+        debugConsole.log(
+          `Found ${importResultPageIds.length} page ID(s) in global importResult (includes dividers)`,
+        );
+      } catch (error) {
+        debugConsole.warning(`Failed to parse global importResult: ${error}`);
       }
+    }
 
-      // Check if page is marked as "under review" - delete any page with this metadata
-      const underReview = page.getPluginData(UNDER_REVIEW_KEY);
-      if (underReview === "true") {
-        pagesToDelete.push(page);
-        debugConsole.log(`Found page to delete: "${page.name}" (under review)`);
+    // If we have importResult, use it exclusively to find pages to delete
+    if (importResultPageIds.length > 0) {
+      for (const pageId of importResultPageIds) {
+        try {
+          const page = (await figma.getNodeByIdAsync(
+            pageId,
+          )) as PageNode | null;
+          if (page && page.type === "PAGE") {
+            pagesToDelete.push(page);
+            debugConsole.log(
+              `Found page to delete from importResult: "${page.name}" (${pageId.substring(0, 8)}...)`,
+            );
+          }
+        } catch (error) {
+          debugConsole.warning(
+            `Could not get page ${pageId.substring(0, 8)}...: ${error}`,
+          );
+        }
+      }
+    } else {
+      // Fallback: if no importResult, use PAGE_METADATA_KEY (legacy)
+      debugConsole.log(
+        "No importResult found, falling back to PAGE_METADATA_KEY for page identification",
+      );
+      for (const page of allPages) {
+        if (page.type !== "PAGE") {
+          continue;
+        }
+        const hasPageMetadata = !!page.getPluginData(PAGE_METADATA_KEY);
+        if (hasPageMetadata) {
+          pagesToDelete.push(page);
+          debugConsole.log(`Found page to delete (legacy): "${page.name}"`);
+        }
       }
     }
 
@@ -1201,7 +1310,7 @@ export async function deleteImportGroup(
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CleanupFailedImportData {
-  // No data needed - finds pages with UNDER_REVIEW_KEY
+  // No data needed - finds pages using global importResult
 }
 
 export interface CleanupFailedImportResponseData {
@@ -1212,10 +1321,10 @@ export interface CleanupFailedImportResponseData {
 }
 
 /**
- * Cleans up a failed import by finding all pages marked as "under review"
+ * Cleans up a failed import by finding all pages using global importResult
  * and deleting them. If a page with primary import metadata is found,
  * uses deleteImportGroup for full cleanup including collections/variables.
- * Otherwise, just deletes pages with UNDER_REVIEW_KEY.
+ * Otherwise, deletes pages identified by importResult.createdPageIds or PAGE_METADATA_KEY.
  */
 export async function cleanupFailedImport(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -1228,25 +1337,33 @@ export async function cleanupFailedImport(
     const allPages = figma.root.children;
 
     const PAGE_METADATA_KEY = "RecursicaPublishedMetadata";
-    const CREATED_ENTITIES_KEY = "RecursicaCreatedEntities";
+    const CREATED_ENTITIES_KEY = "RecursicaCreatedEntities"; // Legacy key for backward compatibility
 
-    // First, check for pages with RecursicaCreatedEntities (new import system)
-    let hasNewSystemPages = false;
+    // Check for global importResult (new system) - stored on figma.root
+    const globalImportResultStr = figma.root.getPluginData(IMPORT_RESULT_KEY);
+    const hasGlobalImportResult = !!globalImportResultStr;
+
+    // Also check for legacy per-page createdEntities for backward compatibility
+    let hasCreatedEntitiesPages = false;
     for (const page of allPages) {
       if (page.type !== "PAGE") {
         continue;
       }
       const createdEntitiesStr = page.getPluginData(CREATED_ENTITIES_KEY);
       if (createdEntitiesStr) {
-        hasNewSystemPages = true;
+        hasCreatedEntitiesPages = true;
         break;
       }
     }
 
-    // If we found pages with new system metadata, use the new cleanup logic
-    if (hasNewSystemPages) {
+    // If we found global importResult, use the new cleanup logic
+    if (hasGlobalImportResult) {
       debugConsole.log(
-        "Found pages with RecursicaCreatedEntities, using new cleanup logic",
+        "Found global RecursicaImportResult, using importResult-based cleanup logic",
+      );
+    } else if (hasCreatedEntitiesPages) {
+      debugConsole.log(
+        "Found pages with RecursicaCreatedEntities (legacy), using createdEntities-based cleanup logic",
       );
     } else {
       // Try to find a page with primary import metadata (old system)
@@ -1270,55 +1387,89 @@ export async function cleanupFailedImport(
         return await deleteImportGroup({ pageId: pageWithMetadata.id });
       }
 
-      // Otherwise, look for pages with UNDER_REVIEW_KEY or pages with PAGE_METADATA_KEY
+      // Otherwise, look for pages using global importResult or pages with PAGE_METADATA_KEY
       debugConsole.log(
-        "No primary metadata found, looking for pages with UNDER_REVIEW_KEY or PAGE_METADATA_KEY",
+        "No primary metadata found, looking for pages using global importResult or PAGE_METADATA_KEY",
       );
     }
     const pagesToDelete: Array<{ id: string; name: string }> = [];
     const allCollectionIds = new Set<string>();
     const allVariableIds = new Set<string>();
 
-    // First, collect created entities from ALL pages (not just pages to delete)
-    // This ensures we find created entities even if they're stored on a different page
-    debugConsole.log(
-      `Scanning ${allPages.length} page(s) for created entities...`,
-    );
+    // Collect created entities from global importResult (new system)
+    let globalImportResults: Array<{
+      createdPageIds?: string[];
+      createdCollectionIds?: string[];
+      createdVariableIds?: string[];
+      createdStyleIds?: string[];
+    }> = [];
 
-    for (const page of allPages) {
-      if (page.type !== "PAGE") {
-        continue;
-      }
-      const createdEntitiesStr = page.getPluginData(CREATED_ENTITIES_KEY);
+    if (hasGlobalImportResult) {
+      try {
+        globalImportResults = JSON.parse(globalImportResultStr) as Array<{
+          createdPageIds?: string[];
+          createdCollectionIds?: string[];
+          createdVariableIds?: string[];
+          createdStyleIds?: string[];
+        }>;
 
-      if (createdEntitiesStr) {
-        try {
-          const createdEntities = JSON.parse(createdEntitiesStr) as {
-            pageIds?: string[];
-            collectionIds?: string[];
-            variableIds?: string[];
-          };
+        debugConsole.log(
+          `Found ${globalImportResults.length} importResult object(s) in global storage`,
+        );
 
-          if (createdEntities.collectionIds) {
-            for (const collectionId of createdEntities.collectionIds) {
+        for (const importResult of globalImportResults) {
+          if (importResult.createdCollectionIds) {
+            for (const collectionId of importResult.createdCollectionIds) {
               allCollectionIds.add(collectionId);
             }
-            debugConsole.log(
-              `  Found ${createdEntities.collectionIds.length} collection ID(s) on page "${page.name}"`,
-            );
           }
-          if (createdEntities.variableIds) {
-            for (const variableId of createdEntities.variableIds) {
+          if (importResult.createdVariableIds) {
+            for (const variableId of importResult.createdVariableIds) {
               allVariableIds.add(variableId);
             }
-            debugConsole.log(
-              `  Found ${createdEntities.variableIds.length} variable ID(s) on page "${page.name}"`,
+          }
+        }
+
+        debugConsole.log(
+          `Extracted ${allCollectionIds.size} collection ID(s) and ${allVariableIds.size} variable ID(s) from global importResult`,
+        );
+      } catch (error) {
+        debugConsole.warning(`Failed to parse global importResult: ${error}`);
+      }
+    } else if (hasCreatedEntitiesPages) {
+      // Fallback to legacy per-page createdEntities for backward compatibility
+      debugConsole.log(
+        `Scanning ${allPages.length} page(s) for legacy created entities...`,
+      );
+
+      for (const page of allPages) {
+        if (page.type !== "PAGE") {
+          continue;
+        }
+        const createdEntitiesStr = page.getPluginData(CREATED_ENTITIES_KEY);
+        if (createdEntitiesStr) {
+          try {
+            const createdEntities = JSON.parse(createdEntitiesStr) as {
+              pageIds?: string[];
+              collectionIds?: string[];
+              variableIds?: string[];
+            };
+
+            if (createdEntities.collectionIds) {
+              for (const collectionId of createdEntities.collectionIds) {
+                allCollectionIds.add(collectionId);
+              }
+            }
+            if (createdEntities.variableIds) {
+              for (const variableId of createdEntities.variableIds) {
+                allVariableIds.add(variableId);
+              }
+            }
+          } catch (error) {
+            debugConsole.warning(
+              `Failed to parse created entities from page "${page.name}": ${error}`,
             );
           }
-        } catch (error) {
-          debugConsole.warning(
-            `  Failed to parse created entities from page "${page.name}": ${error}`,
-          );
         }
       }
     }
@@ -1332,123 +1483,102 @@ export async function cleanupFailedImport(
       if (page.type !== "PAGE") {
         continue;
       }
-      const underReview = page.getPluginData(UNDER_REVIEW_KEY);
       const pageMetadata = page.getPluginData(PAGE_METADATA_KEY);
-      const createdEntitiesStr = page.getPluginData(CREATED_ENTITIES_KEY);
+      const createdEntitiesStr = page.getPluginData(CREATED_ENTITIES_KEY); // Legacy check
+      const isInImportResult =
+        hasGlobalImportResult &&
+        globalImportResults.some((ir) => ir.createdPageIds?.includes(page.id));
+
+      // Delete if global importResult exists and this page is in createdPageIds
+      // OR if it has page metadata (fallback for legacy pages)
 
       // Log every page for debugging
       debugConsole.log(
-        `  Checking page "${page.name}": underReview=${underReview === "true"}, hasMetadata=${!!pageMetadata}, hasCreatedEntities=${!!createdEntitiesStr}`,
+        `  Checking page "${page.name}": hasMetadata=${!!pageMetadata}, isInImportResult=${isInImportResult}, hasLegacyCreatedEntities=${!!createdEntitiesStr}`,
       );
 
-      // Delete if marked as under review OR if it has page metadata (new import system)
-      if (underReview === "true" || pageMetadata) {
+      if (isInImportResult || pageMetadata) {
         // Store page info before deletion
         pagesToDelete.push({ id: page.id, name: page.name });
         debugConsole.log(
-          `Found page to delete: "${page.name}" (underReview: ${underReview === "true"}, hasMetadata: ${!!pageMetadata})`,
+          `Found page to delete: "${page.name}" (isInImportResult: ${isInImportResult}, hasMetadata: ${!!pageMetadata})`,
         );
+      }
+    }
 
-        // Extract created entity IDs from the page (in case we missed them in the first pass)
+    // If we have global importResult, also add any pages from createdPageIds
+    if (hasGlobalImportResult && globalImportResults.length > 0) {
+      debugConsole.log(
+        `Checking global importResult for additional pages to delete...`,
+      );
+      for (const importResult of globalImportResults) {
+        if (importResult.createdPageIds) {
+          for (const pageId of importResult.createdPageIds) {
+            // Only add if not already in pagesToDelete
+            if (!pagesToDelete.some((p) => p.id === pageId)) {
+              try {
+                const additionalPage = (await figma.getNodeByIdAsync(
+                  pageId,
+                )) as PageNode | null;
+                if (additionalPage && additionalPage.type === "PAGE") {
+                  pagesToDelete.push({
+                    id: additionalPage.id,
+                    name: additionalPage.name,
+                  });
+                  debugConsole.log(
+                    `  Added additional page from global importResult.createdPageIds: "${additionalPage.name}"`,
+                  );
+                }
+              } catch (error) {
+                debugConsole.warning(
+                  `  Could not get page ${pageId.substring(0, 8)}...: ${error}`,
+                );
+              }
+            }
+          }
+        }
+      }
+    } else if (hasCreatedEntitiesPages) {
+      // Legacy: extract pageIds from per-page createdEntities
+      for (const page of allPages) {
+        if (page.type !== "PAGE") {
+          continue;
+        }
+        const createdEntitiesStr = page.getPluginData(CREATED_ENTITIES_KEY);
         if (createdEntitiesStr) {
           try {
             const createdEntities = JSON.parse(createdEntitiesStr) as {
               pageIds?: string[];
-              collectionIds?: string[];
-              variableIds?: string[];
             };
-
-            // Also include pageIds from createdEntities (in case there are multiple pages)
             if (createdEntities.pageIds) {
               for (const pageId of createdEntities.pageIds) {
-                // Only add if not already in pagesToDelete
                 if (!pagesToDelete.some((p) => p.id === pageId)) {
-                  const additionalPage = (await figma.getNodeByIdAsync(
-                    pageId,
-                  )) as PageNode | null;
-                  if (additionalPage && additionalPage.type === "PAGE") {
-                    pagesToDelete.push({
-                      id: additionalPage.id,
-                      name: additionalPage.name,
-                    });
-                    debugConsole.log(
-                      `  Added additional page from createdEntities.pageIds: "${additionalPage.name}"`,
-                    );
-
-                    // Also extract created entities from this additional page
-                    const additionalPageCreatedEntitiesStr =
-                      additionalPage.getPluginData(CREATED_ENTITIES_KEY);
-                    if (additionalPageCreatedEntitiesStr) {
-                      try {
-                        const additionalPageCreatedEntities = JSON.parse(
-                          additionalPageCreatedEntitiesStr,
-                        ) as {
-                          collectionIds?: string[];
-                          variableIds?: string[];
-                        };
-                        if (additionalPageCreatedEntities.collectionIds) {
-                          for (const collectionId of additionalPageCreatedEntities.collectionIds) {
-                            allCollectionIds.add(collectionId);
-                          }
-                          debugConsole.log(
-                            `  Extracted ${additionalPageCreatedEntities.collectionIds.length} collection ID(s) from additional page "${additionalPage.name}"`,
-                          );
-                        }
-                        if (additionalPageCreatedEntities.variableIds) {
-                          for (const variableId of additionalPageCreatedEntities.variableIds) {
-                            allVariableIds.add(variableId);
-                          }
-                          debugConsole.log(
-                            `  Extracted ${additionalPageCreatedEntities.variableIds.length} variable ID(s) from additional page "${additionalPage.name}"`,
-                          );
-                        }
-                      } catch (error) {
-                        debugConsole.warning(
-                          `  Failed to parse created entities from additional page "${additionalPage.name}": ${error}`,
-                        );
-                      }
+                  try {
+                    const additionalPage = (await figma.getNodeByIdAsync(
+                      pageId,
+                    )) as PageNode | null;
+                    if (additionalPage && additionalPage.type === "PAGE") {
+                      pagesToDelete.push({
+                        id: additionalPage.id,
+                        name: additionalPage.name,
+                      });
+                      debugConsole.log(
+                        `  Added additional page from legacy createdEntities.pageIds: "${additionalPage.name}"`,
+                      );
                     }
+                  } catch (error) {
+                    debugConsole.warning(
+                      `  Could not get page ${pageId.substring(0, 8)}...: ${error}`,
+                    );
                   }
                 }
               }
             }
-
-            if (createdEntities.collectionIds) {
-              for (const collectionId of createdEntities.collectionIds) {
-                allCollectionIds.add(collectionId);
-              }
-              debugConsole.log(
-                `  Extracted ${createdEntities.collectionIds.length} collection ID(s) from page "${page.name}": ${createdEntities.collectionIds.map((id) => id.substring(0, 8) + "...").join(", ")}`,
-              );
-            } else {
-              debugConsole.log(
-                `  No collectionIds found in createdEntities for page "${page.name}"`,
-              );
-            }
-            if (createdEntities.variableIds) {
-              for (const variableId of createdEntities.variableIds) {
-                allVariableIds.add(variableId);
-              }
-              debugConsole.log(
-                `  Extracted ${createdEntities.variableIds.length} variable ID(s) from page "${page.name}": ${createdEntities.variableIds.map((id) => id.substring(0, 8) + "...").join(", ")}`,
-              );
-            } else {
-              debugConsole.log(
-                `  No variableIds found in createdEntities for page "${page.name}"`,
-              );
-            }
           } catch (error) {
             debugConsole.warning(
-              `  Failed to parse created entities from page "${page.name}": ${error}`,
-            );
-            debugConsole.warning(
-              `  Created entities string: ${createdEntitiesStr.substring(0, 200)}...`,
+              `  Failed to parse legacy createdEntities from page "${page.name}": ${error}`,
             );
           }
-        } else {
-          debugConsole.log(
-            `  No created entities data found on page "${page.name}"`,
-          );
         }
       }
     }
@@ -1478,7 +1608,7 @@ export async function cleanupFailedImport(
       }
     }
 
-    // Delete all pages with UNDER_REVIEW_KEY
+    // Delete all pages identified by importResult or PAGE_METADATA_KEY
     let deletedPagesCount = 0;
     for (const pageInfo of pagesToDelete) {
       try {
@@ -1565,6 +1695,12 @@ export async function cleanupFailedImport(
       }
     }
 
+    // Clear global importResult after cleanup
+    if (hasGlobalImportResult) {
+      figma.root.setPluginData(IMPORT_RESULT_KEY, "");
+      debugConsole.log("Cleared global importResult after cleanup");
+    }
+
     debugConsole.log("=== Failed Import Cleanup Complete ===");
 
     const responseData: CleanupFailedImportResponseData = {
@@ -1617,35 +1753,9 @@ export async function clearImportMetadata(
     // Clear primary import metadata
     mainPage.setPluginData(PRIMARY_IMPORT_KEY, "");
 
-    // Clear "under review" metadata
-    mainPage.setPluginData(UNDER_REVIEW_KEY, "");
-
-    // Also clear "under review" from any other pages that might have it
-    // (in case dependencies were also marked)
-    const allPages = figma.root.children;
-    for (const page of allPages) {
-      if (page.type === "PAGE") {
-        const underReview = page.getPluginData(UNDER_REVIEW_KEY);
-        if (underReview === "true") {
-          // Check if this page is related to the same import by checking for the same component GUID
-          const primaryData = page.getPluginData(PRIMARY_IMPORT_KEY);
-          if (primaryData) {
-            try {
-              // Parse to validate, but we'll clear it regardless
-              JSON.parse(primaryData);
-              // Clear the under review status
-              page.setPluginData(UNDER_REVIEW_KEY, "");
-            } catch {
-              // Invalid metadata, clear it anyway
-              page.setPluginData(UNDER_REVIEW_KEY, "");
-            }
-          } else {
-            // No primary metadata but marked as under review - clear it
-            page.setPluginData(UNDER_REVIEW_KEY, "");
-          }
-        }
-      }
-    }
+    // Clear global importResult (this signals import is complete)
+    figma.root.setPluginData(IMPORT_RESULT_KEY, "");
+    debugConsole.log("Cleared global importResult after clearing metadata");
 
     debugConsole.log("Cleared import metadata from page and related pages");
 

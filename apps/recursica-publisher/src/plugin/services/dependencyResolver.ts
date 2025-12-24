@@ -5,6 +5,8 @@ import {
   importPage,
   resolveDeferredNormalInstances,
   loadAndExpandJson,
+  type PageImportResult,
+  sanitizeImportResult,
 } from "./pageImportNew";
 import type { ResponseMessage } from "../types/messages";
 import {
@@ -387,6 +389,7 @@ export async function importPagesInOrder(
     variableIds: [] as string[],
   };
   const importedPages: Array<{ name: string; pageId: string }> = [];
+  const allImportResults: PageImportResult[] = []; // Collect all importResult objects
 
   // Add pre-created collections to the created entities list
   if (preCreatedCollections.size > 0) {
@@ -441,26 +444,29 @@ export async function importPagesInOrder(
             `  [DEBUG] No deferred instances in response for ${page.fileName}`,
           );
         }
-        // Collect created entity IDs
-        if (result.data?.createdEntities) {
-          const entities = result.data.createdEntities as {
-            pageIds?: string[];
-            collectionIds?: string[];
-            variableIds?: string[];
-          };
-          if (entities.pageIds) {
-            allCreatedEntityIds.pageIds.push(...entities.pageIds);
+        // Collect importResult from each page import
+        if (result.data?.importResult) {
+          const importResult = result.data.importResult as PageImportResult;
+          allImportResults.push(importResult);
+
+          // Also collect IDs for aggregation (used for backward compatibility in response)
+          if (importResult.createdPageIds) {
+            allCreatedEntityIds.pageIds.push(...importResult.createdPageIds);
           }
-          if (entities.collectionIds) {
-            allCreatedEntityIds.collectionIds.push(...entities.collectionIds);
+          if (importResult.createdCollectionIds) {
+            allCreatedEntityIds.collectionIds.push(
+              ...importResult.createdCollectionIds,
+            );
           }
-          if (entities.variableIds) {
-            allCreatedEntityIds.variableIds.push(...entities.variableIds);
+          if (importResult.createdVariableIds) {
+            allCreatedEntityIds.variableIds.push(
+              ...importResult.createdVariableIds,
+            );
           }
           // Track imported page
-          // Check both createdEntities.pageIds (for new pages) and pageId (for reused existing pages)
+          // Check both importResult.createdPageIds (for new pages) and pageId (for reused existing pages)
           const pageId =
-            entities.pageIds?.[0] || (result.data?.pageId as string);
+            importResult.createdPageIds?.[0] || (result.data?.pageId as string);
           if (result.data?.pageName && pageId) {
             importedPages.push({
               name: result.data.pageName as string,
@@ -651,14 +657,11 @@ export async function importPagesInOrder(
     }
   }
 
-  // Deduplicate collection IDs (in case pre-created collections were also added by individual imports)
-  const uniqueCollectionIds = Array.from(
-    new Set(allCreatedEntityIds.collectionIds),
-  );
-  const uniqueVariableIds = Array.from(
-    new Set(allCreatedEntityIds.variableIds),
-  );
-  const uniquePageIds = Array.from(new Set(allCreatedEntityIds.pageIds));
+  // Note: IDs are collected for logging/debugging purposes
+  // They're stored in global importResult for cleanup operations
+
+  // Get unique collection IDs for logging
+  const uniqueCollectionIds = [...new Set(allCreatedEntityIds.collectionIds)];
 
   debugConsole.log("=== Import Summary ===");
   debugConsole.log(
@@ -690,6 +693,23 @@ export async function importPagesInOrder(
     ? `Successfully imported ${imported} page(s)${allDeferredInstances.length > 0 ? ` (${allDeferredInstances.length} deferred instance(s) resolved)` : ""}`
     : `Import completed with ${failed} failure(s). ${allErrors.join("; ")}`;
 
+  // Store all importResult objects globally on figma.root
+  // Since only one import can happen at a time, we can use a single global key
+  // Sanitize importResults to remove logs and other large fields before storing
+  const IMPORT_RESULT_KEY = "RecursicaImportResult";
+  if (allImportResults.length > 0) {
+    const sanitizedResults = allImportResults.map((ir) =>
+      sanitizeImportResult(ir),
+    );
+    figma.root.setPluginData(
+      IMPORT_RESULT_KEY,
+      JSON.stringify(sanitizedResults),
+    );
+    debugConsole.log(
+      `Stored ${sanitizedResults.length} sanitized importResult object(s) globally for cleanup/delete operations`,
+    );
+  }
+
   return {
     type: "importPagesInOrder",
     success,
@@ -701,11 +721,6 @@ export async function importPagesInOrder(
       deferred: allDeferredInstances.length,
       errors: allErrors,
       importedPages,
-      createdEntities: {
-        pageIds: uniquePageIds,
-        collectionIds: uniqueCollectionIds,
-        variableIds: uniqueVariableIds,
-      },
     },
   };
 }

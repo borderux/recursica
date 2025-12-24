@@ -17,7 +17,7 @@ import { InstanceTable } from "./parsers/instanceTable";
 import { StyleTable } from "./parsers/styleTable";
 import { StringTable } from "./parsers/stringTable";
 import { requestGuidFromUI } from "../utils/requestGuidFromUI";
-import { debugConsole } from "./debugConsole";
+import { debugConsole, type DebugConsoleMessage } from "./debugConsole";
 import { checkCancellation } from "../utils/cancellation";
 import { expandJsonData } from "../utils/jsonCompression";
 import { pluginPrompt } from "../utils/pluginPrompt";
@@ -43,6 +43,7 @@ export interface ImportPageData {
   skipUniqueNaming?: boolean; // If true, skip adding _<number> suffix to page names. Used for wizard imports.
   constructionIcon?: string; // If provided, prepend this icon to page name. Used for wizard imports.
   preCreatedCollections?: Map<string, VariableCollection>; // Pre-created collections by normalized name (e.g., "Tokens", "Theme", "Layer")
+  branch?: string; // Branch name if available (optional since imports can come from local files)
 }
 
 export interface DeferredNormalInstance {
@@ -58,11 +59,42 @@ export interface ImportPageResponseData {
   pageName: string;
   deferredInstances?: DeferredNormalInstance[]; // Normal instances that couldn't be resolved yet
   totalNodes: number;
-  createdEntities?: {
-    pageIds: string[];
-    collectionIds: string[];
-    variableIds: string[];
-  };
+}
+
+export interface PageImportResult {
+  componentGuid: string; // GUID from metadata
+  componentPage: string; // Page name from metadata
+  branch?: string; // Branch name if available
+  importedAt: string; // ISO timestamp of when import occurred
+  error?: string; // Error message if import failed
+  logs: DebugConsoleMessage[]; // All logs from DebugConsole
+  createdPageIds: string[]; // IDs of pages created during import
+  createdCollectionIds: string[]; // IDs of collections created (only newly created)
+  createdVariableIds: string[]; // IDs of variables created (only newly created)
+  createdStyleIds: string[]; // IDs of styles created (only newly created)
+  dependentComponents: Array<{
+    guid: string;
+    version: number | undefined;
+    pageId: string;
+  }>; // Dependent components (remote instances) with their versions and page IDs
+}
+
+/**
+ * Sanitized version of PageImportResult for storage in plugin metadata
+ * Excludes logs and other large fields to stay within plugin metadata size limits
+ */
+export type SanitizedPageImportResult = Omit<PageImportResult, "logs">;
+
+/**
+ * Creates a sanitized version of PageImportResult suitable for storage in plugin metadata
+ * Removes logs and other large fields that could exceed size limits
+ */
+export function sanitizeImportResult(
+  importResult: PageImportResult,
+): SanitizedPageImportResult {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { logs, ...sanitized } = importResult;
+  return sanitized;
 }
 
 /**
@@ -936,8 +968,12 @@ function checkForStyleReferences(nodeData: any): boolean {
 async function importStyles(
   stylesData: Record<string, any>,
   recognizedVariables: Map<string, Variable>,
-): Promise<Map<number, BaseStyle>> {
+): Promise<{
+  styleMapping: Map<number, BaseStyle>;
+  newlyCreatedStyles: BaseStyle[];
+}> {
   const styleMapping = new Map<number, BaseStyle>();
+  const newlyCreatedStyles: BaseStyle[] = [];
   debugConsole.log(`Importing ${Object.keys(stylesData).length} styles...`);
 
   const sortedEntries = Object.entries(stylesData).sort(
@@ -1009,6 +1045,7 @@ async function importStyles(
       }
       if (newStyle) {
         styleMapping.set(index, newStyle);
+        newlyCreatedStyles.push(newStyle);
         debugConsole.log(
           `  ✓ Created style "${styleName}" (type: ${styleType})`,
         );
@@ -1019,7 +1056,7 @@ async function importStyles(
       );
     }
   }
-  return styleMapping;
+  return { styleMapping, newlyCreatedStyles };
 }
 
 /**
@@ -5692,7 +5729,14 @@ async function createRemoteInstances(
   recognizedCollections: Map<string, VariableCollection>,
   constructionIcon: string = "", // If provided, prepend this icon to REMOTES page name. Used for wizard imports.
   styleMapping: Map<number, BaseStyle> | null = null, // Map of old style table index -> new style instance
-): Promise<Map<number, ComponentNode>> {
+): Promise<{
+  remoteComponentMap: Map<number, ComponentNode>;
+  dependentComponents: Array<{
+    guid: string;
+    version: number | undefined;
+    pageId: string;
+  }>;
+}> {
   const allInstances = instanceTable.getSerializedTable();
   const remoteInstances = Object.values(allInstances).filter(
     (entry: any) => entry.instanceType === "remote",
@@ -5700,10 +5744,15 @@ async function createRemoteInstances(
 
   // Map of instance table index -> created component node
   const remoteComponentMap = new Map<number, ComponentNode>();
+  const dependentComponents: Array<{
+    guid: string;
+    version: number | undefined;
+    pageId: string;
+  }> = [];
 
   if (remoteInstances.length === 0) {
     debugConsole.log("No remote instances found");
-    return remoteComponentMap;
+    return { remoteComponentMap, dependentComponents };
   }
 
   debugConsole.log(
@@ -5735,7 +5784,7 @@ async function createRemoteInstances(
   // Mark REMOTES page as "under review" if remote instances are being created
   // (This indicates it's being used as part of a wizard import)
   if (remoteInstances.length > 0) {
-    remotesPage.setPluginData("RecursicaUnderReview", "true");
+    // REMOTES page is identified by importResult.createdPageIds if it was created, no need for UNDER_REVIEW_KEY
     debugConsole.log("Marked REMOTES page as under review");
   }
 
@@ -6258,6 +6307,18 @@ async function createRemoteInstances(
         }
 
         remoteComponentMap.set(instanceIndex, componentNode);
+
+        // Collect dependent component information
+        const componentGuid = entry.componentGuid || "";
+        const componentVersion = entry.componentVersion;
+        if (componentGuid) {
+          dependentComponents.push({
+            guid: componentGuid,
+            version: componentVersion,
+            pageId: remotesPage.id,
+          });
+        }
+
         debugConsole.log(
           `✓ Created remote component: "${uniqueComponentName}" (index ${instanceIndex})`,
         );
@@ -6278,7 +6339,7 @@ async function createRemoteInstances(
     `Remote instance processing complete: ${remoteComponentMap.size} component(s) created`,
   );
 
-  return remoteComponentMap;
+  return { remoteComponentMap, dependentComponents };
 }
 
 /**
@@ -6563,6 +6624,9 @@ export async function importPage(
   data: ImportPageData,
   requestId?: string, // Optional request ID for cancellation support
 ): Promise<ResponseMessage> {
+  // Capture import timestamp at the start
+  const importedAt = new Date().toISOString();
+
   // Check for cancellation at the start
   checkCancellation(requestId);
   // Only clear console if explicitly requested (default: true for single page imports)
@@ -6573,6 +6637,13 @@ export async function importPage(
   debugConsole.log("=== Starting Page Import ===");
 
   const newlyCreatedCollections: VariableCollection[] = [];
+  let newlyCreatedVariables: Variable[] = [];
+  let newlyCreatedStyles: BaseStyle[] = [];
+  let dependentComponents: Array<{
+    guid: string;
+    version: number | undefined;
+    pageId: string;
+  }> = [];
 
   try {
     const jsonData = data.jsonData;
@@ -6718,13 +6789,14 @@ export async function importPage(
 
     checkCancellation(requestId);
     // Stage 9: Match and create variables
-    const { recognizedVariables, newlyCreatedVariables } =
-      await matchAndCreateVariables(
-        variableTable,
-        collectionTable,
-        recognizedCollections,
-        newlyCreatedCollections,
-      );
+    const matchVariablesResult = await matchAndCreateVariables(
+      variableTable,
+      collectionTable,
+      recognizedCollections,
+      newlyCreatedCollections,
+    );
+    const recognizedVariables = matchVariablesResult.recognizedVariables;
+    newlyCreatedVariables = matchVariablesResult.newlyCreatedVariables;
 
     // Stage 9.5: Import styles (after variables so styles can bind to variables)
     debugConsole.log("Checking for styles table...");
@@ -6760,10 +6832,12 @@ export async function importPage(
       debugConsole.log(
         `Loaded styles table with ${styleTable.getSize()} style(s)`,
       );
-      styleMapping = await importStyles(
+      const stylesResult = await importStyles(
         styleTable.getTable(),
         recognizedVariables,
       );
+      styleMapping = stylesResult.styleMapping;
+      newlyCreatedStyles = stylesResult.newlyCreatedStyles;
       debugConsole.log(
         `Imported ${styleMapping.size} style(s) (some may have been skipped if they already exist)`,
       );
@@ -6802,7 +6876,7 @@ export async function importPage(
     // Stage 10.5: Create remote instances on REMOTES page
     let remoteComponentMap: Map<number, ComponentNode> | null = null;
     if (instanceTable) {
-      remoteComponentMap = await createRemoteInstances(
+      const remoteInstancesResult = await createRemoteInstances(
         instanceTable,
         variableTable,
         collectionTable,
@@ -6811,6 +6885,8 @@ export async function importPage(
         constructionIcon,
         styleMapping, // Pass styleMapping to apply styles
       );
+      remoteComponentMap = remoteInstancesResult.remoteComponentMap;
+      dependentComponents = remoteInstancesResult.dependentComponents;
     }
     const pageResult = await createPageAndRecreateStructure(
       metadata,
@@ -6867,16 +6943,27 @@ export async function importPage(
 
     // Include debug logs in response
     const debugLogs = debugConsole.getLogs();
+
+    // Build comprehensive import result
+    const importResult: PageImportResult = {
+      componentGuid: metadata.guid,
+      componentPage: metadata.name,
+      branch: data.branch,
+      importedAt,
+      logs: debugLogs,
+      createdPageIds: [newPage.id],
+      createdCollectionIds: newlyCreatedCollections.map((c) => c.id),
+      createdVariableIds: newlyCreatedVariables.map((v) => v.id),
+      createdStyleIds: newlyCreatedStyles.map((s) => s.id),
+      dependentComponents,
+    };
+
     const responseData = {
       pageName: newPage.name,
       pageId: pageId, // Include pageId for tracking (used for both new and reused pages)
       deferredInstances:
         deferredCount > 0 ? deferredInstancesFromResult : undefined,
-      createdEntities: {
-        pageIds: [newPage.id],
-        collectionIds: newlyCreatedCollections.map((c) => c.id),
-        variableIds: newlyCreatedVariables.map((v) => v.id),
-      },
+      importResult,
       ...(debugLogs.length > 0 && { debugLogs }),
     };
 
@@ -6897,12 +6984,45 @@ export async function importPage(
     console.error("Error importing page:", error);
     // Include debug logs in error response
     const debugLogs = debugConsole.getLogs();
+
+    // Build partial import result for error case
+    // Try to get metadata if it was validated before the error occurred
+    let componentGuid = "";
+    let componentPage = "";
+    try {
+      const jsonData = data.jsonData;
+      if (jsonData) {
+        const metadataResult = validateMetadata(jsonData);
+        if (metadataResult.success && metadataResult.metadata) {
+          componentGuid = metadataResult.metadata.guid;
+          componentPage = metadataResult.metadata.name;
+        }
+      }
+    } catch {
+      // Metadata validation failed, use empty strings
+    }
+
+    const importResult: PageImportResult = {
+      componentGuid,
+      componentPage,
+      branch: data.branch,
+      importedAt,
+      error: errorMessage,
+      logs: debugLogs,
+      createdPageIds: [],
+      createdCollectionIds: newlyCreatedCollections.map((c) => c.id),
+      createdVariableIds: newlyCreatedVariables.map((v) => v.id),
+      createdStyleIds: newlyCreatedStyles.map((s) => s.id),
+      dependentComponents,
+    };
+
     return {
       type: "importPage",
       success: false,
       error: true,
       message: errorMessage,
       data: {
+        importResult,
         ...(debugLogs.length > 0 && { debugLogs }),
       },
     };

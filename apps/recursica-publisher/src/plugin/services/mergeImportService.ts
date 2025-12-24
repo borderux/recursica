@@ -4,7 +4,6 @@ import { retSuccess, retError } from "../utils/response";
 import { debugConsole } from "./debugConsole";
 import {
   PRIMARY_IMPORT_KEY,
-  UNDER_REVIEW_KEY,
   DIVIDER_PLUGIN_DATA_KEY,
   CONSTRUCTION_ICON,
 } from "./singleComponentImportService";
@@ -436,10 +435,31 @@ export async function mergeImportGroup(
     for (const page of pagesAfterDividerRemoval) {
       if (page.type !== "PAGE") continue;
       try {
-        const underReview = page.getPluginData(UNDER_REVIEW_KEY);
-        if (underReview === "true") {
+        // Check if page has metadata (indicates it's part of an import)
+        // OR check if it's in global importResult
+        const pageMetadataJson = page.getPluginData(PAGE_METADATA_KEY);
+        const hasMetadata = !!pageMetadataJson;
+
+        // Also check global importResult
+        const globalImportResultStr = figma.root.getPluginData(
+          "RecursicaImportResult",
+        );
+        let isInImportResult = false;
+        if (globalImportResultStr) {
+          try {
+            const importResults = JSON.parse(globalImportResultStr) as Array<{
+              createdPageIds?: string[];
+            }>;
+            isInImportResult = importResults.some((ir) =>
+              ir.createdPageIds?.includes(page.id),
+            );
+          } catch {
+            // Failed to parse, continue
+          }
+        }
+
+        if (hasMetadata || isInImportResult) {
           // Try to get page metadata to find component name and version
-          const pageMetadataJson = page.getPluginData(PAGE_METADATA_KEY);
           let pageMetadata: { id?: string; name?: string; version?: number } =
             {};
           if (pageMetadataJson) {
@@ -533,12 +553,9 @@ export async function mergeImportGroup(
     }
     for (const pageInfo of importPagesInfo) {
       try {
-        const page = (await figma.getNodeByIdAsync(
-          pageInfo.pageId,
-        )) as PageNode | null;
-        if (page && page.type === "PAGE") {
-          page.setPluginData(UNDER_REVIEW_KEY, "");
-        }
+        // No need to clear UNDER_REVIEW_KEY - we use importResult now
+        // Pages are identified by importResult.createdPageIds
+        // Page node retrieval not needed for cleanup
       } catch (err) {
         debugConsole.warning(
           `Failed to clear under review metadata for page ${pageInfo.pageId}: ${err instanceof Error ? err.message : String(err)}`,
