@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import PageLayout from "../components/PageLayout";
 import { useImportData } from "../context/ImportDataContext";
 import { useAuth } from "../context/useAuth";
@@ -21,14 +21,44 @@ export default function Home() {
     });
   }, [importData]);
 
-  // Check if import is in progress or failed (should show "Already importing" screen)
-  // Completed imports should have their data cleared, not shown as "importing"
+  // Check if import is in progress or failed (should show importing screen)
   const isImporting =
     importData &&
     importData.mainFile &&
     importData.mainFile.status === "success" &&
     (importData.importStatus === "in_progress" ||
       importData.importStatus === "failed");
+
+  // Check for existing import in Figma (highest precedence - shows Review Import)
+  const [hasExistingImport, setHasExistingImport] = useState(false);
+  const [checkingExisting, setCheckingExisting] = useState(true);
+
+  useEffect(() => {
+    const checkForExisting = async () => {
+      try {
+        const { promise } = callPlugin("checkForExistingPrimaryImport", {});
+        const response = await promise;
+
+        if (response.success && response.data) {
+          const data = response.data as {
+            exists: boolean;
+            pageId?: string;
+            metadata?: unknown;
+          };
+          setHasExistingImport(data.exists || false);
+        } else {
+          setHasExistingImport(false);
+        }
+      } catch (err) {
+        console.error("[Home] Error checking for existing import:", err);
+        setHasExistingImport(false);
+      } finally {
+        setCheckingExisting(false);
+      }
+    };
+
+    checkForExisting();
+  }, []);
 
   // Debug: Log isImporting state
   useEffect(() => {
@@ -41,27 +71,39 @@ export default function Home() {
     });
   }, [isImporting, importData]);
 
-  // Auto-navigate if already importing or failed (check immediately on mount and when importData changes)
-  // Also clear completed imports
+  // Auto-navigate logic - highest precedence: existing import (Review Import)
   useEffect(() => {
-    // If import is completed, clear it
-    if (importData?.importStatus === "completed") {
-      console.log("[Home] Import completed, clearing import data");
-      setImportData(null);
+    if (checkingExisting) return;
+
+    // Highest precedence: If there's an existing import, show Review Import
+    if (hasExistingImport) {
+      console.log("[Home] Found existing import, navigating to Review Import");
+      navigate("/import-wizard/existing", { replace: true });
       return;
     }
 
-    console.log("[Home] Auto-navigate effect running:", {
-      isImporting,
-      willNavigate: isImporting,
-    });
+    // Second precedence: If import is in progress or failed, show importing screen
     if (isImporting) {
       console.log(
         "[Home] Navigating to /importing (auto-navigate - already importing or failed)",
       );
       navigate("/importing", { replace: true });
+      return;
     }
-  }, [isImporting, navigate, importData, setImportData]);
+
+    // If import is completed, clear it
+    if (importData?.importStatus === "completed") {
+      console.log("[Home] Import completed, clearing import data");
+      setImportData(null);
+    }
+  }, [
+    hasExistingImport,
+    checkingExisting,
+    isImporting,
+    navigate,
+    importData,
+    setImportData,
+  ]);
 
   const handleImportClick = async () => {
     console.log("[Home] Import button clicked");

@@ -33,12 +33,12 @@ import {
   clearImportMetadata,
   cleanupFailedImport,
 } from "./singleComponentImportService";
-import { summarizeVariablesForWizard } from "./summarizeVariablesForWizard";
 import {
   getLocalVariableCollections,
   getCollectionGuids,
   mergeImportGroup,
 } from "./mergeImportService";
+import { getImportSummary } from "./getImportSummary";
 import { runTest } from "./runTest";
 
 // Services map - all service functions indexed by their names
@@ -72,10 +72,10 @@ export const services = {
   deleteImportGroup,
   clearImportMetadata,
   cleanupFailedImport,
-  summarizeVariablesForWizard,
   getLocalVariableCollections,
   getCollectionGuids,
   mergeImportGroup,
+  getImportSummary,
   runTest,
 } as const;
 
@@ -109,10 +109,10 @@ export {
   deleteImportGroup,
   clearImportMetadata,
   cleanupFailedImport,
-  summarizeVariablesForWizard,
   getLocalVariableCollections,
   getCollectionGuids,
   mergeImportGroup,
+  getImportSummary,
   runTest,
 };
 

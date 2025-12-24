@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import PageLayout from "../components/PageLayout";
+import { useAuth } from "../context/useAuth";
 
 const RECURSICA_FIGMA_OWNER = "borderux";
 const RECURSICA_FIGMA_REPO = "recursica-figma";
@@ -28,6 +29,7 @@ interface IndexJson {
 export default function ImportMain() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { accessToken } = useAuth();
   const [components, setComponents] = useState<ComponentInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,13 +43,15 @@ export default function ImportMain() {
         // Get branch/commit ref from search params, default to "main"
         const ref = searchParams.get("ref") || "main";
 
-        // Fetch index.json from public repository (no auth required for public repos)
+        // Fetch index.json from public repository
         const url = `https://api.github.com/repos/${RECURSICA_FIGMA_OWNER}/${RECURSICA_FIGMA_REPO}/contents/index.json?ref=${encodeURIComponent(ref)}`;
-        const response = await fetch(url, {
-          headers: {
-            Accept: "application/vnd.github.v3+json",
-          },
-        });
+        const headers: Record<string, string> = {
+          Accept: "application/vnd.github.v3+json",
+        };
+        if (accessToken) {
+          headers.Authorization = `Bearer ${accessToken}`;
+        }
+        const response = await fetch(url, { headers });
 
         if (!response.ok) {
           if (response.status === 404) {
@@ -129,7 +133,7 @@ export default function ImportMain() {
     };
 
     loadComponents();
-  }, [searchParams]);
+  }, [searchParams, accessToken]);
 
   return (
     <PageLayout showBackButton={true}>

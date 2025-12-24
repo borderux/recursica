@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { callPlugin } from "../../utils/callPlugin";
 import type { PrimaryImportMetadata } from "../../plugin/services/singleComponentImportService";
+import type { ImportSummaryData } from "../../plugin/services/getImportSummary";
 
 export default function ExistingImport() {
   const navigate = useNavigate();
@@ -9,6 +10,22 @@ export default function ExistingImport() {
   const [error, setError] = useState<string | null>(null);
   const [metadata, setMetadata] = useState<PrimaryImportMetadata | null>(null);
   const [pageId, setPageId] = useState<string | null>(null);
+  const [importSummary, setImportSummary] = useState<ImportSummaryData | null>(
+    null,
+  );
+
+  const fetchImportSummary = useCallback(async () => {
+    try {
+      const { promise } = callPlugin("getImportSummary", {});
+      const result = await promise;
+      if (result.success && result.data) {
+        const data = result.data as { summary: ImportSummaryData };
+        setImportSummary(data.summary);
+      }
+    } catch (err) {
+      console.error("[ExistingImport] Failed to fetch import summary:", err);
+    }
+  }, []);
 
   useEffect(() => {
     const loadExistingImport = async () => {
@@ -26,6 +43,8 @@ export default function ExistingImport() {
           if (data.exists && data.metadata && data.pageId) {
             setMetadata(data.metadata);
             setPageId(data.pageId);
+            // Fetch import summary
+            fetchImportSummary();
           } else {
             // No existing import, go to step 1
             navigate("/import-wizard/step1");
@@ -40,7 +59,7 @@ export default function ExistingImport() {
     };
 
     loadExistingImport();
-  }, [navigate]);
+  }, [navigate, fetchImportSummary]);
 
   const [clearingMetadata, setClearingMetadata] = useState(false);
 
@@ -154,7 +173,7 @@ export default function ExistingImport() {
             marginTop: "0",
           }}
         >
-          Already Importing
+          Review Import
         </h1>
         <p style={{ fontSize: "14px", color: "#666", margin: 0 }}>
           Component: {metadata.componentName} (Version:{" "}
@@ -162,123 +181,200 @@ export default function ExistingImport() {
         </p>
       </div>
 
-      <div
-        style={{
-          padding: "16px",
-          border: "1px solid #e0e0e0",
-          borderRadius: "8px",
-          backgroundColor: "#f5f5f5",
-        }}
-      >
-        <h3
-          style={{
-            fontSize: "16px",
-            fontWeight: "bold",
-            marginBottom: "12px",
-          }}
-        >
-          Import Summary
-        </h3>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "8px",
-            fontSize: "14px",
-          }}
-        >
-          <div>
-            <strong>Dependencies:</strong>{" "}
-            {metadata.wizardSelections.dependencies.length} total
-            <br />
-            {
-              metadata.wizardSelections.dependencies.filter(
-                (d) => !d.useExisting,
-              ).length
-            }{" "}
-            imported
-            <br />
-            {
-              metadata.wizardSelections.dependencies.filter(
-                (d) => d.useExisting,
-              ).length
-            }{" "}
-            using existing
-          </div>
-          <div>
-            <strong>Tokens Collection:</strong>{" "}
-            {metadata.wizardSelections.tokensCollection === "new"
-              ? (() => {
-                  const normalizeName = (name: string) =>
-                    name.toLowerCase().replace(/s$/, "").replace(/_\d+$/, "");
-                  const createdCollection = metadata.createdCollections.find(
-                    (c) => {
-                      const normalized = normalizeName(c.collectionName);
-                      return normalized === "token" || normalized === "tokens";
-                    },
-                  );
-                  return createdCollection
-                    ? `Created new: "${createdCollection.collectionName}"`
-                    : "Created new";
-                })()
-              : "Used existing"}
-          </div>
-          <div>
-            <strong>Theme Collection:</strong>{" "}
-            {metadata.wizardSelections.themeCollection === "new"
-              ? (() => {
-                  const normalizeName = (name: string) =>
-                    name.toLowerCase().replace(/s$/, "").replace(/_\d+$/, "");
-                  const createdCollection = metadata.createdCollections.find(
-                    (c) => {
-                      const normalized = normalizeName(c.collectionName);
-                      return normalized === "theme" || normalized === "themes";
-                    },
-                  );
-                  return createdCollection
-                    ? `Created new: "${createdCollection.collectionName}"`
-                    : "Created new";
-                })()
-              : "Used existing"}
-          </div>
-          <div>
-            <strong>Layers Collection:</strong>{" "}
-            {metadata.wizardSelections.layersCollection === "new"
-              ? (() => {
-                  const normalizeName = (name: string) =>
-                    name.toLowerCase().replace(/s$/, "").replace(/_\d+$/, "");
-                  const createdCollection = metadata.createdCollections.find(
-                    (c) => {
-                      const normalized = normalizeName(c.collectionName);
-                      return normalized === "layer" || normalized === "layers";
-                    },
-                  );
-                  return createdCollection
-                    ? `Created new: "${createdCollection.collectionName}"`
-                    : "Created new";
-                })()
-              : "Used existing"}
-          </div>
-          <div>
-            <strong>Import Date:</strong>{" "}
-            {new Date(metadata.importDate).toLocaleString()}
-          </div>
-          {metadata.importError && (
-            <div
+      {/* Import Summary Table */}
+      {importSummary && (
+        <>
+          <p
+            style={{
+              fontSize: "14px",
+              lineHeight: "1.5",
+              color: "#333",
+              margin: "0",
+            }}
+          >
+            Please review all pages created as part of the import. If you
+            confirm they look good, Merge them into your file to proceed, or
+            press Cancel to stop this import.
+          </p>
+          <div
+            style={{
+              border: "1px solid #e0e0e0",
+              borderRadius: "8px",
+              overflow: "hidden",
+              marginTop: "0",
+            }}
+          >
+            <h2
               style={{
-                marginTop: "12px",
-                padding: "12px",
-                backgroundColor: "#ffebee",
-                border: "1px solid #f44336",
-                borderRadius: "4px",
-                color: "#c62828",
+                fontSize: "16px",
+                fontWeight: "600",
+                color: "#333",
+                margin: "0",
+                padding: "12px 16px",
+                backgroundColor: "#f5f5f5",
+                borderBottom: "1px solid #e0e0e0",
               }}
             >
-              <strong>Import Error:</strong> {metadata.importError}
-            </div>
-          )}
-        </div>
-      </div>
+              Import Summary
+            </h2>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+              }}
+            >
+              <thead>
+                <tr style={{ backgroundColor: "#f9f9f9" }}>
+                  <th
+                    style={{
+                      padding: "8px 12px",
+                      textAlign: "left",
+                      borderBottom: "1px solid #e0e0e0",
+                      fontSize: "13px",
+                      fontWeight: "600",
+                    }}
+                  >
+                    Category
+                  </th>
+                  <th
+                    style={{
+                      padding: "8px 12px",
+                      textAlign: "left",
+                      borderBottom: "1px solid #e0e0e0",
+                      fontSize: "13px",
+                      fontWeight: "600",
+                    }}
+                  >
+                    Details
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td
+                    style={{
+                      padding: "8px 12px",
+                      borderBottom: "1px solid #e0e0e0",
+                      fontSize: "13px",
+                      fontWeight: "500",
+                    }}
+                  >
+                    Pages Created
+                  </td>
+                  <td
+                    style={{
+                      padding: "8px 12px",
+                      borderBottom: "1px solid #e0e0e0",
+                      fontSize: "13px",
+                    }}
+                  >
+                    {importSummary.pagesCreated.length === 0 ? (
+                      <span style={{ color: "#666", fontStyle: "italic" }}>
+                        None
+                      </span>
+                    ) : (
+                      <ul
+                        style={{
+                          margin: "0",
+                          paddingLeft: "20px",
+                          listStyle: "disc",
+                        }}
+                      >
+                        {importSummary.pagesCreated.map((page) => (
+                          <li key={page.pageId} style={{ marginBottom: "2px" }}>
+                            {page.pageName}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </td>
+                </tr>
+                <tr>
+                  <td
+                    style={{
+                      padding: "12px",
+                      borderBottom: "1px solid #e0e0e0",
+                      fontSize: "13px",
+                      fontWeight: "500",
+                    }}
+                  >
+                    Pages Existing
+                  </td>
+                  <td
+                    style={{
+                      padding: "12px",
+                      borderBottom: "1px solid #e0e0e0",
+                      fontSize: "13px",
+                    }}
+                  >
+                    {importSummary.pagesExisting.length === 0 ? (
+                      <span style={{ color: "#666", fontStyle: "italic" }}>
+                        None
+                      </span>
+                    ) : (
+                      <ul
+                        style={{
+                          margin: "0",
+                          paddingLeft: "20px",
+                          listStyle: "disc",
+                        }}
+                      >
+                        {importSummary.pagesExisting.map((page) => (
+                          <li key={page.pageId} style={{ marginBottom: "2px" }}>
+                            {page.pageName} ({page.componentPage})
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </td>
+                </tr>
+                <tr>
+                  <td
+                    style={{
+                      padding: "12px",
+                      borderBottom: "1px solid #e0e0e0",
+                      fontSize: "13px",
+                      fontWeight: "500",
+                    }}
+                  >
+                    New Variables
+                  </td>
+                  <td
+                    style={{
+                      padding: "12px",
+                      borderBottom: "1px solid #e0e0e0",
+                      fontSize: "13px",
+                    }}
+                  >
+                    {importSummary.totalVariablesCreated}
+                  </td>
+                </tr>
+                <tr>
+                  <td
+                    style={{
+                      padding: "12px",
+                      borderBottom: "1px solid #e0e0e0",
+                      fontSize: "13px",
+                      fontWeight: "500",
+                    }}
+                  >
+                    New Styles
+                  </td>
+                  <td
+                    style={{
+                      padding: "12px",
+                      borderBottom: "1px solid #e0e0e0",
+                      fontSize: "13px",
+                    }}
+                  >
+                    {importSummary.totalStylesCreated}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
 
       {error && (
         <div
@@ -353,7 +449,7 @@ export default function ExistingImport() {
             }
           }}
         >
-          {loading ? "Deleting..." : "Delete"}
+          {loading ? "Cancelling..." : "Cancel"}
         </button>
         <button
           onClick={() => navigate("/import-wizard/merge/step1")}

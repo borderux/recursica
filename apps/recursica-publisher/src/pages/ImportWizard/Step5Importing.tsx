@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router";
 import DebugConsole from "../../components/DebugConsole";
 import { useImportWizard } from "../../context/ImportWizardContext";
 import { useImportData } from "../../context/ImportDataContext";
 import { callPlugin } from "../../utils/callPlugin";
 import type { DebugConsoleMessage } from "../../plugin/services/debugConsole";
+import type { ImportSummaryData } from "../../plugin/services/getImportSummary";
 
 export default function Step5Importing() {
   const navigate = useNavigate();
@@ -17,6 +18,29 @@ export default function Step5Importing() {
   const [importDebugLogs, setImportDebugLogs] = useState<
     DebugConsoleMessage[] | undefined
   >(undefined);
+  const [importSummary, setImportSummary] = useState<ImportSummaryData | null>(
+    null,
+  );
+  const [loadingSummary, setLoadingSummary] = useState(false);
+
+  const fetchImportSummary = useCallback(async () => {
+    setLoadingSummary((prev) => {
+      if (prev) return prev; // Already loading, don't start another request
+      return true;
+    });
+    try {
+      const { promise } = callPlugin("getImportSummary", {});
+      const result = await promise;
+      if (result.success && result.data) {
+        const data = result.data as { summary: ImportSummaryData };
+        setImportSummary(data.summary);
+      }
+    } catch (err) {
+      console.error("[Step5Importing] Failed to fetch import summary:", err);
+    } finally {
+      setLoadingSummary(false);
+    }
+  }, []);
 
   useEffect(() => {
     // Check if import is already in progress or failed
@@ -55,9 +79,12 @@ export default function Step5Importing() {
       }
     }
 
-    // If import is already completed, just show the result
+    // If import is already completed, fetch summary if not already loaded
     if (importData.importStatus === "completed") {
       setIsImporting(false);
+      if (!importSummary && !loadingSummary) {
+        fetchImportSummary();
+      }
       return;
     }
 
@@ -186,6 +213,8 @@ export default function Step5Importing() {
                   importError: undefined,
                 };
               });
+              // Fetch import summary after successful import
+              fetchImportSummary();
             }
             setIsImporting(false);
             setImportPromise(null);
@@ -265,13 +294,15 @@ export default function Step5Importing() {
     setImportData,
     setWizardState,
     wizardState.selectedComponent,
+    fetchImportSummary,
+    navigate,
+    importSummary,
+    loadingSummary,
   ]);
 
-  const handleIgnore = () => {
-    // Clear import data when user clicks Done/Ignore
-    setImportData(null);
-    resetWizard();
-    navigate("/");
+  const handleDone = () => {
+    // Navigate to Review Import page
+    navigate("/import-wizard/existing");
   };
 
   const handleCleanup = async () => {
@@ -329,7 +360,7 @@ export default function Step5Importing() {
       </h1>
 
       <DebugConsole
-        title={`Importing ${componentName}`}
+        title="Importing"
         isActive={isImporting}
         isComplete={
           importData?.importStatus === "completed" &&
@@ -352,7 +383,7 @@ export default function Step5Importing() {
         {importError ? (
           <>
             <button
-              onClick={handleIgnore}
+              onClick={handleDone}
               disabled={isCleaningUp}
               style={{
                 padding: "12px 24px",
@@ -375,7 +406,7 @@ export default function Step5Importing() {
                 }
               }}
             >
-              Ignore
+              Done
             </button>
             <button
               onClick={handleCleanup}
@@ -406,7 +437,7 @@ export default function Step5Importing() {
           </>
         ) : (
           <button
-            onClick={handleIgnore}
+            onClick={handleDone}
             style={{
               padding: "12px 24px",
               fontSize: "16px",

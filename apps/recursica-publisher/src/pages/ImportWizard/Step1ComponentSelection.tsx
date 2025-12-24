@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import { useImportWizard } from "../../context/ImportWizardContext";
+import { useAuth } from "../../context/useAuth";
 
 const RECURSICA_FIGMA_OWNER = "borderux";
 const RECURSICA_FIGMA_REPO = "recursica-figma";
@@ -28,27 +29,42 @@ interface IndexJson {
 export default function Step1ComponentSelection() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { setWizardState } = useImportWizard();
+  const { wizardState, setWizardState } = useImportWizard();
+  const { accessToken } = useAuth();
   const [components, setComponents] = useState<ComponentInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigatingAwayRef = useRef(false);
+
+  // Reset ref when component mounts (in case user navigated back)
+  useEffect(() => {
+    navigatingAwayRef.current = false;
+  }, []);
 
   useEffect(() => {
+    console.log("[Step1ComponentSelection] useEffect triggered");
     const loadComponents = async () => {
+      console.log("[Step1ComponentSelection] loadComponents called");
       try {
         setLoading(true);
         setError(null);
 
         // Get branch/commit ref from search params, default to "main"
         const ref = searchParams.get("ref") || "main";
+        console.log(
+          "[Step1ComponentSelection] Loading components for ref:",
+          ref,
+        );
 
         // Fetch index.json from public repository
         const url = `https://api.github.com/repos/${RECURSICA_FIGMA_OWNER}/${RECURSICA_FIGMA_REPO}/contents/index.json?ref=${encodeURIComponent(ref)}`;
-        const response = await fetch(url, {
-          headers: {
-            Accept: "application/vnd.github.v3+json",
-          },
-        });
+        const headers: Record<string, string> = {
+          Accept: "application/vnd.github.v3+json",
+        };
+        if (accessToken) {
+          headers.Authorization = `Bearer ${accessToken}`;
+        }
+        const response = await fetch(url, { headers });
 
         if (!response.ok) {
           if (response.status === 404) {
@@ -116,6 +132,10 @@ export default function Step1ComponentSelection() {
         // Sort components by name
         componentsList.sort((a, b) => a.name.localeCompare(b.name));
 
+        console.log(
+          "[Step1ComponentSelection] Setting components, count:",
+          componentsList.length,
+        );
         setComponents(componentsList);
       } catch (loadError) {
         const errorMessage =
@@ -128,12 +148,13 @@ export default function Step1ComponentSelection() {
           loadError,
         );
       } finally {
+        console.log("[Step1ComponentSelection] Setting loading to false");
         setLoading(false);
       }
     };
 
     loadComponents();
-  }, [searchParams]);
+  }, [searchParams, accessToken]);
 
   // Auto-select component if guid is provided in query params (from ImportMain)
   useEffect(() => {
@@ -144,7 +165,16 @@ export default function Step1ComponentSelection() {
       );
       if (preSelectedComponent) {
         // Auto-select and navigate to step 2
+        console.log(
+          "[Step1ComponentSelection] Auto-selecting component:",
+          preSelectedComponent.name,
+        );
+        navigatingAwayRef.current = true; // Set ref synchronously before any async operations
         const ref = searchParams.get("ref") || "main";
+        console.log(
+          "[Step1ComponentSelection] Setting wizard state, ref:",
+          ref,
+        );
         setWizardState((prev) => ({
           ...prev,
           selectedComponent: {
@@ -155,25 +185,88 @@ export default function Step1ComponentSelection() {
           },
           currentStep: 2,
         }));
+        console.log("[Step1ComponentSelection] Navigating to step2");
         navigate("/import-wizard/step2");
+        console.log("[Step1ComponentSelection] Navigate called");
       }
     }
   }, [components, searchParams, loading, setWizardState, navigate]);
 
   const handleComponentSelect = (component: ComponentInfo) => {
+    console.log(
+      "[Step1ComponentSelection] handleComponentSelect called:",
+      component.name,
+    );
+    navigatingAwayRef.current = true; // Set ref synchronously before any async operations
     const ref = searchParams.get("ref") || "main";
-    setWizardState((prev) => ({
-      ...prev,
-      selectedComponent: {
-        guid: component.guid,
-        name: component.name,
-        version: component.version,
-        ref,
-      },
-      currentStep: 2,
-    }));
+    console.log("[Step1ComponentSelection] Setting wizard state, ref:", ref);
+    setWizardState((prev) => {
+      console.log(
+        "[Step1ComponentSelection] setWizardState callback, prev:",
+        prev,
+      );
+      return {
+        ...prev,
+        selectedComponent: {
+          guid: component.guid,
+          name: component.name,
+          version: component.version,
+          ref,
+        },
+        currentStep: 2,
+      };
+    });
+    console.log("[Step1ComponentSelection] Navigating to step2");
     navigate("/import-wizard/step2");
+    console.log("[Step1ComponentSelection] Navigate called");
   };
+
+  // Check ref first (synchronous, set before navigate)
+  if (navigatingAwayRef.current) {
+    console.log(
+      "[Step1ComponentSelection] Render - hiding content, navigatingAwayRef is true",
+    );
+    return null;
+  }
+
+  console.log(
+    "[Step1ComponentSelection] Render - loading:",
+    loading,
+    "components.length:",
+    components.length,
+    "error:",
+    error,
+  );
+  console.log(
+    "[Step1ComponentSelection] Render - searchParams ref:",
+    searchParams.get("ref"),
+  );
+  console.log(
+    "[Step1ComponentSelection] Render - wizardState.selectedComponent:",
+    wizardState.selectedComponent,
+    "currentStep:",
+    wizardState.currentStep,
+  );
+
+  // Check if we're about to auto-select (guid in params)
+  // Hide content immediately if guid exists, even during loading, to prevent flash
+  const componentGuid = searchParams.get("guid");
+  if (componentGuid && !wizardState.selectedComponent) {
+    console.log(
+      "[Step1ComponentSelection] Render - hiding content, guid in params, about to auto-select",
+    );
+    navigatingAwayRef.current = true;
+    return null;
+  }
+
+  // If we've selected a component and are navigating to step2, don't render content
+  if (wizardState.selectedComponent && wizardState.currentStep === 2) {
+    console.log(
+      "[Step1ComponentSelection] Render - hiding content, navigating to step2",
+    );
+    navigatingAwayRef.current = true;
+    return null;
+  }
 
   return (
     <div
@@ -199,63 +292,76 @@ export default function Step1ComponentSelection() {
         Choose your component
       </h1>
 
-      {searchParams.get("ref") ? (
-        <div
-          style={{
-            width: "100%",
-            maxWidth: "600px",
-            marginBottom: "20px",
-            marginTop: "0",
-            padding: "12px",
-            fontSize: "14px",
-            fontFamily: "inherit",
-            border: "1px solid #000",
-            borderRadius: "4px",
-            boxSizing: "border-box",
-            backgroundColor: "#fff",
-            color: "#333",
-          }}
-        >
-          VIEWING BRANCH:{" "}
-          <a
-            href={`https://github.com/${RECURSICA_FIGMA_OWNER}/${RECURSICA_FIGMA_REPO}/tree/${encodeURIComponent(searchParams.get("ref") || "")}`}
-            target="_blank"
-            rel="noopener noreferrer"
+      {(() => {
+        const ref = searchParams.get("ref");
+        console.log(
+          "[Step1ComponentSelection] Render - checking ref, value:",
+          ref,
+        );
+        return ref ? (
+          <div
             style={{
-              color: "#1976d2",
-              textDecoration: "underline",
+              width: "100%",
+              maxWidth: "600px",
+              marginBottom: "20px",
+              marginTop: "0",
+              padding: "12px",
+              fontSize: "14px",
+              fontFamily: "inherit",
+              border: "1px solid #000",
+              borderRadius: "4px",
+              boxSizing: "border-box",
+              backgroundColor: "#fff",
+              color: "#333",
             }}
           >
-            {`https://github.com/${RECURSICA_FIGMA_OWNER}/${RECURSICA_FIGMA_REPO}/tree/${encodeURIComponent(searchParams.get("ref") || "")}`}
-          </a>
-        </div>
-      ) : (
-        <p
-          style={{
-            fontSize: "14px",
-            color: "#666",
-            textAlign: "center",
-            marginBottom: "20px",
-            marginTop: "0",
-            maxWidth: "600px",
-          }}
-        >
-          We have an exciting list of components to import. Please choose from
-          the list below. Check back frequently for new updates.
-        </p>
-      )}
+            VIEWING BRANCH:{" "}
+            <a
+              href={`https://github.com/${RECURSICA_FIGMA_OWNER}/${RECURSICA_FIGMA_REPO}/tree/${encodeURIComponent(searchParams.get("ref") || "")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: "#1976d2",
+                textDecoration: "underline",
+              }}
+            >
+              {`https://github.com/${RECURSICA_FIGMA_OWNER}/${RECURSICA_FIGMA_REPO}/tree/${encodeURIComponent(searchParams.get("ref") || "")}`}
+            </a>
+          </div>
+        ) : (
+          <p
+            style={{
+              fontSize: "14px",
+              color: "#666",
+              textAlign: "center",
+              marginBottom: "20px",
+              marginTop: "0",
+              maxWidth: "600px",
+            }}
+          >
+            We have an exciting list of components to import. Please choose from
+            the list below. Check back frequently for new updates.
+          </p>
+        );
+      })()}
 
-      {loading && (
-        <div
-          style={{
-            padding: "40px",
-            color: "#666",
-            fontSize: "16px",
-          }}
-        >
-          Loading components...
-        </div>
-      )}
+      {(() => {
+        console.log(
+          "[Step1ComponentSelection] Render - loading check, loading:",
+          loading,
+        );
+        return loading ? (
+          <div
+            style={{
+              padding: "40px",
+              color: "#666",
+              fontSize: "16px",
+            }}
+          >
+            Loading components...
+          </div>
+        ) : null;
+      })()}
 
       {error && (
         <div

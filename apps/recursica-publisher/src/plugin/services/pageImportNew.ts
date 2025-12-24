@@ -4988,7 +4988,13 @@ async function matchCollection(
  */
 function validateMetadata(jsonData: any): {
   success: boolean;
-  metadata?: { guid: string; name: string; version?: number };
+  metadata?: {
+    guid: string;
+    name: string;
+    version?: number;
+    description?: string;
+    url?: string;
+  };
   error?: string;
 } {
   if (!jsonData.metadata) {
@@ -5019,6 +5025,8 @@ function validateMetadata(jsonData: any): {
       guid: metadata.guid,
       name: metadata.name,
       version: metadata.version,
+      description: metadata.description,
+      url: metadata.url,
     },
   };
 }
@@ -5415,16 +5423,14 @@ export async function matchAndCreateVariables(
   variableTable: VariableTable,
   collectionTable: CollectionTable,
   recognizedCollections: Map<string, VariableCollection>,
-  newlyCreatedCollections: VariableCollection[],
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  newlyCreatedCollections: VariableCollection[], // Unused - kept for API compatibility
 ): Promise<{
   recognizedVariables: Map<string, Variable>;
   newlyCreatedVariables: Variable[];
 }> {
   const recognizedVariables = new Map<string, Variable>();
   const newlyCreatedVariables: Variable[] = [];
-  const newlyCreatedCollectionIds = new Set(
-    newlyCreatedCollections.map((c) => c.id),
-  );
 
   debugConsole.log("Matching and creating variables in collections...");
 
@@ -5452,10 +5458,6 @@ export async function matchAndCreateVariables(
       });
     }
     const stats = collectionStats.get(collection.id)!;
-
-    const isNewlyCreatedCollection = newlyCreatedCollectionIds.has(
-      collection.id,
-    );
 
     let variableType: string;
     if (typeof entry.variableType === "number") {
@@ -5497,9 +5499,9 @@ export async function matchAndCreateVariables(
           variableTable,
           collectionTable,
         );
-        if (!isNewlyCreatedCollection) {
-          newlyCreatedVariables.push(newVariable);
-        }
+        // Track ALL variables we create, regardless of collection type
+        // We'll delete them individually during cleanup (never delete collections)
+        newlyCreatedVariables.push(newVariable);
         recognizedVariables.set(index, newVariable);
         stats.created++;
       }
@@ -5513,9 +5515,9 @@ export async function matchAndCreateVariables(
         variableTable,
         collectionTable,
       );
-      if (!isNewlyCreatedCollection) {
-        newlyCreatedVariables.push(newVariable);
-      }
+      // Track ALL variables we create, regardless of collection type
+      // We'll delete them individually during cleanup (never delete collections)
+      newlyCreatedVariables.push(newVariable);
       recognizedVariables.set(index, newVariable);
       stats.created++;
     }
@@ -6346,7 +6348,13 @@ async function createRemoteInstances(
  * Stage 11: Create page and recreate structure
  */
 async function createPageAndRecreateStructure(
-  metadata: { guid: string; name: string; version?: number },
+  metadata: {
+    guid: string;
+    name: string;
+    version?: number;
+    description?: string;
+    url?: string;
+  },
   expandedJsonData: any,
   variableTable: VariableTable,
   collectionTable: CollectionTable,
@@ -6588,6 +6596,10 @@ async function createPageAndRecreateStructure(
     version: metadata.version || 0,
     publishDate: new Date().toISOString(),
     history: {},
+    ...(metadata.description !== undefined && {
+      description: metadata.description,
+    }),
+    ...(metadata.url !== undefined && { url: metadata.url }),
   };
   newPage.setPluginData(PAGE_METADATA_KEY, JSON.stringify(pageMetadata));
   debugConsole.log(
@@ -8359,8 +8371,9 @@ export interface CleanupCreatedEntitiesData {
 }
 
 /**
- * Cleans up created entities (pages, collections, variables) by their IDs
+ * Cleans up created entities (pages, variables) by their IDs
  * Used when import fails to remove partially created entities
+ * Collections are never deleted - only the variables we created are removed
  */
 export async function cleanupCreatedEntities(
   data: CleanupCreatedEntitiesData,
@@ -8370,19 +8383,15 @@ export async function cleanupCreatedEntities(
   try {
     const { pageIds, collectionIds, variableIds } = data;
 
-    // Delete variables first (before collections)
+    // Delete all variables we created (from both new and existing collections)
+    // We never delete collections - only the variables we created
     let deletedVariables = 0;
     for (const variableId of variableIds) {
       try {
         const variable = await figma.variables.getVariableByIdAsync(variableId);
         if (variable) {
-          // Check if variable's collection is in our list to be deleted
-          // If so, we don't need to delete it explicitly (it will be deleted with the collection)
-          const collectionId = variable.variableCollectionId;
-          if (!collectionIds.includes(collectionId)) {
-            variable.remove();
-            deletedVariables++;
-          }
+          variable.remove();
+          deletedVariables++;
         }
       } catch (error) {
         debugConsole.warning(
@@ -8391,22 +8400,10 @@ export async function cleanupCreatedEntities(
       }
     }
 
-    // Delete collections (this will also delete variables in those collections)
-    let deletedCollections = 0;
-    for (const collectionId of collectionIds) {
-      try {
-        const collection =
-          await figma.variables.getVariableCollectionByIdAsync(collectionId);
-        if (collection) {
-          collection.remove();
-          deletedCollections++;
-        }
-      } catch (error) {
-        debugConsole.warning(
-          `Could not delete collection ${collectionId.substring(0, 8)}...: ${error}`,
-        );
-      }
-    }
+    // Never delete collections - we only delete variables we created
+    debugConsole.log(
+      `Skipping deletion of ${collectionIds.length} collection(s) - collections are never deleted`,
+    );
 
     // Delete pages
     await figma.loadAllPagesAsync();
@@ -8426,7 +8423,7 @@ export async function cleanupCreatedEntities(
     }
 
     debugConsole.log(
-      `Cleanup complete: Deleted ${deletedPages} page(s), ${deletedCollections} collection(s), ${deletedVariables} variable(s)`,
+      `Cleanup complete: Deleted ${deletedPages} page(s), ${deletedVariables} variable(s) (collections are never deleted)`,
     );
 
     return {
@@ -8436,7 +8433,7 @@ export async function cleanupCreatedEntities(
       message: "Cleanup completed successfully",
       data: {
         deletedPages,
-        deletedCollections,
+        deletedCollections: 0, // Never delete collections
         deletedVariables,
       },
     };

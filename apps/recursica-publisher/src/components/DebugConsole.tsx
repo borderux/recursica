@@ -38,8 +38,7 @@ export default function DebugConsole({
     }
   };
 
-  const hasLogs = debugLogs && debugLogs.length > 0;
-  const showCopyButton = hasLogs && (isComplete || error);
+  const showCopyButton = isComplete || error;
 
   return (
     <>
@@ -59,47 +58,6 @@ export default function DebugConsole({
           gap: "16px",
         }}
       >
-        {/* Title and Status */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "bold" }}>
-            {title}
-          </h2>
-          {showCopyButton && (
-            <button
-              onClick={handleCopyLogs}
-              style={{
-                padding: "6px 12px",
-                fontSize: "12px",
-                fontWeight: "bold",
-                backgroundColor: copySuccess ? "#28a745" : "#d40d0d",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-                transition: "background-color 0.2s",
-              }}
-              onMouseOver={(e) => {
-                if (!copySuccess) {
-                  e.currentTarget.style.backgroundColor = "#b00b0b";
-                }
-              }}
-              onMouseOut={(e) => {
-                if (!copySuccess) {
-                  e.currentTarget.style.backgroundColor = "#d40d0d";
-                }
-              }}
-            >
-              {copySuccess ? "Copied!" : "Copy Logs"}
-            </button>
-          )}
-        </div>
-
         {/* Activity Spinner */}
         {isActive && (
           <div
@@ -138,9 +96,40 @@ export default function DebugConsole({
               borderRadius: "4px",
               color: "#2e7d32",
               fontSize: "14px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
             }}
           >
-            {successMessage || `${title} completed successfully`}
+            <span>{successMessage || `${title} completed successfully`}</span>
+            {showCopyButton && (
+              <button
+                onClick={handleCopyLogs}
+                style={{
+                  padding: "6px 12px",
+                  fontSize: "12px",
+                  fontWeight: "bold",
+                  backgroundColor: copySuccess ? "#28a745" : "#666",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  transition: "background-color 0.2s",
+                }}
+                onMouseOver={(e) => {
+                  if (!copySuccess) {
+                    e.currentTarget.style.backgroundColor = "#555";
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (!copySuccess) {
+                    e.currentTarget.style.backgroundColor = "#666";
+                  }
+                }}
+              >
+                {copySuccess ? "Copied!" : "Copy Logs"}
+              </button>
+            )}
           </div>
         )}
 
@@ -180,7 +169,7 @@ export default function DebugConsole({
                   padding: "8px 16px",
                   fontSize: "14px",
                   fontWeight: "bold",
-                  backgroundColor: copySuccess ? "#28a745" : "#d40d0d",
+                  backgroundColor: copySuccess ? "#28a745" : "#666",
                   color: "white",
                   border: "none",
                   borderRadius: "4px",
@@ -189,12 +178,12 @@ export default function DebugConsole({
                 }}
                 onMouseOver={(e) => {
                   if (!copySuccess) {
-                    e.currentTarget.style.backgroundColor = "#b00b0b";
+                    e.currentTarget.style.backgroundColor = "#555";
                   }
                 }}
                 onMouseOut={(e) => {
                   if (!copySuccess) {
-                    e.currentTarget.style.backgroundColor = "#d40d0d";
+                    e.currentTarget.style.backgroundColor = "#666";
                   }
                 }}
               >

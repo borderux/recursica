@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import PageLayout from "../components/PageLayout";
 import { useImportData, type ImportedFile } from "../context/ImportDataContext";
+import { useAuth } from "../context/useAuth";
 import { validateImport } from "../utils/validateExportFile";
 import { fetchComponentWithDependencies } from "../services/repository/repositoryImportService";
 
@@ -9,6 +10,7 @@ export default function ImportRepoComponent() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { setImportData } = useImportData();
+  const { accessToken } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<string>("");
@@ -31,7 +33,11 @@ export default function ImportRepoComponent() {
 
         // Fetch the component and all its dependencies
         const { mainComponent, dependencies } =
-          await fetchComponentWithDependencies(componentGuid, ref);
+          await fetchComponentWithDependencies(
+            componentGuid,
+            ref,
+            accessToken || undefined,
+          );
 
         setProgress("Validating component files...");
 
@@ -112,7 +118,7 @@ export default function ImportRepoComponent() {
     };
 
     loadComponent();
-  }, [componentGuid, ref, navigate, setImportData]);
+  }, [componentGuid, ref, navigate, setImportData, accessToken]);
 
   return (
     <PageLayout showBackButton={true}>

@@ -29,9 +29,8 @@ export default function Importing() {
       return;
     }
 
-    // If import is completed, clear the data and go home
+    // If import is completed, go to home (which will show Review Import)
     if (importData.importStatus === "completed") {
-      setImportData(null);
       navigate("/", { replace: true });
       return;
     }

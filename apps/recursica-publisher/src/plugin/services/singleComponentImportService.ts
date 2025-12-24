@@ -1055,10 +1055,12 @@ export interface DeleteImportGroupResponseData {
   deletedPages: number;
   deletedCollections: number;
   deletedVariables: number;
+  deletedStyles: number;
 }
 
 /**
- * Deletes an import group including all pages, dividers, and created collections/variables
+ * Deletes an import group including all pages, dividers, created variables, and created styles.
+ * Collections are never deleted - only the variables we created are removed.
  */
 export async function deleteImportGroup(
   data: DeleteImportGroupData,
@@ -1151,9 +1153,10 @@ export async function deleteImportGroup(
       }
     }
 
-    // Step 4: Delete created variables in existing collections
+    // Step 4: Delete created variables (from both new and existing collections)
+    // We never delete collections - only the variables we created
     debugConsole.log(
-      `Deleting ${metadata.createdVariables.length} variable(s) from existing collections...`,
+      `Deleting ${metadata.createdVariables.length} variable(s) we created...`,
     );
     let deletedVariablesCount = 0;
     for (const variableInfo of metadata.createdVariables) {
@@ -1179,33 +1182,56 @@ export async function deleteImportGroup(
       }
     }
 
-    // Step 5: Delete created collections (this will also delete all variables in those collections)
-    debugConsole.log(
-      `Deleting ${metadata.createdCollections.length} collection(s)...`,
-    );
-    let deletedCollectionsCount = 0;
-    for (const collectionInfo of metadata.createdCollections) {
+    // Step 5: Delete created styles from global importResult
+    debugConsole.log("Deleting created styles...");
+    let deletedStylesCount = 0;
+    const globalImportResultStrForStyles =
+      figma.root.getPluginData(IMPORT_RESULT_KEY);
+    if (globalImportResultStrForStyles) {
       try {
-        const collection = await figma.variables.getVariableCollectionByIdAsync(
-          collectionInfo.collectionId,
+        const importResults = JSON.parse(
+          globalImportResultStrForStyles,
+        ) as Array<{
+          createdStyleIds?: string[];
+        }>;
+        const allStyleIds = new Set<string>();
+        for (const ir of importResults) {
+          if (ir.createdStyleIds) {
+            for (const styleId of ir.createdStyleIds) {
+              allStyleIds.add(styleId);
+            }
+          }
+        }
+        debugConsole.log(
+          `Found ${allStyleIds.size} style(s) to delete from global importResult`,
         );
-        if (collection) {
-          collection.remove();
-          deletedCollectionsCount++;
-          debugConsole.log(
-            `Deleted collection: ${collectionInfo.collectionName} (${collectionInfo.collectionId})`,
-          );
-        } else {
-          debugConsole.warning(
-            `Collection ${collectionInfo.collectionName} (${collectionInfo.collectionId}) not found - may have already been deleted`,
-          );
+        for (const styleId of allStyleIds) {
+          try {
+            const style = await figma.getStyleByIdAsync(styleId);
+            if (style) {
+              style.remove();
+              deletedStylesCount++;
+              debugConsole.log(
+                `Deleted style: ${style.name} (${styleId.substring(0, 8)}...)`,
+              );
+            }
+          } catch (error) {
+            debugConsole.warning(
+              `Failed to delete style ${styleId.substring(0, 8)}...: ${error instanceof Error ? error.message : String(error)}`,
+            );
+          }
         }
       } catch (error) {
         debugConsole.warning(
-          `Failed to delete collection ${collectionInfo.collectionName}: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to parse global importResult for styles: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
     }
+
+    // Step 6: Never delete collections - we only delete variables we created
+    debugConsole.log(
+      `Skipping deletion of ${metadata.createdCollections.length} collection(s) - collections are never deleted`,
+    );
 
     // Step 6: Store page names before deletion (we can't access them after deletion)
     const pagesToDeleteWithNames = pagesToDelete.map((page) => ({
@@ -1292,8 +1318,9 @@ export async function deleteImportGroup(
     const responseData: DeleteImportGroupResponseData = {
       success: true,
       deletedPages: pagesToDelete.length,
-      deletedCollections: deletedCollectionsCount,
+      deletedCollections: 0, // Never delete collections
       deletedVariables: deletedVariablesCount,
+      deletedStyles: deletedStylesCount,
     };
 
     return retSuccess("deleteImportGroup", responseData as any);
@@ -1316,15 +1343,17 @@ export interface CleanupFailedImportData {
 export interface CleanupFailedImportResponseData {
   success: boolean;
   deletedPages: number;
-  deletedCollections: number;
+  deletedCollections: number; // Always 0 - collections are never deleted
   deletedVariables: number;
+  deletedStyles: number;
 }
 
 /**
  * Cleans up a failed import by finding all pages using global importResult
  * and deleting them. If a page with primary import metadata is found,
- * uses deleteImportGroup for full cleanup including collections/variables.
+ * uses deleteImportGroup for full cleanup including variables and styles.
  * Otherwise, deletes pages identified by importResult.createdPageIds or PAGE_METADATA_KEY.
+ * Collections are never deleted - only the variables we created are removed.
  */
 export async function cleanupFailedImport(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -1649,25 +1678,21 @@ export async function cleanupFailedImport(
       }
     }
 
-    // Delete collections and variables that were created during the import
-    let deletedCollectionsCount = 0;
+    // Delete variables and styles that were created during the import
+    // We never delete collections - only the variables we created
     let deletedVariablesCount = 0;
+    let deletedStylesCount = 0;
 
-    // Delete variables first (before collections)
+    // Delete all variables we created (from both new and existing collections)
     for (const variableId of allVariableIds) {
       try {
         const variable = await figma.variables.getVariableByIdAsync(variableId);
         if (variable) {
-          // Check if variable's collection is in our list to be deleted
-          // If so, we don't need to delete it explicitly (it will be deleted with the collection)
-          const collectionId = variable.variableCollectionId;
-          if (!allCollectionIds.has(collectionId)) {
-            variable.remove();
-            deletedVariablesCount++;
-            debugConsole.log(
-              `Deleted variable: ${variable.name} (${variableId.substring(0, 8)}...)`,
-            );
-          }
+          variable.remove();
+          deletedVariablesCount++;
+          debugConsole.log(
+            `Deleted variable: ${variable.name} (${variableId.substring(0, 8)}...)`,
+          );
         }
       } catch (error) {
         debugConsole.warning(
@@ -1676,24 +1701,50 @@ export async function cleanupFailedImport(
       }
     }
 
-    // Delete collections (this will also delete variables in those collections)
-    for (const collectionId of allCollectionIds) {
+    // Delete created styles from global importResult
+    if (hasGlobalImportResult) {
       try {
-        const collection =
-          await figma.variables.getVariableCollectionByIdAsync(collectionId);
-        if (collection) {
-          collection.remove();
-          deletedCollectionsCount++;
-          debugConsole.log(
-            `Deleted collection: "${collection.name}" (${collectionId.substring(0, 8)}...)`,
-          );
+        const importResults = JSON.parse(globalImportResultStr) as Array<{
+          createdStyleIds?: string[];
+        }>;
+        const allStyleIds = new Set<string>();
+        for (const ir of importResults) {
+          if (ir.createdStyleIds) {
+            for (const styleId of ir.createdStyleIds) {
+              allStyleIds.add(styleId);
+            }
+          }
+        }
+        debugConsole.log(
+          `Found ${allStyleIds.size} style(s) to delete from global importResult`,
+        );
+        for (const styleId of allStyleIds) {
+          try {
+            const style = await figma.getStyleByIdAsync(styleId);
+            if (style) {
+              style.remove();
+              deletedStylesCount++;
+              debugConsole.log(
+                `Deleted style: ${style.name} (${styleId.substring(0, 8)}...)`,
+              );
+            }
+          } catch (error) {
+            debugConsole.warning(
+              `Failed to delete style ${styleId.substring(0, 8)}...: ${error instanceof Error ? error.message : String(error)}`,
+            );
+          }
         }
       } catch (error) {
         debugConsole.warning(
-          `Could not delete collection ${collectionId.substring(0, 8)}...: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to parse global importResult for styles: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
     }
+
+    // Never delete collections - we only delete variables we created
+    debugConsole.log(
+      `Skipping deletion of ${allCollectionIds.size} collection(s) - collections are never deleted`,
+    );
 
     // Clear global importResult after cleanup
     if (hasGlobalImportResult) {
@@ -1706,8 +1757,9 @@ export async function cleanupFailedImport(
     const responseData: CleanupFailedImportResponseData = {
       success: true,
       deletedPages: deletedPagesCount,
-      deletedCollections: deletedCollectionsCount,
+      deletedCollections: 0, // Never delete collections
       deletedVariables: deletedVariablesCount,
+      deletedStyles: deletedStylesCount,
     };
 
     return retSuccess("cleanupFailedImport", responseData as any);

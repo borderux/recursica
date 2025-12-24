@@ -1219,12 +1219,16 @@ export async function exportPage(
     );
     let pageGuid = "";
     let pageVersion = 0;
+    let pageDescription: string | undefined;
+    let pageUrl: string | undefined;
 
     if (pageMetadataStr) {
       try {
         const pageMetadata = JSON.parse(pageMetadataStr);
         pageGuid = pageMetadata.id || "";
         pageVersion = pageMetadata.version || 0;
+        pageDescription = pageMetadata.description;
+        pageUrl = pageMetadata.url;
       } catch {
         debugConsole.warning(
           "Failed to parse page metadata, generating new GUID",
@@ -1263,6 +1267,8 @@ export async function exportPage(
         version: pageVersion,
         name: selectedPage.name,
         pluginVersion: "1.0.0",
+        ...(pageDescription !== undefined && { description: pageDescription }),
+        ...(pageUrl !== undefined && { url: pageUrl }),
       },
       stringTable: stringTable.getSerializedTable(),
       collections: collectionTable.getSerializedTable(),

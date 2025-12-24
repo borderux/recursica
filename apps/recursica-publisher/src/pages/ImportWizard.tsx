@@ -5,8 +5,6 @@ import { callPlugin } from "../utils/callPlugin";
 import { ImportWizardProvider } from "../context/ImportWizardContext";
 import Step1ComponentSelection from "./ImportWizard/Step1ComponentSelection";
 import Step2DependencyOverview from "./ImportWizard/Step2DependencyOverview";
-import Step3VariableCollections from "./ImportWizard/Step3VariableCollections";
-import Step4Summary from "./ImportWizard/Step4Summary";
 import Step5Importing from "./ImportWizard/Step5Importing";
 import ExistingImport from "./ImportWizard/ExistingImport";
 import Step1CollectionMerge from "./ImportWizard/MergeWizard/Step1CollectionMerge";
@@ -74,14 +72,32 @@ export default function ImportWizard() {
     );
   }
 
+  const handleBack = () => {
+    const currentPath = location.pathname;
+    if (currentPath === "/import-wizard/step2") {
+      // From Dependency Overview, go back to Component Selection
+      navigate("/import-wizard/step1");
+    } else if (currentPath === "/import-wizard/step5") {
+      // From Importing, go back to Dependency Overview
+      navigate("/import-wizard/step2");
+    } else if (currentPath === "/import-wizard/existing") {
+      // From Existing Import, go back to Component Selection
+      navigate("/import-wizard/step1");
+    } else if (currentPath.startsWith("/import-wizard/merge")) {
+      // From Merge wizard, go back to Component Selection
+      navigate("/import-wizard/step1");
+    } else {
+      // Default: go back in browser history
+      navigate(-1);
+    }
+  };
+
   return (
     <ImportWizardProvider>
-      <PageLayout showBackButton={true}>
+      <PageLayout showBackButton={true} onBack={handleBack}>
         <Routes>
           <Route path="/step1" element={<Step1ComponentSelection />} />
           <Route path="/step2" element={<Step2DependencyOverview />} />
-          <Route path="/step3" element={<Step3VariableCollections />} />
-          <Route path="/step4" element={<Step4Summary />} />
           <Route path="/step5" element={<Step5Importing />} />
           <Route path="/existing" element={<ExistingImport />} />
           <Route path="/merge/step1" element={<Step1CollectionMerge />} />
