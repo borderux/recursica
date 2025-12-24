@@ -48,7 +48,7 @@ export async function getImportSummary(
       };
       return retSuccess("getImportSummary", {
         summary: emptySummary,
-      } as GetImportSummaryResponseData);
+      } as Record<string, unknown>);
     }
 
     const importResults = JSON.parse(
@@ -170,7 +170,7 @@ export async function getImportSummary(
 
     return retSuccess("getImportSummary", {
       summary,
-    } as GetImportSummaryResponseData);
+    } as Record<string, unknown>);
   } catch (error) {
     return retError(
       "getImportSummary",

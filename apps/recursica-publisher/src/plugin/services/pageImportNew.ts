@@ -5898,7 +5898,7 @@ export async function matchAndCreateVariables(
   collectionTable: CollectionTable,
   recognizedCollections: Map<string, VariableCollection>,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  newlyCreatedCollections: VariableCollection[], // Unused - kept for API compatibility
+  _newlyCreatedCollections: VariableCollection[], // Unused - kept for API compatibility
 ): Promise<{
   recognizedVariables: Map<string, Variable>;
   newlyCreatedVariables: Variable[];
