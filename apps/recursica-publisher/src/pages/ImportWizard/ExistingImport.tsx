@@ -181,21 +181,64 @@ export default function ExistingImport() {
         </p>
       </div>
 
+      {/* Import Error Display */}
+      {metadata.importError && (
+        <div
+          style={{
+            padding: "16px",
+            backgroundColor: "#ffebee",
+            border: "1px solid #f44336",
+            borderRadius: "8px",
+            color: "#c62828",
+            fontSize: "14px",
+            lineHeight: "1.5",
+          }}
+        >
+          <div
+            style={{
+              fontWeight: "600",
+              marginBottom: "8px",
+              fontSize: "15px",
+            }}
+          >
+            Import Failed
+          </div>
+          <div>{metadata.importError}</div>
+        </div>
+      )}
+
+      {/* Error guidance text */}
+      {metadata.importError && (
+        <p
+          style={{
+            fontSize: "14px",
+            lineHeight: "1.5",
+            color: "#333",
+            margin: "0",
+          }}
+        >
+          The import could not be completed. Please review the error above and
+          consider canceling this import to start over.
+        </p>
+      )}
+
       {/* Import Summary Table */}
       {importSummary && (
         <>
-          <p
-            style={{
-              fontSize: "14px",
-              lineHeight: "1.5",
-              color: "#333",
-              margin: "0",
-            }}
-          >
-            Please review all pages created as part of the import. If you
-            confirm they look good, Merge them into your file to proceed, or
-            press Cancel to stop this import.
-          </p>
+          {!metadata.importError && (
+            <p
+              style={{
+                fontSize: "14px",
+                lineHeight: "1.5",
+                color: "#333",
+                margin: "0",
+              }}
+            >
+              Please review all pages created as part of the import. If you
+              confirm they look good, Merge them into your file to proceed, or
+              press Cancel to stop this import.
+            </p>
+          )}
           <div
             style={{
               border: "1px solid #e0e0e0",
@@ -451,32 +494,34 @@ export default function ExistingImport() {
         >
           {loading ? "Cancelling..." : "Cancel"}
         </button>
-        <button
-          onClick={() => navigate("/import-wizard/merge/step1")}
-          disabled={loading || clearingMetadata}
-          style={{
-            padding: "12px 24px",
-            fontSize: "16px",
-            fontWeight: "bold",
-            backgroundColor: loading || clearingMetadata ? "#ccc" : "#007AFF",
-            color: "white",
-            border: "none",
-            borderRadius: "8px",
-            cursor: loading || clearingMetadata ? "not-allowed" : "pointer",
-          }}
-          onMouseOver={(e) => {
-            if (!loading && !clearingMetadata) {
-              e.currentTarget.style.opacity = "0.9";
-            }
-          }}
-          onMouseOut={(e) => {
-            if (!loading && !clearingMetadata) {
-              e.currentTarget.style.opacity = "1";
-            }
-          }}
-        >
-          Merge
-        </button>
+        {!metadata.importError && (
+          <button
+            onClick={() => navigate("/import-wizard/merge/step1")}
+            disabled={loading || clearingMetadata}
+            style={{
+              padding: "12px 24px",
+              fontSize: "16px",
+              fontWeight: "bold",
+              backgroundColor: loading || clearingMetadata ? "#ccc" : "#007AFF",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              cursor: loading || clearingMetadata ? "not-allowed" : "pointer",
+            }}
+            onMouseOver={(e) => {
+              if (!loading && !clearingMetadata) {
+                e.currentTarget.style.opacity = "0.9";
+              }
+            }}
+            onMouseOut={(e) => {
+              if (!loading && !clearingMetadata) {
+                e.currentTarget.style.opacity = "1";
+              }
+            }}
+          >
+            Merge
+          </button>
+        )}
       </div>
     </div>
   );

@@ -163,6 +163,9 @@ export async function parseTextProperties(
     handledKeys.add("listOptions");
   }
 
+  // Note: componentPropertyReferences is exported in baseNodeParser.ts for all node types
+  // This includes TEXT nodes, so we don't need to handle it here
+
   // Note: Unhandled keys are tracked centrally in extractNodeData
 
   return result;

@@ -191,6 +191,8 @@ const STRING_TABLE_MAP: Record<string, string> = {
   effectStyle: "effSt",
   gridStyle: "grdSt",
   styleKey: "stlKy",
+  // Component property references
+  componentPropertyReferences: "cPropR", // Component property references (5 chars)
 };
 
 /**

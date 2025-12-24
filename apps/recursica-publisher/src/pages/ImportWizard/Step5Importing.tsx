@@ -204,6 +204,12 @@ export default function Step5Importing() {
                 };
               });
             } else {
+              // Extract debug logs from response if available (for successful imports too)
+              if (result.data?.debugLogs) {
+                setImportDebugLogs(
+                  result.data.debugLogs as DebugConsoleMessage[],
+                );
+              }
               // Mark import as completed
               setImportData((prev) => {
                 if (!prev) return prev;

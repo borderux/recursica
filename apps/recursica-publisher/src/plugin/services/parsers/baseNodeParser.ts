@@ -288,6 +288,20 @@ export async function parseBaseNodeProperties(
     handledKeys.add("selectionColor");
   }
 
+  // Export componentPropertyReferences if present
+  // This binds node properties to component properties (e.g., characters for TEXT, visible for BOOLEAN properties)
+  // Can apply to any node type inside a component
+  if (
+    node.componentPropertyReferences &&
+    typeof node.componentPropertyReferences === "object"
+  ) {
+    result.componentPropertyReferences = node.componentPropertyReferences;
+    handledKeys.add("componentPropertyReferences");
+    debugConsole.log(
+      `  [EXPORT] ✓ Exported componentPropertyReferences for ${node.type} node "${node.name || "Unnamed"}": ${JSON.stringify(node.componentPropertyReferences)}`,
+    );
+  }
+
   // Note: Unhandled keys are tracked centrally in extractNodeData
   // after all parsers have run
 

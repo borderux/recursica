@@ -29,12 +29,38 @@ export default function DebugConsole({
     }
 
     try {
-      await navigator.clipboard.writeText(logsText);
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 2000);
+      // Try modern Clipboard API first
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(logsText);
+        setCopySuccess(true);
+        setTimeout(() => setCopySuccess(false), 2000);
+        return;
+      }
+
+      // Fallback to execCommand for older browsers or restricted contexts
+      const textArea = document.createElement("textarea");
+      textArea.value = logsText;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      textArea.style.top = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+
+      const successful = document.execCommand("copy");
+      document.body.removeChild(textArea);
+
+      if (successful) {
+        setCopySuccess(true);
+        setTimeout(() => setCopySuccess(false), 2000);
+      } else {
+        throw new Error("execCommand('copy') failed");
+      }
     } catch (err) {
       console.error("Failed to copy logs:", err);
-      alert("Failed to copy logs to clipboard");
+      alert(
+        "Failed to copy logs to clipboard. Please select and copy manually.",
+      );
     }
   };
 

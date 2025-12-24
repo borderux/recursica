@@ -21,14 +21,6 @@ export default function Home() {
     });
   }, [importData]);
 
-  // Check if import is in progress or failed (should show importing screen)
-  const isImporting =
-    importData &&
-    importData.mainFile &&
-    importData.mainFile.status === "success" &&
-    (importData.importStatus === "in_progress" ||
-      importData.importStatus === "failed");
-
   // Check for existing import in Figma (highest precedence - shows Review Import)
   const [hasExistingImport, setHasExistingImport] = useState(false);
   const [checkingExisting, setCheckingExisting] = useState(true);
@@ -60,34 +52,39 @@ export default function Home() {
     checkForExisting();
   }, []);
 
-  // Debug: Log isImporting state
-  useEffect(() => {
-    console.log("[Home] isImporting check:", {
-      isImporting,
-      importDataExists: !!importData,
-      mainFileExists: !!importData?.mainFile,
-      mainFileStatus: importData?.mainFile?.status,
-      importStatus: importData?.importStatus,
-    });
-  }, [isImporting, importData]);
-
-  // Auto-navigate logic - highest precedence: existing import (Review Import)
+  // Auto-navigate logic - navigate to Review Import if import hasn't completed
   useEffect(() => {
     if (checkingExisting) return;
 
-    // Highest precedence: If there's an existing import, show Review Import
+    // If there's an existing import, show Review Import
+    // This includes cases where import failed but pages were created
     if (hasExistingImport) {
       console.log("[Home] Found existing import, navigating to Review Import");
       navigate("/import-wizard/existing", { replace: true });
       return;
     }
 
-    // Second precedence: If import is in progress or failed, show importing screen
-    if (isImporting) {
-      console.log(
-        "[Home] Navigating to /importing (auto-navigate - already importing or failed)",
-      );
+    // If import is in progress, show importing screen
+    if (
+      importData &&
+      importData.mainFile &&
+      importData.mainFile.status === "success" &&
+      importData.importStatus === "in_progress"
+    ) {
+      console.log("[Home] Import in progress, navigating to importing screen");
       navigate("/importing", { replace: true });
+      return;
+    }
+
+    // If import failed, navigate to Review Import (which will show the error)
+    if (
+      importData &&
+      importData.mainFile &&
+      importData.mainFile.status === "success" &&
+      importData.importStatus === "failed"
+    ) {
+      console.log("[Home] Import failed, navigating to Review Import");
+      navigate("/import-wizard/existing", { replace: true });
       return;
     }
 
@@ -99,7 +96,6 @@ export default function Home() {
   }, [
     hasExistingImport,
     checkingExisting,
-    isImporting,
     navigate,
     importData,
     setImportData,
@@ -223,7 +219,13 @@ export default function Home() {
             e.currentTarget.style.color = "#d40d0d";
           }}
         >
-          {isImporting ? "Continue Import" : "Import"}
+          {importData &&
+          importData.mainFile &&
+          importData.mainFile.status === "success" &&
+          (importData.importStatus === "in_progress" ||
+            importData.importStatus === "failed")
+            ? "Continue Import"
+            : "Import"}
         </button>
 
         {/* Publish Button */}

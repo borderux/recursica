@@ -29,6 +29,16 @@ import {
 } from "../../const/CollectionConstants";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+// Map to store component property binding data during import
+// Key: component node ID, Value: { propertyIdMapping, nodeData }
+const componentBindingData = new Map<
+  string,
+  {
+    propertyIdMapping: Map<string, string>;
+    nodeData: any;
+  }
+>();
+
 export interface ImportPageData {
   jsonData: any; // The full exported JSON structure
   deleteScratchPagesOnFailure?: boolean; // If true, delete scratch pages if import fails (default: false)
@@ -1381,6 +1391,8 @@ export async function recreateNodeFromData(
         );
 
         // Add component property definitions using addComponentProperty() method
+        // CRITICAL: Capture the return value (unique property ID) for binding restoration
+        const propertyIdMapping = new Map<string, string>(); // old property ID -> new property ID
         if (nodeData.componentPropertyDefinitions) {
           const propDefs = nodeData.componentPropertyDefinitions;
           let addedCount = 0;
@@ -1435,10 +1447,19 @@ export async function recreateNodeFromData(
               // Property names in JSON may include IDs (e.g., "Show trailing icon#318:0")
               // Extract just the property name part (before the #)
               const cleanPropName = propName.split("#")[0];
-              newNode.addComponentProperty(
+
+              // CRITICAL: Capture the return value - this is the unique property ID (e.g., "Component name#12:34")
+              // We need this ID (not just the name) to set componentPropertyReferences
+              const newPropertyId = newNode.addComponentProperty(
                 cleanPropName,
                 propType,
                 defaultValue,
+              );
+
+              // Store mapping: old property ID (from JSON) -> new property ID (from addComponentProperty)
+              propertyIdMapping.set(propName, newPropertyId);
+              debugConsole.log(
+                `  [BINDING] Added component property "${cleanPropName}" with ID "${newPropertyId}" (was "${propName}" in JSON)`,
               );
               addedCount++;
             } catch (error) {
@@ -1454,6 +1475,16 @@ export async function recreateNodeFromData(
               `  Added ${addedCount} component property definition(s) to "${nodeData.name || "Unnamed"}"${failedCount > 0 ? ` (${failedCount} failed)` : ""}`,
             );
           }
+        }
+
+        // Store property ID mapping in external Map for later use in post-processing
+        // This allows us to restore componentPropertyReferences after children are added
+        // We can't attach properties directly to Figma nodes (they're not extensible)
+        if (propertyIdMapping.size > 0) {
+          componentBindingData.set(newNode.id, {
+            propertyIdMapping,
+            nodeData,
+          });
         }
       }
       break;
@@ -1840,42 +1871,120 @@ export async function recreateNodeFromData(
 
                       // Only set properties that exist on the component
                       if (componentProperties) {
+                        debugConsole.log(
+                          `[IMPORT] Internal instance "${nodeData.name}" -> Processing ${Object.keys(instanceEntry.componentProperties || {}).length} component property/properties from entry`,
+                        );
+                        debugConsole.log(
+                          `[IMPORT]   Properties in entry: ${JSON.stringify(Object.keys(instanceEntry.componentProperties || {}))}`,
+                        );
+                        debugConsole.log(
+                          `[IMPORT]   Available properties on component: ${JSON.stringify(Object.keys(componentProperties))}`,
+                        );
+                        const propertiesToSet: Record<string, any> = {};
                         for (const [propName, propValue] of Object.entries(
                           instanceEntry.componentProperties,
                         )) {
-                          // Property names in JSON may include IDs (e.g., "Show trailing icon#318:0")
-                          // Extract just the property name part (before the #) to match component property definitions
+                          debugConsole.log(
+                            `[IMPORT]   Processing entry property "${propName}" with value: ${JSON.stringify(propValue)}`,
+                          );
+                          // Property names in JSON may include IDs - extract clean name
                           const cleanPropName = propName.split("#")[0];
-                          if (componentProperties[cleanPropName]) {
-                            try {
-                              // Extract the actual value from propValue
-                              // propValue might be an object with 'value' and 'boundVariables' keys
-                              // or it might be a primitive value directly
-                              let actualValue: any = propValue;
-                              if (
-                                propValue &&
-                                typeof propValue === "object" &&
-                                "value" in propValue
-                              ) {
-                                actualValue = (propValue as any).value;
-                              }
+                          debugConsole.log(
+                            `[IMPORT]     Clean property name: "${cleanPropName}"`,
+                          );
 
-                              newNode.setProperties({
-                                [cleanPropName]: actualValue,
-                              });
-                            } catch (error) {
-                              const errorMessage = `Failed to set component property "${cleanPropName}" for internal instance "${nodeData.name}": ${error}`;
-                              debugConsole.error(errorMessage);
-                              throw new Error(errorMessage);
-                            }
+                          // Check if property exists - Figma may return property keys with or without ID suffixes
+                          // Try exact match first, then try matching by base name
+                          let matchingPropKey: string | undefined = undefined;
+                          if (componentProperties[propName]) {
+                            // Exact match (with ID suffix)
+                            matchingPropKey = propName;
+                            debugConsole.log(
+                              `[IMPORT]     ✓ Exact match found: "${propName}"`,
+                            );
+                          } else if (componentProperties[cleanPropName]) {
+                            // Match by clean name (without ID suffix)
+                            matchingPropKey = cleanPropName;
+                            debugConsole.log(
+                              `[IMPORT]     ✓ Clean name match found: "${cleanPropName}"`,
+                            );
                           } else {
-                            // Expected: Component property definitions cannot be recreated via Figma API
-                            // This is a known limitation - properties are skipped silently
-                            // debugConsole.warning(
-                            //   `Skipping component property "${propName}" for internal instance "${nodeData.name}" - property does not exist on recreated component`,
-                            // );
+                            // Try to find a property that starts with the clean name (in case ID format differs)
+                            matchingPropKey = Object.keys(
+                              componentProperties,
+                            ).find(
+                              (key) => key.split("#")[0] === cleanPropName,
+                            );
+                            if (matchingPropKey) {
+                              debugConsole.log(
+                                `[IMPORT]     ✓ Base name match found: "${matchingPropKey}" (from "${cleanPropName}")`,
+                              );
+                            } else {
+                              debugConsole.warning(
+                                `[IMPORT]     ✗ No match found for "${propName}" (clean: "${cleanPropName}")`,
+                              );
+                            }
+                          }
+
+                          if (matchingPropKey) {
+                            // Extract the actual value from the property object
+                            // Component properties from getProperties() might be stored as primitive values
+                            // or as objects with 'value' and other keys
+                            const actualValue =
+                              propValue &&
+                              typeof propValue === "object" &&
+                              "value" in propValue
+                                ? propValue.value
+                                : propValue;
+                            debugConsole.log(
+                              `[IMPORT]     Extracted value: ${JSON.stringify(actualValue)} (from ${typeof propValue === "object" && "value" in propValue ? "object.value" : "direct"})`,
+                            );
+                            // Use the matching property key (which may have ID suffix) for setProperties
+                            // Figma API requires the exact property key as it exists on the component
+                            propertiesToSet[matchingPropKey] = actualValue;
+                            debugConsole.log(
+                              `[IMPORT]     Added to propertiesToSet: "${matchingPropKey}" = ${JSON.stringify(actualValue)}`,
+                            );
+                          } else {
+                            debugConsole.warning(
+                              `[IMPORT]     Component property "${cleanPropName}" (from "${propName}") does not exist on component "${instanceEntry.componentName}" for internal instance "${nodeData.name}". Available properties: ${Object.keys(componentProperties).join(", ") || "none"}`,
+                            );
                           }
                         }
+
+                        // Set all properties at once (more efficient and reliable)
+                        if (Object.keys(propertiesToSet).length > 0) {
+                          debugConsole.log(
+                            `[IMPORT]   Ready to set ${Object.keys(propertiesToSet).length} property/properties: ${JSON.stringify(Object.keys(propertiesToSet))}`,
+                          );
+                          debugConsole.log(
+                            `[IMPORT]   Properties to set (with values): ${JSON.stringify(propertiesToSet)}`,
+                          );
+                          try {
+                            newNode.setProperties(propertiesToSet);
+                            debugConsole.log(
+                              `[IMPORT]   ✓ Successfully set component properties for internal instance "${nodeData.name}": ${Object.keys(propertiesToSet).join(", ")}`,
+                            );
+                          } catch (error) {
+                            const errorMessage = `Failed to set component properties for internal instance "${nodeData.name}": ${error}`;
+                            debugConsole.error(`[IMPORT]   ✗ ${errorMessage}`);
+                            debugConsole.error(
+                              `[IMPORT]     Properties attempted: ${JSON.stringify(propertiesToSet)}`,
+                            );
+                            debugConsole.error(
+                              `[IMPORT]     Available properties: ${JSON.stringify(Object.keys(componentProperties))}`,
+                            );
+                            throw new Error(errorMessage);
+                          }
+                        } else {
+                          debugConsole.warning(
+                            `[IMPORT]   No properties to set for internal instance "${nodeData.name}" (all properties failed to match)`,
+                          );
+                        }
+                      } else {
+                        debugConsole.warning(
+                          `[IMPORT]   No component properties found on component for internal instance "${nodeData.name}"`,
+                        );
                       }
                     } else {
                       debugConsole.warning(
@@ -2347,6 +2456,26 @@ export async function recreateNodeFromData(
             return null;
           };
 
+          const isPageHeaderInitial =
+            nodeData.name === ".UI kit / Page header" ||
+            instanceEntry.componentName === ".UI kit / Page header";
+          if (isPageHeaderInitial) {
+            debugConsole.log(
+              `[DEBUG .UI kit / Page header] === INITIAL PROCESSING ===`,
+            );
+            debugConsole.log(
+              `[DEBUG .UI kit / Page header] Node data name: "${nodeData.name}"`,
+            );
+            debugConsole.log(
+              `[DEBUG .UI kit / Page header] Instance entry componentName: "${instanceEntry.componentName}"`,
+            );
+            debugConsole.log(
+              `[DEBUG .UI kit / Page header] Instance entry componentProperties: ${JSON.stringify(instanceEntry.componentProperties, null, 2)}`,
+            );
+            debugConsole.log(
+              `[DEBUG .UI kit / Page header] Instance entry (full): ${JSON.stringify(instanceEntry, null, 2)}`,
+            );
+          }
           debugConsole.log(
             `  Looking for component "${instanceEntry.componentName}" on page "${instanceEntry.componentPageName}"${instanceEntry.path && instanceEntry.path.length > 0 ? ` at path [${instanceEntry.path.join(" → ")}]` : " at page root"}${instanceEntry.componentGuid ? ` (GUID: ${instanceEntry.componentGuid.substring(0, 8)}...)` : ""}`,
           );
@@ -2423,6 +2552,17 @@ export async function recreateNodeFromData(
 
           if (!targetComponent) {
             // Component not found - defer resolution (may not be created yet due to circular reference)
+            const isPageHeader =
+              nodeData.name === ".UI kit / Page header" ||
+              instanceEntry.componentName === ".UI kit / Page header";
+            if (isPageHeader) {
+              debugConsole.log(
+                `[DEBUG .UI kit / Page header] Deferring instance "${nodeData.name}" - component "${instanceEntry.componentName}" not found on page "${instanceEntry.componentPageName}"`,
+              );
+              debugConsole.log(
+                `[DEBUG .UI kit / Page header] Instance entry has componentProperties: ${JSON.stringify(instanceEntry.componentProperties)}`,
+              );
+            }
             debugConsole.log(
               `  Deferring normal instance "${nodeData.name}" - component "${instanceEntry.componentName}" not found on page "${instanceEntry.componentPageName}" (may not be created yet due to circular reference)`,
             );
@@ -2566,9 +2706,25 @@ export async function recreateNodeFromData(
             instanceEntry.componentProperties &&
             Object.keys(instanceEntry.componentProperties).length > 0
           ) {
+            debugConsole.log(
+              `[IMPORT] Normal instance "${nodeData.name}" -> Processing ${Object.keys(instanceEntry.componentProperties).length} component property/properties from entry`,
+            );
+            debugConsole.log(
+              `[IMPORT]   Properties in entry: ${JSON.stringify(Object.keys(instanceEntry.componentProperties))}`,
+            );
+            for (const [propName, propValue] of Object.entries(
+              instanceEntry.componentProperties,
+            )) {
+              debugConsole.log(
+                `[IMPORT]   Entry property "${propName}": ${JSON.stringify(propValue)}`,
+              );
+            }
             try {
               const mainComponent = await newNode.getMainComponentAsync();
               if (mainComponent) {
+                debugConsole.log(
+                  `[IMPORT]   Main component found: "${mainComponent.name}" (type: ${(mainComponent as any).type})`,
+                );
                 // If the main component is a variant (inside a COMPONENT_SET),
                 // get property definitions from the parent COMPONENT_SET instead
                 // Variant components don't have componentPropertyDefinitions - only COMPONENT_SETs and non-variant components do
@@ -2580,6 +2736,9 @@ export async function recreateNodeFromData(
                     mainComponent as unknown as ComponentSetNode;
                   componentProperties =
                     componentSet.componentPropertyDefinitions;
+                  debugConsole.log(
+                    `[IMPORT]   Got properties from COMPONENT_SET: ${componentProperties ? Object.keys(componentProperties).length : 0} property/properties`,
+                  );
                 } else if (
                   mainComponentType === "COMPONENT" &&
                   mainComponent.parent &&
@@ -2588,20 +2747,35 @@ export async function recreateNodeFromData(
                   // Instance was created from a variant - get properties from parent COMPONENT_SET
                   componentProperties =
                     mainComponent.parent.componentPropertyDefinitions;
+                  debugConsole.log(
+                    `[IMPORT]   Got properties from parent COMPONENT_SET: ${componentProperties ? Object.keys(componentProperties).length : 0} property/properties`,
+                  );
                 } else if (mainComponentType === "COMPONENT") {
                   // Non-variant component - can access componentPropertyDefinitions directly
                   componentProperties =
                     mainComponent.componentPropertyDefinitions;
+                  debugConsole.log(
+                    `[IMPORT]   Got properties from COMPONENT: ${componentProperties ? Object.keys(componentProperties).length : 0} property/properties`,
+                  );
                 }
 
                 // Only set properties that exist on the component
                 if (componentProperties) {
+                  debugConsole.log(
+                    `[IMPORT]   Available properties on component: ${JSON.stringify(Object.keys(componentProperties))}`,
+                  );
                   const propertiesToSet: Record<string, any> = {};
                   for (const [propName, propValue] of Object.entries(
                     instanceEntry.componentProperties,
                   )) {
+                    debugConsole.log(
+                      `[IMPORT]   Processing entry property "${propName}" with value: ${JSON.stringify(propValue)}`,
+                    );
                     // Property names in JSON may include IDs - extract clean name
                     const cleanPropName = propName.split("#")[0];
+                    debugConsole.log(
+                      `[IMPORT]     Clean property name: "${cleanPropName}"`,
+                    );
 
                     // Check if property exists - Figma may return property keys with or without ID suffixes
                     // Try exact match first, then try matching by base name
@@ -2609,14 +2783,29 @@ export async function recreateNodeFromData(
                     if (componentProperties[propName]) {
                       // Exact match (with ID suffix)
                       matchingPropKey = propName;
+                      debugConsole.log(
+                        `[IMPORT]     ✓ Exact match found: "${propName}"`,
+                      );
                     } else if (componentProperties[cleanPropName]) {
                       // Match by clean name (without ID suffix)
                       matchingPropKey = cleanPropName;
+                      debugConsole.log(
+                        `[IMPORT]     ✓ Clean name match found: "${cleanPropName}"`,
+                      );
                     } else {
                       // Try to find a property that starts with the clean name (in case ID format differs)
                       matchingPropKey = Object.keys(componentProperties).find(
                         (key) => key.split("#")[0] === cleanPropName,
                       );
+                      if (matchingPropKey) {
+                        debugConsole.log(
+                          `[IMPORT]     ✓ Base name match found: "${matchingPropKey}" (from "${cleanPropName}")`,
+                        );
+                      } else {
+                        debugConsole.warning(
+                          `[IMPORT]     ✗ No match found for "${propName}" (clean: "${cleanPropName}")`,
+                        );
+                      }
                     }
 
                     if (matchingPropKey) {
@@ -2629,53 +2818,154 @@ export async function recreateNodeFromData(
                         "value" in propValue
                           ? propValue.value
                           : propValue;
+                      debugConsole.log(
+                        `[IMPORT]     Extracted value: ${JSON.stringify(actualValue)} (from ${typeof propValue === "object" && "value" in propValue ? "object.value" : "direct"})`,
+                      );
                       // Use the matching property key (which may have ID suffix) for setProperties
                       // Figma API requires the exact property key as it exists on the component
                       propertiesToSet[matchingPropKey] = actualValue;
+                      debugConsole.log(
+                        `[IMPORT]     Added to propertiesToSet: "${matchingPropKey}" = ${JSON.stringify(actualValue)}`,
+                      );
                     } else {
                       debugConsole.warning(
-                        `Component property "${cleanPropName}" (from "${propName}") does not exist on component "${instanceEntry.componentName}" for normal instance "${nodeData.name}". Available properties: ${Object.keys(componentProperties).join(", ") || "none"}`,
+                        `[IMPORT]     Component property "${cleanPropName}" (from "${propName}") does not exist on component "${instanceEntry.componentName}" for normal instance "${nodeData.name}". Available properties: ${Object.keys(componentProperties).join(", ") || "none"}`,
                       );
                     }
                   }
 
                   // Set all properties at once
                   if (Object.keys(propertiesToSet).length > 0) {
+                    debugConsole.log(
+                      `[IMPORT]   Ready to set ${Object.keys(propertiesToSet).length} property/properties: ${JSON.stringify(Object.keys(propertiesToSet))}`,
+                    );
+                    debugConsole.log(
+                      `[IMPORT]   Properties to set (with values): ${JSON.stringify(propertiesToSet)}`,
+                    );
                     try {
-                      // Log what we're trying to set and what's available
-                      debugConsole.log(
-                        `  Attempting to set component properties for normal instance "${nodeData.name}": ${Object.keys(propertiesToSet).join(", ")}`,
-                      );
-                      debugConsole.log(
-                        `  Available component properties: ${Object.keys(componentProperties).join(", ")}`,
-                      );
                       newNode.setProperties(propertiesToSet);
                       debugConsole.log(
-                        `  ✓ Successfully set component properties for normal instance "${nodeData.name}": ${Object.keys(propertiesToSet).join(", ")}`,
+                        `[IMPORT]   ✓ Successfully set component properties for normal instance "${nodeData.name}": ${Object.keys(propertiesToSet).join(", ")}`,
                       );
+                      // Verify properties were actually set by reading them back
+                      try {
+                        if (
+                          typeof (newNode as any).getProperties === "function"
+                        ) {
+                          const verifyProps = await (
+                            newNode as any
+                          ).getProperties();
+                          if (verifyProps && verifyProps.componentProperties) {
+                            const verifiedValues: Record<string, any> = {};
+                            for (const [key, value] of Object.entries(
+                              propertiesToSet,
+                            )) {
+                              const verifyValue =
+                                verifyProps.componentProperties[key];
+                              verifiedValues[key] = verifyValue;
+                              if (
+                                JSON.stringify(verifyValue) !==
+                                JSON.stringify(value)
+                              ) {
+                                debugConsole.warning(
+                                  `[IMPORT]   ⚠ Property "${key}" verification mismatch: expected ${JSON.stringify(value)}, got ${JSON.stringify(verifyValue)}`,
+                                );
+                              } else {
+                                debugConsole.log(
+                                  `[IMPORT]   ✓ Verified property "${key}" = ${JSON.stringify(verifyValue)}`,
+                                );
+                              }
+                            }
+                            debugConsole.log(
+                              `[IMPORT]   Verification complete. All properties: ${JSON.stringify(verifiedValues)}`,
+                            );
+                          }
+                        } else {
+                          // Fallback: try direct access to componentProperties
+                          const directProps = (newNode as any)
+                            .componentProperties;
+                          if (directProps) {
+                            const verifiedValues: Record<string, any> = {};
+                            for (const [key, expectedValue] of Object.entries(
+                              propertiesToSet,
+                            )) {
+                              const actualProperty = directProps[key];
+                              // Extract the actual value from the property object
+                              // componentProperties returns objects like {type: "TEXT", value: "Logo"}
+                              // but we set just the value, so we need to compare actualProperty.value with expectedValue
+                              const actualValue =
+                                actualProperty &&
+                                typeof actualProperty === "object" &&
+                                "value" in actualProperty
+                                  ? actualProperty.value
+                                  : actualProperty;
+                              verifiedValues[key] = actualValue;
+                              if (actualProperty === undefined) {
+                                debugConsole.warning(
+                                  `[IMPORT]   ⚠ Property "${key}" not found in componentProperties after setting`,
+                                );
+                              } else if (
+                                JSON.stringify(actualValue) !==
+                                JSON.stringify(expectedValue)
+                              ) {
+                                debugConsole.warning(
+                                  `[IMPORT]   ⚠ Property "${key}" verification mismatch: expected ${JSON.stringify(expectedValue)}, got ${JSON.stringify(actualValue)} (from property object: ${JSON.stringify(actualProperty)})`,
+                                );
+                              } else {
+                                debugConsole.log(
+                                  `[IMPORT]   ✓ Verified property "${key}" = ${JSON.stringify(actualValue)}`,
+                                );
+                              }
+                            }
+                            debugConsole.log(
+                              `[IMPORT]   Verification complete. All properties: ${JSON.stringify(verifiedValues)}`,
+                            );
+                          } else {
+                            debugConsole.warning(
+                              `[IMPORT]   Could not access componentProperties for verification`,
+                            );
+                          }
+                        }
+                      } catch (verifyError) {
+                        debugConsole.warning(
+                          `[IMPORT]   Could not verify properties after setting: ${verifyError}`,
+                        );
+                      }
                     } catch (error) {
-                      debugConsole.warning(
-                        `Failed to set component properties for normal instance "${nodeData.name}": ${error}`,
+                      debugConsole.error(
+                        `[IMPORT]   ✗ Failed to set component properties for normal instance "${nodeData.name}": ${error}`,
                       );
-                      debugConsole.warning(
-                        `  Properties attempted: ${JSON.stringify(propertiesToSet)}`,
+                      debugConsole.error(
+                        `[IMPORT]     Properties attempted: ${JSON.stringify(propertiesToSet)}`,
                       );
-                      debugConsole.warning(
-                        `  Available properties: ${JSON.stringify(Object.keys(componentProperties))}`,
+                      debugConsole.error(
+                        `[IMPORT]     Available properties: ${JSON.stringify(Object.keys(componentProperties))}`,
                       );
                     }
+                  } else {
+                    debugConsole.warning(
+                      `[IMPORT]   No properties to set for normal instance "${nodeData.name}" (all properties failed to match)`,
+                    );
                   }
+                } else {
+                  debugConsole.warning(
+                    `[IMPORT]   No component properties found on main component "${mainComponent.name}" for normal instance "${nodeData.name}"`,
+                  );
                 }
               } else {
                 debugConsole.warning(
-                  `Cannot set component properties for normal instance "${nodeData.name}" - main component not found`,
+                  `[IMPORT]   Cannot set component properties for normal instance "${nodeData.name}" - main component not found`,
                 );
               }
             } catch (error) {
-              debugConsole.warning(
-                `Failed to set component properties for normal instance "${nodeData.name}": ${error}`,
+              debugConsole.error(
+                `[IMPORT]   Error setting component properties for normal instance "${nodeData.name}": ${error}`,
               );
             }
+          } else {
+            debugConsole.log(
+              `[IMPORT] Normal instance "${nodeData.name}" -> No component properties in entry`,
+            );
           }
 
           // Set instance size after properties are applied (properties might affect size)
@@ -4177,6 +4467,90 @@ export async function recreateNodeFromData(
         console.log("Could not set text characters: " + textError);
       }
     }
+
+    // Restore componentPropertyReferences if this node is inside a component
+    // componentPropertyReferences binds node properties to component properties
+    // Examples:
+    //   - TEXT nodes: { characters: "Component name#3041:0" } binds text content
+    //   - Any node: { visible: "Show element#3042:1" } binds visibility (BOOLEAN property)
+    //   - INSTANCE nodes: binds instance swap properties
+    if (
+      nodeData.componentPropertyReferences &&
+      typeof nodeData.componentPropertyReferences === "object"
+    ) {
+      debugConsole.log(
+        `  [BINDING] ${nodeData.type} node "${nodeData.name || "Unnamed"}" has componentPropertyReferences: ${JSON.stringify(nodeData.componentPropertyReferences)}`,
+      );
+      try {
+        // componentPropertyReferences maps node property names to component property names
+        // e.g., { characters: "Component name#3041:0" } for TEXT nodes
+        // e.g., { visible: "Show element#3042:1" } for any node with BOOLEAN property
+        // We need to map the old property name to the new property name (which may have a different ID suffix)
+        const componentPropertyRefs: Record<string, string> = {};
+        const parentComponent =
+          parentNode?.type === "COMPONENT" ? parentNode : null;
+
+        if (parentComponent) {
+          debugConsole.log(
+            `  [BINDING] Parent is a COMPONENT: "${parentComponent.name}"`,
+          );
+          // Get the component's property definitions to map old property names to new ones
+          const componentProps = parentComponent.componentPropertyDefinitions;
+
+          for (const [nodeProperty, oldPropName] of Object.entries(
+            nodeData.componentPropertyReferences,
+          )) {
+            if (typeof oldPropName === "string") {
+              // Extract clean property name (without ID suffix)
+              const cleanPropName = oldPropName.split("#")[0];
+
+              // Find matching property in the component (may have different ID suffix)
+              let matchingPropKey: string | undefined = undefined;
+              if (componentProps[oldPropName]) {
+                // Exact match
+                matchingPropKey = oldPropName;
+              } else if (componentProps[cleanPropName]) {
+                // Clean name match
+                matchingPropKey = cleanPropName;
+              } else {
+                // Base name match
+                matchingPropKey = Object.keys(componentProps).find(
+                  (key) => key.split("#")[0] === cleanPropName,
+                );
+              }
+
+              if (matchingPropKey) {
+                componentPropertyRefs[nodeProperty] = matchingPropKey;
+                debugConsole.log(
+                  `  [BINDING] Restored componentPropertyReferences for ${nodeData.type} node "${nodeData.name || "Unnamed"}": ${nodeProperty} -> ${matchingPropKey}`,
+                );
+              } else {
+                debugConsole.warning(
+                  `  [BINDING] Could not find matching component property for "${oldPropName}" in component "${parentComponent.name}"`,
+                );
+              }
+            }
+          }
+
+          if (Object.keys(componentPropertyRefs).length > 0) {
+            // NOTE: componentPropertyReferences will be restored in post-processing
+            // after all children are added to the component. This ensures nodes are
+            // "symbol sublayers" (children of a Component) before we try to set bindings.
+            debugConsole.log(
+              `  [BINDING] Will restore componentPropertyReferences in post-processing: ${JSON.stringify(componentPropertyRefs)}`,
+            );
+          }
+        } else {
+          debugConsole.warning(
+            `  [BINDING] Parent is not a COMPONENT (type: ${parentNode?.type || "unknown"}) for ${nodeData.type} node "${nodeData.name || "Unnamed"}" - cannot restore componentPropertyReferences`,
+          );
+        }
+      } catch (refError) {
+        debugConsole.warning(
+          `  [BINDING] Could not restore componentPropertyReferences for ${nodeData.type} node "${nodeData.name || "Unnamed"}": ${refError}`,
+        );
+      }
+    }
   }
 
   // ISSUE #2: Set selectionColor property (node-level property, not on fills)
@@ -4560,6 +4934,106 @@ export async function recreateNodeFromData(
         }
         // If childNode.parent === newNode, it's already correctly parented, so do nothing
       }
+    }
+  }
+
+  // Post-processing: Restore componentPropertyReferences for COMPONENT nodes
+  // This must happen AFTER all children are added, when nodes are "symbol sublayers"
+  if (newNode.type === "COMPONENT") {
+    const bindingData = componentBindingData.get(newNode.id);
+    if (!bindingData) {
+      // No binding data for this component, skip post-processing
+      // (This is normal for components without properties or that were reused from first pass)
+    } else {
+      const { propertyIdMapping, nodeData: componentNodeData } = bindingData;
+
+      // Recursively restore bindings for all children
+      const restoreBindings = (node: SceneNode, nodeData: any): void => {
+        // Check if this node has componentPropertyReferences in the original data
+        if (
+          nodeData.componentPropertyReferences &&
+          typeof nodeData.componentPropertyReferences === "object"
+        ) {
+          const componentPropertyRefs: Record<string, string> = {};
+
+          for (const [nodeProperty, oldPropId] of Object.entries(
+            nodeData.componentPropertyReferences,
+          )) {
+            if (typeof oldPropId === "string") {
+              // Look up the new property ID using the old property ID
+              const newPropId = propertyIdMapping.get(oldPropId);
+              if (newPropId) {
+                componentPropertyRefs[nodeProperty] = newPropId;
+                debugConsole.log(
+                  `  [BINDING] Restoring binding for ${node.type} node "${node.name || "Unnamed"}": ${nodeProperty} -> ${newPropId} (was ${oldPropId})`,
+                );
+              } else {
+                // Try matching by clean name (without ID suffix)
+                const cleanPropName = oldPropId.split("#")[0];
+                for (const [oldId, newId] of propertyIdMapping.entries()) {
+                  if (oldId.split("#")[0] === cleanPropName) {
+                    componentPropertyRefs[nodeProperty] = newId;
+                    debugConsole.log(
+                      `  [BINDING] Restoring binding for ${node.type} node "${node.name || "Unnamed"}": ${nodeProperty} -> ${newId} (matched by clean name "${cleanPropName}")`,
+                    );
+                    break;
+                  }
+                }
+              }
+            }
+          }
+
+          // Set the binding now that the node is a child of a Component (symbol sublayer)
+          if (Object.keys(componentPropertyRefs).length > 0) {
+            try {
+              (node as any).componentPropertyReferences = componentPropertyRefs;
+              debugConsole.log(
+                `  [BINDING] ✓ Successfully restored componentPropertyReferences for ${node.type} node "${node.name || "Unnamed"}": ${JSON.stringify(componentPropertyRefs)}`,
+              );
+            } catch (error) {
+              debugConsole.warning(
+                `  [BINDING] ✗ Failed to restore componentPropertyReferences for ${node.type} node "${node.name || "Unnamed"}": ${error}`,
+              );
+            }
+          }
+        }
+
+        // Recursively process children
+        if (
+          "children" in node &&
+          nodeData.children &&
+          Array.isArray(nodeData.children)
+        ) {
+          // Match children by index (assuming order is preserved)
+          for (
+            let i = 0;
+            i < node.children.length && i < nodeData.children.length;
+            i++
+          ) {
+            const child = node.children[i];
+            const childData = nodeData.children[i];
+            restoreBindings(child, childData);
+          }
+        }
+      };
+
+      // Start restoration from the component's children
+      if (
+        "children" in newNode &&
+        componentNodeData.children &&
+        Array.isArray(componentNodeData.children)
+      ) {
+        for (
+          let i = 0;
+          i < newNode.children.length && i < componentNodeData.children.length;
+          i++
+        ) {
+          restoreBindings(newNode.children[i], componentNodeData.children[i]);
+        }
+      }
+
+      // Clean up binding data from Map after use
+      componentBindingData.delete(newNode.id);
     }
   }
 
@@ -6499,96 +6973,114 @@ async function createPageAndRecreateStructure(
   debugConsole.log("Recreating page structure...");
   const pageData = expandedJsonData.pageData;
 
-  // Apply page-level properties (like backgrounds) if they exist
-  // Pages have backgrounds property for background color
-  if (pageData.backgrounds !== undefined) {
-    try {
-      newPage.backgrounds = pageData.backgrounds;
+  // Wrap structure recreation in try-catch so we always return the page
+  // even if an error occurs during structure recreation
+  let structureError: string | undefined = undefined;
+  try {
+    // Apply page-level properties (like backgrounds) if they exist
+    // Pages have backgrounds property for background color
+    if (pageData.backgrounds !== undefined) {
+      try {
+        newPage.backgrounds = pageData.backgrounds;
+        debugConsole.log(
+          `Set page background: ${JSON.stringify(pageData.backgrounds)}`,
+        );
+      } catch (error) {
+        debugConsole.warning(`Failed to set page background: ${error}`);
+      }
+    }
+
+    // Normalize structure types: expand numeric types to strings recursively
+    // This handles cases where the type enum wasn't expanded during JSON expansion
+    normalizeStructureTypes(pageData);
+
+    const nodeIdMapping = new Map<string, any>();
+
+    // Helper function to recursively find all component IDs in the page data
+    const findAllComponentIds = (node: any, ids: string[] = []): string[] => {
+      if (node.type === "COMPONENT" && node.id) {
+        ids.push(node.id);
+      }
+      if (node.children && Array.isArray(node.children)) {
+        for (const child of node.children) {
+          if (!child._truncated) {
+            findAllComponentIds(child, ids);
+          }
+        }
+      }
+      return ids;
+    };
+
+    // Log all component IDs found in the page data for debugging
+    const allComponentIds = findAllComponentIds(pageData);
+    debugConsole.log(
+      `Found ${allComponentIds.length} COMPONENT node(s) in page data`,
+    );
+    if (allComponentIds.length > 0) {
       debugConsole.log(
-        `Set page background: ${JSON.stringify(pageData.backgrounds)}`,
+        `Component IDs in page data (first 20): ${allComponentIds
+          .slice(0, 20)
+          .map((id) => id.substring(0, 8) + "...")
+          .join(", ")}`,
       );
-    } catch (error) {
-      debugConsole.warning(`Failed to set page background: ${error}`);
+      // Also check if we can find the specific ID we're looking for later
+      // Store this for later reference
+      (pageData as any)._allComponentIds = allComponentIds;
     }
-  }
 
-  // Normalize structure types: expand numeric types to strings recursively
-  // This handles cases where the type enum wasn't expanded during JSON expansion
-  normalizeStructureTypes(pageData);
-
-  const nodeIdMapping = new Map<string, any>();
-
-  // Helper function to recursively find all component IDs in the page data
-  const findAllComponentIds = (node: any, ids: string[] = []): string[] => {
-    if (node.type === "COMPONENT" && node.id) {
-      ids.push(node.id);
-    }
-    if (node.children && Array.isArray(node.children)) {
-      for (const child of node.children) {
-        if (!child._truncated) {
-          findAllComponentIds(child, ids);
+    if (pageData.children && Array.isArray(pageData.children)) {
+      for (const childData of pageData.children) {
+        const childNode = await recreateNodeFromData(
+          childData,
+          newPage,
+          variableTable,
+          collectionTable,
+          instanceTable,
+          recognizedVariables,
+          nodeIdMapping,
+          false, // isRemoteStructure: false - we're creating the main page
+          remoteComponentMap,
+          deferredInstances,
+          pageData, // parentNodeData - pass the page's nodeData so children can check for auto-layout
+          recognizedCollections,
+          placeholderFrameIds,
+          undefined, // currentPlaceholderId - page root is not inside a placeholder
+          styleMapping, // Pass styleMapping to apply styles
+        );
+        if (childNode) {
+          newPage.appendChild(childNode);
         }
       }
     }
-    return ids;
-  };
 
-  // Log all component IDs found in the page data for debugging
-  const allComponentIds = findAllComponentIds(pageData);
-  debugConsole.log(
-    `Found ${allComponentIds.length} COMPONENT node(s) in page data`,
-  );
-  if (allComponentIds.length > 0) {
-    debugConsole.log(
-      `Component IDs in page data (first 20): ${allComponentIds
-        .slice(0, 20)
-        .map((id) => id.substring(0, 8) + "...")
-        .join(", ")}`,
-    );
-    // Also check if we can find the specific ID we're looking for later
-    // Store this for later reference
-    (pageData as any)._allComponentIds = allComponentIds;
-  }
+    debugConsole.log("Page structure recreated successfully");
 
-  if (pageData.children && Array.isArray(pageData.children)) {
-    for (const childData of pageData.children) {
-      const childNode = await recreateNodeFromData(
-        childData,
-        newPage,
-        variableTable,
-        collectionTable,
-        instanceTable,
-        recognizedVariables,
-        nodeIdMapping,
-        false, // isRemoteStructure: false - we're creating the main page
-        remoteComponentMap,
-        deferredInstances,
-        pageData, // parentNodeData - pass the page's nodeData so children can check for auto-layout
-        recognizedCollections,
-        placeholderFrameIds,
-        undefined, // currentPlaceholderId - page root is not inside a placeholder
-        styleMapping, // Pass styleMapping to apply styles
+    // Third pass: Set variant properties on all instances now that component sets are created
+    // This is needed because instances are created before component sets are combined,
+    // so variant properties can't be set until after component sets exist
+    if (instanceTable) {
+      debugConsole.log(
+        "Third pass: Setting variant properties on instances...",
       );
-      if (childNode) {
-        newPage.appendChild(childNode);
-      }
+      await setVariantPropertiesOnInstances(
+        newPage,
+        instanceTable,
+        nodeIdMapping,
+      );
+    }
+  } catch (error) {
+    // Error occurred during structure recreation, but page was already created
+    // Log the error and continue to return the page so it can be tracked
+    structureError = error instanceof Error ? error.message : String(error);
+    debugConsole.error(
+      `Error during page structure recreation (page was created): ${structureError}`,
+    );
+    if (error instanceof Error && error.stack) {
+      debugConsole.error(`Stack trace: ${error.stack}`);
     }
   }
 
-  debugConsole.log("Page structure recreated successfully");
-
-  // Third pass: Set variant properties on all instances now that component sets are created
-  // This is needed because instances are created before component sets are combined,
-  // so variant properties can't be set until after component sets exist
-  if (instanceTable) {
-    debugConsole.log("Third pass: Setting variant properties on instances...");
-    await setVariantPropertiesOnInstances(
-      newPage,
-      instanceTable,
-      nodeIdMapping,
-    );
-  }
-
+  // Always set page metadata and apply construction icon, even if structure recreation failed
   const pageMetadata = {
     _ver: 1,
     id: metadata.guid,
@@ -6625,9 +7117,13 @@ async function createPageAndRecreateStructure(
     }
   }
 
+  // Always return the page, even if structure recreation failed
+  // This ensures the page is tracked even if an error occurred
   return {
-    success: true,
+    success: !structureError, // success is false if there was an error
     page: newPage,
+    pageId: newPage.id, // Always include pageId for tracking
+    error: structureError, // Include error if structure recreation failed
     deferredInstances: deferredInstances || undefined,
   };
 }
@@ -6646,6 +7142,8 @@ export async function importPage(
   if (shouldClearConsole) {
     debugConsole.clear();
   }
+  // Clear component binding data Map at the start of each import
+  componentBindingData.clear();
   debugConsole.log("=== Starting Page Import ===");
 
   const newlyCreatedCollections: VariableCollection[] = [];
@@ -6656,6 +7154,8 @@ export async function importPage(
     version: number | undefined;
     pageId: string;
   }> = [];
+  // Track created page ID immediately after creation so it's included even if error occurs later
+  let createdPageId: string | null = null;
 
   try {
     const jsonData = data.jsonData;
@@ -6920,6 +7420,12 @@ export async function importPage(
 
     if (!pageResult.success) {
       debugConsole.error(pageResult.error!);
+      // If page was created but error occurred later, track it
+      if (pageResult.pageId) {
+        createdPageId = pageResult.pageId;
+      } else if (pageResult.page) {
+        createdPageId = pageResult.page.id;
+      }
       return {
         type: "importPage",
         success: false,
@@ -6930,6 +7436,8 @@ export async function importPage(
     }
 
     const newPage = pageResult.page!;
+    // Track page ID immediately after creation so it's included even if error occurs later
+    createdPageId = pageResult.pageId || newPage.id;
     const totalVariables =
       recognizedVariables.size + newlyCreatedVariables.length;
 
@@ -7021,7 +7529,8 @@ export async function importPage(
       importedAt,
       error: errorMessage,
       logs: debugLogs,
-      createdPageIds: [],
+      // Include page ID if it was created before the error occurred
+      createdPageIds: createdPageId ? [createdPageId] : [],
       createdCollectionIds: newlyCreatedCollections.map((c) => c.id),
       createdVariableIds: newlyCreatedVariables.map((v) => v.id),
       createdStyleIds: newlyCreatedStyles.map((s) => s.id),
@@ -7873,22 +8382,510 @@ export async function resolveDeferredNormalInstances(
             }
 
             if (componentProperties) {
+              // Check if this is the ".UI kit / Page header" instance we're debugging
+              const isPageHeader =
+                nodeData.name === ".UI kit / Page header" ||
+                instanceEntry.componentName === ".UI kit / Page header";
+              if (isPageHeader) {
+                debugConsole.log(
+                  `[DEBUG .UI kit / Page header] === RESOLVING DEFERRED INSTANCE ===`,
+                );
+                debugConsole.log(
+                  `[DEBUG .UI kit / Page header] Instance name: "${nodeData.name}"`,
+                );
+                debugConsole.log(
+                  `[DEBUG .UI kit / Page header] Component name: "${instanceEntry.componentName}"`,
+                );
+                debugConsole.log(
+                  `[DEBUG .UI kit / Page header] Instance entry componentProperties (full): ${JSON.stringify(instanceEntry.componentProperties, null, 2)}`,
+                );
+                debugConsole.log(
+                  `[DEBUG .UI kit / Page header] Main component: ${mainComponent.name} (type: ${mainComponentType})`,
+                );
+                debugConsole.log(
+                  `[DEBUG .UI kit / Page header] Component property definitions (full): ${JSON.stringify(componentProperties, null, 2)}`,
+                );
+              }
+              debugConsole.log(
+                `[IMPORT] Deferred instance "${nodeData.name}" -> Processing ${Object.keys(instanceEntry.componentProperties || {}).length} component property/properties from entry`,
+              );
+              debugConsole.log(
+                `[IMPORT]   Properties in entry: ${JSON.stringify(Object.keys(instanceEntry.componentProperties || {}))}`,
+              );
+              debugConsole.log(
+                `[IMPORT]   Available properties on component: ${JSON.stringify(Object.keys(componentProperties))}`,
+              );
+              const propertiesToSet: Record<string, any> = {};
               for (const [propName, propValue] of Object.entries(
                 instanceEntry.componentProperties,
               )) {
+                debugConsole.log(
+                  `[IMPORT]   Processing entry property "${propName}" with value: ${JSON.stringify(propValue)}`,
+                );
+                // Property names in JSON may include IDs - extract clean name
                 const cleanPropName = propName.split("#")[0];
-                if (componentProperties[cleanPropName]) {
-                  try {
-                    instanceNode.setProperties({
-                      [cleanPropName]: propValue as string | boolean,
-                    });
-                  } catch (error) {
+                debugConsole.log(
+                  `[IMPORT]     Clean property name: "${cleanPropName}"`,
+                );
+
+                // Check if property exists - Figma may return property keys with or without ID suffixes
+                // Try exact match first, then try matching by base name
+                let matchingPropKey: string | undefined = undefined;
+                if (componentProperties[propName]) {
+                  // Exact match (with ID suffix)
+                  matchingPropKey = propName;
+                  debugConsole.log(
+                    `[IMPORT]     ✓ Exact match found: "${propName}"`,
+                  );
+                } else if (componentProperties[cleanPropName]) {
+                  // Match by clean name (without ID suffix)
+                  matchingPropKey = cleanPropName;
+                  debugConsole.log(
+                    `[IMPORT]     ✓ Clean name match found: "${cleanPropName}"`,
+                  );
+                } else {
+                  // Try to find a property that starts with the clean name (in case ID format differs)
+                  matchingPropKey = Object.keys(componentProperties).find(
+                    (key) => key.split("#")[0] === cleanPropName,
+                  );
+                  if (matchingPropKey) {
+                    debugConsole.log(
+                      `[IMPORT]     ✓ Base name match found: "${matchingPropKey}" (from "${cleanPropName}")`,
+                    );
+                  } else {
                     debugConsole.warning(
-                      `Failed to set component property "${cleanPropName}" for resolved instance "${nodeData.name}": ${error}`,
+                      `[IMPORT]     ✗ No match found for "${propName}" (clean: "${cleanPropName}")`,
+                    );
+                  }
+                }
+
+                if (matchingPropKey) {
+                  // Extract the actual value from the property object
+                  // Component properties from getProperties() might be stored as primitive values
+                  // or as objects with 'value' and other keys
+                  const actualValue =
+                    propValue !== null &&
+                    propValue !== undefined &&
+                    typeof propValue === "object" &&
+                    "value" in propValue
+                      ? (propValue as any).value
+                      : propValue;
+                  debugConsole.log(
+                    `[IMPORT]     Extracted value: ${JSON.stringify(actualValue)} (from ${propValue !== null && propValue !== undefined && typeof propValue === "object" && "value" in propValue ? "object.value" : "direct"})`,
+                  );
+                  // Use the matching property key (which may have ID suffix) for setProperties
+                  // Figma API requires the exact property key as it exists on the component
+                  propertiesToSet[matchingPropKey] = actualValue;
+                  debugConsole.log(
+                    `[IMPORT]     Added to propertiesToSet: "${matchingPropKey}" = ${JSON.stringify(actualValue)}`,
+                  );
+                } else {
+                  debugConsole.warning(
+                    `[IMPORT]     Component property "${cleanPropName}" (from "${propName}") does not exist on component "${instanceEntry.componentName}" for resolved deferred instance "${nodeData.name}". Available properties: ${Object.keys(componentProperties).join(", ") || "none"}`,
+                  );
+                }
+              }
+
+              // Set all properties at once
+              // IMPORTANT: Set properties BEFORE updating children to ensure TEXT properties
+              // are properly bound to text nodes when children are updated
+              if (Object.keys(propertiesToSet).length > 0) {
+                if (isPageHeader) {
+                  debugConsole.log(
+                    `[DEBUG .UI kit / Page header] === ABOUT TO SET PROPERTIES ===`,
+                  );
+                  debugConsole.log(
+                    `[DEBUG .UI kit / Page header] Instance node ID: ${instanceNode.id}`,
+                  );
+                  debugConsole.log(
+                    `[DEBUG .UI kit / Page header] Instance node name: "${instanceNode.name}"`,
+                  );
+                  debugConsole.log(
+                    `[DEBUG .UI kit / Page header] Properties to set (full): ${JSON.stringify(propertiesToSet, null, 2)}`,
+                  );
+                  debugConsole.log(
+                    `[DEBUG .UI kit / Page header] Instance node type: ${instanceNode.type}`,
+                  );
+                  // Don't access mainComponent directly in dynamic-page context - use getMainComponentAsync instead
+                  try {
+                    const mainComp = await instanceNode.getMainComponentAsync();
+                    debugConsole.log(
+                      `[DEBUG .UI kit / Page header] Main component: ${mainComp?.name || "null"}`,
+                    );
+                  } catch {
+                    debugConsole.log(
+                      `[DEBUG .UI kit / Page header] Main component: (could not access)`,
+                    );
+                  }
+                }
+                debugConsole.log(
+                  `[IMPORT]   Ready to set ${Object.keys(propertiesToSet).length} property/properties: ${JSON.stringify(Object.keys(propertiesToSet))}`,
+                );
+                debugConsole.log(
+                  `[IMPORT]   Properties to set (with values): ${JSON.stringify(propertiesToSet)}`,
+                );
+                try {
+                  // Set properties first, before updating children
+                  // This ensures TEXT properties are available when text nodes are processed
+                  if (isPageHeader) {
+                    debugConsole.log(
+                      `[DEBUG .UI kit / Page header] Calling instanceNode.setProperties()...`,
+                    );
+                  }
+                  instanceNode.setProperties(propertiesToSet);
+                  if (isPageHeader) {
+                    debugConsole.log(
+                      `[DEBUG .UI kit / Page header] ✓ setProperties() call completed`,
+                    );
+                  }
+                  debugConsole.log(
+                    `[IMPORT]   ✓ Successfully set component properties for resolved deferred instance "${nodeData.name}": ${Object.keys(propertiesToSet).join(", ")}`,
+                  );
+                  // Verify properties were actually set by reading them back
+                  try {
+                    if (isPageHeader) {
+                      debugConsole.log(
+                        `[DEBUG .UI kit / Page header] === VERIFYING PROPERTIES AFTER SET ===`,
+                      );
+                    }
+                    if (
+                      typeof (instanceNode as any).getProperties === "function"
+                    ) {
+                      if (isPageHeader) {
+                        debugConsole.log(
+                          `[DEBUG .UI kit / Page header] Using getProperties() to verify...`,
+                        );
+                      }
+                      const verifyProps = await (
+                        instanceNode as any
+                      ).getProperties();
+                      if (isPageHeader) {
+                        debugConsole.log(
+                          `[DEBUG .UI kit / Page header] getProperties() returned: ${JSON.stringify(verifyProps, null, 2)}`,
+                        );
+                      }
+                      if (verifyProps && verifyProps.componentProperties) {
+                        const verifiedValues: Record<string, any> = {};
+                        for (const [key, value] of Object.entries(
+                          propertiesToSet,
+                        )) {
+                          const verifyValue =
+                            verifyProps.componentProperties[key];
+                          verifiedValues[key] = verifyValue;
+                          if (isPageHeader) {
+                            debugConsole.log(
+                              `[DEBUG .UI kit / Page header] Property "${key}": expected ${JSON.stringify(value)}, got ${JSON.stringify(verifyValue)}`,
+                            );
+                          }
+                          if (
+                            JSON.stringify(verifyValue) !==
+                            JSON.stringify(value)
+                          ) {
+                            debugConsole.warning(
+                              `[IMPORT]   ⚠ Property "${key}" verification mismatch: expected ${JSON.stringify(value)}, got ${JSON.stringify(verifyValue)}`,
+                            );
+                            if (isPageHeader) {
+                              debugConsole.warning(
+                                `[DEBUG .UI kit / Page header] ⚠ MISMATCH for "${key}"`,
+                              );
+                            }
+                          } else {
+                            debugConsole.log(
+                              `[IMPORT]   ✓ Verified property "${key}" = ${JSON.stringify(verifyValue)}`,
+                            );
+                            if (isPageHeader) {
+                              debugConsole.log(
+                                `[DEBUG .UI kit / Page header] ✓ MATCH for "${key}"`,
+                              );
+                            }
+                          }
+                        }
+                        debugConsole.log(
+                          `[IMPORT]   Verification complete. All properties: ${JSON.stringify(verifiedValues)}`,
+                        );
+                        if (isPageHeader) {
+                          debugConsole.log(
+                            `[DEBUG .UI kit / Page header] All verified properties: ${JSON.stringify(verifiedValues, null, 2)}`,
+                          );
+                        }
+                      }
+                    } else {
+                      // Fallback: try direct access to componentProperties
+                      if (isPageHeader) {
+                        debugConsole.log(
+                          `[DEBUG .UI kit / Page header] Using direct componentProperties access to verify...`,
+                        );
+                      }
+                      const directProps = (instanceNode as any)
+                        .componentProperties;
+                      if (isPageHeader) {
+                        debugConsole.log(
+                          `[DEBUG .UI kit / Page header] Direct componentProperties: ${JSON.stringify(directProps, null, 2)}`,
+                        );
+                      }
+                      if (directProps) {
+                        const verifiedValues: Record<string, any> = {};
+                        for (const [key, expectedValue] of Object.entries(
+                          propertiesToSet,
+                        )) {
+                          const actualProperty = directProps[key];
+                          // Extract the actual value from the property object
+                          // componentProperties returns objects like {type: "TEXT", value: "Logo"}
+                          // but we set just the value, so we need to compare actualProperty.value with expectedValue
+                          const actualValue =
+                            actualProperty &&
+                            typeof actualProperty === "object" &&
+                            "value" in actualProperty
+                              ? actualProperty.value
+                              : actualProperty;
+                          verifiedValues[key] = actualValue;
+                          if (isPageHeader) {
+                            debugConsole.log(
+                              `[DEBUG .UI kit / Page header] Property "${key}": expected ${JSON.stringify(expectedValue)}, actualProperty=${JSON.stringify(actualProperty)}, actualValue=${JSON.stringify(actualValue)}`,
+                            );
+                          }
+                          if (actualProperty === undefined) {
+                            debugConsole.warning(
+                              `[IMPORT]   ⚠ Property "${key}" not found in componentProperties after setting`,
+                            );
+                            if (isPageHeader) {
+                              debugConsole.warning(
+                                `[DEBUG .UI kit / Page header] ⚠ Property "${key}" NOT FOUND in componentProperties`,
+                              );
+                            }
+                          } else if (
+                            JSON.stringify(actualValue) !==
+                            JSON.stringify(expectedValue)
+                          ) {
+                            debugConsole.warning(
+                              `[IMPORT]   ⚠ Property "${key}" verification mismatch: expected ${JSON.stringify(expectedValue)}, got ${JSON.stringify(actualValue)} (from property object: ${JSON.stringify(actualProperty)})`,
+                            );
+                            if (isPageHeader) {
+                              debugConsole.warning(
+                                `[DEBUG .UI kit / Page header] ⚠ MISMATCH for "${key}"`,
+                              );
+                            }
+                          } else {
+                            debugConsole.log(
+                              `[IMPORT]   ✓ Verified property "${key}" = ${JSON.stringify(actualValue)}`,
+                            );
+                            if (isPageHeader) {
+                              debugConsole.log(
+                                `[DEBUG .UI kit / Page header] ✓ MATCH for "${key}"`,
+                              );
+                            }
+                          }
+                        }
+                        debugConsole.log(
+                          `[IMPORT]   Verification complete. All properties: ${JSON.stringify(verifiedValues)}`,
+                        );
+                        if (isPageHeader) {
+                          debugConsole.log(
+                            `[DEBUG .UI kit / Page header] All verified properties: ${JSON.stringify(verifiedValues, null, 2)}`,
+                          );
+                        }
+                      } else {
+                        debugConsole.warning(
+                          `[IMPORT]   Could not access componentProperties for verification`,
+                        );
+                        if (isPageHeader) {
+                          debugConsole.warning(
+                            `[DEBUG .UI kit / Page header] ⚠ Could not access componentProperties`,
+                          );
+                        }
+                      }
+                    }
+                  } catch (verifyError) {
+                    debugConsole.warning(
+                      `[IMPORT]   Could not verify properties after setting: ${verifyError}`,
+                    );
+                  }
+                } catch (error) {
+                  debugConsole.error(
+                    `[IMPORT]   ✗ Failed to set component properties for resolved deferred instance "${nodeData.name}": ${error}`,
+                  );
+                  debugConsole.error(
+                    `[IMPORT]     Properties attempted: ${JSON.stringify(propertiesToSet)}`,
+                  );
+                  debugConsole.error(
+                    `[IMPORT]     Available properties: ${JSON.stringify(Object.keys(componentProperties))}`,
+                  );
+                }
+              } else {
+                debugConsole.warning(
+                  `[IMPORT]   No properties to set for deferred instance "${nodeData.name}" (all properties failed to match)`,
+                );
+              }
+
+              // Apply fill bound variables to instance children
+              await applyFillBoundVariablesToInstanceChildren(
+                instanceNode,
+                nodeData,
+                recognizedVariables,
+              );
+
+              // Update children from JSON to preserve bound variables and other properties
+              // This handles mismatches between JSON tree and instance tree with warnings (not errors)
+              await updateInstanceChildrenFromJson(instanceNode, nodeData);
+
+              // For TEXT component properties, verify that the bound text nodes reflect the property values
+              // Figma automatically binds TEXT properties to text nodes, but we should verify
+              if (Object.keys(propertiesToSet).length > 0) {
+                try {
+                  // Use getMainComponentAsync() instead of direct access to avoid dynamic-page errors
+                  const mainComponent =
+                    await instanceNode.getMainComponentAsync();
+                  if (mainComponent) {
+                    const componentProps =
+                      mainComponent.componentPropertyDefinitions;
+                    for (const propKey of Object.keys(propertiesToSet)) {
+                      const propDef = componentProps[propKey];
+                      if (propDef && propDef.type === "TEXT") {
+                        // Find text nodes that might be bound to this property
+                        // TEXT properties are typically bound to text nodes with matching content
+                        const findTextNodes = (node: SceneNode): TextNode[] => {
+                          const results: TextNode[] = [];
+                          if (node.type === "TEXT") {
+                            results.push(node);
+                          }
+                          if ("children" in node) {
+                            for (const child of node.children) {
+                              results.push(...findTextNodes(child));
+                            }
+                          }
+                          return results;
+                        };
+                        const textNodes = findTextNodes(instanceNode);
+                        const propValue = propertiesToSet[propKey];
+                        debugConsole.log(
+                          `[IMPORT]   Found ${textNodes.length} text node(s) in instance "${instanceNode.name}" for TEXT property "${propKey}" = ${JSON.stringify(propValue)}`,
+                        );
+                        // Note: Text nodes should be bound to component properties via componentPropertyReferences
+                        // This binding is restored when the component is created, not when properties are set on instances
+                      }
+                    }
+                  }
+                } catch (textCheckError) {
+                  debugConsole.warning(
+                    `[IMPORT]   Could not check text node bindings: ${textCheckError}`,
+                  );
+                }
+              }
+
+              // Final verification: Re-check component properties after all updates to ensure they persisted
+              if (Object.keys(propertiesToSet).length > 0) {
+                if (isPageHeader) {
+                  debugConsole.log(
+                    `[DEBUG .UI kit / Page header] === FINAL VERIFICATION (after all updates) ===`,
+                  );
+                }
+                try {
+                  // Use getProperties() for more reliable reading
+                  let finalProps: any = null;
+                  if (
+                    typeof (instanceNode as any).getProperties === "function"
+                  ) {
+                    if (isPageHeader) {
+                      debugConsole.log(
+                        `[DEBUG .UI kit / Page header] Using getProperties() for final verification...`,
+                      );
+                    }
+                    const propsResult = await (
+                      instanceNode as any
+                    ).getProperties();
+                    if (propsResult && propsResult.componentProperties) {
+                      finalProps = propsResult.componentProperties;
+                      if (isPageHeader) {
+                        debugConsole.log(
+                          `[DEBUG .UI kit / Page header] Final componentProperties from getProperties(): ${JSON.stringify(finalProps, null, 2)}`,
+                        );
+                      }
+                    }
+                  }
+                  // Fallback to direct access
+                  if (!finalProps) {
+                    if (isPageHeader) {
+                      debugConsole.log(
+                        `[DEBUG .UI kit / Page header] Using direct componentProperties access for final verification...`,
+                      );
+                    }
+                    finalProps = (instanceNode as any).componentProperties;
+                    if (isPageHeader) {
+                      debugConsole.log(
+                        `[DEBUG .UI kit / Page header] Final componentProperties (direct): ${JSON.stringify(finalProps, null, 2)}`,
+                      );
+                    }
+                  }
+
+                  if (finalProps) {
+                    const finalValues: Record<string, any> = {};
+                    for (const [key, expectedValue] of Object.entries(
+                      propertiesToSet,
+                    )) {
+                      const finalProperty = finalProps[key];
+                      const finalValue =
+                        finalProperty &&
+                        typeof finalProperty === "object" &&
+                        "value" in finalProperty
+                          ? finalProperty.value
+                          : finalProperty;
+                      finalValues[key] = finalValue;
+                      if (isPageHeader) {
+                        debugConsole.log(
+                          `[DEBUG .UI kit / Page header] Final check for "${key}": expected ${JSON.stringify(expectedValue)}, finalProperty=${JSON.stringify(finalProperty)}, finalValue=${JSON.stringify(finalValue)}`,
+                        );
+                      }
+                      if (
+                        finalProperty === undefined ||
+                        JSON.stringify(finalValue) !==
+                          JSON.stringify(expectedValue)
+                      ) {
+                        debugConsole.warning(
+                          `[IMPORT]   ⚠ Final check: Property "${key}" = ${JSON.stringify(finalValue)} (expected ${JSON.stringify(expectedValue)}) after all updates`,
+                        );
+                        if (isPageHeader) {
+                          debugConsole.warning(
+                            `[DEBUG .UI kit / Page header] ⚠ FINAL MISMATCH for "${key}"`,
+                          );
+                        }
+                      } else {
+                        debugConsole.log(
+                          `[IMPORT]   ✓ Final check: Property "${key}" = ${JSON.stringify(finalValue)} (persisted correctly)`,
+                        );
+                        if (isPageHeader) {
+                          debugConsole.log(
+                            `[DEBUG .UI kit / Page header] ✓ FINAL MATCH for "${key}"`,
+                          );
+                        }
+                      }
+                    }
+                    if (isPageHeader) {
+                      debugConsole.log(
+                        `[DEBUG .UI kit / Page header] Final verification complete. All properties: ${JSON.stringify(finalValues, null, 2)}`,
+                      );
+                    }
+                  } else {
+                    if (isPageHeader) {
+                      debugConsole.warning(
+                        `[DEBUG .UI kit / Page header] ⚠ Could not access componentProperties for final verification`,
+                      );
+                    }
+                  }
+                } catch (finalCheckError) {
+                  debugConsole.warning(
+                    `[IMPORT]   Could not perform final property check: ${finalCheckError}`,
+                  );
+                  if (isPageHeader) {
+                    debugConsole.warning(
+                      `[DEBUG .UI kit / Page header] ⚠ Error during final verification: ${finalCheckError}`,
                     );
                   }
                 }
               }
+            } else {
+              debugConsole.warning(
+                `[IMPORT]   No component properties found on component for deferred instance "${nodeData.name}"`,
+              );
             }
           }
         } catch (error) {
@@ -7897,17 +8894,6 @@ export async function resolveDeferredNormalInstances(
           );
         }
       }
-
-      // Apply fill bound variables to instance children
-      await applyFillBoundVariablesToInstanceChildren(
-        instanceNode,
-        nodeData,
-        recognizedVariables,
-      );
-
-      // Update children from JSON to preserve bound variables and other properties
-      // This handles mismatches between JSON tree and instance tree with warnings (not errors)
-      await updateInstanceChildrenFromJson(instanceNode, nodeData);
 
       // Extract child deferred instances before replacing parent placeholder
       // This handles nested deferred instances (child deferred inside parent deferred)

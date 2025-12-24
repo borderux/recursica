@@ -162,10 +162,30 @@ export async function parseInstanceProperties(
       let variantProperties: Record<string, string> | undefined;
       let componentProperties: Record<string, any> | undefined;
       try {
-        if ((node as any).variantProperties) {
+        // Try getProperties() first (recommended way to get instance properties)
+        if (typeof (node as any).getProperties === "function") {
+          try {
+            const props = await (node as any).getProperties();
+            if (props) {
+              if (props.variantProperties) {
+                variantProperties = props.variantProperties;
+              }
+              if (props.componentProperties) {
+                componentProperties = props.componentProperties;
+              }
+            }
+          } catch (getPropsError) {
+            // getProperties() might not be available or might fail
+            debugConsole.log(
+              `  Detached instance "${instanceName}" -> getProperties() not available or failed: ${getPropsError}`,
+            );
+          }
+        }
+        // Fallback: try direct property access
+        if (!variantProperties && (node as any).variantProperties) {
           variantProperties = (node as any).variantProperties;
         }
-        if ((node as any).componentProperties) {
+        if (!componentProperties && (node as any).componentProperties) {
           componentProperties = (node as any).componentProperties;
         }
       } catch {
@@ -379,19 +399,28 @@ export async function parseInstanceProperties(
       }
 
       // Also try getProperties() if available (some Figma API versions use this)
+      // This is the recommended way to get both variant and component properties
       if (typeof (node as any).getProperties === "function") {
         try {
           const props = await (node as any).getProperties();
-          if (props && props.variantProperties) {
-            debugConsole.log(
-              `  Instance "${instanceName}" -> variantProperties from getProperties(): ${JSON.stringify(props.variantProperties)}`,
-            );
-            // Use getProperties() result if it's different/more complete
-            if (
-              props.variantProperties &&
-              Object.keys(props.variantProperties).length > 0
-            ) {
-              variantProperties = props.variantProperties;
+          if (props) {
+            // Get variant properties from getProperties()
+            if (props.variantProperties) {
+              debugConsole.log(
+                `  Instance "${instanceName}" -> variantProperties from getProperties(): ${JSON.stringify(props.variantProperties)}`,
+              );
+              // Use getProperties() result if it's different/more complete
+              if (
+                props.variantProperties &&
+                Object.keys(props.variantProperties).length > 0
+              ) {
+                variantProperties = props.variantProperties;
+              }
+            }
+            // Get component properties from getProperties() - this is the reliable way
+            if (props.componentProperties) {
+              // Use getProperties() result for component properties (more reliable than direct access)
+              componentProperties = props.componentProperties;
             }
           }
         } catch (getPropsError) {
@@ -402,7 +431,8 @@ export async function parseInstanceProperties(
         }
       }
 
-      if ((node as any).componentProperties) {
+      // Fallback: try direct property access if getProperties() didn't work or wasn't available
+      if (!componentProperties && (node as any).componentProperties) {
         componentProperties = (node as any).componentProperties;
       }
 
