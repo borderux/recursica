@@ -14,6 +14,9 @@ export default function Publishing() {
   const [debugLogs, setDebugLogs] = useState<DebugConsoleMessage[] | undefined>(
     undefined,
   );
+  const [exportData, setExportData] = useState<ExportPageResponseData | null>(
+    null,
+  );
 
   // Extract version from export data metadata
   const getCurrentVersion = useCallback(
@@ -46,8 +49,17 @@ export default function Publishing() {
 
     const startPublishing = async () => {
       try {
+        // Set publishing state immediately so UI shows right away
         setIsPublishing(true);
         setError(null);
+
+        // Small delay to ensure UI has rendered before starting the export
+        // This ensures the user sees the publishing page immediately
+        await new Promise((resolve) => setTimeout(resolve, 50));
+
+        if (!isMounted) return;
+
+        console.log("[Publishing] Starting page export...", { pageIndex });
         const { promise, cancel } = callPlugin("exportPage", {
           pageIndex,
           skipPrompts: true, // Skip prompts - wizard will handle questions
@@ -69,30 +81,30 @@ export default function Publishing() {
         }
 
         if (response.success && response.data) {
-          const exportData = response.data as unknown as ExportPageResponseData;
+          const exportDataResponse =
+            response.data as unknown as ExportPageResponseData;
 
-          console.log("[Publishing] Export successful, navigating to wizard", {
-            pageName: exportData?.pageName,
-            hasAdditionalPages: exportData?.additionalPages?.length > 0,
+          console.log("[Publishing] Export successful", {
+            pageName: exportDataResponse?.pageName,
+            hasAdditionalPages: exportDataResponse?.additionalPages?.length > 0,
           });
 
           if (isMounted) {
-            setIsPublishing(false);
+            // Extract debug logs from response if available
+            if (response.data?.debugLogs) {
+              setDebugLogs(response.data.debugLogs as DebugConsoleMessage[]);
+            }
 
-            // Navigate directly to publishing wizard with export data
-            navigate("/publishing-wizard", {
-              state: {
-                exportData,
-                pageIndex,
-              },
-              replace: true,
-            });
+            // Store export data and show success state
+            setExportData(exportDataResponse);
+            setIsPublishing(false);
           }
         } else {
           const errorMessage =
             response.message || "Failed to export page. Please try again.";
           console.error("[Publishing] Export failed:", errorMessage);
           setError(errorMessage);
+          setIsPublishing(false);
           // Extract debug logs from response if available
           if (response.data?.debugLogs) {
             setDebugLogs(response.data.debugLogs as DebugConsoleMessage[]);
@@ -104,6 +116,7 @@ export default function Publishing() {
           const errorMessage =
             err instanceof Error ? err.message : "Failed to export page";
           setError(errorMessage);
+          setIsPublishing(false);
           // Try to extract debug logs from error response if available
           if (
             err &&
@@ -120,10 +133,6 @@ export default function Publishing() {
               setDebugLogs(errorResponse.data.debugLogs);
             }
           }
-        }
-      } finally {
-        if (isMounted) {
-          setIsPublishing(false);
         }
       }
     };
@@ -155,11 +164,80 @@ export default function Publishing() {
         <DebugConsole
           title="Exporting Page"
           isActive={isPublishing}
-          isComplete={!isPublishing && !error}
+          isComplete={!isPublishing && !error && !!exportData}
           error={error}
           debugLogs={debugLogs}
           successMessage="Page exported successfully"
         />
+
+        {!isPublishing && !error && exportData && (
+          <div
+            style={{
+              display: "flex",
+              gap: "12px",
+              marginTop: "20px",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              style={{
+                padding: "12px 24px",
+                fontSize: "16px",
+                fontWeight: "bold",
+                backgroundColor: "transparent",
+                color: "#d40d0d",
+                border: "2px solid #d40d0d",
+                borderRadius: "8px",
+                cursor: "pointer",
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = "#d40d0d";
+                e.currentTarget.style.color = "white";
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent";
+                e.currentTarget.style.color = "#d40d0d";
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const pageIndexParam = searchParams.get("pageIndex");
+                const pageIndex = pageIndexParam
+                  ? parseInt(pageIndexParam, 10)
+                  : undefined;
+                navigate("/publishing-wizard", {
+                  state: {
+                    exportData,
+                    pageIndex,
+                  },
+                  replace: true,
+                });
+              }}
+              style={{
+                padding: "12px 24px",
+                fontSize: "16px",
+                fontWeight: "bold",
+                backgroundColor: "#d40d0d",
+                color: "white",
+                border: "none",
+                borderRadius: "8px",
+                cursor: "pointer",
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.opacity = "0.9";
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.opacity = "1";
+              }}
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
     </PageLayout>
   );

@@ -110,6 +110,55 @@ function countNodesWithConstraints(node: any): number {
 }
 
 /**
+ * Lightweight function to extract only instances from a page (for discovery mode)
+ * Traverses the page tree and only processes INSTANCE nodes to build the instance table
+ * Much faster than full extraction since it skips all other node types
+ */
+async function extractInstancesOnly(
+  node: any,
+  instanceTable: InstanceTable,
+  visited: WeakSet<any> = new WeakSet(),
+): Promise<void> {
+  if (!node || typeof node !== "object") {
+    return;
+  }
+
+  // Handle circular references
+  if (visited.has(node)) {
+    return;
+  }
+  visited.add(node);
+
+  // If this is an INSTANCE node, parse it to add to instance table
+  if (node.type === "INSTANCE") {
+    const context: Partial<ParserContext> = {
+      visited: new WeakSet(),
+      depth: 0,
+      maxDepth: 100,
+      nodeCount: 0,
+      maxNodes: 10000,
+      unhandledKeys: new Set<string>(),
+      variableTable: new VariableTable(), // Not used, but required by parser
+      collectionTable: new CollectionTable(), // Not used, but required by parser
+      instanceTable: instanceTable, // This is what we're building
+      styleTable: new StyleTable(), // Not used, but required by parser
+      detachedComponentsHandled: new Set(),
+      exportedIds: new Map<string, string>(),
+    };
+
+    // Parse instance properties to add to instance table
+    await parseInstanceProperties(node, context as ParserContext);
+  }
+
+  // Recursively process children
+  if (node.children && Array.isArray(node.children)) {
+    for (const child of node.children) {
+      await extractInstancesOnly(child, instanceTable, visited);
+    }
+  }
+}
+
+/**
  * Recursively extracts node data using type-specific parsers
  * Only serializes non-default values to reduce JSON size
  */
@@ -526,46 +575,84 @@ export async function exportPage(
     debugConsole.log(
       "Initializing variable, collection, and instance tables...",
     );
-    const variableTable = new VariableTable();
-    const collectionTable = new CollectionTable();
-    const instanceTable = new InstanceTable();
-    const styleTable = new StyleTable();
+    let variableTable = new VariableTable();
+    let collectionTable = new CollectionTable();
+    let instanceTable = new InstanceTable();
+    let styleTable = new StyleTable();
 
-    // Extract complete page data with limits to prevent hanging
-    debugConsole.log("Extracting node data from page...");
-    debugConsole.log(
-      `Starting recursive node extraction (max nodes: 10000)...`,
-    );
-    debugConsole.log(
-      "Collections will be discovered as variables are processed:",
-    );
-    const extractedPageData = await extractNodeData(
-      selectedPage as any,
-      new WeakSet(),
-      {
-        variableTable,
-        collectionTable,
-        instanceTable,
-        styleTable,
-      },
-    );
-    checkCancellation(requestId);
-    debugConsole.log("Node extraction finished");
+    let extractedPageData: any;
 
-    const totalNodes = countTotalNodes(extractedPageData);
-    const totalVariables = variableTable.getSize();
-    const totalCollections = collectionTable.getSize();
+    // If skipPrompts is true and this is the initial call (not recursive), do lightweight discovery
+    // Only extract instances to find referenced pages, skip full node extraction
+    if (data.skipPrompts && !isRecursive) {
+      debugConsole.log(
+        "=== Discovery Mode: Extracting instances only (lightweight) ===",
+      );
+      debugConsole.log("Traversing page to find instance references...");
 
-    const totalInstances = instanceTable.getSize();
-    const nodesWithConstraints = countNodesWithConstraints(extractedPageData);
-    debugConsole.log(`Extraction complete:`);
-    debugConsole.log(`  - Total nodes: ${totalNodes}`);
-    debugConsole.log(`  - Unique variables: ${totalVariables}`);
-    debugConsole.log(`  - Unique collections: ${totalCollections}`);
-    debugConsole.log(`  - Unique instances: ${totalInstances}`);
-    debugConsole.log(
-      `  - Nodes with constraints exported: ${nodesWithConstraints}`,
-    );
+      // Only extract instances - much faster than full extraction
+      await extractInstancesOnly(selectedPage as any, instanceTable);
+      checkCancellation(requestId);
+
+      debugConsole.log("Instance extraction finished");
+      // Create minimal page data structure for discovery mode
+      extractedPageData = {
+        type: "PAGE",
+        name: selectedPage.name,
+        id: selectedPage.id,
+        children: [], // Empty - we don't need the full structure for discovery
+      };
+    } else {
+      // Full extraction mode (for actual exports or recursive calls)
+      debugConsole.log("Extracting node data from page...");
+      debugConsole.log(
+        `Starting recursive node extraction (max nodes: 10000)...`,
+      );
+      debugConsole.log(
+        "Collections will be discovered as variables are processed:",
+      );
+      extractedPageData = await extractNodeData(
+        selectedPage as any,
+        new WeakSet(),
+        {
+          variableTable,
+          collectionTable,
+          instanceTable,
+          styleTable,
+        },
+      );
+      checkCancellation(requestId);
+      debugConsole.log("Node extraction finished");
+    }
+
+    // Count and log extraction stats
+    let totalNodes = 0;
+    let totalVariables = 0;
+    let totalCollections = 0;
+    let totalInstances = 0;
+    let nodesWithConstraints = 0;
+
+    if (!(data.skipPrompts && !isRecursive)) {
+      // Full extraction mode - calculate all stats
+      totalNodes = countTotalNodes(extractedPageData);
+      totalVariables = variableTable.getSize();
+      totalCollections = collectionTable.getSize();
+      totalInstances = instanceTable.getSize();
+      nodesWithConstraints = countNodesWithConstraints(extractedPageData);
+      debugConsole.log(`Extraction complete:`);
+      debugConsole.log(`  - Total nodes: ${totalNodes}`);
+      debugConsole.log(`  - Unique variables: ${totalVariables}`);
+      debugConsole.log(`  - Unique collections: ${totalCollections}`);
+      debugConsole.log(`  - Unique instances: ${totalInstances}`);
+      debugConsole.log(
+        `  - Nodes with constraints exported: ${nodesWithConstraints}`,
+      );
+    } else {
+      // Discovery mode - only log instance count
+      totalInstances = instanceTable.getSize();
+      debugConsole.log(`Discovery complete:`);
+      debugConsole.log(`  - Unique instances found: ${totalInstances}`);
+    }
 
     // Check for remote instances - not supported during publishing
     const instanceTableEntries = instanceTable.getSerializedTable();
@@ -847,47 +934,19 @@ export async function exportPage(
       }
     }
 
-    // If skipPrompts is true (discovery mode), run validation on the main page
+    // If skipPrompts is true (discovery mode), skip validation during discovery
+    // Validation will be done during full export after user selects pages
     let aggregatedValidationResult: ValidationResult | undefined;
-    if (data.skipPrompts) {
-      debugConsole.log("Running validation on main page...");
-      try {
-        checkCancellation(requestId);
-        const mainPageValidationResponse = await exportPage(
-          {
-            pageIndex,
-            validateOnly: true,
-          },
-          processedPages,
-          true, // Mark as recursive call
-          discoveredPages,
-          requestId, // Pass requestId for cancellation
-        );
-
-        if (
-          mainPageValidationResponse.success &&
-          mainPageValidationResponse.data
-        ) {
-          const mainPageValidationData =
-            mainPageValidationResponse.data as unknown as ExportPageResponseData;
-          if (mainPageValidationData.validationResult) {
-            aggregatedValidationResult =
-              mainPageValidationData.validationResult;
-            debugConsole.log(
-              `Main page validation: ${aggregatedValidationResult.hasErrors ? "FAILED" : "PASSED"}`,
-            );
-            if (aggregatedValidationResult.hasErrors) {
-              debugConsole.warning(
-                `Found ${aggregatedValidationResult.errors.length} validation error(s) in main page`,
-              );
-            }
-          }
-        }
-      } catch (error) {
-        debugConsole.warning(
-          `Could not validate main page: ${error instanceof Error ? error.message : String(error)}`,
-        );
-      }
+    if (data.skipPrompts && !isRecursive) {
+      debugConsole.log(
+        "Discovery mode: Skipping validation (will be done during full export)",
+      );
+      // Don't run validation during discovery - it's expensive and not needed
+      // Validation will happen during the full export phase
+    } else if (data.skipPrompts && isRecursive) {
+      // During recursive discovery, we still want to find referenced pages
+      // but we don't need validation here either
+      debugConsole.log("Recursive discovery: Finding referenced pages only");
     }
 
     // Handle referenced normal component pages
@@ -1004,135 +1063,17 @@ export async function exportPage(
             }
           }
 
-          // Run validation on this discovered page
-          debugConsole.log(
-            `Validating "${pageName}" for external references and unknown collections...`,
-          );
-          try {
-            checkCancellation(requestId);
-            const validationResponse = await exportPage(
-              {
-                pageIndex: referencedPageIndex,
-                validateOnly: true, // Run validation only
-              },
-              processedPages,
-              true, // Mark as recursive call
-              discoveredPages,
-              requestId, // Pass requestId for cancellation
+          // Skip validation and recursive discovery during lightweight discovery mode
+          // These are expensive operations that will be done during full export
+          if (!isRecursive) {
+            debugConsole.log(
+              `Discovery mode: Skipping validation and recursive discovery for "${pageName}" (will be done during full export)`,
             );
-
-            if (validationResponse.success && validationResponse.data) {
-              const validationData =
-                validationResponse.data as unknown as ExportPageResponseData;
-              if (validationData.validationResult) {
-                // Aggregate validation results
-                if (!aggregatedValidationResult) {
-                  aggregatedValidationResult = {
-                    hasErrors: false,
-                    errors: [],
-                    externalReferences: [],
-                    unknownCollections: [],
-                    discoveredCollections: [],
-                  };
-                }
-
-                // Merge validation results
-                aggregatedValidationResult.errors.push(
-                  ...validationData.validationResult.errors,
-                );
-                aggregatedValidationResult.externalReferences.push(
-                  ...validationData.validationResult.externalReferences,
-                );
-                aggregatedValidationResult.unknownCollections.push(
-                  ...validationData.validationResult.unknownCollections,
-                );
-                // Merge discovered collections (avoid duplicates)
-                for (const collectionName of validationData.validationResult
-                  .discoveredCollections) {
-                  if (
-                    !aggregatedValidationResult.discoveredCollections.includes(
-                      collectionName,
-                    )
-                  ) {
-                    aggregatedValidationResult.discoveredCollections.push(
-                      collectionName,
-                    );
-                  }
-                }
-
-                // Update hasErrors flag
-                aggregatedValidationResult.hasErrors =
-                  aggregatedValidationResult.errors.length > 0;
-
-                debugConsole.log(
-                  `  Validation for "${pageName}": ${validationData.validationResult.hasErrors ? "FAILED" : "PASSED"}`,
-                );
-                if (validationData.validationResult.hasErrors) {
-                  debugConsole.warning(
-                    `  Found ${validationData.validationResult.errors.length} validation error(s) in "${pageName}"`,
-                  );
-                }
-              }
-            }
-          } catch (error) {
-            // If validation fails, log but continue discovery
-            debugConsole.warning(
-              `Could not validate "${pageName}": ${error instanceof Error ? error.message : String(error)}`,
-            );
-          }
-
-          // Recursively discover dependencies of this referenced page
-          // This ensures we find all transitive dependencies (dependencies of dependencies)
-          debugConsole.log(
-            `Checking dependencies of "${pageName}" for transitive dependencies...`,
-          );
-          try {
-            checkCancellation(requestId);
-            const recursiveExportResponse = await exportPage(
-              {
-                pageIndex: referencedPageIndex,
-                skipPrompts: true, // Keep skipPrompts true to just discover, not export
-              },
-              processedPages, // Pass the same set (won't be used during discovery)
-              true, // Mark as recursive call
-              discoveredPages, // Pass the same discoveredPages set to avoid infinite loops
-              requestId, // Pass requestId for cancellation
-            );
-
-            if (
-              recursiveExportResponse.success &&
-              recursiveExportResponse.data
-            ) {
-              const recursiveExportData =
-                recursiveExportResponse.data as unknown as ExportPageResponseData;
-              // Merge discovered pages from recursive call
-              if (recursiveExportData.discoveredReferencedPages) {
-                for (const discoveredPage of recursiveExportData.discoveredReferencedPages) {
-                  // Don't include the original page (it's the one being published)
-                  if (discoveredPage.pageId === selectedPageId) {
-                    debugConsole.log(
-                      `  Skipping "${discoveredPage.pageName}" - this is the original page being published`,
-                    );
-                    continue;
-                  }
-                  // Check if we already have this page (avoid duplicates)
-                  const existingPage = discoveredReferencedPages.find(
-                    (p) => p.pageId === discoveredPage.pageId,
-                  );
-                  if (!existingPage) {
-                    discoveredReferencedPages.push(discoveredPage);
-                    debugConsole.log(
-                      `  Discovered transitive dependency: "${discoveredPage.pageName}" (from ${pageName})`,
-                    );
-                  }
-                }
-              }
-            }
-          } catch (error) {
-            // If recursive discovery fails, log but don't fail the whole export
-            // The page might not be exportable, but we still want to show it in the wizard
-            debugConsole.warning(
-              `Could not discover dependencies of "${pageName}": ${error instanceof Error ? error.message : String(error)}`,
+          } else {
+            // During recursive discovery (if we get here), we still want to find direct references
+            // but skip validation and further recursion to keep it fast
+            debugConsole.log(
+              `Recursive discovery: Skipping validation for "${pageName}"`,
             );
           }
         } else {
@@ -1255,6 +1196,95 @@ export async function exportPage(
       );
     }
 
+    // If in discovery mode (skipPrompts and not recursive), do lightweight discovery first
+    // Then do full export of main page + all discovered pages
+    if (data.skipPrompts && !isRecursive) {
+      debugConsole.log("=== Discovery Phase Complete ===");
+      debugConsole.log(
+        `Found ${discoveredReferencedPages.length} referenced page(s)`,
+      );
+      debugConsole.log("=== Starting Full Export of All Pages ===");
+
+      // Now do full extraction of the main page (re-extract with full extraction)
+      debugConsole.log("Doing full extraction of main page...");
+
+      // Re-extract with full extraction (not just instances)
+      const fullVariableTable = new VariableTable();
+      const fullCollectionTable = new CollectionTable();
+      const fullInstanceTable = new InstanceTable();
+      const fullStyleTable = new StyleTable();
+
+      const fullExtractedPageData = await extractNodeData(
+        selectedPage as any,
+        new WeakSet(),
+        {
+          variableTable: fullVariableTable,
+          collectionTable: fullCollectionTable,
+          instanceTable: fullInstanceTable,
+          styleTable: fullStyleTable,
+        },
+      );
+      checkCancellation(requestId);
+
+      // Update the tables with the full extraction results
+      variableTable = fullVariableTable;
+      collectionTable = fullCollectionTable;
+      instanceTable = fullInstanceTable;
+      styleTable = fullStyleTable;
+      extractedPageData = fullExtractedPageData;
+
+      // Now export all discovered referenced pages
+      const discoveredPagesToExport = discoveredReferencedPages.filter(
+        (p) => p.pageId !== selectedPageId,
+      );
+
+      debugConsole.log(
+        `Exporting ${discoveredPagesToExport.length} discovered referenced page(s)...`,
+      );
+      for (const discoveredPage of discoveredPagesToExport) {
+        checkCancellation(requestId);
+        debugConsole.log(
+          `Exporting referenced page: "${discoveredPage.pageName}"...`,
+        );
+
+        // Do full export of this referenced page
+        // Use skipPrompts: true but isRecursive: true so it does full export, not discovery
+        const referencedPageExportResponse = await exportPage(
+          {
+            pageIndex: discoveredPage.pageIndex,
+            skipPrompts: true, // Export without prompting (isRecursive=true means full export, not discovery)
+          },
+          processedPages, // Track processed pages
+          true, // Mark as recursive call (this makes it do full export, not discovery)
+          discoveredPages,
+          requestId,
+        );
+
+        if (
+          referencedPageExportResponse.success &&
+          referencedPageExportResponse.data
+        ) {
+          const referencedPageData =
+            referencedPageExportResponse.data as unknown as ExportPageResponseData;
+          additionalPages.push(referencedPageData);
+          debugConsole.log(
+            `✓ Successfully exported: "${discoveredPage.pageName}"`,
+          );
+        } else {
+          debugConsole.warning(
+            `Failed to export "${discoveredPage.pageName}": ${referencedPageExportResponse.message}`,
+          );
+        }
+      }
+
+      debugConsole.log(
+        `=== Full Export Complete: ${additionalPages.length + 1} page(s) exported ===`,
+      );
+
+      // Continue with normal export flow to build JSON
+    }
+
+    // Full export mode - build complete JSON structure
     // Create export data with metadata, collections table, variable table, instance table, and page data
     // All data uses full key names at this point
     debugConsole.log("Creating export data structure...");

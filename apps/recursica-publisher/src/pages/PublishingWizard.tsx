@@ -11,7 +11,6 @@ import {
   GitHubService,
   type ComponentInfo,
 } from "../services/github/githubService";
-import { callPlugin } from "../utils/callPlugin";
 import type { DebugConsoleMessage } from "../plugin/services/debugConsole";
 
 const RECURSICA_FIGMA_OWNER = "borderux";
@@ -58,19 +57,17 @@ export default function PublishingWizard() {
   const [exportData, setExportData] = useState<ExportPageResponseData | null>(
     null,
   );
-  const [isExporting, setIsExporting] = useState(false);
-  const [exportError, setExportError] = useState<string | null>(null);
-  const [exportDebugLogs, setExportDebugLogs] = useState<
-    DebugConsoleMessage[] | undefined
-  >(undefined);
+  // These are no longer used since export happens in Publishing page, but kept for compatibility
+  const isExporting = false;
+  const exportError: string | null = null;
+  const exportDebugLogs: DebugConsoleMessage[] | undefined = undefined;
+  const isExportingReferencedPages = false;
   const [discoveredReferencedPages, setDiscoveredReferencedPages] = useState<
     ReferencedPageInfo[]
   >([]);
   const [selectedReferencedPageIds, setSelectedReferencedPageIds] = useState<
     Set<string>
   >(new Set());
-  const [isExportingReferencedPages, setIsExportingReferencedPages] =
-    useState(false);
   const [hasExportedReferencedPages, setHasExportedReferencedPages] =
     useState(false);
 
@@ -103,119 +100,22 @@ export default function PublishingWizard() {
     }
   }, [state?.mainBranchComponents]);
 
-  // If we have pageIndex but no exportData, export the page
+  // Note: We no longer do a second export here. The export is done in the Publishing page
+  // and the exportData is passed via navigation state. If there's no exportData, show an error.
   useEffect(() => {
-    if (
-      pageIndex !== undefined &&
-      !isNaN(pageIndex) &&
-      !exportData &&
-      !isExporting &&
-      !exportError
-    ) {
-      const doExport = async () => {
-        try {
-          setIsExporting(true);
-          setExportError(null);
-          console.log(
-            `[PublishingWizard] Exporting page with index: ${pageIndex}`,
-          );
-
-          const { promise } = callPlugin("exportPage", {
-            pageIndex,
-            skipPrompts: true, // Skip prompts - wizard will handle questions
-          });
-          const response = await promise;
-
-          if (response.success && response.data) {
-            const exportedData =
-              response.data as unknown as ExportPageResponseData;
-            setExportData(exportedData);
-            console.log(
-              `[PublishingWizard] Export successful for page: ${exportedData.pageName}`,
-            );
-
-            // Check for validation errors first
-            if (
-              exportedData.validationResult &&
-              exportedData.validationResult.hasErrors
-            ) {
-              console.log(
-                `[PublishingWizard] Validation errors found: ${exportedData.validationResult.errors.length} error(s)`,
-              );
-              setWizardStep("validationErrors");
-            } else if (
-              exportedData.discoveredReferencedPages &&
-              exportedData.discoveredReferencedPages.length > 0
-            ) {
-              // Check if there are discovered referenced pages to ask user about
-              console.log(
-                `[PublishingWizard] Found ${exportedData.discoveredReferencedPages.length} discovered referenced pages`,
-              );
-              setDiscoveredReferencedPages(
-                exportedData.discoveredReferencedPages,
-              );
-              // Pre-select all pages by default
-              setSelectedReferencedPageIds(
-                new Set(
-                  exportedData.discoveredReferencedPages.map((p) => p.pageId),
-                ),
-              );
-              setWizardStep("selectReferencedPages");
-            } else {
-              // No discovered referenced pages, initialize main page decision and go to publishing
-              const { currentVersion, newVersion } =
-                getVersionInfo(exportedData);
-              updatePageDecision(exportedData.pageName, {
-                currentVersion,
-                newVersion,
-                publishNewVersion: true,
-                changeMessage: "",
-              });
-              setWizardStep("publishing");
-              setHasExportedReferencedPages(true); // No pages to export, so mark as done
-            }
-          } else {
-            const errorMessage =
-              response.message || "Failed to export page. Please try again.";
-            setExportError(errorMessage);
-            console.error("[PublishingWizard] Export failed:", errorMessage);
-            // Extract debug logs from response if available
-            if (response.data?.debugLogs) {
-              setExportDebugLogs(
-                response.data.debugLogs as DebugConsoleMessage[],
-              );
-            }
-          }
-        } catch (err) {
-          const errorMessage =
-            err instanceof Error ? err.message : "Failed to export page";
-          setExportError(errorMessage);
-          console.error("[PublishingWizard] Export error:", errorMessage);
-          // Try to extract debug logs from error response if available
-          if (
-            err &&
-            typeof err === "object" &&
-            "response" in err &&
-            err.response &&
-            typeof err.response === "object" &&
-            "data" in err.response
-          ) {
-            const errorResponse = err.response as {
-              data?: { debugLogs?: DebugConsoleMessage[] };
-            };
-            if (errorResponse.data?.debugLogs) {
-              setExportDebugLogs(errorResponse.data.debugLogs);
-            }
-          }
-        } finally {
-          setIsExporting(false);
-        }
-      };
-
-      doExport();
+    if (!exportData && !isExporting && !state?.exportData) {
+      // If we have a pageIndex but no exportData, it means we navigated here incorrectly
+      // (should always come from Publishing page with exportData)
+      if (pageIndex !== undefined) {
+        console.error(
+          "[PublishingWizard] No exportData provided. Wizard should be accessed from Publishing page.",
+        );
+        setError(
+          "No export data found. Please start from the Publishing page.",
+        );
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageIndex, exportData, isExporting, exportError]);
+  }, [exportData, state?.exportData, pageIndex]);
 
   // Get current page being processed
   const getCurrentPage = useCallback(() => {
@@ -327,6 +227,55 @@ export default function PublishingWizard() {
     },
     [],
   );
+
+  // Process exportData when it's loaded (from state or export) and set wizard step
+  useEffect(() => {
+    if (!exportData || wizardStep !== "initial") return;
+
+    console.log(
+      "[PublishingWizard] Processing export data to determine wizard step",
+      {
+        hasValidationErrors: !!exportData.validationResult?.hasErrors,
+        hasReferencedPages: !!exportData.discoveredReferencedPages?.length,
+      },
+    );
+
+    // Check for validation errors first
+    if (exportData.validationResult && exportData.validationResult.hasErrors) {
+      console.log(
+        `[PublishingWizard] Validation errors found: ${exportData.validationResult.errors.length} error(s)`,
+      );
+      setWizardStep("validationErrors");
+    } else if (
+      exportData.discoveredReferencedPages &&
+      exportData.discoveredReferencedPages.length > 0
+    ) {
+      // Check if there are discovered referenced pages to ask user about
+      console.log(
+        `[PublishingWizard] Found ${exportData.discoveredReferencedPages.length} discovered referenced pages`,
+      );
+      setDiscoveredReferencedPages(exportData.discoveredReferencedPages);
+      // Pre-select all pages by default
+      setSelectedReferencedPageIds(
+        new Set(exportData.discoveredReferencedPages.map((p) => p.pageId)),
+      );
+      setWizardStep("selectReferencedPages");
+    } else {
+      // No discovered referenced pages, initialize main page decision and go directly to componentRevision
+      // (skip publishing step since export is already complete)
+      const { currentVersion, newVersion } = getVersionInfo(exportData);
+      updatePageDecision(exportData.pageName, {
+        currentVersion,
+        newVersion,
+        publishNewVersion: true,
+        changeMessage: "",
+      });
+      setHasExportedReferencedPages(true); // No pages to export, so mark as done
+      // Go directly to componentRevision since export is already complete
+      setWizardStep("componentRevision");
+      setCurrentComponentIndex(0);
+    }
+  }, [exportData, wizardStep, getVersionInfo, updatePageDecision]);
 
   // Update export data with decisions (update versions, history, and instanceTable references)
   const updateExportDataWithDecisions = useCallback(
@@ -479,111 +428,78 @@ export default function PublishingWizard() {
     [],
   );
 
-  // Export selected referenced pages when publishing step is shown
-  // This must be after all useCallback hooks are defined
+  // Process selected referenced pages when publishing step is shown
+  // Use already-exported pages from additionalPages instead of re-exporting
   useEffect(() => {
     if (
       wizardStep === "publishing" &&
       !hasExportedReferencedPages &&
       !isExportingReferencedPages &&
-      discoveredReferencedPages.length > 0
+      discoveredReferencedPages.length > 0 &&
+      exportData
     ) {
-      const doExport = async () => {
-        setIsExportingReferencedPages(true);
-        setError(null);
+      console.log(
+        `[PublishingWizard] Processing ${discoveredReferencedPages.length} discovered referenced page(s)...`,
+      );
 
-        try {
-          const selectedPages = discoveredReferencedPages.filter((p) =>
-            selectedReferencedPageIds.has(p.pageId),
-          );
-          const exportedPages: ExportPageResponseData[] = [];
+      const selectedPages = discoveredReferencedPages.filter((p) =>
+        selectedReferencedPageIds.has(p.pageId),
+      );
 
-          // Export all selected referenced pages sequentially
-          // Note: Each exportPage call may clear the console, but we want to see all logs
-          // So we'll export them one by one and the DebugConsole will show the final export's logs
-          // plus any logs that accumulate during the process
+      // Use already-exported pages from additionalPages
+      const exportedPages: ExportPageResponseData[] = [];
+
+      for (const pageInfo of selectedPages) {
+        // Find the page in additionalPages (already exported)
+        const exportedPage = exportData.additionalPages.find(
+          (p) => p.pageName === pageInfo.pageName,
+        );
+
+        if (exportedPage) {
+          exportedPages.push(exportedPage);
           console.log(
-            `[PublishingWizard] Starting export of ${selectedPages.length} selected referenced page(s)...`,
+            `[PublishingWizard] ✓ Using already-exported page: ${exportedPage.pageName}`,
           );
-
-          for (let i = 0; i < selectedPages.length; i++) {
-            const pageInfo = selectedPages[i];
-            console.log(
-              `[PublishingWizard] Exporting referenced page ${i + 1}/${selectedPages.length}: ${pageInfo.pageName}`,
-            );
-
-            const { promise } = callPlugin("exportPage", {
-              pageIndex: pageInfo.pageIndex,
-              skipPrompts: true, // Skip prompts for nested references too
-              clearConsole: false, // Don't clear console so we can see all exports
-            });
-            const response = await promise;
-
-            if (response.success && response.data) {
-              const exportedPageData =
-                response.data as unknown as ExportPageResponseData;
-              exportedPages.push(exportedPageData);
-              console.log(
-                `[PublishingWizard] ✓ Successfully exported: ${exportedPageData.pageName}`,
-              );
-            } else {
-              // Extract debug logs before throwing
-              if (response.data?.debugLogs) {
-                setExportDebugLogs(
-                  response.data.debugLogs as DebugConsoleMessage[],
-                );
-              }
-              throw new Error(
-                `Failed to export "${pageInfo.pageName}": ${response.message}`,
-              );
-            }
-          }
-
-          console.log(
-            `[PublishingWizard] ✓ Completed export of all ${exportedPages.length} referenced page(s)`,
+        } else {
+          console.warn(
+            `[PublishingWizard] Referenced page "${pageInfo.pageName}" not found in additionalPages. This should not happen if the full export was performed.`,
           );
-
-          // Update exportData with exported referenced pages
-          if (exportData) {
-            setExportData({
-              ...exportData,
-              additionalPages: exportedPages,
-            });
-          }
-
-          // Initialize decisions for selected referenced pages
-          for (const exportedPage of exportedPages) {
-            const { currentVersion, newVersion } = getVersionInfo(exportedPage);
-            updatePageDecision(exportedPage.pageName, {
-              currentVersion,
-              newVersion,
-              publishNewVersion: true,
-              changeMessage: "",
-            });
-          }
-
-          setHasExportedReferencedPages(true);
-          console.log(
-            `[PublishingWizard] Finished exporting ${exportedPages.length} referenced page(s)`,
-          );
-        } catch (err) {
-          const errorMessage =
-            err instanceof Error
-              ? err.message
-              : "Failed to export referenced pages";
-          setError(errorMessage);
-          console.error("[PublishingWizard] Export error:", errorMessage);
-        } finally {
-          setIsExportingReferencedPages(false);
         }
-      };
+      }
 
-      doExport();
+      console.log(
+        `[PublishingWizard] ✓ Processed ${exportedPages.length} referenced page(s) from export data`,
+      );
+
+      // Initialize decisions for selected referenced pages
+      for (const exportedPage of exportedPages) {
+        const { currentVersion, newVersion } = getVersionInfo(exportedPage);
+        updatePageDecision(exportedPage.pageName, {
+          currentVersion,
+          newVersion,
+          publishNewVersion: true,
+          changeMessage: "",
+        });
+      }
+
+      setHasExportedReferencedPages(true);
+      console.log(
+        `[PublishingWizard] Finished processing ${exportedPages.length} referenced page(s)`,
+      );
+
+      // Since export is already complete, go directly to componentRevision
+      // (skip publishing step)
+      if (wizardStep === "publishing") {
+        console.log(
+          "[PublishingWizard] Export complete, proceeding to componentRevision",
+        );
+        setWizardStep("componentRevision");
+        setCurrentComponentIndex(0);
+      }
     }
   }, [
     wizardStep,
     hasExportedReferencedPages,
-    isExportingReferencedPages,
     discoveredReferencedPages,
     selectedReferencedPageIds,
     exportData,
@@ -731,8 +647,8 @@ export default function PublishingWizard() {
     );
   }
 
-  // Handle exporting selected referenced pages - just move to publishing step
-  // The actual export will happen in the publishing step so logs are visible
+  // Handle exporting selected referenced pages - process them and go directly to componentRevision
+  // (skip publishing step since export is already complete)
   const handleExportSelectedReferencedPages = () => {
     // Initialize decisions for main page (will be published)
     const { currentVersion, newVersion } = getVersionInfo(exportData!);
@@ -743,9 +659,48 @@ export default function PublishingWizard() {
       changeMessage: "",
     });
 
-    // Move to publishing step (will trigger export there)
-    setWizardStep("publishing");
-    setHasExportedReferencedPages(false);
+    // Process selected referenced pages from already-exported data
+    const selectedPages = discoveredReferencedPages.filter((p) =>
+      selectedReferencedPageIds.has(p.pageId),
+    );
+
+    // Use already-exported pages from additionalPages
+    const exportedPages: ExportPageResponseData[] = [];
+
+    for (const pageInfo of selectedPages) {
+      // Find the page in additionalPages (already exported)
+      const exportedPage = exportData!.additionalPages.find(
+        (p) => p.pageName === pageInfo.pageName,
+      );
+
+      if (exportedPage) {
+        exportedPages.push(exportedPage);
+        console.log(
+          `[PublishingWizard] ✓ Using already-exported page: ${exportedPage.pageName}`,
+        );
+      } else {
+        console.warn(
+          `[PublishingWizard] Referenced page "${pageInfo.pageName}" not found in additionalPages. This should not happen if the full export was performed.`,
+        );
+      }
+    }
+
+    // Initialize decisions for selected referenced pages
+    for (const exportedPage of exportedPages) {
+      const { currentVersion: pageCurrentVersion, newVersion: pageNewVersion } =
+        getVersionInfo(exportedPage);
+      updatePageDecision(exportedPage.pageName, {
+        currentVersion: pageCurrentVersion,
+        newVersion: pageNewVersion,
+        publishNewVersion: true,
+        changeMessage: "",
+      });
+    }
+
+    // Export is already complete, mark as done and go directly to componentRevision
+    setHasExportedReferencedPages(true);
+    setWizardStep("componentRevision");
+    setCurrentComponentIndex(0);
   };
 
   // Handle continue from publishing step (move to componentRevision)
@@ -776,8 +731,12 @@ export default function PublishingWizard() {
         // Go back to previous component
         setCurrentComponentIndex(currentComponentIndex - 1);
       } else {
-        // Go back to publishing step
-        setWizardStep("publishing");
+        // Go back to select referenced pages (if any) or initial
+        if (discoveredReferencedPages.length > 0) {
+          setWizardStep("selectReferencedPages");
+        } else {
+          setWizardStep("initial");
+        }
       }
     } else if (wizardStep === "finalPublish") {
       // Go back to last component revision

@@ -253,6 +253,7 @@ export default function Publish() {
                   }}
                 >
                   <button
+                    type="button"
                     onClick={() => navigate("/")}
                     style={{
                       padding: "12px 24px",
@@ -276,20 +277,21 @@ export default function Publish() {
                     Cancel
                   </button>
                   <button
+                    type="button"
                     onClick={() => {
                       console.log("[Publish] Publish button clicked", {
                         currentPageIndex,
                       });
                       if (currentPageIndex !== null) {
-                        const targetUrl = `/publishing-wizard?pageIndex=${currentPageIndex}`;
+                        const targetUrl = `/publishing?pageIndex=${currentPageIndex}`;
                         console.log("[Publish] Navigating to:", targetUrl);
                         navigate(targetUrl);
                       } else {
                         // Fallback: navigate without pageIndex (will show error)
                         console.log(
-                          "[Publish] Navigating to: /publishing-wizard (no pageIndex)",
+                          "[Publish] Navigating to: /publishing (no pageIndex)",
                         );
-                        navigate("/publishing-wizard");
+                        navigate("/publishing");
                       }
                     }}
                     style={{
@@ -365,20 +367,21 @@ export default function Publish() {
                     Cancel
                   </button>
                   <button
+                    type="button"
                     onClick={() => {
                       console.log("[Publish] Ok button clicked", {
                         currentPageIndex,
                       });
                       if (currentPageIndex !== null) {
-                        const targetUrl = `/publishing-wizard?pageIndex=${currentPageIndex}`;
+                        const targetUrl = `/publishing?pageIndex=${currentPageIndex}`;
                         console.log("[Publish] Navigating to:", targetUrl);
                         navigate(targetUrl);
                       } else {
                         // Fallback: navigate without pageIndex (will show error)
                         console.log(
-                          "[Publish] Navigating to: /publishing-wizard (no pageIndex)",
+                          "[Publish] Navigating to: /publishing (no pageIndex)",
                         );
-                        navigate("/publishing-wizard");
+                        navigate("/publishing");
                       }
                     }}
                     style={{
