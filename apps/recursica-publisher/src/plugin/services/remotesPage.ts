@@ -382,11 +382,15 @@ export async function createRemoteInstances(
           componentNode.name = entry.structure.name;
         }
         // Check for bound variables before setting width/height
+        // Note: minWidth and maxWidth are constraints, not the actual size, but we include them
+        // in the check to ensure we handle them correctly
         const hasBoundVariablesForSize =
           entry.structure.boundVariables &&
           typeof entry.structure.boundVariables === "object" &&
           (entry.structure.boundVariables.width ||
-            entry.structure.boundVariables.height);
+            entry.structure.boundVariables.height ||
+            entry.structure.boundVariables.minWidth ||
+            entry.structure.boundVariables.maxWidth);
         if (
           entry.structure.width !== undefined &&
           entry.structure.height !== undefined &&
@@ -576,6 +580,8 @@ export async function createRemoteInstances(
             | "bottomRightRadius"
             | "width"
             | "height"
+            | "minWidth"
+            | "maxWidth"
           > = [
             "paddingLeft",
             "paddingRight",
@@ -594,6 +600,8 @@ export async function createRemoteInstances(
             "bottomRightRadius",
             "width",
             "height",
+            "minWidth",
+            "maxWidth",
           ];
           for (const propName of allBindableProps) {
             if (
@@ -604,14 +612,46 @@ export async function createRemoteInstances(
               if (varRef !== undefined) {
                 const variable = recognizedVariables.get(String(varRef));
                 if (variable) {
-                  const alias = {
-                    type: "VARIABLE_ALIAS" as const,
-                    id: variable.id,
-                  };
-                  if (!(componentNode as any).boundVariables) {
-                    (componentNode as any).boundVariables = {};
+                  // CRITICAL: For width/height/minWidth/maxWidth, use setBoundVariable API method
+                  // Direct assignment to boundVariables doesn't work if the property already has a direct value
+                  if (
+                    propName === "width" ||
+                    propName === "height" ||
+                    propName === "minWidth" ||
+                    propName === "maxWidth"
+                  ) {
+                    // First, try to remove any existing binding by setting to null
+                    try {
+                      (componentNode as any).setBoundVariable(propName, null);
+                    } catch {
+                      // Ignore errors when removing (might not exist)
+                    }
+                    // Set the bound variable using Figma's API
+                    try {
+                      (componentNode as any).setBoundVariable(
+                        propName,
+                        variable,
+                      );
+                      debugConsole.log(
+                        `  ✓ Set bound variable for ${propName} on "${entry.componentName}": variable ${variable.name} (ID: ${variable.id.substring(0, 8)}...)`,
+                      );
+                    } catch (error) {
+                      debugConsole.warning(
+                        `  Failed to set bound variable for ${propName} on "${entry.componentName}": ${error}`,
+                      );
+                    }
+                  } else {
+                    // For other properties, use the existing direct assignment approach
+                    // (padding, itemSpacing, etc. are handled differently)
+                    const alias = {
+                      type: "VARIABLE_ALIAS" as const,
+                      id: variable.id,
+                    };
+                    if (!(componentNode as any).boundVariables) {
+                      (componentNode as any).boundVariables = {};
+                    }
+                    (componentNode as any).boundVariables[propName] = alias;
                   }
-                  (componentNode as any).boundVariables[propName] = alias;
                 }
               }
             }

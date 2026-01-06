@@ -241,7 +241,8 @@ export async function extractNodeData(
   if (nodeType) {
     switch (nodeType) {
       case "FRAME":
-      case "COMPONENT": {
+      case "COMPONENT":
+      case "COMPONENT_SET": {
         const frameProps = await parseFrameProperties(node, updatedContext);
         Object.assign(nodeData, frameProps);
         break;
@@ -337,6 +338,7 @@ export async function extractNodeData(
   if (
     nodeType === "FRAME" ||
     nodeType === "COMPONENT" ||
+    nodeType === "COMPONENT_SET" ||
     nodeType === "INSTANCE"
   ) {
     handledKeys.add("layoutMode");
@@ -354,6 +356,8 @@ export async function extractNodeData(
     handledKeys.add("clipsContent");
     handledKeys.add("layoutWrap");
     handledKeys.add("layoutGrow");
+    handledKeys.add("layoutSizingHorizontal");
+    handledKeys.add("layoutSizingVertical");
   }
   if (nodeType === "TEXT") {
     handledKeys.add("characters");

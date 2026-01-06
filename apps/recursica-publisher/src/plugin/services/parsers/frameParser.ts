@@ -2,9 +2,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FRAME_DEFAULTS, isDifferentFromDefault } from "./nodeDefaults";
 import type { ParsedNodeData, ParserContext } from "./baseNodeParser";
+import { debugConsole } from "../debugConsole";
 
 /**
- * Parser for FRAME, COMPONENT, and INSTANCE node types
+ * Parser for FRAME, COMPONENT, COMPONENT_SET, and INSTANCE node types
+ * All of these node types support auto-layout properties
  */
 export async function parseFrameProperties(
   node: any,
@@ -36,15 +38,70 @@ export async function parseFrameProperties(
     result.layoutMode = node.layoutMode;
     handledKeys.add("layoutMode");
   }
+  // Special handling for component variants: check parent COMPONENT_SET if variant has default/undefined sizing mode
+  // In Figma UI, variants may show sizing mode from the COMPONENT_SET parent
+  // Note: "Fill Container" in the UI is represented by having width/minWidth/maxWidth bound to variables,
+  // not by setting primaryAxisSizingMode to "FILL" (which is not a valid API value)
+  let primaryAxisSizingModeToUse = node.primaryAxisSizingMode;
+  if (node.type === "COMPONENT" && node.parent?.type === "COMPONENT_SET") {
+    const componentSet = node.parent;
+    // Get width and bound variables for comprehensive debugging
+    const variantWidth = (node as any).width;
+    const variantWidthBoundVar = (node as any).boundVariables?.width;
+    const variantMinWidthBoundVar = (node as any).boundVariables?.minWidth;
+    const variantMaxWidthBoundVar = (node as any).boundVariables?.maxWidth;
+    const componentSetWidth = (componentSet as any).width;
+    const componentSetWidthBoundVar = (componentSet as any).boundVariables
+      ?.width;
+
+    // If variant has default/undefined sizing mode, check parent COMPONENT_SET
+    if (
+      primaryAxisSizingModeToUse === undefined ||
+      primaryAxisSizingModeToUse === FRAME_DEFAULTS.primaryAxisSizingMode
+    ) {
+      if (
+        componentSet.primaryAxisSizingMode !== undefined &&
+        componentSet.primaryAxisSizingMode !==
+          FRAME_DEFAULTS.primaryAxisSizingMode
+      ) {
+        primaryAxisSizingModeToUse = componentSet.primaryAxisSizingMode;
+        debugConsole.log(
+          `[EXPORT DEBUG] Component variant "${node.name}" (ID: ${node.id.substring(0, 8)}...): Using parent COMPONENT_SET primaryAxisSizingMode = "${primaryAxisSizingModeToUse}" (variant had "${node.primaryAxisSizingMode}")`,
+        );
+      } else {
+        debugConsole.log(
+          `[EXPORT DEBUG] Component variant "${node.name}" (ID: ${node.id.substring(0, 8)}...): primaryAxisSizingMode = "${node.primaryAxisSizingMode}", layoutMode = "${node.layoutMode}", default = "${FRAME_DEFAULTS.primaryAxisSizingMode}", parent = "${componentSet.primaryAxisSizingMode}"`,
+        );
+      }
+    } else {
+      // Variant has non-default value - log comprehensive info including width and bound variables
+      debugConsole.log(
+        `[EXPORT DEBUG] Component variant "${node.name}" (ID: ${node.id.substring(0, 8)}...): primaryAxisSizingMode = "${node.primaryAxisSizingMode}", layoutMode = "${node.layoutMode}", width = ${variantWidth}, widthBoundVar = ${variantWidthBoundVar ? JSON.stringify(variantWidthBoundVar) : "none"}, minWidthBoundVar = ${variantMinWidthBoundVar ? JSON.stringify(variantMinWidthBoundVar) : "none"}, maxWidthBoundVar = ${variantMaxWidthBoundVar ? JSON.stringify(variantMaxWidthBoundVar) : "none"}, parent COMPONENT_SET: primaryAxisSizingMode = "${componentSet.primaryAxisSizingMode}", width = ${componentSetWidth}, widthBoundVar = ${componentSetWidthBoundVar ? JSON.stringify(componentSetWidthBoundVar) : "none"}`,
+      );
+    }
+  }
+
   if (
-    node.primaryAxisSizingMode !== undefined &&
+    primaryAxisSizingModeToUse !== undefined &&
     isDifferentFromDefault(
-      node.primaryAxisSizingMode,
+      primaryAxisSizingModeToUse,
       FRAME_DEFAULTS.primaryAxisSizingMode,
     )
   ) {
-    result.primaryAxisSizingMode = node.primaryAxisSizingMode;
+    result.primaryAxisSizingMode = primaryAxisSizingModeToUse;
     handledKeys.add("primaryAxisSizingMode");
+    if (node.type === "COMPONENT" && node.parent?.type === "COMPONENT_SET") {
+      debugConsole.log(
+        `[EXPORT DEBUG] Component variant "${node.name}" (ID: ${node.id.substring(0, 8)}...): Exporting primaryAxisSizingMode = "${primaryAxisSizingModeToUse}"`,
+      );
+    }
+  } else if (
+    node.type === "COMPONENT" &&
+    node.parent?.type === "COMPONENT_SET"
+  ) {
+    debugConsole.log(
+      `[EXPORT DEBUG] Component variant "${node.name}" (ID: ${node.id.substring(0, 8)}...): NOT exporting primaryAxisSizingMode (undefined or default)`,
+    );
   }
   if (
     node.counterAxisSizingMode !== undefined &&
@@ -148,6 +205,18 @@ export async function parseFrameProperties(
   ) {
     result.layoutGrow = node.layoutGrow;
     handledKeys.add("layoutGrow");
+  }
+
+  // Export layoutSizingHorizontal and layoutSizingVertical (these control "Fill Container" behavior)
+  // These are shorthands that set multiple layout properties including layoutGrow, layoutAlign, etc.
+  // Valid values: "FIXED", "HUG", "FILL"
+  if ((node as any).layoutSizingHorizontal !== undefined) {
+    result.layoutSizingHorizontal = (node as any).layoutSizingHorizontal;
+    handledKeys.add("layoutSizingHorizontal");
+  }
+  if ((node as any).layoutSizingVertical !== undefined) {
+    result.layoutSizingVertical = (node as any).layoutSizingVertical;
+    handledKeys.add("layoutSizingVertical");
   }
 
   // Note: Unhandled keys are tracked centrally in extractNodeData

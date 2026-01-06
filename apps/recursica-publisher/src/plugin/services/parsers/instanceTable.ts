@@ -67,7 +67,12 @@ export class InstanceTable {
       entry.componentGuid &&
       entry.componentVersion !== undefined
     ) {
-      return `normal:${entry.componentGuid}:${entry.componentVersion}`;
+      // For normal instances with metadata, include component name to handle cases where
+      // multiple components on the same page share the same page-level metadata (GUID/version)
+      // This ensures unique keys even when components share page metadata
+      const pathKey =
+        entry.path && entry.path.length > 0 ? `:${entry.path.join("/")}` : "";
+      return `normal:${entry.componentGuid}:${entry.componentVersion}:${entry.componentName}${pathKey}`;
     } else if (entry.instanceType === "remote" && entry.remoteLibraryKey) {
       return `remote:${entry.remoteLibraryKey}:${entry.componentName}`;
     } else if (entry.instanceType === "remote" && entry.componentNodeId) {

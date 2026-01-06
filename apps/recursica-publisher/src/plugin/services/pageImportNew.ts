@@ -1261,6 +1261,7 @@ function applyDefaultsToNode(
   if (
     nodeType === "FRAME" ||
     nodeType === "COMPONENT" ||
+    nodeType === "COMPONENT_SET" ||
     nodeType === "INSTANCE"
   ) {
     const frameDefaults = FRAME_DEFAULTS;
@@ -1567,7 +1568,7 @@ export async function recreateNodeFromData(
             componentSet.name = nodeData.name;
           }
 
-          // Apply other properties from nodeData to the component set
+          // Apply position properties from nodeData to the component set
           if (nodeData.x !== undefined) {
             componentSet.x = nodeData.x;
           }
@@ -1575,9 +1576,253 @@ export async function recreateNodeFromData(
             componentSet.y = nodeData.y;
           }
 
+          // Apply auto-layout properties to the component set
+          // COMPONENT_SET nodes support auto-layout properties just like FRAME/COMPONENT nodes
+          if (nodeData.layoutMode !== undefined) {
+            componentSet.layoutMode = nodeData.layoutMode;
+          }
+
+          // Set itemSpacing immediately after layoutMode (if not bound to a variable)
+          if (
+            nodeData.layoutMode !== undefined &&
+            nodeData.layoutMode !== "NONE" &&
+            nodeData.itemSpacing !== undefined
+          ) {
+            const hasBoundVariableForItemSpacing =
+              nodeData.boundVariables &&
+              typeof nodeData.boundVariables === "object" &&
+              nodeData.boundVariables.itemSpacing;
+
+            if (!hasBoundVariableForItemSpacing) {
+              componentSet.itemSpacing = nodeData.itemSpacing;
+            }
+          }
+
+          // Set wrap (must be set after layoutMode)
+          if (nodeData.layoutWrap !== undefined) {
+            componentSet.layoutWrap = nodeData.layoutWrap;
+          }
+
+          // Set sizing modes
+          if (nodeData.primaryAxisSizingMode !== undefined) {
+            componentSet.primaryAxisSizingMode = nodeData.primaryAxisSizingMode;
+          }
+          if (nodeData.counterAxisSizingMode !== undefined) {
+            componentSet.counterAxisSizingMode = nodeData.counterAxisSizingMode;
+          }
+
+          // Set alignment
+          if (nodeData.primaryAxisAlignItems !== undefined) {
+            componentSet.primaryAxisAlignItems = nodeData.primaryAxisAlignItems;
+          }
+          if (nodeData.counterAxisAlignItems !== undefined) {
+            componentSet.counterAxisAlignItems = nodeData.counterAxisAlignItems;
+          }
+
+          // Set padding (check for bound variables first)
+          const hasBoundVariables =
+            nodeData.boundVariables &&
+            typeof nodeData.boundVariables === "object";
+          if (
+            nodeData.paddingLeft !== undefined &&
+            (!hasBoundVariables || !nodeData.boundVariables.paddingLeft)
+          ) {
+            componentSet.paddingLeft = nodeData.paddingLeft;
+          }
+          if (
+            nodeData.paddingRight !== undefined &&
+            (!hasBoundVariables || !nodeData.boundVariables.paddingRight)
+          ) {
+            componentSet.paddingRight = nodeData.paddingRight;
+          }
+          if (
+            nodeData.paddingTop !== undefined &&
+            (!hasBoundVariables || !nodeData.boundVariables.paddingTop)
+          ) {
+            componentSet.paddingTop = nodeData.paddingTop;
+          }
+          if (
+            nodeData.paddingBottom !== undefined &&
+            (!hasBoundVariables || !nodeData.boundVariables.paddingBottom)
+          ) {
+            componentSet.paddingBottom = nodeData.paddingBottom;
+          }
+
+          // Set counterAxisSpacing if present
+          if (nodeData.counterAxisSpacing !== undefined) {
+            componentSet.counterAxisSpacing = nodeData.counterAxisSpacing;
+          }
+
+          // Apply bound variables for auto-layout properties if present
+          if (
+            nodeData.boundVariables &&
+            typeof nodeData.boundVariables === "object" &&
+            (variableTable || recognizedVariables)
+          ) {
+            const layoutBoundVars = [
+              "paddingLeft",
+              "paddingRight",
+              "paddingTop",
+              "paddingBottom",
+              "itemSpacing",
+            ];
+            for (const propName of layoutBoundVars) {
+              if (nodeData.boundVariables[propName]) {
+                const varRef = nodeData.boundVariables[propName];
+                let variable: Variable | null = null;
+
+                if (
+                  varRef._varRef !== undefined &&
+                  variableTable &&
+                  recognizedVariables
+                ) {
+                  const varIndex = varRef._varRef;
+                  const varEntry = variableTable.getVariableByIndex(varIndex);
+                  if (varEntry) {
+                    // VariableTableEntry has variableName - search recognizedVariables by name
+                    const varName = varEntry.variableName;
+                    for (const varObj of recognizedVariables.values()) {
+                      if (varObj.name === varName) {
+                        variable = varObj;
+                        break;
+                      }
+                    }
+                  }
+                }
+
+                if (variable) {
+                  const alias: VariableAlias = {
+                    type: "VARIABLE_ALIAS",
+                    id: variable.id,
+                  };
+                  try {
+                    (componentSet as any).setBoundVariable(propName, alias);
+                  } catch (error) {
+                    debugConsole.warning(
+                      `  Error setting bound variable for ${propName} on COMPONENT_SET "${nodeData.name || "Unnamed"}": ${error instanceof Error ? error.message : String(error)}`,
+                    );
+                  }
+                }
+              }
+            }
+          }
+
           // Remove the temporary parent frame (components are now in the component set)
           if (tempParent && tempParent.parent) {
             tempParent.remove();
+          }
+
+          // IMPORTANT: After combining into COMPONENT_SET, variants are now children of the auto-layout COMPONENT_SET
+          // At this point, we can set layoutSizingHorizontal/layoutSizingVertical on each variant if needed
+          // Check each variant's childData to see if it has minWidth/maxWidth or minHeight/maxHeight bound to variables
+          if (
+            componentSet.layoutMode !== undefined &&
+            componentSet.layoutMode !== "NONE"
+          ) {
+            const isHorizontal = componentSet.layoutMode === "HORIZONTAL";
+            for (
+              let i = 0;
+              i < componentSet.children.length && i < nodeData.children.length;
+              i++
+            ) {
+              const variant = componentSet.children[i];
+              const variantData = nodeData.children[i];
+
+              if (
+                variant.type === "COMPONENT" &&
+                variantData &&
+                variantData.type === "COMPONENT"
+              ) {
+                const boundVars = variantData.boundVariables;
+                const hasBoundVars = boundVars && typeof boundVars === "object";
+
+                // For HORIZONTAL layout: layoutSizingHorizontal controls width, layoutSizingVertical controls height
+                // For VERTICAL layout: layoutSizingHorizontal controls height, layoutSizingVertical controls width
+
+                // Check for width constraints (minWidth/maxWidth)
+                // For horizontal layout, width is controlled by layoutSizingHorizontal
+                // For vertical layout, width is controlled by layoutSizingVertical
+                const hasWidthConstraints =
+                  hasBoundVars && (boundVars.minWidth || boundVars.maxWidth);
+
+                if (hasWidthConstraints) {
+                  try {
+                    if (isHorizontal) {
+                      (variant as any).layoutSizingHorizontal = "FILL";
+                      debugConsole.log(
+                        `  ✓ Set layoutSizingHorizontal to "FILL" for variant "${variant.name}" (minWidth/maxWidth are bound, horizontal layout)`,
+                      );
+                    } else {
+                      (variant as any).layoutSizingVertical = "FILL";
+                      debugConsole.log(
+                        `  ✓ Set layoutSizingVertical to "FILL" for variant "${variant.name}" (minWidth/maxWidth are bound, vertical layout)`,
+                      );
+                    }
+                  } catch (error) {
+                    debugConsole.warning(
+                      `  ⚠️ Failed to set layout sizing for variant "${variant.name}" (width constraints): ${error}`,
+                    );
+                  }
+                }
+
+                // Check for height constraints (minHeight/maxHeight)
+                // For horizontal layout, height is controlled by layoutSizingVertical
+                // For vertical layout, height is controlled by layoutSizingHorizontal
+                const hasHeightConstraints =
+                  hasBoundVars && (boundVars.minHeight || boundVars.maxHeight);
+
+                if (hasHeightConstraints) {
+                  try {
+                    if (isHorizontal) {
+                      (variant as any).layoutSizingVertical = "FILL";
+                      debugConsole.log(
+                        `  ✓ Set layoutSizingVertical to "FILL" for variant "${variant.name}" (minHeight/maxHeight are bound, horizontal layout)`,
+                      );
+                    } else {
+                      (variant as any).layoutSizingHorizontal = "FILL";
+                      debugConsole.log(
+                        `  ✓ Set layoutSizingHorizontal to "FILL" for variant "${variant.name}" (minHeight/maxHeight are bound, vertical layout)`,
+                      );
+                    }
+                  } catch (error) {
+                    debugConsole.warning(
+                      `  ⚠️ Failed to set layout sizing for variant "${variant.name}" (height constraints): ${error}`,
+                    );
+                  }
+                }
+
+                // Also set layoutSizingHorizontal/layoutSizingVertical if explicitly in the variant data
+                if ((variantData as any).layoutSizingHorizontal !== undefined) {
+                  try {
+                    (variant as any).layoutSizingHorizontal = (
+                      variantData as any
+                    ).layoutSizingHorizontal;
+                    debugConsole.log(
+                      `  ✓ Set layoutSizingHorizontal to "${(variantData as any).layoutSizingHorizontal}" for variant "${variant.name}"`,
+                    );
+                  } catch (error) {
+                    debugConsole.warning(
+                      `  ⚠️ Failed to set layoutSizingHorizontal for variant "${variant.name}": ${error}`,
+                    );
+                  }
+                }
+
+                if ((variantData as any).layoutSizingVertical !== undefined) {
+                  try {
+                    (variant as any).layoutSizingVertical = (
+                      variantData as any
+                    ).layoutSizingVertical;
+                    debugConsole.log(
+                      `  ✓ Set layoutSizingVertical to "${(variantData as any).layoutSizingVertical}" for variant "${variant.name}"`,
+                    );
+                  } catch (error) {
+                    debugConsole.warning(
+                      `  ⚠️ Failed to set layoutSizingVertical for variant "${variant.name}": ${error}`,
+                    );
+                  }
+                }
+              }
+            }
           }
 
           debugConsole.log(
@@ -3111,10 +3356,15 @@ export async function recreateNodeFromData(
   // because setting vectorPaths can auto-resize the vector to fit the path bounds.
   // For other node types, set size now.
   // Check for bound variables before setting width/height
+  // Note: minWidth and maxWidth are constraints, not the actual size, but we include them
+  // in the check to ensure we handle them correctly
   const hasBoundVariablesForSize =
     nodeData.boundVariables &&
     typeof nodeData.boundVariables === "object" &&
-    (nodeData.boundVariables.width || nodeData.boundVariables.height);
+    (nodeData.boundVariables.width ||
+      nodeData.boundVariables.height ||
+      nodeData.boundVariables.minWidth ||
+      nodeData.boundVariables.maxWidth);
 
   // ISSUE #3 & #4 DEBUG: Check for preserveRatio and constraints before resize
   const nodeName = nodeData.name || "Unnamed";
@@ -3137,12 +3387,107 @@ export async function recreateNodeFromData(
     );
   }
 
+  // CRITICAL: Set layoutMode and sizing modes BEFORE resize
+  // This ensures that FILL mode is set before we try to resize, preventing fixed dimensions
+  // from being set when they should be FILL
+  if (
+    nodeData.type === "FRAME" ||
+    nodeData.type === "COMPONENT" ||
+    nodeData.type === "COMPONENT_SET" ||
+    nodeData.type === "INSTANCE"
+  ) {
+    // Set layoutMode first (required before sizing modes)
+    if (nodeData.layoutMode !== undefined) {
+      newNode.layoutMode = nodeData.layoutMode;
+    }
+
+    // Set sizing modes (must be after layoutMode)
+    if (nodeData.primaryAxisSizingMode !== undefined) {
+      newNode.primaryAxisSizingMode = nodeData.primaryAxisSizingMode;
+    }
+    if (nodeData.counterAxisSizingMode !== undefined) {
+      newNode.counterAxisSizingMode = nodeData.counterAxisSizingMode;
+    }
+
+    // Set layoutSizingHorizontal and layoutSizingVertical (these control "Fill Container" behavior)
+    // These are shorthands that set multiple layout properties
+    // Valid values: "FIXED", "HUG", "FILL"
+    // IMPORTANT: layoutSizingHorizontal/layoutSizingVertical can only be set on children of auto-layout frames
+    // Check if parent has auto-layout before setting these properties
+    const parentHasAutoLayout =
+      parentNode &&
+      "layoutMode" in parentNode &&
+      parentNode.layoutMode !== undefined &&
+      parentNode.layoutMode !== "NONE";
+
+    if (parentHasAutoLayout) {
+      if ((nodeData as any).layoutSizingHorizontal !== undefined) {
+        try {
+          (newNode as any).layoutSizingHorizontal = (
+            nodeData as any
+          ).layoutSizingHorizontal;
+        } catch (error) {
+          debugConsole.warning(
+            `  ⚠️ Failed to set layoutSizingHorizontal for "${nodeData.name || "Unnamed"}": ${error}`,
+          );
+        }
+      }
+      if ((nodeData as any).layoutSizingVertical !== undefined) {
+        try {
+          (newNode as any).layoutSizingVertical = (
+            nodeData as any
+          ).layoutSizingVertical;
+        } catch (error) {
+          debugConsole.warning(
+            `  ⚠️ Failed to set layoutSizingVertical for "${nodeData.name || "Unnamed"}": ${error}`,
+          );
+        }
+      }
+    }
+  }
+
+  // Check sizing modes and bound variables - if width should be Fill, don't set fixed dimensions
+  // primaryAxisSizingMode controls width (for HORIZONTAL layout) or height (for VERTICAL layout)
+  // counterAxisSizingMode controls height (for HORIZONTAL layout) or width (for VERTICAL layout)
+  // Only check sizing modes if layoutMode is set (sizing modes only apply with auto-layout)
+  // Note: "FILL" is not a valid value for primaryAxisSizingMode (only "FIXED" and "AUTO" are valid)
+  // When maxWidth or minWidth are bound to variables, the width should be treated as "Fill"
+  const layoutMode = nodeData.layoutMode;
+  const hasAutoLayout = layoutMode !== undefined && layoutMode !== "NONE";
+  const isHorizontal = layoutMode === "HORIZONTAL";
+
+  // Check if width/minWidth/maxWidth are bound to variables (indicates "Fill Container" behavior)
+  const hasWidthConstraints =
+    hasAutoLayout &&
+    nodeData.boundVariables &&
+    typeof nodeData.boundVariables === "object" &&
+    (nodeData.boundVariables.width ||
+      (isHorizontal && nodeData.boundVariables.minWidth) ||
+      (isHorizontal && nodeData.boundVariables.maxWidth));
+
+  // Check if height/minHeight/maxHeight are bound to variables
+  const hasHeightConstraints =
+    hasAutoLayout &&
+    nodeData.boundVariables &&
+    typeof nodeData.boundVariables === "object" &&
+    (nodeData.boundVariables.height ||
+      (!isHorizontal && nodeData.boundVariables.minWidth) ||
+      (!isHorizontal && nodeData.boundVariables.maxWidth));
+
+  // For HORIZONTAL layout: primaryAxis = width, counterAxis = height
+  // For VERTICAL layout: primaryAxis = height, counterAxis = width
+  // If constraints are bound, treat that dimension as "Fill"
+  const widthIsFill = hasWidthConstraints;
+  const heightIsFill = hasHeightConstraints;
+
   if (
     nodeData.type !== "VECTOR" &&
     nodeData.type !== "BOOLEAN_OPERATION" &&
+    !hasBoundVariablesForSize &&
+    !widthIsFill &&
+    !heightIsFill &&
     nodeData.width !== undefined &&
-    nodeData.height !== undefined &&
-    !hasBoundVariablesForSize
+    nodeData.height !== undefined
   ) {
     // ISSUE #3 DEBUG: Check preserveRatio before resize
     const preserveRatioBefore = (newNode as any).preserveRatio;
@@ -3153,6 +3498,31 @@ export async function recreateNodeFromData(
     }
 
     newNode.resize(nodeData.width, nodeData.height);
+  } else if (
+    nodeData.type !== "VECTOR" &&
+    nodeData.type !== "BOOLEAN_OPERATION" &&
+    !hasBoundVariablesForSize &&
+    (widthIsFill || heightIsFill)
+  ) {
+    // Handle partial sizing: set only the dimension that's not FILL
+    if (widthIsFill && !heightIsFill && nodeData.height !== undefined) {
+      // Width is FILL, only set height
+      newNode.resize(newNode.width, nodeData.height);
+      debugConsole.log(
+        `  Set height to ${nodeData.height} for "${nodeName}" (width is FILL)`,
+      );
+    } else if (heightIsFill && !widthIsFill && nodeData.width !== undefined) {
+      // Height is FILL, only set width
+      newNode.resize(nodeData.width, newNode.height);
+      debugConsole.log(
+        `  Set width to ${nodeData.width} for "${nodeName}" (height is FILL)`,
+      );
+    } else if (widthIsFill && heightIsFill) {
+      // Both are FILL, don't set dimensions
+      debugConsole.log(
+        `  Skipping resize for "${nodeName}" (both width and height are FILL)`,
+      );
+    }
 
     // ISSUE #3 DEBUG: Check preserveRatio after resize
     const preserveRatioAfter = (newNode as any).preserveRatio;
@@ -3721,6 +4091,7 @@ export async function recreateNodeFromData(
     } else if (
       nodeData.type === "FRAME" ||
       nodeData.type === "COMPONENT" ||
+      nodeData.type === "COMPONENT_SET" ||
       nodeData.type === "GROUP"
     ) {
       // For FRAME, COMPONENT, and GROUP nodes, if fills are not specified,
@@ -3804,6 +4175,7 @@ export async function recreateNodeFromData(
   if (
     nodeData.type === "FRAME" ||
     nodeData.type === "COMPONENT" ||
+    nodeData.type === "COMPONENT_SET" ||
     nodeData.type === "INSTANCE"
   ) {
     // Step 1: Set auto-layout mode (must be set before wrap)
@@ -3984,6 +4356,7 @@ export async function recreateNodeFromData(
       if (
         nodeData.type === "FRAME" ||
         nodeData.type === "COMPONENT" ||
+        nodeData.type === "COMPONENT_SET" ||
         nodeData.type === "INSTANCE"
       ) {
         debugConsole.log(
@@ -3997,17 +4370,27 @@ export async function recreateNodeFromData(
       newNode.layoutWrap = nodeData.layoutWrap;
     }
     // Step 3: Set other layout properties
-    // Always set sizing modes - if not in data, use defaults (AUTO = "Hug")
-    // This ensures "Hug" property is always set correctly
-    if (nodeData.primaryAxisSizingMode !== undefined) {
-      newNode.primaryAxisSizingMode = nodeData.primaryAxisSizingMode;
-    } else {
+    // Note: layoutMode and sizing modes are already set earlier (before resize)
+    // Only set defaults here if they weren't set earlier
+    if (
+      (nodeData.type === "FRAME" ||
+        nodeData.type === "COMPONENT" ||
+        nodeData.type === "COMPONENT_SET" ||
+        nodeData.type === "INSTANCE") &&
+      nodeData.primaryAxisSizingMode === undefined &&
+      newNode.primaryAxisSizingMode === undefined
+    ) {
       // Default to AUTO (Hug) if not specified
       newNode.primaryAxisSizingMode = "AUTO";
     }
-    if (nodeData.counterAxisSizingMode !== undefined) {
-      newNode.counterAxisSizingMode = nodeData.counterAxisSizingMode;
-    } else {
+    if (
+      (nodeData.type === "FRAME" ||
+        nodeData.type === "COMPONENT" ||
+        nodeData.type === "COMPONENT_SET" ||
+        nodeData.type === "INSTANCE") &&
+      nodeData.counterAxisSizingMode === undefined &&
+      newNode.counterAxisSizingMode === undefined
+    ) {
       // Default to AUTO (Hug) if not specified
       newNode.counterAxisSizingMode = "AUTO";
     }
@@ -4588,6 +4971,7 @@ export async function recreateNodeFromData(
   // This ensures nothing can clear the bound variables after they're set
   // IMPORTANT: Padding/itemSpacing bound variables are already set earlier (right after layoutMode)
   // to ensure they're set before any direct values that might clear them
+  // IMPORTANT: width/height/minWidth/maxWidth bound variables are handled in special section after resize
   if (nodeData.boundVariables && recognizedVariables) {
     const paddingProps = [
       "paddingLeft",
@@ -4596,11 +4980,17 @@ export async function recreateNodeFromData(
       "paddingBottom",
       "itemSpacing",
     ];
+    const sizeProps = ["width", "height", "minWidth", "maxWidth"];
     for (const [propertyName, varInfo] of Object.entries(
       nodeData.boundVariables,
     )) {
-      // Skip fills (handled separately earlier) and padding properties (set earlier)
-      if (propertyName !== "fills" && !paddingProps.includes(propertyName)) {
+      // Skip fills (handled separately earlier), padding properties (set earlier),
+      // and size properties (handled in special section after resize)
+      if (
+        propertyName !== "fills" &&
+        !paddingProps.includes(propertyName) &&
+        !sizeProps.includes(propertyName)
+      ) {
         // ISSUE #2: Log when we're restoring selectionColor bound variable
         if (propertyName === "selectionColor") {
           const nodeName = nodeData.name || "Unnamed";
@@ -4687,28 +5077,45 @@ export async function recreateNodeFromData(
     }
   }
 
-  // Special handling for width/height bound variables (need to set after resize)
-  // If width or height are bound to variables, we need to set them after any resize calls
+  // Special handling for width/height/minWidth/maxWidth bound variables (need to set after resize)
+  // If width, height, minWidth, or maxWidth are bound to variables, we need to set them after any resize calls
+  // CRITICAL: Use setBoundVariable API method (not direct assignment) to properly bind variables
+  // Direct assignment to boundVariables doesn't work if the property already has a direct value
   if (
     nodeData.boundVariables &&
     recognizedVariables &&
-    (nodeData.boundVariables.width || nodeData.boundVariables.height)
+    (nodeData.boundVariables.width ||
+      nodeData.boundVariables.height ||
+      nodeData.boundVariables.minWidth ||
+      nodeData.boundVariables.maxWidth)
   ) {
     const widthVar = nodeData.boundVariables.width;
     const heightVar = nodeData.boundVariables.height;
+    const minWidthVar = nodeData.boundVariables.minWidth;
+    const maxWidthVar = nodeData.boundVariables.maxWidth;
+
     if (widthVar && isVariableReference(widthVar)) {
       const varRef = (widthVar as VariableReference)._varRef;
       if (varRef !== undefined) {
         const variable = recognizedVariables.get(String(varRef));
         if (variable) {
-          const alias: VariableAlias = {
-            type: "VARIABLE_ALIAS",
-            id: variable.id,
-          };
-          if (!newNode.boundVariables) {
-            newNode.boundVariables = {};
+          // First, try to remove any existing binding by setting to null
+          try {
+            (newNode as any).setBoundVariable("width", null);
+          } catch {
+            // Ignore errors when removing (might not exist)
           }
-          newNode.boundVariables.width = alias;
+          // Set the bound variable using Figma's API
+          try {
+            (newNode as any).setBoundVariable("width", variable);
+            debugConsole.log(
+              `  ✓ Set bound variable for width on "${nodeData.name || "Unnamed"}" (${nodeData.type}): variable ${variable.name} (ID: ${variable.id.substring(0, 8)}...)`,
+            );
+          } catch (error) {
+            debugConsole.warning(
+              `  Failed to set bound variable for width on "${nodeData.name || "Unnamed"}": ${error}`,
+            );
+          }
         }
       }
     }
@@ -4717,17 +5124,81 @@ export async function recreateNodeFromData(
       if (varRef !== undefined) {
         const variable = recognizedVariables.get(String(varRef));
         if (variable) {
-          const alias: VariableAlias = {
-            type: "VARIABLE_ALIAS",
-            id: variable.id,
-          };
-          if (!newNode.boundVariables) {
-            newNode.boundVariables = {};
+          // First, try to remove any existing binding by setting to null
+          try {
+            (newNode as any).setBoundVariable("height", null);
+          } catch {
+            // Ignore errors when removing (might not exist)
           }
-          newNode.boundVariables.height = alias;
+          // Set the bound variable using Figma's API
+          try {
+            (newNode as any).setBoundVariable("height", variable);
+            debugConsole.log(
+              `  ✓ Set bound variable for height on "${nodeData.name || "Unnamed"}" (${nodeData.type}): variable ${variable.name} (ID: ${variable.id.substring(0, 8)}...)`,
+            );
+          } catch (error) {
+            debugConsole.warning(
+              `  Failed to set bound variable for height on "${nodeData.name || "Unnamed"}": ${error}`,
+            );
+          }
         }
       }
     }
+    if (minWidthVar && isVariableReference(minWidthVar)) {
+      const varRef = (minWidthVar as VariableReference)._varRef;
+      if (varRef !== undefined) {
+        const variable = recognizedVariables.get(String(varRef));
+        if (variable) {
+          // First, try to remove any existing binding by setting to null
+          try {
+            (newNode as any).setBoundVariable("minWidth", null);
+          } catch {
+            // Ignore errors when removing (might not exist)
+          }
+          // Set the bound variable using Figma's API
+          try {
+            (newNode as any).setBoundVariable("minWidth", variable);
+            debugConsole.log(
+              `  ✓ Set bound variable for minWidth on "${nodeData.name || "Unnamed"}" (${nodeData.type}): variable ${variable.name} (ID: ${variable.id.substring(0, 8)}...)`,
+            );
+          } catch (error) {
+            debugConsole.warning(
+              `  Failed to set bound variable for minWidth on "${nodeData.name || "Unnamed"}": ${error}`,
+            );
+          }
+        }
+      }
+    }
+    if (maxWidthVar && isVariableReference(maxWidthVar)) {
+      const varRef = (maxWidthVar as VariableReference)._varRef;
+      if (varRef !== undefined) {
+        const variable = recognizedVariables.get(String(varRef));
+        if (variable) {
+          // First, try to remove any existing binding by setting to null
+          try {
+            (newNode as any).setBoundVariable("maxWidth", null);
+          } catch {
+            // Ignore errors when removing (might not exist)
+          }
+          // Set the bound variable using Figma's API
+          try {
+            (newNode as any).setBoundVariable("maxWidth", variable);
+            debugConsole.log(
+              `  ✓ Set bound variable for maxWidth on "${nodeData.name || "Unnamed"}" (${nodeData.type}): variable ${variable.name} (ID: ${variable.id.substring(0, 8)}...)`,
+            );
+          } catch (error) {
+            debugConsole.warning(
+              `  Failed to set bound variable for maxWidth on "${nodeData.name || "Unnamed"}": ${error}`,
+            );
+          }
+        }
+      }
+    }
+
+    // IMPORTANT: When minWidth or maxWidth are bound to variables, the component should behave as "Fill Container"
+    // However, layoutSizingHorizontal can only be set on children of auto-layout frames, not on components themselves
+    // So we don't set it here - it will be set when the component is used as a child in an auto-layout container
+    // The minWidth/maxWidth bound variables are already set above, which is sufficient for the component definition
   }
 
   // Recursively recreate children
@@ -6477,11 +6948,15 @@ async function createRemoteInstances(
           componentNode.name = entry.structure.name;
         }
         // Check for bound variables before setting width/height
+        // Note: minWidth and maxWidth are constraints, not the actual size, but we include them
+        // in the check to ensure we handle them correctly
         const hasBoundVariablesForSize =
           entry.structure.boundVariables &&
           typeof entry.structure.boundVariables === "object" &&
           (entry.structure.boundVariables.width ||
-            entry.structure.boundVariables.height);
+            entry.structure.boundVariables.height ||
+            entry.structure.boundVariables.minWidth ||
+            entry.structure.boundVariables.maxWidth);
         if (
           entry.structure.width !== undefined &&
           entry.structure.height !== undefined &&
@@ -6676,6 +7151,8 @@ async function createRemoteInstances(
             | "bottomRightRadius"
             | "width"
             | "height"
+            | "minWidth"
+            | "maxWidth"
           > = [
             "paddingLeft",
             "paddingRight",
@@ -6694,6 +7171,8 @@ async function createRemoteInstances(
             "bottomRightRadius",
             "width",
             "height",
+            "minWidth",
+            "maxWidth",
           ];
           for (const propName of allBindableProps) {
             if (

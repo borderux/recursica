@@ -163,6 +163,8 @@ const STRING_TABLE_MAP: Record<string, string> = {
   bottomRightRadius: "botRR",
   topLeftRadius: "topLR",
   layoutGrow: "layGr",
+  layoutSizingHorizontal: "laySzH",
+  layoutSizingVertical: "laySzV",
   offsetX: "offX",
   offsetY: "offY",
   maxWidth: "maxW",

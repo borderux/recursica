@@ -225,10 +225,24 @@ export async function parseInstanceProperties(
     const componentPageResult = getPageFromNode(mainComponent);
     let componentPage = componentPageResult.page;
 
-    // If componentPage is null and component is marked as remote, try to find it by ID prefix
+    // Debug logging for page detection
+    if (instanceName.includes("Slot") || componentName.includes("Slot")) {
+      debugConsole.log(
+        `  [SLOT DEBUG] Instance "${instanceName}" -> component "${componentName}":`,
+      );
+      debugConsole.log(
+        `  [SLOT DEBUG]   Instance page: ${instancePage ? `"${instancePage.name}" (ID: ${instancePage.id.substring(0, 8)}...)` : "null"} (reason: ${instancePageResult.reason})`,
+      );
+      debugConsole.log(
+        `  [SLOT DEBUG]   Component page (initial): ${componentPage ? `"${componentPage.name}" (ID: ${componentPage.id.substring(0, 8)}...)` : "null"} (reason: ${componentPageResult.reason})`,
+      );
+    }
+
+    // If componentPage is null, try to find it by searching pages or ID prefix
     // This handles cases where components inside COMPONENT_SET nodes can't traverse to their page
     // In Figma, nodes on the same page share the same ID prefix (before the colon)
-    if (!componentPage && isRemote) {
+    // This applies to both remote and non-remote components
+    if (!componentPage) {
       try {
         await figma.loadAllPagesAsync();
         const allPages = figma.root.children;
@@ -262,11 +276,31 @@ export async function parseInstanceProperties(
         }
 
         if (foundOnPage) {
-          // Update componentPage to the found page so it gets treated as normal
+          // Update componentPage to the found page
           componentPage = foundOnPage;
+          debugConsole.log(
+            `  Found page "${foundOnPage.name}" for component "${componentName}" using page search/ID prefix lookup (componentPage was null)`,
+          );
+          if (instanceName.includes("Slot") || componentName.includes("Slot")) {
+            debugConsole.log(
+              `  [SLOT DEBUG]   Component page (after lookup): "${foundOnPage.name}" (ID: ${foundOnPage.id.substring(0, 8)}...)`,
+            );
+          }
+        } else {
+          debugConsole.warning(
+            `  Could not find page for component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...) - page search and ID prefix lookup both failed`,
+          );
+          if (instanceName.includes("Slot") || componentName.includes("Slot")) {
+            debugConsole.warning(
+              `  [SLOT DEBUG]   Failed to find page for Slot component using search/ID prefix lookup`,
+            );
+          }
         }
-      } catch {
+      } catch (error) {
         // If page lookup fails, continue with componentPage as null
+        debugConsole.warning(
+          `  Error during page lookup for component "${componentName}": ${error}`,
+        );
       }
     }
 
@@ -783,14 +817,24 @@ export async function parseInstanceProperties(
         // Always set componentPageName for normal instances (needed for import)
         entry.componentPageName = pageToUse.name;
 
+        debugConsole.log(
+          `  [INSTANCE DEBUG] Instance "${instanceName}" -> component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...): found page "${pageToUse.name}" (ID: ${pageToUse.id.substring(0, 8)}...)`,
+        );
+
         const metadata = getComponentMetadataFromPage(pageToUse);
         if (metadata?.id && metadata.version !== undefined) {
           entry.componentGuid = metadata.id;
           entry.componentVersion = metadata.version;
           debugConsole.log(
+            `  [INSTANCE DEBUG] Instance "${instanceName}" -> component "${componentName}": metadata found - GUID: ${metadata.id.substring(0, 8)}..., version: ${metadata.version}`,
+          );
+          debugConsole.log(
             `  Found INSTANCE: "${instanceName}" -> NORMAL component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...) at path [${(mainComponentParentPath || []).join(" → ")}]`,
           );
         } else {
+          debugConsole.warning(
+            `  [INSTANCE DEBUG] Instance "${instanceName}" -> component "${componentName}": page "${pageToUse.name}" has no metadata (id: ${metadata?.id || "missing"}, version: ${metadata?.version ?? "missing"})`,
+          );
           debugConsole.warning(
             `  Instance "${instanceName}" -> component "${componentName}" is classified as normal but page "${pageToUse.name}" has no metadata. This instance will not be importable.`,
           );
