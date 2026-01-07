@@ -96,7 +96,9 @@ export async function parseInstanceProperties(
     node.type === "INSTANCE" &&
     typeof node.getMainComponentAsync === "function"
   ) {
+    const instanceName = node.name || "(unnamed)";
     const mainComponent = await node.getMainComponentAsync();
+
     if (!mainComponent) {
       // Detached instance - the main component is missing
       const instanceName = node.name || "(unnamed)";
@@ -215,9 +217,88 @@ export async function parseInstanceProperties(
       return result;
     }
 
-    const instanceName = node.name || "(unnamed)";
-    const componentName = mainComponent.name || "(unnamed)";
+    // Validate that the main component is actually accessible and not broken
+    // Even if getMainComponentAsync() returns a component, it might be in a broken state
+    let componentName: string;
+    let isComponentValid = false;
+    try {
+      // Try to access basic properties that should always be available
+      componentName = mainComponent.name || "(unnamed)";
+      const componentType = mainComponent.type;
+      // If we can access name and type without errors, the component is likely valid
+      isComponentValid =
+        componentType === "COMPONENT" || componentType === "COMPONENT_SET";
+    } catch (accessError) {
+      // Component exists but is not accessible - this is a broken reference
+      const errorMessage = `Instance "${instanceName}" has a broken reference to its main component. The component exists but cannot be accessed (${accessError instanceof Error ? accessError.message : String(accessError)}). Please fix the instance reference before exporting.`;
+      debugConsole.error(errorMessage);
+      // Try to scroll to the instance to help user find it
+      try {
+        await figma.viewport.scrollAndZoomIntoView([node]);
+      } catch (scrollError) {
+        console.warn("Could not scroll to instance:", scrollError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    if (!isComponentValid) {
+      // Component type is not valid - this shouldn't happen but check anyway
+      const errorMessage = `Instance "${instanceName}" references a main component that is not a valid component type (type: ${(mainComponent as any).type}). Please fix the instance reference before exporting.`;
+      debugConsole.error(errorMessage);
+      try {
+        await figma.viewport.scrollAndZoomIntoView([node]);
+      } catch (scrollError) {
+        console.warn("Could not scroll to instance:", scrollError);
+      }
+      throw new Error(errorMessage);
+    }
+
     const isRemote = (mainComponent as any).remote === true;
+
+    // Additional validation: Verify the component is actually usable and not broken
+    // If getMainComponentAsync() returns a component but we can't access its properties or it's been removed, it's broken
+    // This catches cases where the component reference exists but is in an invalid state (e.g., component was deleted but reference remains)
+
+    // Validation checks for non-remote components
+    try {
+      // Try to access the component's parent - if this fails or throws, the component is broken
+      // Note: parent can be null for root-level components, which is valid
+      // But if accessing parent throws an error, that's a sign of a broken reference
+      void mainComponent.parent;
+
+      // Additional check: Try to access properties that would fail if the component is truly broken
+      // If the component was deleted but the reference still exists, accessing certain properties might fail
+      try {
+        // Try to access children - this will fail if the component is truly broken/removed
+        void mainComponent.children;
+
+        // Also check if component has been removed (some Figma APIs expose this)
+        const removed = (mainComponent as any).removed;
+        if (removed === true) {
+          throw new Error("Component has been removed");
+        }
+      } catch (childrenError) {
+        // Can't access children or component is removed - this is a broken reference
+        const errorMessage = `Instance "${instanceName}" references a broken main component "${componentName}". The component reference exists but the component appears to have been removed or is in an invalid state (${childrenError instanceof Error ? childrenError.message : String(childrenError)}). Please fix the instance reference before exporting.`;
+        debugConsole.error(errorMessage);
+        try {
+          await figma.viewport.scrollAndZoomIntoView([node]);
+        } catch (scrollError) {
+          console.warn("Could not scroll to instance:", scrollError);
+        }
+        throw new Error(errorMessage);
+      }
+    } catch (parentError) {
+      // Can't access parent - component is broken
+      const errorMessage = `Instance "${instanceName}" references a broken main component "${componentName}". The component reference exists but cannot be accessed properly (${parentError instanceof Error ? parentError.message : String(parentError)}). This usually means the component was deleted or the reference is corrupted. Please fix the instance reference before exporting.`;
+      debugConsole.error(errorMessage);
+      try {
+        await figma.viewport.scrollAndZoomIntoView([node]);
+      } catch (scrollError) {
+        console.warn("Could not scroll to instance:", scrollError);
+      }
+      throw new Error(errorMessage);
+    }
 
     // Get pages for classification
     const instancePageResult = getPageFromNode(node);
@@ -420,6 +501,199 @@ export async function parseInstanceProperties(
       }
     }
 
+    // Remote components are no longer supported - all references must be within the same file
+    if (instanceType === "remote") {
+      // Get page information to include in error message
+      const pageName = instancePage ? instancePage.name : "unknown page";
+
+      // Try to build a simple path to the instance
+      const pathParts: string[] = [];
+      let current: any = node;
+      try {
+        while (current && current !== instancePage) {
+          if (current.name) {
+            pathParts.unshift(current.name);
+          }
+          current = current.parent;
+        }
+      } catch {
+        // Path building failed, that's okay
+      }
+      const pathDisplay =
+        pathParts.length > 0 ? ` at path [${pathParts.join(" → ")}]` : "";
+
+      const errorMessage = `Instance "${instanceName}" on page "${pageName}"${pathDisplay} references a remote component "${componentName}" from a library. Remote components are no longer supported - all component references must be within the same file. Please replace this instance with a local component reference before exporting.`;
+      debugConsole.error(errorMessage);
+      try {
+        await figma.viewport.scrollAndZoomIntoView([node]);
+      } catch (scrollError) {
+        console.warn("Could not scroll to instance:", scrollError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    // Verify the component reference is valid by checking:
+    // 1. Component has a parent (if not remote)
+    // 2. Neither component nor parent is marked as removed
+    // Remote components don't have parents, so we can't validate them this way
+    try {
+      // Check if the component is a variant (parent is a COMPONENT_SET)
+      const isVariant =
+        mainComponent.parent && mainComponent.parent.type === "COMPONENT_SET";
+
+      // Verify component's page can be found and is accessible
+      let componentPageValid = false;
+      let parentChainValid = false;
+
+      if (componentPage) {
+        try {
+          // Verify the page is accessible - if we can access its properties, it's valid
+          componentPageValid = true; // Page exists and is accessible
+
+          // For non-variants, check if parent exists and neither component nor parent is marked as removed
+          // Remote components don't have parents, so we can't validate them this way
+          if (!isVariant) {
+            try {
+              const componentParent = mainComponent.parent;
+              if (!componentParent) {
+                // Component has no parent - check if it's remote
+                // If remote, we can't validate it (remote components don't have parents)
+                // If not remote, this is a broken reference
+                if (!isRemote) {
+                  parentChainValid = false;
+                } else {
+                  // Remote component - can't validate parent chain
+                  parentChainValid = true;
+                }
+              } else {
+                // Parent exists - check if component or parent is marked as removed
+                const componentRemoved =
+                  (mainComponent as any).removed === true;
+                const parentRemoved = (componentParent as any).removed === true;
+
+                if (componentRemoved || parentRemoved) {
+                  // Component or parent is marked as removed - broken reference
+                  parentChainValid = false;
+                } else {
+                  // Component has parent and neither is marked as removed - valid
+                  parentChainValid = true;
+                }
+              }
+            } catch (parentError) {
+              // Can't access parent at all - broken reference (unless remote)
+              if (!isRemote) {
+                parentChainValid = false;
+              } else {
+                // Remote component - can't validate
+                parentChainValid = true;
+              }
+            }
+          } else {
+            // For variants, check if parent exists and neither component nor parent is marked as removed
+            // Remote components don't have parents, so we can't validate them this way
+            try {
+              const variantParent = mainComponent.parent;
+              if (!variantParent) {
+                // Variant has no parent - check if it's remote
+                // If remote, we can't validate it (remote components don't have parents)
+                // If not remote, this is a broken reference
+                if (!isRemote) {
+                  parentChainValid = false;
+                } else {
+                  // Remote component - can't validate parent chain
+                  parentChainValid = true;
+                }
+              } else {
+                // Parent exists - check if component or parent is marked as removed
+                const componentRemoved =
+                  (mainComponent as any).removed === true;
+                const parentRemoved = (variantParent as any).removed === true;
+
+                if (componentRemoved || parentRemoved) {
+                  // Component or parent is marked as removed - broken reference
+                  parentChainValid = false;
+                } else {
+                  // Component has parent and neither is marked as removed - valid
+                  parentChainValid = true;
+                }
+              }
+            } catch (variantParentError) {
+              // Can't access parent at all - broken reference (unless remote)
+              if (!isRemote) {
+                parentChainValid = false;
+              } else {
+                // Remote component - can't validate
+                parentChainValid = true;
+              }
+            }
+          }
+        } catch (pageAccessError) {
+          // Can't access page properties - this indicates a broken reference
+          componentPageValid = false;
+        }
+      } else if (instanceType === "internal") {
+        // For internal instances, componentPage might be null but that's okay
+        // since we use componentNodeId instead of page lookup
+        componentPageValid = true;
+        parentChainValid = true; // Internal instances are on the same page
+      }
+
+      // Reference is valid if:
+      // - Component page is valid AND parent chain is valid
+      //   - parentChainValid means the component has a parent (if not remote) and neither component nor parent is marked as removed
+      // For internal instances, we're more lenient since they're on the same page
+      let isReferenceValid: boolean;
+      if (instanceType === "internal") {
+        // Internal instances are on the same page, so we trust componentPageValid
+        isReferenceValid = componentPageValid;
+      } else {
+        // For all other instances, require both componentPageValid AND parentChainValid
+        // parentChainValid checks that component has parent (if not remote) and neither is marked as removed
+        isReferenceValid = componentPageValid && parentChainValid;
+      }
+
+      if (!isReferenceValid) {
+        const pageName = instancePage ? instancePage.name : "unknown page";
+
+        // Try to build a simple path to the instance
+        const pathParts: string[] = [];
+        let current: any = node;
+        try {
+          while (current && current !== instancePage) {
+            if (current.name) {
+              pathParts.unshift(current.name);
+            }
+            current = current.parent;
+          }
+        } catch {
+          // Path building failed, that's okay
+        }
+        const pathDisplay =
+          pathParts.length > 0 ? ` at path [${pathParts.join(" → ")}]` : "";
+
+        const errorMessage = `Instance "${instanceName}" on page "${pageName}"${pathDisplay} references a broken component "${componentName}". The component reference exists but the component cannot be found in the document. This usually means the component was deleted or the reference is corrupted. Please fix the instance reference before exporting.`;
+        debugConsole.error(errorMessage);
+        try {
+          await figma.viewport.scrollAndZoomIntoView([node]);
+        } catch (scrollError) {
+          console.warn("Could not scroll to instance:", scrollError);
+        }
+        throw new Error(errorMessage);
+      }
+    } catch (verificationError) {
+      // If verification itself fails, re-throw if it's our error, otherwise log and continue
+      if (
+        verificationError instanceof Error &&
+        verificationError.message.includes("references a broken component")
+      ) {
+        throw verificationError;
+      }
+      // Other verification errors are non-fatal - log and continue
+      debugConsole.warning(
+        `  Component verification failed for "${componentName}": ${verificationError}`,
+      );
+    }
+
     // Extract variant properties and component properties
     let variantProperties: Record<string, string> | undefined;
     let componentProperties: Record<string, any> | undefined;
@@ -590,13 +864,14 @@ export async function parseInstanceProperties(
           const pathSegment = nodeName || "";
           pathNames.unshift(pathSegment);
 
-          // Debug: log path building for components in Icons page
+          // Debug: log path building for components in Icons page and "user" component set
           if (
             componentSetName === "arrow-top-right-on-square" ||
-            componentName === "arrow-top-right-on-square"
+            componentName === "arrow-top-right-on-square" ||
+            componentSetName === "user"
           ) {
             debugConsole.log(
-              `  [PATH BUILD] Added segment: "${pathSegment}" (type: ${nodeType}) to path for component "${componentName}"`,
+              `  [PATH BUILD] Added segment: "${pathSegment}" (type: ${nodeType}) to path for component "${componentName}"${componentSetName ? ` (componentSet: "${componentSetName}")` : ""}`,
             );
           }
 
@@ -618,13 +893,14 @@ export async function parseInstanceProperties(
 
       mainComponentParentPath = pathNames;
 
-      // Debug: log final path for components in Icons page
+      // Debug: log final path for components in Icons page and "user" component set
       if (
         componentSetName === "arrow-top-right-on-square" ||
-        componentName === "arrow-top-right-on-square"
+        componentName === "arrow-top-right-on-square" ||
+        componentSetName === "user"
       ) {
         debugConsole.log(
-          `  [PATH BUILD] Final path for component "${componentName}": [${pathNames.join(" → ")}]`,
+          `  [PATH BUILD] Final path for component "${componentName}": [${pathNames.join(" → ")}]${componentSetName ? ` (componentSet: "${componentSetName}")` : ""}`,
         );
       }
     } catch {
@@ -1315,6 +1591,7 @@ export async function parseInstanceProperties(
                     (node as any).fills,
                     context.variableTable,
                     context.collectionTable,
+                    context.imageTable,
                   );
                   structure.fills = instanceFills;
                   debugConsole.log(
@@ -1329,6 +1606,7 @@ export async function parseInstanceProperties(
                     mainComponent.fills,
                     context.variableTable,
                     context.collectionTable,
+                    context.imageTable,
                   );
                   structure.fills = mainComponentFills;
                   debugConsole.log(

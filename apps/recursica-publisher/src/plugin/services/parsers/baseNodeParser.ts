@@ -8,6 +8,7 @@ import {
 import type { VariableTable, CollectionTable } from "./variableTable";
 import type { InstanceTable } from "./instanceTable";
 import type { StyleTable } from "./styleTable";
+import type { ImageTable } from "./imageTable";
 import { debugConsole } from "../debugConsole";
 
 /**
@@ -24,6 +25,7 @@ export interface ParserContext {
   collectionTable: CollectionTable;
   instanceTable: InstanceTable;
   styleTable: StyleTable;
+  imageTable: ImageTable;
   detachedComponentsHandled: Set<string>; // Component IDs we've already prompted for and decided to treat as internal
   exportedIds: Map<string, string>; // node ID -> node name (for duplicate detection)
 }
@@ -193,12 +195,13 @@ export async function parseBaseNodeProperties(
     handledKeys.add("effects");
   }
 
-  // Fills - special handling with bound variables
+  // Fills - special handling with bound variables and images
   if (node.fills !== undefined) {
     const fills = await serializeFills(
       node.fills,
       context.variableTable,
       context.collectionTable,
+      context.imageTable,
     );
     if (isDifferentFromDefault(fills, BASE_NODE_DEFAULTS.fills)) {
       result.fills = fills;
@@ -263,13 +266,14 @@ export async function parseBaseNodeProperties(
     handledKeys.add("boundVariables");
   }
 
-  // Backgrounds - special handling with bound variables (similar to fills)
+  // Backgrounds - special handling with bound variables and images (similar to fills)
   // "Selection colors" might be stored in backgrounds with bound variables
   if (node.backgrounds !== undefined) {
     const backgrounds = await serializeBackgrounds(
       node.backgrounds,
       context.variableTable,
       context.collectionTable,
+      context.imageTable,
     );
     // Only include if different from default (empty array)
     if (backgrounds && Array.isArray(backgrounds) && backgrounds.length > 0) {

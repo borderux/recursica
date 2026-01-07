@@ -15,6 +15,7 @@ import {
 } from "./parsers/variableTable";
 import { InstanceTable } from "./parsers/instanceTable";
 import { StyleTable } from "./parsers/styleTable";
+import { ImageTable, isImageReference } from "./parsers/imageTable";
 import { StringTable } from "./parsers/stringTable";
 import { requestGuidFromUI } from "../utils/requestGuidFromUI";
 import { debugConsole, type DebugConsoleMessage } from "./debugConsole";
@@ -1333,6 +1334,136 @@ function applyDefaultsToNode(
  * No mapping is needed - we can use the exported values directly.
  */
 
+/**
+ * Base64 decode function for Figma plugin environment
+ * (atob() is not available in Figma plugins)
+ */
+function base64Decode(base64: string): Uint8Array {
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  const result: number[] = [];
+  let i = 0;
+  base64 = base64.replace(/[^A-Za-z0-9+/]/g, "");
+
+  while (i < base64.length) {
+    const encoded1 = chars.indexOf(base64.charAt(i++));
+    const encoded2 = chars.indexOf(base64.charAt(i++));
+    const encoded3 = chars.indexOf(base64.charAt(i++));
+    const encoded4 = chars.indexOf(base64.charAt(i++));
+
+    const bitmap =
+      (encoded1 << 18) | (encoded2 << 12) | (encoded3 << 6) | encoded4;
+
+    result.push((bitmap >> 16) & 255);
+    if (encoded3 !== 64) result.push((bitmap >> 8) & 255);
+    if (encoded4 !== 64) result.push(bitmap & 255);
+  }
+
+  return new Uint8Array(result);
+}
+
+/**
+ * Converts Base64 image data to Uint8Array and creates a Figma image
+ * Returns the image hash that can be used in fills/backgrounds
+ * Handles both raw base64 strings and data URL format (data:image/png;base64,...)
+ */
+async function restoreImageFromBase64(
+  base64Data: string,
+): Promise<string | null> {
+  try {
+    // Strip data URL prefix if present (e.g., "data:image/png;base64,")
+    let base64String = base64Data;
+    if (base64Data.startsWith("data:")) {
+      const commaIndex = base64Data.indexOf(",");
+      if (commaIndex !== -1) {
+        base64String = base64Data.substring(commaIndex + 1);
+      }
+    }
+
+    // Convert Base64 to Uint8Array using manual decoder
+    const bytes = base64Decode(base64String);
+
+    // Create image in Figma and get hash
+    const imageHash = await figma.createImage(bytes).hash;
+    debugConsole.log(
+      `  DEBUG: Successfully restored image with hash: ${imageHash}`,
+    );
+    return imageHash;
+  } catch (error) {
+    debugConsole.warning(`Failed to restore image from Base64: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Restores image references in fills or backgrounds array
+ * Replaces _imgRef with actual imageHash from image table
+ */
+async function restoreImageReferences(
+  fillsOrBackgrounds: any[],
+  imageTable: ImageTable | null,
+): Promise<any[]> {
+  if (!imageTable || !Array.isArray(fillsOrBackgrounds)) {
+    return fillsOrBackgrounds;
+  }
+
+  return Promise.all(
+    fillsOrBackgrounds.map(async (item: any) => {
+      if (!item || typeof item !== "object") {
+        return item;
+      }
+
+      // Check if this item has an image reference
+      if (isImageReference(item)) {
+        const imageIndex = item._imgRef;
+        const imageEntry = imageTable.getImageByIndex(imageIndex);
+
+        if (imageEntry) {
+          try {
+            // Restore image from Base64
+            const imageHash = await restoreImageFromBase64(
+              imageEntry.imageData,
+            );
+
+            if (imageHash) {
+              // Create new fill/background object with imageHash
+              // Preserve all original properties (type, visible, opacity, blendMode, etc.)
+              const restored: any = {
+                ...item,
+                type: "IMAGE",
+                imageHash: imageHash,
+              };
+              // Remove _imgRef since we've restored the imageHash
+              delete restored._imgRef;
+              debugConsole.log(
+                `✓ Restored image from index ${imageIndex} (hash: ${imageHash.substring(0, 20)}...)`,
+              );
+              return restored;
+            } else {
+              debugConsole.warning(
+                `Failed to restore image at index ${imageIndex}, keeping _imgRef`,
+              );
+              return item;
+            }
+          } catch (error) {
+            debugConsole.warning(
+              `Error restoring image at index ${imageIndex}: ${error}`,
+            );
+            return item;
+          }
+        } else {
+          debugConsole.warning(
+            `Image at index ${imageIndex} not found in image table`,
+          );
+          return item;
+        }
+      }
+
+      return item;
+    }),
+  );
+}
+
 export async function recreateNodeFromData(
   nodeData: any,
   parentNode: any,
@@ -1349,6 +1480,7 @@ export async function recreateNodeFromData(
   placeholderFrameIds: Set<string> | null = null, // Track placeholder frame IDs as we create them
   currentPlaceholderId?: string, // ID of placeholder we're currently inside (for nested deferred instances)
   styleMapping: Map<number, BaseStyle> | null = null, // Map of old style table index -> new style instance
+  imageTable: ImageTable | null = null, // Image table for restoring images from Base64
 ): Promise<any> {
   let newNode: any;
 
@@ -1536,6 +1668,7 @@ export async function recreateNodeFromData(
                 placeholderFrameIds, // Pass placeholderFrameIds through for component set creation
                 undefined, // currentPlaceholderId - component set creation is not inside a placeholder
                 styleMapping, // Pass styleMapping to apply styles
+                imageTable, // Pass imageTable to restore images
               );
               if (componentNode && componentNode.type === "COMPONENT") {
                 componentVariants.push(componentNode);
@@ -3820,9 +3953,14 @@ export async function recreateNodeFromData(
     }
     if (nodeData.fills !== undefined) {
       try {
-        // Process fills array - remove boundVariables that contain _varRef
-        // We'll restore them properly after setting the fills
+        // Process fills array - restore images first, then remove boundVariables that contain _varRef
+        // We'll restore boundVariables properly after setting the fills
         let fills = nodeData.fills;
+
+        // Restore image references from image table
+        if (Array.isArray(fills) && imageTable) {
+          fills = await restoreImageReferences(fills, imageTable);
+        }
 
         // ISSUE #2 DEBUG: Check for selectionColor in fills before processing
         const nodeName = nodeData.name || "Unnamed";
@@ -4100,6 +4238,60 @@ export async function recreateNodeFromData(
         newNode.fills = [];
       } catch (error) {
         console.log("Error clearing fills:", error);
+      }
+    }
+  }
+
+  // Set backgrounds (skip instances, they're handled separately)
+  // Backgrounds work similarly to fills and are supported on FRAME, COMPONENT, and COMPONENT_SET nodes
+  if (nodeData.type !== "INSTANCE") {
+    if (nodeData.backgrounds !== undefined) {
+      try {
+        // Process backgrounds array - restore images first, then remove boundVariables that contain _varRef
+        // We'll restore boundVariables properly after setting the backgrounds
+        let backgrounds = nodeData.backgrounds;
+
+        // Restore image references from image table
+        if (Array.isArray(backgrounds) && imageTable) {
+          backgrounds = await restoreImageReferences(backgrounds, imageTable);
+        }
+
+        if (Array.isArray(backgrounds)) {
+          backgrounds = backgrounds.map((background: any) => {
+            if (background && typeof background === "object") {
+              // Create a copy without boundVariables (they may contain _varRef which is invalid)
+              const backgroundWithoutBoundVars = { ...background };
+              delete backgroundWithoutBoundVars.boundVariables;
+              return backgroundWithoutBoundVars;
+            }
+            return background;
+          });
+        }
+
+        // Set backgrounds
+        if (Array.isArray(backgrounds) && backgrounds.length > 0) {
+          newNode.backgrounds = backgrounds;
+        } else {
+          // Explicitly clear backgrounds if empty array
+          newNode.backgrounds = [];
+        }
+
+        // Restore bound variables for backgrounds
+        if (
+          nodeData.boundVariables?.backgrounds &&
+          recognizedVariables &&
+          Array.isArray(newNode.backgrounds) &&
+          newNode.backgrounds.length > 0
+        ) {
+          await restoreBoundVariablesForFills(
+            newNode,
+            nodeData.boundVariables,
+            "backgrounds",
+            recognizedVariables,
+          );
+        }
+      } catch (error) {
+        debugConsole.warning(`Error setting backgrounds: ${error}`);
       }
     }
   }
@@ -5381,6 +5573,7 @@ export async function recreateNodeFromData(
         placeholderFrameIds, // Pass placeholderFrameIds through for recursive calls
         childPlaceholderId, // Pass currentPlaceholderId down (or placeholder ID if newNode is a placeholder)
         styleMapping, // Pass styleMapping to apply styles
+        imageTable, // Pass imageTable to restore images
       );
       if (childNode) {
         // Only append if the child doesn't already have this node as its parent
@@ -6555,6 +6748,22 @@ function loadInstanceTable(expandedJsonData: any): InstanceTable | null {
 }
 
 /**
+ * Loads the image table from expanded JSON data
+ */
+function loadImageTable(expandedJsonData: any): ImageTable | null {
+  if (!expandedJsonData.images) {
+    return null;
+  }
+
+  try {
+    const imageTable = ImageTable.fromTable(expandedJsonData.images);
+    return imageTable;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Normalizes node type from numeric enum to string
  * Handles cases where type enums weren't expanded during JSON expansion
  */
@@ -6676,6 +6885,7 @@ async function createRemoteInstances(
   recognizedCollections: Map<string, VariableCollection>,
   constructionIcon: string = "", // If provided, prepend this icon to REMOTES page name. Used for wizard imports.
   styleMapping: Map<number, BaseStyle> | null = null, // Map of old style table index -> new style instance
+  imageTable: ImageTable | null = null, // Image table for restoring images from Base64
 ): Promise<{
   remoteComponentMap: Map<number, ComponentNode>;
   dependentComponents: Array<{
@@ -6862,8 +7072,9 @@ async function createRemoteInstances(
           null, // parentNodeData - not available for remote structures
           recognizedCollections,
           null, // placeholderFrameIds - not needed for remote instances
-          undefined, // currentPlaceholderId - remote instances are not inside placeholders
+          undefined, // currentPlaceholderId - not needed for remote instances
           styleMapping, // Pass styleMapping to apply styles
+          imageTable, // Pass imageTable to restore images
         );
         if (recreatedNode) {
           containerFrame.appendChild(recreatedNode);
@@ -7245,8 +7456,9 @@ async function createRemoteInstances(
               entry.structure, // parentNodeData - pass the component's structure so children can check for auto-layout
               recognizedCollections,
               null, // placeholderFrameIds - not needed for remote instances
-              undefined, // currentPlaceholderId - remote instances are not inside placeholders
+              undefined, // currentPlaceholderId - not needed for remote instances
               styleMapping, // Pass styleMapping to apply styles
+              imageTable, // Pass imageTable to restore images
             );
             if (childNode) {
               componentNode.appendChild(childNode);
@@ -7322,6 +7534,7 @@ async function createPageAndRecreateStructure(
   skipUniqueNaming: boolean = false, // If true, skip adding _<number> suffix to page names. Used for wizard imports.
   constructionIcon: string = "", // If provided, prepend this icon to page name. Used for wizard imports.
   styleMapping: Map<number, BaseStyle> | null = null, // Map of old style table index -> new style instance
+  imageTable: ImageTable | null = null, // Image table for restoring images from Base64
 ): Promise<{
   success: boolean;
   page?: PageNode;
@@ -7525,6 +7738,7 @@ async function createPageAndRecreateStructure(
           placeholderFrameIds,
           undefined, // currentPlaceholderId - page root is not inside a placeholder
           styleMapping, // Pass styleMapping to apply styles
+          imageTable, // Pass imageTable to restore images
         );
         if (childNode) {
           newPage.appendChild(childNode);
@@ -7853,6 +8067,17 @@ export async function importPage(
       debugConsole.log("No instance table found in JSON");
     }
 
+    // Stage 10.5: Load image table
+    debugConsole.log("Loading images table...");
+    const imageTable = loadImageTable(expandedJsonData);
+    if (imageTable) {
+      debugConsole.log(
+        `Loaded images table with ${imageTable.getSize()} image(s)`,
+      );
+    } else {
+      debugConsole.log("No images table found in JSON");
+    }
+
     checkCancellation(requestId);
     // Stage 11: Create page and recreate structure
     const deferredInstances: DeferredNormalInstance[] = [];
@@ -7875,6 +8100,7 @@ export async function importPage(
         recognizedCollections,
         constructionIcon,
         styleMapping, // Pass styleMapping to apply styles
+        imageTable, // Pass imageTable to restore images
       );
       remoteComponentMap = remoteInstancesResult.remoteComponentMap;
       dependentComponents = remoteInstancesResult.dependentComponents;
@@ -7895,6 +8121,7 @@ export async function importPage(
       skipUniqueNaming,
       constructionIcon,
       styleMapping, // Pass styleMapping to apply styles
+      imageTable, // Pass imageTable to restore images
     );
 
     if (!pageResult.success) {
@@ -8670,21 +8897,79 @@ export async function resolveDeferredNormalInstances(
       // If path-based search failed, try searching recursively through all FRAMEs
       // This handles cases where the path doesn't match the actual structure
       // (e.g., component is inside an "Icons" FRAME but path doesn't include it)
-      if (!targetComponent && instanceEntry.componentSetName) {
+      if (!targetComponent) {
+        debugConsole.log(
+          `  Path-based search failed, trying recursive search for component "${instanceEntry.componentName}"`,
+        );
         const recursiveSearch = (
           node: any,
           depth = 0,
+          ignoreComponentSetName = false,
         ): ComponentNode | null => {
           if (depth > 5) return null; // Limit depth
           for (const child of node.children || []) {
-            if (child.type === "COMPONENT_SET") {
-              const setExactMatch =
-                child.name === instanceEntry.componentSetName;
-              const setCleanMatch =
+            // Search for standalone COMPONENT nodes
+            if (child.type === "COMPONENT") {
+              const exactMatch = child.name === instanceEntry.componentName;
+              const cleanMatch =
                 getComponentCleanName(child.name) ===
-                getComponentCleanName(instanceEntry.componentSetName || "");
-              if (setExactMatch || setCleanMatch) {
-                // Found the component set, now search for the variant
+                getComponentCleanName(instanceEntry.componentName);
+              if (exactMatch || cleanMatch) {
+                // Check GUID if provided
+                if (instanceEntry.componentGuid) {
+                  try {
+                    const metadataStr = child.getPluginData(
+                      "RecursicaPublishedMetadata",
+                    );
+                    if (metadataStr) {
+                      const metadata = JSON.parse(metadataStr);
+                      if (metadata.id === instanceEntry.componentGuid) {
+                        debugConsole.log(
+                          `  ✓ Found component "${child.name}" via recursive search (GUID match)`,
+                        );
+                        return child;
+                      }
+                    }
+                  } catch {
+                    // Continue
+                  }
+                }
+                // Return component (prefer exact match)
+                debugConsole.log(
+                  `  ✓ Found component "${child.name}" via recursive search (name match)`,
+                );
+                if (exactMatch) {
+                  return child;
+                }
+                // Return clean match as fallback
+                return child;
+              }
+            }
+            // Search for COMPONENT_SET nodes (variants)
+            // ALWAYS search all COMPONENT_SET nodes for variants, even if componentSetName is not set
+            // This handles cases where component name matches a variant name but componentSetName wasn't provided
+            if (child.type === "COMPONENT_SET") {
+              // If componentSetName is provided and we're not ignoring it, only search in matching sets
+              let shouldSearchSet = true;
+              if (!ignoreComponentSetName && instanceEntry.componentSetName) {
+                const setExactMatch =
+                  child.name === instanceEntry.componentSetName;
+                const setCleanMatch =
+                  getComponentCleanName(child.name) ===
+                  getComponentCleanName(instanceEntry.componentSetName || "");
+                shouldSearchSet = setExactMatch || setCleanMatch;
+                if (!shouldSearchSet) {
+                  debugConsole.log(
+                    `  [RECURSIVE] Skipping COMPONENT_SET "${child.name}" (doesn't match componentSetName "${instanceEntry.componentSetName}")`,
+                  );
+                }
+              }
+
+              if (shouldSearchSet) {
+                debugConsole.log(
+                  `  [RECURSIVE] Searching COMPONENT_SET "${child.name}" for variant "${instanceEntry.componentName}"${ignoreComponentSetName ? " (ignoring componentSetName)" : ""}`,
+                );
+                // Found a matching component set (or searching all sets), now search for the variant
                 const cleanTargetName = getComponentCleanName(
                   instanceEntry.componentName,
                 );
@@ -8694,6 +8979,9 @@ export async function resolveDeferredNormalInstances(
                       variant.name === instanceEntry.componentName;
                     const variantCleanMatch =
                       getComponentCleanName(variant.name) === cleanTargetName;
+                    debugConsole.log(
+                      `  [RECURSIVE] Checking variant "${variant.name}" (exact: ${variantExactMatch}, clean: ${variantCleanMatch})`,
+                    );
                     if (variantExactMatch || variantCleanMatch) {
                       // Check GUID if provided
                       if (instanceEntry.componentGuid) {
@@ -8704,6 +8992,9 @@ export async function resolveDeferredNormalInstances(
                           if (metadataStr) {
                             const metadata = JSON.parse(metadataStr);
                             if (metadata.id === instanceEntry.componentGuid) {
+                              debugConsole.log(
+                                `  ✓ Found variant "${variant.name}" in COMPONENT_SET "${child.name}" via recursive search (GUID match)`,
+                              );
                               return variant;
                             }
                           }
@@ -8712,6 +9003,9 @@ export async function resolveDeferredNormalInstances(
                         }
                       }
                       // Return variant (prefer exact match)
+                      debugConsole.log(
+                        `  ✓ Found variant "${variant.name}" in COMPONENT_SET "${child.name}" via recursive search (name match)`,
+                      );
                       if (variantExactMatch) {
                         return variant;
                       }
@@ -8722,15 +9016,33 @@ export async function resolveDeferredNormalInstances(
                 }
               }
             }
-            // Recurse into FRAMEs and GROUPs
+            // Recurse into FRAMEs and GROUPs (COMPONENT_SET nodes only contain variants, no nested structures)
             if (child.type === "FRAME" || child.type === "GROUP") {
-              const found = recursiveSearch(child, depth + 1);
+              const found = recursiveSearch(
+                child,
+                depth + 1,
+                ignoreComponentSetName,
+              );
               if (found) return found;
             }
           }
           return null;
         };
-        targetComponent = recursiveSearch(referencedPage);
+        // First pass: try with componentSetName filtering (if provided)
+        targetComponent = recursiveSearch(referencedPage, 0, false);
+        // Second pass: if first pass failed and componentSetName was provided, try again ignoring it
+        // This handles cases where componentSetName is incorrectly set (e.g., to a path segment)
+        if (!targetComponent && instanceEntry.componentSetName) {
+          debugConsole.log(
+            `  First recursive search pass failed, trying again while ignoring componentSetName "${instanceEntry.componentSetName}"`,
+          );
+          targetComponent = recursiveSearch(referencedPage, 0, true);
+        }
+        if (!targetComponent) {
+          debugConsole.log(
+            `  ✗ Recursive search also failed to find component "${instanceEntry.componentName}"`,
+          );
+        }
       }
 
       if (!targetComponent) {
@@ -9215,32 +9527,57 @@ export async function resolveDeferredNormalInstances(
                   const mainComponent =
                     await instanceNode.getMainComponentAsync();
                   if (mainComponent) {
-                    const componentProps =
-                      mainComponent.componentPropertyDefinitions;
-                    for (const propKey of Object.keys(propertiesToSet)) {
-                      const propDef = componentProps[propKey];
-                      if (propDef && propDef.type === "TEXT") {
-                        // Find text nodes that might be bound to this property
-                        // TEXT properties are typically bound to text nodes with matching content
-                        const findTextNodes = (node: SceneNode): TextNode[] => {
-                          const results: TextNode[] = [];
-                          if (node.type === "TEXT") {
-                            results.push(node);
-                          }
-                          if ("children" in node) {
-                            for (const child of node.children) {
-                              results.push(...findTextNodes(child));
+                    // Variant components don't have componentPropertyDefinitions - only COMPONENT_SETs and non-variant components do
+                    let componentProps: ComponentPropertyDefinitions | null =
+                      null;
+                    const mainComponentType = (mainComponent as any).type;
+                    if (mainComponentType === "COMPONENT_SET") {
+                      const componentSet =
+                        mainComponent as unknown as ComponentSetNode;
+                      componentProps =
+                        componentSet.componentPropertyDefinitions;
+                    } else if (
+                      mainComponentType === "COMPONENT" &&
+                      mainComponent.parent &&
+                      mainComponent.parent.type === "COMPONENT_SET"
+                    ) {
+                      // Instance was created from a variant - get properties from parent COMPONENT_SET
+                      componentProps =
+                        mainComponent.parent.componentPropertyDefinitions;
+                    } else if (mainComponentType === "COMPONENT") {
+                      // Non-variant component - can access componentPropertyDefinitions directly
+                      componentProps =
+                        mainComponent.componentPropertyDefinitions;
+                    }
+
+                    if (componentProps) {
+                      for (const propKey of Object.keys(propertiesToSet)) {
+                        const propDef = componentProps[propKey];
+                        if (propDef && propDef.type === "TEXT") {
+                          // Find text nodes that might be bound to this property
+                          // TEXT properties are typically bound to text nodes with matching content
+                          const findTextNodes = (
+                            node: SceneNode,
+                          ): TextNode[] => {
+                            const results: TextNode[] = [];
+                            if (node.type === "TEXT") {
+                              results.push(node);
                             }
-                          }
-                          return results;
-                        };
-                        const textNodes = findTextNodes(instanceNode);
-                        const propValue = propertiesToSet[propKey];
-                        debugConsole.log(
-                          `[IMPORT]   Found ${textNodes.length} text node(s) in instance "${instanceNode.name}" for TEXT property "${propKey}" = ${JSON.stringify(propValue)}`,
-                        );
-                        // Note: Text nodes should be bound to component properties via componentPropertyReferences
-                        // This binding is restored when the component is created, not when properties are set on instances
+                            if ("children" in node) {
+                              for (const child of node.children) {
+                                results.push(...findTextNodes(child));
+                              }
+                            }
+                            return results;
+                          };
+                          const textNodes = findTextNodes(instanceNode);
+                          const propValue = propertiesToSet[propKey];
+                          debugConsole.log(
+                            `[IMPORT]   Found ${textNodes.length} text node(s) in instance "${instanceNode.name}" for TEXT property "${propKey}" = ${JSON.stringify(propValue)}`,
+                          );
+                          // Note: Text nodes should be bound to component properties via componentPropertyReferences
+                          // This binding is restored when the component is created, not when properties are set on instances
+                        }
                       }
                     }
                   }

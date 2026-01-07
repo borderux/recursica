@@ -12,6 +12,7 @@ import { parseInstanceProperties } from "./parsers/instanceParser";
 import { VariableTable, CollectionTable } from "./parsers/variableTable";
 import { InstanceTable } from "./parsers/instanceTable";
 import { StyleTable } from "./parsers/styleTable";
+import { ImageTable } from "./parsers/imageTable";
 import { StringTable } from "./parsers/stringTable";
 import { debugConsole } from "./debugConsole";
 import { checkCancellation } from "../utils/cancellation";
@@ -142,6 +143,7 @@ async function extractInstancesOnly(
       collectionTable: new CollectionTable(), // Not used, but required by parser
       instanceTable: instanceTable, // This is what we're building
       styleTable: new StyleTable(), // Not used, but required by parser
+      imageTable: new ImageTable(), // Not used, but required by parser
       detachedComponentsHandled: new Set(),
       exportedIds: new Map<string, string>(),
     };
@@ -197,6 +199,7 @@ export async function extractNodeData(
     collectionTable: context.collectionTable!,
     instanceTable: context.instanceTable!,
     styleTable: context.styleTable!,
+    imageTable: context.imageTable!,
     detachedComponentsHandled: context.detachedComponentsHandled ?? new Set(),
     exportedIds: context.exportedIds ?? new Map<string, string>(),
   };
@@ -575,14 +578,15 @@ export async function exportPage(
       `Selected page: "${selectedPage.name}" (index: ${pageIndex})`,
     );
 
-    // Create variable table, collection table, and instance table for storing unique references
+    // Create variable table, collection table, instance table, style table, and image table for storing unique references
     debugConsole.log(
-      "Initializing variable, collection, and instance tables...",
+      "Initializing variable, collection, instance, style, and image tables...",
     );
     let variableTable = new VariableTable();
     let collectionTable = new CollectionTable();
     let instanceTable = new InstanceTable();
     let styleTable = new StyleTable();
+    let imageTable = new ImageTable();
 
     let extractedPageData: any;
 
@@ -623,6 +627,7 @@ export async function exportPage(
           collectionTable,
           instanceTable,
           styleTable,
+          imageTable,
         },
       );
       checkCancellation(requestId);
@@ -1217,6 +1222,7 @@ export async function exportPage(
       const fullCollectionTable = new CollectionTable();
       const fullInstanceTable = new InstanceTable();
       const fullStyleTable = new StyleTable();
+      const fullImageTable = new ImageTable();
 
       const fullExtractedPageData = await extractNodeData(
         selectedPage as any,
@@ -1226,6 +1232,7 @@ export async function exportPage(
           collectionTable: fullCollectionTable,
           instanceTable: fullInstanceTable,
           styleTable: fullStyleTable,
+          imageTable: fullImageTable,
         },
       );
       checkCancellation(requestId);
@@ -1235,6 +1242,7 @@ export async function exportPage(
       collectionTable = fullCollectionTable;
       instanceTable = fullInstanceTable;
       styleTable = fullStyleTable;
+      imageTable = fullImageTable;
       extractedPageData = fullExtractedPageData;
 
       // Now export all discovered referenced pages
@@ -1309,6 +1317,7 @@ export async function exportPage(
       variables: variableTable.getSerializedTable(),
       instances: instanceTable.getSerializedTable(),
       styles: styleTable.getSerializedTable(),
+      images: imageTable.getSerializedTable(),
       pageData: extractedPageData,
     };
 

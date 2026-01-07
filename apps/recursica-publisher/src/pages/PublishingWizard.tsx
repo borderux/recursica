@@ -414,10 +414,18 @@ export default function PublishingWizard() {
         }
       }
 
-      // Recursively update additional pages
-      const updatedAdditionalPages = pageData.additionalPages.map((page) =>
-        updateExportDataWithDecisions(page, decisions, mainBranchComponents),
-      );
+      // Recursively update additional pages, but only include pages that should be published
+      // Filter out pages that don't have a decision or have publishNewVersion: false
+      const updatedAdditionalPages = pageData.additionalPages
+        .filter((page) => {
+          const pageDecision = decisions.get(page.pageName);
+          // Only include pages that have a decision with publishNewVersion: true
+          // Pages without a decision are excluded (they were deselected)
+          return pageDecision?.publishNewVersion === true;
+        })
+        .map((page) =>
+          updateExportDataWithDecisions(page, decisions, mainBranchComponents),
+        );
 
       return {
         ...pageData,

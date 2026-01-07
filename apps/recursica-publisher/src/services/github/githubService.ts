@@ -412,8 +412,53 @@ export class GitHubService {
 
     // Flatten all exported pages
     console.log("[publishPageExports] Flattening exported pages...");
-    const files = this.flattenPageExports(exportData);
-    console.log(`[publishPageExports] Flattened ${files.length} files`);
+    const allFiles = this.flattenPageExports(exportData);
+    console.log(`[publishPageExports] Flattened ${allFiles.length} files`);
+
+    // Filter files to only include pages that should be published
+    // Only include files where the page has a decision with publishNewVersion: true
+    // The main page is always included (it's the one being published)
+    const mainPageName = exportData.pageName;
+    const files = allFiles.filter((file) => {
+      // Parse the file to get the page name
+      try {
+        const parsedData = JSON.parse(file.jsonData);
+        const pageName = parsedData.metadata?.name || file.name;
+
+        // Always include the main page (the one being published)
+        if (pageName === mainPageName) {
+          return true;
+        }
+
+        // If no pageDecisions provided, include all files (backwards compatibility)
+        if (!pageDecisions) {
+          return true;
+        }
+
+        // Check if this page should be published
+        const decision = pageDecisions.get(pageName);
+        const shouldPublish = decision?.publishNewVersion === true;
+
+        if (!shouldPublish) {
+          console.log(
+            `[publishPageExports] Skipping file ${file.filename} (${pageName}) - not selected for publishing`,
+          );
+        }
+
+        return shouldPublish;
+      } catch (error) {
+        console.error(
+          `[publishPageExports] Failed to parse file ${file.filename} for filtering:`,
+          error,
+        );
+        // If we can't parse it, include it to be safe (but this shouldn't happen)
+        return true;
+      }
+    });
+
+    console.log(
+      `[publishPageExports] Filtered to ${files.length} files to publish (from ${allFiles.length} total)`,
+    );
 
     // Build components mapping for index.json (only include components that were published)
     const components: Record<
@@ -466,10 +511,11 @@ export class GitHubService {
         );
 
         if (guid) {
-          // Only include in index.json if this component was published (publishNewVersion = true)
+          // Only include in index.json if this component was explicitly published (publishNewVersion = true)
+          // Since we've already filtered files to only include selected ones, all files here should be included
+          // But we add an explicit check for safety
           const shouldIncludeInIndex =
             !pageDecisions ||
-            !pageDecisions.has(pageName) ||
             pageDecisions.get(pageName)?.publishNewVersion === true;
 
           if (shouldIncludeInIndex) {
@@ -484,7 +530,7 @@ export class GitHubService {
             };
           } else {
             console.log(
-              `[publishPageExports] Skipping ${pageName} (GUID: ${guid}) from index.json (keep current version was selected)`,
+              `[publishPageExports] Skipping ${pageName} (GUID: ${guid}) from index.json (not selected for publishing)`,
             );
           }
         } else {
@@ -580,19 +626,30 @@ export class GitHubService {
     }
 
     // Merge new components into existing index.json
+    // Only components that were explicitly selected for publishing are in the `components` object
     if (!indexJson.components) {
       indexJson.components = {};
     }
 
     const componentsBeforeMerge = Object.keys(indexJson.components).length;
+    const componentsToAdd = Object.keys(components);
+    console.log(
+      `[publishPageExports] Adding/updating ${componentsToAdd.length} component(s) in index.json: ${componentsToAdd
+        .map(
+          (guid) => `${components[guid].name} (v${components[guid].version})`,
+        )
+        .join(", ")}`,
+    );
+
+    // Only update/add components that were explicitly selected for publishing
     Object.assign(indexJson.components, components);
     const componentsAfterMerge = Object.keys(indexJson.components).length;
 
     console.log(
-      `[publishPageExports] Updated index.json: ${componentsBeforeMerge} -> ${componentsAfterMerge} components (added ${componentsAfterMerge - componentsBeforeMerge})`,
+      `[publishPageExports] Updated index.json: ${componentsBeforeMerge} -> ${componentsAfterMerge} components (added/updated ${componentsToAdd.length})`,
     );
     console.log(
-      `[publishPageExports] Components in index.json: ${Object.keys(
+      `[publishPageExports] All components in index.json: ${Object.keys(
         indexJson.components,
       )
         .map(
@@ -618,7 +675,7 @@ export class GitHubService {
     );
     console.log("[publishPageExports] Successfully updated index.json");
 
-    // Create PR body with list of exported files
+    // Create PR body with list of exported files (only show files that were actually published)
     const fileList = files
       .map((file) => `- \`${file.filename}\` (${file.name})`)
       .join("\n");

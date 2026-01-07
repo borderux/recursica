@@ -8,6 +8,7 @@ import {
   CollectionTable,
   type CollectionTableEntry,
 } from "./variableTable";
+import { ImageTable } from "./imageTable";
 import { requestGuidFromUI } from "../../utils/requestGuidFromUI";
 import { debugConsole } from "../debugConsole";
 import {
@@ -473,18 +474,70 @@ export async function extractBoundVariables(
 }
 
 /**
+ * Converts a Figma image hash to Base64-encoded image data
+ */
+async function getImageAsBase64(imageHash: string): Promise<string> {
+  const image = figma.getImageByHash(imageHash);
+  if (!image) {
+    throw new Error(`Failed to get image for hash: ${imageHash}`);
+  }
+
+  // Get image bytes asynchronously
+  const imageBytes = await image.getBytesAsync();
+
+  // Convert Uint8Array to Base64 using Figma's built-in function
+  const base64 = figma.base64Encode(imageBytes);
+
+  // Return as data URL format
+  return `data:image/png;base64,${base64}`;
+}
+
+/**
  * Serializes fills, handling bound variables with variable table references
+ * and images with image table references
  */
 export async function serializeFills(
   fills: any,
   variableTable: VariableTable,
   collectionTable: CollectionTable,
+  imageTable: ImageTable,
 ): Promise<any> {
   if (!fills || !Array.isArray(fills)) return [];
 
   return Promise.all(
     fills.map(async (fill: any) => {
       if (!fill || typeof fill !== "object") return fill;
+
+      // Check if this is an image fill (has imageHash property)
+      if (fill.imageHash && typeof fill.imageHash === "string") {
+        // Get image data and add to table
+        // Errors will propagate and fail the export
+        const imageData = await getImageAsBase64(fill.imageHash);
+        const imageIndex = imageTable.addImage(fill.imageHash, imageData);
+
+        // Create serialized fill with _imgRef instead of imageHash
+        const serializedFill: any = {};
+        for (const key in fill) {
+          if (Object.prototype.hasOwnProperty.call(fill, key)) {
+            if (key === "boundVariables") {
+              serializedFill[key] = await extractBoundVariables(
+                fill[key],
+                variableTable,
+                collectionTable,
+              );
+            } else if (key === "imageHash") {
+              // Replace imageHash with image table reference
+              serializedFill._imgRef = imageIndex;
+              // Don't include imageHash - use _imgRef instead
+            } else {
+              serializedFill[key] = fill[key];
+            }
+          }
+        }
+        return serializedFill;
+      }
+
+      // Normal serialization for non-image fills
       const serializedFill: any = {};
       for (const key in fill) {
         if (Object.prototype.hasOwnProperty.call(fill, key)) {
@@ -506,18 +559,51 @@ export async function serializeFills(
 
 /**
  * Serializes backgrounds, handling bound variables with variable table references
+ * and images with image table references
  * Similar to serializeFills, but for backgrounds property
  */
 export async function serializeBackgrounds(
   backgrounds: any,
   variableTable: VariableTable,
   collectionTable: CollectionTable,
+  imageTable: ImageTable,
 ): Promise<any> {
   if (!backgrounds || !Array.isArray(backgrounds)) return [];
 
   return Promise.all(
     backgrounds.map(async (background: any) => {
       if (!background || typeof background !== "object") return background;
+
+      // Check if this is an image background (has imageHash property)
+      if (background.imageHash && typeof background.imageHash === "string") {
+        // Get image data and add to table
+        // Errors will propagate and fail the export
+        const imageData = await getImageAsBase64(background.imageHash);
+        const imageIndex = imageTable.addImage(background.imageHash, imageData);
+
+        // Create serialized background with _imgRef instead of imageHash
+        const serializedBackground: any = {};
+        for (const key in background) {
+          if (Object.prototype.hasOwnProperty.call(background, key)) {
+            if (key === "boundVariables") {
+              serializedBackground[key] = await extractBoundVariables(
+                background[key],
+                variableTable,
+                collectionTable,
+              );
+            } else if (key === "imageHash") {
+              // Replace imageHash with image table reference
+              serializedBackground._imgRef = imageIndex;
+              // Don't include imageHash - use _imgRef instead
+            } else {
+              serializedBackground[key] = background[key];
+            }
+          }
+        }
+        return serializedBackground;
+      }
+
+      // Normal serialization for non-image backgrounds
       const serializedBackground: any = {};
       for (const key in background) {
         if (Object.prototype.hasOwnProperty.call(background, key)) {
