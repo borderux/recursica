@@ -197,8 +197,96 @@ export async function parseBaseNodeProperties(
 
   // Fills - special handling with bound variables and images
   if (node.fills !== undefined) {
+    // Debug logging for text nodes with badge/color/label variables
+    const nodeName = node.name || "Unnamed";
+    const nodeType = node.type || "UNKNOWN";
+
+    // Check for node-level boundVariables.fills override (instance child overrides)
+    // Instance child overrides are stored in node.boundVariables.fills, not in node.fills[].boundVariables
+    let fillsToSerialize = node.fills;
+    const nodeBoundVars = (node as any).boundVariables;
+    if (
+      nodeBoundVars &&
+      nodeBoundVars.fills &&
+      Array.isArray(nodeBoundVars.fills)
+    ) {
+      // Merge node-level boundVariables.fills overrides into fills array
+      fillsToSerialize = node.fills.map((fill: any, index: number) => {
+        if (!fill || typeof fill !== "object") return fill;
+        const override = nodeBoundVars.fills[index];
+        if (override && typeof override === "object") {
+          // Create a new fill object with the override merged in
+          // Don't modify the original fill object (it's read-only from Figma API)
+          const mergedFill: any = {};
+          // Copy all properties from original fill
+          for (const key in fill) {
+            if (Object.prototype.hasOwnProperty.call(fill, key)) {
+              if (key === "boundVariables") {
+                // Merge boundVariables: start with original, then override
+                mergedFill.boundVariables = {
+                  ...(fill.boundVariables || {}),
+                  ...override,
+                };
+              } else {
+                mergedFill[key] = fill[key];
+              }
+            }
+          }
+          return mergedFill;
+        }
+        return fill;
+      });
+
+      // Debug logging for instance child overrides
+      if (nodeType === "TEXT") {
+        for (let i = 0; i < fillsToSerialize.length; i++) {
+          const fill = fillsToSerialize[i];
+          if (fill && fill.boundVariables && fill.boundVariables.color) {
+            const boundVar = fill.boundVariables.color;
+            if (boundVar && boundVar.type === "VARIABLE_ALIAS") {
+              try {
+                const variable = await figma.variables.getVariableByIdAsync(
+                  boundVar.id,
+                );
+                if (variable && variable.name.includes("badge/color/label")) {
+                  const hasOverride =
+                    nodeBoundVars.fills && nodeBoundVars.fills[i];
+                  debugConsole.log(
+                    `[EXPORT DEBUG] TEXT node "${nodeName}" (${nodeType}) has fill[${i}] bound to variable "${variable.name}" (ID: ${boundVar.id})${hasOverride ? " [INSTANCE OVERRIDE]" : ""}`,
+                  );
+                }
+              } catch {
+                // Ignore errors - just for debug logging
+              }
+            }
+          }
+        }
+      }
+    } else if (nodeType === "TEXT" && node.fills && Array.isArray(node.fills)) {
+      // Original debug logging for non-override case
+      for (const fill of node.fills) {
+        if (fill && fill.boundVariables && fill.boundVariables.color) {
+          const boundVar = fill.boundVariables.color;
+          if (boundVar && boundVar.type === "VARIABLE_ALIAS") {
+            try {
+              const variable = await figma.variables.getVariableByIdAsync(
+                boundVar.id,
+              );
+              if (variable && variable.name.includes("badge/color/label")) {
+                debugConsole.log(
+                  `[EXPORT DEBUG] TEXT node "${nodeName}" (${nodeType}) has fill bound to variable "${variable.name}" (ID: ${boundVar.id})`,
+                );
+              }
+            } catch {
+              // Ignore errors - just for debug logging
+            }
+          }
+        }
+      }
+    }
+
     const fills = await serializeFills(
-      node.fills,
+      fillsToSerialize,
       context.variableTable,
       context.collectionTable,
       context.imageTable,

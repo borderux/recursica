@@ -398,6 +398,13 @@ export async function resolveVariableAliasMetadata(
     // Add to table and get index (or existing index if already present)
     const index = variableTable.addVariable(variableEntry);
 
+    // Debug logging for badge/color/label variables
+    if (variable.name.includes("badge/color/label")) {
+      debugConsole.log(
+        `[EXPORT DEBUG] Resolved variable "${variable.name}" (ID: ${alias.id}) -> table index ${index}`,
+      );
+    }
+
     // Return reference
     return createVariableReference(index);
   } catch (error) {
@@ -423,6 +430,12 @@ export async function extractBoundVariables(
   const result: any = {};
   for (const key in obj) {
     if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      // Skip Figma API metadata fields that shouldn't be in boundVariables
+      // These are properties of variable alias objects, not the boundVariables container
+      if (key === "type" || key === "id") {
+        continue;
+      }
+
       const value = obj[key];
       if (value && typeof value === "object" && !Array.isArray(value)) {
         // If it's a VARIABLE_ALIAS, resolve it to get table reference
@@ -542,11 +555,30 @@ export async function serializeFills(
       for (const key in fill) {
         if (Object.prototype.hasOwnProperty.call(fill, key)) {
           if (key === "boundVariables") {
-            serializedFill[key] = await extractBoundVariables(
+            const extracted = await extractBoundVariables(
               fill[key],
               variableTable,
               collectionTable,
             );
+            // Debug logging for badge/color/label variables in fills
+            if (
+              extracted &&
+              extracted.color &&
+              extracted.color._varRef !== undefined
+            ) {
+              const varEntry = variableTable.getVariableByIndex(
+                extracted.color._varRef,
+              );
+              if (
+                varEntry &&
+                varEntry.variableName.includes("badge/color/label")
+              ) {
+                debugConsole.log(
+                  `[EXPORT DEBUG] Serialized fill boundVariables.color -> variable "${varEntry.variableName}" (index ${extracted.color._varRef})`,
+                );
+              }
+            }
+            serializedFill[key] = extracted;
           } else {
             serializedFill[key] = fill[key];
           }

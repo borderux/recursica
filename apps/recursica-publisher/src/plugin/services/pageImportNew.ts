@@ -848,6 +848,9 @@ export async function restoreBoundVariablesForFills(
   boundVariables: any,
   propertyName: string,
   recognizedVariables: Map<string, Variable>,
+  variableTable: VariableTable | null = null,
+  collectionTable: CollectionTable | null = null,
+  recognizedCollections: Map<string, VariableCollection> | null = null,
 ): Promise<void> {
   if (!boundVariables || typeof boundVariables !== "object") {
     return;
@@ -883,7 +886,38 @@ export async function restoreBoundVariablesForFills(
           if (isVariableReference(fillBinding)) {
             const varRef = (fillBinding as VariableReference)._varRef;
             if (varRef !== undefined) {
-              const variable = recognizedVariables.get(String(varRef));
+              let variable = recognizedVariables.get(String(varRef));
+
+              // Verify that the variable found in recognizedVariables matches the variable table entry
+              if (variable && variableTable) {
+                const varEntry = variableTable.getVariableByIndex(varRef);
+                if (varEntry && variable.name !== varEntry.variableName) {
+                  // Variable name doesn't match - the index points to a different variable
+                  // Fall back to resolving from table by name
+                  variable = undefined; // Clear so we resolve from table
+                }
+              }
+
+              // If not found or name mismatch, try to resolve from variable table
+              if (
+                !variable &&
+                variableTable &&
+                collectionTable &&
+                recognizedCollections
+              ) {
+                const resolvedVariable = await resolveVariableFromTable(
+                  varRef,
+                  variableTable,
+                  collectionTable,
+                  recognizedCollections,
+                );
+                variable = resolvedVariable || undefined;
+                if (variable) {
+                  // Add to recognizedVariables for future lookups
+                  recognizedVariables.set(String(varRef), variable);
+                }
+              }
+
               if (variable) {
                 // For direct variable references in fills array, bind to the color property
                 // This is the most common case when a fill is bound to a variable
@@ -902,7 +936,38 @@ export async function restoreBoundVariablesForFills(
               if (isVariableReference(varInfo)) {
                 const varRef = (varInfo as VariableReference)._varRef;
                 if (varRef !== undefined) {
-                  const variable = recognizedVariables.get(String(varRef));
+                  let variable = recognizedVariables.get(String(varRef));
+
+                  // Verify that the variable found in recognizedVariables matches the variable table entry
+                  if (variable && variableTable) {
+                    const varEntry = variableTable.getVariableByIndex(varRef);
+                    if (varEntry && variable.name !== varEntry.variableName) {
+                      // Variable name doesn't match - the index points to a different variable
+                      // Fall back to resolving from table by name
+                      variable = undefined; // Clear so we resolve from table
+                    }
+                  }
+
+                  // If not found or name mismatch, try to resolve from variable table
+                  if (
+                    !variable &&
+                    variableTable &&
+                    collectionTable &&
+                    recognizedCollections
+                  ) {
+                    const resolvedVariable = await resolveVariableFromTable(
+                      varRef,
+                      variableTable,
+                      collectionTable,
+                      recognizedCollections,
+                    );
+                    variable = resolvedVariable || undefined;
+                    if (variable) {
+                      // Add to recognizedVariables for future lookups
+                      recognizedVariables.set(String(varRef), variable);
+                    }
+                  }
+
                   if (variable) {
                     // Set the boundVariable with the correct structure
                     propertyValue[i].boundVariables[fillPropertyName] = {
@@ -4037,7 +4102,13 @@ export async function recreateNodeFromData(
           }
 
           // Create new fill objects with boundVariables
+          // Priority: node-level boundVariables.fills (instance overrides) > fill-level boundVariables
           const fillsWithBoundVars: any[] = [];
+          const nodeLevelFillsBoundVars = nodeData.boundVariables?.fills;
+          const hasNodeLevelFillsOverrides = Array.isArray(
+            nodeLevelFillsBoundVars,
+          );
+
           for (let i = 0; i < fills.length; i++) {
             const fill = fills[i];
             const fillData = nodeData.fills[i];
@@ -4047,122 +4118,235 @@ export async function recreateNodeFromData(
               continue;
             }
 
-            // Check for boundVariables in fill items (decompressed from bndVar in JSON)
-            const fillBoundVars = fillData.boundVariables || fillData.bndVar;
-            if (!fillBoundVars) {
-              fillsWithBoundVars.push(fill);
-              continue;
-            }
-
             // Create a new fill object with boundVariables
             const newFill = { ...fill };
             newFill.boundVariables = {};
 
-            // Restore bound variables from boundVariables/bndVar (e.g., boundVariables.color)
-            for (const [propName, varInfo] of Object.entries(fillBoundVars)) {
-              // DEBUG: Log what we're processing
-              if (nodeData.type === "VECTOR") {
-                debugConsole.log(
-                  `  DEBUG: Processing fill[${i}].${propName} on VECTOR "${newNode.name || "Unnamed"}": varInfo=${JSON.stringify(varInfo)}`,
-                );
+            // Check for node-level boundVariables.fills first (instance child overrides take precedence)
+            let boundVarsToProcess: any = null;
+            if (hasNodeLevelFillsOverrides && nodeLevelFillsBoundVars[i]) {
+              // Node-level override exists for this fill index
+              boundVarsToProcess = nodeLevelFillsBoundVars[i];
+              debugConsole.log(
+                `  [INSTANCE OVERRIDE] Using node-level boundVariables.fills[${i}] for "${newNode.name || "Unnamed"}" (${nodeData.type})`,
+              );
+            } else {
+              // Fall back to fill-level boundVariables
+              boundVarsToProcess = fillData.boundVariables || fillData.bndVar;
+            }
+
+            if (!boundVarsToProcess) {
+              fillsWithBoundVars.push(newFill);
+              continue;
+            }
+
+            // Handle both direct variable reference format ({ _varRef: ... }) and object format ({ color: { _varRef: ... } })
+            if (isVariableReference(boundVarsToProcess)) {
+              // Direct variable reference - bind to color property
+              const varRef = (boundVarsToProcess as VariableReference)._varRef;
+              if (varRef !== undefined && recognizedVariables) {
+                let variable = recognizedVariables.get(String(varRef));
+
+                // Verify that the variable found in recognizedVariables matches the variable table entry
+                if (variable && variableTable) {
+                  const varEntry = variableTable.getVariableByIndex(varRef);
+                  if (varEntry && variable.name !== varEntry.variableName) {
+                    variable = undefined; // Clear so we resolve from table
+                  }
+                }
+
+                // If not found or name mismatch, try to resolve from variable table
+                if (!variable) {
+                  if (
+                    variableTable &&
+                    collectionTable &&
+                    recognizedCollections
+                  ) {
+                    const resolvedVariable = await resolveVariableFromTable(
+                      varRef,
+                      variableTable,
+                      collectionTable,
+                      recognizedCollections,
+                    );
+                    variable = resolvedVariable || undefined;
+                    if (variable) {
+                      recognizedVariables.set(String(varRef), variable);
+                    }
+                  }
+                }
+
+                if (variable) {
+                  newFill.boundVariables.color = {
+                    type: "VARIABLE_ALIAS",
+                    id: variable.id,
+                  };
+                  const isBadgeLabelVar =
+                    variable.name.includes("badge/color/label");
+                  if (isBadgeLabelVar) {
+                    debugConsole.log(
+                      `  [IMPORT DEBUG] [INSTANCE OVERRIDE] Restored bound variable for fill[${i}].color on "${newNode.name || "Unnamed"}" (${nodeData.type}): variable "${variable.name}" (ID: ${variable.id.substring(0, 8)}...) from table index ${varRef}`,
+                    );
+                  }
+                }
               }
-              if (isVariableReference(varInfo)) {
-                const varRef = (varInfo as VariableReference)._varRef;
-                if (varRef !== undefined) {
-                  // DEBUG: Log variable lookup
-                  if (nodeData.type === "VECTOR") {
-                    debugConsole.log(
-                      `  DEBUG: Looking up variable reference ${varRef} in recognizedVariables (map has ${recognizedVariables.size} entries)`,
-                    );
-                    // DEBUG: List available variable references
-                    const availableRefs = Array.from(
-                      recognizedVariables.keys(),
-                    ).slice(0, 10);
-                    debugConsole.log(
-                      `  DEBUG: Available variable references (first 10): ${availableRefs.join(", ")}`,
-                    );
-                    // Check if the specific variable reference exists
-                    const hasVarRef = recognizedVariables.has(String(varRef));
-                    debugConsole.log(
-                      `  DEBUG: Variable reference ${varRef} ${hasVarRef ? "found" : "NOT FOUND"} in recognizedVariables`,
-                    );
-                    if (!hasVarRef) {
-                      // List all available references to help debug
-                      const allRefs = Array.from(
+            } else {
+              // Object format - process each property (e.g., color, opacity)
+              // Restore bound variables from boundVariables/bndVar (e.g., boundVariables.color)
+              for (const [propName, varInfo] of Object.entries(
+                boundVarsToProcess,
+              )) {
+                // DEBUG: Log what we're processing
+                const isBadgeLabelVar =
+                  nodeData.type === "TEXT" &&
+                  (newNode.name || "").toLowerCase().includes("text");
+                if (nodeData.type === "VECTOR" || isBadgeLabelVar) {
+                  debugConsole.log(
+                    `  DEBUG: Processing fill[${i}].${propName} on ${nodeData.type} "${newNode.name || "Unnamed"}": varInfo=${JSON.stringify(varInfo)}`,
+                  );
+                }
+                if (isVariableReference(varInfo)) {
+                  const varRef = (varInfo as VariableReference)._varRef;
+                  if (varRef !== undefined && recognizedVariables) {
+                    // DEBUG: Log variable lookup
+                    if (nodeData.type === "VECTOR" || isBadgeLabelVar) {
+                      debugConsole.log(
+                        `  DEBUG: Looking up variable reference ${varRef} in recognizedVariables (map has ${recognizedVariables.size} entries)`,
+                      );
+                      // DEBUG: List available variable references
+                      const availableRefs = Array.from(
                         recognizedVariables.keys(),
-                      ).sort((a, b) => parseInt(a) - parseInt(b));
+                      ).slice(0, 10);
                       debugConsole.log(
-                        `  DEBUG: All available variable references: ${allRefs.join(", ")}`,
+                        `  DEBUG: Available variable references (first 10): ${availableRefs.join(", ")}`,
                       );
-                    }
-                  }
-                  let variable = recognizedVariables.get(String(varRef));
-                  // If not found in recognizedVariables, try to resolve from variable table
-                  if (!variable) {
-                    if (nodeData.type === "VECTOR") {
+                      // Check if the specific variable reference exists
+                      const hasVarRef = recognizedVariables.has(String(varRef));
                       debugConsole.log(
-                        `  DEBUG: Variable ${varRef} not in recognizedVariables. variableTable=${!!variableTable}, collectionTable=${!!collectionTable}, recognizedCollections=${!!recognizedCollections}`,
+                        `  DEBUG: Variable reference ${varRef} ${hasVarRef ? "found" : "NOT FOUND"} in recognizedVariables`,
                       );
-                    }
-                    if (
-                      variableTable &&
-                      collectionTable &&
-                      recognizedCollections
-                    ) {
-                      debugConsole.log(
-                        `  Variable reference ${varRef} not in recognizedVariables, attempting to resolve from variable table...`,
-                      );
-                      const resolvedVariable = await resolveVariableFromTable(
-                        varRef,
-                        variableTable,
-                        collectionTable,
-                        recognizedCollections,
-                      );
-                      variable = resolvedVariable || undefined;
-                      if (variable) {
-                        // Add to recognizedVariables for future lookups
-                        recognizedVariables.set(String(varRef), variable);
+                      if (!hasVarRef) {
+                        // List all available references to help debug
+                        const allRefs = Array.from(
+                          recognizedVariables.keys(),
+                        ).sort((a, b) => parseInt(a) - parseInt(b));
                         debugConsole.log(
-                          `  ✓ Resolved variable ${variable.name} from variable table and added to recognizedVariables`,
-                        );
-                      } else {
-                        debugConsole.warning(
-                          `  Failed to resolve variable ${varRef} from variable table`,
+                          `  DEBUG: All available variable references: ${allRefs.join(", ")}`,
                         );
                       }
-                    } else {
-                      if (nodeData.type === "VECTOR") {
-                        debugConsole.warning(
-                          `  Cannot resolve variable ${varRef} from table - missing required parameters`,
-                        );
+                      // For badge/color/label variables, also check what's in the variable table
+                      if (variableTable) {
+                        const varEntry =
+                          variableTable.getVariableByIndex(varRef);
+                        if (
+                          varEntry &&
+                          varEntry.variableName.includes("badge/color/label")
+                        ) {
+                          debugConsole.log(
+                            `  [IMPORT DEBUG] Variable table index ${varRef} contains: "${varEntry.variableName}"`,
+                          );
+                        }
                       }
                     }
-                  }
-                  if (variable) {
-                    newFill.boundVariables[propName] = {
-                      type: "VARIABLE_ALIAS",
-                      id: variable.id,
-                    };
-                    debugConsole.log(
-                      `  ✓ Restored bound variable for fill[${i}].${propName} on "${newNode.name || "Unnamed"}" (${nodeData.type}): variable ${variable.name} (ID: ${variable.id.substring(0, 8)}...)`,
-                    );
+                    let variable = recognizedVariables.get(String(varRef));
+
+                    // Verify that the variable found in recognizedVariables matches the variable table entry
+                    // This ensures we're using the correct variable even if indices don't match
+                    if (variable && variableTable) {
+                      const varEntry = variableTable.getVariableByIndex(varRef);
+                      if (varEntry && variable.name !== varEntry.variableName) {
+                        // Variable name doesn't match - the index points to a different variable
+                        // Fall back to resolving from table by name
+                        debugConsole.log(
+                          `  Variable reference ${varRef} found in recognizedVariables but name mismatch: expected "${varEntry.variableName}", found "${variable.name}". Resolving from table...`,
+                        );
+                        variable = undefined; // Clear so we resolve from table
+                      }
+                    }
+
+                    // If not found in recognizedVariables or name mismatch, try to resolve from variable table
+                    if (!variable) {
+                      if (nodeData.type === "VECTOR") {
+                        debugConsole.log(
+                          `  DEBUG: Variable ${varRef} not in recognizedVariables or name mismatch. variableTable=${!!variableTable}, collectionTable=${!!collectionTable}, recognizedCollections=${!!recognizedCollections}`,
+                        );
+                      }
+                      if (
+                        variableTable &&
+                        collectionTable &&
+                        recognizedCollections
+                      ) {
+                        debugConsole.log(
+                          `  Variable reference ${varRef} not in recognizedVariables or name mismatch, attempting to resolve from variable table...`,
+                        );
+                        const resolvedVariable = await resolveVariableFromTable(
+                          varRef,
+                          variableTable,
+                          collectionTable,
+                          recognizedCollections,
+                        );
+                        variable = resolvedVariable || undefined;
+                        if (variable) {
+                          // Add to recognizedVariables for future lookups
+                          recognizedVariables.set(String(varRef), variable);
+                          debugConsole.log(
+                            `  ✓ Resolved variable ${variable.name} from variable table and added to recognizedVariables`,
+                          );
+                        } else {
+                          debugConsole.warning(
+                            `  Failed to resolve variable ${varRef} from variable table`,
+                          );
+                        }
+                      } else {
+                        if (nodeData.type === "VECTOR") {
+                          debugConsole.warning(
+                            `  Cannot resolve variable ${varRef} from table - missing required parameters`,
+                          );
+                        }
+                      }
+                    }
+                    if (variable) {
+                      newFill.boundVariables[propName] = {
+                        type: "VARIABLE_ALIAS",
+                        id: variable.id,
+                      };
+                      // Debug logging for badge/color/label variables
+                      const isBadgeLabelVar =
+                        variable.name.includes("badge/color/label");
+                      if (isBadgeLabelVar) {
+                        debugConsole.log(
+                          `  [IMPORT DEBUG] Restored bound variable for fill[${i}].${propName} on "${newNode.name || "Unnamed"}" (${nodeData.type}): variable "${variable.name}" (ID: ${variable.id.substring(0, 8)}...) from table index ${varRef}`,
+                        );
+                        if (variableTable) {
+                          const varEntry =
+                            variableTable.getVariableByIndex(varRef);
+                          if (varEntry) {
+                            debugConsole.log(
+                              `  [IMPORT DEBUG] Variable table entry at index ${varRef}: "${varEntry.variableName}"`,
+                            );
+                          }
+                        }
+                      }
+                      debugConsole.log(
+                        `  ✓ Restored bound variable for fill[${i}].${propName} on "${newNode.name || "Unnamed"}" (${nodeData.type}): variable ${variable.name} (ID: ${variable.id.substring(0, 8)}...)`,
+                      );
+                    } else {
+                      debugConsole.warning(
+                        `  Variable reference ${varRef} not found in recognizedVariables for fill[${i}].${propName} on "${newNode.name || "Unnamed"}"`,
+                      );
+                    }
                   } else {
-                    debugConsole.warning(
-                      `  Variable reference ${varRef} not found in recognizedVariables for fill[${i}].${propName} on "${newNode.name || "Unnamed"}"`,
-                    );
+                    if (nodeData.type === "VECTOR") {
+                      debugConsole.warning(
+                        `  DEBUG: Variable reference ${varRef} is undefined for fill[${i}].${propName} on VECTOR "${newNode.name || "Unnamed"}"`,
+                      );
+                    }
                   }
                 } else {
                   if (nodeData.type === "VECTOR") {
                     debugConsole.warning(
-                      `  DEBUG: Variable reference ${varRef} is undefined for fill[${i}].${propName} on VECTOR "${newNode.name || "Unnamed"}"`,
+                      `  DEBUG: fill[${i}].${propName} on VECTOR "${newNode.name || "Unnamed"}" is not a variable reference: ${JSON.stringify(varInfo)}`,
                     );
                   }
-                }
-              } else {
-                if (nodeData.type === "VECTOR") {
-                  debugConsole.warning(
-                    `  DEBUG: fill[${i}].${propName} on VECTOR "${newNode.name || "Unnamed"}" is not a variable reference: ${JSON.stringify(varInfo)}`,
-                  );
                 }
               }
             }
@@ -4212,7 +4396,9 @@ export async function recreateNodeFromData(
           }
         }
 
-        // Note: Bound variables for fills are already restored above from fillData.boundVariables
+        // Note: Bound variables for fills are restored with priority:
+        // 1. nodeData.boundVariables.fills (instance child overrides) - handled first in the fill loop
+        // 2. fillData.boundVariables (main component values) - fallback in the fill loop
         // We only need to check for other boundVariables (not fills) at the node level
         if (
           nodeData.boundVariables &&
@@ -4288,6 +4474,9 @@ export async function recreateNodeFromData(
             nodeData.boundVariables,
             "backgrounds",
             recognizedVariables,
+            variableTable,
+            collectionTable,
+            recognizedCollections,
           );
         }
       } catch (error) {
@@ -7236,6 +7425,9 @@ async function createRemoteInstances(
                 entry.structure.boundVariables,
                 "fills",
                 recognizedVariables,
+                variableTable,
+                collectionTable,
+                recognizedCollections,
               );
             }
           } catch (error) {
