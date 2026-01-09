@@ -76,14 +76,32 @@ export default function Home() {
       return;
     }
 
-    // If import failed, navigate to Review Import (which will show the error)
+    // If import failed but there's no existing import in Figma, clear the stale data
     if (
       importData &&
       importData.mainFile &&
       importData.mainFile.status === "success" &&
-      importData.importStatus === "failed"
+      importData.importStatus === "failed" &&
+      !hasExistingImport
     ) {
-      console.log("[Home] Import failed, navigating to Review Import");
+      console.log(
+        "[Home] Found failed import data but no existing import in Figma, clearing stale data",
+      );
+      setImportData(null);
+      return;
+    }
+
+    // If import failed AND there's an existing import in Figma, navigate to Review Import
+    if (
+      importData &&
+      importData.mainFile &&
+      importData.mainFile.status === "success" &&
+      importData.importStatus === "failed" &&
+      hasExistingImport
+    ) {
+      console.log(
+        "[Home] Import failed with existing import, navigating to Review Import",
+      );
       navigate("/import-wizard/existing", { replace: true });
       return;
     }

@@ -65,7 +65,7 @@ export interface ExportPageResponseData {
   filename: string;
   pageData: any; // Parsed JSON object (was jsonData as string)
   pageName: string;
-  additionalPages: ExportPageResponseData[];
+  additionalPages: ExportPageResponseData[]; // Referenced pages exported along with main page (for wizard)
   discoveredReferencedPages?: ReferencedPageInfo[]; // Referenced pages discovered but not yet exported
   validationResult?: ValidationResult; // Validation results if validateOnly was true
 }
@@ -218,26 +218,8 @@ export async function extractNodeData(
   const baseProps = await parseBaseNodeProperties(node, updatedContext);
   Object.assign(nodeData, baseProps);
 
-  // Validate ID uniqueness
-  if (nodeData.id && updatedContext.exportedIds) {
-    const existingName = updatedContext.exportedIds.get(nodeData.id);
-    if (existingName !== undefined) {
-      const currentNodeName = nodeData.name || "Unnamed";
-      if (existingName !== currentNodeName) {
-        const errorMessage = `Duplicate ID detected during export: ID "${nodeData.id.substring(0, 8)}..." is used by both "${existingName}" and "${currentNodeName}". Each node must have a unique ID.`;
-        debugConsole.error(errorMessage);
-        throw new Error(errorMessage);
-      }
-      // Same ID and same name - this is the same node being encountered again
-      // This shouldn't happen due to visited WeakSet, but log a warning if it does
-      debugConsole.warning(
-        `Node "${currentNodeName}" (ID: ${nodeData.id.substring(0, 8)}...) was encountered multiple times during export. This may indicate a structural issue.`,
-      );
-    } else {
-      // First time seeing this ID - record it
-      updatedContext.exportedIds.set(nodeData.id, nodeData.name || "Unnamed");
-    }
-  }
+  // Note: ID uniqueness is now ensured in parseBaseNodeProperties()
+  // No additional validation needed here since parseBaseNodeProperties handles uniqueness
 
   // Parse type-specific properties
   const nodeType = node.type;
@@ -619,6 +601,11 @@ export async function exportPage(
       debugConsole.log(
         "Collections will be discovered as variables are processed:",
       );
+      const exportedIds = new Map<string, string>();
+      debugConsole.log(
+        `[EXPORT] Starting ID uniqueness tracking (initial map size: ${exportedIds.size})`,
+      );
+
       extractedPageData = await extractNodeData(
         selectedPage as any,
         new WeakSet(),
@@ -628,7 +615,12 @@ export async function exportPage(
           instanceTable,
           styleTable,
           imageTable,
+          exportedIds,
         },
+      );
+
+      debugConsole.log(
+        `[EXPORT] Finished ID uniqueness tracking (final map size: ${exportedIds.size})`,
       );
       checkCancellation(requestId);
       debugConsole.log("Node extraction finished");
@@ -972,22 +964,46 @@ export async function exportPage(
         `Found ${normalInstances.length} normal instance(s) to check`,
       );
 
+      // Debug: Log all available pages
+      debugConsole.log(
+        `Available pages: ${pages.map((p) => `"${p.name}"`).join(", ")}`,
+      );
+
+      // Validate that all normal instances have componentGuid
+      for (const entry of normalInstances) {
+        if (!entry.componentGuid || entry.componentGuid.length === 0) {
+          const errorMessage = `Normal instance references component "${entry.componentName || "(unnamed)"}" on page "${entry.componentPageName || "(unknown page)"}", but has no componentGuid. Cannot export. Please publish page "${entry.componentPageName || "(unknown page)"}" first to assign it a GUID.`;
+          debugConsole.error(errorMessage);
+          throw new Error(errorMessage);
+        }
+      }
+
       // Get unique referenced pages (only those not already processed)
       // Use page ID as key to ensure uniqueness, not page name
       const referencedPages = new Map<string, any>(); // page ID -> page node
       for (const entry of normalInstances) {
         if (entry.componentPageName) {
+          debugConsole.log(
+            `Checking instance "${entry.componentName || "(unnamed)"}" -> page "${entry.componentPageName}"`,
+          );
           const page = pages.find((p) => p.name === entry.componentPageName);
           if (page && !processedPages.has(page.id)) {
             // Only add if not already in the map (by ID) and not already processed
             if (!referencedPages.has(page.id)) {
               referencedPages.set(page.id, page);
+              debugConsole.log(
+                `✓ Found referenced page "${page.name}" (ID: ${page.id.substring(0, 8)}...)`,
+              );
             }
           } else if (!page) {
-            // Page not found - hard failure
-            const errorMessage = `Normal instance references component "${entry.componentName || "(unnamed)"}" on page "${entry.componentPageName}", but that page was not found. Cannot export.`;
+            // Page not found - hard failure as requested
+            const errorMessage = `Normal instance references component "${entry.componentName || "(unnamed)"}" on page "${entry.componentPageName}", but that page was not found. Cannot export. Available pages: ${pages.map((p) => `"${p.name}"`).join(", ")}`;
             debugConsole.error(errorMessage);
             throw new Error(errorMessage);
+          } else {
+            debugConsole.log(
+              `Page "${entry.componentPageName}" already processed or not needed`,
+            );
           }
         } else {
           // componentPageName is missing - hard failure
@@ -1223,6 +1239,11 @@ export async function exportPage(
       const fullInstanceTable = new InstanceTable();
       const fullStyleTable = new StyleTable();
       const fullImageTable = new ImageTable();
+      const fullExportedIds = new Map<string, string>();
+
+      debugConsole.log(
+        `[EXPORT] Starting full extraction ID uniqueness tracking (initial map size: ${fullExportedIds.size})`,
+      );
 
       const fullExtractedPageData = await extractNodeData(
         selectedPage as any,
@@ -1233,7 +1254,12 @@ export async function exportPage(
           instanceTable: fullInstanceTable,
           styleTable: fullStyleTable,
           imageTable: fullImageTable,
+          exportedIds: fullExportedIds,
         },
+      );
+
+      debugConsole.log(
+        `[EXPORT] Finished full extraction ID uniqueness tracking (final map size: ${fullExportedIds.size})`,
       );
       checkCancellation(requestId);
 
@@ -1300,6 +1326,14 @@ export async function exportPage(
     // Create export data with metadata, collections table, variable table, instance table, and page data
     // All data uses full key names at this point
     debugConsole.log("Creating export data structure...");
+
+    // Ensure pageGuid is set (should never be empty at this point, but validate to be safe)
+    if (!pageGuid || pageGuid.length === 0) {
+      const errorMessage = `Cannot export page "${selectedPage.name}": page has no GUID. This should not happen - GUID should have been generated earlier.`;
+      debugConsole.error(errorMessage);
+      throw new Error(errorMessage);
+    }
+
     const exportData = {
       metadata: {
         exportedAt: new Date().toISOString(),
@@ -1343,7 +1377,7 @@ export async function exportPage(
       filename,
       pageData: parsedPageData,
       pageName: selectedPage.name,
-      additionalPages, // Populated with referenced component pages
+      additionalPages, // Populated with referenced component pages (for wizard)
       discoveredReferencedPages:
         discoveredReferencedPages.length > 0
           ? // Filter out the original page - it shouldn't be in the discovered list since it's the one being published

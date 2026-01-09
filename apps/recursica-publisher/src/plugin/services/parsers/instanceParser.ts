@@ -838,11 +838,13 @@ export async function parseInstanceProperties(
     // 2. Duplicate names: Store them, validation during import will check multiple paths
     // 3. Path is stored as array to avoid separator conflicts
     let mainComponentParentPath: string[] | undefined;
+    let mainComponentNodePath: string[] | undefined;
     let componentSetName: string | undefined;
 
     try {
       let current: any = mainComponent.parent;
       const pathNames: string[] = [];
+      const nodeIds: string[] = [];
       let depth = 0;
       const maxDepth = 20;
 
@@ -859,10 +861,10 @@ export async function parseInstanceProperties(
             break;
           }
 
-          // Use node name for path, empty names are represented as empty strings
-          // Store as array to avoid separator conflicts
+          // Build both name path and node ID path
           const pathSegment = nodeName || "";
           pathNames.unshift(pathSegment);
+          nodeIds.unshift(current.id); // Node IDs are guaranteed unique
 
           // Debug: log path building for components in Icons page and "user" component set
           if (
@@ -892,6 +894,7 @@ export async function parseInstanceProperties(
       }
 
       mainComponentParentPath = pathNames;
+      mainComponentNodePath = nodeIds;
 
       // Debug: log final path for components in Icons page and "user" component set
       if (
@@ -900,7 +903,7 @@ export async function parseInstanceProperties(
         componentSetName === "user"
       ) {
         debugConsole.log(
-          `  [PATH BUILD] Final path for component "${componentName}": [${pathNames.join(" → ")}]${componentSetName ? ` (componentSet: "${componentSetName}")` : ""}`,
+          `  [PATH BUILD] Final path for component "${componentName}": names=[${pathNames.join(" → ")}], ids=[${nodeIds.join(" → ")}]${componentSetName ? ` (componentSet: "${componentSetName}")` : ""}`,
         );
       }
     } catch {
@@ -919,10 +922,14 @@ export async function parseInstanceProperties(
       // For internal instances, we use componentNodeId instead (simpler since everything is on the same page)
       // For remote instances, path is optional (structure is used instead)
       ...(instanceType === "normal"
-        ? { path: mainComponentParentPath || [] }
+        ? {
+            path: mainComponentParentPath || [],
+            nodePath: mainComponentNodePath || [],
+          }
         : mainComponentParentPath &&
           mainComponentParentPath.length > 0 && {
             path: mainComponentParentPath,
+            nodePath: mainComponentNodePath,
           }),
     };
 
@@ -1108,12 +1115,17 @@ export async function parseInstanceProperties(
             `  Found INSTANCE: "${instanceName}" -> NORMAL component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...) at path [${(mainComponentParentPath || []).join(" → ")}]`,
           );
         } else {
-          debugConsole.warning(
-            `  [INSTANCE DEBUG] Instance "${instanceName}" -> component "${componentName}": page "${pageToUse.name}" has no metadata (id: ${metadata?.id || "missing"}, version: ${metadata?.version ?? "missing"})`,
-          );
-          debugConsole.warning(
-            `  Instance "${instanceName}" -> component "${componentName}" is classified as normal but page "${pageToUse.name}" has no metadata. This instance will not be importable.`,
-          );
+          // Hard failure: normal instances must have componentGuid
+          const errorMessage = `Normal instance "${instanceName}" -> component "${componentName}" references page "${pageToUse.name}", but that page has no metadata (GUID: ${metadata?.id || "missing"}, version: ${metadata?.version ?? "missing"}). Cannot export. Please publish page "${pageToUse.name}" first to assign it a GUID.`;
+          debugConsole.error(errorMessage);
+          // Try to scroll to the component to help user find it
+          try {
+            await figma.viewport.scrollAndZoomIntoView([mainComponent]);
+          } catch (scrollError) {
+            // If scrolling fails, component might not be accessible
+            console.warn("Could not scroll to component:", scrollError);
+          }
+          throw new Error(errorMessage);
         }
       } else {
         // componentPage is null - this shouldn't happen for normal instances

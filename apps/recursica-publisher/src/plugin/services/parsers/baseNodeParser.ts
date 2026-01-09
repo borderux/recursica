@@ -55,7 +55,30 @@ export async function parseBaseNodeProperties(
     handledKeys.add("type");
   }
   if (node.id) {
-    result.id = node.id;
+    // Ensure unique node ID using incrementing counter
+    let finalId = node.id;
+    let counter = 1;
+
+    // Check if this ID is already used, append counter until unique
+    while (context.exportedIds.has(finalId)) {
+      finalId = `${node.id}_${counter}`;
+      counter++;
+    }
+
+    // Debug: Log when uniqueness is applied
+    if (finalId !== node.id) {
+      debugConsole.log(
+        `[EXPORT] ID uniqueness applied: ${node.id} → ${finalId} (${node.name || "unnamed"})`,
+      );
+    }
+
+    // Always log the final assignment for verification
+    debugConsole.log(
+      `[EXPORT] Final ID assignment: ${finalId} to "${node.name || "unnamed"}" (original: ${node.id})`,
+    );
+
+    result.id = finalId;
+    context.exportedIds.set(finalId, node.name || "unnamed");
     handledKeys.add("id");
   }
 

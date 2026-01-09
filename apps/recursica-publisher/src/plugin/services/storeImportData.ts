@@ -53,7 +53,9 @@ export async function storeImportData(
   data: StoreImportDataData,
 ): Promise<ResponseMessage> {
   try {
-    await figma.clientStorage.setAsync("importData", data.importData);
+    // Store import data in the current file using plugin data instead of global clientStorage
+    const IMPORT_DATA_KEY = "RecursicaImportData";
+    figma.root.setPluginData(IMPORT_DATA_KEY, JSON.stringify(data.importData));
 
     const responseData: StoreImportDataResponseData = {};
 

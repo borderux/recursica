@@ -1,3 +1,6 @@
+// Plugin data keys for storing metadata on nodes
+const ORIGINAL_NODE_ID_KEY = "RecursicaOriginalNodeId";
+
 import type { ResponseMessage } from "../types/messages";
 import {
   getDefaultsForNodeType,
@@ -64,6 +67,7 @@ export interface DeferredNormalInstance {
   parentNodeId: string; // ID of parent node where placeholder was created (for serialization)
   parentPlaceholderId?: string; // ID of parent placeholder if parent is also a deferred instance
   instanceIndex: number; // Instance table index
+  deferredInstanceIndex?: number; // Instance table index for deferred instance structure
 }
 
 export interface ImportPageResponseData {
@@ -3478,6 +3482,12 @@ export async function recreateNodeFromData(
     }
   }
 
+  // Store original node ID as plugin data for deferred instance resolution
+  // This allows us to uniquely identify children even when multiple have the same name
+  if (nodeData.id) {
+    newNode.setPluginData(ORIGINAL_NODE_ID_KEY, nodeData.id);
+  }
+
   // Store instance table index mapping for variant property setting in third pass
   // This allows us to match instances to their specific instance table entries
   // even when multiple instances reference the same component
@@ -5663,10 +5673,32 @@ export async function recreateNodeFromData(
         nodeIdMapping &&
         !nodeIdMapping.has(componentData.id)
       ) {
+        // Validate component data before creation
+        if (!componentData.name && componentData.name !== "") {
+          debugConsole.warning(
+            `  Component data missing name for ID ${componentData.id?.substring(0, 8)}..., skipping creation`,
+          );
+          continue;
+        }
+
+        // Check for reasonable name length to catch corrupted data
+        if (componentData.name && componentData.name.length > 1000) {
+          debugConsole.warning(
+            `  Component name suspiciously long (${componentData.name.length} chars) for "${componentData.name?.substring(0, 50)}...", this may indicate corrupted data`,
+          );
+        }
         // Create just the component node itself (no children processing yet)
-        const componentNode = figma.createComponent();
-        if (componentData.name !== undefined) {
-          componentNode.name = componentData.name || "Unnamed Node";
+        let componentNode: ComponentNode;
+        try {
+          componentNode = figma.createComponent();
+          if (componentData.name !== undefined) {
+            componentNode.name = componentData.name || "Unnamed Node";
+          }
+        } catch (createError) {
+          debugConsole.error(
+            `  Failed to create component "${componentData.name || "Unnamed"}" (ID: ${componentData.id?.substring(0, 8)}...): ${createError instanceof Error ? createError.message : String(createError)}`,
+          );
+          throw createError; // Re-throw to trigger main error handler
         }
 
         // Add component property definitions using addComponentProperty() method
@@ -5674,6 +5706,10 @@ export async function recreateNodeFromData(
           const propDefs = componentData.componentPropertyDefinitions;
           let addedCount = 0;
           let failedCount = 0;
+
+          debugConsole.log(
+            `  Processing ${Object.keys(propDefs).length} component property definition(s) for "${componentData.name || "Unnamed"}"`,
+          );
 
           for (const [propName, propDef] of Object.entries(propDefs)) {
             try {
@@ -5692,7 +5728,7 @@ export async function recreateNodeFromData(
               const propType = typeMap[(propDef as any).type];
               if (!propType) {
                 debugConsole.warning(
-                  `  Unknown property type ${(propDef as any).type} for property "${propName}" in component "${componentData.name || "Unnamed"}"`,
+                  `  Unknown property type ${(propDef as any).type} for property "${propName}" in component "${componentData.name || "Unnamed"}" - available types: ${Object.keys(typeMap).join(", ")}`,
                 );
                 failedCount++;
                 continue;
@@ -5702,6 +5738,11 @@ export async function recreateNodeFromData(
               // Property names in JSON may include IDs (e.g., "Show trailing icon#318:0")
               // Extract just the property name part (before the #)
               const cleanPropName = propName.split("#")[0];
+
+              debugConsole.log(
+                `    Adding property "${cleanPropName}" (${propType}) with default value: ${JSON.stringify(defaultValue)}`,
+              );
+
               componentNode.addComponentProperty(
                 cleanPropName,
                 propType,
@@ -5710,7 +5751,7 @@ export async function recreateNodeFromData(
               addedCount++;
             } catch (error) {
               debugConsole.warning(
-                `  Failed to add component property "${propName}" to "${componentData.name || "Unnamed"}" in first pass: ${error}`,
+                `  Failed to add component property "${propName}" to "${componentData.name || "Unnamed"}" in first pass: ${error instanceof Error ? error.message : String(error)}`,
               );
               failedCount++;
             }
@@ -5719,6 +5760,10 @@ export async function recreateNodeFromData(
           if (addedCount > 0) {
             debugConsole.log(
               `  Added ${addedCount} component property definition(s) to "${componentData.name || "Unnamed"}" in first pass${failedCount > 0 ? ` (${failedCount} failed)` : ""}`,
+            );
+          } else if (failedCount > 0) {
+            debugConsole.warning(
+              `  No component properties were successfully added to "${componentData.name || "Unnamed"}" (${failedCount} failed)`,
             );
           }
         }
@@ -8376,6 +8421,9 @@ export async function importPage(
       dependentComponents,
     };
 
+    // additionalPages feature has been removed
+    // Referenced pages should be imported separately
+
     const responseData = {
       pageName: newPage.name,
       pageId: pageId, // Include pageId for tracking (used for both new and reused pages)
@@ -8888,6 +8936,78 @@ export async function resolveDeferredNormalInstances(
         continue;
       }
 
+      // Helper function to find component by node ID path (more reliable than name paths)
+      const findComponentByNodePath = (
+        parent: any,
+        nodePath: string[],
+        componentName: string,
+        componentGuid?: string,
+        componentSetName?: string,
+      ): ComponentNode | null => {
+        if (nodePath.length === 0) {
+          // At the end of the path - find the component by name/GUID
+          let nameMatch: ComponentNode | null = null;
+          const cleanTargetName = getComponentCleanName(componentName);
+
+          for (const child of parent.children || []) {
+            if (child.type === "COMPONENT") {
+              const exactMatch = child.name === componentName;
+              const cleanMatch =
+                getComponentCleanName(child.name) === cleanTargetName;
+
+              if (exactMatch || cleanMatch) {
+                if (!nameMatch) {
+                  nameMatch = child;
+                }
+                // Prefer exact match, especially with GUID
+                if (exactMatch && componentGuid) {
+                  try {
+                    const metadataStr = child.getPluginData(
+                      "RecursicaPublishedMetadata",
+                    );
+                    if (metadataStr) {
+                      const metadata = JSON.parse(metadataStr);
+                      if (metadata.id === componentGuid) {
+                        return child;
+                      }
+                    }
+                  } catch {
+                    // Continue searching
+                  }
+                } else if (exactMatch) {
+                  return child;
+                }
+              }
+            }
+          }
+
+          // Return best match found
+          if (nameMatch && componentGuid) {
+            return nameMatch;
+          }
+          return nameMatch;
+        }
+
+        const [firstNodeId, ...remainingNodePath] = nodePath;
+
+        // Find child with matching node ID
+        for (const child of parent.children || []) {
+          if (child.id === firstNodeId) {
+            // Found the correct child, continue with remaining path
+            return findComponentByNodePath(
+              child,
+              remainingNodePath,
+              componentName,
+              componentGuid,
+              componentSetName,
+            );
+          }
+        }
+
+        // Node with specified ID not found
+        return null;
+      };
+
       // Helper function to find component by path, component set name, and component name
       const findComponentByPath = (
         parent: any,
@@ -8895,7 +9015,19 @@ export async function resolveDeferredNormalInstances(
         componentName: string,
         componentGuid?: string,
         componentSetName?: string,
+        nodePath?: string[],
       ): ComponentNode | null => {
+        // If we have nodePath (ID-based), use it for precise navigation
+        if (nodePath && nodePath.length > 0) {
+          return findComponentByNodePath(
+            parent,
+            nodePath,
+            componentName,
+            componentGuid,
+            componentSetName,
+          );
+        }
+
         if (path.length === 0) {
           let nameMatch: ComponentNode | null = null;
           const cleanTargetName = getComponentCleanName(componentName);
@@ -9084,6 +9216,7 @@ export async function resolveDeferredNormalInstances(
         instanceEntry.componentName,
         instanceEntry.componentGuid,
         instanceEntry.componentSetName,
+        instanceEntry.nodePath,
       );
 
       // If path-based search failed, try searching recursively through all FRAMEs
@@ -9270,6 +9403,35 @@ export async function resolveDeferredNormalInstances(
       instanceNode.name =
         nodeData.name ||
         placeholderFrame.name.replace("[Deferred: ", "").replace("]", "");
+
+      // Copy plugin data from component children to instance children for proper ID matching
+      // This ensures deferred child resolution can match by original IDs
+      if ("children" in targetComponent && "children" in instanceNode) {
+        const componentChildren = targetComponent.children;
+        const instanceChildren = instanceNode.children;
+
+        // Copy plugin data by position (component children should correspond to instance children)
+        const maxChildren = Math.min(
+          componentChildren.length,
+          instanceChildren.length,
+        );
+        for (let i = 0; i < maxChildren; i++) {
+          const componentChild = componentChildren[i];
+          const instanceChild = instanceChildren[i];
+
+          // Copy the original node ID from component child to instance child
+          const originalId = componentChild.getPluginData(ORIGINAL_NODE_ID_KEY);
+          if (originalId) {
+            instanceChild.setPluginData(ORIGINAL_NODE_ID_KEY, originalId);
+            console.log(
+              `[IMPORT] Set ORIGINAL_NODE_ID_KEY on instance child "${instanceChild.name}": "${originalId}" (from component "${targetComponent.name}")`,
+            );
+            debugConsole.log(
+              `  [DEBUG] Copied plugin data from component child "${componentChild.name}" to instance child "${instanceChild.name}": "${originalId}"`,
+            );
+          }
+        }
+      }
 
       // Copy position and size from placeholder
       instanceNode.x = placeholderFrame.x;
@@ -9982,18 +10144,45 @@ export async function resolveDeferredNormalInstances(
 
       // Resolve child deferred instances after parent is replaced
       // Match children by name only (exact match) - this is an instance override scenario
-      // Helper function to recursively find a child by name
-      const findChildRecursively = (
+      // Helper function to recursively find a child by original ID or name
+      const findChildRecursively = async (
         node: SceneNode,
+        targetOriginalId: string | undefined,
         targetName: string,
-      ): SceneNode[] => {
+      ): Promise<SceneNode[]> => {
         const matches: SceneNode[] = [];
-        if (node.name === targetName) {
+
+        // For INSTANCE nodes, use plugin data (copied from component children during creation)
+        if (targetOriginalId && node.type === "INSTANCE") {
+          const nodeOriginalId = node.getPluginData(ORIGINAL_NODE_ID_KEY);
+          if (nodeOriginalId === targetOriginalId) {
+            matches.push(node);
+          }
+        }
+
+        // Standard plugin data matching for non-instance nodes
+        if (targetOriginalId && node.type !== "INSTANCE") {
+          const nodeOriginalId = node.getPluginData(ORIGINAL_NODE_ID_KEY);
+          if (nodeOriginalId === targetOriginalId) {
+            matches.push(node);
+          }
+        }
+
+        // Name matching fallback
+        if (!targetOriginalId && node.name === targetName) {
           matches.push(node);
         }
+
+        // Recurse into children
         if ("children" in node) {
           for (const child of node.children) {
-            matches.push(...findChildRecursively(child, targetName));
+            matches.push(
+              ...(await findChildRecursively(
+                child,
+                targetOriginalId,
+                targetName,
+              )),
+            );
           }
         }
         return matches;
@@ -10001,28 +10190,99 @@ export async function resolveDeferredNormalInstances(
 
       for (const childDeferred of childDeferredInstances) {
         try {
-          // Find matching children in actual instance by name (recursive search)
+          // Find matching children in actual instance by ID first, then fallback to name (recursive search)
           // This handles nested children (e.g., "arrow-top-right-on-square" inside "Link")
-          const matchingChildren = findChildRecursively(
-            instanceNode,
-            childDeferred.nodeData.name,
+          const childId = childDeferred.nodeData.id;
+          const childName = childDeferred.nodeData.name;
+
+          console.log(
+            `[DEFERRED] Looking for child "${childName}" with ID "${childId}" in instance "${nodeData.name}"`,
           );
+
+          // Name-first approach: Try name-based matching first, then use ID as tiebreaker
+          let matchingChildren: SceneNode[] = [];
+
+          // First try name-based matching (within component hierarchy)
+          const nameMatches = await findChildRecursively(
+            instanceNode,
+            undefined, // No ID filter - search by name only
+            childName,
+          );
+
+          if (nameMatches.length === 1) {
+            // Perfect match - single child with this name
+            matchingChildren = nameMatches;
+            debugConsole.log(
+              `  ✓ Found single child by name "${childName}" in resolved instance "${nodeData.name}"`,
+            );
+          } else if (nameMatches.length > 1) {
+            // Multiple children with same name - use ID as tiebreaker
+            if (childId) {
+              const idMatches = nameMatches.filter((child) => {
+                const childOriginalId =
+                  child.getPluginData(ORIGINAL_NODE_ID_KEY);
+                return childOriginalId === childId;
+              });
+
+              if (idMatches.length === 1) {
+                // Found exact match using ID tiebreaker
+                matchingChildren = idMatches;
+                debugConsole.log(
+                  `  ✓ Found child by name "${childName}" with ID tiebreaker "${childId.substring(0, 8)}..." in resolved instance "${nodeData.name}"`,
+                );
+              } else if (idMatches.length > 1) {
+                // Multiple matches even with ID - this shouldn't happen
+                debugConsole.warning(
+                  `  Multiple children with name "${childName}" and ID "${childId.substring(0, 8)}..." found in resolved instance "${nodeData.name}" - using first match`,
+                );
+                matchingChildren = [idMatches[0]];
+              } else {
+                // No ID matches among name matches - use first name match as fallback
+                debugConsole.warning(
+                  `  No child with name "${childName}" and ID "${childId.substring(0, 8)}..." found - using first name match as fallback in resolved instance "${nodeData.name}"`,
+                );
+                matchingChildren = [nameMatches[0]];
+              }
+            } else {
+              // No ID available for tiebreaking - use first match
+              debugConsole.warning(
+                `  Multiple children with name "${childName}" found (${nameMatches.length} total) but no ID available for tiebreaking - using first match in resolved instance "${nodeData.name}"`,
+              );
+              matchingChildren = [nameMatches[0]];
+            }
+          } else if (nameMatches.length === 0) {
+            // No name matches found - try fallback ID search (legacy behavior)
+            if (childId) {
+              const idMatches = await findChildRecursively(
+                instanceNode,
+                childId,
+                childName, // Still pass name for fallback name matching
+              );
+              if (idMatches.length >= 1) {
+                debugConsole.warning(
+                  `  No name matches for "${childName}" - found ${idMatches.length} ID match(es) "${childId.substring(0, 8)}..." as fallback in resolved instance "${nodeData.name}"`,
+                );
+                matchingChildren = [idMatches[0]]; // Use first ID match
+              } else {
+                debugConsole.warning(
+                  `  No matches found for child "${childName}" (ID: ${childId?.substring(0, 8) || "none"}) in resolved instance "${nodeData.name}" - child may not exist in component`,
+                );
+              }
+            } else {
+              debugConsole.warning(
+                `  No matches found for child "${childName}" in resolved instance "${nodeData.name}" - child may not exist in component`,
+              );
+            }
+          }
 
           if (matchingChildren.length === 0) {
             debugConsole.warning(
-              `  Could not find matching child "${childDeferred.nodeData.name}" in resolved instance "${nodeData.name}" - child may not exist in component`,
+              `  Could not find matching child "${childName}"${childId ? ` (ID: ${childId.substring(0, 8)}...)` : ""} in resolved instance "${nodeData.name}" - child may not exist in component`,
             );
             continue;
           }
 
-          if (matchingChildren.length > 1) {
-            // Duplicate names - cannot resolve ambiguity
-            const error = `Cannot resolve child deferred instance "${childDeferred.nodeData.name}": multiple children with same name in instance "${nodeData.name}"`;
-            debugConsole.error(error);
-            errors.push(error);
-            failed++;
-            continue;
-          }
+          // Note: With name-first matching above, matchingChildren should always be length 0 or 1
 
           // Single match - proceed with resolution
           const matchingChild = matchingChildren[0];

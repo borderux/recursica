@@ -52,10 +52,25 @@ export async function loadImportData(
   _data: NoData,
 ): Promise<ResponseMessage> {
   try {
-    const importDataJson = await figma.clientStorage.getAsync("importData");
+    // Load import data from the current file using plugin data instead of global clientStorage
+    const IMPORT_DATA_KEY = "RecursicaImportData";
+    const importDataJson = figma.root.getPluginData(IMPORT_DATA_KEY);
+
+    let importData;
+    if (importDataJson) {
+      try {
+        importData = JSON.parse(importDataJson);
+      } catch (parseError) {
+        console.warn(
+          "[loadImportData] Failed to parse import data:",
+          parseError,
+        );
+        importData = undefined;
+      }
+    }
 
     const responseData: LoadImportDataResponseData = {
-      importData: importDataJson || undefined,
+      importData: importData,
     };
 
     return {
