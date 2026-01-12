@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router";
-import PageLayout from "../components/PageLayout";
+import { PageLayout } from "../components/PageLayout";
 import { callPlugin } from "../utils/callPlugin";
 import type { ComponentMetadata } from "../plugin/services/getComponentMetadata";
 import { useAuth } from "../context/useAuth";

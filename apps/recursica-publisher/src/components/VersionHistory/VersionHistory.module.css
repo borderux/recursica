@@ -1,0 +1,39 @@
+.root {
+  margin-top: 12px;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: bold;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.list {
+  font-size: 14px;
+  color: #333;
+  line-height: 1.6;
+}
+
+.entry {
+  margin-bottom: 4px;
+}
+
+.entryLast {
+  margin-bottom: 0;
+}
+
+.version {
+  color: #333;
+}
+
+.date {
+  color: #666;
+  margin-left: 8px;
+}
+
+.message {
+  color: #666;
+  margin-left: 16px;
+  margin-top: 2px;
+}

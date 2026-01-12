@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router";
-import PageLayout from "../components/PageLayout";
-import { useAuth } from "../context/useAuth";
+import { PageLayout } from "../../components/PageLayout";
+import { useAuth } from "../../context/useAuth";
+import { Title } from "../../components/Title";
+import { Text } from "../../components/Text";
+import { Button } from "../../components/Button";
+import { Stack } from "../../components/Stack";
+import { Alert } from "../../components/Alert";
+import { LoadingSpinner } from "../../components/LoadingSpinner";
+import classes from "./ImportMain.module.css";
 
 const RECURSICA_FIGMA_OWNER = "borderux";
 const RECURSICA_FIGMA_REPO = "recursica-figma";
@@ -40,10 +47,8 @@ export default function ImportMain() {
         setLoading(true);
         setError(null);
 
-        // Get branch/commit ref from search params, default to "main"
         const ref = searchParams.get("ref") || "main";
 
-        // Fetch index.json from public repository
         const url = `https://api.github.com/repos/${RECURSICA_FIGMA_OWNER}/${RECURSICA_FIGMA_REPO}/contents/index.json?ref=${encodeURIComponent(ref)}`;
         const headers: Record<string, string> = {
           Accept: "application/vnd.github.v3+json",
@@ -70,12 +75,8 @@ export default function ImportMain() {
 
         const fileData = await response.json();
 
-        // Use base64 content from API response to avoid CDN caching issues
-        // GitHub API includes content for files under 1MB (index.json is small)
         let indexContent: string;
         if (fileData.content && fileData.encoding === "base64") {
-          // Decode base64 content directly from API response (avoids CDN cache)
-          // Properly handle UTF-8 encoding for Unicode characters (emojis, etc.)
           const binaryString = atob(fileData.content.replace(/\s/g, ""));
           const bytes = new Uint8Array(binaryString.length);
           for (let i = 0; i < binaryString.length; i++) {
@@ -83,10 +84,9 @@ export default function ImportMain() {
           }
           indexContent = new TextDecoder("utf-8").decode(bytes);
         } else {
-          // Fallback: use download_url with cache-busting using SHA
           const cacheBustUrl = `${fileData.download_url}?sha=${fileData.sha}`;
           indexContent = await fetch(cacheBustUrl, {
-            cache: "no-store", // Explicitly disable caching
+            cache: "no-store",
           }).then((res) => {
             if (!res.ok) {
               throw new Error(
@@ -99,7 +99,6 @@ export default function ImportMain() {
 
         const indexJson: IndexJson = JSON.parse(indexContent);
 
-        // Convert the components object to an array of ComponentInfo
         const componentsList: ComponentInfo[] = [];
 
         if (indexJson.components) {
@@ -116,7 +115,6 @@ export default function ImportMain() {
           }
         }
 
-        // Sort components by name
         componentsList.sort((a, b) => a.name.localeCompare(b.name));
 
         setComponents(componentsList);
@@ -137,185 +135,66 @@ export default function ImportMain() {
 
   return (
     <PageLayout showBackButton={true}>
-      <div
-        style={{
-          width: "100%",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "20px",
-          padding: "0px",
-          boxSizing: "border-box",
-        }}
-      >
-        <h1
-          style={{
-            fontSize: "24px",
-            fontWeight: "bold",
-            color: "#333",
-            marginBottom: "8px",
-            marginTop: "0",
-          }}
-        >
+      <Stack gap={20} className={classes.root}>
+        <Title order={1} className={classes.title}>
           Choose your component
-        </h1>
+        </Title>
 
         {searchParams.get("ref") ? (
-          <div
-            style={{
-              width: "100%",
-              maxWidth: "600px",
-              marginBottom: "20px",
-              marginTop: "0",
-              padding: "12px",
-              fontSize: "14px",
-              fontFamily: "inherit",
-              border: "1px solid #000",
-              borderRadius: "4px",
-              boxSizing: "border-box",
-              backgroundColor: "#fff",
-              color: "#333",
-            }}
-          >
+          <div className={classes.branchInfo}>
             VIEWING BRANCH:{" "}
             <a
               href={`https://github.com/${RECURSICA_FIGMA_OWNER}/${RECURSICA_FIGMA_REPO}/tree/${encodeURIComponent(searchParams.get("ref") || "")}`}
               target="_blank"
               rel="noopener noreferrer"
-              style={{
-                color: "#1976d2",
-                textDecoration: "underline",
-              }}
+              className={classes.branchLink}
             >
               {`https://github.com/${RECURSICA_FIGMA_OWNER}/${RECURSICA_FIGMA_REPO}/tree/${encodeURIComponent(searchParams.get("ref") || "")}`}
             </a>
           </div>
         ) : (
-          <p
-            style={{
-              fontSize: "14px",
-              color: "#666",
-              textAlign: "center",
-              marginBottom: "20px",
-              marginTop: "0",
-              maxWidth: "600px",
-            }}
-          >
+          <Text variant="body" className={classes.description}>
             We have an exciting list of components to import. Please choose from
             the list below. Check back frequently for new updates.
-          </p>
+          </Text>
         )}
 
         {loading && (
-          <div
-            style={{
-              padding: "40px",
-              color: "#666",
-              fontSize: "16px",
-            }}
-          >
-            Loading components...
+          <div className={classes.loading}>
+            <LoadingSpinner />
+            <Text variant="body">Loading components...</Text>
           </div>
         )}
 
         {error && (
-          <div
-            style={{
-              padding: "16px",
-              backgroundColor: "#ffebee",
-              border: "1px solid #f44336",
-              borderRadius: "8px",
-              color: "#c62828",
-              fontSize: "14px",
-              maxWidth: "600px",
-              textAlign: "center",
-            }}
-          >
+          <Alert variant="error" className={classes.error}>
             {error}
-          </div>
+          </Alert>
         )}
 
         {!loading && !error && components.length === 0 && (
-          <div
-            style={{
-              padding: "40px",
-              color: "#666",
-              fontSize: "16px",
-              textAlign: "center",
-            }}
-          >
+          <Text variant="body" className={classes.empty}>
             No components available.
-          </div>
+          </Text>
         )}
 
         {!loading && !error && components.length > 0 && (
-          <div
-            style={{
-              width: "100%",
-              maxWidth: "800px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "12px",
-            }}
-          >
+          <Stack gap={12} className={classes.componentList}>
             {components.map((component) => (
-              <button
+              <Button
                 key={component.guid}
+                variant="outline"
+                color="red"
                 onClick={() => {
-                  // Navigate to wizard step 1 with component pre-selected
                   const ref = searchParams.get("ref") || "main";
                   navigate(
                     `/import-wizard/step1?guid=${encodeURIComponent(component.guid)}&ref=${encodeURIComponent(ref)}`,
                   );
                 }}
-                style={{
-                  width: "100%",
-                  padding: "12px 24px",
-                  fontSize: "16px",
-                  fontWeight: "bold",
-                  backgroundColor: "transparent",
-                  color: "#d40d0d",
-                  border: "2px solid #d40d0d",
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                  textAlign: "left",
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: "16px",
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor = "#d40d0d";
-                  e.currentTarget.style.color = "white";
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.backgroundColor = "transparent";
-                  e.currentTarget.style.color = "#d40d0d";
-                }}
+                className={classes.componentButton}
               >
-                <div
-                  style={{
-                    fontSize: "16px",
-                    fontWeight: "bold",
-                    flex: 1,
-                    fontFamily:
-                      "system-ui, -apple-system, 'Segoe UI', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif",
-                  }}
-                >
-                  {component.name}
-                </div>
-                <div
-                  style={{
-                    fontSize: "12px",
-                    opacity: 0.8,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "flex-end",
-                    gap: "2px",
-                    flexShrink: 0,
-                  }}
-                >
+                <div className={classes.componentName}>{component.name}</div>
+                <div className={classes.componentVersion}>
                   <div>Version: {component.version || "N/A"}</div>
                   {component.publishDate && (
                     <div>
@@ -323,11 +202,11 @@ export default function ImportMain() {
                     </div>
                   )}
                 </div>
-              </button>
+              </Button>
             ))}
-          </div>
+          </Stack>
         )}
-      </div>
+      </Stack>
     </PageLayout>
   );
 }

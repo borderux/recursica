@@ -1,7 +1,10 @@
 import React from "react";
 import { useNavigate } from "react-router";
-import packageJson from "../../package.json";
-import { useAuth } from "../context/useAuth";
+import packageJson from "../../../package.json";
+import { useAuth } from "../../context/useAuth";
+import { Button } from "../Button";
+import { Badge } from "../Badge";
+import classes from "./PageLayout.module.css";
 
 interface PageLayoutProps {
   children: React.ReactNode;
@@ -34,67 +37,19 @@ export default function PageLayout({
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        width: "100%",
-        fontFamily:
-          "system-ui, -apple-system, 'Segoe UI', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif",
-        overflow: "hidden",
-        boxSizing: "border-box",
-      }}
-    >
+    <div className={classes.root}>
       {/* Main Content */}
-      <main
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          overflowX: "hidden",
-          width: "100%",
-          boxSizing: "border-box",
-          minHeight: 0,
-          padding: "40px",
-        }}
-      >
-        {children}
-      </main>
+      <main className={classes.main}>{children}</main>
 
       {/* Footer */}
-      <footer
-        style={{
-          width: "100%",
-          height: "40px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 12px",
-          borderTop: "1px solid #e0e0e0",
-          flexShrink: 0,
-          flexGrow: 0,
-          boxSizing: "border-box",
-          position: "relative",
-        }}
-      >
+      <footer className={classes.footer}>
         {showBackButton ? (
-          <button
+          <Button
+            variant="subtle"
+            size="sm"
             onClick={handleBackClick}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: "8px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.opacity = "0.7";
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.opacity = "1";
-            }}
+            className={classes.backButton}
+            aria-label="Back"
           >
             <svg
               width="20"
@@ -111,28 +66,20 @@ export default function PageLayout({
                 strokeLinejoin="round"
               />
             </svg>
-          </button>
+          </Button>
         ) : (
-          <div style={{ width: "36px" }} />
+          <div className={classes.spacer} />
         )}
 
         {/* Logo in center */}
-        <div
-          style={{
-            position: "absolute",
-            left: "50%",
-            transform: "translateX(-50%)",
-            display: "flex",
-            alignItems: "center",
-          }}
-        >
+        <div className={classes.logoContainer}>
           <svg
             width="32"
             height="22"
             viewBox="0 0 64.04 43.03"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
-            style={{ fill: "#d40d0d" }}
+            className={classes.logo}
           >
             <path
               fillRule="evenodd"
@@ -143,35 +90,12 @@ export default function PageLayout({
         </div>
 
         {/* GitHub Login/Logout and Version on right */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-          }}
-        >
+        <div className={classes.footerRight}>
           {/* GitHub Login/Logout */}
-          <button
+          <Button
+            variant="subtle"
             onClick={handleAuthClick}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: "4px 8px",
-              fontSize: "12px",
-              color: "#333",
-              fontFamily:
-                "system-ui, -apple-system, 'Segoe UI', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif",
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.opacity = "0.7";
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.opacity = "1";
-            }}
+            className={classes.authButton}
           >
             {/* GitHub Logo SVG */}
             <svg
@@ -188,17 +112,12 @@ export default function PageLayout({
               />
             </svg>
             <span>{isAuthenticated ? "Logout" : "Login"}</span>
-          </button>
+          </Button>
 
           {/* Version */}
-          <div
-            style={{
-              fontSize: "12px",
-              color: "#999",
-            }}
-          >
+          <Badge variant="version" className={classes.version}>
             v{packageJson.version}
-          </div>
+          </Badge>
         </div>
       </footer>
     </div>

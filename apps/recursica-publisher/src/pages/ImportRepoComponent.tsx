@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import PageLayout from "../components/PageLayout";
+import { PageLayout } from "../components/PageLayout";
 import { useImportData, type ImportedFile } from "../context/ImportDataContext";
 import { useAuth } from "../context/useAuth";
 import { validateImport } from "../utils/validateExportFile";

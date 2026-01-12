@@ -1,21 +1,23 @@
 import { MemoryRouter, Routes, Route, useLocation } from "react-router";
 import { useEffect } from "react";
+import { MantineProvider } from "@mantine/core";
+import { theme } from "./theme/theme";
 import Layout from "./components/Layout";
-import Home from "./pages/Home";
-import Import from "./pages/Import";
-import ImportMain from "./pages/ImportMain";
-import ImportBranch from "./pages/ImportBranch";
+import Home from "./pages/Home/Home";
+import Import from "./pages/Import/Import";
+import ImportMain from "./pages/ImportMain/ImportMain";
+import ImportBranch from "./pages/ImportBranch/ImportBranch";
 import ImportFiles from "./pages/ImportFiles";
 import ImportRepoComponent from "./pages/ImportRepoComponent";
 import Importing from "./pages/Importing";
 import ImportWizard from "./pages/ImportWizard";
 import Publish from "./pages/Publish";
-import Publishing from "./pages/Publishing";
+import Publishing from "./pages/Publishing/Publishing";
 import PublishingComplete from "./pages/PublishingComplete";
-import PublishingWizard from "./pages/PublishingWizard";
+import PublishingWizard from "./pages/PublishingWizard/PublishingWizard";
 import Test from "./pages/Test";
 import PageManagement from "./pages/PageManagement";
-import { Auth } from "./pages/Auth";
+import { Auth } from "./pages/Auth/Auth";
 import { PublishAuth } from "./pages/PublishAuth";
 import Unauthorized from "./pages/Unauthorized";
 import { AuthProvider } from "./context/AuthProvider";
@@ -132,35 +134,7 @@ function App() {
     };
   }, []);
   return (
-    <div
-      style={{
-        width: "100%",
-        height: "100%",
-        boxSizing: "border-box",
-        margin: 0,
-        padding: 0,
-      }}
-    >
-      <style>
-        {`
-          * {
-            box-sizing: border-box;
-          }
-          html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            font-family: system-ui, -apple-system, "Segoe UI", "Segoe UI Emoji", "Segoe UI Symbol", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
-          }
-          #root {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-          }
-        `}
-      </style>
+    <MantineProvider theme={theme}>
       <AuthProvider>
         <ImportDataProvider>
           <MemoryRouter initialEntries={["/"]}>
@@ -195,7 +169,7 @@ function App() {
           </MemoryRouter>
         </ImportDataProvider>
       </AuthProvider>
-    </div>
+    </MantineProvider>
   );
 }
 

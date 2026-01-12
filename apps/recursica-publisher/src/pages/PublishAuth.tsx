@@ -4,7 +4,7 @@ import { apiService, pluginTokenToCode } from "../services/auth/auth";
 import { useNavigate } from "react-router";
 import { GitHubService } from "../services/github/githubService";
 import { callPlugin } from "../utils/callPlugin";
-import PageLayout from "../components/PageLayout";
+import { PageLayout } from "../components/PageLayout";
 
 const Status = {
   Login: "Login",

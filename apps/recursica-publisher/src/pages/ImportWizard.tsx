@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Routes, Route, useLocation } from "react-router";
-import PageLayout from "../components/PageLayout";
+import { PageLayout } from "../components/PageLayout";
 import { callPlugin } from "../utils/callPlugin";
 import { ImportWizardProvider } from "../context/ImportWizardContext";
 import Step1ComponentSelection from "./ImportWizard/Step1ComponentSelection";
