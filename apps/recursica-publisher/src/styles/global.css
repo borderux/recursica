@@ -4,6 +4,16 @@
   box-sizing: border-box;
 }
 
+/**
+ * Base font size for rem calculations
+ * Setting to 16px (browser default) means 1rem = 16px
+ * This allows users to adjust text size via browser settings for better accessibility
+ * All font sizes in the theme use rem units relative to this base
+ */
+html {
+  font-size: 16px;
+}
+
 html,
 body {
   margin: 0;
