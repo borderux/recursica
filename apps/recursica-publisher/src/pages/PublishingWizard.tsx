@@ -90,15 +90,38 @@ export default function PublishingWizard() {
     }
   }, [state?.exportData]);
 
-  // Initialize mainBranchComponents from location state if available
+  // Initialize mainBranchComponents from location state if available, or load it
   useEffect(() => {
     if (state?.mainBranchComponents) {
       setMainBranchComponents(state.mainBranchComponents);
       console.log(
         `[PublishingWizard] Loaded ${state.mainBranchComponents.length} components from location state`,
       );
+    } else if (accessToken && !mainBranchComponents) {
+      // Load mainBranchComponents if not provided in state
+      const loadMainBranchComponents = async () => {
+        try {
+          const githubService = new GitHubService(accessToken);
+          const components = await githubService.loadComponentsFromBranch(
+            RECURSICA_FIGMA_OWNER,
+            RECURSICA_FIGMA_REPO,
+            "main",
+          );
+          setMainBranchComponents(components);
+          console.log(
+            `[PublishingWizard] Loaded ${components.length} components from main branch`,
+          );
+        } catch (err) {
+          console.error(
+            "[PublishingWizard] Failed to load main branch components:",
+            err,
+          );
+          // Continue without mainBranchComponents - version checking will be limited
+        }
+      };
+      loadMainBranchComponents();
     }
-  }, [state?.mainBranchComponents]);
+  }, [state?.mainBranchComponents, accessToken, mainBranchComponents]);
 
   // Note: We no longer do a second export here. The export is done in the Publishing page
   // and the exportData is passed via navigation state. If there's no exportData, show an error.
@@ -179,6 +202,7 @@ export default function PublishingWizard() {
       const pageGuid = page.pageData?.metadata?.guid;
 
       // Get version from repository index.json if available
+      // Also check page metadata version as a fallback (in case component was published but index.json isn't loaded yet)
       let currentVersion: number | "UNPUBLISHED" = "UNPUBLISHED";
       if (mainBranchComponents && pageGuid) {
         const component = mainBranchComponents.find((c) => c.guid === pageGuid);
@@ -191,8 +215,38 @@ export default function PublishingWizard() {
         }
       }
 
-      // New version comes from the page's metadata version (which is already incremented)
-      const newVersion = page.pageData?.metadata?.version || 1;
+      // Fallback: If not found in mainBranchComponents, check page metadata version
+      // This handles the case where the component was published but mainBranchComponents isn't loaded yet
+      if (
+        currentVersion === "UNPUBLISHED" &&
+        page.pageData?.metadata?.version
+      ) {
+        const pageMetadataVersion = page.pageData.metadata.version;
+        // Only use page metadata version if it's > 0 (0 means unpublished)
+        if (pageMetadataVersion > 0) {
+          currentVersion = pageMetadataVersion;
+        }
+      }
+
+      // If there's a published version, new version should be currentVersion + 1
+      // Otherwise, if the page has metadata with a version, use that (but at least 1)
+      // Otherwise, default to 1
+      let newVersion: number;
+      if (currentVersion !== "UNPUBLISHED") {
+        // Component is already published - increment the published version
+        newVersion = currentVersion + 1;
+      } else {
+        // Component is not published - use version from page metadata if available, otherwise 1
+        // But also check if page metadata has a version that suggests it was published before
+        const pageMetadataVersion = page.pageData?.metadata?.version;
+        if (pageMetadataVersion && pageMetadataVersion > 0) {
+          // Page has metadata version - this might be from a previous publish
+          // But since it's not in index.json, treat as unpublished and start at 1
+          newVersion = 1;
+        } else {
+          newVersion = 1;
+        }
+      }
 
       return { currentVersion, newVersion };
     },
@@ -765,7 +819,8 @@ export default function PublishingWizard() {
     for (const page of pagesToPublish) {
       const decision = getPageDecision(page.pageName);
       if (!decision || !decision.changeMessage.trim()) {
-        setError(`Please enter revision history for "${page.pageName}".`);
+        const componentName = page.pageData?.metadata?.name || page.pageName;
+        setError(`Please enter revision history for "${componentName}".`);
         return;
       }
     }
@@ -1211,13 +1266,16 @@ export default function PublishingWizard() {
           </h2>
           <p style={{ color: "#666", marginBottom: "20px" }}>
             Component {currentComponentIndex + 1} of {pagesToPublish.length}:{" "}
-            <strong>{currentComponent.pageName}</strong>
+            <strong>
+              {currentComponent.pageData?.metadata?.name ||
+                currentComponent.pageName}
+            </strong>
           </p>
           <p style={{ margin: "4px 0", fontSize: "12px", color: "#666" }}>
             Current Version:{" "}
             <span style={{ color: "#333" }}>
               {currentVersion === "UNPUBLISHED"
-                ? "UNPUBLISHED"
+                ? currentVersion
                 : currentVersion}
             </span>
           </p>
@@ -1409,19 +1467,24 @@ export default function PublishingWizard() {
   };
 
   const getPageTitle = () => {
+    const getComponentName = (page: ExportPageResponseData | null): string => {
+      if (!page) return "Component";
+      return page.pageData?.metadata?.name || page.pageName;
+    };
+
     if (wizardStep === "initial") {
-      return `Publishing: ${exportData.pageName}`;
+      return `Publishing: ${getComponentName(exportData)}`;
     }
     if (wizardStep === "componentRevision" && currentPage) {
-      return `Publishing: ${currentPage.pageName}`;
+      return `Publishing: ${getComponentName(currentPage)}`;
     }
     if (wizardStep === "publishing") {
-      return `Publishing: ${exportData.pageName}`;
+      return `Publishing: ${getComponentName(exportData)}`;
     }
     if (wizardStep === "finalPublish") {
-      return `Publishing: ${exportData.pageName}`;
+      return `Publishing: ${getComponentName(exportData)}`;
     }
-    return `Publishing: ${exportData.pageName}`;
+    return `Publishing: ${getComponentName(exportData)}`;
   };
 
   return (

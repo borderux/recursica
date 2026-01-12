@@ -28,6 +28,7 @@ export interface ParserContext {
   imageTable: ImageTable;
   detachedComponentsHandled: Set<string>; // Component IDs we've already prompted for and decided to treat as internal
   exportedIds: Map<string, string>; // node ID -> node name (for duplicate detection)
+  skipPrompts?: boolean; // If true, skip user prompts and automatically handle detached instances
 }
 
 export interface ParsedNodeData {

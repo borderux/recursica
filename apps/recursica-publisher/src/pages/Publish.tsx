@@ -206,7 +206,12 @@ export default function Publish() {
                           : publishedVersion}
                   </p>
                   <p>
-                    <strong>This Version:</strong> {metadata.version || 0}
+                    <strong>This Version:</strong>{" "}
+                    {publishedVersion !== null &&
+                    publishedVersion !== "UNPUBLISHED" &&
+                    typeof publishedVersion === "number"
+                      ? publishedVersion + 1
+                      : metadata.version || 1}
                   </p>
                 </div>
 

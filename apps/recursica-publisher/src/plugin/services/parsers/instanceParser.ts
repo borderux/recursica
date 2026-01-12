@@ -4,6 +4,7 @@ import type { ParsedNodeData, ParserContext } from "./baseNodeParser";
 import { debugConsole } from "../../services/debugConsole";
 import type { InstanceTableEntry } from "./instanceTable";
 import { pluginPrompt } from "../../utils/pluginPrompt";
+import { requestGuidFromUI } from "../../utils/requestGuidFromUI";
 
 const COMPONENT_METADATA_KEY = "RecursicaPublishedMetadata";
 
@@ -61,7 +62,7 @@ function getComponentMetadataFromPage(page: any): {
   version?: number;
 } | null {
   try {
-    // Metadata is stored using setPluginData (no namespace), not setSharedPluginData
+    // Metadata is stored using setPluginData (no namespace), not getSharedPluginData
     const metadataStr = page.getPluginData(COMPONENT_METADATA_KEY);
     if (!metadataStr || metadataStr.trim() === "") {
       return null;
@@ -74,6 +75,55 @@ function getComponentMetadataFromPage(page: any): {
   } catch {
     return null;
   }
+}
+
+/**
+ * Gets or generates component metadata from a page node
+ * If metadata is missing, automatically generates a new GUID and version
+ * Note: Uses getPluginData (not getSharedPluginData) to match how metadata is stored
+ */
+async function getOrGenerateComponentMetadataFromPage(page: any): Promise<{
+  id: string;
+  version: number;
+}> {
+  let metadata = getComponentMetadataFromPage(page);
+
+  // If metadata is missing or incomplete, generate it
+  if (!metadata || !metadata.id || metadata.version === undefined) {
+    debugConsole.log(
+      `  Page "${page.name}" has no metadata. Generating new GUID and metadata...`,
+    );
+
+    // Generate new GUID
+    const pageGuid = await requestGuidFromUI();
+    const pageVersion = 1;
+
+    // Create and store new metadata
+    const newMetadata = {
+      _ver: 1,
+      id: pageGuid,
+      name: page.name,
+      version: pageVersion,
+      publishDate: new Date().toISOString(),
+      history: {},
+    };
+
+    page.setPluginData(COMPONENT_METADATA_KEY, JSON.stringify(newMetadata));
+
+    debugConsole.log(
+      `  ✓ Generated new metadata for page "${page.name}": GUID=${pageGuid.substring(0, 8)}..., version=${pageVersion}`,
+    );
+
+    metadata = {
+      id: pageGuid,
+      version: pageVersion,
+    };
+  }
+
+  return {
+    id: metadata.id!,
+    version: metadata.version ?? 1,
+  };
 }
 
 /**
@@ -116,34 +166,42 @@ export async function parseInstanceProperties(
           `Found detached instance: "${instanceName}" (main component is missing)`,
         );
 
-        const message = `Found detached instance "${instanceName}". The main component this instance references is missing. This should be fixed. Continue to publish?`;
-        try {
-          await pluginPrompt.prompt(message, {
-            okLabel: "Ok",
-            cancelLabel: "Cancel",
-            timeoutMs: 300000, // 5 minutes
-          });
-
-          // User said Ok - mark as handled and treat as internal instance
-          context.detachedComponentsHandled.add(instanceId);
+        // If skipPrompts is true, automatically handle without prompting
+        if (context.skipPrompts) {
           debugConsole.log(
-            `Treating detached instance "${instanceName}" as internal instance`,
+            `Automatically handling detached instance "${instanceName}" (skipPrompts=true) - treating as internal instance`,
           );
-        } catch (error) {
-          // User said Cancel or prompt was cancelled
-          if (error instanceof Error && error.message === "User cancelled") {
-            const errorMessage = `Export cancelled: Detached instance "${instanceName}" found. Please fix the instance before exporting.`;
-            debugConsole.error(errorMessage);
-            // Try to scroll to the instance to help user find it
-            try {
-              await figma.viewport.scrollAndZoomIntoView([node]);
-            } catch (scrollError) {
-              console.warn("Could not scroll to instance:", scrollError);
+          context.detachedComponentsHandled.add(instanceId);
+        } else {
+          const message = `Found detached instance "${instanceName}". The main component this instance references is missing. This should be fixed. Continue to publish?`;
+          try {
+            await pluginPrompt.prompt(message, {
+              okLabel: "Ok",
+              cancelLabel: "Cancel",
+              timeoutMs: 300000, // 5 minutes
+            });
+
+            // User said Ok - mark as handled and treat as internal instance
+            context.detachedComponentsHandled.add(instanceId);
+            debugConsole.log(
+              `Treating detached instance "${instanceName}" as internal instance`,
+            );
+          } catch (error) {
+            // User said Cancel or prompt was cancelled
+            if (error instanceof Error && error.message === "User cancelled") {
+              const errorMessage = `Export cancelled: Detached instance "${instanceName}" found. Please fix the instance before exporting.`;
+              debugConsole.error(errorMessage);
+              // Try to scroll to the instance to help user find it
+              try {
+                await figma.viewport.scrollAndZoomIntoView([node]);
+              } catch (scrollError) {
+                console.warn("Could not scroll to instance:", scrollError);
+              }
+              throw new Error(errorMessage);
+            } else {
+              // Some other error occurred
+              throw error;
             }
-            throw new Error(errorMessage);
-          } else {
-            // Some other error occurred
-            throw error;
           }
         }
       }
@@ -459,31 +517,43 @@ export async function parseInstanceProperties(
             console.warn("Could not scroll to component:", scrollError);
           }
 
-          // Prompt user
-          const message = `Found detached instance "${instanceName}" attached to component "${componentName}". This should be fixed. Continue to publish?`;
-          try {
-            await pluginPrompt.prompt(message, {
-              okLabel: "Ok",
-              cancelLabel: "Cancel",
-              timeoutMs: 300000, // 5 minutes
-            });
-
-            // User said Ok - mark as handled and treat as remote instance
-            // This allows us to store the component structure and create it on REMOTES page
+          // If skipPrompts is true, automatically handle without prompting
+          if (context.skipPrompts) {
+            debugConsole.log(
+              `Automatically handling detached instance "${instanceName}" -> component "${componentName}" (skipPrompts=true) - treating as remote instance`,
+            );
             context.detachedComponentsHandled.add(componentId);
             instanceType = "remote";
-            debugConsole.log(
-              `Treating detached instance "${instanceName}" as remote instance (will be created on REMOTES page)`,
-            );
-          } catch (error) {
-            // User said Cancel or prompt was cancelled
-            if (error instanceof Error && error.message === "User cancelled") {
-              const errorMessage = `Export cancelled: Detached instance "${instanceName}" found. The component "${componentName}" is not on any page. Please fix the instance before exporting.`;
-              debugConsole.error(errorMessage);
-              throw new Error(errorMessage);
-            } else {
-              // Some other error occurred
-              throw error;
+          } else {
+            // Prompt user
+            const message = `Found detached instance "${instanceName}" attached to component "${componentName}". This should be fixed. Continue to publish?`;
+            try {
+              await pluginPrompt.prompt(message, {
+                okLabel: "Ok",
+                cancelLabel: "Cancel",
+                timeoutMs: 300000, // 5 minutes
+              });
+
+              // User said Ok - mark as handled and treat as remote instance
+              // This allows us to store the component structure and create it on REMOTES page
+              context.detachedComponentsHandled.add(componentId);
+              instanceType = "remote";
+              debugConsole.log(
+                `Treating detached instance "${instanceName}" as remote instance (will be created on REMOTES page)`,
+              );
+            } catch (error) {
+              // User said Cancel or prompt was cancelled
+              if (
+                error instanceof Error &&
+                error.message === "User cancelled"
+              ) {
+                const errorMessage = `Export cancelled: Detached instance "${instanceName}" found. The component "${componentName}" is not on any page. Please fix the instance before exporting.`;
+                debugConsole.error(errorMessage);
+                throw new Error(errorMessage);
+              } else {
+                // Some other error occurred
+                throw error;
+              }
             }
           }
         }
@@ -1104,29 +1174,17 @@ export async function parseInstanceProperties(
           `  [INSTANCE DEBUG] Instance "${instanceName}" -> component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...): found page "${pageToUse.name}" (ID: ${pageToUse.id.substring(0, 8)}...)`,
         );
 
-        const metadata = getComponentMetadataFromPage(pageToUse);
-        if (metadata?.id && metadata.version !== undefined) {
-          entry.componentGuid = metadata.id;
-          entry.componentVersion = metadata.version;
-          debugConsole.log(
-            `  [INSTANCE DEBUG] Instance "${instanceName}" -> component "${componentName}": metadata found - GUID: ${metadata.id.substring(0, 8)}..., version: ${metadata.version}`,
-          );
-          debugConsole.log(
-            `  Found INSTANCE: "${instanceName}" -> NORMAL component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...) at path [${(mainComponentParentPath || []).join(" → ")}]`,
-          );
-        } else {
-          // Hard failure: normal instances must have componentGuid
-          const errorMessage = `Normal instance "${instanceName}" -> component "${componentName}" references page "${pageToUse.name}", but that page has no metadata (GUID: ${metadata?.id || "missing"}, version: ${metadata?.version ?? "missing"}). Cannot export. Please publish page "${pageToUse.name}" first to assign it a GUID.`;
-          debugConsole.error(errorMessage);
-          // Try to scroll to the component to help user find it
-          try {
-            await figma.viewport.scrollAndZoomIntoView([mainComponent]);
-          } catch (scrollError) {
-            // If scrolling fails, component might not be accessible
-            console.warn("Could not scroll to component:", scrollError);
-          }
-          throw new Error(errorMessage);
-        }
+        // Get or generate metadata for the page (will generate if missing)
+        const metadata =
+          await getOrGenerateComponentMetadataFromPage(pageToUse);
+        entry.componentGuid = metadata.id;
+        entry.componentVersion = metadata.version;
+        debugConsole.log(
+          `  [INSTANCE DEBUG] Instance "${instanceName}" -> component "${componentName}": metadata - GUID: ${metadata.id.substring(0, 8)}..., version: ${metadata.version}`,
+        );
+        debugConsole.log(
+          `  Found INSTANCE: "${instanceName}" -> NORMAL component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...) at path [${(mainComponentParentPath || []).join(" → ")}]`,
+        );
       } else {
         // componentPage is null - this shouldn't happen for normal instances
         // (Detached components should have been handled during classification)

@@ -119,6 +119,7 @@ async function extractInstancesOnly(
   node: any,
   instanceTable: InstanceTable,
   visited: WeakSet<any> = new WeakSet(),
+  skipPrompts: boolean = false,
 ): Promise<void> {
   if (!node || typeof node !== "object") {
     return;
@@ -146,6 +147,7 @@ async function extractInstancesOnly(
       imageTable: new ImageTable(), // Not used, but required by parser
       detachedComponentsHandled: new Set(),
       exportedIds: new Map<string, string>(),
+      skipPrompts,
     };
 
     // Parse instance properties to add to instance table
@@ -155,7 +157,7 @@ async function extractInstancesOnly(
   // Recursively process children
   if (node.children && Array.isArray(node.children)) {
     for (const child of node.children) {
-      await extractInstancesOnly(child, instanceTable, visited);
+      await extractInstancesOnly(child, instanceTable, visited, skipPrompts);
     }
   }
 }
@@ -202,6 +204,7 @@ export async function extractNodeData(
     imageTable: context.imageTable!,
     detachedComponentsHandled: context.detachedComponentsHandled ?? new Set(),
     exportedIds: context.exportedIds ?? new Map<string, string>(),
+    skipPrompts: context.skipPrompts ?? false,
   };
 
   // Handle circular references
@@ -581,7 +584,12 @@ export async function exportPage(
       debugConsole.log("Traversing page to find instance references...");
 
       // Only extract instances - much faster than full extraction
-      await extractInstancesOnly(selectedPage as any, instanceTable);
+      await extractInstancesOnly(
+        selectedPage as any,
+        instanceTable,
+        new WeakSet(),
+        data.skipPrompts ?? false,
+      );
       checkCancellation(requestId);
 
       debugConsole.log("Instance extraction finished");
@@ -616,6 +624,7 @@ export async function exportPage(
           styleTable,
           imageTable,
           exportedIds,
+          skipPrompts: data.skipPrompts ?? false,
         },
       );
 
@@ -1255,6 +1264,7 @@ export async function exportPage(
           styleTable: fullStyleTable,
           imageTable: fullImageTable,
           exportedIds: fullExportedIds,
+          skipPrompts: data.skipPrompts ?? false,
         },
       );
 
@@ -1334,6 +1344,22 @@ export async function exportPage(
       throw new Error(errorMessage);
     }
 
+    // Get component name from metadata if available, otherwise use page name
+    let componentName = selectedPage.name;
+    if (pageMetadataStr) {
+      try {
+        const pageMetadata = JSON.parse(pageMetadataStr);
+        if (pageMetadata.name && pageMetadata.name.length > 0) {
+          componentName = pageMetadata.name;
+          debugConsole.log(
+            `Using component name from metadata: "${componentName}" (page name: "${selectedPage.name}")`,
+          );
+        }
+      } catch {
+        // If metadata parsing fails, use page name as fallback
+      }
+    }
+
     const exportData = {
       metadata: {
         exportedAt: new Date().toISOString(),
@@ -1341,7 +1367,7 @@ export async function exportPage(
         figmaApiVersion: figma.apiVersion,
         guid: pageGuid,
         version: pageVersion,
-        name: selectedPage.name,
+        name: componentName,
         pluginVersion: "1.0.0",
         ...(pageDescription !== undefined && { description: pageDescription }),
         ...(pageUrl !== undefined && { url: pageUrl }),
@@ -1362,8 +1388,8 @@ export async function exportPage(
     debugConsole.log("Serializing to JSON...");
     const jsonString = JSON.stringify(compressedExportData, null, 2);
     const jsonSizeKB = (jsonString.length / 1024).toFixed(2);
-    // Clean component name and create filename
-    const cleanedName = getComponentName(selectedPage.name).trim();
+    // Clean component name and create filename (use componentName from metadata if available)
+    const cleanedName = getComponentName(componentName).trim();
     const filename = cleanedName.replace(/\s+/g, "_") + ".figma.json";
 
     debugConsole.log(`JSON serialization complete: ${jsonSizeKB} KB`);
@@ -1376,7 +1402,7 @@ export async function exportPage(
     const responseData: ExportPageResponseData = {
       filename,
       pageData: parsedPageData,
-      pageName: selectedPage.name,
+      pageName: componentName, // Use component name from metadata if available
       additionalPages, // Populated with referenced component pages (for wizard)
       discoveredReferencedPages:
         discoveredReferencedPages.length > 0

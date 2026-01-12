@@ -2712,10 +2712,53 @@ export async function recreateNodeFromData(
           }
 
           // Find the referenced page
+          // Try multiple matching strategies to find existing pages
           await figma.loadAllPagesAsync();
-          const referencedPage = figma.root.children.find(
+          let referencedPage = figma.root.children.find(
             (page) => page.name === instanceEntry.componentPageName,
           );
+
+          // If exact match failed, try clean name matching
+          if (!referencedPage) {
+            const cleanTargetName = getComponentCleanName(
+              instanceEntry.componentPageName,
+            );
+            referencedPage = figma.root.children.find((page) => {
+              const cleanPageName = getComponentCleanName(page.name);
+              return cleanPageName === cleanTargetName;
+            });
+          }
+
+          // If still not found, try matching against pages with version suffixes removed
+          if (!referencedPage) {
+            const cleanTargetName = getComponentCleanName(
+              instanceEntry.componentPageName,
+            );
+            const targetNameWithoutVersion = cleanTargetName.replace(
+              /\s*\(VERSION\s*:\s*\d+\)\s*$/i,
+              "",
+            );
+
+            referencedPage = figma.root.children.find((page) => {
+              const cleanPageName = getComponentCleanName(page.name);
+              const pageNameWithoutVersion = cleanPageName.replace(
+                /\s*\(VERSION\s*:\s*\d+\)\s*$/i,
+                "",
+              );
+              return pageNameWithoutVersion === targetNameWithoutVersion;
+            });
+          }
+
+          // If still not found, try case-insensitive matching
+          if (!referencedPage) {
+            const targetNameLower = instanceEntry.componentPageName
+              .toLowerCase()
+              .trim();
+            referencedPage = figma.root.children.find((page) => {
+              const pageNameLower = page.name.toLowerCase().trim();
+              return pageNameLower === targetNameLower;
+            });
+          }
 
           if (!referencedPage) {
             // Page doesn't exist yet - defer resolution (circular reference or not yet imported)
@@ -8940,18 +8983,48 @@ export async function resolveDeferredNormalInstances(
       }
 
       // Find the referenced page
+      // PRIMARY STRATEGY: Match by GUID from page metadata (most reliable)
+      // This is the correct way to find pages - by their unique identifier, not by name
+      let referencedPage: PageNode | null = null;
+
+      if (instanceEntry.componentGuid) {
+        debugConsole.log(
+          `  Looking for page by GUID: ${instanceEntry.componentGuid.substring(0, 8)}...`,
+        );
+        for (const page of figma.root.children) {
+          if (page.type !== "PAGE") continue;
+          try {
+            const pageMetadataStr = page.getPluginData(
+              "RecursicaPublishedMetadata",
+            );
+            if (pageMetadataStr) {
+              const pageMetadata = JSON.parse(pageMetadataStr);
+              if (pageMetadata.id === instanceEntry.componentGuid) {
+                referencedPage = page;
+                debugConsole.log(`  ✓ Found page "${page.name}" by GUID match`);
+                break;
+              }
+            }
+          } catch {
+            // Continue searching
+          }
+        }
+      }
+
+      // FALLBACK STRATEGIES: If GUID match failed, try name matching
       // Try multiple matching strategies:
       // 1. Exact name match
       // 2. Name with construction icon prefix
-      // 3. Clean name match (alphanumeric only) - handles renamed pages or formatting differences
-      let referencedPage = figma.root.children.find((page) => {
-        const exactMatch = page.name === instanceEntry.componentPageName;
-        const iconMatch =
-          constructionIcon &&
-          page.name ===
-            `${constructionIcon} ${instanceEntry.componentPageName}`;
-        return exactMatch || iconMatch;
-      });
+      if (!referencedPage) {
+        referencedPage = figma.root.children.find((page) => {
+          const exactMatch = page.name === instanceEntry.componentPageName;
+          const iconMatch =
+            constructionIcon &&
+            page.name ===
+              `${constructionIcon} ${instanceEntry.componentPageName}`;
+          return exactMatch || iconMatch;
+        }) as PageNode | null;
+      }
 
       // If exact match failed, try clean name matching
       if (!referencedPage) {
@@ -8964,15 +9037,69 @@ export async function resolveDeferredNormalInstances(
         });
       }
 
+      // If still not found, try matching against pages with version suffixes removed
+      // (e.g., "UI kit components (VERSION: 1)" should match "UI kit components")
+      if (!referencedPage) {
+        const cleanTargetName = getComponentCleanName(
+          instanceEntry.componentPageName,
+        );
+        // Remove version suffix pattern: " (VERSION: X)" or " (VERSION:X)"
+        const targetNameWithoutVersion = cleanTargetName.replace(
+          /\s*\(VERSION\s*:\s*\d+\)\s*$/i,
+          "",
+        );
+
+        referencedPage = figma.root.children.find((page) => {
+          const cleanPageName = getComponentCleanName(page.name);
+          const pageNameWithoutVersion = cleanPageName.replace(
+            /\s*\(VERSION\s*:\s*\d+\)\s*$/i,
+            "",
+          );
+          return pageNameWithoutVersion === targetNameWithoutVersion;
+        });
+      }
+
+      // If still not found, try case-insensitive matching
+      if (!referencedPage) {
+        const targetNameLower = instanceEntry.componentPageName
+          .toLowerCase()
+          .trim();
+        referencedPage = figma.root.children.find((page) => {
+          const pageNameLower = page.name.toLowerCase().trim();
+          return pageNameLower === targetNameLower;
+        });
+      }
+
+      // If still not found, try case-insensitive clean name matching
+      if (!referencedPage) {
+        const cleanTargetName = getComponentCleanName(
+          instanceEntry.componentPageName,
+        ).toLowerCase();
+        referencedPage = figma.root.children.find((page) => {
+          const cleanPageName = getComponentCleanName(page.name).toLowerCase();
+          return cleanPageName === cleanTargetName;
+        });
+      }
+
       if (!referencedPage && constructionIcon) {
         // Debug: log available page names to help diagnose
+        const allPageNames = figma.root.children
+          .filter((p) => p.type === "PAGE")
+          .map((p) => p.name);
+        debugConsole.log(`Available pages: ${allPageNames.join(", ")}`);
+        debugConsole.log(
+          `Looking for page: "${instanceEntry.componentPageName}"`,
+        );
       }
 
       if (!referencedPage) {
         const expectedNames = constructionIcon
           ? `"${instanceEntry.componentPageName}" or "${constructionIcon} ${instanceEntry.componentPageName}"`
           : `"${instanceEntry.componentPageName}"`;
-        const error = `Deferred instance "${nodeData.name}" still cannot find referenced page (tried: ${expectedNames}, and clean name matching)`;
+        const guidInfo = instanceEntry.componentGuid
+          ? ` (GUID: ${instanceEntry.componentGuid.substring(0, 8)}...)`
+          : "";
+        const error = `Deferred instance "${nodeData.name}" still cannot find referenced page${guidInfo} (tried: GUID matching, ${expectedNames}, clean name matching, version suffix removal, and case-insensitive matching)`;
         debugConsole.error(error);
         errors.push(error);
         failed++;

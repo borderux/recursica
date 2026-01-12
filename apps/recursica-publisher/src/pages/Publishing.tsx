@@ -5,10 +5,19 @@ import DebugConsole from "../components/DebugConsole";
 import { callPlugin } from "../utils/callPlugin";
 import type { ExportPageResponseData } from "../plugin/services/pageExportNew";
 import type { DebugConsoleMessage } from "../plugin/services/debugConsole";
+import { useAuth } from "../context/useAuth";
+import {
+  GitHubService,
+  type ComponentInfo,
+} from "../services/github/githubService";
+
+const RECURSICA_FIGMA_OWNER = "borderux";
+const RECURSICA_FIGMA_REPO = "recursica-figma";
 
 export default function Publishing() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { accessToken } = useAuth();
   const [isPublishing, setIsPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [debugLogs, setDebugLogs] = useState<DebugConsoleMessage[] | undefined>(
@@ -204,15 +213,40 @@ export default function Publishing() {
             </button>
             <button
               type="button"
-              onClick={() => {
+              onClick={async () => {
                 const pageIndexParam = searchParams.get("pageIndex");
                 const pageIndex = pageIndexParam
                   ? parseInt(pageIndexParam, 10)
                   : undefined;
+
+                // Load mainBranchComponents before navigating
+                let mainBranchComponents: ComponentInfo[] | undefined;
+                if (accessToken) {
+                  try {
+                    const githubService = new GitHubService(accessToken);
+                    mainBranchComponents =
+                      await githubService.loadComponentsFromBranch(
+                        RECURSICA_FIGMA_OWNER,
+                        RECURSICA_FIGMA_REPO,
+                        "main",
+                      );
+                    console.log(
+                      `[Publishing] Loaded ${mainBranchComponents.length} components from main branch`,
+                    );
+                  } catch (err) {
+                    console.error(
+                      "[Publishing] Failed to load main branch components:",
+                      err,
+                    );
+                    // Continue without mainBranchComponents
+                  }
+                }
+
                 navigate("/publishing-wizard", {
                   state: {
                     exportData,
                     pageIndex,
+                    mainBranchComponents,
                   },
                   replace: true,
                 });

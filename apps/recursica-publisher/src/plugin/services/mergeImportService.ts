@@ -4,6 +4,7 @@ import { retSuccess, retError } from "../utils/response";
 import { debugConsole } from "./debugConsole";
 import {
   PRIMARY_IMPORT_KEY,
+  IMPORT_RESULT_KEY,
   DIVIDER_PLUGIN_DATA_KEY,
   CONSTRUCTION_ICON,
 } from "./singleComponentImportService";
@@ -484,7 +485,7 @@ export async function mergeImportGroup(
       }
     }
 
-    // Rename pages using fresh node references
+    // Rename pages and ensure metadata is set using fresh node references
     for (const pageInfo of importPagesInfo) {
       try {
         const page = (await figma.getNodeByIdAsync(
@@ -527,6 +528,22 @@ export async function mergeImportGroup(
           pageInfo.pageMetadata.version !== undefined
             ? pageInfo.pageMetadata.version
             : metadata.componentVersion;
+        const componentGuid =
+          pageInfo.pageMetadata.id || metadata.componentGuid;
+
+        // Ensure page metadata is set/updated
+        const pageMetadata = {
+          _ver: 1,
+          id: componentGuid,
+          name: componentName,
+          version: version,
+          publishDate: new Date().toISOString(),
+          history: {},
+        };
+        page.setPluginData(PAGE_METADATA_KEY, JSON.stringify(pageMetadata));
+        debugConsole.log(
+          `Set page metadata for "${componentName}": GUID=${componentGuid.substring(0, 8)}..., version=${version}`,
+        );
 
         // Rename to: ComponentName (VERSION: X)
         const finalName = `${componentName} (VERSION: ${version})`;
@@ -545,11 +562,22 @@ export async function mergeImportGroup(
     if (mainPage) {
       try {
         mainPage.setPluginData(PRIMARY_IMPORT_KEY, "");
+        debugConsole.log("Cleared primary import metadata from main page");
       } catch (err) {
         debugConsole.warning(
           `Failed to clear primary import metadata: ${err instanceof Error ? err.message : String(err)}`,
         );
       }
+    }
+
+    // Also clear the global import result to prevent checkForExistingPrimaryImport from finding it
+    try {
+      figma.root.setPluginData(IMPORT_RESULT_KEY, "");
+      debugConsole.log("Cleared global import result");
+    } catch (err) {
+      debugConsole.warning(
+        `Failed to clear global import result: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
     for (const pageInfo of importPagesInfo) {
       try {
