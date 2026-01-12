@@ -29,5 +29,7 @@ export type { BadgeProps } from "./Badge";
 export { PageLayout } from "./PageLayout";
 export { DebugConsole } from "./DebugConsole";
 export { Profile } from "./Profile";
+export { ComponentList } from "./ComponentList";
+export type { ComponentListProps, ComponentInfo } from "./ComponentList";
 export { default as PluginPrompt } from "./PluginPrompt";
 export { default as VersionHistory } from "./VersionHistory/VersionHistory";

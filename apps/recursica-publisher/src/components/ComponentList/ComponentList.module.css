@@ -1,0 +1,81 @@
+.componentList {
+  width: 100%;
+  max-width: 800px;
+}
+
+.componentButton {
+  width: 100%;
+  padding: 8px 12px;
+  text-align: left;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  /* Button styling */
+  background-color: transparent;
+  color: #000;
+  border: 1px solid #000;
+  border-radius: 4px;
+  cursor: pointer;
+
+  /* Typography */
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    "Segoe UI Emoji",
+    "Segoe UI Symbol",
+    "Apple Color Emoji",
+    "Noto Color Emoji",
+    sans-serif;
+  font-size: 1rem;
+  font-weight: normal;
+
+  /* Transitions */
+  transition:
+    background-color 0.2s,
+    border-color 0.2s;
+}
+
+.componentButton:hover {
+  background-color: var(--mantine-color-gray-1); /* Light grey from theme */
+  border-color: #000;
+}
+
+.componentButton:focus {
+  outline: 2px solid #000;
+  outline-offset: 2px;
+}
+
+.componentButton:active {
+  background-color: var(--mantine-color-gray-2); /* Slightly darker grey */
+  border-color: #000;
+}
+
+.componentButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: transparent;
+  color: #000;
+  border-color: #ccc;
+}
+
+.componentName {
+  font-size: 0.875rem; /* 14px - smaller than before */
+  font-weight: normal; /* Not bold */
+  flex: 1;
+  text-align: left; /* Left justified */
+}
+
+.componentVersion {
+  font-size: 0.75rem; /* 12px */
+  opacity: 0.8;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* Right justified */
+  gap: 2px;
+  flex-shrink: 0;
+  text-align: right;
+}

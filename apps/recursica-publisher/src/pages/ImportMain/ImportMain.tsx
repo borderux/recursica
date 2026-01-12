@@ -4,22 +4,17 @@ import { PageLayout } from "../../components/PageLayout";
 import { useAuth } from "../../context/useAuth";
 import { Title } from "../../components/Title";
 import { Text } from "../../components/Text";
-import { Button } from "../../components/Button";
 import { Stack } from "../../components/Stack";
 import { Alert } from "../../components/Alert";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
+import {
+  ComponentList,
+  type ComponentInfo,
+} from "../../components/ComponentList";
 import classes from "./ImportMain.module.css";
 
 const RECURSICA_FIGMA_OWNER = "borderux";
 const RECURSICA_FIGMA_REPO = "recursica-figma";
-
-interface ComponentInfo {
-  guid: string;
-  name: string;
-  path: string;
-  version: number;
-  publishDate?: string;
-}
 
 interface IndexJson {
   components?: Record<
@@ -179,32 +174,15 @@ export default function ImportMain() {
         )}
 
         {!loading && !error && components.length > 0 && (
-          <Stack gap={12} className={classes.componentList}>
-            {components.map((component) => (
-              <Button
-                key={component.guid}
-                variant="outline"
-                color="red"
-                onClick={() => {
-                  const ref = searchParams.get("ref") || "main";
-                  navigate(
-                    `/import-wizard/step1?guid=${encodeURIComponent(component.guid)}&ref=${encodeURIComponent(ref)}`,
-                  );
-                }}
-                className={classes.componentButton}
-              >
-                <div className={classes.componentName}>{component.name}</div>
-                <div className={classes.componentVersion}>
-                  <div>Version: {component.version || "N/A"}</div>
-                  {component.publishDate && (
-                    <div>
-                      {new Date(component.publishDate).toLocaleDateString()}
-                    </div>
-                  )}
-                </div>
-              </Button>
-            ))}
-          </Stack>
+          <ComponentList
+            components={components}
+            onSelect={(component) => {
+              const ref = searchParams.get("ref") || "main";
+              navigate(
+                `/import-wizard/step1?guid=${encodeURIComponent(component.guid)}&ref=${encodeURIComponent(ref)}`,
+              );
+            }}
+          />
         )}
       </Stack>
     </PageLayout>
