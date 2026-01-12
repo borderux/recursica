@@ -2023,6 +2023,49 @@ export async function recreateNodeFromData(
                     );
                   }
                 }
+
+                // After setting layout sizing, explicitly resize variant to correct dimensions
+                // This is necessary because combineAsVariants() may have resized variants based on component set's auto-layout
+                // Restore original dimensions from variantData if they exist
+                if (
+                  variantData.width !== undefined &&
+                  variantData.height !== undefined
+                ) {
+                  try {
+                    variant.resize(variantData.width, variantData.height);
+                    debugConsole.log(
+                      `  ✓ Resized variant "${variant.name}" to ${variantData.width}x${variantData.height}px (restored from JSON)`,
+                    );
+                  } catch (error) {
+                    debugConsole.warning(
+                      `  ⚠️ Failed to resize variant "${variant.name}" to ${variantData.width}x${variantData.height}: ${error}`,
+                    );
+                  }
+                } else if (variantData.height !== undefined) {
+                  // Only height is specified, preserve width
+                  try {
+                    variant.resize(variant.width, variantData.height);
+                    debugConsole.log(
+                      `  ✓ Resized variant "${variant.name}" height to ${variantData.height}px (preserved width: ${variant.width}px)`,
+                    );
+                  } catch (error) {
+                    debugConsole.warning(
+                      `  ⚠️ Failed to resize variant "${variant.name}" height to ${variantData.height}: ${error}`,
+                    );
+                  }
+                } else if (variantData.width !== undefined) {
+                  // Only width is specified, preserve height
+                  try {
+                    variant.resize(variantData.width, variant.height);
+                    debugConsole.log(
+                      `  ✓ Resized variant "${variant.name}" width to ${variantData.width}px (preserved height: ${variant.height}px)`,
+                    );
+                  } catch (error) {
+                    debugConsole.warning(
+                      `  ⚠️ Failed to resize variant "${variant.name}" width to ${variantData.width}: ${error}`,
+                    );
+                  }
+                }
               }
             }
           }
