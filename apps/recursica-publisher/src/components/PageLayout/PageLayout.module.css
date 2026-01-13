@@ -14,9 +14,8 @@
   width: 100%;
   box-sizing: border-box;
   min-height: 0;
-  /* 10px = 0.625rem - using rem for consistency with theme typography */
-  /* Note: This is between Mantine xs (8px/0.5rem) and sm (12px/0.75rem) */
-  padding: 0.625rem;
+  /* 20px = 1.25rem - using rem for consistency with theme typography */
+  padding: 1.25rem;
 }
 
 .footer {

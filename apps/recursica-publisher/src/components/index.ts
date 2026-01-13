@@ -25,11 +25,15 @@ export type { TextProps, TextVariant, TextColor } from "./Text";
 export { LoadingSpinner } from "./LoadingSpinner";
 export type { LoadingSpinnerProps, LoadingSpinnerSize } from "./LoadingSpinner";
 export { Badge } from "./Badge";
-export type { BadgeProps } from "./Badge";
+export type { BadgeProps, BadgeStatus } from "./Badge";
 export { PageLayout } from "./PageLayout";
 export { DebugConsole } from "./DebugConsole";
 export { Profile } from "./Profile";
 export { ComponentList } from "./ComponentList";
-export type { ComponentListProps, ComponentInfo } from "./ComponentList";
+export type {
+  ComponentListProps,
+  ComponentInfo,
+  ComponentBadgeStatus,
+} from "./ComponentList";
 export { default as PluginPrompt } from "./PluginPrompt";
 export { default as VersionHistory } from "./VersionHistory/VersionHistory";

@@ -1,5 +1,11 @@
 import { Stack } from "../Stack";
+import { Badge } from "../Badge";
 import classes from "./ComponentList.module.css";
+
+/**
+ * Component badge status
+ */
+export type ComponentBadgeStatus = "NEW" | "UPDATED" | "EXISTING";
 
 /**
  * Component information interface
@@ -11,6 +17,11 @@ export interface ComponentInfo {
   path: string;
   version: number;
   publishDate?: string;
+  /**
+   * Optional badge status to display (NEW, UPDATED, or EXISTING)
+   * If not provided, no badge will be shown
+   */
+  badge?: ComponentBadgeStatus;
 }
 
 export interface ComponentListProps {
@@ -33,8 +44,8 @@ export interface ComponentListProps {
  * ComponentList - A reusable component for displaying a list of components
  *
  * Displays components in a clickable list format with:
- * - Component name (left-aligned, smaller, not bold)
- * - Version and publish date (right-aligned)
+ * - Component name (left-aligned)
+ * - Badge (right-aligned, optional: NEW, UPDATED, or EXISTING)
  *
  * Components are automatically sorted alphabetically by name.
  *
@@ -66,12 +77,12 @@ export function ComponentList({
           className={classes.componentButton}
         >
           <div className={classes.componentName}>{component.name}</div>
-          <div className={classes.componentVersion}>
-            <div>Version: {component.version || "N/A"}</div>
-            {component.publishDate && (
-              <div>{new Date(component.publishDate).toLocaleDateString()}</div>
-            )}
-          </div>
+          {component.badge && (
+            <Badge
+              status={component.badge}
+              className={classes.componentBadge}
+            />
+          )}
         </button>
       ))}
     </Stack>

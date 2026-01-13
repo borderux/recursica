@@ -12,7 +12,19 @@ import { useAuth } from "../../context/useAuth";
 import { fetchComponentWithDependencies } from "../../services/repository/repositoryImportService";
 import { callPlugin } from "../../utils/callPlugin";
 import { validateImport } from "../../utils/validateExportFile";
-import { VersionHistory } from "../../components";
+import {
+  Title,
+  Text,
+  Stack,
+  Card,
+  Button,
+  Checkbox,
+  Badge,
+  Alert,
+  LoadingSpinner,
+  VersionHistory,
+} from "../../components";
+import classes from "./Step2DependencyOverview.module.css";
 
 export default function Step2DependencyOverview() {
   const navigate = useNavigate();
@@ -634,201 +646,101 @@ export default function Step2DependencyOverview() {
     }
   };
 
+  const getBadgeStatus = (
+    importVersion: number,
+    existingVersion: number | null,
+  ): "NEW" | "UPDATED" | "EXISTING" | undefined => {
+    if (existingVersion === null) {
+      return "NEW";
+    } else if (importVersion > existingVersion) {
+      return "UPDATED";
+    } else if (importVersion === existingVersion) {
+      return "EXISTING";
+    } else {
+      return "UPDATED";
+    }
+  };
+
+  const getDependencyBadgeStatus = (
+    status: "NEW" | "UPDATED" | "SAME",
+  ): "NEW" | "UPDATED" | "EXISTING" | undefined => {
+    if (status === "NEW") return "NEW";
+    if (status === "UPDATED") return "UPDATED";
+    if (status === "SAME") return "EXISTING";
+    return undefined;
+  };
+
   return (
-    <div
-      style={{
-        width: "100%",
-        display: "flex",
-        flexDirection: "column",
-        gap: "20px",
-        maxWidth: "800px",
-        margin: "0 auto",
-      }}
-    >
-      <div>
-        <h1
-          style={{
-            fontSize: "24px",
-            fontWeight: "bold",
-            color: "#333",
-            marginBottom: "20px",
-            marginTop: "0",
-          }}
-        >
-          Import Overview
-        </h1>
+    <Stack gap="lg" className={classes.root}>
+      <Title order={1}>Component Overview</Title>
 
-        {loading ? (
-          <p
-            style={{
-              fontSize: "14px",
-              color: "#666",
-              fontStyle: "italic",
-              marginBottom: "20px",
-            }}
-          >
-            Loading...
-          </p>
-        ) : (
-          <>
-            {/* Component Information Section */}
-            <div
-              style={{
-                border: "1px solid #e0e0e0",
-                borderRadius: "8px",
-                padding: "16px",
-                backgroundColor: "#f9f9f9",
-                marginBottom: "24px",
-              }}
-            >
-              <h2
-                style={{
-                  fontSize: "18px",
-                  fontWeight: "bold",
-                  color: "#333",
-                  marginTop: "0",
-                  marginBottom: "12px",
-                }}
-              >
+      {loading ? (
+        <Stack gap="md" align="center">
+          <LoadingSpinner />
+          <Text className={classes.loadingText}>Loading...</Text>
+        </Stack>
+      ) : (
+        <>
+          {/* Component Information Section */}
+          <Card className={classes.componentInfoCard}>
+            <Stack gap="sm">
+              <Title order={3} className={classes.componentName}>
                 {wizardState.selectedComponent?.name}
-              </h2>
+              </Title>
 
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "12px",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "12px",
-                    flexWrap: "wrap",
-                    alignItems: "baseline",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "baseline",
-                      gap: "8px",
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: "14px",
-                        color: "#666",
-                        fontWeight: "bold",
-                        lineHeight: "1.5",
-                      }}
-                    >
+              <Stack gap="sm" className={classes.versionInfo}>
+                <div className={classes.versionRow}>
+                  <div className={classes.versionGroup}>
+                    <Text variant="small" fw={600} color="secondary">
                       Import Version:
-                    </span>{" "}
-                    <span
-                      style={{
-                        fontSize: "14px",
-                        color: "#333",
-                        lineHeight: "1.5",
-                      }}
-                    >
+                    </Text>
+                    <Text variant="small">
                       v{wizardState.selectedComponent?.version || 0}
-                    </span>
+                    </Text>
                     {(() => {
                       const importVersion =
                         wizardState.selectedComponent?.version || 0;
-                      let badgeText: "NEW" | "UPDATE" | "SAME" = "NEW";
-                      let badgeColor = "#1976d2";
-                      let badgeBg = "#e3f2fd";
-
-                      if (existingComponentVersion !== null) {
-                        if (importVersion > existingComponentVersion) {
-                          badgeText = "UPDATE";
-                          badgeColor = "#f57c00";
-                          badgeBg = "#fff3e0";
-                        } else if (importVersion === existingComponentVersion) {
-                          badgeText = "SAME";
-                          badgeColor = "#388e3c";
-                          badgeBg = "#e8f5e9";
-                        } else {
-                          badgeText = "UPDATE";
-                          badgeColor = "#f57c00";
-                          badgeBg = "#fff3e0";
-                        }
-                      }
-
+                      const badgeStatus = getBadgeStatus(
+                        importVersion,
+                        existingComponentVersion,
+                      );
                       return (
-                        <div
-                          style={{
-                            padding: "4px 8px",
-                            borderRadius: "4px",
-                            fontSize: "12px",
-                            fontWeight: "bold",
-                            backgroundColor: badgeBg,
-                            color: badgeColor,
-                            flexShrink: 0,
-                            lineHeight: "1.5",
-                          }}
-                        >
-                          {badgeText}
-                        </div>
+                        badgeStatus && (
+                          <Badge
+                            status={badgeStatus}
+                            className={classes.dependencyBadge}
+                          />
+                        )
                       );
                     })()}
                   </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "baseline",
-                      gap: "0",
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: "14px",
-                        color: "#666",
-                        fontWeight: "bold",
-                        lineHeight: "1.5",
-                      }}
-                    >
+                  <div className={classes.versionGroup}>
+                    <Text variant="small" fw={600} color="secondary">
                       Current Version:
-                    </span>{" "}
-                    <span
-                      style={{
-                        fontSize: "14px",
-                        color: "#333",
-                        lineHeight: "1.5",
-                      }}
-                    >
+                    </Text>
+                    <Text variant="small">
                       {existingComponentVersion !== null
                         ? `v${existingComponentVersion}`
                         : "Does not exist"}
-                    </span>
+                    </Text>
                   </div>
                 </div>
 
                 {componentDescription && (
-                  <div>
-                    <span style={{ fontSize: "14px", color: "#333" }}>
-                      {componentDescription}
-                    </span>
-                  </div>
+                  <Text variant="small">{componentDescription}</Text>
                 )}
 
                 {componentUrl && (
-                  <div>
+                  <Text variant="small">
                     <a
                       href={componentUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{
-                        fontSize: "14px",
-                        color: "#1976d2",
-                        textDecoration: "underline",
-                      }}
+                      style={{ color: "var(--mantine-color-blue-6)" }}
                     >
                       Documentation
                     </a>
-                  </div>
+                  </Text>
                 )}
 
                 {/* Version History */}
@@ -840,200 +752,83 @@ export default function Step2DependencyOverview() {
                     />
                   </div>
                 )}
-              </div>
-            </div>
+              </Stack>
+            </Stack>
+          </Card>
 
-            {/* Dependencies Section */}
-            <div>
-              <h2
-                style={{
-                  fontSize: "18px",
-                  fontWeight: "bold",
-                  color: "#333",
-                  marginTop: "0",
-                  marginBottom: "12px",
-                }}
-              >
-                Additional Dependencies
-              </h2>
-              <p
-                style={{
-                  fontSize: "14px",
-                  color: "#666",
-                  marginBottom: "12px",
-                }}
-              >
-                These are the additional dependencies that will be imported as
-                part of this process.
-              </p>
+          {/* Dependencies Section */}
+          <div className={classes.dependenciesSection}>
+            <Title order={2} mb="sm">
+              Additional Dependencies
+            </Title>
+            <Text variant="body" color="secondary" mb="sm">
+              Select the additional dependent components you would also like to
+              import
+            </Text>
 
-              {error ? (
-                <div
-                  style={{
-                    padding: "12px",
-                    backgroundColor: "#ffebee",
-                    border: "1px solid #f44336",
-                    borderRadius: "8px",
-                    color: "#c62828",
-                    fontSize: "14px",
-                  }}
-                >
-                  {error}
-                </div>
-              ) : (
-                (() => {
-                  // Filter out the main component from dependencies
-                  const mainComponentGuid = wizardState.selectedComponent?.guid;
-                  const filteredDependencies = dependencies.filter(
-                    (dep) => dep.guid !== mainComponentGuid,
-                  );
+            {error ? (
+              <Alert variant="error">{error}</Alert>
+            ) : (
+              (() => {
+                // Filter out the main component from dependencies
+                const mainComponentGuid = wizardState.selectedComponent?.guid;
+                const filteredDependencies = dependencies.filter(
+                  (dep) => dep.guid !== mainComponentGuid,
+                );
 
-                  if (filteredDependencies.length === 0) {
-                    return (
-                      <p
-                        style={{
-                          fontSize: "14px",
-                          color: "#666",
-                          fontStyle: "italic",
-                        }}
-                      >
-                        No dependencies found.
-                      </p>
-                    );
-                  }
-
+                if (filteredDependencies.length === 0) {
                   return (
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "8px",
-                      }}
-                    >
-                      {filteredDependencies.map((dep) => {
-                        const included =
-                          (dep as DependencySelection & { included?: boolean })
-                            .included === true;
-                        const isNew = dep.status === "NEW";
-
-                        return (
-                          <div
-                            key={dep.guid}
-                            style={{
-                              padding: "5px",
-                              border: "1px solid #e0e0e0",
-                              borderRadius: "8px",
-                              backgroundColor: "#fff",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "8px",
-                            }}
-                          >
-                            {/* Checkbox on the left */}
-                            <input
-                              type="checkbox"
-                              checked={included}
-                              disabled={isNew}
-                              onChange={(e) =>
-                                handleCheckboxToggle(dep.guid, e.target.checked)
-                              }
-                              style={{
-                                flexShrink: 0,
-                                cursor: isNew ? "not-allowed" : "pointer",
-                              }}
-                            />
-
-                            {/* Component name and version in the middle */}
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div
-                                style={{
-                                  fontSize: "16px",
-                                  fontWeight: "bold",
-                                  marginBottom: "2px",
-                                  fontFamily:
-                                    "system-ui, -apple-system, 'Segoe UI', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif",
-                                }}
-                              >
-                                {dep.name}
-                              </div>
-                              <div
-                                style={{
-                                  fontSize: "12px",
-                                  color: "#666",
-                                }}
-                              >
-                                {dep.currentVersionInFile !== undefined
-                                  ? `Current: v${dep.currentVersionInFile} → Latest: v${dep.version}`
-                                  : `Version: ${dep.version}`}
-                              </div>
-                            </div>
-
-                            {/* Badge on the right */}
-                            <div
-                              style={{
-                                padding: "4px 8px",
-                                borderRadius: "4px",
-                                fontSize: "12px",
-                                fontWeight: "bold",
-                                backgroundColor:
-                                  dep.status === "NEW"
-                                    ? "#e3f2fd"
-                                    : dep.status === "UPDATED"
-                                      ? "#fff3e0"
-                                      : "#e8f5e9",
-                                color:
-                                  dep.status === "NEW"
-                                    ? "#1976d2"
-                                    : dep.status === "UPDATED"
-                                      ? "#f57c00"
-                                      : "#388e3c",
-                                flexShrink: 0,
-                                marginLeft: "auto",
-                              }}
-                            >
-                              {dep.status}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                    <Text variant="body" className={classes.emptyDependencies}>
+                      No dependencies found.
+                    </Text>
                   );
-                })()
-              )}
-            </div>
+                }
 
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                marginTop: "20px",
-              }}
-            >
-              <button
-                onClick={handleNext}
-                style={{
-                  padding: "12px 24px",
-                  fontSize: "16px",
-                  fontWeight: "bold",
-                  backgroundColor: "#d40d0d",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.opacity = "0.9";
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.opacity = "1";
-                }}
-              >
-                Next
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
+                return (
+                  <Stack gap="xs" className={classes.dependenciesList}>
+                    {filteredDependencies.map((dep) => {
+                      const included =
+                        (dep as DependencySelection & { included?: boolean })
+                          .included === true;
+                      const isNew = dep.status === "NEW";
+                      const badgeStatus = getDependencyBadgeStatus(dep.status);
+
+                      return (
+                        <div key={dep.guid} className={classes.dependencyItem}>
+                          <Checkbox
+                            checked={included}
+                            disabled={isNew}
+                            onChange={(e) =>
+                              handleCheckboxToggle(dep.guid, e.target.checked)
+                            }
+                          />
+                          <div className={classes.dependencyInfo}>
+                            <Text className={classes.dependencyName}>
+                              {dep.name}
+                            </Text>
+                          </div>
+                          {badgeStatus && (
+                            <Badge
+                              status={badgeStatus}
+                              className={classes.dependencyBadge}
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </Stack>
+                );
+              })()
+            )}
+          </div>
+
+          <div className={classes.actions}>
+            <Button variant="filled" onClick={handleNext}>
+              Next
+            </Button>
+          </div>
+        </>
+      )}
+    </Stack>
   );
 }

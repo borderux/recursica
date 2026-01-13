@@ -10,7 +10,9 @@ import { LoadingSpinner } from "../../components/LoadingSpinner";
 import {
   ComponentList,
   type ComponentInfo,
+  type ComponentBadgeStatus,
 } from "../../components/ComponentList";
+import { callPlugin } from "../../utils/callPlugin";
 import classes from "./ImportMain.module.css";
 
 const RECURSICA_FIGMA_OWNER = "borderux";
@@ -94,18 +96,62 @@ export default function ImportMain() {
 
         const indexJson: IndexJson = JSON.parse(indexContent);
 
+        // Get existing components from Figma to determine badge status
+        const { promise: getAllComponentsPromise } = callPlugin(
+          "getAllComponents",
+          {},
+        );
+        const existingComponentsResponse = await getAllComponentsPromise;
+
+        let existingComponents: Array<{
+          id: string;
+          name: string;
+          version: number;
+        }> = [];
+
+        if (
+          existingComponentsResponse.success &&
+          existingComponentsResponse.data
+        ) {
+          const data = existingComponentsResponse.data as {
+            components: Array<{
+              id: string;
+              name: string;
+              version: number;
+            }>;
+          };
+          existingComponents = data.components.filter((c) => c.id !== "");
+        }
+
+        // Helper function to determine badge status
+        const getBadgeStatus = (
+          guid: string,
+          version: number,
+        ): ComponentBadgeStatus | undefined => {
+          const existing = existingComponents.find((ec) => ec.id === guid);
+          if (!existing) {
+            return "NEW";
+          } else if (existing.version !== version) {
+            return "UPDATED";
+          } else {
+            return "EXISTING";
+          }
+        };
+
         const componentsList: ComponentInfo[] = [];
 
         if (indexJson.components) {
           for (const [guid, component] of Object.entries(
             indexJson.components,
           )) {
+            const componentVersion = component.version ?? 0;
             componentsList.push({
               guid,
               name: component.name,
               path: component.path,
-              version: component.version ?? 0,
+              version: componentVersion,
               publishDate: component.publishDate,
+              badge: getBadgeStatus(guid, componentVersion),
             });
           }
         }
@@ -132,7 +178,7 @@ export default function ImportMain() {
     <PageLayout showBackButton={true}>
       <Stack gap={20} className={classes.root}>
         <Title order={1} className={classes.title}>
-          Choose your component
+          Component Library
         </Title>
 
         {searchParams.get("ref") ? (
@@ -180,6 +226,9 @@ export default function ImportMain() {
               const ref = searchParams.get("ref") || "main";
               navigate(
                 `/import-wizard/step1?guid=${encodeURIComponent(component.guid)}&ref=${encodeURIComponent(ref)}`,
+                {
+                  state: { fromImportMain: true },
+                },
               );
             }}
           />

@@ -1,11 +1,13 @@
 import { useEffect, useState, useRef } from "react";
-import { useSearchParams, useNavigate } from "react-router";
+import { useSearchParams, useNavigate, useLocation } from "react-router";
 import { useImportWizard } from "../../context/ImportWizardContext";
 import { useAuth } from "../../context/useAuth";
 import {
   ComponentList,
   type ComponentInfo,
+  type ComponentBadgeStatus,
 } from "../../components/ComponentList";
+import { callPlugin } from "../../utils/callPlugin";
 
 const RECURSICA_FIGMA_OWNER = "borderux";
 const RECURSICA_FIGMA_REPO = "recursica-figma";
@@ -25,6 +27,7 @@ interface IndexJson {
 export default function Step1ComponentSelection() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { wizardState, setWizardState } = useImportWizard();
   const { accessToken } = useAuth();
   const [components, setComponents] = useState<ComponentInfo[]>([]);
@@ -108,6 +111,48 @@ export default function Step1ComponentSelection() {
 
         const indexJson: IndexJson = JSON.parse(indexContent);
 
+        // Get existing components from Figma to determine badge status
+        const { promise: getAllComponentsPromise } = callPlugin(
+          "getAllComponents",
+          {},
+        );
+        const existingComponentsResponse = await getAllComponentsPromise;
+
+        let existingComponents: Array<{
+          id: string;
+          name: string;
+          version: number;
+        }> = [];
+
+        if (
+          existingComponentsResponse.success &&
+          existingComponentsResponse.data
+        ) {
+          const data = existingComponentsResponse.data as {
+            components: Array<{
+              id: string;
+              name: string;
+              version: number;
+            }>;
+          };
+          existingComponents = data.components.filter((c) => c.id !== "");
+        }
+
+        // Helper function to determine badge status
+        const getBadgeStatus = (
+          guid: string,
+          version: number,
+        ): ComponentBadgeStatus | undefined => {
+          const existing = existingComponents.find((ec) => ec.id === guid);
+          if (!existing) {
+            return "NEW";
+          } else if (existing.version !== version) {
+            return "UPDATED";
+          } else {
+            return "EXISTING";
+          }
+        };
+
         // Convert the components object to an array of ComponentInfo
         const componentsList: ComponentInfo[] = [];
 
@@ -115,12 +160,14 @@ export default function Step1ComponentSelection() {
           for (const [guid, component] of Object.entries(
             indexJson.components,
           )) {
+            const componentVersion = component.version ?? 0;
             componentsList.push({
               guid,
               name: component.name,
               path: component.path,
-              version: component.version ?? 0,
+              version: componentVersion,
               publishDate: component.publishDate,
+              badge: getBadgeStatus(guid, componentVersion),
             });
           }
         }
@@ -182,7 +229,12 @@ export default function Step1ComponentSelection() {
           currentStep: 2,
         }));
         console.log("[Step1ComponentSelection] Navigating to step2");
-        navigate("/import-wizard/step2");
+        // Preserve the fromImportMain state when navigating to step2
+        const locationState =
+          (location.state as { fromImportMain?: boolean }) || {};
+        navigate("/import-wizard/step2", {
+          state: locationState,
+        });
         console.log("[Step1ComponentSelection] Navigate called");
       }
     }
@@ -213,7 +265,12 @@ export default function Step1ComponentSelection() {
       };
     });
     console.log("[Step1ComponentSelection] Navigating to step2");
-    navigate("/import-wizard/step2");
+    // Preserve the fromImportMain state when navigating to step2
+    const locationState =
+      (location.state as { fromImportMain?: boolean }) || {};
+    navigate("/import-wizard/step2", {
+      state: locationState,
+    });
     console.log("[Step1ComponentSelection] Navigate called");
   };
 

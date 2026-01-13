@@ -3,20 +3,20 @@
 }
 
 .title {
-  font-size: 14px;
-  font-weight: bold;
-  color: #666;
-  margin-bottom: 4px;
+  font-size: var(--mantine-font-size-sm); /* 12px */
+  font-weight: 600;
+  color: var(--mantine-color-gray-6);
+  margin-bottom: var(--mantine-spacing-xs);
 }
 
 .list {
-  font-size: 14px;
-  color: #333;
+  font-size: var(--mantine-font-size-sm); /* 12px */
+  color: var(--mantine-color-gray-9);
   line-height: 1.6;
 }
 
 .entry {
-  margin-bottom: 4px;
+  margin-bottom: var(--mantine-spacing-xs);
 }
 
 .entryLast {
@@ -24,16 +24,20 @@
 }
 
 .version {
-  color: #333;
+  font-size: var(--mantine-font-size-sm); /* 12px */
+  font-weight: 600;
+  color: var(--mantine-color-gray-9);
 }
 
 .date {
-  color: #666;
-  margin-left: 8px;
+  font-size: var(--mantine-font-size-xs); /* 10px */
+  color: var(--mantine-color-gray-6);
+  margin-left: var(--mantine-spacing-xs);
 }
 
 .message {
-  color: #666;
-  margin-left: 16px;
+  font-size: var(--mantine-font-size-sm); /* 12px */
+  color: var(--mantine-color-gray-6);
+  margin-left: var(--mantine-spacing-md);
   margin-top: 2px;
 }

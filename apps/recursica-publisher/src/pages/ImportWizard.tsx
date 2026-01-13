@@ -74,9 +74,17 @@ export default function ImportWizard() {
 
   const handleBack = () => {
     const currentPath = location.pathname;
+    const locationState = location.state as { fromImportMain?: boolean } | null;
+
     if (currentPath === "/import-wizard/step2") {
-      // From Dependency Overview, go back to Component Selection
-      navigate("/import-wizard/step1");
+      // From Dependency Overview
+      // If we came from ImportMain (via auto-selection), go back to ImportMain
+      // Otherwise, go back to Component Selection
+      if (locationState?.fromImportMain) {
+        navigate("/import-main");
+      } else {
+        navigate("/import-wizard/step1");
+      }
     } else if (currentPath === "/import-wizard/step5") {
       // From Importing, go back to Dependency Overview
       navigate("/import-wizard/step2");
@@ -86,6 +94,14 @@ export default function ImportWizard() {
     } else if (currentPath.startsWith("/import-wizard/merge")) {
       // From Merge wizard, go back to Component Selection
       navigate("/import-wizard/step1");
+    } else if (currentPath === "/import-wizard/step1") {
+      // From Component Selection, check if we came from ImportMain
+      if (locationState?.fromImportMain) {
+        navigate("/import-main");
+      } else {
+        // Default: go back in browser history
+        navigate(-1);
+      }
     } else {
       // Default: go back in browser history
       navigate(-1);

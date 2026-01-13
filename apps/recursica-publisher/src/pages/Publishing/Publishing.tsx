@@ -168,12 +168,11 @@ export default function Publishing() {
 
         {!isPublishing && !error && exportData && (
           <Group gap={12} className={classes.buttonGroup}>
-            <Button variant="outline" color="red" onClick={() => navigate("/")}>
+            <Button variant="outline" onClick={() => navigate("/")}>
               Cancel
             </Button>
             <Button
               variant="filled"
-              color="red"
               onClick={async () => {
                 const pageIndexParam = searchParams.get("pageIndex");
                 const pageIndex = pageIndexParam

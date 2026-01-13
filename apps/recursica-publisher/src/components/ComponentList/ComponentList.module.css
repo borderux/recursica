@@ -5,13 +5,12 @@
 
 .componentButton {
   width: 100%;
-  padding: 8px 12px;
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
   text-align: left;
-  display: flex;
-  flex-direction: row;
+  display: grid;
+  grid-template-columns: 1fr auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: var(--mantine-spacing-sm);
 
   /* Button styling */
   background-color: transparent;
@@ -45,8 +44,11 @@
 }
 
 .componentButton:focus {
-  outline: 2px solid #000;
+  /* Use theme red color with 1px semi-transparent outline */
+  outline: 1px solid var(--mantine-color-red-5);
   outline-offset: 2px;
+  /* Add semi-transparent overlay using theme custom property */
+  box-shadow: 0 0 0 1px var(--mantine-other-red-5-opacity-50);
 }
 
 .componentButton:active {
@@ -63,19 +65,15 @@
 }
 
 .componentName {
-  font-size: 0.875rem; /* 14px - smaller than before */
-  font-weight: normal; /* Not bold */
-  flex: 1;
+  font-size: 0.875rem; /* 14px */
+  font-weight: normal;
   text-align: left; /* Left justified */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap; /* Prevent wrapping */
 }
 
-.componentVersion {
-  font-size: 0.75rem; /* 12px */
-  opacity: 0.8;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end; /* Right justified */
-  gap: 2px;
-  flex-shrink: 0;
-  text-align: right;
+.componentBadge {
+  /* Badge is right-aligned by default due to grid layout */
+  white-space: nowrap; /* Prevent wrapping */
 }
