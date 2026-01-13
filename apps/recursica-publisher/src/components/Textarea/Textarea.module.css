@@ -1,0 +1,17 @@
+/* Readonly state styling - custom functionality not in Mantine */
+.readonly {
+  background-color: transparent;
+  border: none;
+  padding: 0;
+  color: #333;
+  resize: none;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  cursor: default;
+}
+
+.readonlyDisabled {
+  color: #d0d0d0;
+}

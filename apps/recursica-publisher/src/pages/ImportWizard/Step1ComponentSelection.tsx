@@ -2,17 +2,13 @@ import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import { useImportWizard } from "../../context/ImportWizardContext";
 import { useAuth } from "../../context/useAuth";
+import {
+  ComponentList,
+  type ComponentInfo,
+} from "../../components/ComponentList";
 
 const RECURSICA_FIGMA_OWNER = "borderux";
 const RECURSICA_FIGMA_REPO = "recursica-figma";
-
-interface ComponentInfo {
-  guid: string;
-  name: string;
-  path: string;
-  version: number;
-  publishDate?: string;
-}
 
 interface IndexJson {
   components?: Record<
@@ -394,77 +390,10 @@ export default function Step1ComponentSelection() {
       )}
 
       {!loading && !error && components.length > 0 && (
-        <div
-          style={{
-            width: "100%",
-            maxWidth: "800px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "12px",
-          }}
-        >
-          {components.map((component) => (
-            <button
-              key={component.guid}
-              onClick={() => handleComponentSelect(component)}
-              style={{
-                width: "100%",
-                padding: "12px 24px",
-                fontSize: "16px",
-                fontWeight: "bold",
-                backgroundColor: "transparent",
-                color: "#d40d0d",
-                border: "2px solid #d40d0d",
-                borderRadius: "8px",
-                cursor: "pointer",
-                textAlign: "left",
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "16px",
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = "#d40d0d";
-                e.currentTarget.style.color = "white";
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.color = "#d40d0d";
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "16px",
-                  fontWeight: "bold",
-                  flex: 1,
-                  fontFamily:
-                    "system-ui, -apple-system, 'Segoe UI', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif",
-                }}
-              >
-                {component.name}
-              </div>
-              <div
-                style={{
-                  fontSize: "12px",
-                  opacity: 0.8,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "flex-end",
-                  gap: "2px",
-                  flexShrink: 0,
-                }}
-              >
-                <div>Version: {component.version || "N/A"}</div>
-                {component.publishDate && (
-                  <div>
-                    {new Date(component.publishDate).toLocaleDateString()}
-                  </div>
-                )}
-              </div>
-            </button>
-          ))}
-        </div>
+        <ComponentList
+          components={components}
+          onSelect={handleComponentSelect}
+        />
       )}
     </div>
   );

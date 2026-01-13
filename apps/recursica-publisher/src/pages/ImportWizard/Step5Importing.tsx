@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router";
-import DebugConsole from "../../components/DebugConsole";
+import { DebugConsole } from "../../components/DebugConsole";
 import { useImportWizard } from "../../context/ImportWizardContext";
 import { useImportData } from "../../context/ImportDataContext";
 import { callPlugin } from "../../utils/callPlugin";

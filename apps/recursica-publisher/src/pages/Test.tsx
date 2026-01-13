@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import PageLayout from "../components/PageLayout";
-import DebugConsole from "../components/DebugConsole";
+import { PageLayout } from "../components/PageLayout";
+import { DebugConsole } from "../components/DebugConsole";
 import { callPlugin } from "../utils/callPlugin";
 
 export default function Test() {

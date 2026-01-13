@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
-import PageLayout from "../components/PageLayout";
-import DebugConsole from "../components/DebugConsole";
+import { PageLayout } from "../components/PageLayout";
+import { DebugConsole } from "../components/DebugConsole";
 import type {
   ExportPageResponseData,
   ReferencedPageInfo,
@@ -138,7 +138,7 @@ export default function PublishingWizard() {
         );
       }
     }
-  }, [exportData, state?.exportData, pageIndex]);
+  }, [exportData, state?.exportData, pageIndex, isExporting]);
 
   // Get current page being processed
   const getCurrentPage = useCallback(() => {
@@ -562,6 +562,7 @@ export default function PublishingWizard() {
   }, [
     wizardStep,
     hasExportedReferencedPages,
+    isExportingReferencedPages,
     discoveredReferencedPages,
     selectedReferencedPageIds,
     exportData,

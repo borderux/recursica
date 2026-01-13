@@ -12,7 +12,7 @@ import { useAuth } from "../../context/useAuth";
 import { fetchComponentWithDependencies } from "../../services/repository/repositoryImportService";
 import { callPlugin } from "../../utils/callPlugin";
 import { validateImport } from "../../utils/validateExportFile";
-import VersionHistory from "../../components/VersionHistory";
+import { VersionHistory } from "../../components";
 
 export default function Step2DependencyOverview() {
   const navigate = useNavigate();

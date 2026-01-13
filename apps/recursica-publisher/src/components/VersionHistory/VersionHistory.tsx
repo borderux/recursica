@@ -1,3 +1,5 @@
+import classes from "./VersionHistory.module.css";
+
 interface VersionHistoryEntry {
   message?: string;
   date?: string;
@@ -9,7 +11,6 @@ interface VersionHistoryProps {
 }
 
 export default function VersionHistory({ history }: VersionHistoryProps) {
-  // Convert history object to sorted array of entries
   const historyEntries: Array<{
     version: number;
     message?: string;
@@ -28,7 +29,6 @@ export default function VersionHistory({ history }: VersionHistoryProps) {
     }
   }
 
-  // Sort by version number (descending - newest first)
   historyEntries.sort((a, b) => b.version - a.version);
 
   if (historyEntries.length === 0) {
@@ -36,18 +36,9 @@ export default function VersionHistory({ history }: VersionHistoryProps) {
   }
 
   return (
-    <div style={{ marginTop: "12px" }}>
-      <div
-        style={{
-          fontSize: "14px",
-          fontWeight: "bold",
-          color: "#666",
-          marginBottom: "4px",
-        }}
-      >
-        Version History
-      </div>
-      <div style={{ fontSize: "14px", color: "#333", lineHeight: "1.6" }}>
+    <div className={classes.root}>
+      <div className={classes.title}>Version History</div>
+      <div className={classes.list}>
         {historyEntries.map((entry, index) => {
           const dateStr = entry.date
             ? new Date(entry.date).toLocaleDateString(undefined, {
@@ -60,28 +51,18 @@ export default function VersionHistory({ history }: VersionHistoryProps) {
           return (
             <div
               key={entry.version}
-              style={{
-                marginBottom: index < historyEntries.length - 1 ? "4px" : "0",
-              }}
+              className={
+                index < historyEntries.length - 1
+                  ? classes.entry
+                  : classes.entryLast
+              }
             >
               <div>
-                <span>v{entry.version}</span>
-                {dateStr && (
-                  <span style={{ color: "#666", marginLeft: "8px" }}>
-                    {dateStr}
-                  </span>
-                )}
+                <span className={classes.version}>v{entry.version}</span>
+                {dateStr && <span className={classes.date}>{dateStr}</span>}
               </div>
               {entry.message && (
-                <div
-                  style={{
-                    color: "#666",
-                    marginLeft: "16px",
-                    marginTop: "2px",
-                  }}
-                >
-                  {entry.message}
-                </div>
+                <div className={classes.message}>{entry.message}</div>
               )}
             </div>
           );

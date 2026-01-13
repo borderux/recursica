@@ -9031,10 +9031,11 @@ export async function resolveDeferredNormalInstances(
         const cleanTargetName = getComponentCleanName(
           instanceEntry.componentPageName,
         );
-        referencedPage = figma.root.children.find((page) => {
-          const cleanPageName = getComponentCleanName(page.name);
-          return cleanPageName === cleanTargetName;
-        });
+        referencedPage =
+          figma.root.children.find((page) => {
+            const cleanPageName = getComponentCleanName(page.name);
+            return cleanPageName === cleanTargetName;
+          }) ?? null;
       }
 
       // If still not found, try matching against pages with version suffixes removed
@@ -9049,14 +9050,15 @@ export async function resolveDeferredNormalInstances(
           "",
         );
 
-        referencedPage = figma.root.children.find((page) => {
-          const cleanPageName = getComponentCleanName(page.name);
-          const pageNameWithoutVersion = cleanPageName.replace(
-            /\s*\(VERSION\s*:\s*\d+\)\s*$/i,
-            "",
-          );
-          return pageNameWithoutVersion === targetNameWithoutVersion;
-        });
+        referencedPage =
+          figma.root.children.find((page) => {
+            const cleanPageName = getComponentCleanName(page.name);
+            const pageNameWithoutVersion = cleanPageName.replace(
+              /\s*\(VERSION\s*:\s*\d+\)\s*$/i,
+              "",
+            );
+            return pageNameWithoutVersion === targetNameWithoutVersion;
+          }) ?? null;
       }
 
       // If still not found, try case-insensitive matching
@@ -9064,10 +9066,11 @@ export async function resolveDeferredNormalInstances(
         const targetNameLower = instanceEntry.componentPageName
           .toLowerCase()
           .trim();
-        referencedPage = figma.root.children.find((page) => {
-          const pageNameLower = page.name.toLowerCase().trim();
-          return pageNameLower === targetNameLower;
-        });
+        referencedPage =
+          figma.root.children.find((page) => {
+            const pageNameLower = page.name.toLowerCase().trim();
+            return pageNameLower === targetNameLower;
+          }) ?? null;
       }
 
       // If still not found, try case-insensitive clean name matching
@@ -9075,10 +9078,13 @@ export async function resolveDeferredNormalInstances(
         const cleanTargetName = getComponentCleanName(
           instanceEntry.componentPageName,
         ).toLowerCase();
-        referencedPage = figma.root.children.find((page) => {
-          const cleanPageName = getComponentCleanName(page.name).toLowerCase();
-          return cleanPageName === cleanTargetName;
-        });
+        referencedPage =
+          figma.root.children.find((page) => {
+            const cleanPageName = getComponentCleanName(
+              page.name,
+            ).toLowerCase();
+            return cleanPageName === cleanTargetName;
+          }) ?? null;
       }
 
       if (!referencedPage && constructionIcon) {
