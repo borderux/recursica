@@ -1,5 +1,6 @@
 // Plugin data keys for storing metadata on nodes
 const ORIGINAL_NODE_ID_KEY = "RecursicaOriginalNodeId";
+const PAGE_METADATA_KEY = "RecursicaPublishedMetadata";
 
 import type { ResponseMessage } from "../types/messages";
 import {
@@ -2712,13 +2713,45 @@ export async function recreateNodeFromData(
           }
 
           // Find the referenced page
-          // Try multiple matching strategies to find existing pages
+          // PRIMARY STRATEGY: Match by GUID from page metadata (most reliable)
+          // This is the correct way to find pages - by their unique identifier, not by name
           await figma.loadAllPagesAsync();
-          let referencedPage = figma.root.children.find(
-            (page) => page.name === instanceEntry.componentPageName,
-          );
+          let referencedPage: PageNode | null = null;
 
-          // If exact match failed, try clean name matching
+          if (instanceEntry.componentGuid) {
+            debugConsole.log(
+              `  Looking for page by GUID: ${instanceEntry.componentGuid.substring(0, 8)}...`,
+            );
+            for (const page of figma.root.children) {
+              if (page.type !== "PAGE") continue;
+              try {
+                const pageMetadataStr = page.getPluginData(PAGE_METADATA_KEY);
+                if (pageMetadataStr) {
+                  const pageMetadata = JSON.parse(pageMetadataStr);
+                  if (pageMetadata.id === instanceEntry.componentGuid) {
+                    referencedPage = page;
+                    debugConsole.log(
+                      `  ✓ Found page "${page.name}" by GUID match`,
+                    );
+                    break;
+                  }
+                }
+              } catch {
+                // Continue searching
+              }
+            }
+          }
+
+          // FALLBACK STRATEGIES: If GUID match failed, try name matching
+          // Try multiple matching strategies:
+          // 1. Exact name match
+          if (!referencedPage) {
+            referencedPage = figma.root.children.find(
+              (page) => page.name === instanceEntry.componentPageName,
+            ) as PageNode | null;
+          }
+
+          // 2. Clean name matching
           if (!referencedPage) {
             const cleanTargetName = getComponentCleanName(
               instanceEntry.componentPageName,
@@ -2726,10 +2759,10 @@ export async function recreateNodeFromData(
             referencedPage = figma.root.children.find((page) => {
               const cleanPageName = getComponentCleanName(page.name);
               return cleanPageName === cleanTargetName;
-            });
+            }) as PageNode | null;
           }
 
-          // If still not found, try matching against pages with version suffixes removed
+          // 3. Matching against pages with version suffixes removed
           if (!referencedPage) {
             const cleanTargetName = getComponentCleanName(
               instanceEntry.componentPageName,
@@ -2746,10 +2779,10 @@ export async function recreateNodeFromData(
                 "",
               );
               return pageNameWithoutVersion === targetNameWithoutVersion;
-            });
+            }) as PageNode | null;
           }
 
-          // If still not found, try case-insensitive matching
+          // 4. Case-insensitive matching
           if (!referencedPage) {
             const targetNameLower = instanceEntry.componentPageName
               .toLowerCase()
@@ -2757,7 +2790,7 @@ export async function recreateNodeFromData(
             referencedPage = figma.root.children.find((page) => {
               const pageNameLower = page.name.toLowerCase().trim();
               return pageNameLower === targetNameLower;
-            });
+            }) as PageNode | null;
           }
 
           if (!referencedPage) {
@@ -2860,9 +2893,8 @@ export async function recreateNodeFromData(
                     // If componentGuid is provided, verify it matches
                     if (componentGuid) {
                       try {
-                        const metadataStr = child.getPluginData(
-                          "RecursicaPublishedMetadata",
-                        );
+                        const metadataStr =
+                          child.getPluginData(PAGE_METADATA_KEY);
                         if (metadataStr) {
                           const metadata = JSON.parse(metadataStr);
                           if (metadata.id === componentGuid) {
@@ -2897,9 +2929,8 @@ export async function recreateNodeFromData(
 
                       if (componentGuid) {
                         try {
-                          const metadataStr = variant.getPluginData(
-                            "RecursicaPublishedMetadata",
-                          );
+                          const metadataStr =
+                            variant.getPluginData(PAGE_METADATA_KEY);
                           if (metadataStr) {
                             const metadata = JSON.parse(metadataStr);
                             if (metadata.id === componentGuid) {
@@ -2956,9 +2987,8 @@ export async function recreateNodeFromData(
                       // Found the variant - check GUID if provided
                       if (componentGuid) {
                         try {
-                          const metadataStr = variant.getPluginData(
-                            "RecursicaPublishedMetadata",
-                          );
+                          const metadataStr =
+                            variant.getPluginData(PAGE_METADATA_KEY);
                           if (metadataStr) {
                             const metadata = JSON.parse(metadataStr);
                             if (metadata.id === componentGuid) {
@@ -3057,9 +3087,8 @@ export async function recreateNodeFromData(
           // Log if we used name match fallback (GUID verification failed)
           if (targetComponent && instanceEntry.componentGuid) {
             try {
-              const metadataStr = targetComponent.getPluginData(
-                "RecursicaPublishedMetadata",
-              );
+              const metadataStr =
+                targetComponent.getPluginData(PAGE_METADATA_KEY);
               if (metadataStr) {
                 const metadata = JSON.parse(metadataStr);
                 if (metadata.id !== instanceEntry.componentGuid) {
@@ -7869,7 +7898,6 @@ async function createPageAndRecreateStructure(
 
   await figma.loadAllPagesAsync();
   const allPages = figma.root.children;
-  const PAGE_METADATA_KEY = "RecursicaPublishedMetadata";
 
   let pageWithSameGuid: PageNode | null = null;
   for (const page of allPages) {
@@ -8994,9 +9022,7 @@ export async function resolveDeferredNormalInstances(
         for (const page of figma.root.children) {
           if (page.type !== "PAGE") continue;
           try {
-            const pageMetadataStr = page.getPluginData(
-              "RecursicaPublishedMetadata",
-            );
+            const pageMetadataStr = page.getPluginData(PAGE_METADATA_KEY);
             if (pageMetadataStr) {
               const pageMetadata = JSON.parse(pageMetadataStr);
               if (pageMetadata.id === instanceEntry.componentGuid) {
@@ -9138,9 +9164,7 @@ export async function resolveDeferredNormalInstances(
                 // Prefer exact match, especially with GUID
                 if (exactMatch && componentGuid) {
                   try {
-                    const metadataStr = child.getPluginData(
-                      "RecursicaPublishedMetadata",
-                    );
+                    const metadataStr = child.getPluginData(PAGE_METADATA_KEY);
                     if (metadataStr) {
                       const metadata = JSON.parse(metadataStr);
                       if (metadata.id === componentGuid) {
@@ -9221,9 +9245,7 @@ export async function resolveDeferredNormalInstances(
                 // Prefer exact match if available
                 if (exactMatch && componentGuid) {
                   try {
-                    const metadataStr = child.getPluginData(
-                      "RecursicaPublishedMetadata",
-                    );
+                    const metadataStr = child.getPluginData(PAGE_METADATA_KEY);
                     if (metadataStr) {
                       const metadata = JSON.parse(metadataStr);
                       if (metadata.id === componentGuid) {
@@ -9263,9 +9285,8 @@ export async function resolveDeferredNormalInstances(
                     // Prefer exact match if available
                     if (exactMatch && componentGuid) {
                       try {
-                        const metadataStr = variant.getPluginData(
-                          "RecursicaPublishedMetadata",
-                        );
+                        const metadataStr =
+                          variant.getPluginData(PAGE_METADATA_KEY);
                         if (metadataStr) {
                           const metadata = JSON.parse(metadataStr);
                           if (metadata.id === componentGuid) {
@@ -9336,9 +9357,8 @@ export async function resolveDeferredNormalInstances(
                       // Found the variant - check GUID if provided
                       if (componentGuid) {
                         try {
-                          const metadataStr = variant.getPluginData(
-                            "RecursicaPublishedMetadata",
-                          );
+                          const metadataStr =
+                            variant.getPluginData(PAGE_METADATA_KEY);
                           if (metadataStr) {
                             const metadata = JSON.parse(metadataStr);
                             if (metadata.id === componentGuid) {
@@ -9419,9 +9439,7 @@ export async function resolveDeferredNormalInstances(
                 // Check GUID if provided
                 if (instanceEntry.componentGuid) {
                   try {
-                    const metadataStr = child.getPluginData(
-                      "RecursicaPublishedMetadata",
-                    );
+                    const metadataStr = child.getPluginData(PAGE_METADATA_KEY);
                     if (metadataStr) {
                       const metadata = JSON.parse(metadataStr);
                       if (metadata.id === instanceEntry.componentGuid) {
@@ -9487,9 +9505,8 @@ export async function resolveDeferredNormalInstances(
                       // Check GUID if provided
                       if (instanceEntry.componentGuid) {
                         try {
-                          const metadataStr = variant.getPluginData(
-                            "RecursicaPublishedMetadata",
-                          );
+                          const metadataStr =
+                            variant.getPluginData(PAGE_METADATA_KEY);
                           if (metadataStr) {
                             const metadata = JSON.parse(metadataStr);
                             if (metadata.id === instanceEntry.componentGuid) {
@@ -10513,9 +10530,8 @@ export async function resolveDeferredNormalInstances(
                     // If componentGuid is provided, verify it matches
                     if (componentGuid) {
                       try {
-                        const metadataStr = child.getPluginData(
-                          "RecursicaPublishedMetadata",
-                        );
+                        const metadataStr =
+                          child.getPluginData(PAGE_METADATA_KEY);
                         if (metadataStr) {
                           const metadata = JSON.parse(metadataStr);
                           if (metadata.id === componentGuid) {
@@ -10550,9 +10566,8 @@ export async function resolveDeferredNormalInstances(
                           // If componentGuid is provided, verify it matches
                           if (componentGuid) {
                             try {
-                              const metadataStr = variant.getPluginData(
-                                "RecursicaPublishedMetadata",
-                              );
+                              const metadataStr =
+                                variant.getPluginData(PAGE_METADATA_KEY);
                               if (metadataStr) {
                                 const metadata = JSON.parse(metadataStr);
                                 if (metadata.id === componentGuid) {
@@ -10594,9 +10609,8 @@ export async function resolveDeferredNormalInstances(
                 // If componentGuid is provided, verify it matches
                 if (componentGuid) {
                   try {
-                    const metadataStr = current.getPluginData(
-                      "RecursicaPublishedMetadata",
-                    );
+                    const metadataStr =
+                      current.getPluginData(PAGE_METADATA_KEY);
                     if (metadataStr) {
                       const metadata = JSON.parse(metadataStr);
                       if (metadata.id === componentGuid) {
@@ -10620,9 +10634,8 @@ export async function resolveDeferredNormalInstances(
                     // If componentGuid is provided, verify it matches
                     if (componentGuid) {
                       try {
-                        const metadataStr = variant.getPluginData(
-                          "RecursicaPublishedMetadata",
-                        );
+                        const metadataStr =
+                          variant.getPluginData(PAGE_METADATA_KEY);
                         if (metadataStr) {
                           const metadata = JSON.parse(metadataStr);
                           if (metadata.id === componentGuid) {

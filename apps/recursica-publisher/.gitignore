@@ -25,3 +25,6 @@ dev-releases
 
 export/
 dist/
+
+# Symlink to recursica-figma
+recursica-figma

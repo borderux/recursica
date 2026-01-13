@@ -264,59 +264,162 @@ export default function PublishingWizard() {
             ...updatedPageData.metadata,
             version: decision.newVersion,
           };
+          // Remove exportedAt if it exists (redundant with publishDate)
+          delete updatedPageData.metadata.exportedAt;
+          // Add publishDate
+          updatedPageData.metadata.publishDate = new Date().toISOString();
+
+          // Add history entry
+          if (!updatedPageData.metadata.history) {
+            updatedPageData.metadata.history = {};
+          }
+          const historyKey = `${decision.newVersion}`;
+          updatedPageData.metadata.history[historyKey] = {
+            message: decision.changeMessage,
+            date: new Date().toISOString(),
+          };
         }
 
+        // Update instanceTable entries to reference correct versions of referenced components
         if (updatedPageData.instances) {
           const instanceTable = updatedPageData.instances;
-          if (Array.isArray(instanceTable)) {
-            for (let i = 0; i < instanceTable.length; i++) {
-              const entry = instanceTable[i];
-              if (
-                entry &&
-                typeof entry === "object" &&
-                entry.instanceType === "normal" &&
-                entry.componentGuid
-              ) {
-                const componentPageName = entry.componentPageName;
-                if (componentPageName) {
-                  const referencedComponentDecision =
-                    decisions.get(componentPageName);
+          // Handle both array format and object format (compressed keys)
+          const entries = Array.isArray(instanceTable)
+            ? instanceTable
+            : Object.values(instanceTable);
 
-                  if (referencedComponentDecision?.publishNewVersion) {
-                    const newVersion = referencedComponentDecision.newVersion;
-                    if (entry.componentVersion !== undefined) {
-                      entry.componentVersion = newVersion;
-                    }
-                    if (entry.cVers !== undefined) {
-                      entry.cVers = newVersion;
-                    }
-                  }
+          for (let i = 0; i < entries.length; i++) {
+            const entry = entries[i];
+            if (!entry || typeof entry !== "object") {
+              continue;
+            }
+
+            // Check for both expanded and compressed key formats
+            const instanceType =
+              entry.instanceType || entry.instT || entry.instType;
+            const componentPageName =
+              entry.componentPageName || entry.cPage || entry.componentPage;
+            const componentGuid =
+              entry.componentGuid || entry.cGuid || entry.componentGUID;
+
+            // Only process normal instances that reference other components
+            if (
+              instanceType === "normal" &&
+              componentPageName &&
+              componentGuid
+            ) {
+              const referencedComponentDecision =
+                decisions.get(componentPageName);
+
+              if (referencedComponentDecision?.publishNewVersion) {
+                // Component is being published in this session - use new version
+                const newVersion = referencedComponentDecision.newVersion;
+                // Always set version fields (even if they were undefined)
+                entry.componentVersion = newVersion;
+                entry.cVers = newVersion;
+              } else {
+                // Component is NOT being published - must look up version from mainBranchComponents
+                if (!mainBranchComponents) {
+                  throw new Error(
+                    `Cannot determine version for referenced component "${componentPageName}" (GUID: ${componentGuid.substring(0, 8)}...): mainBranchComponents not loaded. This component must be published before it can be referenced.`,
+                  );
                 }
+
+                const publishedComponent = mainBranchComponents.find(
+                  (c) => c.guid === componentGuid,
+                );
+
+                if (!publishedComponent) {
+                  throw new Error(
+                    `Referenced component "${componentPageName}" (GUID: ${componentGuid.substring(0, 8)}...) is not published and is not being published in this session. All referenced components must either be published (exist in main branch) or selected for publishing.`,
+                  );
+                }
+
+                // Found published version - always use it
+                entry.componentVersion = publishedComponent.version;
+                entry.cVers = publishedComponent.version;
               }
             }
           }
         }
       } else {
+        // Not publishing new version - update instanceTable to reference published versions
         const pageGuid = updatedPageData.metadata?.guid;
-        if (pageGuid && mainBranchComponents) {
+        if (pageGuid) {
+          if (!mainBranchComponents) {
+            throw new Error(
+              `Cannot determine version for component "${pageData.pageName}" (GUID: ${pageGuid.substring(0, 8)}...): mainBranchComponents not loaded.`,
+            );
+          }
+
           const publishedComponent = mainBranchComponents.find(
             (c) => c.guid === pageGuid,
           );
-          if (publishedComponent) {
-            if (updatedPageData.instances) {
-              const instanceTable = updatedPageData.instances;
-              if (Array.isArray(instanceTable)) {
-                for (let i = 0; i < instanceTable.length; i++) {
-                  const entry = instanceTable[i];
-                  if (
-                    entry &&
-                    typeof entry === "object" &&
-                    entry.instanceType === "normal" &&
-                    entry.componentGuid === pageGuid
-                  ) {
-                    entry.componentVersion = publishedComponent.version;
+
+          if (!publishedComponent) {
+            throw new Error(
+              `Component "${pageData.pageName}" (GUID: ${pageGuid.substring(0, 8)}...) is not published in main branch. Cannot update instanceTable references.`,
+            );
+          }
+
+          if (updatedPageData.instances) {
+            const instanceTable = updatedPageData.instances;
+            // Handle both array format and object format
+            const entries = Array.isArray(instanceTable)
+              ? instanceTable
+              : Object.values(instanceTable);
+
+            for (let i = 0; i < entries.length; i++) {
+              const entry = entries[i];
+              if (!entry || typeof entry !== "object") {
+                continue;
+              }
+
+              const instanceType =
+                entry.instanceType || entry.instT || entry.instType;
+              const componentPageName =
+                entry.componentPageName || entry.cPage || entry.componentPage;
+              const entryComponentGuid =
+                entry.componentGuid || entry.cGuid || entry.componentGUID;
+
+              // Update all normal instances that reference other components
+              if (
+                instanceType === "normal" &&
+                componentPageName &&
+                entryComponentGuid
+              ) {
+                const referencedComponentDecision =
+                  decisions.get(componentPageName);
+
+                if (referencedComponentDecision?.publishNewVersion) {
+                  // Referenced component is being published - use new version
+                  const newVersion = referencedComponentDecision.newVersion;
+                  entry.componentVersion = newVersion;
+                  entry.cVers = newVersion;
+                } else {
+                  // Referenced component is NOT being published - must look up from mainBranchComponents
+                  const referencedPublishedComponent =
+                    mainBranchComponents.find(
+                      (c) => c.guid === entryComponentGuid,
+                    );
+
+                  if (!referencedPublishedComponent) {
+                    throw new Error(
+                      `Referenced component "${componentPageName}" (GUID: ${entryComponentGuid.substring(0, 8)}...) in "${pageData.pageName}" is not published and is not being published in this session. All referenced components must either be published (exist in main branch) or selected for publishing.`,
+                    );
                   }
+
+                  // Found published version - always use it
+                  entry.componentVersion = referencedPublishedComponent.version;
+                  entry.cVers = referencedPublishedComponent.version;
                 }
+              } else if (
+                instanceType === "normal" &&
+                entryComponentGuid === pageGuid
+              ) {
+                // Self-reference - use current published version
+                entry.componentVersion = publishedComponent.version;
+                entry.cVers = publishedComponent.version;
               }
             }
           }
@@ -417,31 +520,57 @@ export default function PublishingWizard() {
   useEffect(() => {
     if (!exportData) return;
 
-    const referencedPages: ReferencedPageInfo[] = [];
-    const pageGuid = exportData.pageData?.metadata?.guid;
+    // Use discoveredReferencedPages from export data if available (preferred)
+    // Otherwise fall back to discovering from instances (for backward compatibility)
+    let referencedPages: ReferencedPageInfo[] = [];
 
-    if (pageGuid && exportData.pageData?.instances) {
-      const instanceTable = exportData.pageData.instances;
-      if (Array.isArray(instanceTable)) {
-        for (const entry of instanceTable) {
-          if (
-            entry &&
-            typeof entry === "object" &&
-            entry.instanceType === "normal" &&
-            entry.componentPageName &&
-            entry.componentPageName !== exportData.pageName
-          ) {
-            const existing = referencedPages.find(
-              (p) => p.pageName === entry.componentPageName,
-            );
-            if (!existing && entry.componentPageName) {
-              referencedPages.push({
-                pageId: entry.componentPageName,
-                pageName: entry.componentPageName,
-                pageIndex: -1, // Not available from instance entry
-                hasMetadata: false, // Not available from instance entry
-                localVersion: (entry.componentVersion as number) || 0,
-              });
+    if (
+      exportData.discoveredReferencedPages &&
+      exportData.discoveredReferencedPages.length > 0
+    ) {
+      // Use the discovered pages from export response (has full metadata)
+      referencedPages = exportData.discoveredReferencedPages;
+      console.log(
+        `[PublishingWizard] Using ${referencedPages.length} discovered referenced pages from export data`,
+      );
+
+      // Auto-select all discovered pages since they're already exported in additionalPages
+      // User can deselect them if they don't want to publish new versions
+      const allPageIds = new Set(referencedPages.map((p) => p.pageId));
+      setSelectedReferencedPageIds(allPageIds);
+      console.log(
+        `[PublishingWizard] Auto-selected ${allPageIds.size} referenced page(s) (already exported)`,
+      );
+    } else {
+      // Fallback: discover from instances (for backward compatibility)
+      console.log(
+        "[PublishingWizard] No discoveredReferencedPages in export data, discovering from instances...",
+      );
+      const pageGuid = exportData.pageData?.metadata?.guid;
+
+      if (pageGuid && exportData.pageData?.instances) {
+        const instanceTable = exportData.pageData.instances;
+        if (Array.isArray(instanceTable)) {
+          for (const entry of instanceTable) {
+            if (
+              entry &&
+              typeof entry === "object" &&
+              entry.instanceType === "normal" &&
+              entry.componentPageName &&
+              entry.componentPageName !== exportData.pageName
+            ) {
+              const existing = referencedPages.find(
+                (p) => p.pageName === entry.componentPageName,
+              );
+              if (!existing && entry.componentPageName) {
+                referencedPages.push({
+                  pageId: entry.componentPageName,
+                  pageName: entry.componentPageName,
+                  pageIndex: -1, // Not available from instance entry
+                  hasMetadata: false, // Not available from instance entry
+                  localVersion: (entry.componentVersion as number) || 0,
+                });
+              }
             }
           }
         }

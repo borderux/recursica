@@ -407,8 +407,58 @@ export class GitHubService {
       baseBranchName,
     );
 
-    // Create the branch
-    await this.createBranch(owner, repo, branchName, baseBranch);
+    // Ensure the branch exists (check first to avoid "reference already exists" error)
+    let branchExists = false;
+    try {
+      await this.getBranch(owner, repo, branchName);
+      branchExists = true;
+      console.log(`[publishPageExports] Branch ${branchName} already exists`);
+    } catch {
+      console.log(
+        `[publishPageExports] Branch ${branchName} does not exist, creating it...`,
+      );
+      try {
+        await this.createBranch(owner, repo, branchName, baseBranch);
+        branchExists = true;
+        console.log(
+          `[publishPageExports] Successfully created branch ${branchName}`,
+        );
+      } catch (createError) {
+        console.error(
+          `[publishPageExports] Failed to create branch ${branchName}:`,
+          createError,
+        );
+        // If branch creation fails with "reference already exists", try to get it
+        if (
+          createError instanceof Error &&
+          (createError.message.includes("reference already exists") ||
+            createError.message.includes("422"))
+        ) {
+          console.log(
+            `[publishPageExports] Branch exists but wasn't found initially, trying to get it...`,
+          );
+          try {
+            await this.getBranch(owner, repo, branchName);
+            branchExists = true;
+            console.log(
+              `[publishPageExports] Successfully accessed existing branch ${branchName}`,
+            );
+          } catch {
+            throw new Error(
+              `Failed to create or access branch ${branchName}: ${createError instanceof Error ? createError.message : "Unknown error"}`,
+            );
+          }
+        } else {
+          throw new Error(
+            `Failed to create branch ${branchName}: ${createError instanceof Error ? createError.message : "Unknown error"}`,
+          );
+        }
+      }
+    }
+
+    if (!branchExists) {
+      throw new Error(`Branch ${branchName} could not be created or accessed`);
+    }
 
     // Flatten all exported pages
     console.log("[publishPageExports] Flattening exported pages...");
@@ -932,100 +982,6 @@ ${changeMessage ? `**Change message:**\n${changeMessage}\n\n` : ""}**Export date
     // No existing PR found, create a new one
     console.log(`Creating new PR for branch ${head}`);
     return this.createPullRequest(owner, repo, title, body, head, base);
-  }
-
-  async pushPageToRepoWithBranch(
-    owner: string,
-    repo: string,
-    pageData: {
-      metadata: {
-        exportedAt: string;
-        originalPageName: string;
-        totalNodes: number;
-        pluginVersion: string;
-        exportedBy: string;
-      };
-      pageData: FigmaNode;
-    },
-    pageName: string,
-    username: string,
-    baseBranch: string,
-  ): Promise<{ file: GitHubFileContent; pr: GitHubPullRequest }> {
-    // Sanitize username: replace spaces with hyphens and remove special characters
-    const sanitizedUsername = username
-      .replace(/\s+/g, "-")
-      .replace(/[^a-zA-Z0-9-]/g, "");
-    const branchName = `${sanitizedUsername}-page-export`;
-
-    // Sanitize page name for filename: remove emojis and special characters
-    const sanitizedPageName = pageName
-      .replace(/[^\w\s-]/g, "") // Remove emojis and special characters except word chars, spaces, and hyphens
-      .replace(/\s+/g, "-") // Replace spaces with hyphens
-      .replace(/-+/g, "-") // Replace multiple hyphens with single hyphen
-      .replace(/^-|-$/g, ""); // Remove leading/trailing hyphens
-    const filename = `${sanitizedPageName}.figma.json`;
-    const filePath = `components/${filename}`;
-
-    const content = JSON.stringify(pageData, null, 2);
-    const message = `Export Figma page: ${pageName}`;
-
-    // Ensure the branch exists
-    let branchExists = false;
-    try {
-      await this.getBranch(owner, repo, branchName);
-      branchExists = true;
-      console.log(`Branch ${branchName} already exists`);
-    } catch {
-      console.log(`Branch ${branchName} does not exist, creating it...`);
-      try {
-        await this.createBranch(owner, repo, branchName, baseBranch);
-        branchExists = true;
-        console.log(`Successfully created branch ${branchName}`);
-      } catch (createError) {
-        console.error(`Failed to create branch ${branchName}:`, createError);
-        throw new Error(
-          `Failed to create branch ${branchName}: ${createError instanceof Error ? createError.message : "Unknown error"}`,
-        );
-      }
-    }
-
-    if (!branchExists) {
-      throw new Error(`Branch ${branchName} could not be created or accessed`);
-    }
-
-    // Check if file already exists in the branch
-    let fileSha: string | undefined;
-    try {
-      const existingFile = await this.getRepoContents(owner, repo, filePath);
-      if (!Array.isArray(existingFile)) {
-        fileSha = existingFile.sha;
-      }
-    } catch {
-      // File doesn't exist, that's fine
-    }
-
-    // Create or update the file in the branch
-    const file = await this.createOrUpdateFileInBranch(
-      owner,
-      repo,
-      filePath,
-      content,
-      message,
-      branchName,
-      fileSha,
-    );
-
-    // Create or get existing pull request
-    const pr = await this.createOrGetPullRequest(
-      owner,
-      repo,
-      `Export Figma page: ${sanitizedPageName}`,
-      `This PR exports the Figma page "${sanitizedPageName}" as JSON.\n\n**Exported by:** ${username}\n**Export date:** ${new Date().toLocaleString()}\n**File:** \`${filename}\``,
-      branchName,
-      baseBranch,
-    );
-
-    return { file, pr };
   }
 
   private encodeToBase64(str: string): string {
