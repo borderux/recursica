@@ -359,6 +359,16 @@ export class GitHubService {
       `[flattenPageExports] Successfully stringified ${pageData.pageName} (${(jsonData.length / 1024).toFixed(2)} KB)`,
     );
 
+    // Validate that filename exists
+    if (!pageData.filename || pageData.filename.trim().length === 0) {
+      console.error(
+        `[flattenPageExports] ERROR: filename is missing or empty for page "${pageData.pageName}"`,
+      );
+      throw new Error(
+        `filename is missing or empty for page "${pageData.pageName}". Cannot publish without filename.`,
+      );
+    }
+
     const files: Array<{ name: string; jsonData: string; filename: string }> = [
       {
         name: pageData.pageName,
@@ -369,6 +379,9 @@ export class GitHubService {
 
     // Recursively add additional pages
     for (const additionalPage of pageData.additionalPages) {
+      console.log(
+        `[flattenPageExports] Processing additional page: "${additionalPage.pageName}", filename: "${additionalPage.filename || "(missing)"}", hasPageData: ${!!additionalPage.pageData}`,
+      );
       files.push(...this.flattenPageExports(additionalPage));
     }
 
@@ -536,6 +549,9 @@ export class GitHubService {
 
       // Parse jsonData to extract GUID and version from metadata
       try {
+        console.log(
+          `[publishPageExports] About to parse jsonData for file: filename="${file.filename}", name="${file.name}", jsonData length=${file.jsonData.length}`,
+        );
         const parsedData = JSON.parse(file.jsonData);
         console.log(
           `[publishPageExports] Parsed JSON data for ${file.filename}, checking metadata...`,

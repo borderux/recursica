@@ -215,9 +215,15 @@ async function fetchComponentDependenciesRecursive(
   seen: Set<string>,
   dependencies: ImportedComponentFile[],
   accessToken?: string,
+  depth: number = 0,
 ): Promise<void> {
   // Use the existing getRequiredImportFiles utility to extract dependencies
   const requiredFiles = getRequiredImportFiles(jsonData);
+
+  const indent = "  ".repeat(depth);
+  console.log(
+    `${indent}[fetchComponentDependenciesRecursive] Depth ${depth}: Found ${requiredFiles.length} required files`,
+  );
 
   for (const requiredFile of requiredFiles) {
     // Only fetch files with GUIDs (normal instances)
@@ -225,13 +231,16 @@ async function fetchComponentDependenciesRecursive(
       !requiredFile.componentGuid ||
       requiredFile.componentGuid.length === 0
     ) {
+      console.log(
+        `${indent}[fetchComponentDependenciesRecursive] Skipping file without GUID: ${requiredFile.componentName}`,
+      );
       continue;
     }
 
     // Skip if we've already fetched this GUID (prevents infinite loops from circular dependencies)
     if (seen.has(requiredFile.componentGuid)) {
       console.log(
-        `[fetchComponentDependencies] Skipping already fetched component: ${requiredFile.componentGuid}`,
+        `${indent}[fetchComponentDependenciesRecursive] Skipping already fetched component: ${requiredFile.componentGuid} (${requiredFile.componentName})`,
       );
       continue;
     }
@@ -241,16 +250,19 @@ async function fetchComponentDependenciesRecursive(
       !indexJson.components ||
       !indexJson.components[requiredFile.componentGuid]
     ) {
-      console.warn(
-        `Component with GUID ${requiredFile.componentGuid} not found in index.json, skipping`,
+      throw new Error(
+        `Component with GUID ${requiredFile.componentGuid} not found in index.json. All referenced components must be published before they can be imported.`,
       );
-      continue;
     }
 
     const componentInfo = indexJson.components[requiredFile.componentGuid];
     const path = componentInfo.path;
 
     try {
+      console.log(
+        `${indent}[fetchComponentDependenciesRecursive] Fetching dependency: ${requiredFile.componentName} (${requiredFile.componentGuid})`,
+      );
+
       // Mark as seen BEFORE fetching to prevent infinite loops if there's a circular dependency
       seen.add(requiredFile.componentGuid);
 
@@ -265,6 +277,9 @@ async function fetchComponentDependenciesRecursive(
       };
 
       dependencies.push(dependencyFile);
+      console.log(
+        `${indent}[fetchComponentDependenciesRecursive] Added dependency: ${componentInfo.name} (${requiredFile.componentGuid})`,
+      );
 
       // Recursively fetch dependencies of this dependency
       // Pass the same seen set to prevent circular dependencies
@@ -275,10 +290,11 @@ async function fetchComponentDependenciesRecursive(
         seen,
         dependencies,
         accessToken,
+        depth + 1,
       );
     } catch (error) {
       console.error(
-        `Failed to fetch dependency ${requiredFile.componentGuid}:`,
+        `${indent}[fetchComponentDependenciesRecursive] Failed to fetch dependency ${requiredFile.componentGuid} (${requiredFile.componentName}):`,
         error,
       );
       // Remove from seen set if fetch failed so it can be retried if needed
@@ -314,6 +330,7 @@ export async function fetchComponentDependencies(
     seen,
     dependencies,
     accessToken,
+    0,
   );
 
   return dependencies;

@@ -515,10 +515,28 @@ export async function exportPage(
     const selectedPage = pages[pageIndex];
     const selectedPageId = selectedPage.id;
 
-    // Check if this page has already been processed (for actual exports)
-    // or discovered (for discovery phase when skipPrompts is true)
-    if (data.skipPrompts) {
-      // During discovery phase, use discoveredPages set to avoid infinite loops
+    // Check if this page has already been processed
+    // When isRecursive is true, we're doing a full export, so check processedPages
+    // When isRecursive is false and skipPrompts is true, we're in discovery mode, so check discoveredPages
+    if (isRecursive) {
+      // During full export (recursive call), use processedPages to avoid duplicate exports
+      if (processedPages.has(selectedPageId)) {
+        debugConsole.log(
+          `Page "${selectedPage.name}" has already been processed, skipping...`,
+        );
+        // Return empty response for already processed pages
+        return {
+          type: "exportPage",
+          success: false,
+          error: true,
+          message: "Page already processed",
+          data: {},
+        };
+      }
+      // Mark this page as processed (actually exported)
+      processedPages.add(selectedPageId);
+    } else if (data.skipPrompts) {
+      // During discovery phase (not recursive), use discoveredPages set to avoid infinite loops
       if (discoveredPages.has(selectedPageId)) {
         debugConsole.log(
           `Page "${selectedPage.name}" already discovered, skipping discovery...`,
@@ -541,7 +559,7 @@ export async function exportPage(
       // Mark as discovered (not processed, since we're not exporting)
       discoveredPages.add(selectedPageId);
     } else {
-      // During actual export, use processedPages set
+      // During actual export (not recursive, not skipPrompts), use processedPages set
       if (processedPages.has(selectedPageId)) {
         debugConsole.log(
           `Page "${selectedPage.name}" has already been processed, skipping...`,
@@ -1097,17 +1115,59 @@ export async function exportPage(
             }
           }
 
-          // Skip validation and recursive discovery during lightweight discovery mode
-          // These are expensive operations that will be done during full export
+          // During discovery mode, we need to recursively discover dependencies
+          // to find all nested dependencies (e.g., Menu -> Menu item -> Radio)
           if (!isRecursive) {
             debugConsole.log(
-              `Discovery mode: Skipping validation and recursive discovery for "${pageName}" (will be done during full export)`,
+              `Discovery mode: Recursively discovering dependencies for "${pageName}"`,
             );
+            // Recursively discover dependencies of this referenced page
+            try {
+              checkCancellation(requestId);
+              const referencedDiscoveryResponse = await exportPage(
+                {
+                  pageIndex: referencedPageIndex,
+                  skipPrompts: true, // Keep in discovery mode
+                },
+                processedPages, // Pass the same set to track all processed pages
+                true, // Mark as recursive call
+                discoveredPages, // Pass discovered pages set to avoid infinite loops
+                requestId, // Pass requestId for cancellation
+              );
+
+              if (
+                referencedDiscoveryResponse.success &&
+                referencedDiscoveryResponse.data
+              ) {
+                const referencedDiscoveryData =
+                  referencedDiscoveryResponse.data as unknown as ExportPageResponseData;
+                // Add discovered referenced pages from this recursive call
+                if (referencedDiscoveryData.discoveredReferencedPages) {
+                  for (const discoveredPage of referencedDiscoveryData.discoveredReferencedPages) {
+                    // Check if we already have this page (avoid duplicates)
+                    const existingPage = discoveredReferencedPages.find(
+                      (p) => p.pageId === discoveredPage.pageId,
+                    );
+                    if (!existingPage) {
+                      discoveredReferencedPages.push(discoveredPage);
+                      debugConsole.log(
+                        `Discovered nested dependency: "${discoveredPage.pageName}" (via "${pageName}")`,
+                      );
+                    }
+                  }
+                }
+              }
+            } catch (error) {
+              debugConsole.warning(
+                `Failed to recursively discover dependencies for "${pageName}": ${error instanceof Error ? error.message : String(error)}`,
+              );
+              // Continue with other pages even if one fails
+            }
           } else {
             // During recursive discovery (if we get here), we still want to find direct references
             // but skip validation and further recursion to keep it fast
             debugConsole.log(
-              `Recursive discovery: Skipping validation for "${pageName}"`,
+              `Recursive discovery: Skipping further recursion for "${pageName}"`,
             );
           }
         } else {

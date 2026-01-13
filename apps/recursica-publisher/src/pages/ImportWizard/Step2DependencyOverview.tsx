@@ -674,6 +674,8 @@ export default function Step2DependencyOverview() {
     <Stack gap="lg" className={classes.root}>
       <Title order={1}>Component Overview</Title>
 
+      {error && <Alert variant="error">{error}</Alert>}
+
       {loading ? (
         <Stack gap="md" align="center">
           <LoadingSpinner />
