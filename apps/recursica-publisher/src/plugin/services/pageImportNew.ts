@@ -11893,40 +11893,68 @@ export async function resolveDeferredNormalInstances(
                 );
               } else {
                 // Verify each property exists in the component before attempting to bind
-                for (const [nodeProperty, propId] of Object.entries(
-                  componentPropertyRefs,
-                )) {
-                  const propDef = componentProps[propId];
-                  if (!propDef) {
-                    debugConsole.warning(
-                      `  [BINDING] Property "${propId}" not found in component property definitions when attempting to bind "${nodeProperty}" on instance "${nodeData.name}"`,
-                    );
-                  } else {
-                    debugConsole.log(
-                      `  [BINDING] Property "${propId}" (type: ${propDef.type}) exists - will attempt to bind "${nodeProperty}" on instance "${nodeData.name}"`,
-                    );
+                // Also verify componentProps is actually available (might not be ready yet)
+                if (
+                  !componentProps ||
+                  Object.keys(componentProps).length === 0
+                ) {
+                  debugConsole.warning(
+                    `  [BINDING] Component property definitions not available yet for instance "${nodeData.name}" - properties may not be ready`,
+                  );
+                } else {
+                  for (const [nodeProperty, propId] of Object.entries(
+                    componentPropertyRefs,
+                  )) {
+                    const propDef = componentProps[propId];
+                    if (!propDef) {
+                      debugConsole.warning(
+                        `  [BINDING] Property "${propId}" not found in component property definitions when attempting to bind "${nodeProperty}" on instance "${nodeData.name}"`,
+                      );
+                    } else {
+                      debugConsole.log(
+                        `  [BINDING] Property "${propId}" (type: ${propDef.type}) exists - will attempt to bind "${nodeProperty}" on instance "${nodeData.name}"`,
+                      );
+                    }
                   }
                 }
               }
 
               // CRITICAL: Retry mechanism for timing-sensitive binding restoration
               // Figma may need a moment to recognize the instance as a symbol sublayer
-              // after insertion, so we retry with verification checks
+              // after insertion, so we retry with verification checks and delays
               const MAX_RETRIES = 3;
+              const RETRY_DELAY_MS = 50; // Small delay between retries to allow Figma to catch up
               let bindingSuccess = false;
               let lastError: Error | null = null;
 
+              // Helper function to sleep/delay
+              const sleep = (ms: number) =>
+                new Promise((resolve) => setTimeout(resolve, ms));
+
               for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+                // Before each attempt (except the first), add a small delay
+                if (attempt > 1) {
+                  await sleep(RETRY_DELAY_MS * attempt); // Exponential backoff: 100ms, 150ms
+                  debugConsole.log(
+                    `  [BINDING] Waiting ${RETRY_DELAY_MS * attempt}ms before retry attempt ${attempt}/${MAX_RETRIES} for "${nodeData.name}"`,
+                  );
+                }
+
                 // Before each attempt, verify the instance is still a symbol sublayer
                 // Force re-evaluation by accessing the parent chain
                 let verifyCurrent: any = instanceNode.parent;
                 let isStillSymbolSublayer = false;
+                let currentComponentAncestor:
+                  | ComponentNode
+                  | ComponentSetNode
+                  | null = null;
                 while (verifyCurrent) {
                   if (
                     verifyCurrent.type === "COMPONENT" ||
                     verifyCurrent.type === "COMPONENT_SET"
                   ) {
                     isStillSymbolSublayer = true;
+                    currentComponentAncestor = verifyCurrent;
                     break;
                   }
                   if (verifyCurrent.type === "PAGE") break;
@@ -11940,9 +11968,64 @@ export async function resolveDeferredNormalInstances(
                   break;
                 }
 
+                // Re-fetch component properties on each retry - they may not have been ready initially
+                let currentComponentProps: ComponentPropertyDefinitions | null =
+                  null;
+                if (currentComponentAncestor) {
+                  try {
+                    currentComponentProps =
+                      currentComponentAncestor.componentPropertyDefinitions;
+                    if (
+                      !currentComponentProps ||
+                      Object.keys(currentComponentProps).length === 0
+                    ) {
+                      debugConsole.log(
+                        `  [BINDING] Attempt ${attempt}/${MAX_RETRIES}: Component properties not ready yet for "${nodeData.name}" - will retry`,
+                      );
+                      if (attempt < MAX_RETRIES) {
+                        continue; // Skip to next retry
+                      }
+                    }
+                  } catch (error) {
+                    debugConsole.log(
+                      `  [BINDING] Attempt ${attempt}/${MAX_RETRIES}: Error fetching component properties: ${error}. Will retry.`,
+                    );
+                    if (attempt < MAX_RETRIES) {
+                      continue; // Skip to next retry
+                    }
+                  }
+                }
+
                 try {
+                  // Use the re-fetched component properties if available, otherwise fall back to original
+                  const propsToUse = currentComponentProps || componentProps;
+
+                  // Before setting, verify component properties are still available
+                  // This helps catch cases where properties aren't ready yet
+                  if (!propsToUse || Object.keys(propsToUse).length === 0) {
+                    throw new Error(
+                      "Component property definitions not available - properties may not be ready yet",
+                    );
+                  }
+
+                  // Verify all referenced properties exist before attempting to bind
+                  const missingProps: string[] = [];
+                  for (const propId of Object.values(componentPropertyRefs)) {
+                    if (typeof propId === "string" && !propsToUse[propId]) {
+                      missingProps.push(propId);
+                    }
+                  }
+                  if (missingProps.length > 0) {
+                    throw new Error(
+                      `Properties not found in component: ${missingProps.join(", ")}`,
+                    );
+                  }
+
                   (instanceNode as any).componentPropertyReferences =
                     componentPropertyRefs;
+
+                  // Add a small delay after setting to allow Figma to process
+                  await sleep(10);
 
                   // Verify the binding was actually set
                   const verifyBindings = (instanceNode as any)
@@ -11977,6 +12060,11 @@ export async function resolveDeferredNormalInstances(
                     // This may help Figma recognize the instance as a symbol sublayer
                     void instanceNode.parent?.type;
                     void instanceNode.parent?.name;
+                    // Also try accessing component properties to trigger recognition
+                    if (instanceNode.parent) {
+                      void (instanceNode.parent as any)
+                        .componentPropertyDefinitions;
+                    }
                   } else {
                     debugConsole.warning(
                       `  [BINDING] ✗ Failed to restore componentPropertyReferences for deferred instance "${nodeData.name}" after ${MAX_RETRIES} attempts: ${lastError.message}`,
