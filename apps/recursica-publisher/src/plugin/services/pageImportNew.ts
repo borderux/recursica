@@ -3262,7 +3262,7 @@ export async function recreateNodeFromData(
             referencedPage = figma.root.children.find((page) => {
               const cleanPageName = getComponentCleanName(page.name);
               const pageNameWithoutVersion = cleanPageName.replace(
-                /\s*\(VERSION\s*:\s*\d+\)\s*$/i,
+                /\s*\(V\s*:\s*\d+\)\s*$/i,
                 "",
               );
               return pageNameWithoutVersion === targetNameWithoutVersion;
@@ -9944,14 +9944,14 @@ export async function resolveDeferredNormalInstances(
       }
 
       // If still not found, try matching against pages with version suffixes removed
-      // (e.g., "UI kit components (VERSION: 1)" should match "UI kit components")
+      // (e.g., "UI kit components (V: 1)" should match "UI kit components")
       if (!referencedPage) {
         const cleanTargetName = getComponentCleanName(
           instanceEntry.componentPageName,
         );
-        // Remove version suffix pattern: " (VERSION: X)" or " (VERSION:X)"
+        // Remove version suffix pattern: " (V: X)" or " (V:X)"
         const targetNameWithoutVersion = cleanTargetName.replace(
-          /\s*\(VERSION\s*:\s*\d+\)\s*$/i,
+          /\s*\(V\s*:\s*\d+\)\s*$/i,
           "",
         );
 
@@ -9959,7 +9959,7 @@ export async function resolveDeferredNormalInstances(
           figma.root.children.find((page) => {
             const cleanPageName = getComponentCleanName(page.name);
             const pageNameWithoutVersion = cleanPageName.replace(
-              /\s*\(VERSION\s*:\s*\d+\)\s*$/i,
+              /\s*\(V\s*:\s*\d+\)\s*$/i,
               "",
             );
             return pageNameWithoutVersion === targetNameWithoutVersion;
@@ -10475,6 +10475,16 @@ export async function resolveDeferredNormalInstances(
       instanceNode.name =
         nodeData.name ||
         placeholderFrame.name.replace("[Deferred: ", "").replace("]", "");
+
+      // Log what component the instance was created from vs what it should be
+      const actualMainComponent = await instanceNode.getMainComponentAsync();
+      const expectedComponentName = instanceEntry.componentName;
+      const actualComponentName = actualMainComponent
+        ? actualMainComponent.name
+        : "unknown";
+      debugConsole.log(
+        `  [BINDING] Deferred instance "${nodeData.name}" resolved: expected component "${expectedComponentName}", actual main component "${actualComponentName}"${actualMainComponent?.parent?.type === "COMPONENT_SET" ? ` (COMPONENT_SET: "${actualMainComponent.parent.name}")` : ""}`,
+      );
 
       // Copy plugin data from component children to instance children for proper ID matching
       // This ensures deferred child resolution can match by original IDs
@@ -11221,33 +11231,127 @@ export async function resolveDeferredNormalInstances(
         typeof nodeData.componentPropertyReferences === "object"
       ) {
         try {
-          // CRITICAL: Get property definitions from the INSTANCE'S MAIN COMPONENT, not the parent
-          // The instance's main component is the source of truth for property definitions
-          // Property IDs are unique per component, so we must use the main component's current IDs
+          // Log what properties the bindings are trying to reference
+          const bindingPropertyNames = Object.values(
+            nodeData.componentPropertyReferences,
+          )
+            .filter((v): v is string => typeof v === "string")
+            .map((v) => v.split("#")[0]);
+          debugConsole.log(
+            `  [BINDING] Deferred instance "${nodeData.name}" has bindings for properties: ${bindingPropertyNames.join(", ")}`,
+          );
+
+          // CRITICAL: For nested instances, bindings reference properties from the PARENT component,
+          // not the instance's main component. Walk up the tree to find the containing component.
+          // Example: Icon instance inside Button component - bindings reference Button properties, not Icon properties.
+          let parentComponent: ComponentNode | ComponentSetNode | null = null;
+          let current: any = instanceNode.parent;
+          while (current) {
+            if (
+              current.type === "COMPONENT" ||
+              current.type === "COMPONENT_SET"
+            ) {
+              parentComponent = current;
+              break;
+            }
+            current = current.parent;
+          }
+
+          // If no parent component found, fall back to instance's main component
+          // (This handles cases where the instance is at the root level)
           const mainComponent = await instanceNode.getMainComponentAsync();
+          const expectedComponentName = instanceEntry.componentName;
+          if (mainComponent && mainComponent.name !== expectedComponentName) {
+            debugConsole.warning(
+              `  [BINDING] Component mismatch for deferred instance "${nodeData.name}": expected "${expectedComponentName}", but main component is "${mainComponent.name}"${mainComponent.parent?.type === "COMPONENT_SET" ? ` (COMPONENT_SET: "${mainComponent.parent.name}")` : ""}`,
+            );
+          }
+
           let componentProps: ComponentPropertyDefinitions | null = null;
 
-          if (mainComponent) {
+          // Try parent component first (for nested instances)
+          if (parentComponent) {
+            const parentComponentType = (parentComponent as any).type;
+            if (parentComponentType === "COMPONENT_SET") {
+              const componentSet =
+                parentComponent as unknown as ComponentSetNode;
+              componentProps = componentSet.componentPropertyDefinitions;
+              debugConsole.log(
+                `  [BINDING] Deferred instance "${nodeData.name}" -> Using parent COMPONENT_SET "${parentComponent.name}" with ${Object.keys(componentProps || {}).length} property(ies)`,
+              );
+            } else if (
+              parentComponentType === "COMPONENT" &&
+              parentComponent.parent &&
+              parentComponent.parent.type === "COMPONENT_SET"
+            ) {
+              // Parent is a variant component - get properties from parent COMPONENT_SET
+              componentProps =
+                parentComponent.parent.componentPropertyDefinitions;
+              debugConsole.log(
+                `  [BINDING] Deferred instance "${nodeData.name}" -> Using parent variant "${parentComponent.name}" in COMPONENT_SET "${parentComponent.parent.name}" with ${Object.keys(componentProps || {}).length} property(ies)`,
+              );
+            } else if (parentComponentType === "COMPONENT") {
+              // Non-variant parent component - can access componentPropertyDefinitions directly
+              componentProps = parentComponent.componentPropertyDefinitions;
+              debugConsole.log(
+                `  [BINDING] Deferred instance "${nodeData.name}" -> Using parent non-variant component "${parentComponent.name}" with ${Object.keys(componentProps || {}).length} property(ies)`,
+              );
+            }
+          }
+
+          // Fallback to instance's main component if no parent component found
+          if (!componentProps && mainComponent) {
             const mainComponentType = (mainComponent as any).type;
             if (mainComponentType === "COMPONENT_SET") {
-              // Main component is a COMPONENT_SET - can access componentPropertyDefinitions directly
               const componentSet = mainComponent as unknown as ComponentSetNode;
               componentProps = componentSet.componentPropertyDefinitions;
+              debugConsole.log(
+                `  [BINDING] Deferred instance "${nodeData.name}" -> Fallback to main COMPONENT_SET "${mainComponent.name}" with ${Object.keys(componentProps || {}).length} property(ies)`,
+              );
             } else if (
               mainComponentType === "COMPONENT" &&
               mainComponent.parent &&
               mainComponent.parent.type === "COMPONENT_SET"
             ) {
-              // Instance was created from a variant - get properties from parent COMPONENT_SET
               componentProps =
                 mainComponent.parent.componentPropertyDefinitions;
+              debugConsole.log(
+                `  [BINDING] Deferred instance "${nodeData.name}" -> Fallback to main variant "${mainComponent.name}" in COMPONENT_SET "${mainComponent.parent.name}" with ${Object.keys(componentProps || {}).length} property(ies)`,
+              );
             } else if (mainComponentType === "COMPONENT") {
-              // Non-variant component - can access componentPropertyDefinitions directly
               componentProps = mainComponent.componentPropertyDefinitions;
+              debugConsole.log(
+                `  [BINDING] Deferred instance "${nodeData.name}" -> Fallback to main non-variant component "${mainComponent.name}" with ${Object.keys(componentProps || {}).length} property(ies)`,
+              );
             }
           }
 
+          if (!componentProps) {
+            const parentComponentName = parentComponent
+              ? parentComponent.name
+              : "none";
+            const mainComponentName = mainComponent
+              ? mainComponent.name
+              : "unknown";
+            const componentSetName =
+              mainComponent &&
+              mainComponent.parent &&
+              mainComponent.parent.type === "COMPONENT_SET"
+                ? mainComponent.parent.name
+                : null;
+            debugConsole.warning(
+              `  [BINDING] No component property definitions available for deferred instance "${nodeData.name}" (parent component: "${parentComponentName}", main component: "${mainComponentName}"${componentSetName ? `, COMPONENT_SET: "${componentSetName}"` : ""})`,
+            );
+          }
+
           if (componentProps) {
+            debugConsole.log(
+              `  [BINDING] Available properties for deferred instance "${nodeData.name}": ${Object.keys(
+                componentProps,
+              )
+                .map((p) => p.split("#")[0])
+                .join(", ")}`,
+            );
             const componentPropertyRefs: Record<string, string> = {};
 
             // Map old property IDs to new property IDs by matching property names
@@ -11292,8 +11396,17 @@ export async function resolveDeferredNormalInstances(
                   const componentName = mainComponent
                     ? mainComponent.name
                     : "unknown";
+                  const componentSetName =
+                    mainComponent &&
+                    mainComponent.parent &&
+                    mainComponent.parent.type === "COMPONENT_SET"
+                      ? mainComponent.parent.name
+                      : null;
+                  const availableProps = Object.keys(componentProps)
+                    .map((p) => p.split("#")[0])
+                    .join(", ");
                   debugConsole.warning(
-                    `  [BINDING] Could not find property "${cleanPropName}" in component "${componentName}" for deferred instance "${nodeData.name}"`,
+                    `  [BINDING] Could not find property "${cleanPropName}" in component "${componentName}"${componentSetName ? ` (COMPONENT_SET: "${componentSetName}")` : ""} for deferred instance "${nodeData.name}". Available properties: ${availableProps || "none"}`,
                   );
                 }
               }

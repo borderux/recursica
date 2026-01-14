@@ -545,8 +545,8 @@ export async function mergeImportGroup(
           `Set page metadata for "${componentName}": GUID=${componentGuid.substring(0, 8)}..., version=${version}`,
         );
 
-        // Rename to: ComponentName (VERSION: X)
-        const finalName = `${componentName} (VERSION: ${version})`;
+        // Rename to: ComponentName (VX)
+        const finalName = `${componentName} (V${version})`;
         page.name = finalName;
         pagesRenamed++;
         debugConsole.log(`Renamed page: "${newName}" -> "${finalName}"`);
