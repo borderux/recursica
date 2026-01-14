@@ -1987,6 +1987,26 @@ export async function recreateNodeFromData(
               // Extract just the property name part (before the #)
               const cleanPropName = propName.split("#")[0];
 
+              // Check if property already exists (for COMPONENT nodes that might be part of a COMPONENT_SET)
+              // This can happen if the component was already created and properties were added
+              const existingProps = newNode.componentPropertyDefinitions;
+              if (existingProps && existingProps[cleanPropName]) {
+                debugConsole.log(
+                  `  Skipping component property "${cleanPropName}" on COMPONENT "${nodeData.name || "Unnamed"}" - property already exists`,
+                );
+                // Property already exists, use the existing property ID for mapping
+                const existingPropId = Object.keys(existingProps).find(
+                  (key) => key.split("#")[0] === cleanPropName,
+                );
+                if (existingPropId) {
+                  propertyIdMapping.set(propName, existingPropId);
+                  debugConsole.log(
+                    `  [BINDING] Using existing property "${existingPropId}" for mapping (was "${propName}" in JSON)`,
+                  );
+                }
+                continue;
+              }
+
               // CRITICAL: Capture the return value - this is the unique property ID (e.g., "Component name#12:34")
               // We need this ID (not just the name) to set componentPropertyReferences
               const newPropertyId = newNode.addComponentProperty(
@@ -2218,6 +2238,27 @@ export async function recreateNodeFromData(
                 // Property names in JSON may include IDs (e.g., "Label#318:0")
                 // Extract just the property name part (before the #)
                 const cleanPropName = propName.split("#")[0];
+
+                // Check if property already exists (as variant property or component property)
+                // Variant properties are automatically created when components are combined into a COMPONENT_SET
+                // We cannot add a component property with the same name as an existing variant property
+                const existingProps = componentSet.componentPropertyDefinitions;
+                if (existingProps && existingProps[cleanPropName]) {
+                  debugConsole.log(
+                    `  Skipping component property "${cleanPropName}" on COMPONENT_SET "${nodeData.name || "Unnamed"}" - property already exists (likely a variant property)`,
+                  );
+                  // Property already exists, use the existing property ID for mapping
+                  const existingPropId = Object.keys(existingProps).find(
+                    (key) => key.split("#")[0] === cleanPropName,
+                  );
+                  if (existingPropId) {
+                    propertyIdMapping.set(propName, existingPropId);
+                    debugConsole.log(
+                      `  [BINDING] Using existing property "${existingPropId}" for mapping (was "${propName}" in JSON)`,
+                    );
+                  }
+                  continue;
+                }
 
                 // CRITICAL: Capture the return value - this is the unique property ID (e.g., "Placeholder#12:34")
                 // We need this ID (not just the name) to set componentPropertyReferences
@@ -6003,9 +6044,12 @@ export async function recreateNodeFromData(
       nodeData.boundVariables,
     )) {
       // Skip fills (handled separately earlier), padding properties (set earlier),
-      // and size properties (handled in special section after resize)
+      // size properties (handled in special section after resize), and componentProperties
+      // componentProperties is a special nested structure for component properties bound to variables,
+      // not a node property itself
       if (
         propertyName !== "fills" &&
+        propertyName !== "componentProperties" &&
         !paddingProps.includes(propertyName) &&
         !sizeProps.includes(propertyName)
       ) {
@@ -6051,10 +6095,19 @@ export async function recreateNodeFromData(
                   );
                 }
 
-                // Set the bound variable - this should work if no direct value conflicts
-                // If there's a direct value, Figma will reject this, but we've already skipped setting
-                // direct values when bound variables exist, so this should work
-                (newNode as any).boundVariables[propertyName] = alias;
+                // Use Figma's setBoundVariable API method (not direct assignment)
+                // Direct assignment to boundVariables doesn't work if the property already has a direct value
+                // setBoundVariable API can replace direct values with bound variables
+                try {
+                  // First, try to remove any existing binding by setting to null
+                  (newNode as any).setBoundVariable(propertyName, null);
+                } catch {
+                  // Ignore errors when removing (might not exist)
+                }
+
+                // Set the bound variable using Figma's API
+                // This can replace direct values with bound variables
+                (newNode as any).setBoundVariable(propertyName, variable);
 
                 // Verify the bound variable was set by checking if it exists and matches
                 // Re-read boundVariables to ensure we get the actual state from Figma
@@ -8361,6 +8414,17 @@ async function createRemoteInstances(
               // Property names in JSON may include IDs (e.g., "Show trailing icon#318:0")
               // Extract just the property name part (before the #)
               const cleanPropName = propName.split("#")[0];
+
+              // Check if property already exists
+              // This can happen if the component was already created and properties were added
+              const existingProps = componentNode.componentPropertyDefinitions;
+              if (existingProps && existingProps[cleanPropName]) {
+                debugConsole.log(
+                  `  Skipping component property "${cleanPropName}" on component "${entry.componentName}" - property already exists`,
+                );
+                continue;
+              }
+
               componentNode.addComponentProperty(
                 cleanPropName,
                 propType,
@@ -11222,6 +11286,147 @@ export async function resolveDeferredNormalInstances(
         debugConsole.error(error);
         errors.push(error);
         continue;
+      }
+
+      // CRITICAL: Restore bound variables AFTER variant and component properties are set
+      // When variant properties are set, Figma applies the variant's default values (hardcoded)
+      // which can overwrite bound variables. We need to restore bound variables after this.
+      // This is especially important for properties like opacity and cornerRadius that are
+      // affected by variant changes (e.g., Disabled=true variant changes opacity)
+      debugConsole.log(
+        `  [BOUND-VAR] Checking bound variables for deferred instance "${nodeData.name}": has boundVariables=${!!nodeData.boundVariables}, has recognizedVariables=${!!recognizedVariables}`,
+      );
+      if (nodeData.boundVariables) {
+        const boundVarKeys = Object.keys(nodeData.boundVariables);
+        debugConsole.log(
+          `  [BOUND-VAR] Deferred instance "${nodeData.name}" has boundVariables for: ${boundVarKeys.join(", ")}`,
+        );
+      }
+      if (nodeData.boundVariables && recognizedVariables) {
+        const paddingProps = [
+          "paddingLeft",
+          "paddingRight",
+          "paddingTop",
+          "paddingBottom",
+          "itemSpacing",
+        ];
+        const sizeProps = ["width", "height", "minWidth", "maxWidth"];
+        for (const [propertyName, varInfo] of Object.entries(
+          nodeData.boundVariables,
+        )) {
+          // Skip fills (handled separately), padding properties, size properties, and componentProperties
+          // componentProperties is a special nested structure for component properties bound to variables,
+          // not a node property itself
+          if (
+            propertyName !== "fills" &&
+            propertyName !== "componentProperties" &&
+            !paddingProps.includes(propertyName) &&
+            !sizeProps.includes(propertyName)
+          ) {
+            debugConsole.log(
+              `  [BOUND-VAR] Processing bound variable for ${propertyName} on deferred instance "${nodeData.name}"`,
+            );
+            if (isVariableReference(varInfo) && recognizedVariables) {
+              const varRef = (varInfo as VariableReference)._varRef;
+              if (varRef !== undefined) {
+                debugConsole.log(
+                  `  [BOUND-VAR] Looking up variable reference ${varRef} for ${propertyName} on deferred instance "${nodeData.name}"`,
+                );
+                const variable = recognizedVariables.get(String(varRef));
+                if (variable) {
+                  debugConsole.log(
+                    `  [BOUND-VAR] Found variable "${variable.name}" (ID: ${variable.id.substring(0, 8)}...) for ${propertyName} on deferred instance "${nodeData.name}"`,
+                  );
+                  try {
+                    // Check if property currently has a direct value that might block the binding
+                    const currentValue = (instanceNode as any)[propertyName];
+                    const currentBoundVar = (instanceNode as any)
+                      .boundVariables?.[propertyName];
+                    debugConsole.log(
+                      `  [BOUND-VAR] Current state for ${propertyName} on deferred instance "${nodeData.name}": value=${currentValue}, boundVar=${JSON.stringify(currentBoundVar)}`,
+                    );
+
+                    // Use Figma's setBoundVariable API method (not direct assignment)
+                    // This is the correct way to bind variables - direct assignment doesn't work reliably
+                    try {
+                      // First, try to remove any existing binding by setting to null
+                      (instanceNode as any).setBoundVariable(
+                        propertyName,
+                        null,
+                      );
+                    } catch {
+                      // Ignore errors when removing (might not exist)
+                    }
+
+                    // Set the bound variable using Figma's API
+                    (instanceNode as any).setBoundVariable(
+                      propertyName,
+                      variable,
+                    );
+
+                    // Verify the bound variable was set
+                    const setBoundVar = (instanceNode as any).boundVariables?.[
+                      propertyName
+                    ];
+                    if (
+                      setBoundVar &&
+                      typeof setBoundVar === "object" &&
+                      setBoundVar.type === "VARIABLE_ALIAS" &&
+                      setBoundVar.id === variable.id
+                    ) {
+                      debugConsole.log(
+                        `  [BOUND-VAR] ✓ Set bound variable for ${propertyName} on deferred instance "${nodeData.name}": variable ${variable.name} (ID: ${variable.id.substring(0, 8)}...)`,
+                      );
+                    } else {
+                      const actualBoundVar = (instanceNode as any)
+                        .boundVariables?.[propertyName];
+                      debugConsole.warning(
+                        `  [BOUND-VAR] ✗ Failed to set bound variable for ${propertyName} on deferred instance "${nodeData.name}" - bound variable not persisted. Property value: ${currentValue}, Expected variable ID: ${variable.id}, Got: ${JSON.stringify(actualBoundVar)}`,
+                      );
+                    }
+                  } catch (error) {
+                    debugConsole.warning(
+                      `  [BOUND-VAR] Error setting bound variable for ${propertyName} on deferred instance "${nodeData.name}": ${error}`,
+                    );
+                  }
+                } else {
+                  debugConsole.warning(
+                    `  [BOUND-VAR] Variable reference ${varRef} not found in recognizedVariables for ${propertyName} on deferred instance "${nodeData.name}". Available variable references: ${Array.from(recognizedVariables.keys()).slice(0, 10).join(", ")}...`,
+                  );
+                }
+              } else {
+                debugConsole.warning(
+                  `  [BOUND-VAR] Variable reference is undefined for ${propertyName} on deferred instance "${nodeData.name}"`,
+                );
+              }
+            } else {
+              debugConsole.warning(
+                `  [BOUND-VAR] Variable info for ${propertyName} on deferred instance "${nodeData.name}" is not a valid variable reference: ${JSON.stringify(varInfo)}`,
+              );
+            }
+          } else {
+            if (propertyName === "componentProperties") {
+              debugConsole.log(
+                `  [BOUND-VAR] Skipping ${propertyName} on deferred instance "${nodeData.name}" (component properties with bound variables - handled separately via component property restoration)`,
+              );
+            } else {
+              debugConsole.log(
+                `  [BOUND-VAR] Skipping ${propertyName} on deferred instance "${nodeData.name}" (handled separately)`,
+              );
+            }
+          }
+        }
+      } else {
+        if (!nodeData.boundVariables) {
+          debugConsole.log(
+            `  [BOUND-VAR] No boundVariables in nodeData for deferred instance "${nodeData.name}"`,
+          );
+        }
+        if (!recognizedVariables) {
+          debugConsole.warning(
+            `  [BOUND-VAR] recognizedVariables is null/undefined for deferred instance "${nodeData.name}"`,
+          );
+        }
       }
 
       // Restore componentPropertyReferences for the instance and its children
