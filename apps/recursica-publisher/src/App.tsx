@@ -12,10 +12,13 @@ import ImportRepoComponent from "./pages/ImportRepoComponent";
 import Importing from "./pages/Importing";
 import ImportWizard from "./pages/ImportWizard";
 import Publish from "./pages/Publish";
+import PublishInit from "./pages/PublishInit/PublishInit";
 import Publishing from "./pages/Publishing/Publishing";
 import PublishingComplete from "./pages/PublishingComplete";
 import PublishingWizard from "./pages/PublishingWizard/PublishingWizard";
 import Test from "./pages/Test";
+import Admin from "./pages/Admin/Admin";
+import EditMetadata from "./pages/EditMetadata/EditMetadata";
 import PageManagement from "./pages/PageManagement";
 import { Auth } from "./pages/Auth/Auth";
 import { PublishAuth } from "./pages/PublishAuth";
@@ -152,6 +155,7 @@ function App() {
               <Route path="/importing" element={<Importing />} />
               <Route path="/import-wizard/*" element={<ImportWizard />} />
               <Route path="/publish" element={<Publish />} />
+              <Route path="/publish-init" element={<PublishInit />} />
               <Route path="/publish/auth" element={<PublishAuth />} />
               <Route path="/publish/unauthorized" element={<Unauthorized />} />
               <Route path="/publishing" element={<Publishing />} />
@@ -161,6 +165,8 @@ function App() {
               />
               <Route path="/publishing-wizard" element={<PublishingWizard />} />
               <Route path="/test" element={<Test />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/edit-metadata" element={<EditMetadata />} />
               <Route element={<Layout />}>
                 <Route path="auth" element={<Auth />} />
                 <Route path="page-management" element={<PageManagement />} />

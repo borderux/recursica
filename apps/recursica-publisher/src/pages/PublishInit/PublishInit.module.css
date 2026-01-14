@@ -1,0 +1,113 @@
+.root {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: var(--mantine-spacing-lg);
+}
+
+.description {
+  font-size: var(--mantine-font-size-sm);
+  color: var(--mantine-color-gray-6);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.pagesCard {
+  border: 1px solid var(--mantine-color-gray-3);
+  border-radius: var(--mantine-radius-md);
+  overflow: hidden;
+}
+
+.cardHeader {
+  padding: var(--mantine-spacing-md);
+  background-color: var(--mantine-color-gray-1);
+  border-bottom: 1px solid var(--mantine-color-gray-3);
+}
+
+.cardSubtitle {
+  color: var(--mantine-color-gray-6);
+  margin-top: var(--mantine-spacing-xs);
+}
+
+.pagesList {
+  padding: var(--mantine-spacing-md);
+}
+
+.pageItem {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mantine-spacing-sm);
+  padding: var(--mantine-spacing-sm);
+  border: 1px solid var(--mantine-color-gray-3);
+  border-radius: var(--mantine-radius-sm);
+  background-color: var(--mantine-color-gray-0);
+}
+
+.pageInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mantine-spacing-xs);
+}
+
+.pageNameRow {
+  display: flex;
+  align-items: center;
+  gap: var(--mantine-spacing-sm);
+}
+
+.pageName {
+  font-weight: 500;
+  font-size: var(--mantine-font-size-md);
+}
+
+.metadataBadge {
+  color: var(--mantine-color-blue-6);
+  font-weight: 500;
+}
+
+.githubInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: var(--mantine-spacing-xs);
+}
+
+.githubName {
+  color: var(--mantine-color-gray-7);
+  font-weight: 500;
+}
+
+.githubDetails {
+  color: var(--mantine-color-gray-6);
+  font-family: monospace;
+  font-size: var(--mantine-font-size-xs);
+}
+
+.noMatchText {
+  color: var(--mantine-color-gray-6);
+  font-style: italic;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--mantine-spacing-sm);
+  margin-top: var(--mantine-spacing-lg);
+}
+
+.loadingContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 300px;
+}
+
+.loadingText {
+  font-size: var(--mantine-font-size-md);
+  color: var(--mantine-color-gray-6);
+}

@@ -182,9 +182,9 @@ export default function Home() {
     navigate("/import-main");
   };
 
-  const handleTestClick = () => {
-    console.log("[Home] Test button clicked");
-    navigate("/test");
+  const handlePublishClick = () => {
+    console.log("[Home] Publish button clicked");
+    navigate("/publish");
   };
 
   return (
@@ -210,7 +210,7 @@ export default function Home() {
           variant="outline"
           color="red"
           size="lg"
-          onClick={() => navigate("/publish")}
+          onClick={handlePublishClick}
           className={classes.button}
         >
           Publish
@@ -220,9 +220,10 @@ export default function Home() {
           variant="outline"
           color="red"
           size="lg"
-          onClick={handleTestClick}
+          onClick={() => navigate("/admin")}
+          className={classes.button}
         >
-          Test
+          Admin
         </Button>
       </Stack>
     </PageLayout>

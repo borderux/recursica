@@ -36,6 +36,10 @@ export default function PageLayout({
     }
   };
 
+  const handleLogoClick = () => {
+    navigate("/admin");
+  };
+
   return (
     <div className={classes.root}>
       {/* Main Content */}
@@ -72,7 +76,7 @@ export default function PageLayout({
         )}
 
         {/* Logo in center */}
-        <div className={classes.logoContainer}>
+        <div className={classes.logoContainer} onClick={handleLogoClick}>
           <svg
             width="32"
             height="22"

@@ -17,6 +17,7 @@ export interface ComponentMetadata {
 }
 
 export const PLUGIN_DATA_KEY = "RecursicaPublishedMetadata";
+export const INIT_METADATA_KEY = "RecursicaPublishInitialized";
 
 export interface GetComponentMetadataResponseData {
   componentMetadata: ComponentMetadata;
