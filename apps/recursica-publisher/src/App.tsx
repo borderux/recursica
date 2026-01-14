@@ -4,6 +4,7 @@ import { MantineProvider } from "@mantine/core";
 import { theme } from "./theme/theme";
 import Layout from "./components/Layout";
 import Home from "./pages/Home/Home";
+import Splash from "./pages/Splash/Splash";
 import Import from "./pages/Import/Import";
 import ImportMain from "./pages/ImportMain/ImportMain";
 import ImportBranch from "./pages/ImportBranch/ImportBranch";
@@ -140,9 +141,10 @@ function App() {
     <MantineProvider theme={theme}>
       <AuthProvider>
         <ImportDataProvider>
-          <MemoryRouter initialEntries={["/"]}>
+          <MemoryRouter initialEntries={["/splash"]}>
             <RouteLogger />
             <Routes>
+              <Route path="/splash" element={<Splash />} />
               <Route path="/" element={<Home />} />
               <Route path="/import" element={<Import />} />
               <Route path="/import-main" element={<ImportMain />} />

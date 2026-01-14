@@ -16,6 +16,8 @@
   min-height: 0;
   /* 20px = 1.25rem - using rem for consistency with theme typography */
   padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .footer {
@@ -65,20 +67,19 @@
   gap: 10px;
 }
 
-.authButton {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.logoutLink {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px 8px;
+  padding: 0;
   font-size: 12px;
   color: #333;
+  text-decoration: none;
+  font-family: inherit;
 }
 
-.authButton:hover {
-  opacity: 0.7;
+.logoutLink:hover {
+  text-decoration: underline;
 }
 
 .version {

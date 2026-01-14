@@ -2,6 +2,16 @@
   padding: 20px;
   max-width: 400px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+}
+
+.description {
+  text-align: center;
+  color: #333;
 }
 
 .errorText {
@@ -10,6 +20,10 @@
   color: #c62828;
 }
 
-.button {
+.githubButton {
+  width: 100%;
+}
+
+.skipButton {
   width: 100%;
 }

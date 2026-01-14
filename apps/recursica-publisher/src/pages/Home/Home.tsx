@@ -189,43 +189,35 @@ export default function Home() {
 
   return (
     <PageLayout showBackButton={false}>
-      <Stack gap={20} className={classes.root}>
-        <Button
-          variant="outline"
-          color="red"
-          size="lg"
-          onClick={handleImportClick}
-          className={classes.button}
-        >
-          {importData &&
-          importData.mainFile &&
-          importData.mainFile.status === "success" &&
-          (importData.importStatus === "in_progress" ||
-            importData.importStatus === "failed")
-            ? "Continue Import"
-            : "Import"}
-        </Button>
+      <div className={classes.root}>
+        <Stack gap={20} align="center">
+          <Button
+            variant="outline"
+            color="red"
+            size="lg"
+            onClick={handleImportClick}
+            className={classes.button}
+          >
+            {importData &&
+            importData.mainFile &&
+            importData.mainFile.status === "success" &&
+            (importData.importStatus === "in_progress" ||
+              importData.importStatus === "failed")
+              ? "Continue Import"
+              : "Import"}
+          </Button>
 
-        <Button
-          variant="outline"
-          color="red"
-          size="lg"
-          onClick={handlePublishClick}
-          className={classes.button}
-        >
-          Publish
-        </Button>
-
-        <Button
-          variant="outline"
-          color="red"
-          size="lg"
-          onClick={() => navigate("/admin")}
-          className={classes.button}
-        >
-          Admin
-        </Button>
-      </Stack>
+          <Button
+            variant="outline"
+            color="red"
+            size="lg"
+            onClick={handlePublishClick}
+            className={classes.button}
+          >
+            Publish
+          </Button>
+        </Stack>
+      </div>
     </PageLayout>
   );
 }

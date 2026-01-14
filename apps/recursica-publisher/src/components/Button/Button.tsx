@@ -24,14 +24,7 @@ export interface ButtonProps
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
-    {
-      variant = "outline",
-      size = "md",
-      color = "red",
-      className,
-      disabled,
-      ...props
-    },
+    { variant = "outline", size = "md", color, className, disabled, ...props },
     ref,
   ) => {
     return (

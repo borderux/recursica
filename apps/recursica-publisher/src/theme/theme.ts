@@ -1,7 +1,7 @@
 import { createTheme } from "@mantine/core";
 
 export const theme = createTheme({
-  primaryColor: "red",
+  primaryColor: "dark",
   other: {
     // Custom CSS variables for semi-transparent colors
     "red-5-opacity-50": "rgba(212, 13, 13, 0.5)", // Semi-transparent red for focus states
