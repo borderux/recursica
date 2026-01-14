@@ -10,7 +10,6 @@ import {
   Button,
   Alert,
   LoadingSpinner,
-  Card,
 } from "../../components";
 import classes from "./ExistingImport.module.css";
 
@@ -120,7 +119,7 @@ export default function ExistingImport() {
   return (
     <Stack gap="lg" className={classes.root}>
       <div className={classes.header}>
-        <Title order={1} mb="xs">
+        <Title order={1} className={classes.title}>
           Import Review
         </Title>
         <Text variant="small" className={classes.componentInfo}>
@@ -157,7 +156,7 @@ export default function ExistingImport() {
               press Cancel to stop this import.
             </Text>
           )}
-          <Card className={classes.summaryCard}>
+          <div className={classes.summaryWrapper}>
             <div className={classes.summaryHeader}>
               <Title order={3}>Import Summary</Title>
             </div>
@@ -241,7 +240,7 @@ export default function ExistingImport() {
                 </tr>
               </tbody>
             </table>
-          </Card>
+          </div>
         </>
       )}
 

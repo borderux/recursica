@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { DebugConsole } from "../../components/DebugConsole";
+import { Button } from "../../components/Button";
 import { useImportWizard } from "../../context/ImportWizardContext";
 import { useImportData } from "../../context/ImportDataContext";
 import { callPlugin } from "../../utils/callPlugin";
@@ -388,81 +389,15 @@ export default function Step5Importing() {
       >
         {importError ? (
           <>
-            <button
-              onClick={handleDone}
-              disabled={isCleaningUp}
-              style={{
-                padding: "12px 24px",
-                fontSize: "16px",
-                fontWeight: "bold",
-                backgroundColor: isCleaningUp ? "#ccc" : "#666",
-                color: "white",
-                border: "none",
-                borderRadius: "8px",
-                cursor: isCleaningUp ? "not-allowed" : "pointer",
-              }}
-              onMouseOver={(e) => {
-                if (!isCleaningUp) {
-                  e.currentTarget.style.opacity = "0.9";
-                }
-              }}
-              onMouseOut={(e) => {
-                if (!isCleaningUp) {
-                  e.currentTarget.style.opacity = "1";
-                }
-              }}
-            >
+            <Button onClick={handleDone} disabled={isCleaningUp}>
               Done
-            </button>
-            <button
-              onClick={handleCleanup}
-              disabled={isCleaningUp}
-              style={{
-                padding: "12px 24px",
-                fontSize: "16px",
-                fontWeight: "bold",
-                backgroundColor: isCleaningUp ? "#ccc" : "#d40d0d",
-                color: "white",
-                border: "none",
-                borderRadius: "8px",
-                cursor: isCleaningUp ? "not-allowed" : "pointer",
-              }}
-              onMouseOver={(e) => {
-                if (!isCleaningUp) {
-                  e.currentTarget.style.opacity = "0.9";
-                }
-              }}
-              onMouseOut={(e) => {
-                if (!isCleaningUp) {
-                  e.currentTarget.style.opacity = "1";
-                }
-              }}
-            >
+            </Button>
+            <Button onClick={handleCleanup} disabled={isCleaningUp}>
               {isCleaningUp ? "Cleaning up..." : "Cleanup"}
-            </button>
+            </Button>
           </>
         ) : (
-          <button
-            onClick={handleDone}
-            style={{
-              padding: "12px 24px",
-              fontSize: "16px",
-              fontWeight: "bold",
-              backgroundColor: "#d40d0d",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              cursor: "pointer",
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.opacity = "0.9";
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.opacity = "1";
-            }}
-          >
-            Done
-          </button>
+          <Button onClick={handleDone}>Done</Button>
         )}
       </div>
     </div>

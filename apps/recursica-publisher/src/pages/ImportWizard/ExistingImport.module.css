@@ -5,7 +5,10 @@
 }
 
 .header {
-  margin-bottom: var(--mantine-spacing-lg);
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mantine-spacing-xs);
 }
 
 .componentInfo {
@@ -26,6 +29,11 @@
   line-height: 1.5;
   color: var(--mantine-color-gray-9);
   margin: 0;
+}
+
+.summaryWrapper {
+  border: 1px solid var(--mantine-color-gray-3);
+  margin-top: 0;
 }
 
 .summaryCard {
@@ -79,8 +87,8 @@
 
 .summaryList {
   margin: 0;
-  padding-left: var(--mantine-spacing-lg);
-  list-style: disc;
+  padding: 0;
+  list-style: none;
 }
 
 .summaryListItem {
