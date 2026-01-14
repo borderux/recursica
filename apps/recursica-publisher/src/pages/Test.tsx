@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { PageLayout } from "../components/PageLayout";
 import { DebugConsole } from "../components/DebugConsole";
 import { callPlugin } from "../utils/callPlugin";
+import type { DebugConsoleMessage } from "../plugin/services/debugConsole";
 
 export default function Test() {
   const navigate = useNavigate();
@@ -21,6 +22,9 @@ export default function Test() {
       details?: Record<string, unknown>;
     }>
   >([]);
+  const [debugLogs, setDebugLogs] = useState<DebugConsoleMessage[] | undefined>(
+    undefined,
+  );
 
   const testTitle = "itemSpacing Variable Binding Test (Issue #1)";
 
@@ -33,6 +37,7 @@ export default function Test() {
         setIsRunning(true);
         setError(null);
         setTestResults(null);
+        setDebugLogs(undefined);
 
         const { promise } = callPlugin("runTest", {});
         const response = await promise;
@@ -54,15 +59,23 @@ export default function Test() {
               message: string;
               details?: Record<string, unknown>;
             }>;
+            debugLogs?: DebugConsoleMessage[];
           };
           setTestResults(data.testResults);
           if (data.allTests) {
             setAllTests(data.allTests);
           }
+          if (data.debugLogs) {
+            setDebugLogs(data.debugLogs);
+          }
         } else {
           setError(
             response.message || "Test failed. Please check the debug console.",
           );
+          // Extract debug logs from error response if available
+          if (response.data?.debugLogs) {
+            setDebugLogs(response.data.debugLogs as DebugConsoleMessage[]);
+          }
         }
       } catch (err) {
         if (isMounted) {
@@ -119,6 +132,7 @@ export default function Test() {
           isActive={isRunning}
           isComplete={!isRunning && testResults !== null && !error}
           error={error}
+          debugLogs={debugLogs}
         />
 
         <div style={{ marginTop: "20px" }}>

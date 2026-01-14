@@ -17,7 +17,10 @@ import {
   type VariableAliasSerialized,
   type CollectionTableEntry,
 } from "./parsers/variableTable";
-import { InstanceTable } from "./parsers/instanceTable";
+import {
+  InstanceTable,
+  type InstanceTableEntry,
+} from "./parsers/instanceTable";
 import { StyleTable } from "./parsers/styleTable";
 import { ImageTable, isImageReference } from "./parsers/imageTable";
 import { StringTable } from "./parsers/stringTable";
@@ -998,6 +1001,286 @@ export async function restoreBoundVariablesForFills(
  * Recursively checks if any node in the data has a style reference
  * Returns true if any _styleRef, _fillStyleRef, _effectStyleRef, or _gridStyleRef is found
  */
+/**
+ * Resolves a component ID from an instance table entry.
+ * Used for INSTANCE_SWAP properties that reference instances via _instanceRef.
+ */
+async function resolveComponentIdFromInstanceEntry(
+  instanceEntry: InstanceTableEntry,
+  nodeIdMapping: Map<string, any> | null,
+): Promise<string | null> {
+  try {
+    if (instanceEntry.instanceType === "internal") {
+      // Internal instance - component should be in nodeIdMapping
+      if (!instanceEntry.componentNodeId || !nodeIdMapping) {
+        return null;
+      }
+      const componentNode = nodeIdMapping.get(instanceEntry.componentNodeId);
+      if (!componentNode || componentNode.type !== "COMPONENT") {
+        return null;
+      }
+      return componentNode.id;
+    } else if (instanceEntry.instanceType === "remote") {
+      // Remote instance - get component from remoteComponentMap
+      // We need to find the index in the instance table, but we don't have it here
+      // For now, we'll search by component name in remoteComponentMap
+      // This is a limitation - we'd need the instance table index to properly resolve
+      // For INSTANCE_SWAP, we'll need to pass the instance index or use a different approach
+      debugConsole.warning(
+        `Cannot resolve remote instance component ID for INSTANCE_SWAP - remote instances require instance table index`,
+      );
+      return null;
+    } else if (instanceEntry.instanceType === "normal") {
+      // Normal instance - find component on referenced page
+      if (!instanceEntry.componentPageName) {
+        return null;
+      }
+
+      await figma.loadAllPagesAsync();
+      let referencedPage: PageNode | null = null;
+
+      // Try to find page by GUID first
+      if (instanceEntry.componentGuid) {
+        for (const page of figma.root.children) {
+          if (page.type !== "PAGE") continue;
+          try {
+            const pageMetadataStr = page.getPluginData(PAGE_METADATA_KEY);
+            if (pageMetadataStr) {
+              const pageMetadata = JSON.parse(pageMetadataStr);
+              if (pageMetadata.id === instanceEntry.componentGuid) {
+                referencedPage = page;
+                break;
+              }
+            }
+          } catch {
+            // Continue searching
+          }
+        }
+      }
+
+      // Fallback to name matching
+      if (!referencedPage) {
+        referencedPage = figma.root.children.find(
+          (page) => page.name === instanceEntry.componentPageName,
+        ) as PageNode | null;
+      }
+
+      if (!referencedPage) {
+        debugConsole.warning(
+          `Cannot resolve normal instance component ID - page "${instanceEntry.componentPageName}" not found`,
+        );
+        return null;
+      }
+
+      // Find component on the page using path or name
+      // This needs to handle components that may be inside COMPONENT_SET nodes (variants)
+      let targetComponent: ComponentNode | null = null;
+
+      if (instanceEntry.nodePath && instanceEntry.nodePath.length > 0) {
+        // Use nodePath (more reliable)
+        targetComponent = referencedPage.findOne(
+          (n: any) =>
+            n.id ===
+            instanceEntry.nodePath![instanceEntry.nodePath!.length - 1],
+        ) as ComponentNode | null;
+      } else if (instanceEntry.path && instanceEntry.path.length > 0) {
+        // Use name-based path
+        let current: any = referencedPage;
+        for (const segment of instanceEntry.path) {
+          if (!current || !current.children) {
+            current = null;
+            break;
+          }
+          current = current.children.find(
+            (child: any) => child.name === segment,
+          );
+        }
+        if (current && current.type === "COMPONENT") {
+          targetComponent = current;
+        } else if (current && current.type === "COMPONENT_SET") {
+          // Component is a variant inside a COMPONENT_SET
+          // Verify componentSetName matches if provided
+          if (
+            instanceEntry.componentSetName &&
+            current.name !== instanceEntry.componentSetName
+          ) {
+            debugConsole.warning(
+              `  Path led to COMPONENT_SET "${current.name}" but expected "${instanceEntry.componentSetName}" - path may be incorrect`,
+            );
+            current = null; // Force fallback to recursive search
+          } else {
+            // Search for the variant by name
+            targetComponent = current.children.find(
+              (variant: any) =>
+                variant.type === "COMPONENT" &&
+                variant.name === instanceEntry.componentName,
+            ) as ComponentNode | null;
+            if (targetComponent) {
+              debugConsole.log(
+                `  ✓ Found variant "${targetComponent.name}" in COMPONENT_SET "${current.name}" via path`,
+              );
+            }
+          }
+        }
+      } else {
+        // No path - component is at page root, search by name
+        // PRIORITIZE: If componentSetName is provided, search COMPONENT_SETs first
+        if (instanceEntry.componentSetName) {
+          // Search inside COMPONENT_SET nodes first (when componentSetName is provided)
+          for (const child of referencedPage.children) {
+            if (child.type === "COMPONENT_SET") {
+              // Only search in matching sets
+              if (child.name !== instanceEntry.componentSetName) {
+                continue;
+              }
+              // Search for variant by name
+              const variant = child.children.find(
+                (v: any) =>
+                  v.type === "COMPONENT" &&
+                  v.name === instanceEntry.componentName,
+              ) as ComponentNode | null;
+              if (variant) {
+                targetComponent = variant;
+                debugConsole.log(
+                  `  ✓ Found variant "${variant.name}" in COMPONENT_SET "${child.name}" at page root (matched componentSetName)`,
+                );
+                break;
+              }
+            }
+          }
+        }
+
+        // If not found and no componentSetName filter, try direct COMPONENT nodes
+        if (!targetComponent && !instanceEntry.componentSetName) {
+          targetComponent = referencedPage.children.find(
+            (child: any) =>
+              child.type === "COMPONENT" &&
+              child.name === instanceEntry.componentName,
+          ) as ComponentNode | null;
+        }
+
+        // If still not found and no componentSetName filter, search all COMPONENT_SETs
+        if (!targetComponent && !instanceEntry.componentSetName) {
+          for (const child of referencedPage.children) {
+            if (child.type === "COMPONENT_SET") {
+              // Search for variant by name
+              const variant = child.children.find(
+                (v: any) =>
+                  v.type === "COMPONENT" &&
+                  v.name === instanceEntry.componentName,
+              ) as ComponentNode | null;
+              if (variant) {
+                targetComponent = variant;
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      // If initial search failed, try recursive search (handles nested structures and COMPONENT_SET variants)
+      if (!targetComponent) {
+        debugConsole.log(
+          `  Initial search failed for component "${instanceEntry.componentName}"${instanceEntry.componentSetName ? ` (componentSet: "${instanceEntry.componentSetName}")` : ""}, trying recursive search...`,
+        );
+        const recursiveSearch = (
+          node: any,
+          depth = 0,
+        ): ComponentNode | null => {
+          if (depth > 10) return null; // Limit depth to prevent infinite loops
+
+          for (const child of node.children || []) {
+            // Check COMPONENT_SET nodes for variants FIRST (prioritize these when componentSetName is provided)
+            if (child.type === "COMPONENT_SET") {
+              // If componentSetName is provided, ONLY search in matching sets
+              if (instanceEntry.componentSetName) {
+                if (child.name !== instanceEntry.componentSetName) {
+                  // Skip this COMPONENT_SET - doesn't match
+                  continue;
+                }
+                // componentSetName matches - search for variant by name
+                const variant = child.children.find(
+                  (v: any) =>
+                    v.type === "COMPONENT" &&
+                    v.name === instanceEntry.componentName,
+                ) as ComponentNode | null;
+                if (variant) {
+                  debugConsole.log(
+                    `  ✓ Found variant "${variant.name}" in COMPONENT_SET "${child.name}" via recursive search (matched componentSetName)`,
+                  );
+                  return variant;
+                }
+              } else {
+                // No componentSetName filter - search all COMPONENT_SETs
+                const variant = child.children.find(
+                  (v: any) =>
+                    v.type === "COMPONENT" &&
+                    v.name === instanceEntry.componentName,
+                ) as ComponentNode | null;
+                if (variant) {
+                  debugConsole.log(
+                    `  ✓ Found variant "${variant.name}" in COMPONENT_SET "${child.name}" via recursive search`,
+                  );
+                  return variant;
+                }
+              }
+            }
+
+            // Check standalone COMPONENT nodes (only if no componentSetName filter, or if we haven't found a match)
+            if (child.type === "COMPONENT") {
+              if (child.name === instanceEntry.componentName) {
+                // If componentSetName is provided, skip standalone components (they should be in a COMPONENT_SET)
+                if (instanceEntry.componentSetName) {
+                  debugConsole.log(
+                    `  Skipping standalone component "${child.name}" - componentSetName "${instanceEntry.componentSetName}" provided, expecting variant in COMPONENT_SET`,
+                  );
+                  continue;
+                }
+                debugConsole.log(
+                  `  ✓ Found component "${child.name}" via recursive search`,
+                );
+                return child;
+              }
+            }
+
+            // Recurse into FRAMEs and GROUPs
+            if (child.type === "FRAME" || child.type === "GROUP") {
+              const found = recursiveSearch(child, depth + 1);
+              if (found) return found;
+            }
+          }
+          return null;
+        };
+
+        targetComponent = recursiveSearch(referencedPage);
+      }
+
+      if (!targetComponent) {
+        // Enhanced error message with search details
+        const pathInfo = instanceEntry.path
+          ? ` (path: ${instanceEntry.path.join(" / ")})`
+          : "";
+        const setInfo = instanceEntry.componentSetName
+          ? ` (componentSet: ${instanceEntry.componentSetName})`
+          : "";
+        debugConsole.warning(
+          `Cannot resolve normal instance component ID - component "${instanceEntry.componentName}"${setInfo} not found on page "${instanceEntry.componentPageName}"${pathInfo}`,
+        );
+        return null;
+      }
+
+      return targetComponent.id;
+    }
+
+    return null;
+  } catch (error) {
+    debugConsole.warning(
+      `Error resolving component ID from instance entry: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    return null;
+  }
+}
+
 function checkForStyleReferences(nodeData: any): boolean {
   if (!nodeData || typeof nodeData !== "object") {
     return false;
@@ -1646,7 +1929,60 @@ export async function recreateNodeFromData(
                 continue;
               }
 
-              const defaultValue = (propDef as any).defaultValue;
+              let defaultValue = (propDef as any).defaultValue;
+
+              // For INSTANCE_SWAP properties, resolve _instanceRef to component ID
+              if (
+                propType === "INSTANCE_SWAP" &&
+                defaultValue &&
+                typeof defaultValue === "object" &&
+                defaultValue._instanceRef !== undefined
+              ) {
+                debugConsole.log(
+                  `    Resolving INSTANCE_SWAP property "${propName}" _instanceRef: ${defaultValue._instanceRef}`,
+                );
+
+                if (!instanceTable) {
+                  debugConsole.warning(
+                    `    Cannot resolve _instanceRef for INSTANCE_SWAP property "${propName}" - instance table not available`,
+                  );
+                  failedCount++;
+                  continue;
+                }
+
+                const instanceEntry = instanceTable.getInstanceByIndex(
+                  defaultValue._instanceRef,
+                );
+                if (!instanceEntry) {
+                  debugConsole.warning(
+                    `    Instance table entry not found for index ${defaultValue._instanceRef} in INSTANCE_SWAP property "${propName}"`,
+                  );
+                  failedCount++;
+                  continue;
+                }
+
+                // Resolve the component ID from the instance entry
+                const resolvedComponentId =
+                  await resolveComponentIdFromInstanceEntry(
+                    instanceEntry,
+                    nodeIdMapping,
+                  );
+
+                if (!resolvedComponentId) {
+                  debugConsole.warning(
+                    `    Could not resolve component ID from instance entry for INSTANCE_SWAP property "${propName}"`,
+                  );
+                  failedCount++;
+                  continue;
+                }
+
+                const instanceRefIndex = defaultValue._instanceRef;
+                defaultValue = resolvedComponentId;
+                debugConsole.log(
+                  `    Resolved INSTANCE_SWAP property "${propName}" _instanceRef ${instanceRefIndex} to component ID: ${resolvedComponentId.substring(0, 8)}...`,
+                );
+              }
+
               // Property names in JSON may include IDs (e.g., "Show trailing icon#318:0")
               // Extract just the property name part (before the #)
               const cleanPropName = propName.split("#")[0];
@@ -1825,7 +2161,60 @@ export async function recreateNodeFromData(
                   continue;
                 }
 
-                const defaultValue = (propDef as any).defaultValue;
+                let defaultValue = (propDef as any).defaultValue;
+
+                // For INSTANCE_SWAP properties, resolve _instanceRef to component ID
+                if (
+                  propType === "INSTANCE_SWAP" &&
+                  defaultValue &&
+                  typeof defaultValue === "object" &&
+                  defaultValue._instanceRef !== undefined
+                ) {
+                  debugConsole.log(
+                    `    Resolving INSTANCE_SWAP property "${propName}" _instanceRef: ${defaultValue._instanceRef}`,
+                  );
+
+                  if (!instanceTable) {
+                    debugConsole.warning(
+                      `    Cannot resolve _instanceRef for INSTANCE_SWAP property "${propName}" - instance table not available`,
+                    );
+                    failedCount++;
+                    continue;
+                  }
+
+                  const instanceEntry = instanceTable.getInstanceByIndex(
+                    defaultValue._instanceRef,
+                  );
+                  if (!instanceEntry) {
+                    debugConsole.warning(
+                      `    Instance table entry not found for index ${defaultValue._instanceRef} in INSTANCE_SWAP property "${propName}"`,
+                    );
+                    failedCount++;
+                    continue;
+                  }
+
+                  // Resolve the component ID from the instance entry
+                  const resolvedComponentId =
+                    await resolveComponentIdFromInstanceEntry(
+                      instanceEntry,
+                      nodeIdMapping,
+                    );
+
+                  if (!resolvedComponentId) {
+                    debugConsole.warning(
+                      `    Could not resolve component ID from instance entry for INSTANCE_SWAP property "${propName}"`,
+                    );
+                    failedCount++;
+                    continue;
+                  }
+
+                  const instanceRefIndex = defaultValue._instanceRef;
+                  defaultValue = resolvedComponentId;
+                  debugConsole.log(
+                    `    Resolved INSTANCE_SWAP property "${propName}" _instanceRef ${instanceRefIndex} to component ID: ${resolvedComponentId.substring(0, 8)}...`,
+                  );
+                }
+
                 // Property names in JSON may include IDs (e.g., "Label#318:0")
                 // Extract just the property name part (before the #)
                 const cleanPropName = propName.split("#")[0];
@@ -5482,7 +5871,32 @@ export async function recreateNodeFromData(
             `  [BINDING] Parent is a COMPONENT: "${parentComponent.name}"`,
           );
           // Get the component's property definitions to map old property names to new ones
-          const componentProps = parentComponent.componentPropertyDefinitions;
+          // Handle variant components (they don't have componentPropertyDefinitions - only COMPONENT_SETs do)
+          let componentProps: ComponentPropertyDefinitions | null = null;
+          const parentComponentType = (parentComponent as any).type;
+          if (parentComponentType === "COMPONENT_SET") {
+            // Parent is a COMPONENT_SET - can access componentPropertyDefinitions directly
+            const componentSet = parentComponent as unknown as ComponentSetNode;
+            componentProps = componentSet.componentPropertyDefinitions;
+          } else if (
+            parentComponentType === "COMPONENT" &&
+            parentComponent.parent &&
+            parentComponent.parent.type === "COMPONENT_SET"
+          ) {
+            // Parent is a variant component - get properties from parent COMPONENT_SET
+            componentProps =
+              parentComponent.parent.componentPropertyDefinitions;
+          } else if (parentComponentType === "COMPONENT") {
+            // Non-variant component - can access componentPropertyDefinitions directly
+            componentProps = parentComponent.componentPropertyDefinitions;
+          }
+
+          if (!componentProps) {
+            debugConsole.log(
+              `  [BINDING] No component property definitions available for parent "${parentComponent.name}"`,
+            );
+            return;
+          }
 
           for (const [nodeProperty, oldPropName] of Object.entries(
             nodeData.componentPropertyReferences,
@@ -5947,7 +6361,60 @@ export async function recreateNodeFromData(
                 continue;
               }
 
-              const defaultValue = (propDef as any).defaultValue;
+              let defaultValue = (propDef as any).defaultValue;
+
+              // For INSTANCE_SWAP properties, resolve _instanceRef to component ID
+              if (
+                propType === "INSTANCE_SWAP" &&
+                defaultValue &&
+                typeof defaultValue === "object" &&
+                defaultValue._instanceRef !== undefined
+              ) {
+                debugConsole.log(
+                  `    Resolving INSTANCE_SWAP property "${propName}" _instanceRef: ${defaultValue._instanceRef}`,
+                );
+
+                if (!instanceTable) {
+                  debugConsole.warning(
+                    `    Cannot resolve _instanceRef for INSTANCE_SWAP property "${propName}" - instance table not available`,
+                  );
+                  failedCount++;
+                  continue;
+                }
+
+                const instanceEntry = instanceTable.getInstanceByIndex(
+                  defaultValue._instanceRef,
+                );
+                if (!instanceEntry) {
+                  debugConsole.warning(
+                    `    Instance table entry not found for index ${defaultValue._instanceRef} in INSTANCE_SWAP property "${propName}"`,
+                  );
+                  failedCount++;
+                  continue;
+                }
+
+                // Resolve the component ID from the instance entry
+                const resolvedComponentId =
+                  await resolveComponentIdFromInstanceEntry(
+                    instanceEntry,
+                    nodeIdMapping,
+                  );
+
+                if (!resolvedComponentId) {
+                  debugConsole.warning(
+                    `    Could not resolve component ID from instance entry for INSTANCE_SWAP property "${propName}"`,
+                  );
+                  failedCount++;
+                  continue;
+                }
+
+                const instanceRefIndex = defaultValue._instanceRef;
+                defaultValue = resolvedComponentId;
+                debugConsole.log(
+                  `    Resolved INSTANCE_SWAP property "${propName}" _instanceRef ${instanceRefIndex} to component ID: ${resolvedComponentId.substring(0, 8)}...`,
+                );
+              }
+
               // Property names in JSON may include IDs (e.g., "Show trailing icon#318:0")
               // Extract just the property name part (before the #)
               const cleanPropName = propName.split("#")[0];
@@ -6065,7 +6532,37 @@ export async function recreateNodeFromData(
           nodeData.componentPropertyReferences &&
           typeof nodeData.componentPropertyReferences === "object"
         ) {
+          // Skip binding restoration for placeholder frames (deferred instances)
+          // The bindings will be restored when the placeholder is replaced with the actual instance
+          if (node.name && node.name.startsWith("[Deferred:")) {
+            debugConsole.log(
+              `  [BINDING] Skipping binding restoration for placeholder "${node.name}" - will be restored when instance is resolved`,
+            );
+            // Still recurse into children (they might not be placeholders)
+            if (
+              "children" in node &&
+              nodeData.children &&
+              Array.isArray(nodeData.children)
+            ) {
+              for (
+                let i = 0;
+                i < node.children.length && i < nodeData.children.length;
+                i++
+              ) {
+                const child = node.children[i];
+                const childData = nodeData.children[i];
+                restoreBindings(child, childData);
+              }
+            }
+            return;
+          }
+
           const componentPropertyRefs: Record<string, string> = {};
+          // Get the parent component to check property types
+          const parentComponent =
+            parentNode?.type === "COMPONENT" ? parentNode : null;
+          const componentProps =
+            parentComponent?.componentPropertyDefinitions || {};
 
           for (const [nodeProperty, oldPropId] of Object.entries(
             nodeData.componentPropertyReferences,
@@ -6073,23 +6570,40 @@ export async function recreateNodeFromData(
             if (typeof oldPropId === "string") {
               // Look up the new property ID using the old property ID
               const newPropId = propertyIdMapping.get(oldPropId);
+              let propIdToUse: string | null = null;
+
               if (newPropId) {
-                componentPropertyRefs[nodeProperty] = newPropId;
-                debugConsole.log(
-                  `  [BINDING] Restoring binding for ${node.type} node "${node.name || "Unnamed"}": ${nodeProperty} -> ${newPropId} (was ${oldPropId})`,
-                );
+                propIdToUse = newPropId;
               } else {
                 // Try matching by clean name (without ID suffix)
                 const cleanPropName = oldPropId.split("#")[0];
                 for (const [oldId, newId] of propertyIdMapping.entries()) {
                   if (oldId.split("#")[0] === cleanPropName) {
-                    componentPropertyRefs[nodeProperty] = newId;
-                    debugConsole.log(
-                      `  [BINDING] Restoring binding for ${node.type} node "${node.name || "Unnamed"}": ${nodeProperty} -> ${newId} (matched by clean name "${cleanPropName}")`,
-                    );
+                    propIdToUse = newId;
                     break;
                   }
                 }
+              }
+
+              if (propIdToUse) {
+                // Check if this property is INSTANCE_SWAP and node is not an INSTANCE
+                // INSTANCE_SWAP properties can only be bound to INSTANCE nodes
+                const propDef = componentProps[propIdToUse];
+                if (propDef && propDef.type === "INSTANCE_SWAP") {
+                  if (node.type !== "INSTANCE") {
+                    const propName = propIdToUse.split("#")[0];
+                    const nodeName = node.name || "Unnamed";
+                    debugConsole.log(
+                      `  [BINDING] Skipping INSTANCE_SWAP property "${propName}" for ${node.type} node "${nodeName}" - INSTANCE_SWAP can only be bound to INSTANCE nodes`,
+                    );
+                    continue;
+                  }
+                }
+
+                componentPropertyRefs[nodeProperty] = propIdToUse;
+                debugConsole.log(
+                  `  [BINDING] Restoring binding for ${node.type} node "${node.name || "Unnamed"}": ${nodeProperty} -> ${propIdToUse} (was ${oldPropId})`,
+                );
               }
             }
           }
@@ -6167,7 +6681,72 @@ export async function recreateNodeFromData(
           nodeData.componentPropertyReferences &&
           typeof nodeData.componentPropertyReferences === "object"
         ) {
+          // Skip binding restoration for placeholder frames (deferred instances)
+          // The bindings will be restored when the placeholder is replaced with the actual instance
+          if (node.name && node.name.startsWith("[Deferred:")) {
+            debugConsole.log(
+              `  [BINDING] Skipping binding restoration for placeholder "${node.name}" - will be restored when instance is resolved`,
+            );
+            // Still recurse into children (they might not be placeholders)
+            if (
+              "children" in node &&
+              nodeData.children &&
+              Array.isArray(nodeData.children)
+            ) {
+              for (
+                let i = 0;
+                i < node.children.length && i < nodeData.children.length;
+                i++
+              ) {
+                const child = node.children[i];
+                const childData = nodeData.children[i];
+                restoreBindings(child, childData);
+              }
+            }
+            return;
+          }
+
           const componentPropertyRefs: Record<string, string> = {};
+          // For COMPONENT_SET, properties are defined on the COMPONENT_SET itself
+          // But we need to find the parent variant component to check property types
+          let parentComponent: ComponentNode | null = null;
+          let current: any = node.parent;
+          while (current) {
+            if (current.type === "COMPONENT") {
+              parentComponent = current;
+              break;
+            }
+            current = current.parent;
+          }
+          // Get component property definitions, handling variant components
+          let componentProps: ComponentPropertyDefinitions | null = null;
+          if (parentComponent) {
+            const parentComponentType = (parentComponent as any).type;
+            if (parentComponentType === "COMPONENT_SET") {
+              const componentSet =
+                parentComponent as unknown as ComponentSetNode;
+              componentProps = componentSet.componentPropertyDefinitions;
+            } else if (
+              parentComponentType === "COMPONENT" &&
+              parentComponent.parent &&
+              parentComponent.parent.type === "COMPONENT_SET"
+            ) {
+              // Parent is a variant component - get properties from parent COMPONENT_SET
+              componentProps =
+                parentComponent.parent.componentPropertyDefinitions;
+            } else if (parentComponentType === "COMPONENT") {
+              // Non-variant component - can access componentPropertyDefinitions directly
+              componentProps = parentComponent.componentPropertyDefinitions;
+            }
+          }
+          // Fallback to COMPONENT_SET's own properties (newNode is a COMPONENT_SET in this context)
+          if (!componentProps && newNode.type === "COMPONENT_SET") {
+            componentProps = newNode.componentPropertyDefinitions;
+          }
+          // Final fallback to empty object
+          if (!componentProps) {
+            componentProps = {};
+          }
 
           for (const [nodeProperty, oldPropId] of Object.entries(
             nodeData.componentPropertyReferences,
@@ -6175,23 +6754,40 @@ export async function recreateNodeFromData(
             if (typeof oldPropId === "string") {
               // Look up the new property ID using the old property ID
               const newPropId = propertyIdMapping.get(oldPropId);
+              let propIdToUse: string | null = null;
+
               if (newPropId) {
-                componentPropertyRefs[nodeProperty] = newPropId;
-                debugConsole.log(
-                  `  [BINDING] Restoring binding for ${node.type} node "${node.name || "Unnamed"}": ${nodeProperty} -> ${newPropId} (was ${oldPropId})`,
-                );
+                propIdToUse = newPropId;
               } else {
                 // Try matching by clean name (without ID suffix)
                 const cleanPropName = oldPropId.split("#")[0];
                 for (const [oldId, newId] of propertyIdMapping.entries()) {
                   if (oldId.split("#")[0] === cleanPropName) {
-                    componentPropertyRefs[nodeProperty] = newId;
-                    debugConsole.log(
-                      `  [BINDING] Restoring binding for ${node.type} node "${node.name || "Unnamed"}": ${nodeProperty} -> ${newId} (matched by clean name "${cleanPropName}")`,
-                    );
+                    propIdToUse = newId;
                     break;
                   }
                 }
+              }
+
+              if (propIdToUse) {
+                // Check if this property is INSTANCE_SWAP and node is not an INSTANCE
+                // INSTANCE_SWAP properties can only be bound to INSTANCE nodes
+                const propDef = componentProps[propIdToUse];
+                if (propDef && propDef.type === "INSTANCE_SWAP") {
+                  if (node.type !== "INSTANCE") {
+                    const propName = propIdToUse.split("#")[0];
+                    const nodeName = node.name || "Unnamed";
+                    debugConsole.log(
+                      `  [BINDING] Skipping INSTANCE_SWAP property "${propName}" for ${node.type} node "${nodeName}" - INSTANCE_SWAP can only be bound to INSTANCE nodes`,
+                    );
+                    continue;
+                  }
+                }
+
+                componentPropertyRefs[nodeProperty] = propIdToUse;
+                debugConsole.log(
+                  `  [BINDING] Restoring binding for ${node.type} node "${node.name || "Unnamed"}": ${nodeProperty} -> ${propIdToUse} (was ${oldPropId})`,
+                );
               }
             }
           }
@@ -7706,7 +8302,62 @@ async function createRemoteInstances(
                 continue;
               }
 
-              const defaultValue = (propDef as any).defaultValue;
+              let defaultValue = (propDef as any).defaultValue;
+
+              // For INSTANCE_SWAP properties, resolve _instanceRef to component ID
+              if (
+                propType === "INSTANCE_SWAP" &&
+                defaultValue &&
+                typeof defaultValue === "object" &&
+                defaultValue._instanceRef !== undefined
+              ) {
+                debugConsole.log(
+                  `    Resolving INSTANCE_SWAP property "${propName}" _instanceRef: ${defaultValue._instanceRef}`,
+                );
+
+                if (!instanceTable) {
+                  debugConsole.warning(
+                    `    Cannot resolve _instanceRef for INSTANCE_SWAP property "${propName}" - instance table not available`,
+                  );
+                  failedCount++;
+                  continue;
+                }
+
+                const instanceEntry = instanceTable.getInstanceByIndex(
+                  defaultValue._instanceRef,
+                );
+                if (!instanceEntry) {
+                  debugConsole.warning(
+                    `    Instance table entry not found for index ${defaultValue._instanceRef} in INSTANCE_SWAP property "${propName}"`,
+                  );
+                  failedCount++;
+                  continue;
+                }
+
+                // For remote instances, we don't have nodeIdMapping, so resolution will fail
+                // This is expected - remote INSTANCE_SWAP properties cannot be resolved
+                const nodeIdMapping = null; // Remote instances don't have nodeIdMapping
+                const resolvedComponentId =
+                  await resolveComponentIdFromInstanceEntry(
+                    instanceEntry,
+                    nodeIdMapping,
+                  );
+
+                if (!resolvedComponentId) {
+                  debugConsole.warning(
+                    `    Could not resolve component ID from instance entry for INSTANCE_SWAP property "${propName}" in remote component - skipping`,
+                  );
+                  failedCount++;
+                  continue;
+                }
+
+                const instanceRefIndex = defaultValue._instanceRef;
+                defaultValue = resolvedComponentId;
+                debugConsole.log(
+                  `    Resolved INSTANCE_SWAP property "${propName}" _instanceRef ${instanceRefIndex} to component ID: ${resolvedComponentId.substring(0, 8)}...`,
+                );
+              }
+
               // Property names in JSON may include IDs (e.g., "Show trailing icon#318:0")
               // Extract just the property name part (before the #)
               const cleanPropName = propName.split("#")[0];
@@ -10561,6 +11212,253 @@ export async function resolveDeferredNormalInstances(
         debugConsole.error(error);
         errors.push(error);
         continue;
+      }
+
+      // Restore componentPropertyReferences for the instance and its children
+      // This includes INSTANCE_SWAP bindings that were skipped for the placeholder FRAME
+      if (
+        nodeData.componentPropertyReferences &&
+        typeof nodeData.componentPropertyReferences === "object"
+      ) {
+        try {
+          // CRITICAL: Get property definitions from the INSTANCE'S MAIN COMPONENT, not the parent
+          // The instance's main component is the source of truth for property definitions
+          // Property IDs are unique per component, so we must use the main component's current IDs
+          const mainComponent = await instanceNode.getMainComponentAsync();
+          let componentProps: ComponentPropertyDefinitions | null = null;
+
+          if (mainComponent) {
+            const mainComponentType = (mainComponent as any).type;
+            if (mainComponentType === "COMPONENT_SET") {
+              // Main component is a COMPONENT_SET - can access componentPropertyDefinitions directly
+              const componentSet = mainComponent as unknown as ComponentSetNode;
+              componentProps = componentSet.componentPropertyDefinitions;
+            } else if (
+              mainComponentType === "COMPONENT" &&
+              mainComponent.parent &&
+              mainComponent.parent.type === "COMPONENT_SET"
+            ) {
+              // Instance was created from a variant - get properties from parent COMPONENT_SET
+              componentProps =
+                mainComponent.parent.componentPropertyDefinitions;
+            } else if (mainComponentType === "COMPONENT") {
+              // Non-variant component - can access componentPropertyDefinitions directly
+              componentProps = mainComponent.componentPropertyDefinitions;
+            }
+          }
+
+          if (componentProps) {
+            const componentPropertyRefs: Record<string, string> = {};
+
+            // Map old property IDs to new property IDs by matching property names
+            for (const [nodeProperty, oldPropId] of Object.entries(
+              nodeData.componentPropertyReferences,
+            )) {
+              if (typeof oldPropId === "string") {
+                // Extract clean property name (without ID suffix)
+                const cleanPropName = oldPropId.split("#")[0];
+
+                // Find matching property in component by name
+                let newPropId: string | null = null;
+                for (const propId of Object.keys(componentProps)) {
+                  const propCleanName = propId.split("#")[0];
+                  if (propCleanName === cleanPropName) {
+                    newPropId = propId;
+                    break;
+                  }
+                }
+
+                if (newPropId) {
+                  // Validate that the property exists and is accessible
+                  const propDef = componentProps[newPropId];
+                  if (!propDef) {
+                    const componentName = mainComponent
+                      ? mainComponent.name
+                      : "unknown";
+                    debugConsole.warning(
+                      `  [BINDING] Property "${newPropId}" not found in component property definitions for deferred instance "${nodeData.name}" (component: "${componentName}")`,
+                    );
+                    continue;
+                  }
+
+                  // For INSTANCE_SWAP properties, the property ID references a component
+                  // If that component doesn't exist, setting the binding will fail
+                  // We'll still try to set it, but catch the error if it fails
+                  componentPropertyRefs[nodeProperty] = newPropId;
+                  debugConsole.log(
+                    `  [BINDING] Restored binding for deferred instance "${nodeData.name}": ${nodeProperty} -> ${newPropId} (was ${oldPropId}, type: ${propDef.type})`,
+                  );
+                } else {
+                  const componentName = mainComponent
+                    ? mainComponent.name
+                    : "unknown";
+                  debugConsole.warning(
+                    `  [BINDING] Could not find property "${cleanPropName}" in component "${componentName}" for deferred instance "${nodeData.name}"`,
+                  );
+                }
+              }
+            }
+
+            // Set componentPropertyReferences on the instance (now that it's a child of the component)
+            // Note: This may fail if INSTANCE_SWAP properties reference components that don't exist
+            if (Object.keys(componentPropertyRefs).length > 0) {
+              try {
+                (instanceNode as any).componentPropertyReferences =
+                  componentPropertyRefs;
+                debugConsole.log(
+                  `  [BINDING] ✓ Successfully restored componentPropertyReferences for deferred instance "${nodeData.name}": ${JSON.stringify(componentPropertyRefs)}`,
+                );
+              } catch (error) {
+                const errorMessage =
+                  error instanceof Error ? error.message : String(error);
+                debugConsole.warning(
+                  `  [BINDING] ✗ Failed to restore componentPropertyReferences for deferred instance "${nodeData.name}": ${errorMessage}`,
+                );
+                // If setting all properties failed, try setting them one by one to identify which one fails
+                if (
+                  errorMessage.includes("component property reference") ||
+                  errorMessage.includes("implicitDefID")
+                ) {
+                  debugConsole.log(
+                    `  [BINDING] Attempting to restore bindings individually to identify problematic property...`,
+                  );
+                  const successfulRefs: Record<string, string> = {};
+                  for (const [nodeProperty, propId] of Object.entries(
+                    componentPropertyRefs,
+                  )) {
+                    try {
+                      (instanceNode as any).componentPropertyReferences = {
+                        [nodeProperty]: propId,
+                      };
+                      successfulRefs[nodeProperty] = propId;
+                      debugConsole.log(
+                        `  [BINDING] ✓ Successfully restored binding "${nodeProperty}" -> "${propId}"`,
+                      );
+                    } catch (individualError) {
+                      const propDef = componentProps[propId];
+                      const propType = propDef ? propDef.type : "unknown";
+                      debugConsole.warning(
+                        `  [BINDING] ✗ Failed to restore binding "${nodeProperty}" -> "${propId}" (type: ${propType}): ${individualError instanceof Error ? individualError.message : String(individualError)}`,
+                      );
+                    }
+                  }
+                  // Set all successful bindings at once
+                  if (Object.keys(successfulRefs).length > 0) {
+                    try {
+                      (instanceNode as any).componentPropertyReferences =
+                        successfulRefs;
+                      debugConsole.log(
+                        `  [BINDING] ✓ Restored ${Object.keys(successfulRefs).length} of ${Object.keys(componentPropertyRefs).length} componentPropertyReferences for deferred instance "${nodeData.name}"`,
+                      );
+                    } catch {
+                      // If even setting successful refs fails, give up
+                      debugConsole.warning(
+                        `  [BINDING] ✗ Could not set even successful bindings - skipping all bindings for deferred instance "${nodeData.name}"`,
+                      );
+                    }
+                  }
+                }
+              }
+            }
+
+            // Recursively restore bindings for children
+            const restoreChildBindings = (
+              childNode: SceneNode,
+              childData: any,
+            ): void => {
+              if (
+                childData.componentPropertyReferences &&
+                typeof childData.componentPropertyReferences === "object"
+              ) {
+                const childPropertyRefs: Record<string, string> = {};
+
+                for (const [nodeProperty, oldPropId] of Object.entries(
+                  childData.componentPropertyReferences,
+                )) {
+                  if (typeof oldPropId === "string") {
+                    const cleanPropName = oldPropId.split("#")[0];
+                    let newPropId: string | null = null;
+
+                    if (componentProps) {
+                      for (const propId of Object.keys(componentProps)) {
+                        const propCleanName = propId.split("#")[0];
+                        if (propCleanName === cleanPropName) {
+                          newPropId = propId;
+                          break;
+                        }
+                      }
+                    }
+
+                    if (newPropId) {
+                      // Validate that the property exists in componentProps
+                      if (componentProps && componentProps[newPropId]) {
+                        childPropertyRefs[nodeProperty] = newPropId;
+                      } else {
+                        debugConsole.warning(
+                          `  [BINDING] Property "${newPropId}" not found in component property definitions for child "${childNode.name || "Unnamed"}" of deferred instance "${nodeData.name}"`,
+                        );
+                      }
+                    }
+                  }
+                }
+
+                if (Object.keys(childPropertyRefs).length > 0) {
+                  try {
+                    (childNode as any).componentPropertyReferences =
+                      childPropertyRefs;
+                    debugConsole.log(
+                      `  [BINDING] ✓ Restored componentPropertyReferences for child "${childNode.name || "Unnamed"}" of deferred instance "${nodeData.name}"`,
+                    );
+                  } catch {
+                    // Child might not support bindings (e.g., not a symbol sublayer)
+                  }
+                }
+              }
+
+              // Recurse into children
+              if (
+                "children" in childNode &&
+                childData.children &&
+                Array.isArray(childData.children)
+              ) {
+                for (
+                  let i = 0;
+                  i < childNode.children.length &&
+                  i < childData.children.length;
+                  i++
+                ) {
+                  restoreChildBindings(
+                    childNode.children[i],
+                    childData.children[i],
+                  );
+                }
+              }
+            };
+
+            // Restore bindings for instance children
+            if (
+              "children" in instanceNode &&
+              nodeData.children &&
+              Array.isArray(nodeData.children)
+            ) {
+              for (
+                let i = 0;
+                i < instanceNode.children.length &&
+                i < nodeData.children.length;
+                i++
+              ) {
+                restoreChildBindings(
+                  instanceNode.children[i],
+                  nodeData.children[i],
+                );
+              }
+            }
+          }
+        } catch (error) {
+          debugConsole.warning(
+            `  [BINDING] Error restoring componentPropertyReferences for deferred instance "${nodeData.name}": ${error}`,
+          );
+        }
       }
 
       // Resolve child deferred instances after parent is replaced

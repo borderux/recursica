@@ -17,6 +17,11 @@ import { debugConsole } from "./debugConsole";
 //   testConstraintsVectorStandalone,
 // } from "./test/testConstraints";
 import { testInstanceChildrenAndOverrides } from "./test/testInstanceChildrenAndOverrides";
+import {
+  testInstanceSwapProperty,
+  testInstanceSwapPropertyCrossPage,
+  testInstanceSwapPropertyInstanceRef,
+} from "./test/testInstanceSwap";
 
 export interface RunTestResponseData {
   testResults: {
@@ -286,6 +291,81 @@ export async function runTest(
       details: test9Results.details,
     });
 
+    // Clean up test frame for next test
+    const testFrame9 = testPage.children.find(
+      (child) => child.type === "FRAME" && child.name === "Test",
+    ) as FrameNode | undefined;
+    if (testFrame9) {
+      testFrame9.remove();
+    }
+    const testFrame10 = figma.createFrame();
+    testFrame10.name = "Test";
+    testPage.appendChild(testFrame10);
+
+    // Test 10: INSTANCE_SWAP Component Property Export/Import
+    debugConsole.log("\n" + "=".repeat(60));
+    debugConsole.log("TEST 10: INSTANCE_SWAP Component Property Export/Import");
+    debugConsole.log("=".repeat(60));
+    const test10Results = await testInstanceSwapProperty(testPage.id);
+    allTests.push({
+      name: "INSTANCE_SWAP Property Export/Import",
+      success: test10Results.success,
+      message: test10Results.message,
+      details: test10Results.details,
+    });
+
+    // Clean up test frame for next test
+    const existingTestFrame10 = testPage.children.find(
+      (child) => child.type === "FRAME" && child.name === "Test",
+    ) as FrameNode | undefined;
+    if (existingTestFrame10) {
+      existingTestFrame10.remove();
+    }
+    const testFrame11 = figma.createFrame();
+    testFrame11.name = "Test";
+    testPage.appendChild(testFrame11);
+
+    // Test 11: INSTANCE_SWAP Component Property Cross-Page Scenario
+    debugConsole.log("\n" + "=".repeat(60));
+    debugConsole.log(
+      "TEST 11: INSTANCE_SWAP Component Property Cross-Page Scenario",
+    );
+    debugConsole.log("=".repeat(60));
+    const test11Results = await testInstanceSwapPropertyCrossPage(testPage.id);
+    allTests.push({
+      name: "INSTANCE_SWAP Property Cross-Page",
+      success: test11Results.success,
+      message: test11Results.message,
+      details: test11Results.details,
+    });
+
+    // Clean up test frame for next test
+    const existingTestFrame11 = testPage.children.find(
+      (child) => child.type === "FRAME" && child.name === "Test",
+    ) as FrameNode | undefined;
+    if (existingTestFrame11) {
+      existingTestFrame11.remove();
+    }
+    const testFrame12 = figma.createFrame();
+    testFrame12.name = "Test";
+    testPage.appendChild(testFrame12);
+
+    // Test 12: INSTANCE_SWAP Component Property _instanceRef Conversion
+    debugConsole.log("\n" + "=".repeat(60));
+    debugConsole.log(
+      "TEST 12: INSTANCE_SWAP Component Property _instanceRef Conversion",
+    );
+    debugConsole.log("=".repeat(60));
+    const test12Results = await testInstanceSwapPropertyInstanceRef(
+      testPage.id,
+    );
+    allTests.push({
+      name: "INSTANCE_SWAP Property _instanceRef Conversion",
+      success: test12Results.success,
+      message: test12Results.message,
+      details: test12Results.details,
+    });
+
     // Overall summary
     debugConsole.log("\n" + "=".repeat(60));
     debugConsole.log("=== ALL TESTS COMPLETE ===");
@@ -302,8 +382,12 @@ export async function runTest(
     }
 
     // Overall success if all critical tests pass
-    // Currently only running Test 9 (previous tests commented out for reference)
-    const overallSuccess = test9Results.success;
+    // Currently running Test 9, Test 10, Test 11, and Test 12 (previous tests commented out for reference)
+    const overallSuccess =
+      test9Results.success &&
+      test10Results.success &&
+      test11Results.success &&
+      test12Results.success;
 
     const responseData: RunTestResponseData = {
       testResults: {

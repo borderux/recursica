@@ -238,7 +238,14 @@ export default function Step1ComponentSelection() {
         console.log("[Step1ComponentSelection] Navigate called");
       }
     }
-  }, [components, searchParams, loading, setWizardState, navigate]);
+  }, [
+    components,
+    searchParams,
+    loading,
+    setWizardState,
+    navigate,
+    location.state,
+  ]);
 
   const handleComponentSelect = (component: ComponentInfo) => {
     console.log(

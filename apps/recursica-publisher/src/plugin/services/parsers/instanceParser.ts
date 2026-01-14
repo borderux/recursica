@@ -13,7 +13,7 @@ const COMPONENT_METADATA_KEY = "RecursicaPublishedMetadata";
  * Returns null if the page cannot be determined (e.g., for remote components)
  * Also returns diagnostic information about why the page couldn't be found
  */
-function getPageFromNode(node: any): {
+export function getPageFromNode(node: any): {
   page: any | null;
   reason: "found" | "detached" | "broken_chain" | "access_error";
 } {
@@ -57,7 +57,7 @@ function getPageFromNode(node: any): {
  * Gets component metadata from a page node
  * Note: Uses getPluginData (not getSharedPluginData) to match how metadata is stored
  */
-function getComponentMetadataFromPage(page: any): {
+export function getComponentMetadataFromPage(page: any): {
   id?: string;
   version?: number;
 } | null {
