@@ -3,7 +3,6 @@ import { useNavigate } from "react-router";
 import packageJson from "../../../package.json";
 import { useAuth } from "../../context/useAuth";
 import { Button } from "../Button";
-import { Badge } from "../Badge";
 import classes from "./PageLayout.module.css";
 
 interface PageLayoutProps {
@@ -99,9 +98,7 @@ export default function PageLayout({
           )}
 
           {/* Version */}
-          <Badge variant="version" className={classes.version}>
-            v{packageJson.version}
-          </Badge>
+          <span className={classes.version}>v{packageJson.version}</span>
         </div>
       </footer>
     </div>

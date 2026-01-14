@@ -323,19 +323,10 @@ export default function EditMetadata() {
         </Stack>
 
         <div className={classes.actions}>
-          <Button
-            variant="outline"
-            onClick={() => navigate("/admin")}
-            disabled={saving}
-          >
+          <Button onClick={() => navigate("/admin")} disabled={saving}>
             Cancel
           </Button>
-          <Button
-            variant="filled"
-            onClick={handleSave}
-            disabled={saving}
-            color="red"
-          >
+          <Button variant="filled" onClick={handleSave} disabled={saving}>
             {saving ? "Saving..." : "Save Metadata"}
           </Button>
         </div>

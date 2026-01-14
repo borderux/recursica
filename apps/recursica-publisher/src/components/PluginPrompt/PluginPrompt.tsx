@@ -67,7 +67,6 @@ export default function PluginPrompt() {
             </Button>
             <Button
               variant="filled"
-              color="red"
               size="small"
               onClick={ok}
               disabled={!hasPrompt}

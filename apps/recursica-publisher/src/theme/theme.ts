@@ -67,6 +67,18 @@ export const theme = createTheme({
       "#ef6c00",
       "#e65100",
     ],
+    dark: [
+      "#C1C2C5",
+      "#A6A7AB",
+      "#909296",
+      "#5C5F66",
+      "#373A40",
+      "#2C2E33",
+      "#000000", // Black background for filled buttons - index 6
+      "#1A1B1E",
+      "#141517",
+      "#101113",
+    ],
   },
   fontFamily:
     "system-ui, -apple-system, 'Segoe UI', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif",

@@ -12,6 +12,35 @@ export default function Home() {
   const navigate = useNavigate();
   const { importData, setImportData } = useImportData();
   const { isAuthenticated, accessToken, hasWriteAccess } = useAuth();
+  const [authChecked, setAuthChecked] = useState(false);
+
+  // Wait for auth data to load before making routing decisions
+  useEffect(() => {
+    const authCheckTimer = setTimeout(() => {
+      setAuthChecked(true);
+    }, 500);
+
+    return () => clearTimeout(authCheckTimer);
+  }, []);
+
+  // Route to /import if not authenticated or doesn't have write access
+  useEffect(() => {
+    if (!authChecked) return;
+
+    // If not authenticated OR doesn't have write access, route to /import
+    if (!isAuthenticated || !accessToken || hasWriteAccess !== true) {
+      console.log(
+        "[Home] Not authenticated or no write access, routing to /import",
+        {
+          isAuthenticated,
+          hasAccessToken: !!accessToken,
+          hasWriteAccess,
+        },
+      );
+      navigate("/import", { replace: true });
+      return;
+    }
+  }, [authChecked, isAuthenticated, accessToken, hasWriteAccess, navigate]);
 
   useEffect(() => {
     console.log("[Home] importData state:", {
@@ -54,6 +83,9 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    // Only run import checks if user is authenticated and has write access
+    if (!authChecked) return;
+    if (!isAuthenticated || !accessToken || hasWriteAccess !== true) return;
     if (checkingExisting) return;
 
     if (hasExistingImport) {
@@ -106,6 +138,10 @@ export default function Home() {
       setImportData(null);
     }
   }, [
+    authChecked,
+    isAuthenticated,
+    accessToken,
+    hasWriteAccess,
     hasExistingImport,
     checkingExisting,
     navigate,
@@ -187,13 +223,20 @@ export default function Home() {
     navigate("/publish");
   };
 
+  // Only show buttons if authenticated and has write access
+  const shouldShowButtons =
+    isAuthenticated && accessToken && hasWriteAccess === true;
+
+  // Don't render buttons if we're routing away
+  if (!authChecked || !shouldShowButtons) {
+    return null;
+  }
+
   return (
     <PageLayout showBackButton={false}>
       <div className={classes.root}>
         <Stack gap={20} align="center">
           <Button
-            variant="outline"
-            color="red"
             size="lg"
             onClick={handleImportClick}
             className={classes.button}
@@ -208,8 +251,6 @@ export default function Home() {
           </Button>
 
           <Button
-            variant="outline"
-            color="red"
             size="lg"
             onClick={handlePublishClick}
             className={classes.button}

@@ -248,7 +248,7 @@ export default function ExistingImport() {
       {error && <Alert variant="error">{error}</Alert>}
 
       <div className={classes.actions}>
-        <Button variant="outline" onClick={handleDelete} disabled={loading}>
+        <Button onClick={handleDelete} disabled={loading}>
           {loading ? "Cancelling..." : "Cancel"}
         </Button>
         {!metadata.importError && (

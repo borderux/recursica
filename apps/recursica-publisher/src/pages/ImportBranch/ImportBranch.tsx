@@ -83,7 +83,6 @@ export default function ImportBranch() {
 
           <Button
             variant="filled"
-            color="red"
             disabled={isLoading || !branchInput.trim()}
             className={classes.button}
           >

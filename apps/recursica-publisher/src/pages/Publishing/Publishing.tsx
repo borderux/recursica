@@ -168,9 +168,7 @@ export default function Publishing() {
 
         {!isPublishing && !error && exportData && (
           <Group gap={12} className={classes.buttonGroup}>
-            <Button variant="outline" onClick={() => navigate("/")}>
-              Cancel
-            </Button>
+            <Button onClick={() => navigate("/")}>Cancel</Button>
             <Button
               variant="filled"
               onClick={async () => {

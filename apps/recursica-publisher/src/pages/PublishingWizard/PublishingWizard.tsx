@@ -1036,7 +1036,6 @@ export default function PublishingWizard() {
         </Button>
         <Button
           variant="filled"
-          color="red"
           onClick={handleExportSelectedReferencedPages}
           disabled={isExportingReferencedPages}
           loading={isExportingReferencedPages}
@@ -1073,7 +1072,6 @@ export default function PublishingWizard() {
           </Button>
           <Button
             variant="filled"
-            color="red"
             onClick={handleContinueFromPublishing}
             disabled={!canContinue}
           >
@@ -1166,7 +1164,6 @@ export default function PublishingWizard() {
           </Button>
           <Button
             variant="filled"
-            color="red"
             onClick={() => {
               if (!currentDecision.changeMessage.trim()) {
                 setError("Please enter revision history for this component.");
@@ -1218,7 +1215,6 @@ export default function PublishingWizard() {
         ) : (
           <Button
             variant="filled"
-            color="red"
             onClick={handlePublishToGitHub}
             disabled={isPublishing}
             loading={isPublishing}

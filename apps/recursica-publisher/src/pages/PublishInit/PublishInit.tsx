@@ -345,7 +345,7 @@ export default function PublishInit() {
         )}
 
         <div className={classes.actions}>
-          <Button variant="outline" onClick={handleSkip} disabled={syncing}>
+          <Button onClick={handleSkip} disabled={syncing}>
             {syncing ? "Processing..." : "Skip"}
           </Button>
           <Button

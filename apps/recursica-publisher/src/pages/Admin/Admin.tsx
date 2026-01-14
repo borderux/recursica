@@ -17,8 +17,6 @@ export default function Admin() {
 
         <Stack gap={16} className={classes.buttonContainer}>
           <Button
-            variant="outline"
-            color="red"
             onClick={() => navigate("/publish-init")}
             className={classes.button}
           >
@@ -26,20 +24,13 @@ export default function Admin() {
           </Button>
 
           <Button
-            variant="outline"
-            color="red"
             onClick={() => navigate("/edit-metadata")}
             className={classes.button}
           >
             Edit Metadata
           </Button>
 
-          <Button
-            variant="outline"
-            color="red"
-            onClick={() => navigate("/test")}
-            className={classes.button}
-          >
+          <Button onClick={() => navigate("/test")} className={classes.button}>
             Test
           </Button>
         </Stack>

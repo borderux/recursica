@@ -17,8 +17,6 @@ export default function Import() {
 
         <Stack gap={16} className={classes.buttonContainer}>
           <Button
-            variant="outline"
-            color="red"
             onClick={() => navigate("/import-main")}
             className={classes.button}
           >
@@ -26,8 +24,6 @@ export default function Import() {
           </Button>
 
           <Button
-            variant="outline"
-            color="red"
             onClick={() => navigate("/import-branch")}
             className={classes.button}
           >
@@ -35,8 +31,6 @@ export default function Import() {
           </Button>
 
           <Button
-            variant="outline"
-            color="red"
             onClick={() => navigate("/import-files")}
             className={classes.button}
           >
