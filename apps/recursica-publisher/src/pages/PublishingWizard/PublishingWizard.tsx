@@ -304,24 +304,47 @@ export default function PublishingWizard() {
 
       if (decision?.publishNewVersion) {
         if (updatedPageData.metadata) {
+          // Preserve existing history before creating new metadata object
+          const existingHistory =
+            updatedPageData.metadata.history &&
+            typeof updatedPageData.metadata.history === "object" &&
+            !Array.isArray(updatedPageData.metadata.history)
+              ? { ...updatedPageData.metadata.history }
+              : {};
+
+          // Validate that new version is higher than existing versions in history
+          const existingVersions = Object.keys(existingHistory)
+            .map((key) => {
+              const version = parseInt(key, 10);
+              return isNaN(version) ? 0 : version;
+            })
+            .filter((v) => v > 0);
+
+          if (existingVersions.length > 0) {
+            const maxExistingVersion = Math.max(...existingVersions);
+            if (decision.newVersion <= maxExistingVersion) {
+              console.warn(
+                `[updateExportDataWithDecisions] Warning: New version ${decision.newVersion} is not higher than existing max version ${maxExistingVersion} in history for ${pageData.pageName}. Proceeding anyway.`,
+              );
+            }
+          }
+
           updatedPageData.metadata = {
             ...updatedPageData.metadata,
             version: decision.newVersion,
+            // Preserve existing history and add new entry
+            history: {
+              ...existingHistory,
+              [`${decision.newVersion}`]: {
+                message: decision.changeMessage,
+                date: new Date().toISOString(),
+              },
+            },
           };
           // Remove exportedAt if it exists (redundant with publishDate)
           delete updatedPageData.metadata.exportedAt;
           // Add publishDate
           updatedPageData.metadata.publishDate = new Date().toISOString();
-
-          // Add history entry
-          if (!updatedPageData.metadata.history) {
-            updatedPageData.metadata.history = {};
-          }
-          const historyKey = `${decision.newVersion}`;
-          updatedPageData.metadata.history[historyKey] = {
-            message: decision.changeMessage,
-            date: new Date().toISOString(),
-          };
         }
 
         // Update instanceTable entries to reference correct versions of referenced components

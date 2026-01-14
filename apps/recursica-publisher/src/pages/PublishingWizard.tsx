@@ -352,6 +352,31 @@ export default function PublishingWizard() {
           );
           // Update version in metadata
           if (updatedPageData.metadata) {
+            // Preserve existing history before updating
+            const existingHistory =
+              updatedPageData.metadata.history &&
+              typeof updatedPageData.metadata.history === "object" &&
+              !Array.isArray(updatedPageData.metadata.history)
+                ? { ...updatedPageData.metadata.history }
+                : {};
+
+            // Validate that new version is higher than existing versions in history
+            const existingVersions = Object.keys(existingHistory)
+              .map((key) => {
+                const version = parseInt(key, 10);
+                return isNaN(version) ? 0 : version;
+              })
+              .filter((v) => v > 0);
+
+            if (existingVersions.length > 0) {
+              const maxExistingVersion = Math.max(...existingVersions);
+              if (decision.newVersion <= maxExistingVersion) {
+                console.warn(
+                  `[updateExportDataWithDecisions] Warning: New version ${decision.newVersion} is not higher than existing max version ${maxExistingVersion} in history for ${pageData.pageName}. Proceeding anyway.`,
+                );
+              }
+            }
+
             updatedPageData.metadata.version = decision.newVersion;
             // Remove changeMessage from metadata (it's in history)
             delete updatedPageData.metadata.changeMessage;
@@ -359,17 +384,17 @@ export default function PublishingWizard() {
             delete updatedPageData.metadata.exportedAt;
             updatedPageData.metadata.publishDate = new Date().toISOString();
 
-            // Add history entry
-            if (!updatedPageData.metadata.history) {
-              updatedPageData.metadata.history = {};
-            }
+            // Preserve existing history and add new entry at the top (newest first)
             const historyKey = `${decision.newVersion}`; // Use just the version number, not "v1"
-            updatedPageData.metadata.history[historyKey] = {
-              message: decision.changeMessage,
-              date: new Date().toISOString(),
+            updatedPageData.metadata.history = {
+              [historyKey]: {
+                message: decision.changeMessage,
+                date: new Date().toISOString(),
+              },
+              ...existingHistory, // Spread existing history after new entry (newest first)
             };
             console.log(
-              `[updateExportDataWithDecisions] Added history entry for ${pageData.pageName}: ${historyKey}`,
+              `[updateExportDataWithDecisions] Added history entry for ${pageData.pageName}: ${historyKey} (preserved ${Object.keys(existingHistory).length} existing entries)`,
             );
           }
 

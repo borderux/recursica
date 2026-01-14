@@ -524,10 +524,10 @@ export async function mergeImportGroup(
         const componentName = hasValidPageMetadata
           ? pageInfo.pageMetadata.name!
           : metadata.componentName || newName;
-        const version =
-          pageInfo.pageMetadata.version !== undefined
-            ? pageInfo.pageMetadata.version
-            : metadata.componentVersion;
+        // IMPORTANT: Always use version from imported component metadata, NOT from existing page metadata.
+        // The page metadata version should only be set FROM the imported component, never read from existing page metadata.
+        // This prevents the version from being incorrectly incremented during publishing.
+        const version = metadata.componentVersion;
         const componentGuid =
           pageInfo.pageMetadata.id || metadata.componentGuid;
 
