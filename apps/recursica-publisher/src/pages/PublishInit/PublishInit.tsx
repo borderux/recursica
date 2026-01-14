@@ -36,6 +36,7 @@ interface MatchedPage {
     version: number;
     publishDate?: string;
   } | null;
+  hasGuidMismatch: boolean; // true if local GUID doesn't match GitHub GUID
 }
 
 export default function PublishInit() {
@@ -81,13 +82,20 @@ export default function PublishInit() {
           "main",
         );
 
-        // Match pages by cleaned name
+        // Match pages by cleaned name and check for GUID mismatches
         const matched: MatchedPage[] = pagesData.pages.map((pageInfo) => {
           const cleanedName = pageInfo.cleanedName;
           const matchedComponent = components.find((comp) => {
             const cleanedCompName = getComponentName(comp.name);
             return cleanedCompName === cleanedName;
           });
+
+          // Check for GUID mismatch: if page has local metadata with a GUID,
+          // and it doesn't match the GitHub GUID, there's a mismatch
+          let hasGuidMismatch = false;
+          if (matchedComponent && pageInfo.localGuid) {
+            hasGuidMismatch = pageInfo.localGuid !== matchedComponent.guid;
+          }
 
           return {
             pageInfo,
@@ -99,10 +107,20 @@ export default function PublishInit() {
                   publishDate: matchedComponent.publishDate,
                 }
               : null,
+            hasGuidMismatch,
           };
         });
 
+        // Auto-select pages with GUID mismatches (GitHub GUID takes precedence)
+        const mismatchedIndices = new Set<number>();
+        matched.forEach((mp) => {
+          if (mp.hasGuidMismatch && mp.githubComponent) {
+            mismatchedIndices.add(mp.pageInfo.index);
+          }
+        });
+
         setMatchedPages(matched);
+        setSelectedPageIndices(mismatchedIndices);
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : "Failed to load data";
@@ -214,7 +232,8 @@ export default function PublishInit() {
           </Title>
           <Text variant="small" className={classes.description}>
             Match your Figma pages with components from GitHub to sync metadata.
-            Select the pages you want to sync.
+            Pages with GUID mismatches are automatically selected. GitHub GUID
+            takes precedence over local metadata.
           </Text>
         </div>
 
@@ -269,6 +288,20 @@ export default function PublishInit() {
                             GUID: {matched.githubComponent.guid.substring(0, 8)}
                             ... | Version: {matched.githubComponent.version}
                           </Text>
+                          {matched.hasGuidMismatch && (
+                            <Alert
+                              variant="error"
+                              className={classes.mismatchAlert}
+                            >
+                              <Text variant="small">
+                                <strong>GUID Mismatch:</strong> Local GUID (
+                                {matched.pageInfo.localGuid?.substring(0, 8)}
+                                ...) does not match GitHub GUID (
+                                {matched.githubComponent.guid.substring(0, 8)}
+                                ...). GitHub GUID will be used when syncing.
+                              </Text>
+                            </Alert>
+                          )}
                         </div>
                       )}
                     </div>

@@ -462,6 +462,7 @@ export async function exportPage(
   isRecursive: boolean = false,
   discoveredPages: Set<string> = new Set(), // Track discovered pages to avoid infinite loops during discovery
   requestId?: string, // Optional request ID for cancellation support
+  exportedPagesMap: Map<string, ExportPageResponseData> = new Map(), // Track all exported pages by pageId
 ): Promise<ResponseMessage> {
   // Check for cancellation at the start
   checkCancellation(requestId);
@@ -522,19 +523,35 @@ export async function exportPage(
       // During full export (recursive call), use processedPages to avoid duplicate exports
       if (processedPages.has(selectedPageId)) {
         debugConsole.log(
-          `Page "${selectedPage.name}" has already been processed, skipping...`,
+          `Page "${selectedPage.name}" has already been processed, retrieving from cache...`,
         );
-        // Return empty response for already processed pages
+        // Check if we have the exported data in the map
+        const cachedExport = exportedPagesMap.get(selectedPageId);
+        if (cachedExport) {
+          debugConsole.log(
+            `✓ Retrieved cached export data for "${selectedPage.name}"`,
+          );
+          return {
+            type: "exportPage",
+            success: true,
+            error: false,
+            message: "Page already processed (using cached data)",
+            data: cachedExport as any,
+          };
+        }
+        // If not in cache, return error (should not happen if export flow is correct)
+        debugConsole.warning(
+          `Page "${selectedPage.name}" was processed but not found in cache. This may indicate an issue with the export flow.`,
+        );
         return {
           type: "exportPage",
           success: false,
           error: true,
-          message: "Page already processed",
+          message: "Page already processed but not in cache",
           data: {},
         };
       }
-      // Mark this page as processed (actually exported)
-      processedPages.add(selectedPageId);
+      // Mark this page as processed (will be marked as exported after successful export)
     } else if (data.skipPrompts) {
       // During discovery phase (not recursive), use discoveredPages set to avoid infinite loops
       if (discoveredPages.has(selectedPageId)) {
@@ -562,19 +579,35 @@ export async function exportPage(
       // During actual export (not recursive, not skipPrompts), use processedPages set
       if (processedPages.has(selectedPageId)) {
         debugConsole.log(
-          `Page "${selectedPage.name}" has already been processed, skipping...`,
+          `Page "${selectedPage.name}" has already been processed, retrieving from cache...`,
         );
-        // Return empty response for already processed pages
+        // Check if we have the exported data in the map
+        const cachedExport = exportedPagesMap.get(selectedPageId);
+        if (cachedExport) {
+          debugConsole.log(
+            `✓ Retrieved cached export data for "${selectedPage.name}"`,
+          );
+          return {
+            type: "exportPage",
+            success: true,
+            error: false,
+            message: "Page already processed (using cached data)",
+            data: cachedExport as any,
+          };
+        }
+        // If not in cache, return error (should not happen if export flow is correct)
+        debugConsole.warning(
+          `Page "${selectedPage.name}" was processed but not found in cache. This may indicate an issue with the export flow.`,
+        );
         return {
           type: "exportPage",
           success: false,
           error: true,
-          message: "Page already processed",
+          message: "Page already processed but not in cache",
           data: {},
         };
       }
-      // Mark this page as processed (actually exported)
-      processedPages.add(selectedPageId);
+      // Mark this page as processed (will be marked as exported after successful export)
     }
 
     debugConsole.log(
@@ -1133,6 +1166,7 @@ export async function exportPage(
                 true, // Mark as recursive call
                 discoveredPages, // Pass discovered pages set to avoid infinite loops
                 requestId, // Pass requestId for cancellation
+                exportedPagesMap, // Pass the shared map to track all exported pages
               );
 
               if (
@@ -1200,6 +1234,7 @@ export async function exportPage(
               true, // Mark as recursive call
               discoveredPages, // Pass discovered pages set (empty during actual export)
               requestId, // Pass requestId for cancellation
+              exportedPagesMap, // Pass the shared map to track all exported pages
             );
 
             if (
@@ -1209,6 +1244,8 @@ export async function exportPage(
               const referencedExportData =
                 referencedExportResponse.data as unknown as ExportPageResponseData;
               additionalPages.push(referencedExportData);
+              // Add to exported pages map for future lookups
+              exportedPagesMap.set(referencedPage.id, referencedExportData);
               debugConsole.log(
                 `Successfully exported referenced page: "${pageName}"`,
               );
@@ -1366,6 +1403,7 @@ export async function exportPage(
           true, // Mark as recursive call (this makes it do full export, not discovery)
           discoveredPages,
           requestId,
+          exportedPagesMap, // Pass the shared map to track all exported pages
         );
 
         if (
@@ -1375,15 +1413,76 @@ export async function exportPage(
           const referencedPageData =
             referencedPageExportResponse.data as unknown as ExportPageResponseData;
           additionalPages.push(referencedPageData);
+          // Add to exported pages map for future lookups
+          const pageId = pages.find(
+            (p) => p.name === discoveredPage.pageName,
+          )?.id;
+          if (pageId) {
+            exportedPagesMap.set(pageId, referencedPageData);
+          }
           debugConsole.log(
             `✓ Successfully exported: "${discoveredPage.pageName}"`,
           );
         } else {
-          debugConsole.warning(
-            `Failed to export "${discoveredPage.pageName}": ${referencedPageExportResponse.message}`,
-          );
+          // Check if the page was already processed and is in the cache
+          const pageId = pages.find(
+            (p) => p.name === discoveredPage.pageName,
+          )?.id;
+          if (pageId && exportedPagesMap.has(pageId)) {
+            const cachedExport = exportedPagesMap.get(pageId)!;
+            additionalPages.push(cachedExport);
+            debugConsole.log(
+              `✓ Using cached export data for "${discoveredPage.pageName}" (already processed)`,
+            );
+          } else {
+            debugConsole.warning(
+              `Failed to export "${discoveredPage.pageName}": ${referencedPageExportResponse.message}`,
+            );
+          }
         }
       }
+
+      // Flatten nested additionalPages to include all exported pages in the main export's additionalPages
+      // This ensures the wizard can find all exported pages, even if they were nested
+      const flattenedAdditionalPages: ExportPageResponseData[] = [];
+      const seenPageNames = new Set<string>(); // Use pageName for deduplication since it's more reliable
+
+      const flattenPages = (pages: ExportPageResponseData[]) => {
+        for (const page of pages) {
+          // Use pageName for deduplication (more reliable than GUID which might not be set)
+          const pageName = page.pageName;
+
+          // Skip if we've already added this page (avoid duplicates)
+          if (seenPageNames.has(pageName)) {
+            debugConsole.log(
+              `Skipping duplicate page "${pageName}" during flattening`,
+            );
+            continue;
+          }
+
+          seenPageNames.add(pageName);
+          // Create a copy without nested additionalPages to avoid circular references
+          const flattenedPage: ExportPageResponseData = {
+            ...page,
+            additionalPages: [], // Clear nested additionalPages since we're flattening
+          };
+          flattenedAdditionalPages.push(flattenedPage);
+
+          // Recursively flatten nested additionalPages
+          if (page.additionalPages && page.additionalPages.length > 0) {
+            flattenPages(page.additionalPages);
+          }
+        }
+      };
+
+      flattenPages(additionalPages);
+      // Clear and repopulate the array instead of reassigning (since it's const)
+      additionalPages.length = 0;
+      additionalPages.push(...flattenedAdditionalPages);
+
+      debugConsole.log(
+        `Flattened ${additionalPages.length} unique page(s) from nested additionalPages`,
+      );
 
       debugConsole.log(
         `=== Full Export Complete: ${additionalPages.length + 1} page(s) exported ===`,
@@ -1471,6 +1570,9 @@ export async function exportPage(
           : undefined, // Only include if there are discovered pages
       validationResult: aggregatedValidationResult, // Include aggregated validation results if in discovery mode
     };
+
+    // Add this exported page to the map for future lookups
+    exportedPagesMap.set(selectedPageId, responseData);
 
     // Include debug logs in response
     const debugLogs = debugConsole.getLogs();

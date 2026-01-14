@@ -2,7 +2,10 @@
 import type { ResponseMessage } from "../types/messages";
 import { retSuccess, retError } from "../utils/response";
 import { getComponentName } from "../utils/getComponentName";
-import { PLUGIN_DATA_KEY } from "./getComponentMetadata";
+import {
+  PLUGIN_DATA_KEY,
+  type ComponentMetadata,
+} from "./getComponentMetadata";
 import type { NoData } from "./getCurrentUser";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -11,6 +14,7 @@ export interface PageInfo {
   name: string;
   cleanedName: string;
   hasMetadata: boolean;
+  localGuid?: string; // GUID from local page metadata, if it exists
 }
 
 export interface GetAllPagesResponseData {
@@ -47,11 +51,23 @@ export async function getAllPages(
       const hasMetadata = !!pluginData && pluginData.trim() !== "";
       const cleanedName = getComponentName(page.name);
 
+      // Extract local GUID from metadata if it exists
+      let localGuid: string | undefined;
+      if (hasMetadata) {
+        try {
+          const metadata: ComponentMetadata = JSON.parse(pluginData);
+          localGuid = metadata.id || undefined;
+        } catch {
+          // Invalid metadata, ignore
+        }
+      }
+
       pages.push({
         index: i,
         name: page.name,
         cleanedName,
         hasMetadata,
+        localGuid,
       });
     }
 

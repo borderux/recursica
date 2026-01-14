@@ -87,6 +87,11 @@
   font-size: var(--mantine-font-size-xs);
 }
 
+.mismatchAlert {
+  margin-top: var(--mantine-spacing-xs);
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+}
+
 .noMatchText {
   color: var(--mantine-color-gray-6);
   font-style: italic;

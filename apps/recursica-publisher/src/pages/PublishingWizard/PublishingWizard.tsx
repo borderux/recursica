@@ -172,13 +172,57 @@ export default function PublishingWizard() {
   const getPagesToPublish = useCallback((): ExportPageResponseData[] => {
     if (!exportData) return [];
     const pages: ExportPageResponseData[] = [exportData];
+
+    // Helper function to recursively search for a page in additionalPages (including nested)
+    const findPageInAdditionalPages = (
+      pageName: string,
+      pagesToSearch: ExportPageResponseData[],
+    ): ExportPageResponseData | null => {
+      for (const page of pagesToSearch) {
+        if (page.pageName === pageName) {
+          return page;
+        }
+        if (page.additionalPages && page.additionalPages.length > 0) {
+          const found = findPageInAdditionalPages(
+            pageName,
+            page.additionalPages,
+          );
+          if (found) {
+            return found;
+          }
+        }
+      }
+      return null;
+    };
+
     for (const pageInfo of discoveredReferencedPages) {
       if (selectedReferencedPageIds.has(pageInfo.pageId)) {
-        const exportedPage = exportData.additionalPages.find(
-          (p) => p.pageName === pageInfo.pageName,
+        const exportedPage = findPageInAdditionalPages(
+          pageInfo.pageName,
+          exportData.additionalPages,
         );
         if (exportedPage) {
           pages.push(exportedPage);
+        } else {
+          // User selected this page but it's not in additionalPages
+          // Create a minimal ExportPageResponseData so the user can still enter revision history
+          // This should not normally happen, but we want to show all selected pages
+          console.warn(
+            `[PublishingWizard] Selected page "${pageInfo.pageName}" not found in additionalPages. Creating minimal structure.`,
+          );
+          const minimalPageData: ExportPageResponseData = {
+            filename: `${pageInfo.pageName.replace(/\s+/g, "_")}.figma.json`,
+            pageData: {
+              metadata: {
+                name: pageInfo.componentName || pageInfo.pageName,
+                version: pageInfo.localVersion || 0,
+                guid: "", // Will need to be filled from mainBranchComponents if available
+              },
+            },
+            pageName: pageInfo.componentName || pageInfo.pageName,
+            additionalPages: [],
+          };
+          pages.push(minimalPageData);
         }
       }
     }
@@ -460,11 +504,34 @@ export default function PublishingWizard() {
         selectedReferencedPageIds.has(p.pageId),
       );
 
+      // Helper function to recursively search for a page in additionalPages (including nested)
+      const findPageInAdditionalPages = (
+        pageName: string,
+        pages: ExportPageResponseData[],
+      ): ExportPageResponseData | null => {
+        for (const page of pages) {
+          if (page.pageName === pageName) {
+            return page;
+          }
+          if (page.additionalPages && page.additionalPages.length > 0) {
+            const found = findPageInAdditionalPages(
+              pageName,
+              page.additionalPages,
+            );
+            if (found) {
+              return found;
+            }
+          }
+        }
+        return null;
+      };
+
       const exportedPages: ExportPageResponseData[] = [];
 
       for (const pageInfo of selectedPages) {
-        const exportedPage = exportData.additionalPages.find(
-          (p) => p.pageName === pageInfo.pageName,
+        const exportedPage = findPageInAdditionalPages(
+          pageInfo.pageName,
+          exportData.additionalPages,
         );
 
         if (exportedPage) {
