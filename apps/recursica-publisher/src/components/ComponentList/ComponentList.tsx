@@ -1,5 +1,6 @@
 import { Stack } from "../Stack";
 import { Badge } from "../Badge";
+import { getComponentCleanName } from "../../plugin/utils/getComponentCleanName";
 import classes from "./ComponentList.module.css";
 
 /**
@@ -62,10 +63,12 @@ export function ComponentList({
     return null;
   }
 
-  // Sort components alphabetically by name
-  const sortedComponents = [...components].sort((a, b) =>
-    a.name.localeCompare(b.name),
-  );
+  // Sort components alphabetically by clean component name (case-insensitive, alphanumeric only)
+  const sortedComponents = [...components].sort((a, b) => {
+    const cleanA = getComponentCleanName(a.name).toLowerCase();
+    const cleanB = getComponentCleanName(b.name).toLowerCase();
+    return cleanA.localeCompare(cleanB);
+  });
 
   return (
     <Stack gap={8} className={`${classes.componentList} ${className || ""}`}>
