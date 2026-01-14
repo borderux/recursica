@@ -867,42 +867,87 @@ export async function restoreBoundVariablesForFills(
   try {
     // Get the property value (e.g., fills array)
     const propertyValue = node[propertyName];
+    debugConsole.log(
+      `  [BOUND-VAR] Checking ${propertyName} on "${node.name || "Unnamed"}": propertyValue=${propertyValue ? (Array.isArray(propertyValue) ? `Array(${propertyValue.length})` : typeof propertyValue) : "undefined"}`,
+    );
     if (!propertyValue || !Array.isArray(propertyValue)) {
+      debugConsole.warning(
+        `  [BOUND-VAR] Skipping ${propertyName} bound variables: propertyValue is not an array`,
+      );
       return;
     }
 
-    // Handle fills array binding
-    // boundVariables.fills can be:
+    // Handle fills/strokes array binding
+    // boundVariables.fills or boundVariables.strokes can be:
     // 1. An array where each element is an object with properties like { color: { _varRef: ... } }
     // 2. An array where each element is a direct variable reference like { _varRef: 57 }
     const fillsBinding = boundVariables[propertyName];
+    debugConsole.log(
+      `  [BOUND-VAR] Processing ${propertyName} bound variables: ${JSON.stringify(fillsBinding)}`,
+    );
     if (Array.isArray(fillsBinding)) {
+      debugConsole.log(
+        `  [BOUND-VAR] fillsBinding is array with ${fillsBinding.length} element(s), propertyValue has ${propertyValue.length} element(s)`,
+      );
+
+      // For strokes, we need to create a new array because the strokes array is read-only
+      // We'll build a new array with bound paint objects, then reassign the entire array
+      const newPaints: any[] = propertyName === "strokes" ? [] : propertyValue;
+
       for (
         let i = 0;
         i < fillsBinding.length && i < propertyValue.length;
         i++
       ) {
         const fillBinding = fillsBinding[i];
+        debugConsole.log(
+          `  [BOUND-VAR] Processing ${propertyName}[${i}]: fillBinding=${JSON.stringify(fillBinding)}, propertyValue[${i}]=${propertyValue[i] ? JSON.stringify(propertyValue[i]).substring(0, 100) : "undefined"}`,
+        );
         if (fillBinding && typeof fillBinding === "object") {
           // Initialize boundVariables on the fill if it doesn't exist
-          if (!propertyValue[i].boundVariables) {
+          // For strokes, boundVariables is read-only, so we skip initialization
+          // and will use setBoundVariableForPaint instead
+          if (propertyName !== "strokes" && !propertyValue[i].boundVariables) {
             propertyValue[i].boundVariables = {};
           }
 
           // Check if this is a direct variable reference (e.g., { _varRef: 57 })
           // In Figma, binding an entire fill typically means binding the color property
-          if (isVariableReference(fillBinding)) {
+          const isVarRef = isVariableReference(fillBinding);
+          debugConsole.log(
+            `  [BOUND-VAR] isVariableReference(${propertyName}[${i}]): ${isVarRef}`,
+          );
+          if (isVarRef) {
             const varRef = (fillBinding as VariableReference)._varRef;
+            debugConsole.log(
+              `  [BOUND-VAR] Found _varRef: ${varRef} for ${propertyName}[${i}]`,
+            );
             if (varRef !== undefined) {
               let variable = recognizedVariables.get(String(varRef));
+              debugConsole.log(
+                `  [BOUND-VAR] Variable lookup for _varRef ${varRef}: ${variable ? `found "${variable.name}"` : "not found in recognizedVariables"}`,
+              );
 
               // Verify that the variable found in recognizedVariables matches the variable table entry
               if (variable && variableTable) {
                 const varEntry = variableTable.getVariableByIndex(varRef);
-                if (varEntry && variable.name !== varEntry.variableName) {
-                  // Variable name doesn't match - the index points to a different variable
-                  // Fall back to resolving from table by name
-                  variable = undefined; // Clear so we resolve from table
+                if (varEntry) {
+                  if (variable.name !== varEntry.variableName) {
+                    // Variable name doesn't match - the index points to a different variable
+                    // Fall back to resolving from table by name
+                    debugConsole.warning(
+                      `  [BOUND-VAR] Variable name mismatch for _varRef ${varRef} on ${propertyName}[${i}]: recognizedVariables has "${variable.name}", but variable table entry ${varRef} is "${varEntry.variableName}" - will resolve from table`,
+                    );
+                    variable = undefined; // Clear so we resolve from table
+                  } else {
+                    debugConsole.log(
+                      `  [BOUND-VAR] Variable name verified for _varRef ${varRef} on ${propertyName}[${i}]: "${variable.name}" matches variable table entry`,
+                    );
+                  }
+                } else {
+                  debugConsole.warning(
+                    `  [BOUND-VAR] No variable table entry found for _varRef ${varRef} on ${propertyName}[${i}]`,
+                  );
                 }
               }
 
@@ -913,6 +958,9 @@ export async function restoreBoundVariablesForFills(
                 collectionTable &&
                 recognizedCollections
               ) {
+                debugConsole.log(
+                  `  [BOUND-VAR] Resolving variable from table for _varRef ${varRef} on ${propertyName}[${i}]`,
+                );
                 const resolvedVariable = await resolveVariableFromTable(
                   varRef,
                   variableTable,
@@ -921,23 +969,81 @@ export async function restoreBoundVariablesForFills(
                 );
                 variable = resolvedVariable || undefined;
                 if (variable) {
+                  debugConsole.log(
+                    `  [BOUND-VAR] Resolved variable from table: "${variable.name}" (ID: ${variable.id.substring(0, 20)}...)`,
+                  );
                   // Add to recognizedVariables for future lookups
                   recognizedVariables.set(String(varRef), variable);
+                } else {
+                  debugConsole.warning(
+                    `  [BOUND-VAR] Could not resolve variable from table for _varRef ${varRef} on ${propertyName}[${i}]`,
+                  );
                 }
               }
 
               if (variable) {
-                // For direct variable references in fills array, bind to the color property
-                // This is the most common case when a fill is bound to a variable
-                propertyValue[i].boundVariables.color = {
-                  type: "VARIABLE_ALIAS",
-                  id: variable.id,
-                };
+                // For direct variable references in fills/strokes array, bind to the color property
+                // For strokes, we MUST use setBoundVariableForPaint because boundVariables is read-only
+                if (propertyName === "strokes") {
+                  if (propertyValue[i].type === "SOLID") {
+                    // Use Figma's API to create a new paint with bound variable
+                    // Create a fresh paint object without boundVariables to avoid read-only errors
+                    const solidPaint = propertyValue[i] as SolidPaint;
+                    const freshPaint: SolidPaint = {
+                      type: "SOLID",
+                      visible: solidPaint.visible,
+                      opacity: solidPaint.opacity,
+                      blendMode: solidPaint.blendMode,
+                      color: { ...solidPaint.color },
+                    };
+                    const boundPaint = figma.variables.setBoundVariableForPaint(
+                      freshPaint,
+                      "color",
+                      variable,
+                    );
+                    // Add to new array instead of modifying propertyValue directly (strokes array is read-only)
+                    newPaints.push(boundPaint);
+                    debugConsole.log(
+                      `  [BOUND-VAR] ✓ Set bound variable for ${propertyName}[${i}].color on "${node.name || "Unnamed"}": variable "${variable.name}" (ID: ${variable.id.substring(0, 20)}...) from table index ${varRef}`,
+                    );
+                  } else {
+                    // For non-SOLID strokes, add as-is
+                    newPaints.push(propertyValue[i]);
+                    debugConsole.warning(
+                      `  [BOUND-VAR] Cannot bind variable to ${propertyName}[${i}] - paint type is "${propertyValue[i].type}", only SOLID is supported`,
+                    );
+                  }
+                } else {
+                  // For fills, we can directly set boundVariables (it's not read-only for fills)
+                  if (!propertyValue[i].boundVariables) {
+                    propertyValue[i].boundVariables = {};
+                  }
+                  propertyValue[i].boundVariables.color = {
+                    type: "VARIABLE_ALIAS",
+                    id: variable.id,
+                  };
+                  debugConsole.log(
+                    `  [BOUND-VAR] ✓ Set bound variable for ${propertyName}[${i}].color on "${node.name || "Unnamed"}": variable "${variable.name}" (ID: ${variable.id.substring(0, 20)}...) from table index ${varRef}`,
+                  );
+                }
+              } else {
+                // Variable not found - for strokes, add original paint; for fills, keep as-is
+                if (propertyName === "strokes") {
+                  newPaints.push(propertyValue[i]);
+                }
+                debugConsole.warning(
+                  `  [BOUND-VAR] Could not resolve variable for _varRef ${varRef} on ${propertyName}[${i}]`,
+                );
               }
             }
           } else {
+            debugConsole.log(
+              `  [BOUND-VAR] fillBinding is not a direct variable reference, checking properties: ${Object.keys(fillBinding).join(", ")}`,
+            );
             // Each fill binding can have properties like "color", "opacity", etc.
             // Iterate over each property in the fill binding (e.g., "color")
+            // For strokes, we need to track if we've processed this index
+            let strokeProcessed = false;
             for (const [fillPropertyName, varInfo] of Object.entries(
               fillBinding,
             )) {
@@ -977,21 +1083,89 @@ export async function restoreBoundVariablesForFills(
                   }
 
                   if (variable) {
-                    // Set the boundVariable with the correct structure
-                    propertyValue[i].boundVariables[fillPropertyName] = {
-                      type: "VARIABLE_ALIAS",
-                      id: variable.id,
-                    };
+                    // For strokes, use setBoundVariableForPaint because boundVariables is read-only
+                    if (
+                      propertyName === "strokes" &&
+                      fillPropertyName === "color"
+                    ) {
+                      strokeProcessed = true; // Mark as processed
+                      if (propertyValue[i].type === "SOLID") {
+                        // Create a fresh paint object without boundVariables to avoid read-only errors
+                        const solidPaint = propertyValue[i] as SolidPaint;
+                        const freshPaint: SolidPaint = {
+                          type: "SOLID",
+                          visible: solidPaint.visible,
+                          opacity: solidPaint.opacity,
+                          blendMode: solidPaint.blendMode,
+                          color: { ...solidPaint.color },
+                        };
+                        const boundPaint =
+                          figma.variables.setBoundVariableForPaint(
+                            freshPaint,
+                            "color",
+                            variable,
+                          );
+                        // Add to new array instead of modifying propertyValue directly
+                        newPaints.push(boundPaint);
+                        debugConsole.log(
+                          `  [BOUND-VAR] ✓ Set bound variable for ${propertyName}[${i}].${fillPropertyName} on "${node.name || "Unnamed"}": variable "${variable.name}" (ID: ${variable.id.substring(0, 20)}...)`,
+                        );
+                      } else {
+                        // For non-SOLID strokes, add as-is
+                        newPaints.push(propertyValue[i]);
+                        debugConsole.warning(
+                          `  [BOUND-VAR] Cannot bind variable to ${propertyName}[${i}].${fillPropertyName} - paint type is "${propertyValue[i].type}", only SOLID is supported`,
+                        );
+                      }
+                    } else {
+                      // For fills, we can directly set boundVariables
+                      if (!propertyValue[i].boundVariables) {
+                        propertyValue[i].boundVariables = {};
+                      }
+                      propertyValue[i].boundVariables[fillPropertyName] = {
+                        type: "VARIABLE_ALIAS",
+                        id: variable.id,
+                      };
+                      debugConsole.log(
+                        `  [BOUND-VAR] ✓ Set bound variable for ${propertyName}[${i}].${fillPropertyName} on "${node.name || "Unnamed"}": variable "${variable.name}" (ID: ${variable.id.substring(0, 20)}...)`,
+                      );
+                    }
+                  } else {
+                    // Variable not found - for strokes, add original paint
+                    if (propertyName === "strokes") {
+                      strokeProcessed = true; // Mark as processed even if variable not found
+                      newPaints.push(propertyValue[i]);
+                    }
                   }
                 }
               }
             }
+            // If we didn't process this stroke in the else branch (no variable bindings), add original paint
+            if (propertyName === "strokes" && !strokeProcessed) {
+              newPaints.push(propertyValue[i]);
+            }
           }
+        }
+      }
+
+      // For strokes, reassign the entire array with the new bound paint objects
+      if (propertyName === "strokes" && newPaints.length > 0) {
+        try {
+          node.strokes = newPaints; // Reassign to apply the bound paint objects
+          debugConsole.log(
+            `  [BOUND-VAR] ✓ Reassigned ${propertyName} array on "${node.name || "Unnamed"}" with ${newPaints.length} bound paint object(s)`,
+          );
+        } catch (error) {
+          debugConsole.warning(
+            `  [BOUND-VAR] Error reassigning ${propertyName} array: ${error}`,
+          );
         }
       }
     }
   } catch (error) {
-    console.log(`Error restoring bound variables for ${propertyName}:`, error);
+    debugConsole.warning(
+      `  [BOUND-VAR] Error restoring bound variables for ${propertyName}: ${error}`,
+    );
   }
 }
 
@@ -4803,8 +4977,21 @@ export async function recreateNodeFromData(
                 // Verify that the variable found in recognizedVariables matches the variable table entry
                 if (variable && variableTable) {
                   const varEntry = variableTable.getVariableByIndex(varRef);
-                  if (varEntry && variable.name !== varEntry.variableName) {
-                    variable = undefined; // Clear so we resolve from table
+                  if (varEntry) {
+                    if (variable.name !== varEntry.variableName) {
+                      debugConsole.warning(
+                        `  [BOUND-VAR] Variable name mismatch for _varRef ${varRef} on "${newNode.name || "Unnamed"}": recognizedVariables has "${variable.name}", but variable table entry ${varRef} is "${varEntry.variableName}" - will resolve from table`,
+                      );
+                      variable = undefined; // Clear so we resolve from table
+                    } else {
+                      debugConsole.log(
+                        `  [BOUND-VAR] Variable name verified for _varRef ${varRef} on "${newNode.name || "Unnamed"}": "${variable.name}" matches variable table entry`,
+                      );
+                    }
+                  } else {
+                    debugConsole.warning(
+                      `  [BOUND-VAR] No variable table entry found for _varRef ${varRef} on "${newNode.name || "Unnamed"}"`,
+                    );
                   }
                 }
 
@@ -4833,13 +5020,14 @@ export async function recreateNodeFromData(
                     type: "VARIABLE_ALIAS",
                     id: variable.id,
                   };
-                  const isBadgeLabelVar =
-                    variable.name.includes("badge/color/label");
-                  if (isBadgeLabelVar) {
-                    debugConsole.log(
-                      `  [IMPORT DEBUG] [INSTANCE OVERRIDE] Restored bound variable for fill[${i}].color on "${newNode.name || "Unnamed"}" (${nodeData.type}): variable "${variable.name}" (ID: ${variable.id.substring(0, 8)}...) from table index ${varRef}`,
-                    );
-                  }
+                  // Log all variable bindings for fills to help debug issues
+                  debugConsole.log(
+                    `  [BOUND-VAR] Restored bound variable for fill[${i}].color on "${newNode.name || "Unnamed"}" (${nodeData.type}): variable "${variable.name}" (ID: ${variable.id.substring(0, 8)}...) from table index ${varRef}`,
+                  );
+                } else {
+                  debugConsole.warning(
+                    `  [BOUND-VAR] Could not resolve variable for _varRef ${varRef} on fill[${i}].color for "${newNode.name || "Unnamed"}" (${nodeData.type})`,
+                  );
                 }
               }
             } else {
@@ -5158,6 +5346,28 @@ export async function recreateNodeFromData(
     } catch {
       // Ignore errors if strokes can't be set
     }
+  }
+
+  // Restore bound variables for strokes (similar to fills)
+  // Strokes can have bound variables for color, just like fills
+  if (
+    nodeData.boundVariables &&
+    typeof nodeData.boundVariables === "object" &&
+    nodeData.boundVariables.strokes &&
+    recognizedVariables
+  ) {
+    debugConsole.log(
+      `  [BOUND-VAR] Restoring bound variables for strokes on "${newNode.name || "Unnamed"}" (${nodeData.type}): ${JSON.stringify(nodeData.boundVariables.strokes)}`,
+    );
+    await restoreBoundVariablesForFills(
+      newNode,
+      nodeData.boundVariables,
+      "strokes",
+      recognizedVariables,
+      variableTable,
+      collectionTable,
+      recognizedCollections,
+    );
   }
 
   // Set additional properties for better visual similarity
@@ -11435,6 +11645,10 @@ export async function resolveDeferredNormalInstances(
         nodeData.componentPropertyReferences &&
         typeof nodeData.componentPropertyReferences === "object"
       ) {
+        // Declare variables at this scope so they're accessible in the catch block
+        let componentProps: ComponentPropertyDefinitions | null = null;
+        const componentPropertyRefs: Record<string, string> = {};
+
         try {
           // Log what properties the bindings are trying to reference
           const bindingPropertyNames = Object.values(
@@ -11451,6 +11665,21 @@ export async function resolveDeferredNormalInstances(
           // Example: Icon instance inside Button component - bindings reference Button properties, not Icon properties.
           let parentComponent: ComponentNode | ComponentSetNode | null = null;
           let current: any = instanceNode.parent;
+
+          // Log the full parent chain for debugging
+          const parentChain: string[] = [];
+          let chainCurrent: any = instanceNode.parent;
+          while (chainCurrent) {
+            parentChain.push(
+              `${chainCurrent.type} "${chainCurrent.name || "Unnamed"}"`,
+            );
+            if (chainCurrent.type === "PAGE") break;
+            chainCurrent = chainCurrent.parent;
+          }
+          debugConsole.log(
+            `  [BINDING] Parent chain for deferred instance "${nodeData.name}": ${parentChain.join(" -> ")}`,
+          );
+
           while (current) {
             if (
               current.type === "COMPONENT" ||
@@ -11471,8 +11700,6 @@ export async function resolveDeferredNormalInstances(
               `  [BINDING] Component mismatch for deferred instance "${nodeData.name}": expected "${expectedComponentName}", but main component is "${mainComponent.name}"${mainComponent.parent?.type === "COMPONENT_SET" ? ` (COMPONENT_SET: "${mainComponent.parent.name}")` : ""}`,
             );
           }
-
-          let componentProps: ComponentPropertyDefinitions | null = null;
 
           // Try parent component first (for nested instances)
           if (parentComponent) {
@@ -11557,7 +11784,6 @@ export async function resolveDeferredNormalInstances(
                 .map((p) => p.split("#")[0])
                 .join(", ")}`,
             );
-            const componentPropertyRefs: Record<string, string> = {};
 
             // Map old property IDs to new property IDs by matching property names
             for (const [nodeProperty, oldPropId] of Object.entries(
@@ -11620,162 +11846,303 @@ export async function resolveDeferredNormalInstances(
             // Set componentPropertyReferences on the instance (now that it's a child of the component)
             // Note: This may fail if INSTANCE_SWAP properties reference components that don't exist
             if (Object.keys(componentPropertyRefs).length > 0) {
-              try {
-                (instanceNode as any).componentPropertyReferences =
-                  componentPropertyRefs;
-                debugConsole.log(
-                  `  [BINDING] ✓ Successfully restored componentPropertyReferences for deferred instance "${nodeData.name}": ${JSON.stringify(componentPropertyRefs)}`,
-                );
-              } catch (error) {
-                const errorMessage =
-                  error instanceof Error ? error.message : String(error);
-                debugConsole.warning(
-                  `  [BINDING] ✗ Failed to restore componentPropertyReferences for deferred instance "${nodeData.name}": ${errorMessage}`,
-                );
-                // If setting all properties failed, try setting them one by one to identify which one fails
+              // CRITICAL: Verify the instance is properly a child of the component before setting bindings
+              // Figma requires the instance to be a "symbol sublayer" (child of a component) for bindings to work
+              const actualParent = instanceNode.parent;
+              const isChildOfComponent =
+                actualParent &&
+                (actualParent.type === "COMPONENT" ||
+                  actualParent.type === "COMPONENT_SET");
+              const parentName = actualParent ? actualParent.name : "none";
+              const parentType = actualParent ? actualParent.type : "none";
+
+              // Check if instance is a "symbol sublayer" by walking up to find a component
+              let isSymbolSublayer = false;
+              let componentAncestor: ComponentNode | ComponentSetNode | null =
+                null;
+              let checkCurrent: any = instanceNode.parent;
+              while (checkCurrent) {
                 if (
-                  errorMessage.includes("component property reference") ||
-                  errorMessage.includes("implicitDefID")
+                  checkCurrent.type === "COMPONENT" ||
+                  checkCurrent.type === "COMPONENT_SET"
                 ) {
-                  debugConsole.log(
-                    `  [BINDING] Attempting to restore bindings individually to identify problematic property...`,
-                  );
-                  const successfulRefs: Record<string, string> = {};
-                  for (const [nodeProperty, propId] of Object.entries(
-                    componentPropertyRefs,
-                  )) {
-                    try {
-                      (instanceNode as any).componentPropertyReferences = {
-                        [nodeProperty]: propId,
-                      };
-                      successfulRefs[nodeProperty] = propId;
-                      debugConsole.log(
-                        `  [BINDING] ✓ Successfully restored binding "${nodeProperty}" -> "${propId}"`,
-                      );
-                    } catch (individualError) {
-                      const propDef = componentProps[propId];
-                      const propType = propDef ? propDef.type : "unknown";
-                      debugConsole.warning(
-                        `  [BINDING] ✗ Failed to restore binding "${nodeProperty}" -> "${propId}" (type: ${propType}): ${individualError instanceof Error ? individualError.message : String(individualError)}`,
-                      );
-                    }
-                  }
-                  // Set all successful bindings at once
-                  if (Object.keys(successfulRefs).length > 0) {
-                    try {
-                      (instanceNode as any).componentPropertyReferences =
-                        successfulRefs;
-                      debugConsole.log(
-                        `  [BINDING] ✓ Restored ${Object.keys(successfulRefs).length} of ${Object.keys(componentPropertyRefs).length} componentPropertyReferences for deferred instance "${nodeData.name}"`,
-                      );
-                    } catch {
-                      // If even setting successful refs fails, give up
-                      debugConsole.warning(
-                        `  [BINDING] ✗ Could not set even successful bindings - skipping all bindings for deferred instance "${nodeData.name}"`,
-                      );
-                    }
-                  }
+                  isSymbolSublayer = true;
+                  componentAncestor = checkCurrent;
+                  break;
                 }
-              }
-            }
-
-            // Recursively restore bindings for children
-            const restoreChildBindings = (
-              childNode: SceneNode,
-              childData: any,
-            ): void => {
-              if (
-                childData.componentPropertyReferences &&
-                typeof childData.componentPropertyReferences === "object"
-              ) {
-                const childPropertyRefs: Record<string, string> = {};
-
-                for (const [nodeProperty, oldPropId] of Object.entries(
-                  childData.componentPropertyReferences,
-                )) {
-                  if (typeof oldPropId === "string") {
-                    const cleanPropName = oldPropId.split("#")[0];
-                    let newPropId: string | null = null;
-
-                    if (componentProps) {
-                      for (const propId of Object.keys(componentProps)) {
-                        const propCleanName = propId.split("#")[0];
-                        if (propCleanName === cleanPropName) {
-                          newPropId = propId;
-                          break;
-                        }
-                      }
-                    }
-
-                    if (newPropId) {
-                      // Validate that the property exists in componentProps
-                      if (componentProps && componentProps[newPropId]) {
-                        childPropertyRefs[nodeProperty] = newPropId;
-                      } else {
-                        debugConsole.warning(
-                          `  [BINDING] Property "${newPropId}" not found in component property definitions for child "${childNode.name || "Unnamed"}" of deferred instance "${nodeData.name}"`,
-                        );
-                      }
-                    }
-                  }
-                }
-
-                if (Object.keys(childPropertyRefs).length > 0) {
-                  try {
-                    (childNode as any).componentPropertyReferences =
-                      childPropertyRefs;
-                    debugConsole.log(
-                      `  [BINDING] ✓ Restored componentPropertyReferences for child "${childNode.name || "Unnamed"}" of deferred instance "${nodeData.name}"`,
-                    );
-                  } catch {
-                    // Child might not support bindings (e.g., not a symbol sublayer)
-                  }
-                }
+                if (checkCurrent.type === "PAGE") break;
+                checkCurrent = checkCurrent.parent;
               }
 
-              // Recurse into children
-              if (
-                "children" in childNode &&
-                childData.children &&
-                Array.isArray(childData.children)
-              ) {
-                for (
-                  let i = 0;
-                  i < childNode.children.length &&
-                  i < childData.children.length;
-                  i++
-                ) {
-                  restoreChildBindings(
-                    childNode.children[i],
-                    childData.children[i],
-                  );
-                }
-              }
-            };
+              debugConsole.log(
+                `  [BINDING] Verifying instance "${nodeData.name}" is child of component before setting bindings: parent="${parentName}" (type: ${parentType}), isChildOfComponent=${isChildOfComponent}, isSymbolSublayer=${isSymbolSublayer}${componentAncestor ? ` (component ancestor: ${componentAncestor.type} "${componentAncestor.name}")` : ""}`,
+              );
 
-            // Restore bindings for instance children
-            if (
-              "children" in instanceNode &&
-              nodeData.children &&
-              Array.isArray(nodeData.children)
-            ) {
-              for (
-                let i = 0;
-                i < instanceNode.children.length &&
-                i < nodeData.children.length;
-                i++
-              ) {
-                restoreChildBindings(
-                  instanceNode.children[i],
-                  nodeData.children[i],
+              // Check if bindings are already set (might indicate why setting them again fails)
+              const existingBindings = (instanceNode as any)
+                .componentPropertyReferences;
+              if (existingBindings) {
+                debugConsole.log(
+                  `  [BINDING] Instance "${nodeData.name}" already has componentPropertyReferences: ${JSON.stringify(existingBindings)}`,
                 );
+              }
+
+              if (!isChildOfComponent) {
+                debugConsole.warning(
+                  `  [BINDING] ✗ Instance "${nodeData.name}" is not a child of a component (parent: ${parentType} "${parentName}") - cannot set componentPropertyReferences`,
+                );
+              } else {
+                // Verify each property exists in the component before attempting to bind
+                for (const [nodeProperty, propId] of Object.entries(
+                  componentPropertyRefs,
+                )) {
+                  const propDef = componentProps[propId];
+                  if (!propDef) {
+                    debugConsole.warning(
+                      `  [BINDING] Property "${propId}" not found in component property definitions when attempting to bind "${nodeProperty}" on instance "${nodeData.name}"`,
+                    );
+                  } else {
+                    debugConsole.log(
+                      `  [BINDING] Property "${propId}" (type: ${propDef.type}) exists - will attempt to bind "${nodeProperty}" on instance "${nodeData.name}"`,
+                    );
+                  }
+                }
+              }
+
+              // CRITICAL: Retry mechanism for timing-sensitive binding restoration
+              // Figma may need a moment to recognize the instance as a symbol sublayer
+              // after insertion, so we retry with verification checks
+              const MAX_RETRIES = 3;
+              let bindingSuccess = false;
+              let lastError: Error | null = null;
+
+              for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+                // Before each attempt, verify the instance is still a symbol sublayer
+                // Force re-evaluation by accessing the parent chain
+                let verifyCurrent: any = instanceNode.parent;
+                let isStillSymbolSublayer = false;
+                while (verifyCurrent) {
+                  if (
+                    verifyCurrent.type === "COMPONENT" ||
+                    verifyCurrent.type === "COMPONENT_SET"
+                  ) {
+                    isStillSymbolSublayer = true;
+                    break;
+                  }
+                  if (verifyCurrent.type === "PAGE") break;
+                  verifyCurrent = verifyCurrent.parent;
+                }
+
+                if (!isStillSymbolSublayer) {
+                  debugConsole.warning(
+                    `  [BINDING] Attempt ${attempt}/${MAX_RETRIES}: Instance "${nodeData.name}" is no longer a symbol sublayer - skipping binding restoration`,
+                  );
+                  break;
+                }
+
+                try {
+                  (instanceNode as any).componentPropertyReferences =
+                    componentPropertyRefs;
+
+                  // Verify the binding was actually set
+                  const verifyBindings = (instanceNode as any)
+                    .componentPropertyReferences;
+                  const allBindingsSet = Object.keys(
+                    componentPropertyRefs,
+                  ).every(
+                    (key) =>
+                      verifyBindings &&
+                      verifyBindings[key] === componentPropertyRefs[key],
+                  );
+
+                  if (allBindingsSet) {
+                    bindingSuccess = true;
+                    debugConsole.log(
+                      `  [BINDING] ✓ Successfully restored componentPropertyReferences for deferred instance "${nodeData.name}" on attempt ${attempt}/${MAX_RETRIES}: ${JSON.stringify(componentPropertyRefs)}`,
+                    );
+                    break;
+                  } else {
+                    throw new Error(
+                      `Bindings were set but verification failed. Expected: ${JSON.stringify(componentPropertyRefs)}, Got: ${JSON.stringify(verifyBindings)}`,
+                    );
+                  }
+                } catch (error) {
+                  lastError =
+                    error instanceof Error ? error : new Error(String(error));
+                  if (attempt < MAX_RETRIES) {
+                    debugConsole.log(
+                      `  [BINDING] Attempt ${attempt}/${MAX_RETRIES} failed for deferred instance "${nodeData.name}": ${lastError.message}. Retrying...`,
+                    );
+                    // Force a re-evaluation by accessing parent properties
+                    // This may help Figma recognize the instance as a symbol sublayer
+                    void instanceNode.parent?.type;
+                    void instanceNode.parent?.name;
+                  } else {
+                    debugConsole.warning(
+                      `  [BINDING] ✗ Failed to restore componentPropertyReferences for deferred instance "${nodeData.name}" after ${MAX_RETRIES} attempts: ${lastError.message}`,
+                    );
+                  }
+                }
+              }
+
+              if (!bindingSuccess) {
+                // All retries failed - throw error to be caught by outer catch
+                const errorMessage =
+                  lastError instanceof Error
+                    ? lastError.message
+                    : String(
+                        lastError || "Binding restoration failed after retries",
+                      );
+                throw new Error(errorMessage);
               }
             }
           }
         } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
           debugConsole.warning(
-            `  [BINDING] Error restoring componentPropertyReferences for deferred instance "${nodeData.name}": ${error}`,
+            `  [BINDING] ✗ Failed to restore componentPropertyReferences for deferred instance "${nodeData.name}": ${errorMessage}`,
           );
+          // If setting all properties failed, try setting them one by one to identify which one fails
+          if (
+            (errorMessage.includes("component property reference") ||
+              errorMessage.includes("implicitDefID")) &&
+            componentProps &&
+            Object.keys(componentPropertyRefs).length > 0
+          ) {
+            debugConsole.log(
+              `  [BINDING] Attempting to restore bindings individually to identify problematic property...`,
+            );
+            const successfulRefs: Record<string, string> = {};
+            for (const [nodeProperty, propId] of Object.entries(
+              componentPropertyRefs,
+            )) {
+              if (typeof propId !== "string") continue;
+              try {
+                (instanceNode as any).componentPropertyReferences = {
+                  [nodeProperty]: propId,
+                };
+                successfulRefs[nodeProperty] = propId;
+                debugConsole.log(
+                  `  [BINDING] ✓ Successfully restored binding "${nodeProperty}" -> "${propId}"`,
+                );
+              } catch (individualError) {
+                const propDef = componentProps[propId];
+                const propType = propDef ? propDef.type : "unknown";
+                debugConsole.warning(
+                  `  [BINDING] ✗ Failed to restore binding "${nodeProperty}" -> "${propId}" (type: ${propType}): ${individualError instanceof Error ? individualError.message : String(individualError)}`,
+                );
+              }
+            }
+            // Set all successful bindings at once
+            if (Object.keys(successfulRefs).length > 0) {
+              try {
+                (instanceNode as any).componentPropertyReferences =
+                  successfulRefs;
+                debugConsole.log(
+                  `  [BINDING] ✓ Restored ${Object.keys(successfulRefs).length} of ${Object.keys(componentPropertyRefs).length} componentPropertyReferences for deferred instance "${nodeData.name}"`,
+                );
+              } catch {
+                // If even setting successful refs fails, give up
+                debugConsole.warning(
+                  `  [BINDING] ✗ Could not set even successful bindings - skipping all bindings for deferred instance "${nodeData.name}"`,
+                );
+              }
+            }
+          }
+        }
+
+        // Recursively restore bindings for children
+        const restoreChildBindings = (
+          childNode: SceneNode,
+          childData: any,
+        ): void => {
+          if (
+            childData.componentPropertyReferences &&
+            typeof childData.componentPropertyReferences === "object"
+          ) {
+            const childPropertyRefs: Record<string, string> = {};
+
+            for (const [nodeProperty, oldPropId] of Object.entries(
+              childData.componentPropertyReferences,
+            )) {
+              if (typeof oldPropId === "string") {
+                const cleanPropName = oldPropId.split("#")[0];
+                let newPropId: string | null = null;
+
+                if (componentProps) {
+                  for (const propId of Object.keys(componentProps)) {
+                    const propCleanName = propId.split("#")[0];
+                    if (propCleanName === cleanPropName) {
+                      newPropId = propId;
+                      break;
+                    }
+                  }
+                }
+
+                if (newPropId) {
+                  // Validate that the property exists in componentProps
+                  if (componentProps && componentProps[newPropId]) {
+                    childPropertyRefs[nodeProperty] = newPropId;
+                  } else {
+                    debugConsole.warning(
+                      `  [BINDING] Property "${newPropId}" not found in component property definitions for child "${childNode.name || "Unnamed"}" of deferred instance "${nodeData.name}"`,
+                    );
+                  }
+                }
+              }
+            }
+
+            if (Object.keys(childPropertyRefs).length > 0) {
+              try {
+                (childNode as any).componentPropertyReferences =
+                  childPropertyRefs;
+                debugConsole.log(
+                  `  [BINDING] ✓ Restored componentPropertyReferences for child "${childNode.name || "Unnamed"}" of deferred instance "${nodeData.name}"`,
+                );
+              } catch {
+                // Child might not support bindings (e.g., not a symbol sublayer)
+              }
+            }
+          }
+
+          // Recurse into children
+          if (
+            "children" in childNode &&
+            childData.children &&
+            Array.isArray(childData.children)
+          ) {
+            for (
+              let i = 0;
+              i < childNode.children.length && i < childData.children.length;
+              i++
+            ) {
+              restoreChildBindings(
+                childNode.children[i],
+                childData.children[i],
+              );
+            }
+          }
+        };
+
+        // Restore bindings for instance children (componentProps and componentPropertyRefs are in scope here)
+
+        // Restore bindings for instance children
+        if (
+          "children" in instanceNode &&
+          nodeData.children &&
+          Array.isArray(nodeData.children)
+        ) {
+          for (
+            let i = 0;
+            i < instanceNode.children.length && i < nodeData.children.length;
+            i++
+          ) {
+            restoreChildBindings(
+              instanceNode.children[i],
+              nodeData.children[i],
+            );
+          }
         }
       }
 
