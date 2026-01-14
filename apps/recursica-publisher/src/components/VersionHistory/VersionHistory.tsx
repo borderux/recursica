@@ -39,7 +39,7 @@ export default function VersionHistory({ history }: VersionHistoryProps) {
     <div className={classes.root}>
       <div className={classes.title}>Version History</div>
       <div className={classes.list}>
-        {historyEntries.map((entry, index) => {
+        {historyEntries.map((entry) => {
           const dateStr = entry.date
             ? new Date(entry.date).toLocaleDateString(undefined, {
                 year: "numeric",
@@ -48,22 +48,13 @@ export default function VersionHistory({ history }: VersionHistoryProps) {
               })
             : null;
 
+          const parts = [`v${entry.version}`, dateStr, entry.message].filter(
+            Boolean,
+          );
+
           return (
-            <div
-              key={entry.version}
-              className={
-                index < historyEntries.length - 1
-                  ? classes.entry
-                  : classes.entryLast
-              }
-            >
-              <div>
-                <span className={classes.version}>v{entry.version}</span>
-                {dateStr && <span className={classes.date}>{dateStr}</span>}
-              </div>
-              {entry.message && (
-                <div className={classes.message}>{entry.message}</div>
-              )}
+            <div key={entry.version} className={classes.entry}>
+              {parts.join(" - ")}
             </div>
           );
         })}

@@ -158,56 +158,11 @@ export default function ImportMain() {
         }
 
         // Sort by clean component name (case-insensitive, alphanumeric only)
-        console.log(
-          "[ImportMain] Before sorting - components:",
-          componentsList.map((c) => ({
-            name: c.name,
-            cleanName: getComponentCleanName(c.name).toLowerCase(),
-          })),
-        );
-
         componentsList.sort((a, b) => {
           const cleanA = getComponentCleanName(a.name).toLowerCase();
           const cleanB = getComponentCleanName(b.name).toLowerCase();
-          const comparison = cleanA.localeCompare(cleanB);
-          console.log(
-            `[ImportMain] Comparing "${a.name}" (${cleanA}) vs "${b.name}" (${cleanB}): ${comparison}`,
-          );
-          return comparison;
+          return cleanA.localeCompare(cleanB);
         });
-
-        console.log(
-          "[ImportMain] After sorting - components:",
-          componentsList.map((c) => ({
-            name: c.name,
-            cleanName: getComponentCleanName(c.name).toLowerCase(),
-            position: componentsList.indexOf(c),
-          })),
-        );
-
-        // Check specifically for Checkbox
-        const checkboxIndex = componentsList.findIndex(
-          (c) => getComponentCleanName(c.name).toLowerCase() === "checkbox",
-        );
-        if (checkboxIndex !== -1) {
-          console.log(
-            `[ImportMain] Checkbox found at index ${checkboxIndex}:`,
-            {
-              name: componentsList[checkboxIndex].name,
-              cleanName: getComponentCleanName(
-                componentsList[checkboxIndex].name,
-              ).toLowerCase(),
-              before:
-                checkboxIndex > 0
-                  ? componentsList[checkboxIndex - 1].name
-                  : "none",
-              after:
-                checkboxIndex < componentsList.length - 1
-                  ? componentsList[checkboxIndex + 1].name
-                  : "none",
-            },
-          );
-        }
 
         setComponents(componentsList);
       } catch (loadError) {

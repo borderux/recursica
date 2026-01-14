@@ -690,7 +690,7 @@ export default function Step2DependencyOverview() {
                 {wizardState.selectedComponent?.name}
               </Title>
 
-              <Stack gap="sm" className={classes.versionInfo}>
+              <Stack gap="xs" className={classes.versionInfo}>
                 <div className={classes.versionRow}>
                   <div className={classes.versionGroup}>
                     <Text variant="small" fw={600} color="secondary">

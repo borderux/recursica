@@ -87,7 +87,7 @@ export default function DebugConsole({
             <Button
               variant="filled"
               color="gray"
-              size="small"
+              size="xs"
               onClick={handleCopyLogs}
               className={
                 copySuccess ? classes.copyButtonSuccess : classes.copyButton
@@ -108,14 +108,10 @@ export default function DebugConsole({
             <Button
               variant="filled"
               color="gray"
-              size="default"
+              size="xs"
               onClick={handleCopyLogs}
               className={
-                copySuccess
-                  ? [classes.copyButtonSuccess, classes.copyButtonLarge].join(
-                      " ",
-                    )
-                  : [classes.copyButton, classes.copyButtonLarge].join(" ")
+                copySuccess ? classes.copyButtonSuccess : classes.copyButton
               }
             >
               {copySuccess ? "Copied!" : "Copy Logs"}

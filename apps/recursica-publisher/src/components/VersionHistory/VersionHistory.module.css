@@ -1,5 +1,5 @@
 .root {
-  margin-top: 12px;
+  margin-top: 0;
 }
 
 .title {
@@ -16,28 +16,8 @@
 }
 
 .entry {
-  margin-bottom: var(--mantine-spacing-xs);
-}
-
-.entryLast {
-  margin-bottom: 0;
-}
-
-.version {
-  font-size: var(--mantine-font-size-sm); /* 12px */
-  font-weight: 600;
+  font-size: var(--mantine-font-size-sm);
   color: var(--mantine-color-gray-9);
-}
-
-.date {
-  font-size: var(--mantine-font-size-xs); /* 10px */
-  color: var(--mantine-color-gray-6);
-  margin-left: var(--mantine-spacing-xs);
-}
-
-.message {
-  font-size: var(--mantine-font-size-sm); /* 12px */
-  color: var(--mantine-color-gray-6);
-  margin-left: var(--mantine-spacing-md);
-  margin-top: 2px;
+  line-height: 1.6;
+  margin-bottom: var(--mantine-spacing-xs);
 }
