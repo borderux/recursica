@@ -120,6 +120,7 @@ const STRING_TABLE_MAP: Record<string, string> = {
   componentPageName: "cPage",
   variantProperties: "varPr",
   componentProperties: "cProp",
+  componentPropertyDefinitions: "cPropD",
   remoteLibraryName: "rLibN",
   remoteLibraryKey: "rLibK",
   path: "path", // Already short

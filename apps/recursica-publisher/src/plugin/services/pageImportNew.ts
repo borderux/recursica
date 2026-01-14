@@ -1771,6 +1771,104 @@ export async function recreateNodeFromData(
             componentSet.name = nodeData.name;
           }
 
+          // Add component property definitions to the COMPONENT_SET
+          // COMPONENT_SET nodes store component properties for variant components
+          // CRITICAL: Capture the return value (unique property ID) for binding restoration
+          const propertyIdMapping = new Map<string, string>(); // old property ID -> new property ID
+          if (nodeData.componentPropertyDefinitions) {
+            const propDefs = nodeData.componentPropertyDefinitions;
+            let addedCount = 0;
+            let failedCount = 0;
+
+            for (const [propName, propDef] of Object.entries(propDefs)) {
+              try {
+                // propDef format: { type: number | string, defaultValue?: any }
+                // Map type numbers or strings to Figma API type strings
+                const typeValue = (propDef as any).type;
+                let propType:
+                  | "TEXT"
+                  | "BOOLEAN"
+                  | "INSTANCE_SWAP"
+                  | "VARIANT"
+                  | null = null;
+
+                // Handle both numeric and string types (string table might expand numbers to strings)
+                if (typeof typeValue === "string") {
+                  // Already a string - validate it's a valid type
+                  if (
+                    typeValue === "TEXT" ||
+                    typeValue === "BOOLEAN" ||
+                    typeValue === "INSTANCE_SWAP" ||
+                    typeValue === "VARIANT"
+                  ) {
+                    propType = typeValue;
+                  }
+                } else if (typeof typeValue === "number") {
+                  // Numeric type - map to string
+                  const typeMap: Record<
+                    number,
+                    "TEXT" | "BOOLEAN" | "INSTANCE_SWAP" | "VARIANT"
+                  > = {
+                    2: "TEXT", // Text property
+                    25: "BOOLEAN", // Boolean property
+                    27: "INSTANCE_SWAP", // Instance swap property
+                    26: "VARIANT", // Variant property
+                  };
+                  propType = typeMap[typeValue] || null;
+                }
+
+                if (!propType) {
+                  debugConsole.warning(
+                    `  Unknown property type ${typeValue} (${typeof typeValue}) for property "${propName}" in COMPONENT_SET "${nodeData.name || "Unnamed"}"`,
+                  );
+                  failedCount++;
+                  continue;
+                }
+
+                const defaultValue = (propDef as any).defaultValue;
+                // Property names in JSON may include IDs (e.g., "Label#318:0")
+                // Extract just the property name part (before the #)
+                const cleanPropName = propName.split("#")[0];
+
+                // CRITICAL: Capture the return value - this is the unique property ID (e.g., "Placeholder#12:34")
+                // We need this ID (not just the name) to set componentPropertyReferences
+                const newPropertyId = componentSet.addComponentProperty(
+                  cleanPropName,
+                  propType,
+                  defaultValue,
+                );
+
+                // Store mapping: old property ID (from JSON) -> new property ID (from addComponentProperty)
+                propertyIdMapping.set(propName, newPropertyId);
+                debugConsole.log(
+                  `  [BINDING] Added component property "${cleanPropName}" with ID "${newPropertyId}" to COMPONENT_SET "${nodeData.name || "Unnamed"}" (was "${propName}" in JSON)`,
+                );
+                addedCount++;
+              } catch (error) {
+                debugConsole.warning(
+                  `  Failed to add component property "${propName}" to COMPONENT_SET "${nodeData.name || "Unnamed"}": ${error}`,
+                );
+                failedCount++;
+              }
+            }
+
+            if (addedCount > 0) {
+              debugConsole.log(
+                `  Added ${addedCount} component property definition(s) to COMPONENT_SET "${nodeData.name || "Unnamed"}"${failedCount > 0 ? ` (${failedCount} failed)` : ""}`,
+              );
+            }
+          }
+
+          // Store property ID mapping in external Map for later use in post-processing
+          // This allows us to restore componentPropertyReferences after children are added
+          // We can't attach properties directly to Figma nodes (they're not extensible)
+          if (propertyIdMapping.size > 0) {
+            componentBindingData.set(componentSet.id, {
+              propertyIdMapping,
+              nodeData,
+            });
+          }
+
           // Apply position properties from nodeData to the component set
           if (nodeData.x !== undefined) {
             componentSet.x = nodeData.x;
@@ -6042,6 +6140,136 @@ export async function recreateNodeFromData(
           i++
         ) {
           restoreBindings(newNode.children[i], componentNodeData.children[i]);
+        }
+      }
+
+      // Clean up binding data from Map after use
+      componentBindingData.delete(newNode.id);
+    }
+  }
+
+  // Post-processing: Restore componentPropertyReferences for COMPONENT_SET nodes
+  // This must happen AFTER all children are added, when nodes are "symbol sublayers"
+  // For COMPONENT_SET nodes, properties are defined on the COMPONENT_SET, but bindings
+  // need to be restored to child nodes within each variant component
+  if (newNode.type === "COMPONENT_SET") {
+    const bindingData = componentBindingData.get(newNode.id);
+    if (!bindingData) {
+      // No binding data for this component set, skip post-processing
+      // (This is normal for component sets without properties)
+    } else {
+      const { propertyIdMapping, nodeData: componentSetNodeData } = bindingData;
+
+      // Recursively restore bindings for all children within each variant
+      const restoreBindings = (node: SceneNode, nodeData: any): void => {
+        // Check if this node has componentPropertyReferences in the original data
+        if (
+          nodeData.componentPropertyReferences &&
+          typeof nodeData.componentPropertyReferences === "object"
+        ) {
+          const componentPropertyRefs: Record<string, string> = {};
+
+          for (const [nodeProperty, oldPropId] of Object.entries(
+            nodeData.componentPropertyReferences,
+          )) {
+            if (typeof oldPropId === "string") {
+              // Look up the new property ID using the old property ID
+              const newPropId = propertyIdMapping.get(oldPropId);
+              if (newPropId) {
+                componentPropertyRefs[nodeProperty] = newPropId;
+                debugConsole.log(
+                  `  [BINDING] Restoring binding for ${node.type} node "${node.name || "Unnamed"}": ${nodeProperty} -> ${newPropId} (was ${oldPropId})`,
+                );
+              } else {
+                // Try matching by clean name (without ID suffix)
+                const cleanPropName = oldPropId.split("#")[0];
+                for (const [oldId, newId] of propertyIdMapping.entries()) {
+                  if (oldId.split("#")[0] === cleanPropName) {
+                    componentPropertyRefs[nodeProperty] = newId;
+                    debugConsole.log(
+                      `  [BINDING] Restoring binding for ${node.type} node "${node.name || "Unnamed"}": ${nodeProperty} -> ${newId} (matched by clean name "${cleanPropName}")`,
+                    );
+                    break;
+                  }
+                }
+              }
+            }
+          }
+
+          // Set the binding now that the node is a child of a Component (symbol sublayer)
+          if (Object.keys(componentPropertyRefs).length > 0) {
+            try {
+              (node as any).componentPropertyReferences = componentPropertyRefs;
+              debugConsole.log(
+                `  [BINDING] ✓ Successfully restored componentPropertyReferences for ${node.type} node "${node.name || "Unnamed"}": ${JSON.stringify(componentPropertyRefs)}`,
+              );
+            } catch (error) {
+              debugConsole.warning(
+                `  [BINDING] ✗ Failed to restore componentPropertyReferences for ${node.type} node "${node.name || "Unnamed"}": ${error}`,
+              );
+            }
+          }
+        }
+
+        // Recursively process children
+        if (
+          "children" in node &&
+          nodeData.children &&
+          Array.isArray(nodeData.children)
+        ) {
+          // Match children by index (assuming order is preserved)
+          for (
+            let i = 0;
+            i < node.children.length && i < nodeData.children.length;
+            i++
+          ) {
+            const child = node.children[i];
+            const childData = nodeData.children[i];
+            restoreBindings(child, childData);
+          }
+        }
+      };
+
+      // For COMPONENT_SET, restore bindings for each variant component and their children
+      if (
+        "children" in newNode &&
+        componentSetNodeData.children &&
+        Array.isArray(componentSetNodeData.children)
+      ) {
+        // Iterate through variant components (children of the COMPONENT_SET)
+        for (
+          let i = 0;
+          i < newNode.children.length &&
+          i < componentSetNodeData.children.length;
+          i++
+        ) {
+          const variant = newNode.children[i];
+          const variantData = componentSetNodeData.children[i];
+
+          if (
+            variant.type === "COMPONENT" &&
+            variantData.type === "COMPONENT"
+          ) {
+            debugConsole.log(
+              `  [BINDING] Restoring bindings for variant "${variant.name || "Unnamed"}" in COMPONENT_SET "${newNode.name || "Unnamed"}"`,
+            );
+            // Restore bindings for all children within this variant
+            if (
+              "children" in variant &&
+              variantData.children &&
+              Array.isArray(variantData.children)
+            ) {
+              for (
+                let j = 0;
+                j < variant.children.length && j < variantData.children.length;
+                j++
+              ) {
+                const child = variant.children[j];
+                const childData = variantData.children[j];
+                restoreBindings(child, childData);
+              }
+            }
+          }
         }
       }
 

@@ -15,15 +15,19 @@ export async function parseFrameProperties(
   const result: Partial<ParsedNodeData> = {};
   const handledKeys = new Set<string>();
 
-  // For COMPONENT nodes, export component property definitions
+  // For COMPONENT and COMPONENT_SET nodes, export component property definitions
   // This is needed to recreate components with the same properties during import
-  if (node.type === "COMPONENT") {
+  // COMPONENT_SET nodes store component properties for variant components
+  if (node.type === "COMPONENT" || node.type === "COMPONENT_SET") {
     try {
       if ((node as any).componentPropertyDefinitions) {
         result.componentPropertyDefinitions = (
           node as any
         ).componentPropertyDefinitions;
         handledKeys.add("componentPropertyDefinitions");
+        debugConsole.log(
+          `  [EXPORT] ✓ Exported componentPropertyDefinitions for ${node.type} node "${node.name || "Unnamed"}": ${Object.keys((node as any).componentPropertyDefinitions).length} property(ies)`,
+        );
       }
     } catch {
       // Property definitions might not be accessible
