@@ -12,9 +12,12 @@ export interface ComponentMetadata {
   version: number;
   publishDate: string; // ISO date string
   history: Record<string, unknown>; // Object to be described later
+  description?: string; // Optional description
+  url?: string; // Optional URL
 }
 
 export const PLUGIN_DATA_KEY = "RecursicaPublishedMetadata";
+export const INIT_METADATA_KEY = "RecursicaPublishInitialized";
 
 export interface GetComponentMetadataResponseData {
   componentMetadata: ComponentMetadata;

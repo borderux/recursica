@@ -1,0 +1,32 @@
+.splashContainer {
+  opacity: 1;
+  transition: opacity 0.5s ease-out;
+}
+
+.splashContainer.fadeOut {
+  opacity: 0;
+}
+
+.splashContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  gap: 16px;
+}
+
+.logo {
+  fill: #d40d0d;
+  width: 128px;
+  height: 86px;
+}
+
+.title {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 600;
+  color: #000;
+  font-family: inherit;
+}

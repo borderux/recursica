@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import PageLayout from "../components/PageLayout";
+import { PageLayout } from "../components/PageLayout";
 import { GitHubService } from "../services/github/githubService";
 import { useAuth } from "../context/useAuth";
 

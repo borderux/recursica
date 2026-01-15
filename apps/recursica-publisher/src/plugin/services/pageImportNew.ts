@@ -1,3 +1,7 @@
+// Plugin data keys for storing metadata on nodes
+const ORIGINAL_NODE_ID_KEY = "RecursicaOriginalNodeId";
+const PAGE_METADATA_KEY = "RecursicaPublishedMetadata";
+
 import type { ResponseMessage } from "../types/messages";
 import {
   getDefaultsForNodeType,
@@ -13,10 +17,16 @@ import {
   type VariableAliasSerialized,
   type CollectionTableEntry,
 } from "./parsers/variableTable";
-import { InstanceTable } from "./parsers/instanceTable";
+import {
+  InstanceTable,
+  type InstanceTableEntry,
+} from "./parsers/instanceTable";
+import { StyleTable } from "./parsers/styleTable";
+import { ImageTable, isImageReference } from "./parsers/imageTable";
 import { StringTable } from "./parsers/stringTable";
 import { requestGuidFromUI } from "../utils/requestGuidFromUI";
-import { debugConsole } from "./debugConsole";
+import { debugConsole, type DebugConsoleMessage } from "./debugConsole";
+import { checkCancellation } from "../utils/cancellation";
 import { expandJsonData } from "../utils/jsonCompression";
 import { pluginPrompt } from "../utils/pluginPrompt";
 import { getComponentCleanName } from "../utils/getComponentCleanName";
@@ -26,6 +36,16 @@ import {
   getFixedGuidForCollection,
 } from "../../const/CollectionConstants";
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+// Map to store component property binding data during import
+// Key: component node ID, Value: { propertyIdMapping, nodeData }
+const componentBindingData = new Map<
+  string,
+  {
+    propertyIdMapping: Map<string, string>;
+    nodeData: any;
+  }
+>();
 
 export interface ImportPageData {
   jsonData: any; // The full exported JSON structure
@@ -41,6 +61,7 @@ export interface ImportPageData {
   skipUniqueNaming?: boolean; // If true, skip adding _<number> suffix to page names. Used for wizard imports.
   constructionIcon?: string; // If provided, prepend this icon to page name. Used for wizard imports.
   preCreatedCollections?: Map<string, VariableCollection>; // Pre-created collections by normalized name (e.g., "Tokens", "Theme", "Layer")
+  branch?: string; // Branch name if available (optional since imports can come from local files)
 }
 
 export interface DeferredNormalInstance {
@@ -48,18 +69,51 @@ export interface DeferredNormalInstance {
   instanceEntry: any; // Instance table entry
   nodeData: any; // Original node data
   parentNodeId: string; // ID of parent node where placeholder was created (for serialization)
+  parentPlaceholderId?: string; // ID of parent placeholder if parent is also a deferred instance
   instanceIndex: number; // Instance table index
+  deferredInstanceIndex?: number; // Instance table index for deferred instance structure
 }
 
 export interface ImportPageResponseData {
   pageName: string;
   deferredInstances?: DeferredNormalInstance[]; // Normal instances that couldn't be resolved yet
   totalNodes: number;
-  createdEntities?: {
-    pageIds: string[];
-    collectionIds: string[];
-    variableIds: string[];
-  };
+}
+
+export interface PageImportResult {
+  componentGuid: string; // GUID from metadata
+  componentPage: string; // Page name from metadata
+  branch?: string; // Branch name if available
+  importedAt: string; // ISO timestamp of when import occurred
+  error?: string; // Error message if import failed
+  logs: DebugConsoleMessage[]; // All logs from DebugConsole
+  createdPageIds: string[]; // IDs of pages created during import
+  createdCollectionIds: string[]; // IDs of collections created (only newly created)
+  createdVariableIds: string[]; // IDs of variables created (only newly created)
+  createdStyleIds: string[]; // IDs of styles created (only newly created)
+  dependentComponents: Array<{
+    guid: string;
+    version: number | undefined;
+    pageId: string;
+  }>; // Dependent components (remote instances) with their versions and page IDs
+}
+
+/**
+ * Sanitized version of PageImportResult for storage in plugin metadata
+ * Excludes logs and other large fields to stay within plugin metadata size limits
+ */
+export type SanitizedPageImportResult = Omit<PageImportResult, "logs">;
+
+/**
+ * Creates a sanitized version of PageImportResult suitable for storage in plugin metadata
+ * Removes logs and other large fields that could exceed size limits
+ */
+export function sanitizeImportResult(
+  importResult: PageImportResult,
+): SanitizedPageImportResult {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { logs, ...sanitized } = importResult;
+  return sanitized;
 }
 
 /**
@@ -101,11 +155,11 @@ async function ensureCollectionModes(
       collection.renameMode(defaultMode.modeId, firstExportedMode);
       // Track the rename mapping so we can map "Mode 1" -> firstExportedMode when looking up modes
       modeNameMapping.set(`${collection.id}:${oldName}`, firstExportedMode);
-      await debugConsole.log(
+      debugConsole.log(
         `  Renamed default mode "${oldName}" to "${firstExportedMode}"`,
       );
     } catch (error) {
-      await debugConsole.warning(
+      debugConsole.warning(
         `  Failed to rename default mode "${defaultMode.name}" to "${firstExportedMode}": ${error}`,
       );
     }
@@ -167,7 +221,7 @@ async function getOrGenerateCollectionGuid(
 
     if (!supportedCollectionNames.includes(normalizedName)) {
       const errorMessage = `Remote variable collections are not supported. Only "Token", "Tokens", "Theme", or "Themes" collections are allowed. Collection Name: "${collection.name}", Collection ID: ${collection.id}`;
-      await debugConsole.error(errorMessage);
+      debugConsole.error(errorMessage);
       throw new Error(errorMessage);
     }
 
@@ -467,10 +521,10 @@ async function restoreVariableModeValues(
   collection: VariableCollection, // Collection to look up mode by name
   collectionTable?: CollectionTable, // Optional: for resolving variable aliases by collection
 ): Promise<void> {
-  await debugConsole.log(
+  debugConsole.log(
     `Restoring values for variable "${variable.name}" (type: ${variable.resolvedType}):`,
   );
-  await debugConsole.log(
+  debugConsole.log(
     `  valuesByMode keys: ${Object.keys(valuesByMode).join(", ")}`,
   );
   for (const [modeName, value] of Object.entries(valuesByMode)) {
@@ -486,7 +540,7 @@ async function restoreVariableModeValues(
     }
 
     if (!mode) {
-      await debugConsole.warning(
+      debugConsole.warning(
         `Mode "${modeName}" (mapped: "${mappedModeName}") not found in collection "${collection.name}" for variable "${variable.name}". Available modes: ${collection.modes.map((m) => m.name).join(", ")}. Skipping.`,
       );
       continue;
@@ -494,14 +548,14 @@ async function restoreVariableModeValues(
     const modeId = mode.modeId;
     try {
       if (value === null || value === undefined) {
-        await debugConsole.log(
+        debugConsole.log(
           `  Mode "${modeName}": value is null/undefined, skipping`,
         );
         continue;
       }
 
       // Debug: Log the value type and content
-      await debugConsole.log(
+      debugConsole.log(
         `  Mode "${modeName}": value type=${typeof value}, value=${JSON.stringify(value)}`,
       );
 
@@ -550,12 +604,10 @@ async function restoreVariableModeValues(
 
         // Immediately read back to verify it was set correctly
         const readBackValue = variable.valuesByMode[modeId];
-        await debugConsole.log(
+        debugConsole.log(
           `  Set color value for "${variable.name}" mode "${modeName}": r=${rgbValue.r.toFixed(3)}, g=${rgbValue.g.toFixed(3)}, b=${rgbValue.b.toFixed(3)}${rgbValue.a !== undefined ? `, a=${rgbValue.a.toFixed(3)}` : ""}`,
         );
-        await debugConsole.log(
-          `  Read back value: ${JSON.stringify(readBackValue)}`,
-        );
+        debugConsole.log(`  Read back value: ${JSON.stringify(readBackValue)}`);
 
         // Verify the read-back value matches what we set
         if (
@@ -574,16 +626,16 @@ async function restoreVariableModeValues(
           const gMatch = Math.abs(readBackRgb.g - rgbValue.g) < 0.001;
           const bMatch = Math.abs(readBackRgb.b - rgbValue.b) < 0.001;
           if (!rMatch || !gMatch || !bMatch) {
-            await debugConsole.warning(
+            debugConsole.warning(
               `  ⚠️ Value mismatch! Set: r=${rgbValue.r}, g=${rgbValue.g}, b=${rgbValue.b}, Read back: r=${readBackRgb.r}, g=${readBackRgb.g}, b=${readBackRgb.b}`,
             );
           } else {
-            await debugConsole.log(
+            debugConsole.log(
               `  ✓ Value verified: read-back matches what we set`,
             );
           }
         } else {
-          await debugConsole.warning(
+          debugConsole.warning(
             `  ⚠️ Read-back value is not an RGB object: ${JSON.stringify(readBackValue)}`,
           );
         }
@@ -646,7 +698,7 @@ async function restoreVariableModeValues(
         !("_varRef" in value) &&
         !("r" in value && "g" in value && "b" in value)
       ) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Unhandled value type for mode "${modeName}" in variable "${variable.name}": ${JSON.stringify(value)}`,
         );
       }
@@ -667,21 +719,21 @@ async function createVariableFromEntry(
   variableTable: VariableTable,
   collectionTable?: CollectionTable, // Optional: for resolving variable aliases
 ): Promise<Variable> {
-  await debugConsole.log(
+  debugConsole.log(
     `Creating variable "${entry.variableName}" (type: ${entry.variableType})`,
   );
   if (entry.valuesByMode) {
-    await debugConsole.log(
+    debugConsole.log(
       `  valuesByMode has ${Object.keys(entry.valuesByMode).length} mode(s): ${Object.keys(entry.valuesByMode).join(", ")}`,
     );
     // Log the actual values for debugging
     for (const [modeName, value] of Object.entries(entry.valuesByMode)) {
-      await debugConsole.log(
+      debugConsole.log(
         `  Mode "${modeName}": ${JSON.stringify(value)} (type: ${typeof value})`,
       );
     }
   } else {
-    await debugConsole.log(
+    debugConsole.log(
       `  No valuesByMode found for variable "${entry.variableName}"`,
     );
   }
@@ -705,14 +757,14 @@ async function createVariableFromEntry(
 
   // Verify the values were set correctly
   if (entry.valuesByMode && variable.valuesByMode) {
-    await debugConsole.log(`  Verifying values for "${entry.variableName}":`);
+    debugConsole.log(`  Verifying values for "${entry.variableName}":`);
     for (const [modeName, expectedValue] of Object.entries(
       entry.valuesByMode,
     )) {
       const mode = collection.modes.find((m) => m.name === modeName);
       if (mode) {
         const actualValue = variable.valuesByMode[mode.modeId];
-        await debugConsole.log(
+        debugConsole.log(
           `    Mode "${modeName}": expected=${JSON.stringify(expectedValue)}, actual=${JSON.stringify(actualValue)}`,
         );
       }
@@ -804,6 +856,9 @@ export async function restoreBoundVariablesForFills(
   boundVariables: any,
   propertyName: string,
   recognizedVariables: Map<string, Variable>,
+  variableTable: VariableTable | null = null,
+  collectionTable: CollectionTable | null = null,
+  recognizedCollections: Map<string, VariableCollection> | null = null,
 ): Promise<void> {
   if (!boundVariables || typeof boundVariables !== "object") {
     return;
@@ -812,73 +867,894 @@ export async function restoreBoundVariablesForFills(
   try {
     // Get the property value (e.g., fills array)
     const propertyValue = node[propertyName];
+    debugConsole.log(
+      `  [BOUND-VAR] Checking ${propertyName} on "${node.name || "Unnamed"}": propertyValue=${propertyValue ? (Array.isArray(propertyValue) ? `Array(${propertyValue.length})` : typeof propertyValue) : "undefined"}`,
+    );
     if (!propertyValue || !Array.isArray(propertyValue)) {
+      debugConsole.warning(
+        `  [BOUND-VAR] Skipping ${propertyName} bound variables: propertyValue is not an array`,
+      );
       return;
     }
 
-    // Handle fills array binding
-    // boundVariables.fills can be:
+    // Handle fills/strokes array binding
+    // boundVariables.fills or boundVariables.strokes can be:
     // 1. An array where each element is an object with properties like { color: { _varRef: ... } }
     // 2. An array where each element is a direct variable reference like { _varRef: 57 }
     const fillsBinding = boundVariables[propertyName];
+    debugConsole.log(
+      `  [BOUND-VAR] Processing ${propertyName} bound variables: ${JSON.stringify(fillsBinding)}`,
+    );
     if (Array.isArray(fillsBinding)) {
+      debugConsole.log(
+        `  [BOUND-VAR] fillsBinding is array with ${fillsBinding.length} element(s), propertyValue has ${propertyValue.length} element(s)`,
+      );
+
+      // For strokes, we need to create a new array because the strokes array is read-only
+      // We'll build a new array with bound paint objects, then reassign the entire array
+      const newPaints: any[] = propertyName === "strokes" ? [] : propertyValue;
+
       for (
         let i = 0;
         i < fillsBinding.length && i < propertyValue.length;
         i++
       ) {
         const fillBinding = fillsBinding[i];
+        debugConsole.log(
+          `  [BOUND-VAR] Processing ${propertyName}[${i}]: fillBinding=${JSON.stringify(fillBinding)}, propertyValue[${i}]=${propertyValue[i] ? JSON.stringify(propertyValue[i]).substring(0, 100) : "undefined"}`,
+        );
         if (fillBinding && typeof fillBinding === "object") {
           // Initialize boundVariables on the fill if it doesn't exist
-          if (!propertyValue[i].boundVariables) {
+          // For strokes, boundVariables is read-only, so we skip initialization
+          // and will use setBoundVariableForPaint instead
+          if (propertyName !== "strokes" && !propertyValue[i].boundVariables) {
             propertyValue[i].boundVariables = {};
           }
 
           // Check if this is a direct variable reference (e.g., { _varRef: 57 })
           // In Figma, binding an entire fill typically means binding the color property
-          if (isVariableReference(fillBinding)) {
+          const isVarRef = isVariableReference(fillBinding);
+          debugConsole.log(
+            `  [BOUND-VAR] isVariableReference(${propertyName}[${i}]): ${isVarRef}`,
+          );
+          if (isVarRef) {
             const varRef = (fillBinding as VariableReference)._varRef;
+            debugConsole.log(
+              `  [BOUND-VAR] Found _varRef: ${varRef} for ${propertyName}[${i}]`,
+            );
             if (varRef !== undefined) {
-              const variable = recognizedVariables.get(String(varRef));
+              let variable = recognizedVariables.get(String(varRef));
+              debugConsole.log(
+                `  [BOUND-VAR] Variable lookup for _varRef ${varRef}: ${variable ? `found "${variable.name}"` : "not found in recognizedVariables"}`,
+              );
+
+              // Verify that the variable found in recognizedVariables matches the variable table entry
+              if (variable && variableTable) {
+                const varEntry = variableTable.getVariableByIndex(varRef);
+                if (varEntry) {
+                  if (variable.name !== varEntry.variableName) {
+                    // Variable name doesn't match - the index points to a different variable
+                    // Fall back to resolving from table by name
+                    debugConsole.warning(
+                      `  [BOUND-VAR] Variable name mismatch for _varRef ${varRef} on ${propertyName}[${i}]: recognizedVariables has "${variable.name}", but variable table entry ${varRef} is "${varEntry.variableName}" - will resolve from table`,
+                    );
+                    variable = undefined; // Clear so we resolve from table
+                  } else {
+                    debugConsole.log(
+                      `  [BOUND-VAR] Variable name verified for _varRef ${varRef} on ${propertyName}[${i}]: "${variable.name}" matches variable table entry`,
+                    );
+                  }
+                } else {
+                  debugConsole.warning(
+                    `  [BOUND-VAR] No variable table entry found for _varRef ${varRef} on ${propertyName}[${i}]`,
+                  );
+                }
+              }
+
+              // If not found or name mismatch, try to resolve from variable table
+              if (
+                !variable &&
+                variableTable &&
+                collectionTable &&
+                recognizedCollections
+              ) {
+                debugConsole.log(
+                  `  [BOUND-VAR] Resolving variable from table for _varRef ${varRef} on ${propertyName}[${i}]`,
+                );
+                const resolvedVariable = await resolveVariableFromTable(
+                  varRef,
+                  variableTable,
+                  collectionTable,
+                  recognizedCollections,
+                );
+                variable = resolvedVariable || undefined;
+                if (variable) {
+                  debugConsole.log(
+                    `  [BOUND-VAR] Resolved variable from table: "${variable.name}" (ID: ${variable.id.substring(0, 20)}...)`,
+                  );
+                  // Add to recognizedVariables for future lookups
+                  recognizedVariables.set(String(varRef), variable);
+                } else {
+                  debugConsole.warning(
+                    `  [BOUND-VAR] Could not resolve variable from table for _varRef ${varRef} on ${propertyName}[${i}]`,
+                  );
+                }
+              }
+
               if (variable) {
-                // For direct variable references in fills array, bind to the color property
-                // This is the most common case when a fill is bound to a variable
-                propertyValue[i].boundVariables.color = {
-                  type: "VARIABLE_ALIAS",
-                  id: variable.id,
-                };
+                // For direct variable references in fills/strokes array, bind to the color property
+                // For strokes, we MUST use setBoundVariableForPaint because boundVariables is read-only
+                if (propertyName === "strokes") {
+                  if (propertyValue[i].type === "SOLID") {
+                    // Use Figma's API to create a new paint with bound variable
+                    // Create a fresh paint object without boundVariables to avoid read-only errors
+                    const solidPaint = propertyValue[i] as SolidPaint;
+                    const freshPaint: SolidPaint = {
+                      type: "SOLID",
+                      visible: solidPaint.visible,
+                      opacity: solidPaint.opacity,
+                      blendMode: solidPaint.blendMode,
+                      color: { ...solidPaint.color },
+                    };
+                    const boundPaint = figma.variables.setBoundVariableForPaint(
+                      freshPaint,
+                      "color",
+                      variable,
+                    );
+                    // Add to new array instead of modifying propertyValue directly (strokes array is read-only)
+                    newPaints.push(boundPaint);
+                    debugConsole.log(
+                      `  [BOUND-VAR] ✓ Set bound variable for ${propertyName}[${i}].color on "${node.name || "Unnamed"}": variable "${variable.name}" (ID: ${variable.id.substring(0, 20)}...) from table index ${varRef}`,
+                    );
+                  } else {
+                    // For non-SOLID strokes, add as-is
+                    newPaints.push(propertyValue[i]);
+                    debugConsole.warning(
+                      `  [BOUND-VAR] Cannot bind variable to ${propertyName}[${i}] - paint type is "${propertyValue[i].type}", only SOLID is supported`,
+                    );
+                  }
+                } else {
+                  // For fills, we can directly set boundVariables (it's not read-only for fills)
+                  if (!propertyValue[i].boundVariables) {
+                    propertyValue[i].boundVariables = {};
+                  }
+                  propertyValue[i].boundVariables.color = {
+                    type: "VARIABLE_ALIAS",
+                    id: variable.id,
+                  };
+                  debugConsole.log(
+                    `  [BOUND-VAR] ✓ Set bound variable for ${propertyName}[${i}].color on "${node.name || "Unnamed"}": variable "${variable.name}" (ID: ${variable.id.substring(0, 20)}...) from table index ${varRef}`,
+                  );
+                }
+              } else {
+                // Variable not found - for strokes, add original paint; for fills, keep as-is
+                if (propertyName === "strokes") {
+                  newPaints.push(propertyValue[i]);
+                }
+                debugConsole.warning(
+                  `  [BOUND-VAR] Could not resolve variable for _varRef ${varRef} on ${propertyName}[${i}]`,
+                );
               }
             }
           } else {
+            debugConsole.log(
+              `  [BOUND-VAR] fillBinding is not a direct variable reference, checking properties: ${Object.keys(fillBinding).join(", ")}`,
+            );
             // Each fill binding can have properties like "color", "opacity", etc.
             // Iterate over each property in the fill binding (e.g., "color")
+            // For strokes, we need to track if we've processed this index
+            let strokeProcessed = false;
             for (const [fillPropertyName, varInfo] of Object.entries(
               fillBinding,
             )) {
               if (isVariableReference(varInfo)) {
                 const varRef = (varInfo as VariableReference)._varRef;
                 if (varRef !== undefined) {
-                  const variable = recognizedVariables.get(String(varRef));
+                  let variable = recognizedVariables.get(String(varRef));
+
+                  // Verify that the variable found in recognizedVariables matches the variable table entry
+                  if (variable && variableTable) {
+                    const varEntry = variableTable.getVariableByIndex(varRef);
+                    if (varEntry && variable.name !== varEntry.variableName) {
+                      // Variable name doesn't match - the index points to a different variable
+                      // Fall back to resolving from table by name
+                      variable = undefined; // Clear so we resolve from table
+                    }
+                  }
+
+                  // If not found or name mismatch, try to resolve from variable table
+                  if (
+                    !variable &&
+                    variableTable &&
+                    collectionTable &&
+                    recognizedCollections
+                  ) {
+                    const resolvedVariable = await resolveVariableFromTable(
+                      varRef,
+                      variableTable,
+                      collectionTable,
+                      recognizedCollections,
+                    );
+                    variable = resolvedVariable || undefined;
+                    if (variable) {
+                      // Add to recognizedVariables for future lookups
+                      recognizedVariables.set(String(varRef), variable);
+                    }
+                  }
+
                   if (variable) {
-                    // Set the boundVariable with the correct structure
-                    propertyValue[i].boundVariables[fillPropertyName] = {
-                      type: "VARIABLE_ALIAS",
-                      id: variable.id,
-                    };
+                    // For strokes, use setBoundVariableForPaint because boundVariables is read-only
+                    if (
+                      propertyName === "strokes" &&
+                      fillPropertyName === "color"
+                    ) {
+                      strokeProcessed = true; // Mark as processed
+                      if (propertyValue[i].type === "SOLID") {
+                        // Create a fresh paint object without boundVariables to avoid read-only errors
+                        const solidPaint = propertyValue[i] as SolidPaint;
+                        const freshPaint: SolidPaint = {
+                          type: "SOLID",
+                          visible: solidPaint.visible,
+                          opacity: solidPaint.opacity,
+                          blendMode: solidPaint.blendMode,
+                          color: { ...solidPaint.color },
+                        };
+                        const boundPaint =
+                          figma.variables.setBoundVariableForPaint(
+                            freshPaint,
+                            "color",
+                            variable,
+                          );
+                        // Add to new array instead of modifying propertyValue directly
+                        newPaints.push(boundPaint);
+                        debugConsole.log(
+                          `  [BOUND-VAR] ✓ Set bound variable for ${propertyName}[${i}].${fillPropertyName} on "${node.name || "Unnamed"}": variable "${variable.name}" (ID: ${variable.id.substring(0, 20)}...)`,
+                        );
+                      } else {
+                        // For non-SOLID strokes, add as-is
+                        newPaints.push(propertyValue[i]);
+                        debugConsole.warning(
+                          `  [BOUND-VAR] Cannot bind variable to ${propertyName}[${i}].${fillPropertyName} - paint type is "${propertyValue[i].type}", only SOLID is supported`,
+                        );
+                      }
+                    } else {
+                      // For fills, we can directly set boundVariables
+                      if (!propertyValue[i].boundVariables) {
+                        propertyValue[i].boundVariables = {};
+                      }
+                      propertyValue[i].boundVariables[fillPropertyName] = {
+                        type: "VARIABLE_ALIAS",
+                        id: variable.id,
+                      };
+                      debugConsole.log(
+                        `  [BOUND-VAR] ✓ Set bound variable for ${propertyName}[${i}].${fillPropertyName} on "${node.name || "Unnamed"}": variable "${variable.name}" (ID: ${variable.id.substring(0, 20)}...)`,
+                      );
+                    }
+                  } else {
+                    // Variable not found - for strokes, add original paint
+                    if (propertyName === "strokes") {
+                      strokeProcessed = true; // Mark as processed even if variable not found
+                      newPaints.push(propertyValue[i]);
+                    }
                   }
                 }
+              }
+            }
+            // If we didn't process this stroke in the else branch (no variable bindings), add original paint
+            if (propertyName === "strokes" && !strokeProcessed) {
+              newPaints.push(propertyValue[i]);
+            }
+          }
+        }
+      }
+
+      // For strokes, reassign the entire array with the new bound paint objects
+      if (propertyName === "strokes" && newPaints.length > 0) {
+        try {
+          node.strokes = newPaints; // Reassign to apply the bound paint objects
+          debugConsole.log(
+            `  [BOUND-VAR] ✓ Reassigned ${propertyName} array on "${node.name || "Unnamed"}" with ${newPaints.length} bound paint object(s)`,
+          );
+        } catch (error) {
+          debugConsole.warning(
+            `  [BOUND-VAR] Error reassigning ${propertyName} array: ${error}`,
+          );
+        }
+      }
+    }
+  } catch (error) {
+    debugConsole.warning(
+      `  [BOUND-VAR] Error restoring bound variables for ${propertyName}: ${error}`,
+    );
+  }
+}
+
+// Removed unused function: bindVariableToNodeProperty
+
+/**
+ * Recursively checks if any node in the data has a style reference
+ * Returns true if any _styleRef, _fillStyleRef, _effectStyleRef, or _gridStyleRef is found
+ */
+/**
+ * Resolves a component ID from an instance table entry.
+ * Used for INSTANCE_SWAP properties that reference instances via _instanceRef.
+ */
+async function resolveComponentIdFromInstanceEntry(
+  instanceEntry: InstanceTableEntry,
+  nodeIdMapping: Map<string, any> | null,
+): Promise<string | null> {
+  try {
+    if (instanceEntry.instanceType === "internal") {
+      // Internal instance - component should be in nodeIdMapping
+      if (!instanceEntry.componentNodeId || !nodeIdMapping) {
+        return null;
+      }
+      const componentNode = nodeIdMapping.get(instanceEntry.componentNodeId);
+      if (!componentNode || componentNode.type !== "COMPONENT") {
+        return null;
+      }
+      return componentNode.id;
+    } else if (instanceEntry.instanceType === "remote") {
+      // Remote instance - get component from remoteComponentMap
+      // We need to find the index in the instance table, but we don't have it here
+      // For now, we'll search by component name in remoteComponentMap
+      // This is a limitation - we'd need the instance table index to properly resolve
+      // For INSTANCE_SWAP, we'll need to pass the instance index or use a different approach
+      debugConsole.warning(
+        `Cannot resolve remote instance component ID for INSTANCE_SWAP - remote instances require instance table index`,
+      );
+      return null;
+    } else if (instanceEntry.instanceType === "normal") {
+      // Normal instance - find component on referenced page
+      if (!instanceEntry.componentPageName) {
+        return null;
+      }
+
+      await figma.loadAllPagesAsync();
+      let referencedPage: PageNode | null = null;
+
+      // Try to find page by GUID first
+      if (instanceEntry.componentGuid) {
+        for (const page of figma.root.children) {
+          if (page.type !== "PAGE") continue;
+          try {
+            const pageMetadataStr = page.getPluginData(PAGE_METADATA_KEY);
+            if (pageMetadataStr) {
+              const pageMetadata = JSON.parse(pageMetadataStr);
+              if (pageMetadata.id === instanceEntry.componentGuid) {
+                referencedPage = page;
+                break;
+              }
+            }
+          } catch {
+            // Continue searching
+          }
+        }
+      }
+
+      // Fallback to name matching
+      if (!referencedPage) {
+        referencedPage = figma.root.children.find(
+          (page) => page.name === instanceEntry.componentPageName,
+        ) as PageNode | null;
+      }
+
+      if (!referencedPage) {
+        debugConsole.warning(
+          `Cannot resolve normal instance component ID - page "${instanceEntry.componentPageName}" not found`,
+        );
+        return null;
+      }
+
+      // Find component on the page using path or name
+      // This needs to handle components that may be inside COMPONENT_SET nodes (variants)
+      let targetComponent: ComponentNode | null = null;
+
+      if (instanceEntry.nodePath && instanceEntry.nodePath.length > 0) {
+        // Use nodePath (more reliable)
+        targetComponent = referencedPage.findOne(
+          (n: any) =>
+            n.id ===
+            instanceEntry.nodePath![instanceEntry.nodePath!.length - 1],
+        ) as ComponentNode | null;
+      } else if (instanceEntry.path && instanceEntry.path.length > 0) {
+        // Use name-based path
+        let current: any = referencedPage;
+        for (const segment of instanceEntry.path) {
+          if (!current || !current.children) {
+            current = null;
+            break;
+          }
+          current = current.children.find(
+            (child: any) => child.name === segment,
+          );
+        }
+        if (current && current.type === "COMPONENT") {
+          targetComponent = current;
+        } else if (current && current.type === "COMPONENT_SET") {
+          // Component is a variant inside a COMPONENT_SET
+          // Verify componentSetName matches if provided
+          if (
+            instanceEntry.componentSetName &&
+            current.name !== instanceEntry.componentSetName
+          ) {
+            debugConsole.warning(
+              `  Path led to COMPONENT_SET "${current.name}" but expected "${instanceEntry.componentSetName}" - path may be incorrect`,
+            );
+            current = null; // Force fallback to recursive search
+          } else {
+            // Search for the variant by name
+            targetComponent = current.children.find(
+              (variant: any) =>
+                variant.type === "COMPONENT" &&
+                variant.name === instanceEntry.componentName,
+            ) as ComponentNode | null;
+            if (targetComponent) {
+              debugConsole.log(
+                `  ✓ Found variant "${targetComponent.name}" in COMPONENT_SET "${current.name}" via path`,
+              );
+            }
+          }
+        }
+      } else {
+        // No path - component is at page root, search by name
+        // PRIORITIZE: If componentSetName is provided, search COMPONENT_SETs first
+        if (instanceEntry.componentSetName) {
+          // Search inside COMPONENT_SET nodes first (when componentSetName is provided)
+          for (const child of referencedPage.children) {
+            if (child.type === "COMPONENT_SET") {
+              // Only search in matching sets
+              if (child.name !== instanceEntry.componentSetName) {
+                continue;
+              }
+              // Search for variant by name
+              const variant = child.children.find(
+                (v: any) =>
+                  v.type === "COMPONENT" &&
+                  v.name === instanceEntry.componentName,
+              ) as ComponentNode | null;
+              if (variant) {
+                targetComponent = variant;
+                debugConsole.log(
+                  `  ✓ Found variant "${variant.name}" in COMPONENT_SET "${child.name}" at page root (matched componentSetName)`,
+                );
+                break;
+              }
+            }
+          }
+        }
+
+        // If not found and no componentSetName filter, try direct COMPONENT nodes
+        if (!targetComponent && !instanceEntry.componentSetName) {
+          targetComponent = referencedPage.children.find(
+            (child: any) =>
+              child.type === "COMPONENT" &&
+              child.name === instanceEntry.componentName,
+          ) as ComponentNode | null;
+        }
+
+        // If still not found and no componentSetName filter, search all COMPONENT_SETs
+        if (!targetComponent && !instanceEntry.componentSetName) {
+          for (const child of referencedPage.children) {
+            if (child.type === "COMPONENT_SET") {
+              // Search for variant by name
+              const variant = child.children.find(
+                (v: any) =>
+                  v.type === "COMPONENT" &&
+                  v.name === instanceEntry.componentName,
+              ) as ComponentNode | null;
+              if (variant) {
+                targetComponent = variant;
+                break;
               }
             }
           }
         }
       }
+
+      // If initial search failed, try recursive search (handles nested structures and COMPONENT_SET variants)
+      if (!targetComponent) {
+        debugConsole.log(
+          `  Initial search failed for component "${instanceEntry.componentName}"${instanceEntry.componentSetName ? ` (componentSet: "${instanceEntry.componentSetName}")` : ""}, trying recursive search...`,
+        );
+        const recursiveSearch = (
+          node: any,
+          depth = 0,
+        ): ComponentNode | null => {
+          if (depth > 10) return null; // Limit depth to prevent infinite loops
+
+          for (const child of node.children || []) {
+            // Check COMPONENT_SET nodes for variants FIRST (prioritize these when componentSetName is provided)
+            if (child.type === "COMPONENT_SET") {
+              // If componentSetName is provided, ONLY search in matching sets
+              if (instanceEntry.componentSetName) {
+                if (child.name !== instanceEntry.componentSetName) {
+                  // Skip this COMPONENT_SET - doesn't match
+                  continue;
+                }
+                // componentSetName matches - search for variant by name
+                const variant = child.children.find(
+                  (v: any) =>
+                    v.type === "COMPONENT" &&
+                    v.name === instanceEntry.componentName,
+                ) as ComponentNode | null;
+                if (variant) {
+                  debugConsole.log(
+                    `  ✓ Found variant "${variant.name}" in COMPONENT_SET "${child.name}" via recursive search (matched componentSetName)`,
+                  );
+                  return variant;
+                }
+              } else {
+                // No componentSetName filter - search all COMPONENT_SETs
+                const variant = child.children.find(
+                  (v: any) =>
+                    v.type === "COMPONENT" &&
+                    v.name === instanceEntry.componentName,
+                ) as ComponentNode | null;
+                if (variant) {
+                  debugConsole.log(
+                    `  ✓ Found variant "${variant.name}" in COMPONENT_SET "${child.name}" via recursive search`,
+                  );
+                  return variant;
+                }
+              }
+            }
+
+            // Check standalone COMPONENT nodes (only if no componentSetName filter, or if we haven't found a match)
+            if (child.type === "COMPONENT") {
+              if (child.name === instanceEntry.componentName) {
+                // If componentSetName is provided, skip standalone components (they should be in a COMPONENT_SET)
+                if (instanceEntry.componentSetName) {
+                  debugConsole.log(
+                    `  Skipping standalone component "${child.name}" - componentSetName "${instanceEntry.componentSetName}" provided, expecting variant in COMPONENT_SET`,
+                  );
+                  continue;
+                }
+                debugConsole.log(
+                  `  ✓ Found component "${child.name}" via recursive search`,
+                );
+                return child;
+              }
+            }
+
+            // Recurse into FRAMEs and GROUPs
+            if (child.type === "FRAME" || child.type === "GROUP") {
+              const found = recursiveSearch(child, depth + 1);
+              if (found) return found;
+            }
+          }
+          return null;
+        };
+
+        targetComponent = recursiveSearch(referencedPage);
+      }
+
+      if (!targetComponent) {
+        // Enhanced error message with search details
+        const pathInfo = instanceEntry.path
+          ? ` (path: ${instanceEntry.path.join(" / ")})`
+          : "";
+        const setInfo = instanceEntry.componentSetName
+          ? ` (componentSet: ${instanceEntry.componentSetName})`
+          : "";
+        debugConsole.warning(
+          `Cannot resolve normal instance component ID - component "${instanceEntry.componentName}"${setInfo} not found on page "${instanceEntry.componentPageName}"${pathInfo}`,
+        );
+        return null;
+      }
+
+      return targetComponent.id;
     }
+
+    return null;
   } catch (error) {
-    console.log(`Error restoring bound variables for ${propertyName}:`, error);
+    debugConsole.warning(
+      `Error resolving component ID from instance entry: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    return null;
   }
 }
 
-// Removed unused function: bindVariableToNodeProperty
+function checkForStyleReferences(nodeData: any): boolean {
+  if (!nodeData || typeof nodeData !== "object") {
+    return false;
+  }
+
+  // Check this node for style references
+  if (
+    nodeData._styleRef !== undefined ||
+    nodeData._fillStyleRef !== undefined ||
+    nodeData._effectStyleRef !== undefined ||
+    nodeData._gridStyleRef !== undefined
+  ) {
+    return true;
+  }
+
+  // Check fills for style references
+  if (Array.isArray(nodeData.fills)) {
+    for (const fill of nodeData.fills) {
+      if (fill && typeof fill === "object" && fill._styleRef !== undefined) {
+        return true;
+      }
+    }
+  }
+
+  // Check backgrounds for style references
+  if (Array.isArray(nodeData.backgrounds)) {
+    for (const bg of nodeData.backgrounds) {
+      if (bg && typeof bg === "object" && bg._styleRef !== undefined) {
+        return true;
+      }
+    }
+  }
+
+  // Recursively check children
+  if (Array.isArray(nodeData.children)) {
+    for (const child of nodeData.children) {
+      if (checkForStyleReferences(child)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Import styles from the style table
+ */
+async function importStyles(
+  stylesData: Record<string, any>,
+  recognizedVariables: Map<string, Variable>,
+): Promise<{
+  styleMapping: Map<number, BaseStyle>;
+  newlyCreatedStyles: BaseStyle[];
+}> {
+  const styleMapping = new Map<number, BaseStyle>();
+  const newlyCreatedStyles: BaseStyle[] = [];
+  debugConsole.log(`Importing ${Object.keys(stylesData).length} styles...`);
+
+  const sortedEntries = Object.entries(stylesData).sort(
+    (a, b) => parseInt(a[0], 10) - parseInt(b[0], 10),
+  );
+
+  for (const [indexStr, styleData] of sortedEntries) {
+    const index = parseInt(indexStr, 10);
+    const styleName = styleData.name || "Unnamed Style";
+    const styleType = styleData.type;
+
+    // Check if a style with the same name and type already exists
+    let existingStyle: BaseStyle | null = null;
+    switch (styleType) {
+      case "TEXT":
+        existingStyle =
+          (await figma.getLocalTextStylesAsync()).find(
+            (s) => s.name === styleName,
+          ) || null;
+        break;
+      case "PAINT":
+        existingStyle =
+          (await figma.getLocalPaintStylesAsync()).find(
+            (s) => s.name === styleName,
+          ) || null;
+        break;
+      case "EFFECT":
+        existingStyle =
+          (await figma.getLocalEffectStylesAsync()).find(
+            (s) => s.name === styleName,
+          ) || null;
+        break;
+      case "GRID":
+        existingStyle =
+          (await figma.getLocalGridStylesAsync()).find(
+            (s) => s.name === styleName,
+          ) || null;
+        break;
+    }
+
+    if (existingStyle) {
+      debugConsole.log(
+        `  Skipping creation of style "${styleName}" (type: ${styleType}) as it already exists. Reusing existing style.`,
+      );
+      styleMapping.set(index, existingStyle);
+      continue;
+    }
+
+    let newStyle: BaseStyle | null = null;
+    try {
+      switch (styleType) {
+        case "TEXT":
+          newStyle = await createTextStyle(styleData, recognizedVariables);
+          break;
+        case "PAINT":
+          newStyle = await createPaintStyle(styleData, recognizedVariables);
+          break;
+        case "EFFECT":
+          newStyle = await createEffectStyle(styleData, recognizedVariables);
+          break;
+        case "GRID":
+          newStyle = await createGridStyle(styleData, recognizedVariables);
+          break;
+        default:
+          debugConsole.warning(
+            `  Unknown style type "${styleType}" for style "${styleName}". Skipping.`,
+          );
+          break;
+      }
+      if (newStyle) {
+        styleMapping.set(index, newStyle);
+        newlyCreatedStyles.push(newStyle);
+        debugConsole.log(
+          `  ✓ Created style "${styleName}" (type: ${styleType})`,
+        );
+      }
+    } catch (error) {
+      debugConsole.warning(
+        `  Failed to create style "${styleName}" (type: ${styleType}): ${error}`,
+      );
+    }
+  }
+  return { styleMapping, newlyCreatedStyles };
+}
+
+/**
+ * Create a text style from serialized data
+ */
+async function createTextStyle(
+  styleData: any,
+  recognizedVariables: Map<string, Variable>,
+): Promise<TextStyle> {
+  const style = figma.createTextStyle();
+  style.name = styleData.name;
+
+  if (styleData.textStyle) {
+    // Apply properties (only non-defaults should be in styleData)
+    // IMPORTANT: Load font FIRST before setting fontSize or other font-dependent properties
+    if (
+      styleData.textStyle.fontName !== undefined &&
+      !styleData.textStyle.boundVariables?.fontName
+    ) {
+      await figma.loadFontAsync(styleData.textStyle.fontName);
+      style.fontName = styleData.textStyle.fontName;
+    }
+    // Now we can set fontSize after font is loaded
+    if (
+      styleData.textStyle.fontSize !== undefined &&
+      !styleData.textStyle.boundVariables?.fontSize
+    ) {
+      style.fontSize = styleData.textStyle.fontSize;
+    }
+    if (
+      styleData.textStyle.letterSpacing !== undefined &&
+      !styleData.textStyle.boundVariables?.letterSpacing
+    ) {
+      style.letterSpacing = styleData.textStyle.letterSpacing;
+    }
+    if (
+      styleData.textStyle.lineHeight !== undefined &&
+      !styleData.textStyle.boundVariables?.lineHeight
+    ) {
+      style.lineHeight = styleData.textStyle.lineHeight;
+    }
+    if (
+      styleData.textStyle.textCase !== undefined &&
+      !styleData.textStyle.boundVariables?.textCase
+    ) {
+      style.textCase = styleData.textStyle.textCase;
+    }
+    if (
+      styleData.textStyle.textDecoration !== undefined &&
+      !styleData.textStyle.boundVariables?.textDecoration
+    ) {
+      style.textDecoration = styleData.textStyle.textDecoration;
+    }
+    if (
+      styleData.textStyle.paragraphSpacing !== undefined &&
+      !styleData.textStyle.boundVariables?.paragraphSpacing
+    ) {
+      style.paragraphSpacing = styleData.textStyle.paragraphSpacing;
+    }
+    if (
+      styleData.textStyle.paragraphIndent !== undefined &&
+      !styleData.textStyle.boundVariables?.paragraphIndent
+    ) {
+      style.paragraphIndent = styleData.textStyle.paragraphIndent;
+    }
+
+    // Handle bound variables
+    if (styleData.textStyle.boundVariables) {
+      for (const [property, varRef] of Object.entries(
+        styleData.textStyle.boundVariables,
+      )) {
+        // varRef might be a variable table index (_varRef format) or variable ID
+        // Resolve from recognizedVariables
+        let variable: Variable | undefined;
+        if (
+          typeof varRef === "object" &&
+          varRef !== null &&
+          "_varRef" in varRef
+        ) {
+          // Variable table reference format
+          const varRefIndex = (varRef as any)._varRef;
+          variable = recognizedVariables.get(String(varRefIndex));
+        } else {
+          // Direct variable ID or string reference
+          const varKey = typeof varRef === "string" ? varRef : String(varRef);
+          variable = recognizedVariables.get(varKey);
+        }
+        if (variable) {
+          try {
+            // setBoundVariable expects a Variable object, not an ID
+            style.setBoundVariable(property as any, variable);
+          } catch (error) {
+            debugConsole.warning(
+              `Could not bind variable to text style property "${property}": ${error}`,
+            );
+          }
+        }
+      }
+    }
+  }
+
+  return style;
+}
+
+/**
+ * Create a paint style from serialized data
+ */
+async function createPaintStyle(
+  styleData: any,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _recognizedVariables: Map<string, Variable>,
+): Promise<PaintStyle> {
+  const style = figma.createPaintStyle();
+  style.name = styleData.name;
+
+  if (styleData.paintStyle && styleData.paintStyle.paints) {
+    style.paints = styleData.paintStyle.paints;
+  }
+
+  // Handle bound variables (would be in paints themselves)
+  // This is handled at the fill level during export/import
+
+  return style;
+}
+
+/**
+ * Create an effect style from serialized data
+ */
+async function createEffectStyle(
+  styleData: any,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _recognizedVariables: Map<string, Variable>,
+): Promise<EffectStyle> {
+  const style = figma.createEffectStyle();
+  style.name = styleData.name;
+
+  if (styleData.effectStyle && styleData.effectStyle.effects) {
+    style.effects = styleData.effectStyle.effects;
+  }
+
+  return style;
+}
+
+/**
+ * Create a grid style from serialized data
+ */
+async function createGridStyle(
+  styleData: any,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _recognizedVariables: Map<string, Variable>,
+): Promise<GridStyle> {
+  const style = figma.createGridStyle();
+  style.name = styleData.name;
+
+  if (styleData.gridStyle && styleData.gridStyle.layoutGrids) {
+    style.layoutGrids = styleData.gridStyle.layoutGrids;
+  }
+
+  return style;
+}
 
 /**
  * Applies default values to a newly created node
@@ -913,6 +1789,7 @@ function applyDefaultsToNode(
   if (
     nodeType === "FRAME" ||
     nodeType === "COMPONENT" ||
+    nodeType === "COMPONENT_SET" ||
     nodeType === "INSTANCE"
   ) {
     const frameDefaults = FRAME_DEFAULTS;
@@ -978,6 +1855,142 @@ function applyDefaultsToNode(
  * Recursively recreates nodes from the extracted data
  * Uses defaults when properties are missing
  */
+/**
+ * Note: The Figma Plugin API uses the same constraint values as we export:
+ * MIN, CENTER, MAX, STRETCH, SCALE
+ * No mapping is needed - we can use the exported values directly.
+ */
+
+/**
+ * Base64 decode function for Figma plugin environment
+ * (atob() is not available in Figma plugins)
+ */
+function base64Decode(base64: string): Uint8Array {
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  const result: number[] = [];
+  let i = 0;
+  base64 = base64.replace(/[^A-Za-z0-9+/]/g, "");
+
+  while (i < base64.length) {
+    const encoded1 = chars.indexOf(base64.charAt(i++));
+    const encoded2 = chars.indexOf(base64.charAt(i++));
+    const encoded3 = chars.indexOf(base64.charAt(i++));
+    const encoded4 = chars.indexOf(base64.charAt(i++));
+
+    const bitmap =
+      (encoded1 << 18) | (encoded2 << 12) | (encoded3 << 6) | encoded4;
+
+    result.push((bitmap >> 16) & 255);
+    if (encoded3 !== 64) result.push((bitmap >> 8) & 255);
+    if (encoded4 !== 64) result.push(bitmap & 255);
+  }
+
+  return new Uint8Array(result);
+}
+
+/**
+ * Converts Base64 image data to Uint8Array and creates a Figma image
+ * Returns the image hash that can be used in fills/backgrounds
+ * Handles both raw base64 strings and data URL format (data:image/png;base64,...)
+ */
+async function restoreImageFromBase64(
+  base64Data: string,
+): Promise<string | null> {
+  try {
+    // Strip data URL prefix if present (e.g., "data:image/png;base64,")
+    let base64String = base64Data;
+    if (base64Data.startsWith("data:")) {
+      const commaIndex = base64Data.indexOf(",");
+      if (commaIndex !== -1) {
+        base64String = base64Data.substring(commaIndex + 1);
+      }
+    }
+
+    // Convert Base64 to Uint8Array using manual decoder
+    const bytes = base64Decode(base64String);
+
+    // Create image in Figma and get hash
+    const imageHash = await figma.createImage(bytes).hash;
+    debugConsole.log(
+      `  DEBUG: Successfully restored image with hash: ${imageHash}`,
+    );
+    return imageHash;
+  } catch (error) {
+    debugConsole.warning(`Failed to restore image from Base64: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Restores image references in fills or backgrounds array
+ * Replaces _imgRef with actual imageHash from image table
+ */
+async function restoreImageReferences(
+  fillsOrBackgrounds: any[],
+  imageTable: ImageTable | null,
+): Promise<any[]> {
+  if (!imageTable || !Array.isArray(fillsOrBackgrounds)) {
+    return fillsOrBackgrounds;
+  }
+
+  return Promise.all(
+    fillsOrBackgrounds.map(async (item: any) => {
+      if (!item || typeof item !== "object") {
+        return item;
+      }
+
+      // Check if this item has an image reference
+      if (isImageReference(item)) {
+        const imageIndex = item._imgRef;
+        const imageEntry = imageTable.getImageByIndex(imageIndex);
+
+        if (imageEntry) {
+          try {
+            // Restore image from Base64
+            const imageHash = await restoreImageFromBase64(
+              imageEntry.imageData,
+            );
+
+            if (imageHash) {
+              // Create new fill/background object with imageHash
+              // Preserve all original properties (type, visible, opacity, blendMode, etc.)
+              const restored: any = {
+                ...item,
+                type: "IMAGE",
+                imageHash: imageHash,
+              };
+              // Remove _imgRef since we've restored the imageHash
+              delete restored._imgRef;
+              debugConsole.log(
+                `✓ Restored image from index ${imageIndex} (hash: ${imageHash.substring(0, 20)}...)`,
+              );
+              return restored;
+            } else {
+              debugConsole.warning(
+                `Failed to restore image at index ${imageIndex}, keeping _imgRef`,
+              );
+              return item;
+            }
+          } catch (error) {
+            debugConsole.warning(
+              `Error restoring image at index ${imageIndex}: ${error}`,
+            );
+            return item;
+          }
+        } else {
+          debugConsole.warning(
+            `Image at index ${imageIndex} not found in image table`,
+          );
+          return item;
+        }
+      }
+
+      return item;
+    }),
+  );
+}
+
 export async function recreateNodeFromData(
   nodeData: any,
   parentNode: any,
@@ -991,6 +2004,10 @@ export async function recreateNodeFromData(
   deferredInstances: DeferredNormalInstance[] | null = null, // Array to collect deferred normal instances
   parentNodeData: any = null, // Parent's nodeData - used to check if parent has auto-layout
   recognizedCollections: Map<string, VariableCollection> | null = null, // For resolving variables from table
+  placeholderFrameIds: Set<string> | null = null, // Track placeholder frame IDs as we create them
+  currentPlaceholderId?: string, // ID of placeholder we're currently inside (for nested deferred instances)
+  styleMapping: Map<number, BaseStyle> | null = null, // Map of old style table index -> new style instance
+  imageTable: ImageTable | null = null, // Image table for restoring images from Base64
 ): Promise<any> {
   let newNode: any;
 
@@ -1021,7 +2038,7 @@ export async function recreateNodeFromData(
       // Check if component already exists in mapping (might have been created in first pass)
       if (nodeData.id && nodeIdMapping && nodeIdMapping.has(nodeData.id)) {
         newNode = nodeIdMapping.get(nodeData.id);
-        await debugConsole.log(
+        debugConsole.log(
           `Reusing existing COMPONENT "${nodeData.name || "Unnamed"}" (ID: ${nodeData.id.substring(0, 8)}...)`,
         );
         // If component already has children, it was fully created in a previous second-pass iteration
@@ -1029,11 +2046,13 @@ export async function recreateNodeFromData(
         // If component has no children yet, it was created in first pass and needs children processing
       } else {
         newNode = figma.createComponent();
-        await debugConsole.log(
+        debugConsole.log(
           `Created COMPONENT "${nodeData.name || "Unnamed"}" (ID: ${nodeData.id ? nodeData.id.substring(0, 8) + "..." : "no ID"})`,
         );
 
         // Add component property definitions using addComponentProperty() method
+        // CRITICAL: Capture the return value (unique property ID) for binding restoration
+        const propertyIdMapping = new Map<string, string>(); // old property ID -> new property ID
         if (nodeData.componentPropertyDefinitions) {
           const propDefs = nodeData.componentPropertyDefinitions;
           let addedCount = 0;
@@ -1077,25 +2096,107 @@ export async function recreateNodeFromData(
               }
 
               if (!propType) {
-                await debugConsole.warning(
+                debugConsole.warning(
                   `  Unknown property type ${typeValue} (${typeof typeValue}) for property "${propName}" in component "${nodeData.name || "Unnamed"}"`,
                 );
                 failedCount++;
                 continue;
               }
 
-              const defaultValue = (propDef as any).defaultValue;
+              let defaultValue = (propDef as any).defaultValue;
+
+              // For INSTANCE_SWAP properties, resolve _instanceRef to component ID
+              if (
+                propType === "INSTANCE_SWAP" &&
+                defaultValue &&
+                typeof defaultValue === "object" &&
+                defaultValue._instanceRef !== undefined
+              ) {
+                debugConsole.log(
+                  `    Resolving INSTANCE_SWAP property "${propName}" _instanceRef: ${defaultValue._instanceRef}`,
+                );
+
+                if (!instanceTable) {
+                  debugConsole.warning(
+                    `    Cannot resolve _instanceRef for INSTANCE_SWAP property "${propName}" - instance table not available`,
+                  );
+                  failedCount++;
+                  continue;
+                }
+
+                const instanceEntry = instanceTable.getInstanceByIndex(
+                  defaultValue._instanceRef,
+                );
+                if (!instanceEntry) {
+                  debugConsole.warning(
+                    `    Instance table entry not found for index ${defaultValue._instanceRef} in INSTANCE_SWAP property "${propName}"`,
+                  );
+                  failedCount++;
+                  continue;
+                }
+
+                // Resolve the component ID from the instance entry
+                const resolvedComponentId =
+                  await resolveComponentIdFromInstanceEntry(
+                    instanceEntry,
+                    nodeIdMapping,
+                  );
+
+                if (!resolvedComponentId) {
+                  debugConsole.warning(
+                    `    Could not resolve component ID from instance entry for INSTANCE_SWAP property "${propName}"`,
+                  );
+                  failedCount++;
+                  continue;
+                }
+
+                const instanceRefIndex = defaultValue._instanceRef;
+                defaultValue = resolvedComponentId;
+                debugConsole.log(
+                  `    Resolved INSTANCE_SWAP property "${propName}" _instanceRef ${instanceRefIndex} to component ID: ${resolvedComponentId.substring(0, 8)}...`,
+                );
+              }
+
               // Property names in JSON may include IDs (e.g., "Show trailing icon#318:0")
               // Extract just the property name part (before the #)
               const cleanPropName = propName.split("#")[0];
-              newNode.addComponentProperty(
+
+              // Check if property already exists (for COMPONENT nodes that might be part of a COMPONENT_SET)
+              // This can happen if the component was already created and properties were added
+              const existingProps = newNode.componentPropertyDefinitions;
+              if (existingProps && existingProps[cleanPropName]) {
+                debugConsole.log(
+                  `  Skipping component property "${cleanPropName}" on COMPONENT "${nodeData.name || "Unnamed"}" - property already exists`,
+                );
+                // Property already exists, use the existing property ID for mapping
+                const existingPropId = Object.keys(existingProps).find(
+                  (key) => key.split("#")[0] === cleanPropName,
+                );
+                if (existingPropId) {
+                  propertyIdMapping.set(propName, existingPropId);
+                  debugConsole.log(
+                    `  [BINDING] Using existing property "${existingPropId}" for mapping (was "${propName}" in JSON)`,
+                  );
+                }
+                continue;
+              }
+
+              // CRITICAL: Capture the return value - this is the unique property ID (e.g., "Component name#12:34")
+              // We need this ID (not just the name) to set componentPropertyReferences
+              const newPropertyId = newNode.addComponentProperty(
                 cleanPropName,
                 propType,
                 defaultValue,
               );
+
+              // Store mapping: old property ID (from JSON) -> new property ID (from addComponentProperty)
+              propertyIdMapping.set(propName, newPropertyId);
+              debugConsole.log(
+                `  [BINDING] Added component property "${cleanPropName}" with ID "${newPropertyId}" (was "${propName}" in JSON)`,
+              );
               addedCount++;
             } catch (error) {
-              await debugConsole.warning(
+              debugConsole.warning(
                 `  Failed to add component property "${propName}" to "${nodeData.name || "Unnamed"}": ${error}`,
               );
               failedCount++;
@@ -1103,10 +2204,20 @@ export async function recreateNodeFromData(
           }
 
           if (addedCount > 0) {
-            await debugConsole.log(
+            debugConsole.log(
               `  Added ${addedCount} component property definition(s) to "${nodeData.name || "Unnamed"}"${failedCount > 0 ? ` (${failedCount} failed)` : ""}`,
             );
           }
+        }
+
+        // Store property ID mapping in external Map for later use in post-processing
+        // This allows us to restore componentPropertyReferences after children are added
+        // We can't attach properties directly to Figma nodes (they're not extensible)
+        if (propertyIdMapping.size > 0) {
+          componentBindingData.set(newNode.id, {
+            propertyIdMapping,
+            nodeData,
+          });
         }
       }
       break;
@@ -1116,7 +2227,7 @@ export async function recreateNodeFromData(
       const componentChildren = nodeData.children
         ? nodeData.children.filter((c: any) => c.type === "COMPONENT").length
         : 0;
-      await debugConsole.log(
+      debugConsole.log(
         `Creating COMPONENT_SET "${nodeData.name || "Unnamed"}" by combining ${componentChildren} component variant(s)`,
       );
 
@@ -1154,15 +2265,19 @@ export async function recreateNodeFromData(
                 deferredInstances, // Pass deferredInstances through for component set creation
                 null, // parentNodeData - not needed here, will be passed correctly in recursive calls
                 recognizedCollections,
+                placeholderFrameIds, // Pass placeholderFrameIds through for component set creation
+                undefined, // currentPlaceholderId - component set creation is not inside a placeholder
+                styleMapping, // Pass styleMapping to apply styles
+                imageTable, // Pass imageTable to restore images
               );
               if (componentNode && componentNode.type === "COMPONENT") {
                 componentVariants.push(componentNode);
-                await debugConsole.log(
+                debugConsole.log(
                   `  Created component variant: "${componentNode.name || "Unnamed"}"`,
                 );
               }
             } catch (error) {
-              await debugConsole.warning(
+              debugConsole.warning(
                 `  Failed to create component variant "${childData.name || "Unnamed"}": ${error}`,
               );
             }
@@ -1186,7 +2301,179 @@ export async function recreateNodeFromData(
             componentSet.name = nodeData.name;
           }
 
-          // Apply other properties from nodeData to the component set
+          // Add component property definitions to the COMPONENT_SET
+          // COMPONENT_SET nodes store component properties for variant components
+          // CRITICAL: Capture the return value (unique property ID) for binding restoration
+          const propertyIdMapping = new Map<string, string>(); // old property ID -> new property ID
+          if (nodeData.componentPropertyDefinitions) {
+            const propDefs = nodeData.componentPropertyDefinitions;
+            let addedCount = 0;
+            let failedCount = 0;
+
+            for (const [propName, propDef] of Object.entries(propDefs)) {
+              try {
+                // propDef format: { type: number | string, defaultValue?: any }
+                // Map type numbers or strings to Figma API type strings
+                const typeValue = (propDef as any).type;
+                let propType:
+                  | "TEXT"
+                  | "BOOLEAN"
+                  | "INSTANCE_SWAP"
+                  | "VARIANT"
+                  | null = null;
+
+                // Handle both numeric and string types (string table might expand numbers to strings)
+                if (typeof typeValue === "string") {
+                  // Already a string - validate it's a valid type
+                  if (
+                    typeValue === "TEXT" ||
+                    typeValue === "BOOLEAN" ||
+                    typeValue === "INSTANCE_SWAP" ||
+                    typeValue === "VARIANT"
+                  ) {
+                    propType = typeValue;
+                  }
+                } else if (typeof typeValue === "number") {
+                  // Numeric type - map to string
+                  const typeMap: Record<
+                    number,
+                    "TEXT" | "BOOLEAN" | "INSTANCE_SWAP" | "VARIANT"
+                  > = {
+                    2: "TEXT", // Text property
+                    25: "BOOLEAN", // Boolean property
+                    27: "INSTANCE_SWAP", // Instance swap property
+                    26: "VARIANT", // Variant property
+                  };
+                  propType = typeMap[typeValue] || null;
+                }
+
+                if (!propType) {
+                  debugConsole.warning(
+                    `  Unknown property type ${typeValue} (${typeof typeValue}) for property "${propName}" in COMPONENT_SET "${nodeData.name || "Unnamed"}"`,
+                  );
+                  failedCount++;
+                  continue;
+                }
+
+                let defaultValue = (propDef as any).defaultValue;
+
+                // For INSTANCE_SWAP properties, resolve _instanceRef to component ID
+                if (
+                  propType === "INSTANCE_SWAP" &&
+                  defaultValue &&
+                  typeof defaultValue === "object" &&
+                  defaultValue._instanceRef !== undefined
+                ) {
+                  debugConsole.log(
+                    `    Resolving INSTANCE_SWAP property "${propName}" _instanceRef: ${defaultValue._instanceRef}`,
+                  );
+
+                  if (!instanceTable) {
+                    debugConsole.warning(
+                      `    Cannot resolve _instanceRef for INSTANCE_SWAP property "${propName}" - instance table not available`,
+                    );
+                    failedCount++;
+                    continue;
+                  }
+
+                  const instanceEntry = instanceTable.getInstanceByIndex(
+                    defaultValue._instanceRef,
+                  );
+                  if (!instanceEntry) {
+                    debugConsole.warning(
+                      `    Instance table entry not found for index ${defaultValue._instanceRef} in INSTANCE_SWAP property "${propName}"`,
+                    );
+                    failedCount++;
+                    continue;
+                  }
+
+                  // Resolve the component ID from the instance entry
+                  const resolvedComponentId =
+                    await resolveComponentIdFromInstanceEntry(
+                      instanceEntry,
+                      nodeIdMapping,
+                    );
+
+                  if (!resolvedComponentId) {
+                    debugConsole.warning(
+                      `    Could not resolve component ID from instance entry for INSTANCE_SWAP property "${propName}"`,
+                    );
+                    failedCount++;
+                    continue;
+                  }
+
+                  const instanceRefIndex = defaultValue._instanceRef;
+                  defaultValue = resolvedComponentId;
+                  debugConsole.log(
+                    `    Resolved INSTANCE_SWAP property "${propName}" _instanceRef ${instanceRefIndex} to component ID: ${resolvedComponentId.substring(0, 8)}...`,
+                  );
+                }
+
+                // Property names in JSON may include IDs (e.g., "Label#318:0")
+                // Extract just the property name part (before the #)
+                const cleanPropName = propName.split("#")[0];
+
+                // Check if property already exists (as variant property or component property)
+                // Variant properties are automatically created when components are combined into a COMPONENT_SET
+                // We cannot add a component property with the same name as an existing variant property
+                const existingProps = componentSet.componentPropertyDefinitions;
+                if (existingProps && existingProps[cleanPropName]) {
+                  debugConsole.log(
+                    `  Skipping component property "${cleanPropName}" on COMPONENT_SET "${nodeData.name || "Unnamed"}" - property already exists (likely a variant property)`,
+                  );
+                  // Property already exists, use the existing property ID for mapping
+                  const existingPropId = Object.keys(existingProps).find(
+                    (key) => key.split("#")[0] === cleanPropName,
+                  );
+                  if (existingPropId) {
+                    propertyIdMapping.set(propName, existingPropId);
+                    debugConsole.log(
+                      `  [BINDING] Using existing property "${existingPropId}" for mapping (was "${propName}" in JSON)`,
+                    );
+                  }
+                  continue;
+                }
+
+                // CRITICAL: Capture the return value - this is the unique property ID (e.g., "Placeholder#12:34")
+                // We need this ID (not just the name) to set componentPropertyReferences
+                const newPropertyId = componentSet.addComponentProperty(
+                  cleanPropName,
+                  propType,
+                  defaultValue,
+                );
+
+                // Store mapping: old property ID (from JSON) -> new property ID (from addComponentProperty)
+                propertyIdMapping.set(propName, newPropertyId);
+                debugConsole.log(
+                  `  [BINDING] Added component property "${cleanPropName}" with ID "${newPropertyId}" to COMPONENT_SET "${nodeData.name || "Unnamed"}" (was "${propName}" in JSON)`,
+                );
+                addedCount++;
+              } catch (error) {
+                debugConsole.warning(
+                  `  Failed to add component property "${propName}" to COMPONENT_SET "${nodeData.name || "Unnamed"}": ${error}`,
+                );
+                failedCount++;
+              }
+            }
+
+            if (addedCount > 0) {
+              debugConsole.log(
+                `  Added ${addedCount} component property definition(s) to COMPONENT_SET "${nodeData.name || "Unnamed"}"${failedCount > 0 ? ` (${failedCount} failed)` : ""}`,
+              );
+            }
+          }
+
+          // Store property ID mapping in external Map for later use in post-processing
+          // This allows us to restore componentPropertyReferences after children are added
+          // We can't attach properties directly to Figma nodes (they're not extensible)
+          if (propertyIdMapping.size > 0) {
+            componentBindingData.set(componentSet.id, {
+              propertyIdMapping,
+              nodeData,
+            });
+          }
+
+          // Apply position properties from nodeData to the component set
           if (nodeData.x !== undefined) {
             componentSet.x = nodeData.x;
           }
@@ -1194,17 +2481,304 @@ export async function recreateNodeFromData(
             componentSet.y = nodeData.y;
           }
 
+          // Apply auto-layout properties to the component set
+          // COMPONENT_SET nodes support auto-layout properties just like FRAME/COMPONENT nodes
+          if (nodeData.layoutMode !== undefined) {
+            componentSet.layoutMode = nodeData.layoutMode;
+          }
+
+          // Set itemSpacing immediately after layoutMode (if not bound to a variable)
+          if (
+            nodeData.layoutMode !== undefined &&
+            nodeData.layoutMode !== "NONE" &&
+            nodeData.itemSpacing !== undefined
+          ) {
+            const hasBoundVariableForItemSpacing =
+              nodeData.boundVariables &&
+              typeof nodeData.boundVariables === "object" &&
+              nodeData.boundVariables.itemSpacing;
+
+            if (!hasBoundVariableForItemSpacing) {
+              componentSet.itemSpacing = nodeData.itemSpacing;
+            }
+          }
+
+          // Set wrap (must be set after layoutMode)
+          if (nodeData.layoutWrap !== undefined) {
+            componentSet.layoutWrap = nodeData.layoutWrap;
+          }
+
+          // Set sizing modes
+          if (nodeData.primaryAxisSizingMode !== undefined) {
+            componentSet.primaryAxisSizingMode = nodeData.primaryAxisSizingMode;
+          }
+          if (nodeData.counterAxisSizingMode !== undefined) {
+            componentSet.counterAxisSizingMode = nodeData.counterAxisSizingMode;
+          }
+
+          // Set alignment
+          if (nodeData.primaryAxisAlignItems !== undefined) {
+            componentSet.primaryAxisAlignItems = nodeData.primaryAxisAlignItems;
+          }
+          if (nodeData.counterAxisAlignItems !== undefined) {
+            componentSet.counterAxisAlignItems = nodeData.counterAxisAlignItems;
+          }
+
+          // Set padding (check for bound variables first)
+          const hasBoundVariables =
+            nodeData.boundVariables &&
+            typeof nodeData.boundVariables === "object";
+          if (
+            nodeData.paddingLeft !== undefined &&
+            (!hasBoundVariables || !nodeData.boundVariables.paddingLeft)
+          ) {
+            componentSet.paddingLeft = nodeData.paddingLeft;
+          }
+          if (
+            nodeData.paddingRight !== undefined &&
+            (!hasBoundVariables || !nodeData.boundVariables.paddingRight)
+          ) {
+            componentSet.paddingRight = nodeData.paddingRight;
+          }
+          if (
+            nodeData.paddingTop !== undefined &&
+            (!hasBoundVariables || !nodeData.boundVariables.paddingTop)
+          ) {
+            componentSet.paddingTop = nodeData.paddingTop;
+          }
+          if (
+            nodeData.paddingBottom !== undefined &&
+            (!hasBoundVariables || !nodeData.boundVariables.paddingBottom)
+          ) {
+            componentSet.paddingBottom = nodeData.paddingBottom;
+          }
+
+          // Set counterAxisSpacing if present
+          if (nodeData.counterAxisSpacing !== undefined) {
+            componentSet.counterAxisSpacing = nodeData.counterAxisSpacing;
+          }
+
+          // Apply bound variables for auto-layout properties if present
+          if (
+            nodeData.boundVariables &&
+            typeof nodeData.boundVariables === "object" &&
+            (variableTable || recognizedVariables)
+          ) {
+            const layoutBoundVars = [
+              "paddingLeft",
+              "paddingRight",
+              "paddingTop",
+              "paddingBottom",
+              "itemSpacing",
+            ];
+            for (const propName of layoutBoundVars) {
+              if (nodeData.boundVariables[propName]) {
+                const varRef = nodeData.boundVariables[propName];
+                let variable: Variable | null = null;
+
+                if (
+                  varRef._varRef !== undefined &&
+                  variableTable &&
+                  recognizedVariables
+                ) {
+                  const varIndex = varRef._varRef;
+                  const varEntry = variableTable.getVariableByIndex(varIndex);
+                  if (varEntry) {
+                    // VariableTableEntry has variableName - search recognizedVariables by name
+                    const varName = varEntry.variableName;
+                    for (const varObj of recognizedVariables.values()) {
+                      if (varObj.name === varName) {
+                        variable = varObj;
+                        break;
+                      }
+                    }
+                  }
+                }
+
+                if (variable) {
+                  const alias: VariableAlias = {
+                    type: "VARIABLE_ALIAS",
+                    id: variable.id,
+                  };
+                  try {
+                    (componentSet as any).setBoundVariable(propName, alias);
+                  } catch (error) {
+                    debugConsole.warning(
+                      `  Error setting bound variable for ${propName} on COMPONENT_SET "${nodeData.name || "Unnamed"}": ${error instanceof Error ? error.message : String(error)}`,
+                    );
+                  }
+                }
+              }
+            }
+          }
+
           // Remove the temporary parent frame (components are now in the component set)
           if (tempParent && tempParent.parent) {
             tempParent.remove();
           }
 
-          await debugConsole.log(
+          // IMPORTANT: After combining into COMPONENT_SET, variants are now children of the auto-layout COMPONENT_SET
+          // At this point, we can set layoutSizingHorizontal/layoutSizingVertical on each variant if needed
+          // Check each variant's childData to see if it has minWidth/maxWidth or minHeight/maxHeight bound to variables
+          if (
+            componentSet.layoutMode !== undefined &&
+            componentSet.layoutMode !== "NONE"
+          ) {
+            const isHorizontal = componentSet.layoutMode === "HORIZONTAL";
+            for (
+              let i = 0;
+              i < componentSet.children.length && i < nodeData.children.length;
+              i++
+            ) {
+              const variant = componentSet.children[i];
+              const variantData = nodeData.children[i];
+
+              if (
+                variant.type === "COMPONENT" &&
+                variantData &&
+                variantData.type === "COMPONENT"
+              ) {
+                const boundVars = variantData.boundVariables;
+                const hasBoundVars = boundVars && typeof boundVars === "object";
+
+                // For HORIZONTAL layout: layoutSizingHorizontal controls width, layoutSizingVertical controls height
+                // For VERTICAL layout: layoutSizingHorizontal controls height, layoutSizingVertical controls width
+
+                // Check for width constraints (minWidth/maxWidth)
+                // For horizontal layout, width is controlled by layoutSizingHorizontal
+                // For vertical layout, width is controlled by layoutSizingVertical
+                const hasWidthConstraints =
+                  hasBoundVars && (boundVars.minWidth || boundVars.maxWidth);
+
+                if (hasWidthConstraints) {
+                  try {
+                    if (isHorizontal) {
+                      (variant as any).layoutSizingHorizontal = "FILL";
+                      debugConsole.log(
+                        `  ✓ Set layoutSizingHorizontal to "FILL" for variant "${variant.name}" (minWidth/maxWidth are bound, horizontal layout)`,
+                      );
+                    } else {
+                      (variant as any).layoutSizingVertical = "FILL";
+                      debugConsole.log(
+                        `  ✓ Set layoutSizingVertical to "FILL" for variant "${variant.name}" (minWidth/maxWidth are bound, vertical layout)`,
+                      );
+                    }
+                  } catch (error) {
+                    debugConsole.warning(
+                      `  ⚠️ Failed to set layout sizing for variant "${variant.name}" (width constraints): ${error}`,
+                    );
+                  }
+                }
+
+                // Check for height constraints (minHeight/maxHeight)
+                // For horizontal layout, height is controlled by layoutSizingVertical
+                // For vertical layout, height is controlled by layoutSizingHorizontal
+                const hasHeightConstraints =
+                  hasBoundVars && (boundVars.minHeight || boundVars.maxHeight);
+
+                if (hasHeightConstraints) {
+                  try {
+                    if (isHorizontal) {
+                      (variant as any).layoutSizingVertical = "FILL";
+                      debugConsole.log(
+                        `  ✓ Set layoutSizingVertical to "FILL" for variant "${variant.name}" (minHeight/maxHeight are bound, horizontal layout)`,
+                      );
+                    } else {
+                      (variant as any).layoutSizingHorizontal = "FILL";
+                      debugConsole.log(
+                        `  ✓ Set layoutSizingHorizontal to "FILL" for variant "${variant.name}" (minHeight/maxHeight are bound, vertical layout)`,
+                      );
+                    }
+                  } catch (error) {
+                    debugConsole.warning(
+                      `  ⚠️ Failed to set layout sizing for variant "${variant.name}" (height constraints): ${error}`,
+                    );
+                  }
+                }
+
+                // Also set layoutSizingHorizontal/layoutSizingVertical if explicitly in the variant data
+                if ((variantData as any).layoutSizingHorizontal !== undefined) {
+                  try {
+                    (variant as any).layoutSizingHorizontal = (
+                      variantData as any
+                    ).layoutSizingHorizontal;
+                    debugConsole.log(
+                      `  ✓ Set layoutSizingHorizontal to "${(variantData as any).layoutSizingHorizontal}" for variant "${variant.name}"`,
+                    );
+                  } catch (error) {
+                    debugConsole.warning(
+                      `  ⚠️ Failed to set layoutSizingHorizontal for variant "${variant.name}": ${error}`,
+                    );
+                  }
+                }
+
+                if ((variantData as any).layoutSizingVertical !== undefined) {
+                  try {
+                    (variant as any).layoutSizingVertical = (
+                      variantData as any
+                    ).layoutSizingVertical;
+                    debugConsole.log(
+                      `  ✓ Set layoutSizingVertical to "${(variantData as any).layoutSizingVertical}" for variant "${variant.name}"`,
+                    );
+                  } catch (error) {
+                    debugConsole.warning(
+                      `  ⚠️ Failed to set layoutSizingVertical for variant "${variant.name}": ${error}`,
+                    );
+                  }
+                }
+
+                // After setting layout sizing, explicitly resize variant to correct dimensions
+                // This is necessary because combineAsVariants() may have resized variants based on component set's auto-layout
+                // Restore original dimensions from variantData if they exist
+                if (
+                  variantData.width !== undefined &&
+                  variantData.height !== undefined
+                ) {
+                  try {
+                    variant.resize(variantData.width, variantData.height);
+                    debugConsole.log(
+                      `  ✓ Resized variant "${variant.name}" to ${variantData.width}x${variantData.height}px (restored from JSON)`,
+                    );
+                  } catch (error) {
+                    debugConsole.warning(
+                      `  ⚠️ Failed to resize variant "${variant.name}" to ${variantData.width}x${variantData.height}: ${error}`,
+                    );
+                  }
+                } else if (variantData.height !== undefined) {
+                  // Only height is specified, preserve width
+                  try {
+                    variant.resize(variant.width, variantData.height);
+                    debugConsole.log(
+                      `  ✓ Resized variant "${variant.name}" height to ${variantData.height}px (preserved width: ${variant.width}px)`,
+                    );
+                  } catch (error) {
+                    debugConsole.warning(
+                      `  ⚠️ Failed to resize variant "${variant.name}" height to ${variantData.height}: ${error}`,
+                    );
+                  }
+                } else if (variantData.width !== undefined) {
+                  // Only width is specified, preserve height
+                  try {
+                    variant.resize(variantData.width, variant.height);
+                    debugConsole.log(
+                      `  ✓ Resized variant "${variant.name}" width to ${variantData.width}px (preserved height: ${variant.height}px)`,
+                    );
+                  } catch (error) {
+                    debugConsole.warning(
+                      `  ⚠️ Failed to resize variant "${variant.name}" width to ${variantData.width}: ${error}`,
+                    );
+                  }
+                }
+              }
+            }
+          }
+
+          debugConsole.log(
             `  ✓ Successfully created COMPONENT_SET "${componentSet.name}" with ${componentVariants.length} variant(s)`,
           );
           newNode = componentSet;
         } catch (error) {
-          await debugConsole.warning(
+          debugConsole.warning(
             `  Failed to combine components into COMPONENT_SET "${nodeData.name || "Unnamed"}": ${error}. Falling back to frame.`,
           );
           // Fallback: create a frame and keep the components as children
@@ -1222,7 +2796,7 @@ export async function recreateNodeFromData(
         }
       } else {
         // No valid component children, just create a frame
-        await debugConsole.warning(
+        debugConsole.warning(
           `  No valid component variants found for COMPONENT_SET "${nodeData.name || "Unnamed"}". Creating frame instead.`,
         );
         newNode = figma.createFrame();
@@ -1258,7 +2832,7 @@ export async function recreateNodeFromData(
             // this is a detached instance that was exported as an internal instance.
             // The component doesn't actually exist, so we need to create a frame fallback.
             if (instanceEntry.componentNodeId === nodeData.id) {
-              await debugConsole.warning(
+              debugConsole.warning(
                 `Instance "${nodeData.name}" has componentNodeId matching its own ID (detached instance). Creating frame fallback.`,
               );
               newNode = figma.createFrame();
@@ -1279,13 +2853,13 @@ export async function recreateNodeFromData(
                   20,
                 );
                 // Also check if the component exists in the pageData but wasn't created
-                await debugConsole.error(
+                debugConsole.error(
                   `Component not found for internal instance "${nodeData.name}" (ID: ${instanceEntry.componentNodeId.substring(0, 8)}...). The component should have been created during import.`,
                 );
-                await debugConsole.error(
+                debugConsole.error(
                   `Looking for component ID: ${instanceEntry.componentNodeId}`,
                 );
-                await debugConsole.error(
+                debugConsole.error(
                   `Available IDs in mapping (first 20): ${availableIds.map((id) => id.substring(0, 8) + "...").join(", ")}`,
                 );
 
@@ -1318,21 +2892,21 @@ export async function recreateNodeFromData(
                   instanceEntry.componentNodeId,
                 );
 
-                await debugConsole.error(
+                debugConsole.error(
                   `Component ID ${instanceEntry.componentNodeId.substring(0, 8)}... exists in current node tree: ${componentExistsInPageData}`,
                 );
 
                 // Log possible reasons why the component wasn't found
-                await debugConsole.error(
+                debugConsole.error(
                   `WARNING: Component ID ${instanceEntry.componentNodeId.substring(0, 8)}... not found in nodeIdMapping. This might indicate:`,
                 );
-                await debugConsole.error(
+                debugConsole.error(
                   `  1. The component doesn't exist in the pageData (detached component?)`,
                 );
-                await debugConsole.error(
+                debugConsole.error(
                   `  2. The component wasn't collected in the first pass`,
                 );
-                await debugConsole.error(
+                debugConsole.error(
                   `  3. The component ID in the instance table doesn't match the actual component ID`,
                 );
 
@@ -1341,7 +2915,7 @@ export async function recreateNodeFromData(
                   id.startsWith(instanceEntry.componentNodeId!.substring(0, 8)),
                 );
                 if (matchingPrefix.length > 0) {
-                  await debugConsole.error(
+                  debugConsole.error(
                     `Found IDs with matching prefix: ${matchingPrefix.map((id) => id.substring(0, 8) + "...").join(", ")}`,
                   );
                 }
@@ -1354,7 +2928,7 @@ export async function recreateNodeFromData(
               if (componentNode && componentNode.type === "COMPONENT") {
                 // Create instance from the component
                 newNode = componentNode.createInstance();
-                await debugConsole.log(
+                debugConsole.log(
                   `✓ Created internal instance "${nodeData.name}" from component "${instanceEntry.componentName}"`,
                 );
 
@@ -1379,7 +2953,7 @@ export async function recreateNodeFromData(
                       // Component is inside a component set - get properties from the component set
                       componentProperties =
                         componentNode.parent.componentPropertyDefinitions;
-                      await debugConsole.log(
+                      debugConsole.log(
                         `  DEBUG: Component "${instanceEntry.componentName}" is inside component set "${componentNode.parent.name}" with ${Object.keys(componentProperties || {}).length} property definitions`,
                       );
                     } else {
@@ -1389,7 +2963,7 @@ export async function recreateNodeFromData(
                         await newNode.getMainComponentAsync();
                       if (mainComponent) {
                         const mainComponentType = (mainComponent as any).type;
-                        await debugConsole.log(
+                        debugConsole.log(
                           `  DEBUG: Internal instance "${nodeData.name}" - componentNode parent: ${componentNode.parent ? (componentNode.parent as any).type : "N/A"}, mainComponent type: ${mainComponentType}, mainComponent parent: ${mainComponent.parent ? (mainComponent.parent as any).type : "N/A"}`,
                         );
                         if (mainComponentType === "COMPONENT_SET") {
@@ -1406,7 +2980,7 @@ export async function recreateNodeFromData(
                           // Instance was created from a variant component - get properties from parent COMPONENT_SET
                           componentProperties =
                             mainComponent.parent.componentPropertyDefinitions;
-                          await debugConsole.log(
+                          debugConsole.log(
                             `  DEBUG: Found component set parent "${(mainComponent.parent as any).name}" with ${Object.keys(componentProperties || {}).length} property definitions`,
                           );
                         } else {
@@ -1415,7 +2989,7 @@ export async function recreateNodeFromData(
                           // can only be set after the component is in the set
                           // We'll skip setting variant properties for now - they'll be set correctly
                           // when the component is moved into the component set
-                          await debugConsole.log(
+                          debugConsole.log(
                             `  Skipping variant properties for internal instance "${nodeData.name}" - component "${instanceEntry.componentName}" is not yet in a COMPONENT_SET (will be moved later during component set creation)`,
                           );
                         }
@@ -1436,7 +3010,7 @@ export async function recreateNodeFromData(
                         } else {
                           // Expected: Component property definitions cannot be recreated via Figma API
                           // This is a known limitation - properties are skipped silently
-                          // await debugConsole.warning(
+                          // debugConsole.warning(
                           //   `Skipping variant property "${propName}" for internal instance "${nodeData.name}" - property does not exist on recreated component`,
                           // );
                         }
@@ -1449,7 +3023,7 @@ export async function recreateNodeFromData(
                     }
                   } catch (error) {
                     const errorMessage = `Failed to set variant properties for instance "${nodeData.name}": ${error}`;
-                    await debugConsole.error(errorMessage);
+                    debugConsole.error(errorMessage);
                     throw new Error(errorMessage);
                   }
                 }
@@ -1490,45 +3064,123 @@ export async function recreateNodeFromData(
 
                       // Only set properties that exist on the component
                       if (componentProperties) {
+                        debugConsole.log(
+                          `[IMPORT] Internal instance "${nodeData.name}" -> Processing ${Object.keys(instanceEntry.componentProperties || {}).length} component property/properties from entry`,
+                        );
+                        debugConsole.log(
+                          `[IMPORT]   Properties in entry: ${JSON.stringify(Object.keys(instanceEntry.componentProperties || {}))}`,
+                        );
+                        debugConsole.log(
+                          `[IMPORT]   Available properties on component: ${JSON.stringify(Object.keys(componentProperties))}`,
+                        );
+                        const propertiesToSet: Record<string, any> = {};
                         for (const [propName, propValue] of Object.entries(
                           instanceEntry.componentProperties,
                         )) {
-                          // Property names in JSON may include IDs (e.g., "Show trailing icon#318:0")
-                          // Extract just the property name part (before the #) to match component property definitions
+                          debugConsole.log(
+                            `[IMPORT]   Processing entry property "${propName}" with value: ${JSON.stringify(propValue)}`,
+                          );
+                          // Property names in JSON may include IDs - extract clean name
                           const cleanPropName = propName.split("#")[0];
-                          if (componentProperties[cleanPropName]) {
-                            try {
-                              // Extract the actual value from propValue
-                              // propValue might be an object with 'value' and 'boundVariables' keys
-                              // or it might be a primitive value directly
-                              let actualValue: any = propValue;
-                              if (
-                                propValue &&
-                                typeof propValue === "object" &&
-                                "value" in propValue
-                              ) {
-                                actualValue = (propValue as any).value;
-                              }
+                          debugConsole.log(
+                            `[IMPORT]     Clean property name: "${cleanPropName}"`,
+                          );
 
-                              newNode.setProperties({
-                                [cleanPropName]: actualValue,
-                              });
-                            } catch (error) {
-                              const errorMessage = `Failed to set component property "${cleanPropName}" for internal instance "${nodeData.name}": ${error}`;
-                              await debugConsole.error(errorMessage);
-                              throw new Error(errorMessage);
-                            }
+                          // Check if property exists - Figma may return property keys with or without ID suffixes
+                          // Try exact match first, then try matching by base name
+                          let matchingPropKey: string | undefined = undefined;
+                          if (componentProperties[propName]) {
+                            // Exact match (with ID suffix)
+                            matchingPropKey = propName;
+                            debugConsole.log(
+                              `[IMPORT]     ✓ Exact match found: "${propName}"`,
+                            );
+                          } else if (componentProperties[cleanPropName]) {
+                            // Match by clean name (without ID suffix)
+                            matchingPropKey = cleanPropName;
+                            debugConsole.log(
+                              `[IMPORT]     ✓ Clean name match found: "${cleanPropName}"`,
+                            );
                           } else {
-                            // Expected: Component property definitions cannot be recreated via Figma API
-                            // This is a known limitation - properties are skipped silently
-                            // await debugConsole.warning(
-                            //   `Skipping component property "${propName}" for internal instance "${nodeData.name}" - property does not exist on recreated component`,
-                            // );
+                            // Try to find a property that starts with the clean name (in case ID format differs)
+                            matchingPropKey = Object.keys(
+                              componentProperties,
+                            ).find(
+                              (key) => key.split("#")[0] === cleanPropName,
+                            );
+                            if (matchingPropKey) {
+                              debugConsole.log(
+                                `[IMPORT]     ✓ Base name match found: "${matchingPropKey}" (from "${cleanPropName}")`,
+                              );
+                            } else {
+                              debugConsole.warning(
+                                `[IMPORT]     ✗ No match found for "${propName}" (clean: "${cleanPropName}")`,
+                              );
+                            }
+                          }
+
+                          if (matchingPropKey) {
+                            // Extract the actual value from the property object
+                            // Component properties from getProperties() might be stored as primitive values
+                            // or as objects with 'value' and other keys
+                            const actualValue =
+                              propValue &&
+                              typeof propValue === "object" &&
+                              "value" in propValue
+                                ? propValue.value
+                                : propValue;
+                            debugConsole.log(
+                              `[IMPORT]     Extracted value: ${JSON.stringify(actualValue)} (from ${typeof propValue === "object" && "value" in propValue ? "object.value" : "direct"})`,
+                            );
+                            // Use the matching property key (which may have ID suffix) for setProperties
+                            // Figma API requires the exact property key as it exists on the component
+                            propertiesToSet[matchingPropKey] = actualValue;
+                            debugConsole.log(
+                              `[IMPORT]     Added to propertiesToSet: "${matchingPropKey}" = ${JSON.stringify(actualValue)}`,
+                            );
+                          } else {
+                            debugConsole.warning(
+                              `[IMPORT]     Component property "${cleanPropName}" (from "${propName}") does not exist on component "${instanceEntry.componentName}" for internal instance "${nodeData.name}". Available properties: ${Object.keys(componentProperties).join(", ") || "none"}`,
+                            );
                           }
                         }
+
+                        // Set all properties at once (more efficient and reliable)
+                        if (Object.keys(propertiesToSet).length > 0) {
+                          debugConsole.log(
+                            `[IMPORT]   Ready to set ${Object.keys(propertiesToSet).length} property/properties: ${JSON.stringify(Object.keys(propertiesToSet))}`,
+                          );
+                          debugConsole.log(
+                            `[IMPORT]   Properties to set (with values): ${JSON.stringify(propertiesToSet)}`,
+                          );
+                          try {
+                            newNode.setProperties(propertiesToSet);
+                            debugConsole.log(
+                              `[IMPORT]   ✓ Successfully set component properties for internal instance "${nodeData.name}": ${Object.keys(propertiesToSet).join(", ")}`,
+                            );
+                          } catch (error) {
+                            const errorMessage = `Failed to set component properties for internal instance "${nodeData.name}": ${error}`;
+                            debugConsole.error(`[IMPORT]   ✗ ${errorMessage}`);
+                            debugConsole.error(
+                              `[IMPORT]     Properties attempted: ${JSON.stringify(propertiesToSet)}`,
+                            );
+                            debugConsole.error(
+                              `[IMPORT]     Available properties: ${JSON.stringify(Object.keys(componentProperties))}`,
+                            );
+                            throw new Error(errorMessage);
+                          }
+                        } else {
+                          debugConsole.warning(
+                            `[IMPORT]   No properties to set for internal instance "${nodeData.name}" (all properties failed to match)`,
+                          );
+                        }
+                      } else {
+                        debugConsole.warning(
+                          `[IMPORT]   No component properties found on component for internal instance "${nodeData.name}"`,
+                        );
                       }
                     } else {
-                      await debugConsole.warning(
+                      debugConsole.warning(
                         `Cannot set component properties for internal instance "${nodeData.name}" - main component not found`,
                       );
                     }
@@ -1538,21 +3190,21 @@ export async function recreateNodeFromData(
                       throw error;
                     }
                     const errorMessage = `Failed to set component properties for instance "${nodeData.name}": ${error}`;
-                    await debugConsole.error(errorMessage);
+                    debugConsole.error(errorMessage);
                     throw new Error(errorMessage);
                   }
                 }
               } else if (!newNode && componentNode) {
                 // componentNode exists but is not a COMPONENT type
                 const errorMessage = `Component node found but is not a COMPONENT type for internal instance "${nodeData.name}" (ID: ${instanceEntry.componentNodeId.substring(0, 8)}...).`;
-                await debugConsole.error(errorMessage);
+                debugConsole.error(errorMessage);
                 throw new Error(errorMessage);
               }
               // If newNode is already set (from frame fallback), continue to process children and properties
             }
           } else {
             const errorMessage = `Internal instance "${nodeData.name}" missing componentNodeId. This is required for internal instances.`;
-            await debugConsole.error(errorMessage);
+            debugConsole.error(errorMessage);
             throw new Error(errorMessage);
           }
         } else if (instanceEntry && instanceEntry.instanceType === "remote") {
@@ -1563,7 +3215,7 @@ export async function recreateNodeFromData(
             );
             if (remoteComponent) {
               newNode = remoteComponent.createInstance();
-              await debugConsole.log(
+              debugConsole.log(
                 `✓ Created remote instance "${nodeData.name}" from component "${instanceEntry.componentName}" on REMOTES page`,
               );
 
@@ -1599,7 +3251,7 @@ export async function recreateNodeFromData(
                       // Expected: Remote components are recreated as standalone COMPONENT nodes,
                       // not as part of a COMPONENT_SET, so variant properties cannot be set.
                       // Component properties (if any) will be set separately below.
-                      await debugConsole.log(
+                      debugConsole.log(
                         `Skipping variant properties for remote instance "${nodeData.name}" - main component is not a COMPONENT_SET or variant (expected for remote components)`,
                       );
                     }
@@ -1618,7 +3270,7 @@ export async function recreateNodeFromData(
                         } else {
                           // Expected: Component property definitions cannot be recreated via Figma API
                           // This is a known limitation - properties are skipped silently
-                          // await debugConsole.warning(
+                          // debugConsole.warning(
                           //   `Skipping variant property "${propName}" for remote instance "${nodeData.name}" - property does not exist on recreated component`,
                           // );
                         }
@@ -1630,13 +3282,13 @@ export async function recreateNodeFromData(
                       }
                     }
                   } else {
-                    await debugConsole.warning(
+                    debugConsole.warning(
                       `Cannot set variant properties for remote instance "${nodeData.name}" - main component not found`,
                     );
                   }
                 } catch (error) {
                   const errorMessage = `Failed to set variant properties for remote instance "${nodeData.name}": ${error}`;
-                  await debugConsole.error(errorMessage);
+                  debugConsole.error(errorMessage);
                   throw new Error(errorMessage);
                 }
               }
@@ -1702,20 +3354,20 @@ export async function recreateNodeFromData(
                             });
                           } catch (error) {
                             const errorMessage = `Failed to set component property "${cleanPropName}" for remote instance "${nodeData.name}": ${error}`;
-                            await debugConsole.error(errorMessage);
+                            debugConsole.error(errorMessage);
                             throw new Error(errorMessage);
                           }
                         } else {
                           // Expected: Component property definitions cannot be recreated via Figma API
                           // This is a known limitation - properties are skipped silently
-                          // await debugConsole.warning(
+                          // debugConsole.warning(
                           //   `Skipping component property "${propName}" for remote instance "${nodeData.name}" - property does not exist on recreated component`,
                           // );
                         }
                       }
                     }
                   } else {
-                    await debugConsole.warning(
+                    debugConsole.warning(
                       `Cannot set component properties for remote instance "${nodeData.name}" - main component not found`,
                     );
                   }
@@ -1725,7 +3377,7 @@ export async function recreateNodeFromData(
                     throw error;
                   }
                   const errorMessage = `Failed to set component properties for remote instance "${nodeData.name}": ${error}`;
-                  await debugConsole.error(errorMessage);
+                  debugConsole.error(errorMessage);
                   throw new Error(errorMessage);
                 }
               }
@@ -1739,38 +3391,113 @@ export async function recreateNodeFromData(
                   newNode.resize(nodeData.width, nodeData.height);
                 } catch {
                   // Size might be constrained by component - this is okay
-                  await debugConsole.log(
+                  debugConsole.log(
                     `Note: Could not resize remote instance "${nodeData.name}" to ${nodeData.width}x${nodeData.height} (may be constrained by component)`,
                   );
                 }
               }
             } else {
               const errorMessage = `Remote component not found for instance "${nodeData.name}" (index ${nodeData._instanceRef}). The remote component should have been created on the REMOTES page.`;
-              await debugConsole.error(errorMessage);
+              debugConsole.error(errorMessage);
               throw new Error(errorMessage);
             }
           } else {
             const errorMessage = `Remote instance "${nodeData.name}" cannot be resolved (no remoteComponentMap). Remote instances require a remoteComponentMap.`;
-            await debugConsole.error(errorMessage);
+            debugConsole.error(errorMessage);
             throw new Error(errorMessage);
           }
         } else if (instanceEntry?.instanceType === "normal") {
           // Normal instance - resolve from component on referenced page
           if (!instanceEntry.componentPageName) {
             const errorMessage = `Normal instance "${nodeData.name}" missing componentPageName. Cannot resolve.`;
-            await debugConsole.error(errorMessage);
+            debugConsole.error(errorMessage);
             throw new Error(errorMessage);
           }
 
           // Find the referenced page
+          // PRIMARY STRATEGY: Match by GUID from page metadata (most reliable)
+          // This is the correct way to find pages - by their unique identifier, not by name
           await figma.loadAllPagesAsync();
-          const referencedPage = figma.root.children.find(
-            (page) => page.name === instanceEntry.componentPageName,
-          );
+          let referencedPage: PageNode | null = null;
+
+          if (instanceEntry.componentGuid) {
+            debugConsole.log(
+              `  Looking for page by GUID: ${instanceEntry.componentGuid.substring(0, 8)}...`,
+            );
+            for (const page of figma.root.children) {
+              if (page.type !== "PAGE") continue;
+              try {
+                const pageMetadataStr = page.getPluginData(PAGE_METADATA_KEY);
+                if (pageMetadataStr) {
+                  const pageMetadata = JSON.parse(pageMetadataStr);
+                  if (pageMetadata.id === instanceEntry.componentGuid) {
+                    referencedPage = page;
+                    debugConsole.log(
+                      `  ✓ Found page "${page.name}" by GUID match`,
+                    );
+                    break;
+                  }
+                }
+              } catch {
+                // Continue searching
+              }
+            }
+          }
+
+          // FALLBACK STRATEGIES: If GUID match failed, try name matching
+          // Try multiple matching strategies:
+          // 1. Exact name match
+          if (!referencedPage) {
+            referencedPage = figma.root.children.find(
+              (page) => page.name === instanceEntry.componentPageName,
+            ) as PageNode | null;
+          }
+
+          // 2. Clean name matching
+          if (!referencedPage) {
+            const cleanTargetName = getComponentCleanName(
+              instanceEntry.componentPageName,
+            );
+            referencedPage = figma.root.children.find((page) => {
+              const cleanPageName = getComponentCleanName(page.name);
+              return cleanPageName === cleanTargetName;
+            }) as PageNode | null;
+          }
+
+          // 3. Matching against pages with version suffixes removed
+          if (!referencedPage) {
+            const cleanTargetName = getComponentCleanName(
+              instanceEntry.componentPageName,
+            );
+            const targetNameWithoutVersion = cleanTargetName.replace(
+              /\s*\(VERSION\s*:\s*\d+\)\s*$/i,
+              "",
+            );
+
+            referencedPage = figma.root.children.find((page) => {
+              const cleanPageName = getComponentCleanName(page.name);
+              const pageNameWithoutVersion = cleanPageName.replace(
+                /\s*\(V\s*:\s*\d+\)\s*$/i,
+                "",
+              );
+              return pageNameWithoutVersion === targetNameWithoutVersion;
+            }) as PageNode | null;
+          }
+
+          // 4. Case-insensitive matching
+          if (!referencedPage) {
+            const targetNameLower = instanceEntry.componentPageName
+              .toLowerCase()
+              .trim();
+            referencedPage = figma.root.children.find((page) => {
+              const pageNameLower = page.name.toLowerCase().trim();
+              return pageNameLower === targetNameLower;
+            }) as PageNode | null;
+          }
 
           if (!referencedPage) {
             // Page doesn't exist yet - defer resolution (circular reference or not yet imported)
-            await debugConsole.log(
+            debugConsole.log(
               `  Deferring normal instance "${nodeData.name}" - referenced page "${instanceEntry.componentPageName}" does not exist yet (may be circular reference or not yet imported)`,
             );
 
@@ -1789,23 +3516,52 @@ export async function recreateNodeFromData(
               placeholderFrame.resize(nodeData.w, nodeData.h);
             }
 
+            // Add placeholder frame ID to Set immediately so we can check if parent is a placeholder
+            if (placeholderFrameIds) {
+              placeholderFrameIds.add(placeholderFrame.id);
+            }
+
             // Store deferred instance info (using IDs for serialization)
             if (deferredInstances) {
+              // Use currentPlaceholderId if we're inside a placeholder (nested deferred instance)
+              // This is passed down through recursive calls, so we know if we're inside a placeholder
+              const parentPlaceholderId = currentPlaceholderId;
+
+              if (parentPlaceholderId) {
+                debugConsole.log(
+                  `[NESTED] Creating child deferred instance "${nodeData.name}" with parent placeholder ID ${parentPlaceholderId.substring(0, 8)}... (immediate parent: "${parentNode.name}" ${parentNode.id.substring(0, 8)}...)`,
+                );
+              } else {
+                debugConsole.log(
+                  `[NESTED] Creating top-level deferred instance "${nodeData.name}" - parent "${parentNode.name}" (${parentNode.id.substring(0, 8)}...)`,
+                );
+              }
+
+              // If we're inside a placeholder, use the placeholder's parent as parentNodeId
+              // This ensures we can find the actual parent node even after the placeholder is removed
+              let actualParentNodeId = parentNode.id;
+              if (parentPlaceholderId) {
+                try {
+                  const placeholderNode =
+                    await figma.getNodeByIdAsync(parentPlaceholderId);
+                  if (placeholderNode && placeholderNode.parent) {
+                    actualParentNodeId = placeholderNode.parent.id;
+                  }
+                } catch {
+                  // Placeholder might not exist yet, fall back to parentNode.id
+                  actualParentNodeId = parentNode.id;
+                }
+              }
+
               const deferred = {
                 placeholderFrameId: placeholderFrame.id,
                 instanceEntry,
                 nodeData,
-                parentNodeId: parentNode.id,
+                parentNodeId: actualParentNodeId,
+                parentPlaceholderId,
                 instanceIndex: nodeData._instanceRef,
               };
               deferredInstances.push(deferred);
-              await debugConsole.log(
-                `  [DEBUG] Added deferred instance "${nodeData.name}" to array (array length: ${deferredInstances.length})`,
-              );
-            } else {
-              await debugConsole.log(
-                `  [DEBUG] deferredInstances array is null/undefined - cannot store deferred instance "${nodeData.name}"`,
-              );
             }
 
             newNode = placeholderFrame;
@@ -1839,9 +3595,8 @@ export async function recreateNodeFromData(
                     // If componentGuid is provided, verify it matches
                     if (componentGuid) {
                       try {
-                        const metadataStr = child.getPluginData(
-                          "RecursicaPublishedMetadata",
-                        );
+                        const metadataStr =
+                          child.getPluginData(PAGE_METADATA_KEY);
                         if (metadataStr) {
                           const metadata = JSON.parse(metadataStr);
                           if (metadata.id === componentGuid) {
@@ -1876,9 +3631,8 @@ export async function recreateNodeFromData(
 
                       if (componentGuid) {
                         try {
-                          const metadataStr = variant.getPluginData(
-                            "RecursicaPublishedMetadata",
-                          );
+                          const metadataStr =
+                            variant.getPluginData(PAGE_METADATA_KEY);
                           if (metadataStr) {
                             const metadata = JSON.parse(metadataStr);
                             if (metadata.id === componentGuid) {
@@ -1935,9 +3689,8 @@ export async function recreateNodeFromData(
                       // Found the variant - check GUID if provided
                       if (componentGuid) {
                         try {
-                          const metadataStr = variant.getPluginData(
-                            "RecursicaPublishedMetadata",
-                          );
+                          const metadataStr =
+                            variant.getPluginData(PAGE_METADATA_KEY);
                           if (metadataStr) {
                             const metadata = JSON.parse(metadataStr);
                             if (metadata.id === componentGuid) {
@@ -1968,7 +3721,27 @@ export async function recreateNodeFromData(
             return null;
           };
 
-          await debugConsole.log(
+          const isPageHeaderInitial =
+            nodeData.name === ".UI kit / Page header" ||
+            instanceEntry.componentName === ".UI kit / Page header";
+          if (isPageHeaderInitial) {
+            debugConsole.log(
+              `[DEBUG .UI kit / Page header] === INITIAL PROCESSING ===`,
+            );
+            debugConsole.log(
+              `[DEBUG .UI kit / Page header] Node data name: "${nodeData.name}"`,
+            );
+            debugConsole.log(
+              `[DEBUG .UI kit / Page header] Instance entry componentName: "${instanceEntry.componentName}"`,
+            );
+            debugConsole.log(
+              `[DEBUG .UI kit / Page header] Instance entry componentProperties: ${JSON.stringify(instanceEntry.componentProperties, null, 2)}`,
+            );
+            debugConsole.log(
+              `[DEBUG .UI kit / Page header] Instance entry (full): ${JSON.stringify(instanceEntry, null, 2)}`,
+            );
+          }
+          debugConsole.log(
             `  Looking for component "${instanceEntry.componentName}" on page "${instanceEntry.componentPageName}"${instanceEntry.path && instanceEntry.path.length > 0 ? ` at path [${instanceEntry.path.join(" → ")}]` : " at page root"}${instanceEntry.componentGuid ? ` (GUID: ${instanceEntry.componentGuid.substring(0, 8)}...)` : ""}`,
           );
 
@@ -1996,11 +3769,11 @@ export async function recreateNodeFromData(
           };
           listComponents(referencedPage);
           if (availableComponents.length > 0) {
-            await debugConsole.log(
+            debugConsole.log(
               `  Available components on page "${instanceEntry.componentPageName}":\n${availableComponents.slice(0, 20).join("\n")}${availableComponents.length > 20 ? `\n  ... and ${availableComponents.length - 20} more` : ""}`,
             );
           } else {
-            await debugConsole.warning(
+            debugConsole.warning(
               `  No components found on page "${instanceEntry.componentPageName}"`,
             );
           }
@@ -2016,27 +3789,26 @@ export async function recreateNodeFromData(
           // Log if we used name match fallback (GUID verification failed)
           if (targetComponent && instanceEntry.componentGuid) {
             try {
-              const metadataStr = targetComponent.getPluginData(
-                "RecursicaPublishedMetadata",
-              );
+              const metadataStr =
+                targetComponent.getPluginData(PAGE_METADATA_KEY);
               if (metadataStr) {
                 const metadata = JSON.parse(metadataStr);
                 if (metadata.id !== instanceEntry.componentGuid) {
-                  await debugConsole.warning(
+                  debugConsole.warning(
                     `  Found component "${instanceEntry.componentName}" by name but GUID verification failed (expected ${instanceEntry.componentGuid.substring(0, 8)}..., got ${metadata.id ? metadata.id.substring(0, 8) + "..." : "none"}). Using name match as fallback.`,
                   );
                 } else {
-                  await debugConsole.log(
+                  debugConsole.log(
                     `  Found component "${instanceEntry.componentName}" with matching GUID ${instanceEntry.componentGuid.substring(0, 8)}...`,
                   );
                 }
               } else {
-                await debugConsole.warning(
+                debugConsole.warning(
                   `  Found component "${instanceEntry.componentName}" by name but no metadata found. Using name match as fallback.`,
                 );
               }
             } catch {
-              await debugConsole.warning(
+              debugConsole.warning(
                 `  Found component "${instanceEntry.componentName}" by name but GUID verification failed. Using name match as fallback.`,
               );
             }
@@ -2044,7 +3816,18 @@ export async function recreateNodeFromData(
 
           if (!targetComponent) {
             // Component not found - defer resolution (may not be created yet due to circular reference)
-            await debugConsole.log(
+            const isPageHeader =
+              nodeData.name === ".UI kit / Page header" ||
+              instanceEntry.componentName === ".UI kit / Page header";
+            if (isPageHeader) {
+              debugConsole.log(
+                `[DEBUG .UI kit / Page header] Deferring instance "${nodeData.name}" - component "${instanceEntry.componentName}" not found on page "${instanceEntry.componentPageName}"`,
+              );
+              debugConsole.log(
+                `[DEBUG .UI kit / Page header] Instance entry has componentProperties: ${JSON.stringify(instanceEntry.componentProperties)}`,
+              );
+            }
+            debugConsole.log(
               `  Deferring normal instance "${nodeData.name}" - component "${instanceEntry.componentName}" not found on page "${instanceEntry.componentPageName}" (may not be created yet due to circular reference)`,
             );
 
@@ -2063,23 +3846,52 @@ export async function recreateNodeFromData(
               placeholderFrame.resize(nodeData.w, nodeData.h);
             }
 
+            // Add placeholder frame ID to Set immediately so we can check if parent is a placeholder
+            if (placeholderFrameIds) {
+              placeholderFrameIds.add(placeholderFrame.id);
+            }
+
             // Store deferred instance info (using IDs for serialization)
             if (deferredInstances) {
+              // Use currentPlaceholderId if we're inside a placeholder (nested deferred instance)
+              // This is passed down through recursive calls, so we know if we're inside a placeholder
+              const parentPlaceholderId = currentPlaceholderId;
+
+              if (parentPlaceholderId) {
+                debugConsole.log(
+                  `[NESTED] Creating child deferred instance "${nodeData.name}" with parent placeholder ID ${parentPlaceholderId.substring(0, 8)}... (immediate parent: "${parentNode.name}" ${parentNode.id.substring(0, 8)}...)`,
+                );
+              } else {
+                debugConsole.log(
+                  `[NESTED] Creating top-level deferred instance "${nodeData.name}" - parent "${parentNode.name}" (${parentNode.id.substring(0, 8)}...)`,
+                );
+              }
+
+              // If we're inside a placeholder, use the placeholder's parent as parentNodeId
+              // This ensures we can find the actual parent node even after the placeholder is removed
+              let actualParentNodeId = parentNode.id;
+              if (parentPlaceholderId) {
+                try {
+                  const placeholderNode =
+                    await figma.getNodeByIdAsync(parentPlaceholderId);
+                  if (placeholderNode && placeholderNode.parent) {
+                    actualParentNodeId = placeholderNode.parent.id;
+                  }
+                } catch {
+                  // Placeholder might not exist yet, fall back to parentNode.id
+                  actualParentNodeId = parentNode.id;
+                }
+              }
+
               const deferred = {
                 placeholderFrameId: placeholderFrame.id,
                 instanceEntry,
                 nodeData,
-                parentNodeId: parentNode.id,
+                parentNodeId: actualParentNodeId,
+                parentPlaceholderId,
                 instanceIndex: nodeData._instanceRef,
               };
               deferredInstances.push(deferred);
-              await debugConsole.log(
-                `  [DEBUG] Added deferred instance "${nodeData.name}" to array (array length: ${deferredInstances.length})`,
-              );
-            } else {
-              await debugConsole.log(
-                `  [DEBUG] deferredInstances array is null/undefined - cannot store deferred instance "${nodeData.name}"`,
-              );
             }
 
             newNode = placeholderFrame;
@@ -2088,7 +3900,7 @@ export async function recreateNodeFromData(
 
           // Create instance of the component
           newNode = targetComponent.createInstance();
-          await debugConsole.log(
+          debugConsole.log(
             `  Created normal instance "${nodeData.name}" from component "${instanceEntry.componentName}" on page "${instanceEntry.componentPageName}"`,
           );
 
@@ -2121,7 +3933,7 @@ export async function recreateNodeFromData(
                     mainComponent.parent.componentPropertyDefinitions;
                 } else {
                   // Instance was created from a non-variant component - no variant properties to set
-                  await debugConsole.warning(
+                  debugConsole.warning(
                     `Cannot set variant properties for normal instance "${nodeData.name}" - main component is not a COMPONENT_SET or variant`,
                   );
                 }
@@ -2147,7 +3959,7 @@ export async function recreateNodeFromData(
                 }
               }
             } catch (error) {
-              await debugConsole.warning(
+              debugConsole.warning(
                 `Failed to set variant properties for normal instance "${nodeData.name}": ${error}`,
               );
             }
@@ -2158,9 +3970,25 @@ export async function recreateNodeFromData(
             instanceEntry.componentProperties &&
             Object.keys(instanceEntry.componentProperties).length > 0
           ) {
+            debugConsole.log(
+              `[IMPORT] Normal instance "${nodeData.name}" -> Processing ${Object.keys(instanceEntry.componentProperties).length} component property/properties from entry`,
+            );
+            debugConsole.log(
+              `[IMPORT]   Properties in entry: ${JSON.stringify(Object.keys(instanceEntry.componentProperties))}`,
+            );
+            for (const [propName, propValue] of Object.entries(
+              instanceEntry.componentProperties,
+            )) {
+              debugConsole.log(
+                `[IMPORT]   Entry property "${propName}": ${JSON.stringify(propValue)}`,
+              );
+            }
             try {
               const mainComponent = await newNode.getMainComponentAsync();
               if (mainComponent) {
+                debugConsole.log(
+                  `[IMPORT]   Main component found: "${mainComponent.name}" (type: ${(mainComponent as any).type})`,
+                );
                 // If the main component is a variant (inside a COMPONENT_SET),
                 // get property definitions from the parent COMPONENT_SET instead
                 // Variant components don't have componentPropertyDefinitions - only COMPONENT_SETs and non-variant components do
@@ -2172,6 +4000,9 @@ export async function recreateNodeFromData(
                     mainComponent as unknown as ComponentSetNode;
                   componentProperties =
                     componentSet.componentPropertyDefinitions;
+                  debugConsole.log(
+                    `[IMPORT]   Got properties from COMPONENT_SET: ${componentProperties ? Object.keys(componentProperties).length : 0} property/properties`,
+                  );
                 } else if (
                   mainComponentType === "COMPONENT" &&
                   mainComponent.parent &&
@@ -2180,20 +4011,35 @@ export async function recreateNodeFromData(
                   // Instance was created from a variant - get properties from parent COMPONENT_SET
                   componentProperties =
                     mainComponent.parent.componentPropertyDefinitions;
+                  debugConsole.log(
+                    `[IMPORT]   Got properties from parent COMPONENT_SET: ${componentProperties ? Object.keys(componentProperties).length : 0} property/properties`,
+                  );
                 } else if (mainComponentType === "COMPONENT") {
                   // Non-variant component - can access componentPropertyDefinitions directly
                   componentProperties =
                     mainComponent.componentPropertyDefinitions;
+                  debugConsole.log(
+                    `[IMPORT]   Got properties from COMPONENT: ${componentProperties ? Object.keys(componentProperties).length : 0} property/properties`,
+                  );
                 }
 
                 // Only set properties that exist on the component
                 if (componentProperties) {
+                  debugConsole.log(
+                    `[IMPORT]   Available properties on component: ${JSON.stringify(Object.keys(componentProperties))}`,
+                  );
                   const propertiesToSet: Record<string, any> = {};
                   for (const [propName, propValue] of Object.entries(
                     instanceEntry.componentProperties,
                   )) {
+                    debugConsole.log(
+                      `[IMPORT]   Processing entry property "${propName}" with value: ${JSON.stringify(propValue)}`,
+                    );
                     // Property names in JSON may include IDs - extract clean name
                     const cleanPropName = propName.split("#")[0];
+                    debugConsole.log(
+                      `[IMPORT]     Clean property name: "${cleanPropName}"`,
+                    );
 
                     // Check if property exists - Figma may return property keys with or without ID suffixes
                     // Try exact match first, then try matching by base name
@@ -2201,14 +4047,29 @@ export async function recreateNodeFromData(
                     if (componentProperties[propName]) {
                       // Exact match (with ID suffix)
                       matchingPropKey = propName;
+                      debugConsole.log(
+                        `[IMPORT]     ✓ Exact match found: "${propName}"`,
+                      );
                     } else if (componentProperties[cleanPropName]) {
                       // Match by clean name (without ID suffix)
                       matchingPropKey = cleanPropName;
+                      debugConsole.log(
+                        `[IMPORT]     ✓ Clean name match found: "${cleanPropName}"`,
+                      );
                     } else {
                       // Try to find a property that starts with the clean name (in case ID format differs)
                       matchingPropKey = Object.keys(componentProperties).find(
                         (key) => key.split("#")[0] === cleanPropName,
                       );
+                      if (matchingPropKey) {
+                        debugConsole.log(
+                          `[IMPORT]     ✓ Base name match found: "${matchingPropKey}" (from "${cleanPropName}")`,
+                        );
+                      } else {
+                        debugConsole.warning(
+                          `[IMPORT]     ✗ No match found for "${propName}" (clean: "${cleanPropName}")`,
+                        );
+                      }
                     }
 
                     if (matchingPropKey) {
@@ -2221,53 +4082,154 @@ export async function recreateNodeFromData(
                         "value" in propValue
                           ? propValue.value
                           : propValue;
+                      debugConsole.log(
+                        `[IMPORT]     Extracted value: ${JSON.stringify(actualValue)} (from ${typeof propValue === "object" && "value" in propValue ? "object.value" : "direct"})`,
+                      );
                       // Use the matching property key (which may have ID suffix) for setProperties
                       // Figma API requires the exact property key as it exists on the component
                       propertiesToSet[matchingPropKey] = actualValue;
+                      debugConsole.log(
+                        `[IMPORT]     Added to propertiesToSet: "${matchingPropKey}" = ${JSON.stringify(actualValue)}`,
+                      );
                     } else {
-                      await debugConsole.warning(
-                        `Component property "${cleanPropName}" (from "${propName}") does not exist on component "${instanceEntry.componentName}" for normal instance "${nodeData.name}". Available properties: ${Object.keys(componentProperties).join(", ") || "none"}`,
+                      debugConsole.warning(
+                        `[IMPORT]     Component property "${cleanPropName}" (from "${propName}") does not exist on component "${instanceEntry.componentName}" for normal instance "${nodeData.name}". Available properties: ${Object.keys(componentProperties).join(", ") || "none"}`,
                       );
                     }
                   }
 
                   // Set all properties at once
                   if (Object.keys(propertiesToSet).length > 0) {
+                    debugConsole.log(
+                      `[IMPORT]   Ready to set ${Object.keys(propertiesToSet).length} property/properties: ${JSON.stringify(Object.keys(propertiesToSet))}`,
+                    );
+                    debugConsole.log(
+                      `[IMPORT]   Properties to set (with values): ${JSON.stringify(propertiesToSet)}`,
+                    );
                     try {
-                      // Log what we're trying to set and what's available
-                      await debugConsole.log(
-                        `  Attempting to set component properties for normal instance "${nodeData.name}": ${Object.keys(propertiesToSet).join(", ")}`,
-                      );
-                      await debugConsole.log(
-                        `  Available component properties: ${Object.keys(componentProperties).join(", ")}`,
-                      );
                       newNode.setProperties(propertiesToSet);
-                      await debugConsole.log(
-                        `  ✓ Successfully set component properties for normal instance "${nodeData.name}": ${Object.keys(propertiesToSet).join(", ")}`,
+                      debugConsole.log(
+                        `[IMPORT]   ✓ Successfully set component properties for normal instance "${nodeData.name}": ${Object.keys(propertiesToSet).join(", ")}`,
                       );
+                      // Verify properties were actually set by reading them back
+                      try {
+                        if (
+                          typeof (newNode as any).getProperties === "function"
+                        ) {
+                          const verifyProps = await (
+                            newNode as any
+                          ).getProperties();
+                          if (verifyProps && verifyProps.componentProperties) {
+                            const verifiedValues: Record<string, any> = {};
+                            for (const [key, value] of Object.entries(
+                              propertiesToSet,
+                            )) {
+                              const verifyValue =
+                                verifyProps.componentProperties[key];
+                              verifiedValues[key] = verifyValue;
+                              if (
+                                JSON.stringify(verifyValue) !==
+                                JSON.stringify(value)
+                              ) {
+                                debugConsole.warning(
+                                  `[IMPORT]   ⚠ Property "${key}" verification mismatch: expected ${JSON.stringify(value)}, got ${JSON.stringify(verifyValue)}`,
+                                );
+                              } else {
+                                debugConsole.log(
+                                  `[IMPORT]   ✓ Verified property "${key}" = ${JSON.stringify(verifyValue)}`,
+                                );
+                              }
+                            }
+                            debugConsole.log(
+                              `[IMPORT]   Verification complete. All properties: ${JSON.stringify(verifiedValues)}`,
+                            );
+                          }
+                        } else {
+                          // Fallback: try direct access to componentProperties
+                          const directProps = (newNode as any)
+                            .componentProperties;
+                          if (directProps) {
+                            const verifiedValues: Record<string, any> = {};
+                            for (const [key, expectedValue] of Object.entries(
+                              propertiesToSet,
+                            )) {
+                              const actualProperty = directProps[key];
+                              // Extract the actual value from the property object
+                              // componentProperties returns objects like {type: "TEXT", value: "Logo"}
+                              // but we set just the value, so we need to compare actualProperty.value with expectedValue
+                              const actualValue =
+                                actualProperty &&
+                                typeof actualProperty === "object" &&
+                                "value" in actualProperty
+                                  ? actualProperty.value
+                                  : actualProperty;
+                              verifiedValues[key] = actualValue;
+                              if (actualProperty === undefined) {
+                                debugConsole.warning(
+                                  `[IMPORT]   ⚠ Property "${key}" not found in componentProperties after setting`,
+                                );
+                              } else if (
+                                JSON.stringify(actualValue) !==
+                                JSON.stringify(expectedValue)
+                              ) {
+                                debugConsole.warning(
+                                  `[IMPORT]   ⚠ Property "${key}" verification mismatch: expected ${JSON.stringify(expectedValue)}, got ${JSON.stringify(actualValue)} (from property object: ${JSON.stringify(actualProperty)})`,
+                                );
+                              } else {
+                                debugConsole.log(
+                                  `[IMPORT]   ✓ Verified property "${key}" = ${JSON.stringify(actualValue)}`,
+                                );
+                              }
+                            }
+                            debugConsole.log(
+                              `[IMPORT]   Verification complete. All properties: ${JSON.stringify(verifiedValues)}`,
+                            );
+                          } else {
+                            debugConsole.warning(
+                              `[IMPORT]   Could not access componentProperties for verification`,
+                            );
+                          }
+                        }
+                      } catch (verifyError) {
+                        debugConsole.warning(
+                          `[IMPORT]   Could not verify properties after setting: ${verifyError}`,
+                        );
+                      }
                     } catch (error) {
-                      await debugConsole.warning(
-                        `Failed to set component properties for normal instance "${nodeData.name}": ${error}`,
+                      debugConsole.error(
+                        `[IMPORT]   ✗ Failed to set component properties for normal instance "${nodeData.name}": ${error}`,
                       );
-                      await debugConsole.warning(
-                        `  Properties attempted: ${JSON.stringify(propertiesToSet)}`,
+                      debugConsole.error(
+                        `[IMPORT]     Properties attempted: ${JSON.stringify(propertiesToSet)}`,
                       );
-                      await debugConsole.warning(
-                        `  Available properties: ${JSON.stringify(Object.keys(componentProperties))}`,
+                      debugConsole.error(
+                        `[IMPORT]     Available properties: ${JSON.stringify(Object.keys(componentProperties))}`,
                       );
                     }
+                  } else {
+                    debugConsole.warning(
+                      `[IMPORT]   No properties to set for normal instance "${nodeData.name}" (all properties failed to match)`,
+                    );
                   }
+                } else {
+                  debugConsole.warning(
+                    `[IMPORT]   No component properties found on main component "${mainComponent.name}" for normal instance "${nodeData.name}"`,
+                  );
                 }
               } else {
-                await debugConsole.warning(
-                  `Cannot set component properties for normal instance "${nodeData.name}" - main component not found`,
+                debugConsole.warning(
+                  `[IMPORT]   Cannot set component properties for normal instance "${nodeData.name}" - main component not found`,
                 );
               }
             } catch (error) {
-              await debugConsole.warning(
-                `Failed to set component properties for normal instance "${nodeData.name}": ${error}`,
+              debugConsole.error(
+                `[IMPORT]   Error setting component properties for normal instance "${nodeData.name}": ${error}`,
               );
             }
+          } else {
+            debugConsole.log(
+              `[IMPORT] Normal instance "${nodeData.name}" -> No component properties in entry`,
+            );
           }
 
           // Set instance size after properties are applied (properties might affect size)
@@ -2276,7 +4238,7 @@ export async function recreateNodeFromData(
               newNode.resize(nodeData.width, nodeData.height);
             } catch {
               // Size might be constrained by component - this is okay
-              await debugConsole.log(
+              debugConsole.log(
                 `Note: Could not resize normal instance "${nodeData.name}" to ${nodeData.width}x${nodeData.height} (may be constrained by component)`,
               );
             }
@@ -2284,13 +4246,13 @@ export async function recreateNodeFromData(
         } else {
           // Unknown instance type or missing entry - this is an error
           const errorMessage = `Instance "${nodeData.name}" has unknown or missing instance type: ${instanceEntry?.instanceType || "unknown"}`;
-          await debugConsole.error(errorMessage);
+          debugConsole.error(errorMessage);
           throw new Error(errorMessage);
         }
       } else {
         // No _instanceRef or missing instance table - this is an error
         const errorMessage = `Instance "${nodeData.name}" missing _instanceRef or instance table. This is required for instance resolution.`;
-        await debugConsole.error(errorMessage);
+        debugConsole.error(errorMessage);
         throw new Error(errorMessage);
       }
       break;
@@ -2298,16 +4260,22 @@ export async function recreateNodeFromData(
       newNode = figma.createFrame();
       break;
     case "BOOLEAN_OPERATION": {
-      const booleanError = `Boolean operation nodes cannot be imported. Found boolean operation: "${nodeData.name}".`;
-      await debugConsole.error(booleanError);
-      throw new Error(booleanError);
+      // Boolean operations cannot be created directly in Figma API
+      // They are typically represented as VECTOR nodes with specific paths
+      // Import as VECTOR node to preserve the visual appearance
+      debugConsole.log(
+        `Converting BOOLEAN_OPERATION "${nodeData.name}" to VECTOR node (boolean operations cannot be created directly in Figma API)`,
+      );
+      newNode = figma.createVector();
+      // Note: vectorPaths will be set later if they exist in nodeData
+      break;
     }
     case "POLYGON":
       newNode = figma.createPolygon();
       break;
     default: {
       const errorMessage = `Unsupported node type: ${nodeData.type}. This node type cannot be imported.`;
-      await debugConsole.error(errorMessage);
+      debugConsole.error(errorMessage);
       throw new Error(errorMessage);
     }
   }
@@ -2316,14 +4284,25 @@ export async function recreateNodeFromData(
     return null;
   }
 
+  // ISSUE #4: Note: For VECTOR nodes, constraints are set using the constraints object API
+  // AFTER vectorPaths and size are set. The constraints object API works even after
+  // appending to COMPONENTs (as proven by tests), so no special timing is required.
+  // This is handled later in the code (after vectorPaths and size are set).
+
   // Store node ID mapping for internal instance resolution
   if (nodeData.id && nodeIdMapping) {
     nodeIdMapping.set(nodeData.id, newNode);
     if (newNode.type === "COMPONENT") {
-      await debugConsole.log(
+      debugConsole.log(
         `  Stored COMPONENT "${nodeData.name || "Unnamed"}" in nodeIdMapping (ID: ${nodeData.id.substring(0, 8)}...)`,
       );
     }
+  }
+
+  // Store original node ID as plugin data for deferred instance resolution
+  // This allows us to uniquely identify children even when multiple have the same name
+  if (nodeData.id) {
+    newNode.setPluginData(ORIGINAL_NODE_ID_KEY, nodeData.id);
   }
 
   // Store instance table index mapping for variant property setting in third pass
@@ -2338,11 +4317,11 @@ export async function recreateNodeFromData(
       newNode.id,
       nodeData._instanceRef,
     );
-    await debugConsole.log(
+    debugConsole.log(
       `  Stored instance table mapping: instance "${newNode.name}" (ID: ${newNode.id.substring(0, 8)}...) -> instance table index ${nodeData._instanceRef}`,
     );
   } else if (newNode.type === "INSTANCE") {
-    await debugConsole.log(
+    debugConsole.log(
       `  WARNING: Instance "${newNode.name}" (ID: ${newNode.id.substring(0, 8)}...) has no _instanceRef in nodeData - will use fallback matching in third pass`,
     );
   }
@@ -2402,17 +4381,432 @@ export async function recreateNodeFromData(
   // because setting vectorPaths can auto-resize the vector to fit the path bounds.
   // For other node types, set size now.
   // Check for bound variables before setting width/height
+  // Note: minWidth and maxWidth are constraints, not the actual size, but we include them
+  // in the check to ensure we handle them correctly
   const hasBoundVariablesForSize =
     nodeData.boundVariables &&
     typeof nodeData.boundVariables === "object" &&
-    (nodeData.boundVariables.width || nodeData.boundVariables.height);
+    (nodeData.boundVariables.width ||
+      nodeData.boundVariables.height ||
+      nodeData.boundVariables.minWidth ||
+      nodeData.boundVariables.maxWidth);
+
+  // ISSUE #3 & #4 DEBUG: Check for preserveRatio and constraints before resize
+  const nodeName = nodeData.name || "Unnamed";
+  if (nodeData.preserveRatio !== undefined) {
+    debugConsole.log(
+      `  [ISSUE #3 DEBUG] "${nodeName}" has preserveRatio in nodeData: ${nodeData.preserveRatio}`,
+    );
+  }
+  if (nodeData.constraints !== undefined) {
+    debugConsole.log(
+      `  [ISSUE #4 DEBUG] "${nodeName}" has constraints in nodeData: ${JSON.stringify(nodeData.constraints)}`,
+    );
+  }
+  if (
+    nodeData.constraintHorizontal !== undefined ||
+    nodeData.constraintVertical !== undefined
+  ) {
+    debugConsole.log(
+      `  [ISSUE #4 DEBUG] "${nodeName}" has constraintHorizontal: ${nodeData.constraintHorizontal}, constraintVertical: ${nodeData.constraintVertical}`,
+    );
+  }
+
+  // CRITICAL: Set layoutMode and sizing modes BEFORE resize
+  // This ensures that FILL mode is set before we try to resize, preventing fixed dimensions
+  // from being set when they should be FILL
+  // Note: parentHasAutoLayout is already defined above (line 4367)
+  if (
+    nodeData.type === "FRAME" ||
+    nodeData.type === "COMPONENT" ||
+    nodeData.type === "COMPONENT_SET" ||
+    nodeData.type === "INSTANCE"
+  ) {
+    // Set layoutMode first (required before sizing modes)
+    if (nodeData.layoutMode !== undefined) {
+      newNode.layoutMode = nodeData.layoutMode;
+    }
+
+    // Set sizing modes (must be after layoutMode)
+    if (nodeData.primaryAxisSizingMode !== undefined) {
+      newNode.primaryAxisSizingMode = nodeData.primaryAxisSizingMode;
+    }
+    if (nodeData.counterAxisSizingMode !== undefined) {
+      newNode.counterAxisSizingMode = nodeData.counterAxisSizingMode;
+    }
+
+    // NOTE: layoutSizingHorizontal and layoutSizingVertical are set AFTER appendChild
+    // See below (after line 7365) for the actual setting of these properties
+    // This is required because these properties can only be set on children that are already
+    // appended to an auto-layout parent frame
+  }
+
+  // Check sizing modes and bound variables - if width should be Fill, don't set fixed dimensions
+  // primaryAxisSizingMode controls width (for HORIZONTAL layout) or height (for VERTICAL layout)
+  // counterAxisSizingMode controls height (for HORIZONTAL layout) or width (for VERTICAL layout)
+  // Only check sizing modes if layoutMode is set (sizing modes only apply with auto-layout)
+  // Note: "FILL" is not a valid value for primaryAxisSizingMode (only "FIXED" and "AUTO" are valid)
+  // When maxWidth or minWidth are bound to variables, the width should be treated as "Fill"
+  const layoutMode = nodeData.layoutMode;
+  const hasAutoLayout = layoutMode !== undefined && layoutMode !== "NONE";
+  const isHorizontal = layoutMode === "HORIZONTAL";
+
+  // For HORIZONTAL layout: primaryAxis = width, counterAxis = height
+  // For VERTICAL layout: primaryAxis = height, counterAxis = width
+  // If constraints are bound, treat that dimension as "Fill"
+  // Also check layoutSizingHorizontal/layoutSizingVertical for "FILL" value
+  // This applies both when the node itself has auto-layout OR when it's a child of an auto-layout frame
+  // Check both expanded and abbreviated property names (in case expansion didn't happen)
+  const layoutSizingHorizontal =
+    (nodeData as any).layoutSizingHorizontal ?? (nodeData as any).laySzH;
+  const layoutSizingVertical =
+    (nodeData as any).layoutSizingVertical ?? (nodeData as any).laySzV;
+
+  // widthIsFill: true if width should "Fill container" in auto-layout
+  // This is determined by layoutSizingHorizontal="FILL", NOT by bound variables
+  const widthIsFill = !!(
+    (hasAutoLayout && layoutSizingHorizontal === "FILL") ||
+    (parentHasAutoLayout && layoutSizingHorizontal === "FILL")
+  );
+  // heightIsFill: true if height should "Fill container" in auto-layout
+  // This is determined by layoutSizingVertical="FILL", NOT by bound variables
+  const heightIsFill = !!(
+    (hasAutoLayout && layoutSizingVertical === "FILL") ||
+    (parentHasAutoLayout && layoutSizingVertical === "FILL")
+  );
+
   if (
     nodeData.type !== "VECTOR" &&
+    nodeData.type !== "BOOLEAN_OPERATION" &&
+    !hasBoundVariablesForSize &&
+    !widthIsFill &&
+    !heightIsFill &&
     nodeData.width !== undefined &&
-    nodeData.height !== undefined &&
-    !hasBoundVariablesForSize
+    nodeData.height !== undefined
   ) {
+    // ISSUE #3 DEBUG: Check preserveRatio before resize
+    const preserveRatioBefore = (newNode as any).preserveRatio;
+    if (preserveRatioBefore !== undefined) {
+      debugConsole.log(
+        `  [ISSUE #3 DEBUG] "${nodeName}" preserveRatio before resize: ${preserveRatioBefore}`,
+      );
+    }
+
     newNode.resize(nodeData.width, nodeData.height);
+  } else if (
+    nodeData.type !== "VECTOR" &&
+    nodeData.type !== "BOOLEAN_OPERATION" &&
+    (widthIsFill || heightIsFill)
+  ) {
+    // Check for bound variables per dimension (not globally)
+    // If width should be FILL, we can still set height even if height has bound variables
+    // If height should be FILL, we can still set width even if width has bound variables
+    const hasBoundVariableForWidth =
+      nodeData.boundVariables &&
+      typeof nodeData.boundVariables === "object" &&
+      (nodeData.boundVariables.width ||
+        (isHorizontal && nodeData.boundVariables.minWidth) ||
+        (isHorizontal && nodeData.boundVariables.maxWidth));
+    const hasBoundVariableForHeight =
+      nodeData.boundVariables &&
+      typeof nodeData.boundVariables === "object" &&
+      (nodeData.boundVariables.height ||
+        (!isHorizontal && nodeData.boundVariables.minWidth) ||
+        (!isHorizontal && nodeData.boundVariables.maxWidth));
+
+    // Handle partial sizing: set only the dimension that's not FILL and doesn't have bound variables
+    if (
+      widthIsFill &&
+      !heightIsFill &&
+      !hasBoundVariableForHeight &&
+      nodeData.height !== undefined
+    ) {
+      // Width is FILL, only set height (if height doesn't have bound variables)
+      // Don't set width - it should fill the container
+      // Note: newNode.width might be the default 100px, but we don't want to set it to a fixed value
+      // The parent's auto-layout or minWidth/maxWidth bound variables (set later) will handle the width
+      newNode.resize(newNode.width, nodeData.height);
+      debugConsole.log(
+        `  Set height to ${nodeData.height} for "${nodeName}" (width is FILL, keeping current width ${newNode.width})`,
+      );
+    } else if (
+      !widthIsFill &&
+      heightIsFill &&
+      !hasBoundVariableForWidth &&
+      nodeData.width !== undefined
+    ) {
+      // Height is FILL, only set width (if width doesn't have bound variables)
+      newNode.resize(nodeData.width, newNode.height);
+      debugConsole.log(
+        `  Set width to ${nodeData.width} for "${nodeName}" (height is FILL)`,
+      );
+    } else if (widthIsFill && heightIsFill) {
+      // Both are FILL, don't set dimensions
+      debugConsole.log(
+        `  Skipping resize for "${nodeName}" (both width and height are FILL)`,
+      );
+    } else {
+      // When widthIsFill=true but we can't set height (has bound variable), we still shouldn't set width
+      // For nodes with their own auto-layout, "Fill Container" is achieved through minWidth/maxWidth bound variables
+      // Setting a fixed width would interfere with the Fill behavior
+      if (widthIsFill && !heightIsFill && hasBoundVariableForHeight) {
+        // Width is FILL, height has bound variable - don't set width at all
+        // The minWidth/maxWidth bound variables (set later) will make it fill properly
+        // Note: The frame may have default 100px width initially, but minWidth/maxWidth will override it
+        debugConsole.log(
+          `  Skipping width resize for "${nodeName}" (width is FILL, will be handled by minWidth/maxWidth bound variables, current width=${newNode.width})`,
+        );
+      }
+    }
+
+    // ISSUE #3 DEBUG: Check preserveRatio after resize
+    const preserveRatioAfter = (newNode as any).preserveRatio;
+    if (preserveRatioAfter !== undefined) {
+      debugConsole.log(
+        `  [ISSUE #3 DEBUG] "${nodeName}" preserveRatio after resize: ${preserveRatioAfter}`,
+      );
+    } else if (nodeData.preserveRatio !== undefined) {
+      debugConsole.warning(
+        `  ⚠️ ISSUE #3: "${nodeName}" preserveRatio was in nodeData (${nodeData.preserveRatio}) but not set on node!`,
+      );
+    }
+
+    // ISSUE #4: Log constraints from nodeData (what we're trying to import)
+    const expectedConstraintH =
+      nodeData.constraintHorizontal || nodeData.constraints?.horizontal;
+    const expectedConstraintV =
+      nodeData.constraintVertical || nodeData.constraints?.vertical;
+    if (
+      expectedConstraintH !== undefined ||
+      expectedConstraintV !== undefined
+    ) {
+      debugConsole.log(
+        `  [ISSUE #4] "${nodeName}" (${nodeData.type}) - Expected constraints from JSON: H=${expectedConstraintH || "undefined"}, V=${expectedConstraintV || "undefined"}`,
+      );
+    }
+
+    // ISSUE #4 DEBUG: Check constraints after resize (before we set them)
+    const constraintHorizontalAfter = (newNode as any).constraints?.horizontal;
+    const constraintVerticalAfter = (newNode as any).constraints?.vertical;
+    if (
+      expectedConstraintH !== undefined ||
+      expectedConstraintV !== undefined
+    ) {
+      debugConsole.log(
+        `  [ISSUE #4] "${nodeName}" (${nodeData.type}) - Constraints after resize (before setting): H=${constraintHorizontalAfter || "undefined"}, V=${constraintVerticalAfter || "undefined"}`,
+      );
+    }
+
+    // ISSUE #4: Set constraints if they exist in nodeData
+    // Use the constraints object API: node.constraints = { horizontal: 'SCALE', vertical: 'SCALE' }
+    // Note: Figma API uses the same values we export: MIN, CENTER, MAX, STRETCH, SCALE
+    const hasConstraintH =
+      nodeData.constraintHorizontal !== undefined ||
+      nodeData.constraints?.horizontal !== undefined;
+    const hasConstraintV =
+      nodeData.constraintVertical !== undefined ||
+      nodeData.constraints?.vertical !== undefined;
+
+    if (hasConstraintH || hasConstraintV) {
+      const exportedH =
+        nodeData.constraintHorizontal || nodeData.constraints?.horizontal;
+      const exportedV =
+        nodeData.constraintVertical || nodeData.constraints?.vertical;
+
+      // Use exported values directly (no mapping needed - Figma API uses same values)
+      const apiH = exportedH || constraintHorizontalAfter || "MIN";
+      const apiV = exportedV || constraintVerticalAfter || "MIN";
+
+      try {
+        debugConsole.log(
+          `  [ISSUE #4] Setting constraints for "${nodeName}" (${nodeData.type}): H=${apiH} (from ${exportedH || "default"}), V=${apiV} (from ${exportedV || "default"})`,
+        );
+
+        // Use the constraints object API
+        (newNode as any).constraints = {
+          horizontal: apiH,
+          vertical: apiV,
+        };
+
+        // Verify immediately after setting
+        const verifyH = (newNode as any).constraints?.horizontal;
+        const verifyV = (newNode as any).constraints?.vertical;
+        if (verifyH === apiH && verifyV === apiV) {
+          debugConsole.log(
+            `  [ISSUE #4] ✓ Constraints set successfully: H=${verifyH}, V=${verifyV} for "${nodeName}"`,
+          );
+        } else {
+          debugConsole.warning(
+            `  [ISSUE #4] ⚠️ Constraints set but verification failed! Expected H=${apiH}, V=${apiV}, got H=${verifyH || "undefined"}, V=${verifyV || "undefined"} for "${nodeName}"`,
+          );
+        }
+      } catch (error) {
+        debugConsole.warning(
+          `  [ISSUE #4] ✗ Failed to set constraints for "${nodeName}" (${nodeData.type}): ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
+
+    // Final verification of constraints
+    const finalConstraintH = (newNode as any).constraintHorizontal;
+    const finalConstraintV = (newNode as any).constraintVertical;
+    if (
+      expectedConstraintH !== undefined ||
+      expectedConstraintV !== undefined
+    ) {
+      debugConsole.log(
+        `  [ISSUE #4] "${nodeName}" (${nodeData.type}) - Final constraints: H=${finalConstraintH || "undefined"}, V=${finalConstraintV || "undefined"}`,
+      );
+      if (
+        expectedConstraintH !== undefined &&
+        finalConstraintH !== expectedConstraintH
+      ) {
+        debugConsole.warning(
+          `  ⚠️ ISSUE #4: "${nodeName}" constraintHorizontal mismatch! Expected: ${expectedConstraintH}, Got: ${finalConstraintH || "undefined"}`,
+        );
+      }
+      if (
+        expectedConstraintV !== undefined &&
+        finalConstraintV !== expectedConstraintV
+      ) {
+        debugConsole.warning(
+          `  ⚠️ ISSUE #4: "${nodeName}" constraintVertical mismatch! Expected: ${expectedConstraintV}, Got: ${finalConstraintV || "undefined"}`,
+        );
+      }
+      if (
+        expectedConstraintH !== undefined &&
+        expectedConstraintV !== undefined &&
+        finalConstraintH === expectedConstraintH &&
+        finalConstraintV === expectedConstraintV
+      ) {
+        debugConsole.log(
+          `  ✓ ISSUE #4: "${nodeName}" constraints correctly set: H=${finalConstraintH}, V=${finalConstraintV}`,
+        );
+      }
+    }
+  } else {
+    // No resize happened, but we still need to set constraints if they exist
+    // ISSUE #4: Set constraints even if no resize
+    // Note: VECTOR nodes have constraints set earlier (right after size is set) to avoid "not extensible" errors
+    // Note: Some nodes (e.g., inside components) may be "not extensible" - wrap in try-catch
+    const expectedConstraintH =
+      nodeData.constraintHorizontal || nodeData.constraints?.horizontal;
+    const expectedConstraintV =
+      nodeData.constraintVertical || nodeData.constraints?.vertical;
+    if (
+      expectedConstraintH !== undefined ||
+      expectedConstraintV !== undefined
+    ) {
+      // Skip VECTOR and BOOLEAN_OPERATION nodes - constraints are set earlier to avoid "not extensible" errors
+      if (nodeData.type === "VECTOR" || nodeData.type === "BOOLEAN_OPERATION") {
+        debugConsole.log(
+          `  [ISSUE #4] "${nodeName}" (VECTOR) - Constraints already set earlier (skipping "no resize" path)`,
+        );
+      } else {
+        debugConsole.log(
+          `  [ISSUE #4] "${nodeName}" (${nodeData.type}) - Setting constraints (no resize): Expected H=${expectedConstraintH || "undefined"}, V=${expectedConstraintV || "undefined"}`,
+        );
+      }
+    }
+
+    // Skip VECTOR nodes - constraints are set earlier
+    // Use the same constraints object API for the "no resize" path
+    if (nodeData.type !== "VECTOR") {
+      const hasConstraintHNoResize =
+        nodeData.constraintHorizontal !== undefined ||
+        nodeData.constraints?.horizontal !== undefined;
+      const hasConstraintVNoResize =
+        nodeData.constraintVertical !== undefined ||
+        nodeData.constraints?.vertical !== undefined;
+
+      if (hasConstraintHNoResize || hasConstraintVNoResize) {
+        const exportedHNoResize =
+          nodeData.constraintHorizontal || nodeData.constraints?.horizontal;
+        const exportedVNoResize =
+          nodeData.constraintVertical || nodeData.constraints?.vertical;
+
+        // Get current constraints to preserve one if only setting the other
+        const currentConstraints = (newNode as any).constraints || {};
+        const currentH = currentConstraints.horizontal || "MIN";
+        const currentV = currentConstraints.vertical || "MIN";
+
+        // Use exported values directly (no mapping needed - Figma API uses same values)
+        const apiHNoResize = exportedHNoResize || currentH;
+        const apiVNoResize = exportedVNoResize || currentV;
+
+        try {
+          debugConsole.log(
+            `  [ISSUE #4] Setting constraints for "${nodeName}" (${nodeData.type}) (no resize): H=${apiHNoResize} (from ${exportedHNoResize || "current"}), V=${apiVNoResize} (from ${exportedVNoResize || "current"})`,
+          );
+
+          // Use the constraints object API
+          (newNode as any).constraints = {
+            horizontal: apiHNoResize,
+            vertical: apiVNoResize,
+          };
+
+          // Verify immediately after setting
+          const verifyHNoResize = (newNode as any).constraints?.horizontal;
+          const verifyVNoResize = (newNode as any).constraints?.vertical;
+          if (
+            verifyHNoResize === apiHNoResize &&
+            verifyVNoResize === apiVNoResize
+          ) {
+            debugConsole.log(
+              `  [ISSUE #4] ✓ Constraints set successfully (no resize): H=${verifyHNoResize}, V=${verifyVNoResize} for "${nodeName}"`,
+            );
+          } else {
+            debugConsole.warning(
+              `  [ISSUE #4] ⚠️ Constraints set but verification failed (no resize)! Expected H=${apiHNoResize}, V=${apiVNoResize}, got H=${verifyHNoResize || "undefined"}, V=${verifyVNoResize || "undefined"} for "${nodeName}"`,
+            );
+          }
+        } catch (error) {
+          debugConsole.warning(
+            `  [ISSUE #4] ✗ Failed to set constraints for "${nodeName}" (${nodeData.type}) (no resize): ${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
+      }
+    }
+
+    // Final verification for no-resize case (skip VECTOR and BOOLEAN_OPERATION nodes - already verified earlier)
+    if (
+      nodeData.type !== "VECTOR" &&
+      nodeData.type !== "BOOLEAN_OPERATION" &&
+      (expectedConstraintH !== undefined || expectedConstraintV !== undefined)
+    ) {
+      const finalConstraintH = (newNode as any).constraints?.horizontal;
+      const finalConstraintV = (newNode as any).constraints?.vertical;
+      debugConsole.log(
+        `  [ISSUE #4] "${nodeName}" (${nodeData.type}) - Final constraints (no resize): H=${finalConstraintH || "undefined"}, V=${finalConstraintV || "undefined"}`,
+      );
+      if (
+        expectedConstraintH !== undefined &&
+        finalConstraintH !== expectedConstraintH
+      ) {
+        debugConsole.warning(
+          `  ⚠️ ISSUE #4: "${nodeName}" constraintHorizontal mismatch! Expected: ${expectedConstraintH}, Got: ${finalConstraintH || "undefined"}`,
+        );
+      }
+      if (
+        expectedConstraintV !== undefined &&
+        finalConstraintV !== expectedConstraintV
+      ) {
+        debugConsole.warning(
+          `  ⚠️ ISSUE #4: "${nodeName}" constraintVertical mismatch! Expected: ${expectedConstraintV}, Got: ${finalConstraintV || "undefined"}`,
+        );
+      }
+      // Compare directly (no mapping needed - Figma API uses same values)
+      if (
+        expectedConstraintH !== undefined &&
+        expectedConstraintV !== undefined &&
+        finalConstraintH === expectedConstraintH &&
+        finalConstraintV === expectedConstraintV
+      ) {
+        debugConsole.log(
+          `  ✓ ISSUE #4: "${nodeName}" constraints correctly set (no resize): H=${finalConstraintH}, V=${finalConstraintV}`,
+        );
+      }
+    }
   }
 
   // Set visual properties if they exist
@@ -2450,26 +4844,63 @@ export async function recreateNodeFromData(
   if (nodeData.type !== "INSTANCE") {
     // DEBUG: Log bound variables for VECTOR nodes (for "Selection colors" issue)
     if (nodeData.type === "VECTOR" && nodeData.boundVariables) {
-      await debugConsole.log(
+      debugConsole.log(
         `  DEBUG: VECTOR "${nodeData.name || "Unnamed"}" (ID: ${nodeData.id?.substring(0, 8) || "unknown"}...) has boundVariables: ${Object.keys(nodeData.boundVariables).join(", ")}`,
       );
       if (nodeData.boundVariables.fills) {
-        await debugConsole.log(
+        debugConsole.log(
           `  DEBUG:   boundVariables.fills: ${JSON.stringify(nodeData.boundVariables.fills)}`,
         );
       }
     }
     if (nodeData.fills !== undefined) {
       try {
-        // Process fills array - remove boundVariables that contain _varRef
-        // We'll restore them properly after setting the fills
+        // Process fills array - restore images first, then remove boundVariables that contain _varRef
+        // We'll restore boundVariables properly after setting the fills
         let fills = nodeData.fills;
+
+        // Restore image references from image table
+        if (Array.isArray(fills) && imageTable) {
+          fills = await restoreImageReferences(fills, imageTable);
+        }
+
+        // ISSUE #2 DEBUG: Check for selectionColor in fills before processing
+        const nodeName = nodeData.name || "Unnamed";
         if (Array.isArray(fills)) {
+          for (let i = 0; i < fills.length; i++) {
+            const fill = fills[i];
+            if (fill && typeof fill === "object") {
+              if ((fill as any).selectionColor !== undefined) {
+                debugConsole.log(
+                  `  [ISSUE #2 DEBUG] "${nodeName}" fill[${i}] has selectionColor: ${JSON.stringify((fill as any).selectionColor)}`,
+                );
+              }
+            }
+          }
+        }
+
+        if (Array.isArray(fills)) {
+          const nodeName = nodeData.name || "Unnamed";
+          // ISSUE #2 DEBUG: Check for selectionColor before processing
+          for (let i = 0; i < fills.length; i++) {
+            const fill = fills[i];
+            if (
+              fill &&
+              typeof fill === "object" &&
+              fill.selectionColor !== undefined
+            ) {
+              debugConsole.warning(
+                `  ⚠️ ISSUE #2: "${nodeName}" fill[${i}] has selectionColor that will be preserved: ${JSON.stringify(fill.selectionColor)}`,
+              );
+            }
+          }
           fills = fills.map((fill: any) => {
             if (fill && typeof fill === "object") {
               // Create a copy without boundVariables (they may contain _varRef which is invalid)
               const fillWithoutBoundVars = { ...fill };
               delete fillWithoutBoundVars.boundVariables;
+              // ISSUE #2: Don't delete selectionColor - we need to preserve it
+              // delete fillWithoutBoundVars.selectionColor; // REMOVED - preserve selectionColor
               return fillWithoutBoundVars;
             }
             return fill;
@@ -2486,7 +4917,7 @@ export async function recreateNodeFromData(
         ) {
           // DEBUG: Log fill items for VECTOR nodes
           if (nodeData.type === "VECTOR") {
-            await debugConsole.log(
+            debugConsole.log(
               `  DEBUG: VECTOR "${nodeData.name || "Unnamed"}" has ${nodeData.fills.length} fill(s)`,
             );
             for (let i = 0; i < nodeData.fills.length; i++) {
@@ -2495,11 +4926,11 @@ export async function recreateNodeFromData(
                 const fillBoundVars =
                   fillData.boundVariables || fillData.bndVar;
                 if (fillBoundVars) {
-                  await debugConsole.log(
+                  debugConsole.log(
                     `  DEBUG:   fill[${i}] has boundVariables: ${JSON.stringify(fillBoundVars)}`,
                   );
                 } else {
-                  await debugConsole.log(
+                  debugConsole.log(
                     `  DEBUG:   fill[${i}] has no boundVariables`,
                   );
                 }
@@ -2508,7 +4939,13 @@ export async function recreateNodeFromData(
           }
 
           // Create new fill objects with boundVariables
+          // Priority: node-level boundVariables.fills (instance overrides) > fill-level boundVariables
           const fillsWithBoundVars: any[] = [];
+          const nodeLevelFillsBoundVars = nodeData.boundVariables?.fills;
+          const hasNodeLevelFillsOverrides = Array.isArray(
+            nodeLevelFillsBoundVars,
+          );
+
           for (let i = 0; i < fills.length; i++) {
             const fill = fills[i];
             const fillData = nodeData.fills[i];
@@ -2518,122 +4955,249 @@ export async function recreateNodeFromData(
               continue;
             }
 
-            // Check for boundVariables in fill items (decompressed from bndVar in JSON)
-            const fillBoundVars = fillData.boundVariables || fillData.bndVar;
-            if (!fillBoundVars) {
-              fillsWithBoundVars.push(fill);
-              continue;
-            }
-
             // Create a new fill object with boundVariables
             const newFill = { ...fill };
             newFill.boundVariables = {};
 
-            // Restore bound variables from boundVariables/bndVar (e.g., boundVariables.color)
-            for (const [propName, varInfo] of Object.entries(fillBoundVars)) {
-              // DEBUG: Log what we're processing
-              if (nodeData.type === "VECTOR") {
-                await debugConsole.log(
-                  `  DEBUG: Processing fill[${i}].${propName} on VECTOR "${newNode.name || "Unnamed"}": varInfo=${JSON.stringify(varInfo)}`,
-                );
-              }
-              if (isVariableReference(varInfo)) {
-                const varRef = (varInfo as VariableReference)._varRef;
-                if (varRef !== undefined) {
-                  // DEBUG: Log variable lookup
-                  if (nodeData.type === "VECTOR") {
-                    await debugConsole.log(
-                      `  DEBUG: Looking up variable reference ${varRef} in recognizedVariables (map has ${recognizedVariables.size} entries)`,
-                    );
-                    // DEBUG: List available variable references
-                    const availableRefs = Array.from(
-                      recognizedVariables.keys(),
-                    ).slice(0, 10);
-                    await debugConsole.log(
-                      `  DEBUG: Available variable references (first 10): ${availableRefs.join(", ")}`,
-                    );
-                    // Check if the specific variable reference exists
-                    const hasVarRef = recognizedVariables.has(String(varRef));
-                    await debugConsole.log(
-                      `  DEBUG: Variable reference ${varRef} ${hasVarRef ? "found" : "NOT FOUND"} in recognizedVariables`,
-                    );
-                    if (!hasVarRef) {
-                      // List all available references to help debug
-                      const allRefs = Array.from(
-                        recognizedVariables.keys(),
-                      ).sort((a, b) => parseInt(a) - parseInt(b));
-                      await debugConsole.log(
-                        `  DEBUG: All available variable references: ${allRefs.join(", ")}`,
+            // Check for node-level boundVariables.fills first (instance child overrides take precedence)
+            let boundVarsToProcess: any = null;
+            if (hasNodeLevelFillsOverrides && nodeLevelFillsBoundVars[i]) {
+              // Node-level override exists for this fill index
+              boundVarsToProcess = nodeLevelFillsBoundVars[i];
+              debugConsole.log(
+                `  [INSTANCE OVERRIDE] Using node-level boundVariables.fills[${i}] for "${newNode.name || "Unnamed"}" (${nodeData.type})`,
+              );
+            } else {
+              // Fall back to fill-level boundVariables
+              boundVarsToProcess = fillData.boundVariables || fillData.bndVar;
+            }
+
+            if (!boundVarsToProcess) {
+              fillsWithBoundVars.push(newFill);
+              continue;
+            }
+
+            // Handle both direct variable reference format ({ _varRef: ... }) and object format ({ color: { _varRef: ... } })
+            if (isVariableReference(boundVarsToProcess)) {
+              // Direct variable reference - bind to color property
+              const varRef = (boundVarsToProcess as VariableReference)._varRef;
+              if (varRef !== undefined && recognizedVariables) {
+                let variable = recognizedVariables.get(String(varRef));
+
+                // Verify that the variable found in recognizedVariables matches the variable table entry
+                if (variable && variableTable) {
+                  const varEntry = variableTable.getVariableByIndex(varRef);
+                  if (varEntry) {
+                    if (variable.name !== varEntry.variableName) {
+                      debugConsole.warning(
+                        `  [BOUND-VAR] Variable name mismatch for _varRef ${varRef} on "${newNode.name || "Unnamed"}": recognizedVariables has "${variable.name}", but variable table entry ${varRef} is "${varEntry.variableName}" - will resolve from table`,
                       );
-                    }
-                  }
-                  let variable = recognizedVariables.get(String(varRef));
-                  // If not found in recognizedVariables, try to resolve from variable table
-                  if (!variable) {
-                    if (nodeData.type === "VECTOR") {
-                      await debugConsole.log(
-                        `  DEBUG: Variable ${varRef} not in recognizedVariables. variableTable=${!!variableTable}, collectionTable=${!!collectionTable}, recognizedCollections=${!!recognizedCollections}`,
-                      );
-                    }
-                    if (
-                      variableTable &&
-                      collectionTable &&
-                      recognizedCollections
-                    ) {
-                      await debugConsole.log(
-                        `  Variable reference ${varRef} not in recognizedVariables, attempting to resolve from variable table...`,
-                      );
-                      const resolvedVariable = await resolveVariableFromTable(
-                        varRef,
-                        variableTable,
-                        collectionTable,
-                        recognizedCollections,
-                      );
-                      variable = resolvedVariable || undefined;
-                      if (variable) {
-                        // Add to recognizedVariables for future lookups
-                        recognizedVariables.set(String(varRef), variable);
-                        await debugConsole.log(
-                          `  ✓ Resolved variable ${variable.name} from variable table and added to recognizedVariables`,
-                        );
-                      } else {
-                        await debugConsole.warning(
-                          `  Failed to resolve variable ${varRef} from variable table`,
-                        );
-                      }
+                      variable = undefined; // Clear so we resolve from table
                     } else {
-                      if (nodeData.type === "VECTOR") {
-                        await debugConsole.warning(
-                          `  Cannot resolve variable ${varRef} from table - missing required parameters`,
-                        );
-                      }
+                      debugConsole.log(
+                        `  [BOUND-VAR] Variable name verified for _varRef ${varRef} on "${newNode.name || "Unnamed"}": "${variable.name}" matches variable table entry`,
+                      );
                     }
-                  }
-                  if (variable) {
-                    newFill.boundVariables[propName] = {
-                      type: "VARIABLE_ALIAS",
-                      id: variable.id,
-                    };
-                    await debugConsole.log(
-                      `  ✓ Restored bound variable for fill[${i}].${propName} on "${newNode.name || "Unnamed"}" (${nodeData.type}): variable ${variable.name} (ID: ${variable.id.substring(0, 8)}...)`,
-                    );
                   } else {
-                    await debugConsole.warning(
-                      `  Variable reference ${varRef} not found in recognizedVariables for fill[${i}].${propName} on "${newNode.name || "Unnamed"}"`,
-                    );
-                  }
-                } else {
-                  if (nodeData.type === "VECTOR") {
-                    await debugConsole.warning(
-                      `  DEBUG: Variable reference ${varRef} is undefined for fill[${i}].${propName} on VECTOR "${newNode.name || "Unnamed"}"`,
+                    debugConsole.warning(
+                      `  [BOUND-VAR] No variable table entry found for _varRef ${varRef} on "${newNode.name || "Unnamed"}"`,
                     );
                   }
                 }
-              } else {
-                if (nodeData.type === "VECTOR") {
-                  await debugConsole.warning(
-                    `  DEBUG: fill[${i}].${propName} on VECTOR "${newNode.name || "Unnamed"}" is not a variable reference: ${JSON.stringify(varInfo)}`,
+
+                // If not found or name mismatch, try to resolve from variable table
+                if (!variable) {
+                  if (
+                    variableTable &&
+                    collectionTable &&
+                    recognizedCollections
+                  ) {
+                    const resolvedVariable = await resolveVariableFromTable(
+                      varRef,
+                      variableTable,
+                      collectionTable,
+                      recognizedCollections,
+                    );
+                    variable = resolvedVariable || undefined;
+                    if (variable) {
+                      recognizedVariables.set(String(varRef), variable);
+                    }
+                  }
+                }
+
+                if (variable) {
+                  newFill.boundVariables.color = {
+                    type: "VARIABLE_ALIAS",
+                    id: variable.id,
+                  };
+                  // Log all variable bindings for fills to help debug issues
+                  debugConsole.log(
+                    `  [BOUND-VAR] Restored bound variable for fill[${i}].color on "${newNode.name || "Unnamed"}" (${nodeData.type}): variable "${variable.name}" (ID: ${variable.id.substring(0, 8)}...) from table index ${varRef}`,
                   );
+                } else {
+                  debugConsole.warning(
+                    `  [BOUND-VAR] Could not resolve variable for _varRef ${varRef} on fill[${i}].color for "${newNode.name || "Unnamed"}" (${nodeData.type})`,
+                  );
+                }
+              }
+            } else {
+              // Object format - process each property (e.g., color, opacity)
+              // Restore bound variables from boundVariables/bndVar (e.g., boundVariables.color)
+              for (const [propName, varInfo] of Object.entries(
+                boundVarsToProcess,
+              )) {
+                // DEBUG: Log what we're processing
+                const isBadgeLabelVar =
+                  nodeData.type === "TEXT" &&
+                  (newNode.name || "").toLowerCase().includes("text");
+                if (nodeData.type === "VECTOR" || isBadgeLabelVar) {
+                  debugConsole.log(
+                    `  DEBUG: Processing fill[${i}].${propName} on ${nodeData.type} "${newNode.name || "Unnamed"}": varInfo=${JSON.stringify(varInfo)}`,
+                  );
+                }
+                if (isVariableReference(varInfo)) {
+                  const varRef = (varInfo as VariableReference)._varRef;
+                  if (varRef !== undefined && recognizedVariables) {
+                    // DEBUG: Log variable lookup
+                    if (nodeData.type === "VECTOR" || isBadgeLabelVar) {
+                      debugConsole.log(
+                        `  DEBUG: Looking up variable reference ${varRef} in recognizedVariables (map has ${recognizedVariables.size} entries)`,
+                      );
+                      // DEBUG: List available variable references
+                      const availableRefs = Array.from(
+                        recognizedVariables.keys(),
+                      ).slice(0, 10);
+                      debugConsole.log(
+                        `  DEBUG: Available variable references (first 10): ${availableRefs.join(", ")}`,
+                      );
+                      // Check if the specific variable reference exists
+                      const hasVarRef = recognizedVariables.has(String(varRef));
+                      debugConsole.log(
+                        `  DEBUG: Variable reference ${varRef} ${hasVarRef ? "found" : "NOT FOUND"} in recognizedVariables`,
+                      );
+                      if (!hasVarRef) {
+                        // List all available references to help debug
+                        const allRefs = Array.from(
+                          recognizedVariables.keys(),
+                        ).sort((a, b) => parseInt(a) - parseInt(b));
+                        debugConsole.log(
+                          `  DEBUG: All available variable references: ${allRefs.join(", ")}`,
+                        );
+                      }
+                      // For badge/color/label variables, also check what's in the variable table
+                      if (variableTable) {
+                        const varEntry =
+                          variableTable.getVariableByIndex(varRef);
+                        if (
+                          varEntry &&
+                          varEntry.variableName.includes("badge/color/label")
+                        ) {
+                          debugConsole.log(
+                            `  [IMPORT DEBUG] Variable table index ${varRef} contains: "${varEntry.variableName}"`,
+                          );
+                        }
+                      }
+                    }
+                    let variable = recognizedVariables.get(String(varRef));
+
+                    // Verify that the variable found in recognizedVariables matches the variable table entry
+                    // This ensures we're using the correct variable even if indices don't match
+                    if (variable && variableTable) {
+                      const varEntry = variableTable.getVariableByIndex(varRef);
+                      if (varEntry && variable.name !== varEntry.variableName) {
+                        // Variable name doesn't match - the index points to a different variable
+                        // Fall back to resolving from table by name
+                        debugConsole.log(
+                          `  Variable reference ${varRef} found in recognizedVariables but name mismatch: expected "${varEntry.variableName}", found "${variable.name}". Resolving from table...`,
+                        );
+                        variable = undefined; // Clear so we resolve from table
+                      }
+                    }
+
+                    // If not found in recognizedVariables or name mismatch, try to resolve from variable table
+                    if (!variable) {
+                      if (nodeData.type === "VECTOR") {
+                        debugConsole.log(
+                          `  DEBUG: Variable ${varRef} not in recognizedVariables or name mismatch. variableTable=${!!variableTable}, collectionTable=${!!collectionTable}, recognizedCollections=${!!recognizedCollections}`,
+                        );
+                      }
+                      if (
+                        variableTable &&
+                        collectionTable &&
+                        recognizedCollections
+                      ) {
+                        debugConsole.log(
+                          `  Variable reference ${varRef} not in recognizedVariables or name mismatch, attempting to resolve from variable table...`,
+                        );
+                        const resolvedVariable = await resolveVariableFromTable(
+                          varRef,
+                          variableTable,
+                          collectionTable,
+                          recognizedCollections,
+                        );
+                        variable = resolvedVariable || undefined;
+                        if (variable) {
+                          // Add to recognizedVariables for future lookups
+                          recognizedVariables.set(String(varRef), variable);
+                          debugConsole.log(
+                            `  ✓ Resolved variable ${variable.name} from variable table and added to recognizedVariables`,
+                          );
+                        } else {
+                          debugConsole.warning(
+                            `  Failed to resolve variable ${varRef} from variable table`,
+                          );
+                        }
+                      } else {
+                        if (nodeData.type === "VECTOR") {
+                          debugConsole.warning(
+                            `  Cannot resolve variable ${varRef} from table - missing required parameters`,
+                          );
+                        }
+                      }
+                    }
+                    if (variable) {
+                      newFill.boundVariables[propName] = {
+                        type: "VARIABLE_ALIAS",
+                        id: variable.id,
+                      };
+                      // Debug logging for badge/color/label variables
+                      const isBadgeLabelVar =
+                        variable.name.includes("badge/color/label");
+                      if (isBadgeLabelVar) {
+                        debugConsole.log(
+                          `  [IMPORT DEBUG] Restored bound variable for fill[${i}].${propName} on "${newNode.name || "Unnamed"}" (${nodeData.type}): variable "${variable.name}" (ID: ${variable.id.substring(0, 8)}...) from table index ${varRef}`,
+                        );
+                        if (variableTable) {
+                          const varEntry =
+                            variableTable.getVariableByIndex(varRef);
+                          if (varEntry) {
+                            debugConsole.log(
+                              `  [IMPORT DEBUG] Variable table entry at index ${varRef}: "${varEntry.variableName}"`,
+                            );
+                          }
+                        }
+                      }
+                      debugConsole.log(
+                        `  ✓ Restored bound variable for fill[${i}].${propName} on "${newNode.name || "Unnamed"}" (${nodeData.type}): variable ${variable.name} (ID: ${variable.id.substring(0, 8)}...)`,
+                      );
+                    } else {
+                      debugConsole.warning(
+                        `  Variable reference ${varRef} not found in recognizedVariables for fill[${i}].${propName} on "${newNode.name || "Unnamed"}"`,
+                      );
+                    }
+                  } else {
+                    if (nodeData.type === "VECTOR") {
+                      debugConsole.warning(
+                        `  DEBUG: Variable reference ${varRef} is undefined for fill[${i}].${propName} on VECTOR "${newNode.name || "Unnamed"}"`,
+                      );
+                    }
+                  }
+                } else {
+                  if (nodeData.type === "VECTOR") {
+                    debugConsole.warning(
+                      `  DEBUG: fill[${i}].${propName} on VECTOR "${newNode.name || "Unnamed"}" is not a variable reference: ${JSON.stringify(varInfo)}`,
+                    );
+                  }
                 }
               }
             }
@@ -2643,22 +5207,56 @@ export async function recreateNodeFromData(
 
           // Set fills with boundVariables
           newNode.fills = fillsWithBoundVars;
-          await debugConsole.log(
+          debugConsole.log(
             `  ✓ Set fills with boundVariables on "${newNode.name || "Unnamed"}" (${nodeData.type})`,
           );
+
+          // ISSUE #2 DEBUG: Check for selectionColor after setting fills with boundVariables
+          const fillsAfter = newNode.fills;
+          const nodeName = nodeData.name || "Unnamed";
+          if (Array.isArray(fillsAfter)) {
+            for (let i = 0; i < fillsAfter.length; i++) {
+              const fill = fillsAfter[i];
+              if (fill && typeof fill === "object") {
+                if ((fill as any).selectionColor !== undefined) {
+                  debugConsole.warning(
+                    `  ⚠️ ISSUE #2: "${nodeName}" fill[${i}] has selectionColor AFTER setting with boundVariables: ${JSON.stringify((fill as any).selectionColor)}`,
+                  );
+                }
+              }
+            }
+          }
         } else {
           // Set fills without boundVariables if we can't restore them
           newNode.fills = fills;
+
+          // ISSUE #2 DEBUG: Check for selectionColor after setting fills
+          const fillsAfter = newNode.fills;
+          const nodeName = nodeData.name || "Unnamed";
+          if (Array.isArray(fillsAfter)) {
+            for (let i = 0; i < fillsAfter.length; i++) {
+              const fill = fillsAfter[i];
+              if (fill && typeof fill === "object") {
+                if ((fill as any).selectionColor !== undefined) {
+                  debugConsole.warning(
+                    `  ⚠️ ISSUE #2: "${nodeName}" fill[${i}] has selectionColor AFTER setting: ${JSON.stringify((fill as any).selectionColor)}`,
+                  );
+                }
+              }
+            }
+          }
         }
 
-        // Note: Bound variables for fills are already restored above from fillData.boundVariables
+        // Note: Bound variables for fills are restored with priority:
+        // 1. nodeData.boundVariables.fills (instance child overrides) - handled first in the fill loop
+        // 2. fillData.boundVariables (main component values) - fallback in the fill loop
         // We only need to check for other boundVariables (not fills) at the node level
         if (
           nodeData.boundVariables &&
           Object.keys(nodeData.boundVariables).length > 0 &&
           !nodeData.boundVariables.fills
         ) {
-          await debugConsole.log(
+          debugConsole.log(
             `  Node "${newNode.name || "Unnamed"}" (${nodeData.type}) has boundVariables but not for fills: ${Object.keys(nodeData.boundVariables).join(", ")}`,
           );
         }
@@ -2668,6 +5266,7 @@ export async function recreateNodeFromData(
     } else if (
       nodeData.type === "FRAME" ||
       nodeData.type === "COMPONENT" ||
+      nodeData.type === "COMPONENT_SET" ||
       nodeData.type === "GROUP"
     ) {
       // For FRAME, COMPONENT, and GROUP nodes, if fills are not specified,
@@ -2676,6 +5275,63 @@ export async function recreateNodeFromData(
         newNode.fills = [];
       } catch (error) {
         console.log("Error clearing fills:", error);
+      }
+    }
+  }
+
+  // Set backgrounds (skip instances, they're handled separately)
+  // Backgrounds work similarly to fills and are supported on FRAME, COMPONENT, and COMPONENT_SET nodes
+  if (nodeData.type !== "INSTANCE") {
+    if (nodeData.backgrounds !== undefined) {
+      try {
+        // Process backgrounds array - restore images first, then remove boundVariables that contain _varRef
+        // We'll restore boundVariables properly after setting the backgrounds
+        let backgrounds = nodeData.backgrounds;
+
+        // Restore image references from image table
+        if (Array.isArray(backgrounds) && imageTable) {
+          backgrounds = await restoreImageReferences(backgrounds, imageTable);
+        }
+
+        if (Array.isArray(backgrounds)) {
+          backgrounds = backgrounds.map((background: any) => {
+            if (background && typeof background === "object") {
+              // Create a copy without boundVariables (they may contain _varRef which is invalid)
+              const backgroundWithoutBoundVars = { ...background };
+              delete backgroundWithoutBoundVars.boundVariables;
+              return backgroundWithoutBoundVars;
+            }
+            return background;
+          });
+        }
+
+        // Set backgrounds
+        if (Array.isArray(backgrounds) && backgrounds.length > 0) {
+          newNode.backgrounds = backgrounds;
+        } else {
+          // Explicitly clear backgrounds if empty array
+          newNode.backgrounds = [];
+        }
+
+        // Restore bound variables for backgrounds
+        if (
+          nodeData.boundVariables?.backgrounds &&
+          recognizedVariables &&
+          Array.isArray(newNode.backgrounds) &&
+          newNode.backgrounds.length > 0
+        ) {
+          await restoreBoundVariablesForFills(
+            newNode,
+            nodeData.boundVariables,
+            "backgrounds",
+            recognizedVariables,
+            variableTable,
+            collectionTable,
+            recognizedCollections,
+          );
+        }
+      } catch (error) {
+        debugConsole.warning(`Error setting backgrounds: ${error}`);
       }
     }
   }
@@ -2700,6 +5356,28 @@ export async function recreateNodeFromData(
     } catch {
       // Ignore errors if strokes can't be set
     }
+  }
+
+  // Restore bound variables for strokes (similar to fills)
+  // Strokes can have bound variables for color, just like fills
+  if (
+    nodeData.boundVariables &&
+    typeof nodeData.boundVariables === "object" &&
+    nodeData.boundVariables.strokes &&
+    recognizedVariables
+  ) {
+    debugConsole.log(
+      `  [BOUND-VAR] Restoring bound variables for strokes on "${newNode.name || "Unnamed"}" (${nodeData.type}): ${JSON.stringify(nodeData.boundVariables.strokes)}`,
+    );
+    await restoreBoundVariablesForFills(
+      newNode,
+      nodeData.boundVariables,
+      "strokes",
+      recognizedVariables,
+      variableTable,
+      collectionTable,
+      recognizedCollections,
+    );
   }
 
   // Set additional properties for better visual similarity
@@ -2751,6 +5429,7 @@ export async function recreateNodeFromData(
   if (
     nodeData.type === "FRAME" ||
     nodeData.type === "COMPONENT" ||
+    nodeData.type === "COMPONENT_SET" ||
     nodeData.type === "INSTANCE"
   ) {
     // Step 1: Set auto-layout mode (must be set before wrap)
@@ -2760,7 +5439,7 @@ export async function recreateNodeFromData(
       if (validLayoutModes.includes(nodeData.layoutMode)) {
         newNode.layoutMode = nodeData.layoutMode;
       } else {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Invalid layoutMode value "${nodeData.layoutMode}" for node "${nodeData.name || "Unnamed"}", skipping layoutMode setting`,
         );
       }
@@ -2817,49 +5496,81 @@ export async function recreateNodeFromData(
                 propName
               ];
 
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG: Attempting to set bound variable for ${propName} on "${nodeData.name || "Unnamed"}": current value=${currentValue}, current boundVar=${JSON.stringify(currentBoundVar)}`,
               );
 
-              // Delete any existing bound variable entry first to start fresh
+              // Use Figma's setBoundVariable API method (not direct assignment)
+              // Based on test results, all approaches work, but using the API method is the correct way
+              // First, try to remove any existing binding by setting to null
               try {
-                delete (newNode as any).boundVariables[propName];
+                (newNode as any).setBoundVariable(propName, null);
               } catch {
-                // Ignore errors when deleting
+                // Ignore errors when removing (might not exist)
               }
 
-              // Set the bound variable directly
-              // Note: This may fail silently if the property has a direct value
-              // Figma's API doesn't allow bound variables on properties with direct values
+              // Set the bound variable using Figma's API
+              // This is the correct way to bind variables - direct assignment to boundVariables doesn't work
               try {
-                (newNode as any).boundVariables[propName] = alias;
+                (newNode as any).setBoundVariable(propName, variable);
 
                 // Immediately check if it was set
                 const immediatelyAfter = (newNode as any).boundVariables?.[
                   propName
                 ];
-                await debugConsole.log(
+                debugConsole.log(
                   `  DEBUG: Immediately after setting ${propName} bound variable: ${JSON.stringify(immediatelyAfter)}`,
                 );
               } catch (error) {
-                await debugConsole.warning(
-                  `  Error setting bound variable for ${propName}: ${error}`,
+                debugConsole.warning(
+                  `  Error setting bound variable for ${propName}: ${error instanceof Error ? error.message : String(error)}`,
                 );
               }
 
               // Verify the bound variable was actually set and persisted
               const setBoundVar = (newNode as any).boundVariables?.[propName];
+
+              // ISSUE #1 DEBUG: Enhanced logging for itemSpacing variable binding
+              if (propName === "itemSpacing") {
+                const finalValue = (newNode as any)[propName];
+                const finalBoundVar = (newNode as any).boundVariables?.[
+                  propName
+                ];
+                debugConsole.log(
+                  `  [ISSUE #1 DEBUG] itemSpacing variable binding for "${nodeData.name || "Unnamed"}":`,
+                );
+                debugConsole.log(`    - Expected variable ref: ${varRef}`);
+                debugConsole.log(
+                  `    - Final itemSpacing value: ${finalValue}`,
+                );
+                debugConsole.log(
+                  `    - Final boundVariable: ${JSON.stringify(finalBoundVar)}`,
+                );
+                debugConsole.log(
+                  `    - Variable found: ${variable ? `Yes (ID: ${variable.id})` : "No"}`,
+                );
+                if (!setBoundVar || !setBoundVar.id) {
+                  debugConsole.warning(
+                    `    ⚠️ ISSUE #1: itemSpacing variable binding FAILED - boundVariable not set correctly!`,
+                  );
+                } else {
+                  debugConsole.log(
+                    `    ✓ itemSpacing variable binding SUCCESS`,
+                  );
+                }
+              }
+
               if (
                 setBoundVar &&
                 typeof setBoundVar === "object" &&
                 setBoundVar.type === "VARIABLE_ALIAS" &&
                 setBoundVar.id === variable.id
               ) {
-                await debugConsole.log(
+                debugConsole.log(
                   `  ✓ Set bound variable for ${propName} on "${nodeData.name || "Unnamed"}" (${nodeData.type}): variable ${variable.name} (ID: ${variable.id.substring(0, 8)}...)`,
                 );
               } else {
-                await debugConsole.warning(
+                debugConsole.warning(
                   `  Failed to set bound variable for ${propName} on "${nodeData.name || "Unnamed"}" - verification failed. Expected: ${JSON.stringify(alias)}, Got: ${JSON.stringify(setBoundVar)}`,
                 );
               }
@@ -2883,15 +5594,15 @@ export async function recreateNodeFromData(
         nodeData.boundVariables.itemSpacing;
 
       if (!hasBoundVariableForItemSpacing) {
-        await debugConsole.log(
+        debugConsole.log(
           `  Setting itemSpacing to ${nodeData.itemSpacing} for "${nodeData.name || "Unnamed"}" (${nodeData.type})`,
         );
         newNode.itemSpacing = nodeData.itemSpacing;
-        await debugConsole.log(
+        debugConsole.log(
           `  ✓ Set itemSpacing to ${newNode.itemSpacing} (verified)`,
         );
       } else {
-        await debugConsole.log(
+        debugConsole.log(
           `  Skipping itemSpacing (bound to variable) for "${nodeData.name || "Unnamed"}"`,
         );
       }
@@ -2899,9 +5610,10 @@ export async function recreateNodeFromData(
       if (
         nodeData.type === "FRAME" ||
         nodeData.type === "COMPONENT" ||
+        nodeData.type === "COMPONENT_SET" ||
         nodeData.type === "INSTANCE"
       ) {
-        await debugConsole.log(
+        debugConsole.log(
           `  DEBUG: Not setting itemSpacing for "${nodeData.name || "Unnamed"}": layoutMode=${nodeData.layoutMode}, itemSpacing=${nodeData.itemSpacing}`,
         );
       }
@@ -2912,17 +5624,27 @@ export async function recreateNodeFromData(
       newNode.layoutWrap = nodeData.layoutWrap;
     }
     // Step 3: Set other layout properties
-    // Always set sizing modes - if not in data, use defaults (AUTO = "Hug")
-    // This ensures "Hug" property is always set correctly
-    if (nodeData.primaryAxisSizingMode !== undefined) {
-      newNode.primaryAxisSizingMode = nodeData.primaryAxisSizingMode;
-    } else {
+    // Note: layoutMode and sizing modes are already set earlier (before resize)
+    // Only set defaults here if they weren't set earlier
+    if (
+      (nodeData.type === "FRAME" ||
+        nodeData.type === "COMPONENT" ||
+        nodeData.type === "COMPONENT_SET" ||
+        nodeData.type === "INSTANCE") &&
+      nodeData.primaryAxisSizingMode === undefined &&
+      newNode.primaryAxisSizingMode === undefined
+    ) {
       // Default to AUTO (Hug) if not specified
       newNode.primaryAxisSizingMode = "AUTO";
     }
-    if (nodeData.counterAxisSizingMode !== undefined) {
-      newNode.counterAxisSizingMode = nodeData.counterAxisSizingMode;
-    } else {
+    if (
+      (nodeData.type === "FRAME" ||
+        nodeData.type === "COMPONENT" ||
+        nodeData.type === "COMPONENT_SET" ||
+        nodeData.type === "INSTANCE") &&
+      nodeData.counterAxisSizingMode === undefined &&
+      newNode.counterAxisSizingMode === undefined
+    ) {
       // Default to AUTO (Hug) if not specified
       newNode.counterAxisSizingMode = "AUTO";
     }
@@ -2950,7 +5672,7 @@ export async function recreateNodeFromData(
         "itemSpacing",
       ].filter((prop) => nodeData.boundVariables[prop]);
       if (paddingBoundVars.length > 0) {
-        await debugConsole.log(
+        debugConsole.log(
           `  DEBUG: Node "${nodeData.name || "Unnamed"}" (${nodeData.type}) has bound variables for: ${paddingBoundVars.join(", ")}`,
         );
       }
@@ -2983,19 +5705,33 @@ export async function recreateNodeFromData(
     // Set itemSpacing (only if not already set earlier and not bound to a variable)
     // Note: We already set itemSpacing right after layoutMode, but this ensures it's set
     // if the earlier code didn't run (e.g., if layoutMode was already set)
+    // CRITICAL: Check if itemSpacing is actually bound to a variable on the node itself,
+    // not just in nodeData, to avoid overriding a successfully set binding
     if (
       nodeData.itemSpacing !== undefined &&
-      (!hasBoundVariables || !nodeData.boundVariables.itemSpacing) &&
       newNode.layoutMode !== undefined &&
       newNode.layoutMode !== "NONE"
     ) {
-      // Only set if it's different from what we already set, or if it wasn't set earlier
-      // This prevents overriding a value we already set correctly
-      if (newNode.itemSpacing !== nodeData.itemSpacing) {
-        await debugConsole.log(
-          `  Setting itemSpacing to ${nodeData.itemSpacing} for "${nodeData.name || "Unnamed"}" (late setting)`,
+      // Check if itemSpacing is actually bound to a variable on the node
+      const isActuallyBound =
+        (newNode as any).boundVariables?.itemSpacing !== undefined;
+
+      if (
+        !isActuallyBound &&
+        (!hasBoundVariables || !nodeData.boundVariables.itemSpacing)
+      ) {
+        // Only set if it's different from what we already set, or if it wasn't set earlier
+        // This prevents overriding a value we already set correctly
+        if (newNode.itemSpacing !== nodeData.itemSpacing) {
+          debugConsole.log(
+            `  Setting itemSpacing to ${nodeData.itemSpacing} for "${nodeData.name || "Unnamed"}" (late setting)`,
+          );
+          newNode.itemSpacing = nodeData.itemSpacing;
+        }
+      } else if (isActuallyBound) {
+        debugConsole.log(
+          `  Skipping late setting of itemSpacing for "${nodeData.name || "Unnamed"}" - already bound to variable`,
         );
-        newNode.itemSpacing = nodeData.itemSpacing;
       }
     }
     // Set counterAxisSpacing (vertical gap for horizontal layouts, horizontal gap for vertical layouts)
@@ -3013,7 +5749,11 @@ export async function recreateNodeFromData(
   }
 
   // Set vector and line properties
-  if (nodeData.type === "VECTOR" || nodeData.type === "LINE") {
+  if (
+    nodeData.type === "VECTOR" ||
+    nodeData.type === "BOOLEAN_OPERATION" ||
+    nodeData.type === "LINE"
+  ) {
     if (nodeData.strokeCap !== undefined) {
       newNode.strokeCap = nodeData.strokeCap;
     }
@@ -3023,9 +5763,9 @@ export async function recreateNodeFromData(
     if (nodeData.dashPattern !== undefined && nodeData.dashPattern.length > 0) {
       newNode.dashPattern = nodeData.dashPattern;
     }
-    // Set vector paths for VECTOR nodes (critical for displaying paths)
+    // Set vector paths for VECTOR and BOOLEAN_OPERATION nodes (critical for displaying paths)
     // fillGeometry is read-only, so we need to use vectorPaths instead
-    if (nodeData.type === "VECTOR") {
+    if (nodeData.type === "VECTOR" || nodeData.type === "BOOLEAN_OPERATION") {
       if (nodeData.fillGeometry !== undefined) {
         try {
           // fillGeometry is read-only, but vectorPaths is writable
@@ -3051,17 +5791,17 @@ export async function recreateNodeFromData(
             const originalData = nodeData.fillGeometry[i].data;
             const normalizedData = vectorPaths[i].data;
             if (originalData !== normalizedData) {
-              await debugConsole.log(
+              debugConsole.log(
                 `  Normalized path ${i + 1} for "${nodeData.name || "Unnamed"}": ${originalData.substring(0, 50)}... -> ${normalizedData.substring(0, 50)}...`,
               );
             }
           }
           (newNode as any).vectorPaths = vectorPaths;
-          await debugConsole.log(
+          debugConsole.log(
             `  Set vectorPaths for VECTOR "${nodeData.name || "Unnamed"}" (${vectorPaths.length} path(s))`,
           );
         } catch (error) {
-          await debugConsole.warning(
+          debugConsole.warning(
             `Error setting vectorPaths for VECTOR "${nodeData.name || "Unnamed"}": ${error}`,
           );
         }
@@ -3073,7 +5813,7 @@ export async function recreateNodeFromData(
           // If it fails, we'll log a warning
           (newNode as any).strokeGeometry = nodeData.strokeGeometry;
         } catch (error) {
-          await debugConsole.warning(
+          debugConsole.warning(
             `Error setting strokeGeometry for VECTOR "${nodeData.name || "Unnamed"}": ${error}`,
           );
         }
@@ -3092,12 +5832,96 @@ export async function recreateNodeFromData(
       ) {
         try {
           newNode.resize(nodeData.width, nodeData.height);
-          await debugConsole.log(
+          debugConsole.log(
             `  Set size for VECTOR "${nodeData.name || "Unnamed"}" to ${nodeData.width}x${nodeData.height}`,
           );
         } catch (error) {
-          await debugConsole.warning(
+          debugConsole.warning(
             `Error setting size for VECTOR "${nodeData.name || "Unnamed"}": ${error}`,
+          );
+        }
+      }
+
+      // ISSUE #4: Set constraints for VECTOR nodes IMMEDIATELY after size is set
+      // Use the constraints object API: node.constraints = { horizontal: 'SCALE', vertical: 'SCALE' }
+      // Note: Figma API uses the same values we export: MIN, CENTER, MAX, STRETCH, SCALE
+      // The constraints object API works even after appending to COMPONENTs (as proven by tests)
+      const expectedConstraintH =
+        nodeData.constraintHorizontal || nodeData.constraints?.horizontal;
+      const expectedConstraintV =
+        nodeData.constraintVertical || nodeData.constraints?.vertical;
+      if (
+        expectedConstraintH !== undefined ||
+        expectedConstraintV !== undefined
+      ) {
+        debugConsole.log(
+          `  [ISSUE #4] "${nodeData.name || "Unnamed"}" (VECTOR) - Setting constraints immediately after size: Expected H=${expectedConstraintH || "undefined"}, V=${expectedConstraintV || "undefined"}`,
+        );
+
+        // Get current constraints to preserve one if only setting the other
+        const currentConstraints = (newNode as any).constraints || {};
+        const currentH = currentConstraints.horizontal || "MIN";
+        const currentV = currentConstraints.vertical || "MIN";
+
+        // Use exported values directly (no mapping needed - Figma API uses same values)
+        const apiH = expectedConstraintH || currentH;
+        const apiV = expectedConstraintV || currentV;
+
+        try {
+          // Use the constraints object API
+          (newNode as any).constraints = {
+            horizontal: apiH,
+            vertical: apiV,
+          };
+
+          // Verify immediately after setting
+          const verifyH = (newNode as any).constraints?.horizontal;
+          const verifyV = (newNode as any).constraints?.vertical;
+          if (verifyH === apiH && verifyV === apiV) {
+            debugConsole.log(
+              `  [ISSUE #4] ✓ Constraints set successfully for "${nodeData.name || "Unnamed"}" (VECTOR): H=${verifyH}, V=${verifyV}`,
+            );
+          } else {
+            debugConsole.warning(
+              `  [ISSUE #4] ⚠️ Constraints set but verification failed! Expected H=${apiH}, V=${apiV}, got H=${verifyH || "undefined"}, V=${verifyV || "undefined"} for "${nodeData.name || "Unnamed"}"`,
+            );
+          }
+        } catch (error) {
+          debugConsole.warning(
+            `  [ISSUE #4] ✗ Failed to set constraints for "${nodeData.name || "Unnamed"}" (VECTOR): ${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
+
+        // Final verification for VECTOR constraints
+        const finalConstraintH = (newNode as any).constraints?.horizontal;
+        const finalConstraintV = (newNode as any).constraints?.vertical;
+        debugConsole.log(
+          `  [ISSUE #4] "${nodeData.name || "Unnamed"}" (VECTOR) - Final constraints after immediate setting: H=${finalConstraintH || "undefined"}, V=${finalConstraintV || "undefined"}`,
+        );
+        if (
+          expectedConstraintH !== undefined &&
+          finalConstraintH !== expectedConstraintH
+        ) {
+          debugConsole.warning(
+            `  ⚠️ ISSUE #4: "${nodeData.name || "Unnamed"}" constraintHorizontal mismatch! Expected: ${expectedConstraintH}, Got: ${finalConstraintH || "undefined"}`,
+          );
+        }
+        if (
+          expectedConstraintV !== undefined &&
+          finalConstraintV !== expectedConstraintV
+        ) {
+          debugConsole.warning(
+            `  ⚠️ ISSUE #4: "${nodeData.name || "Unnamed"}" constraintVertical mismatch! Expected: ${expectedConstraintV}, Got: ${finalConstraintV || "undefined"}`,
+          );
+        }
+        if (
+          expectedConstraintH !== undefined &&
+          expectedConstraintV !== undefined &&
+          finalConstraintH === expectedConstraintH &&
+          finalConstraintV === expectedConstraintV
+        ) {
+          debugConsole.log(
+            `  ✓ ISSUE #4: "${nodeData.name || "Unnamed"}" (VECTOR) constraints correctly set: H=${finalConstraintH}, V=${finalConstraintV}`,
           );
         }
       }
@@ -3107,71 +5931,169 @@ export async function recreateNodeFromData(
   // Set text properties for text nodes
   if (nodeData.type === "TEXT" && nodeData.characters !== undefined) {
     try {
-      // Load font first if available, otherwise use default
-      if (nodeData.fontName) {
-        try {
-          await figma.loadFontAsync(nodeData.fontName);
-          newNode.fontName = nodeData.fontName;
-        } catch {
-          // Load default font as fallback
+      // Check for _styleRef first (new format with style table)
+      let styleApplied = false;
+      debugConsole.log(
+        `  Processing TEXT node "${nodeData.name || "Unnamed"}": has _styleRef=${nodeData._styleRef !== undefined}, has styleMapping=${styleMapping !== null && styleMapping !== undefined}`,
+      );
+      if (nodeData._styleRef !== undefined) {
+        if (!styleMapping) {
+          // Style reference found but no style mapping - this should have been caught earlier
+          // but handle gracefully by falling through to individual properties
+          debugConsole.warning(
+            `Text node "${nodeData.name || "Unnamed"}" has _styleRef but styles table was not imported. Using individual properties instead.`,
+          );
+        } else {
+          const style = styleMapping.get(nodeData._styleRef);
+          if (style && style.type === "TEXT") {
+            // Load font from style before setting textStyleId or characters
+            // This is required even though the font is in the style
+            try {
+              const textStyle = style as TextStyle;
+              debugConsole.log(
+                `  Applying text style "${style.name}" to text node "${nodeData.name || "Unnamed"}" (font: ${textStyle.fontName.family} ${textStyle.fontName.style})`,
+              );
+              // Try to load the font from the style
+              // Even if fontName is bound to a variable, we can still try to load the current resolved font
+              try {
+                await figma.loadFontAsync(textStyle.fontName);
+                debugConsole.log(
+                  `  ✓ Loaded font "${textStyle.fontName.family} ${textStyle.fontName.style}" for style "${style.name}"`,
+                );
+              } catch (fontLoadError) {
+                // If font loading fails (e.g., font not available or bound to variable),
+                // try to load a default font as fallback
+                debugConsole.warning(
+                  `  Could not load font "${textStyle.fontName.family} ${textStyle.fontName.style}" for style "${style.name}": ${fontLoadError}. Trying fallback font.`,
+                );
+                try {
+                  await figma.loadFontAsync({
+                    family: "Roboto",
+                    style: "Regular",
+                  });
+                  debugConsole.log(`  ✓ Loaded fallback font "Roboto Regular"`);
+                } catch {
+                  // If even default font fails, log warning but continue
+                  debugConsole.warning(
+                    `  Could not load fallback font for style "${style.name}" on text node "${nodeData.name || "Unnamed"}"`,
+                  );
+                }
+              }
+
+              // Set style first - this applies all style properties including font
+              // Use setTextStyleIdAsync when document access is "dynamic-page"
+              await newNode.setTextStyleIdAsync(style.id);
+              debugConsole.log(
+                `  ✓ Set textStyleId to "${style.id}" for style "${style.name}"`,
+              );
+              // Now we can safely set characters after font is loaded (or attempted)
+              newNode.characters = nodeData.characters;
+              debugConsole.log(
+                `  ✓ Set characters: "${nodeData.characters.substring(0, 50)}${nodeData.characters.length > 50 ? "..." : ""}"`,
+              );
+              // Mark style as successfully applied
+              styleApplied = true;
+
+              // Even when a style is applied, we still need to set node-level properties
+              // that are NOT part of the style (alignment, auto-resize, list options, etc.)
+              // These properties are on the TextNode itself, not in the TextStyle
+              if (nodeData.textAlignHorizontal !== undefined) {
+                newNode.textAlignHorizontal = nodeData.textAlignHorizontal;
+              }
+              if (nodeData.textAlignVertical !== undefined) {
+                newNode.textAlignVertical = nodeData.textAlignVertical;
+              }
+              if (nodeData.textAutoResize !== undefined) {
+                newNode.textAutoResize = nodeData.textAutoResize;
+              }
+              if (nodeData.listOptions !== undefined) {
+                newNode.listOptions = nodeData.listOptions;
+              }
+            } catch (styleError) {
+              // If style application fails, try to fall back to individual properties
+              debugConsole.warning(
+                `Failed to apply style "${style.name}" on text node "${nodeData.name || "Unnamed"}": ${styleError}. Falling back to individual properties.`,
+              );
+              // Fall through to individual properties (styleApplied remains false)
+            }
+          } else {
+            // Style reference invalid, fall through to individual properties
+            debugConsole.warning(
+              `Text node "${nodeData.name || "Unnamed"}" has invalid _styleRef (${nodeData._styleRef}). Using individual properties instead.`,
+            );
+          }
+        }
+      }
+
+      // Only set individual properties if no valid style was applied
+      if (!styleApplied) {
+        // No style reference, use individual properties
+        // Load font first if available, otherwise use default
+        if (nodeData.fontName) {
+          try {
+            await figma.loadFontAsync(nodeData.fontName);
+            newNode.fontName = nodeData.fontName;
+          } catch {
+            // Load default font as fallback
+            await figma.loadFontAsync({
+              family: "Roboto",
+              style: "Regular",
+            });
+            newNode.fontName = { family: "Roboto", style: "Regular" };
+          }
+        } else {
+          // Load default font if no font specified
           await figma.loadFontAsync({
             family: "Roboto",
             style: "Regular",
           });
           newNode.fontName = { family: "Roboto", style: "Regular" };
         }
-      } else {
-        // Load default font if no font specified
-        await figma.loadFontAsync({
-          family: "Roboto",
-          style: "Regular",
-        });
-        newNode.fontName = { family: "Roboto", style: "Regular" };
-      }
 
-      // Set text content
-      newNode.characters = nodeData.characters;
+        // Set text content
+        newNode.characters = nodeData.characters;
 
-      // Set other text properties if they exist
-      // Check for bound variables before setting direct values
-      const hasBoundVariablesForText =
-        nodeData.boundVariables &&
-        typeof nodeData.boundVariables === "object" &&
-        (nodeData.boundVariables.fontSize ||
-          nodeData.boundVariables.letterSpacing ||
-          nodeData.boundVariables.lineHeight);
-      if (
-        nodeData.fontSize !== undefined &&
-        (!hasBoundVariablesForText || !nodeData.boundVariables.fontSize)
-      ) {
-        newNode.fontSize = nodeData.fontSize;
-      }
-      if (nodeData.textAlignHorizontal !== undefined) {
-        newNode.textAlignHorizontal = nodeData.textAlignHorizontal;
-      }
-      if (nodeData.textAlignVertical !== undefined) {
-        newNode.textAlignVertical = nodeData.textAlignVertical;
-      }
-      if (
-        nodeData.letterSpacing !== undefined &&
-        (!hasBoundVariablesForText || !nodeData.boundVariables.letterSpacing)
-      ) {
-        newNode.letterSpacing = nodeData.letterSpacing;
-      }
-      if (
-        nodeData.lineHeight !== undefined &&
-        (!hasBoundVariablesForText || !nodeData.boundVariables.lineHeight)
-      ) {
-        newNode.lineHeight = nodeData.lineHeight;
-      }
-      if (nodeData.textCase !== undefined) {
-        newNode.textCase = nodeData.textCase;
-      }
-      if (nodeData.textDecoration !== undefined) {
-        newNode.textDecoration = nodeData.textDecoration;
-      }
-      if (nodeData.textAutoResize !== undefined) {
-        newNode.textAutoResize = nodeData.textAutoResize;
+        // Set other text properties if they exist
+        // Check for bound variables before setting direct values
+        const hasBoundVariablesForText =
+          nodeData.boundVariables &&
+          typeof nodeData.boundVariables === "object" &&
+          (nodeData.boundVariables.fontSize ||
+            nodeData.boundVariables.letterSpacing ||
+            nodeData.boundVariables.lineHeight);
+        if (
+          nodeData.fontSize !== undefined &&
+          (!hasBoundVariablesForText || !nodeData.boundVariables.fontSize)
+        ) {
+          newNode.fontSize = nodeData.fontSize;
+        }
+        if (nodeData.textAlignHorizontal !== undefined) {
+          newNode.textAlignHorizontal = nodeData.textAlignHorizontal;
+        }
+        if (nodeData.textAlignVertical !== undefined) {
+          newNode.textAlignVertical = nodeData.textAlignVertical;
+        }
+        if (
+          nodeData.letterSpacing !== undefined &&
+          (!hasBoundVariablesForText || !nodeData.boundVariables.letterSpacing)
+        ) {
+          newNode.letterSpacing = nodeData.letterSpacing;
+        }
+        if (
+          nodeData.lineHeight !== undefined &&
+          (!hasBoundVariablesForText || !nodeData.boundVariables.lineHeight)
+        ) {
+          newNode.lineHeight = nodeData.lineHeight;
+        }
+        if (nodeData.textCase !== undefined) {
+          newNode.textCase = nodeData.textCase;
+        }
+        if (nodeData.textDecoration !== undefined) {
+          newNode.textDecoration = nodeData.textDecoration;
+        }
+        if (nodeData.textAutoResize !== undefined) {
+          newNode.textAutoResize = nodeData.textAutoResize;
+        }
       }
     } catch (error) {
       console.log("Error setting text properties: " + error);
@@ -3182,12 +6104,153 @@ export async function recreateNodeFromData(
         console.log("Could not set text characters: " + textError);
       }
     }
+
+    // Restore componentPropertyReferences if this node is inside a component
+    // componentPropertyReferences binds node properties to component properties
+    // Examples:
+    //   - TEXT nodes: { characters: "Component name#3041:0" } binds text content
+    //   - Any node: { visible: "Show element#3042:1" } binds visibility (BOOLEAN property)
+    //   - INSTANCE nodes: binds instance swap properties
+    if (
+      nodeData.componentPropertyReferences &&
+      typeof nodeData.componentPropertyReferences === "object"
+    ) {
+      debugConsole.log(
+        `  [BINDING] ${nodeData.type} node "${nodeData.name || "Unnamed"}" has componentPropertyReferences: ${JSON.stringify(nodeData.componentPropertyReferences)}`,
+      );
+      try {
+        // componentPropertyReferences maps node property names to component property names
+        // e.g., { characters: "Component name#3041:0" } for TEXT nodes
+        // e.g., { visible: "Show element#3042:1" } for any node with BOOLEAN property
+        // We need to map the old property name to the new property name (which may have a different ID suffix)
+        const componentPropertyRefs: Record<string, string> = {};
+        const parentComponent =
+          parentNode?.type === "COMPONENT" ? parentNode : null;
+
+        if (parentComponent) {
+          debugConsole.log(
+            `  [BINDING] Parent is a COMPONENT: "${parentComponent.name}"`,
+          );
+          // Get the component's property definitions to map old property names to new ones
+          // Handle variant components (they don't have componentPropertyDefinitions - only COMPONENT_SETs do)
+          let componentProps: ComponentPropertyDefinitions | null = null;
+          const parentComponentType = (parentComponent as any).type;
+          if (parentComponentType === "COMPONENT_SET") {
+            // Parent is a COMPONENT_SET - can access componentPropertyDefinitions directly
+            const componentSet = parentComponent as unknown as ComponentSetNode;
+            componentProps = componentSet.componentPropertyDefinitions;
+          } else if (
+            parentComponentType === "COMPONENT" &&
+            parentComponent.parent &&
+            parentComponent.parent.type === "COMPONENT_SET"
+          ) {
+            // Parent is a variant component - get properties from parent COMPONENT_SET
+            componentProps =
+              parentComponent.parent.componentPropertyDefinitions;
+          } else if (parentComponentType === "COMPONENT") {
+            // Non-variant component - can access componentPropertyDefinitions directly
+            componentProps = parentComponent.componentPropertyDefinitions;
+          }
+
+          if (!componentProps) {
+            debugConsole.log(
+              `  [BINDING] No component property definitions available for parent "${parentComponent.name}"`,
+            );
+            return;
+          }
+
+          for (const [nodeProperty, oldPropName] of Object.entries(
+            nodeData.componentPropertyReferences,
+          )) {
+            if (typeof oldPropName === "string") {
+              // Extract clean property name (without ID suffix)
+              const cleanPropName = oldPropName.split("#")[0];
+
+              // Find matching property in the component (may have different ID suffix)
+              let matchingPropKey: string | undefined = undefined;
+              if (componentProps[oldPropName]) {
+                // Exact match
+                matchingPropKey = oldPropName;
+              } else if (componentProps[cleanPropName]) {
+                // Clean name match
+                matchingPropKey = cleanPropName;
+              } else {
+                // Base name match
+                matchingPropKey = Object.keys(componentProps).find(
+                  (key) => key.split("#")[0] === cleanPropName,
+                );
+              }
+
+              if (matchingPropKey) {
+                componentPropertyRefs[nodeProperty] = matchingPropKey;
+                debugConsole.log(
+                  `  [BINDING] Restored componentPropertyReferences for ${nodeData.type} node "${nodeData.name || "Unnamed"}": ${nodeProperty} -> ${matchingPropKey}`,
+                );
+              } else {
+                debugConsole.warning(
+                  `  [BINDING] Could not find matching component property for "${oldPropName}" in component "${parentComponent.name}"`,
+                );
+              }
+            }
+          }
+
+          if (Object.keys(componentPropertyRefs).length > 0) {
+            // NOTE: componentPropertyReferences will be restored in post-processing
+            // after all children are added to the component. This ensures nodes are
+            // "symbol sublayers" (children of a Component) before we try to set bindings.
+            debugConsole.log(
+              `  [BINDING] Will restore componentPropertyReferences in post-processing: ${JSON.stringify(componentPropertyRefs)}`,
+            );
+          }
+        } else {
+          debugConsole.warning(
+            `  [BINDING] Parent is not a COMPONENT (type: ${parentNode?.type || "unknown"}) for ${nodeData.type} node "${nodeData.name || "Unnamed"}" - cannot restore componentPropertyReferences`,
+          );
+        }
+      } catch (refError) {
+        debugConsole.warning(
+          `  [BINDING] Could not restore componentPropertyReferences for ${nodeData.type} node "${nodeData.name || "Unnamed"}": ${refError}`,
+        );
+      }
+    }
+  }
+
+  // ISSUE #2: Set selectionColor property (node-level property, not on fills)
+  // selectionColor can be:
+  // 1. A direct color value (RGB object) - set it directly
+  // 2. Bound to a variable (via boundVariables.selectionColor - handled below)
+  if (nodeData.selectionColor !== undefined) {
+    const nodeName = nodeData.name || "Unnamed";
+    // Check if selectionColor is bound to a variable
+    const isBoundToVariable =
+      nodeData.boundVariables &&
+      typeof nodeData.boundVariables === "object" &&
+      nodeData.boundVariables.selectionColor !== undefined;
+
+    if (!isBoundToVariable) {
+      // Set direct value only if not bound to a variable
+      try {
+        (newNode as any).selectionColor = nodeData.selectionColor;
+        debugConsole.log(
+          `  [ISSUE #2] Set selectionColor (direct value) on "${nodeName}": ${JSON.stringify(nodeData.selectionColor)}`,
+        );
+      } catch (error) {
+        debugConsole.warning(
+          `  [ISSUE #2] Failed to set selectionColor on "${nodeName}": ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    } else {
+      debugConsole.log(
+        `  [ISSUE #2] Skipping direct selectionColor value for "${nodeName}" - will be set via bound variable`,
+      );
+    }
   }
 
   // CRITICAL: Restore bound variables as the FINAL step, after all properties are set
   // This ensures nothing can clear the bound variables after they're set
   // IMPORTANT: Padding/itemSpacing bound variables are already set earlier (right after layoutMode)
   // to ensure they're set before any direct values that might clear them
+  // IMPORTANT: width/height/minWidth/maxWidth bound variables are handled in special section after resize
   if (nodeData.boundVariables && recognizedVariables) {
     const paddingProps = [
       "paddingLeft",
@@ -3196,11 +6259,27 @@ export async function recreateNodeFromData(
       "paddingBottom",
       "itemSpacing",
     ];
+    const sizeProps = ["width", "height", "minWidth", "maxWidth"];
     for (const [propertyName, varInfo] of Object.entries(
       nodeData.boundVariables,
     )) {
-      // Skip fills (handled separately earlier) and padding properties (set earlier)
-      if (propertyName !== "fills" && !paddingProps.includes(propertyName)) {
+      // Skip fills (handled separately earlier), padding properties (set earlier),
+      // size properties (handled in special section after resize), and componentProperties
+      // componentProperties is a special nested structure for component properties bound to variables,
+      // not a node property itself
+      if (
+        propertyName !== "fills" &&
+        propertyName !== "componentProperties" &&
+        !paddingProps.includes(propertyName) &&
+        !sizeProps.includes(propertyName)
+      ) {
+        // ISSUE #2: Log when we're restoring selectionColor bound variable
+        if (propertyName === "selectionColor") {
+          const nodeName = nodeData.name || "Unnamed";
+          debugConsole.log(
+            `  [ISSUE #2] Restoring bound variable for selectionColor on "${nodeName}"`,
+          );
+        }
         // Handle all bound variables (including padding/itemSpacing)
         if (
           isVariableReference(varInfo) &&
@@ -3231,15 +6310,24 @@ export async function recreateNodeFromData(
                   newNode.boundVariables[propertyName] === undefined;
 
                 if (hasDirectValue) {
-                  await debugConsole.warning(
+                  debugConsole.warning(
                     `  Property ${propertyName} has direct value ${currentValue} which may prevent bound variable from being set`,
                   );
                 }
 
-                // Set the bound variable - this should work if no direct value conflicts
-                // If there's a direct value, Figma will reject this, but we've already skipped setting
-                // direct values when bound variables exist, so this should work
-                (newNode as any).boundVariables[propertyName] = alias;
+                // Use Figma's setBoundVariable API method (not direct assignment)
+                // Direct assignment to boundVariables doesn't work if the property already has a direct value
+                // setBoundVariable API can replace direct values with bound variables
+                try {
+                  // First, try to remove any existing binding by setting to null
+                  (newNode as any).setBoundVariable(propertyName, null);
+                } catch {
+                  // Ignore errors when removing (might not exist)
+                }
+
+                // Set the bound variable using Figma's API
+                // This can replace direct values with bound variables
+                (newNode as any).setBoundVariable(propertyName, variable);
 
                 // Verify the bound variable was set by checking if it exists and matches
                 // Re-read boundVariables to ensure we get the actual state from Figma
@@ -3252,7 +6340,7 @@ export async function recreateNodeFromData(
                   setBoundVar.type === "VARIABLE_ALIAS" &&
                   setBoundVar.id === variable.id
                 ) {
-                  await debugConsole.log(
+                  debugConsole.log(
                     `  ✓ Set bound variable for ${propertyName} on "${nodeData.name || "Unnamed"}" (${nodeData.type}): variable ${variable.name} (ID: ${variable.id.substring(0, 8)}...)`,
                   );
                 } else {
@@ -3260,17 +6348,17 @@ export async function recreateNodeFromData(
                   const actualBoundVar = (newNode as any).boundVariables?.[
                     propertyName
                   ];
-                  await debugConsole.warning(
+                  debugConsole.warning(
                     `  Failed to set bound variable for ${propertyName} on "${nodeData.name || "Unnamed"}" - bound variable not persisted. Property value: ${currentValue}, Expected: ${JSON.stringify(alias)}, Got: ${JSON.stringify(actualBoundVar)}`,
                   );
                 }
               } catch (error) {
-                await debugConsole.warning(
+                debugConsole.warning(
                   `  Error setting bound variable for ${propertyName} on "${nodeData.name || "Unnamed"}": ${error}`,
                 );
               }
             } else {
-              await debugConsole.warning(
+              debugConsole.warning(
                 `  Variable reference ${varRef} not found in recognizedVariables for ${propertyName} on "${nodeData.name || "Unnamed"}"`,
               );
             }
@@ -3280,28 +6368,45 @@ export async function recreateNodeFromData(
     }
   }
 
-  // Special handling for width/height bound variables (need to set after resize)
-  // If width or height are bound to variables, we need to set them after any resize calls
+  // Special handling for width/height/minWidth/maxWidth bound variables (need to set after resize)
+  // If width, height, minWidth, or maxWidth are bound to variables, we need to set them after any resize calls
+  // CRITICAL: Use setBoundVariable API method (not direct assignment) to properly bind variables
+  // Direct assignment to boundVariables doesn't work if the property already has a direct value
   if (
     nodeData.boundVariables &&
     recognizedVariables &&
-    (nodeData.boundVariables.width || nodeData.boundVariables.height)
+    (nodeData.boundVariables.width ||
+      nodeData.boundVariables.height ||
+      nodeData.boundVariables.minWidth ||
+      nodeData.boundVariables.maxWidth)
   ) {
     const widthVar = nodeData.boundVariables.width;
     const heightVar = nodeData.boundVariables.height;
+    const minWidthVar = nodeData.boundVariables.minWidth;
+    const maxWidthVar = nodeData.boundVariables.maxWidth;
+
     if (widthVar && isVariableReference(widthVar)) {
       const varRef = (widthVar as VariableReference)._varRef;
       if (varRef !== undefined) {
         const variable = recognizedVariables.get(String(varRef));
         if (variable) {
-          const alias: VariableAlias = {
-            type: "VARIABLE_ALIAS",
-            id: variable.id,
-          };
-          if (!newNode.boundVariables) {
-            newNode.boundVariables = {};
+          // First, try to remove any existing binding by setting to null
+          try {
+            (newNode as any).setBoundVariable("width", null);
+          } catch {
+            // Ignore errors when removing (might not exist)
           }
-          newNode.boundVariables.width = alias;
+          // Set the bound variable using Figma's API
+          try {
+            (newNode as any).setBoundVariable("width", variable);
+            debugConsole.log(
+              `  ✓ Set bound variable for width on "${nodeData.name || "Unnamed"}" (${nodeData.type}): variable ${variable.name} (ID: ${variable.id.substring(0, 8)}...)`,
+            );
+          } catch (error) {
+            debugConsole.warning(
+              `  Failed to set bound variable for width on "${nodeData.name || "Unnamed"}": ${error}`,
+            );
+          }
         }
       }
     }
@@ -3310,17 +6415,87 @@ export async function recreateNodeFromData(
       if (varRef !== undefined) {
         const variable = recognizedVariables.get(String(varRef));
         if (variable) {
-          const alias: VariableAlias = {
-            type: "VARIABLE_ALIAS",
-            id: variable.id,
-          };
-          if (!newNode.boundVariables) {
-            newNode.boundVariables = {};
+          // First, try to remove any existing binding by setting to null
+          try {
+            (newNode as any).setBoundVariable("height", null);
+          } catch {
+            // Ignore errors when removing (might not exist)
           }
-          newNode.boundVariables.height = alias;
+          // Set the bound variable using Figma's API
+          try {
+            (newNode as any).setBoundVariable("height", variable);
+            debugConsole.log(
+              `  ✓ Set bound variable for height on "${nodeData.name || "Unnamed"}" (${nodeData.type}): variable ${variable.name} (ID: ${variable.id.substring(0, 8)}...)`,
+            );
+          } catch (error) {
+            debugConsole.warning(
+              `  Failed to set bound variable for height on "${nodeData.name || "Unnamed"}": ${error}`,
+            );
+          }
         }
       }
     }
+
+    // CRITICAL: Only set minWidth/maxWidth if they're actually in the original nodeData
+    // Don't set them if they're not in the export JSON - "Fill Container" should come from layoutSizingHorizontal="FILL"
+    // However, if widthIsFill=true, we should NOT set minWidth/maxWidth because "Fill Container" should come from layoutSizingHorizontal="FILL"
+    // (which is now set AFTER appendChild, so it should work)
+    if (minWidthVar && isVariableReference(minWidthVar) && !widthIsFill) {
+      const varRef = (minWidthVar as VariableReference)._varRef;
+      if (varRef !== undefined) {
+        const variable = recognizedVariables.get(String(varRef));
+        if (variable) {
+          // First, try to remove any existing binding by setting to null
+          try {
+            (newNode as any).setBoundVariable("minWidth", null);
+          } catch {
+            // Ignore errors when removing (might not exist)
+          }
+          // Set the bound variable using Figma's API
+          try {
+            (newNode as any).setBoundVariable("minWidth", variable);
+            debugConsole.log(
+              `  ✓ Set bound variable for minWidth on "${nodeData.name || "Unnamed"}" (${nodeData.type}): variable ${variable.name} (ID: ${variable.id.substring(0, 8)}...)`,
+            );
+          } catch (error) {
+            debugConsole.warning(
+              `  Failed to set bound variable for minWidth on "${nodeData.name || "Unnamed"}": ${error}`,
+            );
+          }
+        }
+      }
+    }
+
+    if (maxWidthVar && isVariableReference(maxWidthVar) && !widthIsFill) {
+      const varRef = (maxWidthVar as VariableReference)._varRef;
+      if (varRef !== undefined) {
+        const variable = recognizedVariables.get(String(varRef));
+        if (variable) {
+          // First, try to remove any existing binding by setting to null
+          try {
+            (newNode as any).setBoundVariable("maxWidth", null);
+          } catch {
+            // Ignore errors when removing (might not exist)
+          }
+          // Set the bound variable using Figma's API
+          try {
+            (newNode as any).setBoundVariable("maxWidth", variable);
+            debugConsole.log(
+              `  ✓ Set bound variable for maxWidth on "${nodeData.name || "Unnamed"}" (${nodeData.type}): variable ${variable.name} (ID: ${variable.id.substring(0, 8)}...)`,
+            );
+          } catch (error) {
+            debugConsole.warning(
+              `  Failed to set bound variable for maxWidth on "${nodeData.name || "Unnamed"}": ${error}`,
+            );
+          }
+        }
+      }
+    }
+
+    // IMPORTANT: When minWidth or maxWidth are bound to variables, the component should behave as "Fill Container"
+    // However, layoutSizingHorizontal can only be set on children of auto-layout frames, not on components themselves
+    // So we don't set it here - it will be set when the component is used as a child in an auto-layout container
+    // The minWidth/maxWidth bound variables are already set above, which is sufficient for the component definition
   }
 
   // Recursively recreate children
@@ -3388,12 +6563,12 @@ export async function recreateNodeFromData(
     // This ensures all components are in nodeIdMapping before any instances reference them
     // We only create the component nodes themselves, not their children (that happens in second pass)
     const allComponents = collectComponents(nodeData.children);
-    await debugConsole.log(
+    debugConsole.log(
       `  First pass: Creating ${allComponents.length} COMPONENT node(s) (without children)...`,
     );
     // Log all collected components for debugging
     for (const comp of allComponents) {
-      await debugConsole.log(
+      debugConsole.log(
         `  Collected COMPONENT "${comp.name || "Unnamed"}" (ID: ${comp.id ? comp.id.substring(0, 8) + "..." : "no ID"}) for first pass`,
       );
     }
@@ -3404,10 +6579,32 @@ export async function recreateNodeFromData(
         nodeIdMapping &&
         !nodeIdMapping.has(componentData.id)
       ) {
+        // Validate component data before creation
+        if (!componentData.name && componentData.name !== "") {
+          debugConsole.warning(
+            `  Component data missing name for ID ${componentData.id?.substring(0, 8)}..., skipping creation`,
+          );
+          continue;
+        }
+
+        // Check for reasonable name length to catch corrupted data
+        if (componentData.name && componentData.name.length > 1000) {
+          debugConsole.warning(
+            `  Component name suspiciously long (${componentData.name.length} chars) for "${componentData.name?.substring(0, 50)}...", this may indicate corrupted data`,
+          );
+        }
         // Create just the component node itself (no children processing yet)
-        const componentNode = figma.createComponent();
-        if (componentData.name !== undefined) {
-          componentNode.name = componentData.name || "Unnamed Node";
+        let componentNode: ComponentNode;
+        try {
+          componentNode = figma.createComponent();
+          if (componentData.name !== undefined) {
+            componentNode.name = componentData.name || "Unnamed Node";
+          }
+        } catch (createError) {
+          debugConsole.error(
+            `  Failed to create component "${componentData.name || "Unnamed"}" (ID: ${componentData.id?.substring(0, 8)}...): ${createError instanceof Error ? createError.message : String(createError)}`,
+          );
+          throw createError; // Re-throw to trigger main error handler
         }
 
         // Add component property definitions using addComponentProperty() method
@@ -3415,6 +6612,10 @@ export async function recreateNodeFromData(
           const propDefs = componentData.componentPropertyDefinitions;
           let addedCount = 0;
           let failedCount = 0;
+
+          debugConsole.log(
+            `  Processing ${Object.keys(propDefs).length} component property definition(s) for "${componentData.name || "Unnamed"}"`,
+          );
 
           for (const [propName, propDef] of Object.entries(propDefs)) {
             try {
@@ -3432,17 +6633,75 @@ export async function recreateNodeFromData(
 
               const propType = typeMap[(propDef as any).type];
               if (!propType) {
-                await debugConsole.warning(
-                  `  Unknown property type ${(propDef as any).type} for property "${propName}" in component "${componentData.name || "Unnamed"}"`,
+                debugConsole.warning(
+                  `  Unknown property type ${(propDef as any).type} for property "${propName}" in component "${componentData.name || "Unnamed"}" - available types: ${Object.keys(typeMap).join(", ")}`,
                 );
                 failedCount++;
                 continue;
               }
 
-              const defaultValue = (propDef as any).defaultValue;
+              let defaultValue = (propDef as any).defaultValue;
+
+              // For INSTANCE_SWAP properties, resolve _instanceRef to component ID
+              if (
+                propType === "INSTANCE_SWAP" &&
+                defaultValue &&
+                typeof defaultValue === "object" &&
+                defaultValue._instanceRef !== undefined
+              ) {
+                debugConsole.log(
+                  `    Resolving INSTANCE_SWAP property "${propName}" _instanceRef: ${defaultValue._instanceRef}`,
+                );
+
+                if (!instanceTable) {
+                  debugConsole.warning(
+                    `    Cannot resolve _instanceRef for INSTANCE_SWAP property "${propName}" - instance table not available`,
+                  );
+                  failedCount++;
+                  continue;
+                }
+
+                const instanceEntry = instanceTable.getInstanceByIndex(
+                  defaultValue._instanceRef,
+                );
+                if (!instanceEntry) {
+                  debugConsole.warning(
+                    `    Instance table entry not found for index ${defaultValue._instanceRef} in INSTANCE_SWAP property "${propName}"`,
+                  );
+                  failedCount++;
+                  continue;
+                }
+
+                // Resolve the component ID from the instance entry
+                const resolvedComponentId =
+                  await resolveComponentIdFromInstanceEntry(
+                    instanceEntry,
+                    nodeIdMapping,
+                  );
+
+                if (!resolvedComponentId) {
+                  debugConsole.warning(
+                    `    Could not resolve component ID from instance entry for INSTANCE_SWAP property "${propName}"`,
+                  );
+                  failedCount++;
+                  continue;
+                }
+
+                const instanceRefIndex = defaultValue._instanceRef;
+                defaultValue = resolvedComponentId;
+                debugConsole.log(
+                  `    Resolved INSTANCE_SWAP property "${propName}" _instanceRef ${instanceRefIndex} to component ID: ${resolvedComponentId.substring(0, 8)}...`,
+                );
+              }
+
               // Property names in JSON may include IDs (e.g., "Show trailing icon#318:0")
               // Extract just the property name part (before the #)
               const cleanPropName = propName.split("#")[0];
+
+              debugConsole.log(
+                `    Adding property "${cleanPropName}" (${propType}) with default value: ${JSON.stringify(defaultValue)}`,
+              );
+
               componentNode.addComponentProperty(
                 cleanPropName,
                 propType,
@@ -3450,23 +6709,27 @@ export async function recreateNodeFromData(
               );
               addedCount++;
             } catch (error) {
-              await debugConsole.warning(
-                `  Failed to add component property "${propName}" to "${componentData.name || "Unnamed"}" in first pass: ${error}`,
+              debugConsole.warning(
+                `  Failed to add component property "${propName}" to "${componentData.name || "Unnamed"}" in first pass: ${error instanceof Error ? error.message : String(error)}`,
               );
               failedCount++;
             }
           }
 
           if (addedCount > 0) {
-            await debugConsole.log(
+            debugConsole.log(
               `  Added ${addedCount} component property definition(s) to "${componentData.name || "Unnamed"}" in first pass${failedCount > 0 ? ` (${failedCount} failed)` : ""}`,
+            );
+          } else if (failedCount > 0) {
+            debugConsole.warning(
+              `  No component properties were successfully added to "${componentData.name || "Unnamed"}" (${failedCount} failed)`,
             );
           }
         }
 
         // Store in mapping immediately so instances can find it
         nodeIdMapping.set(componentData.id, componentNode);
-        await debugConsole.log(
+        debugConsole.log(
           `  Created COMPONENT "${componentData.name || "Unnamed"}" (ID: ${componentData.id.substring(0, 8)}...) in first pass`,
         );
         // Don't append to parent yet - that happens in second pass
@@ -3480,6 +6743,13 @@ export async function recreateNodeFromData(
       if (childData._truncated) {
         continue;
       }
+      // Determine currentPlaceholderId for children:
+      // - If newNode is a placeholder, use its ID
+      // - Otherwise, pass down the currentPlaceholderId we received
+      const childPlaceholderId =
+        newNode && placeholderFrameIds && placeholderFrameIds.has(newNode.id)
+          ? newNode.id
+          : currentPlaceholderId;
       const childNode = await recreateNodeFromData(
         childData,
         newNode,
@@ -3493,6 +6763,10 @@ export async function recreateNodeFromData(
         deferredInstances, // Pass deferredInstances through for recursive calls
         nodeData, // parentNodeData - pass the parent's nodeData so children can check for auto-layout
         recognizedCollections,
+        placeholderFrameIds, // Pass placeholderFrameIds through for recursive calls
+        childPlaceholderId, // Pass currentPlaceholderId down (or placeholder ID if newNode is a placeholder)
+        styleMapping, // Pass styleMapping to apply styles
+        imageTable, // Pass imageTable to restore images
       );
       if (childNode) {
         // Only append if the child doesn't already have this node as its parent
@@ -3508,7 +6782,7 @@ export async function recreateNodeFromData(
               (childNode.parent as any).removeChild(childNode);
             } catch (error) {
               // If removeChild fails, log a warning but continue
-              await debugConsole.warning(
+              debugConsole.warning(
                 `Failed to remove child "${childNode.name || "Unnamed"}" from parent "${childNode.parent.name || "Unnamed"}": ${error}`,
               );
             }
@@ -3517,6 +6791,365 @@ export async function recreateNodeFromData(
         }
         // If childNode.parent === newNode, it's already correctly parented, so do nothing
       }
+    }
+  }
+
+  // Post-processing: Restore componentPropertyReferences for COMPONENT nodes
+  // This must happen AFTER all children are added, when nodes are "symbol sublayers"
+  if (newNode.type === "COMPONENT") {
+    const bindingData = componentBindingData.get(newNode.id);
+    if (!bindingData) {
+      // No binding data for this component, skip post-processing
+      // (This is normal for components without properties or that were reused from first pass)
+    } else {
+      const { propertyIdMapping, nodeData: componentNodeData } = bindingData;
+
+      // Recursively restore bindings for all children
+      const restoreBindings = (node: SceneNode, nodeData: any): void => {
+        // Check if this node has componentPropertyReferences in the original data
+        if (
+          nodeData.componentPropertyReferences &&
+          typeof nodeData.componentPropertyReferences === "object"
+        ) {
+          // Skip binding restoration for placeholder frames (deferred instances)
+          // The bindings will be restored when the placeholder is replaced with the actual instance
+          if (node.name && node.name.startsWith("[Deferred:")) {
+            debugConsole.log(
+              `  [BINDING] Skipping binding restoration for placeholder "${node.name}" - will be restored when instance is resolved`,
+            );
+            // Still recurse into children (they might not be placeholders)
+            if (
+              "children" in node &&
+              nodeData.children &&
+              Array.isArray(nodeData.children)
+            ) {
+              for (
+                let i = 0;
+                i < node.children.length && i < nodeData.children.length;
+                i++
+              ) {
+                const child = node.children[i];
+                const childData = nodeData.children[i];
+                restoreBindings(child, childData);
+              }
+            }
+            return;
+          }
+
+          const componentPropertyRefs: Record<string, string> = {};
+          // Get the parent component to check property types
+          const parentComponent =
+            parentNode?.type === "COMPONENT" ? parentNode : null;
+          const componentProps =
+            parentComponent?.componentPropertyDefinitions || {};
+
+          for (const [nodeProperty, oldPropId] of Object.entries(
+            nodeData.componentPropertyReferences,
+          )) {
+            if (typeof oldPropId === "string") {
+              // Look up the new property ID using the old property ID
+              const newPropId = propertyIdMapping.get(oldPropId);
+              let propIdToUse: string | null = null;
+
+              if (newPropId) {
+                propIdToUse = newPropId;
+              } else {
+                // Try matching by clean name (without ID suffix)
+                const cleanPropName = oldPropId.split("#")[0];
+                for (const [oldId, newId] of propertyIdMapping.entries()) {
+                  if (oldId.split("#")[0] === cleanPropName) {
+                    propIdToUse = newId;
+                    break;
+                  }
+                }
+              }
+
+              if (propIdToUse) {
+                // Check if this property is INSTANCE_SWAP and node is not an INSTANCE
+                // INSTANCE_SWAP properties can only be bound to INSTANCE nodes
+                const propDef = componentProps[propIdToUse];
+                if (propDef && propDef.type === "INSTANCE_SWAP") {
+                  if (node.type !== "INSTANCE") {
+                    const propName = propIdToUse.split("#")[0];
+                    const nodeName = node.name || "Unnamed";
+                    debugConsole.log(
+                      `  [BINDING] Skipping INSTANCE_SWAP property "${propName}" for ${node.type} node "${nodeName}" - INSTANCE_SWAP can only be bound to INSTANCE nodes`,
+                    );
+                    continue;
+                  }
+                }
+
+                componentPropertyRefs[nodeProperty] = propIdToUse;
+                debugConsole.log(
+                  `  [BINDING] Restoring binding for ${node.type} node "${node.name || "Unnamed"}": ${nodeProperty} -> ${propIdToUse} (was ${oldPropId})`,
+                );
+              }
+            }
+          }
+
+          // Set the binding now that the node is a child of a Component (symbol sublayer)
+          if (Object.keys(componentPropertyRefs).length > 0) {
+            try {
+              (node as any).componentPropertyReferences = componentPropertyRefs;
+              debugConsole.log(
+                `  [BINDING] ✓ Successfully restored componentPropertyReferences for ${node.type} node "${node.name || "Unnamed"}": ${JSON.stringify(componentPropertyRefs)}`,
+              );
+            } catch (error) {
+              debugConsole.warning(
+                `  [BINDING] ✗ Failed to restore componentPropertyReferences for ${node.type} node "${node.name || "Unnamed"}": ${error}`,
+              );
+            }
+          }
+        }
+
+        // Recursively process children
+        if (
+          "children" in node &&
+          nodeData.children &&
+          Array.isArray(nodeData.children)
+        ) {
+          // Match children by index (assuming order is preserved)
+          for (
+            let i = 0;
+            i < node.children.length && i < nodeData.children.length;
+            i++
+          ) {
+            const child = node.children[i];
+            const childData = nodeData.children[i];
+            restoreBindings(child, childData);
+          }
+        }
+      };
+
+      // Start restoration from the component's children
+      if (
+        "children" in newNode &&
+        componentNodeData.children &&
+        Array.isArray(componentNodeData.children)
+      ) {
+        for (
+          let i = 0;
+          i < newNode.children.length && i < componentNodeData.children.length;
+          i++
+        ) {
+          restoreBindings(newNode.children[i], componentNodeData.children[i]);
+        }
+      }
+
+      // Clean up binding data from Map after use
+      componentBindingData.delete(newNode.id);
+    }
+  }
+
+  // Post-processing: Restore componentPropertyReferences for COMPONENT_SET nodes
+  // This must happen AFTER all children are added, when nodes are "symbol sublayers"
+  // For COMPONENT_SET nodes, properties are defined on the COMPONENT_SET, but bindings
+  // need to be restored to child nodes within each variant component
+  if (newNode.type === "COMPONENT_SET") {
+    const bindingData = componentBindingData.get(newNode.id);
+    if (!bindingData) {
+      // No binding data for this component set, skip post-processing
+      // (This is normal for component sets without properties)
+    } else {
+      const { propertyIdMapping, nodeData: componentSetNodeData } = bindingData;
+
+      // Recursively restore bindings for all children within each variant
+      const restoreBindings = (node: SceneNode, nodeData: any): void => {
+        // Check if this node has componentPropertyReferences in the original data
+        if (
+          nodeData.componentPropertyReferences &&
+          typeof nodeData.componentPropertyReferences === "object"
+        ) {
+          // Skip binding restoration for placeholder frames (deferred instances)
+          // The bindings will be restored when the placeholder is replaced with the actual instance
+          if (node.name && node.name.startsWith("[Deferred:")) {
+            debugConsole.log(
+              `  [BINDING] Skipping binding restoration for placeholder "${node.name}" - will be restored when instance is resolved`,
+            );
+            // Still recurse into children (they might not be placeholders)
+            if (
+              "children" in node &&
+              nodeData.children &&
+              Array.isArray(nodeData.children)
+            ) {
+              for (
+                let i = 0;
+                i < node.children.length && i < nodeData.children.length;
+                i++
+              ) {
+                const child = node.children[i];
+                const childData = nodeData.children[i];
+                restoreBindings(child, childData);
+              }
+            }
+            return;
+          }
+
+          const componentPropertyRefs: Record<string, string> = {};
+          // For COMPONENT_SET, properties are defined on the COMPONENT_SET itself
+          // But we need to find the parent variant component to check property types
+          let parentComponent: ComponentNode | null = null;
+          let current: any = node.parent;
+          while (current) {
+            if (current.type === "COMPONENT") {
+              parentComponent = current;
+              break;
+            }
+            current = current.parent;
+          }
+          // Get component property definitions, handling variant components
+          let componentProps: ComponentPropertyDefinitions | null = null;
+          if (parentComponent) {
+            const parentComponentType = (parentComponent as any).type;
+            if (parentComponentType === "COMPONENT_SET") {
+              const componentSet =
+                parentComponent as unknown as ComponentSetNode;
+              componentProps = componentSet.componentPropertyDefinitions;
+            } else if (
+              parentComponentType === "COMPONENT" &&
+              parentComponent.parent &&
+              parentComponent.parent.type === "COMPONENT_SET"
+            ) {
+              // Parent is a variant component - get properties from parent COMPONENT_SET
+              componentProps =
+                parentComponent.parent.componentPropertyDefinitions;
+            } else if (parentComponentType === "COMPONENT") {
+              // Non-variant component - can access componentPropertyDefinitions directly
+              componentProps = parentComponent.componentPropertyDefinitions;
+            }
+          }
+          // Fallback to COMPONENT_SET's own properties (newNode is a COMPONENT_SET in this context)
+          if (!componentProps && newNode.type === "COMPONENT_SET") {
+            componentProps = newNode.componentPropertyDefinitions;
+          }
+          // Final fallback to empty object
+          if (!componentProps) {
+            componentProps = {};
+          }
+
+          for (const [nodeProperty, oldPropId] of Object.entries(
+            nodeData.componentPropertyReferences,
+          )) {
+            if (typeof oldPropId === "string") {
+              // Look up the new property ID using the old property ID
+              const newPropId = propertyIdMapping.get(oldPropId);
+              let propIdToUse: string | null = null;
+
+              if (newPropId) {
+                propIdToUse = newPropId;
+              } else {
+                // Try matching by clean name (without ID suffix)
+                const cleanPropName = oldPropId.split("#")[0];
+                for (const [oldId, newId] of propertyIdMapping.entries()) {
+                  if (oldId.split("#")[0] === cleanPropName) {
+                    propIdToUse = newId;
+                    break;
+                  }
+                }
+              }
+
+              if (propIdToUse) {
+                // Check if this property is INSTANCE_SWAP and node is not an INSTANCE
+                // INSTANCE_SWAP properties can only be bound to INSTANCE nodes
+                const propDef = componentProps[propIdToUse];
+                if (propDef && propDef.type === "INSTANCE_SWAP") {
+                  if (node.type !== "INSTANCE") {
+                    const propName = propIdToUse.split("#")[0];
+                    const nodeName = node.name || "Unnamed";
+                    debugConsole.log(
+                      `  [BINDING] Skipping INSTANCE_SWAP property "${propName}" for ${node.type} node "${nodeName}" - INSTANCE_SWAP can only be bound to INSTANCE nodes`,
+                    );
+                    continue;
+                  }
+                }
+
+                componentPropertyRefs[nodeProperty] = propIdToUse;
+                debugConsole.log(
+                  `  [BINDING] Restoring binding for ${node.type} node "${node.name || "Unnamed"}": ${nodeProperty} -> ${propIdToUse} (was ${oldPropId})`,
+                );
+              }
+            }
+          }
+
+          // Set the binding now that the node is a child of a Component (symbol sublayer)
+          if (Object.keys(componentPropertyRefs).length > 0) {
+            try {
+              (node as any).componentPropertyReferences = componentPropertyRefs;
+              debugConsole.log(
+                `  [BINDING] ✓ Successfully restored componentPropertyReferences for ${node.type} node "${node.name || "Unnamed"}": ${JSON.stringify(componentPropertyRefs)}`,
+              );
+            } catch (error) {
+              debugConsole.warning(
+                `  [BINDING] ✗ Failed to restore componentPropertyReferences for ${node.type} node "${node.name || "Unnamed"}": ${error}`,
+              );
+            }
+          }
+        }
+
+        // Recursively process children
+        if (
+          "children" in node &&
+          nodeData.children &&
+          Array.isArray(nodeData.children)
+        ) {
+          // Match children by index (assuming order is preserved)
+          for (
+            let i = 0;
+            i < node.children.length && i < nodeData.children.length;
+            i++
+          ) {
+            const child = node.children[i];
+            const childData = nodeData.children[i];
+            restoreBindings(child, childData);
+          }
+        }
+      };
+
+      // For COMPONENT_SET, restore bindings for each variant component and their children
+      if (
+        "children" in newNode &&
+        componentSetNodeData.children &&
+        Array.isArray(componentSetNodeData.children)
+      ) {
+        // Iterate through variant components (children of the COMPONENT_SET)
+        for (
+          let i = 0;
+          i < newNode.children.length &&
+          i < componentSetNodeData.children.length;
+          i++
+        ) {
+          const variant = newNode.children[i];
+          const variantData = componentSetNodeData.children[i];
+
+          if (
+            variant.type === "COMPONENT" &&
+            variantData.type === "COMPONENT"
+          ) {
+            debugConsole.log(
+              `  [BINDING] Restoring bindings for variant "${variant.name || "Unnamed"}" in COMPONENT_SET "${newNode.name || "Unnamed"}"`,
+            );
+            // Restore bindings for all children within this variant
+            if (
+              "children" in variant &&
+              variantData.children &&
+              Array.isArray(variantData.children)
+            ) {
+              for (
+                let j = 0;
+                j < variant.children.length && j < variantData.children.length;
+                j++
+              ) {
+                const child = variant.children[j];
+                const childData = variantData.children[j];
+                restoreBindings(child, childData);
+              }
+            }
+          }
+        }
+      }
+
+      // Clean up binding data from Map after use
+      componentBindingData.delete(newNode.id);
     }
   }
 
@@ -3534,7 +7167,7 @@ export async function recreateNodeFromData(
         (newNode.parent as any).removeChild(newNode);
       } catch (error) {
         // If removeChild fails, log a warning but continue
-        await debugConsole.warning(
+        debugConsole.warning(
           `Failed to remove node "${newNode.name || "Unnamed"}" from parent "${newNode.parent.name || "Unnamed"}": ${error}`,
         );
       }
@@ -3543,8 +7176,52 @@ export async function recreateNodeFromData(
   }
   // If newNode.parent === parentNode, it's already correctly parented, so do nothing
 
+  // CRITICAL: Set layoutSizingHorizontal and layoutSizingVertical AFTER appendChild
+  // These properties can only be set on children that are already appended to an auto-layout parent frame
+  // The API requires: 1) Parent has layoutMode set, 2) Child is appended, 3) Then we can set layoutSizingHorizontal
+  if (
+    (newNode.type === "FRAME" ||
+      newNode.type === "COMPONENT" ||
+      newNode.type === "COMPONENT_SET" ||
+      newNode.type === "INSTANCE") &&
+    parentNode &&
+    parentHasAutoLayout
+  ) {
+    // Verify parent actually has auto-layout (double-check after appendChild)
+    const parentActuallyHasAutoLayout =
+      "layoutMode" in parentNode &&
+      parentNode.layoutMode !== undefined &&
+      parentNode.layoutMode !== "NONE";
+
+    if (parentActuallyHasAutoLayout) {
+      if ((nodeData as any).layoutSizingHorizontal !== undefined) {
+        try {
+          (newNode as any).layoutSizingHorizontal = (
+            nodeData as any
+          ).layoutSizingHorizontal;
+        } catch (error) {
+          debugConsole.warning(
+            `  ⚠️ Failed to set layoutSizingHorizontal for "${nodeData.name || "Unnamed"}": ${error}`,
+          );
+        }
+      }
+      if ((nodeData as any).layoutSizingVertical !== undefined) {
+        try {
+          (newNode as any).layoutSizingVertical = (
+            nodeData as any
+          ).layoutSizingVertical;
+        } catch (error) {
+          debugConsole.warning(
+            `  ⚠️ Failed to set layoutSizingVertical for "${nodeData.name || "Unnamed"}": ${error}`,
+          );
+        }
+      }
+    }
+  }
+
   // FINAL CHECK: Ensure itemSpacing is set correctly after all operations
   // Sometimes Figma resets itemSpacing when children are appended or other operations occur
+  // CRITICAL: Only fix if itemSpacing is NOT bound to a variable - never override a binding!
   if (
     (newNode.type === "FRAME" ||
       newNode.type === "COMPONENT" ||
@@ -3553,26 +7230,42 @@ export async function recreateNodeFromData(
     nodeData.layoutMode !== "NONE" &&
     nodeData.itemSpacing !== undefined
   ) {
-    const hasBoundVariableForItemSpacing =
+    // Check if itemSpacing is actually bound to a variable on the node itself
+    // This is the definitive check - if it's bound, we must NOT override it
+    const isActuallyBound =
+      (newNode as any).boundVariables?.itemSpacing !== undefined;
+
+    // Also check if it should be bound according to nodeData
+    const shouldBeBound =
       nodeData.boundVariables &&
       typeof nodeData.boundVariables === "object" &&
       nodeData.boundVariables.itemSpacing;
 
-    if (!hasBoundVariableForItemSpacing) {
+    if (isActuallyBound) {
+      debugConsole.log(
+        `  FINAL CHECK: itemSpacing is bound to variable for "${nodeData.name || "Unnamed"}" - skipping direct value fix`,
+      );
+    } else if (!shouldBeBound) {
+      // Only fix if it's not bound and shouldn't be bound
       const currentValue = newNode.itemSpacing;
       if (currentValue !== nodeData.itemSpacing) {
-        await debugConsole.log(
+        debugConsole.log(
           `  FINAL FIX: Resetting itemSpacing to ${nodeData.itemSpacing} for "${nodeData.name || "Unnamed"}" (was ${currentValue})`,
         );
         newNode.itemSpacing = nodeData.itemSpacing;
-        await debugConsole.log(
+        debugConsole.log(
           `  FINAL FIX: Verified itemSpacing is now ${newNode.itemSpacing}`,
         );
       } else {
-        await debugConsole.log(
+        debugConsole.log(
           `  FINAL CHECK: itemSpacing is already correct (${currentValue}) for "${nodeData.name || "Unnamed"}"`,
         );
       }
+    } else {
+      // Should be bound but isn't - this is the bug we're trying to fix
+      debugConsole.warning(
+        `  FINAL CHECK: itemSpacing should be bound to variable for "${nodeData.name || "Unnamed"}" but binding is missing!`,
+      );
     }
   }
 
@@ -3608,7 +7301,7 @@ async function setVariantPropertiesOnInstances(
   };
 
   const allInstances = findInstances(page);
-  await debugConsole.log(
+  debugConsole.log(
     `  Found ${allInstances.length} instance(s) to process for variant properties`,
   );
 
@@ -3634,16 +7327,16 @@ async function setVariantPropertiesOnInstances(
         );
         if (instanceTableIndex !== undefined) {
           matchingEntry = allInstancesData[instanceTableIndex];
-          await debugConsole.log(
+          debugConsole.log(
             `  Found instance table index ${instanceTableIndex} for instance "${instanceNode.name}" (ID: ${instanceNode.id.substring(0, 8)}...)`,
           );
         } else {
-          await debugConsole.log(
+          debugConsole.log(
             `  No instance table index mapping found for instance "${instanceNode.name}" (ID: ${instanceNode.id.substring(0, 8)}...), using fallback matching`,
           );
         }
       } else {
-        await debugConsole.log(
+        debugConsole.log(
           `  No instance table map found, using fallback matching for instance "${instanceNode.name}"`,
         );
       }
@@ -3660,7 +7353,7 @@ async function setVariantPropertiesOnInstances(
               const componentNode = nodeIdMapping.get(entry.componentNodeId);
               if (componentNode && componentNode.id === mainComponent.id) {
                 matchingEntry = entry;
-                await debugConsole.log(
+                debugConsole.log(
                   `  Matched instance "${instanceNode.name}" to instance table entry ${indexStr} by component (less precise)`,
                 );
                 break;
@@ -3671,7 +7364,7 @@ async function setVariantPropertiesOnInstances(
       }
 
       if (!matchingEntry) {
-        await debugConsole.log(
+        debugConsole.log(
           `  No matching entry found for instance "${instanceNode.name}" (main component: ${mainComponent.name}, ID: ${mainComponent.id.substring(0, 8)}...)`,
         );
         skippedCount++;
@@ -3679,14 +7372,14 @@ async function setVariantPropertiesOnInstances(
       }
 
       if (!matchingEntry.variantProperties) {
-        await debugConsole.log(
+        debugConsole.log(
           `  Instance table entry for "${instanceNode.name}" has no variant properties`,
         );
         skippedCount++;
         continue;
       }
 
-      await debugConsole.log(
+      debugConsole.log(
         `  Instance "${instanceNode.name}" matched to entry with variant properties: ${JSON.stringify(matchingEntry.variantProperties)}`,
       );
 
@@ -3719,7 +7412,7 @@ async function setVariantPropertiesOnInstances(
         if (Object.keys(validProperties).length > 0) {
           instanceNode.setProperties(validProperties);
           processedCount++;
-          await debugConsole.log(
+          debugConsole.log(
             `  ✓ Set variant properties on instance "${instanceNode.name}": ${JSON.stringify(validProperties)}`,
           );
         } else {
@@ -3730,13 +7423,13 @@ async function setVariantPropertiesOnInstances(
       }
     } catch (error) {
       errorCount++;
-      await debugConsole.warning(
+      debugConsole.warning(
         `  Failed to set variant properties on instance "${instanceNode.name}": ${error}`,
       );
     }
   }
 
-  await debugConsole.log(
+  debugConsole.log(
     `  Variant properties set: ${processedCount} processed, ${skippedCount} skipped, ${errorCount} errors`,
   );
 }
@@ -3928,7 +7621,13 @@ async function matchCollection(
  */
 function validateMetadata(jsonData: any): {
   success: boolean;
-  metadata?: { guid: string; name: string; version?: number };
+  metadata?: {
+    guid: string;
+    name: string;
+    version?: number;
+    description?: string;
+    url?: string;
+  };
   error?: string;
 } {
   if (!jsonData.metadata) {
@@ -3959,6 +7658,8 @@ function validateMetadata(jsonData: any): {
       guid: metadata.guid,
       name: metadata.name,
       version: metadata.version,
+      description: metadata.description,
+      url: metadata.url,
     },
   };
 }
@@ -4001,7 +7702,7 @@ export function loadAndExpandJson(jsonData: any): {
 /**
  * Stage 3: Load collection table
  */
-function loadCollectionTable(expandedJsonData: any): {
+export function loadCollectionTable(expandedJsonData: any): {
   success: boolean;
   collectionTable?: CollectionTable;
   error?: string;
@@ -4055,7 +7756,7 @@ async function matchCollections(
   for (const [index, entry] of Object.entries(collections)) {
     // Skip remote collections (they're handled separately)
     if (entry.isLocal === false) {
-      await debugConsole.log(
+      debugConsole.log(
         `Skipping remote collection: "${entry.collectionName}" (index ${index})`,
       );
       continue;
@@ -4066,7 +7767,7 @@ async function matchCollections(
     const preCreated = preCreatedCollections?.get(normalizedName);
 
     if (preCreated) {
-      await debugConsole.log(
+      debugConsole.log(
         `✓ Using pre-created collection: "${normalizedName}" (index ${index})`,
       );
       recognizedCollections.set(index, preCreated);
@@ -4076,12 +7777,12 @@ async function matchCollections(
     const match = await matchCollection(entry);
 
     if (match.matchType === "recognized") {
-      await debugConsole.log(
+      debugConsole.log(
         `✓ Recognized collection by GUID: "${entry.collectionName}" (index ${index})`,
       );
       recognizedCollections.set(index, match.collection!);
     } else if (match.matchType === "potential") {
-      await debugConsole.log(
+      debugConsole.log(
         `? Potential match by name: "${entry.collectionName}" (index ${index})`,
       );
       potentialMatches.set(index, {
@@ -4089,14 +7790,14 @@ async function matchCollections(
         collection: match.collection!,
       });
     } else {
-      await debugConsole.log(
+      debugConsole.log(
         `✗ No match found for collection: "${entry.collectionName}" (index ${index}) - will create new`,
       );
       collectionsToCreate.set(index, entry);
     }
   }
 
-  await debugConsole.log(
+  debugConsole.log(
     `Collection matching complete: ${recognizedCollections.size} recognized, ${potentialMatches.size} potential matches, ${collectionsToCreate.size} to create`,
   );
 
@@ -4129,7 +7830,7 @@ async function promptForPotentialMatches(
 
   // If collection choices are provided (from wizard), use them instead of prompting
   if (collectionChoices) {
-    await debugConsole.log(
+    debugConsole.log(
       `Using wizard selections for ${potentialMatches.size} potential match(es)...`,
     );
 
@@ -4152,17 +7853,17 @@ async function promptForPotentialMatches(
         : collection.name;
 
       if (shouldUseExisting) {
-        await debugConsole.log(
+        debugConsole.log(
           `✓ Wizard selection: Using existing collection "${displayName}" (index ${index})`,
         );
         recognizedCollections.set(index, collection);
 
         await ensureCollectionModes(collection, entry.modes);
-        await debugConsole.log(
+        debugConsole.log(
           `  ✓ Ensured modes for collection "${displayName}" (${entry.modes.length} mode(s))`,
         );
       } else {
-        await debugConsole.log(
+        debugConsole.log(
           `✗ Wizard selection: Will create new collection for "${entry.collectionName}" (index ${index})`,
         );
         collectionsToCreate.set(index, entry);
@@ -4172,7 +7873,7 @@ async function promptForPotentialMatches(
   }
 
   // Otherwise, prompt the user (legacy behavior)
-  await debugConsole.log(
+  debugConsole.log(
     `Prompting user for ${potentialMatches.size} potential match(es)...`,
   );
 
@@ -4183,7 +7884,7 @@ async function promptForPotentialMatches(
         : collection.name;
 
       const message = `Found existing "${displayName}" variable collection. Should I use it?`;
-      await debugConsole.log(
+      debugConsole.log(
         `Prompting user about potential match: "${displayName}"`,
       );
       await pluginPrompt.prompt(message, {
@@ -4192,17 +7893,17 @@ async function promptForPotentialMatches(
         timeoutMs: -1,
       });
 
-      await debugConsole.log(
+      debugConsole.log(
         `✓ User confirmed: Using existing collection "${displayName}" (index ${index})`,
       );
       recognizedCollections.set(index, collection);
 
       await ensureCollectionModes(collection, entry.modes);
-      await debugConsole.log(
+      debugConsole.log(
         `  ✓ Ensured modes for collection "${displayName}" (${entry.modes.length} mode(s))`,
       );
     } catch {
-      await debugConsole.log(
+      debugConsole.log(
         `✗ User rejected: Will create new collection for "${entry.collectionName}" (index ${index})`,
       );
       collectionsToCreate.set(index, entry);
@@ -4225,7 +7926,7 @@ async function ensureModesForRecognizedCollections(
     return;
   }
 
-  await debugConsole.log(`Ensuring modes exist for recognized collections...`);
+  debugConsole.log(`Ensuring modes exist for recognized collections...`);
 
   const collections = collectionTable.getTable();
   for (const [index, collection] of recognizedCollections.entries()) {
@@ -4234,7 +7935,7 @@ async function ensureModesForRecognizedCollections(
       const wasUserConfirmed = potentialMatches.has(index);
       if (!wasUserConfirmed) {
         await ensureCollectionModes(collection, entry.modes);
-        await debugConsole.log(
+        debugConsole.log(
           `  ✓ Ensured modes for collection "${collection.name}" (${entry.modes.length} mode(s))`,
         );
       }
@@ -4255,7 +7956,7 @@ async function createNewCollections(
     return;
   }
 
-  await debugConsole.log(
+  debugConsole.log(
     `Processing ${collectionsToCreate.size} collection(s) to create...`,
   );
 
@@ -4265,7 +7966,7 @@ async function createNewCollections(
     // Check if we have a pre-created collection for this normalized name
     const preCreated = preCreatedCollections?.get(normalizedName);
     if (preCreated) {
-      await debugConsole.log(
+      debugConsole.log(
         `Reusing pre-created collection: "${normalizedName}" (index ${index}, id: ${preCreated.id.substring(0, 8)}...)`,
       );
       recognizedCollections.set(index, preCreated);
@@ -4279,11 +7980,11 @@ async function createNewCollections(
     // No pre-created collection, create a new one
     const uniqueName = await findUniqueCollectionName(normalizedName);
     if (uniqueName !== normalizedName) {
-      await debugConsole.log(
+      debugConsole.log(
         `Creating collection: "${uniqueName}" (normalized: "${normalizedName}" - name conflict resolved)`,
       );
     } else {
-      await debugConsole.log(`Creating collection: "${uniqueName}"`);
+      debugConsole.log(`Creating collection: "${uniqueName}"`);
     }
 
     const newCollection = figma.variables.createVariableCollection(uniqueName);
@@ -4305,26 +8006,24 @@ async function createNewCollections(
         COLLECTION_GUID_KEY,
         guidToStore,
       );
-      await debugConsole.log(
-        `  Stored GUID: ${guidToStore.substring(0, 8)}...`,
-      );
+      debugConsole.log(`  Stored GUID: ${guidToStore.substring(0, 8)}...`);
     }
 
     await ensureCollectionModes(newCollection, entry.modes);
-    await debugConsole.log(
+    debugConsole.log(
       `  ✓ Created collection "${uniqueName}" with ${entry.modes.length} mode(s)`,
     );
 
     recognizedCollections.set(index, newCollection);
   }
 
-  await debugConsole.log("Collection creation complete");
+  debugConsole.log("Collection creation complete");
 }
 
 /**
  * Stage 8: Load variable table
  */
-function loadVariableTable(expandedJsonData: any): {
+export function loadVariableTable(expandedJsonData: any): {
   success: boolean;
   variableTable?: VariableTable;
   error?: string;
@@ -4353,22 +8052,20 @@ function loadVariableTable(expandedJsonData: any): {
 /**
  * Stage 9: Match and create variables
  */
-async function matchAndCreateVariables(
+export async function matchAndCreateVariables(
   variableTable: VariableTable,
   collectionTable: CollectionTable,
   recognizedCollections: Map<string, VariableCollection>,
-  newlyCreatedCollections: VariableCollection[],
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _newlyCreatedCollections: VariableCollection[], // Unused - kept for API compatibility
 ): Promise<{
   recognizedVariables: Map<string, Variable>;
   newlyCreatedVariables: Variable[];
 }> {
   const recognizedVariables = new Map<string, Variable>();
   const newlyCreatedVariables: Variable[] = [];
-  const newlyCreatedCollectionIds = new Set(
-    newlyCreatedCollections.map((c) => c.id),
-  );
 
-  await debugConsole.log("Matching and creating variables in collections...");
+  debugConsole.log("Matching and creating variables in collections...");
 
   const variables = variableTable.getTable();
   const collectionStats = new Map<
@@ -4395,10 +8092,6 @@ async function matchAndCreateVariables(
     }
     const stats = collectionStats.get(collection.id)!;
 
-    const isNewlyCreatedCollection = newlyCreatedCollectionIds.has(
-      collection.id,
-    );
-
     let variableType: string;
     if (typeof entry.variableType === "number") {
       const typeMap: Record<number, string> = {
@@ -4422,7 +8115,7 @@ async function matchAndCreateVariables(
         recognizedVariables.set(index, existingVariable);
         stats.existing++;
       } else {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Type mismatch for variable "${entry.variableName}" in collection "${collection.name}": expected ${variableType}, found ${existingVariable.resolvedType}. Creating new variable with incremented name.`,
         );
         const uniqueName = await findUniqueVariableName(
@@ -4439,9 +8132,9 @@ async function matchAndCreateVariables(
           variableTable,
           collectionTable,
         );
-        if (!isNewlyCreatedCollection) {
-          newlyCreatedVariables.push(newVariable);
-        }
+        // Track ALL variables we create, regardless of collection type
+        // We'll delete them individually during cleanup (never delete collections)
+        newlyCreatedVariables.push(newVariable);
         recognizedVariables.set(index, newVariable);
         stats.created++;
       }
@@ -4455,25 +8148,23 @@ async function matchAndCreateVariables(
         variableTable,
         collectionTable,
       );
-      if (!isNewlyCreatedCollection) {
-        newlyCreatedVariables.push(newVariable);
-      }
+      // Track ALL variables we create, regardless of collection type
+      // We'll delete them individually during cleanup (never delete collections)
+      newlyCreatedVariables.push(newVariable);
       recognizedVariables.set(index, newVariable);
       stats.created++;
     }
   }
 
-  await debugConsole.log("Variable processing complete:");
+  debugConsole.log("Variable processing complete:");
   for (const stats of collectionStats.values()) {
-    await debugConsole.log(
+    debugConsole.log(
       `  "${stats.collectionName}": ${stats.existing} existing, ${stats.created} created`,
     );
   }
 
   // Final verification: Read back all COLOR variables to ensure values persisted
-  await debugConsole.log(
-    "Final verification: Reading back all COLOR variables...",
-  );
+  debugConsole.log("Final verification: Reading back all COLOR variables...");
   let verifiedCount = 0;
   let whiteCount = 0;
   for (const variable of newlyCreatedVariables) {
@@ -4483,14 +8174,14 @@ async function matchAndCreateVariables(
         variable.variableCollectionId,
       );
       if (!collection) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `  ⚠️ Variable "${variable.name}" has no variableCollection (ID: ${variable.variableCollectionId})`,
         );
         continue;
       }
       const allModes = collection.modes;
       if (!allModes || allModes.length === 0) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `  ⚠️ Variable "${variable.name}" collection has no modes`,
         );
         continue;
@@ -4506,26 +8197,26 @@ async function matchAndCreateVariables(
             Math.abs(rgb.b - 1) < 0.01;
           if (isWhite) {
             whiteCount++;
-            await debugConsole.warning(
+            debugConsole.warning(
               `  ⚠️ Variable "${variable.name}" mode "${mode.name}" is WHITE: r=${rgb.r.toFixed(3)}, g=${rgb.g.toFixed(3)}, b=${rgb.b.toFixed(3)}`,
             );
           } else {
             verifiedCount++;
-            await debugConsole.log(
+            debugConsole.log(
               `  ✓ Variable "${variable.name}" mode "${mode.name}" has color: r=${rgb.r.toFixed(3)}, g=${rgb.g.toFixed(3)}, b=${rgb.b.toFixed(3)}`,
             );
           }
         } else if (value && typeof value === "object" && "type" in value) {
           // Variable alias - skip
         } else {
-          await debugConsole.warning(
+          debugConsole.warning(
             `  ⚠️ Variable "${variable.name}" mode "${mode.name}" has unexpected value type: ${JSON.stringify(value)}`,
           );
         }
       }
     }
   }
-  await debugConsole.log(
+  debugConsole.log(
     `Final verification complete: ${verifiedCount} color variables verified, ${whiteCount} white variables found`,
   );
 
@@ -4546,6 +8237,22 @@ function loadInstanceTable(expandedJsonData: any): InstanceTable | null {
   try {
     const instanceTable = InstanceTable.fromTable(expandedJsonData.instances);
     return instanceTable;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Loads the image table from expanded JSON data
+ */
+function loadImageTable(expandedJsonData: any): ImageTable | null {
+  if (!expandedJsonData.images) {
+    return null;
+  }
+
+  try {
+    const imageTable = ImageTable.fromTable(expandedJsonData.images);
+    return imageTable;
   } catch {
     return null;
   }
@@ -4672,7 +8379,16 @@ async function createRemoteInstances(
   recognizedVariables: Map<string, Variable>,
   recognizedCollections: Map<string, VariableCollection>,
   constructionIcon: string = "", // If provided, prepend this icon to REMOTES page name. Used for wizard imports.
-): Promise<Map<number, ComponentNode>> {
+  styleMapping: Map<number, BaseStyle> | null = null, // Map of old style table index -> new style instance
+  imageTable: ImageTable | null = null, // Image table for restoring images from Base64
+): Promise<{
+  remoteComponentMap: Map<number, ComponentNode>;
+  dependentComponents: Array<{
+    guid: string;
+    version: number | undefined;
+    pageId: string;
+  }>;
+}> {
   const allInstances = instanceTable.getSerializedTable();
   const remoteInstances = Object.values(allInstances).filter(
     (entry: any) => entry.instanceType === "remote",
@@ -4680,13 +8396,18 @@ async function createRemoteInstances(
 
   // Map of instance table index -> created component node
   const remoteComponentMap = new Map<number, ComponentNode>();
+  const dependentComponents: Array<{
+    guid: string;
+    version: number | undefined;
+    pageId: string;
+  }> = [];
 
   if (remoteInstances.length === 0) {
-    await debugConsole.log("No remote instances found");
-    return remoteComponentMap;
+    debugConsole.log("No remote instances found");
+    return { remoteComponentMap, dependentComponents };
   }
 
-  await debugConsole.log(
+  debugConsole.log(
     `Processing ${remoteInstances.length} remote instance(s)...`,
   );
 
@@ -4703,9 +8424,9 @@ async function createRemoteInstances(
   if (!remotesPage) {
     remotesPage = figma.createPage();
     remotesPage.name = remotesPageName;
-    await debugConsole.log("Created REMOTES page");
+    debugConsole.log("Created REMOTES page");
   } else {
-    await debugConsole.log("Found existing REMOTES page");
+    debugConsole.log("Found existing REMOTES page");
     // Update name if it doesn't have the construction icon but we're in a wizard import
     if (constructionIcon && !remotesPage.name.startsWith(constructionIcon)) {
       remotesPage.name = remotesPageName;
@@ -4715,8 +8436,8 @@ async function createRemoteInstances(
   // Mark REMOTES page as "under review" if remote instances are being created
   // (This indicates it's being used as part of a wizard import)
   if (remoteInstances.length > 0) {
-    remotesPage.setPluginData("RecursicaUnderReview", "true");
-    await debugConsole.log("Marked REMOTES page as under review");
+    // REMOTES page is identified by importResult.createdPageIds if it was created, no need for UNDER_REVIEW_KEY
+    debugConsole.log("Marked REMOTES page as under review");
   }
 
   // Check if title/description already exist
@@ -4759,7 +8480,7 @@ async function createRemoteInstances(
     titleFrame.appendChild(descriptionText);
 
     remotesPage.appendChild(titleFrame);
-    await debugConsole.log("Created title and description on REMOTES page");
+    debugConsole.log("Created title and description on REMOTES page");
   }
 
   // Process each remote instance
@@ -4771,12 +8492,12 @@ async function createRemoteInstances(
     }
 
     const instanceIndex = parseInt(indexStr, 10);
-    await debugConsole.log(
+    debugConsole.log(
       `Processing remote instance ${instanceIndex}: "${entry.componentName}"`,
     );
 
     if (!entry.structure) {
-      await debugConsole.warning(
+      debugConsole.warning(
         `Remote instance "${entry.componentName}" missing structure data, skipping`,
       );
       continue;
@@ -4794,7 +8515,7 @@ async function createRemoteInstances(
       : entry.structure.child
         ? entry.structure.child.length
         : 0;
-    await debugConsole.log(
+    debugConsole.log(
       `  Structure type: ${entry.structure.type || "unknown"}, has children: ${childrenCount} (children key: ${hasChildren}, child key: ${hasChild})`,
     );
 
@@ -4815,7 +8536,7 @@ async function createRemoteInstances(
       frameName,
     );
     if (uniqueComponentName !== frameName) {
-      await debugConsole.log(
+      debugConsole.log(
         `Component name conflict: "${frameName}" -> "${uniqueComponentName}"`,
       );
     }
@@ -4826,7 +8547,7 @@ async function createRemoteInstances(
       // Check if the structure type is COMPONENT
       // Type should already be normalized above, but double-check
       if (entry.structure.type !== "COMPONENT") {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Remote instance "${entry.componentName}" structure is not a COMPONENT (type: ${entry.structure.type}), creating frame fallback`,
         );
         // Create a frame container as fallback
@@ -4845,11 +8566,15 @@ async function createRemoteInstances(
           null, // deferredInstances - not needed for remote instances
           null, // parentNodeData - not available for remote structures
           recognizedCollections,
+          null, // placeholderFrameIds - not needed for remote instances
+          undefined, // currentPlaceholderId - not needed for remote instances
+          styleMapping, // Pass styleMapping to apply styles
+          imageTable, // Pass imageTable to restore images
         );
         if (recreatedNode) {
           containerFrame.appendChild(recreatedNode);
           remotesPage.appendChild(containerFrame);
-          await debugConsole.log(
+          debugConsole.log(
             `✓ Created remote instance frame fallback: "${uniqueComponentName}"`,
           );
         } else {
@@ -4863,9 +8588,7 @@ async function createRemoteInstances(
       const componentNode = figma.createComponent();
       componentNode.name = uniqueComponentName;
       remotesPage.appendChild(componentNode);
-      await debugConsole.log(
-        `  Created component node: "${uniqueComponentName}"`,
-      );
+      debugConsole.log(`  Created component node: "${uniqueComponentName}"`);
 
       // Now recreate the structure's children and properties into the component
       // We need to apply all properties from the structure to the component
@@ -4894,17 +8617,83 @@ async function createRemoteInstances(
 
               const propType = typeMap[(propDef as any).type];
               if (!propType) {
-                await debugConsole.warning(
+                debugConsole.warning(
                   `  Unknown property type ${(propDef as any).type} for property "${propName}" in component "${entry.componentName}"`,
                 );
                 failedCount++;
                 continue;
               }
 
-              const defaultValue = (propDef as any).defaultValue;
+              let defaultValue = (propDef as any).defaultValue;
+
+              // For INSTANCE_SWAP properties, resolve _instanceRef to component ID
+              if (
+                propType === "INSTANCE_SWAP" &&
+                defaultValue &&
+                typeof defaultValue === "object" &&
+                defaultValue._instanceRef !== undefined
+              ) {
+                debugConsole.log(
+                  `    Resolving INSTANCE_SWAP property "${propName}" _instanceRef: ${defaultValue._instanceRef}`,
+                );
+
+                if (!instanceTable) {
+                  debugConsole.warning(
+                    `    Cannot resolve _instanceRef for INSTANCE_SWAP property "${propName}" - instance table not available`,
+                  );
+                  failedCount++;
+                  continue;
+                }
+
+                const instanceEntry = instanceTable.getInstanceByIndex(
+                  defaultValue._instanceRef,
+                );
+                if (!instanceEntry) {
+                  debugConsole.warning(
+                    `    Instance table entry not found for index ${defaultValue._instanceRef} in INSTANCE_SWAP property "${propName}"`,
+                  );
+                  failedCount++;
+                  continue;
+                }
+
+                // For remote instances, we don't have nodeIdMapping, so resolution will fail
+                // This is expected - remote INSTANCE_SWAP properties cannot be resolved
+                const nodeIdMapping = null; // Remote instances don't have nodeIdMapping
+                const resolvedComponentId =
+                  await resolveComponentIdFromInstanceEntry(
+                    instanceEntry,
+                    nodeIdMapping,
+                  );
+
+                if (!resolvedComponentId) {
+                  debugConsole.warning(
+                    `    Could not resolve component ID from instance entry for INSTANCE_SWAP property "${propName}" in remote component - skipping`,
+                  );
+                  failedCount++;
+                  continue;
+                }
+
+                const instanceRefIndex = defaultValue._instanceRef;
+                defaultValue = resolvedComponentId;
+                debugConsole.log(
+                  `    Resolved INSTANCE_SWAP property "${propName}" _instanceRef ${instanceRefIndex} to component ID: ${resolvedComponentId.substring(0, 8)}...`,
+                );
+              }
+
               // Property names in JSON may include IDs (e.g., "Show trailing icon#318:0")
               // Extract just the property name part (before the #)
               const cleanPropName = propName.split("#")[0];
+
+              // Check if property already exists
+              // This can happen if the component was already created and properties were added
+              const existingProps = componentNode.componentPropertyDefinitions;
+              if (existingProps && existingProps[cleanPropName]) {
+                debugConsole.log(
+                  `  Skipping component property "${cleanPropName}" on component "${entry.componentName}" - property already exists`,
+                );
+                continue;
+              }
+
               componentNode.addComponentProperty(
                 cleanPropName,
                 propType,
@@ -4912,7 +8701,7 @@ async function createRemoteInstances(
               );
               addedCount++;
             } catch (error) {
-              await debugConsole.warning(
+              debugConsole.warning(
                 `  Failed to add component property "${propName}" to "${entry.componentName}": ${error}`,
               );
               failedCount++;
@@ -4920,7 +8709,7 @@ async function createRemoteInstances(
           }
 
           if (addedCount > 0) {
-            await debugConsole.log(
+            debugConsole.log(
               `  Added ${addedCount} component property definition(s) to "${entry.componentName}"${failedCount > 0 ? ` (${failedCount} failed)` : ""}`,
             );
           }
@@ -4931,11 +8720,15 @@ async function createRemoteInstances(
           componentNode.name = entry.structure.name;
         }
         // Check for bound variables before setting width/height
+        // Note: minWidth and maxWidth are constraints, not the actual size, but we include them
+        // in the check to ensure we handle them correctly
         const hasBoundVariablesForSize =
           entry.structure.boundVariables &&
           typeof entry.structure.boundVariables === "object" &&
           (entry.structure.boundVariables.width ||
-            entry.structure.boundVariables.height);
+            entry.structure.boundVariables.height ||
+            entry.structure.boundVariables.minWidth ||
+            entry.structure.boundVariables.maxWidth);
         if (
           entry.structure.width !== undefined &&
           entry.structure.height !== undefined &&
@@ -5004,10 +8797,13 @@ async function createRemoteInstances(
                 entry.structure.boundVariables,
                 "fills",
                 recognizedVariables,
+                variableTable,
+                collectionTable,
+                recognizedCollections,
               );
             }
           } catch (error) {
-            await debugConsole.warning(
+            debugConsole.warning(
               `Error setting fills for remote component "${entry.componentName}": ${error}`,
             );
           }
@@ -5018,7 +8814,7 @@ async function createRemoteInstances(
           try {
             componentNode.strokes = entry.structure.strokes;
           } catch (error) {
-            await debugConsole.warning(
+            debugConsole.warning(
               `Error setting strokes for remote component "${entry.componentName}": ${error}`,
             );
           }
@@ -5130,6 +8926,8 @@ async function createRemoteInstances(
             | "bottomRightRadius"
             | "width"
             | "height"
+            | "minWidth"
+            | "maxWidth"
           > = [
             "paddingLeft",
             "paddingRight",
@@ -5148,6 +8946,8 @@ async function createRemoteInstances(
             "bottomRightRadius",
             "width",
             "height",
+            "minWidth",
+            "maxWidth",
           ];
           for (const propName of allBindableProps) {
             if (
@@ -5175,13 +8975,13 @@ async function createRemoteInstances(
         // Recreate children
         // Handle both "child" (compressed) and "children" (expanded) keys
         // Debug: Log structure keys before accessing children
-        await debugConsole.log(
+        debugConsole.log(
           `  DEBUG: Structure keys: ${Object.keys(entry.structure).join(", ")}, has children: ${!!entry.structure.children}, has child: ${!!entry.structure.child}`,
         );
         const childrenArray =
           entry.structure.children ||
           (entry.structure.child ? entry.structure.child : null);
-        await debugConsole.log(
+        debugConsole.log(
           `  DEBUG: childrenArray exists: ${!!childrenArray}, isArray: ${Array.isArray(childrenArray)}, length: ${childrenArray ? childrenArray.length : 0}`,
         );
         if (
@@ -5189,21 +8989,21 @@ async function createRemoteInstances(
           Array.isArray(childrenArray) &&
           childrenArray.length > 0
         ) {
-          await debugConsole.log(
+          debugConsole.log(
             `  Recreating ${childrenArray.length} child(ren) for component "${entry.componentName}"`,
           );
           for (let i = 0; i < childrenArray.length; i++) {
             const childData = childrenArray[i];
-            await debugConsole.log(
+            debugConsole.log(
               `  DEBUG: Processing child ${i + 1}/${childrenArray.length}: ${JSON.stringify({ name: childData?.name, type: childData?.type, hasTruncated: !!childData?._truncated })}`,
             );
             if (childData._truncated) {
-              await debugConsole.log(
+              debugConsole.log(
                 `  Skipping truncated child: ${childData._reason || "Unknown"}`,
               );
               continue;
             }
-            await debugConsole.log(
+            debugConsole.log(
               `  Recreating child: "${childData.name || "Unnamed"}" (type: ${childData.type})`,
             );
             const childNode = await recreateNodeFromData(
@@ -5219,14 +9019,18 @@ async function createRemoteInstances(
               null, // deferredInstances - not needed for remote instances
               entry.structure, // parentNodeData - pass the component's structure so children can check for auto-layout
               recognizedCollections,
+              null, // placeholderFrameIds - not needed for remote instances
+              undefined, // currentPlaceholderId - not needed for remote instances
+              styleMapping, // Pass styleMapping to apply styles
+              imageTable, // Pass imageTable to restore images
             );
             if (childNode) {
               componentNode.appendChild(childNode);
-              await debugConsole.log(
+              debugConsole.log(
                 `  ✓ Appended child "${childData.name || "Unnamed"}" to component "${entry.componentName}"`,
               );
             } else {
-              await debugConsole.warning(
+              debugConsole.warning(
                 `  ✗ Failed to create child "${childData.name || "Unnamed"}" (type: ${childData.type})`,
               );
             }
@@ -5234,34 +9038,52 @@ async function createRemoteInstances(
         }
 
         remoteComponentMap.set(instanceIndex, componentNode);
-        await debugConsole.log(
+
+        // Collect dependent component information
+        const componentGuid = entry.componentGuid || "";
+        const componentVersion = entry.componentVersion;
+        if (componentGuid) {
+          dependentComponents.push({
+            guid: componentGuid,
+            version: componentVersion,
+            pageId: remotesPage.id,
+          });
+        }
+
+        debugConsole.log(
           `✓ Created remote component: "${uniqueComponentName}" (index ${instanceIndex})`,
         );
       } catch (error) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Error populating remote component "${entry.componentName}": ${error instanceof Error ? error.message : "Unknown error"}`,
         );
         componentNode.remove();
       }
     } catch (error) {
-      await debugConsole.warning(
+      debugConsole.warning(
         `Error recreating remote instance "${entry.componentName}": ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
 
-  await debugConsole.log(
+  debugConsole.log(
     `Remote instance processing complete: ${remoteComponentMap.size} component(s) created`,
   );
 
-  return remoteComponentMap;
+  return { remoteComponentMap, dependentComponents };
 }
 
 /**
  * Stage 11: Create page and recreate structure
  */
 async function createPageAndRecreateStructure(
-  metadata: { guid: string; name: string; version?: number },
+  metadata: {
+    guid: string;
+    name: string;
+    version?: number;
+    description?: string;
+    url?: string;
+  },
   expandedJsonData: any,
   variableTable: VariableTable,
   collectionTable: CollectionTable,
@@ -5269,11 +9091,14 @@ async function createPageAndRecreateStructure(
   recognizedVariables: Map<string, Variable>,
   remoteComponentMap: Map<number, ComponentNode> | null = null,
   deferredInstances: DeferredNormalInstance[] | null = null,
+  placeholderFrameIds: Set<string> | null = null, // Track placeholder frame IDs as we create them
   isMainPage: boolean = false, // If true, always create a copy (no prompt). If false, prompt for existing pages.
   recognizedCollections: Map<string, VariableCollection> | null = null,
   alwaysCreateCopy: boolean = false, // If true, always create a copy (no prompt) even if page exists. Used for wizard imports.
   skipUniqueNaming: boolean = false, // If true, skip adding _<number> suffix to page names. Used for wizard imports.
   constructionIcon: string = "", // If provided, prepend this icon to page name. Used for wizard imports.
+  styleMapping: Map<number, BaseStyle> | null = null, // Map of old style table index -> new style instance
+  imageTable: ImageTable | null = null, // Image table for restoring images from Base64
 ): Promise<{
   success: boolean;
   page?: PageNode;
@@ -5281,11 +9106,10 @@ async function createPageAndRecreateStructure(
   error?: string;
   deferredInstances?: DeferredNormalInstance[];
 }> {
-  await debugConsole.log("Creating page from JSON...");
+  debugConsole.log("Creating page from JSON...");
 
   await figma.loadAllPagesAsync();
   const allPages = figma.root.children;
-  const PAGE_METADATA_KEY = "RecursicaPublishedMetadata";
 
   let pageWithSameGuid: PageNode | null = null;
   for (const page of allPages) {
@@ -5325,7 +9149,7 @@ async function createPageAndRecreateStructure(
       existingVersion !== undefined ? ` v${existingVersion}` : "";
     const message = `Found existing component "${pageWithSameGuid.name}${versionText}". Should I use it or create a copy?`;
 
-    await debugConsole.log(
+    debugConsole.log(
       `Found existing page with same GUID: "${pageWithSameGuid.name}". Prompting user...`,
     );
 
@@ -5339,14 +9163,12 @@ async function createPageAndRecreateStructure(
 
       // User chose "Use" - return existing page
       useExistingPage = true;
-      await debugConsole.log(
+      debugConsole.log(
         `User chose to use existing page: "${pageWithSameGuid.name}"`,
       );
     } catch {
       // User chose "Copy" or cancelled - proceed with creating new page
-      await debugConsole.log(
-        `User chose to create a copy. Will create new page.`,
-      );
+      debugConsole.log(`User chose to create a copy. Will create new page.`);
     }
   }
 
@@ -5356,10 +9178,10 @@ async function createPageAndRecreateStructure(
   // (componentPageName) during their import process.
   if (useExistingPage && pageWithSameGuid) {
     await figma.setCurrentPageAsync(pageWithSameGuid);
-    await debugConsole.log(
+    debugConsole.log(
       `Using existing page: "${pageWithSameGuid.name}" (GUID: ${metadata.guid.substring(0, 8)}...)`,
     );
-    await debugConsole.log(
+    debugConsole.log(
       `  Instances from other pages will resolve to components on this existing page using componentPageName: "${pageWithSameGuid.name}"`,
     );
     return {
@@ -5373,7 +9195,7 @@ async function createPageAndRecreateStructure(
   // Otherwise, proceed with creating a new page
   const existingPageByName = allPages.find((p) => p.name === metadata.name);
   if (existingPageByName) {
-    await debugConsole.log(
+    debugConsole.log(
       `Found existing page with same name: "${metadata.name}". Will create new page with unique name.`,
     );
   }
@@ -5382,19 +9204,19 @@ async function createPageAndRecreateStructure(
   if (pageWithSameGuid || existingPageByName) {
     const scratchBaseName = `__${metadata.name}`;
     pageName = await findUniquePageName(scratchBaseName);
-    await debugConsole.log(
+    debugConsole.log(
       `Creating scratch page: "${pageName}" (will be renamed to "${metadata.name}" on success)`,
     );
   } else {
     pageName = metadata.name;
-    await debugConsole.log(`Creating page: "${pageName}"`);
+    debugConsole.log(`Creating page: "${pageName}"`);
   }
 
   const newPage = figma.createPage();
   newPage.name = pageName;
 
   await figma.setCurrentPageAsync(newPage);
-  await debugConsole.log(`Switched to page: "${pageName}"`);
+  debugConsole.log(`Switched to page: "${pageName}"`);
 
   if (!expandedJsonData.pageData) {
     return {
@@ -5403,98 +9225,118 @@ async function createPageAndRecreateStructure(
     };
   }
 
-  await debugConsole.log("Recreating page structure...");
+  debugConsole.log("Recreating page structure...");
   const pageData = expandedJsonData.pageData;
 
-  // Apply page-level properties (like backgrounds) if they exist
-  // Pages have backgrounds property for background color
-  if (pageData.backgrounds !== undefined) {
-    try {
-      newPage.backgrounds = pageData.backgrounds;
-      await debugConsole.log(
-        `Set page background: ${JSON.stringify(pageData.backgrounds)}`,
+  // Wrap structure recreation in try-catch so we always return the page
+  // even if an error occurs during structure recreation
+  let structureError: string | undefined = undefined;
+  try {
+    // Apply page-level properties (like backgrounds) if they exist
+    // Pages have backgrounds property for background color
+    if (pageData.backgrounds !== undefined) {
+      try {
+        newPage.backgrounds = pageData.backgrounds;
+        debugConsole.log(
+          `Set page background: ${JSON.stringify(pageData.backgrounds)}`,
+        );
+      } catch (error) {
+        debugConsole.warning(`Failed to set page background: ${error}`);
+      }
+    }
+
+    // Normalize structure types: expand numeric types to strings recursively
+    // This handles cases where the type enum wasn't expanded during JSON expansion
+    normalizeStructureTypes(pageData);
+
+    const nodeIdMapping = new Map<string, any>();
+
+    // Helper function to recursively find all component IDs in the page data
+    const findAllComponentIds = (node: any, ids: string[] = []): string[] => {
+      if (node.type === "COMPONENT" && node.id) {
+        ids.push(node.id);
+      }
+      if (node.children && Array.isArray(node.children)) {
+        for (const child of node.children) {
+          if (!child._truncated) {
+            findAllComponentIds(child, ids);
+          }
+        }
+      }
+      return ids;
+    };
+
+    // Log all component IDs found in the page data for debugging
+    const allComponentIds = findAllComponentIds(pageData);
+    debugConsole.log(
+      `Found ${allComponentIds.length} COMPONENT node(s) in page data`,
+    );
+    if (allComponentIds.length > 0) {
+      debugConsole.log(
+        `Component IDs in page data (first 20): ${allComponentIds
+          .slice(0, 20)
+          .map((id) => id.substring(0, 8) + "...")
+          .join(", ")}`,
       );
-    } catch (error) {
-      await debugConsole.warning(`Failed to set page background: ${error}`);
+      // Also check if we can find the specific ID we're looking for later
+      // Store this for later reference
+      (pageData as any)._allComponentIds = allComponentIds;
     }
-  }
 
-  // Normalize structure types: expand numeric types to strings recursively
-  // This handles cases where the type enum wasn't expanded during JSON expansion
-  normalizeStructureTypes(pageData);
-
-  const nodeIdMapping = new Map<string, any>();
-
-  // Helper function to recursively find all component IDs in the page data
-  const findAllComponentIds = (node: any, ids: string[] = []): string[] => {
-    if (node.type === "COMPONENT" && node.id) {
-      ids.push(node.id);
-    }
-    if (node.children && Array.isArray(node.children)) {
-      for (const child of node.children) {
-        if (!child._truncated) {
-          findAllComponentIds(child, ids);
+    if (pageData.children && Array.isArray(pageData.children)) {
+      for (const childData of pageData.children) {
+        const childNode = await recreateNodeFromData(
+          childData,
+          newPage,
+          variableTable,
+          collectionTable,
+          instanceTable,
+          recognizedVariables,
+          nodeIdMapping,
+          false, // isRemoteStructure: false - we're creating the main page
+          remoteComponentMap,
+          deferredInstances,
+          pageData, // parentNodeData - pass the page's nodeData so children can check for auto-layout
+          recognizedCollections,
+          placeholderFrameIds,
+          undefined, // currentPlaceholderId - page root is not inside a placeholder
+          styleMapping, // Pass styleMapping to apply styles
+          imageTable, // Pass imageTable to restore images
+        );
+        if (childNode) {
+          newPage.appendChild(childNode);
         }
       }
     }
-    return ids;
-  };
 
-  // Log all component IDs found in the page data for debugging
-  const allComponentIds = findAllComponentIds(pageData);
-  await debugConsole.log(
-    `Found ${allComponentIds.length} COMPONENT node(s) in page data`,
-  );
-  if (allComponentIds.length > 0) {
-    await debugConsole.log(
-      `Component IDs in page data (first 20): ${allComponentIds
-        .slice(0, 20)
-        .map((id) => id.substring(0, 8) + "...")
-        .join(", ")}`,
-    );
-    // Also check if we can find the specific ID we're looking for later
-    // Store this for later reference
-    (pageData as any)._allComponentIds = allComponentIds;
-  }
+    debugConsole.log("Page structure recreated successfully");
 
-  if (pageData.children && Array.isArray(pageData.children)) {
-    for (const childData of pageData.children) {
-      const childNode = await recreateNodeFromData(
-        childData,
-        newPage,
-        variableTable,
-        collectionTable,
-        instanceTable,
-        recognizedVariables,
-        nodeIdMapping,
-        false, // isRemoteStructure: false - we're creating the main page
-        remoteComponentMap,
-        deferredInstances,
-        pageData, // parentNodeData - pass the page's nodeData so children can check for auto-layout
-        recognizedCollections,
+    // Third pass: Set variant properties on all instances now that component sets are created
+    // This is needed because instances are created before component sets are combined,
+    // so variant properties can't be set until after component sets exist
+    if (instanceTable) {
+      debugConsole.log(
+        "Third pass: Setting variant properties on instances...",
       );
-      if (childNode) {
-        newPage.appendChild(childNode);
-      }
+      await setVariantPropertiesOnInstances(
+        newPage,
+        instanceTable,
+        nodeIdMapping,
+      );
+    }
+  } catch (error) {
+    // Error occurred during structure recreation, but page was already created
+    // Log the error and continue to return the page so it can be tracked
+    structureError = error instanceof Error ? error.message : String(error);
+    debugConsole.error(
+      `Error during page structure recreation (page was created): ${structureError}`,
+    );
+    if (error instanceof Error && error.stack) {
+      debugConsole.error(`Stack trace: ${error.stack}`);
     }
   }
 
-  await debugConsole.log("Page structure recreated successfully");
-
-  // Third pass: Set variant properties on all instances now that component sets are created
-  // This is needed because instances are created before component sets are combined,
-  // so variant properties can't be set until after component sets exist
-  if (instanceTable) {
-    await debugConsole.log(
-      "Third pass: Setting variant properties on instances...",
-    );
-    await setVariantPropertiesOnInstances(
-      newPage,
-      instanceTable,
-      nodeIdMapping,
-    );
-  }
-
+  // Always set page metadata and apply construction icon, even if structure recreation failed
   const pageMetadata = {
     _ver: 1,
     id: metadata.guid,
@@ -5502,9 +9344,13 @@ async function createPageAndRecreateStructure(
     version: metadata.version || 0,
     publishDate: new Date().toISOString(),
     history: {},
+    ...(metadata.description !== undefined && {
+      description: metadata.description,
+    }),
+    ...(metadata.url !== undefined && { url: metadata.url }),
   };
   newPage.setPluginData(PAGE_METADATA_KEY, JSON.stringify(pageMetadata));
-  await debugConsole.log(
+  debugConsole.log(
     `Stored page metadata (GUID: ${metadata.guid.substring(0, 8)}...)`,
   );
 
@@ -5519,7 +9365,7 @@ async function createPageAndRecreateStructure(
       finalName = await findUniquePageName(metadata.name);
     }
     newPage.name = finalName;
-    await debugConsole.log(`Renamed page from "${pageName}" to "${finalName}"`);
+    debugConsole.log(`Renamed page from "${pageName}" to "${finalName}"`);
   } else if (skipUniqueNaming && constructionIcon) {
     // For wizard imports, ensure construction icon is present
     if (!newPage.name.startsWith(constructionIcon)) {
@@ -5527,30 +9373,51 @@ async function createPageAndRecreateStructure(
     }
   }
 
+  // Always return the page, even if structure recreation failed
+  // This ensures the page is tracked even if an error occurred
   return {
-    success: true,
+    success: !structureError, // success is false if there was an error
     page: newPage,
+    pageId: newPage.id, // Always include pageId for tracking
+    error: structureError, // Include error if structure recreation failed
     deferredInstances: deferredInstances || undefined,
   };
 }
 
 export async function importPage(
   data: ImportPageData,
+  requestId?: string, // Optional request ID for cancellation support
 ): Promise<ResponseMessage> {
+  // Capture import timestamp at the start
+  const importedAt = new Date().toISOString();
+
+  // Check for cancellation at the start
+  checkCancellation(requestId);
   // Only clear console if explicitly requested (default: true for single page imports)
   const shouldClearConsole = data.clearConsole !== false;
   if (shouldClearConsole) {
-    await debugConsole.clear();
+    debugConsole.clear();
   }
-  await debugConsole.log("=== Starting Page Import ===");
+  // Clear component binding data Map at the start of each import
+  componentBindingData.clear();
+  debugConsole.log("=== Starting Page Import ===");
 
   const newlyCreatedCollections: VariableCollection[] = [];
+  let newlyCreatedVariables: Variable[] = [];
+  let newlyCreatedStyles: BaseStyle[] = [];
+  let dependentComponents: Array<{
+    guid: string;
+    version: number | undefined;
+    pageId: string;
+  }> = [];
+  // Track created page ID immediately after creation so it's included even if error occurs later
+  let createdPageId: string | null = null;
 
   try {
     const jsonData = data.jsonData;
 
     if (!jsonData) {
-      await debugConsole.error("JSON data is required");
+      debugConsole.error("JSON data is required");
       return {
         type: "importPage",
         success: false,
@@ -5561,10 +9428,10 @@ export async function importPage(
     }
 
     // Stage 1: Validate metadata
-    await debugConsole.log("Validating metadata...");
+    debugConsole.log("Validating metadata...");
     const metadataResult = validateMetadata(jsonData);
     if (!metadataResult.success) {
-      await debugConsole.error(metadataResult.error!);
+      debugConsole.error(metadataResult.error!);
       return {
         type: "importPage",
         success: false,
@@ -5574,15 +9441,16 @@ export async function importPage(
       };
     }
     const metadata = metadataResult.metadata!;
-    await debugConsole.log(
+    debugConsole.log(
       `Metadata validated: guid=${metadata.guid}, name=${metadata.name}`,
     );
+    checkCancellation(requestId);
 
     // Stage 2: Load and expand JSON
-    await debugConsole.log("Loading string table...");
+    debugConsole.log("Loading string table...");
     const jsonResult = loadAndExpandJson(jsonData);
     if (!jsonResult.success) {
-      await debugConsole.error(jsonResult.error!);
+      debugConsole.error(jsonResult.error!);
       return {
         type: "importPage",
         success: false,
@@ -5591,20 +9459,21 @@ export async function importPage(
         data: {},
       };
     }
-    await debugConsole.log("String table loaded successfully");
-    await debugConsole.log("Expanding JSON data...");
+    debugConsole.log("String table loaded successfully");
+    debugConsole.log("Expanding JSON data...");
     const expandedJsonData = jsonResult.expandedJsonData!;
-    await debugConsole.log("JSON expanded successfully");
+    debugConsole.log("JSON expanded successfully");
+    checkCancellation(requestId);
 
     // Stage 3: Load collection table
-    await debugConsole.log("Loading collections table...");
+    debugConsole.log("Loading collections table...");
     const collectionTableResult = loadCollectionTable(expandedJsonData);
     if (!collectionTableResult.success) {
       if (
         collectionTableResult.error === "No collections table found in JSON"
       ) {
-        await debugConsole.log(collectionTableResult.error);
-        await debugConsole.log("=== Import Complete ===");
+        debugConsole.log(collectionTableResult.error);
+        debugConsole.log("=== Import Complete ===");
         return {
           type: "importPage",
           success: true,
@@ -5613,7 +9482,7 @@ export async function importPage(
           data: { pageName: metadata.name },
         };
       }
-      await debugConsole.error(collectionTableResult.error!);
+      debugConsole.error(collectionTableResult.error!);
       return {
         type: "importPage",
         success: false,
@@ -5623,14 +9492,13 @@ export async function importPage(
       };
     }
     const collectionTable = collectionTableResult.collectionTable!;
-    await debugConsole.log(
+    debugConsole.log(
       `Loaded collections table with ${collectionTable.getSize()} collection(s)`,
     );
+    checkCancellation(requestId);
 
     // Stage 4: Match collections
-    await debugConsole.log(
-      "Matching collections with existing local collections...",
-    );
+    debugConsole.log("Matching collections with existing local collections...");
     const { recognizedCollections, potentialMatches, collectionsToCreate } =
       await matchCollections(collectionTable, data.preCreatedCollections);
 
@@ -5656,14 +9524,15 @@ export async function importPage(
       newlyCreatedCollections,
       data.preCreatedCollections,
     );
+    checkCancellation(requestId);
 
     // Stage 8: Load variable table
-    await debugConsole.log("Loading variables table...");
+    debugConsole.log("Loading variables table...");
     const variableTableResult = loadVariableTable(expandedJsonData);
     if (!variableTableResult.success) {
       if (variableTableResult.error === "No variables table found in JSON") {
-        await debugConsole.log(variableTableResult.error);
-        await debugConsole.log("=== Import Complete ===");
+        debugConsole.log(variableTableResult.error);
+        debugConsole.log("=== Import Complete ===");
         return {
           type: "importPage",
           success: true,
@@ -5672,7 +9541,7 @@ export async function importPage(
           data: { pageName: metadata.name },
         };
       }
-      await debugConsole.error(variableTableResult.error!);
+      debugConsole.error(variableTableResult.error!);
       return {
         type: "importPage",
         success: false,
@@ -5682,21 +9551,69 @@ export async function importPage(
       };
     }
     const variableTable = variableTableResult.variableTable!;
-    await debugConsole.log(
+    debugConsole.log(
       `Loaded variables table with ${variableTable.getSize()} variable(s)`,
     );
 
+    checkCancellation(requestId);
     // Stage 9: Match and create variables
-    const { recognizedVariables, newlyCreatedVariables } =
-      await matchAndCreateVariables(
-        variableTable,
-        collectionTable,
-        recognizedCollections,
-        newlyCreatedCollections,
-      );
+    const matchVariablesResult = await matchAndCreateVariables(
+      variableTable,
+      collectionTable,
+      recognizedCollections,
+      newlyCreatedCollections,
+    );
+    const recognizedVariables = matchVariablesResult.recognizedVariables;
+    newlyCreatedVariables = matchVariablesResult.newlyCreatedVariables;
 
+    // Stage 9.5: Import styles (after variables so styles can bind to variables)
+    debugConsole.log("Checking for styles table...");
+    const hasStylesTable =
+      expandedJsonData.styles !== undefined && expandedJsonData.styles !== null;
+
+    // Check if style references exist in pageData but styles table is missing
+    if (!hasStylesTable) {
+      const hasStyleReferences = checkForStyleReferences(
+        expandedJsonData.pageData,
+      );
+      if (hasStyleReferences) {
+        const errorMessage =
+          "Style references found in page data but styles table is missing from JSON. Cannot import styles.";
+        debugConsole.error(errorMessage);
+        return {
+          type: "importPage",
+          success: false,
+          error: true,
+          message: errorMessage,
+          data: {},
+        };
+      }
+      debugConsole.log(
+        "No styles table found in JSON (and no style references detected)",
+      );
+    }
+
+    let styleMapping: Map<number, BaseStyle> | null = null;
+    if (hasStylesTable) {
+      debugConsole.log("Loading styles table...");
+      const styleTable = StyleTable.fromTable(expandedJsonData.styles);
+      debugConsole.log(
+        `Loaded styles table with ${styleTable.getSize()} style(s)`,
+      );
+      const stylesResult = await importStyles(
+        styleTable.getTable(),
+        recognizedVariables,
+      );
+      styleMapping = stylesResult.styleMapping;
+      newlyCreatedStyles = stylesResult.newlyCreatedStyles;
+      debugConsole.log(
+        `Imported ${styleMapping.size} style(s) (some may have been skipped if they already exist)`,
+      );
+    }
+
+    checkCancellation(requestId);
     // Stage 10: Load instance table
-    await debugConsole.log("Loading instance table...");
+    debugConsole.log("Loading instance table...");
     const instanceTable = loadInstanceTable(expandedJsonData);
     if (instanceTable) {
       const allInstances = instanceTable.getSerializedTable();
@@ -5706,15 +9623,30 @@ export async function importPage(
       const remoteInstances = Object.values(allInstances).filter(
         (entry: any) => entry.instanceType === "remote",
       );
-      await debugConsole.log(
+      debugConsole.log(
         `Loaded instance table with ${instanceTable.getSize()} instance(s) (${internalInstances.length} internal, ${remoteInstances.length} remote)`,
       );
     } else {
-      await debugConsole.log("No instance table found in JSON");
+      debugConsole.log("No instance table found in JSON");
     }
 
+    // Stage 10.5: Load image table
+    debugConsole.log("Loading images table...");
+    const imageTable = loadImageTable(expandedJsonData);
+    if (imageTable) {
+      debugConsole.log(
+        `Loaded images table with ${imageTable.getSize()} image(s)`,
+      );
+    } else {
+      debugConsole.log("No images table found in JSON");
+    }
+
+    checkCancellation(requestId);
     // Stage 11: Create page and recreate structure
     const deferredInstances: DeferredNormalInstance[] = [];
+    // Track placeholder frame IDs as we create them, so we can check if parent is a placeholder
+    // even before the deferred instance is added to the array
+    const placeholderFrameIds = new Set<string>();
     const isMainPage = data.isMainPage ?? true; // Default to true for single page imports
     const alwaysCreateCopy = data.alwaysCreateCopy ?? false;
     const skipUniqueNaming = data.skipUniqueNaming ?? false;
@@ -5723,14 +9655,18 @@ export async function importPage(
     // Stage 10.5: Create remote instances on REMOTES page
     let remoteComponentMap: Map<number, ComponentNode> | null = null;
     if (instanceTable) {
-      remoteComponentMap = await createRemoteInstances(
+      const remoteInstancesResult = await createRemoteInstances(
         instanceTable,
         variableTable,
         collectionTable,
         recognizedVariables,
         recognizedCollections,
         constructionIcon,
+        styleMapping, // Pass styleMapping to apply styles
+        imageTable, // Pass imageTable to restore images
       );
+      remoteComponentMap = remoteInstancesResult.remoteComponentMap;
+      dependentComponents = remoteInstancesResult.dependentComponents;
     }
     const pageResult = await createPageAndRecreateStructure(
       metadata,
@@ -5741,15 +9677,24 @@ export async function importPage(
       recognizedVariables,
       remoteComponentMap,
       deferredInstances,
+      placeholderFrameIds,
       isMainPage,
       recognizedCollections,
       alwaysCreateCopy,
       skipUniqueNaming,
       constructionIcon,
+      styleMapping, // Pass styleMapping to apply styles
+      imageTable, // Pass imageTable to restore images
     );
 
     if (!pageResult.success) {
-      await debugConsole.error(pageResult.error!);
+      debugConsole.error(pageResult.error!);
+      // If page was created but error occurred later, track it
+      if (pageResult.pageId) {
+        createdPageId = pageResult.pageId;
+      } else if (pageResult.page) {
+        createdPageId = pageResult.page.id;
+      }
       return {
         type: "importPage",
         success: false,
@@ -5760,6 +9705,8 @@ export async function importPage(
     }
 
     const newPage = pageResult.page!;
+    // Track page ID immediately after creation so it's included even if error occurs later
+    createdPageId = pageResult.pageId || newPage.id;
     const totalVariables =
       recognizedVariables.size + newlyCreatedVariables.length;
 
@@ -5767,17 +9714,14 @@ export async function importPage(
     const deferredInstancesFromResult =
       pageResult.deferredInstances || deferredInstances;
     const deferredCount = deferredInstancesFromResult?.length || 0;
-    await debugConsole.log("=== Import Complete ===");
-    await debugConsole.log(
+    debugConsole.log("=== Import Complete ===");
+    debugConsole.log(
       `Successfully processed ${recognizedCollections.size} collection(s), ${totalVariables} variable(s), and created page "${newPage.name}"${deferredCount > 0 ? ` (${deferredCount} deferred normal instance(s) - will need to be resolved after all pages are imported)` : ""}`,
     );
 
     if (deferredCount > 0) {
-      await debugConsole.log(
-        `  [DEBUG] Returning ${deferredCount} deferred instance(s) in response`,
-      );
       for (const deferred of deferredInstancesFromResult) {
-        await debugConsole.log(
+        debugConsole.log(
           `    - "${deferred.nodeData.name}" from page "${deferred.instanceEntry.componentPageName}"`,
         );
       }
@@ -5786,38 +9730,357 @@ export async function importPage(
     // Include pageId in response (either from pageResult.pageId for reused pages, or newPage.id for new pages)
     const pageId = pageResult.pageId || newPage.id;
 
+    // Include debug logs in response
+    const debugLogs = debugConsole.getLogs();
+
+    // Build comprehensive import result
+    const importResult: PageImportResult = {
+      componentGuid: metadata.guid,
+      componentPage: metadata.name,
+      branch: data.branch,
+      importedAt,
+      logs: debugLogs,
+      createdPageIds: [newPage.id],
+      createdCollectionIds: newlyCreatedCollections.map((c) => c.id),
+      createdVariableIds: newlyCreatedVariables.map((v) => v.id),
+      createdStyleIds: newlyCreatedStyles.map((s) => s.id),
+      dependentComponents,
+    };
+
+    // additionalPages feature has been removed
+    // Referenced pages should be imported separately
+
+    const responseData = {
+      pageName: newPage.name,
+      pageId: pageId, // Include pageId for tracking (used for both new and reused pages)
+      deferredInstances:
+        deferredCount > 0 ? deferredInstancesFromResult : undefined,
+      importResult,
+      ...(debugLogs.length > 0 && { debugLogs }),
+    };
+
     return {
       type: "importPage",
       success: true,
       error: false,
       message: "Import completed successfully",
-      data: {
-        pageName: newPage.name,
-        pageId: pageId, // Include pageId for tracking (used for both new and reused pages)
-        deferredInstances:
-          deferredCount > 0 ? deferredInstancesFromResult : undefined,
-        createdEntities: {
-          pageIds: [newPage.id],
-          collectionIds: newlyCreatedCollections.map((c) => c.id),
-          variableIds: newlyCreatedVariables.map((v) => v.id),
-        },
-      },
+      data: responseData,
     };
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
-    await debugConsole.error(`Import failed: ${errorMessage}`);
+    debugConsole.error(`Import failed: ${errorMessage}`);
     if (error instanceof Error && error.stack) {
-      await debugConsole.error(`Stack trace: ${error.stack}`);
+      debugConsole.error(`Stack trace: ${error.stack}`);
     }
     console.error("Error importing page:", error);
+    // Include debug logs in error response
+    const debugLogs = debugConsole.getLogs();
+
+    // Build partial import result for error case
+    // Try to get metadata if it was validated before the error occurred
+    let componentGuid = "";
+    let componentPage = "";
+    try {
+      const jsonData = data.jsonData;
+      if (jsonData) {
+        const metadataResult = validateMetadata(jsonData);
+        if (metadataResult.success && metadataResult.metadata) {
+          componentGuid = metadataResult.metadata.guid;
+          componentPage = metadataResult.metadata.name;
+        }
+      }
+    } catch {
+      // Metadata validation failed, use empty strings
+    }
+
+    const importResult: PageImportResult = {
+      componentGuid,
+      componentPage,
+      branch: data.branch,
+      importedAt,
+      error: errorMessage,
+      logs: debugLogs,
+      // Include page ID if it was created before the error occurred
+      createdPageIds: createdPageId ? [createdPageId] : [],
+      createdCollectionIds: newlyCreatedCollections.map((c) => c.id),
+      createdVariableIds: newlyCreatedVariables.map((v) => v.id),
+      createdStyleIds: newlyCreatedStyles.map((s) => s.id),
+      dependentComponents,
+    };
+
     return {
       type: "importPage",
       success: false,
       error: true,
       message: errorMessage,
-      data: {},
+      data: {
+        importResult,
+        ...(debugLogs.length > 0 && { debugLogs }),
+      },
     };
+  }
+}
+
+/**
+ * Helper function to apply fill bound variables to instance children
+ * This handles the case where instance children have fill bound variables that need to be applied
+ * during deferred instance resolution (instance override scenario)
+ */
+async function applyFillBoundVariablesToInstanceChildren(
+  instanceNode: InstanceNode,
+  nodeData: any,
+  recognizedVariables: Map<string, Variable> | null,
+): Promise<void> {
+  if (
+    !recognizedVariables ||
+    !nodeData.children ||
+    !Array.isArray(nodeData.children) ||
+    !instanceNode.children ||
+    instanceNode.children.length === 0
+  ) {
+    return;
+  }
+
+  // Iterate through instance children and apply fill bound variables
+  debugConsole.log(
+    `[FILL-BOUND] Applying fill bound variables to instance "${instanceNode.name}" children. Instance has ${instanceNode.children.length} child(ren), JSON has ${nodeData.children?.length || 0} child(ren)`,
+  );
+
+  for (const instanceChild of instanceNode.children) {
+    // Only process nodes that have fills (VectorNode, TextNode, etc.)
+    if (!("fills" in instanceChild) || !Array.isArray(instanceChild.fills)) {
+      debugConsole.log(
+        `[FILL-BOUND] Skipping child "${instanceChild.name}" - no fills property`,
+      );
+      continue;
+    }
+
+    // Find matching child data by name
+    const childData = nodeData.children.find(
+      (cd: any) => cd.name === instanceChild.name,
+    );
+
+    if (!childData) {
+      debugConsole.log(
+        `[FILL-BOUND] No JSON data found for child "${instanceChild.name}" in instance "${instanceNode.name}"`,
+      );
+      continue;
+    }
+
+    if (!childData.boundVariables?.fills) {
+      debugConsole.log(
+        `[FILL-BOUND] Child "${instanceChild.name}" in instance "${instanceNode.name}" has no fill bound variables in JSON`,
+      );
+      continue;
+    }
+
+    debugConsole.log(
+      `[FILL-BOUND] Found fill bound variables for child "${instanceChild.name}" in instance "${instanceNode.name}"`,
+    );
+
+    // Apply fill bound variables using setBoundVariableForPaint
+    // This is the correct Figma API approach: create new Paint objects and bind variables
+    try {
+      if (!recognizedVariables) {
+        debugConsole.warning(
+          `[FILL-BOUND] Cannot apply fill bound variables: recognizedVariables is null`,
+        );
+        continue;
+      }
+
+      const fillsBoundVariables = childData.boundVariables.fills;
+      if (!Array.isArray(fillsBoundVariables)) {
+        continue;
+      }
+
+      // Create new fills array with bound variables
+      const boundFills: Paint[] = [];
+      for (
+        let i = 0;
+        i < instanceChild.fills.length && i < fillsBoundVariables.length;
+        i++
+      ) {
+        const instanceFill = instanceChild.fills[i];
+        const fillBoundVars = fillsBoundVariables[i];
+
+        if (fillBoundVars && typeof fillBoundVars === "object") {
+          // Check if this is a direct variable reference (e.g., { _varRef: 55 })
+          // In Figma, binding an entire fill typically means binding the color property
+          let variable: Variable | null = null;
+
+          if ((fillBoundVars as any)._varRef !== undefined) {
+            // Direct variable reference
+            const varRef = (fillBoundVars as any)._varRef;
+            variable = recognizedVariables.get(String(varRef)) || null;
+          } else if ((fillBoundVars as any).color) {
+            // Nested color property
+            const colorVarInfo = (fillBoundVars as any).color;
+            if (colorVarInfo._varRef !== undefined) {
+              variable =
+                recognizedVariables.get(String(colorVarInfo._varRef)) || null;
+            } else if (
+              colorVarInfo.type === "VARIABLE_ALIAS" &&
+              colorVarInfo.id
+            ) {
+              variable = await figma.variables.getVariableByIdAsync(
+                colorVarInfo.id,
+              );
+            }
+          } else if (
+            (fillBoundVars as any).type === "VARIABLE_ALIAS" &&
+            (fillBoundVars as any).id
+          ) {
+            // VARIABLE_ALIAS format
+            variable = await figma.variables.getVariableByIdAsync(
+              (fillBoundVars as any).id,
+            );
+          }
+
+          if (variable && instanceFill.type === "SOLID") {
+            // Create a new SolidPaint based on the existing fill
+            const solidFill = instanceFill as SolidPaint;
+            const newSolidPaint: SolidPaint = {
+              type: "SOLID",
+              visible: solidFill.visible,
+              opacity: solidFill.opacity,
+              blendMode: solidFill.blendMode,
+              color: { ...solidFill.color }, // This will be overridden by the variable
+            };
+
+            // Use setBoundVariableForPaint to bind the variable to the color property
+            const boundPaint = figma.variables.setBoundVariableForPaint(
+              newSolidPaint,
+              "color",
+              variable,
+            ) as SolidPaint;
+
+            boundFills.push(boundPaint);
+            debugConsole.log(
+              `[FILL-BOUND] ✓ Bound variable "${variable.name}" (${variable.id}) to fill[${i}].color on child "${instanceChild.name}"`,
+            );
+          } else if (variable) {
+            // For non-solid fills or if variable not found, use fill as-is
+            // TODO: Handle gradient fills with bound variables on gradient stops
+            boundFills.push(instanceFill);
+            if (!variable) {
+              debugConsole.warning(
+                `[FILL-BOUND] Could not resolve variable for fill[${i}] on child "${instanceChild.name}"`,
+              );
+            } else if (instanceFill.type !== "SOLID") {
+              debugConsole.log(
+                `[FILL-BOUND] Fill[${i}] on child "${instanceChild.name}" is type "${instanceFill.type}" - variable binding for non-solid fills not yet implemented`,
+              );
+            }
+          } else {
+            // No variable to bind, use fill as-is
+            boundFills.push(instanceFill);
+          }
+        } else {
+          // No bound variables for this fill, use as-is
+          boundFills.push(instanceFill);
+        }
+      }
+
+      // Assign the new fills array with bound variables
+      instanceChild.fills = boundFills;
+
+      debugConsole.log(
+        `[FILL-BOUND] ✓ Applied fill bound variables to child "${instanceChild.name}" in instance "${instanceNode.name}" (${boundFills.length} fill(s))`,
+      );
+    } catch (error) {
+      debugConsole.warning(
+        `Error applying fill bound variables to instance child "${instanceChild.name}": ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  debugConsole.log(
+    `[FILL-BOUND] Finished applying fill bound variables to instance "${instanceNode.name}" children`,
+  );
+}
+
+/**
+ * Updates instance children from JSON data to preserve bound variables and other properties
+ * CRITICAL: We can only modify existing children in place - cannot add/replace children in instances
+ *
+ * This function:
+ * - Matches children by name (recursive search) and updates properties (fills, bound variables, etc.)
+ * - Warns (not errors) if JSON child doesn't match instance tree - continues processing
+ * - Keeps default children that aren't in JSON (don't delete them - they're part of component)
+ * - Cannot add children that exist only in JSON (Figma limitation)
+ */
+async function updateInstanceChildrenFromJson(
+  instanceNode: InstanceNode,
+  nodeData: any,
+): Promise<void> {
+  if (
+    !nodeData.children ||
+    !Array.isArray(nodeData.children) ||
+    !instanceNode.children ||
+    instanceNode.children.length === 0
+  ) {
+    return;
+  }
+
+  // Helper to recursively find a child by name
+  const findChildRecursively = (
+    node: SceneNode | ChildrenMixin,
+    targetName: string,
+  ): SceneNode | null => {
+    if ("children" in node && Array.isArray(node.children)) {
+      for (const child of node.children) {
+        if (child.name === targetName) {
+          return child;
+        }
+        const found = findChildRecursively(child, targetName);
+        if (found) {
+          return found;
+        }
+      }
+    }
+    return null;
+  };
+
+  // Process each child in JSON
+  for (const jsonChild of nodeData.children) {
+    if (!jsonChild || !jsonChild.name) {
+      continue;
+    }
+
+    // Find matching child in instance by name (recursive search)
+    const matchingInstanceChild = findChildRecursively(
+      instanceNode,
+      jsonChild.name,
+    );
+
+    if (matchingInstanceChild) {
+      // Match found - update properties in place
+      // Note: We already apply fill bound variables in applyFillBoundVariablesToInstanceChildren
+      // This function can be extended to update other properties if needed
+      // For now, we rely on applyFillBoundVariablesToInstanceChildren for fills
+      // and this function serves as a placeholder for future property updates
+    } else {
+      // No match - JSON child doesn't exist in instance tree
+      // This is expected (instance overrides, Figma limitations) - warn and continue
+      debugConsole.warning(
+        `Child "${jsonChild.name}" in JSON does not exist in instance "${instanceNode.name}" - skipping (instance override or Figma limitation)`,
+      );
+    }
+  }
+
+  // Check for instance children not in JSON (we keep these - they're part of component)
+  const jsonChildNames = new Set(
+    (nodeData.children || []).map((c: any) => c?.name).filter(Boolean),
+  );
+  const instanceChildrenNotInJson = instanceNode.children.filter(
+    (child) => !jsonChildNames.has(child.name),
+  );
+
+  if (instanceChildrenNotInJson.length > 0) {
+    debugConsole.log(
+      `Instance "${instanceNode.name}" has ${instanceChildrenNotInJson.length} child(ren) not in JSON - keeping default children: ${instanceChildrenNotInJson.map((c) => c.name).join(", ")}`,
+    );
   }
 }
 
@@ -5828,16 +10091,25 @@ export async function importPage(
 export async function resolveDeferredNormalInstances(
   deferredInstances: DeferredNormalInstance[],
   constructionIcon: string = "",
+  recognizedVariables: Map<string, Variable> | null = null,
+  _variableTable: VariableTable | null = null,
+  _collectionTable: CollectionTable | null = null,
+  _recognizedCollections: Map<string, VariableCollection> | null = null,
 ): Promise<{
   resolved: number;
   failed: number;
   errors: string[];
 }> {
+  // Mark unused parameters as intentionally unused (kept for API consistency)
+  void _variableTable;
+  void _collectionTable;
+  void _recognizedCollections;
+
   if (deferredInstances.length === 0) {
     return { resolved: 0, failed: 0, errors: [] };
   }
 
-  await debugConsole.log(
+  debugConsole.log(
     `=== Resolving ${deferredInstances.length} deferred normal instance(s) ===`,
   );
 
@@ -5847,7 +10119,81 @@ export async function resolveDeferredNormalInstances(
 
   await figma.loadAllPagesAsync();
 
+  // Sort deferred instances bottom-up (deepest first, shallowest last)
+  // This ensures children are resolved before parents, preventing loss of nested placeholders
+  const calculateDepth = (
+    deferred: DeferredNormalInstance,
+    allDeferred: DeferredNormalInstance[],
+    visited: Set<string> = new Set(),
+  ): number => {
+    if (!deferred.parentPlaceholderId) {
+      return 0; // Root level
+    }
+
+    // Prevent infinite loops
+    if (visited.has(deferred.placeholderFrameId)) {
+      return 0;
+    }
+    visited.add(deferred.placeholderFrameId);
+
+    // Find parent deferred instance
+    const parentDeferred = allDeferred.find(
+      (d) => d.placeholderFrameId === deferred.parentPlaceholderId,
+    );
+
+    if (!parentDeferred) {
+      return 0; // Parent not found (shouldn't happen, but handle gracefully)
+    }
+
+    return 1 + calculateDepth(parentDeferred, allDeferred, visited);
+  };
+
+  // Calculate depth for each deferred instance
+  const deferredWithDepth = deferredInstances.map((deferred) => ({
+    deferred,
+    depth: calculateDepth(deferred, deferredInstances),
+  }));
+
+  // Sort by depth (deepest first = bottom-up)
+  deferredWithDepth.sort((a, b) => b.depth - a.depth);
+
+  debugConsole.log(
+    `[BOTTOM-UP] Sorted ${deferredInstances.length} deferred instance(s) by depth (deepest first)`,
+  );
+  if (deferredWithDepth.length > 0) {
+    const maxDepth = Math.max(...deferredWithDepth.map((d) => d.depth));
+    debugConsole.log(
+      `[BOTTOM-UP] Depth range: 0 (root) to ${maxDepth} (deepest)`,
+    );
+  }
+
+  // Track which deferred instances have been processed as children to avoid double-processing
+  const processedAsChildren = new Set<string>();
+
+  // Pre-mark all child deferred instances (those with parentPlaceholderId) so they don't get processed
+  // in the main loop. They will be resolved when their parent is resolved.
   for (const deferred of deferredInstances) {
+    if (deferred.parentPlaceholderId) {
+      processedAsChildren.add(deferred.placeholderFrameId);
+      debugConsole.log(
+        `[NESTED] Pre-marked child deferred instance "${deferred.nodeData.name}" (placeholder: ${deferred.placeholderFrameId.substring(0, 8)}..., parent placeholder: ${deferred.parentPlaceholderId.substring(0, 8)}...)`,
+      );
+    }
+  }
+  debugConsole.log(
+    `[NESTED] Pre-marked ${processedAsChildren.size} child deferred instance(s) to skip in main loop`,
+  );
+
+  // Process deferred instances in bottom-up order
+  for (const { deferred } of deferredWithDepth) {
+    // Skip if this deferred instance was already processed as a child of another deferred instance
+    if (processedAsChildren.has(deferred.placeholderFrameId)) {
+      debugConsole.log(
+        `[NESTED] Skipping child deferred instance "${deferred.nodeData.name}" (placeholder: ${deferred.placeholderFrameId.substring(0, 8)}...) - will be resolved when parent is resolved`,
+      );
+      continue;
+    }
+
     try {
       const { placeholderFrameId, instanceEntry, nodeData, parentNodeId } =
         deferred;
@@ -5861,45 +10207,132 @@ export async function resolveDeferredNormalInstances(
       )) as SceneNode | null;
 
       if (!placeholderFrame || !parentNode) {
-        const error = `Deferred instance "${nodeData.name}" - could not find placeholder frame (${placeholderFrameId}) or parent node (${parentNodeId})`;
-        await debugConsole.error(error);
+        // Check if this was a child deferred instance that should have been skipped
+        const wasChildDeferred = deferred.parentPlaceholderId !== undefined;
+        const wasMarked = processedAsChildren.has(placeholderFrameId);
+        const error = `Deferred instance "${nodeData.name}" - could not find placeholder frame (${placeholderFrameId.substring(0, 8)}...) or parent node (${parentNodeId.substring(0, 8)}...). Was child deferred: ${wasChildDeferred}, Was marked: ${wasMarked}`;
+        debugConsole.error(error);
+        if (wasChildDeferred && !wasMarked) {
+          debugConsole.error(
+            `[NESTED] BUG: Child deferred instance "${nodeData.name}" was not properly marked! parentPlaceholderId: ${deferred.parentPlaceholderId?.substring(0, 8)}...`,
+          );
+        }
         errors.push(error);
         failed++;
         continue;
       }
 
       // Find the referenced page
+      // PRIMARY STRATEGY: Match by GUID from page metadata (most reliable)
+      // This is the correct way to find pages - by their unique identifier, not by name
+      let referencedPage: PageNode | null = null;
+
+      if (instanceEntry.componentGuid) {
+        debugConsole.log(
+          `  Looking for page by GUID: ${instanceEntry.componentGuid.substring(0, 8)}...`,
+        );
+        for (const page of figma.root.children) {
+          if (page.type !== "PAGE") continue;
+          try {
+            const pageMetadataStr = page.getPluginData(PAGE_METADATA_KEY);
+            if (pageMetadataStr) {
+              const pageMetadata = JSON.parse(pageMetadataStr);
+              if (pageMetadata.id === instanceEntry.componentGuid) {
+                referencedPage = page;
+                debugConsole.log(`  ✓ Found page "${page.name}" by GUID match`);
+                break;
+              }
+            }
+          } catch {
+            // Continue searching
+          }
+        }
+      }
+
+      // FALLBACK STRATEGIES: If GUID match failed, try name matching
       // Try multiple matching strategies:
       // 1. Exact name match
       // 2. Name with construction icon prefix
-      // 3. Clean name match (alphanumeric only) - handles renamed pages or formatting differences
-      let referencedPage = figma.root.children.find((page) => {
-        const exactMatch = page.name === instanceEntry.componentPageName;
-        const iconMatch =
-          constructionIcon &&
-          page.name ===
-            `${constructionIcon} ${instanceEntry.componentPageName}`;
-        return exactMatch || iconMatch;
-      });
+      if (!referencedPage) {
+        referencedPage = figma.root.children.find((page) => {
+          const exactMatch = page.name === instanceEntry.componentPageName;
+          const iconMatch =
+            constructionIcon &&
+            page.name ===
+              `${constructionIcon} ${instanceEntry.componentPageName}`;
+          return exactMatch || iconMatch;
+        }) as PageNode | null;
+      }
 
       // If exact match failed, try clean name matching
       if (!referencedPage) {
         const cleanTargetName = getComponentCleanName(
           instanceEntry.componentPageName,
         );
-        referencedPage = figma.root.children.find((page) => {
-          const cleanPageName = getComponentCleanName(page.name);
-          return cleanPageName === cleanTargetName;
-        });
+        referencedPage =
+          figma.root.children.find((page) => {
+            const cleanPageName = getComponentCleanName(page.name);
+            return cleanPageName === cleanTargetName;
+          }) ?? null;
+      }
+
+      // If still not found, try matching against pages with version suffixes removed
+      // (e.g., "UI kit components (V: 1)" should match "UI kit components")
+      if (!referencedPage) {
+        const cleanTargetName = getComponentCleanName(
+          instanceEntry.componentPageName,
+        );
+        // Remove version suffix pattern: " (V: X)" or " (V:X)"
+        const targetNameWithoutVersion = cleanTargetName.replace(
+          /\s*\(V\s*:\s*\d+\)\s*$/i,
+          "",
+        );
+
+        referencedPage =
+          figma.root.children.find((page) => {
+            const cleanPageName = getComponentCleanName(page.name);
+            const pageNameWithoutVersion = cleanPageName.replace(
+              /\s*\(V\s*:\s*\d+\)\s*$/i,
+              "",
+            );
+            return pageNameWithoutVersion === targetNameWithoutVersion;
+          }) ?? null;
+      }
+
+      // If still not found, try case-insensitive matching
+      if (!referencedPage) {
+        const targetNameLower = instanceEntry.componentPageName
+          .toLowerCase()
+          .trim();
+        referencedPage =
+          figma.root.children.find((page) => {
+            const pageNameLower = page.name.toLowerCase().trim();
+            return pageNameLower === targetNameLower;
+          }) ?? null;
+      }
+
+      // If still not found, try case-insensitive clean name matching
+      if (!referencedPage) {
+        const cleanTargetName = getComponentCleanName(
+          instanceEntry.componentPageName,
+        ).toLowerCase();
+        referencedPage =
+          figma.root.children.find((page) => {
+            const cleanPageName = getComponentCleanName(
+              page.name,
+            ).toLowerCase();
+            return cleanPageName === cleanTargetName;
+          }) ?? null;
       }
 
       if (!referencedPage && constructionIcon) {
         // Debug: log available page names to help diagnose
-        const availablePageNames = figma.root.children
-          .map((p) => p.name)
-          .slice(0, 10);
-        await debugConsole.log(
-          `  [DEBUG] Looking for page "${instanceEntry.componentPageName}" (or "${constructionIcon} ${instanceEntry.componentPageName}"). Available pages (first 10): ${availablePageNames.join(", ")}`,
+        const allPageNames = figma.root.children
+          .filter((p) => p.type === "PAGE")
+          .map((p) => p.name);
+        debugConsole.log(`Available pages: ${allPageNames.join(", ")}`);
+        debugConsole.log(
+          `Looking for page: "${instanceEntry.componentPageName}"`,
         );
       }
 
@@ -5907,12 +10340,85 @@ export async function resolveDeferredNormalInstances(
         const expectedNames = constructionIcon
           ? `"${instanceEntry.componentPageName}" or "${constructionIcon} ${instanceEntry.componentPageName}"`
           : `"${instanceEntry.componentPageName}"`;
-        const error = `Deferred instance "${nodeData.name}" still cannot find referenced page (tried: ${expectedNames}, and clean name matching)`;
-        await debugConsole.error(error);
+        const guidInfo = instanceEntry.componentGuid
+          ? ` (GUID: ${instanceEntry.componentGuid.substring(0, 8)}...)`
+          : "";
+        const error = `Deferred instance "${nodeData.name}" still cannot find referenced page${guidInfo} (tried: GUID matching, ${expectedNames}, clean name matching, version suffix removal, and case-insensitive matching)`;
+        debugConsole.error(error);
         errors.push(error);
         failed++;
         continue;
       }
+
+      // Helper function to find component by node ID path (more reliable than name paths)
+      const findComponentByNodePath = (
+        parent: any,
+        nodePath: string[],
+        componentName: string,
+        componentGuid?: string,
+        componentSetName?: string,
+      ): ComponentNode | null => {
+        if (nodePath.length === 0) {
+          // At the end of the path - find the component by name/GUID
+          let nameMatch: ComponentNode | null = null;
+          const cleanTargetName = getComponentCleanName(componentName);
+
+          for (const child of parent.children || []) {
+            if (child.type === "COMPONENT") {
+              const exactMatch = child.name === componentName;
+              const cleanMatch =
+                getComponentCleanName(child.name) === cleanTargetName;
+
+              if (exactMatch || cleanMatch) {
+                if (!nameMatch) {
+                  nameMatch = child;
+                }
+                // Prefer exact match, especially with GUID
+                if (exactMatch && componentGuid) {
+                  try {
+                    const metadataStr = child.getPluginData(PAGE_METADATA_KEY);
+                    if (metadataStr) {
+                      const metadata = JSON.parse(metadataStr);
+                      if (metadata.id === componentGuid) {
+                        return child;
+                      }
+                    }
+                  } catch {
+                    // Continue searching
+                  }
+                } else if (exactMatch) {
+                  return child;
+                }
+              }
+            }
+          }
+
+          // Return best match found
+          if (nameMatch && componentGuid) {
+            return nameMatch;
+          }
+          return nameMatch;
+        }
+
+        const [firstNodeId, ...remainingNodePath] = nodePath;
+
+        // Find child with matching node ID
+        for (const child of parent.children || []) {
+          if (child.id === firstNodeId) {
+            // Found the correct child, continue with remaining path
+            return findComponentByNodePath(
+              child,
+              remainingNodePath,
+              componentName,
+              componentGuid,
+              componentSetName,
+            );
+          }
+        }
+
+        // Node with specified ID not found
+        return null;
+      };
 
       // Helper function to find component by path, component set name, and component name
       const findComponentByPath = (
@@ -5921,7 +10427,19 @@ export async function resolveDeferredNormalInstances(
         componentName: string,
         componentGuid?: string,
         componentSetName?: string,
+        nodePath?: string[],
       ): ComponentNode | null => {
+        // If we have nodePath (ID-based), use it for precise navigation
+        if (nodePath && nodePath.length > 0) {
+          return findComponentByNodePath(
+            parent,
+            nodePath,
+            componentName,
+            componentGuid,
+            componentSetName,
+          );
+        }
+
         if (path.length === 0) {
           let nameMatch: ComponentNode | null = null;
           const cleanTargetName = getComponentCleanName(componentName);
@@ -5939,9 +10457,7 @@ export async function resolveDeferredNormalInstances(
                 // Prefer exact match if available
                 if (exactMatch && componentGuid) {
                   try {
-                    const metadataStr = child.getPluginData(
-                      "RecursicaPublishedMetadata",
-                    );
+                    const metadataStr = child.getPluginData(PAGE_METADATA_KEY);
                     if (metadataStr) {
                       const metadata = JSON.parse(metadataStr);
                       if (metadata.id === componentGuid) {
@@ -5981,9 +10497,8 @@ export async function resolveDeferredNormalInstances(
                     // Prefer exact match if available
                     if (exactMatch && componentGuid) {
                       try {
-                        const metadataStr = variant.getPluginData(
-                          "RecursicaPublishedMetadata",
-                        );
+                        const metadataStr =
+                          variant.getPluginData(PAGE_METADATA_KEY);
                         if (metadataStr) {
                           const metadata = JSON.parse(metadataStr);
                           if (metadata.id === componentGuid) {
@@ -6054,9 +10569,8 @@ export async function resolveDeferredNormalInstances(
                       // Found the variant - check GUID if provided
                       if (componentGuid) {
                         try {
-                          const metadataStr = variant.getPluginData(
-                            "RecursicaPublishedMetadata",
-                          );
+                          const metadataStr =
+                            variant.getPluginData(PAGE_METADATA_KEY);
                           if (metadataStr) {
                             const metadata = JSON.parse(metadataStr);
                             if (metadata.id === componentGuid) {
@@ -6104,65 +10618,89 @@ export async function resolveDeferredNormalInstances(
         return null;
       };
 
-      // Debug: log what we're searching for
-      await debugConsole.log(
-        `  [DEBUG] Searching for component "${instanceEntry.componentName}" on page "${referencedPage.name}"`,
-      );
-      if (instanceEntry.path && instanceEntry.path.length > 0) {
-        await debugConsole.log(
-          `  [DEBUG] Component path: [${instanceEntry.path.join(" → ")}]`,
-        );
-      } else {
-        await debugConsole.log(`  [DEBUG] Component is at page root`);
-      }
-      if (instanceEntry.componentSetName) {
-        await debugConsole.log(
-          `  [DEBUG] Component set name: "${instanceEntry.componentSetName}"`,
-        );
-      }
-      if (instanceEntry.componentGuid) {
-        await debugConsole.log(
-          `  [DEBUG] Component GUID: ${instanceEntry.componentGuid.substring(0, 8)}...`,
-        );
-      }
-
-      // Debug: log available top-level nodes on the page
-      const topLevelNodes = referencedPage.children.slice(0, 10).map((node) => {
-        return `${node.type}: "${node.name}"${node.type === "COMPONENT_SET" ? ` (${(node as ComponentSetNode).children.length} variants)` : ""}`;
-      });
-      await debugConsole.log(
-        `  [DEBUG] Top-level nodes on page "${referencedPage.name}" (first 10): ${topLevelNodes.join(", ")}`,
-      );
-
       let targetComponent = findComponentByPath(
         referencedPage,
         instanceEntry.path || [],
         instanceEntry.componentName,
         instanceEntry.componentGuid,
         instanceEntry.componentSetName,
+        instanceEntry.nodePath,
       );
 
       // If path-based search failed, try searching recursively through all FRAMEs
       // This handles cases where the path doesn't match the actual structure
       // (e.g., component is inside an "Icons" FRAME but path doesn't include it)
-      if (!targetComponent && instanceEntry.componentSetName) {
-        await debugConsole.log(
-          `  [DEBUG] Path-based search failed, trying recursive search for COMPONENT_SET "${instanceEntry.componentSetName}"`,
+      if (!targetComponent) {
+        debugConsole.log(
+          `  Path-based search failed, trying recursive search for component "${instanceEntry.componentName}"`,
         );
         const recursiveSearch = (
           node: any,
           depth = 0,
+          ignoreComponentSetName = false,
         ): ComponentNode | null => {
           if (depth > 5) return null; // Limit depth
           for (const child of node.children || []) {
-            if (child.type === "COMPONENT_SET") {
-              const setExactMatch =
-                child.name === instanceEntry.componentSetName;
-              const setCleanMatch =
+            // Search for standalone COMPONENT nodes
+            if (child.type === "COMPONENT") {
+              const exactMatch = child.name === instanceEntry.componentName;
+              const cleanMatch =
                 getComponentCleanName(child.name) ===
-                getComponentCleanName(instanceEntry.componentSetName || "");
-              if (setExactMatch || setCleanMatch) {
-                // Found the component set, now search for the variant
+                getComponentCleanName(instanceEntry.componentName);
+              if (exactMatch || cleanMatch) {
+                // Check GUID if provided
+                if (instanceEntry.componentGuid) {
+                  try {
+                    const metadataStr = child.getPluginData(PAGE_METADATA_KEY);
+                    if (metadataStr) {
+                      const metadata = JSON.parse(metadataStr);
+                      if (metadata.id === instanceEntry.componentGuid) {
+                        debugConsole.log(
+                          `  ✓ Found component "${child.name}" via recursive search (GUID match)`,
+                        );
+                        return child;
+                      }
+                    }
+                  } catch {
+                    // Continue
+                  }
+                }
+                // Return component (prefer exact match)
+                debugConsole.log(
+                  `  ✓ Found component "${child.name}" via recursive search (name match)`,
+                );
+                if (exactMatch) {
+                  return child;
+                }
+                // Return clean match as fallback
+                return child;
+              }
+            }
+            // Search for COMPONENT_SET nodes (variants)
+            // ALWAYS search all COMPONENT_SET nodes for variants, even if componentSetName is not set
+            // This handles cases where component name matches a variant name but componentSetName wasn't provided
+            if (child.type === "COMPONENT_SET") {
+              // If componentSetName is provided and we're not ignoring it, only search in matching sets
+              let shouldSearchSet = true;
+              if (!ignoreComponentSetName && instanceEntry.componentSetName) {
+                const setExactMatch =
+                  child.name === instanceEntry.componentSetName;
+                const setCleanMatch =
+                  getComponentCleanName(child.name) ===
+                  getComponentCleanName(instanceEntry.componentSetName || "");
+                shouldSearchSet = setExactMatch || setCleanMatch;
+                if (!shouldSearchSet) {
+                  debugConsole.log(
+                    `  [RECURSIVE] Skipping COMPONENT_SET "${child.name}" (doesn't match componentSetName "${instanceEntry.componentSetName}")`,
+                  );
+                }
+              }
+
+              if (shouldSearchSet) {
+                debugConsole.log(
+                  `  [RECURSIVE] Searching COMPONENT_SET "${child.name}" for variant "${instanceEntry.componentName}"${ignoreComponentSetName ? " (ignoring componentSetName)" : ""}`,
+                );
+                // Found a matching component set (or searching all sets), now search for the variant
                 const cleanTargetName = getComponentCleanName(
                   instanceEntry.componentName,
                 );
@@ -6172,16 +10710,21 @@ export async function resolveDeferredNormalInstances(
                       variant.name === instanceEntry.componentName;
                     const variantCleanMatch =
                       getComponentCleanName(variant.name) === cleanTargetName;
+                    debugConsole.log(
+                      `  [RECURSIVE] Checking variant "${variant.name}" (exact: ${variantExactMatch}, clean: ${variantCleanMatch})`,
+                    );
                     if (variantExactMatch || variantCleanMatch) {
                       // Check GUID if provided
                       if (instanceEntry.componentGuid) {
                         try {
-                          const metadataStr = variant.getPluginData(
-                            "RecursicaPublishedMetadata",
-                          );
+                          const metadataStr =
+                            variant.getPluginData(PAGE_METADATA_KEY);
                           if (metadataStr) {
                             const metadata = JSON.parse(metadataStr);
                             if (metadata.id === instanceEntry.componentGuid) {
+                              debugConsole.log(
+                                `  ✓ Found variant "${variant.name}" in COMPONENT_SET "${child.name}" via recursive search (GUID match)`,
+                              );
                               return variant;
                             }
                           }
@@ -6190,6 +10733,9 @@ export async function resolveDeferredNormalInstances(
                         }
                       }
                       // Return variant (prefer exact match)
+                      debugConsole.log(
+                        `  ✓ Found variant "${variant.name}" in COMPONENT_SET "${child.name}" via recursive search (name match)`,
+                      );
                       if (variantExactMatch) {
                         return variant;
                       }
@@ -6200,18 +10746,31 @@ export async function resolveDeferredNormalInstances(
                 }
               }
             }
-            // Recurse into FRAMEs and GROUPs
+            // Recurse into FRAMEs and GROUPs (COMPONENT_SET nodes only contain variants, no nested structures)
             if (child.type === "FRAME" || child.type === "GROUP") {
-              const found = recursiveSearch(child, depth + 1);
+              const found = recursiveSearch(
+                child,
+                depth + 1,
+                ignoreComponentSetName,
+              );
               if (found) return found;
             }
           }
           return null;
         };
-        targetComponent = recursiveSearch(referencedPage);
-        if (targetComponent) {
-          await debugConsole.log(
-            `  [DEBUG] Found component via recursive search: "${targetComponent.name}"`,
+        // First pass: try with componentSetName filtering (if provided)
+        targetComponent = recursiveSearch(referencedPage, 0, false);
+        // Second pass: if first pass failed and componentSetName was provided, try again ignoring it
+        // This handles cases where componentSetName is incorrectly set (e.g., to a path segment)
+        if (!targetComponent && instanceEntry.componentSetName) {
+          debugConsole.log(
+            `  First recursive search pass failed, trying again while ignoring componentSetName "${instanceEntry.componentSetName}"`,
+          );
+          targetComponent = recursiveSearch(referencedPage, 0, true);
+        }
+        if (!targetComponent) {
+          debugConsole.log(
+            `  ✗ Recursive search also failed to find component "${instanceEntry.componentName}"`,
           );
         }
       }
@@ -6237,11 +10796,8 @@ export async function resolveDeferredNormalInstances(
           }
         };
         collectComponentNames(referencedPage);
-        await debugConsole.log(
-          `  [DEBUG] Available components on page "${referencedPage.name}" (first 20): ${availableComponents.slice(0, 20).join(", ")}`,
-        );
         const error = `Deferred instance "${nodeData.name}" still cannot find component "${instanceEntry.componentName}" on page "${instanceEntry.componentPageName}"${pathDisplay}`;
-        await debugConsole.error(error);
+        debugConsole.error(error);
         errors.push(error);
         failed++;
         continue;
@@ -6252,6 +10808,45 @@ export async function resolveDeferredNormalInstances(
       instanceNode.name =
         nodeData.name ||
         placeholderFrame.name.replace("[Deferred: ", "").replace("]", "");
+
+      // Log what component the instance was created from vs what it should be
+      const actualMainComponent = await instanceNode.getMainComponentAsync();
+      const expectedComponentName = instanceEntry.componentName;
+      const actualComponentName = actualMainComponent
+        ? actualMainComponent.name
+        : "unknown";
+      debugConsole.log(
+        `  [BINDING] Deferred instance "${nodeData.name}" resolved: expected component "${expectedComponentName}", actual main component "${actualComponentName}"${actualMainComponent?.parent?.type === "COMPONENT_SET" ? ` (COMPONENT_SET: "${actualMainComponent.parent.name}")` : ""}`,
+      );
+
+      // Copy plugin data from component children to instance children for proper ID matching
+      // This ensures deferred child resolution can match by original IDs
+      if ("children" in targetComponent && "children" in instanceNode) {
+        const componentChildren = targetComponent.children;
+        const instanceChildren = instanceNode.children;
+
+        // Copy plugin data by position (component children should correspond to instance children)
+        const maxChildren = Math.min(
+          componentChildren.length,
+          instanceChildren.length,
+        );
+        for (let i = 0; i < maxChildren; i++) {
+          const componentChild = componentChildren[i];
+          const instanceChild = instanceChildren[i];
+
+          // Copy the original node ID from component child to instance child
+          const originalId = componentChild.getPluginData(ORIGINAL_NODE_ID_KEY);
+          if (originalId) {
+            instanceChild.setPluginData(ORIGINAL_NODE_ID_KEY, originalId);
+            console.log(
+              `[IMPORT] Set ORIGINAL_NODE_ID_KEY on instance child "${instanceChild.name}": "${originalId}" (from component "${targetComponent.name}")`,
+            );
+            debugConsole.log(
+              `  [DEBUG] Copied plugin data from component child "${componentChild.name}" to instance child "${instanceChild.name}": "${originalId}"`,
+            );
+          }
+        }
+      }
 
       // Copy position and size from placeholder
       instanceNode.x = placeholderFrame.x;
@@ -6290,7 +10885,7 @@ export async function resolveDeferredNormalInstances(
                 mainComponent.parent.componentPropertyDefinitions;
             } else {
               // Instance was created from a non-variant component - no variant properties to set
-              await debugConsole.warning(
+              debugConsole.warning(
                 `Cannot set variant properties for resolved instance "${nodeData.name}" - main component is not a COMPONENT_SET or variant`,
               );
             }
@@ -6313,7 +10908,7 @@ export async function resolveDeferredNormalInstances(
             }
           }
         } catch (error) {
-          await debugConsole.warning(
+          debugConsole.warning(
             `Failed to set variant properties for resolved instance "${nodeData.name}": ${error}`,
           );
         }
@@ -6347,37 +10942,1809 @@ export async function resolveDeferredNormalInstances(
             }
 
             if (componentProperties) {
+              // Check if this is the ".UI kit / Page header" instance we're debugging
+              const isPageHeader =
+                nodeData.name === ".UI kit / Page header" ||
+                instanceEntry.componentName === ".UI kit / Page header";
+              if (isPageHeader) {
+                debugConsole.log(
+                  `[DEBUG .UI kit / Page header] === RESOLVING DEFERRED INSTANCE ===`,
+                );
+                debugConsole.log(
+                  `[DEBUG .UI kit / Page header] Instance name: "${nodeData.name}"`,
+                );
+                debugConsole.log(
+                  `[DEBUG .UI kit / Page header] Component name: "${instanceEntry.componentName}"`,
+                );
+                debugConsole.log(
+                  `[DEBUG .UI kit / Page header] Instance entry componentProperties (full): ${JSON.stringify(instanceEntry.componentProperties, null, 2)}`,
+                );
+                debugConsole.log(
+                  `[DEBUG .UI kit / Page header] Main component: ${mainComponent.name} (type: ${mainComponentType})`,
+                );
+                debugConsole.log(
+                  `[DEBUG .UI kit / Page header] Component property definitions (full): ${JSON.stringify(componentProperties, null, 2)}`,
+                );
+              }
+              debugConsole.log(
+                `[IMPORT] Deferred instance "${nodeData.name}" -> Processing ${Object.keys(instanceEntry.componentProperties || {}).length} component property/properties from entry`,
+              );
+              debugConsole.log(
+                `[IMPORT]   Properties in entry: ${JSON.stringify(Object.keys(instanceEntry.componentProperties || {}))}`,
+              );
+              debugConsole.log(
+                `[IMPORT]   Available properties on component: ${JSON.stringify(Object.keys(componentProperties))}`,
+              );
+              const propertiesToSet: Record<string, any> = {};
               for (const [propName, propValue] of Object.entries(
                 instanceEntry.componentProperties,
               )) {
+                debugConsole.log(
+                  `[IMPORT]   Processing entry property "${propName}" with value: ${JSON.stringify(propValue)}`,
+                );
+                // Property names in JSON may include IDs - extract clean name
                 const cleanPropName = propName.split("#")[0];
-                if (componentProperties[cleanPropName]) {
+                debugConsole.log(
+                  `[IMPORT]     Clean property name: "${cleanPropName}"`,
+                );
+
+                // Check if property exists - Figma may return property keys with or without ID suffixes
+                // Try exact match first, then try matching by base name
+                let matchingPropKey: string | undefined = undefined;
+                if (componentProperties[propName]) {
+                  // Exact match (with ID suffix)
+                  matchingPropKey = propName;
+                  debugConsole.log(
+                    `[IMPORT]     ✓ Exact match found: "${propName}"`,
+                  );
+                } else if (componentProperties[cleanPropName]) {
+                  // Match by clean name (without ID suffix)
+                  matchingPropKey = cleanPropName;
+                  debugConsole.log(
+                    `[IMPORT]     ✓ Clean name match found: "${cleanPropName}"`,
+                  );
+                } else {
+                  // Try to find a property that starts with the clean name (in case ID format differs)
+                  matchingPropKey = Object.keys(componentProperties).find(
+                    (key) => key.split("#")[0] === cleanPropName,
+                  );
+                  if (matchingPropKey) {
+                    debugConsole.log(
+                      `[IMPORT]     ✓ Base name match found: "${matchingPropKey}" (from "${cleanPropName}")`,
+                    );
+                  } else {
+                    debugConsole.warning(
+                      `[IMPORT]     ✗ No match found for "${propName}" (clean: "${cleanPropName}")`,
+                    );
+                  }
+                }
+
+                if (matchingPropKey) {
+                  // Extract the actual value from the property object
+                  // Component properties from getProperties() might be stored as primitive values
+                  // or as objects with 'value' and other keys
+                  const actualValue =
+                    propValue !== null &&
+                    propValue !== undefined &&
+                    typeof propValue === "object" &&
+                    "value" in propValue
+                      ? (propValue as any).value
+                      : propValue;
+                  debugConsole.log(
+                    `[IMPORT]     Extracted value: ${JSON.stringify(actualValue)} (from ${propValue !== null && propValue !== undefined && typeof propValue === "object" && "value" in propValue ? "object.value" : "direct"})`,
+                  );
+                  // Use the matching property key (which may have ID suffix) for setProperties
+                  // Figma API requires the exact property key as it exists on the component
+                  propertiesToSet[matchingPropKey] = actualValue;
+                  debugConsole.log(
+                    `[IMPORT]     Added to propertiesToSet: "${matchingPropKey}" = ${JSON.stringify(actualValue)}`,
+                  );
+                } else {
+                  debugConsole.warning(
+                    `[IMPORT]     Component property "${cleanPropName}" (from "${propName}") does not exist on component "${instanceEntry.componentName}" for resolved deferred instance "${nodeData.name}". Available properties: ${Object.keys(componentProperties).join(", ") || "none"}`,
+                  );
+                }
+              }
+
+              // Set all properties at once
+              // IMPORTANT: Set properties BEFORE updating children to ensure TEXT properties
+              // are properly bound to text nodes when children are updated
+              if (Object.keys(propertiesToSet).length > 0) {
+                if (isPageHeader) {
+                  debugConsole.log(
+                    `[DEBUG .UI kit / Page header] === ABOUT TO SET PROPERTIES ===`,
+                  );
+                  debugConsole.log(
+                    `[DEBUG .UI kit / Page header] Instance node ID: ${instanceNode.id}`,
+                  );
+                  debugConsole.log(
+                    `[DEBUG .UI kit / Page header] Instance node name: "${instanceNode.name}"`,
+                  );
+                  debugConsole.log(
+                    `[DEBUG .UI kit / Page header] Properties to set (full): ${JSON.stringify(propertiesToSet, null, 2)}`,
+                  );
+                  debugConsole.log(
+                    `[DEBUG .UI kit / Page header] Instance node type: ${instanceNode.type}`,
+                  );
+                  // Don't access mainComponent directly in dynamic-page context - use getMainComponentAsync instead
                   try {
-                    instanceNode.setProperties({
-                      [cleanPropName]: propValue as string | boolean,
-                    });
-                  } catch (error) {
-                    await debugConsole.warning(
-                      `Failed to set component property "${cleanPropName}" for resolved instance "${nodeData.name}": ${error}`,
+                    const mainComp = await instanceNode.getMainComponentAsync();
+                    debugConsole.log(
+                      `[DEBUG .UI kit / Page header] Main component: ${mainComp?.name || "null"}`,
+                    );
+                  } catch {
+                    debugConsole.log(
+                      `[DEBUG .UI kit / Page header] Main component: (could not access)`,
+                    );
+                  }
+                }
+                debugConsole.log(
+                  `[IMPORT]   Ready to set ${Object.keys(propertiesToSet).length} property/properties: ${JSON.stringify(Object.keys(propertiesToSet))}`,
+                );
+                debugConsole.log(
+                  `[IMPORT]   Properties to set (with values): ${JSON.stringify(propertiesToSet)}`,
+                );
+                try {
+                  // Set properties first, before updating children
+                  // This ensures TEXT properties are available when text nodes are processed
+                  if (isPageHeader) {
+                    debugConsole.log(
+                      `[DEBUG .UI kit / Page header] Calling instanceNode.setProperties()...`,
+                    );
+                  }
+                  instanceNode.setProperties(propertiesToSet);
+                  if (isPageHeader) {
+                    debugConsole.log(
+                      `[DEBUG .UI kit / Page header] ✓ setProperties() call completed`,
+                    );
+                  }
+                  debugConsole.log(
+                    `[IMPORT]   ✓ Successfully set component properties for resolved deferred instance "${nodeData.name}": ${Object.keys(propertiesToSet).join(", ")}`,
+                  );
+                  // Verify properties were actually set by reading them back
+                  try {
+                    if (isPageHeader) {
+                      debugConsole.log(
+                        `[DEBUG .UI kit / Page header] === VERIFYING PROPERTIES AFTER SET ===`,
+                      );
+                    }
+                    if (
+                      typeof (instanceNode as any).getProperties === "function"
+                    ) {
+                      if (isPageHeader) {
+                        debugConsole.log(
+                          `[DEBUG .UI kit / Page header] Using getProperties() to verify...`,
+                        );
+                      }
+                      const verifyProps = await (
+                        instanceNode as any
+                      ).getProperties();
+                      if (isPageHeader) {
+                        debugConsole.log(
+                          `[DEBUG .UI kit / Page header] getProperties() returned: ${JSON.stringify(verifyProps, null, 2)}`,
+                        );
+                      }
+                      if (verifyProps && verifyProps.componentProperties) {
+                        const verifiedValues: Record<string, any> = {};
+                        for (const [key, value] of Object.entries(
+                          propertiesToSet,
+                        )) {
+                          const verifyValue =
+                            verifyProps.componentProperties[key];
+                          verifiedValues[key] = verifyValue;
+                          if (isPageHeader) {
+                            debugConsole.log(
+                              `[DEBUG .UI kit / Page header] Property "${key}": expected ${JSON.stringify(value)}, got ${JSON.stringify(verifyValue)}`,
+                            );
+                          }
+                          if (
+                            JSON.stringify(verifyValue) !==
+                            JSON.stringify(value)
+                          ) {
+                            debugConsole.warning(
+                              `[IMPORT]   ⚠ Property "${key}" verification mismatch: expected ${JSON.stringify(value)}, got ${JSON.stringify(verifyValue)}`,
+                            );
+                            if (isPageHeader) {
+                              debugConsole.warning(
+                                `[DEBUG .UI kit / Page header] ⚠ MISMATCH for "${key}"`,
+                              );
+                            }
+                          } else {
+                            debugConsole.log(
+                              `[IMPORT]   ✓ Verified property "${key}" = ${JSON.stringify(verifyValue)}`,
+                            );
+                            if (isPageHeader) {
+                              debugConsole.log(
+                                `[DEBUG .UI kit / Page header] ✓ MATCH for "${key}"`,
+                              );
+                            }
+                          }
+                        }
+                        debugConsole.log(
+                          `[IMPORT]   Verification complete. All properties: ${JSON.stringify(verifiedValues)}`,
+                        );
+                        if (isPageHeader) {
+                          debugConsole.log(
+                            `[DEBUG .UI kit / Page header] All verified properties: ${JSON.stringify(verifiedValues, null, 2)}`,
+                          );
+                        }
+                      }
+                    } else {
+                      // Fallback: try direct access to componentProperties
+                      if (isPageHeader) {
+                        debugConsole.log(
+                          `[DEBUG .UI kit / Page header] Using direct componentProperties access to verify...`,
+                        );
+                      }
+                      const directProps = (instanceNode as any)
+                        .componentProperties;
+                      if (isPageHeader) {
+                        debugConsole.log(
+                          `[DEBUG .UI kit / Page header] Direct componentProperties: ${JSON.stringify(directProps, null, 2)}`,
+                        );
+                      }
+                      if (directProps) {
+                        const verifiedValues: Record<string, any> = {};
+                        for (const [key, expectedValue] of Object.entries(
+                          propertiesToSet,
+                        )) {
+                          const actualProperty = directProps[key];
+                          // Extract the actual value from the property object
+                          // componentProperties returns objects like {type: "TEXT", value: "Logo"}
+                          // but we set just the value, so we need to compare actualProperty.value with expectedValue
+                          const actualValue =
+                            actualProperty &&
+                            typeof actualProperty === "object" &&
+                            "value" in actualProperty
+                              ? actualProperty.value
+                              : actualProperty;
+                          verifiedValues[key] = actualValue;
+                          if (isPageHeader) {
+                            debugConsole.log(
+                              `[DEBUG .UI kit / Page header] Property "${key}": expected ${JSON.stringify(expectedValue)}, actualProperty=${JSON.stringify(actualProperty)}, actualValue=${JSON.stringify(actualValue)}`,
+                            );
+                          }
+                          if (actualProperty === undefined) {
+                            debugConsole.warning(
+                              `[IMPORT]   ⚠ Property "${key}" not found in componentProperties after setting`,
+                            );
+                            if (isPageHeader) {
+                              debugConsole.warning(
+                                `[DEBUG .UI kit / Page header] ⚠ Property "${key}" NOT FOUND in componentProperties`,
+                              );
+                            }
+                          } else if (
+                            JSON.stringify(actualValue) !==
+                            JSON.stringify(expectedValue)
+                          ) {
+                            debugConsole.warning(
+                              `[IMPORT]   ⚠ Property "${key}" verification mismatch: expected ${JSON.stringify(expectedValue)}, got ${JSON.stringify(actualValue)} (from property object: ${JSON.stringify(actualProperty)})`,
+                            );
+                            if (isPageHeader) {
+                              debugConsole.warning(
+                                `[DEBUG .UI kit / Page header] ⚠ MISMATCH for "${key}"`,
+                              );
+                            }
+                          } else {
+                            debugConsole.log(
+                              `[IMPORT]   ✓ Verified property "${key}" = ${JSON.stringify(actualValue)}`,
+                            );
+                            if (isPageHeader) {
+                              debugConsole.log(
+                                `[DEBUG .UI kit / Page header] ✓ MATCH for "${key}"`,
+                              );
+                            }
+                          }
+                        }
+                        debugConsole.log(
+                          `[IMPORT]   Verification complete. All properties: ${JSON.stringify(verifiedValues)}`,
+                        );
+                        if (isPageHeader) {
+                          debugConsole.log(
+                            `[DEBUG .UI kit / Page header] All verified properties: ${JSON.stringify(verifiedValues, null, 2)}`,
+                          );
+                        }
+                      } else {
+                        debugConsole.warning(
+                          `[IMPORT]   Could not access componentProperties for verification`,
+                        );
+                        if (isPageHeader) {
+                          debugConsole.warning(
+                            `[DEBUG .UI kit / Page header] ⚠ Could not access componentProperties`,
+                          );
+                        }
+                      }
+                    }
+                  } catch (verifyError) {
+                    debugConsole.warning(
+                      `[IMPORT]   Could not verify properties after setting: ${verifyError}`,
+                    );
+                  }
+                } catch (error) {
+                  debugConsole.error(
+                    `[IMPORT]   ✗ Failed to set component properties for resolved deferred instance "${nodeData.name}": ${error}`,
+                  );
+                  debugConsole.error(
+                    `[IMPORT]     Properties attempted: ${JSON.stringify(propertiesToSet)}`,
+                  );
+                  debugConsole.error(
+                    `[IMPORT]     Available properties: ${JSON.stringify(Object.keys(componentProperties))}`,
+                  );
+                }
+              } else {
+                debugConsole.warning(
+                  `[IMPORT]   No properties to set for deferred instance "${nodeData.name}" (all properties failed to match)`,
+                );
+              }
+
+              // Apply fill bound variables to instance children
+              await applyFillBoundVariablesToInstanceChildren(
+                instanceNode,
+                nodeData,
+                recognizedVariables,
+              );
+
+              // Update children from JSON to preserve bound variables and other properties
+              // This handles mismatches between JSON tree and instance tree with warnings (not errors)
+              await updateInstanceChildrenFromJson(instanceNode, nodeData);
+
+              // For TEXT component properties, verify that the bound text nodes reflect the property values
+              // Figma automatically binds TEXT properties to text nodes, but we should verify
+              if (Object.keys(propertiesToSet).length > 0) {
+                try {
+                  // Use getMainComponentAsync() instead of direct access to avoid dynamic-page errors
+                  const mainComponent =
+                    await instanceNode.getMainComponentAsync();
+                  if (mainComponent) {
+                    // Variant components don't have componentPropertyDefinitions - only COMPONENT_SETs and non-variant components do
+                    let componentProps: ComponentPropertyDefinitions | null =
+                      null;
+                    const mainComponentType = (mainComponent as any).type;
+                    if (mainComponentType === "COMPONENT_SET") {
+                      const componentSet =
+                        mainComponent as unknown as ComponentSetNode;
+                      componentProps =
+                        componentSet.componentPropertyDefinitions;
+                    } else if (
+                      mainComponentType === "COMPONENT" &&
+                      mainComponent.parent &&
+                      mainComponent.parent.type === "COMPONENT_SET"
+                    ) {
+                      // Instance was created from a variant - get properties from parent COMPONENT_SET
+                      componentProps =
+                        mainComponent.parent.componentPropertyDefinitions;
+                    } else if (mainComponentType === "COMPONENT") {
+                      // Non-variant component - can access componentPropertyDefinitions directly
+                      componentProps =
+                        mainComponent.componentPropertyDefinitions;
+                    }
+
+                    if (componentProps) {
+                      for (const propKey of Object.keys(propertiesToSet)) {
+                        const propDef = componentProps[propKey];
+                        if (propDef && propDef.type === "TEXT") {
+                          // Find text nodes that might be bound to this property
+                          // TEXT properties are typically bound to text nodes with matching content
+                          const findTextNodes = (
+                            node: SceneNode,
+                          ): TextNode[] => {
+                            const results: TextNode[] = [];
+                            if (node.type === "TEXT") {
+                              results.push(node);
+                            }
+                            if ("children" in node) {
+                              for (const child of node.children) {
+                                results.push(...findTextNodes(child));
+                              }
+                            }
+                            return results;
+                          };
+                          const textNodes = findTextNodes(instanceNode);
+                          const propValue = propertiesToSet[propKey];
+                          debugConsole.log(
+                            `[IMPORT]   Found ${textNodes.length} text node(s) in instance "${instanceNode.name}" for TEXT property "${propKey}" = ${JSON.stringify(propValue)}`,
+                          );
+                          // Note: Text nodes should be bound to component properties via componentPropertyReferences
+                          // This binding is restored when the component is created, not when properties are set on instances
+                        }
+                      }
+                    }
+                  }
+                } catch (textCheckError) {
+                  debugConsole.warning(
+                    `[IMPORT]   Could not check text node bindings: ${textCheckError}`,
+                  );
+                }
+              }
+
+              // Final verification: Re-check component properties after all updates to ensure they persisted
+              if (Object.keys(propertiesToSet).length > 0) {
+                if (isPageHeader) {
+                  debugConsole.log(
+                    `[DEBUG .UI kit / Page header] === FINAL VERIFICATION (after all updates) ===`,
+                  );
+                }
+                try {
+                  // Use getProperties() for more reliable reading
+                  let finalProps: any = null;
+                  if (
+                    typeof (instanceNode as any).getProperties === "function"
+                  ) {
+                    if (isPageHeader) {
+                      debugConsole.log(
+                        `[DEBUG .UI kit / Page header] Using getProperties() for final verification...`,
+                      );
+                    }
+                    const propsResult = await (
+                      instanceNode as any
+                    ).getProperties();
+                    if (propsResult && propsResult.componentProperties) {
+                      finalProps = propsResult.componentProperties;
+                      if (isPageHeader) {
+                        debugConsole.log(
+                          `[DEBUG .UI kit / Page header] Final componentProperties from getProperties(): ${JSON.stringify(finalProps, null, 2)}`,
+                        );
+                      }
+                    }
+                  }
+                  // Fallback to direct access
+                  if (!finalProps) {
+                    if (isPageHeader) {
+                      debugConsole.log(
+                        `[DEBUG .UI kit / Page header] Using direct componentProperties access for final verification...`,
+                      );
+                    }
+                    finalProps = (instanceNode as any).componentProperties;
+                    if (isPageHeader) {
+                      debugConsole.log(
+                        `[DEBUG .UI kit / Page header] Final componentProperties (direct): ${JSON.stringify(finalProps, null, 2)}`,
+                      );
+                    }
+                  }
+
+                  if (finalProps) {
+                    const finalValues: Record<string, any> = {};
+                    for (const [key, expectedValue] of Object.entries(
+                      propertiesToSet,
+                    )) {
+                      const finalProperty = finalProps[key];
+                      const finalValue =
+                        finalProperty &&
+                        typeof finalProperty === "object" &&
+                        "value" in finalProperty
+                          ? finalProperty.value
+                          : finalProperty;
+                      finalValues[key] = finalValue;
+                      if (isPageHeader) {
+                        debugConsole.log(
+                          `[DEBUG .UI kit / Page header] Final check for "${key}": expected ${JSON.stringify(expectedValue)}, finalProperty=${JSON.stringify(finalProperty)}, finalValue=${JSON.stringify(finalValue)}`,
+                        );
+                      }
+                      if (
+                        finalProperty === undefined ||
+                        JSON.stringify(finalValue) !==
+                          JSON.stringify(expectedValue)
+                      ) {
+                        debugConsole.warning(
+                          `[IMPORT]   ⚠ Final check: Property "${key}" = ${JSON.stringify(finalValue)} (expected ${JSON.stringify(expectedValue)}) after all updates`,
+                        );
+                        if (isPageHeader) {
+                          debugConsole.warning(
+                            `[DEBUG .UI kit / Page header] ⚠ FINAL MISMATCH for "${key}"`,
+                          );
+                        }
+                      } else {
+                        debugConsole.log(
+                          `[IMPORT]   ✓ Final check: Property "${key}" = ${JSON.stringify(finalValue)} (persisted correctly)`,
+                        );
+                        if (isPageHeader) {
+                          debugConsole.log(
+                            `[DEBUG .UI kit / Page header] ✓ FINAL MATCH for "${key}"`,
+                          );
+                        }
+                      }
+                    }
+                    if (isPageHeader) {
+                      debugConsole.log(
+                        `[DEBUG .UI kit / Page header] Final verification complete. All properties: ${JSON.stringify(finalValues, null, 2)}`,
+                      );
+                    }
+                  } else {
+                    if (isPageHeader) {
+                      debugConsole.warning(
+                        `[DEBUG .UI kit / Page header] ⚠ Could not access componentProperties for final verification`,
+                      );
+                    }
+                  }
+                } catch (finalCheckError) {
+                  debugConsole.warning(
+                    `[IMPORT]   Could not perform final property check: ${finalCheckError}`,
+                  );
+                  if (isPageHeader) {
+                    debugConsole.warning(
+                      `[DEBUG .UI kit / Page header] ⚠ Error during final verification: ${finalCheckError}`,
                     );
                   }
                 }
               }
+            } else {
+              debugConsole.warning(
+                `[IMPORT]   No component properties found on component for deferred instance "${nodeData.name}"`,
+              );
             }
           }
         } catch (error) {
-          await debugConsole.warning(
+          debugConsole.warning(
             `Failed to set component properties for resolved instance "${nodeData.name}": ${error}`,
           );
         }
       }
 
-      // Replace placeholder with actual instance
-      const placeholderIndex = parentNode.children.indexOf(placeholderFrame);
-      parentNode.insertChild(placeholderIndex, instanceNode);
-      placeholderFrame.remove();
+      // Extract child deferred instances before replacing parent placeholder
+      // This handles nested deferred instances (child deferred inside parent deferred)
+      // We check both:
+      // 1. If parentPlaceholderId matches (explicit parent relationship)
+      // 2. If the placeholder is actually inside the current placeholder (structural relationship)
+      debugConsole.log(
+        `[NESTED] Extracting child deferred instances for placeholder "${nodeData.name}" (${placeholderFrameId.substring(0, 8)}...). Total deferred instances: ${deferredInstances.length}`,
+      );
 
-      await debugConsole.log(
+      // Helper to check if a node is a descendant of the placeholder
+      const isDescendantOfPlaceholder = async (
+        nodeId: string,
+      ): Promise<boolean> => {
+        try {
+          const node = await figma.getNodeByIdAsync(nodeId);
+          if (!node || !node.parent) return false;
+
+          let current: any = node.parent;
+          while (current) {
+            if (current.id === placeholderFrameId) {
+              return true;
+            }
+            if (current.type === "PAGE") {
+              break;
+            }
+            current = current.parent;
+          }
+          return false;
+        } catch {
+          return false;
+        }
+      };
+
+      const childDeferredInstances: DeferredNormalInstance[] = [];
+      for (const childDeferred of deferredInstances) {
+        // Check explicit parent relationship
+        if (childDeferred.parentPlaceholderId === placeholderFrameId) {
+          childDeferredInstances.push(childDeferred);
+          debugConsole.log(
+            `[NESTED]   - Found child by parentPlaceholderId: "${childDeferred.nodeData.name}" (placeholder: ${childDeferred.placeholderFrameId.substring(0, 8)}...)`,
+          );
+        } else {
+          // Check structural relationship (placeholder is inside current placeholder)
+          const isInside = await isDescendantOfPlaceholder(
+            childDeferred.placeholderFrameId,
+          );
+          if (isInside) {
+            childDeferredInstances.push(childDeferred);
+            debugConsole.log(
+              `[NESTED]   - Found child by structural check: "${childDeferred.nodeData.name}" (placeholder: ${childDeferred.placeholderFrameId.substring(0, 8)}...) - placeholder is inside current placeholder`,
+            );
+          }
+        }
+      }
+
+      debugConsole.log(
+        `[NESTED] Found ${childDeferredInstances.length} child deferred instance(s) for placeholder "${nodeData.name}"`,
+      );
+
+      // Mark child deferred instances as processed so they don't get processed again in the main loop
+      for (const childDeferred of childDeferredInstances) {
+        processedAsChildren.add(childDeferred.placeholderFrameId);
+      }
+
+      // Replace placeholder with actual instance
+      // Check if parentNode supports children (ChildrenMixin)
+      if ("children" in parentNode && "insertChild" in parentNode) {
+        const placeholderIndex = parentNode.children.indexOf(placeholderFrame);
+        parentNode.insertChild(placeholderIndex, instanceNode);
+        placeholderFrame.remove();
+      } else {
+        const error = `Parent node does not support children operations for deferred instance "${nodeData.name}"`;
+        debugConsole.error(error);
+        errors.push(error);
+        continue;
+      }
+
+      // CRITICAL: Restore bound variables AFTER variant and component properties are set
+      // When variant properties are set, Figma applies the variant's default values (hardcoded)
+      // which can overwrite bound variables. We need to restore bound variables after this.
+      // This is especially important for properties like opacity and cornerRadius that are
+      // affected by variant changes (e.g., Disabled=true variant changes opacity)
+      debugConsole.log(
+        `  [BOUND-VAR] Checking bound variables for deferred instance "${nodeData.name}": has boundVariables=${!!nodeData.boundVariables}, has recognizedVariables=${!!recognizedVariables}`,
+      );
+      if (nodeData.boundVariables) {
+        const boundVarKeys = Object.keys(nodeData.boundVariables);
+        debugConsole.log(
+          `  [BOUND-VAR] Deferred instance "${nodeData.name}" has boundVariables for: ${boundVarKeys.join(", ")}`,
+        );
+      }
+      if (nodeData.boundVariables && recognizedVariables) {
+        const paddingProps = [
+          "paddingLeft",
+          "paddingRight",
+          "paddingTop",
+          "paddingBottom",
+          "itemSpacing",
+        ];
+        const sizeProps = ["width", "height", "minWidth", "maxWidth"];
+        for (const [propertyName, varInfo] of Object.entries(
+          nodeData.boundVariables,
+        )) {
+          // Skip fills (handled separately), padding properties, size properties, and componentProperties
+          // componentProperties is a special nested structure for component properties bound to variables,
+          // not a node property itself
+          if (
+            propertyName !== "fills" &&
+            propertyName !== "componentProperties" &&
+            !paddingProps.includes(propertyName) &&
+            !sizeProps.includes(propertyName)
+          ) {
+            debugConsole.log(
+              `  [BOUND-VAR] Processing bound variable for ${propertyName} on deferred instance "${nodeData.name}"`,
+            );
+            if (isVariableReference(varInfo) && recognizedVariables) {
+              const varRef = (varInfo as VariableReference)._varRef;
+              if (varRef !== undefined) {
+                debugConsole.log(
+                  `  [BOUND-VAR] Looking up variable reference ${varRef} for ${propertyName} on deferred instance "${nodeData.name}"`,
+                );
+                const variable = recognizedVariables.get(String(varRef));
+                if (variable) {
+                  debugConsole.log(
+                    `  [BOUND-VAR] Found variable "${variable.name}" (ID: ${variable.id.substring(0, 8)}...) for ${propertyName} on deferred instance "${nodeData.name}"`,
+                  );
+                  try {
+                    // Check if property currently has a direct value that might block the binding
+                    const currentValue = (instanceNode as any)[propertyName];
+                    const currentBoundVar = (instanceNode as any)
+                      .boundVariables?.[propertyName];
+                    debugConsole.log(
+                      `  [BOUND-VAR] Current state for ${propertyName} on deferred instance "${nodeData.name}": value=${currentValue}, boundVar=${JSON.stringify(currentBoundVar)}`,
+                    );
+
+                    // Use Figma's setBoundVariable API method (not direct assignment)
+                    // This is the correct way to bind variables - direct assignment doesn't work reliably
+                    try {
+                      // First, try to remove any existing binding by setting to null
+                      (instanceNode as any).setBoundVariable(
+                        propertyName,
+                        null,
+                      );
+                    } catch {
+                      // Ignore errors when removing (might not exist)
+                    }
+
+                    // Set the bound variable using Figma's API
+                    (instanceNode as any).setBoundVariable(
+                      propertyName,
+                      variable,
+                    );
+
+                    // Verify the bound variable was set
+                    const setBoundVar = (instanceNode as any).boundVariables?.[
+                      propertyName
+                    ];
+                    if (
+                      setBoundVar &&
+                      typeof setBoundVar === "object" &&
+                      setBoundVar.type === "VARIABLE_ALIAS" &&
+                      setBoundVar.id === variable.id
+                    ) {
+                      debugConsole.log(
+                        `  [BOUND-VAR] ✓ Set bound variable for ${propertyName} on deferred instance "${nodeData.name}": variable ${variable.name} (ID: ${variable.id.substring(0, 8)}...)`,
+                      );
+                    } else {
+                      const actualBoundVar = (instanceNode as any)
+                        .boundVariables?.[propertyName];
+                      debugConsole.warning(
+                        `  [BOUND-VAR] ✗ Failed to set bound variable for ${propertyName} on deferred instance "${nodeData.name}" - bound variable not persisted. Property value: ${currentValue}, Expected variable ID: ${variable.id}, Got: ${JSON.stringify(actualBoundVar)}`,
+                      );
+                    }
+                  } catch (error) {
+                    debugConsole.warning(
+                      `  [BOUND-VAR] Error setting bound variable for ${propertyName} on deferred instance "${nodeData.name}": ${error}`,
+                    );
+                  }
+                } else {
+                  debugConsole.warning(
+                    `  [BOUND-VAR] Variable reference ${varRef} not found in recognizedVariables for ${propertyName} on deferred instance "${nodeData.name}". Available variable references: ${Array.from(recognizedVariables.keys()).slice(0, 10).join(", ")}...`,
+                  );
+                }
+              } else {
+                debugConsole.warning(
+                  `  [BOUND-VAR] Variable reference is undefined for ${propertyName} on deferred instance "${nodeData.name}"`,
+                );
+              }
+            } else {
+              debugConsole.warning(
+                `  [BOUND-VAR] Variable info for ${propertyName} on deferred instance "${nodeData.name}" is not a valid variable reference: ${JSON.stringify(varInfo)}`,
+              );
+            }
+          } else {
+            if (propertyName === "componentProperties") {
+              debugConsole.log(
+                `  [BOUND-VAR] Skipping ${propertyName} on deferred instance "${nodeData.name}" (component properties with bound variables - handled separately via component property restoration)`,
+              );
+            } else {
+              debugConsole.log(
+                `  [BOUND-VAR] Skipping ${propertyName} on deferred instance "${nodeData.name}" (handled separately)`,
+              );
+            }
+          }
+        }
+      } else {
+        if (!nodeData.boundVariables) {
+          debugConsole.log(
+            `  [BOUND-VAR] No boundVariables in nodeData for deferred instance "${nodeData.name}"`,
+          );
+        }
+        if (!recognizedVariables) {
+          debugConsole.warning(
+            `  [BOUND-VAR] recognizedVariables is null/undefined for deferred instance "${nodeData.name}"`,
+          );
+        }
+      }
+
+      // Restore componentPropertyReferences for the instance and its children
+      // This includes INSTANCE_SWAP bindings that were skipped for the placeholder FRAME
+      if (
+        nodeData.componentPropertyReferences &&
+        typeof nodeData.componentPropertyReferences === "object"
+      ) {
+        // Declare variables at this scope so they're accessible in the catch block
+        let componentProps: ComponentPropertyDefinitions | null = null;
+        const componentPropertyRefs: Record<string, string> = {};
+
+        try {
+          // Log what properties the bindings are trying to reference
+          const bindingPropertyNames = Object.values(
+            nodeData.componentPropertyReferences,
+          )
+            .filter((v): v is string => typeof v === "string")
+            .map((v) => v.split("#")[0]);
+          debugConsole.log(
+            `  [BINDING] Deferred instance "${nodeData.name}" has bindings for properties: ${bindingPropertyNames.join(", ")}`,
+          );
+
+          // CRITICAL: For nested instances, bindings reference properties from the PARENT component,
+          // not the instance's main component. Walk up the tree to find the containing component.
+          // Example: Icon instance inside Button component - bindings reference Button properties, not Icon properties.
+          let parentComponent: ComponentNode | ComponentSetNode | null = null;
+          let current: any = instanceNode.parent;
+
+          // Log the full parent chain for debugging
+          const parentChain: string[] = [];
+          let chainCurrent: any = instanceNode.parent;
+          while (chainCurrent) {
+            parentChain.push(
+              `${chainCurrent.type} "${chainCurrent.name || "Unnamed"}"`,
+            );
+            if (chainCurrent.type === "PAGE") break;
+            chainCurrent = chainCurrent.parent;
+          }
+          debugConsole.log(
+            `  [BINDING] Parent chain for deferred instance "${nodeData.name}": ${parentChain.join(" -> ")}`,
+          );
+
+          while (current) {
+            if (
+              current.type === "COMPONENT" ||
+              current.type === "COMPONENT_SET"
+            ) {
+              parentComponent = current;
+              break;
+            }
+            current = current.parent;
+          }
+
+          // If no parent component found, fall back to instance's main component
+          // (This handles cases where the instance is at the root level)
+          const mainComponent = await instanceNode.getMainComponentAsync();
+          const expectedComponentName = instanceEntry.componentName;
+          if (mainComponent && mainComponent.name !== expectedComponentName) {
+            debugConsole.warning(
+              `  [BINDING] Component mismatch for deferred instance "${nodeData.name}": expected "${expectedComponentName}", but main component is "${mainComponent.name}"${mainComponent.parent?.type === "COMPONENT_SET" ? ` (COMPONENT_SET: "${mainComponent.parent.name}")` : ""}`,
+            );
+          }
+
+          // Try parent component first (for nested instances)
+          if (parentComponent) {
+            const parentComponentType = (parentComponent as any).type;
+            if (parentComponentType === "COMPONENT_SET") {
+              const componentSet =
+                parentComponent as unknown as ComponentSetNode;
+              componentProps = componentSet.componentPropertyDefinitions;
+              debugConsole.log(
+                `  [BINDING] Deferred instance "${nodeData.name}" -> Using parent COMPONENT_SET "${parentComponent.name}" with ${Object.keys(componentProps || {}).length} property(ies)`,
+              );
+            } else if (
+              parentComponentType === "COMPONENT" &&
+              parentComponent.parent &&
+              parentComponent.parent.type === "COMPONENT_SET"
+            ) {
+              // Parent is a variant component - get properties from parent COMPONENT_SET
+              componentProps =
+                parentComponent.parent.componentPropertyDefinitions;
+              debugConsole.log(
+                `  [BINDING] Deferred instance "${nodeData.name}" -> Using parent variant "${parentComponent.name}" in COMPONENT_SET "${parentComponent.parent.name}" with ${Object.keys(componentProps || {}).length} property(ies)`,
+              );
+            } else if (parentComponentType === "COMPONENT") {
+              // Non-variant parent component - can access componentPropertyDefinitions directly
+              componentProps = parentComponent.componentPropertyDefinitions;
+              debugConsole.log(
+                `  [BINDING] Deferred instance "${nodeData.name}" -> Using parent non-variant component "${parentComponent.name}" with ${Object.keys(componentProps || {}).length} property(ies)`,
+              );
+            }
+          }
+
+          // Fallback to instance's main component if no parent component found
+          if (!componentProps && mainComponent) {
+            const mainComponentType = (mainComponent as any).type;
+            if (mainComponentType === "COMPONENT_SET") {
+              const componentSet = mainComponent as unknown as ComponentSetNode;
+              componentProps = componentSet.componentPropertyDefinitions;
+              debugConsole.log(
+                `  [BINDING] Deferred instance "${nodeData.name}" -> Fallback to main COMPONENT_SET "${mainComponent.name}" with ${Object.keys(componentProps || {}).length} property(ies)`,
+              );
+            } else if (
+              mainComponentType === "COMPONENT" &&
+              mainComponent.parent &&
+              mainComponent.parent.type === "COMPONENT_SET"
+            ) {
+              componentProps =
+                mainComponent.parent.componentPropertyDefinitions;
+              debugConsole.log(
+                `  [BINDING] Deferred instance "${nodeData.name}" -> Fallback to main variant "${mainComponent.name}" in COMPONENT_SET "${mainComponent.parent.name}" with ${Object.keys(componentProps || {}).length} property(ies)`,
+              );
+            } else if (mainComponentType === "COMPONENT") {
+              componentProps = mainComponent.componentPropertyDefinitions;
+              debugConsole.log(
+                `  [BINDING] Deferred instance "${nodeData.name}" -> Fallback to main non-variant component "${mainComponent.name}" with ${Object.keys(componentProps || {}).length} property(ies)`,
+              );
+            }
+          }
+
+          if (!componentProps) {
+            const parentComponentName = parentComponent
+              ? parentComponent.name
+              : "none";
+            const mainComponentName = mainComponent
+              ? mainComponent.name
+              : "unknown";
+            const componentSetName =
+              mainComponent &&
+              mainComponent.parent &&
+              mainComponent.parent.type === "COMPONENT_SET"
+                ? mainComponent.parent.name
+                : null;
+            debugConsole.warning(
+              `  [BINDING] No component property definitions available for deferred instance "${nodeData.name}" (parent component: "${parentComponentName}", main component: "${mainComponentName}"${componentSetName ? `, COMPONENT_SET: "${componentSetName}"` : ""})`,
+            );
+          }
+
+          if (componentProps) {
+            debugConsole.log(
+              `  [BINDING] Available properties for deferred instance "${nodeData.name}": ${Object.keys(
+                componentProps,
+              )
+                .map((p) => p.split("#")[0])
+                .join(", ")}`,
+            );
+
+            // Map old property IDs to new property IDs by matching property names
+            for (const [nodeProperty, oldPropId] of Object.entries(
+              nodeData.componentPropertyReferences,
+            )) {
+              if (typeof oldPropId === "string") {
+                // Extract clean property name (without ID suffix)
+                const cleanPropName = oldPropId.split("#")[0];
+
+                // Find matching property in component by name
+                let newPropId: string | null = null;
+                for (const propId of Object.keys(componentProps)) {
+                  const propCleanName = propId.split("#")[0];
+                  if (propCleanName === cleanPropName) {
+                    newPropId = propId;
+                    break;
+                  }
+                }
+
+                if (newPropId) {
+                  // Validate that the property exists and is accessible
+                  const propDef = componentProps[newPropId];
+                  if (!propDef) {
+                    const componentName = mainComponent
+                      ? mainComponent.name
+                      : "unknown";
+                    debugConsole.warning(
+                      `  [BINDING] Property "${newPropId}" not found in component property definitions for deferred instance "${nodeData.name}" (component: "${componentName}")`,
+                    );
+                    continue;
+                  }
+
+                  // For INSTANCE_SWAP properties, the property ID references a component
+                  // If that component doesn't exist, setting the binding will fail
+                  // We'll still try to set it, but catch the error if it fails
+                  componentPropertyRefs[nodeProperty] = newPropId;
+                  debugConsole.log(
+                    `  [BINDING] Restored binding for deferred instance "${nodeData.name}": ${nodeProperty} -> ${newPropId} (was ${oldPropId}, type: ${propDef.type})`,
+                  );
+                } else {
+                  const componentName = mainComponent
+                    ? mainComponent.name
+                    : "unknown";
+                  const componentSetName =
+                    mainComponent &&
+                    mainComponent.parent &&
+                    mainComponent.parent.type === "COMPONENT_SET"
+                      ? mainComponent.parent.name
+                      : null;
+                  const availableProps = Object.keys(componentProps)
+                    .map((p) => p.split("#")[0])
+                    .join(", ");
+                  debugConsole.warning(
+                    `  [BINDING] Could not find property "${cleanPropName}" in component "${componentName}"${componentSetName ? ` (COMPONENT_SET: "${componentSetName}")` : ""} for deferred instance "${nodeData.name}". Available properties: ${availableProps || "none"}`,
+                  );
+                }
+              }
+            }
+
+            // Set componentPropertyReferences on the instance (now that it's a child of the component)
+            // Note: This may fail if INSTANCE_SWAP properties reference components that don't exist
+            if (Object.keys(componentPropertyRefs).length > 0) {
+              // CRITICAL: Verify the instance is properly a child of the component before setting bindings
+              // Figma requires the instance to be a "symbol sublayer" (child of a component) for bindings to work
+              const actualParent = instanceNode.parent;
+              const isChildOfComponent =
+                actualParent &&
+                (actualParent.type === "COMPONENT" ||
+                  actualParent.type === "COMPONENT_SET");
+              const parentName = actualParent ? actualParent.name : "none";
+              const parentType = actualParent ? actualParent.type : "none";
+
+              // Check if instance is a "symbol sublayer" by walking up to find a component
+              let isSymbolSublayer = false;
+              let componentAncestor: ComponentNode | ComponentSetNode | null =
+                null;
+              let checkCurrent: any = instanceNode.parent;
+              while (checkCurrent) {
+                if (
+                  checkCurrent.type === "COMPONENT" ||
+                  checkCurrent.type === "COMPONENT_SET"
+                ) {
+                  isSymbolSublayer = true;
+                  componentAncestor = checkCurrent;
+                  break;
+                }
+                if (checkCurrent.type === "PAGE") break;
+                checkCurrent = checkCurrent.parent;
+              }
+
+              debugConsole.log(
+                `  [BINDING] Verifying instance "${nodeData.name}" is child of component before setting bindings: parent="${parentName}" (type: ${parentType}), isChildOfComponent=${isChildOfComponent}, isSymbolSublayer=${isSymbolSublayer}${componentAncestor ? ` (component ancestor: ${componentAncestor.type} "${componentAncestor.name}")` : ""}`,
+              );
+
+              // Check if bindings are already set (might indicate why setting them again fails)
+              const existingBindings = (instanceNode as any)
+                .componentPropertyReferences;
+              if (existingBindings) {
+                debugConsole.log(
+                  `  [BINDING] Instance "${nodeData.name}" already has componentPropertyReferences: ${JSON.stringify(existingBindings)}`,
+                );
+              }
+
+              if (!isChildOfComponent) {
+                debugConsole.warning(
+                  `  [BINDING] ✗ Instance "${nodeData.name}" is not a child of a component (parent: ${parentType} "${parentName}") - cannot set componentPropertyReferences`,
+                );
+              } else {
+                // Verify each property exists in the component before attempting to bind
+                // Also verify componentProps is actually available (might not be ready yet)
+                if (
+                  !componentProps ||
+                  Object.keys(componentProps).length === 0
+                ) {
+                  debugConsole.warning(
+                    `  [BINDING] Component property definitions not available yet for instance "${nodeData.name}" - properties may not be ready`,
+                  );
+                } else {
+                  for (const [nodeProperty, propId] of Object.entries(
+                    componentPropertyRefs,
+                  )) {
+                    const propDef = componentProps[propId];
+                    if (!propDef) {
+                      debugConsole.warning(
+                        `  [BINDING] Property "${propId}" not found in component property definitions when attempting to bind "${nodeProperty}" on instance "${nodeData.name}"`,
+                      );
+                    } else {
+                      debugConsole.log(
+                        `  [BINDING] Property "${propId}" (type: ${propDef.type}) exists - will attempt to bind "${nodeProperty}" on instance "${nodeData.name}"`,
+                      );
+                    }
+                  }
+                }
+              }
+
+              // CRITICAL: Retry mechanism for timing-sensitive binding restoration
+              // Figma may need a moment to recognize the instance as a symbol sublayer
+              // after insertion, so we retry with verification checks and delays
+              const MAX_RETRIES = 3;
+              const RETRY_DELAY_MS = 50; // Small delay between retries to allow Figma to catch up
+              let bindingSuccess = false;
+              let lastError: Error | null = null;
+
+              // Helper function to sleep/delay
+              const sleep = (ms: number) =>
+                new Promise((resolve) => setTimeout(resolve, ms));
+
+              for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+                // Before each attempt (except the first), add a small delay
+                if (attempt > 1) {
+                  await sleep(RETRY_DELAY_MS * attempt); // Exponential backoff: 100ms, 150ms
+                  debugConsole.log(
+                    `  [BINDING] Waiting ${RETRY_DELAY_MS * attempt}ms before retry attempt ${attempt}/${MAX_RETRIES} for "${nodeData.name}"`,
+                  );
+                }
+
+                // Before each attempt, verify the instance is still a symbol sublayer
+                // Force re-evaluation by accessing the parent chain
+                let verifyCurrent: any = instanceNode.parent;
+                let isStillSymbolSublayer = false;
+                let currentComponentAncestor:
+                  | ComponentNode
+                  | ComponentSetNode
+                  | null = null;
+                while (verifyCurrent) {
+                  if (
+                    verifyCurrent.type === "COMPONENT" ||
+                    verifyCurrent.type === "COMPONENT_SET"
+                  ) {
+                    isStillSymbolSublayer = true;
+                    currentComponentAncestor = verifyCurrent;
+                    break;
+                  }
+                  if (verifyCurrent.type === "PAGE") break;
+                  verifyCurrent = verifyCurrent.parent;
+                }
+
+                if (!isStillSymbolSublayer) {
+                  debugConsole.warning(
+                    `  [BINDING] Attempt ${attempt}/${MAX_RETRIES}: Instance "${nodeData.name}" is no longer a symbol sublayer - skipping binding restoration`,
+                  );
+                  break;
+                }
+
+                // Re-fetch component properties on each retry - they may not have been ready initially
+                let currentComponentProps: ComponentPropertyDefinitions | null =
+                  null;
+                if (currentComponentAncestor) {
+                  try {
+                    currentComponentProps =
+                      currentComponentAncestor.componentPropertyDefinitions;
+                    if (
+                      !currentComponentProps ||
+                      Object.keys(currentComponentProps).length === 0
+                    ) {
+                      debugConsole.log(
+                        `  [BINDING] Attempt ${attempt}/${MAX_RETRIES}: Component properties not ready yet for "${nodeData.name}" - will retry`,
+                      );
+                      if (attempt < MAX_RETRIES) {
+                        continue; // Skip to next retry
+                      }
+                    }
+                  } catch (error) {
+                    debugConsole.log(
+                      `  [BINDING] Attempt ${attempt}/${MAX_RETRIES}: Error fetching component properties: ${error}. Will retry.`,
+                    );
+                    if (attempt < MAX_RETRIES) {
+                      continue; // Skip to next retry
+                    }
+                  }
+                }
+
+                try {
+                  // Use the re-fetched component properties if available, otherwise fall back to original
+                  const propsToUse = currentComponentProps || componentProps;
+
+                  // Before setting, verify component properties are still available
+                  // This helps catch cases where properties aren't ready yet
+                  if (!propsToUse || Object.keys(propsToUse).length === 0) {
+                    throw new Error(
+                      "Component property definitions not available - properties may not be ready yet",
+                    );
+                  }
+
+                  // Verify all referenced properties exist before attempting to bind
+                  const missingProps: string[] = [];
+                  for (const propId of Object.values(componentPropertyRefs)) {
+                    if (typeof propId === "string" && !propsToUse[propId]) {
+                      missingProps.push(propId);
+                    }
+                  }
+                  if (missingProps.length > 0) {
+                    throw new Error(
+                      `Properties not found in component: ${missingProps.join(", ")}`,
+                    );
+                  }
+
+                  (instanceNode as any).componentPropertyReferences =
+                    componentPropertyRefs;
+
+                  // Add a small delay after setting to allow Figma to process
+                  await sleep(10);
+
+                  // Verify the binding was actually set
+                  const verifyBindings = (instanceNode as any)
+                    .componentPropertyReferences;
+                  const allBindingsSet = Object.keys(
+                    componentPropertyRefs,
+                  ).every(
+                    (key) =>
+                      verifyBindings &&
+                      verifyBindings[key] === componentPropertyRefs[key],
+                  );
+
+                  if (allBindingsSet) {
+                    bindingSuccess = true;
+                    debugConsole.log(
+                      `  [BINDING] ✓ Successfully restored componentPropertyReferences for deferred instance "${nodeData.name}" on attempt ${attempt}/${MAX_RETRIES}: ${JSON.stringify(componentPropertyRefs)}`,
+                    );
+                    break;
+                  } else {
+                    throw new Error(
+                      `Bindings were set but verification failed. Expected: ${JSON.stringify(componentPropertyRefs)}, Got: ${JSON.stringify(verifyBindings)}`,
+                    );
+                  }
+                } catch (error) {
+                  lastError =
+                    error instanceof Error ? error : new Error(String(error));
+                  if (attempt < MAX_RETRIES) {
+                    debugConsole.log(
+                      `  [BINDING] Attempt ${attempt}/${MAX_RETRIES} failed for deferred instance "${nodeData.name}": ${lastError.message}. Retrying...`,
+                    );
+                    // Force a re-evaluation by accessing parent properties
+                    // This may help Figma recognize the instance as a symbol sublayer
+                    void instanceNode.parent?.type;
+                    void instanceNode.parent?.name;
+                    // Also try accessing component properties to trigger recognition
+                    if (instanceNode.parent) {
+                      void (instanceNode.parent as any)
+                        .componentPropertyDefinitions;
+                    }
+                  } else {
+                    debugConsole.warning(
+                      `  [BINDING] ✗ Failed to restore componentPropertyReferences for deferred instance "${nodeData.name}" after ${MAX_RETRIES} attempts: ${lastError.message}`,
+                    );
+                  }
+                }
+              }
+
+              if (!bindingSuccess) {
+                // All retries failed - throw error to be caught by outer catch
+                const errorMessage =
+                  lastError instanceof Error
+                    ? lastError.message
+                    : String(
+                        lastError || "Binding restoration failed after retries",
+                      );
+                throw new Error(errorMessage);
+              }
+            }
+          }
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
+          debugConsole.warning(
+            `  [BINDING] ✗ Failed to restore componentPropertyReferences for deferred instance "${nodeData.name}": ${errorMessage}`,
+          );
+          // If setting all properties failed, try setting them one by one to identify which one fails
+          if (
+            (errorMessage.includes("component property reference") ||
+              errorMessage.includes("implicitDefID")) &&
+            componentProps &&
+            Object.keys(componentPropertyRefs).length > 0
+          ) {
+            debugConsole.log(
+              `  [BINDING] Attempting to restore bindings individually to identify problematic property...`,
+            );
+            const successfulRefs: Record<string, string> = {};
+            for (const [nodeProperty, propId] of Object.entries(
+              componentPropertyRefs,
+            )) {
+              if (typeof propId !== "string") continue;
+              try {
+                (instanceNode as any).componentPropertyReferences = {
+                  [nodeProperty]: propId,
+                };
+                successfulRefs[nodeProperty] = propId;
+                debugConsole.log(
+                  `  [BINDING] ✓ Successfully restored binding "${nodeProperty}" -> "${propId}"`,
+                );
+              } catch (individualError) {
+                const propDef = componentProps[propId];
+                const propType = propDef ? propDef.type : "unknown";
+                debugConsole.warning(
+                  `  [BINDING] ✗ Failed to restore binding "${nodeProperty}" -> "${propId}" (type: ${propType}): ${individualError instanceof Error ? individualError.message : String(individualError)}`,
+                );
+              }
+            }
+            // Set all successful bindings at once
+            if (Object.keys(successfulRefs).length > 0) {
+              try {
+                (instanceNode as any).componentPropertyReferences =
+                  successfulRefs;
+                debugConsole.log(
+                  `  [BINDING] ✓ Restored ${Object.keys(successfulRefs).length} of ${Object.keys(componentPropertyRefs).length} componentPropertyReferences for deferred instance "${nodeData.name}"`,
+                );
+              } catch {
+                // If even setting successful refs fails, give up
+                debugConsole.warning(
+                  `  [BINDING] ✗ Could not set even successful bindings - skipping all bindings for deferred instance "${nodeData.name}"`,
+                );
+              }
+            }
+          }
+        }
+
+        // Recursively restore bindings for children
+        const restoreChildBindings = (
+          childNode: SceneNode,
+          childData: any,
+        ): void => {
+          if (
+            childData.componentPropertyReferences &&
+            typeof childData.componentPropertyReferences === "object"
+          ) {
+            const childPropertyRefs: Record<string, string> = {};
+
+            for (const [nodeProperty, oldPropId] of Object.entries(
+              childData.componentPropertyReferences,
+            )) {
+              if (typeof oldPropId === "string") {
+                const cleanPropName = oldPropId.split("#")[0];
+                let newPropId: string | null = null;
+
+                if (componentProps) {
+                  for (const propId of Object.keys(componentProps)) {
+                    const propCleanName = propId.split("#")[0];
+                    if (propCleanName === cleanPropName) {
+                      newPropId = propId;
+                      break;
+                    }
+                  }
+                }
+
+                if (newPropId) {
+                  // Validate that the property exists in componentProps
+                  if (componentProps && componentProps[newPropId]) {
+                    childPropertyRefs[nodeProperty] = newPropId;
+                  } else {
+                    debugConsole.warning(
+                      `  [BINDING] Property "${newPropId}" not found in component property definitions for child "${childNode.name || "Unnamed"}" of deferred instance "${nodeData.name}"`,
+                    );
+                  }
+                }
+              }
+            }
+
+            if (Object.keys(childPropertyRefs).length > 0) {
+              try {
+                (childNode as any).componentPropertyReferences =
+                  childPropertyRefs;
+                debugConsole.log(
+                  `  [BINDING] ✓ Restored componentPropertyReferences for child "${childNode.name || "Unnamed"}" of deferred instance "${nodeData.name}"`,
+                );
+              } catch {
+                // Child might not support bindings (e.g., not a symbol sublayer)
+              }
+            }
+          }
+
+          // Recurse into children
+          if (
+            "children" in childNode &&
+            childData.children &&
+            Array.isArray(childData.children)
+          ) {
+            for (
+              let i = 0;
+              i < childNode.children.length && i < childData.children.length;
+              i++
+            ) {
+              restoreChildBindings(
+                childNode.children[i],
+                childData.children[i],
+              );
+            }
+          }
+        };
+
+        // Restore bindings for instance children (componentProps and componentPropertyRefs are in scope here)
+
+        // Restore bindings for instance children
+        if (
+          "children" in instanceNode &&
+          nodeData.children &&
+          Array.isArray(nodeData.children)
+        ) {
+          for (
+            let i = 0;
+            i < instanceNode.children.length && i < nodeData.children.length;
+            i++
+          ) {
+            restoreChildBindings(
+              instanceNode.children[i],
+              nodeData.children[i],
+            );
+          }
+        }
+      }
+
+      // Resolve child deferred instances after parent is replaced
+      // Match children by name only (exact match) - this is an instance override scenario
+      // Helper function to recursively find a child by original ID or name
+      const findChildRecursively = async (
+        node: SceneNode,
+        targetOriginalId: string | undefined,
+        targetName: string,
+      ): Promise<SceneNode[]> => {
+        const matches: SceneNode[] = [];
+
+        // For INSTANCE nodes, use plugin data (copied from component children during creation)
+        if (targetOriginalId && node.type === "INSTANCE") {
+          const nodeOriginalId = node.getPluginData(ORIGINAL_NODE_ID_KEY);
+          if (nodeOriginalId === targetOriginalId) {
+            matches.push(node);
+          }
+        }
+
+        // Standard plugin data matching for non-instance nodes
+        if (targetOriginalId && node.type !== "INSTANCE") {
+          const nodeOriginalId = node.getPluginData(ORIGINAL_NODE_ID_KEY);
+          if (nodeOriginalId === targetOriginalId) {
+            matches.push(node);
+          }
+        }
+
+        // Name matching fallback
+        if (!targetOriginalId && node.name === targetName) {
+          matches.push(node);
+        }
+
+        // Recurse into children
+        if ("children" in node) {
+          for (const child of node.children) {
+            matches.push(
+              ...(await findChildRecursively(
+                child,
+                targetOriginalId,
+                targetName,
+              )),
+            );
+          }
+        }
+        return matches;
+      };
+
+      for (const childDeferred of childDeferredInstances) {
+        try {
+          // Find matching children in actual instance by ID first, then fallback to name (recursive search)
+          // This handles nested children (e.g., "arrow-top-right-on-square" inside "Link")
+          const childId = childDeferred.nodeData.id;
+          const childName = childDeferred.nodeData.name;
+
+          console.log(
+            `[DEFERRED] Looking for child "${childName}" with ID "${childId}" in instance "${nodeData.name}"`,
+          );
+
+          // Name-first approach: Try name-based matching first, then use ID as tiebreaker
+          let matchingChildren: SceneNode[] = [];
+
+          // First try name-based matching (within component hierarchy)
+          const nameMatches = await findChildRecursively(
+            instanceNode,
+            undefined, // No ID filter - search by name only
+            childName,
+          );
+
+          if (nameMatches.length === 1) {
+            // Perfect match - single child with this name
+            matchingChildren = nameMatches;
+            debugConsole.log(
+              `  ✓ Found single child by name "${childName}" in resolved instance "${nodeData.name}"`,
+            );
+          } else if (nameMatches.length > 1) {
+            // Multiple children with same name - use ID as tiebreaker
+            if (childId) {
+              const idMatches = nameMatches.filter((child) => {
+                const childOriginalId =
+                  child.getPluginData(ORIGINAL_NODE_ID_KEY);
+                return childOriginalId === childId;
+              });
+
+              if (idMatches.length === 1) {
+                // Found exact match using ID tiebreaker
+                matchingChildren = idMatches;
+                debugConsole.log(
+                  `  ✓ Found child by name "${childName}" with ID tiebreaker "${childId.substring(0, 8)}..." in resolved instance "${nodeData.name}"`,
+                );
+              } else if (idMatches.length > 1) {
+                // Multiple matches even with ID - this shouldn't happen
+                debugConsole.warning(
+                  `  Multiple children with name "${childName}" and ID "${childId.substring(0, 8)}..." found in resolved instance "${nodeData.name}" - using first match`,
+                );
+                matchingChildren = [idMatches[0]];
+              } else {
+                // No ID matches among name matches - use first name match as fallback
+                debugConsole.warning(
+                  `  No child with name "${childName}" and ID "${childId.substring(0, 8)}..." found - using first name match as fallback in resolved instance "${nodeData.name}"`,
+                );
+                matchingChildren = [nameMatches[0]];
+              }
+            } else {
+              // No ID available for tiebreaking - use first match
+              debugConsole.warning(
+                `  Multiple children with name "${childName}" found (${nameMatches.length} total) but no ID available for tiebreaking - using first match in resolved instance "${nodeData.name}"`,
+              );
+              matchingChildren = [nameMatches[0]];
+            }
+          } else if (nameMatches.length === 0) {
+            // No name matches found - try fallback ID search (legacy behavior)
+            if (childId) {
+              const idMatches = await findChildRecursively(
+                instanceNode,
+                childId,
+                childName, // Still pass name for fallback name matching
+              );
+              if (idMatches.length >= 1) {
+                debugConsole.warning(
+                  `  No name matches for "${childName}" - found ${idMatches.length} ID match(es) "${childId.substring(0, 8)}..." as fallback in resolved instance "${nodeData.name}"`,
+                );
+                matchingChildren = [idMatches[0]]; // Use first ID match
+              } else {
+                debugConsole.warning(
+                  `  No matches found for child "${childName}" (ID: ${childId?.substring(0, 8) || "none"}) in resolved instance "${nodeData.name}" - child may not exist in component`,
+                );
+              }
+            } else {
+              debugConsole.warning(
+                `  No matches found for child "${childName}" in resolved instance "${nodeData.name}" - child may not exist in component`,
+              );
+            }
+          }
+
+          if (matchingChildren.length === 0) {
+            debugConsole.warning(
+              `  Could not find matching child "${childName}"${childId ? ` (ID: ${childId.substring(0, 8)}...)` : ""} in resolved instance "${nodeData.name}" - child may not exist in component`,
+            );
+            continue;
+          }
+
+          // Note: With name-first matching above, matchingChildren should always be length 0 or 1
+
+          // Single match - proceed with resolution
+          const matchingChild = matchingChildren[0];
+
+          // Find the component for the child deferred instance
+          const childInstanceEntry = childDeferred.instanceEntry;
+          let childReferencedPage = figma.root.children.find((page) => {
+            const exactMatch =
+              page.name === childInstanceEntry.componentPageName;
+            const iconMatch =
+              constructionIcon &&
+              page.name ===
+                `${constructionIcon} ${childInstanceEntry.componentPageName}`;
+            return exactMatch || iconMatch;
+          });
+
+          if (!childReferencedPage) {
+            const cleanTargetName = getComponentCleanName(
+              childInstanceEntry.componentPageName,
+            );
+            childReferencedPage = figma.root.children.find((page) => {
+              const cleanPageName = getComponentCleanName(page.name);
+              return cleanPageName === cleanTargetName;
+            });
+          }
+
+          if (!childReferencedPage) {
+            debugConsole.warning(
+              `  Could not find referenced page for child deferred instance "${childDeferred.nodeData.name}"`,
+            );
+            continue;
+          }
+
+          // Find the component (same logic as parent resolution)
+          const findChildComponent = (
+            parent: any,
+            path: string[],
+            componentName: string,
+            componentGuid?: string,
+            componentSetName?: string,
+          ): ComponentNode | null => {
+            if (path.length === 0) {
+              let nameMatch: ComponentNode | null = null;
+              for (const child of parent.children || []) {
+                if (child.type === "COMPONENT") {
+                  const cleanChildName = getComponentCleanName(child.name);
+                  const cleanTargetName = getComponentCleanName(componentName);
+                  if (cleanChildName === cleanTargetName) {
+                    if (!nameMatch) {
+                      nameMatch = child as ComponentNode;
+                    }
+                    // If componentGuid is provided, verify it matches
+                    if (componentGuid) {
+                      try {
+                        const metadataStr =
+                          child.getPluginData(PAGE_METADATA_KEY);
+                        if (metadataStr) {
+                          const metadata = JSON.parse(metadataStr);
+                          if (metadata.id === componentGuid) {
+                            return child as ComponentNode;
+                          }
+                        }
+                      } catch {
+                        // Metadata check failed, continue searching
+                      }
+                    } else {
+                      // No GUID check needed, return first match
+                      return child as ComponentNode;
+                    }
+                  }
+                } else if (child.type === "COMPONENT_SET" && componentSetName) {
+                  const cleanSetName = getComponentCleanName(child.name);
+                  const cleanTargetSetName =
+                    getComponentCleanName(componentSetName);
+                  if (cleanSetName === cleanTargetSetName) {
+                    // Find variant by component name
+                    for (const variant of child.children) {
+                      if (variant.type === "COMPONENT") {
+                        const cleanVariantName = getComponentCleanName(
+                          variant.name,
+                        );
+                        const cleanTargetName =
+                          getComponentCleanName(componentName);
+                        if (cleanVariantName === cleanTargetName) {
+                          if (!nameMatch) {
+                            nameMatch = variant as ComponentNode;
+                          }
+                          // If componentGuid is provided, verify it matches
+                          if (componentGuid) {
+                            try {
+                              const metadataStr =
+                                variant.getPluginData(PAGE_METADATA_KEY);
+                              if (metadataStr) {
+                                const metadata = JSON.parse(metadataStr);
+                                if (metadata.id === componentGuid) {
+                                  return variant as ComponentNode;
+                                }
+                              }
+                            } catch {
+                              // Metadata check failed, continue searching
+                            }
+                          } else {
+                            // No GUID check needed, return first match
+                            return variant as ComponentNode;
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              // Return name match if GUID check failed or no GUID provided
+              return nameMatch;
+            }
+
+            let current = parent;
+            for (const pathSegment of path) {
+              const cleanSegment = getComponentCleanName(pathSegment);
+              const found = (current.children || []).find(
+                (child: any) =>
+                  getComponentCleanName(child.name) === cleanSegment,
+              );
+              if (!found) return null;
+              current = found;
+            }
+
+            if (current.type === "COMPONENT") {
+              const cleanCurrentName = getComponentCleanName(current.name);
+              const cleanTargetName = getComponentCleanName(componentName);
+              if (cleanCurrentName === cleanTargetName) {
+                // If componentGuid is provided, verify it matches
+                if (componentGuid) {
+                  try {
+                    const metadataStr =
+                      current.getPluginData(PAGE_METADATA_KEY);
+                    if (metadataStr) {
+                      const metadata = JSON.parse(metadataStr);
+                      if (metadata.id === componentGuid) {
+                        return current as ComponentNode;
+                      }
+                    }
+                  } catch {
+                    // Metadata check failed, return null
+                    return null;
+                  }
+                } else {
+                  return current as ComponentNode;
+                }
+              }
+            } else if (current.type === "COMPONENT_SET" && componentSetName) {
+              for (const variant of current.children) {
+                if (variant.type === "COMPONENT") {
+                  const cleanVariantName = getComponentCleanName(variant.name);
+                  const cleanTargetName = getComponentCleanName(componentName);
+                  if (cleanVariantName === cleanTargetName) {
+                    // If componentGuid is provided, verify it matches
+                    if (componentGuid) {
+                      try {
+                        const metadataStr =
+                          variant.getPluginData(PAGE_METADATA_KEY);
+                        if (metadataStr) {
+                          const metadata = JSON.parse(metadataStr);
+                          if (metadata.id === componentGuid) {
+                            return variant as ComponentNode;
+                          }
+                        }
+                      } catch {
+                        // Metadata check failed, continue searching
+                        continue;
+                      }
+                    } else {
+                      return variant as ComponentNode;
+                    }
+                  }
+                }
+              }
+            }
+            return null;
+          };
+
+          // If componentSetName is not provided, try using the child's name as the component set name
+          // This handles cases where the instance entry doesn't have the component set name set
+          let componentSetName = childInstanceEntry.componentSetName;
+          if (!componentSetName && childDeferred.nodeData.name) {
+            componentSetName = childDeferred.nodeData.name;
+            debugConsole.log(
+              `  [NESTED] componentSetName not provided, using child name "${componentSetName}" as fallback`,
+            );
+          }
+
+          debugConsole.log(
+            `  [NESTED] Looking for component: page="${childReferencedPage.name}", componentSet="${componentSetName}", component="${childInstanceEntry.componentName}", path=[${(childInstanceEntry.path || []).join(", ")}]`,
+          );
+
+          // Debug: List all component sets on the page (recursively search)
+          const findAllComponentSets = (node: any): any[] => {
+            const sets: any[] = [];
+            if (node.type === "COMPONENT_SET") {
+              sets.push(node);
+            }
+            if ("children" in node && Array.isArray(node.children)) {
+              for (const child of node.children) {
+                sets.push(...findAllComponentSets(child));
+              }
+            }
+            return sets;
+          };
+          const allComponentSets = findAllComponentSets(childReferencedPage);
+          debugConsole.log(
+            `  [NESTED] Found ${allComponentSets.length} component set(s) on page "${childReferencedPage.name}" (recursive search): ${allComponentSets.map((cs) => cs.name).join(", ")}`,
+          );
+
+          // Debug: List all direct children of the page to see structure
+          const directChildren = childReferencedPage.children.map(
+            (child) => `${child.type}:${child.name}`,
+          );
+          debugConsole.log(
+            `  [NESTED] Direct children of page "${childReferencedPage.name}" (${directChildren.length}): ${directChildren.slice(0, 10).join(", ")}${directChildren.length > 10 ? "..." : ""}`,
+          );
+
+          const childTargetComponent = findChildComponent(
+            childReferencedPage,
+            childInstanceEntry.path || [],
+            childInstanceEntry.componentName,
+            childInstanceEntry.componentGuid,
+            componentSetName,
+          );
+
+          if (!childTargetComponent) {
+            debugConsole.warning(
+              `  Could not find component "${childInstanceEntry.componentName}" (componentSet: "${componentSetName}") for child deferred instance "${childDeferred.nodeData.name}" on page "${childReferencedPage.name}"`,
+            );
+            // Debug: Try to find what component sets exist that might match
+            if (componentSetName) {
+              const cleanTargetSetName =
+                getComponentCleanName(componentSetName);
+              const matchingSets = allComponentSets.filter((cs) => {
+                const cleanSetName = getComponentCleanName(cs.name);
+                return cleanSetName === cleanTargetSetName;
+              });
+              if (matchingSets.length > 0) {
+                debugConsole.log(
+                  `  [NESTED] Found ${matchingSets.length} component set(s) with matching clean name "${cleanTargetSetName}": ${matchingSets.map((cs) => cs.name).join(", ")}`,
+                );
+                // List variants in the matching set
+                for (const set of matchingSets) {
+                  const variants = (set as ComponentSetNode).children.filter(
+                    (c) => c.type === "COMPONENT",
+                  );
+                  debugConsole.log(
+                    `  [NESTED] Component set "${set.name}" has ${variants.length} variant(s): ${variants.map((v) => v.name).join(", ")}`,
+                  );
+                }
+              }
+            }
+            continue;
+          }
+
+          // Create child instance
+          const childInstanceNode = childTargetComponent.createInstance();
+          childInstanceNode.name =
+            childDeferred.nodeData.name || matchingChild.name;
+
+          // Copy position and size from matching child
+          childInstanceNode.x = matchingChild.x;
+          childInstanceNode.y = matchingChild.y;
+          if (
+            matchingChild.width !== undefined &&
+            matchingChild.height !== undefined
+          ) {
+            childInstanceNode.resize(matchingChild.width, matchingChild.height);
+          }
+
+          // Apply fill bound variables to child instance children (recursive)
+          await applyFillBoundVariablesToInstanceChildren(
+            childInstanceNode,
+            childDeferred.nodeData,
+            recognizedVariables,
+          );
+
+          // Update children from JSON to preserve bound variables and other properties
+          await updateInstanceChildrenFromJson(
+            childInstanceNode,
+            childDeferred.nodeData,
+          );
+
+          // Replace matching child with actual child instance
+          // Handle nested children - get the actual parent of the matching child
+          const actualParent = matchingChild.parent;
+          if (!actualParent || !("children" in actualParent)) {
+            const error = `Cannot replace child "${childDeferred.nodeData.name}": parent does not support children`;
+            debugConsole.error(error);
+            errors.push(error);
+            failed++;
+            continue;
+          }
+          const childIndex = actualParent.children.indexOf(matchingChild);
+          actualParent.insertChild(childIndex, childInstanceNode);
+          matchingChild.remove();
+
+          debugConsole.log(
+            `  ✓ Resolved nested child deferred instance "${childDeferred.nodeData.name}" in "${nodeData.name}"`,
+          );
+        } catch (error) {
+          debugConsole.warning(
+            `  Error resolving child deferred instance "${childDeferred.nodeData.name}": ${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
+      }
+
+      debugConsole.log(
         `  ✓ Resolved deferred instance "${nodeData.name}" from component "${instanceEntry.componentName}" on page "${instanceEntry.componentPageName}"`,
       );
       resolved++;
@@ -6385,13 +12752,13 @@ export async function resolveDeferredNormalInstances(
       const errorMessage =
         error instanceof Error ? error.message : String(error);
       const fullError = `Failed to resolve deferred instance "${deferred.nodeData.name}": ${errorMessage}`;
-      await debugConsole.error(fullError);
+      debugConsole.error(fullError);
       errors.push(fullError);
       failed++;
     }
   }
 
-  await debugConsole.log(
+  debugConsole.log(
     `=== Deferred Resolution Complete: ${resolved} resolved, ${failed} failed ===`,
   );
 
@@ -6405,54 +12772,39 @@ export interface CleanupCreatedEntitiesData {
 }
 
 /**
- * Cleans up created entities (pages, collections, variables) by their IDs
+ * Cleans up created entities (pages, variables) by their IDs
  * Used when import fails to remove partially created entities
+ * Collections are never deleted - only the variables we created are removed
  */
 export async function cleanupCreatedEntities(
   data: CleanupCreatedEntitiesData,
 ): Promise<ResponseMessage> {
-  await debugConsole.log("=== Cleaning up created entities ===");
+  debugConsole.log("=== Cleaning up created entities ===");
 
   try {
     const { pageIds, collectionIds, variableIds } = data;
 
-    // Delete variables first (before collections)
+    // Delete all variables we created (from both new and existing collections)
+    // We never delete collections - only the variables we created
     let deletedVariables = 0;
     for (const variableId of variableIds) {
       try {
         const variable = await figma.variables.getVariableByIdAsync(variableId);
         if (variable) {
-          // Check if variable's collection is in our list to be deleted
-          // If so, we don't need to delete it explicitly (it will be deleted with the collection)
-          const collectionId = variable.variableCollectionId;
-          if (!collectionIds.includes(collectionId)) {
-            variable.remove();
-            deletedVariables++;
-          }
+          variable.remove();
+          deletedVariables++;
         }
       } catch (error) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Could not delete variable ${variableId.substring(0, 8)}...: ${error}`,
         );
       }
     }
 
-    // Delete collections (this will also delete variables in those collections)
-    let deletedCollections = 0;
-    for (const collectionId of collectionIds) {
-      try {
-        const collection =
-          await figma.variables.getVariableCollectionByIdAsync(collectionId);
-        if (collection) {
-          collection.remove();
-          deletedCollections++;
-        }
-      } catch (error) {
-        await debugConsole.warning(
-          `Could not delete collection ${collectionId.substring(0, 8)}...: ${error}`,
-        );
-      }
-    }
+    // Never delete collections - we only delete variables we created
+    debugConsole.log(
+      `Skipping deletion of ${collectionIds.length} collection(s) - collections are never deleted`,
+    );
 
     // Delete pages
     await figma.loadAllPagesAsync();
@@ -6465,14 +12817,14 @@ export async function cleanupCreatedEntities(
           deletedPages++;
         }
       } catch (error) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Could not delete page ${pageId.substring(0, 8)}...: ${error}`,
         );
       }
     }
 
-    await debugConsole.log(
-      `Cleanup complete: Deleted ${deletedPages} page(s), ${deletedCollections} collection(s), ${deletedVariables} variable(s)`,
+    debugConsole.log(
+      `Cleanup complete: Deleted ${deletedPages} page(s), ${deletedVariables} variable(s) (collections are never deleted)`,
     );
 
     return {
@@ -6482,14 +12834,14 @@ export async function cleanupCreatedEntities(
       message: "Cleanup completed successfully",
       data: {
         deletedPages,
-        deletedCollections,
+        deletedCollections: 0, // Never delete collections
         deletedVariables,
       },
     };
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
-    await debugConsole.error(`Cleanup failed: ${errorMessage}`);
+    debugConsole.error(`Cleanup failed: ${errorMessage}`);
     return {
       type: "cleanupCreatedEntities",
       success: false,

@@ -1,0 +1,48 @@
+.root {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: var(--mantine-spacing-md);
+}
+
+.description {
+  color: var(--mantine-color-gray-7);
+}
+
+.loadingContainer {
+  min-height: 200px;
+  justify-content: center;
+}
+
+.loadingText {
+  color: var(--mantine-color-gray-7);
+}
+
+.form {
+  width: 100%;
+}
+
+.label {
+  display: block;
+  margin-bottom: var(--mantine-spacing-xs);
+  font-weight: 500;
+}
+
+.input {
+  width: 100%;
+}
+
+.helperText {
+  margin-top: var(--mantine-spacing-xs);
+  font-size: 12px;
+}
+
+.actions {
+  display: flex;
+  gap: var(--mantine-spacing-md);
+  justify-content: flex-end;
+  margin-top: var(--mantine-spacing-lg);
+}

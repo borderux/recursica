@@ -1,0 +1,29 @@
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.root {
+  border: 2px solid #e0e0e0;
+  border-top: 2px solid #666;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.sizeSmall {
+  width: 16px;
+  height: 16px;
+}
+
+.sizeDefault {
+  width: 20px;
+  height: 20px;
+}
+
+.colorPrimary {
+  border-top-color: var(--mantine-color-red-5);
+}

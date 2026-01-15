@@ -50,6 +50,11 @@ const TYPE_ENUM_MAP: Record<string, number> = {
   // Blend modes (if used as type)
   NORMAL: 30,
   PASS_THROUGH: 31,
+  // Style types
+  TEXT_STYLE: 32,
+  PAINT_STYLE: 33,
+  EFFECT_STYLE: 34,
+  GRID_STYLE: 35,
 };
 
 /**
@@ -103,6 +108,7 @@ const STRING_TABLE_MAP: Record<string, string> = {
   _colRef: "_colRef", // Keep as-is (already short)
   _varRef: "_varRef", // Keep as-is (already short)
   _instanceRef: "_insRef", // Keep short but consistent
+  _styleRef: "_stlRef", // Style reference
 
   // Instance table keys
   instanceType: "instT",
@@ -114,6 +120,7 @@ const STRING_TABLE_MAP: Record<string, string> = {
   componentPageName: "cPage",
   variantProperties: "varPr",
   componentProperties: "cProp",
+  componentPropertyDefinitions: "cPropD",
   remoteLibraryName: "rLibN",
   remoteLibraryKey: "rLibK",
   path: "path", // Already short
@@ -157,6 +164,8 @@ const STRING_TABLE_MAP: Record<string, string> = {
   bottomRightRadius: "botRR",
   topLeftRadius: "topLR",
   layoutGrow: "layGr",
+  layoutSizingHorizontal: "laySzH",
+  layoutSizingVertical: "laySzV",
   offsetX: "offX",
   offsetY: "offY",
   maxWidth: "maxW",
@@ -177,6 +186,16 @@ const STRING_TABLE_MAP: Record<string, string> = {
   height: "h",
   width: "w",
   libraryName: "libNm", // Different from remoteLibraryName (rLibN)
+  constraintHorizontal: "cnsHr", // Constraint horizontal (5 chars)
+  constraintVertical: "cnsVr", // Constraint vertical (5 chars)
+  // Style-related keys
+  textStyle: "txtSt",
+  paintStyle: "pntSt",
+  effectStyle: "effSt",
+  gridStyle: "grdSt",
+  styleKey: "stlKy",
+  // Component property references
+  componentPropertyReferences: "cPropR", // Component property references (5 chars)
 };
 
 /**

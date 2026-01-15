@@ -1,25 +1,30 @@
 import { MemoryRouter, Routes, Route, useLocation } from "react-router";
 import { useEffect } from "react";
+import { MantineProvider } from "@mantine/core";
+import { theme } from "./theme/theme";
 import Layout from "./components/Layout";
-import Home from "./pages/Home";
-import Import from "./pages/Import";
-import ImportMain from "./pages/ImportMain";
-import ImportBranch from "./pages/ImportBranch";
+import Home from "./pages/Home/Home";
+import Splash from "./pages/Splash/Splash";
+import Import from "./pages/Import/Import";
+import ImportMain from "./pages/ImportMain/ImportMain";
+import ImportBranch from "./pages/ImportBranch/ImportBranch";
 import ImportFiles from "./pages/ImportFiles";
 import ImportRepoComponent from "./pages/ImportRepoComponent";
 import Importing from "./pages/Importing";
 import ImportWizard from "./pages/ImportWizard";
 import Publish from "./pages/Publish";
-import Publishing from "./pages/Publishing";
+import PublishInit from "./pages/PublishInit/PublishInit";
+import Publishing from "./pages/Publishing/Publishing";
 import PublishingComplete from "./pages/PublishingComplete";
-import PublishingWizard from "./pages/PublishingWizard";
+import PublishingWizard from "./pages/PublishingWizard/PublishingWizard";
+import Test from "./pages/Test";
+import Admin from "./pages/Admin/Admin";
+import EditMetadata from "./pages/EditMetadata/EditMetadata";
 import PageManagement from "./pages/PageManagement";
-import { Auth } from "./pages/Auth";
+import { Auth } from "./pages/Auth/Auth";
 import { PublishAuth } from "./pages/PublishAuth";
 import Unauthorized from "./pages/Unauthorized";
 import { AuthProvider } from "./context/AuthProvider";
-import { DebugConsoleProvider } from "./context/DebugConsoleProvider";
-import { PluginPromptProvider } from "./context/PluginPromptProvider";
 import { ImportDataProvider } from "./context/ImportDataProvider";
 
 /**
@@ -133,82 +138,46 @@ function App() {
     };
   }, []);
   return (
-    <div
-      style={{
-        width: "100%",
-        height: "100%",
-        boxSizing: "border-box",
-        margin: 0,
-        padding: 0,
-      }}
-    >
-      <style>
-        {`
-          * {
-            box-sizing: border-box;
-          }
-          html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            font-family: system-ui, -apple-system, "Segoe UI", "Segoe UI Emoji", "Segoe UI Symbol", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
-          }
-          #root {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-          }
-        `}
-      </style>
+    <MantineProvider theme={theme}>
       <AuthProvider>
-        <DebugConsoleProvider>
-          <PluginPromptProvider>
-            <ImportDataProvider>
-              <MemoryRouter initialEntries={["/"]}>
-                <RouteLogger />
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/import" element={<Import />} />
-                  <Route path="/import-main" element={<ImportMain />} />
-                  <Route path="/import-branch" element={<ImportBranch />} />
-                  <Route path="/import-files" element={<ImportFiles />} />
-                  <Route
-                    path="/import-repo-component"
-                    element={<ImportRepoComponent />}
-                  />
-                  <Route path="/importing" element={<Importing />} />
-                  <Route path="/import-wizard/*" element={<ImportWizard />} />
-                  <Route path="/publish" element={<Publish />} />
-                  <Route path="/publish/auth" element={<PublishAuth />} />
-                  <Route
-                    path="/publish/unauthorized"
-                    element={<Unauthorized />}
-                  />
-                  <Route path="/publishing" element={<Publishing />} />
-                  <Route
-                    path="/publishing-complete"
-                    element={<PublishingComplete />}
-                  />
-                  <Route
-                    path="/publishing-wizard"
-                    element={<PublishingWizard />}
-                  />
-                  <Route element={<Layout />}>
-                    <Route path="auth" element={<Auth />} />
-                    <Route
-                      path="page-management"
-                      element={<PageManagement />}
-                    />
-                  </Route>
-                </Routes>
-              </MemoryRouter>
-            </ImportDataProvider>
-          </PluginPromptProvider>
-        </DebugConsoleProvider>
+        <ImportDataProvider>
+          <MemoryRouter initialEntries={["/splash"]}>
+            <RouteLogger />
+            <Routes>
+              <Route path="/splash" element={<Splash />} />
+              <Route path="/" element={<Home />} />
+              <Route path="/import" element={<Import />} />
+              <Route path="/import-main" element={<ImportMain />} />
+              <Route path="/import-branch" element={<ImportBranch />} />
+              <Route path="/import-files" element={<ImportFiles />} />
+              <Route
+                path="/import-repo-component"
+                element={<ImportRepoComponent />}
+              />
+              <Route path="/importing" element={<Importing />} />
+              <Route path="/import-wizard/*" element={<ImportWizard />} />
+              <Route path="/publish" element={<Publish />} />
+              <Route path="/publish-init" element={<PublishInit />} />
+              <Route path="/publish/auth" element={<PublishAuth />} />
+              <Route path="/publish/unauthorized" element={<Unauthorized />} />
+              <Route path="/publishing" element={<Publishing />} />
+              <Route
+                path="/publishing-complete"
+                element={<PublishingComplete />}
+              />
+              <Route path="/publishing-wizard" element={<PublishingWizard />} />
+              <Route path="/test" element={<Test />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/edit-metadata" element={<EditMetadata />} />
+              <Route element={<Layout />}>
+                <Route path="auth" element={<Auth />} />
+                <Route path="page-management" element={<PageManagement />} />
+              </Route>
+            </Routes>
+          </MemoryRouter>
+        </ImportDataProvider>
       </AuthProvider>
-    </div>
+    </MantineProvider>
   );
 }
 

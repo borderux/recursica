@@ -4,6 +4,7 @@ import type { ParsedNodeData, ParserContext } from "./baseNodeParser";
 import { debugConsole } from "../../services/debugConsole";
 import type { InstanceTableEntry } from "./instanceTable";
 import { pluginPrompt } from "../../utils/pluginPrompt";
+import { requestGuidFromUI } from "../../utils/requestGuidFromUI";
 
 const COMPONENT_METADATA_KEY = "RecursicaPublishedMetadata";
 
@@ -12,7 +13,7 @@ const COMPONENT_METADATA_KEY = "RecursicaPublishedMetadata";
  * Returns null if the page cannot be determined (e.g., for remote components)
  * Also returns diagnostic information about why the page couldn't be found
  */
-function getPageFromNode(node: any): {
+export function getPageFromNode(node: any): {
   page: any | null;
   reason: "found" | "detached" | "broken_chain" | "access_error";
 } {
@@ -56,12 +57,12 @@ function getPageFromNode(node: any): {
  * Gets component metadata from a page node
  * Note: Uses getPluginData (not getSharedPluginData) to match how metadata is stored
  */
-function getComponentMetadataFromPage(page: any): {
+export function getComponentMetadataFromPage(page: any): {
   id?: string;
   version?: number;
 } | null {
   try {
-    // Metadata is stored using setPluginData (no namespace), not setSharedPluginData
+    // Metadata is stored using setPluginData (no namespace), not getSharedPluginData
     const metadataStr = page.getPluginData(COMPONENT_METADATA_KEY);
     if (!metadataStr || metadataStr.trim() === "") {
       return null;
@@ -74,6 +75,55 @@ function getComponentMetadataFromPage(page: any): {
   } catch {
     return null;
   }
+}
+
+/**
+ * Gets or generates component metadata from a page node
+ * If metadata is missing, automatically generates a new GUID and version
+ * Note: Uses getPluginData (not getSharedPluginData) to match how metadata is stored
+ */
+async function getOrGenerateComponentMetadataFromPage(page: any): Promise<{
+  id: string;
+  version: number;
+}> {
+  let metadata = getComponentMetadataFromPage(page);
+
+  // If metadata is missing or incomplete, generate it
+  if (!metadata || !metadata.id || metadata.version === undefined) {
+    debugConsole.log(
+      `  Page "${page.name}" has no metadata. Generating new GUID and metadata...`,
+    );
+
+    // Generate new GUID
+    const pageGuid = await requestGuidFromUI();
+    const pageVersion = 1;
+
+    // Create and store new metadata
+    const newMetadata = {
+      _ver: 1,
+      id: pageGuid,
+      name: page.name,
+      version: pageVersion,
+      publishDate: new Date().toISOString(),
+      history: {},
+    };
+
+    page.setPluginData(COMPONENT_METADATA_KEY, JSON.stringify(newMetadata));
+
+    debugConsole.log(
+      `  ✓ Generated new metadata for page "${page.name}": GUID=${pageGuid.substring(0, 8)}..., version=${pageVersion}`,
+    );
+
+    metadata = {
+      id: pageGuid,
+      version: pageVersion,
+    };
+  }
+
+  return {
+    id: metadata.id!,
+    version: metadata.version ?? 1,
+  };
 }
 
 /**
@@ -96,7 +146,9 @@ export async function parseInstanceProperties(
     node.type === "INSTANCE" &&
     typeof node.getMainComponentAsync === "function"
   ) {
+    const instanceName = node.name || "(unnamed)";
     const mainComponent = await node.getMainComponentAsync();
+
     if (!mainComponent) {
       // Detached instance - the main component is missing
       const instanceName = node.name || "(unnamed)";
@@ -105,43 +157,51 @@ export async function parseInstanceProperties(
       // Check if we've already handled this detached instance
       if (context.detachedComponentsHandled.has(instanceId)) {
         // Already prompted for this instance - treat as internal
-        await debugConsole.log(
+        debugConsole.log(
           `Treating detached instance "${instanceName}" as internal instance (already prompted)`,
         );
       } else {
         // First time seeing this detached instance - prompt user
-        await debugConsole.warning(
+        debugConsole.warning(
           `Found detached instance: "${instanceName}" (main component is missing)`,
         );
 
-        const message = `Found detached instance "${instanceName}". The main component this instance references is missing. This should be fixed. Continue to publish?`;
-        try {
-          await pluginPrompt.prompt(message, {
-            okLabel: "Ok",
-            cancelLabel: "Cancel",
-            timeoutMs: 300000, // 5 minutes
-          });
-
-          // User said Ok - mark as handled and treat as internal instance
-          context.detachedComponentsHandled.add(instanceId);
-          await debugConsole.log(
-            `Treating detached instance "${instanceName}" as internal instance`,
+        // If skipPrompts is true, automatically handle without prompting
+        if (context.skipPrompts) {
+          debugConsole.log(
+            `Automatically handling detached instance "${instanceName}" (skipPrompts=true) - treating as internal instance`,
           );
-        } catch (error) {
-          // User said Cancel or prompt was cancelled
-          if (error instanceof Error && error.message === "User cancelled") {
-            const errorMessage = `Export cancelled: Detached instance "${instanceName}" found. Please fix the instance before exporting.`;
-            await debugConsole.error(errorMessage);
-            // Try to scroll to the instance to help user find it
-            try {
-              await figma.viewport.scrollAndZoomIntoView([node]);
-            } catch (scrollError) {
-              console.warn("Could not scroll to instance:", scrollError);
+          context.detachedComponentsHandled.add(instanceId);
+        } else {
+          const message = `Found detached instance "${instanceName}". The main component this instance references is missing. This should be fixed. Continue to publish?`;
+          try {
+            await pluginPrompt.prompt(message, {
+              okLabel: "Ok",
+              cancelLabel: "Cancel",
+              timeoutMs: 300000, // 5 minutes
+            });
+
+            // User said Ok - mark as handled and treat as internal instance
+            context.detachedComponentsHandled.add(instanceId);
+            debugConsole.log(
+              `Treating detached instance "${instanceName}" as internal instance`,
+            );
+          } catch (error) {
+            // User said Cancel or prompt was cancelled
+            if (error instanceof Error && error.message === "User cancelled") {
+              const errorMessage = `Export cancelled: Detached instance "${instanceName}" found. Please fix the instance before exporting.`;
+              debugConsole.error(errorMessage);
+              // Try to scroll to the instance to help user find it
+              try {
+                await figma.viewport.scrollAndZoomIntoView([node]);
+              } catch (scrollError) {
+                console.warn("Could not scroll to instance:", scrollError);
+              }
+              throw new Error(errorMessage);
+            } else {
+              // Some other error occurred
+              throw error;
             }
-            throw new Error(errorMessage);
-          } else {
-            // Some other error occurred
-            throw error;
           }
         }
       }
@@ -154,7 +214,7 @@ export async function parseInstanceProperties(
       if (!instancePage) {
         // Instance itself is detached from page - this is a problem
         const errorMessage = `Detached instance "${instanceName}" is not on any page. Cannot export.`;
-        await debugConsole.error(errorMessage);
+        debugConsole.error(errorMessage);
         throw new Error(errorMessage);
       }
 
@@ -162,10 +222,30 @@ export async function parseInstanceProperties(
       let variantProperties: Record<string, string> | undefined;
       let componentProperties: Record<string, any> | undefined;
       try {
-        if ((node as any).variantProperties) {
+        // Try getProperties() first (recommended way to get instance properties)
+        if (typeof (node as any).getProperties === "function") {
+          try {
+            const props = await (node as any).getProperties();
+            if (props) {
+              if (props.variantProperties) {
+                variantProperties = props.variantProperties;
+              }
+              if (props.componentProperties) {
+                componentProperties = props.componentProperties;
+              }
+            }
+          } catch (getPropsError) {
+            // getProperties() might not be available or might fail
+            debugConsole.log(
+              `  Detached instance "${instanceName}" -> getProperties() not available or failed: ${getPropsError}`,
+            );
+          }
+        }
+        // Fallback: try direct property access
+        if (!variantProperties && (node as any).variantProperties) {
           variantProperties = (node as any).variantProperties;
         }
-        if ((node as any).componentProperties) {
+        if (!componentProperties && (node as any).componentProperties) {
           componentProperties = (node as any).componentProperties;
         }
       } catch {
@@ -188,16 +268,95 @@ export async function parseInstanceProperties(
       result._instanceRef = instanceIndex;
       handledKeys.add("_instanceRef");
 
-      await debugConsole.log(
+      debugConsole.log(
         `  Exported detached INSTANCE: "${instanceName}" as internal instance (ID: ${node.id.substring(0, 8)}...)`,
       );
 
       return result;
     }
 
-    const instanceName = node.name || "(unnamed)";
-    const componentName = mainComponent.name || "(unnamed)";
+    // Validate that the main component is actually accessible and not broken
+    // Even if getMainComponentAsync() returns a component, it might be in a broken state
+    let componentName: string;
+    let isComponentValid = false;
+    try {
+      // Try to access basic properties that should always be available
+      componentName = mainComponent.name || "(unnamed)";
+      const componentType = mainComponent.type;
+      // If we can access name and type without errors, the component is likely valid
+      isComponentValid =
+        componentType === "COMPONENT" || componentType === "COMPONENT_SET";
+    } catch (accessError) {
+      // Component exists but is not accessible - this is a broken reference
+      const errorMessage = `Instance "${instanceName}" has a broken reference to its main component. The component exists but cannot be accessed (${accessError instanceof Error ? accessError.message : String(accessError)}). Please fix the instance reference before exporting.`;
+      debugConsole.error(errorMessage);
+      // Try to scroll to the instance to help user find it
+      try {
+        await figma.viewport.scrollAndZoomIntoView([node]);
+      } catch (scrollError) {
+        console.warn("Could not scroll to instance:", scrollError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    if (!isComponentValid) {
+      // Component type is not valid - this shouldn't happen but check anyway
+      const errorMessage = `Instance "${instanceName}" references a main component that is not a valid component type (type: ${(mainComponent as any).type}). Please fix the instance reference before exporting.`;
+      debugConsole.error(errorMessage);
+      try {
+        await figma.viewport.scrollAndZoomIntoView([node]);
+      } catch (scrollError) {
+        console.warn("Could not scroll to instance:", scrollError);
+      }
+      throw new Error(errorMessage);
+    }
+
     const isRemote = (mainComponent as any).remote === true;
+
+    // Additional validation: Verify the component is actually usable and not broken
+    // If getMainComponentAsync() returns a component but we can't access its properties or it's been removed, it's broken
+    // This catches cases where the component reference exists but is in an invalid state (e.g., component was deleted but reference remains)
+
+    // Validation checks for non-remote components
+    try {
+      // Try to access the component's parent - if this fails or throws, the component is broken
+      // Note: parent can be null for root-level components, which is valid
+      // But if accessing parent throws an error, that's a sign of a broken reference
+      void mainComponent.parent;
+
+      // Additional check: Try to access properties that would fail if the component is truly broken
+      // If the component was deleted but the reference still exists, accessing certain properties might fail
+      try {
+        // Try to access children - this will fail if the component is truly broken/removed
+        void mainComponent.children;
+
+        // Also check if component has been removed (some Figma APIs expose this)
+        const removed = (mainComponent as any).removed;
+        if (removed === true) {
+          throw new Error("Component has been removed");
+        }
+      } catch (childrenError) {
+        // Can't access children or component is removed - this is a broken reference
+        const errorMessage = `Instance "${instanceName}" references a broken main component "${componentName}". The component reference exists but the component appears to have been removed or is in an invalid state (${childrenError instanceof Error ? childrenError.message : String(childrenError)}). Please fix the instance reference before exporting.`;
+        debugConsole.error(errorMessage);
+        try {
+          await figma.viewport.scrollAndZoomIntoView([node]);
+        } catch (scrollError) {
+          console.warn("Could not scroll to instance:", scrollError);
+        }
+        throw new Error(errorMessage);
+      }
+    } catch (parentError) {
+      // Can't access parent - component is broken
+      const errorMessage = `Instance "${instanceName}" references a broken main component "${componentName}". The component reference exists but cannot be accessed properly (${parentError instanceof Error ? parentError.message : String(parentError)}). This usually means the component was deleted or the reference is corrupted. Please fix the instance reference before exporting.`;
+      debugConsole.error(errorMessage);
+      try {
+        await figma.viewport.scrollAndZoomIntoView([node]);
+      } catch (scrollError) {
+        console.warn("Could not scroll to instance:", scrollError);
+      }
+      throw new Error(errorMessage);
+    }
 
     // Get pages for classification
     const instancePageResult = getPageFromNode(node);
@@ -205,10 +364,24 @@ export async function parseInstanceProperties(
     const componentPageResult = getPageFromNode(mainComponent);
     let componentPage = componentPageResult.page;
 
-    // If componentPage is null and component is marked as remote, try to find it by ID prefix
+    // Debug logging for page detection
+    if (instanceName.includes("Slot") || componentName.includes("Slot")) {
+      debugConsole.log(
+        `  [SLOT DEBUG] Instance "${instanceName}" -> component "${componentName}":`,
+      );
+      debugConsole.log(
+        `  [SLOT DEBUG]   Instance page: ${instancePage ? `"${instancePage.name}" (ID: ${instancePage.id.substring(0, 8)}...)` : "null"} (reason: ${instancePageResult.reason})`,
+      );
+      debugConsole.log(
+        `  [SLOT DEBUG]   Component page (initial): ${componentPage ? `"${componentPage.name}" (ID: ${componentPage.id.substring(0, 8)}...)` : "null"} (reason: ${componentPageResult.reason})`,
+      );
+    }
+
+    // If componentPage is null, try to find it by searching pages or ID prefix
     // This handles cases where components inside COMPONENT_SET nodes can't traverse to their page
     // In Figma, nodes on the same page share the same ID prefix (before the colon)
-    if (!componentPage && isRemote) {
+    // This applies to both remote and non-remote components
+    if (!componentPage) {
       try {
         await figma.loadAllPagesAsync();
         const allPages = figma.root.children;
@@ -242,11 +415,31 @@ export async function parseInstanceProperties(
         }
 
         if (foundOnPage) {
-          // Update componentPage to the found page so it gets treated as normal
+          // Update componentPage to the found page
           componentPage = foundOnPage;
+          debugConsole.log(
+            `  Found page "${foundOnPage.name}" for component "${componentName}" using page search/ID prefix lookup (componentPage was null)`,
+          );
+          if (instanceName.includes("Slot") || componentName.includes("Slot")) {
+            debugConsole.log(
+              `  [SLOT DEBUG]   Component page (after lookup): "${foundOnPage.name}" (ID: ${foundOnPage.id.substring(0, 8)}...)`,
+            );
+          }
+        } else {
+          debugConsole.warning(
+            `  Could not find page for component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...) - page search and ID prefix lookup both failed`,
+          );
+          if (instanceName.includes("Slot") || componentName.includes("Slot")) {
+            debugConsole.warning(
+              `  [SLOT DEBUG]   Failed to find page for Slot component using search/ID prefix lookup`,
+            );
+          }
         }
-      } catch {
+      } catch (error) {
         // If page lookup fails, continue with componentPage as null
+        debugConsole.warning(
+          `  Error during page lookup for component "${componentName}": ${error}`,
+        );
       }
     }
 
@@ -268,18 +461,18 @@ export async function parseInstanceProperties(
         instanceType = "normal";
         effectiveComponentPage = componentPage;
         if (metadata?.id) {
-          await debugConsole.log(
+          debugConsole.log(
             `  Component "${componentName}" is from library but also exists on local page "${componentPage.name}" with metadata. Treating as "normal" instance.`,
           );
         } else {
-          await debugConsole.log(
+          debugConsole.log(
             `  Component "${componentName}" is from library and exists on local page "${componentPage.name}" (no metadata). Treating as "normal" instance - page should be published first.`,
           );
         }
       } else {
         // Component is not on a local page - truly external library, treat as "remote"
         instanceType = "remote";
-        await debugConsole.log(
+        debugConsole.log(
           `  Component "${componentName}" is from library and not on a local page. Treating as "remote" instance.`,
         );
       }
@@ -308,12 +501,12 @@ export async function parseInstanceProperties(
         if (context.detachedComponentsHandled.has(componentId)) {
           // Already prompted for this component - treat as remote
           instanceType = "remote";
-          await debugConsole.log(
+          debugConsole.log(
             `Treating detached instance "${instanceName}" -> component "${componentName}" as remote instance (already prompted)`,
           );
         } else {
           // First time seeing this detached component - prompt user
-          await debugConsole.warning(
+          debugConsole.warning(
             `Found detached instance: "${instanceName}" -> component "${componentName}" (component is not on any page)`,
           );
 
@@ -324,31 +517,43 @@ export async function parseInstanceProperties(
             console.warn("Could not scroll to component:", scrollError);
           }
 
-          // Prompt user
-          const message = `Found detached instance "${instanceName}" attached to component "${componentName}". This should be fixed. Continue to publish?`;
-          try {
-            await pluginPrompt.prompt(message, {
-              okLabel: "Ok",
-              cancelLabel: "Cancel",
-              timeoutMs: 300000, // 5 minutes
-            });
-
-            // User said Ok - mark as handled and treat as remote instance
-            // This allows us to store the component structure and create it on REMOTES page
+          // If skipPrompts is true, automatically handle without prompting
+          if (context.skipPrompts) {
+            debugConsole.log(
+              `Automatically handling detached instance "${instanceName}" -> component "${componentName}" (skipPrompts=true) - treating as remote instance`,
+            );
             context.detachedComponentsHandled.add(componentId);
             instanceType = "remote";
-            await debugConsole.log(
-              `Treating detached instance "${instanceName}" as remote instance (will be created on REMOTES page)`,
-            );
-          } catch (error) {
-            // User said Cancel or prompt was cancelled
-            if (error instanceof Error && error.message === "User cancelled") {
-              const errorMessage = `Export cancelled: Detached instance "${instanceName}" found. The component "${componentName}" is not on any page. Please fix the instance before exporting.`;
-              await debugConsole.error(errorMessage);
-              throw new Error(errorMessage);
-            } else {
-              // Some other error occurred
-              throw error;
+          } else {
+            // Prompt user
+            const message = `Found detached instance "${instanceName}" attached to component "${componentName}". This should be fixed. Continue to publish?`;
+            try {
+              await pluginPrompt.prompt(message, {
+                okLabel: "Ok",
+                cancelLabel: "Cancel",
+                timeoutMs: 300000, // 5 minutes
+              });
+
+              // User said Ok - mark as handled and treat as remote instance
+              // This allows us to store the component structure and create it on REMOTES page
+              context.detachedComponentsHandled.add(componentId);
+              instanceType = "remote";
+              debugConsole.log(
+                `Treating detached instance "${instanceName}" as remote instance (will be created on REMOTES page)`,
+              );
+            } catch (error) {
+              // User said Cancel or prompt was cancelled
+              if (
+                error instanceof Error &&
+                error.message === "User cancelled"
+              ) {
+                const errorMessage = `Export cancelled: Detached instance "${instanceName}" found. The component "${componentName}" is not on any page. Please fix the instance before exporting.`;
+                debugConsole.error(errorMessage);
+                throw new Error(errorMessage);
+              } else {
+                // Some other error occurred
+                throw error;
+              }
             }
           }
         }
@@ -356,7 +561,7 @@ export async function parseInstanceProperties(
         // componentPage is null but not detached - can't classify as normal or internal
         // If it's not remote, this is an error condition
         if (!isRemote) {
-          await debugConsole.warning(
+          debugConsole.warning(
             `  Instance "${instanceName}" -> component "${componentName}": componentPage is null but component is not remote. Reason: ${componentPageResult.reason}. Cannot determine instance type.`,
           );
         }
@@ -366,6 +571,199 @@ export async function parseInstanceProperties(
       }
     }
 
+    // Remote components are no longer supported - all references must be within the same file
+    if (instanceType === "remote") {
+      // Get page information to include in error message
+      const pageName = instancePage ? instancePage.name : "unknown page";
+
+      // Try to build a simple path to the instance
+      const pathParts: string[] = [];
+      let current: any = node;
+      try {
+        while (current && current !== instancePage) {
+          if (current.name) {
+            pathParts.unshift(current.name);
+          }
+          current = current.parent;
+        }
+      } catch {
+        // Path building failed, that's okay
+      }
+      const pathDisplay =
+        pathParts.length > 0 ? ` at path [${pathParts.join(" → ")}]` : "";
+
+      const errorMessage = `Instance "${instanceName}" on page "${pageName}"${pathDisplay} references a remote component "${componentName}" from a library. Remote components are no longer supported - all component references must be within the same file. Please replace this instance with a local component reference before exporting.`;
+      debugConsole.error(errorMessage);
+      try {
+        await figma.viewport.scrollAndZoomIntoView([node]);
+      } catch (scrollError) {
+        console.warn("Could not scroll to instance:", scrollError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    // Verify the component reference is valid by checking:
+    // 1. Component has a parent (if not remote)
+    // 2. Neither component nor parent is marked as removed
+    // Remote components don't have parents, so we can't validate them this way
+    try {
+      // Check if the component is a variant (parent is a COMPONENT_SET)
+      const isVariant =
+        mainComponent.parent && mainComponent.parent.type === "COMPONENT_SET";
+
+      // Verify component's page can be found and is accessible
+      let componentPageValid = false;
+      let parentChainValid = false;
+
+      if (componentPage) {
+        try {
+          // Verify the page is accessible - if we can access its properties, it's valid
+          componentPageValid = true; // Page exists and is accessible
+
+          // For non-variants, check if parent exists and neither component nor parent is marked as removed
+          // Remote components don't have parents, so we can't validate them this way
+          if (!isVariant) {
+            try {
+              const componentParent = mainComponent.parent;
+              if (!componentParent) {
+                // Component has no parent - check if it's remote
+                // If remote, we can't validate it (remote components don't have parents)
+                // If not remote, this is a broken reference
+                if (!isRemote) {
+                  parentChainValid = false;
+                } else {
+                  // Remote component - can't validate parent chain
+                  parentChainValid = true;
+                }
+              } else {
+                // Parent exists - check if component or parent is marked as removed
+                const componentRemoved =
+                  (mainComponent as any).removed === true;
+                const parentRemoved = (componentParent as any).removed === true;
+
+                if (componentRemoved || parentRemoved) {
+                  // Component or parent is marked as removed - broken reference
+                  parentChainValid = false;
+                } else {
+                  // Component has parent and neither is marked as removed - valid
+                  parentChainValid = true;
+                }
+              }
+            } catch (parentError) {
+              // Can't access parent at all - broken reference (unless remote)
+              if (!isRemote) {
+                parentChainValid = false;
+              } else {
+                // Remote component - can't validate
+                parentChainValid = true;
+              }
+            }
+          } else {
+            // For variants, check if parent exists and neither component nor parent is marked as removed
+            // Remote components don't have parents, so we can't validate them this way
+            try {
+              const variantParent = mainComponent.parent;
+              if (!variantParent) {
+                // Variant has no parent - check if it's remote
+                // If remote, we can't validate it (remote components don't have parents)
+                // If not remote, this is a broken reference
+                if (!isRemote) {
+                  parentChainValid = false;
+                } else {
+                  // Remote component - can't validate parent chain
+                  parentChainValid = true;
+                }
+              } else {
+                // Parent exists - check if component or parent is marked as removed
+                const componentRemoved =
+                  (mainComponent as any).removed === true;
+                const parentRemoved = (variantParent as any).removed === true;
+
+                if (componentRemoved || parentRemoved) {
+                  // Component or parent is marked as removed - broken reference
+                  parentChainValid = false;
+                } else {
+                  // Component has parent and neither is marked as removed - valid
+                  parentChainValid = true;
+                }
+              }
+            } catch (variantParentError) {
+              // Can't access parent at all - broken reference (unless remote)
+              if (!isRemote) {
+                parentChainValid = false;
+              } else {
+                // Remote component - can't validate
+                parentChainValid = true;
+              }
+            }
+          }
+        } catch (pageAccessError) {
+          // Can't access page properties - this indicates a broken reference
+          componentPageValid = false;
+        }
+      } else if (instanceType === "internal") {
+        // For internal instances, componentPage might be null but that's okay
+        // since we use componentNodeId instead of page lookup
+        componentPageValid = true;
+        parentChainValid = true; // Internal instances are on the same page
+      }
+
+      // Reference is valid if:
+      // - Component page is valid AND parent chain is valid
+      //   - parentChainValid means the component has a parent (if not remote) and neither component nor parent is marked as removed
+      // For internal instances, we're more lenient since they're on the same page
+      let isReferenceValid: boolean;
+      if (instanceType === "internal") {
+        // Internal instances are on the same page, so we trust componentPageValid
+        isReferenceValid = componentPageValid;
+      } else {
+        // For all other instances, require both componentPageValid AND parentChainValid
+        // parentChainValid checks that component has parent (if not remote) and neither is marked as removed
+        isReferenceValid = componentPageValid && parentChainValid;
+      }
+
+      if (!isReferenceValid) {
+        const pageName = instancePage ? instancePage.name : "unknown page";
+
+        // Try to build a simple path to the instance
+        const pathParts: string[] = [];
+        let current: any = node;
+        try {
+          while (current && current !== instancePage) {
+            if (current.name) {
+              pathParts.unshift(current.name);
+            }
+            current = current.parent;
+          }
+        } catch {
+          // Path building failed, that's okay
+        }
+        const pathDisplay =
+          pathParts.length > 0 ? ` at path [${pathParts.join(" → ")}]` : "";
+
+        const errorMessage = `Instance "${instanceName}" on page "${pageName}"${pathDisplay} references a broken component "${componentName}". The component reference exists but the component cannot be found in the document. This usually means the component was deleted or the reference is corrupted. Please fix the instance reference before exporting.`;
+        debugConsole.error(errorMessage);
+        try {
+          await figma.viewport.scrollAndZoomIntoView([node]);
+        } catch (scrollError) {
+          console.warn("Could not scroll to instance:", scrollError);
+        }
+        throw new Error(errorMessage);
+      }
+    } catch (verificationError) {
+      // If verification itself fails, re-throw if it's our error, otherwise log and continue
+      if (
+        verificationError instanceof Error &&
+        verificationError.message.includes("references a broken component")
+      ) {
+        throw verificationError;
+      }
+      // Other verification errors are non-fatal - log and continue
+      debugConsole.warning(
+        `  Component verification failed for "${componentName}": ${verificationError}`,
+      );
+    }
+
     // Extract variant properties and component properties
     let variantProperties: Record<string, string> | undefined;
     let componentProperties: Record<string, any> | undefined;
@@ -373,36 +771,46 @@ export async function parseInstanceProperties(
       // Try multiple ways to get variant properties
       if ((node as any).variantProperties) {
         variantProperties = (node as any).variantProperties;
-        await debugConsole.log(
+        debugConsole.log(
           `  Instance "${instanceName}" -> variantProperties from instance: ${JSON.stringify(variantProperties)}`,
         );
       }
 
       // Also try getProperties() if available (some Figma API versions use this)
+      // This is the recommended way to get both variant and component properties
       if (typeof (node as any).getProperties === "function") {
         try {
           const props = await (node as any).getProperties();
-          if (props && props.variantProperties) {
-            await debugConsole.log(
-              `  Instance "${instanceName}" -> variantProperties from getProperties(): ${JSON.stringify(props.variantProperties)}`,
-            );
-            // Use getProperties() result if it's different/more complete
-            if (
-              props.variantProperties &&
-              Object.keys(props.variantProperties).length > 0
-            ) {
-              variantProperties = props.variantProperties;
+          if (props) {
+            // Get variant properties from getProperties()
+            if (props.variantProperties) {
+              debugConsole.log(
+                `  Instance "${instanceName}" -> variantProperties from getProperties(): ${JSON.stringify(props.variantProperties)}`,
+              );
+              // Use getProperties() result if it's different/more complete
+              if (
+                props.variantProperties &&
+                Object.keys(props.variantProperties).length > 0
+              ) {
+                variantProperties = props.variantProperties;
+              }
+            }
+            // Get component properties from getProperties() - this is the reliable way
+            if (props.componentProperties) {
+              // Use getProperties() result for component properties (more reliable than direct access)
+              componentProperties = props.componentProperties;
             }
           }
         } catch (getPropsError) {
           // getProperties() might not be available or might fail
-          await debugConsole.log(
+          debugConsole.log(
             `  Instance "${instanceName}" -> getProperties() not available or failed: ${getPropsError}`,
           );
         }
       }
 
-      if ((node as any).componentProperties) {
+      // Fallback: try direct property access if getProperties() didn't work or wasn't available
+      if (!componentProperties && (node as any).componentProperties) {
         componentProperties = (node as any).componentProperties;
       }
 
@@ -421,7 +829,7 @@ export async function parseInstanceProperties(
           const componentSetProps = (componentSet as any)
             .componentPropertyDefinitions;
           if (componentSetProps) {
-            await debugConsole.log(
+            debugConsole.log(
               `  Component set "${componentSet.name}" has property definitions: ${JSON.stringify(Object.keys(componentSetProps))}`,
             );
           }
@@ -450,7 +858,7 @@ export async function parseInstanceProperties(
           }
 
           if (Object.keys(nameBasedVariantProps).length > 0) {
-            await debugConsole.log(
+            debugConsole.log(
               `  Parsed variant properties from component name "${componentName}": ${JSON.stringify(nameBasedVariantProps)}`,
             );
           }
@@ -463,13 +871,13 @@ export async function parseInstanceProperties(
           if (variantProperties && Object.keys(variantProperties).length > 0) {
             // Instance has variant properties - use them as the source of truth
             // This reflects the actual variant state the user has set in Figma
-            await debugConsole.log(
+            debugConsole.log(
               `  Using variant properties from instance (source of truth): ${JSON.stringify(variantProperties)}`,
             );
           } else if (Object.keys(nameBasedVariantProps).length > 0) {
             // No instance variant properties, but we parsed from component name - use those
             variantProperties = nameBasedVariantProps;
-            await debugConsole.log(
+            debugConsole.log(
               `  Using variant properties from component name (fallback): ${JSON.stringify(variantProperties)}`,
             );
           } else {
@@ -477,14 +885,14 @@ export async function parseInstanceProperties(
             if ((mainComponent as any).variantProperties) {
               const mainComponentVariantProps = (mainComponent as any)
                 .variantProperties;
-              await debugConsole.log(
+              debugConsole.log(
                 `  Main component "${componentName}" has variantProperties: ${JSON.stringify(mainComponentVariantProps)}`,
               );
               variantProperties = mainComponentVariantProps;
             }
           }
         } catch (error) {
-          await debugConsole.warning(
+          debugConsole.warning(
             `  Could not get variant properties from component set: ${error}`,
           );
         }
@@ -500,11 +908,13 @@ export async function parseInstanceProperties(
     // 2. Duplicate names: Store them, validation during import will check multiple paths
     // 3. Path is stored as array to avoid separator conflicts
     let mainComponentParentPath: string[] | undefined;
+    let mainComponentNodePath: string[] | undefined;
     let componentSetName: string | undefined;
 
     try {
       let current: any = mainComponent.parent;
       const pathNames: string[] = [];
+      const nodeIds: string[] = [];
       let depth = 0;
       const maxDepth = 20;
 
@@ -521,18 +931,19 @@ export async function parseInstanceProperties(
             break;
           }
 
-          // Use node name for path, empty names are represented as empty strings
-          // Store as array to avoid separator conflicts
+          // Build both name path and node ID path
           const pathSegment = nodeName || "";
           pathNames.unshift(pathSegment);
+          nodeIds.unshift(current.id); // Node IDs are guaranteed unique
 
-          // Debug: log path building for components in Icons page
+          // Debug: log path building for components in Icons page and "user" component set
           if (
             componentSetName === "arrow-top-right-on-square" ||
-            componentName === "arrow-top-right-on-square"
+            componentName === "arrow-top-right-on-square" ||
+            componentSetName === "user"
           ) {
-            await debugConsole.log(
-              `  [PATH BUILD] Added segment: "${pathSegment}" (type: ${nodeType}) to path for component "${componentName}"`,
+            debugConsole.log(
+              `  [PATH BUILD] Added segment: "${pathSegment}" (type: ${nodeType}) to path for component "${componentName}"${componentSetName ? ` (componentSet: "${componentSetName}")` : ""}`,
             );
           }
 
@@ -544,7 +955,7 @@ export async function parseInstanceProperties(
             componentSetName === "arrow-top-right-on-square" ||
             componentName === "arrow-top-right-on-square"
           ) {
-            await debugConsole.warning(
+            debugConsole.warning(
               `  [PATH BUILD] Error building path for "${componentName}": ${error}`,
             );
           }
@@ -553,14 +964,16 @@ export async function parseInstanceProperties(
       }
 
       mainComponentParentPath = pathNames;
+      mainComponentNodePath = nodeIds;
 
-      // Debug: log final path for components in Icons page
+      // Debug: log final path for components in Icons page and "user" component set
       if (
         componentSetName === "arrow-top-right-on-square" ||
-        componentName === "arrow-top-right-on-square"
+        componentName === "arrow-top-right-on-square" ||
+        componentSetName === "user"
       ) {
-        await debugConsole.log(
-          `  [PATH BUILD] Final path for component "${componentName}": [${pathNames.join(" → ")}]`,
+        debugConsole.log(
+          `  [PATH BUILD] Final path for component "${componentName}": names=[${pathNames.join(" → ")}], ids=[${nodeIds.join(" → ")}]${componentSetName ? ` (componentSet: "${componentSetName}")` : ""}`,
         );
       }
     } catch {
@@ -579,10 +992,14 @@ export async function parseInstanceProperties(
       // For internal instances, we use componentNodeId instead (simpler since everything is on the same page)
       // For remote instances, path is optional (structure is used instead)
       ...(instanceType === "normal"
-        ? { path: mainComponentParentPath || [] }
+        ? {
+            path: mainComponentParentPath || [],
+            nodePath: mainComponentNodePath || [],
+          }
         : mainComponentParentPath &&
           mainComponentParentPath.length > 0 && {
             path: mainComponentParentPath,
+            nodePath: mainComponentNodePath,
           }),
     };
 
@@ -591,7 +1008,7 @@ export async function parseInstanceProperties(
       // For internal instances, store the component node ID
       // During import, we maintain a mapping of old ID -> new node to resolve this
       entry.componentNodeId = mainComponent.id;
-      await debugConsole.log(
+      debugConsole.log(
         `  Found INSTANCE: "${instanceName}" -> INTERNAL component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...)`,
       );
 
@@ -600,14 +1017,14 @@ export async function parseInstanceProperties(
       const mainComponentBoundVars = (mainComponent as any).boundVariables;
       if (instanceBoundVars && typeof instanceBoundVars === "object") {
         const boundVarKeys = Object.keys(instanceBoundVars);
-        await debugConsole.log(
+        debugConsole.log(
           `  DEBUG: Internal instance "${instanceName}" -> boundVariables keys: ${boundVarKeys.length > 0 ? boundVarKeys.join(", ") : "none"}`,
         );
         // Log each bound variable key and its type
         for (const key of boundVarKeys) {
           const boundVar = instanceBoundVars[key];
           const boundVarType = boundVar?.type || typeof boundVar;
-          await debugConsole.log(
+          debugConsole.log(
             `  DEBUG:   boundVariables.${key}: type=${boundVarType}, value=${JSON.stringify(boundVar)}`,
           );
         }
@@ -621,13 +1038,13 @@ export async function parseInstanceProperties(
         ];
         for (const potentialKey of potentialSelectionColorKeys) {
           if (instanceBoundVars[potentialKey] !== undefined) {
-            await debugConsole.log(
+            debugConsole.log(
               `  DEBUG:   Found potential "Selection colors" property: boundVariables.${potentialKey} = ${JSON.stringify(instanceBoundVars[potentialKey])}`,
             );
           }
         }
       } else {
-        await debugConsole.log(
+        debugConsole.log(
           `  DEBUG: Internal instance "${instanceName}" -> No boundVariables found on instance node`,
         );
       }
@@ -636,7 +1053,7 @@ export async function parseInstanceProperties(
         typeof mainComponentBoundVars === "object"
       ) {
         const mainBoundVarKeys = Object.keys(mainComponentBoundVars);
-        await debugConsole.log(
+        debugConsole.log(
           `  DEBUG: Main component "${componentName}" -> boundVariables keys: ${mainBoundVarKeys.length > 0 ? mainBoundVarKeys.join(", ") : "none"}`,
         );
       }
@@ -644,31 +1061,31 @@ export async function parseInstanceProperties(
       // DEBUG: Check backgrounds property for bound variables (for "Selection colors")
       const instanceBackgrounds = (node as any).backgrounds;
       if (instanceBackgrounds && Array.isArray(instanceBackgrounds)) {
-        await debugConsole.log(
+        debugConsole.log(
           `  DEBUG: Internal instance "${instanceName}" -> backgrounds array length: ${instanceBackgrounds.length}`,
         );
         for (let i = 0; i < instanceBackgrounds.length; i++) {
           const bg = instanceBackgrounds[i];
           if (bg && typeof bg === "object") {
             // Log the entire background object structure
-            await debugConsole.log(
+            debugConsole.log(
               `  DEBUG:   backgrounds[${i}] structure: ${JSON.stringify(Object.keys(bg))}`,
             );
             if (bg.boundVariables) {
               const bgBoundVarKeys = Object.keys(bg.boundVariables);
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG:   backgrounds[${i}].boundVariables keys: ${bgBoundVarKeys.length > 0 ? bgBoundVarKeys.join(", ") : "none"}`,
               );
               for (const key of bgBoundVarKeys) {
                 const bgBoundVar = bg.boundVariables[key];
-                await debugConsole.log(
+                debugConsole.log(
                   `  DEBUG:     backgrounds[${i}].boundVariables.${key}: ${JSON.stringify(bgBoundVar)}`,
                 );
               }
             }
             // Check if the background itself has a color property that might be bound
             if (bg.color) {
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG:   backgrounds[${i}].color: ${JSON.stringify(bg.color)}`,
               );
             }
@@ -718,7 +1135,7 @@ export async function parseInstanceProperties(
       );
 
       if (selectionRelatedProps.length > 0) {
-        await debugConsole.log(
+        debugConsole.log(
           `  DEBUG: Found selection/color-related properties: ${selectionRelatedProps.join(", ")}`,
         );
         // Log values for these properties
@@ -726,13 +1143,13 @@ export async function parseInstanceProperties(
           try {
             if (instanceAllProps.includes(key)) {
               const value = (node as any)[key];
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG:   Instance.${key}: ${JSON.stringify(value)}`,
               );
             }
             if (mainComponentAllProps.includes(key)) {
               const value = (mainComponent as any)[key];
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG:   MainComponent.${key}: ${JSON.stringify(value)}`,
               );
             }
@@ -741,7 +1158,7 @@ export async function parseInstanceProperties(
           }
         }
       } else {
-        await debugConsole.log(
+        debugConsole.log(
           `  DEBUG: No selection/color-related properties found on instance or main component`,
         );
       }
@@ -753,18 +1170,21 @@ export async function parseInstanceProperties(
         // Always set componentPageName for normal instances (needed for import)
         entry.componentPageName = pageToUse.name;
 
-        const metadata = getComponentMetadataFromPage(pageToUse);
-        if (metadata?.id && metadata.version !== undefined) {
-          entry.componentGuid = metadata.id;
-          entry.componentVersion = metadata.version;
-          await debugConsole.log(
-            `  Found INSTANCE: "${instanceName}" -> NORMAL component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...) at path [${(mainComponentParentPath || []).join(" → ")}]`,
-          );
-        } else {
-          await debugConsole.warning(
-            `  Instance "${instanceName}" -> component "${componentName}" is classified as normal but page "${pageToUse.name}" has no metadata. This instance will not be importable.`,
-          );
-        }
+        debugConsole.log(
+          `  [INSTANCE DEBUG] Instance "${instanceName}" -> component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...): found page "${pageToUse.name}" (ID: ${pageToUse.id.substring(0, 8)}...)`,
+        );
+
+        // Get or generate metadata for the page (will generate if missing)
+        const metadata =
+          await getOrGenerateComponentMetadataFromPage(pageToUse);
+        entry.componentGuid = metadata.id;
+        entry.componentVersion = metadata.version;
+        debugConsole.log(
+          `  [INSTANCE DEBUG] Instance "${instanceName}" -> component "${componentName}": metadata - GUID: ${metadata.id.substring(0, 8)}..., version: ${metadata.version}`,
+        );
+        debugConsole.log(
+          `  Found INSTANCE: "${instanceName}" -> NORMAL component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...) at path [${(mainComponentParentPath || []).join(" → ")}]`,
+        );
       } else {
         // componentPage is null - this shouldn't happen for normal instances
         // (Detached components should have been handled during classification)
@@ -802,7 +1222,7 @@ export async function parseInstanceProperties(
 
         const errorMessage = `Normal instance "${instanceName}" -> component "${componentName}" (ID: ${mainComponentId}) has no componentPage. ${reasonMessage}. ${actionMessage} Component has been focused in the viewport.`;
         console.error("FATAL EXPORT ERROR:", errorMessage);
-        await debugConsole.error(errorMessage);
+        debugConsole.error(errorMessage);
         const error = new Error(errorMessage);
         console.error("Throwing error:", error);
         throw error;
@@ -823,7 +1243,7 @@ export async function parseInstanceProperties(
         mainComponentParentPath && mainComponentParentPath.length > 0
           ? ` at path [${mainComponentParentPath.join(" → ")}]`
           : " at page root";
-      await debugConsole.log(
+      debugConsole.log(
         `  Found INSTANCE: "${instanceName}" -> NORMAL component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...)${pathDisplay}`,
       );
     } else if (instanceType === "remote") {
@@ -916,7 +1336,7 @@ export async function parseInstanceProperties(
       const existingIndex = context.instanceTable.getInstanceIndex(entry);
       if (existingIndex !== -1) {
         // Instance already exists - reuse it without extracting structure again
-        await debugConsole.log(
+        debugConsole.log(
           `  Found INSTANCE: "${instanceName}" -> REMOTE component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...)${isDetachedInstance ? " [DETACHED]" : ""}`,
         );
         // Skip structure extraction and go directly to adding to table
@@ -1033,12 +1453,12 @@ export async function parseInstanceProperties(
                   if (childBoundVars && typeof childBoundVars === "object") {
                     const childBoundVarKeys = Object.keys(childBoundVars);
                     if (childBoundVarKeys.length > 0) {
-                      await debugConsole.log(
+                      debugConsole.log(
                         `  DEBUG: Child "${child.name || "Unnamed"}" -> boundVariables keys: ${childBoundVarKeys.join(", ")}`,
                       );
                       // Check specifically for backgrounds
                       if (childBoundVars.backgrounds !== undefined) {
-                        await debugConsole.log(
+                        debugConsole.log(
                           `  DEBUG:   Child "${child.name || "Unnamed"}" -> boundVariables.backgrounds: ${JSON.stringify(childBoundVars.backgrounds)}`,
                         );
                       }
@@ -1064,12 +1484,12 @@ export async function parseInstanceProperties(
                         const mainChildBoundVarKeys =
                           Object.keys(mainChildBoundVars);
                         if (mainChildBoundVarKeys.length > 0) {
-                          await debugConsole.log(
+                          debugConsole.log(
                             `  DEBUG: Main component child "${mainComponentChild.name || "Unnamed"}" -> boundVariables keys: ${mainChildBoundVarKeys.join(", ")}`,
                           );
                           // Check specifically for backgrounds
                           if (mainChildBoundVars.backgrounds !== undefined) {
-                            await debugConsole.log(
+                            debugConsole.log(
                               `  DEBUG:   Main component child "${mainComponentChild.name || "Unnamed"}" -> boundVariables.backgrounds: ${JSON.stringify(mainChildBoundVars.backgrounds)}`,
                             );
                             // If instance child doesn't have boundVariables.backgrounds but main component child does,
@@ -1078,7 +1498,7 @@ export async function parseInstanceProperties(
                               !childBoundVars ||
                               !childBoundVars.backgrounds
                             ) {
-                              await debugConsole.log(
+                              debugConsole.log(
                                 `  DEBUG:   Instance child doesn't have boundVariables.backgrounds, but main component child does - preserving from main component`,
                               );
                               // Extract and merge boundVariables from main component child
@@ -1098,7 +1518,7 @@ export async function parseInstanceProperties(
                               if (mainChildBoundVarsExtracted.backgrounds) {
                                 childData.boundVariables.backgrounds =
                                   mainChildBoundVarsExtracted.backgrounds;
-                                await debugConsole.log(
+                                debugConsole.log(
                                   `  DEBUG:   ✓ Added boundVariables.backgrounds to childData from main component child`,
                                 );
                               }
@@ -1136,14 +1556,14 @@ export async function parseInstanceProperties(
             // DEBUG: Log all boundVariables keys to see what properties are bound
             if (instanceBoundVars && typeof instanceBoundVars === "object") {
               const boundVarKeys = Object.keys(instanceBoundVars);
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG: Instance "${instanceName}" -> boundVariables keys: ${boundVarKeys.length > 0 ? boundVarKeys.join(", ") : "none"}`,
               );
               // Log each bound variable key and its type
               for (const key of boundVarKeys) {
                 const boundVar = instanceBoundVars[key];
                 const boundVarType = boundVar?.type || typeof boundVar;
-                await debugConsole.log(
+                debugConsole.log(
                   `  DEBUG:   boundVariables.${key}: type=${boundVarType}, value=${JSON.stringify(boundVar)}`,
                 );
 
@@ -1156,7 +1576,7 @@ export async function parseInstanceProperties(
                 ) {
                   const nestedKeys = Object.keys(boundVar);
                   if (nestedKeys.length > 0) {
-                    await debugConsole.log(
+                    debugConsole.log(
                       `  DEBUG:     boundVariables.${key} has nested keys: ${nestedKeys.join(", ")}`,
                     );
                     // Check if any nested value is a VARIABLE_ALIAS that might be variable 57
@@ -1167,7 +1587,7 @@ export async function parseInstanceProperties(
                         typeof nestedValue === "object" &&
                         nestedValue.type === "VARIABLE_ALIAS"
                       ) {
-                        await debugConsole.log(
+                        debugConsole.log(
                           `  DEBUG:       boundVariables.${key}.${nestedKey}: VARIABLE_ALIAS id=${nestedValue.id}`,
                         );
                       }
@@ -1187,13 +1607,13 @@ export async function parseInstanceProperties(
               ];
               for (const potentialKey of potentialSelectionColorKeys) {
                 if (instanceBoundVars[potentialKey] !== undefined) {
-                  await debugConsole.log(
+                  debugConsole.log(
                     `  DEBUG:   Found potential "Selection colors" property: boundVariables.${potentialKey} = ${JSON.stringify(instanceBoundVars[potentialKey])}`,
                   );
                 }
               }
             } else {
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG: Instance "${instanceName}" -> No boundVariables found on instance node`,
               );
             }
@@ -1221,14 +1641,14 @@ export async function parseInstanceProperties(
               Array.isArray(mainComponent.fills) &&
               mainComponent.fills.length > 0;
 
-            await debugConsole.log(
+            debugConsole.log(
               `  DEBUG: Instance "${instanceName}" -> fills check: instanceHasFills=${instanceHasFills}, structureHasFills=${structureHasFills}, mainComponentHasFills=${mainComponentHasFills}, hasInstanceFillsBoundVar=${!!hasInstanceFillsBoundVar}`,
             );
 
             // If instance has boundVariables.fills but structure doesn't have fills,
             // we need to get fills from either the instance or main component
             if (hasInstanceFillsBoundVar && !structureHasFills) {
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG: Instance has boundVariables.fills but structure has no fills - attempting to get fills`,
               );
               try {
@@ -1241,9 +1661,10 @@ export async function parseInstanceProperties(
                     (node as any).fills,
                     context.variableTable,
                     context.collectionTable,
+                    context.imageTable,
                   );
                   structure.fills = instanceFills;
-                  await debugConsole.log(
+                  debugConsole.log(
                     `  DEBUG: Got ${instanceFills.length} fill(s) from instance node`,
                   );
                 } else if (mainComponentHasFills) {
@@ -1255,20 +1676,19 @@ export async function parseInstanceProperties(
                     mainComponent.fills,
                     context.variableTable,
                     context.collectionTable,
+                    context.imageTable,
                   );
                   structure.fills = mainComponentFills;
-                  await debugConsole.log(
+                  debugConsole.log(
                     `  DEBUG: Got ${mainComponentFills.length} fill(s) from main component`,
                   );
                 } else {
-                  await debugConsole.warning(
+                  debugConsole.warning(
                     `  DEBUG: Instance has boundVariables.fills but neither instance nor main component has fills`,
                   );
                 }
               } catch (fillsError) {
-                await debugConsole.warning(
-                  `  Failed to get fills: ${fillsError}`,
-                );
+                debugConsole.warning(`  Failed to get fills: ${fillsError}`);
               }
             }
 
@@ -1278,12 +1698,12 @@ export async function parseInstanceProperties(
             const mainComponentSelectionColor = (mainComponent as any)
               .selectionColor;
             if (instanceSelectionColor !== undefined) {
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG: Instance "${instanceName}" -> selectionColor: ${JSON.stringify(instanceSelectionColor)}`,
               );
             }
             if (mainComponentSelectionColor !== undefined) {
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG: Main component "${componentName}" -> selectionColor: ${JSON.stringify(mainComponentSelectionColor)}`,
               );
             }
@@ -1324,7 +1744,7 @@ export async function parseInstanceProperties(
             );
 
             if (selectionRelatedProps.length > 0) {
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG: Found selection/color-related properties: ${selectionRelatedProps.join(", ")}`,
               );
               // Log values for these properties
@@ -1332,13 +1752,13 @@ export async function parseInstanceProperties(
                 try {
                   if (instanceAllProps.includes(key)) {
                     const value = (node as any)[key];
-                    await debugConsole.log(
+                    debugConsole.log(
                       `  DEBUG:   Instance.${key}: ${JSON.stringify(value)}`,
                     );
                   }
                   if (mainComponentAllProps.includes(key)) {
                     const value = (mainComponent as any)[key];
-                    await debugConsole.log(
+                    debugConsole.log(
                       `  DEBUG:   MainComponent.${key}: ${JSON.stringify(value)}`,
                     );
                   }
@@ -1347,7 +1767,7 @@ export async function parseInstanceProperties(
                 }
               }
             } else {
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG: No selection/color-related properties found on instance or main component`,
               );
             }
@@ -1361,18 +1781,38 @@ export async function parseInstanceProperties(
             ) {
               const mainBoundVarKeys = Object.keys(mainComponentBoundVars);
               if (mainBoundVarKeys.length > 0) {
-                await debugConsole.log(
+                debugConsole.log(
                   `  DEBUG: Main component "${componentName}" -> boundVariables keys: ${mainBoundVarKeys.join(", ")}`,
                 );
+                // ISSUE #2: Special logging for selectionColor
+                if (mainBoundVarKeys.includes("selectionColor")) {
+                  debugConsole.log(
+                    `[ISSUE #2 EXPORT] Main component "${componentName}" HAS selectionColor in boundVariables: ${JSON.stringify(mainComponentBoundVars.selectionColor)}`,
+                  );
+                } else {
+                  debugConsole.log(
+                    `[ISSUE #2 EXPORT] Main component "${componentName}" does NOT have selectionColor in boundVariables (has: ${mainBoundVarKeys.join(", ")})`,
+                  );
+                }
                 // Log each bound variable key
                 for (const key of mainBoundVarKeys) {
                   const boundVar = mainComponentBoundVars[key];
                   const boundVarType = boundVar?.type || typeof boundVar;
-                  await debugConsole.log(
+                  debugConsole.log(
                     `  DEBUG:   Main component boundVariables.${key}: type=${boundVarType}, value=${JSON.stringify(boundVar)}`,
                   );
                 }
+              } else {
+                // ISSUE #2: Log when main component has no boundVariables
+                debugConsole.log(
+                  `[ISSUE #2 EXPORT] Main component "${componentName}" has no boundVariables`,
+                );
               }
+            } else {
+              // ISSUE #2: Log when main component boundVariables is null/undefined
+              debugConsole.log(
+                `[ISSUE #2 EXPORT] Main component "${componentName}" boundVariables is null/undefined`,
+              );
             }
 
             // Always preserve ALL boundVariables from the instance if they exist
@@ -1382,7 +1822,7 @@ export async function parseInstanceProperties(
               instanceBoundVars &&
               Object.keys(instanceBoundVars).length > 0
             ) {
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG: Preserving instance's boundVariables in structure (${Object.keys(instanceBoundVars).length} key(s))`,
               );
               // Extract boundVariables from instance node
@@ -1409,12 +1849,12 @@ export async function parseInstanceProperties(
                 if (value !== undefined) {
                   // Check if structure already has this boundVariable (from baseProps)
                   if (structure.boundVariables[key] !== undefined) {
-                    await debugConsole.log(
+                    debugConsole.log(
                       `  DEBUG: Structure already has boundVariables.${key} from baseProps, but instance also has it - using instance's boundVariables.${key}`,
                     );
                   }
                   structure.boundVariables[key] = value;
-                  await debugConsole.log(
+                  debugConsole.log(
                     `  DEBUG: Set boundVariables.${key} in structure: ${JSON.stringify(value)}`,
                   );
                 }
@@ -1422,25 +1862,25 @@ export async function parseInstanceProperties(
 
               // Special handling for fills - log separately for clarity
               if (instanceBoundVarsExtracted.fills !== undefined) {
-                await debugConsole.log(
+                debugConsole.log(
                   `  DEBUG: ✓ Preserved boundVariables.fills from instance`,
                 );
               } else if (hasInstanceFillsBoundVar) {
-                await debugConsole.warning(
+                debugConsole.warning(
                   `  DEBUG: Instance has boundVariables.fills but extractBoundVariables didn't extract it`,
                 );
               }
 
               // Special handling for backgrounds - "Selection colors" might be stored here
               if (instanceBoundVarsExtracted.backgrounds !== undefined) {
-                await debugConsole.log(
+                debugConsole.log(
                   `  DEBUG: ✓ Preserved boundVariables.backgrounds from instance: ${JSON.stringify(instanceBoundVarsExtracted.backgrounds)}`,
                 );
               } else if (
                 instanceBoundVars &&
                 instanceBoundVars.backgrounds !== undefined
               ) {
-                await debugConsole.warning(
+                debugConsole.warning(
                   `  DEBUG: Instance has boundVariables.backgrounds but extractBoundVariables didn't extract it`,
                 );
               }
@@ -1453,7 +1893,7 @@ export async function parseInstanceProperties(
               mainComponentBoundVars &&
               Object.keys(mainComponentBoundVars).length > 0
             ) {
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG: Checking main component's boundVariables for properties not in instance (${Object.keys(mainComponentBoundVars).length} key(s))`,
               );
               const { extractBoundVariables } = await import(
@@ -1479,29 +1919,43 @@ export async function parseInstanceProperties(
                   // Only add if instance doesn't have this boundVariable (main component is fallback)
                   if (structure.boundVariables[key] === undefined) {
                     structure.boundVariables[key] = value;
-                    await debugConsole.log(
-                      `  DEBUG: Added boundVariables.${key} from main component (not in instance): ${JSON.stringify(value)}`,
-                    );
+                    // ISSUE #2: Special logging for selectionColor
+                    if (key === "selectionColor") {
+                      debugConsole.log(
+                        `[ISSUE #2 EXPORT] Added boundVariables.selectionColor from main component "${componentName}" to instance "${instanceName}": ${JSON.stringify(value)}`,
+                      );
+                    } else {
+                      debugConsole.log(
+                        `  DEBUG: Added boundVariables.${key} from main component (not in instance): ${JSON.stringify(value)}`,
+                      );
+                    }
                   } else {
-                    await debugConsole.log(
-                      `  DEBUG: Skipped boundVariables.${key} from main component (instance already has it)`,
-                    );
+                    // ISSUE #2: Special logging for selectionColor
+                    if (key === "selectionColor") {
+                      debugConsole.log(
+                        `[ISSUE #2 EXPORT] Skipped boundVariables.selectionColor from main component "${componentName}" (instance "${instanceName}" already has it)`,
+                      );
+                    } else {
+                      debugConsole.log(
+                        `  DEBUG: Skipped boundVariables.${key} from main component (instance already has it)`,
+                      );
+                    }
                   }
                 }
               }
             }
 
             // Final debug: log what we have in the structure
-            await debugConsole.log(
+            debugConsole.log(
               `  DEBUG: Final structure for "${componentName}": hasFills=${!!structure.fills}, fillsCount=${structure.fills?.length || 0}, hasBoundVars=${!!structure.boundVariables}, boundVarsKeys=${structure.boundVariables ? Object.keys(structure.boundVariables).join(", ") : "none"}`,
             );
             if (structure.boundVariables?.fills) {
-              await debugConsole.log(
+              debugConsole.log(
                 `  DEBUG: Structure boundVariables.fills: ${JSON.stringify(structure.boundVariables.fills)}`,
               );
             }
           } catch (boundVarError) {
-            await debugConsole.warning(
+            debugConsole.warning(
               `  Failed to handle bound variables for fills: ${boundVarError}`,
             );
             // Continue anyway - structure is still valid without bound variables
@@ -1510,25 +1964,224 @@ export async function parseInstanceProperties(
           entry.structure = structure;
 
           if (isDetachedInstance) {
-            await debugConsole.log(
+            debugConsole.log(
               `  Extracted structure for detached component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...)`,
             );
           } else {
-            await debugConsole.log(
+            debugConsole.log(
               `  Extracted structure from instance for remote component "${componentName}" (preserving size overrides: ${node.width}x${node.height})`,
             );
           }
 
-          await debugConsole.log(
+          debugConsole.log(
             `  Found INSTANCE: "${instanceName}" -> REMOTE component "${componentName}" (ID: ${mainComponent.id.substring(0, 8)}...)${isDetachedInstance ? " [DETACHED]" : ""}`,
           );
         } catch (extractError) {
           const errorMessage = `Failed to extract structure for remote component "${componentName}": ${extractError instanceof Error ? extractError.message : String(extractError)}`;
           console.error(errorMessage, extractError);
-          await debugConsole.error(errorMessage);
+          debugConsole.error(errorMessage);
           // Don't set structure if extraction failed - this will cause import to skip it
           // which is better than importing incorrect data
         }
+      }
+    }
+
+    // ISSUE #2: For normal instances, check main component's boundVariables and merge them
+    // This is important for properties like selectionColor that may be bound on the main component
+    // but not explicitly overridden on the instance
+    if (instanceType === "normal" && mainComponent) {
+      // Debug: Check if instance has children (it shouldn't for normal instances)
+      if (
+        node.children &&
+        Array.isArray(node.children) &&
+        node.children.length > 0
+      ) {
+        debugConsole.log(
+          `[DEBUG] Normal instance "${instanceName}" has ${node.children.length} child(ren) (unexpected for normal instance):`,
+        );
+        for (let i = 0; i < Math.min(node.children.length, 5); i++) {
+          const child = node.children[i];
+          if (child) {
+            const childName = (child as any).name || `Child ${i}`;
+            const childType = (child as any).type || "UNKNOWN";
+            const childBoundVars = (child as any).boundVariables;
+            const childFills = (child as any).fills;
+            debugConsole.log(
+              `[DEBUG]   Child ${i}: "${childName}" (${childType}) - hasBoundVars=${!!childBoundVars}, hasFills=${!!childFills}`,
+            );
+            if (childBoundVars) {
+              const childBoundVarKeys = Object.keys(childBoundVars);
+              debugConsole.log(
+                `[DEBUG]     boundVariables: ${childBoundVarKeys.join(", ")}`,
+              );
+            }
+          }
+        }
+      }
+
+      // Debug: Check main component's children for bound variables
+      // Also compare with instance children to detect overrides
+      if (
+        mainComponent.children &&
+        Array.isArray(mainComponent.children) &&
+        mainComponent.children.length > 0
+      ) {
+        debugConsole.log(
+          `[DEBUG] Main component "${componentName}" has ${mainComponent.children.length} child(ren):`,
+        );
+        for (let i = 0; i < Math.min(mainComponent.children.length, 5); i++) {
+          const mainChild = mainComponent.children[i];
+          if (mainChild) {
+            const mainChildName = (mainChild as any).name || `Child ${i}`;
+            const mainChildType = (mainChild as any).type || "UNKNOWN";
+            const mainChildBoundVars = (mainChild as any).boundVariables;
+            const mainChildFills = (mainChild as any).fills;
+            debugConsole.log(
+              `[DEBUG]   Main component child ${i}: "${mainChildName}" (${mainChildType}) - hasBoundVars=${!!mainChildBoundVars}, hasFills=${!!mainChildFills}`,
+            );
+            if (mainChildBoundVars) {
+              const mainChildBoundVarKeys = Object.keys(mainChildBoundVars);
+              debugConsole.log(
+                `[DEBUG]     boundVariables: ${mainChildBoundVarKeys.join(", ")}`,
+              );
+              if (mainChildBoundVars.fills) {
+                debugConsole.log(
+                  `[DEBUG]     boundVariables.fills: ${JSON.stringify(mainChildBoundVars.fills)}`,
+                );
+              }
+            }
+            if (
+              mainChildFills &&
+              Array.isArray(mainChildFills) &&
+              mainChildFills.length > 0
+            ) {
+              const firstFill = mainChildFills[0];
+              if (firstFill && typeof firstFill === "object") {
+                debugConsole.log(
+                  `[DEBUG]     fills[0]: type=${firstFill.type}, color=${JSON.stringify((firstFill as any).color)}`,
+                );
+              }
+            }
+
+            // Check if instance has a matching child with different bound variables (instance override)
+            if (
+              node.children &&
+              Array.isArray(node.children) &&
+              i < node.children.length
+            ) {
+              const instanceChild = node.children[i];
+              if (
+                instanceChild &&
+                (instanceChild as any).name === mainChildName
+              ) {
+                const instanceChildBoundVars = (instanceChild as any)
+                  .boundVariables;
+                const instanceChildBoundVarKeys = instanceChildBoundVars
+                  ? Object.keys(instanceChildBoundVars)
+                  : [];
+                const mainChildBoundVarKeys = mainChildBoundVars
+                  ? Object.keys(mainChildBoundVars)
+                  : [];
+
+                // Check if instance child has bound variables that main component child doesn't have
+                const instanceOnlyBoundVars = instanceChildBoundVarKeys.filter(
+                  (key) => !mainChildBoundVarKeys.includes(key),
+                );
+                if (instanceOnlyBoundVars.length > 0) {
+                  debugConsole.log(
+                    `[DEBUG] Instance "${instanceName}" child "${mainChildName}" has instance override bound variables: ${instanceOnlyBoundVars.join(", ")} (will be exported with instance children)`,
+                  );
+                  for (const key of instanceOnlyBoundVars) {
+                    debugConsole.log(
+                      `[DEBUG]   Instance child boundVariables.${key}: ${JSON.stringify(instanceChildBoundVars[key])}`,
+                    );
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      try {
+        const mainComponentBoundVars = (mainComponent as any).boundVariables;
+        if (
+          mainComponentBoundVars &&
+          typeof mainComponentBoundVars === "object"
+        ) {
+          const mainBoundVarKeys = Object.keys(mainComponentBoundVars);
+          if (mainBoundVarKeys.length > 0) {
+            debugConsole.log(
+              `[ISSUE #2 EXPORT] Normal instance "${instanceName}" -> checking main component "${componentName}" boundVariables (${mainBoundVarKeys.length} key(s))`,
+            );
+            // ISSUE #2: Special logging for selectionColor
+            if (mainBoundVarKeys.includes("selectionColor")) {
+              debugConsole.log(
+                `[ISSUE #2 EXPORT] Main component "${componentName}" HAS selectionColor in boundVariables: ${JSON.stringify(mainComponentBoundVars.selectionColor)}`,
+              );
+            } else {
+              debugConsole.log(
+                `[ISSUE #2 EXPORT] Main component "${componentName}" does NOT have selectionColor in boundVariables (has: ${mainBoundVarKeys.join(", ")})`,
+              );
+            }
+
+            // Extract boundVariables from main component
+            const { extractBoundVariables } = await import(
+              "./boundVariableParser"
+            );
+            const mainComponentBoundVarsExtracted = await extractBoundVariables(
+              mainComponentBoundVars,
+              context.variableTable,
+              context.collectionTable,
+            );
+
+            // Merge main component's boundVariables into result's boundVariables
+            // Only add properties that aren't already set (instance takes precedence)
+            if (!result.boundVariables) {
+              result.boundVariables = {};
+            }
+
+            for (const [key, value] of Object.entries(
+              mainComponentBoundVarsExtracted,
+            )) {
+              if (value !== undefined) {
+                // Only add if instance doesn't have this boundVariable (main component is fallback)
+                if (result.boundVariables[key] === undefined) {
+                  result.boundVariables[key] = value;
+                  // ISSUE #2: Special logging for selectionColor
+                  if (key === "selectionColor") {
+                    debugConsole.log(
+                      `[ISSUE #2 EXPORT] Added boundVariables.selectionColor from main component "${componentName}" to normal instance "${instanceName}": ${JSON.stringify(value)}`,
+                    );
+                  } else {
+                    debugConsole.log(
+                      `  DEBUG: Added boundVariables.${key} from main component to normal instance: ${JSON.stringify(value)}`,
+                    );
+                  }
+                } else {
+                  // ISSUE #2: Special logging for selectionColor
+                  if (key === "selectionColor") {
+                    debugConsole.log(
+                      `[ISSUE #2 EXPORT] Skipped boundVariables.selectionColor from main component "${componentName}" (normal instance "${instanceName}" already has it)`,
+                    );
+                  }
+                }
+              }
+            }
+          } else {
+            debugConsole.log(
+              `[ISSUE #2 EXPORT] Main component "${componentName}" has no boundVariables`,
+            );
+          }
+        } else {
+          debugConsole.log(
+            `[ISSUE #2 EXPORT] Main component "${componentName}" boundVariables is null/undefined`,
+          );
+        }
+      } catch (error) {
+        debugConsole.warning(
+          `[ISSUE #2 EXPORT] Error checking main component boundVariables for normal instance "${instanceName}": ${error}`,
+        );
       }
     }
 

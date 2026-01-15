@@ -1,17 +1,16 @@
-import { useEffect, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router";
+import { useEffect, useState, useRef } from "react";
+import { useSearchParams, useNavigate, useLocation } from "react-router";
 import { useImportWizard } from "../../context/ImportWizardContext";
+import { useAuth } from "../../context/useAuth";
+import {
+  ComponentList,
+  type ComponentInfo,
+  type ComponentBadgeStatus,
+} from "../../components/ComponentList";
+import { callPlugin } from "../../utils/callPlugin";
 
 const RECURSICA_FIGMA_OWNER = "borderux";
 const RECURSICA_FIGMA_REPO = "recursica-figma";
-
-interface ComponentInfo {
-  guid: string;
-  name: string;
-  path: string;
-  version: number;
-  publishDate?: string;
-}
 
 interface IndexJson {
   components?: Record<
@@ -28,27 +27,43 @@ interface IndexJson {
 export default function Step1ComponentSelection() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { setWizardState } = useImportWizard();
+  const location = useLocation();
+  const { wizardState, setWizardState } = useImportWizard();
+  const { accessToken } = useAuth();
   const [components, setComponents] = useState<ComponentInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigatingAwayRef = useRef(false);
+
+  // Reset ref when component mounts (in case user navigated back)
+  useEffect(() => {
+    navigatingAwayRef.current = false;
+  }, []);
 
   useEffect(() => {
+    console.log("[Step1ComponentSelection] useEffect triggered");
     const loadComponents = async () => {
+      console.log("[Step1ComponentSelection] loadComponents called");
       try {
         setLoading(true);
         setError(null);
 
         // Get branch/commit ref from search params, default to "main"
         const ref = searchParams.get("ref") || "main";
+        console.log(
+          "[Step1ComponentSelection] Loading components for ref:",
+          ref,
+        );
 
         // Fetch index.json from public repository
         const url = `https://api.github.com/repos/${RECURSICA_FIGMA_OWNER}/${RECURSICA_FIGMA_REPO}/contents/index.json?ref=${encodeURIComponent(ref)}`;
-        const response = await fetch(url, {
-          headers: {
-            Accept: "application/vnd.github.v3+json",
-          },
-        });
+        const headers: Record<string, string> = {
+          Accept: "application/vnd.github.v3+json",
+        };
+        if (accessToken) {
+          headers.Authorization = `Bearer ${accessToken}`;
+        }
+        const response = await fetch(url, { headers });
 
         if (!response.ok) {
           if (response.status === 404) {
@@ -96,6 +111,48 @@ export default function Step1ComponentSelection() {
 
         const indexJson: IndexJson = JSON.parse(indexContent);
 
+        // Get existing components from Figma to determine badge status
+        const { promise: getAllComponentsPromise } = callPlugin(
+          "getAllComponents",
+          {},
+        );
+        const existingComponentsResponse = await getAllComponentsPromise;
+
+        let existingComponents: Array<{
+          id: string;
+          name: string;
+          version: number;
+        }> = [];
+
+        if (
+          existingComponentsResponse.success &&
+          existingComponentsResponse.data
+        ) {
+          const data = existingComponentsResponse.data as {
+            components: Array<{
+              id: string;
+              name: string;
+              version: number;
+            }>;
+          };
+          existingComponents = data.components.filter((c) => c.id !== "");
+        }
+
+        // Helper function to determine badge status
+        const getBadgeStatus = (
+          guid: string,
+          version: number,
+        ): ComponentBadgeStatus | undefined => {
+          const existing = existingComponents.find((ec) => ec.id === guid);
+          if (!existing) {
+            return "NEW";
+          } else if (existing.version !== version) {
+            return "UPDATED";
+          } else {
+            return "EXISTING";
+          }
+        };
+
         // Convert the components object to an array of ComponentInfo
         const componentsList: ComponentInfo[] = [];
 
@@ -103,12 +160,14 @@ export default function Step1ComponentSelection() {
           for (const [guid, component] of Object.entries(
             indexJson.components,
           )) {
+            const componentVersion = component.version ?? 0;
             componentsList.push({
               guid,
               name: component.name,
               path: component.path,
-              version: component.version ?? 0,
+              version: componentVersion,
               publishDate: component.publishDate,
+              badge: getBadgeStatus(guid, componentVersion),
             });
           }
         }
@@ -116,6 +175,10 @@ export default function Step1ComponentSelection() {
         // Sort components by name
         componentsList.sort((a, b) => a.name.localeCompare(b.name));
 
+        console.log(
+          "[Step1ComponentSelection] Setting components, count:",
+          componentsList.length,
+        );
         setComponents(componentsList);
       } catch (loadError) {
         const errorMessage =
@@ -128,12 +191,13 @@ export default function Step1ComponentSelection() {
           loadError,
         );
       } finally {
+        console.log("[Step1ComponentSelection] Setting loading to false");
         setLoading(false);
       }
     };
 
     loadComponents();
-  }, [searchParams]);
+  }, [searchParams, accessToken]);
 
   // Auto-select component if guid is provided in query params (from ImportMain)
   useEffect(() => {
@@ -144,7 +208,16 @@ export default function Step1ComponentSelection() {
       );
       if (preSelectedComponent) {
         // Auto-select and navigate to step 2
+        console.log(
+          "[Step1ComponentSelection] Auto-selecting component:",
+          preSelectedComponent.name,
+        );
+        navigatingAwayRef.current = true; // Set ref synchronously before any async operations
         const ref = searchParams.get("ref") || "main";
+        console.log(
+          "[Step1ComponentSelection] Setting wizard state, ref:",
+          ref,
+        );
         setWizardState((prev) => ({
           ...prev,
           selectedComponent: {
@@ -155,25 +228,105 @@ export default function Step1ComponentSelection() {
           },
           currentStep: 2,
         }));
-        navigate("/import-wizard/step2");
+        console.log("[Step1ComponentSelection] Navigating to step2");
+        // Preserve the fromImportMain state when navigating to step2
+        const locationState =
+          (location.state as { fromImportMain?: boolean }) || {};
+        navigate("/import-wizard/step2", {
+          state: locationState,
+        });
+        console.log("[Step1ComponentSelection] Navigate called");
       }
     }
-  }, [components, searchParams, loading, setWizardState, navigate]);
+  }, [
+    components,
+    searchParams,
+    loading,
+    setWizardState,
+    navigate,
+    location.state,
+  ]);
 
   const handleComponentSelect = (component: ComponentInfo) => {
+    console.log(
+      "[Step1ComponentSelection] handleComponentSelect called:",
+      component.name,
+    );
+    navigatingAwayRef.current = true; // Set ref synchronously before any async operations
     const ref = searchParams.get("ref") || "main";
-    setWizardState((prev) => ({
-      ...prev,
-      selectedComponent: {
-        guid: component.guid,
-        name: component.name,
-        version: component.version,
-        ref,
-      },
-      currentStep: 2,
-    }));
-    navigate("/import-wizard/step2");
+    console.log("[Step1ComponentSelection] Setting wizard state, ref:", ref);
+    setWizardState((prev) => {
+      console.log(
+        "[Step1ComponentSelection] setWizardState callback, prev:",
+        prev,
+      );
+      return {
+        ...prev,
+        selectedComponent: {
+          guid: component.guid,
+          name: component.name,
+          version: component.version,
+          ref,
+        },
+        currentStep: 2,
+      };
+    });
+    console.log("[Step1ComponentSelection] Navigating to step2");
+    // Preserve the fromImportMain state when navigating to step2
+    const locationState =
+      (location.state as { fromImportMain?: boolean }) || {};
+    navigate("/import-wizard/step2", {
+      state: locationState,
+    });
+    console.log("[Step1ComponentSelection] Navigate called");
   };
+
+  // Check ref first (synchronous, set before navigate)
+  if (navigatingAwayRef.current) {
+    console.log(
+      "[Step1ComponentSelection] Render - hiding content, navigatingAwayRef is true",
+    );
+    return null;
+  }
+
+  console.log(
+    "[Step1ComponentSelection] Render - loading:",
+    loading,
+    "components.length:",
+    components.length,
+    "error:",
+    error,
+  );
+  console.log(
+    "[Step1ComponentSelection] Render - searchParams ref:",
+    searchParams.get("ref"),
+  );
+  console.log(
+    "[Step1ComponentSelection] Render - wizardState.selectedComponent:",
+    wizardState.selectedComponent,
+    "currentStep:",
+    wizardState.currentStep,
+  );
+
+  // Check if we're about to auto-select (guid in params)
+  // Hide content immediately if guid exists, even during loading, to prevent flash
+  const componentGuid = searchParams.get("guid");
+  if (componentGuid && !wizardState.selectedComponent) {
+    console.log(
+      "[Step1ComponentSelection] Render - hiding content, guid in params, about to auto-select",
+    );
+    navigatingAwayRef.current = true;
+    return null;
+  }
+
+  // If we've selected a component and are navigating to step2, don't render content
+  if (wizardState.selectedComponent && wizardState.currentStep === 2) {
+    console.log(
+      "[Step1ComponentSelection] Render - hiding content, navigating to step2",
+    );
+    navigatingAwayRef.current = true;
+    return null;
+  }
 
   return (
     <div
@@ -199,63 +352,76 @@ export default function Step1ComponentSelection() {
         Choose your component
       </h1>
 
-      {searchParams.get("ref") ? (
-        <div
-          style={{
-            width: "100%",
-            maxWidth: "600px",
-            marginBottom: "20px",
-            marginTop: "0",
-            padding: "12px",
-            fontSize: "14px",
-            fontFamily: "inherit",
-            border: "1px solid #000",
-            borderRadius: "4px",
-            boxSizing: "border-box",
-            backgroundColor: "#fff",
-            color: "#333",
-          }}
-        >
-          VIEWING BRANCH:{" "}
-          <a
-            href={`https://github.com/${RECURSICA_FIGMA_OWNER}/${RECURSICA_FIGMA_REPO}/tree/${encodeURIComponent(searchParams.get("ref") || "")}`}
-            target="_blank"
-            rel="noopener noreferrer"
+      {(() => {
+        const ref = searchParams.get("ref");
+        console.log(
+          "[Step1ComponentSelection] Render - checking ref, value:",
+          ref,
+        );
+        return ref ? (
+          <div
             style={{
-              color: "#1976d2",
-              textDecoration: "underline",
+              width: "100%",
+              maxWidth: "600px",
+              marginBottom: "20px",
+              marginTop: "0",
+              padding: "12px",
+              fontSize: "14px",
+              fontFamily: "inherit",
+              border: "1px solid #000",
+              borderRadius: "4px",
+              boxSizing: "border-box",
+              backgroundColor: "#fff",
+              color: "#333",
             }}
           >
-            {`https://github.com/${RECURSICA_FIGMA_OWNER}/${RECURSICA_FIGMA_REPO}/tree/${encodeURIComponent(searchParams.get("ref") || "")}`}
-          </a>
-        </div>
-      ) : (
-        <p
-          style={{
-            fontSize: "14px",
-            color: "#666",
-            textAlign: "center",
-            marginBottom: "20px",
-            marginTop: "0",
-            maxWidth: "600px",
-          }}
-        >
-          We have an exciting list of components to import. Please choose from
-          the list below. Check back frequently for new updates.
-        </p>
-      )}
+            VIEWING BRANCH:{" "}
+            <a
+              href={`https://github.com/${RECURSICA_FIGMA_OWNER}/${RECURSICA_FIGMA_REPO}/tree/${encodeURIComponent(searchParams.get("ref") || "")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: "#1976d2",
+                textDecoration: "underline",
+              }}
+            >
+              {`https://github.com/${RECURSICA_FIGMA_OWNER}/${RECURSICA_FIGMA_REPO}/tree/${encodeURIComponent(searchParams.get("ref") || "")}`}
+            </a>
+          </div>
+        ) : (
+          <p
+            style={{
+              fontSize: "14px",
+              color: "#666",
+              textAlign: "center",
+              marginBottom: "20px",
+              marginTop: "0",
+              maxWidth: "600px",
+            }}
+          >
+            We have an exciting list of components to import. Please choose from
+            the list below. Check back frequently for new updates.
+          </p>
+        );
+      })()}
 
-      {loading && (
-        <div
-          style={{
-            padding: "40px",
-            color: "#666",
-            fontSize: "16px",
-          }}
-        >
-          Loading components...
-        </div>
-      )}
+      {(() => {
+        console.log(
+          "[Step1ComponentSelection] Render - loading check, loading:",
+          loading,
+        );
+        return loading ? (
+          <div
+            style={{
+              padding: "40px",
+              color: "#666",
+              fontSize: "16px",
+            }}
+          >
+            Loading components...
+          </div>
+        ) : null;
+      })()}
 
       {error && (
         <div
@@ -288,77 +454,10 @@ export default function Step1ComponentSelection() {
       )}
 
       {!loading && !error && components.length > 0 && (
-        <div
-          style={{
-            width: "100%",
-            maxWidth: "800px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "12px",
-          }}
-        >
-          {components.map((component) => (
-            <button
-              key={component.guid}
-              onClick={() => handleComponentSelect(component)}
-              style={{
-                width: "100%",
-                padding: "12px 24px",
-                fontSize: "16px",
-                fontWeight: "bold",
-                backgroundColor: "transparent",
-                color: "#d40d0d",
-                border: "2px solid #d40d0d",
-                borderRadius: "8px",
-                cursor: "pointer",
-                textAlign: "left",
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "16px",
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = "#d40d0d";
-                e.currentTarget.style.color = "white";
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.color = "#d40d0d";
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "16px",
-                  fontWeight: "bold",
-                  flex: 1,
-                  fontFamily:
-                    "system-ui, -apple-system, 'Segoe UI', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif",
-                }}
-              >
-                {component.name}
-              </div>
-              <div
-                style={{
-                  fontSize: "12px",
-                  opacity: 0.8,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "flex-end",
-                  gap: "2px",
-                  flexShrink: 0,
-                }}
-              >
-                <div>Version: {component.version || "N/A"}</div>
-                {component.publishDate && (
-                  <div>
-                    {new Date(component.publishDate).toLocaleDateString()}
-                  </div>
-                )}
-              </div>
-            </button>
-          ))}
-        </div>
+        <ComponentList
+          components={components}
+          onSelect={handleComponentSelect}
+        />
       )}
     </div>
   );

@@ -1,0 +1,23 @@
+.root {
+  margin-top: 0;
+}
+
+.title {
+  font-size: var(--mantine-font-size-sm); /* 12px */
+  font-weight: 600;
+  color: var(--mantine-color-gray-6);
+  margin-bottom: var(--mantine-spacing-xs);
+}
+
+.list {
+  font-size: var(--mantine-font-size-sm); /* 12px */
+  color: var(--mantine-color-gray-9);
+  line-height: 1.6;
+}
+
+.entry {
+  font-size: var(--mantine-font-size-sm);
+  color: var(--mantine-color-gray-9);
+  line-height: 1.6;
+  margin-bottom: var(--mantine-spacing-xs);
+}

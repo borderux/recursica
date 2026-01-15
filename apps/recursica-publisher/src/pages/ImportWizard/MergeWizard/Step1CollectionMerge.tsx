@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { callPlugin } from "../../../utils/callPlugin";
 import type { PrimaryImportMetadata } from "../../../plugin/services/singleComponentImportService";
@@ -25,6 +25,11 @@ export default function Step1CollectionMerge() {
   const [collections, setCollections] = useState<CollectionMergeChoice[]>([]);
 
   useEffect(() => {
+    // Don't reload data if we're currently merging
+    if (loading) {
+      return;
+    }
+
     const loadData = async () => {
       try {
         // Get metadata
@@ -42,10 +47,23 @@ export default function Step1CollectionMerge() {
             setMetadata(data.metadata);
             setPageId(data.pageId);
 
+            console.log("[Step1CollectionMerge] Metadata loaded:", {
+              componentName: data.metadata.componentName,
+              createdCollectionsCount: data.metadata.createdCollections.length,
+              createdCollections: data.metadata.createdCollections,
+              importDate: data.metadata.importDate,
+            });
+
             // Get GUIDs for newly created collections
             const newCollectionIds = data.metadata.createdCollections.map(
               (c) => c.collectionId,
             );
+
+            console.log(
+              "[Step1CollectionMerge] Collection IDs to process:",
+              newCollectionIds,
+            );
+
             const { promise: guidsPromise } = callPlugin("getCollectionGuids", {
               collectionIds: newCollectionIds,
             });
@@ -75,6 +93,19 @@ export default function Step1CollectionMerge() {
                     }>;
                   }
                 ).collections || [];
+
+              console.log(
+                "[Step1CollectionMerge] Local collections found:",
+                localCollections.length,
+              );
+              console.log(
+                "[Step1CollectionMerge] Local collections:",
+                localCollections.map((c) => ({
+                  name: c.name,
+                  id: c.id.substring(0, 8) + "...",
+                  guid: c.guid?.substring(0, 8) + "...",
+                })),
+              );
 
               const guidsData = guidsResponse.data as unknown;
               const collectionGuids =
@@ -147,6 +178,7 @@ export default function Step1CollectionMerge() {
 
               // Build collection choices
               const choices: CollectionMergeChoice[] = [];
+
               for (const newCollection of data.metadata.createdCollections) {
                 const newCollectionGuid =
                   newCollectionGuidMap.get(newCollection.collectionId) || null;
@@ -177,6 +209,73 @@ export default function Step1CollectionMerge() {
                 });
               }
               setCollections(choices);
+
+              // If there are no collections to merge, automatically proceed with merge
+              if (choices.length === 0 && data.pageId && data.metadata) {
+                console.log(
+                  "[Step1CollectionMerge] No collections to merge, auto-proceeding with merge",
+                );
+                // Set loading state and proceed with merge directly
+                setLoading(true);
+                setError(null);
+
+                try {
+                  const mergeData = {
+                    pageId: data.pageId,
+                    collectionChoices: [],
+                  };
+
+                  console.log(
+                    "[Step1CollectionMerge] Auto-calling mergeImportGroup",
+                    mergeData,
+                  );
+                  const { promise } = callPlugin("mergeImportGroup", mergeData);
+
+                  const timeoutPromise = new Promise<never>((_, reject) => {
+                    setTimeout(() => {
+                      reject(
+                        new Error("Merge operation timed out after 60 seconds"),
+                      );
+                    }, 60000);
+                  });
+
+                  const result = await Promise.race([promise, timeoutPromise]);
+
+                  console.log(
+                    "[Step1CollectionMerge] Auto-merge result:",
+                    result,
+                  );
+
+                  if (result.success) {
+                    console.log("[Step1CollectionMerge] Auto-merge successful");
+                    await new Promise((resolve) => setTimeout(resolve, 100));
+                    console.log("[Step1CollectionMerge] Navigating home");
+                    navigate("/", { replace: true });
+                  } else {
+                    const errorMsg =
+                      result.message || "Failed to merge import group";
+                    console.error(
+                      "[Step1CollectionMerge] Auto-merge failed:",
+                      errorMsg,
+                      result,
+                    );
+                    setError(errorMsg);
+                    setLoading(false);
+                  }
+                } catch (err) {
+                  const errorMessage =
+                    err instanceof Error
+                      ? err.message
+                      : "Failed to merge import group";
+                  console.error(
+                    "[Step1CollectionMerge] Exception during auto-merge:",
+                    err,
+                  );
+                  setError(errorMessage);
+                  setLoading(false);
+                }
+                return; // Exit early since we're auto-merging
+              }
             }
           } else {
             navigate("/import-wizard/existing");
@@ -191,7 +290,7 @@ export default function Step1CollectionMerge() {
     };
 
     loadData();
-  }, [navigate]);
+  }, [navigate, loading]);
 
   const handleChoiceChange = (index: number, choice: "merge" | "keep") => {
     const updated = [...collections];
@@ -199,17 +298,31 @@ export default function Step1CollectionMerge() {
     setCollections(updated);
   };
 
-  const handleMerge = async () => {
+  const handleMerge = useCallback(async () => {
+    console.log("[Step1CollectionMerge] handleMerge called", {
+      pageId,
+      hasMetadata: !!metadata,
+      collectionsCount: collections.length,
+    });
+
     if (!pageId || !metadata) {
-      setError("Missing required data");
+      const errorMsg = "Missing required data";
+      console.error("[Step1CollectionMerge] Missing data:", {
+        pageId,
+        metadata,
+      });
+      setError(errorMsg);
       return;
     }
+
+    // Note: collections.length can be 0 - that's fine, we still need to call merge
+    // to clean up metadata (remove dividers, rename pages, clear import metadata)
 
     setLoading(true);
     setError(null);
 
     try {
-      const { promise } = callPlugin("mergeImportGroup", {
+      const mergeData = {
         pageId,
         collectionChoices: collections.map((c) => ({
           newCollectionId: c.newCollectionId,
@@ -217,26 +330,46 @@ export default function Step1CollectionMerge() {
           existingCollectionId: c.existingCollectionId,
           choice: c.choice,
         })),
+      };
+
+      console.log("[Step1CollectionMerge] Calling mergeImportGroup", mergeData);
+      const { promise } = callPlugin("mergeImportGroup", mergeData);
+
+      // Add timeout to detect hanging promises
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(new Error("Merge operation timed out after 60 seconds"));
+        }, 60000);
       });
-      const result = await promise;
+
+      const result = await Promise.race([promise, timeoutPromise]);
+
+      console.log("[Step1CollectionMerge] Merge result:", result);
 
       if (result.success) {
-        // Navigate back to home
-        navigate("/");
+        console.log("[Step1CollectionMerge] Merge successful");
+        // Small delay to ensure metadata is cleared before navigation
+        // This prevents Home from detecting the import before it's fully cleared
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        console.log("[Step1CollectionMerge] Navigating home");
+        // Navigate back to home - use replace to prevent back button issues
+        navigate("/", { replace: true });
       } else {
-        setError(result.message || "Failed to merge import group");
+        const errorMsg = result.message || "Failed to merge import group";
+        console.error("[Step1CollectionMerge] Merge failed:", errorMsg, result);
+        setError(errorMsg);
         setLoading(false);
       }
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to merge import group";
+      console.error("[Step1CollectionMerge] Exception during merge:", err);
       setError(errorMessage);
       setLoading(false);
-      console.error("[Step1CollectionMerge] Error:", err);
     }
-  };
+  }, [pageId, metadata, collections, navigate]);
 
-  if (!metadata || collections.length === 0) {
+  if (!metadata || (collections.length === 0 && loading)) {
     return (
       <div
         style={{
@@ -246,7 +379,23 @@ export default function Step1CollectionMerge() {
           height: "100%",
         }}
       >
-        <p>Loading...</p>
+        <p>{loading ? "Merging..." : "Loading..."}</p>
+      </div>
+    );
+  }
+
+  // If no collections and not loading, show error (shouldn't happen, but just in case)
+  if (collections.length === 0 && !loading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100%",
+        }}
+      >
+        <p>No collections to merge. Preparing merge...</p>
       </div>
     );
   }
@@ -482,17 +631,24 @@ export default function Step1CollectionMerge() {
           Cancel
         </button>
         <button
-          onClick={handleMerge}
-          disabled={loading}
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            console.log("[Step1CollectionMerge] Merge button clicked");
+            handleMerge();
+          }}
+          disabled={loading || collections.length === 0}
           style={{
             padding: "12px 24px",
             fontSize: "16px",
             fontWeight: "bold",
-            backgroundColor: loading ? "#ccc" : "#007AFF",
+            backgroundColor:
+              loading || collections.length === 0 ? "#ccc" : "#007AFF",
             color: "white",
             border: "none",
             borderRadius: "8px",
-            cursor: loading ? "not-allowed" : "pointer",
+            cursor:
+              loading || collections.length === 0 ? "not-allowed" : "pointer",
           }}
         >
           {loading ? "Merging..." : "Merge"}

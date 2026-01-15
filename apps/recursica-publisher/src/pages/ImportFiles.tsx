@@ -1,6 +1,6 @@
 import React, { useState, useRef, useMemo } from "react";
 import { useNavigate } from "react-router";
-import PageLayout from "../components/PageLayout";
+import { PageLayout } from "../components/PageLayout";
 import { validateImport } from "../utils/validateExportFile";
 import {
   getRequiredImportFiles,

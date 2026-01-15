@@ -8,7 +8,6 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-!dist
 dist-ssr
 dev-releases
 *.local
@@ -25,3 +24,8 @@ dev-releases
 *.sw?
 
 export/
+dist/
+
+# Symlink to recursica-figma
+recursica-figma
+LOGS.txt

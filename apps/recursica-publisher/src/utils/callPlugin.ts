@@ -6,6 +6,10 @@ interface PendingCall {
   reject: (reason: Error) => void;
 }
 
+interface ErrorWithResponse extends Error {
+  response?: ResponseMessage;
+}
+
 // Map to store pending calls by their request ID
 const pendingCalls = new Map<string, PendingCall>();
 
@@ -47,9 +51,12 @@ function initializeMessageHandler(): void {
           `Plugin response: ${pluginMessage.type}`,
           pluginMessage.message,
         );
-        pendingCall.reject(
-          new Error(response.message || "Plugin request failed"),
+        // Create error with response data attached so we can extract debug logs
+        const error: ErrorWithResponse = new Error(
+          response.message || "Plugin request failed",
         );
+        error.response = response;
+        pendingCall.reject(error);
       } else {
         console.log(
           `Plugin response: ${pluginMessage.type}`,
@@ -117,6 +124,20 @@ export function callPlugin(
     if (pendingCalls.has(requestId)) {
       const call = pendingCalls.get(requestId)!;
       pendingCalls.delete(requestId);
+
+      // Send cancellation message to plugin
+      parent.postMessage(
+        {
+          pluginMessage: {
+            type: "cancelRequest",
+            data: {
+              requestId,
+            },
+            requestId,
+          },
+        },
+        "*",
+      );
 
       if (errorOnCancel) {
         call.reject(new Error(`Service call cancelled: ${serviceName}`));
