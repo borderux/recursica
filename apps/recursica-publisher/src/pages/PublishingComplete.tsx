@@ -25,6 +25,13 @@ export default function PublishingComplete() {
         },
         replace: true,
       });
+    } else {
+      // If no state, redirect back to publish page
+      // This shouldn't happen in normal flow, but handle it gracefully
+      console.warn(
+        "[PublishingComplete] No export data found in state, redirecting to publish page",
+      );
+      navigate("/publish", { replace: true });
     }
   }, [location.state, navigate]);
 

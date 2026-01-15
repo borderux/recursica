@@ -4,19 +4,50 @@ import {
   useImportWizard,
   type DependencySelection,
 } from "../../context/ImportWizardContext";
-import { useImportData } from "../../context/ImportDataContext";
+import {
+  useImportData,
+  type ImportedFile,
+} from "../../context/ImportDataContext";
+import { useAuth } from "../../context/useAuth";
 import { fetchComponentWithDependencies } from "../../services/repository/repositoryImportService";
 import { callPlugin } from "../../utils/callPlugin";
 import { validateImport } from "../../utils/validateExportFile";
+import {
+  Title,
+  Text,
+  Stack,
+  Card,
+  Button,
+  Checkbox,
+  Badge,
+  Alert,
+  LoadingSpinner,
+  VersionHistory,
+} from "../../components";
+import classes from "./Step2DependencyOverview.module.css";
 
 export default function Step2DependencyOverview() {
   const navigate = useNavigate();
   const { wizardState, setWizardState } = useImportWizard();
-  const { importData } = useImportData();
+  const { importData, setImportData } = useImportData();
+  const { accessToken } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dependencies, setDependencies] = useState<DependencySelection[]>([]);
   const processedRef = useRef<string | null>(null);
+  const initialMountRef = useRef(true);
+  const [existingComponentVersion, setExistingComponentVersion] = useState<
+    number | null
+  >(null);
+  const [componentDescription, setComponentDescription] = useState<
+    string | undefined
+  >(undefined);
+  const [componentUrl, setComponentUrl] = useState<string | undefined>(
+    undefined,
+  );
+  const [componentHistory, setComponentHistory] = useState<
+    Record<string, unknown>
+  >({});
 
   useEffect(() => {
     const loadDependencies = async () => {
@@ -83,9 +114,20 @@ export default function Step2DependencyOverview() {
             return;
           }
         }
+        // On initial mount, skip navigation to allow state to update from previous step
+        // The effect will run again when state updates, and then we can check properly
+        if (initialMountRef.current) {
+          initialMountRef.current = false;
+          return;
+        }
         // No importData or can't extract component info, go to step 1
         navigate("/import-wizard/step1");
         return;
+      }
+
+      // Mark that we've passed the initial mount check
+      if (initialMountRef.current) {
+        initialMountRef.current = false;
       }
 
       // Check if component data is already loaded (from importData)
@@ -194,11 +236,63 @@ export default function Step2DependencyOverview() {
                 currentVersionInFile: existing?.version,
                 status,
                 useExisting,
+                included: status === "NEW", // Only NEW dependencies are included by default
               };
             },
           );
 
           setDependencies(dependencySelections);
+
+          // Extract metadata (description, url, history) from main component
+          const extractMetadata = (
+            jsonData: unknown,
+          ): {
+            description?: string;
+            url?: string;
+            history?: Record<string, unknown>;
+          } => {
+            if (
+              !jsonData ||
+              typeof jsonData !== "object" ||
+              Array.isArray(jsonData)
+            ) {
+              return {};
+            }
+            const data = jsonData as Record<string, unknown>;
+            if (data.metadata && typeof data.metadata === "object") {
+              const metadata = data.metadata as Record<string, unknown>;
+              return {
+                description:
+                  typeof metadata.description === "string"
+                    ? metadata.description
+                    : undefined,
+                url:
+                  typeof metadata.url === "string" ? metadata.url : undefined,
+                history:
+                  metadata.history &&
+                  typeof metadata.history === "object" &&
+                  !Array.isArray(metadata.history)
+                    ? (metadata.history as Record<string, unknown>)
+                    : undefined,
+              };
+            }
+            return {};
+          };
+
+          if (wizardState.componentData.mainComponent) {
+            const metadata = extractMetadata(
+              wizardState.componentData.mainComponent.jsonData,
+            );
+            setComponentDescription(metadata.description);
+            setComponentUrl(metadata.url);
+            setComponentHistory(metadata.history || {});
+
+            // Find existing component version
+            const existingComponent = existingComponents.find(
+              (ec) => ec.id === wizardState.selectedComponent?.guid,
+            );
+            setExistingComponentVersion(existingComponent?.version ?? null);
+          }
 
           // Update wizard state with dependencies
           setWizardState((prev) => ({
@@ -240,6 +334,7 @@ export default function Step2DependencyOverview() {
           await fetchComponentWithDependencies(
             wizardState.selectedComponent.guid,
             ref,
+            accessToken || undefined,
           );
 
         // Validate main component
@@ -341,6 +436,7 @@ export default function Step2DependencyOverview() {
               currentVersionInFile: existing?.version,
               status,
               useExisting,
+              included: status === "NEW", // Only NEW dependencies are included by default
             };
           },
         );
@@ -349,6 +445,55 @@ export default function Step2DependencyOverview() {
 
         // Extract main component version
         const mainVersion = getVersionFromJson(mainComponent.jsonData);
+
+        // Extract metadata (description, url, history) from main component
+        const extractMetadata = (
+          jsonData: unknown,
+        ): {
+          description?: string;
+          url?: string;
+          history?: Record<string, unknown>;
+        } => {
+          if (
+            jsonData &&
+            typeof jsonData === "object" &&
+            !Array.isArray(jsonData)
+          ) {
+            const data = jsonData as Record<string, unknown>;
+            if (data.metadata && typeof data.metadata === "object") {
+              const metadata = data.metadata as Record<string, unknown>;
+              return {
+                description:
+                  typeof metadata.description === "string"
+                    ? metadata.description
+                    : undefined,
+                url:
+                  typeof metadata.url === "string" ? metadata.url : undefined,
+                history:
+                  metadata.history &&
+                  typeof metadata.history === "object" &&
+                  !Array.isArray(metadata.history)
+                    ? (metadata.history as Record<string, unknown>)
+                    : undefined,
+              };
+            }
+          }
+          return {};
+        };
+
+        const metadata = extractMetadata(mainComponent.jsonData);
+        setComponentDescription(metadata.description);
+        setComponentUrl(metadata.url);
+        setComponentHistory(metadata.history || {});
+
+        // Find existing component version
+        if (wizardState.selectedComponent) {
+          const selectedGuid = wizardState.selectedComponent.guid;
+          const existingComponent = existingComponents.find(
+            (ec) => ec.id === selectedGuid,
+          );
+          setExistingComponentVersion(existingComponent?.version ?? null);
+        }
 
         // Store component data in wizard state
         setWizardState((prev) => ({
@@ -388,270 +533,304 @@ export default function Step2DependencyOverview() {
   }, [
     wizardState.selectedComponent?.guid,
     wizardState.componentData.mainComponent?.guid,
+    wizardState.componentData.dependencies,
+    wizardState.componentData.mainComponent,
+    wizardState.selectedComponent,
     navigate,
     setWizardState,
     importData,
+    accessToken,
   ]);
 
-  const handleToggle = (guid: string, useExisting: boolean) => {
+  const handleCheckboxToggle = (guid: string, included: boolean) => {
     setDependencies((prev) =>
-      prev.map((dep) => (dep.guid === guid ? { ...dep, useExisting } : dep)),
+      prev.map((dep) => (dep.guid === guid ? { ...dep, included } : dep)),
     );
     setWizardState((prev) => ({
       ...prev,
       dependencies: prev.dependencies.map((dep) =>
-        dep.guid === guid ? { ...dep, useExisting } : dep,
+        dep.guid === guid ? { ...dep, included } : dep,
       ),
     }));
   };
 
-  const handleNext = () => {
-    setWizardState((prev) => ({
-      ...prev,
-      currentStep: 3,
-    }));
-    navigate("/import-wizard/step3");
+  const handleNext = async () => {
+    if (!wizardState.componentData.mainComponent) {
+      setError("No component data available");
+      return;
+    }
+
+    try {
+      // Set default variableCollections to all "existing"
+      setWizardState((prev) => ({
+        ...prev,
+        variableCollections: {
+          tokens: "existing",
+          theme: "existing",
+          layers: "existing",
+        },
+        currentStep: 5,
+      }));
+
+      // Convert wizard component data to ImportedFile format
+      const timestamp = Date.now();
+      const mainFile: ImportedFile = {
+        id: `${wizardState.componentData.mainComponent.guid}-${timestamp}-0`,
+        name: `${wizardState.componentData.mainComponent.name}.json`,
+        size: JSON.stringify(wizardState.componentData.mainComponent.jsonData)
+          .length,
+        data: wizardState.componentData.mainComponent.jsonData,
+        status: "success",
+      };
+
+      const additionalFiles: ImportedFile[] =
+        wizardState.componentData.dependencies
+          .filter((dep) => {
+            // Only include dependencies that are checked (included === true)
+            // Checked dependencies will create a new page as part of the import process
+            const depSelection = wizardState.dependencies.find(
+              (d) => d.guid === dep.guid,
+            );
+            const included =
+              (depSelection as DependencySelection & { included?: boolean })
+                .included === true;
+            return depSelection && included;
+          })
+          .map((dep, index) => ({
+            id: `${dep.guid}-${timestamp}-${index + 1}`,
+            name: `${dep.name}.json`,
+            size: JSON.stringify(dep.jsonData).length,
+            data: dep.jsonData,
+            status: "success" as const,
+          }));
+
+      // Determine source info from wizard state
+      const ref = wizardState.selectedComponent?.ref || "main";
+      const source = {
+        type: "repo" as const,
+        branch: ref,
+        owner: "borderux",
+        repo: "recursica-figma",
+      };
+
+      // Set import data with wizard selections and source info
+      setImportData({
+        mainFile,
+        additionalFiles,
+        source,
+        wizardSelections: {
+          dependencies: wizardState.dependencies.map((dep) => ({
+            guid: dep.guid,
+            name: dep.name,
+            useExisting: dep.useExisting,
+          })),
+          tokensCollection: "existing",
+          themeCollection: "existing",
+          layersCollection: "existing",
+        },
+        variableSummary: {
+          tokens: { existing: 0, new: 0 },
+          theme: { existing: 0, new: 0 },
+          layers: { existing: 0, new: 0 },
+        },
+        importStatus: "pending", // Mark as pending - will be set to "in_progress" when import starts
+      });
+
+      // Navigate directly to step 5 (importing)
+      navigate("/import-wizard/step5");
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to prepare import";
+      setError(errorMessage);
+      console.error("[Step2DependencyOverview] Error:", err);
+    }
   };
 
-  if (loading) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          height: "100%",
-        }}
-      >
-        <p>Loading component dependencies...</p>
-      </div>
-    );
-  }
+  const getBadgeStatus = (
+    importVersion: number,
+    existingVersion: number | null,
+  ): "NEW" | "UPDATED" | "EXISTING" | undefined => {
+    if (existingVersion === null) {
+      return "NEW";
+    } else if (importVersion > existingVersion) {
+      return "UPDATED";
+    } else if (importVersion === existingVersion) {
+      return "EXISTING";
+    } else {
+      return "UPDATED";
+    }
+  };
 
-  if (error) {
-    return (
-      <div
-        style={{
-          padding: "16px",
-          backgroundColor: "#ffebee",
-          border: "1px solid #f44336",
-          borderRadius: "8px",
-          color: "#c62828",
-          fontSize: "14px",
-          maxWidth: "600px",
-          textAlign: "center",
-        }}
-      >
-        {error}
-      </div>
-    );
-  }
+  const getDependencyBadgeStatus = (
+    status: "NEW" | "UPDATED" | "SAME",
+  ): "NEW" | "UPDATED" | "EXISTING" | undefined => {
+    if (status === "NEW") return "NEW";
+    if (status === "UPDATED") return "UPDATED";
+    if (status === "SAME") return "EXISTING";
+    return undefined;
+  };
 
   return (
-    <div
-      style={{
-        width: "100%",
-        display: "flex",
-        flexDirection: "column",
-        gap: "20px",
-        maxWidth: "800px",
-        margin: "0 auto",
-      }}
-    >
-      <div>
-        <h1
-          style={{
-            fontSize: "24px",
-            fontWeight: "bold",
-            color: "#333",
-            marginBottom: "8px",
-            marginTop: "0",
-          }}
-        >
-          Import Overview
-        </h1>
-        <p
-          style={{
-            fontSize: "14px",
-            color: "#666",
-            margin: 0,
-            fontFamily:
-              "system-ui, -apple-system, 'Segoe UI', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif",
-          }}
-        >
-          Component: {wizardState.selectedComponent?.name} (Version:{" "}
-          {wizardState.selectedComponent?.version})
-        </p>
-      </div>
+    <Stack gap="lg" className={classes.root}>
+      <Title order={1}>Component Overview</Title>
 
-      <div>
-        <p
-          style={{
-            fontSize: "14px",
-            color: "#333",
-            marginBottom: "12px",
-          }}
-        >
-          Please review a list of components and select how you would like to
-          proceed
-        </p>
+      {error && <Alert variant="error">{error}</Alert>}
 
-        {dependencies.length === 0 ? (
-          <p style={{ fontSize: "14px", color: "#666", fontStyle: "italic" }}>
-            No dependencies found.
-          </p>
-        ) : (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "8px",
-            }}
-          >
-            {dependencies.map((dep) => (
-              <div
-                key={dep.guid}
-                style={{
-                  padding: "5px",
-                  border: "1px solid #e0e0e0",
-                  borderRadius: "8px",
-                  backgroundColor: "#fff",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                }}
-              >
-                {/* Badge on the left */}
-                <div
-                  style={{
-                    padding: "4px 8px",
-                    borderRadius: "4px",
-                    fontSize: "12px",
-                    fontWeight: "bold",
-                    backgroundColor:
-                      dep.status === "NEW"
-                        ? "#e3f2fd"
-                        : dep.status === "UPDATED"
-                          ? "#fff3e0"
-                          : "#e8f5e9",
-                    color:
-                      dep.status === "NEW"
-                        ? "#1976d2"
-                        : dep.status === "UPDATED"
-                          ? "#f57c00"
-                          : "#388e3c",
-                    flexShrink: 0,
-                  }}
-                >
-                  {dep.status}
-                </div>
+      {loading ? (
+        <Stack gap="md" align="center">
+          <LoadingSpinner />
+          <Text className={classes.loadingText}>Loading...</Text>
+        </Stack>
+      ) : (
+        <>
+          {/* Component Information Section */}
+          <Card className={classes.componentInfoCard}>
+            <Stack gap="sm">
+              <Title order={3} className={classes.componentName}>
+                {wizardState.selectedComponent?.name}
+              </Title>
 
-                {/* Component name and version in the middle */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontSize: "16px",
-                      fontWeight: "bold",
-                      marginBottom: "2px",
-                      fontFamily:
-                        "system-ui, -apple-system, 'Segoe UI', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif",
-                    }}
-                  >
-                    {dep.name}
+              <Stack gap="xs" className={classes.versionInfo}>
+                <div className={classes.versionRow}>
+                  <div className={classes.versionGroup}>
+                    <Text variant="small" fw={600} color="secondary">
+                      Import Version:
+                    </Text>
+                    <Text variant="small">
+                      v{wizardState.selectedComponent?.version || 0}
+                    </Text>
+                    {(() => {
+                      const importVersion =
+                        wizardState.selectedComponent?.version || 0;
+                      const badgeStatus = getBadgeStatus(
+                        importVersion,
+                        existingComponentVersion,
+                      );
+                      return (
+                        badgeStatus && (
+                          <Badge
+                            status={badgeStatus}
+                            className={classes.dependencyBadge}
+                          />
+                        )
+                      );
+                    })()}
                   </div>
-                  <div
-                    style={{
-                      fontSize: "12px",
-                      color: "#666",
-                    }}
-                  >
-                    {dep.currentVersionInFile !== undefined
-                      ? `Current: v${dep.currentVersionInFile} → Latest: v${dep.version}`
-                      : `Version: ${dep.version}`}
+                  <div className={classes.versionGroup}>
+                    <Text variant="small" fw={600} color="secondary">
+                      Current Version:
+                    </Text>
+                    <Text variant="small">
+                      {existingComponentVersion !== null
+                        ? `v${existingComponentVersion}`
+                        : "Does not exist"}
+                    </Text>
                   </div>
                 </div>
 
-                {/* Radio buttons vertical on the right */}
-                {(dep.status === "SAME" || dep.status === "UPDATED") && (
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "4px",
-                      alignItems: "flex-start",
-                      flexShrink: 0,
-                      marginLeft: "auto",
-                    }}
-                  >
-                    <label
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        cursor: "pointer",
-                        fontSize: "14px",
-                      }}
+                {componentDescription && (
+                  <Text variant="small">{componentDescription}</Text>
+                )}
+
+                {componentUrl && (
+                  <Text variant="small">
+                    <a
+                      href={componentUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: "var(--mantine-color-blue-6)" }}
                     >
-                      <input
-                        type="radio"
-                        checked={dep.useExisting}
-                        onChange={() => handleToggle(dep.guid, true)}
-                      />
-                      Existing
-                    </label>
-                    <label
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        cursor: "pointer",
-                        fontSize: "14px",
-                      }}
-                    >
-                      <input
-                        type="radio"
-                        checked={!dep.useExisting}
-                        onChange={() => handleToggle(dep.guid, false)}
-                      />
-                      {dep.status === "SAME" ? "Create new" : "Update"}
-                    </label>
+                      Documentation
+                    </a>
+                  </Text>
+                )}
+
+                {/* Version History */}
+                {Object.keys(componentHistory).length > 0 && (
+                  <div>
+                    <VersionHistory
+                      history={componentHistory}
+                      currentVersion={wizardState.selectedComponent?.version}
+                    />
                   </div>
                 )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              </Stack>
+            </Stack>
+          </Card>
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          marginTop: "20px",
-        }}
-      >
-        <button
-          onClick={handleNext}
-          style={{
-            padding: "12px 24px",
-            fontSize: "16px",
-            fontWeight: "bold",
-            backgroundColor: "#d40d0d",
-            color: "white",
-            border: "none",
-            borderRadius: "8px",
-            cursor: "pointer",
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.opacity = "0.9";
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.opacity = "1";
-          }}
-        >
-          Next
-        </button>
-      </div>
-    </div>
+          {/* Dependencies Section */}
+          <div className={classes.dependenciesSection}>
+            <Title order={2} mb="sm">
+              Additional Dependencies
+            </Title>
+            <Text variant="body" color="secondary" mb="sm">
+              Select the additional dependent components you would also like to
+              import
+            </Text>
+
+            {error ? (
+              <Alert variant="error">{error}</Alert>
+            ) : (
+              (() => {
+                // Filter out the main component from dependencies
+                const mainComponentGuid = wizardState.selectedComponent?.guid;
+                const filteredDependencies = dependencies.filter(
+                  (dep) => dep.guid !== mainComponentGuid,
+                );
+
+                if (filteredDependencies.length === 0) {
+                  return (
+                    <Text variant="body" className={classes.emptyDependencies}>
+                      No dependencies found.
+                    </Text>
+                  );
+                }
+
+                return (
+                  <Stack gap="xs" className={classes.dependenciesList}>
+                    {filteredDependencies.map((dep) => {
+                      const included =
+                        (dep as DependencySelection & { included?: boolean })
+                          .included === true;
+                      const isNew = dep.status === "NEW";
+                      const badgeStatus = getDependencyBadgeStatus(dep.status);
+
+                      return (
+                        <div key={dep.guid} className={classes.dependencyItem}>
+                          <Checkbox
+                            checked={included}
+                            disabled={isNew}
+                            onChange={(e) =>
+                              handleCheckboxToggle(dep.guid, e.target.checked)
+                            }
+                          />
+                          <div className={classes.dependencyInfo}>
+                            <Text className={classes.dependencyName}>
+                              {dep.name}
+                            </Text>
+                          </div>
+                          {badgeStatus && (
+                            <Badge
+                              status={badgeStatus}
+                              className={classes.dependencyBadge}
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </Stack>
+                );
+              })()
+            )}
+          </div>
+
+          <div className={classes.actions}>
+            <Button variant="filled" onClick={handleNext}>
+              Next
+            </Button>
+          </div>
+        </>
+      )}
+    </Stack>
   );
 }

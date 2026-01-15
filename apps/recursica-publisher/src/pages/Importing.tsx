@@ -20,18 +20,21 @@ export default function Importing() {
       return;
     }
 
-    // If import is in progress or failed, go to step 5 (importing screen)
-    if (
-      importData.importStatus === "in_progress" ||
-      importData.importStatus === "failed"
-    ) {
+    // If import failed, navigate to Review Import (which will show the error)
+    if (importData.importStatus === "failed") {
+      console.log("[Importing] Import failed, navigating to Review Import");
+      navigate("/import-wizard/existing", { replace: true });
+      return;
+    }
+
+    // If import is in progress, go to step 5 (importing screen)
+    if (importData.importStatus === "in_progress") {
       navigate("/import-wizard/step5", { replace: true });
       return;
     }
 
-    // If import is completed, clear the data and go home
+    // If import is completed, go to home (which will show Review Import)
     if (importData.importStatus === "completed") {
-      setImportData(null);
       navigate("/", { replace: true });
       return;
     }

@@ -53,9 +53,9 @@ async function ensureRemotesPage(): Promise<PageNode> {
   if (!remotesPage) {
     remotesPage = figma.createPage();
     remotesPage.name = "REMOTES";
-    await debugConsole.log("Created REMOTES page");
+    debugConsole.log("Created REMOTES page");
   } else {
-    await debugConsole.log("Found existing REMOTES page");
+    debugConsole.log("Found existing REMOTES page");
   }
 
   return remotesPage;
@@ -85,7 +85,7 @@ async function getOrCreateParentContainer(
     parentContainer.layoutSizingHorizontal = "HUG";
     parentContainer.layoutSizingVertical = "HUG";
     remotesPage.appendChild(parentContainer);
-    await debugConsole.log("Created parent container frame for REMOTES page");
+    debugConsole.log("Created parent container frame for REMOTES page");
   }
 
   return parentContainer;
@@ -139,7 +139,7 @@ async function ensureTitleFrame(
 
     // Insert at the beginning to ensure it's above the instances container
     parentContainer.insertChild(0, titleFrame);
-    await debugConsole.log("Created title and description on REMOTES page");
+    debugConsole.log("Created title and description on REMOTES page");
   }
 
   return titleFrame;
@@ -168,7 +168,7 @@ async function getOrCreateInstancesContainer(
     instancesContainer.layoutSizingHorizontal = "HUG";
     instancesContainer.layoutSizingVertical = "HUG";
     parentContainer.appendChild(instancesContainer);
-    await debugConsole.log("Created container frame for remote instances");
+    debugConsole.log("Created container frame for remote instances");
   }
 
   return instancesContainer;
@@ -194,11 +194,11 @@ export async function createRemoteInstances(
   const remoteComponentMap = new Map<number, ComponentNode>();
 
   if (remoteInstances.length === 0) {
-    await debugConsole.log("No remote instances found");
+    debugConsole.log("No remote instances found");
     return remoteComponentMap;
   }
 
-  await debugConsole.log(
+  debugConsole.log(
     `Processing ${remoteInstances.length} remote instance(s)...`,
   );
 
@@ -224,12 +224,12 @@ export async function createRemoteInstances(
     }
 
     const instanceIndex = parseInt(indexStr, 10);
-    await debugConsole.log(
+    debugConsole.log(
       `Processing remote instance ${instanceIndex}: "${entry.componentName}"`,
     );
 
     if (!entry.structure) {
-      await debugConsole.warning(
+      debugConsole.warning(
         `Remote instance "${entry.componentName}" missing structure data, skipping`,
       );
       continue;
@@ -247,7 +247,7 @@ export async function createRemoteInstances(
       : entry.structure.child
         ? entry.structure.child.length
         : 0;
-    await debugConsole.log(
+    debugConsole.log(
       `  Structure type: ${entry.structure.type || "unknown"}, has children: ${childrenCount} (children key: ${hasChildren}, child key: ${hasChild})`,
     );
 
@@ -268,7 +268,7 @@ export async function createRemoteInstances(
       frameName,
     );
     if (uniqueComponentName !== frameName) {
-      await debugConsole.log(
+      debugConsole.log(
         `Component name conflict: "${frameName}" -> "${uniqueComponentName}"`,
       );
     }
@@ -279,7 +279,7 @@ export async function createRemoteInstances(
       // Check if the structure type is COMPONENT
       // Type should already be normalized above, but double-check
       if (entry.structure.type !== "COMPONENT") {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Remote instance "${entry.componentName}" structure is not a COMPONENT (type: ${entry.structure.type}), creating frame fallback`,
         );
         // Create a frame container as fallback
@@ -302,7 +302,7 @@ export async function createRemoteInstances(
         if (recreatedNode) {
           containerFrame.appendChild(recreatedNode);
           instancesContainer.appendChild(containerFrame);
-          await debugConsole.log(
+          debugConsole.log(
             `✓ Created remote instance frame fallback: "${uniqueComponentName}"`,
           );
         } else {
@@ -316,9 +316,7 @@ export async function createRemoteInstances(
       const componentNode = figma.createComponent();
       componentNode.name = uniqueComponentName;
       instancesContainer.appendChild(componentNode);
-      await debugConsole.log(
-        `  Created component node: "${uniqueComponentName}"`,
-      );
+      debugConsole.log(`  Created component node: "${uniqueComponentName}"`);
 
       // Now recreate the structure's children and properties into the component
       // We need to apply all properties from the structure to the component
@@ -347,7 +345,7 @@ export async function createRemoteInstances(
 
               const propType = typeMap[(propDef as any).type];
               if (!propType) {
-                await debugConsole.warning(
+                debugConsole.warning(
                   `  Unknown property type ${(propDef as any).type} for property "${propName}" in component "${entry.componentName}"`,
                 );
                 failedCount++;
@@ -365,7 +363,7 @@ export async function createRemoteInstances(
               );
               addedCount++;
             } catch (error) {
-              await debugConsole.warning(
+              debugConsole.warning(
                 `  Failed to add component property "${propName}" to "${entry.componentName}": ${error}`,
               );
               failedCount++;
@@ -373,7 +371,7 @@ export async function createRemoteInstances(
           }
 
           if (addedCount > 0) {
-            await debugConsole.log(
+            debugConsole.log(
               `  Added ${addedCount} component property definition(s) to "${entry.componentName}"${failedCount > 0 ? ` (${failedCount} failed)` : ""}`,
             );
           }
@@ -384,11 +382,15 @@ export async function createRemoteInstances(
           componentNode.name = entry.structure.name;
         }
         // Check for bound variables before setting width/height
+        // Note: minWidth and maxWidth are constraints, not the actual size, but we include them
+        // in the check to ensure we handle them correctly
         const hasBoundVariablesForSize =
           entry.structure.boundVariables &&
           typeof entry.structure.boundVariables === "object" &&
           (entry.structure.boundVariables.width ||
-            entry.structure.boundVariables.height);
+            entry.structure.boundVariables.height ||
+            entry.structure.boundVariables.minWidth ||
+            entry.structure.boundVariables.maxWidth);
         if (
           entry.structure.width !== undefined &&
           entry.structure.height !== undefined &&
@@ -457,7 +459,7 @@ export async function createRemoteInstances(
               );
             }
           } catch (error) {
-            await debugConsole.warning(
+            debugConsole.warning(
               `Error setting fills for remote component "${entry.componentName}": ${error}`,
             );
           }
@@ -468,7 +470,7 @@ export async function createRemoteInstances(
           try {
             componentNode.strokes = entry.structure.strokes;
           } catch (error) {
-            await debugConsole.warning(
+            debugConsole.warning(
               `Error setting strokes for remote component "${entry.componentName}": ${error}`,
             );
           }
@@ -578,6 +580,8 @@ export async function createRemoteInstances(
             | "bottomRightRadius"
             | "width"
             | "height"
+            | "minWidth"
+            | "maxWidth"
           > = [
             "paddingLeft",
             "paddingRight",
@@ -596,6 +600,8 @@ export async function createRemoteInstances(
             "bottomRightRadius",
             "width",
             "height",
+            "minWidth",
+            "maxWidth",
           ];
           for (const propName of allBindableProps) {
             if (
@@ -606,14 +612,46 @@ export async function createRemoteInstances(
               if (varRef !== undefined) {
                 const variable = recognizedVariables.get(String(varRef));
                 if (variable) {
-                  const alias = {
-                    type: "VARIABLE_ALIAS" as const,
-                    id: variable.id,
-                  };
-                  if (!(componentNode as any).boundVariables) {
-                    (componentNode as any).boundVariables = {};
+                  // CRITICAL: For width/height/minWidth/maxWidth, use setBoundVariable API method
+                  // Direct assignment to boundVariables doesn't work if the property already has a direct value
+                  if (
+                    propName === "width" ||
+                    propName === "height" ||
+                    propName === "minWidth" ||
+                    propName === "maxWidth"
+                  ) {
+                    // First, try to remove any existing binding by setting to null
+                    try {
+                      (componentNode as any).setBoundVariable(propName, null);
+                    } catch {
+                      // Ignore errors when removing (might not exist)
+                    }
+                    // Set the bound variable using Figma's API
+                    try {
+                      (componentNode as any).setBoundVariable(
+                        propName,
+                        variable,
+                      );
+                      debugConsole.log(
+                        `  ✓ Set bound variable for ${propName} on "${entry.componentName}": variable ${variable.name} (ID: ${variable.id.substring(0, 8)}...)`,
+                      );
+                    } catch (error) {
+                      debugConsole.warning(
+                        `  Failed to set bound variable for ${propName} on "${entry.componentName}": ${error}`,
+                      );
+                    }
+                  } else {
+                    // For other properties, use the existing direct assignment approach
+                    // (padding, itemSpacing, etc. are handled differently)
+                    const alias = {
+                      type: "VARIABLE_ALIAS" as const,
+                      id: variable.id,
+                    };
+                    if (!(componentNode as any).boundVariables) {
+                      (componentNode as any).boundVariables = {};
+                    }
+                    (componentNode as any).boundVariables[propName] = alias;
                   }
-                  (componentNode as any).boundVariables[propName] = alias;
                 }
               }
             }
@@ -623,13 +661,13 @@ export async function createRemoteInstances(
         // Recreate children
         // Handle both "child" (compressed) and "children" (expanded) keys
         // Debug: Log structure keys before accessing children
-        await debugConsole.log(
+        debugConsole.log(
           `  DEBUG: Structure keys: ${Object.keys(entry.structure).join(", ")}, has children: ${!!entry.structure.children}, has child: ${!!entry.structure.child}`,
         );
         const childrenArray =
           entry.structure.children ||
           (entry.structure.child ? entry.structure.child : null);
-        await debugConsole.log(
+        debugConsole.log(
           `  DEBUG: childrenArray exists: ${!!childrenArray}, isArray: ${Array.isArray(childrenArray)}, length: ${childrenArray ? childrenArray.length : 0}`,
         );
         if (
@@ -637,21 +675,21 @@ export async function createRemoteInstances(
           Array.isArray(childrenArray) &&
           childrenArray.length > 0
         ) {
-          await debugConsole.log(
+          debugConsole.log(
             `  Recreating ${childrenArray.length} child(ren) for component "${entry.componentName}"`,
           );
           for (let i = 0; i < childrenArray.length; i++) {
             const childData = childrenArray[i];
-            await debugConsole.log(
+            debugConsole.log(
               `  DEBUG: Processing child ${i + 1}/${childrenArray.length}: ${JSON.stringify({ name: childData?.name, type: childData?.type, hasTruncated: !!childData?._truncated })}`,
             );
             if (childData._truncated) {
-              await debugConsole.log(
+              debugConsole.log(
                 `  Skipping truncated child: ${childData._reason || "Unknown"}`,
               );
               continue;
             }
-            await debugConsole.log(
+            debugConsole.log(
               `  Recreating child: "${childData.name || "Unnamed"}" (type: ${childData.type})`,
             );
             const childNode = await recreateNodeFromData(
@@ -670,11 +708,11 @@ export async function createRemoteInstances(
             );
             if (childNode) {
               componentNode.appendChild(childNode);
-              await debugConsole.log(
+              debugConsole.log(
                 `  ✓ Appended child "${childData.name || "Unnamed"}" to component "${entry.componentName}"`,
               );
             } else {
-              await debugConsole.warning(
+              debugConsole.warning(
                 `  ✗ Failed to create child "${childData.name || "Unnamed"}" (type: ${childData.type})`,
               );
             }
@@ -682,23 +720,23 @@ export async function createRemoteInstances(
         }
 
         remoteComponentMap.set(instanceIndex, componentNode);
-        await debugConsole.log(
+        debugConsole.log(
           `✓ Created remote component: "${uniqueComponentName}" (index ${instanceIndex})`,
         );
       } catch (error) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Error populating remote component "${entry.componentName}": ${error instanceof Error ? error.message : "Unknown error"}`,
         );
         componentNode.remove();
       }
     } catch (error) {
-      await debugConsole.warning(
+      debugConsole.warning(
         `Error recreating remote instance "${entry.componentName}": ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
 
-  await debugConsole.log(
+  debugConsole.log(
     `Remote instance processing complete: ${remoteComponentMap.size} component(s) created`,
   );
 

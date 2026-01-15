@@ -31,6 +31,7 @@ export interface InstanceTableEntry {
   componentSetName?: string; // Actual component set name (if variant)
   // Note: componentType is not stored - instances always reference COMPONENT nodes (never COMPONENT_SET directly)
   path?: string[]; // Path within library/file - REQUIRED for normal instances to locate the specific component on the referenced page. Array of node names from page root to component. Empty array means component is at page root. Empty names are represented as empty strings in the array. Duplicate names are allowed but may require validation during import to resolve ambiguity. For internal instances, componentNodeId is used instead (simpler since everything is on the same page).
+  nodePath?: string[]; // Array of node IDs from page root to component. More robust than name-based paths as node IDs are guaranteed unique. Used as primary path during import when available.
   variantProperties?: Record<string, string>; // Variant property values
   componentProperties?: Record<string, any>; // Component property values
 }
@@ -67,7 +68,12 @@ export class InstanceTable {
       entry.componentGuid &&
       entry.componentVersion !== undefined
     ) {
-      return `normal:${entry.componentGuid}:${entry.componentVersion}`;
+      // For normal instances with metadata, include component name to handle cases where
+      // multiple components on the same page share the same page-level metadata (GUID/version)
+      // This ensures unique keys even when components share page metadata
+      const pathKey =
+        entry.path && entry.path.length > 0 ? `:${entry.path.join("/")}` : "";
+      return `normal:${entry.componentGuid}:${entry.componentVersion}:${entry.componentName}${pathKey}`;
     } else if (entry.instanceType === "remote" && entry.remoteLibraryKey) {
       return `remote:${entry.remoteLibraryKey}:${entry.componentName}`;
     } else if (entry.instanceType === "remote" && entry.componentNodeId) {

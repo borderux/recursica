@@ -4,7 +4,7 @@ import { retSuccess, retError } from "../utils/response";
 import { debugConsole } from "./debugConsole";
 import {
   PRIMARY_IMPORT_KEY,
-  UNDER_REVIEW_KEY,
+  IMPORT_RESULT_KEY,
   DIVIDER_PLUGIN_DATA_KEY,
   CONSTRUCTION_ICON,
 } from "./singleComponentImportService";
@@ -117,7 +117,7 @@ export async function getCollectionGuids(
           });
         }
       } catch (err) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Failed to get GUID for collection ${collectionId}: ${err instanceof Error ? err.message : String(err)}`,
         );
         collectionGuids.push({
@@ -153,7 +153,7 @@ export async function mergeImportGroup(
   data: MergeImportGroupData,
 ): Promise<ResponseMessage> {
   try {
-    await debugConsole.log("=== Starting Import Group Merge ===");
+    debugConsole.log("=== Starting Import Group Merge ===");
 
     // Step 1: Get the main page and metadata
     await figma.loadAllPagesAsync();
@@ -170,7 +170,7 @@ export async function mergeImportGroup(
     }
 
     const metadata: PrimaryImportMetadata = JSON.parse(primaryImportData);
-    await debugConsole.log(
+    debugConsole.log(
       `Found metadata for component: ${metadata.componentName} (Version: ${metadata.componentVersion})`,
     );
 
@@ -188,7 +188,7 @@ export async function mergeImportGroup(
             );
 
           if (!newCollection) {
-            await debugConsole.warning(
+            debugConsole.warning(
               `New collection ${choice.newCollectionId} not found, skipping merge`,
             );
             continue;
@@ -272,7 +272,7 @@ export async function mergeImportGroup(
                     COLLECTION_GUID_KEY,
                     newCollectionGuid,
                   );
-                  await debugConsole.log(
+                  debugConsole.log(
                     `Created new standard collection: "${standardName}"`,
                   );
                 }
@@ -281,13 +281,13 @@ export async function mergeImportGroup(
           }
 
           if (!existingCollection) {
-            await debugConsole.warning(
+            debugConsole.warning(
               `Could not find or create existing collection for merge, skipping`,
             );
             continue;
           }
 
-          await debugConsole.log(
+          debugConsole.log(
             `Merging collection "${newCollection.name}" (${choice.newCollectionId.substring(0, 8)}...) into "${existingCollection.name}" (${existingCollection.id.substring(0, 8)}...)`,
           );
 
@@ -313,7 +313,7 @@ export async function mergeImportGroup(
               // Check if variable with same name exists in existing collection
               if (existingVariableNames.has(variable.name)) {
                 // Variable exists, skip it (we can't update existing variables)
-                await debugConsole.warning(
+                debugConsole.warning(
                   `Variable "${variable.name}" already exists in collection "${existingCollection.name}", skipping`,
                 );
                 continue;
@@ -344,11 +344,11 @@ export async function mergeImportGroup(
                 }
               }
 
-              await debugConsole.log(
+              debugConsole.log(
                 `  ✓ Copied variable "${variable.name}" to collection "${existingCollection.name}"`,
               );
             } catch (err) {
-              await debugConsole.warning(
+              debugConsole.warning(
                 `Failed to copy variable "${variable.name}": ${err instanceof Error ? err.message : String(err)}`,
               );
             }
@@ -357,23 +357,23 @@ export async function mergeImportGroup(
           // Delete the new collection (since we've merged its variables)
           newCollection.remove();
           mergedCollections++;
-          await debugConsole.log(
+          debugConsole.log(
             `✓ Merged and deleted collection: ${newCollection.name}`,
           );
         } catch (err) {
-          await debugConsole.warning(
+          debugConsole.warning(
             `Failed to merge collection: ${err instanceof Error ? err.message : String(err)}`,
           );
         }
       } else {
         // Keep the collection as-is
         keptCollections++;
-        await debugConsole.log(`Kept collection: ${choice.newCollectionId}`);
+        debugConsole.log(`Kept collection: ${choice.newCollectionId}`);
       }
     }
 
     // Step 3: Remove dividers
-    await debugConsole.log("Removing dividers...");
+    debugConsole.log("Removing dividers...");
     const allPages = figma.root.children;
     const dividersToDelete: PageNode[] = [];
 
@@ -409,17 +409,17 @@ export async function mergeImportGroup(
       try {
         divider.remove();
       } catch (err) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Failed to delete divider: ${err instanceof Error ? err.message : String(err)}`,
         );
       }
     }
     for (const name of dividerNames) {
-      await debugConsole.log(`Deleted divider: ${name}`);
+      debugConsole.log(`Deleted divider: ${name}`);
     }
 
     // Step 4: Remove construction icons and rename pages with version numbers
-    await debugConsole.log("Removing construction icons and renaming pages...");
+    debugConsole.log("Removing construction icons and renaming pages...");
     await figma.loadAllPagesAsync();
     const pagesAfterDividerRemoval = figma.root.children;
     let pagesRenamed = 0;
@@ -436,10 +436,31 @@ export async function mergeImportGroup(
     for (const page of pagesAfterDividerRemoval) {
       if (page.type !== "PAGE") continue;
       try {
-        const underReview = page.getPluginData(UNDER_REVIEW_KEY);
-        if (underReview === "true") {
+        // Check if page has metadata (indicates it's part of an import)
+        // OR check if it's in global importResult
+        const pageMetadataJson = page.getPluginData(PAGE_METADATA_KEY);
+        const hasMetadata = !!pageMetadataJson;
+
+        // Also check global importResult
+        const globalImportResultStr = figma.root.getPluginData(
+          "RecursicaImportResult",
+        );
+        let isInImportResult = false;
+        if (globalImportResultStr) {
+          try {
+            const importResults = JSON.parse(globalImportResultStr) as Array<{
+              createdPageIds?: string[];
+            }>;
+            isInImportResult = importResults.some((ir) =>
+              ir.createdPageIds?.includes(page.id),
+            );
+          } catch {
+            // Failed to parse, continue
+          }
+        }
+
+        if (hasMetadata || isInImportResult) {
           // Try to get page metadata to find component name and version
-          const pageMetadataJson = page.getPluginData(PAGE_METADATA_KEY);
           let pageMetadata: { id?: string; name?: string; version?: number } =
             {};
           if (pageMetadataJson) {
@@ -458,20 +479,20 @@ export async function mergeImportGroup(
         }
       } catch (err) {
         // Page might have been deleted, skip
-        await debugConsole.warning(
+        debugConsole.warning(
           `Failed to process page: ${err instanceof Error ? err.message : String(err)}`,
         );
       }
     }
 
-    // Rename pages using fresh node references
+    // Rename pages and ensure metadata is set using fresh node references
     for (const pageInfo of importPagesInfo) {
       try {
         const page = (await figma.getNodeByIdAsync(
           pageInfo.pageId,
         )) as PageNode | null;
         if (!page || page.type !== "PAGE") {
-          await debugConsole.warning(
+          debugConsole.warning(
             `Page ${pageInfo.pageId} not found, skipping rename`,
           );
           continue;
@@ -487,7 +508,7 @@ export async function mergeImportGroup(
         if (newName === "REMOTES" || newName.includes("REMOTES")) {
           page.name = "REMOTES";
           pagesRenamed++;
-          await debugConsole.log(`Renamed page: "${page.name}" -> "REMOTES"`);
+          debugConsole.log(`Renamed page: "${page.name}" -> "REMOTES"`);
           continue;
         }
 
@@ -503,44 +524,68 @@ export async function mergeImportGroup(
         const componentName = hasValidPageMetadata
           ? pageInfo.pageMetadata.name!
           : metadata.componentName || newName;
-        const version =
-          pageInfo.pageMetadata.version !== undefined
-            ? pageInfo.pageMetadata.version
-            : metadata.componentVersion;
+        // IMPORTANT: Always use version from imported component metadata, NOT from existing page metadata.
+        // The page metadata version should only be set FROM the imported component, never read from existing page metadata.
+        // This prevents the version from being incorrectly incremented during publishing.
+        const version = metadata.componentVersion;
+        const componentGuid =
+          pageInfo.pageMetadata.id || metadata.componentGuid;
 
-        // Rename to: ComponentName (VERSION: X)
-        const finalName = `${componentName} (VERSION: ${version})`;
+        // Ensure page metadata is set/updated
+        const pageMetadata = {
+          _ver: 1,
+          id: componentGuid,
+          name: componentName,
+          version: version,
+          publishDate: new Date().toISOString(),
+          history: {},
+        };
+        page.setPluginData(PAGE_METADATA_KEY, JSON.stringify(pageMetadata));
+        debugConsole.log(
+          `Set page metadata for "${componentName}": GUID=${componentGuid.substring(0, 8)}..., version=${version}`,
+        );
+
+        // Rename to: ComponentName (VX)
+        const finalName = `${componentName} (V${version})`;
         page.name = finalName;
         pagesRenamed++;
-        await debugConsole.log(`Renamed page: "${newName}" -> "${finalName}"`);
+        debugConsole.log(`Renamed page: "${newName}" -> "${finalName}"`);
       } catch (err) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Failed to rename page ${pageInfo.pageId}: ${err instanceof Error ? err.message : String(err)}`,
         );
       }
     }
 
     // Step 5: Clear import metadata (only from main page, keep page metadata)
-    await debugConsole.log("Clearing import metadata...");
+    debugConsole.log("Clearing import metadata...");
     if (mainPage) {
       try {
         mainPage.setPluginData(PRIMARY_IMPORT_KEY, "");
+        debugConsole.log("Cleared primary import metadata from main page");
       } catch (err) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Failed to clear primary import metadata: ${err instanceof Error ? err.message : String(err)}`,
         );
       }
     }
+
+    // Also clear the global import result to prevent checkForExistingPrimaryImport from finding it
+    try {
+      figma.root.setPluginData(IMPORT_RESULT_KEY, "");
+      debugConsole.log("Cleared global import result");
+    } catch (err) {
+      debugConsole.warning(
+        `Failed to clear global import result: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
     for (const pageInfo of importPagesInfo) {
       try {
-        const page = (await figma.getNodeByIdAsync(
-          pageInfo.pageId,
-        )) as PageNode | null;
-        if (page && page.type === "PAGE") {
-          page.setPluginData(UNDER_REVIEW_KEY, "");
-        }
+        // No need to clear UNDER_REVIEW_KEY - we use importResult now
+        // Pages are identified by importResult.createdPageIds
+        // Page node retrieval not needed for cleanup
       } catch (err) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Failed to clear under review metadata for page ${pageInfo.pageId}: ${err instanceof Error ? err.message : String(err)}`,
         );
       }
@@ -552,7 +597,7 @@ export async function mergeImportGroup(
       pagesRenamed,
     };
 
-    await debugConsole.log(
+    debugConsole.log(
       `=== Merge Complete ===\n  Merged: ${mergedCollections} collection(s)\n  Kept: ${keptCollections} collection(s)\n  Renamed: ${pagesRenamed} page(s)`,
     );
 
@@ -561,7 +606,7 @@ export async function mergeImportGroup(
       responseData as unknown as Record<string, unknown>,
     );
   } catch (error) {
-    await debugConsole.error(
+    debugConsole.error(
       `Merge failed: ${error instanceof Error ? error.message : String(error)}`,
     );
     return retError(

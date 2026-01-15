@@ -43,17 +43,21 @@ interface ImportedComponentFile {
 
 /**
  * Fetches index.json from the repository for a specific branch/ref
- * Note: This makes unauthenticated requests for public repositories.
- * No authentication is needed or used for public repos.
+ * @param ref - The branch/commit ref to fetch from
+ * @param accessToken - Optional GitHub access token to avoid rate limiting
  */
-async function fetchIndexJson(ref: string): Promise<IndexJson> {
+async function fetchIndexJson(
+  ref: string,
+  accessToken?: string,
+): Promise<IndexJson> {
   const url = `https://api.github.com/repos/${RECURSICA_FIGMA_OWNER}/${RECURSICA_FIGMA_REPO}/contents/index.json?ref=${encodeURIComponent(ref)}`;
-  const response = await fetch(url, {
-    headers: {
-      Accept: "application/vnd.github.v3+json",
-      // Intentionally no Authorization header - public repo doesn't need authentication
-    },
-  });
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github.v3+json",
+  };
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`;
+  }
+  const response = await fetch(url, { headers });
 
   if (!response.ok) {
     if (response.status === 404) {
@@ -111,17 +115,23 @@ async function fetchIndexJson(ref: string): Promise<IndexJson> {
 
 /**
  * Fetches a figma.json file from the repository by path
- * Note: This makes unauthenticated requests for public repositories.
- * No authentication is needed or used for public repos.
+ * @param path - The path to the figma.json file
+ * @param ref - The branch/commit ref to fetch from
+ * @param accessToken - Optional GitHub access token to avoid rate limiting
  */
-async function fetchFigmaJson(path: string, ref: string): Promise<unknown> {
+async function fetchFigmaJson(
+  path: string,
+  ref: string,
+  accessToken?: string,
+): Promise<unknown> {
   const url = `https://api.github.com/repos/${RECURSICA_FIGMA_OWNER}/${RECURSICA_FIGMA_REPO}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(ref)}`;
-  const response = await fetch(url, {
-    headers: {
-      Accept: "application/vnd.github.v3+json",
-      // Intentionally no Authorization header - public repo doesn't need authentication
-    },
-  });
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github.v3+json",
+  };
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`;
+  }
+  const response = await fetch(url, { headers });
 
   if (!response.ok) {
     if (response.status === 404) {
@@ -162,14 +172,16 @@ async function fetchFigmaJson(path: string, ref: string): Promise<unknown> {
  * Fetches a component's figma.json file by GUID from the repository
  * @param componentGuid - The GUID of the component to fetch
  * @param ref - The branch/commit ref to fetch from
+ * @param accessToken - Optional GitHub access token to avoid rate limiting
  * @returns The component's JSON data
  */
 export async function fetchComponentByGuid(
   componentGuid: string,
   ref: string,
+  accessToken?: string,
 ): Promise<ImportedComponentFile> {
   // First, fetch index.json to get the component path
-  const indexJson = await fetchIndexJson(ref);
+  const indexJson = await fetchIndexJson(ref, accessToken);
 
   if (!indexJson.components || !indexJson.components[componentGuid]) {
     throw new Error(
@@ -181,7 +193,7 @@ export async function fetchComponentByGuid(
   const path = componentInfo.path;
 
   // Fetch the figma.json file
-  const jsonData = await fetchFigmaJson(path, ref);
+  const jsonData = await fetchFigmaJson(path, ref, accessToken);
 
   return {
     guid: componentGuid,
@@ -194,6 +206,7 @@ export async function fetchComponentByGuid(
 /**
  * Internal helper function that recursively fetches dependencies
  * Maintains a seen set across recursive calls to prevent infinite loops from circular dependencies
+ * @param accessToken - Optional GitHub access token to avoid rate limiting
  */
 async function fetchComponentDependenciesRecursive(
   jsonData: unknown,
@@ -201,9 +214,16 @@ async function fetchComponentDependenciesRecursive(
   indexJson: IndexJson,
   seen: Set<string>,
   dependencies: ImportedComponentFile[],
+  accessToken?: string,
+  depth: number = 0,
 ): Promise<void> {
   // Use the existing getRequiredImportFiles utility to extract dependencies
   const requiredFiles = getRequiredImportFiles(jsonData);
+
+  const indent = "  ".repeat(depth);
+  console.log(
+    `${indent}[fetchComponentDependenciesRecursive] Depth ${depth}: Found ${requiredFiles.length} required files`,
+  );
 
   for (const requiredFile of requiredFiles) {
     // Only fetch files with GUIDs (normal instances)
@@ -211,13 +231,16 @@ async function fetchComponentDependenciesRecursive(
       !requiredFile.componentGuid ||
       requiredFile.componentGuid.length === 0
     ) {
+      console.log(
+        `${indent}[fetchComponentDependenciesRecursive] Skipping file without GUID: ${requiredFile.componentName}`,
+      );
       continue;
     }
 
     // Skip if we've already fetched this GUID (prevents infinite loops from circular dependencies)
     if (seen.has(requiredFile.componentGuid)) {
       console.log(
-        `[fetchComponentDependencies] Skipping already fetched component: ${requiredFile.componentGuid}`,
+        `${indent}[fetchComponentDependenciesRecursive] Skipping already fetched component: ${requiredFile.componentGuid} (${requiredFile.componentName})`,
       );
       continue;
     }
@@ -227,21 +250,24 @@ async function fetchComponentDependenciesRecursive(
       !indexJson.components ||
       !indexJson.components[requiredFile.componentGuid]
     ) {
-      console.warn(
-        `Component with GUID ${requiredFile.componentGuid} not found in index.json, skipping`,
+      throw new Error(
+        `Component with GUID ${requiredFile.componentGuid} not found in index.json. All referenced components must be published before they can be imported.`,
       );
-      continue;
     }
 
     const componentInfo = indexJson.components[requiredFile.componentGuid];
     const path = componentInfo.path;
 
     try {
+      console.log(
+        `${indent}[fetchComponentDependenciesRecursive] Fetching dependency: ${requiredFile.componentName} (${requiredFile.componentGuid})`,
+      );
+
       // Mark as seen BEFORE fetching to prevent infinite loops if there's a circular dependency
       seen.add(requiredFile.componentGuid);
 
       // Fetch the figma.json file
-      const dependencyJsonData = await fetchFigmaJson(path, ref);
+      const dependencyJsonData = await fetchFigmaJson(path, ref, accessToken);
 
       const dependencyFile: ImportedComponentFile = {
         guid: requiredFile.componentGuid,
@@ -251,6 +277,9 @@ async function fetchComponentDependenciesRecursive(
       };
 
       dependencies.push(dependencyFile);
+      console.log(
+        `${indent}[fetchComponentDependenciesRecursive] Added dependency: ${componentInfo.name} (${requiredFile.componentGuid})`,
+      );
 
       // Recursively fetch dependencies of this dependency
       // Pass the same seen set to prevent circular dependencies
@@ -260,10 +289,12 @@ async function fetchComponentDependenciesRecursive(
         indexJson,
         seen,
         dependencies,
+        accessToken,
+        depth + 1,
       );
     } catch (error) {
       console.error(
-        `Failed to fetch dependency ${requiredFile.componentGuid}:`,
+        `${indent}[fetchComponentDependenciesRecursive] Failed to fetch dependency ${requiredFile.componentGuid} (${requiredFile.componentName}):`,
         error,
       );
       // Remove from seen set if fetch failed so it can be retried if needed
@@ -277,14 +308,16 @@ async function fetchComponentDependenciesRecursive(
  * Fetches all required dependencies for a component by parsing its instanceTable
  * @param jsonData - The parsed JSON data of the main component
  * @param ref - The branch/commit ref to fetch from
+ * @param accessToken - Optional GitHub access token to avoid rate limiting
  * @returns Array of imported component files
  */
 export async function fetchComponentDependencies(
   jsonData: unknown,
   ref: string,
+  accessToken?: string,
 ): Promise<ImportedComponentFile[]> {
   // Fetch index.json once and reuse it for all lookups
-  const indexJson = await fetchIndexJson(ref);
+  const indexJson = await fetchIndexJson(ref, accessToken);
 
   const dependencies: ImportedComponentFile[] = [];
   const seen = new Set<string>(); // Track fetched GUIDs to avoid duplicates and circular dependencies
@@ -296,6 +329,8 @@ export async function fetchComponentDependencies(
     indexJson,
     seen,
     dependencies,
+    accessToken,
+    0,
   );
 
   return dependencies;
@@ -305,22 +340,29 @@ export async function fetchComponentDependencies(
  * Fetches a component and all its dependencies from the repository
  * @param componentGuid - The GUID of the component to import
  * @param ref - The branch/commit ref to fetch from
+ * @param accessToken - Optional GitHub access token to avoid rate limiting
  * @returns Object containing the main component and all dependencies
  */
 export async function fetchComponentWithDependencies(
   componentGuid: string,
   ref: string,
+  accessToken?: string,
 ): Promise<{
   mainComponent: ImportedComponentFile;
   dependencies: ImportedComponentFile[];
 }> {
   // Fetch the main component
-  const mainComponent = await fetchComponentByGuid(componentGuid, ref);
+  const mainComponent = await fetchComponentByGuid(
+    componentGuid,
+    ref,
+    accessToken,
+  );
 
   // Fetch all dependencies
   const dependencies = await fetchComponentDependencies(
     mainComponent.jsonData,
     ref,
+    accessToken,
   );
 
   return {

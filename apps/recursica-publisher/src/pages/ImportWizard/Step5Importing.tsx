@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router";
-import DebugConsole from "../../components/DebugConsole";
+import { DebugConsole } from "../../components/DebugConsole";
+import { Button } from "../../components/Button";
 import { useImportWizard } from "../../context/ImportWizardContext";
 import { useImportData } from "../../context/ImportDataContext";
 import { callPlugin } from "../../utils/callPlugin";
+import type { DebugConsoleMessage } from "../../plugin/services/debugConsole";
+import type { ImportSummaryData } from "../../plugin/services/getImportSummary";
 
 export default function Step5Importing() {
   const navigate = useNavigate();
@@ -13,6 +16,32 @@ export default function Step5Importing() {
   const [importError, setImportError] = useState<string | null>(null);
   const [isCleaningUp, setIsCleaningUp] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [importDebugLogs, setImportDebugLogs] = useState<
+    DebugConsoleMessage[] | undefined
+  >(undefined);
+  const [importSummary, setImportSummary] = useState<ImportSummaryData | null>(
+    null,
+  );
+  const [loadingSummary, setLoadingSummary] = useState(false);
+
+  const fetchImportSummary = useCallback(async () => {
+    setLoadingSummary((prev) => {
+      if (prev) return prev; // Already loading, don't start another request
+      return true;
+    });
+    try {
+      const { promise } = callPlugin("getImportSummary", {});
+      const result = await promise;
+      if (result.success && result.data) {
+        const data = result.data as { summary: ImportSummaryData };
+        setImportSummary(data.summary);
+      }
+    } catch (err) {
+      console.error("[Step5Importing] Failed to fetch import summary:", err);
+    } finally {
+      setLoadingSummary(false);
+    }
+  }, []);
 
   useEffect(() => {
     // Check if import is already in progress or failed
@@ -51,9 +80,12 @@ export default function Step5Importing() {
       }
     }
 
-    // If import is already completed, just show the result
+    // If import is already completed, fetch summary if not already loaded
     if (importData.importStatus === "completed") {
       setIsImporting(false);
+      if (!importSummary && !loadingSummary) {
+        fetchImportSummary();
+      }
       return;
     }
 
@@ -157,6 +189,12 @@ export default function Step5Importing() {
             if (!result.success) {
               const errorMsg = result.message || "Import failed";
               setImportError(errorMsg);
+              // Extract debug logs from response if available
+              if (result.data?.debugLogs) {
+                setImportDebugLogs(
+                  result.data.debugLogs as DebugConsoleMessage[],
+                );
+              }
               // Mark import as failed
               setImportData((prev) => {
                 if (!prev) return prev;
@@ -167,6 +205,12 @@ export default function Step5Importing() {
                 };
               });
             } else {
+              // Extract debug logs from response if available (for successful imports too)
+              if (result.data?.debugLogs) {
+                setImportDebugLogs(
+                  result.data.debugLogs as DebugConsoleMessage[],
+                );
+              }
               // Mark import as completed
               setImportData((prev) => {
                 if (!prev) return prev;
@@ -176,6 +220,8 @@ export default function Step5Importing() {
                   importError: undefined,
                 };
               });
+              // Fetch import summary after successful import
+              fetchImportSummary();
             }
             setIsImporting(false);
             setImportPromise(null);
@@ -184,6 +230,22 @@ export default function Step5Importing() {
             const errorMessage =
               err instanceof Error ? err.message : "Import failed";
             setImportError(errorMessage);
+            // Try to extract debug logs from error response if available
+            if (
+              err &&
+              typeof err === "object" &&
+              "response" in err &&
+              err.response &&
+              typeof err.response === "object" &&
+              "data" in err.response
+            ) {
+              const errorResponse = err.response as {
+                data?: { debugLogs?: DebugConsoleMessage[] };
+              };
+              if (errorResponse.data?.debugLogs) {
+                setImportDebugLogs(errorResponse.data.debugLogs);
+              }
+            }
             // Mark import as failed
             setImportData((prev) => {
               if (!prev) return prev;
@@ -200,6 +262,22 @@ export default function Step5Importing() {
         const errorMessage =
           err instanceof Error ? err.message : "Failed to start import";
         setImportError(errorMessage);
+        // Try to extract debug logs from error response if available
+        if (
+          err &&
+          typeof err === "object" &&
+          "response" in err &&
+          err.response &&
+          typeof err.response === "object" &&
+          "data" in err.response
+        ) {
+          const errorResponse = err.response as {
+            data?: { debugLogs?: DebugConsoleMessage[] };
+          };
+          if (errorResponse.data?.debugLogs) {
+            setImportDebugLogs(errorResponse.data.debugLogs);
+          }
+        }
         // Mark import as failed
         setImportData((prev) => {
           if (!prev) return prev;
@@ -223,13 +301,15 @@ export default function Step5Importing() {
     setImportData,
     setWizardState,
     wizardState.selectedComponent,
+    fetchImportSummary,
+    navigate,
+    importSummary,
+    loadingSummary,
   ]);
 
-  const handleIgnore = () => {
-    // Clear import data when user clicks Done/Ignore
-    setImportData(null);
-    resetWizard();
-    navigate("/");
+  const handleDone = () => {
+    // Navigate to Review Import page
+    navigate("/import-wizard/existing");
   };
 
   const handleCleanup = async () => {
@@ -242,15 +322,28 @@ export default function Step5Importing() {
         console.error(
           `[Step5Importing] Cleanup failed: ${result.message || "Unknown error"}`,
         );
+      } else {
+        // Clear import data state after successful cleanup
+        setImportData(null);
+        console.log(
+          `[Step5Importing] Cleanup successful: deleted ${result.data?.deletedPages || 0} page(s)`,
+        );
       }
     } catch (err) {
       console.error("[Step5Importing] Cleanup error:", err);
+      // Still clear import data even if cleanup had an error
+      setImportData(null);
     } finally {
       setIsCleaningUp(false);
       resetWizard();
       navigate("/");
     }
   };
+
+  const componentName =
+    wizardState.selectedComponent?.name ||
+    importData?.mainFile?.name?.replace(".json", "") ||
+    "component";
 
   return (
     <div
@@ -261,56 +354,30 @@ export default function Step5Importing() {
         gap: "20px",
       }}
     >
-      <div>
-        <h1
-          style={{
-            fontSize: "24px",
-            fontWeight: "bold",
-            color: "#333",
-            marginBottom: "8px",
-            marginTop: "0",
-          }}
-        >
-          Importing
-        </h1>
-        <p
-          style={{
-            fontSize: "14px",
-            color: "#666",
-            margin: 0,
-            fontFamily:
-              "system-ui, -apple-system, 'Segoe UI', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif",
-          }}
-        >
-          {importData?.importStatus === "completed"
-            ? `Import complete: ${wizardState.selectedComponent?.name || importData?.mainFile?.name?.replace(".json", "") || "component"}`
-            : isImporting
-              ? `Importing ${wizardState.selectedComponent?.name || "component"}...`
-              : importError
-                ? "Import failed"
-                : "Ready to import"}
-        </p>
-      </div>
+      <h1
+        style={{
+          fontSize: "24px",
+          fontWeight: "bold",
+          color: "#333",
+          marginBottom: "8px",
+          marginTop: "0",
+        }}
+      >
+        Importing
+      </h1>
 
-      <DebugConsole label="Import Logs:" showClearButton={false} />
-
-      {importError && (
-        <div
-          style={{
-            padding: "16px",
-            backgroundColor: "#ffebee",
-            border: "1px solid #f44336",
-            borderRadius: "8px",
-            color: "#c62828",
-            fontSize: "14px",
-          }}
-        >
-          <div style={{ fontWeight: "bold", marginBottom: "8px" }}>
-            Import Failed
-          </div>
-          <div>{importError}</div>
-        </div>
-      )}
+      <DebugConsole
+        title="Importing"
+        isActive={isImporting}
+        isComplete={
+          importData?.importStatus === "completed" &&
+          !isImporting &&
+          !importError
+        }
+        error={importError}
+        debugLogs={importDebugLogs}
+        successMessage={`Import complete: ${componentName}`}
+      />
 
       <div
         style={{
@@ -322,81 +389,15 @@ export default function Step5Importing() {
       >
         {importError ? (
           <>
-            <button
-              onClick={handleIgnore}
-              disabled={isCleaningUp}
-              style={{
-                padding: "12px 24px",
-                fontSize: "16px",
-                fontWeight: "bold",
-                backgroundColor: isCleaningUp ? "#ccc" : "#666",
-                color: "white",
-                border: "none",
-                borderRadius: "8px",
-                cursor: isCleaningUp ? "not-allowed" : "pointer",
-              }}
-              onMouseOver={(e) => {
-                if (!isCleaningUp) {
-                  e.currentTarget.style.opacity = "0.9";
-                }
-              }}
-              onMouseOut={(e) => {
-                if (!isCleaningUp) {
-                  e.currentTarget.style.opacity = "1";
-                }
-              }}
-            >
-              Ignore
-            </button>
-            <button
-              onClick={handleCleanup}
-              disabled={isCleaningUp}
-              style={{
-                padding: "12px 24px",
-                fontSize: "16px",
-                fontWeight: "bold",
-                backgroundColor: isCleaningUp ? "#ccc" : "#d40d0d",
-                color: "white",
-                border: "none",
-                borderRadius: "8px",
-                cursor: isCleaningUp ? "not-allowed" : "pointer",
-              }}
-              onMouseOver={(e) => {
-                if (!isCleaningUp) {
-                  e.currentTarget.style.opacity = "0.9";
-                }
-              }}
-              onMouseOut={(e) => {
-                if (!isCleaningUp) {
-                  e.currentTarget.style.opacity = "1";
-                }
-              }}
-            >
+            <Button onClick={handleDone} disabled={isCleaningUp}>
+              Done
+            </Button>
+            <Button onClick={handleCleanup} disabled={isCleaningUp}>
               {isCleaningUp ? "Cleaning up..." : "Cleanup"}
-            </button>
+            </Button>
           </>
         ) : (
-          <button
-            onClick={handleIgnore}
-            style={{
-              padding: "12px 24px",
-              fontSize: "16px",
-              fontWeight: "bold",
-              backgroundColor: "#d40d0d",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              cursor: "pointer",
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.opacity = "0.9";
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.opacity = "1";
-            }}
-          >
-            Done
-          </button>
+          <Button onClick={handleDone}>Done</Button>
         )}
       </div>
     </div>

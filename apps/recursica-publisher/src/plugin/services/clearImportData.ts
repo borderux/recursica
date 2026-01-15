@@ -13,7 +13,9 @@ export async function clearImportData(
   _data: NoData,
 ): Promise<ResponseMessage> {
   try {
-    await figma.clientStorage.deleteAsync("importData");
+    // Clear import data from the current file using plugin data instead of global clientStorage
+    const IMPORT_DATA_KEY = "RecursicaImportData";
+    figma.root.setPluginData(IMPORT_DATA_KEY, "");
 
     const responseData: ClearImportDataResponseData = {};
 

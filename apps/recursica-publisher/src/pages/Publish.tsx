@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router";
-import PageLayout from "../components/PageLayout";
+import { PageLayout } from "../components/PageLayout";
 import { callPlugin } from "../utils/callPlugin";
 import type { ComponentMetadata } from "../plugin/services/getComponentMetadata";
 import { useAuth } from "../context/useAuth";
@@ -206,7 +206,12 @@ export default function Publish() {
                           : publishedVersion}
                   </p>
                   <p>
-                    <strong>This Version:</strong> {metadata.version || 0}
+                    <strong>This Version:</strong>{" "}
+                    {publishedVersion !== null &&
+                    publishedVersion !== "UNPUBLISHED" &&
+                    typeof publishedVersion === "number"
+                      ? publishedVersion + 1
+                      : metadata.version || 1}
                   </p>
                 </div>
 
@@ -253,6 +258,7 @@ export default function Publish() {
                   }}
                 >
                   <button
+                    type="button"
                     onClick={() => navigate("/")}
                     style={{
                       padding: "12px 24px",
@@ -276,11 +282,20 @@ export default function Publish() {
                     Cancel
                   </button>
                   <button
+                    type="button"
                     onClick={() => {
+                      console.log("[Publish] Publish button clicked", {
+                        currentPageIndex,
+                      });
                       if (currentPageIndex !== null) {
-                        navigate(`/publishing?pageIndex=${currentPageIndex}`);
+                        const targetUrl = `/publishing?pageIndex=${currentPageIndex}`;
+                        console.log("[Publish] Navigating to:", targetUrl);
+                        navigate(targetUrl);
                       } else {
                         // Fallback: navigate without pageIndex (will show error)
+                        console.log(
+                          "[Publish] Navigating to: /publishing (no pageIndex)",
+                        );
                         navigate("/publishing");
                       }
                     }}
@@ -357,11 +372,20 @@ export default function Publish() {
                     Cancel
                   </button>
                   <button
+                    type="button"
                     onClick={() => {
+                      console.log("[Publish] Ok button clicked", {
+                        currentPageIndex,
+                      });
                       if (currentPageIndex !== null) {
-                        navigate(`/publishing?pageIndex=${currentPageIndex}`);
+                        const targetUrl = `/publishing?pageIndex=${currentPageIndex}`;
+                        console.log("[Publish] Navigating to:", targetUrl);
+                        navigate(targetUrl);
                       } else {
                         // Fallback: navigate without pageIndex (will show error)
+                        console.log(
+                          "[Publish] Navigating to: /publishing (no pageIndex)",
+                        );
                         navigate("/publishing");
                       }
                     }}

@@ -20,6 +20,8 @@ export const BASE_NODE_DEFAULTS = {
   strokeCap: "NONE",
   strokeJoin: "MITER",
   dashPattern: [],
+  constraintHorizontal: "MIN", // Default: Left/Top
+  constraintVertical: "MIN", // Default: Left/Top
 } as const;
 
 export const FRAME_DEFAULTS = {

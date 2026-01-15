@@ -5,11 +5,14 @@ import {
   importPage,
   resolveDeferredNormalInstances,
   loadAndExpandJson,
+  type PageImportResult,
+  sanitizeImportResult,
 } from "./pageImportNew";
 import type { ResponseMessage } from "../types/messages";
 import {
   getFixedGuidForCollection,
   isStandardCollection,
+  normalizeCollectionName,
 } from "../../const/CollectionConstants";
 // VariableCollection type from Figma API
 type VariableCollection = ReturnType<
@@ -41,7 +44,7 @@ export async function buildDependencyGraph(
       // Expand the JSON data to get readable keys
       const jsonResult = loadAndExpandJson(jsonData);
       if (!jsonResult.success || !jsonResult.expandedJsonData) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Skipping ${fileName} - failed to expand JSON: ${jsonResult.error || "Unknown error"}`,
         );
         continue;
@@ -51,7 +54,7 @@ export async function buildDependencyGraph(
       // Extract metadata
       const metadata = expanded.metadata;
       if (!metadata || !metadata.name || !metadata.guid) {
-        await debugConsole.warning(
+        debugConsole.warning(
           `Skipping ${fileName} - missing or invalid metadata`,
         );
         continue;
@@ -83,11 +86,11 @@ export async function buildDependencyGraph(
         jsonData, // Store original JSON data for import
       });
 
-      await debugConsole.log(
+      debugConsole.log(
         `  ${fileName}: "${metadata.name}" depends on: ${dependencies.length > 0 ? dependencies.join(", ") : "none"}`,
       );
     } catch (error) {
-      await debugConsole.error(
+      debugConsole.error(
         `Error processing ${fileName}: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
@@ -196,40 +199,38 @@ export async function determineImportOrder(
   cycles: PageDependency[][];
   errors: string[];
 }> {
-  await debugConsole.log("=== Building Dependency Graph ===");
+  debugConsole.log("=== Building Dependency Graph ===");
   const pages = await buildDependencyGraph(jsonFiles);
 
-  await debugConsole.log("=== Resolving Import Order ===");
+  debugConsole.log("=== Resolving Import Order ===");
   const result = resolveImportOrder(pages);
 
   if (result.cycles.length > 0) {
-    await debugConsole.log(
+    debugConsole.log(
       `Detected ${result.cycles.length} circular dependency cycle(s):`,
     );
     for (const cycle of result.cycles) {
       const cycleNames = cycle.map((p) => `"${p.pageName}"`).join(" → ");
-      await debugConsole.log(`  Cycle: ${cycleNames} → (back to start)`);
+      debugConsole.log(`  Cycle: ${cycleNames} → (back to start)`);
     }
-    await debugConsole.log(
+    debugConsole.log(
       "  Circular dependencies will be handled with deferred instance resolution",
     );
   }
 
   if (result.errors.length > 0) {
-    await debugConsole.warning(
+    debugConsole.warning(
       `Found ${result.errors.length} missing dependency warning(s):`,
     );
     for (const error of result.errors) {
-      await debugConsole.warning(`  ${error}`);
+      debugConsole.warning(`  ${error}`);
     }
   }
 
-  await debugConsole.log(
-    `Import order determined: ${result.order.length} page(s)`,
-  );
+  debugConsole.log(`Import order determined: ${result.order.length} page(s)`);
   for (let i = 0; i < result.order.length; i++) {
     const page = result.order[i];
-    await debugConsole.log(`  ${i + 1}. ${page.fileName} ("${page.pageName}")`);
+    debugConsole.log(`  ${i + 1}. ${page.fileName} ("${page.pageName}")`);
   }
 
   return result;
@@ -270,7 +271,7 @@ export async function importPagesInOrder(
     };
   }
 
-  await debugConsole.log("=== Determining Import Order ===");
+  debugConsole.log("=== Determining Import Order ===");
   const {
     order,
     cycles,
@@ -278,25 +279,25 @@ export async function importPagesInOrder(
   } = await determineImportOrder(jsonFiles);
 
   if (depErrors.length > 0) {
-    await debugConsole.warning(
+    debugConsole.warning(
       `Found ${depErrors.length} dependency warning(s) - some dependencies may be missing`,
     );
   }
 
   if (cycles.length > 0) {
-    await debugConsole.log(
+    debugConsole.log(
       `Detected ${cycles.length} circular dependency cycle(s) - will use deferred resolution`,
     );
   }
 
   // Pre-create collections if "new" is selected for any collection type
   const preCreatedCollections = new Map<string, VariableCollection>();
-  await debugConsole.log(
+  debugConsole.log(
     `Checking collectionChoices: ${data.collectionChoices ? "exists" : "undefined"}`,
   );
   if (data.collectionChoices) {
-    await debugConsole.log("=== Pre-creating Collections ===");
-    await debugConsole.log(
+    debugConsole.log("=== Pre-creating Collections ===");
+    debugConsole.log(
       `Collection choices: tokens=${data.collectionChoices.tokens}, theme=${data.collectionChoices.theme}, layers=${data.collectionChoices.layers}`,
     );
 
@@ -333,7 +334,7 @@ export async function importPagesInOrder(
 
     for (const { choice, normalizedName } of collectionTypes) {
       if (choice === "new") {
-        await debugConsole.log(
+        debugConsole.log(
           `Processing collection type: "${normalizedName}" (choice: "new") - will create new collection`,
         );
 
@@ -352,32 +353,32 @@ export async function importPagesInOrder(
               COLLECTION_GUID_KEY,
               fixedGuid,
             );
-            await debugConsole.log(
+            debugConsole.log(
               `  Stored fixed GUID: ${fixedGuid.substring(0, 8)}...`,
             );
           }
         }
 
         preCreatedCollections.set(normalizedName, newCollection);
-        await debugConsole.log(
+        debugConsole.log(
           `✓ Pre-created collection: "${uniqueName}" (normalized: "${normalizedName}", id: ${newCollection.id.substring(0, 8)}...)`,
         );
       } else {
-        await debugConsole.log(
+        debugConsole.log(
           `Skipping collection type: "${normalizedName}" (choice: "existing")`,
         );
       }
     }
 
     if (preCreatedCollections.size > 0) {
-      await debugConsole.log(
+      debugConsole.log(
         `Pre-created ${preCreatedCollections.size} collection(s) for reuse across all imports`,
       );
     }
   }
 
   // Import pages in dependency order
-  await debugConsole.log("=== Importing Pages in Order ===");
+  debugConsole.log("=== Importing Pages in Order ===");
   let imported = 0;
   let failed = 0;
   const allErrors: string[] = [...depErrors];
@@ -388,12 +389,13 @@ export async function importPagesInOrder(
     variableIds: [] as string[],
   };
   const importedPages: Array<{ name: string; pageId: string }> = [];
+  const allImportResults: PageImportResult[] = []; // Collect all importResult objects
 
   // Add pre-created collections to the created entities list
   if (preCreatedCollections.size > 0) {
     for (const collection of preCreatedCollections.values()) {
       allCreatedEntityIds.collectionIds.push(collection.id);
-      await debugConsole.log(
+      debugConsole.log(
         `Tracking pre-created collection: "${collection.name}" (${collection.id.substring(0, 8)}...)`,
       );
     }
@@ -408,7 +410,7 @@ export async function importPagesInOrder(
     const isMainPage = mainFileName
       ? page.fileName === mainFileName
       : i === order.length - 1; // Last page in order is main if no mainFileName specified
-    await debugConsole.log(
+    debugConsole.log(
       `[${i + 1}/${order.length}] Importing ${page.fileName} ("${page.pageName}")${isMainPage ? " [MAIN]" : " [DEPENDENCY]"}...`,
     );
 
@@ -432,36 +434,39 @@ export async function importPagesInOrder(
         if (result.data?.deferredInstances) {
           const deferred = result.data.deferredInstances;
           if (Array.isArray(deferred)) {
-            await debugConsole.log(
+            debugConsole.log(
               `  [DEBUG] Collected ${deferred.length} deferred instance(s) from ${page.fileName}`,
             );
             allDeferredInstances.push(...deferred);
           }
         } else {
-          await debugConsole.log(
+          debugConsole.log(
             `  [DEBUG] No deferred instances in response for ${page.fileName}`,
           );
         }
-        // Collect created entity IDs
-        if (result.data?.createdEntities) {
-          const entities = result.data.createdEntities as {
-            pageIds?: string[];
-            collectionIds?: string[];
-            variableIds?: string[];
-          };
-          if (entities.pageIds) {
-            allCreatedEntityIds.pageIds.push(...entities.pageIds);
+        // Collect importResult from each page import
+        if (result.data?.importResult) {
+          const importResult = result.data.importResult as PageImportResult;
+          allImportResults.push(importResult);
+
+          // Also collect IDs for aggregation (used for backward compatibility in response)
+          if (importResult.createdPageIds) {
+            allCreatedEntityIds.pageIds.push(...importResult.createdPageIds);
           }
-          if (entities.collectionIds) {
-            allCreatedEntityIds.collectionIds.push(...entities.collectionIds);
+          if (importResult.createdCollectionIds) {
+            allCreatedEntityIds.collectionIds.push(
+              ...importResult.createdCollectionIds,
+            );
           }
-          if (entities.variableIds) {
-            allCreatedEntityIds.variableIds.push(...entities.variableIds);
+          if (importResult.createdVariableIds) {
+            allCreatedEntityIds.variableIds.push(
+              ...importResult.createdVariableIds,
+            );
           }
           // Track imported page
-          // Check both createdEntities.pageIds (for new pages) and pageId (for reused existing pages)
+          // Check both importResult.createdPageIds (for new pages) and pageId (for reused existing pages)
           const pageId =
-            entities.pageIds?.[0] || (result.data?.pageId as string);
+            importResult.createdPageIds?.[0] || (result.data?.pageId as string);
           if (result.data?.pageName && pageId) {
             importedPages.push({
               name: result.data.pageName as string,
@@ -484,54 +489,195 @@ export async function importPagesInOrder(
   }
 
   // Resolve all deferred instances after all pages are imported
+  let deferredResolutionFailed = 0;
   if (allDeferredInstances.length > 0) {
-    await debugConsole.log(
+    debugConsole.log(
       `=== Resolving ${allDeferredInstances.length} Deferred Instance(s) ===`,
     );
     try {
+      // Build recognizedVariables map from all imported pages
+      // We need this to apply child overrides with bound variables
+      // Rebuild variable and collection tables from all JSON files
+      debugConsole.log(
+        `  Rebuilding variable and collection tables from imported JSON files...`,
+      );
+
+      // Import the necessary functions
+      const {
+        loadAndExpandJson,
+        loadCollectionTable,
+        loadVariableTable,
+        matchAndCreateVariables,
+      } = await import("./pageImportNew");
+
+      // Collect all variable and collection tables from all imported JSON files
+      const allVariableTables: any[] = [];
+      const allCollectionTables: any[] = [];
+
+      // Process all JSON files to build merged variable and collection tables
+      for (const page of order) {
+        try {
+          const jsonResult = loadAndExpandJson(page.jsonData);
+          if (jsonResult.success && jsonResult.expandedJsonData) {
+            const expandedJsonData = jsonResult.expandedJsonData;
+
+            // Load collection table
+            const collectionTableResult = loadCollectionTable(expandedJsonData);
+            if (
+              collectionTableResult.success &&
+              collectionTableResult.collectionTable
+            ) {
+              allCollectionTables.push(collectionTableResult.collectionTable);
+            }
+
+            // Load variable table
+            const variableTableResult = loadVariableTable(expandedJsonData);
+            if (
+              variableTableResult.success &&
+              variableTableResult.variableTable
+            ) {
+              allVariableTables.push(variableTableResult.variableTable);
+            }
+          }
+        } catch (error) {
+          debugConsole.warning(
+            `  Could not load tables from ${page.fileName}: ${error}`,
+          );
+        }
+      }
+
+      // Merge all variable tables (use the first one as base, or create a merged one)
+      // For now, we'll use the last variable table (should have all variables from all imports)
+      // In practice, all imports should have the same variable table entries
+      let mergedVariableTable: any = null;
+      let mergedCollectionTable: any = null;
+
+      if (allVariableTables.length > 0) {
+        // Use the last variable table (should be the most complete)
+        mergedVariableTable = allVariableTables[allVariableTables.length - 1];
+        debugConsole.log(
+          `  Using variable table with ${mergedVariableTable.getSize()} variable(s)`,
+        );
+      }
+
+      if (allCollectionTables.length > 0) {
+        // Use the last collection table
+        mergedCollectionTable =
+          allCollectionTables[allCollectionTables.length - 1];
+        debugConsole.log(
+          `  Using collection table with ${mergedCollectionTable.getSize()} collection(s)`,
+        );
+      }
+
+      // Build recognizedCollections map keyed by collection table index
+      // This is required because matchAndCreateVariables expects collections to be keyed by index
+      const recognizedCollections = new Map<string, VariableCollection>();
+      if (mergedCollectionTable) {
+        // Get all local collections (they should already be created/matched from imports)
+        const localCollections =
+          await figma.variables.getLocalVariableCollectionsAsync();
+
+        // Build a lookup map by normalized name for fast matching
+        const collectionsByName = new Map<string, VariableCollection>();
+        for (const collection of localCollections) {
+          const normalizedName = normalizeCollectionName(collection.name);
+          collectionsByName.set(normalizedName, collection);
+        }
+
+        // Iterate through collection table entries and match them to actual collections
+        const collectionTableEntries = mergedCollectionTable.getTable();
+        for (const [indexStr, entry] of Object.entries(
+          collectionTableEntries,
+        )) {
+          const collectionEntry = entry as {
+            collectionName: string;
+            collectionId?: string;
+            isLocal?: boolean;
+            modes?: string[];
+            collectionGuid?: string;
+          };
+          const normalizedName = normalizeCollectionName(
+            collectionEntry.collectionName,
+          );
+          const collection = collectionsByName.get(normalizedName);
+
+          if (collection) {
+            // Store by collection table index (as string) for matchAndCreateVariables
+            recognizedCollections.set(indexStr, collection);
+            debugConsole.log(
+              `  Matched collection table index ${indexStr} ("${collectionEntry.collectionName}") to collection "${collection.name}"`,
+            );
+          } else {
+            debugConsole.warning(
+              `  Could not find collection for table index ${indexStr} ("${collectionEntry.collectionName}")`,
+            );
+          }
+        }
+      }
+
+      // Build recognizedVariables map using matchAndCreateVariables
+      let recognizedVariables = new Map<string, Variable>();
+      if (mergedVariableTable && mergedCollectionTable) {
+        const { recognizedVariables: builtRecognizedVariables } =
+          await matchAndCreateVariables(
+            mergedVariableTable,
+            mergedCollectionTable,
+            recognizedCollections,
+            [], // newlyCreatedCollections - empty since they're already created
+          );
+        recognizedVariables = builtRecognizedVariables;
+        debugConsole.log(
+          `  Built recognizedVariables map with ${recognizedVariables.size} variable(s)`,
+        );
+      } else {
+        debugConsole.warning(
+          `  Could not build recognizedVariables map - variable or collection table missing`,
+        );
+      }
+
       const resolveResult = await resolveDeferredNormalInstances(
         allDeferredInstances,
         data.constructionIcon || "",
+        recognizedVariables,
+        mergedVariableTable || null,
+        mergedCollectionTable || null,
+        recognizedCollections,
       );
-      await debugConsole.log(
+      debugConsole.log(
         `  Resolved: ${resolveResult.resolved}, Failed: ${resolveResult.failed}`,
       );
       if (resolveResult.errors.length > 0) {
         allErrors.push(...resolveResult.errors);
+        deferredResolutionFailed = resolveResult.failed;
       }
     } catch (error) {
-      allErrors.push(
-        `Failed to resolve deferred instances: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      const errorMessage = `Failed to resolve deferred instances: ${error instanceof Error ? error.message : String(error)}`;
+      allErrors.push(errorMessage);
+      deferredResolutionFailed = allDeferredInstances.length; // Mark all as failed if resolution threw
     }
   }
 
-  // Deduplicate collection IDs (in case pre-created collections were also added by individual imports)
-  const uniqueCollectionIds = Array.from(
-    new Set(allCreatedEntityIds.collectionIds),
-  );
-  const uniqueVariableIds = Array.from(
-    new Set(allCreatedEntityIds.variableIds),
-  );
-  const uniquePageIds = Array.from(new Set(allCreatedEntityIds.pageIds));
+  // Note: IDs are collected for logging/debugging purposes
+  // They're stored in global importResult for cleanup operations
 
-  await debugConsole.log("=== Import Summary ===");
-  await debugConsole.log(
-    `  Imported: ${imported}, Failed: ${failed}, Deferred instances: ${allDeferredInstances.length}`,
+  // Get unique collection IDs for logging
+  const uniqueCollectionIds = [...new Set(allCreatedEntityIds.collectionIds)];
+
+  debugConsole.log("=== Import Summary ===");
+  debugConsole.log(
+    `  Imported: ${imported}, Failed: ${failed}, Deferred instances: ${allDeferredInstances.length}, Deferred resolution failed: ${deferredResolutionFailed}`,
   );
-  await debugConsole.log(
+  debugConsole.log(
     `  Collections in allCreatedEntityIds: ${allCreatedEntityIds.collectionIds.length}, Unique: ${uniqueCollectionIds.length}`,
   );
   if (uniqueCollectionIds.length > 0) {
-    await debugConsole.log(
-      `  Created ${uniqueCollectionIds.length} collection(s)`,
-    );
+    debugConsole.log(`  Created ${uniqueCollectionIds.length} collection(s)`);
     for (const collectionId of uniqueCollectionIds) {
       try {
         const collection =
           await figma.variables.getVariableCollectionByIdAsync(collectionId);
         if (collection) {
-          await debugConsole.log(
+          debugConsole.log(
             `    - "${collection.name}" (${collectionId.substring(0, 8)}...)`,
           );
         }
@@ -541,10 +687,28 @@ export async function importPagesInOrder(
     }
   }
 
-  const success = failed === 0;
+  // Import fails if page imports failed OR if deferred instance resolution failed
+  const success = failed === 0 && deferredResolutionFailed === 0;
   const message = success
     ? `Successfully imported ${imported} page(s)${allDeferredInstances.length > 0 ? ` (${allDeferredInstances.length} deferred instance(s) resolved)` : ""}`
     : `Import completed with ${failed} failure(s). ${allErrors.join("; ")}`;
+
+  // Store all importResult objects globally on figma.root
+  // Since only one import can happen at a time, we can use a single global key
+  // Sanitize importResults to remove logs and other large fields before storing
+  const IMPORT_RESULT_KEY = "RecursicaImportResult";
+  if (allImportResults.length > 0) {
+    const sanitizedResults = allImportResults.map((ir) =>
+      sanitizeImportResult(ir),
+    );
+    figma.root.setPluginData(
+      IMPORT_RESULT_KEY,
+      JSON.stringify(sanitizedResults),
+    );
+    debugConsole.log(
+      `Stored ${sanitizedResults.length} sanitized importResult object(s) globally for cleanup/delete operations`,
+    );
+  }
 
   return {
     type: "importPagesInOrder",
@@ -557,11 +721,6 @@ export async function importPagesInOrder(
       deferred: allDeferredInstances.length,
       errors: allErrors,
       importedPages,
-      createdEntities: {
-        pageIds: uniquePageIds,
-        collectionIds: uniqueCollectionIds,
-        variableIds: uniqueVariableIds,
-      },
     },
   };
 }

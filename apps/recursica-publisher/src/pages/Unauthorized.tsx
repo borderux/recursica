@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router";
-import PageLayout from "../components/PageLayout";
+import { PageLayout } from "../components/PageLayout";
 
 export default function Unauthorized() {
   const navigate = useNavigate();

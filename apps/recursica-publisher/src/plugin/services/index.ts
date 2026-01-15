@@ -33,12 +33,19 @@ import {
   clearImportMetadata,
   cleanupFailedImport,
 } from "./singleComponentImportService";
-import { summarizeVariablesForWizard } from "./summarizeVariablesForWizard";
 import {
   getLocalVariableCollections,
   getCollectionGuids,
   mergeImportGroup,
 } from "./mergeImportService";
+import { getImportSummary } from "./getImportSummary";
+import { runTest } from "./runTest";
+import {
+  getPublishInitStatus,
+  setPublishInitStatus,
+} from "./publishInitMetadata";
+import { getAllPages } from "./getAllPages";
+import { storePageMetadata } from "./storePageMetadata";
 
 // Services map - all service functions indexed by their names
 // This is the single source of truth for available services
@@ -71,10 +78,15 @@ export const services = {
   deleteImportGroup,
   clearImportMetadata,
   cleanupFailedImport,
-  summarizeVariablesForWizard,
   getLocalVariableCollections,
   getCollectionGuids,
   mergeImportGroup,
+  getImportSummary,
+  runTest,
+  getPublishInitStatus,
+  setPublishInitStatus,
+  getAllPages,
+  storePageMetadata,
 } as const;
 
 // Re-export individual services for convenience
@@ -107,10 +119,15 @@ export {
   deleteImportGroup,
   clearImportMetadata,
   cleanupFailedImport,
-  summarizeVariablesForWizard,
   getLocalVariableCollections,
   getCollectionGuids,
   mergeImportGroup,
+  getImportSummary,
+  runTest,
+  getPublishInitStatus,
+  setPublishInitStatus,
+  getAllPages,
+  storePageMetadata,
 };
 
 export type { PageDependency };
