@@ -4391,13 +4391,6 @@ export async function recreateNodeFromData(
       nodeData.boundVariables.minWidth ||
       nodeData.boundVariables.maxWidth);
 
-  // INPUT-LAYOUT DEBUG: Log hasBoundVariablesForSize check
-  if (nodeData.name === "Input") {
-    debugConsole.log(
-      `[INPUT-LAYOUT] "${nodeData.name}": hasBoundVariablesForSize=${hasBoundVariablesForSize}, boundVariables.width=${nodeData.boundVariables?.width}, boundVariables.height=${nodeData.boundVariables?.height}`,
-    );
-  }
-
   // ISSUE #3 & #4 DEBUG: Check for preserveRatio and constraints before resize
   const nodeName = nodeData.name || "Unnamed";
   if (nodeData.preserveRatio !== undefined) {
@@ -4458,40 +4451,6 @@ export async function recreateNodeFromData(
   const hasAutoLayout = layoutMode !== undefined && layoutMode !== "NONE";
   const isHorizontal = layoutMode === "HORIZONTAL";
 
-  // INPUT-LAYOUT DEBUG: Log layout mode and auto-layout status
-  if (nodeData.name === "Input") {
-    debugConsole.log(
-      `[INPUT-LAYOUT] "${nodeData.name}" (${nodeData.type}): layoutMode=${layoutMode}, hasAutoLayout=${hasAutoLayout}, isHorizontal=${isHorizontal}`,
-    );
-  }
-
-  // Check if width/minWidth/maxWidth are bound to variables (indicates "Fill Container" behavior)
-  const hasWidthConstraints = !!(
-    hasAutoLayout &&
-    nodeData.boundVariables &&
-    typeof nodeData.boundVariables === "object" &&
-    (nodeData.boundVariables.width ||
-      (isHorizontal && nodeData.boundVariables.minWidth) ||
-      (isHorizontal && nodeData.boundVariables.maxWidth))
-  );
-
-  // INPUT-LAYOUT DEBUG: Log bound variables check
-  if (nodeData.name === "Input") {
-    debugConsole.log(
-      `[INPUT-LAYOUT] "${nodeData.name}": hasWidthConstraints=${hasWidthConstraints}, boundVariables.minWidth=${nodeData.boundVariables?.minWidth}, boundVariables.maxWidth=${nodeData.boundVariables?.maxWidth}`,
-    );
-  }
-
-  // Check if height/minHeight/maxHeight are bound to variables
-  const hasHeightConstraints = !!(
-    hasAutoLayout &&
-    nodeData.boundVariables &&
-    typeof nodeData.boundVariables === "object" &&
-    (nodeData.boundVariables.height ||
-      (!isHorizontal && nodeData.boundVariables.minWidth) ||
-      (!isHorizontal && nodeData.boundVariables.maxWidth))
-  );
-
   // For HORIZONTAL layout: primaryAxis = width, counterAxis = height
   // For VERTICAL layout: primaryAxis = height, counterAxis = width
   // If constraints are bound, treat that dimension as "Fill"
@@ -4503,50 +4462,18 @@ export async function recreateNodeFromData(
   const layoutSizingVertical =
     (nodeData as any).layoutSizingVertical ?? (nodeData as any).laySzV;
 
-  // INPUT-LAYOUT DEBUG: Log layoutSizing values
-  if (nodeData.name === "Input") {
-    debugConsole.log(
-      `[INPUT-LAYOUT] "${nodeData.name}": layoutSizingHorizontal=${layoutSizingHorizontal}, layoutSizingVertical=${layoutSizingVertical}, parentHasAutoLayout=${parentHasAutoLayout}`,
-    );
-    debugConsole.log(
-      `[INPUT-LAYOUT] "${nodeData.name}": Also checking abbreviated names - laySzH=${(nodeData as any).laySzH}, laySzV=${(nodeData as any).laySzV}`,
-    );
-  }
-
   // widthIsFill: true if width should "Fill container" in auto-layout
   // This is determined by layoutSizingHorizontal="FILL", NOT by bound variables
-  // Bound variables (hasWidthConstraints) mean the width is variable-controlled, but not necessarily "Fill"
   const widthIsFill = !!(
     (hasAutoLayout && layoutSizingHorizontal === "FILL") ||
     (parentHasAutoLayout && layoutSizingHorizontal === "FILL")
   );
   // heightIsFill: true if height should "Fill container" in auto-layout
   // This is determined by layoutSizingVertical="FILL", NOT by bound variables
-  // Bound variables (hasHeightConstraints) mean the height is variable-controlled, but not necessarily "Fill"
   const heightIsFill = !!(
     (hasAutoLayout && layoutSizingVertical === "FILL") ||
     (parentHasAutoLayout && layoutSizingVertical === "FILL")
   );
-
-  // INPUT-LAYOUT DEBUG: Log final Fill determination
-  if (nodeData.name === "Input") {
-    debugConsole.log(
-      `[INPUT-LAYOUT] "${nodeData.name}": widthIsFill=${widthIsFill}, heightIsFill=${heightIsFill}`,
-    );
-    debugConsole.log(
-      `[INPUT-LAYOUT] "${nodeData.name}": widthIsFill breakdown - hasWidthConstraints=${hasWidthConstraints}, (hasAutoLayout && layoutSizingHorizontal === "FILL")=${hasAutoLayout && layoutSizingHorizontal === "FILL"}, (parentHasAutoLayout && layoutSizingHorizontal === "FILL")=${parentHasAutoLayout && layoutSizingHorizontal === "FILL"}`,
-    );
-    debugConsole.log(
-      `[INPUT-LAYOUT] "${nodeData.name}": heightIsFill breakdown - hasHeightConstraints=${hasHeightConstraints}, (hasAutoLayout && layoutSizingVertical === "FILL")=${hasAutoLayout && layoutSizingVertical === "FILL"}, (parentHasAutoLayout && layoutSizingVertical === "FILL")=${parentHasAutoLayout && layoutSizingVertical === "FILL"}`,
-    );
-  }
-
-  // INPUT-LAYOUT DEBUG: Log resize condition check
-  if (nodeData.name === "Input") {
-    debugConsole.log(
-      `[INPUT-LAYOUT] "${nodeData.name}": Resize condition check - type=${nodeData.type}, hasBoundVariablesForSize=${hasBoundVariablesForSize}, widthIsFill=${widthIsFill}, heightIsFill=${heightIsFill}, width=${nodeData.width}, height=${nodeData.height}`,
-    );
-  }
 
   if (
     nodeData.type !== "VECTOR" &&
@@ -4557,13 +4484,6 @@ export async function recreateNodeFromData(
     nodeData.width !== undefined &&
     nodeData.height !== undefined
   ) {
-    // INPUT-LAYOUT DEBUG: Log when resize is about to happen
-    if (nodeData.name === "Input") {
-      debugConsole.log(
-        `[INPUT-LAYOUT] "${nodeData.name}": About to resize to ${nodeData.width}x${nodeData.height} (widthIsFill=${widthIsFill}, heightIsFill=${heightIsFill}, hasBoundVariablesForSize=${hasBoundVariablesForSize})`,
-      );
-    }
-
     // ISSUE #3 DEBUG: Check preserveRatio before resize
     const preserveRatioBefore = (newNode as any).preserveRatio;
     if (preserveRatioBefore !== undefined) {
@@ -4593,13 +4513,6 @@ export async function recreateNodeFromData(
       (nodeData.boundVariables.height ||
         (!isHorizontal && nodeData.boundVariables.minWidth) ||
         (!isHorizontal && nodeData.boundVariables.maxWidth));
-
-    // INPUT-LAYOUT DEBUG: Log when entering Fill handling path
-    if (nodeData.name === "Input") {
-      debugConsole.log(
-        `[INPUT-LAYOUT] "${nodeData.name}": Entering Fill handling path (widthIsFill=${widthIsFill}, heightIsFill=${heightIsFill}, hasBoundVariableForWidth=${hasBoundVariableForWidth}, hasBoundVariableForHeight=${hasBoundVariableForHeight})`,
-      );
-    }
 
     // Handle partial sizing: set only the dimension that's not FILL and doesn't have bound variables
     if (
@@ -4633,12 +4546,6 @@ export async function recreateNodeFromData(
         `  Skipping resize for "${nodeName}" (both width and height are FILL)`,
       );
     } else {
-      // INPUT-LAYOUT DEBUG: Log when Fill path is skipped due to bound variables
-      if (nodeData.name === "Input") {
-        debugConsole.log(
-          `[INPUT-LAYOUT] "${nodeData.name}": Skipping Fill handling - widthIsFill=${widthIsFill}, heightIsFill=${heightIsFill}, hasBoundVariableForWidth=${hasBoundVariableForWidth}, hasBoundVariableForHeight=${hasBoundVariableForHeight}`,
-        );
-      }
       // When widthIsFill=true but we can't set height (has bound variable), we still shouldn't set width
       // For nodes with their own auto-layout, "Fill Container" is achieved through minWidth/maxWidth bound variables
       // Setting a fixed width would interfere with the Fill behavior
@@ -6528,12 +6435,6 @@ export async function recreateNodeFromData(
         }
       }
     }
-    // INPUT-LAYOUT DEBUG: Check if minWidth/maxWidth are in original nodeData
-    if (nodeData.name === "Input") {
-      debugConsole.log(
-        `[INPUT-LAYOUT] "${nodeData.name}": Checking for minWidth/maxWidth in nodeData - minWidthVar=${minWidthVar}, maxWidthVar=${maxWidthVar}, widthIsFill=${widthIsFill}`,
-      );
-    }
 
     // CRITICAL: Only set minWidth/maxWidth if they're actually in the original nodeData
     // Don't set them if they're not in the export JSON - "Fill Container" should come from layoutSizingHorizontal="FILL"
@@ -6544,12 +6445,6 @@ export async function recreateNodeFromData(
       if (varRef !== undefined) {
         const variable = recognizedVariables.get(String(varRef));
         if (variable) {
-          // INPUT-LAYOUT DEBUG: Log minWidth bound variable setting
-          if (nodeData.name === "Input") {
-            debugConsole.log(
-              `[INPUT-LAYOUT] "${nodeData.name}": Setting minWidth bound variable (found in nodeData), current width=${newNode.width}, widthIsFill=${widthIsFill}`,
-            );
-          }
           // First, try to remove any existing binding by setting to null
           try {
             (newNode as any).setBoundVariable("minWidth", null);
@@ -6562,12 +6457,6 @@ export async function recreateNodeFromData(
             debugConsole.log(
               `  ✓ Set bound variable for minWidth on "${nodeData.name || "Unnamed"}" (${nodeData.type}): variable ${variable.name} (ID: ${variable.id.substring(0, 8)}...)`,
             );
-            // INPUT-LAYOUT DEBUG: Log after minWidth is set
-            if (nodeData.name === "Input") {
-              debugConsole.log(
-                `[INPUT-LAYOUT] "${nodeData.name}": After setting minWidth bound variable, width=${newNode.width}`,
-              );
-            }
           } catch (error) {
             debugConsole.warning(
               `  Failed to set bound variable for minWidth on "${nodeData.name || "Unnamed"}": ${error}`,
@@ -6577,32 +6466,11 @@ export async function recreateNodeFromData(
       }
     }
 
-    // INPUT-LAYOUT DEBUG: Log when minWidth is not being set due to widthIsFill
-    if (nodeData.name === "Input" && widthIsFill) {
-      if (!minWidthVar) {
-        debugConsole.log(
-          `[INPUT-LAYOUT] "${nodeData.name}": minWidth NOT in nodeData, but widthIsFill=true. "Fill Container" should come from layoutSizingHorizontal="FILL", not minWidth/maxWidth.`,
-        );
-      } else {
-        // INPUT-LAYOUT DEBUG: Log when minWidth IS in nodeData but widthIsFill is true
-        // This means minWidth was added during import, but it's not in the original export
-        // We should NOT set it because "Fill Container" should come from layoutSizingHorizontal="FILL"
-        debugConsole.log(
-          `[INPUT-LAYOUT] "${nodeData.name}": minWidth found in nodeData but widthIsFill=true. Skipping minWidth because "Fill Container" should come from layoutSizingHorizontal="FILL".`,
-        );
-      }
-    }
     if (maxWidthVar && isVariableReference(maxWidthVar) && !widthIsFill) {
       const varRef = (maxWidthVar as VariableReference)._varRef;
       if (varRef !== undefined) {
         const variable = recognizedVariables.get(String(varRef));
         if (variable) {
-          // INPUT-LAYOUT DEBUG: Log maxWidth bound variable setting
-          if (nodeData.name === "Input") {
-            debugConsole.log(
-              `[INPUT-LAYOUT] "${nodeData.name}": Setting maxWidth bound variable, current width=${newNode.width}`,
-            );
-          }
           // First, try to remove any existing binding by setting to null
           try {
             (newNode as any).setBoundVariable("maxWidth", null);
@@ -6615,48 +6483,11 @@ export async function recreateNodeFromData(
             debugConsole.log(
               `  ✓ Set bound variable for maxWidth on "${nodeData.name || "Unnamed"}" (${nodeData.type}): variable ${variable.name} (ID: ${variable.id.substring(0, 8)}...)`,
             );
-            // INPUT-LAYOUT DEBUG: Log after maxWidth is set
-            if (nodeData.name === "Input") {
-              debugConsole.log(
-                `[INPUT-LAYOUT] "${nodeData.name}": After setting maxWidth bound variable, width=${newNode.width}`,
-              );
-            }
           } catch (error) {
             debugConsole.warning(
               `  Failed to set bound variable for maxWidth on "${nodeData.name || "Unnamed"}": ${error}`,
             );
           }
-        }
-      }
-    }
-
-    // INPUT-LAYOUT: After setting minWidth/maxWidth bound variables, try to clear the width direct value
-    // For "Fill Container" behavior, the width should be controlled by minWidth/maxWidth constraints,
-    // not by a direct width value. However, setting minWidth automatically sets width to minWidth value.
-    // We need to try to clear the width value or set it to be controlled by constraints.
-    if (widthIsFill && (minWidthVar || maxWidthVar)) {
-      // INPUT-LAYOUT DEBUG: Log attempt to clear width
-      if (nodeData.name === "Input") {
-        debugConsole.log(
-          `[INPUT-LAYOUT] "${nodeData.name}": Attempting to clear width direct value (current=${newNode.width}) after setting minWidth/maxWidth for Fill behavior`,
-        );
-      }
-      // Try to remove any direct width value by setting bound variable to null
-      // This might allow the width to be controlled by minWidth/maxWidth constraints
-      try {
-        (newNode as any).setBoundVariable("width", null);
-        // INPUT-LAYOUT DEBUG: Log after clearing width bound variable
-        if (nodeData.name === "Input") {
-          debugConsole.log(
-            `[INPUT-LAYOUT] "${nodeData.name}": After clearing width bound variable, width=${newNode.width}`,
-          );
-        }
-      } catch (error) {
-        // INPUT-LAYOUT DEBUG: Log if clearing fails
-        if (nodeData.name === "Input") {
-          debugConsole.log(
-            `[INPUT-LAYOUT] "${nodeData.name}": Could not clear width bound variable: ${error}`,
-          );
         }
       }
     }
@@ -7368,12 +7199,6 @@ export async function recreateNodeFromData(
           (newNode as any).layoutSizingHorizontal = (
             nodeData as any
           ).layoutSizingHorizontal;
-          // INPUT-LAYOUT DEBUG: Log successful setting
-          if (nodeData.name === "Input") {
-            debugConsole.log(
-              `[INPUT-LAYOUT] "${nodeData.name}": Successfully set layoutSizingHorizontal=${(nodeData as any).layoutSizingHorizontal} AFTER appendChild`,
-            );
-          }
         } catch (error) {
           debugConsole.warning(
             `  ⚠️ Failed to set layoutSizingHorizontal for "${nodeData.name || "Unnamed"}": ${error}`,
@@ -7385,23 +7210,12 @@ export async function recreateNodeFromData(
           (newNode as any).layoutSizingVertical = (
             nodeData as any
           ).layoutSizingVertical;
-          // INPUT-LAYOUT DEBUG: Log successful setting
-          if (nodeData.name === "Input") {
-            debugConsole.log(
-              `[INPUT-LAYOUT] "${nodeData.name}": Successfully set layoutSizingVertical=${(nodeData as any).layoutSizingVertical} AFTER appendChild`,
-            );
-          }
         } catch (error) {
           debugConsole.warning(
             `  ⚠️ Failed to set layoutSizingVertical for "${nodeData.name || "Unnamed"}": ${error}`,
           );
         }
       }
-    } else if (nodeData.name === "Input") {
-      // INPUT-LAYOUT DEBUG: Log when parent doesn't actually have auto-layout
-      debugConsole.log(
-        `[INPUT-LAYOUT] "${nodeData.name}": Parent does not have auto-layout after appendChild, cannot set layoutSizingHorizontal`,
-      );
     }
   }
 
