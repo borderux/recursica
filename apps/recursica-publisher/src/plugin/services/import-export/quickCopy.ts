@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { ResponseMessage } from "../types/messages";
+import type { ResponseMessage } from "../../types/messages";
 import { extractNodeData, countTotalNodes } from "./pageExportNew";
 import { recreateNodeFromData } from "./pageImportNew";
-import type { NoData } from "./getCurrentUser";
+import type { NoData } from "../getCurrentUser";
 
 export interface QuickCopyResponseData {
   pageName: string;

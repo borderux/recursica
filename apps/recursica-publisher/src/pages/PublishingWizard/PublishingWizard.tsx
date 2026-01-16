@@ -5,13 +5,13 @@ import { DebugConsole } from "../../components/DebugConsole";
 import type {
   ExportPageResponseData,
   ReferencedPageInfo,
-} from "../../plugin/services/pageExportNew";
+} from "../../plugin/services/import-export/pageExportNew";
 import { useAuth } from "../../context/useAuth";
 import {
   GitHubService,
   type ComponentInfo,
 } from "../../services/github/githubService";
-import type { DebugConsoleMessage } from "../../plugin/services/debugConsole";
+import type { DebugConsoleMessage } from "../../plugin/services/import-export/debugConsole";
 import { Title } from "../../components/Title";
 import { Text } from "../../components/Text";
 import { Button } from "../../components/Button";

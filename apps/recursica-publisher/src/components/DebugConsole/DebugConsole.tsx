@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { formatLogsForClipboard } from "../../utils/formatLogsForClipboard";
-import type { DebugConsoleMessage } from "../../plugin/services/debugConsole";
+import type { DebugConsoleMessage } from "../../plugin/services/import-export/debugConsole";
 import { LoadingSpinner } from "../LoadingSpinner";
 import { Alert } from "../Alert";
 import { Button } from "../Button";

@@ -3,7 +3,7 @@ import {
   normalizeCollectionName,
   isStandardCollection,
   getFixedGuidForCollection,
-} from "../../../const/CollectionConstants";
+} from "../../../../const/CollectionConstants";
 
 /**
  * Variable table for storing unique variables and referencing them by index

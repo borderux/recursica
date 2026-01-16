@@ -9,12 +9,12 @@ import {
   type CollectionTableEntry,
 } from "./variableTable";
 import { ImageTable } from "./imageTable";
-import { requestGuidFromUI } from "../../utils/requestGuidFromUI";
+import { requestGuidFromUI } from "../../../utils/requestGuidFromUI";
 import { debugConsole } from "../debugConsole";
 import {
   isStandardCollection,
   getFixedGuidForCollection,
-} from "../../../const/CollectionConstants";
+} from "../../../../const/CollectionConstants";
 
 /**
  * Parser for handling bound variables in Figma nodes

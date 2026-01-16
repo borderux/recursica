@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { callPlugin } from "../../utils/callPlugin";
-import type { PrimaryImportMetadata } from "../../plugin/services/singleComponentImportService";
-import type { ImportSummaryData } from "../../plugin/services/getImportSummary";
+import type { PrimaryImportMetadata } from "../../plugin/services/import-export/singleComponentImportService";
+import type { ImportSummaryData } from "../../plugin/services/import-export/getImportSummary";
 import {
   Title,
   Text,

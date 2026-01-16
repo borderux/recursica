@@ -1,0 +1,18 @@
+---
+description: Rules for import/export services area
+globs:
+  - apps/recursica-publisher/src/plugin/services/import-export/**
+alwaysApply: false
+---
+
+Before editing import/export code, read `apps/recursica-publisher/src/plugin/services/import-export/README.md`.
+
+Limit context to this folder unless the user explicitly asks to expand scope.
+
+When changes alter behavior, stages, or decisions, update the README to keep it accurate.
+
+Record key decisions or lessons learned in the "Lessons Learned" section at the end of the README.
+
+Exceptions should not be caught. If they must be caught, rethrow them. Do not add console logs for caught exceptions.
+
+Follow existing pipeline stage naming and ordering (including Stage 9.5 and Stage 10.5).

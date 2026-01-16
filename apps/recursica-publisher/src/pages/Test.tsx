@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { PageLayout } from "../components/PageLayout";
 import { DebugConsole } from "../components/DebugConsole";
 import { callPlugin } from "../utils/callPlugin";
-import type { DebugConsoleMessage } from "../plugin/services/debugConsole";
+import type { DebugConsoleMessage } from "../plugin/services/import-export/debugConsole";
 
 export default function Test() {
   const navigate = useNavigate();

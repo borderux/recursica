@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { callPlugin } from "../../../utils/callPlugin";
-import type { PrimaryImportMetadata } from "../../../plugin/services/singleComponentImportService";
+import type { PrimaryImportMetadata } from "../../../plugin/services/import-export/singleComponentImportService";
 import {
   FIXED_COLLECTION_GUIDS,
   VALID_COLLECTION_NAMES,

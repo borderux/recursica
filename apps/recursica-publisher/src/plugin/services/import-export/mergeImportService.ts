@@ -1,6 +1,6 @@
 /// <reference types="@figma/plugin-typings" />
-import type { ResponseMessage } from "../types/messages";
-import { retSuccess, retError } from "../utils/response";
+import type { ResponseMessage } from "../../types/messages";
+import { retSuccess, retError } from "../../utils/response";
 import { debugConsole } from "./debugConsole";
 import {
   PRIMARY_IMPORT_KEY,
@@ -12,7 +12,7 @@ import type { PrimaryImportMetadata } from "./singleComponentImportService";
 import {
   FIXED_COLLECTION_GUIDS,
   VALID_COLLECTION_NAMES,
-} from "../../const/CollectionConstants";
+} from "../../../const/CollectionConstants";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface GetLocalVariableCollectionsData {

@@ -1,10 +1,10 @@
 /// <reference types="@figma/plugin-typings" />
-import type { ResponseMessage } from "../types/messages";
-import { retSuccess, retError } from "../utils/response";
+import type { ResponseMessage } from "../../types/messages";
+import { retSuccess, retError } from "../../utils/response";
 import { debugConsole } from "./debugConsole";
 import { importPagesInOrder } from "./dependencyResolver";
 import type { SanitizedPageImportResult } from "./pageImportNew";
-import { normalizeCollectionName } from "../../const/CollectionConstants";
+import { normalizeCollectionName } from "../../../const/CollectionConstants";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 

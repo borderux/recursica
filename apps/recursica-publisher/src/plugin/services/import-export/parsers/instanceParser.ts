@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ParsedNodeData, ParserContext } from "./baseNodeParser";
-import { debugConsole } from "../../services/debugConsole";
+import { debugConsole } from "../debugConsole";
 import type { InstanceTableEntry } from "./instanceTable";
-import { pluginPrompt } from "../../utils/pluginPrompt";
-import { requestGuidFromUI } from "../../utils/requestGuidFromUI";
+import { pluginPrompt } from "../../../utils/pluginPrompt";
+import { requestGuidFromUI } from "../../../utils/requestGuidFromUI";
 
 const COMPONENT_METADATA_KEY = "RecursicaPublishedMetadata";
 

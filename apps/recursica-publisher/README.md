@@ -1,110 +1,182 @@
-# Recursica Internal Tool
+# Recursica Publisher
 
-A Figma plugin for internal Recursica team operations, providing tools for theme management, page operations, and metadata handling.
+A Figma plugin for publishing and importing Figma pages and components to/from GitHub repositories. Recursica Publisher enables version-controlled component management, allowing designers to export components with full fidelity and import them back into Figma with automatic dependency resolution.
+
+## Overview
+
+Recursica Publisher bridges the gap between Figma design work and version control. It allows you to:
+
+- **Publish** Figma components to GitHub with versioning and automated pull request creation
+- **Import** previously exported components from GitHub back into Figma
+- Manage component dependencies automatically
+- Handle variable collections and design tokens
+- Track component versions and revision history
 
 ## Features
 
-- **Theme Settings**: Configure file type and theme name for your Figma projects
-- **Page Management**: Export, import, and manage Figma pages with full structure preservation
-- **GitHub Integration**: Seamlessly export pages to GitHub repositories with automated PR creation
-- **Remote Import**: Import previously exported pages from remote repositories
-- **Authentication**: Secure GitHub OAuth integration for repository access
-- **Reset Metadata**: Clear plugin metadata from collections
-- **Auto-Updater**: Cross-platform update scripts for easy deployment
+### Publish to GitHub
 
-## Page Management & GitHub Integration
+- Export Figma pages/components with full structure preservation
+- Automatic version management and incrementing
+- Create GitHub branches and pull requests automatically
+- Support for component dependencies (export referenced components)
+- Revision history tracking with change messages
+- GitHub OAuth authentication for secure repository access
 
-The page management feature provides comprehensive Figma page operations:
+### Import from GitHub
 
-- **Export Pages**: Extract complete page structure including all nodes, properties, and relationships
-- **Import Pages**: Recreate pages from previously exported JSON data with full fidelity
-- **GitHub Integration**:
-  - Authenticate with GitHub using personal access tokens
-  - Select repositories for page exports
-  - Automatically create branches and pull requests
-  - Export pages to `figma-exports/` folder in your repository
-- **Remote Import**: Fetch and import pages from remote repositories
-- **Structure Preservation**: Maintains all Figma node properties including fills, strokes, text properties, and layout settings
+- Import components from GitHub repositories
+- Multi-stage import pipeline with intelligent matching
+- Automatic dependency resolution for component instances
+- Variable collection matching (by GUID or name)
+- Deferred instance resolution for circular dependencies
+- Import wizard for handling conflicts and user decisions
 
-## Theme Settings
+### Component Management
 
-The theme settings feature allows you to:
+- Full fidelity export/import (preserves all node properties, styles, and relationships)
+- Component instance deduplication for efficient storage
+- Variable collection handling with mode mapping
+- Support for component sets and variants
+- Remote component handling (Team Library icons)
 
-- Set the file type for your project (themes, ui-kit, tokens, icons, other)
-- Configure theme names for theme-based projects
-- Store settings in Figma variable collections for persistence
+### Developer Experience
 
-## Update Scripts
+- TypeScript support throughout
+- Debug console for troubleshooting
+- Cancellation support for long-running operations
+- Comprehensive error handling and validation
 
-Cross-platform update scripts are available in the `scripts/updater/` directory:
+## Installation
 
-- Windows: `update-dist.bat` or `update-dist.ps1`
-- macOS/Linux: `update-dist.sh` or `update-dist`
-- Universal: `update-dist` (auto-detects platform)
+### For Users
 
-See `scripts/updater/UPDATE-README.md` for detailed usage instructions.
+1. Install the plugin from the Figma Community or via the Recursica team
+2. Open a Figma file
+3. Run the plugin from the Plugins menu
+4. Authenticate with GitHub when prompted
+
+### For Developers
+
+```bash
+# Install dependencies
+npm install
+
+# Development mode (watches for changes)
+npm run dev
+
+# Build for production
+npm run build
+
+# Create plugin zip file
+npm run zip
+```
+
+## Usage
+
+### Publishing a Component
+
+1. Open the component page in Figma
+2. Run the Recursica Publisher plugin
+3. Click "Publish" from the home screen
+4. Review component metadata and version
+5. Enter a change message describing your updates
+6. Select which referenced components to publish (if any)
+7. The plugin will:
+   - Export the component(s) to JSON
+   - Create a GitHub branch
+   - Commit files to the branch
+   - Create a pull request
+
+### Importing a Component
+
+1. Run the Recursica Publisher plugin
+2. Click "Import" from the home screen
+3. Choose import source:
+   - **From Files**: Select exported JSON files
+   - **From Repository**: Browse and select from GitHub repository
+4. Follow the import wizard to:
+   - Resolve variable collection conflicts
+   - Handle component dependencies
+   - Review import summary
+5. Complete the import process
+
+## Architecture
+
+For detailed information about the plugin's architecture, design patterns, and technical implementation, see [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ## Development
 
-Built with React + TypeScript + Vite for optimal development experience.
+### Project Structure
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+```
+apps/recursica-publisher/
+├── src/
+│   ├── App.tsx                 # Main React application
+│   ├── pages/                  # UI pages (Home, Publish, Import, etc.)
+│   ├── components/             # Reusable UI components
+│   ├── context/                # React context providers
+│   ├── services/               # UI services (GitHub, repository)
+│   └── plugin/                 # Plugin sandbox code
+│       ├── main.ts             # Message router
+│       ├── services/           # Business logic services
+│       ├── parsers/            # Type-specific node parsers
+│       └── types/              # TypeScript definitions
+├── manifest.json               # Figma plugin manifest
+└── package.json
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Key Technologies
 
-```js
-// eslint.config.js
-import reactX from "eslint-plugin-react-x";
-import reactDom from "eslint-plugin-react-dom";
+- **React 19** with TypeScript
+- **React Router** for navigation
+- **Mantine** for UI components
+- **Vite** for building
+- **Figma Plugin API** for Figma integration
+- **GitHub API** for repository operations
 
-export default tseslint.config([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs["recommended-typescript"],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
-```
+### Building
+
+The project uses two build configurations:
+
+- **UI Build**: React application bundled for plugin UI (`vite.config.ts`)
+- **Plugin Build**: Plugin sandbox code (`vite.config.lib.ts`)
+
+Both are built concurrently during development and production builds.
+
+### Scripts
+
+- `npm run dev` - Start development mode (watches both UI and plugin)
+- `npm run build` - Build for production
+- `npm run zip` - Build and create plugin zip file
+- `npm run lint` - Run ESLint
+
+## Configuration
+
+The plugin connects to the Recursica GitHub repository (`borderux/recursica-figma`) by default. Authentication is handled via GitHub OAuth tokens stored securely in the plugin.
+
+## Troubleshooting
+
+### Import/Export Issues
+
+- Check the debug console (available in the plugin UI) for detailed error messages
+- Ensure you have proper GitHub authentication and repository access
+- Verify that exported JSON files are valid and complete
+- Check that variable collections exist and are accessible
+
+### Authentication Issues
+
+- Ensure you have a valid GitHub personal access token
+- Verify the token has appropriate repository permissions (read/write)
+- Check that you have access to the target repository
+
+## Related Documentation
+
+- [ARCHITECTURE.md](./ARCHITECTURE.md) - Detailed architecture documentation
+- [PLAN.md](./PLAN.md) - Export format version history and design decisions
+- [IMPORT_SUMMARY.md](./IMPORT_SUMMARY.md) - Import pipeline details
+- [src/plugin/README.md](./src/plugin/README.md) - Plugin architecture overview
+
+## License
+
+Part of the Recursica project. See the main project LICENSE file for details.

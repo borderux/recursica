@@ -1,19 +1,19 @@
 import { getCurrentUser } from "./getCurrentUser";
 import { loadPages } from "./loadPages";
-import { exportPage } from "./pageExportNew";
+import { exportPage } from "./import-export/pageExportNew";
 import {
   importPage,
   cleanupCreatedEntities,
   resolveDeferredNormalInstances,
-} from "./pageImportNew";
+} from "./import-export/pageImportNew";
 import {
   determineImportOrder,
   buildDependencyGraph,
   resolveImportOrder,
   importPagesInOrder,
   type PageDependency,
-} from "./dependencyResolver";
-import { quickCopy } from "./quickCopy";
+} from "./import-export/dependencyResolver";
+import { quickCopy } from "./import-export/quickCopy";
 import { storeAuthData } from "./storeAuthData";
 import { loadAuthData } from "./loadAuthData";
 import { clearAuthData } from "./clearAuthData";
@@ -26,20 +26,20 @@ import { getAllComponents } from "./getAllComponents";
 import { pluginPromptResponse } from "./pluginPromptResponse";
 import { switchToPage } from "./switchToPage";
 import {
+  getLocalVariableCollections,
+  getCollectionGuids,
+  mergeImportGroup,
+} from "./import-export/mergeImportService";
+import {
   checkForExistingPrimaryImport,
   createImportDividers,
   importSingleComponentWithWizard,
   deleteImportGroup,
   clearImportMetadata,
   cleanupFailedImport,
-} from "./singleComponentImportService";
-import {
-  getLocalVariableCollections,
-  getCollectionGuids,
-  mergeImportGroup,
-} from "./mergeImportService";
-import { getImportSummary } from "./getImportSummary";
-import { runTest } from "./runTest";
+} from "./import-export/singleComponentImportService";
+import { getImportSummary } from "./import-export/getImportSummary";
+import { runTest } from "./import-export/runTest";
 import {
   getPublishInitStatus,
   setPublishInitStatus,

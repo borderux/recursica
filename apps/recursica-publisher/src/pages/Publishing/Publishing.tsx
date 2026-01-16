@@ -3,8 +3,8 @@ import { useSearchParams, useNavigate } from "react-router";
 import { PageLayout } from "../../components/PageLayout";
 import { DebugConsole } from "../../components/DebugConsole";
 import { callPlugin } from "../../utils/callPlugin";
-import type { ExportPageResponseData } from "../../plugin/services/pageExportNew";
-import type { DebugConsoleMessage } from "../../plugin/services/debugConsole";
+import type { ExportPageResponseData } from "../../plugin/services/import-export/pageExportNew";
+import type { DebugConsoleMessage } from "../../plugin/services/import-export/debugConsole";
 import { useAuth } from "../../context/useAuth";
 import {
   GitHubService,

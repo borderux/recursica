@@ -7,7 +7,7 @@ import {
   checkCancellation,
   clearCancellation,
 } from "./utils/cancellation";
-import { debugConsole } from "./services/debugConsole";
+import { debugConsole } from "./services/import-export/debugConsole";
 
 // Service map - automatically derived from services export
 // This ensures any service added to services/index.ts is automatically available

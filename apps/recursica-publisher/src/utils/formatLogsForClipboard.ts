@@ -1,4 +1,4 @@
-import type { DebugConsoleMessage } from "../plugin/services/debugConsole";
+import type { DebugConsoleMessage } from "../plugin/services/import-export/debugConsole";
 
 /**
  * Format debug console logs for clipboard copying
