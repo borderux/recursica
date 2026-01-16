@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { StringTable } from "../services/parsers/stringTable";
+import { StringTable } from "../services/import-export/parsers/stringTable";
 
 /**
  * Compresses a JSON object by replacing long keys with short abbreviations

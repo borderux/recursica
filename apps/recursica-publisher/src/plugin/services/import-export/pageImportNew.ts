@@ -2,7 +2,7 @@
 const ORIGINAL_NODE_ID_KEY = "RecursicaOriginalNodeId";
 const PAGE_METADATA_KEY = "RecursicaPublishedMetadata";
 
-import type { ResponseMessage } from "../types/messages";
+import type { ResponseMessage } from "../../types/messages";
 import {
   getDefaultsForNodeType,
   FRAME_DEFAULTS,
@@ -24,17 +24,17 @@ import {
 import { StyleTable } from "./parsers/styleTable";
 import { ImageTable, isImageReference } from "./parsers/imageTable";
 import { StringTable } from "./parsers/stringTable";
-import { requestGuidFromUI } from "../utils/requestGuidFromUI";
+import { requestGuidFromUI } from "../../utils/requestGuidFromUI";
 import { debugConsole, type DebugConsoleMessage } from "./debugConsole";
-import { checkCancellation } from "../utils/cancellation";
-import { expandJsonData } from "../utils/jsonCompression";
-import { pluginPrompt } from "../utils/pluginPrompt";
-import { getComponentCleanName } from "../utils/getComponentCleanName";
+import { checkCancellation } from "../../utils/cancellation";
+import { expandJsonData } from "../../utils/jsonCompression";
+import { pluginPrompt } from "../../utils/pluginPrompt";
+import { getComponentCleanName } from "../../utils/getComponentCleanName";
 import {
   normalizeCollectionName,
   isStandardCollection,
   getFixedGuidForCollection,
-} from "../../const/CollectionConstants";
+} from "../../../const/CollectionConstants";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // Map to store component property binding data during import
@@ -9773,7 +9773,6 @@ export async function importPage(
     if (error instanceof Error && error.stack) {
       debugConsole.error(`Stack trace: ${error.stack}`);
     }
-    console.error("Error importing page:", error);
     // Include debug logs in error response
     const debugLogs = debugConsole.getLogs();
 

@@ -96,7 +96,7 @@ interface IndexJson {
   components?: Record<string, IndexJsonComponent>;
 }
 
-import type { ExportPageResponseData } from "../../plugin/services/pageExportNew";
+import type { ExportPageResponseData } from "../../plugin/services/import-export/pageExportNew";
 
 interface FigmaNode {
   id: string;

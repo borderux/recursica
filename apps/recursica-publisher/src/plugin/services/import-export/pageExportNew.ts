@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { ResponseMessage } from "../types/messages";
+import type { ResponseMessage } from "../../types/messages";
 import {
   parseBaseNodeProperties,
   type ParserContext,
@@ -15,12 +15,12 @@ import { StyleTable } from "./parsers/styleTable";
 import { ImageTable } from "./parsers/imageTable";
 import { StringTable } from "./parsers/stringTable";
 import { debugConsole } from "./debugConsole";
-import { checkCancellation } from "../utils/cancellation";
-import { compressJsonData } from "../utils/jsonCompression";
-import { requestGuidFromUI } from "../utils/requestGuidFromUI";
-import { pluginPrompt } from "../utils/pluginPrompt";
+import { checkCancellation } from "../../utils/cancellation";
+import { compressJsonData } from "../../utils/jsonCompression";
+import { requestGuidFromUI } from "../../utils/requestGuidFromUI";
+import { pluginPrompt } from "../../utils/pluginPrompt";
 import type { InstanceTableEntry } from "./parsers/instanceTable";
-import { getComponentName } from "../utils/getComponentName";
+import { getComponentName } from "../../utils/getComponentName";
 
 export interface ExportPageData {
   pageIndex: number;
@@ -1591,11 +1591,8 @@ export async function exportPage(
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
-    console.error("EXPORT ERROR CAUGHT:", error);
-    console.error("Error message:", errorMessage);
     debugConsole.error(`Export failed: ${errorMessage}`);
     if (error instanceof Error && error.stack) {
-      console.error("Stack trace:", error.stack);
       debugConsole.error(`Stack trace: ${error.stack}`);
     }
     // Include debug logs in error response
@@ -1609,7 +1606,6 @@ export async function exportPage(
         ...(debugLogs.length > 0 && { debugLogs }),
       },
     };
-    console.error("Returning error response:", errorResponse);
     return errorResponse;
   }
 }

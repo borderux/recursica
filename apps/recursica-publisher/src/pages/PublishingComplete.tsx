@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router";
-import type { ExportPageResponseData } from "../plugin/services/pageExportNew";
+import type { ExportPageResponseData } from "../plugin/services/import-export/pageExportNew";
 import type { ComponentInfo } from "../services/github/githubService";
 
 interface PublishingCompleteLocationState {
