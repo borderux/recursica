@@ -1,7 +1,7 @@
 /// <reference types="@figma/plugin-typings" />
-import type { ResponseMessage } from "../types/messages";
-import { retSuccess, retError } from "../utils/response";
-import type { NoData } from "./getCurrentUser";
+import type { ResponseMessage } from "../../types/messages";
+import { retSuccess, retError } from "../../utils/response";
+import type { NoData } from "../getCurrentUser";
 import type { SanitizedPageImportResult } from "./pageImportNew";
 import { DIVIDER_PLUGIN_DATA_KEY } from "./singleComponentImportService";
 

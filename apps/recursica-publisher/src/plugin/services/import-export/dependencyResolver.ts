@@ -8,12 +8,12 @@ import {
   type PageImportResult,
   sanitizeImportResult,
 } from "./pageImportNew";
-import type { ResponseMessage } from "../types/messages";
+import type { ResponseMessage } from "../../types/messages";
 import {
   getFixedGuidForCollection,
   isStandardCollection,
   normalizeCollectionName,
-} from "../../const/CollectionConstants";
+} from "../../../const/CollectionConstants";
 // VariableCollection type from Figma API
 type VariableCollection = ReturnType<
   typeof figma.variables.createVariableCollection

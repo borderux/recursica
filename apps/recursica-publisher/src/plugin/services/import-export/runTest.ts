@@ -1,7 +1,7 @@
 /// <reference types="@figma/plugin-typings" />
-import type { ResponseMessage } from "../types/messages";
-import type { NoData } from "./getCurrentUser";
-import { retSuccess, retError } from "../utils/response";
+import type { ResponseMessage } from "../../types/messages";
+import type { NoData } from "../getCurrentUser";
+import { retSuccess, retError } from "../../utils/response";
 import { debugConsole } from "./debugConsole";
 // Previous test imports commented out - only running testInstanceChildrenAndOverrides
 // import {

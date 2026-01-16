@@ -1,75 +1,58 @@
-# Plugin Architecture
+# Plugin Code Layout
 
-This directory contains the Figma plugin code organized in a clean, modular structure.
+This folder contains the Figma plugin sandbox code (not the UI). It is organized around services, types, and shared utilities.
 
 ## Structure
 
-```
+```text
 src/plugin/
-├── main.ts                 # Plugin orchestrator - handles UI setup and message routing
+├── main.ts                 # Orchestrator + message router
 ├── services/               # Business logic services
-│   └── resetMetadata.ts    # Service for resetting variable metadata
-├── types/                  # TypeScript type definitions
-│   └── messages.ts         # Message and response type definitions
-└── README.md              # This file
+├── types/                  # Message + service name types
+├── utils/                  # Shared stateless helpers
+└── README.md               # This file
 ```
+
+## How Services Work
+
+The plugin uses message-based communication between the UI and sandbox:
+
+- **UI → Plugin**: `figma.ui.postMessage(message)`
+- **Plugin → UI**: `figma.ui.postMessage(response)`
+
+Services are registered in `services/index.ts` and invoked by name via `main.ts`.
+
+## Creating a New Service
+
+1. **Create the service** in `services/` (exported function).
+2. **Add the service name** to `types/ServiceName.ts`.
+3. **Define message types** in `types/messages.ts`.
+4. **Export the service** in `services/index.ts`.
+5. **Update the UI** to call the new service.
+
+This repository does **not** use a switch statement in `main.ts`; it routes dynamically using the services map from `services/index.ts`.
+
+## Utils Guidelines (Important)
+
+Utils in `src/plugin/utils/` must be **stateless** shared helpers:
+
+- No module-level state
+- No side effects
+- Prefer pure functions
+- Keep them reusable across services
+
+If a function needs state, it belongs in a service or a dedicated module in `services/`.
+
+## Import/Export Services (Read Before Editing)
+
+**Before modifying** `pageExportNew.ts` or `pageImportNew.ts`, you **must read**:
+
+- `services/import-export/README.md`
+
+Those services have a complex pipeline (including Stage 9.5 and Stage 10.5 sub-stages), deferred instance handling, and non-obvious design decisions. The documentation explains why those choices exist and how changes should be made safely.
 
 ## Architecture Principles
 
-### 1. Separation of Concerns
-
-- **main.ts**: Acts as an orchestrator, handling UI setup and message routing
-- **services/**: Contains business logic for specific operations
-- **types/**: Centralized type definitions for better maintainability
-
-### 2. Message-Based Communication
-
-The plugin uses a message-based system for communication between the UI and plugin sandbox:
-
-- **PluginMessage**: Messages sent from UI to plugin
-- **PluginResponse**: Responses sent from plugin to UI
-
-### 3. Service Pattern
-
-Each major operation is encapsulated in its own service:
-
-- `resetMetadata.ts`: Handles all metadata reset operations
-- Future services can be added for other operations
-
-## Adding New Features
-
-To add a new feature:
-
-1. **Create a service** in `services/` directory
-2. **Define message types** in `types/messages.ts`
-3. **Add message handler** in `main.ts` switch statement
-4. **Update UI** to send the new message type
-
-## Example: Adding a New Service
-
-```typescript
-// services/newFeature.ts
-import type { NewFeatureResponse } from '../types/messages';
-
-export async function performNewFeature(): Promise<NewFeatureResponse> {
-  // Implementation here
-}
-
-// types/messages.ts
-export interface NewFeatureMessage extends BaseMessage {
-  type: 'new-feature';
-}
-
-export interface NewFeatureResponse extends BaseMessage {
-  type: 'new-feature-response';
-  success: boolean;
-  data?: any;
-  error?: string;
-}
-
-// main.ts
-case 'new-feature':
-  const response = await performNewFeature();
-  figma.ui.postMessage(response);
-  break;
-```
+- **Separation of concerns**: orchestration in `main.ts`, logic in `services/`
+- **Message-based communication**: typed request/response messages
+- **Service pattern**: one service per operation

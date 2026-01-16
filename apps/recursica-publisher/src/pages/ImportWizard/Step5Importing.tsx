@@ -5,8 +5,8 @@ import { Button } from "../../components/Button";
 import { useImportWizard } from "../../context/ImportWizardContext";
 import { useImportData } from "../../context/ImportDataContext";
 import { callPlugin } from "../../utils/callPlugin";
-import type { DebugConsoleMessage } from "../../plugin/services/debugConsole";
-import type { ImportSummaryData } from "../../plugin/services/getImportSummary";
+import type { DebugConsoleMessage } from "../../plugin/services/import-export/debugConsole";
+import type { ImportSummaryData } from "../../plugin/services/import-export/getImportSummary";
 
 export default function Step5Importing() {
   const navigate = useNavigate();
