@@ -1,5 +1,15 @@
 # @recursica/publisher
 
+## 0.2.0
+
+### Minor Changes
+
+- [#305](https://github.com/borderux/recursica/pull/305) [`3c85d79`](https://github.com/borderux/recursica/commit/3c85d79e955e1182cd274c537cf8ee386165fdbe) Thanks [@mlmassey](https://github.com/mlmassey)! - Achieved export and import of Button and dropdown
+
+### Patch Changes
+
+- [#306](https://github.com/borderux/recursica/pull/306) [`4bbef2b`](https://github.com/borderux/recursica/commit/4bbef2b890922f0ea2d616d8ccc6027be6c64977) Thanks [@mlmassey](https://github.com/mlmassey)! - Cleaned up docs and add rules to code base
+
 ## 0.1.1
 
 ### Patch Changes
