@@ -1,5 +1,11 @@
 # @recursica/publisher
 
+## 0.2.1
+
+### Patch Changes
+
+- [#313](https://github.com/borderux/recursica/pull/313) [`e004c02`](https://github.com/borderux/recursica/commit/e004c0210701a94016f804c73245582b7637dfa7) Thanks [@mlmassey](https://github.com/mlmassey)! - Added manifest to dist
+
 ## 0.2.0
 
 ### Minor Changes
