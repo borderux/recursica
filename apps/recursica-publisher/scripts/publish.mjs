@@ -171,11 +171,19 @@ function createZipFile(config) {
 
       archive.pipe(output);
 
-      // Add all files from dist directory (excluding zip files)
+      // Add manifest.json at zip root (required for Figma plugin; not in dist/)
+      const manifestPath = path.join(parentDir, "manifest.json");
+      if (fs.existsSync(manifestPath)) {
+        archive.file(manifestPath, { name: "manifest.json" });
+        log(`  📄 Added manifest.json`, "cyan");
+      } else {
+        log(`⚠️  Warning: manifest.json not found at ${manifestPath}`, "yellow");
+      }
+
+      // Add dist contents under dist/ so manifest paths (./dist/...) resolve
       try {
         const files = fs.readdirSync(distPath);
         let filesAdded = 0;
-        let filesSkipped = 0;
 
         for (const file of files) {
           try {
@@ -183,34 +191,26 @@ function createZipFile(config) {
             const stat = fs.statSync(filePath);
 
             if (stat.isFile() && !file.endsWith(".zip")) {
-              archive.file(filePath, { name: file });
-              log(`  📄 Added ${file}`, "cyan");
+              archive.file(filePath, { name: path.join("dist", file) });
+              log(`  📄 Added dist/${file}`, "cyan");
               filesAdded++;
-            } else {
-              filesSkipped++;
             }
           } catch (fileError) {
             log(
               `⚠️  Warning: Could not add file ${file}: ${fileError.message}`,
               "yellow",
             );
-            filesSkipped++;
-            // Continue with other files
           }
         }
 
         if (filesAdded > 0) {
-          log(`📁 Added ${filesAdded} file(s) from ${config.distDir}/`, "cyan");
-        }
-        if (filesSkipped > 0) {
-          log(`⚠️  Skipped ${filesSkipped} file(s)`, "yellow");
+          log(`📁 Added ${filesAdded} file(s) under dist/`, "cyan");
         }
       } catch (readError) {
         log(
           `⚠️  Warning: Error reading directory: ${readError.message}`,
           "yellow",
         );
-        // Still try to finalize if archive was started
       }
 
       // Finalize the archive
