@@ -17,86 +17,47 @@ For more information about Recursica, go to https://recursica.com
   --global-form-layout-side-by-side-label-height: 48px;
   --global-form-layout-side-by-side-gutter: var(--dimension-gutter-horizontal);
   --global-form-layout-side-by-side-vertical-padding: 3px;
-  --global-form-indicator-color-optional-text: var(
-    --layer-element-text-low-emphasis
-  );
+  --global-form-indicator-color-optional-text: var(--layer-layer-3-element-text-low-emphasis);
   --global-form-layout-stacked-label-field-gap: 3px;
-  --global-form-indicator-color-required-asterisk: var(
-    --layer-element-text-alert
-  );
+  --global-form-indicator-color-required-asterisk: var(--layer-layer-3-element-text-alert);
   --global-form-indicator-label-gap: 2px;
-  --global-form-field-color-background: var(--layer-property-surface);
-  --global-form-field-color-background-read-only: var(
-    --palette-neutral-100-tone
-  );
-  --global-form-field-color-border: var(--layer-property-border-color);
+  --global-form-field-color-background: var(--layer-layer-3-property-surface);
+  --global-form-field-color-background-read-only: var(--palette-neutral-100-tone);
+  --global-form-field-color-border: var(--layer-layer-3-property-border-color);
   --global-form-field-color-border-focus: var(--palette-palette-1-default-tone);
-  --global-form-field-color-border-selected: var(
-    --palette-palette-1-default-tone
-  );
-  --global-form-field-size-border-radius: var(
-    --dimension-border-radius-default
-  );
-  --global-form-field-color-border-error: var(--palette-alert);
+  --global-form-field-color-border-selected: var(--palette-palette-1-default-tone);
+  --global-form-field-color-border-error: var(--palette-alert-tone);
+  --global-form-field-size-border-radius: var(--dimension-border-radius-default);
   --global-form-field-size-border-thickness-default: 1px;
   --global-form-field-size-border-thickness-focus: 2px;
-  --global-form-field-color-icon: var(--layer-element-text-color);
+  --global-form-field-color-icon: var(--layer-layer-3-element-text-color);
   --global-form-field-size-icon-text-gap: var(--dimension-default);
   --global-form-field-size-single-line-input-height: 48px;
   --global-form-field-size-horizontal-padding: var(--dimension-lg);
-  --global-form-field-color-text-valued: var(--layer-element-text-color);
+  --global-form-field-color-text-valued: var(--layer-layer-3-element-text-color);
   --global-form-field-size-icon: var(--dimension-icon-default);
   --global-form-field-size-max-width: 464px;
   --global-form-field-size-min-width: 140px;
-  --global-form-field-color-placeholder-text-opacity: var(
-    --layer-element-text-low-emphasis
-  );
-  --global-form-field-size-vertical-padding: var(--dimension-md);
+  --global-form-field-color-placeholder-text-opacity: var(--palette-white-low-emphasis);
   --global-form-field-color-disabled: var(--state-disabled);
+  --global-form-field-size-vertical-padding: var(--dimension-md);
   --global-form-field-size-vertical-gutter: var(--dimension-default);
-  --global-form-label-color-default: var(--layer-element-text-color);
-  --global-form-label-color-required-asterisk: var(
-    --global-form-indicator-color-required-asterisk
-  );
-  --global-form-label-color-optional-text-opacity: var(
-    --global-form-indicator-color-optional-text
-  );
-  --global-form-label-size-required-indicator-gap: var(
-    --global-form-indicator-label-gap
-  );
-  --global-form-label-size-stacked-bottom-padding: var(
-    --global-form-field-size-vertical-gutter
-  );
-  --global-form-label-size-side-by-side-large-column-width: var(
-    --global-form-layout-side-by-side-label-column-width
-  );
-  --global-form-label-size-side-by-side-large-height: var(
-    --global-form-layout-side-by-side-label-height
-  );
-  --global-form-label-size-side-by-side-large-gutter: var(
-    --global-form-layout-side-by-side-gutter
-  );
-  --global-form-label-size-side-by-side-small-vertical-padding: var(
-    --global-form-layout-side-by-side-vertical-padding
-  );
-  --global-form-assistive-element-help-text-color: var(
-    --layer-element-text-color
-  );
-  --global-form-assistive-element-help-icon-color: var(
-    --layer-element-text-color
-  );
-  --global-form-assistive-element-error-text-color: var(
-    --layer-element-text-alert
-  );
-  --global-form-assistive-element-error-icon-color: var(
-    --layer-element-text-alert
-  );
-  /* --accordion-color-label: var(--layer-element-text-color); */
-  --accordion-color-label: var(--layer-element-text-color);
-  /** --accordion-color-icon: var(--layer-element-text-color); */
-  --accordion-color-icon: var(--layer-element-text-color);
-  /** --accordion-color-divider: var(--layer-property-border-color); */
-  --accordion-color-divider: var(--layer-property-border-color);
+  --global-form-label-color-default: var(--layer-layer-3-element-text-color);
+  --global-form-label-color-required-asterisk: var(--global-form-indicator-color-required-asterisk);
+  --global-form-label-color-optional-text-opacity: var(--global-form-indicator-color-optional-text);
+  --global-form-label-size-required-indicator-gap: var(--global-form-indicator-label-gap);
+  --global-form-label-size-stacked-bottom-padding: var(--global-form-field-size-vertical-gutter);
+  --global-form-label-size-side-by-side-large-column-width: var(--global-form-layout-side-by-side-label-column-width);
+  --global-form-label-size-side-by-side-large-height: var(--global-form-layout-side-by-side-label-height);
+  --global-form-label-size-side-by-side-large-gutter: var(--global-form-layout-side-by-side-gutter);
+  --global-form-label-size-side-by-side-small-vertical-padding: var(--global-form-layout-side-by-side-vertical-padding);
+  --global-form-assistive-element-help-text-color: var(--layer-layer-3-element-text-color);
+  --global-form-assistive-element-help-icon-color: var(--layer-layer-3-element-text-color);
+  --global-form-assistive-element-error-text-color: var(--layer-layer-3-element-text-alert);
+  --global-form-assistive-element-error-icon-color: var(--layer-layer-3-element-text-alert);
+  --accordion-color-label: var(--layer-layer-3-element-text-color);
+  --accordion-color-icon: var(--layer-layer-3-element-text-color);
+  --accordion-color-divider: var(--layer-layer-3-property-border-color);
   --accordion-size-padding: var(--dimension-lg);
   --accordion-size-text-icon-gap: var(--dimension-lg);
   --accordion-size-header-content-gap: var(--dimension-lg);
@@ -104,186 +65,141 @@ For more information about Recursica, go to https://recursica.com
   --accordion-size-icon: var(--dimension-icon-default);
   --accordion-size-min-width: 140px;
   --accordion-size-max-width: 464px;
-  --avatar-color-background-primary: var(
-    --layer-layer-alternative-primary-color-property-surface
-  );
-  --avatar-color-border-primary: var(
-    --layer-layer-alternative-primary-color-element-text-color
-  );
-  --avatar-color-initials-primary: var(
-    --layer-layer-alternative-primary-color-element-text-color
-  );
-  --avatar-color-background-ghost: var(--layer-property-surface);
-  --avatar-color-border-ghost: var(--layer-property-border-color);
-  --avatar-color-initials-ghost: var(--layer-element-text-color);
-  --avatar-color-border-image: var(--layer-property-border-color);
+  --avatar-color-background-primary: var(--palette-palette-1-default-tone);
+  --avatar-color-border-primary: var(--palette-white-tone);
+  --avatar-color-label-primary: var(--palette-palette-1-default-on-tone);
+  --avatar-color-background-ghost: var(--layer-layer-3-property-surface);
+  --avatar-color-border-ghost: var(--layer-layer-3-property-border-color);
+  --avatar-color-label-ghost: var(--layer-layer-3-element-text-color);
+  --avatar-color-border-image: var(--layer-layer-3-property-border-color);
   --avatar-size-small: 24px;
   --avatar-size-default: 32px;
   --avatar-size-large: 40px;
   --avatar-size-icon: var(--dimension-icon-sm);
-  --badge-color-background-default: var(--layer-property-surface);
-  --badge-color-background-primary: var(
-    --layer-layer-alternative-primary-color-property-surface
-  );
-  --badge-color-background-alert: var(
-    --layer-layer-alternative-alert-property-surface
-  );
-  --badge-color-background-success: var(
-    --layer-layer-alternative-success-property-surface
-  );
-  --badge-color-label-default: var(--layer-element-text-color);
-  --badge-color-label-primary: var(
-    --layer-layer-alternative-primary-color-element-text-color
-  );
-  --badge-color-label-alert: var(
-    --layer-layer-alternative-alert-element-text-color
-  );
-  --badge-color-label-success: var(
-    --layer-layer-alternative-success-element-text-color
-  );
+  --badge-color-background-default: var(--palette-white-tone);
+  --badge-color-background-primary: var(--palette-palette-1-default-tone);
+  --badge-color-background-alert: var(--palette-alert-tone);
+  --badge-color-background-success: var(--palette-success-tone);
+  --badge-color-label-default: var(--palette-white-on-tone);
+  --badge-color-label-primary: var(--palette-palette-1-default-on-tone);
+  --badge-color-label-alert: var(--palette-alert-on-tone);
+  --badge-color-label-success: var(--palette-success-on-tone);
   --badge-size-horizontal-padding: var(--dimension-default);
   --badge-size-default-min-width: 16px;
-  --badge-size-large-min-width: 24px;
   --badge-size-default-height: 16px;
+  --badge-size-large-min-width: 24px;
   --badge-size-large-height: 24px;
-  --breadcrumb-color-interactive: var(--layer-element-interactive-color);
-  --breadcrumb-color-read-only: var(--layer-element-text-color);
+  --badge-size-border-radius: var(--dimension-border-radius-lg);
+  --breadcrumb-color-interactive: var(--layer-layer-3-element-interactive-color);
+  --breadcrumb-color-read-only: var(--layer-layer-3-element-text-color);
   --breadcrumb-size-padding: var(--dimension-default);
   --breadcrumb-size-icon-label-gap: var(--dimension-sm);
   --breadcrumb-size-icon: var(--dimension-icon-sm);
   --button-color-background-solid: var(--palette-neutral-900-tone);
   --button-color-background-solid-hover: var(--palette-neutral-800-tone);
   --button-color-text-solid: var(--palette-neutral-900-on-tone);
-  --button-color-outline: var(--layer-element-interactive-color);
-  --button-color-outline-hover: var(--layer-element-interactive-hover-color);
+  --button-color-outline: var(--layer-layer-3-element-interactive-color);
+  --button-color-outline-hover: var(--layer-layer-3-element-interactive-hover-color);
   --button-color-disabled: var(--state-disabled);
   --button-size-default-icon: var(--dimension-icon-default);
   --button-size-default-height: 48px;
   --button-size-default-min-width: 120px;
   --button-size-default-horizontal-padding: var(--dimension-lg);
-  --button-size-default-icon-padding: var(--dimension-default);
   --button-size-default-icon-text-gap: var(--dimension-default);
-  --card-color-background: var(--layer-property-surface);
-  --card-color-outline: var(--layer-property-border-color);
-  --card-size-border-radius: var(--layer-property-border-radius);
-  --card-color-text: var(--layer-element-text-color);
+  --card-color-background: var(--layer-layer-3-property-surface);
+  --card-color-outline: var(--layer-layer-3-property-border-color);
+  --card-size-border-radius: var(--layer-layer-3-property-border-radius);
+  --card-color-text: var(--layer-layer-alternative-floating-element-text-color);
   --card-size-title-badge-gap: var(--dimension-default);
   --card-size-content-vertical-gutter: var(--dimension-lg);
   --card-size-min-width: 224px;
   --card-size-max-width: 464px;
   --card-size-padding: var(--dimension-lg);
-  --checkbox-color-checkbox: var(--layer-element-text-color);
+  --checkbox-color-checkbox: var(--layer-layer-3-element-text-color);
   --checkbox-color-icon: var(--palette-neutral-900-on-tone);
   --checkbox-color-text-value: var(--global-form-field-color-text-valued);
   --button-size-small-icon: var(--dimension-icon-sm);
   --button-size-small-height: 32px;
   --checkbox-color-disabled: var(--state-disabled);
-  --chip-color-unselected-background: var(--layer-property-surface);
+  --chip-color-error: var(--palette-alert-tone);
+  --chip-color-unselected-background: var(--palette-white-tone);
+  --chip-color-unselected-text: var(--palette-white-on-tone);
+  --chip-color-unselected-border: var(--palette-neutral-default-tone);
+  --chip-color-selected-background: var(--palette-neutral-100-tone);
+  --chip-color-selected-text: var(--palette-neutral-100-on-tone);
+  --chip-color-selected-border: var(--palette-palette-1-default-tone);
   --chip-size-border-radius: var(--dimension-border-radius-sm);
-  --chip-size-horizontal-padding: var(--dimension-sm);
-  --chip-size-vertical-padding: var(--dimension-default);
+  --chip-size-vertical-padding: var(--dimension-sm);
+  --chip-size-horizontal-padding: var(--dimension-default);
   --chip-size-icon-text-gap: var(--dimension-sm);
   --chip-size-icon: var(--dimension-icon-sm);
   --chip-size-max-width: 200px;
-  --chip-color-unselected-text: var(--layer-element-text-color);
-  --chip-color-unselected-border: var(--layer-property-border-color);
-  --chip-color-selected-background: var(--palette-neutral-100-tone);
-  --chip-color-selected-text: var(--palette-neutral-100-on-tone);
   --checkbox-size-border-radius: var(--dimension-border-radius-sm);
   --checkbox-size-checkbox: var(--dimension-xl);
   --checkbox-size-icon: var(--dimension-icon-sm);
-  --chip-color-selected-border: var(--palette-palette-1-default-tone);
-  --chip-color-error: var(--layer-element-text-alert);
   --chip-row-size-chip-gap: var(--dimension-sm);
-  --date-picker-calendar-color-background: var(--layer-property-surface);
-  --date-picker-calendar-color-border: var(--layer-property-border-color);
-  --date-picker-calendar-color-date-read-only: var(--layer-element-text-color);
+  --date-picker-calendar-color-background: var(--layer-layer-3-property-surface);
+  --date-picker-calendar-color-border: var(--layer-layer-3-property-border-color);
+  --date-picker-calendar-color-date-read-only: var(--layer-layer-3-element-text-color);
   --date-picker-calendar-size-height: 400px;
   --date-picker-calendar-size-width: 360px;
   --date-picker-calendar-size-buttons-gap: var(--dimension-default);
   --date-picker-calendar-size-padding: var(--dimension-md);
-  --date-picker-calendar-size-date-size: 40px;
-  --date-picker-calendar-size-border-radius: var(--size-border-radius-default);
+  --date-picker-calendar-size-date-size: 32px;
+  --date-picker-calendar-size-border-radius: var(--dimension-border-radius-default);
   --date-picker-calendar-size-date-border-radius: var(--dimension-xl);
-  --date-picker-calendar-size-date-padding: var(--dimension-sm);
-  --divider-color-default: var(--layer-property-border-color);
+  --date-picker-calendar-size-date-padding: var(--dimension-default);
+  --divider-color-default: var(--layer-layer-3-property-border-color);
   --dropdown-color-background: var(--global-form-field-color-background);
   --dropdown-size-border-radius: var(--global-form-field-size-border-radius);
-  --dropdown-size-field-height: var(
-    --global-form-field-size-single-line-input-height
-  );
+  --dropdown-size-field-height: var(--global-form-field-size-single-line-input-height);
   --dropdown-size-icon-text-gap: var(--global-form-field-size-icon-text-gap);
-  --dropdown-size-horizontal-padding: var(
-    --global-form-field-size-horizontal-padding
-  );
+  --dropdown-size-horizontal-padding: var(--global-form-field-size-horizontal-padding);
   --dropdown-size-icon: var(--global-form-field-size-icon);
   --dropdown-size-max-width: var(--global-form-field-size-max-width);
   --dropdown-size-min-width: var(--global-form-field-size-min-width);
-  --dropdown-size-vertical-padding: var(
-    --global-form-field-size-vertical-padding
-  );
-  --dropdown-color-background-read-only: var(
-    --global-form-field-color-background-read-only
-  );
+  --dropdown-size-vertical-padding: var(--global-form-field-size-vertical-padding);
+  --dropdown-color-background-read-only: var(--global-form-field-color-background-read-only);
   --dropdown-color-border: var(--global-form-field-color-border);
   --dropdown-color-border-focus: var(--global-form-field-color-border-focus);
-  --dropdown-color-border-selected: var(
-    --global-form-field-color-border-selected
-  );
+  --dropdown-color-border-selected: var(--global-form-field-color-border-selected);
   --dropdown-color-border-error: var(--global-form-field-color-border-error);
   --dropdown-color-leading-icon: var(--global-form-field-color-icon);
   --dropdown-color-trailing-icon: var(--global-form-field-color-icon);
   --dropdown-color-text-valued: var(--global-form-field-color-text-valued);
-  --dropdown-color-text-placeholder-opacity: var(
-    --global-form-field-color-placeholder-text-opacity
-  );
+  --dropdown-color-text-placeholder-opacity: var(--global-form-field-color-placeholder-text-opacity);
   --dropdown-color-disabled: var(--global-form-field-color-disabled);
-  --file-upload-drop-zone-color-background: var(--layer-property-surface);
+  --file-upload-help-text-help-text: var(--layer-layer-3-element-text-color);
+  --file-upload-help-text-error-text: var(--layer-layer-3-element-text-alert);
+  --file-upload-help-text-error-border: var(--layer-layer-3-element-text-alert);
+  --file-upload-drop-zone-color-background: var(--layer-layer-3-property-surface);
   --file-input-color-background: var(--global-form-field-color-background);
-  --file-input-color-background-read-only: var(
-    --global-form-field-color-background-read-only
-  );
+  --file-input-color-background-read-only: var(--global-form-field-color-background-read-only);
   --file-input-color-border: var(--global-form-field-color-border);
   --file-input-color-border-focus: var(--global-form-field-color-border-focus);
-  --file-input-color-border-selected: var(
-    --global-form-field-color-border-selected
-  );
+  --file-input-color-border-selected: var(--global-form-field-color-border-selected);
   --file-input-color-border-error: var(--global-form-field-color-border-error);
   --file-input-color-upload-icon: var(--global-form-field-color-icon);
   --file-input-color-clear-icon: var(--global-form-field-color-icon);
   --file-input-color-text-valued: var(--global-form-field-color-text-valued);
-  --file-input-color-placeholder-text-opacity: var(
-    --global-form-field-color-placeholder-text-opacity
-  );
+  --file-input-color-placeholder-text-opacity: var(--global-form-field-color-placeholder-text-opacity);
   --file-input-color-disabled: var(--global-form-field-color-disabled);
   --file-input-size-border-radius: var(--global-form-field-size-border-radius);
   --file-input-size-icon-text-gap: var(--global-form-field-size-icon-text-gap);
-  --file-input-size-field-height: var(
-    --global-form-field-size-single-line-input-height
-  );
-  --file-input-size-horizontal-padding: var(
-    --global-form-field-size-horizontal-padding
-  );
+  --file-input-size-field-height: var(--global-form-field-size-single-line-input-height);
+  --file-input-size-horizontal-padding: var(--global-form-field-size-horizontal-padding);
   --file-input-size-icon: var(--global-form-field-size-icon);
   --file-input-size-max-width: var(--global-form-field-size-max-width);
   --file-input-size-min-width: var(--global-form-field-size-min-width);
-  --file-input-size-vertical-padding: var(
-    --global-form-field-size-vertical-padding
-  );
-  --file-upload-drop-zone-color-border-default: var(
-    --layer-property-border-color
-  );
-  --file-upload-drop-zone-color-border-focus: var(
-    --palette-palette-1-default-tone
-  );
-  --file-upload-drop-zone-color-text: var(--layer-element-interactive-color);
-  --file-upload-drop-zone-size-border-radius: var(
-    --dimension-border-radius-default
-  );
+  --file-input-size-vertical-padding: var(--global-form-field-size-vertical-padding);
+  --file-upload-drop-zone-color-border-default: var(--layer-layer-3-property-border-color);
+  --file-upload-drop-zone-color-border-focus: var(--palette-palette-1-default-tone);
+  --file-upload-drop-zone-color-text: var(--layer-layer-3-element-interactive-color);
+  --file-upload-drop-zone-size-border-radius: var(--dimension-border-radius-default);
   --file-upload-drop-zone-size-padding: var(--dimension-lg);
   --file-upload-drop-zone-size-min-width: 224px;
   --file-upload-drop-zone-size-max-width: 464px;
-  --file-upload-file-color-background: var(--layer-property-surface);
+  --file-upload-file-color-background: var(--layer-layer-3-property-surface);
   --file-upload-file-size-height: 40px;
   --file-upload-file-size-left-padding: var(--dimension-lg);
   --file-upload-file-size-right-padding: var(--dimension-default);
@@ -293,17 +209,14 @@ For more information about Recursica, go to https://recursica.com
   --file-upload-gap: var(--dimension-lg);
   --file-upload-file-min-width: 224px;
   --file-upload-file-max-width: 384px;
-  --file-upload-file-color-border: var(--layer-property-border-color);
-  --file-upload-file-color-text: var(--layer-element-text-color);
-  --file-upload-file-color-error-text: var(--layer-element-text-alert);
-  --file-upload-file-color-error-border: var(--layer-element-text-alert);
-  --hover-card-color-background: var(--layer-property-surface);
-  --hover-card-color-border: var(--layer-property-border-color);
-  --hover-card-color-text: var(--layer-element-text-color);
+  --file-upload-file-color-border: var(--layer-layer-3-property-border-color);
+  --hover-card-color-background: var(--layer-layer-3-property-surface);
+  --hover-card-color-border: var(--layer-layer-3-property-border-color);
+  --hover-card-color-text: var(--layer-layer-3-element-text-color);
   --hover-card-size-padding: var(--dimension-lg);
   --hover-card-size-radius: var(--dimension-border-radius-sm);
-  --link-color-text-default: var(--layer-element-interactive-color);
-  --link-color-text-hover: var(--layer-element-interactive-hover-color);
+  --link-color-text-default: var(--layer-layer-3-element-interactive-color);
+  --link-color-text-hover: var(--layer-layer-3-element-interactive-hover-color);
   --link-size-text-icon-gap: var(--dimension-sm);
   --link-size-icon-body: var(--dimension-icon-sm);
   --link-size-icon-body-small: var(--dimension-icon-xs);
@@ -314,25 +227,24 @@ For more information about Recursica, go to https://recursica.com
   --loader-size-md: 36px;
   --loader-size-sm: 22px;
   --loader-size-xs: 18px;
-  --menu-color-background: var(--layer-property-surface);
+  --menu-color-background: var(--layer-layer-3-property-surface);
   --menu-size-border-radius: var(--dimension-border-radius-default);
   --menu-size-min-width: 140px;
   --menu-size-max-width: 464px;
   --menu-size-vertical-padding: var(--dimension-default);
-  --menu-item-color-enabled: var(--layer-property-surface);
   --menu-item-color-hover: var(--palette-neutral-100-tone);
   --menu-item-color-selected: var(--palette-neutral-200-tone);
   --menu-item-color-focused: var(--palette-neutral-100-tone);
   --menu-item-color-disabled: var(--state-disabled);
-  --menu-item-color-text: var(--layer-element-text-color);
-  --menu-item-color-supporting-text: var(--layer-element-text-low-emphasis);
-  --menu-item-color-border-bottom: var(--layer-property-border-color);
+  --menu-item-color-text: var(--layer-layer-3-element-text-color);
+  --menu-item-color-supporting-text: var(--layer-layer-1-element-text-low-emphasis);
+  --menu-item-color-border-bottom: var(--layer-layer-3-property-border-color);
   --menu-item-size-padding: var(--dimension-lg);
   --menu-item-size-label-top-padding: 3px;
   --menu-item-size-spacing: var(--dimension-default);
-  --modal-color-background: var(--layer-property-surface);
-  --modal-color-scroll-divider: var(--layer-property-border-color);
-  --modal-color-title: var(--layer-element-text-color);
+  --modal-color-background: var(--layer-layer-3-property-surface);
+  --modal-color-scroll-divider: var(--palette-neutral-default-tone);
+  --modal-color-title: var(--layer-layer-alternative-floating-element-text-color);
   --modal-size-button-gap: var(--dimension-sm);
   --modal-size-border-radius: var(--dimension-border-radius-lg);
   --modal-size-horizontal-padding: var(--dimension-xl);
@@ -340,74 +252,50 @@ For more information about Recursica, go to https://recursica.com
   --modal-size-min-width: 304px;
   --modal-size-max-width: 542px;
   --number-input-color-background: var(--global-form-field-color-background);
-  --number-input-color-background-read-only: var(
-    --global-form-field-color-background-read-only
-  );
+  --number-input-color-background-read-only: var(--global-form-field-color-background-read-only);
   --number-input-color-border: var(--global-form-field-color-border);
-  --number-input-color-border-focus: var(
-    --global-form-field-color-border-focus
-  );
-  --number-input-color-border-selected: var(
-    --global-form-field-color-border-selected
-  );
-  --number-input-color-border-error: var(
-    --global-form-field-color-border-error
-  );
+  --number-input-color-border-focus: var(--global-form-field-color-border-focus);
+  --number-input-color-border-selected: var(--global-form-field-color-border-selected);
+  --number-input-color-border-error: var(--global-form-field-color-border-error);
   --number-input-color-control-icon: var(--global-form-field-color-icon);
   --number-input-color-leading-icon: var(--global-form-field-color-icon);
   --number-input-color-text-valued: var(--global-form-field-color-text-valued);
-  --number-input-color-placeholder-text-opacity: var(
-    --global-form-field-color-placeholder-text-opacity
-  );
+  --number-input-color-placeholder-text-opacity: var(--global-form-field-color-placeholder-text-opacity);
   --number-input-color-disabled: var(--global-form-field-color-disabled);
-  --number-input-size-border-radius: var(
-    --global-form-field-size-border-radius
-  );
+  --number-input-size-border-radius: var(--global-form-field-size-border-radius);
   --number-input-size-control-icon: var(--dimension-icon-sm);
-  --number-input-size-field-height: var(
-    --global-form-field-size-single-line-input-height
-  );
-  --number-input-size-icon-text-gap: var(
-    --global-form-field-size-icon-text-gap
-  );
-  --number-input-size-left-padding: var(
-    --global-form-field-size-horizontal-padding
-  );
+  --number-input-size-field-height: var(--global-form-field-size-single-line-input-height);
+  --number-input-size-icon-text-gap: var(--global-form-field-size-icon-text-gap);
+  --number-input-size-left-padding: var(--global-form-field-size-horizontal-padding);
   --number-input-size-leading-icon: var(--global-form-field-size-icon);
   --number-input-size-max-width: 140px;
   --number-input-size-min-width: 64px;
-  --number-input-size-vertical-padding: var(
-    --global-form-field-size-vertical-padding
-  );
+  --number-input-size-vertical-padding: var(--global-form-field-size-vertical-padding);
   --pagination-color-background-selected: var(--palette-palette-1-default-tone);
   --pagination-size-page-item: 32px;
   --pagination-size-page-item-border-radius: 100px;
   --pagination-size-page-item-gap: var(--dimension-sm);
-  --pagination-color-background-hover-unselected: var(
-    --palette-neutral-100-tone
-  );
-  --pagination-color-border-default: var(--layer-property-border-color);
+  --pagination-color-background-hover-unselected: var(--palette-neutral-100-tone);
+  --pagination-color-border-default: var(--layer-layer-3-property-border-color);
   --pagination-color-border-focus: var(--palette-palette-1-default-tone);
   --pagination-color-disabled: var(--state-disabled);
-  --pagination-color-ellipsis-icon: var(--layer-element-text-color);
-  --panel-color-background: var(--layer-property-surface);
-  --pagination-color-text-default: var(--layer-element-interactive-color);
-  --panel-color-scroll-divider: var(--layer-property-border-color);
-  --pagination-color-text-selected: var(
-    --layer-layer-alternative-primary-color-element-interactive-color
-  );
-  --panel-color-title: var(--layer-element-text-color);
+  --pagination-color-ellipsis-icon: var(--layer-layer-3-element-text-color);
+  --panel-color-background: var(--layer-layer-3-property-surface);
+  --pagination-color-text-default: var(--layer-layer-3-element-interactive-color);
+  --panel-color-scroll-divider: var(--palette-neutral-200-tone);
+  --pagination-color-text-selected: var(--layer-layer-alternative-primary-color-element-interactive-color);
+  --panel-color-title: var(--layer-layer-alternative-floating-element-text-color);
   --panel-size-content-padding: var(--dimension-xl);
-  --popover-color-background: var(--layer-property-surface);
-  --popover-color-text: var(--layer-element-text-color);
+  --popover-color-background: var(--layer-layer-3-property-surface);
+  --popover-color-text: var(--layer-layer-3-element-text-color);
   --popover-size-beak-inset: var(--dimension-default);
   --popover-size-border-radius: var(--dimension-border-radius-sm);
   --popover-size-padding: var(--dimension-md);
-  --radio-color-default: var(--layer-element-text-color);
+  --radio-color-default: var(--layer-layer-3-element-text-color);
   --radio-color-text-value: var(--global-form-field-color-text-valued);
-  --read-only-color-leading-icon: var(--layer-element-text-color);
-  --read-only-color-edit-icon: var(--layer-element-interactive-color);
-  --read-only-color-text-value: var(--layer-element-text-color);
+  --read-only-color-leading-icon: var(--layer-layer-2-element-text-color);
+  --read-only-color-edit-icon: var(--layer-layer-3-element-interactive-color);
+  --read-only-color-text-value: var(--layer-layer-2-element-text-color);
   --read-only-size-leading-icon: var(--dimension-icon-default);
   --read-only-size-edit-icon: var(--dimension-icon-sm);
   --read-only-size-label-edit-icon-gap: var(--dimension-default);
@@ -421,46 +309,30 @@ For more information about Recursica, go to https://recursica.com
   --radio-size-options-vertical-gutter: var(--dimension-sm);
   --panel-size-header-horizontal-padding: var(--dimension-xl);
   --panel-size-header-vertical-padding: var(--dimension-lg);
-  --panel-size-title-close-button-gap: var(--dimension-lg);
-  --panel-size-footer-horizontal-padding: var(--dimension-xl);
-  --panel-size-footer-vertical-padding: var(--dimension-lg);
+  --panel-size-header-close-button-gap: var(--dimension-lg);
   --search-color-background: var(--global-form-field-color-background);
   --search-color-border: var(--global-form-field-color-border);
   --search-color-border-focus: var(--global-form-field-color-border-focus);
-  --search-color-border-selected: var(
-    --global-form-field-color-border-selected
-  );
+  --search-color-border-selected: var(--global-form-field-color-border-selected);
   --search-color-leading-icon: var(--global-form-field-color-icon);
   --search-color-clear-icon: var(--global-form-field-color-icon);
   --search-color-text-valued: var(--global-form-field-color-text-valued);
   --search-color-text-cursor: var(--global-form-field-color-text-valued);
-  --search-color-placeholder-text-opacity: var(
-    --global-form-field-color-placeholder-text-opacity
-  );
+  --search-color-placeholder-text-opacity: var(--global-form-field-color-placeholder-text-opacity);
   --search-color-disabled: var(--global-form-field-color-disabled);
   --search-size-border-radius: var(--global-form-field-size-border-radius);
   --search-size-icon-text-gap: var(--global-form-field-size-icon-text-gap);
-  --search-size-field-height: var(
-    --global-form-field-size-single-line-input-height
-  );
-  --search-size-horizontal-padding: var(
-    --global-form-field-size-horizontal-padding
-  );
+  --search-size-field-height: var(--global-form-field-size-single-line-input-height);
+  --search-size-horizontal-padding: var(--global-form-field-size-horizontal-padding);
   --search-size-icon: var(--global-form-field-size-icon);
   --search-size-max-width: var(--global-form-field-size-max-width);
   --search-size-min-width: 224px;
-  --search-size-vertical-padding: var(
-    --global-form-field-size-vertical-padding
-  );
-  --panel-size-footer-buttons-gap: var(--dimension-lg);
-  --segmented-control-color-background-default: var(--layer-property-surface);
-  --segmented-control-color-background-selected: var(
-    --layer-layer-alternative-primary-color-property-surface
-  );
-  --segmented-control-color-label-default: var(--layer-element-text-color);
-  --segmented-control-color-label-selected: var(
-    --layer-layer-alternative-primary-color-element-text-color
-  );
+  --search-size-vertical-padding: var(--global-form-field-size-vertical-padding);
+  --panel-size-footer-button-row-gap: var(--dimension-lg);
+  --segmented-control-color-background-default: var(--palette-neutral-100-tone);
+  --segmented-control-color-background-selected: var(--layer-layer-alternative-primary-color-property-surface);
+  --segmented-control-color-label-default: var(--palette-actionable-tone);
+  --segmented-control-color-label-selected: var(--layer-layer-alternative-primary-color-element-text-color);
   --segmented-control-size-border-radius: var(--dimension-border-radius-xl);
   --segmented-control-size-control-horizontal-padding: var(--dimension-lg);
   --segmented-control-size-padding: var(--dimension-sm);
@@ -469,24 +341,21 @@ For more information about Recursica, go to https://recursica.com
   --slider-color-track-selected: var(--palette-palette-1-default-tone);
   --slider-color-track-unselected: var(--palette-neutral-700-tone);
   --slider-color-handle: var(--palette-neutral-900-tone);
-  --stepper-color-step-background-current: var(--layer-property-surface);
-  --stepper-color-step-background-done: var(
-    --layer-layer-alternative-primary-color-property-surface
-  );
-  --stepper-color-step-background-next-enabled: var(--layer-property-surface);
+  --stepper-color-step-background-current: var(--layer-layer-3-property-surface);
+  --stepper-color-step-background-done: var(--layer-layer-alternative-primary-color-property-surface);
+  --stepper-color-step-background-next-enabled: var(--layer-layer-3-property-surface);
   --stepper-color-step-border-current: var(--palette-palette-1-default-tone);
   --slider-color-handle-hovered: var(--palette-neutral-800-tone);
-  --stepper-color-step-border-next-enabled: var(--layer-property-border-color);
-  --stepper-color-step-icon-on-done: var(
-    --layer-layer-alternative-primary-color-element-text-color
-  );
-  --stepper-color-step-label: var(--layer-element-text-color);
+  --stepper-color-step-border-next-enabled: var(--layer-layer-3-property-border-color);
+  --stepper-color-step-icon-on-done: var(--layer-layer-alternative-primary-color-element-text-color);
+  --stepper-color-step-label: var(--layer-layer-1-element-text-color);
   --slider-color-disabled: var(--state-disabled);
-  --stepper-color-step-text-on-current: var(--layer-element-text-color);
-  --stepper-color-step-text-on-next-enabled: var(--layer-element-text-color);
+  --stepper-color-step-text-on-current: var(--layer-layer-1-element-text-color);
+  --stepper-color-step-text-on-next-enabled: var(--layer-layer-3-element-text-color);
   --slider-size-discrete-step-size: 2px;
   --slider-size-discrete-steps-vertical-padding: var(--dimension-sm);
   --slider-size-handle-border-radius: var(--dimension-border-radius-xl);
+  --slider-size-track-border-radius: var(--dimension-border-radius-xl);
   --slider-size-handle-size: var(--dimension-xl);
   --slider-size-slider-max-width: var(--global-form-field-size-max-width);
   --slider-size-slider-min-width: var(--global-form-field-size-min-width);
@@ -495,14 +364,10 @@ For more information about Recursica, go to https://recursica.com
   --slider-size-layout-stacked-max-width: 620px;
   --slider-size-layout-side-by-side-max-width: 874px;
   --stepper-color-step-disabled: var(--state-disabled);
-  --stepper-color-step-supporting-text: var(--layer-element-text-low-emphasis);
-  --stepper-size-progress-indicator-border-radius: var(
-    --dimension-border-radius-xl
-  );
+  --stepper-color-step-supporting-text: var(--layer-layer-3-element-text-low-emphasis);
+  --stepper-size-progress-indicator-border-radius: var(--dimension-border-radius-xl);
   --stepper-size-progress-indicator-large: 40px;
-  --stepper-size-progress-indicator-icon-size-large: var(
-    --dimension-icon-default
-  );
+  --stepper-size-progress-indicator-icon-size-large: var(--dimension-icon-default);
   --stepper-size-progress-indicator-small: 24px;
   --stepper-size-label-horizontal-padding: var(--dimension-default);
   --stepper-size-supporting-text-label-gap: var(--dimension-sm);
@@ -510,7 +375,7 @@ For more information about Recursica, go to https://recursica.com
   --stepper-size-progress-indicator-label-gap: var(--dimension-default);
   --stepper-size-horizontal-min-width: 463px;
   --stepper-size-vertical-min-width: 144px;
-  --switch-color-thumb: var(--layer-property-surface);
+  --switch-color-thumb: var(--layer-layer-3-property-surface);
   --switch-size-border-radius: var(--dimension-border-radius-xl);
   --switch-size-label-switch-gap: var(--dimension-default);
   --switch-color-track-selected: var(--palette-palette-1-default-tone);
@@ -519,15 +384,15 @@ For more information about Recursica, go to https://recursica.com
   --checkbox-size-checkbox-value-gap: var(--dimension-sm);
   --checkbox-size-options-vertical-gutter: var(--dimension-sm);
   --button-size-small-min-width: 60px;
-  --table-color-background: var(--layer-property-surface);
+  --table-color-background: var(--layer-layer-3-property-surface);
   --table-color-cell-zebra-stripe: var(--palette-neutral-100-tone);
   --table-color-cell-state-hover: var(--palette-neutral-200-tone);
   --table-color-cell-state-selected: var(--palette-palette-1-100-tone);
   --table-color-cell-state-focus: var(--palette-palette-1-default-tone);
-  --table-color-text: var(--layer-element-text-color);
-  --table-color-link: var(--layer-element-interactive-color);
-  --table-color-supporting-text: var(--layer-element-text-low-emphasis);
-  --table-color-border: var(--layer-property-border-color);
+  --table-color-text: var(--layer-layer-3-element-text-color);
+  --table-color-link: var(--layer-layer-3-element-interactive-color);
+  --table-color-supporting-text: var(--layer-layer-1-element-text-low-emphasis);
+  --table-color-border: var(--layer-layer-3-property-border-color);
   --table-size-border-radius: var(--dimension-border-radius-lg);
   --table-size-cell-height: 54px;
   --table-size-cell-horizontal-padding: var(--dimension-lg);
@@ -541,12 +406,12 @@ For more information about Recursica, go to https://recursica.com
   --tab-color-pill-background: var(--palette-palette-1-default-tone);
   --tab-color-pill-selected-icon: var(--palette-palette-1-default-on-tone);
   --tab-color-pill-selected-label: var(--palette-palette-1-default-on-tone);
-  --tab-color-outline-border: var(--layer-property-border-color);
-  --tab-color-divider: var(--layer-property-border-color);
-  --tab-color-label-default: var(--layer-element-text-low-emphasis);
-  --tab-color-label: var(--layer-element-text-color);
-  --tab-color-icon: var(--layer-element-text-color);
-  --tab-color-label-selected: var(--layer-element-text-high-emphasis);
+  --tab-color-outline-border: var(--layer-layer-3-property-border-color);
+  --tab-color-divider: var(--layer-layer-3-property-border-color);
+  --tab-color-label: var(--layer-layer-3-element-text-color);
+  --tab-color-label-default: var(--layer-layer-0-element-text-low-emphasis);
+  --tab-color-icon: var(--layer-layer-3-element-text-color);
+  --tab-color-label-selected: var(--layer-layer-0-element-text-high-emphasis);
   --tab-color-label-disabled: var(--state-disabled);
   --tab-size-horizontal-padding: var(--dimension-lg);
   --tab-size-icon-label-gap: var(--dimension-default);
@@ -559,192 +424,115 @@ For more information about Recursica, go to https://recursica.com
   --button-size-small-icon-padding: var(--dimension-sm);
   --button-size-small-icon-text-gap: var(--dimension-sm);
   --button-size-border-radius: var(--dimension-border-radius-xl);
-  --button-size-border-radius-no-text: var(--dimension-border-radius-xl);
   --button-size-content-max-width: 320px;
-  --text-area-color-background-default: var(
-    --global-form-field-color-background
-  );
-  --text-area-color-background-read-only: var(
-    --global-form-field-color-background-read-only
-  );
+  --text-area-color-background-default: var(--global-form-field-color-background);
+  --text-area-color-background-read-only: var(--global-form-field-color-background-read-only);
+  --text-area-color-background-disabled: var(--global-form-field-color-disabled);
   --text-area-color-border-default: var(--global-form-field-color-border);
-  --text-area-color-background-disabled: var(
-    --global-form-field-color-disabled
-  );
   --text-area-color-border-focus: var(--global-form-field-color-border-focus);
   --text-area-color-border-error: var(--global-form-field-color-border-error);
   --text-area-color-text-valued: var(--global-form-field-color-text-valued);
-  --text-area-color-text-character-count: var(
-    --global-form-field-color-text-valued
-  );
-  --text-area-color-text-placeholder: var(
-    --global-form-field-color-placeholder-text-opacity
-  );
+  --text-area-color-text-character-count: var(--global-form-field-color-text-valued);
+  --text-area-color-text-placeholder: var(--global-form-field-color-placeholder-text-opacity);
   --text-area-size-border-radius: var(--global-form-field-size-border-radius);
-  --text-area-size-horizontal-padding: var(
-    --global-form-field-size-horizontal-padding
-  );
+  --text-area-size-horizontal-padding: var(--global-form-field-size-horizontal-padding);
   --text-area-size-max-width: var(--global-form-field-size-max-width);
   --text-area-size-max-height: 176px;
   --text-area-size-min-width: 224px;
   --text-area-size-min-height: 72px;
-  --text-area-size-vertical-padding: var(
-    --global-form-field-size-vertical-padding
-  );
-  --text-field-color-background-default: var(
-    --global-form-field-color-background
-  );
-  --text-field-color-background-read-only: var(
-    --global-form-field-color-background-read-only
-  );
+  --text-area-size-vertical-padding: var(--global-form-field-size-vertical-padding);
+  --text-field-color-background-default: var(--global-form-field-color-background);
+  --text-field-color-background-read-only: var(--global-form-field-color-background-read-only);
   --text-field-color-border-default: var(--global-form-field-color-border);
   --text-field-color-border-focus: var(--global-form-field-color-border-focus);
   --text-field-color-border-error: var(--global-form-field-color-border-error);
   --text-field-color-leading-icon: var(--global-form-field-color-icon);
   --text-field-color-trailing-icon: var(--global-form-field-color-icon);
   --text-field-color-text-valued: var(--global-form-field-color-text-valued);
-  --text-field-color-text-placeholder: var(
-    --global-form-field-color-placeholder-text-opacity
-  );
-  --text-field-color-background-disabled: var(
-    --global-form-field-color-disabled
-  );
+  --text-field-color-text-placeholder: var(--global-form-field-color-placeholder-text-opacity);
+  --text-field-color-background-disabled: var(--global-form-field-color-disabled);
   --text-field-size-border-radius: var(--global-form-field-size-border-radius);
   --text-field-size-icon-text-gap: var(--global-form-field-size-icon-text-gap);
-  --text-field-size-height: var(
-    --global-form-field-size-single-line-input-height
-  );
-  --text-field-size-horizontal-padding: var(
-    --global-form-field-size-horizontal-padding
-  );
+  --text-field-size-height: var(--global-form-field-size-single-line-input-height);
+  --text-field-size-horizontal-padding: var(--global-form-field-size-horizontal-padding);
   --text-field-size-icon: var(--global-form-field-size-icon);
   --text-field-size-max-width: var(--global-form-field-size-max-width);
   --text-field-size-min-width: 64px;
-  --text-field-size-vertical-padding: var(
-    --global-form-field-size-vertical-padding
-  );
-  --timeline-bullet-color-background-default: var(--layer-property-surface);
-  --timeline-bullet-size-border-radius: 100px;
-  --timeline-bullet-size-default: var(--dimension-xl);
-  --timeline-bullet-size-icon: var(--dimension-icon-sm);
-  --timeline-bullet-color-background-icon: var(--palette-neutral-100-tone);
-  --timeline-note-color-text: var(--layer-element-text-color);
-  --timeline-note-color-timestamp: var(--layer-element-text-low-emphasis);
-  --timeline-note-size-width: 344px;
-  --timeline-note-size-horizontal-padding: var(--dimension-default);
-  --timeline-note-size-line-content-gap: var(--dimension-lg);
-  --timeline-note-size-title-content-gap: var(--dimension-sm);
-  --timeline-note-size-body-top-padding: var(--dimension-sm);
-  --timeline-note-size-body-bottom-padding: var(--dimension-xl);
-  --timeline-bullet-color-background-alternative: var(
-    --layer-layer-alternative-high-contrast-property-surface
-  );
-  --timeline-bullet-color-border-default: var(--layer-property-border-color);
-  --timeline-bullet-color-border-active: var(--palette-palette-1-default-tone);
-  --timeline-bullet-color-icon-on-default: var(--palette-neutral-100-on-tone);
-  --timeline-bullet-color-icon-on-alternative: var(
-    --layer-layer-alternative-high-contrast-element-text-color
-  );
-  --timeline-inactive: var(--layer-property-border-color);
-  --timeline-active: var(--palette-palette-1-default-tone);
-  --time-picker-color-background-default: var(
-    --global-form-field-color-background
-  );
-  --time-picker-color-background-read-only: var(
-    --global-form-field-color-background-read-only
-  );
+  --text-field-size-vertical-padding: var(--global-form-field-size-vertical-padding);
+  --timeline-color-bullet-background-default: var(--layer-layer-3-property-surface);
+  --timeline-color-bullet-background-icon: var(--palette-neutral-100-tone);
+  --timeline-color-item-text: var(--layer-layer-3-element-text-color);
+  --timeline-color-bullet-background-theme: var(--layer-layer-alternative-high-contrast-property-surface);
+  --timeline-color-item-timestamp: var(--layer-layer-1-element-text-low-emphasis);
+  --timeline-color-bullet-border-default: var(--layer-layer-3-property-border-color);
+  --timeline-color-bullet-border-active: var(--palette-palette-1-default-tone);
+  --timeline-color-bullet-icon-on-default: var(--palette-neutral-100-on-tone);
+  --timeline-color-bullet-icon-on-theme: var(--layer-layer-alternative-high-contrast-element-text-color);
+  --timeline-color-line-inactive: var(--layer-layer-3-property-border-color);
+  --timeline-color-line-active: var(--palette-palette-1-default-tone);
+  --timeline-size-bullet-border-radius: 100px;
+  --timeline-size-bullet-default: var(--dimension-xl);
+  --timeline-size-bullet-icon: var(--dimension-icon-sm);
+  --timeline-size-item-width: 344px;
+  --timeline-size-item-horizontal-padding: var(--dimension-default);
+  --timeline-size-item-line-content-gap: var(--dimension-lg);
+  --timeline-size-item-title-content-gap: var(--dimension-sm);
+  --timeline-size-item-body-top-padding: var(--dimension-sm);
+  --timeline-size-item-body-bottom-padding: var(--dimension-xl);
+  --time-picker-color-background-default: var(--global-form-field-color-background);
+  --time-picker-color-background-read-only: var(--global-form-field-color-background-read-only);
   --time-picker-color-border-default: var(--global-form-field-color-border);
   --time-picker-color-border-focus: var(--global-form-field-color-border-focus);
   --time-picker-color-border-error: var(--global-form-field-color-border-error);
   --time-picker-color-leading-icon: var(--global-form-field-color-icon);
   --time-picker-color-trailing-icon: var(--global-form-field-color-icon);
   --time-picker-color-text-valued: var(--global-form-field-color-text-valued);
-  --time-picker-color-text-placeholder: var(
-    --global-form-field-color-placeholder-text-opacity
-  );
-  --time-picker-color-background-disabled: var(
-    --global-form-field-color-disabled
-  );
+  --time-picker-color-text-placeholder: var(--global-form-field-color-placeholder-text-opacity);
+  --time-picker-color-background-disabled: var(--global-form-field-color-disabled);
+  --time-picker-size-assistive-element-left-padding: 240px;
   --time-picker-size-border-radius: var(--global-form-field-size-border-radius);
   --time-picker-size-icon-text-gap: var(--global-form-field-size-icon-text-gap);
   --time-picker-size-field-width: 140px;
-  --time-picker-size-field-height: var(
-    --global-form-field-size-single-line-input-height
-  );
-  --time-picker-size-horizontal-padding: var(
-    --global-form-field-size-horizontal-padding
-  );
-  --time-picker-size-vertical-padding: var(
-    --global-form-field-size-vertical-padding
-  );
+  --time-picker-size-field-height: var(--global-form-field-size-single-line-input-height);
+  --time-picker-size-horizontal-padding: var(--global-form-field-size-horizontal-padding);
+  --time-picker-size-vertical-padding: var(--global-form-field-size-vertical-padding);
   --time-picker-size-icon: var(--global-form-field-size-icon);
-  --toast-color-default-background: var(--layer-property-surface);
+  --toast-color-default-background: var(--layer-layer-alternative-floating-property-surface);
   --toast-size-vertical-padding: var(--dimension-default);
   --toast-size-horizontal-padding: var(--dimension-lg);
   --toast-size-spacing: var(--dimension-md);
   --toast-size-min-width: 384px;
   --toast-size-max-width: 624px;
   --toast-size-icon: var(--dimension-icon-default);
-  --toast-color-success-background: var(
-    --layer-layer-alternative-success-property-surface
-  );
-  --toast-color-default-text: var(--layer-element-text-color);
-  --toast-color-error-background: var(
-    --layer-layer-alternative-alert-property-surface
-  );
-  --toast-color-error-button: var(
-    --layer-layer-alternative-alert-element-interactive-color
-  );
-  --toast-color-error-text: var(
-    --layer-layer-alternative-alert-element-text-color
-  );
-  --toast-color-success-button: var(
-    --layer-layer-alternative-success-element-interactive-color
-  );
-  --toast-color-success-text: var(
-    --layer-layer-alternative-success-element-text-color
-  );
-  --tooltip-color-background: var(
-    --layer-layer-alternative-high-contrast-property-surface
-  );
-  --transfer-list-color-background: var(--layer-property-surface);
-  --transfer-list-color-background-controls: var(
-    --global-form-field-color-background
-  );
+  --toast-color-default-text: var(--layer-layer-alternative-floating-element-text-color);
+  --toast-color-success-background: var(--palette-success-tone);
+  --toast-color-error-background: var(--palette-alert-tone);
+  --toast-color-error-button: var(--palette-alert-interactive);
+  --toast-color-error-text: var(--palette-alert-on-tone);
+  --toast-color-success-button: var(--palette-success-interactive);
+  --toast-color-success-text: var(--palette-success-on-tone);
+  --tooltip-color-background: var(--palette-black-tone);
+  --transfer-list-color-background: var(--layer-layer-3-property-surface);
+  --transfer-list-color-background-controls: var(--layer-layer-3-property-surface);
   --transfer-list-color-border: var(--global-form-field-color-border);
-  --transfer-list-color-border-focus: var(
-    --global-form-field-color-border-focus
-  );
-  --transfer-list-color-border-selected: var(
-    --global-form-field-color-border-selected
-  );
-  --transfer-list-color-border-error: var(
-    --global-form-field-color-border-error
-  );
-  --transfer-list-color-menu-empty-text: var(--layer-element-text-color);
-  --transfer-list-color-menu-empty-text-opacity: var(
-    --global-form-field-color-placeholder-text-opacity
-  );
-  --transfer-list-color-placeholder-text-opacity: var(
-    --global-form-field-color-placeholder-text-opacity
-  );
+  --transfer-list-color-border-focus: var(--global-form-field-color-border-focus);
+  --transfer-list-color-border-selected: var(--global-form-field-color-border-selected);
+  --transfer-list-color-border-error: var(--global-form-field-color-border-error);
+  --transfer-list-color-menu-empty-text: var(--layer-layer-1-element-text-color);
+  --transfer-list-color-menu-empty-text-opacity: var(--global-form-field-color-placeholder-text-opacity);
+  --transfer-list-color-placeholder-text-opacity: var(--global-form-field-color-placeholder-text-opacity);
   --transfer-list-color-text-valued: var(--global-form-field-color-text-valued);
-  --transfer-list-size-border-radius: var(
-    --global-form-field-size-border-radius
-  );
+  --transfer-list-size-border-radius: var(--global-form-field-size-border-radius);
   --transfer-list-size-control-icon: var(--global-form-field-size-icon);
   --transfer-list-size-control-padding: var(--dimension-md);
   --transfer-list-size-input-left-padding: var(--dimension-lg);
+  --transfer-list-size-list-gap: var(--dimension-lg);
   --transfer-list-size-menu-vertical-padding: var(--dimension-default);
   --transfer-list-size-menu-empty-vertical-padding: var(--dimension-xl);
-  --transfer-list-size-search-input-height: var(
-    --global-form-field-size-single-line-input-height
-  );
+  --transfer-list-size-search-input-height: var(--global-form-field-size-single-line-input-height);
   --transfer-list-size-height: 200px;
   --transfer-list-size-width: 364px;
-  --tooltip-color-text: var(
-    --layer-layer-alternative-high-contrast-element-text-color
-  );
+  --tooltip-color-text: var(--palette-black-on-tone);
   --tooltip-size-beak-inset: var(--dimension-default);
   --tooltip-size-border-radius: var(--dimension-border-radius-sm);
   --tooltip-size-horizontal-padding: var(--dimension-md);
@@ -753,6 +541,10 @@ For more information about Recursica, go to https://recursica.com
   --tooltip-size-min-width: 106px;
   --global-form-assistive-element-size-icon: var(--dimension-icon-sm);
   --global-form-assistive-element-size-icon-text-gap: var(--dimension-sm);
+  --layout-color-background: var(--layer-layer-3-property-surface);
+  --layout-color-columns: var(--global-form-field-color-background);
+  --layout-color-header-footer: var(--global-form-field-color-border);
+  --layout-color-column-opacity: var(--global-form-field-color-placeholder-text-opacity);
   --layout-size-mobile-max-width: var(--layout-grid-mobile-max-width);
   --layout-size-mobile-gutter: var(--layout-grid-mobile-gutter);
   --layout-size-tablet-max-width: var(--layout-grid-tablet-max-width);
