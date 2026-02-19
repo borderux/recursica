@@ -46,6 +46,7 @@ import {
 } from "./publishInitMetadata";
 import { getAllPages } from "./getAllPages";
 import { storePageMetadata } from "./storePageMetadata";
+import { importVariablesCsv } from "./importVariablesCsv";
 
 // Services map - all service functions indexed by their names
 // This is the single source of truth for available services
@@ -87,6 +88,7 @@ export const services = {
   setPublishInitStatus,
   getAllPages,
   storePageMetadata,
+  importVariablesCsv,
 } as const;
 
 // Re-export individual services for convenience
@@ -128,6 +130,7 @@ export {
   setPublishInitStatus,
   getAllPages,
   storePageMetadata,
+  importVariablesCsv,
 };
 
 export type { PageDependency };

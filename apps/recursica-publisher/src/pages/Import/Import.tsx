@@ -36,6 +36,13 @@ export default function Import() {
           >
             Import from Files
           </Button>
+
+          <Button
+            onClick={() => navigate("/import-variables-csv")}
+            className={classes.button}
+          >
+            Import Variables CSV
+          </Button>
         </Stack>
       </Stack>
     </PageLayout>

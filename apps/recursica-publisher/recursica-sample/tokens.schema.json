@@ -1,0 +1,364 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Tokens JSON Schema",
+  "description": "Schema for Tokens.json structure",
+  "type": "object",
+  "required": ["tokens"],
+  "properties": {
+    "tokens": {
+      "type": "object",
+      "properties": {
+        "colors": {
+          "type": "object",
+          "patternProperties": {
+            "^scale-\\d+$": {
+              "type": "object",
+              "required": ["alias"],
+              "properties": {
+                "alias": {
+                  "type": "string"
+                }
+              },
+              "patternProperties": {
+                "^\\d{2,4}|000|050|1000$": {
+                  "type": "object",
+                  "required": ["$type", "$value"],
+                  "properties": {
+                    "$type": {
+                      "type": "string",
+                      "enum": ["color"]
+                    },
+                    "$value": {
+                      "$ref": "#/$defs/colorValue"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "sizes": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9_-]+$": {
+              "type": "object",
+              "required": ["$type", "$value"],
+              "properties": {
+                "$type": {
+                  "type": "string",
+                  "enum": ["dimension"]
+                },
+                "$value": {
+                  "type": "object",
+                  "required": ["value", "unit"],
+                  "properties": {
+                    "value": {
+                      "oneOf": [{ "type": "number" }, { "type": "string" }]
+                    },
+                    "unit": {
+                      "type": "string",
+                      "enum": ["px", "rem"],
+                      "description": "DTCG dimension unit. Allowed: px, rem only."
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "opacities": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9_-]+$": {
+              "type": "object",
+              "required": ["$type", "$value"],
+              "properties": {
+                "$type": {
+                  "type": "string",
+                  "enum": ["number"]
+                },
+                "$value": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "font": {
+          "type": "object",
+          "properties": {
+            "sizes": {
+              "type": "object",
+              "patternProperties": {
+                "^[a-z0-9_-]+$": {
+                  "type": "object",
+                  "required": ["$type", "$value"],
+                  "properties": {
+                    "$type": {
+                      "type": "string",
+                      "enum": ["dimension"]
+                    },
+                    "$value": {
+                      "type": "object",
+                      "required": ["value", "unit"],
+                      "properties": {
+                        "value": {
+                          "oneOf": [{ "type": "number" }, { "type": "string" }]
+                        },
+                        "unit": {
+                          "type": "string",
+                          "enum": ["px", "rem"],
+                          "description": "DTCG dimension unit. Allowed: px, rem only."
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "typefaces": {
+              "type": "object",
+              "required": ["$type"],
+              "properties": {
+                "$type": {
+                  "type": "string",
+                  "enum": ["fontFamily"]
+                }
+              },
+              "patternProperties": {
+                "^[a-z0-9_-]+$": {
+                  "type": "object",
+                  "required": ["$value"],
+                  "properties": {
+                    "$value": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1
+                        }
+                      ]
+                    },
+                    "$extensions": {
+                      "type": "object",
+                      "properties": {
+                        "com.google.fonts": {
+                          "type": "object",
+                          "properties": {
+                            "url": {
+                              "type": "string",
+                              "format": "uri"
+                            },
+                            "opticalSizing": {
+                              "type": "string",
+                              "enum": ["auto", "none"]
+                            }
+                          },
+                          "required": ["url"],
+                          "additionalProperties": false
+                        },
+                        "variants": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["weight", "style"],
+                            "properties": {
+                              "weight": {
+                                "type": "string"
+                              },
+                              "style": {
+                                "type": "string"
+                              }
+                            },
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            "letter-spacings": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "weights": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "styles": {
+              "type": "object",
+              "patternProperties": {
+                "^[a-z0-9_-]+$": {
+                  "type": "object",
+                  "required": ["$type", "$value"],
+                  "properties": {
+                    "$type": {
+                      "type": "string",
+                      "enum": ["string"]
+                    },
+                    "$value": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            "line-heights": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "cases": {
+              "type": "object",
+              "required": ["original"],
+              "properties": {
+                "original": {
+                  "type": "object",
+                  "required": ["$type", "$value"],
+                  "properties": {
+                    "$type": {
+                      "type": "string",
+                      "enum": ["string"]
+                    },
+                    "$value": {
+                      "type": ["string", "null"]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "patternProperties": {
+                "^[a-z0-9_-]+$": {
+                  "type": "object",
+                  "required": ["$type", "$value"],
+                  "properties": {
+                    "$type": {
+                      "type": "string",
+                      "enum": ["string"]
+                    },
+                    "$value": {
+                      "type": ["string", "null"]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            "decorations": {
+              "type": "object",
+              "required": ["none"],
+              "properties": {
+                "none": {
+                  "type": "object",
+                  "required": ["$type", "$value"],
+                  "properties": {
+                    "$type": {
+                      "type": "string",
+                      "enum": ["string"]
+                    },
+                    "$value": {
+                      "type": ["string", "null"]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "patternProperties": {
+                "^[a-z0-9_-]+$": {
+                  "type": "object",
+                  "required": ["$type", "$value"],
+                  "properties": {
+                    "$type": {
+                      "type": "string",
+                      "enum": ["string"]
+                    },
+                    "$value": {
+                      "type": ["string", "null"]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "colorValue": {
+      "description": "Color token value. One of: hex 6/8, rgb(), rgba(), or DTCG sRGB object. See RECURSICA_JSON_SPEC.md § 2.",
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "description": "sRGB hex 6-digit, alpha=1"
+        },
+        {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{8}$",
+          "description": "sRGB hex 8-digit, last 2 = alpha"
+        },
+        {
+          "type": "string",
+          "pattern": "^rgb\\s*\\(\\s*\\d{1,3}\\s*,\\s*\\d{1,3}\\s*,\\s*\\d{1,3}\\s*\\)$",
+          "description": "rgb(r,g,b) 0-255"
+        },
+        {
+          "type": "string",
+          "pattern": "^rgba\\s*\\(\\s*\\d{1,3}\\s*,\\s*\\d{1,3}\\s*,\\s*\\d{1,3}\\s*,\\s*[\\d.]+\\s*\\)$",
+          "description": "rgba(r,g,b,a) r,g,b 0-255, a 0-1"
+        },
+        {
+          "type": "object",
+          "required": ["components"],
+          "description": "DTCG sRGB object",
+          "properties": {
+            "colorSpace": {
+              "type": "string",
+              "enum": ["srgb", "srgb-linear"]
+            },
+            "components": {
+              "type": "array",
+              "items": { "type": "number", "minimum": 0, "maximum": 1 },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "alpha": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
+  "additionalProperties": false
+}
