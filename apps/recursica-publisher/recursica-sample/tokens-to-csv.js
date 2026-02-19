@@ -96,7 +96,7 @@ function jsonReferenceToFigmaPathValue(ref) {
 /**
  * Resolves a reference per DTCG: references must target tokens (not groups).
  * Work-arounds (recorded as warnings):
- * - Current-theme context: brand refs without theme in path use current theme.
+ * - Current-theme context: brand refs without theme in path are validated against current theme set; alias points to variable (Figma resolves per mode).
  * - Color group .tone: if path points to a group, try path/tone (assume tone for color groups).
  * - tokens renames: size→sizes, opacity→opacities (try renamed segment when not found).
  * Returns { value, warning? } or throws if unresolved.
@@ -109,10 +109,8 @@ function resolveAndValidateAlias(
 ) {
   const parsed = jsonReferenceToFigmaPath(ref);
   let set;
-  let usedCurrentTheme = false;
   if (parsed.collectionFileType === "brand") {
     const resolvedTheme = parsed.themeKey ?? currentThemeKey;
-    usedCurrentTheme = parsed.themeKey == null;
     if (!resolvedTheme || !registry.brandByTheme?.[resolvedTheme]) {
       set = null;
     } else {
@@ -135,9 +133,7 @@ function resolveAndValidateAlias(
   if (set?.has(parsed.figmaVariableName)) {
     const value = `${parsed.collectionFileType}/${parsed.figmaVariableName}`;
     let warning = null;
-    if (usedCurrentTheme && parsed.collectionFileType === "brand") {
-      warning = `Theme-agnostic reference resolved using current theme (${currentThemeKey})${locationForWarnings ? ` at ${locationForWarnings}` : ""}: ${ref}`;
-    } else if (
+    if (
       parsed.collectionFileType === "brand" &&
       parsed.figmaVariableName.startsWith("typography/") &&
       parsed.figmaVariableName.split("/").length > 2
@@ -573,6 +569,7 @@ function collectTokens(
 
 // --- Themes collection (recursica_brand.json → Themes.csv). Rows: [figmaVariableName, mode, value, type, defaultMode]. ---
 // References ({...}) are emitted with value = the reference string; type is taken from token $type (see tokenTypeToFigmaType).
+// pathPrefix (optional): JSON path prefix for warnings/errors, e.g. "brand.typography" or "brand.themes.light".
 function collectThemeRows(
   obj,
   pathSegments,
@@ -581,11 +578,15 @@ function collectThemeRows(
   errors,
   inheritedType,
   warnings = [],
+  pathPrefix = null,
 ) {
   if (obj === null || typeof obj !== "object") return;
 
   if ("$value" in obj) {
     const figmaVariableName = pathSegments.join("/");
+    const jsonPath = pathPrefix
+      ? pathPrefix + "." + figmaVariableName.replace(/\//g, ".")
+      : mode + "/" + figmaVariableName;
     const tokenType =
       obj.$type != null
         ? String(obj.$type).trim()
@@ -632,9 +633,7 @@ function collectThemeRows(
     }
     if (tokenType === "dimension") {
       if (v !== null && typeof v === "object" && v.unit === "rem") {
-        errors.push(
-          `rem format is not supported at path: ${mode}/${figmaVariableName}`,
-        );
+        errors.push(`rem format is not supported at path: ${jsonPath}`);
         return;
       }
       if (
@@ -656,7 +655,7 @@ function collectThemeRows(
 
     if (tokenType === "typography") {
       warnings.push(
-        `Typography type is not fully supported at path: ${mode}/${figmaVariableName}`,
+        `Typography type is not fully supported at path: ${jsonPath}`,
       );
       const str =
         v === null || v === undefined
@@ -732,6 +731,7 @@ function collectThemeRows(
             errors,
             groupType,
             warnings,
+            pathPrefix,
           );
         }
       }
@@ -739,7 +739,7 @@ function collectThemeRows(
     }
 
     errors.push(
-      `Unsupported or invalid theme token type "${tokenType}" at path: ${mode}/${figmaVariableName}`,
+      `Unsupported or invalid theme token type "${tokenType}" at path: ${jsonPath}`,
     );
   } else {
     const groupType =
@@ -760,6 +760,7 @@ function collectThemeRows(
           errors,
           groupType,
           warnings,
+          pathPrefix,
         );
       }
     }
@@ -1162,7 +1163,16 @@ function processBrandToThemeRows(brandData, rows, errors, warnings = []) {
       );
       continue;
     }
-    collectThemeRows(themeObj, [], mode, rows, errors, undefined, warnings);
+    collectThemeRows(
+      themeObj,
+      [],
+      mode,
+      rows,
+      errors,
+      undefined,
+      warnings,
+      "brand.themes." + rawMode.toLowerCase(),
+    );
   }
   // Emit theme rows for brand root sections (dimensions, typography, etc.) so alias targets exist in Themes collection.
   for (const rootKey of Object.keys(brand)) {
@@ -1183,6 +1193,7 @@ function processBrandToThemeRows(brandData, rows, errors, warnings = []) {
         errors,
         undefined,
         warnings,
+        "brand",
       );
     }
   }

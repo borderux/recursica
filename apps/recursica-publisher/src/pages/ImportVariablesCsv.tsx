@@ -58,6 +58,12 @@ export default function ImportVariablesCsv() {
     variablesCreated: number;
     variablesAlreadyExisted: number;
     aliasErrors?: string[];
+    textStylesCreated?: number;
+    textStylesSkipped?: number;
+    textStyleWarnings?: string[];
+    effectStylesCreated?: number;
+    effectStylesSkipped?: number;
+    effectStyleWarnings?: string[];
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -103,11 +109,23 @@ export default function ImportVariablesCsv() {
         variablesCreated?: number;
         variablesAlreadyExisted?: number;
         aliasErrors?: string[];
+        textStylesCreated?: number;
+        textStylesSkipped?: number;
+        textStyleWarnings?: string[];
+        effectStylesCreated?: number;
+        effectStylesSkipped?: number;
+        effectStyleWarnings?: string[];
       };
       setResult({
         variablesCreated: data.variablesCreated ?? 0,
         variablesAlreadyExisted: data.variablesAlreadyExisted ?? 0,
         aliasErrors: data.aliasErrors,
+        textStylesCreated: data.textStylesCreated,
+        textStylesSkipped: data.textStylesSkipped,
+        textStyleWarnings: data.textStyleWarnings,
+        effectStylesCreated: data.effectStylesCreated,
+        effectStylesSkipped: data.effectStylesSkipped,
+        effectStyleWarnings: data.effectStyleWarnings,
       });
       if (response.error || !response.success) {
         setError(response.message || "Import failed.");
@@ -179,6 +197,22 @@ export default function ImportVariablesCsv() {
               Variables created: {result.variablesCreated}
               <br />
               Variables already existed: {result.variablesAlreadyExisted}
+              {(result.textStylesCreated !== undefined ||
+                result.textStylesSkipped !== undefined) && (
+                <>
+                  <br />
+                  Text styles created: {result.textStylesCreated ?? 0}, skipped:{" "}
+                  {result.textStylesSkipped ?? 0}
+                </>
+              )}
+              {(result.effectStylesCreated !== undefined ||
+                result.effectStylesSkipped !== undefined) && (
+                <>
+                  <br />
+                  Effect styles created: {result.effectStylesCreated ?? 0},
+                  skipped: {result.effectStylesSkipped ?? 0}
+                </>
+              )}
             </div>
             {result.aliasErrors && result.aliasErrors.length > 0 && (
               <div
@@ -198,6 +232,48 @@ export default function ImportVariablesCsv() {
                 </ul>
               </div>
             )}
+            {result.textStyleWarnings &&
+              result.textStyleWarnings.length > 0 && (
+                <div
+                  style={{
+                    padding: 12,
+                    backgroundColor: "#fff3e0",
+                    color: "#e65100",
+                    borderRadius: 6,
+                    fontSize: 14,
+                  }}
+                >
+                  <strong>
+                    Text style warnings ({result.textStyleWarnings.length}):
+                  </strong>
+                  <ul style={{ margin: "8px 0 0", paddingLeft: 20 }}>
+                    {result.textStyleWarnings.map((msg, i) => (
+                      <li key={i}>{msg}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            {result.effectStyleWarnings &&
+              result.effectStyleWarnings.length > 0 && (
+                <div
+                  style={{
+                    padding: 12,
+                    backgroundColor: "#fff3e0",
+                    color: "#e65100",
+                    borderRadius: 6,
+                    fontSize: 14,
+                  }}
+                >
+                  <strong>
+                    Effect style warnings ({result.effectStyleWarnings.length}):
+                  </strong>
+                  <ul style={{ margin: "8px 0 0", paddingLeft: 20 }}>
+                    {result.effectStyleWarnings.map((msg, i) => (
+                      <li key={i}>{msg}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
           </div>
         )}
       </Stack>

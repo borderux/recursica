@@ -2,10 +2,14 @@
  * Imports variables from FigmaVariables.csv (combined CSV with collection column).
  * Creates collection if it does not exist; uses existing collection if it does.
  * For each variable: if it already exists at that path, skip; otherwise create it with the value.
- * Returns counts: variablesCreated, variablesAlreadyExisted.
+ * At the end: creates Text Styles from typography variables (see docs/TEXT-STYLES-IMPORT.md),
+ * then creates Effect Styles from elevations (see docs/EFFECT-STYLES-IMPORT.md).
+ * Returns counts and warnings for variables, text styles, and effect styles.
  */
 
 import type { PluginResponse } from "../types/messages";
+import { createEffectStylesFromElevations } from "./createEffectStylesFromElevations";
+import { createTextStylesFromTypography } from "./createTextStylesFromTypography";
 
 const COLLECTION_DISPLAY_NAMES: Record<string, string> = {
   tokens: "Tokens",
@@ -345,10 +349,38 @@ export async function importVariablesCsv(
     );
   }
 
+  let textStylesCreated = 0;
+  let textStylesSkipped = 0;
+  const textStyleWarnings: string[] = [];
+  try {
+    const textStyleResult = await createTextStylesFromTypography();
+    textStylesCreated = textStyleResult.textStylesCreated;
+    textStylesSkipped = textStyleResult.textStylesSkipped;
+    textStyleWarnings.push(...textStyleResult.textStyleWarnings);
+  } catch (e) {
+    textStyleWarnings.push(
+      `Text styles from typography failed: ${e instanceof Error ? e.message : String(e)}`,
+    );
+  }
+
+  let effectStylesCreated = 0;
+  let effectStylesSkipped = 0;
+  const effectStyleWarnings: string[] = [];
+  try {
+    const effectStyleResult = await createEffectStylesFromElevations();
+    effectStylesCreated = effectStyleResult.effectStylesCreated;
+    effectStylesSkipped = effectStyleResult.effectStylesSkipped;
+    effectStyleWarnings.push(...effectStyleResult.effectStyleWarnings);
+  } catch (e) {
+    effectStyleWarnings.push(
+      `Effect styles from elevations failed: ${e instanceof Error ? e.message : String(e)}`,
+    );
+  }
+
   const message =
     aliasErrors.length > 0
-      ? `Import complete with ${aliasErrors.length} alias error(s). Variables created: ${variablesCreated}. Variables already existed: ${variablesAlreadyExisted}.`
-      : `Import complete. Variables created: ${variablesCreated}. Variables already existed: ${variablesAlreadyExisted}.`;
+      ? `Import complete with ${aliasErrors.length} alias error(s). Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Text styles: ${textStylesCreated} created, ${textStylesSkipped} skipped. Effect styles: ${effectStylesCreated} created, ${effectStylesSkipped} skipped.`
+      : `Import complete. Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Text styles: ${textStylesCreated} created, ${textStylesSkipped} skipped. Effect styles: ${effectStylesCreated} created, ${effectStylesSkipped} skipped.`;
 
   return {
     type: "importVariablesCsv",
@@ -359,6 +391,12 @@ export async function importVariablesCsv(
       variablesCreated,
       variablesAlreadyExisted,
       aliasErrors,
+      textStylesCreated,
+      textStylesSkipped,
+      textStyleWarnings,
+      effectStylesCreated,
+      effectStylesSkipped,
+      effectStyleWarnings,
     },
   };
 }
