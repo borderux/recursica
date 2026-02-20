@@ -102,6 +102,14 @@ async function resolveVariableValue(
   return null;
 }
 
+/** Narrow resolved variable value to string/number for typography (font style, text case, decoration). RGB is not used. */
+function toLiteralOrNull(
+  v: string | number | RGB | null,
+): string | number | null {
+  if (v == null || typeof v === "string" || typeof v === "number") return v;
+  return null;
+}
+
 /** Map our text-case value to Figma TextCase. */
 function toTextCase(value: string | number | null): TextCase | undefined {
   if (value == null) return undefined;
@@ -235,7 +243,10 @@ export async function createTextStylesFromTypography(): Promise<CreateTextStyles
     const fontWeightVal = fontWeightVar
       ? await resolveVariableValue(fontWeightVar, collections)
       : null;
-    const fontStyleName = toFontStyleName(fontStyleVal, fontWeightVal);
+    const fontStyleName = toFontStyleName(
+      toLiteralOrNull(fontStyleVal),
+      toLiteralOrNull(fontWeightVal),
+    );
 
     for (const key of TYPOGRAPHY_PROPERTY_KEYS) {
       if (!propVars.has(key)) {
@@ -268,11 +279,11 @@ export async function createTextStylesFromTypography(): Promise<CreateTextStyles
       key: TypographyPropertyKey;
       field: "fontSize" | "letterSpacing" | "lineHeight";
     }> = [
-      ["font-size", "fontSize"],
-      ["letter-spacing", "letterSpacing"],
-      ["line-height", "lineHeight"],
+      { key: "font-size", field: "fontSize" },
+      { key: "letter-spacing", field: "letterSpacing" },
+      { key: "line-height", field: "lineHeight" },
     ];
-    for (const [key, field] of bindableFields) {
+    for (const { key, field } of bindableFields) {
       const variable = propVars.get(key);
       if (variable) {
         textStyle.setBoundVariable(field, variable);
@@ -283,13 +294,13 @@ export async function createTextStylesFromTypography(): Promise<CreateTextStyles
     const textCaseVar = propVars.get("text-case");
     if (textCaseVar) {
       const v = await resolveVariableValue(textCaseVar, collections);
-      const tc = toTextCase(v);
+      const tc = toTextCase(toLiteralOrNull(v));
       if (tc) textStyle.textCase = tc;
     }
     const textDecorationVar = propVars.get("text-decoration");
     if (textDecorationVar) {
       const v = await resolveVariableValue(textDecorationVar, collections);
-      const td = toTextDecoration(v);
+      const td = toTextDecoration(toLiteralOrNull(v));
       if (td) textStyle.textDecoration = td;
     }
 
