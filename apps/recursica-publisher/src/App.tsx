@@ -9,7 +9,7 @@ import Import from "./pages/Import/Import";
 import ImportMain from "./pages/ImportMain/ImportMain";
 import ImportBranch from "./pages/ImportBranch/ImportBranch";
 import ImportFiles from "./pages/ImportFiles";
-import ImportVariablesCsv from "./pages/ImportVariablesCsv";
+import ImportRecursicaJson from "./pages/ImportRecursicaJson";
 import ImportRepoComponent from "./pages/ImportRepoComponent";
 import Importing from "./pages/Importing";
 import ImportWizard from "./pages/ImportWizard";
@@ -152,8 +152,8 @@ function App() {
               <Route path="/import-branch" element={<ImportBranch />} />
               <Route path="/import-files" element={<ImportFiles />} />
               <Route
-                path="/import-variables-csv"
-                element={<ImportVariablesCsv />}
+                path="/import-recursica-json"
+                element={<ImportRecursicaJson />}
               />
               <Route
                 path="/import-repo-component"

@@ -1,55 +1,107 @@
 /**
- * Converts recursica tokens, brand, and ui-kit JSON files to Figma collection CSVs.
- * All 3 JSON files are required. Output: Tokens.csv, Themes.csv, Layer.csv, FigmaVariables.csv (combined, with collection column).
+ * Transforms recursica_tokens.json, recursica_brand.json, and recursica_ui-kit.json
+ * into the same CsvRow[] format consumed by applyVariableRows (Figma variables import).
+ * Port of tokens-to-csv.js logic; no Node fs/path.
  *
- * Process order: tokens → brand → ui-kit (later files can reference earlier or same collection).
+ * --- WORKAROUNDS (candidate for removal) ---
+ * Alias resolution uses several workarounds when the JSON/spec and Figma’s variable
+ * model don’t align. Each is marked in-code with "WORKAROUND WA-N". To find all
+ * sites: grep for "WORKAROUND WA-". To remove later: fix the source JSON or the spec
+ * so references and variable names match what we emit.
  *
- * References follow DTCG: they must target tokens (objects with $value), not groups. Invalid
- * references are reported as errors. Work-arounds (applied when strict resolution would fail)
- * are recorded as warnings:
- * - Current-theme context: brand refs without a theme in the path are resolved in the current
- *   theme being parsed (e.g. parsing brand.themes.light uses the light theme set).
- * - Color group .tone / .on-tone: if the path points to a group, resolve to .tone or .on-tone; when the referrer path ends in "on-tone", prefer .on-tone.
- * - core-black / core-white: brand.palettes.core-black → palettes.core-colors.black, same for core-white; then resolve to .tone or .on-tone by referrer context.
- * - Palette step → .color.tone: refs like brand.palettes.neutral.200 (palette step group) resolve to .color.tone or .color.on-tone by referrer context.
- * - One-level indirection: refs like brand.palettes.palette-1.default.color.tone resolve by following the "default" token's reference (e.g. to palette-1.600) then appending the rest of the path; DTCG does not define this pattern.
- * - tokens.size → tokens.sizes, tokens.opacity → tokens.opacities: if the tokens path starts with the old segment and is not found, try the renamed segment.
- * At the end the script lists errors (numbered) then warnings (numbered). Parsing continues
- * so as much CSV as possible is written.
+ * WA-1  Typography sub-property kebab-case
+ *   JSON may use camelCase for typography sub-properties (e.g. fontFamily); we emit
+ *   kebab-case paths (font-family). If direct path not found, try last segment as kebab-case.
+ *   Remove when: brand typography references use kebab-case in JSON or we accept camelCase.
  *
- * Tokens: path prefix "tokens/". Types: color, dimension (px; rem throws), number, fontFamily, string.
- * Themes: from brand.themes; each row has figmaVariableName, mode, value, type, alias, defaultMode.
- * Layer (ui-kit): 4 modes 0, 1, 2, 3 (default 0); each variable emitted once per mode with defaultMode column.
- * When alias=true, value is stored in Figma path form (collection/path/with/slashes).
+ * WA-2  core-black / core-white → core-colors/black|white
+ *   References like {brand.palettes.core-black} don’t exist; actual structure is
+ *   palettes/core-colors/black with tone/on-tone. We map to core-colors/black|white and
+ *   pick tone or on-tone from referrer context.
+ *   Remove when: JSON uses core-colors/black|white paths or we add core-black/core-white vars.
  *
- * FigmaVariables.csv: collection (tokens|themes|layer), figmaVariableName, mode, value, type, alias, defaultMode; tokens use empty mode and defaultMode true.
+ * WA-3  default → step indirection
+ *   Brand uses indirection (e.g. default → actual step name). We follow one level via
+ *   brandRefByTheme when the path contains "default".
+ *   Remove when: references point directly to the step path (no default indirection).
  *
- * Usage: node tokens-to-csv.js [<tokensPath> <brandPath> <uiKitPath>]
- *        Or: node tokens-to-csv.js <dir>  (uses <dir>/recursica_tokens.json, recursica_brand.json, recursica_ui-kit.json)
+ * WA-4  Palette step → .color.tone / .color.on-tone
+ *   Reference targets a palette step (3 segments: palettes/name/step); Figma has
+ *   variables for .color.tone and .color.on-tone. We resolve to the correct one by
+ *   referrer (on-tone vs tone).
+ *   Remove when: references point to the actual variable path (e.g. .../step/color/tone).
+ *
+ * WA-5  .color → .tone / .on-tone when .color missing
+ *   Reference ends in .color but no such variable exists; we try .tone and .on-tone.
+ *   Remove when: JSON references use .tone/.on-tone or we emit a .color variable.
+ *
+ * WA-6  Group reference → .tone / .on-tone
+ *   Reference targets a group (no $value); we resolve to the .tone or .on-tone child variable.
+ *   Remove when: DTCG/spec allows referencing group and we map it, or refs point to leaves.
+ *
+ * WA-7  text-transform → text-case
+ *   DTCG typography uses "text-transform"; Figma variable is "text-case". We map the ref.
+ *   Remove when: spec or our export uses "text-case" or Figma accepts "text-transform".
+ *
+ * WA-8  tokens.size → sizes, tokens.opacity → opacities
+ *   JSON paths may say tokens.size / tokens.opacity; we emit tokens.sizes / tokens.opacities.
+ *   We try the alternate path when the direct one isn’t in the registry.
+ *   Remove when: JSON uses "sizes" and "opacities" in paths (or we accept size/opacity).
  */
 
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+export interface CsvRow {
+  collection: string;
+  figmaVariableName: string;
+  mode: string;
+  value: string;
+  type: string;
+  alias: string;
+  defaultMode: string;
+}
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+export interface RecursicaJsonToRowsResult {
+  rows: CsvRow[];
+  errors: string[];
+  warnings: string[];
+}
 
 const TOKENS_PREFIX = "tokens/";
 const FIGMA_TYPE_COLOR = "COLOR";
 const FIGMA_TYPE_FLOAT = "FLOAT";
 const FIGMA_TYPE_STRING = "STRING";
-
-// Reference: string value wrapped in { }; points to another variable. We preserve token $type when emitting.
 const REFERENCE_PATTERN = /^\{[^}]+\}$/;
-function isReference(value) {
+const VALID_ROOTS = ["tokens", "brand", "ui-kit"];
+const VALID_THEMES = ["light", "dark"];
+const THEMES_DEFAULT_MODE = "Light";
+const THEMES_MODES = ["Light", "Dark"];
+const NORMALIZED_MODES: Record<string, string> = {
+  light: "Light",
+  dark: "Dark",
+};
+const UIKIT_PREFIX = "ui-kit/";
+const LAYER_MODES = ["0", "1", "2", "3"];
+const LAYER_DEFAULT_MODE = "0";
+const LAYER_MODE_KEYS = ["layer-0", "layer-1", "layer-2", "layer-3"];
+const HEX6 = /^#[0-9a-fA-F]{6}$/;
+const HEX8 = /^#[0-9a-fA-F]{8}$/;
+
+type TokenObj = Record<string, unknown>;
+
+function isReference(value: unknown): value is string {
   return typeof value === "string" && REFERENCE_PATTERN.test(value.trim());
 }
 
-// --- Alias reference: JSON dot path → Figma path, validate exists (mirrors figma-plugin import/aliasReference.ts) ---
-const VALID_ROOTS = ["tokens", "brand", "ui-kit"];
-const VALID_THEMES = ["light", "dark"];
+function camelToKebab(str: string): string {
+  return String(str).replace(/([A-Z])/g, (m) => "-" + m.toLowerCase());
+}
 
-function jsonReferenceToFigmaPath(ref) {
+interface JsonReferenceToFigmaPathResult {
+  collectionFileType: string;
+  figmaVariableName: string;
+  themeKey?: string;
+}
+
+function jsonReferenceToFigmaPath(ref: string): JsonReferenceToFigmaPathResult {
   const trimmed = typeof ref === "string" ? ref.trim() : "";
   const match = trimmed.match(/^\{([^}]+)\}$/);
   if (!match) {
@@ -64,20 +116,20 @@ function jsonReferenceToFigmaPath(ref) {
     );
   }
   const parts = pathContent.split(".");
-  const root = parts[0]?.toLowerCase();
+  const root = (parts[0] as string)?.toLowerCase();
   if (!root || !VALID_ROOTS.includes(root)) {
     throw new Error(
       `Invalid alias reference: path must start with "tokens.", "brand.", or "ui-kit.", got: ${JSON.stringify(pathContent)}`,
     );
   }
-  let figmaVariableName;
-  let themeKey;
+  let figmaVariableName: string;
+  let themeKey: string | undefined;
   if (
     root === "brand" &&
-    parts[1]?.toLowerCase() === "themes" &&
-    VALID_THEMES.includes(parts[2]?.toLowerCase())
+    (parts[1] as string)?.toLowerCase() === "themes" &&
+    VALID_THEMES.includes((parts[2] as string)?.toLowerCase())
   ) {
-    themeKey = parts[2].toLowerCase();
+    themeKey = (parts[2] as string).toLowerCase();
     figmaVariableName = parts.slice(3).join("/");
   } else {
     figmaVariableName = parts.slice(1).join("/");
@@ -89,35 +141,35 @@ function jsonReferenceToFigmaPath(ref) {
   }
   return { collectionFileType: root, figmaVariableName, themeKey };
 }
-function jsonReferenceToFigmaPathValue(ref) {
-  const parsed = jsonReferenceToFigmaPath(ref);
-  return `${parsed.collectionFileType}/${parsed.figmaVariableName}`;
+
+interface Registry {
+  tokens: Set<string>;
+  tokenKeyToAliasPath: Map<string, string>;
+  brandByTheme: Record<string, Set<string>>;
+  brandRefByTheme: Record<string, Map<string, string>>;
+  "ui-kit": Set<string>;
 }
+
 /**
- * Resolves a reference per DTCG: references must target tokens (not groups).
- * Work-arounds (recorded as warnings):
- * - Current-theme context: brand refs without theme in path are validated against current theme set; alias points to variable (Figma resolves per mode).
- * - Color group .tone: if path points to a group, try path/tone (assume tone for color groups).
- * - tokens renames: size→sizes, opacity→opacities (try renamed segment when not found).
- * Returns { value, warning? } or throws if unresolved.
+ * Resolves a DTCG-style reference "{path.to.token}" to a Figma variable path (e.g. "tokens/...").
+ * All alias-resolution workarounds (WA-1 through WA-8) live in this function; see file header.
  */
 function resolveAndValidateAlias(
-  ref,
-  registry,
-  currentThemeKey,
-  locationForWarnings,
-) {
+  ref: string,
+  registry: Registry,
+  currentThemeKey: string,
+  locationForWarnings: string | null,
+): { value: string; warning: string | null } {
   const parsed = jsonReferenceToFigmaPath(ref);
-  let set;
+  let set: Set<string> | null = null;
   if (parsed.collectionFileType === "brand") {
     const resolvedTheme = parsed.themeKey ?? currentThemeKey;
-    if (!resolvedTheme || !registry.brandByTheme?.[resolvedTheme]) {
-      set = null;
-    } else {
+    if (resolvedTheme && registry.brandByTheme?.[resolvedTheme]) {
       set = registry.brandByTheme[resolvedTheme];
     }
   } else {
-    set = registry[parsed.collectionFileType];
+    const s = registry[parsed.collectionFileType as keyof Registry];
+    set = s instanceof Set ? s : null;
   }
 
   const pathDisplay =
@@ -125,14 +177,15 @@ function resolveAndValidateAlias(
     (parsed.themeKey ?? currentThemeKey)
       ? `${parsed.collectionFileType}/themes/${parsed.themeKey ?? currentThemeKey}/${parsed.figmaVariableName}`
       : `${parsed.collectionFileType}/${parsed.figmaVariableName}`;
-  const notFoundError = () =>
+  const notFoundError = (): Error =>
     new Error(
       `Alias reference points to a variable that does not exist: ${pathDisplay} (from reference ${JSON.stringify(ref)})`,
     );
 
   if (set?.has(parsed.figmaVariableName)) {
     const value = `${parsed.collectionFileType}/${parsed.figmaVariableName}`;
-    let warning = null;
+    let warning: string | null = null;
+    // WORKAROUND WA-1: typography sub-property may be referenced in camelCase; we emit kebab-case.
     if (
       parsed.collectionFileType === "brand" &&
       parsed.figmaVariableName.startsWith("typography/") &&
@@ -143,7 +196,7 @@ function resolveAndValidateAlias(
     return { value, warning };
   }
 
-  // DTCG camelCase: typography sub-property refs use fontFamily, fontSize, textCase, etc.; set has kebab-case. Accept camelCase refs.
+  // WORKAROUND WA-1: try kebab-case for typography sub-property when direct path not found.
   if (
     parsed.collectionFileType === "brand" &&
     set &&
@@ -165,20 +218,17 @@ function resolveAndValidateAlias(
     }
   }
 
-  if (
-    parsed.collectionFileType === "tokens" &&
-    set &&
-    registry.tokenKeyToAliasPath
-  ) {
-    const aliasPath = registry.tokenKeyToAliasPath.get(
-      parsed.figmaVariableName,
-    );
+  // Token key may differ from alias path (e.g. $alias on a group); resolve via registry.
+  const tokenKeyToAliasPath = registry.tokenKeyToAliasPath;
+  if (parsed.collectionFileType === "tokens" && set && tokenKeyToAliasPath) {
+    const aliasPath = tokenKeyToAliasPath.get(parsed.figmaVariableName);
     if (aliasPath != null && set.has(aliasPath)) {
       return { value: `tokens/${aliasPath}`, warning: null };
     }
   }
 
   if (parsed.collectionFileType === "brand" && set) {
+    // WORKAROUND WA-2: core-black / core-white → core-colors/black|white + tone|on-tone.
     if (
       parsed.figmaVariableName === "palettes/core-black" ||
       parsed.figmaVariableName === "palettes/core-white"
@@ -194,16 +244,19 @@ function resolveAndValidateAlias(
       const firstSuffix = referrerIsOnTone ? "on-tone" : "tone";
       const secondSuffix = referrerIsOnTone ? "tone" : "on-tone";
       if (set.has(`${expandedPath}/${firstSuffix}`)) {
-        const value = `${parsed.collectionFileType}/${expandedPath}/${firstSuffix}`;
-        const warning = `Reference used core-black/core-white → core-colors and .${firstSuffix} per work-around${locationForWarnings ? ` at ${locationForWarnings}` : ""}: ${ref}`;
-        return { value, warning };
+        return {
+          value: `${parsed.collectionFileType}/${expandedPath}/${firstSuffix}`,
+          warning: `Reference used core-black/core-white → core-colors and .${firstSuffix} per work-around${locationForWarnings ? ` at ${locationForWarnings}` : ""}: ${ref}`,
+        };
       }
       if (set.has(`${expandedPath}/${secondSuffix}`)) {
-        const value = `${parsed.collectionFileType}/${expandedPath}/${secondSuffix}`;
-        const warning = `Reference used core-black/core-white → core-colors and .${secondSuffix} per work-around${locationForWarnings ? ` at ${locationForWarnings}` : ""}: ${ref}`;
-        return { value, warning };
+        return {
+          value: `${parsed.collectionFileType}/${expandedPath}/${secondSuffix}`,
+          warning: `Reference used core-black/core-white → core-colors and .${secondSuffix} per work-around${locationForWarnings ? ` at ${locationForWarnings}` : ""}: ${ref}`,
+        };
       }
     }
+    // WORKAROUND WA-3: follow one-level indirection (e.g. default → step) via brandRefByTheme.
     const refByTheme =
       registry.brandRefByTheme?.[parsed.themeKey ?? currentThemeKey];
     const parts = parsed.figmaVariableName.split("/");
@@ -215,12 +268,14 @@ function resolveAndValidateAlias(
       if (targetPath) {
         const newPath = suffix ? `${targetPath}/${suffix}` : targetPath;
         if (set.has(newPath)) {
-          const value = `${parsed.collectionFileType}/${newPath}`;
-          const warning = `Reference followed one-level indirection (e.g. default → step) per work-around${locationForWarnings ? ` at ${locationForWarnings}` : ""}: ${ref}`;
-          return { value, warning };
+          return {
+            value: `${parsed.collectionFileType}/${newPath}`,
+            warning: `Reference followed one-level indirection (e.g. default → step) per work-around${locationForWarnings ? ` at ${locationForWarnings}` : ""}: ${ref}`,
+          };
         }
       }
     }
+    // WORKAROUND WA-4: palette step (3 segments) → resolve to .color.tone or .color.on-tone by referrer.
     if (parts.length === 3 && parts[0] === "palettes") {
       const colorTonePath = `${parsed.figmaVariableName}/color/tone`;
       const colorOnTonePath = `${parsed.figmaVariableName}/color/on-tone`;
@@ -231,17 +286,19 @@ function resolveAndValidateAlias(
       const firstPath = referrerIsOnTone ? colorOnTonePath : colorTonePath;
       const secondPath = referrerIsOnTone ? colorTonePath : colorOnTonePath;
       if (set.has(firstPath)) {
-        const value = `${parsed.collectionFileType}/${firstPath}`;
-        const warning = `Reference targeted palette step; resolved to .color.${referrerIsOnTone ? "on-tone" : "tone"} per work-around${locationForWarnings ? ` at ${locationForWarnings}` : ""}: ${ref}`;
-        return { value, warning };
+        return {
+          value: `${parsed.collectionFileType}/${firstPath}`,
+          warning: `Reference targeted palette step; resolved to .color.${referrerIsOnTone ? "on-tone" : "tone"} per work-around${locationForWarnings ? ` at ${locationForWarnings}` : ""}: ${ref}`,
+        };
       }
       if (set.has(secondPath)) {
-        const value = `${parsed.collectionFileType}/${secondPath}`;
-        const warning = `Reference targeted palette step; resolved to .color.${referrerIsOnTone ? "tone" : "on-tone"} per work-around${locationForWarnings ? ` at ${locationForWarnings}` : ""}: ${ref}`;
-        return { value, warning };
+        return {
+          value: `${parsed.collectionFileType}/${secondPath}`,
+          warning: `Reference targeted palette step; resolved to .color.${referrerIsOnTone ? "tone" : "on-tone"} per work-around${locationForWarnings ? ` at ${locationForWarnings}` : ""}: ${ref}`,
+        };
       }
     }
-    // layers.layer-0 has elements.interactive.tone but not .color; resolve .color → .tone (or .on-tone by referrer)
+    // WORKAROUND WA-5: reference ends in .color but token doesn't exist; try .tone and .on-tone.
     const partsForColor = parsed.figmaVariableName.split("/");
     if (
       partsForColor.length > 0 &&
@@ -257,16 +314,19 @@ function resolveAndValidateAlias(
       const firstPath = referrerIsOnTone ? onTonePathAlt : tonePathAlt;
       const secondPath = referrerIsOnTone ? tonePathAlt : onTonePathAlt;
       if (set.has(firstPath)) {
-        const value = `${parsed.collectionFileType}/${firstPath}`;
-        const warning = `Reference targeted .color but token does not exist; resolved to .${referrerIsOnTone ? "on-tone" : "tone"} per work-around${locationForWarnings ? ` at ${locationForWarnings}` : ""}: ${ref}`;
-        return { value, warning };
+        return {
+          value: `${parsed.collectionFileType}/${firstPath}`,
+          warning: `Reference targeted .color but token does not exist; resolved to .${referrerIsOnTone ? "on-tone" : "tone"} per work-around${locationForWarnings ? ` at ${locationForWarnings}` : ""}: ${ref}`,
+        };
       }
       if (set.has(secondPath)) {
-        const value = `${parsed.collectionFileType}/${secondPath}`;
-        const warning = `Reference targeted .color but token does not exist; resolved to .${referrerIsOnTone ? "tone" : "on-tone"} per work-around${locationForWarnings ? ` at ${locationForWarnings}` : ""}: ${ref}`;
-        return { value, warning };
+        return {
+          value: `${parsed.collectionFileType}/${secondPath}`,
+          warning: `Reference targeted .color but token does not exist; resolved to .${referrerIsOnTone ? "tone" : "on-tone"} per work-around${locationForWarnings ? ` at ${locationForWarnings}` : ""}: ${ref}`,
+        };
       }
     }
+    // WORKAROUND WA-6: reference targets a group; resolve to .tone or .on-tone child.
     const referrerIsOnTone =
       locationForWarnings &&
       (locationForWarnings.endsWith(".on-tone") ||
@@ -274,22 +334,26 @@ function resolveAndValidateAlias(
     const onTonePath = `${parsed.figmaVariableName}/on-tone`;
     const tonePath = `${parsed.figmaVariableName}/tone`;
     if (referrerIsOnTone && set.has(onTonePath)) {
-      const value = `${parsed.collectionFileType}/${onTonePath}`;
-      const warning = `Reference targeted a group; resolved to .on-tone per work-around${locationForWarnings ? ` at ${locationForWarnings}` : ""}: ${ref}`;
-      return { value, warning };
+      return {
+        value: `${parsed.collectionFileType}/${onTonePath}`,
+        warning: `Reference targeted a group; resolved to .on-tone per work-around${locationForWarnings ? ` at ${locationForWarnings}` : ""}: ${ref}`,
+      };
     }
     if (set.has(tonePath)) {
-      const value = `${parsed.collectionFileType}/${tonePath}`;
-      const warning = `Reference targeted a group; resolved to .tone per work-around${locationForWarnings ? ` at ${locationForWarnings}` : ""}: ${ref}`;
-      return { value, warning };
+      return {
+        value: `${parsed.collectionFileType}/${tonePath}`,
+        warning: `Reference targeted a group; resolved to .tone per work-around${locationForWarnings ? ` at ${locationForWarnings}` : ""}: ${ref}`,
+      };
     }
     if (set.has(onTonePath)) {
-      const value = `${parsed.collectionFileType}/${onTonePath}`;
-      const warning = `Reference targeted a group; resolved to .on-tone per work-around${locationForWarnings ? ` at ${locationForWarnings}` : ""}: ${ref}`;
-      return { value, warning };
+      return {
+        value: `${parsed.collectionFileType}/${onTonePath}`,
+        warning: `Reference targeted a group; resolved to .on-tone per work-around${locationForWarnings ? ` at ${locationForWarnings}` : ""}: ${ref}`,
+      };
     }
   }
 
+  // WORKAROUND WA-7: DTCG typography "text-transform" → Figma "text-case".
   if (parsed.collectionFileType === "brand" && set) {
     const parts = parsed.figmaVariableName.split("/");
     if (
@@ -299,16 +363,18 @@ function resolveAndValidateAlias(
     ) {
       const textCasePath = [...parts.slice(0, -1), "text-case"].join("/");
       if (set.has(textCasePath)) {
-        const value = `${parsed.collectionFileType}/${textCasePath}`;
-        const warning = `Reference used typography .text-transform → .text-case (DTCG textCase) per work-around${locationForWarnings ? ` at ${locationForWarnings}` : ""}: ${ref}`;
-        return { value, warning };
+        return {
+          value: `${parsed.collectionFileType}/${textCasePath}`,
+          warning: `Reference used typography .text-transform → .text-case (DTCG textCase) per work-around${locationForWarnings ? ` at ${locationForWarnings}` : ""}: ${ref}`,
+        };
       }
     }
   }
 
+  // WORKAROUND WA-8: tokens.size → sizes, tokens.opacity → opacities (path renames).
   if (parsed.collectionFileType === "tokens" && set) {
     const parts = parsed.figmaVariableName.split("/");
-    const renames = [
+    const renames: [string, string, string][] = [
       ["size", "sizes", "tokens.size → tokens.sizes"],
       ["opacity", "opacities", "tokens.opacity → tokens.opacities"],
     ];
@@ -316,9 +382,10 @@ function resolveAndValidateAlias(
       if (parts[0] === from) {
         const altPath = [to, ...parts.slice(1)].join("/");
         if (set.has(altPath)) {
-          const value = `${parsed.collectionFileType}/${altPath}`;
-          const warning = `Reference used ${label} per work-around${locationForWarnings ? ` at ${locationForWarnings}` : ""}: ${ref}`;
-          return { value, warning };
+          return {
+            value: `${parsed.collectionFileType}/${altPath}`,
+            warning: `Reference used ${label} per work-around${locationForWarnings ? ` at ${locationForWarnings}` : ""}: ${ref}`,
+          };
         }
       }
     }
@@ -327,32 +394,21 @@ function resolveAndValidateAlias(
   throw notFoundError();
 }
 
-/** Maps DTCG token $type to Figma variable type (COLOR | FLOAT | STRING). Used for references so we do not lose type. */
-function tokenTypeToFigmaType(tokenType) {
+function tokenTypeToFigmaType(tokenType: string): string {
   const t = tokenType?.toLowerCase();
   if (t === "color") return FIGMA_TYPE_COLOR;
   if (t === "number" || t === "dimension") return FIGMA_TYPE_FLOAT;
   return FIGMA_TYPE_STRING;
 }
 
-function escapeCsvCell(value) {
-  const str = String(value);
-  if (
-    str.includes(",") ||
-    str.includes('"') ||
-    str.includes("\n") ||
-    str.includes("\r")
-  ) {
-    return '"' + str.replace(/"/g, '""') + '"';
-  }
-  return str;
+interface Rgba {
+  r: number;
+  g: number;
+  b: number;
+  a: number;
 }
 
-// --- Color conversion (matches RECURSICA_JSON_SPEC § 2 and colorToFigmaRgba) ---
-const HEX6 = /^#[0-9a-fA-F]{6}$/;
-const HEX8 = /^#[0-9a-fA-F]{8}$/;
-
-function rgbaToHex(rgba) {
+function rgbaToHex(rgba: Rgba): string {
   const r = Math.round(Math.max(0, Math.min(1, rgba.r)) * 255);
   const g = Math.round(Math.max(0, Math.min(1, rgba.g)) * 255);
   const b = Math.round(Math.max(0, Math.min(1, rgba.b)) * 255);
@@ -365,20 +421,20 @@ function rgbaToHex(rgba) {
   );
 }
 
-function isRGBA(value) {
+function isRGBA(value: unknown): value is Rgba {
   return (
     value !== null &&
     typeof value === "object" &&
     "r" in value &&
     "g" in value &&
     "b" in value &&
-    typeof value.r === "number" &&
-    typeof value.g === "number" &&
-    typeof value.b === "number"
+    typeof (value as Rgba).r === "number" &&
+    typeof (value as Rgba).g === "number" &&
+    typeof (value as Rgba).b === "number"
   );
 }
 
-function parseRgbOrRgbaString(str) {
+function parseRgbOrRgbaString(str: string): Rgba | null {
   const trimmed = str.trim().toLowerCase();
   const rgbMatch = trimmed.match(
     /^rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/,
@@ -405,7 +461,7 @@ function parseRgbOrRgbaString(str) {
   return null;
 }
 
-function colorToHex(value) {
+function colorToHex(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   if (typeof value === "string") {
     const s = value.trim();
@@ -430,34 +486,37 @@ function colorToHex(value) {
   }
   if (isRGBA(value)) return rgbaToHex(value);
   if (typeof value === "object" && value !== null && "components" in value) {
-    const comp = value.components;
+    const v = value as {
+      components: unknown[];
+      colorSpace?: string;
+      alpha?: number;
+    };
+    const comp = v.components;
     if (!Array.isArray(comp) || comp.length < 3) return null;
-    const space = (value.colorSpace ?? "srgb").toLowerCase();
+    const space = (v.colorSpace ?? "srgb").toLowerCase();
     if (space !== "srgb" && space !== "srgb-linear") return null;
     const r = Math.max(0, Math.min(1, Number(comp[0])));
     const g = Math.max(0, Math.min(1, Number(comp[1])));
     const b = Math.max(0, Math.min(1, Number(comp[2])));
     const a =
-      value.alpha !== undefined
-        ? Math.max(0, Math.min(1, Number(value.alpha)))
-        : 1;
+      v.alpha !== undefined ? Math.max(0, Math.min(1, Number(v.alpha))) : 1;
     return rgbaToHex({ r, g, b, a });
   }
   return null;
 }
 
-// --- Tokens collection (recursica_tokens.json → Tokens.csv) ---
-// Uses alias name in path when present (e.g. colors/cornflower/100 not colors/scale-01/100).
-// tokenKeyToAliasPath: key path -> alias path so refs like tokens.colors.scale-01.100 resolve to the alias path.
+// --- Tokens ---
+type TokenRow = [string, number | string, string, string];
+
 function collectTokens(
-  obj,
-  keyPathSegments,
-  aliasPathSegments,
-  rows,
-  errors,
-  inheritedType,
-  tokenKeyToAliasPath = null,
-) {
+  obj: TokenObj | null,
+  keyPathSegments: string[],
+  aliasPathSegments: string[],
+  rows: TokenRow[],
+  errors: string[],
+  inheritedType: string | undefined,
+  tokenKeyToAliasPath: Map<string, string> | null,
+): void {
   if (obj === null || typeof obj !== "object") return;
 
   if ("$value" in obj) {
@@ -483,18 +542,23 @@ function collectTokens(
     }
     if (tokenType === "dimension") {
       const v = obj.$value;
-      if (v !== null && typeof v === "object" && v.unit === "rem") {
+      if (
+        v !== null &&
+        typeof v === "object" &&
+        (v as { unit?: string }).unit === "rem"
+      ) {
         throw new Error(
           `rem format is not supported at path: ${aliasPathWithSlashes}`,
         );
       }
+      const vObj = v as { value?: number; unit?: string } | null;
       if (
-        v !== null &&
-        typeof v === "object" &&
-        v.unit === "px" &&
-        typeof v.value === "number"
+        vObj !== null &&
+        typeof vObj === "object" &&
+        vObj.unit === "px" &&
+        typeof vObj.value === "number"
       ) {
-        rows.push([figmaVariableName, v.value, FIGMA_TYPE_FLOAT, "false"]);
+        rows.push([figmaVariableName, vObj.value, FIGMA_TYPE_FLOAT, "false"]);
         return;
       }
       errors.push(
@@ -521,7 +585,7 @@ function collectTokens(
           : Array.isArray(v) &&
               v.length > 0 &&
               v.every((x) => typeof x === "string")
-            ? v.join(", ")
+            ? (v as string[]).join(", ")
             : null;
       if (str !== null) {
         rows.push([figmaVariableName, str, FIGMA_TYPE_STRING, "false"]);
@@ -575,9 +639,10 @@ function collectTokens(
     const value = obj[key];
     if (value !== null && typeof value === "object" && !Array.isArray(value)) {
       if (key === "alias") continue;
-      const aliasSegment = typeof value.alias === "string" ? value.alias : key;
+      const child = value as TokenObj & { alias?: string };
+      const aliasSegment = typeof child.alias === "string" ? child.alias : key;
       collectTokens(
-        value,
+        child,
         keyPathSegments.concat(key),
         aliasPathSegments.concat(aliasSegment),
         rows,
@@ -589,19 +654,19 @@ function collectTokens(
   }
 }
 
-// --- Themes collection (recursica_brand.json → Themes.csv). Rows: [figmaVariableName, mode, value, type, defaultMode]. ---
-// References ({...}) are emitted with value = the reference string; type is taken from token $type (see tokenTypeToFigmaType).
-// pathPrefix (optional): JSON path prefix for warnings/errors, e.g. "brand.typography" or "brand.themes.light".
+// --- Themes ---
+type ThemeRow = [string, string, string | number, string, string];
+
 function collectThemeRows(
-  obj,
-  pathSegments,
-  mode,
-  rows,
-  errors,
-  inheritedType,
-  warnings = [],
-  pathPrefix = null,
-) {
+  obj: TokenObj | null,
+  pathSegments: string[],
+  mode: string,
+  rows: ThemeRow[],
+  errors: string[],
+  inheritedType: string | undefined,
+  warnings: string[],
+  pathPrefix: string | null,
+): void {
   if (obj === null || typeof obj !== "object") return;
 
   if ("$value" in obj) {
@@ -635,18 +700,19 @@ function collectThemeRows(
         rows.push([figmaVariableName, mode, v, FIGMA_TYPE_FLOAT, "false"]);
         return;
       }
+      const vObj = v as { value?: number; unit?: string } | null;
       if (
-        v !== null &&
-        typeof v === "object" &&
-        "value" in v &&
-        "unit" in v &&
-        v.unit === "px" &&
-        typeof v.value === "number"
+        vObj !== null &&
+        typeof vObj === "object" &&
+        "value" in vObj &&
+        "unit" in vObj &&
+        vObj.unit === "px" &&
+        typeof vObj.value === "number"
       ) {
         rows.push([
           figmaVariableName,
           mode,
-          v.value,
+          vObj.value,
           FIGMA_TYPE_FLOAT,
           "false",
         ]);
@@ -654,20 +720,22 @@ function collectThemeRows(
       }
     }
     if (tokenType === "dimension") {
-      if (v !== null && typeof v === "object" && v.unit === "rem") {
+      const vObj = v as { unit?: string } | null;
+      if (vObj !== null && typeof vObj === "object" && vObj.unit === "rem") {
         errors.push(`rem format is not supported at path: ${jsonPath}`);
         return;
       }
+      const vDim = v as { value?: number; unit?: string } | null;
       if (
-        v !== null &&
-        typeof v === "object" &&
-        v.unit === "px" &&
-        typeof v.value === "number"
+        vDim !== null &&
+        typeof vDim === "object" &&
+        vDim.unit === "px" &&
+        typeof vDim.value === "number"
       ) {
         rows.push([
           figmaVariableName,
           mode,
-          v.value,
+          vDim.value,
           FIGMA_TYPE_FLOAT,
           "false",
         ]);
@@ -685,17 +753,17 @@ function collectThemeRows(
               ? JSON.stringify(v)
               : String(v);
       rows.push([figmaVariableName, mode, str, FIGMA_TYPE_STRING, "false"]);
-      // Emit sub-property rows (font-family, font-size, etc.) so alias targets like brand/typography/h3/font-family exist in Themes.
       if (typeof v === "object" && v !== null && !Array.isArray(v)) {
-        for (const key of Object.keys(v)) {
+        const vTypo = v as Record<string, unknown>;
+        for (const key of Object.keys(vTypo)) {
           if (key.startsWith("$")) continue;
-          const subVal = v[key];
+          const subVal = vTypo[key];
           const subPath = figmaVariableName + "/" + camelToKebab(key);
           const subRef = typeof subVal === "string" && isReference(subVal);
           rows.push([
             subPath,
             mode,
-            subRef ? subVal : String(subVal ?? ""),
+            subRef ? (subVal as string) : String(subVal ?? ""),
             FIGMA_TYPE_STRING,
             subRef ? "true" : "false",
           ]);
@@ -724,26 +792,27 @@ function collectThemeRows(
       }
     }
 
+    const vObj = v as Record<string, unknown> | null;
     if (
       tokenType === "color" &&
-      v !== null &&
-      typeof v === "object" &&
-      !Array.isArray(v) &&
-      !("components" in v) &&
-      !("r" in v)
+      vObj !== null &&
+      typeof vObj === "object" &&
+      !Array.isArray(vObj) &&
+      !("components" in vObj) &&
+      !("r" in vObj)
     ) {
       const groupType =
         obj.$type != null ? String(obj.$type).trim() : inheritedType;
-      for (const key of Object.keys(v)) {
+      for (const key of Object.keys(vObj)) {
         if (key.startsWith("$")) continue;
-        const child = v[key];
+        const child = vObj[key];
         if (
           child !== null &&
           typeof child === "object" &&
           !Array.isArray(child)
         ) {
           collectThemeRows(
-            child,
+            child as TokenObj,
             pathSegments.concat(key),
             mode,
             rows,
@@ -772,7 +841,7 @@ function collectThemeRows(
         !Array.isArray(value)
       ) {
         collectThemeRows(
-          value,
+          value as TokenObj,
           pathSegments.concat(key),
           mode,
           rows,
@@ -786,16 +855,12 @@ function collectThemeRows(
   }
 }
 
-const THEMES_DEFAULT_MODE = "Light";
-const THEMES_MODES = ["Light", "Dark"];
-const NORMALIZED_MODES = { light: "Light", dark: "Dark" };
-
-function camelToKebab(str) {
-  return String(str).replace(/([A-Z])/g, (m) => "-" + m.toLowerCase());
-}
-
-/** Walks theme object and adds every token's figma variable name (path with /) to the set. Optionally records path → target path when $value is a reference (for one-level indirection, e.g. default → step). Typography tokens have composite $value (fontFamily, fontSize, etc.); we add synthetic sub-paths in kebab-case (font-family, font-size) so refs like brand.typography.h3.font-family resolve. */
-function collectBrandVariableNames(obj, pathSegments, namesSet, refMap = null) {
+function collectBrandVariableNames(
+  obj: TokenObj | null,
+  pathSegments: string[],
+  namesSet: Set<string>,
+  refMap: Map<string, string> | null,
+): void {
   if (obj === null || typeof obj !== "object") return;
   if ("$value" in obj) {
     const v = obj.$value;
@@ -807,39 +872,42 @@ function collectBrandVariableNames(obj, pathSegments, namesSet, refMap = null) {
           const parsed = jsonReferenceToFigmaPath(v);
           if (parsed.collectionFileType === "brand")
             refMap.set(path, parsed.figmaVariableName);
-        } catch (_) {}
+        } catch {
+          // ignore
+        }
       }
       return;
     }
     const tokenType = obj.$type != null ? String(obj.$type).trim() : "";
+    const vObj = v as Record<string, unknown> | null;
     if (
       tokenType === "typography" &&
-      typeof v === "object" &&
-      v !== null &&
-      !Array.isArray(v)
+      typeof vObj === "object" &&
+      vObj !== null &&
+      !Array.isArray(vObj)
     ) {
-      for (const key of Object.keys(v)) {
+      for (const key of Object.keys(vObj)) {
         if (key.startsWith("$")) continue;
         namesSet.add(`${path}/${camelToKebab(key)}`);
       }
     }
     if (
-      typeof v === "object" &&
-      v !== null &&
-      !Array.isArray(v) &&
-      !("components" in v) &&
-      !("r" in v)
+      typeof vObj === "object" &&
+      vObj !== null &&
+      !Array.isArray(vObj) &&
+      !("components" in vObj) &&
+      !("r" in vObj)
     ) {
-      for (const key of Object.keys(v)) {
+      for (const key of Object.keys(vObj)) {
         if (key.startsWith("$")) continue;
-        const child = v[key];
+        const child = vObj[key];
         if (
           child !== null &&
           typeof child === "object" &&
           !Array.isArray(child)
         ) {
           collectBrandVariableNames(
-            child,
+            child as TokenObj,
             pathSegments.concat(key),
             namesSet,
             refMap,
@@ -854,7 +922,7 @@ function collectBrandVariableNames(obj, pathSegments, namesSet, refMap = null) {
     const value = obj[key];
     if (value !== null && typeof value === "object" && !Array.isArray(value)) {
       collectBrandVariableNames(
-        value,
+        value as TokenObj,
         pathSegments.concat(key),
         namesSet,
         refMap,
@@ -863,17 +931,76 @@ function collectBrandVariableNames(obj, pathSegments, namesSet, refMap = null) {
   }
 }
 
-const UIKIT_PREFIX = "ui-kit/";
-/** Layer collection has 4 modes in Figma: 0, 1, 2, 3; default is 0. ui-kit keys layer-0..layer-3 map to these modes. */
-const LAYER_MODES = ["0", "1", "2", "3"];
-const LAYER_DEFAULT_MODE = "0";
-const LAYER_MODE_KEYS = ["layer-0", "layer-1", "layer-2", "layer-3"];
-function layerKeyToMode(layerKey) {
+function processBrandToThemeRows(
+  brandData: { brand?: TokenObj } | TokenObj,
+  rows: ThemeRow[],
+  errors: string[],
+  warnings: string[],
+): void {
+  const brand = (brandData as { brand?: TokenObj }).brand ?? brandData;
+  const themes = (brand as TokenObj).themes;
+  if (themes == null || typeof themes !== "object") {
+    errors.push("brand.json: missing or invalid brand.themes");
+    return;
+  }
+  const themesObj = themes as Record<string, TokenObj>;
+  for (const [rawMode, themeObj] of Object.entries(themesObj)) {
+    if (
+      themeObj === null ||
+      typeof themeObj !== "object" ||
+      Array.isArray(themeObj)
+    )
+      continue;
+    const mode = NORMALIZED_MODES[rawMode?.toLowerCase()];
+    if (mode == null) {
+      errors.push(
+        `brand.json: theme mode must be "light" or "dark" (case insensitive), got: ${rawMode}`,
+      );
+      continue;
+    }
+    collectThemeRows(
+      themeObj,
+      [],
+      mode,
+      rows,
+      errors,
+      undefined,
+      warnings,
+      "brand.themes." + rawMode.toLowerCase(),
+    );
+  }
+  const brandObj = brand as TokenObj;
+  for (const rootKey of Object.keys(brandObj)) {
+    if (rootKey === "themes") continue;
+    const rootSection = brandObj[rootKey];
+    if (
+      rootSection == null ||
+      typeof rootSection !== "object" ||
+      Array.isArray(rootSection)
+    )
+      continue;
+    for (const mode of THEMES_MODES) {
+      collectThemeRows(
+        rootSection as TokenObj,
+        [rootKey],
+        mode,
+        rows,
+        errors,
+        undefined,
+        warnings,
+        "brand",
+      );
+    }
+  }
+}
+
+// --- Ui-kit / Layer ---
+function layerKeyToMode(layerKey: string): string {
   const i = LAYER_MODE_KEYS.indexOf(String(layerKey));
   return i >= 0 ? LAYER_MODES[i] : LAYER_DEFAULT_MODE;
 }
-/** True if obj looks like a layer-mode map: all keys are layer-0, layer-1, etc. */
-function isLayerModeMap(obj) {
+
+function isLayerModeMap(obj: TokenObj | null): boolean {
   if (obj === null || typeof obj !== "object" || Array.isArray(obj))
     return false;
   const keys = Object.keys(obj).filter((k) => !String(k).startsWith("$"));
@@ -881,8 +1008,11 @@ function isLayerModeMap(obj) {
   return keys.every((k) => LAYER_MODE_KEYS.includes(k));
 }
 
-/** Walks ui-kit object and adds every token's figma variable name (path with /, no "ui-kit/" prefix) to the set. Layer-mode maps (layer-0..layer-3) are flattened: we add child keys (e.g. colors/background) not layer-X keys. */
-function collectUiKitVariableNames(obj, pathSegments, namesSet) {
+function collectUiKitVariableNames(
+  obj: TokenObj | null,
+  pathSegments: string[],
+  namesSet: Set<string>,
+): void {
   if (obj === null || typeof obj !== "object") return;
   if ("$value" in obj) {
     const path = pathSegments.join("/");
@@ -891,22 +1021,27 @@ function collectUiKitVariableNames(obj, pathSegments, namesSet) {
     else namesSet.add(path);
     const v = obj.$value;
     if (isReference(v)) return;
+    const vObj = v as Record<string, unknown> | null;
     if (
-      typeof v === "object" &&
-      v !== null &&
-      !Array.isArray(v) &&
-      !("components" in v) &&
-      !("r" in v)
+      typeof vObj === "object" &&
+      vObj !== null &&
+      !Array.isArray(vObj) &&
+      !("components" in vObj) &&
+      !("r" in vObj)
     ) {
-      for (const key of Object.keys(v)) {
+      for (const key of Object.keys(vObj)) {
         if (key.startsWith("$")) continue;
-        const child = v[key];
+        const child = vObj[key];
         if (
           child !== null &&
           typeof child === "object" &&
           !Array.isArray(child)
         ) {
-          collectUiKitVariableNames(child, pathSegments.concat(key), namesSet);
+          collectUiKitVariableNames(
+            child as TokenObj,
+            pathSegments.concat(key),
+            namesSet,
+          );
         }
       }
     }
@@ -918,12 +1053,14 @@ function collectUiKitVariableNames(obj, pathSegments, namesSet) {
     );
     const childKeys =
       layerKeys.length > 0
-        ? Object.keys(obj[layerKeys[0]]).filter(
+        ? Object.keys((obj as Record<string, TokenObj>)[layerKeys[0]]).filter(
             (k) => !String(k).startsWith("$"),
           )
         : [];
     for (const childKey of childKeys) {
-      const child = obj[layerKeys[0]]?.[childKey];
+      const child = (obj as Record<string, Record<string, TokenObj>>)[
+        layerKeys[0]
+      ]?.[childKey];
       if (
         child !== null &&
         typeof child === "object" &&
@@ -942,21 +1079,26 @@ function collectUiKitVariableNames(obj, pathSegments, namesSet) {
     if (key.startsWith("$")) continue;
     const value = obj[key];
     if (value !== null && typeof value === "object" && !Array.isArray(value)) {
-      collectUiKitVariableNames(value, pathSegments.concat(key), namesSet);
+      collectUiKitVariableNames(
+        value as TokenObj,
+        pathSegments.concat(key),
+        namesSet,
+      );
     }
   }
 }
 
-/** Collects ui-kit rows: [figmaVariableName, mode, value, type, alias]. When under a layer-0..layer-3 map, emits one row per mode (layer-0→0, layer-1→1, etc.); otherwise mode "0" (expanded to 4 when writing Layer.csv). */
+type UiKitRow = [string, string, string | number, string, string];
+
 function collectUiKitRows(
-  obj,
-  pathSegments,
-  rows,
-  errors,
-  inheritedType,
-  warnings = [],
-  modeOverride = null,
-) {
+  obj: TokenObj | null,
+  pathSegments: string[],
+  rows: UiKitRow[],
+  errors: string[],
+  inheritedType: string | undefined,
+  warnings: string[],
+  modeOverride: string | null,
+): void {
   if (obj === null || typeof obj !== "object") return;
   const mode = modeOverride ?? LAYER_DEFAULT_MODE;
 
@@ -985,7 +1127,6 @@ function collectUiKitRows(
         rows.push([figmaVariableName, mode, hex, FIGMA_TYPE_COLOR, "false"]);
         return;
       }
-      // Null/undefined color = transparent (rule, not warning)
       if (v === null || v === undefined) {
         rows.push([
           figmaVariableName,
@@ -1009,31 +1150,40 @@ function collectUiKitRows(
         rows.push([figmaVariableName, mode, 0, FIGMA_TYPE_FLOAT, "false"]);
         return;
       }
+      const vObj = v as { value?: number; unit?: string } | null;
       if (
-        typeof v === "object" &&
-        "value" in v &&
-        "unit" in v &&
-        v.unit === "px" &&
-        typeof v.value === "number"
+        typeof vObj === "object" &&
+        vObj !== null &&
+        "value" in vObj &&
+        "unit" in vObj &&
+        vObj.unit === "px" &&
+        typeof vObj.value === "number"
       ) {
         rows.push([
           figmaVariableName,
           mode,
-          v.value,
+          vObj.value,
           FIGMA_TYPE_FLOAT,
           "false",
         ]);
         return;
       }
       if (
-        typeof v === "object" &&
-        "value" in v &&
-        "unit" in v &&
-        v.unit === "px" &&
-        isReference(v.value)
+        typeof vObj === "object" &&
+        vObj !== null &&
+        "value" in vObj &&
+        "unit" in vObj &&
+        vObj.unit === "px" &&
+        isReference(vObj.value)
       ) {
         const figmaType = tokenTypeToFigmaType(tokenType);
-        rows.push([figmaVariableName, mode, v.value, figmaType, "true"]);
+        rows.push([
+          figmaVariableName,
+          mode,
+          vObj.value as string,
+          figmaType,
+          "true",
+        ]);
         return;
       }
     }
@@ -1045,28 +1195,29 @@ function collectUiKitRows(
         rows.push([figmaVariableName, mode, 0, FIGMA_TYPE_FLOAT, "false"]);
         return;
       }
-      if (typeof v === "object" && v.unit === "rem") {
+      const vObj = v as { unit?: string; value?: number } | null;
+      if (typeof vObj === "object" && vObj !== null && vObj.unit === "rem") {
         errors.push(
           `rem format is not supported at path: ${figmaVariableName}`,
         );
         return;
       }
-      if (typeof v === "object" && v.unit === "px") {
-        if (typeof v.value === "number") {
+      if (typeof vObj === "object" && vObj !== null && vObj.unit === "px") {
+        if (typeof vObj.value === "number") {
           rows.push([
             figmaVariableName,
             mode,
-            v.value,
+            vObj.value,
             FIGMA_TYPE_FLOAT,
             "false",
           ]);
           return;
         }
-        if (isReference(v.value)) {
+        if (isReference(vObj.value)) {
           rows.push([
             figmaVariableName,
             mode,
-            v.value,
+            vObj.value as string,
             FIGMA_TYPE_FLOAT,
             "true",
           ]);
@@ -1109,13 +1260,15 @@ function collectUiKitRows(
       );
       const childKeys =
         layerKeys.length > 0
-          ? Object.keys(obj[layerKeys[0]]).filter(
+          ? Object.keys((obj as Record<string, TokenObj>)[layerKeys[0]]).filter(
               (k) => !String(k).startsWith("$"),
             )
           : [];
       for (const childKey of childKeys) {
         for (const layerKey of layerKeys) {
-          const child = obj[layerKey]?.[childKey];
+          const child = (obj as Record<string, Record<string, TokenObj>>)[
+            layerKey
+          ]?.[childKey];
           if (
             child !== null &&
             typeof child === "object" &&
@@ -1146,183 +1299,70 @@ function collectUiKitRows(
         !Array.isArray(value)
       ) {
         collectUiKitRows(
-          value,
+          value as TokenObj,
           pathSegments.concat(key),
           rows,
           errors,
           groupType,
           warnings,
+          null,
         );
       }
     }
   }
 }
 
-function processBrandToThemeRows(brandData, rows, errors, warnings = []) {
-  const brand = brandData.brand ?? brandData;
-  const themes = brand.themes;
-  if (themes == null || typeof themes !== "object") {
-    errors.push("brand.json: missing or invalid brand.themes");
-    return;
-  }
-  for (const [rawMode, themeObj] of Object.entries(themes)) {
-    if (
-      themeObj === null ||
-      typeof themeObj !== "object" ||
-      Array.isArray(themeObj)
-    )
-      continue;
-    const mode = NORMALIZED_MODES[rawMode?.toLowerCase()];
-    if (mode == null) {
-      errors.push(
-        `brand.json: theme mode must be "light" or "dark" (case insensitive), got: ${rawMode}`,
-      );
-      continue;
-    }
-    collectThemeRows(
-      themeObj,
-      [],
-      mode,
-      rows,
-      errors,
-      undefined,
-      warnings,
-      "brand.themes." + rawMode.toLowerCase(),
+/**
+ * Transforms the three Recursica JSON roots into CsvRow[] (same shape as FigmaVariables.csv)
+ * for consumption by applyVariableRows. Process order: tokens → brand/themes → ui-kit/layer.
+ */
+export function recursicaJsonToVariableRows(
+  tokensRoot: unknown,
+  brandRoot: unknown,
+  uiKitRoot: unknown,
+): RecursicaJsonToRowsResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  const tokensData = tokensRoot as { tokens?: TokenObj } | TokenObj;
+  const root = tokensData?.tokens != null ? tokensData.tokens : tokensData;
+  if (root == null || typeof root !== "object") {
+    errors.push(
+      "tokens: missing or invalid root (expected object with tokens or raw tokens object)",
     );
-  }
-  // Emit theme rows for brand root sections (dimensions, typography, etc.) so alias targets exist in Themes collection.
-  for (const rootKey of Object.keys(brand)) {
-    if (rootKey === "themes") continue;
-    const rootSection = brand[rootKey];
-    if (
-      rootSection == null ||
-      typeof rootSection !== "object" ||
-      Array.isArray(rootSection)
-    )
-      continue;
-    for (const mode of ["Light", "Dark"]) {
-      collectThemeRows(
-        rootSection,
-        [rootKey],
-        mode,
-        rows,
-        errors,
-        undefined,
-        warnings,
-        "brand",
-      );
-    }
-  }
-}
-
-function writeCsv(filePath, header, rows) {
-  const csvLines = [
-    header.join(","),
-    ...rows.map((row) => row.map(escapeCsvCell).join(",")),
-  ];
-  fs.writeFileSync(filePath, csvLines.join("\n"), "utf8");
-}
-
-function parseArgs() {
-  const args = process.argv.slice(2);
-  if (args.length === 0) {
-    return {
-      tokensPath: path.resolve(__dirname, "recursica_tokens.json"),
-      brandPath: path.resolve(__dirname, "recursica_brand.json"),
-      uiKitPath: path.resolve(__dirname, "recursica_ui-kit.json"),
-    };
-  }
-  if (args.length === 1) {
-    const dir = path.resolve(process.cwd(), args[0]);
-    return {
-      tokensPath: path.join(dir, "recursica_tokens.json"),
-      brandPath: path.join(dir, "recursica_brand.json"),
-      uiKitPath: path.join(dir, "recursica_ui-kit.json"),
-    };
-  }
-  if (args.length >= 3) {
-    return {
-      tokensPath: path.resolve(process.cwd(), args[0]),
-      brandPath: path.resolve(process.cwd(), args[1]),
-      uiKitPath: path.resolve(process.cwd(), args[2]),
-    };
-  }
-  throw new Error(
-    "Usage: node tokens-to-csv.js [<dir>] or node tokens-to-csv.js <tokensPath> <brandPath> <uiKitPath>",
-  );
-}
-
-function main() {
-  const { tokensPath, brandPath, uiKitPath } = parseArgs();
-
-  console.log("--- tokens-to-csv ---");
-  console.log(
-    "Converts recursica_tokens.json, recursica_brand.json, and recursica_ui-kit.json to Figma CSVs.",
-  );
-  console.log(
-    "Process order: tokens → brand → ui-kit. Alias references are converted to Figma path form and validated.",
-  );
-  console.log(
-    "Output: Tokens.csv, Themes.csv, Layer.csv (in same directory as tokens file).",
-  );
-  console.log("");
-
-  for (const [name, p] of [
-    ["tokens", tokensPath],
-    ["brand", brandPath],
-    ["ui-kit", uiKitPath],
-  ]) {
-    if (!fs.existsSync(p)) {
-      throw new Error(`Required file missing: ${name} at ${p}`);
-    }
+    return { rows: [], errors, warnings };
   }
 
-  const outputDir = path.dirname(tokensPath);
-  const tokensOut = path.join(outputDir, "Tokens.csv");
-  const themesOut = path.join(outputDir, "Themes.csv");
-  const layerOut = path.join(outputDir, "Layer.csv");
-  const figmaVariablesOut = path.join(outputDir, "FigmaVariables.csv");
-
-  const allErrors = [];
-  const allWarnings = [];
-  let themeProcessed = 0;
-  let tokensProcessed = 0;
-
-  // Process order: tokens → brand → ui-kit (aliases in later files reference earlier or same).
-  // 1. Tokens → Tokens.csv and build token variable name set
-  const tokenRows = [];
-  const tokenErrors = [];
-  const tokensRaw = fs.readFileSync(tokensPath, "utf8");
-  const tokensData = JSON.parse(tokensRaw);
-  const root = tokensData.tokens != null ? tokensData.tokens : tokensData;
-  const tokenKeyToAliasPath = new Map();
+  const tokenRows: TokenRow[] = [];
+  const tokenKeyToAliasPath = new Map<string, string>();
   collectTokens(
-    root,
+    root as TokenObj,
     ["tokens"],
     ["tokens"],
     tokenRows,
-    tokenErrors,
+    errors,
     undefined,
     tokenKeyToAliasPath,
   );
-  tokensProcessed = tokenRows.length;
-  allErrors.push(...tokenErrors);
-  const tokenNames = new Set(tokenRows.map((row) => row[0]));
-  writeCsv(
-    tokensOut,
-    ["figmaVariableName", "value", "type", "alias"],
-    tokenRows,
-  );
+  const tokenNames = new Set(tokenRows.map((r) => r[0]));
 
-  // 2. Brand: collect brand variable names per theme (references are theme-agnostic: assume current theme when not specified)
-  const brandRaw = fs.readFileSync(brandPath, "utf8");
-  const brandData = JSON.parse(brandRaw);
-  const brand = brandData.brand ?? brandData;
-  const themes = brand?.themes;
-  const brandNamesByTheme = {};
-  const brandRefByTheme = {};
+  const brandData = brandRoot as { brand?: TokenObj } | TokenObj;
+  const brand = (brandData as { brand?: TokenObj }).brand ?? brandData;
+  if (brand == null || typeof brand !== "object") {
+    errors.push("brand: missing or invalid root");
+    return {
+      rows: buildCombinedRows([], [], []),
+      errors,
+      warnings,
+    };
+  }
+
+  const brandNamesByTheme: Record<string, Set<string>> = {};
+  const brandRefByTheme: Record<string, Map<string, string>> = {};
+  const themes = (brand as TokenObj).themes;
   if (themes != null && typeof themes === "object") {
-    for (const [themeKey, themeObj] of Object.entries(themes)) {
+    const themesObj = themes as Record<string, TokenObj>;
+    for (const [themeKey, themeObj] of Object.entries(themesObj)) {
       if (
         themeObj != null &&
         typeof themeObj === "object" &&
@@ -1342,10 +1382,10 @@ function main() {
       }
     }
   }
-  // Brand root sections (dimensions, typography, elevations, etc.) are not inside themes; add them to each theme set so refs like {brand.dimensions.gutters.horizontal} resolve.
-  for (const rootKey of Object.keys(brand)) {
+  const brandObj = brand as TokenObj;
+  for (const rootKey of Object.keys(brandObj)) {
     if (rootKey === "themes") continue;
-    const rootSection = brand[rootKey];
+    const rootSection = brandObj[rootKey];
     if (
       rootSection != null &&
       typeof rootSection === "object" &&
@@ -1353,7 +1393,7 @@ function main() {
     ) {
       for (const themeKey of Object.keys(brandNamesByTheme)) {
         collectBrandVariableNames(
-          rootSection,
+          rootSection as TokenObj,
           [rootKey],
           brandNamesByTheme[themeKey],
           brandRefByTheme[themeKey],
@@ -1361,22 +1401,20 @@ function main() {
       }
     }
   }
-  const registry = {
+
+  const registry: Registry = {
     tokens: tokenNames,
     tokenKeyToAliasPath,
     brandByTheme: brandNamesByTheme,
     brandRefByTheme,
     "ui-kit": new Set(),
   };
-  const themeRows = [];
-  const themeErrors = [];
-  processBrandToThemeRows(brandData, themeRows, themeErrors, allWarnings);
-  themeProcessed = themeRows.length;
-  allErrors.push(...themeErrors);
-  const themeRowsWithResolvedAliases = themeRows.map((row) => {
+
+  const themeRows: ThemeRow[] = [];
+  processBrandToThemeRows(brandData, themeRows, errors, warnings);
+  const themeRowsWithResolvedAliases: ThemeRow[] = themeRows.map((row) => {
     const [figmaVariableName, mode, value, type, alias] = row;
-    const defaultMode = mode === THEMES_DEFAULT_MODE ? "true" : "false";
-    const currentThemeKey = mode?.toLowerCase();
+    const currentThemeKey = (mode as string)?.toLowerCase();
     const location = `brand.themes.${currentThemeKey}.${figmaVariableName.replace(/\//g, ".")}`;
     if (alias === "true" && isReference(value)) {
       try {
@@ -1386,58 +1424,52 @@ function main() {
           currentThemeKey,
           location,
         );
-        if (warning) allWarnings.push(warning);
-        return [
-          figmaVariableName,
-          mode,
-          figmaPathValue,
-          type,
-          "true",
-          defaultMode,
-        ];
-      } catch (err) {
-        allErrors.push(
+        if (warning) warnings.push(warning);
+        return [figmaVariableName, mode, figmaPathValue, type, "true"];
+      } catch {
+        errors.push(
           `At ${location}: invalid reference ${value} (target variable does not exist; DTCG requires references to tokens, not groups)`,
         );
-        return [figmaVariableName, mode, value, type, "true", defaultMode];
+        return [figmaVariableName, mode, value as string, type, "true"];
       }
     }
-    return [figmaVariableName, mode, value, type, alias, defaultMode];
+    return row;
   });
-  writeCsv(
-    themesOut,
-    ["figmaVariableName", "mode", "value", "type", "alias", "defaultMode"],
-    themeRowsWithResolvedAliases,
-  );
 
-  // 3. Ui-kit → Layer.csv: collect ui-kit variable names, then rows; resolve aliases (brand refs use theme "light" when from ui-kit)
-  const uiKitNames = new Set();
-  const uiKitRaw = fs.readFileSync(uiKitPath, "utf8");
-  const uiKitData = JSON.parse(uiKitRaw);
-  const uiKitRoot =
-    uiKitData["ui-kit"] != null ? uiKitData["ui-kit"] : uiKitData;
+  const uiKitData = uiKitRoot as { "ui-kit"?: TokenObj } | TokenObj;
+  const uiKitRootObj =
+    (uiKitData as { "ui-kit"?: TokenObj })["ui-kit"] != null
+      ? (uiKitData as { "ui-kit": TokenObj })["ui-kit"]
+      : uiKitData;
+  if (uiKitRootObj == null || typeof uiKitRootObj !== "object") {
+    return {
+      rows: buildCombinedRows(tokenRows, themeRowsWithResolvedAliases, []),
+      errors,
+      warnings,
+    };
+  }
+
+  const uiKitNames = new Set<string>();
   collectUiKitVariableNames(
-    uiKitRoot,
+    uiKitRootObj as TokenObj,
     [UIKIT_PREFIX.replace("/", "")],
     uiKitNames,
   );
   registry["ui-kit"] = uiKitNames;
 
-  const uiKitRows = [];
-  const uiKitErrors = [];
+  const uiKitRows: UiKitRow[] = [];
   collectUiKitRows(
-    uiKitRoot,
+    uiKitRootObj as TokenObj,
     [UIKIT_PREFIX.replace("/", "")],
     uiKitRows,
-    uiKitErrors,
+    errors,
     undefined,
-    allWarnings,
+    warnings,
+    null,
   );
-  const uiKitProcessed = uiKitRows.length;
-  allErrors.push(...uiKitErrors);
 
   const UIKIT_THEME_FOR_BRAND_REFS = "light";
-  const uiKitRowsWithResolvedAliases = uiKitRows.map((row) => {
+  const uiKitRowsWithResolvedAliases: UiKitRow[] = uiKitRows.map((row) => {
     const [figmaVariableName, mode, value, type, alias] = row;
     const location = `ui-kit.${figmaVariableName.replace(/\//g, ".")}`;
     if (alias === "true" && isReference(value)) {
@@ -1448,28 +1480,30 @@ function main() {
           UIKIT_THEME_FOR_BRAND_REFS,
           location,
         );
-        if (warning) allWarnings.push(warning);
+        if (warning) warnings.push(warning);
         return [figmaVariableName, mode, figmaPathValue, type, "true"];
-      } catch (err) {
-        allErrors.push(
+      } catch {
+        errors.push(
           `At ${location}: invalid reference ${value} (target variable does not exist; DTCG requires references to tokens, not groups)`,
         );
-        return [figmaVariableName, mode, value, type, "true"];
+        return [figmaVariableName, mode, value as string, type, "true"];
       }
     }
     return row;
   });
-  // Layer collection has 4 modes (0,1,2,3); default is 0. Variables from layer-0..layer-3 maps already have one row per mode; others expand to 4 with same value.
-  const layerRowsByVariable = new Map();
+
+  const layerRowsByVariable = new Map<string, UiKitRow[]>();
   for (const row of uiKitRowsWithResolvedAliases) {
     const [figmaVariableName, mode, value, type, alias] = row;
     if (!layerRowsByVariable.has(figmaVariableName))
       layerRowsByVariable.set(figmaVariableName, []);
     layerRowsByVariable
-      .get(figmaVariableName)
+      .get(figmaVariableName)!
       .push([figmaVariableName, mode, value, type, alias]);
   }
-  const layerRows = [];
+  const layerRows: Array<
+    [string, string, string | number, string, string, string]
+  > = [];
   for (const [, variableRows] of layerRowsByVariable) {
     const modesPresent = new Set(variableRows.map((r) => r[1]));
     const hasAllModes = LAYER_MODES.every((m) => modesPresent.has(m));
@@ -1493,106 +1527,63 @@ function main() {
       }
     } else {
       const [figmaVariableName, , value, type, alias] = variableRows[0];
-      for (const mode of LAYER_MODES) {
-        const defaultMode = mode === LAYER_DEFAULT_MODE ? "true" : "false";
-        layerRows.push([
-          figmaVariableName,
-          mode,
-          value,
-          type,
-          alias,
-          defaultMode,
-        ]);
+      for (const m of LAYER_MODES) {
+        const defaultMode = m === LAYER_DEFAULT_MODE ? "true" : "false";
+        layerRows.push([figmaVariableName, m, value, type, alias, defaultMode]);
       }
     }
   }
-  writeCsv(
-    layerOut,
-    ["figmaVariableName", "mode", "value", "type", "alias", "defaultMode"],
+
+  const combined = buildCombinedRows(
+    tokenRows,
+    themeRowsWithResolvedAliases,
     layerRows,
   );
-
-  const layerProcessed = layerRows.length;
-
-  // Combined FigmaVariables.csv: collection column + all rows in order (tokens → themes → layer)
-  const FIGMA_VARS_HEADER = [
-    "collection",
-    "figmaVariableName",
-    "mode",
-    "value",
-    "type",
-    "alias",
-    "defaultMode",
-  ];
-  const combinedRows = [
-    ...tokenRows.map((row) => [
-      "tokens",
-      row[0],
-      "",
-      row[1],
-      row[2],
-      row[3],
-      "true",
-    ]),
-    ...themeRowsWithResolvedAliases.map((row) => [
-      "themes",
-      row[0],
-      row[1],
-      row[2],
-      row[3],
-      row[4],
-      row[5],
-    ]),
-    ...layerRows.map((row) => [
-      "layer",
-      row[0],
-      row[1],
-      row[2],
-      row[3],
-      row[4],
-      row[5],
-    ]),
-  ];
-  writeCsv(figmaVariablesOut, FIGMA_VARS_HEADER, combinedRows);
-
-  console.log("--- Run information ---");
-  console.log("Inputs:");
-  console.log("  tokens:", tokensPath);
-  console.log("  brand:", brandPath);
-  console.log("  ui-kit:", uiKitPath);
-  console.log("Output directory:", outputDir);
-  console.log("");
-  console.log("--- Statistics ---");
-  console.log("Tokens.csv:", tokensProcessed, "rows");
-  console.log("Themes.csv:", themeProcessed, "rows");
-  console.log("Layer.csv:", layerProcessed, "rows");
-  console.log("FigmaVariables.csv:", combinedRows.length, "rows (combined)");
-  console.log("Written:", tokensOut);
-  console.log("Written:", themesOut);
-  console.log("Written:", layerOut);
-  console.log("Written:", figmaVariablesOut);
-  console.log("");
-  console.log("--- Errors and Warnings statistics ---");
-  console.log("Errors:", allErrors.length);
-  console.log("Warnings:", allWarnings.length);
-  console.log("");
-  console.log("--- Warnings (work-arounds applied) ---");
-  if (allWarnings.length > 0) {
-    allWarnings.forEach((w, i) => {
-      console.warn(`W-${i + 1}. ${w}`);
-    });
-  } else {
-    console.log("(none)");
-  }
-  console.log("");
-  console.log("--- Errors ---");
-  if (allErrors.length > 0) {
-    allErrors.forEach((e, i) => {
-      console.error(`E-${i + 1}. ${e}`);
-    });
-  } else {
-    console.log("(none)");
-  }
+  return { rows: combined, errors, warnings };
 }
 
-main();
+function buildCombinedRows(
+  tokenRows: TokenRow[],
+  themeRowsWithResolvedAliases: ThemeRow[],
+  layerRows: Array<[string, string, string | number, string, string, string]>,
+): CsvRow[] {
+  const out: CsvRow[] = [];
+  for (const row of tokenRows) {
+    const [figmaVariableName, value, type, alias] = row;
+    out.push({
+      collection: "tokens",
+      figmaVariableName,
+      mode: "",
+      value: String(value),
+      type,
+      alias,
+      defaultMode: "true",
+    });
+  }
+  for (const row of themeRowsWithResolvedAliases) {
+    const [figmaVariableName, mode, value, type, alias] = row;
+    const defaultMode = mode === THEMES_DEFAULT_MODE ? "true" : "false";
+    out.push({
+      collection: "themes",
+      figmaVariableName,
+      mode,
+      value: String(value),
+      type,
+      alias,
+      defaultMode,
+    });
+  }
+  for (const row of layerRows) {
+    const [figmaVariableName, mode, value, type, alias, defaultMode] = row;
+    out.push({
+      collection: "layer",
+      figmaVariableName,
+      mode,
+      value: String(value),
+      type,
+      alias,
+      defaultMode,
+    });
+  }
+  return out;
+}

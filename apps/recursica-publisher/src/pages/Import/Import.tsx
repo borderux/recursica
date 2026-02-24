@@ -38,10 +38,10 @@ export default function Import() {
           </Button>
 
           <Button
-            onClick={() => navigate("/import-variables-csv")}
+            onClick={() => navigate("/import-recursica-json")}
             className={classes.button}
           >
-            Import Variables CSV
+            Import Recursica JSON
           </Button>
         </Stack>
       </Stack>

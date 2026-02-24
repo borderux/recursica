@@ -1,15 +1,16 @@
 /**
- * Imports variables from FigmaVariables.csv (combined CSV with collection column).
- * Creates collection if it does not exist; uses existing collection if it does.
+ * Imports variables from variable rows (CSV or Recursica JSON–derived).
+ * Creates collection if it does not exist; uses existing by GUID then by name; sets GUID on create or when matched by name.
  * For each variable: if it already exists at that path, skip; otherwise create it with the value.
- * At the end: creates Text Styles from typography variables (see docs/TEXT-STYLES-IMPORT.md),
- * then creates Effect Styles from elevations (see docs/EFFECT-STYLES-IMPORT.md).
- * Returns counts and warnings for variables, text styles, and effect styles.
+ * applyVariableRows() does collections + variables + alias resolution; callers add Text/Effect styles and response.
  */
 
 import type { PluginResponse } from "../types/messages";
+import { getFixedGuidForCollection } from "../../const/CollectionConstants";
 import { createEffectStylesFromElevations } from "./createEffectStylesFromElevations";
 import { createTextStylesFromTypography } from "./createTextStylesFromTypography";
+
+const COLLECTION_GUID_KEY = "recursica:collectionId";
 
 const COLLECTION_DISPLAY_NAMES: Record<string, string> = {
   tokens: "Tokens",
@@ -25,7 +26,7 @@ const COLLECTION_MODES: Record<string, string[]> = {
 
 type VariableResolvedDataType = "COLOR" | "FLOAT" | "STRING";
 
-interface CsvRow {
+export interface CsvRow {
   collection: string;
   figmaVariableName: string;
   mode: string;
@@ -33,6 +34,12 @@ interface CsvRow {
   type: string;
   alias: string;
   defaultMode: string;
+}
+
+export interface ApplyVariableRowsResult {
+  variablesCreated: number;
+  variablesAlreadyExisted: number;
+  aliasErrors: string[];
 }
 
 function parseCsvRow(header: string[], cells: string[]): CsvRow | null {
@@ -147,43 +154,46 @@ function aliasValueToMapKey(value: string): string {
   return v;
 }
 
-export async function importVariablesCsv(
-  data: Record<string, unknown>,
-): Promise<PluginResponse> {
-  const rowsInput = data.rows as string[][] | undefined;
-  if (!Array.isArray(rowsInput) || rowsInput.length === 0) {
-    return {
-      type: "importVariablesCsv",
-      success: false,
-      error: true,
-      message: "No CSV rows provided",
-      data: {},
-    };
+function findOrCreateCollection(
+  localCollections: VariableCollection[],
+  displayName: string,
+): VariableCollection {
+  const fixedGuid = getFixedGuidForCollection(displayName);
+  let collection = fixedGuid
+    ? localCollections.find(
+        (c) =>
+          c.getSharedPluginData("recursica", COLLECTION_GUID_KEY) === fixedGuid,
+      )
+    : undefined;
+  if (!collection) {
+    collection = localCollections.find((c) => c.name === displayName);
   }
-
-  const csvRows = parseCsvRows(rowsInput);
-  if (csvRows.length === 0) {
-    return {
-      type: "importVariablesCsv",
-      success: false,
-      error: true,
-      message: "CSV has no data rows",
-      data: {},
-    };
+  if (collection) {
+    if (fixedGuid) {
+      const currentGuid = collection.getSharedPluginData(
+        "recursica",
+        COLLECTION_GUID_KEY,
+      );
+      if (!currentGuid || currentGuid.trim() === "") {
+        collection.setSharedPluginData(
+          "recursica",
+          COLLECTION_GUID_KEY,
+          fixedGuid,
+        );
+      }
+    }
+    return collection;
   }
-
-  const rowsByCollection = new Map<string, number>();
-  for (const r of csvRows) {
-    const c = r.collection.toLowerCase();
-    rowsByCollection.set(c, (rowsByCollection.get(c) ?? 0) + 1);
+  collection = figma.variables.createVariableCollection(displayName);
+  if (fixedGuid) {
+    collection.setSharedPluginData("recursica", COLLECTION_GUID_KEY, fixedGuid);
   }
-  console.log(
-    "[importVariablesCsv] Parsed rows:",
-    csvRows.length,
-    "total. Per collection:",
-    Object.fromEntries(rowsByCollection),
-  );
+  return collection;
+}
 
+export async function applyVariableRows(
+  csvRows: CsvRow[],
+): Promise<ApplyVariableRowsResult> {
   const localCollections =
     await figma.variables.getLocalVariableCollectionsAsync();
   const variableByKey = new Map<string, Variable>();
@@ -202,13 +212,10 @@ export async function importVariablesCsv(
 
     const uniqueNames = new Set(rows.map((r) => r.figmaVariableName));
     console.log(
-      `[importVariablesCsv] ${displayName}: ${rows.length} rows, ${uniqueNames.size} unique variable names`,
+      `[applyVariableRows] ${displayName}: ${rows.length} rows, ${uniqueNames.size} unique variable names`,
     );
 
-    let collection = localCollections.find((c) => c.name === displayName);
-    if (!collection) {
-      collection = figma.variables.createVariableCollection(displayName);
-    }
+    const collection = findOrCreateCollection(localCollections, displayName);
     ensureCollectionModes(collection, modeNames);
 
     const modeByName = new Map(collection.modes.map((m) => [m.name, m]));
@@ -318,7 +325,7 @@ export async function importVariablesCsv(
               .filter((k) => k.startsWith(prefix + "/"))
               .slice(0, 5);
             console.log(
-              `[importVariablesCsv] Alias target not found: rawValue=${JSON.stringify(rawValue)} → targetKey=${JSON.stringify(targetKey)}. Sample keys for "${prefix}":`,
+              `[applyVariableRows] Alias target not found: rawValue=${JSON.stringify(rawValue)} → targetKey=${JSON.stringify(targetKey)}. Sample keys for "${prefix}":`,
               sampleKeys,
             );
           }
@@ -344,10 +351,56 @@ export async function importVariablesCsv(
       }),
     );
     console.log(
-      `[importVariablesCsv] Alias errors: ${aliasErrors.length} total, ${uniqueTargets.size} unique missing target(s). Sample:`,
+      `[applyVariableRows] Alias errors: ${aliasErrors.length} total, ${uniqueTargets.size} unique missing target(s). Sample:`,
       [...uniqueTargets].slice(0, 5),
     );
   }
+
+  return {
+    variablesCreated,
+    variablesAlreadyExisted,
+    aliasErrors,
+  };
+}
+
+export async function importVariablesCsv(
+  data: Record<string, unknown>,
+): Promise<PluginResponse> {
+  const rowsInput = data.rows as string[][] | undefined;
+  if (!Array.isArray(rowsInput) || rowsInput.length === 0) {
+    return {
+      type: "importVariablesCsv",
+      success: false,
+      error: true,
+      message: "No CSV rows provided",
+      data: {},
+    };
+  }
+
+  const csvRows = parseCsvRows(rowsInput);
+  if (csvRows.length === 0) {
+    return {
+      type: "importVariablesCsv",
+      success: false,
+      error: true,
+      message: "CSV has no data rows",
+      data: {},
+    };
+  }
+
+  const rowsByCollection = new Map<string, number>();
+  for (const r of csvRows) {
+    const c = r.collection.toLowerCase();
+    rowsByCollection.set(c, (rowsByCollection.get(c) ?? 0) + 1);
+  }
+  console.log(
+    "[importVariablesCsv] Parsed rows:",
+    csvRows.length,
+    "total. Per collection:",
+    Object.fromEntries(rowsByCollection),
+  );
+
+  const applyResult = await applyVariableRows(csvRows);
 
   let textStylesCreated = 0;
   let textStylesSkipped = 0;
@@ -377,6 +430,8 @@ export async function importVariablesCsv(
     );
   }
 
+  const { variablesCreated, variablesAlreadyExisted, aliasErrors } =
+    applyResult;
   const message =
     aliasErrors.length > 0
       ? `Import complete with ${aliasErrors.length} alias error(s). Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Text styles: ${textStylesCreated} created, ${textStylesSkipped} skipped. Effect styles: ${effectStylesCreated} created, ${effectStylesSkipped} skipped.`
