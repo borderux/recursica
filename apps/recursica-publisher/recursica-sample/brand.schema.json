@@ -1,0 +1,768 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Brand JSON Schema",
+  "description": "Schema for Brand.json structure",
+  "type": "object",
+  "required": ["brand"],
+  "properties": {
+    "brand": {
+      "type": "object",
+      "required": ["themes"],
+      "properties": {
+        "themes": {
+          "type": "object",
+          "required": ["light"],
+          "properties": {
+            "light": {
+              "$ref": "#/definitions/mode"
+            },
+            "dark": {
+              "$ref": "#/definitions/mode"
+            }
+          },
+          "additionalProperties": false
+        },
+        "dimensions": {
+          "$ref": "#/definitions/dimensions"
+        },
+        "layout-grids": {
+          "type": "object"
+        },
+        "typography": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "definitions": {
+    "mode": {
+      "type": "object",
+      "properties": {
+        "layers": {
+          "type": "object",
+          "patternProperties": {
+            "^layer-\\d+$": {
+              "$ref": "#/definitions/layer"
+            }
+          }
+        },
+        "palettes": {
+          "type": "object",
+          "required": ["core-colors", "neutral"],
+          "properties": {
+            "core-colors": {
+              "type": "object",
+              "required": ["$type", "$value"],
+              "properties": {
+                "$type": {
+                  "type": "string",
+                  "enum": ["color"]
+                },
+                "$value": {
+                  "type": "object",
+                  "required": [
+                    "black",
+                    "white",
+                    "alert",
+                    "success",
+                    "warning",
+                    "interactive"
+                  ],
+                  "properties": {
+                    "black": {
+                      "type": "object",
+                      "required": ["tone", "on-tone", "interactive"],
+                      "properties": {
+                        "tone": {
+                          "type": "object",
+                          "required": ["$value"],
+                          "properties": {
+                            "$value": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        "on-tone": {
+                          "type": "object",
+                          "required": ["$value"],
+                          "properties": {
+                            "$value": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        "interactive": {
+                          "type": "object",
+                          "required": ["$value"],
+                          "properties": {
+                            "$value": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "white": {
+                      "type": "object",
+                      "required": ["tone", "on-tone", "interactive"],
+                      "properties": {
+                        "tone": {
+                          "type": "object",
+                          "required": ["$value"],
+                          "properties": {
+                            "$value": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        "on-tone": {
+                          "type": "object",
+                          "required": ["$value"],
+                          "properties": {
+                            "$value": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        "interactive": {
+                          "type": "object",
+                          "required": ["$value"],
+                          "properties": {
+                            "$value": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "alert": {
+                      "type": "object",
+                      "required": ["tone", "on-tone", "interactive"],
+                      "properties": {
+                        "tone": {
+                          "type": "object",
+                          "required": ["$value"],
+                          "properties": {
+                            "$value": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        "on-tone": {
+                          "type": "object",
+                          "required": ["$value"],
+                          "properties": {
+                            "$value": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        "interactive": {
+                          "type": "object",
+                          "required": ["$value"],
+                          "properties": {
+                            "$value": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "success": {
+                      "type": "object",
+                      "required": ["tone", "on-tone", "interactive"],
+                      "properties": {
+                        "tone": {
+                          "type": "object",
+                          "required": ["$value"],
+                          "properties": {
+                            "$value": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        "on-tone": {
+                          "type": "object",
+                          "required": ["$value"],
+                          "properties": {
+                            "$value": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        "interactive": {
+                          "type": "object",
+                          "required": ["$value"],
+                          "properties": {
+                            "$value": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "warning": {
+                      "type": "object",
+                      "required": ["tone", "on-tone", "interactive"],
+                      "properties": {
+                        "tone": {
+                          "type": "object",
+                          "required": ["$value"],
+                          "properties": {
+                            "$value": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        "on-tone": {
+                          "type": "object",
+                          "required": ["$value"],
+                          "properties": {
+                            "$value": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        "interactive": {
+                          "type": "object",
+                          "required": ["$value"],
+                          "properties": {
+                            "$value": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "interactive": {
+                      "type": "object",
+                      "required": ["default", "hover"],
+                      "properties": {
+                        "default": {
+                          "type": "object",
+                          "required": ["tone", "on-tone"],
+                          "properties": {
+                            "tone": {
+                              "type": "object",
+                              "required": ["$value"],
+                              "properties": {
+                                "$value": {
+                                  "type": "string"
+                                }
+                              },
+                              "additionalProperties": false
+                            },
+                            "on-tone": {
+                              "type": "object",
+                              "required": ["$value"],
+                              "properties": {
+                                "$value": {
+                                  "type": "string"
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        "hover": {
+                          "type": "object",
+                          "required": ["tone", "on-tone"],
+                          "properties": {
+                            "tone": {
+                              "type": "object",
+                              "required": ["$value"],
+                              "properties": {
+                                "$value": {
+                                  "type": "string"
+                                }
+                              },
+                              "additionalProperties": false
+                            },
+                            "on-tone": {
+                              "type": "object",
+                              "required": ["$value"],
+                              "properties": {
+                                "$value": {
+                                  "type": "string"
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            "neutral": {
+              "$ref": "#/definitions/palette"
+            }
+          },
+          "patternProperties": {
+            "^palette-\\d+$": {
+              "$ref": "#/definitions/palette"
+            }
+          },
+          "additionalProperties": true
+        },
+        "elevations": {
+          "type": "object",
+          "patternProperties": {
+            "^elevation-\\d+$": {
+              "$ref": "#/definitions/elevation"
+            }
+          }
+        },
+        "states": {
+          "$ref": "#/definitions/state"
+        },
+        "text-emphasis": {
+          "type": "object",
+          "properties": {
+            "low": {
+              "type": "object",
+              "required": ["$type", "$value"],
+              "properties": {
+                "$type": {
+                  "type": "string",
+                  "enum": ["number"]
+                },
+                "$value": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "high": {
+              "type": "object",
+              "required": ["$type", "$value"],
+              "properties": {
+                "$type": {
+                  "type": "string",
+                  "enum": ["number"]
+                },
+                "$value": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "typography": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": true
+    },
+    "layer": {
+      "type": "object",
+      "properties": {
+        "element": {
+          "type": "object"
+        },
+        "property": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": true
+    },
+    "palette": {
+      "type": "object",
+      "description": "Palette levels are groups. Each level has color with tone and on-tone; each has $type and $value.",
+      "patternProperties": {
+        "^\\d{2,4}|000|050|default$": {
+          "type": "object",
+          "properties": {
+            "color": {
+              "type": "object",
+              "properties": {
+                "$type": {
+                  "type": "string",
+                  "enum": ["color"]
+                },
+                "tone": {
+                  "type": "object",
+                  "properties": {
+                    "$type": { "type": "string", "enum": ["color"] },
+                    "$value": { "type": "string" }
+                  },
+                  "required": ["$type", "$value"],
+                  "additionalProperties": false
+                },
+                "on-tone": {
+                  "type": "object",
+                  "properties": {
+                    "$type": { "type": "string", "enum": ["color"] },
+                    "$value": { "type": "string" }
+                  },
+                  "required": ["$type", "$value"],
+                  "additionalProperties": false
+                }
+              },
+              "required": ["tone", "on-tone"],
+              "additionalProperties": false
+            }
+          },
+          "required": ["color"],
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": true
+    },
+    "dimensionValue": {
+      "type": "object",
+      "required": ["$type", "$value"],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": ["number"]
+        },
+        "$value": {
+          "oneOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "anyOf": [
+                {
+                  "pattern": "^\\{tokens\\.size\\.[a-z0-9_-]+\\}$"
+                },
+                {
+                  "pattern": "^\\{tokens\\.font\\.sizes\\.[a-z0-9_-]+\\}$"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "dimensions": {
+      "type": "object",
+      "properties": {
+        "general": {
+          "type": "object",
+          "properties": {
+            "none": { "$ref": "#/definitions/dimensionValue" },
+            "sm": { "$ref": "#/definitions/dimensionValue" },
+            "md": { "$ref": "#/definitions/dimensionValue" },
+            "default": { "$ref": "#/definitions/dimensionValue" },
+            "lg": { "$ref": "#/definitions/dimensionValue" },
+            "xl": { "$ref": "#/definitions/dimensionValue" },
+            "2xl": { "$ref": "#/definitions/dimensionValue" }
+          },
+          "additionalProperties": false
+        },
+        "icons": {
+          "type": "object",
+          "properties": {
+            "sm": { "$ref": "#/definitions/dimensionValue" },
+            "lg": { "$ref": "#/definitions/dimensionValue" },
+            "default": { "$ref": "#/definitions/dimensionValue" },
+            "xs": { "$ref": "#/definitions/dimensionValue" }
+          },
+          "additionalProperties": false
+        },
+        "gutters": {
+          "type": "object",
+          "properties": {
+            "horizontal": { "$ref": "#/definitions/dimensionValue" },
+            "vertical": { "$ref": "#/definitions/dimensionValue" }
+          },
+          "additionalProperties": false
+        },
+        "border-radii": {
+          "type": "object",
+          "properties": {
+            "xl": { "$ref": "#/definitions/dimensionValue" },
+            "none": { "$ref": "#/definitions/dimensionValue" },
+            "sm": { "$ref": "#/definitions/dimensionValue" },
+            "default": { "$ref": "#/definitions/dimensionValue" },
+            "lg": { "$ref": "#/definitions/dimensionValue" },
+            "2xl": { "$ref": "#/definitions/dimensionValue" }
+          },
+          "additionalProperties": false
+        },
+        "text-size": {
+          "type": "object",
+          "properties": {
+            "2xs": { "$ref": "#/definitions/dimensionValue" },
+            "xs": { "$ref": "#/definitions/dimensionValue" },
+            "sm": { "$ref": "#/definitions/dimensionValue" },
+            "default": { "$ref": "#/definitions/dimensionValue" },
+            "md": { "$ref": "#/definitions/dimensionValue" },
+            "lg": { "$ref": "#/definitions/dimensionValue" },
+            "xl": { "$ref": "#/definitions/dimensionValue" },
+            "2xl": { "$ref": "#/definitions/dimensionValue" },
+            "3xl": { "$ref": "#/definitions/dimensionValue" },
+            "4xl": { "$ref": "#/definitions/dimensionValue" },
+            "5xl": { "$ref": "#/definitions/dimensionValue" },
+            "6xl": { "$ref": "#/definitions/dimensionValue" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": true
+    },
+    "elevation": {
+      "type": "object",
+      "required": ["$type", "$value"],
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": ["boxShadow"]
+        },
+        "$value": {
+          "type": "object",
+          "required": ["x", "y", "blur", "spread", "color", "opacity"],
+          "properties": {
+            "x": {
+              "type": "object",
+              "required": ["$value", "$type"],
+              "properties": {
+                "$value": {
+                  "type": "object",
+                  "required": ["value", "unit"],
+                  "properties": {
+                    "value": {
+                      "type": "number"
+                    },
+                    "unit": {
+                      "type": "string",
+                      "enum": ["px"]
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "$type": {
+                  "type": "string",
+                  "enum": ["number"]
+                }
+              },
+              "additionalProperties": false
+            },
+            "y": {
+              "type": "object",
+              "required": ["$value", "$type"],
+              "properties": {
+                "$value": {
+                  "type": "object",
+                  "required": ["value", "unit"],
+                  "properties": {
+                    "value": {
+                      "type": "number"
+                    },
+                    "unit": {
+                      "type": "string",
+                      "enum": ["px"]
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "$type": {
+                  "type": "string",
+                  "enum": ["number"]
+                }
+              },
+              "additionalProperties": false
+            },
+            "blur": {
+              "type": "object",
+              "required": ["$value", "$type"],
+              "properties": {
+                "$value": {
+                  "type": "object",
+                  "required": ["value", "unit"],
+                  "properties": {
+                    "value": {
+                      "type": "number"
+                    },
+                    "unit": {
+                      "type": "string",
+                      "enum": ["px"]
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "$type": {
+                  "type": "string",
+                  "enum": ["number"]
+                }
+              },
+              "additionalProperties": false
+            },
+            "spread": {
+              "type": "object",
+              "required": ["$value", "$type"],
+              "properties": {
+                "$value": {
+                  "type": "object",
+                  "required": ["value", "unit"],
+                  "properties": {
+                    "value": {
+                      "type": "number"
+                    },
+                    "unit": {
+                      "type": "string",
+                      "enum": ["px"]
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "$type": {
+                  "type": "string",
+                  "enum": ["number"]
+                }
+              },
+              "additionalProperties": false
+            },
+            "color": {
+              "type": "object",
+              "required": ["$value", "$type"],
+              "properties": {
+                "$value": {
+                  "type": "string"
+                },
+                "$type": {
+                  "type": "string",
+                  "enum": ["color"]
+                }
+              },
+              "additionalProperties": false
+            },
+            "opacity": {
+              "type": "object",
+              "required": ["$value", "$type"],
+              "properties": {
+                "$value": {
+                  "type": "object",
+                  "required": ["value", "unit"],
+                  "properties": {
+                    "value": {
+                      "type": "number"
+                    },
+                    "unit": {
+                      "type": "string",
+                      "enum": ["percentage"]
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "$type": {
+                  "type": "string",
+                  "enum": ["number"]
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "state": {
+      "type": "object",
+      "properties": {
+        "disabled": {
+          "type": "object",
+          "required": ["$type", "$value"],
+          "properties": {
+            "$type": {
+              "type": "string",
+              "enum": ["number"]
+            },
+            "$value": {
+              "type": "string",
+              "pattern": "^\\{tokens\\.opacity\\.[a-z0-9_-]+\\}$"
+            }
+          },
+          "additionalProperties": false
+        },
+        "hover": {
+          "type": "object",
+          "required": ["$type", "$value"],
+          "properties": {
+            "$type": {
+              "type": "string",
+              "enum": ["number"]
+            },
+            "$value": {
+              "type": "string",
+              "pattern": "^\\{tokens\\.opacity\\.[a-z0-9_-]+\\}$"
+            }
+          },
+          "additionalProperties": false
+        },
+        "overlay": {
+          "type": "object",
+          "required": ["color", "opacity"],
+          "properties": {
+            "color": {
+              "type": "object",
+              "required": ["$type", "$value"],
+              "properties": {
+                "$type": {
+                  "type": "string",
+                  "enum": ["color"]
+                },
+                "$value": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "opacity": {
+              "type": "object",
+              "required": ["$type", "$value"],
+              "properties": {
+                "$type": {
+                  "type": "string",
+                  "enum": ["number"]
+                },
+                "$value": {
+                  "type": "string",
+                  "pattern": "^\\{tokens\\.opacity\\.[a-z0-9_-]+\\}$"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

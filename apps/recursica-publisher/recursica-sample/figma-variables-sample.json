@@ -1,0 +1,16 @@
+[
+  {
+    "name": "colors/scale-01/100",
+    "resolvedType": "COLOR",
+    "valuesByMode": {
+      "Default": { "r": 0.451, "g": 0.808, "b": 0.855, "a": 1 }
+    }
+  },
+  {
+    "name": "sizes/default",
+    "resolvedType": "FLOAT",
+    "valuesByMode": {
+      "Default": 8
+    }
+  }
+]
