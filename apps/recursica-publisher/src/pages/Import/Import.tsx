@@ -36,6 +36,13 @@ export default function Import() {
           >
             Import from Files
           </Button>
+
+          <Button
+            onClick={() => navigate("/import-recursica-json")}
+            className={classes.button}
+          >
+            Import Recursica JSON
+          </Button>
         </Stack>
       </Stack>
     </PageLayout>
