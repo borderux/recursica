@@ -85,6 +85,63 @@ const LAYER_MODE_KEYS = ["layer-0", "layer-1", "layer-2", "layer-3"];
 const HEX6 = /^#[0-9a-fA-F]{6}$/;
 const HEX8 = /^#[0-9a-fA-F]{8}$/;
 
+/** Keys that designate a typography style object in ui-kit. Used for Text Style creation. */
+const TYPOGRAPHY_KEYS_UIKIT = [
+  "font-family",
+  "font-size",
+  "font-weight",
+  "letter-spacing",
+  "line-height",
+  "font-style",
+  "text-decoration",
+  "text-transform",
+] as const;
+
+/** Derive Figma Text Style name from full path: strip ui-kit.components., .properties, .variants. */
+function pathToTypographyStyleName(path: string): string {
+  let name = path.replace(/^ui-kit\.components\./, "");
+  name = name.replace(/\.properties\./g, ".").replace(/\.properties$/, "");
+  name = name.replace(/\.variants\./g, ".").replace(/\.variants$/, "");
+  return name;
+}
+
+/**
+ * Find font-family from the first properties.text under the component that has font-family.
+ * Only considers nodes at path ...properties.text (not any typography block).
+ * Used to fallback when a variant's properties.text is missing font-family.
+ */
+function findFallbackFontFamilyInPropertiesText(
+  componentObj: TokenObj,
+  pathFromComponent: string[] = [],
+): unknown {
+  const isPropertiesText =
+    pathFromComponent.length >= 2 &&
+    pathFromComponent[pathFromComponent.length - 2] === "properties" &&
+    pathFromComponent[pathFromComponent.length - 1] === "text";
+
+  if (isPropertiesText) {
+    const fontFamilyNode = componentObj["font-family"] as TokenObj | undefined;
+    const hasFontFamily =
+      fontFamilyNode != null &&
+      typeof fontFamilyNode === "object" &&
+      "$value" in fontFamilyNode;
+    if (hasFontFamily) return fontFamilyNode.$value;
+  }
+
+  for (const key of Object.keys(componentObj)) {
+    if (key.startsWith("$")) continue;
+    const value = componentObj[key];
+    if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+      const found = findFallbackFontFamilyInPropertiesText(
+        value as TokenObj,
+        pathFromComponent.concat(key),
+      );
+      if (found !== undefined) return found;
+    }
+  }
+  return undefined;
+}
+
 type TokenObj = Record<string, unknown>;
 
 function isReference(value: unknown): value is string {
@@ -938,7 +995,9 @@ function processBrandToThemeRows(
   warnings: string[],
 ): void {
   const brand = (brandData as { brand?: TokenObj }).brand ?? brandData;
-  const themes = (brand as TokenObj).themes;
+  const brandObj = brand as TokenObj;
+
+  const themes = brandObj.themes;
   if (themes == null || typeof themes !== "object") {
     errors.push("brand.json: missing or invalid brand.themes");
     return;
@@ -969,7 +1028,6 @@ function processBrandToThemeRows(
       "brand.themes." + rawMode.toLowerCase(),
     );
   }
-  const brandObj = brand as TokenObj;
   for (const rootKey of Object.keys(brandObj)) {
     if (rootKey === "themes") continue;
     const rootSection = brandObj[rootKey];
@@ -989,6 +1047,146 @@ function processBrandToThemeRows(
         undefined,
         warnings,
         "brand",
+      );
+    }
+  }
+}
+
+/** Collect theme rows for ui-kit typography blocks (typography/<styleName>/<prop>). Pushes into themeRows. */
+function collectUiKitTypographyThemeRows(
+  uiKitRoot: TokenObj | null,
+  obj: TokenObj | null,
+  pathSegments: string[],
+  pathPrefix: string,
+  themeRows: ThemeRow[],
+  errors: string[],
+  warnings: string[],
+): void {
+  if (obj === null || typeof obj !== "object" || Array.isArray(obj)) return;
+
+  const hasTypo = TYPOGRAPHY_KEYS_UIKIT.some(
+    (k) =>
+      Object.prototype.hasOwnProperty.call(obj, k) &&
+      (obj[k] as TokenObj)?.$value !== undefined,
+  );
+  const hasFontFamily =
+    Object.prototype.hasOwnProperty.call(obj, "font-family") &&
+    (obj["font-family"] as TokenObj)?.$value !== undefined;
+
+  let fontFamilyValue: unknown = hasFontFamily
+    ? (obj["font-family"] as TokenObj).$value
+    : undefined;
+
+  if (hasTypo && !hasFontFamily) {
+    const fullPath = pathPrefix + "." + pathSegments.join(".");
+    const styleName = pathToTypographyStyleName(fullPath);
+    const styleNameForVariable = styleName.replace(/\./g, "_");
+
+    // uiKitRoot is the unwrapped ui-kit content (has "components"); path from recursion is ["components", "link", ...].
+    const components =
+      uiKitRoot != null &&
+      pathSegments.length >= 2 &&
+      pathSegments[0] === "components"
+        ? (uiKitRoot["components"] as Record<string, TokenObj> | undefined)
+        : undefined;
+    const component = components?.[pathSegments[1]];
+
+    const fallback = component
+      ? findFallbackFontFamilyInPropertiesText(component)
+      : undefined;
+
+    if (fallback !== undefined) {
+      fontFamilyValue = fallback;
+      warnings.push(
+        `Typography "${styleNameForVariable}": missing font-family in variant; using font-family from same component (path: ${fullPath}).`,
+      );
+    } else {
+      warnings.push(
+        `Typography "${styleNameForVariable}" skipped: missing font-family in ui-kit (path: ${fullPath}).`,
+      );
+    }
+  }
+
+  if (hasTypo && (hasFontFamily || fontFamilyValue !== undefined)) {
+    const fullPath = pathPrefix + "." + pathSegments.join(".");
+    const styleName = pathToTypographyStyleName(fullPath);
+    // Only dots become underscores (segment separators); hyphens within segment names stay (e.g. visited-hover, label-text).
+    const styleNameForVariable = styleName.replace(/\./g, "_");
+    const figmaBase = "typography/" + styleNameForVariable;
+    for (const key of TYPOGRAPHY_KEYS_UIKIT) {
+      const child = obj[key] as TokenObj | undefined;
+      const rawValue =
+        key === "font-family" && fontFamilyValue !== undefined
+          ? fontFamilyValue
+          : child != null && typeof child === "object" && "$value" in child
+            ? child.$value
+            : undefined;
+      if (rawValue === undefined) continue;
+      const v = rawValue;
+      const propKey = key === "text-transform" ? "text-case" : key;
+      const figmaVariableName = figmaBase + "/" + propKey;
+      if (typeof v === "string") {
+        const isRef = isReference(v);
+        themeRows.push([
+          figmaVariableName,
+          THEMES_DEFAULT_MODE,
+          v,
+          FIGMA_TYPE_STRING,
+          isRef ? "true" : "false",
+        ]);
+        continue;
+      }
+      if (typeof v === "number") {
+        themeRows.push([
+          figmaVariableName,
+          THEMES_DEFAULT_MODE,
+          v,
+          FIGMA_TYPE_FLOAT,
+          "false",
+        ]);
+        continue;
+      }
+      if (
+        typeof v === "object" &&
+        v !== null &&
+        !Array.isArray(v) &&
+        "value" in v
+      ) {
+        const inner = (v as { value: unknown }).value;
+        if (typeof inner === "string" && isReference(inner)) {
+          themeRows.push([
+            figmaVariableName,
+            THEMES_DEFAULT_MODE,
+            inner,
+            FIGMA_TYPE_FLOAT,
+            "true",
+          ]);
+        } else if (typeof inner === "number") {
+          themeRows.push([
+            figmaVariableName,
+            THEMES_DEFAULT_MODE,
+            inner,
+            FIGMA_TYPE_FLOAT,
+            "false",
+          ]);
+        }
+      }
+    }
+    return;
+  }
+
+  for (const key of Object.keys(obj)) {
+    if (key.startsWith("$")) continue;
+    const value = obj[key];
+    if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+      collectUiKitTypographyThemeRows(
+        uiKitRoot,
+        value as TokenObj,
+        pathSegments.concat(key),
+        pathPrefix,
+        themeRows,
+        errors,
+        warnings,
       );
     }
   }
@@ -1402,6 +1600,12 @@ export function recursicaJsonToVariableRows(
     }
   }
 
+  const uiKitData = uiKitRoot as { "ui-kit"?: TokenObj } | TokenObj;
+  const uiKitRootObj =
+    (uiKitData as { "ui-kit"?: TokenObj })["ui-kit"] != null
+      ? (uiKitData as { "ui-kit": TokenObj })["ui-kit"]
+      : (uiKitData as TokenObj);
+
   const registry: Registry = {
     tokens: tokenNames,
     tokenKeyToAliasPath,
@@ -1412,6 +1616,21 @@ export function recursicaJsonToVariableRows(
 
   const themeRows: ThemeRow[] = [];
   processBrandToThemeRows(brandData, themeRows, errors, warnings);
+  if (
+    uiKitRootObj != null &&
+    typeof uiKitRootObj === "object" &&
+    !Array.isArray(uiKitRootObj)
+  ) {
+    collectUiKitTypographyThemeRows(
+      uiKitRootObj as TokenObj,
+      uiKitRootObj as TokenObj,
+      [],
+      "ui-kit",
+      themeRows,
+      errors,
+      warnings,
+    );
+  }
   const themeRowsWithResolvedAliases: ThemeRow[] = themeRows.map((row) => {
     const [figmaVariableName, mode, value, type, alias] = row;
     const currentThemeKey = (mode as string)?.toLowerCase();
@@ -1436,11 +1655,6 @@ export function recursicaJsonToVariableRows(
     return row;
   });
 
-  const uiKitData = uiKitRoot as { "ui-kit"?: TokenObj } | TokenObj;
-  const uiKitRootObj =
-    (uiKitData as { "ui-kit"?: TokenObj })["ui-kit"] != null
-      ? (uiKitData as { "ui-kit": TokenObj })["ui-kit"]
-      : uiKitData;
   if (uiKitRootObj == null || typeof uiKitRootObj !== "object") {
     return {
       rows: buildCombinedRows(tokenRows, themeRowsWithResolvedAliases, []),

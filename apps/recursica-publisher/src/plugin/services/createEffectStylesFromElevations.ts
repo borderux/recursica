@@ -7,6 +7,8 @@
 
 const ELEVATION_VAR_PREFIX = "elevations/";
 const THEMES_COLLECTION_NAME = "Themes";
+const EFFECT_STYLE_FOLDER_NAME = "Recursica";
+const EFFECT_STYLE_NAME_PREFIX = "recursica_";
 
 export interface CreateEffectStylesFromElevationsResult {
   effectStylesCreated: number;
@@ -177,7 +179,10 @@ export async function createEffectStylesFromElevations(): Promise<CreateEffectSt
 
   for (const { name: elevationName, variable } of elevationVariables) {
     if (createdNames.has(elevationName)) continue;
-    const existing = existingEffectStyles.find((s) => s.name === elevationName);
+    const figmaStyleName = `${EFFECT_STYLE_FOLDER_NAME}/${EFFECT_STYLE_NAME_PREFIX}${elevationName}`;
+    const existing = existingEffectStyles.find(
+      (s) => s.name === figmaStyleName,
+    );
     if (existing) {
       result.effectStylesSkipped++;
       createdNames.add(elevationName);
@@ -228,7 +233,7 @@ export async function createEffectStylesFromElevations(): Promise<CreateEffectSt
       ) as DropShadowEffect;
     }
     const style = figma.createEffectStyle();
-    style.name = elevationName;
+    style.name = figmaStyleName;
     style.effects = [effect];
 
     result.effectStylesCreated++;
