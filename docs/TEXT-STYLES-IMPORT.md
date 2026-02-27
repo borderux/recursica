@@ -1,10 +1,17 @@
-# Text Styles Import (brand.typography)
+# Text Styles Import
 
 ## Overview
 
-When we import variables from FigmaVariables.csv, we also create **Figma Text Styles** from `brand.typography`. Typography variables in the Themes collection (e.g. `typography/h1/font-family`, `typography/h1/font-size`) are used as the source. This step runs **at the end of the variable import**, after all variables (including typography sub-properties) have been created and aliases resolved.
+When we import variables (from FigmaVariables.csv or from Recursica JSON), we also create **Figma Text Styles** from typography variables in the Themes collection. This step runs **at the end of the variable import**, after all variables (including typography sub-properties) have been created and aliases resolved.
 
 Figma does not bind text layers to typography _variables_; it uses **Text Styles**. So we create local Text Styles that match our typography tokens, so designers can apply them to text layers.
+
+## Sources of typography variables (Themes collection)
+
+We create typography variables (and thus Text Styles) from two sources:
+
+1. **recursica_brand.json** — `brand.themes.<mode>.typography` (e.g. `typography/h1/font-family`, `typography/body/font-size`). Each key under `brand.typography` becomes a style name.
+2. **recursica_ui-kit.json** — Component-level typography blocks. We traverse the ui-kit JSON and, whenever we find an object that contains any of the typography property keys below, we treat that object as a typography style and emit variables `typography/<styleName>/<property>`. The style name is derived from the path to that object (see [Naming (ui-kit)](#naming-ui-kit)).
 
 ## When It Runs
 
@@ -52,10 +59,29 @@ We define a list of expected typography property keys. If a variable for that pr
 5. Set `fontName` from resolved family + style.
 6. **Bind variables** for `fontSize`, `letterSpacing`, `lineHeight`, `textCase`, `textDecoration` via `textStyle.setBoundVariable(field, variable)` so the style stays linked to the Themes variables (matches design files where these properties are bound).
 
-## Naming
+## Naming (brand)
 
 - Text style **name** = typography style key from the variable path: e.g. variable `typography/h1/font-size` → style name `h1`; `typography/body/font-family` → style name `body`.
 - No prefix like `typography/` in the Figma style name unless we explicitly choose that later.
+
+## Naming (ui-kit)
+
+For ui-kit we derive the Text Style name from the **path to the parent object** that contains the typography keys. We:
+
+1. Take the full path (e.g. `ui-kit.components.menu-item.properties.text`).
+2. Remove the prefix `ui-kit.components.`
+3. Remove the segment `.properties`
+4. Remove the segment `.variants`
+
+Result: e.g. `ui-kit.components.menu-item.properties.text` → `menu-item.text`; `ui-kit.components.avatar.variants.sizes.small.properties.text` → `avatar.sizes.small.text`. Because Figma variable names cannot contain periods (`.`), we replace `.` with `_` when building the variable name (and thus the Figma Text Style name); dashes are reserved in our names. E.g. `menu-item.text` → variable/style name `menu-item_text`, `avatar.sizes.small.text` → `avatar_sizes_small_text`.
+
+## Typography keys (ui-kit detection and binding)
+
+We detect a typography style object in ui-kit when it contains any of these keys:
+
+- `font-family`, `font-size`, `font-weight`, `letter-spacing`, `line-height`, `font-style`, `text-decoration`, `text-transform`
+
+For each such object we create one Figma Text Style. We bind only these properties to variables; any other Text Style property (e.g. paragraph spacing) is left at Figma default if not defined. In variable names we map `text-transform` → `text-case` (Figma uses `text-case`).
 
 ## API References
 

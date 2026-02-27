@@ -5,8 +5,10 @@
 
 const TYPOGRAPHY_VAR_PREFIX = "typography/";
 const THEMES_COLLECTION_NAME = "Themes";
+const TEXT_STYLE_FOLDER_NAME = "Recursica";
+const TEXT_STYLE_NAME_PREFIX = "recursica_";
 
-/** Expected typography property keys (variable name segment after style name). Missing = warn. */
+/** Typography property keys (variable name segment after style name). Only font-family is required to create a style; others use Figma defaults if missing. */
 export const TYPOGRAPHY_PROPERTY_KEYS = [
   "font-family",
   "font-size",
@@ -67,18 +69,15 @@ async function resolveVariableValue(
   const raw = variable.valuesByMode[modeId];
   if (raw === undefined) {
     const msg = `[resolve] ${variable.name}: no value for modeId (keys: ${Object.keys(variable.valuesByMode).join(",")})`;
-    console.log(msg);
     log?.(msg);
     return null;
   }
   if (isVariableAlias(raw)) {
     const msg = `[resolve] ${variable.name}: alias → ${raw.id}`;
-    console.log(msg);
     log?.(msg);
     const target = await figma.variables.getVariableByIdAsync(raw.id);
     if (!target) {
       const err = `[resolve] alias target not found: ${raw.id}`;
-      console.log(err);
       log?.(err);
       return null;
     }
@@ -86,18 +85,15 @@ async function resolveVariableValue(
   }
   if (typeof raw === "number" || typeof raw === "string") {
     const msg = `[resolve] ${variable.name}: literal ${typeof raw} = ${typeof raw === "string" ? JSON.stringify(raw) : raw}`;
-    console.log(msg);
     log?.(msg);
     return raw;
   }
   if (typeof raw === "object" && raw !== null && "r" in raw) {
     const msg = `[resolve] ${variable.name}: literal COLOR`;
-    console.log(msg);
     log?.(msg);
     return raw as RGB;
   }
   const msg = `[resolve] ${variable.name}: unhandled value type`;
-  console.log(msg);
   log?.(msg);
   return null;
 }
@@ -196,7 +192,8 @@ export async function createTextStylesFromTypography(): Promise<CreateTextStyles
   const existingTextStyles = await figma.getLocalTextStylesAsync();
 
   for (const [styleName, propVars] of variablesByStyle) {
-    const existing = existingTextStyles.find((s) => s.name === styleName);
+    const figmaStyleName = `${TEXT_STYLE_FOLDER_NAME}/${TEXT_STYLE_NAME_PREFIX}${styleName}`;
+    const existing = existingTextStyles.find((s) => s.name === figmaStyleName);
     if (existing) {
       result.textStylesSkipped++;
       continue;
@@ -213,9 +210,6 @@ export async function createTextStylesFromTypography(): Promise<CreateTextStyles
     }
 
     const resolveLog: string[] = [];
-    console.log(
-      `[createTextStyles] Resolving font-family for style "${styleName}" (var: ${fontFamilyVar.name})`,
-    );
     const fontFamily = await resolveVariableValue(
       fontFamilyVar,
       collections,
@@ -248,15 +242,6 @@ export async function createTextStylesFromTypography(): Promise<CreateTextStyles
       toLiteralOrNull(fontWeightVal),
     );
 
-    for (const key of TYPOGRAPHY_PROPERTY_KEYS) {
-      if (!propVars.has(key)) {
-        warnings.push(
-          `Typography style "${styleName}": missing property "${key}".`,
-        );
-      }
-    }
-    result.textStyleWarnings.push(...warnings);
-
     try {
       await figma.loadFontAsync({
         family: fontFamilyStr,
@@ -270,7 +255,7 @@ export async function createTextStylesFromTypography(): Promise<CreateTextStyles
     }
 
     const textStyle = figma.createTextStyle();
-    textStyle.name = styleName;
+    textStyle.name = figmaStyleName;
     textStyle.fontName = { family: fontFamilyStr, style: fontStyleName };
 
     // Bind typography variables so style updates when variables change (matches design files).
