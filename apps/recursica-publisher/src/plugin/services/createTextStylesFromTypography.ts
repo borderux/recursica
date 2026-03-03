@@ -262,16 +262,35 @@ export async function createTextStylesFromTypography(): Promise<CreateTextStyles
     // Figma only allows: fontFamily | fontSize | fontStyle | fontWeight | letterSpacing | lineHeight | paragraphSpacing | paragraphIndent.
     const bindableFields: Array<{
       key: TypographyPropertyKey;
-      field: "fontSize" | "letterSpacing" | "lineHeight";
+      field: "fontSize" | "letterSpacing";
     }> = [
       { key: "font-size", field: "fontSize" },
       { key: "letter-spacing", field: "letterSpacing" },
-      { key: "line-height", field: "lineHeight" },
     ];
     for (const { key, field } of bindableFields) {
       const variable = propVars.get(key);
       if (variable) {
         textStyle.setBoundVariable(field, variable);
+      }
+    }
+
+    // `line-height` resolves to a multiplier in our tokens, so we calc an absolute pixel value.
+    const lineHeightVar = propVars.get("line-height");
+    const fontSizeVar = propVars.get("font-size");
+    if (lineHeightVar && fontSizeVar) {
+      const lhVal = await resolveVariableValue(lineHeightVar, collections);
+      const fsVal = await resolveVariableValue(fontSizeVar, collections);
+
+      const parsedLh =
+        typeof lhVal === "number" ? lhVal : parseFloat(String(lhVal));
+      const parsedFs =
+        typeof fsVal === "number" ? fsVal : parseFloat(String(fsVal));
+
+      if (!Number.isNaN(parsedLh) && !Number.isNaN(parsedFs)) {
+        textStyle.lineHeight = {
+          value: parsedLh * parsedFs,
+          unit: "PIXELS",
+        };
       }
     }
 

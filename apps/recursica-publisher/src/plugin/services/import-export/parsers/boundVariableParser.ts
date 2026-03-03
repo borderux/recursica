@@ -63,9 +63,26 @@ async function resolveVariableValuesRecursively(
     string | number | boolean | VariableAliasSerialized
   > = {};
 
+  const normalizedCollectionName = collection.name.trim().toLowerCase();
+
   for (const [modeId, value] of Object.entries(valuesByMode)) {
     // Convert mode ID to mode name
-    const modeName = convertModeIdToName(modeId, collection);
+    let modeName = convertModeIdToName(modeId, collection);
+
+    // Map modes during export (WA-10) to prevent redundant default modes
+    if (
+      normalizedCollectionName === "tokens" ||
+      normalizedCollectionName === "token"
+    ) {
+      if (modeName === "Mode 1") modeName = "Default";
+    } else if (
+      normalizedCollectionName === "themes" ||
+      normalizedCollectionName === "theme"
+    ) {
+      if (modeName === "Mode 1") modeName = "Light";
+      if (modeName === "Mode 2") modeName = "Dark";
+    }
+
     if (value === null || value === undefined) {
       serialized[modeName] = value;
       continue;
@@ -306,8 +323,26 @@ async function addCollectionToTable(
   // Get or generate GUID for the collection
   const collectionGuid = await getOrGenerateCollectionGuid(collection);
 
-  // Extract mode names as an array
-  const modes: string[] = collection.modes.map((mode) => mode.name);
+  // Map modes during export (WA-10) to prevent redundant default modes
+  // When collections are created via API or UI, they start with "Mode 1" which might get merged
+  // with actual named modes during export of external/remote collections
+  const normalizedCollectionName = collection.name.trim().toLowerCase();
+
+  const modes: string[] = collection.modes.map((mode) => {
+    if (
+      normalizedCollectionName === "tokens" ||
+      normalizedCollectionName === "token"
+    ) {
+      if (mode.name === "Mode 1") return "Default";
+    } else if (
+      normalizedCollectionName === "themes" ||
+      normalizedCollectionName === "theme"
+    ) {
+      if (mode.name === "Mode 1") return "Light";
+      if (mode.name === "Mode 2") return "Dark";
+    }
+    return mode.name;
+  });
 
   // Create collection entry
   const collectionEntry: CollectionTableEntry = {
