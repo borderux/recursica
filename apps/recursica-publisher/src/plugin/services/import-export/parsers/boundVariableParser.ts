@@ -55,6 +55,7 @@ async function resolveVariableValuesRecursively(
   collectionTable: CollectionTable,
   collection: VariableCollection, // Collection to convert mode IDs to names
   visitedIds: Set<string> = new Set(),
+  nodePath: string[],
 ): Promise<
   Record<string, string | number | boolean | VariableAliasSerialized>
 > {
@@ -178,12 +179,13 @@ async function resolveVariableValuesRecursively(
             collectionTable,
             refCollection, // Pass collection for mode ID to name conversion
             newVisitedIds,
+            nodePath,
           );
         }
       }
 
       // Add to table and get index
-      const refIndex = variableTable.addVariable(referencedEntry);
+      const refIndex = variableTable.addVariable(referencedEntry, nodePath);
 
       // Store serialized alias with both ID and table reference
       serialized[modeName] = {
@@ -375,6 +377,7 @@ export async function resolveVariableAliasMetadata(
   alias: any,
   variableTable: VariableTable,
   collectionTable: CollectionTable,
+  nodePath: string[],
 ): Promise<VariableReference | null> {
   if (!alias || typeof alias !== "object" || alias.type !== "VARIABLE_ALIAS") {
     return null;
@@ -427,11 +430,12 @@ export async function resolveVariableAliasMetadata(
         collectionTable,
         collection, // Pass collection for mode ID to name conversion
         new Set([alias.id]), // Start with current variable ID in visited set
+        nodePath,
       );
     }
 
     // Add to table and get index (or existing index if already present)
-    const index = variableTable.addVariable(variableEntry);
+    const index = variableTable.addVariable(variableEntry, nodePath);
 
     // Debug logging for badge/color/label variables
     if (variable.name.includes("badge/color/label")) {
@@ -459,6 +463,7 @@ export async function extractBoundVariables(
   obj: any,
   variableTable: VariableTable,
   collectionTable: CollectionTable,
+  nodePath: string[],
 ): Promise<any> {
   if (!obj || typeof obj !== "object") return obj;
 
@@ -479,6 +484,7 @@ export async function extractBoundVariables(
             value,
             variableTable,
             collectionTable,
+            nodePath,
           );
           if (resolved) {
             result[key] = resolved;
@@ -489,6 +495,7 @@ export async function extractBoundVariables(
             value,
             variableTable,
             collectionTable,
+            nodePath,
           );
         }
       } else if (Array.isArray(value)) {
@@ -500,6 +507,7 @@ export async function extractBoundVariables(
                 item,
                 variableTable,
                 collectionTable,
+                nodePath,
               );
               return resolved || item;
             } else if (item && typeof item === "object") {
@@ -508,6 +516,7 @@ export async function extractBoundVariables(
                 item,
                 variableTable,
                 collectionTable,
+                nodePath,
               );
             }
             return item;
@@ -549,6 +558,7 @@ export async function serializeFills(
   variableTable: VariableTable,
   collectionTable: CollectionTable,
   imageTable: ImageTable,
+  nodePath: string[],
 ): Promise<any> {
   if (!fills || !Array.isArray(fills)) return [];
 
@@ -572,6 +582,7 @@ export async function serializeFills(
                 fill[key],
                 variableTable,
                 collectionTable,
+                nodePath,
               );
             } else if (key === "imageHash") {
               // Replace imageHash with image table reference
@@ -594,6 +605,7 @@ export async function serializeFills(
               fill[key],
               variableTable,
               collectionTable,
+              nodePath,
             );
             // Debug logging for badge/color/label variables in fills
             if (
@@ -634,6 +646,7 @@ export async function serializeBackgrounds(
   variableTable: VariableTable,
   collectionTable: CollectionTable,
   imageTable: ImageTable,
+  nodePath: string[],
 ): Promise<any> {
   if (!backgrounds || !Array.isArray(backgrounds)) return [];
 
@@ -657,6 +670,7 @@ export async function serializeBackgrounds(
                 background[key],
                 variableTable,
                 collectionTable,
+                nodePath,
               );
             } else if (key === "imageHash") {
               // Replace imageHash with image table reference
@@ -679,6 +693,7 @@ export async function serializeBackgrounds(
               background[key],
               variableTable,
               collectionTable,
+              nodePath,
             );
           } else {
             serializedBackground[key] = background[key];

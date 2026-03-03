@@ -103,7 +103,12 @@ export default function DebugConsole({
       {error && (
         <Alert variant="error" className={classes.errorContainer}>
           <div className={classes.errorTitle}>{title} Failed</div>
-          <div className={classes.errorMessage}>{error}</div>
+          <div
+            className={classes.errorMessage}
+            style={{ whiteSpace: "pre-wrap" }}
+          >
+            {error}
+          </div>
           {showCopyButton && (
             <Button
               variant="filled"

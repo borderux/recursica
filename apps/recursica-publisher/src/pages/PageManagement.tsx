@@ -201,6 +201,7 @@ export default function PageManagement() {
             border: `1px solid ${status.type === "success" ? "#4caf50" : "#f44336"}`,
             borderRadius: "4px",
             color: status.type === "success" ? "#2e7d32" : "#c62828",
+            whiteSpace: "pre-wrap",
           }}
         >
           {status.type === "success" ? "✅" : "❌"} {status.message}

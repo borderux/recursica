@@ -205,6 +205,7 @@ export async function extractNodeData(
     detachedComponentsHandled: context.detachedComponentsHandled ?? new Set(),
     exportedIds: context.exportedIds ?? new Map<string, string>(),
     skipPrompts: context.skipPrompts ?? false,
+    nodePath: [...(context.nodePath || []), node.name || "(unnamed)"],
   };
 
   // Handle circular references
@@ -846,6 +847,12 @@ export async function exportPage(
       };
     }
 
+    // ==========================================
+    // EXPORT VALIDATION (Collections & Styles)
+    // ==========================================
+    const exportErrors: string[] = [];
+
+    // 1. Validate Remote Instances (Not Supported)
     if (remoteInstanceMap.size > 0) {
       debugConsole.error(
         `Found ${remoteInstanceMap.size} remote instance(s) - remote instances are not supported during publishing`,
@@ -976,15 +983,16 @@ export async function exportPage(
         detailIndex++;
       }
 
-      const errorMessage = `Cannot publish: Remote instances are not supported. Please remove all remote instances before publishing.\n\nFound ${remoteInstanceMap.size} remote instance(s):\n${remoteInstanceDetails.join("\n\n")}\n\nTo fix this:\n1. Locate each remote instance component listed above using the path(s) shown\n2. Replace it with a local component or remove it\n3. Try publishing again`;
-
-      debugConsole.error(errorMessage);
-      throw new Error(errorMessage);
+      exportErrors.push(
+        `Cannot publish: Remote instances are not supported. Please remove all remote instances before publishing.\n\nFound ${remoteInstanceMap.size} remote instance(s):\n${remoteInstanceDetails.join("\n\n")}\n\nTo fix this:\n1. Locate each remote instance component listed above using the path(s) shown\n2. Replace it with a local component or remove it`,
+      );
     }
 
+    // 2. Validate Collections
     if (totalCollections > 0) {
       debugConsole.log("Collections found:");
       const collections = collectionTable.getTable();
+
       for (const [idx, entry] of Object.values(collections).entries()) {
         const guidInfo = entry.collectionGuid
           ? ` (GUID: ${entry.collectionGuid.substring(0, 8)}...)`
@@ -992,7 +1000,79 @@ export async function exportPage(
         debugConsole.log(
           `  ${idx}: ${entry.collectionName}${guidInfo} - ${entry.modes.length} mode(s)`,
         );
+
+        const normalizedName = entry.collectionName.trim().toLowerCase();
+        let errorReason = "";
+
+        // Strict mapping validation
+        if (
+          !["layer", "layers", "token", "tokens", "theme", "themes"].includes(
+            normalizedName,
+          )
+        ) {
+          errorReason = `Invalid variable collection referenced: "${entry.collectionName}". Must be 'Layer', 'Tokens', or 'Themes'.`;
+        } else if (!entry.isLocal) {
+          // Block remote collections
+          errorReason = `Remote variable collection referenced: "${entry.collectionName}". All variables must be stored in local collections.`;
+        }
+
+        if (errorReason) {
+          // Find variables in this collection
+          const collectionVars = Object.values(variableTable.getTable()).filter(
+            (v: any) => v.collectionId === entry.collectionId,
+          );
+
+          // Flatten their node paths
+          const locations: string[] = [];
+          for (const v of collectionVars) {
+            if (v.nodePaths) locations.push(...v.nodePaths);
+          }
+
+          let locationInfo = "";
+          if (locations.length > 0) {
+            // Deduplicate paths
+            const uniquePaths = Array.from(new Set(locations));
+            locationInfo = `\n   Location(s):\n      - ${uniquePaths.join("\n      - ")}`;
+          } else {
+            locationInfo = `\n   Location: (unable to determine - deeply nested or used in style definitions)`;
+          }
+          exportErrors.push(`${errorReason}${locationInfo}`);
+        }
       }
+    }
+    // 3. Validate Styles (TEXT and EFFECT only)
+    const styles = styleTable.getTable();
+
+    for (const entry of Object.values(styles)) {
+      if (entry.type === "TEXT" || entry.type === "EFFECT") {
+        const stylePrefix = entry.name.split("/")[0]?.trim()?.toLowerCase();
+        if (stylePrefix !== "recursica") {
+          const errorReason = `Invalid style referenced: "${entry.name}". ${entry.type === "TEXT" ? "Typography" : "Effect"} styles must be housed in a 'Recursica' folder.`;
+
+          const locations = entry.nodePaths || [];
+          let locationInfo = "";
+          if (locations.length > 0) {
+            const uniquePaths = Array.from(new Set(locations));
+            locationInfo = `\n   Location(s):\n      - ${uniquePaths.join("\n      - ")}`;
+          } else {
+            locationInfo = `\n   Location: (unable to determine)`;
+          }
+          exportErrors.push(`${errorReason}${locationInfo}`);
+        }
+      }
+    }
+
+    // 4. Block Export if Validations Failed
+    if (exportErrors.length > 0) {
+      const errorMessage = `Export BLOCKED due to validation errors:\n\n${exportErrors.join("\n\n")}`;
+      debugConsole.error(errorMessage);
+      return {
+        type: "exportPage",
+        success: false,
+        error: true,
+        message: errorMessage,
+        data: {} as any,
+      };
     }
 
     // If skipPrompts is true (discovery mode), skip validation during discovery
@@ -1192,10 +1272,11 @@ export async function exportPage(
                 }
               }
             } catch (error) {
-              debugConsole.warning(
+              debugConsole.error(
                 `Failed to recursively discover dependencies for "${pageName}": ${error instanceof Error ? error.message : String(error)}`,
               );
-              // Continue with other pages even if one fails
+              // Fail the discovery if a dependency fails (e.g., validation rule broken)
+              throw error;
             }
           } else {
             // During recursive discovery (if we get here), we still want to find direct references
@@ -1362,6 +1443,7 @@ export async function exportPage(
           imageTable: fullImageTable,
           exportedIds: fullExportedIds,
           skipPrompts: data.skipPrompts ?? false,
+          nodePath: ["page root"],
         },
       );
 
@@ -1435,8 +1517,12 @@ export async function exportPage(
               `✓ Using cached export data for "${discoveredPage.pageName}" (already processed)`,
             );
           } else {
-            debugConsole.warning(
+            debugConsole.error(
               `Failed to export "${discoveredPage.pageName}": ${referencedPageExportResponse.message}`,
+            );
+            // Throw an error to abort the entire export process if a nested export fails (e.g., validation error)
+            throw new Error(
+              `Export blocked by nested component "${discoveredPage.pageName}": ${referencedPageExportResponse.message}`,
             );
           }
         }

@@ -13,6 +13,7 @@ export interface StyleTableEntry {
   effectStyle?: any; // SerializedEffectStyle
   gridStyle?: any; // SerializedGridStyle
   boundVariables?: Record<string, any>; // Bound variables for style properties
+  nodePaths?: string[]; // Traces of all nodes that utilize this style
   styleKey?: string; // Internal-only: used for deduplication during export
 }
 
@@ -29,20 +30,28 @@ export class StyleTable {
    * Add a style to the table and return its index
    * If the style already exists (by styleKey), returns the existing index
    */
-  addStyle(style: StyleTableEntry): number {
+  addStyle(style: StyleTableEntry, nodePath: string[]): number {
     // Generate a styleKey if not provided (for deduplication)
     const styleKey =
       style.styleKey ||
       `${style.type}:${style.name}:${JSON.stringify(style.textStyle || style.paintStyle || style.effectStyle || style.gridStyle)}`;
 
+    const pathString = nodePath.join(" → ");
+
     // Check if style already exists
     const existingIndex = this.styleKeyToIndex.get(styleKey);
     if (existingIndex !== undefined) {
+      const existingStyle = this.styles.get(existingIndex)!;
+      if (!existingStyle.nodePaths) existingStyle.nodePaths = [];
+      if (!existingStyle.nodePaths.includes(pathString)) {
+        existingStyle.nodePaths.push(pathString);
+      }
       return existingIndex;
     }
 
     // Add new style
     const index = this.nextIndex++;
+    style.nodePaths = [pathString];
     this.styles.set(index, { ...style, styleKey });
     this.styleKeyToIndex.set(styleKey, index);
     return index;
