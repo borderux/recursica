@@ -156,6 +156,15 @@ If an instance still cannot be resolved, it remains as a placeholder and a failu
 - **Remote instances**: Stored as full structure and recreated on the REMOTES page.
 - **Variable aliases**: Resolved recursively during import.
 
+## JSON Versioning Architecture
+
+To maintain backward compatibility when the schema structure evolves:
+
+1. **Format Version**: The current export format version is strictly defined as `CURRENT_EXPORT_FORMAT_VERSION` in `constants.ts` and uses SemVer (e.g., `"1.0.0"`).
+2. **Schema Changes**: If you modify the core export tables (variables, collections, metadata, instances, styles), you MUST increment the constant.
+3. **Migrator Pipeline**: You MUST write a migration in `migrations/index.ts` to convert any older JSON payload schema into the _current_ expected format.
+4. **Import Behavior**: The import pipeline (`pageImportNew.ts`) routes the payload through `migrateExportData()` immediately before validation, guaranteeing the parsed JSON matches the current shape. Unsupported newer versions will fail the import automatically.
+
 ## Design Decisions
 
 ### Export Format Evolution (Summary)

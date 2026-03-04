@@ -196,7 +196,7 @@ export async function createEffectStylesFromElevations(): Promise<CreateEffectSt
       );
       continue;
     }
-    const rawValue = variable.valuesByMode[modeId];
+    const rawValue = await resolveVariableValue(variable, collections);
     if (typeof rawValue !== "string") {
       result.effectStyleWarnings.push(
         `Elevation "${elevationName}": value is not a string; skipping.`,

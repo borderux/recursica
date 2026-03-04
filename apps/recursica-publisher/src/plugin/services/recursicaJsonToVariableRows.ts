@@ -47,6 +47,11 @@
  *   JSON paths may say tokens.size / tokens.opacity; we emit tokens.sizes / tokens.opacities.
  *   We try the alternate path when the direct one isn’t in the registry.
  *   Remove when: JSON uses "sizes" and "opacities" in paths (or we accept size/opacity).
+ *
+ * WA-9  opacity decimal → percentage
+ *   Opacities in recursica JSON are 0-1 decimals, but Figma expects 0-100 percentages.
+ *   We multiply by 100 when property path includes "opacity" or "opacities".
+ *   Remove when: recursica JSON uses 0-100 percentages or Figma accepts 0-1 decimals.
  */
 
 export interface CsvRow {
@@ -97,8 +102,8 @@ const TYPOGRAPHY_KEYS_UIKIT = [
   "text-transform",
 ] as const;
 
-/** Derive Figma Text Style name from full path: strip ui-kit.components., .properties, .variants. */
-function pathToTypographyStyleName(path: string): string {
+/** Derive Figma Style name from full path: strip ui-kit.components., .properties, .variants. */
+function pathToStyleName(path: string): string {
   let name = path.replace(/^ui-kit\.components\./, "");
   name = name.replace(/\.properties\./g, ".").replace(/\.properties$/, "");
   name = name.replace(/\.variants\./g, ".").replace(/\.variants$/, "");
@@ -626,7 +631,13 @@ function collectTokens(
     if (tokenType === "number") {
       const v = obj.$value;
       if (typeof v === "number" && !Number.isNaN(v)) {
-        rows.push([figmaVariableName, v, FIGMA_TYPE_FLOAT, "false"]);
+        // WORKAROUND WA-9: Opacities in recursica JSON are 0-1 (e.g., 0.38),
+        // but Figma expects percentages 0-100 for opacity variables.
+        const isOpacity =
+          figmaVariableName.includes("opacity") ||
+          figmaVariableName.includes("opacities");
+        const finalValue = isOpacity ? v * 100 : v;
+        rows.push([figmaVariableName, finalValue, FIGMA_TYPE_FLOAT, "false"]);
         return;
       }
       errors.push(
@@ -754,7 +765,19 @@ function collectThemeRows(
     }
     if (tokenType === "number") {
       if (typeof v === "number" && !Number.isNaN(v)) {
-        rows.push([figmaVariableName, mode, v, FIGMA_TYPE_FLOAT, "false"]);
+        // WORKAROUND WA-9: Opacities in recursica JSON are 0-1 (e.g., 0.38),
+        // but Figma expects percentages 0-100 for opacity variables.
+        const isOpacity =
+          figmaVariableName.includes("opacity") ||
+          figmaVariableName.includes("opacities");
+        const finalValue = isOpacity ? v * 100 : v;
+        rows.push([
+          figmaVariableName,
+          mode,
+          finalValue,
+          FIGMA_TYPE_FLOAT,
+          "false",
+        ]);
         return;
       }
       const vObj = v as { value?: number; unit?: string } | null;
@@ -1079,7 +1102,7 @@ function collectUiKitTypographyThemeRows(
 
   if (hasTypo && !hasFontFamily) {
     const fullPath = pathPrefix + "." + pathSegments.join(".");
-    const styleName = pathToTypographyStyleName(fullPath);
+    const styleName = pathToStyleName(fullPath);
     const styleNameForVariable = styleName.replace(/\./g, "_");
 
     // uiKitRoot is the unwrapped ui-kit content (has "components"); path from recursion is ["components", "link", ...].
@@ -1109,7 +1132,7 @@ function collectUiKitTypographyThemeRows(
 
   if (hasTypo && (hasFontFamily || fontFamilyValue !== undefined)) {
     const fullPath = pathPrefix + "." + pathSegments.join(".");
-    const styleName = pathToTypographyStyleName(fullPath);
+    const styleName = pathToStyleName(fullPath);
     // Only dots become underscores (segment separators); hyphens within segment names stay (e.g. visited-hover, label-text).
     const styleNameForVariable = styleName.replace(/\./g, "_");
     const figmaBase = "typography/" + styleNameForVariable;
@@ -1180,6 +1203,68 @@ function collectUiKitTypographyThemeRows(
     const value = obj[key];
     if (value !== null && typeof value === "object" && !Array.isArray(value)) {
       collectUiKitTypographyThemeRows(
+        uiKitRoot,
+        value as TokenObj,
+        pathSegments.concat(key),
+        pathPrefix,
+        themeRows,
+        errors,
+        warnings,
+      );
+    }
+  }
+}
+
+/** Collect theme rows for ui-kit elevation blocks (e.g. elevations/<styleName>). Pushes into themeRows. */
+function collectUiKitElevationThemeRows(
+  uiKitRoot: TokenObj | null,
+  obj: TokenObj | null,
+  pathSegments: string[],
+  pathPrefix: string,
+  themeRows: ThemeRow[],
+  errors: string[],
+  warnings: string[],
+): void {
+  if (obj === null || typeof obj !== "object" || Array.isArray(obj)) return;
+
+  const isElevation = obj.$type === "elevation" && obj.$value !== undefined;
+
+  if (isElevation) {
+    const fullPath = pathPrefix + "." + pathSegments.join(".");
+    const styleName = pathToStyleName(fullPath);
+    // Use the same replacement rule for dots to underscores
+    const styleNameForVariable = styleName.replace(/\./g, "_");
+    const figmaVariableName = "elevations/" + styleNameForVariable;
+
+    const v = obj.$value;
+
+    if (typeof v === "string") {
+      const isRef = isReference(v);
+      themeRows.push([
+        figmaVariableName,
+        THEMES_DEFAULT_MODE,
+        v,
+        FIGMA_TYPE_STRING, // It will be resolved from string later
+        isRef ? "true" : "false",
+      ]);
+    } else {
+      // Direct raw elevation objects aren't standard for Recursica JSON here, but handle fallback
+      themeRows.push([
+        figmaVariableName,
+        THEMES_DEFAULT_MODE,
+        JSON.stringify(v),
+        FIGMA_TYPE_STRING,
+        "false",
+      ]);
+    }
+    return;
+  }
+
+  for (const key of Object.keys(obj)) {
+    if (key.startsWith("$")) continue;
+    const value = obj[key];
+    if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+      collectUiKitElevationThemeRows(
         uiKitRoot,
         value as TokenObj,
         pathSegments.concat(key),
@@ -1338,7 +1423,19 @@ function collectUiKitRows(
     }
     if (tokenType === "number") {
       if (typeof v === "number" && !Number.isNaN(v)) {
-        rows.push([figmaVariableName, mode, v, FIGMA_TYPE_FLOAT, "false"]);
+        // WORKAROUND WA-9: Opacities in recursica JSON are 0-1 (e.g., 0.38),
+        // but Figma expects percentages 0-100 for opacity variables.
+        const isOpacity =
+          figmaVariableName.includes("opacity") ||
+          figmaVariableName.includes("opacities");
+        const finalValue = isOpacity ? v * 100 : v;
+        rows.push([
+          figmaVariableName,
+          mode,
+          finalValue,
+          FIGMA_TYPE_FLOAT,
+          "false",
+        ]);
         return;
       }
       if (v === null || v === undefined) {
@@ -1622,6 +1719,15 @@ export function recursicaJsonToVariableRows(
     !Array.isArray(uiKitRootObj)
   ) {
     collectUiKitTypographyThemeRows(
+      uiKitRootObj as TokenObj,
+      uiKitRootObj as TokenObj,
+      [],
+      "ui-kit",
+      themeRows,
+      errors,
+      warnings,
+    );
+    collectUiKitElevationThemeRows(
       uiKitRootObj as TokenObj,
       uiKitRootObj as TokenObj,
       [],

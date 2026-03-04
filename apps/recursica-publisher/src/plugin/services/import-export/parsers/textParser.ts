@@ -24,17 +24,29 @@ export async function parseTextProperties(
         if (styleIndex < 0) {
           // Style not in table yet - parse and add it
           const parsed = await parseTextStyle(style as TextStyle, context);
-          styleIndex = context.styleTable.addStyle({
-            type: "TEXT",
-            name: style.name,
-            styleKey: style.key,
-            textStyle: parsed,
-            boundVariables: parsed.boundVariables,
-          });
+          styleIndex = context.styleTable.addStyle(
+            {
+              type: "TEXT",
+              name: style.name,
+              styleKey: style.key,
+              textStyle: parsed,
+              boundVariables: parsed.boundVariables,
+            },
+            context.nodePath || [],
+          );
           debugConsole.log(
             `  [EXPORT] Added text style "${style.name}" to style table at index ${styleIndex} for text node "${node.name || "Unnamed"}"`,
           );
         } else {
+          // Re-trigger addStyle to append nodePath for existing styles
+          context.styleTable.addStyle(
+            {
+              type: "TEXT",
+              name: style.name,
+              styleKey: style.key,
+            },
+            context.nodePath || [],
+          );
           debugConsole.log(
             `  [EXPORT] Reusing existing text style "${style.name}" from style table at index ${styleIndex} for text node "${node.name || "Unnamed"}"`,
           );
