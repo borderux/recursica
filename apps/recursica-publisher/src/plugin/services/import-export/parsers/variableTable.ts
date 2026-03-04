@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   normalizeCollectionName,
   isStandardCollection,
@@ -260,6 +259,7 @@ export interface VariableTableEntry {
     string,
     string | number | boolean | VariableAliasSerialized
   >;
+  nodePaths?: string[]; // Traces of all nodes that utilize this variable
   // Internal-only fields (not serialized to JSON):
   // Used during export for deduplication and import for legacy compatibility
   variableKey?: string; // Only used during export for deduplication
@@ -340,19 +340,29 @@ export class VariableTable {
    * Adds a variable to the table if it doesn't already exist
    * Returns the index of the variable (existing or newly added)
    */
-  addVariable(variableInfo: VariableTableEntry): number {
+  addVariable(variableInfo: VariableTableEntry, nodePath: string[]): number {
     const key = variableInfo.variableKey;
     if (!key) {
       return -1;
     }
 
+    const pathString = nodePath.join(" → ");
+
     // Check if variable already exists
     if (this.variableMap.has(key)) {
-      return this.variableMap.get(key)!;
+      const existingIndex = this.variableMap.get(key)!;
+      const existingVariable = this.variables[existingIndex];
+      // Append path trace if not already included
+      if (!existingVariable.nodePaths) existingVariable.nodePaths = [];
+      if (!existingVariable.nodePaths.includes(pathString)) {
+        existingVariable.nodePaths.push(pathString);
+      }
+      return existingIndex;
     }
 
     // Add new variable
     const index = this.nextIndex++;
+    variableInfo.nodePaths = [pathString];
     this.variableMap.set(key, index);
     this.variables[index] = variableInfo;
     return index;
@@ -413,7 +423,7 @@ export class VariableTable {
         typeof value === "object" &&
         value !== null &&
         "_varRef" in value &&
-        typeof (value as any)._varRef === "number"
+        typeof (value as VariableAliasSerialized)._varRef === "number"
       ) {
         // Only include _varRef, exclude type and id
         serialized[modeName] = {
@@ -440,7 +450,7 @@ export class VariableTable {
     string,
     Omit<
       VariableTableEntry,
-      "variableKey" | "id" | "valuesByMode" | "variableType"
+      "variableKey" | "id" | "valuesByMode" | "variableType" | "nodePaths"
     > & {
       variableType: number | string; // Compressed: number for known types, string for unknown
       valuesByMode?: Record<
@@ -453,7 +463,7 @@ export class VariableTable {
       string,
       Omit<
         VariableTableEntry,
-        "variableKey" | "id" | "valuesByMode" | "variableType"
+        "variableKey" | "id" | "valuesByMode" | "variableType" | "nodePaths"
       > & {
         variableType: number | string; // Compressed: number for known types, string for unknown
         valuesByMode?: Record<
@@ -471,9 +481,11 @@ export class VariableTable {
 
       // Build serialized entry with correct types
       // Compress variableType to number if it's a known type
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { nodePaths, ...restEntry } = entry;
       const serialized: Omit<
         VariableTableEntry,
-        "variableKey" | "id" | "valuesByMode" | "variableType"
+        "variableKey" | "id" | "valuesByMode" | "variableType" | "nodePaths"
       > & {
         variableType: number | string; // Compressed: number for known types, string for unknown
         valuesByMode?: Record<
@@ -481,9 +493,9 @@ export class VariableTable {
           string | number | boolean | { _varRef: number }
         >;
       } = {
-        variableName: entry.variableName,
-        variableType: compressVariableType(entry.variableType),
-        ...(entry._colRef !== undefined && { _colRef: entry._colRef }),
+        variableName: restEntry.variableName,
+        variableType: compressVariableType(restEntry.variableType),
+        ...(restEntry._colRef !== undefined && { _colRef: restEntry._colRef }),
         ...(serializedValuesByMode && { valuesByMode: serializedValuesByMode }),
       };
       table[String(i)] = serialized;
@@ -552,11 +564,12 @@ export function createVariableReference(index: number): VariableReference {
 /**
  * Checks if an object is a variable reference
  */
-export function isVariableReference(obj: any): boolean {
+export function isVariableReference(obj: unknown): boolean {
   return (
-    obj &&
     typeof obj === "object" &&
-    typeof obj._varRef === "number" &&
+    obj !== null &&
+    "_varRef" in obj &&
+    typeof (obj as Record<string, unknown>)._varRef === "number" &&
     !("type" in obj) // Legacy format has type, new format doesn't
   );
 }

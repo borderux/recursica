@@ -100,6 +100,7 @@ export async function parseTextStyle(
       (style as any).boundVariables,
       context.variableTable,
       context.collectionTable,
+      context.nodePath || [],
     );
     if (Object.keys(boundVars).length > 0) {
       result.boundVariables = boundVars;
@@ -129,6 +130,7 @@ export async function parsePaintStyle(
       (style as any).boundVariables,
       context.variableTable,
       context.collectionTable,
+      context.nodePath || [],
     );
     if (Object.keys(boundVars).length > 0) {
       result.boundVariables = boundVars;
@@ -157,6 +159,7 @@ export async function parseEffectStyle(
       (style as any).boundVariables,
       context.variableTable,
       context.collectionTable,
+      context.nodePath || [],
     );
     if (Object.keys(boundVars).length > 0) {
       result.boundVariables = boundVars;
@@ -185,6 +188,7 @@ export async function parseGridStyle(
       (style as any).boundVariables,
       context.variableTable,
       context.collectionTable,
+      context.nodePath || [],
     );
     if (Object.keys(boundVars).length > 0) {
       result.boundVariables = boundVars;

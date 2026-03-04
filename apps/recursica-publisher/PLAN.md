@@ -17,6 +17,8 @@ This document tracks all design decisions, implementation details, and changes m
 
 ## Export Format Versions
 
+The detailed history of the export format (v1.0.0 through v2.6.0) is maintained here for historical context. However, for the **current, active JSON Versioning Strategy** (including how schema changes and migrations are handled), please refer to the source of truth documentation: [Import/Export README](src/plugin/services/import-export/README.md).
+
 ### Version 1.0.0
 
 - Initial implementation

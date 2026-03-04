@@ -55,6 +55,7 @@ async function resolveVariableValuesRecursively(
   collectionTable: CollectionTable,
   collection: VariableCollection, // Collection to convert mode IDs to names
   visitedIds: Set<string> = new Set(),
+  nodePath: string[],
 ): Promise<
   Record<string, string | number | boolean | VariableAliasSerialized>
 > {
@@ -63,9 +64,26 @@ async function resolveVariableValuesRecursively(
     string | number | boolean | VariableAliasSerialized
   > = {};
 
+  const normalizedCollectionName = collection.name.trim().toLowerCase();
+
   for (const [modeId, value] of Object.entries(valuesByMode)) {
     // Convert mode ID to mode name
-    const modeName = convertModeIdToName(modeId, collection);
+    let modeName = convertModeIdToName(modeId, collection);
+
+    // Map modes during export (WA-10) to prevent redundant default modes
+    if (
+      normalizedCollectionName === "tokens" ||
+      normalizedCollectionName === "token"
+    ) {
+      if (modeName === "Mode 1") modeName = "Default";
+    } else if (
+      normalizedCollectionName === "themes" ||
+      normalizedCollectionName === "theme"
+    ) {
+      if (modeName === "Mode 1") modeName = "Light";
+      if (modeName === "Mode 2") modeName = "Dark";
+    }
+
     if (value === null || value === undefined) {
       serialized[modeName] = value;
       continue;
@@ -161,12 +179,13 @@ async function resolveVariableValuesRecursively(
             collectionTable,
             refCollection, // Pass collection for mode ID to name conversion
             newVisitedIds,
+            nodePath,
           );
         }
       }
 
       // Add to table and get index
-      const refIndex = variableTable.addVariable(referencedEntry);
+      const refIndex = variableTable.addVariable(referencedEntry, nodePath);
 
       // Store serialized alias with both ID and table reference
       serialized[modeName] = {
@@ -306,8 +325,26 @@ async function addCollectionToTable(
   // Get or generate GUID for the collection
   const collectionGuid = await getOrGenerateCollectionGuid(collection);
 
-  // Extract mode names as an array
-  const modes: string[] = collection.modes.map((mode) => mode.name);
+  // Map modes during export (WA-10) to prevent redundant default modes
+  // When collections are created via API or UI, they start with "Mode 1" which might get merged
+  // with actual named modes during export of external/remote collections
+  const normalizedCollectionName = collection.name.trim().toLowerCase();
+
+  const modes: string[] = collection.modes.map((mode) => {
+    if (
+      normalizedCollectionName === "tokens" ||
+      normalizedCollectionName === "token"
+    ) {
+      if (mode.name === "Mode 1") return "Default";
+    } else if (
+      normalizedCollectionName === "themes" ||
+      normalizedCollectionName === "theme"
+    ) {
+      if (mode.name === "Mode 1") return "Light";
+      if (mode.name === "Mode 2") return "Dark";
+    }
+    return mode.name;
+  });
 
   // Create collection entry
   const collectionEntry: CollectionTableEntry = {
@@ -340,6 +377,7 @@ export async function resolveVariableAliasMetadata(
   alias: any,
   variableTable: VariableTable,
   collectionTable: CollectionTable,
+  nodePath: string[],
 ): Promise<VariableReference | null> {
   if (!alias || typeof alias !== "object" || alias.type !== "VARIABLE_ALIAS") {
     return null;
@@ -392,11 +430,12 @@ export async function resolveVariableAliasMetadata(
         collectionTable,
         collection, // Pass collection for mode ID to name conversion
         new Set([alias.id]), // Start with current variable ID in visited set
+        nodePath,
       );
     }
 
     // Add to table and get index (or existing index if already present)
-    const index = variableTable.addVariable(variableEntry);
+    const index = variableTable.addVariable(variableEntry, nodePath);
 
     // Debug logging for badge/color/label variables
     if (variable.name.includes("badge/color/label")) {
@@ -424,6 +463,7 @@ export async function extractBoundVariables(
   obj: any,
   variableTable: VariableTable,
   collectionTable: CollectionTable,
+  nodePath: string[],
 ): Promise<any> {
   if (!obj || typeof obj !== "object") return obj;
 
@@ -444,6 +484,7 @@ export async function extractBoundVariables(
             value,
             variableTable,
             collectionTable,
+            [...nodePath, `(${key})`],
           );
           if (resolved) {
             result[key] = resolved;
@@ -454,17 +495,20 @@ export async function extractBoundVariables(
             value,
             variableTable,
             collectionTable,
+            [...nodePath, `(${key})`],
           );
         }
       } else if (Array.isArray(value)) {
         // Handle arrays of variable aliases (like in fills)
         result[key] = await Promise.all(
-          value.map(async (item: any) => {
+          value.map(async (item: any, index: number) => {
+            const itemPath = [...nodePath, `(${key}[${index}])`];
             if (item?.type === "VARIABLE_ALIAS") {
               const resolved = await resolveVariableAliasMetadata(
                 item,
                 variableTable,
                 collectionTable,
+                itemPath,
               );
               return resolved || item;
             } else if (item && typeof item === "object") {
@@ -473,6 +517,7 @@ export async function extractBoundVariables(
                 item,
                 variableTable,
                 collectionTable,
+                itemPath,
               );
             }
             return item;
@@ -514,6 +559,7 @@ export async function serializeFills(
   variableTable: VariableTable,
   collectionTable: CollectionTable,
   imageTable: ImageTable,
+  nodePath: string[],
 ): Promise<any> {
   if (!fills || !Array.isArray(fills)) return [];
 
@@ -537,6 +583,7 @@ export async function serializeFills(
                 fill[key],
                 variableTable,
                 collectionTable,
+                nodePath,
               );
             } else if (key === "imageHash") {
               // Replace imageHash with image table reference
@@ -559,6 +606,7 @@ export async function serializeFills(
               fill[key],
               variableTable,
               collectionTable,
+              nodePath,
             );
             // Debug logging for badge/color/label variables in fills
             if (
@@ -599,6 +647,7 @@ export async function serializeBackgrounds(
   variableTable: VariableTable,
   collectionTable: CollectionTable,
   imageTable: ImageTable,
+  nodePath: string[],
 ): Promise<any> {
   if (!backgrounds || !Array.isArray(backgrounds)) return [];
 
@@ -622,6 +671,7 @@ export async function serializeBackgrounds(
                 background[key],
                 variableTable,
                 collectionTable,
+                nodePath,
               );
             } else if (key === "imageHash") {
               // Replace imageHash with image table reference
@@ -644,6 +694,7 @@ export async function serializeBackgrounds(
               background[key],
               variableTable,
               collectionTable,
+              nodePath,
             );
           } else {
             serializedBackground[key] = background[key];

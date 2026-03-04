@@ -1510,6 +1510,7 @@ export async function parseInstanceProperties(
                                   mainChildBoundVars,
                                   context.variableTable,
                                   context.collectionTable,
+                                  context.nodePath || [],
                                 );
                               // Merge into childData's boundVariables
                               if (!childData.boundVariables) {
@@ -1662,6 +1663,7 @@ export async function parseInstanceProperties(
                     context.variableTable,
                     context.collectionTable,
                     context.imageTable,
+                    context.nodePath || [],
                   );
                   structure.fills = instanceFills;
                   debugConsole.log(
@@ -1677,6 +1679,7 @@ export async function parseInstanceProperties(
                     context.variableTable,
                     context.collectionTable,
                     context.imageTable,
+                    context.nodePath || [],
                   );
                   structure.fills = mainComponentFills;
                   debugConsole.log(
@@ -1833,6 +1836,7 @@ export async function parseInstanceProperties(
                 instanceBoundVars,
                 context.variableTable,
                 context.collectionTable,
+                context.nodePath || [],
               );
 
               // Merge instance's boundVariables into structure's boundVariables
@@ -1904,6 +1908,7 @@ export async function parseInstanceProperties(
                   mainComponentBoundVars,
                   context.variableTable,
                   context.collectionTable,
+                  context.nodePath || [],
                 );
 
               // Merge main component's boundVariables into structure's boundVariables
@@ -2133,6 +2138,7 @@ export async function parseInstanceProperties(
               mainComponentBoundVars,
               context.variableTable,
               context.collectionTable,
+              context.nodePath || [],
             );
 
             // Merge main component's boundVariables into result's boundVariables

@@ -29,6 +29,7 @@ export interface ParserContext {
   detachedComponentsHandled: Set<string>; // Component IDs we've already prompted for and decided to treat as internal
   exportedIds: Map<string, string>; // node ID -> node name (for duplicate detection)
   skipPrompts?: boolean; // If true, skip user prompts and automatically handle detached instances
+  nodePath?: string[]; // Traced lineage from component root down to current node
 }
 
 export interface ParsedNodeData {
@@ -314,6 +315,7 @@ export async function parseBaseNodeProperties(
       context.variableTable,
       context.collectionTable,
       context.imageTable,
+      context.nodePath || [],
     );
     if (isDifferentFromDefault(fills, BASE_NODE_DEFAULTS.fills)) {
       result.fills = fills;
@@ -363,6 +365,7 @@ export async function parseBaseNodeProperties(
       node.boundVariables,
       context.variableTable,
       context.collectionTable,
+      context.nodePath || [],
     );
 
     const extractedKeys = Object.keys(boundVars);
@@ -386,6 +389,7 @@ export async function parseBaseNodeProperties(
       context.variableTable,
       context.collectionTable,
       context.imageTable,
+      context.nodePath || [],
     );
     // Only include if different from default (empty array)
     if (backgrounds && Array.isArray(backgrounds) && backgrounds.length > 0) {
