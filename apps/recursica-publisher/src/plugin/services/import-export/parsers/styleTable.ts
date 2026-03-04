@@ -82,11 +82,17 @@ export class StyleTable {
    * Get the full table (for serialization)
    * Excludes internal styleKey field
    */
-  getSerializedTable(): Record<string, Omit<StyleTableEntry, "styleKey">> {
-    const result: Record<string, Omit<StyleTableEntry, "styleKey">> = {};
+  getSerializedTable(): Record<
+    string,
+    Omit<StyleTableEntry, "styleKey" | "nodePaths">
+  > {
+    const result: Record<
+      string,
+      Omit<StyleTableEntry, "styleKey" | "nodePaths">
+    > = {};
     for (const [index, entry] of this.styles.entries()) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { styleKey, ...serializedEntry } = entry;
+      const { styleKey, nodePaths, ...serializedEntry } = entry;
       result[String(index)] = serializedEntry;
     }
     return result;

@@ -4383,13 +4383,19 @@ export async function recreateNodeFromData(
   // Check for bound variables before setting width/height
   // Note: minWidth and maxWidth are constraints, not the actual size, but we include them
   // in the check to ensure we handle them correctly
-  const hasBoundVariablesForSize =
+  const hasBoundVariableForWidth =
     nodeData.boundVariables &&
     typeof nodeData.boundVariables === "object" &&
     (nodeData.boundVariables.width ||
-      nodeData.boundVariables.height ||
       nodeData.boundVariables.minWidth ||
       nodeData.boundVariables.maxWidth);
+
+  const hasBoundVariableForHeight =
+    nodeData.boundVariables &&
+    typeof nodeData.boundVariables === "object" &&
+    (nodeData.boundVariables.height ||
+      nodeData.boundVariables.minHeight ||
+      nodeData.boundVariables.maxHeight);
 
   // ISSUE #3 & #4 DEBUG: Check for preserveRatio and constraints before resize
   const nodeName = nodeData.name || "Unnamed";
@@ -4449,7 +4455,7 @@ export async function recreateNodeFromData(
   // When maxWidth or minWidth are bound to variables, the width should be treated as "Fill"
   const layoutMode = nodeData.layoutMode;
   const hasAutoLayout = layoutMode !== undefined && layoutMode !== "NONE";
-  const isHorizontal = layoutMode === "HORIZONTAL";
+  // const isHorizontal = layoutMode === "HORIZONTAL"; // No longer used after minWidth/maxWidth fix
 
   // For HORIZONTAL layout: primaryAxis = width, counterAxis = height
   // For VERTICAL layout: primaryAxis = height, counterAxis = width
@@ -4478,85 +4484,39 @@ export async function recreateNodeFromData(
   if (
     nodeData.type !== "VECTOR" &&
     nodeData.type !== "BOOLEAN_OPERATION" &&
-    !hasBoundVariablesForSize &&
-    !widthIsFill &&
-    !heightIsFill &&
     nodeData.width !== undefined &&
     nodeData.height !== undefined
   ) {
-    // ISSUE #3 DEBUG: Check preserveRatio before resize
-    const preserveRatioBefore = (newNode as any).preserveRatio;
-    if (preserveRatioBefore !== undefined) {
-      debugConsole.log(
-        `  [ISSUE #3 DEBUG] "${nodeName}" preserveRatio before resize: ${preserveRatioBefore}`,
-      );
-    }
+    const isWidthStatic = !widthIsFill && !hasBoundVariableForWidth;
+    const isHeightStatic = !heightIsFill && !hasBoundVariableForHeight;
 
-    newNode.resize(nodeData.width, nodeData.height);
-  } else if (
-    nodeData.type !== "VECTOR" &&
-    nodeData.type !== "BOOLEAN_OPERATION" &&
-    (widthIsFill || heightIsFill)
-  ) {
-    // Check for bound variables per dimension (not globally)
-    // If width should be FILL, we can still set height even if height has bound variables
-    // If height should be FILL, we can still set width even if width has bound variables
-    const hasBoundVariableForWidth =
-      nodeData.boundVariables &&
-      typeof nodeData.boundVariables === "object" &&
-      (nodeData.boundVariables.width ||
-        (isHorizontal && nodeData.boundVariables.minWidth) ||
-        (isHorizontal && nodeData.boundVariables.maxWidth));
-    const hasBoundVariableForHeight =
-      nodeData.boundVariables &&
-      typeof nodeData.boundVariables === "object" &&
-      (nodeData.boundVariables.height ||
-        (!isHorizontal && nodeData.boundVariables.minWidth) ||
-        (!isHorizontal && nodeData.boundVariables.maxWidth));
-
-    // Handle partial sizing: set only the dimension that's not FILL and doesn't have bound variables
-    if (
-      widthIsFill &&
-      !heightIsFill &&
-      !hasBoundVariableForHeight &&
-      nodeData.height !== undefined
-    ) {
-      // Width is FILL, only set height (if height doesn't have bound variables)
-      // Don't set width - it should fill the container
-      // Note: newNode.width might be the default 100px, but we don't want to set it to a fixed value
-      // The parent's auto-layout or minWidth/maxWidth bound variables (set later) will handle the width
-      newNode.resize(newNode.width, nodeData.height);
-      debugConsole.log(
-        `  Set height to ${nodeData.height} for "${nodeName}" (width is FILL, keeping current width ${newNode.width})`,
-      );
-    } else if (
-      !widthIsFill &&
-      heightIsFill &&
-      !hasBoundVariableForWidth &&
-      nodeData.width !== undefined
-    ) {
-      // Height is FILL, only set width (if width doesn't have bound variables)
-      newNode.resize(nodeData.width, newNode.height);
-      debugConsole.log(
-        `  Set width to ${nodeData.width} for "${nodeName}" (height is FILL)`,
-      );
-    } else if (widthIsFill && heightIsFill) {
-      // Both are FILL, don't set dimensions
-      debugConsole.log(
-        `  Skipping resize for "${nodeName}" (both width and height are FILL)`,
-      );
-    } else {
-      // When widthIsFill=true but we can't set height (has bound variable), we still shouldn't set width
-      // For nodes with their own auto-layout, "Fill Container" is achieved through minWidth/maxWidth bound variables
-      // Setting a fixed width would interfere with the Fill behavior
-      if (widthIsFill && !heightIsFill && hasBoundVariableForHeight) {
-        // Width is FILL, height has bound variable - don't set width at all
-        // The minWidth/maxWidth bound variables (set later) will make it fill properly
-        // Note: The frame may have default 100px width initially, but minWidth/maxWidth will override it
+    if (isWidthStatic && isHeightStatic) {
+      // ISSUE #3 DEBUG: Check preserveRatio before resize
+      const preserveRatioBefore = (newNode as any).preserveRatio;
+      if (preserveRatioBefore !== undefined) {
         debugConsole.log(
-          `  Skipping width resize for "${nodeName}" (width is FILL, will be handled by minWidth/maxWidth bound variables, current width=${newNode.width})`,
+          `  [ISSUE #3 DEBUG] "${nodeName}" preserveRatio before resize: ${preserveRatioBefore}`,
         );
       }
+
+      newNode.resize(nodeData.width, nodeData.height);
+      debugConsole.log(
+        `  Set static dimensions ${nodeData.width}x${nodeData.height} for "${nodeName}"`,
+      );
+    } else if (isWidthStatic) {
+      newNode.resize(nodeData.width, newNode.height);
+      debugConsole.log(
+        `  Set static width ${nodeData.width} for "${nodeName}" (height is FILL/bound)`,
+      );
+    } else if (isHeightStatic) {
+      newNode.resize(newNode.width, nodeData.height);
+      debugConsole.log(
+        `  Set static height ${nodeData.height} for "${nodeName}" (width is FILL/bound)`,
+      );
+    } else {
+      debugConsole.log(
+        `  Skipping static resize for "${nodeName}" (both dimensions are FILL or bound)`,
+      );
     }
 
     // ISSUE #3 DEBUG: Check preserveRatio after resize
@@ -8722,19 +8682,34 @@ async function createRemoteInstances(
         // Check for bound variables before setting width/height
         // Note: minWidth and maxWidth are constraints, not the actual size, but we include them
         // in the check to ensure we handle them correctly
-        const hasBoundVariablesForSize =
+        const hasBoundVariableForWidth =
           entry.structure.boundVariables &&
           typeof entry.structure.boundVariables === "object" &&
           (entry.structure.boundVariables.width ||
-            entry.structure.boundVariables.height ||
             entry.structure.boundVariables.minWidth ||
             entry.structure.boundVariables.maxWidth);
+
+        const hasBoundVariableForHeight =
+          entry.structure.boundVariables &&
+          typeof entry.structure.boundVariables === "object" &&
+          (entry.structure.boundVariables.height ||
+            entry.structure.boundVariables.minHeight ||
+            entry.structure.boundVariables.maxHeight);
+
         if (
           entry.structure.width !== undefined &&
-          entry.structure.height !== undefined &&
-          !hasBoundVariablesForSize
+          entry.structure.height !== undefined
         ) {
-          componentNode.resize(entry.structure.width, entry.structure.height);
+          const isWidthStatic = !hasBoundVariableForWidth;
+          const isHeightStatic = !hasBoundVariableForHeight;
+
+          if (isWidthStatic && isHeightStatic) {
+            componentNode.resize(entry.structure.width, entry.structure.height);
+          } else if (isWidthStatic) {
+            componentNode.resize(entry.structure.width, componentNode.height);
+          } else if (isHeightStatic) {
+            componentNode.resize(componentNode.width, entry.structure.height);
+          }
         }
         if (entry.structure.x !== undefined) {
           componentNode.x = entry.structure.x;

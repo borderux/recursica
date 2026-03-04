@@ -450,7 +450,7 @@ export class VariableTable {
     string,
     Omit<
       VariableTableEntry,
-      "variableKey" | "id" | "valuesByMode" | "variableType"
+      "variableKey" | "id" | "valuesByMode" | "variableType" | "nodePaths"
     > & {
       variableType: number | string; // Compressed: number for known types, string for unknown
       valuesByMode?: Record<
@@ -463,7 +463,7 @@ export class VariableTable {
       string,
       Omit<
         VariableTableEntry,
-        "variableKey" | "id" | "valuesByMode" | "variableType"
+        "variableKey" | "id" | "valuesByMode" | "variableType" | "nodePaths"
       > & {
         variableType: number | string; // Compressed: number for known types, string for unknown
         valuesByMode?: Record<
@@ -481,9 +481,11 @@ export class VariableTable {
 
       // Build serialized entry with correct types
       // Compress variableType to number if it's a known type
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { nodePaths, ...restEntry } = entry;
       const serialized: Omit<
         VariableTableEntry,
-        "variableKey" | "id" | "valuesByMode" | "variableType"
+        "variableKey" | "id" | "valuesByMode" | "variableType" | "nodePaths"
       > & {
         variableType: number | string; // Compressed: number for known types, string for unknown
         valuesByMode?: Record<
@@ -491,9 +493,9 @@ export class VariableTable {
           string | number | boolean | { _varRef: number }
         >;
       } = {
-        variableName: entry.variableName,
-        variableType: compressVariableType(entry.variableType),
-        ...(entry._colRef !== undefined && { _colRef: entry._colRef }),
+        variableName: restEntry.variableName,
+        variableType: compressVariableType(restEntry.variableType),
+        ...(restEntry._colRef !== undefined && { _colRef: restEntry._colRef }),
         ...(serializedValuesByMode && { valuesByMode: serializedValuesByMode }),
       };
       table[String(i)] = serialized;
