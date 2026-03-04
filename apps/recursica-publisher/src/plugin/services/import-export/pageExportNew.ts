@@ -10,6 +10,7 @@ import { parseVectorProperties } from "./parsers/vectorParser";
 import { parseShapeProperties } from "./parsers/shapeParser";
 import { parseInstanceProperties } from "./parsers/instanceParser";
 import { VariableTable, CollectionTable } from "./parsers/variableTable";
+import { CURRENT_EXPORT_FORMAT_VERSION } from "./constants";
 import { InstanceTable } from "./parsers/instanceTable";
 import { StyleTable } from "./parsers/styleTable";
 import { ImageTable } from "./parsers/imageTable";
@@ -1614,7 +1615,16 @@ export async function exportPage(
     const exportData = {
       metadata: {
         exportedAt: new Date().toISOString(),
-        exportFormatVersion: "1.0.0",
+        // ============================================================================
+        // 🛑 AI INSTRUCTION: JSON SCHEMA MODIFICATION RULES 🛑
+        // ============================================================================
+        // If you are modifying the structure of the JSON payload below (adding, removing,
+        // or renaming fields in metadata, collections, variables, instances, etc.):
+        // 1. You MUST increment the CURRENT_EXPORT_FORMAT_VERSION in constants.ts using SemVer.
+        // 2. You MUST write a migration in src/plugin/services/import-export/migrations/
+        //    to handle upgrading older JSON payloads to this new schema FIRST before import.
+        // ============================================================================
+        exportFormatVersion: CURRENT_EXPORT_FORMAT_VERSION,
         figmaApiVersion: figma.apiVersion,
         guid: pageGuid,
         version: pageVersion,

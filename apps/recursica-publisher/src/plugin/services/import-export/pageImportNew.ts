@@ -30,6 +30,7 @@ import { checkCancellation } from "../../utils/cancellation";
 import { expandJsonData } from "../../utils/jsonCompression";
 import { pluginPrompt } from "../../utils/pluginPrompt";
 import { getComponentCleanName } from "../../utils/getComponentCleanName";
+import { migrateExportData } from "./migrations";
 import {
   normalizeCollectionName,
   isStandardCollection,
@@ -9389,7 +9390,7 @@ export async function importPage(
   let createdPageId: string | null = null;
 
   try {
-    const jsonData = data.jsonData;
+    let jsonData = data.jsonData;
 
     if (!jsonData) {
       debugConsole.error("JSON data is required");
@@ -9398,6 +9399,25 @@ export async function importPage(
         success: false,
         error: true,
         message: "JSON data is required",
+        data: {},
+      };
+    }
+
+    // Run migrations before any parsing occurs
+    debugConsole.log(
+      "Checking import payload version and running migrations if needed...",
+    );
+    try {
+      jsonData = migrateExportData(jsonData);
+    } catch (e) {
+      debugConsole.error(
+        `Migration failed: ${e instanceof Error ? e.message : String(e)}`,
+      );
+      return {
+        type: "importPage",
+        success: false,
+        error: true,
+        message: e instanceof Error ? e.message : String(e),
         data: {},
       };
     }
