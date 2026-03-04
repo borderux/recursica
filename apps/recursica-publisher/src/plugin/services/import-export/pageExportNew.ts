@@ -205,7 +205,10 @@ export async function extractNodeData(
     detachedComponentsHandled: context.detachedComponentsHandled ?? new Set(),
     exportedIds: context.exportedIds ?? new Map<string, string>(),
     skipPrompts: context.skipPrompts ?? false,
-    nodePath: [...(context.nodePath || []), node.name || "(unnamed)"],
+    nodePath: [
+      ...(context.nodePath || []),
+      `${node.name || "(unnamed)"} (ID: ${node.id})`,
+    ],
   };
 
   // Handle circular references
@@ -1374,6 +1377,7 @@ export async function exportPage(
     let pageVersion = 0;
     let pageDescription: string | undefined;
     let pageUrl: string | undefined;
+    let pageHistory: Record<string, unknown> | undefined;
 
     if (pageMetadataStr) {
       try {
@@ -1382,6 +1386,7 @@ export async function exportPage(
         pageVersion = pageMetadata.version || 0;
         pageDescription = pageMetadata.description;
         pageUrl = pageMetadata.url;
+        pageHistory = pageMetadata.history;
       } catch {
         debugConsole.warning(
           "Failed to parse page metadata, generating new GUID",
@@ -1406,6 +1411,7 @@ export async function exportPage(
         "RecursicaPublishedMetadata",
         JSON.stringify(newMetadata),
       );
+      pageHistory = {};
     }
 
     // If in discovery mode (skipPrompts and not recursive), do lightweight discovery first
@@ -1616,6 +1622,7 @@ export async function exportPage(
         pluginVersion: "1.0.0",
         ...(pageDescription !== undefined && { description: pageDescription }),
         ...(pageUrl !== undefined && { url: pageUrl }),
+        ...(pageHistory !== undefined && { history: pageHistory }),
       },
       stringTable: stringTable.getSerializedTable(),
       collections: collectionTable.getSerializedTable(),

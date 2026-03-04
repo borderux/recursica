@@ -484,7 +484,7 @@ export async function extractBoundVariables(
             value,
             variableTable,
             collectionTable,
-            nodePath,
+            [...nodePath, `(${key})`],
           );
           if (resolved) {
             result[key] = resolved;
@@ -495,19 +495,20 @@ export async function extractBoundVariables(
             value,
             variableTable,
             collectionTable,
-            nodePath,
+            [...nodePath, `(${key})`],
           );
         }
       } else if (Array.isArray(value)) {
         // Handle arrays of variable aliases (like in fills)
         result[key] = await Promise.all(
-          value.map(async (item: any) => {
+          value.map(async (item: any, index: number) => {
+            const itemPath = [...nodePath, `(${key}[${index}])`];
             if (item?.type === "VARIABLE_ALIAS") {
               const resolved = await resolveVariableAliasMetadata(
                 item,
                 variableTable,
                 collectionTable,
-                nodePath,
+                itemPath,
               );
               return resolved || item;
             } else if (item && typeof item === "object") {
@@ -516,7 +517,7 @@ export async function extractBoundVariables(
                 item,
                 variableTable,
                 collectionTable,
-                nodePath,
+                itemPath,
               );
             }
             return item;
