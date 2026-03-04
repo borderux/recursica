@@ -1,5 +1,15 @@
 # @recursica/publisher
 
+## 0.3.0
+
+### Minor Changes
+
+- [#317](https://github.com/borderux/recursica/pull/317) [`318d02e`](https://github.com/borderux/recursica/commit/318d02efbfab051355fda003a89097a470003a96) Thanks [@mlmassey](https://github.com/mlmassey)! - Add JSON versioning pipeline
+
+### Patch Changes
+
+- [#317](https://github.com/borderux/recursica/pull/317) [`318d02e`](https://github.com/borderux/recursica/commit/318d02efbfab051355fda003a89097a470003a96) Thanks [@mlmassey](https://github.com/mlmassey)! - Fixes to variable import
+
 ## 0.2.1
 
 ### Patch Changes
