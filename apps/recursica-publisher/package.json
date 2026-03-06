@@ -4,10 +4,10 @@
   "version": "0.3.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"npm run dev:ui\" \"npm run dev:lib\"",
+    "dev": "concurrently --kill-others-on-fail \"npm run dev:ui\" \"npm run dev:lib\"",
     "dev:ui": "tsc -b && vite build --watch",
     "dev:lib": "tsc -b && vite build --config vite.config.lib.ts --watch",
-    "build": "concurrently \"npm run build:ui\" \"npm run build:lib\"",
+    "build": "concurrently --kill-others-on-fail \"npm run build:ui\" \"npm run build:lib\"",
     "build:ui": "tsc -b && vite build",
     "build:lib": "tsc -b && vite build --config vite.config.lib.ts",
     "test": "vitest run",
