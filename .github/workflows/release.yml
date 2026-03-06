@@ -129,6 +129,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
+          # Production environment variables (for main plugin)
+          VITE_RECURSICA_API_URL: ${{ vars.RECURSICA_API }}
+          VITE_RECURSICA_UI_URL: ${{ vars.RECURSICA_API }}
+          VITE_PLUGIN_PHRASE: ${{ secrets.PLUGIN_PHRASE }}
+          VITE_PLUGIN_MODE: "production"
+          # Test environment variables (for test plugin)
+          VITE_RECURSICA_API_TEST: ${{ vars.RECURSICA_API_TEST }}
+          VITE_PLUGIN_PHRASE_TEST: ${{ secrets.PLUGIN_PHRASE_TEST }}
 
       # Create and upload release assets for published packages
       - name: Create and Upload Release Assets
