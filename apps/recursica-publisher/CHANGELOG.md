@@ -1,5 +1,11 @@
 # @recursica/publisher
 
+## 0.3.3
+
+### Patch Changes
+
+- [`59961e5`](https://github.com/borderux/recursica/commit/59961e5dbd114dc262b4b29cdfdfc26d77364d60) Thanks [@github-actions[bot]](https://github.com/github-actions%5Bbot%5D)! - Test again
+
 ## 0.3.2
 
 ### Patch Changes
