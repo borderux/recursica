@@ -1,5 +1,11 @@
 # @recursica/publisher
 
+## 0.3.1
+
+### Patch Changes
+
+- [`1d906f4`](https://github.com/borderux/recursica/commit/1d906f44a7405cbbc4d82b7c1a5fe25b85ea906b) Thanks [@github-actions[bot]](https://github.com/github-actions%5Bbot%5D)! - Fix to env variable handling
+
 ## 0.3.0
 
 ### Minor Changes
