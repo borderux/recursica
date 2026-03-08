@@ -130,12 +130,6 @@ export function encrypt(value: string): string {
     throw new Error("Plugin phrase not defined");
   }
 
-  console.log(
-    "Encrypting with phrase:",
-    PLUGIN_PHRASE ? "defined" : "undefined",
-  );
-  console.log("Encrypting with phrase:", PLUGIN_PHRASE);
-
   const encrypted = CryptoJS.AES.encrypt(value, PLUGIN_PHRASE).toString();
   const words = Utf8.parse(encrypted);
   return Base64.stringify(words);
