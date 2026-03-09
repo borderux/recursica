@@ -5,13 +5,17 @@
  * See docs/EFFECT-STYLES-IMPORT.md.
  */
 
+import { getFixedGuidForCollection } from "../../const/CollectionConstants";
+
 const ELEVATION_VAR_PREFIX = "elevations/";
-const THEMES_COLLECTION_NAME = "Themes";
+const COLLECTION_GUID_KEY = "recursica:collectionId";
+const THEMES_COLLECTION_NAMES = ["Themes", "Theme"];
 const EFFECT_STYLE_FOLDER_NAME = "Recursica";
 const EFFECT_STYLE_NAME_PREFIX = "recursica_";
 
 export interface CreateEffectStylesFromElevationsResult {
   effectStylesCreated: number;
+  effectStylesUpdated: number;
   effectStylesSkipped: number;
   effectStyleWarnings: string[];
 }
@@ -153,54 +157,108 @@ function toDropShadow(
 export async function createEffectStylesFromElevations(): Promise<CreateEffectStylesFromElevationsResult> {
   const result: CreateEffectStylesFromElevationsResult = {
     effectStylesCreated: 0,
+    effectStylesUpdated: 0,
     effectStylesSkipped: 0,
     effectStyleWarnings: [],
   };
 
   const collections = await figma.variables.getLocalVariableCollectionsAsync();
-  const themesCollection = collections.find(
-    (c) => c.name === THEMES_COLLECTION_NAME,
+  const themesGuid = getFixedGuidForCollection("Themes");
+  let themesCollection = themesGuid
+    ? collections.find(
+        (c) =>
+          c.getSharedPluginData("recursica", COLLECTION_GUID_KEY) ===
+          themesGuid,
+      )
+    : undefined;
+
+  if (!themesCollection) {
+    themesCollection = collections.find((c) =>
+      THEMES_COLLECTION_NAMES.includes(c.name),
+    );
+  }
+
+  if (!themesCollection) {
+    console.log(
+      `[createEffectStyles] No Themes collection found. Collections: ${collections.map((c) => c.name).join(", ")}`,
+    );
+    return result;
+  }
+
+  console.log(
+    `[createEffectStyles] Found Themes collection (id: ${themesCollection.id})`,
   );
-  if (!themesCollection) return result;
 
   const elevationVariables: { name: string; variable: Variable }[] = [];
-  for (const varId of themesCollection.variableIds) {
-    const variable = await figma.variables.getVariableByIdAsync(varId);
-    if (!variable || !variable.name.startsWith(ELEVATION_VAR_PREFIX)) continue;
-    const elevationName = variable.name.slice(ELEVATION_VAR_PREFIX.length);
+  const allLocalVariables = await figma.variables.getLocalVariablesAsync();
+  console.log(
+    `[createEffectStyles] Fetched ${allLocalVariables.length} total local variables.`,
+  );
+  for (const variable of allLocalVariables) {
+    if (variable.variableCollectionId !== themesCollection.id) continue;
+    if (!variable.name.includes(ELEVATION_VAR_PREFIX)) continue;
+    const parts = variable.name.split(ELEVATION_VAR_PREFIX);
+    const elevationName = parts[parts.length - 1];
     if (!elevationName) continue;
     elevationVariables.push({ name: elevationName, variable });
   }
 
+  console.log(
+    `[createEffectStyles] Found ${elevationVariables.length} elevation variables in Themes collection.`,
+  );
+
   if (elevationVariables.length === 0) return result;
 
   const existingEffectStyles = await figma.getLocalEffectStylesAsync();
+  console.log(
+    `[createEffectStyles] Found ${existingEffectStyles.length} existing effect styles.`,
+  );
   const createdNames = new Set<string>();
 
   for (const { name: elevationName, variable } of elevationVariables) {
-    if (createdNames.has(elevationName)) continue;
+    if (createdNames.has(elevationName)) {
+      console.log(
+        `[createEffectStyles] Already processed ${elevationName} in this run.`,
+      );
+      continue;
+    }
     const figmaStyleName = `${EFFECT_STYLE_FOLDER_NAME}/${EFFECT_STYLE_NAME_PREFIX}${elevationName}`;
     const existing = existingEffectStyles.find(
       (s) => s.name === figmaStyleName,
     );
+
+    let style: EffectStyle;
     if (existing) {
-      result.effectStylesSkipped++;
-      createdNames.add(elevationName);
-      continue;
+      style = existing;
+      result.effectStylesUpdated++;
+    } else {
+      style = figma.createEffectStyle();
+      style.name = figmaStyleName;
+      result.effectStylesCreated++;
     }
+
+    createdNames.add(elevationName);
 
     const modeId = getModeIdForVariable(variable.id, collections);
     if (!modeId) {
+      console.log(
+        `[createEffectStyles] No mode ID for ${elevationName} (var: ${variable.id})`,
+      );
       result.effectStyleWarnings.push(
         `Elevation "${elevationName}": no mode; skipping.`,
       );
+      result.effectStylesSkipped++;
       continue;
     }
     const rawValue = await resolveVariableValue(variable, collections);
     if (typeof rawValue !== "string") {
+      console.log(
+        `[createEffectStyles] ${elevationName} value is not a string (type: ${typeof rawValue}, val: ${JSON.stringify(rawValue)})`,
+      );
       result.effectStyleWarnings.push(
         `Elevation "${elevationName}": value is not a string; skipping.`,
       );
+      result.effectStylesSkipped++;
       continue;
     }
 
@@ -209,6 +267,7 @@ export async function createEffectStylesFromElevations(): Promise<CreateEffectSt
       result.effectStyleWarnings.push(
         `Elevation "${elevationName}": could not parse value; skipping.`,
       );
+      result.effectStylesSkipped++;
       continue;
     }
 
@@ -232,12 +291,8 @@ export async function createEffectStylesFromElevations(): Promise<CreateEffectSt
         colorVariable,
       ) as DropShadowEffect;
     }
-    const style = figma.createEffectStyle();
-    style.name = figmaStyleName;
-    style.effects = [effect];
 
-    result.effectStylesCreated++;
-    createdNames.add(elevationName);
+    style.effects = [effect];
   }
 
   return result;

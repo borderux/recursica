@@ -124,11 +124,11 @@ async function resolveVariableValuesRecursively(
         await figma.variables.getVariableByIdAsync(aliasId);
       if (!referencedVariable) {
         // Cannot resolve - store with just ID (non-critical, continue)
-        serialized[modeName] = {
-          type: "VARIABLE_ALIAS",
-          id: aliasId,
-        };
-        continue;
+        variableTable.addInvalidReference(aliasId, nodePath);
+        // TEMPORARY: Fail immediately on invalid variable reference for debugging
+        throw new Error(
+          `[TEMP DEBUG] Force failing export due to unresolved recursive variable alias: ${aliasId} at path: ${nodePath.join(" -> ")}`,
+        );
       }
 
       // Add to visited set
@@ -144,11 +144,7 @@ async function resolveVariableValuesRecursively(
       const variableKey = (referencedVariable as any).key;
       if (!variableKey) {
         // Missing key - store with just ID (non-critical, continue)
-        serialized[modeName] = {
-          type: "VARIABLE_ALIAS",
-          id: aliasId,
-        };
-        continue;
+        variableTable.addInvalidReference(aliasId, nodePath);
       }
 
       // Create entry for referenced variable
@@ -388,6 +384,7 @@ export async function resolveVariableAliasMetadata(
     if (!variable) {
       // Cannot resolve variable, return null
       console.log("Could not resolve variable alias:", alias.id);
+      variableTable.addInvalidReference(alias.id, nodePath);
       return null;
     }
 
@@ -396,13 +393,17 @@ export async function resolveVariableAliasMetadata(
     );
 
     if (!collection) {
-      console.log("Could not resolve collection for variable:", alias.id);
+      debugConsole.log(
+        `Could not resolve collection for variable: ${alias.id}`,
+      );
+      variableTable.addInvalidReference(alias.id, nodePath);
       return null;
     }
 
     const variableKey = (variable as any).key;
     if (!variableKey) {
-      console.log("Variable missing key:", alias.id);
+      debugConsole.log(`Variable missing key: ${alias.id}`);
+      variableTable.addInvalidReference(alias.id, nodePath);
       return null;
     }
 
@@ -447,12 +448,13 @@ export async function resolveVariableAliasMetadata(
     // Return reference
     return createVariableReference(index);
   } catch (error) {
-    // Log error and rethrow to bubble up to exportPage
+    // Log error and track as invalid reference before returning null
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("Could not resolve variable alias:", alias.id, error);
-    throw new Error(
-      `Failed to resolve variable alias ${alias.id}: ${errorMessage}`,
+    debugConsole.log(
+      `Could not resolve variable alias: ${alias.id} Error: ${errorMessage}`,
     );
+    variableTable.addInvalidReference(alias.id, nodePath);
+    return null;
   }
 }
 
@@ -480,6 +482,10 @@ export async function extractBoundVariables(
       if (value && typeof value === "object" && !Array.isArray(value)) {
         // If it's a VARIABLE_ALIAS, resolve it to get table reference
         if (value.type === "VARIABLE_ALIAS") {
+          // LOG RAW ALIAS
+          debugConsole.log(
+            `[BOUND-VAR TRACE] Encountered alias for key ${key} -> ${value.id}`,
+          );
           const resolved = await resolveVariableAliasMetadata(
             value,
             variableTable,
@@ -504,6 +510,10 @@ export async function extractBoundVariables(
           value.map(async (item: any, index: number) => {
             const itemPath = [...nodePath, `(${key}[${index}])`];
             if (item?.type === "VARIABLE_ALIAS") {
+              // LOG RAW ALIAS
+              debugConsole.log(
+                `[BOUND-VAR TRACE] Encountered alias in array ${nodePath.join(".")} -> ${item.id}`,
+              );
               const resolved = await resolveVariableAliasMetadata(
                 item,
                 variableTable,

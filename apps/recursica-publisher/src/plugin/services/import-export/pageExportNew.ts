@@ -25,7 +25,8 @@ import { getComponentName } from "../../utils/getComponentName";
 
 export interface ExportPageData {
   pageIndex: number;
-  skipPrompts?: boolean; // If true, automatically include all referenced pages without prompting
+  skipPrompts?: boolean; // If true, automatically include all referenced pages without prompting (or skip prompting entirely and let wizard handle it)
+  discoveryMode?: boolean; // If true, only extract instances to discover external references, skip deep node extraction
   validateOnly?: boolean; // If true, only extract instances, collections, and variables for validation (no full export)
   clearConsole?: boolean; // If false, don't clear the console (default: true for initial exports, false for referenced pages)
 }
@@ -40,10 +41,12 @@ export interface ReferencedPageInfo {
 }
 
 export interface ValidationError {
-  type: "externalReference" | "unknownCollection";
+  type: "externalReference" | "unknownCollection" | "invalidVariable";
   message: string;
   componentName?: string;
   collectionName?: string;
+  variableId?: string;
+  variableLocation?: string;
   pageName: string;
 }
 
@@ -57,6 +60,11 @@ export interface ValidationResult {
   unknownCollections: Array<{
     collectionName: string;
     collectionId: string;
+    pageName: string;
+  }>;
+  invalidVariables: Array<{
+    variableId: string;
+    location: string;
     pageName: string;
   }>;
   discoveredCollections: string[]; // Collection names discovered during validation
@@ -631,9 +639,9 @@ export async function exportPage(
 
     let extractedPageData: any;
 
-    // If skipPrompts is true and this is the initial call (not recursive), do lightweight discovery
+    // If `discoveryMode` is explicitly set to true, do lightweight discovery
     // Only extract instances to find referenced pages, skip full node extraction
-    if (data.skipPrompts && !isRecursive) {
+    if (data.discoveryMode && !isRecursive) {
       debugConsole.log(
         "=== Discovery Mode: Extracting instances only (lightweight) ===",
       );
@@ -698,7 +706,7 @@ export async function exportPage(
     let totalInstances = 0;
     let nodesWithConstraints = 0;
 
-    if (!(data.skipPrompts && !isRecursive)) {
+    if (!(data.discoveryMode && !isRecursive)) {
       // Full extraction mode - calculate all stats
       totalNodes = countTotalNodes(extractedPageData);
       totalVariables = variableTable.getSize();
@@ -818,6 +826,34 @@ export async function exportPage(
         }
       }
 
+      // Check for invalid variables
+      const invalidVariables: Array<{
+        variableId: string;
+        location: string;
+        pageName: string;
+      }> = [];
+
+      for (const invalidRef of variableTable.invalidReferences) {
+        let location = "(unable to determine)";
+        if (invalidRef.nodePaths && invalidRef.nodePaths.length > 0) {
+          location = Array.from(new Set(invalidRef.nodePaths)).join(", ");
+        }
+
+        invalidVariables.push({
+          variableId: invalidRef.id,
+          location,
+          pageName: selectedPage.name,
+        });
+
+        validationErrors.push({
+          type: "invalidVariable",
+          message: `Invalid or missing variable referenced: "var_id:${invalidRef.id}". This variable could not be resolved. Location(s): ${location}`,
+          variableId: invalidRef.id,
+          variableLocation: location,
+          pageName: selectedPage.name,
+        });
+      }
+
       // Get discovered collection names
       const discoveredCollections = Object.values(collections).map(
         (entry) => entry.collectionName,
@@ -828,12 +864,14 @@ export async function exportPage(
         errors: validationErrors,
         externalReferences,
         unknownCollections,
+        invalidVariables,
         discoveredCollections,
       };
 
       debugConsole.log(`Validation complete:`);
       debugConsole.log(`  - External references: ${externalReferences.length}`);
       debugConsole.log(`  - Unknown collections: ${unknownCollections.length}`);
+      debugConsole.log(`  - Invalid variables: ${invalidVariables.length}`);
       debugConsole.log(`  - Has errors: ${validationResult.hasErrors}`);
 
       return {
@@ -1044,6 +1082,23 @@ export async function exportPage(
         }
       }
     }
+    // 2.5 Validate Variables
+    if (variableTable.invalidReferences.length > 0) {
+      for (const invalidRef of variableTable.invalidReferences) {
+        const errorReason = `Invalid or missing variable referenced: "var_id:${invalidRef.id}". This variable could not be resolved in Figma.`;
+
+        const locations = invalidRef.nodePaths || [];
+        let locationInfo = "";
+        if (locations.length > 0) {
+          const uniquePaths = Array.from(new Set(locations));
+          locationInfo = `\n   Location(s):\n      - ${uniquePaths.join("\n      - ")}`;
+        } else {
+          locationInfo = `\n   Location: (unable to determine)`;
+        }
+        exportErrors.push(`${errorReason}${locationInfo}`);
+      }
+    }
+
     // 3. Validate Styles (TEXT and EFFECT only)
     const styles = styleTable.getTable();
 

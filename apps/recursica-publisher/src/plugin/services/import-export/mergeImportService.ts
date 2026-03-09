@@ -220,10 +220,7 @@ export async function mergeImportGroup(
                   "recursica",
                   COLLECTION_GUID_KEY,
                 );
-                if (
-                  guid === newCollectionGuid &&
-                  collection.id !== choice.newCollectionId
-                ) {
+                if (guid === newCollectionGuid) {
                   existingCollection = collection;
                   break;
                 }
@@ -255,8 +252,7 @@ export async function mergeImportGroup(
                   );
                   if (
                     guid === newCollectionGuid &&
-                    collection.name === standardName &&
-                    collection.id !== choice.newCollectionId
+                    collection.name === standardName
                   ) {
                     existingCollection = collection;
                     break;
@@ -284,6 +280,14 @@ export async function mergeImportGroup(
             debugConsole.warning(
               `Could not find or create existing collection for merge, skipping`,
             );
+            continue;
+          }
+
+          if (existingCollection.id === newCollection.id) {
+            debugConsole.log(
+              `Collection "${newCollection.name}" (${newCollection.id.substring(0, 8)}...) is already the existing collection. Skipping merge.`,
+            );
+            keptCollections++;
             continue;
           }
 
@@ -524,6 +528,10 @@ export async function mergeImportGroup(
         const componentName = hasValidPageMetadata
           ? pageInfo.pageMetadata.name!
           : metadata.componentName || newName;
+
+        // Sanitize component name: keep alphanumeric, spaces, dashes, and underscores
+        const sanitizedComponentName = componentName.replace(/[^\w\s-]/g, "");
+
         // IMPORTANT: Always use version from imported component metadata, NOT from existing page metadata.
         // The page metadata version should only be set FROM the imported component, never read from existing page metadata.
         // This prevents the version from being incorrectly incremented during publishing.
@@ -535,18 +543,18 @@ export async function mergeImportGroup(
         const pageMetadata = {
           _ver: 1,
           id: componentGuid,
-          name: componentName,
+          name: sanitizedComponentName,
           version: version,
           publishDate: new Date().toISOString(),
           history: {},
         };
         page.setPluginData(PAGE_METADATA_KEY, JSON.stringify(pageMetadata));
         debugConsole.log(
-          `Set page metadata for "${componentName}": GUID=${componentGuid.substring(0, 8)}..., version=${version}`,
+          `Set page metadata for "${sanitizedComponentName}": GUID=${componentGuid.substring(0, 8)}..., version=${version}`,
         );
 
-        // Rename to: ComponentName (VX)
-        const finalName = `${componentName} (V${version})`;
+        // Rename to just the sanitized component name
+        const finalName = sanitizedComponentName;
         page.name = finalName;
         pagesRenamed++;
         debugConsole.log(`Renamed page: "${newName}" -> "${finalName}"`);

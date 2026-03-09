@@ -9,6 +9,11 @@ import type { VariableTable, CollectionTable } from "./variableTable";
 import type { InstanceTable } from "./instanceTable";
 import type { StyleTable } from "./styleTable";
 import type { ImageTable } from "./imageTable";
+import {
+  parsePaintStyle,
+  parseEffectStyle,
+  parseGridStyle,
+} from "./styleParsers";
 import { debugConsole } from "../debugConsole";
 
 /**
@@ -211,7 +216,104 @@ export async function parseBaseNodeProperties(
     handledKeys.add("blendMode");
   }
 
+  // Styles (Fills, Strokes, Effects, Grids)
+  const styleTypes = [
+    {
+      idKey: "fillStyleId",
+      refKey: "_fillStyleRef",
+      type: "PAINT",
+      parser: parsePaintStyle,
+    },
+    {
+      idKey: "strokeStyleId",
+      refKey: "_strokeStyleRef",
+      type: "PAINT",
+      parser: parsePaintStyle,
+    },
+    {
+      idKey: "effectStyleId",
+      refKey: "_effectStyleRef",
+      type: "EFFECT",
+      parser: parseEffectStyle,
+    },
+    {
+      idKey: "gridStyleId",
+      refKey: "_gridStyleRef",
+      type: "GRID",
+      parser: parseGridStyle,
+    },
+  ];
+
+  for (const { idKey, refKey, type, parser } of styleTypes) {
+    if (node[idKey] !== undefined && node[idKey] !== "") {
+      try {
+        const style = await figma.getStyleByIdAsync(node[idKey]);
+        if (style && style.type === type) {
+          let styleIndex = context.styleTable.getStyleIndex(style.key);
+          if (styleIndex < 0) {
+            const parsed = await (parser as any)(style, context);
+            styleIndex = context.styleTable.addStyle(
+              {
+                type: style.type as any,
+                name: style.name,
+                styleKey: style.key,
+                [type === "PAINT"
+                  ? "paintStyle"
+                  : type === "EFFECT"
+                    ? "effectStyle"
+                    : "gridStyle"]: parsed,
+                boundVariables: parsed.boundVariables,
+              },
+              context.nodePath || [],
+            );
+            debugConsole.log(
+              `  [EXPORT] Added ${type} style "${style.name}" to style table at index ${styleIndex} for node "${node.name || "Unnamed"}"`,
+            );
+          } else {
+            // Append nodePath for existing styles
+            context.styleTable.addStyle(
+              {
+                type: style.type as any,
+                name: style.name,
+                styleKey: style.key,
+              },
+              context.nodePath || [],
+            );
+            debugConsole.log(
+              `  [EXPORT] Reusing existing ${type} style "${style.name}" from style table at index ${styleIndex} for node "${node.name || "Unnamed"}"`,
+            );
+          }
+          result[refKey] = styleIndex;
+          handledKeys.add(refKey);
+          handledKeys.add(idKey);
+          debugConsole.log(
+            `  [EXPORT] ✓ Exported node "${node.name || "Unnamed"}" with ${refKey}=${styleIndex} (style: "${style.name}")`,
+          );
+        } else {
+          debugConsole.warning(
+            `  [EXPORT] Node "${node.name || "Unnamed"}" has ${idKey} but style lookup returned null or wrong type`,
+          );
+        }
+      } catch (error) {
+        debugConsole.warning(
+          `  [EXPORT] Could not look up style for node "${node.name || "Unnamed"}" on ${idKey}: ${error}`,
+        );
+      }
+    } else {
+      // debugConsole.log(`  [EXPORT] Node "${node.name || "Unnamed"}" has no ${idKey}`);
+    }
+  }
+
   // Effects
+  if (node.type === "COMPONENT" || node.type === "INSTANCE") {
+    const hasEffectBoundVar =
+      node.boundVariables && node.boundVariables.effects !== undefined;
+    const effectStyleId = (node as any).effectStyleId;
+    debugConsole.log(
+      `[EFFECTS DEBUG] Node "${node.name}" (${node.type}): hasEffectBoundVar=${hasEffectBoundVar}, effectStyleId=${effectStyleId || "undefined"}, effects=${node.effects ? JSON.stringify(node.effects) : "undefined"}`,
+    );
+  }
+
   if (
     node.effects !== undefined &&
     isDifferentFromDefault(node.effects, BASE_NODE_DEFAULTS.effects)
@@ -383,6 +485,7 @@ export async function parseBaseNodeProperties(
 
   // Backgrounds - special handling with bound variables and images (similar to fills)
   // "Selection colors" might be stored in backgrounds with bound variables
+  // Figma aliases backgrounds to fills, so if fills exist, skip backgrounds
   if (node.backgrounds !== undefined) {
     const backgrounds = await serializeBackgrounds(
       node.backgrounds,

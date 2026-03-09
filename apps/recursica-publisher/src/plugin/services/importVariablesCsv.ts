@@ -14,7 +14,7 @@ const COLLECTION_GUID_KEY = "recursica:collectionId";
 
 const COLLECTION_DISPLAY_NAMES: Record<string, string> = {
   tokens: "Tokens",
-  themes: "Themes",
+  themes: "Theme",
   layer: "Layer",
 };
 
@@ -169,6 +169,13 @@ function findOrCreateCollection(
     collection = localCollections.find((c) => c.name === displayName);
   }
   if (collection) {
+    if (collection.name === "Themes" && displayName === "Theme") {
+      try {
+        collection.name = "Theme";
+      } catch {
+        // Ignore rename failures
+      }
+    }
     if (fixedGuid) {
       const currentGuid = collection.getSharedPluginData(
         "recursica",
@@ -229,39 +236,41 @@ export async function applyVariableRows(
     // Pass 1: Create all variables and set only literal (non-alias) values, so variableByKey is complete.
     for (const [variableName, modeRows] of rowsByVariable) {
       const existing = await findVariableByName(collection, variableName);
+      let variable = existing;
       if (existing) {
         variableByKey.set(`${collKey}/${variableName}`, existing);
         variablesAlreadyExisted++;
-        continue;
-      }
-
-      let resolvedType: VariableResolvedDataType = "STRING";
-      for (const row of modeRows) {
-        const fromRow = (
-          row.type || "STRING"
-        ).toUpperCase() as VariableResolvedDataType;
-        const validType =
-          fromRow === "COLOR" || fromRow === "FLOAT" || fromRow === "STRING";
-        if (!validType) continue;
-        if (row.alias === "true" && row.value) {
-          const targetKey = aliasValueToMapKey(row.value);
-          const targetVar = variableByKey.get(targetKey);
-          if (targetVar) {
-            resolvedType = targetVar.resolvedType as VariableResolvedDataType;
-            break;
+      } else {
+        let resolvedType: VariableResolvedDataType = "STRING";
+        for (const row of modeRows) {
+          const fromRow = (
+            row.type || "STRING"
+          ).toUpperCase() as VariableResolvedDataType;
+          const validType =
+            fromRow === "COLOR" || fromRow === "FLOAT" || fromRow === "STRING";
+          if (!validType) continue;
+          if (row.alias === "true" && row.value) {
+            const targetKey = aliasValueToMapKey(row.value);
+            const targetVar = variableByKey.get(targetKey);
+            if (targetVar) {
+              resolvedType = targetVar.resolvedType as VariableResolvedDataType;
+              break;
+            }
           }
+          resolvedType = fromRow;
+          break;
         }
-        resolvedType = fromRow;
-        break;
+
+        variable = figma.variables.createVariable(
+          variableName,
+          collection,
+          resolvedType,
+        );
+        variableByKey.set(`${collKey}/${variableName}`, variable);
+        variablesCreated++;
       }
 
-      const variable = figma.variables.createVariable(
-        variableName,
-        collection,
-        resolvedType,
-      );
-      variableByKey.set(`${collKey}/${variableName}`, variable);
-      variablesCreated++;
+      if (!variable) continue;
 
       for (const row of modeRows) {
         const mode =
@@ -276,7 +285,7 @@ export async function applyVariableRows(
           continue;
         }
 
-        if (resolvedType === "COLOR") {
+        if (variable.resolvedType === "COLOR") {
           try {
             const rgba = parseColorToRgba(rawValue);
             variable.setValueForMode(modeObj.modeId, rgba);
@@ -285,7 +294,7 @@ export async function applyVariableRows(
           }
           continue;
         }
-        if (resolvedType === "FLOAT") {
+        if (variable.resolvedType === "FLOAT") {
           const n = Number(rawValue);
           if (!Number.isNaN(n)) {
             variable.setValueForMode(modeObj.modeId, n);
@@ -403,11 +412,13 @@ export async function importVariablesCsv(
   const applyResult = await applyVariableRows(csvRows);
 
   let textStylesCreated = 0;
+  let textStylesUpdated = 0;
   let textStylesSkipped = 0;
   const textStyleWarnings: string[] = [];
   try {
     const textStyleResult = await createTextStylesFromTypography();
     textStylesCreated = textStyleResult.textStylesCreated;
+    textStylesUpdated = textStyleResult.textStylesUpdated;
     textStylesSkipped = textStyleResult.textStylesSkipped;
     textStyleWarnings.push(...textStyleResult.textStyleWarnings);
   } catch (e) {
@@ -417,11 +428,13 @@ export async function importVariablesCsv(
   }
 
   let effectStylesCreated = 0;
+  let effectStylesUpdated = 0;
   let effectStylesSkipped = 0;
   const effectStyleWarnings: string[] = [];
   try {
     const effectStyleResult = await createEffectStylesFromElevations();
     effectStylesCreated = effectStyleResult.effectStylesCreated;
+    effectStylesUpdated = effectStyleResult.effectStylesUpdated;
     effectStylesSkipped = effectStyleResult.effectStylesSkipped;
     effectStyleWarnings.push(...effectStyleResult.effectStyleWarnings);
   } catch (e) {
@@ -434,8 +447,8 @@ export async function importVariablesCsv(
     applyResult;
   const message =
     aliasErrors.length > 0
-      ? `Import complete with ${aliasErrors.length} alias error(s). Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Text styles: ${textStylesCreated} created, ${textStylesSkipped} skipped. Effect styles: ${effectStylesCreated} created, ${effectStylesSkipped} skipped.`
-      : `Import complete. Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Text styles: ${textStylesCreated} created, ${textStylesSkipped} skipped. Effect styles: ${effectStylesCreated} created, ${effectStylesSkipped} skipped.`;
+      ? `Import complete with ${aliasErrors.length} alias error(s). Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Text styles: ${textStylesCreated} created, ${textStylesUpdated} updated, ${textStylesSkipped} skipped. Effect styles: ${effectStylesCreated} created, ${effectStylesUpdated} updated, ${effectStylesSkipped} skipped.`
+      : `Import complete. Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Text styles: ${textStylesCreated} created, ${textStylesUpdated} updated, ${textStylesSkipped} skipped. Effect styles: ${effectStylesCreated} created, ${effectStylesUpdated} updated, ${effectStylesSkipped} skipped.`;
 
   return {
     type: "importVariablesCsv",
@@ -447,9 +460,11 @@ export async function importVariablesCsv(
       variablesAlreadyExisted,
       aliasErrors,
       textStylesCreated,
+      textStylesUpdated,
       textStylesSkipped,
       textStyleWarnings,
       effectStylesCreated,
+      effectStylesUpdated,
       effectStylesSkipped,
       effectStyleWarnings,
     },

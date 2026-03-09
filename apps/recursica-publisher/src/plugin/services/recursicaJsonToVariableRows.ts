@@ -104,7 +104,7 @@ const TYPOGRAPHY_KEYS_UIKIT = [
 
 /** Derive Figma Style name from full path: strip ui-kit.components., .properties, .variants. */
 function pathToStyleName(path: string): string {
-  let name = path.replace(/^ui-kit\.components\./, "");
+  let name = path.replace(/^ui-kit\./, "");
   name = name.replace(/\.properties\./g, ".").replace(/\.properties$/, "");
   name = name.replace(/\.variants\./g, ".").replace(/\.variants$/, "");
   return name;
@@ -751,8 +751,45 @@ function collectThemeRows(
     const v = obj.$value;
 
     if (isReference(v)) {
+      if (tokenType === "variant") {
+        const cleanVal = String(v).replace(/^{|}$/g, "");
+        const parts = cleanVal.split(".");
+        const extracted = parts.length > 0 ? parts[parts.length - 1] : "";
+        if (extracted) {
+          rows.push([
+            figmaVariableName,
+            mode,
+            extracted,
+            FIGMA_TYPE_STRING,
+            "false",
+          ]);
+          return;
+        }
+      }
       const figmaType = tokenTypeToFigmaType(tokenType);
       rows.push([figmaVariableName, mode, v, figmaType, "true"]);
+      return;
+    }
+
+    if (tokenType === "variant") {
+      if (typeof v === "string") {
+        const cleanVal = String(v).replace(/^{|}$/g, "");
+        const parts = cleanVal.split(".");
+        const extracted = parts.length > 0 ? parts[parts.length - 1] : "";
+        if (extracted) {
+          rows.push([
+            figmaVariableName,
+            mode,
+            extracted,
+            FIGMA_TYPE_STRING,
+            "false",
+          ]);
+          return;
+        }
+      }
+      warnings.push(
+        `Variant token is not a valid string reference at path: ${figmaVariableName}`,
+      );
       return;
     }
 
@@ -1309,7 +1346,6 @@ function collectUiKitVariableNames(
       typeof vObj === "object" &&
       vObj !== null &&
       !Array.isArray(vObj) &&
-      !("components" in vObj) &&
       !("r" in vObj)
     ) {
       for (const key of Object.keys(vObj)) {
@@ -1399,8 +1435,45 @@ function collectUiKitRows(
     const v = obj.$value;
 
     if (isReference(v)) {
+      if (tokenType === "variant") {
+        const cleanVal = String(v).replace(/^{|}$/g, "");
+        const parts = cleanVal.split(".");
+        const extracted = parts.length > 0 ? parts[parts.length - 1] : "";
+        if (extracted) {
+          rows.push([
+            figmaVariableName,
+            mode,
+            extracted,
+            FIGMA_TYPE_STRING,
+            "false",
+          ]);
+          return;
+        }
+      }
       const figmaType = tokenTypeToFigmaType(tokenType);
       rows.push([figmaVariableName, mode, v, figmaType, "true"]);
+      return;
+    }
+
+    if (tokenType === "variant") {
+      if (typeof v === "string") {
+        const cleanVal = String(v).replace(/^{|}$/g, "");
+        const parts = cleanVal.split(".");
+        const extracted = parts.length > 0 ? parts[parts.length - 1] : "";
+        if (extracted) {
+          rows.push([
+            figmaVariableName,
+            mode,
+            extracted,
+            FIGMA_TYPE_STRING,
+            "false",
+          ]);
+          return;
+        }
+      }
+      warnings.push(
+        `Variant token is not a valid string reference at path: ${figmaVariableName}`,
+      );
       return;
     }
 

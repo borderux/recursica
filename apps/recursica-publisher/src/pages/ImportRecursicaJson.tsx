@@ -63,9 +63,11 @@ export default function ImportRecursicaJson() {
     variablesAlreadyExisted: number;
     aliasErrors?: string[];
     textStylesCreated?: number;
+    textStylesUpdated?: number;
     textStylesSkipped?: number;
     textStyleWarnings?: string[];
     effectStylesCreated?: number;
+    effectStylesUpdated?: number;
     effectStylesSkipped?: number;
     effectStyleWarnings?: string[];
     transformErrors?: string[];
@@ -121,6 +123,9 @@ export default function ImportRecursicaJson() {
     setImporting(true);
     setError(null);
     setResult(null);
+
+    // Give the UI a moment to show the importing spinner
+    await new Promise((resolve) => setTimeout(resolve, 50));
     try {
       const [tokens, brand, uiKit] = await Promise.all([
         readJson(tokensFile),
@@ -138,9 +143,11 @@ export default function ImportRecursicaJson() {
         variablesAlreadyExisted?: number;
         aliasErrors?: string[];
         textStylesCreated?: number;
+        textStylesUpdated?: number;
         textStylesSkipped?: number;
         textStyleWarnings?: string[];
         effectStylesCreated?: number;
+        effectStylesUpdated?: number;
         effectStylesSkipped?: number;
         effectStyleWarnings?: string[];
         transformErrors?: string[];
@@ -151,9 +158,11 @@ export default function ImportRecursicaJson() {
         variablesAlreadyExisted: data.variablesAlreadyExisted ?? 0,
         aliasErrors: data.aliasErrors,
         textStylesCreated: data.textStylesCreated,
+        textStylesUpdated: data.textStylesUpdated,
         textStylesSkipped: data.textStylesSkipped,
         textStyleWarnings: data.textStyleWarnings,
         effectStylesCreated: data.effectStylesCreated,
+        effectStylesUpdated: data.effectStylesUpdated,
         effectStylesSkipped: data.effectStylesSkipped,
         effectStyleWarnings: data.effectStyleWarnings,
         transformErrors: data.transformErrors,
@@ -239,21 +248,19 @@ export default function ImportRecursicaJson() {
               Variables created: {result.variablesCreated}
               <br />
               Variables already existed: {result.variablesAlreadyExisted}
-              {(result.textStylesCreated !== undefined ||
-                result.textStylesSkipped !== undefined) && (
-                <>
-                  <br />
-                  Text styles created: {result.textStylesCreated ?? 0}, skipped:{" "}
-                  {result.textStylesSkipped ?? 0}
-                </>
+              {result.textStylesCreated != null && (
+                <div>
+                  Text styles created: {result.textStylesCreated}, updated:{" "}
+                  {result.textStylesUpdated ?? 0}, skipped:{" "}
+                  {result.textStylesSkipped}
+                </div>
               )}
-              {(result.effectStylesCreated !== undefined ||
-                result.effectStylesSkipped !== undefined) && (
-                <>
-                  <br />
-                  Effect styles created: {result.effectStylesCreated ?? 0},
-                  skipped: {result.effectStylesSkipped ?? 0}
-                </>
+              {result.effectStylesCreated != null && (
+                <div>
+                  Effect styles created: {result.effectStylesCreated}, updated:{" "}
+                  {result.effectStylesUpdated ?? 0}, skipped:{" "}
+                  {result.effectStylesSkipped}
+                </div>
               )}
             </div>
             {result.transformErrors && result.transformErrors.length > 0 && (
@@ -276,6 +283,7 @@ export default function ImportRecursicaJson() {
                 </ul>
               </div>
             )}
+            {/* TODO: Re-enable transform warnings later
             {result.transformWarnings &&
               result.transformWarnings.length > 0 && (
                 <div
@@ -297,6 +305,7 @@ export default function ImportRecursicaJson() {
                   </ul>
                 </div>
               )}
+            */}
             {result.aliasErrors && result.aliasErrors.length > 0 && (
               <div
                 style={{
@@ -315,6 +324,7 @@ export default function ImportRecursicaJson() {
                 </ul>
               </div>
             )}
+            {/* TODO: Re-enable text style warnings later
             {result.textStyleWarnings &&
               result.textStyleWarnings.length > 0 && (
                 <div
@@ -336,6 +346,8 @@ export default function ImportRecursicaJson() {
                   </ul>
                 </div>
               )}
+            */}
+            {/* TODO: Re-enable effect style warnings later
             {result.effectStyleWarnings &&
               result.effectStyleWarnings.length > 0 && (
                 <div
@@ -357,6 +369,7 @@ export default function ImportRecursicaJson() {
                   </ul>
                 </div>
               )}
+            */}
           </div>
         )}
       </Stack>

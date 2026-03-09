@@ -92,11 +92,13 @@ export async function importRecursicaJson(
   const applyResult = await applyVariableRows(rows);
 
   let textStylesCreated = 0;
+  let textStylesUpdated = 0;
   let textStylesSkipped = 0;
   const textStyleWarnings: string[] = [];
   try {
     const textStyleResult = await createTextStylesFromTypography();
     textStylesCreated = textStyleResult.textStylesCreated;
+    textStylesUpdated = textStyleResult.textStylesUpdated;
     textStylesSkipped = textStyleResult.textStylesSkipped;
     textStyleWarnings.push(...textStyleResult.textStyleWarnings);
   } catch (e) {
@@ -106,11 +108,13 @@ export async function importRecursicaJson(
   }
 
   let effectStylesCreated = 0;
+  let effectStylesUpdated = 0;
   let effectStylesSkipped = 0;
   const effectStyleWarnings: string[] = [];
   try {
     const effectStyleResult = await createEffectStylesFromElevations();
     effectStylesCreated = effectStyleResult.effectStylesCreated;
+    effectStylesUpdated = effectStyleResult.effectStylesUpdated;
     effectStylesSkipped = effectStyleResult.effectStylesSkipped;
     effectStyleWarnings.push(...effectStyleResult.effectStyleWarnings);
   } catch (e) {
@@ -137,9 +141,11 @@ export async function importRecursicaJson(
       variablesAlreadyExisted,
       aliasErrors,
       textStylesCreated,
+      textStylesUpdated,
       textStylesSkipped,
       textStyleWarnings,
       effectStylesCreated,
+      effectStylesUpdated,
       effectStylesSkipped,
       effectStyleWarnings,
       ...(transformErrors.length > 0 && { transformErrors }),

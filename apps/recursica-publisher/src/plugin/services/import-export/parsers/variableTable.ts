@@ -329,11 +329,33 @@ export class VariableTable {
   private variableMap: Map<string, number>; // variableKey -> index
   private variables: VariableTableEntry[]; // index -> variable data
   private nextIndex: number;
+  public invalidReferences: Array<{ id: string; nodePaths: string[] }>;
 
   constructor() {
     this.variableMap = new Map();
     this.variables = [];
     this.nextIndex = 0;
+    this.invalidReferences = [];
+  }
+
+  /**
+   * Records an invalid or unresolvable variable reference
+   */
+  addInvalidReference(aliasId: string, nodePath: string[]): void {
+    const pathString = nodePath.join(" → ");
+
+    // Check if we already have this invalid reference
+    const existing = this.invalidReferences.find((ref) => ref.id === aliasId);
+    if (existing) {
+      if (!existing.nodePaths.includes(pathString)) {
+        existing.nodePaths.push(pathString);
+      }
+    } else {
+      this.invalidReferences.push({
+        id: aliasId,
+        nodePaths: [pathString],
+      });
+    }
   }
 
   /**

@@ -3,8 +3,11 @@
  * Runs after variable import. See docs/TEXT-STYLES-IMPORT.md for design.
  */
 
+import { getFixedGuidForCollection } from "../../const/CollectionConstants";
+
 const TYPOGRAPHY_VAR_PREFIX = "typography/";
-const THEMES_COLLECTION_NAME = "Themes";
+const COLLECTION_GUID_KEY = "recursica:collectionId";
+const THEMES_COLLECTION_NAMES = ["Themes", "Theme"];
 const TEXT_STYLE_FOLDER_NAME = "Recursica";
 const TEXT_STYLE_NAME_PREFIX = "recursica_";
 
@@ -24,6 +27,7 @@ export type TypographyPropertyKey = (typeof TYPOGRAPHY_PROPERTY_KEYS)[number];
 
 export interface CreateTextStylesFromTypographyResult {
   textStylesCreated: number;
+  textStylesUpdated: number;
   textStylesSkipped: number;
   textStyleWarnings: string[];
 }
@@ -155,23 +159,48 @@ function toFontStyleName(
 export async function createTextStylesFromTypography(): Promise<CreateTextStylesFromTypographyResult> {
   const result: CreateTextStylesFromTypographyResult = {
     textStylesCreated: 0,
+    textStylesUpdated: 0,
     textStylesSkipped: 0,
     textStyleWarnings: [],
   };
 
   const collections = await figma.variables.getLocalVariableCollectionsAsync();
-  const themesCollection = collections.find(
-    (c) => c.name === THEMES_COLLECTION_NAME,
+  const themesGuid = getFixedGuidForCollection("Themes");
+  let themesCollection = themesGuid
+    ? collections.find(
+        (c) =>
+          c.getSharedPluginData("recursica", COLLECTION_GUID_KEY) ===
+          themesGuid,
+      )
+    : undefined;
+
+  if (!themesCollection) {
+    themesCollection = collections.find((c) =>
+      THEMES_COLLECTION_NAMES.includes(c.name),
+    );
+  }
+
+  if (!themesCollection) {
+    console.log(
+      `[createTextStyles] No Themes collection found. Collections: ${collections.map((c) => c.name).join(", ")}`,
+    );
+    return result;
+  }
+  console.log(
+    `[createTextStyles] Found Themes collection (id: ${themesCollection.id})`,
   );
-  if (!themesCollection) return result;
 
   const variablesByStyle = new Map<
     string,
     Map<TypographyPropertyKey, Variable>
   >();
-  for (const varId of themesCollection.variableIds) {
-    const variable = await figma.variables.getVariableByIdAsync(varId);
-    if (!variable || !variable.name.startsWith(TYPOGRAPHY_VAR_PREFIX)) continue;
+  const allLocalVariables = await figma.variables.getLocalVariablesAsync();
+  console.log(
+    `[createTextStyles] Fetched ${allLocalVariables.length} total local variables.`,
+  );
+  for (const variable of allLocalVariables) {
+    if (variable.variableCollectionId !== themesCollection.id) continue;
+    if (!variable.name.startsWith(TYPOGRAPHY_VAR_PREFIX)) continue;
     const rest = variable.name.slice(TYPOGRAPHY_VAR_PREFIX.length);
     const parts = rest.split("/");
     if (parts.length < 2) continue;
@@ -187,25 +216,42 @@ export async function createTextStylesFromTypography(): Promise<CreateTextStyles
     variablesByStyle.get(styleName)!.set(propKey, variable);
   }
 
+  console.log(
+    `[createTextStyles] Found ${variablesByStyle.size} distinct typography styles.`,
+  );
+
   if (variablesByStyle.size === 0) return result;
 
   const existingTextStyles = await figma.getLocalTextStylesAsync();
+  console.log(
+    `[createTextStyles] Found ${existingTextStyles.length} existing text styles.`,
+  );
 
   for (const [styleName, propVars] of variablesByStyle) {
     const figmaStyleName = `${TEXT_STYLE_FOLDER_NAME}/${TEXT_STYLE_NAME_PREFIX}${styleName}`;
     const existing = existingTextStyles.find((s) => s.name === figmaStyleName);
+
+    let textStyle: TextStyle;
     if (existing) {
-      result.textStylesSkipped++;
-      continue;
+      textStyle = existing;
+      result.textStylesUpdated++;
+    } else {
+      textStyle = figma.createTextStyle();
+      textStyle.name = figmaStyleName;
+      result.textStylesCreated++;
     }
 
     const warnings: string[] = [];
     const fontFamilyVar = propVars.get("font-family");
     if (!fontFamilyVar) {
+      console.log(
+        `[createTextStyles] Style ${styleName} missing font-family variable.`,
+      );
       warnings.push(
         `Typography style "${styleName}": missing font-family; skipping creation.`,
       );
       result.textStyleWarnings.push(...warnings);
+      result.textStylesSkipped++;
       continue;
     }
 
@@ -224,6 +270,7 @@ export async function createTextStylesFromTypography(): Promise<CreateTextStyles
         warnings.push(`  Debug: ${resolveLog.join(" | ")}`);
       }
       result.textStyleWarnings.push(...warnings);
+      result.textStylesSkipped++;
       continue;
     }
 
@@ -242,20 +289,24 @@ export async function createTextStylesFromTypography(): Promise<CreateTextStyles
       toLiteralOrNull(fontWeightVal),
     );
 
+    let fontLoaded = false;
     try {
       await figma.loadFontAsync({
         family: fontFamilyStr,
         style: fontStyleName,
       });
+      fontLoaded = true;
     } catch {
       result.textStyleWarnings.push(
         `Typography style "${styleName}": could not load font "${fontFamilyStr}" / "${fontStyleName}" (from "${fontFamilyRaw}"); skipping.`,
       );
+    }
+
+    if (!fontLoaded) {
+      result.textStylesSkipped++;
       continue;
     }
 
-    const textStyle = figma.createTextStyle();
-    textStyle.name = figmaStyleName;
     textStyle.fontName = { family: fontFamilyStr, style: fontStyleName };
 
     // Bind typography variables so style updates when variables change (matches design files).
@@ -307,8 +358,6 @@ export async function createTextStylesFromTypography(): Promise<CreateTextStyles
       const td = toTextDecoration(toLiteralOrNull(v));
       if (td) textStyle.textDecoration = td;
     }
-
-    result.textStylesCreated++;
   }
 
   return result;
