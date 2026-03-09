@@ -8,7 +8,9 @@ export type CheckboxProps = MantineCheckboxProps;
 
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
   ({ className, ...props }, ref) => {
-    return <MantineCheckbox ref={ref} className={className} {...props} />;
+    return (
+      <MantineCheckbox ref={ref} className={className} radius={4} {...props} />
+    );
   },
 );
 

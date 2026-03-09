@@ -3,7 +3,6 @@ import { useEffect } from "react";
 import { MantineProvider } from "@mantine/core";
 import { theme } from "./theme/theme";
 import Layout from "./components/Layout";
-import Home from "./pages/Home/Home";
 import Splash from "./pages/Splash/Splash";
 import Import from "./pages/Import/Import";
 import ImportMain from "./pages/ImportMain/ImportMain";
@@ -146,7 +145,7 @@ function App() {
             <RouteLogger />
             <Routes>
               <Route path="/splash" element={<Splash />} />
-              <Route path="/" element={<Home />} />
+              <Route path="/" element={<Import />} />
               <Route path="/import" element={<Import />} />
               <Route path="/import-main" element={<ImportMain />} />
               <Route path="/import-branch" element={<ImportBranch />} />

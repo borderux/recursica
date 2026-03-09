@@ -33,6 +33,13 @@ export default function Admin() {
           <Button onClick={() => navigate("/test")} className={classes.button}>
             Test
           </Button>
+
+          <Button
+            onClick={() => navigate("/publish")}
+            className={classes.button}
+          >
+            Publish
+          </Button>
         </Stack>
       </Stack>
     </PageLayout>

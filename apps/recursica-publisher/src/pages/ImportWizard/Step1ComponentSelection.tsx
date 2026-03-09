@@ -8,6 +8,7 @@ import {
   type ComponentBadgeStatus,
 } from "../../components/ComponentList";
 import { callPlugin } from "../../utils/callPlugin";
+import { Button } from "../../components/Button";
 
 const RECURSICA_FIGMA_OWNER = "borderux";
 const RECURSICA_FIGMA_REPO = "recursica-figma";
@@ -31,6 +32,9 @@ export default function Step1ComponentSelection() {
   const { wizardState, setWizardState } = useImportWizard();
   const { accessToken } = useAuth();
   const [components, setComponents] = useState<ComponentInfo[]>([]);
+  const [selectedComponents, setSelectedComponents] = useState<ComponentInfo[]>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigatingAwayRef = useRef(false);
@@ -349,7 +353,7 @@ export default function Step1ComponentSelection() {
           marginTop: "0",
         }}
       >
-        Choose your component
+        Add/Import Components
       </h1>
 
       {(() => {
@@ -399,8 +403,7 @@ export default function Step1ComponentSelection() {
               maxWidth: "600px",
             }}
           >
-            We have an exciting list of components to import. Please choose from
-            the list below. Check back frequently for new updates.
+            Choose from a list of official components to add below
           </p>
         );
       })()}
@@ -454,10 +457,33 @@ export default function Step1ComponentSelection() {
       )}
 
       {!loading && !error && components.length > 0 && (
-        <ComponentList
-          components={components}
-          onSelect={handleComponentSelect}
-        />
+        <div
+          style={{
+            width: "100%",
+            maxWidth: "800px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+            alignItems: "center",
+          }}
+        >
+          <ComponentList
+            components={components}
+            selectedComponents={selectedComponents}
+            onSelectionChange={setSelectedComponents}
+          />
+          <Button
+            disabled={selectedComponents.length === 0}
+            onClick={() => {
+              if (selectedComponents.length > 0) {
+                handleComponentSelect(selectedComponents[0]);
+              }
+            }}
+            style={{ alignSelf: "flex-end" }}
+          >
+            Import Selected
+          </Button>
+        </div>
       )}
     </div>
   );

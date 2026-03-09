@@ -218,11 +218,6 @@ export default function Home() {
     navigate("/import-main");
   };
 
-  const handlePublishClick = () => {
-    console.log("[Home] Publish button clicked");
-    navigate("/publish");
-  };
-
   // Only show buttons if authenticated and has write access
   const shouldShowButtons =
     isAuthenticated && accessToken && hasWriteAccess === true;
@@ -250,13 +245,13 @@ export default function Home() {
               : "Import"}
           </Button>
 
-          <Button
+          {/* <Button
             size="lg"
             onClick={handlePublishClick}
             className={classes.button}
           >
             Publish
-          </Button>
+          </Button> */}
         </Stack>
       </div>
     </PageLayout>

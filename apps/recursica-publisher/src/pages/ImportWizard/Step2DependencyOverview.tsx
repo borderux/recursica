@@ -16,13 +16,10 @@ import {
   Title,
   Text,
   Stack,
-  Card,
   Button,
   Checkbox,
-  Badge,
   Alert,
   LoadingSpinner,
-  VersionHistory,
 } from "../../components";
 import classes from "./Step2DependencyOverview.module.css";
 
@@ -36,7 +33,7 @@ export default function Step2DependencyOverview() {
   const [dependencies, setDependencies] = useState<DependencySelection[]>([]);
   const processedRef = useRef<string | null>(null);
   const initialMountRef = useRef(true);
-  const [existingComponentVersion, setExistingComponentVersion] = useState<
+  /* const [existingComponentVersion, setExistingComponentVersion] = useState<
     number | null
   >(null);
   const [componentDescription, setComponentDescription] = useState<
@@ -47,7 +44,7 @@ export default function Step2DependencyOverview() {
   );
   const [componentHistory, setComponentHistory] = useState<
     Record<string, unknown>
-  >({});
+  >({}); */
 
   useEffect(() => {
     const loadDependencies = async () => {
@@ -244,7 +241,7 @@ export default function Step2DependencyOverview() {
           setDependencies(dependencySelections);
 
           // Extract metadata (description, url, history) from main component
-          const extractMetadata = (
+          /* const extractMetadata = (
             jsonData: unknown,
           ): {
             description?: string;
@@ -277,10 +274,10 @@ export default function Step2DependencyOverview() {
               };
             }
             return {};
-          };
+          }; */
 
           if (wizardState.componentData.mainComponent) {
-            const metadata = extractMetadata(
+            /* const metadata = extractMetadata(
               wizardState.componentData.mainComponent.jsonData,
             );
             setComponentDescription(metadata.description);
@@ -291,7 +288,7 @@ export default function Step2DependencyOverview() {
             const existingComponent = existingComponents.find(
               (ec) => ec.id === wizardState.selectedComponent?.guid,
             );
-            setExistingComponentVersion(existingComponent?.version ?? null);
+            setExistingComponentVersion(existingComponent?.version ?? null); */
           }
 
           // Update wizard state with dependencies
@@ -447,7 +444,7 @@ export default function Step2DependencyOverview() {
         const mainVersion = getVersionFromJson(mainComponent.jsonData);
 
         // Extract metadata (description, url, history) from main component
-        const extractMetadata = (
+        /* const extractMetadata = (
           jsonData: unknown,
         ): {
           description?: string;
@@ -479,9 +476,9 @@ export default function Step2DependencyOverview() {
             }
           }
           return {};
-        };
+        }; */
 
-        const metadata = extractMetadata(mainComponent.jsonData);
+        /* const metadata = extractMetadata(mainComponent.jsonData);
         setComponentDescription(metadata.description);
         setComponentUrl(metadata.url);
         setComponentHistory(metadata.history || {});
@@ -493,7 +490,7 @@ export default function Step2DependencyOverview() {
             (ec) => ec.id === selectedGuid,
           );
           setExistingComponentVersion(existingComponent?.version ?? null);
-        }
+        } */
 
         // Store component data in wizard state
         setWizardState((prev) => ({
@@ -646,7 +643,7 @@ export default function Step2DependencyOverview() {
     }
   };
 
-  const getBadgeStatus = (
+  /*   const getBadgeStatus = (
     importVersion: number,
     existingVersion: number | null,
   ): "NEW" | "UPDATED" | "EXISTING" | undefined => {
@@ -659,20 +656,20 @@ export default function Step2DependencyOverview() {
     } else {
       return "UPDATED";
     }
-  };
+  }; */
 
-  const getDependencyBadgeStatus = (
+  /*   const getDependencyBadgeStatus = (
     status: "NEW" | "UPDATED" | "SAME",
   ): "NEW" | "UPDATED" | "EXISTING" | undefined => {
     if (status === "NEW") return "NEW";
     if (status === "UPDATED") return "UPDATED";
     if (status === "SAME") return "EXISTING";
     return undefined;
-  };
+  }; */
 
   return (
     <Stack gap="lg" className={classes.root}>
-      <Title order={1}>Component Overview</Title>
+      <Title order={1}>Overview</Title>
 
       {error && <Alert variant="error">{error}</Alert>}
 
@@ -684,7 +681,7 @@ export default function Step2DependencyOverview() {
       ) : (
         <>
           {/* Component Information Section */}
-          <Card className={classes.componentInfoCard}>
+          {/* <Card className={classes.componentInfoCard}>
             <Stack gap="sm">
               <Title order={3} className={classes.componentName}>
                 {wizardState.selectedComponent?.name}
@@ -744,8 +741,6 @@ export default function Step2DependencyOverview() {
                     </a>
                   </Text>
                 )}
-
-                {/* Version History */}
                 {Object.keys(componentHistory).length > 0 && (
                   <div>
                     <VersionHistory
@@ -756,16 +751,15 @@ export default function Step2DependencyOverview() {
                 )}
               </Stack>
             </Stack>
-          </Card>
+          </Card> */}
 
           {/* Dependencies Section */}
           <div className={classes.dependenciesSection}>
-            <Title order={2} mb="sm">
+            {/* <Title order={2} mb="sm">
               Additional Dependencies
-            </Title>
+            </Title> */}
             <Text variant="body" color="secondary" mb="sm">
-              Select the additional dependent components you would also like to
-              import
+              The following dependencies will also be imported:
             </Text>
 
             {error ? (
@@ -793,7 +787,7 @@ export default function Step2DependencyOverview() {
                         (dep as DependencySelection & { included?: boolean })
                           .included === true;
                       const isNew = dep.status === "NEW";
-                      const badgeStatus = getDependencyBadgeStatus(dep.status);
+                      // const badgeStatus = getDependencyBadgeStatus(dep.status);
 
                       return (
                         <div key={dep.guid} className={classes.dependencyItem}>
@@ -809,12 +803,12 @@ export default function Step2DependencyOverview() {
                               {dep.name}
                             </Text>
                           </div>
-                          {badgeStatus && (
+                          {/* {badgeStatus && (
                             <Badge
                               status={badgeStatus}
                               className={classes.dependencyBadge}
                             />
-                          )}
+                          )} */}
                         </div>
                       );
                     })}

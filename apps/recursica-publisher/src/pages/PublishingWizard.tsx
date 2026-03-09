@@ -289,13 +289,19 @@ export default function PublishingWizard() {
     console.log(
       "[PublishingWizard] Processing export data to determine wizard step",
       {
-        hasValidationErrors: !!exportData.validationResult?.hasErrors,
+        hasValidationErrors:
+          !!exportData.validationResult?.hasErrors ||
+          (exportData.validationResult?.invalidVariables?.length || 0) > 0,
         hasReferencedPages: !!exportData.discoveredReferencedPages?.length,
       },
     );
 
     // Check for validation errors first
-    if (exportData.validationResult && exportData.validationResult.hasErrors) {
+    if (
+      exportData.validationResult &&
+      (exportData.validationResult.hasErrors ||
+        (exportData.validationResult.invalidVariables?.length || 0) > 0)
+    ) {
       console.log(
         `[PublishingWizard] Validation errors found: ${exportData.validationResult.errors.length} error(s)`,
       );

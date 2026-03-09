@@ -1,5 +1,4 @@
 import React, { useState, useRef } from "react";
-import { useNavigate } from "react-router";
 import { PageLayout } from "../components/PageLayout";
 import { Title } from "../components/Title";
 import { Stack } from "../components/Stack";
@@ -52,7 +51,6 @@ async function readJson(file: File): Promise<unknown> {
 }
 
 export default function ImportRecursicaJson() {
-  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [fileNames, setFileNames] = useState<Record<FileKey, string | null>>({
     tokens: null,
@@ -181,13 +179,11 @@ export default function ImportRecursicaJson() {
   return (
     <PageLayout showBackButton={true}>
       <Stack gap={20} style={{ maxWidth: 500 }}>
-        <Title order={1}>Import Recursica JSON</Title>
+        <Title order={1}>Import Recursica Theme</Title>
         <p style={{ margin: 0, color: "#666", fontSize: 14 }}>
           Select the three Recursica JSON files:{" "}
           <code>{FILE_NAMES.tokens}</code>, <code>{FILE_NAMES.brand}</code>,{" "}
-          <code>{FILE_NAMES.uiKit}</code>. They will be transformed into
-          variables and applied to Figma (Tokens, Themes, Layer collections;
-          text and effect styles).
+          <code>{FILE_NAMES.uiKit}</code>
         </p>
         <input
           ref={fileInputRef}
@@ -203,12 +199,16 @@ export default function ImportRecursicaJson() {
           </span>
         )}
         <Stack gap={8} style={{ flexDirection: "row" }}>
-          <Button onClick={handleImport} disabled={importing || !hasFiles}>
+          <Button
+            onClick={handleImport}
+            disabled={!hasFiles}
+            loading={importing}
+          >
             {importing ? "Importing…" : "Import"}
           </Button>
-          <Button variant="light" onClick={() => navigate("/import")}>
+          {/* <Button variant="light" onClick={() => navigate("/import")}>
             Back
-          </Button>
+          </Button> */}
         </Stack>
         {error && (
           <div

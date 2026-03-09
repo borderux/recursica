@@ -5,6 +5,7 @@ import { useAuth } from "../../context/useAuth";
 import { Title } from "../../components/Title";
 import { Text } from "../../components/Text";
 import { Stack } from "../../components/Stack";
+import { Button } from "../../components/Button";
 import { Alert } from "../../components/Alert";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import {
@@ -36,6 +37,9 @@ export default function ImportMain() {
   const navigate = useNavigate();
   const { accessToken } = useAuth();
   const [components, setComponents] = useState<ComponentInfo[]>([]);
+  const [selectedComponents, setSelectedComponents] = useState<ComponentInfo[]>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -184,7 +188,7 @@ export default function ImportMain() {
     <PageLayout showBackButton={true}>
       <Stack gap={20} className={classes.root}>
         <Title order={1} className={classes.title}>
-          Component Library
+          Add / Import Components
         </Title>
 
         {searchParams.get("ref") ? (
@@ -201,8 +205,8 @@ export default function ImportMain() {
           </div>
         ) : (
           <Text variant="body" className={classes.description}>
-            We have an exciting list of components to import. Please choose from
-            the list below. Check back frequently for new updates.
+            Please choose from the list of Recursica components below to add to
+            your project
           </Text>
         )}
 
@@ -226,18 +230,32 @@ export default function ImportMain() {
         )}
 
         {!loading && !error && components.length > 0 && (
-          <ComponentList
-            components={components}
-            onSelect={(component) => {
-              const ref = searchParams.get("ref") || "main";
-              navigate(
-                `/import-wizard/step1?guid=${encodeURIComponent(component.guid)}&ref=${encodeURIComponent(ref)}`,
-                {
-                  state: { fromImportMain: true },
-                },
-              );
-            }}
-          />
+          <Stack gap={16} style={{ width: "100%", alignItems: "center" }}>
+            <ComponentList
+              components={components}
+              selectedComponents={selectedComponents}
+              onSelectionChange={setSelectedComponents}
+            />
+            <Button
+              disabled={selectedComponents.length === 0}
+              onClick={() => {
+                const ref = searchParams.get("ref") || "main";
+                // For now, if we only support one, take the first one
+                const first = selectedComponents[0];
+                if (first) {
+                  navigate(
+                    `/import-wizard/step1?guid=${encodeURIComponent(first.guid)}&ref=${encodeURIComponent(ref)}`,
+                    {
+                      state: { fromImportMain: true },
+                    },
+                  );
+                }
+              }}
+              style={{ alignSelf: "flex-end", marginTop: "16px" }}
+            >
+              Import
+            </Button>
+          </Stack>
         )}
       </Stack>
     </PageLayout>
