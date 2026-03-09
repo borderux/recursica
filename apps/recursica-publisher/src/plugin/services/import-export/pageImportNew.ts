@@ -4723,6 +4723,85 @@ export async function recreateNodeFromData(
     }
   }
 
+  // Restore Styles (Fills, Strokes, Effects, Grids) for this node
+  // CRITICAL: We MUST apply styles FIRST before setting manual properties (fills, strokes, etc.).
+  // If we apply styles last, they wipe out bounding variable overrides like `newNode.fills = fillsWithBoundVars`.
+  // If we apply styles first, we must only assign properties manually (like `newNode.fills`) IF there is no style
+  // OR if there is an explicit variable override that should detach the style.
+  const styleAppliers = [
+    {
+      refKey: "_fillStyleRef",
+      type: "PAINT",
+      method: "setFillStyleIdAsync",
+      name: "Fill",
+    },
+    {
+      refKey: "_strokeStyleRef",
+      type: "PAINT",
+      method: "setStrokeStyleIdAsync",
+      name: "Stroke",
+    },
+    {
+      refKey: "_effectStyleRef",
+      type: "EFFECT",
+      method: "setEffectStyleIdAsync",
+      name: "Effect",
+    },
+    {
+      refKey: "_gridStyleRef",
+      type: "GRID",
+      method: "setGridStyleIdAsync",
+      name: "Grid",
+    },
+  ];
+
+  if (nodeData.type === "COMPONENT" || newNode.type === "COMPONENT") {
+    debugConsole.log(
+      `[DEBUG_EFFECTS] Node "${nodeData.name}" has keys: ${Object.keys(nodeData)
+        .filter(
+          (k) => k.includes("Ref") || k === "effects" || k === "boundVariables",
+        )
+        .join(", ")}`,
+    );
+    debugConsole.log(
+      `[DEBUG_EFFECTS] specifically _effectStyleRef: ${nodeData._effectStyleRef}`,
+    );
+  }
+
+  for (const applier of styleAppliers) {
+    if (nodeData[applier.refKey] !== undefined) {
+      if (!styleMapping) {
+        debugConsole.warning(
+          `${applier.name} style reference found on "${nodeData.name || "Unnamed"}" but styles table was not imported.`,
+        );
+      } else {
+        const style = styleMapping.get(nodeData[applier.refKey]);
+        if (style && style.type === applier.type) {
+          try {
+            if (typeof (newNode as any)[applier.method] === "function") {
+              await (newNode as any)[applier.method](style.id);
+              debugConsole.log(
+                `  ✓ Set ${applier.method} to "${style.id}" for style "${style.name}" on "${nodeData.name || "Unnamed"}"`,
+              );
+            } else {
+              debugConsole.warning(
+                `  Node "${nodeData.name || "Unnamed"}" (${nodeData.type}) does not support ${applier.method}`,
+              );
+            }
+          } catch (styleError) {
+            debugConsole.warning(
+              `Failed to apply ${applier.name} style "${style.name}" on node "${nodeData.name || "Unnamed"}": ${styleError}`,
+            );
+          }
+        } else {
+          debugConsole.warning(
+            `Node "${nodeData.name || "Unnamed"}" has invalid ${applier.refKey} (${nodeData[applier.refKey]}).`,
+          );
+        }
+      }
+    }
+  }
+
   // Set visual properties if they exist
   // Check for bound variables before setting direct values
   const hasBoundVariables =
@@ -4855,6 +4934,8 @@ export async function recreateNodeFromData(
           // Create new fill objects with boundVariables
           // Priority: node-level boundVariables.fills (instance overrides) > fill-level boundVariables
           const fillsWithBoundVars: any[] = [];
+          let hasLocalFillOverride = false;
+
           const nodeLevelFillsBoundVars = nodeData.boundVariables?.fills;
           const hasNodeLevelFillsOverrides = Array.isArray(
             nodeLevelFillsBoundVars,
@@ -5129,6 +5210,10 @@ export async function recreateNodeFromData(
                           }
                         }
                       }
+
+                      // Explicitly flag that this node requires its manual array to override its style if present
+                      hasLocalFillOverride = true;
+
                       debugConsole.log(
                         `  ✓ Restored bound variable for fill[${i}].${propName} on "${newNode.name || "Unnamed"}" (${nodeData.type}): variable ${variable.name} (ID: ${variable.id.substring(0, 8)}...)`,
                       );
@@ -5157,11 +5242,17 @@ export async function recreateNodeFromData(
             fillsWithBoundVars.push(newFill);
           }
 
-          // Set fills with boundVariables
-          newNode.fills = fillsWithBoundVars;
-          debugConsole.log(
-            `  ✓ Set fills with boundVariables on "${newNode.name || "Unnamed"}" (${nodeData.type})`,
-          );
+          // Set fills with boundVariables ONLY if there is no style applied OR there is a local override
+          if (nodeData._fillStyleRef === undefined || hasLocalFillOverride) {
+            newNode.fills = fillsWithBoundVars;
+            debugConsole.log(
+              `  ✓ Set fills with boundVariables on "${newNode.name || "Unnamed"}" (${nodeData.type})`,
+            );
+          } else {
+            debugConsole.log(
+              `  Skipped setting fills because _fillStyleRef is resolving it and there are no bounds variable overrides.`,
+            );
+          }
 
           // ISSUE #2 DEBUG: Check for selectionColor after setting fills with boundVariables
           const fillsAfter = newNode.fills;
@@ -5180,7 +5271,10 @@ export async function recreateNodeFromData(
           }
         } else {
           // Set fills without boundVariables if we can't restore them
-          newNode.fills = fills;
+          // ONLY if there is no fill style (a style overrides raw arrays)
+          if (nodeData._fillStyleRef === undefined) {
+            newNode.fills = fills;
+          }
 
           // ISSUE #2 DEBUG: Check for selectionColor after setting fills
           const fillsAfter = newNode.fills;
@@ -5374,7 +5468,11 @@ export async function recreateNodeFromData(
   ) {
     newNode.cornerRadius = nodeData.cornerRadius;
   }
-  if (nodeData.effects !== undefined && nodeData.effects.length > 0) {
+  if (
+    nodeData.effects !== undefined &&
+    nodeData.effects.length > 0 &&
+    nodeData._effectStyleRef === undefined
+  ) {
     newNode.effects = nodeData.effects;
   }
 
@@ -6060,81 +6158,8 @@ export async function recreateNodeFromData(
     }
   }
 
-  // Restore Styles (Fills, Strokes, Effects, Grids) for this node
-  // Note: Text styles are handled separately above
-  const styleAppliers = [
-    {
-      refKey: "_fillStyleRef",
-      type: "PAINT",
-      method: "setFillStyleIdAsync",
-      name: "Fill",
-    },
-    {
-      refKey: "_strokeStyleRef",
-      type: "PAINT",
-      method: "setStrokeStyleIdAsync",
-      name: "Stroke",
-    },
-    {
-      refKey: "_effectStyleRef",
-      type: "EFFECT",
-      method: "setEffectStyleIdAsync",
-      name: "Effect",
-    },
-    {
-      refKey: "_gridStyleRef",
-      type: "GRID",
-      method: "setGridStyleIdAsync",
-      name: "Grid",
-    },
-  ];
+  // TEXT Node handling finished.
 
-  if (nodeData.type === "COMPONENT" || newNode.type === "COMPONENT") {
-    debugConsole.log(
-      `[DEBUG_EFFECTS] Node "${nodeData.name}" has keys: ${Object.keys(nodeData)
-        .filter(
-          (k) => k.includes("Ref") || k === "effects" || k === "boundVariables",
-        )
-        .join(", ")}`,
-    );
-    debugConsole.log(
-      `[DEBUG_EFFECTS] specifically _effectStyleRef: ${nodeData._effectStyleRef}`,
-    );
-  }
-
-  for (const applier of styleAppliers) {
-    if (nodeData[applier.refKey] !== undefined) {
-      if (!styleMapping) {
-        debugConsole.warning(
-          `${applier.name} style reference found on "${nodeData.name || "Unnamed"}" but styles table was not imported.`,
-        );
-      } else {
-        const style = styleMapping.get(nodeData[applier.refKey]);
-        if (style && style.type === applier.type) {
-          try {
-            if (typeof (newNode as any)[applier.method] === "function") {
-              await (newNode as any)[applier.method](style.id);
-              debugConsole.log(
-                `  ✓ Set ${applier.method} to "${style.id}" for style "${style.name}" on "${nodeData.name || "Unnamed"}"`,
-              );
-            } else {
-              debugConsole.warning(
-                `  Node "${nodeData.name || "Unnamed"}" (${nodeData.type}) does not support ${applier.method}`,
-              );
-            }
-          } catch (styleError) {
-            debugConsole.warning(
-              `Failed to apply ${applier.name} style "${style.name}" on node "${nodeData.name || "Unnamed"}": ${styleError}`,
-            );
-          }
-        } else {
-          debugConsole.warning(
-            `Node "${nodeData.name || "Unnamed"}" has invalid ${applier.refKey} (${nodeData[applier.refKey]}).`,
-          );
-        }
-      }
-    }
-  }
   // Restore componentPropertyReferences if this node is inside a component
   // componentPropertyReferences binds node properties to component properties
   // Examples:
@@ -6540,6 +6565,23 @@ export async function recreateNodeFromData(
     newNode.type === "COMPONENT" &&
     newNode.children &&
     newNode.children.length > 0;
+
+  // Apply visual overrides to normal instances that auto-generated their children
+  if (
+    nodeData.children &&
+    Array.isArray(nodeData.children) &&
+    newNode.type === "INSTANCE"
+  ) {
+    // Apply fill bound variables to instance children
+    await applyFillBoundVariablesToInstanceChildren(
+      newNode as InstanceNode,
+      nodeData,
+      recognizedVariables,
+    );
+
+    // Update children from JSON to preserve bound variables and other properties
+    await updateInstanceChildrenFromJson(newNode as InstanceNode, nodeData);
+  }
 
   if (
     nodeData.children &&
