@@ -5330,56 +5330,65 @@ export async function recreateNodeFromData(
   // We only set backgrounds if fills are NOT present, as Figma aliases backgrounds to fills
   // Setting backgrounds after setting fills will overwrite the fills and destroy bound variables!
   if (nodeData.type !== "INSTANCE") {
+    const hasValidFills =
+      Array.isArray(newNode.fills) && newNode.fills.length > 0;
+
     if (nodeData.backgrounds !== undefined) {
-      try {
-        // Process backgrounds array - restore images first, then remove boundVariables that contain _varRef
-        // We'll restore boundVariables properly after setting the backgrounds
-        let backgrounds = nodeData.backgrounds;
+      if (hasValidFills) {
+        debugConsole.log(
+          `  Skipping backgrounds for "${newNode.name || "Unnamed"}" because fills are already set (prevents overwriting bound variables)`,
+        );
+      } else {
+        try {
+          // Process backgrounds array - restore images first, then remove boundVariables that contain _varRef
+          // We'll restore boundVariables properly after setting the backgrounds
+          let backgrounds = nodeData.backgrounds;
 
-        // Restore image references from image table
-        if (Array.isArray(backgrounds) && imageTable) {
-          backgrounds = await restoreImageReferences(backgrounds, imageTable);
-        }
+          // Restore image references from image table
+          if (Array.isArray(backgrounds) && imageTable) {
+            backgrounds = await restoreImageReferences(backgrounds, imageTable);
+          }
 
-        if (Array.isArray(backgrounds)) {
-          backgrounds = backgrounds.map((background: any) => {
-            if (background && typeof background === "object") {
-              // Create a copy without boundVariables (they may contain _varRef which is invalid)
-              const backgroundWithoutBoundVars = { ...background };
-              delete backgroundWithoutBoundVars.boundVariables;
-              return backgroundWithoutBoundVars;
-            }
-            return background;
-          });
-        }
+          if (Array.isArray(backgrounds)) {
+            backgrounds = backgrounds.map((background: any) => {
+              if (background && typeof background === "object") {
+                // Create a copy without boundVariables (they may contain _varRef which is invalid)
+                const backgroundWithoutBoundVars = { ...background };
+                delete backgroundWithoutBoundVars.boundVariables;
+                return backgroundWithoutBoundVars;
+              }
+              return background;
+            });
+          }
 
-        // Set backgrounds
-        if (Array.isArray(backgrounds) && backgrounds.length > 0) {
-          newNode.backgrounds = backgrounds;
-        } else {
-          // Explicitly clear backgrounds if empty array
-          newNode.backgrounds = [];
-        }
+          // Set backgrounds
+          if (Array.isArray(backgrounds) && backgrounds.length > 0) {
+            newNode.backgrounds = backgrounds;
+          } else {
+            // Explicitly clear backgrounds if empty array
+            newNode.backgrounds = [];
+          }
 
-        // Restore bound variables for backgrounds
-        if (
-          nodeData.boundVariables?.backgrounds &&
-          recognizedVariables &&
-          Array.isArray(newNode.backgrounds) &&
-          newNode.backgrounds.length > 0
-        ) {
-          await restoreBoundVariablesForFills(
-            newNode,
-            nodeData.boundVariables,
-            "backgrounds",
-            recognizedVariables,
-            variableTable,
-            collectionTable,
-            recognizedCollections,
-          );
+          // Restore bound variables for backgrounds
+          if (
+            nodeData.boundVariables?.backgrounds &&
+            recognizedVariables &&
+            Array.isArray(newNode.backgrounds) &&
+            newNode.backgrounds.length > 0
+          ) {
+            await restoreBoundVariablesForFills(
+              newNode,
+              nodeData.boundVariables,
+              "backgrounds",
+              recognizedVariables,
+              variableTable,
+              collectionTable,
+              recognizedCollections,
+            );
+          }
+        } catch (error) {
+          debugConsole.warning(`Error setting backgrounds: ${error}`);
         }
-      } catch (error) {
-        debugConsole.warning(`Error setting backgrounds: ${error}`);
       }
     }
   }
