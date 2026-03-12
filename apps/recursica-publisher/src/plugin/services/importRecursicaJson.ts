@@ -123,12 +123,19 @@ export async function importRecursicaJson(
     );
   }
 
-  const { variablesCreated, variablesAlreadyExisted, aliasErrors } =
-    applyResult;
+  const {
+    variablesCreated,
+    variablesAlreadyExisted,
+    aliasErrors,
+    typeRenameWarnings: varTypeRenameWarnings,
+  } = applyResult;
 
-  const hasIssues = aliasErrors.length > 0 || transformErrors.length > 0;
+  const hasIssues =
+    aliasErrors.length > 0 ||
+    transformErrors.length > 0 ||
+    varTypeRenameWarnings.length > 0;
   const message = hasIssues
-    ? `Import complete with issues. Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Alias errors: ${aliasErrors.length}. Transform errors: ${transformErrors.length}. Text styles: ${textStylesCreated} created, ${textStylesSkipped} skipped. Effect styles: ${effectStylesCreated} created, ${effectStylesSkipped} skipped.`
+    ? `Import complete with issues. Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Alias errors: ${aliasErrors.length}. Transform errors: ${transformErrors.length}. Type renames: ${varTypeRenameWarnings.length}. Text styles: ${textStylesCreated} created, ${textStylesSkipped} skipped. Effect styles: ${effectStylesCreated} created, ${effectStylesSkipped} skipped.`
     : `Import complete. Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Text styles: ${textStylesCreated} created, ${textStylesSkipped} skipped. Effect styles: ${effectStylesCreated} created, ${effectStylesSkipped} skipped.`;
 
   return {
@@ -150,6 +157,9 @@ export async function importRecursicaJson(
       effectStyleWarnings,
       ...(transformErrors.length > 0 && { transformErrors }),
       ...(transformWarnings.length > 0 && { transformWarnings }),
+      ...(varTypeRenameWarnings.length > 0 && {
+        typeRenameWarnings: varTypeRenameWarnings,
+      }),
     },
   };
 }

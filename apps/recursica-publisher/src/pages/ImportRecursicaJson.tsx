@@ -72,6 +72,7 @@ export default function ImportRecursicaJson() {
     effectStyleWarnings?: string[];
     transformErrors?: string[];
     transformWarnings?: string[];
+    typeRenameWarnings?: string[];
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -152,6 +153,7 @@ export default function ImportRecursicaJson() {
         effectStyleWarnings?: string[];
         transformErrors?: string[];
         transformWarnings?: string[];
+        typeRenameWarnings?: string[];
       };
       setResult({
         variablesCreated: data.variablesCreated ?? 0,
@@ -167,6 +169,7 @@ export default function ImportRecursicaJson() {
         effectStyleWarnings: data.effectStyleWarnings,
         transformErrors: data.transformErrors,
         transformWarnings: data.transformWarnings,
+        typeRenameWarnings: data.typeRenameWarnings,
       });
       if (response.error || !response.success) {
         setError(response.message ?? "Import failed.");
@@ -324,6 +327,32 @@ export default function ImportRecursicaJson() {
                 </ul>
               </div>
             )}
+            {result.typeRenameWarnings &&
+              result.typeRenameWarnings.length > 0 && (
+                <div
+                  style={{
+                    padding: 12,
+                    backgroundColor: "#fff8e1",
+                    color: "#f57f17",
+                    borderRadius: 6,
+                    fontSize: 14,
+                  }}
+                >
+                  <strong>
+                    Type mismatch renames ({result.typeRenameWarnings.length}):
+                  </strong>
+                  <p style={{ margin: "4px 0", fontSize: 13 }}>
+                    These variables had a different type than expected. New
+                    variables were created with a _NEW suffix. Review them in
+                    Figma, then delete the old variable and rename the new one.
+                  </p>
+                  <ul style={{ margin: "8px 0 0", paddingLeft: 20 }}>
+                    {result.typeRenameWarnings.map((msg, i) => (
+                      <li key={i}>{msg}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             {/* TODO: Re-enable text style warnings later
             {result.textStyleWarnings &&
               result.textStyleWarnings.length > 0 && (

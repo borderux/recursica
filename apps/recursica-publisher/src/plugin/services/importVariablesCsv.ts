@@ -40,6 +40,7 @@ export interface ApplyVariableRowsResult {
   variablesCreated: number;
   variablesAlreadyExisted: number;
   aliasErrors: string[];
+  typeRenameWarnings: string[];
 }
 
 function parseCsvRow(header: string[], cells: string[]): CsvRow | null {
@@ -207,6 +208,7 @@ export async function applyVariableRows(
   let variablesCreated = 0;
   let variablesAlreadyExisted = 0;
   const aliasErrors: string[] = [];
+  const typeRenameWarnings: string[] = [];
   const loggedTargetKeys = new Set<string>();
   const MAX_ALIAS_MISS_LOGS = 10;
 
@@ -237,34 +239,55 @@ export async function applyVariableRows(
     for (const [variableName, modeRows] of rowsByVariable) {
       const existing = await findVariableByName(collection, variableName);
       let variable = existing;
-      if (existing) {
-        variableByKey.set(`${collKey}/${variableName}`, existing);
-        variablesAlreadyExisted++;
-      } else {
-        let resolvedType: VariableResolvedDataType = "STRING";
-        for (const row of modeRows) {
-          const fromRow = (
-            row.type || "STRING"
-          ).toUpperCase() as VariableResolvedDataType;
-          const validType =
-            fromRow === "COLOR" || fromRow === "FLOAT" || fromRow === "STRING";
-          if (!validType) continue;
-          if (row.alias === "true" && row.value) {
-            const targetKey = aliasValueToMapKey(row.value);
-            const targetVar = variableByKey.get(targetKey);
-            if (targetVar) {
-              resolvedType = targetVar.resolvedType as VariableResolvedDataType;
-              break;
-            }
-          }
-          resolvedType = fromRow;
-          break;
-        }
 
+      // Determine the incoming type from the import row data.
+      let incomingType: VariableResolvedDataType = "STRING";
+      for (const row of modeRows) {
+        const fromRow = (
+          row.type || "STRING"
+        ).toUpperCase() as VariableResolvedDataType;
+        const validType =
+          fromRow === "COLOR" || fromRow === "FLOAT" || fromRow === "STRING";
+        if (!validType) continue;
+        if (row.alias === "true" && row.value) {
+          const targetKey = aliasValueToMapKey(row.value);
+          const targetVar = variableByKey.get(targetKey);
+          if (targetVar) {
+            incomingType = targetVar.resolvedType as VariableResolvedDataType;
+            break;
+          }
+        }
+        incomingType = fromRow;
+        break;
+      }
+
+      if (existing) {
+        const existingType = existing.resolvedType as VariableResolvedDataType;
+        if (existingType !== incomingType) {
+          // Type mismatch: create a new variable with _NEW suffix.
+          const renamedName = `${variableName}_NEW`;
+          const msg = `${displayName}/${variableName}: existing type ${existingType} != imported type ${incomingType}. Created as ${renamedName}`;
+          console.warn(`[applyVariableRows] TYPE MISMATCH: ${msg}`);
+          typeRenameWarnings.push(msg);
+
+          variable = figma.variables.createVariable(
+            renamedName,
+            collection,
+            incomingType,
+          );
+          // Register under the ORIGINAL key so alias resolution still works.
+          variableByKey.set(`${collKey}/${variableName}`, variable);
+          variablesCreated++;
+        } else {
+          // Same type — existing variable is fine, skip creation.
+          variableByKey.set(`${collKey}/${variableName}`, existing);
+          variablesAlreadyExisted++;
+        }
+      } else {
         variable = figma.variables.createVariable(
           variableName,
           collection,
-          resolvedType,
+          incomingType,
         );
         variableByKey.set(`${collKey}/${variableName}`, variable);
         variablesCreated++;
@@ -369,6 +392,7 @@ export async function applyVariableRows(
     variablesCreated,
     variablesAlreadyExisted,
     aliasErrors,
+    typeRenameWarnings,
   };
 }
 
@@ -443,17 +467,21 @@ export async function importVariablesCsv(
     );
   }
 
-  const { variablesCreated, variablesAlreadyExisted, aliasErrors } =
-    applyResult;
-  const message =
-    aliasErrors.length > 0
-      ? `Import complete with ${aliasErrors.length} alias error(s). Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Text styles: ${textStylesCreated} created, ${textStylesUpdated} updated, ${textStylesSkipped} skipped. Effect styles: ${effectStylesCreated} created, ${effectStylesUpdated} updated, ${effectStylesSkipped} skipped.`
-      : `Import complete. Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Text styles: ${textStylesCreated} created, ${textStylesUpdated} updated, ${textStylesSkipped} skipped. Effect styles: ${effectStylesCreated} created, ${effectStylesUpdated} updated, ${effectStylesSkipped} skipped.`;
+  const {
+    variablesCreated,
+    variablesAlreadyExisted,
+    aliasErrors,
+    typeRenameWarnings: varTypeRenameWarnings,
+  } = applyResult;
+  const hasIssues = aliasErrors.length > 0 || varTypeRenameWarnings.length > 0;
+  const message = hasIssues
+    ? `Import complete with issues. Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Alias errors: ${aliasErrors.length}. Type renames: ${varTypeRenameWarnings.length}. Text styles: ${textStylesCreated} created, ${textStylesUpdated} updated, ${textStylesSkipped} skipped. Effect styles: ${effectStylesCreated} created, ${effectStylesUpdated} updated, ${effectStylesSkipped} skipped.`
+    : `Import complete. Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Text styles: ${textStylesCreated} created, ${textStylesUpdated} updated, ${textStylesSkipped} skipped. Effect styles: ${effectStylesCreated} created, ${effectStylesUpdated} updated, ${effectStylesSkipped} skipped.`;
 
   return {
     type: "importVariablesCsv",
-    success: aliasErrors.length === 0,
-    error: aliasErrors.length > 0,
+    success: !hasIssues,
+    error: hasIssues,
     message,
     data: {
       variablesCreated,
@@ -467,6 +495,9 @@ export async function importVariablesCsv(
       effectStylesUpdated,
       effectStylesSkipped,
       effectStyleWarnings,
+      ...(varTypeRenameWarnings.length > 0 && {
+        typeRenameWarnings: varTypeRenameWarnings,
+      }),
     },
   };
 }
