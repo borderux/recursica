@@ -702,7 +702,7 @@ export default function PublishingWizard() {
 
   if (pageIndex === undefined || isNaN(pageIndex)) {
     return (
-      <PageLayout showBackButton={true}>
+      <PageLayout>
         <Stack gap={20} className={classes.root}>
           <Title order={1}>Publishing Wizard</Title>
           <Text variant="body" color="error">
@@ -715,7 +715,7 @@ export default function PublishingWizard() {
 
   if (isExporting) {
     return (
-      <PageLayout showBackButton={true}>
+      <PageLayout>
         <Stack gap={20} align="center" className={classes.loadingContainer}>
           <Title order={1}>Publishing Wizard</Title>
           <Group gap={12}>
@@ -736,7 +736,7 @@ export default function PublishingWizard() {
 
   if (exportError) {
     return (
-      <PageLayout showBackButton={true}>
+      <PageLayout>
         <Stack gap={20} className={classes.root}>
           <Title order={1}>Publishing Wizard</Title>
           <Alert variant="error">
@@ -755,7 +755,7 @@ export default function PublishingWizard() {
 
   if (!exportData) {
     return (
-      <PageLayout showBackButton={true}>
+      <PageLayout>
         <Stack gap={20} className={classes.root}>
           <Title order={1}>Publishing Wizard</Title>
           <Text variant="body" color="error">
@@ -1307,7 +1307,7 @@ export default function PublishingWizard() {
   };
 
   return (
-    <PageLayout showBackButton={true} onBack={handleBack}>
+    <PageLayout onBack={handleBack}>
       <Stack gap={20} className={classes.root}>
         <Title order={1} className={classes.title}>
           {getPageTitle()}

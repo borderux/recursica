@@ -96,7 +96,7 @@ export default function Test() {
   }, []);
 
   return (
-    <PageLayout showBackButton={true}>
+    <PageLayout>
       <style>
         {`
           @keyframes spin {

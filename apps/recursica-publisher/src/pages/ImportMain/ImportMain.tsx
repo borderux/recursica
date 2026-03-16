@@ -185,7 +185,7 @@ export default function ImportMain() {
   }, [searchParams, accessToken]);
 
   return (
-    <PageLayout showBackButton={true}>
+    <PageLayout>
       <Stack gap={20} className={classes.root}>
         <Title order={1} className={classes.title}>
           Add / Import Components

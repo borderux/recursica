@@ -9,7 +9,7 @@ export default function Unauthorized() {
   };
 
   return (
-    <PageLayout showBackButton={true}>
+    <PageLayout>
       <div
         style={{
           width: "100%",

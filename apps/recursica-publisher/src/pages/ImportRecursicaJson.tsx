@@ -189,7 +189,7 @@ export default function ImportRecursicaJson() {
     fileNames.uiKit != null;
 
   return (
-    <PageLayout showBackButton={true}>
+    <PageLayout>
       <Stack gap={20} style={{ maxWidth: 500 }}>
         <Title order={1}>Import Recursica Theme</Title>
         <p style={{ margin: 0, color: "#666", fontSize: 14 }}>

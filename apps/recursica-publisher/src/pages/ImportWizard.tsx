@@ -57,7 +57,7 @@ export default function ImportWizard() {
 
   if (checking && location.pathname === "/import-wizard") {
     return (
-      <PageLayout showBackButton={true}>
+      <PageLayout>
         <div
           style={{
             display: "flex",
@@ -110,7 +110,7 @@ export default function ImportWizard() {
 
   return (
     <ImportWizardProvider>
-      <PageLayout showBackButton={true} onBack={handleBack}>
+      <PageLayout onBack={handleBack}>
         <Routes>
           <Route path="/step1" element={<Step1ComponentSelection />} />
           <Route path="/step2" element={<Step2DependencyOverview />} />

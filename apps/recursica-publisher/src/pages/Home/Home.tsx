@@ -228,7 +228,7 @@ export default function Home() {
   }
 
   return (
-    <PageLayout showBackButton={false}>
+    <PageLayout>
       <div className={classes.root}>
         <Stack gap={20} align="center">
           <Button

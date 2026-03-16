@@ -604,7 +604,7 @@ export default function PublishingWizard() {
   // Early return after all hooks
   if (pageIndex === undefined || isNaN(pageIndex)) {
     return (
-      <PageLayout showBackButton={true}>
+      <PageLayout>
         <div
           style={{
             width: "100%",
@@ -626,7 +626,7 @@ export default function PublishingWizard() {
 
   if (isExporting) {
     return (
-      <PageLayout showBackButton={true}>
+      <PageLayout>
         <style>
           {`
             @keyframes spin {
@@ -685,7 +685,7 @@ export default function PublishingWizard() {
 
   if (exportError) {
     return (
-      <PageLayout showBackButton={true}>
+      <PageLayout>
         <div
           style={{
             width: "100%",
@@ -721,7 +721,7 @@ export default function PublishingWizard() {
 
   if (!exportData) {
     return (
-      <PageLayout showBackButton={true}>
+      <PageLayout>
         <div
           style={{
             width: "100%",
@@ -1520,7 +1520,7 @@ export default function PublishingWizard() {
   };
 
   return (
-    <PageLayout showBackButton={true} onBack={handleBack}>
+    <PageLayout onBack={handleBack}>
       <style>
         {`
           @keyframes spin {

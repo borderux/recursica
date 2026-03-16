@@ -740,7 +740,7 @@ export default function Import() {
   };
 
   return (
-    <PageLayout showBackButton={true}>
+    <PageLayout>
       <div
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}

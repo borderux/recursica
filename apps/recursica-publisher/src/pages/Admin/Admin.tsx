@@ -9,7 +9,7 @@ export default function Admin() {
   const navigate = useNavigate();
 
   return (
-    <PageLayout showBackButton={true}>
+    <PageLayout>
       <Stack gap={20} className={classes.root}>
         <Title order={1} className={classes.title}>
           Admin

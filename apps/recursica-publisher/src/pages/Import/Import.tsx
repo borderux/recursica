@@ -11,6 +11,28 @@ import classes from "./Import.module.css";
 export default function Import() {
   const navigate = useNavigate();
   const [checkingComponents, setCheckingComponents] = useState(true);
+  const [isRecursicaPage, setIsRecursicaPage] = useState(false);
+
+  // Check if current page is a Recursica component page
+  useEffect(() => {
+    const checkPage = async () => {
+      try {
+        const { promise } = callPlugin("getComponentMetadata", {});
+        const response = await promise;
+        if (response.success && response.data) {
+          const data = response.data as {
+            componentMetadata: { id: string };
+          };
+          // Has a non-empty ID = published Recursica component
+          setIsRecursicaPage(!!data.componentMetadata?.id);
+        }
+      } catch {
+        // If check fails, default to disabled
+        setIsRecursicaPage(false);
+      }
+    };
+    checkPage();
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -52,7 +74,7 @@ export default function Import() {
 
   if (checkingComponents) {
     return (
-      <PageLayout showBackButton={true}>
+      <PageLayout>
         <Stack
           gap={20}
           className={classes.root}
@@ -69,7 +91,7 @@ export default function Import() {
   }
 
   return (
-    <PageLayout showBackButton={true}>
+    <PageLayout>
       <Stack gap={20} className={classes.root}>
         <Title order={1} className={classes.title}>
           Import
@@ -102,6 +124,14 @@ export default function Import() {
             className={classes.button}
           >
             Import Theme
+          </Button>
+
+          <Button
+            onClick={() => navigate("/apply-recursica-theme")}
+            className={classes.button}
+            disabled={!isRecursicaPage}
+          >
+            Apply Recursica Theme
           </Button>
         </Stack>
       </Stack>

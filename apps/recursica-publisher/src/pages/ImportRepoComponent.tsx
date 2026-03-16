@@ -121,7 +121,7 @@ export default function ImportRepoComponent() {
   }, [componentGuid, ref, navigate, setImportData, accessToken]);
 
   return (
-    <PageLayout showBackButton={true}>
+    <PageLayout>
       <div
         style={{
           width: "100%",
