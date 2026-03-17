@@ -13,6 +13,7 @@ import type {
   ThemeVariableIssue,
   ReferencedPage,
 } from "../plugin/services/getPageThemeVariables";
+import { recursicaJsonToVariableRows } from "../plugin/services/recursicaJsonToVariableRows";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                             */
@@ -124,6 +125,12 @@ interface ApplyThemeContextValue {
   ) => Promise<void>;
   handleFocusNode: (nodeId: string) => Promise<void>;
 
+  // Variable path browser (for fix selections)
+  variablePaths: string[];
+  variableTypeMap: Map<string, string>;
+  fixSelections: Map<string, string>;
+  setFixSelection: (variableId: string, selectedPath: string | null) => void;
+
   // Cross-page
   applyLog: string[];
   allLogs: string[];
@@ -173,6 +180,7 @@ export function ApplyThemeProvider({
 
   // Scan results
   const [pageName, setPageName] = useState("");
+  const [pageId, setPageId] = useState("");
   const [clashVars, setClashVars] = useState<ClashVariableIssue[]>([]);
   const [unmatchedVars, setUnmatchedVars] = useState<ThemeVariableIssue[]>([]);
   const [nonRecursicaVars, setNonRecursicaVars] = useState<
@@ -200,6 +208,22 @@ export function ApplyThemeProvider({
   const [allLogs, setAllLogs] = useState<string[]>([]);
   const [processedPages, setProcessedPages] = useState<string[]>([]);
   const [remainingPages, setRemainingPages] = useState<ReferencedPage[]>([]);
+
+  // Variable paths from theme JSON (for VariableInput fix selections)
+  const [variablePaths, setVariablePaths] = useState<string[]>([]);
+  const [variableTypeMap, setVariableTypeMap] = useState<Map<string, string>>(
+    new Map(),
+  );
+  const [fixSelections, setFixSelections] = useState<Map<string, string>>(
+    new Map(),
+  );
+
+  // Ref to hold parsed JSON for variable path extraction
+  const parsedJsonRef = useRef<{
+    tokens: unknown;
+    brand: unknown;
+    uiKit: unknown;
+  } | null>(null);
 
   const hasFiles =
     fileNames.tokens != null &&
@@ -256,6 +280,9 @@ export function ApplyThemeProvider({
         readJson(assigned.brandFile),
         readJson(assigned.uiKitFile),
       ]);
+
+      // Store parsed JSON for variable path extraction
+      parsedJsonRef.current = { tokens, brand, uiKit };
       const { promise } = callPlugin(ServiceName.importRecursicaJson, {
         tokens,
         brand,
@@ -269,6 +296,41 @@ export function ApplyThemeProvider({
         setError(response.message ?? "Import failed.");
       } else {
         setError(null);
+
+        // Extract variable paths from the theme JSON for VariableInput
+        if (parsedJsonRef.current) {
+          try {
+            const { rows } = recursicaJsonToVariableRows(
+              parsedJsonRef.current.tokens,
+              parsedJsonRef.current.brand,
+              parsedJsonRef.current.uiKit,
+            );
+            // Map collection names to display labels
+            const collectionLabels: Record<string, string> = {
+              tokens: "Tokens",
+              themes: "Theme",
+              layer: "Layer",
+            };
+            const paths: string[] = [];
+            const typeMap = new Map<string, string>();
+            const seen = new Set<string>();
+            for (const r of rows) {
+              const prefix = collectionLabels[r.collection] ?? r.collection;
+              const fullPath = `${prefix}/${r.figmaVariableName}`;
+              if (!seen.has(fullPath)) {
+                seen.add(fullPath);
+                paths.push(fullPath);
+                typeMap.set(fullPath, r.type);
+              }
+            }
+            paths.sort();
+            setVariablePaths(paths);
+            setVariableTypeMap(typeMap);
+          } catch {
+            // Silently fail — variable paths are optional
+          }
+        }
+
         startScan();
       }
     } catch (err) {
@@ -282,7 +344,7 @@ export function ApplyThemeProvider({
 
   const startScan = useCallback(
     async (pageId?: string) => {
-      navigate("/apply-recursica-theme", { replace: true });
+      navigate("/apply-recursica-theme/scanning", { replace: true });
       setError(null);
       setClashIndex(0);
       setUnmatchedIndex(0);
@@ -309,6 +371,7 @@ export function ApplyThemeProvider({
         };
 
         setPageName(data.pageName);
+        setPageId(data.pageId);
         setClashVars(data.clashVariables);
         setNonRecursicaVars(data.nonRecursicaVariables ?? []);
         setScanWarnings(data.warnings);
@@ -316,13 +379,15 @@ export function ApplyThemeProvider({
         const filteredUnmatched = data.unmatchedVariables.map((v) => v);
         setUnmatchedVars(filteredUnmatched);
 
-        // Merge new referenced pages
-        const newRefs = data.referencedPages.filter(
-          (p) =>
-            !processedPages.includes(p.pageId) &&
-            !remainingPages.some((rp) => rp.pageId === p.pageId),
-        );
-        setRemainingPages((prev) => [...prev, ...newRefs]);
+        // Merge new referenced pages (deduped against processed and newly-added)
+        setRemainingPages((prev) => {
+          const newRefs = data.referencedPages.filter(
+            (p) =>
+              !processedPages.includes(p.pageId) &&
+              !prev.some((rp) => rp.pageId === p.pageId),
+          );
+          return [...prev, ...newRefs];
+        });
 
         // Initialize decisions
         const newClashDecisions = new Map<string, ClashDecision>();
@@ -386,6 +451,21 @@ export function ApplyThemeProvider({
     });
   };
 
+  const setFixSelectionFn = (
+    variableId: string,
+    selectedPath: string | null,
+  ) => {
+    setFixSelections((prev) => {
+      const next = new Map(prev);
+      if (selectedPath === null) {
+        next.delete(variableId);
+      } else {
+        next.set(variableId, selectedPath);
+      }
+      return next;
+    });
+  };
+
   /* ---- Apply ---- */
 
   const handleApply = async (
@@ -424,7 +504,7 @@ export function ApplyThemeProvider({
       ];
       setApplyLog(pageLog);
       setAllLogs((prev) => [...prev, ...pageLog]);
-      setProcessedPages((prev) => [...prev, pageName]);
+      setProcessedPages((prev) => [...prev, pageId]);
 
       navigate("/apply-recursica-theme/next-page", { replace: true });
     } catch (err) {
@@ -505,6 +585,10 @@ export function ApplyThemeProvider({
     nonRecursicaDecisions,
     handleApply,
     handleFocusNode,
+    variablePaths,
+    variableTypeMap,
+    fixSelections,
+    setFixSelection: setFixSelectionFn,
     applyLog,
     allLogs,
     processedPages,

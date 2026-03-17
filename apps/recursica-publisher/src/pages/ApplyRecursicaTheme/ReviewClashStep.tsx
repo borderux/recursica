@@ -5,6 +5,7 @@ import { useFooterActions } from "../../context/FooterActionsContext";
 import { Stack } from "../../components/Stack";
 import { Title } from "../../components/Title";
 import { Button } from "../../components/Button";
+import { VariableInput } from "../../components/VariableInput";
 import { infoRow, labelStyle, linkStyle, warningCard } from "./styles";
 
 export default function ReviewClashStep() {
@@ -19,6 +20,10 @@ export default function ReviewClashStep() {
     scanWarnings,
     handleApply,
     handleFocusNode,
+    variablePaths,
+    variableTypeMap,
+    fixSelections,
+    setFixSelection,
   } = useApplyTheme();
 
   // Read current index from URL search params
@@ -55,6 +60,40 @@ export default function ReviewClashStep() {
     ],
   );
 
+  const handleFix = useCallback(() => {
+    if (clashVars.length === 0) return;
+    const cv = clashVars[currentIndex];
+    const selectedPath = fixSelections.get(cv.oldVariableId);
+    if (!selectedPath) return;
+    // For now, treat fix the same as a navigation action
+    // TODO: Wire up the actual remap logic
+    if (currentIndex < clashVars.length - 1) {
+      navigate(`/apply-recursica-theme/review-clash?i=${currentIndex + 1}`);
+    } else {
+      if (unmatchedVars.length > 0) {
+        navigate("/apply-recursica-theme/review-unmatched");
+      } else if (nonRecursicaVars.length > 0) {
+        navigate("/apply-recursica-theme/review-non-recursica");
+      } else {
+        handleApply();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    clashVars,
+    currentIndex,
+    fixSelections,
+    unmatchedVars.length,
+    nonRecursicaVars.length,
+    navigate,
+  ]);
+
+  // Check if fix is available for current item
+  const currentVarId = clashVars[currentIndex]?.oldVariableId;
+  const hasFixSelection = currentVarId
+    ? fixSelections.has(currentVarId)
+    : false;
+
   useFooterActions(
     <>
       <Button
@@ -64,11 +103,11 @@ export default function ReviewClashStep() {
       >
         Delete
       </Button>
-      <Button size="compact-md" disabled>
+      <Button size="compact-md" disabled={!hasFixSelection} onClick={handleFix}>
         Fix
       </Button>
     </>,
-    [handleClashAction],
+    [handleClashAction, handleFix, hasFixSelection],
   );
 
   if (clashVars.length === 0) return null;
@@ -140,6 +179,30 @@ export default function ReviewClashStep() {
           <span>{cv.newVariableValue}</span>
         </div>
       </div>
+
+      {variablePaths.length > 0 && (
+        <div
+          style={{
+            padding: 10,
+            backgroundColor: "#e3f2fd",
+            borderRadius: 6,
+          }}
+        >
+          <p style={{ margin: "0 0 8px", color: "#1565c0", fontSize: 12 }}>
+            To fix this issue, use the input below to select a replacement
+            variable from the theme.
+          </p>
+          <VariableInput
+            key={cv.oldVariableId}
+            variablePaths={variablePaths}
+            typeMap={variableTypeMap}
+            typeFilter={cv.oldVariableType}
+            value={fixSelections.get(cv.oldVariableId)}
+            onChange={(val) => setFixSelection(cv.oldVariableId, val)}
+            placeholder="Search theme variables…"
+          />
+        </div>
+      )}
 
       {scanWarnings.length > 0 && (
         <div style={warningCard}>

@@ -5,6 +5,7 @@ import { useFooterActions } from "../../context/FooterActionsContext";
 import { Stack } from "../../components/Stack";
 import { Title } from "../../components/Title";
 import { Button } from "../../components/Button";
+import { VariableInput } from "../../components/VariableInput";
 import { infoRow, labelStyle, linkStyle } from "./styles";
 
 export default function ReviewNonRecursicaStep() {
@@ -16,6 +17,10 @@ export default function ReviewNonRecursicaStep() {
     setNonRecursicaAction,
     handleApply,
     handleFocusNode,
+    variablePaths,
+    variableTypeMap,
+    fixSelections,
+    setFixSelection,
   } = useApplyTheme();
 
   // Read current index from URL search params
@@ -39,11 +44,39 @@ export default function ReviewNonRecursicaStep() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nonRecursicaVars, currentIndex, navigate]);
 
+  const handleFix = useCallback(() => {
+    if (nonRecursicaVars.length === 0) return;
+    const nv = nonRecursicaVars[currentIndex];
+    const selectedPath = fixSelections.get(nv.variableId);
+    if (!selectedPath) return;
+    // For now, treat fix the same as a navigation action
+    // TODO: Wire up the actual remap logic
+    if (currentIndex < nonRecursicaVars.length - 1) {
+      navigate(
+        `/apply-recursica-theme/review-non-recursica?i=${currentIndex + 1}`,
+      );
+    } else {
+      handleApply();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nonRecursicaVars, currentIndex, fixSelections, navigate]);
+
+  // Check if fix is available for current item
+  const currentVarId = nonRecursicaVars[currentIndex]?.variableId;
+  const hasFixSelection = currentVarId
+    ? fixSelections.has(currentVarId)
+    : false;
+
   useFooterActions(
-    <Button size="compact-md" onClick={handleAction}>
-      Ignore
-    </Button>,
-    [handleAction],
+    <>
+      <Button size="compact-md" variant="light" onClick={handleAction}>
+        Ignore
+      </Button>
+      <Button size="compact-md" disabled={!hasFixSelection} onClick={handleFix}>
+        Fix
+      </Button>
+    </>,
+    [handleAction, handleFix, hasFixSelection],
   );
 
   if (nonRecursicaVars.length === 0) return null;
@@ -102,6 +135,30 @@ export default function ReviewNonRecursicaStep() {
           <span>{nv.variableValue}</span>
         </div>
       </div>
+
+      {variablePaths.length > 0 && (
+        <div
+          style={{
+            padding: 10,
+            backgroundColor: "#e3f2fd",
+            borderRadius: 6,
+          }}
+        >
+          <p style={{ margin: "0 0 8px", color: "#1565c0", fontSize: 12 }}>
+            To fix this issue, use the input below to select a replacement
+            variable from the theme.
+          </p>
+          <VariableInput
+            key={nv.variableId}
+            variablePaths={variablePaths}
+            typeMap={variableTypeMap}
+            typeFilter={nv.variableType}
+            value={fixSelections.get(nv.variableId)}
+            onChange={(val) => setFixSelection(nv.variableId, val)}
+            placeholder="Search theme variables…"
+          />
+        </div>
+      )}
 
       <p style={{ margin: 0, color: "#666", fontSize: 12 }}>
         Click a node below to highlight it on the canvas ({nv.bindings.length}{" "}

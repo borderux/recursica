@@ -4,14 +4,13 @@ import { useFooterActions } from "../../context/FooterActionsContext";
 import { Stack } from "../../components/Stack";
 import { Title } from "../../components/Title";
 import { Button } from "../../components/Button";
-import { successCard, errorCard } from "./styles";
+import { errorCard } from "./styles";
 
 export default function NextPageStep() {
   const navigate = useNavigate();
   const {
     pageName,
     error,
-    applyLog,
     remainingPages,
     handleProceedToNextPage,
     handleSkipAll,
@@ -24,18 +23,20 @@ export default function NextPageStep() {
     hasMore ? (
       <>
         <Button size="compact-md" variant="light" onClick={handleSkipAll}>
-          No, finish
+          Cancel
         </Button>
         <Button size="compact-md" onClick={handleProceedToNextPage}>
-          Yes, proceed
+          Next
         </Button>
       </>
     ) : (
       <Button
         size="compact-md"
-        onClick={() => navigate("/apply-recursica-theme/summary")}
+        onClick={() => {
+          navigate("/");
+        }}
       >
-        View Summary
+        Done
       </Button>
     ),
     [hasMore, handleProceedToNextPage, handleSkipAll, navigate],
@@ -45,14 +46,6 @@ export default function NextPageStep() {
     <Stack gap={16} style={{ maxWidth: 500 }}>
       <Title order={1}>Apply Recursica Theme</Title>
       <Title order={3}>Page Complete: {pageName}</Title>
-
-      {applyLog.length > 0 && (
-        <div style={successCard}>
-          {applyLog.map((line, i) => (
-            <div key={i}>{line}</div>
-          ))}
-        </div>
-      )}
 
       {error && <div style={errorCard}>{error}</div>}
 
@@ -81,7 +74,7 @@ export default function NextPageStep() {
         </>
       ) : (
         <p style={{ margin: 0, color: "#666", fontSize: 14 }}>
-          No more referenced component pages to process.
+          Congratulations, your theme was applied.
         </p>
       )}
     </Stack>

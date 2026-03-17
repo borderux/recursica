@@ -209,7 +209,17 @@ function serializeVariableValue(variable: Variable): string {
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (typeof value === "object" && (value as any).type === "VARIABLE_ALIAS") {
-      return "(alias)";
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const aliasId = (value as any).id as string;
+        const aliasVar = figma.variables.getVariableById(aliasId);
+        if (aliasVar) {
+          return `(alias) ${aliasVar.name}`;
+        }
+      } catch {
+        // Fall through to default
+      }
+      return "(alias) INVALID";
     }
     // Color: { r, g, b, a }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -225,6 +235,42 @@ function serializeVariableValue(variable: Variable): string {
   } catch {
     return "(unknown)";
   }
+}
+
+/** Human-readable labels for Figma bound variable property keys. */
+const BINDING_PROPERTY_LABELS: Record<string, string> = {
+  fills: "Fill Color",
+  strokes: "Stroke Color",
+  effects: "Effect Color",
+  layoutGrids: "Layout Grid",
+  itemSpacing: "Item Spacing",
+  counterAxisSpacing: "Counter Axis Spacing",
+  paddingTop: "Padding Top",
+  paddingBottom: "Padding Bottom",
+  paddingLeft: "Padding Left",
+  paddingRight: "Padding Right",
+  width: "Width",
+  height: "Height",
+  minWidth: "Min Width",
+  maxWidth: "Max Width",
+  minHeight: "Min Height",
+  maxHeight: "Max Height",
+  topLeftRadius: "Top Left Radius",
+  topRightRadius: "Top Right Radius",
+  bottomLeftRadius: "Bottom Left Radius",
+  bottomRightRadius: "Bottom Right Radius",
+  opacity: "Opacity",
+  fontFamily: "Font Family",
+  fontSize: "Font Size",
+  fontWeight: "Font Weight",
+  lineHeight: "Line Height",
+  letterSpacing: "Letter Spacing",
+  paragraphSpacing: "Paragraph Spacing",
+  visible: "Visibility",
+};
+
+function bindingPropertyLabel(prop: string): string {
+  return BINDING_PROPERTY_LABELS[prop] ?? prop;
 }
 
 /**
@@ -249,7 +295,7 @@ async function processBoundVariable(
   if (!THEME_COLLECTION_NAMES.has(normCollName)) {
     const binding: VariableBinding = {
       nodeId: node.id,
-      nodePath: buildNodePath(node),
+      nodePath: `${buildNodePath(node)} (${bindingPropertyLabel(bindingProperty)})`,
       bindingProperty,
     };
     const existing = ctx.nonRecursicaMap.get(variable.id);
@@ -271,7 +317,7 @@ async function processBoundVariable(
   const key = `${collectionName}/${variable.name}`;
   const binding: VariableBinding = {
     nodeId: node.id,
-    nodePath: buildNodePath(node),
+    nodePath: `${buildNodePath(node)} (${bindingPropertyLabel(bindingProperty)})`,
     bindingProperty,
   };
 
@@ -332,20 +378,33 @@ async function processNodeBindings(
   const boundVars = (node as any).boundVariables;
   if (!boundVars || typeof boundVars !== "object") return;
 
-  for (const [prop, value] of Object.entries(boundVars)) {
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        await processBoundVariable(node, prop, item, ctx);
-      }
-    } else if (
-      value &&
-      typeof value === "object" &&
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (value as any).type === "VARIABLE_ALIAS"
-    ) {
-      await processBoundVariable(node, prop, value, ctx);
+  const promises: Promise<void>[] = [];
+
+  // Recursive helper to find all VARIABLE_ALIAS objects within nested objects/arrays
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const findAliases = (obj: any, topLevelProp: string) => {
+    if (!obj || typeof obj !== "object") return;
+
+    if (obj.type === "VARIABLE_ALIAS" && obj.id) {
+      promises.push(processBoundVariable(node, topLevelProp, obj, ctx));
+      return;
     }
-  }
+
+    if (Array.isArray(obj)) {
+      for (const item of obj) {
+        findAliases(item, topLevelProp);
+      }
+    } else {
+      for (const [key, value] of Object.entries(obj)) {
+        // If we don't have a topLevelProp yet, this key is the top-level property
+        findAliases(value, topLevelProp || key);
+      }
+    }
+  };
+
+  findAliases(boundVars, "");
+
+  await Promise.all(promises);
 }
 
 /**

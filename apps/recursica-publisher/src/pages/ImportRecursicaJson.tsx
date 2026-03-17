@@ -3,8 +3,10 @@ import { PageLayout } from "../components/PageLayout";
 import { Title } from "../components/Title";
 import { Stack } from "../components/Stack";
 import { Button } from "../components/Button";
+import { VariableInput } from "../components/VariableInput";
 import { callPlugin } from "../utils/callPlugin";
 import { ServiceName } from "../plugin/types/ServiceName";
+import { recursicaJsonToVariableRows } from "../plugin/services/recursicaJsonToVariableRows";
 
 const FILE_NAMES = {
   tokens: "recursica_tokens.json",
@@ -75,6 +77,15 @@ export default function ImportRecursicaJson() {
     typeRenameWarnings?: string[];
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [variablePaths, setVariablePaths] = useState<string[]>([]);
+  const [selectedVariable, setSelectedVariable] = useState<string | null>(null);
+
+  // Refs to hold parsed JSON for variable path extraction
+  const parsedJsonRef = useRef<{
+    tokens: unknown;
+    brand: unknown;
+    uiKit: unknown;
+  } | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -133,6 +144,10 @@ export default function ImportRecursicaJson() {
         readJson(brandFile),
         readJson(uiKitFile),
       ]);
+
+      // Store parsed JSON for variable path extraction
+      parsedJsonRef.current = { tokens, brand, uiKit };
+
       const { promise } = callPlugin(ServiceName.importRecursicaJson, {
         tokens,
         brand,
@@ -175,6 +190,23 @@ export default function ImportRecursicaJson() {
         setError(response.message ?? "Import failed.");
       } else {
         setError(null);
+      }
+
+      // Extract variable paths from the theme JSON for VariableInput
+      if (parsedJsonRef.current) {
+        try {
+          const { rows } = recursicaJsonToVariableRows(
+            parsedJsonRef.current.tokens,
+            parsedJsonRef.current.brand,
+            parsedJsonRef.current.uiKit,
+          );
+          const paths = [
+            ...new Set(rows.map((r) => r.figmaVariableName)),
+          ].sort();
+          setVariablePaths(paths);
+        } catch {
+          // Silently fail — variable paths are optional for testing
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Import failed.");
@@ -399,6 +431,37 @@ export default function ImportRecursicaJson() {
                 </div>
               )}
             */}
+            {variablePaths.length > 0 && (
+              <div
+                style={{
+                  padding: 12,
+                  backgroundColor: "#f5f5f5",
+                  borderRadius: 6,
+                }}
+              >
+                <div style={{ fontSize: 13, color: "#666", marginBottom: 8 }}>
+                  <strong>Variable Path Browser</strong> —{" "}
+                  {variablePaths.length} variables from theme JSON
+                </div>
+                <VariableInput
+                  variablePaths={variablePaths}
+                  value={selectedVariable ?? undefined}
+                  onChange={setSelectedVariable}
+                  placeholder="Type to search variables…"
+                />
+                {selectedVariable && (
+                  <div
+                    style={{
+                      marginTop: 8,
+                      fontSize: 13,
+                      color: "#1b5e20",
+                    }}
+                  >
+                    Selected: <code>{selectedVariable}</code>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </Stack>

@@ -1,5 +1,5 @@
-import React from "react";
-import { useNavigate } from "react-router";
+import React, { useEffect, useRef } from "react";
+import { useNavigate, useLocation } from "react-router";
 import packageJson from "../../../package.json";
 import { useAuth } from "../../context/useAuth";
 import { useNavigationHistory } from "../../context/NavigationHistoryProvider";
@@ -14,9 +14,16 @@ interface PageLayoutProps {
 
 export default function PageLayout({ children, onBack }: PageLayoutProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, logout } = useAuth();
   const { canGoBack } = useNavigationHistory();
   const { footerActions } = useFooterActionsState();
+  const mainRef = useRef<HTMLElement>(null);
+
+  // Scroll to top on route transitions (including search param changes)
+  useEffect(() => {
+    mainRef.current?.scrollTo(0, 0);
+  }, [location.pathname, location.search]);
 
   const handleLogout = () => {
     logout();
@@ -40,7 +47,9 @@ export default function PageLayout({ children, onBack }: PageLayoutProps) {
   return (
     <div className={classes.root}>
       {/* Main Content */}
-      <main className={classes.main}>{children}</main>
+      <main ref={mainRef} className={classes.main}>
+        {children}
+      </main>
 
       {/* Footer */}
       <footer className={classes.footer}>

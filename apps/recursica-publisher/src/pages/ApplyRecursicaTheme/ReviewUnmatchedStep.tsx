@@ -5,6 +5,7 @@ import { useFooterActions } from "../../context/FooterActionsContext";
 import { Stack } from "../../components/Stack";
 import { Title } from "../../components/Title";
 import { Button } from "../../components/Button";
+import { VariableInput } from "../../components/VariableInput";
 import { infoRow, labelStyle, linkStyle } from "./styles";
 
 export default function ReviewUnmatchedStep() {
@@ -18,6 +19,10 @@ export default function ReviewUnmatchedStep() {
     globalIgnored,
     handleApply,
     handleFocusNode,
+    variablePaths,
+    variableTypeMap,
+    fixSelections,
+    setFixSelection,
   } = useApplyTheme();
 
   // Read current index from URL search params
@@ -48,6 +53,37 @@ export default function ReviewUnmatchedStep() {
     [unmatchedVars, currentIndex, nonRecursicaVars.length, navigate],
   );
 
+  const handleFix = useCallback(() => {
+    if (unmatchedVars.length === 0) return;
+    const uv = unmatchedVars[currentIndex];
+    const selectedPath = fixSelections.get(uv.variableId);
+    if (!selectedPath) return;
+    // For now, treat fix the same as a navigation action
+    // TODO: Wire up the actual remap logic
+    if (currentIndex < unmatchedVars.length - 1) {
+      navigate(`/apply-recursica-theme/review-unmatched?i=${currentIndex + 1}`);
+    } else {
+      if (nonRecursicaVars.length > 0) {
+        navigate("/apply-recursica-theme/review-non-recursica");
+      } else {
+        handleApply();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    unmatchedVars,
+    currentIndex,
+    fixSelections,
+    nonRecursicaVars.length,
+    navigate,
+  ]);
+
+  // Check if fix is available for current item
+  const currentVarId = unmatchedVars[currentIndex]?.variableId;
+  const hasFixSelection = currentVarId
+    ? fixSelections.has(currentVarId)
+    : false;
+
   useFooterActions(
     <>
       <Button
@@ -57,11 +93,11 @@ export default function ReviewUnmatchedStep() {
       >
         Ignore
       </Button>
-      <Button size="compact-md" disabled>
+      <Button size="compact-md" disabled={!hasFixSelection} onClick={handleFix}>
         Fix
       </Button>
     </>,
-    [handleAction],
+    [handleAction, handleFix, hasFixSelection],
   );
 
   if (unmatchedVars.length === 0) return null;
@@ -127,6 +163,30 @@ export default function ReviewUnmatchedStep() {
           <span>{uv.variableValue}</span>
         </div>
       </div>
+
+      {variablePaths.length > 0 && (
+        <div
+          style={{
+            padding: 10,
+            backgroundColor: "#e3f2fd",
+            borderRadius: 6,
+          }}
+        >
+          <p style={{ margin: "0 0 8px", color: "#1565c0", fontSize: 12 }}>
+            To fix this issue, use the input below to select a replacement
+            variable from the theme.
+          </p>
+          <VariableInput
+            key={uv.variableId}
+            variablePaths={variablePaths}
+            typeMap={variableTypeMap}
+            typeFilter={uv.variableType}
+            value={fixSelections.get(uv.variableId)}
+            onChange={(val) => setFixSelection(uv.variableId, val)}
+            placeholder="Search theme variables…"
+          />
+        </div>
+      )}
 
       <p style={{ margin: 0, color: "#666", fontSize: 12 }}>
         Click a node below to highlight it on the canvas ({uv.bindings.length}{" "}
