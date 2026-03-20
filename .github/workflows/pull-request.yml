@@ -59,3 +59,5 @@ jobs:
       # Runs the test suite.
       - name: Test
         run: npm run test
+        env:
+          VITE_PLUGIN_PHRASE: dummy-phrase-for-testing
