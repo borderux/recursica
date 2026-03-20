@@ -1,5 +1,11 @@
 # @recursica/publisher
 
+## 0.4.0
+
+### Minor Changes
+
+- [#324](https://github.com/borderux/recursica/pull/324) [`12fdf26`](https://github.com/borderux/recursica/commit/12fdf26c1fb48c32f1156bed5275d53a8de84182) Thanks [@mlmassey](https://github.com/mlmassey)! - Revised UI to simply for demo. Theme variable binding function
+
 ## 0.3.4
 
 ### Patch Changes
