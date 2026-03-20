@@ -48,9 +48,15 @@ export default function ReviewUnmatchedStep() {
           handleApply();
         }
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
-    [unmatchedVars, currentIndex, nonRecursicaVars.length, navigate],
+    [
+      unmatchedVars,
+      currentIndex,
+      nonRecursicaVars.length,
+      navigate,
+      handleApply,
+      setUnmatchedAction,
+    ],
   );
 
   const handleFix = useCallback(() => {

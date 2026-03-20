@@ -161,18 +161,18 @@ function rebindVariableOnNode(
           ) {
             try {
               if (prop === "fills" || prop === "strokes") {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const newPaint = figma.variables.setBoundVariableForPaint(
                   newItem,
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   field as any,
                   newVariable,
                 );
                 Object.assign(newItem, newPaint);
                 itemChanged = true;
               } else if (prop === "effects") {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const newEffect = figma.variables.setBoundVariableForEffect(
                   newItem,
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   field as any,
                   newVariable,
                 );

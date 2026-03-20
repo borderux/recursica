@@ -49,7 +49,6 @@ export default function ReviewClashStep() {
           handleApply();
         }
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
     [
       clashVars,
@@ -57,6 +56,8 @@ export default function ReviewClashStep() {
       unmatchedVars.length,
       nonRecursicaVars.length,
       navigate,
+      handleApply,
+      setClashAction,
     ],
   );
 
