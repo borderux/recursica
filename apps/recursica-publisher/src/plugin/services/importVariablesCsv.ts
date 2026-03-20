@@ -8,13 +8,14 @@
 import type { PluginResponse } from "../types/messages";
 import { getFixedGuidForCollection } from "../../const/CollectionConstants";
 import { createEffectStylesFromElevations } from "./createEffectStylesFromElevations";
+import { isUiKitTypography } from "../../utils/typographyUtils";
 import { createTextStylesFromTypography } from "./createTextStylesFromTypography";
 
 const COLLECTION_GUID_KEY = "recursica:collectionId";
 
 const COLLECTION_DISPLAY_NAMES: Record<string, string> = {
   tokens: "Tokens",
-  themes: "Themes",
+  themes: "Theme",
   layer: "Layer",
 };
 
@@ -40,6 +41,7 @@ export interface ApplyVariableRowsResult {
   variablesCreated: number;
   variablesAlreadyExisted: number;
   aliasErrors: string[];
+  typeRenameWarnings: string[];
 }
 
 function parseCsvRow(header: string[], cells: string[]): CsvRow | null {
@@ -169,6 +171,13 @@ function findOrCreateCollection(
     collection = localCollections.find((c) => c.name === displayName);
   }
   if (collection) {
+    if (collection.name === "Themes" && displayName === "Theme") {
+      try {
+        collection.name = "Theme";
+      } catch {
+        // Ignore rename failures
+      }
+    }
     if (fixedGuid) {
       const currentGuid = collection.getSharedPluginData(
         "recursica",
@@ -193,6 +202,7 @@ function findOrCreateCollection(
 
 export async function applyVariableRows(
   csvRows: CsvRow[],
+  typographyRowsForAliasFallback: CsvRow[] = [],
 ): Promise<ApplyVariableRowsResult> {
   const localCollections =
     await figma.variables.getLocalVariableCollectionsAsync();
@@ -200,8 +210,25 @@ export async function applyVariableRows(
   let variablesCreated = 0;
   let variablesAlreadyExisted = 0;
   const aliasErrors: string[] = [];
+  const typeRenameWarnings: string[] = [];
   const loggedTargetKeys = new Set<string>();
   const MAX_ALIAS_MISS_LOGS = 10;
+
+  const resolveAliasTarget = (rawValue: string): Variable | undefined => {
+    const targetKey = aliasValueToMapKey(rawValue);
+    let targetVar = variableByKey.get(targetKey);
+    if (!targetVar) {
+      const typRow = typographyRowsForAliasFallback.find(
+        (r) =>
+          `${r.collection.toLowerCase()}/${r.figmaVariableName}` === targetKey,
+      );
+      if (typRow && typRow.alias === "true" && typRow.value) {
+        const nestedTargetKey = aliasValueToMapKey(typRow.value);
+        targetVar = variableByKey.get(nestedTargetKey);
+      }
+    }
+    return targetVar;
+  };
 
   const order: string[] = ["tokens", "themes", "layer"];
   for (const collKey of order) {
@@ -229,13 +256,10 @@ export async function applyVariableRows(
     // Pass 1: Create all variables and set only literal (non-alias) values, so variableByKey is complete.
     for (const [variableName, modeRows] of rowsByVariable) {
       const existing = await findVariableByName(collection, variableName);
-      if (existing) {
-        variableByKey.set(`${collKey}/${variableName}`, existing);
-        variablesAlreadyExisted++;
-        continue;
-      }
+      let variable = existing;
 
-      let resolvedType: VariableResolvedDataType = "STRING";
+      // Determine the incoming type from the import row data.
+      let incomingType: VariableResolvedDataType = "STRING";
       for (const row of modeRows) {
         const fromRow = (
           row.type || "STRING"
@@ -244,24 +268,49 @@ export async function applyVariableRows(
           fromRow === "COLOR" || fromRow === "FLOAT" || fromRow === "STRING";
         if (!validType) continue;
         if (row.alias === "true" && row.value) {
-          const targetKey = aliasValueToMapKey(row.value);
-          const targetVar = variableByKey.get(targetKey);
+          const targetVar = resolveAliasTarget(row.value);
           if (targetVar) {
-            resolvedType = targetVar.resolvedType as VariableResolvedDataType;
+            incomingType = targetVar.resolvedType as VariableResolvedDataType;
             break;
           }
         }
-        resolvedType = fromRow;
+        incomingType = fromRow;
         break;
       }
 
-      const variable = figma.variables.createVariable(
-        variableName,
-        collection,
-        resolvedType,
-      );
-      variableByKey.set(`${collKey}/${variableName}`, variable);
-      variablesCreated++;
+      if (existing) {
+        const existingType = existing.resolvedType as VariableResolvedDataType;
+        if (existingType !== incomingType) {
+          // Type mismatch: create a new variable with _NEW suffix.
+          const renamedName = `${variableName}_NEW`;
+          const msg = `${displayName}/${variableName}: existing type ${existingType} != imported type ${incomingType}. Created as ${renamedName}`;
+          console.warn(`[applyVariableRows] TYPE MISMATCH: ${msg}`);
+          typeRenameWarnings.push(msg);
+
+          variable = figma.variables.createVariable(
+            renamedName,
+            collection,
+            incomingType,
+          );
+          // Register under the ORIGINAL key so alias resolution still works.
+          variableByKey.set(`${collKey}/${variableName}`, variable);
+          variablesCreated++;
+        } else {
+          // Same type — existing variable is fine, skip creation.
+          variableByKey.set(`${collKey}/${variableName}`, existing);
+          variablesAlreadyExisted++;
+        }
+      } else {
+        variable = figma.variables.createVariable(
+          variableName,
+          collection,
+          incomingType,
+        );
+        variableByKey.set(`${collKey}/${variableName}`, variable);
+        variablesCreated++;
+      }
+
+      if (!variable) continue;
 
       for (const row of modeRows) {
         const mode =
@@ -276,7 +325,7 @@ export async function applyVariableRows(
           continue;
         }
 
-        if (resolvedType === "COLOR") {
+        if (variable.resolvedType === "COLOR") {
           try {
             const rgba = parseColorToRgba(rawValue);
             variable.setValueForMode(modeObj.modeId, rgba);
@@ -285,7 +334,7 @@ export async function applyVariableRows(
           }
           continue;
         }
-        if (resolvedType === "FLOAT") {
+        if (variable.resolvedType === "FLOAT") {
           const n = Number(rawValue);
           if (!Number.isNaN(n)) {
             variable.setValueForMode(modeObj.modeId, n);
@@ -312,9 +361,10 @@ export async function applyVariableRows(
 
         if (!isAlias || !rawValue) continue;
 
-        const targetKey = aliasValueToMapKey(rawValue);
-        const targetVar = variableByKey.get(targetKey);
+        const targetVar = resolveAliasTarget(rawValue);
+
         if (!targetVar) {
+          const targetKey = aliasValueToMapKey(rawValue);
           if (
             loggedTargetKeys.size < MAX_ALIAS_MISS_LOGS &&
             !loggedTargetKeys.has(targetKey)
@@ -360,6 +410,7 @@ export async function applyVariableRows(
     variablesCreated,
     variablesAlreadyExisted,
     aliasErrors,
+    typeRenameWarnings,
   };
 }
 
@@ -400,14 +451,24 @@ export async function importVariablesCsv(
     Object.fromEntries(rowsByCollection),
   );
 
-  const applyResult = await applyVariableRows(csvRows);
+  const variableRows = csvRows.filter(
+    (r) => !isUiKitTypography(r.figmaVariableName),
+  );
+  const typographyRows = csvRows.filter((r) =>
+    r.figmaVariableName.startsWith("typography/"),
+  );
+
+  const applyResult = await applyVariableRows(variableRows, typographyRows);
 
   let textStylesCreated = 0;
+  let textStylesUpdated = 0;
   let textStylesSkipped = 0;
   const textStyleWarnings: string[] = [];
   try {
-    const textStyleResult = await createTextStylesFromTypography();
+    const textStyleResult =
+      await createTextStylesFromTypography(typographyRows);
     textStylesCreated = textStyleResult.textStylesCreated;
+    textStylesUpdated = textStyleResult.textStylesUpdated;
     textStylesSkipped = textStyleResult.textStylesSkipped;
     textStyleWarnings.push(...textStyleResult.textStyleWarnings);
   } catch (e) {
@@ -417,11 +478,13 @@ export async function importVariablesCsv(
   }
 
   let effectStylesCreated = 0;
+  let effectStylesUpdated = 0;
   let effectStylesSkipped = 0;
   const effectStyleWarnings: string[] = [];
   try {
     const effectStyleResult = await createEffectStylesFromElevations();
     effectStylesCreated = effectStyleResult.effectStylesCreated;
+    effectStylesUpdated = effectStyleResult.effectStylesUpdated;
     effectStylesSkipped = effectStyleResult.effectStylesSkipped;
     effectStyleWarnings.push(...effectStyleResult.effectStyleWarnings);
   } catch (e) {
@@ -430,28 +493,37 @@ export async function importVariablesCsv(
     );
   }
 
-  const { variablesCreated, variablesAlreadyExisted, aliasErrors } =
-    applyResult;
-  const message =
-    aliasErrors.length > 0
-      ? `Import complete with ${aliasErrors.length} alias error(s). Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Text styles: ${textStylesCreated} created, ${textStylesSkipped} skipped. Effect styles: ${effectStylesCreated} created, ${effectStylesSkipped} skipped.`
-      : `Import complete. Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Text styles: ${textStylesCreated} created, ${textStylesSkipped} skipped. Effect styles: ${effectStylesCreated} created, ${effectStylesSkipped} skipped.`;
+  const {
+    variablesCreated,
+    variablesAlreadyExisted,
+    aliasErrors,
+    typeRenameWarnings: varTypeRenameWarnings,
+  } = applyResult;
+  const hasIssues = aliasErrors.length > 0 || varTypeRenameWarnings.length > 0;
+  const message = hasIssues
+    ? `Import complete with issues. Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Alias errors: ${aliasErrors.length}. Type renames: ${varTypeRenameWarnings.length}. Text styles: ${textStylesCreated} created, ${textStylesUpdated} updated, ${textStylesSkipped} skipped. Effect styles: ${effectStylesCreated} created, ${effectStylesUpdated} updated, ${effectStylesSkipped} skipped.`
+    : `Import complete. Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Text styles: ${textStylesCreated} created, ${textStylesUpdated} updated, ${textStylesSkipped} skipped. Effect styles: ${effectStylesCreated} created, ${effectStylesUpdated} updated, ${effectStylesSkipped} skipped.`;
 
   return {
     type: "importVariablesCsv",
-    success: aliasErrors.length === 0,
-    error: aliasErrors.length > 0,
+    success: !hasIssues,
+    error: hasIssues,
     message,
     data: {
       variablesCreated,
       variablesAlreadyExisted,
       aliasErrors,
       textStylesCreated,
+      textStylesUpdated,
       textStylesSkipped,
       textStyleWarnings,
       effectStylesCreated,
+      effectStylesUpdated,
       effectStylesSkipped,
       effectStyleWarnings,
+      ...(varTypeRenameWarnings.length > 0 && {
+        typeRenameWarnings: varTypeRenameWarnings,
+      }),
     },
   };
 }

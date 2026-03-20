@@ -9,7 +9,7 @@ export default function Admin() {
   const navigate = useNavigate();
 
   return (
-    <PageLayout showBackButton={true}>
+    <PageLayout>
       <Stack gap={20} className={classes.root}>
         <Title order={1} className={classes.title}>
           Admin
@@ -24,6 +24,13 @@ export default function Admin() {
           </Button>
 
           <Button
+            onClick={() => navigate("/import-recursica-json")}
+            className={classes.button}
+          >
+            Import Theme
+          </Button>
+
+          <Button
             onClick={() => navigate("/edit-metadata")}
             className={classes.button}
           >
@@ -32,6 +39,13 @@ export default function Admin() {
 
           <Button onClick={() => navigate("/test")} className={classes.button}>
             Test
+          </Button>
+
+          <Button
+            onClick={() => navigate("/publish")}
+            className={classes.button}
+          >
+            Publish
           </Button>
         </Stack>
       </Stack>

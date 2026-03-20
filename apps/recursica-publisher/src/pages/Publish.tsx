@@ -148,7 +148,7 @@ export default function Publish() {
   }
 
   return (
-    <PageLayout showBackButton={true}>
+    <PageLayout>
       <div
         style={{
           width: "100%",

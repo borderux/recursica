@@ -151,7 +151,7 @@ export default function Publishing() {
   }, [searchParams, getCurrentVersion, navigate]);
 
   return (
-    <PageLayout showBackButton={true}>
+    <PageLayout>
       <Stack gap={16} className={classes.root}>
         <Title order={1} className={classes.title}>
           Publishing

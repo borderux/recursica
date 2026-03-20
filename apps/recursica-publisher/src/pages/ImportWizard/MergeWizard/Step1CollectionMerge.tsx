@@ -183,21 +183,11 @@ export default function Step1CollectionMerge() {
                 const newCollectionGuid =
                   newCollectionGuidMap.get(newCollection.collectionId) || null;
 
-                // Check if GUID matches a fixed GUID for standard collections
-                const isStandardCollection =
-                  newCollectionGuid === FIXED_COLLECTION_GUIDS.LAYER ||
-                  newCollectionGuid === FIXED_COLLECTION_GUIDS.TOKENS ||
-                  newCollectionGuid === FIXED_COLLECTION_GUIDS.THEME;
-
                 // Find existing collection by GUID
                 let existing: { id: string; name: string } | null = null;
                 if (newCollectionGuid) {
                   existing = existingMapByGuid.get(newCollectionGuid) || null;
                 }
-
-                // For standard collections, if no existing found, we should still allow merge
-                // (it will create/find the standard collection)
-                const shouldDefaultToMerge = isStandardCollection;
 
                 choices.push({
                   newCollectionId: newCollection.collectionId,
@@ -205,15 +195,15 @@ export default function Step1CollectionMerge() {
                   newCollectionGuid,
                   existingCollectionId: existing?.id || null,
                   existingCollectionName: existing?.name || null,
-                  choice: existing || shouldDefaultToMerge ? "merge" : "keep", // Default to merge for standard collections
+                  choice: "merge", // Always default to merge
                 });
               }
               setCollections(choices);
 
-              // If there are no collections to merge, automatically proceed with merge
-              if (choices.length === 0 && data.pageId && data.metadata) {
+              // Automatically proceed with merge for all cases
+              if (data.pageId && data.metadata) {
                 console.log(
-                  "[Step1CollectionMerge] No collections to merge, auto-proceeding with merge",
+                  "[Step1CollectionMerge] Auto-proceeding with merge",
                 );
                 // Set loading state and proceed with merge directly
                 setLoading(true);
@@ -222,7 +212,7 @@ export default function Step1CollectionMerge() {
                 try {
                   const mergeData = {
                     pageId: data.pageId,
-                    collectionChoices: [],
+                    collectionChoices: choices,
                   };
 
                   console.log(

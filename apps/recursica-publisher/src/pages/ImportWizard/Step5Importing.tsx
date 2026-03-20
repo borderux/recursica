@@ -308,8 +308,13 @@ export default function Step5Importing() {
   ]);
 
   const handleDone = () => {
-    // Navigate to Review Import page
+    // Navigate to Review Import page for errors
     navigate("/import-wizard/existing");
+  };
+
+  const handleMerge = () => {
+    // Navigate to Merge step 1
+    navigate("/import-wizard/merge/step1");
   };
 
   const handleCleanup = async () => {
@@ -397,7 +402,9 @@ export default function Step5Importing() {
             </Button>
           </>
         ) : (
-          <Button onClick={handleDone}>Done</Button>
+          <Button onClick={handleMerge} disabled={isImporting}>
+            Done
+          </Button>
         )}
       </div>
     </div>

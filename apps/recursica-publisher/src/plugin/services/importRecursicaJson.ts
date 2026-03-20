@@ -13,6 +13,7 @@ import type { PluginResponse } from "../types/messages";
 import { applyVariableRows } from "./importVariablesCsv";
 import { createEffectStylesFromElevations } from "./createEffectStylesFromElevations";
 import { createTextStylesFromTypography } from "./createTextStylesFromTypography";
+import { isUiKitTypography } from "../../utils/typographyUtils";
 import {
   recursicaJsonToVariableRows,
   type RecursicaJsonToRowsResult,
@@ -89,14 +90,24 @@ export async function importRecursicaJson(
     };
   }
 
-  const applyResult = await applyVariableRows(rows);
+  const variableRows = rows.filter(
+    (r) => !isUiKitTypography(r.figmaVariableName),
+  );
+  const typographyRows = rows.filter((r) =>
+    r.figmaVariableName.startsWith("typography/"),
+  );
+
+  const applyResult = await applyVariableRows(variableRows, typographyRows);
 
   let textStylesCreated = 0;
+  let textStylesUpdated = 0;
   let textStylesSkipped = 0;
   const textStyleWarnings: string[] = [];
   try {
-    const textStyleResult = await createTextStylesFromTypography();
+    const textStyleResult =
+      await createTextStylesFromTypography(typographyRows);
     textStylesCreated = textStyleResult.textStylesCreated;
+    textStylesUpdated = textStyleResult.textStylesUpdated;
     textStylesSkipped = textStyleResult.textStylesSkipped;
     textStyleWarnings.push(...textStyleResult.textStyleWarnings);
   } catch (e) {
@@ -106,11 +117,13 @@ export async function importRecursicaJson(
   }
 
   let effectStylesCreated = 0;
+  let effectStylesUpdated = 0;
   let effectStylesSkipped = 0;
   const effectStyleWarnings: string[] = [];
   try {
     const effectStyleResult = await createEffectStylesFromElevations();
     effectStylesCreated = effectStyleResult.effectStylesCreated;
+    effectStylesUpdated = effectStyleResult.effectStylesUpdated;
     effectStylesSkipped = effectStyleResult.effectStylesSkipped;
     effectStyleWarnings.push(...effectStyleResult.effectStyleWarnings);
   } catch (e) {
@@ -119,12 +132,19 @@ export async function importRecursicaJson(
     );
   }
 
-  const { variablesCreated, variablesAlreadyExisted, aliasErrors } =
-    applyResult;
+  const {
+    variablesCreated,
+    variablesAlreadyExisted,
+    aliasErrors,
+    typeRenameWarnings: varTypeRenameWarnings,
+  } = applyResult;
 
-  const hasIssues = aliasErrors.length > 0 || transformErrors.length > 0;
+  const hasIssues =
+    aliasErrors.length > 0 ||
+    transformErrors.length > 0 ||
+    varTypeRenameWarnings.length > 0;
   const message = hasIssues
-    ? `Import complete with issues. Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Alias errors: ${aliasErrors.length}. Transform errors: ${transformErrors.length}. Text styles: ${textStylesCreated} created, ${textStylesSkipped} skipped. Effect styles: ${effectStylesCreated} created, ${effectStylesSkipped} skipped.`
+    ? `Import complete with issues. Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Alias errors: ${aliasErrors.length}. Transform errors: ${transformErrors.length}. Type renames: ${varTypeRenameWarnings.length}. Text styles: ${textStylesCreated} created, ${textStylesSkipped} skipped. Effect styles: ${effectStylesCreated} created, ${effectStylesSkipped} skipped.`
     : `Import complete. Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Text styles: ${textStylesCreated} created, ${textStylesSkipped} skipped. Effect styles: ${effectStylesCreated} created, ${effectStylesSkipped} skipped.`;
 
   return {
@@ -137,13 +157,18 @@ export async function importRecursicaJson(
       variablesAlreadyExisted,
       aliasErrors,
       textStylesCreated,
+      textStylesUpdated,
       textStylesSkipped,
       textStyleWarnings,
       effectStylesCreated,
+      effectStylesUpdated,
       effectStylesSkipped,
       effectStyleWarnings,
       ...(transformErrors.length > 0 && { transformErrors }),
       ...(transformWarnings.length > 0 && { transformWarnings }),
+      ...(varTypeRenameWarnings.length > 0 && {
+        typeRenameWarnings: varTypeRenameWarnings,
+      }),
     },
   };
 }

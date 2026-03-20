@@ -153,7 +153,7 @@ export default function EditMetadata() {
 
   if (loading) {
     return (
-      <PageLayout showBackButton={true}>
+      <PageLayout>
         <Stack gap="md" align="center" className={classes.loadingContainer}>
           <LoadingSpinner />
           <Text className={classes.loadingText}>Loading metadata...</Text>
@@ -163,7 +163,7 @@ export default function EditMetadata() {
   }
 
   return (
-    <PageLayout showBackButton={true}>
+    <PageLayout>
       <Stack gap="lg" className={classes.root}>
         <div className={classes.header}>
           <Title order={1} mb="xs">

@@ -215,7 +215,7 @@ export function PublishAuth() {
   }, [isAuthenticated, accessToken, checkRepositoryAccess, navigate]);
 
   return (
-    <PageLayout showBackButton={false}>
+    <PageLayout>
       <div
         style={{
           display: "flex",

@@ -35,5 +35,7 @@ export type {
   ComponentInfo,
   ComponentBadgeStatus,
 } from "./ComponentList";
+export { VariableInput } from "./VariableInput";
+export type { VariableInputProps } from "./VariableInput";
 export { default as PluginPrompt } from "./PluginPrompt";
 export { default as VersionHistory } from "./VersionHistory/VersionHistory";

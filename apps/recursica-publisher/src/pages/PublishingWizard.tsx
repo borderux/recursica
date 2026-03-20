@@ -289,13 +289,19 @@ export default function PublishingWizard() {
     console.log(
       "[PublishingWizard] Processing export data to determine wizard step",
       {
-        hasValidationErrors: !!exportData.validationResult?.hasErrors,
+        hasValidationErrors:
+          !!exportData.validationResult?.hasErrors ||
+          (exportData.validationResult?.invalidVariables?.length || 0) > 0,
         hasReferencedPages: !!exportData.discoveredReferencedPages?.length,
       },
     );
 
     // Check for validation errors first
-    if (exportData.validationResult && exportData.validationResult.hasErrors) {
+    if (
+      exportData.validationResult &&
+      (exportData.validationResult.hasErrors ||
+        (exportData.validationResult.invalidVariables?.length || 0) > 0)
+    ) {
       console.log(
         `[PublishingWizard] Validation errors found: ${exportData.validationResult.errors.length} error(s)`,
       );
@@ -598,7 +604,7 @@ export default function PublishingWizard() {
   // Early return after all hooks
   if (pageIndex === undefined || isNaN(pageIndex)) {
     return (
-      <PageLayout showBackButton={true}>
+      <PageLayout>
         <div
           style={{
             width: "100%",
@@ -620,7 +626,7 @@ export default function PublishingWizard() {
 
   if (isExporting) {
     return (
-      <PageLayout showBackButton={true}>
+      <PageLayout>
         <style>
           {`
             @keyframes spin {
@@ -679,7 +685,7 @@ export default function PublishingWizard() {
 
   if (exportError) {
     return (
-      <PageLayout showBackButton={true}>
+      <PageLayout>
         <div
           style={{
             width: "100%",
@@ -715,7 +721,7 @@ export default function PublishingWizard() {
 
   if (!exportData) {
     return (
-      <PageLayout showBackButton={true}>
+      <PageLayout>
         <div
           style={{
             width: "100%",
@@ -1514,7 +1520,7 @@ export default function PublishingWizard() {
   };
 
   return (
-    <PageLayout showBackButton={true} onBack={handleBack}>
+    <PageLayout onBack={handleBack}>
       <style>
         {`
           @keyframes spin {

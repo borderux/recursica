@@ -866,7 +866,6 @@ export async function restoreBoundVariablesForFills(
   }
 
   try {
-    // Get the property value (e.g., fills array)
     const propertyValue = node[propertyName];
     debugConsole.log(
       `  [BOUND-VAR] Checking ${propertyName} on "${node.name || "Unnamed"}": propertyValue=${propertyValue ? (Array.isArray(propertyValue) ? `Array(${propertyValue.length})` : typeof propertyValue) : "undefined"}`,
@@ -878,22 +877,18 @@ export async function restoreBoundVariablesForFills(
       return;
     }
 
-    // Handle fills/strokes array binding
-    // boundVariables.fills or boundVariables.strokes can be:
-    // 1. An array where each element is an object with properties like { color: { _varRef: ... } }
-    // 2. An array where each element is a direct variable reference like { _varRef: 57 }
     const fillsBinding = boundVariables[propertyName];
     debugConsole.log(
       `  [BOUND-VAR] Processing ${propertyName} bound variables: ${JSON.stringify(fillsBinding)}`,
     );
+
     if (Array.isArray(fillsBinding)) {
       debugConsole.log(
         `  [BOUND-VAR] fillsBinding is array with ${fillsBinding.length} element(s), propertyValue has ${propertyValue.length} element(s)`,
       );
 
-      // For strokes, we need to create a new array because the strokes array is read-only
-      // We'll build a new array with bound paint objects, then reassign the entire array
-      const newPaints: any[] = propertyName === "strokes" ? [] : propertyValue;
+      // Figma requires a completely fresh paint array since native read properties are often read-only, and mutating a subset drops it later internally
+      const newPaints: any[] = [];
 
       for (
         let i = 0;
@@ -904,42 +899,33 @@ export async function restoreBoundVariablesForFills(
         debugConsole.log(
           `  [BOUND-VAR] Processing ${propertyName}[${i}]: fillBinding=${JSON.stringify(fillBinding)}, propertyValue[${i}]=${propertyValue[i] ? JSON.stringify(propertyValue[i]).substring(0, 100) : "undefined"}`,
         );
-        if (fillBinding && typeof fillBinding === "object") {
-          // Initialize boundVariables on the fill if it doesn't exist
-          // For strokes, boundVariables is read-only, so we skip initialization
-          // and will use setBoundVariableForPaint instead
-          if (propertyName !== "strokes" && !propertyValue[i].boundVariables) {
-            propertyValue[i].boundVariables = {};
-          }
 
-          // Check if this is a direct variable reference (e.g., { _varRef: 57 })
-          // In Figma, binding an entire fill typically means binding the color property
+        if (fillBinding && typeof fillBinding === "object") {
           const isVarRef = isVariableReference(fillBinding);
           debugConsole.log(
             `  [BOUND-VAR] isVariableReference(${propertyName}[${i}]): ${isVarRef}`,
           );
+
           if (isVarRef) {
             const varRef = (fillBinding as VariableReference)._varRef;
             debugConsole.log(
               `  [BOUND-VAR] Found _varRef: ${varRef} for ${propertyName}[${i}]`,
             );
+
             if (varRef !== undefined) {
               let variable = recognizedVariables.get(String(varRef));
               debugConsole.log(
                 `  [BOUND-VAR] Variable lookup for _varRef ${varRef}: ${variable ? `found "${variable.name}"` : "not found in recognizedVariables"}`,
               );
 
-              // Verify that the variable found in recognizedVariables matches the variable table entry
               if (variable && variableTable) {
                 const varEntry = variableTable.getVariableByIndex(varRef);
                 if (varEntry) {
                   if (variable.name !== varEntry.variableName) {
-                    // Variable name doesn't match - the index points to a different variable
-                    // Fall back to resolving from table by name
                     debugConsole.warning(
                       `  [BOUND-VAR] Variable name mismatch for _varRef ${varRef} on ${propertyName}[${i}]: recognizedVariables has "${variable.name}", but variable table entry ${varRef} is "${varEntry.variableName}" - will resolve from table`,
                     );
-                    variable = undefined; // Clear so we resolve from table
+                    variable = undefined;
                   } else {
                     debugConsole.log(
                       `  [BOUND-VAR] Variable name verified for _varRef ${varRef} on ${propertyName}[${i}]: "${variable.name}" matches variable table entry`,
@@ -952,16 +938,12 @@ export async function restoreBoundVariablesForFills(
                 }
               }
 
-              // If not found or name mismatch, try to resolve from variable table
               if (
                 !variable &&
                 variableTable &&
                 collectionTable &&
                 recognizedCollections
               ) {
-                debugConsole.log(
-                  `  [BOUND-VAR] Resolving variable from table for _varRef ${varRef} on ${propertyName}[${i}]`,
-                );
                 const resolvedVariable = await resolveVariableFromTable(
                   varRef,
                   variableTable,
@@ -973,7 +955,6 @@ export async function restoreBoundVariablesForFills(
                   debugConsole.log(
                     `  [BOUND-VAR] Resolved variable from table: "${variable.name}" (ID: ${variable.id.substring(0, 20)}...)`,
                   );
-                  // Add to recognizedVariables for future lookups
                   recognizedVariables.set(String(varRef), variable);
                 } else {
                   debugConsole.warning(
@@ -983,68 +964,48 @@ export async function restoreBoundVariablesForFills(
               }
 
               if (variable) {
-                // For direct variable references in fills/strokes array, bind to the color property
-                // For strokes, we MUST use setBoundVariableForPaint because boundVariables is read-only
-                if (propertyName === "strokes") {
-                  if (propertyValue[i].type === "SOLID") {
-                    // Use Figma's API to create a new paint with bound variable
-                    // Create a fresh paint object without boundVariables to avoid read-only errors
-                    const solidPaint = propertyValue[i] as SolidPaint;
-                    const freshPaint: SolidPaint = {
-                      type: "SOLID",
-                      visible: solidPaint.visible,
-                      opacity: solidPaint.opacity,
-                      blendMode: solidPaint.blendMode,
-                      color: { ...solidPaint.color },
-                    };
-                    const boundPaint = figma.variables.setBoundVariableForPaint(
-                      freshPaint,
-                      "color",
-                      variable,
-                    );
-                    // Add to new array instead of modifying propertyValue directly (strokes array is read-only)
-                    newPaints.push(boundPaint);
-                    debugConsole.log(
-                      `  [BOUND-VAR] ✓ Set bound variable for ${propertyName}[${i}].color on "${node.name || "Unnamed"}": variable "${variable.name}" (ID: ${variable.id.substring(0, 20)}...) from table index ${varRef}`,
-                    );
-                  } else {
-                    // For non-SOLID strokes, add as-is
-                    newPaints.push(propertyValue[i]);
-                    debugConsole.warning(
-                      `  [BOUND-VAR] Cannot bind variable to ${propertyName}[${i}] - paint type is "${propertyValue[i].type}", only SOLID is supported`,
-                    );
-                  }
-                } else {
-                  // For fills, we can directly set boundVariables (it's not read-only for fills)
-                  if (!propertyValue[i].boundVariables) {
-                    propertyValue[i].boundVariables = {};
-                  }
-                  propertyValue[i].boundVariables.color = {
-                    type: "VARIABLE_ALIAS",
-                    id: variable.id,
+                if (
+                  propertyValue[i].type === "SOLID" ||
+                  propertyValue[i].type === 15
+                ) {
+                  const solidPaint = propertyValue[i] as SolidPaint;
+                  const freshPaint: SolidPaint = {
+                    type: "SOLID",
+                    visible: solidPaint.visible !== false,
+                    opacity: solidPaint.opacity ?? 1,
+                    blendMode: solidPaint.blendMode || "NORMAL",
+                    color: { ...solidPaint.color },
                   };
+                  const boundPaint = figma.variables.setBoundVariableForPaint(
+                    freshPaint,
+                    "color",
+                    variable,
+                  );
+                  newPaints.push(boundPaint);
                   debugConsole.log(
                     `  [BOUND-VAR] ✓ Set bound variable for ${propertyName}[${i}].color on "${node.name || "Unnamed"}": variable "${variable.name}" (ID: ${variable.id.substring(0, 20)}...) from table index ${varRef}`,
                   );
+                } else {
+                  newPaints.push(propertyValue[i]);
+                  debugConsole.warning(
+                    `  [BOUND-VAR] Cannot bind variable to ${propertyName}[${i}] - paint type is "${propertyValue[i].type}", only SOLID is supported`,
+                  );
                 }
               } else {
-                // Variable not found - for strokes, add original paint; for fills, keep as-is
-                if (propertyName === "strokes") {
-                  newPaints.push(propertyValue[i]);
-                }
+                newPaints.push(propertyValue[i]);
                 debugConsole.warning(
                   `  [BOUND-VAR] Could not resolve variable for _varRef ${varRef} on ${propertyName}[${i}]`,
                 );
               }
+            } else {
+              newPaints.push(propertyValue[i]);
             }
           } else {
             debugConsole.log(
               `  [BOUND-VAR] fillBinding is not a direct variable reference, checking properties: ${Object.keys(fillBinding).join(", ")}`,
             );
-            // Each fill binding can have properties like "color", "opacity", etc.
-            // Iterate over each property in the fill binding (e.g., "color")
-            // For strokes, we need to track if we've processed this index
-            let strokeProcessed = false;
+
+            let structProcessed = false;
             for (const [fillPropertyName, varInfo] of Object.entries(
               fillBinding,
             )) {
@@ -1053,17 +1014,22 @@ export async function restoreBoundVariablesForFills(
                 if (varRef !== undefined) {
                   let variable = recognizedVariables.get(String(varRef));
 
-                  // Verify that the variable found in recognizedVariables matches the variable table entry
                   if (variable && variableTable) {
                     const varEntry = variableTable.getVariableByIndex(varRef);
-                    if (varEntry && variable.name !== varEntry.variableName) {
-                      // Variable name doesn't match - the index points to a different variable
-                      // Fall back to resolving from table by name
-                      variable = undefined; // Clear so we resolve from table
+                    if (varEntry) {
+                      if (variable.name !== varEntry.variableName) {
+                        debugConsole.warning(
+                          `  [BOUND-VAR] Variable name mismatch for _varRef ${varRef} on ${propertyName}[${i}].${fillPropertyName}: recognizedVariables has "${variable.name}", but variable table entry ${varRef} is "${varEntry.variableName}"`,
+                        );
+                        variable = undefined;
+                      } else {
+                        debugConsole.log(
+                          `  [BOUND-VAR] Variable name verified for _varRef ${varRef} on ${propertyName}[${i}].${fillPropertyName}: "${variable.name}" matches`,
+                        );
+                      }
                     }
                   }
 
-                  // If not found or name mismatch, try to resolve from variable table
                   if (
                     !variable &&
                     variableTable &&
@@ -1078,26 +1044,22 @@ export async function restoreBoundVariablesForFills(
                     );
                     variable = resolvedVariable || undefined;
                     if (variable) {
-                      // Add to recognizedVariables for future lookups
                       recognizedVariables.set(String(varRef), variable);
                     }
                   }
 
                   if (variable) {
-                    // For strokes, use setBoundVariableForPaint because boundVariables is read-only
-                    if (
-                      propertyName === "strokes" &&
-                      fillPropertyName === "color"
-                    ) {
-                      strokeProcessed = true; // Mark as processed
-                      if (propertyValue[i].type === "SOLID") {
-                        // Create a fresh paint object without boundVariables to avoid read-only errors
+                    if (fillPropertyName === "color") {
+                      if (
+                        propertyValue[i].type === "SOLID" ||
+                        propertyValue[i].type === 15
+                      ) {
                         const solidPaint = propertyValue[i] as SolidPaint;
                         const freshPaint: SolidPaint = {
                           type: "SOLID",
-                          visible: solidPaint.visible,
-                          opacity: solidPaint.opacity,
-                          blendMode: solidPaint.blendMode,
+                          visible: solidPaint.visible !== false,
+                          opacity: solidPaint.opacity ?? 1,
+                          blendMode: solidPaint.blendMode || "NORMAL",
                           color: { ...solidPaint.color },
                         };
                         const boundPaint =
@@ -1106,64 +1068,55 @@ export async function restoreBoundVariablesForFills(
                             "color",
                             variable,
                           );
-                        // Add to new array instead of modifying propertyValue directly
                         newPaints.push(boundPaint);
+                        structProcessed = true;
                         debugConsole.log(
-                          `  [BOUND-VAR] ✓ Set bound variable for ${propertyName}[${i}].${fillPropertyName} on "${node.name || "Unnamed"}": variable "${variable.name}" (ID: ${variable.id.substring(0, 20)}...)`,
+                          `  [BOUND-VAR] ✓ Set bound variable for ${propertyName}[${i}].color on "${node.name || "Unnamed"}": variable "${variable.name}" (ID: ${variable.id.substring(0, 20)}...)`,
                         );
                       } else {
-                        // For non-SOLID strokes, add as-is
-                        newPaints.push(propertyValue[i]);
                         debugConsole.warning(
                           `  [BOUND-VAR] Cannot bind variable to ${propertyName}[${i}].${fillPropertyName} - paint type is "${propertyValue[i].type}", only SOLID is supported`,
                         );
                       }
                     } else {
-                      // For fills, we can directly set boundVariables
-                      if (!propertyValue[i].boundVariables) {
-                        propertyValue[i].boundVariables = {};
-                      }
-                      propertyValue[i].boundVariables[fillPropertyName] = {
+                      // Custom bound property besides color; copy and map
+                      const clonedPaint = { ...propertyValue[i] };
+                      if (!clonedPaint.boundVariables)
+                        clonedPaint.boundVariables = {};
+                      clonedPaint.boundVariables[fillPropertyName] = {
                         type: "VARIABLE_ALIAS",
                         id: variable.id,
                       };
-                      debugConsole.log(
-                        `  [BOUND-VAR] ✓ Set bound variable for ${propertyName}[${i}].${fillPropertyName} on "${node.name || "Unnamed"}": variable "${variable.name}" (ID: ${variable.id.substring(0, 20)}...)`,
-                      );
-                    }
-                  } else {
-                    // Variable not found - for strokes, add original paint
-                    if (propertyName === "strokes") {
-                      strokeProcessed = true; // Mark as processed even if variable not found
-                      newPaints.push(propertyValue[i]);
+                      newPaints.push(clonedPaint);
+                      structProcessed = true;
                     }
                   }
                 }
               }
             }
-            // If we didn't process this stroke in the else branch (no variable bindings), add original paint
-            if (propertyName === "strokes" && !strokeProcessed) {
+            if (!structProcessed) {
               newPaints.push(propertyValue[i]);
+              debugConsole.log(
+                `  [BOUND-VAR] ${propertyName}[${i}] had struct fields but no resolvable variables`,
+              );
             }
           }
+        } else {
+          newPaints.push(propertyValue[i]);
         }
       }
 
-      // For strokes, reassign the entire array with the new bound paint objects
-      if (propertyName === "strokes" && newPaints.length > 0) {
-        try {
-          node.strokes = newPaints; // Reassign to apply the bound paint objects
-          debugConsole.log(
-            `  [BOUND-VAR] ✓ Reassigned ${propertyName} array on "${node.name || "Unnamed"}" with ${newPaints.length} bound paint object(s)`,
-          );
-        } catch (error) {
-          debugConsole.warning(
-            `  [BOUND-VAR] Error reassigning ${propertyName} array: ${error}`,
-          );
-        }
-      }
+      // Final Reassignment
+      node[propertyName] = newPaints;
+      debugConsole.log(
+        `  [BOUND-VAR] ✓ Reassigned ${propertyName} array on "${node.name || "Unnamed"}" with ${newPaints.length} bound paint object(s)`,
+      );
+    } else {
+      debugConsole.warning(
+        `  [BOUND-VAR] fillsBinding is not an array: ${JSON.stringify(fillsBinding)}`,
+      );
     }
-  } catch (error) {
+  } catch (error: any) {
     debugConsole.warning(
       `  [BOUND-VAR] Error restoring bound variables for ${propertyName}: ${error}`,
     );
@@ -4770,6 +4723,85 @@ export async function recreateNodeFromData(
     }
   }
 
+  // Restore Styles (Fills, Strokes, Effects, Grids) for this node
+  // CRITICAL: We MUST apply styles FIRST before setting manual properties (fills, strokes, etc.).
+  // If we apply styles last, they wipe out bounding variable overrides like `newNode.fills = fillsWithBoundVars`.
+  // If we apply styles first, we must only assign properties manually (like `newNode.fills`) IF there is no style
+  // OR if there is an explicit variable override that should detach the style.
+  const styleAppliers = [
+    {
+      refKey: "_fillStyleRef",
+      type: "PAINT",
+      method: "setFillStyleIdAsync",
+      name: "Fill",
+    },
+    {
+      refKey: "_strokeStyleRef",
+      type: "PAINT",
+      method: "setStrokeStyleIdAsync",
+      name: "Stroke",
+    },
+    {
+      refKey: "_effectStyleRef",
+      type: "EFFECT",
+      method: "setEffectStyleIdAsync",
+      name: "Effect",
+    },
+    {
+      refKey: "_gridStyleRef",
+      type: "GRID",
+      method: "setGridStyleIdAsync",
+      name: "Grid",
+    },
+  ];
+
+  if (nodeData.type === "COMPONENT" || newNode.type === "COMPONENT") {
+    debugConsole.log(
+      `[DEBUG_EFFECTS] Node "${nodeData.name}" has keys: ${Object.keys(nodeData)
+        .filter(
+          (k) => k.includes("Ref") || k === "effects" || k === "boundVariables",
+        )
+        .join(", ")}`,
+    );
+    debugConsole.log(
+      `[DEBUG_EFFECTS] specifically _effectStyleRef: ${nodeData._effectStyleRef}`,
+    );
+  }
+
+  for (const applier of styleAppliers) {
+    if (nodeData[applier.refKey] !== undefined) {
+      if (!styleMapping) {
+        debugConsole.warning(
+          `${applier.name} style reference found on "${nodeData.name || "Unnamed"}" but styles table was not imported.`,
+        );
+      } else {
+        const style = styleMapping.get(nodeData[applier.refKey]);
+        if (style && style.type === applier.type) {
+          try {
+            if (typeof (newNode as any)[applier.method] === "function") {
+              await (newNode as any)[applier.method](style.id);
+              debugConsole.log(
+                `  ✓ Set ${applier.method} to "${style.id}" for style "${style.name}" on "${nodeData.name || "Unnamed"}"`,
+              );
+            } else {
+              debugConsole.warning(
+                `  Node "${nodeData.name || "Unnamed"}" (${nodeData.type}) does not support ${applier.method}`,
+              );
+            }
+          } catch (styleError) {
+            debugConsole.warning(
+              `Failed to apply ${applier.name} style "${style.name}" on node "${nodeData.name || "Unnamed"}": ${styleError}`,
+            );
+          }
+        } else {
+          debugConsole.warning(
+            `Node "${nodeData.name || "Unnamed"}" has invalid ${applier.refKey} (${nodeData[applier.refKey]}).`,
+          );
+        }
+      }
+    }
+  }
+
   // Set visual properties if they exist
   // Check for bound variables before setting direct values
   const hasBoundVariables =
@@ -4902,6 +4934,8 @@ export async function recreateNodeFromData(
           // Create new fill objects with boundVariables
           // Priority: node-level boundVariables.fills (instance overrides) > fill-level boundVariables
           const fillsWithBoundVars: any[] = [];
+          let hasLocalFillOverride = false;
+
           const nodeLevelFillsBoundVars = nodeData.boundVariables?.fills;
           const hasNodeLevelFillsOverrides = Array.isArray(
             nodeLevelFillsBoundVars,
@@ -4917,7 +4951,7 @@ export async function recreateNodeFromData(
             }
 
             // Create a new fill object with boundVariables
-            const newFill = { ...fill };
+            let newFill: any = { ...fill };
             newFill.boundVariables = {};
 
             // Check for node-level boundVariables.fills first (instance child overrides take precedence)
@@ -4987,14 +5021,30 @@ export async function recreateNodeFromData(
                 }
 
                 if (variable) {
-                  newFill.boundVariables.color = {
-                    type: "VARIABLE_ALIAS",
-                    id: variable.id,
-                  };
-                  // Log all variable bindings for fills to help debug issues
-                  debugConsole.log(
-                    `  [BOUND-VAR] Restored bound variable for fill[${i}].color on "${newNode.name || "Unnamed"}" (${nodeData.type}): variable "${variable.name}" (ID: ${variable.id.substring(0, 8)}...) from table index ${varRef}`,
-                  );
+                  // In Figma, we must use setBoundVariableForPaint for fills
+                  // First ensure it's a solid paint
+                  if (newFill.type === "SOLID" || newFill.type === 15) {
+                    const freshPaint: SolidPaint = {
+                      type: "SOLID",
+                      visible: newFill.visible !== false,
+                      opacity: newFill.opacity ?? 1,
+                      blendMode: newFill.blendMode || "NORMAL",
+                      color: { ...newFill.color },
+                    };
+                    newFill = figma.variables.setBoundVariableForPaint(
+                      freshPaint,
+                      "color",
+                      variable,
+                    );
+                    // Log all variable bindings for fills to help debug issues
+                    debugConsole.log(
+                      `  [BOUND-VAR] Restored bound variable for fill[${i}].color on "${newNode.name || "Unnamed"}" (${nodeData.type}): variable "${variable.name}" (ID: ${variable.id.substring(0, 8)}...) from table index ${varRef}`,
+                    );
+                  } else {
+                    debugConsole.warning(
+                      `  [BOUND-VAR] Cannot bind variable to non-solid fill type "${newFill.type}" on "${newNode.name || "Unnamed"}" (${nodeData.type})`,
+                    );
+                  }
                 } else {
                   debugConsole.warning(
                     `  [BOUND-VAR] Could not resolve variable for _varRef ${varRef} on fill[${i}].color for "${newNode.name || "Unnamed"}" (${nodeData.type})`,
@@ -5117,10 +5167,32 @@ export async function recreateNodeFromData(
                       }
                     }
                     if (variable) {
-                      newFill.boundVariables[propName] = {
-                        type: "VARIABLE_ALIAS",
-                        id: variable.id,
-                      };
+                      if (
+                        propName === "color" &&
+                        (newFill.type === "SOLID" || newFill.type === 15)
+                      ) {
+                        const freshPaint: SolidPaint = {
+                          type: "SOLID",
+                          visible: newFill.visible !== false,
+                          opacity: newFill.opacity ?? 1,
+                          blendMode: newFill.blendMode || "NORMAL",
+                          color: { ...newFill.color },
+                        };
+                        newFill = figma.variables.setBoundVariableForPaint(
+                          freshPaint,
+                          "color",
+                          variable,
+                        );
+                      } else {
+                        // Custom bound property besides color
+                        if (!newFill.boundVariables) {
+                          newFill.boundVariables = {};
+                        }
+                        newFill.boundVariables[propName] = {
+                          type: "VARIABLE_ALIAS",
+                          id: variable.id,
+                        };
+                      }
                       // Debug logging for badge/color/label variables
                       const isBadgeLabelVar =
                         variable.name.includes("badge/color/label");
@@ -5138,6 +5210,10 @@ export async function recreateNodeFromData(
                           }
                         }
                       }
+
+                      // Explicitly flag that this node requires its manual array to override its style if present
+                      hasLocalFillOverride = true;
+
                       debugConsole.log(
                         `  ✓ Restored bound variable for fill[${i}].${propName} on "${newNode.name || "Unnamed"}" (${nodeData.type}): variable ${variable.name} (ID: ${variable.id.substring(0, 8)}...)`,
                       );
@@ -5166,11 +5242,17 @@ export async function recreateNodeFromData(
             fillsWithBoundVars.push(newFill);
           }
 
-          // Set fills with boundVariables
-          newNode.fills = fillsWithBoundVars;
-          debugConsole.log(
-            `  ✓ Set fills with boundVariables on "${newNode.name || "Unnamed"}" (${nodeData.type})`,
-          );
+          // Set fills with boundVariables ONLY if there is no style applied OR there is a local override
+          if (nodeData._fillStyleRef === undefined || hasLocalFillOverride) {
+            newNode.fills = fillsWithBoundVars;
+            debugConsole.log(
+              `  ✓ Set fills with boundVariables on "${newNode.name || "Unnamed"}" (${nodeData.type})`,
+            );
+          } else {
+            debugConsole.log(
+              `  Skipped setting fills because _fillStyleRef is resolving it and there are no bounds variable overrides.`,
+            );
+          }
 
           // ISSUE #2 DEBUG: Check for selectionColor after setting fills with boundVariables
           const fillsAfter = newNode.fills;
@@ -5189,7 +5271,10 @@ export async function recreateNodeFromData(
           }
         } else {
           // Set fills without boundVariables if we can't restore them
-          newNode.fills = fills;
+          // ONLY if there is no fill style (a style overrides raw arrays)
+          if (nodeData._fillStyleRef === undefined) {
+            newNode.fills = fills;
+          }
 
           // ISSUE #2 DEBUG: Check for selectionColor after setting fills
           const fillsAfter = newNode.fills;
@@ -5242,57 +5327,68 @@ export async function recreateNodeFromData(
 
   // Set backgrounds (skip instances, they're handled separately)
   // Backgrounds work similarly to fills and are supported on FRAME, COMPONENT, and COMPONENT_SET nodes
+  // We only set backgrounds if fills are NOT present, as Figma aliases backgrounds to fills
+  // Setting backgrounds after setting fills will overwrite the fills and destroy bound variables!
   if (nodeData.type !== "INSTANCE") {
+    const hasValidFills =
+      Array.isArray(newNode.fills) && newNode.fills.length > 0;
+
     if (nodeData.backgrounds !== undefined) {
-      try {
-        // Process backgrounds array - restore images first, then remove boundVariables that contain _varRef
-        // We'll restore boundVariables properly after setting the backgrounds
-        let backgrounds = nodeData.backgrounds;
+      if (hasValidFills) {
+        debugConsole.log(
+          `  Skipping backgrounds for "${newNode.name || "Unnamed"}" because fills are already set (prevents overwriting bound variables)`,
+        );
+      } else {
+        try {
+          // Process backgrounds array - restore images first, then remove boundVariables that contain _varRef
+          // We'll restore boundVariables properly after setting the backgrounds
+          let backgrounds = nodeData.backgrounds;
 
-        // Restore image references from image table
-        if (Array.isArray(backgrounds) && imageTable) {
-          backgrounds = await restoreImageReferences(backgrounds, imageTable);
-        }
+          // Restore image references from image table
+          if (Array.isArray(backgrounds) && imageTable) {
+            backgrounds = await restoreImageReferences(backgrounds, imageTable);
+          }
 
-        if (Array.isArray(backgrounds)) {
-          backgrounds = backgrounds.map((background: any) => {
-            if (background && typeof background === "object") {
-              // Create a copy without boundVariables (they may contain _varRef which is invalid)
-              const backgroundWithoutBoundVars = { ...background };
-              delete backgroundWithoutBoundVars.boundVariables;
-              return backgroundWithoutBoundVars;
-            }
-            return background;
-          });
-        }
+          if (Array.isArray(backgrounds)) {
+            backgrounds = backgrounds.map((background: any) => {
+              if (background && typeof background === "object") {
+                // Create a copy without boundVariables (they may contain _varRef which is invalid)
+                const backgroundWithoutBoundVars = { ...background };
+                delete backgroundWithoutBoundVars.boundVariables;
+                return backgroundWithoutBoundVars;
+              }
+              return background;
+            });
+          }
 
-        // Set backgrounds
-        if (Array.isArray(backgrounds) && backgrounds.length > 0) {
-          newNode.backgrounds = backgrounds;
-        } else {
-          // Explicitly clear backgrounds if empty array
-          newNode.backgrounds = [];
-        }
+          // Set backgrounds
+          if (Array.isArray(backgrounds) && backgrounds.length > 0) {
+            newNode.backgrounds = backgrounds;
+          } else {
+            // Explicitly clear backgrounds if empty array
+            newNode.backgrounds = [];
+          }
 
-        // Restore bound variables for backgrounds
-        if (
-          nodeData.boundVariables?.backgrounds &&
-          recognizedVariables &&
-          Array.isArray(newNode.backgrounds) &&
-          newNode.backgrounds.length > 0
-        ) {
-          await restoreBoundVariablesForFills(
-            newNode,
-            nodeData.boundVariables,
-            "backgrounds",
-            recognizedVariables,
-            variableTable,
-            collectionTable,
-            recognizedCollections,
-          );
+          // Restore bound variables for backgrounds
+          if (
+            nodeData.boundVariables?.backgrounds &&
+            recognizedVariables &&
+            Array.isArray(newNode.backgrounds) &&
+            newNode.backgrounds.length > 0
+          ) {
+            await restoreBoundVariablesForFills(
+              newNode,
+              nodeData.boundVariables,
+              "backgrounds",
+              recognizedVariables,
+              variableTable,
+              collectionTable,
+              recognizedCollections,
+            );
+          }
+        } catch (error) {
+          debugConsole.warning(`Error setting backgrounds: ${error}`);
         }
-      } catch (error) {
-        debugConsole.warning(`Error setting backgrounds: ${error}`);
       }
     }
   }
@@ -5381,7 +5477,11 @@ export async function recreateNodeFromData(
   ) {
     newNode.cornerRadius = nodeData.cornerRadius;
   }
-  if (nodeData.effects !== undefined && nodeData.effects.length > 0) {
+  if (
+    nodeData.effects !== undefined &&
+    nodeData.effects.length > 0 &&
+    nodeData._effectStyleRef === undefined
+  ) {
     newNode.effects = nodeData.effects;
   }
 
@@ -6065,114 +6165,115 @@ export async function recreateNodeFromData(
         console.log("Could not set text characters: " + textError);
       }
     }
+  }
 
-    // Restore componentPropertyReferences if this node is inside a component
-    // componentPropertyReferences binds node properties to component properties
-    // Examples:
-    //   - TEXT nodes: { characters: "Component name#3041:0" } binds text content
-    //   - Any node: { visible: "Show element#3042:1" } binds visibility (BOOLEAN property)
-    //   - INSTANCE nodes: binds instance swap properties
-    if (
-      nodeData.componentPropertyReferences &&
-      typeof nodeData.componentPropertyReferences === "object"
-    ) {
-      debugConsole.log(
-        `  [BINDING] ${nodeData.type} node "${nodeData.name || "Unnamed"}" has componentPropertyReferences: ${JSON.stringify(nodeData.componentPropertyReferences)}`,
-      );
-      try {
-        // componentPropertyReferences maps node property names to component property names
-        // e.g., { characters: "Component name#3041:0" } for TEXT nodes
-        // e.g., { visible: "Show element#3042:1" } for any node with BOOLEAN property
-        // We need to map the old property name to the new property name (which may have a different ID suffix)
-        const componentPropertyRefs: Record<string, string> = {};
-        const parentComponent =
-          parentNode?.type === "COMPONENT" ? parentNode : null;
+  // TEXT Node handling finished.
 
-        if (parentComponent) {
+  // Restore componentPropertyReferences if this node is inside a component
+  // componentPropertyReferences binds node properties to component properties
+  // Examples:
+  //   - TEXT nodes: { characters: "Component name#3041:0" } binds text content
+  //   - Any node: { visible: "Show element#3042:1" } binds visibility (BOOLEAN property)
+  //   - INSTANCE nodes: binds instance swap properties
+  if (
+    nodeData.componentPropertyReferences &&
+    typeof nodeData.componentPropertyReferences === "object"
+  ) {
+    debugConsole.log(
+      `  [BINDING] ${nodeData.type} node "${nodeData.name || "Unnamed"}" has componentPropertyReferences: ${JSON.stringify(nodeData.componentPropertyReferences)}`,
+    );
+    try {
+      // componentPropertyReferences maps node property names to component property names
+      // e.g., { characters: "Component name#3041:0" } for TEXT nodes
+      // e.g., { visible: "Show element#3042:1" } for any node with BOOLEAN property
+      // We need to map the old property name to the new property name (which may have a different ID suffix)
+      const componentPropertyRefs: Record<string, string> = {};
+      const parentComponent =
+        parentNode?.type === "COMPONENT" ? parentNode : null;
+
+      if (parentComponent) {
+        debugConsole.log(
+          `  [BINDING] Parent is a COMPONENT: "${parentComponent.name}"`,
+        );
+        // Get the component's property definitions to map old property names to new ones
+        // Handle variant components (they don't have componentPropertyDefinitions - only COMPONENT_SETs do)
+        let componentProps: ComponentPropertyDefinitions | null = null;
+        const parentComponentType = (parentComponent as any).type;
+        if (parentComponentType === "COMPONENT_SET") {
+          // Parent is a COMPONENT_SET - can access componentPropertyDefinitions directly
+          const componentSet = parentComponent as unknown as ComponentSetNode;
+          componentProps = componentSet.componentPropertyDefinitions;
+        } else if (
+          parentComponentType === "COMPONENT" &&
+          parentComponent.parent &&
+          parentComponent.parent.type === "COMPONENT_SET"
+        ) {
+          // Parent is a variant component - get properties from parent COMPONENT_SET
+          componentProps = parentComponent.parent.componentPropertyDefinitions;
+        } else if (parentComponentType === "COMPONENT") {
+          // Non-variant component - can access componentPropertyDefinitions directly
+          componentProps = parentComponent.componentPropertyDefinitions;
+        }
+
+        if (!componentProps) {
           debugConsole.log(
-            `  [BINDING] Parent is a COMPONENT: "${parentComponent.name}"`,
+            `  [BINDING] No component property definitions available for parent "${parentComponent.name}"`,
           );
-          // Get the component's property definitions to map old property names to new ones
-          // Handle variant components (they don't have componentPropertyDefinitions - only COMPONENT_SETs do)
-          let componentProps: ComponentPropertyDefinitions | null = null;
-          const parentComponentType = (parentComponent as any).type;
-          if (parentComponentType === "COMPONENT_SET") {
-            // Parent is a COMPONENT_SET - can access componentPropertyDefinitions directly
-            const componentSet = parentComponent as unknown as ComponentSetNode;
-            componentProps = componentSet.componentPropertyDefinitions;
-          } else if (
-            parentComponentType === "COMPONENT" &&
-            parentComponent.parent &&
-            parentComponent.parent.type === "COMPONENT_SET"
-          ) {
-            // Parent is a variant component - get properties from parent COMPONENT_SET
-            componentProps =
-              parentComponent.parent.componentPropertyDefinitions;
-          } else if (parentComponentType === "COMPONENT") {
-            // Non-variant component - can access componentPropertyDefinitions directly
-            componentProps = parentComponent.componentPropertyDefinitions;
-          }
+          return;
+        }
 
-          if (!componentProps) {
-            debugConsole.log(
-              `  [BINDING] No component property definitions available for parent "${parentComponent.name}"`,
-            );
-            return;
-          }
+        for (const [nodeProperty, oldPropName] of Object.entries(
+          nodeData.componentPropertyReferences,
+        )) {
+          if (typeof oldPropName === "string") {
+            // Extract clean property name (without ID suffix)
+            const cleanPropName = oldPropName.split("#")[0];
 
-          for (const [nodeProperty, oldPropName] of Object.entries(
-            nodeData.componentPropertyReferences,
-          )) {
-            if (typeof oldPropName === "string") {
-              // Extract clean property name (without ID suffix)
-              const cleanPropName = oldPropName.split("#")[0];
+            // Find matching property in the component (may have different ID suffix)
+            let matchingPropKey: string | undefined = undefined;
+            if (componentProps[oldPropName]) {
+              // Exact match
+              matchingPropKey = oldPropName;
+            } else if (componentProps[cleanPropName]) {
+              // Clean name match
+              matchingPropKey = cleanPropName;
+            } else {
+              // Base name match
+              matchingPropKey = Object.keys(componentProps).find(
+                (key) => key.split("#")[0] === cleanPropName,
+              );
+            }
 
-              // Find matching property in the component (may have different ID suffix)
-              let matchingPropKey: string | undefined = undefined;
-              if (componentProps[oldPropName]) {
-                // Exact match
-                matchingPropKey = oldPropName;
-              } else if (componentProps[cleanPropName]) {
-                // Clean name match
-                matchingPropKey = cleanPropName;
-              } else {
-                // Base name match
-                matchingPropKey = Object.keys(componentProps).find(
-                  (key) => key.split("#")[0] === cleanPropName,
-                );
-              }
-
-              if (matchingPropKey) {
-                componentPropertyRefs[nodeProperty] = matchingPropKey;
-                debugConsole.log(
-                  `  [BINDING] Restored componentPropertyReferences for ${nodeData.type} node "${nodeData.name || "Unnamed"}": ${nodeProperty} -> ${matchingPropKey}`,
-                );
-              } else {
-                debugConsole.warning(
-                  `  [BINDING] Could not find matching component property for "${oldPropName}" in component "${parentComponent.name}"`,
-                );
-              }
+            if (matchingPropKey) {
+              componentPropertyRefs[nodeProperty] = matchingPropKey;
+              debugConsole.log(
+                `  [BINDING] Restored componentPropertyReferences for ${nodeData.type} node "${nodeData.name || "Unnamed"}": ${nodeProperty} -> ${matchingPropKey}`,
+              );
+            } else {
+              debugConsole.warning(
+                `  [BINDING] Could not find matching component property for "${oldPropName}" in component "${parentComponent.name}"`,
+              );
             }
           }
+        }
 
-          if (Object.keys(componentPropertyRefs).length > 0) {
-            // NOTE: componentPropertyReferences will be restored in post-processing
-            // after all children are added to the component. This ensures nodes are
-            // "symbol sublayers" (children of a Component) before we try to set bindings.
-            debugConsole.log(
-              `  [BINDING] Will restore componentPropertyReferences in post-processing: ${JSON.stringify(componentPropertyRefs)}`,
-            );
-          }
-        } else {
-          debugConsole.warning(
-            `  [BINDING] Parent is not a COMPONENT (type: ${parentNode?.type || "unknown"}) for ${nodeData.type} node "${nodeData.name || "Unnamed"}" - cannot restore componentPropertyReferences`,
+        if (Object.keys(componentPropertyRefs).length > 0) {
+          // NOTE: componentPropertyReferences will be restored in post-processing
+          // after all children are added to the component. This ensures nodes are
+          // "symbol sublayers" (children of a Component) before we try to set bindings.
+          debugConsole.log(
+            `  [BINDING] Will restore componentPropertyReferences in post-processing: ${JSON.stringify(componentPropertyRefs)}`,
           );
         }
-      } catch (refError) {
+      } else {
         debugConsole.warning(
-          `  [BINDING] Could not restore componentPropertyReferences for ${nodeData.type} node "${nodeData.name || "Unnamed"}": ${refError}`,
+          `  [BINDING] Parent is not a COMPONENT (type: ${parentNode?.type || "unknown"}) for ${nodeData.type} node "${nodeData.name || "Unnamed"}" - cannot restore componentPropertyReferences`,
         );
       }
+    } catch (refError) {
+      debugConsole.warning(
+        `  [BINDING] Could not restore componentPropertyReferences for ${nodeData.type} node "${nodeData.name || "Unnamed"}": ${refError}`,
+      );
     }
   }
 
@@ -6232,7 +6333,10 @@ export async function recreateNodeFromData(
         propertyName !== "fills" &&
         propertyName !== "componentProperties" &&
         !paddingProps.includes(propertyName) &&
-        !sizeProps.includes(propertyName)
+        !sizeProps.includes(propertyName) &&
+        // ISSUE #2 FIX: Skip binding effects variable directly if we already applied an Effect Style,
+        // because binding the variable clears the style reference in Figma. The style itself contains the bindings.
+        !(propertyName === "effects" && nodeData._effectStyleRef !== undefined)
       ) {
         // ISSUE #2: Log when we're restoring selectionColor bound variable
         if (propertyName === "selectionColor") {
@@ -6470,6 +6574,23 @@ export async function recreateNodeFromData(
     newNode.type === "COMPONENT" &&
     newNode.children &&
     newNode.children.length > 0;
+
+  // Apply visual overrides to normal instances that auto-generated their children
+  if (
+    nodeData.children &&
+    Array.isArray(nodeData.children) &&
+    newNode.type === "INSTANCE"
+  ) {
+    // Apply fill bound variables to instance children
+    await applyFillBoundVariablesToInstanceChildren(
+      newNode as InstanceNode,
+      nodeData,
+      recognizedVariables,
+    );
+
+    // Update children from JSON to preserve bound variables and other properties
+    await updateInstanceChildrenFromJson(newNode as InstanceNode, nodeData);
+  }
 
   if (
     nodeData.children &&
@@ -7524,16 +7645,16 @@ async function matchCollection(
   // Normalize the entry's collection name
   const normalizedEntryName = normalizeCollectionName(entry.collectionName);
 
-  // For standard collections (Theme, Tokens, Layer), always check by normalized name first
-  // and treat as potential match (will prompt user)
+  // For standard collections (Theme, Tokens, Layer), check by normalized name first
+  // and treat as recognized match (will directly import without prompts or temporary collections)
   if (isStandardCollection(entry.collectionName)) {
     for (const collection of localCollections) {
       const normalizedCollectionName = normalizeCollectionName(collection.name);
       if (normalizedCollectionName === normalizedEntryName) {
-        // Found by normalized name - always prompt user for standard collections
+        // Found by normalized name - treat as a recognized matched collection
         return {
           collection,
-          matchType: "potential",
+          matchType: "recognized",
         };
       }
     }

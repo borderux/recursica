@@ -1,11 +1,12 @@
 import React, { useState, useRef } from "react";
-import { useNavigate } from "react-router";
 import { PageLayout } from "../components/PageLayout";
 import { Title } from "../components/Title";
 import { Stack } from "../components/Stack";
 import { Button } from "../components/Button";
+import { VariableInput } from "../components/VariableInput";
 import { callPlugin } from "../utils/callPlugin";
 import { ServiceName } from "../plugin/types/ServiceName";
+import { recursicaJsonToVariableRows } from "../plugin/services/recursicaJsonToVariableRows";
 
 const FILE_NAMES = {
   tokens: "recursica_tokens.json",
@@ -52,7 +53,6 @@ async function readJson(file: File): Promise<unknown> {
 }
 
 export default function ImportRecursicaJson() {
-  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [fileNames, setFileNames] = useState<Record<FileKey, string | null>>({
     tokens: null,
@@ -65,15 +65,27 @@ export default function ImportRecursicaJson() {
     variablesAlreadyExisted: number;
     aliasErrors?: string[];
     textStylesCreated?: number;
+    textStylesUpdated?: number;
     textStylesSkipped?: number;
     textStyleWarnings?: string[];
     effectStylesCreated?: number;
+    effectStylesUpdated?: number;
     effectStylesSkipped?: number;
     effectStyleWarnings?: string[];
     transformErrors?: string[];
     transformWarnings?: string[];
+    typeRenameWarnings?: string[];
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [variablePaths, setVariablePaths] = useState<string[]>([]);
+  const [selectedVariable, setSelectedVariable] = useState<string | null>(null);
+
+  // Refs to hold parsed JSON for variable path extraction
+  const parsedJsonRef = useRef<{
+    tokens: unknown;
+    brand: unknown;
+    uiKit: unknown;
+  } | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -123,12 +135,19 @@ export default function ImportRecursicaJson() {
     setImporting(true);
     setError(null);
     setResult(null);
+
+    // Give the UI a moment to show the importing spinner
+    await new Promise((resolve) => setTimeout(resolve, 50));
     try {
       const [tokens, brand, uiKit] = await Promise.all([
         readJson(tokensFile),
         readJson(brandFile),
         readJson(uiKitFile),
       ]);
+
+      // Store parsed JSON for variable path extraction
+      parsedJsonRef.current = { tokens, brand, uiKit };
+
       const { promise } = callPlugin(ServiceName.importRecursicaJson, {
         tokens,
         brand,
@@ -140,31 +159,54 @@ export default function ImportRecursicaJson() {
         variablesAlreadyExisted?: number;
         aliasErrors?: string[];
         textStylesCreated?: number;
+        textStylesUpdated?: number;
         textStylesSkipped?: number;
         textStyleWarnings?: string[];
         effectStylesCreated?: number;
+        effectStylesUpdated?: number;
         effectStylesSkipped?: number;
         effectStyleWarnings?: string[];
         transformErrors?: string[];
         transformWarnings?: string[];
+        typeRenameWarnings?: string[];
       };
       setResult({
         variablesCreated: data.variablesCreated ?? 0,
         variablesAlreadyExisted: data.variablesAlreadyExisted ?? 0,
         aliasErrors: data.aliasErrors,
         textStylesCreated: data.textStylesCreated,
+        textStylesUpdated: data.textStylesUpdated,
         textStylesSkipped: data.textStylesSkipped,
         textStyleWarnings: data.textStyleWarnings,
         effectStylesCreated: data.effectStylesCreated,
+        effectStylesUpdated: data.effectStylesUpdated,
         effectStylesSkipped: data.effectStylesSkipped,
         effectStyleWarnings: data.effectStyleWarnings,
         transformErrors: data.transformErrors,
         transformWarnings: data.transformWarnings,
+        typeRenameWarnings: data.typeRenameWarnings,
       });
       if (response.error || !response.success) {
         setError(response.message ?? "Import failed.");
       } else {
         setError(null);
+      }
+
+      // Extract variable paths from the theme JSON for VariableInput
+      if (parsedJsonRef.current) {
+        try {
+          const { rows } = recursicaJsonToVariableRows(
+            parsedJsonRef.current.tokens,
+            parsedJsonRef.current.brand,
+            parsedJsonRef.current.uiKit,
+          );
+          const paths = [
+            ...new Set(rows.map((r) => r.figmaVariableName)),
+          ].sort();
+          setVariablePaths(paths);
+        } catch {
+          // Silently fail — variable paths are optional for testing
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Import failed.");
@@ -179,15 +221,13 @@ export default function ImportRecursicaJson() {
     fileNames.uiKit != null;
 
   return (
-    <PageLayout showBackButton={true}>
+    <PageLayout>
       <Stack gap={20} style={{ maxWidth: 500 }}>
-        <Title order={1}>Import Recursica JSON</Title>
+        <Title order={1}>Import Recursica Theme</Title>
         <p style={{ margin: 0, color: "#666", fontSize: 14 }}>
           Select the three Recursica JSON files:{" "}
           <code>{FILE_NAMES.tokens}</code>, <code>{FILE_NAMES.brand}</code>,{" "}
-          <code>{FILE_NAMES.uiKit}</code>. They will be transformed into
-          variables and applied to Figma (Tokens, Themes, Layer collections;
-          text and effect styles).
+          <code>{FILE_NAMES.uiKit}</code>
         </p>
         <input
           ref={fileInputRef}
@@ -203,12 +243,16 @@ export default function ImportRecursicaJson() {
           </span>
         )}
         <Stack gap={8} style={{ flexDirection: "row" }}>
-          <Button onClick={handleImport} disabled={importing || !hasFiles}>
+          <Button
+            onClick={handleImport}
+            disabled={!hasFiles}
+            loading={importing}
+          >
             {importing ? "Importing…" : "Import"}
           </Button>
-          <Button variant="light" onClick={() => navigate("/import")}>
+          {/* <Button variant="light" onClick={() => navigate("/import")}>
             Back
-          </Button>
+          </Button> */}
         </Stack>
         {error && (
           <div
@@ -239,21 +283,19 @@ export default function ImportRecursicaJson() {
               Variables created: {result.variablesCreated}
               <br />
               Variables already existed: {result.variablesAlreadyExisted}
-              {(result.textStylesCreated !== undefined ||
-                result.textStylesSkipped !== undefined) && (
-                <>
-                  <br />
-                  Text styles created: {result.textStylesCreated ?? 0}, skipped:{" "}
-                  {result.textStylesSkipped ?? 0}
-                </>
+              {result.textStylesCreated != null && (
+                <div>
+                  Text styles created: {result.textStylesCreated}, updated:{" "}
+                  {result.textStylesUpdated ?? 0}, skipped:{" "}
+                  {result.textStylesSkipped}
+                </div>
               )}
-              {(result.effectStylesCreated !== undefined ||
-                result.effectStylesSkipped !== undefined) && (
-                <>
-                  <br />
-                  Effect styles created: {result.effectStylesCreated ?? 0},
-                  skipped: {result.effectStylesSkipped ?? 0}
-                </>
+              {result.effectStylesCreated != null && (
+                <div>
+                  Effect styles created: {result.effectStylesCreated}, updated:{" "}
+                  {result.effectStylesUpdated ?? 0}, skipped:{" "}
+                  {result.effectStylesSkipped}
+                </div>
               )}
             </div>
             {result.transformErrors && result.transformErrors.length > 0 && (
@@ -276,6 +318,7 @@ export default function ImportRecursicaJson() {
                 </ul>
               </div>
             )}
+            {/* TODO: Re-enable transform warnings later
             {result.transformWarnings &&
               result.transformWarnings.length > 0 && (
                 <div
@@ -297,6 +340,7 @@ export default function ImportRecursicaJson() {
                   </ul>
                 </div>
               )}
+            */}
             {result.aliasErrors && result.aliasErrors.length > 0 && (
               <div
                 style={{
@@ -315,6 +359,33 @@ export default function ImportRecursicaJson() {
                 </ul>
               </div>
             )}
+            {result.typeRenameWarnings &&
+              result.typeRenameWarnings.length > 0 && (
+                <div
+                  style={{
+                    padding: 12,
+                    backgroundColor: "#fff8e1",
+                    color: "#f57f17",
+                    borderRadius: 6,
+                    fontSize: 14,
+                  }}
+                >
+                  <strong>
+                    Type mismatch renames ({result.typeRenameWarnings.length}):
+                  </strong>
+                  <p style={{ margin: "4px 0", fontSize: 13 }}>
+                    These variables had a different type than expected. New
+                    variables were created with a _NEW suffix. Review them in
+                    Figma, then delete the old variable and rename the new one.
+                  </p>
+                  <ul style={{ margin: "8px 0 0", paddingLeft: 20 }}>
+                    {result.typeRenameWarnings.map((msg, i) => (
+                      <li key={i}>{msg}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            {/* TODO: Re-enable text style warnings later
             {result.textStyleWarnings &&
               result.textStyleWarnings.length > 0 && (
                 <div
@@ -336,6 +407,8 @@ export default function ImportRecursicaJson() {
                   </ul>
                 </div>
               )}
+            */}
+            {/* TODO: Re-enable effect style warnings later
             {result.effectStyleWarnings &&
               result.effectStyleWarnings.length > 0 && (
                 <div
@@ -357,6 +430,38 @@ export default function ImportRecursicaJson() {
                   </ul>
                 </div>
               )}
+            */}
+            {variablePaths.length > 0 && (
+              <div
+                style={{
+                  padding: 12,
+                  backgroundColor: "#f5f5f5",
+                  borderRadius: 6,
+                }}
+              >
+                <div style={{ fontSize: 13, color: "#666", marginBottom: 8 }}>
+                  <strong>Variable Path Browser</strong> —{" "}
+                  {variablePaths.length} variables from theme JSON
+                </div>
+                <VariableInput
+                  variablePaths={variablePaths}
+                  value={selectedVariable ?? undefined}
+                  onChange={setSelectedVariable}
+                  placeholder="Type to search variables…"
+                />
+                {selectedVariable && (
+                  <div
+                    style={{
+                      marginTop: 8,
+                      fontSize: 13,
+                      color: "#1b5e20",
+                    }}
+                  >
+                    Selected: <code>{selectedVariable}</code>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </Stack>

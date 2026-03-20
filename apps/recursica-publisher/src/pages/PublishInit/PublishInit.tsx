@@ -209,7 +209,7 @@ export default function PublishInit() {
 
   if (loading) {
     return (
-      <PageLayout showBackButton={true}>
+      <PageLayout>
         <Stack gap="md" align="center" className={classes.loadingContainer}>
           <LoadingSpinner />
           <Text className={classes.loadingText}>
@@ -224,7 +224,7 @@ export default function PublishInit() {
   const pagesWithoutMatches = matchedPages.filter((mp) => !mp.githubComponent);
 
   return (
-    <PageLayout showBackButton={true}>
+    <PageLayout>
       <Stack gap="lg" className={classes.root}>
         <div className={classes.header}>
           <Title order={1} mb="xs">

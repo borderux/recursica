@@ -3,19 +3,16 @@
   max-width: 800px;
 }
 
-.componentButton {
+.componentItem {
   width: 100%;
   padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
-  text-align: left;
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: var(--mantine-spacing-sm);
+  gap: 10px;
 
-  /* Button styling */
-  background-color: transparent;
+  /* Container styling */
   color: #000;
-  border: 1px solid #000;
   border-radius: 4px;
   cursor: pointer;
 
@@ -31,37 +28,6 @@
     sans-serif;
   font-size: 1rem;
   font-weight: normal;
-
-  /* Transitions */
-  transition:
-    background-color 0.2s,
-    border-color 0.2s;
-}
-
-.componentButton:hover {
-  background-color: var(--mantine-color-gray-1); /* Light grey from theme */
-  border-color: #000;
-}
-
-.componentButton:focus {
-  /* Use theme red color with 1px semi-transparent outline */
-  outline: 1px solid var(--mantine-color-red-5);
-  outline-offset: 2px;
-  /* Add semi-transparent overlay using theme custom property */
-  box-shadow: 0 0 0 1px var(--mantine-other-red-5-opacity-50);
-}
-
-.componentButton:active {
-  background-color: var(--mantine-color-gray-2); /* Slightly darker grey */
-  border-color: #000;
-}
-
-.componentButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background-color: transparent;
-  color: #000;
-  border-color: #ccc;
 }
 
 .componentName {
@@ -71,9 +37,5 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap; /* Prevent wrapping */
-}
-
-.componentBadge {
-  /* Badge is right-aligned by default due to grid layout */
-  white-space: nowrap; /* Prevent wrapping */
+  color: #000;
 }

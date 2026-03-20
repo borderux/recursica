@@ -1,5 +1,5 @@
 {
-  "name": "Recursica Publisher",
+  "name": "Recursica",
   "id": "1567687728010187317",
   "api": "1.0.0",
   "main": "./dist/recursica-publisher.js",

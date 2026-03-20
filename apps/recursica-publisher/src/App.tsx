@@ -3,13 +3,13 @@ import { useEffect } from "react";
 import { MantineProvider } from "@mantine/core";
 import { theme } from "./theme/theme";
 import Layout from "./components/Layout";
-import Home from "./pages/Home/Home";
 import Splash from "./pages/Splash/Splash";
 import Import from "./pages/Import/Import";
 import ImportMain from "./pages/ImportMain/ImportMain";
 import ImportBranch from "./pages/ImportBranch/ImportBranch";
 import ImportFiles from "./pages/ImportFiles";
 import ImportRecursicaJson from "./pages/ImportRecursicaJson";
+import ApplyRecursicaTheme from "./pages/ApplyRecursicaTheme";
 import ImportRepoComponent from "./pages/ImportRepoComponent";
 import Importing from "./pages/Importing";
 import ImportWizard from "./pages/ImportWizard";
@@ -27,6 +27,8 @@ import { PublishAuth } from "./pages/PublishAuth";
 import Unauthorized from "./pages/Unauthorized";
 import { AuthProvider } from "./context/AuthProvider";
 import { ImportDataProvider } from "./context/ImportDataProvider";
+import { NavigationHistoryProvider } from "./context/NavigationHistoryProvider";
+import { FooterActionsProvider } from "./context/FooterActionsContext";
 
 /**
  * Generates a proper UUID v4 using Web Crypto API
@@ -143,42 +145,59 @@ function App() {
       <AuthProvider>
         <ImportDataProvider>
           <MemoryRouter initialEntries={["/splash"]}>
-            <RouteLogger />
-            <Routes>
-              <Route path="/splash" element={<Splash />} />
-              <Route path="/" element={<Home />} />
-              <Route path="/import" element={<Import />} />
-              <Route path="/import-main" element={<ImportMain />} />
-              <Route path="/import-branch" element={<ImportBranch />} />
-              <Route path="/import-files" element={<ImportFiles />} />
-              <Route
-                path="/import-recursica-json"
-                element={<ImportRecursicaJson />}
-              />
-              <Route
-                path="/import-repo-component"
-                element={<ImportRepoComponent />}
-              />
-              <Route path="/importing" element={<Importing />} />
-              <Route path="/import-wizard/*" element={<ImportWizard />} />
-              <Route path="/publish" element={<Publish />} />
-              <Route path="/publish-init" element={<PublishInit />} />
-              <Route path="/publish/auth" element={<PublishAuth />} />
-              <Route path="/publish/unauthorized" element={<Unauthorized />} />
-              <Route path="/publishing" element={<Publishing />} />
-              <Route
-                path="/publishing-complete"
-                element={<PublishingComplete />}
-              />
-              <Route path="/publishing-wizard" element={<PublishingWizard />} />
-              <Route path="/test" element={<Test />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/edit-metadata" element={<EditMetadata />} />
-              <Route element={<Layout />}>
-                <Route path="auth" element={<Auth />} />
-                <Route path="page-management" element={<PageManagement />} />
-              </Route>
-            </Routes>
+            <NavigationHistoryProvider>
+              <FooterActionsProvider>
+                <RouteLogger />
+                <Routes>
+                  <Route path="/splash" element={<Splash />} />
+                  <Route path="/" element={<Import />} />
+                  <Route path="/import" element={<Import />} />
+                  <Route path="/import-main" element={<ImportMain />} />
+                  <Route path="/import-branch" element={<ImportBranch />} />
+                  <Route path="/import-files" element={<ImportFiles />} />
+                  <Route
+                    path="/import-recursica-json"
+                    element={<ImportRecursicaJson />}
+                  />
+                  <Route
+                    path="/apply-recursica-theme/*"
+                    element={<ApplyRecursicaTheme />}
+                  />
+                  <Route
+                    path="/import-repo-component"
+                    element={<ImportRepoComponent />}
+                  />
+                  <Route path="/importing" element={<Importing />} />
+                  <Route path="/import-wizard/*" element={<ImportWizard />} />
+                  <Route path="/publish" element={<Publish />} />
+                  <Route path="/publish-init" element={<PublishInit />} />
+                  <Route path="/publish/auth" element={<PublishAuth />} />
+                  <Route
+                    path="/publish/unauthorized"
+                    element={<Unauthorized />}
+                  />
+                  <Route path="/publishing" element={<Publishing />} />
+                  <Route
+                    path="/publishing-complete"
+                    element={<PublishingComplete />}
+                  />
+                  <Route
+                    path="/publishing-wizard"
+                    element={<PublishingWizard />}
+                  />
+                  <Route path="/test" element={<Test />} />
+                  <Route path="/admin" element={<Admin />} />
+                  <Route path="/edit-metadata" element={<EditMetadata />} />
+                  <Route element={<Layout />}>
+                    <Route path="auth" element={<Auth />} />
+                    <Route
+                      path="page-management"
+                      element={<PageManagement />}
+                    />
+                  </Route>
+                </Routes>
+              </FooterActionsProvider>
+            </NavigationHistoryProvider>
           </MemoryRouter>
         </ImportDataProvider>
       </AuthProvider>

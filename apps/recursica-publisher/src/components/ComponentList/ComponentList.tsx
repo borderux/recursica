@@ -1,5 +1,5 @@
 import { Stack } from "../Stack";
-import { Badge } from "../Badge";
+import { Checkbox } from "../Checkbox";
 import { getComponentCleanName } from "../../plugin/utils/getComponentCleanName";
 import classes from "./ComponentList.module.css";
 
@@ -31,10 +31,14 @@ export interface ComponentListProps {
    */
   components: ComponentInfo[];
   /**
-   * Callback when a component is selected
-   * @param component - The selected component
+   * Array of currently selected components
    */
-  onSelect: (component: ComponentInfo) => void;
+  selectedComponents: ComponentInfo[];
+  /**
+   * Callback when selection changes
+   * @param selected - The new array of selected components
+   */
+  onSelectionChange: (selected: ComponentInfo[]) => void;
   /**
    * Optional className for the list container
    */
@@ -44,9 +48,10 @@ export interface ComponentListProps {
 /**
  * ComponentList - A reusable component for displaying a list of components
  *
- * Displays components in a clickable list format with:
- * - Component name (left-aligned)
- * - Badge (right-aligned, optional: NEW, UPDATED, or EXISTING)
+ * Displays components in a checkbox list format with:
+ * - Checkbox (left-aligned)
+ * - Component name (middle-aligned)
+ * - Badge (right-aligned, optional: UPDATED, or EXISTING. NEW is hidden)
  *
  * Components are automatically sorted alphabetically by name.
  *
@@ -56,7 +61,8 @@ export interface ComponentListProps {
  */
 export function ComponentList({
   components,
-  onSelect,
+  selectedComponents,
+  onSelectionChange,
   className,
 }: ComponentListProps) {
   if (components.length === 0) {
@@ -70,24 +76,34 @@ export function ComponentList({
     return cleanA.localeCompare(cleanB);
   });
 
+  const handleToggle = (component: ComponentInfo, isChecked: boolean) => {
+    if (isChecked) {
+      onSelectionChange([...selectedComponents, component]);
+    } else {
+      onSelectionChange(
+        selectedComponents.filter((c) => c.guid !== component.guid),
+      );
+    }
+  };
+
   return (
-    <Stack gap={8} className={`${classes.componentList} ${className || ""}`}>
-      {sortedComponents.map((component) => (
-        <button
-          key={component.guid}
-          type="button"
-          onClick={() => onSelect(component)}
-          className={classes.componentButton}
-        >
-          <div className={classes.componentName}>{component.name}</div>
-          {component.badge && (
-            <Badge
-              status={component.badge}
-              className={classes.componentBadge}
+    <Stack gap={0} className={`${classes.componentList} ${className || ""}`}>
+      {sortedComponents.map((component) => {
+        const isSelected = selectedComponents.some(
+          (c) => c.guid === component.guid,
+        );
+        return (
+          <label key={component.guid} className={classes.componentItem}>
+            <Checkbox
+              checked={isSelected}
+              onChange={(e) => handleToggle(component, e.currentTarget.checked)}
             />
-          )}
-        </button>
-      ))}
+            <div className={classes.componentName}>
+              {getComponentCleanName(component.name)}
+            </div>
+          </label>
+        );
+      })}
     </Stack>
   );
 }

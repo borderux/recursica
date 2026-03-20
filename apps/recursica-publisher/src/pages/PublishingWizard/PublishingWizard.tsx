@@ -673,7 +673,8 @@ export default function PublishingWizard() {
       if (exportData.validationResult) {
         const hasErrors =
           exportData.validationResult.externalReferences.length > 0 ||
-          exportData.validationResult.unknownCollections.length > 0;
+          exportData.validationResult.unknownCollections.length > 0 ||
+          (exportData.validationResult.invalidVariables?.length || 0) > 0;
         if (hasErrors) {
           setWizardStep("validationErrors");
         } else {
@@ -686,7 +687,8 @@ export default function PublishingWizard() {
       if (exportData.validationResult) {
         const hasErrors =
           exportData.validationResult.externalReferences.length > 0 ||
-          exportData.validationResult.unknownCollections.length > 0;
+          exportData.validationResult.unknownCollections.length > 0 ||
+          (exportData.validationResult.invalidVariables?.length || 0) > 0;
         if (hasErrors) {
           setWizardStep("validationErrors");
         } else {
@@ -700,7 +702,7 @@ export default function PublishingWizard() {
 
   if (pageIndex === undefined || isNaN(pageIndex)) {
     return (
-      <PageLayout showBackButton={true}>
+      <PageLayout>
         <Stack gap={20} className={classes.root}>
           <Title order={1}>Publishing Wizard</Title>
           <Text variant="body" color="error">
@@ -713,7 +715,7 @@ export default function PublishingWizard() {
 
   if (isExporting) {
     return (
-      <PageLayout showBackButton={true}>
+      <PageLayout>
         <Stack gap={20} align="center" className={classes.loadingContainer}>
           <Title order={1}>Publishing Wizard</Title>
           <Group gap={12}>
@@ -734,7 +736,7 @@ export default function PublishingWizard() {
 
   if (exportError) {
     return (
-      <PageLayout showBackButton={true}>
+      <PageLayout>
         <Stack gap={20} className={classes.root}>
           <Title order={1}>Publishing Wizard</Title>
           <Alert variant="error">
@@ -753,7 +755,7 @@ export default function PublishingWizard() {
 
   if (!exportData) {
     return (
-      <PageLayout showBackButton={true}>
+      <PageLayout>
         <Stack gap={20} className={classes.root}>
           <Title order={1}>Publishing Wizard</Title>
           <Text variant="body" color="error">
@@ -973,6 +975,40 @@ export default function PublishingWizard() {
             <Text variant="body">No unknown collections found.</Text>
           )}
         </Card>
+
+        {validationResult.invalidVariables && (
+          <Card variant="error" className={classes.validationSection}>
+            <Title order={3} error className={classes.validationTitle}>
+              Invalid Variables ({validationResult.invalidVariables.length})
+            </Title>
+            {validationResult.invalidVariables.length > 0 ? (
+              <ul className={classes.validationList}>
+                {validationResult.invalidVariables.map(
+                  (
+                    invalidVar: {
+                      variableId: string;
+                      location: string;
+                      pageName: string;
+                    },
+                    index: number,
+                  ) => (
+                    <li key={index} className={classes.validationListItem}>
+                      Page <strong>"{invalidVar.pageName}"</strong> references a
+                      missing or invalid variable:{" "}
+                      <strong>{invalidVar.variableId}</strong>.
+                      <br />
+                      <span className={classes.validationLocation}>
+                        Location(s): {invalidVar.location}
+                      </span>
+                    </li>
+                  ),
+                )}
+              </ul>
+            ) : (
+              <Text variant="body">No invalid variables found.</Text>
+            )}
+          </Card>
+        )}
 
         <Group gap={12} className={classes.buttonGroup}>
           <Button variant="subtle" onClick={() => navigate(-1)}>
@@ -1271,7 +1307,7 @@ export default function PublishingWizard() {
   };
 
   return (
-    <PageLayout showBackButton={true} onBack={handleBack}>
+    <PageLayout onBack={handleBack}>
       <Stack gap={20} className={classes.root}>
         <Title order={1} className={classes.title}>
           {getPageTitle()}
