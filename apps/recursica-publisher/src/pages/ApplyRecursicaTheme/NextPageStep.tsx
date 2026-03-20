@@ -10,6 +10,7 @@ export default function NextPageStep() {
   const navigate = useNavigate();
   const {
     pageName,
+    lastCompletedPageName,
     error,
     remainingPages,
     handleProceedToNextPage,
@@ -45,7 +46,9 @@ export default function NextPageStep() {
   return (
     <Stack gap={16} style={{ maxWidth: 500 }}>
       <Title order={1}>Apply Recursica Theme</Title>
-      <Title order={3}>Page Complete: {pageName}</Title>
+      <Title order={3}>
+        Page Complete: {lastCompletedPageName || pageName}
+      </Title>
 
       {error && <div style={errorCard}>{error}</div>}
 

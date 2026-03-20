@@ -53,12 +53,32 @@ export interface ReferencedPage {
   pageName: string;
 }
 
+export interface StyleBinding {
+  nodeId: string;
+  nodePath: string;
+}
+
+export interface ThemeStyleIssue {
+  styleId: string;
+  styleName: string;
+  bindings: StyleBinding[];
+}
+
+export interface AvailableStyle {
+  id: string;
+  name: string;
+}
+
 export interface GetPageThemeVariablesResult {
   pageName: string;
   pageId: string;
   clashVariables: ClashVariableIssue[];
   unmatchedVariables: ThemeVariableIssue[];
   nonRecursicaVariables: ThemeVariableIssue[];
+  nonRecursicaTextStyles: ThemeStyleIssue[];
+  nonRecursicaEffectStyles: ThemeStyleIssue[];
+  availableTextStyles: AvailableStyle[];
+  availableEffectStyles: AvailableStyle[];
   referencedPages: ReferencedPage[];
   warnings: string[];
 }
@@ -149,6 +169,10 @@ interface WalkContext {
   unmatchedMap: Map<string, ThemeVariableIssue>;
   /** Accumulates non-Recursica variables keyed by variableId for dedup */
   nonRecursicaMap: Map<string, ThemeVariableIssue>;
+  /** Accumulates non-Recursica Text Styles keyed by styleId */
+  nonRecursicaTextStyles: Map<string, ThemeStyleIssue>;
+  /** Accumulates non-Recursica Effect Styles keyed by styleId */
+  nonRecursicaEffectStyles: Map<string, ThemeStyleIssue>;
   /** Referenced Recursica pages keyed by pageId for dedup */
   referencedPages: Map<string, ReferencedPage>;
   /** Warnings log */
@@ -158,6 +182,8 @@ interface WalkContext {
     string,
     { collectionName: string; variable: Variable } | null
   >;
+  /** Processed style IDs to avoid re-resolving */
+  resolvedStyleCache: Map<string, BaseStyle | null>;
 }
 
 /**
@@ -408,10 +434,72 @@ async function processNodeBindings(
 }
 
 /**
+ * Process textStyleId and effectStyleId on a single node.
+ */
+async function processNodeStyles(
+  node: SceneNode,
+  ctx: WalkContext,
+): Promise<void> {
+  const checkStyle = async (
+    styleId: string,
+    map: Map<string, ThemeStyleIssue>,
+    propertyLabel: string,
+  ) => {
+    let style = ctx.resolvedStyleCache.get(styleId);
+    if (style === undefined) {
+      style = (await figma.getStyleByIdAsync(styleId)) || null;
+      ctx.resolvedStyleCache.set(styleId, style);
+    }
+    // Filter out styles that already belong to the Recursica folder or prefix
+    if (style && !style.name.toLowerCase().startsWith("recursica/")) {
+      const binding: StyleBinding = {
+        nodeId: node.id,
+        nodePath: `${buildNodePath(node)} (${propertyLabel})`,
+      };
+      const existing = map.get(style.id);
+      if (existing) {
+        existing.bindings.push(binding);
+      } else {
+        map.set(style.id, {
+          styleId: style.id,
+          styleName: style.name,
+          bindings: [binding],
+        });
+      }
+    }
+  };
+
+  if (
+    "textStyleId" in node &&
+    typeof node.textStyleId === "string" &&
+    node.textStyleId
+  ) {
+    await checkStyle(
+      node.textStyleId,
+      ctx.nonRecursicaTextStyles,
+      "Text Style",
+    );
+  }
+
+  if (
+    "effectStyleId" in node &&
+    typeof node.effectStyleId === "string" &&
+    node.effectStyleId
+  ) {
+    await checkStyle(
+      node.effectStyleId,
+      ctx.nonRecursicaEffectStyles,
+      "Effect Style",
+    );
+  }
+}
+
+/**
  * Recursively walk the node tree.
  */
 async function walkNodeTree(node: SceneNode, ctx: WalkContext): Promise<void> {
   await processNodeBindings(node, ctx);
+  await processNodeStyles(node, ctx);
 
   // Check for component instance references to other pages
   if (node.type === "INSTANCE") {
@@ -514,14 +602,43 @@ export async function getPageThemeVariables(
       clashMap: new Map(),
       unmatchedMap: new Map(),
       nonRecursicaMap: new Map(),
+      nonRecursicaTextStyles: new Map(),
+      nonRecursicaEffectStyles: new Map(),
       referencedPages: new Map(),
       warnings: [],
       resolvedVarCache: new Map(),
+      resolvedStyleCache: new Map(),
     };
 
     for (const child of page.children) {
       await walkNodeTree(child as SceneNode, ctx);
     }
+
+    const [allTextStyles, allEffectStyles] = await Promise.all([
+      figma.getLocalTextStylesAsync(),
+      figma.getLocalEffectStylesAsync(),
+    ]);
+
+    const sortWithComponentsLast = (
+      a: { name: string },
+      b: { name: string },
+    ) => {
+      const aComp = a.name.includes("components_");
+      const bComp = b.name.includes("components_");
+      if (aComp && !bComp) return 1;
+      if (!aComp && bComp) return -1;
+      return a.name.localeCompare(b.name);
+    };
+
+    const availableTextStyles = allTextStyles
+      .filter((s) => s.name.toLowerCase().startsWith("recursica/"))
+      .map((s) => ({ id: s.id, name: s.name }))
+      .sort(sortWithComponentsLast);
+
+    const availableEffectStyles = allEffectStyles
+      .filter((s) => s.name.toLowerCase().startsWith("recursica/"))
+      .map((s) => ({ id: s.id, name: s.name }))
+      .sort(sortWithComponentsLast);
 
     const result: GetPageThemeVariablesResult = {
       pageName: page.name,
@@ -529,12 +646,16 @@ export async function getPageThemeVariables(
       clashVariables: [...ctx.clashMap.values()],
       unmatchedVariables: [...ctx.unmatchedMap.values()],
       nonRecursicaVariables: [...ctx.nonRecursicaMap.values()],
+      nonRecursicaTextStyles: [...ctx.nonRecursicaTextStyles.values()],
+      nonRecursicaEffectStyles: [...ctx.nonRecursicaEffectStyles.values()],
+      availableTextStyles,
+      availableEffectStyles,
       referencedPages: [...ctx.referencedPages.values()],
       warnings: ctx.warnings,
     };
 
     console.log(
-      `[getPageThemeVariables] Done. Clashes: ${result.clashVariables.length}, Unmatched: ${result.unmatchedVariables.length}, Non-Recursica: ${result.nonRecursicaVariables.length}, Referenced pages: ${result.referencedPages.length}`,
+      `[getPageThemeVariables] Done. Clashes: ${result.clashVariables.length}, Unmatched: ${result.unmatchedVariables.length}, Non-Recursica Vars: ${result.nonRecursicaVariables.length}, Legacy Text Styles: ${result.nonRecursicaTextStyles.length}, Legacy Effect Styles: ${result.nonRecursicaEffectStyles.length}`,
     );
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

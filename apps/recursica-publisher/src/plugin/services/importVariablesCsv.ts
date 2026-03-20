@@ -8,6 +8,7 @@
 import type { PluginResponse } from "../types/messages";
 import { getFixedGuidForCollection } from "../../const/CollectionConstants";
 import { createEffectStylesFromElevations } from "./createEffectStylesFromElevations";
+import { isUiKitTypography } from "../../utils/typographyUtils";
 import { createTextStylesFromTypography } from "./createTextStylesFromTypography";
 
 const COLLECTION_GUID_KEY = "recursica:collectionId";
@@ -201,6 +202,7 @@ function findOrCreateCollection(
 
 export async function applyVariableRows(
   csvRows: CsvRow[],
+  typographyRowsForAliasFallback: CsvRow[] = [],
 ): Promise<ApplyVariableRowsResult> {
   const localCollections =
     await figma.variables.getLocalVariableCollectionsAsync();
@@ -211,6 +213,22 @@ export async function applyVariableRows(
   const typeRenameWarnings: string[] = [];
   const loggedTargetKeys = new Set<string>();
   const MAX_ALIAS_MISS_LOGS = 10;
+
+  const resolveAliasTarget = (rawValue: string): Variable | undefined => {
+    const targetKey = aliasValueToMapKey(rawValue);
+    let targetVar = variableByKey.get(targetKey);
+    if (!targetVar) {
+      const typRow = typographyRowsForAliasFallback.find(
+        (r) =>
+          `${r.collection.toLowerCase()}/${r.figmaVariableName}` === targetKey,
+      );
+      if (typRow && typRow.alias === "true" && typRow.value) {
+        const nestedTargetKey = aliasValueToMapKey(typRow.value);
+        targetVar = variableByKey.get(nestedTargetKey);
+      }
+    }
+    return targetVar;
+  };
 
   const order: string[] = ["tokens", "themes", "layer"];
   for (const collKey of order) {
@@ -250,8 +268,7 @@ export async function applyVariableRows(
           fromRow === "COLOR" || fromRow === "FLOAT" || fromRow === "STRING";
         if (!validType) continue;
         if (row.alias === "true" && row.value) {
-          const targetKey = aliasValueToMapKey(row.value);
-          const targetVar = variableByKey.get(targetKey);
+          const targetVar = resolveAliasTarget(row.value);
           if (targetVar) {
             incomingType = targetVar.resolvedType as VariableResolvedDataType;
             break;
@@ -344,9 +361,10 @@ export async function applyVariableRows(
 
         if (!isAlias || !rawValue) continue;
 
-        const targetKey = aliasValueToMapKey(rawValue);
-        const targetVar = variableByKey.get(targetKey);
+        const targetVar = resolveAliasTarget(rawValue);
+
         if (!targetVar) {
+          const targetKey = aliasValueToMapKey(rawValue);
           if (
             loggedTargetKeys.size < MAX_ALIAS_MISS_LOGS &&
             !loggedTargetKeys.has(targetKey)
@@ -433,14 +451,22 @@ export async function importVariablesCsv(
     Object.fromEntries(rowsByCollection),
   );
 
-  const applyResult = await applyVariableRows(csvRows);
+  const variableRows = csvRows.filter(
+    (r) => !isUiKitTypography(r.figmaVariableName),
+  );
+  const typographyRows = csvRows.filter((r) =>
+    r.figmaVariableName.startsWith("typography/"),
+  );
+
+  const applyResult = await applyVariableRows(variableRows, typographyRows);
 
   let textStylesCreated = 0;
   let textStylesUpdated = 0;
   let textStylesSkipped = 0;
   const textStyleWarnings: string[] = [];
   try {
-    const textStyleResult = await createTextStylesFromTypography();
+    const textStyleResult =
+      await createTextStylesFromTypography(typographyRows);
     textStylesCreated = textStyleResult.textStylesCreated;
     textStylesUpdated = textStyleResult.textStylesUpdated;
     textStylesSkipped = textStyleResult.textStylesSkipped;

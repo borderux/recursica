@@ -13,6 +13,7 @@ import type { PluginResponse } from "../types/messages";
 import { applyVariableRows } from "./importVariablesCsv";
 import { createEffectStylesFromElevations } from "./createEffectStylesFromElevations";
 import { createTextStylesFromTypography } from "./createTextStylesFromTypography";
+import { isUiKitTypography } from "../../utils/typographyUtils";
 import {
   recursicaJsonToVariableRows,
   type RecursicaJsonToRowsResult,
@@ -89,14 +90,22 @@ export async function importRecursicaJson(
     };
   }
 
-  const applyResult = await applyVariableRows(rows);
+  const variableRows = rows.filter(
+    (r) => !isUiKitTypography(r.figmaVariableName),
+  );
+  const typographyRows = rows.filter((r) =>
+    r.figmaVariableName.startsWith("typography/"),
+  );
+
+  const applyResult = await applyVariableRows(variableRows, typographyRows);
 
   let textStylesCreated = 0;
   let textStylesUpdated = 0;
   let textStylesSkipped = 0;
   const textStyleWarnings: string[] = [];
   try {
-    const textStyleResult = await createTextStylesFromTypography();
+    const textStyleResult =
+      await createTextStylesFromTypography(typographyRows);
     textStylesCreated = textStyleResult.textStylesCreated;
     textStylesUpdated = textStyleResult.textStylesUpdated;
     textStylesSkipped = textStyleResult.textStylesSkipped;

@@ -11,6 +11,8 @@ import { ServiceName } from "../plugin/types/ServiceName";
 import type {
   ClashVariableIssue,
   ThemeVariableIssue,
+  ThemeStyleIssue,
+  AvailableStyle,
   ReferencedPage,
 } from "../plugin/services/getPageThemeVariables";
 import { recursicaJsonToVariableRows } from "../plugin/services/recursicaJsonToVariableRows";
@@ -23,12 +25,17 @@ interface ClashDecision {
   action: "delete" | null;
 }
 
-interface UnmatchedDecision {
-  action: "ignore" | null;
+export interface UnmatchedDecision {
+  action: "ignore" | "fix" | null;
 }
 
 interface NonRecursicaDecision {
-  action: "ignore" | null;
+  action: "ignore" | "fix" | null;
+}
+
+export interface StyleDecision {
+  action: "ignore" | "map" | null;
+  mappedStyleId?: string;
 }
 
 const FILE_NAMES = {
@@ -101,6 +108,10 @@ interface ApplyThemeContextValue {
   clashVars: ClashVariableIssue[];
   unmatchedVars: ThemeVariableIssue[];
   nonRecursicaVars: ThemeVariableIssue[];
+  nonRecursicaTextStyles: ThemeStyleIssue[];
+  nonRecursicaEffectStyles: ThemeStyleIssue[];
+  availableTextStyles: AvailableStyle[];
+  availableEffectStyles: AvailableStyle[];
   scanWarnings: string[];
 
   // Decisions
@@ -112,17 +123,43 @@ interface ApplyThemeContextValue {
   setClashIndex: (i: number) => void;
   setUnmatchedIndex: (i: number) => void;
   setNonRecursicaIndex: (i: number) => void;
+  textStyleIndex: number;
+  effectStyleIndex: number;
+  setTextStyleIndex: (i: number) => void;
+  setEffectStyleIndex: (i: number) => void;
 
   // Actions
   startScan: (pageId?: string) => Promise<void>;
-  setClashAction: (variableId: string, action: "delete") => void;
-  setUnmatchedAction: (variableId: string, action: "ignore") => void;
-  setNonRecursicaAction: (variableId: string, action: "ignore") => void;
+  setClashAction: (variableId: string, action: "delete" | null) => void;
+  setUnmatchedAction: (
+    variableId: string,
+    action: "ignore" | "fix" | null,
+  ) => void;
+  setNonRecursicaAction: (
+    variableId: string,
+    action: "ignore" | "fix" | null,
+  ) => void;
+  setTextStyleAction: (
+    styleId: string,
+    action: "ignore" | "map" | null,
+    mappedStyleId?: string,
+  ) => void;
+  setEffectStyleAction: (
+    styleId: string,
+    action: "ignore" | "map",
+    mappedStyleId?: string,
+  ) => void;
   nonRecursicaDecisions: Map<string, NonRecursicaDecision>;
+  textStyleDecisions: Map<string, StyleDecision>;
+  effectStyleDecisions: Map<string, StyleDecision>;
   handleApply: (
     clashDec?: Map<string, ClashDecision>,
     unmatchedDec?: Map<string, UnmatchedDecision>,
+    nonRecursicaDec?: Map<string, NonRecursicaDecision>,
+    textStyleDec?: Map<string, StyleDecision>,
+    effectStyleDec?: Map<string, StyleDecision>,
   ) => Promise<void>;
+  handleSkipPage: () => void;
   handleFocusNode: (nodeId: string) => Promise<void>;
 
   // Variable path browser (for fix selections)
@@ -135,10 +172,11 @@ interface ApplyThemeContextValue {
   applyLog: string[];
   allLogs: string[];
   processedPages: string[];
-  remainingPages: ReferencedPage[];
+  remainingPages: Array<{ pageId: string; pageName: string }>;
   handleProceedToNextPage: () => Promise<void>;
   handleSkipAll: () => void;
   globalIgnored: Set<string>;
+  lastCompletedPageName: string | null;
 }
 
 const ApplyThemeContext = createContext<ApplyThemeContextValue | null>(null);
@@ -186,6 +224,18 @@ export function ApplyThemeProvider({
   const [nonRecursicaVars, setNonRecursicaVars] = useState<
     ThemeVariableIssue[]
   >([]);
+  const [nonRecursicaTextStyles, setNonRecursicaTextStyles] = useState<
+    ThemeStyleIssue[]
+  >([]);
+  const [nonRecursicaEffectStyles, setNonRecursicaEffectStyles] = useState<
+    ThemeStyleIssue[]
+  >([]);
+  const [availableTextStyles, setAvailableTextStyles] = useState<
+    AvailableStyle[]
+  >([]);
+  const [availableEffectStyles, setAvailableEffectStyles] = useState<
+    AvailableStyle[]
+  >([]);
   const [scanWarnings, setScanWarnings] = useState<string[]>([]);
 
   // Decisions
@@ -199,17 +249,30 @@ export function ApplyThemeProvider({
   const [clashIndex, setClashIndex] = useState(0);
   const [unmatchedIndex, setUnmatchedIndex] = useState(0);
   const [nonRecursicaIndex, setNonRecursicaIndex] = useState(0);
+  const [textStyleIndex, setTextStyleIndex] = useState(0);
+  const [effectStyleIndex, setEffectStyleIndex] = useState(0);
   const [nonRecursicaDecisions, setNonRecursicaDecisions] = useState<
     Map<string, NonRecursicaDecision>
+  >(new Map());
+  const [textStyleDecisions, setTextStyleDecisions] = useState<
+    Map<string, StyleDecision>
+  >(new Map());
+  const [effectStyleDecisions, setEffectStyleDecisions] = useState<
+    Map<string, StyleDecision>
   >(new Map());
 
   // Apply
   const [applyLog, setApplyLog] = useState<string[]>([]);
   const [allLogs, setAllLogs] = useState<string[]>([]);
   const [processedPages, setProcessedPages] = useState<string[]>([]);
-  const [remainingPages, setRemainingPages] = useState<ReferencedPage[]>([]);
+  const [remainingPages, setRemainingPages] = useState<
+    Array<{ pageId: string; pageName: string }>
+  >([]);
+  const [lastCompletedPageName, setLastCompletedPageName] = useState<
+    string | null
+  >(null);
 
-  // Variable paths from theme JSON (for VariableInput fix selections)
+  // Variable paths from theme JSON (for fix selections)
   const [variablePaths, setVariablePaths] = useState<string[]>([]);
   const [variableTypeMap, setVariableTypeMap] = useState<Map<string, string>>(
     new Map(),
@@ -366,6 +429,10 @@ export function ApplyThemeProvider({
           clashVariables: ClashVariableIssue[];
           unmatchedVariables: ThemeVariableIssue[];
           nonRecursicaVariables: ThemeVariableIssue[];
+          nonRecursicaTextStyles: ThemeStyleIssue[];
+          nonRecursicaEffectStyles: ThemeStyleIssue[];
+          availableTextStyles: AvailableStyle[];
+          availableEffectStyles: AvailableStyle[];
           referencedPages: ReferencedPage[];
           warnings: string[];
         };
@@ -374,6 +441,10 @@ export function ApplyThemeProvider({
         setPageId(data.pageId);
         setClashVars(data.clashVariables);
         setNonRecursicaVars(data.nonRecursicaVariables ?? []);
+        setNonRecursicaTextStyles(data.nonRecursicaTextStyles ?? []);
+        setNonRecursicaEffectStyles(data.nonRecursicaEffectStyles ?? []);
+        setAvailableTextStyles(data.availableTextStyles ?? []);
+        setAvailableEffectStyles(data.availableEffectStyles ?? []);
         setScanWarnings(data.warnings);
 
         const filteredUnmatched = data.unmatchedVariables.map((v) => v);
@@ -406,15 +477,49 @@ export function ApplyThemeProvider({
         }
         setUnmatchedDecisions(newUnmatchedDecisions);
 
+        const newNonRecursicaDecisions = new Map<
+          string,
+          NonRecursicaDecision
+        >();
+        for (const nrv of data.nonRecursicaVariables ?? []) {
+          if (globalIgnored.has(nrv.variableId)) {
+            newNonRecursicaDecisions.set(nrv.variableId, { action: "ignore" });
+          } else {
+            newNonRecursicaDecisions.set(nrv.variableId, { action: null });
+          }
+        }
+        setNonRecursicaDecisions(newNonRecursicaDecisions);
+
+        const newTextStyleDecisions = new Map<string, StyleDecision>();
+        for (const style of data.nonRecursicaTextStyles ?? []) {
+          newTextStyleDecisions.set(style.styleId, { action: null });
+        }
+        setTextStyleDecisions(newTextStyleDecisions);
+
+        const newEffectStyleDecisions = new Map<string, StyleDecision>();
+        for (const style of data.nonRecursicaEffectStyles ?? []) {
+          newEffectStyleDecisions.set(style.styleId, { action: null });
+        }
+        setEffectStyleDecisions(newEffectStyleDecisions);
+
         // Determine next step
         if (
           data.clashVariables.length > 0 ||
           filteredUnmatched.length > 0 ||
-          (data.nonRecursicaVariables ?? []).length > 0
+          (data.nonRecursicaVariables ?? []).length > 0 ||
+          (data.nonRecursicaTextStyles ?? []).length > 0 ||
+          (data.nonRecursicaEffectStyles ?? []).length > 0
         ) {
           navigate("/apply-recursica-theme/overview", { replace: true });
         } else {
-          handleApply(newClashDecisions, newUnmatchedDecisions);
+          setLastCompletedPageName(data.pageName);
+          handleApply(
+            newClashDecisions,
+            newUnmatchedDecisions,
+            newNonRecursicaDecisions,
+            newTextStyleDecisions,
+            newEffectStyleDecisions,
+          );
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Scan failed.");
@@ -427,7 +532,7 @@ export function ApplyThemeProvider({
 
   /* ---- Decision setters ---- */
 
-  const setClashActionFn = (variableId: string, action: "delete") => {
+  const setClashActionFn = (variableId: string, action: "delete" | null) => {
     setClashDecisions((prev) => {
       const next = new Map(prev);
       next.set(variableId, { action });
@@ -435,7 +540,10 @@ export function ApplyThemeProvider({
     });
   };
 
-  const setUnmatchedActionFn = (variableId: string, action: "ignore") => {
+  const setUnmatchedActionFn = (
+    variableId: string,
+    action: "ignore" | "fix" | null,
+  ) => {
     setUnmatchedDecisions((prev) => {
       const next = new Map(prev);
       next.set(variableId, { action });
@@ -443,10 +551,37 @@ export function ApplyThemeProvider({
     });
   };
 
-  const setNonRecursicaActionFn = (variableId: string, action: "ignore") => {
+  const setNonRecursicaActionFn = (
+    variableId: string,
+    action: "ignore" | "fix" | null,
+  ) => {
     setNonRecursicaDecisions((prev) => {
       const next = new Map(prev);
       next.set(variableId, { action });
+      return next;
+    });
+  };
+
+  const setTextStyleActionFn = (
+    styleId: string,
+    action: "ignore" | "map" | null,
+    mappedStyleId?: string,
+  ) => {
+    setTextStyleDecisions((prev) => {
+      const next = new Map(prev);
+      next.set(styleId, { action, mappedStyleId });
+      return next;
+    });
+  };
+
+  const setEffectStyleActionFn = (
+    styleId: string,
+    action: "ignore" | "map",
+    mappedStyleId?: string,
+  ) => {
+    setEffectStyleDecisions((prev) => {
+      const next = new Map(prev);
+      next.set(styleId, { action, mappedStyleId });
       return next;
     });
   };
@@ -471,6 +606,9 @@ export function ApplyThemeProvider({
   const handleApply = async (
     clashDec: Map<string, ClashDecision> = clashDecisions,
     unmatchedDec: Map<string, UnmatchedDecision> = unmatchedDecisions,
+    nonRecursicaDec: Map<string, NonRecursicaDecision> = nonRecursicaDecisions,
+    textStyleDec: Map<string, StyleDecision> = textStyleDecisions,
+    effectStyleDec: Map<string, StyleDecision> = effectStyleDecisions,
   ) => {
     navigate("/apply-recursica-theme/applying", { replace: true });
     setError(null);
@@ -480,19 +618,56 @@ export function ApplyThemeProvider({
         .filter(([, d]) => d.action !== null)
         .map(([id, d]) => ({ oldVariableId: id, action: d.action! }));
 
-      const unmatchedActions = [...unmatchedDec.entries()]
+      const unmatchedAsActions = [...unmatchedDec.entries()]
         .filter(([, d]) => d.action !== null)
-        .map(([id, d]) => ({ variableId: id, action: d.action! }));
+        .map(([id, d]) => ({
+          variableId: id,
+          action: d.action!,
+          newVariablePath:
+            d.action === "fix" ? fixSelections.get(id) : undefined,
+        }));
+
+      const nonRecursicaAsActions = [...nonRecursicaDec.entries()]
+        .filter(([, d]) => d.action !== null)
+        .map(([id, d]) => ({
+          variableId: id,
+          action: d.action!,
+          newVariablePath:
+            d.action === "fix" ? fixSelections.get(id) : undefined,
+        }));
+
+      const combinedUnmatchedActions = [
+        ...unmatchedAsActions,
+        ...nonRecursicaAsActions,
+      ];
+
+      const textStyleActions = [...textStyleDec.entries()]
+        .filter(([, d]) => d.action !== null)
+        .map(([id, d]) => ({
+          styleId: id,
+          action: d.action!,
+          mappedStyleId: d.mappedStyleId,
+        }));
+
+      const effectStyleActions = [...effectStyleDec.entries()]
+        .filter(([, d]) => d.action !== null)
+        .map(([id, d]) => ({
+          styleId: id,
+          action: d.action!,
+          mappedStyleId: d.mappedStyleId,
+        }));
 
       const newIgnored = new Set(globalIgnored);
-      for (const ua of unmatchedActions) {
+      for (const ua of combinedUnmatchedActions) {
         if (ua.action === "ignore") newIgnored.add(ua.variableId);
       }
       setGlobalIgnored(newIgnored);
 
       const { promise } = callPlugin(ServiceName.applyPageThemeVariables, {
         clashActions,
-        unmatchedActions,
+        unmatchedActions: combinedUnmatchedActions,
+        textStyleActions,
+        effectStyleActions,
       });
       const response = await promise;
       const data = response.data as { operationLog: string[]; summary: string };
@@ -505,6 +680,11 @@ export function ApplyThemeProvider({
       setApplyLog(pageLog);
       setAllLogs((prev) => [...prev, ...pageLog]);
       setProcessedPages((prev) => [...prev, pageId]);
+
+      setLastCompletedPageName(pageName);
+      if (processedPages.length > 0) {
+        setRemainingPages((prev) => prev.slice(1)); // Remove this page from the queue of dependent pages
+      }
 
       navigate("/apply-recursica-theme/next-page", { replace: true });
     } catch (err) {
@@ -533,7 +713,6 @@ export function ApplyThemeProvider({
     }
 
     const nextPage = remainingPages[0];
-    setRemainingPages((prev) => prev.slice(1));
 
     try {
       const { promise } = callPlugin(ServiceName.switchToPage, {
@@ -554,6 +733,78 @@ export function ApplyThemeProvider({
     navigate("/apply-recursica-theme/summary");
   };
 
+  const handleSkipPage = () => {
+    setRemainingPages((prev) => prev.slice(1));
+    handleProceedToNextPage();
+  };
+
+  /* ---- Dynamic Pruning ---- */
+
+  // Build a set of node IDs that are scheduled to receive a new Text or Effect Style
+  const nodesStrippedByStyleMappings = React.useMemo(() => {
+    const nodeIds = new Set<string>();
+
+    // Add nodes from text styles that will be mapped
+    for (const ts of nonRecursicaTextStyles) {
+      const decision = textStyleDecisions.get(ts.styleId);
+      if (decision?.action === "map" && decision.mappedStyleId) {
+        for (const b of ts.bindings) nodeIds.add(b.nodeId);
+      }
+    }
+
+    // Add nodes from effect styles that will be mapped
+    for (const es of nonRecursicaEffectStyles) {
+      const decision = effectStyleDecisions.get(es.styleId);
+      if (decision?.action === "map" && decision.mappedStyleId) {
+        for (const b of es.bindings) nodeIds.add(b.nodeId);
+      }
+    }
+
+    return nodeIds;
+  }, [
+    nonRecursicaTextStyles,
+    nonRecursicaEffectStyles,
+    textStyleDecisions,
+    effectStyleDecisions,
+  ]);
+
+  // Prune the variable issues based on the stripped node IDs
+  const prunedClashVars = React.useMemo(() => {
+    if (nodesStrippedByStyleMappings.size === 0) return clashVars;
+    return clashVars
+      .map((issue) => ({
+        ...issue,
+        bindings: issue.bindings.filter(
+          (b) => !nodesStrippedByStyleMappings.has(b.nodeId),
+        ),
+      }))
+      .filter((issue) => issue.bindings.length > 0);
+  }, [clashVars, nodesStrippedByStyleMappings]);
+
+  const prunedUnmatchedVars = React.useMemo(() => {
+    if (nodesStrippedByStyleMappings.size === 0) return unmatchedVars;
+    return unmatchedVars
+      .map((issue) => ({
+        ...issue,
+        bindings: issue.bindings.filter(
+          (b) => !nodesStrippedByStyleMappings.has(b.nodeId),
+        ),
+      }))
+      .filter((issue) => issue.bindings.length > 0);
+  }, [unmatchedVars, nodesStrippedByStyleMappings]);
+
+  const prunedNonRecursicaVars = React.useMemo(() => {
+    if (nodesStrippedByStyleMappings.size === 0) return nonRecursicaVars;
+    return nonRecursicaVars
+      .map((issue) => ({
+        ...issue,
+        bindings: issue.bindings.filter(
+          (b) => !nodesStrippedByStyleMappings.has(b.nodeId),
+        ),
+      }))
+      .filter((issue) => issue.bindings.length > 0);
+  }, [nonRecursicaVars, nodesStrippedByStyleMappings]);
+
   /* ---- Context value ---- */
 
   const value: ApplyThemeContextValue = {
@@ -566,24 +817,38 @@ export function ApplyThemeProvider({
     handleFileChange,
     handleImport,
     pageName,
-    clashVars,
-    unmatchedVars,
-    nonRecursicaVars,
+    lastCompletedPageName,
+    clashVars: prunedClashVars,
+    unmatchedVars: prunedUnmatchedVars,
+    nonRecursicaVars: prunedNonRecursicaVars,
+    nonRecursicaTextStyles,
+    nonRecursicaEffectStyles,
+    availableTextStyles,
+    availableEffectStyles,
     scanWarnings,
     clashDecisions,
     unmatchedDecisions,
+    nonRecursicaDecisions,
+    textStyleDecisions,
+    effectStyleDecisions,
     clashIndex,
     unmatchedIndex,
     nonRecursicaIndex,
+    textStyleIndex,
+    effectStyleIndex,
     setClashIndex,
     setUnmatchedIndex,
     setNonRecursicaIndex,
+    setTextStyleIndex,
+    setEffectStyleIndex,
     startScan,
     setClashAction: setClashActionFn,
     setUnmatchedAction: setUnmatchedActionFn,
     setNonRecursicaAction: setNonRecursicaActionFn,
-    nonRecursicaDecisions,
+    setTextStyleAction: setTextStyleActionFn,
+    setEffectStyleAction: setEffectStyleActionFn,
     handleApply,
+    handleSkipPage,
     handleFocusNode,
     variablePaths,
     variableTypeMap,

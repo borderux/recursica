@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { Select } from "@mantine/core";
+import { isUiKitTypography } from "../../utils/typographyUtils";
 
 export interface VariableInputProps {
   /** Flat list of all variable paths, e.g. ["Tokens/palettes/core-colors/black/color/tone", ...] */
@@ -46,8 +47,13 @@ export function VariableInput({
 
   // Filter paths by type if typeFilter is set
   const filteredPaths = useMemo(() => {
-    if (!typeFilter || !typeMap) return variablePaths;
-    return variablePaths.filter((path) => {
+    // 1. Filter out synthetic typography variables from UI Kit (e.g. components_button_text)
+    const paths = variablePaths.filter((path) => !isUiKitTypography(path));
+
+    // 2. Filter by variable type (e.g. COLOR, FLOAT) if provided
+    if (!typeFilter || !typeMap) return paths;
+
+    return paths.filter((path) => {
       const pathType = typeMap.get(path);
       // Only filter leaf paths that have a type entry;
       // intermediate paths (folders) are kept so drilling works
@@ -56,7 +62,7 @@ export function VariableInput({
   }, [variablePaths, typeMap, typeFilter]);
 
   const options: DropdownOption[] = useMemo(() => {
-    const segments = new Map<string, boolean>();
+    const segments = new Map<string, "leaf" | "folder" | "both">();
 
     for (const path of filteredPaths) {
       if (!path.startsWith(currentPrefix)) continue;
@@ -66,24 +72,45 @@ export function VariableInput({
 
       const slashIndex = remainder.indexOf("/");
       if (slashIndex === -1) {
-        segments.set(remainder, true);
+        const current = segments.get(remainder);
+        if (current === "folder") {
+          segments.set(remainder, "both");
+        } else if (!current) {
+          segments.set(remainder, "leaf");
+        }
       } else {
         const segment = remainder.slice(0, slashIndex);
-        if (!segments.has(segment)) {
-          segments.set(segment, false);
+        const current = segments.get(segment);
+        if (current === "leaf") {
+          segments.set(segment, "both");
+        } else if (!current) {
+          segments.set(segment, "folder");
         }
       }
     }
 
-    return Array.from(segments.entries())
-      .sort(([a, aIsLeaf], [b, bIsLeaf]) => {
-        if (aIsLeaf !== bIsLeaf) return aIsLeaf ? 1 : -1;
-        return a.localeCompare(b);
-      })
-      .map(([segment, isLeaf]) => ({
-        value: isLeaf ? currentPrefix + segment : currentPrefix + segment + "/",
-        label: isLeaf ? segment : segment + "/",
-      }));
+    const opts: DropdownOption[] = [];
+    for (const [segment, type] of segments.entries()) {
+      if (type === "leaf" || type === "both") {
+        opts.push({
+          value: currentPrefix + segment,
+          label: segment,
+        });
+      }
+      if (type === "folder" || type === "both") {
+        opts.push({
+          value: currentPrefix + segment + "/",
+          label: segment + "/",
+        });
+      }
+    }
+
+    return opts.sort((a, b) => {
+      const aIsLeaf = !a.label.endsWith("/");
+      const bIsLeaf = !b.label.endsWith("/");
+      if (aIsLeaf !== bIsLeaf) return aIsLeaf ? 1 : -1;
+      return a.label.localeCompare(b.label);
+    });
   }, [filteredPaths, currentPrefix]);
 
   const handleChange = useCallback(
@@ -140,7 +167,7 @@ export function VariableInput({
         }}
         nothingFoundMessage="No matching variables"
         disabled={isComplete}
-        maxDropdownHeight={250}
+        maxDropdownHeight={115}
       />
 
       {displayPath && (

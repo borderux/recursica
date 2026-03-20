@@ -49,8 +49,10 @@ export default function ReviewNonRecursicaStep() {
     const nv = nonRecursicaVars[currentIndex];
     const selectedPath = fixSelections.get(nv.variableId);
     if (!selectedPath) return;
-    // For now, treat fix the same as a navigation action
-    // TODO: Wire up the actual remap logic
+
+    // Commit the "fix" decision
+    setNonRecursicaAction(nv.variableId, "fix");
+
     if (currentIndex < nonRecursicaVars.length - 1) {
       navigate(
         `/apply-recursica-theme/review-non-recursica?i=${currentIndex + 1}`,

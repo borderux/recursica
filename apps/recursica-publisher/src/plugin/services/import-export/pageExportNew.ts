@@ -758,9 +758,11 @@ export async function exportPage(
 
       // Add standard remote collection names (case-sensitive)
       knownCollectionNames.add("Token");
-      knownCollectionNames.add("Tokens");
+      // knownCollectionNames.add("Tokens");  // Not a valid name
       knownCollectionNames.add("Theme");
       knownCollectionNames.add("Themes");
+      knownCollectionNames.add("Layer");
+      // knownCollectionNames.add("Layers");  // Not a valid name
 
       // Check for external references (remote instances)
       const externalReferences: Array<{
@@ -818,7 +820,7 @@ export async function exportPage(
             });
             validationErrors.push({
               type: "unknownCollection",
-              message: `Unknown remote collection: "${entry.collectionName}". Remote collections must be named "Token", "Tokens", "Theme", or "Themes"`,
+              message: `Unknown remote collection: "${entry.collectionName}". Remote collections must be named "Layer", "Layers", "Token", "Tokens", "Theme", or "Themes"`,
               collectionName: entry.collectionName,
               pageName: selectedPage.name,
             });
@@ -1054,14 +1056,18 @@ export async function exportPage(
         ) {
           errorReason = `Invalid variable collection referenced: "${entry.collectionName}". Must be 'Layer', 'Tokens', or 'Themes'.`;
         } else if (!entry.isLocal) {
-          // Block remote collections
-          errorReason = `Remote variable collection referenced: "${entry.collectionName}". All variables must be stored in local collections.`;
+          // Allow recognized remote collections (enforced by the block above), but log securely
+          debugConsole.log(
+            `Exporting allowed remote collection mapping: "${entry.collectionName}"`,
+          );
         }
 
         if (errorReason) {
           // Find variables in this collection
           const collectionVars = Object.values(variableTable.getTable()).filter(
-            (v: any) => v.collectionId === entry.collectionId,
+            (v: any) =>
+              v.collectionId === entry.collectionId ||
+              v._colRef === Number(idx),
           );
 
           // Flatten their node paths

@@ -14,13 +14,23 @@ export default function OverviewStep() {
     clashVars,
     unmatchedVars,
     nonRecursicaVars,
+    nonRecursicaTextStyles,
+    nonRecursicaEffectStyles,
     remainingPages,
+    processedPages,
     scanWarnings,
     handleApply,
+    handleSkipPage,
   } = useApplyTheme();
 
+  const isDependentPage = processedPages.length > 0;
+
   const handleNext = useCallback(() => {
-    if (clashVars.length > 0) {
+    if (nonRecursicaTextStyles.length > 0) {
+      navigate("/apply-recursica-theme/review-text-styles");
+    } else if (nonRecursicaEffectStyles.length > 0) {
+      navigate("/apply-recursica-theme/review-effect-styles");
+    } else if (clashVars.length > 0) {
       navigate("/apply-recursica-theme/review-clash");
     } else if (unmatchedVars.length > 0) {
       navigate("/apply-recursica-theme/review-unmatched");
@@ -31,6 +41,8 @@ export default function OverviewStep() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    nonRecursicaTextStyles.length,
+    nonRecursicaEffectStyles.length,
     clashVars.length,
     unmatchedVars.length,
     nonRecursicaVars.length,
@@ -42,9 +54,9 @@ export default function OverviewStep() {
       <Button
         size="compact-md"
         variant="light"
-        onClick={() => navigate("/import")}
+        onClick={isDependentPage ? handleSkipPage : () => navigate("/import")}
       >
-        Cancel
+        {isDependentPage ? "Skip" : "Cancel"}
       </Button>
       <Button size="compact-md" onClick={handleNext}>
         Next →
@@ -62,6 +74,18 @@ export default function OverviewStep() {
       </p>
 
       <div style={{ padding: 10, backgroundColor: "#f5f5f5", borderRadius: 6 }}>
+        {nonRecursicaTextStyles.length > 0 && (
+          <div style={infoRow}>
+            <span style={labelStyle}>Legacy Text Styles</span>
+            <strong>{nonRecursicaTextStyles.length}</strong>
+          </div>
+        )}
+        {nonRecursicaEffectStyles.length > 0 && (
+          <div style={infoRow}>
+            <span style={labelStyle}>Legacy Effect Styles</span>
+            <strong>{nonRecursicaEffectStyles.length}</strong>
+          </div>
+        )}
         <div style={infoRow}>
           <span style={labelStyle}>Variables not found in Theme</span>
           <strong>{unmatchedVars.length}</strong>

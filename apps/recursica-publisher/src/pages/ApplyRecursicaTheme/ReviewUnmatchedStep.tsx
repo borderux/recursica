@@ -58,8 +58,10 @@ export default function ReviewUnmatchedStep() {
     const uv = unmatchedVars[currentIndex];
     const selectedPath = fixSelections.get(uv.variableId);
     if (!selectedPath) return;
-    // For now, treat fix the same as a navigation action
-    // TODO: Wire up the actual remap logic
+
+    // Commit the "fix" decision
+    setUnmatchedAction(uv.variableId, "fix");
+
     if (currentIndex < unmatchedVars.length - 1) {
       navigate(`/apply-recursica-theme/review-unmatched?i=${currentIndex + 1}`);
     } else {

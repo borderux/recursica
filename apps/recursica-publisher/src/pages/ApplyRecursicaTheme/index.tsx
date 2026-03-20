@@ -7,6 +7,8 @@ import OverviewStep from "./OverviewStep";
 import ReviewClashStep from "./ReviewClashStep";
 import ReviewUnmatchedStep from "./ReviewUnmatchedStep";
 import ReviewNonRecursicaStep from "./ReviewNonRecursicaStep";
+import ReviewTextStylesStep from "./ReviewTextStylesStep";
+import ReviewEffectStylesStep from "./ReviewEffectStylesStep";
 import ApplyingStep from "./ApplyingStep";
 import NextPageStep from "./NextPageStep";
 
@@ -23,6 +25,11 @@ export default function ApplyRecursicaTheme() {
           <Route
             path="review-non-recursica"
             element={<ReviewNonRecursicaStep />}
+          />
+          <Route path="review-text-styles" element={<ReviewTextStylesStep />} />
+          <Route
+            path="review-effect-styles"
+            element={<ReviewEffectStylesStep />}
           />
           <Route path="applying" element={<ApplyingStep />} />
           <Route path="next-page" element={<NextPageStep />} />
