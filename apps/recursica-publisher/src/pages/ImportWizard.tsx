@@ -7,7 +7,8 @@ import Step1ComponentSelection from "./ImportWizard/Step1ComponentSelection";
 import Step2DependencyOverview from "./ImportWizard/Step2DependencyOverview";
 import Step5Importing from "./ImportWizard/Step5Importing";
 import ExistingImport from "./ImportWizard/ExistingImport";
-import Step1CollectionMerge from "./ImportWizard/MergeWizard/Step1CollectionMerge";
+import Step1ComponentMerge from "./ImportWizard/MergeWizard/Step1ComponentMerge";
+import Step2MergeProgress from "./ImportWizard/MergeWizard/Step2MergeProgress";
 
 export default function ImportWizard() {
   const navigate = useNavigate();
@@ -116,7 +117,8 @@ export default function ImportWizard() {
           <Route path="/step2" element={<Step2DependencyOverview />} />
           <Route path="/step5" element={<Step5Importing />} />
           <Route path="/existing" element={<ExistingImport />} />
-          <Route path="/merge/step1" element={<Step1CollectionMerge />} />
+          <Route path="/merge/components" element={<Step1ComponentMerge />} />
+          <Route path="/merge/progress" element={<Step2MergeProgress />} />
         </Routes>
       </PageLayout>
     </ImportWizardProvider>

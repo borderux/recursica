@@ -1,8 +1,21 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 
+export interface FooterActionDef {
+  label: React.ReactNode;
+  onClick?: (e?: React.MouseEvent<HTMLButtonElement>) => void;
+  disabled?: boolean;
+  loading?: boolean;
+}
+
+export interface FooterActionsPayload {
+  primary: FooterActionDef;
+  secondary?: FooterActionDef[];
+  onBackOverride?: () => void;
+}
+
 interface FooterActionsContextValue {
-  footerActions: React.ReactNode;
-  setFooterActions: (actions: React.ReactNode) => void;
+  footerActions: FooterActionsPayload | null;
+  setFooterActions: (actions: FooterActionsPayload | null) => void;
 }
 
 const FooterActionsContext = createContext<FooterActionsContextValue>({
@@ -22,21 +35,18 @@ export function useFooterActionsState() {
 /**
  * Hook for pages/components to dynamically place buttons in the footer.
  *
- * Pass a ReactNode and a dependency array — the footer updates when deps change,
- * and clears automatically when the component unmounts.
- *
  * @example
  * useFooterActions(
- *   <>
- *     <Button onClick={handleNext}>Next</Button>
- *     <Button onClick={handleCancel}>Cancel</Button>
- *   </>,
+ *   {
+ *     secondary: [{ label: "Cancel", onClick: handleCancel }],
+ *     primary: { label: "Next", onClick: handleNext }
+ *   },
  *   [handleNext, handleCancel]
  * );
  */
 // eslint-disable-next-line react-refresh/only-export-components
 export function useFooterActions(
-  actions: React.ReactNode,
+  actions: FooterActionsPayload | null,
   deps: React.DependencyList = [],
 ) {
   const { setFooterActions } = useContext(FooterActionsContext);
@@ -57,7 +67,8 @@ export function FooterActionsProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [footerActions, setFooterActions] = useState<React.ReactNode>(null);
+  const [footerActions, setFooterActions] =
+    useState<FooterActionsPayload | null>(null);
 
   return (
     <FooterActionsContext.Provider value={{ footerActions, setFooterActions }}>

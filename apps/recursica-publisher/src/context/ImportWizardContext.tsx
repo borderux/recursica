@@ -22,6 +22,13 @@ export interface VariableSummary {
   layers: { existing: number; new: number };
 }
 
+export interface ComponentMergeChoice {
+  guid: string;
+  name: string;
+  importedPageId: string;
+  choice: "deprecate" | "keep" | "use_existing";
+}
+
 export interface ImportWizardState {
   currentStep: number;
   selectedComponent: {
@@ -30,6 +37,7 @@ export interface ImportWizardState {
     version: number;
     ref?: string;
   } | null;
+  componentMergeChoices: ComponentMergeChoice[];
   dependencies: DependencySelection[];
   variableCollections: {
     tokens: "new" | "existing";
@@ -66,6 +74,7 @@ interface ImportWizardContextType {
 const initialState: ImportWizardState = {
   currentStep: 1,
   selectedComponent: null,
+  componentMergeChoices: [],
   dependencies: [],
   variableCollections: {
     tokens: "existing",

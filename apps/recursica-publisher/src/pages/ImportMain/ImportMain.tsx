@@ -1,11 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import { PageLayout } from "../../components/PageLayout";
 import { useAuth } from "../../context/useAuth";
 import { Title } from "../../components/Title";
 import { Text } from "../../components/Text";
 import { Stack } from "../../components/Stack";
-import { Button } from "../../components/Button";
 import { Alert } from "../../components/Alert";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import {
@@ -15,6 +14,7 @@ import {
 } from "../../components/ComponentList";
 import { callPlugin } from "../../utils/callPlugin";
 import { getComponentCleanName } from "../../plugin/utils/getComponentCleanName";
+import { useFooterActions } from "../../context/FooterActionsContext";
 import classes from "./ImportMain.module.css";
 
 const RECURSICA_FIGMA_OWNER = "borderux";
@@ -42,6 +42,30 @@ export default function ImportMain() {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [checkingExisting, setCheckingExisting] = useState(true);
+
+  useEffect(() => {
+    const checkForExisting = async () => {
+      try {
+        const { promise } = callPlugin("checkForExistingPrimaryImport", {});
+        const response = await promise;
+
+        if (response.success && response.data) {
+          const data = response.data as { exists: boolean };
+          if (data.exists) {
+            navigate("/import-wizard/existing", { replace: true });
+            return;
+          }
+        }
+      } catch (err) {
+        console.error("[ImportMain] Error checking for existing import:", err);
+      } finally {
+        setCheckingExisting(false);
+      }
+    };
+
+    checkForExisting();
+  }, [navigate]);
 
   useEffect(() => {
     const loadComponents = async () => {
@@ -184,6 +208,39 @@ export default function ImportMain() {
     loadComponents();
   }, [searchParams, accessToken]);
 
+  const handleImport = useCallback(() => {
+    const ref = searchParams.get("ref") || "main";
+    const first = selectedComponents[0];
+    if (first) {
+      navigate(
+        `/import-wizard/step1?guid=${encodeURIComponent(first.guid)}&ref=${encodeURIComponent(ref)}`,
+        {
+          state: { fromImportMain: true },
+        },
+      );
+    }
+  }, [selectedComponents, searchParams, navigate]);
+
+  useFooterActions(
+    !loading && !checkingExisting && !error && components.length > 0
+      ? {
+          primary: {
+            label: "Import",
+            onClick: handleImport,
+            disabled: selectedComponents.length === 0,
+          },
+        }
+      : null,
+    [
+      loading,
+      checkingExisting,
+      error,
+      components.length,
+      handleImport,
+      selectedComponents.length,
+    ],
+  );
+
   return (
     <PageLayout>
       <Stack gap={20} className={classes.root}>
@@ -210,10 +267,14 @@ export default function ImportMain() {
           </Text>
         )}
 
-        {loading && (
+        {(loading || checkingExisting) && (
           <div className={classes.loading}>
             <LoadingSpinner />
-            <Text variant="body">Loading components...</Text>
+            <Text variant="body">
+              {checkingExisting
+                ? "Checking existing imports..."
+                : "Loading components..."}
+            </Text>
           </div>
         )}
 
@@ -223,38 +284,19 @@ export default function ImportMain() {
           </Alert>
         )}
 
-        {!loading && !error && components.length === 0 && (
+        {!loading && !checkingExisting && !error && components.length === 0 && (
           <Text variant="body" className={classes.empty}>
             No components available.
           </Text>
         )}
 
-        {!loading && !error && components.length > 0 && (
+        {!loading && !checkingExisting && !error && components.length > 0 && (
           <Stack gap={16} style={{ width: "100%", alignItems: "center" }}>
             <ComponentList
               components={components}
               selectedComponents={selectedComponents}
               onSelectionChange={setSelectedComponents}
             />
-            <Button
-              disabled={selectedComponents.length === 0}
-              onClick={() => {
-                const ref = searchParams.get("ref") || "main";
-                // For now, if we only support one, take the first one
-                const first = selectedComponents[0];
-                if (first) {
-                  navigate(
-                    `/import-wizard/step1?guid=${encodeURIComponent(first.guid)}&ref=${encodeURIComponent(ref)}`,
-                    {
-                      state: { fromImportMain: true },
-                    },
-                  );
-                }
-              }}
-              style={{ alignSelf: "flex-end", marginTop: "16px" }}
-            >
-              Import
-            </Button>
           </Stack>
         )}
       </Stack>

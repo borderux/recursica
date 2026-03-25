@@ -4,7 +4,7 @@ import { useApplyTheme } from "../../context/ApplyThemeContext";
 import { useFooterActions } from "../../context/FooterActionsContext";
 import { Stack } from "../../components/Stack";
 import { Title } from "../../components/Title";
-import { Button } from "../../components/Button";
+
 import { Select } from "../../components/Select";
 import { infoRow, labelStyle, linkStyle } from "./styles";
 
@@ -82,22 +82,14 @@ export default function ReviewTextStylesStep() {
   const decisionMappedId = decision?.mappedStyleId;
 
   useFooterActions(
-    <>
-      <Button
-        size="compact-md"
-        variant="light"
-        onClick={() => handleAction("ignore")}
-      >
-        Ignore
-      </Button>
-      <Button
-        size="compact-md"
-        disabled={!decisionMappedId && decision?.action !== "map"}
-        onClick={() => handleAction("map", decisionMappedId)}
-      >
-        Next
-      </Button>
-    </>,
+    {
+      secondary: [{ label: "Ignore", onClick: () => handleAction("ignore") }],
+      primary: {
+        label: "Next",
+        disabled: !decisionMappedId && decision?.action !== "map",
+        onClick: () => handleAction("map", decisionMappedId),
+      },
+    },
     [handleAction, decisionMappedId, decision?.action],
   );
 

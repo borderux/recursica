@@ -4,7 +4,7 @@ import { useApplyTheme } from "../../context/ApplyThemeContext";
 import { useFooterActions } from "../../context/FooterActionsContext";
 import { Stack } from "../../components/Stack";
 import { Title } from "../../components/Title";
-import { Button } from "../../components/Button";
+
 import { infoRow, labelStyle, warningCard } from "./styles";
 
 export default function OverviewStep() {
@@ -50,18 +50,15 @@ export default function OverviewStep() {
   ]);
 
   useFooterActions(
-    <>
-      <Button
-        size="compact-md"
-        variant="light"
-        onClick={isDependentPage ? handleSkipPage : () => navigate("/import")}
-      >
-        {isDependentPage ? "Skip" : "Cancel"}
-      </Button>
-      <Button size="compact-md" onClick={handleNext}>
-        Next →
-      </Button>
-    </>,
+    {
+      secondary: [
+        {
+          label: isDependentPage ? "Skip" : "Cancel",
+          onClick: isDependentPage ? handleSkipPage : () => navigate("/import"),
+        },
+      ],
+      primary: { label: "Next →", onClick: handleNext },
+    },
     [handleNext, navigate],
   );
 

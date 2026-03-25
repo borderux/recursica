@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { DebugConsole } from "../../components/DebugConsole";
-import { Button } from "../../components/Button";
 import { useImportWizard } from "../../context/ImportWizardContext";
+import { useFooterActions } from "../../context/FooterActionsContext";
 import { useImportData } from "../../context/ImportDataContext";
 import { callPlugin } from "../../utils/callPlugin";
 import type { DebugConsoleMessage } from "../../plugin/services/import-export/debugConsole";
@@ -307,17 +307,12 @@ export default function Step5Importing() {
     loadingSummary,
   ]);
 
-  const handleDone = () => {
-    // Navigate to Review Import page for errors
+  const handleDone = useCallback(() => {
+    // Navigate to Review Import page
     navigate("/import-wizard/existing");
-  };
+  }, [navigate]);
 
-  const handleMerge = () => {
-    // Navigate to Merge step 1
-    navigate("/import-wizard/merge/step1");
-  };
-
-  const handleCleanup = async () => {
+  const handleCleanup = useCallback(async () => {
     setIsCleaningUp(true);
     try {
       const { promise } = callPlugin("cleanupFailedImport", {});
@@ -343,7 +338,27 @@ export default function Step5Importing() {
       resetWizard();
       navigate("/");
     }
-  };
+  }, [setImportData, resetWizard, navigate]);
+
+  useFooterActions(
+    {
+      primary: {
+        label: "Done",
+        onClick: handleDone,
+        disabled: importError ? isCleaningUp : isImporting,
+      },
+      secondary: importError
+        ? [
+            {
+              label: isCleaningUp ? "Cleaning up..." : "Cleanup",
+              onClick: handleCleanup,
+              disabled: isCleaningUp,
+            },
+          ]
+        : undefined,
+    },
+    [handleDone, handleCleanup, isCleaningUp, isImporting, importError],
+  );
 
   const componentName =
     wizardState.selectedComponent?.name ||
@@ -383,30 +398,6 @@ export default function Step5Importing() {
         debugLogs={importDebugLogs}
         successMessage={`Import complete: ${componentName}`}
       />
-
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: "12px",
-          marginTop: "20px",
-        }}
-      >
-        {importError ? (
-          <>
-            <Button onClick={handleDone} disabled={isCleaningUp}>
-              Done
-            </Button>
-            <Button onClick={handleCleanup} disabled={isCleaningUp}>
-              {isCleaningUp ? "Cleaning up..." : "Cleanup"}
-            </Button>
-          </>
-        ) : (
-          <Button onClick={handleMerge} disabled={isImporting}>
-            Done
-          </Button>
-        )}
-      </div>
     </div>
   );
 }

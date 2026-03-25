@@ -1,6 +1,7 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useSearchParams, useNavigate, useLocation } from "react-router";
 import { useImportWizard } from "../../context/ImportWizardContext";
+import { useFooterActions } from "../../context/FooterActionsContext";
 import { useAuth } from "../../context/useAuth";
 import {
   ComponentList,
@@ -8,7 +9,6 @@ import {
   type ComponentBadgeStatus,
 } from "../../components/ComponentList";
 import { callPlugin } from "../../utils/callPlugin";
-import { Button } from "../../components/Button";
 
 const RECURSICA_FIGMA_OWNER = "borderux";
 const RECURSICA_FIGMA_REPO = "recursica-figma";
@@ -251,39 +251,68 @@ export default function Step1ComponentSelection() {
     location.state,
   ]);
 
-  const handleComponentSelect = (component: ComponentInfo) => {
-    console.log(
-      "[Step1ComponentSelection] handleComponentSelect called:",
-      component.name,
-    );
-    navigatingAwayRef.current = true; // Set ref synchronously before any async operations
-    const ref = searchParams.get("ref") || "main";
-    console.log("[Step1ComponentSelection] Setting wizard state, ref:", ref);
-    setWizardState((prev) => {
+  const handleComponentSelect = useCallback(
+    (component: ComponentInfo) => {
       console.log(
-        "[Step1ComponentSelection] setWizardState callback, prev:",
-        prev,
+        "[Step1ComponentSelection] handleComponentSelect called:",
+        component.name,
       );
-      return {
-        ...prev,
-        selectedComponent: {
-          guid: component.guid,
-          name: component.name,
-          version: component.version,
-          ref,
-        },
-        currentStep: 2,
-      };
-    });
-    console.log("[Step1ComponentSelection] Navigating to step2");
-    // Preserve the fromImportMain state when navigating to step2
-    const locationState =
-      (location.state as { fromImportMain?: boolean }) || {};
-    navigate("/import-wizard/step2", {
-      state: locationState,
-    });
-    console.log("[Step1ComponentSelection] Navigate called");
-  };
+      navigatingAwayRef.current = true; // Set ref synchronously before any async operations
+      const ref = searchParams.get("ref") || "main";
+      console.log("[Step1ComponentSelection] Setting wizard state, ref:", ref);
+      setWizardState((prev) => {
+        console.log(
+          "[Step1ComponentSelection] setWizardState callback, prev:",
+          prev,
+        );
+        return {
+          ...prev,
+          selectedComponent: {
+            guid: component.guid,
+            name: component.name,
+            version: component.version,
+            ref,
+          },
+          currentStep: 2,
+        };
+      });
+      console.log("[Step1ComponentSelection] Navigating to step2");
+      // Preserve the fromImportMain state when navigating to step2
+      const locationState =
+        (location.state as { fromImportMain?: boolean }) || {};
+      navigate("/import-wizard/step2", {
+        state: locationState,
+      });
+      console.log("[Step1ComponentSelection] Navigate called");
+    },
+    [searchParams, setWizardState, navigate, location.state],
+  );
+
+  // Check if we're about to auto-select (guid in params)
+  const handleImportSelected = useCallback(() => {
+    if (selectedComponents.length > 0) {
+      handleComponentSelect(selectedComponents[0]);
+    }
+  }, [selectedComponents, handleComponentSelect]);
+
+  useFooterActions(
+    !loading && !error && components.length > 0
+      ? {
+          primary: {
+            label: "Import Selected",
+            onClick: handleImportSelected,
+            disabled: selectedComponents.length === 0,
+          },
+        }
+      : null,
+    [
+      loading,
+      error,
+      components.length,
+      handleImportSelected,
+      selectedComponents.length,
+    ],
+  );
 
   // Check ref first (synchronous, set before navigate)
   if (navigatingAwayRef.current) {
@@ -293,26 +322,6 @@ export default function Step1ComponentSelection() {
     return null;
   }
 
-  console.log(
-    "[Step1ComponentSelection] Render - loading:",
-    loading,
-    "components.length:",
-    components.length,
-    "error:",
-    error,
-  );
-  console.log(
-    "[Step1ComponentSelection] Render - searchParams ref:",
-    searchParams.get("ref"),
-  );
-  console.log(
-    "[Step1ComponentSelection] Render - wizardState.selectedComponent:",
-    wizardState.selectedComponent,
-    "currentStep:",
-    wizardState.currentStep,
-  );
-
-  // Check if we're about to auto-select (guid in params)
   // Hide content immediately if guid exists, even during loading, to prevent flash
   const componentGuid = searchParams.get("guid");
   if (componentGuid && !wizardState.selectedComponent) {
@@ -358,10 +367,6 @@ export default function Step1ComponentSelection() {
 
       {(() => {
         const ref = searchParams.get("ref");
-        console.log(
-          "[Step1ComponentSelection] Render - checking ref, value:",
-          ref,
-        );
         return ref ? (
           <div
             style={{
@@ -409,10 +414,6 @@ export default function Step1ComponentSelection() {
       })()}
 
       {(() => {
-        console.log(
-          "[Step1ComponentSelection] Render - loading check, loading:",
-          loading,
-        );
         return loading ? (
           <div
             style={{
@@ -472,17 +473,6 @@ export default function Step1ComponentSelection() {
             selectedComponents={selectedComponents}
             onSelectionChange={setSelectedComponents}
           />
-          <Button
-            disabled={selectedComponents.length === 0}
-            onClick={() => {
-              if (selectedComponents.length > 0) {
-                handleComponentSelect(selectedComponents[0]);
-              }
-            }}
-            style={{ alignSelf: "flex-end" }}
-          >
-            Import Selected
-          </Button>
         </div>
       )}
     </div>

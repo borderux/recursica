@@ -3,14 +3,8 @@ import { useNavigate } from "react-router";
 import { callPlugin } from "../../utils/callPlugin";
 import type { PrimaryImportMetadata } from "../../plugin/services/import-export/singleComponentImportService";
 import type { ImportSummaryData } from "../../plugin/services/import-export/getImportSummary";
-import {
-  Title,
-  Text,
-  Stack,
-  Button,
-  Alert,
-  LoadingSpinner,
-} from "../../components";
+import { Title, Text, Stack, Alert, LoadingSpinner } from "../../components";
+import { useFooterActions } from "../../context/FooterActionsContext";
 import classes from "./ExistingImport.module.css";
 
 export default function ExistingImport() {
@@ -106,6 +100,36 @@ export default function ExistingImport() {
       console.error("[ExistingImport] Error:", err);
     }
   };
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  useFooterActions(
+    metadata && !metadata.importError
+      ? {
+          secondary: [
+            {
+              label: loading ? "Cancelling..." : "Cancel",
+              onClick: handleDelete,
+              disabled: loading,
+            },
+          ],
+          primary: {
+            label: "Merge",
+            onClick: () => navigate("/import-wizard/merge/components"),
+            disabled: loading,
+          },
+        }
+      : {
+          primary: {
+            label: loading ? "Cancelling..." : "Cancel",
+            onClick: handleDelete,
+            disabled: loading,
+          },
+        },
+    [loading, metadata, navigate],
+  );
 
   if (!metadata) {
     return (
@@ -245,21 +269,6 @@ export default function ExistingImport() {
       )}
 
       {error && <Alert variant="error">{error}</Alert>}
-
-      <div className={classes.actions}>
-        <Button onClick={handleDelete} disabled={loading}>
-          {loading ? "Cancelling..." : "Cancel"}
-        </Button>
-        {!metadata.importError && (
-          <Button
-            variant="filled"
-            onClick={() => navigate("/import-wizard/merge/step1")}
-            disabled={loading}
-          >
-            Merge
-          </Button>
-        )}
-      </div>
     </Stack>
   );
 }

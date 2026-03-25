@@ -4,7 +4,7 @@ import { useApplyTheme } from "../../context/ApplyThemeContext";
 import { useFooterActions } from "../../context/FooterActionsContext";
 import { Stack } from "../../components/Stack";
 import { Title } from "../../components/Title";
-import { Button } from "../../components/Button";
+
 import { VariableInput } from "../../components/VariableInput";
 import { infoRow, labelStyle, linkStyle } from "./styles";
 
@@ -93,18 +93,10 @@ export default function ReviewUnmatchedStep() {
     : false;
 
   useFooterActions(
-    <>
-      <Button
-        size="compact-md"
-        variant="light"
-        onClick={() => handleAction("ignore")}
-      >
-        Ignore
-      </Button>
-      <Button size="compact-md" disabled={!hasFixSelection} onClick={handleFix}>
-        Fix
-      </Button>
-    </>,
+    {
+      secondary: [{ label: "Ignore", onClick: () => handleAction("ignore") }],
+      primary: { label: "Fix", disabled: !hasFixSelection, onClick: handleFix },
+    },
     [handleAction, handleFix, hasFixSelection],
   );
 

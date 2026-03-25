@@ -1,18 +1,19 @@
 /// <reference types="@figma/plugin-typings" />
 import type { ResponseMessage } from "../../types/messages";
 import { retSuccess, retError } from "../../utils/response";
+import type { DebugConsoleMessage } from "./debugConsole";
 import { debugConsole } from "./debugConsole";
 import {
   PRIMARY_IMPORT_KEY,
   IMPORT_RESULT_KEY,
   DIVIDER_PLUGIN_DATA_KEY,
   CONSTRUCTION_ICON,
+  checkForExistingPrimaryImport,
 } from "./singleComponentImportService";
-import type { PrimaryImportMetadata } from "./singleComponentImportService";
-import {
-  FIXED_COLLECTION_GUIDS,
-  VALID_COLLECTION_NAMES,
-} from "../../../const/CollectionConstants";
+import type {
+  PrimaryImportMetadata,
+  CheckForExistingPrimaryImportData,
+} from "./singleComponentImportService";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface GetLocalVariableCollectionsData {
@@ -36,19 +37,17 @@ export interface GetLocalVariableCollectionsResponseData {
 }
 
 export interface MergeImportGroupData {
-  pageId: string;
-  collectionChoices: Array<{
-    newCollectionId: string;
-    newCollectionGuid: string | null;
-    existingCollectionId: string | null;
-    choice: "merge" | "keep";
+  componentChoices?: Array<{
+    guid: string;
+    name: string;
+    importedPageId: string;
+    choice: "deprecate" | "keep" | "use_existing";
   }>;
 }
 
 export interface MergeImportGroupResponseData {
-  mergedCollections: number;
-  keptCollections: number;
   pagesRenamed: number;
+  debugLogs?: DebugConsoleMessage[];
 }
 
 /**
@@ -155,10 +154,27 @@ export async function mergeImportGroup(
   try {
     debugConsole.log("=== Starting Import Group Merge ===");
 
-    // Step 1: Get the main page and metadata
+    // Step 1: Get the main page and metadata natively
+    const existingImport = await checkForExistingPrimaryImport(
+      {} as CheckForExistingPrimaryImportData,
+    );
+    const existingImportData = existingImport.data as {
+      exists: boolean;
+      pageId?: string;
+      metadata?: PrimaryImportMetadata;
+    };
+
+    if (
+      !existingImport.success ||
+      !existingImportData.exists ||
+      !existingImportData.pageId
+    ) {
+      throw new Error("Active import not found or page ID missing");
+    }
+
     await figma.loadAllPagesAsync();
     const mainPage = (await figma.getNodeByIdAsync(
-      data.pageId,
+      existingImportData.pageId,
     )) as PageNode | null;
     if (!mainPage || mainPage.type !== "PAGE") {
       throw new Error("Main page not found");
@@ -174,209 +190,7 @@ export async function mergeImportGroup(
       `Found metadata for component: ${metadata.componentName} (Version: ${metadata.componentVersion})`,
     );
 
-    // Step 2: Merge collections
-    let mergedCollections = 0;
-    let keptCollections = 0;
-    const COLLECTION_GUID_KEY = "recursica:collectionId";
-
-    for (const choice of data.collectionChoices) {
-      if (choice.choice === "merge") {
-        try {
-          const newCollection =
-            await figma.variables.getVariableCollectionByIdAsync(
-              choice.newCollectionId,
-            );
-
-          if (!newCollection) {
-            debugConsole.warning(
-              `New collection ${choice.newCollectionId} not found, skipping merge`,
-            );
-            continue;
-          }
-
-          // Find or get existing collection
-          let existingCollection: VariableCollection | null = null;
-
-          if (choice.existingCollectionId) {
-            // Use provided existing collection ID
-            existingCollection =
-              await figma.variables.getVariableCollectionByIdAsync(
-                choice.existingCollectionId,
-              );
-          } else {
-            // No existing collection ID provided - get GUID from new collection and find by GUID
-            const newCollectionGuid = newCollection.getSharedPluginData(
-              "recursica",
-              COLLECTION_GUID_KEY,
-            );
-
-            if (newCollectionGuid) {
-              // Find existing collection by GUID
-              const allCollections =
-                await figma.variables.getLocalVariableCollectionsAsync();
-
-              for (const collection of allCollections) {
-                const guid = collection.getSharedPluginData(
-                  "recursica",
-                  COLLECTION_GUID_KEY,
-                );
-                if (guid === newCollectionGuid) {
-                  existingCollection = collection;
-                  break;
-                }
-              }
-
-              // If not found and it's a standard collection GUID, find or create a standard collection
-              if (
-                !existingCollection &&
-                (newCollectionGuid === FIXED_COLLECTION_GUIDS.LAYER ||
-                  newCollectionGuid === FIXED_COLLECTION_GUIDS.TOKENS ||
-                  newCollectionGuid === FIXED_COLLECTION_GUIDS.THEME)
-              ) {
-                let standardName: string;
-                if (newCollectionGuid === FIXED_COLLECTION_GUIDS.LAYER) {
-                  standardName = VALID_COLLECTION_NAMES.LAYER;
-                } else if (
-                  newCollectionGuid === FIXED_COLLECTION_GUIDS.TOKENS
-                ) {
-                  standardName = VALID_COLLECTION_NAMES.TOKENS;
-                } else {
-                  standardName = VALID_COLLECTION_NAMES.THEME;
-                }
-
-                // Try to find existing collection with correct name and GUID
-                for (const collection of allCollections) {
-                  const guid = collection.getSharedPluginData(
-                    "recursica",
-                    COLLECTION_GUID_KEY,
-                  );
-                  if (
-                    guid === newCollectionGuid &&
-                    collection.name === standardName
-                  ) {
-                    existingCollection = collection;
-                    break;
-                  }
-                }
-
-                // If still not found, create a new standard collection with correct name
-                if (!existingCollection) {
-                  existingCollection =
-                    figma.variables.createVariableCollection(standardName);
-                  existingCollection.setSharedPluginData(
-                    "recursica",
-                    COLLECTION_GUID_KEY,
-                    newCollectionGuid,
-                  );
-                  debugConsole.log(
-                    `Created new standard collection: "${standardName}"`,
-                  );
-                }
-              }
-            }
-          }
-
-          if (!existingCollection) {
-            debugConsole.warning(
-              `Could not find or create existing collection for merge, skipping`,
-            );
-            continue;
-          }
-
-          if (existingCollection.id === newCollection.id) {
-            debugConsole.log(
-              `Collection "${newCollection.name}" (${newCollection.id.substring(0, 8)}...) is already the existing collection. Skipping merge.`,
-            );
-            keptCollections++;
-            continue;
-          }
-
-          debugConsole.log(
-            `Merging collection "${newCollection.name}" (${choice.newCollectionId.substring(0, 8)}...) into "${existingCollection.name}" (${existingCollection.id.substring(0, 8)}...)`,
-          );
-
-          // Get all variables from both collections
-          const newVariablePromises = newCollection.variableIds.map((id) =>
-            figma.variables.getVariableByIdAsync(id),
-          );
-          const newVariableObjects = await Promise.all(newVariablePromises);
-
-          const existingVariablePromises = existingCollection.variableIds.map(
-            (id) => figma.variables.getVariableByIdAsync(id),
-          );
-          const existingVariables = await Promise.all(existingVariablePromises);
-          const existingVariableNames = new Set(
-            existingVariables.filter((v) => v !== null).map((v) => v!.name),
-          );
-
-          // Copy each variable to the existing collection
-          for (const variable of newVariableObjects) {
-            if (!variable) continue;
-
-            try {
-              // Check if variable with same name exists in existing collection
-              if (existingVariableNames.has(variable.name)) {
-                // Variable exists, skip it (we can't update existing variables)
-                debugConsole.warning(
-                  `Variable "${variable.name}" already exists in collection "${existingCollection.name}", skipping`,
-                );
-                continue;
-              }
-
-              // Create a new variable in the existing collection
-              const newVariable = figma.variables.createVariable(
-                variable.name,
-                existingCollection,
-                variable.resolvedType,
-              );
-
-              // Copy variable values for each mode in the existing collection
-              // Use the value from the new variable's first mode if the mode doesn't match
-              for (const mode of existingCollection.modes) {
-                const modeId = mode.modeId;
-                let value = variable.valuesByMode[modeId];
-
-                // If the new variable doesn't have a value for this mode,
-                // try to use the value from the first mode of the new variable
-                if (value === undefined && newCollection.modes.length > 0) {
-                  const firstModeId = newCollection.modes[0].modeId;
-                  value = variable.valuesByMode[firstModeId];
-                }
-
-                if (value !== undefined) {
-                  newVariable.setValueForMode(modeId, value);
-                }
-              }
-
-              debugConsole.log(
-                `  ✓ Copied variable "${variable.name}" to collection "${existingCollection.name}"`,
-              );
-            } catch (err) {
-              debugConsole.warning(
-                `Failed to copy variable "${variable.name}": ${err instanceof Error ? err.message : String(err)}`,
-              );
-            }
-          }
-
-          // Delete the new collection (since we've merged its variables)
-          newCollection.remove();
-          mergedCollections++;
-          debugConsole.log(
-            `✓ Merged and deleted collection: ${newCollection.name}`,
-          );
-        } catch (err) {
-          debugConsole.warning(
-            `Failed to merge collection: ${err instanceof Error ? err.message : String(err)}`,
-          );
-        }
-      } else {
-        // Keep the collection as-is
-        keptCollections++;
-        debugConsole.log(`Kept collection: ${choice.newCollectionId}`);
-      }
-    }
-
-    // Step 3: Remove dividers
+    // Step 2: Remove dividers
     debugConsole.log("Removing dividers...");
     const allPages = figma.root.children;
     const dividersToDelete: PageNode[] = [];
@@ -420,6 +234,240 @@ export async function mergeImportGroup(
     }
     for (const name of dividerNames) {
       debugConsole.log(`Deleted divider: ${name}`);
+    }
+
+    // Step 3: Execute Component Merge Strategies
+    debugConsole.log("Processing component merge strategies...");
+
+    // Helper to build a stable map key for a component
+    const getComponentKey = (comp: ComponentNode): string => {
+      if (comp.parent?.type === "COMPONENT_SET") {
+        return `${comp.parent.name}::${comp.name}`;
+      }
+      return comp.name;
+    };
+
+    if (data.componentChoices && data.componentChoices.length > 0) {
+      for (const choice of data.componentChoices) {
+        try {
+          const newPage = (await figma.getNodeByIdAsync(
+            choice.importedPageId,
+          )) as PageNode | null;
+          if (!newPage) {
+            debugConsole.warning(
+              `Component merge: new page ${choice.importedPageId} not found`,
+            );
+            continue;
+          }
+
+          if (choice.choice === "keep") {
+            debugConsole.log(`Keeping component page: ${newPage.name}`);
+            // No action needed, Step 4 will just rename it to canonical
+            continue;
+          }
+
+          if (choice.choice === "deprecate") {
+            debugConsole.log(
+              `Deprecating all old versions and migrating to ${newPage.name}`,
+            );
+
+            // 1. Find ALL old versions
+            const oldPages: PageNode[] = [];
+            const PAGE_METADATA_KEY = "RecursicaPublishedMetadata";
+            const allPages = figma.root.children;
+
+            for (const page of allPages) {
+              if (page.type !== "PAGE" || page.id === newPage.id) continue;
+              const metaJson = page.getPluginData(PAGE_METADATA_KEY);
+              if (metaJson) {
+                try {
+                  const meta = JSON.parse(metaJson);
+                  if (meta.id === choice.guid) {
+                    oldPages.push(page);
+                  }
+                } catch {
+                  // Ignore parse errors on old pages
+                }
+              }
+            }
+
+            if (oldPages.length === 0) {
+              debugConsole.warning(
+                `Component merge: no old pages found for ${choice.name} to deprecate`,
+              );
+              continue;
+            }
+
+            // 2. Rename old pages and track their IDs
+            const oldPageIds = new Set(oldPages.map((p) => p.id));
+            for (const oldPage of oldPages) {
+              if (!oldPage.name.startsWith("[DEPRECATED]")) {
+                oldPage.name = `[DEPRECATED] ${oldPage.name}`;
+              }
+              debugConsole.log(`Deprecated old page: ${oldPage.name}`);
+            }
+
+            // 3. Build map of new components
+            const newMap = new Map<string, ComponentNode>();
+            const newComponents = newPage.findAllWithCriteria({
+              types: ["COMPONENT"],
+            });
+            for (const comp of newComponents) {
+              newMap.set(getComponentKey(comp), comp);
+            }
+
+            // 4. Find and swap instances locally where possible
+            // We search the entire file for instances pointing to components that live in any of the old pages
+            let swapCount = 0;
+            const allInstances = figma.root.findAllWithCriteria({
+              types: ["INSTANCE"],
+            });
+            for (const instance of allInstances) {
+              try {
+                const mainComp = await instance.getMainComponentAsync();
+                if (mainComp) {
+                  // Check if the main component lives in an old page
+                  let isOld = false;
+                  let curr: BaseNode | null = mainComp;
+                  while (curr) {
+                    if (oldPageIds.has(curr.id)) {
+                      isOld = true;
+                      break;
+                    }
+                    curr = curr.parent;
+                  }
+
+                  if (isOld) {
+                    const key = getComponentKey(mainComp);
+                    const counterpart = newMap.get(key);
+                    if (counterpart) {
+                      instance.swapComponent(counterpart);
+                      swapCount++;
+                    }
+                  }
+                }
+              } catch {
+                // Ignore instances that fail to swap
+              }
+            }
+            debugConsole.log(
+              `Successfully swapped ${swapCount} instances to the new component`,
+            );
+            // Step 4 will naturally rename newPage to canonical
+          }
+
+          if (choice.choice === "use_existing") {
+            // Find ALL existing versions to build a fallback map
+            // We search for ANY page matching the metadata GUID since UI didn't specify target
+            debugConsole.log(
+              `Discarding update for ${newPage.name} and pointing dependencies to existing...`,
+            );
+
+            let targetOldPage: PageNode | null = null;
+            const PAGE_METADATA_KEY = "RecursicaPublishedMetadata";
+            const allPages = figma.root.children;
+
+            for (const page of allPages) {
+              if (page.type !== "PAGE" || page.id === newPage.id) continue;
+              const metaJson = page.getPluginData(PAGE_METADATA_KEY);
+              if (metaJson) {
+                try {
+                  const meta = JSON.parse(metaJson);
+                  if (meta.id === choice.guid) {
+                    targetOldPage = page;
+                    break;
+                  }
+                } catch {
+                  // Ignore parse errors
+                }
+              }
+            }
+
+            if (targetOldPage) {
+              // 1. Build map of old components
+              const oldMap = new Map<string, ComponentNode>();
+              const oldComponents = targetOldPage.findAllWithCriteria({
+                types: ["COMPONENT"],
+              });
+              for (const comp of oldComponents) {
+                oldMap.set(getComponentKey(comp), comp);
+              }
+
+              // 2. We only need to swap instances inside newly IMPORTED pages (since existing pages wouldn't point to the new ⚠️ page yet)
+              let swapCount = 0;
+              for (const importedChoice of data.componentChoices) {
+                if (importedChoice.importedPageId === newPage.id) continue;
+
+                try {
+                  const importedPage = (await figma.getNodeByIdAsync(
+                    importedChoice.importedPageId,
+                  )) as PageNode | null;
+                  if (importedPage) {
+                    const instances = importedPage.findAllWithCriteria({
+                      types: ["INSTANCE"],
+                    });
+                    for (const instance of instances) {
+                      try {
+                        const mainComp = await instance.getMainComponentAsync();
+                        if (mainComp) {
+                          // Is this instance pointing to the new page we're discarding?
+                          let isNew = false;
+                          let curr: BaseNode | null = mainComp;
+                          while (curr) {
+                            if (curr.id === newPage.id) {
+                              isNew = true;
+                              break;
+                            }
+                            curr = curr.parent;
+                          }
+
+                          if (isNew) {
+                            const key = getComponentKey(mainComp);
+                            const counterpart = oldMap.get(key);
+                            if (counterpart) {
+                              instance.swapComponent(counterpart);
+                              swapCount++;
+                            }
+                          }
+                        }
+                      } catch {
+                        // ignore
+                      }
+                    }
+                  }
+                } catch {
+                  // ignore
+                }
+              }
+              debugConsole.log(
+                `Re-bound ${swapCount} dependent instances back to old existing component`,
+              );
+            } else {
+              debugConsole.warning(
+                `Could not find an existing page for GUID ${choice.guid} to fallback to!`,
+              );
+            }
+
+            // 3. Delete the newly imported page securely
+            try {
+              if (figma.currentPage.id === newPage.id) {
+                const safePage = allPages.find(
+                  (p) => p.type === "PAGE" && p.id !== newPage.id,
+                ) as PageNode | undefined;
+                if (safePage) figma.currentPage = safePage;
+              }
+              newPage.remove();
+              debugConsole.log(`Deleted discarded update page`);
+            } catch (err) {
+              debugConsole.warning(`Failed to delete discarded page: ${err}`);
+            }
+          }
+        } catch (err) {
+          debugConsole.error(
+            `Strategy execution failed for ${choice.name}: ${err}`,
+          );
+        }
+      }
     }
 
     // Step 4: Remove construction icons and rename pages with version numbers
@@ -529,8 +577,10 @@ export async function mergeImportGroup(
           ? pageInfo.pageMetadata.name!
           : metadata.componentName || newName;
 
-        // Sanitize component name: keep alphanumeric, spaces, dashes, and underscores
-        const sanitizedComponentName = componentName.replace(/[^\w\s-]/g, "");
+        // Sanitize component name for metadata: keep alphanumeric, spaces, dashes, and underscores
+        const sanitizedComponentName = componentName
+          .replace(/[^\w\s-]/g, "")
+          .trim();
 
         // IMPORTANT: Always use version from imported component metadata, NOT from existing page metadata.
         // The page metadata version should only be set FROM the imported component, never read from existing page metadata.
@@ -553,8 +603,8 @@ export async function mergeImportGroup(
           `Set page metadata for "${sanitizedComponentName}": GUID=${componentGuid.substring(0, 8)}..., version=${version}`,
         );
 
-        // Rename to just the sanitized component name
-        const finalName = sanitizedComponentName;
+        // Rename to the extracted new name (with icon removed), and trim whitespace to fix orphaned spaces
+        const finalName = newName.trim();
         page.name = finalName;
         pagesRenamed++;
         debugConsole.log(`Renamed page: "${newName}" -> "${finalName}"`);
@@ -600,13 +650,12 @@ export async function mergeImportGroup(
     }
 
     const responseData: MergeImportGroupResponseData = {
-      mergedCollections,
-      keptCollections,
       pagesRenamed,
+      debugLogs: debugConsole.getLogs(),
     };
 
     debugConsole.log(
-      `=== Merge Complete ===\n  Merged: ${mergedCollections} collection(s)\n  Kept: ${keptCollections} collection(s)\n  Renamed: ${pagesRenamed} page(s)`,
+      `=== Merge Complete ===\n  Renamed: ${pagesRenamed} component page(s) and cleared dividers`,
     );
 
     return retSuccess(

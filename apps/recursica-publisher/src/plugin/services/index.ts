@@ -1,5 +1,6 @@
 import { getCurrentUser } from "./getCurrentUser";
 import { loadPages } from "./loadPages";
+import { getComponentMergeOptions } from "./import-export/getComponentMergeOptions";
 import { exportPage } from "./import-export/pageExportNew";
 import {
   importPage,
@@ -77,6 +78,7 @@ export const services = {
   getAllComponents,
   pluginPromptResponse,
   switchToPage,
+  getComponentMergeOptions,
   checkForExistingPrimaryImport,
   createImportDividers,
   importSingleComponentWithWizard,
@@ -124,6 +126,7 @@ export {
   pluginPromptResponse,
   switchToPage,
   checkForExistingPrimaryImport,
+  getComponentMergeOptions,
   createImportDividers,
   importSingleComponentWithWizard,
   deleteImportGroup,
