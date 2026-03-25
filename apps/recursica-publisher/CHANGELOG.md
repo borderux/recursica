@@ -1,5 +1,11 @@
 # @recursica/publisher
 
+## 0.6.0
+
+### Minor Changes
+
+- [#329](https://github.com/borderux/recursica/pull/329) [`014f990`](https://github.com/borderux/recursica/commit/014f99030fe4971877e3a6e9aba7a1a10685a6ac) Thanks [@mlmassey](https://github.com/mlmassey)! - Added support for SECTION
+
 ## 0.5.0
 
 ### Minor Changes
