@@ -969,12 +969,31 @@ export async function restoreBoundVariablesForFills(
                   propertyValue[i].type === 15
                 ) {
                   const solidPaint = propertyValue[i] as SolidPaint;
+                  let fallbackColor = { ...solidPaint.color };
+                  let fallbackOpacity = solidPaint.opacity ?? 1;
+
+                  try {
+                    const resolved = variable.resolveForConsumer(node);
+                    if (
+                      resolved &&
+                      resolved.value &&
+                      typeof resolved.value === "object" &&
+                      "r" in resolved.value
+                    ) {
+                      const val = resolved.value as any;
+                      fallbackColor = { r: val.r, g: val.g, b: val.b };
+                      if ("a" in val) fallbackOpacity = val.a;
+                    }
+                  } catch {
+                    /* ignore */
+                  }
+
                   const freshPaint: SolidPaint = {
                     type: "SOLID",
                     visible: solidPaint.visible !== false,
-                    opacity: solidPaint.opacity ?? 1,
+                    opacity: fallbackOpacity,
                     blendMode: solidPaint.blendMode || "NORMAL",
-                    color: { ...solidPaint.color },
+                    color: fallbackColor,
                   };
                   const boundPaint = figma.variables.setBoundVariableForPaint(
                     freshPaint,
@@ -1055,12 +1074,31 @@ export async function restoreBoundVariablesForFills(
                         propertyValue[i].type === 15
                       ) {
                         const solidPaint = propertyValue[i] as SolidPaint;
+                        let fallbackColor = { ...solidPaint.color };
+                        let fallbackOpacity = solidPaint.opacity ?? 1;
+
+                        try {
+                          const resolved = variable.resolveForConsumer(node);
+                          if (
+                            resolved &&
+                            resolved.value &&
+                            typeof resolved.value === "object" &&
+                            "r" in resolved.value
+                          ) {
+                            const val = resolved.value as any;
+                            fallbackColor = { r: val.r, g: val.g, b: val.b };
+                            if ("a" in val) fallbackOpacity = val.a;
+                          }
+                        } catch {
+                          /* ignore */
+                        }
+
                         const freshPaint: SolidPaint = {
                           type: "SOLID",
                           visible: solidPaint.visible !== false,
-                          opacity: solidPaint.opacity ?? 1,
+                          opacity: fallbackOpacity,
                           blendMode: solidPaint.blendMode || "NORMAL",
-                          color: { ...solidPaint.color },
+                          color: fallbackColor,
                         };
                         const boundPaint =
                           figma.variables.setBoundVariableForPaint(
@@ -5024,12 +5062,31 @@ export async function recreateNodeFromData(
                   // In Figma, we must use setBoundVariableForPaint for fills
                   // First ensure it's a solid paint
                   if (newFill.type === "SOLID" || newFill.type === 15) {
+                    let fallbackColor = { ...newFill.color };
+                    let fallbackOpacity = newFill.opacity ?? 1;
+
+                    try {
+                      const resolved = variable.resolveForConsumer(newNode);
+                      if (
+                        resolved &&
+                        resolved.value &&
+                        typeof resolved.value === "object" &&
+                        "r" in resolved.value
+                      ) {
+                        const val = resolved.value as any;
+                        fallbackColor = { r: val.r, g: val.g, b: val.b };
+                        if ("a" in val) fallbackOpacity = val.a;
+                      }
+                    } catch {
+                      /* ignore */
+                    }
+
                     const freshPaint: SolidPaint = {
                       type: "SOLID",
                       visible: newFill.visible !== false,
-                      opacity: newFill.opacity ?? 1,
+                      opacity: fallbackOpacity,
                       blendMode: newFill.blendMode || "NORMAL",
-                      color: { ...newFill.color },
+                      color: fallbackColor,
                     };
                     newFill = figma.variables.setBoundVariableForPaint(
                       freshPaint,
@@ -5171,12 +5228,31 @@ export async function recreateNodeFromData(
                         propName === "color" &&
                         (newFill.type === "SOLID" || newFill.type === 15)
                       ) {
+                        let fallbackColor = { ...newFill.color };
+                        let fallbackOpacity = newFill.opacity ?? 1;
+
+                        try {
+                          const resolved = variable.resolveForConsumer(newNode);
+                          if (
+                            resolved &&
+                            resolved.value &&
+                            typeof resolved.value === "object" &&
+                            "r" in resolved.value
+                          ) {
+                            const val = resolved.value as any;
+                            fallbackColor = { r: val.r, g: val.g, b: val.b };
+                            if ("a" in val) fallbackOpacity = val.a;
+                          }
+                        } catch {
+                          /* ignore */
+                        }
+
                         const freshPaint: SolidPaint = {
                           type: "SOLID",
                           visible: newFill.visible !== false,
-                          opacity: newFill.opacity ?? 1,
+                          opacity: fallbackOpacity,
                           blendMode: newFill.blendMode || "NORMAL",
-                          color: { ...newFill.color },
+                          color: fallbackColor,
                         };
                         newFill = figma.variables.setBoundVariableForPaint(
                           freshPaint,
@@ -7682,12 +7758,12 @@ async function matchCollection(
     }
   }
 
-  // Second pass: Check by exact name (potential matches for non-standard collections)
+  // Second pass: Check by exact name (treated as recognized now per Non-Destructive rules)
   for (const collection of localCollections) {
     if (collection.name === entry.collectionName) {
       return {
         collection,
-        matchType: "potential",
+        matchType: "recognized",
       };
     }
   }
@@ -7820,17 +7896,9 @@ async function matchCollections(
   preCreatedCollections?: Map<string, VariableCollection>,
 ): Promise<{
   recognizedCollections: Map<string, VariableCollection>;
-  potentialMatches: Map<
-    string,
-    { entry: CollectionTableEntry; collection: VariableCollection }
-  >;
   collectionsToCreate: Map<string, CollectionTableEntry>;
 }> {
   const recognizedCollections = new Map<string, VariableCollection>();
-  const potentialMatches = new Map<
-    string,
-    { entry: CollectionTableEntry; collection: VariableCollection }
-  >();
   const collectionsToCreate = new Map<string, CollectionTableEntry>();
 
   const collections = collectionTable.getTable();
@@ -7865,12 +7933,9 @@ async function matchCollections(
       recognizedCollections.set(index, match.collection!);
     } else if (match.matchType === "potential") {
       debugConsole.log(
-        `? Potential match by name: "${entry.collectionName}" (index ${index})`,
+        `? Potential match by name: "${entry.collectionName}" (index ${index}) - Treated as recognized natively`,
       );
-      potentialMatches.set(index, {
-        entry,
-        collection: match.collection!,
-      });
+      recognizedCollections.set(index, match.collection!);
     } else {
       debugConsole.log(
         `✗ No match found for collection: "${entry.collectionName}" (index ${index}) - will create new`,
@@ -7880,117 +7945,13 @@ async function matchCollections(
   }
 
   debugConsole.log(
-    `Collection matching complete: ${recognizedCollections.size} recognized, ${potentialMatches.size} potential matches, ${collectionsToCreate.size} to create`,
+    `Collection matching complete: ${recognizedCollections.size} recognized, ${collectionsToCreate.size} to create`,
   );
 
   return {
     recognizedCollections,
-    potentialMatches,
     collectionsToCreate,
   };
-}
-
-/**
- * Stage 5: Prompt user for potential collection matches (or use wizard selections)
- */
-async function promptForPotentialMatches(
-  potentialMatches: Map<
-    string,
-    { entry: CollectionTableEntry; collection: VariableCollection }
-  >,
-  recognizedCollections: Map<string, VariableCollection>,
-  collectionsToCreate: Map<string, CollectionTableEntry>,
-  collectionChoices?: {
-    tokens: "new" | "existing";
-    theme: "new" | "existing";
-    layers: "new" | "existing";
-  },
-): Promise<void> {
-  if (potentialMatches.size === 0) {
-    return;
-  }
-
-  // If collection choices are provided (from wizard), use them instead of prompting
-  if (collectionChoices) {
-    debugConsole.log(
-      `Using wizard selections for ${potentialMatches.size} potential match(es)...`,
-    );
-
-    for (const [index, { entry, collection }] of potentialMatches.entries()) {
-      const normalizedName = normalizeCollectionName(
-        entry.collectionName,
-      ).toLowerCase();
-      let shouldUseExisting = false;
-
-      if (normalizedName === "tokens" || normalizedName === "token") {
-        shouldUseExisting = collectionChoices.tokens === "existing";
-      } else if (normalizedName === "theme" || normalizedName === "themes") {
-        shouldUseExisting = collectionChoices.theme === "existing";
-      } else if (normalizedName === "layer" || normalizedName === "layers") {
-        shouldUseExisting = collectionChoices.layers === "existing";
-      }
-
-      const displayName = isStandardCollection(entry.collectionName)
-        ? normalizeCollectionName(entry.collectionName)
-        : collection.name;
-
-      if (shouldUseExisting) {
-        debugConsole.log(
-          `✓ Wizard selection: Using existing collection "${displayName}" (index ${index})`,
-        );
-        recognizedCollections.set(index, collection);
-
-        await ensureCollectionModes(collection, entry.modes);
-        debugConsole.log(
-          `  ✓ Ensured modes for collection "${displayName}" (${entry.modes.length} mode(s))`,
-        );
-      } else {
-        debugConsole.log(
-          `✗ Wizard selection: Will create new collection for "${entry.collectionName}" (index ${index})`,
-        );
-        collectionsToCreate.set(index, entry);
-      }
-    }
-    return;
-  }
-
-  // Otherwise, prompt the user (legacy behavior)
-  debugConsole.log(
-    `Prompting user for ${potentialMatches.size} potential match(es)...`,
-  );
-
-  for (const [index, { entry, collection }] of potentialMatches.entries()) {
-    try {
-      const displayName = isStandardCollection(entry.collectionName)
-        ? normalizeCollectionName(entry.collectionName)
-        : collection.name;
-
-      const message = `Found existing "${displayName}" variable collection. Should I use it?`;
-      debugConsole.log(
-        `Prompting user about potential match: "${displayName}"`,
-      );
-      await pluginPrompt.prompt(message, {
-        okLabel: "Yes",
-        cancelLabel: "No",
-        timeoutMs: -1,
-      });
-
-      debugConsole.log(
-        `✓ User confirmed: Using existing collection "${displayName}" (index ${index})`,
-      );
-      recognizedCollections.set(index, collection);
-
-      await ensureCollectionModes(collection, entry.modes);
-      debugConsole.log(
-        `  ✓ Ensured modes for collection "${displayName}" (${entry.modes.length} mode(s))`,
-      );
-    } catch {
-      debugConsole.log(
-        `✗ User rejected: Will create new collection for "${entry.collectionName}" (index ${index})`,
-      );
-      collectionsToCreate.set(index, entry);
-    }
-  }
 }
 
 /**
@@ -7999,10 +7960,6 @@ async function promptForPotentialMatches(
 async function ensureModesForRecognizedCollections(
   recognizedCollections: Map<string, VariableCollection>,
   collectionTable: CollectionTable,
-  potentialMatches: Map<
-    string,
-    { entry: CollectionTableEntry; collection: VariableCollection }
-  >,
 ): Promise<void> {
   if (recognizedCollections.size === 0) {
     return;
@@ -8014,13 +7971,10 @@ async function ensureModesForRecognizedCollections(
   for (const [index, collection] of recognizedCollections.entries()) {
     const entry = collections[index];
     if (entry) {
-      const wasUserConfirmed = potentialMatches.has(index);
-      if (!wasUserConfirmed) {
-        await ensureCollectionModes(collection, entry.modes);
-        debugConsole.log(
-          `  ✓ Ensured modes for collection "${collection.name}" (${entry.modes.length} mode(s))`,
-        );
-      }
+      await ensureCollectionModes(collection, entry.modes);
+      debugConsole.log(
+        `  ✓ Ensured modes for collection "${collection.name}" (${entry.modes.length} mode(s))`,
+      );
     }
   }
 }
@@ -8198,11 +8152,11 @@ export async function matchAndCreateVariables(
         stats.existing++;
       } else {
         debugConsole.warning(
-          `Type mismatch for variable "${entry.variableName}" in collection "${collection.name}": expected ${variableType}, found ${existingVariable.resolvedType}. Creating new variable with incremented name.`,
+          `Type mismatch for variable "${entry.variableName}" in collection "${collection.name}": expected ${variableType}, found ${existingVariable.resolvedType}. Creating new variable with _NEW suffix.`,
         );
         const uniqueName = await findUniqueVariableName(
           collection,
-          entry.variableName,
+          `${entry.variableName}_NEW`,
         );
         const newVariable = await createVariableFromEntry(
           {
@@ -9451,23 +9405,41 @@ async function createPageAndRecreateStructure(
     `Stored page metadata (GUID: ${metadata.guid.substring(0, 8)}...)`,
   );
 
+  const d = new Date();
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  const dateStr = `${d.getDate().toString().padStart(2, "0")}-${months[d.getMonth()]}-${d.getFullYear().toString().slice(-2)}`;
+  const versionStr = metadata.version ? `v${metadata.version}` : "v1";
+  const nameSuffix = ` (${versionStr} ${dateStr})`;
+  const baseNameWithSuffix = `${metadata.name}${nameSuffix}`;
+
   if (pageName.startsWith("__")) {
     let finalName: string;
     if (skipUniqueNaming) {
       // For wizard imports, use base name with construction icon, no _<number> suffix
       finalName = constructionIcon
-        ? `${constructionIcon} ${metadata.name}`
-        : metadata.name;
+        ? `${constructionIcon} ${baseNameWithSuffix}`
+        : baseNameWithSuffix;
     } else {
-      finalName = await findUniquePageName(metadata.name);
+      finalName = await findUniquePageName(baseNameWithSuffix);
     }
     newPage.name = finalName;
     debugConsole.log(`Renamed page from "${pageName}" to "${finalName}"`);
   } else if (skipUniqueNaming && constructionIcon) {
-    // For wizard imports, ensure construction icon is present
-    if (!newPage.name.startsWith(constructionIcon)) {
-      newPage.name = `${constructionIcon} ${newPage.name}`;
-    }
+    // For wizard imports, ensure construction icon and suffix are present
+    newPage.name = `${constructionIcon} ${baseNameWithSuffix}`;
   }
 
   // Always return the page, even if structure recreation failed
@@ -9615,22 +9587,13 @@ export async function importPage(
 
     // Stage 4: Match collections
     debugConsole.log("Matching collections with existing local collections...");
-    const { recognizedCollections, potentialMatches, collectionsToCreate } =
+    const { recognizedCollections, collectionsToCreate } =
       await matchCollections(collectionTable, data.preCreatedCollections);
-
-    // Stage 5: Prompt for potential matches (or use wizard selections)
-    await promptForPotentialMatches(
-      potentialMatches,
-      recognizedCollections,
-      collectionsToCreate,
-      data.collectionChoices,
-    );
 
     // Stage 6: Ensure modes for recognized collections
     await ensureModesForRecognizedCollections(
       recognizedCollections,
       collectionTable,
-      potentialMatches,
     );
 
     // Stage 7: Create new collections (or reuse pre-created ones)
@@ -10055,12 +10018,31 @@ async function applyFillBoundVariablesToInstanceChildren(
           if (variable && instanceFill.type === "SOLID") {
             // Create a new SolidPaint based on the existing fill
             const solidFill = instanceFill as SolidPaint;
+            let fallbackColor = { ...solidFill.color };
+            let fallbackOpacity = solidFill.opacity;
+
+            try {
+              const resolved = variable.resolveForConsumer(instanceChild);
+              if (
+                resolved &&
+                resolved.value &&
+                typeof resolved.value === "object" &&
+                "r" in resolved.value
+              ) {
+                const val = resolved.value as any;
+                fallbackColor = { r: val.r, g: val.g, b: val.b };
+                if ("a" in val) fallbackOpacity = val.a;
+              }
+            } catch {
+              /* ignore */
+            }
+
             const newSolidPaint: SolidPaint = {
               type: "SOLID",
               visible: solidFill.visible,
-              opacity: solidFill.opacity,
+              opacity: fallbackOpacity,
               blendMode: solidFill.blendMode,
-              color: { ...solidFill.color }, // This will be overridden by the variable
+              color: fallbackColor,
             };
 
             // Use setBoundVariableForPaint to bind the variable to the color property

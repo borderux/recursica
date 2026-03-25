@@ -3,7 +3,7 @@ import { useApplyTheme } from "../../context/ApplyThemeContext";
 import { useFooterActions } from "../../context/FooterActionsContext";
 import { Stack } from "../../components/Stack";
 import { Title } from "../../components/Title";
-import { Button } from "../../components/Button";
+
 import { errorCard } from "./styles";
 
 export default function NextPageStep() {
@@ -21,25 +21,20 @@ export default function NextPageStep() {
   const nextPage = hasMore ? remainingPages[0] : null;
 
   useFooterActions(
-    hasMore ? (
-      <>
-        <Button size="compact-md" variant="light" onClick={handleSkipAll}>
-          Cancel
-        </Button>
-        <Button size="compact-md" onClick={handleProceedToNextPage}>
-          Next
-        </Button>
-      </>
-    ) : (
-      <Button
-        size="compact-md"
-        onClick={() => {
-          navigate("/");
-        }}
-      >
-        Done
-      </Button>
-    ),
+    hasMore
+      ? {
+          secondary: [{ label: "Cancel", onClick: handleSkipAll }],
+          primary: {
+            label: "Next",
+            onClick: handleProceedToNextPage,
+          },
+        }
+      : {
+          primary: {
+            label: "Done",
+            onClick: () => navigate("/"),
+          },
+        },
     [hasMore, handleProceedToNextPage, handleSkipAll, navigate],
   );
 

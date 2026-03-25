@@ -30,7 +30,9 @@ export default function PageLayout({ children, onBack }: PageLayoutProps) {
   };
 
   const handleBackClick = () => {
-    if (onBack) {
+    if (footerActions?.onBackOverride) {
+      footerActions.onBackOverride();
+    } else if (onBack) {
       onBack();
     } else {
       navigate(-1);
@@ -42,7 +44,8 @@ export default function PageLayout({ children, onBack }: PageLayoutProps) {
   };
 
   // Show back button if there's history to go back to, or if a custom onBack is provided
-  const showBack = canGoBack || !!onBack;
+  // If a child specifically overrides it, we keep it visible as well.
+  const showBack = canGoBack || !!onBack || !!footerActions?.onBackOverride;
 
   return (
     <div className={classes.root}>
@@ -109,7 +112,32 @@ export default function PageLayout({ children, onBack }: PageLayoutProps) {
               </svg>
             </Button>
           )}
-          {footerActions}
+          {/* Secondary Actions (Left of Primary) */}
+          {footerActions?.secondary?.map((action, i) => (
+            <Button
+              key={i}
+              variant="default"
+              size="compact-md"
+              onClick={action.onClick}
+              disabled={action.disabled}
+              loading={action.loading}
+            >
+              {action.label}
+            </Button>
+          ))}
+
+          {/* Primary Action (Right-most) */}
+          {footerActions?.primary && (
+            <Button
+              variant="filled"
+              size="compact-md"
+              onClick={footerActions.primary.onClick}
+              disabled={footerActions.primary.disabled}
+              loading={footerActions.primary.loading}
+            >
+              {footerActions.primary.label}
+            </Button>
+          )}
         </div>
       </footer>
     </div>

@@ -1,9 +1,10 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router";
 import {
   useImportWizard,
   type DependencySelection,
 } from "../../context/ImportWizardContext";
+import { useFooterActions } from "../../context/FooterActionsContext";
 import {
   useImportData,
   type ImportedFile,
@@ -16,7 +17,6 @@ import {
   Title,
   Text,
   Stack,
-  Button,
   Checkbox,
   Alert,
   LoadingSpinner,
@@ -184,6 +184,10 @@ export default function Step2DependencyOverview() {
                 version: number;
               }>;
             };
+            console.log(
+              "[Step2DependencyOverview] Loaded local components from Figma:",
+              data.components,
+            );
             existingComponents = data.components.filter((c) => c.id !== "");
           }
 
@@ -218,11 +222,16 @@ export default function Step2DependencyOverview() {
               let useExisting = false;
 
               if (existing) {
-                if (depVersion > existing.version) {
-                  status = "UPDATED";
-                } else if (depVersion === existing.version) {
+                if (existing.version === depVersion) {
                   status = "SAME";
-                  useExisting = true; // Default to using existing if versions match
+                  useExisting = true; // Default to use existing for SAME
+                } else if (existing.version < depVersion) {
+                  status = "UPDATED";
+                  useExisting = false; // Default to update for UPDATED
+                } else {
+                  // Existing version is newer - still show as UPDATED but allow choice
+                  status = "UPDATED";
+                  useExisting = true;
                 }
               }
 
@@ -381,6 +390,10 @@ export default function Step2DependencyOverview() {
               version: number;
             }>;
           };
+          console.log(
+            "[Step2DependencyOverview] Loaded local components from Figma:",
+            data.components,
+          );
           existingComponents = data.components.filter((c) => c.id !== "");
         }
 
@@ -551,7 +564,7 @@ export default function Step2DependencyOverview() {
     }));
   };
 
-  const handleNext = async () => {
+  const handleNext = useCallback(async () => {
     if (!wizardState.componentData.mainComponent) {
       setError("No component data available");
       return;
@@ -641,7 +654,26 @@ export default function Step2DependencyOverview() {
       setError(errorMessage);
       console.error("[Step2DependencyOverview] Error:", err);
     }
-  };
+  }, [
+    wizardState.componentData.mainComponent,
+    wizardState.dependencies,
+    wizardState.componentData.dependencies,
+    wizardState.selectedComponent?.ref,
+    setImportData,
+    navigate,
+    setWizardState,
+  ]);
+
+  useFooterActions(
+    {
+      primary: {
+        label: "Next",
+        onClick: handleNext,
+        disabled: loading || error !== null,
+      },
+    },
+    [handleNext, loading, error],
+  );
 
   /*   const getBadgeStatus = (
     importVersion: number,
@@ -816,12 +848,6 @@ export default function Step2DependencyOverview() {
                 );
               })()
             )}
-          </div>
-
-          <div className={classes.actions}>
-            <Button variant="filled" onClick={handleNext}>
-              Next
-            </Button>
           </div>
         </>
       )}

@@ -4,7 +4,7 @@ import { useApplyTheme } from "../../context/ApplyThemeContext";
 import { useFooterActions } from "../../context/FooterActionsContext";
 import { Stack } from "../../components/Stack";
 import { Title } from "../../components/Title";
-import { Button } from "../../components/Button";
+
 import { VariableInput } from "../../components/VariableInput";
 import { infoRow, labelStyle, linkStyle, warningCard } from "./styles";
 
@@ -96,18 +96,12 @@ export default function ReviewClashStep() {
     : false;
 
   useFooterActions(
-    <>
-      <Button
-        size="compact-md"
-        variant="light"
-        onClick={() => handleClashAction("delete")}
-      >
-        Delete
-      </Button>
-      <Button size="compact-md" disabled={!hasFixSelection} onClick={handleFix}>
-        Fix
-      </Button>
-    </>,
+    {
+      secondary: [
+        { label: "Delete", onClick: () => handleClashAction("delete") },
+      ],
+      primary: { label: "Fix", disabled: !hasFixSelection, onClick: handleFix },
+    },
     [handleClashAction, handleFix, hasFixSelection],
   );
 

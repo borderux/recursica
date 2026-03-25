@@ -43,8 +43,10 @@ export async function getAllComponents(
       const pluginData = page.getPluginData(PLUGIN_DATA_KEY);
 
       if (!pluginData) {
-        // No metadata found, return empty entry with cleaned page name
         const cleanedName = getComponentName(page.name);
+        console.log(
+          `[getAllComponents] Page "${page.name}" has NO plugin metadata. Setting id to "".`,
+        );
         const emptyMetadata: ComponentMetadata = {
           _ver: 1,
           id: "",
@@ -58,6 +60,10 @@ export async function getAllComponents(
         // Parse the plugin data
         try {
           const metadata: ComponentMetadata = JSON.parse(pluginData);
+          console.log(
+            `[getAllComponents] Page "${page.name}" HAS metadata:`,
+            metadata,
+          );
           components.push(metadata);
         } catch (parseError) {
           // If parsing fails, still include empty entry with cleaned page name
