@@ -1,5 +1,11 @@
 # @recursica/publisher
 
+## 0.5.0
+
+### Minor Changes
+
+- [#327](https://github.com/borderux/recursica/pull/327) [`fe04fc3`](https://github.com/borderux/recursica/commit/fe04fc3f62989cff3eb685a570b10acfa9e75598) Thanks [@mlmassey](https://github.com/mlmassey)! - Component merge strategy implemented
+
 ## 0.4.0
 
 ### Minor Changes
