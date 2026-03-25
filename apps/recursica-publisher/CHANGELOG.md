@@ -1,5 +1,11 @@
 # @recursica/publisher
 
+## 0.6.1
+
+### Patch Changes
+
+- [#331](https://github.com/borderux/recursica/pull/331) [`7060df1`](https://github.com/borderux/recursica/commit/7060df1b61cd353db99792613863d456c25fcef6) Thanks [@mlmassey](https://github.com/mlmassey)! - Fixed SECTION import logic
+
 ## 0.6.0
 
 ### Minor Changes
