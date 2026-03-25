@@ -16,13 +16,15 @@ describe("JSON Migration Pipeline", () => {
     expect(migrated).toEqual(validJson);
   });
 
-  it("should default unversioned payloads to 1.0.0", () => {
+  it("should default unversioned payloads to 1.0.0 and migrate to current version", () => {
     const unversionedJson = {
       pageData: { name: "Test" },
     };
 
     const migrated = migrateExportData(unversionedJson);
-    expect(migrated.metadata.exportFormatVersion).toBe("1.0.0");
+    expect(migrated.metadata.exportFormatVersion).toBe(
+      CURRENT_EXPORT_FORMAT_VERSION,
+    );
   });
 
   it("should throw error if payload is a newer unsupported version", () => {

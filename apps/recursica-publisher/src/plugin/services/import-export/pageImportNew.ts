@@ -4265,6 +4265,9 @@ export async function recreateNodeFromData(
     case "POLYGON":
       newNode = figma.createPolygon();
       break;
+    case "SECTION":
+      newNode = figma.createSection();
+      break;
     default: {
       const errorMessage = `Unsupported node type: ${nodeData.type}. This node type cannot be imported.`;
       debugConsole.error(errorMessage);

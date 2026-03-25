@@ -242,6 +242,7 @@ export async function extractNodeData(
   if (nodeType) {
     switch (nodeType) {
       case "FRAME":
+      case "SECTION":
       case "COMPONENT":
       case "COMPONENT_SET": {
         const frameProps = await parseFrameProperties(node, updatedContext);
