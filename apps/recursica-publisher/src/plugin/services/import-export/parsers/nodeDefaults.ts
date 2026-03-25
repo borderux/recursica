@@ -83,6 +83,7 @@ export const LINE_DEFAULTS = {
  */
 export function getDefaultsForNodeType(nodeType: string): any {
   switch (nodeType) {
+    case "SECTION":
     case "FRAME":
     case "COMPONENT":
     case "INSTANCE":

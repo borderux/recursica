@@ -14,14 +14,28 @@ export interface Migration {
 
 // Registry of all migrations, ordered typically from oldest to newest
 export const migrations: Migration[] = [
+  {
+    fromVersion: "1.0.0",
+    toVersion: "1.1.0",
+    migrate: (data) => {
+      // 1.1.0 adds support for exporting SECTION nodes.
+      // Older 1.0.0 exports will not contain SECTION nodes, so no structural
+      // data transformation is needed for backward compatibility.
+      // Just bumping the version natively informs the parser it can receive SECTIONs.
+      if (data.metadata) {
+        data.metadata.exportFormatVersion = "1.1.0";
+      }
+      return data;
+    },
+  },
   // Example for future use:
   // {
-  //   fromVersion: "1.0.0",
-  //   toVersion: "1.1.0",
+  //   fromVersion: "1.1.0",
+  //   toVersion: "1.2.0",
   //   migrate: (data) => {
   //     // Migrate data shape here
   //     if (data.metadata) {
-  //       data.metadata.exportFormatVersion = "1.1.0";
+  //       data.metadata.exportFormatVersion = "1.2.0";
   //     }
   //     return data;
   //   },
