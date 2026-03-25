@@ -1761,19 +1761,19 @@ function applyDefaultsToNode(
   const defaults = getDefaultsForNodeType(nodeType);
 
   // Apply base defaults
-  if (node.visible === undefined) {
+  if (node.visible === undefined && "visible" in node) {
     node.visible = defaults.visible;
   }
-  if (node.locked === undefined) {
+  if (node.locked === undefined && "locked" in node) {
     node.locked = defaults.locked;
   }
-  if (node.opacity === undefined) {
+  if (node.opacity === undefined && "opacity" in node) {
     node.opacity = defaults.opacity;
   }
-  if (node.rotation === undefined) {
+  if (node.rotation === undefined && "rotation" in node) {
     node.rotation = defaults.rotation;
   }
-  if (node.blendMode === undefined) {
+  if (node.blendMode === undefined && "blendMode" in node) {
     node.blendMode = defaults.blendMode;
   }
 
@@ -1785,39 +1785,54 @@ function applyDefaultsToNode(
     nodeType === "INSTANCE"
   ) {
     const frameDefaults = FRAME_DEFAULTS;
-    if (node.layoutMode === undefined) {
+    if (node.layoutMode === undefined && "layoutMode" in node) {
       node.layoutMode = frameDefaults.layoutMode;
     }
-    if (node.primaryAxisSizingMode === undefined) {
+    if (
+      node.primaryAxisSizingMode === undefined &&
+      "primaryAxisSizingMode" in node
+    ) {
       node.primaryAxisSizingMode = frameDefaults.primaryAxisSizingMode;
     }
-    if (node.counterAxisSizingMode === undefined) {
+    if (
+      node.counterAxisSizingMode === undefined &&
+      "counterAxisSizingMode" in node
+    ) {
       node.counterAxisSizingMode = frameDefaults.counterAxisSizingMode;
     }
-    if (node.primaryAxisAlignItems === undefined) {
+    if (
+      node.primaryAxisAlignItems === undefined &&
+      "primaryAxisAlignItems" in node
+    ) {
       node.primaryAxisAlignItems = frameDefaults.primaryAxisAlignItems;
     }
-    if (node.counterAxisAlignItems === undefined) {
+    if (
+      node.counterAxisAlignItems === undefined &&
+      "counterAxisAlignItems" in node
+    ) {
       node.counterAxisAlignItems = frameDefaults.counterAxisAlignItems;
     }
     // Skip padding defaults if bound variables will be set (prevents interference)
     if (!skipPaddingDefaults) {
-      if (node.paddingLeft === undefined) {
+      if (node.paddingLeft === undefined && "paddingLeft" in node) {
         node.paddingLeft = frameDefaults.paddingLeft;
       }
-      if (node.paddingRight === undefined) {
+      if (node.paddingRight === undefined && "paddingRight" in node) {
         node.paddingRight = frameDefaults.paddingRight;
       }
-      if (node.paddingTop === undefined) {
+      if (node.paddingTop === undefined && "paddingTop" in node) {
         node.paddingTop = frameDefaults.paddingTop;
       }
-      if (node.paddingBottom === undefined) {
+      if (node.paddingBottom === undefined && "paddingBottom" in node) {
         node.paddingBottom = frameDefaults.paddingBottom;
       }
-      if (node.itemSpacing === undefined) {
+      if (node.itemSpacing === undefined && "itemSpacing" in node) {
         node.itemSpacing = frameDefaults.itemSpacing;
       }
-      if (node.counterAxisSpacing === undefined) {
+      if (
+        node.counterAxisSpacing === undefined &&
+        "counterAxisSpacing" in node
+      ) {
         node.counterAxisSpacing = frameDefaults.counterAxisSpacing;
       }
     }
@@ -3115,12 +3130,37 @@ export async function recreateNodeFromData(
                             // Extract the actual value from the property object
                             // Component properties from getProperties() might be stored as primitive values
                             // or as objects with 'value' and other keys
-                            const actualValue =
+                            let actualValue =
                               propValue &&
                               typeof propValue === "object" &&
                               "value" in propValue
                                 ? propValue.value
                                 : propValue;
+
+                            // Map INSTANCE_SWAP values from original JSON component IDs to newly created component IDs
+                            if (
+                              propValue &&
+                              typeof propValue === "object" &&
+                              propValue.type === "INSTANCE_SWAP" &&
+                              typeof actualValue === "string"
+                            ) {
+                              if (
+                                nodeIdMapping &&
+                                nodeIdMapping.has(actualValue)
+                              ) {
+                                const mappedNode =
+                                  nodeIdMapping.get(actualValue);
+                                actualValue = mappedNode.id;
+                                debugConsole.log(
+                                  `[IMPORT]     Mapped INSTANCE_SWAP value to new ID: ${actualValue.substring(0, 8)}...`,
+                                );
+                              } else {
+                                debugConsole.warning(
+                                  `[IMPORT]     Could not find mapped component for INSTANCE_SWAP value: ${actualValue}`,
+                                );
+                                continue; // Skip property rather than crash Figma API with an invalid ID
+                              }
+                            }
                             debugConsole.log(
                               `[IMPORT]     Extracted value: ${JSON.stringify(actualValue)} (from ${typeof propValue === "object" && "value" in propValue ? "object.value" : "direct"})`,
                             );
@@ -4068,12 +4108,33 @@ export async function recreateNodeFromData(
                       // Extract the actual value from the property object
                       // Component properties in JSON are stored as { value: ..., type: ..., bndVar: ... }
                       // but setProperties expects just the value
-                      const actualValue =
+                      let actualValue =
                         propValue &&
                         typeof propValue === "object" &&
                         "value" in propValue
                           ? propValue.value
                           : propValue;
+
+                      // Map INSTANCE_SWAP values from original JSON component IDs to newly created component IDs
+                      if (
+                        propValue &&
+                        typeof propValue === "object" &&
+                        propValue.type === "INSTANCE_SWAP" &&
+                        typeof actualValue === "string"
+                      ) {
+                        if (nodeIdMapping && nodeIdMapping.has(actualValue)) {
+                          const mappedNode = nodeIdMapping.get(actualValue);
+                          actualValue = mappedNode.id;
+                          debugConsole.log(
+                            `[IMPORT]     Mapped INSTANCE_SWAP value to new ID: ${actualValue.substring(0, 8)}...`,
+                          );
+                        } else {
+                          debugConsole.warning(
+                            `[IMPORT]     Could not find mapped component for INSTANCE_SWAP value: ${actualValue}`,
+                          );
+                          continue; // Skip property rather than crash Figma API with an invalid ID
+                        }
+                      }
                       debugConsole.log(
                         `[IMPORT]     Extracted value: ${JSON.stringify(actualValue)} (from ${typeof propValue === "object" && "value" in propValue ? "object.value" : "direct"})`,
                       );
@@ -4485,6 +4546,14 @@ export async function recreateNodeFromData(
     const isWidthStatic = !widthIsFill && !hasBoundVariableForWidth;
     const isHeightStatic = !heightIsFill && !hasBoundVariableForHeight;
 
+    const safeResize = (n: any, w: number, h: number) => {
+      if (typeof n.resize === "function") {
+        n.resize(w, h);
+      } else if (typeof n.resizeWithoutConstraints === "function") {
+        n.resizeWithoutConstraints(w, h);
+      }
+    };
+
     if (isWidthStatic && isHeightStatic) {
       // ISSUE #3 DEBUG: Check preserveRatio before resize
       const preserveRatioBefore = (newNode as any).preserveRatio;
@@ -4494,17 +4563,17 @@ export async function recreateNodeFromData(
         );
       }
 
-      newNode.resize(nodeData.width, nodeData.height);
+      safeResize(newNode, nodeData.width, nodeData.height);
       debugConsole.log(
         `  Set static dimensions ${nodeData.width}x${nodeData.height} for "${nodeName}"`,
       );
     } else if (isWidthStatic) {
-      newNode.resize(nodeData.width, newNode.height);
+      safeResize(newNode, nodeData.width, newNode.height);
       debugConsole.log(
         `  Set static width ${nodeData.width} for "${nodeName}" (height is FILL/bound)`,
       );
     } else if (isHeightStatic) {
-      newNode.resize(newNode.width, nodeData.height);
+      safeResize(newNode, newNode.width, nodeData.height);
       debugConsole.log(
         `  Set static height ${nodeData.height} for "${nodeName}" (width is FILL/bound)`,
       );
@@ -4847,26 +4916,29 @@ export async function recreateNodeFromData(
   // Check for bound variables before setting direct values
   const hasBoundVariables =
     nodeData.boundVariables && typeof nodeData.boundVariables === "object";
-  if (nodeData.visible !== undefined) {
+  if (nodeData.visible !== undefined && "visible" in newNode) {
     newNode.visible = nodeData.visible;
   }
-  if (nodeData.locked !== undefined) {
+  if (nodeData.locked !== undefined && "locked" in newNode) {
     newNode.locked = nodeData.locked;
   }
   if (
     nodeData.opacity !== undefined &&
+    "opacity" in newNode &&
     (!hasBoundVariables || !nodeData.boundVariables.opacity)
   ) {
     newNode.opacity = nodeData.opacity;
   }
   if (
     nodeData.rotation !== undefined &&
+    "rotation" in newNode &&
     (!hasBoundVariables || !nodeData.boundVariables.rotation)
   ) {
     newNode.rotation = nodeData.rotation;
   }
   if (
     nodeData.blendMode !== undefined &&
+    "blendMode" in newNode &&
     (!hasBoundVariables || !nodeData.boundVariables.blendMode)
   ) {
     newNode.blendMode = nodeData.blendMode;
@@ -5552,12 +5624,14 @@ export async function recreateNodeFromData(
       nodeData.boundVariables.bottomRightRadius);
   if (
     nodeData.cornerRadius !== undefined &&
+    "cornerRadius" in newNode &&
     (!hasBoundVariablesForCornerRadius || !nodeData.boundVariables.cornerRadius)
   ) {
     newNode.cornerRadius = nodeData.cornerRadius;
   }
   if (
     nodeData.effects !== undefined &&
+    "effects" in newNode &&
     nodeData.effects.length > 0 &&
     nodeData._effectStyleRef === undefined
   ) {
@@ -6677,229 +6751,7 @@ export async function recreateNodeFromData(
     newNode.type !== "INSTANCE" &&
     !isReusedComponentWithChildren // Skip if component already fully created
   ) {
-    // Two-pass approach: First create all COMPONENT nodes recursively (so they're in nodeIdMapping),
-    // then create all other nodes (including INSTANCE nodes that reference the components)
-    const componentChildren: any[] = [];
-    const otherChildren: any[] = [];
-
-    // Helper function to recursively collect all COMPONENT nodes
-    // Note: This function cannot be async, so we log after collection
-    const collectComponents = (children: any[]): any[] => {
-      const components: any[] = [];
-      for (const child of children) {
-        if (child._truncated) {
-          continue;
-        }
-        if (child.type === "COMPONENT") {
-          components.push(child);
-          // Also collect components from this component's children
-          if (child.children && Array.isArray(child.children)) {
-            components.push(...collectComponents(child.children));
-          }
-        } else if (child.children && Array.isArray(child.children)) {
-          // Recursively collect components from nested structures
-          components.push(...collectComponents(child.children));
-        }
-      }
-      return components;
-    };
-
-    for (const childData of nodeData.children) {
-      // Skip truncated children markers
-      if (childData._truncated) {
-        console.log(
-          `Skipping truncated children: ${childData._reason || "Unknown"}`,
-        );
-        continue;
-      }
-      // Separate COMPONENT children from others
-      if (childData.type === "COMPONENT") {
-        componentChildren.push(childData);
-      } else {
-        otherChildren.push(childData);
-      }
-    }
-
-    // First pass: Recursively create all COMPONENT nodes (including nested ones)
-    // This ensures all components are in nodeIdMapping before any instances reference them
-    // We only create the component nodes themselves, not their children (that happens in second pass)
-    const allComponents = collectComponents(nodeData.children);
-    debugConsole.log(
-      `  First pass: Creating ${allComponents.length} COMPONENT node(s) (without children)...`,
-    );
-    // Log all collected components for debugging
-    for (const comp of allComponents) {
-      debugConsole.log(
-        `  Collected COMPONENT "${comp.name || "Unnamed"}" (ID: ${comp.id ? comp.id.substring(0, 8) + "..." : "no ID"}) for first pass`,
-      );
-    }
-    for (const componentData of allComponents) {
-      // Only create if not already created (check nodeIdMapping)
-      if (
-        componentData.id &&
-        nodeIdMapping &&
-        !nodeIdMapping.has(componentData.id)
-      ) {
-        // Validate component data before creation
-        if (!componentData.name && componentData.name !== "") {
-          debugConsole.warning(
-            `  Component data missing name for ID ${componentData.id?.substring(0, 8)}..., skipping creation`,
-          );
-          continue;
-        }
-
-        // Check for reasonable name length to catch corrupted data
-        if (componentData.name && componentData.name.length > 1000) {
-          debugConsole.warning(
-            `  Component name suspiciously long (${componentData.name.length} chars) for "${componentData.name?.substring(0, 50)}...", this may indicate corrupted data`,
-          );
-        }
-        // Create just the component node itself (no children processing yet)
-        let componentNode: ComponentNode;
-        try {
-          componentNode = figma.createComponent();
-          if (componentData.name !== undefined) {
-            componentNode.name = componentData.name || "Unnamed Node";
-          }
-        } catch (createError) {
-          debugConsole.error(
-            `  Failed to create component "${componentData.name || "Unnamed"}" (ID: ${componentData.id?.substring(0, 8)}...): ${createError instanceof Error ? createError.message : String(createError)}`,
-          );
-          throw createError; // Re-throw to trigger main error handler
-        }
-
-        // Add component property definitions using addComponentProperty() method
-        if (componentData.componentPropertyDefinitions) {
-          const propDefs = componentData.componentPropertyDefinitions;
-          let addedCount = 0;
-          let failedCount = 0;
-
-          debugConsole.log(
-            `  Processing ${Object.keys(propDefs).length} component property definition(s) for "${componentData.name || "Unnamed"}"`,
-          );
-
-          for (const [propName, propDef] of Object.entries(propDefs)) {
-            try {
-              // propDef format: { type: number, defaultValue?: any }
-              // Map type numbers to Figma API type strings
-              const typeMap: Record<
-                number,
-                "TEXT" | "BOOLEAN" | "INSTANCE_SWAP" | "VARIANT"
-              > = {
-                2: "TEXT", // Text property
-                25: "BOOLEAN", // Boolean property
-                27: "INSTANCE_SWAP", // Instance swap property
-                26: "VARIANT", // Variant property
-              };
-
-              const propType = typeMap[(propDef as any).type];
-              if (!propType) {
-                debugConsole.warning(
-                  `  Unknown property type ${(propDef as any).type} for property "${propName}" in component "${componentData.name || "Unnamed"}" - available types: ${Object.keys(typeMap).join(", ")}`,
-                );
-                failedCount++;
-                continue;
-              }
-
-              let defaultValue = (propDef as any).defaultValue;
-
-              // For INSTANCE_SWAP properties, resolve _instanceRef to component ID
-              if (
-                propType === "INSTANCE_SWAP" &&
-                defaultValue &&
-                typeof defaultValue === "object" &&
-                defaultValue._instanceRef !== undefined
-              ) {
-                debugConsole.log(
-                  `    Resolving INSTANCE_SWAP property "${propName}" _instanceRef: ${defaultValue._instanceRef}`,
-                );
-
-                if (!instanceTable) {
-                  debugConsole.warning(
-                    `    Cannot resolve _instanceRef for INSTANCE_SWAP property "${propName}" - instance table not available`,
-                  );
-                  failedCount++;
-                  continue;
-                }
-
-                const instanceEntry = instanceTable.getInstanceByIndex(
-                  defaultValue._instanceRef,
-                );
-                if (!instanceEntry) {
-                  debugConsole.warning(
-                    `    Instance table entry not found for index ${defaultValue._instanceRef} in INSTANCE_SWAP property "${propName}"`,
-                  );
-                  failedCount++;
-                  continue;
-                }
-
-                // Resolve the component ID from the instance entry
-                const resolvedComponentId =
-                  await resolveComponentIdFromInstanceEntry(
-                    instanceEntry,
-                    nodeIdMapping,
-                  );
-
-                if (!resolvedComponentId) {
-                  debugConsole.warning(
-                    `    Could not resolve component ID from instance entry for INSTANCE_SWAP property "${propName}"`,
-                  );
-                  failedCount++;
-                  continue;
-                }
-
-                const instanceRefIndex = defaultValue._instanceRef;
-                defaultValue = resolvedComponentId;
-                debugConsole.log(
-                  `    Resolved INSTANCE_SWAP property "${propName}" _instanceRef ${instanceRefIndex} to component ID: ${resolvedComponentId.substring(0, 8)}...`,
-                );
-              }
-
-              // Property names in JSON may include IDs (e.g., "Show trailing icon#318:0")
-              // Extract just the property name part (before the #)
-              const cleanPropName = propName.split("#")[0];
-
-              debugConsole.log(
-                `    Adding property "${cleanPropName}" (${propType}) with default value: ${JSON.stringify(defaultValue)}`,
-              );
-
-              componentNode.addComponentProperty(
-                cleanPropName,
-                propType,
-                defaultValue,
-              );
-              addedCount++;
-            } catch (error) {
-              debugConsole.warning(
-                `  Failed to add component property "${propName}" to "${componentData.name || "Unnamed"}" in first pass: ${error instanceof Error ? error.message : String(error)}`,
-              );
-              failedCount++;
-            }
-          }
-
-          if (addedCount > 0) {
-            debugConsole.log(
-              `  Added ${addedCount} component property definition(s) to "${componentData.name || "Unnamed"}" in first pass${failedCount > 0 ? ` (${failedCount} failed)` : ""}`,
-            );
-          } else if (failedCount > 0) {
-            debugConsole.warning(
-              `  No component properties were successfully added to "${componentData.name || "Unnamed"}" (${failedCount} failed)`,
-            );
-          }
-        }
-
-        // Store in mapping immediately so instances can find it
-        nodeIdMapping.set(componentData.id, componentNode);
-        debugConsole.log(
-          `  Created COMPONENT "${componentData.name || "Unnamed"}" (ID: ${componentData.id.substring(0, 8)}...) in first pass`,
-        );
-        // Don't append to parent yet - that happens in second pass
-        // Don't process children yet - that also happens in second pass
-      }
-    }
-
-    // Second pass: Process all children normally (components will be skipped if already created,
-    // but their children will be processed, and instances can now find the components)
+    // Traverse children normally (component pre-pass happens globally at page level now)
     for (const childData of nodeData.children) {
       if (childData._truncated) {
         continue;
@@ -9337,6 +9189,119 @@ async function createPageAndRecreateStructure(
       (pageData as any)._allComponentIds = allComponentIds;
     }
 
+    // GLOBAL FIRST PASS: Pre-create all COMPONENT nodes so instances can resolve them
+    const collectComponents = (children: any[]): any[] => {
+      const components: any[] = [];
+      for (const child of children) {
+        if (child._truncated) continue;
+        if (child.type === "COMPONENT") {
+          components.push(child);
+          if (child.children && Array.isArray(child.children)) {
+            components.push(...collectComponents(child.children));
+          }
+        } else if (child.children && Array.isArray(child.children)) {
+          components.push(...collectComponents(child.children));
+        }
+      }
+      return components;
+    };
+
+    if (pageData.children && Array.isArray(pageData.children)) {
+      const allComponents = collectComponents(pageData.children);
+      debugConsole.log(
+        `[GLOBAL PRE-PASS] Creating ${allComponents.length} COMPONENT node(s)...`,
+      );
+
+      for (const componentData of allComponents) {
+        if (
+          componentData.id &&
+          nodeIdMapping &&
+          !nodeIdMapping.has(componentData.id)
+        ) {
+          if (!componentData.name && componentData.name !== "") {
+            debugConsole.warning(
+              `  Component data missing name for ID ${componentData.id?.substring(0, 8)}..., skipping creation`,
+            );
+            continue;
+          }
+
+          let componentNode;
+          try {
+            componentNode = figma.createComponent();
+            if (componentData.name !== undefined) {
+              componentNode.name = componentData.name || "Unnamed Node";
+            }
+          } catch (createError) {
+            debugConsole.error(
+              `  Failed to create component "${componentData.name || "Unnamed"}" (ID: ${componentData.id?.substring(0, 8)}...): ${createError}`,
+            );
+            throw createError;
+          }
+
+          if (componentData.componentPropertyDefinitions) {
+            const propDefs = componentData.componentPropertyDefinitions;
+
+            for (const [propName, propDef] of Object.entries(propDefs)) {
+              try {
+                const typeMap: Record<
+                  number,
+                  "TEXT" | "BOOLEAN" | "INSTANCE_SWAP" | "VARIANT"
+                > = {
+                  2: "TEXT",
+                  25: "BOOLEAN",
+                  27: "INSTANCE_SWAP",
+                  26: "VARIANT",
+                };
+
+                const propType = typeMap[(propDef as any).type];
+                if (!propType) {
+                  continue;
+                }
+
+                let defaultValue = (propDef as any).defaultValue;
+
+                if (
+                  propType === "INSTANCE_SWAP" &&
+                  defaultValue &&
+                  typeof defaultValue === "object" &&
+                  defaultValue._instanceRef !== undefined
+                ) {
+                  if (instanceTable) {
+                    const instanceEntry = instanceTable.getInstanceByIndex(
+                      defaultValue._instanceRef,
+                    );
+                    if (instanceEntry) {
+                      const resolvedComponentId =
+                        await resolveComponentIdFromInstanceEntry(
+                          instanceEntry,
+                          nodeIdMapping,
+                        );
+                      if (resolvedComponentId) {
+                        defaultValue = resolvedComponentId;
+                      }
+                    }
+                  }
+                }
+
+                const cleanPropName = propName.split("#")[0];
+                componentNode.addComponentProperty(
+                  cleanPropName,
+                  propType,
+                  defaultValue,
+                );
+              } catch (error) {
+                debugConsole.warning(
+                  `Failed to add component property: ${error instanceof Error ? error.message : String(error)}`,
+                );
+              }
+            }
+          }
+
+          nodeIdMapping.set(componentData.id, componentNode);
+        }
+      }
+    }
+
     if (pageData.children && Array.isArray(pageData.children)) {
       for (const childData of pageData.children) {
         const childNode = await recreateNodeFromData(
@@ -11130,6 +11095,20 @@ export async function resolveDeferredNormalInstances(
                     "value" in propValue
                       ? (propValue as any).value
                       : propValue;
+
+                  // Map INSTANCE_SWAP values from original JSON component IDs to newly created component IDs
+                  if (
+                    propValue !== null &&
+                    propValue !== undefined &&
+                    typeof propValue === "object" &&
+                    (propValue as any).type === "INSTANCE_SWAP" &&
+                    typeof actualValue === "string"
+                  ) {
+                    debugConsole.warning(
+                      `[IMPORT]     Cannot map INSTANCE_SWAP value in deferred instance context: ${actualValue}. Skipping property to avoid crash.`,
+                    );
+                    continue; // Skip property rather than crash Figma API with an invalid ID
+                  }
                   debugConsole.log(
                     `[IMPORT]     Extracted value: ${JSON.stringify(actualValue)} (from ${propValue !== null && propValue !== undefined && typeof propValue === "object" && "value" in propValue ? "object.value" : "direct"})`,
                   );

@@ -299,7 +299,7 @@ export default function Step1ComponentSelection() {
     !loading && !error && components.length > 0
       ? {
           primary: {
-            label: "Import Selected",
+            label: "Import",
             onClick: handleImportSelected,
             disabled: selectedComponents.length === 0,
           },
