@@ -1,5 +1,11 @@
 # @recursica/publisher
 
+## 0.7.0
+
+### Minor Changes
+
+- [#333](https://github.com/borderux/recursica/pull/333) [`3099fe6`](https://github.com/borderux/recursica/commit/3099fe6d1c859062061ca7c179b272011bb77e10) Thanks [@mlmassey](https://github.com/mlmassey)! - Fixed hug/fill and updated JSON for Effect variable binding issues
+
 ## 0.6.1
 
 ### Patch Changes
