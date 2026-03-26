@@ -7767,6 +7767,7 @@ function validateMetadata(jsonData: any): {
     version?: number;
     description?: string;
     url?: string;
+    history?: any;
   };
   error?: string;
 } {
@@ -7800,6 +7801,7 @@ function validateMetadata(jsonData: any): {
       version: metadata.version,
       description: metadata.description,
       url: metadata.url,
+      history: metadata.history,
     },
   };
 }
@@ -9111,6 +9113,7 @@ async function createPageAndRecreateStructure(
     version?: number;
     description?: string;
     url?: string;
+    history?: any;
   },
   expandedJsonData: any,
   variableTable: VariableTable,
@@ -9484,7 +9487,7 @@ async function createPageAndRecreateStructure(
     name: metadata.name,
     version: metadata.version || 0,
     publishDate: new Date().toISOString(),
-    history: {},
+    history: metadata.history || {},
     ...(metadata.description !== undefined && {
       description: metadata.description,
     }),
