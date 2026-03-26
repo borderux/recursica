@@ -387,10 +387,8 @@ export async function createRemoteInstances(
         const hasBoundVariablesForSize =
           entry.structure.boundVariables &&
           typeof entry.structure.boundVariables === "object" &&
-          (entry.structure.boundVariables.width ||
-            entry.structure.boundVariables.height ||
-            entry.structure.boundVariables.minWidth ||
-            entry.structure.boundVariables.maxWidth);
+          (!!entry.structure.boundVariables.width ||
+            !!entry.structure.boundVariables.height);
         if (
           entry.structure.width !== undefined &&
           entry.structure.height !== undefined &&

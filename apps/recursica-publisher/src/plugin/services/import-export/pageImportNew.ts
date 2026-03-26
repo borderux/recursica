@@ -1696,18 +1696,62 @@ async function createTextStyle(
  */
 async function createPaintStyle(
   styleData: any,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _recognizedVariables: Map<string, Variable>,
+  recognizedVariables: Map<string, Variable>,
 ): Promise<PaintStyle> {
   const style = figma.createPaintStyle();
   style.name = styleData.name;
 
   if (styleData.paintStyle && styleData.paintStyle.paints) {
-    style.paints = styleData.paintStyle.paints;
-  }
+    let newPaints = styleData.paintStyle.paints as any[];
 
-  // Handle bound variables (would be in paints themselves)
-  // This is handled at the fill level during export/import
+    // Process each paint to restore variable bindings natively into the Paint object
+    newPaints = newPaints.map((paint: any) => {
+      let currentPaint = { ...paint };
+      // Clean raw properties so Figma doesn't error on unfamiliar fields
+      delete currentPaint.boundVariables;
+      delete currentPaint.bndVar;
+
+      const boundVars = paint.boundVariables || paint.bndVar;
+      if (boundVars && typeof boundVars === "object") {
+        for (const [field, alias] of Object.entries(boundVars)) {
+          let variable: Variable | undefined;
+
+          if (alias && typeof alias === "object") {
+            if ("id" in alias) {
+              variable = recognizedVariables.get((alias as any).id);
+            } else if ("_varRef" in alias) {
+              variable = recognizedVariables.get(
+                String((alias as any)._varRef),
+              );
+            }
+          }
+
+          if (variable) {
+            try {
+              currentPaint = figma.variables.setBoundVariableForPaint(
+                currentPaint,
+                field as any,
+                variable,
+              );
+            } catch (e) {
+              debugConsole.warning(
+                `Failed to bind variable to paint field ${field}: ${e}`,
+              );
+            }
+          }
+        }
+      }
+      return currentPaint;
+    });
+
+    try {
+      style.paints = newPaints;
+    } catch (error) {
+      debugConsole.warning(
+        `Failed to assign paints to style ${style.name}: ${error}`,
+      );
+    }
+  }
 
   return style;
 }
@@ -1717,14 +1761,61 @@ async function createPaintStyle(
  */
 async function createEffectStyle(
   styleData: any,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _recognizedVariables: Map<string, Variable>,
+  recognizedVariables: Map<string, Variable>,
 ): Promise<EffectStyle> {
   const style = figma.createEffectStyle();
   style.name = styleData.name;
 
   if (styleData.effectStyle && styleData.effectStyle.effects) {
-    style.effects = styleData.effectStyle.effects;
+    let newEffects = styleData.effectStyle.effects as any[];
+
+    // Process each effect to restore variable bindings
+    newEffects = newEffects.map((effect: any) => {
+      let currentEffect = { ...effect };
+      // Delete boundVariables from the clean object so Figma doesn't complain about invalid properties
+      delete currentEffect.boundVariables;
+      delete currentEffect.bndVar;
+
+      const boundVars = effect.boundVariables || effect.bndVar;
+      if (boundVars && typeof boundVars === "object") {
+        for (const [field, alias] of Object.entries(boundVars)) {
+          let variable: Variable | undefined;
+
+          if (alias && typeof alias === "object") {
+            if ("id" in alias) {
+              variable = recognizedVariables.get((alias as any).id);
+            } else if ("_varRef" in alias) {
+              variable = recognizedVariables.get(
+                String((alias as any)._varRef),
+              );
+            }
+          }
+
+          if (variable) {
+            try {
+              currentEffect = figma.variables.setBoundVariableForEffect(
+                currentEffect,
+                field as any,
+                variable,
+              );
+            } catch (e) {
+              debugConsole.warning(
+                `Failed to bind variable to effect field ${field}: ${e}`,
+              );
+            }
+          }
+        }
+      }
+      return currentEffect;
+    });
+
+    try {
+      style.effects = newEffects;
+    } catch (error) {
+      debugConsole.warning(
+        `Failed to assign effects to style ${style.name}: ${error}`,
+      );
+    }
   }
 
   return style;
@@ -4442,16 +4533,12 @@ export async function recreateNodeFromData(
   const hasBoundVariableForWidth =
     nodeData.boundVariables &&
     typeof nodeData.boundVariables === "object" &&
-    (nodeData.boundVariables.width ||
-      nodeData.boundVariables.minWidth ||
-      nodeData.boundVariables.maxWidth);
+    !!nodeData.boundVariables.width;
 
   const hasBoundVariableForHeight =
     nodeData.boundVariables &&
     typeof nodeData.boundVariables === "object" &&
-    (nodeData.boundVariables.height ||
-      nodeData.boundVariables.minHeight ||
-      nodeData.boundVariables.maxHeight);
+    !!nodeData.boundVariables.height;
 
   // ISSUE #3 & #4 DEBUG: Check for preserveRatio and constraints before resize
   const nodeName = nodeData.name || "Unnamed";
@@ -4543,8 +4630,15 @@ export async function recreateNodeFromData(
     nodeData.width !== undefined &&
     nodeData.height !== undefined
   ) {
-    const isWidthStatic = !widthIsFill && !hasBoundVariableForWidth;
+    let isWidthStatic = !widthIsFill && !hasBoundVariableForWidth;
     const isHeightStatic = !heightIsFill && !hasBoundVariableForHeight;
+
+    // CRITICAL FIX: If we skip initial width on a TEXT node with height-resizing,
+    // it defaults to 10px, stacks vertically, and permanently balloons parent auto-layouts before 'FILL' kicks in.
+    // ALWAYS instantiate TEXT nodes with their JSON width explicitly!
+    if (nodeData.type === "TEXT" && nodeData.width !== undefined) {
+      isWidthStatic = true;
+    }
 
     const safeResize = (n: any, w: number, h: number) => {
       if (typeof n.resize === "function") {
@@ -4573,7 +4667,11 @@ export async function recreateNodeFromData(
         `  Set static width ${nodeData.width} for "${nodeName}" (height is FILL/bound)`,
       );
     } else if (isHeightStatic) {
-      safeResize(newNode, newNode.width, nodeData.height);
+      // If we fall back to newNode.width, and the node is fresh, it might be 10px!
+      // Provide a fallback to nodeData.width if available to prevent 0/10 math destruction!
+      const fallbackWidth =
+        newNode.width > 20 ? newNode.width : (nodeData.width ?? newNode.width);
+      safeResize(newNode, fallbackWidth, nodeData.height);
       debugConsole.log(
         `  Set static height ${nodeData.height} for "${nodeName}" (width is FILL/bound)`,
       );
@@ -5548,7 +5646,15 @@ export async function recreateNodeFromData(
   if (nodeData.strokes !== undefined) {
     try {
       if (nodeData.strokes.length > 0) {
-        newNode.strokes = nodeData.strokes;
+        const cleanStrokes = nodeData.strokes.map((stroke: any) => {
+          if (stroke && typeof stroke === "object") {
+            const copy = { ...stroke };
+            delete copy.boundVariables;
+            return copy;
+          }
+          return stroke;
+        });
+        newNode.strokes = cleanStrokes;
       } else {
         // Explicitly clear strokes if empty array (vectors might have default strokes)
         newNode.strokes = [];
@@ -5635,7 +5741,19 @@ export async function recreateNodeFromData(
     nodeData.effects.length > 0 &&
     nodeData._effectStyleRef === undefined
   ) {
-    newNode.effects = nodeData.effects;
+    try {
+      const cleanEffects = nodeData.effects.map((effect: any) => {
+        if (effect && typeof effect === "object") {
+          const copy = { ...effect };
+          delete copy.boundVariables;
+          return copy;
+        }
+        return effect;
+      });
+      newNode.effects = cleanEffects;
+    } catch (e) {
+      debugConsole.warning(`Failed to assign effects: ${e}`);
+    }
   }
 
   // Set layout properties for frames, components, and instances
@@ -7192,14 +7310,7 @@ export async function recreateNodeFromData(
   // CRITICAL: Set layoutSizingHorizontal and layoutSizingVertical AFTER appendChild
   // These properties can only be set on children that are already appended to an auto-layout parent frame
   // The API requires: 1) Parent has layoutMode set, 2) Child is appended, 3) Then we can set layoutSizingHorizontal
-  if (
-    (newNode.type === "FRAME" ||
-      newNode.type === "COMPONENT" ||
-      newNode.type === "COMPONENT_SET" ||
-      newNode.type === "INSTANCE") &&
-    parentNode &&
-    parentHasAutoLayout
-  ) {
+  if (parentNode && parentHasAutoLayout) {
     // Verify parent actually has auto-layout (double-check after appendChild)
     const parentActuallyHasAutoLayout =
       "layoutMode" in parentNode &&
@@ -7217,7 +7328,23 @@ export async function recreateNodeFromData(
             `  ⚠️ Failed to set layoutSizingHorizontal for "${nodeData.name || "Unnamed"}": ${error}`,
           );
         }
+      } else if (
+        newNode.type === "TEXT" &&
+        nodeData.textAutoResize === "HEIGHT"
+      ) {
+        // Fallback for TEXT nodes in old exported JSONs missing layoutSizingHorizontal
+        try {
+          (newNode as any).layoutSizingHorizontal = "FILL";
+          debugConsole.log(
+            `  ✓ Synthesized layoutSizingHorizontal="FILL" for TEXT node "${nodeData.name || "Unnamed"}" based on textAutoResize="HEIGHT"`,
+          );
+        } catch (error) {
+          debugConsole.warning(
+            `  ⚠️ Failed to synthesize layoutSizingHorizontal for "${nodeData.name || "Unnamed"}": ${error}`,
+          );
+        }
       }
+
       if ((nodeData as any).layoutSizingVertical !== undefined) {
         try {
           (newNode as any).layoutSizingVertical = (
@@ -8004,6 +8131,7 @@ export async function matchAndCreateVariables(
     if (existingVariable) {
       if (variableTypeMatches(existingVariable, variableType)) {
         recognizedVariables.set(index, existingVariable);
+        if (entry.id) recognizedVariables.set(entry.id, existingVariable);
         stats.existing++;
       } else {
         debugConsole.warning(
@@ -8023,10 +8151,9 @@ export async function matchAndCreateVariables(
           variableTable,
           collectionTable,
         );
-        // Track ALL variables we create, regardless of collection type
-        // We'll delete them individually during cleanup (never delete collections)
         newlyCreatedVariables.push(newVariable);
         recognizedVariables.set(index, newVariable);
+        if (entry.id) recognizedVariables.set(entry.id, newVariable);
         stats.created++;
       }
     } else {
@@ -8039,10 +8166,9 @@ export async function matchAndCreateVariables(
         variableTable,
         collectionTable,
       );
-      // Track ALL variables we create, regardless of collection type
-      // We'll delete them individually during cleanup (never delete collections)
       newlyCreatedVariables.push(newVariable);
       recognizedVariables.set(index, newVariable);
+      if (entry.id) recognizedVariables.set(entry.id, newVariable);
       stats.created++;
     }
   }
@@ -8616,16 +8742,12 @@ async function createRemoteInstances(
         const hasBoundVariableForWidth =
           entry.structure.boundVariables &&
           typeof entry.structure.boundVariables === "object" &&
-          (entry.structure.boundVariables.width ||
-            entry.structure.boundVariables.minWidth ||
-            entry.structure.boundVariables.maxWidth);
+          !!entry.structure.boundVariables.width;
 
         const hasBoundVariableForHeight =
           entry.structure.boundVariables &&
           typeof entry.structure.boundVariables === "object" &&
-          (entry.structure.boundVariables.height ||
-            entry.structure.boundVariables.minHeight ||
-            entry.structure.boundVariables.maxHeight);
+          !!entry.structure.boundVariables.height;
 
         if (
           entry.structure.width !== undefined &&

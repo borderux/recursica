@@ -648,6 +648,42 @@ export async function serializeFills(
 }
 
 /**
+ * Serializes effects, extracting bound variables to the variable table.
+ */
+export async function serializeEffects(
+  effects: any,
+  variableTable: VariableTable,
+  collectionTable: CollectionTable,
+  nodePath: string[],
+): Promise<any> {
+  if (!effects || !Array.isArray(effects)) return [];
+
+  return Promise.all(
+    effects.map(async (effect: any) => {
+      if (!effect || typeof effect !== "object") return effect;
+
+      const serializedEffect: any = {};
+      for (const key in effect) {
+        if (Object.prototype.hasOwnProperty.call(effect, key)) {
+          if (key === "boundVariables" || key === "bndVar") {
+            const extracted = await extractBoundVariables(
+              effect[key],
+              variableTable,
+              collectionTable,
+              nodePath,
+            );
+            serializedEffect[key] = extracted;
+          } else {
+            serializedEffect[key] = effect[key];
+          }
+        }
+      }
+      return serializedEffect;
+    }),
+  );
+}
+
+/**
  * Serializes backgrounds, handling bound variables with variable table references
  * and images with image table references
  * Similar to serializeFills, but for backgrounds property

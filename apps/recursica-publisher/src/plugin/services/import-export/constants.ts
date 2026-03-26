@@ -11,4 +11,4 @@
 // 2. You MUST write a migration in src/plugin/services/import-export/migrations/
 //    to handle upgrading older JSON payloads to this new schema FIRST before import.
 // ============================================================================
-export const CURRENT_EXPORT_FORMAT_VERSION = "1.1.0";
+export const CURRENT_EXPORT_FORMAT_VERSION = "1.1.1";
