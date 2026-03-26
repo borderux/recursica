@@ -221,18 +221,6 @@ export async function parseFrameProperties(
     handledKeys.add("layoutGrow");
   }
 
-  // Export layoutSizingHorizontal and layoutSizingVertical (these control "Fill Container" behavior)
-  // These are shorthands that set multiple layout properties including layoutGrow, layoutAlign, etc.
-  // Valid values: "FIXED", "HUG", "FILL"
-  if ((node as any).layoutSizingHorizontal !== undefined) {
-    result.layoutSizingHorizontal = (node as any).layoutSizingHorizontal;
-    handledKeys.add("layoutSizingHorizontal");
-  }
-  if ((node as any).layoutSizingVertical !== undefined) {
-    result.layoutSizingVertical = (node as any).layoutSizingVertical;
-    handledKeys.add("layoutSizingVertical");
-  }
-
   // Note: Unhandled keys are tracked centrally in extractNodeData
 
   return result;

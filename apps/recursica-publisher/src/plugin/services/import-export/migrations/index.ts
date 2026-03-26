@@ -28,18 +28,20 @@ export const migrations: Migration[] = [
       return data;
     },
   },
-  // Example for future use:
-  // {
-  //   fromVersion: "1.1.0",
-  //   toVersion: "1.2.0",
-  //   migrate: (data) => {
-  //     // Migrate data shape here
-  //     if (data.metadata) {
-  //       data.metadata.exportFormatVersion = "1.2.0";
-  //     }
-  //     return data;
-  //   },
-  // },
+  {
+    fromVersion: "1.1.0",
+    toVersion: "1.1.1",
+    migrate: (data) => {
+      // 1.1.1 fixes a bug where effect and stroke bound variables weren't cleanly serialized.
+      // Old 1.1.0 exports have lost the raw variable table context for these bindings,
+      // so we cannot statically rewrite them to _varRef here.
+      // The importer will safely ignore unresolvable raw IDs.
+      if (data.metadata) {
+        data.metadata.exportFormatVersion = "1.1.1";
+      }
+      return data;
+    },
+  },
 ];
 
 /**

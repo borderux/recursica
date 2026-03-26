@@ -3,6 +3,7 @@ import { BASE_NODE_DEFAULTS, isDifferentFromDefault } from "./nodeDefaults";
 import {
   extractBoundVariables,
   serializeFills,
+  serializeEffects,
   serializeBackgrounds,
 } from "./boundVariableParser";
 import type { VariableTable, CollectionTable } from "./variableTable";
@@ -318,7 +319,15 @@ export async function parseBaseNodeProperties(
     node.effects !== undefined &&
     isDifferentFromDefault(node.effects, BASE_NODE_DEFAULTS.effects)
   ) {
-    result.effects = node.effects;
+    const effects = await serializeEffects(
+      node.effects,
+      context.variableTable,
+      context.collectionTable,
+      context.nodePath || [],
+    );
+    if (isDifferentFromDefault(effects, BASE_NODE_DEFAULTS.effects)) {
+      result.effects = effects;
+    }
     handledKeys.add("effects");
   }
 
@@ -430,7 +439,16 @@ export async function parseBaseNodeProperties(
     node.strokes !== undefined &&
     isDifferentFromDefault(node.strokes, BASE_NODE_DEFAULTS.strokes)
   ) {
-    result.strokes = node.strokes;
+    const strokes = await serializeFills(
+      node.strokes,
+      context.variableTable,
+      context.collectionTable,
+      context.imageTable,
+      context.nodePath || [],
+    );
+    if (isDifferentFromDefault(strokes, BASE_NODE_DEFAULTS.strokes)) {
+      result.strokes = strokes;
+    }
     handledKeys.add("strokes");
   }
   if (
@@ -523,6 +541,19 @@ export async function parseBaseNodeProperties(
     debugConsole.log(
       `  [EXPORT] ✓ Exported componentPropertyReferences for ${node.type} node "${node.name || "Unnamed"}": ${JSON.stringify(node.componentPropertyReferences)}`,
     );
+  }
+
+  // Export layoutSizingHorizontal and layoutSizingVertical specifically for TEXT nodes
+  // This fixes the text auto-resize bug without destructively overriding auto-layout variables on instances
+  if (node.type === "TEXT") {
+    if ((node as any).layoutSizingHorizontal !== undefined) {
+      result.layoutSizingHorizontal = (node as any).layoutSizingHorizontal;
+      handledKeys.add("layoutSizingHorizontal");
+    }
+    if ((node as any).layoutSizingVertical !== undefined) {
+      result.layoutSizingVertical = (node as any).layoutSizingVertical;
+      handledKeys.add("layoutSizingVertical");
+    }
   }
 
   // Note: Unhandled keys are tracked centrally in extractNodeData

@@ -1,7 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { TEXT_STYLE_DEFAULTS } from "./styleDefaults";
 import type { ParserContext } from "./baseNodeParser";
-import { extractBoundVariables } from "./boundVariableParser";
+import {
+  extractBoundVariables,
+  serializeFills,
+  serializeEffects,
+} from "./boundVariableParser";
 
 /**
  * Serialized text style (only non-default properties)
@@ -120,7 +124,13 @@ export async function parsePaintStyle(
   const result: SerializedPaintStyle = {};
 
   if (style.paints && style.paints.length > 0) {
-    result.paints = [...style.paints];
+    result.paints = await serializeFills(
+      style.paints,
+      context.variableTable,
+      context.collectionTable,
+      context.imageTable,
+      context.nodePath || [],
+    );
   }
 
   // Extract bound variables from style properties
@@ -150,7 +160,12 @@ export async function parseEffectStyle(
   const result: SerializedEffectStyle = {};
 
   if (style.effects && style.effects.length > 0) {
-    result.effects = [...style.effects];
+    result.effects = await serializeEffects(
+      style.effects,
+      context.variableTable,
+      context.collectionTable,
+      context.nodePath || [],
+    );
   }
 
   // Extract bound variables from style properties
