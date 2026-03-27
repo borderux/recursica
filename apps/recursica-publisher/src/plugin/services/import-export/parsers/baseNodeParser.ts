@@ -543,17 +543,30 @@ export async function parseBaseNodeProperties(
     );
   }
 
-  // Export layoutSizingHorizontal and layoutSizingVertical specifically for TEXT nodes
-  // This fixes the text auto-resize bug without destructively overriding auto-layout variables on instances
-  if (node.type === "TEXT") {
-    if ((node as any).layoutSizingHorizontal !== undefined) {
+  // Export layoutSizingHorizontal and layoutSizingVertical (these control "Fill Container" behavior)
+  // Protected with try/catch because accessing these getters on incompatible nodes (like VECTOR) will throw fatal Figma API errors
+  try {
+    if (
+      "layoutSizingHorizontal" in node &&
+      (node as any).layoutSizingHorizontal !== undefined
+    ) {
       result.layoutSizingHorizontal = (node as any).layoutSizingHorizontal;
       handledKeys.add("layoutSizingHorizontal");
     }
-    if ((node as any).layoutSizingVertical !== undefined) {
+  } catch {
+    // Silently ignore if the node specifically rejects this property getter
+  }
+
+  try {
+    if (
+      "layoutSizingVertical" in node &&
+      (node as any).layoutSizingVertical !== undefined
+    ) {
       result.layoutSizingVertical = (node as any).layoutSizingVertical;
       handledKeys.add("layoutSizingVertical");
     }
+  } catch {
+    // Silently ignore
   }
 
   // Note: Unhandled keys are tracked centrally in extractNodeData
