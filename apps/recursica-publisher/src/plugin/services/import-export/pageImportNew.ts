@@ -7308,53 +7308,58 @@ export async function recreateNodeFromData(
   // If newNode.parent === parentNode, it's already correctly parented, so do nothing
 
   // CRITICAL: Set layoutSizingHorizontal and layoutSizingVertical AFTER appendChild
-  // These properties can only be set on children that are already appended to an auto-layout parent frame
-  // The API requires: 1) Parent has layoutMode set, 2) Child is appended, 3) Then we can set layoutSizingHorizontal
-  if (parentNode && parentHasAutoLayout) {
-    // Verify parent actually has auto-layout (double-check after appendChild)
-    const parentActuallyHasAutoLayout =
-      "layoutMode" in parentNode &&
-      parentNode.layoutMode !== undefined &&
-      parentNode.layoutMode !== "NONE";
+  // These properties require:
+  // 1. To FILL: Parent must be an auto-layout frame
+  // 2. To HUG: Node itself must be an auto-layout frame, or it must be a Text node inside an auto-layout frame
+  const parentActuallyHasAutoLayout =
+    parentNode &&
+    "layoutMode" in parentNode &&
+    parentNode.layoutMode !== undefined &&
+    parentNode.layoutMode !== "NONE";
 
-    if (parentActuallyHasAutoLayout) {
-      if ((nodeData as any).layoutSizingHorizontal !== undefined) {
-        try {
-          (newNode as any).layoutSizingHorizontal = (
-            nodeData as any
-          ).layoutSizingHorizontal;
-        } catch (error) {
-          debugConsole.warning(
-            `  ⚠️ Failed to set layoutSizingHorizontal for "${nodeData.name || "Unnamed"}": ${error}`,
-          );
-        }
-      } else if (
-        newNode.type === "TEXT" &&
-        nodeData.textAutoResize === "HEIGHT"
-      ) {
-        // Fallback for TEXT nodes in old exported JSONs missing layoutSizingHorizontal
-        try {
-          (newNode as any).layoutSizingHorizontal = "FILL";
-          debugConsole.log(
-            `  ✓ Synthesized layoutSizingHorizontal="FILL" for TEXT node "${nodeData.name || "Unnamed"}" based on textAutoResize="HEIGHT"`,
-          );
-        } catch (error) {
-          debugConsole.warning(
-            `  ⚠️ Failed to synthesize layoutSizingHorizontal for "${nodeData.name || "Unnamed"}": ${error}`,
-          );
-        }
+  const nodeHasAutoLayout =
+    "layoutMode" in newNode &&
+    (newNode as any).layoutMode !== undefined &&
+    (newNode as any).layoutMode !== "NONE";
+
+  if (parentActuallyHasAutoLayout || nodeHasAutoLayout) {
+    if ((nodeData as any).layoutSizingHorizontal !== undefined) {
+      try {
+        (newNode as any).layoutSizingHorizontal = (
+          nodeData as any
+        ).layoutSizingHorizontal;
+      } catch (error) {
+        debugConsole.warning(
+          `  ⚠️ Failed to set layoutSizingHorizontal for "${nodeData.name || "Unnamed"}": ${error}`,
+        );
       }
+    } else if (
+      newNode.type === "TEXT" &&
+      nodeData.textAutoResize === "HEIGHT" &&
+      parentActuallyHasAutoLayout
+    ) {
+      // Fallback for TEXT nodes in old exported JSONs missing layoutSizingHorizontal
+      try {
+        (newNode as any).layoutSizingHorizontal = "FILL";
+        debugConsole.log(
+          `  ✓ Synthesized layoutSizingHorizontal="FILL" for TEXT node "${nodeData.name || "Unnamed"}" based on textAutoResize="HEIGHT"`,
+        );
+      } catch (error) {
+        debugConsole.warning(
+          `  ⚠️ Failed to synthesize layoutSizingHorizontal for "${nodeData.name || "Unnamed"}": ${error}`,
+        );
+      }
+    }
 
-      if ((nodeData as any).layoutSizingVertical !== undefined) {
-        try {
-          (newNode as any).layoutSizingVertical = (
-            nodeData as any
-          ).layoutSizingVertical;
-        } catch (error) {
-          debugConsole.warning(
-            `  ⚠️ Failed to set layoutSizingVertical for "${nodeData.name || "Unnamed"}": ${error}`,
-          );
-        }
+    if ((nodeData as any).layoutSizingVertical !== undefined) {
+      try {
+        (newNode as any).layoutSizingVertical = (
+          nodeData as any
+        ).layoutSizingVertical;
+      } catch (error) {
+        debugConsole.warning(
+          `  ⚠️ Failed to set layoutSizingVertical for "${nodeData.name || "Unnamed"}": ${error}`,
+        );
       }
     }
   }

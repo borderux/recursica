@@ -42,6 +42,21 @@ export const migrations: Migration[] = [
       return data;
     },
   },
+  {
+    fromVersion: "1.1.1",
+    toVersion: "1.2.0",
+    migrate: (data) => {
+      // 1.2.0 fixes layoutSizing constraint bugs.
+      // Prior exports (1.1.1) dropped layoutSizingHorizontal and layoutSizingVertical on non-text nodes.
+      // They also incorrectly initialized text node widths.
+      // No schema transformations are required; bumping the version notifies the importer
+      // that the payload is safely formatted.
+      if (data.metadata) {
+        data.metadata.exportFormatVersion = "1.2.0";
+      }
+      return data;
+    },
+  },
 ];
 
 /**
