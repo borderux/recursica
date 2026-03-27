@@ -1,5 +1,11 @@
 # @recursica/publisher
 
+## 0.9.0
+
+### Minor Changes
+
+- [#337](https://github.com/borderux/recursica/pull/337) [`ead0156`](https://github.com/borderux/recursica/commit/ead0156079a3bb597a7fd1b239c85627e7780a09) Thanks [@mlmassey](https://github.com/mlmassey)! - Fixed HUG/FILL properties missing
+
 ## 0.8.0
 
 ### Minor Changes
