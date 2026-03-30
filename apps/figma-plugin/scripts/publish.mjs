@@ -6,9 +6,7 @@
  * This script creates a zip file for the figma plugin based on the specified mode.
  * It handles both production and test builds.
  *
- * Usage: node scripts/publish.mjs [mode]
- *
- * @param {string} mode - The build mode: 'production' or 'test' (default: 'production')
+ * Usage: node scripts/publish.mjs
  *
  * Output:
  * - Creates recursica-figma-plugin.zip in the dist/ folder
@@ -50,37 +48,12 @@ function log(message, color = "reset") {
   console.log(`${colors[color]}${message}${colors.reset}`);
 }
 
-function getMode() {
-  const mode = process.argv[2] || "production";
-
-  if (mode !== "production" && mode !== "test") {
-    log(
-      `❌ Error: Invalid mode '${mode}'. Must be 'production' or 'test'`,
-      "red",
-    );
-    log("Usage: node scripts/publish.mjs [production|test]", "yellow");
-    process.exit(1);
-  }
-
-  return mode;
-}
-
-function getBuildConfig(mode) {
-  const configs = {
-    production: {
-      distDir: "dist",
-      zipName: "figma-plugin.zip",
-      description: "Production",
-    },
-    test: {
-      distDir: "dist-test",
-      zipName: "figma-plugin-test.zip",
-      description: "Test",
-    },
-  };
-
-  return configs[mode];
-}
+// Configuration for production build
+const config = {
+  distDir: "dist",
+  zipName: "recursica-figma-plugin.zip",
+  description: "Production",
+};
 
 function validateBuildFiles(config) {
   const distPath = path.join(parentDir, config.distDir);
@@ -230,10 +203,6 @@ function main() {
       "bright",
     );
 
-    const mode = getMode();
-    const config = getBuildConfig(mode);
-
-    log(`📋 Mode: ${config.description}`, "cyan");
     log(`📁 Dist Directory: ${config.distDir}`, "cyan");
     log(`📦 Zip Name: ${config.zipName}`, "cyan");
     log("");

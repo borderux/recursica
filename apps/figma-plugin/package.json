@@ -29,7 +29,6 @@
     "build:ui": "tsc -b && vite build",
     "build:lib": "tsc -b && vite build --config vite.config.lib.ts",
     "test": "vitest run",
-    "zip": "npm run build && node scripts/zip.mjs",
     "lint": "eslint .",
     "publish": "node scripts/publish.mjs"
   },
