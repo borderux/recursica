@@ -1,191 +1,182 @@
-# Recursica Figma Plugin
+# Recursica Publisher
 
-This is a simple plugin for Figma that exports all the local variables in the Recursica design system files to Json in a repository, as well as supporting CSS and project files.
+A Figma plugin for publishing and importing Figma pages and components to/from GitHub repositories. Recursica Publisher enables version-controlled component management, allowing designers to export components with full fidelity and import them back into Figma with automatic dependency resolution.
 
-## Development
+## Overview
 
-To develop this plugin, you need to have Node.js and npm installed. Then, you can run the following commands:
-[node]: https://nodejs.org/
+Recursica Publisher bridges the gap between Figma design work and version control. It allows you to:
+
+- **Publish** Figma components to GitHub with versioning and automated pull request creation
+- **Import** previously exported components from GitHub back into Figma
+- Manage component dependencies automatically
+- Handle variable collections and design tokens
+- Track component versions and revision history
+
+## Features
+
+### Publish to GitHub
+
+- Export Figma pages/components with full structure preservation
+- Automatic version management and incrementing
+- Create GitHub branches and pull requests automatically
+- Support for component dependencies (export referenced components)
+- Revision history tracking with change messages
+- GitHub OAuth authentication for secure repository access
+
+### Import from GitHub
+
+- Import components from GitHub repositories
+- Multi-stage import pipeline with intelligent matching
+- Automatic dependency resolution for component instances
+- Variable collection matching (by GUID or name)
+- Deferred instance resolution for circular dependencies
+- Import wizard for handling conflicts and user decisions
+
+### Component Management
+
+- Full fidelity export/import (preserves all node properties, styles, and relationships)
+- Component instance deduplication for efficient storage
+- Variable collection handling with mode mapping
+- Support for component sets and variants
+- Remote component handling (Team Library icons)
+
+### Developer Experience
+
+- TypeScript support throughout
+- Debug console for troubleshooting
+- Cancellation support for long-running operations
+- Comprehensive error handling and validation
+
+## Installation
+
+### For Users
+
+1. Install the plugin from the Figma Community or via the Recursica team
+2. Open a Figma file
+3. Run the plugin from the Plugins menu
+4. Authenticate with GitHub when prompted
+
+### For Developers
 
 ```bash
 # Install dependencies
 npm install
 
-# Start the development system and watch
+# Development mode (watches for changes)
 npm run dev
+
+# Build for production
+npm run build
+
+# Create plugin zip file
+npm run zip
 ```
 
-This will start file watch that will watch for changes in the `src` directory and automatically build the plugin for Figma.
+## Usage
 
-## Build System
+### Publishing a Component
 
-The plugin supports three distinct build types for different use cases:
+1. Open the component page in Figma
+2. Run the Recursica Publisher plugin
+3. Click "Publish" from the home screen
+4. Review component metadata and version
+5. Enter a change message describing your updates
+6. Select which referenced components to publish (if any)
+7. The plugin will:
+   - Export the component(s) to JSON
+   - Create a GitHub branch
+   - Commit files to the branch
+   - Create a pull request
 
-### 🚀 **Local Development** (`npm run dev`)
+### Importing a Component
 
-- **Purpose**: Local development and debugging
-- **Manifest**: `manifest..development.json` (points to `dist-test/`)
-- **Output**: `dist-test/` directory
-- **Features**: Hot reload, file watching
+1. Run the Recursica Publisher plugin
+2. Click "Import" from the home screen
+3. Choose import source:
+   - **From Files**: Select exported JSON files
+   - **From Repository**: Browse and select from GitHub repository
+4. Follow the import wizard to:
+   - Resolve variable collection conflicts
+   - Handle component dependencies
+   - Review import summary
+5. Complete the import process
 
-### 🧪 **Test Build** (`npm run build:test`)
+## Architecture
 
-- **Purpose**: Creating test releases for internal testing
-- **Manifest**: `manifest.test.json` (points to `dist/`)
-- **Output**: `dist/` directory
-- **Usage**: `npm run build:test` to create test release package
+For detailed information about the plugin's architecture, design patterns, and technical implementation, see [ARCHITECTURE.md](./ARCHITECTURE.md).
 
-### 🏭 **Production Build** (`npm run build`)
+## Development
 
-- **Purpose**: Production releases
-- **Manifest**: `manifest.production.json` (points to `dist/`)
-- **Output**: `dist/` directory
-- **Usage**: `npm run build` to create production release package
+### Project Structure
 
-### 📋 **Available Scripts**
-
-| Script                    | Purpose                   | Description                                                 |
-| ------------------------- | ------------------------- | ----------------------------------------------------------- |
-| `npm run dev`             | **Local development**     | Runs both UI and plugin code in watch mode                  |
-| `npm run dev:ui`          | UI development watcher    | Builds UI in watch mode for development                     |
-| `npm run dev:code`        | Plugin code watcher       | Builds plugin code in watch mode for development            |
-| `npm run build`           | **Production build**      | Builds both UI and plugin code for production               |
-| `npm run build:test`      | **Test build**            | Builds both UI and plugin code for test releases            |
-| `npm run build:ui`        | UI production build       | Builds the React UI to `dist/` for production               |
-| `npm run build:test:ui`   | UI test build             | Builds the React UI to `dist/` for test releases            |
-| `npm run build:code`      | Plugin code production    | Builds the Figma plugin code to `dist/figma-plugin.js`      |
-| `npm run build:test:code` | Plugin code test build    | Builds the Figma plugin code to `dist/figma-plugin.js`      |
-| `npm run zip:test`        | **Create test zip**       | Creates test release package with test manifest             |
-| `npm run zip:production`  | **Create production zip** | Creates production release package with production manifest |
-
-### 🛠️ **Utility Scripts**
-
-| Script                | Purpose         | Description                                          |
-| --------------------- | --------------- | ---------------------------------------------------- |
-| `npm run lint`        | Code linting    | Runs ESLint on source code                           |
-| `npm run check-types` | Type checking   | Runs TypeScript type checking without emitting files |
-| `npm run format`      | Code formatting | Formats code with Prettier                           |
-| `npm run preview`     | Preview build   | Serves the built application for preview             |
-
-### 🏗️ **Build Architecture**
-
-The plugin uses a dual-build system:
-
-1. **UI Build** (`vite.config.ts`):
-
-   - Builds React UI with `viteSingleFile` plugin
-   - Outputs to `dist-test/index.html` (development) or `dist/index.html` (test/production)
-
-2. **Plugin Code Build** (`vite.config.lib.ts`):
-   - Builds Figma plugin code as ES module
-   - Outputs to `dist-test/figma-plugin.js` (development) or `dist/figma-plugin.js` (test/production)
-
-### 🔧 **Environment Configuration**
-
-The plugin uses environment variables to configure API endpoints and development settings. See the `.env` file for configuration options:
-
-```bash
-# The .env file already exists with default development settings
-# Edit .env to customize your configuration:
-
-# Environment options:
-# - Development: https://dev-api.recursica.com (default)
-# - Production: https://api.recursica.com
-# - Local: http://localhost:5000
-
-# For local customization, copy to .env.local:
-cp .env .env.local
-# Then edit .env.local (it's gitignored)
+```
+apps/recursica-publisher/
+├── src/
+│   ├── App.tsx                 # Main React application
+│   ├── pages/                  # UI pages (Home, Publish, Import, etc.)
+│   ├── components/             # Reusable UI components
+│   ├── context/                # React context providers
+│   ├── services/               # UI services (GitHub, repository)
+│   └── plugin/                 # Plugin sandbox code
+│       ├── main.ts             # Message router
+│       ├── services/           # Business logic services
+│       ├── parsers/            # Type-specific node parsers
+│       └── types/              # TypeScript definitions
+├── manifest.json               # Figma plugin manifest
+└── package.json
 ```
 
-#### **Available Environment Variables:**
+### Key Technologies
 
-| Variable                 | Purpose                | Default                         | Options                           |
-| ------------------------ | ---------------------- | ------------------------------- | --------------------------------- |
-| `VITE_RECURSICA_API_URL` | API endpoint URL       | `https://dev-api.recursica.com` | Development/Production/Local URLs |
-| `VITE_RECURSICA_UI_URL`  | UI endpoint URL        | `https://dev-api.recursica.com` | Development/Production/Local URLs |
-| `VITE_PLUGIN_PHRASE`     | Plugin security phrase | (empty)                         | Custom security phrase            |
-| `VITE_PLUGIN_MODE`       | Selects the mode       | `production`                    | `development` / `test` / `test`   |
+- **React 19** with TypeScript
+- **React Router** for navigation
+- **Mantine** for UI components
+- **Vite** for building
+- **Figma Plugin API** for Figma integration
+- **GitHub API** for repository operations
 
-### 🏠 **Local Development with Localhost API**
+### Building
 
-If you need to test against a local API server, follow these steps:
+The project uses two build configurations:
 
-#### 1. **Set Up Local API Server**
+- **UI Build**: React application bundled for plugin UI (`vite.config.ts`)
+- **Plugin Build**: Plugin sandbox code (`vite.config.lib.ts`)
 
-```bash
-# Start your local API server (usually on port 5000)
-# This depends on your local setup - check your API server documentation
-```
+Both are built concurrently during development and production builds.
 
-#### 2. **Configure Plugin for Local API**
+### Scripts
 
-```bash
-# Copy the environment template
-cp .env .env.local
+- `npm run dev` - Start development mode (watches both UI and plugin)
+- `npm run build` - Build for production
+- `npm run zip` - Build and create plugin zip file
+- `npm run lint` - Run ESLint
 
-# Edit .env.local and uncomment the local development lines:
-# VITE_RECURSICA_API_URL=http://localhost:5000
-# VITE_RECURSICA_UI_URL=http://localhost:5000
-```
+## Configuration
 
-### 🚀 **Installing the Plugin for Development**
+The plugin connects to the Recursica GitHub repository (`borderux/recursica-figma`) by default. Authentication is handled via GitHub OAuth tokens stored securely in the plugin.
 
-#### **Step 1: Start Development**
+## Troubleshooting
 
-```bash
-npm run dev
-```
+### Import/Export Issues
 
-This starts both UI dev server (port 5175) and plugin code watcher.
+- Check the debug console (available in the plugin UI) for detailed error messages
+- Ensure you have proper GitHub authentication and repository access
+- Verify that exported JSON files are valid and complete
+- Check that variable collections exist and are accessible
 
-#### **Step 2: Install Plugin in Figma**
+### Authentication Issues
 
-1. Open Figma Desktop
-2. Go to `Plugins` → `Development` → `Import plugin from manifest`
-3. Select `dist-dev/manifest.json` (for local development)
-4. The plugin will appear as "Recursica - Development"
+- Ensure you have a valid GitHub personal access token
+- Verify the token has appropriate repository permissions (read/write)
+- Check that you have access to the target repository
 
-## Publishing
+## Related Documentation
 
-The plugin supports two types of releases:
+- [ARCHITECTURE.md](./ARCHITECTURE.md) - Detailed architecture documentation
+- [PLAN.md](./PLAN.md) - Export format version history and design decisions
+- [IMPORT_SUMMARY.md](./IMPORT_SUMMARY.md) - Import pipeline details
+- [src/plugin/README.md](./src/plugin/README.md) - Plugin architecture overview
 
-### Test Releases
+## License
 
-```bash
-npm run zip:test
-```
-
-Creates a test release package in `dev-releases/recursica-plugin.zip` for internal testing.
-
-### Production Releases
-
-```bash
-npm run zip:production
-```
-
-Creates a production release package in `dev-releases/recursica-plugin.zip` for production deployment.
-
-Both releases are handled by the CI system and are only available for internal use.
-
-## Structure
-
-The plugin is using [React](https://reactjs.org/) for the UI and [TypeScript](https://www.typescriptlang.org/) for the logic.
-
-To modify the UI, you can edit the file located at `src/App.tsx` directory. To modify the logic, you can edit the files in the `src/plugin` directory.
-
-More details at [Figma Plugin API](https://www.figma.com/plugin-docs/intro/).
-
-## Metadata collection
-
-To be able to run the plugin you will need to create a variable collection in your figma file, to specify the name of the project (eg. recursica-project) and the project type (the current accepted values are: `ui-kit-mantine | theme + tokens | icons`).  
-Here's an example of the expected variable collection.
-
-**ID variables**
-| name | value |
-| ------------ | ---------- |
-| project-id | recursica-project |
-| project-type | ui-kit-mantine |
-
-> [!Important]
-> The name of the collection must be `ID variables`
+Part of the Recursica project. See the main project LICENSE file for details.

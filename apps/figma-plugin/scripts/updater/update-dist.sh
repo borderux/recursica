@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Recursica Plugin - Dist Update Script (Cross-platform)
+# Recursica Publisher - Dist Update Script (Cross-platform)
 echo "========================================"
-echo "Recursica Plugin - Dist Update Script"
+echo "Recursica Publisher - Dist Update Script"
 echo "========================================"
 echo ""
 
@@ -21,8 +21,8 @@ echo "Downloading files from GitHub repository..."
 echo ""
 
 # GitHub repository URLs
-BASE_URL="https://raw.githubusercontent.com/borderux/recursica/main/apps/figma-plugin/dist-test"
-FILES=("figma-plugin.js" "index.html")
+BASE_URL="https://raw.githubusercontent.com/borderux/recursica/main/apps/recursica-publisher/dist"
+FILES=("recursica-publisher.js" "index.html" "vite.svg")
 
 # Try different download methods
 if command_exists curl; then
@@ -62,4 +62,4 @@ echo "Update completed successfully!"
 echo "Files have been downloaded to the dist folder."
 echo "========================================"
 echo ""
-read -p "Press Enter to exit..." 
+read -p "Press Enter to exit..."

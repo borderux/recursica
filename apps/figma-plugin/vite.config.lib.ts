@@ -1,80 +1,53 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react-swc';
-import fs from 'fs';
-import path from 'path';
-import type { OutputChunk } from 'rollup';
-import chokidar from 'chokidar';
+import { defineConfig, loadEnv } from "vite";
+import react from "@vitejs/plugin-react-swc";
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
-  plugins: [
-    react(),
-    // Plugin to watch HTML file changes and trigger rebuilds
-    {
-      name: 'watch-html',
-      buildStart() {
-        if (mode === 'development') {
-          const htmlPath = path.resolve(process.cwd(), 'dist-dev/index.html');
+export default defineConfig(({ mode }) => {
+  // Load environment variables for the current mode
+  const env = loadEnv(mode, process.cwd(), "");
 
-          console.log(`👀 Watching HTML file: ${htmlPath}`);
+  // Require VITE_PLUGIN_PHRASE to be set in CI
+  if (!env.VITE_PLUGIN_PHRASE) {
+    const isCI = !!process.env.CI || !!process.env.GITHUB_ACTIONS;
+    if (isCI) {
+      console.error(
+        "\n❌ ERROR: [figma-plugin:lib] VITE_PLUGIN_PHRASE environment variable is missing or empty.",
+      );
+      console.error(
+        "This variable is required for production builds. Please ensure it is set in your CI environment.\n",
+      );
+      process.exit(1);
+    } else {
+      console.warn(
+        "\n⚠️ WARNING: [figma-plugin:lib] VITE_PLUGIN_PHRASE is missing. Using a dummy value for local development.",
+      );
+      console.warn(
+        "Some features (e.g. encryption/decryption) may not function correctly without the real secret.\n",
+      );
+      // Set a placeholder for local development
+      env.VITE_PLUGIN_PHRASE = "local-development-placeholder";
+    }
+  }
 
-          if (fs.existsSync(htmlPath)) {
-            const watcher = chokidar.watch(htmlPath, { persistent: true });
-            watcher.on('change', () => {
-              console.log('🔄 HTML file changed, triggering plugin code rebuild...');
-              // Force a rebuild by touching the main source file
-              const mainFile = path.resolve(process.cwd(), 'src/plugin/main.ts');
-              if (fs.existsSync(mainFile)) {
-                const time = new Date();
-                fs.utimesSync(mainFile, time, time);
-              }
-            });
-          }
-        }
+  return {
+    plugins: [react()],
+    build: {
+      emptyOutDir: false,
+      target: "es2017",
+      lib: {
+        entry: "src/plugin/main.ts",
+        name: "FigmaPlugin",
+        formats: ["es"],
       },
-    },
-    // Plugin to inject __html__ for development mode
-    {
-      name: 'inject-html',
-      generateBundle(options, bundle) {
-        if (mode === 'development' || mode === 'test') {
-          // Read the built HTML file from the appropriate directory
-          const htmlDir = mode === 'development' ? 'dist-dev' : 'dist-test';
-          const htmlPath = path.resolve(process.cwd(), `${htmlDir}/index.html`);
-
-          console.log(`🔍 Looking for HTML at: ${htmlPath}`);
-          console.log(`🔍 HTML exists: ${fs.existsSync(htmlPath)}`);
-
-          if (fs.existsSync(htmlPath)) {
-            const htmlContent = fs.readFileSync(htmlPath, 'utf-8');
-            console.log(`📄 HTML content loaded (${htmlContent.length} chars)`);
-
-            // Find the main plugin bundle
-            const pluginFile = Object.keys(bundle).find((file) => file.endsWith('.js'));
-            if (pluginFile && bundle[pluginFile].type === 'chunk') {
-              const chunk = bundle[pluginFile] as OutputChunk;
-              chunk.code = `const __html__ = ${JSON.stringify(htmlContent)};\n${chunk.code}`;
-              console.log(`✅ HTML injected into ${pluginFile}`);
-            }
-          } else {
-            console.warn(`❌ HTML file not found at ${htmlPath}`);
-          }
-        }
+      rollupOptions: {
+        external: ["react", "react-dom"],
+        output: {
+          format: "es",
+          entryFileNames: "recursica-publisher.js",
+          inlineDynamicImports: true,
+        },
       },
+      outDir: mode === "development" ? "dist-dev" : "dist",
     },
-  ],
-  build: {
-    emptyOutDir: false,
-    sourcemap: false, // Disabled - not useful in Figma's sandbox environment
-    target: 'es2018', // Target ES2018 to avoid optional catch binding (ES2019 feature)
-    lib: {
-      entry: 'src/plugin/main.ts',
-      name: 'FigmaPlugin',
-      formats: ['es'],
-    },
-    rollupOptions: {
-      external: ['react', 'react-dom'],
-    },
-    outDir: mode === 'development' ? 'dist-dev' : mode === 'test' ? 'dist-test' : 'dist',
-  },
-}));
+  };
+});

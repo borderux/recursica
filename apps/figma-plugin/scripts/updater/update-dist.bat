@@ -1,6 +1,6 @@
 @echo off
 echo ========================================
-echo Recursica Plugin - Dist Update Script
+echo Recursica Publisher - Dist Update Script
 echo ========================================
 echo.
 
@@ -44,20 +44,29 @@ if not exist "dist" (
 echo Downloading files from GitHub repository...
 echo.
 
-REM Download figma-plugin.js
-echo Downloading figma-plugin.js...
-curl -L -o "dist\figma-plugin.js" "https://raw.githubusercontent.com/borderux/recursica/main/apps/figma-plugin/dist-test/figma-plugin.js"
+REM Download recursica-publisher.js
+echo Downloading recursica-publisher.js...
+curl -L -o "dist\recursica-publisher.js" "https://raw.githubusercontent.com/borderux/recursica/main/apps/recursica-publisher/dist/recursica-publisher.js"
 if %errorlevel% neq 0 (
-    echo ERROR: Failed to download figma-plugin.js
+    echo ERROR: Failed to download recursica-publisher.js
     pause
     exit /b 1
 )
 
 REM Download index.html
 echo Downloading index.html...
-curl -L -o "dist\index.html" "https://raw.githubusercontent.com/borderux/recursica/main/apps/figma-plugin/dist-test/index.html"
+curl -L -o "dist\index.html" "https://raw.githubusercontent.com/borderux/recursica/main/apps/recursica-publisher/dist/index.html"
 if %errorlevel% neq 0 (
     echo ERROR: Failed to download index.html
+    pause
+    exit /b 1
+)
+
+REM Download vite.svg
+echo Downloading vite.svg...
+curl -L -o "dist\vite.svg" "https://raw.githubusercontent.com/borderux/recursica/main/apps/recursica-publisher/dist/vite.svg"
+if %errorlevel% neq 0 (
+    echo ERROR: Failed to download vite.svg
     pause
     exit /b 1
 )
@@ -68,4 +77,4 @@ echo Update completed successfully!
 echo Files have been downloaded to the dist folder.
 echo ========================================
 echo.
-pause 
+pause

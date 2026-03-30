@@ -1,89 +1,207 @@
-import {
-  PublishChanges,
-  Home,
-  Auth,
-  FileSynced,
-  Error,
-  Introduction,
-  SyncTokens,
-  SyncBrand,
-  SyncIcons,
-  SyncUiKit,
-  TokensSyncSuccess,
-  TokensSyncError,
-  BrandSyncSuccess,
-  BrandSyncError,
-  BrandTokensNotPublished,
-  IconsSyncSuccess,
-  IconsSyncError,
-  UiKitSyncError,
-  UiKitBrandNotPublished,
-  SyncComplete,
-} from './pages';
-import { MemoryRouter, Route, Routes } from 'react-router';
-import { ThemeProvider, Themes } from '@recursica/ui-kit-mantine';
-import { RepositoryProvider } from './context/Repository/RepositoryProvider';
-import { FigmaProvider } from './context';
-import { useGTMTracking } from './hooks';
-import { useVersionCheck } from './hooks/useVersionCheck';
-import { UpdateNotification } from './components';
+import { MemoryRouter, Routes, Route, useLocation } from "react-router";
+import { useEffect } from "react";
+import { MantineProvider } from "@mantine/core";
+import { theme } from "./theme/theme";
+import Layout from "./components/Layout";
+import Splash from "./pages/Splash/Splash";
+import Import from "./pages/Import/Import";
+import ImportMain from "./pages/ImportMain/ImportMain";
+import ImportBranch from "./pages/ImportBranch/ImportBranch";
+import ImportFiles from "./pages/ImportFiles";
+import ImportRecursicaJson from "./pages/ImportRecursicaJson";
+import ApplyRecursicaTheme from "./pages/ApplyRecursicaTheme";
+import ImportRepoComponent from "./pages/ImportRepoComponent";
+import Importing from "./pages/Importing";
+import ImportWizard from "./pages/ImportWizard";
+import Publish from "./pages/Publish";
+import PublishInit from "./pages/PublishInit/PublishInit";
+import Publishing from "./pages/Publishing/Publishing";
+import PublishingComplete from "./pages/PublishingComplete";
+import PublishingWizard from "./pages/PublishingWizard/PublishingWizard";
+import Test from "./pages/Test";
+import Admin from "./pages/Admin/Admin";
+import EditMetadata from "./pages/EditMetadata/EditMetadata";
+import PageManagement from "./pages/PageManagement";
+import { Auth } from "./pages/Auth/Auth";
+import { PublishAuth } from "./pages/PublishAuth";
+import Unauthorized from "./pages/Unauthorized";
+import { AuthProvider } from "./context/AuthProvider";
+import { ImportDataProvider } from "./context/ImportDataProvider";
+import { NavigationHistoryProvider } from "./context/NavigationHistoryProvider";
+import { FooterActionsProvider } from "./context/FooterActionsContext";
 
-// Component that tracks route changes inside the MemoryRouter context
-function AppRoutes() {
-  useGTMTracking();
-  const { showUpdateNotification, updateInfo, dismissUpdateNotification, downloadUpdate } =
-    useVersionCheck();
+/**
+ * Generates a proper UUID v4 using Web Crypto API
+ * Uses crypto.getRandomValues() for cryptographically secure random numbers
+ * @returns A UUID v4 string
+ */
+function generateUUID(): string {
+  // Check if Web Crypto API is available
+  if (
+    typeof crypto === "undefined" ||
+    typeof crypto.getRandomValues !== "function"
+  ) {
+    throw new Error(
+      "Web Crypto API not available. Cannot generate secure UUID.",
+    );
+  }
 
-  return (
-    <>
-      <Routes>
-        <Route path='introduction' element={<Introduction />} />
-        <Route path='home' element={<Home />} />
-        <Route path='sync-tokens' element={<SyncTokens />} />
-        <Route path='sync-tokens-success' element={<TokensSyncSuccess />} />
-        <Route path='sync-tokens-error' element={<TokensSyncError />} />
-        <Route path='sync-brand' element={<SyncBrand />} />
-        <Route path='sync-brand-success' element={<BrandSyncSuccess />} />
-        <Route path='sync-brand-error' element={<BrandSyncError />} />
-        <Route path='sync-brand-tokens-not-published' element={<BrandTokensNotPublished />} />
-        <Route path='sync-icons' element={<SyncIcons />} />
-        <Route path='sync-icons-success' element={<IconsSyncSuccess />} />
-        <Route path='sync-icons-error' element={<IconsSyncError />} />
-        <Route path='sync-ui-kit' element={<SyncUiKit />} />
-        <Route path='sync-ui-kit-error' element={<UiKitSyncError />} />
-        <Route path='sync-ui-kit-brand-not-published' element={<UiKitBrandNotPublished />} />
-        <Route path='sync-complete' element={<SyncComplete />} />
-        <Route path='auth' element={<Auth />} />
-        <Route path='file-synced' element={<FileSynced />} />
-        <Route path='publish/*' element={<PublishChanges />} />
-        <Route path='error' element={<Error />} />
-      </Routes>
-      {showUpdateNotification && updateInfo && (
-        <UpdateNotification
-          updateInfo={updateInfo}
-          onDismiss={dismissUpdateNotification}
-          onDownload={downloadUpdate}
-        />
-      )}
-    </>
-  );
+  // Generate 16 random bytes
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+
+  // Set version (4) and variant bits according to RFC 4122
+  bytes[6] = (bytes[6] & 0x0f) | 0x40; // Version 4
+  bytes[8] = (bytes[8] & 0x3f) | 0x80; // Variant 10
+
+  // Convert to UUID string format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+  const hex = Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+
+  return [
+    hex.slice(0, 8),
+    hex.slice(8, 12),
+    hex.slice(12, 16),
+    hex.slice(16, 20),
+    hex.slice(20, 32),
+  ].join("-");
+}
+
+// Component to log route changes
+function RouteLogger() {
+  const location = useLocation();
+
+  useEffect(() => {
+    console.log(
+      `[Route] Navigated to: ${location.pathname}${location.search || ""}`,
+    );
+  }, [location]);
+
+  return null;
 }
 
 function App() {
-  // Debug: Log environment variables
-  console.log('VITE_PLUGIN_MODE:', import.meta.env.VITE_PLUGIN_MODE);
-  console.log('VITE_RECURSICA_API_URL:', import.meta.env.VITE_RECURSICA_API_URL);
-  console.log('VITE_RECURSICA_UI_URL:', import.meta.env.VITE_RECURSICA_UI_URL);
+  // Handle GUID generation requests from the plugin
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      const { pluginMessage } = event.data;
+      if (!pluginMessage || pluginMessage.type !== "GenerateGuidRequest") {
+        return;
+      }
+
+      try {
+        // Generate GUID using proper UUID v4 generator
+        // Try crypto.randomUUID() first if available (best option)
+        // Otherwise use our implementation with crypto.getRandomValues()
+        let guid: string;
+        if (
+          typeof crypto !== "undefined" &&
+          typeof crypto.randomUUID === "function"
+        ) {
+          guid = crypto.randomUUID();
+        } else {
+          // Use Web Crypto API's getRandomValues for proper UUID generation
+          guid = generateUUID();
+        }
+
+        // Send the GUID back to the plugin
+        parent.postMessage(
+          {
+            pluginMessage: {
+              type: "GenerateGuidResponse",
+              requestId: pluginMessage.requestId,
+              guid,
+            },
+          },
+          "*",
+        );
+      } catch (error) {
+        // If crypto.randomUUID() fails, send error response
+        parent.postMessage(
+          {
+            pluginMessage: {
+              type: "GenerateGuidResponse",
+              requestId: pluginMessage.requestId,
+              error: true,
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "Failed to generate GUID",
+            },
+          },
+          "*",
+        );
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => {
+      window.removeEventListener("message", handleMessage);
+    };
+  }, []);
   return (
-    <ThemeProvider themeClassname={Themes.Default.Light}>
-      <FigmaProvider>
-        <RepositoryProvider>
-          <MemoryRouter initialEntries={['/home']}>
-            <AppRoutes />
+    <MantineProvider theme={theme}>
+      <AuthProvider>
+        <ImportDataProvider>
+          <MemoryRouter initialEntries={["/splash"]}>
+            <NavigationHistoryProvider>
+              <FooterActionsProvider>
+                <RouteLogger />
+                <Routes>
+                  <Route path="/splash" element={<Splash />} />
+                  <Route path="/" element={<Import />} />
+                  <Route path="/import" element={<Import />} />
+                  <Route path="/import-main" element={<ImportMain />} />
+                  <Route path="/import-branch" element={<ImportBranch />} />
+                  <Route path="/import-files" element={<ImportFiles />} />
+                  <Route
+                    path="/import-recursica-json"
+                    element={<ImportRecursicaJson />}
+                  />
+                  <Route
+                    path="/apply-recursica-theme/*"
+                    element={<ApplyRecursicaTheme />}
+                  />
+                  <Route
+                    path="/import-repo-component"
+                    element={<ImportRepoComponent />}
+                  />
+                  <Route path="/importing" element={<Importing />} />
+                  <Route path="/import-wizard/*" element={<ImportWizard />} />
+                  <Route path="/publish" element={<Publish />} />
+                  <Route path="/publish-init" element={<PublishInit />} />
+                  <Route path="/publish/auth" element={<PublishAuth />} />
+                  <Route
+                    path="/publish/unauthorized"
+                    element={<Unauthorized />}
+                  />
+                  <Route path="/publishing" element={<Publishing />} />
+                  <Route
+                    path="/publishing-complete"
+                    element={<PublishingComplete />}
+                  />
+                  <Route
+                    path="/publishing-wizard"
+                    element={<PublishingWizard />}
+                  />
+                  <Route path="/test" element={<Test />} />
+                  <Route path="/admin" element={<Admin />} />
+                  <Route path="/edit-metadata" element={<EditMetadata />} />
+                  <Route element={<Layout />}>
+                    <Route path="auth" element={<Auth />} />
+                    <Route
+                      path="page-management"
+                      element={<PageManagement />}
+                    />
+                  </Route>
+                </Routes>
+              </FooterActionsProvider>
+            </NavigationHistoryProvider>
           </MemoryRouter>
-        </RepositoryProvider>
-      </FigmaProvider>
-    </ThemeProvider>
+        </ImportDataProvider>
+      </AuthProvider>
+    </MantineProvider>
   );
 }
 

@@ -1,6 +1,6 @@
-# Recursica Plugin - Dist Update Script (PowerShell)
+# Recursica Publisher - Dist Update Script (PowerShell)
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Recursica Plugin - Dist Update Script" -ForegroundColor Cyan
+Write-Host "Recursica Publisher - Dist Update Script" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -14,29 +14,26 @@ Write-Host "Downloading files from GitHub repository..." -ForegroundColor Green
 Write-Host ""
 
 # GitHub repository URLs
-$baseUrl = "https://raw.githubusercontent.com/borderux/recursica/main/apps/figma-plugin/dist-test"
-$files = @(
-    "figma-plugin.js",
-    "index.html"
-)
+$baseUrl = "https://raw.githubusercontent.com/borderux/recursica/main/apps/recursica-publisher/dist"
+$files = @("recursica-publisher.js", "index.html", "vite.svg")
 
 # Download each file
 foreach ($file in $files) {
     $url = "$baseUrl/$file"
-    $outputPath = "dist\$file"
+    $outputPath = "dist/$file"
     
     Write-Host "Downloading $file..." -ForegroundColor Yellow
     
     try {
         Invoke-WebRequest -Uri $url -OutFile $outputPath -UseBasicParsing
-        Write-Host "✓ Successfully downloaded $file" -ForegroundColor Green
+        Write-Host "Successfully downloaded $file" -ForegroundColor Green
     }
     catch {
-        Write-Host "✗ ERROR: Failed to download $file" -ForegroundColor Red
+        Write-Host "ERROR: Failed to download $file" -ForegroundColor Red
         Write-Host "Error details: $($_.Exception.Message)" -ForegroundColor Red
         Write-Host ""
         Write-Host "Press any key to exit..." -ForegroundColor Yellow
-        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+        Read-Host
         exit 1
     }
 }
@@ -48,4 +45,4 @@ Write-Host "Files have been downloaded to the dist folder." -ForegroundColor Gre
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Press any key to exit..." -ForegroundColor Yellow
-$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") 
+Read-Host

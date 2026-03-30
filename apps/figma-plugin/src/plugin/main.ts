@@ -1,282 +1,148 @@
-import packageInfo from '../../package.json';
-import { getLocalStorage, saveInStorage } from './authStorage';
-import { getTeamLibrary } from './teamLibrary';
-import { syncMetadata } from './metadata';
-import { detectFiletype } from './filetype';
-import { continueBrandSync, markBrandSynchronized } from './metadata/workflows/syncBrandFile';
-import { continueUiKitSync, markUiKitSynchronized } from './metadata/workflows/syncUiKitFile';
+import { services } from "./services";
+import type { PluginMessage, PluginResponse } from "./types/messages";
+import type { ServiceName } from "./types/ServiceName";
+import { handleGuidResponse } from "./utils/requestGuidFromUI";
 import {
-  getSyncMetadata,
-  clearSyncMetadata,
-  updateSyncMetadata,
-} from './metadata/syncMetadataStorage';
-const pluginVersion = packageInfo.version;
+  markRequestCancelled,
+  checkCancellation,
+  clearCancellation,
+} from "./utils/cancellation";
+import { debugConsole } from "./services/import-export/debugConsole";
 
-console.log('📦 Figma Plugin loaded with version:', pluginVersion);
-console.log('📋 Plugin package info:', {
-  name: packageInfo.name,
-  version: packageInfo.version,
-  description: packageInfo.description,
+// Service map - automatically derived from services export
+// This ensures any service added to services/index.ts is automatically available
+const serviceMap = services;
+
+// Plugin configuration
+figma.showUI(__html__, {
+  width: 400,
+  height: 400,
 });
 
-if (import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test') {
-  figma.showUI(__html__, {
-    width: 370,
-    height: 350,
-  });
-} else {
-  const uiUrl = import.meta.env.VITE_RECURSICA_UI_URL;
-  figma.showUI(`<script>window.location.href = '${uiUrl}'</script>`, {
-    width: 370,
-    height: 350,
-  });
-}
+// Message handler - routes messages to services based on type
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+figma.ui.onmessage = async (message: PluginMessage | any) => {
+  console.log("Received message:", message);
 
-// DEBUG: Check what getAvailableLibraryVariableCollectionsAsync returns
-(async () => {
+  // Handle cancellation messages
+  if (message.type === "cancelRequest") {
+    const requestId = message.data?.requestId;
+    if (requestId) {
+      markRequestCancelled(requestId);
+      console.log(`Request cancelled: ${requestId}`);
+    }
+    return;
+  }
+
+  // Handle GUID response messages (from UI to plugin)
+  if (message.type === "GenerateGuidResponse") {
+    handleGuidResponse(message);
+    return;
+  }
+
+  // At this point, message should be a PluginMessage
+  const pluginMessage = message as PluginMessage;
+
   try {
-    console.log('[main] DEBUG: Calling getAvailableLibraryVariableCollectionsAsync()...');
-    const availableLibraries =
-      await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
-    console.log(
-      '[main] DEBUG: getAvailableLibraryVariableCollectionsAsync() returned:',
-      availableLibraries
-    );
-    console.log('[main] DEBUG: Count:', availableLibraries.length);
-    console.log(
-      '[main] DEBUG: Full details:',
-      availableLibraries.map((lib) => ({
-        name: lib.name,
-        key: lib.key,
-        libraryName: lib.libraryName,
-      }))
-    );
+    const serviceName = pluginMessage.type as ServiceName;
+    const service = serviceMap[serviceName];
 
-    // Check variable count for each library collection
-    console.log('[main] DEBUG: Checking variable counts for each library...');
-    for (const lib of availableLibraries) {
-      try {
-        const variables = await figma.teamLibrary.getVariablesInLibraryCollectionAsync(lib.key);
-        console.log(
-          `[main] DEBUG: Library "${lib.name}" (library key: ${lib.key}): ${variables.length} variables`
-        );
-
-        if (variables.length > 0) {
-          console.log(
-            `[main] DEBUG: First few variable keys for "${lib.name}":`,
-            variables.slice(0, 3).map((v) => v.key)
-          );
-
-          // Import first variable to get the collection and compare keys
-          try {
-            const importedVar = await figma.variables.importVariableByKeyAsync(variables[0].key);
-            const collection = await figma.variables.getVariableCollectionByIdAsync(
-              importedVar.variableCollectionId
-            );
-            if (collection) {
-              console.log(`[main] DEBUG: Key comparison for "${lib.name}":`);
-              console.log(
-                `[main] DEBUG:   - Library key (from getAvailableLibraryVariableCollectionsAsync): ${lib.key}`
-              );
-              console.log(
-                `[main] DEBUG:   - Collection key (from getVariableCollectionByIdAsync): ${collection.key}`
-              );
-              console.log(`[main] DEBUG:   - Keys match: ${lib.key === collection.key}`);
-              console.log(
-                `[main] DEBUG:   - Collection has ${collection.variableIds.length} local variable IDs`
-              );
-            }
-          } catch (error) {
-            console.warn(
-              `[main] DEBUG: Could not import variable to get collection for "${lib.name}":`,
-              error
-            );
-          }
-        } else {
-          console.warn(
-            `[main] DEBUG: Library "${lib.name}" has 0 variables - may not be fully published or accessible`
-          );
-        }
-      } catch (error) {
-        console.error(`[main] DEBUG: Error getting variables for library "${lib.name}":`, error);
-      }
+    if (!service) {
+      console.warn("Unknown message type:", pluginMessage.type);
+      const errorResponse: PluginResponse = {
+        type: pluginMessage.type,
+        success: false,
+        error: true,
+        message: "Unknown message type: " + pluginMessage.type,
+        data: {},
+        requestId: pluginMessage.requestId,
+      };
+      figma.ui.postMessage(errorResponse);
+      return;
     }
 
-    // Also check stored metadata keys
-    try {
-      const syncMetadata = await getSyncMetadata();
-      if (syncMetadata) {
-        console.log('[main] DEBUG: Stored metadata keys:');
-        if (syncMetadata.tokens?.collectionKey) {
-          console.log(`[main] DEBUG:   - Tokens stored key: ${syncMetadata.tokens.collectionKey}`);
-        }
-        if (syncMetadata.brand?.collectionKey) {
-          console.log(`[main] DEBUG:   - Brand stored key: ${syncMetadata.brand.collectionKey}`);
-        }
-      }
-    } catch (error) {
-      console.warn('[main] DEBUG: Could not get stored metadata:', error);
+    // Check for cancellation before processing
+    if (pluginMessage.requestId) {
+      checkCancellation(pluginMessage.requestId);
     }
 
-    // Also check local collections for comparison
-    const localCollections = await figma.variables.getLocalVariableCollectionsAsync();
-    console.log(
-      '[main] DEBUG: Local collections:',
-      localCollections.map((col) => ({
-        name: col.name,
-        key: col.key,
-        variableCount: col.variableIds.length,
-      }))
-    );
+    // Service functions have different signatures, so we need to handle them specially
+    // Most services: (data: Record<string, unknown>) => Promise<PluginResponse>
+    // exportPage: (data, processedPages?, isRecursive?, discoveredPages?, requestId?) => Promise<PluginResponse>
+    // importPage: (data, requestId?) => Promise<PluginResponse>
+    type ServiceFunction = (
+      data: Record<string, unknown>,
+      ...args: unknown[]
+    ) => Promise<PluginResponse>;
+
+    let response: PluginResponse;
+    if (serviceName === "exportPage" && pluginMessage.requestId) {
+      // exportPage has signature: (data, processedPages?, isRecursive?, discoveredPages?, requestId?)
+      // We need to pass defaults for the middle parameters
+      const exportPageService = service as ServiceFunction;
+      response = await exportPageService(
+        pluginMessage.data,
+        new Set(),
+        false,
+        new Set(),
+        pluginMessage.requestId,
+      );
+    } else if (serviceName === "importPage" && pluginMessage.requestId) {
+      // importPage has signature: (data, requestId?)
+      const importPageService = service as ServiceFunction;
+      response = await importPageService(
+        pluginMessage.data,
+        pluginMessage.requestId,
+      );
+    } else {
+      // Standard service signature: (data) => Promise<PluginResponse>
+      const standardService = service as ServiceFunction;
+      response = await standardService(pluginMessage.data);
+    }
+
+    // Include debug logs in response if available
+    const debugLogs = debugConsole.getLogs();
+    if (debugLogs.length > 0) {
+      response.data = {
+        ...response.data,
+        debugLogs,
+      };
+    }
+
+    // Include requestId in response so UI can match it to the pending promise
+    figma.ui.postMessage({
+      ...response,
+      requestId: pluginMessage.requestId,
+    });
+
+    // Clean up cancelled request tracking after successful completion
+    if (pluginMessage.requestId) {
+      clearCancellation(pluginMessage.requestId);
+    }
   } catch (error) {
-    console.error('[main] DEBUG ERROR:', error);
-  }
-})();
+    console.error("Error handling message:", error);
 
-// Send sync metadata to UI when plugin loads
-(async () => {
-  try {
-    const syncMetadata = await getSyncMetadata();
-    console.log('[main] Loaded sync metadata on startup:', syncMetadata);
-    figma.ui.postMessage({
-      type: 'SYNC_METADATA_LOADED',
-      payload: syncMetadata,
-    });
-  } catch (error) {
-    console.warn('[main] Could not load sync metadata:', error);
-    // Send null to indicate no metadata exists
-    figma.ui.postMessage({
-      type: 'SYNC_METADATA_LOADED',
-      payload: null,
-    });
-  }
-})();
+    const errorResponse: PluginResponse = {
+      type: pluginMessage.type,
+      success: false,
+      error: true,
+      message:
+        error instanceof Error ? error.message : "Unknown error occurred",
+      data: {},
+      requestId: pluginMessage.requestId,
+    };
 
-figma.ui.onmessage = async (e) => {
-  if (e.type === 'GET_LOCAL_STORAGE') {
-    getLocalStorage();
-  }
-  if (e.type === 'GET_CURRENT_USER') {
-    figma.ui.postMessage({
-      type: 'CURRENT_USER',
-      payload: figma.currentUser?.id,
-    });
-  }
-  if (e.type === 'UPDATE_ACCESS_TOKEN') {
-    saveInStorage('accessToken', e.payload);
-  }
-  if (e.type === 'UPDATE_PLATFORM') {
-    saveInStorage('platform', e.payload);
-  }
-  if (e.type === 'UPDATE_SELECTED_PROJECT') {
-    saveInStorage('selectedProject', e.payload);
-  }
-  if (e.type === 'UPDATE_AGREED_PUBLISH_CHANGES') {
-    saveInStorage('agreedPublishChanges', e.payload);
-  }
-  if (e.type === 'GET_VARIABLES') {
-    const { fileType } = await detectFiletype();
-    if (fileType === 'ui-kit') {
-      getTeamLibrary(pluginVersion);
+    // Include debug logs in error response if available
+    const debugLogs = debugConsole.getLogs();
+    if (debugLogs.length > 0) {
+      errorResponse.data.debugLogs = debugLogs;
     }
-  }
-  if (e.type === 'SYNC_TOKENS') {
-    syncMetadata();
-  }
-  if (e.type === 'SYNC_BRAND') {
-    syncMetadata();
-  }
-  if (e.type === 'SYNC_ICONS') {
-    syncMetadata();
-  }
-  if (e.type === 'SYNC_UI_KIT') {
-    syncMetadata();
-  }
-  if (e.type === 'SYNC_UI_KIT_IGNORE_ERROR') {
-    continueUiKitSync();
-  }
-  if (e.type === 'GET_FILETYPE') {
-    try {
-      const { fileType, themeName } = await detectFiletype();
-      // Also get sync metadata to determine workflow status
-      const syncMetadata = await getSyncMetadata();
-      figma.ui.postMessage({
-        type: 'FILETYPE_DETECTED',
-        payload: {
-          fileType,
-          themeName,
-          pluginVersion,
-        },
-      });
-      // Send sync metadata to UI
-      figma.ui.postMessage({
-        type: 'SYNC_METADATA_LOADED',
-        payload: syncMetadata,
-      });
-    } catch (error) {
-      figma.ui.postMessage({
-        type: 'FILETYPE_ERROR',
-        payload: {
-          error: error instanceof Error ? error.message : 'Unknown error occurred',
-        },
-      });
-    }
-  }
-  if (e.type === 'GET_SYNC_METADATA') {
-    const syncMetadata = await getSyncMetadata();
-    figma.ui.postMessage({
-      type: 'SYNC_METADATA_LOADED',
-      payload: syncMetadata,
-    });
-  }
-  if (e.type === 'CLEAR_SYNC_METADATA') {
-    console.log('[main] Clearing sync metadata');
-    await clearSyncMetadata();
-    // Reload metadata and send to UI
-    const syncMetadata = await getSyncMetadata();
-    figma.ui.postMessage({
-      type: 'SYNC_METADATA_LOADED',
-      payload: syncMetadata,
-    });
-    figma.notify('Sync metadata cleared');
-  }
-  if (e.type === 'CLOSE_PLUGIN') {
-    figma.closePlugin();
-  }
-  if (e.type === 'CONTINUE_WITH_MISSING_VARIABLES') {
-    continueBrandSync();
-  }
-  if (e.type === 'SYNC_BRAND_IGNORE_ERROR') {
-    continueBrandSync();
-  }
-  if (e.type === 'MARK_BRAND_SYNCHRONIZED') {
-    markBrandSynchronized();
-  }
-  if (e.type === 'MARK_UI_KIT_SYNCHRONIZED') {
-    markUiKitSynchronized();
-  }
-  if (e.type === 'MARK_INTRODUCTION_SYNCHRONIZED') {
-    console.log('[main] Marking Introduction as synchronized');
-    await updateSyncMetadata({
-      introduction: {
-        synchronized: true,
-      },
-    });
-    // Reload metadata and send to UI
-    const syncMetadata = await getSyncMetadata();
-    figma.ui.postMessage({
-      type: 'SYNC_METADATA_LOADED',
-      payload: syncMetadata,
-    });
-  }
-  if (e.type === 'NAVIGATE_TO_FILE') {
-    const { fileId } = e.payload;
-    if (fileId) {
-      console.log('[main] File navigation requested. File ID:', fileId);
-      // Note: Figma plugins cannot programmatically navigate to different files
-      // The user will need to manually navigate to the Tokens file
-      // The sync-tokens page will guide them if they're in the wrong file
-      figma.notify('Please navigate to the Tokens file and run the plugin again.');
+
+    figma.ui.postMessage(errorResponse);
+
+    // Clean up cancelled request tracking
+    if (pluginMessage.requestId) {
+      clearCancellation(pluginMessage.requestId);
     }
   }
 };

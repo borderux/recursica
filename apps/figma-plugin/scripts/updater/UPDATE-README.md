@@ -1,6 +1,6 @@
-# Recursica Plugin - Update Scripts (Cross-Platform)
+# Recursica Publisher - Update Scripts (Cross-Platform)
 
-This folder contains scripts to automatically update the plugin files from the GitHub repository. These scripts work on **Windows**, **macOS**, and **Linux**.
+This folder contains scripts to automatically update the publisher files from the GitHub repository. These scripts work on **Windows**, **macOS**, and **Linux**.
 
 ## Available Scripts
 
@@ -8,7 +8,7 @@ This folder contains scripts to automatically update the plugin files from the G
 
 - **Platform**: Windows (including WSL detection)
 - **Usage**: Double-click the file or run from command prompt
-- **What it does**: Downloads the latest `figma-plugin.js` and `index.html` files from the GitHub repository and places them in the `dist` folder
+- **What it does**: Downloads the latest `recursica-publisher.js`, `index.html`, and `vite.svg` files from the GitHub repository and places them in the `dist` folder
 - **Requirements**: PowerShell (preferred) or curl
 
 ### `update-dist.ps1` (PowerShell Script)
@@ -75,15 +75,16 @@ This folder contains scripts to automatically update the plugin files from the G
 All scripts automatically:
 
 - Create a `dist` folder if it doesn't exist
-- Download the latest files from https://github.com/borderux/recursica/tree/main/dist-test
+- Download the latest files from https://github.com/borderux/recursica/tree/main/apps/recursica-publisher/dist
 - Replace any existing files in the `dist` folder
 
 ## What Files Are Updated
 
 The scripts download and update these files in the `dist` folder:
 
-- `figma-plugin.js` - The main plugin JavaScript file
+- `recursica-publisher.js` - The main plugin JavaScript file
 - `index.html` - The plugin's HTML interface
+- `vite.svg` - The Vite logo asset
 
 ## Cross-Platform Compatibility
 
@@ -117,4 +118,4 @@ The scripts download and update these files in the `dist` folder:
 
 ## Source Repository
 
-Files are downloaded from: https://github.com/borderux/recursica/tree/main/dist-test
+Files are downloaded from: https://github.com/borderux/recursica/tree/main/apps/recursica-publisher/dist
