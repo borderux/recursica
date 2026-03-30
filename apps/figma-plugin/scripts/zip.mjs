@@ -20,7 +20,7 @@ if (!fs.existsSync(releasesDir)) {
 }
 
 const output = fs.createWriteStream(
-  parentDir + "/dev-releases/recursica-publisher.zip",
+  parentDir + "/dev-releases/figma-plugin.zip",
 );
 const archive = archiver("zip", {
   zlib: { level: 9 }, // Sets the compression level.
@@ -29,7 +29,7 @@ const archive = archiver("zip", {
 // listen for all archive data to be written
 output.on("close", function () {
   console.log(
-    `✅ Plugin packaged: recursica-publisher.zip (${archive.pointer()} bytes)`,
+    `✅ Plugin packaged: figma-plugin.zip (${archive.pointer()} bytes)`,
   );
 });
 

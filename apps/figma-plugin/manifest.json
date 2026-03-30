@@ -1,8 +1,8 @@
 {
   "name": "Recursica",
-  "id": "1567687728010187317",
+  "id": "1529976075852056898",
   "api": "1.0.0",
-  "main": "./dist/recursica-publisher.js",
+  "main": "./dist/figma-plugin.js",
   "ui": "./dist/index.html",
   "capabilities": [],
   "enableProposedApi": false,
@@ -12,9 +12,13 @@
   "networkAccess": {
     "allowedDomains": [
       "https://api.recursica.com",
+      "https://fonts.googleapis.com",
       "https://api.github.com",
+      "https://gitlab.com",
       "https://avatars.githubusercontent.com",
-      "https://raw.githubusercontent.com"
+      "https://raw.githubusercontent.com",
+      "https://fonts.gstatic.com",
+      "https://www.googletagmanager.com"
     ],
     "devAllowedDomains": ["https://dev-api.recursica.com"]
   }

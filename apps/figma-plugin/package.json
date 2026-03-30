@@ -2,18 +2,35 @@
   "name": "@recursica/figma-plugin",
   "private": true,
   "version": "0.9.0",
+  "description": "The Figma plugin for Recursica",
+  "license": "MIT",
+  "author": "hi@borderux.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/borderux/recursica.git"
+  },
+  "keywords": [
+    "figma",
+    "plugin",
+    "recursica",
+    "design"
+  ],
+  "bugs": {
+    "url": "https://github.com/borderux/recursica/issues"
+  },
+  "homepage": "https://github.com/borderux/recursica",
   "type": "module",
   "scripts": {
-    "dev": "concurrently --kill-others-on-fail \"npm run dev:ui\" \"npm run dev:lib\"",
+    "clean": "rimraf dist dist-dev dist-test",
+    "dev": "npm run clean && concurrently --kill-others-on-fail \"npm run dev:ui\" \"npm run dev:lib\"",
     "dev:ui": "tsc -b && vite build --watch",
     "dev:lib": "tsc -b && vite build --config vite.config.lib.ts --watch",
-    "build": "concurrently --kill-others-on-fail \"npm run build:ui\" \"npm run build:lib\"",
+    "build": "npm run clean && concurrently --kill-others-on-fail \"npm run build:ui\" \"npm run build:lib\"",
     "build:ui": "tsc -b && vite build",
     "build:lib": "tsc -b && vite build --config vite.config.lib.ts",
     "test": "vitest run",
     "zip": "npm run build && node scripts/zip.mjs",
     "lint": "eslint .",
-    "preview": "vite preview",
     "publish": "node scripts/publish.mjs"
   },
   "dependencies": {
@@ -40,6 +57,7 @@
     "eslint-plugin-react-hooks": "5.2.0",
     "eslint-plugin-react-refresh": "0.4.20",
     "globals": "16.3.0",
+    "rimraf": "^6.1.3",
     "typescript": "5.8.3",
     "typescript-eslint": "8.39.1",
     "vite": "6.3.5",

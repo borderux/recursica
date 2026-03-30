@@ -37,13 +37,14 @@ export default defineConfig(({ mode }) => {
       lib: {
         entry: "src/plugin/main.ts",
         name: "FigmaPlugin",
+        fileName: "figma-plugin",
         formats: ["es"],
       },
       rollupOptions: {
         external: ["react", "react-dom"],
         output: {
           format: "es",
-          entryFileNames: "recursica-publisher.js",
+          entryFileNames: "figma-plugin.js",
           inlineDynamicImports: true,
         },
       },

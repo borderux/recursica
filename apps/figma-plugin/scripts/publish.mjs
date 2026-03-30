@@ -69,12 +69,12 @@ function getBuildConfig(mode) {
   const configs = {
     production: {
       distDir: "dist",
-      zipName: "recursica-publisher-plugin.zip",
+      zipName: "figma-plugin.zip",
       description: "Production",
     },
     test: {
       distDir: "dist-test",
-      zipName: "recursica-publisher-plugin-test.zip",
+      zipName: "figma-plugin-test.zip",
       description: "Test",
     },
   };
