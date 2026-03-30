@@ -19,7 +19,7 @@ function loadConfigurationSchema(): object {
       "..",
       "schemas",
       "dist",
-      "RecursicaConfiguration.v1.json",
+      "RecursicaConfiguration_v1.json",
     );
     const schemaContent = readFileSync(schemaPath, "utf-8");
     const schema = JSON.parse(schemaContent);

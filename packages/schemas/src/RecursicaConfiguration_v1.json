@@ -1,10 +1,11 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Recursica Configuration",
+  "title": "Recursica Configuration v1",
   "description": "Configuration file for Recursica theme generation",
+  "deprecated": true,
   "type": "object",
   "required": ["project"],
-  "additionalProperties": false,
+  "additionalProperties": true,
   "properties": {
     "$schema": {
       "type": "string",
@@ -41,7 +42,7 @@
           "examples": ["packages/recursica-ui-kit/webworker.js"]
         }
       },
-      "additionalProperties": false
+      "additionalProperties": true
     },
     "icons": {
       "type": "object",
@@ -71,7 +72,7 @@
               }
             }
           },
-          "additionalProperties": false
+          "additionalProperties": true
         }
       }
     },
@@ -99,7 +100,7 @@
               "examples": ["color/background/default"]
             }
           },
-          "additionalProperties": false
+          "additionalProperties": true
         },
         "fontWeight": {
           "type": "array",
@@ -138,7 +139,7 @@
               "alias": "55 Roman"
             }
           ],
-          "additionalProperties": false
+          "additionalProperties": true
         }
       }
     }

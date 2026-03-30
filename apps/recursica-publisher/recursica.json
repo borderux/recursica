@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/borderux/recursica/main/packages/schemas/src/RecursicaConfiguration.v2.json",
+  "$schema": "https://raw.githubusercontent.com/borderux/recursica/main/packages/schemas/dist/RecursicaConfiguration_v2.json",
   "config": {
     "project": {
       "name": "Recursica Plugin"

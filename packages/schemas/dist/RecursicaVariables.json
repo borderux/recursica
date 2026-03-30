@@ -79,7 +79,7 @@
             }
           },
           "required": ["r", "g", "b", "a"],
-          "additionalProperties": false
+          "additionalProperties": true
         },
         "offset": {
           "type": "object",
@@ -95,7 +95,7 @@
             }
           },
           "required": ["x", "y"],
-          "additionalProperties": false
+          "additionalProperties": true
         },
         "radius": {
           "type": "number",
@@ -107,7 +107,7 @@
         }
       },
       "required": ["type", "color", "offset", "radius", "spread"],
-      "additionalProperties": false
+      "additionalProperties": true
     },
     "EffectToken": {
       "type": "object",
@@ -124,7 +124,7 @@
         }
       },
       "required": ["variableName", "effects"],
-      "additionalProperties": false
+      "additionalProperties": true
     },
     "GridLayout": {
       "type": "object",
@@ -156,7 +156,7 @@
         }
       },
       "required": ["alignment", "count", "gap", "pattern"],
-      "additionalProperties": false
+      "additionalProperties": true
     },
     "GridToken": {
       "type": "object",
@@ -184,7 +184,7 @@
         }
       },
       "required": ["type", "name", "description", "layouts"],
-      "additionalProperties": false
+      "additionalProperties": true
     },
     "LineHeight": {
       "type": "object",
@@ -198,7 +198,7 @@
         }
       },
       "required": ["value", "unit"],
-      "additionalProperties": false
+      "additionalProperties": true
     },
     "LetterSpacing": {
       "type": "object",
@@ -212,7 +212,7 @@
         }
       },
       "required": ["value", "unit"],
-      "additionalProperties": false
+      "additionalProperties": true
     },
     "FontFamilyToken": {
       "type": "object",
@@ -244,7 +244,7 @@
             }
           },
           "required": ["value", "alias"],
-          "additionalProperties": false
+          "additionalProperties": true
         },
         "lineHeight": {
           "$ref": "#/$defs/LineHeight",
@@ -273,7 +273,7 @@
         "textCase",
         "textDecoration"
       ],
-      "additionalProperties": false
+      "additionalProperties": true
     },
     "VariableCastedValue": {
       "oneOf": [
@@ -301,7 +301,7 @@
         }
       },
       "required": ["collection", "name"],
-      "additionalProperties": false
+      "additionalProperties": true
     },
     "Token": {
       "type": "object",
@@ -336,7 +336,7 @@
         }
       },
       "required": ["collection", "mode", "type", "name", "value"],
-      "additionalProperties": false
+      "additionalProperties": true
     },
     "CollectionToken": {
       "oneOf": [
@@ -356,5 +356,5 @@
       "description": "Union type representing any type of collection token"
     }
   },
-  "additionalProperties": false
+  "additionalProperties": true
 }

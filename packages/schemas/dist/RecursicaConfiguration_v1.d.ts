@@ -3,9 +3,10 @@
  */
 
 /**
+ * @deprecated
  * Configuration file for Recursica theme generation
  */
-export interface RecursicaConfiguration {
+export interface RecursicaConfigurationV1 {
   /**
    * Schema of the configuration file
    */
@@ -28,6 +29,7 @@ export interface RecursicaConfiguration {
          * Path to the adapter file
          */
         adapter?: string;
+        [k: string]: unknown;
       };
   /**
    * Object containing icons configuration
@@ -49,6 +51,7 @@ export interface RecursicaConfiguration {
        * Variants of the icons to transform
        */
       variants?: string[];
+      [k: string]: unknown;
     };
     [k: string]: unknown;
   };
@@ -72,6 +75,7 @@ export interface RecursicaConfiguration {
        * Background of the theme
        */
       background?: string;
+      [k: string]: unknown;
     };
     /**
      * Font weight of the theme
@@ -93,4 +97,5 @@ export interface RecursicaConfiguration {
     }[];
     [k: string]: unknown;
   };
+  [k: string]: unknown;
 }
