@@ -19,7 +19,7 @@ function loadConfigurationSchema(): object {
       "..",
       "schemas",
       "dist",
-      "RecursicaConfiguration.json",
+      "RecursicaConfiguration.v2.json",
     );
     const schemaContent = readFileSync(schemaPath, "utf-8");
     const schema = JSON.parse(schemaContent);
@@ -38,11 +38,11 @@ export interface ValidationResult {
 }
 
 /**
- * Validates a Recursica configuration JSON file
+ * Validates a Recursica configuration JSON file (V2)
  * @param data - The configuration JSON data to validate
  * @returns ValidationResult with validation status and any errors
  */
-export function validateConfiguration(data: unknown): ValidationResult {
+export function validateConfigurationV2(data: unknown): ValidationResult {
   // Initialize AJV with formats support
   const ajv = new Ajv({
     allErrors: true,

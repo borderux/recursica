@@ -3,7 +3,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { fileURLToPath } from "url";
 import {
-  validateConfiguration,
+  validateConfigurationV1,
   validateVariables,
   validateIcons,
 } from "./index.js";
@@ -57,7 +57,7 @@ describe("Sample File Validation", () => {
   describe("recursica.json (Configuration)", () => {
     it("should validate the sample configuration file", () => {
       const configData = loadTestFile("recursica.json");
-      const result = validateConfiguration(configData);
+      const result = validateConfigurationV1(configData);
 
       expect(result.isValid).toBe(true);
       expect(result.errors).toBeUndefined();
@@ -252,7 +252,7 @@ describe("Sample File Validation", () => {
       const iconsData = loadTestFile("recursica-icons.json");
       const variablesData = loadTestFile("recursica-bundle.json");
 
-      const configResult = validateConfiguration(configData);
+      const configResult = validateConfigurationV1(configData);
       const iconsResult = validateIcons(iconsData);
       const variablesResult = validateVariables(variablesData);
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { validateConfiguration } from "./validateConfiguration.js";
+import { validateConfigurationV1 } from "./validateConfigurationV1.js";
 
 describe("validateConfiguration", () => {
   it("should validate a correct configuration object", () => {
@@ -8,7 +8,7 @@ describe("validateConfiguration", () => {
       jsonsPath: "recursica-json",
     };
 
-    const result = validateConfiguration(validData);
+    const result = validateConfigurationV1(validData);
     expect(result.isValid).toBe(true);
     expect(result.errors).toBeUndefined();
   });
@@ -23,7 +23,7 @@ describe("validateConfiguration", () => {
       jsonsPath: "recursica-json",
     };
 
-    const result = validateConfiguration(validData);
+    const result = validateConfigurationV1(validData);
     expect(result.isValid).toBe(true);
   });
 
@@ -33,7 +33,7 @@ describe("validateConfiguration", () => {
       // Missing project
     };
 
-    const result = validateConfiguration(invalidData);
+    const result = validateConfigurationV1(invalidData);
     expect(result.isValid).toBe(false);
     expect(result.errors).toContain(
       "root level: must have required property 'project'",
@@ -46,12 +46,12 @@ describe("validateConfiguration", () => {
       jsonsPath: "recursica-json",
     };
 
-    const result = validateConfiguration(invalidData);
+    const result = validateConfigurationV1(invalidData);
     expect(result.isValid).toBe(false);
     // Check for any pattern-related error
-    expect(result.errors?.some((error) => error.includes("pattern"))).toBe(
-      true,
-    );
+    expect(
+      result.errors?.some((error: string) => error.includes("pattern")),
+    ).toBe(true);
   });
 
   it("should validate configuration with icons configuration", () => {
@@ -67,7 +67,7 @@ describe("validateConfiguration", () => {
       },
     };
 
-    const result = validateConfiguration(validData);
+    const result = validateConfigurationV1(validData);
     expect(result.isValid).toBe(true);
   });
 
@@ -90,7 +90,7 @@ describe("validateConfiguration", () => {
       },
     };
 
-    const result = validateConfiguration(validData);
+    const result = validateConfigurationV1(validData);
     expect(result.isValid).toBe(true);
   });
 });
