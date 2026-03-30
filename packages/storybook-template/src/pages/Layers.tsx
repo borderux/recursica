@@ -6,7 +6,7 @@ export interface LayersProps {
   theme: string;
   recursica: Recursica;
 }
-export function Layers({ theme, recursica }: LayersProps) {
+export function Layers({ recursica }: LayersProps) {
   const layers = [
     { number: 0, name: "Layer 0 (Background)", hasBorder: false },
     { number: 1, name: "Layer 1", hasBorder: true },

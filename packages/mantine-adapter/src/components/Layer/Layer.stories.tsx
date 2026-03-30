@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Meta, StoryObj } from "@storybook/react";
 import { Layer } from "./Layer";
 import { LAYER_ARG_TYPES } from "./stories.util";

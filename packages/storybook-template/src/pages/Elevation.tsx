@@ -7,7 +7,7 @@ export interface ElevationProps {
   recursica: Recursica;
 }
 
-export function Elevation({ theme, recursica }: ElevationProps) {
+export function Elevation({ recursica }: ElevationProps) {
   const elevations = [0, 1, 2, 3, 4];
 
   return (

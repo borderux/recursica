@@ -109,8 +109,10 @@ export const createMainConfig = (
 
           if (existsSync(headersSource)) {
             copyFileSync(headersSource, headersDest);
+            // eslint-disable-next-line no-console
             console.log("✅ Copied _headers file to storybook-static/");
           } else {
+            // eslint-disable-next-line no-console
             console.warn("⚠️ _headers file not found in .storybook directory");
           }
         },

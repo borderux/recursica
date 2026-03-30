@@ -10,11 +10,11 @@ export interface RecursicaBundleProviderProps {
 export const RecursicaBundleProvider: React.FC<
   RecursicaBundleProviderProps
 > = ({ bundle, children }) => {
+  const contextValue = useMemo(() => ({ bundle }), [bundle]);
+
   if (!bundle) {
     return <>{children}</>;
   }
-
-  const contextValue = useMemo(() => ({ bundle }), [bundle]);
 
   return (
     <RecursicaBundleContext.Provider value={contextValue}>

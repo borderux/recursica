@@ -9,7 +9,6 @@ const SizeTokens = () => {
 
   // Filter for size tokens
   const sizeTokens = allTokens.filter(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (token: any) =>
       "collection" in token &&
       token.collection === "tokens" &&
