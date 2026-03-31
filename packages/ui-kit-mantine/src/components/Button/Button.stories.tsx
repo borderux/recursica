@@ -1,30 +1,7 @@
 import React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 import { Button } from "./Button";
-
-// A mock Layer component to satisfy the "wrap in <Layer>" requirement
-// In the actual system, a real `<Layer>` might exist that provides this context.
-const MockLayer = ({
-  layer,
-  children,
-}: {
-  layer: number;
-  children: React.ReactNode;
-}) => (
-  <div
-    data-recursica-layer={layer}
-    style={{
-      padding: "24px",
-      backgroundColor:
-        layer > 0
-          ? "var(--recursica_ui-kit_themes_light_layer_1_ui-kit_globals_page_colors_background, #f5f5f5)"
-          : "transparent",
-      borderRadius: "8px",
-    }}
-  >
-    {children}
-  </div>
-);
+import { Layer } from "../Layer";
 
 type ButtonStoryProps = React.ComponentProps<typeof Button> & {
   layer?: number;
@@ -74,9 +51,9 @@ export const Default: Story = {
   },
   render: ({ layer = 0, ...args }) => {
     return (
-      <MockLayer layer={layer}>
+      <Layer layer={layer as 0 | 1 | 2 | 3} style={{ padding: "24px" }}>
         <Button {...args} />
-      </MockLayer>
+      </Layer>
     );
   },
 };
@@ -131,9 +108,9 @@ export const LayerOneSolid: Story = {
     size: "default",
   },
   render: (args) => (
-    <MockLayer layer={1}>
+    <Layer layer={1} style={{ padding: "24px" }}>
       <Button {...args} />
-    </MockLayer>
+    </Layer>
   ),
 };
 
