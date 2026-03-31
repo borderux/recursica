@@ -3,6 +3,8 @@ import type { Preview } from "@storybook/react-vite";
 import { MantineProvider } from "@mantine/core";
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
+import "../recursica_variables_scoped.css";
+import { RecursicaThemeProvider } from "../src/RecursicaThemeProvider/RecursicaThemeProvider";
 
 const preview: Preview = {
   parameters: {
@@ -22,9 +24,11 @@ const preview: Preview = {
   },
   decorators: [
     (Story) => (
-      <MantineProvider defaultColorScheme="auto">
-        <Story />
-      </MantineProvider>
+      <RecursicaThemeProvider theme="light">
+        <MantineProvider defaultColorScheme="auto">
+          <Story />
+        </MantineProvider>
+      </RecursicaThemeProvider>
     ),
   ],
 };

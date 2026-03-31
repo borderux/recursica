@@ -1,0 +1,57 @@
+/*
+ * HARDCODED VALUES:
+ * - .root: display block (so the Layer div creates a box and can receive padding, background, etc.
+ *   from inline style or className. With display: contents, the box is elided and such styles do nothing. No token.)
+ * - .root: border-style solid (baseline for border; width comes from token border-thickness.)
+ *
+ * Layer surface, border, elevation: generic brand vars (--recursica_brand_layer_N_*) from scoped CSS.
+ * Theme+layer blocks set those generic names on elements matching [data-recursica-layer="N"]; we apply
+ * them to the Layer root. See recursica_variables_scoped.css header.
+ */
+
+.root {
+  display: block; /* HARDCODE: wrapper must be a box so caller padding/style apply; no token */
+  border-style: solid; /* HARDCODE: baseline; width from token border-thickness */
+}
+
+/* With contentsOnly prop: box is elided, no Recursica layer styling; children still inherit cascade */
+.root.contents {
+  display: contents;
+  border-style: unset;
+}
+
+.root[data-recursica-layer="0"] {
+  background-color: var(--recursica_brand_layer_0_properties_surface);
+  border-color: var(--recursica_brand_layer_0_properties_border-color);
+  border-width: var(--recursica_brand_layer_0_properties_border-thickness);
+  border-radius: var(--recursica_brand_layer_0_properties_border-radius);
+  box-shadow: var(--recursica_brand_layer_0_properties_elevation);
+  padding: var(--recursica_brand_layer_0_properties_padding);
+}
+
+.root[data-recursica-layer="1"] {
+  background-color: var(--recursica_brand_layer_1_properties_surface);
+  border-color: var(--recursica_brand_layer_1_properties_border-color);
+  border-width: var(--recursica_brand_layer_1_properties_border-thickness);
+  border-radius: var(--recursica_brand_layer_1_properties_border-radius);
+  box-shadow: var(--recursica_brand_layer_1_properties_elevation);
+  padding: var(--recursica_brand_layer_1_properties_padding);
+}
+
+.root[data-recursica-layer="2"] {
+  background-color: var(--recursica_brand_layer_2_properties_surface);
+  border-color: var(--recursica_brand_layer_2_properties_border-color);
+  border-width: var(--recursica_brand_layer_2_properties_border-thickness);
+  border-radius: var(--recursica_brand_layer_2_properties_border-radius);
+  box-shadow: var(--recursica_brand_layer_2_properties_elevation);
+  padding: var(--recursica_brand_layer_2_properties_padding);
+}
+
+.root[data-recursica-layer="3"] {
+  background-color: var(--recursica_brand_layer_3_properties_surface);
+  border-color: var(--recursica_brand_layer_3_properties_border-color);
+  border-width: var(--recursica_brand_layer_3_properties_border-thickness);
+  border-radius: var(--recursica_brand_layer_3_properties_border-radius);
+  box-shadow: var(--recursica_brand_layer_3_properties_elevation);
+  padding: var(--recursica_brand_layer_3_properties_padding);
+}
