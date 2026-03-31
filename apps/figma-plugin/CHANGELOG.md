@@ -1,5 +1,11 @@
 # @recursica/publisher
 
+## 0.10.0
+
+### Minor Changes
+
+- [#339](https://github.com/borderux/recursica/pull/339) [`4c4b9fe`](https://github.com/borderux/recursica/commit/4c4b9feee66f477fe47ac45e7979f29781b79bf8) Thanks [@mlmassey](https://github.com/mlmassey)! - Changed plugin id and new version
+
 ## 0.9.0
 
 ### Minor Changes
