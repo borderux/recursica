@@ -1,5 +1,11 @@
 # @recursica/publisher
 
+## 0.11.1
+
+### Patch Changes
+
+- [#344](https://github.com/borderux/recursica/pull/344) [`29c95db`](https://github.com/borderux/recursica/commit/29c95db98785b4d8fb6a99fef205a8a129ed00b9) Thanks [@mlmassey](https://github.com/mlmassey)! - Fixed chip import apply instance override
+
 ## 0.11.0
 
 ### Minor Changes
