@@ -44,6 +44,7 @@ export interface RecursicaVariablesSchema {
   uiKit: {
     [k: string]: CollectionToken;
   };
+  [k: string]: unknown;
 }
 /**
  * Represents a basic design token with common properties
@@ -69,6 +70,7 @@ export interface Token {
    * The value of the token, which can be either a direct value or a reference to another token
    */
   value: VariableCastedValue | VariableReferenceValue;
+  [k: string]: unknown;
 }
 /**
  * Represents a variable reference value
@@ -76,6 +78,7 @@ export interface Token {
 export interface VariableReferenceValue {
   collection: string;
   name: string;
+  [k: string]: unknown;
 }
 /**
  * Represents a font family token with detailed typography properties
@@ -105,6 +108,7 @@ export interface FontFamilyToken {
      * The weight alias (e.g., 'regular', 'bold')
      */
     alias: string;
+    [k: string]: unknown;
   };
   lineHeight: LineHeight;
   letterSpacing: LetterSpacing;
@@ -116,6 +120,7 @@ export interface FontFamilyToken {
    * The text decoration (e.g., 'none', 'underline')
    */
   textDecoration: string;
+  [k: string]: unknown;
 }
 /**
  * The line height configuration
@@ -123,6 +128,7 @@ export interface FontFamilyToken {
 export interface LineHeight {
   value: number;
   unit: string;
+  [k: string]: unknown;
 }
 /**
  * The letter spacing configuration
@@ -130,6 +136,7 @@ export interface LineHeight {
 export interface LetterSpacing {
   value: number;
   unit: string;
+  [k: string]: unknown;
 }
 export interface EffectToken {
   /**
@@ -137,6 +144,7 @@ export interface EffectToken {
    */
   variableName: string;
   effects: Effect[];
+  [k: string]: unknown;
 }
 /**
  * Represents an effect token (like shadows) with detailed effect properties
@@ -166,6 +174,7 @@ export interface Effect {
      * Alpha/opacity component (0-1)
      */
     a: number;
+    [k: string]: unknown;
   };
   /**
    * The offset of the effect
@@ -179,6 +188,7 @@ export interface Effect {
      * Vertical offset
      */
     y: number;
+    [k: string]: unknown;
   };
   /**
    * The blur radius of the effect
@@ -188,6 +198,7 @@ export interface Effect {
    * The spread radius of the effect
    */
   spread: number;
+  [k: string]: unknown;
 }
 /**
  * Represents a grid token with layout configurations
@@ -209,6 +220,7 @@ export interface GridToken {
    * Array of grid layout configurations
    */
   layouts: GridLayout[];
+  [k: string]: unknown;
 }
 /**
  * Represents a grid layout configuration
@@ -238,4 +250,5 @@ export interface GridLayout {
    * The grid pattern (e.g., 'COLUMNS')
    */
   pattern: string;
+  [k: string]: unknown;
 }

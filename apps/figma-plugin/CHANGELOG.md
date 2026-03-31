@@ -1,226 +1,109 @@
-# @recursica/figma-plugin
+# @recursica/publisher
 
-## 0.5.1
+## 0.9.0
+
+### Minor Changes
+
+- [#337](https://github.com/borderux/recursica/pull/337) [`ead0156`](https://github.com/borderux/recursica/commit/ead0156079a3bb597a7fd1b239c85627e7780a09) Thanks [@mlmassey](https://github.com/mlmassey)! - Fixed HUG/FILL properties missing
+
+## 0.8.0
+
+### Minor Changes
+
+- [#335](https://github.com/borderux/recursica/pull/335) [`dbf9436`](https://github.com/borderux/recursica/commit/dbf94365973a344c6150ff0f4df9335cfa66f0f9) Thanks [@mlmassey](https://github.com/mlmassey)! - Fixed hug/fill and updated JSON for Effect variable binding issues
 
 ### Patch Changes
 
-- [#297](https://github.com/borderux/recursica/pull/297) [`91d859f`](https://github.com/borderux/recursica/commit/91d859f3a58cd66e329aa09bd284f29298e6c5ab) Thanks [@mlmassey](https://github.com/mlmassey)! - Small wording updates for clarity
+- [#335](https://github.com/borderux/recursica/pull/335) [`dbf9436`](https://github.com/borderux/recursica/commit/dbf94365973a344c6150ff0f4df9335cfa66f0f9) Thanks [@mlmassey](https://github.com/mlmassey)! - Fixed version history handling
+
+## 0.7.0
+
+### Minor Changes
+
+- [#333](https://github.com/borderux/recursica/pull/333) [`3099fe6`](https://github.com/borderux/recursica/commit/3099fe6d1c859062061ca7c179b272011bb77e10) Thanks [@mlmassey](https://github.com/mlmassey)! - Fixed hug/fill and updated JSON for Effect variable binding issues
+
+## 0.6.1
+
+### Patch Changes
+
+- [#331](https://github.com/borderux/recursica/pull/331) [`7060df1`](https://github.com/borderux/recursica/commit/7060df1b61cd353db99792613863d456c25fcef6) Thanks [@mlmassey](https://github.com/mlmassey)! - Fixed SECTION import logic
+
+## 0.6.0
+
+### Minor Changes
+
+- [#329](https://github.com/borderux/recursica/pull/329) [`014f990`](https://github.com/borderux/recursica/commit/014f99030fe4971877e3a6e9aba7a1a10685a6ac) Thanks [@mlmassey](https://github.com/mlmassey)! - Added support for SECTION
 
 ## 0.5.0
 
 ### Minor Changes
 
-- [#295](https://github.com/borderux/recursica/pull/295) [`20c598b`](https://github.com/borderux/recursica/commit/20c598bb5700a4dad57c65289b8cf938b52a5f0b) Thanks [@mlmassey](https://github.com/mlmassey)! - Updated information for each page with better and more clear instructions
+- [#327](https://github.com/borderux/recursica/pull/327) [`fe04fc3`](https://github.com/borderux/recursica/commit/fe04fc3f62989cff3eb685a570b10acfa9e75598) Thanks [@mlmassey](https://github.com/mlmassey)! - Component merge strategy implemented
 
 ## 0.4.0
 
 ### Minor Changes
 
-- [#292](https://github.com/borderux/recursica/pull/292) [`e0351d7`](https://github.com/borderux/recursica/commit/e0351d7f1f09a0f67f8a624bfacf90dbef7cc369) Thanks [@mlmassey](https://github.com/mlmassey)! - Reworked plugin sync flow for better user experience
+- [#324](https://github.com/borderux/recursica/pull/324) [`12fdf26`](https://github.com/borderux/recursica/commit/12fdf26c1fb48c32f1156bed5275d53a8de84182) Thanks [@mlmassey](https://github.com/mlmassey)! - Revised UI to simply for demo. Theme variable binding function
+
+## 0.3.4
+
+### Patch Changes
+
+- [`817fbec`](https://github.com/borderux/recursica/commit/817fbecb7a72cb38230e42fc405bd9fadebd4564) Thanks [@github-actions[bot]](https://github.com/github-actions%5Bbot%5D)! - Test again
+
+## 0.3.3
+
+### Patch Changes
+
+- [`59961e5`](https://github.com/borderux/recursica/commit/59961e5dbd114dc262b4b29cdfdfc26d77364d60) Thanks [@github-actions[bot]](https://github.com/github-actions%5Bbot%5D)! - Test again
+
+## 0.3.2
+
+### Patch Changes
+
+- [`03ccaf8`](https://github.com/borderux/recursica/commit/03ccaf842b3c41fb7fe7eae6c9312960a2eef0ab) Thanks [@github-actions[bot]](https://github.com/github-actions%5Bbot%5D)! - Testing production build
 
 ## 0.3.1
 
 ### Patch Changes
 
-- [#289](https://github.com/borderux/recursica/pull/289) [`8e0fa4a`](https://github.com/borderux/recursica/commit/8e0fa4a092b5864879e0ab2c3aef9fea084073f1) Thanks [@jonathan-mojica](https://github.com/jonathan-mojica)! - Proper handling of metadata collections to sync figma metadata
+- [`1d906f4`](https://github.com/borderux/recursica/commit/1d906f44a7405cbbc4d82b7c1a5fe25b85ea906b) Thanks [@github-actions[bot]](https://github.com/github-actions%5Bbot%5D)! - Fix to env variable handling
 
 ## 0.3.0
 
 ### Minor Changes
 
-- [`26ba9e3`](https://github.com/borderux/recursica/commit/26ba9e3b5d4bcef1732d8278d8af5aebf21a91a1) Thanks [@github-actions[bot]](https://github.com/github-actions%5Bbot%5D)! - Added publishing instructions and changed test zip filename
+- [#317](https://github.com/borderux/recursica/pull/317) [`318d02e`](https://github.com/borderux/recursica/commit/318d02efbfab051355fda003a89097a470003a96) Thanks [@mlmassey](https://github.com/mlmassey)! - Add JSON versioning pipeline
+
+### Patch Changes
+
+- [#317](https://github.com/borderux/recursica/pull/317) [`318d02e`](https://github.com/borderux/recursica/commit/318d02efbfab051355fda003a89097a470003a96) Thanks [@mlmassey](https://github.com/mlmassey)! - Fixes to variable import
 
 ## 0.2.1
 
 ### Patch Changes
 
-- [`cfb0200`](https://github.com/borderux/recursica/commit/cfb02005659e0974a1c4f055b1623c043b9e5fe2) Thanks [@github-actions[bot]](https://github.com/github-actions%5Bbot%5D)! - Version change
+- [#313](https://github.com/borderux/recursica/pull/313) [`e004c02`](https://github.com/borderux/recursica/commit/e004c0210701a94016f804c73245582b7637dfa7) Thanks [@mlmassey](https://github.com/mlmassey)! - Added manifest to dist
 
 ## 0.2.0
 
 ### Minor Changes
 
-- [`8c45f00`](https://github.com/borderux/recursica/commit/8c45f0065006afb5075deae9950b60a439413b3a) Thanks [@github-actions[bot]](https://github.com/github-actions%5Bbot%5D)! - Fixed variable binding issues and build packaging issues
-
-## 0.1.13
+- [#305](https://github.com/borderux/recursica/pull/305) [`3c85d79`](https://github.com/borderux/recursica/commit/3c85d79e955e1182cd274c537cf8ee386165fdbe) Thanks [@mlmassey](https://github.com/mlmassey)! - Achieved export and import of Button and dropdown
 
 ### Patch Changes
 
-- [`e1dc470`](https://github.com/borderux/recursica/commit/e1dc470f60c24f7b0ba46addeeb9735f44398b1a) Thanks [@github-actions[bot]](https://github.com/github-actions%5Bbot%5D)! - Final test
-
-## 0.1.12
-
-### Patch Changes
-
-- [`8d6cfaf`](https://github.com/borderux/recursica/commit/8d6cfaf12575bdc1425f8477c2d5b63ad2287d8f) Thanks [@github-actions[bot]](https://github.com/github-actions%5Bbot%5D)! - Test
-
-## 0.1.11
-
-### Patch Changes
-
-- [`754e0f8`](https://github.com/borderux/recursica/commit/754e0f88deaf5c1d964d0c99d6467b94724538c8) Thanks [@github-actions[bot]](https://github.com/github-actions%5Bbot%5D)! - Fix
-
-## 0.1.10
-
-### Patch Changes
-
-- [`d62a974`](https://github.com/borderux/recursica/commit/d62a974847fd51df7668d6705a81e291c9c77a4d) Thanks [@github-actions[bot]](https://github.com/github-actions%5Bbot%5D)! - Test
-
-## 0.1.9
-
-### Patch Changes
-
-- [`5c24235`](https://github.com/borderux/recursica/commit/5c24235c373042e8bfbc86c510d6e522a3076517) Thanks [@github-actions[bot]](https://github.com/github-actions%5Bbot%5D)! - test
-
-## 0.1.8
-
-### Patch Changes
-
-- [`a22706c`](https://github.com/borderux/recursica/commit/a22706cfcd3f97b67e3a242dac79b56d6aeb1e97) Thanks [@github-actions[bot]](https://github.com/github-actions%5Bbot%5D)! - Test again
-
-## 0.1.7
-
-### Patch Changes
-
-- [`e83e41a`](https://github.com/borderux/recursica/commit/e83e41a1b88f29ba212130106dac1e12de160f2b) Thanks [@github-actions[bot]](https://github.com/github-actions%5Bbot%5D)! - test
-
-## 0.1.6
-
-### Patch Changes
-
-- [`8dc6fda`](https://github.com/borderux/recursica/commit/8dc6fda382f094e558af1c5fe09230c7bb0bfac2) Thanks [@github-actions[bot]](https://github.com/github-actions%5Bbot%5D)! - Another test build
-
-## 0.1.5
-
-### Patch Changes
-
-- [`f503cf1`](https://github.com/borderux/recursica/commit/f503cf1e6656ac9fc4e282ffa16f1049ef942a15) Thanks [@github-actions[bot]](https://github.com/github-actions%5Bbot%5D)! - MInor release test
-
-## 0.1.4
-
-### Patch Changes
-
-- [#272](https://github.com/borderux/recursica/pull/272) [`f52dddf`](https://github.com/borderux/recursica/commit/f52dddf3495e4afbb74abf017b0e128e05b49b9e) Thanks [@mlmassey](https://github.com/mlmassey)! - Patch version change build again
-
-## 0.1.3
-
-### Patch Changes
-
-- [#270](https://github.com/borderux/recursica/pull/270) [`6459f9d`](https://github.com/borderux/recursica/commit/6459f9d4358de37cba1e3d1b7a70096fb1530037) Thanks [@mlmassey](https://github.com/mlmassey)! - New patch release to ensure distribution variables set correctly
-
-## 0.1.2
-
-### Patch Changes
-
-- [#267](https://github.com/borderux/recursica/pull/267) [`8ea1b3f`](https://github.com/borderux/recursica/commit/8ea1b3ffb7038e543844550b8638295f4191a14e) Thanks [@jonathan-mojica](https://github.com/jonathan-mojica)! - Fixed a bug that prevented the plugin from working with empty style keys. And simplified the metadata generation process.
-
-- Updated dependencies [[`8ea1b3f`](https://github.com/borderux/recursica/commit/8ea1b3ffb7038e543844550b8638295f4191a14e)]:
-  - @recursica/general-adapter@0.9.5
+- [#306](https://github.com/borderux/recursica/pull/306) [`4bbef2b`](https://github.com/borderux/recursica/commit/4bbef2b890922f0ea2d616d8ccc6027be6c64977) Thanks [@mlmassey](https://github.com/mlmassey)! - Cleaned up docs and add rules to code base
 
 ## 0.1.1
 
 ### Patch Changes
 
-- [`4f3dab9`](https://github.com/borderux/recursica/commit/4f3dab91db84d9116ff691aa1dd67fdf00867ea5) Thanks [@mattborderux](https://github.com/mattborderux)! - Updated plugin to latest release process
+- [#302](https://github.com/borderux/recursica/pull/302) [`c911e54`](https://github.com/borderux/recursica/commit/c911e54be6aef8eae8ed06e9dea5383002f618bb) Thanks [@mlmassey](https://github.com/mlmassey)! - Fixed publish step for release
 
-## 0.0.11
+## 0.1.0
 
-### Patch Changes
+### Minor Changes
 
-- [`950599f`](https://github.com/borderux/recursica/commit/950599f3e62b40df300466d38605ad22da3f845e) Thanks [@mattborderux](https://github.com/mattborderux)! - Test again
-
-## 10.0.0
-
-### Major Changes
-
-- ea4b151: Refactored the file type detection module
-
-## 9.0.0
-
-### Major Changes
-
-- 3040b04: Added GTM tracking for the Figma plugin
-
-### Patch Changes
-
-- Updated dependencies [3040b04]
-  - @recursica/common@1.1.1
-
-> ✅ **AI Agent PR Check Completed** - Version 8.0.1 release verified and ready for deployment
-
-## 8.0.1
-
-### Patch Changes
-
-- 38424fe: Error Handling Enhancements: Users now see specific error details instead of generic messages
-
-## 0.0.12
-
-### Patch Changes
-
-- 95e1484: Fixed a bug that prevented icons from exporting properly.
-
-## 0.0.11
-
-### Patch Changes
-
-- db56af9: support legacy figma files structure
-
-## 0.0.10
-
-### Patch Changes
-
-- ad76920: added plugin version to the ui
-
-## 0.0.9
-
-### Patch Changes
-
-- a4670b9: Fixed a bug that only allowed exporting one variable collection per Figma file.
-
-## 0.0.8
-
-### Patch Changes
-
-- 3eb444c: Update plugin phrase for production
-- cec0db5: Renamed ui-kit to ui-kit-mantine to signal proper peer reference to Mantine
-- cec0db5: Added peer dependency for mantine in the plugin
-- Updated dependencies [cec0db5]
-- Updated dependencies [cec0db5]
-  - @recursica/ui-kit-mantine@0.0.4
-
-## 0.0.7
-
-### Patch Changes
-
-- cf99c3c: fix an error when trying to trigger the auth flow (env vars were not set correctly)
-
-## 0.0.6
-
-### Patch Changes
-
-- b624a46: Enhance Figma plugin manifest with network access permissions and update navigation links
-
-## 0.0.5
-
-### Patch Changes
-
-- 2bbb5e2: new figma plugin release
-
-## 0.0.4
-
-### Patch Changes
-
-- ce4f42f: get userid from the figma user
-
-## 0.0.3
-
-### Patch Changes
-
-- aa8cf27: ui updated
-
-## 0.0.2
-
-### Patch Changes
-
-- 6c0164f: Fixed CI build and testing
+- [#299](https://github.com/borderux/recursica/pull/299) [`5fff451`](https://github.com/borderux/recursica/commit/5fff4510c23ba8f62a5d034596e0a11a8c9b7c38) Thanks [@mlmassey](https://github.com/mlmassey)! - Revised publish and imnport flow

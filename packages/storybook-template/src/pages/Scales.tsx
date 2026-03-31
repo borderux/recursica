@@ -7,7 +7,7 @@ export type ScalesProps = {
   recursica: Recursica;
 };
 
-export function Scales({ theme, recursica }: ScalesProps) {
+export function Scales({ recursica }: ScalesProps) {
   const scales = [
     {
       name: "Neutral (Grayscale)",

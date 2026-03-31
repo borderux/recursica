@@ -6,7 +6,7 @@ export type ColorsProps = {
   recursica: Recursica;
 };
 
-export function Colors({ theme, recursica }: ColorsProps) {
+export function Colors({ recursica }: ColorsProps) {
   return (
     <div className="section">
       <h2>Colors</h2>

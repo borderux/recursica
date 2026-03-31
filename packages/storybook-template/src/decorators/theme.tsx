@@ -19,7 +19,8 @@ export const withTheme = (options: ThemeDecoratorOptions = {}): Decorator => {
     ThemeProvider,
   } = options;
 
-  return (Story, context) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const DecoratorComponent = (Story: React.ComponentType, context: any) => {
     const themeName =
       context.globals?.theme ||
       context.parameters?.theme?.default ||
@@ -37,4 +38,7 @@ export const withTheme = (options: ThemeDecoratorOptions = {}): Decorator => {
 
     return <Story />;
   };
+  DecoratorComponent.displayName = "ThemeDecorator";
+
+  return DecoratorComponent;
 };

@@ -1,166 +1,259 @@
-import { Flex, Typography, Logo } from '@recursica/ui-kit-mantine';
-import { useNavigate, useSearchParams, useLocation } from 'react-router';
-import { useFigma } from '../../hooks';
-import { Layout } from '../../components';
-import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from "react-router";
+import { useEffect, useState } from "react";
+import { PageLayout } from "../../components/PageLayout";
+import { useImportData } from "../../context/ImportDataContext";
+import { useAuth } from "../../context/useAuth";
+import { callPlugin } from "../../utils/callPlugin";
+import { Stack } from "../../components/Stack";
+import { Button } from "../../components/Button";
+import classes from "./Home.module.css";
 
-export function Home() {
-  const { error, syncMetadata } = useFigma();
+export default function Home() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const [searchParams] = useSearchParams();
-  const skipSplash = searchParams.get('skip-splash') === 'true';
-  const [minTimeElapsed, setMinTimeElapsed] = useState(skipSplash);
-  const startTimeRef = useRef<number>(Date.now());
+  const { importData, setImportData } = useImportData();
+  const { isAuthenticated, accessToken, hasWriteAccess } = useAuth();
+  const [authChecked, setAuthChecked] = useState(false);
 
-  // Request sync metadata if not loaded, or refresh if skip-splash is present
+  // Wait for auth data to load before making routing decisions
   useEffect(() => {
-    console.log('[Home] Page loaded', { skipSplash });
-    // Always request fresh metadata when skip-splash is present (coming from Continue button)
-    if (skipSplash || syncMetadata === null) {
-      console.log('[Home] Requesting sync metadata from plugin');
-      parent.postMessage(
+    const authCheckTimer = setTimeout(() => {
+      setAuthChecked(true);
+    }, 500);
+
+    return () => clearTimeout(authCheckTimer);
+  }, []);
+
+  // Route to /import if not authenticated or doesn't have write access
+  useEffect(() => {
+    if (!authChecked) return;
+
+    // If not authenticated OR doesn't have write access, route to /import
+    if (!isAuthenticated || !accessToken || hasWriteAccess !== true) {
+      console.log(
+        "[Home] Not authenticated or no write access, routing to /import",
         {
-          pluginMessage: {
-            type: 'GET_SYNC_METADATA',
-          },
-          pluginId: '*',
+          isAuthenticated,
+          hasAccessToken: !!accessToken,
+          hasWriteAccess,
         },
-        '*'
       );
+      navigate("/import", { replace: true });
+      return;
     }
-  }, [skipSplash]);
+  }, [authChecked, isAuthenticated, accessToken, hasWriteAccess, navigate]);
 
   useEffect(() => {
-    console.log('[Home] Sync metadata from global plugin storage:', syncMetadata);
-    if (syncMetadata) {
-      console.log('[Home] Tokens:', syncMetadata.tokens);
-      console.log('[Home] Brand:', syncMetadata.brand);
-      console.log('[Home] Icons:', syncMetadata.icons);
-      console.log('[Home] UI Kit:', syncMetadata.uiKit);
-    } else {
-      console.log('[Home] No sync metadata found in global plugin storage');
-    }
-  }, [syncMetadata]);
+    console.log("[Home] importData state:", {
+      hasImportData: !!importData,
+      hasMainFile: !!importData?.mainFile,
+      mainFileStatus: importData?.mainFile?.status,
+      mainFileName: importData?.mainFile?.name,
+      additionalFilesCount: importData?.additionalFiles?.length || 0,
+    });
+  }, [importData]);
+
+  const [hasExistingImport, setHasExistingImport] = useState(false);
+  const [checkingExisting, setCheckingExisting] = useState(true);
 
   useEffect(() => {
-    if (error) {
-      navigate('/error');
-      return;
-    }
+    const checkForExisting = async () => {
+      try {
+        const { promise } = callPlugin("checkForExistingPrimaryImport", {});
+        const response = await promise;
 
-    // Skip delay if skip-splash param is present
-    if (skipSplash) {
-      setMinTimeElapsed(true);
-      return;
-    }
-
-    // Ensure minimum 4 seconds display time
-    const elapsed = Date.now() - startTimeRef.current;
-    const remaining = Math.max(0, 4000 - elapsed);
-
-    const timer = setTimeout(() => {
-      setMinTimeElapsed(true);
-    }, remaining);
-
-    return () => clearTimeout(timer);
-  }, [error, navigate, skipSplash]);
-
-  useEffect(() => {
-    if (!minTimeElapsed) {
-      return;
-    }
-
-    // When skip-splash is present, wait for metadata to be loaded before routing
-    if (skipSplash && syncMetadata === null) {
-      console.log('[Home] Waiting for metadata to load (skip-splash mode)');
-      return;
-    }
-
-    // If no metadata exists at all, navigate to Introduction page
-    if (syncMetadata === null) {
-      console.log('[Home] No metadata found, navigating to Introduction');
-      navigate('/introduction');
-      return;
-    }
-
-    // Use default empty metadata if not loaded yet
-    const metadata = syncMetadata || {
-      introduction: undefined,
-      tokens: undefined,
-      brand: undefined,
-      icons: undefined,
-      uiKit: undefined,
+        if (response.success && response.data) {
+          const data = response.data as {
+            exists: boolean;
+            pageId?: string;
+            metadata?: unknown;
+          };
+          setHasExistingImport(data.exists || false);
+        } else {
+          setHasExistingImport(false);
+        }
+      } catch (err) {
+        console.error("[Home] Error checking for existing import:", err);
+        setHasExistingImport(false);
+      } finally {
+        setCheckingExisting(false);
+      }
     };
 
-    // Check if introduction is not synchronized or doesn't exist - if so, go to Introduction
-    const introductionSynced = metadata.introduction?.synchronized === true;
-    if (!introductionSynced) {
-      console.log('[Home] Introduction not synchronized, navigating to Introduction');
-      navigate('/introduction');
+    checkForExisting();
+  }, []);
+
+  useEffect(() => {
+    // Only run import checks if user is authenticated and has write access
+    if (!authChecked) return;
+    if (!isAuthenticated || !accessToken || hasWriteAccess !== true) return;
+    if (checkingExisting) return;
+
+    if (hasExistingImport) {
+      console.log("[Home] Found existing import, navigating to Review Import");
+      navigate("/import-wizard/existing", { replace: true });
       return;
     }
 
-    // Check if all files are synchronized
-    const tokensSynced = metadata.tokens?.synchronized === true;
-    const brandSynced = metadata.brand?.synchronized === true;
-    const iconsSynced = metadata.icons !== undefined;
-    const uiKitSynced = metadata.uiKit?.synchronized === true;
+    if (
+      importData &&
+      importData.mainFile &&
+      importData.mainFile.status === "success" &&
+      importData.importStatus === "in_progress"
+    ) {
+      console.log("[Home] Import in progress, navigating to importing screen");
+      navigate("/importing", { replace: true });
+      return;
+    }
 
-    const allSynced = tokensSynced && brandSynced && iconsSynced && uiKitSynced;
+    if (
+      importData &&
+      importData.mainFile &&
+      importData.mainFile.status === "success" &&
+      importData.importStatus === "failed" &&
+      !hasExistingImport
+    ) {
+      console.log(
+        "[Home] Found failed import data but no existing import in Figma, clearing stale data",
+      );
+      setImportData(null);
+      return;
+    }
 
-    if (allSynced) {
-      // Only navigate if we're not already on the file-synced page
-      if (location.pathname !== '/file-synced') {
-        console.log('[Home] All files synchronized, navigating to file-synced page');
-        navigate('/file-synced', { replace: true });
+    if (
+      importData &&
+      importData.mainFile &&
+      importData.mainFile.status === "success" &&
+      importData.importStatus === "failed" &&
+      hasExistingImport
+    ) {
+      console.log(
+        "[Home] Import failed with existing import, navigating to Review Import",
+      );
+      navigate("/import-wizard/existing", { replace: true });
+      return;
+    }
+
+    if (importData?.importStatus === "completed") {
+      console.log("[Home] Import completed, clearing import data");
+      setImportData(null);
+    }
+  }, [
+    authChecked,
+    isAuthenticated,
+    accessToken,
+    hasWriteAccess,
+    hasExistingImport,
+    checkingExisting,
+    navigate,
+    importData,
+    setImportData,
+  ]);
+
+  const handleImportClick = async () => {
+    console.log("[Home] Import button clicked");
+    console.log("[Home] Current state:", {
+      importDataExists: !!importData,
+      mainFileExists: !!importData?.mainFile,
+      mainFileStatus: importData?.mainFile?.status,
+      isAuthenticated,
+      hasAccessToken: !!accessToken,
+      hasWriteAccess,
+    });
+
+    const currentlyImporting =
+      importData &&
+      importData.mainFile &&
+      importData.mainFile.status === "success" &&
+      (importData.importStatus === "in_progress" ||
+        importData.importStatus === "failed");
+
+    console.log("[Home] currentlyImporting:", currentlyImporting, {
+      importStatus: importData?.importStatus,
+      hasMainFile: !!importData?.mainFile,
+    });
+
+    if (currentlyImporting) {
+      console.log(
+        "[Home] Navigating to /importing (button click - import in progress or failed)",
+      );
+      navigate("/importing");
+      return;
+    }
+
+    if (importData?.importStatus === "completed") {
+      console.log("[Home] Import completed, clearing import data");
+      setImportData(null);
+    }
+
+    try {
+      const { promise } = callPlugin("checkForExistingPrimaryImport", {});
+      const response = await promise;
+
+      if (response.success && response.data) {
+        const data = response.data as {
+          exists: boolean;
+          pageId?: string;
+          metadata?: unknown;
+        };
+
+        if (data.exists) {
+          console.log(
+            "[Home] Found existing import, navigating to /import-wizard/existing",
+          );
+          navigate("/import-wizard/existing");
+          return;
+        }
       }
+    } catch (err) {
+      console.error("[Home] Error checking for existing import:", err);
+    }
+
+    if (isAuthenticated && accessToken && hasWriteAccess === true) {
+      console.log("[Home] Navigating to /import (selection page)");
+      navigate("/import");
       return;
     }
 
-    // Navigate to the first stage that is missing or not synchronized
-    // Check in order: Tokens -> Brand -> Icons -> UI Kit
-    // Each sync page will check file type on load and navigate to error if wrong
+    console.log("[Home] Navigating to /import-main (default)");
+    navigate("/import-main");
+  };
 
-    // #1 Tokens: missing entry or not synchronized
-    if (!metadata.tokens || metadata.tokens.synchronized !== true) {
-      console.log('[Home] Tokens missing or not synchronized, navigating to /sync-tokens');
-      navigate('/sync-tokens');
-      return;
-    }
+  // Only show buttons if authenticated and has write access
+  const shouldShowButtons =
+    isAuthenticated && accessToken && hasWriteAccess === true;
 
-    // #2 Brand: missing entry or not synchronized
-    if (!metadata.brand || metadata.brand.synchronized !== true) {
-      console.log('[Home] Brand missing or not synchronized, navigating to /sync-brand');
-      navigate('/sync-brand');
-      return;
-    }
-
-    // #3 Icons: missing entry
-    if (!metadata.icons) {
-      console.log('[Home] Icons missing, navigating to /sync-icons');
-      navigate('/sync-icons');
-      return;
-    }
-
-    // #4 UI Kit: missing entry or not synchronized
-    if (!metadata.uiKit || metadata.uiKit.synchronized !== true) {
-      console.log('[Home] UI Kit missing or not synchronized, navigating to /sync-ui-kit');
-      navigate('/sync-ui-kit');
-      return;
-    }
-  }, [minTimeElapsed, syncMetadata, navigate, skipSplash]);
+  // Don't render buttons if we're routing away
+  if (!authChecked || !shouldShowButtons) {
+    return null;
+  }
 
   return (
-    <Layout>
-      <Flex direction='column' h='100%'>
-        {!skipSplash && (
-          <Flex direction='column' align='center' justify='center' gap={4} flex={1}>
-            <Logo />
-            <Typography variant='h2'>Recursica</Typography>
-          </Flex>
-        )}
-      </Flex>
-    </Layout>
+    <PageLayout>
+      <div className={classes.root}>
+        <Stack gap={20} align="center">
+          <Button
+            size="lg"
+            onClick={handleImportClick}
+            className={classes.button}
+          >
+            {importData &&
+            importData.mainFile &&
+            importData.mainFile.status === "success" &&
+            (importData.importStatus === "in_progress" ||
+              importData.importStatus === "failed")
+              ? "Continue Import"
+              : "Import"}
+          </Button>
+
+          {/* <Button
+            size="lg"
+            onClick={handlePublishClick}
+            className={classes.button}
+          >
+            Publish
+          </Button> */}
+        </Stack>
+      </div>
+    </PageLayout>
   );
 }

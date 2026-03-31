@@ -8,14 +8,12 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
-dist-dev
-dist-test
 dist-ssr
+dev-releases
 *.local
-.env.local
 
 # Editor directories and files
+.vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
@@ -25,8 +23,9 @@ dist-ssr
 *.sln
 *.sw?
 
-*storybook.log
-storybook-static
+export/
+dist/
 
-tsconfig.node.tsbuildinfo
-tsconfig.app.tsbuildinfo
+# Symlink to recursica-figma
+recursica-figma
+LOGS.txt

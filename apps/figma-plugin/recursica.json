@@ -1,11 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/borderux/recursica/main/packages/schemas/dist/RecursicaConfiguration_v2.json",
   "config": {
-    "projects": [
-      {
-        "name": "Recursica Plugin",
-        "path": "apps/recursica-publisher"
-      }
-    ]
+    "project": {
+      "name": "Recursica Plugin"
+    }
   }
 }

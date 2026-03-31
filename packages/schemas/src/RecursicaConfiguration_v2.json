@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Recursica Configuration",
+  "description": "Configuration file/object for Recursica",
+  "type": "object",
+  "required": ["config"],
+  "additionalProperties": true,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Schema of the configuration file"
+    },
+
+    "config": {
+      "type": "object",
+      "description": "Configuration object",
+      "required": ["version"],
+      "properties": {
+        "version": {
+          "type": "number",
+          "const": 2,
+          "description": "Version of the configuration format"
+        },
+        "project": {
+          "$ref": "#/definitions/project"
+        },
+        "projects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/project"
+          },
+          "description": "Array of project configurations if multiple Recursica projects are present"
+        }
+      },
+      "additionalProperties": true,
+      "anyOf": [{ "required": ["project"] }, { "required": ["projects"] }],
+      "errorMessage": {
+        "required": {
+          "version": "Version is required"
+        }
+      }
+    }
+  },
+  "definitions": {
+    "project": {
+      "type": "object",
+      "description": "Project configuration for a Recursica project",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Human readable friendly name for the project"
+        },
+        "path": {
+          "type": "string",
+          "description": "Path to the project location, relative to the config file. If not specified, defaults to the location of the config file."
+        },
+        "file-paths": {
+          "type": "object",
+          "description": "Optional paths to specific Recursica configuration files",
+          "properties": {
+            "tokens": {
+              "type": "string",
+              "description": "Path to the tokens JSON file relative to the config object's location"
+            },
+            "themes": {
+              "type": "string",
+              "description": "Path to the themes JSON file relative to the config object's location"
+            },
+            "ui-kit": {
+              "type": "string",
+              "description": "Path to the UI kit JSON file relative to the config object's location"
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "required": ["name"],
+      "additionalProperties": true
+    }
+  },
+  "errorMessage": {
+    "required": {
+      "config": "Config is required"
+    },
+    "additionalProperties": "Property is not allowed"
+  }
+}

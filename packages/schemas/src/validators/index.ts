@@ -1,4 +1,5 @@
-export * from "./validateConfiguration";
+export * from "./validateConfigurationV1";
+export * from "./validateConfigurationV2";
 export * from "./validateIcons";
 export * from "./validateVariables";
 export * from "./errorFormatter";

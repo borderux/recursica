@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 /**
  * Component comments
  * 1. The Help_text shows a heart icon.  Are you allowing a slot (or component) for the help text, or simply text?

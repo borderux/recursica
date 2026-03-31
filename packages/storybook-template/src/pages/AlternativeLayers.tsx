@@ -7,10 +7,7 @@ export interface AlternativeLayersProps {
   recursica: Recursica;
 }
 
-export function AlternativeLayers({
-  theme,
-  recursica,
-}: AlternativeLayersProps) {
+export function AlternativeLayers({ recursica }: AlternativeLayersProps) {
   const alternativeLayers = [
     {
       name: "High Contrast",
