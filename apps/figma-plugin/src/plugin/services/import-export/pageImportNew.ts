@@ -342,7 +342,9 @@ async function findOrCreateCollectionFromEntry(
         );
       }
       // Otherwise, fall through to local collection handling
-      console.log("Could not import external collection, trying local:", error);
+      debugConsole.log(
+        "Could not import external collection, trying local: " + error,
+      );
     }
   }
 
@@ -686,7 +688,7 @@ async function restoreVariableModeValues(
           };
           variable.setValueForMode(modeId, alias);
         } else {
-          console.warn(
+          debugConsole.warning(
             `Could not resolve variable alias for mode "${modeName}" in variable "${variable.name}". Variable reference index: ${aliasValue._varRef}`,
           );
         }
@@ -703,9 +705,9 @@ async function restoreVariableModeValues(
           `Unhandled value type for mode "${modeName}" in variable "${variable.name}": ${JSON.stringify(value)}`,
         );
       }
-      console.warn(
-        `Error setting value for mode "${modeName}" in variable "${variable.name}":`,
-        error,
+      debugConsole.warning(
+        `Error setting value for mode "${modeName}" in variable "${variable.name}": ` +
+          error,
       );
     }
   }
@@ -1703,6 +1705,11 @@ async function createPaintStyle(
 
   if (styleData.paintStyle && styleData.paintStyle.paints) {
     let newPaints = styleData.paintStyle.paints as any[];
+
+    // Restore image references from image table if available
+    if (imageTable) {
+      newPaints = await restoreImageReferences(newPaints, imageTable);
+    }
 
     // Process each paint to restore variable bindings natively into the Paint object
     newPaints = newPaints.map((paint: any) => {
@@ -4431,6 +4438,13 @@ export async function recreateNodeFromData(
     return null;
   }
 
+  // Add creation logging (COMPONENT already has logging inside the switch)
+  if (newNode.type !== "COMPONENT") {
+    debugConsole.log(
+      `Created ${newNode.type} "${nodeData.name || "Unnamed"}" (ID: ${nodeData.id ? nodeData.id.substring(0, 8) + "..." : "no ID"})`,
+    );
+  }
+
   // ISSUE #4: Note: For VECTOR nodes, constraints are set using the constraints object API
   // AFTER vectorPaths and size are set. The constraints object API works even after
   // appending to COMPONENTs (as proven by tests), so no special timing is required.
@@ -5057,7 +5071,8 @@ export async function recreateNodeFromData(
         );
       }
     }
-    if (nodeData.fills !== undefined) {
+    // VECTOR nodes handle fills AFTER size and paths are set
+    if (nodeData.fills !== undefined && nodeData.type !== "VECTOR") {
       try {
         // Process fills array - restore images first, then remove boundVariables that contain _varRef
         // We'll restore boundVariables properly after setting the fills
@@ -5556,7 +5571,7 @@ export async function recreateNodeFromData(
           );
         }
       } catch (error) {
-        console.log("Error setting fills:", error);
+        debugConsole.error("Error setting fills: " + error);
       }
     } else if (
       nodeData.type === "FRAME" ||
@@ -5569,7 +5584,7 @@ export async function recreateNodeFromData(
       try {
         newNode.fills = [];
       } catch (error) {
-        console.log("Error clearing fills:", error);
+        debugConsole.error("Error clearing fills: " + error);
       }
     }
   }
@@ -5660,7 +5675,7 @@ export async function recreateNodeFromData(
         newNode.strokes = [];
       }
     } catch (error) {
-      console.log("Error setting strokes:", error);
+      debugConsole.log("Error setting strokes:", error);
     }
   } else if (nodeData.type === "VECTOR") {
     // For vectors, if strokes are not specified, clear any default strokes
@@ -6235,25 +6250,39 @@ export async function recreateNodeFromData(
           finalConstraintH !== expectedConstraintH
         ) {
           debugConsole.warning(
-            `  ⚠️ ISSUE #4: "${nodeData.name || "Unnamed"}" constraintHorizontal mismatch! Expected: ${expectedConstraintH}, Got: ${finalConstraintH || "undefined"}`,
+            `  [ISSUE #4] ⚠️ Final verification failed for "${nodeData.name || "Unnamed"}" (VECTOR) horizontal constraint! Expected: ${expectedConstraintH}, Final: ${finalConstraintH}`,
           );
         }
-        if (
-          expectedConstraintV !== undefined &&
-          finalConstraintV !== expectedConstraintV
-        ) {
-          debugConsole.warning(
-            `  ⚠️ ISSUE #4: "${nodeData.name || "Unnamed"}" constraintVertical mismatch! Expected: ${expectedConstraintV}, Got: ${finalConstraintV || "undefined"}`,
-          );
-        }
-        if (
-          expectedConstraintH !== undefined &&
-          expectedConstraintV !== undefined &&
-          finalConstraintH === expectedConstraintH &&
-          finalConstraintV === expectedConstraintV
-        ) {
+      }
+
+      // CRITICAL: Now that paths and size are set, apply fills and strokes for VECTOR nodes
+      // This ensures Figma correctly applies the fills to the vector geometry
+      if (nodeData.fills !== undefined) {
+        try {
+          let fills = nodeData.fills;
+          if (Array.isArray(fills) && imageTable) {
+            fills = await restoreImageReferences(fills, imageTable);
+          }
+          newNode.fills = fills;
           debugConsole.log(
-            `  ✓ ISSUE #4: "${nodeData.name || "Unnamed"}" (VECTOR) constraints correctly set: H=${finalConstraintH}, V=${finalConstraintV}`,
+            `  ✓ Applied fills to VECTOR "${nodeData.name || "Unnamed"}" after setting paths and size`,
+          );
+        } catch (error) {
+          debugConsole.error(
+            `  Failed to set fills for VECTOR "${nodeData.name || "Unnamed"}": ${error}`,
+          );
+        }
+      }
+      if (nodeData.strokes !== undefined) {
+        try {
+          let strokes = nodeData.strokes;
+          if (Array.isArray(strokes) && imageTable) {
+            strokes = await restoreImageReferences(strokes, imageTable);
+          }
+          newNode.strokes = strokes;
+        } catch (error) {
+          debugConsole.error(
+            `  Failed to set strokes for VECTOR "${nodeData.name || "Unnamed"}": ${error}`,
           );
         }
       }
@@ -6428,12 +6457,12 @@ export async function recreateNodeFromData(
         }
       }
     } catch (error) {
-      console.log("Error setting text properties: " + error);
+      debugConsole.log("Error setting text properties: " + error);
       // Final fallback: just set the text with basic properties
       try {
         newNode.characters = nodeData.characters;
       } catch (textError) {
-        console.log("Could not set text characters: " + textError);
+        debugConsole.log("Could not set text characters: " + textError);
       }
     }
   }
@@ -6537,9 +6566,17 @@ export async function recreateNodeFromData(
           );
         }
       } else {
-        debugConsole.warning(
-          `  [BINDING] Parent is not a COMPONENT (type: ${parentNode?.type || "unknown"}) for ${nodeData.type} node "${nodeData.name || "Unnamed"}" - cannot restore componentPropertyReferences`,
-        );
+        // If parent is a COMPONENT_SET, we can also restore property bindings
+        const isParentCompSet = parentNode?.type === "COMPONENT_SET";
+        if (isParentCompSet) {
+          debugConsole.log(
+            `  [BINDING] Parent is a COMPONENT_SET (type: ${parentNode.type}) for ${nodeData.type} node "${nodeData.name || "Unnamed"}" - will restore property bindings`,
+          );
+        } else {
+          debugConsole.warning(
+            `  [BINDING] Parent is not a COMPONENT or COMPONENT_SET (type: ${parentNode?.type || "unknown"}) for ${nodeData.type} node "${nodeData.name || "Unnamed"}" - cannot restore componentPropertyReferences`,
+          );
+        }
       }
     } catch (refError) {
       debugConsole.warning(
@@ -6869,6 +6906,9 @@ export async function recreateNodeFromData(
     newNode.type !== "INSTANCE" &&
     !isReusedComponentWithChildren // Skip if component already fully created
   ) {
+    debugConsole.log(
+      `  [CHILDREN] Processing ${nodeData.children.length} child(ren) for "${newNode.name || "Unnamed"}" (${newNode.type})`,
+    );
     // Traverse children normally (component pre-pass happens globally at page level now)
     for (const childData of nodeData.children) {
       if (childData._truncated) {
@@ -11033,7 +11073,7 @@ export async function resolveDeferredNormalInstances(
           const originalId = componentChild.getPluginData(ORIGINAL_NODE_ID_KEY);
           if (originalId) {
             instanceChild.setPluginData(ORIGINAL_NODE_ID_KEY, originalId);
-            console.log(
+            debugConsole.log(
               `[IMPORT] Set ORIGINAL_NODE_ID_KEY on instance child "${instanceChild.name}": "${originalId}" (from component "${targetComponent.name}")`,
             );
             debugConsole.log(
@@ -12555,7 +12595,7 @@ export async function resolveDeferredNormalInstances(
           const childId = childDeferred.nodeData.id;
           const childName = childDeferred.nodeData.name;
 
-          console.log(
+          debugConsole.log(
             `[DEFERRED] Looking for child "${childName}" with ID "${childId}" in instance "${nodeData.name}"`,
           );
 
