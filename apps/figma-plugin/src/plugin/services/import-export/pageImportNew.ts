@@ -1500,6 +1500,7 @@ function checkForStyleReferences(nodeData: any): boolean {
 async function importStyles(
   stylesData: Record<string, any>,
   recognizedVariables: Map<string, Variable>,
+  imageTable: ImageTable | null = null,
 ): Promise<{
   styleMapping: Map<number, BaseStyle>;
   newlyCreatedStyles: BaseStyle[];
@@ -1561,7 +1562,11 @@ async function importStyles(
           newStyle = await createTextStyle(styleData, recognizedVariables);
           break;
         case "PAINT":
-          newStyle = await createPaintStyle(styleData, recognizedVariables);
+          newStyle = await createPaintStyle(
+            styleData,
+            recognizedVariables,
+            imageTable,
+          );
           break;
         case "EFFECT":
           newStyle = await createEffectStyle(styleData, recognizedVariables);
@@ -1699,6 +1704,7 @@ async function createTextStyle(
 async function createPaintStyle(
   styleData: any,
   recognizedVariables: Map<string, Variable>,
+  imageTable: ImageTable | null = null,
 ): Promise<PaintStyle> {
   const style = figma.createPaintStyle();
   style.name = styleData.name;
@@ -2113,6 +2119,10 @@ export async function recreateNodeFromData(
   currentPlaceholderId?: string, // ID of placeholder we're currently inside (for nested deferred instances)
   styleMapping: Map<number, BaseStyle> | null = null, // Map of old style table index -> new style instance
   imageTable: ImageTable | null = null, // Image table for restoring images from Base64
+  deferredInstanceOverrides: Array<{
+    instanceNode: InstanceNode;
+    nodeData: any;
+  }> | null = null, // Array to collect instances that need overrides applied after children sync
 ): Promise<any> {
   let newNode: any;
 
@@ -2371,9 +2381,10 @@ export async function recreateNodeFromData(
                 null, // parentNodeData - not needed here, will be passed correctly in recursive calls
                 recognizedCollections,
                 placeholderFrameIds, // Pass placeholderFrameIds through for component set creation
-                undefined, // currentPlaceholderId - component set creation is not inside a placeholder
+                currentPlaceholderId, // Pass currentPlaceholderId through for component set creation
                 styleMapping, // Pass styleMapping to apply styles
                 imageTable, // Pass imageTable to restore images
+                deferredInstanceOverrides, // Pass down to collect deferred instance overrides
               );
               if (componentNode && componentNode.type === "COMPONENT") {
                 componentVariants.push(componentNode);
@@ -5675,7 +5686,7 @@ export async function recreateNodeFromData(
         newNode.strokes = [];
       }
     } catch (error) {
-      debugConsole.log("Error setting strokes:", error);
+      debugConsole.log("Error setting strokes: " + error);
     }
   } else if (nodeData.type === "VECTOR") {
     // For vectors, if strokes are not specified, clear any default strokes
@@ -6889,15 +6900,31 @@ export async function recreateNodeFromData(
     Array.isArray(nodeData.children) &&
     newNode.type === "INSTANCE"
   ) {
-    // Apply fill bound variables to instance children
-    await applyFillBoundVariablesToInstanceChildren(
-      newNode as InstanceNode,
-      nodeData,
-      recognizedVariables,
-    );
+    // If instance has 0 children but we have JSON children to override, defer it!
+    if (
+      newNode.children &&
+      newNode.children.length === 0 &&
+      nodeData.children.length > 0 &&
+      deferredInstanceOverrides
+    ) {
+      debugConsole.log(
+        `  [DEFER-OVERRIDES] Deferring overrides for instance "${newNode.name || "Unnamed"}" because it currently has 0 children in Figma`,
+      );
+      deferredInstanceOverrides.push({
+        instanceNode: newNode as InstanceNode,
+        nodeData,
+      });
+    } else {
+      // Apply fill bound variables to instance children
+      await applyFillBoundVariablesToInstanceChildren(
+        newNode as InstanceNode,
+        nodeData,
+        recognizedVariables,
+      );
 
-    // Update children from JSON to preserve bound variables and other properties
-    await updateInstanceChildrenFromJson(newNode as InstanceNode, nodeData);
+      // Update children from JSON to preserve bound variables and other properties
+      await updateInstanceChildrenFromJson(newNode as InstanceNode, nodeData);
+    }
   }
 
   if (
@@ -6938,6 +6965,7 @@ export async function recreateNodeFromData(
         childPlaceholderId, // Pass currentPlaceholderId down (or placeholder ID if newNode is a placeholder)
         styleMapping, // Pass styleMapping to apply styles
         imageTable, // Pass imageTable to restore images
+        deferredInstanceOverrides, // Pass down to collect deferred instance overrides
       );
       if (childNode) {
         // Only append if the child doesn't already have this node as its parent
@@ -9184,6 +9212,11 @@ async function createPageAndRecreateStructure(
 }> {
   debugConsole.log("Creating page from JSON...");
 
+  const deferredInstanceOverrides: Array<{
+    instanceNode: InstanceNode;
+    nodeData: any;
+  }> = [];
+
   await figma.loadAllPagesAsync();
   const allPages = figma.root.children;
 
@@ -9491,6 +9524,7 @@ async function createPageAndRecreateStructure(
           undefined, // currentPlaceholderId - page root is not inside a placeholder
           styleMapping, // Pass styleMapping to apply styles
           imageTable, // Pass imageTable to restore images
+          deferredInstanceOverrides, // Pass the array to collect overrides
         );
         if (childNode) {
           newPage.appendChild(childNode);
@@ -9499,6 +9533,28 @@ async function createPageAndRecreateStructure(
     }
 
     debugConsole.log("Page structure recreated successfully");
+
+    // Second pass (b): Apply deferred overrides to instances
+    // This must happen after all components are recreated so their instances have populated children
+    if (deferredInstanceOverrides.length > 0) {
+      debugConsole.log(
+        `Applying deferred overrides for ${deferredInstanceOverrides.length} instance(s)...`,
+      );
+      for (const { instanceNode, nodeData } of deferredInstanceOverrides) {
+        if (instanceNode.children && instanceNode.children.length > 0) {
+          await applyFillBoundVariablesToInstanceChildren(
+            instanceNode,
+            nodeData,
+            recognizedVariables,
+          );
+          await updateInstanceChildrenFromJson(instanceNode, nodeData);
+        } else {
+          debugConsole.warning(
+            `Deferred instance "${instanceNode.name}" still has 0 children. Overrides could not be applied.`,
+          );
+        }
+      }
+    }
 
     // Third pass: Set variant properties on all instances now that component sets are created
     // This is needed because instances are created before component sets are combined,
@@ -9810,6 +9866,17 @@ export async function importPage(
       );
     }
 
+    // Stage 10.5: Load image table Early (so styles can use it)
+    debugConsole.log("Loading images table...");
+    const imageTable = loadImageTable(expandedJsonData);
+    if (imageTable) {
+      debugConsole.log(
+        `Loaded images table with ${imageTable.getSize()} image(s)`,
+      );
+    } else {
+      debugConsole.log("No images table found in JSON");
+    }
+
     let styleMapping: Map<number, BaseStyle> | null = null;
     if (hasStylesTable) {
       debugConsole.log("Loading styles table...");
@@ -9820,6 +9887,7 @@ export async function importPage(
       const stylesResult = await importStyles(
         styleTable.getTable(),
         recognizedVariables,
+        imageTable,
       );
       styleMapping = stylesResult.styleMapping;
       newlyCreatedStyles = stylesResult.newlyCreatedStyles;
@@ -9845,17 +9913,6 @@ export async function importPage(
       );
     } else {
       debugConsole.log("No instance table found in JSON");
-    }
-
-    // Stage 10.5: Load image table
-    debugConsole.log("Loading images table...");
-    const imageTable = loadImageTable(expandedJsonData);
-    if (imageTable) {
-      debugConsole.log(
-        `Loaded images table with ${imageTable.getSize()} image(s)`,
-      );
-    } else {
-      debugConsole.log("No images table found in JSON");
     }
 
     checkCancellation(requestId);
