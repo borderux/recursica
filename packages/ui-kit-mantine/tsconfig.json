@@ -23,5 +23,11 @@
     /* Vitest */
     "types": ["vitest/globals"]
   },
-  "include": ["src"]
+  "include": [
+    "src",
+    ".storybook/**/*",
+    "vite.config.ts",
+    "vitest.workspace.ts",
+    "vitest.shims.d.ts"
+  ]
 }

@@ -1,6 +1,5 @@
 import { defineConfig, type PluginOption } from "vite";
 import react from "@vitejs/plugin-react";
-import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 import svgr from "vite-plugin-svgr";
 import dts from "vite-plugin-dts";
 import { resolve } from "path";
@@ -11,7 +10,6 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       react(),
-      vanillaExtractPlugin(),
       svgr(),
       ...(isLibrary ? [dts({ insertTypesEntry: true })] : []),
     ] as PluginOption[],
@@ -43,7 +41,6 @@ export default defineConfig(({ mode }) => {
                 "@mantine/core",
                 "@mantine/dates",
                 "@mantine/hooks",
-                "@vanilla-extract/css",
               ],
               output: {
                 globals: {
