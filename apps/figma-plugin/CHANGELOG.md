@@ -1,5 +1,11 @@
 # @recursica/publisher
 
+## 0.11.0
+
+### Minor Changes
+
+- [#341](https://github.com/borderux/recursica/pull/341) [`894b8e3`](https://github.com/borderux/recursica/commit/894b8e315a5f9ef503ffe5ec6043b7a8ba57220b) Thanks [@mlmassey](https://github.com/mlmassey)! - Fixed avatar import issues
+
 ## 0.10.0
 
 ### Minor Changes
