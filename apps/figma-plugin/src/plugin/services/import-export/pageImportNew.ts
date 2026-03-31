@@ -342,7 +342,9 @@ async function findOrCreateCollectionFromEntry(
         );
       }
       // Otherwise, fall through to local collection handling
-      console.log("Could not import external collection, trying local:", error);
+      debugConsole.log(
+        "Could not import external collection, trying local: " + error,
+      );
     }
   }
 
@@ -686,7 +688,7 @@ async function restoreVariableModeValues(
           };
           variable.setValueForMode(modeId, alias);
         } else {
-          console.warn(
+          debugConsole.warning(
             `Could not resolve variable alias for mode "${modeName}" in variable "${variable.name}". Variable reference index: ${aliasValue._varRef}`,
           );
         }
@@ -703,9 +705,9 @@ async function restoreVariableModeValues(
           `Unhandled value type for mode "${modeName}" in variable "${variable.name}": ${JSON.stringify(value)}`,
         );
       }
-      console.warn(
-        `Error setting value for mode "${modeName}" in variable "${variable.name}":`,
-        error,
+      debugConsole.warning(
+        `Error setting value for mode "${modeName}" in variable "${variable.name}": ` +
+          error,
       );
     }
   }
@@ -1498,6 +1500,7 @@ function checkForStyleReferences(nodeData: any): boolean {
 async function importStyles(
   stylesData: Record<string, any>,
   recognizedVariables: Map<string, Variable>,
+  imageTable: ImageTable | null = null,
 ): Promise<{
   styleMapping: Map<number, BaseStyle>;
   newlyCreatedStyles: BaseStyle[];
@@ -1559,7 +1562,11 @@ async function importStyles(
           newStyle = await createTextStyle(styleData, recognizedVariables);
           break;
         case "PAINT":
-          newStyle = await createPaintStyle(styleData, recognizedVariables);
+          newStyle = await createPaintStyle(
+            styleData,
+            recognizedVariables,
+            imageTable,
+          );
           break;
         case "EFFECT":
           newStyle = await createEffectStyle(styleData, recognizedVariables);
@@ -1697,12 +1704,18 @@ async function createTextStyle(
 async function createPaintStyle(
   styleData: any,
   recognizedVariables: Map<string, Variable>,
+  imageTable: ImageTable | null = null,
 ): Promise<PaintStyle> {
   const style = figma.createPaintStyle();
   style.name = styleData.name;
 
   if (styleData.paintStyle && styleData.paintStyle.paints) {
     let newPaints = styleData.paintStyle.paints as any[];
+
+    // Restore image references from image table if available
+    if (imageTable) {
+      newPaints = await restoreImageReferences(newPaints, imageTable);
+    }
 
     // Process each paint to restore variable bindings natively into the Paint object
     newPaints = newPaints.map((paint: any) => {
@@ -2106,6 +2119,10 @@ export async function recreateNodeFromData(
   currentPlaceholderId?: string, // ID of placeholder we're currently inside (for nested deferred instances)
   styleMapping: Map<number, BaseStyle> | null = null, // Map of old style table index -> new style instance
   imageTable: ImageTable | null = null, // Image table for restoring images from Base64
+  deferredInstanceOverrides: Array<{
+    instanceNode: InstanceNode;
+    nodeData: any;
+  }> | null = null, // Array to collect instances that need overrides applied after children sync
 ): Promise<any> {
   let newNode: any;
 
@@ -2364,9 +2381,10 @@ export async function recreateNodeFromData(
                 null, // parentNodeData - not needed here, will be passed correctly in recursive calls
                 recognizedCollections,
                 placeholderFrameIds, // Pass placeholderFrameIds through for component set creation
-                undefined, // currentPlaceholderId - component set creation is not inside a placeholder
+                currentPlaceholderId, // Pass currentPlaceholderId through for component set creation
                 styleMapping, // Pass styleMapping to apply styles
                 imageTable, // Pass imageTable to restore images
+                deferredInstanceOverrides, // Pass down to collect deferred instance overrides
               );
               if (componentNode && componentNode.type === "COMPONENT") {
                 componentVariants.push(componentNode);
@@ -4431,6 +4449,13 @@ export async function recreateNodeFromData(
     return null;
   }
 
+  // Add creation logging (COMPONENT already has logging inside the switch)
+  if (newNode.type !== "COMPONENT") {
+    debugConsole.log(
+      `Created ${newNode.type} "${nodeData.name || "Unnamed"}" (ID: ${nodeData.id ? nodeData.id.substring(0, 8) + "..." : "no ID"})`,
+    );
+  }
+
   // ISSUE #4: Note: For VECTOR nodes, constraints are set using the constraints object API
   // AFTER vectorPaths and size are set. The constraints object API works even after
   // appending to COMPONENTs (as proven by tests), so no special timing is required.
@@ -5057,7 +5082,8 @@ export async function recreateNodeFromData(
         );
       }
     }
-    if (nodeData.fills !== undefined) {
+    // VECTOR nodes handle fills AFTER size and paths are set
+    if (nodeData.fills !== undefined && nodeData.type !== "VECTOR") {
       try {
         // Process fills array - restore images first, then remove boundVariables that contain _varRef
         // We'll restore boundVariables properly after setting the fills
@@ -5556,7 +5582,7 @@ export async function recreateNodeFromData(
           );
         }
       } catch (error) {
-        console.log("Error setting fills:", error);
+        debugConsole.error("Error setting fills: " + error);
       }
     } else if (
       nodeData.type === "FRAME" ||
@@ -5569,7 +5595,7 @@ export async function recreateNodeFromData(
       try {
         newNode.fills = [];
       } catch (error) {
-        console.log("Error clearing fills:", error);
+        debugConsole.error("Error clearing fills: " + error);
       }
     }
   }
@@ -5660,7 +5686,7 @@ export async function recreateNodeFromData(
         newNode.strokes = [];
       }
     } catch (error) {
-      console.log("Error setting strokes:", error);
+      debugConsole.log("Error setting strokes: " + error);
     }
   } else if (nodeData.type === "VECTOR") {
     // For vectors, if strokes are not specified, clear any default strokes
@@ -6235,25 +6261,39 @@ export async function recreateNodeFromData(
           finalConstraintH !== expectedConstraintH
         ) {
           debugConsole.warning(
-            `  ⚠️ ISSUE #4: "${nodeData.name || "Unnamed"}" constraintHorizontal mismatch! Expected: ${expectedConstraintH}, Got: ${finalConstraintH || "undefined"}`,
+            `  [ISSUE #4] ⚠️ Final verification failed for "${nodeData.name || "Unnamed"}" (VECTOR) horizontal constraint! Expected: ${expectedConstraintH}, Final: ${finalConstraintH}`,
           );
         }
-        if (
-          expectedConstraintV !== undefined &&
-          finalConstraintV !== expectedConstraintV
-        ) {
-          debugConsole.warning(
-            `  ⚠️ ISSUE #4: "${nodeData.name || "Unnamed"}" constraintVertical mismatch! Expected: ${expectedConstraintV}, Got: ${finalConstraintV || "undefined"}`,
-          );
-        }
-        if (
-          expectedConstraintH !== undefined &&
-          expectedConstraintV !== undefined &&
-          finalConstraintH === expectedConstraintH &&
-          finalConstraintV === expectedConstraintV
-        ) {
+      }
+
+      // CRITICAL: Now that paths and size are set, apply fills and strokes for VECTOR nodes
+      // This ensures Figma correctly applies the fills to the vector geometry
+      if (nodeData.fills !== undefined) {
+        try {
+          let fills = nodeData.fills;
+          if (Array.isArray(fills) && imageTable) {
+            fills = await restoreImageReferences(fills, imageTable);
+          }
+          newNode.fills = fills;
           debugConsole.log(
-            `  ✓ ISSUE #4: "${nodeData.name || "Unnamed"}" (VECTOR) constraints correctly set: H=${finalConstraintH}, V=${finalConstraintV}`,
+            `  ✓ Applied fills to VECTOR "${nodeData.name || "Unnamed"}" after setting paths and size`,
+          );
+        } catch (error) {
+          debugConsole.error(
+            `  Failed to set fills for VECTOR "${nodeData.name || "Unnamed"}": ${error}`,
+          );
+        }
+      }
+      if (nodeData.strokes !== undefined) {
+        try {
+          let strokes = nodeData.strokes;
+          if (Array.isArray(strokes) && imageTable) {
+            strokes = await restoreImageReferences(strokes, imageTable);
+          }
+          newNode.strokes = strokes;
+        } catch (error) {
+          debugConsole.error(
+            `  Failed to set strokes for VECTOR "${nodeData.name || "Unnamed"}": ${error}`,
           );
         }
       }
@@ -6428,12 +6468,12 @@ export async function recreateNodeFromData(
         }
       }
     } catch (error) {
-      console.log("Error setting text properties: " + error);
+      debugConsole.log("Error setting text properties: " + error);
       // Final fallback: just set the text with basic properties
       try {
         newNode.characters = nodeData.characters;
       } catch (textError) {
-        console.log("Could not set text characters: " + textError);
+        debugConsole.log("Could not set text characters: " + textError);
       }
     }
   }
@@ -6537,9 +6577,17 @@ export async function recreateNodeFromData(
           );
         }
       } else {
-        debugConsole.warning(
-          `  [BINDING] Parent is not a COMPONENT (type: ${parentNode?.type || "unknown"}) for ${nodeData.type} node "${nodeData.name || "Unnamed"}" - cannot restore componentPropertyReferences`,
-        );
+        // If parent is a COMPONENT_SET, we can also restore property bindings
+        const isParentCompSet = parentNode?.type === "COMPONENT_SET";
+        if (isParentCompSet) {
+          debugConsole.log(
+            `  [BINDING] Parent is a COMPONENT_SET (type: ${parentNode.type}) for ${nodeData.type} node "${nodeData.name || "Unnamed"}" - will restore property bindings`,
+          );
+        } else {
+          debugConsole.warning(
+            `  [BINDING] Parent is not a COMPONENT or COMPONENT_SET (type: ${parentNode?.type || "unknown"}) for ${nodeData.type} node "${nodeData.name || "Unnamed"}" - cannot restore componentPropertyReferences`,
+          );
+        }
       }
     } catch (refError) {
       debugConsole.warning(
@@ -6852,15 +6900,31 @@ export async function recreateNodeFromData(
     Array.isArray(nodeData.children) &&
     newNode.type === "INSTANCE"
   ) {
-    // Apply fill bound variables to instance children
-    await applyFillBoundVariablesToInstanceChildren(
-      newNode as InstanceNode,
-      nodeData,
-      recognizedVariables,
-    );
+    // If instance has 0 children but we have JSON children to override, defer it!
+    if (
+      newNode.children &&
+      newNode.children.length === 0 &&
+      nodeData.children.length > 0 &&
+      deferredInstanceOverrides
+    ) {
+      debugConsole.log(
+        `  [DEFER-OVERRIDES] Deferring overrides for instance "${newNode.name || "Unnamed"}" because it currently has 0 children in Figma`,
+      );
+      deferredInstanceOverrides.push({
+        instanceNode: newNode as InstanceNode,
+        nodeData,
+      });
+    } else {
+      // Apply fill bound variables to instance children
+      await applyFillBoundVariablesToInstanceChildren(
+        newNode as InstanceNode,
+        nodeData,
+        recognizedVariables,
+      );
 
-    // Update children from JSON to preserve bound variables and other properties
-    await updateInstanceChildrenFromJson(newNode as InstanceNode, nodeData);
+      // Update children from JSON to preserve bound variables and other properties
+      await updateInstanceChildrenFromJson(newNode as InstanceNode, nodeData);
+    }
   }
 
   if (
@@ -6869,6 +6933,9 @@ export async function recreateNodeFromData(
     newNode.type !== "INSTANCE" &&
     !isReusedComponentWithChildren // Skip if component already fully created
   ) {
+    debugConsole.log(
+      `  [CHILDREN] Processing ${nodeData.children.length} child(ren) for "${newNode.name || "Unnamed"}" (${newNode.type})`,
+    );
     // Traverse children normally (component pre-pass happens globally at page level now)
     for (const childData of nodeData.children) {
       if (childData._truncated) {
@@ -6898,6 +6965,7 @@ export async function recreateNodeFromData(
         childPlaceholderId, // Pass currentPlaceholderId down (or placeholder ID if newNode is a placeholder)
         styleMapping, // Pass styleMapping to apply styles
         imageTable, // Pass imageTable to restore images
+        deferredInstanceOverrides, // Pass down to collect deferred instance overrides
       );
       if (childNode) {
         // Only append if the child doesn't already have this node as its parent
@@ -9144,6 +9212,11 @@ async function createPageAndRecreateStructure(
 }> {
   debugConsole.log("Creating page from JSON...");
 
+  const deferredInstanceOverrides: Array<{
+    instanceNode: InstanceNode;
+    nodeData: any;
+  }> = [];
+
   await figma.loadAllPagesAsync();
   const allPages = figma.root.children;
 
@@ -9451,6 +9524,7 @@ async function createPageAndRecreateStructure(
           undefined, // currentPlaceholderId - page root is not inside a placeholder
           styleMapping, // Pass styleMapping to apply styles
           imageTable, // Pass imageTable to restore images
+          deferredInstanceOverrides, // Pass the array to collect overrides
         );
         if (childNode) {
           newPage.appendChild(childNode);
@@ -9459,6 +9533,28 @@ async function createPageAndRecreateStructure(
     }
 
     debugConsole.log("Page structure recreated successfully");
+
+    // Second pass (b): Apply deferred overrides to instances
+    // This must happen after all components are recreated so their instances have populated children
+    if (deferredInstanceOverrides.length > 0) {
+      debugConsole.log(
+        `Applying deferred overrides for ${deferredInstanceOverrides.length} instance(s)...`,
+      );
+      for (const { instanceNode, nodeData } of deferredInstanceOverrides) {
+        if (instanceNode.children && instanceNode.children.length > 0) {
+          await applyFillBoundVariablesToInstanceChildren(
+            instanceNode,
+            nodeData,
+            recognizedVariables,
+          );
+          await updateInstanceChildrenFromJson(instanceNode, nodeData);
+        } else {
+          debugConsole.warning(
+            `Deferred instance "${instanceNode.name}" still has 0 children. Overrides could not be applied.`,
+          );
+        }
+      }
+    }
 
     // Third pass: Set variant properties on all instances now that component sets are created
     // This is needed because instances are created before component sets are combined,
@@ -9770,6 +9866,17 @@ export async function importPage(
       );
     }
 
+    // Stage 10.5: Load image table Early (so styles can use it)
+    debugConsole.log("Loading images table...");
+    const imageTable = loadImageTable(expandedJsonData);
+    if (imageTable) {
+      debugConsole.log(
+        `Loaded images table with ${imageTable.getSize()} image(s)`,
+      );
+    } else {
+      debugConsole.log("No images table found in JSON");
+    }
+
     let styleMapping: Map<number, BaseStyle> | null = null;
     if (hasStylesTable) {
       debugConsole.log("Loading styles table...");
@@ -9780,6 +9887,7 @@ export async function importPage(
       const stylesResult = await importStyles(
         styleTable.getTable(),
         recognizedVariables,
+        imageTable,
       );
       styleMapping = stylesResult.styleMapping;
       newlyCreatedStyles = stylesResult.newlyCreatedStyles;
@@ -9805,17 +9913,6 @@ export async function importPage(
       );
     } else {
       debugConsole.log("No instance table found in JSON");
-    }
-
-    // Stage 10.5: Load image table
-    debugConsole.log("Loading images table...");
-    const imageTable = loadImageTable(expandedJsonData);
-    if (imageTable) {
-      debugConsole.log(
-        `Loaded images table with ${imageTable.getSize()} image(s)`,
-      );
-    } else {
-      debugConsole.log("No images table found in JSON");
     }
 
     checkCancellation(requestId);
@@ -11033,7 +11130,7 @@ export async function resolveDeferredNormalInstances(
           const originalId = componentChild.getPluginData(ORIGINAL_NODE_ID_KEY);
           if (originalId) {
             instanceChild.setPluginData(ORIGINAL_NODE_ID_KEY, originalId);
-            console.log(
+            debugConsole.log(
               `[IMPORT] Set ORIGINAL_NODE_ID_KEY on instance child "${instanceChild.name}": "${originalId}" (from component "${targetComponent.name}")`,
             );
             debugConsole.log(
@@ -12555,7 +12652,7 @@ export async function resolveDeferredNormalInstances(
           const childId = childDeferred.nodeData.id;
           const childName = childDeferred.nodeData.name;
 
-          console.log(
+          debugConsole.log(
             `[DEFERRED] Looking for child "${childName}" with ID "${childId}" in instance "${nodeData.name}"`,
           );
 
