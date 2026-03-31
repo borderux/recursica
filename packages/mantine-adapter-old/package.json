@@ -1,8 +1,8 @@
 {
-  "name": "@recursica/mantine-adapter",
+  "name": "@recursica/mantine-adapter-old",
   "description": "Reusable UI components for Recursica applications based on Mantine 8+",
   "private": false,
-  "homepage": "https://github.com/borderux/recursica/tree/main/packages/mantine-adapter",
+  "homepage": "https://github.com/borderux/recursica/tree/main/packages/mantine-adapter-old",
   "author": "hi@borderux.com",
   "bugs": {
     "url": "https://github.com/borderux/recursica/issues"

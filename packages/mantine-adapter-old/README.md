@@ -1,15 +1,15 @@
-# @recursica/mantine-adapter
+# @recursica/mantine-adapter-old
 
 A modern React component library built with TypeScript, Mantine, and Vanilla Extract CSS. This package provides reusable UI components with consistent design tokens and theming support.
 
 ## Installation
 
 ```bash
-npm install @recursica/mantine-adapter
+npm install @recursica/mantine-adapter-old
 # or
-yarn add @recursica/mantine-adapter
+yarn add @recursica/mantine-adapter-old
 # or
-pnpm add @recursica/mantine-adapter
+pnpm add @recursica/mantine-adapter-old
 ```
 
 ## Peer Dependencies
@@ -28,8 +28,8 @@ npm install @mantine/core@>=8.0.0 @mantine/dates@>=8.0.0 @mantine/hooks@>=8.0.0 
 
 ```tsx
 import React from "react";
-import { Button, ThemeProvider } from "@recursica/mantine-adapter";
-import "@recursica/mantine-adapter/style.css";
+import { Button, ThemeProvider } from "@recursica/mantine-adapter-old";
+import "@recursica/mantine-adapter-old/style.css";
 
 function App() {
   return (
@@ -54,10 +54,13 @@ import {
   Flex,
   Box,
   Badge,
-} from "@recursica/mantine-adapter";
+} from "@recursica/mantine-adapter-old";
 
 // Import types for TypeScript
-import type { ButtonProps, TextfieldProps } from "@recursica/mantine-adapter";
+import type {
+  ButtonProps,
+  TextfieldProps,
+} from "@recursica/mantine-adapter-old";
 ```
 
 ## Available Components
@@ -113,7 +116,7 @@ import type { ButtonProps, TextfieldProps } from "@recursica/mantine-adapter";
 ### Button Component
 
 ```tsx
-import { Button } from "@recursica/mantine-adapter";
+import { Button } from "@recursica/mantine-adapter-old";
 
 // Basic button
 <Button label="Click me" variant="solid" />
@@ -144,7 +147,7 @@ import { Button } from "@recursica/mantine-adapter";
 ### Form Component Examples
 
 ```tsx
-import { Textfield, Checkbox, Dropdown, FileInput, FormFieldLayout } from "@recursica/mantine-adapter";
+import { Textfield, Checkbox, Dropdown, FileInput, FormFieldLayout } from "@recursica/mantine-adapter-old";
 
 // Text input
 <Textfield
@@ -190,7 +193,7 @@ import { Textfield, Checkbox, Dropdown, FileInput, FormFieldLayout } from "@recu
 ### Layout Component Examples
 
 ```tsx
-import { Box, Flex } from "@recursica/mantine-adapter";
+import { Box, Flex } from "@recursica/mantine-adapter-old";
 
 // Basic container
 <Box padding="medium" backgroundColor="background">
@@ -229,7 +232,7 @@ You can customize component styles by extending the existing styles:
 
 ```tsx
 import { style } from "@vanilla-extract/css";
-import { recursica } from "@recursica/mantine-adapter";
+import { recursica } from "@recursica/mantine-adapter-old";
 
 // Custom button style
 const customButton = style({
@@ -251,7 +254,7 @@ const customButton = style({
 Access design tokens directly from the Recursica system:
 
 ```tsx
-import { recursica } from "@recursica/mantine-adapter";
+import { recursica } from "@recursica/mantine-adapter-old";
 
 const myStyle = style({
   // Spacing
@@ -276,7 +279,7 @@ const myStyle = style({
 Use predefined typography styles:
 
 ```tsx
-import { typographies } from "@recursica/mantine-adapter";
+import { typographies } from "@recursica/mantine-adapter-old";
 
 const headingStyle = style({
   ...typographies.heading,
@@ -296,7 +299,7 @@ const bodyStyle = style({
 Wrap your app with the ThemeProvider to enable theming:
 
 ```tsx
-import { ThemeProvider } from "@recursica/mantine-adapter";
+import { ThemeProvider } from "@recursica/mantine-adapter-old";
 
 function App() {
   return <ThemeProvider>{/* Your app components */}</ThemeProvider>;
@@ -324,7 +327,10 @@ const customTheme = createTheme({
 All components include full TypeScript support with proper prop types:
 
 ```tsx
-import type { ButtonProps, TextfieldProps } from "@recursica/mantine-adapter";
+import type {
+  ButtonProps,
+  TextfieldProps,
+} from "@recursica/mantine-adapter-old";
 
 interface MyFormProps {
   onSubmit: (data: FormData) => void;
@@ -355,7 +361,7 @@ This library includes comprehensive Storybook documentation for all components. 
 ### Accessing Storybook
 
 - **Online (Recommended)**: Visit the [Storybook documentation](https://borderux.github.io/recursica/) for live examples and documentation
-- **For Contributors**: If you're contributing to the library, clone the repository and run `npm run storybook` in the `packages/mantine-adapter` directory
+- **For Contributors**: If you're contributing to the library, clone the repository and run `npm run storybook` in the `packages/mantine-adapter-old` directory
 
 ### Using Storybook for Development
 

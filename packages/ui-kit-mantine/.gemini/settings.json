@@ -1,7 +1,0 @@
-{
-  "mcpServers": {
-    "storybook": {
-      "httpUrl": "http://localhost:6006/mcp"
-    }
-  }
-}
