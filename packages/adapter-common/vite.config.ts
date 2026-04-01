@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import svgr from "vite-plugin-svgr";
 import dts from "vite-plugin-dts";
 import { resolve } from "path";
+
 export default defineConfig(({ mode }) => {
   const isLibrary = mode === "library";
 
@@ -19,16 +20,6 @@ export default defineConfig(({ mode }) => {
           ]
         : []),
     ] as PluginOption[],
-    css: {
-      modules: {
-        generateScopedName: "[name]__[local]___[hash:base64:5]",
-      },
-      preprocessorOptions: {
-        scss: {
-          // Add any global SCSS variables or mixins here
-        },
-      },
-    },
     ...(isLibrary
       ? {
           build: {

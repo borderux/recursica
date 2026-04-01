@@ -1,5 +1,11 @@
 # @recursica/mantine-adapter
 
+## 0.3.0
+
+### Minor Changes
+
+- ea86688: Updated for latest CSS config and postcss processing
+
 ## 0.2.0
 
 ### Minor Changes

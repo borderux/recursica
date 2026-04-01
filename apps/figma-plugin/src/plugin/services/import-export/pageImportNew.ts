@@ -6920,6 +6920,9 @@ export async function recreateNodeFromData(
         newNode as InstanceNode,
         nodeData,
         recognizedVariables,
+        variableTable,
+        collectionTable,
+        recognizedCollections,
       );
 
       // Update children from JSON to preserve bound variables and other properties
@@ -9546,6 +9549,9 @@ async function createPageAndRecreateStructure(
             instanceNode,
             nodeData,
             recognizedVariables,
+            variableTable,
+            collectionTable,
+            recognizedCollections,
           );
           await updateInstanceChildrenFromJson(instanceNode, nodeData);
         } else {
@@ -10104,6 +10110,9 @@ async function applyFillBoundVariablesToInstanceChildren(
   instanceNode: InstanceNode,
   nodeData: any,
   recognizedVariables: Map<string, Variable> | null,
+  variableTable: VariableTable | null = null,
+  collectionTable: CollectionTable | null = null,
+  recognizedCollections: Map<string, VariableCollection> | null = null,
 ): Promise<void> {
   if (
     !recognizedVariables ||
@@ -10115,180 +10124,123 @@ async function applyFillBoundVariablesToInstanceChildren(
     return;
   }
 
-  // Iterate through instance children and apply fill bound variables
-  debugConsole.log(
-    `[FILL-BOUND] Applying fill bound variables to instance "${instanceNode.name}" children. Instance has ${instanceNode.children.length} child(ren), JSON has ${nodeData.children?.length || 0} child(ren)`,
-  );
-
-  for (const instanceChild of instanceNode.children) {
-    // Only process nodes that have fills (VectorNode, TextNode, etc.)
-    if (!("fills" in instanceChild) || !Array.isArray(instanceChild.fills)) {
-      debugConsole.log(
-        `[FILL-BOUND] Skipping child "${instanceChild.name}" - no fills property`,
-      );
-      continue;
-    }
-
-    // Find matching child data by name
-    const childData = nodeData.children.find(
-      (cd: any) => cd.name === instanceChild.name,
-    );
-
-    if (!childData) {
-      debugConsole.log(
-        `[FILL-BOUND] No JSON data found for child "${instanceChild.name}" in instance "${instanceNode.name}"`,
-      );
-      continue;
-    }
-
-    if (!childData.boundVariables?.fills) {
-      debugConsole.log(
-        `[FILL-BOUND] Child "${instanceChild.name}" in instance "${instanceNode.name}" has no fill bound variables in JSON`,
-      );
-      continue;
-    }
-
-    debugConsole.log(
-      `[FILL-BOUND] Found fill bound variables for child "${instanceChild.name}" in instance "${instanceNode.name}"`,
-    );
-
-    // Apply fill bound variables using setBoundVariableForPaint
-    // This is the correct Figma API approach: create new Paint objects and bind variables
-    try {
-      if (!recognizedVariables) {
-        debugConsole.warning(
-          `[FILL-BOUND] Cannot apply fill bound variables: recognizedVariables is null`,
-        );
-        continue;
-      }
-
-      const fillsBoundVariables = childData.boundVariables.fills;
-      if (!Array.isArray(fillsBoundVariables)) {
-        continue;
-      }
-
-      // Create new fills array with bound variables
-      const boundFills: Paint[] = [];
-      for (
-        let i = 0;
-        i < instanceChild.fills.length && i < fillsBoundVariables.length;
-        i++
-      ) {
-        const instanceFill = instanceChild.fills[i];
-        const fillBoundVars = fillsBoundVariables[i];
-
-        if (fillBoundVars && typeof fillBoundVars === "object") {
-          // Check if this is a direct variable reference (e.g., { _varRef: 55 })
-          // In Figma, binding an entire fill typically means binding the color property
-          let variable: Variable | null = null;
-
-          if ((fillBoundVars as any)._varRef !== undefined) {
-            // Direct variable reference
-            const varRef = (fillBoundVars as any)._varRef;
-            variable = recognizedVariables.get(String(varRef)) || null;
-          } else if ((fillBoundVars as any).color) {
-            // Nested color property
-            const colorVarInfo = (fillBoundVars as any).color;
-            if (colorVarInfo._varRef !== undefined) {
-              variable =
-                recognizedVariables.get(String(colorVarInfo._varRef)) || null;
-            } else if (
-              colorVarInfo.type === "VARIABLE_ALIAS" &&
-              colorVarInfo.id
-            ) {
-              variable = await figma.variables.getVariableByIdAsync(
-                colorVarInfo.id,
-              );
-            }
-          } else if (
-            (fillBoundVars as any).type === "VARIABLE_ALIAS" &&
-            (fillBoundVars as any).id
-          ) {
-            // VARIABLE_ALIAS format
-            variable = await figma.variables.getVariableByIdAsync(
-              (fillBoundVars as any).id,
-            );
-          }
-
-          if (variable && instanceFill.type === "SOLID") {
-            // Create a new SolidPaint based on the existing fill
-            const solidFill = instanceFill as SolidPaint;
-            let fallbackColor = { ...solidFill.color };
-            let fallbackOpacity = solidFill.opacity;
-
-            try {
-              const resolved = variable.resolveForConsumer(instanceChild);
-              if (
-                resolved &&
-                resolved.value &&
-                typeof resolved.value === "object" &&
-                "r" in resolved.value
-              ) {
-                const val = resolved.value as any;
-                fallbackColor = { r: val.r, g: val.g, b: val.b };
-                if ("a" in val) fallbackOpacity = val.a;
-              }
-            } catch {
-              /* ignore */
-            }
-
-            const newSolidPaint: SolidPaint = {
-              type: "SOLID",
-              visible: solidFill.visible,
-              opacity: fallbackOpacity,
-              blendMode: solidFill.blendMode,
-              color: fallbackColor,
-            };
-
-            // Use setBoundVariableForPaint to bind the variable to the color property
-            const boundPaint = figma.variables.setBoundVariableForPaint(
-              newSolidPaint,
-              "color",
-              variable,
-            ) as SolidPaint;
-
-            boundFills.push(boundPaint);
-            debugConsole.log(
-              `[FILL-BOUND] ✓ Bound variable "${variable.name}" (${variable.id}) to fill[${i}].color on child "${instanceChild.name}"`,
-            );
-          } else if (variable) {
-            // For non-solid fills or if variable not found, use fill as-is
-            // TODO: Handle gradient fills with bound variables on gradient stops
-            boundFills.push(instanceFill);
-            if (!variable) {
-              debugConsole.warning(
-                `[FILL-BOUND] Could not resolve variable for fill[${i}] on child "${instanceChild.name}"`,
-              );
-            } else if (instanceFill.type !== "SOLID") {
-              debugConsole.log(
-                `[FILL-BOUND] Fill[${i}] on child "${instanceChild.name}" is type "${instanceFill.type}" - variable binding for non-solid fills not yet implemented`,
-              );
-            }
-          } else {
-            // No variable to bind, use fill as-is
-            boundFills.push(instanceFill);
-          }
-        } else {
-          // No bound variables for this fill, use as-is
-          boundFills.push(instanceFill);
+  // Helper to recursively find a child by name
+  const findChildRecursively = (
+    node: SceneNode | ChildrenMixin,
+    targetName: string,
+  ): SceneNode | null => {
+    if ("children" in node && Array.isArray(node.children)) {
+      for (const child of node.children) {
+        if (child.name === targetName) {
+          return child;
+        }
+        const found = findChildRecursively(child, targetName);
+        if (found) {
+          return found;
         }
       }
+    }
+    return null;
+  };
 
-      // Assign the new fills array with bound variables
-      instanceChild.fills = boundFills;
+  // Iterate through json children and apply overrides
+  debugConsole.log(
+    `[FILL-BOUND] Applying property overrides to instance "${instanceNode.name}" children. Instance has ${instanceNode.children.length} child(ren), JSON has ${nodeData.children?.length || 0} child(ren)`,
+  );
 
-      debugConsole.log(
-        `[FILL-BOUND] ✓ Applied fill bound variables to child "${instanceChild.name}" in instance "${instanceNode.name}" (${boundFills.length} fill(s))`,
-      );
+  for (const childData of nodeData.children) {
+    if (!childData || !childData.name) {
+      continue;
+    }
+
+    const instanceChild = findChildRecursively(
+      instanceNode,
+      childData.name,
+    ) as any;
+    if (!instanceChild) {
+      continue;
+    }
+
+    try {
+      // 1. Clean and Apply Raw Overrides (Fills, Strokes)
+      if (childData.fills !== undefined && "fills" in instanceChild) {
+        // Must map into a new array and delete invalid properties so Figma's setter doesn't reject it
+        const cleanFills = (
+          Array.isArray(childData.fills) ? childData.fills : []
+        ).map((f: any) => {
+          if (f && typeof f === "object") {
+            const copy = { ...f };
+            delete copy.boundVariables; // Strip non-Figma native property
+            return copy;
+          }
+          return f;
+        });
+        // The assignment setter IS the Figma API for triggering an instance override
+        instanceChild.fills = cleanFills;
+      }
+
+      if (childData.strokes !== undefined && "strokes" in instanceChild) {
+        const cleanStrokes = (
+          Array.isArray(childData.strokes) ? childData.strokes : []
+        ).map((f: any) => {
+          if (f && typeof f === "object") {
+            const copy = { ...f };
+            delete copy.boundVariables;
+            return copy;
+          }
+          return f;
+        });
+        instanceChild.strokes = cleanStrokes;
+      }
+
+      // 2. Delegate to the robust function which invokes figma.variables.setBoundVariableForPaint
+      if (childData.boundVariables) {
+        if (childData.boundVariables.fills && "fills" in instanceChild) {
+          await restoreBoundVariablesForFills(
+            instanceChild,
+            childData.boundVariables,
+            "fills",
+            recognizedVariables,
+            variableTable,
+            collectionTable,
+            recognizedCollections,
+          );
+        }
+        if (childData.boundVariables.strokes && "strokes" in instanceChild) {
+          await restoreBoundVariablesForFills(
+            instanceChild,
+            childData.boundVariables,
+            "strokes",
+            recognizedVariables,
+            variableTable,
+            collectionTable,
+            recognizedCollections,
+          );
+        }
+        if (
+          childData.boundVariables.backgrounds &&
+          "backgrounds" in instanceChild
+        ) {
+          await restoreBoundVariablesForFills(
+            instanceChild,
+            childData.boundVariables,
+            "backgrounds",
+            recognizedVariables,
+            variableTable,
+            collectionTable,
+            recognizedCollections,
+          );
+        }
+      }
     } catch (error) {
       debugConsole.warning(
-        `Error applying fill bound variables to instance child "${instanceChild.name}": ${error instanceof Error ? error.message : String(error)}`,
+        `Error applying property overrides to instance child "${childData.name}": ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }
 
   debugConsole.log(
-    `[FILL-BOUND] Finished applying fill bound variables to instance "${instanceNode.name}" children`,
+    `[FILL-BOUND] Finished applying overrides to instance "${instanceNode.name}" children`,
   );
 }
 
@@ -10392,10 +10344,7 @@ export async function resolveDeferredNormalInstances(
   failed: number;
   errors: string[];
 }> {
-  // Mark unused parameters as intentionally unused (kept for API consistency)
-  void _variableTable;
-  void _collectionTable;
-  void _recognizedCollections;
+  // Unused tables are now used by applyFillBoundVariablesToInstanceChildren
 
   if (deferredInstances.length === 0) {
     return { resolved: 0, failed: 0, errors: [] };
@@ -11588,6 +11537,9 @@ export async function resolveDeferredNormalInstances(
                 instanceNode,
                 nodeData,
                 recognizedVariables,
+                _variableTable,
+                _collectionTable,
+                _recognizedCollections,
               );
 
               // Update children from JSON to preserve bound variables and other properties
@@ -13018,6 +12970,9 @@ export async function resolveDeferredNormalInstances(
             childInstanceNode,
             childDeferred.nodeData,
             recognizedVariables,
+            _variableTable,
+            _collectionTable,
+            _recognizedCollections,
           );
 
           // Update children from JSON to preserve bound variables and other properties
