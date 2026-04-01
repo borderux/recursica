@@ -1,15 +1,15 @@
-# @recursica/ui-kit-mantine
+# @recursica/mantine-adapter
 
 A modern React component library built with TypeScript and **Mantine 8**. This package serves as the core UI kit for Recursica applications, providing reusable UI components, centralized theme configurations, and a comprehensive Storybook environment for development.
 
 ## Installation
 
 ```bash
-npm install @recursica/ui-kit-mantine
+npm install @recursica/mantine-adapter
 # or
-yarn add @recursica/ui-kit-mantine
+yarn add @recursica/mantine-adapter
 # or
-pnpm add @recursica/ui-kit-mantine
+pnpm add @recursica/mantine-adapter
 ```
 
 ## Peer Dependencies
@@ -28,7 +28,7 @@ _Components are currently being rebuilt. Documentation will be updated as new co
 
 ```tsx
 import React from "react";
-// import { Button } from "@recursica/ui-kit-mantine";
+// import { Button } from "@recursica/mantine-adapter";
 
 function App() {
   return (

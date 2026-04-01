@@ -254,7 +254,7 @@ const WelcomeComponent = () => (
         overflow: "auto",
       }}
     >
-      <code>npm install @recursica/ui-kit-mantine</code>
+      <code>npm install @recursica/mantine-adapter</code>
     </pre>
 
     <h3>
@@ -268,7 +268,7 @@ const WelcomeComponent = () => (
         overflow: "auto",
       }}
     >
-      <code>{`import { ThemeProvider } from "@recursica/ui-kit-mantine";
+      <code>{`import { ThemeProvider } from "@recursica/mantine-adapter";
 
 function App() {
   return (
@@ -290,7 +290,7 @@ function App() {
         overflow: "auto",
       }}
     >
-      <code>{`import { Button, Card, Text } from "@recursica/ui-kit-mantine";
+      <code>{`import { Button, Card, Text } from "@recursica/mantine-adapter";
 
 <Card>
   <Text variant="heading">Welcome to Recursica</Text>

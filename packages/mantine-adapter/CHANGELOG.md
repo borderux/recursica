@@ -1,4 +1,4 @@
-# @recursica/ui-kit-mantine
+# @recursica/mantine-adapter
 
 ## 0.2.0
 
@@ -20,7 +20,7 @@
 
 ### Patch Changes
 
-- cec0db5: Renamed ui-kit to ui-kit-mantine to signal proper peer reference to Mantine
+- cec0db5: Renamed ui-kit to mantine-adapter to signal proper peer reference to Mantine
 - cec0db5: Added peer dependency for mantine in the plugin
 
 ## 0.0.3

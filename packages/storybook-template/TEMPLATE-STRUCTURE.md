@@ -112,7 +112,7 @@ export default config;
 ```typescript
 import { createPreviewConfig } from "@recursica/storybook-template";
 import { MantineProvider } from "@mantine/core"; // Replace with your framework
-import "@recursica/ui-kit-mantine/style.css"; // Replace with your package
+import "@recursica/mantine-adapter/style.css"; // Replace with your package
 import "../src/index.css";
 
 const preview = createPreviewConfig({
@@ -145,7 +145,7 @@ export default defineConfig({
     lib: {
       entry: resolve(__dirname, "src/index.ts"),
       name: "UIKitMantine", // Replace with your package name
-      fileName: "ui-kit-mantine", // Replace with your package name
+      fileName: "mantine-adapter", // Replace with your package name
       formats: ["es", "cjs"],
     },
     rollupOptions: {

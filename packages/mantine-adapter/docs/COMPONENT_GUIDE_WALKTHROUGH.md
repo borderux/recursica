@@ -74,7 +74,7 @@ Do not use plain `.css` for component overrides, and do not use `.css.ts` with `
 
 ## 5. Folder structure
 
-- **Adapter** – Because this package (`@recursica/ui-kit-mantine`) is explicitly built for Mantine, we do not need a generic adapter abstraction. The component itself serves as both the public API and the Mantine implementation.
+- **Adapter** – Because this package (`@recursica/mantine-adapter`) is explicitly built for Mantine, we do not need a generic adapter abstraction. The component itself serves as both the public API and the Mantine implementation.
 - **Folder structure** – Place each component directly under `src/components/{ComponentName}/` (e.g., `src/components/Button/Button.tsx` and `src/components/Button/Button.module.css`).
 - **Reactive token logic** – Prefer no React state or `useEffect` for design token updates. With styling in the CSS module and `var(...)` references, the browser updates when document CSS variables change. If one exception is required (e.g. elevation computed to box-shadow), keep it in the adapter or a small helper and document it.
 

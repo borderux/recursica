@@ -1,8 +1,8 @@
 {
-  "name": "@recursica/ui-kit-mantine",
+  "name": "@recursica/mantine-adapter",
   "description": "Reusable UI components for Recursica applications based on Mantine 8+",
   "private": false,
-  "homepage": "https://github.com/borderux/recursica/tree/main/packages/ui-kit-mantine",
+  "homepage": "https://github.com/borderux/recursica/tree/main/packages/mantine-adapter",
   "author": "hi@borderux.com",
   "bugs": {
     "url": "https://github.com/borderux/recursica/issues"
@@ -13,16 +13,16 @@
   },
   "version": "0.2.0",
   "type": "module",
-  "main": "./dist/ui-kit-mantine.cjs",
-  "module": "./dist/ui-kit-mantine.js",
+  "main": "./dist/mantine-adapter.cjs",
+  "module": "./dist/mantine-adapter.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/ui-kit-mantine.js",
-      "require": "./dist/ui-kit-mantine.cjs"
+      "import": "./dist/mantine-adapter.js",
+      "require": "./dist/mantine-adapter.cjs"
     },
-    "./style.css": "./dist/ui-kit-mantine.css"
+    "./style.css": "./dist/mantine-adapter.css"
   },
   "files": [
     "dist"

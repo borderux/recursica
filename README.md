@@ -74,10 +74,10 @@ npm run build
 
 - `packages/common` - Shared utilities and helper functions used across the monorepo
 - `packages/eslint-config` - Shared ESLint configurations for consistent code style
-- `packages/mantine-adapter` - Adapter for integrating Recursica with Mantine UI framework
+- `packages/mantine-adapter-old` - (Deprecated) Adapter for integrating Recursica with Mantine UI framework
 - `packages/schemas` - JSON schemas and TypeScript type definitions for Recursica's configuration
 - `packages/typescript-config` - Shared TypeScript configurations
-- `packages/ui-kit-mantine` - Core UI component library built with Mantine
+- `packages/mantine-adapter` - Core UI component library built with Mantine
 
 ## Contributing
 

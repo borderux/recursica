@@ -28,10 +28,10 @@ export default defineConfig(({ mode }) => {
           build: {
             lib: {
               entry: resolve(__dirname, "src/index.ts"),
-              name: "RecursicaUIKitMantine",
+              name: "RecursicaMantineAdapter",
               formats: ["es", "cjs"],
               fileName: (format) =>
-                `ui-kit-mantine.${format === "es" ? "js" : "cjs"}`,
+                `mantine-adapter.${format === "es" ? "js" : "cjs"}`,
             },
             rollupOptions: {
               external: [
