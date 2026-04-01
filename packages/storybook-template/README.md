@@ -38,7 +38,9 @@ const config = createMainConfig({
   stories: ["../src/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
   basePath: "/your-app/", // For GitHub Pages deployment
   enableCORS: true, // For iframe embedding
-  copyHeadersFile: true, // For GitHub Pages headers
+  enablePostcssVars: true, // Enable Recursica PostCSS variables
+  recursicaCSSPath: "../recursica_variables_scoped.css", // Path to variables
+  postCSSStrictMode: true, // Enforce strict CSS variable parsing
 });
 
 export default config;
@@ -87,8 +89,10 @@ import {
 - `stories`: Array of story file patterns
 - `addons`: Array of Storybook addons (defaults to common addons)
 - `basePath`: Base path for deployment (default: "/")
-- `enableCORS`: Enable CORS headers for iframe embedding (default: false)
-- `copyHeadersFile`: Copy \_headers file for GitHub Pages (default: false)
+- `enableCORS`: Enable CORS headers and remove X-Frame-Options to allow iframe embedding (default: true)
+- `enablePostcssVars`: Enable injection of the `@recursica/recursica-postcss-vars` plugin into the Vite CSS pipeline (default: false)
+- `recursicaCSSPath`: Absolute path to the Recursica scoped variables CSS file. Used if enablePostcssVars is true
+- `postCSSStrictMode`: Enforces strict mode for postcss vars plugin (throws on missing vars). Defaults to true in PRODUCTION mode
 
 ### PreviewConfigOptions
 

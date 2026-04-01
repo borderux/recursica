@@ -1,33 +1,32 @@
 import type { Preview } from "@storybook/react-vite";
+import { createPreviewConfig } from "@recursica/storybook-template/preview";
 import { MantineProvider } from "@mantine/core";
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
 import "../recursica_variables_scoped.css";
-import { RecursicaThemeProvider } from "../src/RecursicaThemeProvider/RecursicaThemeProvider";
+import recursicaTokens from "../recursica_tokens.json";
+import recursicaBrand from "../recursica_brand.json";
+import recursicaUIKit from "../recursica_ui-kit.json";
+
+const basePreview = createPreviewConfig({
+  defaultTheme: "light",
+  recursicaTokensJsonPath: recursicaTokens,
+  recursicaBrandJsonPath: recursicaBrand,
+  recursicaUIKitJsonPath: recursicaUIKit,
+});
 
 const preview: Preview = {
-  parameters: {
-    controls: {
-      matchers: {
-        color: /(background|color)$/i,
-        date: /Date$/i,
-      },
-    },
-
-    a11y: {
-      // 'todo' - show a11y violations in the test UI only
-      // 'error' - fail CI on a11y violations
-      // 'off' - skip a11y checks entirely
-      test: "todo",
-    },
-  },
+  ...basePreview,
   decorators: [
+    ...(Array.isArray(basePreview.decorators)
+      ? basePreview.decorators
+      : basePreview.decorators
+        ? [basePreview.decorators]
+        : []),
     (Story) => (
-      <RecursicaThemeProvider theme="light">
-        <MantineProvider defaultColorScheme="auto">
-          <Story />
-        </MantineProvider>
-      </RecursicaThemeProvider>
+      <MantineProvider defaultColorScheme="auto">
+        <Story />
+      </MantineProvider>
     ),
   ],
 };

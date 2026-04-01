@@ -1,28 +1,21 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { StorybookConfig } from "@storybook/react-vite";
 
 export interface MainConfigOptions {
+  /** Array of story file patterns to include, e.g. ["../src/.../*.stories.*"] */
   stories: string[];
+  /** Array of Storybook addons to load. Defaults to common addons (docs, a11y, vitest, etc.) */
   addons?: string[];
+  /** Base path for deployment (useful for GitHub Pages). Defaults to "/" */
   basePath?: string;
+  /** Enable CORS headers and remove X-Frame-Options to allow iframe embedding. Defaults to true */
   enableCORS?: boolean;
+  /** Enable injection of the `@recursica/recursica-postcss-vars` plugin into the Vite CSS pipeline. Defaults to false */
+  enablePostcssVars?: boolean;
+  /** Absolute path to the Recursica scoped variables CSS file. Used if enablePostcssVars is true */
+  recursicaCSSPath?: string;
+  /** Enforces strict mode for postcss vars plugin (throws on missing vars). If undefined, defaults to true in PRODUCTION mode */
+  postCSSStrictMode?: boolean;
 }
-
-// Get shared story paths - resolve at runtime to avoid bundling
-const getSharedStoryPaths = (): string[] => {
-  const { resolve } = require("path");
-  const { dirname } = require("path");
-  const storyDir = resolve(dirname(__filename), "../stories");
-
-  return [
-    resolve(storyDir, "Introduction.stories.tsx"),
-    resolve(storyDir, "Color.stories.tsx"),
-    resolve(storyDir, "Grid.stories.tsx"),
-    resolve(storyDir, "Size.stories.tsx"),
-    resolve(storyDir, "Themes.stories.tsx"),
-  ];
-};
 
 export const createMainConfig = (
   options: MainConfigOptions,
@@ -37,13 +30,29 @@ export const createMainConfig = (
     ],
     basePath = "/",
     enableCORS = true,
+    enablePostcssVars = false,
+    recursicaCSSPath,
+    postCSSStrictMode,
   } = options;
 
-  // Automatically include shared stories
-  const allStories = [...stories, ...getSharedStoryPaths()];
-
   const config: StorybookConfig = {
-    stories: allStories,
+    stories: async (list) => {
+      const pathModule = await import("path");
+      const urlModule = await import("url");
+      const { dirname, join } = pathModule;
+      const { fileURLToPath } = urlModule;
+      const currentFilename =
+        typeof __filename !== "undefined"
+          ? __filename
+          : fileURLToPath(import.meta.url);
+      const currentDir = dirname(currentFilename);
+
+      const sharedStories = [
+        join(currentDir, "../stories/**/*.stories.@(js|jsx|mjs|ts|tsx)"),
+      ];
+
+      return [...(list || []), ...stories, ...sharedStories];
+    },
     addons,
     framework: {
       name: "@storybook/react-vite",
@@ -60,19 +69,37 @@ export const createMainConfig = (
   };
 
   // Add viteFinal configuration
-  config.viteFinal = async (config) => {
+  config.viteFinal = async (viteConfig, { configType }) => {
+    // Inject Postcss
+    if (enablePostcssVars && recursicaCSSPath) {
+      const recursicaVars = (await import("@recursica/recursica-postcss-vars"))
+        .default;
+      viteConfig.css = viteConfig.css || {};
+      viteConfig.css.postcss = {
+        plugins: [
+          recursicaVars({
+            cssPath: recursicaCSSPath,
+            strict:
+              postCSSStrictMode !== undefined
+                ? postCSSStrictMode
+                : configType === "PRODUCTION",
+          }),
+        ],
+      };
+    }
+
     // Set base path for deployment
     if (basePath !== "/") {
-      config.base = process.env.NODE_ENV === "production" ? basePath : "/";
+      viteConfig.base = process.env.NODE_ENV === "production" ? basePath : "/";
     }
 
     // Add CORS headers for iframe embedding
     if (enableCORS) {
-      config.plugins = config.plugins || [];
-      config.plugins.push({
+      viteConfig.plugins = viteConfig.plugins || [];
+      viteConfig.plugins.push({
         name: "cors-headers",
-        configureServer(server: any) {
-          server.middlewares.use((_req: any, res: any, next: any) => {
+        configureServer(server: import("vite").ViteDevServer) {
+          server.middlewares.use((_req, res, next) => {
             res.setHeader("Access-Control-Allow-Origin", "*");
             res.setHeader(
               "Access-Control-Allow-Methods",
@@ -97,15 +124,25 @@ export const createMainConfig = (
 
     // Add plugin to copy _headers file during build
     if (enableCORS) {
-      const { copyFileSync, existsSync } = await import("fs");
-      const { join } = await import("path");
+      const fsModule = await import("fs");
+      const pathModule = await import("path");
+      const urlModule = await import("url");
 
-      config.plugins = config.plugins || [];
-      config.plugins.push({
+      const { copyFileSync, existsSync } = fsModule;
+      const { join, dirname } = pathModule;
+      const { fileURLToPath } = urlModule;
+
+      viteConfig.plugins = viteConfig.plugins || [];
+      viteConfig.plugins.push({
         name: "copy-headers-file",
         closeBundle() {
-          const headersSource = join(__dirname, "_headers");
-          const headersDest = join(__dirname, "../storybook-static/_headers");
+          const currentFilename =
+            typeof __filename !== "undefined"
+              ? __filename
+              : fileURLToPath(import.meta.url);
+          const currentDir = dirname(currentFilename);
+          const headersSource = join(currentDir, "_headers");
+          const headersDest = join(currentDir, "../storybook-static/_headers");
 
           if (existsSync(headersSource)) {
             copyFileSync(headersSource, headersDest);
@@ -119,7 +156,7 @@ export const createMainConfig = (
       });
     }
 
-    return config;
+    return viteConfig;
   };
 
   return config;

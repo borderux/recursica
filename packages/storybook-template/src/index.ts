@@ -9,13 +9,13 @@ export type { Preview } from "@storybook/react-vite";
 
 // Export context and provider for use by other packages
 export {
-  useRecursicaBundle,
-  RecursicaBundleContext,
-} from "./contexts/RecursicaBundleContext.js";
-export { RecursicaBundleProvider } from "./contexts/RecursicaBundleProvider.js";
-export { withRecursicaBundle } from "./decorators/withRecursicaBundle.js";
+  useRecursicaJson,
+  RecursicaJsonContext,
+} from "./contexts/RecursicaJsonContext.js";
+export { RecursicaJsonProvider } from "./contexts/RecursicaJsonProvider.js";
+export { withRecursicaJson } from "./decorators/withRecursicaJson.js";
 
 // Export types for context
-export type { RecursicaBundleContextType } from "./contexts/RecursicaBundleContext.js";
-export type { RecursicaBundleProviderProps } from "./contexts/RecursicaBundleProvider.js";
-export type { RecursicaBundleDecoratorOptions } from "./decorators/withRecursicaBundle.js";
+export type { RecursicaJsonContextType } from "./contexts/RecursicaJsonContext.js";
+export type { RecursicaJsonProviderProps } from "./contexts/RecursicaJsonProvider.js";
+export type { RecursicaJsonDecoratorOptions } from "./decorators/withRecursicaJson.js";

@@ -48,6 +48,8 @@
     "@chromatic-com/storybook": "^5.1.1",
     "@eslint/js": "^9.25.0",
     "@recursica/recursica-postcss-vars": "*",
+    "@recursica/adapter-common": "*",
+    "@recursica/storybook-template": "*",
     "@repo/typescript-config": "*",
     "@storybook/addon-a11y": "^10.3.3",
     "@storybook/addon-docs": "^10.3.3",
