@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import svgr from "vite-plugin-svgr";
 import dts from "vite-plugin-dts";
 import { resolve } from "path";
+import recursicaVars from "@recursica/recursica-postcss-vars";
 
 export default defineConfig(({ mode }) => {
   const isLibrary = mode === "library";
@@ -11,9 +12,24 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       svgr(),
-      ...(isLibrary ? [dts({ insertTypesEntry: true })] : []),
+      ...(isLibrary
+        ? [
+            dts({
+              insertTypesEntry: true,
+              exclude: ["**/*.stories.*", ".storybook/**"],
+            }),
+          ]
+        : []),
     ] as PluginOption[],
     css: {
+      postcss: {
+        plugins: [
+          recursicaVars({
+            cssPath: resolve(__dirname, "recursica_variables_scoped.css"),
+            strict: isLibrary, // Fail the build process ONLY when running 'npm run build'
+          }),
+        ],
+      },
       modules: {
         generateScopedName: "[name]__[local]___[hash:base64:5]",
       },

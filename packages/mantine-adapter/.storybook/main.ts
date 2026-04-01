@@ -2,6 +2,7 @@ import { copyFileSync, existsSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import type { StorybookConfig } from "@storybook/react-vite";
+import recursicaVars from "@recursica/recursica-postcss-vars";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -29,8 +30,18 @@ const config: StorybookConfig = {
         prop.parent ? !/node_modules/.test(prop.parent.fileName) : true,
     },
   },
-  // Configure for GitHub Pages deployment
-  viteFinal: async (config) => {
+  viteFinal: async (config, { configType }) => {
+    // Inject Postcss
+    config.css = config.css || {};
+    config.css.postcss = {
+      plugins: [
+        recursicaVars({
+          cssPath: join(__dirname, "../recursica_variables_scoped.css"),
+          strict: configType === "PRODUCTION",
+        }),
+      ],
+    };
+
     // Set base path for GitHub Pages - deployed to root of recursica site
     config.base = process.env.NODE_ENV === "production" ? "/recursica/" : "/";
 
