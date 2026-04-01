@@ -1,22 +1,74 @@
-import { defineConfig } from "vite";
+import { defineConfig, type PluginOption } from "vite";
 import react from "@vitejs/plugin-react";
-import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 import svgr from "vite-plugin-svgr";
+import dts from "vite-plugin-dts";
+import { resolve } from "path";
+import recursicaVars from "@recursica/recursica-postcss-vars";
 
-// Vite config for Storybook development only
-// Library builds are handled by Rollup (rollup.config.js)
-export default defineConfig({
-  plugins: [react(), vanillaExtractPlugin(), svgr()],
-  css: {
-    modules: {
-      generateScopedName: "[name]__[local]___[hash:base64:5]",
-    },
-    preprocessorOptions: {
-      scss: {
-        // Add any global SCSS variables or mixins here
+export default defineConfig(({ mode }) => {
+  const isLibrary = mode === "library";
+
+  return {
+    plugins: [
+      react(),
+      svgr(),
+      ...(isLibrary
+        ? [
+            dts({
+              insertTypesEntry: true,
+              exclude: ["**/*.stories.*", ".storybook/**"],
+            }),
+          ]
+        : []),
+    ] as PluginOption[],
+    css: {
+      postcss: {
+        plugins: [
+          recursicaVars({
+            cssPath: resolve(__dirname, "recursica_variables_scoped.css"),
+            strict: isLibrary, // Fail the build process ONLY when running 'npm run build'
+          }),
+        ],
+      },
+      modules: {
+        generateScopedName: "[name]__[local]___[hash:base64:5]",
+      },
+      preprocessorOptions: {
+        scss: {
+          // Add any global SCSS variables or mixins here
+        },
       },
     },
-  },
-  // No build config - this is only for Storybook development
-  // Library builds are handled by Rollup
+    ...(isLibrary
+      ? {
+          build: {
+            lib: {
+              entry: resolve(__dirname, "src/index.ts"),
+              name: "RecursicaMantineAdapter",
+              formats: ["es", "cjs"],
+              fileName: (format) =>
+                `mantine-adapter.${format === "es" ? "js" : "cjs"}`,
+            },
+            rollupOptions: {
+              external: [
+                "react",
+                "react-dom",
+                "react/jsx-runtime",
+                "@mantine/core",
+                "@mantine/dates",
+                "@mantine/hooks",
+              ],
+              output: {
+                globals: {
+                  react: "React",
+                  "react-dom": "ReactDOM",
+                },
+              },
+            },
+            sourcemap: true,
+            emptyOutDir: true,
+          },
+        }
+      : {}),
+  };
 });

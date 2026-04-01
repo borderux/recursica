@@ -9,7 +9,7 @@
  * Usage: node scripts/test-release-workflow.mjs [options]
  *
  * Options:
- *   --packages <packages>    Comma-separated list of packages to test (default: @recursica/figma-plugin,@recursica/figma-plugin-test,@recursica/ui-kit-mantine,@recursica/schemas)
+ *   --packages <packages>    Comma-separated list of packages to test (default: @recursica/figma-plugin,@recursica/figma-plugin-test,@recursica/mantine-adapter,@recursica/schemas)
  *   --dry-run               Don't actually upload to GitHub (default: true)
  *   --upload                 Actually upload to GitHub (overrides --dry-run)
  *   --help                  Show this help message
@@ -27,7 +27,7 @@
  *
  * Package Types Tested:
  * - Figma Plugins (@recursica/figma-plugin, @recursica/figma-plugin-test): Have publish commands, create zip files
- * - NPM Libraries (@recursica/ui-kit-mantine, @recursica/schemas): No publish commands, handled by Changesets only
+ * - NPM Libraries (@recursica/mantine-adapter, @recursica/schemas): No publish commands, handled by Changesets only
  *
  * Requirements:
  * - Packages must be built (dist/ folders must exist for figma plugins)
@@ -65,7 +65,7 @@ function parseArguments() {
     packages: [
       "@recursica/figma-plugin",
       "@recursica/figma-plugin-test",
-      "@recursica/ui-kit-mantine",
+      "@recursica/mantine-adapter",
       "@recursica/schemas",
     ],
     dryRun: true,
@@ -117,7 +117,7 @@ function showHelp() {
     "cyan",
   );
   log(
-    "                          (default: @recursica/figma-plugin,@recursica/figma-plugin-test,@recursica/ui-kit-mantine,@recursica/schemas)",
+    "                          (default: @recursica/figma-plugin,@recursica/figma-plugin-test,@recursica/mantine-adapter,@recursica/schemas)",
     "cyan",
   );
   log(

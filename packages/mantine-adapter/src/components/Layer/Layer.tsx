@@ -1,56 +1,55 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { styles } from "./Layer.css";
-import { LayerType, getLayerClassname } from "./getLayerClassname";
-
-export interface LayerTypeProps {
-  /** The theme layer that this applies to */
-  Layer?: LayerType;
-}
-interface LayerComponentProps<T extends React.ElementType = "div"> {
-  children?: React.ReactNode;
-  as?: T;
-  /** If set to true, it does not apply default layer styles. This is used in case if the component sets them */
-  noLayerStyles?: boolean;
-}
-
-export type LayerProps<T extends React.ElementType = "div"> =
-  LayerComponentProps<T> &
-    Omit<React.ComponentPropsWithoutRef<T>, keyof LayerComponentProps<T>> &
-    LayerTypeProps;
+import { forwardRef } from "react";
+import styles from "./Layer.module.css";
 
 /**
- * Layer component to apply the different Recursica layer values to the children.
- * @param layer - The layer to apply
- * @param children - The children to render
- * @param as - The HTML element type to render (defaults to "div")
- * @param className - The className to apply
- * @param noLayerStyles - If set to true, it does not apply default layer styles. This is used in case if the component sets them
- * @returns The Layer component
+ * Recursica design-system props for Layer.
+ * Sets data-recursica-layer so scoped CSS theme+layer blocks apply that layer's
+ * generic brand vars (e.g. --recursica_brand_layer_N_properties_surface) to this element
+ * and descendants. Theme is set on the document root (e.g. via RecursicaThemeProvider).
+ * See recursica_variables_scoped.css header.
  */
-export function Layer<T extends React.ElementType = "div">({
-  Layer,
-  children,
-  as,
-  className,
-  noLayerStyles,
-  ...props
-}: LayerProps<T>) {
-  const Component = as || "div";
-  if (!Layer) {
-    return children;
-  }
-  const layerClassName = getLayerClassname(Layer);
-  const styleClassName = noLayerStyles ? "" : styles;
-  const finalClassName = [layerClassName, styleClassName, className || ""]
-    .filter(Boolean)
-    .join(" ");
+export interface RecursicaLayerProps {
+  /** Layer (0–3). Sets data-recursica-layer on the root so descendants use this layer's styles. */
+  layer: 0 | 1 | 2 | 3;
+  /**
+   * When true, the root uses display: contents (no box, not styled) and data-recursica-layer
+   * is omitted so Recursica layer styling is not applied. Children still participate in the cascade.
+   */
+  contentsOnly?: boolean;
+  children?: React.ReactNode;
+}
+
+export type LayerProps = RecursicaLayerProps &
+  React.HTMLAttributes<HTMLDivElement>;
+
+/**
+ * Applies a Recursica layer context. Root has data-recursica-layer so scoped CSS
+ * theme+layer blocks (e.g. [data-recursica-theme="light"] [data-recursica-layer="1"])
+ * set generic brand vars on this element; descendants inherit. Use with theme on
+ * document root (RecursicaThemeProvider). Root is display: block so padding/background apply.
+ */
+export const Layer = forwardRef<HTMLDivElement, LayerProps>(function Layer(
+  { layer, contentsOnly, children, className, style, ...rest },
+  ref,
+) {
+  const rootClassName = contentsOnly
+    ? className
+      ? `${styles.root} ${styles.contents} ${className}`
+      : `${styles.root} ${styles.contents}`
+    : className
+      ? `${styles.root} ${className}`
+      : styles.root;
   return (
-    <Component
-      {...(props as any)}
-      className={finalClassName}
-      data-layer={"true"}
+    <div
+      ref={ref}
+      className={rootClassName}
+      style={style}
+      {...(contentsOnly ? {} : { "data-recursica-layer": String(layer) })}
+      {...rest}
     >
       {children}
-    </Component>
+    </div>
   );
-}
+});
+
+Layer.displayName = "Layer";

@@ -1,41 +1,35 @@
-import { createPreviewConfig } from "@recursica/storybook-template";
-import { ThemeProvider } from "../src/components/ThemeProvider/ThemeProvider";
-import { MantineProvider, createTheme } from "@mantine/core";
-import { recursicaBundle } from "@recursica/official-release/recursica-bundle";
+import type { Preview } from "@storybook/react-vite";
+import { MantineProvider } from "@mantine/core";
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
-import "@recursica/official-release/recursica.css";
-import "@recursica/official-release/recursicabrand-light-theme.css";
-import "@recursica/official-release/recursicabrand-dark-theme.css";
-import "../dist/mantine-adapter.css";
-import "../src/index.css";
+import "../recursica_variables_scoped.css";
+import { RecursicaThemeProvider } from "../src/RecursicaThemeProvider/RecursicaThemeProvider";
 
-// Create Mantine theme
-const theme = createTheme({});
-
-const preview = createPreviewConfig({
-  defaultTheme: "light",
-  enableProvider: true,
-  Provider: MantineProvider,
-  providerProps: { theme },
-  enableThemeProvider: true,
-  ThemeProvider: ThemeProvider,
-  lightThemeClass: "recursicabrand-light-theme",
-  darkThemeClass: "recursicabrand-dark-theme",
-  recursicaBundle,
-  customParameters: {
-    options: {
-      storySort: {
-        order: [
-          "Introduction",
-          "Tokens",
-          ["Tokens/Colors", "Tokens/Grid", "Tokens/Size"],
-          "Components",
-          "*",
-        ],
+const preview: Preview = {
+  parameters: {
+    controls: {
+      matchers: {
+        color: /(background|color)$/i,
+        date: /Date$/i,
       },
     },
+
+    a11y: {
+      // 'todo' - show a11y violations in the test UI only
+      // 'error' - fail CI on a11y violations
+      // 'off' - skip a11y checks entirely
+      test: "todo",
+    },
   },
-});
+  decorators: [
+    (Story) => (
+      <RecursicaThemeProvider theme="light">
+        <MantineProvider defaultColorScheme="auto">
+          <Story />
+        </MantineProvider>
+      </RecursicaThemeProvider>
+    ),
+  ],
+};
 
 export default preview;

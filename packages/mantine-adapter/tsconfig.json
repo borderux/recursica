@@ -8,11 +8,11 @@
 
     /* Bundler mode */
     "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "jsxImportSource": "react",
 
     /* Linting */
     "strict": true,
@@ -20,8 +20,14 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
 
-    /* Types */
-    "types": ["vitest/globals", "@types/react"]
+    /* Vitest */
+    "types": ["vitest/globals"]
   },
-  "include": ["src"]
+  "include": [
+    "src",
+    ".storybook/**/*",
+    "vite.config.ts",
+    "vitest.workspace.ts",
+    "vitest.shims.d.ts"
+  ]
 }
