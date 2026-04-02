@@ -7,7 +7,7 @@ const currentDirname = dirname(currentFilename);
 
 const config = createMainConfig({
   stories: ["../src/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
-  basePath: "/recursica/",
+  basePath: "./",
   enableCORS: true,
   enablePostcssVars: true,
   recursicaCSSPath: join(currentDirname, "../recursica_variables_scoped.css"),

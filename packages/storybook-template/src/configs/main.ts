@@ -26,7 +26,6 @@ export const createMainConfig = (
       "@storybook/addon-onboarding",
       "@storybook/addon-docs",
       "@storybook/addon-a11y",
-      "@storybook/addon-vitest",
     ],
     basePath = "/",
     enableCORS = true,
