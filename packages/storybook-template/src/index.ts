@@ -1,7 +1,7 @@
-// Main exports
 export * from "./configs/index.js";
 export * from "./decorators/index.js";
 export * from "./parameters/index.js";
+export * from "./components/index.js";
 
 // Re-export commonly used types
 export type { StorybookConfig } from "@storybook/react-vite";
