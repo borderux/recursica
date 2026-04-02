@@ -1,5 +1,16 @@
 # recursica-storybook
 
+## 0.1.0
+
+### Minor Changes
+
+- [#349](https://github.com/borderux/recursica/pull/349) [`6df88b7`](https://github.com/borderux/recursica/commit/6df88b78ca572dc7905974300116107415a7640a) Thanks [@mlmassey](https://github.com/mlmassey)! - Updated storybook layout and consolidated storybook release
+
+### Patch Changes
+
+- Updated dependencies [[`eb5561b`](https://github.com/borderux/recursica/commit/eb5561bb27947938d60e5f4ce00b70e06a6264e5), [`6df88b7`](https://github.com/borderux/recursica/commit/6df88b78ca572dc7905974300116107415a7640a), [`eb5561b`](https://github.com/borderux/recursica/commit/eb5561bb27947938d60e5f4ce00b70e06a6264e5)]:
+  - @recursica/mantine-adapter@0.4.0
+
 ## 0.0.3
 
 ### Patch Changes
