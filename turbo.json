@@ -29,7 +29,8 @@
       "persistent": true
     },
     "publish": {
-      "outputs": ["**/*.zip", "releases/**"]
+      "outputs": ["**/*.zip", "releases/**"],
+      "env": ["GITHUB_TOKEN", "GITHUB_REPOSITORY"]
     }
   }
 }

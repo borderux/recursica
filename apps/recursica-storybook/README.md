@@ -20,8 +20,8 @@ The storybook is automatically deployed to GitHub Pages when changes are merged 
 
 The deployed storybook will be available at:
 
-- **Main site**: `https://[username].github.io/recursica/` (redirects to storybook)
-- **Direct access**: `https://[username].github.io/recursica/storybook/`
+- **Main site**: `https://borderux.github.io/recursica/` (redirects to storybook)
+- **Direct access**: `https://borderux.github.io/recursica/storybook/`
 
 ## License
 
