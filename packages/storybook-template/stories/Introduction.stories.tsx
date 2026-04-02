@@ -103,11 +103,7 @@ function IntroductionContent() {
 }
 
 const meta = {
-  title: "Introduction",
-  parameters: {
-    layout: "padded",
-  },
-  tags: ["autodocs"],
+  title: "Introduction/Default",
 } satisfies Meta;
 
 export default meta;

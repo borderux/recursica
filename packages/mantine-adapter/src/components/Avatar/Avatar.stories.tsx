@@ -1,14 +1,14 @@
 import React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 import { Avatar } from "./Avatar";
-import { Layer } from "../Layer";
+import { Layer } from "@recursica/adapter-common";
 
 type AvatarStoryProps = React.ComponentProps<typeof Avatar> & {
   layer?: number;
 };
 
 const meta: Meta<AvatarStoryProps> = {
-  title: "Design System/Avatar",
+  title: "UI-Kit/Avatar",
   component: Avatar,
   tags: ["autodocs"],
   argTypes: {

@@ -5,14 +5,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "cd ../../packages/mantine-adapter-old && npm run build-storybook && rm -rf ../../apps/recursica-storybook/dist && cp -r storybook-static ../../apps/recursica-storybook/dist",
+    "build": "cd ../../packages/mantine-adapter && npm run build-storybook && rm -rf ../../apps/recursica-storybook/dist && cp -r storybook-static ../../apps/recursica-storybook/dist",
     "publish": "node scripts/publish.mjs"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@recursica/mantine-adapter-old": "*"
+    "@recursica/mantine-adapter": "*"
   },
   "devDependencies": {
     "gh-pages": "^6.3.0"

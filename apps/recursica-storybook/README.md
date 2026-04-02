@@ -1,17 +1,17 @@
 # Recursica Storybook
 
-This app is a simple build and deployment wrapper for the mantine-adapter-old storybook. It builds the mantine-adapter-old storybook and deploys it to GitHub Pages.
+This app is a simple build and deployment wrapper for the mantine-adapter storybook. It builds the mantine-adapter storybook and deploys it to GitHub Pages.
 
 ## What it does
 
-- Builds the mantine-adapter-old storybook using `npm run build`
+- Builds the mantine-adapter storybook using `npm run build`
 - Copies the built storybook to the `dist/` folder
 - Deploys the storybook to GitHub Pages via the `publish` script
 - Provides a root redirect from the main site to the storybook
 
 ## Available Scripts
 
-- **`npm run build`** - Builds the mantine-adapter-old storybook and copies it to `dist/`
+- **`npm run build`** - Builds the mantine-adapter storybook and copies it to `dist/`
 - **`npm run publish`** - Deploys the built storybook to GitHub Pages
 
 ## Deployment

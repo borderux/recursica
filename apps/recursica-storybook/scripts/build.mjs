@@ -10,7 +10,7 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const projectRoot = join(__dirname, "../..");
-const mantineAdapterPath = join(projectRoot, "../../packages/mantine-adapter-old");
+const mantineAdapterPath = join(projectRoot, "../../packages/mantine-adapter");
 const distPath = join(projectRoot, "../recursica-storybook/dist");
 
 console.log("Building mantine-adapter storybook...");

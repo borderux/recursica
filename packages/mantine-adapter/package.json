@@ -47,8 +47,8 @@
   "devDependencies": {
     "@chromatic-com/storybook": "^5.1.1",
     "@eslint/js": "^9.25.0",
-    "@recursica/recursica-postcss-vars": "*",
     "@recursica/adapter-common": "*",
+    "@recursica/recursica-postcss-vars": "*",
     "@recursica/storybook-template": "*",
     "@repo/typescript-config": "*",
     "@storybook/addon-a11y": "^10.3.3",
@@ -68,6 +68,7 @@
     "eslint-plugin-storybook": "^10.3.3",
     "globals": "^16.0.0",
     "playwright": "^1.53.0",
+    "react-markdown": "^10.1.0",
     "sass": "^1.89.2",
     "sirv": "^3.0.2",
     "storybook": "^10.3.3",

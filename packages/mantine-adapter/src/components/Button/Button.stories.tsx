@@ -1,14 +1,14 @@
 import React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 import { Button } from "./Button";
-import { Layer } from "../Layer";
+import { Layer } from "@recursica/adapter-common";
 
 type ButtonStoryProps = React.ComponentProps<typeof Button> & {
   layer?: number;
 };
 
 const meta: Meta<ButtonStoryProps> = {
-  title: "Design System/Button",
+  title: "UI-Kit/Button",
   component: Button,
   tags: ["autodocs"],
   argTypes: {
