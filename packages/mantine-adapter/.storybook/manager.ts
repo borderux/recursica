@@ -1,6 +1,3 @@
-import { addons } from "storybook/manager-api";
-import recursicaTheme from "./RecursicaTheme";
+import { createManagerConfig } from "@recursica/storybook-template/manager";
 
-addons.setConfig({
-  theme: recursicaTheme,
-});
+createManagerConfig();

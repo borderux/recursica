@@ -1,3 +1,3 @@
-export * from "./provider";
-export * from "./theme";
-export * from "./withRecursicaBundle";
+export * from "./withRecursicaTheme.js";
+export * from "./withRecursicaJson.js";
+export * from "./withRecursicaFonts.js";

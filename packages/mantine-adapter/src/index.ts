@@ -1,2 +1,3 @@
+import "@recursica/adapter-common/style.css";
 export * from "./components";
-export * from "./RecursicaThemeProvider/RecursicaThemeProvider";
+export * from "@recursica/adapter-common";

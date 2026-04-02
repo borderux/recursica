@@ -1,7 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import React from "react";
 import type { Preview } from "@storybook/react-vite";
-import { withProvider, withTheme, withRecursicaBundle } from "../decorators";
+import {
+  withRecursicaJson,
+  withRecursicaFonts,
+  withRecursicaTheme,
+} from "../decorators";
 import {
   commonParameters,
   accessibilityParameters,
@@ -11,59 +13,52 @@ import {
 } from "../parameters/index";
 
 export interface PreviewConfigOptions {
+  /** The default theme to inject into the storybook global toolbar. Defaults to "dark" */
   defaultTheme?: "light" | "dark";
-  enableProvider?: boolean;
-  Provider?: React.ComponentType<{ children: React.ReactNode }>;
-  providerProps?: Record<string, any>;
-  enableThemeProvider?: boolean;
-  ThemeProvider?: React.ComponentType<{
-    currentTheme: string;
-    children: React.ReactNode;
-  }>;
-  lightThemeClass?: string;
-  darkThemeClass?: string;
-  customParameters?: Record<string, any>;
-  recursicaBundle?: any;
+  /** Whether to automatically inject the RecursicaThemeProvider context provider onto stories, defaults to true */
+  useRecursicaTheme?: boolean;
+  /** The fully imported \`recursica_tokens.json\` JSON object. Must be populated so inherited Stories can visualize the base token systems. */
+  recursicaTokensJsonPath: Record<string, unknown> | null;
+  /** The fully imported \`recursica_brand.json\` JSON object. Must be populated so inherited Stories can visualize active brand matrices. */
+  recursicaBrandJsonPath: Record<string, unknown> | null;
+  /** The fully imported \`recursica_ui-kit.json\` JSON object (strictly optional usage inside Storybook contexts but provided for schema completeness). */
+  recursicaUIKitJsonPath: Record<string, unknown> | null;
 }
 
-export const createPreviewConfig = (
-  options: PreviewConfigOptions = {},
-): Preview => {
+export const createPreviewConfig = (options: PreviewConfigOptions): Preview => {
   const {
     defaultTheme = "dark",
-    enableProvider = false,
-    Provider,
-    providerProps = {},
-    enableThemeProvider = false,
-    ThemeProvider,
-    lightThemeClass,
-    darkThemeClass,
-    customParameters = {},
-    recursicaBundle,
+    useRecursicaTheme = true,
+    recursicaTokensJsonPath,
+    recursicaBrandJsonPath,
+    recursicaUIKitJsonPath,
   } = options;
 
-  const decorators: any[] = [];
+  const decorators: NonNullable<Preview["decorators"]> = [];
 
-  // Add recursica bundle decorator if bundle is provided
-  if (recursicaBundle) {
-    decorators.push(withRecursicaBundle({ bundle: recursicaBundle }));
-  }
-
-  // Add provider decorator if enabled
-  if (enableProvider && Provider) {
-    decorators.push(withProvider({ Provider, props: providerProps }));
-  }
-
-  // Add theme decorator if enabled
-  if (enableThemeProvider && ThemeProvider) {
+  // Add recursica JSON context decorator if any json is provided
+  if (
+    recursicaTokensJsonPath ||
+    recursicaBrandJsonPath ||
+    recursicaUIKitJsonPath
+  ) {
     decorators.push(
-      withTheme({
-        defaultTheme,
-        ThemeProvider,
-        lightThemeClass,
-        darkThemeClass,
+      withRecursicaJson({
+        tokensJson: recursicaTokensJsonPath,
+        brandJson: recursicaBrandJsonPath,
+        uiKitJson: recursicaUIKitJsonPath,
       }),
     );
+  }
+
+  // Add recursica font loader decorator if tokens are provided
+  if (recursicaTokensJsonPath) {
+    decorators.push(withRecursicaFonts({ tokens: recursicaTokensJsonPath }));
+  }
+
+  // Add direct generic recursica theme wrapper
+  if (useRecursicaTheme) {
+    decorators.push(withRecursicaTheme(defaultTheme as "light" | "dark"));
   }
 
   // Combine all parameters
@@ -74,7 +69,6 @@ export const createPreviewConfig = (
     ...(defaultTheme === "light"
       ? lightBackgroundParameters
       : backgroundParameters),
-    ...customParameters,
   };
 
   return {
@@ -91,7 +85,6 @@ export const createPreviewConfig = (
             { value: "dark", title: "Dark" },
             { value: "light", title: "Light" },
           ],
-          showName: true,
           dynamicTitle: true,
         },
       },

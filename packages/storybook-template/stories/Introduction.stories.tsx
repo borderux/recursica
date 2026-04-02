@@ -1,95 +1,118 @@
-import React from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-// This story is designed to be customized for each project
-// Import your UI kit components here
-// import { Box, Typography } from "@your-ui-kit/package";
+const DOCS_URL = "https://recursica.com";
+const FORGE_URL = "https://forge.recursica.com";
 
-const WelcomeComponent = () => (
-  <div style={{ padding: "2rem" }}>
-    <div style={{ marginBottom: "1rem" }}>
-      <h1>Welcome to Your Design System</h1>
-    </div>
-    <div style={{ marginBottom: "1rem" }}>
-      <p>
-        <strong>
-          This is a modern, scalable design system that bridges the gap between
-          design and development through seamless Figma-to-code integration.
-        </strong>
-      </p>
-    </div>
-
-    <div style={{ marginBottom: "0.5rem" }}>
-      <h2>What is This Design System?</h2>
-    </div>
-    <div style={{ marginBottom: "1rem" }}>
-      <p>
-        This is a comprehensive design system that enables designers and
-        developers to work in perfect harmony. Through our Figma plugin, design
-        tokens are automatically extracted and synchronized with your codebase,
-        ensuring pixel-perfect implementation and maintaining design consistency
-        across all platforms.
-      </p>
-    </div>
-
-    <div style={{ marginBottom: "0.5rem" }}>
-      <h2>How This Storybook Works</h2>
-    </div>
-    <div style={{ marginBottom: "1rem" }}>
-      <p>
-        This Storybook is designed to demonstrate how changes in the{" "}
-        <code>recursica.json</code>
-        file from our Figma plugin allow users to visually see the changes they
-        made. When you update design tokens in Figma and export them through our
-        plugin, those changes are immediately reflected here in the Storybook.
-      </p>
-    </div>
-
-    <div style={{ marginBottom: "0.5rem" }}>
-      <h2>Figma Design File Structure</h2>
-    </div>
-    <div style={{ marginBottom: "1rem" }}>
-      <p>
-        The Storybook is structured to exactly mimic the Figma design files.
-        Each section and story corresponds directly to pages and components in
-        your Figma file, making it easy for designers to compare Storybook
-        against the Figma pages to ensure everything looks correct. This 1:1
-        mapping allows for seamless design-to-development handoff and ongoing
-        design system maintenance.
-      </p>
-    </div>
-
-    <div style={{ marginBottom: "0.5rem" }}>
-      <h2>Design Tokens</h2>
-    </div>
-    <div style={{ marginBottom: "1rem" }}>
-      <p>
-        Explore our comprehensive collection of design tokens including colors,
-        sizes, typography, and more. Each token is carefully crafted to ensure
-        consistency across all touchpoints and is automatically synchronized
-        between Figma and your codebase.
-      </p>
-    </div>
-  </div>
-);
-
-const meta: Meta<typeof WelcomeComponent> = {
-  title: "Introduction",
-  component: WelcomeComponent,
-  parameters: {
-    layout: "fullscreen",
-    docs: {
-      description: {
-        story:
-          "Welcome to your Design System - a modern, scalable design system for building exceptional user interfaces.",
-      },
-    },
-  },
+const sectionStyle: React.CSSProperties = {
+  marginBottom: 32,
 };
+
+const headingStyle: React.CSSProperties = {
+  fontSize: 14,
+  fontWeight: 600,
+  color: "#333",
+  marginBottom: 8,
+  marginTop: 0,
+};
+
+const bodyStyle: React.CSSProperties = {
+  fontSize: 14,
+  lineHeight: 1.6,
+  color: "#444",
+  margin: 0,
+};
+
+const linkStyle: React.CSSProperties = {
+  color: "#0066cc",
+  textDecoration: "none",
+};
+
+function IntroductionContent() {
+  return (
+    <div style={{ padding: 24, maxWidth: 640 }}>
+      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 16 }}>
+        Recursica Design System
+      </h1>
+      <p style={{ ...bodyStyle, marginBottom: 24 }}>
+        This Storybook showcases the Recursica design system: design tokens,
+        theme (brand) configuration, and UI components. Use the sidebar to
+        explore each section.
+      </p>
+
+      <section style={sectionStyle}>
+        <h2 style={headingStyle}>Tokens</h2>
+        <p style={bodyStyle}>
+          Raw design tokens (colors, sizes, font weights, opacities, etc.) that
+          feed the theme and components. These are the primitive values defined
+          in your token set and exposed as CSS custom properties.
+        </p>
+      </section>
+
+      <section style={sectionStyle}>
+        <h2 style={headingStyle}>Theme</h2>
+        <p style={bodyStyle}>
+          Brand and theme layer built on top of tokens. Typography types,
+          dimensions, and layout grids are defined here. Theme uses the tokens
+          and exposes both CSS variables and helper classes (e.g. typography
+          classes) for consistent styling across the product.
+        </p>
+      </section>
+
+      <section style={sectionStyle}>
+        <h2 style={headingStyle}>UI Kit</h2>
+        <p style={bodyStyle}>
+          Reusable components (buttons, layers, etc.) that consume the theme and
+          tokens. Use these as the building blocks for application UIs while
+          staying on-brand.
+        </p>
+      </section>
+
+      <section style={sectionStyle}>
+        <h2 style={headingStyle}>Configuring Recursica</h2>
+        <p style={bodyStyle}>
+          To modify the Recursica configuration (tokens, brand, theme), go to{" "}
+          <a
+            href={FORGE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={linkStyle}
+          >
+            {FORGE_URL}
+          </a>
+          . Changes there drive the tokens and theme you see in this Storybook.
+        </p>
+      </section>
+
+      <section style={sectionStyle}>
+        <h2 style={headingStyle}>Documentation</h2>
+        <p style={bodyStyle}>
+          For full documentation, guides, and API reference, visit{" "}
+          <a
+            href={DOCS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={linkStyle}
+          >
+            {DOCS_URL}
+          </a>
+          .
+        </p>
+      </section>
+    </div>
+  );
+}
+
+const meta = {
+  title: "Introduction",
+  parameters: {
+    layout: "padded",
+  },
+  tags: ["autodocs"],
+} satisfies Meta;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Welcome: Story = {
-  name: "Welcome to Your Design System",
+export const Default: Story = {
+  render: () => <IntroductionContent />,
 };

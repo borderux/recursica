@@ -10,11 +10,16 @@ export default defineConfig({
   ],
   build: {
     lib: {
-      entry: resolve(__dirname, "src/index.ts"),
+      entry: {
+        index: resolve(__dirname, "src/index.ts"),
+        main: resolve(__dirname, "src/configs/main.ts"),
+        preview: resolve(__dirname, "src/configs/preview.ts"),
+        manager: resolve(__dirname, "src/configs/manager.ts"),
+      },
       name: "StorybookTemplate",
       formats: ["es", "cjs"],
-      fileName: (format) =>
-        `storybook-template.${format === "es" ? "js" : "cjs"}`,
+      fileName: (format, entryName) =>
+        `${entryName}.${format === "es" ? "js" : "cjs"}`,
     },
     rollupOptions: {
       external: (id) => {
@@ -23,7 +28,7 @@ export default defineConfig({
           return true;
         }
         // Externalize Storybook packages
-        if (id.startsWith("@storybook/")) {
+        if (id.startsWith("@storybook/") || id.startsWith("storybook/")) {
           return true;
         }
         // Externalize Node.js built-ins

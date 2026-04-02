@@ -24,19 +24,29 @@ npm install @mantine/core@>=8.0.0 @mantine/dates@>=8.0.0 @mantine/hooks@>=8.0.0 
 
 ## Quick Start
 
-_Components are currently being rebuilt. Documentation will be updated as new components are added._
+To use `@recursica/mantine-adapter` in your project, you **must** import its required CSS files in a specific order at the root of your application (e.g., in `App.tsx` or `main.tsx`). This ensures that Mantine styles load first, followed by the Recursica design tokens, and finally the adapter overrides.
 
 ```tsx
+import "@mantine/core/styles.css";
+import "../path/to/recursica_variables_scoped.css"; // Import your Recursica CSS variables
+import "@recursica/mantine-adapter/style.css";
+
 import React from "react";
-// import { Button } from "@recursica/mantine-adapter";
+import { Button } from "@recursica/mantine-adapter";
 
 function App() {
-  return (
-    // <Button label="Click Me" variant="solid" />
-    <div>More components coming soon!</div>
-  );
+  return <Button variant="solid">Click Me</Button>;
 }
 ```
+
+## Philosophy
+
+The `@recursica/mantine-adapter` is designed to provide curated, strictly-typed UI components tailored specifically following the Recursica styling and behavior guidelines.
+
+- **Override, Don't Corrupt**: Recursica components are built as wrappers around Mantine components to seamlessly override their default appearance with Recursica stylings. We deliberately **leave the base Mantine global styles and theme alone** so that it does not negatively impact the overall project or third-party libraries depending on standard Mantine.
+- **Strictly Curated Props**: We expose a complete set of Mantine props via our Recursica components, but **not all props are fully supported**. We restrict certain props if they do not fit the established UI definition, styles, or behaviors of the Recursica design system.
+- **Avoid Overstyling**: Developers are encouraged to use Recursica components precisely as they are provided. You should **not overstyle them** (e.g., injecting custom styles or class names that conflict with the adapter) as this risks breaking the carefully constructed styling connections and visual consistency.
+- **Need Something Different?**: If you need to build a UI element with completely different styling that deviates from the design system, you are encouraged to import the base component directly from `@mantine/core` and style it yourself to achieve your goal.
 
 ## Development and Architecture
 
@@ -46,7 +56,7 @@ This project is built using:
 - **Mantine 8**: Base components, hooks, and native standard styling architecture.
 - **Storybook**: Used heavily for interactive component development, documentation, and prototyping.
 
-> **Note:** We do not use Vanilla Extract or PostCSS for this project, relying instead on Mantine's built-in CSS styling and Vite's native CSS/CSS Modules capabilities. No complex CSS-in-JS overhead!
+> **Note:** We relying completely on Mantine's built-in CSS styling and Vite's native CSS/CSS Modules capabilities. No complex CSS-in-JS overhead!
 
 ## Storybook Documentation
 
