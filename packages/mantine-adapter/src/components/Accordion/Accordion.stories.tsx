@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { Accordion } from "./Accordion";
-import { Layer } from "../Layer";
+import { Layer } from "@recursica/adapter-common";
 
 const SVGIcon = () => (
   <svg
@@ -34,7 +34,7 @@ const ChevronIcon = () => (
 );
 
 const meta: Meta<typeof Accordion> = {
-  title: "Design System/Accordion",
+  title: "UI-Kit/Accordion",
   component: Accordion,
   tags: ["autodocs"],
   parameters: {
