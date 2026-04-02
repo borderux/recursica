@@ -291,7 +291,7 @@ The General Adapter serves as the foundation for framework-specific adapters:
 ### Mantine Adapter
 
 ```typescript
-// packages/mantine-adapter-old/adapter/index.ts
+// packages/mantine-adapter/adapter/index.ts
 import { runAdapter as runGeneralAdapter } from "@recursica/general-adapter";
 
 export function runMantineAdapter(params) {
