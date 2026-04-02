@@ -1,5 +1,11 @@
 # recursica-storybook
 
+## 0.1.2
+
+### Patch Changes
+
+- 5f73853: Fixed incorrect plugin and basepath
+
 ## 0.1.1
 
 ### Patch Changes
