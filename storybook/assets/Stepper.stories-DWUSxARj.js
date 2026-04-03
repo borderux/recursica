@@ -1,0 +1,3 @@
+import{j as s}from"./iframe-BmfdKJen.js";import{o as n}from"./index-DQinPukL.js";import"./preload-helper-Dp1pzeXC.js";const r=t=>s.jsx("div",{...t,children:"Stepper"});try{r.displayName="Stepper",r.__docgenInfo={description:"",displayName:"Stepper",props:{}}}catch{}const i={title:"UI-Kit/🚧 Stepper",component:r,tags:["autodocs"]},e={render:()=>s.jsx(n,{componentName:"Stepper"})};var o,p,a;e.parameters={...e.parameters,docs:{...(o=e.parameters)==null?void 0:o.docs,source:{originalSource:`{
+  render: () => <ComingSoon componentName="Stepper" />
+}`,...(a=(p=e.parameters)==null?void 0:p.docs)==null?void 0:a.source}}};const _=["Default"];export{e as Default,_ as __namedExportsOrder,i as default};

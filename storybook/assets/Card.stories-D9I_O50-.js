@@ -1,0 +1,3 @@
+import{j as n}from"./iframe-BmfdKJen.js";import{o as d}from"./index-DQinPukL.js";import"./preload-helper-Dp1pzeXC.js";const e=o=>n.jsx("div",{...o,children:"Card"});try{e.displayName="Card",e.__docgenInfo={description:"",displayName:"Card",props:{}}}catch{}const i={title:"UI-Kit/🚧 Card",component:e,tags:["autodocs"]},r={render:()=>n.jsx(d,{componentName:"Card"})};var a,t,s;r.parameters={...r.parameters,docs:{...(a=r.parameters)==null?void 0:a.docs,source:{originalSource:`{
+  render: () => <ComingSoon componentName="Card" />
+}`,...(s=(t=r.parameters)==null?void 0:t.docs)==null?void 0:s.source}}};const _=["Default"];export{r as Default,_ as __namedExportsOrder,i as default};

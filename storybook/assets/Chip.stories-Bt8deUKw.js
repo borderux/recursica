@@ -1,0 +1,3 @@
+import{j as s}from"./iframe-BmfdKJen.js";import{o as n}from"./index-DQinPukL.js";import"./preload-helper-Dp1pzeXC.js";const o=r=>s.jsx("div",{...r,children:"Chip"});try{o.displayName="Chip",o.__docgenInfo={description:"",displayName:"Chip",props:{}}}catch{}const d={title:"UI-Kit/🚧 Chip",component:o,tags:["autodocs"]},e={render:()=>s.jsx(n,{componentName:"Chip"})};var t,a,p;e.parameters={...e.parameters,docs:{...(t=e.parameters)==null?void 0:t.docs,source:{originalSource:`{
+  render: () => <ComingSoon componentName="Chip" />
+}`,...(p=(a=e.parameters)==null?void 0:a.docs)==null?void 0:p.source}}};const _=["Default"];export{e as Default,_ as __namedExportsOrder,d as default};

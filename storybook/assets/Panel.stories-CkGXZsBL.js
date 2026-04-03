@@ -1,0 +1,3 @@
+import{j as s}from"./iframe-BmfdKJen.js";import{o as c}from"./index-DQinPukL.js";import"./preload-helper-Dp1pzeXC.js";const o=r=>s.jsx("div",{...r,children:"Panel"});try{o.displayName="Panel",o.__docgenInfo={description:"",displayName:"Panel",props:{}}}catch{}const i={title:"UI-Kit/🚧 Panel",component:o,tags:["autodocs"]},e={render:()=>s.jsx(c,{componentName:"Panel"})};var a,t,n;e.parameters={...e.parameters,docs:{...(a=e.parameters)==null?void 0:a.docs,source:{originalSource:`{
+  render: () => <ComingSoon componentName="Panel" />
+}`,...(n=(t=e.parameters)==null?void 0:t.docs)==null?void 0:n.source}}};const l=["Default"];export{e as Default,l as __namedExportsOrder,i as default};

@@ -1,0 +1,3 @@
+import{j as m}from"./iframe-BmfdKJen.js";import{o as p}from"./index-DQinPukL.js";import"./preload-helper-Dp1pzeXC.js";const r=t=>m.jsx("div",{...t,children:"NumberInput"});try{r.displayName="NumberInput",r.__docgenInfo={description:"",displayName:"NumberInput",props:{}}}catch{}const d={title:"UI-Kit/🚧 NumberInput",component:r,tags:["autodocs"]},e={render:()=>m.jsx(p,{componentName:"NumberInput"})};var o,n,a;e.parameters={...e.parameters,docs:{...(o=e.parameters)==null?void 0:o.docs,source:{originalSource:`{
+  render: () => <ComingSoon componentName="NumberInput" />
+}`,...(a=(n=e.parameters)==null?void 0:n.docs)==null?void 0:a.source}}};const i=["Default"];export{e as Default,i as __namedExportsOrder,d as default};

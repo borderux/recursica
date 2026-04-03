@@ -1,0 +1,3 @@
+import{j as s}from"./iframe-BmfdKJen.js";import{o as n}from"./index-DQinPukL.js";import"./preload-helper-Dp1pzeXC.js";const t=e=>s.jsx("div",{...e,children:"Tooltip"});try{t.displayName="Tooltip",t.__docgenInfo={description:"",displayName:"Tooltip",props:{}}}catch{}const d={title:"UI-Kit/🚧 Tooltip",component:t,tags:["autodocs"]},o={render:()=>s.jsx(n,{componentName:"Tooltip"})};var r,a,p;o.parameters={...o.parameters,docs:{...(r=o.parameters)==null?void 0:r.docs,source:{originalSource:`{
+  render: () => <ComingSoon componentName="Tooltip" />
+}`,...(p=(a=o.parameters)==null?void 0:a.docs)==null?void 0:p.source}}};const l=["Default"];export{o as Default,l as __namedExportsOrder,d as default};

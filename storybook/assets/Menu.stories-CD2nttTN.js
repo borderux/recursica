@@ -1,0 +1,3 @@
+import{j as s}from"./iframe-BmfdKJen.js";import{o as c}from"./index-DQinPukL.js";import"./preload-helper-Dp1pzeXC.js";const o=r=>s.jsx("div",{...r,children:"Menu"});try{o.displayName="Menu",o.__docgenInfo={description:"",displayName:"Menu",props:{}}}catch{}const i={title:"UI-Kit/🚧 Menu",component:o,tags:["autodocs"]},e={render:()=>s.jsx(c,{componentName:"Menu"})};var t,n,a;e.parameters={...e.parameters,docs:{...(t=e.parameters)==null?void 0:t.docs,source:{originalSource:`{
+  render: () => <ComingSoon componentName="Menu" />
+}`,...(a=(n=e.parameters)==null?void 0:n.docs)==null?void 0:a.source}}};const u=["Default"];export{e as Default,u as __namedExportsOrder,i as default};

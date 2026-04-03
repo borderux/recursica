@@ -1,0 +1,3 @@
+import{j as n}from"./iframe-BmfdKJen.js";import{o as c}from"./index-DQinPukL.js";import"./preload-helper-Dp1pzeXC.js";const o=r=>n.jsx("div",{...r,children:"Table"});try{o.displayName="Table",o.__docgenInfo={description:"",displayName:"Table",props:{}}}catch{}const i={title:"UI-Kit/🚧 Table",component:o,tags:["autodocs"]},e={render:()=>n.jsx(c,{componentName:"Table"})};var a,t,s;e.parameters={...e.parameters,docs:{...(a=e.parameters)==null?void 0:a.docs,source:{originalSource:`{
+  render: () => <ComingSoon componentName="Table" />
+}`,...(s=(t=e.parameters)==null?void 0:t.docs)==null?void 0:s.source}}};const l=["Default"];export{e as Default,l as __namedExportsOrder,i as default};

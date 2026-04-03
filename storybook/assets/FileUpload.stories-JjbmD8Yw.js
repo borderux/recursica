@@ -1,0 +1,3 @@
+import{j as s}from"./iframe-BmfdKJen.js";import{o as n}from"./index-DQinPukL.js";import"./preload-helper-Dp1pzeXC.js";const o=r=>s.jsx("div",{...r,children:"FileUpload"});try{o.displayName="FileUpload",o.__docgenInfo={description:"",displayName:"FileUpload",props:{}}}catch{}const c={title:"UI-Kit/🚧 FileUpload",component:o,tags:["autodocs"]},e={render:()=>s.jsx(n,{componentName:"FileUpload"})};var a,t,p;e.parameters={...e.parameters,docs:{...(a=e.parameters)==null?void 0:a.docs,source:{originalSource:`{
+  render: () => <ComingSoon componentName="FileUpload" />
+}`,...(p=(t=e.parameters)==null?void 0:t.docs)==null?void 0:p.source}}};const m=["Default"];export{e as Default,m as __namedExportsOrder,c as default};

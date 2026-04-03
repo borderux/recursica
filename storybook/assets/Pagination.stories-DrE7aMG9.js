@@ -1,0 +1,3 @@
+import{j as i}from"./iframe-BmfdKJen.js";import{o as s}from"./index-DQinPukL.js";import"./preload-helper-Dp1pzeXC.js";const a=t=>i.jsx("div",{...t,children:"Pagination"});try{a.displayName="Pagination",a.__docgenInfo={description:"",displayName:"Pagination",props:{}}}catch{}const d={title:"UI-Kit/🚧 Pagination",component:a,tags:["autodocs"]},o={render:()=>i.jsx(s,{componentName:"Pagination"})};var e,n,r;o.parameters={...o.parameters,docs:{...(e=o.parameters)==null?void 0:e.docs,source:{originalSource:`{
+  render: () => <ComingSoon componentName="Pagination" />
+}`,...(r=(n=o.parameters)==null?void 0:n.docs)==null?void 0:r.source}}};const g=["Default"];export{o as Default,g as __namedExportsOrder,d as default};

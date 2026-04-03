@@ -1,0 +1,3 @@
+import{j as n}from"./iframe-BmfdKJen.js";import{o as d}from"./index-DQinPukL.js";import"./preload-helper-Dp1pzeXC.js";const t=o=>n.jsx("div",{...o,children:"TextField"});try{t.displayName="TextField",t.__docgenInfo={description:"",displayName:"TextField",props:{}}}catch{}const p={title:"UI-Kit/🚧 TextField",component:t,tags:["autodocs"]},e={render:()=>n.jsx(d,{componentName:"TextField"})};var r,a,s;e.parameters={...e.parameters,docs:{...(r=e.parameters)==null?void 0:r.docs,source:{originalSource:`{
+  render: () => <ComingSoon componentName="TextField" />
+}`,...(s=(a=e.parameters)==null?void 0:a.docs)==null?void 0:s.source}}};const l=["Default"];export{e as Default,l as __namedExportsOrder,p as default};

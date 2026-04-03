@@ -1,0 +1,3 @@
+import{j as n}from"./iframe-BmfdKJen.js";import{o as d}from"./index-DQinPukL.js";import"./preload-helper-Dp1pzeXC.js";const e=r=>n.jsx("div",{...r,children:"Radio"});try{e.displayName="Radio",e.__docgenInfo={description:"",displayName:"Radio",props:{}}}catch{}const p={title:"UI-Kit/🚧 Radio",component:e,tags:["autodocs"]},o={render:()=>n.jsx(d,{componentName:"Radio"})};var a,t,s;o.parameters={...o.parameters,docs:{...(a=o.parameters)==null?void 0:a.docs,source:{originalSource:`{
+  render: () => <ComingSoon componentName="Radio" />
+}`,...(s=(t=o.parameters)==null?void 0:t.docs)==null?void 0:s.source}}};const _=["Default"];export{o as Default,_ as __namedExportsOrder,p as default};

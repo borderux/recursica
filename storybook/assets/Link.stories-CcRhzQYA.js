@@ -1,0 +1,3 @@
+import{j as s}from"./iframe-BmfdKJen.js";import{o as i}from"./index-DQinPukL.js";import"./preload-helper-Dp1pzeXC.js";const o=r=>s.jsx("div",{...r,children:"Link"});try{o.displayName="Link",o.__docgenInfo={description:"",displayName:"Link",props:{}}}catch{}const d={title:"UI-Kit/🚧 Link",component:o,tags:["autodocs"]},e={render:()=>s.jsx(i,{componentName:"Link"})};var t,n,a;e.parameters={...e.parameters,docs:{...(t=e.parameters)==null?void 0:t.docs,source:{originalSource:`{
+  render: () => <ComingSoon componentName="Link" />
+}`,...(a=(n=e.parameters)==null?void 0:n.docs)==null?void 0:a.source}}};const _=["Default"];export{e as Default,_ as __namedExportsOrder,d as default};

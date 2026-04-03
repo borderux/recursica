@@ -1,0 +1,3 @@
+import{j as d}from"./iframe-BmfdKJen.js";import{o as s}from"./index-DQinPukL.js";import"./preload-helper-Dp1pzeXC.js";const o=r=>d.jsx("div",{...r,children:"ReadOnlyField"});try{o.displayName="ReadOnlyField",o.__docgenInfo={description:"",displayName:"ReadOnlyField",props:{}}}catch{}const m={title:"UI-Kit/🚧 ReadOnlyField",component:o,tags:["autodocs"]},e={render:()=>d.jsx(s,{componentName:"ReadOnlyField"})};var a,t,n;e.parameters={...e.parameters,docs:{...(a=e.parameters)==null?void 0:a.docs,source:{originalSource:`{
+  render: () => <ComingSoon componentName="ReadOnlyField" />
+}`,...(n=(t=e.parameters)==null?void 0:t.docs)==null?void 0:n.source}}};const p=["Default"];export{e as Default,p as __namedExportsOrder,m as default};
