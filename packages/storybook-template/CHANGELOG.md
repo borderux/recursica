@@ -1,5 +1,11 @@
 # @recursica/storybook-template
 
+## 0.3.0
+
+### Minor Changes
+
+- a1067c9: Implemented stories in construction and over styling
+
 ## 0.2.1
 
 ### Patch Changes
