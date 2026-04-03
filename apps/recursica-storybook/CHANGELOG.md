@@ -1,5 +1,16 @@
 # recursica-storybook
 
+## 0.2.0
+
+### Minor Changes
+
+- a1067c9: Implemented stories in construction and over styling
+
+### Patch Changes
+
+- Updated dependencies [a1067c9]
+  - @recursica/mantine-adapter@0.5.0
+
 ## 0.1.2
 
 ### Patch Changes
