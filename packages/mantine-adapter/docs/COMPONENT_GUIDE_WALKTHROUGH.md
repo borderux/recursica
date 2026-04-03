@@ -2,6 +2,9 @@
 
 This guide defines how to build design-system components that wrap UI libraries (e.g. Mantine) and style them with Recursica (design tokens and UI Kit CSS variables). Use it when creating a new component or when reviewing existing wrappers.
 
+> [!NOTE]
+> For the core architectural philosophy, goals, and expectations for modifying these adapter components (including the usage of `overStyled`), please read the [Mantine Adapter Philosophy](./PHILOSOPHY.md).
+
 ## Core principles
 
 1. **Single way to style** – Use **CSS modules only** (e.g. `Button.module.css`). No inline styles for design tokens, no mix of plain `.css` and `.css.ts`.
@@ -43,6 +46,7 @@ Do not use plain `.css` for component overrides, and do not use `.css.ts` with `
 ### 3.1 Recursica prop layer (unified API)
 
 - **Start with Recursica props** – The Recursica props interface is the **generic prop layer** that applies to all UI-kit adapters (Mantine, Material, Carbon, native HTML, etc.). Define it first; it is the design-system API only (e.g. `variant`, `size`, `elevation`, `icon`). **Do not add `layer` as a prop;** layer is set only by wrapping in `<Layer>`. Add JSDoc on the interface and important props.
+- **Global `overStyled` prop** – Every Recursica component **must** accept an `overStyled` boolean prop (defaulting to `false`) and wrap their component properties in the `RecursicaOverStyled<T>` typescript union. This strict compile-time check prevents developers from accidentally autocompleting forbidden internal styling injections (like `className` or Mantine system `bg` maps). At runtime, components also pipe their properties through `filterStylingProps` to omit injection attempts if a developer forces an override through Javascript directly. The presence of `overStyled={true}` serves as an explicit bypass for both Typescript and the runtime filter.
 - **Goal: one API, any kit** – The goal is a **unified prop layer** for Recursica components that works with any underlying UI-kit or HTML element. Each adapter is responsible for **mapping** Recursica props to the underlying kit’s API. Creating a component therefore requires **understanding each target kit’s prop API** so you can define a single Recursica API that maps cleanly in every adapter.
 - **Use standard HTML props when possible** – Do not change or redefine default HTML attribute types. Use native props (e.g. `type`, `title`, `disabled`, `onClick`) as-is and pass them through to the root element. They are part of the public props but not part of the “Recursica-only” design-system interface.
 - **Preserve Underlying Composability** – When the target UI library utilizes a highly composable dot-notation or multi-part hierarchical API (e.g., `<Accordion>`, `<Accordion.Item>`, `<Accordion.Control>`), **do not flatten or aggregate their functionality** into a single rigid property bucket (e.g., forcing integrators to pass `{ title, content }` objects instead of using nested JSX). Instead, establish a 1:1 React component mapping of the library's sub-components. This strictly preserves the underlying library's dynamic ARIA tracking, semantic HTML behaviors, focus accessibility, and expected Developer Experience (DX) while securely enforcing Recursica styling rules.

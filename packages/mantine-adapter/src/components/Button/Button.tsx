@@ -3,6 +3,10 @@ import {
   Button as MantineButton,
   type ButtonProps as MantineButtonProps,
 } from "@mantine/core";
+import {
+  filterStylingProps,
+  type RecursicaOverStyled,
+} from "../../utils/filterStylingProps";
 import styles from "./Button.module.css";
 
 export interface RecursicaButtonProps {
@@ -11,11 +15,10 @@ export interface RecursicaButtonProps {
   icon?: React.ReactNode;
 }
 
-export type ButtonProps = Omit<
-  MantineButtonProps,
-  "variant" | "size" | "leftSection"
-> &
-  RecursicaButtonProps;
+export type ButtonProps = RecursicaOverStyled<
+  Omit<MantineButtonProps, "variant" | "size" | "leftSection"> &
+    RecursicaButtonProps
+>;
 
 function hasVisibleChildren(children: React.ReactNode): boolean {
   if (children == null || children === "") return false;
@@ -29,10 +32,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       variant = "solid",
       size = "default",
       icon,
-      className,
-      classNames,
       children,
-      style,
+      overStyled = false,
       ...rest
     },
     ref,
@@ -48,7 +49,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       small: "sm",
     } as const;
 
-    const restRecord = rest as Record<string, unknown>;
+    const sanitizedProps = filterStylingProps(rest, overStyled);
+    const restRecord = sanitizedProps as Record<string, unknown>;
+
     const hasLeftSection = !!icon || !!restRecord["leftSection"];
     const hasRightSection = !!restRecord["rightSection"];
     const isIconOnly =
@@ -70,25 +73,31 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       section: styles.section,
       label: styles.label,
     };
+
+    const classNamesProp = restRecord.classNames;
     if (
-      classNames &&
-      typeof classNames === "object" &&
-      !Array.isArray(classNames)
+      classNamesProp &&
+      typeof classNamesProp === "object" &&
+      !Array.isArray(classNamesProp)
     ) {
-      const o = classNames as Partial<Record<string, string>>;
+      const o = classNamesProp as Partial<Record<string, string>>;
       mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
       mergedClassNames.section = o.section ?? styles.section;
       mergedClassNames.label = o.label ?? styles.label;
     }
 
+    const classNameProp = restRecord.className as string | undefined;
+    const finalClass = classNameProp
+      ? `${styles.root} ${classNameProp}`
+      : styles.root;
+
     return (
       <MantineButton
         ref={ref}
-        className={className}
+        className={finalClass}
         classNames={mergedClassNames}
         variant={mapVariant[variant]}
         size={mapSize[size]}
-        style={style}
         leftSection={
           icon != null ? (
             <span className={styles.iconWrapper} aria-hidden>
@@ -99,7 +108,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         data-variant={variant}
         data-size={size}
         {...(isIconOnly ? { "data-icon-only": "" } : {})}
-        {...rest}
+        {...sanitizedProps}
       >
         <span className={styles.labelText}>{children}</span>
       </MantineButton>

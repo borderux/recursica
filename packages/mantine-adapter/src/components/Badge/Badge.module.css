@@ -1,0 +1,124 @@
+/* HARDCODED VALUES:
+   - border-style: solid (needs a token if we support other border styles)
+   - box-sizing: border-box
+   - display: inline-flex
+   - align-items: center
+   - justify-content: center
+   - text-transform: uppercase (Mantine does this, but our tokens also specify it so we map it)
+*/
+
+.root {
+  /* HARDCODE: Basic structural assumptions */
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-style: solid;
+
+  /* Base style resets to fully clear Mantine's defaults before applying ours */
+  background-color: transparent;
+  color: inherit;
+  border-color: transparent;
+
+  /* Apply global badge properties */
+  border-radius: var(
+    --recursica_ui-kit_components_badge_properties_border-radius
+  );
+  border-width: var(--recursica_ui-kit_components_badge_properties_border-size);
+  box-shadow: var(--recursica_ui-kit_components_badge_properties_elevation);
+
+  padding-left: var(
+    --recursica_ui-kit_components_badge_properties_padding-horizontal
+  );
+  padding-right: var(
+    --recursica_ui-kit_components_badge_properties_padding-horizontal
+  );
+  padding-top: var(
+    --recursica_ui-kit_components_badge_properties_padding-vertical
+  );
+  padding-bottom: var(
+    --recursica_ui-kit_components_badge_properties_padding-vertical
+  );
+
+  font-family: var(
+    --recursica_ui-kit_components_badge_properties_text_font-family
+  );
+  font-size: var(--recursica_ui-kit_components_badge_properties_text_font-size);
+  font-weight: var(
+    --recursica_ui-kit_components_badge_properties_text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_badge_properties_text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_badge_properties_text_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_badge_properties_text_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_badge_properties_text_text-transform
+  );
+}
+
+/* Variant Definitions */
+
+.root[data-variant="alert"] {
+  background-color: var(
+    --recursica_ui-kit_components_badge_variants_styles_alert_properties_colors_background
+  );
+  border-color: var(
+    --recursica_ui-kit_components_badge_variants_styles_alert_properties_colors_border-color
+  );
+  color: var(
+    --recursica_ui-kit_components_badge_variants_styles_alert_properties_colors_text
+  );
+}
+
+.root[data-variant="primary-color"] {
+  background-color: var(
+    --recursica_ui-kit_components_badge_variants_styles_primary-color_properties_colors_background
+  );
+  border-color: var(
+    --recursica_ui-kit_components_badge_variants_styles_primary-color_properties_colors_border-color
+  );
+  color: var(
+    --recursica_ui-kit_components_badge_variants_styles_primary-color_properties_colors_text
+  );
+}
+
+.root[data-variant="success"] {
+  background-color: var(
+    --recursica_ui-kit_components_badge_variants_styles_success_properties_colors_background
+  );
+  border-color: var(
+    --recursica_ui-kit_components_badge_variants_styles_success_properties_colors_border-color
+  );
+  color: var(
+    --recursica_ui-kit_components_badge_variants_styles_success_properties_colors_text
+  );
+}
+
+.root[data-variant="warning"] {
+  background-color: var(
+    --recursica_ui-kit_components_badge_variants_styles_warning_properties_colors_background
+  );
+  border-color: var(
+    --recursica_ui-kit_components_badge_variants_styles_warning_properties_colors_border-color
+  );
+  color: var(
+    --recursica_ui-kit_components_badge_variants_styles_warning_properties_colors_text
+  );
+}
+
+/* Target Mantine internal children if needed for typography constraints */
+.root :global(.mantine-Badge-label),
+.root :global(.mantine-Badge-section) {
+  /* HARDCODE: Prevent Mantine from overriding our typography setup inside inner wrappers */
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  font-family: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+}
