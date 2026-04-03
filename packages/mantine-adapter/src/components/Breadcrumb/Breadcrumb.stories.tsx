@@ -2,7 +2,6 @@ import React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 import { Breadcrumb } from "./Breadcrumb";
 import { Layer } from "@recursica/adapter-common";
-import { Anchor } from "@mantine/core";
 
 type BreadcrumbStoryProps = React.ComponentProps<typeof Breadcrumb> & {
   layer?: number;
@@ -13,10 +12,6 @@ const meta: Meta<BreadcrumbStoryProps> = {
   component: Breadcrumb,
   tags: ["autodocs"],
   argTypes: {
-    overStyled: {
-      control: "boolean",
-      description: "Allow generic external styles to override base kit limits",
-    },
     layer: {
       control: "radio",
       options: [0, 1, 2, 3],
@@ -41,15 +36,22 @@ const mockItems = [
   { title: "Components", href: "#" },
   { title: "Breadcrumb", href: "#" },
 ].map((item, index) => (
-  <Anchor href={item.href} key={index}>
+  <a
+    href={item.href}
+    key={index}
+    style={{
+      color: "var(--recursica_brand_palettes_primary_default_color_tone)",
+      textDecoration: "none",
+    }}
+  >
     {item.title}
-  </Anchor>
+  </a>
 ));
 
 export const Default: Story = {
   args: {
     children: mockItems,
-    overStyled: false,
+
     layer: 0,
   },
   render: ({ layer = 0, ...args }) => {

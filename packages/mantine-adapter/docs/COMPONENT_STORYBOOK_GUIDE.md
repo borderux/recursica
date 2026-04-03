@@ -87,3 +87,13 @@ This keeps the story count manageable and makes it clear why each static story e
 - [ ] Static stories are added for the chosen combinations; each has fixed props and no controls.
 - [ ] Default story wraps the component in `<Layer layer={layer}>` with a layer control; static stories that need a layer use `<Layer layer={N}>` around the component. Theme (and any other required context) are provided via decorators or wrapper so Recursica styles apply.
 - [ ] Recursica CSS (e.g. `recursica_variables_scoped.css`) is loaded in the story or in Storybook preview.
+- [ ] No native UI library components (like `@mantine/core` wrappers) are directly imported into the story. Everything rendered should strictly be Recursica components. Never use HTML primitive components (`div`, `span`, etc.) unless absolutely necessary to demo a story.
+
+---
+
+## 8. Strictly Recursica Components in Stories
+
+**Do not import native UI-library components (e.g., `@mantine/core`) directly into `.stories.tsx` files.**
+
+- **Why?** It defeats the purpose of the abstraction layer. If a Storybook user relies on the native library for padding, margins, formatting, or buttons during development playground usage, they are missing the raw limitations of the styling boundaries we impose natively.
+- **Solution:** Rely strictly on Recursica UI components that you have constructed natively (for example, import our wrapped `<Button>` over Mantine's raw `<Button>`). You should never use HTML primitive components like `<div>`, `<span>`, or `<p>` unless absolutely necessary to demo a story.

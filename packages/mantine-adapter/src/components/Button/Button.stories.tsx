@@ -64,7 +64,6 @@ export const SolidDefault: Story = {
     variant: "solid",
     size: "default",
   },
-  render: (args) => <Button {...args} />,
 };
 
 export const OutlineSmall: Story = {
@@ -73,7 +72,6 @@ export const OutlineSmall: Story = {
     variant: "outline",
     size: "small",
   },
-  render: (args) => <Button {...args} />,
 };
 
 export const TextWithIcon: Story = {
@@ -98,7 +96,6 @@ export const TextWithIcon: Story = {
       </svg>
     ),
   },
-  render: (args) => <Button {...args} />,
 };
 
 export const LayerOneSolid: Story = {
@@ -107,7 +104,7 @@ export const LayerOneSolid: Story = {
     variant: "solid",
     size: "default",
   },
-  render: (args) => (
+  render: (args: ButtonStoryProps) => (
     <Layer layer={1} style={{ padding: "24px" }}>
       <Button {...args} />
     </Layer>
@@ -121,5 +118,4 @@ export const DisabledSolid: Story = {
     size: "default",
     disabled: true,
   },
-  render: (args) => <Button {...args} />,
 };

@@ -23,3 +23,19 @@ This document tracks known issues, edge cases, missing variables, or design syst
 - **Description:** Currently, the CSS variables define basic spacing properties (`padding`, `item-gap`) globally for the component. There are no `size` or structural `variant` values defined in `recursica_ui-kit.json`.
 - **Impact:** The component is restricted to a single default visual layout with no native options for resizing or visual variations (e.g. outline styling).
 - **Current Resolution:** We restrict the component to rendering the single token-driven style. Developers must use standard CSS `fontSize` cascading for text adjustments if needed until variables are implemented.
+
+## Card
+
+### 1. Structural Departure from Generic Mantine Sections
+
+- **Description:** Mantine natively builds generic `Card` structures strictly via a generic `<Card.Section>` wrapper, meaning layout formatting (like headers vs footers) is normally handled manually by developers. Recursica’s UI Kit defines strict explicit tokens for `header-padding`, `footer-background`, etc.
+- **Impact:** We cannot allow users to arbitrarily inject standard generic sections without losing sync with the overarching explicitly-targeted UI kit bounds.
+- **Current Resolution:** We explicitly export `<Card.Header>` and `<Card.Footer>` wrappers alongside `<Card.Section>` to enforce the strict tokens natively onto Mantine's sections behind the scenes. Developers must use `Card.Header` and `Card.Footer` for structural parity rather than rolling their own generic layout.
+
+## Button
+
+### 1. Omitted `fullWidth` Layout Attribute
+
+- **Description:** Mantine natively supports a `fullWidth` prop on `<Button>` components which mathematically expands the node. Recursica bounds strict dimensional scaling explicitly, leaving dynamic expansion largely governed by flex-container grid parents.
+- **Impact:** Developers cannot force buttons to visually stretch 100% width inline natively using component overrides.
+- **Current Resolution:** We actively omit `fullWidth` from the native abstract. Developers should wrap components with flex grids or column lists rather than independently stretching boundary layouts.

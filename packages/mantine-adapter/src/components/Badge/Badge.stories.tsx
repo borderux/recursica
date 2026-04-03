@@ -17,10 +17,7 @@ const meta: Meta<BadgeStoryProps> = {
       options: ["alert", "primary-color", "success", "warning"],
       description: "The style / intent mapping for the badge",
     },
-    overStyled: {
-      control: "boolean",
-      description: "Allow generic external styles to override base kit limits",
-    },
+
     layer: {
       control: "radio",
       options: [0, 1, 2, 3],
@@ -40,7 +37,7 @@ export const Default: Story = {
   args: {
     children: "Badge Label",
     variant: "primary-color",
-    overStyled: false,
+
     layer: 0,
   },
   render: ({ layer = 0, ...args }) => {
@@ -57,7 +54,7 @@ export const StaticAlert: Story = {
     children: "Alert Badge",
     variant: "alert",
   },
-  render: (args) => <Badge {...args} />,
+  render: (args: BadgeStoryProps) => <Badge {...args} />,
 };
 
 export const StaticPrimary: Story = {
@@ -65,7 +62,7 @@ export const StaticPrimary: Story = {
     children: "Primary Badge",
     variant: "primary-color",
   },
-  render: (args) => <Badge {...args} />,
+  render: (args: BadgeStoryProps) => <Badge {...args} />,
 };
 
 export const StaticSuccess: Story = {
@@ -73,7 +70,7 @@ export const StaticSuccess: Story = {
     children: "Success Badge",
     variant: "success",
   },
-  render: (args) => <Badge {...args} />,
+  render: (args: BadgeStoryProps) => <Badge {...args} />,
 };
 
 export const StaticWarning: Story = {
@@ -81,7 +78,7 @@ export const StaticWarning: Story = {
     children: "Warning Badge",
     variant: "warning",
   },
-  render: (args) => <Badge {...args} />,
+  render: (args: BadgeStoryProps) => <Badge {...args} />,
 };
 
 export const LayerOneAlert: Story = {
@@ -89,7 +86,7 @@ export const LayerOneAlert: Story = {
     children: "Layer 1 Alert",
     variant: "alert",
   },
-  render: (args) => (
+  render: (args: BadgeStoryProps) => (
     <Layer layer={1} style={{ padding: "24px" }}>
       <Badge {...args} />
     </Layer>
