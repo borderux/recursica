@@ -1,0 +1,26 @@
+/* HARDCODED VALUES:
+   - align-items: center
+*/
+
+.root {
+  /* HARDCODE: Basic structural flex layout for breadcrumbs */
+  display: flex;
+  align-items: center;
+
+  /* Base style resets */
+  background-color: transparent;
+  color: inherit;
+
+  /* Apply global breadcrumb properties */
+  padding: var(--recursica_ui-kit_components_breadcrumb_properties_padding);
+
+  /* Mantine's breadcrumbs uses gap on the root or pseudo classes, but standard gap is safest since flex is used */
+  gap: var(--recursica_ui-kit_components_breadcrumb_properties_item-gap);
+}
+
+.separator {
+  /* Separator base resets if needed */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
