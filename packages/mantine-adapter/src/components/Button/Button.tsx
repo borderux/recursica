@@ -3,22 +3,22 @@ import {
   Button as MantineButton,
   type ButtonProps as MantineButtonProps,
 } from "@mantine/core";
-import { filterStylingProps } from "../../utils/filterStylingProps";
+import {
+  filterStylingProps,
+  type RecursicaOverStyled,
+} from "../../utils/filterStylingProps";
 import styles from "./Button.module.css";
 
 export interface RecursicaButtonProps {
   variant?: "solid" | "outline" | "text";
   size?: "default" | "small";
   icon?: React.ReactNode;
-  /** If true, allows external style props to override Recursica base styles. Default: false */
-  overStyled?: boolean;
 }
 
-export type ButtonProps = Omit<
-  MantineButtonProps,
-  "variant" | "size" | "leftSection"
-> &
-  RecursicaButtonProps;
+export type ButtonProps = RecursicaOverStyled<
+  Omit<MantineButtonProps, "variant" | "size" | "leftSection"> &
+    RecursicaButtonProps
+>;
 
 function hasVisibleChildren(children: React.ReactNode): boolean {
   if (children == null || children === "") return false;
@@ -74,19 +74,21 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       label: styles.label,
     };
 
+    const classNamesProp = restRecord.classNames;
     if (
-      sanitizedProps.classNames &&
-      typeof sanitizedProps.classNames === "object" &&
-      !Array.isArray(sanitizedProps.classNames)
+      classNamesProp &&
+      typeof classNamesProp === "object" &&
+      !Array.isArray(classNamesProp)
     ) {
-      const o = sanitizedProps.classNames as Partial<Record<string, string>>;
+      const o = classNamesProp as Partial<Record<string, string>>;
       mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
       mergedClassNames.section = o.section ?? styles.section;
       mergedClassNames.label = o.label ?? styles.label;
     }
 
-    const finalClass = sanitizedProps.className
-      ? `${styles.root} ${sanitizedProps.className}`
+    const classNameProp = restRecord.className as string | undefined;
+    const finalClass = classNameProp
+      ? `${styles.root} ${classNameProp}`
       : styles.root;
 
     return (

@@ -21,54 +21,57 @@
  * @param overStyled - Boolean toggle to allow raw external styling. Defaults to false.
  * @returns Sanitized component props safe for internal styling merging
  */
+
+export const BLOCKED_STYLING_KEYS = [
+  "className",
+  "classNames",
+  "style",
+  "styles",
+  "vars", // Internal structure hooks
+  "p",
+  "px",
+  "py",
+  "pt",
+  "pb",
+  "pl",
+  "pr", // Padding
+  "bg",
+  "c",
+  "opacity", // Color
+  "ff",
+  "fz",
+  "fw",
+  "lts",
+  "ta",
+  "lh",
+  "fs",
+  "tt",
+  "td", // Typography
+  "bd",
+  "bdw",
+  "bds",
+  "bdc",
+  "bdr", // Borders
+  "shadow", // Effects
+] as const;
+
+export type BlockedStylingKeys = (typeof BLOCKED_STYLING_KEYS)[number];
+
+export type RecursicaOverStyled<T> =
+  | (Omit<T, BlockedStylingKeys> & { overStyled?: false | undefined })
+  | (T & { overStyled: true });
+
 export function filterStylingProps<T extends Record<string, unknown>>(
   props: T,
   overStyled?: boolean,
 ): Partial<T> {
-  // If explicitly requested to allow external overrides, pass everything untouched.
   if (overStyled) {
     return props;
   }
 
   const sanitized = { ...props };
 
-  // Specific internal structure hooks
-  const internalHooks = ["className", "classNames", "style", "styles", "vars"];
-
-  // Mantine generic system props mapping to internal layout/color changes.
-  // Note: External layout props like `m`, `mx`, `my`, `mt`, `mb`, `ml`, `mr`, `pos`, `top` etc.,
-  // are intentionally EXCLUDED from this list to allow component alignment in external DOMs.
-  const visualSystemProps = [
-    "p",
-    "px",
-    "py",
-    "pt",
-    "pb",
-    "pl",
-    "pr", // Padding
-    "bg",
-    "c",
-    "opacity", // Color
-    "ff",
-    "fz",
-    "fw",
-    "lts",
-    "ta",
-    "lh",
-    "fs",
-    "tt",
-    "td", // Typography
-    "bd",
-    "bdw",
-    "bds",
-    "bdc",
-    "bdr", // Borders
-    "shadow", // Effects
-  ];
-
-  const blockedProps = [...internalHooks, ...visualSystemProps];
-
-  for (const prop of blockedProps) {
+  for (const prop of BLOCKED_STYLING_KEYS) {
     if (prop in sanitized) {
       delete sanitized[prop];
     }
