@@ -28,7 +28,11 @@ export default defineConfig({
           return true;
         }
         // Externalize Storybook packages
-        if (id.startsWith("@storybook/") || id.startsWith("storybook/")) {
+        if (
+          id.startsWith("@storybook/") ||
+          id.startsWith("storybook/") ||
+          id === "storybook-dark-mode"
+        ) {
           return true;
         }
         // Externalize Node.js built-ins
