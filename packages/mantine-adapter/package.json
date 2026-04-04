@@ -72,6 +72,7 @@
     "sass": "^1.89.2",
     "sirv": "^3.0.2",
     "storybook": "^10.3.3",
+    "storybook-dark-mode": "^5.0.0",
     "strip-literal": "^3.0.0",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.30.1",
