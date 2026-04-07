@@ -1,5 +1,11 @@
 # @recursica/publisher
 
+## 0.12.0
+
+### Minor Changes
+
+- a52d8ab: Updated json theme import for single files
+
 ## 0.11.1
 
 ### Patch Changes
