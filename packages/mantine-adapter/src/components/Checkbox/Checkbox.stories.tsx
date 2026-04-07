@@ -24,6 +24,18 @@ export const Default: Story = {
   ),
 };
 
+export const LongLabelWrap: Story = {
+  args: {
+    label:
+      "A meticulously long Checkbox label property demonstrating the absolute maximum 400px wrapper constraints actively snapping the text engine down onto a secondary wrapping line automatically without blowing out the visual boundaries.",
+  },
+  render: (args) => (
+    <Layer layer={0} style={{ padding: "48px" }}>
+      <Checkbox {...args} />
+    </Layer>
+  ),
+};
+
 export const StaticVariations: Story = {
   args: {},
   render: () => (

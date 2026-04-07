@@ -38,8 +38,10 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
     const mergedClassNames: Partial<Record<string, string>> = {
       root: styles.root,
       body: styles.body,
+      inner: styles.inner,
       input: styles.input,
       icon: styles.icon,
+      labelWrapper: styles.labelWrapper,
       label: styles.label,
     };
 
@@ -52,10 +54,16 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
       const o = classNamesProp as Partial<Record<string, string>>;
       mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
       mergedClassNames.body = o.body ? `${styles.body} ${o.body}` : styles.body;
+      mergedClassNames.inner = o.inner
+        ? `${styles.inner} ${o.inner}`
+        : styles.inner;
       mergedClassNames.input = o.input
         ? `${styles.input} ${o.input}`
         : styles.input;
       mergedClassNames.icon = o.icon ? `${styles.icon} ${o.icon}` : styles.icon;
+      mergedClassNames.labelWrapper = o.labelWrapper
+        ? `${styles.labelWrapper} ${o.labelWrapper}`
+        : styles.labelWrapper;
       mergedClassNames.label = o.label
         ? `${styles.label} ${o.label}`
         : styles.label;

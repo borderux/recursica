@@ -1,4 +1,13 @@
-/* Checkbox.module.css */
+/**
+ * Checkbox.module.css
+ * 
+ * HARDCODED VALUES:
+ * - margin / padding: 0 — Structural resets; consider token if spacing needed.
+ * - cursor: pointer / not-allowed — Baseline interactive indications.
+ * - appearance / box-sizing / border-style — necessary normalization for inputs.
+ * - transition: all 0.2s ease — Animation curve; consider a transition token.
+ * - min-width: 0 — Forces text wrap boundary in flex children.
+ */
 
 /* --- GROUP STYLES --- */
 .groupRoot {
@@ -6,7 +15,7 @@
     --recursica_ui-kit_components_checkbox-group_properties_padding,
     0
   );
-  margin: 0;
+  margin: 0; /* HARDCODE: structural reset; consider token if layout needs change */
   display: flex !important;
 }
 
@@ -59,10 +68,25 @@
   gap: var(--recursica_ui-kit_components_checkbox-item_properties_label-gap);
 }
 
+.inner {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important; /* HARDCODE: structural reset */
+  width: var(--recursica_ui-kit_components_checkbox_properties_size) !important;
+  height: calc(
+    var(
+        --recursica_ui-kit_components_checkbox-item_properties_text_line-height
+      ) *
+      var(--recursica_ui-kit_components_checkbox-item_properties_text_font-size)
+  ) !important;
+}
+
 /* Base explicit reset masking underlying framework defaults */
 .input {
-  cursor: pointer;
-  appearance: none;
+  cursor: pointer; /* HARDCODE: core interaction behavior */
+  appearance: none; /* HARDCODE: reset native widget */
+  box-sizing: border-box !important; /* HARDCODE: ensures size includes borders */
   width: var(--recursica_ui-kit_components_checkbox_properties_size) !important;
   height: var(
     --recursica_ui-kit_components_checkbox_properties_size
@@ -73,7 +97,7 @@
   border-width: var(
     --recursica_ui-kit_components_checkbox_properties_border-size
   ) !important;
-  border-style: solid;
+  border-style: solid; /* HARDCODE: normalize primitive border-style */
 
   /* Standard unchecked state */
   background-color: var(
@@ -82,7 +106,7 @@
   border-color: var(
     --recursica_ui-kit_components_checkbox_properties_colors_border-unchecked
   ) !important;
-  transition: all 0.2s ease;
+  transition: all 0.2s ease; /* HARDCODE: consider global transition token */
 }
 
 /* Checked/Indeterminate State */
@@ -105,7 +129,7 @@
 
 /* Disabled State */
 .input:disabled {
-  cursor: not-allowed;
+  cursor: not-allowed; /* HARDCODE: disabled state default */
   opacity: var(
     --recursica_ui-kit_components_checkbox_properties_disabled-opacity
   ) !important;
@@ -134,8 +158,19 @@
   ) !important;
 }
 
+.labelWrapper {
+  padding: 0 !important; /* HARDCODE: structural layout reset */
+  margin: 0 !important; /* HARDCODE: structural layout reset */
+  flex: 1;
+  min-width: 0; /* HARDCODE: forces text wrap boundary in flex child */
+}
+
 .label {
-  cursor: pointer;
+  cursor: pointer; /* HARDCODE: interactive affordance */
+  padding: 0 !important; /* HARDCODE: reset layout */
+  margin: 0 !important; /* HARDCODE: reset layout */
+  word-wrap: break-word;
+  white-space: normal;
   color: var(
     --recursica_ui-kit_components_checkbox-item_properties_text_color
   ) !important;
@@ -153,7 +188,7 @@
   );
 }
 .root[data-disabled] .label {
-  cursor: not-allowed;
+  cursor: not-allowed; /* HARDCODE: disabled interaction */
   opacity: var(
     --recursica_ui-kit_components_checkbox_properties_disabled-opacity
   );
