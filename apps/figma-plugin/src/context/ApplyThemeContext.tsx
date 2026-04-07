@@ -47,9 +47,9 @@ const FILE_NAMES = {
 type FileKey = keyof typeof FILE_NAMES;
 
 interface AssignedFiles {
-  tokensFile: File;
-  brandFile: File;
-  uiKitFile: File;
+  tokensFile: File | null;
+  brandFile: File | null;
+  uiKitFile: File | null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -65,15 +65,26 @@ function assignFiles(files: FileList | null): AssignedFiles | null {
   }
   const tokensFile =
     byName[FILE_NAMES.tokens] ??
-    [...Object.values(byName)].find((f) => f.name.includes("tokens"));
+    [...Object.values(byName)].find((f) => f.name.includes("tokens")) ??
+    null;
   const brandFile =
     byName[FILE_NAMES.brand] ??
-    [...Object.values(byName)].find((f) => f.name.includes("brand"));
+    [...Object.values(byName)].find((f) => f.name.includes("brand")) ??
+    null;
   const uiKitFile =
     byName[FILE_NAMES.uiKit] ??
-    [...Object.values(byName)].find((f) => f.name.includes("ui-kit"));
-  if (!tokensFile || !brandFile || !uiKitFile) return null;
-  return { tokensFile, brandFile, uiKitFile };
+    [...Object.values(byName)].find((f) => f.name.includes("ui-kit")) ??
+    null;
+
+  if (!tokensFile && !brandFile && !uiKitFile) return null;
+
+  // Create dummy objects to satisfy type, we will check undefined where actually used,
+  // but it's better to update AssignedFiles type if possible
+  return {
+    tokensFile,
+    brandFile,
+    uiKitFile,
+  };
 }
 
 async function readJson(file: File): Promise<unknown> {
@@ -289,8 +300,8 @@ export function ApplyThemeProvider({
   } | null>(null);
 
   const hasFiles =
-    fileNames.tokens != null &&
-    fileNames.brand != null &&
+    fileNames.tokens != null ||
+    fileNames.brand != null ||
     fileNames.uiKit != null;
 
   /* ---- Import ---- */
@@ -307,15 +318,15 @@ export function ApplyThemeProvider({
     if (!assigned) {
       setFileNames({ tokens: null, brand: null, uiKit: null });
       setError(
-        "Select exactly three JSON files: one containing tokens, one brand, one ui-kit.",
+        "Select at least one valid Recursica JSON file (tokens, brand, or ui-kit).",
       );
       setImportResult(null);
       return;
     }
     setFileNames({
-      tokens: assigned.tokensFile.name,
-      brand: assigned.brandFile.name,
-      uiKit: assigned.uiKitFile.name,
+      tokens: assigned.tokensFile?.name ?? null,
+      brand: assigned.brandFile?.name ?? null,
+      uiKit: assigned.uiKitFile?.name ?? null,
     });
     setError(null);
     setImportResult(null);
@@ -324,7 +335,7 @@ export function ApplyThemeProvider({
   const handleImport = async () => {
     const input = fileInputRef.current;
     if (!input?.files?.length) {
-      setError("Please select the three Recursica JSON files.");
+      setError("Please select at least one Recursica JSON file.");
       return;
     }
     const assigned = assignFiles(input.files);
@@ -339,9 +350,15 @@ export function ApplyThemeProvider({
 
     try {
       const [tokens, brand, uiKit] = await Promise.all([
-        readJson(assigned.tokensFile),
-        readJson(assigned.brandFile),
-        readJson(assigned.uiKitFile),
+        assigned.tokensFile
+          ? readJson(assigned.tokensFile)
+          : Promise.resolve(null),
+        assigned.brandFile
+          ? readJson(assigned.brandFile)
+          : Promise.resolve(null),
+        assigned.uiKitFile
+          ? readJson(assigned.uiKitFile)
+          : Promise.resolve(null),
       ]);
 
       // Store parsed JSON for variable path extraction
