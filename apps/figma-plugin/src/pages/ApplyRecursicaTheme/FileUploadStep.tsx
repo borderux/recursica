@@ -24,8 +24,9 @@ export default function FileUploadStep() {
     <Stack gap={20} style={{ maxWidth: 500 }}>
       <Title order={2}>Apply Recursica Theme</Title>
       <p style={{ margin: 0, color: "#666", fontSize: 14 }}>
-        Select the three Recursica JSON files: <code>{FILE_NAMES.tokens}</code>,{" "}
-        <code>{FILE_NAMES.brand}</code>, <code>{FILE_NAMES.uiKit}</code>
+        Select one or more Recursica JSON files:{" "}
+        <code>{FILE_NAMES.tokens}</code>, <code>{FILE_NAMES.brand}</code>,{" "}
+        <code>{FILE_NAMES.uiKit}</code>
       </p>
       <input
         ref={fileInputRef}
@@ -37,7 +38,10 @@ export default function FileUploadStep() {
       />
       {hasFiles && (
         <span style={{ fontSize: 14, color: "#333" }}>
-          Selected: {fileNames.tokens}, {fileNames.brand}, {fileNames.uiKit}
+          Selected:{" "}
+          {[fileNames.tokens, fileNames.brand, fileNames.uiKit]
+            .filter(Boolean)
+            .join(", ")}
         </span>
       )}
       <Button onClick={handleImport} disabled={!hasFiles} loading={importing}>

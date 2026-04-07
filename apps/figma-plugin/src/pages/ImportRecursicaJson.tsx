@@ -3,10 +3,8 @@ import { PageLayout } from "../components/PageLayout";
 import { Title } from "../components/Title";
 import { Stack } from "../components/Stack";
 import { Button } from "../components/Button";
-import { VariableInput } from "../components/VariableInput";
 import { callPlugin } from "../utils/callPlugin";
 import { ServiceName } from "../plugin/types/ServiceName";
-import { recursicaJsonToVariableRows } from "../plugin/services/recursicaJsonToVariableRows";
 
 const FILE_NAMES = {
   tokens: "recursica_tokens.json",
@@ -17,9 +15,9 @@ const FILE_NAMES = {
 type FileKey = keyof typeof FILE_NAMES;
 
 interface AssignedFiles {
-  tokensFile: File;
-  brandFile: File;
-  uiKitFile: File;
+  tokensFile: File | null;
+  brandFile: File | null;
+  uiKitFile: File | null;
 }
 
 function assignFiles(files: FileList | null): AssignedFiles | null {
@@ -31,14 +29,17 @@ function assignFiles(files: FileList | null): AssignedFiles | null {
   }
   const tokensFile =
     byName[FILE_NAMES.tokens] ??
-    [...Object.values(byName)].find((f) => f.name.includes("tokens"));
+    [...Object.values(byName)].find((f) => f.name.includes("tokens")) ??
+    null;
   const brandFile =
     byName[FILE_NAMES.brand] ??
-    [...Object.values(byName)].find((f) => f.name.includes("brand"));
+    [...Object.values(byName)].find((f) => f.name.includes("brand")) ??
+    null;
   const uiKitFile =
     byName[FILE_NAMES.uiKit] ??
-    [...Object.values(byName)].find((f) => f.name.includes("ui-kit"));
-  if (!tokensFile || !brandFile || !uiKitFile) return null;
+    [...Object.values(byName)].find((f) => f.name.includes("ui-kit")) ??
+    null;
+  if (!tokensFile && !brandFile && !uiKitFile) return null;
   return { tokensFile, brandFile, uiKitFile };
 }
 
@@ -77,15 +78,6 @@ export default function ImportRecursicaJson() {
     typeRenameWarnings?: string[];
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [variablePaths, setVariablePaths] = useState<string[]>([]);
-  const [selectedVariable, setSelectedVariable] = useState<string | null>(null);
-
-  // Refs to hold parsed JSON for variable path extraction
-  const parsedJsonRef = useRef<{
-    tokens: unknown;
-    brand: unknown;
-    uiKit: unknown;
-  } | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -99,20 +91,20 @@ export default function ImportRecursicaJson() {
     if (!assigned) {
       setFileNames({ tokens: null, brand: null, uiKit: null });
       setError(
-        "Select exactly three JSON files: one containing tokens, one brand, one ui-kit (e.g. recursica_tokens.json, recursica_brand.json, recursica_ui-kit.json).",
+        "Select at least one valid Recursica JSON file (tokens, brand, or ui-kit).",
       );
       setResult(null);
       return;
     }
     const a = assigned as {
-      tokensFile: File;
-      brandFile: File;
-      uiKitFile: File;
+      tokensFile: File | null;
+      brandFile: File | null;
+      uiKitFile: File | null;
     };
     setFileNames({
-      tokens: a.tokensFile.name,
-      brand: a.brandFile.name,
-      uiKit: a.uiKitFile.name,
+      tokens: a.tokensFile?.name ?? null,
+      brand: a.brandFile?.name ?? null,
+      uiKit: a.uiKitFile?.name ?? null,
     });
     setError(null);
     setResult(null);
@@ -121,7 +113,7 @@ export default function ImportRecursicaJson() {
   const handleImport = async () => {
     const input = fileInputRef.current;
     if (!input?.files?.length) {
-      setError("Please select the three Recursica JSON files.");
+      setError("Please select at least one Recursica JSON file.");
       return;
     }
     const assigned = assignFiles(input.files);
@@ -140,13 +132,10 @@ export default function ImportRecursicaJson() {
     await new Promise((resolve) => setTimeout(resolve, 50));
     try {
       const [tokens, brand, uiKit] = await Promise.all([
-        readJson(tokensFile),
-        readJson(brandFile),
-        readJson(uiKitFile),
+        tokensFile ? readJson(tokensFile) : Promise.resolve(null),
+        brandFile ? readJson(brandFile) : Promise.resolve(null),
+        uiKitFile ? readJson(uiKitFile) : Promise.resolve(null),
       ]);
-
-      // Store parsed JSON for variable path extraction
-      parsedJsonRef.current = { tokens, brand, uiKit };
 
       const { promise } = callPlugin(ServiceName.importRecursicaJson, {
         tokens,
@@ -191,23 +180,6 @@ export default function ImportRecursicaJson() {
       } else {
         setError(null);
       }
-
-      // Extract variable paths from the theme JSON for VariableInput
-      if (parsedJsonRef.current) {
-        try {
-          const { rows } = recursicaJsonToVariableRows(
-            parsedJsonRef.current.tokens,
-            parsedJsonRef.current.brand,
-            parsedJsonRef.current.uiKit,
-          );
-          const paths = [
-            ...new Set(rows.map((r) => r.figmaVariableName)),
-          ].sort();
-          setVariablePaths(paths);
-        } catch {
-          // Silently fail — variable paths are optional for testing
-        }
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Import failed.");
     } finally {
@@ -216,8 +188,8 @@ export default function ImportRecursicaJson() {
   };
 
   const hasFiles =
-    fileNames.tokens != null &&
-    fileNames.brand != null &&
+    fileNames.tokens != null ||
+    fileNames.brand != null ||
     fileNames.uiKit != null;
 
   return (
@@ -225,7 +197,7 @@ export default function ImportRecursicaJson() {
       <Stack gap={20} style={{ maxWidth: 500 }}>
         <Title order={1}>Import Recursica Theme</Title>
         <p style={{ margin: 0, color: "#666", fontSize: 14 }}>
-          Select the three Recursica JSON files:{" "}
+          Select one or more Recursica JSON files:{" "}
           <code>{FILE_NAMES.tokens}</code>, <code>{FILE_NAMES.brand}</code>,{" "}
           <code>{FILE_NAMES.uiKit}</code>
         </p>
@@ -239,7 +211,10 @@ export default function ImportRecursicaJson() {
         />
         {hasFiles && (
           <span style={{ fontSize: 14, color: "#333" }}>
-            Selected: {fileNames.tokens}, {fileNames.brand}, {fileNames.uiKit}
+            Selected:{" "}
+            {[fileNames.tokens, fileNames.brand, fileNames.uiKit]
+              .filter(Boolean)
+              .join(", ")}
           </span>
         )}
         <Stack gap={8} style={{ flexDirection: "row" }}>
@@ -431,37 +406,6 @@ export default function ImportRecursicaJson() {
                 </div>
               )}
             */}
-            {variablePaths.length > 0 && (
-              <div
-                style={{
-                  padding: 12,
-                  backgroundColor: "#f5f5f5",
-                  borderRadius: 6,
-                }}
-              >
-                <div style={{ fontSize: 13, color: "#666", marginBottom: 8 }}>
-                  <strong>Variable Path Browser</strong> —{" "}
-                  {variablePaths.length} variables from theme JSON
-                </div>
-                <VariableInput
-                  variablePaths={variablePaths}
-                  value={selectedVariable ?? undefined}
-                  onChange={setSelectedVariable}
-                  placeholder="Type to search variables…"
-                />
-                {selectedVariable && (
-                  <div
-                    style={{
-                      marginTop: 8,
-                      fontSize: 13,
-                      color: "#1b5e20",
-                    }}
-                  >
-                    Selected: <code>{selectedVariable}</code>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         )}
       </Stack>

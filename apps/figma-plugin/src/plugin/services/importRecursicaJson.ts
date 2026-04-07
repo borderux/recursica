@@ -26,30 +26,17 @@ export async function importRecursicaJson(
   const brandRoot = data.brand;
   const uiKitRoot = data.uiKit;
 
-  if (tokensRoot == null || typeof tokensRoot !== "object") {
+  if (
+    (tokensRoot == null || typeof tokensRoot !== "object") &&
+    (brandRoot == null || typeof brandRoot !== "object") &&
+    (uiKitRoot == null || typeof uiKitRoot !== "object")
+  ) {
     return {
       type: "importRecursicaJson",
       success: false,
       error: true,
-      message: "Missing or invalid tokens JSON",
-      data: {},
-    };
-  }
-  if (brandRoot == null || typeof brandRoot !== "object") {
-    return {
-      type: "importRecursicaJson",
-      success: false,
-      error: true,
-      message: "Missing or invalid brand JSON",
-      data: {},
-    };
-  }
-  if (uiKitRoot == null || typeof uiKitRoot !== "object") {
-    return {
-      type: "importRecursicaJson",
-      success: false,
-      error: true,
-      message: "Missing or invalid uiKit JSON",
+      message:
+        "At least one valid JSON file (tokens, brand, or ui-kit) is required",
       data: {},
     };
   }

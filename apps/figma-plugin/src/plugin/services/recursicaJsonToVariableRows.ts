@@ -1692,89 +1692,79 @@ export function recursicaJsonToVariableRows(
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  const tokensData = tokensRoot as { tokens?: TokenObj } | TokenObj;
+  const tokensData = tokensRoot as { tokens?: TokenObj } | null;
   const root = tokensData?.tokens != null ? tokensData.tokens : tokensData;
-  if (root == null || typeof root !== "object") {
-    errors.push(
-      "tokens: missing or invalid root (expected object with tokens or raw tokens object)",
-    );
-    return { rows: [], errors, warnings };
-  }
 
   const tokenRows: TokenRow[] = [];
   const tokenKeyToAliasPath = new Map<string, string>();
-  collectTokens(
-    root as TokenObj,
-    ["tokens"],
-    ["tokens"],
-    tokenRows,
-    errors,
-    undefined,
-    tokenKeyToAliasPath,
-  );
+
+  if (root != null && typeof root === "object") {
+    collectTokens(
+      root as TokenObj,
+      ["tokens"],
+      ["tokens"],
+      tokenRows,
+      errors,
+      undefined,
+      tokenKeyToAliasPath,
+    );
+  }
   const tokenNames = new Set(tokenRows.map((r) => r[0]));
 
-  const brandData = brandRoot as { brand?: TokenObj } | TokenObj;
-  const brand = (brandData as { brand?: TokenObj }).brand ?? brandData;
-  if (brand == null || typeof brand !== "object") {
-    errors.push("brand: missing or invalid root");
-    return {
-      rows: buildCombinedRows([], [], []),
-      errors,
-      warnings,
-    };
-  }
+  const brandData = brandRoot as { brand?: TokenObj } | null;
+  const brand = brandData?.brand ?? brandData;
 
   const brandNamesByTheme: Record<string, Set<string>> = {};
   const brandRefByTheme: Record<string, Map<string, string>> = {};
-  const themes = (brand as TokenObj).themes;
-  if (themes != null && typeof themes === "object") {
-    const themesObj = themes as Record<string, TokenObj>;
-    for (const [themeKey, themeObj] of Object.entries(themesObj)) {
+
+  if (brand != null && typeof brand === "object") {
+    const themes = (brand as TokenObj).themes;
+    if (themes != null && typeof themes === "object") {
+      const themesObj = themes as Record<string, TokenObj>;
+      for (const [themeKey, themeObj] of Object.entries(themesObj)) {
+        if (
+          themeObj != null &&
+          typeof themeObj === "object" &&
+          !Array.isArray(themeObj)
+        ) {
+          const key = themeKey.toLowerCase();
+          if (VALID_THEMES.includes(key)) {
+            brandNamesByTheme[key] = new Set();
+            brandRefByTheme[key] = new Map();
+            collectBrandVariableNames(
+              themeObj,
+              [],
+              brandNamesByTheme[key],
+              brandRefByTheme[key],
+            );
+          }
+        }
+      }
+    }
+    const brandObj = brand as TokenObj;
+    for (const rootKey of Object.keys(brandObj)) {
+      if (rootKey === "themes") continue;
+      const rootSection = brandObj[rootKey];
       if (
-        themeObj != null &&
-        typeof themeObj === "object" &&
-        !Array.isArray(themeObj)
+        rootSection != null &&
+        typeof rootSection === "object" &&
+        !Array.isArray(rootSection)
       ) {
-        const key = themeKey.toLowerCase();
-        if (VALID_THEMES.includes(key)) {
-          brandNamesByTheme[key] = new Set();
-          brandRefByTheme[key] = new Map();
+        for (const themeKey of Object.keys(brandNamesByTheme)) {
           collectBrandVariableNames(
-            themeObj,
-            [],
-            brandNamesByTheme[key],
-            brandRefByTheme[key],
+            rootSection as TokenObj,
+            [rootKey],
+            brandNamesByTheme[themeKey],
+            brandRefByTheme[themeKey],
           );
         }
       }
     }
   }
-  const brandObj = brand as TokenObj;
-  for (const rootKey of Object.keys(brandObj)) {
-    if (rootKey === "themes") continue;
-    const rootSection = brandObj[rootKey];
-    if (
-      rootSection != null &&
-      typeof rootSection === "object" &&
-      !Array.isArray(rootSection)
-    ) {
-      for (const themeKey of Object.keys(brandNamesByTheme)) {
-        collectBrandVariableNames(
-          rootSection as TokenObj,
-          [rootKey],
-          brandNamesByTheme[themeKey],
-          brandRefByTheme[themeKey],
-        );
-      }
-    }
-  }
 
-  const uiKitData = uiKitRoot as { "ui-kit"?: TokenObj } | TokenObj;
+  const uiKitData = uiKitRoot as { "ui-kit"?: TokenObj } | null;
   const uiKitRootObj =
-    (uiKitData as { "ui-kit"?: TokenObj })["ui-kit"] != null
-      ? (uiKitData as { "ui-kit": TokenObj })["ui-kit"]
-      : (uiKitData as TokenObj);
+    uiKitData?.["ui-kit"] != null ? uiKitData["ui-kit"] : uiKitData;
 
   const registry: Registry = {
     tokens: tokenNames,
@@ -1785,7 +1775,9 @@ export function recursicaJsonToVariableRows(
   };
 
   const themeRows: ThemeRow[] = [];
-  processBrandToThemeRows(brandData, themeRows, errors, warnings);
+  if (brand != null && typeof brand === "object" && brandData != null) {
+    processBrandToThemeRows(brandData, themeRows, errors, warnings);
+  }
   if (
     uiKitRootObj != null &&
     typeof uiKitRootObj === "object" &&
