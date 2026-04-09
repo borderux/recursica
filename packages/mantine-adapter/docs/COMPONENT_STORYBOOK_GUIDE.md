@@ -64,7 +64,7 @@ This keeps the story count manageable and makes it clear why each static story e
 
 ## 5. Structure of the story file
 
-- **Default export:** Meta object with `component`, `title` (e.g. under `Design System/Button`), and optionally `tags` for docs or tests.
+- **Default export:** Meta object with `component`, `title` (e.g. under `Design System/Button`), `parameters.docs.description.component` exclusively documenting the purpose and layout usage of the element explicitly for the AutoDocs layout, and optionally `tags` for docs or tests (e.g., `["autodocs"]`).
 - **Default / Primary story:** The “playground” story with controls (e.g. `export const Default` or the default story with `args` and `argTypes`).
 - **Named exports:** One per static state (e.g. `SolidDefault`, `OutlineSmall`). Each uses fixed props and no (or minimal) controls.
 - **Decorators:** If all stories need the same wrapper (e.g. theme context), add a decorator in the meta. For **layer**, wrap the component in `<Layer layer={N}>` in the Default story (with a layer control) and in any static story that should show a specific layer; do not set layer as a component prop. Ensure the Recursica CSS (e.g. `recursica_variables_scoped.css`) is imported in the story file or in Storybook preview so variables resolve.
@@ -82,6 +82,7 @@ This keeps the story count manageable and makes it clear why each static story e
 ## 7. Checklist for a new component story file
 
 - [ ] Story file is co-located: `{ComponentName}.stories.tsx` next to `{ComponentName}.tsx`.
+- [ ] Component documentation exists explicitly mapping `parameters.docs.description.component` in the default meta object describing what the element fundamentally provides.
 - [ ] Default (or primary) story exposes controls for the main props integrators will change.
 - [ ] Major properties for static stories are chosen and documented (in the file or in this guide).
 - [ ] Static stories are added for the chosen combinations; each has fixed props and no controls.

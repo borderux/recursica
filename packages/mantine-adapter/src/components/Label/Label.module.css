@@ -1,0 +1,169 @@
+/* HARDCODED VALUES:
+   - display: flex helps us leverage flex 'order' to perfectly position Mantine's injected asterisk.
+   - align-items: baseline ensures text logic lines up nicely if font sizes differ slightly.
+   - margin/padding resets.
+*/
+
+.root {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  box-sizing: border-box;
+  margin: 0;
+  color: var(--recursica_ui-kit_components_label_properties_colors_text);
+}
+
+.root[data-alignment="left"] {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.root[data-alignment="right"] {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.root[data-layout="stacked"] {
+  padding-bottom: var(
+    --recursica_ui-kit_components_label_variants_layouts_stacked_properties_bottom-padding
+  );
+  min-height: var(
+    --recursica_ui-kit_components_label_variants_layouts_stacked_properties_min-height
+  );
+}
+
+.root[data-layout="stacked"][data-size="default"] {
+  width: var(
+    --recursica_ui-kit_components_label_variants_layouts_stacked_variants_sizes_default_properties_width
+  );
+}
+
+.root[data-layout="stacked"][data-size="small"] {
+  width: var(
+    --recursica_ui-kit_components_label_variants_layouts_stacked_variants_sizes_small_properties_width
+  );
+}
+
+.root[data-layout="side-by-side"] {
+  padding-top: var(
+    --recursica_ui-kit_components_label_variants_layouts_side-by-side_properties_vertical-padding
+  );
+  padding-bottom: var(
+    --recursica_ui-kit_components_label_variants_layouts_side-by-side_properties_vertical-padding
+  );
+  min-height: var(
+    --recursica_ui-kit_components_label_variants_layouts_side-by-side_properties_min-height
+  );
+  /* In side-by-side, the label exists to the left of its input, so we use the gutter gap here. */
+  margin-right: var(
+    --recursica_ui-kit_components_label_variants_layouts_side-by-side_properties_gutter
+  );
+}
+
+.root[data-layout="side-by-side"][data-size="default"] {
+  width: var(
+    --recursica_ui-kit_components_label_variants_layouts_side-by-side_variants_sizes_default_properties_width
+  );
+}
+
+.root[data-layout="side-by-side"][data-size="small"] {
+  width: var(
+    --recursica_ui-kit_components_label_variants_layouts_side-by-side_variants_sizes_small_properties_width
+  );
+}
+
+.labelText {
+  order: 1;
+  font-family: var(
+    --recursica_ui-kit_components_label_properties_label-text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_label_properties_label-text_font-size
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_label_properties_label-text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_label_properties_label-text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_label_properties_label-text_line-height
+  );
+  font-style: var(
+    --recursica_ui-kit_components_label_properties_label-text_font-style,
+    normal
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_label_properties_label-text_text-decoration,
+    none
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_label_properties_label-text_text-transform,
+    none
+  );
+}
+
+/* Intercepting Mantine's required asterisk to place it correctly using flex order */
+.required {
+  order: 2;
+  margin-left: var(
+    --recursica_ui-kit_components_label_properties_required-indicator-gap
+  );
+  color: var(--recursica_ui-kit_components_label_properties_colors_asterisk);
+}
+
+.optionalText {
+  order: 5;
+  flex-basis: 100%;
+  margin-top: var(
+    --recursica_ui-kit_components_label_properties_label-optional-text-gap
+  );
+  margin-left: 0;
+  font-family: var(
+    --recursica_ui-kit_components_label_properties_optional-text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_label_properties_optional-text_font-size
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_label_properties_optional-text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_label_properties_optional-text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_label_properties_optional-text_line-height
+  );
+  font-style: normal;
+  text-decoration: var(
+    --recursica_ui-kit_components_label_properties_optional-text_text-decoration,
+    none
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_label_properties_optional-text_text-transform,
+    none
+  );
+  color: inherit;
+  opacity: var(
+    --recursica_ui-kit_components_label_properties_colors_optional-text-opacity
+  );
+}
+
+.editIconWrapper {
+  order: 4;
+  margin-left: var(
+    --recursica_ui-kit_components_label_properties_edit-icon-gap
+  );
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+.editIconWrapper[data-replaces-asterisk="true"] {
+  color: var(--recursica_ui-kit_components_label_properties_colors_asterisk);
+}

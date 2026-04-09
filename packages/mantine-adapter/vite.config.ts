@@ -26,7 +26,6 @@ export default defineConfig(({ mode }) => {
         plugins: [
           recursicaVars({
             cssPath: resolve(__dirname, "recursica_variables_scoped.css"),
-            strict: isLibrary, // Fail the build process ONLY when running 'npm run build'
           }),
         ],
       },

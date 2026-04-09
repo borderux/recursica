@@ -17,15 +17,16 @@
   );
   margin: 0; /* HARDCODE: structural reset; consider token if layout needs change */
   display: flex !important;
+  gap: var(
+    --recursica_ui-kit_components_checkbox-group_properties_item-gap,
+    16px
+  );
 }
 
 /* SideBySide Variant */
 .groupRoot[data-layout="side-by-side"] {
   flex-direction: row;
   flex-wrap: wrap;
-  gap: var(
-    --recursica_ui-kit_components_checkbox-group_variants_layouts_side-by-side_properties_gutter
-  );
   padding-top: var(
     --recursica_ui-kit_components_checkbox-group_variants_layouts_side-by-side_properties_vertical-padding
   );
@@ -43,9 +44,6 @@
 /* Stacked Variant */
 .groupRoot[data-layout="stacked"] {
   flex-direction: column;
-  gap: var(
-    --recursica_ui-kit_components_checkbox-group_variants_layouts_stacked_properties_label-field-gap
-  );
   margin-top: var(
     --recursica_ui-kit_components_checkbox-group_variants_layouts_stacked_properties_top-bottom-margin
   );
@@ -74,11 +72,21 @@
   justify-content: center !important;
   margin: 0 !important; /* HARDCODE: structural reset */
   width: var(--recursica_ui-kit_components_checkbox_properties_size) !important;
-  height: calc(
-    var(
-        --recursica_ui-kit_components_checkbox-item_properties_text_line-height
-      ) *
-      var(--recursica_ui-kit_components_checkbox-item_properties_text_font-size)
+  height: var(
+    --recursica_ui-kit_components_checkbox_properties_size
+  ) !important;
+  /* Mathematically syncs the physical input checkbox bounding block visually with the center of the text's first line natively. */
+  margin-top: calc(
+    (
+        var(
+            --recursica_ui-kit_components_checkbox-item_properties_text_line-height
+          ) *
+          var(
+            --recursica_ui-kit_components_checkbox-item_properties_text_font-size
+          ) -
+          var(--recursica_ui-kit_components_checkbox_properties_size)
+      ) /
+      2
   ) !important;
 }
 

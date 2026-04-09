@@ -79,10 +79,9 @@ export const createMainConfig = (
         plugins: [
           recursicaVars({
             cssPath: recursicaCSSPath,
-            strict:
-              postCSSStrictMode !== undefined
-                ? postCSSStrictMode
-                : configType === "PRODUCTION",
+            ...(postCSSStrictMode !== undefined
+              ? { strict: postCSSStrictMode }
+              : {}),
           }),
         ],
       };

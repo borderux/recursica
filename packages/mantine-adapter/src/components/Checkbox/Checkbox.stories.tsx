@@ -7,6 +7,39 @@ const meta: Meta<typeof Checkbox> = {
   title: "UI-Kit/Checkbox",
   component: Checkbox,
   tags: ["autodocs"],
+  parameters: {
+    docs: {
+      description: {
+        component: `
+The \`Checkbox\` component is a precisely engineered, atomic form primitive representing boolean states natively aligned to the Recursica design system. It overrides Mantine's standard properties explicitly enforcing our variables natively across all structural boundaries.
+
+### Usage
+To render a solitary component natively:
+\`\`\`tsx
+<Checkbox label="Acknowledge Terms" defaultChecked />
+\`\`\`
+
+### Using within Arrays (Checkbox.Group)
+When wrapping multiple Checkbox elements together, **always** utilize the \`<Checkbox.Group>\` component. This automatically inherits the global \`FormControlWrapper\` natively granting instantaneous access to macroscopic layout structuring, assistive descriptions, and strict flex arrays.
+
+We exclusively utilize the \`formLayout\` parameter to control macro-level form flow:
+- **\`formLayout="stacked"\`**: Top-to-bottom layout cascading the Label bounding box down vertically into a standard stacked checkbox column array.
+- **\`formLayout="side-by-side"\`**: Flow architecture pulling the grouping Label dynamically to the left while structurally organizing the internal checkboxes cleanly alongside it horizontally.
+
+\`\`\`tsx
+<Checkbox.Group 
+  label="Execution Targets" 
+  assistiveText="Strictly mapped structural grouping dynamically applied natively."
+  formLayout="stacked" 
+>
+  <Checkbox value="react" label="Browser Execution Context" />
+  <Checkbox value="svelte" label="Edge Nodes" />
+</Checkbox.Group>
+\`\`\`
+`,
+      },
+    },
+  },
 };
 
 export default meta;
@@ -57,50 +90,53 @@ export const StaticVariations: Story = {
   ),
 };
 
-export const GroupLayouts = () => {
-  const [value, setValue] = useState<string[]>(["react"]);
-
-  return (
-    <Layer
-      layer={0}
-      style={{
-        padding: "48px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "48px",
-      }}
-    >
-      <div>
-        <h4
-          style={{
-            margin: "0 0 16px 0",
-            color: "var(--recursica_brand_typography_subtitle_color)",
-          }}
+export const GroupSideBySide: Story = {
+  render: function GroupSideBySideRender() {
+    const [value, setValue] = useState<string[]>(["react"]);
+    return (
+      <Layer layer={0} style={{ padding: "48px" }}>
+        <Checkbox.Group
+          value={value}
+          onChange={setValue}
+          label="Frontend Frameworks"
+          assistiveText="Select all libraries currently in use for this specific workspace configuration."
+          formLayout="side-by-side"
+          labelOptionalText="Recommended"
+          labelWithEditIcon
         >
-          Stacked Layout Array Tracker
-        </h4>
-        <Checkbox.Group value={value} onChange={setValue} layout="stacked">
-          <Checkbox value="react" label="React" />
-          <Checkbox value="svelte" label="Svelte" />
-          <Checkbox value="vue" label="Vue" />
+          <Checkbox value="react" label="React (Standard Build)" />
+          <Checkbox
+            value="svelte"
+            label="The Svelte architecture which provides a highly optimized, completely compiler-driven framework avoiding virtual DOM boundaries. This massively extended text explicitly guarantees accurate wrapper constraint checking and multi-line flex alignment."
+          />
+          <Checkbox value="vue" label="Vue Configuration Map" />
         </Checkbox.Group>
-      </div>
+      </Layer>
+    );
+  },
+};
 
-      <div>
-        <h4
-          style={{
-            margin: "0 0 16px 0",
-            color: "var(--recursica_brand_typography_subtitle_color)",
-          }}
+export const GroupStacked: Story = {
+  render: function GroupStackedRender() {
+    const [value, setValue] = useState<string[]>(["react"]);
+    return (
+      <Layer layer={0} style={{ padding: "48px" }}>
+        <Checkbox.Group
+          value={value}
+          onChange={setValue}
+          label="Execution Targets"
+          error="You must select at least one deployment target to compile."
+          required
+          formLayout="stacked"
         >
-          Side-By-Side Layout Matrix
-        </h4>
-        <Checkbox.Group value={value} onChange={setValue} layout="side-by-side">
-          <Checkbox value="react" label="React" />
-          <Checkbox value="svelte" label="Svelte" />
-          <Checkbox value="vue" label="Vue" />
+          <Checkbox value="react" label="Browser Execution Context" />
+          <Checkbox
+            value="svelte"
+            label="Highly distributed Edge computing environments seamlessly bridging local runtime boundaries."
+          />
+          <Checkbox value="vue" label="Serverless Cloud Providers" />
         </Checkbox.Group>
-      </div>
-    </Layer>
-  );
+      </Layer>
+    );
+  },
 };
