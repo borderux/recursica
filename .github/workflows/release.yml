@@ -61,6 +61,7 @@ jobs:
             apps/*/package.json
             packages/*/package-lock.json
             packages/*/package.json
+          registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
         run: npm ci
