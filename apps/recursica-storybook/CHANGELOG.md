@@ -1,5 +1,11 @@
 # recursica-storybook
 
+## 0.3.3
+
+### Patch Changes
+
+- c05c973: Fixed dark mode delpoyment
+
 ## 0.3.2
 
 ### Patch Changes
