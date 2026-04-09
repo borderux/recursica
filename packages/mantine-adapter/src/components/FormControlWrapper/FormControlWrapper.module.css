@@ -4,6 +4,8 @@
   display: flex;
   margin: 0; /* Hardcoded structural reset */
   padding: 0; /* Hardcoded structural reset */
+  max-width: var(--form-control-max-width, 100%);
+  min-width: var(--form-control-min-width, auto);
 }
 
 /* Base Structural Stacked Layout */

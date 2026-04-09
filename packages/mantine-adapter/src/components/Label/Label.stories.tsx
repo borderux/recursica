@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 import { Label } from "./Label";
 import { Layer } from "@recursica/adapter-common";
+import { TextField } from "../TextField/TextField";
 
 type LabelStoryProps = React.ComponentProps<typeof Label> & {
   layer?: number;
@@ -59,9 +61,24 @@ export default meta;
 
 type Story = StoryObj<LabelStoryProps>;
 
+// Utility mapping to pipe raw Label args structurally into TextField accurately
+const renderWithTextField = ({
+  layer = 0,
+  children,
+  ...args
+}: LabelStoryProps) => (
+  <Layer layer={layer as 0 | 1 | 2 | 3} style={{ padding: "24px" }}>
+    <TextField
+      label={children as React.ReactNode}
+      placeholder="Form Control primitive mapped..."
+      {...(args as any)}
+    />
+  </Layer>
+);
+
 export const Default: Story = {
   args: {
-    children: "Email Address",
+    children: "Dynamic Label (Controls)",
     formLayout: "stacked",
     labelSize: "default",
     labelAlignment: "left",
@@ -70,22 +87,33 @@ export const Default: Story = {
     labelWithEditIcon: false,
     layer: 0,
   },
-  render: ({ layer = 0, ...args }) => {
-    return (
-      <Layer layer={layer as 0 | 1 | 2 | 3} style={{ padding: "24px" }}>
-        <Label {...args} />
-      </Layer>
-    );
-  },
+  render: renderWithTextField,
 };
 
-export const StackedSmall: Story = {
+export const StackedDefault: Story = {
   args: {
-    children: "Small Label",
+    children: "Email Address",
     formLayout: "stacked",
-    labelSize: "small",
   },
-  render: (args: LabelStoryProps) => <Label {...args} />,
+  render: renderWithTextField,
+};
+
+export const StackedRequired: Story = {
+  args: {
+    children: "Primary Network Node",
+    formLayout: "stacked",
+    required: true,
+  },
+  render: renderWithTextField,
+};
+
+export const StackedWithEditIcon: Story = {
+  args: {
+    children: "Environment Variables",
+    formLayout: "stacked",
+    labelWithEditIcon: true,
+  },
+  render: renderWithTextField,
 };
 
 export const SideBySideDefault: Story = {
@@ -94,7 +122,7 @@ export const SideBySideDefault: Story = {
     formLayout: "side-by-side",
     labelSize: "default",
   },
-  render: (args: LabelStoryProps) => <Label {...args} />,
+  render: renderWithTextField,
 };
 
 export const RequiredSuppressesOptionalText: Story = {
@@ -104,7 +132,7 @@ export const RequiredSuppressesOptionalText: Story = {
     required: true,
     labelOptionalText: "This should not render",
   },
-  render: (args: LabelStoryProps) => <Label {...args} />,
+  render: renderWithTextField,
 };
 
 export const BooleanOptionalText: Story = {
@@ -113,7 +141,7 @@ export const BooleanOptionalText: Story = {
     formLayout: "side-by-side",
     labelOptionalText: true,
   },
-  render: (args: LabelStoryProps) => <Label {...args} />,
+  render: renderWithTextField,
 };
 
 export const WithEditIcon: Story = {
@@ -122,7 +150,7 @@ export const WithEditIcon: Story = {
     formLayout: "side-by-side",
     labelWithEditIcon: true,
   },
-  render: (args: LabelStoryProps) => <Label {...args} />,
+  render: renderWithTextField,
 };
 
 export const LayerOneSideBySide: Story = {
@@ -130,10 +158,7 @@ export const LayerOneSideBySide: Story = {
     children: "Configuration",
     formLayout: "side-by-side",
     labelWithEditIcon: true,
+    layer: 1,
   },
-  render: (args: LabelStoryProps) => (
-    <Layer layer={1} style={{ padding: "24px" }}>
-      <Label {...args} />
-    </Layer>
-  ),
+  render: renderWithTextField,
 };

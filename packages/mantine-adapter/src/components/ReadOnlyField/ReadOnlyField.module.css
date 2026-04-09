@@ -1,0 +1,49 @@
+/* HARDCODED VALUES:
+   - margin: 0; padding: overrides native paragraph margins mapping back to form element flows.
+*/
+.textField {
+  margin: 0; /* HARDCODE: Reset paragraph margin; assume wrapper controls layout */
+  display: flex;
+  align-items: center;
+  word-break: break-word;
+  padding: 0; /* HARDCODE: read-only fields have no specific padding defined by tokens, zeroing it. */
+  font-family: var(
+    --recursica_ui-kit_components_read-only-field_properties_text_font-family,
+    inherit
+  );
+  font-size: var(
+    --recursica_ui-kit_components_read-only-field_properties_text_font-size,
+    1rem
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_read-only-field_properties_text_font-weight,
+    normal
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_read-only-field_properties_text_letter-spacing,
+    normal
+  );
+  line-height: var(
+    --recursica_ui-kit_components_read-only-field_properties_text_line-height,
+    1.5
+  );
+  font-style: var(
+    --recursica_ui-kit_components_read-only-field_properties_text_font-style,
+    normal
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_read-only-field_properties_text_text-decoration,
+    none
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_read-only-field_properties_text_text-transform,
+    none
+  );
+  color: var(
+    --recursica_ui-kit_components_read-only-field_properties_colors_text
+  );
+  min-height: var(
+    --recursica_ui-kit_components_read-only-field_properties_min-height,
+    32px
+  );
+}

@@ -40,6 +40,13 @@ We exclusively utilize the \`formLayout\` parameter to control macro-level form 
       },
     },
   },
+  argTypes: {
+    readOnly: {
+      control: "boolean",
+      description:
+        "Toggles structural read-only data presentation bypassing interaction boundaries completely.",
+    },
+  },
 };
 
 export default meta;
@@ -135,6 +142,56 @@ export const GroupStacked: Story = {
             label="Highly distributed Edge computing environments seamlessly bridging local runtime boundaries."
           />
           <Checkbox value="vue" label="Serverless Cloud Providers" />
+        </Checkbox.Group>
+      </Layer>
+    );
+  },
+};
+
+export const StaticReadOnlyGroup: Story = {
+  render: function StaticReadOnlyGroupRender() {
+    const [value, setValue] = useState<string[]>(["disabledNode"]);
+    return (
+      <Layer layer={0} style={{ padding: "48px" }}>
+        <Checkbox.Group
+          value={value}
+          onChange={setValue}
+          label="Static ReadOnly Execution Locks"
+          assistiveText="This structure explicitly validates native component-level DOM preservation natively mapping lock bounds safely over interaction."
+          required
+          readOnly
+          formLayout="stacked"
+        >
+          <Checkbox
+            value="disabledNode"
+            label="Structurally Checked Node natively"
+          />
+          <Checkbox
+            value="disabledNodeEmpty"
+            label="Unchecked Configuration Limit"
+          />
+        </Checkbox.Group>
+      </Layer>
+    );
+  },
+};
+
+export const EditableReadOnlyGroup: Story = {
+  render: function EditableReadOnlyGroupRender() {
+    const [value, setValue] = useState<string[]>(["activeState"]);
+    return (
+      <Layer layer={0} style={{ padding: "48px" }}>
+        <Checkbox.Group
+          value={value}
+          onChange={setValue}
+          label="Interactively Editable ReadOnly Group"
+          assistiveText="Users explicitly unlock DOM structures dynamically."
+          labelWithEditIcon
+          readOnly
+          formLayout="side-by-side"
+        >
+          <Checkbox value="activeState" label="Locked active state" />
+          <Checkbox value="unlockedNode" label="Locked inactive map" />
         </Checkbox.Group>
       </Layer>
     );

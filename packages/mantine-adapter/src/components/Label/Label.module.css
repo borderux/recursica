@@ -32,18 +32,6 @@
   );
 }
 
-.root[data-layout="stacked"][data-size="default"] {
-  width: var(
-    --recursica_ui-kit_components_label_variants_layouts_stacked_variants_sizes_default_properties_width
-  );
-}
-
-.root[data-layout="stacked"][data-size="small"] {
-  width: var(
-    --recursica_ui-kit_components_label_variants_layouts_stacked_variants_sizes_small_properties_width
-  );
-}
-
 .root[data-layout="side-by-side"] {
   padding-top: var(
     --recursica_ui-kit_components_label_variants_layouts_side-by-side_properties_vertical-padding
@@ -103,13 +91,23 @@
   );
 }
 
-/* Intercepting Mantine's required asterisk to place it correctly using flex order */
 .required {
   order: 2;
   margin-left: var(
     --recursica_ui-kit_components_label_properties_required-indicator-gap
   );
   color: var(--recursica_ui-kit_components_label_properties_colors_asterisk);
+
+  /* Inherit identical typography bounds to prevent flex row line-height stretching */
+  font-family: var(
+    --recursica_ui-kit_components_label_properties_label-text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_label_properties_label-text_font-size
+  );
+  line-height: var(
+    --recursica_ui-kit_components_label_properties_label-text_line-height
+  );
 }
 
 .optionalText {
@@ -147,6 +145,16 @@
   opacity: var(
     --recursica_ui-kit_components_label_properties_colors_optional-text-opacity
   );
+}
+
+.actionAreaWrapper {
+  order: 4;
+  margin-left: var(
+    --recursica_ui-kit_components_label_properties_edit-icon-gap
+  );
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .editIconWrapper {

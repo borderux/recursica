@@ -1,5 +1,5 @@
 import React, { forwardRef, useId } from "react";
-import { type InputWrapperProps } from "@mantine/core";
+import { type InputWrapperProps, Box } from "@mantine/core";
 import {
   filterStylingProps,
   type RecursicaOverStyled,
@@ -13,6 +13,12 @@ export interface RecursicaFormControlWrapperProps extends RecursicaLabelProps {
   assistiveText?: React.ReactNode;
   /** Explicit toggle to suppress the Info icon rendering natively alongside the assistiveText. Defaults to true. */
   assistiveWithIcon?: boolean;
+  /** Custom action area to render alongside the label instead of the default edit icon. */
+  labelActionArea?: React.ReactNode;
+  /** Pass the native maximum width design variable dynamically bounding the specific wrapper width exclusively. */
+  controlMaxWidth: string | undefined;
+  /** Pass the native minimum width design variable dynamically bounding the specific wrapper width exclusively. */
+  controlMinWidth: string | undefined;
 }
 
 export type FormControlWrapperProps = RecursicaOverStyled<
@@ -30,12 +36,15 @@ export const FormControlWrapper = forwardRef<
     labelAlignment,
     labelOptionalText,
     labelWithEditIcon,
+    labelActionArea,
     onLabelEditClick,
 
     label,
     description,
     assistiveText,
     assistiveWithIcon = true,
+    controlMaxWidth,
+    controlMinWidth,
     error,
     required,
     withAsterisk,
@@ -84,12 +93,23 @@ export const FormControlWrapper = forwardRef<
     : children;
 
   return (
-    <div
+    <Box
       ref={ref}
       className={finalClass}
       data-form-layout={formLayout || "stacked"}
       data-form-alignment={labelAlignment || "left"}
-      style={restRecord.style as React.CSSProperties}
+      style={
+        {
+          ...((restRecord.style as React.CSSProperties) || {}),
+          ...(controlMaxWidth
+            ? { "--form-control-max-width": controlMaxWidth }
+            : {}),
+          ...(controlMinWidth
+            ? { "--form-control-min-width": controlMinWidth }
+            : {}),
+        } as React.CSSProperties
+      }
+      {...restRecord}
     >
       {/* 
         Section 1: The Native Custom Label
@@ -104,6 +124,7 @@ export const FormControlWrapper = forwardRef<
             labelAlignment={labelAlignment}
             labelOptionalText={labelOptionalText}
             labelWithEditIcon={labelWithEditIcon}
+            labelActionArea={labelActionArea}
             onLabelEditClick={onLabelEditClick}
             required={withAsterisk ?? required}
             // Manually propagate relevant structural logic if underlying groups dictate Label to act as generic wrapper
@@ -141,7 +162,7 @@ export const FormControlWrapper = forwardRef<
           </AssistiveElement>
         )}
       </div>
-    </div>
+    </Box>
   );
 });
 

@@ -44,6 +44,7 @@ This guide describes how to create Storybook stories for design-system component
   - **Future components:** Apply the same question—pick the major properties that define how the component looks and behaves, then add a few static stories that cover the most important combinations or edge cases.
 - **Implementation:**
   - Each static story is a **named export** that renders the component with fixed `args` (or no args and inline props). Do not rely on controls for these; the story should look the same every time.
+  - **Single responsibility per story:** Do not attempt to pack multiple distinct semantic states (e.g., Disabled, Error) into a single overarching "State Variants" story block. Split them into discrete, isolated stories (e.g., `export const Disabled`, `export const Error`) to ensure clear visual regression snapshots without UI-grid overcrowding.
   - Use a clear naming convention (e.g. `SolidDefault`, `OutlineSmall`, `TextWithIcon`) so the story list is readable and regression reports are easy to interpret.
 - **Result:** A set of static stories that can be used for visual regression (e.g. Chromatic, Percy, or a custom screenshot diff) and that document key states without overwhelming the sidebar.
 
@@ -98,3 +99,15 @@ This keeps the story count manageable and makes it clear why each static story e
 
 - **Why?** It defeats the purpose of the abstraction layer. If a Storybook user relies on the native library for padding, margins, formatting, or buttons during development playground usage, they are missing the raw limitations of the styling boundaries we impose natively.
 - **Solution:** Rely strictly on Recursica UI components that you have constructed natively (for example, import our wrapped `<Button>` over Mantine's raw `<Button>`). You should never use HTML primitive components like `<div>`, `<span>`, or `<p>` unless absolutely necessary to demo a story.
+
+---
+
+## 9. ReadOnly Framework & Visual Verification
+
+**If a component utilizes `ReadOnlyControlProps` directly natively (like `TextField`), it must explicitly demonstrate these formatting hooks safely.**
+
+1. **`readOnly` ArgType:** Add `readOnly` inside the `argTypes` block mapped functionally to `"boolean"` exposing the toggle natively in the baseline Default panel.
+2. **Standard ReadOnly Static Story:** Provide, at absolute minimum, a core `StaticReadOnly` snapshot structurally freezing the ReadOnly mappings evaluating a standard text property (typically with `readOnly: true` and `value="Explicit ReadOnly Preview"`).
+3. **Editable ReadOnly Constraint (If Applicable):** If bounding editable nodes via `labelWithEditIcon`, explicitly verify the transition boundary by creating `EditableReadOnly` evaluating `labelWithEditIcon: true`, `readOnly: true`, and standard `defaultValues`.
+
+This securely ensures visual snapshot tests never miss parsing edge-case read text transitions.

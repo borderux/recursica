@@ -17,6 +17,8 @@ export interface RecursicaLabelProps {
   labelOptionalText?: boolean | React.ReactNode;
   /** When true, forces the native Edit Icon to replace the standard asterisk visually. */
   labelWithEditIcon?: boolean;
+  /** Custom action area to render alongside the label instead of the default edit icon. */
+  labelActionArea?: React.ReactNode;
   /** Interaction hook invoked whenever a generated edit icon block natively triggers a click event. */
   onLabelEditClick?: React.MouseEventHandler<HTMLButtonElement>;
 }
@@ -33,6 +35,7 @@ export const Label = forwardRef<HTMLLabelElement, LabelProps>(function Label(
     required = false,
     labelOptionalText,
     labelWithEditIcon,
+    labelActionArea,
     onLabelEditClick,
     children,
     overStyled = false,
@@ -45,7 +48,7 @@ export const Label = forwardRef<HTMLLabelElement, LabelProps>(function Label(
 
   let resolvedOptionalText: React.ReactNode | undefined;
   if (!required) {
-    if (labelOptionalText === true) resolvedOptionalText = "Optional";
+    if (labelOptionalText === true) resolvedOptionalText = "optional";
     else if (labelOptionalText) resolvedOptionalText = labelOptionalText;
   }
 
@@ -96,7 +99,9 @@ export const Label = forwardRef<HTMLLabelElement, LabelProps>(function Label(
             : resolvedOptionalText}
         </span>
       )}
-      {labelWithEditIcon && (
+      {labelActionArea ? (
+        <span className={styles.actionAreaWrapper}>{labelActionArea}</span>
+      ) : labelWithEditIcon ? (
         <button
           type="button"
           className={styles.editIconWrapper}
@@ -119,7 +124,7 @@ export const Label = forwardRef<HTMLLabelElement, LabelProps>(function Label(
             />
           </svg>
         </button>
-      )}
+      ) : null}
     </Input.Label>
   );
 });

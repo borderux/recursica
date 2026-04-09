@@ -130,3 +130,20 @@ Do not use plain `.css` for component overrides, and do not use `.css.ts` with `
 - [ ] displayName and JSDoc set; icon-only / unlabeled usage documented (e.g. aria-label).
 - [ ] Toolbar integration test and any required toolbar/sidebar config added.
 - [ ] Component-specific decisions, edge-cases, and ongoing design-system layout fixes are meticulously documented in a living `{COMPONENT}_IMPLEMENTATION_NOTES.md` file (e.g. `BUTTON_IMPLEMENTATION_NOTES.md`) to structurally track _why_ the component logic diverges from standard library behavior.
+
+---
+
+## 11. Form Controls & Wrappers
+
+When building input primitives (e.g., Text Fields, Selects, Checkboxes), UI libraries universally try to inject their own highly-opinionated macro wrappers (such as `Input.Wrapper` in Mantine or `FormControl` in MUI) to manage labels, error strings, and layout.
+
+**Rule: Never use the underlying UI-kit's macro form wrapper.**
+
+To strictly ensure that every single form input matches the exact Recursica semantic spacing, accessibility links, and optical layouts, we map every single form element inside our own native `<FormControlWrapper>`.
+
+### Implementation Constraints
+
+1. **Target the Naked Primitive**: Only render the absolute bare-metal input element from the UI system (e.g., `<Input>` instead of `<TextInput>`, or rendering it with `label={null} description={null}` if standard properties cannot be bypassed). This guarantees we don't accidentally render two sets of labels or deeply nested hidden validation boxes.
+2. **Propagate via FormControlWrapper**: Inject the naked primitive safely within `<FormControlWrapper>`. This centralizes our entire form layout parameter map (`formLayout`, `assistiveText`, `required`, etc.).
+3. **Form Layout Unification**: Expose a generic `formLayout` parameter on your component (defaulting to `"stacked"`) and explicitly hand it down to `FormControlWrapper`. Do NOT maintain separate structural layout hooks specific to the singular input. Let the `FormControlWrapper` orchestrate whether the component renders stacked or side-by-side natively.
+4. **ARIA Bridging**: Expose the base validation states (`error`, `required`, `id`) from your wrapper props and feed them blindly into `<FormControlWrapper>`. The wrapper calculates `aria-errormessage` and `aria-describedby` logic natively and directly `<cloneElement>` maps them straight down onto your naked input primitive for screen-reader viability safely!

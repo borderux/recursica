@@ -1,8 +1,13 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { forwardRef } from "react";
 import {
   Checkbox as MantineCheckbox,
   type CheckboxGroupProps as MantineCheckboxGroupProps,
 } from "@mantine/core";
+import {
+  useReadOnlyControl,
+  type ReadOnlyControlProps,
+} from "@recursica/adapter-common";
 import {
   filterStylingProps,
   type RecursicaOverStyled,
@@ -15,7 +20,8 @@ import styles from "./Checkbox.module.css";
 
 export interface RecursicaCheckboxGroupProps
   extends Omit<MantineCheckboxGroupProps, "size" | "labelProps">,
-    RecursicaFormControlWrapperProps {}
+    RecursicaFormControlWrapperProps,
+    ReadOnlyControlProps {}
 
 export type CheckboxGroupProps =
   RecursicaOverStyled<RecursicaCheckboxGroupProps>;
@@ -45,10 +51,17 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
       className,
       style,
       children,
+      readOnly,
+      readOnlyComponent,
       ...rest
     },
     ref,
   ) {
+    const { isReadOnly, handleEditClick } = useReadOnlyControl(
+      readOnly,
+      onLabelEditClick,
+    );
+
     // We isolate and filter the strictly remaining structural props that belong inherently to the DOM Input.
     const sanitizedProps = filterStylingProps(rest, overStyled);
     const restRecord = sanitizedProps as Record<string, unknown>;
@@ -56,18 +69,45 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
     // Delete prohibited sizing hooks from bypassing the variables
     delete restRecord["size"];
 
+    if (isReadOnly && readOnlyComponent) {
+      return (
+        <FormControlWrapper
+          className={className}
+          style={style as React.CSSProperties}
+          overStyled={overStyled as true}
+          labelElement="div"
+          formLayout={formLayout}
+          labelSize={labelSize}
+          labelAlignment={labelAlignment}
+          labelOptionalText={labelOptionalText}
+          labelWithEditIcon={labelWithEditIcon}
+          onLabelEditClick={handleEditClick}
+          label={label}
+          description={description}
+          assistiveText={assistiveText}
+          assistiveWithIcon={assistiveWithIcon}
+          error={error}
+          required={required}
+          withAsterisk={withAsterisk}
+          id={id}
+        >
+          {readOnlyComponent}
+        </FormControlWrapper>
+      );
+    }
+
     return (
       <FormControlWrapper
         className={className}
         style={style as React.CSSProperties}
-        overStyled={overStyled}
+        overStyled={overStyled as true}
         labelElement="div" // Strictly override. ARIA grouping prohibits interactive checkboxes nested natively inside <label>.
         formLayout={formLayout}
         labelSize={labelSize}
         labelAlignment={labelAlignment}
         labelOptionalText={labelOptionalText}
         labelWithEditIcon={labelWithEditIcon}
-        onLabelEditClick={onLabelEditClick}
+        onLabelEditClick={handleEditClick}
         label={label}
         description={description}
         assistiveText={assistiveText}
@@ -79,10 +119,19 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
       >
         <MantineCheckbox.Group
           ref={ref}
+          /* Natively bind local disabled lock dynamically */
           {...(sanitizedProps as unknown as MantineCheckboxGroupProps)}
         >
           <div className={styles.groupRoot} data-layout={formLayout}>
-            {children}
+            {/* If the exact group is read-only natively, we inject disabled hooks dynamically over children? Mantine handles native context directly! */}
+            {React.Children.map(children, (child) => {
+              if (React.isValidElement(child)) {
+                return React.cloneElement(child as React.ReactElement<any>, {
+                  disabled: isReadOnly || child.props.disabled,
+                });
+              }
+              return child;
+            })}
           </div>
         </MantineCheckbox.Group>
       </FormControlWrapper>

@@ -1,9 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { forwardRef } from "react";
 import {
   Checkbox as MantineCheckbox,
   type CheckboxProps as MantineCheckboxProps,
 } from "@mantine/core";
+import {
+  useReadOnlyControl,
+  type ReadOnlyControlProps,
+} from "@recursica/adapter-common";
 import { CheckboxGroup } from "./CheckboxGroup";
+import { FormControlWrapper } from "../FormControlWrapper/FormControlWrapper";
 import {
   filterStylingProps,
   type RecursicaOverStyled,
@@ -13,7 +19,8 @@ import styles from "./Checkbox.module.css";
 export type RecursicaCheckboxProps = Omit<
   MantineCheckboxProps,
   "size" | "color" | "radius" | "iconColor" | "variant"
->;
+> &
+  ReadOnlyControlProps;
 
 export type CheckboxProps = RecursicaOverStyled<RecursicaCheckboxProps>;
 
@@ -24,7 +31,13 @@ type CheckboxComponent = React.ForwardRefExoticComponent<
 };
 
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
-  function Checkbox({ overStyled = false, ...rest }, ref) {
+  function Checkbox(
+    { overStyled = false, readOnly, readOnlyComponent, disabled, ...rest },
+    ref,
+  ) {
+    // Checkbox doesn't use Label onLabelEditClick natively since it isn't mapped inside FormControlWrapper intrinsically.
+    const { isReadOnly } = useReadOnlyControl(readOnly);
+
     const sanitizedProps = filterStylingProps(rest, overStyled);
     const restRecord = sanitizedProps as Record<string, unknown>;
 
@@ -34,6 +47,18 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
     delete restRecord["radius"];
     delete restRecord["variant"];
     delete restRecord["iconColor"];
+
+    if (isReadOnly && readOnlyComponent) {
+      // Safely fallback explicitly returning mapped elements natively
+      return (
+        <FormControlWrapper
+          overStyled={overStyled as true}
+          {...(sanitizedProps as any)}
+        >
+          {readOnlyComponent}
+        </FormControlWrapper>
+      );
+    }
 
     const mergedClassNames: Partial<Record<string, string>> = {
       root: styles.root,
@@ -80,6 +105,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
         ref={ref}
         className={finalClass}
         classNames={mergedClassNames}
+        disabled={isReadOnly || disabled}
         {...(sanitizedProps as unknown as MantineCheckboxProps)}
       />
     );

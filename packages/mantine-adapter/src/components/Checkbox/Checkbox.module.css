@@ -17,6 +17,7 @@
   );
   margin: 0; /* HARDCODE: structural reset; consider token if layout needs change */
   display: flex !important;
+  flex-direction: column;
   gap: var(
     --recursica_ui-kit_components_checkbox-group_properties_item-gap,
     16px
@@ -25,7 +26,7 @@
 
 /* SideBySide Variant */
 .groupRoot[data-layout="side-by-side"] {
-  flex-direction: row;
+  flex-direction: column;
   flex-wrap: wrap;
   padding-top: var(
     --recursica_ui-kit_components_checkbox-group_variants_layouts_side-by-side_properties_vertical-padding

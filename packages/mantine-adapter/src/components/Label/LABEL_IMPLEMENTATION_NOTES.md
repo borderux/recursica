@@ -25,6 +25,15 @@ The `Label` component is fundamentally built as a strict, localized wrapper arou
 - `required={required && !withEditIcon}` is passed to the underlying Mantine structure so the native `*` is entirely suppressed.
 - Added localized styling via `data-replaces-asterisk={required ? "true" : undefined}` onto the `.editIconWrapper` element. If an editable instance is simultaneously designated as required, the edit icon functionally assumes the indicator role natively, overriding its default icon metrics explicitly to match `--recursica_ui-kit_components_label_properties_colors_asterisk`.
 
+### **Bypassing `Input.Wrapper` Integrations**
+
+- By decoupling from Mantine's standard `Input.Wrapper`, the `Label` component is exclusively mapped manually through `FormControlWrapper`. This grants us exact visual sync regarding where the label renders based on `formLayout="stacked"` or `formLayout="side-by-side"`, without fighting internal Mantine positional hooks that assume vertical stacking by default.
+
+### **Label Size Container Constraints**
+
+- The `labelSize` parameter (mapping values like `"small"`) internally **does not scale typographic font metrics**. Instead, it dynamically defines the explicit horizontal bounding width limit of the block container itself.
+- **Architectural Rule:** `labelSize` modifications are strictly designed to execute exclusively when `formLayout="side-by-side"` is active. It acts as an optical grid threshold ensuring left-aligned string wrappers constrain correctly uniformly down a column without bleeding into the physical input arrays alongside them.
+
 ## Outstanding Technical Debt / Issues
 
 ### **Description Property Omission**

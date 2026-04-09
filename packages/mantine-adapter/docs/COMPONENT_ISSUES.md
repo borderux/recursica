@@ -39,3 +39,19 @@ This document tracks known issues, edge cases, missing variables, or design syst
 - **Description:** Mantine natively supports a `fullWidth` prop on `<Button>` components which mathematically expands the node. Recursica bounds strict dimensional scaling explicitly, leaving dynamic expansion largely governed by flex-container grid parents.
 - **Impact:** Developers cannot force buttons to visually stretch 100% width inline natively using component overrides.
 - **Current Resolution:** We actively omit `fullWidth` from the native abstract. Developers should wrap components with flex grids or column lists rather than independently stretching boundary layouts.
+
+## Label
+
+### 1. Edit Icon UX Paradigm Ambiguity
+
+- **Description:** The `Label` primitive exposes a `labelWithEditIcon` boolean triggering a visual edit icon to render adjacent to the label text (a concept derived loosely from data-heavy Material UI patterns). However, the strict UX implication for how this icon should behave functionally is undefined natively inside the UI Kit.
+- **Impact:** It is currently ambiguous whether the component orchestrates a Read-Only `<pre>` to live `<TextField>` structural DOM swap, or if it simply drops an overarching `disabled={true}` state lock from an already rendered input node.
+- **Current Resolution:** **RESOLVED**. The component strictly exposes `onLabelEditClick={...}` entirely natively un-opinionated. The universal `WithReadOnlyWrapper` structural hook now reliably controls transitioning between a safe visually-mapped `<ReadOnlyField />` output and an active editable DOM node context instantly.
+
+## Form Controls
+
+### 1. Uncontrolled State Data Loss During `readOnly` Transitions
+
+- **Description:** Form field abstractions (like `TextField`, `NumberField`, etc.) that act as Uncontrolled inputs structurally store their string interactions exclusively inside the native browser HTML DOM `<input>`. When toggling `readOnly={true}` dynamically, the library intentionally unmounts the active DOM node to mount the safe structural `<ReadOnlyField />` parser.
+- **Impact:** Because the active node dies, the browser’s internal uncontrolled state is instantly destroyed. `WithReadOnlyWrapper` inherits an `undefined` value evaluation mapping straight into "N/A" (or empty defaults) rather than projecting the text the user actively typed natively.
+- **Current Resolution:** **OPEN ISSUE**. Explicitly unresolved to avoid deeply wiring `useUncontrolled` state hooks natively across every wrapper. Developers must strictly supply Controlled inputs (by tracking `value` and `onChange` hooks externally in their views) if they conditionally inject ReadOnly capabilities sequentially on-the-fly.
