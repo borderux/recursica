@@ -1,5 +1,11 @@
 # recursica-storybook
 
+## 0.3.0
+
+### Minor Changes
+
+- 4ecd1a3: New release with latest adapter
+
 ## 0.2.0
 
 ### Minor Changes
