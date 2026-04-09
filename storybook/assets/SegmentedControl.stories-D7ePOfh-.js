@@ -1,3 +1,0 @@
-import{j as m}from"./iframe-BmfdKJen.js";import{o as s}from"./index-DQinPukL.js";import"./preload-helper-Dp1pzeXC.js";const o=t=>m.jsx("div",{...t,children:"SegmentedControl"});try{o.displayName="SegmentedControl",o.__docgenInfo={description:"",displayName:"SegmentedControl",props:{}}}catch{}const i={title:"UI-Kit/🚧 SegmentedControl",component:o,tags:["autodocs"]},e={render:()=>m.jsx(s,{componentName:"SegmentedControl"})};var r,n,a;e.parameters={...e.parameters,docs:{...(r=e.parameters)==null?void 0:r.docs,source:{originalSource:`{
-  render: () => <ComingSoon componentName="SegmentedControl" />
-}`,...(a=(n=e.parameters)==null?void 0:n.docs)==null?void 0:a.source}}};const l=["Default"];export{e as Default,l as __namedExportsOrder,i as default};

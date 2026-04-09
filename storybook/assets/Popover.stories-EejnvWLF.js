@@ -1,3 +1,0 @@
-import{j as s}from"./iframe-BmfdKJen.js";import{o as n}from"./index-DQinPukL.js";import"./preload-helper-Dp1pzeXC.js";const e=r=>s.jsx("div",{...r,children:"Popover"});try{e.displayName="Popover",e.__docgenInfo={description:"",displayName:"Popover",props:{}}}catch{}const i={title:"UI-Kit/🚧 Popover",component:e,tags:["autodocs"]},o={render:()=>s.jsx(n,{componentName:"Popover"})};var t,a,p;o.parameters={...o.parameters,docs:{...(t=o.parameters)==null?void 0:t.docs,source:{originalSource:`{
-  render: () => <ComingSoon componentName="Popover" />
-}`,...(p=(a=o.parameters)==null?void 0:a.docs)==null?void 0:p.source}}};const _=["Default"];export{o as Default,_ as __namedExportsOrder,i as default};

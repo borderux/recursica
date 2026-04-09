@@ -1,3 +1,0 @@
-import{j as s}from"./iframe-BmfdKJen.js";import{o as n}from"./index-DQinPukL.js";import"./preload-helper-Dp1pzeXC.js";const o=r=>s.jsx("div",{...r,children:"Checkbox"});try{o.displayName="Checkbox",o.__docgenInfo={description:"",displayName:"Checkbox",props:{}}}catch{}const i={title:"UI-Kit/🚧 Checkbox",component:o,tags:["autodocs"]},e={render:()=>s.jsx(n,{componentName:"Checkbox"})};var t,c,a;e.parameters={...e.parameters,docs:{...(t=e.parameters)==null?void 0:t.docs,source:{originalSource:`{
-  render: () => <ComingSoon componentName="Checkbox" />
-}`,...(a=(c=e.parameters)==null?void 0:c.docs)==null?void 0:a.source}}};const x=["Default"];export{e as Default,x as __namedExportsOrder,i as default};

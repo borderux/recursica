@@ -1,3 +1,0 @@
-import{j as a}from"./iframe-BmfdKJen.js";import{o as m}from"./index-DQinPukL.js";import"./preload-helper-Dp1pzeXC.js";const o=r=>a.jsx("div",{...r,children:"Timeline"});try{o.displayName="Timeline",o.__docgenInfo={description:"",displayName:"Timeline",props:{}}}catch{}const d={title:"UI-Kit/🚧 Timeline",component:o,tags:["autodocs"]},e={render:()=>a.jsx(m,{componentName:"Timeline"})};var t,n,i;e.parameters={...e.parameters,docs:{...(t=e.parameters)==null?void 0:t.docs,source:{originalSource:`{
-  render: () => <ComingSoon componentName="Timeline" />
-}`,...(i=(n=e.parameters)==null?void 0:n.docs)==null?void 0:i.source}}};const l=["Default"];export{e as Default,l as __namedExportsOrder,d as default};

@@ -1,3 +1,0 @@
-import{j as s}from"./iframe-BmfdKJen.js";import{o as n}from"./index-DQinPukL.js";import"./preload-helper-Dp1pzeXC.js";const e=o=>s.jsx("div",{...o,children:"Switch"});try{e.displayName="Switch",e.__docgenInfo={description:"",displayName:"Switch",props:{}}}catch{}const d={title:"UI-Kit/🚧 Switch",component:e,tags:["autodocs"]},t={render:()=>s.jsx(n,{componentName:"Switch"})};var r,c,a;t.parameters={...t.parameters,docs:{...(r=t.parameters)==null?void 0:r.docs,source:{originalSource:`{
-  render: () => <ComingSoon componentName="Switch" />
-}`,...(a=(c=t.parameters)==null?void 0:c.docs)==null?void 0:a.source}}};const _=["Default"];export{t as Default,_ as __namedExportsOrder,d as default};

@@ -1,3 +1,0 @@
-import{j as p}from"./iframe-BmfdKJen.js";import{o as s}from"./index-DQinPukL.js";import"./preload-helper-Dp1pzeXC.js";const r=e=>p.jsx("div",{...e,children:"Dropdown"});try{r.displayName="Dropdown",r.__docgenInfo={description:"",displayName:"Dropdown",props:{}}}catch{}const i={title:"UI-Kit/🚧 Dropdown",component:r,tags:["autodocs"]},o={render:()=>p.jsx(s,{componentName:"Dropdown"})};var t,n,a;o.parameters={...o.parameters,docs:{...(t=o.parameters)==null?void 0:t.docs,source:{originalSource:`{
-  render: () => <ComingSoon componentName="Dropdown" />
-}`,...(a=(n=o.parameters)==null?void 0:n.docs)==null?void 0:a.source}}};const _=["Default"];export{o as Default,_ as __namedExportsOrder,i as default};

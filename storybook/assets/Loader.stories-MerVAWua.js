@@ -1,3 +1,0 @@
-import{j as n}from"./iframe-BmfdKJen.js";import{o as d}from"./index-DQinPukL.js";import"./preload-helper-Dp1pzeXC.js";const o=r=>n.jsx("div",{...r,children:"Loader"});try{o.displayName="Loader",o.__docgenInfo={description:"",displayName:"Loader",props:{}}}catch{}const i={title:"UI-Kit/🚧 Loader",component:o,tags:["autodocs"]},e={render:()=>n.jsx(d,{componentName:"Loader"})};var a,t,s;e.parameters={...e.parameters,docs:{...(a=e.parameters)==null?void 0:a.docs,source:{originalSource:`{
-  render: () => <ComingSoon componentName="Loader" />
-}`,...(s=(t=e.parameters)==null?void 0:t.docs)==null?void 0:s.source}}};const _=["Default"];export{e as Default,_ as __namedExportsOrder,i as default};

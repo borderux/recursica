@@ -1,3 +1,0 @@
-import{j as n}from"./iframe-BmfdKJen.js";import{o as d}from"./index-DQinPukL.js";import"./preload-helper-Dp1pzeXC.js";const e=r=>n.jsx("div",{...r,children:"Modal"});try{e.displayName="Modal",e.__docgenInfo={description:"",displayName:"Modal",props:{}}}catch{}const i={title:"UI-Kit/🚧 Modal",component:e,tags:["autodocs"]},o={render:()=>n.jsx(d,{componentName:"Modal"})};var a,t,s;o.parameters={...o.parameters,docs:{...(a=o.parameters)==null?void 0:a.docs,source:{originalSource:`{
-  render: () => <ComingSoon componentName="Modal" />
-}`,...(s=(t=o.parameters)==null?void 0:t.docs)==null?void 0:s.source}}};const l=["Default"];export{o as Default,l as __namedExportsOrder,i as default};

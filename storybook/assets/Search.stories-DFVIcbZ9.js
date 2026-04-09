@@ -1,3 +1,0 @@
-import{j as s}from"./iframe-BmfdKJen.js";import{o as n}from"./index-DQinPukL.js";import"./preload-helper-Dp1pzeXC.js";const r=o=>s.jsx("div",{...o,children:"Search"});try{r.displayName="Search",r.__docgenInfo={description:"",displayName:"Search",props:{}}}catch{}const i={title:"UI-Kit/🚧 Search",component:r,tags:["autodocs"]},e={render:()=>s.jsx(n,{componentName:"Search"})};var a,t,c;e.parameters={...e.parameters,docs:{...(a=e.parameters)==null?void 0:a.docs,source:{originalSource:`{
-  render: () => <ComingSoon componentName="Search" />
-}`,...(c=(t=e.parameters)==null?void 0:t.docs)==null?void 0:c.source}}};const _=["Default"];export{e as Default,_ as __namedExportsOrder,i as default};

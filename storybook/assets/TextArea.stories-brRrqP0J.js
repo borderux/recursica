@@ -1,3 +1,0 @@
-import{j as n}from"./iframe-BmfdKJen.js";import{o as c}from"./index-DQinPukL.js";import"./preload-helper-Dp1pzeXC.js";const r=t=>n.jsx("div",{...t,children:"TextArea"});try{r.displayName="TextArea",r.__docgenInfo={description:"",displayName:"TextArea",props:{}}}catch{}const i={title:"UI-Kit/🚧 TextArea",component:r,tags:["autodocs"]},e={render:()=>n.jsx(c,{componentName:"TextArea"})};var o,a,s;e.parameters={...e.parameters,docs:{...(o=e.parameters)==null?void 0:o.docs,source:{originalSource:`{
-  render: () => <ComingSoon componentName="TextArea" />
-}`,...(s=(a=e.parameters)==null?void 0:a.docs)==null?void 0:s.source}}};const x=["Default"];export{e as Default,x as __namedExportsOrder,i as default};

@@ -1,1 +1,0 @@
-const r=["className","classNames","style","styles","vars","p","px","py","pt","pb","pl","pr","bg","c","opacity","ff","fz","fw","lts","ta","lh","fs","tt","td","bd","bdw","bds","bdc","bdr","shadow"];function a(s,f){if(f)return s;const t={...s};for(const e of r)e in t&&delete t[e];return t}export{a as f};

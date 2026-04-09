@@ -1,3 +1,0 @@
-import{j as n}from"./iframe-BmfdKJen.js";import{o as c}from"./index-DQinPukL.js";import"./preload-helper-Dp1pzeXC.js";const t=e=>n.jsx("div",{...e,children:"Toast"});try{t.displayName="Toast",t.__docgenInfo={description:"",displayName:"Toast",props:{}}}catch{}const i={title:"UI-Kit/🚧 Toast",component:t,tags:["autodocs"]},o={render:()=>n.jsx(c,{componentName:"Toast"})};var r,a,s;o.parameters={...o.parameters,docs:{...(r=o.parameters)==null?void 0:r.docs,source:{originalSource:`{
-  render: () => <ComingSoon componentName="Toast" />
-}`,...(s=(a=o.parameters)==null?void 0:a.docs)==null?void 0:s.source}}};const _=["Default"];export{o as Default,_ as __namedExportsOrder,i as default};
