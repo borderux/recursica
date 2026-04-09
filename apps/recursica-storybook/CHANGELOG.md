@@ -1,5 +1,11 @@
 # recursica-storybook
 
+## 0.3.1
+
+### Patch Changes
+
+- fdc2e00: Updated release again with trusted publishing
+
 ## 0.3.0
 
 ### Minor Changes
