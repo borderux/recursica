@@ -1,5 +1,11 @@
 # @recursica/adapter-common
 
+## 0.3.0
+
+### Minor Changes
+
+- 9e31278: Added more mantine adapter components
+
 ## 0.2.0
 
 ### Minor Changes

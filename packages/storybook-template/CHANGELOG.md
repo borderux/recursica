@@ -1,5 +1,17 @@
 # @recursica/storybook-template
 
+## 0.4.0
+
+### Minor Changes
+
+- 9e31278: Added more mantine adapter components
+
+### Patch Changes
+
+- Updated dependencies [9e31278]
+  - @recursica/recursica-postcss-vars@1.3.0
+  - @recursica/adapter-common@0.3.0
+
 ## 0.3.0
 
 ### Minor Changes

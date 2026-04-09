@@ -1,6 +1,6 @@
 {
   "name": "@recursica/recursica-postcss-vars",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "PostCSS plugin to validate missing Recursica CSS variables against tokens JSON.",
   "private": false,
   "homepage": "https://github.com/borderux/recursica/tree/main/packages/recursica-postcss-vars",
