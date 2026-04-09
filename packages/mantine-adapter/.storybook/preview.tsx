@@ -35,7 +35,7 @@ const preview: Preview = {
         ? [basePreview.decorators]
         : []),
     (Story) => (
-      <MantineProvider defaultColorScheme="dark">
+      <MantineProvider defaultColorScheme="light">
         <ColorSchemeWrapper>
           <Story />
         </ColorSchemeWrapper>
