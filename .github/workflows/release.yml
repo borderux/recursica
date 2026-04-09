@@ -42,6 +42,7 @@ jobs:
     permissions:
       contents: write # To create releases and tags
       pull-requests: write # To create pull requests
+      id-token: write # Required for NPM OIDC Trusted Publishing
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -117,8 +118,9 @@ jobs:
           publish: npm run release
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ""
+          NODE_AUTH_TOKEN: ""
+          NPM_CONFIG_PROVENANCE: true
 
       # Publish packages (create zip files for figma plugins)
       # Note: All packages are already built, so this step only creates zip files
