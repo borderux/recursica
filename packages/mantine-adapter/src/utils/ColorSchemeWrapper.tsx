@@ -13,8 +13,11 @@ export function ColorSchemeWrapper({
   const { setColorScheme } = useMantineColorScheme();
 
   useEffect(() => {
-    const handleColorScheme = (value: boolean) =>
-      setColorScheme(value ? "dark" : "light");
+    const handleColorScheme = (value: boolean) => {
+      const theme = value ? "dark" : "light";
+      setColorScheme(theme);
+      document.documentElement.setAttribute("data-recursica-theme", theme);
+    };
 
     channel.on(DARK_MODE_EVENT_NAME, handleColorScheme);
     return () => channel.off(DARK_MODE_EVENT_NAME, handleColorScheme);

@@ -16,8 +16,18 @@ const basePreview = createPreviewConfig({
   recursicaUIKitJsonPath: recursicaUIKit,
 });
 
+import recursicaTheme from "./RecursicaTheme";
+
 const preview: Preview = {
   ...basePreview,
+  parameters: {
+    ...basePreview.parameters,
+    darkMode: {
+      current: "light",
+      dark: recursicaTheme,
+      light: recursicaTheme,
+    },
+  },
   decorators: [
     ...(Array.isArray(basePreview.decorators)
       ? basePreview.decorators
