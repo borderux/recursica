@@ -75,7 +75,11 @@ const plugin = (opts: PluginOptions = {}) => {
               `    at ${fileName}:${line}:${column}\n` +
               `    (Not found in ${path.basename(opts.cssPath)})`;
 
-            if (opts.strict) {
+            const isProduction = process.env.NODE_ENV === "production";
+            const strictMode =
+              opts.strict !== undefined ? opts.strict : isProduction;
+
+            if (strictMode) {
               console.error(
                 `\n\x1b[31m❌ [recursica-postcss-vars] BUILD FAILED:\x1b[0m\n${message}\n`,
               );

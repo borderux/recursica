@@ -16,7 +16,7 @@ export interface RecursicaButtonProps {
 }
 
 export type ButtonProps = RecursicaOverStyled<
-  Omit<MantineButtonProps, "variant" | "size" | "leftSection"> &
+  Omit<MantineButtonProps, "variant" | "size" | "leftSection" | "fullWidth"> &
     RecursicaButtonProps
 >;
 
@@ -51,6 +51,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const sanitizedProps = filterStylingProps(rest, overStyled);
     const restRecord = sanitizedProps as Record<string, unknown>;
+
+    // Explicitly delete blocked semantic expansion dimension props
+    delete restRecord["fullWidth"];
 
     const hasLeftSection = !!icon || !!restRecord["leftSection"];
     const hasRightSection = !!restRecord["rightSection"];

@@ -44,6 +44,7 @@ This guide describes how to create Storybook stories for design-system component
   - **Future components:** Apply the same question—pick the major properties that define how the component looks and behaves, then add a few static stories that cover the most important combinations or edge cases.
 - **Implementation:**
   - Each static story is a **named export** that renders the component with fixed `args` (or no args and inline props). Do not rely on controls for these; the story should look the same every time.
+  - **Single responsibility per story:** Do not attempt to pack multiple distinct semantic states (e.g., Disabled, Error) into a single overarching "State Variants" story block. Split them into discrete, isolated stories (e.g., `export const Disabled`, `export const Error`) to ensure clear visual regression snapshots without UI-grid overcrowding.
   - Use a clear naming convention (e.g. `SolidDefault`, `OutlineSmall`, `TextWithIcon`) so the story list is readable and regression reports are easy to interpret.
 - **Result:** A set of static stories that can be used for visual regression (e.g. Chromatic, Percy, or a custom screenshot diff) and that document key states without overwhelming the sidebar.
 
@@ -64,7 +65,7 @@ This keeps the story count manageable and makes it clear why each static story e
 
 ## 5. Structure of the story file
 
-- **Default export:** Meta object with `component`, `title` (e.g. under `Design System/Button`), and optionally `tags` for docs or tests.
+- **Default export:** Meta object with `component`, `title` (e.g. under `Design System/Button`), `parameters.docs.description.component` exclusively documenting the purpose and layout usage of the element explicitly for the AutoDocs layout, and optionally `tags` for docs or tests (e.g., `["autodocs"]`).
 - **Default / Primary story:** The “playground” story with controls (e.g. `export const Default` or the default story with `args` and `argTypes`).
 - **Named exports:** One per static state (e.g. `SolidDefault`, `OutlineSmall`). Each uses fixed props and no (or minimal) controls.
 - **Decorators:** If all stories need the same wrapper (e.g. theme context), add a decorator in the meta. For **layer**, wrap the component in `<Layer layer={N}>` in the Default story (with a layer control) and in any static story that should show a specific layer; do not set layer as a component prop. Ensure the Recursica CSS (e.g. `recursica_variables_scoped.css`) is imported in the story file or in Storybook preview so variables resolve.
@@ -82,8 +83,31 @@ This keeps the story count manageable and makes it clear why each static story e
 ## 7. Checklist for a new component story file
 
 - [ ] Story file is co-located: `{ComponentName}.stories.tsx` next to `{ComponentName}.tsx`.
+- [ ] Component documentation exists explicitly mapping `parameters.docs.description.component` in the default meta object describing what the element fundamentally provides.
 - [ ] Default (or primary) story exposes controls for the main props integrators will change.
 - [ ] Major properties for static stories are chosen and documented (in the file or in this guide).
 - [ ] Static stories are added for the chosen combinations; each has fixed props and no controls.
 - [ ] Default story wraps the component in `<Layer layer={layer}>` with a layer control; static stories that need a layer use `<Layer layer={N}>` around the component. Theme (and any other required context) are provided via decorators or wrapper so Recursica styles apply.
 - [ ] Recursica CSS (e.g. `recursica_variables_scoped.css`) is loaded in the story or in Storybook preview.
+- [ ] No native UI library components (like `@mantine/core` wrappers) are directly imported into the story. Everything rendered should strictly be Recursica components. Never use HTML primitive components (`div`, `span`, etc.) unless absolutely necessary to demo a story.
+
+---
+
+## 8. Strictly Recursica Components in Stories
+
+**Do not import native UI-library components (e.g., `@mantine/core`) directly into `.stories.tsx` files.**
+
+- **Why?** It defeats the purpose of the abstraction layer. If a Storybook user relies on the native library for padding, margins, formatting, or buttons during development playground usage, they are missing the raw limitations of the styling boundaries we impose natively.
+- **Solution:** Rely strictly on Recursica UI components that you have constructed natively (for example, import our wrapped `<Button>` over Mantine's raw `<Button>`). You should never use HTML primitive components like `<div>`, `<span>`, or `<p>` unless absolutely necessary to demo a story.
+
+---
+
+## 9. ReadOnly Framework & Visual Verification
+
+**If a component utilizes `ReadOnlyControlProps` directly natively (like `TextField`), it must explicitly demonstrate these formatting hooks safely.**
+
+1. **`readOnly` ArgType:** Add `readOnly` inside the `argTypes` block mapped functionally to `"boolean"` exposing the toggle natively in the baseline Default panel.
+2. **Standard ReadOnly Static Story:** Provide, at absolute minimum, a core `StaticReadOnly` snapshot structurally freezing the ReadOnly mappings evaluating a standard text property (typically with `readOnly: true` and `value="Explicit ReadOnly Preview"`).
+3. **Editable ReadOnly Constraint (If Applicable):** If bounding editable nodes via `labelWithEditIcon`, explicitly verify the transition boundary by creating `EditableReadOnly` evaluating `labelWithEditIcon: true`, `readOnly: true`, and standard `defaultValues`.
+
+This securely ensures visual snapshot tests never miss parsing edge-case read text transitions.

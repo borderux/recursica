@@ -1,0 +1,46 @@
+/* FormControlWrapper.module.css */
+
+.root {
+  display: flex;
+  margin: 0; /* Hardcoded structural reset */
+  padding: 0; /* Hardcoded structural reset */
+  max-width: var(--form-control-max-width, 100%);
+  min-width: var(--form-control-min-width, auto);
+}
+
+/* Base Structural Stacked Layout */
+.root[data-form-layout="stacked"] {
+  flex-direction: column;
+}
+
+/* Base Structural Grid Layout */
+.root[data-form-layout="side-by-side"] {
+  flex-direction: row;
+  align-items: flex-start;
+  flex-wrap: wrap; /* Allows collapse if screen is too thin, though standard flex width should hold */
+}
+
+/* Left structural justification defaults (push input mapping) */
+.root[data-form-alignment="left"] {
+  /* Inherited naturally via row/column flows */
+}
+
+/* Right structural justification defaults */
+.root[data-form-alignment="right"] {
+  /* To justify entire form control components to the right */
+  justify-content: flex-end;
+}
+
+.labelSection {
+  /* Width dimensions are strictly governed natively inside Label.module.css's sizing variant mapping */
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.inputSection {
+  display: flex; /* Groups internal field alongside subsequent errors/descriptions */
+  flex-direction: column;
+  flex: 1; /* Consumes the remaining x-axis in grid columns natively */
+  min-width: 0; /* Break boundary preventing internal flex explosion */
+}

@@ -72,6 +72,67 @@ const OverStylingInfo = () => {
 
         <Divider mb="xl" />
 
+        <Title order={3} mb="sm">
+          Permitted Layout Properties
+        </Title>
+        <Text mb="sm">
+          Unlike deep styling bounds (colors, typography, padding, dimensions),
+          external <strong>layout spacing properties</strong> like Margins (
+          <Code>m</Code>, <Code>mt</Code>, <Code>mb</Code>, <Code>mx</Code>) are
+          safely <strong>permitted by default</strong>. This allows integrators
+          to structurally compose components alongside siblings without
+          breaching internal token boundaries.
+        </Text>
+        <Text mb="xl">
+          When using layout properties, you have the flexibility to use either
+          ecosystem seamlessly:
+        </Text>
+        <List mb="md" type="ordered">
+          <List.Item>
+            <strong>Mantine Core Values:</strong> Passing standard Mantine sizes
+            (like <Code>mt="md"</Code>) passes straight through to Mantine
+            natively, allowing you to interface completely normally with a
+            parent application's existing Mantine Theme setup that might fall
+            outside Recursica's scope.
+          </List.Item>
+          <List.Item>
+            <strong>Recursica Strict Tokens:</strong> Passing our custom
+            prefixed tokens (like <Code>mt="rec-md"</Code>) signals our internal
+            layout interceptor to securely translate the value directly to our
+            native <Code>recursica_brand_dimensions</Code> CSS variables. This
+            ensures strict design token measurements while sharing the exact
+            same prop interface!
+          </List.Item>
+        </List>
+        <Text mb="sm" fw={500}>
+          Available Recursica Layout Tokens:
+        </Text>
+        <List mb="xl" type="unordered">
+          <List.Item>
+            <Code>rec-none</Code> (0px limit)
+          </List.Item>
+          <List.Item>
+            <Code>rec-sm</Code> (0.5x scaling)
+          </List.Item>
+          <List.Item>
+            <Code>rec-default</Code> (1.0x scaling)
+          </List.Item>
+          <List.Item>
+            <Code>rec-md</Code> (1.5x scaling)
+          </List.Item>
+          <List.Item>
+            <Code>rec-lg</Code> (2.0x scaling)
+          </List.Item>
+          <List.Item>
+            <Code>rec-xl</Code> (3.0x scaling)
+          </List.Item>
+          <List.Item>
+            <Code>rec-2xl</Code> (4.0x scaling)
+          </List.Item>
+        </List>
+
+        <Divider mb="xl" />
+
         <Title order={3} mb="md">
           Live Example
         </Title>

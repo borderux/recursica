@@ -1,19 +1,25 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import type { Decorator } from "@storybook/react-vite";
 import { RecursicaThemeProvider } from "@recursica/adapter-common";
+import { addons } from "storybook/internal/preview-api";
+import { DARK_MODE_EVENT_NAME } from "storybook-dark-mode";
+
+const channel = addons.getChannel();
 
 export const withRecursicaTheme = (
   defaultTheme: "light" | "dark" = "light",
 ): Decorator => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const DecoratorComponent = (Story: React.ComponentType, context: any) => {
-    const themeName =
-      context.globals?.theme ||
-      context.parameters?.theme?.default ||
-      defaultTheme;
+  const DecoratorComponent = (Story: React.ComponentType) => {
+    const [isDark, setIsDark] = useState(defaultTheme === "dark");
+
+    useEffect(() => {
+      const handleMode = (dark: boolean) => setIsDark(dark);
+      channel.on(DARK_MODE_EVENT_NAME, handleMode);
+      return () => channel.off(DARK_MODE_EVENT_NAME, handleMode);
+    }, []);
 
     return (
-      <RecursicaThemeProvider theme={themeName}>
+      <RecursicaThemeProvider theme={isDark ? "dark" : "light"}>
         <Story />
       </RecursicaThemeProvider>
     );

@@ -74,20 +74,6 @@ export const createPreviewConfig = (options: PreviewConfigOptions): Preview => {
   return {
     parameters,
     decorators,
-    globalTypes: {
-      theme: {
-        name: "Theme",
-        description: "Global theme for components",
-        defaultValue: defaultTheme,
-        toolbar: {
-          icon: "circlehollow",
-          items: [
-            { value: "dark", title: "Dark" },
-            { value: "light", title: "Light" },
-          ],
-          dynamicTitle: true,
-        },
-      },
-    },
+    globalTypes: {},
   };
 };

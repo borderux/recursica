@@ -26,6 +26,7 @@ export const createMainConfig = (
       "@storybook/addon-onboarding",
       "@storybook/addon-docs",
       "@storybook/addon-a11y",
+      "storybook-dark-mode",
     ],
     basePath = "/",
     enableCORS = true,
@@ -78,10 +79,9 @@ export const createMainConfig = (
         plugins: [
           recursicaVars({
             cssPath: recursicaCSSPath,
-            strict:
-              postCSSStrictMode !== undefined
-                ? postCSSStrictMode
-                : configType === "PRODUCTION",
+            ...(postCSSStrictMode !== undefined
+              ? { strict: postCSSStrictMode }
+              : {}),
           }),
         ],
       };

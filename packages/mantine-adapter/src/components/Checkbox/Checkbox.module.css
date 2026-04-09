@@ -1,0 +1,204 @@
+/**
+ * Checkbox.module.css
+ * 
+ * HARDCODED VALUES:
+ * - margin / padding: 0 — Structural resets; consider token if spacing needed.
+ * - cursor: pointer / not-allowed — Baseline interactive indications.
+ * - appearance / box-sizing / border-style — necessary normalization for inputs.
+ * - transition: all 0.2s ease — Animation curve; consider a transition token.
+ * - min-width: 0 — Forces text wrap boundary in flex children.
+ */
+
+/* --- GROUP STYLES --- */
+.groupRoot {
+  padding: var(
+    --recursica_ui-kit_components_checkbox-group_properties_padding,
+    0
+  );
+  margin: 0; /* HARDCODE: structural reset; consider token if layout needs change */
+  display: flex !important;
+  flex-direction: column;
+  gap: var(
+    --recursica_ui-kit_components_checkbox-group_properties_item-gap,
+    16px
+  );
+}
+
+/* SideBySide Variant */
+.groupRoot[data-layout="side-by-side"] {
+  flex-direction: column;
+  flex-wrap: wrap;
+  padding-top: var(
+    --recursica_ui-kit_components_checkbox-group_variants_layouts_side-by-side_properties_vertical-padding
+  );
+  padding-bottom: var(
+    --recursica_ui-kit_components_checkbox-group_variants_layouts_side-by-side_properties_vertical-padding
+  );
+  margin-top: var(
+    --recursica_ui-kit_components_checkbox-group_variants_layouts_side-by-side_properties_top-bottom-margin
+  );
+  margin-bottom: var(
+    --recursica_ui-kit_components_checkbox-group_variants_layouts_side-by-side_properties_top-bottom-margin
+  );
+}
+
+/* Stacked Variant */
+.groupRoot[data-layout="stacked"] {
+  flex-direction: column;
+  margin-top: var(
+    --recursica_ui-kit_components_checkbox-group_variants_layouts_stacked_properties_top-bottom-margin
+  );
+  margin-bottom: var(
+    --recursica_ui-kit_components_checkbox-group_variants_layouts_stacked_properties_top-bottom-margin
+  );
+}
+
+/* --- PRIMITIVE CHECKBOX STYLES --- */
+
+.root {
+  max-width: var(
+    --recursica_ui-kit_components_checkbox-item_properties_max-width
+  );
+}
+
+.body {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--recursica_ui-kit_components_checkbox-item_properties_label-gap);
+}
+
+.inner {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important; /* HARDCODE: structural reset */
+  width: var(--recursica_ui-kit_components_checkbox_properties_size) !important;
+  height: var(
+    --recursica_ui-kit_components_checkbox_properties_size
+  ) !important;
+  /* Mathematically syncs the physical input checkbox bounding block visually with the center of the text's first line natively. */
+  margin-top: calc(
+    (
+        var(
+            --recursica_ui-kit_components_checkbox-item_properties_text_line-height
+          ) *
+          var(
+            --recursica_ui-kit_components_checkbox-item_properties_text_font-size
+          ) -
+          var(--recursica_ui-kit_components_checkbox_properties_size)
+      ) /
+      2
+  ) !important;
+}
+
+/* Base explicit reset masking underlying framework defaults */
+.input {
+  cursor: pointer; /* HARDCODE: core interaction behavior */
+  appearance: none; /* HARDCODE: reset native widget */
+  box-sizing: border-box !important; /* HARDCODE: ensures size includes borders */
+  width: var(--recursica_ui-kit_components_checkbox_properties_size) !important;
+  height: var(
+    --recursica_ui-kit_components_checkbox_properties_size
+  ) !important;
+  border-radius: var(
+    --recursica_ui-kit_components_checkbox_properties_border-radius
+  ) !important;
+  border-width: var(
+    --recursica_ui-kit_components_checkbox_properties_border-size
+  ) !important;
+  border-style: solid; /* HARDCODE: normalize primitive border-style */
+
+  /* Standard unchecked state */
+  background-color: var(
+    --recursica_ui-kit_components_checkbox_properties_colors_background-unchecked
+  ) !important;
+  border-color: var(
+    --recursica_ui-kit_components_checkbox_properties_colors_border-unchecked
+  ) !important;
+  transition: all 0.2s ease; /* HARDCODE: consider global transition token */
+}
+
+/* Checked/Indeterminate State */
+.input:checked {
+  background-color: var(
+    --recursica_ui-kit_components_checkbox_properties_colors_background-checked
+  ) !important;
+  border-color: var(
+    --recursica_ui-kit_components_checkbox_properties_colors_border-checked
+  ) !important;
+}
+.input[data-indeterminate] {
+  background-color: var(
+    --recursica_ui-kit_components_checkbox_properties_colors_background-indeterminate
+  ) !important;
+  border-color: var(
+    --recursica_ui-kit_components_checkbox_properties_colors_border-indeterminate
+  ) !important;
+}
+
+/* Disabled State */
+.input:disabled {
+  cursor: not-allowed; /* HARDCODE: disabled state default */
+  opacity: var(
+    --recursica_ui-kit_components_checkbox_properties_disabled-opacity
+  ) !important;
+  background-color: var(
+    --recursica_ui-kit_components_checkbox_properties_colors_disabled-background
+  ) !important;
+  border-color: var(
+    --recursica_ui-kit_components_checkbox_properties_colors_disabled-border
+  ) !important;
+}
+
+.icon {
+  width: var(
+    --recursica_ui-kit_components_checkbox_properties_icon-size
+  ) !important;
+  height: var(
+    --recursica_ui-kit_components_checkbox_properties_icon-size
+  ) !important;
+  color: var(
+    --recursica_ui-kit_components_checkbox_properties_colors_icon-color
+  ) !important;
+}
+.input:disabled + .iconWrapper .icon {
+  color: var(
+    --recursica_ui-kit_components_checkbox_properties_colors_disabled-icon
+  ) !important;
+}
+
+.labelWrapper {
+  padding: 0 !important; /* HARDCODE: structural layout reset */
+  margin: 0 !important; /* HARDCODE: structural layout reset */
+  flex: 1;
+  min-width: 0; /* HARDCODE: forces text wrap boundary in flex child */
+}
+
+.label {
+  cursor: pointer; /* HARDCODE: interactive affordance */
+  padding: 0 !important; /* HARDCODE: reset layout */
+  margin: 0 !important; /* HARDCODE: reset layout */
+  word-wrap: break-word;
+  white-space: normal;
+  color: var(
+    --recursica_ui-kit_components_checkbox-item_properties_text_color
+  ) !important;
+  font-family: var(
+    --recursica_ui-kit_components_checkbox-item_properties_text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_checkbox-item_properties_text_font-size
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_checkbox-item_properties_text_font-weight
+  );
+  line-height: var(
+    --recursica_ui-kit_components_checkbox-item_properties_text_line-height
+  );
+}
+.root[data-disabled] .label {
+  cursor: not-allowed; /* HARDCODE: disabled interaction */
+  opacity: var(
+    --recursica_ui-kit_components_checkbox_properties_disabled-opacity
+  );
+}

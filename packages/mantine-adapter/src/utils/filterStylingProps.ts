@@ -53,12 +53,57 @@ export const BLOCKED_STYLING_KEYS = [
   "bdc",
   "bdr", // Borders
   "shadow", // Effects
+  "w",
+  "miw",
+  "maw",
+  "h",
+  "mih",
+  "mah", // Dimensions
 ] as const;
 
 export type BlockedStylingKeys = (typeof BLOCKED_STYLING_KEYS)[number];
 
+export type RecursicaSpacing =
+  | "rec-none"
+  | "rec-sm"
+  | "rec-default"
+  | "rec-md"
+  | "rec-lg"
+  | "rec-xl"
+  | "rec-2xl";
+
+const LAYOUT_PROPS = new Set([
+  "m",
+  "my",
+  "mx",
+  "mt",
+  "mb",
+  "ml",
+  "mr",
+  "gap",
+  "rowGap",
+  "columnGap",
+  "top",
+  "left",
+  "bottom",
+  "right",
+]);
+
+const SPACING_MAP: Record<string, string> = {
+  "rec-none": "var(--recursica_brand_dimensions_general_none)",
+  "rec-sm": "var(--recursica_brand_dimensions_general_sm)",
+  "rec-default": "var(--recursica_brand_dimensions_general_default)",
+  "rec-md": "var(--recursica_brand_dimensions_general_md)",
+  "rec-lg": "var(--recursica_brand_dimensions_general_lg)",
+  "rec-xl": "var(--recursica_brand_dimensions_general_xl)",
+  "rec-2xl": "var(--recursica_brand_dimensions_general_2xl)",
+};
+
+export type ForbiddenStyles = { [K in BlockedStylingKeys]?: never };
+
 export type RecursicaOverStyled<T> =
-  | (Omit<T, BlockedStylingKeys> & { overStyled?: false | undefined })
+  | (Omit<T, BlockedStylingKeys> &
+      ForbiddenStyles & { overStyled?: false | undefined })
   | (T & { overStyled: true });
 
 export function filterStylingProps<T extends Record<string, unknown>>(
@@ -74,6 +119,19 @@ export function filterStylingProps<T extends Record<string, unknown>>(
   for (const prop of BLOCKED_STYLING_KEYS) {
     if (prop in sanitized) {
       delete sanitized[prop];
+    }
+  }
+
+  // Intercept Recursica spacing tokens for valid layout properties
+  for (const [key, value] of Object.entries(sanitized)) {
+    if (
+      typeof value === "string" &&
+      value.startsWith("rec-") &&
+      LAYOUT_PROPS.has(key)
+    ) {
+      if (value in SPACING_MAP) {
+        (sanitized as Record<string, unknown>)[key] = SPACING_MAP[value];
+      }
     }
   }
 

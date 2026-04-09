@@ -6,19 +6,24 @@ import {
   type AccordionControlProps,
   type AccordionPanelProps,
 } from "@mantine/core";
+import {
+  filterStylingProps,
+  type RecursicaOverStyled,
+} from "../../utils/filterStylingProps";
 import styles from "./Accordion.module.css";
 
 // ==== ACCORDION CONTAINER ====
-export type AccordionProps = MantineAccordionProps;
+export type AccordionProps = RecursicaOverStyled<MantineAccordionProps>;
 
 const AccordionBase = function Accordion({
-  className,
-  classNames,
   variant = "unstyled",
+  overStyled = false,
   ...rest
 }: AccordionProps) {
+  const sanitizedProps = filterStylingProps(rest, overStyled);
+
   // Bind all deep CSS module references natively into the global class mapping schema
-  const mergedClassNames: Record<string, string> = {
+  const mergedClassNames: Partial<Record<string, string>> = {
     root: styles.root,
     item: styles.item,
     control: styles.control,
@@ -28,12 +33,13 @@ const AccordionBase = function Accordion({
     content: styles.content,
   };
 
+  const classNamesProp = (sanitizedProps as Record<string, unknown>).classNames;
   if (
-    classNames &&
-    typeof classNames === "object" &&
-    !Array.isArray(classNames)
+    classNamesProp &&
+    typeof classNamesProp === "object" &&
+    !Array.isArray(classNamesProp)
   ) {
-    const o = classNames as Record<string, string>;
+    const o = classNamesProp as Record<string, string>;
     Object.keys(o).forEach((key) => {
       if (mergedClassNames[key]) {
         mergedClassNames[key] = `${mergedClassNames[key]} ${o[key]}`;
@@ -43,55 +49,68 @@ const AccordionBase = function Accordion({
     });
   }
 
+  const classNameProp = (sanitizedProps as Record<string, unknown>)
+    .className as string | undefined;
+
   return (
     <MantineAccordion
       variant={variant}
-      className={className}
+      className={classNameProp}
       classNames={mergedClassNames}
-      {...rest}
+      {...(sanitizedProps as unknown as MantineAccordionProps)}
     />
   );
 };
 AccordionBase.displayName = "Accordion";
 
 // ==== ACCORDION ITEM ====
-export type RecursicaAccordionItemProps = AccordionItemProps & {
-  /**
-   * When provided alongside `leftIcon` or independently, this auto-generates the Accordion Control and Panel DOM layers natively.
-   */
-  title?: React.ReactNode;
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface RecursicaAccordionItemProps
+  extends Omit<AccordionItemProps, "className"> {}
+// We need to omit and re-merge native props like in Badge
+export type AccordionItemWrapperProps = RecursicaOverStyled<
+  AccordionItemProps & {
+    /**
+     * When provided alongside `leftIcon` or independently, this auto-generates the Accordion Control and Panel DOM layers natively.
+     */
+    title?: React.ReactNode;
 
-  /**
-   * Leading icon explicitly mapped into the Mantine `Accordion.Control` leftSection boundary natively.
-   */
-  leftIcon?: React.ReactNode;
+    /**
+     * Leading icon explicitly mapped into the Mantine `Accordion.Control` leftSection boundary natively.
+     */
+    leftIcon?: React.ReactNode;
 
-  /**
-   * Toggles the presence of the bottom trailing divider native to AccordionItems.
-   * @default true
-   */
-  divider?: boolean;
-
-  // Note on `open` property:
-  // Recursica structurally maps an `open` property for active state tracking. However, Mantine inherently demands array-driven states
-  // managed by the parent `<Accordion value="...">` wrapper logic to accurately sequence expanding DOM animations. Attempting to force
-  // an isolated `open` boolean natively corrupts Mantine's transition observers, so no `open` prop is directly preserved on this wrapper.
-};
+    /**
+     * Toggles the presence of the bottom trailing divider native to AccordionItems.
+     * @default true
+     */
+    divider?: boolean;
+  }
+>;
 
 export const AccordionItem = forwardRef<
   HTMLDivElement,
-  RecursicaAccordionItemProps
+  AccordionItemWrapperProps
 >(function AccordionItem(
-  { title, leftIcon, divider = true, children, ...rest },
+  { title, leftIcon, divider = true, children, overStyled = false, ...rest },
   ref,
 ) {
+  const sanitizedProps = filterStylingProps(rest, overStyled);
+  const classNameProp = (sanitizedProps as Record<string, unknown>)
+    .className as string | undefined;
+
+  const finalClass =
+    [divider ? undefined : styles.noDivider, classNameProp]
+      .filter(Boolean)
+      .join(" ") || undefined;
+
   // If the user utilizes the explicit 'title' prop from Recursica, we securely auto-construct the Mantine sub-hierarchy natively!
   // If not, we defer to raw composable children (meaning the integrator maps `<Accordion.Control>` manually).
   return (
     <MantineAccordion.Item
       ref={ref}
-      className={divider ? undefined : styles.noDivider}
-      {...rest}
+      className={finalClass}
+      {...(sanitizedProps as unknown as AccordionItemProps)}
     >
       {title ? (
         <>
@@ -107,20 +126,30 @@ export const AccordionItem = forwardRef<
 AccordionItem.displayName = "AccordionItem";
 
 // ==== ACCORDION CONTROL ====
-export type RecursicaAccordionControlProps = AccordionControlProps & {
-  /**
-   * Leading icon explicitly mapped into the Mantine `Accordion.Control` leftSection boundary natively.
-   */
-  leftIcon?: React.ReactNode;
-};
+export type AccordionControlWrapperProps = RecursicaOverStyled<
+  AccordionControlProps & {
+    /**
+     * Leading icon explicitly mapped into the Mantine `Accordion.Control` leftSection boundary natively.
+     */
+    leftIcon?: React.ReactNode;
+  }
+>;
 
 export const AccordionControl = forwardRef<
   HTMLButtonElement,
-  RecursicaAccordionControlProps
->(function AccordionControl({ leftIcon, children, ...rest }, ref) {
+  AccordionControlWrapperProps
+>(function AccordionControl(
+  { leftIcon, children, overStyled = false, ...rest },
+  ref,
+) {
+  const sanitizedProps = filterStylingProps(rest, overStyled);
+  const classNameProp = (sanitizedProps as Record<string, unknown>)
+    .className as string | undefined;
+
   return (
     <MantineAccordion.Control
       ref={ref}
+      className={classNameProp}
       icon={
         leftIcon ? (
           <span className={styles.iconLeftWrapper} aria-hidden>
@@ -128,7 +157,7 @@ export const AccordionControl = forwardRef<
           </span>
         ) : undefined
       }
-      {...rest}
+      {...(sanitizedProps as unknown as AccordionControlProps)}
     >
       {children}
     </MantineAccordion.Control>
@@ -137,11 +166,25 @@ export const AccordionControl = forwardRef<
 AccordionControl.displayName = "AccordionControl";
 
 // ==== ACCORDION PANEL ====
-export const AccordionPanel = forwardRef<HTMLDivElement, AccordionPanelProps>(
-  function AccordionPanel(props, ref) {
-    return <MantineAccordion.Panel ref={ref} {...props} />;
-  },
-);
+export type AccordionPanelWrapperProps =
+  RecursicaOverStyled<AccordionPanelProps>;
+
+export const AccordionPanel = forwardRef<
+  HTMLDivElement,
+  AccordionPanelWrapperProps
+>(function AccordionPanel({ overStyled = false, ...rest }, ref) {
+  const sanitizedProps = filterStylingProps(rest, overStyled);
+  const classNameProp = (sanitizedProps as Record<string, unknown>)
+    .className as string | undefined;
+
+  return (
+    <MantineAccordion.Panel
+      ref={ref}
+      className={classNameProp}
+      {...(sanitizedProps as unknown as AccordionPanelProps)}
+    />
+  );
+});
 AccordionPanel.displayName = "AccordionPanel";
 
 // ==== DOT NOTATION EXPORT ====

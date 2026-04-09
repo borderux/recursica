@@ -1,0 +1,111 @@
+/**
+ * AssistiveElement.module.css
+ * 
+ * HARDCODED VALUES:
+ * - margin / padding: 0 — Structural resets.
+ * - display: flex / align-items: flex-start — layout alignment.
+ */
+
+.root {
+  display: flex !important;
+  align-items: flex-start !important; /* Forces the icon to align with the first line of text */
+  margin: 0 !important; /* HARDCODE: structural reset */
+  padding: 0 !important; /* HARDCODE: structural reset */
+
+  gap: var(
+    --recursica_ui-kit_components_assistive-element_properties_icon-text-gap
+  );
+  margin-top: var(
+    --recursica_ui-kit_components_assistive-element_properties_top-margin
+  ) !important;
+  max-width: var(
+    --recursica_ui-kit_components_assistive-element_properties_max-width
+  );
+}
+
+.textWrapper {
+  /* Text properties securely governed via layout mappings */
+  font-family: var(
+    --recursica_ui-kit_components_assistive-element_properties_text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_assistive-element_properties_text_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_assistive-element_properties_text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_assistive-element_properties_text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_assistive-element_properties_text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_assistive-element_properties_text_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_assistive-element_properties_text_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_assistive-element_properties_text_text-transform
+  );
+
+  /* Fallback text wrap structures */
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+.iconWrapper {
+  flex-shrink: 0 !important; /* Prevent squishing */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  width: var(
+    --recursica_ui-kit_components_assistive-element_properties_icon-size
+  ) !important;
+  height: calc(
+    var(
+        --recursica_ui-kit_components_assistive-element_properties_text_line-height
+      ) *
+      var(
+        --recursica_ui-kit_components_assistive-element_properties_text_font-size
+      )
+  ) !important; /* Forces exact centering bounds within the first text line vertically */
+}
+
+.iconWrapper svg {
+  width: var(
+    --recursica_ui-kit_components_assistive-element_properties_icon-size
+  ) !important;
+  height: var(
+    --recursica_ui-kit_components_assistive-element_properties_icon-size
+  ) !important;
+}
+
+/* 
+ * VARIANT MAPPINGS 
+ * Inherits colors natively mapped per variant. 
+ */
+
+.root[data-variant="help"] .textWrapper {
+  color: var(
+    --recursica_ui-kit_components_assistive-element_variants_types_help_properties_colors_text-color
+  ) !important;
+}
+.root[data-variant="help"] .iconWrapper svg {
+  color: var(
+    --recursica_ui-kit_components_assistive-element_variants_types_help_properties_colors_icon-color
+  ) !important;
+}
+
+.root[data-variant="error"] .textWrapper {
+  color: var(
+    --recursica_ui-kit_components_assistive-element_variants_types_error_properties_colors_text-color
+  ) !important;
+}
+.root[data-variant="error"] .iconWrapper svg {
+  color: var(
+    --recursica_ui-kit_components_assistive-element_variants_types_error_properties_colors_icon-color
+  ) !important;
+}

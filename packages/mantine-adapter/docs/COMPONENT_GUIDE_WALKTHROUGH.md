@@ -45,7 +45,8 @@ Do not use plain `.css` for component overrides, and do not use `.css.ts` with `
 
 ### 3.1 Recursica prop layer (unified API)
 
-- **Start with Recursica props** – The Recursica props interface is the **generic prop layer** that applies to all UI-kit adapters (Mantine, Material, Carbon, native HTML, etc.). Define it first; it is the design-system API only (e.g. `variant`, `size`, `elevation`, `icon`). **Do not add `layer` as a prop;** layer is set only by wrapping in `<Layer>`. Add JSDoc on the interface and important props.
+- **Start with Recursica props** – The Recursica props interface is the **generic prop layer** that applies to all UI-kit adapters (Mantine, Material, Carbon, native HTML, etc.). Define it first; it is the design-system API only (e.g. `variant`, `size`, `elevation`, `icon`). **Do not add `layer` as a prop;** layer is set only by wrapping in `<Layer>`.
+- **Always Document Props with JSDoc** - Every exported Prop interface (especially Recursica specific props) MUST be fully documented using JSDoc (`/** ... */`) on every field. This ensures developers have exact Intellisense definitions locally and guarantees that autocompletion reliably maps our structural definitions without requiring them to parse the component natively.
 - **Global `overStyled` prop** – Every Recursica component **must** accept an `overStyled` boolean prop (defaulting to `false`) and wrap their component properties in the `RecursicaOverStyled<T>` typescript union. This strict compile-time check prevents developers from accidentally autocompleting forbidden internal styling injections (like `className` or Mantine system `bg` maps). At runtime, components also pipe their properties through `filterStylingProps` to omit injection attempts if a developer forces an override through Javascript directly. The presence of `overStyled={true}` serves as an explicit bypass for both Typescript and the runtime filter.
 - **Goal: one API, any kit** – The goal is a **unified prop layer** for Recursica components that works with any underlying UI-kit or HTML element. Each adapter is responsible for **mapping** Recursica props to the underlying kit’s API. Creating a component therefore requires **understanding each target kit’s prop API** so you can define a single Recursica API that maps cleanly in every adapter.
 - **Use standard HTML props when possible** – Do not change or redefine default HTML attribute types. Use native props (e.g. `type`, `title`, `disabled`, `onClick`) as-is and pass them through to the root element. They are part of the public props but not part of the “Recursica-only” design-system interface.
@@ -129,3 +130,20 @@ Do not use plain `.css` for component overrides, and do not use `.css.ts` with `
 - [ ] displayName and JSDoc set; icon-only / unlabeled usage documented (e.g. aria-label).
 - [ ] Toolbar integration test and any required toolbar/sidebar config added.
 - [ ] Component-specific decisions, edge-cases, and ongoing design-system layout fixes are meticulously documented in a living `{COMPONENT}_IMPLEMENTATION_NOTES.md` file (e.g. `BUTTON_IMPLEMENTATION_NOTES.md`) to structurally track _why_ the component logic diverges from standard library behavior.
+
+---
+
+## 11. Form Controls & Wrappers
+
+When building input primitives (e.g., Text Fields, Selects, Checkboxes), UI libraries universally try to inject their own highly-opinionated macro wrappers (such as `Input.Wrapper` in Mantine or `FormControl` in MUI) to manage labels, error strings, and layout.
+
+**Rule: Never use the underlying UI-kit's macro form wrapper.**
+
+To strictly ensure that every single form input matches the exact Recursica semantic spacing, accessibility links, and optical layouts, we map every single form element inside our own native `<FormControlWrapper>`.
+
+### Implementation Constraints
+
+1. **Target the Naked Primitive**: Only render the absolute bare-metal input element from the UI system (e.g., `<Input>` instead of `<TextInput>`, or rendering it with `label={null} description={null}` if standard properties cannot be bypassed). This guarantees we don't accidentally render two sets of labels or deeply nested hidden validation boxes.
+2. **Propagate via FormControlWrapper**: Inject the naked primitive safely within `<FormControlWrapper>`. This centralizes our entire form layout parameter map (`formLayout`, `assistiveText`, `required`, etc.).
+3. **Form Layout Unification**: Expose a generic `formLayout` parameter on your component (defaulting to `"stacked"`) and explicitly hand it down to `FormControlWrapper`. Do NOT maintain separate structural layout hooks specific to the singular input. Let the `FormControlWrapper` orchestrate whether the component renders stacked or side-by-side natively.
+4. **ARIA Bridging**: Expose the base validation states (`error`, `required`, `id`) from your wrapper props and feed them blindly into `<FormControlWrapper>`. The wrapper calculates `aria-errormessage` and `aria-describedby` logic natively and directly `<cloneElement>` maps them straight down onto your naked input primitive for screen-reader viability safely!
