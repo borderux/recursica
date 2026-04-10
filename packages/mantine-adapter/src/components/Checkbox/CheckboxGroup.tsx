@@ -4,10 +4,7 @@ import {
   Checkbox as MantineCheckbox,
   type CheckboxGroupProps as MantineCheckboxGroupProps,
 } from "@mantine/core";
-import {
-  useReadOnlyControl,
-  type ReadOnlyControlProps,
-} from "@recursica/adapter-common";
+import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import {
   filterStylingProps,
   type RecursicaOverStyled,
@@ -57,19 +54,13 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
     },
     ref,
   ) {
-    const { isReadOnly, handleEditClick } = useReadOnlyControl(
-      readOnly,
-      onLabelEditClick,
-    );
-
-    // We isolate and filter the strictly remaining structural props that belong inherently to the DOM Input.
     const sanitizedProps = filterStylingProps(rest, overStyled);
     const restRecord = sanitizedProps as Record<string, unknown>;
 
     // Delete prohibited sizing hooks from bypassing the variables
     delete restRecord["size"];
 
-    if (isReadOnly && readOnlyComponent) {
+    if (readOnly && readOnlyComponent) {
       return (
         <FormControlWrapper
           className={className}
@@ -81,7 +72,7 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
           labelAlignment={labelAlignment}
           labelOptionalText={labelOptionalText}
           labelWithEditIcon={labelWithEditIcon}
-          onLabelEditClick={handleEditClick}
+          onLabelEditClick={onLabelEditClick}
           label={label}
           description={description}
           assistiveText={assistiveText}
@@ -107,7 +98,7 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
         labelAlignment={labelAlignment}
         labelOptionalText={labelOptionalText}
         labelWithEditIcon={labelWithEditIcon}
-        onLabelEditClick={handleEditClick}
+        onLabelEditClick={onLabelEditClick}
         label={label}
         description={description}
         assistiveText={assistiveText}
@@ -127,7 +118,7 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
             {React.Children.map(children, (child) => {
               if (React.isValidElement(child)) {
                 return React.cloneElement(child as React.ReactElement<any>, {
-                  disabled: isReadOnly || child.props.disabled,
+                  disabled: readOnly || child.props.disabled,
                 });
               }
               return child;

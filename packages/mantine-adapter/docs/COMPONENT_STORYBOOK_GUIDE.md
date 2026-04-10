@@ -108,6 +108,6 @@ This keeps the story count manageable and makes it clear why each static story e
 
 1. **`readOnly` ArgType:** Add `readOnly` inside the `argTypes` block mapped functionally to `"boolean"` exposing the toggle natively in the baseline Default panel.
 2. **Standard ReadOnly Static Story:** Provide, at absolute minimum, a core `StaticReadOnly` snapshot structurally freezing the ReadOnly mappings evaluating a standard text property (typically with `readOnly: true` and `value="Explicit ReadOnly Preview"`).
-3. **Editable ReadOnly Constraint (If Applicable):** If bounding editable nodes via `labelWithEditIcon`, explicitly verify the transition boundary by creating `EditableReadOnly` evaluating `labelWithEditIcon: true`, `readOnly: true`, and standard `defaultValues`.
+3. **Editable ReadOnly Constraint (If Applicable):** If bounding nodes via `onLabelEditClick`, explicitly verify the visual layout boundaries by creating `EditableReadOnly` evaluating `readOnly: true` accompanied by the `onLabelEditClick` callback (or `labelActionArea`) to ensure the interactive elements render flawlessly alongside frozen read data.
 
 This securely ensures visual snapshot tests never miss parsing edge-case read text transitions.

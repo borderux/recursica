@@ -4,10 +4,7 @@ import {
   Checkbox as MantineCheckbox,
   type CheckboxProps as MantineCheckboxProps,
 } from "@mantine/core";
-import {
-  useReadOnlyControl,
-  type ReadOnlyControlProps,
-} from "@recursica/adapter-common";
+import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import { CheckboxGroup } from "./CheckboxGroup";
 import { FormControlWrapper } from "../FormControlWrapper/FormControlWrapper";
 import {
@@ -36,8 +33,6 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
     ref,
   ) {
     // Checkbox doesn't use Label onLabelEditClick natively since it isn't mapped inside FormControlWrapper intrinsically.
-    const { isReadOnly } = useReadOnlyControl(readOnly);
-
     const sanitizedProps = filterStylingProps(rest, overStyled);
     const restRecord = sanitizedProps as Record<string, unknown>;
 
@@ -48,7 +43,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
     delete restRecord["variant"];
     delete restRecord["iconColor"];
 
-    if (isReadOnly && readOnlyComponent) {
+    if (readOnly && readOnlyComponent) {
       // Safely fallback explicitly returning mapped elements natively
       return (
         <FormControlWrapper

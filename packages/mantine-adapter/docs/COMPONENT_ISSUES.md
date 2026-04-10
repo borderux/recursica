@@ -46,7 +46,7 @@ This document tracks known issues, edge cases, missing variables, or design syst
 
 - **Description:** The `Label` primitive exposes a `labelWithEditIcon` boolean triggering a visual edit icon to render adjacent to the label text (a concept derived loosely from data-heavy Material UI patterns). However, the strict UX implication for how this icon should behave functionally is undefined natively inside the UI Kit.
 - **Impact:** It is currently ambiguous whether the component orchestrates a Read-Only `<pre>` to live `<TextField>` structural DOM swap, or if it simply drops an overarching `disabled={true}` state lock from an already rendered input node.
-- **Current Resolution:** **RESOLVED**. The component strictly exposes `onLabelEditClick={...}` entirely natively un-opinionated. The universal `WithReadOnlyWrapper` structural hook now reliably controls transitioning between a safe visually-mapped `<ReadOnlyField />` output and an active editable DOM node context instantly.
+- **Current Resolution:** **RESOLVED**. The edit icon behavior explicitly does not map to or manipulate `readOnly` state natively. It strictly exposes a detached `onLabelEditClick={...}` callback. It is entirely up to the implementer to natively handle this event and determine how the application state or active component should react.
 
 ## Form Controls
 
