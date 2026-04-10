@@ -150,6 +150,7 @@ Both are built concurrently during development and production builds.
 - `npm run build` - Build for production
 - `npm run zip` - Build and create plugin zip file
 - `npm run lint` - Run ESLint
+- `npm run export:csv` - Convert exported JSON tokens from the `export/` folder into a CSV file
 
 ## Configuration
 
