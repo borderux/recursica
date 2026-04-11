@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Meta, StoryObj } from "@storybook/react";
 import { ReadOnlyField } from "./ReadOnlyField";
-import { Layer, EmptyValueRenderer } from "@recursica/adapter-common";
+import { EmptyValueRenderer } from "@recursica/adapter-common";
 
 const meta: Meta<typeof ReadOnlyField> = {
   title: "UI Kit/ReadOnlyField",
@@ -31,16 +31,6 @@ const meta: Meta<typeof ReadOnlyField> = {
     },
     // We cannot natively control a React.ElementType through standard primitive storybook panels.
   },
-  decorators: [
-    (Story, context) => {
-      const { layer = 0 } = context.args as any;
-      return (
-        <Layer layer={layer}>
-          <Story />
-        </Layer>
-      );
-    },
-  ],
 };
 
 export default meta;
@@ -51,15 +41,7 @@ type Story = StoryObj<typeof ReadOnlyField>;
  * Playground story demonstrating standard structural blocks of the ReadOnlyField module dynamically.
  */
 export const Default: Story = {
-  args: {
-    // layer defined temporarily inline above via mock decorator if proper `<Layer>` wrapper isn't natively bound here
-  },
-  argTypes: {
-    layer: {
-      control: { type: "number", min: 0, max: 3 },
-      table: { category: "Storybook Wrappers" },
-    } as any,
-  },
+  args: {},
 };
 
 /**

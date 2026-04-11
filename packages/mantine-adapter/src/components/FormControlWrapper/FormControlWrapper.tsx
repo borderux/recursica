@@ -52,6 +52,7 @@ export const FormControlWrapper = forwardRef<
     children,
     className,
     overStyled = false,
+    labelElement, // Extracted safely preventing bleeding into HTML domains
     ...rest
   },
   ref,
@@ -128,7 +129,7 @@ export const FormControlWrapper = forwardRef<
             onLabelEditClick={onLabelEditClick}
             required={withAsterisk ?? required}
             // Manually propagate relevant structural logic if underlying groups dictate Label to act as generic wrapper
-            {...(restRecord.labelElement === "div" ? { as: "div" } : {})}
+            {...(labelElement === "div" ? { as: "div" } : {})}
           >
             {label}
           </Label>

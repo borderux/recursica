@@ -6,6 +6,11 @@ const meta: Meta<typeof NumberInput> = {
   title: "UI-Kit/🚧 NumberInput",
   component: NumberInput,
   tags: ["autodocs"],
+  argTypes: {
+    disabled: {
+      control: "boolean",
+    },
+  },
 };
 
 export default meta;

@@ -6,6 +6,11 @@ const meta: Meta<typeof TextArea> = {
   title: "UI-Kit/🚧 TextArea",
   component: TextArea,
   tags: ["autodocs"],
+  argTypes: {
+    disabled: {
+      control: "boolean",
+    },
+  },
 };
 
 export default meta;

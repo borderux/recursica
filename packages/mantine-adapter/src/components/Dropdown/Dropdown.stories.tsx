@@ -6,6 +6,11 @@ const meta: Meta<typeof Dropdown> = {
   title: "UI-Kit/🚧 Dropdown",
   component: Dropdown,
   tags: ["autodocs"],
+  argTypes: {
+    disabled: {
+      control: "boolean",
+    },
+  },
 };
 
 export default meta;

@@ -6,6 +6,11 @@ const meta: Meta<typeof Chip> = {
   title: "UI-Kit/🚧 Chip",
   component: Chip,
   tags: ["autodocs"],
+  argTypes: {
+    disabled: {
+      control: "boolean",
+    },
+  },
 };
 
 export default meta;

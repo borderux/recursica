@@ -17,7 +17,10 @@ import styles from "./Checkbox.module.css";
 
 export interface RecursicaCheckboxGroupProps
   extends Omit<MantineCheckboxGroupProps, "size" | "labelProps">,
-    RecursicaFormControlWrapperProps,
+    Omit<
+      RecursicaFormControlWrapperProps,
+      "controlMaxWidth" | "controlMinWidth"
+    >,
     ReadOnlyControlProps {}
 
 export type CheckboxGroupProps =
@@ -65,6 +68,8 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
         <FormControlWrapper
           className={className}
           style={style as React.CSSProperties}
+          controlMaxWidth="var(--recursica_ui-kit_components_checkbox-item_properties_max-width)"
+          controlMinWidth={undefined}
           overStyled={overStyled as true}
           labelElement="div"
           formLayout={formLayout}
@@ -91,6 +96,8 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
       <FormControlWrapper
         className={className}
         style={style as React.CSSProperties}
+        controlMaxWidth="var(--recursica_ui-kit_components_checkbox-item_properties_max-width)"
+        controlMinWidth={undefined}
         overStyled={overStyled as true}
         labelElement="div" // Strictly override. ARIA grouping prohibits interactive checkboxes nested natively inside <label>.
         formLayout={formLayout}

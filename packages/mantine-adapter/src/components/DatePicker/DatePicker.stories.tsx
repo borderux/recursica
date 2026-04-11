@@ -6,6 +6,11 @@ const meta: Meta<typeof DatePicker> = {
   title: "UI-Kit/🚧 DatePicker",
   component: DatePicker,
   tags: ["autodocs"],
+  argTypes: {
+    disabled: {
+      control: "boolean",
+    },
+  },
 };
 
 export default meta;

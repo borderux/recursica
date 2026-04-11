@@ -19,8 +19,11 @@ export type BreadcrumbProps = RecursicaOverStyled<
 >;
 
 export const Breadcrumb = forwardRef<HTMLDivElement, BreadcrumbProps>(
-  function Breadcrumb({ overStyled = false, ...rest }, ref) {
-    const sanitizedProps = filterStylingProps(rest, overStyled);
+  function Breadcrumb({ overStyled = false, separator = ">", ...rest }, ref) {
+    const sanitizedProps = filterStylingProps(
+      { separator, ...rest },
+      overStyled,
+    );
 
     const mergedClassNames: Partial<Record<string, string>> = {
       root: styles.root,

@@ -1,10 +1,9 @@
 import React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 import { Breadcrumb } from "./Breadcrumb";
-import { Layer } from "@recursica/adapter-common";
 
 type BreadcrumbStoryProps = React.ComponentProps<typeof Breadcrumb> & {
-  layer?: number;
+  items?: string[];
 };
 
 const meta: Meta<BreadcrumbStoryProps> = {
@@ -12,10 +11,15 @@ const meta: Meta<BreadcrumbStoryProps> = {
   component: Breadcrumb,
   tags: ["autodocs"],
   argTypes: {
-    layer: {
-      control: "radio",
-      options: [0, 1, 2, 3],
-      description: "The design system layer context",
+    children: {
+      table: {
+        disable: true,
+      },
+    },
+    items: {
+      control: "object",
+      description:
+        "Array of string labels used to dynamically generate the interactive Breadcrumb nodes.",
       table: {
         category: "Story Controls",
       },
@@ -25,55 +29,49 @@ const meta: Meta<BreadcrumbStoryProps> = {
       description: "Custom separator between items",
     },
   },
+  args: {
+    items: ["Home", "Components", "Breadcrumbs"],
+  },
+  render: ({ items, children, ...args }) => {
+    const mappedChildren = items
+      ? items.map((label, index) => (
+          <a
+            href="#"
+            key={index}
+            style={{
+              color:
+                "var(--recursica_brand_palettes_primary_default_color_tone)",
+              textDecoration: "none",
+            }}
+          >
+            {label}
+          </a>
+        ))
+      : children;
+
+    return <Breadcrumb children={mappedChildren} {...args} />;
+  },
 };
 
 export default meta;
 
 type Story = StoryObj<BreadcrumbStoryProps>;
 
-const mockItems = [
-  { title: "Home", href: "#" },
-  { title: "Components", href: "#" },
-  { title: "Breadcrumb", href: "#" },
-].map((item, index) => (
-  <a
-    href={item.href}
-    key={index}
-    style={{
-      color: "var(--recursica_brand_palettes_primary_default_color_tone)",
-      textDecoration: "none",
-    }}
-  >
-    {item.title}
-  </a>
-));
-
 export const Default: Story = {
   args: {
-    children: mockItems,
-
-    layer: 0,
-  },
-  render: ({ layer = 0, ...args }) => {
-    return (
-      <Layer layer={layer as 0 | 1 | 2 | 3} style={{ padding: "24px" }}>
-        <Breadcrumb {...(args as React.ComponentProps<typeof Breadcrumb>)} />
-      </Layer>
-    );
+    items: ["Dashboard", "Settings", "Security"],
   },
 };
 
 export const StaticExample: Story = {
   args: {
-    children: mockItems,
+    items: ["Store", "Electronics", "Computers", "Laptops"],
   },
-  render: (args: BreadcrumbStoryProps) => <Breadcrumb {...args} />,
 };
 
 export const CustomSeparator: Story = {
   args: {
-    children: mockItems,
+    items: ["Root", "Branch", "Leaf"],
     separator: "→",
   },
-  render: (args: BreadcrumbStoryProps) => <Breadcrumb {...args} />,
 };

@@ -100,7 +100,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
         ref={ref}
         className={finalClass}
         classNames={mergedClassNames}
-        disabled={isReadOnly || disabled}
+        disabled={readOnly || disabled}
         {...(sanitizedProps as unknown as MantineCheckboxProps)}
       />
     );

@@ -2,12 +2,10 @@
 import React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 import { Label } from "./Label";
-import { Layer } from "@recursica/adapter-common";
 import { TextField } from "../TextField/TextField";
+import { formControlArgTypes } from "../../../.storybook/commonArgTypes";
 
-type LabelStoryProps = React.ComponentProps<typeof Label> & {
-  layer?: number;
-};
+type LabelStoryProps = React.ComponentProps<typeof Label>;
 
 const meta: Meta<LabelStoryProps> = {
   title: "UI-Kit/Label",
@@ -22,38 +20,7 @@ const meta: Meta<LabelStoryProps> = {
     },
   },
   argTypes: {
-    formLayout: {
-      control: "radio",
-      options: ["stacked", "side-by-side"],
-      description: "Layout structure of the Label component",
-    },
-    labelSize: {
-      control: "radio",
-      options: ["default", "small"],
-    },
-    labelAlignment: {
-      control: "radio",
-      options: ["left", "right"],
-      description: "Text and layout alignment for the Label",
-    },
-    required: {
-      control: "boolean",
-    },
-    labelOptionalText: {
-      control: "text",
-      description: "String or boolean (if true, renders 'Optional')",
-    },
-    labelWithEditIcon: {
-      control: "boolean",
-    },
-    layer: {
-      control: "radio",
-      options: [0, 1, 2, 3],
-      description: "The design system layer context",
-      table: {
-        category: "Story Controls",
-      },
-    },
+    ...formControlArgTypes,
   },
 };
 
@@ -62,18 +29,12 @@ export default meta;
 type Story = StoryObj<LabelStoryProps>;
 
 // Utility mapping to pipe raw Label args structurally into TextField accurately
-const renderWithTextField = ({
-  layer = 0,
-  children,
-  ...args
-}: LabelStoryProps) => (
-  <Layer layer={layer as 0 | 1 | 2 | 3} style={{ padding: "24px" }}>
-    <TextField
-      label={children as React.ReactNode}
-      placeholder="Form Control primitive mapped..."
-      {...(args as any)}
-    />
-  </Layer>
+const renderWithTextField = ({ children, ...args }: LabelStoryProps) => (
+  <TextField
+    label={children as React.ReactNode}
+    placeholder="Form Control primitive mapped..."
+    {...(args as any)}
+  />
 );
 
 export const Default: Story = {
@@ -85,7 +46,6 @@ export const Default: Story = {
     required: false,
     labelOptionalText: "",
     labelWithEditIcon: false,
-    layer: 0,
   },
   render: renderWithTextField,
 };
@@ -158,7 +118,6 @@ export const LayerOneSideBySide: Story = {
     children: "Configuration",
     formLayout: "side-by-side",
     labelWithEditIcon: true,
-    layer: 1,
   },
   render: renderWithTextField,
 };

@@ -6,6 +6,11 @@ const meta: Meta<typeof SegmentedControl> = {
   title: "UI-Kit/🚧 SegmentedControl",
   component: SegmentedControl,
   tags: ["autodocs"],
+  argTypes: {
+    disabled: {
+      control: "boolean",
+    },
+  },
 };
 
 export default meta;
