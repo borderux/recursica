@@ -1,5 +1,11 @@
 # @recursica/adapter-common
 
+## 0.4.0
+
+### Minor Changes
+
+- a4cf78b: Updates storybook controls and added chip
+
 ## 0.3.0
 
 ### Minor Changes
