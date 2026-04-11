@@ -4,12 +4,10 @@ import {
   FormControlWrapper,
   type FormControlWrapperProps,
 } from "./FormControlWrapper";
-import { Layer } from "@recursica/adapter-common";
 import { TextField } from "../TextField/TextField";
+import { formControlArgTypes } from "../../../.storybook/commonArgTypes";
 
-type WrapperStoryProps = FormControlWrapperProps & {
-  layer?: number;
-};
+type WrapperStoryProps = FormControlWrapperProps;
 
 const meta: Meta<WrapperStoryProps> = {
   title: "UI-Kit/FormControlWrapper",
@@ -24,12 +22,7 @@ const meta: Meta<WrapperStoryProps> = {
     },
   },
   argTypes: {
-    formLayout: {
-      control: "radio",
-      options: ["stacked", "side-by-side"],
-      description:
-        "Controls the architectural grid mapping labels linearly or side-by-side.",
-    },
+    ...formControlArgTypes,
     error: {
       control: "text",
       description:
@@ -46,14 +39,6 @@ const meta: Meta<WrapperStoryProps> = {
     required: {
       control: "boolean",
     },
-    layer: {
-      control: "radio",
-      options: [0, 1, 2, 3],
-      description: "The design system layer context",
-      table: {
-        category: "Story Controls",
-      },
-    },
   },
 };
 
@@ -61,19 +46,8 @@ export default meta;
 
 type Story = StoryObj<WrapperStoryProps>;
 
-// Utility mapping to pipe raw wrapper args structurally into TextField accurately
-const renderWithTextField = ({
-  layer = 0,
-  label,
-  ...args
-}: WrapperStoryProps) => (
-  <Layer layer={layer as 0 | 1 | 2 | 3} style={{ padding: "24px" }}>
-    <TextField
-      label={label}
-      placeholder="Form Control primitive mapped..."
-      {...args}
-    />
-  </Layer>
+const renderWithTextField = (args: WrapperStoryProps) => (
+  <TextField placeholder="Form Control primitive mapped..." {...args} />
 );
 
 export const Default: Story = {
@@ -81,7 +55,6 @@ export const Default: Story = {
     label: "Account Username",
     formLayout: "stacked",
     assistiveText: "Validation occurs immediately natively.",
-    layer: 0,
   },
   render: renderWithTextField,
 };
@@ -123,11 +96,9 @@ export const NativeChildrenDirectly: Story = {
     formLayout: "side-by-side",
     assistiveText: "This wraps a raw HTML input tag mapping correctly.",
   },
-  render: ({ layer = 0, ...args }) => (
-    <Layer
-      layer={layer as 0 | 1 | 2 | 3}
+  render: (args) => (
+    <div
       style={{
-        padding: "24px",
         display: "flex",
         gap: "10px",
         alignItems: "center",
@@ -140,6 +111,6 @@ export const NativeChildrenDirectly: Story = {
           style={{ margin: 0, width: "16px", height: "16px" }}
         />
       </FormControlWrapper>
-    </Layer>
+    </div>
   ),
 };

@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { TextField } from "./TextField";
-import { Layer } from "@recursica/adapter-common";
-
+import { formControlArgTypes } from "../../../.storybook/commonArgTypes";
 const meta: Meta<typeof TextField> = {
   title: "UI-Kit/TextField",
   component: TextField,
@@ -29,12 +28,7 @@ Always structure horizontal architectures via the generic \`formLayout\` paramet
     },
   },
   argTypes: {
-    formLayout: {
-      control: "radio",
-      options: ["stacked", "side-by-side"],
-      description:
-        "Controls the overarching grid format structure of the input component.",
-    },
+    ...formControlArgTypes,
     disabled: {
       control: "boolean",
       description:
@@ -68,16 +62,12 @@ type Story = StoryObj<typeof TextField>;
 
 export const Default: Story = {
   args: {
+    disabled: false,
     label: "Authentication Token",
     placeholder: "Enter validation hash...",
     assistiveText:
       "Tokens are stored identically locally and strictly ephemeral.",
   },
-  render: (args) => (
-    <Layer layer={0} style={{ padding: "48px" }}>
-      <TextField {...args} />
-    </Layer>
-  ),
 };
 
 export const FormsSideBySide: Story = {
@@ -88,11 +78,6 @@ export const FormsSideBySide: Story = {
       "Specify the exact cluster administrative credentials enforcing strict domain policies. This violently long string tests native textual wrapping safely mapping alongside inputs.",
     formLayout: "side-by-side",
   },
-  render: (args) => (
-    <Layer layer={0} style={{ padding: "48px" }}>
-      <TextField {...args} />
-    </Layer>
-  ),
 };
 
 export const WithLeadingIcon: Story = {
@@ -115,11 +100,6 @@ export const WithLeadingIcon: Story = {
       </svg>
     ),
   },
-  render: (args) => (
-    <Layer layer={0} style={{ padding: "48px" }}>
-      <TextField {...args} />
-    </Layer>
-  ),
 };
 
 export const WithTrailingIcon: Story = {
@@ -141,11 +121,6 @@ export const WithTrailingIcon: Story = {
       </svg>
     ),
   },
-  render: (args) => (
-    <Layer layer={0} style={{ padding: "48px" }}>
-      <TextField {...args} />
-    </Layer>
-  ),
 };
 
 export const Disabled: Story = {
@@ -154,11 +129,6 @@ export const Disabled: Story = {
     placeholder: "Disabled primitive map...",
     disabled: true,
   },
-  render: (args) => (
-    <Layer layer={0} style={{ padding: "48px" }}>
-      <TextField {...args} />
-    </Layer>
-  ),
 };
 
 export const ErrorState: Story = {
@@ -170,11 +140,6 @@ export const ErrorState: Story = {
       "Critical runtime node disconnect detected traversing DOM architecture.",
     required: true,
   },
-  render: (args) => (
-    <Layer layer={0} style={{ padding: "48px" }}>
-      <TextField {...args} />
-    </Layer>
-  ),
 };
 
 export const StaticReadOnly: Story = {
@@ -184,11 +149,6 @@ export const StaticReadOnly: Story = {
     value: "Explicitly Uneditable Bound Output",
     readOnly: true,
   },
-  render: (args) => (
-    <Layer layer={0} style={{ padding: "48px" }}>
-      <TextField {...args} />
-    </Layer>
-  ),
 };
 
 export const EditableReadOnly: Story = {
@@ -199,9 +159,4 @@ export const EditableReadOnly: Story = {
     readOnly: true,
     labelWithEditIcon: true,
   },
-  render: (args) => (
-    <Layer layer={0} style={{ padding: "48px" }}>
-      <TextField {...args} />
-    </Layer>
-  ),
 };

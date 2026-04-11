@@ -4,10 +4,7 @@ import {
   Checkbox as MantineCheckbox,
   type CheckboxGroupProps as MantineCheckboxGroupProps,
 } from "@mantine/core";
-import {
-  useReadOnlyControl,
-  type ReadOnlyControlProps,
-} from "@recursica/adapter-common";
+import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import {
   filterStylingProps,
   type RecursicaOverStyled,
@@ -20,7 +17,10 @@ import styles from "./Checkbox.module.css";
 
 export interface RecursicaCheckboxGroupProps
   extends Omit<MantineCheckboxGroupProps, "size" | "labelProps">,
-    RecursicaFormControlWrapperProps,
+    Omit<
+      RecursicaFormControlWrapperProps,
+      "controlMaxWidth" | "controlMinWidth"
+    >,
     ReadOnlyControlProps {}
 
 export type CheckboxGroupProps =
@@ -57,23 +57,19 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
     },
     ref,
   ) {
-    const { isReadOnly, handleEditClick } = useReadOnlyControl(
-      readOnly,
-      onLabelEditClick,
-    );
-
-    // We isolate and filter the strictly remaining structural props that belong inherently to the DOM Input.
     const sanitizedProps = filterStylingProps(rest, overStyled);
     const restRecord = sanitizedProps as Record<string, unknown>;
 
     // Delete prohibited sizing hooks from bypassing the variables
     delete restRecord["size"];
 
-    if (isReadOnly && readOnlyComponent) {
+    if (readOnly && readOnlyComponent) {
       return (
         <FormControlWrapper
           className={className}
           style={style as React.CSSProperties}
+          controlMaxWidth="var(--recursica_ui-kit_components_checkbox-item_properties_max-width)"
+          controlMinWidth={undefined}
           overStyled={overStyled as true}
           labelElement="div"
           formLayout={formLayout}
@@ -81,7 +77,7 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
           labelAlignment={labelAlignment}
           labelOptionalText={labelOptionalText}
           labelWithEditIcon={labelWithEditIcon}
-          onLabelEditClick={handleEditClick}
+          onLabelEditClick={onLabelEditClick}
           label={label}
           description={description}
           assistiveText={assistiveText}
@@ -100,6 +96,8 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
       <FormControlWrapper
         className={className}
         style={style as React.CSSProperties}
+        controlMaxWidth="var(--recursica_ui-kit_components_checkbox-item_properties_max-width)"
+        controlMinWidth={undefined}
         overStyled={overStyled as true}
         labelElement="div" // Strictly override. ARIA grouping prohibits interactive checkboxes nested natively inside <label>.
         formLayout={formLayout}
@@ -107,7 +105,7 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
         labelAlignment={labelAlignment}
         labelOptionalText={labelOptionalText}
         labelWithEditIcon={labelWithEditIcon}
-        onLabelEditClick={handleEditClick}
+        onLabelEditClick={onLabelEditClick}
         label={label}
         description={description}
         assistiveText={assistiveText}
@@ -127,7 +125,7 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
             {React.Children.map(children, (child) => {
               if (React.isValidElement(child)) {
                 return React.cloneElement(child as React.ReactElement<any>, {
-                  disabled: isReadOnly || child.props.disabled,
+                  disabled: readOnly || child.props.disabled,
                 });
               }
               return child;

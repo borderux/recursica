@@ -3,9 +3,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { Badge } from "./Badge";
 import { Layer } from "@recursica/adapter-common";
 
-type BadgeStoryProps = React.ComponentProps<typeof Badge> & {
-  layer?: number;
-};
+type BadgeStoryProps = React.ComponentProps<typeof Badge>;
 
 const meta: Meta<BadgeStoryProps> = {
   title: "UI-Kit/Badge",
@@ -16,15 +14,6 @@ const meta: Meta<BadgeStoryProps> = {
       control: "select",
       options: ["alert", "primary-color", "success", "warning"],
       description: "The style / intent mapping for the badge",
-    },
-
-    layer: {
-      control: "radio",
-      options: [0, 1, 2, 3],
-      description: "The design system layer context",
-      table: {
-        category: "Story Controls",
-      },
     },
   },
 };
@@ -37,15 +26,9 @@ export const Default: Story = {
   args: {
     children: "Badge Label",
     variant: "primary-color",
-
-    layer: 0,
   },
-  render: ({ layer = 0, ...args }) => {
-    return (
-      <Layer layer={layer as 0 | 1 | 2 | 3} style={{ padding: "24px" }}>
-        <Badge {...args} />
-      </Layer>
-    );
+  render: (args) => {
+    return <Badge {...args} />;
   },
 };
 

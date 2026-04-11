@@ -6,6 +6,11 @@ const meta: Meta<typeof Slider> = {
   title: "UI-Kit/🚧 Slider",
   component: Slider,
   tags: ["autodocs"],
+  argTypes: {
+    disabled: {
+      control: "boolean",
+    },
+  },
 };
 
 export default meta;

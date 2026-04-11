@@ -6,6 +6,11 @@ const meta: Meta<typeof Radio> = {
   title: "UI-Kit/🚧 Radio",
   component: Radio,
   tags: ["autodocs"],
+  argTypes: {
+    disabled: {
+      control: "boolean",
+    },
+  },
 };
 
 export default meta;

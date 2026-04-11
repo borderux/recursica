@@ -3,9 +3,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { Avatar } from "./Avatar";
 import { Layer } from "@recursica/adapter-common";
 
-type AvatarStoryProps = React.ComponentProps<typeof Avatar> & {
-  layer?: number;
-};
+type AvatarStoryProps = React.ComponentProps<typeof Avatar>;
 
 const meta: Meta<AvatarStoryProps> = {
   title: "UI-Kit/Avatar",
@@ -27,12 +25,9 @@ const meta: Meta<AvatarStoryProps> = {
       control: "text",
       description: "Image URL for the image style avatar",
     },
-    layer: {
-      control: "radio",
-      options: [0, 1, 2, 3],
-      description: "The design system layer context",
+    icon: {
       table: {
-        category: "Story Controls",
+        disable: true,
       },
     },
   },
@@ -46,18 +41,9 @@ export const Default: Story = {
   args: {
     size: "default",
     variant: "solid",
-    layer: 0,
-    children: "AB",
   },
-  render: ({ layer = 0, ...args }) => {
-    return (
-      <Layer
-        layer={layer as 0 | 1 | 2 | 3}
-        style={{ padding: "24px", display: "inline-block" }}
-      >
-        <Avatar {...args} />
-      </Layer>
-    );
+  render: (args) => {
+    return <Avatar {...args} />;
   },
 };
 

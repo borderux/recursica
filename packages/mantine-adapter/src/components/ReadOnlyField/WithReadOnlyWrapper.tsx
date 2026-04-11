@@ -1,9 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { forwardRef } from "react";
-import {
-  useReadOnlyControl,
-  type ReadOnlyFieldType,
-} from "@recursica/adapter-common";
+import { type ReadOnlyFieldType } from "@recursica/adapter-common";
 import {
   FormControlWrapper,
   type FormControlWrapperProps,
@@ -46,18 +43,13 @@ export const WithReadOnlyWrapper = forwardRef<
   },
   ref,
 ) {
-  const { isReadOnly, handleEditClick } = useReadOnlyControl(
-    readOnly,
-    onLabelEditClick,
-  );
-
-  if (isReadOnly) {
+  if (readOnly) {
     if (readOnlyComponent) {
       return (
         <FormControlWrapper
           ref={ref}
           {...wrapperProps}
-          onLabelEditClick={handleEditClick}
+          onLabelEditClick={onLabelEditClick}
           overStyled={overStyled as true}
         >
           {readOnlyComponent}
@@ -70,7 +62,7 @@ export const WithReadOnlyWrapper = forwardRef<
         ref={ref}
         type={readOnlyType}
         value={readOnlyValue}
-        onLabelEditClick={handleEditClick}
+        onLabelEditClick={onLabelEditClick}
         overStyled={overStyled as true}
         {...wrapperProps}
       />
@@ -82,7 +74,7 @@ export const WithReadOnlyWrapper = forwardRef<
     <FormControlWrapper
       ref={ref}
       {...wrapperProps}
-      onLabelEditClick={handleEditClick}
+      onLabelEditClick={onLabelEditClick}
       overStyled={overStyled as true}
     >
       {activeComponent}

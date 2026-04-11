@@ -6,6 +6,11 @@ const meta: Meta<typeof Switch> = {
   title: "UI-Kit/🚧 Switch",
   component: Switch,
   tags: ["autodocs"],
+  argTypes: {
+    disabled: {
+      control: "boolean",
+    },
+  },
 };
 
 export default meta;

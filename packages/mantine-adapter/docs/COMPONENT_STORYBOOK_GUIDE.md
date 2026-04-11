@@ -108,6 +108,28 @@ This keeps the story count manageable and makes it clear why each static story e
 
 1. **`readOnly` ArgType:** Add `readOnly` inside the `argTypes` block mapped functionally to `"boolean"` exposing the toggle natively in the baseline Default panel.
 2. **Standard ReadOnly Static Story:** Provide, at absolute minimum, a core `StaticReadOnly` snapshot structurally freezing the ReadOnly mappings evaluating a standard text property (typically with `readOnly: true` and `value="Explicit ReadOnly Preview"`).
-3. **Editable ReadOnly Constraint (If Applicable):** If bounding editable nodes via `labelWithEditIcon`, explicitly verify the transition boundary by creating `EditableReadOnly` evaluating `labelWithEditIcon: true`, `readOnly: true`, and standard `defaultValues`.
+3. **Editable ReadOnly Constraint (If Applicable):** If bounding nodes via `onLabelEditClick`, explicitly verify the visual layout boundaries by creating `EditableReadOnly` evaluating `readOnly: true` accompanied by the `onLabelEditClick` callback (or `labelActionArea`) to ensure the interactive elements render flawlessly alongside frozen read data.
 
 This securely ensures visual snapshot tests never miss parsing edge-case read text transitions.
+
+---
+
+## 10. Form Control Layout Standardization
+
+**If a component utilizes the `FormControlWrapper` (like `TextField`, `Checkbox.Group`, `Dropdown`, etc.), you should inherit the universal Form Control `argTypes` map to ensure Storybook consistency.**
+
+To provide a standardized testing interface for the macro-level visual layout boundaries across all wrapped form primitives natively, explicitly append the `formControlArgTypes` into the component's `argTypes` meta block.
+
+1. **Import the Shared Mapping:** `import { formControlArgTypes } from "../../.storybook/commonArgTypes";`
+2. **Inject the ArgTypes:** Safely spread the export dynamically directly alongside your component's localized variables:
+
+```tsx
+  argTypes: {
+    ...formControlArgTypes,
+    disabled: {
+      control: "boolean",
+    },
+  },
+```
+
+This dynamically enables universal `formLayout`, `labelSize`, `labelAlignment`, `labelOptionalText`, and `labelWithEditIcon` UI panel hooks inside Storybook instantly without forcing you to manually re-declare controls boilerplate across every form component natively.

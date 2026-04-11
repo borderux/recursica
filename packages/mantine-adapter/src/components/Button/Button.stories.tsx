@@ -3,9 +3,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { Button } from "./Button";
 import { Layer } from "@recursica/adapter-common";
 
-type ButtonStoryProps = React.ComponentProps<typeof Button> & {
-  layer?: number;
-};
+type ButtonStoryProps = React.ComponentProps<typeof Button>;
 
 const meta: Meta<ButtonStoryProps> = {
   title: "UI-Kit/Button",
@@ -25,15 +23,6 @@ const meta: Meta<ButtonStoryProps> = {
     disabled: {
       control: "boolean",
     },
-    // We add a 'layer' arg strictly for the story control, not passed to component
-    layer: {
-      control: "radio",
-      options: [0, 1, 2, 3],
-      description: "The design system layer context",
-      table: {
-        category: "Story Controls",
-      },
-    },
   },
 };
 
@@ -47,14 +36,9 @@ export const Default: Story = {
     variant: "solid",
     size: "default",
     disabled: false,
-    layer: 0, // default layer
   },
-  render: ({ layer = 0, ...args }) => {
-    return (
-      <Layer layer={layer as 0 | 1 | 2 | 3} style={{ padding: "24px" }}>
-        <Button {...args} />
-      </Layer>
-    );
+  render: (args) => {
+    return <Button {...args} />;
   },
 };
 

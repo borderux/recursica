@@ -31,7 +31,8 @@
     "build:lib": "tsc -b && vite build --config vite.config.lib.ts",
     "test": "vitest run",
     "lint": "eslint .",
-    "publish": "node scripts/publish.mjs"
+    "publish": "node scripts/publish.mjs",
+    "export:csv": "npx -y tsx scripts/json-to-csv.ts --tokens export/recursica_tokens.json --brand export/recursica_brand.json --uiKit export/recursica_ui-kit.json --out export/recursica_variables.csv"
   },
   "dependencies": {
     "@mantine/core": "^8.3.12",

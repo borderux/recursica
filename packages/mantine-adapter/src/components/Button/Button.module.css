@@ -71,9 +71,6 @@
   min-width: var(
     --recursica_ui-kit_components_button_variants_sizes_default_properties_min-width
   );
-  max-width: var(
-    --recursica_ui-kit_components_button_variants_sizes_default_properties_max-width
-  );
   padding: 0
     var(
       --recursica_ui-kit_components_button_variants_sizes_default_properties_horizontal-padding
@@ -88,9 +85,6 @@
   );
   min-width: var(
     --recursica_ui-kit_components_button_variants_sizes_small_properties_min-width
-  );
-  max-width: var(
-    --recursica_ui-kit_components_button_variants_sizes_small_properties_max-width
   );
   padding: 0
     var(

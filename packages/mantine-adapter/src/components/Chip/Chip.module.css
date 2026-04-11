@@ -1,0 +1,218 @@
+/* HARDCODED VALUES
+   border-style: solid;  (Baseline reset)
+   box-sizing: border-box; (Baseline reset)
+   display: inline-flex; (Baseline reset)
+   align-items: center; (Baseline reset)
+   outline: none; (Accessible fallback)
+   padding: 0; (Override mantine default)
+   background: transparent; (Override mantine default)
+*/
+
+.root {
+  /* Set preset layout variables to override mantine defaults safely */
+  box-sizing: border-box;
+  display: inline-flex;
+
+  /* Token properties */
+  --chip-height: max-content; /* Sizing is driven by padding and line height */
+  --chip-bg: var(
+    --recursica_ui-kit_components_chip_variants_styles_unselected_properties_colors_background
+  );
+  --chip-border: var(
+    --recursica_ui-kit_components_chip_variants_styles_unselected_properties_colors_border-color
+  );
+  --chip-text: var(
+    --recursica_ui-kit_components_chip_variants_styles_unselected_properties_colors_text
+  );
+  --chip-icon: var(
+    --recursica_ui-kit_components_chip_variants_styles_unselected_properties_colors_leading-icon-color
+  );
+  --chip-close: var(
+    --recursica_ui-kit_components_chip_variants_styles_unselected_properties_colors_close-icon-color
+  );
+
+  border-radius: var(
+    --recursica_ui-kit_components_chip_properties_border-radius
+  );
+}
+
+/* We target the mantine label directly because that is the visible container in Mantine's Chip */
+.label {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Reset mantine styles */
+  background: transparent !important; /* HARDCODE: Mantine forces background styling on label */
+  border-style: solid;
+  border-width: var(--recursica_ui-kit_components_chip_properties_border-size);
+  padding: var(--recursica_ui-kit_components_chip_properties_vertical-padding)
+    var(--recursica_ui-kit_components_chip_properties_horizontal-padding) !important;
+
+  /* Typography */
+  font-family: var(
+    --recursica_ui-kit_components_chip_properties_text_font-family
+  );
+  font-size: var(--recursica_ui-kit_components_chip_properties_text_font-size);
+  font-weight: var(
+    --recursica_ui-kit_components_chip_properties_text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_chip_properties_text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_chip_properties_text_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_chip_properties_text_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_chip_properties_text_text-transform
+  );
+
+  /* Token evaluation */
+  background-color: var(--chip-bg) !important;
+  border-color: var(--chip-border) !important;
+  color: var(--chip-text) !important;
+  min-width: var(--recursica_ui-kit_components_chip_properties_min-width);
+  max-width: var(--recursica_ui-kit_components_chip_properties_max-width);
+  box-shadow: var(
+    --recursica_ui-kit_components_chip_properties_elevation,
+    none
+  );
+
+  transition: all 0.2s ease;
+}
+
+/* Default (Unselected) hover/active interactions (Mantine overrides) */
+.label[data-checked] {
+  --chip-bg: var(
+    --recursica_ui-kit_components_chip_variants_styles_selected_properties_colors_background
+  );
+  --chip-border: var(
+    --recursica_ui-kit_components_chip_variants_styles_selected_properties_colors_border-color
+  );
+  --chip-text: var(
+    --recursica_ui-kit_components_chip_variants_styles_selected_properties_colors_text
+  );
+  --chip-icon: var(
+    --recursica_ui-kit_components_chip_variants_styles_selected_properties_colors_selected-icon-color
+  );
+  --chip-close: var(
+    --recursica_ui-kit_components_chip_variants_styles_selected_properties_colors_close-icon-color
+  );
+}
+
+.root[data-error] .label {
+  --chip-bg: var(
+    --recursica_ui-kit_components_chip_variants_styles_error_properties_colors_background
+  );
+  --chip-border: var(
+    --recursica_ui-kit_components_chip_variants_styles_error_properties_colors_border-color
+  );
+  --chip-text: var(
+    --recursica_ui-kit_components_chip_variants_styles_error_properties_colors_text
+  );
+  --chip-icon: var(
+    --recursica_ui-kit_components_chip_variants_styles_error_properties_colors_icon
+  );
+  --chip-close: var(
+    --recursica_ui-kit_components_chip_variants_styles_error_properties_colors_close-icon-color
+  );
+}
+
+.root[data-error] .label[data-checked] {
+  --chip-bg: var(
+    --recursica_ui-kit_components_chip_variants_styles_error-selected_properties_colors_background
+  );
+  --chip-border: var(
+    --recursica_ui-kit_components_chip_variants_styles_error-selected_properties_colors_border-color
+  );
+  --chip-text: var(
+    --recursica_ui-kit_components_chip_variants_styles_error-selected_properties_colors_text
+  );
+  --chip-icon: var(
+    --recursica_ui-kit_components_chip_variants_styles_error-selected_properties_colors_selected-icon-color
+  );
+  --chip-close: var(
+    --recursica_ui-kit_components_chip_variants_styles_error-selected_properties_colors_close-icon-color
+  );
+}
+
+.root[data-disabled] .label {
+  opacity: var(--recursica_brand_states_disabled, 0.5);
+  cursor: not-allowed;
+}
+
+/* Override Mantine's built-in check icon colors and size if we keep it */
+.mantineIconWrapper {
+  color: var(--chip-icon) !important;
+  width: var(
+    --recursica_ui-kit_components_chip_properties_icon-size
+  ) !important;
+  height: var(
+    --recursica_ui-kit_components_chip_properties_icon-size
+  ) !important;
+  margin-right: var(
+    --recursica_ui-kit_components_chip_properties_icon-text-gap
+  );
+}
+
+.innerWrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--recursica_ui-kit_components_chip_properties_icon-text-gap);
+  width: 100%;
+}
+
+.children {
+  flex-grow: 1;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.leadingIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--chip-icon);
+  width: var(--recursica_ui-kit_components_chip_properties_icon-size);
+  height: var(--recursica_ui-kit_components_chip_properties_icon-size);
+}
+
+.leadingIcon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.removeIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--chip-close);
+  width: var(--recursica_ui-kit_components_chip_properties_close-icon-size);
+  height: var(--recursica_ui-kit_components_chip_properties_close-icon-size);
+  cursor: pointer;
+  border-radius: 50%; /* HARDCODE: Make focus ring rounded */
+  outline: none;
+}
+
+.removeIcon:focus-visible {
+  box-shadow: 0 0 0 2px var(--chip-border); /* HARDCODE: Focus indication */
+}
+
+.removeIcon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.root[data-icon-only] .label {
+  padding-left: var(
+    --recursica_ui-kit_components_chip_properties_vertical-padding
+  ) !important;
+  padding-right: var(
+    --recursica_ui-kit_components_chip_properties_vertical-padding
+  ) !important;
+}

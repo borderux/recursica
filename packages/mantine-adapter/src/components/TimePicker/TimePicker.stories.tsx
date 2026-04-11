@@ -6,6 +6,11 @@ const meta: Meta<typeof TimePicker> = {
   title: "UI-Kit/🚧 TimePicker",
   component: TimePicker,
   tags: ["autodocs"],
+  argTypes: {
+    disabled: {
+      control: "boolean",
+    },
+  },
 };
 
 export default meta;

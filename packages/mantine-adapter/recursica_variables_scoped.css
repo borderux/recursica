@@ -1,7 +1,7 @@
 /*
  * Recursica CSS Variables - Scoped
  * Transform version: 1.1.0
- * Generated: Tue, 31 Mar 2026 19:37:45 GMT
+ * Generated: Fri, 10 Apr 2026 17:09:33 GMT
  *
  * --- How to integrate this file ---
  *
@@ -169,7 +169,7 @@
   --recursica_brand_themes_dark_elevations_elevation-0_color: var(
     --recursica_brand_themes_dark_palettes_neutral_800_color_tone
   );
-  --recursica_brand_themes_dark_elevations_elevation-0_opacity: 10%;
+  --recursica_brand_themes_dark_elevations_elevation-0_opacity: 0%;
   --recursica_brand_themes_dark_elevations_elevation-0_spread: 0px;
   --recursica_brand_themes_dark_elevations_elevation-0_x: 0px;
   --recursica_brand_themes_dark_elevations_elevation-0_y: 0px;
@@ -184,7 +184,7 @@
   --recursica_brand_themes_dark_elevations_elevation-1_color: var(
     --recursica_brand_themes_dark_palettes_neutral_800_color_tone
   );
-  --recursica_brand_themes_dark_elevations_elevation-1_opacity: 10%;
+  --recursica_brand_themes_dark_elevations_elevation-1_opacity: 84%;
   --recursica_brand_themes_dark_elevations_elevation-1_spread: 0px;
   --recursica_brand_themes_dark_elevations_elevation-1_x: 0px;
   --recursica_brand_themes_dark_elevations_elevation-1_y: 1px;
@@ -199,7 +199,7 @@
   --recursica_brand_themes_dark_elevations_elevation-2_color: var(
     --recursica_brand_themes_dark_palettes_neutral_800_color_tone
   );
-  --recursica_brand_themes_dark_elevations_elevation-2_opacity: 10%;
+  --recursica_brand_themes_dark_elevations_elevation-2_opacity: 84%;
   --recursica_brand_themes_dark_elevations_elevation-2_spread: 0px;
   --recursica_brand_themes_dark_elevations_elevation-2_x: 0px;
   --recursica_brand_themes_dark_elevations_elevation-2_y: 2px;
@@ -214,7 +214,7 @@
   --recursica_brand_themes_dark_elevations_elevation-3_color: var(
     --recursica_brand_themes_dark_palettes_neutral_800_color_tone
   );
-  --recursica_brand_themes_dark_elevations_elevation-3_opacity: 10%;
+  --recursica_brand_themes_dark_elevations_elevation-3_opacity: 84%;
   --recursica_brand_themes_dark_elevations_elevation-3_spread: 0px;
   --recursica_brand_themes_dark_elevations_elevation-3_x: 0px;
   --recursica_brand_themes_dark_elevations_elevation-3_y: 4px;
@@ -229,27 +229,21 @@
   --recursica_brand_themes_dark_elevations_elevation-4_color: var(
     --recursica_brand_themes_dark_palettes_neutral_800_color_tone
   );
-  --recursica_brand_themes_dark_elevations_elevation-4_opacity: 10%;
+  --recursica_brand_themes_dark_elevations_elevation-4_opacity: 84%;
   --recursica_brand_themes_dark_elevations_elevation-4_spread: 0px;
   --recursica_brand_themes_dark_elevations_elevation-4_x: 0px;
   --recursica_brand_themes_dark_elevations_elevation-4_y: 8px;
-  --recursica_brand_themes_dark_layers_layer-0_elements_interactive_color: var(
-    --recursica_brand_themes_dark_palettes_core-colors_interactive_default_tone
-  );
-  --recursica_brand_themes_dark_layers_layer-0_elements_interactive_hover-color: var(
-    --recursica_brand_themes_dark_palettes_core-colors_interactive_hover_tone
-  );
   --recursica_brand_themes_dark_layers_layer-0_elements_interactive_on-tone: var(
-    --recursica_brand_themes_dark_palettes_palette-1_600_color_on-tone
+    --recursica_brand_themes_dark_palettes_core-colors_interactive_default_on-tone
   );
   --recursica_brand_themes_dark_layers_layer-0_elements_interactive_on-tone-hover: var(
-    --recursica_brand_themes_dark_palettes_palette-1_600_color_on-tone
+    --recursica_brand_themes_dark_palettes_core-colors_interactive_hover_on-tone
   );
   --recursica_brand_themes_dark_layers_layer-0_elements_interactive_tone: var(
-    --recursica_brand_themes_dark_layers_layer-0_elements_interactive_color
+    --recursica_brand_themes_dark_palettes_core-colors_interactive_default_tone
   );
   --recursica_brand_themes_dark_layers_layer-0_elements_interactive_tone-hover: var(
-    --recursica_brand_themes_dark_layers_layer-0_elements_interactive_hover-color
+    --recursica_brand_themes_dark_palettes_core-colors_interactive_hover_tone
   );
   --recursica_brand_themes_dark_layers_layer-0_elements_text_alert: var(
     --recursica_brand_themes_dark_palettes_core-colors_alert_tone
@@ -269,7 +263,7 @@
   --recursica_brand_themes_dark_layers_layer-0_properties_border-radius: var(
     --recursica_tokens_sizes_3x
   );
-  --recursica_brand_themes_dark_layers_layer-0_properties_border-size: 0px;
+  --recursica_brand_themes_dark_layers_layer-0_properties_border-size: 0;
   --recursica_brand_themes_dark_layers_layer-0_properties_elevation: var(
     --recursica_brand_themes_dark_elevations_elevation-0
   );
@@ -279,23 +273,17 @@
   --recursica_brand_themes_dark_layers_layer-0_properties_surface: var(
     --recursica_brand_themes_dark_palettes_neutral_000_color_tone
   );
-  --recursica_brand_themes_dark_layers_layer-1_elements_interactive_color: var(
-    --recursica_brand_themes_dark_palettes_core-colors_interactive_default_tone
-  );
-  --recursica_brand_themes_dark_layers_layer-1_elements_interactive_hover-color: var(
-    --recursica_brand_themes_dark_palettes_core-colors_interactive_hover_tone
-  );
   --recursica_brand_themes_dark_layers_layer-1_elements_interactive_on-tone: var(
-    --recursica_brand_themes_dark_palettes_palette-1_600_color_on-tone
+    --recursica_brand_themes_dark_palettes_core-colors_interactive_default_on-tone
   );
   --recursica_brand_themes_dark_layers_layer-1_elements_interactive_on-tone-hover: var(
-    --recursica_brand_themes_dark_palettes_palette-1_600_color_on-tone
+    --recursica_brand_themes_dark_palettes_core-colors_interactive_hover_on-tone
   );
   --recursica_brand_themes_dark_layers_layer-1_elements_interactive_tone: var(
-    --recursica_brand_themes_dark_layers_layer-1_elements_interactive_color
+    --recursica_brand_themes_dark_palettes_core-colors_interactive_default_tone
   );
   --recursica_brand_themes_dark_layers_layer-1_elements_interactive_tone-hover: var(
-    --recursica_brand_themes_dark_layers_layer-1_elements_interactive_hover-color
+    --recursica_brand_themes_dark_palettes_core-colors_interactive_hover_tone
   );
   --recursica_brand_themes_dark_layers_layer-1_elements_text_alert: var(
     --recursica_brand_themes_dark_palettes_core-colors_alert_tone
@@ -325,23 +313,17 @@
   --recursica_brand_themes_dark_layers_layer-1_properties_surface: var(
     --recursica_brand_themes_dark_palettes_neutral_050_color_tone
   );
-  --recursica_brand_themes_dark_layers_layer-2_elements_interactive_color: var(
-    --recursica_brand_themes_dark_palettes_core-colors_interactive_default_tone
-  );
-  --recursica_brand_themes_dark_layers_layer-2_elements_interactive_hover-color: var(
-    --recursica_brand_themes_dark_palettes_core-colors_interactive_hover_tone
-  );
   --recursica_brand_themes_dark_layers_layer-2_elements_interactive_on-tone: var(
-    --recursica_brand_themes_dark_palettes_palette-1_600_color_on-tone
+    --recursica_brand_themes_dark_palettes_core-colors_interactive_default_on-tone
   );
   --recursica_brand_themes_dark_layers_layer-2_elements_interactive_on-tone-hover: var(
-    --recursica_brand_themes_dark_palettes_palette-1_600_color_on-tone
+    --recursica_brand_themes_dark_palettes_core-colors_interactive_hover_on-tone
   );
   --recursica_brand_themes_dark_layers_layer-2_elements_interactive_tone: var(
-    --recursica_brand_themes_dark_layers_layer-2_elements_interactive_color
+    --recursica_brand_themes_dark_palettes_core-colors_interactive_default_tone
   );
   --recursica_brand_themes_dark_layers_layer-2_elements_interactive_tone-hover: var(
-    --recursica_brand_themes_dark_layers_layer-2_elements_interactive_hover-color
+    --recursica_brand_themes_dark_palettes_core-colors_interactive_hover_tone
   );
   --recursica_brand_themes_dark_layers_layer-2_elements_text_alert: var(
     --recursica_brand_themes_dark_palettes_core-colors_alert_tone
@@ -361,7 +343,7 @@
   --recursica_brand_themes_dark_layers_layer-2_properties_border-radius: var(
     --recursica_tokens_sizes_2x
   );
-  --recursica_brand_themes_dark_layers_layer-2_properties_border-size: 0px;
+  --recursica_brand_themes_dark_layers_layer-2_properties_border-size: 0;
   --recursica_brand_themes_dark_layers_layer-2_properties_elevation: var(
     --recursica_brand_themes_dark_elevations_elevation-2
   );
@@ -371,23 +353,17 @@
   --recursica_brand_themes_dark_layers_layer-2_properties_surface: var(
     --recursica_brand_themes_dark_palettes_neutral_050_color_tone
   );
-  --recursica_brand_themes_dark_layers_layer-3_elements_interactive_color: var(
-    --recursica_brand_themes_dark_palettes_core-colors_interactive_default_tone
-  );
-  --recursica_brand_themes_dark_layers_layer-3_elements_interactive_hover-color: var(
-    --recursica_brand_themes_dark_palettes_core-colors_interactive_hover_tone
-  );
   --recursica_brand_themes_dark_layers_layer-3_elements_interactive_on-tone: var(
-    --recursica_brand_themes_dark_palettes_palette-1_600_color_on-tone
+    --recursica_brand_themes_dark_palettes_core-colors_interactive_default_on-tone
   );
   --recursica_brand_themes_dark_layers_layer-3_elements_interactive_on-tone-hover: var(
-    --recursica_brand_themes_dark_palettes_palette-1_600_color_on-tone
+    --recursica_brand_themes_dark_palettes_core-colors_interactive_hover_on-tone
   );
   --recursica_brand_themes_dark_layers_layer-3_elements_interactive_tone: var(
-    --recursica_brand_themes_dark_layers_layer-3_elements_interactive_color
+    --recursica_brand_themes_dark_palettes_core-colors_interactive_default_tone
   );
   --recursica_brand_themes_dark_layers_layer-3_elements_interactive_tone-hover: var(
-    --recursica_brand_themes_dark_layers_layer-3_elements_interactive_hover-color
+    --recursica_brand_themes_dark_palettes_core-colors_interactive_hover_tone
   );
   --recursica_brand_themes_dark_layers_layer-3_elements_text_alert: var(
     --recursica_brand_themes_dark_palettes_core-colors_alert_tone
@@ -407,7 +383,7 @@
   --recursica_brand_themes_dark_layers_layer-3_properties_border-radius: var(
     --recursica_tokens_sizes_default
   );
-  --recursica_brand_themes_dark_layers_layer-3_properties_border-size: 0px;
+  --recursica_brand_themes_dark_layers_layer-3_properties_border-size: 0;
   --recursica_brand_themes_dark_layers_layer-3_properties_elevation: var(
     --recursica_brand_themes_dark_elevations_elevation-4
   );
@@ -752,7 +728,7 @@
   --recursica_brand_themes_light_elevations_elevation-1_color: var(
     --recursica_brand_themes_light_palettes_neutral_200_color_tone
   );
-  --recursica_brand_themes_light_elevations_elevation-1_opacity: 10%;
+  --recursica_brand_themes_light_elevations_elevation-1_opacity: 84%;
   --recursica_brand_themes_light_elevations_elevation-1_spread: 0px;
   --recursica_brand_themes_light_elevations_elevation-1_x: 0px;
   --recursica_brand_themes_light_elevations_elevation-1_y: 2px;
@@ -767,7 +743,7 @@
   --recursica_brand_themes_light_elevations_elevation-2_color: var(
     --recursica_brand_themes_light_palettes_neutral_200_color_tone
   );
-  --recursica_brand_themes_light_elevations_elevation-2_opacity: 10%;
+  --recursica_brand_themes_light_elevations_elevation-2_opacity: 84%;
   --recursica_brand_themes_light_elevations_elevation-2_spread: 0px;
   --recursica_brand_themes_light_elevations_elevation-2_x: 0px;
   --recursica_brand_themes_light_elevations_elevation-2_y: 4px;
@@ -782,7 +758,7 @@
   --recursica_brand_themes_light_elevations_elevation-3_color: var(
     --recursica_brand_themes_light_palettes_neutral_200_color_tone
   );
-  --recursica_brand_themes_light_elevations_elevation-3_opacity: 10%;
+  --recursica_brand_themes_light_elevations_elevation-3_opacity: 84%;
   --recursica_brand_themes_light_elevations_elevation-3_spread: 0px;
   --recursica_brand_themes_light_elevations_elevation-3_x: 0px;
   --recursica_brand_themes_light_elevations_elevation-3_y: 8px;
@@ -797,7 +773,7 @@
   --recursica_brand_themes_light_elevations_elevation-4_color: var(
     --recursica_brand_themes_light_palettes_neutral_200_color_tone
   );
-  --recursica_brand_themes_light_elevations_elevation-4_opacity: 10%;
+  --recursica_brand_themes_light_elevations_elevation-4_opacity: 84%;
   --recursica_brand_themes_light_elevations_elevation-4_spread: 0px;
   --recursica_brand_themes_light_elevations_elevation-4_x: 0px;
   --recursica_brand_themes_light_elevations_elevation-4_y: 12px;
@@ -831,7 +807,7 @@
   --recursica_brand_themes_light_layers_layer-0_properties_border-radius: var(
     --recursica_tokens_sizes_3x
   );
-  --recursica_brand_themes_light_layers_layer-0_properties_border-size: 0px;
+  --recursica_brand_themes_light_layers_layer-0_properties_border-size: 0;
   --recursica_brand_themes_light_layers_layer-0_properties_elevation: var(
     --recursica_brand_themes_light_elevations_elevation-0
   );
@@ -911,7 +887,7 @@
   --recursica_brand_themes_light_layers_layer-2_properties_border-radius: var(
     --recursica_tokens_sizes_2x
   );
-  --recursica_brand_themes_light_layers_layer-2_properties_border-size: 0px;
+  --recursica_brand_themes_light_layers_layer-2_properties_border-size: 0;
   --recursica_brand_themes_light_layers_layer-2_properties_elevation: var(
     --recursica_brand_themes_light_elevations_elevation-2
   );
@@ -951,7 +927,7 @@
   --recursica_brand_themes_light_layers_layer-3_properties_border-radius: var(
     --recursica_tokens_sizes_default
   );
-  --recursica_brand_themes_light_layers_layer-3_properties_border-size: 0px;
+  --recursica_brand_themes_light_layers_layer-3_properties_border-size: 0;
   --recursica_brand_themes_light_layers_layer-3_properties_elevation: var(
     --recursica_brand_themes_light_elevations_elevation-4
   );
@@ -2000,8 +1976,23 @@
   --recursica_ui-kit_components_breadcrumb_properties_padding: var(
     --recursica_brand_dimensions_general_default
   );
+  --recursica_ui-kit_components_button_variants_content_icon-only_sizes_default_properties_horizontal-padding: var(
+    --recursica_brand_dimensions_general_default
+  );
+  --recursica_ui-kit_components_button_variants_content_icon-only_sizes_small_properties_horizontal-padding: var(
+    --recursica_brand_dimensions_general_sm
+  );
+  --recursica_ui-kit_components_button_variants_content_label_sizes_default_properties_horizontal-padding: var(
+    --recursica_brand_dimensions_general_lg
+  );
+  --recursica_ui-kit_components_button_variants_content_label_sizes_small_properties_horizontal-padding: var(
+    --recursica_brand_dimensions_general_md
+  );
   --recursica_ui-kit_components_button_variants_sizes_default_properties_border-radius: var(
     --recursica_brand_dimensions_border-radii_xl
+  );
+  --recursica_ui-kit_components_button_variants_sizes_default_properties_disabled-opacity: var(
+    --recursica_brand_themes_light_states_disabled
   );
   --recursica_ui-kit_components_button_variants_sizes_default_properties_height: 48px;
   --recursica_ui-kit_components_button_variants_sizes_default_properties_horizontal-padding: var(
@@ -2019,7 +2010,7 @@
   --recursica_ui-kit_components_button_variants_sizes_default_properties_icon-text-gap: var(
     --recursica_brand_dimensions_general_default
   );
-  --recursica_ui-kit_components_button_variants_sizes_default_properties_max-width: 500px;
+  --recursica_ui-kit_components_button_variants_sizes_default_properties_max-label-width: 500px;
   --recursica_ui-kit_components_button_variants_sizes_default_properties_min-width: 48px;
   --recursica_ui-kit_components_button_variants_sizes_default_properties_text_font-family: var(
     --recursica_tokens_font_typefaces_primary
@@ -2042,6 +2033,9 @@
   --recursica_ui-kit_components_button_variants_sizes_small_properties_border-radius: var(
     --recursica_brand_dimensions_border-radii_xl
   );
+  --recursica_ui-kit_components_button_variants_sizes_small_properties_disabled-opacity: var(
+    --recursica_brand_themes_light_states_disabled
+  );
   --recursica_ui-kit_components_button_variants_sizes_small_properties_height: 32px;
   --recursica_ui-kit_components_button_variants_sizes_small_properties_horizontal-padding: var(
     --recursica_brand_dimensions_general_md
@@ -2058,7 +2052,7 @@
   --recursica_ui-kit_components_button_variants_sizes_small_properties_icon-text-gap: var(
     --recursica_brand_dimensions_general_sm
   );
-  --recursica_ui-kit_components_button_variants_sizes_small_properties_max-width: 500px;
+  --recursica_ui-kit_components_button_variants_sizes_small_properties_max-label-width: 500px;
   --recursica_ui-kit_components_button_variants_sizes_small_properties_min-width: 32px;
   --recursica_ui-kit_components_button_variants_sizes_small_properties_text_font-family: var(
     --recursica_tokens_font_typefaces_primary
@@ -3065,11 +3059,9 @@
     --recursica_brand_themes_light_elevations_elevation-0
   );
   --recursica_ui-kit_components_switch_properties_thumb-height: 20px;
-  --recursica_ui-kit_components_switch_properties_thumb-icon-selected: "check";
   --recursica_ui-kit_components_switch_properties_thumb-icon-size: var(
     --recursica_brand_dimensions_icons_sm
   );
-  --recursica_ui-kit_components_switch_properties_thumb-icon-unselected: "x-mark";
   --recursica_ui-kit_components_switch_properties_thumb-width: 20px;
   --recursica_ui-kit_components_switch_properties_track-border-radius: var(
     --recursica_brand_dimensions_border-radii_lg
@@ -3787,6 +3779,9 @@
   --recursica_ui-kit_themes_dark_layer_0_ui-kit_components_button_variants_styles_outline_properties_colors_border-color: var(
     --recursica_brand_themes_dark_layers_layer-0_elements_interactive_tone
   );
+  --recursica_ui-kit_themes_dark_layer_0_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color: var(
+    --recursica_brand_themes_dark_layers_layer-0_elements_interactive_tone
+  );
   --recursica_ui-kit_themes_dark_layer_0_ui-kit_components_button_variants_styles_outline_properties_colors_text: var(
     --recursica_brand_themes_dark_layers_layer-0_elements_interactive_tone
   );
@@ -3799,6 +3794,9 @@
   --recursica_ui-kit_themes_dark_layer_0_ui-kit_components_button_variants_styles_solid_properties_colors_border-color: var(
     --recursica_brand_themes_dark_layers_layer-0_elements_interactive_tone
   );
+  --recursica_ui-kit_themes_dark_layer_0_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color: var(
+    --recursica_brand_themes_dark_layers_layer-0_elements_interactive_on-tone
+  );
   --recursica_ui-kit_themes_dark_layer_0_ui-kit_components_button_variants_styles_solid_properties_colors_text: var(
     --recursica_brand_themes_dark_layers_layer-0_elements_interactive_on-tone
   );
@@ -3807,6 +3805,9 @@
   );
   --recursica_ui-kit_themes_dark_layer_0_ui-kit_components_button_variants_styles_text_properties_colors_background: transparent;
   --recursica_ui-kit_themes_dark_layer_0_ui-kit_components_button_variants_styles_text_properties_colors_border-color: transparent;
+  --recursica_ui-kit_themes_dark_layer_0_ui-kit_components_button_variants_styles_text_properties_colors_icon-color: var(
+    --recursica_brand_themes_dark_layers_layer-0_elements_interactive_tone
+  );
   --recursica_ui-kit_themes_dark_layer_0_ui-kit_components_button_variants_styles_text_properties_colors_text: var(
     --recursica_brand_themes_dark_layers_layer-0_elements_interactive_tone
   );
@@ -4997,6 +4998,9 @@
   --recursica_ui-kit_themes_dark_layer_1_ui-kit_components_button_variants_styles_outline_properties_colors_border-color: var(
     --recursica_brand_themes_dark_layers_layer-1_elements_interactive_tone
   );
+  --recursica_ui-kit_themes_dark_layer_1_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color: var(
+    --recursica_brand_themes_dark_layers_layer-1_elements_interactive_tone
+  );
   --recursica_ui-kit_themes_dark_layer_1_ui-kit_components_button_variants_styles_outline_properties_colors_text: var(
     --recursica_brand_themes_dark_layers_layer-1_elements_interactive_tone
   );
@@ -5009,6 +5013,9 @@
   --recursica_ui-kit_themes_dark_layer_1_ui-kit_components_button_variants_styles_solid_properties_colors_border-color: var(
     --recursica_brand_themes_dark_layers_layer-1_properties_border-color
   );
+  --recursica_ui-kit_themes_dark_layer_1_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color: var(
+    --recursica_brand_themes_dark_layers_layer-1_elements_interactive_on-tone
+  );
   --recursica_ui-kit_themes_dark_layer_1_ui-kit_components_button_variants_styles_solid_properties_colors_text: var(
     --recursica_brand_themes_dark_layers_layer-1_elements_interactive_on-tone
   );
@@ -5017,6 +5024,9 @@
   );
   --recursica_ui-kit_themes_dark_layer_1_ui-kit_components_button_variants_styles_text_properties_colors_background: transparent;
   --recursica_ui-kit_themes_dark_layer_1_ui-kit_components_button_variants_styles_text_properties_colors_border-color: transparent;
+  --recursica_ui-kit_themes_dark_layer_1_ui-kit_components_button_variants_styles_text_properties_colors_icon-color: var(
+    --recursica_brand_themes_dark_layers_layer-1_elements_interactive_tone
+  );
   --recursica_ui-kit_themes_dark_layer_1_ui-kit_components_button_variants_styles_text_properties_colors_text: var(
     --recursica_brand_themes_dark_layers_layer-1_elements_interactive_tone
   );
@@ -6207,6 +6217,9 @@
   --recursica_ui-kit_themes_dark_layer_2_ui-kit_components_button_variants_styles_outline_properties_colors_border-color: var(
     --recursica_brand_themes_dark_layers_layer-1_elements_interactive_tone
   );
+  --recursica_ui-kit_themes_dark_layer_2_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color: var(
+    --recursica_brand_themes_dark_layers_layer-2_elements_interactive_tone
+  );
   --recursica_ui-kit_themes_dark_layer_2_ui-kit_components_button_variants_styles_outline_properties_colors_text: var(
     --recursica_brand_themes_dark_layers_layer-2_elements_interactive_tone
   );
@@ -6219,6 +6232,9 @@
   --recursica_ui-kit_themes_dark_layer_2_ui-kit_components_button_variants_styles_solid_properties_colors_border-color: var(
     --recursica_brand_themes_dark_layers_layer-2_properties_border-color
   );
+  --recursica_ui-kit_themes_dark_layer_2_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color: var(
+    --recursica_brand_themes_dark_layers_layer-2_elements_interactive_on-tone
+  );
   --recursica_ui-kit_themes_dark_layer_2_ui-kit_components_button_variants_styles_solid_properties_colors_text: var(
     --recursica_brand_themes_dark_layers_layer-2_elements_interactive_on-tone
   );
@@ -6227,6 +6243,9 @@
   );
   --recursica_ui-kit_themes_dark_layer_2_ui-kit_components_button_variants_styles_text_properties_colors_background: transparent;
   --recursica_ui-kit_themes_dark_layer_2_ui-kit_components_button_variants_styles_text_properties_colors_border-color: transparent;
+  --recursica_ui-kit_themes_dark_layer_2_ui-kit_components_button_variants_styles_text_properties_colors_icon-color: var(
+    --recursica_brand_themes_dark_layers_layer-2_elements_interactive_tone
+  );
   --recursica_ui-kit_themes_dark_layer_2_ui-kit_components_button_variants_styles_text_properties_colors_text: var(
     --recursica_brand_themes_dark_layers_layer-2_elements_interactive_tone
   );
@@ -7417,6 +7436,9 @@
   --recursica_ui-kit_themes_dark_layer_3_ui-kit_components_button_variants_styles_outline_properties_colors_border-color: var(
     --recursica_brand_themes_dark_layers_layer-1_elements_interactive_tone
   );
+  --recursica_ui-kit_themes_dark_layer_3_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color: var(
+    --recursica_brand_themes_dark_layers_layer-3_elements_interactive_tone
+  );
   --recursica_ui-kit_themes_dark_layer_3_ui-kit_components_button_variants_styles_outline_properties_colors_text: var(
     --recursica_brand_themes_dark_layers_layer-3_elements_interactive_tone
   );
@@ -7429,6 +7451,9 @@
   --recursica_ui-kit_themes_dark_layer_3_ui-kit_components_button_variants_styles_solid_properties_colors_border-color: var(
     --recursica_brand_themes_dark_layers_layer-3_properties_border-color
   );
+  --recursica_ui-kit_themes_dark_layer_3_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color: var(
+    --recursica_brand_themes_dark_layers_layer-3_elements_interactive_on-tone
+  );
   --recursica_ui-kit_themes_dark_layer_3_ui-kit_components_button_variants_styles_solid_properties_colors_text: var(
     --recursica_brand_themes_dark_layers_layer-3_elements_interactive_on-tone
   );
@@ -7438,6 +7463,9 @@
   --recursica_ui-kit_themes_dark_layer_3_ui-kit_components_button_variants_styles_text_properties_colors_background: transparent;
   --recursica_ui-kit_themes_dark_layer_3_ui-kit_components_button_variants_styles_text_properties_colors_border-color: var(
     --recursica_brand_themes_dark_layers_layer-3_properties_border-color
+  );
+  --recursica_ui-kit_themes_dark_layer_3_ui-kit_components_button_variants_styles_text_properties_colors_icon-color: var(
+    --recursica_brand_themes_dark_layers_layer-3_elements_interactive_tone
   );
   --recursica_ui-kit_themes_dark_layer_3_ui-kit_components_button_variants_styles_text_properties_colors_text: var(
     --recursica_brand_themes_dark_layers_layer-3_elements_interactive_tone
@@ -8629,6 +8657,9 @@
   --recursica_ui-kit_themes_light_layer_0_ui-kit_components_button_variants_styles_outline_properties_colors_border-color: var(
     --recursica_brand_themes_light_layers_layer-0_elements_interactive_tone
   );
+  --recursica_ui-kit_themes_light_layer_0_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color: var(
+    --recursica_brand_themes_light_layers_layer-0_elements_interactive_tone
+  );
   --recursica_ui-kit_themes_light_layer_0_ui-kit_components_button_variants_styles_outline_properties_colors_text: var(
     --recursica_brand_themes_light_layers_layer-0_elements_interactive_tone
   );
@@ -8641,6 +8672,9 @@
   --recursica_ui-kit_themes_light_layer_0_ui-kit_components_button_variants_styles_solid_properties_colors_border-color: var(
     --recursica_brand_themes_light_layers_layer-0_elements_interactive_tone
   );
+  --recursica_ui-kit_themes_light_layer_0_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color: var(
+    --recursica_brand_themes_light_layers_layer-0_elements_interactive_on-tone
+  );
   --recursica_ui-kit_themes_light_layer_0_ui-kit_components_button_variants_styles_solid_properties_colors_text: var(
     --recursica_brand_themes_light_layers_layer-0_elements_interactive_on-tone
   );
@@ -8649,6 +8683,9 @@
   );
   --recursica_ui-kit_themes_light_layer_0_ui-kit_components_button_variants_styles_text_properties_colors_background: transparent;
   --recursica_ui-kit_themes_light_layer_0_ui-kit_components_button_variants_styles_text_properties_colors_border-color: transparent;
+  --recursica_ui-kit_themes_light_layer_0_ui-kit_components_button_variants_styles_text_properties_colors_icon-color: var(
+    --recursica_brand_themes_light_layers_layer-0_elements_interactive_tone
+  );
   --recursica_ui-kit_themes_light_layer_0_ui-kit_components_button_variants_styles_text_properties_colors_text: var(
     --recursica_brand_themes_light_layers_layer-0_elements_interactive_tone
   );
@@ -9839,6 +9876,9 @@
   --recursica_ui-kit_themes_light_layer_1_ui-kit_components_button_variants_styles_outline_properties_colors_border-color: var(
     --recursica_brand_themes_light_layers_layer-1_elements_interactive_tone
   );
+  --recursica_ui-kit_themes_light_layer_1_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color: var(
+    --recursica_brand_themes_light_layers_layer-1_elements_interactive_tone
+  );
   --recursica_ui-kit_themes_light_layer_1_ui-kit_components_button_variants_styles_outline_properties_colors_text: var(
     --recursica_brand_themes_light_layers_layer-1_elements_interactive_tone
   );
@@ -9851,6 +9891,9 @@
   --recursica_ui-kit_themes_light_layer_1_ui-kit_components_button_variants_styles_solid_properties_colors_border-color: var(
     --recursica_brand_themes_light_layers_layer-1_properties_border-color
   );
+  --recursica_ui-kit_themes_light_layer_1_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color: var(
+    --recursica_brand_themes_light_layers_layer-1_elements_interactive_on-tone
+  );
   --recursica_ui-kit_themes_light_layer_1_ui-kit_components_button_variants_styles_solid_properties_colors_text: var(
     --recursica_brand_themes_light_layers_layer-1_elements_interactive_on-tone
   );
@@ -9859,6 +9902,9 @@
   );
   --recursica_ui-kit_themes_light_layer_1_ui-kit_components_button_variants_styles_text_properties_colors_background: transparent;
   --recursica_ui-kit_themes_light_layer_1_ui-kit_components_button_variants_styles_text_properties_colors_border-color: transparent;
+  --recursica_ui-kit_themes_light_layer_1_ui-kit_components_button_variants_styles_text_properties_colors_icon-color: var(
+    --recursica_brand_themes_light_layers_layer-1_elements_interactive_tone
+  );
   --recursica_ui-kit_themes_light_layer_1_ui-kit_components_button_variants_styles_text_properties_colors_text: var(
     --recursica_brand_themes_light_layers_layer-1_elements_interactive_tone
   );
@@ -11049,6 +11095,9 @@
   --recursica_ui-kit_themes_light_layer_2_ui-kit_components_button_variants_styles_outline_properties_colors_border-color: var(
     --recursica_brand_themes_light_layers_layer-1_elements_interactive_tone
   );
+  --recursica_ui-kit_themes_light_layer_2_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color: var(
+    --recursica_brand_themes_light_layers_layer-2_elements_interactive_tone
+  );
   --recursica_ui-kit_themes_light_layer_2_ui-kit_components_button_variants_styles_outline_properties_colors_text: var(
     --recursica_brand_themes_light_layers_layer-2_elements_interactive_tone
   );
@@ -11061,6 +11110,9 @@
   --recursica_ui-kit_themes_light_layer_2_ui-kit_components_button_variants_styles_solid_properties_colors_border-color: var(
     --recursica_brand_themes_light_layers_layer-2_properties_border-color
   );
+  --recursica_ui-kit_themes_light_layer_2_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color: var(
+    --recursica_brand_themes_light_layers_layer-2_elements_interactive_on-tone
+  );
   --recursica_ui-kit_themes_light_layer_2_ui-kit_components_button_variants_styles_solid_properties_colors_text: var(
     --recursica_brand_themes_light_layers_layer-2_elements_interactive_on-tone
   );
@@ -11069,6 +11121,9 @@
   );
   --recursica_ui-kit_themes_light_layer_2_ui-kit_components_button_variants_styles_text_properties_colors_background: transparent;
   --recursica_ui-kit_themes_light_layer_2_ui-kit_components_button_variants_styles_text_properties_colors_border-color: transparent;
+  --recursica_ui-kit_themes_light_layer_2_ui-kit_components_button_variants_styles_text_properties_colors_icon-color: var(
+    --recursica_brand_themes_light_layers_layer-2_elements_interactive_tone
+  );
   --recursica_ui-kit_themes_light_layer_2_ui-kit_components_button_variants_styles_text_properties_colors_text: var(
     --recursica_brand_themes_light_layers_layer-2_elements_interactive_tone
   );
@@ -12259,6 +12314,9 @@
   --recursica_ui-kit_themes_light_layer_3_ui-kit_components_button_variants_styles_outline_properties_colors_border-color: var(
     --recursica_brand_themes_light_layers_layer-1_elements_interactive_tone
   );
+  --recursica_ui-kit_themes_light_layer_3_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color: var(
+    --recursica_brand_themes_light_layers_layer-3_elements_interactive_tone
+  );
   --recursica_ui-kit_themes_light_layer_3_ui-kit_components_button_variants_styles_outline_properties_colors_text: var(
     --recursica_brand_themes_light_layers_layer-3_elements_interactive_tone
   );
@@ -12271,6 +12329,9 @@
   --recursica_ui-kit_themes_light_layer_3_ui-kit_components_button_variants_styles_solid_properties_colors_border-color: var(
     --recursica_brand_themes_light_layers_layer-3_properties_border-color
   );
+  --recursica_ui-kit_themes_light_layer_3_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color: var(
+    --recursica_brand_themes_light_layers_layer-3_elements_interactive_on-tone
+  );
   --recursica_ui-kit_themes_light_layer_3_ui-kit_components_button_variants_styles_solid_properties_colors_text: var(
     --recursica_brand_themes_light_layers_layer-3_elements_interactive_on-tone
   );
@@ -12280,6 +12341,9 @@
   --recursica_ui-kit_themes_light_layer_3_ui-kit_components_button_variants_styles_text_properties_colors_background: transparent;
   --recursica_ui-kit_themes_light_layer_3_ui-kit_components_button_variants_styles_text_properties_colors_border-color: var(
     --recursica_brand_themes_light_layers_layer-3_properties_border-color
+  );
+  --recursica_ui-kit_themes_light_layer_3_ui-kit_components_button_variants_styles_text_properties_colors_icon-color: var(
+    --recursica_brand_themes_light_layers_layer-3_elements_interactive_tone
   );
   --recursica_ui-kit_themes_light_layer_3_ui-kit_components_button_variants_styles_text_properties_colors_text: var(
     --recursica_brand_themes_light_layers_layer-3_elements_interactive_tone
@@ -13944,6 +14008,9 @@
   --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_border-color: var(
     --recursica_ui-kit_themes_light_layer_0_ui-kit_components_button_variants_styles_outline_properties_colors_border-color
   );
+  --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_light_layer_0_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color
+  );
   --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_text: var(
     --recursica_ui-kit_themes_light_layer_0_ui-kit_components_button_variants_styles_outline_properties_colors_text
   );
@@ -13956,6 +14023,9 @@
   --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_border-color: var(
     --recursica_ui-kit_themes_light_layer_0_ui-kit_components_button_variants_styles_solid_properties_colors_border-color
   );
+  --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_light_layer_0_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color
+  );
   --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_text: var(
     --recursica_ui-kit_themes_light_layer_0_ui-kit_components_button_variants_styles_solid_properties_colors_text
   );
@@ -13967,6 +14037,9 @@
   );
   --recursica_ui-kit_components_button_variants_styles_text_properties_colors_border-color: var(
     --recursica_ui-kit_themes_light_layer_0_ui-kit_components_button_variants_styles_text_properties_colors_border-color
+  );
+  --recursica_ui-kit_components_button_variants_styles_text_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_light_layer_0_ui-kit_components_button_variants_styles_text_properties_colors_icon-color
   );
   --recursica_ui-kit_components_button_variants_styles_text_properties_colors_text: var(
     --recursica_ui-kit_themes_light_layer_0_ui-kit_components_button_variants_styles_text_properties_colors_text
@@ -15105,12 +15178,6 @@
   --recursica_brand_elevations_elevation-4_y: var(
     --recursica_brand_themes_dark_elevations_elevation-4_y
   );
-  --recursica_brand_layer_0_elements_interactive_color: var(
-    --recursica_brand_themes_dark_layers_layer-0_elements_interactive_color
-  );
-  --recursica_brand_layer_0_elements_interactive_hover-color: var(
-    --recursica_brand_themes_dark_layers_layer-0_elements_interactive_hover-color
-  );
   --recursica_brand_layer_0_elements_interactive_on-tone: var(
     --recursica_brand_themes_dark_layers_layer-0_elements_interactive_on-tone
   );
@@ -15663,6 +15730,9 @@
   --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_border-color: var(
     --recursica_ui-kit_themes_dark_layer_0_ui-kit_components_button_variants_styles_outline_properties_colors_border-color
   );
+  --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_dark_layer_0_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color
+  );
   --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_text: var(
     --recursica_ui-kit_themes_dark_layer_0_ui-kit_components_button_variants_styles_outline_properties_colors_text
   );
@@ -15675,6 +15745,9 @@
   --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_border-color: var(
     --recursica_ui-kit_themes_dark_layer_0_ui-kit_components_button_variants_styles_solid_properties_colors_border-color
   );
+  --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_dark_layer_0_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color
+  );
   --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_text: var(
     --recursica_ui-kit_themes_dark_layer_0_ui-kit_components_button_variants_styles_solid_properties_colors_text
   );
@@ -15686,6 +15759,9 @@
   );
   --recursica_ui-kit_components_button_variants_styles_text_properties_colors_border-color: var(
     --recursica_ui-kit_themes_dark_layer_0_ui-kit_components_button_variants_styles_text_properties_colors_border-color
+  );
+  --recursica_ui-kit_components_button_variants_styles_text_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_dark_layer_0_ui-kit_components_button_variants_styles_text_properties_colors_icon-color
   );
   --recursica_ui-kit_components_button_variants_styles_text_properties_colors_text: var(
     --recursica_ui-kit_themes_dark_layer_0_ui-kit_components_button_variants_styles_text_properties_colors_text
@@ -16963,6 +17039,9 @@
   --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_border-color: var(
     --recursica_ui-kit_themes_light_layer_0_ui-kit_components_button_variants_styles_outline_properties_colors_border-color
   );
+  --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_light_layer_0_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color
+  );
   --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_text: var(
     --recursica_ui-kit_themes_light_layer_0_ui-kit_components_button_variants_styles_outline_properties_colors_text
   );
@@ -16975,6 +17054,9 @@
   --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_border-color: var(
     --recursica_ui-kit_themes_light_layer_0_ui-kit_components_button_variants_styles_solid_properties_colors_border-color
   );
+  --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_light_layer_0_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color
+  );
   --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_text: var(
     --recursica_ui-kit_themes_light_layer_0_ui-kit_components_button_variants_styles_solid_properties_colors_text
   );
@@ -16986,6 +17068,9 @@
   );
   --recursica_ui-kit_components_button_variants_styles_text_properties_colors_border-color: var(
     --recursica_ui-kit_themes_light_layer_0_ui-kit_components_button_variants_styles_text_properties_colors_border-color
+  );
+  --recursica_ui-kit_components_button_variants_styles_text_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_light_layer_0_ui-kit_components_button_variants_styles_text_properties_colors_icon-color
   );
   --recursica_ui-kit_components_button_variants_styles_text_properties_colors_text: var(
     --recursica_ui-kit_themes_light_layer_0_ui-kit_components_button_variants_styles_text_properties_colors_text
@@ -18020,12 +18105,6 @@
 
 [data-recursica-theme="dark"][data-recursica-layer="0"],
 [data-recursica-theme="dark"] [data-recursica-layer="0"] {
-  --recursica_brand_layer_0_elements_interactive_color: var(
-    --recursica_brand_themes_dark_layers_layer-0_elements_interactive_color
-  );
-  --recursica_brand_layer_0_elements_interactive_hover-color: var(
-    --recursica_brand_themes_dark_layers_layer-0_elements_interactive_hover-color
-  );
   --recursica_brand_layer_0_elements_interactive_on-tone: var(
     --recursica_brand_themes_dark_layers_layer-0_elements_interactive_on-tone
   );
@@ -18269,6 +18348,9 @@
   --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_border-color: var(
     --recursica_ui-kit_themes_dark_layer_0_ui-kit_components_button_variants_styles_outline_properties_colors_border-color
   );
+  --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_dark_layer_0_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color
+  );
   --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_text: var(
     --recursica_ui-kit_themes_dark_layer_0_ui-kit_components_button_variants_styles_outline_properties_colors_text
   );
@@ -18281,6 +18363,9 @@
   --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_border-color: var(
     --recursica_ui-kit_themes_dark_layer_0_ui-kit_components_button_variants_styles_solid_properties_colors_border-color
   );
+  --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_dark_layer_0_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color
+  );
   --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_text: var(
     --recursica_ui-kit_themes_dark_layer_0_ui-kit_components_button_variants_styles_solid_properties_colors_text
   );
@@ -18292,6 +18377,9 @@
   );
   --recursica_ui-kit_components_button_variants_styles_text_properties_colors_border-color: var(
     --recursica_ui-kit_themes_dark_layer_0_ui-kit_components_button_variants_styles_text_properties_colors_border-color
+  );
+  --recursica_ui-kit_components_button_variants_styles_text_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_dark_layer_0_ui-kit_components_button_variants_styles_text_properties_colors_icon-color
   );
   --recursica_ui-kit_components_button_variants_styles_text_properties_colors_text: var(
     --recursica_ui-kit_themes_dark_layer_0_ui-kit_components_button_variants_styles_text_properties_colors_text
@@ -19569,6 +19657,9 @@
   --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_border-color: var(
     --recursica_ui-kit_themes_light_layer_1_ui-kit_components_button_variants_styles_outline_properties_colors_border-color
   );
+  --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_light_layer_1_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color
+  );
   --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_text: var(
     --recursica_ui-kit_themes_light_layer_1_ui-kit_components_button_variants_styles_outline_properties_colors_text
   );
@@ -19581,6 +19672,9 @@
   --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_border-color: var(
     --recursica_ui-kit_themes_light_layer_1_ui-kit_components_button_variants_styles_solid_properties_colors_border-color
   );
+  --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_light_layer_1_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color
+  );
   --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_text: var(
     --recursica_ui-kit_themes_light_layer_1_ui-kit_components_button_variants_styles_solid_properties_colors_text
   );
@@ -19592,6 +19686,9 @@
   );
   --recursica_ui-kit_components_button_variants_styles_text_properties_colors_border-color: var(
     --recursica_ui-kit_themes_light_layer_1_ui-kit_components_button_variants_styles_text_properties_colors_border-color
+  );
+  --recursica_ui-kit_components_button_variants_styles_text_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_light_layer_1_ui-kit_components_button_variants_styles_text_properties_colors_icon-color
   );
   --recursica_ui-kit_components_button_variants_styles_text_properties_colors_text: var(
     --recursica_ui-kit_themes_light_layer_1_ui-kit_components_button_variants_styles_text_properties_colors_text
@@ -20626,12 +20723,6 @@
 
 [data-recursica-theme="dark"][data-recursica-layer="1"],
 [data-recursica-theme="dark"] [data-recursica-layer="1"] {
-  --recursica_brand_layer_1_elements_interactive_color: var(
-    --recursica_brand_themes_dark_layers_layer-1_elements_interactive_color
-  );
-  --recursica_brand_layer_1_elements_interactive_hover-color: var(
-    --recursica_brand_themes_dark_layers_layer-1_elements_interactive_hover-color
-  );
   --recursica_brand_layer_1_elements_interactive_on-tone: var(
     --recursica_brand_themes_dark_layers_layer-1_elements_interactive_on-tone
   );
@@ -20875,6 +20966,9 @@
   --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_border-color: var(
     --recursica_ui-kit_themes_dark_layer_1_ui-kit_components_button_variants_styles_outline_properties_colors_border-color
   );
+  --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_dark_layer_1_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color
+  );
   --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_text: var(
     --recursica_ui-kit_themes_dark_layer_1_ui-kit_components_button_variants_styles_outline_properties_colors_text
   );
@@ -20887,6 +20981,9 @@
   --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_border-color: var(
     --recursica_ui-kit_themes_dark_layer_1_ui-kit_components_button_variants_styles_solid_properties_colors_border-color
   );
+  --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_dark_layer_1_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color
+  );
   --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_text: var(
     --recursica_ui-kit_themes_dark_layer_1_ui-kit_components_button_variants_styles_solid_properties_colors_text
   );
@@ -20898,6 +20995,9 @@
   );
   --recursica_ui-kit_components_button_variants_styles_text_properties_colors_border-color: var(
     --recursica_ui-kit_themes_dark_layer_1_ui-kit_components_button_variants_styles_text_properties_colors_border-color
+  );
+  --recursica_ui-kit_components_button_variants_styles_text_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_dark_layer_1_ui-kit_components_button_variants_styles_text_properties_colors_icon-color
   );
   --recursica_ui-kit_components_button_variants_styles_text_properties_colors_text: var(
     --recursica_ui-kit_themes_dark_layer_1_ui-kit_components_button_variants_styles_text_properties_colors_text
@@ -22175,6 +22275,9 @@
   --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_border-color: var(
     --recursica_ui-kit_themes_light_layer_2_ui-kit_components_button_variants_styles_outline_properties_colors_border-color
   );
+  --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_light_layer_2_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color
+  );
   --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_text: var(
     --recursica_ui-kit_themes_light_layer_2_ui-kit_components_button_variants_styles_outline_properties_colors_text
   );
@@ -22187,6 +22290,9 @@
   --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_border-color: var(
     --recursica_ui-kit_themes_light_layer_2_ui-kit_components_button_variants_styles_solid_properties_colors_border-color
   );
+  --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_light_layer_2_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color
+  );
   --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_text: var(
     --recursica_ui-kit_themes_light_layer_2_ui-kit_components_button_variants_styles_solid_properties_colors_text
   );
@@ -22198,6 +22304,9 @@
   );
   --recursica_ui-kit_components_button_variants_styles_text_properties_colors_border-color: var(
     --recursica_ui-kit_themes_light_layer_2_ui-kit_components_button_variants_styles_text_properties_colors_border-color
+  );
+  --recursica_ui-kit_components_button_variants_styles_text_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_light_layer_2_ui-kit_components_button_variants_styles_text_properties_colors_icon-color
   );
   --recursica_ui-kit_components_button_variants_styles_text_properties_colors_text: var(
     --recursica_ui-kit_themes_light_layer_2_ui-kit_components_button_variants_styles_text_properties_colors_text
@@ -23232,12 +23341,6 @@
 
 [data-recursica-theme="dark"][data-recursica-layer="2"],
 [data-recursica-theme="dark"] [data-recursica-layer="2"] {
-  --recursica_brand_layer_2_elements_interactive_color: var(
-    --recursica_brand_themes_dark_layers_layer-2_elements_interactive_color
-  );
-  --recursica_brand_layer_2_elements_interactive_hover-color: var(
-    --recursica_brand_themes_dark_layers_layer-2_elements_interactive_hover-color
-  );
   --recursica_brand_layer_2_elements_interactive_on-tone: var(
     --recursica_brand_themes_dark_layers_layer-2_elements_interactive_on-tone
   );
@@ -23481,6 +23584,9 @@
   --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_border-color: var(
     --recursica_ui-kit_themes_dark_layer_2_ui-kit_components_button_variants_styles_outline_properties_colors_border-color
   );
+  --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_dark_layer_2_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color
+  );
   --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_text: var(
     --recursica_ui-kit_themes_dark_layer_2_ui-kit_components_button_variants_styles_outline_properties_colors_text
   );
@@ -23493,6 +23599,9 @@
   --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_border-color: var(
     --recursica_ui-kit_themes_dark_layer_2_ui-kit_components_button_variants_styles_solid_properties_colors_border-color
   );
+  --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_dark_layer_2_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color
+  );
   --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_text: var(
     --recursica_ui-kit_themes_dark_layer_2_ui-kit_components_button_variants_styles_solid_properties_colors_text
   );
@@ -23504,6 +23613,9 @@
   );
   --recursica_ui-kit_components_button_variants_styles_text_properties_colors_border-color: var(
     --recursica_ui-kit_themes_dark_layer_2_ui-kit_components_button_variants_styles_text_properties_colors_border-color
+  );
+  --recursica_ui-kit_components_button_variants_styles_text_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_dark_layer_2_ui-kit_components_button_variants_styles_text_properties_colors_icon-color
   );
   --recursica_ui-kit_components_button_variants_styles_text_properties_colors_text: var(
     --recursica_ui-kit_themes_dark_layer_2_ui-kit_components_button_variants_styles_text_properties_colors_text
@@ -24781,6 +24893,9 @@
   --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_border-color: var(
     --recursica_ui-kit_themes_light_layer_3_ui-kit_components_button_variants_styles_outline_properties_colors_border-color
   );
+  --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_light_layer_3_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color
+  );
   --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_text: var(
     --recursica_ui-kit_themes_light_layer_3_ui-kit_components_button_variants_styles_outline_properties_colors_text
   );
@@ -24793,6 +24908,9 @@
   --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_border-color: var(
     --recursica_ui-kit_themes_light_layer_3_ui-kit_components_button_variants_styles_solid_properties_colors_border-color
   );
+  --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_light_layer_3_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color
+  );
   --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_text: var(
     --recursica_ui-kit_themes_light_layer_3_ui-kit_components_button_variants_styles_solid_properties_colors_text
   );
@@ -24804,6 +24922,9 @@
   );
   --recursica_ui-kit_components_button_variants_styles_text_properties_colors_border-color: var(
     --recursica_ui-kit_themes_light_layer_3_ui-kit_components_button_variants_styles_text_properties_colors_border-color
+  );
+  --recursica_ui-kit_components_button_variants_styles_text_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_light_layer_3_ui-kit_components_button_variants_styles_text_properties_colors_icon-color
   );
   --recursica_ui-kit_components_button_variants_styles_text_properties_colors_text: var(
     --recursica_ui-kit_themes_light_layer_3_ui-kit_components_button_variants_styles_text_properties_colors_text
@@ -25838,12 +25959,6 @@
 
 [data-recursica-theme="dark"][data-recursica-layer="3"],
 [data-recursica-theme="dark"] [data-recursica-layer="3"] {
-  --recursica_brand_layer_3_elements_interactive_color: var(
-    --recursica_brand_themes_dark_layers_layer-3_elements_interactive_color
-  );
-  --recursica_brand_layer_3_elements_interactive_hover-color: var(
-    --recursica_brand_themes_dark_layers_layer-3_elements_interactive_hover-color
-  );
   --recursica_brand_layer_3_elements_interactive_on-tone: var(
     --recursica_brand_themes_dark_layers_layer-3_elements_interactive_on-tone
   );
@@ -26087,6 +26202,9 @@
   --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_border-color: var(
     --recursica_ui-kit_themes_dark_layer_3_ui-kit_components_button_variants_styles_outline_properties_colors_border-color
   );
+  --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_dark_layer_3_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color
+  );
   --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_text: var(
     --recursica_ui-kit_themes_dark_layer_3_ui-kit_components_button_variants_styles_outline_properties_colors_text
   );
@@ -26099,6 +26217,9 @@
   --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_border-color: var(
     --recursica_ui-kit_themes_dark_layer_3_ui-kit_components_button_variants_styles_solid_properties_colors_border-color
   );
+  --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_dark_layer_3_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color
+  );
   --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_text: var(
     --recursica_ui-kit_themes_dark_layer_3_ui-kit_components_button_variants_styles_solid_properties_colors_text
   );
@@ -26110,6 +26231,9 @@
   );
   --recursica_ui-kit_components_button_variants_styles_text_properties_colors_border-color: var(
     --recursica_ui-kit_themes_dark_layer_3_ui-kit_components_button_variants_styles_text_properties_colors_border-color
+  );
+  --recursica_ui-kit_components_button_variants_styles_text_properties_colors_icon-color: var(
+    --recursica_ui-kit_themes_dark_layer_3_ui-kit_components_button_variants_styles_text_properties_colors_icon-color
   );
   --recursica_ui-kit_components_button_variants_styles_text_properties_colors_text: var(
     --recursica_ui-kit_themes_dark_layer_3_ui-kit_components_button_variants_styles_text_properties_colors_text
