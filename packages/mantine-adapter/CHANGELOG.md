@@ -1,5 +1,11 @@
 # @recursica/mantine-adapter
 
+## 0.7.0
+
+### Minor Changes
+
+- a4cf78b: Updates storybook controls and added chip
+
 ## 0.6.0
 
 ### Minor Changes
