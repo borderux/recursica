@@ -1,1 +1,0 @@
-import{r as t,u as s}from"./iframe-uF_HBlgp.js";function o(e,r){const u=t.useRef(!1);t.useEffect(()=>()=>{u.current=!1},[]),t.useEffect(()=>{if(u.current)return e();u.current=!0},r)}function c(e,r){return s("(prefers-reduced-motion: reduce)",e,r)}export{o as a,c as u};
