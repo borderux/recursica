@@ -25,7 +25,10 @@
     "./style.css": "./dist/mantine-adapter.css"
   },
   "files": [
-    "dist"
+    "dist",
+    "src",
+    "CHANGELOG.md",
+    ".storybook/commonArgTypes.ts"
   ],
   "keywords": [
     "react",
