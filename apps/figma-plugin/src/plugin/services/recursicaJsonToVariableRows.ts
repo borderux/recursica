@@ -1817,10 +1817,37 @@ export function recursicaJsonToVariableRows(
         if (warning) warnings.push(warning);
         return [figmaVariableName, mode, figmaPathValue, type, "true"];
       } catch {
-        errors.push(
-          `At ${location}: invalid reference ${value} (target variable does not exist; DTCG requires references to tokens, not groups)`,
-        );
-        return [figmaVariableName, mode, value as string, type, "true"];
+        let fallbackValue = value as string;
+        try {
+          const parsed = jsonReferenceToFigmaPath(value as string);
+          let figmaVarName = parsed.figmaVariableName;
+          if (
+            parsed.collectionFileType === "brand" &&
+            figmaVarName.startsWith("typography/")
+          ) {
+            const parts = figmaVarName.split("/");
+            if (parts.length > 2) {
+              const last = parts[parts.length - 1];
+              parts[parts.length - 1] = last.replace(
+                /([A-Z])/g,
+                (m) => "-" + m.toLowerCase(),
+              );
+              figmaVarName = parts.join("/");
+            }
+          }
+          if (parsed.collectionFileType === "tokens") {
+            const parts = figmaVarName.split("/");
+            if (parts[0] === "size") parts[0] = "sizes";
+            if (parts[0] === "opacity") parts[0] = "opacities";
+            figmaVarName = parts.join("/");
+          }
+          fallbackValue = `${parsed.collectionFileType}/${figmaVarName}`;
+        } catch {
+          errors.push(
+            `At ${location}: invalid reference ${value} (target variable does not exist; DTCG requires references to tokens, not groups)`,
+          );
+        }
+        return [figmaVariableName, mode, fallbackValue, type, "true"];
       }
     }
     return row;
@@ -1868,10 +1895,37 @@ export function recursicaJsonToVariableRows(
         if (warning) warnings.push(warning);
         return [figmaVariableName, mode, figmaPathValue, type, "true"];
       } catch {
-        errors.push(
-          `At ${location}: invalid reference ${value} (target variable does not exist; DTCG requires references to tokens, not groups)`,
-        );
-        return [figmaVariableName, mode, value as string, type, "true"];
+        let fallbackValue = value as string;
+        try {
+          const parsed = jsonReferenceToFigmaPath(value as string);
+          let figmaVarName = parsed.figmaVariableName;
+          if (
+            parsed.collectionFileType === "brand" &&
+            figmaVarName.startsWith("typography/")
+          ) {
+            const parts = figmaVarName.split("/");
+            if (parts.length > 2) {
+              const last = parts[parts.length - 1];
+              parts[parts.length - 1] = last.replace(
+                /([A-Z])/g,
+                (m) => "-" + m.toLowerCase(),
+              );
+              figmaVarName = parts.join("/");
+            }
+          }
+          if (parsed.collectionFileType === "tokens") {
+            const parts = figmaVarName.split("/");
+            if (parts[0] === "size") parts[0] = "sizes";
+            if (parts[0] === "opacity") parts[0] = "opacities";
+            figmaVarName = parts.join("/");
+          }
+          fallbackValue = `${parsed.collectionFileType}/${figmaVarName}`;
+        } catch {
+          errors.push(
+            `At ${location}: invalid reference ${value} (target variable does not exist; DTCG requires references to tokens, not groups)`,
+          );
+        }
+        return [figmaVariableName, mode, fallbackValue, type, "true"];
       }
     }
     return row;

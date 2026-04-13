@@ -207,6 +207,23 @@ export async function applyVariableRows(
   const localCollections =
     await figma.variables.getLocalVariableCollectionsAsync();
   const variableByKey = new Map<string, Variable>();
+
+  // Pre-populate variableByKey with existing Figma variables
+  // so alias resolution works even if partial JSONs are imported
+  const allLocalVariables = await figma.variables.getLocalVariablesAsync();
+  for (const variable of allLocalVariables) {
+    const coll = localCollections.find(
+      (c) => c.id === variable.variableCollectionId,
+    );
+    if (!coll) continue;
+    let collKey = coll.name.toLowerCase();
+    if (collKey === "themes" || collKey === "theme") collKey = "themes";
+    else if (collKey === "layer") collKey = "layer";
+    else if (collKey === "tokens") collKey = "tokens";
+
+    variableByKey.set(`${collKey}/${variable.name}`, variable);
+  }
+
   let variablesCreated = 0;
   let variablesAlreadyExisted = 0;
   const aliasErrors: string[] = [];
@@ -287,14 +304,31 @@ export async function applyVariableRows(
           console.warn(`[applyVariableRows] TYPE MISMATCH: ${msg}`);
           typeRenameWarnings.push(msg);
 
-          variable = figma.variables.createVariable(
-            renamedName,
+          const existingRenamed = await findVariableByName(
             collection,
-            incomingType,
+            renamedName,
           );
+          if (existingRenamed) {
+            variable = existingRenamed;
+            variablesAlreadyExisted++;
+          } else {
+            try {
+              variable = figma.variables.createVariable(
+                renamedName,
+                collection,
+                incomingType,
+              );
+              variablesCreated++;
+            } catch (err) {
+              console.error(`Failed to create ${renamedName}:`, err);
+              variable = existing; // fallback to prevent crashing the whole loop
+            }
+          }
+
           // Register under the ORIGINAL key so alias resolution still works.
-          variableByKey.set(`${collKey}/${variableName}`, variable);
-          variablesCreated++;
+          if (variable) {
+            variableByKey.set(`${collKey}/${variableName}`, variable);
+          }
         } else {
           // Same type — existing variable is fine, skip creation.
           variableByKey.set(`${collKey}/${variableName}`, existing);
