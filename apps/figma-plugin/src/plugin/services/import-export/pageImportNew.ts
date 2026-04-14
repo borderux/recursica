@@ -5761,6 +5761,9 @@ export async function recreateNodeFromData(
   ) {
     newNode.cornerRadius = nodeData.cornerRadius;
   }
+  if (nodeData.clipsContent !== undefined && "clipsContent" in newNode) {
+    newNode.clipsContent = nodeData.clipsContent;
+  }
   if (
     nodeData.effects !== undefined &&
     "effects" in newNode &&
@@ -9009,6 +9012,9 @@ async function createRemoteInstances(
             !entry.structure.boundVariables.cornerRadius)
         ) {
           componentNode.cornerRadius = entry.structure.cornerRadius;
+        }
+        if (entry.structure.clipsContent !== undefined) {
+          componentNode.clipsContent = entry.structure.clipsContent;
         }
 
         // Restore bound variables for all properties (if any)
