@@ -330,11 +330,8 @@ export async function createTextStylesFromTypography(
     // Figma only allows bindings to actual Variables
     const bindableFields: Array<{
       key: TypographyPropertyKey;
-      field: "fontSize" | "letterSpacing";
-    }> = [
-      { key: "font-size", field: "fontSize" },
-      { key: "letter-spacing", field: "letterSpacing" },
-    ];
+      field: "fontSize";
+    }> = [{ key: "font-size", field: "fontSize" }];
     for (const { key, field } of bindableFields) {
       const entry = propVars.get(key);
       if (entry && typeof entry === "object" && "id" in entry) {
@@ -345,11 +342,6 @@ export async function createTextStylesFromTypography(
           const val =
             typeof entry === "number" ? entry : parseFloat(String(entry));
           if (!Number.isNaN(val)) textStyle.fontSize = val;
-        } else if (field === "letterSpacing") {
-          const val =
-            typeof entry === "number" ? entry : parseFloat(String(entry));
-          if (!Number.isNaN(val))
-            textStyle.letterSpacing = { value: val, unit: "PIXELS" };
         }
       }
     }
@@ -395,6 +387,51 @@ export async function createTextStylesFromTypography(
           );
           if (col && col.name.toLowerCase() !== "tokens") {
             textStyle.setBoundVariable("lineHeight", lineHeightEntry);
+          }
+        }
+      }
+    }
+
+    // `letter-spacing` resolves to a multiplier in our tokens, so we calc an absolute pixel value.
+    const letterSpacingEntry = propVars.get("letter-spacing");
+    if (letterSpacingEntry !== undefined && fontSizeEntry !== undefined) {
+      const lsVal = await resolveEntry(letterSpacingEntry);
+      const fsVal = await resolveEntry(fontSizeEntry);
+
+      const parsedLs =
+        typeof lsVal === "number" ? lsVal : parseFloat(String(lsVal));
+      const parsedFs =
+        typeof fsVal === "number" ? fsVal : parseFloat(String(fsVal));
+
+      if (!Number.isNaN(parsedLs) && !Number.isNaN(parsedFs)) {
+        // Assume anything between -5 and 5 is an em multiplier.
+        const isEmRatio = Math.abs(parsedLs) < 5;
+        const modifiedLsValue = isEmRatio ? parsedLs * 100 : parsedLs;
+        const lsUnit = isEmRatio ? "PERCENT" : "PIXELS";
+
+        textStyle.letterSpacing = {
+          value: modifiedLsValue,
+          unit: lsUnit,
+        };
+
+        const lsFigmaVarKey = `themes/typography/${styleName}/letter-spacing`;
+        const lsFigmaVar = variableByKey.get(lsFigmaVarKey);
+
+        if (lsFigmaVar) {
+          for (const modeId of Object.keys(lsFigmaVar.valuesByMode)) {
+            lsFigmaVar.setValueForMode(modeId, modifiedLsValue);
+          }
+          textStyle.setBoundVariable("letterSpacing", lsFigmaVar);
+        } else if (
+          letterSpacingEntry &&
+          typeof letterSpacingEntry === "object" &&
+          "id" in letterSpacingEntry
+        ) {
+          const col = collections.find(
+            (c) => c.id === letterSpacingEntry.variableCollectionId,
+          );
+          if (col && col.name.toLowerCase() !== "tokens") {
+            textStyle.setBoundVariable("letterSpacing", letterSpacingEntry);
           }
         }
       }
