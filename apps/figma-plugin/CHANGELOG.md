@@ -1,5 +1,11 @@
 # @recursica/publisher
 
+## 0.15.0
+
+### Minor Changes
+
+- 0ea5193: Updated apply theme and added to admin menu
+
 ## 0.14.0
 
 ### Minor Changes
