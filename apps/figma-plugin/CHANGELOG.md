@@ -1,5 +1,11 @@
 # @recursica/publisher
 
+## 0.14.0
+
+### Minor Changes
+
+- 98a2d96: Fixed clip content and line spacing
+
 ## 0.13.0
 
 ### Minor Changes
