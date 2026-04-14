@@ -1,5 +1,11 @@
 # @recursica/publisher
 
+## 0.13.0
+
+### Minor Changes
+
+- d90b4df: Fixed single import and case apply
+
 ## 0.12.0
 
 ### Minor Changes

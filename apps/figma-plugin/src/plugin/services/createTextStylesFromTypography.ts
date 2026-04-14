@@ -112,10 +112,10 @@ function toLiteralOrNull(
 function toTextCase(value: string | number | null): TextCase | undefined {
   if (value == null) return undefined;
   const s = String(value).toUpperCase().replace(/-/g, "_");
-  if (s === "NONE" || s === "ORIGINAL") return "ORIGINAL";
-  if (s === "UPPER") return "UPPER";
-  if (s === "LOWER") return "LOWER";
-  if (s === "TITLE") return "TITLE";
+  if (s === "NONE" || s === "ORIGINAL" || s === "NORMAL") return "ORIGINAL";
+  if (s === "UPPER" || s === "UPPERCASE") return "UPPER";
+  if (s === "LOWER" || s === "LOWERCASE") return "LOWER";
+  if (s === "TITLE" || s === "CAPITALIZE") return "TITLE";
   if (s === "SMALL_CAPS") return "SMALL_CAPS";
   if (s === "SMALL_CAPS_FORCED") return "SMALL_CAPS_FORCED";
   return undefined;
@@ -126,10 +126,10 @@ function toTextDecoration(
   value: string | number | null,
 ): TextDecoration | undefined {
   if (value == null) return undefined;
-  const s = String(value).toUpperCase();
-  if (s === "NONE") return "NONE";
+  const s = String(value).toUpperCase().replace(/-/g, "_");
+  if (s === "NONE" || s === "NORMAL") return "NONE";
   if (s === "UNDERLINE") return "UNDERLINE";
-  if (s === "STRIKETHROUGH") return "STRIKETHROUGH";
+  if (s === "STRIKETHROUGH" || s === "LINE_THROUGH") return "STRIKETHROUGH";
   return undefined;
 }
 
