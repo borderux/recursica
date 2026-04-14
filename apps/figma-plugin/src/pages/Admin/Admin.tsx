@@ -31,6 +31,13 @@ export default function Admin() {
           </Button>
 
           <Button
+            onClick={() => navigate("/apply-recursica-theme")}
+            className={classes.button}
+          >
+            Apply Recursica Theme
+          </Button>
+
+          <Button
             onClick={() => navigate("/edit-metadata")}
             className={classes.button}
           >

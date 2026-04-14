@@ -533,9 +533,13 @@ export async function importVariablesCsv(
     aliasErrors,
     typeRenameWarnings: varTypeRenameWarnings,
   } = applyResult;
-  const hasIssues = aliasErrors.length > 0 || varTypeRenameWarnings.length > 0;
+  const hasIssues =
+    aliasErrors.length > 0 ||
+    varTypeRenameWarnings.length > 0 ||
+    textStyleWarnings.length > 0 ||
+    effectStyleWarnings.length > 0;
   const message = hasIssues
-    ? `Import complete with issues. Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Alias errors: ${aliasErrors.length}. Type renames: ${varTypeRenameWarnings.length}. Text styles: ${textStylesCreated} created, ${textStylesUpdated} updated, ${textStylesSkipped} skipped. Effect styles: ${effectStylesCreated} created, ${effectStylesUpdated} updated, ${effectStylesSkipped} skipped.`
+    ? `Import complete with issues. Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Alias errors: ${aliasErrors.length}. Type renames: ${varTypeRenameWarnings.length}. Text styles: ${textStylesCreated} created, ${textStylesUpdated} updated, ${textStylesSkipped} skipped, ${textStyleWarnings.length} warnings. Effect styles: ${effectStylesCreated} created, ${effectStylesUpdated} updated, ${effectStylesSkipped} skipped, ${effectStyleWarnings.length} warnings.`
     : `Import complete. Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Text styles: ${textStylesCreated} created, ${textStylesUpdated} updated, ${textStylesSkipped} skipped. Effect styles: ${effectStylesCreated} created, ${effectStylesUpdated} updated, ${effectStylesSkipped} skipped.`;
 
   return {
