@@ -174,14 +174,16 @@ export async function createEffectStylesFromElevations(): Promise<CreateEffectSt
 
   if (!themesCollection) {
     themesCollection = collections.find((c) =>
-      THEMES_COLLECTION_NAMES.includes(c.name),
+      THEMES_COLLECTION_NAMES.map((n) => n.toLowerCase()).includes(
+        c.name.toLowerCase(),
+      ),
     );
   }
 
   if (!themesCollection) {
-    console.log(
-      `[createEffectStyles] No Themes collection found. Collections: ${collections.map((c) => c.name).join(", ")}`,
-    );
+    const errorMsg = `No Themes collection found. Collections: ${collections.map((c) => c.name).join(", ")}`;
+    console.log(`[createEffectStyles] ${errorMsg}`);
+    result.effectStyleWarnings.push(errorMsg);
     return result;
   }
 
@@ -203,29 +205,26 @@ export async function createEffectStylesFromElevations(): Promise<CreateEffectSt
     elevationVariables.push({ name: elevationName, variable });
   }
 
-  console.log(
-    `[createEffectStyles] Found ${elevationVariables.length} elevation variables in Themes collection.`,
-  );
-
   if (elevationVariables.length === 0) return result;
 
   const existingEffectStyles = await figma.getLocalEffectStylesAsync();
-  console.log(
-    `[createEffectStyles] Found ${existingEffectStyles.length} existing effect styles.`,
-  );
   const createdNames = new Set<string>();
 
   for (const { name: elevationName, variable } of elevationVariables) {
     if (createdNames.has(elevationName)) {
-      console.log(
-        `[createEffectStyles] Already processed ${elevationName} in this run.`,
-      );
       continue;
     }
     const figmaStyleName = `${EFFECT_STYLE_FOLDER_NAME}/${EFFECT_STYLE_NAME_PREFIX}${elevationName}`;
-    const existing = existingEffectStyles.find(
+    const allMatches = existingEffectStyles.filter(
       (s) => s.name === figmaStyleName,
     );
+    const existing = allMatches[0];
+
+    if (allMatches.length > 1) {
+      console.error(
+        `[createEffectStyles] MULTIPLE STYLES FOUND for ${figmaStyleName} (Count: ${allMatches.length}). You have duplicated this style in Figma! We are only updating the first one (id: ${existing.id}).`,
+      );
+    }
 
     let style: EffectStyle;
     if (existing) {
@@ -241,9 +240,6 @@ export async function createEffectStylesFromElevations(): Promise<CreateEffectSt
 
     const modeId = getModeIdForVariable(variable.id, collections);
     if (!modeId) {
-      console.log(
-        `[createEffectStyles] No mode ID for ${elevationName} (var: ${variable.id})`,
-      );
       result.effectStyleWarnings.push(
         `Elevation "${elevationName}": no mode; skipping.`,
       );
@@ -252,9 +248,6 @@ export async function createEffectStylesFromElevations(): Promise<CreateEffectSt
     }
     const rawValue = await resolveVariableValue(variable, collections);
     if (typeof rawValue !== "string") {
-      console.log(
-        `[createEffectStyles] ${elevationName} value is not a string (type: ${typeof rawValue}, val: ${JSON.stringify(rawValue)})`,
-      );
       result.effectStyleWarnings.push(
         `Elevation "${elevationName}": value is not a string; skipping.`,
       );

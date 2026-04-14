@@ -129,10 +129,12 @@ export async function importRecursicaJson(
   const hasIssues =
     aliasErrors.length > 0 ||
     transformErrors.length > 0 ||
-    varTypeRenameWarnings.length > 0;
+    varTypeRenameWarnings.length > 0 ||
+    textStyleWarnings.length > 0 ||
+    effectStyleWarnings.length > 0;
   const message = hasIssues
-    ? `Import complete with issues. Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Alias errors: ${aliasErrors.length}. Transform errors: ${transformErrors.length}. Type renames: ${varTypeRenameWarnings.length}. Text styles: ${textStylesCreated} created, ${textStylesSkipped} skipped. Effect styles: ${effectStylesCreated} created, ${effectStylesSkipped} skipped.`
-    : `Import complete. Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Text styles: ${textStylesCreated} created, ${textStylesSkipped} skipped. Effect styles: ${effectStylesCreated} created, ${effectStylesSkipped} skipped.`;
+    ? `Import complete with issues. Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Alias errors: ${aliasErrors.length}. Transform errors: ${transformErrors.length}. Type renames: ${varTypeRenameWarnings.length}. Text styles: ${textStylesCreated} created, ${textStylesUpdated} updated, ${textStylesSkipped} skipped, ${textStyleWarnings.length} warnings. Effect styles: ${effectStylesCreated} created, ${effectStylesUpdated} updated, ${effectStylesSkipped} skipped, ${effectStyleWarnings.length} warnings.`
+    : `Import complete. Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Text styles: ${textStylesCreated} created, ${textStylesUpdated} updated, ${textStylesSkipped} skipped. Effect styles: ${effectStylesCreated} created, ${effectStylesUpdated} updated, ${effectStylesSkipped} skipped.`;
 
   return {
     type: "importRecursicaJson",
@@ -143,6 +145,8 @@ export async function importRecursicaJson(
       variablesCreated,
       variablesAlreadyExisted,
       aliasErrors,
+      transformErrors,
+      varTypeRenameWarnings,
       textStylesCreated,
       textStylesUpdated,
       textStylesSkipped,
@@ -151,7 +155,6 @@ export async function importRecursicaJson(
       effectStylesUpdated,
       effectStylesSkipped,
       effectStyleWarnings,
-      ...(transformErrors.length > 0 && { transformErrors }),
       ...(transformWarnings.length > 0 && { transformWarnings }),
       ...(varTypeRenameWarnings.length > 0 && {
         typeRenameWarnings: varTypeRenameWarnings,
