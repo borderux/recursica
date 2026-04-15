@@ -116,8 +116,8 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
       <WithReadOnlyWrapper
         className={className}
         style={style as React.CSSProperties}
-        controlMaxWidth="100%"
-        controlMinWidth="100%"
+        controlMaxWidth="var(--recursica_ui-kit_components_text-field_properties_max-width)"
+        controlMinWidth="var(--recursica_ui-kit_components_text-field_properties_min-width)"
         overStyled={overStyled as true}
         formLayout={formLayout}
         labelSize={labelSize}

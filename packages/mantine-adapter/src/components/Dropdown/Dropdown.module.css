@@ -1,0 +1,272 @@
+/* HARDCODED VALUES:
+   - border-width: 1px. Native geometric boundary for the input box.
+   - border-style: solid. Native structural rendering rule.
+   - outline: none. Bypassing browser focus rings to rely strictly on Recursica focus states natively.
+   - flex/layout: display: flex on the root wrapper safely encapsulating internal section rendering.
+*/
+
+.root {
+  display: flex;
+  position: relative;
+  width: 100%;
+  min-height: var(--recursica_ui-kit_components_dropdown_properties_min-height);
+
+  /* Override Mantine native Input variables governing section spacing padding mathematics safely */
+  --input-left-section-size: calc(
+    var(--recursica_ui-kit_components_dropdown_properties_icon-size) +
+      (
+        var(
+            --recursica_ui-kit_components_dropdown_properties_horizontal-padding
+          ) *
+          2
+      )
+  );
+  --input-right-section-size: calc(
+    var(--recursica_ui-kit_components_dropdown_properties_icon-size) +
+      (
+        var(
+            --recursica_ui-kit_components_dropdown_properties_horizontal-padding
+          ) *
+          2
+      )
+  );
+}
+
+.input {
+  /* Structural Overrides */
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+
+  /* Box Geometry */
+  min-height: var(--recursica_ui-kit_components_dropdown_properties_min-height);
+  padding-top: var(
+    --recursica_ui-kit_components_dropdown_properties_vertical-padding
+  );
+  padding-bottom: var(
+    --recursica_ui-kit_components_dropdown_properties_vertical-padding
+  );
+  padding-left: var(
+    --recursica_ui-kit_components_dropdown_properties_horizontal-padding
+  );
+  padding-right: var(
+    --recursica_ui-kit_components_dropdown_properties_horizontal-padding
+  );
+  border-radius: var(
+    --recursica_ui-kit_components_dropdown_properties_border-radius
+  );
+  border-width: 1px;
+  border-style: solid;
+
+  /* Strict Typography Unification */
+  font-family: var(
+    --recursica_ui-kit_components_dropdown_properties_text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_dropdown_properties_text_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_dropdown_properties_text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_dropdown_properties_text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_dropdown_properties_text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_dropdown_properties_text_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_dropdown_properties_text_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_dropdown_properties_text_text-transform
+  );
+
+  /* Base State Default Execution */
+  background-color: var(
+    --recursica_ui-kit_components_dropdown_variants_states_default_properties_colors_background
+  );
+  border-color: var(
+    --recursica_ui-kit_components_dropdown_variants_states_default_properties_colors_border-color
+  );
+  color: var(
+    --recursica_ui-kit_components_dropdown_variants_states_default_properties_colors_text
+  );
+
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.input::placeholder {
+  opacity: var(
+    --recursica_ui-kit_components_dropdown_properties_placeholder-opacity
+  );
+  color: inherit;
+}
+
+/* Dynamic Padding Overrides */
+.root[data-with-left-section] .input {
+  padding-left: var(--input-left-section-size);
+}
+
+.root[data-with-right-section] .input {
+  padding-right: var(--input-right-section-size);
+}
+
+/* Flexible End-Caps (Icons, actions) */
+.section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.section :global(svg) {
+  width: var(--recursica_ui-kit_components_dropdown_properties_icon-size);
+  height: var(--recursica_ui-kit_components_dropdown_properties_icon-size);
+  color: var(
+    --recursica_ui-kit_components_dropdown_variants_states_default_properties_colors_leading-icon
+  );
+}
+
+.section[data-position="right"] :global(svg) {
+  color: var(
+    --recursica_ui-kit_components_dropdown_variants_states_default_properties_colors_trailing-icon
+  );
+}
+
+/* -------------------------------------
+   STATE CASCADE ARCHITECTURE
+-------------------------------------- */
+
+/* Focus State Mapping (Triggered internally via browser pseudo-pseudo-class) */
+.input:focus-within,
+.input:focus {
+  border-color: var(
+    --recursica_ui-kit_components_dropdown_variants_states_focus_properties_colors_border-color
+  );
+  background-color: var(
+    --recursica_ui-kit_components_dropdown_variants_states_focus_properties_colors_background
+  );
+  color: var(
+    --recursica_ui-kit_components_dropdown_variants_states_focus_properties_colors_text
+  );
+}
+
+.root:focus-within .section[data-position="left"] :global(svg) {
+  color: var(
+    --recursica_ui-kit_components_dropdown_variants_states_focus_properties_colors_leading-icon
+  );
+}
+
+.root:focus-within .section[data-position="right"] :global(svg) {
+  color: var(
+    --recursica_ui-kit_components_dropdown_variants_states_focus_properties_colors_trailing-icon
+  );
+}
+
+/* Error State Mapping (Propagated strictly down from the wrapper DOM context) */
+.root[data-error] .input {
+  border-color: var(
+    --recursica_ui-kit_components_dropdown_variants_states_error_properties_colors_border-color
+  ) !important;
+  background-color: var(
+    --recursica_ui-kit_components_dropdown_variants_states_error_properties_colors_background
+  ) !important;
+  color: var(
+    --recursica_ui-kit_components_dropdown_variants_states_error_properties_colors_text
+  ) !important;
+}
+
+.root[data-error] .section[data-position="left"] :global(svg) {
+  color: var(
+    --recursica_ui-kit_components_dropdown_variants_states_error_properties_colors_leading-icon
+  ) !important;
+}
+
+.root[data-error] .section[data-position="right"] :global(svg) {
+  color: var(
+    --recursica_ui-kit_components_dropdown_variants_states_error_properties_colors_trailing-icon
+  ) !important;
+}
+
+/* Disabled State Mapping (Propagated strictly down from the wrapper DOM context) */
+.root[data-disabled] .input {
+  border-color: var(
+    --recursica_ui-kit_components_dropdown_variants_states_disabled_properties_colors_border-color
+  ) !important;
+  background-color: var(
+    --recursica_ui-kit_components_dropdown_variants_states_disabled_properties_colors_background
+  ) !important;
+  color: var(
+    --recursica_ui-kit_components_dropdown_variants_states_disabled_properties_colors_text
+  ) !important;
+  cursor: not-allowed;
+}
+
+.root[data-disabled] .section[data-position="left"] :global(svg) {
+  color: var(
+    --recursica_ui-kit_components_dropdown_variants_states_disabled_properties_colors_leading-icon
+  ) !important;
+}
+
+.root[data-disabled] .section[data-position="right"] :global(svg) {
+  color: var(
+    --recursica_ui-kit_components_dropdown_variants_states_disabled_properties_colors_trailing-icon
+  ) !important;
+}
+
+/* -------------------------------------
+   DROPDOWN & OPTIONS ARCHITECTURE
+-------------------------------------- */
+
+.dropdown {
+  background-color: var(
+    --recursica_ui-kit_components_dropdown_variants_states_default_properties_colors_background
+  );
+  border: 1px solid
+    var(
+      --recursica_ui-kit_components_dropdown_variants_states_default_properties_colors_border-color
+    );
+  border-radius: var(
+    --recursica_ui-kit_components_dropdown_properties_border-radius
+  );
+  overflow: hidden;
+}
+
+.option {
+  font-family: var(
+    --recursica_ui-kit_components_dropdown_properties_text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_dropdown_properties_text_font-size
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_dropdown_properties_text_font-weight
+  );
+  color: var(
+    --recursica_ui-kit_components_dropdown_variants_states_default_properties_colors_text
+  );
+  padding: calc(
+      var(--recursica_ui-kit_components_dropdown_properties_vertical-padding) *
+        0.75
+    )
+    var(--recursica_ui-kit_components_dropdown_properties_horizontal-padding);
+  cursor: pointer;
+}
+
+.option[data-selected="true"],
+.option[data-combobox-selected="true"],
+.option[data-hovered="true"],
+.option:hover {
+  background-color: var(
+    --recursica_ui-kit_components_dropdown_variants_states_focus_properties_colors_background
+  );
+  color: var(
+    --recursica_ui-kit_components_dropdown_variants_states_focus_properties_colors_text
+  );
+}
