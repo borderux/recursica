@@ -11,6 +11,7 @@ export * from "./DatePicker/DatePicker";
 export * from "./Dropdown/Dropdown";
 export * from "./FileInput/FileInput";
 export * from "./FileUpload/FileUpload";
+export * from "./Flex/Flex";
 export * from "./Group/Group";
 export * from "./HoverCard/HoverCard";
 export * from "./Link/Link";
