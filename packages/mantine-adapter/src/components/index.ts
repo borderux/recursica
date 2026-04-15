@@ -7,6 +7,7 @@ export * from "./Card/Card";
 export * from "./Checkbox/Checkbox";
 export * from "./Checkbox/CheckboxGroup";
 export * from "./Chip/Chip";
+export * from "./Container/Container";
 export * from "./DatePicker/DatePicker";
 export * from "./Dropdown/Dropdown";
 export * from "./FileInput/FileInput";
