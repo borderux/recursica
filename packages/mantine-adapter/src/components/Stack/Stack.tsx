@@ -26,10 +26,10 @@ export type StackProps = RecursicaOverStyled<
 >;
 
 export const Stack = forwardRef<HTMLDivElement, StackProps>(function Stack(
-  { children, overStyled = false, ...rest },
+  { children, overStyled = false, gap = "rec-default", ...rest },
   ref,
 ) {
-  const sanitizedProps = filterStylingProps(rest, overStyled);
+  const sanitizedProps = filterStylingProps({ ...rest, gap }, overStyled);
   const restRecord = sanitizedProps as Record<string, unknown>;
 
   const mergedClassNames: Partial<Record<string, string>> = {
