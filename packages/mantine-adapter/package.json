@@ -11,7 +11,7 @@
     "type": "git",
     "url": "git+https://github.com/borderux/recursica.git"
   },
-  "version": "0.7.0",
+  "version": "0.8.0",
   "type": "module",
   "main": "./dist/mantine-adapter.cjs",
   "module": "./dist/mantine-adapter.js",

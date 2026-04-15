@@ -1,5 +1,11 @@
 # @recursica/mantine-adapter
 
+## 0.8.0
+
+### Minor Changes
+
+- 6e6256b: Updated with latest components
+
 ## 0.7.0
 
 ### Minor Changes
