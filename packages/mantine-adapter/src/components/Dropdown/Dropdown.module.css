@@ -3,6 +3,7 @@
    - border-style: solid. Native structural rendering rule.
    - outline: none. Bypassing browser focus rings to rely strictly on Recursica focus states natively.
    - flex/layout: display: flex on the root wrapper safely encapsulating internal section rendering.
+   - placeholder opacity: 0.5. The dropdown parameters currently lack a dedicated placeholder-opacity variable.
 */
 
 .root {
@@ -102,9 +103,8 @@
 }
 
 .input::placeholder {
-  opacity: var(
-    --recursica_ui-kit_components_dropdown_properties_placeholder-opacity
-  );
+  /* HARDCODE: Dropdown properties currently missing placeholder-opacity tokens from Figma JSON */
+  opacity: 0.5;
   color: inherit;
 }
 
