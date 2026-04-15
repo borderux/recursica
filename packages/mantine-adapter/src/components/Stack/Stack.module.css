@@ -1,0 +1,7 @@
+/* HARDCODED VALUES:
+ * None. This is a generic flex layout wrapper.
+ */
+
+.root {
+  /* Mantine handles flex, gap, align, justify. No intrinsic design-system styles required for pure layout wrappers. */
+}
