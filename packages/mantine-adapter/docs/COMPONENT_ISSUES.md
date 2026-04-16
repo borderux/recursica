@@ -55,3 +55,11 @@ This document tracks known issues, edge cases, missing variables, or design syst
 - **Description:** Form field abstractions (like `TextField`, `NumberField`, etc.) that act as Uncontrolled inputs structurally store their string interactions exclusively inside the native browser HTML DOM `<input>`. When toggling `readOnly={true}` dynamically, the library intentionally unmounts the active DOM node to mount the safe structural `<ReadOnlyField />` parser.
 - **Impact:** Because the active node dies, the browser’s internal uncontrolled state is instantly destroyed. `WithReadOnlyWrapper` inherits an `undefined` value evaluation mapping straight into "N/A" (or empty defaults) rather than projecting the text the user actively typed natively.
 - **Current Resolution:** **OPEN ISSUE**. Explicitly unresolved to avoid deeply wiring `useUncontrolled` state hooks natively across every wrapper. Developers must strictly supply Controlled inputs (by tracking `value` and `onChange` hooks externally in their views) if they conditionally inject ReadOnly capabilities sequentially on-the-fly.
+
+## Loader
+
+### 1. Missing Size Variants
+
+- **Description:** Native Mantine sizes `xs` and `xl` are not currently supported by Recursica sizing configurations natively. The UI kit explicitly surfaces sizes `small`, `default`, and `large` for loader rendering.
+- **Impact:** We cannot natively support structural scaling out to extremes.
+- **Current Resolution:** We restrict the Loader to sizes mapped out by standard or structural scales: `sm`, `md`, `lg` (or structurally `small`, `default`, `large`). Passing `xs` or `xl` is officially unsupported and will fall back or not map.

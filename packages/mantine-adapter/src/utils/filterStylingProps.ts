@@ -72,6 +72,8 @@ export type RecursicaSpacing =
   | "rec-xl"
   | "rec-2xl";
 
+export type RecursicaSize = "small" | "default" | "large";
+
 const LAYOUT_PROPS = new Set([
   "m",
   "my",
