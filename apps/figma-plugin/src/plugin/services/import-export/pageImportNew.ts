@@ -1665,6 +1665,8 @@ async function createTextStyle(
       for (const [property, varRef] of Object.entries(
         styleData.textStyle.boundVariables,
       )) {
+        if (property === "letterSpacing" || property === "lineHeight") continue;
+
         // varRef might be a variable table index (_varRef format) or variable ID
         // Resolve from recognizedVariables
         let variable: Variable | undefined;
@@ -6654,6 +6656,8 @@ export async function recreateNodeFromData(
       if (
         propertyName !== "fills" &&
         propertyName !== "componentProperties" &&
+        propertyName !== "letterSpacing" &&
+        propertyName !== "lineHeight" &&
         !paddingProps.includes(propertyName) &&
         !sizeProps.includes(propertyName) &&
         // ISSUE #2 FIX: Skip binding effects variable directly if we already applied an Effect Style,

@@ -69,7 +69,7 @@ export const createMainConfig = (
   };
 
   // Add viteFinal configuration
-  config.viteFinal = async (viteConfig, { configType }) => {
+  config.viteFinal = async (viteConfig) => {
     // Inject Postcss
     if (enablePostcssVars && recursicaCSSPath) {
       const recursicaVars = (await import("@recursica/recursica-postcss-vars"))

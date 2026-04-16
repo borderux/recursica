@@ -364,31 +364,6 @@ export async function createTextStylesFromTypography(
           value: absolutePixelLh,
           unit: "PIXELS",
         };
-
-        const lhFigmaVarKey = `themes/typography/${styleName}/line-height`;
-        const lhFigmaVar = variableByKey.get(lhFigmaVarKey);
-
-        if (lhFigmaVar) {
-          // It's a brand semantic typography variable (like h3). Overwrite its value with pixels!
-          for (const modeId of Object.keys(lhFigmaVar.valuesByMode)) {
-            lhFigmaVar.setValueForMode(modeId, absolutePixelLh);
-          }
-          // And natively bind the text style to this exact variable
-          textStyle.setBoundVariable("lineHeight", lhFigmaVar);
-        } else if (
-          lineHeightEntry &&
-          typeof lineHeightEntry === "object" &&
-          "id" in lineHeightEntry
-        ) {
-          // If a component aliases to a brand typography line-height (e.g. h3/line-height), bind it.
-          // NEVER bind directly to a tokens multiplier, as that squishes text rendering.
-          const col = collections.find(
-            (c) => c.id === lineHeightEntry.variableCollectionId,
-          );
-          if (col && col.name.toLowerCase() !== "tokens") {
-            textStyle.setBoundVariable("lineHeight", lineHeightEntry);
-          }
-        }
       }
     }
 
@@ -413,27 +388,6 @@ export async function createTextStylesFromTypography(
           value: modifiedLsValue,
           unit: lsUnit,
         };
-
-        const lsFigmaVarKey = `themes/typography/${styleName}/letter-spacing`;
-        const lsFigmaVar = variableByKey.get(lsFigmaVarKey);
-
-        if (lsFigmaVar) {
-          for (const modeId of Object.keys(lsFigmaVar.valuesByMode)) {
-            lsFigmaVar.setValueForMode(modeId, modifiedLsValue);
-          }
-          textStyle.setBoundVariable("letterSpacing", lsFigmaVar);
-        } else if (
-          letterSpacingEntry &&
-          typeof letterSpacingEntry === "object" &&
-          "id" in letterSpacingEntry
-        ) {
-          const col = collections.find(
-            (c) => c.id === letterSpacingEntry.variableCollectionId,
-          );
-          if (col && col.name.toLowerCase() !== "tokens") {
-            textStyle.setBoundVariable("letterSpacing", letterSpacingEntry);
-          }
-        }
       }
     }
 
