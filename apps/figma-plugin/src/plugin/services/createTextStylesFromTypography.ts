@@ -307,6 +307,7 @@ export async function createTextStylesFromTypography(
     );
 
     let fontLoaded = false;
+    let finalFontStyleName = fontStyleName;
     try {
       await figma.loadFontAsync({
         family: fontFamilyStr,
@@ -314,9 +315,27 @@ export async function createTextStylesFromTypography(
       });
       fontLoaded = true;
     } catch {
-      result.textStyleWarnings.push(
-        `Typography style "${styleName}": could not load font "${fontFamilyStr}" / "${fontStyleName}" (from "${fontFamilyRaw}"); skipping.`,
-      );
+      if (fontStyleName !== "Regular") {
+        try {
+          await figma.loadFontAsync({
+            family: fontFamilyStr,
+            style: "Regular",
+          });
+          fontLoaded = true;
+          finalFontStyleName = "Regular";
+          result.textStyleWarnings.push(
+            `Typography style "${styleName}": could not load font "${fontFamilyStr}" / "${fontStyleName}". Falling back to "Regular".`,
+          );
+        } catch {
+          // both failed
+        }
+      }
+
+      if (!fontLoaded) {
+        result.textStyleWarnings.push(
+          `Typography style "${styleName}": could not load font "${fontFamilyStr}" / "${fontStyleName}" (from "${fontFamilyRaw}"); skipping.`,
+        );
+      }
     }
 
     if (!fontLoaded) {
@@ -324,7 +343,7 @@ export async function createTextStylesFromTypography(
       continue;
     }
 
-    textStyle.fontName = { family: fontFamilyStr, style: fontStyleName };
+    textStyle.fontName = { family: fontFamilyStr, style: finalFontStyleName };
 
     // Bind typography variables so style updates when variables change (matches design files).
     // Figma only allows bindings to actual Variables
@@ -379,14 +398,12 @@ export async function createTextStylesFromTypography(
         typeof fsVal === "number" ? fsVal : parseFloat(String(fsVal));
 
       if (!Number.isNaN(parsedLs) && !Number.isNaN(parsedFs)) {
-        // Assume anything between -5 and 5 is an em multiplier.
-        const isEmRatio = Math.abs(parsedLs) < 5;
-        const modifiedLsValue = isEmRatio ? parsedLs * 100 : parsedLs;
-        const lsUnit = isEmRatio ? "PERCENT" : "PIXELS";
+        // Assume letter-spacing is an em multiplier for now, so calculate absolute pixels.
+        const absolutePixelLs = parsedLs * parsedFs;
 
         textStyle.letterSpacing = {
-          value: modifiedLsValue,
-          unit: lsUnit,
+          value: absolutePixelLs,
+          unit: "PIXELS",
         };
       }
     }
