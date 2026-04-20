@@ -15,23 +15,10 @@ import styles from "./Dropdown.module.css";
 export interface RecursicaDropdownProps
   extends Omit<
       MantineSelectProps,
-      | "size"
-      | "variant"
-      | "radius"
-      | "wrapperProps"
-      | "label"
-      | "description"
-      | "error"
-      | "required"
-      | "withAsterisk"
+      "size" | "variant" | "radius" | "wrapperProps"
     >,
     Pick<
       RecursicaFormControlWrapperProps,
-      | "label"
-      | "error"
-      | "required"
-      | "withAsterisk"
-      | "id"
       | "assistiveText"
       | "assistiveWithIcon"
       | "formLayout"
