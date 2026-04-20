@@ -40,16 +40,22 @@
 
   border-style: solid;
   border-color: var(
-    --recursica_ui-kit_components_accordion-item_properties_colors_divider
+    --recursica_ui-kit_components_accordion-item_properties_colors_item-border-color
   );
   border-width: var(
-    --recursica_ui-kit_components_accordion-item_properties_divider-size
+    --recursica_ui-kit_components_accordion-item_properties_item-border-size
+  );
+  border-bottom-color: var(
+    --recursica_ui-kit_components_accordion_properties_colors_divider
+  );
+  border-bottom-width: var(
+    --recursica_ui-kit_components_accordion_properties_divider-size
   );
   border-radius: var(
     --recursica_ui-kit_components_accordion-item_properties_border-radius
   );
   box-shadow: var(
-    --recursica_ui-kit_components_accordion-item_properties_elevation
+    --recursica_ui-kit_components_accordion-item_properties_elevation-item
   );
 
   background-color: var(
@@ -79,10 +85,10 @@
 
   /* Strip Mantine's baked padding directly */
   padding: var(
-      --recursica_ui-kit_components_accordion-item_properties_padding-vertical
+      --recursica_ui-kit_components_accordion-item_properties_header-vertical-padding
     )
     var(
-      --recursica_ui-kit_components_accordion-item_properties_padding-horizontal
+      --recursica_ui-kit_components_accordion-item_properties_header-horizontal-padding
     );
   background-color: transparent;
 
@@ -206,10 +212,25 @@
 /* ==== ACCORDION PANEL (CONTENT) ==== */
 .panel {
   box-sizing: border-box;
-  margin: 0;
+  margin: var(
+    --recursica_ui-kit_components_accordion-item_properties_content-margin
+  );
   padding: 0; /* Overriding dynamic layout structure */
   background-color: var(
     --recursica_ui-kit_components_accordion-item_properties_colors_content-background
+  );
+  border-style: solid;
+  border-color: var(
+    --recursica_ui-kit_components_accordion-item_properties_colors_content-border-color
+  );
+  border-width: var(
+    --recursica_ui-kit_components_accordion-item_properties_content-border-size
+  );
+  border-radius: var(
+    --recursica_ui-kit_components_accordion-item_properties_content-border-radius
+  );
+  box-shadow: var(
+    --recursica_ui-kit_components_accordion-item_properties_elevation-content
   );
 }
 
@@ -218,7 +239,7 @@
   /* Strip Mantine padding and apply logic directly mapped */
   padding: 0
     var(
-      --recursica_ui-kit_components_accordion-item_properties_padding-horizontal
+      --recursica_ui-kit_components_accordion-item_properties_content-horizontal-padding
     )
     var(
       --recursica_ui-kit_components_accordion-item_properties_content-bottom-padding
@@ -226,7 +247,7 @@
 
   /* Apply offset gap explicitly calculated below header */
   padding-top: var(
-    --recursica_ui-kit_components_accordion-item_properties_header-content-gap
+    --recursica_ui-kit_components_accordion-item_properties_content-top-padding
   );
 
   color: var(
