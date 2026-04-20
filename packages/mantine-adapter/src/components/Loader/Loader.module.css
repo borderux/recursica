@@ -1,0 +1,60 @@
+.root {
+  /* Default inheritance mapped from component variables if not explicitly overridden by variants */
+  --loader-color: var(
+    --recursica_ui-kit_components_loader_properties_indicator-color,
+    currentColor
+  );
+}
+
+/* data-size mapping */
+
+/* SMALL */
+.root[data-size="small"] {
+  --loader-size: var(
+    --recursica_ui-kit_components_loader_variants_sizes_small_properties_size
+  );
+}
+.root[data-size="small"][data-variant="oval"] {
+  border-width: var(
+    --recursica_ui-kit_components_loader_variants_sizes_small_properties_thickness
+  );
+}
+.root[data-size="small"]:not([data-variant="oval"]) span {
+  border-radius: var(
+    --recursica_ui-kit_components_loader_variants_sizes_small_properties_border-radius
+  );
+}
+
+/* DEFAULT */
+.root[data-size="default"] {
+  --loader-size: var(
+    --recursica_ui-kit_components_loader_variants_sizes_default_properties_size
+  );
+}
+.root[data-size="default"][data-variant="oval"] {
+  border-width: var(
+    --recursica_ui-kit_components_loader_variants_sizes_default_properties_thickness
+  );
+}
+.root[data-size="default"]:not([data-variant="oval"]) span {
+  border-radius: var(
+    --recursica_ui-kit_components_loader_variants_sizes_default_properties_border-radius
+  );
+}
+
+/* LARGE */
+.root[data-size="large"] {
+  --loader-size: var(
+    --recursica_ui-kit_components_loader_variants_sizes_large_properties_size
+  );
+}
+.root[data-size="large"][data-variant="oval"] {
+  border-width: var(
+    --recursica_ui-kit_components_loader_variants_sizes_large_properties_thickness
+  );
+}
+.root[data-size="large"]:not([data-variant="oval"]) span {
+  border-radius: var(
+    --recursica_ui-kit_components_loader_variants_sizes_large_properties_border-radius
+  );
+}
