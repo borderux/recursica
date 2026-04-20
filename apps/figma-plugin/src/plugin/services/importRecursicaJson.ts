@@ -132,6 +132,23 @@ export async function importRecursicaJson(
     varTypeRenameWarnings.length > 0 ||
     textStyleWarnings.length > 0 ||
     effectStyleWarnings.length > 0;
+
+  if (aliasErrors.length > 0)
+    console.warn("[importRecursicaJson] Alias Errors:", aliasErrors);
+  if (transformErrors.length > 0)
+    console.error("[importRecursicaJson] Transform Errors:", transformErrors);
+  if (varTypeRenameWarnings.length > 0)
+    console.warn("[importRecursicaJson] Type renames:", varTypeRenameWarnings);
+  if (textStyleWarnings.length > 0)
+    console.warn(
+      "[importRecursicaJson] Text Style warnings:",
+      textStyleWarnings,
+    );
+  if (effectStyleWarnings.length > 0)
+    console.warn(
+      "[importRecursicaJson] Effect Style warnings:",
+      effectStyleWarnings,
+    );
   const message = hasIssues
     ? `Import complete with issues. Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Alias errors: ${aliasErrors.length}. Transform errors: ${transformErrors.length}. Type renames: ${varTypeRenameWarnings.length}. Text styles: ${textStylesCreated} created, ${textStylesUpdated} updated, ${textStylesSkipped} skipped, ${textStyleWarnings.length} warnings. Effect styles: ${effectStylesCreated} created, ${effectStylesUpdated} updated, ${effectStylesSkipped} skipped, ${effectStyleWarnings.length} warnings.`
     : `Import complete. Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Text styles: ${textStylesCreated} created, ${textStylesUpdated} updated, ${textStylesSkipped} skipped. Effect styles: ${effectStylesCreated} created, ${effectStylesUpdated} updated, ${effectStylesSkipped} skipped.`;

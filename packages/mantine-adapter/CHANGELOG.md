@@ -1,5 +1,11 @@
 # @recursica/mantine-adapter
 
+## 0.9.0
+
+### Minor Changes
+
+- 7d4af9c: Updated accordion
+
 ## 0.8.0
 
 ### Minor Changes

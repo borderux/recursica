@@ -1,5 +1,18 @@
 # @recursica/publisher
 
+## 0.17.0
+
+### Minor Changes
+
+- 8156571: Fixed to line spacing and text style creation
+
+## 0.16.0
+
+### Minor Changes
+
+- 0d0a02f: Fixed line height and letter spacing
+- 9af59c4: Updated text style handling
+
 ## 0.15.0
 
 ### Minor Changes

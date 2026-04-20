@@ -125,7 +125,7 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
             {React.Children.map(children, (child) => {
               if (React.isValidElement(child)) {
                 return React.cloneElement(child as React.ReactElement<any>, {
-                  disabled: readOnly || child.props.disabled,
+                  disabled: readOnly || (child.props as any).disabled,
                 });
               }
               return child;
