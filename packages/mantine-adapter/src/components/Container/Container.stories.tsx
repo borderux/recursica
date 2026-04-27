@@ -24,8 +24,21 @@ const meta: Meta<ContainerStoryProps> = {
   argTypes: {
     size: {
       control: "select",
-      options: ["xs", "sm", "md", "lg", "xl"],
-      description: "Maximum width defined by Mantine system sizes",
+      options: [
+        "xs",
+        "sm",
+        "md",
+        "lg",
+        "xl",
+        "rec-sm",
+        "rec-default",
+        "rec-md",
+        "rec-lg",
+        "rec-xl",
+        "rec-2xl",
+      ],
+      description:
+        "Maximum width defined by Mantine system sizes or Recursica sizes",
     },
     fluid: {
       control: "boolean",

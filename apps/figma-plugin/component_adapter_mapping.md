@@ -8,36 +8,32 @@ These components have exact or near-exact replacements in the `mantine-adapter` 
 
 | Figma Plugin App Component | Mantine-Adapter Component | Notes                                   |
 | -------------------------- | ------------------------- | --------------------------------------- |
+| `Avatar`                   | `Avatar`                  | Exact match                             |
 | `Badge`                    | `Badge`                   | Exact match                             |
 | `Button`                   | `Button`                  | Exact match                             |
-| `Card`                     | `Card`                    | Exact match                             |
+| `Card`                     | `Card`                    | Exact match (uses `Paper` internally)   |
+| `Center`                   | `Flex` or `Stack`         | Architectural replacement               |
 | `Checkbox`                 | `Checkbox`                | Exact match                             |
+| `Container`                | `Container`               | Exact match                             |
+| `Group`                    | `Group`                   | Exact match                             |
+| `LoadingSpinner`           | `Loader`                  | Naming difference                       |
+| `Radio`                    | `Radio`                   | Exact match                             |
+| `Select`                   | `Dropdown`                | Naming difference                       |
+| `Stack`                    | `Stack`                   | Exact match                             |
+| `Text`                     | `Text`                    | Exact match                             |
 | `Textarea`                 | `TextArea`                | Case difference in adapter (`TextArea`) |
 | `TextInput`                | `TextField`               | Naming difference                       |
-| `LoadingSpinner`           | `Loader`                  | Naming difference                       |
+| `Title`                    | `Title`                   | Exact match                             |
 
-## 2. In Adapter, but Needs Export 🟡
+## 2. Permitted Direct Mantine Usage 🟡
 
-These components exist in the `mantine-adapter/src/components` directory but are **not currently exported** in `mantine-adapter/src/components/index.ts`. We just need to add the `export *` lines.
+These UI components are used directly from `@mantine/core` because they do not have a corresponding implementation defined in the Recursica design system. They are safe to use directly.
 
-| Figma Plugin App Component | Mantine-Adapter Component |
-| -------------------------- | ------------------------- |
-| `Title`                    | `Title`                   |
-| `Text`                     | `Text`                    |
+| Figma Plugin App Component | Notes                                                   |
+| -------------------------- | ------------------------------------------------------- |
+| `Alert`                    | Not defined in Recursica; use `@mantine/core` directly. |
 
-## 3. Missing in Adapter 🔴
-
-These UI components are used in the Figma plugin (mostly direct mappings to `@mantine/core`) but have no corresponding implementation in the `mantine-adapter`.
-
-| Figma Plugin App Component | Status / Notes                                                               |
-| -------------------------- | ---------------------------------------------------------------------------- |
-| `Alert`                    | Missing entirely in `mantine-adapter`.                                       |
-| `Select`                   | Mantine adapter has a `Dropdown` skeleton component but no `Select` wrapper. |
-| `Container`                | Missing. Used heavily for layout.                                            |
-| `Group`                    | Missing. Used heavily for flex layout.                                       |
-| `Stack`                    | Missing. Used heavily for flex layout.                                       |
-
-## 4. App-Specific (No Adapter Equivalent Expected) ⚪
+## 3. App-Specific (No Adapter Equivalent Expected) ⚪
 
 These are composite, app-level components that combine multiple primitive components to build higher-level features specifically for the Figma Plugin. They do not need to be ported to `mantine-adapter`.
 
@@ -51,6 +47,5 @@ These are composite, app-level components that combine multiple primitive compon
 
 ## Summary of Next Steps
 
-1. **Easy Wins:** Update `mantine-adapter/src/components/index.ts` to export `Text` and `Title`.
-2. **Refactors:** Replace uses of `TextInput`, `Textarea`, and `LoadingSpinner` with their adapter equivalents (`TextField`, `TextArea`, `Loader`).
-3. **Missing Features to build in Adapter:** Implement wrappers for `Alert`, `Select`, `Container`, `Group`, and `Stack` in the `mantine-adapter` so we can fully detach the plugin from `@mantine/core`.
+1. **Refactors:** Replace uses of primitive Mantine components with their adapter equivalents (e.g., `Select` -> `Dropdown`, `TextInput` -> `TextField`, `Textarea` -> `TextArea`, and migrating over the layout elements like `Container`, `Stack`, `Group`, etc.). Replace `Center` usage with `Flex` or `Stack` wrappers.
+2. **Direct Usage:** Continue using `Alert` directly from `@mantine/core` since there's no Recursica adapter equivalent planned.
