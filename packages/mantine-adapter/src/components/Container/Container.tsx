@@ -6,6 +6,7 @@ import {
 import {
   filterStylingProps,
   type RecursicaOverStyled,
+  type RecursicaSpacing,
 } from "../../utils/filterStylingProps";
 import styles from "./Container.module.css";
 
@@ -14,19 +15,43 @@ export interface RecursicaContainerProps {
    * Children components inside the layout container
    */
   children?: React.ReactNode;
+  /**
+   * Maximum width defined by Mantine system sizes or Recursica sizes
+   */
+  size?:
+    | "xs"
+    | "sm"
+    | "md"
+    | "lg"
+    | "xl"
+    | RecursicaSpacing
+    | (string & {})
+    | number;
 }
 
 /**
  * Container layout wrapper
  */
 export type ContainerProps = RecursicaOverStyled<
-  MantineContainerProps & RecursicaContainerProps
+  Omit<MantineContainerProps, "size"> & RecursicaContainerProps
 >;
 
 export const Container = forwardRef<HTMLDivElement, ContainerProps>(
-  function Container({ children, overStyled = false, ...rest }, ref) {
+  function Container({ children, size, overStyled = false, ...rest }, ref) {
     const sanitizedProps = filterStylingProps(rest, overStyled);
     const restRecord = sanitizedProps as Record<string, unknown>;
+
+    const mapSize: Record<string, string> = {
+      "rec-sm": "sm",
+      "rec-default": "md",
+      "rec-md": "md",
+      "rec-lg": "lg",
+      "rec-xl": "xl",
+      "rec-2xl": "xl",
+    };
+
+    const resolvedSize =
+      typeof size === "string" && mapSize[size] ? mapSize[size] : size;
 
     const mergedClassNames: Partial<Record<string, string>> = {
       root: styles.root,
@@ -50,6 +75,7 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(
     return (
       <MantineContainer
         ref={ref}
+        size={resolvedSize}
         className={finalClass}
         classNames={mergedClassNames}
         {...sanitizedProps}

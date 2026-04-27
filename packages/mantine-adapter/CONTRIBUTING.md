@@ -1,6 +1,17 @@
-# Contributing to recursica
+# Contributing to the Mantine Adapter
 
-First off, thank you for considering contributing to recursica! It's people like you that make our community great. We welcome contributions of all kinds, from reporting bugs and suggesting enhancements to submitting pull requests for code changes or documentation improvements.
+First off, thank you for considering contributing to Recursica! It's people like you that make our community great. We welcome contributions of all kinds, from reporting bugs and suggesting enhancements to submitting pull requests for code changes or documentation improvements.
+
+## 🤖 Instructions for AI Agents & Developers Building Components
+
+If you are tasked with building, modifying, or reviewing components **inside** the `mantine-adapter`, you must strictly adhere to our architectural philosophy and design constraints.
+
+**DO NOT** begin writing or modifying component code until you have read and understood the following core documents:
+
+1. **Core Philosophy:** Read `docs/PHILOSOPHY.md` to understand why we aggressively block arbitrary styling, how we use the `overStyled` property, and why we never modify Mantine natively.
+2. **Component Implementation:** Read `docs/COMPONENT_DEV_GUIDE.md` for the exact rules on structuring scoped CSS, filtering styling props, and building naked component wrappers. **Do not duplicate those rules here; follow them directly from the guide.**
+3. **Storybook Requirements:** Read `docs/COMPONENT_STORYBOOK_GUIDE.md`. **Rule:** You must implement a Storybook story for every new component or variant you build. Verification is required.
+4. **Implementation Notes:** Every component MUST have its own `[COMPONENT]_IMPLEMENTATION_NOTES.md` living within its component folder (e.g., `src/components/Button/IMPLEMENTATION_NOTES.md`). You must update this file documenting exactly _why_ specific layout hacks or logic decisions were made.
 
 ## How Can I Contribute?
 

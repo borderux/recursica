@@ -80,9 +80,12 @@ This will spin up a local server (typically at `http://localhost:6006`) with a h
 
 All newly built components will include full TypeScript support with comprehensive prop types exported.
 
-## Contributing
+## Developer & AI Guidelines
 
-For development and contribution guidelines, see the [CONTRIBUTING.md](./CONTRIBUTING.md) file.
+This repository provides dedicated routing documents for both human developers and AI Agents to ensure strict adherence to our design system constraints.
+
+- **For Human Developers:** This `README.md` acts as your primary routing document. If you are integrating this library into an application, please read [USAGE.md](./USAGE.md). If you are building or modifying components inside this library, please read [CONTRIBUTING.md](./CONTRIBUTING.md).
+- **For AI Agents:** All AI Agents operating in this repository must start by reading [AGENT.md](./AGENT.md), which serves as the primary routing document for AI workflows.
 
 ## License
 
