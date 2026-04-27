@@ -32,6 +32,7 @@ export * from "./Slider/Slider";
 export * from "./Stack/Stack";
 export * from "./Stepper/Stepper";
 export * from "./Switch/Switch";
+export * from "./Switch/SwitchGroup";
 export * from "./Table/Table";
 export * from "./Tabs/Tabs";
 export * from "./Text/Text";
