@@ -49,9 +49,9 @@ const renderWithTextField = (args: WrapperStoryProps) => (
   // We explicitly cast args to 'any' here because Mantine enforces strict anatomy types for
   // 'classNames', 'styles', and 'attributes'. WrapperStoryProps defines these for the Wrapper anatomy,
   // but TextField expects them for the full TextInput anatomy, causing a TS intersection mismatch.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   <TextField
     placeholder="Form Control primitive mapped..."
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     {...(args as any)}
   />
 );
