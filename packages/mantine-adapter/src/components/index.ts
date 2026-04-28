@@ -25,6 +25,7 @@ export * from "./Pagination/Pagination";
 export * from "./Panel/Panel";
 export * from "./Popover/Popover";
 export * from "./Radio/Radio";
+export * from "./Radio/RadioGroup";
 export * from "./ReadOnlyField";
 export * from "./Search/Search";
 export * from "./SegmentedControl/SegmentedControl";
