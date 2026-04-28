@@ -1,5 +1,17 @@
 # recursica-storybook
 
+## 0.7.0
+
+### Minor Changes
+
+- cb90751: Updated container and docs
+
+### Patch Changes
+
+- Updated dependencies [928f346]
+- Updated dependencies [cb90751]
+  - @recursica/mantine-adapter@0.10.0
+
 ## 0.6.0
 
 ### Minor Changes
