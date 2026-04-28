@@ -1,5 +1,12 @@
 # @recursica/mantine-adapter
 
+## 0.10.0
+
+### Minor Changes
+
+- 928f346: Added switch and radio
+- cb90751: Updated container and docs
+
 ## 0.9.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # @recursica/publisher
 
+## 0.18.0
+
+### Minor Changes
+
+- 928f346: Added switch and radio
+
 ## 0.17.0
 
 ### Minor Changes
