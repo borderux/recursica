@@ -40,8 +40,8 @@ export interface RecursicaTextAreaProps
 export type TextAreaProps = RecursicaOverStyled<RecursicaTextAreaProps>;
 
 export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
-  function TextArea(
-    {
+  function TextArea(props, ref) {
+    const {
       overStyled = false,
       formLayout = "stacked",
 
@@ -64,12 +64,11 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
       disabled,
       readOnly,
       readOnlyComponent,
+      emptyValueComponent,
       value,
       defaultValue,
       ...rest
-    },
-    ref,
-  ) {
+    } = props;
     const sanitizedProps = filterStylingProps(rest, overStyled);
     const restRecord = sanitizedProps as Record<string, unknown>;
 
@@ -121,8 +120,10 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
         id={id}
         readOnly={readOnly}
         readOnlyComponent={readOnlyComponent}
+        emptyValueComponent={emptyValueComponent}
         readOnlyType="text"
         readOnlyValue={value !== undefined ? value : defaultValue}
+        readOnlyNativeProps={props}
         activeComponent={
           /* Naked Input execution safely decoupled from Mantine's macro Input.Wrapper DOM hooks */
           <MantineTextarea

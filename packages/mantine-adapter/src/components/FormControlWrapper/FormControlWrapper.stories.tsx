@@ -1,4 +1,3 @@
-import React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 import {
   FormControlWrapper,
@@ -47,7 +46,14 @@ export default meta;
 type Story = StoryObj<WrapperStoryProps>;
 
 const renderWithTextField = (args: WrapperStoryProps) => (
-  <TextField placeholder="Form Control primitive mapped..." {...args} />
+  // We explicitly cast args to 'any' here because Mantine enforces strict anatomy types for
+  // 'classNames', 'styles', and 'attributes'. WrapperStoryProps defines these for the Wrapper anatomy,
+  // but TextField expects them for the full TextInput anatomy, causing a TS intersection mismatch.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  <TextField
+    placeholder="Form Control primitive mapped..."
+    {...(args as any)}
+  />
 );
 
 export const Default: Story = {
@@ -89,14 +95,21 @@ export const WithoutAssistiveIcons: Story = {
 };
 
 export const NativeChildrenDirectly: Story = {
-  description:
-    "Bypassing the TextField map to show exactly how native `<input>` hooks execute inside the raw wrapper natively perfectly.",
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Bypassing the TextField map to show exactly how native `<input>` hooks execute inside the raw wrapper natively perfectly.",
+      },
+    },
+  },
   args: {
     label: "Raw HTML Checkbox",
     formLayout: "side-by-side",
     assistiveText: "This wraps a raw HTML input tag mapping correctly.",
   },
-  render: (args) => (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ withLayer, layer, ...args }: any) => (
     <div
       style={{
         display: "flex",

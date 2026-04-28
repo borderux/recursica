@@ -6,11 +6,7 @@ const meta: Meta<typeof FileUpload> = {
   title: "UI-Kit/🚧 FileUpload",
   component: FileUpload,
   tags: ["autodocs"],
-  argTypes: {
-    disabled: {
-      control: "boolean",
-    },
-  },
+  argTypes: {},
 };
 
 export default meta;

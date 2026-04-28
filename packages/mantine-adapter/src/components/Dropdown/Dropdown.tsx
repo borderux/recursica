@@ -36,8 +36,8 @@ export interface RecursicaDropdownProps
 export type DropdownProps = RecursicaOverStyled<RecursicaDropdownProps>;
 
 export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
-  function Dropdown(
-    {
+  function Dropdown(props, ref) {
+    const {
       overStyled = false,
       formLayout = "stacked",
       containerWidth,
@@ -61,13 +61,12 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
       disabled,
       readOnly,
       readOnlyComponent,
+      emptyValueComponent,
       value,
       defaultValue,
       data,
       ...rest
-    },
-    ref,
-  ) {
+    } = props;
     const sanitizedProps = filterStylingProps(rest, overStyled);
     const restRecord = sanitizedProps as Record<string, unknown>;
 
@@ -136,6 +135,7 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
         id={id}
         readOnly={readOnly}
         readOnlyComponent={readOnlyComponent}
+        emptyValueComponent={emptyValueComponent}
         readOnlyType="text"
         readOnlyValue={
           value !== undefined
@@ -144,6 +144,7 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
               ? String(defaultValue)
               : undefined
         }
+        readOnlyNativeProps={props}
         activeComponent={
           /* Naked Select execution safely decoupled from Mantine's macro Input.Wrapper DOM hooks */
           <MantineSelect

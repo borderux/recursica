@@ -161,7 +161,7 @@
     --recursica_ui-kit_components_checkbox_properties_colors_icon-color
   ) !important;
 }
-.input:disabled + .iconWrapper .icon {
+.input:disabled + .icon {
   color: var(
     --recursica_ui-kit_components_checkbox_properties_colors_disabled-icon
   ) !important;

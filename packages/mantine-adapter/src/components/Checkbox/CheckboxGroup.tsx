@@ -9,10 +9,8 @@ import {
   filterStylingProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
-import {
-  FormControlWrapper,
-  type RecursicaFormControlWrapperProps,
-} from "../FormControlWrapper/FormControlWrapper";
+import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
+import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
 import styles from "./Checkbox.module.css";
 
 export interface RecursicaCheckboxGroupProps
@@ -27,8 +25,8 @@ export type CheckboxGroupProps =
   RecursicaOverStyled<RecursicaCheckboxGroupProps>;
 
 export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
-  function CheckboxGroup(
-    {
+  function CheckboxGroup(props, ref) {
+    const {
       overStyled = false,
       formLayout = "stacked",
 
@@ -53,47 +51,19 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
       children,
       readOnly,
       readOnlyComponent,
+      emptyValueComponent,
+      value,
+      defaultValue,
       ...rest
-    },
-    ref,
-  ) {
+    } = props;
     const sanitizedProps = filterStylingProps(rest, overStyled);
     const restRecord = sanitizedProps as Record<string, unknown>;
 
     // Delete prohibited sizing hooks from bypassing the variables
     delete restRecord["size"];
 
-    if (readOnly && readOnlyComponent) {
-      return (
-        <FormControlWrapper
-          className={className}
-          style={style as React.CSSProperties}
-          controlMaxWidth="var(--recursica_ui-kit_components_checkbox-item_properties_max-width)"
-          controlMinWidth={undefined}
-          overStyled={overStyled as true}
-          labelElement="div"
-          formLayout={formLayout}
-          labelSize={labelSize}
-          labelAlignment={labelAlignment}
-          labelOptionalText={labelOptionalText}
-          labelWithEditIcon={labelWithEditIcon}
-          onLabelEditClick={onLabelEditClick}
-          label={label}
-          description={description}
-          assistiveText={assistiveText}
-          assistiveWithIcon={assistiveWithIcon}
-          error={error}
-          required={required}
-          withAsterisk={withAsterisk}
-          id={id}
-        >
-          {readOnlyComponent}
-        </FormControlWrapper>
-      );
-    }
-
     return (
-      <FormControlWrapper
+      <WithReadOnlyWrapper
         className={className}
         style={style as React.CSSProperties}
         controlMaxWidth="var(--recursica_ui-kit_components_checkbox-item_properties_max-width)"
@@ -114,25 +84,35 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
         required={required}
         withAsterisk={withAsterisk}
         id={id}
-      >
-        <MantineCheckbox.Group
-          ref={ref}
-          /* Natively bind local disabled lock dynamically */
-          {...(sanitizedProps as unknown as MantineCheckboxGroupProps)}
-        >
-          <div className={styles.groupRoot} data-layout={formLayout}>
-            {/* If the exact group is read-only natively, we inject disabled hooks dynamically over children? Mantine handles native context directly! */}
-            {React.Children.map(children, (child) => {
-              if (React.isValidElement(child)) {
-                return React.cloneElement(child as React.ReactElement<any>, {
-                  disabled: readOnly || (child.props as any).disabled,
-                });
-              }
-              return child;
-            })}
-          </div>
-        </MantineCheckbox.Group>
-      </FormControlWrapper>
+        readOnly={readOnly && !!readOnlyComponent}
+        readOnlyComponent={readOnlyComponent}
+        emptyValueComponent={emptyValueComponent}
+        readOnlyType="text"
+        readOnlyValue={value !== undefined ? value : defaultValue}
+        readOnlyNativeProps={props}
+        activeComponent={
+          <MantineCheckbox.Group
+            ref={ref}
+            /* Natively bind local disabled lock dynamically */
+            {...(sanitizedProps as unknown as MantineCheckboxGroupProps)}
+            disabled={readOnly || (restRecord as any).disabled}
+            value={value}
+            defaultValue={defaultValue}
+          >
+            <div className={styles.groupRoot} data-layout={formLayout}>
+              {/* If the exact group is read-only natively, we inject disabled hooks dynamically over children? Mantine handles native context directly! */}
+              {React.Children.map(children, (child) => {
+                if (React.isValidElement(child)) {
+                  return React.cloneElement(child as React.ReactElement<any>, {
+                    disabled: readOnly || (child.props as any).disabled,
+                  });
+                }
+                return child;
+              })}
+            </div>
+          </MantineCheckbox.Group>
+        }
+      />
     );
   },
 );

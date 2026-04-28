@@ -13,6 +13,7 @@ export * from "./Dropdown/Dropdown";
 export * from "./FileInput/FileInput";
 export * from "./FileUpload/FileUpload";
 export * from "./Flex/Flex";
+export * from "./FormControlLayout/FormControlLayout";
 export * from "./Group/Group";
 export * from "./HoverCard/HoverCard";
 export * from "./Link/Link";

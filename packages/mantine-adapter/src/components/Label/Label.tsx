@@ -7,10 +7,8 @@ import {
 import styles from "./Label.module.css";
 
 export interface RecursicaLabelProps {
-  /** Overall structural flow mapping the Form Control natively cascading down to Label and Input logic. */
-  formLayout?: "stacked" | "side-by-side";
   /** Specifies the sizing metrics natively mapping the Label boundaries. */
-  labelSize?: "default" | "small";
+  labelSize?: "default" | "small" | "md";
   /** Overall alignment directive for the label strings natively forcing Left/Right justification. */
   labelAlignment?: "left" | "right";
   /** Injects an indicator text block alongside the label. Can be boolean (`true` maps to '(Optional)') or custom React nodes. */
@@ -29,7 +27,6 @@ export type LabelProps = RecursicaOverStyled<
 
 export const Label = forwardRef<HTMLLabelElement, LabelProps>(function Label(
   {
-    formLayout = "stacked",
     labelSize = "default",
     labelAlignment,
     required = false,
@@ -43,8 +40,7 @@ export const Label = forwardRef<HTMLLabelElement, LabelProps>(function Label(
   },
   ref,
 ) {
-  const resolvedAlignment =
-    labelAlignment || (formLayout === "side-by-side" ? "right" : "left");
+  const resolvedAlignment = labelAlignment || "left";
 
   let resolvedOptionalText: React.ReactNode | undefined;
   if (!required) {
@@ -85,7 +81,6 @@ export const Label = forwardRef<HTMLLabelElement, LabelProps>(function Label(
       ref={ref}
       className={finalClass}
       classNames={mergedClassNames}
-      data-layout={formLayout}
       data-size={labelSize}
       data-alignment={resolvedAlignment}
       required={required && !labelWithEditIcon}

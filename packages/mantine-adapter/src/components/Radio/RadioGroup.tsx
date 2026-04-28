@@ -9,10 +9,8 @@ import {
   filterStylingProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
-import {
-  FormControlWrapper,
-  type RecursicaFormControlWrapperProps,
-} from "../FormControlWrapper/FormControlWrapper";
+import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
+import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
 import styles from "./Radio.module.css";
 
 export interface RecursicaRadioGroupProps
@@ -26,8 +24,8 @@ export interface RecursicaRadioGroupProps
 export type RadioGroupProps = RecursicaOverStyled<RecursicaRadioGroupProps>;
 
 export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
-  function RadioGroup(
-    {
+  function RadioGroup(props, ref) {
+    const {
       overStyled = false,
       formLayout = "stacked",
 
@@ -52,47 +50,19 @@ export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
       children,
       readOnly,
       readOnlyComponent,
+      emptyValueComponent,
+      value,
+      defaultValue,
       ...rest
-    },
-    ref,
-  ) {
+    } = props;
     const sanitizedProps = filterStylingProps(rest, overStyled);
     const restRecord = sanitizedProps as Record<string, unknown>;
 
     // Delete prohibited sizing hooks from bypassing the variables
     delete restRecord["size"];
 
-    if (readOnly && readOnlyComponent) {
-      return (
-        <FormControlWrapper
-          className={className}
-          style={style as React.CSSProperties}
-          controlMaxWidth="var(--recursica_ui-kit_components_radio-button-item_properties_max-width)"
-          controlMinWidth={undefined}
-          overStyled={overStyled as true}
-          labelElement="div"
-          formLayout={formLayout}
-          labelSize={labelSize}
-          labelAlignment={labelAlignment}
-          labelOptionalText={labelOptionalText}
-          labelWithEditIcon={labelWithEditIcon}
-          onLabelEditClick={onLabelEditClick}
-          label={label}
-          description={description}
-          assistiveText={assistiveText}
-          assistiveWithIcon={assistiveWithIcon}
-          error={error}
-          required={required}
-          withAsterisk={withAsterisk}
-          id={id}
-        >
-          {readOnlyComponent}
-        </FormControlWrapper>
-      );
-    }
-
     return (
-      <FormControlWrapper
+      <WithReadOnlyWrapper
         className={className}
         style={style as React.CSSProperties}
         controlMaxWidth="var(--recursica_ui-kit_components_radio-button-item_properties_max-width)"
@@ -113,24 +83,34 @@ export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
         required={required}
         withAsterisk={withAsterisk}
         id={id}
-      >
-        <MantineRadio.Group
-          ref={ref}
-          /* Natively bind local disabled lock dynamically */
-          {...(sanitizedProps as unknown as MantineRadioGroupProps)}
-        >
-          <div className={styles.groupRoot} data-layout={formLayout}>
-            {React.Children.map(children, (child) => {
-              if (React.isValidElement(child)) {
-                return React.cloneElement(child as React.ReactElement<any>, {
-                  disabled: readOnly || (child.props as any).disabled,
-                });
-              }
-              return child;
-            })}
-          </div>
-        </MantineRadio.Group>
-      </FormControlWrapper>
+        readOnly={readOnly && !!readOnlyComponent}
+        readOnlyComponent={readOnlyComponent}
+        emptyValueComponent={emptyValueComponent}
+        readOnlyType="text"
+        readOnlyValue={value !== undefined ? value : defaultValue}
+        readOnlyNativeProps={props}
+        activeComponent={
+          <MantineRadio.Group
+            ref={ref}
+            /* Natively bind local disabled lock dynamically */
+            {...(sanitizedProps as unknown as MantineRadioGroupProps)}
+            disabled={readOnly || (restRecord as any).disabled}
+            value={value}
+            defaultValue={defaultValue}
+          >
+            <div className={styles.groupRoot} data-layout={formLayout}>
+              {React.Children.map(children, (child) => {
+                if (React.isValidElement(child)) {
+                  return React.cloneElement(child as React.ReactElement<any>, {
+                    disabled: readOnly || (child.props as any).disabled,
+                  });
+                }
+                return child;
+              })}
+            </div>
+          </MantineRadio.Group>
+        }
+      />
     );
   },
 );

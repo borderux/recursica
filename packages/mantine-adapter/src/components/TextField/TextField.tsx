@@ -28,8 +28,8 @@ export interface RecursicaTextFieldProps
 export type TextFieldProps = RecursicaOverStyled<RecursicaTextFieldProps>;
 
 export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
-  function TextField(
-    {
+  function TextField(props, ref) {
+    const {
       overStyled = false,
       formLayout = "stacked",
 
@@ -52,12 +52,11 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
       disabled,
       readOnly,
       readOnlyComponent,
+      emptyValueComponent,
       value,
       defaultValue,
       ...rest
-    },
-    ref,
-  ) {
+    } = props;
     const sanitizedProps = filterStylingProps(rest, overStyled);
     const restRecord = sanitizedProps as Record<string, unknown>;
 
@@ -113,8 +112,10 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
         id={id}
         readOnly={readOnly}
         readOnlyComponent={readOnlyComponent}
+        emptyValueComponent={emptyValueComponent}
         readOnlyType="text"
         readOnlyValue={value !== undefined ? value : defaultValue}
+        readOnlyNativeProps={props}
         activeComponent={
           /* Naked Input execution safely decoupled from Mantine's macro Input.Wrapper DOM hooks */
           <Input

@@ -1,14 +1,17 @@
 import React, { forwardRef, useId } from "react";
-import { type InputWrapperProps, Box } from "@mantine/core";
+import { type InputWrapperProps } from "@mantine/core";
 import {
   filterStylingProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import { Label, type RecursicaLabelProps } from "../Label/Label";
+import { FormControlLayout } from "../FormControlLayout/FormControlLayout";
 import { AssistiveElement } from "../AssistiveElement/AssistiveElement";
 import styles from "./FormControlWrapper.module.css";
 
 export interface RecursicaFormControlWrapperProps extends RecursicaLabelProps {
+  /** Overall structural flow mapping the Form Control natively cascading down to Label and Input logic. */
+  formLayout?: "stacked" | "side-by-side";
   /** Securely replaces standard Mantine descriptions safely providing standard Assistive properties. */
   assistiveText?: React.ReactNode;
   /** Explicit toggle to suppress the Info icon rendering natively alongside the assistiveText. Defaults to true. */
@@ -93,51 +96,35 @@ export const FormControlWrapper = forwardRef<
       )
     : children;
 
+  const labelNode = label ? (
+    <Label
+      id={id} // Directly binds ARIA references down
+      labelAlignment={labelAlignment}
+      labelOptionalText={labelOptionalText}
+      labelWithEditIcon={labelWithEditIcon}
+      labelActionArea={labelActionArea}
+      onLabelEditClick={onLabelEditClick}
+      required={withAsterisk ?? required}
+      // Manually propagate relevant structural logic if underlying groups dictate Label to act as generic wrapper
+      {...(labelElement === "div" ? { as: "div" } : {})}
+    >
+      {label}
+    </Label>
+  ) : undefined;
+
   return (
-    <Box
+    <FormControlLayout
       ref={ref}
       className={finalClass}
-      data-form-layout={formLayout || "stacked"}
-      data-form-alignment={labelAlignment || "left"}
-      style={
-        {
-          ...((restRecord.style as React.CSSProperties) || {}),
-          ...(controlMaxWidth
-            ? { "--form-control-max-width": controlMaxWidth }
-            : {}),
-          ...(controlMinWidth
-            ? { "--form-control-min-width": controlMinWidth }
-            : {}),
-        } as React.CSSProperties
-      }
+      formLayout={formLayout}
+      labelSize={labelSize}
+      controlMaxWidth={controlMaxWidth}
+      controlMinWidth={controlMinWidth}
+      leftSection={labelNode}
       {...restRecord}
     >
-      {/* 
-        Section 1: The Native Custom Label
-        Bypasses Mantine's built-in Input.Wrapper Label entirely in favor of explicit Recursica formatting.
-      */}
-      {label && (
-        <div className={styles.labelSection}>
-          <Label
-            id={id} // Directly binds ARIA references down
-            formLayout={formLayout}
-            labelSize={labelSize}
-            labelAlignment={labelAlignment}
-            labelOptionalText={labelOptionalText}
-            labelWithEditIcon={labelWithEditIcon}
-            labelActionArea={labelActionArea}
-            onLabelEditClick={onLabelEditClick}
-            required={withAsterisk ?? required}
-            // Manually propagate relevant structural logic if underlying groups dictate Label to act as generic wrapper
-            {...(labelElement === "div" ? { as: "div" } : {})}
-          >
-            {label}
-          </Label>
-        </div>
-      )}
-
       {/*
-        Section 2: The Core Input Wrapper & Controls
+        The Core Input Wrapper & Controls
         Nakedly inject the actual field elements alongside natively bridged Assistive components mapped dynamically.
       */}
       <div className={styles.inputSection}>
@@ -163,7 +150,7 @@ export const FormControlWrapper = forwardRef<
           </AssistiveElement>
         )}
       </div>
-    </Box>
+    </FormControlLayout>
   );
 });
 

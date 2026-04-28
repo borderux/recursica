@@ -37,7 +37,9 @@ export const ReadOnlyTextField: React.FC<ReadOnlyTextFieldProps> = ({
       {value != null
         ? React.isValidElement(value)
           ? value
-          : String(value)
+          : Array.isArray(value)
+            ? value.join(", ")
+            : String(value)
         : ""}
     </Box>
   );

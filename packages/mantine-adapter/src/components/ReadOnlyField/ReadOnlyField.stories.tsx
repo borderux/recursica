@@ -118,3 +118,46 @@ export const WithEditIcon: Story = {
     value: "Editable fixed structure",
   },
 };
+
+/**
+ * Demonstrates how the generic ReadOnlyField handles mapping different internal data types.
+ * Currently, all types safely default to string extraction mapping into the text renderer natively.
+ */
+export const DataTypes: Story = {
+  args: {},
+  render: () => (
+    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+      <ReadOnlyField
+        label="Text Mapping"
+        type="text"
+        value="Standard string output"
+      />
+      <ReadOnlyField label="Number Mapping" type="number" value={1234567.89} />
+      <ReadOnlyField
+        label="Date Mapping"
+        type="date"
+        value={new Date("2026-04-28T12:00:00Z").toLocaleDateString()}
+      />
+      <ReadOnlyField
+        label="Boolean Mapping (True)"
+        type="boolean"
+        value={true}
+      />
+      <ReadOnlyField
+        label="Boolean Mapping (False)"
+        type="boolean"
+        value={false}
+      />
+      <ReadOnlyField
+        label="Switch Mapping (True -> On)"
+        type="switch"
+        value={true}
+      />
+      <ReadOnlyField
+        label="Switch Mapping (False -> Off)"
+        type="switch"
+        value={false}
+      />
+    </div>
+  ),
+};

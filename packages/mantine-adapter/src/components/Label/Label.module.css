@@ -23,43 +23,6 @@
   text-align: right;
 }
 
-.root[data-layout="stacked"] {
-  padding-bottom: var(
-    --recursica_ui-kit_components_label_variants_layouts_stacked_properties_bottom-padding
-  );
-  min-height: var(
-    --recursica_ui-kit_components_label_variants_layouts_stacked_properties_min-height
-  );
-}
-
-.root[data-layout="side-by-side"] {
-  padding-top: var(
-    --recursica_ui-kit_components_label_variants_layouts_side-by-side_properties_vertical-padding
-  );
-  padding-bottom: var(
-    --recursica_ui-kit_components_label_variants_layouts_side-by-side_properties_vertical-padding
-  );
-  min-height: var(
-    --recursica_ui-kit_components_label_variants_layouts_side-by-side_properties_min-height
-  );
-  /* In side-by-side, the label exists to the left of its input, so we use the gutter gap here. */
-  margin-right: var(
-    --recursica_ui-kit_components_label_variants_layouts_side-by-side_properties_gutter
-  );
-}
-
-.root[data-layout="side-by-side"][data-size="default"] {
-  width: var(
-    --recursica_ui-kit_components_label_variants_layouts_side-by-side_variants_sizes_default_properties_width
-  );
-}
-
-.root[data-layout="side-by-side"][data-size="small"] {
-  width: var(
-    --recursica_ui-kit_components_label_variants_layouts_side-by-side_variants_sizes_small_properties_width
-  );
-}
-
 .labelText {
   order: 1;
   font-family: var(

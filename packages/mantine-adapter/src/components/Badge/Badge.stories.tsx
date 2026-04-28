@@ -27,7 +27,8 @@ export const Default: Story = {
     children: "Badge Label",
     variant: "primary-color",
   },
-  render: (args) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ withLayer, layer, ...args }: any) => {
     return <Badge {...args} />;
   },
 };

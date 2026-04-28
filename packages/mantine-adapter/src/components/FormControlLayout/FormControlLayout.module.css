@@ -1,0 +1,80 @@
+/* FormControlLayout.module.css */
+
+.root {
+  display: flex;
+  margin: 0; /* Hardcoded structural reset */
+  padding: 0; /* Hardcoded structural reset */
+  max-width: var(--form-control-max-width, 100%);
+  min-width: var(--form-control-min-width, auto);
+}
+
+/* Base Structural Stacked Layout */
+.root[data-form-layout="stacked"] {
+  flex-direction: column;
+}
+
+/* Base Structural Grid Layout */
+.root[data-form-layout="side-by-side"] {
+  flex-direction: row;
+  align-items: flex-start;
+  flex-wrap: wrap; /* Allows collapse if screen is too thin, though standard flex width should hold */
+}
+
+.leftSection {
+  /* Width dimensions are strictly governed natively inside this layout column */
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Stacked Layout constraints */
+.root[data-form-layout="stacked"] .leftSection {
+  padding-bottom: var(
+    --recursica_ui-kit_components_label_variants_layouts_stacked_properties_bottom-padding,
+    8px
+  );
+  min-height: var(
+    --recursica_ui-kit_components_label_variants_layouts_stacked_properties_min-height,
+    auto
+  );
+}
+
+/* SideBySide Layout constraints */
+.root[data-form-layout="side-by-side"] .leftSection {
+  padding-top: var(
+    --recursica_ui-kit_components_label_variants_layouts_side-by-side_properties_vertical-padding,
+    0
+  );
+  padding-bottom: var(
+    --recursica_ui-kit_components_label_variants_layouts_side-by-side_properties_vertical-padding,
+    0
+  );
+  min-height: var(
+    --recursica_ui-kit_components_label_variants_layouts_side-by-side_properties_min-height,
+    auto
+  );
+  /* In side-by-side, the label column exists to the left of its input, so we use the gutter gap here. */
+  margin-right: var(
+    --recursica_ui-kit_components_label_variants_layouts_side-by-side_properties_gutter,
+    16px
+  );
+}
+
+.root[data-form-layout="side-by-side"] .leftSection[data-size="default"] {
+  width: var(
+    --recursica_ui-kit_components_label_variants_layouts_side-by-side_variants_sizes_default_properties_width
+  );
+}
+
+.root[data-form-layout="side-by-side"] .leftSection[data-size="small"] {
+  width: var(
+    --recursica_ui-kit_components_label_variants_layouts_side-by-side_variants_sizes_small_properties_width
+  );
+}
+
+.rightSection {
+  display: flex; /* Groups internal field alongside subsequent errors/descriptions */
+  flex-direction: column;
+  flex: 1; /* Consumes the remaining x-axis in grid columns natively */
+  min-width: 0; /* Break boundary preventing internal flex explosion */
+}

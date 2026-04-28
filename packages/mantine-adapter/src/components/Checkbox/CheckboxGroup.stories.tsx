@@ -46,7 +46,24 @@ export default meta;
 
 type Story = StoryObj<typeof CheckboxGroup>;
 
-export const GroupSideBySide: Story = {
+export const Default: Story = {
+  args: {
+    formLayout: "stacked",
+    label: "Standard Group",
+  },
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: function StoryRender({ withLayer, layer, ...args }: any) {
+    const [value, setValue] = useState<string[]>([]);
+    return (
+      <Checkbox.Group {...args} value={value} onChange={setValue}>
+        <Checkbox value="1" label="Option 1" />
+        <Checkbox value="2" label="Option 2" />
+      </Checkbox.Group>
+    );
+  },
+};
+
+export const SideBySideLayout: Story = {
   args: {
     formLayout: "side-by-side",
     labelOptionalText: "Recommended",
@@ -55,7 +72,8 @@ export const GroupSideBySide: Story = {
     assistiveText:
       "Select all libraries currently in use for this specific workspace configuration.",
   },
-  render: function GroupSideBySideRender(args) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: function StoryRender({ withLayer, layer, ...args }: any) {
     const [value, setValue] = useState<string[]>(["react"]);
     return (
       <Checkbox.Group {...args} value={value} onChange={setValue}>
@@ -70,14 +88,15 @@ export const GroupSideBySide: Story = {
   },
 };
 
-export const GroupStacked: Story = {
+export const StackedLayout: Story = {
   args: {
     formLayout: "stacked",
     required: true,
     label: "Execution Targets",
     error: "You must select at least one deployment target to compile.",
   },
-  render: function GroupStackedRender(args) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: function StoryRender({ withLayer, layer, ...args }: any) {
     const [value, setValue] = useState<string[]>(["react"]);
     return (
       <Checkbox.Group {...args} value={value} onChange={setValue}>
@@ -92,7 +111,7 @@ export const GroupStacked: Story = {
   },
 };
 
-export const StaticReadOnlyGroup: Story = {
+export const ReadOnly: Story = {
   args: {
     readOnly: true,
     formLayout: "stacked",
@@ -101,7 +120,8 @@ export const StaticReadOnlyGroup: Story = {
     assistiveText:
       "This structure explicitly validates native component-level DOM preservation natively mapping lock bounds safely over interaction.",
   },
-  render: function StaticReadOnlyGroupRender(args) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: function StoryRender({ withLayer, layer, ...args }: any) {
     const [value, setValue] = useState<string[]>(["disabledNode"]);
     return (
       <Checkbox.Group {...args} value={value} onChange={setValue}>
@@ -113,25 +133,6 @@ export const StaticReadOnlyGroup: Story = {
           value="disabledNodeEmpty"
           label="Unchecked Configuration Limit"
         />
-      </Checkbox.Group>
-    );
-  },
-};
-
-export const EditableReadOnlyGroup: Story = {
-  args: {
-    readOnly: true,
-    formLayout: "side-by-side",
-    labelWithEditIcon: true,
-    label: "Interactively Editable ReadOnly Group",
-    assistiveText: "Users explicitly unlock DOM structures dynamically.",
-  },
-  render: function EditableReadOnlyGroupRender(args) {
-    const [value, setValue] = useState<string[]>(["activeState"]);
-    return (
-      <Checkbox.Group {...args} value={value} onChange={setValue}>
-        <Checkbox value="activeState" label="Locked active state" />
-        <Checkbox value="unlockedNode" label="Locked inactive map" />
       </Checkbox.Group>
     );
   },

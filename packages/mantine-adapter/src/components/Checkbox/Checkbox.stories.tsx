@@ -24,14 +24,13 @@ To render a solitary component natively:
     },
   },
   argTypes: {
-    disabled: {
-      control: "boolean",
-    },
     readOnly: {
       control: "boolean",
       description:
         "Toggles structural read-only data presentation bypassing interaction boundaries completely.",
     },
+    controlMaxWidth: { table: { disable: true } },
+    controlMinWidth: { table: { disable: true } },
   },
 };
 
@@ -43,6 +42,13 @@ export const Default: Story = {
   args: {
     disabled: false,
     label: "Standard Unchecked Property",
+  },
+};
+
+export const SideBySideLayout: Story = {
+  args: {
+    label: "Opt-in form alignment",
+    formLayout: "side-by-side",
   },
 };
 
@@ -68,6 +74,21 @@ export const StaticVariations: Story = {
       <Checkbox label="Indeterminate Master" indeterminate />
       <Checkbox label="Disabled Variant" disabled />
       <Checkbox label="Disabled Checked Variant" checked disabled />
+    </div>
+  ),
+};
+
+export const ReadOnly: Story = {
+  args: {},
+  render: () => (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "24px",
+      }}
+    >
+      <Checkbox label="Accept Terms & Conditions" defaultChecked readOnly />
     </div>
   ),
 };

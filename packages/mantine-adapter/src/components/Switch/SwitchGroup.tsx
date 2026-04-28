@@ -9,10 +9,8 @@ import {
   filterStylingProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
-import {
-  FormControlWrapper,
-  type RecursicaFormControlWrapperProps,
-} from "../FormControlWrapper/FormControlWrapper";
+import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
+import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
 import styles from "./Switch.module.css";
 
 export interface RecursicaSwitchGroupProps
@@ -26,8 +24,8 @@ export interface RecursicaSwitchGroupProps
 export type SwitchGroupProps = RecursicaOverStyled<RecursicaSwitchGroupProps>;
 
 export const SwitchGroup = forwardRef<HTMLDivElement, SwitchGroupProps>(
-  function SwitchGroup(
-    {
+  function SwitchGroup(props, ref) {
+    const {
       overStyled = false,
       formLayout = "stacked",
 
@@ -52,47 +50,19 @@ export const SwitchGroup = forwardRef<HTMLDivElement, SwitchGroupProps>(
       children,
       readOnly,
       readOnlyComponent,
+      emptyValueComponent,
+      value,
+      defaultValue,
       ...rest
-    },
-    ref,
-  ) {
+    } = props;
     const sanitizedProps = filterStylingProps(rest, overStyled);
     const restRecord = sanitizedProps as Record<string, unknown>;
 
     // Delete prohibited sizing hooks from bypassing the variables
     delete restRecord["size"];
 
-    if (readOnly && readOnlyComponent) {
-      return (
-        <FormControlWrapper
-          className={className}
-          style={style as React.CSSProperties}
-          controlMaxWidth="var(--recursica_ui-kit_components_switch_properties_max-width)"
-          controlMinWidth={undefined}
-          overStyled={overStyled as true}
-          labelElement="div"
-          formLayout={formLayout}
-          labelSize={labelSize}
-          labelAlignment={labelAlignment}
-          labelOptionalText={labelOptionalText}
-          labelWithEditIcon={labelWithEditIcon}
-          onLabelEditClick={onLabelEditClick}
-          label={label}
-          description={description}
-          assistiveText={assistiveText}
-          assistiveWithIcon={assistiveWithIcon}
-          error={error}
-          required={required}
-          withAsterisk={withAsterisk}
-          id={id}
-        >
-          {readOnlyComponent}
-        </FormControlWrapper>
-      );
-    }
-
     return (
-      <FormControlWrapper
+      <WithReadOnlyWrapper
         className={className}
         style={style as React.CSSProperties}
         controlMaxWidth="var(--recursica_ui-kit_components_switch_properties_max-width)"
@@ -113,24 +83,34 @@ export const SwitchGroup = forwardRef<HTMLDivElement, SwitchGroupProps>(
         required={required}
         withAsterisk={withAsterisk}
         id={id}
-      >
-        <MantineSwitch.Group
-          ref={ref}
-          /* Natively bind local disabled lock dynamically */
-          {...(sanitizedProps as unknown as MantineSwitchGroupProps)}
-        >
-          <div className={styles.groupRoot} data-layout={formLayout}>
-            {React.Children.map(children, (child) => {
-              if (React.isValidElement(child)) {
-                return React.cloneElement(child as React.ReactElement<any>, {
-                  disabled: readOnly || (child.props as any).disabled,
-                });
-              }
-              return child;
-            })}
-          </div>
-        </MantineSwitch.Group>
-      </FormControlWrapper>
+        readOnly={readOnly && !!readOnlyComponent}
+        readOnlyComponent={readOnlyComponent}
+        emptyValueComponent={emptyValueComponent}
+        readOnlyType="text"
+        readOnlyValue={value !== undefined ? value : defaultValue}
+        readOnlyNativeProps={props}
+        activeComponent={
+          <MantineSwitch.Group
+            ref={ref}
+            /* Natively bind local disabled lock dynamically */
+            {...(sanitizedProps as unknown as MantineSwitchGroupProps)}
+            disabled={readOnly || (restRecord as any).disabled}
+            value={value}
+            defaultValue={defaultValue}
+          >
+            <div className={styles.groupRoot}>
+              {React.Children.map(children, (child) => {
+                if (React.isValidElement(child)) {
+                  return React.cloneElement(child as React.ReactElement<any>, {
+                    disabled: readOnly || (child.props as any).disabled,
+                  });
+                }
+                return child;
+              })}
+            </div>
+          </MantineSwitch.Group>
+        }
+      />
     );
   },
 );

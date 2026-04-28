@@ -18,9 +18,6 @@ The \`Radio\` component represents a fundamental standalone boolean selection no
     },
   },
   argTypes: {
-    disabled: {
-      control: "boolean",
-    },
     checked: {
       control: "boolean",
     },
@@ -33,6 +30,8 @@ The \`Radio\` component represents a fundamental standalone boolean selection no
     defaultChecked: {
       control: "boolean",
     },
+    controlMaxWidth: { table: { disable: true } },
+    controlMinWidth: { table: { disable: true } },
   },
 };
 
@@ -43,6 +42,13 @@ type Story = StoryObj<typeof Radio>;
 export const Default: Story = {
   args: {
     label: "Standard Radio Primitive",
+  },
+};
+
+export const SideBySideLayout: Story = {
+  args: {
+    label: "Opt-in form alignment",
+    formLayout: "side-by-side",
   },
 };
 
@@ -68,9 +74,17 @@ export const DisabledChecked: Story = {
   },
 };
 
-export const ReadOnlyStandalone: Story = {
-  args: {
-    readOnly: true,
-    readOnlyComponent: <span>Locked Native Value</span>,
-  },
+export const ReadOnly: Story = {
+  args: {},
+  render: () => (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "24px",
+      }}
+    >
+      <Radio label="Account Type" defaultChecked readOnly />
+    </div>
+  ),
 };
