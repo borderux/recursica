@@ -3,6 +3,7 @@ import React, { forwardRef } from "react";
 import {
   ReadOnlyFieldType,
   EmptyValueRenderer,
+  type ReadOnlyControlProps,
 } from "@recursica/adapter-common";
 import {
   filterStylingProps,
@@ -15,13 +16,19 @@ import {
 import { ReadOnlyTextField } from "./ReadOnlyTextField";
 
 export interface RecursicaReadOnlyFieldProps
-  extends Omit<FormControlWrapperProps, "children" | "overStyled"> {
+  extends Omit<
+      FormControlWrapperProps,
+      "children" | "overStyled" | "controlMaxWidth" | "controlMinWidth"
+    >,
+    Pick<ReadOnlyControlProps, "emptyValueComponent"> {
   /** The specific value to be rendered in read-only mode explicitly matching the original field input */
   value?: any;
   /** The data type formatting rules bounding how the string is presented to the user */
   type?: ReadOnlyFieldType;
-  /** Custom renderer explicitly responsible for formatting missing/empty value mappings (overriding default 'N/A') */
-  emptyValueComponent?: React.ElementType<{ value?: any }>;
+  /** Pass the native maximum width design variable dynamically bounding the specific wrapper width exclusively. */
+  controlMaxWidth?: string | undefined;
+  /** Pass the native minimum width design variable dynamically bounding the specific wrapper width exclusively. */
+  controlMinWidth?: string | undefined;
 }
 
 export type ReadOnlyFieldProps =
@@ -49,6 +56,26 @@ export const ReadOnlyField = forwardRef<HTMLDivElement, ReadOnlyFieldProps>(
     const displayValue = isValueEmpty ? <Renderer value={value} /> : value;
 
     switch (type) {
+      case "boolean":
+        content = (
+          <ReadOnlyTextField
+            value={
+              value === true ? "True" : value === false ? "False" : displayValue
+            }
+            overStyled={overStyled as true}
+          />
+        );
+        break;
+      case "switch":
+        content = (
+          <ReadOnlyTextField
+            value={
+              value === true ? "On" : value === false ? "Off" : displayValue
+            }
+            overStyled={overStyled as true}
+          />
+        );
+        break;
       case "text":
       default:
         content = (

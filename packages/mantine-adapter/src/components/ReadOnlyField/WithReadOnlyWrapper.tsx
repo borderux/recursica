@@ -12,7 +12,11 @@ export interface WithReadOnlyWrapperProps
   /** Injects whether the field defaults to reading mode natively */
   readOnly?: boolean;
   /** Explicit React component directly overtaking the baseline text renderer when read-only mode is active */
-  readOnlyComponent?: React.ReactNode;
+  readOnlyComponent?: React.ElementType<any>;
+  /** Custom renderer explicitly responsible for formatting missing/empty value mappings (overriding default 'N/A') */
+  emptyValueComponent?: React.ElementType<{ value?: any }>;
+  /** The full native props dictionary securely forwarded into the custom readOnlyComponent if active */
+  readOnlyNativeProps?: any;
   /** Instructs the underlying generic ReadOnlyField which raw visual structure to bridge automatically */
   readOnlyType?: ReadOnlyFieldType;
   /** The isolated raw data value intercepted explicitly into the ReadOnly formatters */
@@ -36,6 +40,8 @@ export const WithReadOnlyWrapper = forwardRef<
     readOnlyComponent,
     readOnlyType = "text",
     readOnlyValue,
+    readOnlyNativeProps,
+    emptyValueComponent,
     activeComponent,
     overStyled,
     onLabelEditClick,
@@ -45,6 +51,7 @@ export const WithReadOnlyWrapper = forwardRef<
 ) {
   if (readOnly) {
     if (readOnlyComponent) {
+      const ReadOnlyComponent = readOnlyComponent;
       return (
         <FormControlWrapper
           ref={ref}
@@ -52,7 +59,7 @@ export const WithReadOnlyWrapper = forwardRef<
           onLabelEditClick={onLabelEditClick}
           overStyled={overStyled as true}
         >
-          {readOnlyComponent}
+          <ReadOnlyComponent {...readOnlyNativeProps} />
         </FormControlWrapper>
       );
     }
@@ -62,6 +69,7 @@ export const WithReadOnlyWrapper = forwardRef<
         ref={ref}
         type={readOnlyType}
         value={readOnlyValue}
+        emptyValueComponent={emptyValueComponent}
         onLabelEditClick={onLabelEditClick}
         overStyled={overStyled as true}
         {...wrapperProps}

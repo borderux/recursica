@@ -27,9 +27,6 @@ const meta: Meta<TextAreaStoryProps> = {
   },
   argTypes: {
     ...formControlArgTypes,
-    disabled: {
-      control: "boolean",
-    },
     readOnly: {
       control: "boolean",
     },

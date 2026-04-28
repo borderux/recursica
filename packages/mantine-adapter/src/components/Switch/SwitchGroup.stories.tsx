@@ -41,13 +41,31 @@ type Story = StoryObj<typeof SwitchGroup>;
 export const Default: Story = {
   args: {
     formLayout: "stacked",
+    label: "Standard Group",
+  },
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: function StoryRender({ withLayer, layer, ...args }: any) {
+    const [value, setValue] = useState<string[]>([]);
+    return (
+      <SwitchGroup {...args} value={value} onChange={setValue}>
+        <Switch value="1" label="Option 1" />
+        <Switch value="2" label="Option 2" />
+      </SwitchGroup>
+    );
+  },
+};
+
+export const StackedLayout: Story = {
+  args: {
+    formLayout: "stacked",
     label: "Notification Settings",
     description: "Manage your preferences.",
     assistiveText: "We recommend turning these on.",
     error: "",
     required: true,
   },
-  render: function DefaultRender(args) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: function StoryRender({ withLayer, layer, ...args }: any) {
     const [value, setValue] = useState<string[]>(["email"]);
     return (
       <SwitchGroup {...args} value={value} onChange={setValue}>
@@ -61,12 +79,13 @@ export const Default: Story = {
 
 export const SideBySideLayout: Story = {
   args: {
-    ...Default.args,
+    ...StackedLayout.args,
     formLayout: "side-by-side",
     labelSize: "default",
     labelAlignment: "left",
   },
-  render: function SideBySideRender(args) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: function StoryRender({ withLayer, layer, ...args }: any) {
     const [value, setValue] = useState<string[]>([]);
     return (
       <SwitchGroup {...args} value={value} onChange={setValue}>
@@ -83,7 +102,8 @@ export const SolitaryFormControl: Story = {
     label: "Enable Backups",
     description: "Automatically back up your data nightly.",
   },
-  render: function SolitaryRender(args) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: function StoryRender({ withLayer, layer, ...args }: any) {
     const [value, setValue] = useState<string[]>(["auto"]);
     return (
       <SwitchGroup {...args} value={value} onChange={setValue}>
@@ -93,13 +113,13 @@ export const SolitaryFormControl: Story = {
   },
 };
 
-export const GroupReadOnly: Story = {
+export const ReadOnly: Story = {
   args: {
-    ...Default.args,
+    ...StackedLayout.args,
     readOnly: true,
-    readOnlyComponent: <span>2 Notifications Enabled</span>,
   },
-  render: function ReadOnlyRender(args) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: function StoryRender({ withLayer, layer, ...args }: any) {
     const [value, setValue] = useState<string[]>(["email", "sms"]);
     return (
       <SwitchGroup {...args} value={value} onChange={setValue}>

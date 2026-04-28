@@ -6,11 +6,7 @@ const meta: Meta<typeof FileInput> = {
   title: "UI-Kit/🚧 FileInput",
   component: FileInput,
   tags: ["autodocs"],
-  argTypes: {
-    disabled: {
-      control: "boolean",
-    },
-  },
+  argTypes: {},
 };
 
 export default meta;

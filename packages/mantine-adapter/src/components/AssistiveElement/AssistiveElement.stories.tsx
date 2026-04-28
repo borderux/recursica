@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { AssistiveElement } from "./AssistiveElement";
 import { Layer } from "@recursica/adapter-common";
-import React from "react";
 
 const meta: Meta<typeof AssistiveElement> = {
   title: "UI-Kit/AssistiveElement",
@@ -37,7 +36,8 @@ export const DefaultHelp: Story = {
     assistiveVariant: "help",
     assistiveWithIcon: true,
   },
-  render: (args) => (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ withLayer, layer, ...args }: any) => (
     <Layer layer={0} style={{ padding: "48px" }}>
       <AssistiveElement {...args} />
     </Layer>
@@ -51,7 +51,8 @@ export const ErrorState: Story = {
     assistiveVariant: "error",
     assistiveWithIcon: true,
   },
-  render: (args) => (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ withLayer, layer, ...args }: any) => (
     <Layer layer={0} style={{ padding: "48px" }}>
       <AssistiveElement {...args} />
     </Layer>
@@ -65,7 +66,8 @@ export const NoIconHelp: Story = {
     assistiveVariant: "help",
     assistiveWithIcon: false,
   },
-  render: (args) => (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ withLayer, layer, ...args }: any) => (
     <Layer layer={0} style={{ padding: "48px" }}>
       <AssistiveElement {...args} />
     </Layer>

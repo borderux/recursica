@@ -9,13 +9,25 @@ import {
   filterStylingProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
+import { type RequireAccessibleLabel } from "../../utils/RequireAccessibleLabel";
+import {
+  FormControlLayout,
+  type FormControlLayoutProps,
+} from "../FormControlLayout/FormControlLayout";
+
 import styles from "./Checkbox.module.css";
 
-export type RecursicaCheckboxProps = Omit<
-  MantineCheckboxProps,
-  "size" | "color" | "radius" | "iconColor" | "variant"
-> &
-  ReadOnlyControlProps;
+export type RecursicaCheckboxProps = RequireAccessibleLabel<
+  Omit<
+    MantineCheckboxProps,
+    "size" | "color" | "radius" | "iconColor" | "variant"
+  > &
+    ReadOnlyControlProps &
+    Pick<
+      FormControlLayoutProps,
+      "formLayout" | "labelSize" | "controlMaxWidth" | "controlMinWidth"
+    >
+>;
 
 export type CheckboxProps = RecursicaOverStyled<RecursicaCheckboxProps>;
 
@@ -26,10 +38,18 @@ type CheckboxComponent = React.ForwardRefExoticComponent<
 };
 
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
-  function Checkbox(
-    { overStyled = false, readOnly, readOnlyComponent, disabled, ...rest },
-    ref,
-  ) {
+  function Checkbox(props, ref) {
+    const {
+      overStyled = false,
+      readOnly,
+      readOnlyComponent,
+      disabled,
+      formLayout,
+      labelSize,
+      controlMaxWidth,
+      controlMinWidth,
+      ...rest
+    } = props;
     // Checkbox doesn't use Label onLabelEditClick natively since it isn't mapped inside FormControlWrapper intrinsically.
     const sanitizedProps = filterStylingProps(rest, overStyled);
     const restRecord = sanitizedProps as Record<string, unknown>;
@@ -40,11 +60,6 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
     delete restRecord["radius"];
     delete restRecord["variant"];
     delete restRecord["iconColor"];
-
-    if (readOnly && readOnlyComponent) {
-      // Safely fallback explicitly returning mapped elements natively without macro wrappers
-      return <>{readOnlyComponent}</>;
-    }
 
     const mergedClassNames: Partial<Record<string, string>> = {
       root: styles.root,
@@ -85,8 +100,35 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
       ? `${styles.root} ${classNameProp}`
       : styles.root;
 
+    if (readOnly && !!readOnlyComponent) {
+      const isChecked = !!(restRecord.checked ?? restRecord.defaultChecked);
+      const ReadOnlyComp = readOnlyComponent;
+      const roNode = (
+        <ReadOnlyComp
+          {...props}
+          checked={isChecked}
+          label={restRecord.label as React.ReactNode}
+        />
+      );
+
+      if (formLayout) {
+        return (
+          <FormControlLayout
+            formLayout={formLayout}
+            labelSize={labelSize}
+            controlMaxWidth={controlMaxWidth}
+            controlMinWidth={controlMinWidth}
+          >
+            {roNode}
+          </FormControlLayout>
+        );
+      }
+
+      return <>{roNode}</>;
+    }
+
     // We omit Mantine's sizing/coloring so we rely strictly on variables from Checkbox.module.css
-    return (
+    const checkboxNode = (
       <MantineCheckbox
         ref={ref}
         className={finalClass}
@@ -95,6 +137,21 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
         {...(sanitizedProps as unknown as MantineCheckboxProps)}
       />
     );
+
+    if (formLayout) {
+      return (
+        <FormControlLayout
+          formLayout={formLayout}
+          labelSize={labelSize}
+          controlMaxWidth={controlMaxWidth}
+          controlMinWidth={controlMinWidth}
+        >
+          {checkboxNode}
+        </FormControlLayout>
+      );
+    }
+
+    return checkboxNode;
   },
 ) as CheckboxComponent;
 

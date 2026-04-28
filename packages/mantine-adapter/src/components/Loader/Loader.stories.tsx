@@ -54,7 +54,8 @@ export const Default: Story = {
     size: "default",
     layer: 0,
   },
-  render: ({ layer, ...args }) => (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ withLayer, layer, ...args }: any) => (
     <Layer layer={layer ?? 0} style={{ padding: "24px" }}>
       <Loader {...args} />
     </Layer>
@@ -66,7 +67,8 @@ export const StaticOvalDefault: Story = {
     variant: "oval",
     size: "default",
   },
-  render: (args) => <Loader {...args} />,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ withLayer, layer, ...args }: any) => <Loader {...args} />,
 };
 
 export const StaticBarsLarge: Story = {
@@ -74,7 +76,8 @@ export const StaticBarsLarge: Story = {
     variant: "bars",
     size: "large",
   },
-  render: (args) => <Loader {...args} />,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ withLayer, layer, ...args }: any) => <Loader {...args} />,
 };
 
 export const StaticDotsSmall: Story = {
@@ -82,7 +85,8 @@ export const StaticDotsSmall: Story = {
     variant: "dots",
     size: "sm",
   },
-  render: (args) => <Loader {...args} />,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ withLayer, layer, ...args }: any) => <Loader {...args} />,
 };
 
 export const LayerTwoOval: Story = {
@@ -90,7 +94,8 @@ export const LayerTwoOval: Story = {
     variant: "oval",
     size: "default",
   },
-  render: (args) => (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ withLayer, layer, ...args }: any) => (
     <Layer layer={2} style={{ padding: "24px" }}>
       <Loader {...args} />
     </Layer>

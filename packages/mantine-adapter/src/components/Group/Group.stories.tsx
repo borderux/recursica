@@ -81,7 +81,8 @@ export default meta;
 type Story = StoryObj<GroupStoryProps>;
 
 export const Default: Story = {
-  render: (args) => (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ withLayer, layer, ...args }: any) => (
     <Group {...args}>
       <Button variant="solid">Primary</Button>
       <Button variant="outline">Secondary</Button>
@@ -94,7 +95,8 @@ export const StaticGapSmall: Story = {
   args: {
     gap: "rec-sm",
   },
-  render: (args) => (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ withLayer, layer, ...args }: any) => (
     <Group {...args}>
       <Button variant="solid">Item 1</Button>
       <Button variant="solid">Item 2</Button>
@@ -107,7 +109,8 @@ export const StaticGapLarge: Story = {
   args: {
     gap: "rec-xl",
   },
-  render: (args) => (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ withLayer, layer, ...args }: any) => (
     <Group {...args}>
       <Button variant="solid">Item 1</Button>
       <Button variant="solid">Item 2</Button>

@@ -40,7 +40,7 @@ const renderWithTextField = ({ children, ...args }: LabelStoryProps) => (
 export const Default: Story = {
   args: {
     children: "Dynamic Label (Controls)",
-    formLayout: "stacked",
+
     labelSize: "default",
     labelAlignment: "left",
     required: false,
@@ -53,7 +53,6 @@ export const Default: Story = {
 export const StackedDefault: Story = {
   args: {
     children: "Email Address",
-    formLayout: "stacked",
   },
   render: renderWithTextField,
 };
@@ -61,7 +60,7 @@ export const StackedDefault: Story = {
 export const StackedRequired: Story = {
   args: {
     children: "Primary Network Node",
-    formLayout: "stacked",
+
     required: true,
   },
   render: renderWithTextField,
@@ -70,7 +69,7 @@ export const StackedRequired: Story = {
 export const StackedWithEditIcon: Story = {
   args: {
     children: "Environment Variables",
-    formLayout: "stacked",
+
     labelWithEditIcon: true,
   },
   render: renderWithTextField,
@@ -79,7 +78,7 @@ export const StackedWithEditIcon: Story = {
 export const SideBySideDefault: Story = {
   args: {
     children: "Status",
-    formLayout: "side-by-side",
+
     labelSize: "default",
   },
   render: renderWithTextField,
@@ -88,7 +87,7 @@ export const SideBySideDefault: Story = {
 export const RequiredSuppressesOptionalText: Story = {
   args: {
     children: "Full Name",
-    formLayout: "stacked",
+
     required: true,
     labelOptionalText: "This should not render",
   },
@@ -98,7 +97,7 @@ export const RequiredSuppressesOptionalText: Story = {
 export const BooleanOptionalText: Story = {
   args: {
     children: "Middle Initial",
-    formLayout: "side-by-side",
+
     labelOptionalText: true,
   },
   render: renderWithTextField,
@@ -107,7 +106,7 @@ export const BooleanOptionalText: Story = {
 export const WithEditIcon: Story = {
   args: {
     children: "Shipping Address",
-    formLayout: "side-by-side",
+
     labelWithEditIcon: true,
   },
   render: renderWithTextField,
@@ -116,7 +115,7 @@ export const WithEditIcon: Story = {
 export const LayerOneSideBySide: Story = {
   args: {
     children: "Configuration",
-    formLayout: "side-by-side",
+
     labelWithEditIcon: true,
   },
   render: renderWithTextField,

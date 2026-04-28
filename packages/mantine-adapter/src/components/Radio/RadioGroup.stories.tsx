@@ -35,14 +35,32 @@ export default meta;
 
 type Story = StoryObj<typeof RadioGroup>;
 
-export const GroupStacked: Story = {
+export const Default: Story = {
+  args: {
+    formLayout: "stacked",
+    label: "Standard Group",
+  },
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: function StoryRender({ withLayer, layer, ...args }: any) {
+    const [value, setValue] = useState<string>("");
+    return (
+      <RadioGroup {...args} value={value} onChange={setValue}>
+        <Radio value="1" label="Option 1" />
+        <Radio value="2" label="Option 2" />
+      </RadioGroup>
+    );
+  },
+};
+
+export const StackedLayout: Story = {
   args: {
     formLayout: "stacked",
     required: true,
     label: "Hosting Provider",
     error: "You must select a deployment provider.",
   },
-  render: function GroupStackedRender(args) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: function StoryRender({ withLayer, layer, ...args }: any) {
     const [value, setValue] = useState<string>("aws");
     return (
       <RadioGroup {...args} value={value} onChange={setValue}>
@@ -57,7 +75,7 @@ export const GroupStacked: Story = {
   },
 };
 
-export const GroupSideBySide: Story = {
+export const SideBySideLayout: Story = {
   args: {
     formLayout: "side-by-side",
     labelOptionalText: "Recommended",
@@ -65,7 +83,8 @@ export const GroupSideBySide: Story = {
     label: "Deployment Region",
     assistiveText: "Select the data center closest to your user base.",
   },
-  render: function GroupSideBySideRender(args) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: function StoryRender({ withLayer, layer, ...args }: any) {
     const [value, setValue] = useState<string>("us-east");
     return (
       <RadioGroup {...args} value={value} onChange={setValue}>
@@ -77,16 +96,16 @@ export const GroupSideBySide: Story = {
   },
 };
 
-export const StaticReadOnlyGroup: Story = {
+export const ReadOnly: Story = {
   args: {
     readOnly: true,
     formLayout: "stacked",
     required: true,
     label: "Selected Framework",
     assistiveText: "This selection cannot be changed after initialization.",
-    readOnlyComponent: <span>React (Standard Build)</span>,
   },
-  render: function StaticReadOnlyGroupRender(args) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: function StoryRender({ withLayer, layer, ...args }: any) {
     const [value, setValue] = useState<string>("react");
     return (
       <RadioGroup {...args} value={value} onChange={setValue}>

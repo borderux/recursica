@@ -87,7 +87,8 @@ export default meta;
 type Story = StoryObj<FlexStoryProps>;
 
 export const Default: Story = {
-  render: (args) => (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ withLayer, layer, ...args }: any) => (
     <Flex {...args}>
       <Button variant="solid">Block A</Button>
       <Button variant="outline">Block B</Button>
@@ -101,7 +102,8 @@ export const StaticGapSmallColumn: Story = {
     gap: "rec-sm",
     direction: "column",
   },
-  render: (args) => (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ withLayer, layer, ...args }: any) => (
     <Flex {...args}>
       <Button variant="solid">Item 1</Button>
       <Button variant="solid">Item 2</Button>
@@ -115,7 +117,8 @@ export const StaticGapLargeRow: Story = {
     gap: "rec-xl",
     direction: "row",
   },
-  render: (args) => (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ withLayer, layer, ...args }: any) => (
     <Flex {...args}>
       <Button variant="solid">Item 1</Button>
       <Button variant="solid">Item 2</Button>

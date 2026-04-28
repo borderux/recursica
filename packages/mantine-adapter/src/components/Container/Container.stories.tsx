@@ -55,7 +55,8 @@ export default meta;
 type Story = StoryObj<ContainerStoryProps>;
 
 export const Default: Story = {
-  render: (args) => (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ withLayer, layer, ...args }: any) => (
     <div style={{ backgroundColor: "#f0f0f0", padding: "16px" }}>
       <Container
         {...args}
@@ -78,7 +79,8 @@ export const SmallContainer: Story = {
   args: {
     size: "sm",
   },
-  render: (args) => (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ withLayer, layer, ...args }: any) => (
     <div style={{ backgroundColor: "#f0f0f0", padding: "16px" }}>
       <Container
         {...args}
@@ -98,7 +100,8 @@ export const FluidContainer: Story = {
   args: {
     fluid: true,
   },
-  render: (args) => (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ withLayer, layer, ...args }: any) => (
     <div style={{ backgroundColor: "#f0f0f0", padding: "16px" }}>
       <Container
         {...args}

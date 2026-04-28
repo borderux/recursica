@@ -190,18 +190,10 @@
 
 .groupRoot {
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   gap: var(
     --recursica_ui-kit_components_switch_properties_label-switch-gap,
     16px
   );
-}
-
-.groupRoot[data-layout="stacked"] {
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.groupRoot[data-layout="side-by-side"] {
-  flex-direction: row;
-  align-items: center;
 }

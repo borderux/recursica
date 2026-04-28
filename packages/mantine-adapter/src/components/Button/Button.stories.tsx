@@ -20,9 +20,6 @@ const meta: Meta<ButtonStoryProps> = {
       options: ["default", "small"],
       description: "The size of the button",
     },
-    disabled: {
-      control: "boolean",
-    },
   },
 };
 
@@ -37,7 +34,8 @@ export const Default: Story = {
     size: "default",
     disabled: false,
   },
-  render: (args) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ withLayer, layer, ...args }: any) => {
     return <Button {...args} />;
   },
 };

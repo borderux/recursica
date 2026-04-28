@@ -98,7 +98,8 @@ This keeps the story count manageable and makes it clear why each static story e
 **Do not import native UI-library components (e.g., `@mantine/core`) directly into `.stories.tsx` files.**
 
 - **Why?** It defeats the purpose of the abstraction layer. If a Storybook user relies on the native library for padding, margins, formatting, or buttons during development playground usage, they are missing the raw limitations of the styling boundaries we impose natively.
-- **Solution:** Rely strictly on Recursica UI components that you have constructed natively (for example, import our wrapped `<Button>` over Mantine's raw `<Button>`). You should never use HTML primitive components like `<div>`, `<span>`, or `<p>` unless absolutely necessary to demo a story.
+- **Layouts:** Do not use HTML primitive components like `<div style={{...}}>` or `<span>` with inline styles to manually construct layouts. Always strive to use appropriate Recursica library components, particularly layout components like `Stack`, `Group`, `Flex`, and `Box`.
+- **Solution:** Rely strictly on Recursica UI components that you have constructed natively (for example, import our wrapped `<Button>` over Mantine's raw `<Button>`). Use standard library layout primitives for all structural alignments to accurately reflect the design system.
 
 ---
 

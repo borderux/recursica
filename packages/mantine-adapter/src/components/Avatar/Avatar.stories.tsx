@@ -42,7 +42,8 @@ export const Default: Story = {
     size: "default",
     variant: "solid",
   },
-  render: (args) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ withLayer, layer, ...args }: any) => {
     return <Avatar {...args} />;
   },
 };
@@ -53,7 +54,8 @@ export const TextSolidDefault: Story = {
     variant: "solid",
     size: "default",
   },
-  render: (args) => <Avatar {...args} />,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ withLayer, layer, ...args }: any) => <Avatar {...args} />,
 };
 
 export const ImageLarge: Story = {
@@ -61,7 +63,8 @@ export const ImageLarge: Story = {
     src: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=250&q=80",
     size: "large",
   },
-  render: (args) => <Avatar {...args} />,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ withLayer, layer, ...args }: any) => <Avatar {...args} />,
 };
 
 export const IconSmallGhost: Story = {
@@ -85,7 +88,8 @@ export const IconSmallGhost: Story = {
       </svg>
     ),
   },
-  render: (args) => <Avatar {...args} />,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ withLayer, layer, ...args }: any) => <Avatar {...args} />,
 };
 
 export const LayerOneOutline: Story = {
@@ -94,7 +98,8 @@ export const LayerOneOutline: Story = {
     variant: "outline",
     size: "default",
   },
-  render: (args) => (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ withLayer, layer, ...args }: any) => (
     <Layer layer={1} style={{ padding: "24px", display: "inline-block" }}>
       <Avatar {...args} />
     </Layer>

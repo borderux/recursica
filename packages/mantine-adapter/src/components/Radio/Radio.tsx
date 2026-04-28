@@ -9,6 +9,12 @@ import {
   filterStylingProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
+import { type RequireAccessibleLabel } from "../../utils/RequireAccessibleLabel";
+import {
+  FormControlLayout,
+  type FormControlLayoutProps,
+} from "../FormControlLayout/FormControlLayout";
+
 import styles from "./Radio.module.css";
 
 const RadioIcon: React.FC<{
@@ -26,11 +32,17 @@ const RadioIcon: React.FC<{
   </svg>
 );
 
-export type RecursicaRadioProps = Omit<
-  MantineRadioProps,
-  "size" | "color" | "radius" | "iconColor" | "variant"
-> &
-  ReadOnlyControlProps;
+export type RecursicaRadioProps = RequireAccessibleLabel<
+  Omit<
+    MantineRadioProps,
+    "size" | "color" | "radius" | "iconColor" | "variant"
+  > &
+    ReadOnlyControlProps &
+    Pick<
+      FormControlLayoutProps,
+      "formLayout" | "labelSize" | "controlMaxWidth" | "controlMinWidth"
+    >
+>;
 
 export type RadioProps = RecursicaOverStyled<RecursicaRadioProps>;
 
@@ -40,76 +52,123 @@ type RadioComponent = React.ForwardRefExoticComponent<
   Group: typeof RadioGroup;
 };
 
-export const Radio = forwardRef<HTMLInputElement, RadioProps>(function Radio(
-  { overStyled = false, readOnly, readOnlyComponent, disabled, ...rest },
-  ref,
-) {
-  const sanitizedProps = filterStylingProps(rest, overStyled);
-  const restRecord = sanitizedProps as Record<string, unknown>;
+export const Radio = forwardRef<HTMLInputElement, RadioProps>(
+  function Radio(props, ref) {
+    const {
+      overStyled = false,
+      readOnly,
+      readOnlyComponent,
+      disabled,
+      formLayout,
+      labelSize,
+      controlMaxWidth,
+      controlMinWidth,
+      ...rest
+    } = props;
+    const sanitizedProps = filterStylingProps(rest, overStyled);
+    const restRecord = sanitizedProps as Record<string, unknown>;
 
-  // Actively delete dimension bindings that bypass the abstraction
-  delete restRecord["size"];
-  delete restRecord["color"];
-  delete restRecord["radius"];
-  delete restRecord["variant"];
-  delete restRecord["iconColor"];
+    // Actively delete dimension bindings that bypass the abstraction
+    delete restRecord["size"];
+    delete restRecord["color"];
+    delete restRecord["radius"];
+    delete restRecord["variant"];
+    delete restRecord["iconColor"];
 
-  if (readOnly && readOnlyComponent) {
-    // Safely fallback explicitly returning mapped elements natively without macro wrappers
-    return <>{readOnlyComponent}</>;
-  }
+    const mergedClassNames: Partial<Record<string, string>> = {
+      root: styles.root,
+      body: styles.body,
+      inner: styles.inner,
+      radio: styles.radio,
+      icon: styles.icon,
+      labelWrapper: styles.labelWrapper,
+      label: styles.label,
+    };
 
-  const mergedClassNames: Partial<Record<string, string>> = {
-    root: styles.root,
-    body: styles.body,
-    inner: styles.inner,
-    radio: styles.radio,
-    icon: styles.icon,
-    labelWrapper: styles.labelWrapper,
-    label: styles.label,
-  };
+    const classNamesProp = restRecord.classNames;
+    if (
+      classNamesProp &&
+      typeof classNamesProp === "object" &&
+      !Array.isArray(classNamesProp)
+    ) {
+      const o = classNamesProp as Partial<Record<string, string>>;
+      mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
+      mergedClassNames.body = o.body ? `${styles.body} ${o.body}` : styles.body;
+      mergedClassNames.inner = o.inner
+        ? `${styles.inner} ${o.inner}`
+        : styles.inner;
+      mergedClassNames.radio = o.radio
+        ? `${styles.radio} ${o.radio}`
+        : styles.radio;
+      mergedClassNames.icon = o.icon ? `${styles.icon} ${o.icon}` : styles.icon;
+      mergedClassNames.labelWrapper = o.labelWrapper
+        ? `${styles.labelWrapper} ${o.labelWrapper}`
+        : styles.labelWrapper;
+      mergedClassNames.label = o.label
+        ? `${styles.label} ${o.label}`
+        : styles.label;
+    }
 
-  const classNamesProp = restRecord.classNames;
-  if (
-    classNamesProp &&
-    typeof classNamesProp === "object" &&
-    !Array.isArray(classNamesProp)
-  ) {
-    const o = classNamesProp as Partial<Record<string, string>>;
-    mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
-    mergedClassNames.body = o.body ? `${styles.body} ${o.body}` : styles.body;
-    mergedClassNames.inner = o.inner
-      ? `${styles.inner} ${o.inner}`
-      : styles.inner;
-    mergedClassNames.radio = o.radio
-      ? `${styles.radio} ${o.radio}`
-      : styles.radio;
-    mergedClassNames.icon = o.icon ? `${styles.icon} ${o.icon}` : styles.icon;
-    mergedClassNames.labelWrapper = o.labelWrapper
-      ? `${styles.labelWrapper} ${o.labelWrapper}`
-      : styles.labelWrapper;
-    mergedClassNames.label = o.label
-      ? `${styles.label} ${o.label}`
-      : styles.label;
-  }
+    const classNameProp = restRecord.className as string | undefined;
+    const finalClass = classNameProp
+      ? `${styles.root} ${classNameProp}`
+      : styles.root;
 
-  const classNameProp = restRecord.className as string | undefined;
-  const finalClass = classNameProp
-    ? `${styles.root} ${classNameProp}`
-    : styles.root;
+    if (readOnly && !!readOnlyComponent) {
+      const isChecked = !!(restRecord.checked ?? restRecord.defaultChecked);
+      const ReadOnlyComp = readOnlyComponent;
+      const roNode = (
+        <ReadOnlyComp
+          {...props}
+          checked={isChecked}
+          label={restRecord.label as React.ReactNode}
+        />
+      );
 
-  // We omit Mantine's sizing/coloring so we rely strictly on variables from Radio.module.css
-  return (
-    <MantineRadio
-      ref={ref}
-      icon={RadioIcon}
-      className={finalClass}
-      classNames={mergedClassNames}
-      disabled={readOnly || disabled}
-      {...(sanitizedProps as unknown as MantineRadioProps)}
-    />
-  );
-}) as RadioComponent;
+      if (formLayout) {
+        return (
+          <FormControlLayout
+            formLayout={formLayout}
+            labelSize={labelSize}
+            controlMaxWidth={controlMaxWidth}
+            controlMinWidth={controlMinWidth}
+          >
+            {roNode}
+          </FormControlLayout>
+        );
+      }
+
+      return <>{roNode}</>;
+    }
+
+    // We omit Mantine's sizing/coloring so we rely strictly on variables from Radio.module.css
+    const radioNode = (
+      <MantineRadio
+        ref={ref}
+        icon={RadioIcon}
+        className={finalClass}
+        classNames={mergedClassNames}
+        disabled={readOnly || disabled}
+        {...(sanitizedProps as unknown as MantineRadioProps)}
+      />
+    );
+
+    if (formLayout) {
+      return (
+        <FormControlLayout
+          formLayout={formLayout}
+          labelSize={labelSize}
+          controlMaxWidth={controlMaxWidth}
+          controlMinWidth={controlMinWidth}
+        >
+          {radioNode}
+        </FormControlLayout>
+      );
+    }
+
+    return radioNode;
+  },
+) as RadioComponent;
 
 Radio.displayName = "Radio";
 Radio.Group = RadioGroup;
