@@ -1,5 +1,11 @@
 # @recursica/adapter-common
 
+## 0.5.0
+
+### Minor Changes
+
+- 7898170: Updated read-only states for all components
+
 ## 0.4.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # @recursica/mantine-adapter
 
+## 0.11.0
+
+### Minor Changes
+
+- 7898170: Updated read-only states for all components
+
 ## 0.10.0
 
 ### Minor Changes

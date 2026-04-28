@@ -1,5 +1,16 @@
 # recursica-storybook
 
+## 0.8.0
+
+### Minor Changes
+
+- 7898170: Updated read-only states for all components
+
+### Patch Changes
+
+- Updated dependencies [7898170]
+  - @recursica/mantine-adapter@0.11.0
+
 ## 0.7.0
 
 ### Minor Changes
