@@ -1,0 +1,207 @@
+/* HARDCODED VALUES 
+ *
+ * 1. track border: none; (we do not use border for the switch track)
+ * 2. thumb border: none; (we do not use border for the thumb)
+ * 3. outline: none; (focus rings handled internally by mantine)
+ */
+
+.root {
+  /* Provide a stable cursor when not disabled */
+  cursor: pointer;
+
+  --switch-track-padding: var(
+    --recursica_ui-kit_components_switch_properties_track-inner-padding,
+    2px
+  );
+  --switch-thumb-width: var(
+    --recursica_ui-kit_components_switch_properties_thumb-width
+  );
+  --switch-thumb-height: var(
+    --recursica_ui-kit_components_switch_properties_thumb-height
+  );
+  --switch-track-width: var(
+    --recursica_ui-kit_components_switch_properties_track-width
+  );
+}
+
+.root[data-disabled] {
+  cursor: not-allowed;
+  opacity: var(--recursica_brand_states_disabled, 0.4);
+}
+
+.body {
+  display: flex;
+  align-items: center;
+  gap: var(--recursica_ui-kit_components_switch_properties_label-switch-gap);
+}
+
+/* HARDCODE: disable native hover color transitions applied by Mantine */
+.track:hover {
+  background-color: var(
+    --recursica_ui-kit_components_switch_properties_colors_track-unselected
+  );
+}
+.root input:checked + .track:hover {
+  background-color: var(
+    --recursica_ui-kit_components_switch_properties_colors_track-selected
+  );
+}
+
+.track {
+  width: var(--switch-track-width);
+  height: calc(var(--switch-thumb-height) + (var(--switch-track-padding) * 2));
+  border-radius: var(
+    --recursica_ui-kit_components_switch_properties_track-border-radius
+  );
+  background-color: var(
+    --recursica_ui-kit_components_switch_properties_colors_track-unselected
+  );
+  box-shadow: var(
+    --recursica_ui-kit_components_switch_properties_track-elevation,
+    none
+  );
+  padding: var(--switch-track-padding);
+  border: none; /* HARDCODE */
+
+  /* Mantine uses variables internally for these, but we explicitly override the CSS to ensure our dimensions */
+  --switch-width: var(--switch-track-width);
+  --switch-height: calc(
+    var(--switch-thumb-height) + (var(--switch-track-padding) * 2)
+  );
+  --switch-thumb-size: var(--switch-thumb-width);
+
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  transition: background-color 150ms ease;
+  cursor: inherit;
+}
+
+.root input:checked + .track {
+  background-color: var(
+    --recursica_ui-kit_components_switch_properties_colors_track-selected
+  );
+  border-color: transparent;
+}
+
+.thumb {
+  width: var(--switch-thumb-width);
+  height: var(--switch-thumb-height);
+  border-radius: var(
+    --recursica_ui-kit_components_switch_properties_thumb-border-radius
+  );
+  background-color: var(
+    --recursica_ui-kit_components_switch_properties_colors_thumb-unselected
+  );
+  box-shadow: var(
+    --recursica_ui-kit_components_switch_properties_thumb-elevation,
+    none
+  );
+  border: none; /* HARDCODE */
+
+  transition: background-color 150ms ease;
+}
+
+.root input:checked + .track .thumb {
+  background-color: var(
+    --recursica_ui-kit_components_switch_properties_colors_thumb-selected
+  );
+}
+
+.labelWrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  font-family: var(
+    --recursica_ui-kit_components_switch_properties_label-text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_switch_properties_label-text_font-size
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_switch_properties_label-text_font-weight
+  );
+  font-style: var(
+    --recursica_ui-kit_components_switch_properties_label-text_font-style
+  );
+  line-height: var(
+    --recursica_ui-kit_components_switch_properties_label-text_line-height
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_switch_properties_label-text_letter-spacing
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_switch_properties_label-text_text-transform
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_switch_properties_label-text_text-decoration
+  );
+  cursor: inherit;
+}
+
+.thumbIconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.checkIcon,
+.closeIcon {
+  width: 10px;
+  height: 10px;
+  position: absolute;
+  transition:
+    opacity 150ms ease,
+    transform 150ms ease;
+}
+
+/* Unchecked state */
+.checkIcon {
+  opacity: 0;
+  transform: scale(0.5);
+  color: var(
+    --recursica_ui-kit_components_switch_properties_colors_track-selected
+  );
+}
+
+.closeIcon {
+  opacity: 1;
+  transform: scale(1);
+  color: var(
+    --recursica_ui-kit_components_switch_properties_colors_track-unselected
+  );
+}
+
+/* Checked state */
+.root input:checked + .track .thumb .checkIcon {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.root input:checked + .track .thumb .closeIcon {
+  opacity: 0;
+  transform: scale(0.5);
+}
+
+.groupRoot {
+  display: flex;
+  gap: var(
+    --recursica_ui-kit_components_switch_properties_label-switch-gap,
+    16px
+  );
+}
+
+.groupRoot[data-layout="stacked"] {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.groupRoot[data-layout="side-by-side"] {
+  flex-direction: row;
+  align-items: center;
+}

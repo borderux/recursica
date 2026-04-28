@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { forwardRef } from "react";
 import {
   Checkbox as MantineCheckbox,
@@ -6,7 +5,6 @@ import {
 } from "@mantine/core";
 import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import { CheckboxGroup } from "./CheckboxGroup";
-import { FormControlWrapper } from "../FormControlWrapper/FormControlWrapper";
 import {
   filterStylingProps,
   type RecursicaOverStyled,
@@ -44,15 +42,8 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
     delete restRecord["iconColor"];
 
     if (readOnly && readOnlyComponent) {
-      // Safely fallback explicitly returning mapped elements natively
-      return (
-        <FormControlWrapper
-          overStyled={overStyled as true}
-          {...(sanitizedProps as any)}
-        >
-          {readOnlyComponent}
-        </FormControlWrapper>
-      );
+      // Safely fallback explicitly returning mapped elements natively without macro wrappers
+      return <>{readOnlyComponent}</>;
     }
 
     const mergedClassNames: Partial<Record<string, string>> = {
