@@ -1,6 +1,6 @@
-# UI Kit Mantine - Agent Instructions
+# Mantine Adapter - Agent Instructions
 
-If you are an AI Agent operating within this repository, your instructions depend entirely on whether you are **consuming** the UI Kit in an external application, or **contributing** to the UI Kit by building new components.
+If you are an AI Agent operating within this repository, your instructions depend entirely on whether you are **consuming** the Adapter in an external application, or **contributing** to the Adapter by building new components.
 
 Please determine your context and read the appropriate guide:
 

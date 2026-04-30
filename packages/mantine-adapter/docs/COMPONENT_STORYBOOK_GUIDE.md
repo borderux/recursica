@@ -1,3 +1,12 @@
+<critical_agent_directive>
+STOP AND READ THIS FIRST.
+If you are an AI agent writing stories:
+
+1. You MUST use Component Story Format 3 (CSF3). Do not use the older `storiesOf` API or CSF2 syntax.
+2. You must NEVER import `@mantine/core` raw components into Storybook. Everything rendered must be Recursica components.
+3. Every component must feature a Default playground story wrapped in a `<Layer>`.
+   </critical_agent_directive>
+
 # Component Storybook Guide
 
 This guide describes how to create Storybook stories for design-system components built with the [Component Development Guide](./COMPONENT_GUIDE_WALKTHROUGH.md). Use it when adding or updating stories for Recursica components (e.g. Button, future inputs, cards).

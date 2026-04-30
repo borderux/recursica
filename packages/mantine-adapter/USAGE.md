@@ -1,3 +1,13 @@
+<critical_agent_directive>
+STOP AND READ THIS FIRST.
+If you are an AI agent reading this document, you MUST perform the following checks BEFORE writing any code or creating an implementation plan:
+
+1. You must explicitly verify if the application has integrated `recursica_variables_scoped.css`.
+2. You must explicitly verify if `recursica-postcss-plugin` is configured.
+3. You must explicitly verify if the Recursica Google Fonts are integrated.
+   If any of these are missing, your VERY FIRST ACTION must be to inform the developer and include their integration in your plan. You are strictly forbidden from modifying components until this is acknowledged.
+   </critical_agent_directive>
+
 # Mantine Adapter Usage Guide
 
 This guide outlines how human developers and AI agents should consume the `mantine-adapter` library when building applications.
@@ -5,8 +15,6 @@ This guide outlines how human developers and AI agents should consume the `manti
 ## 1. Setup and Integration
 
 Before consuming the components, the application must be properly integrated with Recursica design tokens.
-
-> **Important for AI Agents:** You must strictly follow these integration steps. Furthermore, you must inform the developer how to handle the PostCSS plugin and font integrations as part of an explicit integration plan _before_ proceeding with code changes.
 
 1. **Export Theme Files**: The developer must export their first theme files from [Forge Recursica](https://forge.recursica.com) into the repository. This will generate the required `recursica_variables_scoped.css` and associated JSON files.
 2. **Integrate CSS**: The generated `recursica_variables_scoped.css` must be integrated into the application (typically in a root file like `App.tsx` or `main.tsx`). **It must be included after the Mantine CSS imports.**
