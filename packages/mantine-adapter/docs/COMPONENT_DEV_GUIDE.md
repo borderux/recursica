@@ -1,3 +1,13 @@
+<critical_agent_directive>
+STOP AND READ THIS FIRST.
+If you are an AI agent building components:
+
+1. You are forbidden from modifying native Mantine source code or injecting system styles directly (no `style={{}}` for design tokens).
+2. All style overrides must be done via `{ComponentName}.module.css` scoped to `.root`.
+3. You must use native CSS variables derived from `recursica_variables_scoped.css`.
+4. You must document any necessary HTML layout hooks in a `{COMPONENT}_IMPLEMENTATION_NOTES.md` file.
+   </critical_agent_directive>
+
 # Component Development Guide
 
 This guide defines how to build design-system components that wrap UI libraries (e.g. Mantine) and style them with Recursica (design tokens and UI Kit CSS variables). Use it when creating a new component or when reviewing existing wrappers.

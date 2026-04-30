@@ -1,3 +1,13 @@
+<critical_agent_directive>
+STOP AND READ THIS FIRST.
+If you are an AI agent tasked with creating or modifying a component:
+
+1. You MUST wrap the component props with `RecursicaOverStyled`.
+2. You MUST NOT use hardcoded colors or sizing (e.g. padding="16px"). You must use the CSS variables from `recursica_variables_scoped.css`.
+3. If you do not see a relevant CSS variable in the design tokens, you must inform the developer and PAUSE implementation.
+4. You MUST read `docs/COMPONENT_DEV_GUIDE.md` for specific implementation constraints.
+   </critical_agent_directive>
+
 # Contributing to the Mantine Adapter
 
 First off, thank you for considering contributing to Recursica! It's people like you that make our community great. We welcome contributions of all kinds, from reporting bugs and suggesting enhancements to submitting pull requests for code changes or documentation improvements.
