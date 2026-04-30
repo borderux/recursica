@@ -112,7 +112,85 @@ This keeps the story count manageable and makes it clear why each static story e
 
 ---
 
-## 9. ReadOnly Framework & Visual Verification
+## 9. Global Layer Decorator — Do NOT Manually Wrap
+
+The Storybook preview (`preview.tsx`) provides a **global decorator** that automatically wraps every story in a `<Layer>` component with `withLayer` and `layer` controls. This means:
+
+- **Do NOT** manually wrap your component in `<Layer layer={0}>` inside render functions.
+- **Do NOT** add `layer` or `withLayer` to your component's `argTypes`—they are globally provided.
+- **DO** destructure `withLayer` and `layer` out of args in your render function so they don't get passed to the component:
+
+```tsx
+render: ({ withLayer, layer, ...args }: MenuStoryArgs) => {
+  return <MyComponent {...args} />;
+},
+```
+
+If you skip this destructure step, Storybook will pass `withLayer` and `layer` as DOM attributes, causing React warnings. If you use a bare `render: () =>` function that ignores args entirely, controls will have **no effect**.
+
+---
+
+## 10. Composable / Dot-Notation Components
+
+Components that use a dot-notation composition API (e.g., `Menu`, `Accordion`, `Tabs`) require special attention for Storybook controls, because the props an integrator configures live on the **root component**, not on the children.
+
+### Identifying controllable props
+
+For composable components, the root component typically exposes **behavioral props** rather than visual props:
+
+| Prop Category    | Examples                                     |
+| ---------------- | -------------------------------------------- |
+| Trigger behavior | `trigger` ("click", "hover", "click-hover")  |
+| Positioning      | `position` ("bottom-start", "top-end", etc.) |
+| State control    | `opened`, `defaultOpened`, `onChange`        |
+| Layout tuning    | `offset`, `width`, `withArrow`               |
+| Animation        | `transitionProps`                            |
+
+These should be exposed as `argTypes` in the meta block with appropriate control types (`select`, `boolean`, `number`).
+
+### Render function pattern
+
+The Default story's render function should:
+
+1. **Destructure** `withLayer` and `layer` out of args (global decorator handles these)
+2. **Spread** remaining args onto the root component
+3. **Hardcode** the children (sub-components like `Menu.Item`, `Accordion.Item` etc.)
+
+```tsx
+export const Default: Story = {
+  args: {
+    trigger: "click",
+    position: "bottom-start",
+    withArrow: false,
+  },
+  render: ({ withLayer, layer, ...args }: StoryArgs) => {
+    return (
+      <Menu {...args}>
+        <Menu.Target>
+          <Button variant="solid">Toggle Menu</Button>
+        </Menu.Target>
+        <Menu.Dropdown>
+          <Menu.Item>Settings</Menu.Item>
+          <Menu.Item>Messages</Menu.Item>
+        </Menu.Dropdown>
+      </Menu>
+    );
+  },
+};
+```
+
+### Static stories for composable components
+
+Static stories should showcase **content variations** (different child compositions) rather than prop permutations:
+
+- `WithDividers` — Shows `Menu.Divider` + `Menu.Label` groupings
+- `WithDisabledItems` — Fixed disabled item states
+- `WithSubmenus` — Nested `Menu.Sub` hierarchies
+- `HoverTrigger` — Fixed `trigger="click-hover"` behavioral variant
+
+---
+
+## 11. ReadOnly Framework & Visual Verification
 
 **If a component utilizes `ReadOnlyControlProps` directly natively (like `TextField`), it must explicitly demonstrate these formatting hooks safely.**
 
@@ -124,7 +202,7 @@ This securely ensures visual snapshot tests never miss parsing edge-case read te
 
 ---
 
-## 10. Form Control Layout Standardization
+## 12. Form Control Layout Standardization
 
 **If a component utilizes the `FormControlWrapper` (like `TextField`, `Checkbox.Group`, `Dropdown`, etc.), you should inherit the universal Form Control `argTypes` map to ensure Storybook consistency.**
 

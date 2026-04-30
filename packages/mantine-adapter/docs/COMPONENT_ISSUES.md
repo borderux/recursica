@@ -63,3 +63,17 @@ This document tracks known issues, edge cases, missing variables, or design syst
 - **Description:** Native Mantine sizes `xs` and `xl` are not currently supported by Recursica sizing configurations natively. The UI kit explicitly surfaces sizes `small`, `default`, and `large` for loader rendering.
 - **Impact:** We cannot natively support structural scaling out to extremes.
 - **Current Resolution:** We restrict the Loader to sizes mapped out by standard or structural scales: `sm`, `md`, `lg` (or structurally `small`, `default`, `large`). Passing `xs` or `xl` is officially unsupported and will fall back or not map.
+
+## Menu
+
+### 1. Stripped `color` Prop on Menu.Item
+
+- **Description:** Mantine's `Menu.Item` natively supports a `color` prop for semantic color overrides (e.g., `color="red"` for destructive actions). This prop is explicitly stripped in Recursica's strict mode to enforce design token adherence.
+- **Impact:** Developers cannot natively differentiate "danger" or semantic-colored menu items purely through component props. All item colors are driven exclusively by the `menu-item` Recursica CSS variables.
+- **Current Resolution:** The `color` prop is deleted during prop sanitization when `overStyled={false}`. Developers requiring semantic colors must use `overStyled={true}` as an explicit escape hatch. A future Recursica token update could introduce `variant="danger"` support with dedicated token variables.
+
+### 2. Missing Disabled State Tokens
+
+- **Description:** The Recursica token set does not include dedicated `disabled` state color variables for menu items (e.g., `menu-item_properties_colors_disabled_text`).
+- **Impact:** Disabled items fall back to a hardcoded `opacity: 0.5` value rather than using token-driven disabled colors.
+- **Current Resolution:** A generic `opacity: 0.5` is applied to `[data-disabled]` menu items with `cursor: not-allowed` and `pointer-events: none`. This should be revisited when disabled-state tokens are added to the Figma token structure.

@@ -1,0 +1,244 @@
+/* HARDCODED VALUES:
+   - border-style: solid. Structural rendering rule for the dropdown border (Mantine uses Paper which may not set border natively).
+   - opacity: 0.5 on disabled items. Recursica has no dedicated disabled-opacity token for menu items.
+   - NOTE: overflow is intentionally NOT set on .dropdown. Mantine renders sub-menu dropdowns
+     inside the parent dropdown DOM tree using Floating UI absolute positioning. Setting
+     overflow: hidden clips sub-menus; overflow-y: auto causes unwanted scrollbars.
+   - All structural layout (flex, cursor, pointer-events on disabled) is deferred to Mantine's
+     native behavior. We only override visual design tokens (colors, typography, spacing, borders).
+*/
+
+/* ======================================
+   DROPDOWN CONTAINER
+   ====================================== */
+
+.dropdown {
+  background-color: var(
+    --recursica_ui-kit_components_menu_properties_colors_background
+  );
+  border-style: solid; /* HARDCODE: Mantine Paper does not set border-style natively */
+  border-width: var(--recursica_ui-kit_components_menu_properties_border-size);
+  border-color: var(
+    --recursica_ui-kit_components_menu_properties_colors_border-color
+  );
+  border-radius: var(
+    --recursica_ui-kit_components_menu_properties_border-radius
+  );
+  box-shadow: var(--recursica_ui-kit_components_menu_properties_elevation);
+
+  min-width: var(--recursica_ui-kit_components_menu_properties_min-width);
+  max-width: var(--recursica_ui-kit_components_menu_properties_max-width);
+
+  padding: var(
+    --recursica_ui-kit_components_menu-item_properties_divider-item-gap
+  );
+}
+
+/* ======================================
+   MENU ITEM
+   ====================================== */
+
+.item {
+  position: relative;
+
+  /* Geometry */
+  padding: var(
+      --recursica_ui-kit_components_menu-item_properties_vertical-padding
+    )
+    var(--recursica_ui-kit_components_menu-item_properties_horizontal-padding);
+  border-radius: var(
+    --recursica_ui-kit_components_menu-item_properties_border-radius
+  );
+
+  /* Typography */
+  font-family: var(
+    --recursica_ui-kit_components_menu-item_properties_text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_menu-item_properties_text_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_menu-item_properties_text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_menu-item_properties_text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_menu-item_properties_text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_menu-item_properties_text_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_menu-item_properties_text_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_menu-item_properties_text_text-transform
+  );
+
+  /* Default State: Unselected */
+  background-color: var(
+    --recursica_ui-kit_components_menu-item_properties_colors_unselected-item_background
+  );
+  color: var(
+    --recursica_ui-kit_components_menu-item_properties_colors_unselected-item_text
+  );
+  opacity: var(
+    --recursica_ui-kit_components_menu-item_properties_colors_unselected-item_opacity
+  );
+}
+
+/* Override Mantine's native hover background to use our overlay technique */
+.item:hover {
+  background-color: var(
+    --recursica_ui-kit_components_menu-item_properties_colors_unselected-item_background
+  );
+}
+
+/* Hover overlay using ::after pseudo-element (same technique as Accordion) */
+.item::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 0;
+  pointer-events: none;
+  background-color: var(
+    --recursica_ui-kit_components_menu-item_properties_hover-color
+  );
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.item:hover:not([data-disabled])::after {
+  opacity: var(
+    --recursica_ui-kit_components_menu-item_properties_hover-opacity,
+    0.1
+  );
+}
+
+/* Selected item state */
+.item[data-selected] {
+  background-color: var(
+    --recursica_ui-kit_components_menu-item_properties_colors_selected-item_background
+  );
+  color: var(
+    --recursica_ui-kit_components_menu-item_properties_colors_selected-item_text
+  );
+  opacity: var(
+    --recursica_ui-kit_components_menu-item_properties_colors_selected-item_opacity
+  );
+}
+
+/* Hovered item state (keyboard navigation) */
+.item[data-hovered] {
+  background-color: var(
+    --recursica_ui-kit_components_menu-item_properties_colors_unselected-item_background
+  );
+}
+.item[data-hovered]::after {
+  opacity: var(
+    --recursica_ui-kit_components_menu-item_properties_hover-opacity,
+    0.1
+  );
+}
+
+/* Disabled item */
+.item[data-disabled] {
+  /* HARDCODE: 0.5 opacity fallback; no dedicated disabled-opacity token for menu items */
+  opacity: 0.5;
+}
+
+/* ======================================
+   ITEM LABEL
+   ====================================== */
+
+.itemLabel {
+  position: relative;
+  z-index: 1;
+  color: inherit;
+}
+
+/* ======================================
+   ITEM SECTION (LEFT / RIGHT ICONS)
+   ====================================== */
+
+.itemSection {
+  position: relative;
+  z-index: 1;
+  color: inherit;
+}
+
+/* ======================================
+   DIVIDER
+   ====================================== */
+
+.divider {
+  height: var(
+    --recursica_ui-kit_components_menu-item_properties_divider-height
+  );
+  background-color: var(
+    --recursica_ui-kit_components_menu-item_properties_colors_divider-color
+  );
+  opacity: var(
+    --recursica_ui-kit_components_menu-item_properties_divider-opacity
+  );
+  margin: var(
+      --recursica_ui-kit_components_menu-item_properties_divider-item-gap
+    )
+    0;
+}
+
+/* ======================================
+   SECTION LABEL
+   ====================================== */
+
+.label {
+  padding: var(
+      --recursica_ui-kit_components_menu-item_properties_vertical-padding
+    )
+    var(--recursica_ui-kit_components_menu-item_properties_horizontal-padding);
+
+  /* Supporting Text Typography */
+  font-family: var(
+    --recursica_ui-kit_components_menu-item_properties_supporting-text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_menu-item_properties_supporting-text_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_menu-item_properties_supporting-text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_menu-item_properties_supporting-text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_menu-item_properties_supporting-text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_menu-item_properties_supporting-text_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_menu-item_properties_supporting-text_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_menu-item_properties_supporting-text_text-transform
+  );
+
+  color: var(
+    --recursica_ui-kit_components_menu-item_properties_colors_unselected-item_supporting-text-color
+  );
+  opacity: var(
+    --recursica_ui-kit_components_menu-item_properties_colors_unselected-item_supporting-text-opacity
+  );
+}
+
+/* ======================================
+   SUB-MENU CHEVRON
+   ====================================== */
+
+.chevron {
+  position: relative;
+  z-index: 1;
+  color: inherit;
+}
