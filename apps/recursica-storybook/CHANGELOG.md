@@ -1,5 +1,17 @@
 # recursica-storybook
 
+## 0.9.0
+
+### Minor Changes
+
+- d8f8580: Implemented menu component
+
+### Patch Changes
+
+- Updated dependencies [d8f8580]
+- Updated dependencies [9c6e275]
+  - @recursica/mantine-adapter@0.12.0
+
 ## 0.8.0
 
 ### Minor Changes

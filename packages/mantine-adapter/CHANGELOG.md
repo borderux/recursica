@@ -1,5 +1,15 @@
 # @recursica/mantine-adapter
 
+## 0.12.0
+
+### Minor Changes
+
+- d8f8580: Implemented menu component
+
+### Patch Changes
+
+- 9c6e275: Updated documentation
+
 ## 0.11.0
 
 ### Minor Changes
