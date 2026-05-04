@@ -88,10 +88,18 @@ Many packages and apps contain their own documentation. Always check the target 
 | `AGENT.md`        | Agent-specific routing and guidelines     |
 | `CONTRIBUTING.md` | Package-specific contribution guidelines  |
 
-### Packages/apps with their own AGENT.md
+Every package and app has its own `AGENT.md`. Read it before making changes:
 
 - [`apps/figma-plugin/AGENT.md`](apps/figma-plugin/AGENT.md)
+- [`apps/recursica-storybook/AGENT.md`](apps/recursica-storybook/AGENT.md)
+- [`packages/adapter-common/AGENT.md`](packages/adapter-common/AGENT.md)
+- [`packages/common/AGENT.md`](packages/common/AGENT.md)
+- [`packages/eslint-config/AGENT.md`](packages/eslint-config/AGENT.md)
 - [`packages/mantine-adapter/AGENT.md`](packages/mantine-adapter/AGENT.md)
+- [`packages/recursica-postcss-vars/AGENT.md`](packages/recursica-postcss-vars/AGENT.md)
+- [`packages/schemas/AGENT.md`](packages/schemas/AGENT.md)
+- [`packages/storybook-template/AGENT.md`](packages/storybook-template/AGENT.md)
+- [`packages/typescript-config/AGENT.md`](packages/typescript-config/AGENT.md)
 
 ### Packages with their own CONTRIBUTING.md
 
