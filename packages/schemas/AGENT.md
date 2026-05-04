@@ -8,14 +8,11 @@ This package manages JSON schemas and generates corresponding TypeScript type de
 
 ## Key Files
 
-| Path                       | Purpose                                        |
-| -------------------------- | ---------------------------------------------- |
-| `src/`                     | JSON schema source files                       |
-| `dist/types/`              | Generated TypeScript `.d.ts` files (flattened) |
-| `dist/schemas/`            | Copied JSON schema files (flattened)           |
-| `scripts/`                 | Build scripts for schema-to-type generation    |
-| `lib/`                     | Shared build utilities                         |
-| `tsconfig.validators.json` | TypeScript config for validator generation     |
+- `src/` — JSON schema source files
+- `dist/types/` — Generated TypeScript `.d.ts` files (flattened)
+- `dist/schemas/` — Copied JSON schema files (flattened)
+- `scripts/` — Build scripts for schema-to-type generation
+- `lib/` — Shared build utilities
 
 ## Scripts
 
@@ -27,15 +24,12 @@ This package manages JSON schemas and generates corresponding TypeScript type de
 ## Usage by Other Packages
 
 ```typescript
-// Import a schema
 import mySchema from "@recursica/schemas/MySchema.json";
-
-// Import a generated type
 import { MyType } from "@recursica/schemas/types";
 ```
 
 ## Guidelines
 
-- When adding a new Recursica JSON format, add the schema in `src/` — the build will auto-generate the corresponding TypeScript types
-- Do not manually edit files in `dist/` — they are generated
-- Schema changes may require corresponding updates in `@recursica/common` validators
+- When adding a new Recursica JSON format, add the schema in `src/` — the build will auto-generate the corresponding TypeScript types.
+- Do not manually edit files in `dist/` — they are generated.
+- Schema changes may require corresponding updates in `@recursica/common` validators.

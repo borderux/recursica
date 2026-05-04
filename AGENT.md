@@ -2,6 +2,17 @@
 
 This document is the entry point for AI agents operating in the Recursica monorepo. Use it to understand the repo structure and quickly locate the code, documentation, and tooling for any package or app.
 
+## Rules
+
+These rules apply to all AI agents working in this repository.
+
+- Before making changes to any package or app, read its `AGENT.md` and `CONTRIBUTING.md` first.
+- Read any supplemental docs referenced by those files (e.g. `USAGE.md`, `PHILOSOPHY.md`) before modifying code.
+- Do not create fallbacks, default values, or silent error handling unless explicitly requested by the developer. Code should fail hard and visibly so issues are caught early.
+- Do not swallow exceptions. Do not catch and rethrow unless necessary or requested by the developer. Let exceptions propagate naturally.
+- Be concise. Do not add verbose comments, excessive logging, or unnecessary abstractions.
+- All `AGENT.md` files use simple formatting — plain bullets, headers, and short paragraphs. No tables, no complex markdown. Keep them easy for agents to parse.
+
 ## Repo Overview
 
 Recursica is a design system and component library monorepo. It uses **Turborepo** for task orchestration and **npm workspaces** for dependency management. All packages live under `packages/` and all applications live under `apps/`.

@@ -8,11 +8,9 @@ Centralizes TypeScript compiler options so that all packages extend a common bas
 
 ## Available Configs
 
-| File                 | Purpose                                        |
-| -------------------- | ---------------------------------------------- |
-| `base.json`          | Base TypeScript configuration for all packages |
-| `react-library.json` | Config preset for React library packages       |
-| `nextjs.json`        | Config preset for Next.js applications         |
+- `base.json` — Base TypeScript configuration for all packages
+- `react-library.json` — Config preset for React library packages
+- `nextjs.json` — Config preset for Next.js applications
 
 ## Usage
 
@@ -29,5 +27,5 @@ Packages extend these configs in their `tsconfig.json`:
 
 ## Guidelines
 
-- Changes to `base.json` affect **every package and app** — review carefully
-- Add new preset files for new framework patterns rather than bloating `base.json`
+- Changes to `base.json` affect every package and app — review carefully.
+- Add new preset files for new framework patterns rather than bloating `base.json`.

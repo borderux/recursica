@@ -8,13 +8,6 @@ This app is a build-and-deploy wrapper for the `mantine-adapter` Storybook. It d
 - Copies the output to `dist/`
 - Deploys to GitHub Pages via the `publish` script
 
-## Key Files
-
-| File           | Purpose                                    |
-| -------------- | ------------------------------------------ |
-| `package.json` | Build and deploy scripts                   |
-| `public/`      | Static assets including root redirect HTML |
-
 ## Scripts
 
 - `npm run build` — Build the mantine-adapter Storybook and copy to `dist/`
@@ -22,11 +15,10 @@ This app is a build-and-deploy wrapper for the `mantine-adapter` Storybook. It d
 
 ## Deployment
 
-The Storybook is deployed automatically when changes merge to `main` through the changesets release workflow.
-
-- **Main site:** `https://borderux.github.io/recursica/` (redirects to storybook)
-- **Direct access:** `https://borderux.github.io/recursica/storybook/`
+- Deployed automatically when changes merge to `main` through the changesets release workflow
+- Main site: `https://borderux.github.io/recursica/` (redirects to storybook)
+- Direct access: `https://borderux.github.io/recursica/storybook/`
 
 ## Dependencies
 
-This app depends on `@recursica/mantine-adapter` for the actual Storybook stories and components. If you need to modify stories or components, work in [`packages/mantine-adapter/`](../../packages/mantine-adapter/) instead.
+This app depends on `@recursica/mantine-adapter` for the actual Storybook stories and components. If you need to modify stories or components, work in `packages/mantine-adapter/` instead.

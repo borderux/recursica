@@ -8,12 +8,10 @@ This package provides shared TypeScript interfaces, types, parsers, detectors, s
 
 ## Key Areas
 
-| Area       | Path              | Purpose                                             |
-| ---------- | ----------------- | --------------------------------------------------- |
-| Parsers    | `src/parsers/`    | Utility functions for parsing and transforming data |
-| Detectors  | `src/detectors/`  | Functions for detecting and analyzing data types    |
-| Strings    | `src/strings/`    | String manipulation utilities                       |
-| Validators | `src/validators/` | JSON schema validation for Recursica files          |
+- `src/parsers/` — Utility functions for parsing and transforming data
+- `src/detectors/` — Functions for detecting and analyzing data types
+- `src/strings/` — String manipulation utilities
+- `src/validators/` — JSON schema validation for Recursica files
 
 ## Validation
 
@@ -25,9 +23,9 @@ The package validates Recursica JSON files using schemas from `@recursica/schema
 
 ### Variable Reference Rules
 
-- **Tokens** → raw values (no references)
-- **Themes** → must only reference **Tokens**
-- **UI Kit** → must only reference **Themes**
+- Tokens — raw values (no references)
+- Themes — must only reference Tokens
+- UI Kit — must only reference Themes
 
 ## Scripts
 
@@ -40,6 +38,6 @@ The package validates Recursica JSON files using schemas from `@recursica/schema
 
 ## Guidelines
 
-- This package must remain **UI-free** — no React components, no CSS
-- All exports should be pure functions or TypeScript types
-- See [CONTRIBUTING.md](./CONTRIBUTING.md) for contribution rules
+- This package must remain UI-free — no React components, no CSS.
+- All exports should be pure functions or TypeScript types.
+- See `CONTRIBUTING.md` for contribution rules.
