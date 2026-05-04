@@ -1,5 +1,11 @@
 # @recursica/publisher
 
+## 0.18.1
+
+### Patch Changes
+
+- 13b567a: Updated all documentation for better README and AGENT.md
+
 ## 0.18.0
 
 ### Minor Changes
