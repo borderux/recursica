@@ -2,6 +2,7 @@ import { forwardRef, type ReactNode } from "react";
 import {
   Text as MantineText,
   type TextProps as MantineTextProps,
+  createPolymorphicComponent,
 } from "@mantine/core";
 import {
   filterStylingProps,
@@ -26,11 +27,7 @@ export type RecursicaTextProps = Omit<MantineTextProps, "variant"> & {
 
 export type TextProps = RecursicaOverStyled<RecursicaTextProps>;
 
-/**
- * A generalized typographical wrapper limiting text properties to bounded Recursica UI-kit tokens inherently.
- * Do not use for semantic headings; use the explicit `<Title>` component for `<h1>` - `<h6>`.
- */
-export const Text = forwardRef<HTMLDivElement, TextProps>(function Text(
+const _Text = forwardRef<HTMLDivElement, TextProps>(function Text(
   { overStyled = false, variant = "body", ...rest },
   ref,
 ) {
@@ -51,4 +48,17 @@ export const Text = forwardRef<HTMLDivElement, TextProps>(function Text(
     />
   );
 });
-Text.displayName = "Text";
+_Text.displayName = "Text";
+
+/**
+ * A generalized typographical wrapper limiting text properties to bounded Recursica UI-kit tokens inherently.
+ * Do not use for semantic headings; use the explicit `<Title>` component for `<h1>` - `<h6>`.
+ *
+ * Supports polymorphism via the `component` prop or `renderRoot` for custom element rendering.
+ * @example
+ * ```tsx
+ * <Text component="span">Inline text</Text>
+ * <Text component="label" htmlFor="input-id">Label text</Text>
+ * ```
+ */
+export const Text = createPolymorphicComponent<"p", TextProps>(_Text);

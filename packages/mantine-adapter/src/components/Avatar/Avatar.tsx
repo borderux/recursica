@@ -2,7 +2,12 @@ import React, { forwardRef } from "react";
 import {
   Avatar as MantineAvatar,
   type AvatarProps as MantineAvatarProps,
+  createPolymorphicComponent,
 } from "@mantine/core";
+import {
+  filterStylingProps,
+  type RecursicaOverStyled,
+} from "../../utils/filterStylingProps";
 import styles from "./Avatar.module.css";
 
 export interface RecursicaAvatarProps {
@@ -11,22 +16,19 @@ export interface RecursicaAvatarProps {
   icon?: React.ReactNode;
 }
 
-export type AvatarProps = Omit<
-  MantineAvatarProps,
-  "variant" | "size" | "color" | "radius"
-> &
-  RecursicaAvatarProps;
+export type AvatarProps = RecursicaOverStyled<
+  Omit<MantineAvatarProps, "variant" | "size" | "color" | "radius"> &
+    RecursicaAvatarProps
+>;
 
-export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(function Avatar(
+const _Avatar = forwardRef<HTMLDivElement, AvatarProps>(function Avatar(
   {
     size = "default",
     variant = "solid",
     icon,
-    className,
-    classNames,
     children,
-    style,
     src,
+    overStyled = false,
     ...rest
   },
   ref,
@@ -43,6 +45,9 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(function Avatar(
     large: "lg",
   } as const;
 
+  const sanitizedProps = filterStylingProps(rest, overStyled);
+  const restRecord = sanitizedProps as Record<string, unknown>;
+
   // Determine semantic style based on provided props
   let computedStyle = "text";
   if (src) {
@@ -57,12 +62,13 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(function Avatar(
     placeholder: styles.placeholder,
   };
 
+  const classNamesProp = restRecord.classNames;
   if (
-    classNames &&
-    typeof classNames === "object" &&
-    !Array.isArray(classNames)
+    classNamesProp &&
+    typeof classNamesProp === "object" &&
+    !Array.isArray(classNamesProp)
   ) {
-    const o = classNames as Partial<Record<string, string>>;
+    const o = classNamesProp as Partial<Record<string, string>>;
     mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
     mergedClassNames.image = o.image
       ? `${styles.image} ${o.image}`
@@ -72,19 +78,20 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(function Avatar(
       : styles.placeholder;
   }
 
+  const classNameProp = restRecord.className as string | undefined;
+
   return (
     <MantineAvatar
       ref={ref}
-      className={className}
+      className={classNameProp}
       classNames={mergedClassNames}
       variant={mapVariant[variant]}
       size={mapSize[size]}
-      style={style}
       src={src}
       data-variant={variant}
       data-size={size}
       data-style={computedStyle}
-      {...rest}
+      {...sanitizedProps}
     >
       {icon != null ? (
         <span className={styles.iconWrapper} aria-hidden>
@@ -96,5 +103,11 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(function Avatar(
     </MantineAvatar>
   );
 });
+_Avatar.displayName = "Avatar";
 
-Avatar.displayName = "Avatar";
+/**
+ * Recursica Avatar component wrapping Mantine's Avatar.
+ *
+ * Supports polymorphism via the `component` prop or `renderRoot` for custom element rendering.
+ */
+export const Avatar = createPolymorphicComponent<"div", AvatarProps>(_Avatar);

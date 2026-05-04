@@ -158,3 +158,129 @@ To strictly ensure that every single form input matches the exact Recursica sema
 2. **Propagate via FormControlWrapper**: Inject the naked primitive safely within `<FormControlWrapper>`. This centralizes our entire form layout parameter map (`formLayout`, `assistiveText`, `required`, etc.).
 3. **Form Layout Unification**: Expose a generic `formLayout` parameter on your component (defaulting to `"stacked"`) and explicitly hand it down to `FormControlWrapper`. Do NOT maintain separate structural layout hooks specific to the singular input. Let the `FormControlWrapper` orchestrate whether the component renders stacked or side-by-side natively.
 4. **ARIA Bridging**: Expose the base validation states (`error`, `required`, `id`) from your wrapper props and feed them blindly into `<FormControlWrapper>`. The wrapper calculates `aria-errormessage` and `aria-describedby` logic natively and directly `<cloneElement>` maps them straight down onto your naked input primitive for screen-reader viability safely!
+
+---
+
+## 12. Polymorphic Components
+
+Mantine v8 exposes many components as **polymorphic** — they accept a `component` prop (or `renderRoot`) that changes the rendered DOM element while preserving the component's visual behavior and accessibility. Our Recursica wrappers must preserve this capability so consumers can render buttons as anchors, text as spans, cards as links, etc.
+
+### 12.1 Which components are polymorphic
+
+The following Mantine components use `PolymorphicFactory` and our wrappers must expose polymorphism:
+
+| Recursica Wrapper | Mantine Base   | Default Element |
+| ----------------- | -------------- | --------------- |
+| `Button`          | `Button`       | `"button"`      |
+| `Text`            | `Text`         | `"p"`           |
+| `Badge`           | `Badge`        | `"div"`         |
+| `Card`            | `Card` (Paper) | `"div"`         |
+| `Flex`            | `Flex`         | `"div"`         |
+| `Avatar`          | `Avatar`       | `"div"`         |
+| `Menu.Item`       | `Menu.Item`    | `"button"`      |
+
+### 12.2 The pattern: `createPolymorphicComponent`
+
+Use Mantine's `createPolymorphicComponent` (exported from `@mantine/core`) to wrap the internal `forwardRef` component. This is the **same mechanism Mantine uses internally**:
+
+```tsx
+import { forwardRef } from "react";
+import {
+  SomeComponent as MantineSomeComponent,
+  type SomeComponentProps as MantineSomeComponentProps,
+  createPolymorphicComponent,
+} from "@mantine/core";
+import {
+  filterStylingProps,
+  type RecursicaOverStyled,
+} from "../../utils/filterStylingProps";
+
+// 1. Define Recursica props as usual
+export interface RecursicaSomeComponentProps {
+  variant?: "primary" | "secondary";
+}
+
+// 2. Build the merged props type with RecursicaOverStyled as usual
+export type SomeComponentProps = RecursicaOverStyled<
+  Omit<MantineSomeComponentProps, "variant"> & RecursicaSomeComponentProps
+>;
+
+// 3. Internal forwardRef — prefix with underscore, NOT exported
+const _SomeComponent = forwardRef<HTMLDivElement, SomeComponentProps>(
+  function SomeComponent(
+    { variant = "primary", overStyled = false, ...rest },
+    ref,
+  ) {
+    const sanitizedProps = filterStylingProps(rest, overStyled);
+    // ... map props, render MantineSomeComponent
+  },
+);
+_SomeComponent.displayName = "SomeComponent";
+
+// 4. Export via createPolymorphicComponent with the correct default element
+export const SomeComponent = createPolymorphicComponent<
+  "div",
+  SomeComponentProps
+>(_SomeComponent);
+```
+
+### 12.3 How polymorphism and `RecursicaOverStyled` compose
+
+These two concerns are **orthogonal**:
+
+- **`RecursicaOverStyled<T>`** controls which styling props are available (blocks `className`, `style`, Mantine system props unless `overStyled={true}`).
+- **`createPolymorphicComponent`** adds the `component` and `renderRoot` props on top, and adjusts HTML attributes based on the element type.
+
+The `component` prop passes through to the underlying Mantine component natively — it is not a styling concern and is **not blocked** by `filterStylingProps`.
+
+### 12.4 Static components (dot-notation)
+
+For components with static sub-components (e.g., `Card.Section`, `Menu.Item`), pass the static components as the third generic parameter:
+
+```tsx
+const PolymorphicCard = createPolymorphicComponent<
+  "div",
+  CardProps,
+  {
+    Section: typeof CardSection;
+    Header: typeof CardHeader;
+  }
+>(CardBase);
+
+// Attach statics
+(PolymorphicCard as any).Section = CardSection;
+(PolymorphicCard as any).Header = CardHeader;
+
+export const Card = PolymorphicCard as typeof PolymorphicCard & {
+  Section: typeof CardSection;
+  Header: typeof CardHeader;
+};
+```
+
+### 12.5 Consumer usage examples
+
+```tsx
+// Button as a link
+<Button component="a" href="/dashboard">Navigate</Button>
+
+// Button with a router Link
+<Button renderRoot={(props) => <Link to="/home" {...props} />}>Home</Button>
+
+// Text as a span
+<Text component="span">Inline text</Text>
+
+// Card as a clickable link
+<Card component="a" href="/details">...</Card>
+
+// Menu item as a link
+<Menu.Item component="a" href="/settings">Settings</Menu.Item>
+```
+
+### 12.6 Checklist for polymorphic components
+
+- [ ] Uses `createPolymorphicComponent` with the correct default element type
+- [ ] Internal `forwardRef` is prefixed with `_` and NOT exported directly
+- [ ] `RecursicaOverStyled` wrapping is applied to the props type (not to the polymorphic wrapper)
+- [ ] JSDoc on the exported component documents polymorphic usage with `@example`
+- [ ] Static sub-components (if any) are preserved via the third generic parameter
+- [ ] `displayName` is set on the internal `forwardRef` component

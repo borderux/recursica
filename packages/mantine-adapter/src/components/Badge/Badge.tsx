@@ -2,6 +2,7 @@ import { forwardRef } from "react";
 import {
   Badge as MantineBadge,
   type BadgeProps as MantineBadgeProps,
+  createPolymorphicComponent,
 } from "@mantine/core";
 import {
   filterStylingProps,
@@ -19,7 +20,7 @@ export type BadgeProps = RecursicaOverStyled<
     RecursicaBadgeProps
 >;
 
-export const Badge = forwardRef<HTMLDivElement, BadgeProps>(function Badge(
+const _Badge = forwardRef<HTMLDivElement, BadgeProps>(function Badge(
   { variant = "primary-color", overStyled = false, ...rest },
   ref,
 ) {
@@ -62,5 +63,11 @@ export const Badge = forwardRef<HTMLDivElement, BadgeProps>(function Badge(
     />
   );
 });
+_Badge.displayName = "Badge";
 
-Badge.displayName = "Badge";
+/**
+ * Recursica Badge component wrapping Mantine's Badge.
+ *
+ * Supports polymorphism via the `component` prop or `renderRoot` for custom element rendering.
+ */
+export const Badge = createPolymorphicComponent<"div", BadgeProps>(_Badge);

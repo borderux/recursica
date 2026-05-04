@@ -10,6 +10,7 @@ import {
   type MenuSubProps as MantineMenuSubProps,
   type MenuSubTargetProps as MantineMenuSubTargetProps,
   type MenuSubDropdownProps as MantineMenuSubDropdownProps,
+  createPolymorphicComponent,
 } from "@mantine/core";
 import {
   filterStylingProps,
@@ -131,29 +132,39 @@ export type MenuItemProps = RecursicaOverStyled<
   Omit<MantineMenuItemProps, "color">
 >;
 
-const MenuItem = forwardRef<HTMLButtonElement, MenuItemProps>(function MenuItem(
-  { overStyled = false, ...rest },
-  ref,
-) {
-  const sanitizedProps = filterStylingProps(rest, overStyled);
-  const restRecord = sanitizedProps as Record<string, unknown>;
+const _MenuItem = forwardRef<HTMLButtonElement, MenuItemProps>(
+  function MenuItem({ overStyled = false, ...rest }, ref) {
+    const sanitizedProps = filterStylingProps(rest, overStyled);
+    const restRecord = sanitizedProps as Record<string, unknown>;
 
-  // Strip Mantine's `color` prop to enforce token-driven styling
-  if (!overStyled) {
-    delete restRecord["color"];
-  }
+    // Strip Mantine's `color` prop to enforce token-driven styling
+    if (!overStyled) {
+      delete restRecord["color"];
+    }
 
-  const classNameProp = restRecord.className as string | undefined;
+    const classNameProp = restRecord.className as string | undefined;
 
-  return (
-    <MantineMenu.Item
-      ref={ref}
-      className={classNameProp}
-      {...(sanitizedProps as unknown as MantineMenuItemProps)}
-    />
-  );
-});
-MenuItem.displayName = "MenuItem";
+    return (
+      <MantineMenu.Item
+        ref={ref}
+        className={classNameProp}
+        {...(sanitizedProps as unknown as MantineMenuItemProps)}
+      />
+    );
+  },
+);
+_MenuItem.displayName = "MenuItem";
+
+/**
+ * An individual actionable item within the menu dropdown.
+ *
+ * Supports polymorphism via the `component` prop for link-style items.
+ * @example
+ * ```tsx
+ * <Menu.Item component="a" href="/settings">Settings</Menu.Item>
+ * ```
+ */
+const MenuItem = createPolymorphicComponent<"button", MenuItemProps>(_MenuItem);
 
 // ============================================================
 // MENU DIVIDER
@@ -240,7 +251,7 @@ export type MenuSubItemProps = RecursicaOverStyled<
   Omit<MantineMenuItemProps, "color">
 >;
 
-const MenuSubItem = forwardRef<HTMLButtonElement, MenuSubItemProps>(
+const _MenuSubItem = forwardRef<HTMLButtonElement, MenuSubItemProps>(
   function MenuSubItem({ overStyled = false, ...rest }, ref) {
     const sanitizedProps = filterStylingProps(rest, overStyled);
     const restRecord = sanitizedProps as Record<string, unknown>;
@@ -260,7 +271,16 @@ const MenuSubItem = forwardRef<HTMLButtonElement, MenuSubItemProps>(
     );
   },
 );
-MenuSubItem.displayName = "MenuSubItem";
+_MenuSubItem.displayName = "MenuSubItem";
+
+/**
+ * A menu item that acts as a submenu trigger.
+ *
+ * Supports polymorphism via the `component` prop.
+ */
+const MenuSubItem = createPolymorphicComponent<"button", MenuSubItemProps>(
+  _MenuSubItem,
+);
 
 // ============================================================
 // MENU SUB DROPDOWN
