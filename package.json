@@ -10,8 +10,6 @@
   "author": "hi@borderux.com",
   "scripts": {
     "build": "turbo run build",
-    "dev": "turbo run dev",
-    "recursica": "recursica",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md,css,scss}\"",
     "check-types": "turbo run check-types",
@@ -21,10 +19,7 @@
     "version": "changeset version",
     "release": "changeset publish --access public",
     "publish": "node scripts/publish.mjs",
-    "pr": "node scripts/create-pr.js",
-    "pr:commit": "node scripts/commit-pr-check.js",
-    "simulate-ci": "./scripts/simulate-ci-build.sh",
-    "storybook": "turbo run storybook --filter=recursica-storybook"
+    "simulate-ci": "./scripts/simulate-ci-build.sh"
   },
   "packageManager": "npm@10.9.0",
   "engines": {
