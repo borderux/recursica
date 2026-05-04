@@ -1,5 +1,14 @@
 # @recursica/storybook-template
 
+## 0.4.1
+
+### Patch Changes
+
+- 13b567a: Updated all documentation for better README and AGENT.md
+- Updated dependencies [13b567a]
+  - @recursica/recursica-postcss-vars@1.3.1
+  - @recursica/adapter-common@0.5.1
+
 ## 0.4.0
 
 ### Minor Changes

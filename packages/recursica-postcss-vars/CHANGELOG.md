@@ -1,5 +1,11 @@
 # @recursica/recursica-postcss-vars
 
+## 1.3.1
+
+### Patch Changes
+
+- 13b567a: Updated all documentation for better README and AGENT.md
+
 ## 1.3.0
 
 ### Minor Changes

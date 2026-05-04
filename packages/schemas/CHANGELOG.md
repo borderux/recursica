@@ -1,5 +1,11 @@
 # @repo/recursica-schemas
 
+## 1.1.1
+
+### Patch Changes
+
+- 13b567a: Updated all documentation for better README and AGENT.md
+
 ## 1.1.0
 
 ### Minor Changes
