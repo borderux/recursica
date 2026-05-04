@@ -2,6 +2,7 @@ import React, { forwardRef } from "react";
 import {
   Flex as MantineFlex,
   type FlexProps as MantineFlexProps,
+  createPolymorphicComponent,
 } from "@mantine/core";
 import {
   filterStylingProps,
@@ -27,7 +28,7 @@ export type FlexProps = RecursicaOverStyled<
   MantineFlexProps & RecursicaFlexProps
 >;
 
-export const Flex = forwardRef<HTMLDivElement, FlexProps>(function Flex(
+const _Flex = forwardRef<HTMLDivElement, FlexProps>(function Flex(
   { children, overStyled = false, gap = "rec-default", ...rest },
   ref,
 ) {
@@ -64,5 +65,16 @@ export const Flex = forwardRef<HTMLDivElement, FlexProps>(function Flex(
     </MantineFlex>
   );
 });
+_Flex.displayName = "Flex";
 
-Flex.displayName = "Flex";
+/**
+ * Recursica Flex layout wrapper.
+ *
+ * Supports polymorphism via the `component` prop or `renderRoot` for custom element rendering.
+ * @example
+ * ```tsx
+ * <Flex component="nav">...</Flex>
+ * <Flex component="section">...</Flex>
+ * ```
+ */
+export const Flex = createPolymorphicComponent<"div", FlexProps>(_Flex);

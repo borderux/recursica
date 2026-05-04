@@ -3,6 +3,7 @@ import {
   Card as MantineCard,
   type CardProps as MantineCardProps,
   type CardSectionProps as MantineCardSectionProps,
+  createPolymorphicComponent,
 } from "@mantine/core";
 import {
   filterStylingProps,
@@ -162,15 +163,34 @@ export const CardContent = forwardRef<HTMLDivElement, CardContentProps>(
 CardContent.displayName = "CardContent";
 
 // ==== DOT NOTATION EXPORT ====
-type CardComponent = typeof CardBase & {
+
+/**
+ * Recursica Card component wrapping Mantine's Card (Paper).
+ *
+ * Supports polymorphism via the `component` prop or `renderRoot` for custom element rendering.
+ * Use dot-notation sub-components for structured card layouts.
+ */
+const PolymorphicCard = createPolymorphicComponent<
+  "div",
+  CardProps,
+  {
+    Section: typeof CardSection;
+    Header: typeof CardHeader;
+    Footer: typeof CardFooter;
+    Content: typeof CardContent;
+  }
+>(CardBase);
+
+// Attach static components for dot-notation access
+const _card = PolymorphicCard as Record<string, unknown>;
+_card.Section = CardSection;
+_card.Header = CardHeader;
+_card.Footer = CardFooter;
+_card.Content = CardContent;
+
+export const Card = PolymorphicCard as typeof PolymorphicCard & {
   Section: typeof CardSection;
   Header: typeof CardHeader;
   Footer: typeof CardFooter;
   Content: typeof CardContent;
 };
-
-export const Card = CardBase as CardComponent;
-Card.Section = CardSection;
-Card.Header = CardHeader;
-Card.Footer = CardFooter;
-Card.Content = CardContent;
