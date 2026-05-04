@@ -1,5 +1,11 @@
 # @recursica/mantine-adapter
 
+## 0.13.0
+
+### Minor Changes
+
+- b5bacdb: Added polymorphic support
+
 ## 0.12.0
 
 ### Minor Changes
