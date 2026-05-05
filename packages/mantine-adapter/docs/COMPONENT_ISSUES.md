@@ -77,3 +77,41 @@ This document tracks known issues, edge cases, missing variables, or design syst
 - **Description:** The Recursica token set does not include dedicated `disabled` state color variables for menu items (e.g., `menu-item_properties_colors_disabled_text`).
 - **Impact:** Disabled items fall back to a hardcoded `opacity: 0.5` value rather than using token-driven disabled colors.
 - **Current Resolution:** A generic `opacity: 0.5` is applied to `[data-disabled]` menu items with `cursor: not-allowed` and `pointer-events: none`. This should be revisited when disabled-state tokens are added to the Figma token structure.
+
+## HoverCard
+
+### 1. Beak Size Cannot Be Fully CSS-Driven
+
+- **Description:** Recursica defines a `beak-size` design token (`--recursica_ui-kit_components_hover-card-popover_properties_beak-size: 16px`) intended to control the beak (arrow) size via CSS. However, Mantine's `arrowSize` prop is a JavaScript number used for inline style calculations: it sets `width`, `height`, and a positioning offset (`-arrowSize/2`) directly on the arrow `<div>` element. These inline styles cannot be overridden via CSS without `!important`, and the positioning offset has no CSS-only equivalent.
+- **Impact:** The beak size is not purely token-driven. The `arrowSize` default (16) in `HoverCard.tsx` must be manually kept in sync with the `beak-size` token value. Developers can also override `arrowSize` via props, which breaks design system consistency.
+- **Current Resolution:** `arrowSize` defaults to `16` in the component to match the token. The value is documented as a hardcoded exception in `HOVERCARD_IMPLEMENTATION_NOTES.md`. A future improvement could involve reading the CSS variable value at runtime via `getComputedStyle`, though this would add complexity and a dependency on `useEffect`/state.
+
+## Tooltip
+
+### 1. Beak Size Cannot Be Fully CSS-Driven
+
+- **Description:** Same limitation as HoverCard. Recursica defines a `beak-size` design token (`--recursica_ui-kit_components_tooltip_properties_beak-size: 16px`) intended to control the beak (arrow) size via CSS. However, Mantine's `arrowSize` prop is a JavaScript number used for inline style calculations (`width`, `height`, and `-arrowSize/2` positioning offset) that cannot be CSS-driven.
+- **Impact:** The beak size is not purely token-driven. The `arrowSize` default (16) in `Tooltip.tsx` must be manually kept in sync with the `beak-size` token value.
+- **Current Resolution:** `arrowSize` defaults to `16` in the component to match the token. Same approach as HoverCard.
+
+## Panel
+
+### 1. header-style Token Reference Bug
+
+- **Description:** The UI Kit JSON outputs the `header-style` token as the raw string `"h3"` rather than a structural typography reference. This prevents the compiler from automatically generating the expected nested typography CSS variables (e.g., `--recursica_ui-kit_components_panel_properties_header-style_fontFamily`).
+- **Impact:** We cannot natively map the `header-style` token to the `.title` class in the CSS module because attempting to reference the non-existent fallback variables breaks the PostCSS build pipeline.
+- **Current Resolution:** We have completely stripped typography variable bindings from the `.title` class and are relying exclusively on the `color` token and Mantine's defaults. This should be revisited once the Figma UI Kit is updated to correctly export `header-style` as a typography reference.
+
+## NumberInput
+
+### 1. `rightSection` Overwrites Increment/Decrement Controls
+
+- **Description:** Mantine natively renders its increment/decrement arrows inside the `rightSection` DOM slot. Providing a custom `rightSection` prop to the component intentionally deletes these stepper arrows.
+- **Impact:** It is structurally impossible to render both a right-aligned icon and the stepper controls simultaneously without heavily rebuilding Mantine's abstract native `handlersRef` logic inside a custom wrapper layout.
+- **Current Resolution:** The component inherits the native behavior where the `rightSection` definitively overwrites the controls. If an icon is required alongside controls, it must be passed into `leftSection` instead.
+
+### 2. Missing Explicit Design Tokens for Controls
+
+- **Description:** The Recursica Figma UI Kit provides generic tokens for `number-input` layout geometry and overall colors, but lacks explicit targeting variants for the internal increment/decrement arrow controls (e.g., specific hover backgrounds, icon colors, or border divisions for the arrows themselves).
+- **Impact:** We cannot construct an exact 1-to-1 visual parity if design expects the arrows to have custom dividers or standalone highlight states.
+- **Current Resolution:** The controls have had their default borders stripped out to float seamlessly inside the main input wrapper, and they inherit generic icon tokens, but complex hover background mappings rely on native Mantine fallback states.
