@@ -94,7 +94,7 @@ type Story = StoryObj<HoverCardStoryArgs>;
 
 export const Default: Story = {
   args: {
-    position: "bottom",
+    position: "top",
     withBeak: true,
     offset: 5,
     openDelay: 0,
@@ -121,7 +121,7 @@ export const Default: Story = {
 
 export const WithoutBeak: Story = {
   args: {
-    position: "bottom",
+    position: "top",
     withBeak: false,
     offset: 5,
   },
@@ -146,7 +146,7 @@ export const WithoutBeak: Story = {
 
 export const RichContent: Story = {
   args: {
-    position: "bottom",
+    position: "top",
     offset: 5,
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

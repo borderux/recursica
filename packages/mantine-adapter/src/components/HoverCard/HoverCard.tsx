@@ -92,6 +92,7 @@ const HoverCardBase = function HoverCard({
 
   return (
     <MantineHoverCard
+      position="top" /* Recursica default; Mantine defaults to "bottom" */
       arrowSize={arrowSize}
       withArrow={resolvedWithArrow}
       classNames={mergedClassNames}

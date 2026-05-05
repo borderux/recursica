@@ -67,3 +67,11 @@ This is documented as an open issue in `docs/COMPONENT_ISSUES.md`.
 **Decision:** The root `HoverCard` component binds CSS module classes via `classNames` on the Mantine root, identical to the Menu pattern.
 
 **Implementation:** The root component receives `classNames={{ dropdown: styles.dropdown }}` and merges any consumer-provided `classNames` when `overStyled` is true. This ensures our token-driven styles are applied to the dropdown panel without wrapper divs, and the consumer's classes are additive.
+
+---
+
+## 7. Default Position Override
+
+**Decision:** Recursica defaults `position` to `"top"`. Mantine defaults to `"bottom"`.
+
+**Implementation:** The `position="top"` default is set on the Mantine root element before the prop spread, so developer-provided `position` values still take precedence. This aligns with Recursica's design intent for overlay components to appear above their trigger by default.
