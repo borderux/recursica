@@ -1,5 +1,11 @@
 # @recursica/mantine-adapter
 
+## 0.14.0
+
+### Minor Changes
+
+- 8f7ee70: Added NumberInput and Panel
+
 ## 0.13.1
 
 ### Patch Changes
