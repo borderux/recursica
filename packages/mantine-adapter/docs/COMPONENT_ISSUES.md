@@ -101,3 +101,17 @@ This document tracks known issues, edge cases, missing variables, or design syst
 - **Description:** The UI Kit JSON outputs the `header-style` token as the raw string `"h3"` rather than a structural typography reference. This prevents the compiler from automatically generating the expected nested typography CSS variables (e.g., `--recursica_ui-kit_components_panel_properties_header-style_fontFamily`).
 - **Impact:** We cannot natively map the `header-style` token to the `.title` class in the CSS module because attempting to reference the non-existent fallback variables breaks the PostCSS build pipeline.
 - **Current Resolution:** We have completely stripped typography variable bindings from the `.title` class and are relying exclusively on the `color` token and Mantine's defaults. This should be revisited once the Figma UI Kit is updated to correctly export `header-style` as a typography reference.
+
+## NumberInput
+
+### 1. `rightSection` Overwrites Increment/Decrement Controls
+
+- **Description:** Mantine natively renders its increment/decrement arrows inside the `rightSection` DOM slot. Providing a custom `rightSection` prop to the component intentionally deletes these stepper arrows.
+- **Impact:** It is structurally impossible to render both a right-aligned icon and the stepper controls simultaneously without heavily rebuilding Mantine's abstract native `handlersRef` logic inside a custom wrapper layout.
+- **Current Resolution:** The component inherits the native behavior where the `rightSection` definitively overwrites the controls. If an icon is required alongside controls, it must be passed into `leftSection` instead.
+
+### 2. Missing Explicit Design Tokens for Controls
+
+- **Description:** The Recursica Figma UI Kit provides generic tokens for `number-input` layout geometry and overall colors, but lacks explicit targeting variants for the internal increment/decrement arrow controls (e.g., specific hover backgrounds, icon colors, or border divisions for the arrows themselves).
+- **Impact:** We cannot construct an exact 1-to-1 visual parity if design expects the arrows to have custom dividers or standalone highlight states.
+- **Current Resolution:** The controls have had their default borders stripped out to float seamlessly inside the main input wrapper, and they inherit generic icon tokens, but complex hover background mappings rely on native Mantine fallback states.
