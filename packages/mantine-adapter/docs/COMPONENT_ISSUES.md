@@ -93,3 +93,11 @@ This document tracks known issues, edge cases, missing variables, or design syst
 - **Description:** Same limitation as HoverCard. Recursica defines a `beak-size` design token (`--recursica_ui-kit_components_tooltip_properties_beak-size: 16px`) intended to control the beak (arrow) size via CSS. However, Mantine's `arrowSize` prop is a JavaScript number used for inline style calculations (`width`, `height`, and `-arrowSize/2` positioning offset) that cannot be CSS-driven.
 - **Impact:** The beak size is not purely token-driven. The `arrowSize` default (16) in `Tooltip.tsx` must be manually kept in sync with the `beak-size` token value.
 - **Current Resolution:** `arrowSize` defaults to `16` in the component to match the token. Same approach as HoverCard.
+
+## Panel
+
+### 1. header-style Token Reference Bug
+
+- **Description:** The UI Kit JSON outputs the `header-style` token as the raw string `"h3"` rather than a structural typography reference. This prevents the compiler from automatically generating the expected nested typography CSS variables (e.g., `--recursica_ui-kit_components_panel_properties_header-style_fontFamily`).
+- **Impact:** We cannot natively map the `header-style` token to the `.title` class in the CSS module because attempting to reference the non-existent fallback variables breaks the PostCSS build pipeline.
+- **Current Resolution:** We have completely stripped typography variable bindings from the `.title` class and are relying exclusively on the `color` token and Mantine's defaults. This should be revisited once the Figma UI Kit is updated to correctly export `header-style` as a typography reference.
