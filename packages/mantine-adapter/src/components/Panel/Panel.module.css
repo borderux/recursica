@@ -64,6 +64,17 @@
 
 .title {
   color: var(--recursica_ui-kit_components_panel_properties_colors_title);
+  composes: recursica_brand_typography_h3 from global;
+}
+
+.titleTruncate {
+  composes: title;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  flex: 1;
+  min-width: 0;
 }
 
 /* ======================================

@@ -86,11 +86,11 @@ Mantine's Drawer content does not set `border-style` natively. Without this, the
 
 ---
 
-## 7. header-style Token Reference Bug
+## 7. `header-style` Typography Utility Class
 
-**Decision:** The `header-style: "h3"` token currently outputs as a raw string in the UI kit JSON, breaking our PostCSS compiler when mapped as CSS variable fallbacks. We have explicitly removed these fallbacks.
+**Decision:** The `header-style` token exports as the string `"h3"`, so we use the generated global utility class `.recursica_brand_typography_h3`.
 
-**Implementation:** The design system intended for the `header-style` token to act as a proper typography reference, which would compile into fully expanded properties like `--recursica_ui-kit_components_panel_properties_header-style_fontFamily`. Because the JSON export currently passes it as the raw string `"h3"`, attempting to bind to the non-existent variables breaks the build plugin. Until the JSON export is fixed to compile proper reference nodes, we are stripping typography bindings from the `.title` class and relying purely on `color` and Mantine's defaults.
+**Implementation:** The PostCSS compiler generates `.recursica_brand_typography_<typeName>` classes at the bottom of the scoped variables file to apply full typography definitions without assigning variables inline. We apply this to the `.title` class via `composes: recursica_brand_typography_h3 from global;`.
 
 ---
 

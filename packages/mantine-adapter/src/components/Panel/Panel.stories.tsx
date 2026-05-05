@@ -29,6 +29,11 @@ const meta: Meta = {
       control: "boolean",
       description: "Whether to display the close button in the header.",
     },
+    wrapHeaderText: {
+      control: "boolean",
+      description:
+        "If true, forces the header text to a single line and truncates with an ellipsis.",
+    },
     // Hide auto-detected HTML attributes
     defaultChecked: { table: { disable: true } },
     defaultValue: { table: { disable: true } },
@@ -77,8 +82,9 @@ export const Default: Story = {
     title: "Panel Title",
     withOverlay: true,
     withCloseButton: true,
+    wrapHeaderText: false,
   },
-  render: () => {
+  render: ({ wrapHeaderText, ...args }: PanelStoryArgs) => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const [opened, setOpened] = useState(false);
 
@@ -92,6 +98,8 @@ export const Default: Story = {
           onClose={() => setOpened(false)}
           title="Panel Title"
           position="right"
+          wrapHeaderText={wrapHeaderText}
+          {...(args as PanelProps)}
         >
           <Text>
             This is the panel body content area. Panels slide in from the edge
@@ -116,6 +124,7 @@ export const LeftPosition: Story = {
     title: "Navigation",
     withOverlay: true,
     withCloseButton: true,
+    wrapHeaderText: false,
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   render: ({ withLayer, layer, ...args }: PanelStoryArgs) => {
@@ -148,6 +157,7 @@ export const ScrollableContent: Story = {
     title: "Scrollable Panel",
     withOverlay: true,
     withCloseButton: true,
+    wrapHeaderText: false,
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   render: ({ withLayer, layer, ...args }: PanelStoryArgs) => {
@@ -190,6 +200,7 @@ export const LongTitle: Story = {
       "This is a ridiculously long panel title designed to test how the header CSS handles text overflow and whether it truncates correctly or breaks the layout",
     withOverlay: true,
     withCloseButton: true,
+    wrapHeaderText: true,
   },
   render: ({ ...args }: PanelStoryArgs) => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
