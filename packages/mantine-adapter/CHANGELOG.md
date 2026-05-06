@@ -1,5 +1,11 @@
 # @recursica/mantine-adapter
 
+## 0.15.0
+
+### Minor Changes
+
+- 2c26c89: Updated to latest recursica export and fixed theme import
+
 ## 0.14.0
 
 ### Minor Changes

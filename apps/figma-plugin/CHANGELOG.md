@@ -1,5 +1,11 @@
 # @recursica/publisher
 
+## 0.19.0
+
+### Minor Changes
+
+- 2c26c89: Updated to latest recursica export and fixed theme import
+
 ## 0.18.1
 
 ### Patch Changes
