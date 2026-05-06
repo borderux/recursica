@@ -200,6 +200,7 @@ export async function importRecursicaJson(
       ...(varTypeRenameWarnings.length > 0 && {
         typeRenameWarnings: varTypeRenameWarnings,
       }),
+      debugLogs: debugConsole.getLogs(),
     },
   };
 }
