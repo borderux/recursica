@@ -13,10 +13,19 @@ import styles from "./Panel.module.css";
 // PANEL (Drawer)
 // ============================================================
 
+export interface RecursicaPanelProps extends MantineDrawerProps {
+  /**
+   * If true, forces the header text to a single line and truncates with an ellipsis.
+   * Note: While the prop is named `wrapHeaderText` for backward compatibility,
+   * setting it to `true` actually PREVENTS wrapping (it forces truncation).
+   */
+  wrapHeaderText?: boolean;
+}
+
 /**
  * Recursica Panel root props. Extends Mantine Drawer.
  */
-export type PanelProps = RecursicaOverStyled<MantineDrawerProps>;
+export type PanelProps = RecursicaOverStyled<RecursicaPanelProps>;
 
 /**
  * Recursica Panel component wrapping Mantine's Drawer.
@@ -48,6 +57,7 @@ const PanelBase = function Panel({
   overStyled = false,
   position = "right",
   keepMounted = true,
+  wrapHeaderText = false,
   ...rest
 }: PanelProps) {
   const sanitizedProps = filterStylingProps(rest, overStyled);
@@ -56,7 +66,7 @@ const PanelBase = function Panel({
   const mergedClassNames: Partial<Record<string, string>> = {
     content: styles.content,
     header: styles.header,
-    title: styles.title,
+    title: wrapHeaderText ? styles.titleTruncate : styles.title,
     body: styles.body,
     inner: styles.inner,
   };

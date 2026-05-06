@@ -33,6 +33,7 @@
   border-bottom: var(--recursica_ui-kit_components_card_properties_divider-size)
     solid
     var(--recursica_ui-kit_components_card_properties_colors_divider-color);
+  composes: recursica_brand_typography_h3 from global;
 }
 
 .footer {

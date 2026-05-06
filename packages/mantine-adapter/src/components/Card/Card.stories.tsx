@@ -2,6 +2,8 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { Card } from "./Card";
 import { Layer } from "@recursica/adapter-common";
 import { Button } from "../Button/Button";
+import { Group } from "../Group/Group";
+import { Text } from "../Text/Text";
 
 const meta: Meta<typeof Card> = {
   title: "UI-Kit/Card",
@@ -32,46 +34,33 @@ export const Default: Story = {
   args: {},
   render: ({ ...args }) => {
     return (
-      <Layer
-        layer={0}
+      <div
         style={{
           padding: "48px",
           backgroundColor: "var(--recursica_brand_palettes_neutral_050)",
         }}
       >
-        <Card {...args}>
-          <Card.Header>
-            <span style={{ fontWeight: 500, fontSize: "1.125rem" }}>
-              Customer Activity Report
-            </span>
-          </Card.Header>
-          <Card.Content>
-            <p>
-              Card inner section content body. Notice how this acts as padded
-              content natively based on the overarching properties. Recursica's
-              vertical gutter governs vertical spacing between siblings in the
-              flex container.
-            </p>
-            <p>Another section showing the vertical gutter spacing.</p>
-          </Card.Content>
-          <Card.Footer>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginTop: "16px",
-                marginBottom: "8px",
-              }}
-            >
-              <span style={{ color: "#868e96", fontSize: "0.75rem" }}>
-                Generated today
-              </span>
-              <Button variant="solid">View Details</Button>
-            </div>
-          </Card.Footer>
-        </Card>
-      </Layer>
+        <Layer layer={0}>
+          <Card {...args}>
+            <Card.Header>Customer Activity Report</Card.Header>
+            <Card.Content>
+              <Text>
+                Card inner section content body. Notice how this acts as padded
+                content natively based on the overarching properties.
+                Recursica's vertical gutter governs vertical spacing between
+                siblings in the flex container.
+              </Text>
+              <Text>Another section showing the vertical gutter spacing.</Text>
+            </Card.Content>
+            <Card.Footer>
+              <Group justify="space-between" align="center">
+                <Text variant="caption">Generated today</Text>
+                <Button variant="solid">View Details</Button>
+              </Group>
+            </Card.Footer>
+          </Card>
+        </Layer>
+      </div>
     );
   },
 };
@@ -80,29 +69,26 @@ export const HeaderlessAndFooterless: Story = {
   args: {},
   render: ({ ...args }) => {
     return (
-      <Layer
-        layer={0}
+      <div
         style={{
           padding: "48px",
           backgroundColor: "var(--recursica_brand_palettes_neutral_050)",
         }}
       >
-        <Card {...args}>
-          <Card.Content>
-            <span style={{ fontWeight: 500, fontSize: "1.125rem" }}>
-              Notice
-            </span>
-            <p>
-              This is a completely generic card payload dropping the Header and
-              Footer specific elements, simply acting as a padded elevation
-              boundary box directly mirroring native composability!
-            </p>
-            <Button variant="solid" mt="rec-md">
-              Acknowledge
-            </Button>
-          </Card.Content>
-        </Card>
-      </Layer>
+        <Layer layer={0}>
+          <Card {...args}>
+            <Card.Content>
+              <Text variant="subtitle">Notice</Text>
+              <Text>
+                This is a completely generic card payload dropping the Header
+                and Footer specific elements, simply acting as a padded
+                elevation boundary box directly mirroring native composability!
+              </Text>
+              <Button variant="solid">Acknowledge</Button>
+            </Card.Content>
+          </Card>
+        </Layer>
+      </div>
     );
   },
 };
@@ -122,17 +108,21 @@ export const LayerDemonstration: Story = {
         <Layer layer={1}>
           <Card {...args}>
             <Card.Header>Layer 1 Wrapper</Card.Header>
-            <p>Content inside layer 1 card.</p>
+            <Card.Content>
+              <Text>Content inside layer 1 card.</Text>
+            </Card.Content>
           </Card>
         </Layer>
 
         <Layer layer={2}>
           <Card {...args}>
             <Card.Header>Layer 2 Wrapper</Card.Header>
-            <p>
-              Content inside layer 2 card exposing a higher elevation drop
-              shadow inherently cascaded.
-            </p>
+            <Card.Content>
+              <Text>
+                Content inside layer 2 card exposing a higher elevation drop
+                shadow inherently cascaded.
+              </Text>
+            </Card.Content>
           </Card>
         </Layer>
       </div>

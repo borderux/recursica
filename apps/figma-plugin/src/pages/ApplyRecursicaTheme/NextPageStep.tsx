@@ -3,8 +3,7 @@ import { useApplyTheme } from "../../context/ApplyThemeContext";
 import { useFooterActions } from "../../context/FooterActionsContext";
 import { Stack } from "../../components/Stack";
 import { Title } from "../../components/Title";
-
-import { errorCard } from "./styles";
+import { DebugConsole } from "../../components/DebugConsole";
 
 export default function NextPageStep() {
   const navigate = useNavigate();
@@ -41,13 +40,15 @@ export default function NextPageStep() {
   return (
     <Stack gap={16} style={{ maxWidth: 500 }}>
       <Title order={1}>Apply Recursica Theme</Title>
-      <Title order={3}>
-        Page Complete: {lastCompletedPageName || pageName}
-      </Title>
+      <DebugConsole
+        title="Applying changes"
+        isActive={false}
+        isComplete={true}
+        error={error}
+        successMessage={`Page Complete: ${lastCompletedPageName || pageName}`}
+      />
 
-      {error && <div style={errorCard}>{error}</div>}
-
-      {hasMore && nextPage ? (
+      {hasMore && nextPage && !error && (
         <>
           <p style={{ margin: 0, color: "#666", fontSize: 14 }}>
             Would you like to proceed to the next component page?
@@ -70,10 +71,6 @@ export default function NextPageStep() {
             )}
           </div>
         </>
-      ) : (
-        <p style={{ margin: 0, color: "#666", fontSize: 14 }}>
-          Congratulations, your theme was applied.
-        </p>
       )}
     </Stack>
   );

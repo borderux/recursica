@@ -35,6 +35,7 @@ export interface CsvRow {
   type: string;
   alias: string;
   defaultMode: string;
+  unit?: string;
 }
 
 export interface ApplyVariableRowsResult {
@@ -58,6 +59,7 @@ function parseCsvRow(header: string[], cells: string[]): CsvRow | null {
     type: get("type") || (cells[4] ?? "").trim(),
     alias: get("alias") || (cells[5] ?? "").trim(),
     defaultMode: get("defaultMode") || (cells[6] ?? "").trim(),
+    unit: get("unit") || (cells[7] ?? "").trim(),
   };
 }
 

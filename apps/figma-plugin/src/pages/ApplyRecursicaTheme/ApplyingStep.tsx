@@ -1,15 +1,8 @@
-import { Stack } from "../../components/Stack";
-import { Title } from "../../components/Title";
-import { LoadingSpinner } from "../../components/LoadingSpinner";
-
+import { DebugConsole } from "../../components/DebugConsole";
 export default function ApplyingStep() {
   return (
-    <Stack
-      gap={20}
-      style={{ alignItems: "center", justifyContent: "center", minHeight: 200 }}
-    >
-      <Title order={3}>Applying changes…</Title>
-      <LoadingSpinner />
-    </Stack>
+    <div style={{ width: "100%", padding: "20px 0" }}>
+      <DebugConsole title="Applying changes" isActive={true} />
+    </div>
   );
 }
