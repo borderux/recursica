@@ -14,6 +14,7 @@ import { applyVariableRows } from "./importVariablesCsv";
 import { createEffectStylesFromElevations } from "./createEffectStylesFromElevations";
 import { createTextStylesFromTypography } from "./createTextStylesFromTypography";
 import { isUiKitTypography } from "../../utils/typographyUtils";
+import { debugConsole } from "./import-export/debugConsole";
 import {
   recursicaJsonToVariableRows,
   type RecursicaJsonToRowsResult,
@@ -22,6 +23,9 @@ import {
 export async function importRecursicaJson(
   data: Record<string, unknown>,
 ): Promise<PluginResponse> {
+  debugConsole.clear();
+  debugConsole.log("Starting importRecursicaJson...");
+
   const tokensRoot = data.tokens;
   const brandRoot = data.brand;
   const uiKitRoot = data.uiKit;
@@ -91,8 +95,10 @@ export async function importRecursicaJson(
   let textStylesSkipped = 0;
   const textStyleWarnings: string[] = [];
   try {
-    const textStyleResult =
-      await createTextStylesFromTypography(typographyRows);
+    const textStyleResult = await createTextStylesFromTypography(
+      typographyRows,
+      rows,
+    );
     textStylesCreated = textStyleResult.textStylesCreated;
     textStylesUpdated = textStyleResult.textStylesUpdated;
     textStylesSkipped = textStyleResult.textStylesSkipped;
@@ -133,22 +139,40 @@ export async function importRecursicaJson(
     textStyleWarnings.length > 0 ||
     effectStyleWarnings.length > 0;
 
-  if (aliasErrors.length > 0)
-    console.warn("[importRecursicaJson] Alias Errors:", aliasErrors);
-  if (transformErrors.length > 0)
-    console.error("[importRecursicaJson] Transform Errors:", transformErrors);
-  if (varTypeRenameWarnings.length > 0)
-    console.warn("[importRecursicaJson] Type renames:", varTypeRenameWarnings);
-  if (textStyleWarnings.length > 0)
-    console.warn(
-      "[importRecursicaJson] Text Style warnings:",
-      textStyleWarnings,
+  debugConsole.log(`Variables created: ${variablesCreated}`);
+  debugConsole.log(`Variables already existed: ${variablesAlreadyExisted}`);
+  debugConsole.log(
+    `Text styles created/updated: ${textStylesCreated} / ${textStylesUpdated}`,
+  );
+  debugConsole.log(
+    `Effect styles created/updated: ${effectStylesCreated} / ${effectStylesUpdated}`,
+  );
+
+  if (aliasErrors.length > 0) {
+    debugConsole.warning(
+      `[importRecursicaJson] Alias Errors: ${aliasErrors.join(", ")}`,
     );
-  if (effectStyleWarnings.length > 0)
-    console.warn(
-      "[importRecursicaJson] Effect Style warnings:",
-      effectStyleWarnings,
+  }
+  if (transformErrors.length > 0) {
+    debugConsole.error(
+      `[importRecursicaJson] Transform Errors: ${transformErrors.join(", ")}`,
     );
+  }
+  if (varTypeRenameWarnings.length > 0) {
+    debugConsole.warning(
+      `[importRecursicaJson] Type renames: ${varTypeRenameWarnings.join(", ")}`,
+    );
+  }
+  if (textStyleWarnings.length > 0) {
+    debugConsole.warning(
+      `[importRecursicaJson] Text Style warnings: ${textStyleWarnings.join(", ")}`,
+    );
+  }
+  if (effectStyleWarnings.length > 0) {
+    debugConsole.warning(
+      `[importRecursicaJson] Effect Style warnings: ${effectStyleWarnings.join(", ")}`,
+    );
+  }
   const message = hasIssues
     ? `Import complete with issues. Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Alias errors: ${aliasErrors.length}. Transform errors: ${transformErrors.length}. Type renames: ${varTypeRenameWarnings.length}. Text styles: ${textStylesCreated} created, ${textStylesUpdated} updated, ${textStylesSkipped} skipped, ${textStyleWarnings.length} warnings. Effect styles: ${effectStylesCreated} created, ${effectStylesUpdated} updated, ${effectStylesSkipped} skipped, ${effectStyleWarnings.length} warnings.`
     : `Import complete. Variables: ${variablesCreated} created, ${variablesAlreadyExisted} existed. Text styles: ${textStylesCreated} created, ${textStylesUpdated} updated, ${textStylesSkipped} skipped. Effect styles: ${effectStylesCreated} created, ${effectStylesUpdated} updated, ${effectStylesSkipped} skipped.`;

@@ -156,6 +156,7 @@ function toFontStyleName(
 
 export async function createTextStylesFromTypography(
   typographyRows: CsvRow[] = [],
+  allRows: CsvRow[] = [],
 ): Promise<CreateTextStylesFromTypographyResult> {
   const result: CreateTextStylesFromTypographyResult = {
     textStylesCreated: 0,
@@ -248,6 +249,25 @@ export async function createTextStylesFromTypography(
     if (entry === undefined) return null;
     if (typeof entry === "string" || typeof entry === "number") return entry;
     return await resolveVariableValue(entry, collections, log);
+  }
+
+  function resolveEntryUnit(
+    entry: Variable | string | number | undefined,
+  ): string | undefined {
+    if (entry === undefined) return undefined;
+    if (typeof entry === "object" && "name" in entry) {
+      // Find the variable's row in allRows to retrieve its unit
+      const name = entry.name;
+      // Note: allRows has figmaVariableName without the collection prefix.
+      const row = allRows.find(
+        (r) =>
+          r.figmaVariableName === name &&
+          (r.collection.toLowerCase() === "tokens" ||
+            r.collection.toLowerCase() === "themes"),
+      );
+      return row?.unit;
+    }
+    return undefined;
   }
 
   for (const [styleName, propVars] of variablesByStyle) {
@@ -378,7 +398,9 @@ export async function createTextStylesFromTypography(
         typeof fsVal === "number" ? fsVal : parseFloat(String(fsVal));
 
       if (!Number.isNaN(parsedLh) && !Number.isNaN(parsedFs)) {
-        const absolutePixelLh = parsedLh * parsedFs;
+        const unit = resolveEntryUnit(lineHeightEntry);
+        // If unit is explicitly px, use raw value. Otherwise default to em multiplier.
+        const absolutePixelLh = unit === "px" ? parsedLh : parsedLh * parsedFs;
         textStyle.lineHeight = {
           value: absolutePixelLh,
           unit: "PIXELS",
@@ -398,8 +420,9 @@ export async function createTextStylesFromTypography(
         typeof fsVal === "number" ? fsVal : parseFloat(String(fsVal));
 
       if (!Number.isNaN(parsedLs) && !Number.isNaN(parsedFs)) {
-        // Assume letter-spacing is an em multiplier for now, so calculate absolute pixels.
-        const absolutePixelLs = parsedLs * parsedFs;
+        const unit = resolveEntryUnit(letterSpacingEntry);
+        // If unit is explicitly px, use raw value. Otherwise default to em multiplier.
+        const absolutePixelLs = unit === "px" ? parsedLs : parsedLs * parsedFs;
 
         textStyle.letterSpacing = {
           value: absolutePixelLs,

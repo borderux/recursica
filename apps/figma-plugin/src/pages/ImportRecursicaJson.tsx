@@ -1,10 +1,13 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { PageLayout } from "../components/PageLayout";
 import { Title } from "../components/Title";
 import { Stack } from "../components/Stack";
-import { Button } from "../components/Button";
+import { DebugConsole } from "../components/DebugConsole";
 import { callPlugin } from "../utils/callPlugin";
 import { ServiceName } from "../plugin/types/ServiceName";
+import { useNavigate } from "react-router";
+import { useFooterActions } from "../context/FooterActionsContext";
+import type { DebugConsoleMessage } from "../plugin/services/import-export/debugConsole";
 
 const FILE_NAMES = {
   tokens: "recursica_tokens.json",
@@ -54,6 +57,7 @@ async function readJson(file: File): Promise<unknown> {
 }
 
 export default function ImportRecursicaJson() {
+  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [fileNames, setFileNames] = useState<Record<FileKey, string | null>>({
     tokens: null,
@@ -78,6 +82,9 @@ export default function ImportRecursicaJson() {
     typeRenameWarnings?: string[];
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [debugLogs, setDebugLogs] = useState<DebugConsoleMessage[] | undefined>(
+    undefined,
+  );
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -110,7 +117,7 @@ export default function ImportRecursicaJson() {
     setResult(null);
   };
 
-  const handleImport = async () => {
+  const handleImport = useCallback(async () => {
     const input = fileInputRef.current;
     if (!input?.files?.length) {
       setError("Please select at least one Recursica JSON file.");
@@ -127,6 +134,7 @@ export default function ImportRecursicaJson() {
     setImporting(true);
     setError(null);
     setResult(null);
+    setDebugLogs(undefined);
 
     // Give the UI a moment to show the importing spinner
     await new Promise((resolve) => setTimeout(resolve, 50));
@@ -180,17 +188,50 @@ export default function ImportRecursicaJson() {
       } else {
         setError(null);
       }
+
+      if (data.debugLogs) {
+        setDebugLogs(data.debugLogs);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Import failed.");
+      if (
+        err &&
+        typeof err === "object" &&
+        "response" in err &&
+        err.response &&
+        typeof err.response === "object" &&
+        "data" in err.response
+      ) {
+        const errorResponse = err.response as {
+          data?: { debugLogs?: DebugConsoleMessage[] };
+        };
+        if (errorResponse.data?.debugLogs) {
+          setDebugLogs(errorResponse.data.debugLogs);
+        }
+      }
     } finally {
       setImporting(false);
     }
-  };
+  }, []);
 
   const hasFiles =
     fileNames.tokens != null ||
     fileNames.brand != null ||
     fileNames.uiKit != null;
+
+  const isDone = !!result || !!error;
+
+  useFooterActions(
+    {
+      primary: {
+        label: isDone ? "Done" : importing ? "Importing…" : "Import",
+        onClick: isDone ? () => navigate("/") : handleImport,
+        disabled: (!hasFiles || importing) && !isDone,
+        loading: importing,
+      },
+    },
+    [importing, hasFiles, isDone, handleImport, navigate],
+  );
 
   return (
     <PageLayout>
@@ -210,38 +251,26 @@ export default function ImportRecursicaJson() {
           style={{ display: "block" }}
         />
         {hasFiles && (
-          <span style={{ fontSize: 14, color: "#333" }}>
-            Selected:{" "}
-            {[fileNames.tokens, fileNames.brand, fileNames.uiKit]
-              .filter(Boolean)
-              .join(", ")}
-          </span>
+          <Stack gap={8}>
+            <span style={{ fontSize: 14, color: "#333" }}>
+              Selected:{" "}
+              {[fileNames.tokens, fileNames.brand, fileNames.uiKit]
+                .filter(Boolean)
+                .join(", ")}
+            </span>
+            <span style={{ fontSize: 14, color: "#666" }}>
+              Press Import below to begin
+            </span>
+          </Stack>
         )}
-        <Stack gap={8} style={{ flexDirection: "row" }}>
-          <Button
-            onClick={handleImport}
-            disabled={!hasFiles}
-            loading={importing}
-          >
-            {importing ? "Importing…" : "Import"}
-          </Button>
-          {/* <Button variant="light" onClick={() => navigate("/import")}>
-            Back
-          </Button> */}
-        </Stack>
-        {error && (
-          <div
-            style={{
-              padding: 12,
-              backgroundColor: "#fde8e8",
-              color: "#c00",
-              borderRadius: 6,
-              fontSize: 14,
-            }}
-          >
-            {error}
-          </div>
-        )}
+        <DebugConsole
+          title="Importing Theme"
+          isActive={importing}
+          isComplete={!importing && !error && !!result}
+          error={error}
+          successMessage="Theme imported successfully"
+          debugLogs={debugLogs}
+        />
         {result && (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div

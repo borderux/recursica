@@ -62,6 +62,7 @@ export interface CsvRow {
   type: string;
   alias: string;
   defaultMode: string;
+  unit?: string;
 }
 
 export interface RecursicaJsonToRowsResult {
@@ -568,7 +569,7 @@ function colorToHex(value: unknown): string | null {
 }
 
 // --- Tokens ---
-type TokenRow = [string, number | string, string, string];
+type TokenRow = [string, number | string, string, string, string?];
 
 function collectTokens(
   obj: TokenObj | null,
@@ -617,11 +618,19 @@ function collectTokens(
       if (
         vObj !== null &&
         typeof vObj === "object" &&
-        vObj.unit === "px" &&
         typeof vObj.value === "number"
       ) {
-        rows.push([figmaVariableName, vObj.value, FIGMA_TYPE_FLOAT, "false"]);
-        return;
+        const unit = vObj.unit?.toLowerCase();
+        if (!unit || unit === "px" || unit === "em") {
+          rows.push([
+            figmaVariableName,
+            vObj.value,
+            FIGMA_TYPE_FLOAT,
+            "false",
+            unit || "em",
+          ]);
+          return;
+        }
       }
       errors.push(
         `Unsupported or invalid dimension value at path: ${aliasPathWithSlashes}`,
@@ -723,7 +732,7 @@ function collectTokens(
 }
 
 // --- Themes ---
-type ThemeRow = [string, string, string | number, string, string];
+type ThemeRow = [string, string, string | number, string, string, string?];
 
 function collectThemeRows(
   obj: TokenObj | null,
@@ -846,17 +855,20 @@ function collectThemeRows(
       if (
         vDim !== null &&
         typeof vDim === "object" &&
-        vDim.unit === "px" &&
         typeof vDim.value === "number"
       ) {
-        rows.push([
-          figmaVariableName,
-          mode,
-          vDim.value,
-          FIGMA_TYPE_FLOAT,
-          "false",
-        ]);
-        return;
+        const unit = vDim.unit?.toLowerCase();
+        if (!unit || unit === "px" || unit === "em") {
+          rows.push([
+            figmaVariableName,
+            mode,
+            vDim.value,
+            FIGMA_TYPE_FLOAT,
+            "false",
+            unit || "em",
+          ]);
+          return;
+        }
       }
     }
 
@@ -1988,7 +2000,7 @@ function buildCombinedRows(
 ): CsvRow[] {
   const out: CsvRow[] = [];
   for (const row of tokenRows) {
-    const [figmaVariableName, value, type, alias] = row;
+    const [figmaVariableName, value, type, alias, unit] = row;
     out.push({
       collection: "tokens",
       figmaVariableName,
@@ -1997,10 +2009,11 @@ function buildCombinedRows(
       type,
       alias,
       defaultMode: "true",
+      unit,
     });
   }
   for (const row of themeRowsWithResolvedAliases) {
-    const [figmaVariableName, mode, value, type, alias] = row;
+    const [figmaVariableName, mode, value, type, alias, unit] = row;
     const defaultMode = mode === THEMES_DEFAULT_MODE ? "true" : "false";
     out.push({
       collection: "themes",
@@ -2010,6 +2023,7 @@ function buildCombinedRows(
       type,
       alias,
       defaultMode,
+      unit,
     });
   }
   for (const row of layerRows) {
