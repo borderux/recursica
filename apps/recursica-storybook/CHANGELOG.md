@@ -1,5 +1,16 @@
 # recursica-storybook
 
+## 0.11.0
+
+### Minor Changes
+
+- 2c26c89: Updated to latest recursica export and fixed theme import
+
+### Patch Changes
+
+- Updated dependencies [2c26c89]
+  - @recursica/mantine-adapter@0.15.0
+
 ## 0.10.0
 
 ### Minor Changes
