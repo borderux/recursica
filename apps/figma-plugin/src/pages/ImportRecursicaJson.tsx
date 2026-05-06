@@ -166,6 +166,7 @@ export default function ImportRecursicaJson() {
         transformErrors?: string[];
         transformWarnings?: string[];
         typeRenameWarnings?: string[];
+        debugLogs?: string[];
       };
       setResult({
         variablesCreated: data.variablesCreated ?? 0,
