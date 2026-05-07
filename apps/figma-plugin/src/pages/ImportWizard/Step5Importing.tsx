@@ -108,6 +108,60 @@ export default function Step5Importing() {
         setIsImporting(true);
         setImportError(null);
 
+        // Step 0: Ensure core Recursica theme variables exist
+        try {
+          const statusResult = await callPlugin("checkThemeStatus").promise;
+          if (
+            statusResult.success &&
+            statusResult.data &&
+            !statusResult.data.isComplete
+          ) {
+            console.log(
+              "[Step5Importing] Theme incomplete, fetching defaults from GitHub...",
+            );
+
+            const FORGE_BASE_URL =
+              "https://raw.githubusercontent.com/borderux/recursica-forge/main";
+
+            const [tokens, brand, uiKit] = await Promise.all([
+              fetch(`${FORGE_BASE_URL}/recursica_tokens.json`).then((r) => {
+                if (!r.ok)
+                  throw new Error(`Tokens fetch failed: ${r.statusText}`);
+                return r.json();
+              }),
+              fetch(`${FORGE_BASE_URL}/recursica_brand.json`).then((r) => {
+                if (!r.ok)
+                  throw new Error(`Brand fetch failed: ${r.statusText}`);
+                return r.json();
+              }),
+              fetch(`${FORGE_BASE_URL}/recursica_ui-kit.json`).then((r) => {
+                if (!r.ok)
+                  throw new Error(`UI-Kit fetch failed: ${r.statusText}`);
+                return r.json();
+              }),
+            ]);
+
+            const importResponse = await callPlugin("importRecursicaJson", {
+              tokens,
+              brand,
+              uiKit,
+            }).promise;
+
+            if (!importResponse.success) {
+              throw new Error(
+                importResponse.message || "Theme initialization failed",
+              );
+            }
+          }
+        } catch (themeErr) {
+          console.error("[Step5Importing] Theme bootstrap failed:", themeErr);
+          setImportError(
+            `Failed to initialize Recursica theme: ${themeErr instanceof Error ? themeErr.message : String(themeErr)}`,
+          );
+          setIsImporting(false);
+          return;
+        }
+
         // Mark import as in progress
         if (!importData.mainFile) {
           setImportError("No main file available");

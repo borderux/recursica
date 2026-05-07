@@ -153,7 +153,7 @@ function toFontStyleName(
     weightStr === "extra-light" ||
     weightStr === "extralight"
   )
-    weightName = "Extra Light";
+    weightName = "ExtraLight";
   else if (weightStr === "300" || weightStr === "light") weightName = "Light";
   else if (weightStr === "500" || weightStr === "medium") weightName = "Medium";
   else if (
@@ -161,14 +161,14 @@ function toFontStyleName(
     weightStr === "semi-bold" ||
     weightStr === "semibold"
   )
-    weightName = "Semi Bold";
+    weightName = "SemiBold";
   else if (weightStr === "700" || weightStr === "bold") weightName = "Bold";
   else if (
     weightStr === "800" ||
     weightStr === "extra-bold" ||
     weightStr === "extrabold"
   )
-    weightName = "Extra Bold";
+    weightName = "ExtraBold";
   else if (weightStr === "900" || weightStr === "black") weightName = "Black";
   // 400/Regular stays as empty string for concatenation
 
@@ -357,42 +357,20 @@ export async function createTextStylesFromTypography(
       toLiteralOrNull(fontWeightVal),
     );
 
-    let fontLoaded = false;
-    let finalFontStyleName = fontStyleName;
     try {
       await figma.loadFontAsync({
         family: fontFamilyStr,
         style: fontStyleName,
       });
-      fontLoaded = true;
     } catch {
-      if (fontStyleName !== "Regular") {
-        try {
-          await figma.loadFontAsync({
-            family: fontFamilyStr,
-            style: "Regular",
-          });
-          fontLoaded = true;
-          finalFontStyleName = "Regular";
-          result.textStyleWarnings.push(
-            `Typography style "${styleName}": could not load font "${fontFamilyStr}" / "${fontStyleName}". Falling back to "Regular".`,
-          );
-        } catch {
-          // both failed
-        }
-      }
-
-      if (!fontLoaded) {
-        result.textStyleWarnings.push(
-          `Typography style "${styleName}": could not load font "${fontFamilyStr}" / "${fontStyleName}" (from "${fontFamilyRaw}"); skipping.`,
-        );
-      }
-    }
-
-    if (!fontLoaded) {
+      result.textStyleWarnings.push(
+        `Typography style "${styleName}": FAILED to load font "${fontFamilyStr}" / "${fontStyleName}". Skipping style.`,
+      );
       result.textStylesSkipped++;
       continue;
     }
+
+    const finalFontStyleName = fontStyleName;
 
     textStyle.fontName = { family: fontFamilyStr, style: finalFontStyleName };
 

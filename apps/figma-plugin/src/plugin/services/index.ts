@@ -52,6 +52,7 @@ import { importRecursicaJson } from "./importRecursicaJson";
 import { getPageThemeVariables } from "./getPageThemeVariables";
 import { applyPageThemeVariables } from "./applyPageThemeVariables";
 import { focusNode } from "./focusNode";
+import { checkThemeStatus } from "./checkThemeStatus";
 
 // Services map - all service functions indexed by their names
 // This is the single source of truth for available services
@@ -99,6 +100,7 @@ export const services = {
   getPageThemeVariables,
   applyPageThemeVariables,
   focusNode,
+  checkThemeStatus,
 } as const;
 
 // Re-export individual services for convenience
@@ -146,6 +148,7 @@ export {
   getPageThemeVariables,
   applyPageThemeVariables,
   focusNode,
+  checkThemeStatus,
 };
 
 export type { PageDependency };
