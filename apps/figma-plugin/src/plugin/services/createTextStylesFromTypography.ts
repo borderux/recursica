@@ -143,13 +143,46 @@ function toFontStyleName(
   fontWeight: string | number | null,
 ): string {
   const style = fontStyle != null ? String(fontStyle).toLowerCase() : "";
-  const weight = fontWeight != null ? String(fontWeight) : "";
-  if (style === "italic") return "Italic";
-  if (weight === "bold" || weight === "700") return "Bold";
-  if (weight === "600" || weight === "semi-bold") return "SemiBold";
-  if (weight === "500" || weight === "medium") return "Medium";
-  if (weight === "300" || weight === "light") return "Light";
-  return "Regular";
+  const weightStr = fontWeight != null ? String(fontWeight).toLowerCase() : "";
+
+  // 1. Map weight to standard Figma names
+  let weightName = "";
+  if (weightStr === "100" || weightStr === "thin") weightName = "Thin";
+  else if (
+    weightStr === "200" ||
+    weightStr === "extra-light" ||
+    weightStr === "extralight"
+  )
+    weightName = "Extra Light";
+  else if (weightStr === "300" || weightStr === "light") weightName = "Light";
+  else if (weightStr === "500" || weightStr === "medium") weightName = "Medium";
+  else if (
+    weightStr === "600" ||
+    weightStr === "semi-bold" ||
+    weightStr === "semibold"
+  )
+    weightName = "Semi Bold";
+  else if (weightStr === "700" || weightStr === "bold") weightName = "Bold";
+  else if (
+    weightStr === "800" ||
+    weightStr === "extra-bold" ||
+    weightStr === "extrabold"
+  )
+    weightName = "Extra Bold";
+  else if (weightStr === "900" || weightStr === "black") weightName = "Black";
+  // 400/Regular stays as empty string for concatenation
+
+  const isItalic = style === "italic" || style === "oblique";
+
+  // 2. Handle Italic/Oblique concatenation
+  if (isItalic) {
+    // For weight 400 (empty string), return just "Italic"
+    // For other weights, return "Bold Italic", "Light Italic", etc.
+    return weightName ? `${weightName} Italic` : "Italic";
+  }
+
+  // 3. Handle Normal/Regular
+  return weightName || "Regular";
 }
 
 export async function createTextStylesFromTypography(
