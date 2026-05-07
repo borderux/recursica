@@ -1,5 +1,11 @@
 # @recursica/publisher
 
+## 0.20.0
+
+### Minor Changes
+
+- 235cd82: Fixed import errors and base theme import before components
+
 ## 0.19.0
 
 ### Minor Changes
