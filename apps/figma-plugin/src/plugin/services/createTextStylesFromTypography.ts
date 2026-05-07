@@ -109,8 +109,8 @@ function toLiteralOrNull(
 }
 
 /** Map our text-case value to Figma TextCase. */
-function toTextCase(value: string | number | null): TextCase | undefined {
-  if (value == null) return undefined;
+function toTextCase(value: string | number | null): TextCase {
+  if (value == null) return "ORIGINAL";
   const s = String(value).toUpperCase().replace(/-/g, "_");
   if (s === "NONE" || s === "ORIGINAL" || s === "NORMAL") return "ORIGINAL";
   if (s === "UPPER" || s === "UPPERCASE") return "UPPER";
@@ -118,19 +118,17 @@ function toTextCase(value: string | number | null): TextCase | undefined {
   if (s === "TITLE" || s === "CAPITALIZE") return "TITLE";
   if (s === "SMALL_CAPS") return "SMALL_CAPS";
   if (s === "SMALL_CAPS_FORCED") return "SMALL_CAPS_FORCED";
-  return undefined;
+  return "ORIGINAL";
 }
 
 /** Map our text-decoration value to Figma TextDecoration. */
-function toTextDecoration(
-  value: string | number | null,
-): TextDecoration | undefined {
-  if (value == null) return undefined;
+function toTextDecoration(value: string | number | null): TextDecoration {
+  if (value == null) return "NONE";
   const s = String(value).toUpperCase().replace(/-/g, "_");
   if (s === "NONE" || s === "NORMAL") return "NONE";
   if (s === "UNDERLINE") return "UNDERLINE";
   if (s === "STRIKETHROUGH" || s === "LINE_THROUGH") return "STRIKETHROUGH";
-  return undefined;
+  return "NONE";
 }
 
 /** Parse first font family from a CSS-style font stack (e.g. "Lexend, sans-serif" → "Lexend"). */
@@ -145,13 +143,46 @@ function toFontStyleName(
   fontWeight: string | number | null,
 ): string {
   const style = fontStyle != null ? String(fontStyle).toLowerCase() : "";
-  const weight = fontWeight != null ? String(fontWeight) : "";
-  if (style === "italic") return "Italic";
-  if (weight === "bold" || weight === "700") return "Bold";
-  if (weight === "600" || weight === "semi-bold") return "SemiBold";
-  if (weight === "500" || weight === "medium") return "Medium";
-  if (weight === "300" || weight === "light") return "Light";
-  return "Regular";
+  const weightStr = fontWeight != null ? String(fontWeight).toLowerCase() : "";
+
+  // 1. Map weight to standard Figma names
+  let weightName = "";
+  if (weightStr === "100" || weightStr === "thin") weightName = "Thin";
+  else if (
+    weightStr === "200" ||
+    weightStr === "extra-light" ||
+    weightStr === "extralight"
+  )
+    weightName = "ExtraLight";
+  else if (weightStr === "300" || weightStr === "light") weightName = "Light";
+  else if (weightStr === "500" || weightStr === "medium") weightName = "Medium";
+  else if (
+    weightStr === "600" ||
+    weightStr === "semi-bold" ||
+    weightStr === "semibold"
+  )
+    weightName = "SemiBold";
+  else if (weightStr === "700" || weightStr === "bold") weightName = "Bold";
+  else if (
+    weightStr === "800" ||
+    weightStr === "extra-bold" ||
+    weightStr === "extrabold"
+  )
+    weightName = "ExtraBold";
+  else if (weightStr === "900" || weightStr === "black") weightName = "Black";
+  // 400/Regular stays as empty string for concatenation
+
+  const isItalic = style === "italic" || style === "oblique";
+
+  // 2. Handle Italic/Oblique concatenation
+  if (isItalic) {
+    // For weight 400 (empty string), return just "Italic"
+    // For other weights, return "Bold Italic", "Light Italic", etc.
+    return weightName ? `${weightName} Italic` : "Italic";
+  }
+
+  // 3. Handle Normal/Regular
+  return weightName || "Regular";
 }
 
 export async function createTextStylesFromTypography(
@@ -326,42 +357,20 @@ export async function createTextStylesFromTypography(
       toLiteralOrNull(fontWeightVal),
     );
 
-    let fontLoaded = false;
-    let finalFontStyleName = fontStyleName;
     try {
       await figma.loadFontAsync({
         family: fontFamilyStr,
         style: fontStyleName,
       });
-      fontLoaded = true;
     } catch {
-      if (fontStyleName !== "Regular") {
-        try {
-          await figma.loadFontAsync({
-            family: fontFamilyStr,
-            style: "Regular",
-          });
-          fontLoaded = true;
-          finalFontStyleName = "Regular";
-          result.textStyleWarnings.push(
-            `Typography style "${styleName}": could not load font "${fontFamilyStr}" / "${fontStyleName}". Falling back to "Regular".`,
-          );
-        } catch {
-          // both failed
-        }
-      }
-
-      if (!fontLoaded) {
-        result.textStyleWarnings.push(
-          `Typography style "${styleName}": could not load font "${fontFamilyStr}" / "${fontStyleName}" (from "${fontFamilyRaw}"); skipping.`,
-        );
-      }
-    }
-
-    if (!fontLoaded) {
+      result.textStyleWarnings.push(
+        `Typography style "${styleName}": FAILED to load font "${fontFamilyStr}" / "${fontStyleName}". Skipping style.`,
+      );
       result.textStylesSkipped++;
       continue;
     }
+
+    const finalFontStyleName = fontStyleName;
 
     textStyle.fontName = { family: fontFamilyStr, style: finalFontStyleName };
 
@@ -433,17 +442,12 @@ export async function createTextStylesFromTypography(
 
     // textCase and textDecoration are not bindable; set from resolved values.
     const textCaseEntry = propVars.get("text-case");
-    if (textCaseEntry !== undefined) {
-      const v = await resolveEntry(textCaseEntry);
-      const tc = toTextCase(toLiteralOrNull(v));
-      if (tc) textStyle.textCase = tc;
-    }
+    const resolvedTc = await resolveEntry(textCaseEntry);
+    textStyle.textCase = toTextCase(toLiteralOrNull(resolvedTc));
+
     const textDecorationEntry = propVars.get("text-decoration");
-    if (textDecorationEntry !== undefined) {
-      const v = await resolveEntry(textDecorationEntry);
-      const td = toTextDecoration(toLiteralOrNull(v));
-      if (td) textStyle.textDecoration = td;
-    }
+    const resolvedTd = await resolveEntry(textDecorationEntry);
+    textStyle.textDecoration = toTextDecoration(toLiteralOrNull(resolvedTd));
   }
 
   return result;

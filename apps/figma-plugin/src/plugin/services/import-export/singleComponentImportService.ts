@@ -5,6 +5,7 @@ import { debugConsole } from "./debugConsole";
 import { importPagesInOrder } from "./dependencyResolver";
 import type { SanitizedPageImportResult } from "./pageImportNew";
 import { normalizeCollectionName } from "../../../const/CollectionConstants";
+import { checkRecursicaVarCollectionsExist } from "../../utils/checkRecursicaVarCollectionsExist";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -263,6 +264,20 @@ export async function importSingleComponentWithWizard(
 ): Promise<ResponseMessage> {
   try {
     debugConsole.log("=== Starting Single Component Import ===");
+
+    // Validation: Ensure core Recursica theme variables exist
+    const { hasTokens, hasTheme, hasLayer, isComplete } =
+      await checkRecursicaVarCollectionsExist();
+
+    if (!isComplete) {
+      const missing = [];
+      if (!hasTokens) missing.push("Tokens");
+      if (!hasTheme) missing.push("Theme");
+      if (!hasLayer) missing.push("Layer");
+      throw new Error(
+        `Recursica theme variables not found (${missing.join(", ")}). Please initialize the theme before importing components.`,
+      );
+    }
 
     // Step 1: Create start divider only (end divider will be created after pages)
     debugConsole.log("Creating start divider...");
