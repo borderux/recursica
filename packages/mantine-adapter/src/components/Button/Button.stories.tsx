@@ -101,3 +101,14 @@ export const DisabledSolid: Story = {
     disabled: true,
   },
 };
+
+export const PolymorphicAsLink: Story = {
+  args: {
+    children: "Button as Link",
+    variant: "solid",
+    size: "default",
+    component: "a",
+    href: "https://example.com",
+    target: "_blank",
+  },
+};

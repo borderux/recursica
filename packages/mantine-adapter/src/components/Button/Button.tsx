@@ -123,9 +123,15 @@ _Button.displayName = "Button";
  * Recursica Button component wrapping Mantine's Button.
  *
  * Supports polymorphism via the `component` prop or `renderRoot` for custom element rendering.
+ * This is particularly useful when you need a button that behaves as a hyperlink (rendering an `<a>` tag)
+ * or integrates with a routing library (e.g., `react-router-dom` or Next.js), while preserving full visual styling.
+ *
  * @example
  * ```tsx
- * <Button component="a" href="/dashboard">Navigate</Button>
+ * // Renders as an <a> tag natively
+ * <Button component="a" href="/dashboard" target="_blank">Navigate</Button>
+ *
+ * // Renders using a custom router link
  * <Button renderRoot={(props) => <Link to="/home" {...props} />}>Home</Button>
  * ```
  */
