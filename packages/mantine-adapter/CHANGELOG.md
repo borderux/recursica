@@ -1,5 +1,11 @@
 # @recursica/mantine-adapter
 
+## 0.16.0
+
+### Minor Changes
+
+- 2666672: Added Link and Pagination
+
 ## 0.15.0
 
 ### Minor Changes

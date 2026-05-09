@@ -1,5 +1,16 @@
 # recursica-storybook
 
+## 0.12.0
+
+### Minor Changes
+
+- 2666672: Added Link and Pagination
+
+### Patch Changes
+
+- Updated dependencies [2666672]
+  - @recursica/mantine-adapter@0.16.0
+
 ## 0.11.0
 
 ### Minor Changes
