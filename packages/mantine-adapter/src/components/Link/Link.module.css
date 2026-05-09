@@ -1,0 +1,133 @@
+/* 
+HARDCODED VALUES:
+- display: inline-flex; (Base layout to align icon and text correctly)
+- align-items: center;
+- cursor: pointer;
+- text-decoration: none; (Overridden by our design tokens instead of using Mantine's underline prop)
+- color: inherit; (Reset before applying token)
+*/
+
+.root {
+  /* HARDCODE: base layout to support optional icon gaps */
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+
+  /* HARDCODE: Reset underline and color so we can explicitly use our tokens */
+  text-decoration: none;
+  color: inherit;
+
+  /* Typography Default Tokens */
+  font-family: var(
+    --recursica_ui-kit_components_link_properties_text_font-family
+  );
+  font-size: var(--recursica_ui-kit_components_link_properties_text_font-size);
+  letter-spacing: var(
+    --recursica_ui-kit_components_link_properties_text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_link_properties_text_line-height
+  );
+
+  /* Default State Tokens */
+  font-style: var(
+    --recursica_ui-kit_components_link_variants_states_default_properties_text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_link_variants_states_default_properties_text_font-weight
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_link_variants_states_default_properties_text_text-decoration
+  );
+  color: var(
+    --recursica_ui-kit_components_link_variants_states_default_properties_colors_text
+  );
+}
+
+.root[data-has-icon] {
+  gap: var(--recursica_ui-kit_components_link_properties_icon-text-gap);
+}
+
+.root:hover {
+  /* Reset Mantine's potential hover override */
+  text-decoration: var(
+    --recursica_ui-kit_components_link_variants_states_hover_properties_text_text-decoration
+  );
+  font-style: var(
+    --recursica_ui-kit_components_link_variants_states_hover_properties_text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_link_variants_states_hover_properties_text_font-weight
+  );
+  color: var(
+    --recursica_ui-kit_components_link_variants_states_hover_properties_colors_text
+  );
+}
+
+.root:visited {
+  text-decoration: var(
+    --recursica_ui-kit_components_link_variants_states_visited_properties_text_text-decoration
+  );
+  font-style: var(
+    --recursica_ui-kit_components_link_variants_states_visited_properties_text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_link_variants_states_visited_properties_text_font-weight
+  );
+  color: var(
+    --recursica_ui-kit_components_link_variants_states_visited_properties_colors_text
+  );
+}
+
+.root:visited:hover {
+  text-decoration: var(
+    --recursica_ui-kit_components_link_variants_states_visited-hover_properties_text_text-decoration
+  );
+  font-style: var(
+    --recursica_ui-kit_components_link_variants_states_visited-hover_properties_text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_link_variants_states_visited-hover_properties_text_font-weight
+  );
+  color: var(
+    --recursica_ui-kit_components_link_variants_states_visited-hover_properties_colors_text
+  );
+}
+
+/* Icon Support */
+.iconWrapper {
+  /* HARDCODE: maintain intrinsic icon bounds */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: var(--recursica_ui-kit_components_link_properties_icon-size);
+  height: var(--recursica_ui-kit_components_link_properties_icon-size);
+  color: var(
+    --recursica_ui-kit_components_link_variants_states_default_properties_colors_icon
+  );
+}
+
+.root:hover .iconWrapper {
+  color: var(
+    --recursica_ui-kit_components_link_variants_states_hover_properties_colors_icon
+  );
+}
+
+.root:visited .iconWrapper {
+  color: var(
+    --recursica_ui-kit_components_link_variants_states_visited_properties_colors_icon
+  );
+}
+
+.root:visited:hover .iconWrapper {
+  color: var(
+    --recursica_ui-kit_components_link_variants_states_visited-hover_properties_colors_icon
+  );
+}
+
+/* Label text wrapper */
+.labelText {
+  /* HARDCODE: allows text truncation if bounded */
+  min-width: 0;
+}
