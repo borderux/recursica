@@ -18,12 +18,11 @@ const paths: Record<PaginationIconType, string> = {
   last: LastPath,
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const PaginationIcon = ({
   type,
   className,
   ...props
-}: any & { type: PaginationIconType }) => (
+}: React.ComponentProps<"svg"> & { type: PaginationIconType }) => (
   <svg
     viewBox="0 0 16 16"
     xmlns="http://www.w3.org/2000/svg"

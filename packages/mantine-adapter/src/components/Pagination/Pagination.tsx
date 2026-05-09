@@ -30,7 +30,6 @@ export type PaginationEdgeProps<T extends React.ElementType> =
   React.ComponentProps<T> & {
     /** If set to true, displays text labels alongside the icon. */
     withLabel?: boolean;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     icon?: any;
   };
 
