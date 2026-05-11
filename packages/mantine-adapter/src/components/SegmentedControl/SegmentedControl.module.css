@@ -1,0 +1,138 @@
+/* HARDCODED VALUES:
+   - border-style: solid; on container and indicator
+   - background-color: transparent; on label hover (overriding Mantine)
+   - !important usage to strictly enforce Figma tokens over Mantine's inline calculation
+*/
+
+.root {
+  background-color: var(
+    --recursica_ui-kit_components_segmented-control_properties_container_colors_background
+  ) !important;
+  border: var(
+      --recursica_ui-kit_components_segmented-control_properties_container_border-size
+    )
+    solid
+    var(
+      --recursica_ui-kit_components_segmented-control_properties_container_colors_border-color
+    );
+  border-radius: var(
+    --recursica_ui-kit_components_segmented-control_properties_container_border-radius
+  ) !important;
+  padding: var(
+      --recursica_ui-kit_components_segmented-control_properties_container_padding-vertical
+    )
+    var(
+      --recursica_ui-kit_components_segmented-control_properties_container_padding-horizontal
+    ) !important;
+  box-shadow: var(
+    --recursica_ui-kit_components_segmented-control_properties_container_elevation
+  );
+  gap: var(--recursica_ui-kit_components_segmented-control_properties_item-gap);
+}
+
+.label {
+  padding-left: var(
+    --recursica_ui-kit_components_segmented-control-item_properties_item_padding-horizontal
+  ) !important;
+  padding-right: var(
+    --recursica_ui-kit_components_segmented-control-item_properties_item_padding-horizontal
+  ) !important;
+  height: var(
+    --recursica_ui-kit_components_segmented-control-item_properties_item_height
+  ) !important;
+  border-radius: var(
+    --recursica_ui-kit_components_segmented-control-item_properties_item_border-radius
+  ) !important;
+
+  font-family: var(
+    --recursica_ui-kit_components_segmented-control-item_properties_text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_segmented-control-item_properties_text_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_segmented-control-item_properties_text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_segmented-control-item_properties_text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_segmented-control-item_properties_text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_segmented-control-item_properties_text_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_segmented-control-item_properties_text_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_segmented-control-item_properties_text_text-transform
+  );
+
+  color: var(
+    --recursica_ui-kit_components_segmented-control_properties_colors_text
+  ) !important;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mantine natively wraps label contents in an innerLabel span */
+.label :global(.mantine-SegmentedControl-innerLabel) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(
+    --recursica_ui-kit_components_segmented-control-item_properties_item_icon-text-gap
+  );
+}
+
+.label svg {
+  width: var(
+    --recursica_ui-kit_components_segmented-control-item_properties_item_icon-size
+  );
+  height: var(
+    --recursica_ui-kit_components_segmented-control-item_properties_item_icon-size
+  );
+  flex-shrink: 0;
+}
+
+/* Mantine adds a background on hover, we must strictly strip it */
+.label:hover {
+  background-color: transparent !important;
+}
+
+/* Mantine adds separators via ::before on the .control */
+.control::before {
+  background-color: var(
+    --recursica_ui-kit_components_segmented-control_properties_colors_divider-color
+  ) !important;
+}
+
+/* Indicator (the moving selected block) */
+.indicator {
+  background-color: var(
+    --recursica_ui-kit_components_segmented-control-item_properties_selected_colors_background
+  ) !important;
+  border: var(
+      --recursica_ui-kit_components_segmented-control-item_properties_selected_border-size
+    )
+    solid
+    var(
+      --recursica_ui-kit_components_segmented-control-item_properties_selected_colors_border-color
+    ) !important;
+  box-shadow: var(
+    --recursica_ui-kit_components_segmented-control-item_properties_selected_elevation
+  ) !important;
+  border-radius: var(
+    --recursica_ui-kit_components_segmented-control-item_properties_item_border-radius
+  ) !important;
+}
+
+/* Selected label text color override */
+.control[data-active] .label {
+  color: var(
+    --recursica_ui-kit_components_segmented-control-item_properties_selected_colors_text-color
+  ) !important;
+}
