@@ -133,6 +133,28 @@ const OverStylingInfo = () => {
 
         <Divider mb="xl" />
 
+        <Title order={3} mb="sm">
+          Primitive Layout Components Exemption
+        </Title>
+        <Text mb="sm">
+          Unlike complex UI components (Buttons, Tabs, Inputs) which are
+          strictly protected, <strong>Primitive Layout Components</strong> (
+          <Code>Flex</Code>,<Code>Stack</Code>, <Code>Group</Code>,{" "}
+          <Code>Container</Code>) are entirely exempt from the{" "}
+          <Code>RecursicaOverStyled</Code> gatekeeper.
+        </Text>
+        <Text mb="xl">
+          Because the entire functional purpose of these components is
+          structural layout composition, developers are free to pass any
+          standard Mantine width, height, padding, margin, gap, and alignment
+          property directly to them without needing to flag{" "}
+          <Code>overStyled={`{true}`}</Code>. The internal custom token mapper
+          (such as converting <Code>gap="rec-md"</Code>) is still active
+          natively on these wrappers.
+        </Text>
+
+        <Divider mb="xl" />
+
         <Title order={3} mb="md">
           Live Example
         </Title>

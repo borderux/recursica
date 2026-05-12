@@ -107,3 +107,8 @@ This document tracks known issues, edge cases, missing variables, or design syst
 - **Description:** The Recursica Figma UI Kit provides generic tokens for `number-input` layout geometry and overall colors, but lacks explicit targeting variants for the internal increment/decrement arrow controls (e.g., specific hover backgrounds, icon colors, or border divisions for the arrows themselves).
 - **Impact:** We cannot construct an exact 1-to-1 visual parity if design expects the arrows to have custom dividers or standalone highlight states.
 - **Current Resolution:** The controls have had their default borders stripped out to float seamlessly inside the main input wrapper, and they inherit generic icon tokens, but complex hover background mappings rely on native Mantine fallback states.
+
+## Skipped Components
+
+- **Search**: Skipped because it does not exist in the underlying UI framework (Forge).
+- **Popover**: Skipped because it does not exist in the underlying UI framework (Forge).

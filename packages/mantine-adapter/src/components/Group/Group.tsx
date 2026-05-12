@@ -1,13 +1,9 @@
-import React, { forwardRef } from "react";
+import { forwardRef } from "react";
 import {
   Group as MantineGroup,
   type GroupProps as MantineGroupProps,
 } from "@mantine/core";
-import {
-  filterStylingProps,
-  type RecursicaOverStyled,
-  type RecursicaSpacing,
-} from "../../utils/filterStylingProps";
+import { type RecursicaSpacing } from "../../utils/filterStylingProps";
 import styles from "./Group.module.css";
 
 export interface RecursicaGroupProps {
@@ -21,24 +17,23 @@ export interface RecursicaGroupProps {
 }
 
 /**
- * Group flex layout wrapper
+ * Group flex layout wrapper.
+ *
+ * Note: Unlike complex UI components, primitive layout components (Flex, Stack, Group, Container)
+ * DO NOT use the `RecursicaOverStyled` gatekeeper. Developers must be able to freely pass
+ * width, height, padding, margins, and flexbox alignment props to construct structural layouts.
  */
-export type GroupProps = RecursicaOverStyled<
-  MantineGroupProps & RecursicaGroupProps
->;
+export type GroupProps = MantineGroupProps & RecursicaGroupProps;
 
 export const Group = forwardRef<HTMLDivElement, GroupProps>(function Group(
-  { children, overStyled = false, gap = "rec-default", ...rest },
+  { children, gap = "rec-default", ...rest },
   ref,
 ) {
-  const sanitizedProps = filterStylingProps({ ...rest, gap }, overStyled);
-  const restRecord = sanitizedProps as Record<string, unknown>;
-
   const mergedClassNames: Partial<Record<string, string>> = {
     root: styles.root,
   };
 
-  const classNamesProp = restRecord.classNames;
+  const classNamesProp = rest.classNames;
   if (
     classNamesProp &&
     typeof classNamesProp === "object" &&
@@ -48,7 +43,7 @@ export const Group = forwardRef<HTMLDivElement, GroupProps>(function Group(
     mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
   }
 
-  const classNameProp = restRecord.className as string | undefined;
+  const classNameProp = rest.className as string | undefined;
   const finalClass = classNameProp
     ? `${styles.root} ${classNameProp}`
     : styles.root;
@@ -58,7 +53,8 @@ export const Group = forwardRef<HTMLDivElement, GroupProps>(function Group(
       ref={ref}
       className={finalClass}
       classNames={mergedClassNames}
-      {...sanitizedProps}
+      gap={gap}
+      {...rest}
     >
       {children}
     </MantineGroup>

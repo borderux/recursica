@@ -182,7 +182,7 @@ const PolymorphicCard = createPolymorphicComponent<
 >(CardBase);
 
 // Attach static components for dot-notation access
-const _card = PolymorphicCard as Record<string, unknown>;
+const _card = PolymorphicCard as unknown as Record<string, unknown>;
 _card.Section = CardSection;
 _card.Header = CardHeader;
 _card.Footer = CardFooter;
