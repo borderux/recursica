@@ -37,7 +37,7 @@ const InteractiveTabs = (
   args: React.ComponentProps<typeof Tabs> & { disabled?: boolean },
 ) => {
   return (
-    <Flex w={600} h={300} overStyled>
+    <Flex w={600} h={300}>
       <Tabs defaultValue="gallery" {...args}>
         <Tabs.List>
           <Tabs.Tab

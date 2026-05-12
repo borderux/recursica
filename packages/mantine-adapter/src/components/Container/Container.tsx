@@ -1,13 +1,9 @@
-import React, { forwardRef } from "react";
+import { forwardRef } from "react";
 import {
   Container as MantineContainer,
   type ContainerProps as MantineContainerProps,
 } from "@mantine/core";
-import {
-  filterStylingProps,
-  type RecursicaOverStyled,
-  type RecursicaSpacing,
-} from "../../utils/filterStylingProps";
+import { type RecursicaSpacing } from "../../utils/filterStylingProps";
 import styles from "./Container.module.css";
 
 export interface RecursicaContainerProps {
@@ -30,17 +26,17 @@ export interface RecursicaContainerProps {
 }
 
 /**
- * Container layout wrapper
+ * Container layout wrapper.
+ *
+ * Note: Unlike complex UI components, primitive layout components (Flex, Stack, Group, Container)
+ * DO NOT use the `RecursicaOverStyled` gatekeeper. Developers must be able to freely pass
+ * width, height, padding, margins, and flexbox alignment props to construct structural layouts.
  */
-export type ContainerProps = RecursicaOverStyled<
-  Omit<MantineContainerProps, "size"> & RecursicaContainerProps
->;
+export type ContainerProps = Omit<MantineContainerProps, "size"> &
+  RecursicaContainerProps;
 
 export const Container = forwardRef<HTMLDivElement, ContainerProps>(
-  function Container({ children, size, overStyled = false, ...rest }, ref) {
-    const sanitizedProps = filterStylingProps(rest, overStyled);
-    const restRecord = sanitizedProps as Record<string, unknown>;
-
+  function Container({ children, size, ...rest }, ref) {
     const mapSize: Record<string, string> = {
       "rec-sm": "sm",
       "rec-default": "md",
@@ -57,7 +53,7 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(
       root: styles.root,
     };
 
-    const classNamesProp = restRecord.classNames;
+    const classNamesProp = rest.classNames;
     if (
       classNamesProp &&
       typeof classNamesProp === "object" &&
@@ -67,7 +63,7 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(
       mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
     }
 
-    const classNameProp = restRecord.className as string | undefined;
+    const classNameProp = rest.className as string | undefined;
     const finalClass = classNameProp
       ? `${styles.root} ${classNameProp}`
       : styles.root;
@@ -78,7 +74,7 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(
         size={resolvedSize}
         className={finalClass}
         classNames={mergedClassNames}
-        {...sanitizedProps}
+        {...rest}
       >
         {children}
       </MantineContainer>

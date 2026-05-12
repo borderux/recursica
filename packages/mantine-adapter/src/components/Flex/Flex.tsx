@@ -1,14 +1,10 @@
-import React, { forwardRef } from "react";
+import { forwardRef } from "react";
 import {
   Flex as MantineFlex,
   type FlexProps as MantineFlexProps,
   createPolymorphicComponent,
 } from "@mantine/core";
-import {
-  filterStylingProps,
-  type RecursicaOverStyled,
-  type RecursicaSpacing,
-} from "../../utils/filterStylingProps";
+import { type RecursicaSpacing } from "../../utils/filterStylingProps";
 import styles from "./Flex.module.css";
 
 export interface RecursicaFlexProps {
@@ -22,24 +18,23 @@ export interface RecursicaFlexProps {
 }
 
 /**
- * Flex layout wrapper
+ * Flex layout wrapper.
+ *
+ * Note: Unlike complex UI components, primitive layout components (Flex, Stack, Group, Container)
+ * DO NOT use the `RecursicaOverStyled` gatekeeper. Developers must be able to freely pass
+ * width, height, padding, margins, and flexbox alignment props to construct structural layouts.
  */
-export type FlexProps = RecursicaOverStyled<
-  MantineFlexProps & RecursicaFlexProps
->;
+export type FlexProps = MantineFlexProps & RecursicaFlexProps;
 
 const _Flex = forwardRef<HTMLDivElement, FlexProps>(function Flex(
-  { children, overStyled = false, gap = "rec-default", ...rest },
+  { children, gap = "rec-default", ...rest },
   ref,
 ) {
-  const sanitizedProps = filterStylingProps({ ...rest, gap }, overStyled);
-  const restRecord = sanitizedProps as Record<string, unknown>;
-
   const mergedClassNames: Partial<Record<string, string>> = {
     root: styles.root,
   };
 
-  const classNamesProp = restRecord.classNames;
+  const classNamesProp = rest.classNames;
   if (
     classNamesProp &&
     typeof classNamesProp === "object" &&
@@ -49,7 +44,7 @@ const _Flex = forwardRef<HTMLDivElement, FlexProps>(function Flex(
     mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
   }
 
-  const classNameProp = restRecord.className as string | undefined;
+  const classNameProp = rest.className as string | undefined;
   const finalClass = classNameProp
     ? `${styles.root} ${classNameProp}`
     : styles.root;
@@ -59,7 +54,8 @@ const _Flex = forwardRef<HTMLDivElement, FlexProps>(function Flex(
       ref={ref}
       className={finalClass}
       classNames={mergedClassNames}
-      {...sanitizedProps}
+      gap={gap}
+      {...rest}
     >
       {children}
     </MantineFlex>

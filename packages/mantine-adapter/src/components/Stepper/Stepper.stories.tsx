@@ -51,7 +51,7 @@ const InteractiveStepper = (args: React.ComponentProps<typeof Stepper>) => {
     setActive((current) => (current > 0 ? current - 1 : current));
 
   return (
-    <Flex direction="column" w={600} overStyled>
+    <Flex direction="column" w={600}>
       <Stepper {...args} active={active} onStepClick={setActive}>
         <Stepper.Step
           label="First step"
@@ -111,7 +111,7 @@ const StressTestStepper = (args: React.ComponentProps<typeof Stepper>) => {
     setActive((current) => (current > 0 ? current - 1 : current));
 
   return (
-    <Flex direction="column" w={600} overStyled>
+    <Flex direction="column" w={600}>
       <Stepper {...args} active={active} onStepClick={setActive}>
         <Stepper.Step
           label="This is an extremely long step title designed to test how the layout handles multiline text wrapping and constraints"
