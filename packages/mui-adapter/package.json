@@ -1,6 +1,6 @@
 {
   "name": "@recursica/mui-adapter",
-  "description": "Reusable UI components for Recursica applications based on Material UI (MUI)",
+  "description": "Reusable UI components for Recursica applications based on Material UI (MUI) v7",
   "private": false,
   "homepage": "https://github.com/borderux/recursica/tree/main/packages/mui-adapter",
   "author": "hi@borderux.com",
@@ -11,7 +11,7 @@
     "type": "git",
     "url": "git+https://github.com/borderux/recursica.git"
   },
-  "version": "0.16.0",
+  "version": "0.1.0",
   "type": "module",
   "main": "./dist/mui-adapter.cjs",
   "module": "./dist/mui-adapter.js",
