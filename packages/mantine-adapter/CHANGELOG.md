@@ -1,5 +1,11 @@
 # @recursica/mantine-adapter
 
+## 0.17.0
+
+### Minor Changes
+
+- 687043f: Added Tabs and Stepper components
+
 ## 0.16.0
 
 ### Minor Changes

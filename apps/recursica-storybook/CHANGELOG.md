@@ -1,5 +1,16 @@
 # recursica-storybook
 
+## 0.13.0
+
+### Minor Changes
+
+- 687043f: Added Tabs and Stepper components
+
+### Patch Changes
+
+- Updated dependencies [687043f]
+  - @recursica/mantine-adapter@0.17.0
+
 ## 0.12.0
 
 ### Minor Changes
