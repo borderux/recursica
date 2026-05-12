@@ -94,12 +94,12 @@ export const Default: Story = {
           Open Panel
         </Button>
         <Panel
+          {...(args as PanelProps)}
           opened={opened}
           onClose={() => setOpened(false)}
           title="Panel Title"
           position="right"
           wrapHeaderText={wrapHeaderText}
-          {...(args as PanelProps)}
         >
           <Text>
             This is the panel body content area. Panels slide in from the edge
