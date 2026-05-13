@@ -1,27 +1,28 @@
 # Recursica Storybook
 
-This app is a simple build and deployment wrapper for the mantine-adapter storybook. It builds the mantine-adapter storybook and deploys it to GitHub Pages.
+This app is a centralized build and deployment pipeline for the Recursica multi-adapter storybook ecosystem. It builds documentation for all supported UI Kit adapters (Mantine, MUI, etc.) and seamlessly deploys them to GitHub Pages under a unified navigation structure.
 
 ## What it does
 
-- Builds the mantine-adapter storybook using `npm run build`
-- Copies the built storybook to the `dist/` folder
-- Deploys the storybook to GitHub Pages via the `publish` script
-- Provides a root redirect from the main site to the storybook
+- Builds the **Mantine** adapter storybook and outputs it to `dist/mantine-adapter/`
+- Builds the **MUI** adapter storybook and outputs it to `dist/mui-adapter/`
+- Automatically generates an `index.html` root redirect to point traffic to the default adapter (Mantine)
+- Deploys the entire multi-adapter `dist/` bundle to GitHub Pages via the `publish` script
 
 ## Available Scripts
 
-- **`npm run build`** - Builds the mantine-adapter storybook and copies it to `dist/`
-- **`npm run publish`** - Deploys the built storybook to GitHub Pages
+- **`npm run build`** - Orchestrates the build of all UI-kit storybooks and stages them in `dist/`
+- **`npm run publish`** - Deploys the built storybooks to GitHub Pages
 
 ## Deployment
 
 The storybook is automatically deployed to GitHub Pages when changes are merged to the `main` branch through the changesets release workflow.
 
-The deployed storybook will be available at:
+The deployed storybooks will be available at:
 
-- **Main site**: `https://borderux.github.io/recursica/` (redirects to storybook)
-- **Direct access**: `https://borderux.github.io/recursica/storybook/`
+- **Main site**: `https://borderux.github.io/recursica/` (redirects to default storybook)
+- **Mantine Adapter (Default)**: `https://borderux.github.io/recursica/storybook/mantine-adapter/`
+- **MUI Adapter**: `https://borderux.github.io/recursica/storybook/mui-adapter/`
 
 ## License
 

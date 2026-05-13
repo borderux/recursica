@@ -23,7 +23,6 @@ export const createMainConfig = (
   const {
     stories,
     addons = [
-      "@storybook/addon-onboarding",
       "@storybook/addon-docs",
       "@storybook/addon-a11y",
       "storybook-dark-mode",

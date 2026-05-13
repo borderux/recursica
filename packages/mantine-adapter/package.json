@@ -10,7 +10,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/borderux/recursica.git"
+    "url": "git+https://github.com/borderux/recursica.git",
+    "directory": "packages/mantine-adapter"
   },
   "version": "0.17.0",
   "type": "module",
@@ -58,7 +59,6 @@
     "@storybook/addon-a11y": "^10.3.3",
     "@storybook/addon-docs": "^10.3.3",
     "@storybook/addon-mcp": "^0.4.2",
-    "@storybook/addon-onboarding": "^10.3.3",
     "@storybook/addon-vitest": "^10.3.3",
     "@storybook/react-vite": "^10.3.3",
     "@types/react": "^19.1.2",

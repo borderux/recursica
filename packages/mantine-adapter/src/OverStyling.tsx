@@ -1,4 +1,3 @@
-import type { Meta, StoryObj } from "@storybook/react";
 import {
   Container,
   Paper,
@@ -11,7 +10,7 @@ import {
 } from "@mantine/core";
 import { Button } from "./components/Button/Button";
 
-const OverStylingInfo = () => {
+export const OverStylingInfo = () => {
   return (
     <Container size="md" py="xl">
       <Paper withBorder p="xl" radius="md">
@@ -185,12 +184,3 @@ const OverStylingInfo = () => {
     </Container>
   );
 };
-
-const meta: Meta<typeof OverStylingInfo> = {
-  title: "Introduction/Over Styling",
-  component: OverStylingInfo,
-};
-
-export default meta;
-
-export const Default: StoryObj<typeof OverStylingInfo> = {};

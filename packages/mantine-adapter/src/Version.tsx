@@ -1,4 +1,3 @@
-import type { Meta, StoryObj } from "@storybook/react";
 import ReactMarkdown from "react-markdown";
 import {
   Container,
@@ -12,7 +11,7 @@ import {
 import pkg from "../package.json";
 import changelog from "../CHANGELOG.md?raw";
 
-const VersionInfo = () => {
+export const VersionInfo = () => {
   return (
     <Container size="md" py="xl">
       <Paper withBorder p="xl" radius="md">
@@ -43,14 +42,3 @@ const VersionInfo = () => {
     </Container>
   );
 };
-
-const meta: Meta<typeof VersionInfo> = {
-  title: "Introduction/Version Info",
-  component: VersionInfo,
-};
-
-export default meta;
-
-type Story = StoryObj<typeof VersionInfo>;
-
-export const Default: Story = {};

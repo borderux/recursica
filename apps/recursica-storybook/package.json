@@ -5,7 +5,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "cd ../../packages/mantine-adapter && npm run build-storybook && rm -rf ../../apps/recursica-storybook/dist && cp -r storybook-static ../../apps/recursica-storybook/dist",
+    "build": "node scripts/build.mjs",
     "publish": "node scripts/publish.mjs"
   },
   "keywords": [],
@@ -16,5 +16,10 @@
   },
   "devDependencies": {
     "gh-pages": "^6.3.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/borderux/recursica.git",
+    "directory": "apps/recursica-storybook"
   }
 }

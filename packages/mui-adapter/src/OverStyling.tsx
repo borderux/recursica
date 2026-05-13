@@ -1,4 +1,3 @@
-import type { Meta, StoryObj } from "@storybook/react";
 import {
   Container,
   Paper,
@@ -9,7 +8,7 @@ import {
 } from "@mui/material";
 import { Button } from "./components/Button/Button";
 
-const OverStylingInfo = () => {
+export const OverStylingInfo = () => {
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Paper variant="outlined" sx={{ p: 4, borderRadius: 2 }}>
@@ -224,12 +223,3 @@ const OverStylingInfo = () => {
     </Container>
   );
 };
-
-const meta: Meta<typeof OverStylingInfo> = {
-  title: "Introduction/Over Styling",
-  component: OverStylingInfo,
-};
-
-export default meta;
-
-export const Default: StoryObj<typeof OverStylingInfo> = {};
