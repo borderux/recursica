@@ -10,6 +10,11 @@ import {
 import styles from "./Timeline.module.css";
 import { TimelineItem } from "./TimelineItem";
 
+/**
+ * Properties for the strictly-tokenized Timeline component.
+ * Native Mantine abstract properties like `color`, `radius`, `bulletSize`, and `lineWidth`
+ * have been stripped out to strictly enforce the structural mappings of the Recursica UI Kit.
+ */
 export type TimelineProps = RecursicaOverStyled<
   Omit<MantineTimelineProps, "color" | "radius" | "bulletSize" | "lineWidth">
 >;
@@ -21,6 +26,20 @@ interface TimelineComponent
   Item: typeof TimelineItem;
 }
 
+/**
+ * The `Timeline` component displays a list of events in chronological order.
+ *
+ * **Recursica Abstract:**
+ * This component acts as a structural wrapper around Mantine's `<Timeline>`.
+ * It forces alignment and geometry strictly via the UI Kit's `.itemBullet` and connector definitions.
+ *
+ * @example
+ * ```tsx
+ * <Timeline active={1}>
+ *   <Timeline.Item title="Event 1" timestamp="Yesterday">Description</Timeline.Item>
+ * </Timeline>
+ * ```
+ */
 const TimelineInner = React.forwardRef<HTMLDivElement, TimelineProps>(
   function Timeline({ overStyled = false, ...rest }, ref) {
     const sanitizedProps = filterStylingProps(rest, overStyled);

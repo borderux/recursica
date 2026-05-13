@@ -27,6 +27,14 @@ export type TimelineItemProps = RecursicaOverStyled<
     RecursicaTimelineItemProps
 >;
 
+/**
+ * The individual item component for the Timeline.
+ *
+ * **Recursica Abstract:**
+ * The `Timeline.Item` has been extended to support a `timestamp` string natively,
+ * rendering it below the body content. It also accepts a `bulletVariant` to morph
+ * the structural dimensions of the node circle automatically.
+ */
 export const TimelineItem = React.forwardRef<HTMLDivElement, TimelineItemProps>(
   function TimelineItem(
     {
