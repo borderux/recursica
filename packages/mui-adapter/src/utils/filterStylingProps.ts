@@ -89,7 +89,7 @@ const LAYOUT_PROPS = new Set([
   "right",
 ]);
 
-const SPACING_MAP: Record<string, string> = {
+export const SPACING_MAP: Record<string, string> = {
   "rec-none": "var(--recursica_brand_dimensions_general_none)",
   "rec-sm": "var(--recursica_brand_dimensions_general_sm)",
   "rec-default": "var(--recursica_brand_dimensions_general_default)",
@@ -100,6 +100,18 @@ const SPACING_MAP: Record<string, string> = {
 };
 
 export type ForbiddenStyles = { [K in BlockedStylingKeys]?: never };
+
+export type OmitSx<T> = Omit<T, "sx">;
+
+export function filterSxProp<T extends Record<string, unknown>>(
+  props: T,
+): Omit<T, "sx"> {
+  const sanitized = { ...props };
+  if ("sx" in sanitized) {
+    delete sanitized["sx"];
+  }
+  return sanitized as Omit<T, "sx">;
+}
 
 export type RecursicaOverStyled<T> =
   | (Omit<T, BlockedStylingKeys> &

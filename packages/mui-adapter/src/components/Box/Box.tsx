@@ -1,26 +1,23 @@
+/**
+ * Box layout wrapper.
+ *
+ * NOTE: Box is the lowest-level primitive layout component. It explicitly ALLOWS
+ * the `sx` prop as an escape hatch. It does not use the strict RecursicaOverStyled gatekeeper
+ * or any style stripping utilities.
+ */
 import React, { forwardRef } from "react";
 import { Box as MUIBox, type BoxProps as MUIBoxProps } from "@mui/material";
-import {
-  filterStylingProps,
-  type RecursicaOverStyled,
-} from "../../utils/filterStylingProps";
 
-export type BoxProps<C extends React.ElementType = "div"> = RecursicaOverStyled<
-  MUIBoxProps<C, { component?: C }>
+export type BoxProps<C extends React.ElementType = "div"> = MUIBoxProps<
+  C,
+  { component?: C }
 >;
 
 export const Box = forwardRef(function Box<C extends React.ElementType = "div">(
   props: BoxProps<C>,
   ref: React.Ref<Element>,
 ) {
-  const { overStyled = false, ...rest } = props;
-
-  const sanitizedProps = filterStylingProps(
-    rest as Record<string, unknown>,
-    overStyled,
-  );
-
-  return <MUIBox ref={ref} {...sanitizedProps} />;
+  return <MUIBox ref={ref} {...props} />;
 }) as <C extends React.ElementType = "div">(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   props: BoxProps<C> & { ref?: React.ForwardedRef<any> },

@@ -91,7 +91,7 @@ const LAYOUT_PROPS = new Set([
   "right",
 ]);
 
-const SPACING_MAP: Record<string, string> = {
+export const SPACING_MAP: Record<string, string> = {
   "rec-none": "var(--recursica_brand_dimensions_general_none)",
   "rec-sm": "var(--recursica_brand_dimensions_general_sm)",
   "rec-default": "var(--recursica_brand_dimensions_general_default)",
@@ -107,6 +107,22 @@ export type RecursicaOverStyled<T> =
   | (Omit<T, BlockedStylingKeys> &
       ForbiddenStyles & { overStyled?: false | undefined })
   | (T & { overStyled: true });
+
+export function mapLayoutProps<T extends Record<string, unknown>>(props: T): T {
+  const mapped = { ...props };
+  for (const [key, value] of Object.entries(mapped)) {
+    if (
+      typeof value === "string" &&
+      value.startsWith("rec-") &&
+      LAYOUT_PROPS.has(key)
+    ) {
+      if (value in SPACING_MAP) {
+        (mapped as Record<string, unknown>)[key] = SPACING_MAP[value];
+      }
+    }
+  }
+  return mapped;
+}
 
 export function filterStylingProps<T extends Record<string, unknown>>(
   props: T,

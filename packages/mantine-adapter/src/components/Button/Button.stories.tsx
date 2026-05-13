@@ -112,3 +112,17 @@ export const PolymorphicAsLink: Story = {
     target: "_blank",
   },
 };
+
+export const TruncatedLabel: Story = {
+  args: {
+    children:
+      "This is an exceptionally long button label designed to demonstrate how the component handles text overflow by applying an ellipsis rather than breaking the layout or wrapping to multiple lines.",
+    variant: "solid",
+    size: "default",
+  },
+  render: (args: ButtonStoryProps) => (
+    <div style={{ maxWidth: "250px" }}>
+      <Button {...args} />
+    </div>
+  ),
+};

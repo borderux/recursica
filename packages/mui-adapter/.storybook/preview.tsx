@@ -1,9 +1,12 @@
 import type { Preview } from "@storybook/react-vite";
 import { createPreviewConfig } from "@recursica/storybook-template/preview";
-import { MantineProvider } from "@mantine/core";
+import {
+  ThemeProvider,
+  createTheme,
+  CssBaseline,
+  StyledEngineProvider,
+} from "@mui/material";
 import { ColorSchemeWrapper } from "../src/utils/ColorSchemeWrapper";
-import "@mantine/core/styles.css";
-import "@mantine/dates/styles.css";
 import "../recursica_variables_scoped.css";
 import recursicaTokens from "../recursica_tokens.json";
 import recursicaBrand from "../recursica_brand.json";
@@ -93,17 +96,25 @@ const preview: Preview = {
       const content = <Story />;
 
       return (
-        <MantineProvider defaultColorScheme="light">
-          <ColorSchemeWrapper>
-            {withLayer ? (
-              <Layer layer={layer as 0 | 1 | 2 | 3} style={{ padding: "48px" }}>
-                {content}
-              </Layer>
-            ) : (
-              content
-            )}
-          </ColorSchemeWrapper>
-        </MantineProvider>
+        <StyledEngineProvider injectFirst>
+          <ThemeProvider
+            theme={createTheme({ colorSchemes: { light: true, dark: true } })}
+          >
+            <CssBaseline />
+            <ColorSchemeWrapper>
+              {withLayer ? (
+                <Layer
+                  layer={layer as 0 | 1 | 2 | 3}
+                  style={{ padding: "48px" }}
+                >
+                  {content}
+                </Layer>
+              ) : (
+                content
+              )}
+            </ColorSchemeWrapper>
+          </ThemeProvider>
+        </StyledEngineProvider>
       );
     },
   ],

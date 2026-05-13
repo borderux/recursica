@@ -29,7 +29,20 @@ This guide describes how to create Storybook stories for design-system component
   - Map the component’s public API to control types (e.g. `variant` → select, `size` → select, `disabled` → boolean).
   - Use `args` and `argTypes` in the default export’s meta so every important prop is configurable.
 - **Scope:** Include the props that an integrator is likely to change when using the component (e.g. variant, size, icon, disabled). You can omit rarely used or internal props if it keeps the Controls panel manageable. **Layer is not a component prop** (see **Layer and the Default story** below).
-- **Result:** One interactive story where users can change props and see the result immediately.
+- **Explicit Controls Filtering:** UI Kits (like MUI) automatically leak hundreds of internal system props and complex objects into the Storybook Controls panel. **You must explicitly filter these out** by providing a `parameters.controls.include` array in your `Meta` block.
+  ```tsx
+  const meta: Meta<typeof Button> = {
+    title: "UI-Kit/Button",
+    component: Button,
+    parameters: {
+      controls: {
+        // Explicitly list ONLY the props you want integrators to configure
+        include: ["variant", "size", "icon", "disabled", "children"],
+      },
+    },
+  };
+  ```
+- **Result:** One interactive story where users can change props and see the result immediately, without navigating through clutter.
 
 ---
 

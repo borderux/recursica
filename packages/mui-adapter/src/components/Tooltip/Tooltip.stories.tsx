@@ -6,6 +6,25 @@ const meta: Meta<typeof Tooltip> = {
   title: "UI-Kit/🚧 Tooltip",
   component: Tooltip,
   tags: ["autodocs"],
+  parameters: {
+    controls: {
+      include: [
+        "layer",
+        "withLayer",
+        "children",
+        "component",
+        "variant",
+        "size",
+        "icon",
+        "disabled",
+        "href",
+        "onClick",
+        "onChange",
+        "value",
+        "checked",
+      ],
+    },
+  },
 };
 
 export default meta;
