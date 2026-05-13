@@ -10,7 +10,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/borderux/recursica.git"
+    "url": "git+https://github.com/borderux/recursica.git",
+    "directory": "packages/mui-adapter"
   },
   "version": "0.1.0",
   "publishConfig": {
