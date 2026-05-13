@@ -1,5 +1,11 @@
 # @recursica/mantine-adapter
 
+## 0.20.0
+
+### Minor Changes
+
+- 3756d7b: Cleaned up stories and added layout stories to mui-adapter
+
 ## 0.19.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # @recursica/mui-adapter
 
+## 0.3.0
+
+### Minor Changes
+
+- 3756d7b: Cleaned up stories and added layout stories to mui-adapter
+
 ## 0.2.0
 
 ### Minor Changes

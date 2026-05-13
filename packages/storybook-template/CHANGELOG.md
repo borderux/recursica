@@ -1,5 +1,11 @@
 # @recursica/storybook-template
 
+## 0.6.0
+
+### Minor Changes
+
+- 3756d7b: Cleaned up stories and added layout stories to mui-adapter
+
 ## 0.5.0
 
 ### Minor Changes
