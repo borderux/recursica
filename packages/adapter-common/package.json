@@ -10,7 +10,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/borderux/recursica.git"
+    "url": "git+https://github.com/borderux/recursica.git",
+    "directory": "packages/adapter-common"
   },
   "version": "0.5.1",
   "type": "module",

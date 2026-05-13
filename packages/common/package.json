@@ -14,7 +14,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/borderux/recursica.git"
+    "url": "git+https://github.com/borderux/recursica.git",
+    "directory": "packages/common"
   },
   "keywords": [
     "TypeScript",
@@ -60,6 +61,5 @@
     "tsx": "^4.19.2",
     "typescript": "5.8.2",
     "vitest": "^3.2.3"
-  },
-  "license": "MIT"
+  }
 }

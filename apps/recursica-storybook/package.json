@@ -16,5 +16,10 @@
   },
   "devDependencies": {
     "gh-pages": "^6.3.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/borderux/recursica.git",
+    "directory": "apps/recursica-storybook"
   }
 }
