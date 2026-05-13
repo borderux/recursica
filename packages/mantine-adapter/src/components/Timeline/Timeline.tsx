@@ -1,7 +1,65 @@
 import React from "react";
+import {
+  Timeline as MantineTimeline,
+  type TimelineProps as MantineTimelineProps,
+} from "@mantine/core";
+import {
+  filterStylingProps,
+  type RecursicaOverStyled,
+} from "../../utils/filterStylingProps";
+import styles from "./Timeline.module.css";
+import { TimelineItem } from "./TimelineItem";
 
-export type TimelineProps = React.HTMLAttributes<HTMLDivElement>;
+export type TimelineProps = RecursicaOverStyled<
+  Omit<MantineTimelineProps, "color" | "radius" | "bulletSize" | "lineWidth">
+>;
 
-export const Timeline: React.FC<TimelineProps> = (props) => {
-  return <div {...props}>Timeline</div>;
-};
+interface TimelineComponent
+  extends React.ForwardRefExoticComponent<
+    TimelineProps & React.RefAttributes<HTMLDivElement>
+  > {
+  Item: typeof TimelineItem;
+}
+
+const TimelineInner = React.forwardRef<HTMLDivElement, TimelineProps>(
+  function Timeline({ overStyled = false, ...rest }, ref) {
+    const sanitizedProps = filterStylingProps(rest, overStyled);
+
+    const mergedClassNames: Partial<Record<string, string>> = {
+      root: styles.root,
+    };
+
+    const classNamesProp = (sanitizedProps as Record<string, unknown>)
+      .classNames;
+    if (
+      classNamesProp &&
+      typeof classNamesProp === "object" &&
+      !Array.isArray(classNamesProp)
+    ) {
+      const o = classNamesProp as Record<string, string>;
+      Object.keys(o).forEach((key) => {
+        if (mergedClassNames[key]) {
+          mergedClassNames[key] = `${mergedClassNames[key]} ${o[key]}`;
+        } else {
+          mergedClassNames[key] = o[key];
+        }
+      });
+    }
+
+    return (
+      <MantineTimeline
+        ref={ref}
+        classNames={mergedClassNames}
+        {...(sanitizedProps as unknown as Omit<
+          MantineTimelineProps,
+          "color" | "radius" | "bulletSize" | "lineWidth"
+        >)}
+      />
+    );
+  },
+);
+
+TimelineInner.displayName = "Timeline";
+
+export const Timeline = TimelineInner as TimelineComponent;
+Timeline.Item = TimelineItem;

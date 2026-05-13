@@ -122,6 +122,14 @@ This document tracks known issues, edge cases, missing variables, or design syst
 - **Impact:** Developers cannot use Mantine's native `loading={true}` prop to automatically show a loader.
 - **Current Resolution:** The `loading` prop is omitted from the API. Developers must explicitly pass a `<Loader />` into the `icon` prop if a loading layout is required.
 
+## Timeline
+
+### 1. Missing Avatar Bullet Size Tokens
+
+- **Description:** The `Timeline` component explicitly maps four bullet variants from the UI Kit (`default`, `icon`, `icon-alternative`, `avatar`). While the first three have explicit `--bullet-size` geometric mappings (20px, 24px, 28px), the `avatar` token provides the string `"default"` instead of a pixel density scale.
+- **Impact:** It is impossible to natively predict the spatial boundary required for an Avatar to perfectly center atop the Timeline's connector axis purely via variables.
+- **Current Resolution:** The CSS enforces a strict fallback on `avatar` variants to inherit the `default` geometry (`20px`). This ensures that Mantine's native `calc()` layout engine correctly positions the connector line. Users implementing avatars must constrain their images via CSS `width: 100%` bounds.
+
 ## Skipped Components
 
 - **Search**: Skipped because it does not exist in the underlying UI framework (Forge).
