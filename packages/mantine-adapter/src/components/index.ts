@@ -24,6 +24,7 @@ export * from "./Modal/Modal";
 export * from "./NumberInput/NumberInput";
 export * from "./Pagination/Pagination";
 export * from "./Panel/Panel";
+export * from "./Popover";
 export * from "./Radio/Radio";
 export * from "./Radio/RadioGroup";
 export * from "./ReadOnlyField";
