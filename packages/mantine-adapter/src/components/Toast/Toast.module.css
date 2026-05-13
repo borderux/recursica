@@ -23,6 +23,12 @@
   );
   gap: var(--recursica_ui-kit_components_toast_properties_spacing);
 
+  /* Hide Mantine's native colored vertical line */
+  &::before {
+    display: none;
+    content: none;
+  }
+
   & .icon {
     width: var(--recursica_ui-kit_components_toast_properties_icon) !important;
     height: var(--recursica_ui-kit_components_toast_properties_icon) !important;
