@@ -1,5 +1,11 @@
 # @recursica/adapter-common
 
+## 0.6.0
+
+### Minor Changes
+
+- 72174fc: Add MUI adapter, reworked storybook for adapter switching
+
 ## 0.5.1
 
 ### Patch Changes

@@ -1,5 +1,17 @@
 # @recursica/storybook-template
 
+## 0.5.0
+
+### Minor Changes
+
+- 72174fc: Add MUI adapter, reworked storybook for adapter switching
+
+### Patch Changes
+
+- Updated dependencies [72174fc]
+  - @recursica/recursica-postcss-vars@1.4.0
+  - @recursica/adapter-common@0.6.0
+
 ## 0.4.1
 
 ### Patch Changes

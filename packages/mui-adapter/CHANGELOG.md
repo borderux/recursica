@@ -4,6 +4,16 @@
 
 ### Minor Changes
 
+- 72174fc: Add MUI adapter, reworked storybook for adapter switching
+
+### Patch Changes
+
+- 72174fc: Updated docs and README.md links
+
+## 0.2.0
+
+### Minor Changes
+
 - 0f7ca8b: Scaffolding and Box component
 
 ## 0.0.1

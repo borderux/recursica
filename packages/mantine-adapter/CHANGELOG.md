@@ -1,5 +1,15 @@
 # @recursica/mantine-adapter
 
+## 0.18.0
+
+### Minor Changes
+
+- 72174fc: Add MUI adapter, reworked storybook for adapter switching
+
+### Patch Changes
+
+- 72174fc: Updated docs and README.md links
+
 ## 0.17.0
 
 ### Minor Changes
