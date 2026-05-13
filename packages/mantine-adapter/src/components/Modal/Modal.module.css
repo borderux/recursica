@@ -1,0 +1,127 @@
+.root {
+}
+
+.inner {
+  /* Mantine applies padding to inner to keep modal away from edges. We rely on content constraints. */
+}
+
+.content {
+  /* Geometric Bounds */
+  min-width: var(
+    --recursica_ui-kit_components_modal_properties_min-width
+  ) !important;
+  max-width: var(
+    --recursica_ui-kit_components_modal_properties_max-width
+  ) !important;
+  min-height: var(
+    --recursica_ui-kit_components_modal_properties_min-height
+  ) !important;
+
+  /* Restrict max-height to either the UI Kit max or the viewport bounds to force internal scrolling */
+  max-height: min(
+    var(--recursica_ui-kit_components_modal_properties_max-height),
+    calc(100vh - 4rem)
+  ) !important;
+  overflow: hidden !important;
+
+  /* Box model */
+  border-radius: var(
+    --recursica_ui-kit_components_modal_properties_border-radius
+  ) !important;
+  border-width: var(
+    --recursica_ui-kit_components_modal_properties_border-size
+  ) !important;
+  border-color: var(
+    --recursica_ui-kit_components_modal_colors_border-color
+  ) !important;
+  border-style: solid !important;
+
+  /* Appearance */
+  background-color: var(
+    --recursica_ui-kit_components_modal_colors_background
+  ) !important;
+  box-shadow: var(
+    --recursica_ui-kit_components_modal_properties_elevation
+  ) !important;
+
+  /* Internal Flex container to trap header and let body scroll */
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.header {
+  padding: var(--recursica_ui-kit_components_modal_properties_vertical-padding)
+    var(--recursica_ui-kit_components_modal_properties_horizontal-padding) !important;
+  background-color: transparent !important; /* Inherit from content */
+}
+
+.title {
+  /* Typography Class Injection */
+  composes: recursica_brand_typography_h2 from global;
+  color: var(--recursica_ui-kit_components_modal_colors_title) !important;
+}
+
+.bodyWrapper {
+  /* This is the container that overrides Mantine's native Body. It strips padding and acts as a flex column. */
+  padding: 0 !important;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  overflow: hidden !important;
+  min-height: 0 !important; /* Critical for flex child scrolling constraint */
+}
+
+.scrollArea {
+  padding: var(--recursica_ui-kit_components_modal_properties_vertical-padding)
+    var(--recursica_ui-kit_components_modal_properties_horizontal-padding) !important;
+
+  /* Internal scrolling */
+  flex: 1 1 auto;
+  overflow-y: auto !important;
+  min-height: 0 !important; /* Critical for flex child scrolling constraint */
+
+  /* Typography */
+  composes: recursica_brand_typography_body from global;
+  color: var(--recursica_ui-kit_components_modal_colors_content) !important;
+
+  /* Ensure button gap token is easily usable if developers use standard spacing */
+  --modal-button-gap: var(
+    --recursica_ui-kit_components_modal_properties_button-gap
+  );
+
+  /* Smooth divider transitions */
+  transition: border-color 0.15s ease;
+  border-top: var(
+      --recursica_ui-kit_components_modal_properties_scroll-divider-thickness
+    )
+    solid transparent !important;
+  border-bottom: var(
+      --recursica_ui-kit_components_modal_properties_scroll-divider-thickness
+    )
+    solid transparent !important;
+}
+
+.scrollArea[data-scrolled-top] {
+  border-top-color: var(
+    --recursica_ui-kit_components_modal_colors_scroll-divider
+  ) !important;
+}
+
+.scrollArea[data-scrolled-bottom] {
+  border-bottom-color: var(
+    --recursica_ui-kit_components_modal_colors_scroll-divider
+  ) !important;
+}
+
+.footer {
+  padding: var(--recursica_ui-kit_components_modal_properties_vertical-padding)
+    var(--recursica_ui-kit_components_modal_properties_horizontal-padding) !important;
+  background-color: transparent !important;
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--recursica_ui-kit_components_modal_properties_button-gap);
+}
+
+.close {
+  /* Inherits standard icon button tokens natively, but we can override if required */
+}
