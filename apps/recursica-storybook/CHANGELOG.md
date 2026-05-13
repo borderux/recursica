@@ -1,5 +1,17 @@
 # recursica-storybook
 
+## 0.14.0
+
+### Minor Changes
+
+- 72174fc: Add MUI adapter, reworked storybook for adapter switching
+
+### Patch Changes
+
+- Updated dependencies [72174fc]
+- Updated dependencies [72174fc]
+  - @recursica/mantine-adapter@0.18.0
+
 ## 0.13.0
 
 ### Minor Changes

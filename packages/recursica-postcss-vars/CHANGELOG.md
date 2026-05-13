@@ -1,5 +1,11 @@
 # @recursica/recursica-postcss-vars
 
+## 1.4.0
+
+### Minor Changes
+
+- 72174fc: Add MUI adapter, reworked storybook for adapter switching
+
 ## 1.3.1
 
 ### Patch Changes

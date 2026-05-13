@@ -1,5 +1,11 @@
 # @recursica/publisher
 
+## 0.21.0
+
+### Minor Changes
+
+- 72174fc: Add MUI adapter, reworked storybook for adapter switching
+
 ## 0.20.0
 
 ### Minor Changes

@@ -1,5 +1,16 @@
 # @recursica/common
 
+## 1.2.0
+
+### Minor Changes
+
+- 72174fc: Add MUI adapter, reworked storybook for adapter switching
+
+### Patch Changes
+
+- Updated dependencies [72174fc]
+  - @recursica/schemas@1.2.0
+
 ## 1.1.1
 
 ### Patch Changes
