@@ -196,9 +196,37 @@ node scripts/test-release-workflow.mjs --upload
 ]
 ```
 
-Note: Only packages with publish commands (like Figma plugins) will appear in the publish results. NPM-only packages like `@recursica/ui-kit-mantine` are handled by Changesets directly.
+Note: Only packages with publish commands (like Figma plugins) will appear in the publish results. NPM-only packages like `@recursica/mui-adapter` are handled by Changesets directly.
 
 ## Error Handling
+
+### First-Time Package Publishing (404/401 Errors)
+
+When publishing a completely new scoped package for the first time via CI or Changesets, NPM may fail with a `404 Not Found` or `401 Unauthorized` error. This happens because granular access tokens (OIDC) cannot be pre-scoped to packages that don't exist yet, and local `.npmrc` files intended for CI may interfere with local authentication.
+
+To successfully publish a new package for the first time:
+
+1. Temporarily bypass the CI `.npmrc` file in the root of the monorepo by renaming it:
+   ```bash
+   mv .npmrc .npmrc.bak
+   ```
+2. Navigate to your new package directory and authenticate globally:
+   ```bash
+   cd packages/my-new-package
+   npm login
+   ```
+3. Publish the package manually with public access:
+   ```bash
+   npm publish --access public
+   ```
+4. Restore the original `.npmrc` file so CI continues working:
+   ```bash
+   cd ../..
+   mv .npmrc.bak .npmrc
+   ```
+5. Finally, go to the NPM registry website to configure Provenance/OIDC for your new package and add it to your CI's Granular Access Token scope.
+
+### General Errors
 
 - **No packages to publish**: Scripts exit with code 0 and show info message
 - **Missing zip files**: Upload script skips missing files and reports errors
