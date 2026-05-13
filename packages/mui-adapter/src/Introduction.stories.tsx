@@ -1,4 +1,8 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
+import type { Meta } from "@storybook/react-vite";
+import { AdaptersContent, MuiLogo } from "@recursica/storybook-template";
+import { Button } from "./components/Button/Button";
+import { VersionInfo } from "./Version";
+import { OverStylingInfo } from "./OverStyling";
 
 const DOCS_URL = "https://recursica.com";
 const FORGE_URL = "https://forge.recursica.com";
@@ -30,14 +34,72 @@ const linkStyle: React.CSSProperties = {
 function IntroductionContent() {
   return (
     <div style={{ padding: 24, maxWidth: 640 }}>
-      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 16 }}>
-        Recursica Design System
-      </h1>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "16px",
+          marginBottom: "16px",
+        }}
+      >
+        <MuiLogo width={40} height={40} />
+        <div>
+          <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>
+            Recursica Design System (MUI Adapter)
+          </h1>
+          <a
+            href="https://mui.com"
+            target="_blank"
+            rel="noreferrer"
+            style={linkStyle}
+          >
+            mui.com
+          </a>
+        </div>
+      </div>
       <p style={{ ...bodyStyle, marginBottom: 24 }}>
-        This Storybook showcases the Recursica design system: design tokens,
-        theme (brand) configuration, and UI components. Use the sidebar to
-        explore each section.
+        This Storybook showcases the Recursica design system implemented for the{" "}
+        <strong>Material UI (MUI) Kit</strong>. It provides reusable components
+        that map our design tokens to MUI's robust component layer.
       </p>
+
+      <section style={sectionStyle}>
+        <h2 style={headingStyle}>Looking for another UI Kit?</h2>
+        <p style={bodyStyle}>
+          Are you using a different UI Kit (like Mantine)? Recursica provides
+          multiple adapters for different frameworks.
+        </p>
+        <div style={{ marginTop: "16px" }}>
+          <Button
+            href="./?path=/story/introduction--adapters"
+            target="_parent"
+            variant="solid"
+          >
+            View Supported Adapters
+          </Button>
+        </div>
+      </section>
+
+      <section style={sectionStyle}>
+        <h2 style={headingStyle}>Installation</h2>
+        <p style={bodyStyle}>
+          To install the MUI adapter in your project, run:
+        </p>
+        <pre
+          style={{
+            padding: 12,
+            backgroundColor: "#f5f5f5",
+            borderRadius: 6,
+            fontSize: 13,
+            marginTop: 8,
+          }}
+        >
+          <code>
+            npm install @recursica/mui-adapter @mui/material @emotion/react
+            @emotion/styled
+          </code>
+        </pre>
+      </section>
 
       <section style={sectionStyle}>
         <h2 style={headingStyle}>Tokens</h2>
@@ -55,15 +117,6 @@ function IntroductionContent() {
           dimensions, and layout grids are defined here. Theme uses the tokens
           and exposes both CSS variables and helper classes (e.g. typography
           classes) for consistent styling across the product.
-        </p>
-      </section>
-
-      <section style={sectionStyle}>
-        <h2 style={headingStyle}>UI Kit</h2>
-        <p style={bodyStyle}>
-          Reusable components (buttons, layers, etc.) that consume the theme and
-          tokens. Use these as the building blocks for application UIs while
-          staying on-brand.
         </p>
       </section>
 
@@ -103,12 +156,25 @@ function IntroductionContent() {
 }
 
 const meta = {
-  title: "Introduction/Default",
+  title: "Introduction",
 } satisfies Meta;
 
 export default meta;
-type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {
+export const Welcome = {
   render: () => <IntroductionContent />,
+};
+
+export const Adapters = {
+  render: () => <AdaptersContent />,
+};
+
+export const OverStyling = {
+  name: "Over Styling",
+  render: () => <OverStylingInfo />,
+};
+
+export const VersionInfoStory = {
+  name: "Version Info",
+  render: () => <VersionInfo />,
 };
