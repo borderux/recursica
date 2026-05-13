@@ -2,8 +2,12 @@ import { forwardRef } from "react";
 import {
   Stack as MantineStack,
   type StackProps as MantineStackProps,
+  createPolymorphicComponent,
 } from "@mantine/core";
-import { type RecursicaSpacing } from "../../utils/filterStylingProps";
+import {
+  type RecursicaSpacing,
+  mapLayoutProps,
+} from "../../utils/filterStylingProps";
 import styles from "./Stack.module.css";
 
 export interface RecursicaStackProps {
@@ -23,7 +27,7 @@ export interface RecursicaStackProps {
  */
 export type StackProps = MantineStackProps & RecursicaStackProps;
 
-export const Stack = forwardRef<HTMLDivElement, StackProps>(function Stack(
+const _Stack = forwardRef<HTMLDivElement, StackProps>(function Stack(
   { children, gap = "rec-default", ...rest },
   ref,
 ) {
@@ -51,12 +55,12 @@ export const Stack = forwardRef<HTMLDivElement, StackProps>(function Stack(
       ref={ref}
       className={finalClass}
       classNames={mergedClassNames}
-      gap={gap}
-      {...rest}
+      {...mapLayoutProps({ gap, ...rest } as Record<string, unknown>)}
     >
       {children}
     </MantineStack>
   );
 });
+_Stack.displayName = "Stack";
 
-Stack.displayName = "Stack";
+export const Stack = createPolymorphicComponent<"div", StackProps>(_Stack);

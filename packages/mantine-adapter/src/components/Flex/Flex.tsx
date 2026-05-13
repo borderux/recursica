@@ -4,7 +4,10 @@ import {
   type FlexProps as MantineFlexProps,
   createPolymorphicComponent,
 } from "@mantine/core";
-import { type RecursicaSpacing } from "../../utils/filterStylingProps";
+import {
+  type RecursicaSpacing,
+  mapLayoutProps,
+} from "../../utils/filterStylingProps";
 import styles from "./Flex.module.css";
 
 export interface RecursicaFlexProps {
@@ -27,7 +30,7 @@ export interface RecursicaFlexProps {
 export type FlexProps = MantineFlexProps & RecursicaFlexProps;
 
 const _Flex = forwardRef<HTMLDivElement, FlexProps>(function Flex(
-  { children, gap = "rec-default", ...rest },
+  { children, gap = "rec-default", rowGap, columnGap, ...rest },
   ref,
 ) {
   const mergedClassNames: Partial<Record<string, string>> = {
@@ -54,8 +57,10 @@ const _Flex = forwardRef<HTMLDivElement, FlexProps>(function Flex(
       ref={ref}
       className={finalClass}
       classNames={mergedClassNames}
-      gap={gap}
-      {...rest}
+      {...mapLayoutProps({ gap, rowGap, columnGap, ...rest } as Record<
+        string,
+        unknown
+      >)}
     >
       {children}
     </MantineFlex>

@@ -17,9 +17,10 @@ This guide outlines how human developers and AI agents should consume the `mui-a
 Before consuming the components, the application must be properly integrated with Recursica design tokens.
 
 1. **Export Theme Files**: The developer must export their first theme files from [Forge Recursica](https://forge.recursica.com) into the repository. This will generate the required `recursica_variables_scoped.css` and associated JSON files.
-2. **Integrate CSS**: The generated `recursica_variables_scoped.css` must be integrated into the application (typically in a root file like `App.tsx` or `main.tsx`). **It must be included after the MUI CSS imports.**
-3. **Configure PostCSS (Optional but Recommended)**: The `recursica-postcss-plugin` should be incorporated to help manage changes to Recursica CSS.
-4. **Integrate Fonts**: Fonts used in Recursica need to be integrated into the application. The specific method is left up to the developer, but the recommended approach is to use Google Fonts as CSS imports.
+2. **Configure MUI's CSS Injection Order**: Because the Recursica UI components use native CSS modules, they must be given a higher priority than MUI's default engine styles to properly apply design tokens without relying on `!important` tags or specificity hacks. You **must** wrap your application in `<StyledEngineProvider injectFirst>`.
+3. **Integrate CSS**: The generated `recursica_variables_scoped.css` must be integrated into the application (typically in a root file like `App.tsx` or `main.tsx`). **It must be included after any baseline MUI setups (like `<CssBaseline />`).**
+4. **Configure PostCSS (Optional but Recommended)**: The `recursica-postcss-plugin` should be incorporated to help manage changes to Recursica CSS.
+5. **Integrate Fonts**: Fonts used in Recursica need to be integrated into the application. The specific method is left up to the developer, but the recommended approach is to use Google Fonts as CSS imports.
 
 Example Font Integration:
 
@@ -35,13 +36,13 @@ All UI components should be imported directly from the `mui-adapter`.
 import { Button, Stack, Container } from "@recursica/mui-adapter";
 ```
 
-**Rule:** Do NOT import components directly from `@mui/core` unless a specific exception has been documented (e.g. `Alert`, which has no planned Recursica equivalent). If you need a standard component, always check the adapter first.
+**Rule:** Do NOT import components directly from `@mui/material` unless a specific exception has been documented (e.g. `Alert`, which has no planned Recursica equivalent). If you need a standard component, always check the adapter first.
 
 ## 3. Passing Design Tokens & Layout Constraints
 
 Our components strictly separate logical structural layouts from visual design tokens.
 
-- **DO NOT** try to inject arbitrary styling objects, generic padding/margin properties (`p`, `bg`, `fw`), or custom `classNames` directly into component JSX. The components use `filterStylingProps` to actively strip these out.
+- **DO NOT** try to inject arbitrary styling objects, generic MUI styling properties (`sx`), or custom `className` strings directly into component JSX. The components use `filterStylingProps` to actively strip these out.
 - **DO** use the defined logical layout properties (like `gap`, `margin`, `mt`, etc.).
 - When passing sizes to layout wrappers (like `Stack`, `Flex`, `Group`, `Container`), use the `rec-` prefixed sizes explicitly mapped in the library (e.g., `"rec-sm"`, `"rec-default"`, `"rec-md"`, `"rec-lg"`, `"rec-xl"`).
 
@@ -50,7 +51,7 @@ Our components strictly separate logical structural layouts from visual design t
 If you encounter an absolute necessity to break out of the design system (e.g., a highly custom one-off hero section where a button needs an arbitrary height and custom background), you must pass `overStyled={true}`.
 
 ```tsx
-<Button overStyled={true} bg="red" h={120}>
+<Button overStyled={true} style={{ backgroundColor: "red", height: 120 }}>
   Custom Button
 </Button>
 ```

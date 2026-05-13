@@ -1,20 +1,14 @@
-import {
-  Container,
-  Paper,
-  Typography as Text,
-  Divider,
-  Stack,
-  Box,
-} from "@mui/material";
+import { Paper, Divider } from "@mui/material";
+import { Container, Stack, Box, Text, Title } from "./components";
 import { Button } from "./components/Button/Button";
 
 export const OverStylingInfo = () => {
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
+    <Container size="md" style={{ padding: "32px 0" }}>
       <Paper variant="outlined" sx={{ p: 4, borderRadius: 2 }}>
-        <Text variant="h4" mb={2}>
+        <Title order={4} mb={2}>
           Over Styling (<code>overStyled</code>)
-        </Text>
+        </Title>
         <Text mb={2}>
           By default, all Recursica components are strictly sandboxed. This
           means they are protected against arbitrary styling configurations
@@ -31,9 +25,9 @@ export const OverStylingInfo = () => {
           <code>overStyled={`{true}`}</code>.
         </Text>
 
-        <Text variant="h6" mb={1} mt={4}>
+        <Title order={6} mb={1} mt={4}>
           The Core Philosophy
-        </Text>
+        </Title>
         <Text mb={1}>
           **You should not over-style components.** Using{" "}
           <code>overStyled</code> explicitly signifies that you are breaking
@@ -77,9 +71,9 @@ export const OverStylingInfo = () => {
 
         <Divider sx={{ mb: 4 }} />
 
-        <Text variant="h6" mb={1}>
+        <Title order={6} mb={1}>
           Permitted Layout Properties
-        </Text>
+        </Title>
         <Text mb={1}>
           Unlike deep styling bounds (colors, typography, padding, dimensions),
           external <strong>layout spacing properties</strong> like Margins (
@@ -113,7 +107,7 @@ export const OverStylingInfo = () => {
             </Text>
           </li>
         </Box>
-        <Text mb={1} sx={{ fontWeight: 500 }}>
+        <Text mb={1} overStyled sx={{ fontWeight: 500 }}>
           Available Recursica Layout Tokens:
         </Text>
         <Box component="ul" sx={{ pl: 4, mb: 4 }}>
@@ -156,9 +150,9 @@ export const OverStylingInfo = () => {
 
         <Divider sx={{ mb: 4 }} />
 
-        <Text variant="h6" mb={1}>
+        <Title order={6} mb={1}>
           Primitive Layout Components Exemption
-        </Text>
+        </Title>
         <Text mb={1}>
           Unlike complex UI components (Buttons, Tabs, Inputs) which are
           strictly protected, <strong>Primitive Layout Components</strong> (
@@ -178,9 +172,9 @@ export const OverStylingInfo = () => {
 
         <Divider sx={{ mb: 4 }} />
 
-        <Text variant="h6" mb={2}>
+        <Title order={6} mb={2}>
           Live Example
-        </Text>
+        </Title>
         <Text mb={4}>
           Below is a side-by-side comparison. The first is a standard Recursica
           Button protected by the design tokens mapping. The second flagrantly
@@ -188,26 +182,27 @@ export const OverStylingInfo = () => {
           styling generics to punch right through the sandbox layout.
         </Text>
 
-        <Stack direction="row" spacing={4}>
+        <Stack direction="row" gap="rec-default">
           <Box>
             <Text
               variant="caption"
+              overStyled
               sx={{ color: "text.secondary", mb: 1, display: "block" }}
             >
               Strict Baseline (Default)
             </Text>
-            {/* Note: In mui-adapter, Button is currently a stub so we just pass standard React props */}
             <Button>Standard UI Kit Button</Button>
           </Box>
           <Box>
             <Text
               variant="caption"
+              overStyled
               sx={{ color: "text.secondary", mb: 1, display: "block" }}
             >
               overStyled={`{true}`}
             </Text>
-            {/* Note: Button props are just standard HTML div props for the stub */}
             <Button
+              overStyled={true}
               style={{
                 backgroundColor: "pink",
                 color: "black",

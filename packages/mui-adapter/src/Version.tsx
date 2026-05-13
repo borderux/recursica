@@ -1,43 +1,36 @@
 import ReactMarkdown from "react-markdown";
-import {
-  Container,
-  Paper,
-  Title,
-  TypographyStylesProvider,
-  Group,
-  Anchor,
-  Divider,
-} from "@mantine/core";
+import { Paper, Divider } from "@mui/material";
+import { Container, Title, Group, Link, Box } from "./components";
 import pkg from "../package.json";
 import changelog from "../CHANGELOG.md?raw";
 
 export const VersionInfo = () => {
   return (
-    <Container size="md" py="xl">
-      <Paper withBorder p="xl" radius="md">
-        <Title order={1} mb="xs">
-          Mantine Adapter v{pkg.version}
+    <Container size="md" style={{ padding: "32px 0" }}>
+      <Paper variant="outlined" sx={{ p: 4, borderRadius: 2 }}>
+        <Title order={1} mb={1}>
+          MUI Adapter v{pkg.version}
         </Title>
-        <Group mb="xl" gap="md">
-          <Anchor
+        <Group mb={4} gap="rec-md">
+          <Link
             href="https://github.com/borderux/recursica"
             target="_blank"
             rel="noopener noreferrer"
           >
             GitHub Repository
-          </Anchor>
-          <Anchor
+          </Link>
+          <Link
             href="https://recursica.com"
             target="_blank"
             rel="noopener noreferrer"
           >
             Documentation & Website
-          </Anchor>
+          </Link>
         </Group>
-        <Divider mb="xl" />
-        <TypographyStylesProvider>
+        <Divider sx={{ mb: 4 }} />
+        <Box className="markdown-body">
           <ReactMarkdown>{changelog}</ReactMarkdown>
-        </TypographyStylesProvider>
+        </Box>
       </Paper>
     </Container>
   );

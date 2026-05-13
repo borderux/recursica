@@ -3,7 +3,10 @@ import {
   Group as MantineGroup,
   type GroupProps as MantineGroupProps,
 } from "@mantine/core";
-import { type RecursicaSpacing } from "../../utils/filterStylingProps";
+import {
+  type RecursicaSpacing,
+  mapLayoutProps,
+} from "../../utils/filterStylingProps";
 import styles from "./Group.module.css";
 
 export interface RecursicaGroupProps {
@@ -53,8 +56,7 @@ export const Group = forwardRef<HTMLDivElement, GroupProps>(function Group(
       ref={ref}
       className={finalClass}
       classNames={mergedClassNames}
-      gap={gap}
-      {...rest}
+      {...mapLayoutProps({ gap, ...rest } as Record<string, unknown>)}
     >
       {children}
     </MantineGroup>

@@ -134,3 +134,11 @@ This document tracks known issues, edge cases, missing variables, or design syst
 
 - **Search**: Skipped because it does not exist in the underlying UI framework (Forge).
 - **Popover**: Skipped because it does not exist in the underlying UI framework (Forge).
+
+## Missing the Code component
+
+- **Description:** The Code component is missing from the codebase. It should be added as a new component that wraps the Mantine Code component.
+
+## Missing the List component
+
+- **Description:** The List component is missing from the codebase. It should be added as a new component that wraps the Mantine List component.

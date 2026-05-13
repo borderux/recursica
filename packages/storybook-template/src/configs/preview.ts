@@ -75,5 +75,8 @@ export const createPreviewConfig = (options: PreviewConfigOptions): Preview => {
     parameters,
     decorators,
     globalTypes: {},
+    argTypes: {
+      defaultChecked: { table: { disable: true } },
+    },
   };
 };

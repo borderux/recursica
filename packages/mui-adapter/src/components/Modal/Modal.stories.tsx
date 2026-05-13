@@ -6,6 +6,25 @@ const meta: Meta<typeof Modal> = {
   title: "UI-Kit/🚧 Modal",
   component: Modal,
   tags: ["autodocs"],
+  parameters: {
+    controls: {
+      include: [
+        "layer",
+        "withLayer",
+        "children",
+        "component",
+        "variant",
+        "size",
+        "icon",
+        "disabled",
+        "href",
+        "onClick",
+        "onChange",
+        "value",
+        "checked",
+      ],
+    },
+  },
 };
 
 export default meta;

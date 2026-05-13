@@ -6,6 +6,25 @@ const meta: Meta<typeof Menu> = {
   title: "UI-Kit/🚧 Menu",
   component: Menu,
   tags: ["autodocs"],
+  parameters: {
+    controls: {
+      include: [
+        "layer",
+        "withLayer",
+        "children",
+        "component",
+        "variant",
+        "size",
+        "icon",
+        "disabled",
+        "href",
+        "onClick",
+        "onChange",
+        "value",
+        "checked",
+      ],
+    },
+  },
 };
 
 export default meta;

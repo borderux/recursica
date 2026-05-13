@@ -6,6 +6,25 @@ const meta: Meta<typeof Flex> = {
   title: "UI-Kit/🚧 Flex",
   component: Flex,
   tags: ["autodocs"],
+  parameters: {
+    controls: {
+      include: [
+        "layer",
+        "withLayer",
+        "children",
+        "component",
+        "variant",
+        "size",
+        "icon",
+        "disabled",
+        "href",
+        "onClick",
+        "onChange",
+        "value",
+        "checked",
+      ],
+    },
+  },
 };
 
 export default meta;
