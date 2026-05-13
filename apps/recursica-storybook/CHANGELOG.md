@@ -1,5 +1,16 @@
 # recursica-storybook
 
+## 0.16.0
+
+### Minor Changes
+
+- 3756d7b: Cleaned up stories and added layout stories to mui-adapter
+
+### Patch Changes
+
+- Updated dependencies [3756d7b]
+  - @recursica/mantine-adapter@0.20.0
+
 ## 0.15.0
 
 ### Minor Changes
