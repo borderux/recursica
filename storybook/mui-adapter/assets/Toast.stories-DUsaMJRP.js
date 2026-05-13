@@ -1,0 +1,3 @@
+import{j as a}from"./iframe-DORCsje-.js";import{T as s}from"./Toast-Dc6czzEI.js";import{p as n}from"./index-OGyte3Iz.js";import"./preload-helper-Dp1pzeXC.js";const d={title:"UI-Kit/🚧 Toast",component:s,tags:["autodocs"],parameters:{controls:{include:["layer","withLayer","children","component","variant","size","icon","disabled","href","onClick","onChange","value","checked"]}}},e={render:()=>a.jsx(n,{componentName:"Toast"})};var o,r,t;e.parameters={...e.parameters,docs:{...(o=e.parameters)==null?void 0:o.docs,source:{originalSource:`{
+  render: () => <ComingSoon componentName="Toast" />
+}`,...(t=(r=e.parameters)==null?void 0:r.docs)==null?void 0:t.source}}};const l=["Default"];export{e as Default,l as __namedExportsOrder,d as default};

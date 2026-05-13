@@ -1,0 +1,3 @@
+import{j as t}from"./iframe-DORCsje-.js";import{L as n}from"./Loader-BbJqGzWo.js";import{p as s}from"./index-OGyte3Iz.js";import"./preload-helper-Dp1pzeXC.js";const p={title:"UI-Kit/🚧 Loader",component:n,tags:["autodocs"],parameters:{controls:{include:["layer","withLayer","children","component","variant","size","icon","disabled","href","onClick","onChange","value","checked"]}}},e={render:()=>t.jsx(s,{componentName:"Loader"})};var o,r,a;e.parameters={...e.parameters,docs:{...(o=e.parameters)==null?void 0:o.docs,source:{originalSource:`{
+  render: () => <ComingSoon componentName="Loader" />
+}`,...(a=(r=e.parameters)==null?void 0:r.docs)==null?void 0:a.source}}};const l=["Default"];export{e as Default,l as __namedExportsOrder,p as default};

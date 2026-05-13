@@ -1,0 +1,3 @@
+import{j as t}from"./iframe-DORCsje-.js";import{C as n}from"./Card-Cv5RfbPr.js";import{p as s}from"./index-OGyte3Iz.js";import"./preload-helper-Dp1pzeXC.js";const p={title:"UI-Kit/🚧 Card",component:n,tags:["autodocs"],parameters:{controls:{include:["layer","withLayer","children","component","variant","size","icon","disabled","href","onClick","onChange","value","checked"]}}},e={render:()=>t.jsx(s,{componentName:"Card"})};var r,o,a;e.parameters={...e.parameters,docs:{...(r=e.parameters)==null?void 0:r.docs,source:{originalSource:`{
+  render: () => <ComingSoon componentName="Card" />
+}`,...(a=(o=e.parameters)==null?void 0:o.docs)==null?void 0:a.source}}};const l=["Default"];export{e as Default,l as __namedExportsOrder,p as default};
