@@ -1,5 +1,11 @@
 # @recursica/mantine-adapter
 
+## 0.19.0
+
+### Minor Changes
+
+- f37c089: Added Modal, Timeline, and Toast
+
 ## 0.18.0
 
 ### Minor Changes
