@@ -42,6 +42,6 @@ export * from "./TextField/TextField";
 export * from "./TimePicker/TimePicker";
 export * from "./Timeline/Timeline";
 export * from "./Title/Title";
-export * from "./Toast/Toast";
+export * from "./Toast";
 export * from "./Tooltip/Tooltip";
 export * from "./TransferList/TransferList";

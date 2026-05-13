@@ -108,6 +108,20 @@ This document tracks known issues, edge cases, missing variables, or design syst
 - **Impact:** We cannot construct an exact 1-to-1 visual parity if design expects the arrows to have custom dividers or standalone highlight states.
 - **Current Resolution:** The controls have had their default borders stripped out to float seamlessly inside the main input wrapper, and they inherit generic icon tokens, but complex hover background mappings rely on native Mantine fallback states.
 
+## Toast
+
+### 1. Missing Error and Success Variants
+
+- **Description:** The `Toast` component was originally scoped to have `error` and `success` visual variants mapped from design tokens. For now, we only support the `default` variant.
+- **Impact:** Developers cannot natively trigger "error" or "success" semantic toasts through the wrapper.
+- **Current Resolution:** We've temporarily removed the `variant` support from the codebase. These variants should be added later.
+
+### 2. Missing Loading State Tokens
+
+- **Description:** The `Toast` component does not natively map a `loading` property because there are no Figma tokens for a loader size/color strictly bounded inside a toast.
+- **Impact:** Developers cannot use Mantine's native `loading={true}` prop to automatically show a loader.
+- **Current Resolution:** The `loading` prop is omitted from the API. Developers must explicitly pass a `<Loader />` into the `icon` prop if a loading layout is required.
+
 ## Skipped Components
 
 - **Search**: Skipped because it does not exist in the underlying UI framework (Forge).
