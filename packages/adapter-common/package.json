@@ -4,6 +4,7 @@
   "private": false,
   "homepage": "https://github.com/borderux/recursica/tree/main/packages/adapter-common",
   "author": "hi@borderux.com",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/borderux/recursica/issues"
   },
