@@ -30,7 +30,7 @@
     background-color: transparent !important; /* Remove Mantine's native circle background */
 
     color: var(
-      --recursica_ui-kit_components_toast_variants_styles_default_properties_colors_icon
+      --recursica_ui-kit_components_toast_variants_styles_default_properties_colors_text
     );
   }
 
