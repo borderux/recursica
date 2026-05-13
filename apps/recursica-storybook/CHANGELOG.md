@@ -1,5 +1,16 @@
 # recursica-storybook
 
+## 0.15.0
+
+### Minor Changes
+
+- f37c089: Added Modal, Timeline, and Toast
+
+### Patch Changes
+
+- Updated dependencies [f37c089]
+  - @recursica/mantine-adapter@0.19.0
+
 ## 0.14.0
 
 ### Minor Changes
