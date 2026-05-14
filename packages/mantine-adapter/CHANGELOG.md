@@ -1,5 +1,11 @@
 # @recursica/mantine-adapter
 
+## 0.21.0
+
+### Minor Changes
+
+- 53682cb: Updated Button to support loading
+
 ## 0.20.0
 
 ### Minor Changes
