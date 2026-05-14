@@ -20,6 +20,30 @@ const meta: Meta<ButtonStoryProps> = {
       options: ["default", "small"],
       description: "The size of the button",
     },
+    loading: {
+      control: "boolean",
+      description: "Sets the button to a loading state",
+    },
+    useRecursicaLoader: {
+      control: "boolean",
+      description:
+        "Use the Recursica Loader component instead of the default Mantine loader",
+    },
+    loaderVariant: {
+      control: "select",
+      options: ["oval", "bars", "dots"],
+      description: "The visual variant of the Recursica Loader",
+    },
+    loaderSize: {
+      control: "select",
+      options: [undefined, "sm", "md", "lg", "small", "default", "large"],
+      description: "The size variant for the loader",
+    },
+  },
+  args: {
+    useRecursicaLoader: true,
+    loaderVariant: "oval",
+    loaderSize: undefined,
   },
 };
 
@@ -125,4 +149,21 @@ export const TruncatedLabel: Story = {
       <Button {...args} />
     </div>
   ),
+};
+
+export const Loading: Story = {
+  args: {
+    children: "Saving Changes",
+    variant: "solid",
+    size: "default",
+    loading: true,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "When `loading={true}` is applied, the Button injects the Recursica `<Loader />` component. Per Recursica design rules, placing a Button in a loading state automatically forces the `disabled={true}` state on the underlying element. This ensures the button immediately receives the brand theme disabled opacities without relying solely on semantic logic.",
+      },
+    },
+  },
 };
