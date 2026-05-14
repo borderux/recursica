@@ -43,3 +43,19 @@ Mantine's `.mantine-Button-label` flex centering breaks primitive truncation log
 ## Disabled state: brand theme opacity (implicit)
 
 **Decision:** The UI kit enforces global brand theme disabled opacities. The `.root:disabled` logic implicitly overrides visibility locally via `var(--recursica_brand_states_disabled)`.
+
+---
+
+## Loader color contrast
+
+**Decision:** When a Button is in a loading state, the `Recursica Loader` component is injected. The `Loader` component strictly defines its own colors and styles per variant, meaning it does not inherit the text color (`currentColor`) from the Button.
+
+**Constraint:** This can lead to contrast issues (e.g., a blue dots loader inside a solid blue button). Design has explicitly decided not to address this at the moment. As such, developers using the `loading` prop must be aware that the loader's color is fixed by its internal tokens, not by the button's context.
+
+---
+
+## Loading state enforces disabled state
+
+**Decision:** When `loading={true}` is passed to the Button, the component explicitly forces `disabled={true}` natively on the underlying element.
+
+**Implementation:** This ensures that loading buttons automatically inherit the brand theme disabled opacities (via the `:disabled` CSS pseudo-class) rather than relying solely on Mantine's native `data-disabled` dataset logic, which may not trigger the strict visual fade required by the Recursica design system.

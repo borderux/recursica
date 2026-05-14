@@ -36,10 +36,14 @@
 }
 
 /* Internal Mantine reset & layout logic for Truncation */
-.root > * {
+.root > *:not(.loader) {
   min-width: 0;
   position: relative;
   z-index: 1;
+}
+
+.loader {
+  /* Mantine absolutely positions this; we just need a hook to exclude it from the child reset */
 }
 
 .label {

@@ -40,6 +40,12 @@ This document tracks known issues, edge cases, missing variables, or design syst
 - **Impact:** Developers cannot force buttons to visually stretch 100% width inline natively using component overrides.
 - **Current Resolution:** We actively omit `fullWidth` from the native abstract. Developers should wrap components with flex grids or column lists rather than independently stretching boundary layouts.
 
+### 2. Loader Color Contrast
+
+- **Description:** When using `useRecursicaLoader={true}` (the default), the injected `Recursica Loader` strictly defines its colors and styles per variant. It does not inherit the Button's `currentColor`.
+- **Impact:** This can cause poor contrast if a specific loader variant happens to match the button's background color (e.g., a blue dots loader on a solid blue button).
+- **Current Resolution:** **OPEN ISSUE**. Design has decided not to consider this contrast context at the moment. There is no automated fix to invert or inherit colors inside the loader itself. Developers must manually toggle `useRecursicaLoader={false}` to fall back to the native Mantine loader if they encounter contrast issues they cannot resolve.
+
 ## Label
 
 ### 1. Edit Icon UX Paradigm Ambiguity

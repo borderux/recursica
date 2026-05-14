@@ -1,4 +1,6 @@
 import React, { forwardRef } from "react";
+import { Loader } from "../Loader/Loader";
+import type { RecursicaLoaderProps } from "../Loader/Loader";
 import {
   Button as MantineButton,
   type ButtonProps as MantineButtonProps,
@@ -11,9 +13,18 @@ import {
 import styles from "./Button.module.css";
 
 export interface RecursicaButtonProps {
+  /** The visual style variant of the button */
   variant?: "solid" | "outline" | "text";
+  /** The size of the button */
   size?: "default" | "small";
+  /** An optional icon element to display to the left of the button text. Replaces Mantine's leftSection. */
   icon?: React.ReactNode;
+  /** Which Recursica Loader variant to use */
+  loaderVariant?: RecursicaLoaderProps["variant"];
+  /** The size variant for the loader */
+  loaderSize?: RecursicaLoaderProps["size"];
+  /** Whether to use the Recursica loader or fallback to the Mantine loader */
+  useRecursicaLoader?: boolean;
 }
 
 export type ButtonProps = RecursicaOverStyled<
@@ -34,6 +45,9 @@ const _Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
     icon,
     children,
     overStyled = false,
+    loaderVariant = "oval",
+    loaderSize,
+    useRecursicaLoader = true,
     ...rest
   },
   ref,
@@ -75,6 +89,7 @@ const _Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
     root: styles.root,
     section: styles.section,
     label: styles.label,
+    loader: styles.loader,
   };
 
   const classNamesProp = restRecord.classNames;
@@ -94,6 +109,21 @@ const _Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
     ? `${styles.root} ${classNameProp}`
     : styles.root;
 
+  const userLoaderProps = restRecord.loaderProps as
+    | Record<string, any>
+    | undefined;
+
+  const resolvedLoaderSize =
+    loaderSize ?? (size === "small" ? "small" : "default");
+
+  let mergedLoaderProps = userLoaderProps;
+  if (useRecursicaLoader) {
+    mergedLoaderProps = {
+      children: <Loader variant={loaderVariant} size={resolvedLoaderSize} />,
+      ...userLoaderProps,
+    };
+  }
+
   return (
     <MantineButton
       ref={ref}
@@ -101,6 +131,7 @@ const _Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
       classNames={mergedClassNames}
       variant={mapVariant[variant]}
       size={mapSize[size]}
+      loaderProps={mergedLoaderProps}
       leftSection={
         icon != null ? (
           <span className={styles.iconWrapper} aria-hidden>
@@ -112,6 +143,7 @@ const _Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
       data-size={size}
       {...(isIconOnly ? { "data-icon-only": "" } : {})}
       {...sanitizedProps}
+      disabled={!!restRecord.disabled || !!restRecord.loading}
     >
       <span className={styles.labelText}>{children}</span>
     </MantineButton>
