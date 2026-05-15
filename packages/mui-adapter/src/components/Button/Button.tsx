@@ -1,4 +1,6 @@
 import React, { forwardRef } from "react";
+import { Loader } from "../Loader/Loader";
+import type { RecursicaLoaderProps } from "../Loader/Loader";
 import {
   Button as MuiButton,
   type ButtonProps as MuiButtonProps,
@@ -17,6 +19,12 @@ export interface RecursicaButtonProps {
    * For polymorphic support (e.g., `component="a"`), native to MUI.
    */
   component?: React.ElementType;
+  /** Which Recursica Loader variant to use */
+  loaderVariant?: RecursicaLoaderProps["variant"];
+  /** The size variant for the loader */
+  loaderSize?: RecursicaLoaderProps["size"];
+  /** Whether to use the Recursica loader or fallback to the Mantine loader */
+  useRecursicaLoader?: boolean;
 }
 
 export type ButtonProps = RecursicaOverStyled<
@@ -54,6 +62,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       icon,
       children,
       overStyled = false,
+      loaderVariant = "oval",
+      loaderSize,
+      useRecursicaLoader = true,
       ...rest
     },
     ref,
@@ -91,12 +102,24 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     // However, Mui Button requires some string, but we can just leave it as standard or ignore since
     // our CSS resets its properties anyway, but to be clean we just don't pass variant to MUI.
 
+    const resolvedLoaderSize =
+      loaderSize ?? (size === "small" ? "small" : "default");
+
+    let loadingIndicator = restRecord.loadingIndicator as React.ReactNode;
+    if (useRecursicaLoader) {
+      loadingIndicator = (
+        <Loader variant={loaderVariant} size={resolvedLoaderSize} />
+      );
+    }
+
     return (
       <MuiButton
         ref={ref}
         disableRipple
         disableElevation
         className={finalClass}
+        loading={!!restRecord.loading}
+        loadingIndicator={loadingIndicator}
         startIcon={
           icon != null ? (
             <span className={styles.iconWrapper} aria-hidden>
@@ -107,7 +130,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         data-variant={variant}
         data-size={size}
         {...(isIconOnly ? { "data-icon-only": "" } : {})}
+        {...(restRecord.loading ? { "data-loading": "true" } : {})}
         {...sanitizedProps}
+        disabled={!!restRecord.disabled || !!restRecord.loading}
       >
         <span className={styles.labelText}>{children}</span>
       </MuiButton>

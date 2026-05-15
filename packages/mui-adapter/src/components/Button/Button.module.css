@@ -44,7 +44,7 @@
 }
 
 /* Internal layout logic for Truncation */
-.root > * {
+.root > *:not(:global(.MuiButton-loadingIndicator)) {
   min-width: 0;
   position: relative;
   z-index: 1;
@@ -65,6 +65,49 @@
   white-space: nowrap;
   font-size: inherit;
   line-height: inherit;
+}
+.root[data-loading="true"] .labelText {
+  visibility: hidden;
+}
+
+/* 
+ * Keep the loader fully opaque, but make the background transparent 
+ * to create contrast for solid variants without changing the loader color. 
+ */
+.root[data-loading="true"] {
+  opacity: 1 !important;
+}
+
+.root[data-size="default"][data-variant="solid"][data-loading="true"] {
+  background-color: color-mix(
+    in srgb,
+    var(
+        --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_background
+      )
+      calc(
+        var(
+            --recursica_ui-kit_components_button_variants_sizes_default_properties_disabled-opacity
+          ) *
+          100%
+      ),
+    transparent
+  ) !important;
+}
+
+.root[data-size="small"][data-variant="solid"][data-loading="true"] {
+  background-color: color-mix(
+    in srgb,
+    var(
+        --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_background
+      )
+      calc(
+        var(
+            --recursica_ui-kit_components_button_variants_sizes_small_properties_disabled-opacity
+          ) *
+          100%
+      ),
+    transparent
+  ) !important;
 }
 
 /* ==== SIZES ==== */
