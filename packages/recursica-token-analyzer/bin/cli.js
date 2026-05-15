@@ -56,6 +56,7 @@ function analyze() {
   // 2. Build Component Index & Extract Usage
   const componentsIndex = {};
   const usedVarsMap = new Map(); // varName -> set of { componentId, filePath }
+  let exemptions = new Set();
 
   if (fs.existsSync(options.dir)) {
     const dirs = fs
@@ -85,6 +86,8 @@ function analyze() {
           ) {
             componentsIndex[compId].files.push(fullPath);
             const content = fs.readFileSync(fullPath, "utf-8");
+
+            // Extract variable usages
             const matches = [
               ...content.matchAll(/var\(\s*(--recursica_[\w-]+)/g),
             ];
@@ -98,6 +101,14 @@ function analyze() {
                 .add(
                   JSON.stringify({ componentId: compId, filePath: fullPath }),
                 );
+            });
+
+            // Extract inline exemptions
+            const ignoredMatches = [
+              ...content.matchAll(/recursica-ignore:\s*(--recursica_[\w-]+)/g),
+            ];
+            ignoredMatches.forEach((m) => {
+              exemptions.add(m[1]);
             });
           }
         });
@@ -136,22 +147,6 @@ function analyze() {
   // 4. Find Unused Variables
   const unusedVars = new Set(definedVars);
   usedVarsMap.forEach((_, varName) => unusedVars.delete(varName));
-
-  // Load Exemptions
-  let exemptions = new Set();
-  const exemptionsFile = path.join(process.cwd(), "token-exemptions.json");
-  if (fs.existsSync(exemptionsFile)) {
-    try {
-      const data = JSON.parse(fs.readFileSync(exemptionsFile, "utf-8"));
-      if (Array.isArray(data)) {
-        exemptions = new Set(data);
-      }
-    } catch (err) {
-      console.warn(
-        `⚠️  Warning: Failed to parse token-exemptions.json. Ignoring exemptions.`,
-      );
-    }
-  }
 
   const unusedByComponent = {};
 

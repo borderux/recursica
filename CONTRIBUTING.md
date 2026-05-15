@@ -99,7 +99,10 @@ When you receive a new version of the UI Kit (`recursica.json` and `recursica_va
 3. The analyzer will generate a `token-analysis.json` report containing two categories:
    - **Broken Variables:** Component references to CSS variables that no longer exist in the UI Kit. You must update your React component's `.module.css` files to match the new variable names.
    - **Unused Variables:** New CSS variables added to the UI Kit that are not yet implemented in the adapter. You must build out these new features or states.
-4. **Exemptions:** If a variable is purposely ignored in your integration and you do not plan to implement it, add its exact name to a `token-exemptions.json` array in the root of the adapter package.
+4. **Exemptions:** If a Figma variable is purposely ignored in your integration (e.g., redundant sizing tokens), you can permanently exempt it by adding an inline comment directly inside your component's `.module.css` file:
+   ```css
+   /* recursica-ignore: --recursica_ui-kit_components_button_some_weird_state */
+   ```
 5. The `npm run build` pipeline uses a `prebuild` hook to run this analyzer. The build will **fail** if there are _any_ broken variables or _any_ un-exempted unused variables remaining!
 
 ## Using Changesets
