@@ -88,6 +88,20 @@ In your PR description, please include:
 - Any related issue numbers (e.g., `Fixes #123`)
 - Whether there are any breaking changes
 
+## Updating Figma UI Kit Variables
+
+To ensure our React components stay 100% in sync with the design system, we enforce an Ultra-Strict token validation pipeline during the build process.
+
+When you receive a new version of the UI Kit (`recursica.json` and `recursica_variables_scoped.css`), you must run the token analyzer to resolve any breaking changes:
+
+1. Copy the new files into your adapter package.
+2. Run `npm run analyze-tokens` from within the adapter package directory.
+3. The analyzer will generate a `token-analysis.json` report containing two categories:
+   - **Broken Variables:** Component references to CSS variables that no longer exist in the UI Kit. You must update your React component's `.module.css` files to match the new variable names.
+   - **Unused Variables:** New CSS variables added to the UI Kit that are not yet implemented in the adapter. You must build out these new features or states.
+4. **Exemptions:** If a variable is purposely ignored in your integration and you do not plan to implement it, add its exact name to a `token-exemptions.json` array in the root of the adapter package.
+5. The `npm run build` pipeline uses a `prebuild` hook to run this analyzer. The build will **fail** if there are _any_ broken variables or _any_ un-exempted unused variables remaining!
+
 ## Using Changesets
 
 This project uses [Changesets](https://github.com/changesets/changesets) to manage releases. All pull requests that fix a bug, add a feature, or otherwise impact the user must include a changeset file.

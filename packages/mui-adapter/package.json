@@ -51,7 +51,9 @@
     "build": "vite build --mode library",
     "build-storybook": "storybook build -o storybook-static",
     "lint": "eslint .",
-    "storybook": "storybook dev -p 6006"
+    "storybook": "storybook dev -p 6006",
+    "analyze-tokens": "analyze-tokens --css recursica_variables_scoped.css --dir src/components --output token-analysis.json",
+    "prebuild": "npm run analyze-tokens"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^5.1.1",
@@ -59,6 +61,7 @@
     "@recursica/adapter-common": "*",
     "@recursica/recursica-postcss-vars": "*",
     "@recursica/storybook-template": "*",
+    "@recursica/token-analyzer": "*",
     "@repo/typescript-config": "*",
     "@storybook/addon-a11y": "^10.3.3",
     "@storybook/addon-docs": "^10.3.3",
