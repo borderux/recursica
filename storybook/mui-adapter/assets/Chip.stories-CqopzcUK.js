@@ -1,3 +1,0 @@
-import{j as a}from"./iframe-DORCsje-.js";import{C as n}from"./Chip-BXer9cDH.js";import{p as s}from"./index-OGyte3Iz.js";import"./preload-helper-Dp1pzeXC.js";const d={title:"UI-Kit/🚧 Chip",component:n,tags:["autodocs"],parameters:{controls:{include:["layer","withLayer","children","component","variant","size","icon","disabled","href","onClick","onChange","value","checked"]}}},e={render:()=>a.jsx(s,{componentName:"Chip"})};var o,r,t;e.parameters={...e.parameters,docs:{...(o=e.parameters)==null?void 0:o.docs,source:{originalSource:`{
-  render: () => <ComingSoon componentName="Chip" />
-}`,...(t=(r=e.parameters)==null?void 0:r.docs)==null?void 0:t.source}}};const l=["Default"];export{e as Default,l as __namedExportsOrder,d as default};

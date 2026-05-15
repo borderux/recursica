@@ -1,3 +1,0 @@
-import{j as t}from"./iframe-DORCsje-.js";import{T as s}from"./Tabs-wGJlJVYS.js";import{p as n}from"./index-OGyte3Iz.js";import"./preload-helper-Dp1pzeXC.js";const d={title:"UI-Kit/🚧 Tabs",component:s,tags:["autodocs"],parameters:{controls:{include:["layer","withLayer","children","component","variant","size","icon","disabled","href","onClick","onChange","value","checked"]}}},e={render:()=>t.jsx(n,{componentName:"Tabs"})};var o,r,a;e.parameters={...e.parameters,docs:{...(o=e.parameters)==null?void 0:o.docs,source:{originalSource:`{
-  render: () => <ComingSoon componentName="Tabs" />
-}`,...(a=(r=e.parameters)==null?void 0:r.docs)==null?void 0:a.source}}};const l=["Default"];export{e as Default,l as __namedExportsOrder,d as default};
