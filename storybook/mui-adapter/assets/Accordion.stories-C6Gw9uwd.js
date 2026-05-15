@@ -1,0 +1,3 @@
+import{j as t}from"./iframe-BM_dDOh_.js";import{A as a}from"./Accordion-Khoy2G2L.js";import{p as c}from"./index-DXrM0R98.js";import"./preload-helper-Dp1pzeXC.js";const p={title:"UI-Kit/🚧 Accordion",component:a,tags:["autodocs"],parameters:{controls:{include:["layer","withLayer","children","component","variant","size","icon","disabled","href","onClick","onChange","value","checked"]}}},o={render:()=>t.jsx(c,{componentName:"Accordion"})};var e,r,n;o.parameters={...o.parameters,docs:{...(e=o.parameters)==null?void 0:e.docs,source:{originalSource:`{
+  render: () => <ComingSoon componentName="Accordion" />
+}`,...(n=(r=o.parameters)==null?void 0:r.docs)==null?void 0:n.source}}};const l=["Default"];export{o as Default,l as __namedExportsOrder,p as default};

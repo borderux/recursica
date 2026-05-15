@@ -1,0 +1,3 @@
+import{j as a}from"./iframe-alR3zAUJ.js";import{F as n}from"./FileInput-C1okiE9X.js";import{p as s}from"./index-Mfgyxwol.js";import"./preload-helper-Dp1pzeXC.js";const u={title:"UI-Kit/🚧 FileInput",component:n,tags:["autodocs"],argTypes:{}},e={render:()=>a.jsx(s,{componentName:"FileInput"})};var o,t,r;e.parameters={...e.parameters,docs:{...(o=e.parameters)==null?void 0:o.docs,source:{originalSource:`{
+  render: () => <ComingSoon componentName="FileInput" />
+}`,...(r=(t=e.parameters)==null?void 0:t.docs)==null?void 0:r.source}}};const d=["Default"];export{e as Default,d as __namedExportsOrder,u as default};

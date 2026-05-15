@@ -1,0 +1,3 @@
+import{j as a}from"./iframe-BM_dDOh_.js";import{S as n}from"./Switch-DrFlcGUD.js";import{p as c}from"./index-DXrM0R98.js";import"./preload-helper-Dp1pzeXC.js";const d={title:"UI-Kit/🚧 Switch",component:n,tags:["autodocs"],parameters:{controls:{include:["layer","withLayer","children","component","variant","size","icon","disabled","href","onClick","onChange","value","checked"]}}},e={render:()=>a.jsx(c,{componentName:"Switch"})};var o,r,t;e.parameters={...e.parameters,docs:{...(o=e.parameters)==null?void 0:o.docs,source:{originalSource:`{
+  render: () => <ComingSoon componentName="Switch" />
+}`,...(t=(r=e.parameters)==null?void 0:r.docs)==null?void 0:t.source}}};const l=["Default"];export{e as Default,l as __namedExportsOrder,d as default};
