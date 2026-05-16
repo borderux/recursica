@@ -3,6 +3,8 @@
    - align-items: baseline ensures text logic lines up nicely if font sizes differ slightly.
    - margin/padding resets.
 */
+/* recursica-ignore: --recursica_ui-kit_components_label_variants_layouts_stacked_variants_sizes_default_properties_width */
+/* recursica-ignore: --recursica_ui-kit_components_label_variants_layouts_stacked_variants_sizes_small_properties_width */
 
 .root {
   display: flex;
@@ -106,7 +108,7 @@
   );
   color: inherit;
   opacity: var(
-    --recursica_ui-kit_components_label_properties_colors_optional-text-opacity
+    --recursica_ui-kit_components_label_properties_optional-text-opacity
   );
 }
 
