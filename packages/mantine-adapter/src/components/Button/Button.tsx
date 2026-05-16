@@ -71,8 +71,15 @@ const _Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
 
   const hasLeftSection = !!icon || !!restRecord["leftSection"];
   const hasRightSection = !!restRecord["rightSection"];
-  const isIconOnly =
-    (hasLeftSection || hasRightSection) && !hasVisibleChildren(children);
+  const hasVisibleText = hasVisibleChildren(children);
+  const isIconOnly = (hasLeftSection || hasRightSection) && !hasVisibleText;
+
+  let contentType = "label";
+  if (isIconOnly) {
+    contentType = "icon-only";
+  } else if (hasLeftSection || hasRightSection) {
+    contentType = "icon-label";
+  }
 
   if (
     typeof process !== "undefined" &&
@@ -141,7 +148,7 @@ const _Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
       }
       data-variant={variant}
       data-size={size}
-      {...(isIconOnly ? { "data-icon-only": "" } : {})}
+      data-content={contentType}
       {...sanitizedProps}
       disabled={!!restRecord.disabled || !!restRecord.loading}
     >
