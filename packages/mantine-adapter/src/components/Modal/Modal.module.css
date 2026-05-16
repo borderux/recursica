@@ -4,85 +4,77 @@
 .inner {
   /* Mantine applies padding to inner to keep modal away from edges. We rely on content constraints. */
 }
+/* recursica-ignore: --recursica_ui-kit_components_modal_properties_content-style */
+/* recursica-ignore: --recursica_ui-kit_components_modal_properties_header-style */
 
 .content {
   /* Geometric Bounds */
-  min-width: var(
-    --recursica_ui-kit_components_modal_properties_min-width
-  ) !important;
-  max-width: var(
-    --recursica_ui-kit_components_modal_properties_max-width
-  ) !important;
-  min-height: var(
-    --recursica_ui-kit_components_modal_properties_min-height
-  ) !important;
+  min-width: var(--recursica_ui-kit_components_modal_properties_min-width);
+  max-width: var(--recursica_ui-kit_components_modal_properties_max-width);
+  min-height: var(--recursica_ui-kit_components_modal_properties_min-height);
 
   /* Restrict max-height to either the UI Kit max or the viewport bounds to force internal scrolling */
   max-height: min(
     var(--recursica_ui-kit_components_modal_properties_max-height),
     calc(100vh - 4rem)
-  ) !important;
-  overflow: hidden !important;
+  );
+  overflow: hidden;
 
   /* Box model */
   border-radius: var(
     --recursica_ui-kit_components_modal_properties_border-radius
-  ) !important;
-  border-width: var(
-    --recursica_ui-kit_components_modal_properties_border-size
-  ) !important;
+  );
+  border-width: var(--recursica_ui-kit_components_modal_properties_border-size);
   border-color: var(
-    --recursica_ui-kit_components_modal_colors_border-color
-  ) !important;
-  border-style: solid !important;
+    --recursica_ui-kit_components_modal_properties_colors_border-color
+  );
+  border-style: solid;
 
   /* Appearance */
   background-color: var(
-    --recursica_ui-kit_components_modal_colors_background
-  ) !important;
-  box-shadow: var(
-    --recursica_ui-kit_components_modal_properties_elevation
-  ) !important;
+    --recursica_ui-kit_components_modal_properties_colors_background
+  );
+  box-shadow: var(--recursica_ui-kit_components_modal_properties_elevation);
 
   /* Internal Flex container to trap header and let body scroll */
-  display: flex !important;
-  flex-direction: column !important;
+  display: flex;
+  flex-direction: column;
 }
 
 .header {
   padding: var(--recursica_ui-kit_components_modal_properties_vertical-padding)
-    var(--recursica_ui-kit_components_modal_properties_horizontal-padding) !important;
-  background-color: transparent !important; /* Inherit from content */
+    var(--recursica_ui-kit_components_modal_properties_horizontal-padding);
+  background-color: transparent; /* Inherit from content */
 }
 
 .title {
   /* Typography Class Injection */
   composes: recursica_brand_typography_h2 from global;
-  color: var(--recursica_ui-kit_components_modal_colors_title) !important;
+  color: var(--recursica_ui-kit_components_modal_properties_colors_title);
 }
 
 .bodyWrapper {
   /* This is the container that overrides Mantine's native Body. It strips padding and acts as a flex column. */
-  padding: 0 !important;
+  padding: 0;
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
-  overflow: hidden !important;
-  min-height: 0 !important; /* Critical for flex child scrolling constraint */
+  overflow: hidden;
+  min-height: 0; /* Critical for flex child scrolling constraint */
 }
 
 .scrollArea {
   padding: var(--recursica_ui-kit_components_modal_properties_vertical-padding)
-    var(--recursica_ui-kit_components_modal_properties_horizontal-padding) !important;
+    var(--recursica_ui-kit_components_modal_properties_horizontal-padding);
 
   /* Internal scrolling */
   flex: 1 1 auto;
-  overflow-y: auto !important;
-  min-height: 0 !important; /* Critical for flex child scrolling constraint */
+  overflow-y: auto;
+  min-height: 0; /* Critical for flex child scrolling constraint */
 
   /* Typography */
   composes: recursica_brand_typography_body from global;
-  color: var(--recursica_ui-kit_components_modal_colors_content) !important;
+  color: var(--recursica_ui-kit_components_modal_properties_colors_content);
 
   /* Ensure button gap token is easily usable if developers use standard spacing */
   --modal-button-gap: var(
@@ -94,29 +86,29 @@
   border-top: var(
       --recursica_ui-kit_components_modal_properties_scroll-divider-thickness
     )
-    solid transparent !important;
+    solid transparent;
   border-bottom: var(
       --recursica_ui-kit_components_modal_properties_scroll-divider-thickness
     )
-    solid transparent !important;
+    solid transparent;
 }
 
 .scrollArea[data-scrolled-top] {
   border-top-color: var(
-    --recursica_ui-kit_components_modal_colors_scroll-divider
-  ) !important;
+    --recursica_ui-kit_components_modal_properties_colors_scroll-divider
+  );
 }
 
 .scrollArea[data-scrolled-bottom] {
   border-bottom-color: var(
-    --recursica_ui-kit_components_modal_colors_scroll-divider
-  ) !important;
+    --recursica_ui-kit_components_modal_properties_colors_scroll-divider
+  );
 }
 
 .footer {
   padding: var(--recursica_ui-kit_components_modal_properties_vertical-padding)
-    var(--recursica_ui-kit_components_modal_properties_horizontal-padding) !important;
-  background-color: transparent !important;
+    var(--recursica_ui-kit_components_modal_properties_horizontal-padding);
+  background-color: transparent;
   display: flex;
   justify-content: flex-end;
   gap: var(--recursica_ui-kit_components_modal_properties_button-gap);
