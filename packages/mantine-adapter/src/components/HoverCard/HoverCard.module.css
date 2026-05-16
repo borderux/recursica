@@ -7,6 +7,7 @@
    - All structural layout (display, position, overflow) is deferred to Mantine's native
      behavior. We only override visual design tokens (colors, typography, spacing, borders).
 */
+/* recursica-ignore: --recursica_ui-kit_components_hover-card-popover_properties_beak-size */
 
 /* ======================================
    DROPDOWN CONTAINER
@@ -14,14 +15,14 @@
 
 .dropdown {
   background-color: var(
-    --recursica_ui-kit_components_hover-card-popover_colors_background
+    --recursica_ui-kit_components_hover-card-popover_properties_colors_background
   );
   border-style: solid; /* HARDCODE: Mantine Paper does not set border-style natively */
   border-width: var(
     --recursica_ui-kit_components_hover-card-popover_properties_border-size
   );
   border-color: var(
-    --recursica_ui-kit_components_hover-card-popover_colors_border-color
+    --recursica_ui-kit_components_hover-card-popover_properties_colors_border-color
   );
   border-radius: var(
     --recursica_ui-kit_components_hover-card-popover_properties_border-radius
@@ -70,7 +71,9 @@
     --recursica_ui-kit_components_hover-card-popover_properties_content-text_text-transform
   );
 
-  color: var(--recursica_ui-kit_components_hover-card-popover_colors_content);
+  color: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_colors_content
+  );
 }
 
 /* ======================================
@@ -79,6 +82,6 @@
 
 .arrow {
   border-color: var(
-    --recursica_ui-kit_components_hover-card-popover_colors_border-color
+    --recursica_ui-kit_components_hover-card-popover_properties_colors_border-color
   );
 }
