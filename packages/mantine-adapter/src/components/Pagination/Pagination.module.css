@@ -50,9 +50,8 @@
   );
 
   /* Dimensions */
-  border-radius: var(
-    --recursica_ui-kit_components_pagination_properties_inactive-pages_size_properties_border-radius
-  );
+  /* HARDCODE: Figma UI Kit only exports border-radius for navigation-controls, not for active/inactive pages. */
+  border-radius: 4px;
   height: var(
     --recursica_ui-kit_components_pagination_properties_inactive-pages_size_properties_height
   );
@@ -160,7 +159,7 @@
 
   /* Also explicitly inherit navigation sizes incase they differ from pages */
   border-radius: var(
-    --recursica_ui-kit_components_pagination_properties_navigation-controls_size_properties_border-radius
+    --recursica_ui-kit_components_pagination_properties_navigation-controls_content_sizes_default_properties_border-radius
   );
   height: var(
     --recursica_ui-kit_components_pagination_properties_navigation-controls_size_properties_height

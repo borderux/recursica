@@ -100,15 +100,7 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
             defaultValue={defaultValue}
           >
             <div className={styles.groupRoot} data-layout={formLayout}>
-              {/* If the exact group is read-only natively, we inject disabled hooks dynamically over children? Mantine handles native context directly! */}
-              {React.Children.map(children, (child) => {
-                if (React.isValidElement(child)) {
-                  return React.cloneElement(child as React.ReactElement<any>, {
-                    disabled: readOnly || (child.props as any).disabled,
-                  });
-                }
-                return child;
-              })}
+              {children}
             </div>
           </MantineCheckbox.Group>
         }

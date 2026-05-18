@@ -24,6 +24,9 @@ To render a solitary component natively:
     },
   },
   argTypes: {
+    disabled: {
+      control: "boolean",
+    },
     readOnly: {
       control: "boolean",
       description:

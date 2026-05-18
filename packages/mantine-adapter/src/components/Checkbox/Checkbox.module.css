@@ -203,7 +203,7 @@
     --recursica_ui-kit_components_checkbox-item_properties_text_text-transform
   );
 }
-.root[data-disabled] .label {
+.root:has(input:disabled) .label {
   cursor: not-allowed; /* HARDCODE: disabled interaction */
   opacity: var(
     --recursica_ui-kit_components_checkbox-item_properties_disabled-opacity

@@ -29,6 +29,9 @@ const meta: Meta<DropdownStoryProps> = {
     clearable: false,
   },
   argTypes: {
+    disabled: {
+      control: "boolean",
+    },
     ...formControlArgTypes,
     readOnly: {
       control: "boolean",

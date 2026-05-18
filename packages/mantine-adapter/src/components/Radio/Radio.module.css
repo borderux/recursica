@@ -208,7 +208,7 @@
     --recursica_ui-kit_components_radio-button-item_properties_text_text-transform
   );
 }
-.root[data-disabled] .label {
+.root:has(input:disabled) .label {
   cursor: not-allowed; /* HARDCODE: disabled interaction */
   color: var(
     --recursica_ui-kit_components_radio-button-item_properties_colors_disabled-text
