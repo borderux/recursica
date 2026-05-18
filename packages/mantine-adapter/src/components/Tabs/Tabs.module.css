@@ -35,6 +35,9 @@
   --tabs-vertical-padding: var(
     --recursica_ui-kit_components_tabs_variants_orientation_horizontal_properties_vertical-padding
   );
+  --tabs-content-alignment: var(
+    --recursica_ui-kit_components_tabs_variants_orientation_horizontal_properties_tab-content-alignment
+  );
 }
 
 .root[data-orientation="horizontal"] .list {
@@ -58,6 +61,9 @@
   );
   --tabs-vertical-padding: var(
     --recursica_ui-kit_components_tabs_variants_orientation_vertical_properties_vertical-padding
+  );
+  --tabs-content-alignment: var(
+    --recursica_ui-kit_components_tabs_variants_orientation_vertical_properties_tab-content-alignment
   );
 }
 
@@ -85,17 +91,23 @@
   --tabs-color: var(
     --recursica_ui-kit_components_tabs_variants_styles_default_properties_active_colors_border-color
   ) !important;
+  --tabs-hover-color: var(
+    --recursica_ui-kit_components_tabs_variants_styles_default_properties_hover-color
+  );
+  --tabs-hover-opacity: var(
+    --recursica_ui-kit_components_tabs_variants_styles_default_properties_hover-opacity
+  );
 }
 
 .root[data-variant="default"][data-orientation="horizontal"] .list {
   margin-bottom: var(
-    --recursica_ui-kit_components_tabs_variants_styles_default_orientation_horizontal_properties_tabs-content-gap
+    --recursica_ui-kit_components_tabs_variants_styles_default_variants_orientation_horizontal_properties_tabs-content-gap
   );
 }
 
 .root[data-variant="default"][data-orientation="vertical"] .list {
   margin-right: var(
-    --recursica_ui-kit_components_tabs_variants_styles_default_orientation_vertical_properties_tabs-content-gap
+    --recursica_ui-kit_components_tabs_variants_styles_default_variants_orientation_vertical_properties_tabs-content-gap
   );
 }
 
@@ -116,17 +128,23 @@
   --tabs-color: var(
     --recursica_ui-kit_components_tabs_variants_styles_outline_properties_active_colors_border-color
   ) !important;
+  --tabs-hover-color: var(
+    --recursica_ui-kit_components_tabs_variants_styles_outline_properties_hover-color
+  );
+  --tabs-hover-opacity: var(
+    --recursica_ui-kit_components_tabs_variants_styles_outline_properties_hover-opacity
+  );
 }
 
 .root[data-variant="outline"][data-orientation="horizontal"] .list {
   margin-bottom: var(
-    --recursica_ui-kit_components_tabs_variants_styles_outline_orientation_horizontal_properties_tabs-content-gap
+    --recursica_ui-kit_components_tabs_variants_styles_outline_variants_orientation_horizontal_properties_tabs-content-gap
   );
 }
 
 .root[data-variant="outline"][data-orientation="vertical"] .list {
   margin-right: var(
-    --recursica_ui-kit_components_tabs_variants_styles_outline_orientation_vertical_properties_tabs-content-gap
+    --recursica_ui-kit_components_tabs_variants_styles_outline_variants_orientation_vertical_properties_tabs-content-gap
   );
 }
 
@@ -141,17 +159,23 @@
   --tabs-border-radius: var(
     --recursica_ui-kit_components_tabs_variants_styles_pills_properties_border-radius
   );
+  --tabs-hover-color: var(
+    --recursica_ui-kit_components_tabs_variants_styles_pills_properties_hover-color
+  );
+  --tabs-hover-opacity: var(
+    --recursica_ui-kit_components_tabs_variants_styles_pills_properties_hover-opacity
+  );
 }
 
 .root[data-variant="pills"][data-orientation="horizontal"] .list {
   margin-bottom: var(
-    --recursica_ui-kit_components_tabs_variants_styles_pills_orientation_horizontal_properties_tabs-content-gap
+    --recursica_ui-kit_components_tabs_variants_styles_pills_variants_orientation_horizontal_properties_tabs-content-gap
   );
 }
 
 .root[data-variant="pills"][data-orientation="vertical"] .list {
   margin-right: var(
-    --recursica_ui-kit_components_tabs_variants_styles_pills_orientation_vertical_properties_tabs-content-gap
+    --recursica_ui-kit_components_tabs_variants_styles_pills_variants_orientation_vertical_properties_tabs-content-gap
   );
 }
 
@@ -165,8 +189,7 @@
   gap: var(--tabs-element-gap);
   display: flex;
   align-items: center;
-  /* Alignment can be mapped if defined */
-  justify-content: flex-start;
+  justify-content: var(--tabs-content-alignment);
   cursor: pointer;
   position: relative;
 
@@ -386,10 +409,8 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background-color: var(
-    --recursica_ui-kit_components_tabs_properties_hover-color
-  );
-  opacity: var(--recursica_ui-kit_components_tabs_properties_hover-opacity);
+  background-color: var(--tabs-hover-color);
+  opacity: var(--tabs-hover-opacity);
   pointer-events: none;
   z-index: 0;
 }
