@@ -14,12 +14,23 @@ export interface RecursicaSegmentedControlProps {
   orientation?: "horizontal" | "vertical";
   /** If true, the control will take up the full width of its container */
   fullWidth?: boolean;
+  /**
+   * SegmentedControl should NOT be allowed to be disabled by design.
+   * This component explicitly disables the `disabled` prop.
+   */
+  disabled?: never;
 }
 
 export type SegmentedControlProps = RecursicaOverStyled<
   Omit<
     MantineSegmentedControlProps,
-    "variant" | "size" | "radius" | "color" | "classNames" | "className"
+    | "variant"
+    | "size"
+    | "radius"
+    | "color"
+    | "classNames"
+    | "className"
+    | "disabled"
   > & {
     className?: string;
     classNames?: Partial<Record<string, string>>;
@@ -70,9 +81,12 @@ const _SegmentedControl = forwardRef<HTMLDivElement, SegmentedControlProps>(
     ref,
   ) {
     const sanitizedProps = filterStylingProps(rest, overStyled);
-    const stylingParams = useSegmentedControlClassNames(
-      sanitizedProps as Record<string, unknown>,
-    );
+    const restRecord = sanitizedProps as Record<string, unknown>;
+
+    // Explicitly prevent consumers from bypassing the disabled restriction
+    delete restRecord["disabled"];
+
+    const stylingParams = useSegmentedControlClassNames(restRecord);
 
     return (
       <MantineSegmentedControl

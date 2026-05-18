@@ -21,9 +21,7 @@ const meta: Meta<typeof SegmentedControl> = {
     fullWidth: {
       control: "boolean",
     },
-    disabled: {
-      control: "boolean",
-    },
+    disabled: { table: { disable: true } },
     data: { table: { disable: true } },
     defaultChecked: { table: { disable: true } },
   },
@@ -37,7 +35,6 @@ export const Default: Story = {
     data: ["React", "Angular", "Vue", "Svelte"],
     orientation: "horizontal",
     fullWidth: false,
-    disabled: false,
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
   render: ({ withLayer, layer, ...args }: any) => {
