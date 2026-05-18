@@ -2003,48 +2003,48 @@
   --recursica_ui-kit_components_breadcrumb_properties_padding: var(
     --recursica_brand_dimensions_general_default
   );
-  --recursica_ui-kit_components_button_variants_content_icon-label_sizes_default_properties_border-radius: var(
+  --recursica_ui-kit_components_button_variants_content_icon-label_variants_sizes_default_properties_border-radius: var(
     --recursica_brand_dimensions_border-radii_xl
   );
-  --recursica_ui-kit_components_button_variants_content_icon-label_sizes_default_properties_horizontal-padding: var(
+  --recursica_ui-kit_components_button_variants_content_icon-label_variants_sizes_default_properties_horizontal-padding: var(
     --recursica_brand_dimensions_general_lg
   );
-  --recursica_ui-kit_components_button_variants_content_icon-label_sizes_default_properties_min-width: 120px;
-  --recursica_ui-kit_components_button_variants_content_icon-label_sizes_small_properties_border-radius: var(
+  --recursica_ui-kit_components_button_variants_content_icon-label_variants_sizes_default_properties_min-width: 120px;
+  --recursica_ui-kit_components_button_variants_content_icon-label_variants_sizes_small_properties_border-radius: var(
     --recursica_brand_dimensions_border-radii_xl
   );
-  --recursica_ui-kit_components_button_variants_content_icon-label_sizes_small_properties_horizontal-padding: var(
+  --recursica_ui-kit_components_button_variants_content_icon-label_variants_sizes_small_properties_horizontal-padding: var(
     --recursica_brand_dimensions_general_md
   );
-  --recursica_ui-kit_components_button_variants_content_icon-label_sizes_small_properties_min-width: 80px;
-  --recursica_ui-kit_components_button_variants_content_icon-only_sizes_default_properties_border-radius: var(
+  --recursica_ui-kit_components_button_variants_content_icon-label_variants_sizes_small_properties_min-width: 80px;
+  --recursica_ui-kit_components_button_variants_content_icon-only_variants_sizes_default_properties_border-radius: var(
     --recursica_brand_dimensions_border-radii_xl
   );
-  --recursica_ui-kit_components_button_variants_content_icon-only_sizes_default_properties_horizontal-padding: var(
+  --recursica_ui-kit_components_button_variants_content_icon-only_variants_sizes_default_properties_horizontal-padding: var(
     --recursica_brand_dimensions_general_default
   );
-  --recursica_ui-kit_components_button_variants_content_icon-only_sizes_default_properties_min-width: 48px;
-  --recursica_ui-kit_components_button_variants_content_icon-only_sizes_small_properties_border-radius: var(
+  --recursica_ui-kit_components_button_variants_content_icon-only_variants_sizes_default_properties_min-width: 48px;
+  --recursica_ui-kit_components_button_variants_content_icon-only_variants_sizes_small_properties_border-radius: var(
     --recursica_brand_dimensions_border-radii_xl
   );
-  --recursica_ui-kit_components_button_variants_content_icon-only_sizes_small_properties_horizontal-padding: var(
+  --recursica_ui-kit_components_button_variants_content_icon-only_variants_sizes_small_properties_horizontal-padding: var(
     --recursica_brand_dimensions_general_sm
   );
-  --recursica_ui-kit_components_button_variants_content_icon-only_sizes_small_properties_min-width: 32px;
-  --recursica_ui-kit_components_button_variants_content_label_sizes_default_properties_border-radius: var(
+  --recursica_ui-kit_components_button_variants_content_icon-only_variants_sizes_small_properties_min-width: 32px;
+  --recursica_ui-kit_components_button_variants_content_label_variants_sizes_default_properties_border-radius: var(
     --recursica_brand_dimensions_border-radii_xl
   );
-  --recursica_ui-kit_components_button_variants_content_label_sizes_default_properties_horizontal-padding: var(
+  --recursica_ui-kit_components_button_variants_content_label_variants_sizes_default_properties_horizontal-padding: var(
     --recursica_brand_dimensions_general_lg
   );
-  --recursica_ui-kit_components_button_variants_content_label_sizes_default_properties_min-width: 120px;
-  --recursica_ui-kit_components_button_variants_content_label_sizes_small_properties_border-radius: var(
+  --recursica_ui-kit_components_button_variants_content_label_variants_sizes_default_properties_min-width: 120px;
+  --recursica_ui-kit_components_button_variants_content_label_variants_sizes_small_properties_border-radius: var(
     --recursica_brand_dimensions_border-radii_xl
   );
-  --recursica_ui-kit_components_button_variants_content_label_sizes_small_properties_horizontal-padding: var(
+  --recursica_ui-kit_components_button_variants_content_label_variants_sizes_small_properties_horizontal-padding: var(
     --recursica_brand_dimensions_general_md
   );
-  --recursica_ui-kit_components_button_variants_content_label_sizes_small_properties_min-width: 80px;
+  --recursica_ui-kit_components_button_variants_content_label_variants_sizes_small_properties_min-width: 80px;
   --recursica_ui-kit_components_button_variants_sizes_default_properties_disabled-opacity: var(
     --recursica_brand_themes_light_states_disabled
   );
@@ -3083,27 +3083,27 @@
   --recursica_ui-kit_components_pagination_properties_navigation-controls_content: "icon-only";
   /* Variant Reference: ui-kit.components.button.variants.content.icon-only */
   --recursica_ui-kit_components_pagination_properties_navigation-controls_content_sizes_default_properties_border-radius: var(
-    --recursica_ui-kit_components_button_variants_content_icon-only_sizes_default_properties_border-radius
+    --recursica_ui-kit_components_button_variants_content_icon-only_variants_sizes_default_properties_border-radius
   );
   /* Variant Reference: ui-kit.components.button.variants.content.icon-only */
   --recursica_ui-kit_components_pagination_properties_navigation-controls_content_sizes_default_properties_horizontal-padding: var(
-    --recursica_ui-kit_components_button_variants_content_icon-only_sizes_default_properties_horizontal-padding
+    --recursica_ui-kit_components_button_variants_content_icon-only_variants_sizes_default_properties_horizontal-padding
   );
   /* Variant Reference: ui-kit.components.button.variants.content.icon-only */
   --recursica_ui-kit_components_pagination_properties_navigation-controls_content_sizes_default_properties_min-width: var(
-    --recursica_ui-kit_components_button_variants_content_icon-only_sizes_default_properties_min-width
+    --recursica_ui-kit_components_button_variants_content_icon-only_variants_sizes_default_properties_min-width
   );
   /* Variant Reference: ui-kit.components.button.variants.content.icon-only */
   --recursica_ui-kit_components_pagination_properties_navigation-controls_content_sizes_small_properties_border-radius: var(
-    --recursica_ui-kit_components_button_variants_content_icon-only_sizes_small_properties_border-radius
+    --recursica_ui-kit_components_button_variants_content_icon-only_variants_sizes_small_properties_border-radius
   );
   /* Variant Reference: ui-kit.components.button.variants.content.icon-only */
   --recursica_ui-kit_components_pagination_properties_navigation-controls_content_sizes_small_properties_horizontal-padding: var(
-    --recursica_ui-kit_components_button_variants_content_icon-only_sizes_small_properties_horizontal-padding
+    --recursica_ui-kit_components_button_variants_content_icon-only_variants_sizes_small_properties_horizontal-padding
   );
   /* Variant Reference: ui-kit.components.button.variants.content.icon-only */
   --recursica_ui-kit_components_pagination_properties_navigation-controls_content_sizes_small_properties_min-width: var(
-    --recursica_ui-kit_components_button_variants_content_icon-only_sizes_small_properties_min-width
+    --recursica_ui-kit_components_button_variants_content_icon-only_variants_sizes_small_properties_min-width
   );
   --recursica_ui-kit_components_pagination_properties_navigation-controls_size: "small";
   /* Variant Reference: ui-kit.components.button.variants.sizes.small */
@@ -3826,10 +3826,10 @@
   --recursica_ui-kit_components_tabs_variants_orientation_vertical_properties_vertical-padding: var(
     --recursica_brand_dimensions_general_md
   );
-  --recursica_ui-kit_components_tabs_variants_styles_default_orientation_horizontal_properties_tabs-content-gap: var(
+  --recursica_ui-kit_components_tabs_variants_styles_default_variants_orientation_horizontal_properties_tabs-content-gap: var(
     --recursica_brand_dimensions_gutters_vertical
   );
-  --recursica_ui-kit_components_tabs_variants_styles_default_orientation_vertical_properties_tabs-content-gap: var(
+  --recursica_ui-kit_components_tabs_variants_styles_default_variants_orientation_vertical_properties_tabs-content-gap: var(
     --recursica_brand_dimensions_gutters_horizontal
   );
   --recursica_ui-kit_components_tabs_variants_styles_default_properties_active_border-size: 2px;
@@ -3843,10 +3843,10 @@
     --recursica_tokens_opacities_mist
   );
   --recursica_ui-kit_components_tabs_variants_styles_default_properties_inactive_border-size: 1px;
-  --recursica_ui-kit_components_tabs_variants_styles_outline_orientation_horizontal_properties_tabs-content-gap: var(
+  --recursica_ui-kit_components_tabs_variants_styles_outline_variants_orientation_horizontal_properties_tabs-content-gap: var(
     --recursica_brand_dimensions_gutters_vertical
   );
-  --recursica_ui-kit_components_tabs_variants_styles_outline_orientation_vertical_properties_tabs-content-gap: var(
+  --recursica_ui-kit_components_tabs_variants_styles_outline_variants_orientation_vertical_properties_tabs-content-gap: var(
     --recursica_brand_dimensions_gutters_horizontal
   );
   --recursica_ui-kit_components_tabs_variants_styles_outline_properties_active_border-size: 1px;
@@ -3860,10 +3860,10 @@
     --recursica_tokens_opacities_mist
   );
   --recursica_ui-kit_components_tabs_variants_styles_outline_properties_inactive_border-size: 1px;
-  --recursica_ui-kit_components_tabs_variants_styles_pills_orientation_horizontal_properties_tabs-content-gap: var(
+  --recursica_ui-kit_components_tabs_variants_styles_pills_variants_orientation_horizontal_properties_tabs-content-gap: var(
     --recursica_brand_dimensions_gutters_vertical
   );
-  --recursica_ui-kit_components_tabs_variants_styles_pills_orientation_vertical_properties_tabs-content-gap: var(
+  --recursica_ui-kit_components_tabs_variants_styles_pills_variants_orientation_vertical_properties_tabs-content-gap: var(
     --recursica_brand_dimensions_gutters_horizontal
   );
   --recursica_ui-kit_components_tabs_variants_styles_pills_properties_active_border-size: 1px;
