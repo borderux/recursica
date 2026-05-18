@@ -108,8 +108,29 @@
   --stepper-border-radius: var(
     --recursica_ui-kit_components_stepper_variants_sizes_large_properties_indicator-border-radius
   );
+  --stepper-font-family: var(
+    --recursica_ui-kit_components_stepper_variants_sizes_large_properties_step-number-text_font-family
+  );
   --stepper-font-size: var(
-    --recursica_ui-kit_components_stepper_variants_sizes_large_properties_step-number-font-size
+    --recursica_ui-kit_components_stepper_variants_sizes_large_properties_step-number-text_font-size
+  );
+  --stepper-font-style: var(
+    --recursica_ui-kit_components_stepper_variants_sizes_large_properties_step-number-text_font-style
+  );
+  --stepper-font-weight: var(
+    --recursica_ui-kit_components_stepper_variants_sizes_large_properties_step-number-text_font-weight
+  );
+  --stepper-letter-spacing: var(
+    --recursica_ui-kit_components_stepper_variants_sizes_large_properties_step-number-text_letter-spacing
+  );
+  --stepper-line-height: var(
+    --recursica_ui-kit_components_stepper_variants_sizes_large_properties_step-number-text_line-height
+  );
+  --stepper-text-decoration: var(
+    --recursica_ui-kit_components_stepper_variants_sizes_large_properties_step-number-text_text-decoration
+  );
+  --stepper-text-transform: var(
+    --recursica_ui-kit_components_stepper_variants_sizes_large_properties_step-number-text_text-transform
   );
   --stepper-svg-size: var(
     --recursica_ui-kit_components_stepper_variants_sizes_large_properties_completed-icon-size
@@ -129,8 +150,29 @@
   --stepper-border-radius: var(
     --recursica_ui-kit_components_stepper_variants_sizes_small_properties_indicator-border-radius
   );
+  --stepper-font-family: var(
+    --recursica_ui-kit_components_stepper_variants_sizes_small_properties_step-number-text_font-family
+  );
   --stepper-font-size: var(
-    --recursica_ui-kit_components_stepper_variants_sizes_small_properties_step-number-font-size
+    --recursica_ui-kit_components_stepper_variants_sizes_small_properties_step-number-text_font-size
+  );
+  --stepper-font-style: var(
+    --recursica_ui-kit_components_stepper_variants_sizes_small_properties_step-number-text_font-style
+  );
+  --stepper-font-weight: var(
+    --recursica_ui-kit_components_stepper_variants_sizes_small_properties_step-number-text_font-weight
+  );
+  --stepper-letter-spacing: var(
+    --recursica_ui-kit_components_stepper_variants_sizes_small_properties_step-number-text_letter-spacing
+  );
+  --stepper-line-height: var(
+    --recursica_ui-kit_components_stepper_variants_sizes_small_properties_step-number-text_line-height
+  );
+  --stepper-text-decoration: var(
+    --recursica_ui-kit_components_stepper_variants_sizes_small_properties_step-number-text_text-decoration
+  );
+  --stepper-text-transform: var(
+    --recursica_ui-kit_components_stepper_variants_sizes_small_properties_step-number-text_text-transform
   );
   --stepper-svg-size: var(
     --recursica_ui-kit_components_stepper_variants_sizes_small_properties_completed-icon-size
@@ -209,7 +251,16 @@
   min-height: var(--stepper-indicator-size);
   border-width: var(--stepper-border-size);
   border-radius: 50%; /* Override Figma token to ensure perfectly circular indicators */
+
+  font-family: var(--stepper-font-family);
   font-size: var(--stepper-font-size);
+  font-style: var(--stepper-font-style);
+  font-weight: var(--stepper-font-weight);
+  letter-spacing: var(--stepper-letter-spacing);
+  line-height: var(--stepper-line-height);
+  text-decoration: var(--stepper-text-decoration);
+  text-transform: var(--stepper-text-transform);
+
   display: flex;
   align-items: center;
   justify-content: center;
