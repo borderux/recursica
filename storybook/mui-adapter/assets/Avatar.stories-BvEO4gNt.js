@@ -1,3 +1,0 @@
-import{j as t}from"./iframe-BM_dDOh_.js";import{A as n}from"./Avatar-DyPmAq9J.js";import{p as s}from"./index-DXrM0R98.js";import"./preload-helper-Dp1pzeXC.js";const d={title:"UI-Kit/🚧 Avatar",component:n,tags:["autodocs"],parameters:{controls:{include:["layer","withLayer","children","component","variant","size","icon","disabled","href","onClick","onChange","value","checked"]}}},e={render:()=>t.jsx(s,{componentName:"Avatar"})};var r,a,o;e.parameters={...e.parameters,docs:{...(r=e.parameters)==null?void 0:r.docs,source:{originalSource:`{
-  render: () => <ComingSoon componentName="Avatar" />
-}`,...(o=(a=e.parameters)==null?void 0:a.docs)==null?void 0:o.source}}};const l=["Default"];export{e as Default,l as __namedExportsOrder,d as default};

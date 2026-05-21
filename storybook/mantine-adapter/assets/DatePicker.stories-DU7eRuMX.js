@@ -1,3 +1,0 @@
-import{j as a}from"./iframe-alR3zAUJ.js";import{D as s}from"./DatePicker-BUrs8JYn.js";import{p as m}from"./index-Mfgyxwol.js";import"./preload-helper-Dp1pzeXC.js";const d={title:"UI-Kit/🚧 DatePicker",component:s,tags:["autodocs"],argTypes:{}},e={render:()=>a.jsx(m,{componentName:"DatePicker"})};var r,o,t;e.parameters={...e.parameters,docs:{...(r=e.parameters)==null?void 0:r.docs,source:{originalSource:`{
-  render: () => <ComingSoon componentName="DatePicker" />
-}`,...(t=(o=e.parameters)==null?void 0:o.docs)==null?void 0:t.source}}};const u=["Default"];export{e as Default,u as __namedExportsOrder,d as default};

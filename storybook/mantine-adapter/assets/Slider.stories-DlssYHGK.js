@@ -1,3 +1,0 @@
-import{j as a}from"./iframe-alR3zAUJ.js";import{S as s}from"./Slider-Yg5xKHiD.js";import{p as m}from"./index-Mfgyxwol.js";import"./preload-helper-Dp1pzeXC.js";const d={title:"UI-Kit/🚧 Slider",component:s,tags:["autodocs"],argTypes:{}},e={render:()=>a.jsx(m,{componentName:"Slider"})};var r,o,t;e.parameters={...e.parameters,docs:{...(r=e.parameters)==null?void 0:r.docs,source:{originalSource:`{
-  render: () => <ComingSoon componentName="Slider" />
-}`,...(t=(o=e.parameters)==null?void 0:o.docs)==null?void 0:t.source}}};const l=["Default"];export{e as Default,l as __namedExportsOrder,d as default};

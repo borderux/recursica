@@ -1,3 +1,0 @@
-import{j as m}from"./iframe-alR3zAUJ.js";import{T as a}from"./TimePicker-CjvosNxe.js";import{p as s}from"./index-Mfgyxwol.js";import"./preload-helper-Dp1pzeXC.js";const d={title:"UI-Kit/🚧 TimePicker",component:a,tags:["autodocs"],argTypes:{}},e={render:()=>m.jsx(s,{componentName:"TimePicker"})};var r,o,t;e.parameters={...e.parameters,docs:{...(r=e.parameters)==null?void 0:r.docs,source:{originalSource:`{
-  render: () => <ComingSoon componentName="TimePicker" />
-}`,...(t=(o=e.parameters)==null?void 0:o.docs)==null?void 0:t.source}}};const u=["Default"];export{e as Default,u as __namedExportsOrder,d as default};
