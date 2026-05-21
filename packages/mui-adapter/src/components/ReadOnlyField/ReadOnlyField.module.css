@@ -1,16 +1,63 @@
-/* EXEMPTIONS:
-   This component is a placeholder stub. Once fully implemented, its specific
-   tokens will be fully wired up to direct styles. */
+/* LAYOUT SPACING OVERRIDES:
+   - Sets the --form-control-margin-bottom spacing hook to map component-specific layout tokens. */
+.layoutOverride {
+  --form-control-margin-bottom: var(
+    --recursica_ui-kit_components_read-only-field_variants_layouts_stacked_properties_top-bottom-margin
+  );
+}
 
-/* recursica-ignore: --recursica_ui-kit_components_read-only-field_properties_colors_text */
-/* recursica-ignore: --recursica_ui-kit_components_read-only-field_properties_min-height */
-/* recursica-ignore: --recursica_ui-kit_components_read-only-field_properties_text_font-family */
-/* recursica-ignore: --recursica_ui-kit_components_read-only-field_properties_text_font-size */
-/* recursica-ignore: --recursica_ui-kit_components_read-only-field_properties_text_font-style */
-/* recursica-ignore: --recursica_ui-kit_components_read-only-field_properties_text_font-weight */
-/* recursica-ignore: --recursica_ui-kit_components_read-only-field_properties_text_letter-spacing */
-/* recursica-ignore: --recursica_ui-kit_components_read-only-field_properties_text_line-height */
-/* recursica-ignore: --recursica_ui-kit_components_read-only-field_properties_text_text-decoration */
-/* recursica-ignore: --recursica_ui-kit_components_read-only-field_properties_text_text-transform */
-/* recursica-ignore: --recursica_ui-kit_components_read-only-field_variants_layouts_side-by-side_properties_top-bottom-margin */
-/* recursica-ignore: --recursica_ui-kit_components_read-only-field_variants_layouts_stacked_properties_top-bottom-margin */
+.layoutOverride[data-form-layout="side-by-side"] {
+  --form-control-margin-bottom: var(
+    --recursica_ui-kit_components_read-only-field_variants_layouts_side-by-side_properties_top-bottom-margin
+  );
+}
+
+/* HARDCODED VALUES:
+   - margin: 0; padding: overrides native paragraph margins mapping back to form element flows.
+*/
+.textField {
+  margin: 0; /* HARDCODE: Reset paragraph margin; assume wrapper controls layout */
+  display: flex;
+  align-items: center;
+  word-break: break-word;
+  padding: 0; /* HARDCODE: read-only fields have no specific padding defined by tokens, zeroing it. */
+  font-family: var(
+    --recursica_ui-kit_components_read-only-field_properties_text_font-family,
+    inherit
+  );
+  font-size: var(
+    --recursica_ui-kit_components_read-only-field_properties_text_font-size,
+    1rem
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_read-only-field_properties_text_font-weight,
+    normal
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_read-only-field_properties_text_letter-spacing,
+    normal
+  );
+  line-height: var(
+    --recursica_ui-kit_components_read-only-field_properties_text_line-height,
+    1.5
+  );
+  font-style: var(
+    --recursica_ui-kit_components_read-only-field_properties_text_font-style,
+    normal
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_read-only-field_properties_text_text-decoration,
+    none
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_read-only-field_properties_text_text-transform,
+    none
+  );
+  color: var(
+    --recursica_ui-kit_components_read-only-field_properties_colors_text
+  );
+  min-height: var(
+    --recursica_ui-kit_components_read-only-field_properties_min-height,
+    32px
+  );
+}

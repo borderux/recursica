@@ -1,47 +1,266 @@
 /* EXEMPTIONS:
-   This component is a placeholder stub. Once fully implemented, its specific
-   tokens will be fully wired up to direct styles. */
-
-/* recursica-ignore: --recursica_ui-kit_components_text-field_properties_border-radius */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_properties_horizontal-padding */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_properties_icon-size */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_properties_icon-text-gap */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_properties_max-width */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_properties_min-height */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_properties_min-width */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_properties_placeholder-opacity */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_properties_text_font-family */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_properties_text_font-size */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_properties_text_font-style */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_properties_text_font-weight */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_properties_text_letter-spacing */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_properties_text_line-height */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_properties_text_text-decoration */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_properties_text_text-transform */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_properties_vertical-padding */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_variants_layouts_side-by-side_properties_top-bottom-margin */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_variants_layouts_stacked_properties_top-bottom-margin */
+   - state-specific border-size variables are ignored because a uniform 1px border is applied globally to prevent 
+     unexpected layout shift or flickering during focus, disabled, or error state transitions. */
 /* recursica-ignore: --recursica_ui-kit_components_text-field_variants_states_default_properties_border-size */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_variants_states_default_properties_colors_background */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_variants_states_default_properties_colors_border-color */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_variants_states_default_properties_colors_leading-icon */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_variants_states_default_properties_colors_text */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_variants_states_default_properties_colors_trailing-icon */
 /* recursica-ignore: --recursica_ui-kit_components_text-field_variants_states_disabled_properties_border-size */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_variants_states_disabled_properties_colors_background */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_variants_states_disabled_properties_colors_border-color */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_variants_states_disabled_properties_colors_leading-icon */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_variants_states_disabled_properties_colors_text */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_variants_states_disabled_properties_colors_trailing-icon */
 /* recursica-ignore: --recursica_ui-kit_components_text-field_variants_states_error_properties_border-size */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_variants_states_error_properties_colors_background */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_variants_states_error_properties_colors_border-color */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_variants_states_error_properties_colors_leading-icon */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_variants_states_error_properties_colors_text */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_variants_states_error_properties_colors_trailing-icon */
 /* recursica-ignore: --recursica_ui-kit_components_text-field_variants_states_focus_properties_border-size */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_variants_states_focus_properties_colors_background */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_variants_states_focus_properties_colors_border-color */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_variants_states_focus_properties_colors_leading-icon */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_variants_states_focus_properties_colors_text */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_variants_states_focus_properties_colors_trailing-icon */
+
+/* LAYOUT SPACING OVERRIDES:
+   - Sets the --form-control-margin-bottom spacing hook to map component-specific layout tokens. */
+.layoutOverride {
+  --form-control-margin-bottom: var(
+    --recursica_ui-kit_components_text-field_variants_layouts_stacked_properties_top-bottom-margin
+  );
+}
+
+.layoutOverride[data-form-layout="side-by-side"] {
+  --form-control-margin-bottom: var(
+    --recursica_ui-kit_components_text-field_variants_layouts_side-by-side_properties_top-bottom-margin
+  );
+}
+
+/* HARDCODED VALUES:
+   - border-width: 1px. Native geometric boundary for the input box.
+   - border-style: solid. Native structural rendering rule.
+   - outline: none. Bypassing browser focus rings to rely strictly on Recursica focus states natively.
+   - flex/layout: display: flex on the root wrapper safely encapsulating internal section rendering.
+*/
+
+.root {
+  display: flex;
+  position: relative;
+  width: 100%;
+  min-height: var(
+    --recursica_ui-kit_components_text-field_properties_min-height
+  );
+
+  /* Strict Typography Unification placed on root for MUI InputBase inheritance */
+  font-family: var(
+    --recursica_ui-kit_components_text-field_properties_text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_text-field_properties_text_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_text-field_properties_text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_text-field_properties_text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_text-field_properties_text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_text-field_properties_text_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_text-field_properties_text_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_text-field_properties_text_text-transform
+  );
+
+  /* Box Geometry placed on root so MUI InputBase boundary executes */
+  border-radius: var(
+    --recursica_ui-kit_components_text-field_properties_border-radius
+  );
+  border-width: 1px;
+  border-style: solid;
+
+  /* Base State Default Execution */
+  background-color: var(
+    --recursica_ui-kit_components_text-field_variants_states_default_properties_colors_background
+  );
+  border-color: var(
+    --recursica_ui-kit_components_text-field_variants_states_default_properties_colors_border-color
+  );
+  color: var(
+    --recursica_ui-kit_components_text-field_variants_states_default_properties_colors_text
+  );
+
+  /* Override MUI/Mantine native Input variables governing section spacing padding mathematics safely */
+  --input-left-section-size: calc(
+    var(
+        --recursica_ui-kit_components_text-field_properties_horizontal-padding
+      ) +
+      var(--recursica_ui-kit_components_text-field_properties_icon-size) +
+      var(--recursica_ui-kit_components_text-field_properties_icon-text-gap)
+  );
+  --input-right-section-size: calc(
+    var(
+        --recursica_ui-kit_components_text-field_properties_horizontal-padding
+      ) +
+      var(--recursica_ui-kit_components_text-field_properties_icon-size) +
+      var(--recursica_ui-kit_components_text-field_properties_icon-text-gap)
+  );
+}
+
+.input {
+  /* Structural Overrides */
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+
+  /* Box Geometry Padding */
+  min-height: var(
+    --recursica_ui-kit_components_text-field_properties_min-height
+  );
+  padding-top: var(
+    --recursica_ui-kit_components_text-field_properties_vertical-padding
+  );
+  padding-bottom: var(
+    --recursica_ui-kit_components_text-field_properties_vertical-padding
+  );
+  padding-left: var(
+    --recursica_ui-kit_components_text-field_properties_horizontal-padding
+  );
+  padding-right: var(
+    --recursica_ui-kit_components_text-field_properties_horizontal-padding
+  );
+
+  outline: none;
+  border: none; /* Because root handles border in MUI */
+  background: transparent;
+  color: inherit;
+  height: auto; /* overrides MUI's 1.1876em */
+}
+
+.input::placeholder {
+  opacity: var(
+    --recursica_ui-kit_components_text-field_properties_placeholder-opacity
+  );
+  color: inherit;
+}
+
+/* Dynamic Padding Overrides */
+.root[data-with-left-section="true"] .input {
+  padding-left: var(--input-left-section-size);
+}
+
+.root[data-with-right-section="true"] .input {
+  padding-right: var(--input-right-section-size);
+}
+
+/* Flexible End-Caps (Icons, actions) */
+.section {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  position: absolute;
+}
+
+.section[data-position="left"] {
+  justify-content: flex-start;
+  left: 0;
+  padding-left: var(
+    --recursica_ui-kit_components_text-field_properties_horizontal-padding
+  );
+}
+
+.section[data-position="right"] {
+  justify-content: flex-end;
+  right: 0;
+  padding-right: var(
+    --recursica_ui-kit_components_text-field_properties_horizontal-padding
+  );
+}
+
+.section :global(svg) {
+  width: var(--recursica_ui-kit_components_text-field_properties_icon-size);
+  height: var(--recursica_ui-kit_components_text-field_properties_icon-size);
+  color: var(
+    --recursica_ui-kit_components_text-field_variants_states_default_properties_colors_leading-icon
+  );
+}
+
+.section[data-position="right"] :global(svg) {
+  color: var(
+    --recursica_ui-kit_components_text-field_variants_states_default_properties_colors_trailing-icon
+  );
+}
+
+/* -------------------------------------
+   STATE CASCADE ARCHITECTURE
+-------------------------------------- */
+
+/* Focus State Mapping (Triggered internally via browser pseudo-pseudo-class) */
+.root:focus-within,
+.root:focus {
+  border-color: var(
+    --recursica_ui-kit_components_text-field_variants_states_focus_properties_colors_border-color
+  );
+  background-color: var(
+    --recursica_ui-kit_components_text-field_variants_states_focus_properties_colors_background
+  );
+  color: var(
+    --recursica_ui-kit_components_text-field_variants_states_focus_properties_colors_text
+  );
+}
+
+.root:focus-within .section[data-position="left"] :global(svg) {
+  color: var(
+    --recursica_ui-kit_components_text-field_variants_states_focus_properties_colors_leading-icon
+  );
+}
+
+.root:focus-within .section[data-position="right"] :global(svg) {
+  color: var(
+    --recursica_ui-kit_components_text-field_variants_states_focus_properties_colors_trailing-icon
+  );
+}
+
+/* Error State Mapping (Propagated strictly down from the wrapper DOM context) */
+.root[data-error="true"] {
+  border-color: var(
+    --recursica_ui-kit_components_text-field_variants_states_error_properties_colors_border-color
+  );
+  background-color: var(
+    --recursica_ui-kit_components_text-field_variants_states_error_properties_colors_background
+  );
+  color: var(
+    --recursica_ui-kit_components_text-field_variants_states_error_properties_colors_text
+  );
+}
+
+.root[data-error="true"] .section[data-position="left"] :global(svg) {
+  color: var(
+    --recursica_ui-kit_components_text-field_variants_states_error_properties_colors_leading-icon
+  );
+}
+
+.root[data-error="true"] .section[data-position="right"] :global(svg) {
+  color: var(
+    --recursica_ui-kit_components_text-field_variants_states_error_properties_colors_trailing-icon
+  );
+}
+
+/* Disabled State Mapping (Propagated strictly down from the wrapper DOM context) */
+.root[data-disabled="true"] {
+  border-color: var(
+    --recursica_ui-kit_components_text-field_variants_states_disabled_properties_colors_border-color
+  );
+  background-color: var(
+    --recursica_ui-kit_components_text-field_variants_states_disabled_properties_colors_background
+  );
+  color: var(
+    --recursica_ui-kit_components_text-field_variants_states_disabled_properties_colors_text
+  );
+  cursor: not-allowed;
+}
+
+.root[data-disabled="true"] .input {
+  cursor: not-allowed;
+}
+
+.root[data-disabled="true"] .section[data-position="left"] :global(svg) {
+  color: var(
+    --recursica_ui-kit_components_text-field_variants_states_disabled_properties_colors_leading-icon
+  );
+}
+
+.root[data-disabled="true"] .section[data-position="right"] :global(svg) {
+  color: var(
+    --recursica_ui-kit_components_text-field_variants_states_disabled_properties_colors_trailing-icon
+  );
+}

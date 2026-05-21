@@ -75,7 +75,7 @@
  * to create contrast for solid variants without changing the loader color. 
  */
 .root[data-loading="true"] {
-  opacity: 1 !important;
+  opacity: 1;
 }
 
 .root[data-size="default"][data-variant="solid"][data-loading="true"] {
@@ -91,7 +91,7 @@
           100%
       ),
     transparent
-  ) !important;
+  );
 }
 
 .root[data-size="small"][data-variant="solid"][data-loading="true"] {
@@ -107,7 +107,7 @@
           100%
       ),
     transparent
-  ) !important;
+  );
 }
 
 /* ==== SIZES ==== */
