@@ -1,4 +1,5 @@
 import React from "react";
+import "./Menu.module.css";
 
 export type MenuProps = React.HTMLAttributes<HTMLDivElement>;
 

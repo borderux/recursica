@@ -1,4 +1,5 @@
 import React from "react";
+import "./Pagination.module.css";
 
 export type PaginationProps = React.HTMLAttributes<HTMLDivElement>;
 

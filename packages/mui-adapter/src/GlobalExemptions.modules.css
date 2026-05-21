@@ -1,0 +1,13 @@
+/**
+ * GLOBAL EXEMPTIONS
+ *
+ * This file hosts global, brand, and layout variables that are defined in
+ * recursica_variables_scoped.css but are not used by any specific component.
+ * Isolating them here keeps individual component stylesheets clean and focused.
+ */
+
+/* ==== GLOBAL ICON STYLE ====
+   Global layout option specifying the overall SVG rendering style (solid/outline).
+   Note to Forge Devs: style is not a CSS property or variable type and cannot be applied in standard CSS stylesheets.
+   This variable is ignored in the UI adapters and should be reviewed by the Forge team. */
+/* recursica-ignore: --recursica_ui-kit_globals_icon_style */

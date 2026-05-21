@@ -1,4 +1,5 @@
 import React from "react";
+import "./Toast.module.css";
 
 export type ToastProps = React.HTMLAttributes<HTMLDivElement>;
 

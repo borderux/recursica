@@ -1,5 +1,6 @@
 export * from "./Accordion";
 export * from "./AssistiveElement";
+export * from "./Autocomplete";
 export * from "./Avatar";
 export * from "./Badge";
 export * from "./Box";

@@ -78,8 +78,15 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const hasStartIcon = !!icon || !!restRecord["startIcon"];
     const hasEndIcon = !!restRecord["endIcon"];
-    const isIconOnly =
-      (hasStartIcon || hasEndIcon) && !hasVisibleChildren(children);
+    const hasVisibleText = hasVisibleChildren(children);
+    const isIconOnly = (hasStartIcon || hasEndIcon) && !hasVisibleText;
+
+    let contentType = "label";
+    if (isIconOnly) {
+      contentType = "icon-only";
+    } else if (hasStartIcon || hasEndIcon) {
+      contentType = "icon-label";
+    }
 
     if (
       typeof process !== "undefined" &&
@@ -129,7 +136,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         }
         data-variant={variant}
         data-size={size}
-        {...(isIconOnly ? { "data-icon-only": "" } : {})}
+        data-content={contentType}
         {...(restRecord.loading ? { "data-loading": "true" } : {})}
         {...sanitizedProps}
         disabled={!!restRecord.disabled || !!restRecord.loading}

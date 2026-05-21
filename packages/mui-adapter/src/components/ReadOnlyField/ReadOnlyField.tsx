@@ -1,4 +1,5 @@
 import React from "react";
+import "./ReadOnlyField.module.css";
 
 export type ReadOnlyFieldProps = React.HTMLAttributes<HTMLDivElement>;
 

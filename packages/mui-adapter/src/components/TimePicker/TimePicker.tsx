@@ -1,4 +1,5 @@
 import React from "react";
+import "./TimePicker.module.css";
 
 export type TimePickerProps = React.HTMLAttributes<HTMLDivElement>;
 

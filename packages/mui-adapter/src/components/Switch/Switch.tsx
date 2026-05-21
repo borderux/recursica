@@ -1,4 +1,5 @@
 import React from "react";
+import "./Switch.module.css";
 
 export type SwitchProps = React.HTMLAttributes<HTMLDivElement>;
 

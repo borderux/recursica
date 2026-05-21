@@ -1,4 +1,5 @@
 import React from "react";
+import "./AssistiveElement.module.css";
 
 export type AssistiveElementProps = React.HTMLAttributes<HTMLDivElement>;
 

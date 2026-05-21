@@ -1,4 +1,5 @@
 import React from "react";
+import "./HoverCard.module.css";
 
 export type HoverCardProps = React.HTMLAttributes<HTMLDivElement>;
 

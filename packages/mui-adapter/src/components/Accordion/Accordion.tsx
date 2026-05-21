@@ -1,4 +1,5 @@
 import React from "react";
+import "./Accordion.module.css";
 
 export type AccordionProps = React.HTMLAttributes<HTMLDivElement>;
 

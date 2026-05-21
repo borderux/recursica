@@ -1,4 +1,5 @@
 import React from "react";
+import "./TextArea.module.css";
 
 export type TextAreaProps = React.HTMLAttributes<HTMLDivElement>;
 

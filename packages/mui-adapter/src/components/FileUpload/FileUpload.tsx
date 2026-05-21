@@ -1,4 +1,5 @@
 import React from "react";
+import "./FileUpload.module.css";
 
 export type FileUploadProps = React.HTMLAttributes<HTMLDivElement>;
 

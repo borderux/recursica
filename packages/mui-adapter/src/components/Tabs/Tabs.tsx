@@ -1,4 +1,5 @@
 import React from "react";
+import "./Tabs.module.css";
 
 export type TabsProps = React.HTMLAttributes<HTMLDivElement>;
 

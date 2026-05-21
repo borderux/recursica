@@ -1,4 +1,5 @@
 import React from "react";
+import "./Label.module.css";
 
 export type LabelProps = React.HTMLAttributes<HTMLDivElement>;
 

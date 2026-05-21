@@ -1,4 +1,5 @@
 import React from "react";
+import "./Panel.module.css";
 
 export type PanelProps = React.HTMLAttributes<HTMLDivElement>;
 

@@ -1,4 +1,5 @@
 import React from "react";
+import "./Chip.module.css";
 
 export type ChipProps = React.HTMLAttributes<HTMLDivElement>;
 

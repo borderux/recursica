@@ -1,4 +1,5 @@
 import React from "react";
+import "./Breadcrumb.module.css";
 
 export type BreadcrumbProps = React.HTMLAttributes<HTMLDivElement>;
 

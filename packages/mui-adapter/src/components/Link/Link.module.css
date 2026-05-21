@@ -131,3 +131,11 @@ HARDCODED VALUES:
   /* HARDCODE: allows text truncation if bounded */
   min-width: 0;
 }
+
+/* EXEMPTIONS:
+   text_text-transform across multiple link states (default, hover, visited, visited-hover) is ignored
+   because links naturally inherit casing directly from text children rather than requiring custom CSS transforms. */
+/* recursica-ignore: --recursica_ui-kit_components_link_variants_states_default_properties_text_text-transform */
+/* recursica-ignore: --recursica_ui-kit_components_link_variants_states_hover_properties_text_text-transform */
+/* recursica-ignore: --recursica_ui-kit_components_link_variants_states_visited_properties_text_text-transform */
+/* recursica-ignore: --recursica_ui-kit_components_link_variants_states_visited-hover_properties_text_text-transform */
