@@ -64,6 +64,7 @@
   --form-field-vertical-padding: var(
     --recursica_ui-kit_globals_form_field_size_vertical-padding
   );
+  color: var(--form-field-text-valued);
 }
 
 .inputSection {

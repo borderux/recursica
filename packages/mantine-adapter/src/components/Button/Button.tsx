@@ -117,7 +117,7 @@ const _Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
     : styles.root;
 
   const userLoaderProps = restRecord.loaderProps as
-    | Record<string, any>
+    | Record<string, unknown>
     | undefined;
 
   const resolvedLoaderSize =
