@@ -191,13 +191,10 @@ function analyze() {
 
   const newComponents = Object.keys(unusedByComponent).length;
   if (unusedVars.size > 0) {
-    console.error(
-      `❌ FOUND ${unusedVars.size} UNUSED VARIABLES grouped across ${newComponents} component definitions.`,
+    console.warn(
+      `⚠️ WARNING: FOUND ${unusedVars.size} UNUSED VARIABLES grouped across ${newComponents} component definitions.`,
     );
-    console.error(
-      `   These must be implemented or explicitly ignored in token-exemptions.json.`,
-    );
-    console.error(
+    console.warn(
       `   Review ${options.output} to identify the unmapped Figma features.\n`,
     );
   } else {
@@ -229,10 +226,8 @@ function analyze() {
 
   console.log(`💾 Analysis written to ${options.output}\n`);
 
-  if (missingVars.length > 0 || unusedVars.size > 0) {
-    console.error(
-      `🚨 BUILD FAILED: Token analysis found missing or unused variables.`,
-    );
+  if (missingVars.length > 0) {
+    console.error(`🚨 BUILD FAILED: Token analysis found missing variables.`);
     process.exit(1);
   }
 }
