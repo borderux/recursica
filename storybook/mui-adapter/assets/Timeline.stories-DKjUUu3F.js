@@ -1,0 +1,3 @@
+import{j as t}from"./iframe-BYOZEeYD.js";import{T as a}from"./Timeline-WTPQGJVj.js";import{p as i}from"./index-BAVfEGr5.js";import"./preload-helper-Dp1pzeXC.js";const l={title:"UI-Kit/🚧 Timeline",component:a,tags:["autodocs"],parameters:{controls:{include:["layer","withLayer","children","component","variant","size","icon","disabled","href","onClick","onChange","value","checked"]}}},e={render:()=>t.jsx(i,{componentName:"Timeline"})};var o,r,n;e.parameters={...e.parameters,docs:{...(o=e.parameters)==null?void 0:o.docs,source:{originalSource:`{
+  render: () => <ComingSoon componentName="Timeline" />
+}`,...(n=(r=e.parameters)==null?void 0:r.docs)==null?void 0:n.source}}};const d=["Default"];export{e as Default,d as __namedExportsOrder,l as default};

@@ -1,0 +1,3 @@
+import{j as a}from"./iframe-BYOZEeYD.js";import{S as n}from"./Slider-0l9Qv3-a.js";import{p as s}from"./index-BAVfEGr5.js";import"./preload-helper-Dp1pzeXC.js";const p={title:"UI-Kit/🚧 Slider",component:n,tags:["autodocs"],parameters:{controls:{include:["layer","withLayer","children","component","variant","size","icon","disabled","href","onClick","onChange","value","checked"]}}},e={render:()=>a.jsx(s,{componentName:"Slider"})};var r,o,t;e.parameters={...e.parameters,docs:{...(r=e.parameters)==null?void 0:r.docs,source:{originalSource:`{
+  render: () => <ComingSoon componentName="Slider" />
+}`,...(t=(o=e.parameters)==null?void 0:o.docs)==null?void 0:t.source}}};const l=["Default"];export{e as Default,l as __namedExportsOrder,p as default};

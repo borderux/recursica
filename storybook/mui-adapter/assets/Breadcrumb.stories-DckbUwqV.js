@@ -1,0 +1,3 @@
+import{j as t}from"./iframe-BYOZEeYD.js";import{B as n}from"./Breadcrumb-CI1uFpz0.js";import{p as m}from"./index-BAVfEGr5.js";import"./preload-helper-Dp1pzeXC.js";const p={title:"UI-Kit/🚧 Breadcrumb",component:n,tags:["autodocs"],parameters:{controls:{include:["layer","withLayer","children","component","variant","size","icon","disabled","href","onClick","onChange","value","checked"]}}},e={render:()=>t.jsx(m,{componentName:"Breadcrumb"})};var r,o,a;e.parameters={...e.parameters,docs:{...(r=e.parameters)==null?void 0:r.docs,source:{originalSource:`{
+  render: () => <ComingSoon componentName="Breadcrumb" />
+}`,...(a=(o=e.parameters)==null?void 0:o.docs)==null?void 0:a.source}}};const u=["Default"];export{e as Default,u as __namedExportsOrder,p as default};

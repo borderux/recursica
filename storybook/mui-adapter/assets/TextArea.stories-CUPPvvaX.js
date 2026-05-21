@@ -1,0 +1,3 @@
+import{j as a}from"./iframe-BYOZEeYD.js";import{T as n}from"./TextArea-icH56NLx.js";import{p as s}from"./index-BAVfEGr5.js";import"./preload-helper-Dp1pzeXC.js";const d={title:"UI-Kit/🚧 TextArea",component:n,tags:["autodocs"],parameters:{controls:{include:["layer","withLayer","children","component","variant","size","icon","disabled","href","onClick","onChange","value","checked"]}}},e={render:()=>a.jsx(s,{componentName:"TextArea"})};var r,o,t;e.parameters={...e.parameters,docs:{...(r=e.parameters)==null?void 0:r.docs,source:{originalSource:`{
+  render: () => <ComingSoon componentName="TextArea" />
+}`,...(t=(o=e.parameters)==null?void 0:o.docs)==null?void 0:t.source}}};const l=["Default"];export{e as Default,l as __namedExportsOrder,d as default};
