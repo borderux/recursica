@@ -65,7 +65,7 @@ export const SwitchGroup = forwardRef<HTMLDivElement, SwitchGroupProps>(
       <WithReadOnlyWrapper
         className={className}
         style={style as React.CSSProperties}
-        controlMaxWidth="var(--recursica_ui-kit_components_switch_properties_max-width)"
+        controlMaxWidth="var(--recursica_ui-kit_components_switch-item_properties_label-max-width)"
         controlMinWidth={undefined}
         overStyled={overStyled as true}
         labelElement="div" // Strictly override. ARIA grouping prohibits interactive switches nested natively inside <label>.
@@ -98,15 +98,8 @@ export const SwitchGroup = forwardRef<HTMLDivElement, SwitchGroupProps>(
             value={value}
             defaultValue={defaultValue}
           >
-            <div className={styles.groupRoot}>
-              {React.Children.map(children, (child) => {
-                if (React.isValidElement(child)) {
-                  return React.cloneElement(child as React.ReactElement<any>, {
-                    disabled: readOnly || (child.props as any).disabled,
-                  });
-                }
-                return child;
-              })}
+            <div className={styles.groupRoot} data-layout={formLayout}>
+              {children}
             </div>
           </MantineSwitch.Group>
         }

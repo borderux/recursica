@@ -10,6 +10,9 @@ const meta: Meta<ButtonStoryProps> = {
   component: Button,
   tags: ["autodocs"],
   argTypes: {
+    disabled: {
+      control: "boolean",
+    },
     variant: {
       control: "select",
       options: ["solid", "outline", "text"],

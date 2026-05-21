@@ -1,4 +1,5 @@
 import React from "react";
+import "./NumberInput.module.css";
 
 export type NumberInputProps = React.HTMLAttributes<HTMLDivElement>;
 

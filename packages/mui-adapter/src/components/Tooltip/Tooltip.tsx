@@ -1,4 +1,5 @@
 import React from "react";
+import "./Tooltip.module.css";
 
 export type TooltipProps = React.HTMLAttributes<HTMLDivElement>;
 

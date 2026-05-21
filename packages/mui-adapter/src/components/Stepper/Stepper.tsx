@@ -1,4 +1,5 @@
 import React from "react";
+import "./Stepper.module.css";
 
 export type StepperProps = React.HTMLAttributes<HTMLDivElement>;
 

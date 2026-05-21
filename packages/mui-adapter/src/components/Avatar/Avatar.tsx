@@ -1,4 +1,5 @@
 import React from "react";
+import "./Avatar.module.css";
 
 export type AvatarProps = React.HTMLAttributes<HTMLDivElement>;
 

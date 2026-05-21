@@ -1,4 +1,5 @@
 import React from "react";
+import "./SegmentedControl.module.css";
 
 export type SegmentedControlProps = React.HTMLAttributes<HTMLDivElement>;
 

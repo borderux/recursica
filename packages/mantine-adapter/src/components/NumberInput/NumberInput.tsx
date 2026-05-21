@@ -84,9 +84,13 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
       control: styles.control,
     };
 
+    const wrapperClass = className
+      ? `${styles.layoutOverride} ${className}`
+      : styles.layoutOverride;
+
     return (
       <WithReadOnlyWrapper
-        className={className}
+        className={wrapperClass}
         style={style as React.CSSProperties}
         controlMaxWidth="var(--recursica_ui-kit_components_number-input_properties_max-width)"
         controlMinWidth="var(--recursica_ui-kit_components_number-input_properties_min-width)"

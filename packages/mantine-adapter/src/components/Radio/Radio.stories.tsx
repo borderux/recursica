@@ -18,6 +18,9 @@ The \`Radio\` component represents a fundamental standalone boolean selection no
     },
   },
   argTypes: {
+    disabled: {
+      control: "boolean",
+    },
     checked: {
       control: "boolean",
     },

@@ -14,7 +14,7 @@ export interface RecursicaToastProps {
    * The visual variant of the toast.
    * @default "default"
    */
-  variant?: "default";
+  variant?: "default" | "error" | "success";
 
   /**
    * Loading state is natively unsupported by Recursica UI Kit.

@@ -1,3 +1,8 @@
+/* EXEMPTIONS:
+   - colors_selected-item_supporting-text-color is ignored because selected menu items do not render 
+     supporting secondary text, making selected state overrides for supporting text colors obsolete. */
+/* recursica-ignore: --recursica_ui-kit_components_menu-item_properties_colors_selected-item_supporting-text-color */
+
 /* HARDCODED VALUES:
    - border-style: solid. Structural rendering rule for the dropdown border (Mantine uses Paper which may not set border natively).
    - opacity: 0.5 on disabled items. Recursica has no dedicated disabled-opacity token for menu items.
@@ -27,11 +32,12 @@
   box-shadow: var(--recursica_ui-kit_components_menu_properties_elevation);
 
   min-width: var(--recursica_ui-kit_components_menu_properties_min-width);
+  max-height: var(--recursica_ui-kit_components_menu_properties_max-height);
   max-width: var(--recursica_ui-kit_components_menu_properties_max-width);
 
-  padding: var(
-    --recursica_ui-kit_components_menu-item_properties_divider-item-gap
-  );
+  /* HARDCODE: Figma UI Kit does not export padding tokens for the Menu container itself. 
+     If added in the future, it would be mapped here. */
+  padding: 8px;
 }
 
 /* ======================================
@@ -83,9 +89,7 @@
   color: var(
     --recursica_ui-kit_components_menu-item_properties_colors_unselected-item_text
   );
-  opacity: var(
-    --recursica_ui-kit_components_menu-item_properties_colors_unselected-item_opacity
-  );
+  opacity: 1;
 }
 
 /* Override Mantine's native hover background to use our overlay technique */
@@ -104,7 +108,7 @@
   z-index: 0;
   pointer-events: none;
   background-color: var(
-    --recursica_ui-kit_components_menu-item_properties_hover-color
+    --recursica_ui-kit_components_menu-item_properties_colors_unselected-item_hover-color
   );
   opacity: 0;
   transition: opacity 150ms ease;
@@ -112,8 +116,7 @@
 
 .item:hover:not([data-disabled])::after {
   opacity: var(
-    --recursica_ui-kit_components_menu-item_properties_hover-opacity,
-    0.1
+    --recursica_ui-kit_components_menu-item_properties_colors_unselected-item_hover-opacity
   );
 }
 
@@ -125,8 +128,12 @@
   color: var(
     --recursica_ui-kit_components_menu-item_properties_colors_selected-item_text
   );
-  opacity: var(
-    --recursica_ui-kit_components_menu-item_properties_colors_selected-item_opacity
+  opacity: 1;
+}
+
+.item[data-selected]::after {
+  background-color: var(
+    --recursica_ui-kit_components_menu-item_properties_colors_selected-item_hover-color
   );
 }
 
@@ -138,15 +145,21 @@
 }
 .item[data-hovered]::after {
   opacity: var(
-    --recursica_ui-kit_components_menu-item_properties_hover-opacity,
-    0.1
+    --recursica_ui-kit_components_menu-item_properties_colors_unselected-item_hover-opacity
+  );
+}
+
+.item[data-hovered][data-selected]::after {
+  opacity: var(
+    --recursica_ui-kit_components_menu-item_properties_colors_selected-item_hover-opacity
   );
 }
 
 /* Disabled item */
 .item[data-disabled] {
-  /* HARDCODE: 0.5 opacity fallback; no dedicated disabled-opacity token for menu items */
-  opacity: 0.5;
+  opacity: var(
+    --recursica_ui-kit_components_menu-item_properties_disabled-opacity
+  );
 }
 
 /* ======================================
@@ -166,7 +179,46 @@
 .itemSection {
   position: relative;
   z-index: 1;
-  color: inherit;
+}
+
+.itemSection[data-position="left"] {
+  width: var(
+    --recursica_ui-kit_components_menu-item_properties_icon-leading-size
+  );
+  height: var(
+    --recursica_ui-kit_components_menu-item_properties_icon-leading-size
+  );
+  margin-right: var(
+    --recursica_ui-kit_components_menu-item_properties_icon-text-gap
+  );
+  color: var(
+    --recursica_ui-kit_components_menu-item_properties_colors_unselected-item_leading-icon-color
+  );
+}
+
+.itemSection[data-position="right"] {
+  width: var(
+    --recursica_ui-kit_components_menu-item_properties_icon-trailing-size
+  );
+  height: var(
+    --recursica_ui-kit_components_menu-item_properties_icon-trailing-size
+  );
+  margin-left: var(--recursica_ui-kit_components_menu-item_properties_text-gap);
+  color: var(
+    --recursica_ui-kit_components_menu-item_properties_colors_unselected-item_trailing-icon-color
+  );
+}
+
+.item[data-selected] .itemSection[data-position="left"] {
+  color: var(
+    --recursica_ui-kit_components_menu-item_properties_colors_selected-item_leading-icon-color
+  );
+}
+
+.item[data-selected] .itemSection[data-position="right"] {
+  color: var(
+    --recursica_ui-kit_components_menu-item_properties_colors_selected-item_trailing-icon-color
+  );
 }
 
 /* ======================================
@@ -174,19 +226,12 @@
    ====================================== */
 
 .divider {
-  height: var(
-    --recursica_ui-kit_components_menu-item_properties_divider-height
-  );
+  height: var(--recursica_ui-kit_components_menu_properties_divider-height);
   background-color: var(
-    --recursica_ui-kit_components_menu-item_properties_colors_divider-color
+    --recursica_ui-kit_components_menu_properties_colors_divider-color
   );
-  opacity: var(
-    --recursica_ui-kit_components_menu-item_properties_divider-opacity
-  );
-  margin: var(
-      --recursica_ui-kit_components_menu-item_properties_divider-item-gap
-    )
-    0;
+  opacity: var(--recursica_ui-kit_components_menu_properties_divider-opacity);
+  margin: 8px 0;
 }
 
 /* ======================================
@@ -228,9 +273,7 @@
   color: var(
     --recursica_ui-kit_components_menu-item_properties_colors_unselected-item_supporting-text-color
   );
-  opacity: var(
-    --recursica_ui-kit_components_menu-item_properties_colors_unselected-item_supporting-text-opacity
-  );
+  opacity: 0.7;
 }
 
 /* ======================================

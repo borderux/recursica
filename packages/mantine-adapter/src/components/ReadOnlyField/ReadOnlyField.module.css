@@ -1,3 +1,17 @@
+/* LAYOUT SPACING OVERRIDES:
+   - Sets the --form-control-margin-bottom spacing hook to map component-specific layout tokens. */
+.layoutOverride {
+  --form-control-margin-bottom: var(
+    --recursica_ui-kit_components_read-only-field_variants_layouts_stacked_properties_top-bottom-margin
+  );
+}
+
+.layoutOverride[data-form-layout="side-by-side"] {
+  --form-control-margin-bottom: var(
+    --recursica_ui-kit_components_read-only-field_variants_layouts_side-by-side_properties_top-bottom-margin
+  );
+}
+
 /* HARDCODED VALUES:
    - margin: 0; padding: overrides native paragraph margins mapping back to form element flows.
 */

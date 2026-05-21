@@ -113,9 +113,13 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
       width: containerWidth || "100%",
     };
 
+    const wrapperClass = className
+      ? `${styles.layoutOverride} ${className}`
+      : styles.layoutOverride;
+
     return (
       <WithReadOnlyWrapper
-        className={className}
+        className={wrapperClass}
         style={injectedStyles}
         controlMaxWidth="var(--recursica_ui-kit_components_dropdown_properties_max-width)"
         controlMinWidth="var(--recursica_ui-kit_components_dropdown_properties_min-width)"

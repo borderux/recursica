@@ -1,6 +1,13 @@
+/* EXEMPTIONS:
+   - elevation levels layer-1, layer-2, and layer-3 are ignored because all toasts explicitly use the standard 
+     layer-0 elevation shadow for styling consistency. */
+/* recursica-ignore: --recursica_ui-kit_components_toast_properties_elevation_layer-1 */
+/* recursica-ignore: --recursica_ui-kit_components_toast_properties_elevation_layer-2 */
+/* recursica-ignore: --recursica_ui-kit_components_toast_properties_elevation_layer-3 */
+
 /* HARDCODED VALUES:
    - border-style: none. To ensure the notification doesn't render unwanted borders unless specified.
-*/
+ */
 
 /* ======================================
    TOAST / NOTIFICATION ROOT
@@ -53,6 +60,54 @@
     color: var(
       --recursica_ui-kit_components_toast_variants_styles_default_properties_colors_button
     );
+  }
+
+  /* Error Variant styling */
+  &[data-variant="error"] {
+    background-color: var(
+      --recursica_ui-kit_components_toast_variants_styles_error_properties_colors_background
+    );
+
+    & .icon {
+      color: var(
+        --recursica_ui-kit_components_toast_variants_styles_error_properties_colors_text
+      ) !important;
+    }
+    & .title,
+    & .description {
+      color: var(
+        --recursica_ui-kit_components_toast_variants_styles_error_properties_colors_text
+      );
+    }
+    & .closeButton {
+      color: var(
+        --recursica_ui-kit_components_toast_variants_styles_error_properties_colors_button
+      );
+    }
+  }
+
+  /* Success Variant styling */
+  &[data-variant="success"] {
+    background-color: var(
+      --recursica_ui-kit_components_toast_variants_styles_success_properties_colors_background
+    );
+
+    & .icon {
+      color: var(
+        --recursica_ui-kit_components_toast_variants_styles_success_properties_colors_text
+      ) !important;
+    }
+    & .title,
+    & .description {
+      color: var(
+        --recursica_ui-kit_components_toast_variants_styles_success_properties_colors_text
+      );
+    }
+    & .closeButton {
+      color: var(
+        --recursica_ui-kit_components_toast_variants_styles_success_properties_colors_button
+      );
+    }
   }
 }
 

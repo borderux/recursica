@@ -2,6 +2,18 @@
 
 This document tracks known issues, edge cases, missing variables, or design system concerns mapped by component. It acts as a running ledger for developers and designers to align on what needs to be fixed or updated in the Figma token variables or component logic.
 
+## Global API Issues
+
+### 1. Extraneous Composite Typography Tokens in Export
+
+- **Description:** Figma is currently exporting raw composite typography tokens (like `-style` properties) directly into the UI Kit JSON as single string variables (e.g. `--recursica_ui-kit_components_modal_properties_content-style: var(--recursica_brand_typography_body)`).
+- **Impact:** These are unusable in raw CSS because they output the localized class-name string rather than parseable `font` shorthands. We map typography using CSS Modules (`composes: recursica_brand_typography_body from global;`), rendering these variables dead weight. They falsely trigger "Unused Variable" errors in the build pipeline.
+- **Current Resolution:** We are explicitly bypassing these via `/* recursica-ignore */` in their respective CSS modules. This issue currently affects:
+  - `Card` (`content-style`, `header-style`)
+  - `Modal` (`content-style`, `header-style`)
+  - `Panel` (`content-style`, `header-style`)
+  - `TransferList` (`header-style`)
+
 ## Badge
 
 ### 1. Missing Size Variants
@@ -80,9 +92,15 @@ This document tracks known issues, edge cases, missing variables, or design syst
 
 ### 2. Missing Disabled State Tokens
 
-- **Description:** The Recursica token set does not include dedicated `disabled` state color variables for menu items (e.g., `menu-item_properties_colors_disabled_text`).
-- **Impact:** Disabled items fall back to a hardcoded `opacity: 0.5` value rather than using token-driven disabled colors.
-- **Current Resolution:** A generic `opacity: 0.5` is applied to `[data-disabled]` menu items with `cursor: not-allowed` and `pointer-events: none`. This should be revisited when disabled-state tokens are added to the Figma token structure.
+- **Description:** The Recursica token set previously did not include dedicated `disabled` state color variables for menu items.
+- **Impact:** Disabled items were falling back to a hardcoded `opacity: 0.5` value.
+- **Current Resolution:** **RESOLVED**. The `--recursica_ui-kit_components_menu-item_properties_disabled-opacity` token has been added to the Figma UI Kit and is now actively mapped in the CSS.
+
+### 3. Missing Padding Token for Menu Dropdown
+
+- **Description:** The Figma UI Kit does not export a padding design token for the `menu` container itself. Properties like `border-radius`, `border-size`, and `max-height` exist, but no internal padding metrics.
+- **Impact:** The internal padding of the dropdown container cannot be driven by a CSS variable, forcing developers to rely on a hardcoded value to prevent menu items from collapsing into the border.
+- **Current Resolution:** A hardcoded `padding: 8px;` is defined on `.dropdown` in `Menu.module.css`. If a padding token is added to the UI Kit in the future, it should be mapped here.
 
 ## HoverCard
 
@@ -148,3 +166,11 @@ This document tracks known issues, edge cases, missing variables, or design syst
 ## Missing the List component
 
 - **Description:** The List component is missing from the codebase. It should be added as a new component that wraps the Mantine List component.
+
+## AutoComplete
+
+### 1. Missing Active/Hover Color Tokens for Options
+
+- **Description:** The JSON tokens do not currently export an explicit color for the active, hovered, or selected item state within the `AutoComplete` menu. The variable `--recursica_ui-kit_components_autocomplete_variants_states_focus_properties_colors_background` currently maps to the standard form field background, effectively making the hover/active state invisible.
+- **Impact:** When users keyboard down to select an item, or hover over an item with a mouse, the focused item displays no highlight.
+- **Current Resolution:** **OPEN ISSUE**. We are currently using the `focus` background property as a placeholder. We will need to add a dedicated token for the active menu item color in the JSON to resolve this.

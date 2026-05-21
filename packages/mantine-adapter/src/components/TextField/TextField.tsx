@@ -90,9 +90,13 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
         : styles.section;
     }
 
+    const wrapperClass = className
+      ? `${styles.layoutOverride} ${className}`
+      : styles.layoutOverride;
+
     return (
       <WithReadOnlyWrapper
-        className={className}
+        className={wrapperClass}
         style={style as React.CSSProperties}
         controlMaxWidth="var(--recursica_ui-kit_components_text-field_properties_max-width)"
         controlMinWidth="var(--recursica_ui-kit_components_text-field_properties_min-width)"

@@ -98,12 +98,16 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
         : styles.input;
     }
 
+    const wrapperClass = className
+      ? `${styles.layoutOverride} ${className}`
+      : styles.layoutOverride;
+
     return (
       <WithReadOnlyWrapper
-        className={className}
+        className={wrapperClass}
         style={style as React.CSSProperties}
-        controlMaxWidth="var(--recursica_ui-kit_components_text-field_properties_max-width)"
-        controlMinWidth="var(--recursica_ui-kit_components_text-field_properties_min-width)"
+        controlMaxWidth="var(--recursica_ui-kit_components_textarea_properties_max-width)"
+        controlMinWidth="var(--recursica_ui-kit_components_textarea_properties_min-width)"
         overStyled={overStyled as true}
         formLayout={formLayout}
         labelSize={labelSize}

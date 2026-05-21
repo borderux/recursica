@@ -3,6 +3,10 @@
 .root {
   display: flex;
   margin: 0; /* Hardcoded structural reset */
+  margin-bottom: var(
+    --form-control-margin-bottom,
+    var(--recursica_ui-kit_globals_form_properties_vertical-item-gap, 0)
+  );
   padding: 0; /* Hardcoded structural reset */
   max-width: var(--form-control-max-width, 100%);
   min-width: var(--form-control-min-width, auto);
@@ -31,7 +35,10 @@
 .root[data-form-layout="stacked"] .leftSection {
   padding-bottom: var(
     --recursica_ui-kit_components_label_variants_layouts_stacked_properties_bottom-padding,
-    8px
+    var(
+      --recursica_ui-kit_globals_form_properties_label-field-gap-vertical,
+      8px
+    )
   );
   min-height: var(
     --recursica_ui-kit_components_label_variants_layouts_stacked_properties_min-height,
@@ -56,7 +63,10 @@
   /* In side-by-side, the label column exists to the left of its input, so we use the gutter gap here. */
   margin-right: var(
     --recursica_ui-kit_components_label_variants_layouts_side-by-side_properties_gutter,
-    16px
+    var(
+      --recursica_ui-kit_globals_form_properties_label-field-gap-horizontal,
+      16px
+    )
   );
 }
 

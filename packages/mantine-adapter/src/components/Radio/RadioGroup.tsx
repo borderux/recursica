@@ -99,14 +99,7 @@ export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
             defaultValue={defaultValue}
           >
             <div className={styles.groupRoot} data-layout={formLayout}>
-              {React.Children.map(children, (child) => {
-                if (React.isValidElement(child)) {
-                  return React.cloneElement(child as React.ReactElement<any>, {
-                    disabled: readOnly || (child.props as any).disabled,
-                  });
-                }
-                return child;
-              })}
+              {children}
             </div>
           </MantineRadio.Group>
         }

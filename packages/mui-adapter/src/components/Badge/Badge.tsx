@@ -1,4 +1,5 @@
 import React from "react";
+import "./Badge.module.css";
 
 export type BadgeProps = React.HTMLAttributes<HTMLDivElement>;
 

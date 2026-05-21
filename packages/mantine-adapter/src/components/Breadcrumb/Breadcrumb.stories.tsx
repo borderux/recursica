@@ -1,6 +1,7 @@
 import React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 import { Breadcrumb } from "./Breadcrumb";
+import { Link } from "../Link";
 
 type BreadcrumbStoryProps = React.ComponentProps<typeof Breadcrumb> & {
   items?: string[];
@@ -35,17 +36,9 @@ const meta: Meta<BreadcrumbStoryProps> = {
   render: ({ items, children, ...args }) => {
     const mappedChildren = items
       ? items.map((label, index) => (
-          <a
-            href="#"
-            key={index}
-            style={{
-              color:
-                "var(--recursica_brand_palettes_primary_default_color_tone)",
-              textDecoration: "none",
-            }}
-          >
+          <Link href="#" key={index}>
             {label}
-          </a>
+          </Link>
         ))
       : children;
 

@@ -142,6 +142,7 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(
         className={finalClass}
         classNames={mergedClassNames}
         disabled={readOnly || disabled}
+        data-disabled={readOnly || disabled || undefined}
         thumbIcon={thumbIcon ?? FinalThumbIcon}
         {...(sanitizedProps as unknown as MantineSwitchProps)}
       />

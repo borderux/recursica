@@ -112,18 +112,44 @@
 
 /* ==== SIZES ==== */
 .root[data-size="default"] {
-  border-radius: var(
-    --recursica_ui-kit_components_button_variants_sizes_default_properties_border-radius
-  );
   height: var(
     --recursica_ui-kit_components_button_variants_sizes_default_properties_height
   );
+}
+.root[data-size="default"][data-content="label"] {
+  border-radius: var(
+    --recursica_ui-kit_components_button_variants_content_label_variants_sizes_default_properties_border-radius
+  );
   min-width: var(
-    --recursica_ui-kit_components_button_variants_sizes_default_properties_min-width
+    --recursica_ui-kit_components_button_variants_content_label_variants_sizes_default_properties_min-width
   );
   padding: 0
     var(
-      --recursica_ui-kit_components_button_variants_sizes_default_properties_horizontal-padding
+      --recursica_ui-kit_components_button_variants_content_label_variants_sizes_default_properties_horizontal-padding
+    );
+}
+.root[data-size="default"][data-content="icon-label"] {
+  border-radius: var(
+    --recursica_ui-kit_components_button_variants_content_icon-label_variants_sizes_default_properties_border-radius
+  );
+  min-width: var(
+    --recursica_ui-kit_components_button_variants_content_icon-label_variants_sizes_default_properties_min-width
+  );
+  padding: 0
+    var(
+      --recursica_ui-kit_components_button_variants_content_icon-label_variants_sizes_default_properties_horizontal-padding
+    );
+}
+.root[data-size="default"][data-content="icon-only"] {
+  border-radius: var(
+    --recursica_ui-kit_components_button_variants_content_icon-only_variants_sizes_default_properties_border-radius
+  );
+  min-width: var(
+    --recursica_ui-kit_components_button_variants_content_icon-only_variants_sizes_default_properties_min-width
+  );
+  padding: 0
+    var(
+      --recursica_ui-kit_components_button_variants_content_icon-only_variants_sizes_default_properties_horizontal-padding
     );
 }
 .root[data-size="default"] .labelText {
@@ -132,19 +158,9 @@
   );
 }
 .root[data-size="small"] {
-  border-radius: var(
-    --recursica_ui-kit_components_button_variants_sizes_small_properties_border-radius
-  );
   height: var(
     --recursica_ui-kit_components_button_variants_sizes_small_properties_height
   );
-  min-width: var(
-    --recursica_ui-kit_components_button_variants_sizes_small_properties_min-width
-  );
-  padding: 0
-    var(
-      --recursica_ui-kit_components_button_variants_sizes_small_properties_horizontal-padding
-    );
 
   /* Override specific typography for small */
   font-family: var(
@@ -165,6 +181,42 @@
       --recursica_ui-kit_components_button_variants_sizes_default_properties_text_font-weight
     )
   );
+}
+.root[data-size="small"][data-content="label"] {
+  border-radius: var(
+    --recursica_ui-kit_components_button_variants_content_label_variants_sizes_small_properties_border-radius
+  );
+  min-width: var(
+    --recursica_ui-kit_components_button_variants_content_label_variants_sizes_small_properties_min-width
+  );
+  padding: 0
+    var(
+      --recursica_ui-kit_components_button_variants_content_label_variants_sizes_small_properties_horizontal-padding
+    );
+}
+.root[data-size="small"][data-content="icon-label"] {
+  border-radius: var(
+    --recursica_ui-kit_components_button_variants_content_icon-label_variants_sizes_small_properties_border-radius
+  );
+  min-width: var(
+    --recursica_ui-kit_components_button_variants_content_icon-label_variants_sizes_small_properties_min-width
+  );
+  padding: 0
+    var(
+      --recursica_ui-kit_components_button_variants_content_icon-label_variants_sizes_small_properties_horizontal-padding
+    );
+}
+.root[data-size="small"][data-content="icon-only"] {
+  border-radius: var(
+    --recursica_ui-kit_components_button_variants_content_icon-only_variants_sizes_small_properties_border-radius
+  );
+  min-width: var(
+    --recursica_ui-kit_components_button_variants_content_icon-only_variants_sizes_small_properties_min-width
+  );
+  padding: 0
+    var(
+      --recursica_ui-kit_components_button_variants_content_icon-only_variants_sizes_small_properties_horizontal-padding
+    );
 }
 .root[data-size="small"] .labelText {
   max-width: var(
@@ -218,8 +270,11 @@
 }
 
 /* Icon-only logic overrides */
-.root[data-icon-only] .MuiButton-startIcon,
-.root[data-icon-only] .MuiButton-endIcon {
+.root[data-content="icon-only"] .labelText {
+  display: none;
+}
+.root[data-content="icon-only"] .MuiButton-startIcon,
+.root[data-content="icon-only"] .MuiButton-endIcon {
   margin-right: 0;
   margin-left: 0;
 }
@@ -288,9 +343,17 @@
     --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_text
   );
 }
+.root[data-variant="solid"] .iconWrapper {
+  color: var(
+    --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color
+  );
+}
 .root[data-variant="solid"]:hover:not(:disabled):not(:global(.Mui-disabled)) {
   color: var(
     --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_text-hover
+  );
+  box-shadow: var(
+    --recursica_ui-kit_components_button_variants_styles_solid_properties_hover-elevation
   );
 }
 
@@ -312,9 +375,17 @@
     --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_text
   );
 }
+.root[data-variant="outline"] .iconWrapper {
+  color: var(
+    --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color
+  );
+}
 .root[data-variant="outline"]:hover:not(:disabled):not(:global(.Mui-disabled)) {
   color: var(
     --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_text-hover
+  );
+  box-shadow: var(
+    --recursica_ui-kit_components_button_variants_styles_outline_properties_hover-elevation
   );
 }
 
@@ -336,8 +407,30 @@
     --recursica_ui-kit_components_button_variants_styles_text_properties_colors_text
   );
 }
+.root[data-variant="text"] .iconWrapper {
+  color: var(
+    --recursica_ui-kit_components_button_variants_styles_text_properties_colors_icon-color
+  );
+}
 .root[data-variant="text"]:hover:not(:disabled):not(:global(.Mui-disabled)) {
   color: var(
     --recursica_ui-kit_components_button_variants_styles_text_properties_colors_text-hover
   );
+  box-shadow: var(
+    --recursica_ui-kit_components_button_variants_styles_text_properties_hover-elevation
+  );
 }
+
+/* EXEMPTIONS:
+   These general button properties are redundant because visual mapping has been refactored
+   to content-specific variables (_content_label_sizes_... etc.) or are handled by design defaults. */
+/* recursica-ignore: --recursica_ui-kit_components_button_variants_sizes_default_properties_horizontal-padding */
+/* recursica-ignore: --recursica_ui-kit_components_button_variants_sizes_default_properties_min-width */
+/* recursica-ignore: --recursica_ui-kit_components_button_variants_sizes_small_properties_horizontal-padding */
+/* recursica-ignore: --recursica_ui-kit_components_button_variants_sizes_small_properties_hover-opacity */
+/* recursica-ignore: --recursica_ui-kit_components_button_variants_sizes_small_properties_min-width */
+/* recursica-ignore: --recursica_ui-kit_components_button_variants_sizes_small_properties_text_font-style */
+/* recursica-ignore: --recursica_ui-kit_components_button_variants_sizes_small_properties_text_letter-spacing */
+/* recursica-ignore: --recursica_ui-kit_components_button_variants_sizes_small_properties_text_line-height */
+/* recursica-ignore: --recursica_ui-kit_components_button_variants_sizes_small_properties_text_text-decoration */
+/* recursica-ignore: --recursica_ui-kit_components_button_variants_sizes_small_properties_text_text-transform */

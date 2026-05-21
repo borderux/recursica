@@ -1,8 +1,14 @@
+/* EXEMPTIONS:
+   - layouts_stacked sizes width variables are ignored because stacked labels naturally occupy 100% width block-level 
+     real estate in HTML rendering, making explicit width properties redundant. */
+
 /* HARDCODED VALUES:
    - display: flex helps us leverage flex 'order' to perfectly position Mantine's injected asterisk.
    - align-items: baseline ensures text logic lines up nicely if font sizes differ slightly.
    - margin/padding resets.
-*/
+ */
+/* recursica-ignore: --recursica_ui-kit_components_label_variants_layouts_stacked_variants_sizes_default_properties_width */
+/* recursica-ignore: --recursica_ui-kit_components_label_variants_layouts_stacked_variants_sizes_small_properties_width */
 
 .root {
   display: flex;
@@ -95,7 +101,9 @@
   line-height: var(
     --recursica_ui-kit_components_label_properties_optional-text_line-height
   );
-  font-style: normal;
+  font-style: var(
+    --recursica_ui-kit_components_label_properties_optional-text_font-style
+  );
   text-decoration: var(
     --recursica_ui-kit_components_label_properties_optional-text_text-decoration,
     none
@@ -106,7 +114,7 @@
   );
   color: inherit;
   opacity: var(
-    --recursica_ui-kit_components_label_properties_colors_optional-text-opacity
+    --recursica_ui-kit_components_label_properties_optional-text-opacity
   );
 }
 

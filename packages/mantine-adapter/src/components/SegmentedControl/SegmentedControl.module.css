@@ -1,77 +1,104 @@
 /* HARDCODED VALUES:
    - border-style: solid; on container and indicator
    - background-color: transparent; on label hover (overriding Mantine)
-   - !important usage to strictly enforce Figma tokens over Mantine's inline calculation
+   - Scope prefix .root to enforce Figma tokens over Mantine's inline calculation without using !important
 */
 
 .root {
   background-color: var(
-    --recursica_ui-kit_components_segmented-control_properties_container_colors_background
-  ) !important;
+    --recursica_ui-kit_components_segmented-control_properties_colors_background
+  );
   border: var(
-      --recursica_ui-kit_components_segmented-control_properties_container_border-size
+      --recursica_ui-kit_components_segmented-control_properties_border-size
     )
     solid
     var(
-      --recursica_ui-kit_components_segmented-control_properties_container_colors_border-color
+      --recursica_ui-kit_components_segmented-control_properties_colors_border-color
     );
   border-radius: var(
-    --recursica_ui-kit_components_segmented-control_properties_container_border-radius
-  ) !important;
+    --recursica_ui-kit_components_segmented-control_properties_border-radius
+  );
   padding: var(
-      --recursica_ui-kit_components_segmented-control_properties_container_padding-vertical
+      --recursica_ui-kit_components_segmented-control_properties_padding-vertical
     )
     var(
-      --recursica_ui-kit_components_segmented-control_properties_container_padding-horizontal
-    ) !important;
+      --recursica_ui-kit_components_segmented-control_properties_padding-horizontal
+    );
   box-shadow: var(
-    --recursica_ui-kit_components_segmented-control_properties_container_elevation
+    --recursica_ui-kit_components_segmented-control_properties_elevation,
+    none
   );
   gap: var(--recursica_ui-kit_components_segmented-control_properties_item-gap);
 }
 
-.label {
+.root .label {
   padding-left: var(
     --recursica_ui-kit_components_segmented-control-item_properties_item_padding-horizontal
-  ) !important;
+  );
   padding-right: var(
     --recursica_ui-kit_components_segmented-control-item_properties_item_padding-horizontal
-  ) !important;
+  );
   height: var(
     --recursica_ui-kit_components_segmented-control-item_properties_item_height
-  ) !important;
+  );
   border-radius: var(
-    --recursica_ui-kit_components_segmented-control-item_properties_item_border-radius
-  ) !important;
+    --recursica_ui-kit_components_segmented-control-item_properties_unselected_border-radius,
+    var(
+      --recursica_ui-kit_components_segmented-control-item_properties_item_border-radius
+    )
+  );
+
+  border: var(
+      --recursica_ui-kit_components_segmented-control-item_properties_unselected_border-size
+    )
+    solid
+    var(
+      --recursica_ui-kit_components_segmented-control-item_properties_unselected_colors_border-color
+    );
+  background-color: var(
+    --recursica_ui-kit_components_segmented-control-item_properties_unselected_colors_background
+  );
+  box-shadow: var(
+    --recursica_ui-kit_components_segmented-control-item_properties_unselected_elevation
+  );
 
   font-family: var(
-    --recursica_ui-kit_components_segmented-control-item_properties_text_font-family
+    --recursica_ui-kit_components_segmented-control-item_properties_unselected-text_font-family,
+    inherit
   );
   font-size: var(
-    --recursica_ui-kit_components_segmented-control-item_properties_text_font-size
+    --recursica_ui-kit_components_segmented-control-item_properties_unselected-text_font-size,
+    inherit
   );
   font-style: var(
-    --recursica_ui-kit_components_segmented-control-item_properties_text_font-style
+    --recursica_ui-kit_components_segmented-control-item_properties_unselected-text_font-style,
+    inherit
   );
   font-weight: var(
-    --recursica_ui-kit_components_segmented-control-item_properties_text_font-weight
+    --recursica_ui-kit_components_segmented-control-item_properties_unselected-text_font-weight,
+    inherit
   );
   letter-spacing: var(
-    --recursica_ui-kit_components_segmented-control-item_properties_text_letter-spacing
+    --recursica_ui-kit_components_segmented-control-item_properties_unselected-text_letter-spacing,
+    inherit
   );
   line-height: var(
-    --recursica_ui-kit_components_segmented-control-item_properties_text_line-height
+    --recursica_ui-kit_components_segmented-control-item_properties_unselected-text_line-height,
+    inherit
   );
   text-decoration: var(
-    --recursica_ui-kit_components_segmented-control-item_properties_text_text-decoration
+    --recursica_ui-kit_components_segmented-control-item_properties_unselected-text_text-decoration,
+    inherit
   );
   text-transform: var(
-    --recursica_ui-kit_components_segmented-control-item_properties_text_text-transform
+    --recursica_ui-kit_components_segmented-control-item_properties_unselected-text_text-transform,
+    inherit
   );
 
   color: var(
-    --recursica_ui-kit_components_segmented-control_properties_colors_text
-  ) !important;
+    --recursica_ui-kit_components_segmented-control-item_properties_unselected_colors_text-color,
+    inherit
+  );
 
   display: flex;
   align-items: center;
@@ -79,7 +106,7 @@
 }
 
 /* Mantine natively wraps label contents in an innerLabel span */
-.label :global(.mantine-SegmentedControl-innerLabel) {
+.root .label :global(.mantine-SegmentedControl-innerLabel) {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -88,7 +115,7 @@
   );
 }
 
-.label svg {
+.root .label svg {
   width: var(
     --recursica_ui-kit_components_segmented-control-item_properties_item_icon-size
   );
@@ -99,40 +126,78 @@
 }
 
 /* Mantine adds a background on hover, we must strictly strip it */
-.label:hover {
-  background-color: transparent !important;
+.root .label:hover {
+  background-color: transparent;
 }
 
 /* Mantine adds separators via ::before on the .control */
-.control::before {
+.root .control::before {
   background-color: var(
     --recursica_ui-kit_components_segmented-control_properties_colors_divider-color
-  ) !important;
+  );
+  width: var(
+    --recursica_ui-kit_components_segmented-control_properties_divider-size
+  );
 }
 
 /* Indicator (the moving selected block) */
-.indicator {
+.root .indicator {
   background-color: var(
     --recursica_ui-kit_components_segmented-control-item_properties_selected_colors_background
-  ) !important;
+  );
   border: var(
       --recursica_ui-kit_components_segmented-control-item_properties_selected_border-size
     )
     solid
     var(
       --recursica_ui-kit_components_segmented-control-item_properties_selected_colors_border-color
-    ) !important;
+    );
   box-shadow: var(
     --recursica_ui-kit_components_segmented-control-item_properties_selected_elevation
-  ) !important;
+  );
   border-radius: var(
-    --recursica_ui-kit_components_segmented-control-item_properties_item_border-radius
-  ) !important;
+    --recursica_ui-kit_components_segmented-control-item_properties_selected_border-radius,
+    var(
+      --recursica_ui-kit_components_segmented-control-item_properties_item_border-radius
+    )
+  );
 }
 
 /* Selected label text color override */
-.control[data-active] .label {
+.root .control[data-active] .label {
   color: var(
     --recursica_ui-kit_components_segmented-control-item_properties_selected_colors_text-color
-  ) !important;
+  );
+  font-family: var(
+    --recursica_ui-kit_components_segmented-control-item_properties_selected-text_font-family,
+    inherit
+  );
+  font-size: var(
+    --recursica_ui-kit_components_segmented-control-item_properties_selected-text_font-size,
+    inherit
+  );
+  font-style: var(
+    --recursica_ui-kit_components_segmented-control-item_properties_selected-text_font-style,
+    inherit
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_segmented-control-item_properties_selected-text_font-weight,
+    inherit
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_segmented-control-item_properties_selected-text_letter-spacing,
+    inherit
+  );
+  line-height: var(
+    --recursica_ui-kit_components_segmented-control-item_properties_selected-text_line-height,
+    inherit
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_segmented-control-item_properties_selected-text_text-decoration,
+    inherit
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_segmented-control-item_properties_selected-text_text-transform,
+    inherit
+  );
 }

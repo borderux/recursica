@@ -1,3 +1,18 @@
+/* EXEMPTIONS:
+   - close-icon-color, leading-icon-color, and select-specific state icon variables are ignored because 
+     Chip uses explicit state color definitions (e.g. unselected, selected, error, error-selected variant colors) 
+     to drive pixel-perfect hover and click transitions, rather than generic single-color overrides.
+   - text-size is ignored since actual chip sizing is dynamically driven by precise vertical padding and line-heights. */
+/* recursica-ignore: --recursica_ui-kit_components_chip_properties_close-icon-color */
+/* recursica-ignore: --recursica_ui-kit_components_chip_properties_leading-icon-color */
+/* recursica-ignore: --recursica_ui-kit_components_chip_properties_text-size */
+/* recursica-ignore: --recursica_ui-kit_components_chip_variants_styles_error_properties_colors_leading-icon-color */
+/* recursica-ignore: --recursica_ui-kit_components_chip_variants_styles_error_properties_colors_selected-icon-color */
+/* recursica-ignore: --recursica_ui-kit_components_chip_variants_styles_error-selected_properties_colors_icon */
+/* recursica-ignore: --recursica_ui-kit_components_chip_variants_styles_error-selected_properties_colors_leading-icon-color */
+/* recursica-ignore: --recursica_ui-kit_components_chip_variants_styles_selected_properties_colors_leading-icon-color */
+/* recursica-ignore: --recursica_ui-kit_components_chip_variants_styles_unselected_properties_colors_selected-icon-color */
+
 /* HARDCODED VALUES
    border-style: solid;  (Baseline reset)
    box-sizing: border-box; (Baseline reset)
@@ -6,7 +21,7 @@
    outline: none; (Accessible fallback)
    padding: 0; (Override mantine default)
    background: transparent; (Override mantine default)
-*/
+ */
 
 .root {
   /* Set preset layout variables to override mantine defaults safely */
@@ -57,6 +72,9 @@
   font-size: var(--recursica_ui-kit_components_chip_properties_text_font-size);
   font-weight: var(
     --recursica_ui-kit_components_chip_properties_text_font-weight
+  );
+  font-style: var(
+    --recursica_ui-kit_components_chip_properties_text_font-style
   );
   letter-spacing: var(
     --recursica_ui-kit_components_chip_properties_text_letter-spacing

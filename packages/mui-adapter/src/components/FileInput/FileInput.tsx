@@ -1,4 +1,5 @@
 import React from "react";
+import "./FileInput.module.css";
 
 export type FileInputProps = React.HTMLAttributes<HTMLDivElement>;
 

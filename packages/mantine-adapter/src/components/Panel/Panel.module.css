@@ -4,7 +4,7 @@
    - flexbox layout on .content & .body: Required to create a vertical flex context that pushes the footer to the bottom.
    - position: sticky & negative margins on .footer: A CSS technique used to break the footer out of the .body padding constraints so it stretches edge-to-edge, while remaining fixed at the bottom of the scroll container.
    - z-index: 10 on .footer: Ensures the footer covers the body content as it scrolls underneath.
-*/
+ */
 
 /* ======================================
    PANEL CONTENT (outer drawer container)
@@ -23,7 +23,8 @@
     --recursica_ui-kit_components_panel_properties_border-radius
   );
   box-shadow: var(--recursica_ui-kit_components_panel_properties_elevation);
-  color: var(--recursica_ui-kit_components_panel_properties_colors_content);
+  min-width: var(--recursica_ui-kit_components_panel_properties_min-width);
+  max-width: var(--recursica_ui-kit_components_panel_properties_max-width);
 
   display: flex;
   flex-direction: column;
@@ -64,7 +65,32 @@
 
 .title {
   color: var(--recursica_ui-kit_components_panel_properties_colors_title);
-  composes: recursica_brand_typography_h3 from global;
+
+  /* Direct Figma Typography Mapping */
+  font-family: var(
+    --recursica_ui-kit_components_panel_properties_header-style_fontFamily
+  );
+  font-size: var(
+    --recursica_ui-kit_components_panel_properties_header-style_fontSize
+  );
+  font-style: var(
+    --recursica_ui-kit_components_panel_properties_header-style_fontStyle
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_panel_properties_header-style_fontWeight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_panel_properties_header-style_letterSpacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_panel_properties_header-style_lineHeight
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_panel_properties_header-style_textCase
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_panel_properties_header-style_textDecoration
+  );
 }
 
 .titleTruncate {
@@ -94,6 +120,32 @@
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+
+  /* Direct Figma Typography Mapping */
+  font-family: var(
+    --recursica_ui-kit_components_panel_properties_content-style_fontFamily
+  );
+  font-size: var(
+    --recursica_ui-kit_components_panel_properties_content-style_fontSize
+  );
+  font-style: var(
+    --recursica_ui-kit_components_panel_properties_content-style_fontStyle
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_panel_properties_content-style_fontWeight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_panel_properties_content-style_letterSpacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_panel_properties_content-style_lineHeight
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_panel_properties_content-style_textCase
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_panel_properties_content-style_textDecoration
+  );
 }
 
 /* ======================================

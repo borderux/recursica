@@ -1,3 +1,9 @@
+/* EXEMPTIONS:
+   - timeline-bullet_variants_types_avatar_properties_avatar-size is ignored because under the avatar timeline variant,
+     the bullet container size uses fallback bullet-size configurations to maintain vertical alignment with the 
+     inactive/active connector line, while the nested Avatar subcomponent handles its own sizing natively. */
+/* recursica-ignore: --recursica_ui-kit_components_timeline-bullet_variants_types_avatar_properties_avatar-size */
+
 .root {
   display: flex;
   flex-direction: column;

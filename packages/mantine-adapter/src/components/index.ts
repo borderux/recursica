@@ -1,4 +1,5 @@
 export * from "./Accordion";
+export * from "./AutoComplete/AutoComplete";
 export * from "./Avatar";
 export * from "./Badge/Badge";
 export * from "./Breadcrumb/Breadcrumb";

@@ -1,0 +1,13 @@
+{
+  "name": "@recursica/token-analyzer",
+  "version": "1.0.0",
+  "description": "Internal CLI tool to analyze unused and missing CSS variables across adapter packages",
+  "private": true,
+  "bin": {
+    "analyze-tokens": "./bin/cli.js"
+  },
+  "scripts": {
+    "start": "node ./bin/cli.js"
+  },
+  "author": "hi@borderux.com"
+}

@@ -28,6 +28,9 @@ To render a standard switch:
     checked: {
       control: "boolean",
     },
+    disabled: {
+      control: "boolean",
+    },
     required: {
       control: "boolean",
     },
