@@ -1,3 +1,15 @@
+/* EXEMPTIONS:
+   - side-by-side and stacked layout top-bottom-margin variables are ignored because field spacing is handled
+     by external form grid/layout wrappers rather than direct margin declarations inside the TextArea component.
+   - state-specific border-size variables are ignored because a uniform 1px border is applied globally to prevent 
+     unexpected layout shift or flickering during focus, disabled, or error state transitions. */
+/* recursica-ignore: --recursica_ui-kit_components_textarea_variants_layouts_side-by-side_properties_top-bottom-margin */
+/* recursica-ignore: --recursica_ui-kit_components_textarea_variants_layouts_stacked_properties_top-bottom-margin */
+/* recursica-ignore: --recursica_ui-kit_components_textarea_variants_states_default_properties_border-size */
+/* recursica-ignore: --recursica_ui-kit_components_textarea_variants_states_disabled_properties_border-size */
+/* recursica-ignore: --recursica_ui-kit_components_textarea_variants_states_error_properties_border-size */
+/* recursica-ignore: --recursica_ui-kit_components_textarea_variants_states_focus_properties_border-size */
+
 /* HARDCODED VALUES:
    - border-width: 1px. Native geometric boundary for the input box.
    - border-style: solid. Native structural rendering rule.
@@ -9,29 +21,6 @@
   display: flex;
   position: relative;
   width: 100%;
-  min-height: var(
-    --recursica_ui-kit_components_text-field_properties_min-height
-  );
-
-  /* Override Mantine native Input variables governing section spacing padding mathematics safely */
-  --input-left-section-size: calc(
-    var(--recursica_ui-kit_components_text-field_properties_icon-size) +
-      (
-        var(
-            --recursica_ui-kit_components_text-field_properties_horizontal-padding
-          ) *
-          2
-      )
-  );
-  --input-right-section-size: calc(
-    var(--recursica_ui-kit_components_text-field_properties_icon-size) +
-      (
-        var(
-            --recursica_ui-kit_components_text-field_properties_horizontal-padding
-          ) *
-          2
-      )
-  );
 }
 
 .input {
@@ -40,63 +29,69 @@
   box-sizing: border-box;
   margin: 0;
 
-  /* Box Geometry */
-  min-height: var(
-    --recursica_ui-kit_components_text-field_properties_min-height
+  /* Sizing driven by rows token */
+  min-height: calc(
+    var(--recursica_ui-kit_components_textarea_properties_rows) *
+      var(--recursica_ui-kit_components_textarea_properties_text_line-height) +
+      2 *
+      var(--recursica_ui-kit_components_textarea_properties_vertical-padding) +
+      2px
   );
+
+  /* Box Geometry */
   padding-top: var(
-    --recursica_ui-kit_components_text-field_properties_vertical-padding
+    --recursica_ui-kit_components_textarea_properties_vertical-padding
   );
   padding-bottom: var(
-    --recursica_ui-kit_components_text-field_properties_vertical-padding
+    --recursica_ui-kit_components_textarea_properties_vertical-padding
   );
   padding-left: var(
-    --recursica_ui-kit_components_text-field_properties_horizontal-padding
+    --recursica_ui-kit_components_textarea_properties_horizontal-padding
   );
   padding-right: var(
-    --recursica_ui-kit_components_text-field_properties_horizontal-padding
+    --recursica_ui-kit_components_textarea_properties_horizontal-padding
   );
   border-radius: var(
-    --recursica_ui-kit_components_text-field_properties_border-radius
+    --recursica_ui-kit_components_textarea_properties_border-radius
   );
   border-width: 1px;
   border-style: solid;
 
   /* Strict Typography Unification */
   font-family: var(
-    --recursica_ui-kit_components_text-field_properties_text_font-family
+    --recursica_ui-kit_components_textarea_properties_text_font-family
   );
   font-size: var(
-    --recursica_ui-kit_components_text-field_properties_text_font-size
+    --recursica_ui-kit_components_textarea_properties_text_font-size
   );
   font-style: var(
-    --recursica_ui-kit_components_text-field_properties_text_font-style
+    --recursica_ui-kit_components_textarea_properties_text_font-style
   );
   font-weight: var(
-    --recursica_ui-kit_components_text-field_properties_text_font-weight
+    --recursica_ui-kit_components_textarea_properties_text_font-weight
   );
   letter-spacing: var(
-    --recursica_ui-kit_components_text-field_properties_text_letter-spacing
+    --recursica_ui-kit_components_textarea_properties_text_letter-spacing
   );
   line-height: var(
-    --recursica_ui-kit_components_text-field_properties_text_line-height
+    --recursica_ui-kit_components_textarea_properties_text_line-height
   );
   text-decoration: var(
-    --recursica_ui-kit_components_text-field_properties_text_text-decoration
+    --recursica_ui-kit_components_textarea_properties_text_text-decoration
   );
   text-transform: var(
-    --recursica_ui-kit_components_text-field_properties_text_text-transform
+    --recursica_ui-kit_components_textarea_properties_text_text-transform
   );
 
   /* Base State Default Execution */
   background-color: var(
-    --recursica_ui-kit_components_text-field_variants_states_default_properties_colors_background
+    --recursica_ui-kit_components_textarea_variants_states_default_properties_colors_background
   );
   border-color: var(
-    --recursica_ui-kit_components_text-field_variants_states_default_properties_colors_border-color
+    --recursica_ui-kit_components_textarea_variants_states_default_properties_colors_border-color
   );
   color: var(
-    --recursica_ui-kit_components_text-field_variants_states_default_properties_colors_text
+    --recursica_ui-kit_components_textarea_variants_states_default_properties_colors_text
   );
 
   outline: none;
@@ -104,119 +99,52 @@
 
 .input::placeholder {
   opacity: var(
-    --recursica_ui-kit_components_text-field_properties_placeholder-opacity
+    --recursica_ui-kit_components_textarea_properties_placeholder-opacity
   );
   color: inherit;
-}
-
-/* Dynamic Padding Overrides */
-.root[data-with-left-section] .input {
-  padding-left: var(--input-left-section-size);
-}
-
-.root[data-with-right-section] .input {
-  padding-right: var(--input-right-section-size);
-}
-
-/* Flexible End-Caps (Icons, actions) */
-.section {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-}
-
-.section :global(svg) {
-  width: var(--recursica_ui-kit_components_text-field_properties_icon-size);
-  height: var(--recursica_ui-kit_components_text-field_properties_icon-size);
-  color: var(
-    --recursica_ui-kit_components_text-field_variants_states_default_properties_colors_leading-icon
-  );
-}
-
-.section[data-position="right"] :global(svg) {
-  color: var(
-    --recursica_ui-kit_components_text-field_variants_states_default_properties_colors_trailing-icon
-  );
 }
 
 /* -------------------------------------
    STATE CASCADE ARCHITECTURE
 -------------------------------------- */
 
-/* Focus State Mapping (Triggered internally via browser pseudo-pseudo-class) */
+/* Focus State Mapping (Triggered internally via browser focus rules) */
 .input:focus-within,
 .input:focus {
   border-color: var(
-    --recursica_ui-kit_components_text-field_variants_states_focus_properties_colors_border-color
+    --recursica_ui-kit_components_textarea_variants_states_focus_properties_colors_border-color
   );
   background-color: var(
-    --recursica_ui-kit_components_text-field_variants_states_focus_properties_colors_background
+    --recursica_ui-kit_components_textarea_variants_states_focus_properties_colors_background
   );
   color: var(
-    --recursica_ui-kit_components_text-field_variants_states_focus_properties_colors_text
-  );
-}
-
-.root:focus-within .section[data-position="left"] :global(svg) {
-  color: var(
-    --recursica_ui-kit_components_text-field_variants_states_focus_properties_colors_leading-icon
-  );
-}
-
-.root:focus-within .section[data-position="right"] :global(svg) {
-  color: var(
-    --recursica_ui-kit_components_text-field_variants_states_focus_properties_colors_trailing-icon
+    --recursica_ui-kit_components_textarea_variants_states_focus_properties_colors_text
   );
 }
 
 /* Error State Mapping (Propagated strictly down from the wrapper DOM context) */
 .root[data-error] .input {
   border-color: var(
-    --recursica_ui-kit_components_text-field_variants_states_error_properties_colors_border-color
+    --recursica_ui-kit_components_textarea_variants_states_error_properties_colors_border-color
   ) !important;
   background-color: var(
-    --recursica_ui-kit_components_text-field_variants_states_error_properties_colors_background
+    --recursica_ui-kit_components_textarea_variants_states_error_properties_colors_background
   ) !important;
   color: var(
-    --recursica_ui-kit_components_text-field_variants_states_error_properties_colors_text
-  ) !important;
-}
-
-.root[data-error] .section[data-position="left"] :global(svg) {
-  color: var(
-    --recursica_ui-kit_components_text-field_variants_states_error_properties_colors_leading-icon
-  ) !important;
-}
-
-.root[data-error] .section[data-position="right"] :global(svg) {
-  color: var(
-    --recursica_ui-kit_components_text-field_variants_states_error_properties_colors_trailing-icon
+    --recursica_ui-kit_components_textarea_variants_states_error_properties_colors_text
   ) !important;
 }
 
 /* Disabled State Mapping (Propagated strictly down from the wrapper DOM context) */
 .root[data-disabled] .input {
   border-color: var(
-    --recursica_ui-kit_components_text-field_variants_states_disabled_properties_colors_border-color
+    --recursica_ui-kit_components_textarea_variants_states_disabled_properties_colors_border-color
   ) !important;
   background-color: var(
-    --recursica_ui-kit_components_text-field_variants_states_disabled_properties_colors_background
+    --recursica_ui-kit_components_textarea_variants_states_disabled_properties_colors_background
   ) !important;
   color: var(
-    --recursica_ui-kit_components_text-field_variants_states_disabled_properties_colors_text
+    --recursica_ui-kit_components_textarea_variants_states_disabled_properties_colors_text
   ) !important;
   cursor: not-allowed;
-}
-
-.root[data-disabled] .section[data-position="left"] :global(svg) {
-  color: var(
-    --recursica_ui-kit_components_text-field_variants_states_disabled_properties_colors_leading-icon
-  ) !important;
-}
-
-.root[data-disabled] .section[data-position="right"] :global(svg) {
-  color: var(
-    --recursica_ui-kit_components_text-field_variants_states_disabled_properties_colors_trailing-icon
-  ) !important;
 }

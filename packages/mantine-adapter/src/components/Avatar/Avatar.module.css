@@ -7,7 +7,10 @@ HARDCODED VALUES:
 - Image has no explicit size tokens other than root size, assume it scales 100%
 */
 
-/* EXEMPTIONS: */
+/* EXEMPTIONS:
+   The generic size variables below are defined in Figma but unused.
+   We explicitly style the avatar's dimensions using the dedicated width and height tokens
+   (e.g., small_properties_width and small_properties_height) for precise component layout. */
 /* recursica-ignore: --recursica_ui-kit_components_avatar_variants_sizes_default_properties_size */
 /* recursica-ignore: --recursica_ui-kit_components_avatar_variants_sizes_large_properties_size */
 /* recursica-ignore: --recursica_ui-kit_components_avatar_variants_sizes_small_properties_size */
@@ -242,46 +245,46 @@ HARDCODED VALUES:
 
 .root[data-style="icon"][data-variant="solid"] {
   border-width: var(
-    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_solid_properties_border-size
+    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_types_solid_properties_border-size
   );
   background-color: var(
-    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_solid_properties_colors_background
+    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_types_solid_properties_colors_background
   );
   border-color: var(
-    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_solid_properties_colors_border-color
+    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_types_solid_properties_colors_border-color
   );
   color: var(
-    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_solid_properties_colors_icon-color
+    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_types_solid_properties_colors_icon-color
   );
 }
 
 .root[data-style="icon"][data-variant="outline"] {
   border-width: var(
-    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_outline_properties_border-size
+    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_types_outline_properties_border-size
   );
   background-color: var(
-    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_outline_properties_colors_background
+    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_types_outline_properties_colors_background
   );
   border-color: var(
-    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_outline_properties_colors_border-color
+    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_types_outline_properties_colors_border-color
   );
   color: var(
-    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_outline_properties_colors_icon-color
+    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_types_outline_properties_colors_icon-color
   );
 }
 
 .root[data-style="icon"][data-variant="ghost"] {
   border-width: var(
-    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_ghost_properties_border-size
+    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_types_ghost_properties_border-size
   );
   background-color: var(
-    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_ghost_properties_colors_background
+    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_types_ghost_properties_colors_background
   );
   border-color: var(
-    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_ghost_properties_colors_border-color
+    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_types_ghost_properties_colors_border-color
   );
   color: var(
-    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_ghost_properties_colors_icon-color
+    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_types_ghost_properties_colors_icon-color
   );
 }
 
@@ -297,45 +300,45 @@ HARDCODED VALUES:
 
 .root[data-style="text"][data-variant="solid"] {
   border-width: var(
-    --recursica_ui-kit_components_avatar_variants_styles_text_variants_solid_properties_border-size
+    --recursica_ui-kit_components_avatar_variants_styles_text_variants_types_solid_properties_border-size
   );
   background-color: var(
-    --recursica_ui-kit_components_avatar_variants_styles_text_variants_solid_properties_colors_background
+    --recursica_ui-kit_components_avatar_variants_styles_text_variants_types_solid_properties_colors_background
   );
   border-color: var(
-    --recursica_ui-kit_components_avatar_variants_styles_text_variants_solid_properties_colors_border-color
+    --recursica_ui-kit_components_avatar_variants_styles_text_variants_types_solid_properties_colors_border-color
   );
   color: var(
-    --recursica_ui-kit_components_avatar_variants_styles_text_variants_solid_properties_colors_text-color
+    --recursica_ui-kit_components_avatar_variants_styles_text_variants_types_solid_properties_colors_text-color
   );
 }
 
 .root[data-style="text"][data-variant="outline"] {
   border-width: var(
-    --recursica_ui-kit_components_avatar_variants_styles_text_variants_outline_properties_border-size
+    --recursica_ui-kit_components_avatar_variants_styles_text_variants_types_outline_properties_border-size
   );
   background-color: var(
-    --recursica_ui-kit_components_avatar_variants_styles_text_variants_outline_properties_colors_background
+    --recursica_ui-kit_components_avatar_variants_styles_text_variants_types_outline_properties_colors_background
   );
   border-color: var(
-    --recursica_ui-kit_components_avatar_variants_styles_text_variants_outline_properties_colors_border-color
+    --recursica_ui-kit_components_avatar_variants_styles_text_variants_types_outline_properties_colors_border-color
   );
   color: var(
-    --recursica_ui-kit_components_avatar_variants_styles_text_variants_outline_properties_colors_text-color
+    --recursica_ui-kit_components_avatar_variants_styles_text_variants_types_outline_properties_colors_text-color
   );
 }
 
 .root[data-style="text"][data-variant="ghost"] {
   border-width: var(
-    --recursica_ui-kit_components_avatar_variants_styles_text_variants_ghost_properties_border-size
+    --recursica_ui-kit_components_avatar_variants_styles_text_variants_types_ghost_properties_border-size
   );
   background-color: var(
-    --recursica_ui-kit_components_avatar_variants_styles_text_variants_ghost_properties_colors_background
+    --recursica_ui-kit_components_avatar_variants_styles_text_variants_types_ghost_properties_colors_background
   );
   border-color: var(
-    --recursica_ui-kit_components_avatar_variants_styles_text_variants_ghost_properties_colors_border-color
+    --recursica_ui-kit_components_avatar_variants_styles_text_variants_types_ghost_properties_colors_border-color
   );
   color: var(
-    --recursica_ui-kit_components_avatar_variants_styles_text_variants_ghost_properties_colors_text-color
+    --recursica_ui-kit_components_avatar_variants_styles_text_variants_types_ghost_properties_colors_text-color
   );
 }

@@ -1,11 +1,16 @@
+/* EXEMPTIONS:
+   - content-style and header-style parent variables represent raw JSON styling objects rather than 
+     direct CSS variables and cannot be applied directly in standard CSS files.
+     Sub-properties are fully and individually mapped to elements natively. */
+/* recursica-ignore: --recursica_ui-kit_components_modal_properties_content-style */
+/* recursica-ignore: --recursica_ui-kit_components_modal_properties_header-style */
+
 .root {
 }
 
 .inner {
   /* Mantine applies padding to inner to keep modal away from edges. We rely on content constraints. */
 }
-/* recursica-ignore: --recursica_ui-kit_components_modal_properties_content-style */
-/* recursica-ignore: --recursica_ui-kit_components_modal_properties_header-style */
 
 .content {
   /* Geometric Bounds */
@@ -48,9 +53,33 @@
 }
 
 .title {
-  /* Typography Class Injection */
-  composes: recursica_brand_typography_h2 from global;
   color: var(--recursica_ui-kit_components_modal_properties_colors_title);
+
+  /* Direct Figma Typography Mapping */
+  font-family: var(
+    --recursica_ui-kit_components_modal_properties_header-style_fontFamily
+  );
+  font-size: var(
+    --recursica_ui-kit_components_modal_properties_header-style_fontSize
+  );
+  font-style: var(
+    --recursica_ui-kit_components_modal_properties_header-style_fontStyle
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_modal_properties_header-style_fontWeight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_modal_properties_header-style_letterSpacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_modal_properties_header-style_lineHeight
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_modal_properties_header-style_textCase
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_modal_properties_header-style_textDecoration
+  );
 }
 
 .bodyWrapper {
@@ -72,9 +101,33 @@
   overflow-y: auto;
   min-height: 0; /* Critical for flex child scrolling constraint */
 
-  /* Typography */
-  composes: recursica_brand_typography_body from global;
   color: var(--recursica_ui-kit_components_modal_properties_colors_content);
+
+  /* Direct Figma Typography Mapping */
+  font-family: var(
+    --recursica_ui-kit_components_modal_properties_content-style_fontFamily
+  );
+  font-size: var(
+    --recursica_ui-kit_components_modal_properties_content-style_fontSize
+  );
+  font-style: var(
+    --recursica_ui-kit_components_modal_properties_content-style_fontStyle
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_modal_properties_content-style_fontWeight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_modal_properties_content-style_letterSpacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_modal_properties_content-style_lineHeight
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_modal_properties_content-style_textCase
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_modal_properties_content-style_textDecoration
+  );
 
   /* Ensure button gap token is easily usable if developers use standard spacing */
   --modal-button-gap: var(

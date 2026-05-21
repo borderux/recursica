@@ -772,8 +772,10 @@
       }
     }
   },
-  "$metadata": {
-    "exportedAt": "2026-05-15T18:10:02.355Z",
-    "version": "1.0.0"
+  "$extensions": {
+    "recursica.metadata": {
+      "exportedAt": "2026-05-20T19:37:01.200Z",
+      "version": "0.18.0"
+    }
   }
 }

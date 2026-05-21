@@ -1,3 +1,9 @@
+/* HARDCODED VALUES:
+   - display: flex on root
+   - flex-direction: column
+   - gap: section-gap
+ */
+
 .root {
   /* HARDCODE: Map Recursica explicitly into Mantine's variable format so internal components know the margins */
   --card-padding: var(--recursica_ui-kit_components_card_properties_padding);
@@ -33,7 +39,32 @@
   border-bottom: var(--recursica_ui-kit_components_card_properties_divider-size)
     solid
     var(--recursica_ui-kit_components_card_properties_colors_divider-color);
-  composes: recursica_brand_typography_h3 from global;
+
+  /* Direct Figma Typography Mapping */
+  font-family: var(
+    --recursica_ui-kit_components_card_properties_header-style_fontFamily
+  );
+  font-size: var(
+    --recursica_ui-kit_components_card_properties_header-style_fontSize
+  );
+  font-style: var(
+    --recursica_ui-kit_components_card_properties_header-style_fontStyle
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_card_properties_header-style_fontWeight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_card_properties_header-style_letterSpacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_card_properties_header-style_lineHeight
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_card_properties_header-style_textCase
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_card_properties_header-style_textDecoration
+  );
 }
 
 .footer {
@@ -58,4 +89,30 @@
   flex-direction: column;
   gap: var(--recursica_ui-kit_components_card_properties_vertical-gutter);
   padding: 0;
+
+  /* Direct Figma Typography Mapping */
+  font-family: var(
+    --recursica_ui-kit_components_card_properties_content-style_fontFamily
+  );
+  font-size: var(
+    --recursica_ui-kit_components_card_properties_content-style_fontSize
+  );
+  font-style: var(
+    --recursica_ui-kit_components_card_properties_content-style_fontStyle
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_card_properties_content-style_fontWeight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_card_properties_content-style_letterSpacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_card_properties_content-style_lineHeight
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_card_properties_content-style_textCase
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_card_properties_content-style_textDecoration
+  );
 }

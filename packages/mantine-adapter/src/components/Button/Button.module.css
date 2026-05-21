@@ -5,11 +5,6 @@
  *   Because we apply `flex: 1` to `.label`, this empty span grows and pushes the `leftSection` (the icon) 
  *   off-center. To fix this, we apply `display: none` to the label when `data-content="icon-only"`.
  */
-/* recursica-ignore: --recursica_ui-kit_components_button_variants_sizes_default_properties_horizontal-padding */
-/* recursica-ignore: --recursica_ui-kit_components_button_variants_sizes_default_properties_min-width */
-/* recursica-ignore: --recursica_ui-kit_components_button_variants_sizes_small_properties_horizontal-padding */
-/* recursica-ignore: --recursica_ui-kit_components_button_variants_sizes_small_properties_min-width */
-
 /* Baseline and Reset */
 .root {
   box-sizing: border-box;
@@ -78,6 +73,15 @@
 
 /* ==== SIZES ==== */
 .root[data-size="default"] {
+  /* Set baseline paddings and min-width using generic tokens as baseline defaults */
+  padding: 0
+    var(
+      --recursica_ui-kit_components_button_variants_sizes_default_properties_horizontal-padding
+    );
+  min-width: var(
+    --recursica_ui-kit_components_button_variants_sizes_default_properties_min-width
+  );
+
   height: var(
     --recursica_ui-kit_components_button_variants_sizes_default_properties_height
   );
@@ -144,6 +148,15 @@
 }
 
 .root[data-size="small"] {
+  /* Set baseline paddings and min-width using generic tokens as baseline defaults */
+  padding: 0
+    var(
+      --recursica_ui-kit_components_button_variants_sizes_small_properties_horizontal-padding
+    );
+  min-width: var(
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_min-width
+  );
+
   height: var(
     --recursica_ui-kit_components_button_variants_sizes_small_properties_height
   );

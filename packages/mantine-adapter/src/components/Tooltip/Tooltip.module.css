@@ -1,3 +1,12 @@
+/* EXEMPTIONS:
+   - beak-inset is ignored because Tooltip positioning calculations are handled dynamically by Mantine/Floating UI at the React runtime.
+   - beak-size is ignored because Mantine's tooltip arrows compute their sizing and positional offsets
+     dynamically within the React rendering engine (requires inline pixel number rather than standard CSS variables).
+     The beak size is checked in JS against a fixed value of 16px. If this variable changes, the TSX components
+     need to be reviewed/re-compiled. */
+/* recursica-ignore: --recursica_ui-kit_components_tooltip_properties_beak-inset = 8px */
+/* recursica-ignore: --recursica_ui-kit_components_tooltip_properties_beak-size = 16px */
+
 /* HARDCODED VALUES:
    - border-style: solid. Structural rendering rule for the tooltip border (Mantine uses Box
      which may not set border-style natively). Same pattern as Menu / HoverCard.

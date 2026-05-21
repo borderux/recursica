@@ -1,3 +1,9 @@
+/* EXEMPTIONS:
+   - side-by-side and stacked layout top-bottom-margin variables are ignored because ReadOnlyField spacing
+     is governed structurally by external parent form/grid layout wrappers rather than internal module margins. */
+/* recursica-ignore: --recursica_ui-kit_components_read-only-field_variants_layouts_side-by-side_properties_top-bottom-margin */
+/* recursica-ignore: --recursica_ui-kit_components_read-only-field_variants_layouts_stacked_properties_top-bottom-margin */
+
 /* HARDCODED VALUES:
    - margin: 0; padding: overrides native paragraph margins mapping back to form element flows.
 */

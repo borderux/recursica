@@ -1,3 +1,8 @@
+/* EXEMPTIONS:
+   - colors_selected-item_supporting-text-color is ignored because selected menu items do not render 
+     supporting secondary text, making selected state overrides for supporting text colors obsolete. */
+/* recursica-ignore: --recursica_ui-kit_components_menu-item_properties_colors_selected-item_supporting-text-color */
+
 /* HARDCODED VALUES:
    - border-style: solid. Structural rendering rule for the dropdown border (Mantine uses Paper which may not set border natively).
    - opacity: 0.5 on disabled items. Recursica has no dedicated disabled-opacity token for menu items.
