@@ -39,7 +39,7 @@ export default meta;
 type Story = StoryObj<LabelStoryProps>;
 
 // Utility mapping to pipe raw Label args structurally into TextField accurately
-const renderWithTextField = ({ children, withLayer, layer, ...args }: any) => (
+const renderWithTextField = ({ children, ...args }: any) => (
   <TextField
     label={children as React.ReactNode}
     placeholder="Form Control primitive mapped..."

@@ -59,9 +59,7 @@ export const Default: Story = {
     ),
     children: <Switch label="Input area content" />,
   },
-  render: ({ withLayer, layer, ...args }: any) => (
-    <FormControlLayout {...args} />
-  ),
+  render: ({ ...args }: any) => <FormControlLayout {...args} />,
 };
 
 /**
@@ -74,9 +72,7 @@ export const StackedLayout: Story = {
     labelSize: "default",
     children: <Switch label="Flush stacked switch" />,
   },
-  render: ({ withLayer, layer, ...args }: any) => (
-    <FormControlLayout {...args} />
-  ),
+  render: ({ ...args }: any) => <FormControlLayout {...args} />,
 };
 
 /**
@@ -90,7 +86,5 @@ export const SideBySideLayout: Story = {
     labelSize: "default",
     children: <Switch label="Offset switch aligning with grid" />,
   },
-  render: ({ withLayer, layer, ...args }: any) => (
-    <FormControlLayout {...args} />
-  ),
+  render: ({ ...args }: any) => <FormControlLayout {...args} />,
 };

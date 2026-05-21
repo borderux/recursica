@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import {
@@ -24,7 +25,6 @@ export const ReadOnlyField = React.forwardRef<
     type = "text",
     readOnlyComponent,
     emptyValueComponent,
-    readOnlyNativeProps,
     className,
     ...wrapperProps
   } = props;
@@ -75,11 +75,7 @@ export const ReadOnlyField = React.forwardRef<
         className={`${styles.root} ${className || ""}`}
         {...wrapperProps}
       >
-        <CustomReadOnlyRenderer
-          value={value}
-          type={type}
-          {...(readOnlyNativeProps as any)}
-        />
+        <CustomReadOnlyRenderer value={value as any} />
       </FormControlWrapper>
     );
   }

@@ -12,7 +12,11 @@ import styles from "./TextField.module.css";
 export interface RecursicaTextFieldProps
   extends Omit<
       InputBaseProps,
-      "size" | "color" | "startAdornment" | "endAdornment"
+      "color" | "size" | "startAdornment" | "endAdornment" | "autoComplete"
+    >,
+    Omit<
+      React.ComponentPropsWithoutRef<"input">,
+      keyof InputBaseProps | "size" | "color" | "style" | "className" | "id"
     >,
     Pick<
       RecursicaFormControlWrapperProps,
@@ -28,10 +32,6 @@ export interface RecursicaTextFieldProps
       | "labelOptionalText"
       | "labelWithEditIcon"
       | "onLabelEditClick"
-    >,
-    Omit<
-      React.ComponentPropsWithoutRef<"input">,
-      "size" | "style" | "className" | "id" | "color"
     >,
     ReadOnlyControlProps {
   /** Renders a section on the left side of the input (e.g. icon). Maps to Mantine's leftSection natively. */

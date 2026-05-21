@@ -71,9 +71,7 @@
 }
 
 .optionalText {
-  color: var(
-    --recursica_ui-kit_components_label_properties_colors_optional-text
-  );
+  color: inherit;
   font-family: var(
     --recursica_ui-kit_components_label_properties_optional-text_font-family
   );
@@ -114,9 +112,9 @@
   border: none;
   padding: 0;
 
-  width: var(--recursica_ui-kit_components_label_properties_edit-icon-size);
-  height: var(--recursica_ui-kit_components_label_properties_edit-icon-size);
-  color: var(--recursica_ui-kit_components_label_properties_colors_edit-icon);
+  width: 16px;
+  height: 16px;
+  color: inherit;
 }
 
 .editIcon :global(svg) {

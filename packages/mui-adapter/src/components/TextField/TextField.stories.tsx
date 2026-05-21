@@ -86,7 +86,7 @@ export const Default: Story = {
     assistiveText:
       "Tokens are stored identically locally and strictly ephemeral.",
   },
-  render: ({ withLayer, layer, ...args }: any) => <TextField {...args} />,
+  render: ({ ...args }: any) => <TextField {...args} />,
 };
 
 export const FormsSideBySide: Story = {
@@ -97,7 +97,7 @@ export const FormsSideBySide: Story = {
       "Specify the exact cluster administrative credentials enforcing strict domain policies. This violently long string tests native textual wrapping safely mapping alongside inputs.",
     formLayout: "side-by-side",
   },
-  render: ({ withLayer, layer, ...args }: any) => <TextField {...args} />,
+  render: ({ ...args }: any) => <TextField {...args} />,
 };
 
 export const WithLeadingIcon: Story = {
@@ -120,7 +120,7 @@ export const WithLeadingIcon: Story = {
       </svg>
     ),
   },
-  render: ({ withLayer, layer, ...args }: any) => <TextField {...args} />,
+  render: ({ ...args }: any) => <TextField {...args} />,
 };
 
 export const WithTrailingIcon: Story = {
@@ -142,7 +142,7 @@ export const WithTrailingIcon: Story = {
       </svg>
     ),
   },
-  render: ({ withLayer, layer, ...args }: any) => <TextField {...args} />,
+  render: ({ ...args }: any) => <TextField {...args} />,
 };
 
 export const Disabled: Story = {
@@ -151,7 +151,7 @@ export const Disabled: Story = {
     placeholder: "Disabled primitive map...",
     disabled: true,
   },
-  render: ({ withLayer, layer, ...args }: any) => <TextField {...args} />,
+  render: ({ ...args }: any) => <TextField {...args} />,
 };
 
 export const ErrorState: Story = {
@@ -163,7 +163,7 @@ export const ErrorState: Story = {
       "Critical runtime node disconnect detected traversing DOM architecture.",
     required: true,
   },
-  render: ({ withLayer, layer, ...args }: any) => <TextField {...args} />,
+  render: ({ ...args }: any) => <TextField {...args} />,
 };
 
 export const StaticReadOnly: Story = {
@@ -173,7 +173,7 @@ export const StaticReadOnly: Story = {
     value: "Explicitly Uneditable Bound Output",
     readOnly: true,
   },
-  render: ({ withLayer, layer, ...args }: any) => <TextField {...args} />,
+  render: ({ ...args }: any) => <TextField {...args} />,
 };
 
 export const EditableReadOnly: Story = {
@@ -184,5 +184,5 @@ export const EditableReadOnly: Story = {
     readOnly: true,
     labelWithEditIcon: true,
   },
-  render: ({ withLayer, layer, ...args }: any) => <TextField {...args} />,
+  render: ({ ...args }: any) => <TextField {...args} />,
 };

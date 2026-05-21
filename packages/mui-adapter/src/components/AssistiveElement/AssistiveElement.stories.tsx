@@ -40,7 +40,7 @@ export const DefaultHelp: Story = {
     assistiveWithIcon: true,
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
-  render: ({ withLayer, layer, ...args }: any) => (
+  render: ({ ...args }: any) => (
     <div style={{ padding: "48px" }}>
       <AssistiveElement {...args} />
     </div>
@@ -55,7 +55,7 @@ export const ErrorState: Story = {
     assistiveWithIcon: true,
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
-  render: ({ withLayer, layer, ...args }: any) => (
+  render: ({ ...args }: any) => (
     <div style={{ padding: "48px" }}>
       <AssistiveElement {...args} />
     </div>
@@ -70,7 +70,7 @@ export const NoIconHelp: Story = {
     assistiveWithIcon: false,
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
-  render: ({ withLayer, layer, ...args }: any) => (
+  render: ({ ...args }: any) => (
     <div style={{ padding: "48px" }}>
       <AssistiveElement {...args} />
     </div>

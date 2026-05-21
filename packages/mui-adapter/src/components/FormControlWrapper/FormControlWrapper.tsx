@@ -1,9 +1,5 @@
 import React from "react";
 import { FormControl, type FormControlProps } from "@mui/material";
-import {
-  type FormLayoutType,
-  type FormLabelSizeType,
-} from "@recursica/adapter-common";
 import { filterStylingProps } from "../../utils/filterStylingProps";
 import { Label } from "../Label/Label";
 import { AssistiveElement } from "../AssistiveElement/AssistiveElement";
@@ -22,8 +18,8 @@ export interface RecursicaFormControlWrapperProps
   helperText?: React.ReactNode;
   assistiveWithIcon?: boolean;
 
-  formLayout?: FormLayoutType;
-  labelSize?: FormLabelSizeType;
+  formLayout?: "stacked" | "side-by-side";
+  labelSize?: "small" | "default" | "md";
   labelAlignment?: "left" | "right"; // Currently functionally maps to left automatically natively
   labelOptionalText?: React.ReactNode | true;
   labelWithEditIcon?: boolean;
@@ -56,7 +52,6 @@ export const FormControlWrapper = React.forwardRef<
 
     formLayout = "stacked",
     labelSize = "default",
-    labelAlignment = "left",
     labelOptionalText,
     labelWithEditIcon,
     onLabelEditClick,

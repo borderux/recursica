@@ -61,7 +61,7 @@ export default meta;
 
 type Story = StoryObj<WrapperStoryProps>;
 
-const renderWithTextField = ({ withLayer, layer, ...args }: any) => (
+const renderWithTextField = ({ ...args }: any) => (
   // We explicitly cast args to 'any' here because MUI wrapper defines Wrapper anatomy,
   // but TextField expects them for the full TextInput anatomy, causing a TS intersection mismatch.
   <TextField placeholder="Form Control primitive mapped..." {...args} />
@@ -119,7 +119,7 @@ export const NativeChildrenDirectly: Story = {
     formLayout: "side-by-side",
     assistiveText: "This wraps a raw HTML input tag mapping correctly.",
   },
-  render: ({ withLayer, layer, ...args }: any) => (
+  render: ({ ...args }: any) => (
     <div
       style={{
         display: "flex",

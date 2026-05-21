@@ -1,18 +1,16 @@
 import React from "react";
-import {
-  type FormLayoutType,
-  type FormLabelSizeType,
-} from "@recursica/adapter-common";
 import { filterStylingProps } from "../../utils/filterStylingProps";
 import styles from "./FormControlLayout.module.css";
 
 export interface FormControlLayoutProps
   extends React.HTMLAttributes<HTMLDivElement> {
   overStyled?: boolean;
-  formLayout?: FormLayoutType;
-  labelSize?: FormLabelSizeType;
-  /** Section rendered inside the left layout block (typically the Label natively) */
+  formLayout?: "stacked" | "side-by-side";
+  labelSize?: "small" | "default" | "md";
+  controlMaxWidth?: string;
+  controlMinWidth?: string;
   leftSection?: React.ReactNode;
+  children: React.ReactNode;
 }
 
 export const FormControlLayout = React.forwardRef<

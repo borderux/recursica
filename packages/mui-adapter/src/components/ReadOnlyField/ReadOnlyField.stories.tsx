@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import { ReadOnlyField, type ReadOnlyFieldProps } from "./ReadOnlyField";
+import { ReadOnlyField } from "./ReadOnlyField";
 import { EmptyValueRenderer } from "@recursica/adapter-common";
 import { formControlArgTypes } from "../../../.storybook/commonArgTypes";
 
@@ -55,7 +55,7 @@ type Story = StoryObj<typeof ReadOnlyField>;
  */
 export const Default: Story = {
   args: {},
-  render: ({ withLayer, layer, ...args }: any) => <ReadOnlyField {...args} />,
+  render: ({ ...args }: any) => <ReadOnlyField {...args} />,
 };
 
 /**
@@ -66,7 +66,7 @@ export const EmptyValue: Story = {
     value: "",
     label: "Empty String Evaluated Automatically (Default 'N/A')",
   },
-  render: ({ withLayer, layer, ...args }: any) => <ReadOnlyField {...args} />,
+  render: ({ ...args }: any) => <ReadOnlyField {...args} />,
 };
 
 const CustomEmptyTextRenderer: React.FC<{ value?: any }> & {
@@ -83,7 +83,7 @@ export const CustomEmptyText: Story = {
     label: "Custom Empty Text Default",
     emptyValueComponent: CustomEmptyTextRenderer,
   },
-  render: ({ withLayer, layer, ...args }: any) => <ReadOnlyField {...args} />,
+  render: ({ ...args }: any) => <ReadOnlyField {...args} />,
 };
 
 const CustomEmptyCheckRenderer: React.FC<{ value?: any }> & {
@@ -102,7 +102,7 @@ export const CustomEmptyRenderer: Story = {
     label: "Custom Logic Evaluation Binding",
     emptyValueComponent: CustomEmptyCheckRenderer,
   },
-  render: ({ withLayer, layer, ...args }: any) => <ReadOnlyField {...args} />,
+  render: ({ ...args }: any) => <ReadOnlyField {...args} />,
 };
 
 /**
@@ -113,7 +113,7 @@ export const StackedDefault: Story = {
     formLayout: "stacked",
     value: "Some fixed readable text",
   },
-  render: ({ withLayer, layer, ...args }: any) => <ReadOnlyField {...args} />,
+  render: ({ ...args }: any) => <ReadOnlyField {...args} />,
 };
 
 /**
@@ -124,7 +124,7 @@ export const SideBySide: Story = {
     formLayout: "side-by-side",
     value: "Some fixed readable text mapping horizontally",
   },
-  render: ({ withLayer, layer, ...args }: any) => <ReadOnlyField {...args} />,
+  render: ({ ...args }: any) => <ReadOnlyField {...args} />,
 };
 
 /**
@@ -136,7 +136,7 @@ export const WithEditIcon: Story = {
     required: true,
     value: "Editable fixed structure",
   },
-  render: ({ withLayer, layer, ...args }: any) => <ReadOnlyField {...args} />,
+  render: ({ ...args }: any) => <ReadOnlyField {...args} />,
 };
 
 /**
@@ -145,7 +145,7 @@ export const WithEditIcon: Story = {
  */
 export const DataTypes: Story = {
   args: {},
-  render: ({ withLayer, layer, ...args }: any) => (
+  render: ({ ...args }: any) => (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
       <ReadOnlyField
         {...args}
