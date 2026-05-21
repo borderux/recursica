@@ -1,5 +1,17 @@
 # recursica-storybook
 
+## 0.18.0
+
+### Minor Changes
+
+- 0ead0d7: Updated with mui-adapter changes
+
+### Patch Changes
+
+- Updated dependencies [0ead0d7]
+- Updated dependencies [0ead0d7]
+  - @recursica/mantine-adapter@0.22.0
+
 ## 0.17.0
 
 ### Minor Changes
