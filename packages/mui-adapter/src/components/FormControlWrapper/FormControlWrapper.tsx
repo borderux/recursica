@@ -1,162 +1,147 @@
-import React, { forwardRef, useId } from "react";
+import React from "react";
 import { FormControl, type FormControlProps } from "@mui/material";
 import {
-  filterStylingProps,
-  type RecursicaOverStyled,
-} from "../../utils/filterStylingProps";
-import { Label, type RecursicaLabelProps } from "../Label/Label";
-import { FormControlLayout } from "../FormControlLayout/FormControlLayout";
+  type FormLayoutType,
+  type FormLabelSizeType,
+} from "@recursica/adapter-common";
+import { filterStylingProps } from "../../utils/filterStylingProps";
+import { Label } from "../Label/Label";
 import { AssistiveElement } from "../AssistiveElement/AssistiveElement";
+import { FormControlLayout } from "../FormControlLayout/FormControlLayout";
 import styles from "./FormControlWrapper.module.css";
 
-export interface RecursicaFormControlWrapperProps extends RecursicaLabelProps {
-  /** Overall structural flow mapping the Form Control natively cascading down to Label and Input logic. */
-  formLayout?: "stacked" | "side-by-side";
-  /** Securely replaces standard UI descriptions safely providing standard Assistive properties. */
-  assistiveText?: React.ReactNode;
-  /** Fallback for assistiveText to match Mantine API. */
-  description?: React.ReactNode;
-  /** Fallback for assistiveText to match MUI API. */
-  helperText?: React.ReactNode;
-  /** Explicit toggle to suppress the Info icon rendering natively alongside the assistiveText. Defaults to true. */
-  assistiveWithIcon?: boolean;
-  /** Custom action area to render alongside the label instead of the default edit icon. */
-  labelActionArea?: React.ReactNode;
-  /** Pass the native maximum width design variable dynamically bounding the specific wrapper width exclusively. */
-  controlMaxWidth?: string | undefined;
-  /** Pass the native minimum width design variable dynamically bounding the specific wrapper width exclusively. */
-  controlMinWidth?: string | undefined;
-  /** Error state which can be a boolean or a string message. */
-  error?: boolean | React.ReactNode;
-  /** Required state for the entire form control. */
-  required?: boolean;
-  /** The text string for the label. */
+export interface RecursicaFormControlWrapperProps
+  extends Omit<FormControlProps, "margin" | "variant" | "size" | "color"> {
+  overStyled?: boolean;
   label?: React.ReactNode;
+  /** Primary assistive description bound natively to the component footer. Maps to MUI's 'helperText' dynamically. */
+  assistiveText?: React.ReactNode;
+  /** Secondary parameter fallback identical to assistiveText to match MUI / Mantine native APIs safely. */
+  description?: React.ReactNode;
+  /** Fallback mapping for MUI's native helperText */
+  helperText?: React.ReactNode;
+  assistiveWithIcon?: boolean;
+
+  formLayout?: FormLayoutType;
+  labelSize?: FormLabelSizeType;
+  labelAlignment?: "left" | "right"; // Currently functionally maps to left automatically natively
+  labelOptionalText?: React.ReactNode | true;
+  labelWithEditIcon?: boolean;
+  onLabelEditClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  labelActionArea?: React.ReactNode;
+
+  /** Allows layout mapping to limit the input's bounding box without impacting the label */
+  controlMaxWidth?: string;
+  controlMinWidth?: string;
 }
 
-export type FormControlWrapperProps = RecursicaOverStyled<
-  Omit<FormControlProps, "margin" | "error" | "required"> &
-    RecursicaFormControlWrapperProps
->;
+export type FormControlWrapperProps = RecursicaFormControlWrapperProps;
 
-export const FormControlWrapper = forwardRef<
+export const FormControlWrapper = React.forwardRef<
   HTMLDivElement,
   FormControlWrapperProps
->(function FormControlWrapper(
-  {
-    formLayout,
-    labelSize,
-    labelAlignment,
-    labelOptionalText,
-    labelWithEditIcon,
-    labelActionArea,
-    onLabelEditClick,
-
+>(function FormControlWrapper(props, ref) {
+  const {
+    overStyled = false,
     label,
     assistiveText,
     description,
     helperText,
     assistiveWithIcon = true,
-    controlMaxWidth,
-    controlMinWidth,
     error,
     required,
-    id: userProvidedId,
-    children,
-    className,
-    overStyled = false,
-    ...rest
-  },
-  ref,
-) {
-  // Generate a reliable ID to map the Label's HTML context down to the component array natively.
-  const generatedId = useId();
-  const id = userProvidedId || `recursica-fc-${generatedId}`;
+    disabled,
+    focused,
+    id,
 
-  // Evaluate explicit assistive fallbacks ensuring assistiveText correctly prioritizes natively over underlying UI configurations!
-  const resolvedAssistive = assistiveText || description || helperText;
-  const assistiveId = resolvedAssistive ? `${id}-assistive` : undefined;
-  const errorId = error ? `${id}-error` : undefined;
+    formLayout = "stacked",
+    labelSize = "default",
+    labelAlignment = "left",
+    labelOptionalText,
+    labelWithEditIcon,
+    onLabelEditClick,
+    labelActionArea,
+
+    controlMaxWidth,
+    controlMinWidth,
+
+    className,
+    style,
+    children,
+    ...rest
+  } = props;
 
   const sanitizedProps = filterStylingProps(rest, overStyled);
-  const restRecord = sanitizedProps as Record<string, unknown>;
 
-  const classNameProp =
-    className || (restRecord.className as string | undefined);
-  const rootClass = styles.root;
-  const finalClass = classNameProp
-    ? `${rootClass} ${classNameProp}`
-    : rootClass;
+  // Map descriptions fallback exactly like Mantine
+  const finalAssistiveText = assistiveText || description || helperText;
 
-  // Clone ARIA identifiers directly back down into the nested children wrapper so screen-readers natively hook the external strings
-  const content = React.isValidElement(children)
-    ? React.cloneElement(
-        children as React.ReactElement<Record<string, unknown>>,
-        {
-          ...(resolvedAssistive &&
-          !(children.props as Record<string, unknown>)["aria-describedby"]
-            ? { "aria-describedby": assistiveId }
-            : {}),
-          ...(error &&
-          !(children.props as Record<string, unknown>)["aria-errormessage"]
-            ? { "aria-errormessage": errorId }
-            : {}),
-        },
-      )
-    : children;
+  // ARIA Bindings
+  const labelId = id ? `${id}-label` : undefined;
+  const descriptionId = id ? `${id}-description` : undefined;
 
-  const labelNode = label ? (
-    <Label
-      id={id} // Directly binds ARIA references down
-      labelAlignment={labelAlignment}
-      labelOptionalText={labelOptionalText}
-      labelWithEditIcon={labelWithEditIcon}
-      labelActionArea={labelActionArea}
-      onLabelEditClick={onLabelEditClick}
-    >
-      {label}
-    </Label>
-  ) : undefined;
+  // Wrap children safely cloning aria hooks down natively
+  const mappedChildren = React.Children.map(children, (child) => {
+    if (React.isValidElement(child)) {
+      return React.cloneElement(child, {
+        "aria-labelledby": labelId,
+        "aria-describedby": finalAssistiveText ? descriptionId : undefined,
+      } as React.HTMLAttributes<HTMLElement>);
+    }
+    return child;
+  });
 
   return (
     <FormControl
       ref={ref}
       error={!!error}
       required={required}
-      className={finalClass}
-      {...(restRecord as any)}
+      disabled={disabled}
+      focused={focused}
+      className={className ? `${styles.root} ${className}` : styles.root}
+      style={style}
+      {...(sanitizedProps as FormControlProps)}
     >
       <FormControlLayout
         formLayout={formLayout}
         labelSize={labelSize}
-        controlMaxWidth={controlMaxWidth}
-        controlMinWidth={controlMinWidth}
-        leftSection={labelNode}
+        leftSection={
+          label && (
+            <Label
+              id={labelId}
+              htmlFor={id}
+              required={required}
+              labelOptionalText={labelOptionalText}
+              labelWithEditIcon={labelWithEditIcon}
+              onLabelEditClick={onLabelEditClick}
+              labelActionArea={labelActionArea}
+            >
+              {label}
+            </Label>
+          )
+        }
       >
-        {/*
-          The Core Input Wrapper & Controls
-          Nakedly inject the actual field elements alongside natively bridged Assistive components mapped dynamically.
-        */}
-        <div className={styles.inputSection}>
-          {content}
+        <div
+          className={styles.inputContainer}
+          style={
+            {
+              "--form-control-max-width": controlMaxWidth,
+              "--form-control-min-width": controlMinWidth,
+            } as React.CSSProperties
+          }
+        >
+          {/* Natively wrap children into flex box */}
+          {mappedChildren}
 
-          {error && typeof error !== "boolean" && (
+          {/* Append native assistive block dynamically below the input */}
+          {finalAssistiveText && (
             <AssistiveElement
-              id={errorId}
-              assistiveVariant="error"
+              id={descriptionId}
+              assistiveVariant={error ? "error" : "help"}
               assistiveWithIcon={assistiveWithIcon}
+              className={styles.assistive}
             >
-              {error}
-            </AssistiveElement>
-          )}
-
-          {!error && resolvedAssistive && (
-            <AssistiveElement
-              id={assistiveId}
-              assistiveVariant="help"
-              assistiveWithIcon={assistiveWithIcon}
-            >
-              {resolvedAssistive}
+              {error && typeof error === "string" ? error : finalAssistiveText}
             </AssistiveElement>
           )}
         </div>

@@ -1,87 +1,92 @@
-/* FormControlLayout.module.css */
-
 .root {
+  /* Recursica Reset Boundary */
+  box-sizing: border-box;
   display: flex;
   margin: 0; /* Hardcoded structural reset */
-  margin-bottom: var(
-    --form-control-margin-bottom,
-    var(--recursica_ui-kit_globals_form_properties_vertical-item-gap, 0)
-  );
+  width: 100%;
+
+  /* Recursica Layout Overrides mapped down dynamically from components */
   padding: 0; /* Hardcoded structural reset */
   max-width: var(--form-control-max-width, 100%);
   min-width: var(--form-control-min-width, auto);
 }
 
-/* Base Structural Stacked Layout */
+/* =========================================
+   LAYOUT MODES
+   ========================================= */
+
 .root[data-form-layout="stacked"] {
   flex-direction: column;
 }
 
-/* Base Structural Grid Layout */
 .root[data-form-layout="side-by-side"] {
+  /* Aligns the Input/Component identically horizontally beside the label mapping */
   flex-direction: row;
   align-items: flex-start;
   flex-wrap: wrap; /* Allows collapse if screen is too thin, though standard flex width should hold */
 }
 
+/* =========================================
+   GRID SECTIONS
+   ========================================= */
+
 .leftSection {
-  /* Width dimensions are strictly governed natively inside this layout column */
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
 }
 
-/* Stacked Layout constraints */
+/* 
+   Stacked margins natively apply spacing *below* the label 
+*/
 .root[data-form-layout="stacked"] .leftSection {
-  padding-bottom: var(
-    --recursica_ui-kit_components_label_variants_layouts_stacked_properties_bottom-padding,
-    var(
-      --recursica_ui-kit_globals_form_properties_label-field-gap-vertical,
-      8px
-    )
-  );
-  min-height: var(
-    --recursica_ui-kit_components_label_variants_layouts_stacked_properties_min-height,
-    auto
+  margin-bottom: var(
+    --recursica_ui-kit_globals_form_properties_label-field-gap-vertical
   );
 }
 
-/* SideBySide Layout constraints */
+/* 
+   Side-by-side margins natively apply spacing *right* of the label 
+   and forces vertical padding to align the label perfectly with 1st line of input text 
+*/
 .root[data-form-layout="side-by-side"] .leftSection {
+  margin-right: var(
+    --recursica_ui-kit_components_label_variants_layouts_side-by-side_properties_gutter,
+    var(--recursica_ui-kit_globals_form_properties_label-field-gap-horizontal)
+  );
   padding-top: var(
     --recursica_ui-kit_components_label_variants_layouts_side-by-side_properties_vertical-padding,
-    0
-  );
-  padding-bottom: var(
-    --recursica_ui-kit_components_label_variants_layouts_side-by-side_properties_vertical-padding,
-    0
+    10px
   );
   min-height: var(
     --recursica_ui-kit_components_label_variants_layouts_side-by-side_properties_min-height,
-    auto
-  );
-  /* In side-by-side, the label column exists to the left of its input, so we use the gutter gap here. */
-  margin-right: var(
-    --recursica_ui-kit_components_label_variants_layouts_side-by-side_properties_gutter,
-    var(
-      --recursica_ui-kit_globals_form_properties_label-field-gap-horizontal,
-      16px
-    )
+    48px
   );
 }
 
-.root[data-form-layout="side-by-side"] .leftSection[data-size="default"] {
-  width: var(
-    --recursica_ui-kit_components_label_variants_layouts_side-by-side_variants_sizes_default_properties_width
-  );
-}
-
-.root[data-form-layout="side-by-side"] .leftSection[data-size="small"] {
+/* Label column sizing hooks (Only applies functionally in side-by-side mode) */
+.root[data-form-layout="side-by-side"] .leftSection[data-label-size="small"] {
   width: var(
     --recursica_ui-kit_components_label_variants_layouts_side-by-side_variants_sizes_small_properties_width
   );
 }
 
+.root[data-form-layout="side-by-side"] .leftSection[data-label-size="default"] {
+  width: var(
+    --recursica_ui-kit_components_label_variants_layouts_side-by-side_variants_sizes_default_properties_width
+  );
+}
+
+.root[data-form-layout="side-by-side"] .leftSection[data-label-size="md"] {
+  /* No 'medium' defined explicitly in generated token scope, mapped fallback to default */
+  width: var(
+    --recursica_ui-kit_components_label_variants_layouts_side-by-side_variants_sizes_default_properties_width
+  );
+}
+
+/* 
+   Right Section dynamically wraps the input element natively 
+*/
 .rightSection {
   display: flex; /* Groups internal field alongside subsequent errors/descriptions */
   flex-direction: column;

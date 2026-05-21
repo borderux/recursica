@@ -1,30 +1,20 @@
-/**
- * AssistiveElement.module.css
- * 
- * HARDCODED VALUES:
- * - margin / padding: 0 — Structural resets.
- * - display: flex / align-items: flex-start — layout alignment.
- */
+/*
+  ASSISTIVE ELEMENT ARCHITECTURE
+  This component strictly standardizes FormHelperText logic dynamically natively decoupled from the overarching input blocks.
+*/
 
 .root {
+  /* Override MUI FormHelperText native resets structurally safely */
   display: flex;
   align-items: flex-start; /* Forces the icon to align with the first line of text */
   margin: 0; /* HARDCODE: structural reset */
   padding: 0; /* HARDCODE: structural reset */
+  width: 100%;
 
   gap: var(
     --recursica_ui-kit_components_assistive-element_properties_icon-text-gap
   );
-  margin-top: var(
-    --recursica_ui-kit_components_assistive-element_properties_top-margin
-  );
-  max-width: var(
-    --recursica_ui-kit_components_assistive-element_properties_max-width
-  );
-}
 
-.textWrapper {
-  /* Text properties securely governed via layout mappings */
   font-family: var(
     --recursica_ui-kit_components_assistive-element_properties_text_font-family
   );
@@ -49,62 +39,72 @@
   text-transform: var(
     --recursica_ui-kit_components_assistive-element_properties_text_text-transform
   );
-
-  /* Fallback text wrap structures */
-  overflow-wrap: break-word;
-  white-space: normal;
 }
 
-.iconWrapper {
+.text {
+  flex: 1; /* Consume remaining space causing native flex wrap */
+}
+
+/* Base Icon Architecture */
+.icon {
   flex-shrink: 0; /* Prevent squishing */
   display: flex;
   align-items: center;
   justify-content: center;
-
-  width: var(
-    --recursica_ui-kit_components_assistive-element_properties_icon-size
-  );
-  height: calc(
-    var(
-        --recursica_ui-kit_components_assistive-element_properties_text_line-height
-      ) *
-      var(
-        --recursica_ui-kit_components_assistive-element_properties_text_font-size
-      )
-  ); /* Forces exact centering bounds within the first text line vertically */
-}
-
-.iconWrapper svg {
   width: var(
     --recursica_ui-kit_components_assistive-element_properties_icon-size
   );
   height: var(
     --recursica_ui-kit_components_assistive-element_properties_icon-size
   );
+
+  /* Mathematical vertical centering bounds to the first line of typography explicitly */
+  margin-top: calc(
+    (
+        var(
+            --recursica_ui-kit_components_assistive-element_properties_text_line-height
+          ) -
+          var(
+            --recursica_ui-kit_components_assistive-element_properties_icon-size
+          )
+      ) /
+      2
+  ); /* Forces exact centering bounds within the first text line vertically */
 }
 
-/* 
- * VARIANT MAPPINGS 
- * Inherits colors natively mapped per variant. 
- */
+.icon :global(svg) {
+  width: 100%;
+  height: 100%;
+  stroke-width: 2px;
+}
 
-.root[data-variant="help"] .textWrapper {
+/* =========================================
+   VARIANTS: Default / Help
+   ========================================= */
+
+.root[data-variant="help"] {
   color: var(
     --recursica_ui-kit_components_assistive-element_variants_types_help_properties_colors_text-color
   );
 }
-.root[data-variant="help"] .iconWrapper svg {
+
+.root[data-variant="help"] .icon {
   color: var(
     --recursica_ui-kit_components_assistive-element_variants_types_help_properties_colors_icon-color
   );
 }
 
-.root[data-variant="error"] .textWrapper {
+/* =========================================
+   VARIANTS: Error
+   ========================================= */
+
+.root[data-variant="error"] {
   color: var(
     --recursica_ui-kit_components_assistive-element_variants_types_error_properties_colors_text-color
   );
 }
-.root[data-variant="error"] .iconWrapper svg {
+
+.root[data-variant="error"] .icon {
   color: var(
     --recursica_ui-kit_components_assistive-element_variants_types_error_properties_colors_icon-color
   );

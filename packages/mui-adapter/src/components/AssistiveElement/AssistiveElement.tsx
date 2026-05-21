@@ -1,91 +1,86 @@
-import React, { forwardRef } from "react";
+import React from "react";
 import { FormHelperText, type FormHelperTextProps } from "@mui/material";
-import {
-  filterStylingProps,
-  type RecursicaOverStyled,
-} from "../../utils/filterStylingProps";
+import { filterStylingProps } from "../../utils/filterStylingProps";
 import styles from "./AssistiveElement.module.css";
 
-export interface RecursicaAssistiveElementProps {
-  /** The semantic variant driving the icon and text colors natively mapped across the UI Kit tokens. */
+export interface AssistiveElementProps extends FormHelperTextProps {
+  /** Governs the semantic rendering block (changes icon and CSS structural hooks natively). */
   assistiveVariant?: "help" | "error";
-  /** Explicitly toggle the rendering of the variant-specific SVG bounding box. */
+  /** Renders the structural mapping icon inline beside the text natively. */
   assistiveWithIcon?: boolean;
+  overStyled?: boolean;
 }
 
-export type AssistiveElementProps = RecursicaOverStyled<
-  Omit<FormHelperTextProps, "variant"> & RecursicaAssistiveElementProps
->;
-
-const InfoIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <circle cx="12" cy="12" r="10" />
-    <path d="M12 16v-4" />
-    <path d="M12 8h.01" />
-  </svg>
-);
-
-const AlertIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-    <path d="M12 9v4" />
-    <path d="M12 17h.01" />
-  </svg>
-);
-
-export const AssistiveElement = forwardRef<
+export const AssistiveElement = React.forwardRef<
   HTMLParagraphElement,
   AssistiveElementProps
->(function AssistiveElement(
-  {
+>(function AssistiveElement(props, ref) {
+  const {
     assistiveVariant = "help",
     assistiveWithIcon = true,
-    children,
-    className,
     overStyled = false,
+    className,
+    children,
     ...rest
-  },
-  ref,
-) {
+  } = props;
+
   const sanitizedProps = filterStylingProps(rest, overStyled);
-  const restRecord = sanitizedProps as Record<string, unknown>;
 
-  const rootClass = styles.root;
-  const finalClass = className ? `${rootClass} ${className}` : rootClass;
+  const HelpIcon = () => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="16" x2="12" y2="12"></line>
+      <line x1="12" y1="8" x2="12.01" y2="8"></line>
+    </svg>
+  );
 
-  const IconComponent = assistiveVariant === "error" ? AlertIcon : InfoIcon;
+  const ErrorIcon = () => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="8" x2="12" y2="12"></line>
+      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+    </svg>
+  );
 
+  // Map to MUI's native error prop if it's explicitly an error state
+  const isError = assistiveVariant === "error";
+
+  // Force component = "div" so flex layouts execute correctly inside HelperText
   return (
     <FormHelperText
       ref={ref}
-      className={finalClass}
+      component="div"
+      error={isError}
       data-variant={assistiveVariant}
-      error={assistiveVariant === "error" ? true : undefined}
-      style={restRecord.style as React.CSSProperties}
-      {...restRecord} // Spread standard HTML attributes (like id, aria-*, role) natively.
+      className={className ? `${styles.root} ${className}` : styles.root}
+      {...(sanitizedProps as FormHelperTextProps)}
     >
       {assistiveWithIcon && (
-        <span className={styles.iconWrapper}>
-          <IconComponent />
-        </span>
+        <div className={styles.icon}>
+          {assistiveVariant === "error" ? <ErrorIcon /> : <HelpIcon />}
+        </div>
       )}
-      <span className={styles.textWrapper}>{children}</span>
+      <div className={styles.text}>{children}</div>
     </FormHelperText>
   );
 });

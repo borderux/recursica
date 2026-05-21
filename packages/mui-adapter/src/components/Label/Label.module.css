@@ -1,49 +1,25 @@
-/* EXEMPTIONS:
-   - layouts_stacked sizes width variables are ignored because stacked labels naturally occupy 100% width block-level 
-     real estate in HTML rendering, making explicit width properties redundant. */
-
-/* HARDCODED VALUES:
-   - display: flex helps us leverage flex 'order' to perfectly position Mantine's/MUI's injected asterisk.
-   - align-items: baseline ensures text logic lines up nicely if font sizes differ slightly.
-   - margin/padding resets.
-   - MUI overrides: position relative, transform none, pointer-events auto to kill floating label logic.
- */
-/* recursica-ignore: --recursica_ui-kit_components_label_variants_layouts_stacked_variants_sizes_default_properties_width */
-/* recursica-ignore: --recursica_ui-kit_components_label_variants_layouts_stacked_variants_sizes_small_properties_width */
-
 .root {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  color: var(--recursica_ui-kit_components_label_properties_colors_text);
-
-  /* Kill MUI floating label logic */
+  /* Prevent default MUI absolute positioning logic */
   position: relative;
   transform: none;
   pointer-events: auto;
-  max-width: 100%;
-}
+  white-space: normal;
 
-.root[data-alignment="left"] {
-  justify-content: flex-start;
-  text-align: left;
-}
+  /* Reset MUI structural overrides */
+  margin: 0;
+  padding: 0;
+  display: flex;
+  width: 100%;
 
-.root[data-alignment="right"] {
-  justify-content: flex-end;
-  text-align: right;
-}
-
-.labelText {
-  order: 1;
+  /* Recursica Font Map */
   font-family: var(
     --recursica_ui-kit_components_label_properties_label-text_font-family
   );
   font-size: var(
     --recursica_ui-kit_components_label_properties_label-text_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_label_properties_label-text_font-style
   );
   font-weight: var(
     --recursica_ui-kit_components_label_properties_label-text_font-weight
@@ -54,51 +30,58 @@
   line-height: var(
     --recursica_ui-kit_components_label_properties_label-text_line-height
   );
-  font-style: var(
-    --recursica_ui-kit_components_label_properties_label-text_font-style,
-    normal
-  );
   text-decoration: var(
-    --recursica_ui-kit_components_label_properties_label-text_text-decoration,
-    none
+    --recursica_ui-kit_components_label_properties_label-text_text-decoration
   );
   text-transform: var(
-    --recursica_ui-kit_components_label_properties_label-text_text-transform,
-    none
+    --recursica_ui-kit_components_label_properties_label-text_text-transform
   );
+
+  color: var(--recursica_ui-kit_components_label_properties_colors_text);
+}
+
+.innerLayout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* pushes endNodes to right natively */
+  width: 100%;
+}
+
+.text {
+  /* Natively intercepts MUI asterisk rendering securely wrapping inline with typography */
+  display: inline;
 }
 
 .required {
-  order: 2;
-  margin-left: var(
-    --recursica_ui-kit_components_label_properties_required-indicator-gap
-  );
+  /* Override the `.MuiInputLabel-asterisk` natively */
   color: var(--recursica_ui-kit_components_label_properties_colors_asterisk);
-
-  /* Inherit identical typography bounds to prevent flex row line-height stretching */
-  font-family: var(
-    --recursica_ui-kit_components_label_properties_label-text_font-family
-  );
-  font-size: var(
-    --recursica_ui-kit_components_label_properties_label-text_font-size
-  );
-  line-height: var(
-    --recursica_ui-kit_components_label_properties_label-text_line-height
+  margin-left: var(
+    --recursica_ui-kit_components_label_properties_required-indicator-gap,
+    2px
   );
 }
 
-.optionalText {
-  order: 5;
-  flex-basis: 100%;
-  margin-top: var(
+.endNodes {
+  display: flex;
+  align-items: center;
+  gap: var(
     --recursica_ui-kit_components_label_properties_label-optional-text-gap
   );
-  margin-left: 0;
+  margin-left: auto; /* Pushes to the end natively */
+}
+
+.optionalText {
+  color: var(
+    --recursica_ui-kit_components_label_properties_colors_optional-text
+  );
   font-family: var(
     --recursica_ui-kit_components_label_properties_optional-text_font-family
   );
   font-size: var(
     --recursica_ui-kit_components_label_properties_optional-text_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_label_properties_optional-text_font-style
   );
   font-weight: var(
     --recursica_ui-kit_components_label_properties_optional-text_font-weight
@@ -109,48 +92,35 @@
   line-height: var(
     --recursica_ui-kit_components_label_properties_optional-text_line-height
   );
-  font-style: var(
-    --recursica_ui-kit_components_label_properties_optional-text_font-style
-  );
   text-decoration: var(
-    --recursica_ui-kit_components_label_properties_optional-text_text-decoration,
-    none
+    --recursica_ui-kit_components_label_properties_optional-text_text-decoration
   );
   text-transform: var(
-    --recursica_ui-kit_components_label_properties_optional-text_text-transform,
-    none
-  );
-  color: inherit;
-  opacity: var(
-    --recursica_ui-kit_components_label_properties_optional-text-opacity
+    --recursica_ui-kit_components_label_properties_optional-text_text-transform
   );
 }
 
-.actionAreaWrapper {
-  order: 4;
-  margin-left: var(
-    --recursica_ui-kit_components_label_properties_edit-icon-gap
-  );
-  display: inline-flex;
+.actionArea {
+  display: flex;
+  align-items: center;
+}
+
+.editIcon {
+  display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.editIconWrapper {
-  order: 4;
-  margin-left: var(
-    --recursica_ui-kit_components_label_properties_edit-icon-gap
-  );
+  cursor: pointer;
   background: none;
   border: none;
   padding: 0;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: inherit;
+
+  width: var(--recursica_ui-kit_components_label_properties_edit-icon-size);
+  height: var(--recursica_ui-kit_components_label_properties_edit-icon-size);
+  color: var(--recursica_ui-kit_components_label_properties_colors_edit-icon);
 }
 
-.editIconWrapper[data-replaces-asterisk="true"] {
-  color: var(--recursica_ui-kit_components_label_properties_colors_asterisk);
+.editIcon :global(svg) {
+  width: 100%;
+  height: 100%;
+  stroke-width: 2px;
 }

@@ -21,7 +21,7 @@ export interface WithReadOnlyWrapperProps
   readOnlyType?: ReadOnlyFieldType;
   /** The isolated raw data value intercepted explicitly into the ReadOnly formatters */
   readOnlyValue?: any;
-  /** Safely enables deep MUI overrides transparently bypassing block filters */
+  /** Safely enables deep overrides transparently bypassing block filters */
   overStyled?: boolean;
   /** The nested active node dynamically exposed exclusively when read-only bounds are disabled */
   activeComponent: React.ReactNode;

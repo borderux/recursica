@@ -1,117 +1,116 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { forwardRef } from "react";
+import React from "react";
+import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import {
-  ReadOnlyFieldType,
-  EmptyValueRenderer,
-  type ReadOnlyControlProps,
-} from "@recursica/adapter-common";
-import {
-  filterStylingProps,
-  type RecursicaOverStyled,
-} from "../../utils/filterStylingProps";
-import {
-  type FormControlWrapperProps,
   FormControlWrapper,
+  type RecursicaFormControlWrapperProps,
 } from "../FormControlWrapper/FormControlWrapper";
-import { ReadOnlyTextField } from "./ReadOnlyTextField";
 import styles from "./ReadOnlyField.module.css";
 
-export interface RecursicaReadOnlyFieldProps
-  extends Omit<
-      FormControlWrapperProps,
-      "children" | "overStyled" | "controlMaxWidth" | "controlMinWidth"
-    >,
-    Pick<ReadOnlyControlProps, "emptyValueComponent"> {
-  /** The specific value to be rendered in read-only mode explicitly matching the original field input */
-  value?: any;
-  /** The data type formatting rules bounding how the string is presented to the user */
-  type?: ReadOnlyFieldType;
-  /** Pass the native maximum width design variable dynamically bounding the specific wrapper width exclusively. */
-  controlMaxWidth?: string | undefined;
-  /** Pass the native minimum width design variable dynamically bounding the specific wrapper width exclusively. */
-  controlMinWidth?: string | undefined;
-}
+export type ReadOnlyFieldProps = Omit<
+  RecursicaFormControlWrapperProps,
+  "error" | "focused"
+> &
+  ReadOnlyControlProps & {
+    value?: any;
+    type?: "text" | "boolean" | "number" | "switch" | "date";
+  };
 
-export type ReadOnlyFieldProps =
-  RecursicaOverStyled<RecursicaReadOnlyFieldProps>;
+export const ReadOnlyField = React.forwardRef<
+  HTMLDivElement,
+  ReadOnlyFieldProps
+>(function ReadOnlyField(props, ref) {
+  const {
+    value,
+    type = "text",
+    readOnlyComponent,
+    emptyValueComponent,
+    readOnlyNativeProps,
+    className,
+    ...wrapperProps
+  } = props;
 
-/**
- * A native generic form control wrapper exclusively responsible for displaying fixed data.
- * Internally maps to structural ReadOnly primitive blocks bridging standard `FormControlWrapper` layouts natively.
- */
-export const ReadOnlyField = forwardRef<HTMLDivElement, ReadOnlyFieldProps>(
-  function ReadOnlyField(
-    {
-      value,
-      type = "text",
-      emptyValueComponent,
-      overStyled = false,
-      className,
-      style,
-      ...rest
-    },
-    ref,
-  ) {
-    let content: React.ReactNode = null;
-
-    // We still pass sanitized properties (like className/style/etc) strictly down.
-    const sanitizedProps = filterStylingProps(rest, overStyled);
-
-    const Renderer = emptyValueComponent || EmptyValueRenderer;
-    const isValueEmpty = (Renderer as any).check
-      ? (Renderer as any).check(value)
-      : EmptyValueRenderer.check(value);
-
-    const displayValue = isValueEmpty ? <Renderer value={value} /> : value;
-
-    switch (type) {
-      case "boolean":
-        content = (
-          <ReadOnlyTextField
-            value={
-              value === true ? "True" : value === false ? "False" : displayValue
-            }
-            overStyled={overStyled as true}
-          />
-        );
-        break;
-      case "switch":
-        content = (
-          <ReadOnlyTextField
-            value={
-              value === true ? "On" : value === false ? "Off" : displayValue
-            }
-            overStyled={overStyled as true}
-          />
-        );
-        break;
-      case "text":
-      default:
-        content = (
-          <ReadOnlyTextField
-            value={displayValue}
-            overStyled={overStyled as true}
-          />
-        );
-        break;
+  // Custom empty component bypass map handling dynamically explicitly
+  if (emptyValueComponent && typeof emptyValueComponent !== "string") {
+    const CustomEmptyRenderer = emptyValueComponent as React.FC<any> & {
+      check?: (val: any) => boolean;
+    };
+    if (CustomEmptyRenderer.check && CustomEmptyRenderer.check(value)) {
+      return (
+        <FormControlWrapper
+          ref={ref}
+          className={`${styles.root} ${className || ""}`}
+          {...wrapperProps}
+        >
+          <CustomEmptyRenderer value={value} />
+        </FormControlWrapper>
+      );
     }
+  }
 
-    const wrapperClass = className
-      ? `${styles.layoutOverride} ${className}`
-      : styles.layoutOverride;
+  // Value missing check mapping Default 'N/A' behavior mapping natively
+  const isMissing =
+    value === undefined ||
+    value === null ||
+    value === "" ||
+    (Array.isArray(value) && value.length === 0);
 
+  if (isMissing) {
     return (
       <FormControlWrapper
         ref={ref}
-        overStyled={overStyled as true}
-        className={wrapperClass}
-        style={style}
-        {...(sanitizedProps as any)}
+        className={`${styles.root} ${className || ""}`}
+        {...wrapperProps}
       >
-        {content}
+        <span className={styles.text}>N/A</span>
       </FormControlWrapper>
     );
-  },
-);
+  }
+
+  // Override execution mapping securely
+  if (readOnlyComponent) {
+    const CustomReadOnlyRenderer = readOnlyComponent as React.ElementType;
+    return (
+      <FormControlWrapper
+        ref={ref}
+        className={`${styles.root} ${className || ""}`}
+        {...wrapperProps}
+      >
+        <CustomReadOnlyRenderer
+          value={value}
+          type={type}
+          {...(readOnlyNativeProps as any)}
+        />
+      </FormControlWrapper>
+    );
+  }
+
+  // Type coercions securely bounding the output values cleanly explicitly.
+  let displayValue: React.ReactNode = value;
+
+  if (type === "boolean" || type === "switch") {
+    displayValue = value ? "True" : "False";
+    if (type === "switch") {
+      displayValue = value ? "On" : "Off";
+    }
+  } else if (typeof value === "object") {
+    try {
+      displayValue = JSON.stringify(value);
+    } catch {
+      displayValue = String(value);
+    }
+  } else {
+    displayValue = String(value);
+  }
+
+  return (
+    <FormControlWrapper
+      ref={ref}
+      className={`${styles.root} ${className || ""}`}
+      {...wrapperProps}
+    >
+      <span className={styles.text}>{displayValue}</span>
+    </FormControlWrapper>
+  );
+});
 
 ReadOnlyField.displayName = "ReadOnlyField";
