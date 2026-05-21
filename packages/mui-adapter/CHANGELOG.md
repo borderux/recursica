@@ -1,5 +1,11 @@
 # @recursica/mui-adapter
 
+## 0.5.0
+
+### Minor Changes
+
+- 0ead0d7: Updated with mui-adapter changes
+
 ## 0.4.0
 
 ### Minor Changes
