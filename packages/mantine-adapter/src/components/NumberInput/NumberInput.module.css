@@ -1,14 +1,24 @@
 /* EXEMPTIONS:
-   - layout_side-by-side and layout_stacked margin variables are ignored because label/field positioning is handled
-     structurally by outer Mantine form layout components rather than direct styles inside NumberInput.
    - state-specific border-size variables are ignored because the input box uses a uniform static boundary to prevent 
      unexpected layout shifts or flickering when switching between active, focused, or error states. */
-/* recursica-ignore: --recursica_ui-kit_components_number-input_variants_layouts_side-by-side_properties_top-bottom-margin */
-/* recursica-ignore: --recursica_ui-kit_components_number-input_variants_layouts_stacked_properties_top-bottom-margin */
 /* recursica-ignore: --recursica_ui-kit_components_number-input_variants_states_default_properties_border-size */
 /* recursica-ignore: --recursica_ui-kit_components_number-input_variants_states_disabled_properties_border-size */
 /* recursica-ignore: --recursica_ui-kit_components_number-input_variants_states_error_properties_border-size */
 /* recursica-ignore: --recursica_ui-kit_components_number-input_variants_states_focus_properties_border-size */
+
+/* LAYOUT SPACING OVERRIDES:
+   - Sets the --form-control-margin-bottom spacing hook to map component-specific layout tokens. */
+.layoutOverride {
+  --form-control-margin-bottom: var(
+    --recursica_ui-kit_components_number-input_variants_layouts_stacked_properties_top-bottom-margin
+  );
+}
+
+.layoutOverride[data-form-layout="side-by-side"] {
+  --form-control-margin-bottom: var(
+    --recursica_ui-kit_components_number-input_variants_layouts_side-by-side_properties_top-bottom-margin
+  );
+}
 
 /* HARDCODED VALUES:
    - border-width: 1px. Native geometric boundary for the input box.

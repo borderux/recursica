@@ -159,6 +159,34 @@ To strictly ensure that every single form input matches the exact Recursica sema
 2. **Propagate via FormControlWrapper**: Inject the naked primitive safely within `<FormControlWrapper>`. This centralizes our entire form layout parameter map (`formLayout`, `assistiveText`, `required`, etc.).
 3. **Form Layout Unification**: Expose a generic `formLayout` parameter on your component (defaulting to `"stacked"`) and explicitly hand it down to `FormControlWrapper`. Do NOT maintain separate structural layout hooks specific to the singular input. Let the `FormControlWrapper` orchestrate whether the component renders stacked or side-by-side natively.
 4. **ARIA Bridging**: Expose the base validation states (`error`, `required`, `id`) from your wrapper props and feed them blindly into `<FormControlWrapper>`. The wrapper calculates `aria-errormessage` and `aria-describedby` logic natively and directly `<cloneElement>` maps them straight down onto your naked input primitive for screen-reader viability safely!
+5. **Component-Specific Spacing Overrides**:
+   Figma generates precise component-specific layout variables (e.g., `--recursica_ui-kit_components_text-field_variants_layouts_stacked_properties_top-bottom-margin`) that dictate layout bottom margins. Rather than ignoring these variables as redundant, we leverage a CSS Custom Property hook system:
+   - **The Spacing Hook**: The root form control container (`FormControlLayout`) consumes the `--form-control-margin-bottom` spacing hook, falling back natively to the global layout gap token.
+   - **The Component Style Override**: Inside `{Component}.module.css`, declare a `.layoutOverride` class targeting layout states:
+
+     ```css
+     /* Stacked Layout Spacing Override */
+     .layoutOverride {
+       --form-control-margin-bottom: var(
+         --recursica_ui-kit_components_text-field_variants_layouts_stacked_properties_top-bottom-margin
+       );
+     }
+
+     /* Side-by-Side Layout Spacing Override */
+     .layoutOverride[data-form-layout="side-by-side"] {
+       --form-control-margin-bottom: var(
+         --recursica_ui-kit_components_text-field_variants_layouts_side-by-side_properties_top-bottom-margin
+       );
+     }
+     ```
+
+   - **Class Forwarding**: Forward the resolved style class down to the wrapping element (e.g., `WithReadOnlyWrapper` or `FormControlWrapper`) using a merged className configuration:
+     ```tsx
+     const wrapperClass = className
+       ? `${styles.layoutOverride} ${className}`
+       : styles.layoutOverride;
+     ```
+   - **Zero Token Warnings**: By actively referencing these layout tokens inside the component's `.module.css` override class, you **must remove all recursica-ignore comments** for them. This keeps the token analyzer 100% clean and tracks proper variable usage.
 
 ---
 

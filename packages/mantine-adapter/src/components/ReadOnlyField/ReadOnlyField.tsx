@@ -14,6 +14,7 @@ import {
   FormControlWrapper,
 } from "../FormControlWrapper/FormControlWrapper";
 import { ReadOnlyTextField } from "./ReadOnlyTextField";
+import styles from "./ReadOnlyField.module.css";
 
 export interface RecursicaReadOnlyFieldProps
   extends Omit<
@@ -40,7 +41,15 @@ export type ReadOnlyFieldProps =
  */
 export const ReadOnlyField = forwardRef<HTMLDivElement, ReadOnlyFieldProps>(
   function ReadOnlyField(
-    { value, type = "text", emptyValueComponent, overStyled = false, ...rest },
+    {
+      value,
+      type = "text",
+      emptyValueComponent,
+      overStyled = false,
+      className,
+      style,
+      ...rest
+    },
     ref,
   ) {
     let content: React.ReactNode = null;
@@ -87,10 +96,16 @@ export const ReadOnlyField = forwardRef<HTMLDivElement, ReadOnlyFieldProps>(
         break;
     }
 
+    const wrapperClass = className
+      ? `${styles.layoutOverride} ${className}`
+      : styles.layoutOverride;
+
     return (
       <FormControlWrapper
         ref={ref}
         overStyled={overStyled as true}
+        className={wrapperClass}
+        style={style}
         {...(sanitizedProps as any)}
       >
         {content}

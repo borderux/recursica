@@ -1,14 +1,24 @@
 /* EXEMPTIONS:
-   - side-by-side and stacked layout top-bottom-margin variables are ignored because field spacing is handled
-     by external form grid/layout wrappers rather than direct margin declarations inside the TextField component.
    - state-specific border-size variables are ignored because a uniform 1px border is applied globally to prevent 
      unexpected layout shift or flickering during focus, disabled, or error state transitions. */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_variants_layouts_side-by-side_properties_top-bottom-margin */
-/* recursica-ignore: --recursica_ui-kit_components_text-field_variants_layouts_stacked_properties_top-bottom-margin */
 /* recursica-ignore: --recursica_ui-kit_components_text-field_variants_states_default_properties_border-size */
 /* recursica-ignore: --recursica_ui-kit_components_text-field_variants_states_disabled_properties_border-size */
 /* recursica-ignore: --recursica_ui-kit_components_text-field_variants_states_error_properties_border-size */
 /* recursica-ignore: --recursica_ui-kit_components_text-field_variants_states_focus_properties_border-size */
+
+/* LAYOUT SPACING OVERRIDES:
+   - Sets the --form-control-margin-bottom spacing hook to map component-specific layout tokens. */
+.layoutOverride {
+  --form-control-margin-bottom: var(
+    --recursica_ui-kit_components_text-field_variants_layouts_stacked_properties_top-bottom-margin
+  );
+}
+
+.layoutOverride[data-form-layout="side-by-side"] {
+  --form-control-margin-bottom: var(
+    --recursica_ui-kit_components_text-field_variants_layouts_side-by-side_properties_top-bottom-margin
+  );
+}
 
 /* HARDCODED VALUES:
    - border-width: 1px. Native geometric boundary for the input box.

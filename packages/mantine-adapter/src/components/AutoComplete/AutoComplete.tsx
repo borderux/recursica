@@ -101,9 +101,13 @@ export const AutoComplete = forwardRef<HTMLInputElement, AutoCompleteProps>(
         : styles.option;
     }
 
+    const wrapperClass = className
+      ? `${styles.layoutOverride} ${className}`
+      : styles.layoutOverride;
+
     return (
       <WithReadOnlyWrapper
-        className={className}
+        className={wrapperClass}
         style={style as React.CSSProperties}
         controlMaxWidth="var(--recursica_ui-kit_components_autocomplete_properties_max-width)"
         controlMinWidth="var(--recursica_ui-kit_components_autocomplete_properties_min-width)"

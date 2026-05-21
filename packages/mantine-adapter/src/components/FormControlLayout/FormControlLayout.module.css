@@ -4,8 +4,8 @@
   display: flex;
   margin: 0; /* Hardcoded structural reset */
   margin-bottom: var(
-    --recursica_ui-kit_globals_form_properties_vertical-item-gap,
-    0
+    --form-control-margin-bottom,
+    var(--recursica_ui-kit_globals_form_properties_vertical-item-gap, 0)
   );
   padding: 0; /* Hardcoded structural reset */
   max-width: var(--form-control-max-width, 100%);
