@@ -1,8 +1,184 @@
-import React from "react";
-import "./Dropdown.module.css";
+import React, { forwardRef, ReactNode } from "react";
+import {
+  Select as MuiSelect,
+  SelectProps as MuiSelectProps,
+  MenuItem,
+} from "@mui/material";
+import { type ReadOnlyControlProps } from "@recursica/adapter-common";
+import {
+  filterStylingProps,
+  type RecursicaOverStyled,
+} from "../../utils/filterStylingProps";
+import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
+import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
+import styles from "./Dropdown.module.css";
 
-export type DropdownProps = React.HTMLAttributes<HTMLDivElement>;
+export interface RecursicaDropdownProps
+  extends Omit<
+      MuiSelectProps,
+      "size" | "variant" | "classes" | "inputProps" | "SelectDisplayProps"
+    >,
+    Pick<
+      RecursicaFormControlWrapperProps,
+      | "assistiveText"
+      | "assistiveWithIcon"
+      | "formLayout"
+      | "labelSize"
+      | "labelAlignment"
+      | "labelOptionalText"
+      | "labelWithEditIcon"
+      | "onLabelEditClick"
+    >,
+    ReadOnlyControlProps {
+  /** Internal hook for Selects to override raw layout width properties when necessary */
+  containerWidth?: React.CSSProperties["width"];
+  data?: (string | { value: string; label: ReactNode; disabled?: boolean })[];
+  searchable?: boolean;
+  clearable?: boolean;
+  withAsterisk?: boolean;
+}
 
-export const Dropdown: React.FC<DropdownProps> = (props) => {
-  return <div {...props}>Dropdown</div>;
-};
+export type DropdownProps = RecursicaOverStyled<RecursicaDropdownProps>;
+
+export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
+  function Dropdown(props, ref) {
+    const {
+      overStyled = false,
+      formLayout = "stacked",
+      containerWidth,
+
+      // Label & Wrapper Maps
+      labelSize,
+      labelAlignment,
+      labelOptionalText,
+      labelWithEditIcon,
+      onLabelEditClick,
+
+      label,
+      assistiveText,
+      assistiveWithIcon,
+      error,
+      required,
+      withAsterisk,
+      id,
+      className,
+      style,
+      disabled,
+      readOnly,
+      readOnlyComponent,
+      emptyValueComponent,
+      value,
+      defaultValue,
+      data,
+      searchable, // Not natively supported by basic MUI Select, stubbed
+      clearable, // Not natively supported by basic MUI Select, stubbed
+      ...rest
+    } = props;
+    const sanitizedProps = filterStylingProps(rest, overStyled);
+    const restRecord = sanitizedProps as Record<string, unknown>;
+
+    // Delete prohibited sizing hooks
+    delete restRecord["size"];
+    delete restRecord["variant"];
+
+    const injectedStyles = {
+      ...((style as React.CSSProperties) || {}),
+      width: containerWidth || "100%",
+    };
+
+    const wrapperClass = className
+      ? `${styles.layoutOverride} ${className}`
+      : styles.layoutOverride;
+
+    const renderOptions = () => {
+      if (!data) return null;
+      return data.map((item, index) => {
+        if (typeof item === "string") {
+          return (
+            <MenuItem
+              key={`${item}-${index}`}
+              value={item}
+              className={styles.option}
+            >
+              {item}
+            </MenuItem>
+          );
+        }
+        return (
+          <MenuItem
+            key={`${item.value}-${index}`}
+            value={item.value}
+            disabled={item.disabled}
+            className={styles.option}
+          >
+            {item.label}
+          </MenuItem>
+        );
+      });
+    };
+
+    return (
+      <WithReadOnlyWrapper
+        className={wrapperClass}
+        style={injectedStyles}
+        controlMaxWidth="var(--recursica_ui-kit_components_dropdown_properties_max-width)"
+        controlMinWidth="var(--recursica_ui-kit_components_dropdown_properties_min-width)"
+        overStyled={overStyled as true}
+        formLayout={formLayout}
+        labelSize={labelSize}
+        labelAlignment={labelAlignment}
+        labelOptionalText={labelOptionalText}
+        labelWithEditIcon={labelWithEditIcon}
+        onLabelEditClick={onLabelEditClick}
+        label={label as ReactNode}
+        assistiveText={assistiveText}
+        assistiveWithIcon={assistiveWithIcon}
+        error={!!error}
+        required={required}
+        withAsterisk={withAsterisk}
+        id={id}
+        readOnly={readOnly}
+        readOnlyComponent={readOnlyComponent}
+        emptyValueComponent={emptyValueComponent}
+        readOnlyType="text"
+        readOnlyValue={
+          value !== undefined
+            ? String(value)
+            : defaultValue
+              ? String(defaultValue)
+              : undefined
+        }
+        readOnlyNativeProps={props}
+        activeComponent={
+          <MuiSelect
+            ref={ref}
+            disabled={disabled}
+            value={value}
+            defaultValue={defaultValue}
+            error={!!error}
+            required={required}
+            displayEmpty
+            className={styles.root}
+            classes={{
+              select: styles.input,
+              icon: styles.icon,
+            }}
+            MenuProps={{
+              classes: { paper: styles.dropdown },
+            }}
+            inputProps={{
+              "data-disabled": disabled ? "true" : undefined,
+              "data-error": error ? "true" : undefined,
+              ...(restRecord.inputProps as any),
+            }}
+            {...(sanitizedProps as unknown as MuiSelectProps)}
+          >
+            {renderOptions()}
+          </MuiSelect>
+        }
+      />
+    );
+  },
+);
+
+Dropdown.displayName = "Dropdown";

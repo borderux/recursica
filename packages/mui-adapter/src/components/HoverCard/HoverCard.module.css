@@ -1,23 +1,91 @@
+/* HARDCODED VALUES:
+   - border-style: solid. Structural rendering rule for the dropdown border (Mantine uses Paper
+     which may not set border-style natively). Same pattern as Menu.
+   - arrowSize defaults to 16 in HoverCard.tsx. Mantine uses arrowSize for inline width/height
+     and positioning (-arrowSize/2) calculations that cannot be CSS-driven. The default matches
+     the Recursica beak-size token (16px). See COMPONENT_ISSUES.md for details.
+   - All structural layout (display, position, overflow) is deferred to Mantine's native
+     behavior. We only override visual design tokens (colors, typography, spacing, borders).
 /* EXEMPTIONS:
-   This component is a placeholder stub. Once fully implemented, its specific
-   tokens will be fully wired up to direct styles. */
+   - beak-size is ignored here because Mantine's popover arrows compute their sizing and positional offsets
+     dynamically within the React rendering engine (requires inline pixel number rather than standard CSS variables).
+     The beak size is checked in JS against a fixed value of 16px. If this variable changes, the TSX components
+     need to be reviewed/re-compiled. */
+/* recursica-ignore: --recursica_ui-kit_components_hover-card-popover_properties_beak-size = 16px */
 
-/* recursica-ignore: --recursica_ui-kit_components_hover-card-popover_properties_beak-size */
-/* recursica-ignore: --recursica_ui-kit_components_hover-card-popover_properties_border-radius */
-/* recursica-ignore: --recursica_ui-kit_components_hover-card-popover_properties_border-size */
-/* recursica-ignore: --recursica_ui-kit_components_hover-card-popover_properties_colors_background */
-/* recursica-ignore: --recursica_ui-kit_components_hover-card-popover_properties_colors_border-color */
-/* recursica-ignore: --recursica_ui-kit_components_hover-card-popover_properties_colors_content */
-/* recursica-ignore: --recursica_ui-kit_components_hover-card-popover_properties_content-text_font-family */
-/* recursica-ignore: --recursica_ui-kit_components_hover-card-popover_properties_content-text_font-size */
-/* recursica-ignore: --recursica_ui-kit_components_hover-card-popover_properties_content-text_font-style */
-/* recursica-ignore: --recursica_ui-kit_components_hover-card-popover_properties_content-text_font-weight */
-/* recursica-ignore: --recursica_ui-kit_components_hover-card-popover_properties_content-text_letter-spacing */
-/* recursica-ignore: --recursica_ui-kit_components_hover-card-popover_properties_content-text_line-height */
-/* recursica-ignore: --recursica_ui-kit_components_hover-card-popover_properties_content-text_text-decoration */
-/* recursica-ignore: --recursica_ui-kit_components_hover-card-popover_properties_content-text_text-transform */
-/* recursica-ignore: --recursica_ui-kit_components_hover-card-popover_properties_elevation */
-/* recursica-ignore: --recursica_ui-kit_components_hover-card-popover_properties_horizontal-padding */
-/* recursica-ignore: --recursica_ui-kit_components_hover-card-popover_properties_max-width */
-/* recursica-ignore: --recursica_ui-kit_components_hover-card-popover_properties_min-width */
-/* recursica-ignore: --recursica_ui-kit_components_hover-card-popover_properties_vertical-padding */
+/* ======================================
+   DROPDOWN CONTAINER
+   ====================================== */
+
+.dropdown {
+  background-color: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_colors_background
+  );
+  border-style: solid; /* HARDCODE: Mantine Paper does not set border-style natively */
+  border-width: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_border-size
+  );
+  border-color: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_colors_border-color
+  );
+  border-radius: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_border-radius
+  );
+  box-shadow: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_elevation
+  );
+
+  min-width: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_min-width
+  );
+  max-width: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_max-width
+  );
+
+  padding: var(
+      --recursica_ui-kit_components_hover-card-popover_properties_vertical-padding
+    )
+    var(
+      --recursica_ui-kit_components_hover-card-popover_properties_horizontal-padding
+    );
+
+  /* Typography */
+  font-family: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_content-text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_content-text_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_content-text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_content-text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_content-text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_content-text_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_content-text_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_content-text_text-transform
+  );
+
+  color: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_colors_content
+  );
+}
+
+/* ======================================
+   ARROW / BEAK
+   ====================================== */
+
+.arrow {
+  border-color: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_colors_border-color
+  );
+}

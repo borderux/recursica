@@ -1,6 +1,26 @@
-/* EXEMPTIONS:
-   This component is a placeholder stub. Once fully implemented, its specific
-   tokens will be fully wired up to direct styles. */
+/* HARDCODED VALUES:
+   - align-items: center
+*/
 
-/* recursica-ignore: --recursica_ui-kit_components_breadcrumb_properties_item-gap */
-/* recursica-ignore: --recursica_ui-kit_components_breadcrumb_properties_padding */
+.root {
+  /* HARDCODE: Basic structural flex layout for breadcrumbs */
+  display: flex;
+  align-items: center;
+
+  /* Base style resets */
+  background-color: transparent;
+  color: inherit;
+
+  /* Apply global breadcrumb properties */
+  padding: var(--recursica_ui-kit_components_breadcrumb_properties_padding);
+
+  /* Mantine's breadcrumbs uses gap on the root or pseudo classes, but standard gap is safest since flex is used */
+  gap: var(--recursica_ui-kit_components_breadcrumb_properties_item-gap);
+}
+
+.separator {
+  /* Separator base resets if needed */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

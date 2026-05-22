@@ -1,86 +1,498 @@
-/* EXEMPTIONS:
-   This component is a placeholder stub. Once fully implemented, its specific
-   tokens will be fully wired up to direct styles. */
+/*
+ * HARDCODED VALUES:
+ * - display: flex; align-items: center; width: 100%; (Standard CSS flexbox layouts for bidirectional components)
+ * - flex-grow: 1; flex-shrink: 0; (Layout control structures)
+ * - transform: translateX(-50%); (Mantine's standard step marks positioning alignment offset)
+ * - outline: none; border-style: solid; (Standard focus reset and border outlines)
+ */
 
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_icon-size */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_input-border-radius */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_input-border-size */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_input-gap */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_input-height */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_input-padding-left */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_input-padding-right */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_input-padding-vertical */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_input-text_font-family */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_input-text_font-size */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_input-text_font-style */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_input-text_font-weight */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_input-text_letter-spacing */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_input-text_line-height */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_input-text_text-decoration */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_input-text_text-transform */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_input-width */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_min-max-label_font-family */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_min-max-label_font-size */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_min-max-label_font-style */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_min-max-label_font-weight */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_min-max-label_letter-spacing */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_min-max-label_line-height */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_min-max-label_text-decoration */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_min-max-label_text-transform */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_read-only-value_font-family */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_read-only-value_font-size */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_read-only-value_font-style */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_read-only-value_font-weight */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_read-only-value_letter-spacing */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_read-only-value_line-height */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_read-only-value_text-decoration */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_read-only-value_text-transform */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_step-indicator-border-radius */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_step-indicator-width */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_thumb-border-radius */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_thumb-elevation */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_thumb-size */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_track-border-radius */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_track-height */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_layouts_side-by-side_properties_top-bottom-margin */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_layouts_stacked_properties_top-bottom-margin */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_default_properties_colors_icon-color */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_default_properties_colors_input-background */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_default_properties_colors_input-border-color */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_default_properties_colors_input-text */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_default_properties_colors_step-indicator-color */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_default_properties_colors_step-indicator-color-active */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_default_properties_colors_thumb */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_default_properties_colors_track */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_default_properties_colors_track-active */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_default_properties_input-border-size */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_disabled_properties_colors_icon-color */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_disabled_properties_colors_input-background */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_disabled_properties_colors_input-border-color */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_disabled_properties_colors_input-text */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_disabled_properties_colors_step-indicator-color */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_disabled_properties_colors_step-indicator-color-active */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_disabled_properties_colors_thumb */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_disabled_properties_colors_track */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_disabled_properties_colors_track-active */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_disabled_properties_input-border-size */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_error_properties_colors_icon-color */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_error_properties_colors_input-background */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_error_properties_colors_input-border-color */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_error_properties_colors_input-text */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_error_properties_colors_step-indicator-color */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_error_properties_colors_step-indicator-color-active */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_error_properties_colors_thumb */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_error_properties_colors_track */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_error_properties_colors_track-active */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_error_properties_input-border-size */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_focus_properties_colors_icon-color */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_focus_properties_colors_input-background */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_focus_properties_colors_input-border-color */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_focus_properties_colors_input-text */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_focus_properties_colors_step-indicator-color */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_focus_properties_colors_step-indicator-color-active */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_focus_properties_colors_thumb */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_focus_properties_colors_track */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_focus_properties_colors_track-active */
-/* recursica-ignore: --recursica_ui-kit_components_slider_variants_states_focus_properties_input-border-size */
+/* ==========================================
+   1. Baseline, Reset & Layout Overrides
+   ========================================== */
+
+/* Stacked Layout Spacing Override */
+.layoutOverride {
+  --form-control-margin-bottom: var(
+    --recursica_ui-kit_components_slider_variants_layouts_stacked_properties_top-bottom-margin
+  );
+}
+
+/* Side-by-Side Layout Spacing Override */
+.layoutOverride[data-form-layout="side-by-side"] {
+  --form-control-margin-bottom: var(
+    --recursica_ui-kit_components_slider_variants_layouts_side-by-side_properties_top-bottom-margin
+  );
+}
+
+.sliderContainer {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  gap: var(--recursica_ui-kit_components_slider_properties_input-gap);
+  color: var(--form-field-text-valued);
+}
+
+.sliderTrackWrapper {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.iconWrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--recursica_ui-kit_components_slider_properties_icon-size);
+  height: var(--recursica_ui-kit_components_slider_properties_icon-size);
+  color: var(
+    --recursica_ui-kit_components_slider_variants_states_default_properties_colors_icon-color
+  );
+}
+
+/* ==========================================
+   2. Slider Tracks, Bars, Thumbs, and Marks
+   ========================================== */
+
+.sliderRoot {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sliderTrack {
+  height: var(--recursica_ui-kit_components_slider_properties_track-height);
+  border-radius: var(
+    --recursica_ui-kit_components_slider_properties_track-border-radius
+  );
+  background-color: var(
+    --recursica_ui-kit_components_slider_variants_states_default_properties_colors_track
+  );
+}
+
+.sliderBar {
+  background-color: var(
+    --recursica_ui-kit_components_slider_variants_states_default_properties_colors_track-active
+  );
+}
+
+.sliderThumb {
+  box-sizing: border-box;
+  width: var(--recursica_ui-kit_components_slider_properties_thumb-size);
+  height: var(--recursica_ui-kit_components_slider_properties_thumb-size);
+  border-radius: var(
+    --recursica_ui-kit_components_slider_properties_thumb-border-radius
+  );
+  box-shadow: var(
+    --recursica_ui-kit_components_slider_properties_thumb-elevation
+  );
+  background-color: var(
+    --recursica_ui-kit_components_slider_variants_states_default_properties_colors_thumb
+  );
+  border: none;
+  cursor: pointer;
+  outline: none;
+}
+
+.sliderThumb:focus,
+.sliderThumb:focus-visible {
+  outline: none;
+  background-color: var(
+    --recursica_ui-kit_components_slider_variants_states_focus_properties_colors_thumb
+  );
+  box-shadow: 0 0 0 2px
+    var(
+      --recursica_ui-kit_components_slider_variants_states_focus_properties_colors_track-active
+    );
+}
+
+.sliderMark {
+  box-sizing: border-box;
+  width: var(
+    --recursica_ui-kit_components_slider_properties_step-indicator-width
+  );
+  height: var(
+    --recursica_ui-kit_components_slider_properties_step-indicator-width
+  );
+  border-radius: var(
+    --recursica_ui-kit_components_slider_properties_step-indicator-border-radius
+  );
+  background-color: var(
+    --recursica_ui-kit_components_slider_variants_states_default_properties_colors_step-indicator-color
+  );
+  transform: translateX(-50%);
+  border: none;
+}
+
+.sliderMark[data-filled] {
+  background-color: var(
+    --recursica_ui-kit_components_slider_variants_states_default_properties_colors_step-indicator-color-active
+  );
+}
+
+/* ==========================================
+   3. Min / Max Custom Typography Labels & Floating Active Value
+   ========================================== */
+
+.minMaxGuide {
+  font-family: var(
+    --recursica_ui-kit_components_slider_properties_min-max-label_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_slider_properties_min-max-label_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_slider_properties_min-max-label_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_slider_properties_min-max-label_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_slider_properties_min-max-label_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_slider_properties_min-max-label_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_slider_properties_min-max-label_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_slider_properties_min-max-label_text-transform
+  );
+}
+
+/* 
+ * LAYOUT DECISION: Right-Aligned Floating Current Value Container
+ * - Wrapped around the right-side max guide (or icon) as a relative flex context.
+ * - This provides the anchor for absolutely positioning the floating current value element
+ *   above the guide.
+ */
+.rightGuideContainer {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/*
+ * LAYOUT DECISION: Floating Active Value Element
+ * - Absolutely positioned directly above the max guide and right-aligned (`right: 0`).
+ * - Uses a vertical gap matching the global label-to-component gap variable, ensuring
+ *   that `.currentValue` is placed in perfect horizontal baseline alignment with the
+ *   left-aligned form label of the component.
+ * - Typography maps back to the slider component's read-only value token definitions.
+ * - Inherits the container default/disabled/error text colors naturally.
+ */
+.currentValue {
+  position: absolute;
+  bottom: calc(
+    100% +
+      var(
+        --recursica_ui-kit_globals_form_properties_label-field-gap-vertical,
+        8px
+      )
+  );
+  right: 0;
+  white-space: nowrap;
+  pointer-events: none;
+  display: inline-block;
+  width: var(--recursica_ui-kit_components_slider_properties_input-width);
+  text-align: right;
+
+  font-family: var(
+    --recursica_ui-kit_components_slider_properties_read-only-value_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_slider_properties_read-only-value_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_slider_properties_read-only-value_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_slider_properties_read-only-value_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_slider_properties_read-only-value_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_slider_properties_read-only-value_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_slider_properties_read-only-value_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_slider_properties_read-only-value_text-transform
+  );
+}
+
+/* ==========================================
+   4. Numeric Input Field
+   ========================================== */
+
+.inputField {
+  box-sizing: border-box;
+  flex-shrink: 0;
+  width: var(--recursica_ui-kit_components_slider_properties_input-width);
+  height: var(--recursica_ui-kit_components_slider_properties_input-height);
+  border-radius: var(
+    --recursica_ui-kit_components_slider_properties_input-border-radius
+  );
+  border-style: solid;
+  border-width: var(
+    --recursica_ui-kit_components_slider_variants_states_default_properties_input-border-size
+  );
+  border-color: var(
+    --recursica_ui-kit_components_slider_variants_states_default_properties_colors_input-border-color
+  );
+  background-color: var(
+    --recursica_ui-kit_components_slider_variants_states_default_properties_colors_input-background
+  );
+  color: var(
+    --recursica_ui-kit_components_slider_variants_states_default_properties_colors_input-text
+  );
+
+  font-family: var(
+    --recursica_ui-kit_components_slider_properties_input-text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_slider_properties_input-text_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_slider_properties_input-text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_slider_properties_input-text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_slider_properties_input-text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_slider_properties_input-text_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_slider_properties_input-text_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_slider_properties_input-text_text-transform
+  );
+
+  padding-left: var(
+    --recursica_ui-kit_components_slider_properties_input-padding-left
+  );
+  padding-right: var(
+    --recursica_ui-kit_components_slider_properties_input-padding-right
+  );
+  padding-top: var(
+    --recursica_ui-kit_components_slider_properties_input-padding-vertical
+  );
+  padding-bottom: var(
+    --recursica_ui-kit_components_slider_properties_input-padding-vertical
+  );
+  text-align: center;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.inputField:focus {
+  outline: none;
+  background-color: var(
+    --recursica_ui-kit_components_slider_variants_states_focus_properties_colors_input-background
+  );
+  border-color: var(
+    --recursica_ui-kit_components_slider_variants_states_focus_properties_colors_input-border-color
+  );
+  color: var(
+    --recursica_ui-kit_components_slider_variants_states_focus_properties_colors_input-text
+  );
+  border-width: var(
+    --recursica_ui-kit_components_slider_variants_states_focus_properties_input-border-size
+  );
+}
+
+/* Chrome, Safari, Edge, Opera: Hide number spin buttons */
+.inputField::-webkit-outer-spin-button,
+.inputField::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox: Hide number spin buttons */
+.inputField[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* ==========================================
+   5. Custom Read-Only Typography Value
+   ========================================== */
+
+.readOnlyValue {
+  font-family: var(
+    --recursica_ui-kit_components_slider_properties_read-only-value_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_slider_properties_read-only-value_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_slider_properties_read-only-value_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_slider_properties_read-only-value_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_slider_properties_read-only-value_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_slider_properties_read-only-value_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_slider_properties_read-only-value_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_slider_properties_read-only-value_text-transform
+  );
+}
+
+/* ==========================================
+   6. State-Specific Overrides (Disabled, Error)
+   ========================================== */
+
+/* Disabled state */
+.sliderContainer[data-disabled="true"] .iconWrapper {
+  color: var(
+    --recursica_ui-kit_components_slider_variants_states_disabled_properties_colors_icon-color
+  );
+}
+
+.sliderContainer[data-disabled="true"] .sliderTrack {
+  background-color: var(
+    --recursica_ui-kit_components_slider_variants_states_disabled_properties_colors_track
+  );
+}
+
+.sliderContainer[data-disabled="true"] .sliderBar {
+  background-color: var(
+    --recursica_ui-kit_components_slider_variants_states_disabled_properties_colors_track-active
+  );
+}
+
+.sliderContainer[data-disabled="true"] .sliderThumb {
+  background-color: var(
+    --recursica_ui-kit_components_slider_variants_states_disabled_properties_colors_thumb
+  );
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.sliderContainer[data-disabled="true"] .sliderMark {
+  background-color: var(
+    --recursica_ui-kit_components_slider_variants_states_disabled_properties_colors_step-indicator-color
+  );
+}
+
+.sliderContainer[data-disabled="true"] .sliderMark[data-filled] {
+  background-color: var(
+    --recursica_ui-kit_components_slider_variants_states_disabled_properties_colors_step-indicator-color-active
+  );
+}
+
+.sliderContainer[data-disabled="true"] {
+  color: var(--form-field-disabled-text);
+}
+
+.inputField:disabled {
+  cursor: not-allowed;
+  background-color: var(
+    --recursica_ui-kit_components_slider_variants_states_disabled_properties_colors_input-background
+  );
+  border-color: var(
+    --recursica_ui-kit_components_slider_variants_states_disabled_properties_colors_input-border-color
+  );
+  color: var(
+    --recursica_ui-kit_components_slider_variants_states_disabled_properties_colors_input-text
+  );
+  border-width: var(
+    --recursica_ui-kit_components_slider_variants_states_disabled_properties_input-border-size
+  );
+}
+
+/* Error state */
+.sliderContainer[data-error="true"] .iconWrapper {
+  color: var(
+    --recursica_ui-kit_components_slider_variants_states_error_properties_colors_icon-color
+  );
+}
+
+.sliderContainer[data-error="true"] .sliderTrack {
+  background-color: var(
+    --recursica_ui-kit_components_slider_variants_states_error_properties_colors_track
+  );
+}
+
+.sliderContainer[data-error="true"] .sliderBar {
+  background-color: var(
+    --recursica_ui-kit_components_slider_variants_states_error_properties_colors_track-active
+  );
+}
+
+.sliderContainer[data-error="true"] .sliderThumb {
+  background-color: var(
+    --recursica_ui-kit_components_slider_variants_states_error_properties_colors_thumb
+  );
+}
+
+.sliderContainer[data-error="true"] .sliderMark {
+  background-color: var(
+    --recursica_ui-kit_components_slider_variants_states_error_properties_colors_step-indicator-color
+  );
+}
+
+.sliderContainer[data-error="true"] .sliderMark[data-filled] {
+  background-color: var(
+    --recursica_ui-kit_components_slider_variants_states_error_properties_colors_step-indicator-color-active
+  );
+}
+
+.inputField[data-error="true"] {
+  background-color: var(
+    --recursica_ui-kit_components_slider_variants_states_error_properties_colors_input-background
+  );
+  border-color: var(
+    --recursica_ui-kit_components_slider_variants_states_error_properties_colors_input-border-color
+  );
+  color: var(
+    --recursica_ui-kit_components_slider_variants_states_error_properties_colors_input-text
+  );
+  border-width: var(
+    --recursica_ui-kit_components_slider_variants_states_error_properties_input-border-size
+  );
+}
+
+/* ==========================================
+   7. Side-by-Side Layout Overrides
+   ========================================== */
+
+.sliderContainer[data-form-layout="side-by-side"] .rightGuideContainer {
+  position: relative;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  gap: var(--recursica_ui-kit_components_slider_properties_input-gap);
+}
+
+.sliderContainer[data-form-layout="side-by-side"] .currentValue {
+  position: static;
+  white-space: nowrap;
+  pointer-events: none;
+  order: 2; /* Positioned to the right of the max label */
+}
+
+.sliderContainer[data-form-layout="side-by-side"]
+  .rightGuideContainer
+  .minMaxGuide {
+  order: 1; /* Positioned to the left of the current value */
+}

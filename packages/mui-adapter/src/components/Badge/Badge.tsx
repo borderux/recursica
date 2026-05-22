@@ -1,8 +1,73 @@
-import React from "react";
-import "./Badge.module.css";
+import { forwardRef } from "react";
+import {
+  Badge as MuiBadge,
+  type BadgeProps as MuiBadgeProps,
+  createPolymorphicComponent,
+} from "@mui/material";
+import {
+  filterStylingProps,
+  type RecursicaOverStyled,
+} from "../../utils/filterStylingProps";
+import styles from "./Badge.module.css";
 
-export type BadgeProps = React.HTMLAttributes<HTMLDivElement>;
+export interface RecursicaBadgeProps {
+  /** Map to the component styles defined in variables */
+  variant?: "alert" | "primary-color" | "success" | "warning";
+}
 
-export const Badge: React.FC<BadgeProps> = (props) => {
-  return <div {...props}>Badge</div>;
-};
+export type BadgeProps = RecursicaOverStyled<
+  Omit<MuiBadgeProps, "variant" | "size" | "color" | "radius"> &
+    RecursicaBadgeProps
+>;
+
+const _Badge = forwardRef<HTMLDivElement, BadgeProps>(function Badge(
+  { variant = "primary-color", overStyled = false, ...rest },
+  ref,
+) {
+  // Strip all visual override injections unless developer has specifically opted into overStyling.
+  // External layout props like margins are safely preserved.
+  const sanitizedProps = filterStylingProps(rest, overStyled);
+
+  const mergedClassNames: Partial<Record<string, string>> = {
+    root: styles.root,
+    section: styles.section,
+    label: styles.label,
+  };
+
+  const classNamesProp = (sanitizedProps as Record<string, unknown>).classNames;
+  if (
+    classNamesProp &&
+    typeof classNamesProp === "object" &&
+    !Array.isArray(classNamesProp)
+  ) {
+    const o = classNamesProp as Partial<Record<string, string>>;
+    mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
+    mergedClassNames.section = o.section ?? styles.section;
+    mergedClassNames.label = o.label ?? styles.label;
+  }
+
+  const classNameProp = (sanitizedProps as Record<string, unknown>)
+    .className as string | undefined;
+  const finalClass = classNameProp
+    ? `${styles.root} ${classNameProp}`
+    : styles.root;
+
+  return (
+    <MuiBadge
+      ref={ref}
+      variant="filled" // We manage visual style purely through our CSS variables mapping
+      data-variant={variant}
+      {...sanitizedProps}
+      className={finalClass}
+      classes={mergedClassNames}
+    />
+  );
+});
+_Badge.displayName = "Badge";
+
+/**
+ * Recursica Badge component wrapping Mui's Badge.
+ *
+ * Supports polymorphism via the `component` prop or `renderRoot` for custom element rendering.
+ */
+export const Badge = createPolymorphicComponent<"div", BadgeProps>(_Badge);
