@@ -10,7 +10,6 @@ import {
   type MenuSubProps as MuiMenuSubProps,
   type MenuSubTargetProps as MuiMenuSubTargetProps,
   type MenuSubDropdownProps as MuiMenuSubDropdownProps,
-  createPolymorphicComponent,
 } from "@mui/material";
 import {
   filterStylingProps,
@@ -164,7 +163,7 @@ _MenuItem.displayName = "MenuItem";
  * <Menu.Item component="a" href="/settings">Settings</Menu.Item>
  * ```
  */
-const MenuItem = createPolymorphicComponent<"button", MenuItemProps>(_MenuItem);
+const MenuItem = _MenuItem as any;
 
 // ============================================================
 // MENU DIVIDER
@@ -278,9 +277,7 @@ _MenuSubItem.displayName = "MenuSubItem";
  *
  * Supports polymorphism via the `component` prop.
  */
-const MenuSubItem = createPolymorphicComponent<"button", MenuSubItemProps>(
-  _MenuSubItem,
-);
+const MenuSubItem = _MenuSubItem as any;
 
 // ============================================================
 // MENU SUB DROPDOWN

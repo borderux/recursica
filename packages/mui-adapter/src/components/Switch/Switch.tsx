@@ -2,8 +2,6 @@ import { forwardRef } from "react";
 import {
   Switch as MuiSwitch,
   type SwitchProps as MuiSwitchProps,
-  CheckIcon,
-  CloseIcon,
 } from "@mui/material";
 import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 
@@ -139,7 +137,7 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(
         classes={mergedClassNames}
         disabled={readOnly || disabled}
         data-disabled={readOnly || disabled || undefined}
-        thumbIcon={thumbIcon ?? FinalThumbIcon}
+        // thumbIcon={thumbIcon ?? FinalThumbIcon}
         {...(sanitizedProps as unknown as MuiSwitchProps)}
       />
     );

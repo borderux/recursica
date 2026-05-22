@@ -2,7 +2,6 @@ import { forwardRef } from "react";
 import {
   Badge as MuiBadge,
   type BadgeProps as MuiBadgeProps,
-  createPolymorphicComponent,
 } from "@mui/material";
 import {
   filterStylingProps,
@@ -70,4 +69,4 @@ _Badge.displayName = "Badge";
  *
  * Supports polymorphism via the `component` prop or `renderRoot` for custom element rendering.
  */
-export const Badge = createPolymorphicComponent<"div", BadgeProps>(_Badge);
+export const Badge = _Badge as any;

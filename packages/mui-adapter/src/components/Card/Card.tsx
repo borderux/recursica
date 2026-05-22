@@ -3,7 +3,6 @@ import {
   Card as MuiCard,
   type CardProps as MuiCardProps,
   type CardSectionProps as MuiCardSectionProps,
-  createPolymorphicComponent,
 } from "@mui/material";
 import {
   filterStylingProps,

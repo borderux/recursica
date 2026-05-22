@@ -2,7 +2,6 @@ import React, { forwardRef } from "react";
 import {
   Avatar as MuiAvatar,
   type AvatarProps as MuiAvatarProps,
-  createPolymorphicComponent,
 } from "@mui/material";
 import {
   filterStylingProps,
@@ -110,4 +109,4 @@ _Avatar.displayName = "Avatar";
  *
  * Supports polymorphism via the `component` prop or `renderRoot` for custom element rendering.
  */
-export const Avatar = createPolymorphicComponent<"div", AvatarProps>(_Avatar);
+export const Avatar = _Avatar as any;

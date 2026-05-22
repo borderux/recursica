@@ -1,7 +1,7 @@
 import { forwardRef } from "react";
 import {
-  SegmentedControl as MuiSegmentedControl,
-  type SegmentedControlProps as MuiSegmentedControlProps,
+  ToggleButtonGroup as MuiSegmentedControl,
+  type ToggleButtonGroupProps as MuiSegmentedControlProps,
 } from "@mui/material";
 import {
   filterStylingProps,

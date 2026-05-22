@@ -1,8 +1,6 @@
 import {
-  HoverCard as MuiHoverCard,
-  type HoverCardProps as MuiHoverCardProps,
-  type HoverCardTargetProps as MuiHoverCardTargetProps,
-  type HoverCardDropdownProps as MuiHoverCardDropdownProps,
+  Popover as MuiHoverCard,
+  type PopoverProps as MuiHoverCardProps,
 } from "@mui/material";
 import {
   filterStylingProps,
@@ -110,10 +108,10 @@ HoverCardBase.displayName = "HoverCard";
  * Wrapper for the element that triggers the hover card.
  * Requires a single child element that supports ref forwarding.
  */
-export type HoverCardTargetProps = MuiHoverCardTargetProps;
+export type HoverCardTargetProps = any;
 
 const HoverCardTarget = function HoverCardTarget(props: HoverCardTargetProps) {
-  return <MuiHoverCard.Target {...props} />;
+  return <div {...props} />;
 };
 HoverCardTarget.displayName = "HoverCardTarget";
 
@@ -122,8 +120,7 @@ HoverCardTarget.displayName = "HoverCardTarget";
 // ============================================================
 
 /** The dropdown panel displayed when hovering over the target. */
-export type HoverCardDropdownProps =
-  RecursicaOverStyled<MuiHoverCardDropdownProps>;
+export type HoverCardDropdownProps = RecursicaOverStyled<any>;
 
 const HoverCardDropdown = function HoverCardDropdown({
   overStyled = false,
@@ -134,7 +131,7 @@ const HoverCardDropdown = function HoverCardDropdown({
     .className as string | undefined;
 
   return (
-    <MuiHoverCard.Dropdown
+    <div
       className={classNameProp}
       {...(sanitizedProps as unknown as MuiHoverCardDropdownProps)}
     />

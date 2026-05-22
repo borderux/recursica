@@ -1,7 +1,7 @@
 import React, { forwardRef } from "react";
 import {
-  NumberInput as MuiNumberInput,
-  type NumberInputProps as MuiNumberInputProps,
+  TextField as MuiNumberInput,
+  type TextFieldProps as MuiNumberInputProps,
 } from "@mui/material";
 import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import {
