@@ -1,20 +1,111 @@
-/* EXEMPTIONS:
-   This component is a placeholder stub. Once fully implemented, its specific
-   tokens will be fully wired up to direct styles. */
+/*
+  ASSISTIVE ELEMENT ARCHITECTURE
+  This component strictly standardizes FormHelperText logic dynamically natively decoupled from the overarching input blocks.
+*/
 
-/* recursica-ignore: --recursica_ui-kit_components_assistive-element_properties_icon-size */
-/* recursica-ignore: --recursica_ui-kit_components_assistive-element_properties_icon-text-gap */
-/* recursica-ignore: --recursica_ui-kit_components_assistive-element_properties_max-width */
-/* recursica-ignore: --recursica_ui-kit_components_assistive-element_properties_text_font-family */
-/* recursica-ignore: --recursica_ui-kit_components_assistive-element_properties_text_font-size */
-/* recursica-ignore: --recursica_ui-kit_components_assistive-element_properties_text_font-style */
-/* recursica-ignore: --recursica_ui-kit_components_assistive-element_properties_text_font-weight */
-/* recursica-ignore: --recursica_ui-kit_components_assistive-element_properties_text_letter-spacing */
-/* recursica-ignore: --recursica_ui-kit_components_assistive-element_properties_text_line-height */
-/* recursica-ignore: --recursica_ui-kit_components_assistive-element_properties_text_text-decoration */
-/* recursica-ignore: --recursica_ui-kit_components_assistive-element_properties_text_text-transform */
-/* recursica-ignore: --recursica_ui-kit_components_assistive-element_properties_top-margin */
-/* recursica-ignore: --recursica_ui-kit_components_assistive-element_variants_types_error_properties_colors_icon-color */
-/* recursica-ignore: --recursica_ui-kit_components_assistive-element_variants_types_error_properties_colors_text-color */
-/* recursica-ignore: --recursica_ui-kit_components_assistive-element_variants_types_help_properties_colors_icon-color */
-/* recursica-ignore: --recursica_ui-kit_components_assistive-element_variants_types_help_properties_colors_text-color */
+.root {
+  /* Override MUI FormHelperText native resets structurally safely */
+  display: flex;
+  align-items: flex-start; /* Forces the icon to align with the first line of text */
+  margin: 0; /* HARDCODE: structural reset */
+  padding: 0; /* HARDCODE: structural reset */
+  width: 100%;
+
+  gap: var(
+    --recursica_ui-kit_components_assistive-element_properties_icon-text-gap
+  );
+
+  font-family: var(
+    --recursica_ui-kit_components_assistive-element_properties_text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_assistive-element_properties_text_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_assistive-element_properties_text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_assistive-element_properties_text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_assistive-element_properties_text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_assistive-element_properties_text_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_assistive-element_properties_text_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_assistive-element_properties_text_text-transform
+  );
+}
+
+.text {
+  flex: 1; /* Consume remaining space causing native flex wrap */
+}
+
+/* Base Icon Architecture */
+.icon {
+  flex-shrink: 0; /* Prevent squishing */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(
+    --recursica_ui-kit_components_assistive-element_properties_icon-size
+  );
+  height: var(
+    --recursica_ui-kit_components_assistive-element_properties_icon-size
+  );
+
+  /* Mathematical vertical centering bounds to the first line of typography explicitly */
+  margin-top: calc(
+    (
+        var(
+            --recursica_ui-kit_components_assistive-element_properties_text_line-height
+          ) -
+          var(
+            --recursica_ui-kit_components_assistive-element_properties_icon-size
+          )
+      ) /
+      2
+  ); /* Forces exact centering bounds within the first text line vertically */
+}
+
+.icon :global(svg) {
+  width: 100%;
+  height: 100%;
+  stroke-width: 2px;
+}
+
+/* =========================================
+   VARIANTS: Default / Help
+   ========================================= */
+
+.root[data-variant="help"] {
+  color: var(
+    --recursica_ui-kit_components_assistive-element_variants_types_help_properties_colors_text-color
+  );
+}
+
+.root[data-variant="help"] .icon {
+  color: var(
+    --recursica_ui-kit_components_assistive-element_variants_types_help_properties_colors_icon-color
+  );
+}
+
+/* =========================================
+   VARIANTS: Error
+   ========================================= */
+
+.root[data-variant="error"] {
+  color: var(
+    --recursica_ui-kit_components_assistive-element_variants_types_error_properties_colors_text-color
+  );
+}
+
+.root[data-variant="error"] .icon {
+  color: var(
+    --recursica_ui-kit_components_assistive-element_variants_types_error_properties_colors_icon-color
+  );
+}

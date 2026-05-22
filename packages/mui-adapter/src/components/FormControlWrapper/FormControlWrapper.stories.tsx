@@ -1,35 +1,138 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import { FormControlWrapper } from "./FormControlWrapper";
-import { ComingSoon } from "@recursica/storybook-template";
+import {
+  FormControlWrapper,
+  type FormControlWrapperProps,
+} from "./FormControlWrapper";
+import { TextField } from "../TextField/TextField";
+import { formControlArgTypes } from "../../../.storybook/commonArgTypes";
 
-const meta: Meta<typeof FormControlWrapper> = {
-  title: "UI-Kit/🚧 FormControlWrapper",
+type WrapperStoryProps = FormControlWrapperProps;
+
+const meta: Meta<WrapperStoryProps> = {
+  title: "UI-Kit/FormControlWrapper",
   component: FormControlWrapper,
   tags: ["autodocs"],
   parameters: {
+    docs: {
+      description: {
+        component:
+          "The `FormControlWrapper` is the ultimate structural replacement for built-in wrapper layouts. By centralizing label tracking, error rendering, ARIA generation, and grid layouts natively inside this single component, we achieve pixel-perfect layout compliance while retaining MUI's internal `useFormControl` Context natively.\n\n### Usage with Naked Primitives\nThis component wraps 'naked' elements directly. The demonstration stories below utilize `<TextField>` as a native display vehicle, since `<TextField>` natively pipes all its properties structurally back into this wrapper.",
+      },
+    },
     controls: {
       include: [
-        "layer",
-        "withLayer",
-        "children",
-        "component",
-        "variant",
-        "size",
-        "icon",
-        "disabled",
-        "href",
-        "onClick",
-        "onChange",
-        "value",
-        "checked",
+        "error",
+        "assistiveText",
+        "assistiveWithIcon",
+        "required",
+        "formLayout",
+        "labelSize",
+        "labelAlignment",
+        "labelOptionalText",
+        "labelWithEditIcon",
+        "labelActionArea",
       ],
+    },
+  },
+  argTypes: {
+    ...formControlArgTypes,
+    error: {
+      control: "text",
+      description:
+        "Error string driving native assistive component and validation markers.",
+    },
+    assistiveText: {
+      control: "text",
+      description:
+        "Helper instructions safely dynamically anchored below the input box.",
+    },
+    assistiveWithIcon: {
+      control: "boolean",
+    },
+    required: {
+      control: "boolean",
     },
   },
 };
 
 export default meta;
-type Story = StoryObj<typeof FormControlWrapper>;
+
+type Story = StoryObj<WrapperStoryProps>;
+
+const renderWithTextField = ({ ...args }: any) => (
+  // We explicitly cast args to 'any' here because MUI wrapper defines Wrapper anatomy,
+  // but TextField expects them for the full TextInput anatomy, causing a TS intersection mismatch.
+  <TextField placeholder="Form Control primitive mapped..." {...args} />
+);
 
 export const Default: Story = {
-  render: () => <ComingSoon componentName="FormControlWrapper" />,
+  args: {
+    label: "Account Username",
+    formLayout: "stacked",
+    assistiveText: "Validation occurs immediately natively.",
+  },
+  render: renderWithTextField,
+};
+
+export const VisualErrorState: Story = {
+  args: {
+    label: "Encryption Protocol",
+    formLayout: "stacked",
+    error: "Strict validation limits reached. Handshake rejected securely.",
+  },
+  render: renderWithTextField,
+};
+
+export const RequiredArchitecture: Story = {
+  args: {
+    label: "Root Password",
+    formLayout: "side-by-side",
+    required: true,
+    assistiveText: "Bypass string structure required to initiate protocol.",
+  },
+  render: renderWithTextField,
+};
+
+export const WithoutAssistiveIcons: Story = {
+  args: {
+    label: "Server Domain",
+    assistiveText:
+      "A standard text boundary without default native icon parameters bounding.",
+    assistiveWithIcon: false,
+  },
+  render: renderWithTextField,
+};
+
+export const NativeChildrenDirectly: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Bypassing the TextField map to show exactly how native `<input>` hooks execute inside the raw wrapper natively perfectly.",
+      },
+    },
+  },
+  args: {
+    label: "Raw HTML Checkbox",
+    formLayout: "side-by-side",
+    assistiveText: "This wraps a raw HTML input tag mapping correctly.",
+  },
+  render: ({ ...args }: any) => (
+    <div
+      style={{
+        display: "flex",
+        gap: "10px",
+        alignItems: "center",
+      }}
+    >
+      <FormControlWrapper {...args}>
+        <input
+          type="checkbox"
+          style={{ margin: 0, width: "16px", height: "16px" }}
+        />
+      </FormControlWrapper>
+    </div>
+  ),
 };

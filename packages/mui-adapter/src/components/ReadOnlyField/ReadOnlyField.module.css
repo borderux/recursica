@@ -1,16 +1,54 @@
-/* EXEMPTIONS:
-   This component is a placeholder stub. Once fully implemented, its specific
-   tokens will be fully wired up to direct styles. */
+/* LAYOUT SPACING OVERRIDES:
+   - Sets the --form-control-margin-bottom spacing hook to map component-specific layout tokens. */
+.root {
+  width: 100%;
+  --form-control-margin-bottom: var(
+    --recursica_ui-kit_components_read-only-field_variants_layouts_stacked_properties_top-bottom-margin,
+    0px
+  );
+}
 
-/* recursica-ignore: --recursica_ui-kit_components_read-only-field_properties_colors_text */
-/* recursica-ignore: --recursica_ui-kit_components_read-only-field_properties_min-height */
-/* recursica-ignore: --recursica_ui-kit_components_read-only-field_properties_text_font-family */
-/* recursica-ignore: --recursica_ui-kit_components_read-only-field_properties_text_font-size */
-/* recursica-ignore: --recursica_ui-kit_components_read-only-field_properties_text_font-style */
-/* recursica-ignore: --recursica_ui-kit_components_read-only-field_properties_text_font-weight */
-/* recursica-ignore: --recursica_ui-kit_components_read-only-field_properties_text_letter-spacing */
-/* recursica-ignore: --recursica_ui-kit_components_read-only-field_properties_text_line-height */
-/* recursica-ignore: --recursica_ui-kit_components_read-only-field_properties_text_text-decoration */
-/* recursica-ignore: --recursica_ui-kit_components_read-only-field_properties_text_text-transform */
-/* recursica-ignore: --recursica_ui-kit_components_read-only-field_variants_layouts_side-by-side_properties_top-bottom-margin */
-/* recursica-ignore: --recursica_ui-kit_components_read-only-field_variants_layouts_stacked_properties_top-bottom-margin */
+.root[data-form-layout="side-by-side"] {
+  --form-control-margin-bottom: var(
+    --recursica_ui-kit_components_read-only-field_variants_layouts_side-by-side_properties_top-bottom-margin,
+    0px
+  );
+}
+
+.text {
+  display: flex;
+  align-items: center;
+
+  font-family: var(
+    --recursica_ui-kit_components_read-only-field_properties_text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_read-only-field_properties_text_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_read-only-field_properties_text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_read-only-field_properties_text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_read-only-field_properties_text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_read-only-field_properties_text_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_read-only-field_properties_text_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_read-only-field_properties_text_text-transform
+  );
+  color: var(
+    --recursica_ui-kit_components_read-only-field_properties_colors_text
+  );
+
+  min-height: var(
+    --recursica_ui-kit_components_read-only-field_properties_min-height,
+    40px
+  );
+}

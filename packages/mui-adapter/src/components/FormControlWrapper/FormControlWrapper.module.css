@@ -1,0 +1,33 @@
+/*
+  FORM CONTROL WRAPPER
+  Strict architectural layout mapping handling grid bounds around MUI Form Controls natively.
+*/
+
+.root {
+  /* Inherit MUI Reset overrides */
+  display: block;
+  width: 100%;
+}
+
+.inputContainer {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+
+  /* Constrain the input natively to custom properties */
+  max-width: var(--form-control-max-width, 100%);
+  min-width: var(--form-control-min-width, auto);
+
+  /* Hook to allow child components to add margin below themselves dynamically 
+     via CSS variables (e.g. padding beneath TextField before AssistiveText renders) */
+  margin-bottom: var(--form-control-margin-bottom, 0px);
+}
+
+.assistive {
+  /* Using standard global vertical gap with 8px fallback. */
+  margin-top: var(
+    --recursica_ui-kit_globals_form_properties_label-field-gap-vertical,
+    8px
+  );
+}

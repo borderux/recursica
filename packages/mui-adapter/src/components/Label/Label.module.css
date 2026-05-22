@@ -1,35 +1,124 @@
-/* EXEMPTIONS:
-   This component is a placeholder stub. Once fully implemented, its specific
-   tokens will be fully wired up to direct styles. */
+.root {
+  /* Prevent default MUI absolute positioning logic */
+  position: relative;
+  transform: none;
+  pointer-events: auto;
+  white-space: normal;
 
-/* recursica-ignore: --recursica_ui-kit_components_label_properties_colors_asterisk */
-/* recursica-ignore: --recursica_ui-kit_components_label_properties_colors_text */
-/* recursica-ignore: --recursica_ui-kit_components_label_properties_edit-icon-gap */
-/* recursica-ignore: --recursica_ui-kit_components_label_properties_label-optional-text-gap */
-/* recursica-ignore: --recursica_ui-kit_components_label_properties_label-text_font-family */
-/* recursica-ignore: --recursica_ui-kit_components_label_properties_label-text_font-size */
-/* recursica-ignore: --recursica_ui-kit_components_label_properties_label-text_font-style */
-/* recursica-ignore: --recursica_ui-kit_components_label_properties_label-text_font-weight */
-/* recursica-ignore: --recursica_ui-kit_components_label_properties_label-text_letter-spacing */
-/* recursica-ignore: --recursica_ui-kit_components_label_properties_label-text_line-height */
-/* recursica-ignore: --recursica_ui-kit_components_label_properties_label-text_text-decoration */
-/* recursica-ignore: --recursica_ui-kit_components_label_properties_label-text_text-transform */
-/* recursica-ignore: --recursica_ui-kit_components_label_properties_optional-text-opacity */
-/* recursica-ignore: --recursica_ui-kit_components_label_properties_optional-text_font-family */
-/* recursica-ignore: --recursica_ui-kit_components_label_properties_optional-text_font-size */
-/* recursica-ignore: --recursica_ui-kit_components_label_properties_optional-text_font-style */
-/* recursica-ignore: --recursica_ui-kit_components_label_properties_optional-text_font-weight */
-/* recursica-ignore: --recursica_ui-kit_components_label_properties_optional-text_letter-spacing */
-/* recursica-ignore: --recursica_ui-kit_components_label_properties_optional-text_line-height */
-/* recursica-ignore: --recursica_ui-kit_components_label_properties_optional-text_text-decoration */
-/* recursica-ignore: --recursica_ui-kit_components_label_properties_optional-text_text-transform */
-/* recursica-ignore: --recursica_ui-kit_components_label_properties_required-indicator-gap */
-/* recursica-ignore: --recursica_ui-kit_components_label_variants_layouts_side-by-side_properties_gutter */
-/* recursica-ignore: --recursica_ui-kit_components_label_variants_layouts_side-by-side_properties_min-height */
-/* recursica-ignore: --recursica_ui-kit_components_label_variants_layouts_side-by-side_properties_vertical-padding */
-/* recursica-ignore: --recursica_ui-kit_components_label_variants_layouts_side-by-side_variants_sizes_default_properties_width */
-/* recursica-ignore: --recursica_ui-kit_components_label_variants_layouts_side-by-side_variants_sizes_small_properties_width */
-/* recursica-ignore: --recursica_ui-kit_components_label_variants_layouts_stacked_properties_bottom-padding */
-/* recursica-ignore: --recursica_ui-kit_components_label_variants_layouts_stacked_properties_min-height */
-/* recursica-ignore: --recursica_ui-kit_components_label_variants_layouts_stacked_variants_sizes_default_properties_width */
-/* recursica-ignore: --recursica_ui-kit_components_label_variants_layouts_stacked_variants_sizes_small_properties_width */
+  /* Reset MUI structural overrides */
+  margin: 0;
+  padding: 0;
+  display: flex;
+  width: 100%;
+
+  /* Recursica Font Map */
+  font-family: var(
+    --recursica_ui-kit_components_label_properties_label-text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_label_properties_label-text_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_label_properties_label-text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_label_properties_label-text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_label_properties_label-text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_label_properties_label-text_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_label_properties_label-text_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_label_properties_label-text_text-transform
+  );
+
+  color: var(--recursica_ui-kit_components_label_properties_colors_text);
+}
+
+.innerLayout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* pushes endNodes to right natively */
+  width: 100%;
+}
+
+.text {
+  /* Natively intercepts MUI asterisk rendering securely wrapping inline with typography */
+  display: inline;
+}
+
+.required {
+  /* Override the `.MuiInputLabel-asterisk` natively */
+  color: var(--recursica_ui-kit_components_label_properties_colors_asterisk);
+  margin-left: var(
+    --recursica_ui-kit_components_label_properties_required-indicator-gap,
+    2px
+  );
+}
+
+.endNodes {
+  display: flex;
+  align-items: center;
+  gap: var(
+    --recursica_ui-kit_components_label_properties_label-optional-text-gap
+  );
+  margin-left: auto; /* Pushes to the end natively */
+}
+
+.optionalText {
+  color: inherit;
+  font-family: var(
+    --recursica_ui-kit_components_label_properties_optional-text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_label_properties_optional-text_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_label_properties_optional-text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_label_properties_optional-text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_label_properties_optional-text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_label_properties_optional-text_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_label_properties_optional-text_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_label_properties_optional-text_text-transform
+  );
+}
+
+.actionArea {
+  display: flex;
+  align-items: center;
+}
+
+.editIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+
+  width: 16px;
+  height: 16px;
+  color: inherit;
+}
+
+.editIcon :global(svg) {
+  width: 100%;
+  height: 100%;
+  stroke-width: 2px;
+}
