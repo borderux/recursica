@@ -139,8 +139,8 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
         required={required}
         id={id}
         readOnly={readOnly}
-        readOnlyComponent={readOnlyComponent}
-        emptyValueComponent={emptyValueComponent}
+        readOnlyComponent={readOnlyComponent as any}
+        emptyValueComponent={(emptyValueComponent as any) || undefined}
         readOnlyType="text"
         readOnlyValue={value !== undefined ? value : defaultValue}
         readOnlyNativeProps={props}

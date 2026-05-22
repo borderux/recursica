@@ -1,8 +1,158 @@
-import React from "react";
-import "./TextArea.module.css";
+import React, { forwardRef } from "react";
+import {
+  TextField as MuiTextarea,
+  type TextFieldProps as MuiTextareaProps,
+} from "@mui/material";
+import { type ReadOnlyControlProps } from "@recursica/adapter-common";
+import { TextField } from "@mui/material";
+import {
+  filterStylingProps,
+  type RecursicaOverStyled,
+} from "../../utils/filterStylingProps";
+import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
+import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
+import styles from "./TextArea.module.css";
 
-export type TextAreaProps = React.HTMLAttributes<HTMLDivElement>;
+export interface RecursicaTextAreaProps
+  extends Omit<
+      MuiTextareaProps,
+      "size" | "variant" | "radius" | "wrapperProps"
+    >,
+    Pick<
+      RecursicaFormControlWrapperProps,
+      | "assistiveText"
+      | "assistiveWithIcon"
+      | "formLayout"
+      | "labelSize"
+      | "labelAlignment"
+      | "labelOptionalText"
+      | "labelWithEditIcon"
+      | "onLabelEditClick"
+    >,
+    ReadOnlyControlProps {
+  /** Maximum rows for autosize textarea to grow */
+  maxRows?: number;
+  /** Minimum rows of autosize textarea */
+  minRows?: number;
+  /** If set, enables textarea height growing with its content */
+  autosize?: boolean;
+}
 
-export const TextArea: React.FC<TextAreaProps> = (props) => {
-  return <div {...props}>TextArea</div>;
-};
+export type TextAreaProps = RecursicaOverStyled<RecursicaTextAreaProps>;
+
+export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
+  function TextArea(props, ref) {
+    const {
+      overStyled = false,
+      formLayout = "stacked",
+
+      // Label & Wrapper Maps
+      labelSize,
+      labelAlignment,
+      labelOptionalText,
+      labelWithEditIcon,
+      onLabelEditClick,
+
+      label,
+      assistiveText,
+      assistiveWithIcon,
+      error,
+      required,
+      withAsterisk,
+      id,
+      className,
+      style,
+      disabled,
+      readOnly,
+      readOnlyComponent,
+      emptyValueComponent,
+      value,
+      defaultValue,
+      ...rest
+    } = props;
+    const sanitizedProps = filterStylingProps(rest, overStyled);
+    const restRecord = sanitizedProps as Record<string, unknown>;
+
+    // Delete prohibited sizing hooks from bypassing variables natively
+    delete restRecord["size"];
+    delete restRecord["variant"];
+    delete restRecord["radius"];
+
+    // Securely map core native blocks down ensuring nested CSS modules map precisely
+    const mergedClassNames: Partial<Record<string, string>> = {
+      wrapper: styles.root, // The nested Input internal relative wrapper bounding box
+      input: styles.input,
+    };
+
+    const classNamesProp = restRecord.classNames;
+    if (
+      classNamesProp &&
+      typeof classNamesProp === "object" &&
+      !Array.isArray(classNamesProp)
+    ) {
+      const o = classNamesProp as Partial<Record<string, string>>;
+      mergedClassNames.wrapper = o.wrapper
+        ? `${styles.root} ${o.wrapper}`
+        : styles.root;
+      mergedClassNames.input = o.input
+        ? `${styles.input} ${o.input}`
+        : styles.input;
+    }
+
+    const wrapperClass = className
+      ? `${styles.layoutOverride} ${className}`
+      : styles.layoutOverride;
+
+    return (
+      <WithReadOnlyWrapper
+        className={wrapperClass}
+        style={style as React.CSSProperties}
+        controlMaxWidth="var(--recursica_ui-kit_components_textarea_properties_max-width)"
+        controlMinWidth="var(--recursica_ui-kit_components_textarea_properties_min-width)"
+        overStyled={overStyled as true}
+        formLayout={formLayout}
+        labelSize={labelSize}
+        labelAlignment={labelAlignment}
+        labelOptionalText={labelOptionalText}
+        labelWithEditIcon={labelWithEditIcon}
+        onLabelEditClick={onLabelEditClick}
+        label={label}
+        assistiveText={assistiveText}
+        assistiveWithIcon={assistiveWithIcon}
+        error={error}
+        required={required}
+        withAsterisk={withAsterisk}
+        id={id}
+        readOnly={readOnly}
+        readOnlyComponent={readOnlyComponent}
+        emptyValueComponent={emptyValueComponent}
+        readOnlyType="text"
+        readOnlyValue={value !== undefined ? value : defaultValue}
+        readOnlyNativeProps={props}
+        activeComponent={
+          /* Naked Input execution safely decoupled from Mui's macro Input.Wrapper DOM hooks */
+          <MuiTextarea
+            multiline
+            ref={ref}
+            classes={mergedClassNames}
+            disabled={disabled}
+            value={value}
+            defaultValue={defaultValue}
+            label={undefined}
+            description={undefined}
+            error={undefined}
+            required={undefined}
+            withAsterisk={undefined}
+            wrapperProps={{
+              "data-disabled": disabled ? "true" : undefined,
+              "data-error": error ? "true" : undefined,
+            }}
+            {...(sanitizedProps as unknown as MuiTextareaProps)}
+          />
+        }
+      />
+    );
+  },
+);
+
+TextArea.displayName = "TextArea";

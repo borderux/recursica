@@ -1,39 +1,238 @@
-/* EXEMPTIONS:
-   This component is a placeholder stub. Once fully implemented, its specific
-   tokens will be fully wired up to direct styles. */
+/* HARDCODED VALUES 
+ *
+ * 1. track border: none; (we do not use border for the switch track)
+ * 2. thumb border: none; (we do not use border for the thumb)
+ * 3. outline: none; (focus rings handled internally by mantine)
+ */
 
-/* recursica-ignore: --recursica_ui-kit_components_switch-group_properties_item-gap */
-/* recursica-ignore: --recursica_ui-kit_components_switch-group_properties_padding */
-/* recursica-ignore: --recursica_ui-kit_components_switch-group_variants_layouts_side-by-side_properties_gutter */
-/* recursica-ignore: --recursica_ui-kit_components_switch-group_variants_layouts_side-by-side_properties_top-bottom-margin */
-/* recursica-ignore: --recursica_ui-kit_components_switch-group_variants_layouts_side-by-side_properties_vertical-padding */
-/* recursica-ignore: --recursica_ui-kit_components_switch-group_variants_layouts_stacked_properties_label-field-gap */
-/* recursica-ignore: --recursica_ui-kit_components_switch-group_variants_layouts_stacked_properties_top-bottom-margin */
-/* recursica-ignore: --recursica_ui-kit_components_switch-item_properties_colors_disabled-text */
-/* recursica-ignore: --recursica_ui-kit_components_switch-item_properties_colors_text */
-/* recursica-ignore: --recursica_ui-kit_components_switch-item_properties_disabled-opacity */
-/* recursica-ignore: --recursica_ui-kit_components_switch-item_properties_label-gap */
-/* recursica-ignore: --recursica_ui-kit_components_switch-item_properties_label-max-width */
-/* recursica-ignore: --recursica_ui-kit_components_switch-item_properties_text_font-family */
-/* recursica-ignore: --recursica_ui-kit_components_switch-item_properties_text_font-size */
-/* recursica-ignore: --recursica_ui-kit_components_switch-item_properties_text_font-style */
-/* recursica-ignore: --recursica_ui-kit_components_switch-item_properties_text_font-weight */
-/* recursica-ignore: --recursica_ui-kit_components_switch-item_properties_text_letter-spacing */
-/* recursica-ignore: --recursica_ui-kit_components_switch-item_properties_text_line-height */
-/* recursica-ignore: --recursica_ui-kit_components_switch-item_properties_text_text-decoration */
-/* recursica-ignore: --recursica_ui-kit_components_switch-item_properties_text_text-transform */
-/* recursica-ignore: --recursica_ui-kit_components_switch_properties_colors_icon-selected */
-/* recursica-ignore: --recursica_ui-kit_components_switch_properties_colors_icon-unselected */
-/* recursica-ignore: --recursica_ui-kit_components_switch_properties_colors_thumb-selected */
-/* recursica-ignore: --recursica_ui-kit_components_switch_properties_colors_thumb-unselected */
-/* recursica-ignore: --recursica_ui-kit_components_switch_properties_colors_track-selected */
-/* recursica-ignore: --recursica_ui-kit_components_switch_properties_colors_track-unselected */
-/* recursica-ignore: --recursica_ui-kit_components_switch_properties_thumb-border-radius */
-/* recursica-ignore: --recursica_ui-kit_components_switch_properties_thumb-elevation */
-/* recursica-ignore: --recursica_ui-kit_components_switch_properties_thumb-height */
-/* recursica-ignore: --recursica_ui-kit_components_switch_properties_thumb-icon-size */
-/* recursica-ignore: --recursica_ui-kit_components_switch_properties_thumb-width */
-/* recursica-ignore: --recursica_ui-kit_components_switch_properties_track-border-radius */
-/* recursica-ignore: --recursica_ui-kit_components_switch_properties_track-elevation */
-/* recursica-ignore: --recursica_ui-kit_components_switch_properties_track-inner-padding */
-/* recursica-ignore: --recursica_ui-kit_components_switch_properties_track-width */
+.root {
+  /* Provide a stable cursor when not disabled */
+  cursor: pointer;
+
+  --switch-track-padding: var(
+    --recursica_ui-kit_components_switch_properties_track-inner-padding
+  );
+  --switch-thumb-width: var(
+    --recursica_ui-kit_components_switch_properties_thumb-width
+  );
+  --switch-thumb-height: var(
+    --recursica_ui-kit_components_switch_properties_thumb-height
+  );
+  --switch-track-width: var(
+    --recursica_ui-kit_components_switch_properties_track-width
+  );
+}
+
+.root:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: var(
+    --recursica_ui-kit_components_switch-item_properties_disabled-opacity
+  );
+}
+
+.body {
+  display: flex;
+  align-items: center;
+  gap: var(--recursica_ui-kit_components_switch-item_properties_label-gap);
+}
+
+/* HARDCODE: disable native hover color transitions applied by Mantine */
+.track:hover {
+  background-color: var(
+    --recursica_ui-kit_components_switch_properties_colors_track-unselected
+  );
+}
+.root input:checked + .track:hover {
+  background-color: var(
+    --recursica_ui-kit_components_switch_properties_colors_track-selected
+  );
+}
+
+.track {
+  width: var(--switch-track-width);
+  height: calc(var(--switch-thumb-height) + (var(--switch-track-padding) * 2));
+  border-radius: var(
+    --recursica_ui-kit_components_switch_properties_track-border-radius
+  );
+  background-color: var(
+    --recursica_ui-kit_components_switch_properties_colors_track-unselected
+  );
+  box-shadow: var(
+    --recursica_ui-kit_components_switch_properties_track-elevation
+  );
+  padding: var(--switch-track-padding);
+  border: none; /* HARDCODE */
+
+  /* Mantine uses variables internally for these, but we explicitly override the CSS to ensure our dimensions */
+  --switch-width: var(--switch-track-width);
+  --switch-height: calc(
+    var(--switch-thumb-height) + (var(--switch-track-padding) * 2)
+  );
+  --switch-thumb-size: var(--switch-thumb-width);
+
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  transition: background-color 150ms ease;
+  cursor: inherit;
+}
+
+.root input:checked + .track {
+  background-color: var(
+    --recursica_ui-kit_components_switch_properties_colors_track-selected
+  );
+  border-color: transparent;
+}
+
+.thumb {
+  width: var(--switch-thumb-width);
+  height: var(--switch-thumb-height);
+  border-radius: var(
+    --recursica_ui-kit_components_switch_properties_thumb-border-radius
+  );
+  background-color: var(
+    --recursica_ui-kit_components_switch_properties_colors_thumb-unselected
+  );
+  box-shadow: var(
+    --recursica_ui-kit_components_switch_properties_thumb-elevation
+  );
+  border: none; /* HARDCODE */
+
+  transition: background-color 150ms ease;
+}
+
+.root input:checked + .track .thumb {
+  background-color: var(
+    --recursica_ui-kit_components_switch_properties_colors_thumb-selected
+  );
+}
+
+.labelWrapper {
+  display: flex;
+  flex-direction: column;
+  max-width: var(
+    --recursica_ui-kit_components_switch-item_properties_label-max-width
+  );
+}
+
+.label {
+  font-family: var(
+    --recursica_ui-kit_components_switch-item_properties_text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_switch-item_properties_text_font-size
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_switch-item_properties_text_font-weight
+  );
+  font-style: var(
+    --recursica_ui-kit_components_switch-item_properties_text_font-style
+  );
+  line-height: var(
+    --recursica_ui-kit_components_switch-item_properties_text_line-height
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_switch-item_properties_text_letter-spacing
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_switch-item_properties_text_text-transform
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_switch-item_properties_text_text-decoration
+  );
+  color: var(--recursica_ui-kit_components_switch-item_properties_colors_text);
+  cursor: inherit;
+}
+
+.root:has(input:disabled) .label {
+  color: var(
+    --recursica_ui-kit_components_switch-item_properties_colors_disabled-text
+  );
+}
+
+.thumbIconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.checkIcon,
+.closeIcon {
+  width: var(--recursica_ui-kit_components_switch_properties_thumb-icon-size);
+  height: var(--recursica_ui-kit_components_switch_properties_thumb-icon-size);
+  position: absolute;
+  transition:
+    opacity 150ms ease,
+    transform 150ms ease;
+}
+
+/* Unchecked state */
+.checkIcon {
+  opacity: 0;
+  transform: scale(0.5);
+  color: var(
+    --recursica_ui-kit_components_switch_properties_colors_icon-selected
+  );
+}
+
+.closeIcon {
+  opacity: 1;
+  transform: scale(1);
+  color: var(
+    --recursica_ui-kit_components_switch_properties_colors_icon-unselected
+  );
+}
+
+/* Checked state */
+.root input:checked + .track .thumb .checkIcon {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.root input:checked + .track .thumb .closeIcon {
+  opacity: 0;
+  transform: scale(0.5);
+}
+
+/* --- GROUP STYLES --- */
+.groupRoot {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: var(--recursica_ui-kit_components_switch-group_properties_padding);
+  gap: var(--recursica_ui-kit_components_switch-group_properties_item-gap);
+}
+
+/* SideBySide Variant */
+.groupRoot[data-layout="side-by-side"] {
+  flex-direction: column;
+  gap: var(
+    --recursica_ui-kit_components_switch-group_variants_layouts_side-by-side_properties_gutter
+  );
+  padding-top: var(
+    --recursica_ui-kit_components_switch-group_variants_layouts_side-by-side_properties_vertical-padding
+  );
+  padding-bottom: var(
+    --recursica_ui-kit_components_switch-group_variants_layouts_side-by-side_properties_vertical-padding
+  );
+  margin-top: var(
+    --recursica_ui-kit_components_switch-group_variants_layouts_side-by-side_properties_top-bottom-margin
+  );
+  margin-bottom: var(
+    --recursica_ui-kit_components_switch-group_variants_layouts_side-by-side_properties_top-bottom-margin
+  );
+}
+
+/* Stacked Variant */
+.groupRoot[data-layout="stacked"] {
+  flex-direction: column;
+  margin-top: var(
+    --recursica_ui-kit_components_switch-group_variants_layouts_stacked_properties_label-field-gap
+  );
+  margin-bottom: var(
+    --recursica_ui-kit_components_switch-group_variants_layouts_stacked_properties_top-bottom-margin
+  );
+}

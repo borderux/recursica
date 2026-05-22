@@ -1,32 +1,170 @@
 /* EXEMPTIONS:
-   This component is a placeholder stub. Once fully implemented, its specific
-   tokens will be fully wired up to direct styles. */
-
-/* recursica-ignore: --recursica_ui-kit_components_toast_properties_elevation_layer-0 */
+   - elevation levels layer-1, layer-2, and layer-3 are ignored because all toasts explicitly use the standard 
+     layer-0 elevation shadow for styling consistency. */
 /* recursica-ignore: --recursica_ui-kit_components_toast_properties_elevation_layer-1 */
 /* recursica-ignore: --recursica_ui-kit_components_toast_properties_elevation_layer-2 */
 /* recursica-ignore: --recursica_ui-kit_components_toast_properties_elevation_layer-3 */
-/* recursica-ignore: --recursica_ui-kit_components_toast_properties_horizontal-padding */
-/* recursica-ignore: --recursica_ui-kit_components_toast_properties_icon */
-/* recursica-ignore: --recursica_ui-kit_components_toast_properties_max-width */
-/* recursica-ignore: --recursica_ui-kit_components_toast_properties_min-height */
-/* recursica-ignore: --recursica_ui-kit_components_toast_properties_min-width */
-/* recursica-ignore: --recursica_ui-kit_components_toast_properties_spacing */
-/* recursica-ignore: --recursica_ui-kit_components_toast_properties_text_font-family */
-/* recursica-ignore: --recursica_ui-kit_components_toast_properties_text_font-size */
-/* recursica-ignore: --recursica_ui-kit_components_toast_properties_text_font-style */
-/* recursica-ignore: --recursica_ui-kit_components_toast_properties_text_font-weight */
-/* recursica-ignore: --recursica_ui-kit_components_toast_properties_text_letter-spacing */
-/* recursica-ignore: --recursica_ui-kit_components_toast_properties_text_line-height */
-/* recursica-ignore: --recursica_ui-kit_components_toast_properties_text_text-decoration */
-/* recursica-ignore: --recursica_ui-kit_components_toast_properties_text_text-transform */
-/* recursica-ignore: --recursica_ui-kit_components_toast_properties_vertical-padding */
-/* recursica-ignore: --recursica_ui-kit_components_toast_variants_styles_default_properties_colors_background */
-/* recursica-ignore: --recursica_ui-kit_components_toast_variants_styles_default_properties_colors_button */
-/* recursica-ignore: --recursica_ui-kit_components_toast_variants_styles_default_properties_colors_text */
-/* recursica-ignore: --recursica_ui-kit_components_toast_variants_styles_error_properties_colors_background */
-/* recursica-ignore: --recursica_ui-kit_components_toast_variants_styles_error_properties_colors_button */
-/* recursica-ignore: --recursica_ui-kit_components_toast_variants_styles_error_properties_colors_text */
-/* recursica-ignore: --recursica_ui-kit_components_toast_variants_styles_success_properties_colors_background */
-/* recursica-ignore: --recursica_ui-kit_components_toast_variants_styles_success_properties_colors_button */
-/* recursica-ignore: --recursica_ui-kit_components_toast_variants_styles_success_properties_colors_text */
+
+/* HARDCODED VALUES:
+   - border-style: none. To ensure the notification doesn't render unwanted borders unless specified.
+ */
+
+/* ======================================
+   TOAST / NOTIFICATION ROOT
+   ====================================== */
+
+.root {
+  border-style: none; /* HARDCODE: Reset to ensure clean shadow boundaries */
+  box-shadow: var(
+    --recursica_ui-kit_components_toast_properties_elevation_layer-0
+  );
+  padding: var(--recursica_ui-kit_components_toast_properties_vertical-padding)
+    var(--recursica_ui-kit_components_toast_properties_horizontal-padding);
+  min-width: var(--recursica_ui-kit_components_toast_properties_min-width);
+  max-width: var(--recursica_ui-kit_components_toast_properties_max-width);
+  min-height: var(--recursica_ui-kit_components_toast_properties_min-height);
+
+  /* Default Variant (Base) */
+  background-color: var(
+    --recursica_ui-kit_components_toast_variants_styles_default_properties_colors_background
+  );
+  gap: var(--recursica_ui-kit_components_toast_properties_spacing);
+
+  /* Hide Mantine's native colored vertical line */
+  &::before {
+    display: none;
+    content: none;
+  }
+
+  & .icon {
+    width: var(--recursica_ui-kit_components_toast_properties_icon) !important;
+    height: var(--recursica_ui-kit_components_toast_properties_icon) !important;
+    margin-right: 0 !important; /* Override Mantine's native spacing in favor of flex gap */
+    background-color: transparent !important; /* Remove Mantine's native circle background */
+
+    color: var(
+      --recursica_ui-kit_components_toast_variants_styles_default_properties_colors_text
+    );
+  }
+
+  & .loader {
+    margin-right: 0 !important; /* Override native spacing */
+  }
+  & .title,
+  & .description {
+    color: var(
+      --recursica_ui-kit_components_toast_variants_styles_default_properties_colors_text
+    );
+  }
+  & .closeButton {
+    color: var(
+      --recursica_ui-kit_components_toast_variants_styles_default_properties_colors_button
+    );
+  }
+
+  /* Error Variant styling */
+  &[data-variant="error"] {
+    background-color: var(
+      --recursica_ui-kit_components_toast_variants_styles_error_properties_colors_background
+    );
+
+    & .icon {
+      color: var(
+        --recursica_ui-kit_components_toast_variants_styles_error_properties_colors_text
+      ) !important;
+    }
+    & .title,
+    & .description {
+      color: var(
+        --recursica_ui-kit_components_toast_variants_styles_error_properties_colors_text
+      );
+    }
+    & .closeButton {
+      color: var(
+        --recursica_ui-kit_components_toast_variants_styles_error_properties_colors_button
+      );
+    }
+  }
+
+  /* Success Variant styling */
+  &[data-variant="success"] {
+    background-color: var(
+      --recursica_ui-kit_components_toast_variants_styles_success_properties_colors_background
+    );
+
+    & .icon {
+      color: var(
+        --recursica_ui-kit_components_toast_variants_styles_success_properties_colors_text
+      ) !important;
+    }
+    & .title,
+    & .description {
+      color: var(
+        --recursica_ui-kit_components_toast_variants_styles_success_properties_colors_text
+      );
+    }
+    & .closeButton {
+      color: var(
+        --recursica_ui-kit_components_toast_variants_styles_success_properties_colors_button
+      );
+    }
+  }
+}
+
+/* ======================================
+   TOAST BODY
+   ====================================== */
+
+.body {
+  /* No extra gap here, root handles icon-to-text, body can handle title-to-description if needed */
+}
+
+.title {
+  font-family: var(
+    --recursica_ui-kit_components_toast_properties_text_font-family
+  );
+  font-size: var(--recursica_ui-kit_components_toast_properties_text_font-size);
+  font-style: var(
+    --recursica_ui-kit_components_toast_properties_text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_toast_properties_text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_toast_properties_text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_toast_properties_text_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_toast_properties_text_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_toast_properties_text_text-transform
+  );
+}
+
+.description {
+  font-family: var(
+    --recursica_ui-kit_components_toast_properties_text_font-family
+  );
+  font-size: var(--recursica_ui-kit_components_toast_properties_text_font-size);
+  font-style: var(
+    --recursica_ui-kit_components_toast_properties_text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_toast_properties_text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_toast_properties_text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_toast_properties_text_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_toast_properties_text_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_toast_properties_text_text-transform
+  );
+}
