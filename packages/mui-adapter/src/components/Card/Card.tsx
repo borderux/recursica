@@ -1,9 +1,5 @@
 import { forwardRef } from "react";
-import {
-  Card as MuiCard,
-  type CardProps as MuiCardProps,
-  type CardSectionProps as MuiCardSectionProps,
-} from "@mui/material";
+import { Card as MuiCard, type CardProps as MuiCardProps } from "@mui/material";
 import {
   filterStylingProps,
   type RecursicaOverStyled,
@@ -57,7 +53,7 @@ const CardBase = forwardRef<HTMLDivElement, CardProps>(function Card(
 CardBase.displayName = "Card";
 
 // ==== NATIVE MANTINE CARD.SECTION ====
-export type RecursicaCardSectionProps = MuiCardSectionProps & {
+export type RecursicaCardSectionProps = React.HTMLAttributes<HTMLDivElement> & {
   children?: React.ReactNode;
 };
 export type CardSectionProps = RecursicaOverStyled<RecursicaCardSectionProps>;
@@ -72,12 +68,12 @@ export const CardSection = forwardRef<HTMLDivElement, CardSectionProps>(
       .className as string | undefined;
 
     return (
-      <MuiCard.Section
+      <div
         ref={ref}
         className={
           classNameProp ? `${styles.section} ${classNameProp}` : styles.section
         }
-        {...(sanitizedProps as unknown as MuiCardSectionProps)}
+        {...(sanitizedProps as unknown as React.HTMLAttributes<HTMLDivElement>)}
       />
     );
   },
@@ -97,12 +93,12 @@ export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
       .className as string | undefined;
 
     return (
-      <MuiCard.Section
+      <div
         ref={ref}
         className={
           classNameProp ? `${styles.header} ${classNameProp}` : styles.header
         }
-        {...(sanitizedProps as unknown as MuiCardSectionProps)}
+        {...(sanitizedProps as unknown as React.HTMLAttributes<HTMLDivElement>)}
       />
     );
   },
@@ -122,12 +118,12 @@ export const CardFooter = forwardRef<HTMLDivElement, CardFooterProps>(
       .className as string | undefined;
 
     return (
-      <MuiCard.Section
+      <div
         ref={ref}
         className={
           classNameProp ? `${styles.footer} ${classNameProp}` : styles.footer
         }
-        {...(sanitizedProps as unknown as MuiCardSectionProps)}
+        {...(sanitizedProps as unknown as React.HTMLAttributes<HTMLDivElement>)}
       />
     );
   },

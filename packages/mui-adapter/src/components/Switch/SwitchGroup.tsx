@@ -90,7 +90,7 @@ export const SwitchGroup = forwardRef<HTMLDivElement, SwitchGroupProps>(
         readOnlyValue={value !== undefined ? value : defaultValue}
         readOnlyNativeProps={props}
         activeComponent={
-          <MuiSwitch.Group
+          <div
             ref={ref}
             /* Natively bind local disabled lock dynamically */
             {...(sanitizedProps as unknown as MuiSwitchGroupProps)}
@@ -101,7 +101,7 @@ export const SwitchGroup = forwardRef<HTMLDivElement, SwitchGroupProps>(
             <div className={styles.groupRoot} data-layout={formLayout}>
               {children}
             </div>
-          </MuiSwitch.Group>
+          </div>
         }
       />
     );

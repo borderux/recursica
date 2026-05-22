@@ -2,6 +2,7 @@ import React, { forwardRef } from "react";
 import {
   Autocomplete as MuiAutocomplete,
   type AutocompleteProps as MuiAutocompleteProps,
+  TextField as MuiTextField,
   type InputWrapperProps,
 } from "@mui/material";
 import { type ReadOnlyControlProps } from "@recursica/adapter-common";
@@ -26,7 +27,9 @@ export interface RecursicaAutocompleteProps
       RecursicaFormControlWrapperProps,
       "controlMaxWidth" | "controlMinWidth"
     >,
-    ReadOnlyControlProps {}
+    ReadOnlyControlProps {
+  data?: any[];
+}
 
 export type AutocompleteProps = RecursicaOverStyled<RecursicaAutocompleteProps>;
 
@@ -58,6 +61,7 @@ export const Autocomplete = forwardRef<HTMLInputElement, AutocompleteProps>(
       emptyValueComponent,
       value,
       defaultValue,
+      data,
       ...rest
     } = props;
     const sanitizedProps = filterStylingProps(rest, overStyled);
@@ -143,6 +147,8 @@ export const Autocomplete = forwardRef<HTMLInputElement, AutocompleteProps>(
               "data-disabled": disabled ? "true" : undefined,
               "data-error": error ? "true" : undefined,
             }}
+            options={data || []}
+            renderInput={(params) => <MuiTextField {...params} />}
             {...(sanitizedProps as unknown as MuiAutocompleteProps)}
           />
         }

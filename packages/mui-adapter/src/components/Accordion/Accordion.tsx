@@ -107,7 +107,7 @@ export const AccordionItem = forwardRef<
   // If the user utilizes the explicit 'title' prop from Recursica, we securely auto-construct the Mui sub-hierarchy natively!
   // If not, we defer to raw composable children (meaning the integrator maps `<Accordion.Control>` manually).
   return (
-    <MuiAccordion.Item
+    <div
       ref={ref}
       className={finalClass}
       {...(sanitizedProps as unknown as AccordionItemProps)}
@@ -120,7 +120,7 @@ export const AccordionItem = forwardRef<
       ) : (
         children
       )}
-    </MuiAccordion.Item>
+    </div>
   );
 });
 AccordionItem.displayName = "AccordionItem";
@@ -147,7 +147,7 @@ export const AccordionControl = forwardRef<
     .className as string | undefined;
 
   return (
-    <MuiAccordion.Control
+    <div
       ref={ref}
       className={classNameProp}
       icon={
@@ -160,7 +160,7 @@ export const AccordionControl = forwardRef<
       {...(sanitizedProps as unknown as AccordionControlProps)}
     >
       {children}
-    </MuiAccordion.Control>
+    </div>
   );
 });
 AccordionControl.displayName = "AccordionControl";
@@ -178,7 +178,7 @@ export const AccordionPanel = forwardRef<
     .className as string | undefined;
 
   return (
-    <MuiAccordion.Panel
+    <div
       ref={ref}
       className={classNameProp}
       {...(sanitizedProps as unknown as AccordionPanelProps)}

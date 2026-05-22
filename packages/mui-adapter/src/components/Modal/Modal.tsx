@@ -74,7 +74,7 @@ const ModalInner = React.forwardRef<HTMLDivElement, ModalProps>(function Modal(
   }
 
   return (
-    <MuiModal.Root
+    <div
       ref={ref}
       classes={mergedClassNames}
       {...(sanitizedProps as unknown as Omit<
@@ -82,17 +82,17 @@ const ModalInner = React.forwardRef<HTMLDivElement, ModalProps>(function Modal(
         "size" | "radius" | "shadow"
       >)}
     >
-      {withOverlay && <MuiModal.Overlay {...overlayProps} />}
-      <MuiModal.Content>
+      {withOverlay && <div {...overlayProps} />}
+      <div>
         {(title || withCloseButton) && (
-          <MuiModal.Header>
-            {title && <MuiModal.Title>{title}</MuiModal.Title>}
-            {withCloseButton && <MuiModal.CloseButton {...closeButtonProps} />}
-          </MuiModal.Header>
+          <div>
+            {title && <div>{title}</div>}
+            {withCloseButton && <div {...closeButtonProps} />}
+          </div>
         )}
         <ModalBody>{children}</ModalBody>
-      </MuiModal.Content>
-    </MuiModal.Root>
+      </div>
+    </div>
   );
 });
 
@@ -169,7 +169,7 @@ const ModalBody = React.forwardRef<
   });
 
   return (
-    <MuiModal.Body
+    <div
       {...rest}
       ref={(node) => {
         if (typeof ref === "function") ref(node);
@@ -188,7 +188,7 @@ const ModalBody = React.forwardRef<
         {bodyChildren}
       </div>
       {footer}
-    </MuiModal.Body>
+    </div>
   );
 });
 ModalBody.displayName = "Modal.Body";

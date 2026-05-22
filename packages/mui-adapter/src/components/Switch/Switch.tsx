@@ -122,13 +122,6 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(
       return <>{roNode}</>;
     }
 
-    const FinalThumbIcon = (
-      <div className={styles.thumbIconWrapper}>
-        <CheckIcon className={styles.checkIcon} />
-        <CloseIcon className={styles.closeIcon} />
-      </div>
-    );
-
     // We omit Mui's sizing/coloring so we rely strictly on variables from Switch.module.css
     const switchNode = (
       <MuiSwitch

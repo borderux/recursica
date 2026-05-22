@@ -1,16 +1,5 @@
 import { forwardRef } from "react";
-import {
-  Menu as MuiMenu,
-  type MenuProps as MuiMenuProps,
-  type MenuTargetProps as MuiMenuTargetProps,
-  type MenuDropdownProps as MuiMenuDropdownProps,
-  type MenuItemProps as MuiMenuItemProps,
-  type MenuDividerProps as MuiMenuDividerProps,
-  type MenuLabelProps as MuiMenuLabelProps,
-  type MenuSubProps as MuiMenuSubProps,
-  type MenuSubTargetProps as MuiMenuSubTargetProps,
-  type MenuSubDropdownProps as MuiMenuSubDropdownProps,
-} from "@mui/material";
+import { Menu as MuiMenu, type MenuProps as MuiMenuProps } from "@mui/material";
 import {
   filterStylingProps,
   type RecursicaOverStyled,
@@ -86,10 +75,10 @@ MenuBase.displayName = "Menu";
  * Wrapper for the element that triggers the menu.
  * Requires a single child element that supports ref forwarding.
  */
-export type MenuTargetProps = MuiMenuTargetProps;
+export type MenuTargetProps = any;
 
 const MenuTarget = function MenuTarget(props: MenuTargetProps) {
-  return <MuiMenu.Target {...props} />;
+  return <div {...props} />;
 };
 MenuTarget.displayName = "MenuTarget";
 
@@ -98,7 +87,7 @@ MenuTarget.displayName = "MenuTarget";
 // ============================================================
 
 /** The dropdown panel containing menu items, dividers, and labels. */
-export type MenuDropdownProps = RecursicaOverStyled<MuiMenuDropdownProps>;
+export type MenuDropdownProps = RecursicaOverStyled<any>;
 
 const MenuDropdown = forwardRef<HTMLDivElement, MenuDropdownProps>(
   function MenuDropdown({ overStyled = false, ...rest }, ref) {
@@ -107,10 +96,10 @@ const MenuDropdown = forwardRef<HTMLDivElement, MenuDropdownProps>(
       .className as string | undefined;
 
     return (
-      <MuiMenu.Dropdown
+      <div
         ref={ref}
         className={classNameProp}
-        {...(sanitizedProps as unknown as MuiMenuDropdownProps)}
+        {...(sanitizedProps as unknown as any)}
       />
     );
   },
@@ -127,9 +116,7 @@ MenuDropdown.displayName = "MenuDropdown";
  * **Note:** Mui's `color` prop is stripped in strict mode to enforce
  * design token adherence. Use `overStyled={true}` if you need to bypass.
  */
-export type MenuItemProps = RecursicaOverStyled<
-  Omit<MuiMenuItemProps, "color">
->;
+export type MenuItemProps = RecursicaOverStyled<Omit<any, "color">>;
 
 const _MenuItem = forwardRef<HTMLButtonElement, MenuItemProps>(
   function MenuItem({ overStyled = false, ...rest }, ref) {
@@ -144,10 +131,10 @@ const _MenuItem = forwardRef<HTMLButtonElement, MenuItemProps>(
     const classNameProp = restRecord.className as string | undefined;
 
     return (
-      <MuiMenu.Item
+      <div
         ref={ref}
         className={classNameProp}
-        {...(sanitizedProps as unknown as MuiMenuItemProps)}
+        {...(sanitizedProps as unknown as any)}
       />
     );
   },
@@ -170,7 +157,7 @@ const MenuItem = _MenuItem as any;
 // ============================================================
 
 /** A visual separator between groups of menu items. */
-export type MenuDividerProps = RecursicaOverStyled<MuiMenuDividerProps>;
+export type MenuDividerProps = RecursicaOverStyled<any>;
 
 const MenuDivider = forwardRef<HTMLHRElement, MenuDividerProps>(
   function MenuDivider({ overStyled = false, ...rest }, ref) {
@@ -179,10 +166,10 @@ const MenuDivider = forwardRef<HTMLHRElement, MenuDividerProps>(
       .className as string | undefined;
 
     return (
-      <MuiMenu.Divider
+      <hr
         ref={ref}
         className={classNameProp}
-        {...(sanitizedProps as unknown as MuiMenuDividerProps)}
+        {...(sanitizedProps as unknown as any)}
       />
     );
   },
@@ -194,7 +181,7 @@ MenuDivider.displayName = "MenuDivider";
 // ============================================================
 
 /** A non-interactive section label used to categorize groups of menu items. */
-export type MenuLabelProps = RecursicaOverStyled<MuiMenuLabelProps>;
+export type MenuLabelProps = RecursicaOverStyled<any>;
 
 const MenuLabel = forwardRef<HTMLDivElement, MenuLabelProps>(function MenuLabel(
   { overStyled = false, ...rest },
@@ -205,10 +192,10 @@ const MenuLabel = forwardRef<HTMLDivElement, MenuLabelProps>(function MenuLabel(
     .className as string | undefined;
 
   return (
-    <MuiMenu.Label
+    <div
       ref={ref}
       className={classNameProp}
-      {...(sanitizedProps as unknown as MuiMenuLabelProps)}
+      {...(sanitizedProps as unknown as any)}
     />
   );
 });
@@ -219,10 +206,10 @@ MenuLabel.displayName = "MenuLabel";
 // ============================================================
 
 /** Container for a submenu, wrapping Menu.Sub.Target and Menu.Sub.Dropdown. */
-export type MenuSubProps = MuiMenuSubProps;
+export type MenuSubProps = any;
 
 const MenuSubBase = function MenuSub(props: MenuSubProps) {
-  return <MuiMenu.Sub {...props} />;
+  return <div {...props} />;
 };
 MenuSubBase.displayName = "MenuSub";
 
@@ -231,10 +218,10 @@ MenuSubBase.displayName = "MenuSub";
 // ============================================================
 
 /** Wrapper for the element that triggers the submenu. */
-export type MenuSubTargetProps = MuiMenuSubTargetProps;
+export type MenuSubTargetProps = any;
 
 const MenuSubTarget = function MenuSubTarget(props: MenuSubTargetProps) {
-  return <MuiMenu.Sub.Target {...props} />;
+  return <div {...props} />;
 };
 MenuSubTarget.displayName = "MenuSubTarget";
 
@@ -246,9 +233,7 @@ MenuSubTarget.displayName = "MenuSubTarget";
  * A menu item that acts as a submenu trigger.
  * Renders within Menu.Sub.Target and displays a chevron indicator.
  */
-export type MenuSubItemProps = RecursicaOverStyled<
-  Omit<MuiMenuItemProps, "color">
->;
+export type MenuSubItemProps = RecursicaOverStyled<Omit<any, "color">>;
 
 const _MenuSubItem = forwardRef<HTMLButtonElement, MenuSubItemProps>(
   function MenuSubItem({ overStyled = false, ...rest }, ref) {
@@ -262,10 +247,10 @@ const _MenuSubItem = forwardRef<HTMLButtonElement, MenuSubItemProps>(
     const classNameProp = restRecord.className as string | undefined;
 
     return (
-      <MuiMenu.Sub.Item
+      <div
         ref={ref}
         className={classNameProp}
-        {...(sanitizedProps as unknown as MuiMenuItemProps)}
+        {...(sanitizedProps as unknown as any)}
       />
     );
   },
@@ -284,7 +269,7 @@ const MenuSubItem = _MenuSubItem as any;
 // ============================================================
 
 /** The dropdown panel for a submenu. */
-export type MenuSubDropdownProps = RecursicaOverStyled<MuiMenuSubDropdownProps>;
+export type MenuSubDropdownProps = RecursicaOverStyled<any>;
 
 const MenuSubDropdown = forwardRef<HTMLDivElement, MenuSubDropdownProps>(
   function MenuSubDropdown({ overStyled = false, ...rest }, ref) {
@@ -293,10 +278,10 @@ const MenuSubDropdown = forwardRef<HTMLDivElement, MenuSubDropdownProps>(
       .className as string | undefined;
 
     return (
-      <MuiMenu.Sub.Dropdown
+      <div
         ref={ref}
         className={classNameProp}
-        {...(sanitizedProps as unknown as MuiMenuSubDropdownProps)}
+        {...(sanitizedProps as unknown as any)}
       />
     );
   },

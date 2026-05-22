@@ -4,7 +4,6 @@ import {
   type TabsProps as MuiTabsProps,
   type ListProps as MuiTabsListProps,
   type TabsProps as MuiTabsTabProps,
-  type any as MuiTabsPanelProps,
 } from "@mui/material";
 import {
   filterStylingProps,

@@ -72,7 +72,7 @@ const _PaginationRoot = forwardRef<HTMLDivElement, PaginationRootProps>(
     );
 
     return (
-      <MuiPagination.Root
+      <div
         ref={ref}
         className={stylingParams.className}
         classes={stylingParams.classNames}
@@ -89,12 +89,7 @@ const _PaginationNext = forwardRef<
 >(function PaginationNext({ withLabel, icon, ...props }, ref) {
   const renderIcon = icon || (withLabel ? NextWithLabel : undefined);
   return (
-    <MuiPagination.Next
-      ref={ref}
-      data-variant="text"
-      icon={renderIcon as any}
-      {...props}
-    />
+    <div ref={ref} data-variant="text" icon={renderIcon as any} {...props} />
   );
 });
 _PaginationNext.displayName = "Pagination.Next";
@@ -105,12 +100,7 @@ const _PaginationPrevious = forwardRef<
 >(function PaginationPrevious({ withLabel, icon, ...props }, ref) {
   const renderIcon = icon || (withLabel ? PrevWithLabel : undefined);
   return (
-    <MuiPagination.Previous
-      ref={ref}
-      data-variant="text"
-      icon={renderIcon as any}
-      {...props}
-    />
+    <div ref={ref} data-variant="text" icon={renderIcon as any} {...props} />
   );
 });
 _PaginationPrevious.displayName = "Pagination.Previous";
@@ -121,12 +111,7 @@ const _PaginationFirst = forwardRef<
 >(function PaginationFirst({ withLabel, icon, ...props }, ref) {
   const renderIcon = icon || (withLabel ? FirstWithLabel : undefined);
   return (
-    <MuiPagination.First
-      ref={ref}
-      data-variant="text"
-      icon={renderIcon as any}
-      {...props}
-    />
+    <div ref={ref} data-variant="text" icon={renderIcon as any} {...props} />
   );
 });
 _PaginationFirst.displayName = "Pagination.First";
@@ -137,12 +122,7 @@ const _PaginationLast = forwardRef<
 >(function PaginationLast({ withLabel, icon, ...props }, ref) {
   const renderIcon = icon || (withLabel ? LastWithLabel : undefined);
   return (
-    <MuiPagination.Last
-      ref={ref}
-      data-variant="text"
-      icon={renderIcon as any}
-      {...props}
-    />
+    <div ref={ref} data-variant="text" icon={renderIcon as any} {...props} />
   );
 });
 _PaginationLast.displayName = "Pagination.Last";
