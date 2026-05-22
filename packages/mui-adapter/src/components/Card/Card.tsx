@@ -169,16 +169,7 @@ CardContent.displayName = "CardContent";
  * Supports polymorphism via the `component` prop or `renderRoot` for custom element rendering.
  * Use dot-notation sub-components for structured card layouts.
  */
-const PolymorphicCard = createPolymorphicComponent<
-  "div",
-  CardProps,
-  {
-    Section: typeof CardSection;
-    Header: typeof CardHeader;
-    Footer: typeof CardFooter;
-    Content: typeof CardContent;
-  }
->(CardBase);
+const PolymorphicCard = CardBase as any;
 
 // Attach static components for dot-notation access
 const _card = PolymorphicCard as unknown as Record<string, unknown>;
