@@ -1,0 +1,26 @@
+{
+  "name": "@recursica/adapter-tester",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Visual regression tester between recursica adapters",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test:visual": "playwright test",
+    "dev": "ts-node src/dev.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^25.9.1",
+    "@types/pixelmatch": "^5.2.6",
+    "@types/pngjs": "^6.0.5",
+    "express": "^5.2.1",
+    "http-proxy-middleware": "^4.0.0",
+    "pixelmatch": "^7.2.0",
+    "playwright": "^1.60.0",
+    "pngjs": "^7.0.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3"
+  }
+}

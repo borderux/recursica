@@ -6,6 +6,7 @@ If you are an AI agent building components:
 2. All style overrides must be done via `{ComponentName}.module.css` scoped to `.root`.
 3. You must use native CSS variables derived from `recursica_variables_scoped.css`.
 4. You must document any necessary HTML layout hooks in a `{COMPONENT}_IMPLEMENTATION_NOTES.md` file.
+5. You are strictly FORBIDDEN from using CSS variable fallbacks (e.g. `var(--variable-name, fallback-value)`) in `module.css` files.
    </critical_agent_directive>
 
 # Component Development Guide
@@ -31,6 +32,10 @@ This guide defines how to build design-system components that wrap UI libraries 
 - **No inline design tokens in TSX** – The component does not set `style={{ ... }}` for colors, sizes, typography, or other design tokens. All such values come from the CSS module.
 - **No custom properties set from TSX for styling** – The CSS module should reference Recursica/UIKit variables directly (e.g. `var(--recursica-ui-kit-components-button-...)`). If a “bridge” custom property is ever needed, document it as an exception.
 - **Design tokens only in CSS** – In the module, use only Recursica/UIKit CSS variables. No hex colors, magic pixel values, or raw shadows. **Never use CSS variable fallbacks** (e.g., `var(--token, #fff)` or `var(--token, var(--mantine-fallback))`). Rely entirely on the design tokens as the definitive source of truth.
+
+  > [!CAUTION] > **NEVER USE CSS VARIABLE FALLBACKS**
+  > Using fallback values inside `var(...)` statements (e.g. `var(--token-name, 8px)`) is strictly forbidden. Fallbacks mask missing or broken theme variables, bypass token verification checks, and cause design drift. All variable declarations must rely exclusively on the design token context: `var(--token-name)`.
+
 - **Selectors keyed off library `data-*`** – Use `[data-size]`, `[data-variant]`, etc. so one stylesheet handles all variants and sizes.
 - **Hover states** – Many libraries (e.g. Mantine) apply their own `:hover` styles. **Disable or override the library's hover** in your CSS module so only Recursica controls hover. Use hover state variables only when Recursica CSS (e.g. `recursica_variables_scoped.css`) defines hover variables for the component (e.g. `*_text-hover`). In the module, re-apply the default values for any property the library changes on hover (e.g. `background-color`, `border-color`) so the library's hover is fully overridden; then set only the Recursica hover variables (e.g. `color: var(--recursica_..._text-hover)`). If Recursica does not define hover variables for the component, do not add hover styles—leave the default (no hover) or document the exception.
 - **Attach styles via `classNames` or `className`** – Prefer **`classNames`** when the library supports overriding its internal parts (e.g. `root`, `section`, `label`); pass your module’s root class (e.g. `classNames={{ root: styles.root }}`) so the library root element gets your scoped class. Optionally pass part classes (e.g. `section: styles.section`) to target inner parts without `:global()`. Otherwise use **`className`** on the root. Do not mix both for the same root element. Do not use inline style objects for design.
@@ -161,6 +166,7 @@ To strictly ensure that every single form input matches the exact Recursica sema
 4. **ARIA Bridging**: Expose the base validation states (`error`, `required`, `id`) from your wrapper props and feed them blindly into `<FormControlWrapper>`. The wrapper calculates `aria-errormessage` and `aria-describedby` logic natively and directly `<cloneElement>` maps them straight down onto your naked input primitive for screen-reader viability safely!
 5. **Component-Specific Spacing Overrides**:
    Figma generates precise component-specific layout variables (e.g., `--recursica_ui-kit_components_text-field_variants_layouts_stacked_properties_top-bottom-margin`) that dictate layout bottom margins. Rather than ignoring these variables as redundant, we leverage a CSS Custom Property hook system:
+
    - **The Spacing Hook**: The root form control container (`FormControlLayout`) consumes the `--form-control-margin-bottom` spacing hook, falling back natively to the global layout gap token.
    - **The Component Style Override**: Inside `{Component}.module.css`, declare a `.layoutOverride` class targeting layout states:
 

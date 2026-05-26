@@ -59,6 +59,11 @@
 .sliderRoot {
   width: 100%;
   box-sizing: border-box;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  padding: 0;
+  margin: 0;
 }
 
 .sliderTrack {
@@ -72,9 +77,16 @@
 }
 
 .sliderBar {
+  height: var(
+    --recursica_ui-kit_components_slider_properties_track-height
+  ) !important;
+  border-radius: var(
+    --recursica_ui-kit_components_slider_properties_track-border-radius
+  ) !important;
   background-color: var(
     --recursica_ui-kit_components_slider_variants_states_default_properties_colors_track-active
-  );
+  ) !important;
+  border: none !important;
 }
 
 .sliderThumb {
@@ -93,6 +105,13 @@
   border: none;
   cursor: pointer;
   outline: none;
+}
+
+.sliderThumb:hover {
+  /* Reset MUI's default hover ring (box-shadow) */
+  box-shadow: var(
+    --recursica_ui-kit_components_slider_properties_thumb-elevation
+  );
 }
 
 .sliderThumb:focus,
@@ -129,6 +148,31 @@
   background-color: var(
     --recursica_ui-kit_components_slider_variants_states_default_properties_colors_step-indicator-color-active
   );
+}
+
+.sliderTooltip {
+  background-color: var(--form-field-text-valued) !important;
+  color: var(--form-field-background) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  padding: 4px 8px !important;
+  border-radius: 4px !important;
+
+  /* Reset MUI's default teardrop transform styling */
+  transform: translateY(-100%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.sliderTooltip * {
+  /* Prevent MUI's internal rotation hack */
+  transform: none !important;
+}
+
+.sliderTooltip::before {
+  /* Hide the default MUI teardrop arrow (if v5 uses before) */
+  display: none !important;
 }
 
 /* ==========================================

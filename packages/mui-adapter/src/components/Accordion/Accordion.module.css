@@ -62,7 +62,7 @@
     --recursica_ui-kit_components_accordion-item_properties_colors_background-collapsed
   );
 }
-.item[data-active] {
+.item:global(.Mui-expanded) {
   background-color: var(
     --recursica_ui-kit_components_accordion-item_properties_colors_background-expanded
   );
@@ -126,6 +126,19 @@
   );
 }
 
+/* Ensure inner native wrap aligns and has zero margins */
+.control :global(.MuiAccordionSummary-content) {
+  margin: 0 !important;
+  display: flex;
+  align-items: center;
+  gap: inherit;
+  flex: 1;
+}
+
+.control :global(.MuiAccordionSummary-content.Mui-expanded) {
+  margin: 0 !important;
+}
+
 /* Mantine natively places hover states on the control node. 
    We explicitly override it with our layer hover tokens via an overlay ::after structure
    so we can cleanly utilize the hover-opacity token! */
@@ -183,7 +196,7 @@
   height: 100%;
   object-fit: contain;
 }
-.item[data-active] .chevron {
+.item:global(.Mui-expanded) .chevron {
   transform: rotate(180deg);
 }
 

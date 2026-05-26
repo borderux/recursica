@@ -1,10 +1,11 @@
-import React, { forwardRef } from "react";
+import React, { forwardRef, createContext, useContext, useState } from "react";
 import {
   Accordion as MuiAccordion,
+  AccordionSummary as MuiAccordionSummary,
+  AccordionDetails as MuiAccordionDetails,
   type AccordionProps as MuiAccordionProps,
-  type AccordionItemProps,
-  type AccordionControlProps,
-  type AccordionPanelProps,
+  type AccordionSummaryProps as MuiAccordionSummaryProps,
+  type AccordionDetailsProps as MuiAccordionDetailsProps,
 } from "@mui/material";
 import {
   filterStylingProps,
@@ -12,79 +13,107 @@ import {
 } from "../../utils/filterStylingProps";
 import styles from "./Accordion.module.css";
 
+const ChevronIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={{ width: "100%", height: "100%" }}
+  >
+    <polyline points="6 9 12 15 18 9"></polyline>
+  </svg>
+);
+
+const AccordionContext = createContext<{
+  value: string | string[] | null;
+  onChange: (val: string) => void;
+} | null>(null);
+
 // ==== ACCORDION CONTAINER ====
-export type AccordionProps = RecursicaOverStyled<MuiAccordionProps>;
-
-const AccordionBase = function Accordion({
-  variant = "unstyled",
-  overStyled = false,
-  ...rest
-}: AccordionProps) {
-  const sanitizedProps = filterStylingProps(rest, overStyled);
-
-  // Bind all deep CSS module references natively into the global class mapping schema
-  const mergedClassNames: Partial<Record<string, string>> = {
-    root: styles.root,
-    item: styles.item,
-    control: styles.control,
-    label: styles.label,
-    chevron: styles.chevron,
-    panel: styles.panel,
-    content: styles.content,
-  };
-
-  const classNamesProp = (sanitizedProps as Record<string, unknown>).classNames;
-  if (
-    classNamesProp &&
-    typeof classNamesProp === "object" &&
-    !Array.isArray(classNamesProp)
-  ) {
-    const o = classNamesProp as Record<string, string>;
-    Object.keys(o).forEach((key) => {
-      if (mergedClassNames[key]) {
-        mergedClassNames[key] = `${mergedClassNames[key]} ${o[key]}`;
-      } else {
-        mergedClassNames[key] = o[key];
-      }
-    });
+export type AccordionProps = RecursicaOverStyled<
+  React.HTMLAttributes<HTMLDivElement> & {
+    variant?: string;
+    value?: string | string[];
+    defaultValue?: string | string[];
+    onChange?: (value: string | string[] | null) => void;
+    multiple?: boolean;
   }
+>;
 
-  const classNameProp = (sanitizedProps as Record<string, unknown>)
-    .className as string | undefined;
+const AccordionBase = forwardRef<HTMLDivElement, AccordionProps>(
+  function Accordion(
+    {
+      variant = "unstyled",
+      overStyled = false,
+      value,
+      defaultValue,
+      onChange,
+      multiple = false,
+      children,
+      ...rest
+    },
+    ref,
+  ) {
+    const sanitizedProps = filterStylingProps(rest, overStyled);
+    const classNameProp = (sanitizedProps as Record<string, unknown>)
+      .className as string | undefined;
 
-  return (
-    <MuiAccordion
-      variant={variant}
-      className={classNameProp}
-      classes={mergedClassNames}
-      {...(sanitizedProps as unknown as MuiAccordionProps)}
-    />
-  );
-};
+    const finalClass =
+      [styles.root, classNameProp].filter(Boolean).join(" ") || undefined;
+
+    const [uncontrolledValue, setUncontrolledValue] = useState<
+      string | string[] | null
+    >(defaultValue !== undefined ? defaultValue : multiple ? [] : null);
+    const activeValue = value !== undefined ? value : uncontrolledValue;
+
+    const handleItemChange = (itemValue: string) => {
+      let newValue: string | string[] | null;
+      if (multiple) {
+        const arr = Array.isArray(activeValue)
+          ? activeValue
+          : activeValue
+            ? [activeValue as string]
+            : [];
+        newValue = arr.includes(itemValue)
+          ? arr.filter((v) => v !== itemValue)
+          : [...arr, itemValue];
+      } else {
+        newValue = activeValue === itemValue ? null : itemValue;
+      }
+      setUncontrolledValue(newValue);
+      onChange?.(newValue);
+    };
+
+    return (
+      <AccordionContext.Provider
+        value={{ value: activeValue, onChange: handleItemChange }}
+      >
+        <div
+          ref={ref}
+          className={finalClass}
+          data-variant={variant}
+          {...(sanitizedProps as React.HTMLAttributes<HTMLDivElement>)}
+        >
+          {children}
+        </div>
+      </AccordionContext.Provider>
+    );
+  },
+);
 AccordionBase.displayName = "Accordion";
 
 // ==== ACCORDION ITEM ====
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface RecursicaAccordionItemProps
-  extends Omit<AccordionItemProps, "className"> {}
-// We need to omit and re-merge native props like in Badge
 export type AccordionItemWrapperProps = RecursicaOverStyled<
-  AccordionItemProps & {
-    /**
-     * When provided alongside `leftIcon` or independently, this auto-generates the Accordion Control and Panel DOM layers natively.
-     */
+  Omit<MuiAccordionProps, "children" | "value"> & {
+    children?: React.ReactNode;
     title?: React.ReactNode;
-
-    /**
-     * Leading icon explicitly mapped into the Mui `Accordion.Control` leftSection boundary natively.
-     */
     leftIcon?: React.ReactNode;
-
-    /**
-     * Toggles the presence of the bottom trailing divider native to AccordionItems.
-     * @default true
-     */
     divider?: boolean;
+    value: string;
   }
 >;
 
@@ -92,7 +121,16 @@ export const AccordionItem = forwardRef<
   HTMLDivElement,
   AccordionItemWrapperProps
 >(function AccordionItem(
-  { title, leftIcon, divider = true, children, overStyled = false, ...rest },
+  {
+    title,
+    leftIcon,
+    divider = true,
+    children,
+    value,
+    overStyled = false,
+    style,
+    ...rest
+  },
   ref,
 ) {
   const sanitizedProps = filterStylingProps(rest, overStyled);
@@ -100,17 +138,38 @@ export const AccordionItem = forwardRef<
     .className as string | undefined;
 
   const finalClass =
-    [divider ? undefined : styles.noDivider, classNameProp]
+    [styles.item, divider ? undefined : styles.noDivider, classNameProp]
       .filter(Boolean)
       .join(" ") || undefined;
 
-  // If the user utilizes the explicit 'title' prop from Recursica, we securely auto-construct the Mui sub-hierarchy natively!
-  // If not, we defer to raw composable children (meaning the integrator maps `<Accordion.Control>` manually).
+  const ctx = useContext(AccordionContext);
+  const isExpanded = ctx
+    ? Array.isArray(ctx.value)
+      ? ctx.value.includes(value)
+      : ctx.value === value
+    : undefined;
+
+  const handleChange = () => {
+    ctx?.onChange(value);
+  };
+
+  // background-color: transparent allows Layer overrides to naturally penetrate
+  const mergedStyle = { backgroundColor: "transparent", ...style };
+
   return (
-    <div
+    <MuiAccordion
       ref={ref}
       className={finalClass}
-      {...(sanitizedProps as unknown as AccordionItemProps)}
+      disableGutters
+      elevation={0}
+      square
+      expanded={isExpanded}
+      onChange={handleChange}
+      style={mergedStyle}
+      {...(sanitizedProps as unknown as Omit<
+        MuiAccordionProps,
+        "expanded" | "onChange"
+      >)}
     >
       {title ? (
         <>
@@ -120,23 +179,20 @@ export const AccordionItem = forwardRef<
       ) : (
         children
       )}
-    </div>
+    </MuiAccordion>
   );
 });
 AccordionItem.displayName = "AccordionItem";
 
 // ==== ACCORDION CONTROL ====
 export type AccordionControlWrapperProps = RecursicaOverStyled<
-  AccordionControlProps & {
-    /**
-     * Leading icon explicitly mapped into the Mui `Accordion.Control` leftSection boundary natively.
-     */
+  MuiAccordionSummaryProps & {
     leftIcon?: React.ReactNode;
   }
 >;
 
 export const AccordionControl = forwardRef<
-  HTMLButtonElement,
+  HTMLDivElement,
   AccordionControlWrapperProps
 >(function AccordionControl(
   { leftIcon, children, overStyled = false, ...rest },
@@ -146,43 +202,54 @@ export const AccordionControl = forwardRef<
   const classNameProp = (sanitizedProps as Record<string, unknown>)
     .className as string | undefined;
 
+  const finalClass =
+    [styles.control, classNameProp].filter(Boolean).join(" ") || undefined;
+
   return (
-    <div
+    <MuiAccordionSummary
       ref={ref}
-      className={classNameProp}
-      icon={
-        leftIcon ? (
-          <span className={styles.iconLeftWrapper} aria-hidden>
-            {leftIcon}
-          </span>
-        ) : undefined
+      className={finalClass}
+      expandIcon={
+        <span className={styles.chevron}>
+          <ChevronIcon />
+        </span>
       }
-      {...(sanitizedProps as unknown as AccordionControlProps)}
+      {...(sanitizedProps as unknown as MuiAccordionSummaryProps)}
     >
-      {children}
-    </div>
+      {leftIcon && (
+        <span className={styles.iconLeftWrapper} aria-hidden>
+          {leftIcon}
+        </span>
+      )}
+      <div className={styles.label}>{children}</div>
+    </MuiAccordionSummary>
   );
 });
 AccordionControl.displayName = "AccordionControl";
 
 // ==== ACCORDION PANEL ====
 export type AccordionPanelWrapperProps =
-  RecursicaOverStyled<AccordionPanelProps>;
+  RecursicaOverStyled<MuiAccordionDetailsProps>;
 
 export const AccordionPanel = forwardRef<
   HTMLDivElement,
   AccordionPanelWrapperProps
->(function AccordionPanel({ overStyled = false, ...rest }, ref) {
+>(function AccordionPanel({ overStyled = false, children, ...rest }, ref) {
   const sanitizedProps = filterStylingProps(rest, overStyled);
   const classNameProp = (sanitizedProps as Record<string, unknown>)
     .className as string | undefined;
 
+  const finalClass =
+    [styles.panel, classNameProp].filter(Boolean).join(" ") || undefined;
+
   return (
-    <div
+    <MuiAccordionDetails
       ref={ref}
-      className={classNameProp}
-      {...(sanitizedProps as unknown as AccordionPanelProps)}
-    />
+      className={finalClass}
+      {...(sanitizedProps as unknown as MuiAccordionDetailsProps)}
+    >
+      <div className={styles.content}>{children}</div>
+    </MuiAccordionDetails>
   );
 });
 AccordionPanel.displayName = "AccordionPanel";

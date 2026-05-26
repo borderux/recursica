@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Recursica UI Kit - Adapter Dev Mode</title>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #1e1e1e;
+      color: #fff;
+      overflow: hidden;
+    }
+    .pane {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .header {
+      padding: 10px 15px;
+      background-color: #252526;
+      border-bottom: 1px solid #333;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .status {
+      font-size: 11px;
+      color: #aaa;
+      text-transform: none;
+      letter-spacing: normal;
+      font-weight: normal;
+    }
+    .status.connected {
+      color: #4CAF50;
+    }
+    iframe {
+      flex: 1;
+      border: none;
+      width: 100%;
+      background: white;
+    }
+    .divider {
+      width: 4px;
+      background: #333;
+      cursor: col-resize;
+      z-index: 10;
+      transition: background 0.2s;
+    }
+    .divider:hover {
+      background: #007acc;
+    }
+    .h-divider {
+      height: 4px;
+      background: #333;
+      cursor: row-resize;
+      z-index: 10;
+      transition: background 0.2s;
+    }
+    .h-divider:hover {
+      background: #007acc;
+    }
+    .right-top {
+      flex: 0 0 70%;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .right-bottom {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      background-color: #1e1e1e;
+    }
+    .notes-area {
+      flex: 1;
+      padding: 15px;
+      background: transparent;
+      border: none;
+      color: #d4d4d4;
+      font-family: monospace;
+      font-size: 13px;
+      resize: none;
+      outline: none;
+    }
+    .btn {
+      background: #0e639c;
+      color: white;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    .btn:hover {
+      background: #1177bb;
+    }
+    /* Modal Styles */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: #252526;
+      border: 1px solid #444;
+      width: 60%;
+      height: 70%;
+      display: flex;
+      flex-direction: column;
+      border-radius: 6px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .modal-header {
+      padding: 15px;
+      border-bottom: 1px solid #444;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-header h2 {
+      margin: 0;
+      font-size: 16px;
+    }
+    .close-btn {
+      background: transparent;
+      border: none;
+      color: #ccc;
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .close-btn:hover { color: white; }
+    .report-area {
+      flex: 1;
+      padding: 15px;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      border: none;
+      font-family: monospace;
+      resize: none;
+      outline: none;
+    }
+    .modal-footer {
+      padding: 10px 15px;
+      border-top: 1px solid #444;
+      display: flex;
+      justify-content: flex-end;
+    }
+  </style>
+</head>
+<body>
+  <div class="pane" id="leftPane">
+    <div class="header">
+      Mantine Adapter (Source of Truth)
+      <span class="status connected" id="mantineStatus">Connected & Syncing</span>
+    </div>
+    <!-- Load Mantine via the SAME ORIGIN proxy -->
+    <iframe id="mantine" src="/?path=/story/ui-kit-slider--default"></iframe>
+  </div>
+  
+  <div class="divider" id="vDivider"></div>
+  
+  <div class="pane" id="rightPane">
+    <div class="right-top" id="rightTop">
+      <div class="header">
+        MUI Adapter (Syncing)
+        <span class="status connected" id="muiStatus">Ready</span>
+      </div>
+      <!-- Spacer to align the view with Mantine's Storybook header (40px) -->
+      <div style="height: 40px; flex: 0 0 40px; background-color: #fff; border-bottom: 1px solid #e6e6e6; box-sizing: border-box;"></div>
+      <!-- Load the bare MUI component preview -->
+      <iframe id="mui" src="http://localhost:6012/iframe.html?id=ui-kit-slider--default&viewMode=story"></iframe>
+    </div>
+    
+    <div class="h-divider" id="hDivider"></div>
+    
+    <div class="right-bottom" id="rightBottom">
+      <div class="header">
+        <span>Component Notes <span id="currentNoteId" style="color:#aaa; text-transform:none; font-weight:normal; margin-left: 10px;"></span></span>
+        <button class="btn" id="fullReportBtn">Full Report</button>
+      </div>
+      <textarea id="notesArea" class="notes-area" placeholder="Take notes on visual differences here... They will be automatically saved locally for this specific component state."></textarea>
+    </div>
+  </div>
+
+  <!-- Full Report Modal -->
+  <div class="modal-overlay" id="reportModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Component Discrepancy Report</h2>
+        <button class="close-btn" id="closeModalBtn">&times;</button>
+      </div>
+      <textarea id="reportArea" class="report-area" readonly></textarea>
+      <div class="modal-footer">
+        <button class="btn" id="clearNotesBtn" style="padding: 8px 15px; margin-right: 10px; background-color: #d32f2f;">Clear All Notes</button>
+        <button class="btn" id="copyReportBtn" style="padding: 8px 15px;">Copy to Clipboard</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const muiIframe = document.getElementById('mui');
+    const mantineIframe = document.getElementById('mantine');
+    const muiStatus = document.getElementById('muiStatus');
+
+    // Sync initial iframe sources with outer URL if params exist
+    const outerParams = new URLSearchParams(window.location.search);
+    const initialId = outerParams.get('id');
+    const initialArgs = outerParams.get('args');
+    if (initialId) {
+      let mSrc = `/?path=/story/${initialId}`;
+      if (initialArgs) {
+        mSrc += `&args=${initialArgs}`;
+      }
+      mantineIframe.src = mSrc;
+      
+      let uSrc = `http://localhost:6012/iframe.html?id=${initialId}&viewMode=story`;
+      if (initialArgs) {
+        uSrc += `&args=${initialArgs}`;
+      }
+      muiIframe.src = uSrc;
+    }
+    
+    // Resizers
+    const vDivider = document.getElementById('vDivider');
+    const leftPane = document.getElementById('leftPane');
+    const hDivider = document.getElementById('hDivider');
+    const rightTop = document.getElementById('rightTop');
+    
+    // Notes
+    const notesArea = document.getElementById('notesArea');
+    const currentNoteIdLabel = document.getElementById('currentNoteId');
+    let currentStoryId = '';
+
+    // Modal
+    const reportModal = document.getElementById('reportModal');
+    const fullReportBtn = document.getElementById('fullReportBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const reportArea = document.getElementById('reportArea');
+    const copyReportBtn = document.getElementById('copyReportBtn');
+
+    // Resizing Logic - Vertical
+    let isVResizing = false;
+    vDivider.addEventListener('mousedown', (e) => {
+      isVResizing = true;
+      document.body.style.cursor = 'col-resize';
+      mantineIframe.style.pointerEvents = 'none';
+      muiIframe.style.pointerEvents = 'none';
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (isVResizing) {
+        const totalWidth = document.body.offsetWidth;
+        const percentage = (e.clientX / totalWidth) * 100;
+        if (percentage > 20 && percentage < 80) {
+          leftPane.style.flex = `0 0 ${percentage}%`;
+        }
+      } else if (isHResizing) {
+        const totalHeight = document.body.offsetHeight;
+        const percentage = (e.clientY / totalHeight) * 100;
+        if (percentage > 20 && percentage < 90) {
+          rightTop.style.flex = `0 0 ${percentage}%`;
+        }
+      }
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (isVResizing || isHResizing) {
+        isVResizing = false;
+        isHResizing = false;
+        document.body.style.cursor = 'default';
+        mantineIframe.style.pointerEvents = 'auto';
+        muiIframe.style.pointerEvents = 'auto';
+      }
+    });
+
+    // Resizing Logic - Horizontal
+    let isHResizing = false;
+    hDivider.addEventListener('mousedown', (e) => {
+      isHResizing = true;
+      document.body.style.cursor = 'row-resize';
+      mantineIframe.style.pointerEvents = 'none';
+      muiIframe.style.pointerEvents = 'none';
+    });
+
+    // Auto-save notes logic
+    notesArea.addEventListener('input', (e) => {
+      if (currentStoryId) {
+        const val = e.target.value;
+        if (val.trim() === '') {
+          localStorage.removeItem(`notes_${currentStoryId}`);
+        } else {
+          localStorage.setItem(`notes_${currentStoryId}`, val);
+        }
+      }
+    });
+
+    function loadNotes(storyId) {
+      if (currentStoryId !== storyId) {
+        currentStoryId = storyId;
+        currentNoteIdLabel.textContent = `(${storyId})`;
+        const savedNote = localStorage.getItem(`notes_${storyId}`);
+        notesArea.value = savedNote || '';
+      }
+    }
+
+    // Modal Logic
+    const clearNotesBtn = document.getElementById('clearNotesBtn');
+    
+    fullReportBtn.addEventListener('click', async () => {
+      let reportText = '';
+      try {
+        const response = await fetch('/report-header.txt');
+        reportText = await response.text();
+      } catch (err) {
+        reportText = '# UI Component Discrepancy Report\n\n*(Failed to load custom header)*\n\n';
+      }
+      
+      let hasNotes = false;
+      
+      // Iterate through local storage
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('notes_')) {
+          hasNotes = true;
+          const configState = key.replace('notes_', '');
+          const note = localStorage.getItem(key);
+          
+          // Parse a human readable name from the config string (e.g., ui-kit-slider--default)
+          const baseId = configState.split(' | ')[0];
+          const parts = baseId.split('--');
+          let compName = (parts[0] || '').replace('ui-kit-', '').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+          let storyName = (parts[1] || '').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+          
+          const humanReadableHeader = `${compName}${storyName ? ` (${storyName})` : ''}`;
+          
+          reportText += `## Component: ${humanReadableHeader}\n**Storybook Config State:** \`${configState}\`\n\n${note}\n\n---\n\n`;
+        }
+      }
+      
+      if (!hasNotes) {
+        reportText += '*No notes taken yet.*';
+      }
+      
+      reportArea.value = reportText;
+      reportModal.style.display = 'flex';
+    });
+
+    closeModalBtn.addEventListener('click', () => {
+      reportModal.style.display = 'none';
+    });
+    
+    // Close modal on click outside
+    reportModal.addEventListener('click', (e) => {
+      if (e.target === reportModal) {
+        reportModal.style.display = 'none';
+      }
+    });
+
+    copyReportBtn.addEventListener('click', () => {
+      reportArea.select();
+      document.execCommand('copy');
+      const originalText = copyReportBtn.textContent;
+      copyReportBtn.textContent = 'Copied!';
+      setTimeout(() => {
+        copyReportBtn.textContent = originalText;
+      }, 2000);
+    });
+
+    clearNotesBtn.addEventListener('click', () => {
+      if (confirm('Are you sure you want to delete all your component notes? This cannot be undone.')) {
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('notes_')) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach(k => localStorage.removeItem(k));
+        
+        notesArea.value = '';
+        reportArea.value = '*No notes taken yet.*';
+      }
+    });
+
+    // Same-Origin Polling Syncing
+    let lastUrl = '';
+    setInterval(() => {
+      try {
+        const currentUrl = mantineIframe.contentWindow.location.href;
+        
+        if (currentUrl && currentUrl !== lastUrl && currentUrl !== 'about:blank') {
+          lastUrl = currentUrl;
+          
+          const url = new URL(currentUrl);
+          const args = url.searchParams.get('args');
+          const id = url.searchParams.get('id') || url.searchParams.get('path')?.replace('/story/', '');
+          
+          if (id) {
+            // Determine the full state string to use as the notes key
+            const stateId = args ? `${id} | ${args}` : id;
+            loadNotes(stateId);
+
+            // Sync search parameters to the outer browser URL in the address bar
+            const outerUrl = new URL(window.location.href);
+            let urlChanged = false;
+            if (outerUrl.searchParams.get('id') !== id) {
+              outerUrl.searchParams.set('id', id);
+              urlChanged = true;
+            }
+            if (args) {
+              if (outerUrl.searchParams.get('args') !== args) {
+                outerUrl.searchParams.set('args', args);
+                urlChanged = true;
+              }
+            } else if (outerUrl.searchParams.has('args')) {
+              outerUrl.searchParams.delete('args');
+              urlChanged = true;
+            }
+            if (urlChanged) {
+              window.history.replaceState({}, '', outerUrl.pathname + outerUrl.search);
+            }
+            
+            let muiUrl = `http://localhost:6012/iframe.html?id=${id}&viewMode=story`;
+            if (args) {
+              muiUrl += `&args=${args}`;
+            }
+            
+            if (muiIframe.src !== muiUrl) {
+              muiStatus.textContent = 'Updating...';
+              muiStatus.classList.remove('connected');
+              muiIframe.src = muiUrl;
+              
+              setTimeout(() => {
+                muiStatus.textContent = 'Synced';
+                muiStatus.classList.add('connected');
+              }, 500);
+            }
+          }
+        }
+      } catch (e) {
+        // Ignore cross-origin errors if they briefly occur during navigation
+      }
+    }, 100);
+  </script>
+</body>
+</html>

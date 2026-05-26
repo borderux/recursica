@@ -7,8 +7,8 @@
 
   /* Recursica Layout Overrides mapped down dynamically from components */
   padding: 0; /* Hardcoded structural reset */
-  max-width: var(--form-control-max-width, 100%);
-  min-width: var(--form-control-min-width, auto);
+  max-width: var(--form-control-max-width);
+  min-width: var(--form-control-min-width);
 }
 
 /* =========================================
@@ -51,16 +51,13 @@
 */
 .root[data-form-layout="side-by-side"] .leftSection {
   margin-right: var(
-    --recursica_ui-kit_components_label_variants_layouts_side-by-side_properties_gutter,
-    var(--recursica_ui-kit_globals_form_properties_label-field-gap-horizontal)
+    --recursica_ui-kit_components_label_variants_layouts_side-by-side_properties_gutter
   );
   padding-top: var(
-    --recursica_ui-kit_components_label_variants_layouts_side-by-side_properties_vertical-padding,
-    10px
+    --recursica_ui-kit_components_label_variants_layouts_side-by-side_properties_vertical-padding
   );
   min-height: var(
-    --recursica_ui-kit_components_label_variants_layouts_side-by-side_properties_min-height,
-    48px
+    --recursica_ui-kit_components_label_variants_layouts_side-by-side_properties_min-height
   );
 }
 

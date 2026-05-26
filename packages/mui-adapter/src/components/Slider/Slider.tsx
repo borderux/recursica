@@ -146,11 +146,12 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
     // Securely map core native blocks down ensuring nested CSS modules map precisely
     const mergedClassNames: Partial<Record<string, string>> = {
       root: styles.sliderRoot,
-      track: styles.sliderTrack,
-      bar: styles.sliderBar,
+      rail: styles.sliderTrack,
+      track: styles.sliderBar,
       thumb: styles.sliderThumb,
       mark: styles.sliderMark,
       markLabel: styles.sliderMarkLabel,
+      valueLabel: styles.sliderTooltip,
     };
 
     const classNamesProp = restRecord.classNames;
@@ -163,10 +164,10 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
       mergedClassNames.root = o.root
         ? `${styles.sliderRoot} ${o.root}`
         : styles.sliderRoot;
-      mergedClassNames.track = o.track
+      mergedClassNames.rail = o.track
         ? `${styles.sliderTrack} ${o.track}`
         : styles.sliderTrack;
-      mergedClassNames.bar = o.bar
+      mergedClassNames.track = o.bar
         ? `${styles.sliderBar} ${o.bar}`
         : styles.sliderBar;
       mergedClassNames.thumb = o.thumb
@@ -241,7 +242,12 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
                 min={min}
                 max={max}
                 step={step}
-                label={tooltipLabel}
+                valueLabelDisplay={tooltipLabel === null ? "off" : "auto"}
+                valueLabelFormat={
+                  typeof tooltipLabel === "function"
+                    ? (tooltipLabel as any)
+                    : undefined
+                }
                 {...(sanitizedProps as unknown as MuiSliderProps)}
               />
             </div>

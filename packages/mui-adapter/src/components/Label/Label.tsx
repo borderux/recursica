@@ -53,15 +53,14 @@ export const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
       <InputLabel
         ref={ref}
         shrink={true}
-        required={required}
         className={className ? `${styles.root} ${className}` : styles.root}
-        classes={{
-          asterisk: styles.required, // Override MUI asterisk hook safely to our token colors
-        }}
         {...(sanitizedProps as InputLabelProps)}
       >
         <div className={styles.innerLayout}>
-          <span className={styles.text}>{children}</span>
+          <span className={styles.textWrapper}>
+            <span className={styles.text}>{children}</span>
+            {required && <span className={styles.required}> *</span>}
+          </span>
 
           <div className={styles.endNodes}>
             {labelActionArea && (

@@ -16,8 +16,8 @@ import styles from "./Autocomplete.module.css";
 
 export interface RecursicaAutocompleteProps
   extends Omit<
-      MuiAutocompleteProps,
-      "size" | "variant" | "radius" | "wrapperProps"
+      MuiAutocompleteProps<any, any, any, any>,
+      "size" | "variant" | "radius" | "wrapperProps" | "renderInput"
     >,
     Pick<
       InputWrapperProps,
@@ -29,6 +29,9 @@ export interface RecursicaAutocompleteProps
     >,
     ReadOnlyControlProps {
   data?: any[];
+  leftSection?: React.ReactNode;
+  rightSection?: React.ReactNode;
+  placeholder?: string;
 }
 
 export type AutocompleteProps = RecursicaOverStyled<RecursicaAutocompleteProps>;
@@ -62,6 +65,10 @@ export const Autocomplete = forwardRef<HTMLInputElement, AutocompleteProps>(
       value,
       defaultValue,
       data,
+      leftSection,
+      rightSection,
+      placeholder,
+      ListboxProps,
       ...rest
     } = props;
     const sanitizedProps = filterStylingProps(rest, overStyled);
@@ -74,10 +81,9 @@ export const Autocomplete = forwardRef<HTMLInputElement, AutocompleteProps>(
 
     // Securely map core native blocks down ensuring nested CSS modules map precisely
     const mergedClassNames: Partial<Record<string, string>> = {
-      wrapper: styles.root, // The nested Input internal relative wrapper bounding box
-      input: styles.input,
-      section: styles.section,
-      dropdown: styles.dropdown,
+      root: styles.root,
+      inputRoot: styles.input, // Map Mantine .input (wrapper) to MUI's inputRoot
+      listbox: styles.dropdown, // Map Mantine .dropdown to MUI's listbox
       option: styles.option,
     };
 
@@ -88,16 +94,13 @@ export const Autocomplete = forwardRef<HTMLInputElement, AutocompleteProps>(
       !Array.isArray(classNamesProp)
     ) {
       const o = classNamesProp as Partial<Record<string, string>>;
-      mergedClassNames.wrapper = o.wrapper
+      mergedClassNames.root = o.wrapper
         ? `${styles.root} ${o.wrapper}`
         : styles.root;
-      mergedClassNames.input = o.input
+      mergedClassNames.inputRoot = o.input
         ? `${styles.input} ${o.input}`
         : styles.input;
-      mergedClassNames.section = o.section
-        ? `${styles.section} ${o.section}`
-        : styles.section;
-      mergedClassNames.dropdown = o.dropdown
+      mergedClassNames.listbox = o.dropdown
         ? `${styles.dropdown} ${o.dropdown}`
         : styles.dropdown;
       mergedClassNames.option = o.option
@@ -108,6 +111,11 @@ export const Autocomplete = forwardRef<HTMLInputElement, AutocompleteProps>(
     const wrapperClass = className
       ? `${styles.layoutOverride} ${className}`
       : styles.layoutOverride;
+
+    const sectionClass =
+      classNamesProp && (classNamesProp as any).section
+        ? `${styles.section} ${(classNamesProp as any).section}`
+        : styles.section;
 
     return (
       <WithReadOnlyWrapper
@@ -143,13 +151,46 @@ export const Autocomplete = forwardRef<HTMLInputElement, AutocompleteProps>(
             disabled={disabled}
             value={value}
             defaultValue={defaultValue}
-            wrapperProps={{
-              "data-disabled": disabled ? "true" : undefined,
-              "data-error": error ? "true" : undefined,
+            forcePopupIcon={false}
+            disableClearable={true}
+            ListboxProps={{
+              ...ListboxProps,
+              className: mergedClassNames.listbox,
             }}
             options={data || []}
-            renderInput={(params) => <MuiTextField {...params} />}
-            {...(sanitizedProps as unknown as MuiAutocompleteProps)}
+            renderInput={(params) => {
+              const { InputProps, ...restParams } = params;
+              return (
+                <MuiTextField
+                  {...restParams}
+                  placeholder={placeholder}
+                  variant="standard"
+                  InputProps={{
+                    ...InputProps,
+                    disableUnderline: true,
+                    startAdornment: leftSection ? (
+                      <span className={sectionClass}>{leftSection}</span>
+                    ) : (
+                      InputProps.startAdornment
+                    ),
+                    endAdornment: rightSection ? (
+                      <>
+                        {InputProps.endAdornment}
+                        <span className={sectionClass}>{rightSection}</span>
+                      </>
+                    ) : (
+                      InputProps.endAdornment
+                    ),
+                  }}
+                />
+              );
+            }}
+            {...(sanitizedProps as unknown as MuiAutocompleteProps<
+              any,
+              any,
+              any,
+              any
+            >)}
           />
         }
       />

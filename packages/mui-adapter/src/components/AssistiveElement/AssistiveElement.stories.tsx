@@ -76,3 +76,17 @@ export const NoIconHelp: Story = {
     </div>
   ),
 };
+
+export const Docs: Story = {
+  args: {
+    children: "Docs explicitly mapped configuration.",
+    assistiveVariant: "help",
+    assistiveWithIcon: true,
+  },
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ ...args }: any) => (
+    <div style={{ padding: "48px" }}>
+      <AssistiveElement {...args} />
+    </div>
+  ),
+};

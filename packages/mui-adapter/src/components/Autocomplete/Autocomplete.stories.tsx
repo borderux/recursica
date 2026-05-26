@@ -185,3 +185,12 @@ export const EditableReadOnly: Story = {
     labelWithEditIcon: true,
   },
 };
+
+export const Docs: Story = {
+  args: {
+    label: "Documentation Mode",
+    placeholder: "Docs layout validation...",
+    data: ["Doc A", "Doc B"],
+    assistiveText: "Explicitly requested docs story.",
+  },
+};
