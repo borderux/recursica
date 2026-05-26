@@ -43,7 +43,9 @@
 .innerLayout {
   display: flex;
   align-items: center;
-  justify-content: space-between; /* pushes endNodes to right natively */
+  gap: var(
+    --recursica_ui-kit_components_label_properties_label-optional-text-gap
+  );
   width: 100%;
 }
 
@@ -56,8 +58,19 @@
   /* Override the `.MuiInputLabel-asterisk` natively */
   color: var(--recursica_ui-kit_components_label_properties_colors_asterisk);
   margin-left: var(
-    --recursica_ui-kit_components_label_properties_required-indicator-gap,
-    2px
+    --recursica_ui-kit_components_label_properties_required-indicator-gap
+  );
+}
+
+/* MUI propagates .Mui-error to the label automatically on FormControl error. 
+   We explicitly override this bleed to prevent the main label text from turning red, 
+   while allowing the asterisk to take the error color! */
+.root:global(.Mui-error) {
+  color: var(--recursica_ui-kit_components_label_properties_colors_text);
+}
+.root:global(.Mui-error) .required {
+  color: var(
+    --recursica_ui-kit_components_assistive-element_variants_types_error_properties_colors_text-color
   );
 }
 
@@ -67,7 +80,6 @@
   gap: var(
     --recursica_ui-kit_components_label_properties_label-optional-text-gap
   );
-  margin-left: auto; /* Pushes to the end natively */
 }
 
 .optionalText {

@@ -1,0 +1,8 @@
+# UI Component Discrepancy Report
+
+*You are an expert AI frontend developer. Below is a report of visual discrepancies between the Source of Truth (`@recursica/mantine-adapter` running in Storybook) and the target implementation (`@recursica/mui-adapter` running in Storybook).*
+
+*Each section below represents a specific component story and its active control arguments. The section header provides the human-readable component name along with the exact Storybook URL configuration string. Use this context to apply the necessary CSS/TypeScript fixes to the MUI adapter to perfectly match the Mantine Source of Truth.*
+
+---
+

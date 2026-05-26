@@ -129,7 +129,7 @@ export const FormControlWrapper = React.forwardRef<
           {mappedChildren}
 
           {/* Append native assistive block dynamically below the input */}
-          {finalAssistiveText && (
+          {(finalAssistiveText || error) && (
             <AssistiveElement
               id={descriptionId}
               assistiveVariant={error ? "error" : "help"}
