@@ -73,14 +73,20 @@ npm run test:visual
 
 ### What happens during execution?
 
-1. **Story Extraction**: The script fetches the `index.json` from both Storybook instances to compile a list of all shared `ui-kit-*` stories.
-2. **Headless Snapshots**: It launches Playwright (Chromium) in the background and navigates to the isolated iframe URLs for both adapters.
-3. **Pixel Diffing**: It captures screenshots and uses `pixelmatch` to generate a diff overlay.
-4. **Report Generation**: A static HTML report is generated detailing matches and discrepancies.
+1. **Automatic Storybook Bootup**: The testing engine checks ports `6011` and `6012`. If they are inactive, it automatically starts the Mantine and MUI Storybooks in the background and cleans them up upon exit. If they are already active, it instantly reuses them.
+2. **Story Discovery**: The test suite fetches the Storybook index (`http://localhost:6011/index.json`) to dynamically discover and parameterize tests for every single component story under the `ui-kit-` group.
+3. **Headless Snapshots**: It launches headless Chrome in the background, navigates to the isolated iframe views for both adapters, and takes side-by-side snapshots.
+4. **Pixel Diffing**: It diffs the images using `pixelmatch` against our global mismatch threshold.
+5. **Native Report Generation**: All raw snapshots, highlighted pixel diff overlays, and extracted computed CSS DOM trees are embedded directly as test attachments.
 
 ### Output & Reports
 
-The execution generates files in two main directories (ignored by Git):
+All test outcomes and visual outputs are compiled into the standard, git-ignored Playwright reports folder:
 
-- `/diffs`: Contains the raw screenshots (`[story]-mantine.png` and `[story]-mui.png`) as well as the highlighted discrepancy image (`[story]-diff.png`).
-- `/report`: Contains an `index.html` file that you can open in your browser to visually review the test results, including the amount of mismatched pixels and the "before/after" diff overlays.
+- **Interactive HTML Dashboard**: View the full side-by-side browser layout, visual difference overlays, and style audits by opening:
+  `packages/adapter-tester/playwright-report/index.html`
+- **Review in Browser**: Open the interactive dashboard directly from your terminal by running:
+  ```bash
+  npx playwright show-report
+  ```
+- **Raw Screenshot Assets**: Individual screenshot buffers and visual diff outputs are retained in the standard `packages/adapter-tester/test-results/` folder for reference.
