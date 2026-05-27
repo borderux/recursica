@@ -1,3 +1,0 @@
-import{j as a}from"./iframe-BYOZEeYD.js";import{A as n}from"./Autocomplete-BKxi8Szt.js";import{p as m}from"./index-BAVfEGr5.js";import"./preload-helper-Dp1pzeXC.js";const l={title:"UI-Kit/🚧 Autocomplete",component:n,tags:["autodocs"],parameters:{controls:{include:["layer","withLayer","children","component","variant","size","icon","disabled","href","onClick","onChange","value","checked"]}}},e={render:()=>a.jsx(m,{componentName:"Autocomplete"})};var o,t,r;e.parameters={...e.parameters,docs:{...(o=e.parameters)==null?void 0:o.docs,source:{originalSource:`{
-  render: () => <ComingSoon componentName="Autocomplete" />
-}`,...(r=(t=e.parameters)==null?void 0:t.docs)==null?void 0:r.source}}};const d=["Default"];export{e as Default,d as __namedExportsOrder,l as default};
