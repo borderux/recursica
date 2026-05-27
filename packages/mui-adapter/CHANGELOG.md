@@ -1,5 +1,14 @@
 # @recursica/mui-adapter
 
+## 0.6.0
+
+### Minor Changes
+
+- a407c6f: More complete mui components
+- 93df8e2: Added form components
+- fe9d24a: Added adapter tester and updated adapters
+- 93df8e2: Added form controls
+
 ## 0.5.0
 
 ### Minor Changes

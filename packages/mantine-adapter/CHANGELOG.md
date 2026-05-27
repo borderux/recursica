@@ -1,5 +1,16 @@
 # @recursica/mantine-adapter
 
+## 0.23.0
+
+### Minor Changes
+
+- 3cb6f89: Added Slider component
+- fe9d24a: Added adapter tester and updated adapters
+
+### Patch Changes
+
+- 639ac9a: Fixed loader border issues
+
 ## 0.22.0
 
 ### Minor Changes

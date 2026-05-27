@@ -1,6 +1,6 @@
 {
   "name": "@recursica/adapter-tester",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "Visual regression tester between recursica adapters",
   "main": "index.js",
