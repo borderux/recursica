@@ -1,0 +1,3 @@
+import{j as a}from"./iframe-C_ymJL69.js";import{T as s}from"./TransferList-DvoN5QQX.js";import{p as n}from"./index-CGcrtvb-.js";import"./preload-helper-Dp1pzeXC.js";const d={title:"UI-Kit/🚧 TransferList",component:s,tags:["autodocs"],parameters:{controls:{include:["layer","withLayer","children","component","variant","size","icon","disabled","href","onClick","onChange","value","checked"]}}},e={render:()=>a.jsx(n,{componentName:"TransferList"})};var r,o,t;e.parameters={...e.parameters,docs:{...(r=e.parameters)==null?void 0:r.docs,source:{originalSource:`{
+  render: () => <ComingSoon componentName="TransferList" />
+}`,...(t=(o=e.parameters)==null?void 0:o.docs)==null?void 0:t.source}}};const l=["Default"];export{e as Default,l as __namedExportsOrder,d as default};
