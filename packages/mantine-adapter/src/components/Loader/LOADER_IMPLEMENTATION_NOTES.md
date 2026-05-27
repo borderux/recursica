@@ -17,8 +17,7 @@ Mantine natively sets sizing dynamically at the component root and parses thickn
 
 #### Specific CSS Targeting Hacks Used
 
-- `border-width` structurally styles the `thickness` configuration of the `oval` variant by resolving `--recursica_ui-kit_components_loader_variants_sizes_..._properties_thickness`.
-- For non-oval variants, `border-radius` natively maps downwards to targeting component `span` children within the wrapper to capture `<span className="mantine-Loader-dot" />` geometries safely without polluting the flex wrapper natively.
+- `border-width` and `border-radius` structurally style the `thickness` and `border-radius` configuration of the `oval` variant on the `::after` pseudo-element by resolving `--recursica_ui-kit_components_loader_variants_sizes_..._properties_thickness` and `_border-radius`.
 
 ### Unsupported Properties
 
