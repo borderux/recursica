@@ -23,7 +23,7 @@
    background: transparent; (Override mantine default)
  */
 
-.root {
+.root.root {
   /* Set preset layout variables to override mantine defaults safely */
   box-sizing: border-box;
   display: inline-flex;
@@ -46,24 +46,30 @@
     --recursica_ui-kit_components_chip_variants_styles_unselected_properties_colors_close-icon-color
   );
 
-  border-radius: var(
+  /* Override Mantine's internal variables */
+  --chip-size: max-content;
+  --chip-radius: var(
     --recursica_ui-kit_components_chip_properties_border-radius
   );
+
+  cursor: pointer;
+  user-select: none;
+  overflow: hidden;
 }
 
 /* We target the mantine label directly because that is the visible container in Mantine's Chip */
-.label {
+.label.label {
   box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
   /* Reset mantine styles */
-  background: transparent !important; /* HARDCODE: Mantine forces background styling on label */
+  background: transparent; /* HARDCODE: Mantine forces background styling on label */
   border-style: solid;
   border-width: var(--recursica_ui-kit_components_chip_properties_border-size);
   padding: var(--recursica_ui-kit_components_chip_properties_vertical-padding)
-    var(--recursica_ui-kit_components_chip_properties_horizontal-padding) !important;
+    var(--recursica_ui-kit_components_chip_properties_horizontal-padding);
 
   /* Typography */
   font-family: var(
@@ -90,21 +96,27 @@
   );
 
   /* Token evaluation */
-  background-color: var(--chip-bg) !important;
-  border-color: var(--chip-border) !important;
-  color: var(--chip-text) !important;
+  background-color: var(--chip-bg);
+  border-color: var(--chip-border);
+  color: var(--chip-text);
   min-width: var(--recursica_ui-kit_components_chip_properties_min-width);
   max-width: var(--recursica_ui-kit_components_chip_properties_max-width);
-  box-shadow: var(
-    --recursica_ui-kit_components_chip_properties_elevation,
-    none
-  );
+  box-shadow: var(--recursica_ui-kit_components_chip_properties_elevation);
 
   transition: all 0.2s ease;
 }
 
+.label.label > span:not(.mantineIconWrapper) {
+  display: inline-flex;
+  align-items: center;
+}
+
+.label.label:hover {
+  background-color: var(--chip-bg);
+}
+
 /* Default (Unselected) hover/active interactions (Mantine overrides) */
-.label[data-checked] {
+.label.label[data-checked] {
   --chip-bg: var(
     --recursica_ui-kit_components_chip_variants_styles_selected_properties_colors_background
   );
@@ -122,7 +134,7 @@
   );
 }
 
-.root[data-error] .label {
+.root[data-error] .label.label {
   --chip-bg: var(
     --recursica_ui-kit_components_chip_variants_styles_error_properties_colors_background
   );
@@ -140,7 +152,7 @@
   );
 }
 
-.root[data-error] .label[data-checked] {
+.root[data-error] .label.label[data-checked] {
   --chip-bg: var(
     --recursica_ui-kit_components_chip_variants_styles_error-selected_properties_colors_background
   );
@@ -158,20 +170,16 @@
   );
 }
 
-.root[data-disabled] .label {
-  opacity: var(--recursica_brand_states_disabled, 0.5);
+.root[data-disabled] .label.label {
+  opacity: var(--recursica_brand_states_disabled);
   cursor: not-allowed;
 }
 
 /* Override Mantine's built-in check icon colors and size if we keep it */
-.mantineIconWrapper {
-  color: var(--chip-icon) !important;
-  width: var(
-    --recursica_ui-kit_components_chip_properties_icon-size
-  ) !important;
-  height: var(
-    --recursica_ui-kit_components_chip_properties_icon-size
-  ) !important;
+.mantineIconWrapper.mantineIconWrapper {
+  color: var(--chip-icon);
+  width: var(--recursica_ui-kit_components_chip_properties_icon-size);
+  height: var(--recursica_ui-kit_components_chip_properties_icon-size);
   margin-right: var(
     --recursica_ui-kit_components_chip_properties_icon-text-gap
   );
@@ -226,11 +234,11 @@
   height: 100%;
 }
 
-.root[data-icon-only] .label {
+.root[data-icon-only] .label.label {
   padding-left: var(
     --recursica_ui-kit_components_chip_properties_vertical-padding
-  ) !important;
+  );
   padding-right: var(
     --recursica_ui-kit_components_chip_properties_vertical-padding
-  ) !important;
+  );
 }

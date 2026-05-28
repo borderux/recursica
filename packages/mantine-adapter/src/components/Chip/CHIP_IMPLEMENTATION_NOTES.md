@@ -14,7 +14,6 @@ Because the `.label` is the primary visual surface and handles Mantine's built-i
 
 ### Icon and Remove Implementations
 
-The Recursica specifications for the Chip component define `--chip-icon` and `--chip-close` which map to leading and trailing states.
 To achieve this without breaking Mantine's `Chip` input architecture, we wrapped the internal `children` using a standard `span` DOM strategy:
 
 ```tsx
@@ -24,6 +23,10 @@ To achieve this without breaking Mantine's `Chip` input architecture, we wrapped
   {onRemove}
 </span>
 ```
+
+#### Intermediate Children Wrapper Span display fix:
+
+Mantine internally wraps the children passed to `Chip` in a default `<span>` which has `display: inline`. This intermediate `span` inherits the `line-height` of the `.label` container, causing the computed height of the Chip to be ~2px taller than expected. To address this, `.label > span:not(.mantineIconWrapper)` is targeted to force `display: inline-flex; align-items: center;` on that intermediate wrapper `span`, allowing it to collapse perfectly to the `16px` height of the `innerWrapper`.
 
 ### Accessibility of Remove Action
 

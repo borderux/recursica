@@ -13,23 +13,6 @@ const meta: Meta<typeof Text> = {
           "The standard `<Text>` component controls common body sizing scales and implicit paragraphs governed by the active theme layer. For semantic headings (`h1` through `h6`), use `<Title>` instead.",
       },
     },
-    controls: {
-      include: [
-        "layer",
-        "withLayer",
-        "variant",
-        "children",
-        "component",
-        "size",
-        "icon",
-        "disabled",
-        "href",
-        "onClick",
-        "onChange",
-        "value",
-        "checked",
-      ],
-    },
   },
   argTypes: {
     variant: {
@@ -44,6 +27,11 @@ const meta: Meta<typeof Text> = {
       ],
       description:
         "Controls the standard logical boundary definitions natively extracted from Figma.",
+    },
+    c: {
+      control: "text",
+      description:
+        "Standard Mantine color string mapped via internal boundaries. Example: `dimmed`",
     },
   },
 };

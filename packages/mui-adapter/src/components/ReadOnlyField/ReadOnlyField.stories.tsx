@@ -1,12 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 import { ReadOnlyField } from "./ReadOnlyField";
 import { EmptyValueRenderer } from "@recursica/adapter-common";
-import { formControlArgTypes } from "../../../.storybook/commonArgTypes";
 
 const meta: Meta<typeof ReadOnlyField> = {
-  title: "UI-Kit/ReadOnlyField",
+  title: "UI Kit/ReadOnlyField",
   component: ReadOnlyField,
   tags: ["autodocs"],
   parameters: {
@@ -16,17 +14,6 @@ const meta: Meta<typeof ReadOnlyField> = {
           "The ReadOnlyField safely natively wraps data sets bypassing active HTML interaction hooks while natively retaining exact bounding visual layouts defined by internal Design System Tokens. Useful for creating strict data-review profiles or conditional form read-overs.",
       },
     },
-    controls: {
-      include: [
-        "type",
-        "labelWithEditIcon",
-        "formLayout",
-        "labelSize",
-        "labelAlignment",
-        "labelOptionalText",
-        "required",
-      ],
-    },
   },
   args: {
     label: "Read Only Label",
@@ -35,14 +22,14 @@ const meta: Meta<typeof ReadOnlyField> = {
     type: "text",
   },
   argTypes: {
-    ...formControlArgTypes,
     type: {
       control: "select",
-      options: ["text", "number", "boolean", "switch", "date"], // Add more as we support them
+      options: ["text", "number"], // Add more as we support them
     },
     labelWithEditIcon: {
       control: "boolean",
     },
+    // We cannot natively control a React.ElementType through standard primitive storybook panels.
   },
 };
 
@@ -55,7 +42,6 @@ type Story = StoryObj<typeof ReadOnlyField>;
  */
 export const Default: Story = {
   args: {},
-  render: ({ ...args }: any) => <ReadOnlyField {...args} />,
 };
 
 /**
@@ -66,7 +52,6 @@ export const EmptyValue: Story = {
     value: "",
     label: "Empty String Evaluated Automatically (Default 'N/A')",
   },
-  render: ({ ...args }: any) => <ReadOnlyField {...args} />,
 };
 
 const CustomEmptyTextRenderer: React.FC<{ value?: any }> & {
@@ -83,7 +68,6 @@ export const CustomEmptyText: Story = {
     label: "Custom Empty Text Default",
     emptyValueComponent: CustomEmptyTextRenderer,
   },
-  render: ({ ...args }: any) => <ReadOnlyField {...args} />,
 };
 
 const CustomEmptyCheckRenderer: React.FC<{ value?: any }> & {
@@ -102,7 +86,6 @@ export const CustomEmptyRenderer: Story = {
     label: "Custom Logic Evaluation Binding",
     emptyValueComponent: CustomEmptyCheckRenderer,
   },
-  render: ({ ...args }: any) => <ReadOnlyField {...args} />,
 };
 
 /**
@@ -113,7 +96,6 @@ export const StackedDefault: Story = {
     formLayout: "stacked",
     value: "Some fixed readable text",
   },
-  render: ({ ...args }: any) => <ReadOnlyField {...args} />,
 };
 
 /**
@@ -124,7 +106,6 @@ export const SideBySide: Story = {
     formLayout: "side-by-side",
     value: "Some fixed readable text mapping horizontally",
   },
-  render: ({ ...args }: any) => <ReadOnlyField {...args} />,
 };
 
 /**
@@ -136,7 +117,6 @@ export const WithEditIcon: Story = {
     required: true,
     value: "Editable fixed structure",
   },
-  render: ({ ...args }: any) => <ReadOnlyField {...args} />,
 };
 
 /**
@@ -145,46 +125,35 @@ export const WithEditIcon: Story = {
  */
 export const DataTypes: Story = {
   args: {},
-  render: ({ ...args }: any) => (
+  render: () => (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
       <ReadOnlyField
-        {...args}
         label="Text Mapping"
         type="text"
         value="Standard string output"
       />
+      <ReadOnlyField label="Number Mapping" type="number" value={1234567.89} />
       <ReadOnlyField
-        {...args}
-        label="Number Mapping"
-        type="number"
-        value={1234567.89}
-      />
-      <ReadOnlyField
-        {...args}
         label="Date Mapping"
         type="date"
         value={new Date("2026-04-28T12:00:00Z").toLocaleDateString()}
       />
       <ReadOnlyField
-        {...args}
         label="Boolean Mapping (True)"
         type="boolean"
         value={true}
       />
       <ReadOnlyField
-        {...args}
         label="Boolean Mapping (False)"
         type="boolean"
         value={false}
       />
       <ReadOnlyField
-        {...args}
         label="Switch Mapping (True -> On)"
         type="switch"
         value={true}
       />
       <ReadOnlyField
-        {...args}
         label="Switch Mapping (False -> Off)"
         type="switch"
         value={false}

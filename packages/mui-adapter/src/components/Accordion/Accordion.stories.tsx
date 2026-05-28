@@ -143,21 +143,3 @@ export const LayerOne: StoryObj<typeof Accordion> = {
     );
   },
 };
-
-export const Docs: StoryObj<typeof Accordion> = {
-  render: () => {
-    return (
-      <Layer layer={0} style={{ padding: "24px" }}>
-        <Accordion defaultValue="docs-1">
-          <Accordion.Item value="docs-1">
-            <Accordion.Control>Documentation Content</Accordion.Control>
-            <Accordion.Panel>
-              This is the explicitly requested Docs story for automated layout
-              testing.
-            </Accordion.Panel>
-          </Accordion.Item>
-        </Accordion>
-      </Layer>
-    );
-  },
-};

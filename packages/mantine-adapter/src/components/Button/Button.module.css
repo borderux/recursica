@@ -184,52 +184,28 @@
 
   /* Override specific typography for small */
   font-family: var(
-    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_font-family,
-    var(
-      --recursica_ui-kit_components_button_variants_sizes_default_properties_text_font-family
-    )
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_font-family
   );
   font-size: var(
-    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_font-size,
-    var(
-      --recursica_ui-kit_components_button_variants_sizes_default_properties_text_font-size
-    )
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_font-size
   );
   font-weight: var(
-    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_font-weight,
-    var(
-      --recursica_ui-kit_components_button_variants_sizes_default_properties_text_font-weight
-    )
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_font-weight
   );
   font-style: var(
-    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_font-style,
-    var(
-      --recursica_ui-kit_components_button_variants_sizes_default_properties_text_font-style
-    )
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_font-style
   );
   letter-spacing: var(
-    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_letter-spacing,
-    var(
-      --recursica_ui-kit_components_button_variants_sizes_default_properties_text_letter-spacing
-    )
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_letter-spacing
   );
   line-height: var(
-    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_line-height,
-    var(
-      --recursica_ui-kit_components_button_variants_sizes_default_properties_text_line-height
-    )
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_line-height
   );
   text-decoration: var(
-    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_text-decoration,
-    var(
-      --recursica_ui-kit_components_button_variants_sizes_default_properties_text_text-decoration
-    )
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_text-decoration
   );
   text-transform: var(
-    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_text-transform,
-    var(
-      --recursica_ui-kit_components_button_variants_sizes_default_properties_text_text-transform
-    )
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_text-transform
   );
 
   &[data-content="label"] {
@@ -340,17 +316,12 @@
 }
 .root[data-size="default"]:hover:not(:disabled)::after {
   opacity: var(
-    --recursica_ui-kit_components_button_variants_sizes_default_properties_hover-opacity,
-    0.1
+    --recursica_ui-kit_components_button_variants_sizes_default_properties_hover-opacity
   );
 }
 .root[data-size="small"]:hover:not(:disabled)::after {
   opacity: var(
-    --recursica_ui-kit_components_button_variants_sizes_small_properties_hover-opacity,
-    var(
-      --recursica_ui-kit_components_button_variants_sizes_default_properties_hover-opacity,
-      0.1
-    )
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_hover-opacity
   );
 }
 /* ==== VARIANTS ==== */

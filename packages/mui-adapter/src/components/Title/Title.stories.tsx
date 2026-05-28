@@ -13,24 +13,6 @@ const meta: Meta<typeof Title> = {
           "The semantic `<Title>` abstraction intrinsically links pure `h1-h6` tag generation with exact Recursica design boundaries to preserve SEO and screen reader trees uniformly globally.",
       },
     },
-    controls: {
-      include: [
-        "layer",
-        "withLayer",
-        "order",
-        "children",
-        "component",
-        "variant",
-        "size",
-        "icon",
-        "disabled",
-        "href",
-        "onClick",
-        "onChange",
-        "value",
-        "checked",
-      ],
-    },
   },
   argTypes: {
     order: {

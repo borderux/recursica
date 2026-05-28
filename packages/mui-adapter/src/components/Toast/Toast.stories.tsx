@@ -12,7 +12,7 @@ const meta = {
     docs: {
       description: {
         component:
-          "The `Toast` component is a standalone visual component wrapping Mantine's `Notification`. Note that this component is visually decoupled from `@mantine/notifications` and is meant to be used when you need to render a static or manually-controlled notification panel. If you need dynamic notification popups, you should use `@mantine/notifications` and configure its provider to use our styles.",
+          "The `Toast` component is a standalone visual component wrapping Mui's `Alert`. Note that this component is visually decoupled from `@mui/material/Snackbar` and is meant to be used when you need to render a static or manually-controlled notification panel.",
       },
     },
   },

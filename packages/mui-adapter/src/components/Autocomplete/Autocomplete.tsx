@@ -3,7 +3,7 @@ import {
   Autocomplete as MuiAutocomplete,
   type AutocompleteProps as MuiAutocompleteProps,
   TextField as MuiTextField,
-  type InputWrapperProps,
+  // removed InputWrapperProps
 } from "@mui/material";
 import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import {
@@ -16,19 +16,29 @@ import styles from "./Autocomplete.module.css";
 
 export interface RecursicaAutocompleteProps
   extends Omit<
-      MuiAutocompleteProps<any, any, any, any>,
-      "size" | "variant" | "radius" | "wrapperProps" | "renderInput"
-    >,
-    Pick<
-      InputWrapperProps,
-      "label" | "error" | "required" | "withAsterisk" | "id"
+      MuiAutocompleteProps<any, any, any, any, "div">,
+      | "variant"
+      | "size"
+      | "wrapperProps"
+      | "radius"
+      | "renderInput"
+      | "classes"
+      | "defaultValue"
     >,
     Omit<
       RecursicaFormControlWrapperProps,
-      "controlMaxWidth" | "controlMinWidth"
+      | "controlMaxWidth"
+      | "controlMinWidth"
+      | "error"
+      | keyof MuiAutocompleteProps<any, any, any, any, "div">
     >,
     ReadOnlyControlProps {
   data?: any[];
+  error?: boolean | React.ReactNode;
+  required?: boolean;
+  withAsterisk?: boolean;
+  id?: string;
+  defaultValue?: any;
   leftSection?: React.ReactNode;
   rightSection?: React.ReactNode;
   placeholder?: string;
@@ -112,11 +122,6 @@ export const Autocomplete = forwardRef<HTMLInputElement, AutocompleteProps>(
       ? `${styles.layoutOverride} ${className}`
       : styles.layoutOverride;
 
-    const sectionClass =
-      classNamesProp && (classNamesProp as any).section
-        ? `${styles.section} ${(classNamesProp as any).section}`
-        : styles.section;
-
     return (
       <WithReadOnlyWrapper
         className={wrapperClass}
@@ -133,10 +138,10 @@ export const Autocomplete = forwardRef<HTMLInputElement, AutocompleteProps>(
         label={label}
         assistiveText={assistiveText}
         assistiveWithIcon={assistiveWithIcon}
-        error={error}
+        error={!!error}
         required={required}
-        withAsterisk={withAsterisk}
         id={id}
+        disabled={disabled}
         readOnly={readOnly}
         readOnlyComponent={readOnlyComponent}
         emptyValueComponent={emptyValueComponent}
@@ -147,12 +152,17 @@ export const Autocomplete = forwardRef<HTMLInputElement, AutocompleteProps>(
           /* Naked Input execution safely decoupled from Mui's macro Input.Wrapper DOM hooks */
           <MuiAutocomplete
             ref={ref}
+            freeSolo
+            disableClearable
             classes={mergedClassNames}
             disabled={disabled}
             value={value}
             defaultValue={defaultValue}
             forcePopupIcon={false}
-            disableClearable={true}
+            data-error={error ? "true" : undefined}
+            data-disabled={disabled ? "true" : undefined}
+            data-with-left-section={leftSection ? "true" : undefined}
+            data-with-right-section={rightSection ? "true" : undefined}
             ListboxProps={{
               ...ListboxProps,
               className: mergedClassNames.listbox,
@@ -165,32 +175,9 @@ export const Autocomplete = forwardRef<HTMLInputElement, AutocompleteProps>(
                   {...restParams}
                   placeholder={placeholder}
                   variant="standard"
-                  InputProps={{
-                    ...InputProps,
-                    disableUnderline: true,
-                    startAdornment: leftSection ? (
-                      <span className={sectionClass}>{leftSection}</span>
-                    ) : (
-                      InputProps.startAdornment
-                    ),
-                    endAdornment: rightSection ? (
-                      <>
-                        {InputProps.endAdornment}
-                        <span className={sectionClass}>{rightSection}</span>
-                      </>
-                    ) : (
-                      InputProps.endAdornment
-                    ),
-                  }}
                 />
               );
             }}
-            {...(sanitizedProps as unknown as MuiAutocompleteProps<
-              any,
-              any,
-              any,
-              any
-            >)}
           />
         }
       />

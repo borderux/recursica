@@ -1,8 +1,7 @@
 .root {
   /* Default inheritance mapped from component variables if not explicitly overridden by variants */
   --loader-color: var(
-    --recursica_ui-kit_components_loader_properties_indicator-color,
-    currentColor
+    --recursica_ui-kit_components_loader_properties_indicator-color
   );
   box-sizing: border-box;
 }

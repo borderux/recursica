@@ -30,7 +30,7 @@
 .root {
   display: flex;
   position: relative;
-  width: var(--recursica_ui-kit_components_date-picker_properties_width, 100%);
+  width: var(--recursica_ui-kit_components_date-picker_properties_width);
   min-height: var(
     --recursica_ui-kit_components_date-picker_properties_min-height
   );
@@ -272,7 +272,7 @@
   color: var(
     --recursica_ui-kit_components_hover-card-popover_properties_colors_content
   );
-  border-radius: var(--recursica_brand_dimensions_border-radii_default, 4px);
+  border-radius: var(--recursica_brand_dimensions_border-radii_default);
 }
 
 .day[data-selected],

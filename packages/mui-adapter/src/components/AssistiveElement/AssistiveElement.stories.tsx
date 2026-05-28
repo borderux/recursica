@@ -1,6 +1,6 @@
-import React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 import { AssistiveElement } from "./AssistiveElement";
+import { Layer } from "@recursica/adapter-common";
 
 const meta: Meta<typeof AssistiveElement> = {
   title: "UI-Kit/AssistiveElement",
@@ -12,9 +12,6 @@ const meta: Meta<typeof AssistiveElement> = {
         component:
           "The `AssistiveElement` is a semantic structural primitive designed to standardize Helper and Error descriptive blocks natively beneath form components globally. By explicitly wiring to the `--recursica_ui-kit_components_assistive-element` layout tokens, this component safely injects custom SVGs (Alerts vs Info circles) alongside constrained flex-wrapping typography strings, preserving flawless line-height and alignment logic entirely decoupled from underlying input engine frameworks.",
       },
-    },
-    controls: {
-      include: ["assistiveVariant", "assistiveWithIcon", "children"],
     },
   },
   argTypes: {
@@ -40,10 +37,10 @@ export const DefaultHelp: Story = {
     assistiveWithIcon: true,
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
-  render: ({ ...args }: any) => (
-    <div style={{ padding: "48px" }}>
+  render: ({ withLayer, layer, ...args }: any) => (
+    <Layer layer={0} style={{ padding: "48px" }}>
       <AssistiveElement {...args} />
-    </div>
+    </Layer>
   ),
 };
 
@@ -55,10 +52,10 @@ export const ErrorState: Story = {
     assistiveWithIcon: true,
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
-  render: ({ ...args }: any) => (
-    <div style={{ padding: "48px" }}>
+  render: ({ withLayer, layer, ...args }: any) => (
+    <Layer layer={0} style={{ padding: "48px" }}>
       <AssistiveElement {...args} />
-    </div>
+    </Layer>
   ),
 };
 
@@ -70,23 +67,9 @@ export const NoIconHelp: Story = {
     assistiveWithIcon: false,
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
-  render: ({ ...args }: any) => (
-    <div style={{ padding: "48px" }}>
+  render: ({ withLayer, layer, ...args }: any) => (
+    <Layer layer={0} style={{ padding: "48px" }}>
       <AssistiveElement {...args} />
-    </div>
-  ),
-};
-
-export const Docs: Story = {
-  args: {
-    children: "Docs explicitly mapped configuration.",
-    assistiveVariant: "help",
-    assistiveWithIcon: true,
-  },
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
-  render: ({ ...args }: any) => (
-    <div style={{ padding: "48px" }}>
-      <AssistiveElement {...args} />
-    </div>
+    </Layer>
   ),
 };

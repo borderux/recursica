@@ -135,7 +135,6 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
         assistiveWithIcon={assistiveWithIcon}
         error={!!error}
         required={required}
-        withAsterisk={withAsterisk}
         id={id}
         readOnly={readOnly}
         readOnlyComponent={readOnlyComponent}

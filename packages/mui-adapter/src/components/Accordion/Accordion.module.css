@@ -160,8 +160,7 @@
 }
 .control:hover:not(:disabled)::after {
   opacity: var(
-    --recursica_ui-kit_components_accordion-item_properties_hover-opacity,
-    0.1
+    --recursica_ui-kit_components_accordion-item_properties_hover-opacity
   );
 }
 

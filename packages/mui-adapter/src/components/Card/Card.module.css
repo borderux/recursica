@@ -65,6 +65,18 @@
   text-decoration: var(
     --recursica_ui-kit_components_card_properties_header-style_textDecoration
   );
+
+  /* Edge-to-edge behavior */
+  margin-left: calc(var(--card-padding) * -1) !important;
+  margin-right: calc(var(--card-padding) * -1) !important;
+}
+
+.header:first-child {
+  margin-top: calc(var(--card-padding) * -1) !important;
+}
+
+.header:last-child {
+  margin-bottom: calc(var(--card-padding) * -1) !important;
 }
 
 .footer {
@@ -75,6 +87,18 @@
   border-top: var(--recursica_ui-kit_components_card_properties_divider-size)
     solid
     var(--recursica_ui-kit_components_card_properties_colors_divider-color);
+
+  /* Edge-to-edge behavior */
+  margin-left: calc(var(--card-padding) * -1) !important;
+  margin-right: calc(var(--card-padding) * -1) !important;
+}
+
+.footer:first-child {
+  margin-top: calc(var(--card-padding) * -1) !important;
+}
+
+.footer:last-child {
+  margin-bottom: calc(var(--card-padding) * -1) !important;
 }
 
 .section {
@@ -82,6 +106,18 @@
   margin-top: var(
     --recursica_ui-kit_components_card_properties_vertical-gutter
   );
+
+  /* Edge-to-edge behavior */
+  margin-left: calc(var(--card-padding) * -1) !important;
+  margin-right: calc(var(--card-padding) * -1) !important;
+}
+
+.section:first-child {
+  margin-top: calc(var(--card-padding) * -1) !important;
+}
+
+.section:last-child {
+  margin-bottom: calc(var(--card-padding) * -1) !important;
 }
 
 .content {

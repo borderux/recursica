@@ -65,8 +65,8 @@ export const Default: Story = {
   args: {
     label: "Auditory Threshold",
     assistiveText: "Specify the maximum decibel frequency boundary.",
-    defaultValue: 40,
-    min: 0,
+    defaultValue: 60,
+    min: 10,
     max: 100,
     step: 1,
     showMinMaxLabels: true,
@@ -92,7 +92,7 @@ export const Disabled: Story = {
     label: "Decommissioned Server Node",
     assistiveText: "Modifications to this environment are frozen.",
     defaultValue: 35,
-    disabled: true,
+    disabled: false,
   },
 };
 

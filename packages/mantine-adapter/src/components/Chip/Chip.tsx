@@ -92,14 +92,20 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
   // Determine state
   const dataError = error ? "" : undefined;
   const isIconOnly = !children && (!!icon || !!onRemove);
+  const isInteractive =
+    restRecord.checked !== undefined ||
+    restRecord.defaultChecked !== undefined ||
+    onRemove !== undefined ||
+    restRecord.onClick !== undefined;
 
   return (
     <MantineChip
       ref={ref}
       className={finalClass}
       classNames={mergedClassNames}
-      {...(dataError !== undefined ? { "data-error": "" } : {})}
+      wrapperProps={dataError !== undefined ? { "data-error": "" } : undefined}
       {...(isIconOnly ? { "data-icon-only": "" } : {})}
+      {...(!isInteractive ? { tabIndex: -1, "aria-hidden": true } : {})}
       {...sanitizedProps}
     >
       <span className={styles.innerWrapper}>

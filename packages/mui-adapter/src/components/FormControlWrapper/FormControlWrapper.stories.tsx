@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 import {
   FormControlWrapper,
@@ -18,22 +16,8 @@ const meta: Meta<WrapperStoryProps> = {
     docs: {
       description: {
         component:
-          "The `FormControlWrapper` is the ultimate structural replacement for built-in wrapper layouts. By centralizing label tracking, error rendering, ARIA generation, and grid layouts natively inside this single component, we achieve pixel-perfect layout compliance while retaining MUI's internal `useFormControl` Context natively.\n\n### Usage with Naked Primitives\nThis component wraps 'naked' elements directly. The demonstration stories below utilize `<TextField>` as a native display vehicle, since `<TextField>` natively pipes all its properties structurally back into this wrapper.",
+          "The `FormControlWrapper` is the ultimate structural replacement for Mantine's built-in `Input.Wrapper`. By abandoning Mantine's opinionated wrappers entirely, we centralize all label tracking, error rendering, ARIA generation, and grid layouts natively inside this single component.\n\n### Usage with Naked Primitives\nThis component wraps 'naked' elements like `<Input>` directly. The demonstration stories below utilize `<TextField>` as a native display vehicle, since `<TextField>` natively pipes all its properties structurally back into this wrapper.",
       },
-    },
-    controls: {
-      include: [
-        "error",
-        "assistiveText",
-        "assistiveWithIcon",
-        "required",
-        "formLayout",
-        "labelSize",
-        "labelAlignment",
-        "labelOptionalText",
-        "labelWithEditIcon",
-        "labelActionArea",
-      ],
     },
   },
   argTypes: {
@@ -61,10 +45,15 @@ export default meta;
 
 type Story = StoryObj<WrapperStoryProps>;
 
-const renderWithTextField = ({ ...args }: any) => (
-  // We explicitly cast args to 'any' here because MUI wrapper defines Wrapper anatomy,
+const renderWithTextField = (args: WrapperStoryProps) => (
+  // We explicitly cast args to 'any' here because Mantine enforces strict anatomy types for
+  // 'classNames', 'styles', and 'attributes'. WrapperStoryProps defines these for the Wrapper anatomy,
   // but TextField expects them for the full TextInput anatomy, causing a TS intersection mismatch.
-  <TextField placeholder="Form Control primitive mapped..." {...args} />
+  <TextField
+    placeholder="Form Control primitive mapped..."
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    {...(args as any)}
+  />
 );
 
 export const Default: Story = {
@@ -119,7 +108,8 @@ export const NativeChildrenDirectly: Story = {
     formLayout: "side-by-side",
     assistiveText: "This wraps a raw HTML input tag mapping correctly.",
   },
-  render: ({ ...args }: any) => (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ withLayer, layer, ...args }: any) => (
     <div
       style={{
         display: "flex",
@@ -127,6 +117,7 @@ export const NativeChildrenDirectly: Story = {
         alignItems: "center",
       }}
     >
+      {/* We can cleanly wrap even un-styled HTML primitives! */}
       <FormControlWrapper {...args}>
         <input
           type="checkbox"

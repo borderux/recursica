@@ -66,49 +66,7 @@
   font-size: inherit;
   line-height: inherit;
 }
-.root[data-loading="true"] .labelText {
-  visibility: hidden;
-}
-
-/* 
- * Keep the loader fully opaque, but make the background transparent 
- * to create contrast for solid variants without changing the loader color. 
- */
-.root[data-loading="true"] {
-  opacity: 1;
-}
-
-.root[data-size="default"][data-variant="solid"][data-loading="true"] {
-  background-color: color-mix(
-    in srgb,
-    var(
-        --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_background
-      )
-      calc(
-        var(
-            --recursica_ui-kit_components_button_variants_sizes_default_properties_disabled-opacity
-          ) *
-          100%
-      ),
-    transparent
-  );
-}
-
-.root[data-size="small"][data-variant="solid"][data-loading="true"] {
-  background-color: color-mix(
-    in srgb,
-    var(
-        --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_background
-      )
-      calc(
-        var(
-            --recursica_ui-kit_components_button_variants_sizes_small_properties_disabled-opacity
-          ) *
-          100%
-      ),
-    transparent
-  );
-}
+/* Removed data-loading background override to rely on native disabled opacities like Mantine */
 
 /* ==== SIZES ==== */
 .root[data-size="default"] {
@@ -164,22 +122,13 @@
 
   /* Override specific typography for small */
   font-family: var(
-    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_font-family,
-    var(
-      --recursica_ui-kit_components_button_variants_sizes_default_properties_text_font-family
-    )
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_font-family
   );
   font-size: var(
-    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_font-size,
-    var(
-      --recursica_ui-kit_components_button_variants_sizes_default_properties_text_font-size
-    )
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_font-size
   );
   font-weight: var(
-    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_font-weight,
-    var(
-      --recursica_ui-kit_components_button_variants_sizes_default_properties_text_font-weight
-    )
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_font-weight
   );
 }
 .root[data-size="small"][data-content="label"] {
@@ -254,17 +203,27 @@
 }
 
 /* MUI uses .MuiButton-startIcon and .MuiButton-endIcon */
-.root[data-size="default"] .MuiButton-startIcon,
-.root[data-size="default"] .MuiButton-endIcon {
+.root[data-size="default"] .MuiButton-startIcon {
   margin-left: 0;
   margin-right: var(
     --recursica_ui-kit_components_button_variants_sizes_default_properties_icon-text-gap
   );
 }
-.root[data-size="small"] .MuiButton-startIcon,
-.root[data-size="small"] .MuiButton-endIcon {
+.root[data-size="default"] .MuiButton-endIcon {
+  margin-right: 0;
+  margin-left: var(
+    --recursica_ui-kit_components_button_variants_sizes_default_properties_icon-text-gap
+  );
+}
+.root[data-size="small"] .MuiButton-startIcon {
   margin-left: 0;
   margin-right: var(
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_icon-text-gap
+  );
+}
+.root[data-size="small"] .MuiButton-endIcon {
+  margin-right: 0;
+  margin-left: var(
     --recursica_ui-kit_components_button_variants_sizes_small_properties_icon-text-gap
   );
 }
@@ -318,8 +277,7 @@
 }
 .root:hover:not(:disabled):not(:global(.Mui-disabled))::after {
   opacity: var(
-    --recursica_ui-kit_components_button_variants_sizes_default_properties_hover-opacity,
-    0.1
+    --recursica_ui-kit_components_button_variants_sizes_default_properties_hover-opacity
   );
 }
 

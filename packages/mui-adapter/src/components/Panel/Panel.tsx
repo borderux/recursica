@@ -59,7 +59,10 @@ const PanelBase = function Panel({
   keepMounted = true,
   wrapHeaderText = false,
   ...rest
-}: PanelProps) {
+}: PanelProps & {
+  position?: "left" | "right" | "top" | "bottom";
+  opened?: boolean;
+}) {
   const sanitizedProps = filterStylingProps(rest, overStyled);
 
   // Bind CSS module classes to Mui's internal classNames API
@@ -89,9 +92,9 @@ const PanelBase = function Panel({
 
   return (
     <MuiDrawer
-      position={position} /* Recursica default: right; Mui default: left */
+      anchor={position} /* Recursica default: right; Mui default: left */
       keepMounted={keepMounted}
-      closeOnClickOutside={rest.closeOnClickOutside ?? Boolean(rest.opened)}
+      open={Boolean(rest.opened)}
       {...(sanitizedProps as unknown as MuiDrawerProps)}
       classes={mergedClassNames}
     />
@@ -129,28 +132,9 @@ export const PanelFooter = forwardRef<HTMLDivElement, PanelFooterProps>(
 PanelFooter.displayName = "PanelFooter";
 
 // ============================================================
-// DOT NOTATION EXPORT
-// ============================================================
-
 type PanelComponent = typeof PanelBase & {
-  Root: typeof MuiDrawer.Root;
-  Overlay: typeof MuiDrawer.Overlay;
-  Content: typeof MuiDrawer.Content;
-  Header: typeof MuiDrawer.Header;
-  Title: typeof MuiDrawer.Title;
-  CloseButton: typeof MuiDrawer.CloseButton;
-  Body: typeof MuiDrawer.Body;
-  Stack: typeof MuiDrawer.Stack;
   Footer: typeof PanelFooter;
 };
 
 export const Panel = PanelBase as PanelComponent;
-Panel.Root = MuiDrawer.Root;
-Panel.Overlay = MuiDrawer.Overlay;
-Panel.Content = MuiDrawer.Content;
-Panel.Header = MuiDrawer.Header;
-Panel.Title = MuiDrawer.Title;
-Panel.CloseButton = MuiDrawer.CloseButton;
-Panel.Body = MuiDrawer.Body;
-Panel.Stack = MuiDrawer.Stack;
 Panel.Footer = PanelFooter;

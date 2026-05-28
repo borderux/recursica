@@ -1,16 +1,16 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Autocomplete } from "./Autocomplete";
+import { Autocomplete as AutoComplete } from "./Autocomplete";
 import { formControlArgTypes } from "../../../.storybook/commonArgTypes";
 
-const meta: Meta<typeof Autocomplete> = {
-  title: "UI-Kit/Autocomplete",
-  component: Autocomplete,
+const meta: Meta<typeof AutoComplete> = {
+  title: "UI-Kit/AutoComplete",
+  component: AutoComplete,
   tags: ["autodocs"],
   parameters: {
     docs: {
       description: {
         component: `
-The \`Autocomplete\` primitive provides a text input with a dropdown menu for displaying suggestions as the user types.
+The \`AutoComplete\` primitive provides a text input with a dropdown menu for displaying suggestions as the user types.
 
 ### Architectural Decoupling
 Recursica wraps the internal Mantine \`<Autocomplete>\` component inside the \`WithReadOnlyWrapper\`, ensuring it integrates perfectly with the strict design system form architecture.
@@ -18,7 +18,7 @@ Recursica wraps the internal Mantine \`<Autocomplete>\` component inside the \`W
 ### Examples
 Always structure horizontal architectures via the generic \`formLayout\` parameter.
 \`\`\`tsx
-<Autocomplete 
+<AutoComplete 
   label="Country" 
   assistiveText="Select your country of residence." 
   data={["United States", "Canada", "Mexico", "United Kingdom", "France"]}
@@ -60,7 +60,7 @@ Always structure horizontal architectures via the generic \`formLayout\` paramet
 
 export default meta;
 
-type Story = StoryObj<typeof Autocomplete>;
+type Story = StoryObj<typeof AutoComplete>;
 
 export const Default: Story = {
   args: {
@@ -183,14 +183,5 @@ export const EditableReadOnly: Story = {
     defaultValue: "Waiting for Edit Execution",
     readOnly: true,
     labelWithEditIcon: true,
-  },
-};
-
-export const Docs: Story = {
-  args: {
-    label: "Documentation Mode",
-    placeholder: "Docs layout validation...",
-    data: ["Doc A", "Doc B"],
-    assistiveText: "Explicitly requested docs story.",
   },
 };

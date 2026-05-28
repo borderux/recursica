@@ -61,7 +61,7 @@ export const ReadOnlyField = React.forwardRef<
         className={`${styles.root} ${className || ""}`}
         {...wrapperProps}
       >
-        <span className={styles.text}>N/A</span>
+        <p className={styles.text}>N/A</p>
       </FormControlWrapper>
     );
   }
@@ -88,12 +88,8 @@ export const ReadOnlyField = React.forwardRef<
     if (type === "switch") {
       displayValue = value ? "On" : "Off";
     }
-  } else if (typeof value === "object") {
-    try {
-      displayValue = JSON.stringify(value);
-    } catch {
-      displayValue = String(value);
-    }
+  } else if (Array.isArray(value)) {
+    displayValue = value.join(", ");
   } else {
     displayValue = String(value);
   }
@@ -104,7 +100,7 @@ export const ReadOnlyField = React.forwardRef<
       className={`${styles.root} ${className || ""}`}
       {...wrapperProps}
     >
-      <span className={styles.text}>{displayValue}</span>
+      <p className={styles.text}>{displayValue}</p>
     </FormControlWrapper>
   );
 });

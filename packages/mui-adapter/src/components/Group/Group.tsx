@@ -15,6 +15,9 @@ export interface RecursicaGroupProps {
   gap?: MUIStackProps["spacing"] | RecursicaSpacing;
   rowGap?: MUIStackProps["spacing"] | RecursicaSpacing;
   columnGap?: MUIStackProps["spacing"] | RecursicaSpacing;
+  justify?: React.CSSProperties["justifyContent"];
+  align?: React.CSSProperties["alignItems"];
+  wrap?: React.CSSProperties["flexWrap"];
 }
 
 export type GroupProps = OmitSx<
@@ -22,7 +25,16 @@ export type GroupProps = OmitSx<
 >;
 
 export const Group = forwardRef<HTMLDivElement, GroupProps>(function Group(
-  { children, gap = "rec-default", rowGap, columnGap, ...rest },
+  {
+    children,
+    gap = "rec-default",
+    rowGap,
+    columnGap,
+    justify,
+    align,
+    wrap,
+    ...rest
+  },
   ref,
 ) {
   const safeProps = filterSxProp(rest as Record<string, unknown>);
@@ -43,7 +55,9 @@ export const Group = forwardRef<HTMLDivElement, GroupProps>(function Group(
     <MUIStack
       ref={ref}
       direction="row"
-      flexWrap="wrap"
+      flexWrap={wrap || "wrap"}
+      justifyContent={justify}
+      alignItems={align}
       spacing={resolvedGap}
       sx={{
         ...(resolvedRowGap ? { rowGap: resolvedRowGap } : {}),

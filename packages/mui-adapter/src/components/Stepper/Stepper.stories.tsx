@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import { Stepper } from "./Stepper";
+import { Stepper, Step, StepLabel } from "./Stepper";
 import { Button } from "../Button/Button";
 import { Group } from "../Group/Group";
 import { Flex } from "../Flex/Flex";
@@ -11,19 +11,6 @@ const meta: Meta<typeof Stepper> = {
   tags: ["autodocs"],
   parameters: {
     layout: "centered",
-    docs: {
-      description: {
-        component: `
-The \`Stepper\` component provides a visual progression interface strictly mapped to Recursica's UI-Kit.
-This component wraps Mantine's \`Stepper\` and natively enforces Figma tokens for sizes, colors, gaps, and states (\`completed\`, \`current\`, \`upcoming\`).
-
-### Layout & Orientation
-Orientation dictates how the steps flow:
-- **horizontal**: Steps render side-by-side. 
-- **vertical**: Steps stack vertically, mapping seamlessly to the vertical gap tokens.
-        `,
-      },
-    },
   },
   argTypes: {
     size: {
@@ -33,9 +20,6 @@ Orientation dictates how the steps flow:
     orientation: {
       control: "radio",
       options: ["horizontal", "vertical"],
-    },
-    defaultChecked: {
-      table: { disable: true },
     },
   },
 };
@@ -50,22 +34,38 @@ const InteractiveStepper = (args: React.ComponentProps<typeof Stepper>) => {
   const prevStep = () =>
     setActive((current) => (current > 0 ? current - 1 : current));
 
+  const steps = [
+    {
+      label: "First step",
+      description: "Create an account and set up your billing profile",
+    },
+    {
+      label: "Second step",
+      description:
+        "Verify email and ensure all notification preferences are correct",
+    },
+    { label: "Final step", description: "Get full access" },
+  ];
+
   return (
     <Flex direction="column" w={600}>
-      <Stepper {...args} active={active} onStepClick={setActive}>
-        <Stepper.Step
-          label="First step"
-          description="Create an account and set up your billing profile"
-        />
-        <Stepper.Step
-          label="Second step"
-          description="Verify email and ensure all notification preferences are correct"
-        />
-        <Stepper.Step label="Final step" description="Get full access" />
-        <Stepper.Completed>
-          Completed, click back button to get to previous step
-        </Stepper.Completed>
+      <Stepper {...args} activeStep={active}>
+        {steps.map((step, index) => (
+          <Step key={index} completed={active > index}>
+            <StepLabel description={step.description}>{step.label}</StepLabel>
+          </Step>
+        ))}
       </Stepper>
+
+      {active === steps.length ? (
+        <div style={{ marginTop: 24, textAlign: "center" }}>
+          Completed, click back button to get to previous step
+        </div>
+      ) : (
+        <div style={{ marginTop: 24, textAlign: "center" }}>
+          Step {active + 1} content
+        </div>
+      )}
 
       <Group mt={24} justify="center" gap={8}>
         <Button variant="outline" onClick={prevStep} disabled={active === 0}>
@@ -110,22 +110,35 @@ const StressTestStepper = (args: React.ComponentProps<typeof Stepper>) => {
   const prevStep = () =>
     setActive((current) => (current > 0 ? current - 1 : current));
 
+  const steps = [
+    {
+      label:
+        "This is an extremely long step title designed to test how the layout handles multiline text wrapping and constraints",
+      description: "Create an account and set up your billing profile",
+    },
+    {
+      label: "Second step",
+      description:
+        "Verify email and ensure all notification preferences are correct",
+    },
+    { label: "Final step", description: undefined },
+  ];
+
   return (
     <Flex direction="column" w={600}>
-      <Stepper {...args} active={active} onStepClick={setActive}>
-        <Stepper.Step
-          label="This is an extremely long step title designed to test how the layout handles multiline text wrapping and constraints"
-          description="Create an account and set up your billing profile"
-        />
-        <Stepper.Step
-          label="Second step"
-          description="Verify email and ensure all notification preferences are correct"
-        />
-        <Stepper.Step label="Final step" />
-        <Stepper.Completed>
-          Completed, click back button to get to previous step
-        </Stepper.Completed>
+      <Stepper {...args} activeStep={active}>
+        {steps.map((step, index) => (
+          <Step key={index} completed={active > index}>
+            <StepLabel description={step.description}>{step.label}</StepLabel>
+          </Step>
+        ))}
       </Stepper>
+
+      {active === steps.length && (
+        <div style={{ marginTop: 24, textAlign: "center" }}>
+          Completed, click back button to get to previous step
+        </div>
+      )}
 
       <Group mt={24} justify="center" gap={8}>
         <Button variant="outline" onClick={prevStep} disabled={active === 0}>

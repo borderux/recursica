@@ -1,7 +1,14 @@
-import React from "react";
+import React, { forwardRef } from "react";
 import {
-  Modal as MuiModal,
-  type ModalProps as MuiModalProps,
+  Dialog as MuiDialog,
+  type DialogProps as MuiDialogProps,
+  DialogTitle as MuiDialogTitle,
+  type DialogTitleProps as MuiDialogTitleProps,
+  DialogContent as MuiDialogContent,
+  type DialogContentProps as MuiDialogContentProps,
+  DialogActions as MuiDialogActions,
+  type DialogActionsProps as MuiDialogActionsProps,
+  IconButton as MuiIconButton,
 } from "@mui/material";
 import {
   filterStylingProps,
@@ -9,125 +16,129 @@ import {
 } from "../../utils/filterStylingProps";
 import styles from "./Modal.module.css";
 
-/**
- * Properties for the strictly-tokenized Modal component.
- * Native Mui abstract properties like `size`, `radius`, and `shadow` have been stripped out
- * because they directly conflict with the non-negotiable pixel boundaries defined in the Recursica UI Kit.
- */
+// ============================================================
+// MODAL ROOT (Dialog)
+// ============================================================
+
 export type ModalProps = RecursicaOverStyled<
-  Omit<MuiModalProps, "size" | "radius" | "shadow">
+  Omit<MuiDialogProps, "size" | "radius" | "shadow" | "open"> & {
+    opened?: boolean;
+    withCloseButton?: boolean;
+    title?: React.ReactNode;
+  }
 >;
 
-/**
- * The `Modal` component displays a window overlaid on the primary viewport.
- *
- * **Recursica Abstract:**
- * This component acts as a strict structural wrapper around Mui's `<Modal>`.
- * It automatically enforces Figma UI Kit geometries (`max-width: 960px`, `min-width: 304px`)
- * and handles internal body scrolling explicitly via CSS module overrides.
- *
- * @example
- * ```tsx
- * <Modal opened={opened} onClose={close} title="Hello World">
- *   Modal Content
- * </Modal>
- * ```
- */
-const ModalInner = React.forwardRef<HTMLDivElement, ModalProps>(function Modal(
+const CloseIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M18 6L6 18M6 6l12 12" />
+  </svg>
+);
+
+const ModalRoot = forwardRef<HTMLDivElement, ModalProps>(function ModalRoot(
   {
     overStyled = false,
-    children,
-    title,
+    opened = false,
     withCloseButton = true,
-    overlayProps,
-    withOverlay = true,
-    closeButtonProps,
+    title,
+    children,
+    onClose,
+    className,
     ...rest
   },
   ref,
 ) {
   const sanitizedProps = filterStylingProps(rest, overStyled);
 
-  const mergedClassNames: Partial<Record<string, string>> = {
-    root: styles.root,
-    inner: styles.inner,
-    content: styles.content,
-    header: styles.header,
-    title: styles.title,
-    close: styles.close,
-  };
+  let footer: React.ReactNode = null;
+  const bodyChildren: React.ReactNode[] = [];
 
-  const classNamesProp = (sanitizedProps as Record<string, unknown>).classNames;
-  if (
-    classNamesProp &&
-    typeof classNamesProp === "object" &&
-    !Array.isArray(classNamesProp)
-  ) {
-    const o = classNamesProp as Record<string, string>;
-    Object.keys(o).forEach((key) => {
-      if (mergedClassNames[key]) {
-        mergedClassNames[key] = `${mergedClassNames[key]} ${o[key]}`;
-      } else {
-        mergedClassNames[key] = o[key];
-      }
-    });
-  }
+  React.Children.forEach(children, (child) => {
+    if (
+      React.isValidElement(child) &&
+      (child.type === ModalFooter ||
+        (child.type as any)?.displayName === "Modal.Footer")
+    ) {
+      footer = child;
+    } else {
+      bodyChildren.push(child);
+    }
+  });
 
   return (
-    <div
+    <MuiDialog
       ref={ref}
-      classes={mergedClassNames}
-      {...(sanitizedProps as unknown as Omit<
-        MuiModalProps,
-        "size" | "radius" | "shadow"
-      >)}
+      className={`${styles.root} ${className || ""}`}
+      classes={{
+        paper: styles.inner,
+      }}
+      {...(sanitizedProps as MuiDialogProps)}
+      open={opened || (sanitizedProps as any).open}
+      onClose={onClose}
     >
-      {withOverlay && <div {...overlayProps} />}
-      <div>
-        {(title || withCloseButton) && (
-          <div>
-            {title && <div>{title}</div>}
-            {withCloseButton && <div {...closeButtonProps} />}
-          </div>
-        )}
-        <ModalBody>{children}</ModalBody>
-      </div>
-    </div>
+      {(title || withCloseButton) && (
+        <div className={styles.header}>
+          {title && <div className={styles.title}>{title}</div>}
+          {withCloseButton && (
+            <MuiIconButton
+              onClick={(e) => onClose?.(e, "backdropClick")}
+              className={styles.close}
+            >
+              <CloseIcon />
+            </MuiIconButton>
+          )}
+        </div>
+      )}
+      <ModalBody>{bodyChildren}</ModalBody>
+      {footer}
+    </MuiDialog>
   );
 });
 
-ModalInner.displayName = "Modal";
+ModalRoot.displayName = "Modal";
 
-/**
- * The `Modal.Footer` provides a perfectly padded container for modal actions.
- *
- * **Recursica Abstract:**
- * By default, this container aligns its children to the right (`justify-content: flex-end`)
- * and applies the standard Figma button-gap spacing.
- *
- * > [!IMPORTANT]
- * > **Button Hierarchy:** Recursica design language explicitly requires that the
- * > primary action button MUST be the right-most element, with the secondary
- * > (outline variant) action placed immediately to the left of it.
- */
-const ModalFooter = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentPropsWithoutRef<"div">
->(function ModalFooter({ className, ...rest }, ref) {
-  return (
-    <div
-      ref={ref}
-      className={`${styles.footer} ${className || ""}`}
-      {...rest}
-    />
-  );
-});
-ModalFooter.displayName = "Modal.Footer";
+// ============================================================
+// MODAL TITLE (DialogTitle)
+// ============================================================
 
-const ModalBody = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentPropsWithoutRef<typeof MuiModal.Body>
->(function ModalBody({ className, onScroll, children, ...rest }, ref) {
+export type ModalTitleProps = RecursicaOverStyled<MuiDialogTitleProps>;
+
+const ModalTitle = forwardRef<HTMLDivElement, ModalTitleProps>(
+  function ModalTitle({ overStyled = false, className, ...rest }, ref) {
+    const sanitizedProps = filterStylingProps(rest, overStyled);
+
+    return (
+      <MuiDialogTitle
+        ref={ref as any}
+        className={`${styles.title} ${className || ""}`}
+        {...(sanitizedProps as MuiDialogTitleProps)}
+      />
+    );
+  },
+);
+
+ModalTitle.displayName = "Modal.Title";
+
+// ============================================================
+// MODAL BODY (DialogContent)
+// ============================================================
+
+export type ModalBodyProps = RecursicaOverStyled<MuiDialogContentProps>;
+
+const ModalBody = forwardRef<HTMLDivElement, ModalBodyProps>(function ModalBody(
+  { overStyled = false, className, children, ...rest },
+  ref,
+) {
+  const sanitizedProps = filterStylingProps(rest, overStyled);
   const internalRef = React.useRef<HTMLDivElement>(null);
   const [scrolledTop, setScrolledTop] = React.useState(false);
   const [scrolledBottom, setScrolledBottom] = React.useState(false);
@@ -140,81 +151,69 @@ const ModalBody = React.forwardRef<
     }
   }, []);
 
-  // Re-check scroll on mount and window resize
   React.useEffect(() => {
     checkScroll();
     window.addEventListener("resize", checkScroll);
     return () => window.removeEventListener("resize", checkScroll);
   }, [checkScroll, children]);
 
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    checkScroll();
-    onScroll?.(e);
-  };
-
-  // Intercept children to pull Modal.Footer out of the scrolling container
-  let footer: React.ReactNode = null;
-  const bodyChildren: React.ReactNode[] = [];
-
-  React.Children.forEach(children, (child) => {
-    if (
-      React.isValidElement(child) &&
-      (child.type === ModalFooter ||
-        (child.type as React.ComponentType)?.displayName === "Modal.Footer")
-    ) {
-      footer = child;
-    } else {
-      bodyChildren.push(child);
-    }
-  });
-
   return (
-    <div
-      {...rest}
+    <MuiDialogContent
       ref={(node) => {
-        if (typeof ref === "function") ref(node);
+        if (typeof ref === "function") ref(node as any);
         else if (ref)
-          (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+          (ref as React.MutableRefObject<HTMLDivElement | null>).current =
+            node as any;
+        if (internalRef)
+          (
+            internalRef as React.MutableRefObject<HTMLDivElement | null>
+          ).current = node as HTMLDivElement;
       }}
-      className={`${styles.bodyWrapper} ${className || ""}`}
+      onScroll={() => checkScroll()}
+      data-scrolled-top={scrolledTop || undefined}
+      data-scrolled-bottom={scrolledBottom || undefined}
+      className={`${styles.content} ${styles.scrollArea} ${className || ""}`}
+      {...(sanitizedProps as MuiDialogContentProps)}
     >
-      <div
-        ref={internalRef}
-        onScroll={handleScroll}
-        data-scrolled-top={scrolledTop || undefined}
-        data-scrolled-bottom={scrolledBottom || undefined}
-        className={styles.scrollArea}
-      >
-        {bodyChildren}
-      </div>
-      {footer}
-    </div>
+      {children}
+    </MuiDialogContent>
   );
 });
+
 ModalBody.displayName = "Modal.Body";
 
-interface ModalComponent
-  extends React.ForwardRefExoticComponent<
-    ModalProps & React.RefAttributes<HTMLDivElement>
-  > {
-  Root: typeof MuiModal.Root;
-  Overlay: typeof MuiModal.Overlay;
-  Content: typeof MuiModal.Content;
-  Header: typeof MuiModal.Header;
-  Title: typeof MuiModal.Title;
-  CloseButton: typeof MuiModal.CloseButton;
+// ============================================================
+// MODAL FOOTER (DialogActions)
+// ============================================================
+
+export type ModalFooterProps = RecursicaOverStyled<MuiDialogActionsProps>;
+
+const ModalFooter = forwardRef<HTMLDivElement, ModalFooterProps>(
+  function ModalFooter({ overStyled = false, className, ...rest }, ref) {
+    const sanitizedProps = filterStylingProps(rest, overStyled);
+
+    return (
+      <MuiDialogActions
+        ref={ref as any}
+        className={`${styles.footer} ${className || ""}`}
+        {...(sanitizedProps as MuiDialogActionsProps)}
+      />
+    );
+  },
+);
+
+ModalFooter.displayName = "Modal.Footer";
+
+// ============================================================
+// EXPORT COMPOSITION
+// ============================================================
+
+export const Modal = ModalRoot as typeof ModalRoot & {
+  Title: typeof ModalTitle;
   Body: typeof ModalBody;
   Footer: typeof ModalFooter;
-}
-
-export const Modal = ModalInner as ModalComponent & {
-  Footer: typeof ModalFooter;
 };
-Modal.Root = MuiModal.Root;
-Modal.Overlay = MuiModal.Overlay;
-Modal.Content = MuiModal.Content;
-Modal.Header = MuiModal.Header;
-Modal.Title = MuiModal.Title;
-Modal.CloseButton = MuiModal.CloseButton;
+
+Modal.Title = ModalTitle;
 Modal.Body = ModalBody;
 Modal.Footer = ModalFooter;
