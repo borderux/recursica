@@ -46,7 +46,9 @@
   },
   "files": [
     "lib",
-    "dist"
+    "dist",
+    "llms.txt",
+    "ARCHITECTURE.md"
   ],
   "scripts": {
     "build": "node scripts/validate-schemas.js && node scripts/generate-types.js",

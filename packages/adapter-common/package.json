@@ -27,7 +27,9 @@
     "./style.css": "./dist/adapter-common.css"
   },
   "files": [
-    "dist"
+    "dist",
+    "llms.txt",
+    "ARCHITECTURE.md"
   ],
   "keywords": [
     "react",

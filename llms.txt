@@ -1,0 +1,18 @@
+# Recursica Monorepo
+
+> Recursica is a design system and component library for React and Figma.
+
+This document serves as the entry point for LLMs consuming Recursica packages. Recursica utilizes design tokens (exported from Figma as JSON) to generate framework-specific UI code.
+
+## Packages
+
+- [@recursica/mantine-adapter](packages/mantine-adapter/llms.txt): Primary adapter. Mantine 8+ component library.
+- [@recursica/mui-adapter](packages/mui-adapter/llms.txt): Material UI (MUI) v7 component library adapter.
+- [@recursica/common](packages/common/llms.txt): Shared TypeScript interfaces and types.
+- [@recursica/adapter-common](packages/adapter-common/llms.txt): Framework-agnostic primitives.
+- [@recursica/schemas](packages/schemas/llms.txt): JSON schemas and TypeScript definitions for Recursica configurations.
+
+## Documentation
+
+- [Introduction to Recursica](docs/INTRODUCTION.md)
+- [README](README.md)

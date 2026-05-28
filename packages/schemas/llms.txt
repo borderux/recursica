@@ -1,0 +1,10 @@
+# @recursica/schemas
+
+> Recursica design system schemas and types.
+
+Contains the JSON schemas and generated TypeScript type definitions used to validate Recursica configuration files (`recursica.json`) and token exports.
+
+## Documentation
+
+- [ARCHITECTURE](ARCHITECTURE.md): Package architecture and dependencies.
+- [README](README.md)
