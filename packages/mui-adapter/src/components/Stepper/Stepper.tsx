@@ -1,4 +1,4 @@
-import React, { forwardRef, isValidElement } from "react";
+import React, { forwardRef } from "react";
 import {
   Stepper as MuiStepper,
   Step as MuiStep,
@@ -6,6 +6,10 @@ import {
   StepButton as MuiStepButton,
   StepConnector as MuiStepConnector,
   type StepperProps as MuiStepperProps,
+  type StepProps as MuiStepProps,
+  type StepLabelProps as MuiStepLabelProps,
+  type StepButtonProps as MuiStepButtonProps,
+  type StepConnectorProps as MuiStepConnectorProps,
 } from "@mui/material";
 import {
   filterStylingProps,
@@ -16,20 +20,14 @@ import styles from "./Stepper.module.css";
 export interface RecursicaStepperProps
   extends Omit<
     MuiStepperProps,
-    "size" | "color" | "radius" | "iconSize" | "contentPadding" | "activeStep"
+    "size" | "color" | "radius" | "iconSize" | "contentPadding"
   > {
   size?: "small" | "large";
-  active?: number;
-  onStepClick?: (stepIndex: number) => void;
-  orientation?: "horizontal" | "vertical";
 }
 
 export type StepperProps = RecursicaOverStyled<RecursicaStepperProps>;
 
-export const StepperStep: React.FC<any> = () => null;
-export const StepperCompleted: React.FC<any> = () => null;
-
-const _Stepper = forwardRef<HTMLDivElement, StepperProps>(
+export const Stepper = forwardRef<HTMLDivElement, StepperProps>(
   function Stepper(props, ref) {
     const {
       overStyled = false,
@@ -37,26 +35,10 @@ const _Stepper = forwardRef<HTMLDivElement, StepperProps>(
       orientation = "horizontal",
       className,
       style,
-      active = 0,
-      onStepClick,
-      children,
       ...rest
     } = props;
 
     const sanitizedProps = filterStylingProps(rest, overStyled);
-
-    const steps = React.Children.toArray(children).filter(
-      (child: any) =>
-        isValidElement(child) &&
-        (child.type === StepperStep ||
-          (child.type as any).displayName === "StepperStep"),
-    );
-    const completed = React.Children.toArray(children).find(
-      (child: any) =>
-        isValidElement(child) &&
-        (child.type === StepperCompleted ||
-          (child.type as any).displayName === "StepperCompleted"),
-    );
 
     return (
       <div
@@ -68,7 +50,6 @@ const _Stepper = forwardRef<HTMLDivElement, StepperProps>(
         <MuiStepper
           ref={ref as any}
           orientation={orientation}
-          activeStep={active}
           connector={
             <MuiStepConnector
               classes={{
@@ -83,65 +64,92 @@ const _Stepper = forwardRef<HTMLDivElement, StepperProps>(
             root: styles.steps,
           }}
           {...(sanitizedProps as MuiStepperProps)}
-        >
-          {steps.map((step: any, index: number) => {
-            const stepProps = step.props;
-            const label = stepProps.label;
-            const description = stepProps.description;
-
-            return (
-              <MuiStep
-                key={index}
-                classes={{ root: styles.step }}
-                completed={active > index}
-              >
-                <MuiStepButton onClick={() => onStepClick?.(index)}>
-                  <MuiStepLabel
-                    optional={
-                      description ? (
-                        <div className={styles.stepDescription}>
-                          {description}
-                        </div>
-                      ) : null
-                    }
-                    classes={{
-                      label: styles.stepLabel,
-                      iconContainer: styles.stepIcon,
-                    }}
-                  >
-                    {label}
-                  </MuiStepLabel>
-                </MuiStepButton>
-              </MuiStep>
-            );
-          })}
-        </MuiStepper>
-        {active >= steps.length && completed && (
-          <div className={styles.content}>
-            {(completed as React.ReactElement).props.children}
-          </div>
-        )}
-        {active < steps.length &&
-          steps[active] &&
-          (steps[active] as React.ReactElement).props.children && (
-            <div className={styles.content}>
-              {(steps[active] as React.ReactElement).props.children}
-            </div>
-          )}
+        />
       </div>
     );
   },
 );
 
-StepperStep.displayName = "StepperStep";
-StepperCompleted.displayName = "StepperCompleted";
+Stepper.displayName = "Stepper";
 
-export const Stepper: typeof _Stepper & {
-  Step: typeof StepperStep;
-  Completed: typeof StepperCompleted;
-} = Object.assign(_Stepper, {
-  Step: StepperStep,
-  Completed: StepperCompleted,
-});
+export type StepProps = RecursicaOverStyled<MuiStepProps>;
 
-_Stepper.displayName = "Stepper";
+export const Step = forwardRef<HTMLDivElement, StepProps>(
+  function Step(props, ref) {
+    const { overStyled = false, className, ...rest } = props;
+    return (
+      <MuiStep
+        ref={ref}
+        classes={{ root: styles.step }}
+        className={className || ""}
+        {...(filterStylingProps(rest, overStyled) as MuiStepProps)}
+      />
+    );
+  },
+);
+
+Step.displayName = "Step";
+
+export type StepButtonProps = RecursicaOverStyled<MuiStepButtonProps>;
+
+export const StepButton = forwardRef<HTMLButtonElement, StepButtonProps>(
+  function StepButton(props, ref) {
+    const { overStyled = false, className, ...rest } = props;
+    return (
+      <MuiStepButton
+        ref={ref}
+        className={className || ""}
+        {...(filterStylingProps(rest, overStyled) as MuiStepButtonProps)}
+      />
+    );
+  },
+);
+
+StepButton.displayName = "StepButton";
+
+export type StepLabelProps = RecursicaOverStyled<
+  MuiStepLabelProps & { description?: React.ReactNode }
+>;
+
+export const StepLabel = forwardRef<HTMLDivElement, StepLabelProps>(
+  function StepLabel(props, ref) {
+    const { overStyled = false, className, description, ...rest } = props;
+    return (
+      <MuiStepLabel
+        ref={ref}
+        className={className || ""}
+        classes={{
+          label: styles.stepLabel,
+          iconContainer: styles.stepIcon,
+        }}
+        optional={
+          description ? (
+            <div className={styles.stepDescription}>{description}</div>
+          ) : (
+            rest.optional
+          )
+        }
+        {...(filterStylingProps(rest, overStyled) as MuiStepLabelProps)}
+      />
+    );
+  },
+);
+
+StepLabel.displayName = "StepLabel";
+
+export type StepConnectorProps = RecursicaOverStyled<MuiStepConnectorProps>;
+
+export const StepConnector = forwardRef<HTMLDivElement, StepConnectorProps>(
+  function StepConnector(props, ref) {
+    const { overStyled = false, className, ...rest } = props;
+    return (
+      <MuiStepConnector
+        ref={ref}
+        className={className || ""}
+        {...(filterStylingProps(rest, overStyled) as MuiStepConnectorProps)}
+      />
+    );
+  },
+);
+
+StepConnector.displayName = "StepConnector";

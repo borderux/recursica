@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { forwardRef } from "react";
-import { FormGroup, type FormGroupProps } from "@mui/material";
 import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import {
   filterStylingProps,
@@ -10,16 +9,30 @@ import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/For
 import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
 import styles from "./Checkbox.module.css";
 
+import { FormGroup as MuiFormGroup } from "@mui/material";
+
+export const CheckboxGroupContext = React.createContext<{
+  value?: any[];
+  onChange?: (event: React.SyntheticEvent, value: any) => void;
+  name?: string;
+  readOnly?: boolean;
+} | null>(null);
+
 export interface RecursicaCheckboxGroupProps
-  extends Omit<FormGroupProps, "size" | "onChange">,
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, "onChange">,
     Omit<
       RecursicaFormControlWrapperProps,
-      "controlMaxWidth" | "controlMinWidth"
+      | "controlMaxWidth"
+      | "controlMinWidth"
+      | "onChange"
+      | "classes"
+      | "withAsterisk"
     >,
     ReadOnlyControlProps {
   value?: any[];
   defaultValue?: any[];
   onChange?: (value: any[]) => void;
+  row?: boolean; // Support MUI's row prop if needed, or mapping from layout
 }
 
 export type CheckboxGroupProps =
@@ -45,7 +58,7 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
       assistiveWithIcon,
       error,
       required,
-      withAsterisk,
+      // removed withAsterisk
       id,
       className,
       style,
@@ -56,6 +69,7 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
       value,
       defaultValue,
       onChange,
+      row,
       ...rest
     } = props;
     const sanitizedProps = filterStylingProps(rest, overStyled);
@@ -64,11 +78,10 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
     // Delete prohibited sizing hooks
     delete restRecord["size"];
 
-    const handleChange = (event: React.SyntheticEvent, childValue: any) => {
-      // In MUI, FormGroup doesn't handle value arrays automatically like Mantine Checkbox.Group does.
-      // A common pattern is that each child Checkbox handles its own onChange,
-      // but to match Mantine API we might need context or cloning.
-      // For now, we pass down props or rely on the user to handle state.
+    const handleChange = (_event: React.SyntheticEvent, childValue: any) => {
+      if (onChange) {
+        onChange(childValue);
+      }
     };
 
     return (
@@ -78,7 +91,7 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
         controlMaxWidth="var(--recursica_ui-kit_components_checkbox-item_properties_max-width)"
         controlMinWidth={undefined}
         overStyled={overStyled as true}
-        labelElement="div"
+        // strictly override
         formLayout={formLayout}
         labelSize={labelSize}
         labelAlignment={labelAlignment}
@@ -91,7 +104,6 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
         assistiveWithIcon={assistiveWithIcon}
         error={error}
         required={required}
-        withAsterisk={withAsterisk}
         id={id}
         readOnly={readOnly && !!readOnlyComponent}
         readOnlyComponent={readOnlyComponent}
@@ -100,14 +112,24 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
         readOnlyValue={value !== undefined ? value : defaultValue}
         readOnlyNativeProps={props}
         activeComponent={
-          <FormGroup
-            ref={ref}
-            {...(sanitizedProps as unknown as FormGroupProps)}
-            className={`${styles.groupRoot} ${(sanitizedProps as any).className || ""}`}
-            data-layout={formLayout}
+          <CheckboxGroupContext.Provider
+            value={{
+              value: value !== undefined ? value : defaultValue,
+              onChange: handleChange,
+              name: restRecord.name as string | undefined,
+              readOnly: readOnly || !!(restRecord as any).disabled,
+            }}
           >
-            {children}
-          </FormGroup>
+            <MuiFormGroup
+              ref={ref}
+              row={row}
+              {...(sanitizedProps as any)}
+              className={`${styles.groupRoot} ${(sanitizedProps as any).className || ""}`.trim()}
+              data-layout={formLayout}
+            >
+              {children}
+            </MuiFormGroup>
+          </CheckboxGroupContext.Provider>
         }
       />
     );

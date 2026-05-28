@@ -8,9 +8,8 @@ HARDCODED VALUES:
 */
 
 .root {
-  /* HARDCODE: base layout to support optional icon gaps */
-  display: inline-flex;
-  align-items: center;
+  /* HARDCODE: base layout */
+  display: inline;
   cursor: pointer;
 
   /* HARDCODE: Reset underline and color so we can explicitly use our tokens */
@@ -45,6 +44,8 @@ HARDCODED VALUES:
 }
 
 .root[data-has-icon] {
+  display: inline-flex;
+  align-items: center;
   gap: var(--recursica_ui-kit_components_link_properties_icon-text-gap);
 }
 

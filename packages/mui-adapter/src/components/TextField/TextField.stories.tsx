@@ -1,9 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 import { TextField } from "./TextField";
 import { formControlArgTypes } from "../../../.storybook/commonArgTypes";
-
 const meta: Meta<typeof TextField> = {
   title: "UI-Kit/TextField",
   component: TextField,
@@ -15,7 +12,7 @@ const meta: Meta<typeof TextField> = {
 The \`TextField\` primitive functions as a universal text entry input natively integrated directly into the unified \`FormControlWrapper\` architecture.
 
 ### Architectural Decoupling
-Recursica forcibly overrides the internal MUI \`InputBase\` defaults injecting an untamed input layout primitive perfectly mapped back into our rigid design systems. State modifiers (e.g. Focus, Errors) hook flawlessly back onto our CSS module mapping variable colors strictly accurately.
+Recursica forcibly overrides the internal Mantine \`Input.Wrapper\` defaults injecting an untamed \`<Input>\` layout primitive perfectly mapped back into our rigid design systems. State modifiers (e.g. Focus, Errors) hook flawlessly back onto our CSS module mapping variable colors strictly accurately.
 
 ### Examples
 Always structure horizontal architectures via the generic \`formLayout\` parameter.
@@ -28,21 +25,6 @@ Always structure horizontal architectures via the generic \`formLayout\` paramet
 \`\`\`
 `,
       },
-    },
-    controls: {
-      include: [
-        "disabled",
-        "error",
-        "required",
-        "label",
-        "assistiveText",
-        "readOnly",
-        "formLayout",
-        "labelSize",
-        "labelAlignment",
-        "labelOptionalText",
-        "labelWithEditIcon",
-      ],
     },
   },
   argTypes: {
@@ -86,7 +68,6 @@ export const Default: Story = {
     assistiveText:
       "Tokens are stored identically locally and strictly ephemeral.",
   },
-  render: ({ ...args }: any) => <TextField {...args} />,
 };
 
 export const FormsSideBySide: Story = {
@@ -97,7 +78,6 @@ export const FormsSideBySide: Story = {
       "Specify the exact cluster administrative credentials enforcing strict domain policies. This violently long string tests native textual wrapping safely mapping alongside inputs.",
     formLayout: "side-by-side",
   },
-  render: ({ ...args }: any) => <TextField {...args} />,
 };
 
 export const WithLeadingIcon: Story = {
@@ -120,7 +100,6 @@ export const WithLeadingIcon: Story = {
       </svg>
     ),
   },
-  render: ({ ...args }: any) => <TextField {...args} />,
 };
 
 export const WithTrailingIcon: Story = {
@@ -142,7 +121,6 @@ export const WithTrailingIcon: Story = {
       </svg>
     ),
   },
-  render: ({ ...args }: any) => <TextField {...args} />,
 };
 
 export const Disabled: Story = {
@@ -151,7 +129,6 @@ export const Disabled: Story = {
     placeholder: "Disabled primitive map...",
     disabled: true,
   },
-  render: ({ ...args }: any) => <TextField {...args} />,
 };
 
 export const ErrorState: Story = {
@@ -163,7 +140,6 @@ export const ErrorState: Story = {
       "Critical runtime node disconnect detected traversing DOM architecture.",
     required: true,
   },
-  render: ({ ...args }: any) => <TextField {...args} />,
 };
 
 export const StaticReadOnly: Story = {
@@ -173,7 +149,6 @@ export const StaticReadOnly: Story = {
     value: "Explicitly Uneditable Bound Output",
     readOnly: true,
   },
-  render: ({ ...args }: any) => <TextField {...args} />,
 };
 
 export const EditableReadOnly: Story = {
@@ -184,5 +159,4 @@ export const EditableReadOnly: Story = {
     readOnly: true,
     labelWithEditIcon: true,
   },
-  render: ({ ...args }: any) => <TextField {...args} />,
 };

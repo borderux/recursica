@@ -17,36 +17,12 @@ const meta: Meta<GroupStoryProps> = {
           "Group is a flex horizontal layout container that maps directly to Mantine's Group component allowing safe layout property passing.",
       },
     },
-    controls: {
-      include: [
-        "layer",
-        "withLayer",
-        "gap",
-        "alignItems",
-        "justifyContent",
-        "flexWrap",
-        "defaultChecked",
-        "rowGap",
-        "columnGap",
-        "children",
-        "component",
-        "variant",
-        "size",
-        "icon",
-        "disabled",
-        "href",
-        "onClick",
-        "onChange",
-        "value",
-        "checked",
-      ],
-    },
   },
   args: {
     gap: "rec-default",
-    alignItems: "center",
-    justifyContent: "flex-start",
-    flexWrap: "wrap",
+    align: "center",
+    justify: "flex-start",
+    wrap: "wrap",
   },
   argTypes: {
     gap: {
@@ -67,12 +43,12 @@ const meta: Meta<GroupStoryProps> = {
       ],
       description: "Gap between elements",
     },
-    alignItems: {
+    align: {
       control: "select",
       options: ["flex-start", "center", "flex-end", "stretch"],
       description: "Align-items property",
     },
-    justifyContent: {
+    justify: {
       control: "select",
       options: [
         "flex-start",
@@ -83,7 +59,7 @@ const meta: Meta<GroupStoryProps> = {
       ],
       description: "Justify-content property",
     },
-    flexWrap: {
+    wrap: {
       control: "select",
       options: ["wrap", "nowrap", "wrap-reverse"],
       description: "Flex-wrap property",

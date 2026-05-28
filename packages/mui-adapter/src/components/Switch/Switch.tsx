@@ -16,11 +16,14 @@ import {
 } from "../FormControlLayout/FormControlLayout";
 import styles from "./Switch.module.css";
 
-import { SwitchGroup } from "./SwitchGroup";
+// Removed unused SwitchGroup import
 
 export type RecursicaSwitchProps = RequireAccessibleLabel<
-  Omit<MuiSwitchProps, "size" | "color" | "radius" | "variant"> &
-    ReadOnlyControlProps &
+  Omit<MuiSwitchProps, "size" | "color" | "radius" | "variant"> & {
+    label?: React.ReactNode;
+    description?: React.ReactNode;
+    error?: React.ReactNode;
+  } & ReadOnlyControlProps &
     Pick<
       FormControlLayoutProps,
       "formLayout" | "labelSize" | "controlMaxWidth" | "controlMinWidth"
@@ -38,11 +41,15 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(
       readOnly,
       readOnlyComponent,
       disabled,
-      thumbIcon,
+      // Removed thumbIcon from destructured props since it's not supported
       formLayout,
       labelSize,
       controlMaxWidth,
       controlMinWidth,
+      label,
+      description,
+      error,
+      style,
       ...rest
     } = props;
     const sanitizedProps = filterStylingProps(rest, overStyled);
@@ -125,14 +132,49 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(
     // We omit Mui's sizing/coloring so we rely strictly on variables from Switch.module.css
     const switchNode = (
       <MuiSwitch
-        ref={ref}
-        className={finalClass}
+        ref={ref as any}
+        className={!label ? `${finalClass} ${styles.inner}` : styles.inner}
         classes={mergedClassNames}
         disabled={readOnly || disabled}
         data-disabled={readOnly || disabled || undefined}
         // thumbIcon={thumbIcon ?? FinalThumbIcon}
         {...(sanitizedProps as unknown as MuiSwitchProps)}
       />
+    );
+
+    const finalNode = label ? (
+      <div className={finalClass} style={style as React.CSSProperties}>
+        <div className={styles.body}>
+          {switchNode}
+          <div className={styles.labelWrapper}>
+            <label
+              className={styles.label}
+              htmlFor={restRecord.id as string}
+              data-disabled={readOnly || disabled ? true : undefined}
+            >
+              {label as React.ReactNode}
+            </label>
+            {description && (
+              <div
+                className={styles.description}
+                data-disabled={readOnly || disabled ? true : undefined}
+              >
+                {description}
+              </div>
+            )}
+            {error && (
+              <div
+                className={styles.error}
+                data-disabled={readOnly || disabled ? true : undefined}
+              >
+                {error}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    ) : (
+      switchNode
     );
 
     if (formLayout) {
@@ -143,12 +185,12 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(
           controlMaxWidth={controlMaxWidth}
           controlMinWidth={controlMinWidth}
         >
-          {switchNode}
+          {finalNode}
         </FormControlLayout>
       );
     }
 
-    return switchNode;
+    return finalNode;
   },
 ) as SwitchComponent;
 

@@ -54,7 +54,7 @@ const _Badge = forwardRef<HTMLDivElement, BadgeProps>(function Badge(
   return (
     <MuiBadge
       ref={ref}
-      variant="filled" // We manage visual style purely through our CSS variables mapping
+      variant="standard" // We manage visual style purely through our CSS variables mapping
       data-variant={variant}
       {...sanitizedProps}
       className={finalClass}

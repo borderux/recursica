@@ -95,11 +95,16 @@ export const FormControlWrapper = React.forwardRef<
       focused={focused}
       className={className ? `${styles.root} ${className}` : styles.root}
       style={style}
+      data-error={error ? "true" : undefined}
+      data-disabled={disabled ? "true" : undefined}
+      data-focused={focused ? "true" : undefined}
       {...(sanitizedProps as FormControlProps)}
     >
       <FormControlLayout
         formLayout={formLayout}
         labelSize={labelSize}
+        controlMaxWidth={controlMaxWidth}
+        controlMinWidth={controlMinWidth}
         leftSection={
           label && (
             <Label
@@ -116,15 +121,7 @@ export const FormControlWrapper = React.forwardRef<
           )
         }
       >
-        <div
-          className={styles.inputContainer}
-          style={
-            {
-              "--form-control-max-width": controlMaxWidth,
-              "--form-control-min-width": controlMinWidth,
-            } as React.CSSProperties
-          }
-        >
+        <div className={styles.inputSection}>
           {/* Natively wrap children into flex box */}
           {mappedChildren}
 
@@ -134,7 +131,6 @@ export const FormControlWrapper = React.forwardRef<
               id={descriptionId}
               assistiveVariant={error ? "error" : "help"}
               assistiveWithIcon={assistiveWithIcon}
-              className={styles.assistive}
             >
               {error && typeof error === "string" ? error : finalAssistiveText}
             </AssistiveElement>

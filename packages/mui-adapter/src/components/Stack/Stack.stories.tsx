@@ -17,32 +17,11 @@ const meta: Meta<StackStoryProps> = {
           "Stack is a flex vertical layout container that maps directly to Mantine's Stack component allowing safe layout property passing.",
       },
     },
-    controls: {
-      include: [
-        "layer",
-        "withLayer",
-        "gap",
-        "alignItems",
-        "justifyContent",
-        "defaultChecked",
-        "children",
-        "component",
-        "variant",
-        "size",
-        "icon",
-        "disabled",
-        "href",
-        "onClick",
-        "onChange",
-        "value",
-        "checked",
-      ],
-    },
   },
   args: {
     gap: "rec-default",
-    alignItems: "stretch",
-    justifyContent: "flex-start",
+    align: "stretch",
+    justify: "flex-start",
   },
   argTypes: {
     gap: {
@@ -63,12 +42,12 @@ const meta: Meta<StackStoryProps> = {
       ],
       description: "Gap between elements",
     },
-    alignItems: {
+    align: {
       control: "select",
       options: ["flex-start", "center", "flex-end", "stretch"],
       description: "Align-items property",
     },
-    justifyContent: {
+    justify: {
       control: "select",
       options: [
         "flex-start",

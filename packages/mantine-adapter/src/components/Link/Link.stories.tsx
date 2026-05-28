@@ -2,7 +2,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import type { Meta, StoryObj } from "@storybook/react";
 import { Link } from "./Link";
-import { Text } from "@mantine/core";
 
 const meta: Meta<typeof Link> = {
   title: "UI-Kit/Link",
@@ -52,8 +51,8 @@ export const Polymorphic: Story = {
 
 export const InlineText: Story = {
   render: () => (
-    <Text>
+    <p>
       Here is some text with an <Link href="#">inline link</Link> inside it.
-    </Text>
+    </p>
   ),
 };

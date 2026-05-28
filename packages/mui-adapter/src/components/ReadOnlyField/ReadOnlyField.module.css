@@ -3,21 +3,22 @@
 .root {
   width: 100%;
   --form-control-margin-bottom: var(
-    --recursica_ui-kit_components_read-only-field_variants_layouts_stacked_properties_top-bottom-margin,
-    0px
+    --recursica_ui-kit_components_read-only-field_variants_layouts_stacked_properties_top-bottom-margin
   );
 }
 
 .root[data-form-layout="side-by-side"] {
   --form-control-margin-bottom: var(
-    --recursica_ui-kit_components_read-only-field_variants_layouts_side-by-side_properties_top-bottom-margin,
-    0px
+    --recursica_ui-kit_components_read-only-field_variants_layouts_side-by-side_properties_top-bottom-margin
   );
 }
 
 .text {
+  margin: 0;
+  padding: 0;
   display: flex;
   align-items: center;
+  word-break: break-word;
 
   font-family: var(
     --recursica_ui-kit_components_read-only-field_properties_text_font-family
@@ -48,7 +49,6 @@
   );
 
   min-height: var(
-    --recursica_ui-kit_components_read-only-field_properties_min-height,
-    40px
+    --recursica_ui-kit_components_read-only-field_properties_min-height
   );
 }

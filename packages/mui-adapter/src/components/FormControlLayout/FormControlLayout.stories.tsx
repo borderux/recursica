@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 import { FormControlLayout } from "./FormControlLayout";
 import { Switch } from "../Switch/Switch";
@@ -14,9 +12,6 @@ const meta: Meta<typeof FormControlLayout> = {
         component:
           "A layout component used to correctly position form inputs alongside their labels.\n\n**When to use this:**\nTypically, you should use `FormControlWrapper` instead, which uses this component under the hood to handle layout automatically.\n\nHowever, this component is useful when you need to align standalone inputs (like a `Switch` or `Checkbox` without a label) so they perfectly match the spacing and alignment of your other form fields in a `side-by-side` layout.",
       },
-    },
-    controls: {
-      include: ["formLayout", "labelSize"],
     },
   },
   tags: ["autodocs"],
@@ -59,7 +54,6 @@ export const Default: Story = {
     ),
     children: <Switch label="Input area content" />,
   },
-  render: ({ ...args }: any) => <FormControlLayout {...args} />,
 };
 
 /**
@@ -72,7 +66,6 @@ export const StackedLayout: Story = {
     labelSize: "default",
     children: <Switch label="Flush stacked switch" />,
   },
-  render: ({ ...args }: any) => <FormControlLayout {...args} />,
 };
 
 /**
@@ -86,5 +79,4 @@ export const SideBySideLayout: Story = {
     labelSize: "default",
     children: <Switch label="Offset switch aligning with grid" />,
   },
-  render: ({ ...args }: any) => <FormControlLayout {...args} />,
 };

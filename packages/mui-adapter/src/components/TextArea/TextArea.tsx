@@ -4,7 +4,7 @@ import {
   type TextFieldProps as MuiTextareaProps,
 } from "@mui/material";
 import { type ReadOnlyControlProps } from "@recursica/adapter-common";
-import { TextField } from "@mui/material";
+// Removed unused TextField import
 import {
   filterStylingProps,
   type RecursicaOverStyled,
@@ -30,6 +30,7 @@ export interface RecursicaTextAreaProps
       | "onLabelEditClick"
     >,
     ReadOnlyControlProps {
+  withAsterisk?: boolean;
   /** Maximum rows for autosize textarea to grow */
   maxRows?: number;
   /** Minimum rows of autosize textarea */
@@ -121,7 +122,6 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
         assistiveWithIcon={assistiveWithIcon}
         error={error}
         required={required}
-        withAsterisk={withAsterisk}
         id={id}
         readOnly={readOnly}
         readOnlyComponent={readOnlyComponent}
@@ -133,20 +133,14 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
           /* Naked Input execution safely decoupled from Mui's macro Input.Wrapper DOM hooks */
           <MuiTextarea
             multiline
-            ref={ref}
+            inputRef={ref as any}
             classes={mergedClassNames}
             disabled={disabled}
             value={value}
             defaultValue={defaultValue}
             label={undefined}
-            description={undefined}
             error={undefined}
             required={undefined}
-            withAsterisk={undefined}
-            wrapperProps={{
-              "data-disabled": disabled ? "true" : undefined,
-              "data-error": error ? "true" : undefined,
-            }}
             {...(sanitizedProps as unknown as MuiTextareaProps)}
           />
         }

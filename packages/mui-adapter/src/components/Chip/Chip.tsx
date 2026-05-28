@@ -18,6 +18,9 @@ export interface RecursicaChipProps {
 
   /** Screen reader label for the remove button. Defaults to 'Remove' */
   removeLabel?: string;
+
+  /** Checked state for the chip (acts as a checkbox) */
+  checked?: boolean;
 }
 
 export type ChipProps = RecursicaOverStyled<
@@ -45,6 +48,24 @@ function CloseIcon(props: React.ComponentPropsWithoutRef<"svg">) {
   );
 }
 
+function CheckIcon(props: React.ComponentPropsWithoutRef<"svg">) {
+  return (
+    <svg
+      viewBox="0 0 10 7"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <path
+        d="M4 4.586L1.707 2.293A1 1 0 1 0 .293 3.707l3 3a.997.997 0 0 0 1.414 0l5-5A1 1 0 1 0 8.293.293L4 4.586z"
+        fill="currentColor"
+        fillRule="evenodd"
+        clipRule="evenodd"
+      />
+    </svg>
+  );
+}
+
 export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
   {
     error = false,
@@ -52,6 +73,7 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
     onRemove,
     removeLabel = "Remove",
     children,
+    checked,
     overStyled = false,
     ...rest
   },
@@ -63,9 +85,8 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
   const mergedClassNames: Partial<Record<string, string>> = {
     root: styles.root,
     label: styles.label,
-    input: styles.input,
-    iconWrapper: styles.muiIconWrapper,
-    checkIcon: styles.checkIcon,
+    icon: styles.leadingIcon,
+    deleteIcon: styles.removeIconWrapper,
   };
 
   const classNamesProp = restRecord.classNames;
@@ -88,6 +109,7 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
 
   // Determine state
   const dataError = error ? "" : undefined;
+  const dataChecked = checked ? "" : undefined;
   const isIconOnly = !children && (!!icon || !!onRemove);
 
   return (
@@ -96,44 +118,34 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
       className={finalClass}
       classes={mergedClassNames}
       {...(dataError !== undefined ? { "data-error": "" } : {})}
+      {...(dataChecked !== undefined ? { "data-checked": "" } : {})}
       {...(isIconOnly ? { "data-icon-only": "" } : {})}
       {...sanitizedProps}
-    >
-      <span className={styles.innerWrapper}>
-        {icon && (
+      icon={
+        checked ? (
+          <span className={styles.mantineIconWrapper} aria-hidden>
+            <CheckIcon />
+          </span>
+        ) : icon ? (
           <span className={styles.leadingIcon} aria-hidden>
             {icon}
           </span>
-        )}
-
-        <span className={styles.children}>{children}</span>
-
-        {onRemove && (
-          <span
-            role="button"
-            className={styles.removeIcon}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onRemove(e);
-            }}
-            aria-label={removeLabel}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                e.stopPropagation();
-                onRemove(
-                  e as unknown as React.MouseEvent<HTMLSpanElement, MouseEvent>,
-                );
-              }
-            }}
-            tabIndex={0}
-          >
+        ) : undefined
+      }
+      onDelete={onRemove}
+      deleteIcon={
+        onRemove ? (
+          <span className={styles.removeIconWrapper}>
             <CloseIcon />
           </span>
-        )}
-      </span>
-    </MuiChip>
+        ) : undefined
+      }
+      label={
+        <span className={styles.innerWrapper}>
+          <span className={styles.children}>{children}</span>
+        </span>
+      }
+    />
   );
 });
 

@@ -12,15 +12,13 @@
 /* --- GROUP STYLES --- */
 .groupRoot {
   padding: var(
-    --recursica_ui-kit_components_radio-button-group_properties_padding,
-    0
+    --recursica_ui-kit_components_radio-button-group_properties_padding
   );
   margin: 0; /* HARDCODE: structural reset; consider token if layout needs change */
   display: flex;
   flex-direction: column;
   gap: var(
-    --recursica_ui-kit_components_radio-button-group_properties_item-gap,
-    16px
+    --recursica_ui-kit_components_radio-button-group_properties_item-gap
   );
 }
 
@@ -49,10 +47,7 @@
 .groupRoot[data-layout="stacked"] {
   flex-direction: column;
   margin-top: var(
-    --recursica_ui-kit_components_radio-button-group_variants_layouts_stacked_properties_label-field-gap,
-    var(
-      --recursica_ui-kit_components_radio-button-group_variants_layouts_stacked_properties_top-bottom-margin
-    )
+    --recursica_ui-kit_components_radio-button-group_variants_layouts_stacked_properties_label-field-gap
   );
   margin-bottom: var(
     --recursica_ui-kit_components_radio-button-group_variants_layouts_stacked_properties_top-bottom-margin
@@ -214,7 +209,27 @@
     --recursica_ui-kit_components_radio-button-item_properties_colors_disabled-text
   );
   opacity: var(
-    --recursica_ui-kit_components_radio-button-item_properties_disabled-opacity,
-    var(--recursica_ui-kit_components_radio-button_properties_disabled-opacity)
+    --recursica_ui-kit_components_radio-button-item_properties_disabled-opacity
+  );
+}
+
+.root .description {
+  margin-top: 5px; /* HARDCODE: mantine default */
+  color: #868e96; /* HARDCODE: mantine default dimmed */
+  font-size: 12px; /* HARDCODE: mantine default xs */
+  line-height: 1.2;
+}
+
+.root .error {
+  margin-top: 5px; /* HARDCODE: mantine default */
+  color: #fa5252; /* HARDCODE: mantine default error */
+  font-size: 12px; /* HARDCODE: mantine default xs */
+  line-height: 1.2;
+}
+
+.root .description[data-disabled="true"],
+.root .error[data-disabled="true"] {
+  opacity: var(
+    --recursica_ui-kit_components_radio-button-item_properties_disabled-opacity
   );
 }

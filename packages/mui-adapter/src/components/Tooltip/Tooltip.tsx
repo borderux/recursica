@@ -49,9 +49,12 @@ export type TooltipProps = RecursicaOverStyled<
 const TooltipBase = function Tooltip({
   overStyled = false,
   withBeak = true,
+  label,
+  opened,
   ...rest
-}: TooltipProps) {
-  const sanitizedProps = filterStylingProps(rest, overStyled);
+}: TooltipProps & { label?: React.ReactNode; opened?: boolean }) {
+  const { title, ...restProps } = rest;
+  const sanitizedProps = filterStylingProps(restProps, overStyled);
 
   // Bind CSS module classes to Mui's internal classNames API
   const mergedClassNames: Partial<Record<string, string>> = {
@@ -75,16 +78,6 @@ const TooltipBase = function Tooltip({
     });
   }
 
-  // arrowSize must be a JS number prop — Mui uses it for inline width/height
-  // and positioning offset (-arrowSize/2) calculations that cannot be CSS-driven.
-  // Default to 16 to match the Recursica beak-size token (16px).
-  const arrowSize =
-    ((sanitizedProps as Record<string, unknown>).arrowSize as
-      | number
-      | undefined) ?? 16;
-
-  // Resolve withBeak (Recursica) vs withArrow (Mui).
-  // withBeak takes precedence when both are provided.
   const withArrow = (sanitizedProps as Record<string, unknown>).withArrow as
     | boolean
     | undefined;
@@ -92,26 +85,15 @@ const TooltipBase = function Tooltip({
 
   return (
     <MuiTooltip
+      title={label || title || ""}
+      open={opened}
       placement="top" /* Recursica default; Mui defaults to "bottom" */
-      multiline /* Always allow text wrapping within max-width */
-      arrowSize={arrowSize}
-      withArrow={resolvedWithArrow}
+      arrow={resolvedWithArrow}
       classes={mergedClassNames}
-      {...(sanitizedProps as unknown as MuiTooltipProps)}
+      {...(sanitizedProps as unknown as Omit<MuiTooltipProps, "title">)}
     />
   );
 };
 TooltipBase.displayName = "Tooltip";
 
-// ============================================================
-// DOT NOTATION EXPORT
-// ============================================================
-
-type TooltipComponent = typeof TooltipBase & {
-  Floating: typeof MuiTooltip.Floating;
-  Group: typeof MuiTooltip.Group;
-};
-
-export const Tooltip = TooltipBase as TooltipComponent;
-Tooltip.Floating = MuiTooltip.Floating;
-Tooltip.Group = MuiTooltip.Group;
+export const Tooltip = TooltipBase;

@@ -73,7 +73,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const restRecord = sanitizedProps as Record<string, unknown>;
 
     // Explicitly delete blocked semantic expansion dimension props that MUI uses natively
-    delete restRecord["fullWidth"];
     delete restRecord["color"]; // Recursica handles colors internally via tokens
 
     const hasStartIcon = !!icon || !!restRecord["startIcon"];
@@ -127,8 +126,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         className={finalClass}
         loading={!!restRecord.loading}
         loadingIndicator={loadingIndicator}
+        fullWidth={!!restRecord.fullWidth}
         startIcon={
-          icon != null ? (
+          restRecord.loading ? (
+            <span className={styles.iconWrapper} aria-hidden>
+              {loadingIndicator}
+            </span>
+          ) : icon != null ? (
             <span className={styles.iconWrapper} aria-hidden>
               {icon}
             </span>

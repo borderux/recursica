@@ -38,12 +38,6 @@ const _Avatar = forwardRef<HTMLDivElement, AvatarProps>(function Avatar(
     ghost: "transparent",
   } as const;
 
-  const mapSize = {
-    default: "md",
-    small: "sm",
-    large: "lg",
-  } as const;
-
   const sanitizedProps = filterStylingProps(rest, overStyled);
   const restRecord = sanitizedProps as Record<string, unknown>;
 
@@ -84,8 +78,7 @@ const _Avatar = forwardRef<HTMLDivElement, AvatarProps>(function Avatar(
       ref={ref}
       className={classNameProp}
       classes={mergedClassNames}
-      variant={mapVariant[variant]}
-      size={mapSize[size]}
+      variant={mapVariant[variant] as any}
       src={src}
       data-variant={variant}
       data-size={size}

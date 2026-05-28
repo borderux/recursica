@@ -2,17 +2,11 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import type { Meta, StoryObj } from "@storybook/react";
 import { Link } from "./Link";
-import { Text } from "../Text/Text";
 
 const meta: Meta<typeof Link> = {
   title: "UI-Kit/Link",
   component: Link,
   tags: ["autodocs"],
-  parameters: {
-    controls: {
-      include: ["children", "href", "icon", "component", "onClick"],
-    },
-  },
   args: {
     children: "Link text",
     href: "#",
@@ -57,8 +51,8 @@ export const Polymorphic: Story = {
 
 export const InlineText: Story = {
   render: () => (
-    <Text>
+    <p>
       Here is some text with an <Link href="#">inline link</Link> inside it.
-    </Text>
+    </p>
   ),
 };

@@ -171,14 +171,16 @@ export const AccordionItem = forwardRef<
         "expanded" | "onChange"
       >)}
     >
-      {title ? (
-        <>
-          <AccordionControl leftIcon={leftIcon}>{title}</AccordionControl>
-          <AccordionPanel>{children}</AccordionPanel>
-        </>
-      ) : (
-        children
-      )}
+      {
+        (title ? (
+          <>
+            <AccordionControl leftIcon={leftIcon}>{title}</AccordionControl>
+            <AccordionPanel>{children}</AccordionPanel>
+          </>
+        ) : (
+          children
+        )) as any
+      }
     </MuiAccordion>
   );
 });

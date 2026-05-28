@@ -25,8 +25,7 @@
       --recursica_ui-kit_components_segmented-control_properties_padding-horizontal
     );
   box-shadow: var(
-    --recursica_ui-kit_components_segmented-control_properties_elevation,
-    none
+    --recursica_ui-kit_components_segmented-control_properties_elevation
   );
   gap: var(--recursica_ui-kit_components_segmented-control_properties_item-gap);
 }
@@ -42,10 +41,7 @@
     --recursica_ui-kit_components_segmented-control-item_properties_item_height
   );
   border-radius: var(
-    --recursica_ui-kit_components_segmented-control-item_properties_unselected_border-radius,
-    var(
-      --recursica_ui-kit_components_segmented-control-item_properties_item_border-radius
-    )
+    --recursica_ui-kit_components_segmented-control-item_properties_unselected_border-radius
   );
 
   border: var(
@@ -63,41 +59,32 @@
   );
 
   font-family: var(
-    --recursica_ui-kit_components_segmented-control-item_properties_unselected-text_font-family,
-    inherit
+    --recursica_ui-kit_components_segmented-control-item_properties_unselected-text_font-family
   );
   font-size: var(
-    --recursica_ui-kit_components_segmented-control-item_properties_unselected-text_font-size,
-    inherit
+    --recursica_ui-kit_components_segmented-control-item_properties_unselected-text_font-size
   );
   font-style: var(
-    --recursica_ui-kit_components_segmented-control-item_properties_unselected-text_font-style,
-    inherit
+    --recursica_ui-kit_components_segmented-control-item_properties_unselected-text_font-style
   );
   font-weight: var(
-    --recursica_ui-kit_components_segmented-control-item_properties_unselected-text_font-weight,
-    inherit
+    --recursica_ui-kit_components_segmented-control-item_properties_unselected-text_font-weight
   );
   letter-spacing: var(
-    --recursica_ui-kit_components_segmented-control-item_properties_unselected-text_letter-spacing,
-    inherit
+    --recursica_ui-kit_components_segmented-control-item_properties_unselected-text_letter-spacing
   );
   line-height: var(
-    --recursica_ui-kit_components_segmented-control-item_properties_unselected-text_line-height,
-    inherit
+    --recursica_ui-kit_components_segmented-control-item_properties_unselected-text_line-height
   );
   text-decoration: var(
-    --recursica_ui-kit_components_segmented-control-item_properties_unselected-text_text-decoration,
-    inherit
+    --recursica_ui-kit_components_segmented-control-item_properties_unselected-text_text-decoration
   );
   text-transform: var(
-    --recursica_ui-kit_components_segmented-control-item_properties_unselected-text_text-transform,
-    inherit
+    --recursica_ui-kit_components_segmented-control-item_properties_unselected-text_text-transform
   );
 
   color: var(
-    --recursica_ui-kit_components_segmented-control-item_properties_unselected_colors_text-color,
-    inherit
+    --recursica_ui-kit_components_segmented-control-item_properties_unselected_colors_text-color
   );
 
   display: flex;
@@ -140,8 +127,8 @@
   );
 }
 
-/* Indicator (the moving selected block) */
-.root .indicator {
+/* Indicator mapping (MUI ToggleButton applies .Mui-selected to the button instead of rendering a sliding indicator) */
+.root .control.Mui-selected {
   background-color: var(
     --recursica_ui-kit_components_segmented-control-item_properties_selected_colors_background
   );
@@ -156,48 +143,37 @@
     --recursica_ui-kit_components_segmented-control-item_properties_selected_elevation
   );
   border-radius: var(
-    --recursica_ui-kit_components_segmented-control-item_properties_selected_border-radius,
-    var(
-      --recursica_ui-kit_components_segmented-control-item_properties_item_border-radius
-    )
+    --recursica_ui-kit_components_segmented-control-item_properties_selected_border-radius
   );
 }
 
 /* Selected label text color override */
-.root .control[data-active] .label {
+.root .control.Mui-selected .label {
   color: var(
     --recursica_ui-kit_components_segmented-control-item_properties_selected_colors_text-color
   );
   font-family: var(
-    --recursica_ui-kit_components_segmented-control-item_properties_selected-text_font-family,
-    inherit
+    --recursica_ui-kit_components_segmented-control-item_properties_selected-text_font-family
   );
   font-size: var(
-    --recursica_ui-kit_components_segmented-control-item_properties_selected-text_font-size,
-    inherit
+    --recursica_ui-kit_components_segmented-control-item_properties_selected-text_font-size
   );
   font-style: var(
-    --recursica_ui-kit_components_segmented-control-item_properties_selected-text_font-style,
-    inherit
+    --recursica_ui-kit_components_segmented-control-item_properties_selected-text_font-style
   );
   font-weight: var(
-    --recursica_ui-kit_components_segmented-control-item_properties_selected-text_font-weight,
-    inherit
+    --recursica_ui-kit_components_segmented-control-item_properties_selected-text_font-weight
   );
   letter-spacing: var(
-    --recursica_ui-kit_components_segmented-control-item_properties_selected-text_letter-spacing,
-    inherit
+    --recursica_ui-kit_components_segmented-control-item_properties_selected-text_letter-spacing
   );
   line-height: var(
-    --recursica_ui-kit_components_segmented-control-item_properties_selected-text_line-height,
-    inherit
+    --recursica_ui-kit_components_segmented-control-item_properties_selected-text_line-height
   );
   text-decoration: var(
-    --recursica_ui-kit_components_segmented-control-item_properties_selected-text_text-decoration,
-    inherit
+    --recursica_ui-kit_components_segmented-control-item_properties_selected-text_text-decoration
   );
   text-transform: var(
-    --recursica_ui-kit_components_segmented-control-item_properties_selected-text_text-transform,
-    inherit
+    --recursica_ui-kit_components_segmented-control-item_properties_selected-text_text-transform
   );
 }

@@ -62,6 +62,10 @@
   );
 }
 
+.root :global(.MuiFormLabel-asterisk) {
+  display: none !important;
+}
+
 /* MUI propagates .Mui-error to the label automatically on FormControl error. 
    We explicitly override this bleed to prevent the main label text from turning red, 
    while allowing the asterisk to take the error color! */

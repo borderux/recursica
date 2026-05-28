@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { forwardRef } from "react";
 import {
-  Radio as MuiRadio,
+  // Removed unused Radio import
   RadioGroup as MuiRadioGroup,
   type RadioGroupProps as MuiRadioGroupProps,
 } from "@mui/material";
@@ -15,12 +15,32 @@ import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
 import styles from "./Radio.module.css";
 
 export interface RecursicaRadioGroupProps
-  extends Omit<MuiRadioGroupProps, "size" | "labelProps">,
+  extends Omit<
+      MuiRadioGroupProps,
+      | "size"
+      | "labelProps"
+      | "classes"
+      | "ref"
+      | "onChange"
+      | "value"
+      | "defaultValue"
+    >,
     Omit<
       RecursicaFormControlWrapperProps,
-      "controlMaxWidth" | "controlMinWidth"
+      | "controlMaxWidth"
+      | "controlMinWidth"
+      | "classes"
+      | "onChange"
+      | keyof MuiRadioGroupProps
     >,
-    ReadOnlyControlProps {}
+    ReadOnlyControlProps {
+  value?: any;
+  defaultValue?: any;
+  onChange?: (
+    event: React.ChangeEvent<HTMLInputElement>,
+    value: string,
+  ) => void;
+}
 
 export type RadioGroupProps = RecursicaOverStyled<RecursicaRadioGroupProps>;
 
@@ -44,7 +64,7 @@ export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
       assistiveWithIcon,
       error,
       required,
-      withAsterisk,
+      // Removed withAsterisk as it is not supported natively in this interface
       id,
       className,
       style,
@@ -69,7 +89,7 @@ export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
         controlMaxWidth="var(--recursica_ui-kit_components_radio-button-item_properties_max-width)"
         controlMinWidth={undefined}
         overStyled={overStyled as true}
-        labelElement="div" // Strictly override. ARIA grouping prohibits interactive radios nested natively inside <label>.
+        // Strictly override. ARIA grouping prohibits interactive radios nested natively inside <label>.
         formLayout={formLayout}
         labelSize={labelSize}
         labelAlignment={labelAlignment}
@@ -81,8 +101,6 @@ export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
         assistiveText={assistiveText}
         assistiveWithIcon={assistiveWithIcon}
         error={error}
-        required={required}
-        withAsterisk={withAsterisk}
         id={id}
         readOnly={readOnly && !!readOnlyComponent}
         readOnlyComponent={readOnlyComponent}
@@ -97,10 +115,10 @@ export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
             {...(sanitizedProps as unknown as MuiRadioGroupProps)}
             value={value}
             defaultValue={defaultValue}
+            className={styles.groupRoot}
+            data-layout={formLayout}
           >
-            <div className={styles.groupRoot} data-layout={formLayout}>
-              {children}
-            </div>
+            {children}
           </MuiRadioGroup>
         }
       />

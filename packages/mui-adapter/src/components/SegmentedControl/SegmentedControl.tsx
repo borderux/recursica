@@ -1,6 +1,7 @@
 import { forwardRef } from "react";
 import {
   ToggleButtonGroup as MuiSegmentedControl,
+  ToggleButton,
   type ToggleButtonGroupProps as MuiSegmentedControlProps,
 } from "@mui/material";
 import {
@@ -19,6 +20,12 @@ export interface RecursicaSegmentedControlProps {
    * This component explicitly disables the `disabled` prop.
    */
   disabled?: never;
+  /** Data to generate the control options */
+  data?: Array<
+    string | { label: React.ReactNode; value: string; disabled?: boolean }
+  >;
+  value?: string;
+  onChange?: (value: string) => void;
 }
 
 export type SegmentedControlProps = RecursicaOverStyled<
@@ -31,6 +38,8 @@ export type SegmentedControlProps = RecursicaOverStyled<
     | "classNames"
     | "className"
     | "disabled"
+    | "value"
+    | "onChange"
   > & {
     className?: string;
     classNames?: Partial<Record<string, string>>;
@@ -77,7 +86,15 @@ function useSegmentedControlClassNames(restRecord: Record<string, unknown>): {
 
 const _SegmentedControl = forwardRef<HTMLDivElement, SegmentedControlProps>(
   function SegmentedControl(
-    { overStyled = false, orientation = "horizontal", fullWidth, ...rest },
+    {
+      overStyled = false,
+      orientation = "horizontal",
+      fullWidth,
+      data = [],
+      value,
+      onChange,
+      ...rest
+    },
     ref,
   ) {
     const sanitizedProps = filterStylingProps(rest, overStyled);
@@ -88,6 +105,15 @@ const _SegmentedControl = forwardRef<HTMLDivElement, SegmentedControlProps>(
 
     const stylingParams = useSegmentedControlClassNames(restRecord);
 
+    const handleChange = (
+      _event: React.MouseEvent<HTMLElement>,
+      newValue: string | null,
+    ) => {
+      if (newValue !== null && onChange) {
+        onChange(newValue);
+      }
+    };
+
     return (
       <MuiSegmentedControl
         ref={ref}
@@ -96,11 +122,31 @@ const _SegmentedControl = forwardRef<HTMLDivElement, SegmentedControlProps>(
         orientation={orientation}
         fullWidth={fullWidth}
         data-orientation={orientation}
+        exclusive
+        value={value}
+        onChange={handleChange as any}
         {...(sanitizedProps as Omit<
           MuiSegmentedControlProps,
-          "variant" | "size"
+          "variant" | "size" | "value" | "onChange"
         >)}
-      />
+      >
+        {data.map((item) => {
+          const itemValue = typeof item === "string" ? item : item.value;
+          const itemLabel = typeof item === "string" ? item : item.label;
+          const itemDisabled = typeof item === "string" ? false : item.disabled;
+
+          return (
+            <ToggleButton
+              key={itemValue}
+              value={itemValue}
+              disabled={itemDisabled}
+              className={stylingParams.classNames.control}
+            >
+              <div className={stylingParams.classNames.label}>{itemLabel}</div>
+            </ToggleButton>
+          );
+        })}
+      </MuiSegmentedControl>
     );
   },
 );

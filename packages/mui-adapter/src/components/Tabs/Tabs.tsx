@@ -2,8 +2,8 @@ import { forwardRef } from "react";
 import {
   Tabs as MuiTabs,
   type TabsProps as MuiTabsProps,
-  type ListProps as MuiTabsListProps,
-  type TabsProps as MuiTabsTabProps,
+  Tab as MuiTab,
+  type TabProps as MuiTabProps,
 } from "@mui/material";
 import {
   filterStylingProps,
@@ -18,88 +18,74 @@ export interface RecursicaTabsProps
 
 export type TabsProps = RecursicaOverStyled<RecursicaTabsProps>;
 
-const _Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(props, ref) {
-  const {
-    variant = "default",
-    orientation = "horizontal",
-    overStyled = false,
-    className,
-    ...rest
-  } = props;
+export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
+  function Tabs(props, ref) {
+    const {
+      variant = "default",
+      orientation = "horizontal",
+      overStyled = false,
+      className,
+      ...rest
+    } = props;
 
-  const sanitizedProps = filterStylingProps(rest, overStyled);
+    const sanitizedProps = filterStylingProps(rest, overStyled);
 
-  return (
-    <MuiTabs
-      ref={ref}
-      variant={variant}
-      orientation={orientation}
-      className={`${styles.root} ${className || ""}`}
-      data-variant={variant}
-      data-orientation={orientation}
-      classes={{
-        list: styles.list,
-        tab: styles.tab,
-        panel: styles.panel,
-      }}
-      {...(sanitizedProps as MuiTabsProps)}
-    />
-  );
-});
-
-_Tabs.displayName = "Tabs";
-
-export type TabsListProps = RecursicaOverStyled<MuiTabsListProps>;
-
-const _TabsList = forwardRef<HTMLDivElement, TabsListProps>(
-  function TabsList(props, ref) {
-    const { overStyled = false, ...rest } = props;
     return (
-      <div
+      <MuiTabs
         ref={ref}
-        {...(filterStylingProps(rest, overStyled) as MuiTabsListProps)}
+        orientation={orientation}
+        className={`${styles.root} ${className || ""}`}
+        data-variant={variant}
+        data-orientation={orientation}
+        classes={{
+          flexContainer: styles.list,
+          indicator: styles.indicator,
+        }}
+        {...(sanitizedProps as MuiTabsProps)}
       />
     );
   },
 );
-_TabsList.displayName = "Tabs.List";
 
-export type TabsTabProps = RecursicaOverStyled<MuiTabsTabProps>;
+Tabs.displayName = "Tabs";
 
-const _TabsTab = forwardRef<HTMLButtonElement, TabsTabProps>(
-  function TabsTab(props, ref) {
-    const { overStyled = false, ...rest } = props;
+export type TabProps = RecursicaOverStyled<MuiTabProps>;
+
+export const Tab = forwardRef<HTMLDivElement, TabProps>(
+  function Tab(props, ref) {
+    const { overStyled = false, className, ...rest } = props;
+    const sanitizedProps = filterStylingProps(rest, overStyled);
+
     return (
-      <div
+      <MuiTab
         ref={ref}
-        {...(filterStylingProps(rest, overStyled) as MuiTabsTabProps)}
+        className={`${styles.tab} ${className || ""}`}
+        {...(sanitizedProps as MuiTabProps)}
       />
     );
   },
 );
-_TabsTab.displayName = "Tabs.Tab";
 
-export type TabsPanelProps = RecursicaOverStyled<MuiTabsPanelProps>;
+Tab.displayName = "Tab";
 
-const _TabsPanel = forwardRef<HTMLDivElement, TabsPanelProps>(
-  function TabsPanel(props, ref) {
-    const { overStyled = false, ...rest } = props;
+import { TabPanel as MuiTabPanel } from "@mui/lab";
+import type { TabPanelProps as MuiTabPanelProps } from "@mui/lab";
+
+export type TabPanelProps = RecursicaOverStyled<MuiTabPanelProps>;
+
+export const TabPanel = forwardRef<HTMLDivElement, TabPanelProps>(
+  function TabPanel(props, ref) {
+    const { overStyled = false, className, ...rest } = props;
+    const sanitizedProps = filterStylingProps(rest, overStyled);
+
     return (
-      <div
+      <MuiTabPanel
         ref={ref}
-        {...(filterStylingProps(rest, overStyled) as MuiTabsPanelProps)}
+        className={`${styles.panel} ${className || ""}`}
+        {...(sanitizedProps as MuiTabPanelProps)}
       />
     );
   },
 );
-_TabsPanel.displayName = "Tabs.Panel";
 
-export const Tabs: typeof _Tabs & {
-  List: typeof _TabsList;
-  Tab: typeof _TabsTab;
-  Panel: typeof _TabsPanel;
-} = Object.assign(_Tabs, {
-  List: _TabsList,
-  Tab: _TabsTab,
-  Panel: _TabsPanel,
-});
+TabPanel.displayName = "TabPanel";

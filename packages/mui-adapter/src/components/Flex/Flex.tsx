@@ -40,12 +40,42 @@ export interface RecursicaFlexProps {
    * or Recursica gap tokens.
    */
   columnGap?: string | number | RecursicaSpacing;
+
+  /**
+   * Flex direction
+   */
+  direction?: React.CSSProperties["flexDirection"];
+
+  /**
+   * Align items
+   */
+  align?: React.CSSProperties["alignItems"];
+
+  /**
+   * Justify content
+   */
+  justify?: React.CSSProperties["justifyContent"];
+
+  /**
+   * Flex wrap
+   */
+  wrap?: React.CSSProperties["flexWrap"];
 }
 
 export type FlexProps = OmitSx<MUIBoxProps & RecursicaFlexProps>;
 
 export const Flex = forwardRef<HTMLDivElement, FlexProps>(function Flex(
-  { children, gap = "rec-default", rowGap, columnGap, ...rest },
+  {
+    children,
+    gap = "rec-default",
+    rowGap,
+    columnGap,
+    direction,
+    align,
+    justify,
+    wrap,
+    ...rest
+  },
   ref,
 ) {
   const safeProps = filterSxProp(rest as Record<string, unknown>);
@@ -70,6 +100,10 @@ export const Flex = forwardRef<HTMLDivElement, FlexProps>(function Flex(
       gap={resolvedGap}
       rowGap={resolvedRowGap}
       columnGap={resolvedColumnGap}
+      flexDirection={direction}
+      alignItems={align}
+      justifyContent={justify}
+      flexWrap={wrap}
     >
       {children}
     </MUIBox>

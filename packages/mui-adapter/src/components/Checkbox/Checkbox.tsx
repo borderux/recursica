@@ -2,10 +2,9 @@ import React, { forwardRef } from "react";
 import {
   Checkbox as MuiCheckbox,
   type CheckboxProps as MuiCheckboxProps,
-  FormControlLabel,
 } from "@mui/material";
 import { type ReadOnlyControlProps } from "@recursica/adapter-common";
-import { CheckboxGroup } from "./CheckboxGroup";
+import { CheckboxGroup, CheckboxGroupContext } from "./CheckboxGroup";
 import {
   filterStylingProps,
   type RecursicaOverStyled,
@@ -21,6 +20,8 @@ import styles from "./Checkbox.module.css";
 export type RecursicaCheckboxProps = RequireAccessibleLabel<
   Omit<MuiCheckboxProps, "size" | "color"> & {
     label?: React.ReactNode;
+    description?: React.ReactNode;
+    error?: React.ReactNode;
   } & ReadOnlyControlProps &
     Pick<
       FormControlLayoutProps,
@@ -48,6 +49,9 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
       controlMaxWidth,
       controlMinWidth,
       label,
+      description,
+      error,
+      style,
       ...rest
     } = props;
 
@@ -84,11 +88,21 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
       ? `${styles.root} ${classNameProp}`
       : styles.root;
 
+    const groupContext = React.useContext(CheckboxGroupContext);
+    const isGrouped = groupContext !== null;
+    const isGroupReadOnly = isGrouped ? groupContext.readOnly : false;
+    const isChecked = isGrouped
+      ? (groupContext.value || []).includes(restRecord.value)
+      : !!(restRecord.checked ?? restRecord.defaultChecked);
+
     if (readOnly && !!readOnlyComponent) {
-      const isChecked = !!(restRecord.checked ?? restRecord.defaultChecked);
       const ReadOnlyComp = readOnlyComponent;
       const roNode = (
-        <ReadOnlyComp {...props} checked={isChecked} label={label} />
+        <ReadOnlyComp
+          {...props}
+          checked={isChecked}
+          label={label as React.ReactNode}
+        />
       );
 
       if (formLayout) {
@@ -107,25 +121,109 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
       return <>{roNode}</>;
     }
 
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (isGrouped) {
+        const newValue = e.target.checked
+          ? [...(groupContext.value || []), restRecord.value]
+          : (groupContext.value || []).filter((v) => v !== restRecord.value);
+        if (groupContext.onChange) {
+          groupContext.onChange(e, newValue);
+        }
+      } else {
+        if (restRecord.onChange) {
+          (restRecord.onChange as any)(e, e.target.checked);
+        }
+      }
+    };
+
+    const CheckIcon = (props: React.ComponentProps<"svg">) => (
+      <svg
+        viewBox="0 0 10 7"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        {...props}
+      >
+        <path
+          d="M4 4.586L1.707 2.293A1 1 0 1 0 .293 3.707l3 3a.997.997 0 0 0 1.414 0l5-5A1 1 0 1 0 8.293.293L4 4.586z"
+          fill="currentColor"
+          fillRule="evenodd"
+          clipRule="evenodd"
+        />
+      </svg>
+    );
+
     const checkboxNode = (
       <MuiCheckbox
         ref={ref}
-        className={finalClass}
+        className={!label ? `${finalClass} ${styles.inner}` : styles.inner}
         classes={mergedClassNames}
-        disabled={readOnly || disabled}
+        disabled={readOnly || disabled || isGroupReadOnly}
         {...(sanitizedProps as unknown as MuiCheckboxProps)}
+        checked={isChecked as boolean}
+        onChange={handleChange}
+        sx={label ? { padding: 0 } : undefined}
+        icon={<div className={styles.input} />}
+        checkedIcon={
+          <div className={`${styles.input} ${styles.inputChecked}`}>
+            <CheckIcon className={styles.icon} />
+          </div>
+        }
+        indeterminateIcon={
+          <div className={`${styles.input} ${styles.inputIndeterminate}`}>
+            <svg
+              className={styles.icon}
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 32 32"
+            >
+              <rect x="6" y="14" width="20" height="4" fill="currentColor" />
+            </svg>
+          </div>
+        }
       />
     );
 
     const finalNode = label ? (
-      <FormControlLabel
-        control={checkboxNode}
-        label={label}
-        className={styles.labelWrapper}
-        classes={{ label: styles.label }}
-      />
+      <div className={finalClass} style={style as React.CSSProperties}>
+        <div className={styles.body}>
+          {checkboxNode}
+          <div className={styles.labelWrapper}>
+            <label
+              className={styles.label}
+              htmlFor={restRecord.id as string}
+              data-disabled={
+                readOnly || disabled || isGroupReadOnly ? true : undefined
+              }
+            >
+              {label as React.ReactNode}
+            </label>
+            {description && (
+              <div
+                className={styles.description}
+                data-disabled={
+                  readOnly || disabled || isGroupReadOnly ? true : undefined
+                }
+              >
+                {description}
+              </div>
+            )}
+            {error && (
+              <div
+                className={styles.error}
+                data-disabled={
+                  readOnly || disabled || isGroupReadOnly ? true : undefined
+                }
+              >
+                {error}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     ) : (
-      checkboxNode
+      <div className={finalClass} style={style as React.CSSProperties}>
+        {checkboxNode}
+      </div>
     );
 
     if (formLayout) {

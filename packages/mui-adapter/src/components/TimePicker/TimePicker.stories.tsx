@@ -6,28 +6,11 @@ const meta: Meta<typeof TimePicker> = {
   title: "UI-Kit/🚧 TimePicker",
   component: TimePicker,
   tags: ["autodocs"],
-  parameters: {
-    controls: {
-      include: [
-        "layer",
-        "withLayer",
-        "children",
-        "component",
-        "variant",
-        "size",
-        "icon",
-        "disabled",
-        "href",
-        "onClick",
-        "onChange",
-        "value",
-        "checked",
-      ],
-    },
-  },
+  argTypes: {},
 };
 
 export default meta;
+
 type Story = StoryObj<typeof TimePicker>;
 
 export const Default: Story = {

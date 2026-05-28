@@ -53,7 +53,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
       assistiveWithIcon,
       error,
       required,
-      withAsterisk,
+      // removed withAsterisk
       id,
       className,
       style,
@@ -106,7 +106,6 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
         assistiveWithIcon={assistiveWithIcon}
         error={error}
         required={required}
-        withAsterisk={withAsterisk}
         id={id}
         readOnly={readOnly}
         readOnlyComponent={readOnlyComponent}
@@ -124,21 +123,9 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
             disabled={disabled}
             value={value}
             defaultValue={defaultValue}
-            hideControls={hideControls}
             label={undefined}
-            description={undefined}
             error={undefined}
             required={undefined}
-            withAsterisk={undefined}
-            wrapperProps={{
-              "data-disabled": disabled ? "true" : undefined,
-              "data-error": error ? "true" : undefined,
-              "data-with-left-section": restRecord.leftSection
-                ? "true"
-                : undefined,
-              "data-with-right-section":
-                restRecord.rightSection || !hideControls ? "true" : undefined,
-            }}
             {...(sanitizedProps as unknown as MuiNumberInputProps)}
           />
         }

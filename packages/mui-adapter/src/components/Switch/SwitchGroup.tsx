@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { forwardRef } from "react";
 import {
-  Switch as MuiSwitch,
-  type SwitchGroupProps as MuiSwitchGroupProps,
+  FormGroup as MuiFormGroup,
+  type FormGroupProps as MuiFormGroupProps,
 } from "@mui/material";
 import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import {
@@ -14,12 +14,25 @@ import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
 import styles from "./Switch.module.css";
 
 export interface RecursicaSwitchGroupProps
-  extends Omit<MuiSwitchGroupProps, "size" | "labelProps">,
+  extends Omit<
+      MuiFormGroupProps,
+      | "size"
+      | "labelProps"
+      | "onChange"
+      | "classes"
+      | "ref"
+      | "value"
+      | "defaultValue"
+    >,
     Omit<
       RecursicaFormControlWrapperProps,
-      "controlMaxWidth" | "controlMinWidth"
+      "controlMaxWidth" | "controlMinWidth" | "classes" | "onChange"
     >,
-    ReadOnlyControlProps {}
+    ReadOnlyControlProps {
+  value?: any[];
+  defaultValue?: any[];
+  onChange?: (value: any[]) => void;
+}
 
 export type SwitchGroupProps = RecursicaOverStyled<RecursicaSwitchGroupProps>;
 
@@ -43,7 +56,7 @@ export const SwitchGroup = forwardRef<HTMLDivElement, SwitchGroupProps>(
       assistiveWithIcon,
       error,
       required,
-      withAsterisk,
+      // removed withAsterisk
       id,
       className,
       style,
@@ -53,6 +66,7 @@ export const SwitchGroup = forwardRef<HTMLDivElement, SwitchGroupProps>(
       emptyValueComponent,
       value,
       defaultValue,
+      onChange,
       ...rest
     } = props;
     const sanitizedProps = filterStylingProps(rest, overStyled);
@@ -81,7 +95,6 @@ export const SwitchGroup = forwardRef<HTMLDivElement, SwitchGroupProps>(
         assistiveWithIcon={assistiveWithIcon}
         error={error}
         required={required}
-        withAsterisk={withAsterisk}
         id={id}
         readOnly={readOnly && !!readOnlyComponent}
         readOnlyComponent={readOnlyComponent}
@@ -90,22 +103,18 @@ export const SwitchGroup = forwardRef<HTMLDivElement, SwitchGroupProps>(
         readOnlyValue={value !== undefined ? value : defaultValue}
         readOnlyNativeProps={props}
         activeComponent={
-          <div
+          <MuiFormGroup
             ref={ref}
-            /* Natively bind local disabled lock dynamically */
-            {...(sanitizedProps as unknown as MuiSwitchGroupProps)}
-            disabled={readOnly || (restRecord as any).disabled}
-            value={value}
-            defaultValue={defaultValue}
+            {...(sanitizedProps as unknown as MuiFormGroupProps)}
+            className={`${styles.groupRoot} ${(sanitizedProps as any).className || ""}`.trim()}
+            data-layout={formLayout}
           >
-            <div className={styles.groupRoot} data-layout={formLayout}>
-              {children}
-            </div>
-          </div>
+            {children}
+          </MuiFormGroup>
         }
       />
     );
   },
 );
 
-const SwitchGroup = (() => {}) as any; // SwitchGroup.displayName = "SwitchGroup";
+SwitchGroup.displayName = "SwitchGroup";

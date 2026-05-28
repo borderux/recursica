@@ -47,16 +47,13 @@
     --recursica_ui-kit_components_label_properties_label-text_line-height
   );
   font-style: var(
-    --recursica_ui-kit_components_label_properties_label-text_font-style,
-    normal
+    --recursica_ui-kit_components_label_properties_label-text_font-style
   );
   text-decoration: var(
-    --recursica_ui-kit_components_label_properties_label-text_text-decoration,
-    none
+    --recursica_ui-kit_components_label_properties_label-text_text-decoration
   );
   text-transform: var(
-    --recursica_ui-kit_components_label_properties_label-text_text-transform,
-    none
+    --recursica_ui-kit_components_label_properties_label-text_text-transform
   );
 }
 
@@ -105,12 +102,10 @@
     --recursica_ui-kit_components_label_properties_optional-text_font-style
   );
   text-decoration: var(
-    --recursica_ui-kit_components_label_properties_optional-text_text-decoration,
-    none
+    --recursica_ui-kit_components_label_properties_optional-text_text-decoration
   );
   text-transform: var(
-    --recursica_ui-kit_components_label_properties_optional-text_text-transform,
-    none
+    --recursica_ui-kit_components_label_properties_optional-text_text-transform
   );
   color: inherit;
   opacity: var(

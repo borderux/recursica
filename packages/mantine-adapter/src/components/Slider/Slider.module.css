@@ -189,10 +189,7 @@
   position: absolute;
   bottom: calc(
     100% +
-      var(
-        --recursica_ui-kit_globals_form_properties_label-field-gap-vertical,
-        8px
-      )
+      var(--recursica_ui-kit_globals_form_properties_label-field-gap-vertical)
   );
   right: 0;
   white-space: nowrap;

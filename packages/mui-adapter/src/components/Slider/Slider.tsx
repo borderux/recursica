@@ -2,7 +2,6 @@ import React, { forwardRef, useState, useEffect } from "react";
 import {
   Slider as MuiSlider,
   type SliderProps as MuiSliderProps,
-  type InputWrapperProps,
 } from "@mui/material";
 import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import {
@@ -16,19 +15,28 @@ import styles from "./Slider.module.css";
 
 export interface RecursicaSliderProps
   extends Omit<
-      Omit<MuiSliderProps, "size" | "color">,
-      "variant" | "radius" | "wrapperProps" | "classNames" | "styles" | "label"
+      MuiSliderProps,
+      "size" | "color" | "classes" | "onChange" | "onChangeCommitted"
     >,
     Omit<
       RecursicaFormControlWrapperProps,
-      "controlMaxWidth" | "controlMinWidth"
+      | "controlMaxWidth"
+      | "controlMinWidth"
+      | "error"
+      | "required"
+      | "withAsterisk"
+      | keyof MuiSliderProps
     >,
-    Pick<InputWrapperProps, "error" | "required" | "withAsterisk">,
     ReadOnlyControlProps {
+  error?: boolean | React.ReactNode;
+  required?: boolean;
+  withAsterisk?: boolean;
+  onChange?: (value: number) => void;
+  onChangeEnd?: (value: number) => void;
   /** The form control label displayed above or beside the slider track. */
   label?: React.ReactNode;
   /** Floating tooltip shown above the thumb when dragging. Replaces Mui's `label`. */
-  tooltipLabel?: MuiSliderProps["label"];
+  tooltipLabel?: React.ReactNode | ((value: number) => React.ReactNode);
   /** An optional icon rendered to the left of the slider track. */
   icon?: React.ReactNode;
   /** Whether to render a numeric input field side-by-side or stacked with the track. Defaults to false. */
@@ -96,12 +104,18 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
 
     // Bidirectional state linking the slider track value to the input field string representation
     const [internalValue, setInternalValue] = useState<number>(() => {
-      if (value !== undefined) return value;
-      if (defaultValue !== undefined) return defaultValue;
+      if (value !== undefined) return Array.isArray(value) ? value[0] : value;
+      if (defaultValue !== undefined)
+        return Array.isArray(defaultValue) ? defaultValue[0] : defaultValue;
       return min;
     });
 
-    const resolvedValue = value !== undefined ? value : internalValue;
+    const resolvedValue =
+      value !== undefined
+        ? Array.isArray(value)
+          ? value[0]
+          : value
+        : internalValue;
     const [inputValue, setInputValue] = useState<string>(
       resolvedValue.toString(),
     );
@@ -111,12 +125,12 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
       setInputValue(resolvedValue.toString());
     }, [resolvedValue]);
 
-    const handleValueChange = (e: Event, val: number | number[]) => {
+    const handleValueChange = (_e: Event, val: number | number[]) => {
       const singleVal = Array.isArray(val) ? val[0] : val;
       if (value === undefined) {
         setInternalValue(singleVal);
       }
-      onChange?.(singleVal as any);
+      onChange?.(singleVal);
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -209,9 +223,8 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
         label={label}
         assistiveText={assistiveText}
         assistiveWithIcon={assistiveWithIcon}
-        error={error}
+        error={error as any}
         required={required}
-        withAsterisk={withAsterisk}
         id={id}
         readOnly={readOnly}
         readOnlyComponent={readOnlyComponent || SliderReadOnlyValue}
@@ -270,7 +283,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
                 onBlur={handleInputBlur}
                 min={min}
                 max={max}
-                step={step}
+                step={step ?? undefined}
                 disabled={disabled}
                 data-error={error ? "true" : undefined}
               />

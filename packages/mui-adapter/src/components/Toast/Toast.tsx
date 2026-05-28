@@ -1,7 +1,9 @@
 import React from "react";
 import {
-  Snackbar as MuiNotification,
-  type SnackbarProps as MuiNotificationProps,
+  Alert as MuiAlert,
+  AlertTitle as MuiAlertTitle,
+  IconButton as MuiIconButton,
+  type AlertProps as MuiAlertProps,
 } from "@mui/material";
 import {
   filterStylingProps,
@@ -21,17 +23,38 @@ export interface RecursicaToastProps {
    * If a loading state is required, pass a `<Loader size="sm" />` directly into the `icon` prop.
    */
   loading?: false;
+
+  withCloseButton?: boolean;
+  title?: React.ReactNode;
+  icon?: React.ReactNode;
+  onClose?: () => void;
 }
 
 /**
- * Toast component wrapping Mui's Notification.
+ * Toast component wrapping Mui's Alert.
  *
  * Can be used as a standalone visual component to display a notification or message.
  */
 export type ToastProps = RecursicaOverStyled<
-  Omit<MuiNotificationProps, "color" | "radius" | "variant" | "loading"> &
+  Omit<MuiAlertProps, "color" | "radius" | "variant" | "onClose"> &
     RecursicaToastProps
 >;
+
+const CloseIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M18 6L6 18M6 6l12 12" />
+  </svg>
+);
 
 export const Toast = React.forwardRef<HTMLDivElement, ToastProps>(
   function Toast(
@@ -39,21 +62,22 @@ export const Toast = React.forwardRef<HTMLDivElement, ToastProps>(
       overStyled = false,
       variant = "default",
       withCloseButton = true,
+      title,
+      icon,
+      children,
+      onClose,
+      className,
       ...rest
     },
     ref,
   ) {
     const sanitizedProps = filterStylingProps(rest, overStyled);
 
-    // Bind CSS module classes to Mui's internal classNames API
     const mergedClassNames: Partial<Record<string, string>> = {
       root: styles.root,
-      body: styles.body,
-      title: styles.title,
-      description: styles.description,
-      closeButton: styles.closeButton,
+      message: styles.body,
       icon: styles.icon,
-      loader: styles.loader,
+      action: styles.closeButton,
     };
 
     const classNamesProp = (sanitizedProps as Record<string, unknown>)
@@ -73,19 +97,39 @@ export const Toast = React.forwardRef<HTMLDivElement, ToastProps>(
       });
     }
 
+    const handleClose = (_e: React.SyntheticEvent) => {
+      if (onClose) onClose();
+    };
+
     return (
-      <MuiNotification
+      <MuiAlert
         ref={ref}
-        withCloseButton={withCloseButton}
-        withBorder={false} // Border is handled via CSS or tokens if needed
+        icon={icon}
         data-variant={variant}
+        className={`${className || ""}`}
         classes={mergedClassNames}
-        loading={false}
+        action={
+          withCloseButton ? (
+            <MuiIconButton
+              size="small"
+              aria-label="close"
+              color="inherit"
+              onClick={handleClose}
+            >
+              <CloseIcon />
+            </MuiIconButton>
+          ) : undefined
+        }
         {...(sanitizedProps as unknown as Omit<
-          MuiNotificationProps,
-          "color" | "radius" | "variant" | "loading"
+          MuiAlertProps,
+          "color" | "radius" | "variant" | "onClose"
         >)}
-      />
+      >
+        {title && (
+          <MuiAlertTitle className={styles.title}>{title}</MuiAlertTitle>
+        )}
+        <div className={styles.description}>{children}</div>
+      </MuiAlert>
     );
   },
 );

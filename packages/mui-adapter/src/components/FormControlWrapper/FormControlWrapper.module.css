@@ -74,21 +74,12 @@
   color: var(--form-field-text-valued);
 }
 
-.inputContainer {
+.inputSection {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-width: 0;
-
-  /* Constrain the input natively to custom properties */
-  max-width: var(--form-control-max-width);
-  min-width: var(--form-control-min-width);
-
-  /* Hook to allow child components to add margin below themselves dynamically 
-     via CSS variables (e.g. padding beneath TextField before AssistiveText renders) */
-  margin-bottom: var(--form-control-margin-bottom);
 }
-
 .assistive {
   margin-top: var(
     --recursica_ui-kit_globals_form_properties_label-field-gap-vertical

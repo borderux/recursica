@@ -2,7 +2,6 @@ import { forwardRef } from "react";
 import {
   Radio as MuiRadio,
   type RadioProps as MuiRadioProps,
-  FormControlLabel,
 } from "@mui/material";
 import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import { RadioGroup } from "./RadioGroup";
@@ -34,8 +33,11 @@ const RadioIcon: React.FC<{
 );
 
 export type RecursicaRadioProps = RequireAccessibleLabel<
-  Omit<MuiRadioProps, "size" | "color"> &
-    ReadOnlyControlProps &
+  Omit<MuiRadioProps, "size" | "color"> & {
+    label?: React.ReactNode;
+    description?: React.ReactNode;
+    error?: React.ReactNode;
+  } & ReadOnlyControlProps &
     Pick<
       FormControlLayoutProps,
       "formLayout" | "labelSize" | "controlMaxWidth" | "controlMinWidth"
@@ -61,6 +63,10 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(
       labelSize,
       controlMaxWidth,
       controlMinWidth,
+      label,
+      description,
+      error,
+      style,
       ...rest
     } = props;
     const sanitizedProps = filterStylingProps(rest, overStyled);
@@ -139,7 +145,7 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(
     // We omit Mui's sizing/coloring so we rely strictly on variables from Radio.module.css
     const radioNode = (
       <MuiRadio
-        ref={ref}
+        ref={ref as any}
         icon={<RadioIcon />}
         checkedIcon={<RadioIcon className={styles.checked} />}
         className={finalClass}
@@ -149,13 +155,37 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(
       />
     );
 
-    const finalNode = restRecord.label ? (
-      <FormControlLabel
-        control={radioNode}
-        label={restRecord.label as React.ReactNode}
-        className={styles.labelWrapper}
-        classes={{ label: styles.label }}
-      />
+    const finalNode = label ? (
+      <div className={finalClass} style={style as React.CSSProperties}>
+        <div className={styles.body}>
+          {radioNode}
+          <div className={styles.labelWrapper}>
+            <label
+              className={styles.label}
+              htmlFor={restRecord.id as string}
+              data-disabled={readOnly || disabled ? true : undefined}
+            >
+              {label as React.ReactNode}
+            </label>
+            {description && (
+              <div
+                className={styles.description}
+                data-disabled={readOnly || disabled ? true : undefined}
+              >
+                {description}
+              </div>
+            )}
+            {error && (
+              <div
+                className={styles.error}
+                data-disabled={readOnly || disabled ? true : undefined}
+              >
+                {error}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     ) : (
       radioNode
     );

@@ -1,6 +1,7 @@
+import React, { isValidElement } from "react";
 import {
-  Popover as MuiHoverCard,
-  type PopoverProps as MuiHoverCardProps,
+  Tooltip as MuiTooltip,
+  type TooltipProps as MuiTooltipProps,
 } from "@mui/material";
 import {
   filterStylingProps,
@@ -12,48 +13,51 @@ import styles from "./HoverCard.module.css";
 // HOVERCARD ROOT
 // ============================================================
 
-/**
- * Recursica-specific props for HoverCard.
- */
 export interface RecursicaHoverCardProps {
-  /**
-   * Whether to display a beak (arrow) pointing from the dropdown to the target.
-   * This is the Recursica equivalent of Mui's `withArrow`.
-   * When both `withBeak` and `withArrow` are provided, `withBeak` takes precedence.
-   */
   withBeak?: boolean;
+  position?:
+    | "bottom"
+    | "bottom-start"
+    | "bottom-end"
+    | "top"
+    | "top-start"
+    | "top-end"
+    | "left"
+    | "left-start"
+    | "left-end"
+    | "right"
+    | "right-start"
+    | "right-end";
+  openDelay?: number;
+  closeDelay?: number;
+  disabled?: boolean;
+  offset?: number;
+  children?: React.ReactNode;
 }
 
-/**
- * Recursica HoverCard component wrapping Mui's composable HoverCard.
- *
- * Displays a dropdown panel when the user hovers over a target element.
- * Uses the composable dot-notation pattern:
- * ```tsx
- * <HoverCard withBeak>
- *   <HoverCard.Target>
- *     <Button>Hover me</Button>
- *   </HoverCard.Target>
- *   <HoverCard.Dropdown>
- *     Content displayed on hover
- *   </HoverCard.Dropdown>
- * </HoverCard>
- * ```
- */
 export type HoverCardProps = RecursicaOverStyled<
-  MuiHoverCardProps & RecursicaHoverCardProps
+  Omit<MuiTooltipProps, "title" | "children"> & RecursicaHoverCardProps
 >;
 
 const HoverCardBase = function HoverCard({
   overStyled = false,
   withBeak = true,
+  position = "top",
+  openDelay = 0,
+  closeDelay = 150,
+  disabled = false,
+  offset = 5,
+  children,
   ...rest
 }: HoverCardProps) {
-  const sanitizedProps = filterStylingProps(rest, overStyled);
+  const sanitizedProps = filterStylingProps(
+    rest as Record<string, unknown>,
+    overStyled,
+  );
 
   // Bind CSS module classes to Mui's internal classNames API
   const mergedClassNames: Partial<Record<string, string>> = {
-    dropdown: styles.dropdown,
+    tooltip: styles.dropdown,
     arrow: styles.arrow,
   };
 
@@ -73,29 +77,55 @@ const HoverCardBase = function HoverCard({
     });
   }
 
-  // arrowSize must be a JS number prop — Mui uses it for inline width/height
-  // and positioning offset (-arrowSize/2) calculations that cannot be CSS-driven.
-  // Default to 16 to match the Recursica beak-size token (16px).
-  const arrowSize =
-    ((sanitizedProps as Record<string, unknown>).arrowSize as
-      | number
-      | undefined) ?? 16;
+  // Find Target and Dropdown children
+  let targetNode: React.ReactNode = null;
+  let dropdownNode: React.ReactNode = null;
 
-  // Resolve withBeak (Recursica) vs withArrow (Mui).
-  // withBeak takes precedence when both are provided.
-  const withArrow = (sanitizedProps as Record<string, unknown>).withArrow as
-    | boolean
-    | undefined;
-  const resolvedWithArrow = withBeak ?? withArrow;
+  React.Children.forEach(children, (child) => {
+    if (isValidElement(child)) {
+      const childElement = child as any;
+      if (childElement.type?.displayName === "HoverCardTarget") {
+        targetNode = childElement.props.children;
+      } else if (childElement.type?.displayName === "HoverCardDropdown") {
+        dropdownNode = childElement.props.children;
+      }
+    }
+  });
+
+  if (!targetNode) {
+    // Fallback if structure is wrong
+    targetNode = <div />;
+  }
+  if (!dropdownNode) {
+    dropdownNode = <div />;
+  }
 
   return (
-    <MuiHoverCard
-      position="top" /* Recursica default; Mui defaults to "bottom" */
-      arrowSize={arrowSize}
-      withArrow={resolvedWithArrow}
-      classes={mergedClassNames}
-      {...(sanitizedProps as unknown as MuiHoverCardProps)}
-    />
+    <MuiTooltip
+      title={dropdownNode}
+      placement={position as any}
+      arrow={withBeak}
+      enterDelay={openDelay}
+      leaveDelay={closeDelay}
+      disableHoverListener={disabled}
+      slotProps={{
+        popper: {
+          modifiers: [
+            {
+              name: "offset",
+              options: {
+                offset: [0, offset],
+              },
+            },
+          ],
+        },
+      }}
+      classes={mergedClassNames as any}
+      {...(sanitizedProps as any)}
+    >
+      {/* Tooltip requires a single valid React element child that accepts a ref */}
+      {isValidElement(targetNode) ? targetNode : <span>{targetNode}</span>}
+    </MuiTooltip>
   );
 };
 HoverCardBase.displayName = "HoverCard";
@@ -104,14 +134,12 @@ HoverCardBase.displayName = "HoverCard";
 // HOVERCARD TARGET
 // ============================================================
 
-/**
- * Wrapper for the element that triggers the hover card.
- * Requires a single child element that supports ref forwarding.
- */
-export type HoverCardTargetProps = any;
+export type HoverCardTargetProps = { children?: React.ReactNode };
 
-const HoverCardTarget = function HoverCardTarget(props: HoverCardTargetProps) {
-  return <div {...props} />;
+const HoverCardTarget = function HoverCardTarget({
+  children,
+}: HoverCardTargetProps) {
+  return <>{children}</>;
 };
 HoverCardTarget.displayName = "HoverCardTarget";
 
@@ -119,23 +147,12 @@ HoverCardTarget.displayName = "HoverCardTarget";
 // HOVERCARD DROPDOWN
 // ============================================================
 
-/** The dropdown panel displayed when hovering over the target. */
-export type HoverCardDropdownProps = RecursicaOverStyled<any>;
+export type HoverCardDropdownProps = { children?: React.ReactNode };
 
 const HoverCardDropdown = function HoverCardDropdown({
-  overStyled = false,
-  ...rest
+  children,
 }: HoverCardDropdownProps) {
-  const sanitizedProps = filterStylingProps(rest, overStyled);
-  const classNameProp = (sanitizedProps as Record<string, unknown>)
-    .className as string | undefined;
-
-  return (
-    <div
-      className={classNameProp}
-      {...(sanitizedProps as unknown as MuiHoverCardDropdownProps)}
-    />
-  );
+  return <>{children}</>;
 };
 HoverCardDropdown.displayName = "HoverCardDropdown";
 

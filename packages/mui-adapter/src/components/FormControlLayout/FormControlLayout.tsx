@@ -21,9 +21,12 @@ export const FormControlLayout = React.forwardRef<
     overStyled = false,
     formLayout = "stacked",
     labelSize = "default",
+    controlMaxWidth,
+    controlMinWidth,
     leftSection,
     className,
     children,
+    style,
     ...rest
   } = props;
 
@@ -34,6 +37,17 @@ export const FormControlLayout = React.forwardRef<
       ref={ref}
       className={className ? `${styles.root} ${className}` : styles.root}
       data-form-layout={formLayout}
+      style={
+        {
+          ...style,
+          ...(controlMaxWidth
+            ? { "--form-control-max-width": controlMaxWidth }
+            : {}),
+          ...(controlMinWidth
+            ? { "--form-control-min-width": controlMinWidth }
+            : {}),
+        } as React.CSSProperties
+      }
       {...sanitizedProps}
     >
       {/* 

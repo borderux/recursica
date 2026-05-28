@@ -30,7 +30,7 @@
 .root {
   display: flex;
   position: relative;
-  width: 100%;
+  width: 100% !important; /* Override MUI default 300px width */
   min-height: var(
     --recursica_ui-kit_components_autocomplete_properties_min-height
   );
@@ -71,16 +71,16 @@
   );
   padding-top: var(
     --recursica_ui-kit_components_autocomplete_properties_vertical-padding
-  );
+  ) !important;
   padding-bottom: var(
     --recursica_ui-kit_components_autocomplete_properties_vertical-padding
-  );
+  ) !important;
   padding-left: var(
     --recursica_ui-kit_components_autocomplete_properties_horizontal-padding
-  );
+  ) !important;
   padding-right: var(
     --recursica_ui-kit_components_autocomplete_properties_horizontal-padding
-  );
+  ) !important;
   border-radius: var(
     --recursica_ui-kit_components_autocomplete_properties_border-radius
   );
@@ -129,10 +129,17 @@
 
 /* Reset internal MUI <input> node padding to safely allow the wrapper to manage geometry */
 .input :global(input.MuiInputBase-input) {
-  padding: 0;
+  padding: 0 !important;
   height: 100%;
   margin: 0;
   box-sizing: border-box;
+  color: inherit;
+}
+
+/* Ensure MUI standard variant pseudo-elements (underlines) are destroyed completely */
+.input::before,
+.input::after {
+  display: none !important;
 }
 
 .input::placeholder {
@@ -143,12 +150,10 @@
 }
 
 /* Dynamic Padding Overrides */
-.root[data-with-left-section] .input {
-  padding-left: var(--input-left-section-size);
-}
-
-.root[data-with-right-section] .input {
-  padding-right: var(--input-right-section-size);
+/* MUI naturally flexes adornments, so we don't need absolute padding overrides for the wrapper.
+   Instead, we apply gap to the input wrapper to space out the adornments and the input natively. */
+.input {
+  gap: var(--recursica_ui-kit_components_autocomplete_properties_icon-text-gap);
 }
 
 /* Flexible End-Caps (Icons, actions) */
@@ -160,16 +165,10 @@
 
 .section[data-position="left"] {
   justify-content: flex-start;
-  padding-left: var(
-    --recursica_ui-kit_components_autocomplete_properties_horizontal-padding
-  );
 }
 
 .section[data-position="right"] {
   justify-content: flex-end;
-  padding-right: var(
-    --recursica_ui-kit_components_autocomplete_properties_horizontal-padding
-  );
 }
 
 .section :global(svg) {

@@ -40,14 +40,6 @@ export const WithEdges: Story = {
   },
 };
 
-export const Compositional: Story = {
-  render: () => (
-    <Pagination.Root total={10}>
-      <Pagination.Items />
-    </Pagination.Root>
-  ),
-};
-
 export const WithTextLabels: Story = {
   args: {
     withEdges: true,
