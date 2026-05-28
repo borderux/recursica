@@ -1,5 +1,20 @@
 # recursica-storybook
 
+## 0.19.0
+
+### Minor Changes
+
+- 3cb6f89: Added Slider component
+- a407c6f: More complete mui components
+- fe9d24a: Added adapter tester and updated adapters
+
+### Patch Changes
+
+- Updated dependencies [3cb6f89]
+- Updated dependencies [fe9d24a]
+- Updated dependencies [639ac9a]
+  - @recursica/mantine-adapter@0.23.0
+
 ## 0.18.0
 
 ### Minor Changes
