@@ -1,0 +1,16 @@
+# @recursica/mantine-adapter
+
+> Reusable UI components for Recursica applications based on Mantine 8+.
+
+This adapter converts Recursica design tokens into Mantine-specific themes and components.
+
+## Usage Guidelines
+
+- Relies on `@mantine/core`, `@mantine/dates`, and `@mantine/hooks` peer dependencies.
+- When building UI in consumer applications, prioritize using components exported by this package to adhere to the Recursica design system.
+
+## Documentation
+
+- [USAGE](USAGE.md): Detailed usage instructions.
+- [ARCHITECTURE](ARCHITECTURE.md): Package architecture and dependencies.
+- [README](README.md)

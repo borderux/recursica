@@ -2,6 +2,11 @@
 
 This document is the entry point for AI agents operating in the Recursica monorepo. Use it to understand the repo structure and quickly locate the code, documentation, and tooling for any package or app.
 
+> **Note on `llms.txt`:** This repository also uses `llms.txt` files.
+>
+> - **`AGENT.md`**: For _internal_ AI development. Instructions on how an AI should modify, build, or navigate the monorepo.
+> - **`llms.txt`**: For _external_ AI usage. Context, public APIs, and instructions on how an AI should consume the libraries provided by Recursica.
+
 ## Rules
 
 These rules apply to all AI agents working in this repository.
@@ -82,6 +87,7 @@ Adapters convert Recursica design tokens (exported from Figma as JSON) into fram
 | --------------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `packages/adapter-common/`  | `@recursica/adapter-common`  | Framework-agnostic component primitives and hooks shared by all adapters.                                  |
 | `packages/mantine-adapter/` | `@recursica/mantine-adapter` | Primary adapter — Mantine 8+ component library. Has its own [AGENT.md](packages/mantine-adapter/AGENT.md). |
+| `packages/mui-adapter/`     | `@recursica/mui-adapter`     | Material UI (MUI) v7 component library adapter. Has its own [AGENT.md](packages/mui-adapter/AGENT.md).     |
 
 `adapter-common` provides shared primitives. `mantine-adapter` depends on it and extends with Mantine-specific behavior.
 
@@ -107,6 +113,7 @@ Every package and app has its own `AGENT.md`. Read it before making changes:
 - [`packages/common/AGENT.md`](packages/common/AGENT.md)
 - [`packages/eslint-config/AGENT.md`](packages/eslint-config/AGENT.md)
 - [`packages/mantine-adapter/AGENT.md`](packages/mantine-adapter/AGENT.md)
+- [`packages/mui-adapter/AGENT.md`](packages/mui-adapter/AGENT.md)
 - [`packages/recursica-postcss-vars/AGENT.md`](packages/recursica-postcss-vars/AGENT.md)
 - [`packages/schemas/AGENT.md`](packages/schemas/AGENT.md)
 - [`packages/storybook-template/AGENT.md`](packages/storybook-template/AGENT.md)
@@ -117,6 +124,7 @@ Every package and app has its own `AGENT.md`. Read it before making changes:
 - [`packages/adapter-common/CONTRIBUTING.md`](packages/adapter-common/CONTRIBUTING.md)
 - [`packages/common/CONTRIBUTING.md`](packages/common/CONTRIBUTING.md)
 - [`packages/mantine-adapter/CONTRIBUTING.md`](packages/mantine-adapter/CONTRIBUTING.md)
+- [`packages/mui-adapter/CONTRIBUTING.md`](packages/mui-adapter/CONTRIBUTING.md)
 
 ## Root Documentation Index
 
@@ -128,6 +136,7 @@ Every package and app has its own `AGENT.md`. Read it before making changes:
 | [PUBLISHING.md](PUBLISHING.md)                                           | Publishing architecture for CI/CD                    |
 | [TURBO.md](TURBO.md)                                                     | Turborepo configuration and caching                  |
 | [docs/INTRODUCTION.md](docs/INTRODUCTION.md)                             | Purpose, philosophy, and design principles           |
+| [docs/DOCUMENTATION_STRATEGY.md](docs/DOCUMENTATION_STRATEGY.md)         | Strategy for human and AI documentation management   |
 | [docs/API-CORS-FOR-FIGMA-PLUGINS.md](docs/API-CORS-FOR-FIGMA-PLUGINS.md) | CORS setup for Figma plugin API calls                |
 
 ## Quick Reference

@@ -30,7 +30,10 @@
     "dist",
     "src",
     "CHANGELOG.md",
-    ".storybook/commonArgTypes.ts"
+    ".storybook/commonArgTypes.ts",
+    "llms.txt",
+    "USAGE.md",
+    "ARCHITECTURE.md"
   ],
   "keywords": [
     "react",

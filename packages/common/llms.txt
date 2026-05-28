@@ -1,0 +1,10 @@
+# @recursica/common
+
+> Shared TypeScript interfaces and types for Recursica projects.
+
+Provides the foundational TypeScript typings utilized across the monorepo and by consumer packages, including token shapes and shared utility interfaces.
+
+## Documentation
+
+- [ARCHITECTURE](ARCHITECTURE.md): Package architecture and dependencies.
+- [README](README.md)

@@ -1,0 +1,16 @@
+# @recursica/mui-adapter
+
+> Reusable UI components for Recursica applications based on Material UI (MUI) v7.
+
+This adapter converts Recursica design tokens into MUI-specific themes and components.
+
+## Usage Guidelines
+
+- Relies on `@mui/material`, `@emotion/react`, and `@emotion/styled` peer dependencies.
+- When building UI in consumer applications, prioritize using components exported by this package to adhere to the Recursica design system.
+
+## Documentation
+
+- [USAGE](USAGE.md): Detailed usage instructions.
+- [ARCHITECTURE](ARCHITECTURE.md): Package architecture and dependencies.
+- [README](README.md)

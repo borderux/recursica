@@ -36,7 +36,9 @@
     "./types/*": "./dist/types/*.d.ts"
   },
   "files": [
-    "dist"
+    "dist",
+    "llms.txt",
+    "ARCHITECTURE.md"
   ],
   "scripts": {
     "build": "tsc",

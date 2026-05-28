@@ -1,0 +1,10 @@
+# @recursica/adapter-common
+
+> Shared agnostic design-system component primitives for Recursica UI integrations.
+
+Provides the base primitives, utilities, and hooks that specific framework adapters (like the Mantine adapter) build upon.
+
+## Documentation
+
+- [ARCHITECTURE](ARCHITECTURE.md): Package architecture and dependencies.
+- [README](README.md)
