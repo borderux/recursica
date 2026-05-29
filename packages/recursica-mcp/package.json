@@ -1,0 +1,36 @@
+{
+  "name": "@recursica/mcp",
+  "description": "Adapter-agnostic Model Context Protocol (MCP) server for Recursica",
+  "version": "1.0.0",
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "bin": {
+    "recursica-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "llms.txt",
+    "AGENT.md",
+    "ARCHITECTURE.md",
+    "SETUP.md",
+    "CONTRIBUTING.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && cp -r src/list_components/components dist/list_components/",
+    "dev": "npx @modelcontextprotocol/inspector npx tsx --watch src/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "~5.8.3",
+    "vitest": "^3.2.4"
+  }
+}

@@ -36,7 +36,8 @@
     ".storybook/commonArgTypes.ts",
     "llms.txt",
     "USAGE.md",
-    "ARCHITECTURE.md"
+    "ARCHITECTURE.md",
+    "SETUP.md"
   ],
   "keywords": [
     "react",
