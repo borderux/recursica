@@ -31,9 +31,6 @@
   letter-spacing: var(
     --recursica_ui-kit_components_button_variants_sizes_default_properties_text_letter-spacing
   );
-  line-height: var(
-    --recursica_ui-kit_components_button_variants_sizes_default_properties_text_line-height
-  );
   text-decoration: var(
     --recursica_ui-kit_components_button_variants_sizes_default_properties_text_text-decoration
   );
@@ -68,7 +65,15 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: inherit;
-  line-height: inherit;
+  line-height: var(
+    --recursica_ui-kit_components_button_variants_sizes_default_properties_text_line-height
+  );
+}
+
+.root[data-size="small"] .labelText {
+  line-height: var(
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_line-height
+  );
 }
 
 /* ==== SIZES ==== */
@@ -197,9 +202,6 @@
   );
   letter-spacing: var(
     --recursica_ui-kit_components_button_variants_sizes_small_properties_text_letter-spacing
-  );
-  line-height: var(
-    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_line-height
   );
   text-decoration: var(
     --recursica_ui-kit_components_button_variants_sizes_small_properties_text_text-decoration
