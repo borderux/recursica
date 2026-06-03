@@ -1,0 +1,22 @@
+# @recursica/mcp
+
+> Model Context Protocol (MCP) server for Recursica.
+
+This server provides tools to discover, configure, and integrate Recursica's premium design system adapters into external host projects.
+
+## Provided Tools
+
+- `recommend_adapter`: Analyze project dependencies and recommend the correct Recursica adapter.
+- `get_adapter_setup`: Retrieve installation, peer dependency, and setup instructions.
+- `get_general_guidelines`: View post-setup integration coding principles and spacing variables.
+- `list_components`: Discover all premium adapted components available in the workspace.
+- `get_component_doc`: Inspect TS interfaces and implementation design rules of a specific component.
+- `recommend_component`: Suggest the correct component mapping based on natural language UI requirements.
+
+## Documentation
+
+- [AGENT](AGENT.md): Routing document for AI Agents.
+- [ARCHITECTURE](ARCHITECTURE.md): Server design and dynamic execution pipeline.
+- [SETUP](SETUP.md): Installation and local playground setup instructions.
+- [CONTRIBUTING](CONTRIBUTING.md): How to add new tools and verify them.
+- [README](README.md)
