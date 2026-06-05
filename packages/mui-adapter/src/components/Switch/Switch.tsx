@@ -9,7 +9,10 @@ import {
   filterStylingProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
-import { type RequireAccessibleLabel } from "../../utils/RequireAccessibleLabel";
+import {
+  type RequireAccessibleLabel,
+  type RecursicaSwitchProps,
+} from "@recursica/adapter-common";
 import {
   FormControlLayout,
   type FormControlLayoutProps,
@@ -18,19 +21,21 @@ import styles from "./Switch.module.css";
 
 // Removed unused SwitchGroup import
 
-export type RecursicaSwitchProps = RequireAccessibleLabel<
-  Omit<MuiSwitchProps, "size" | "color" | "radius" | "variant"> & {
-    label?: React.ReactNode;
-    description?: React.ReactNode;
-    error?: React.ReactNode;
-  } & ReadOnlyControlProps &
-    Pick<
-      FormControlLayoutProps,
-      "formLayout" | "labelSize" | "controlMaxWidth" | "controlMinWidth"
-    >
->;
+export type SwitchWrapperProps = Omit<
+  MuiSwitchProps,
+  "size" | "color" | "radius" | "variant"
+> &
+  RecursicaSwitchProps &
+  ReadOnlyControlProps &
+  Pick<
+    FormControlLayoutProps,
+    "formLayout" | "labelSize" | "controlMaxWidth" | "controlMinWidth"
+  >;
 
-export type SwitchProps = RecursicaOverStyled<RecursicaSwitchProps>;
+export type RecursicaSwitchPropsAlias =
+  RequireAccessibleLabel<SwitchWrapperProps>;
+
+export type SwitchProps = RecursicaOverStyled<RecursicaSwitchPropsAlias>;
 
 type SwitchComponent = any;
 

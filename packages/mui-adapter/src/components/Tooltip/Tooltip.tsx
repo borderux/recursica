@@ -15,15 +15,7 @@ import styles from "./Tooltip.module.css";
 /**
  * Recursica-specific props for Tooltip.
  */
-export interface RecursicaTooltipProps {
-  /**
-   * Whether to display a beak (arrow) pointing from the tooltip to the target.
-   * This is the Recursica equivalent of Mui's `withArrow`.
-   * When both `withBeak` and `withArrow` are provided, `withBeak` takes precedence.
-   * @default true
-   */
-  withBeak?: boolean;
-}
+import { type RecursicaTooltipProps } from "@recursica/adapter-common";
 
 /**
  * Recursica Tooltip component wrapping Mui's Tooltip.

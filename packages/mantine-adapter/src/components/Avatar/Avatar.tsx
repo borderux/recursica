@@ -10,11 +10,7 @@ import {
 } from "../../utils/filterStylingProps";
 import styles from "./Avatar.module.css";
 
-export interface RecursicaAvatarProps {
-  size?: "small" | "default" | "large";
-  variant?: "solid" | "outline" | "ghost";
-  icon?: React.ReactNode;
-}
+import { type RecursicaAvatarProps } from "@recursica/adapter-common";
 
 export type AvatarProps = RecursicaOverStyled<
   Omit<MantineAvatarProps, "variant" | "size" | "color" | "radius"> &

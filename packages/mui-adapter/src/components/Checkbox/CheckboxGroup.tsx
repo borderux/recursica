@@ -18,6 +18,8 @@ export const CheckboxGroupContext = React.createContext<{
   readOnly?: boolean;
 } | null>(null);
 
+import { type RecursicaCheckboxGroupProps as BaseRecursicaCheckboxGroupProps } from "@recursica/adapter-common";
+
 export interface RecursicaCheckboxGroupProps
   extends Omit<React.HTMLAttributes<HTMLDivElement>, "onChange">,
     Omit<
@@ -28,12 +30,8 @@ export interface RecursicaCheckboxGroupProps
       | "classes"
       | "withAsterisk"
     >,
-    ReadOnlyControlProps {
-  value?: any[];
-  defaultValue?: any[];
-  onChange?: (value: any[]) => void;
-  row?: boolean; // Support MUI's row prop if needed, or mapping from layout
-}
+    ReadOnlyControlProps,
+    BaseRecursicaCheckboxGroupProps {}
 
 export type CheckboxGroupProps =
   RecursicaOverStyled<RecursicaCheckboxGroupProps>;

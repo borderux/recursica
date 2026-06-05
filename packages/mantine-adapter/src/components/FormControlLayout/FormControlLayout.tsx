@@ -1,15 +1,11 @@
 import React, { forwardRef } from "react";
 import styles from "./FormControlLayout.module.css";
 
+import { type RecursicaFormControlLayoutProps } from "@recursica/adapter-common";
+
 export interface FormControlLayoutProps
-  extends React.HTMLAttributes<HTMLDivElement> {
-  formLayout?: "stacked" | "side-by-side";
-  labelSize?: "default" | "small" | "md";
-  controlMaxWidth?: string;
-  controlMinWidth?: string;
-  leftSection?: React.ReactNode;
-  children?: React.ReactNode;
-}
+  extends React.HTMLAttributes<HTMLDivElement>,
+    RecursicaFormControlLayoutProps {}
 
 /**
  * A layout component used to correctly position form inputs alongside their labels.

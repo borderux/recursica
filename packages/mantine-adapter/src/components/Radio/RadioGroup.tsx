@@ -13,13 +13,16 @@ import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/For
 import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
 import styles from "./Radio.module.css";
 
+import { type RecursicaRadioGroupProps as BaseRecursicaRadioGroupProps } from "@recursica/adapter-common";
+
 export interface RecursicaRadioGroupProps
   extends Omit<MantineRadioGroupProps, "size" | "labelProps">,
     Omit<
       RecursicaFormControlWrapperProps,
       "controlMaxWidth" | "controlMinWidth"
     >,
-    ReadOnlyControlProps {}
+    ReadOnlyControlProps,
+    BaseRecursicaRadioGroupProps {}
 
 export type RadioGroupProps = RecursicaOverStyled<RecursicaRadioGroupProps>;
 

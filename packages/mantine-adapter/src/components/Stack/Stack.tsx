@@ -4,19 +4,10 @@ import {
   type StackProps as MantineStackProps,
   createPolymorphicComponent,
 } from "@mantine/core";
-import {
-  type RecursicaSpacing,
-  mapLayoutProps,
-} from "../../utils/filterStylingProps";
+import { mapLayoutProps } from "../../utils/filterStylingProps";
 import styles from "./Stack.module.css";
 
-export interface RecursicaStackProps {
-  /**
-   * Children components inside the stack
-   */
-  children?: React.ReactNode;
-  gap?: MantineStackProps["gap"] | RecursicaSpacing;
-}
+import { type RecursicaStackProps } from "@recursica/adapter-common";
 
 /**
  * Stack flex layout wrapper.

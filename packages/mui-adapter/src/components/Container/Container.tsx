@@ -11,20 +11,8 @@ import {
   Container as MUIContainer,
   type ContainerProps as MUIContainerProps,
 } from "@mui/material";
-import { type RecursicaSpacing } from "../../utils/filterStylingProps";
 
-export interface RecursicaContainerProps {
-  children?: React.ReactNode;
-  size?:
-    | "xs"
-    | "sm"
-    | "md"
-    | "lg"
-    | "xl"
-    | RecursicaSpacing
-    | (string & {})
-    | number;
-}
+import { type RecursicaContainerProps } from "@recursica/adapter-common";
 
 export type ContainerProps = Omit<MUIContainerProps, "maxWidth"> &
   RecursicaContainerProps;

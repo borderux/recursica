@@ -13,6 +13,8 @@ import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/For
 import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
 import styles from "./AutoComplete.module.css";
 
+import { type RecursicaAutocompleteProps as BaseRecursicaAutocompleteProps } from "@recursica/adapter-common";
+
 export interface RecursicaAutoCompleteProps
   extends Omit<
       MantineAutocompleteProps,
@@ -26,7 +28,8 @@ export interface RecursicaAutoCompleteProps
       RecursicaFormControlWrapperProps,
       "controlMaxWidth" | "controlMinWidth"
     >,
-    ReadOnlyControlProps {}
+    ReadOnlyControlProps,
+    BaseRecursicaAutocompleteProps {}
 
 export type AutoCompleteProps = RecursicaOverStyled<RecursicaAutoCompleteProps>;
 

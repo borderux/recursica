@@ -4,16 +4,12 @@ import {
   type StackProps as MUIStackProps,
 } from "@mui/material";
 import {
-  type RecursicaSpacing,
   SPACING_MAP,
   type OmitSx,
   filterSxProp,
 } from "../../utils/filterStylingProps";
 
-export interface RecursicaStackProps {
-  children?: React.ReactNode;
-  gap?: MUIStackProps["spacing"] | RecursicaSpacing;
-}
+import { type RecursicaStackProps } from "@recursica/adapter-common";
 
 export type StackProps = OmitSx<
   Omit<MUIStackProps, "spacing"> & RecursicaStackProps

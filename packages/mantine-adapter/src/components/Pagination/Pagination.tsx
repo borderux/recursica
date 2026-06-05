@@ -18,10 +18,11 @@ import {
   PaginationIcon,
 } from "./Pagination.icons";
 
-export type PaginationProps = RecursicaOverStyled<MantinePaginationProps> & {
-  /** If set to true, displays text labels alongside the icons for next/previous/first/last edges. */
-  withLabels?: boolean;
-};
+import { type RecursicaPaginationProps } from "@recursica/adapter-common";
+
+export type PaginationProps = RecursicaOverStyled<
+  MantinePaginationProps & RecursicaPaginationProps
+>;
 
 export type PaginationRootProps =
   RecursicaOverStyled<MantinePaginationRootProps>;

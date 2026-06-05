@@ -3,21 +3,10 @@ import {
   Group as MantineGroup,
   type GroupProps as MantineGroupProps,
 } from "@mantine/core";
-import {
-  type RecursicaSpacing,
-  mapLayoutProps,
-} from "../../utils/filterStylingProps";
+import { mapLayoutProps } from "../../utils/filterStylingProps";
 import styles from "./Group.module.css";
 
-export interface RecursicaGroupProps {
-  /**
-   * Children components inside the group
-   */
-  children?: React.ReactNode;
-  gap?: MantineGroupProps["gap"] | RecursicaSpacing;
-  rowGap?: MantineGroupProps["gap"] | RecursicaSpacing;
-  columnGap?: MantineGroupProps["gap"] | RecursicaSpacing;
-}
+import { type RecursicaGroupProps } from "@recursica/adapter-common";
 
 /**
  * Group flex layout wrapper.

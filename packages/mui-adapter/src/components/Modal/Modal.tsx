@@ -20,12 +20,11 @@ import styles from "./Modal.module.css";
 // MODAL ROOT (Dialog)
 // ============================================================
 
+import { type RecursicaModalProps } from "@recursica/adapter-common";
+
 export type ModalProps = RecursicaOverStyled<
-  Omit<MuiDialogProps, "size" | "radius" | "shadow" | "open"> & {
-    opened?: boolean;
-    withCloseButton?: boolean;
-    title?: React.ReactNode;
-  }
+  Omit<MuiDialogProps, "size" | "radius" | "shadow" | "open"> &
+    RecursicaModalProps
 >;
 
 const CloseIcon = () => (

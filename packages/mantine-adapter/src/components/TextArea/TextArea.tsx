@@ -12,6 +12,8 @@ import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/For
 import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
 import styles from "./TextArea.module.css";
 
+import { type RecursicaTextAreaProps as BaseRecursicaTextAreaProps } from "@recursica/adapter-common";
+
 export interface RecursicaTextAreaProps
   extends Omit<
       MantineTextareaProps,
@@ -28,14 +30,8 @@ export interface RecursicaTextAreaProps
       | "labelWithEditIcon"
       | "onLabelEditClick"
     >,
-    ReadOnlyControlProps {
-  /** Maximum rows for autosize textarea to grow */
-  maxRows?: number;
-  /** Minimum rows of autosize textarea */
-  minRows?: number;
-  /** If set, enables textarea height growing with its content */
-  autosize?: boolean;
-}
+    ReadOnlyControlProps,
+    BaseRecursicaTextAreaProps {}
 
 export type TextAreaProps = RecursicaOverStyled<RecursicaTextAreaProps>;
 

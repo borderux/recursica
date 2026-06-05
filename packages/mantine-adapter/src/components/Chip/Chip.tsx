@@ -8,20 +8,7 @@ import {
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Chip.module.css";
-
-export interface RecursicaChipProps {
-  /** Enables the error state styling */
-  error?: boolean;
-
-  /** Leading icon content */
-  icon?: React.ReactNode;
-
-  /** Called when the remove (X) icon is clicked. If provided, the remove icon will be displayed. */
-  onRemove?: (e: React.MouseEvent<HTMLSpanElement, MouseEvent>) => void;
-
-  /** Screen reader label for the remove button. Defaults to 'Remove' */
-  removeLabel?: string;
-}
+import { type RecursicaChipProps } from "@recursica/adapter-common";
 
 export type ChipProps = RecursicaOverStyled<
   Omit<MantineChipProps, "variant" | "size" | "color" | "radius"> &

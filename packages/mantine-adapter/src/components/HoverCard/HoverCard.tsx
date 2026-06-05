@@ -17,14 +17,7 @@ import styles from "./HoverCard.module.css";
 /**
  * Recursica-specific props for HoverCard.
  */
-export interface RecursicaHoverCardProps {
-  /**
-   * Whether to display a beak (arrow) pointing from the dropdown to the target.
-   * This is the Recursica equivalent of Mantine's `withArrow`.
-   * When both `withBeak` and `withArrow` are provided, `withBeak` takes precedence.
-   */
-  withBeak?: boolean;
-}
+import { type RecursicaHoverCardProps } from "@recursica/adapter-common";
 
 /**
  * Recursica HoverCard component wrapping Mantine's composable HoverCard.

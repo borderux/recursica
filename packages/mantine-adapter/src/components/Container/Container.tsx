@@ -3,27 +3,9 @@ import {
   Container as MantineContainer,
   type ContainerProps as MantineContainerProps,
 } from "@mantine/core";
-import { type RecursicaSpacing } from "../../utils/filterStylingProps";
 import styles from "./Container.module.css";
 
-export interface RecursicaContainerProps {
-  /**
-   * Children components inside the layout container
-   */
-  children?: React.ReactNode;
-  /**
-   * Maximum width defined by Mantine system sizes or Recursica sizes
-   */
-  size?:
-    | "xs"
-    | "sm"
-    | "md"
-    | "lg"
-    | "xl"
-    | RecursicaSpacing
-    | (string & {})
-    | number;
-}
+import { type RecursicaContainerProps } from "@recursica/adapter-common";
 
 /**
  * Container layout wrapper.

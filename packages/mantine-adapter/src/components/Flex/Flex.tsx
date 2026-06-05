@@ -4,21 +4,10 @@ import {
   type FlexProps as MantineFlexProps,
   createPolymorphicComponent,
 } from "@mantine/core";
-import {
-  type RecursicaSpacing,
-  mapLayoutProps,
-} from "../../utils/filterStylingProps";
+import { mapLayoutProps } from "../../utils/filterStylingProps";
 import styles from "./Flex.module.css";
 
-export interface RecursicaFlexProps {
-  /**
-   * Children components inside the Flex container
-   */
-  children?: React.ReactNode;
-  gap?: MantineFlexProps["gap"] | RecursicaSpacing;
-  rowGap?: MantineFlexProps["gap"] | RecursicaSpacing;
-  columnGap?: MantineFlexProps["gap"] | RecursicaSpacing;
-}
+import { type RecursicaFlexProps } from "@recursica/adapter-common";
 
 /**
  * Flex layout wrapper.

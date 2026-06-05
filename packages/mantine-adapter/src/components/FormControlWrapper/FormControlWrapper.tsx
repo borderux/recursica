@@ -4,25 +4,12 @@ import {
   filterStylingProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
-import { Label, type RecursicaLabelProps } from "../Label/Label";
+import { Label } from "../Label/Label";
 import { FormControlLayout } from "../FormControlLayout/FormControlLayout";
 import { AssistiveElement } from "../AssistiveElement/AssistiveElement";
 import styles from "./FormControlWrapper.module.css";
 
-export interface RecursicaFormControlWrapperProps extends RecursicaLabelProps {
-  /** Overall structural flow mapping the Form Control natively cascading down to Label and Input logic. */
-  formLayout?: "stacked" | "side-by-side";
-  /** Securely replaces standard Mantine descriptions safely providing standard Assistive properties. */
-  assistiveText?: React.ReactNode;
-  /** Explicit toggle to suppress the Info icon rendering natively alongside the assistiveText. Defaults to true. */
-  assistiveWithIcon?: boolean;
-  /** Custom action area to render alongside the label instead of the default edit icon. */
-  labelActionArea?: React.ReactNode;
-  /** Pass the native maximum width design variable dynamically bounding the specific wrapper width exclusively. */
-  controlMaxWidth: string | undefined;
-  /** Pass the native minimum width design variable dynamically bounding the specific wrapper width exclusively. */
-  controlMinWidth: string | undefined;
-}
+import { type RecursicaFormControlWrapperProps } from "@recursica/adapter-common";
 
 export type FormControlWrapperProps = RecursicaOverStyled<
   Omit<InputWrapperProps, "labelProps" | "inputWrapperOrder"> &

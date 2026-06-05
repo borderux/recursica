@@ -5,12 +5,7 @@ import {
 } from "../../utils/filterStylingProps";
 import styles from "./AssistiveElement.module.css";
 
-export interface RecursicaAssistiveElementProps {
-  /** The semantic variant driving the icon and text colors natively mapped across the UI Kit tokens. */
-  assistiveVariant?: "help" | "error";
-  /** Explicitly toggle the rendering of the variant-specific SVG bounding box. */
-  assistiveWithIcon?: boolean;
-}
+import { type RecursicaAssistiveElementProps } from "@recursica/adapter-common";
 
 export type AssistiveElementProps = RecursicaOverStyled<
   React.HTMLAttributes<HTMLDivElement> & RecursicaAssistiveElementProps

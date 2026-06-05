@@ -10,16 +10,7 @@ import {
 } from "../../utils/filterStylingProps";
 import styles from "./Link.module.css";
 
-export interface RecursicaLinkProps {
-  /**
-   * Optional leading icon to display next to the link text.
-   */
-  icon?: React.ReactNode;
-  /**
-   * The text or elements to display inside the link.
-   */
-  children?: React.ReactNode;
-}
+import { type RecursicaLinkProps } from "@recursica/adapter-common";
 
 export type LinkProps = RecursicaOverStyled<
   Omit<MantineAnchorProps, "underline"> & RecursicaLinkProps

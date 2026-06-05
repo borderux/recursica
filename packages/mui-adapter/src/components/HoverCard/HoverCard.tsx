@@ -13,27 +13,7 @@ import styles from "./HoverCard.module.css";
 // HOVERCARD ROOT
 // ============================================================
 
-export interface RecursicaHoverCardProps {
-  withBeak?: boolean;
-  position?:
-    | "bottom"
-    | "bottom-start"
-    | "bottom-end"
-    | "top"
-    | "top-start"
-    | "top-end"
-    | "left"
-    | "left-start"
-    | "left-end"
-    | "right"
-    | "right-start"
-    | "right-end";
-  openDelay?: number;
-  closeDelay?: number;
-  disabled?: boolean;
-  offset?: number;
-  children?: React.ReactNode;
-}
+import { type RecursicaHoverCardProps } from "@recursica/adapter-common";
 
 export type HoverCardProps = RecursicaOverStyled<
   Omit<MuiTooltipProps, "title" | "children"> & RecursicaHoverCardProps

@@ -13,13 +13,16 @@ import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/For
 import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
 import styles from "./Switch.module.css";
 
+import { type RecursicaSwitchGroupProps as BaseRecursicaSwitchGroupProps } from "@recursica/adapter-common";
+
 export interface RecursicaSwitchGroupProps
   extends Omit<MantineSwitchGroupProps, "size" | "labelProps">,
     Omit<
       RecursicaFormControlWrapperProps,
       "controlMaxWidth" | "controlMinWidth"
     >,
-    ReadOnlyControlProps {}
+    ReadOnlyControlProps,
+    BaseRecursicaSwitchGroupProps {}
 
 export type SwitchGroupProps = RecursicaOverStyled<RecursicaSwitchGroupProps>;
 

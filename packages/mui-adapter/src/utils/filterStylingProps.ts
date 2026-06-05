@@ -51,19 +51,13 @@ export const BLOCKED_STYLING_KEYS = [
   "position",
   "zIndex",
 ] as const;
-
-export type BlockedStylingKeys = (typeof BLOCKED_STYLING_KEYS)[number];
-
-export type RecursicaSpacing =
-  | "rec-none"
-  | "rec-sm"
-  | "rec-default"
-  | "rec-md"
-  | "rec-lg"
-  | "rec-xl"
-  | "rec-2xl";
-
-export type RecursicaSize = "small" | "default" | "large";
+export {
+  type RecursicaSpacing,
+  type RecursicaSize,
+  type RecursicaOverStyled,
+  type BlockedStylingKeys,
+  type ForbiddenStyles,
+} from "@recursica/adapter-common";
 
 const LAYOUT_PROPS = new Set([
   "m",
@@ -99,8 +93,6 @@ export const SPACING_MAP: Record<string, string> = {
   "rec-2xl": "var(--recursica_brand_dimensions_general_2xl)",
 };
 
-export type ForbiddenStyles = { [K in BlockedStylingKeys]?: never };
-
 export type OmitSx<T> = Omit<T, "sx">;
 
 export function filterSxProp<T extends Record<string, unknown>>(
@@ -112,11 +104,6 @@ export function filterSxProp<T extends Record<string, unknown>>(
   }
   return sanitized as Omit<T, "sx">;
 }
-
-export type RecursicaOverStyled<T> =
-  | (Omit<T, BlockedStylingKeys> &
-      ForbiddenStyles & { overStyled?: false | undefined })
-  | (T & { overStyled: true });
 
 export function filterStylingProps<T extends Record<string, unknown>>(
   props: T,

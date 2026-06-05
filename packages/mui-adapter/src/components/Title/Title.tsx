@@ -1,13 +1,7 @@
 import React, { forwardRef } from "react";
 import { Typography } from "../Typography/Typography";
 import { type RecursicaOverStyled } from "../../utils/filterStylingProps";
-import { type TypographyProps as MuiTypographyProps } from "@mui/material";
-
-export type RecursicaTitleProps = Omit<MuiTypographyProps, "variant"> & {
-  order?: 1 | 2 | 3 | 4 | 5 | 6;
-  children?: React.ReactNode;
-  component?: React.ElementType;
-};
+import { type RecursicaTitleProps } from "@recursica/adapter-common";
 
 export type TitleProps = RecursicaOverStyled<RecursicaTitleProps>;
 

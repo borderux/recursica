@@ -9,7 +9,10 @@ import {
   filterStylingProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
-import { type RequireAccessibleLabel } from "../../utils/RequireAccessibleLabel";
+import {
+  type RequireAccessibleLabel,
+  type RecursicaCheckboxProps,
+} from "@recursica/adapter-common";
 import {
   FormControlLayout,
   type FormControlLayoutProps,
@@ -17,19 +20,21 @@ import {
 
 import styles from "./Checkbox.module.css";
 
-export type RecursicaCheckboxProps = RequireAccessibleLabel<
-  Omit<
-    MantineCheckboxProps,
-    "size" | "color" | "radius" | "iconColor" | "variant"
-  > &
-    ReadOnlyControlProps &
-    Pick<
-      FormControlLayoutProps,
-      "formLayout" | "labelSize" | "controlMaxWidth" | "controlMinWidth"
-    >
->;
+export type CheckboxWrapperProps = Omit<
+  MantineCheckboxProps,
+  "size" | "color" | "radius" | "iconColor" | "variant"
+> &
+  RecursicaCheckboxProps &
+  ReadOnlyControlProps &
+  Pick<
+    FormControlLayoutProps,
+    "formLayout" | "labelSize" | "controlMaxWidth" | "controlMinWidth"
+  >;
 
-export type CheckboxProps = RecursicaOverStyled<RecursicaCheckboxProps>;
+export type RecursicaCheckboxPropsAlias =
+  RequireAccessibleLabel<CheckboxWrapperProps>;
+
+export type CheckboxProps = RecursicaOverStyled<RecursicaCheckboxPropsAlias>;
 
 type CheckboxComponent = React.ForwardRefExoticComponent<
   CheckboxProps & React.RefAttributes<HTMLInputElement>

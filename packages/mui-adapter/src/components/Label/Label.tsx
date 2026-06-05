@@ -3,16 +3,10 @@ import { InputLabel, type InputLabelProps } from "@mui/material";
 import { filterStylingProps } from "../../utils/filterStylingProps";
 import styles from "./Label.module.css";
 
-export interface LabelProps extends InputLabelProps {
+import { type RecursicaLabelProps } from "@recursica/adapter-common";
+
+export interface LabelProps extends InputLabelProps, RecursicaLabelProps {
   overStyled?: boolean;
-  /** Explicit optional text to render safely mapping alongside the label. Hidden natively if 'required' is flagged true. */
-  labelOptionalText?: React.ReactNode | true;
-  /** Triggers the inline edit action icon native layout hook beside the label element. */
-  labelWithEditIcon?: boolean;
-  /** Fires specifically on icon click natively. */
-  onLabelEditClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
-  /** Replaces the right side optional text block natively with any custom React node (e.g. actions, toggles). */
-  labelActionArea?: React.ReactNode;
 }
 
 export const Label = React.forwardRef<HTMLLabelElement, LabelProps>(

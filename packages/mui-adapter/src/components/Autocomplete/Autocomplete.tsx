@@ -14,6 +14,8 @@ import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/For
 import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
 import styles from "./Autocomplete.module.css";
 
+import { type RecursicaAutocompleteProps as BaseRecursicaAutocompleteProps } from "@recursica/adapter-common";
+
 export interface RecursicaAutocompleteProps
   extends Omit<
       MuiAutocompleteProps<any, any, any, any, "div">,
@@ -32,17 +34,8 @@ export interface RecursicaAutocompleteProps
       | "error"
       | keyof MuiAutocompleteProps<any, any, any, any, "div">
     >,
-    ReadOnlyControlProps {
-  data?: any[];
-  error?: boolean | React.ReactNode;
-  required?: boolean;
-  withAsterisk?: boolean;
-  id?: string;
-  defaultValue?: any;
-  leftSection?: React.ReactNode;
-  rightSection?: React.ReactNode;
-  placeholder?: string;
-}
+    ReadOnlyControlProps,
+    BaseRecursicaAutocompleteProps {}
 
 export type AutocompleteProps = RecursicaOverStyled<RecursicaAutocompleteProps>;
 
@@ -64,6 +57,7 @@ export const Autocomplete = forwardRef<HTMLInputElement, AutocompleteProps>(
       assistiveWithIcon,
       error,
       required,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       withAsterisk,
       id,
       className,
@@ -169,6 +163,7 @@ export const Autocomplete = forwardRef<HTMLInputElement, AutocompleteProps>(
             }}
             options={data || []}
             renderInput={(params) => {
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               const { InputProps, ...restParams } = params;
               return (
                 <MuiTextField

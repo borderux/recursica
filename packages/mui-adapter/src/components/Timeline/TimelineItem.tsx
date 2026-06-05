@@ -8,18 +8,7 @@ import {
 } from "../../utils/filterStylingProps";
 import styles from "./Timeline.module.css";
 
-export interface RecursicaTimelineItemProps {
-  /**
-   * Timestamp text displayed below the description.
-   */
-  timestamp?: React.ReactNode;
-  /**
-   * The structural styling variant of the bullet container.
-   * Maps to the UI Kit structural tokens.
-   * @default "default"
-   */
-  bulletVariant?: "default" | "avatar" | "icon" | "icon-alternative";
-}
+import { type RecursicaTimelineItemProps } from "@recursica/adapter-common";
 
 export type TimelineItemProps = RecursicaOverStyled<
   Omit<MuiTimelineItemProps, "radius" | "color" | "lineVariant"> &

@@ -9,6 +9,8 @@ import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/For
 import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
 import styles from "./DatePicker.module.css";
 
+import { type RecursicaDatePickerProps as BaseRecursicaDatePickerProps } from "@recursica/adapter-common";
+
 export interface RecursicaDatePickerProps
   extends Omit<
       DatePickerInputProps,
@@ -31,7 +33,8 @@ export interface RecursicaDatePickerProps
       RecursicaFormControlWrapperProps,
       "controlMaxWidth" | "controlMinWidth"
     >,
-    ReadOnlyControlProps {}
+    ReadOnlyControlProps,
+    BaseRecursicaDatePickerProps {}
 
 export type DatePickerProps = RecursicaOverStyled<RecursicaDatePickerProps>;
 

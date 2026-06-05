@@ -9,19 +9,7 @@ import {
 } from "../../utils/filterStylingProps";
 import styles from "./Toast.module.css";
 
-export interface RecursicaToastProps {
-  /**
-   * The visual variant of the toast.
-   * @default "default"
-   */
-  variant?: "default" | "error" | "success";
-
-  /**
-   * Loading state is natively unsupported by Recursica UI Kit.
-   * If a loading state is required, pass a `<Loader size="sm" />` directly into the `icon` prop.
-   */
-  loading?: false;
-}
+import { type RecursicaToastProps } from "@recursica/adapter-common";
 
 /**
  * Toast component wrapping Mantine's Notification.

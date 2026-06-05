@@ -13,6 +13,8 @@ import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/For
 import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
 import styles from "./Switch.module.css";
 
+import { type RecursicaSwitchGroupProps as BaseRecursicaSwitchGroupProps } from "@recursica/adapter-common";
+
 export interface RecursicaSwitchGroupProps
   extends Omit<
       MuiFormGroupProps,
@@ -28,11 +30,8 @@ export interface RecursicaSwitchGroupProps
       RecursicaFormControlWrapperProps,
       "controlMaxWidth" | "controlMinWidth" | "classes" | "onChange"
     >,
-    ReadOnlyControlProps {
-  value?: any[];
-  defaultValue?: any[];
-  onChange?: (value: any[]) => void;
-}
+    ReadOnlyControlProps,
+    BaseRecursicaSwitchGroupProps {}
 
 export type SwitchGroupProps = RecursicaOverStyled<RecursicaSwitchGroupProps>;
 
@@ -66,6 +65,7 @@ export const SwitchGroup = forwardRef<HTMLDivElement, SwitchGroupProps>(
       emptyValueComponent,
       value,
       defaultValue,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       onChange,
       ...rest
     } = props;
