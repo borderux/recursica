@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { recommend_adapter } from "./recommend_adapter.js";
+import { recursica_recommend_ui_kit } from "./recursica_recommend_ui_kit.js";
 import fs from "fs";
 import path from "path";
 
 vi.mock("fs");
 
-describe("recommend_adapter", () => {
+describe("recursica_recommend_ui_kit", () => {
   const mockContext = {
     root: "/Users/mock/recursica",
     allAdapters: [
@@ -28,7 +28,7 @@ describe("recommend_adapter", () => {
 
   describe("Explicit UI Kit inputs", () => {
     it("should recommend MUI adapter directly when MUI kit is specified", async () => {
-      const result = await recommend_adapter.handler(
+      const result = await recursica_recommend_ui_kit.handler(
         { uiKit: "MUI", version: "6.0.0" },
         mockContext,
       );
@@ -39,7 +39,7 @@ describe("recommend_adapter", () => {
     });
 
     it("should recommend Mantine adapter with compatibility warning for old versions", async () => {
-      const result = await recommend_adapter.handler(
+      const result = await recursica_recommend_ui_kit.handler(
         { uiKit: "Mantine", version: "7.0.0" },
         mockContext,
       );
@@ -53,7 +53,7 @@ describe("recommend_adapter", () => {
     });
 
     it("should recommend Mantine adapter as fully compatible for version 8", async () => {
-      const result = await recommend_adapter.handler(
+      const result = await recursica_recommend_ui_kit.handler(
         { uiKit: "Mantine", version: "8.1.0" },
         mockContext,
       );
@@ -63,7 +63,7 @@ describe("recommend_adapter", () => {
     });
 
     it("should report unsupported UI kits and direct to GitHub issues", async () => {
-      const result = await recommend_adapter.handler(
+      const result = await recursica_recommend_ui_kit.handler(
         { uiKit: "antd" },
         mockContext,
       );
@@ -94,7 +94,7 @@ describe("recommend_adapter", () => {
         return "";
       });
 
-      const result = await recommend_adapter.handler(
+      const result = await recursica_recommend_ui_kit.handler(
         { projectPath: "/Users/mock/project" },
         mockContext,
       );
@@ -122,7 +122,7 @@ describe("recommend_adapter", () => {
         return "";
       });
 
-      const result = await recommend_adapter.handler(
+      const result = await recursica_recommend_ui_kit.handler(
         { projectPath: "/Users/mock/project" },
         mockContext,
       );
@@ -148,7 +148,7 @@ describe("recommend_adapter", () => {
         return "";
       });
 
-      const result = await recommend_adapter.handler(
+      const result = await recursica_recommend_ui_kit.handler(
         { projectPath: "/Users/mock/nested/subfolder" },
         mockContext,
       );

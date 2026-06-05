@@ -19,10 +19,10 @@ function findPackageJson(startDir: string): string | null {
   return null;
 }
 
-export const get_adapter_setup: Command = {
-  name: "get_adapter_setup",
+export const recursica_project_setup: Command = {
+  name: "recursica_project_setup",
   description:
-    "Retrieve step-by-step installation and integration setup guides for a Recursica adapter, or verify if it is already installed.",
+    "Retrieve step-by-step installation and integration setup guides for Recursica. Call this tool when the user asks 'how do I setup my recursica project', 'how to install/configure recursica', or to verify if recursica is already installed.",
   inputSchema: {
     type: "object",
     properties: {
@@ -93,8 +93,8 @@ export const get_adapter_setup: Command = {
       output += `✅ **Status**: **\`@recursica/${cleanName}-adapter\`** is already successfully installed in your project dependencies (\`${pkgPath}\`)! 🎉\n\n`;
       output += `### 🚀 Recommended Next Steps:\n\n`;
       output += `1. **CSS Integration**: Ensure that you have imported the design system variables CSS (\`recursica_variables_scoped.css\`) in your application root file (e.g. \`main.tsx\` or \`App.tsx\`).\n`;
-      output += `2. **Integration Spacing Guidelines**: Call the tool **\`get_general_guidelines\`** with \`adapter: "${cleanName}"\` to review standard layout spacing variables and agnostic coding principles.\n`;
-      output += `3. **Explore Ready-to-use Primitives**: Call the tool **\`list_components\`** with \`adapter: "${cleanName}"\` to see all premium, adapter-wrapped React components ready to build your layout.\n`;
+      output += `2. **Integration Spacing Guidelines**: Call the tool **\`recursica_get_general_guidelines\`** with \`adapter: "${cleanName}"\` to review standard layout spacing variables and agnostic coding principles.\n`;
+      output += `3. **Explore Ready-to-use Primitives**: Call the tool **\`recursica_list_components\`** with \`adapter: "${cleanName}"\` to see all premium, adapter-wrapped React components ready to build your layout.\n`;
 
       return {
         content: [{ type: "text", text: output }],

@@ -6,10 +6,10 @@ import { Command } from "../common/types.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export const list_components: Command = {
-  name: "list_components",
+export const recursica_list_components: Command = {
+  name: "recursica_list_components",
   description:
-    "List all UI components defined in the Recursica Design System, including alternate names, description, and usage.",
+    "List all UI components defined in the Recursica Design System, including alternate names, description, and usage compatibility.",
   inputSchema: {
     type: "object",
     properties: {
@@ -85,7 +85,7 @@ export const list_components: Command = {
 
     if (matchedAdapter) {
       output += `## 📦 Active Adapter: **\`@recursica/${matchedAdapter.dirName}\`**\n`;
-      output += `*To get detailed TypeScript interfaces and properties for any component below, run tool **\`get_component_doc\`** with \`componentName: "[Component]"\`.*\n\n`;
+      output += `*To get detailed TypeScript interfaces and properties for any component below, run tool **\`recursica_get_component_doc\`** with \`componentName: "[Component]"\`.*\n\n`;
     }
 
     output += `---\n\n`;

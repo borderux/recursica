@@ -2,10 +2,10 @@ import path from "path";
 import fs from "fs";
 import { Command } from "../common/types.js";
 
-export const get_general_guidelines: Command = {
-  name: "get_general_guidelines",
+export const recursica_get_general_guidelines: Command = {
+  name: "recursica_get_general_guidelines",
   description:
-    "Retrieve high-level architectural, styling, setup, and layout integration guidelines for Recursica.",
+    "Retrieve high-level architectural, styling, setup, and layout integration guidelines for Recursica. Call this tool when the user asks 'how do I do ui and front end design using recursica', 'what are the design rules for recursica', or needs styling/spacing tokens info.",
   inputSchema: {
     type: "object",
     properties: {

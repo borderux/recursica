@@ -72,10 +72,10 @@ function getRecommendationForKit(
   };
 }
 
-export const recommend_adapter: Command = {
-  name: "recommend_adapter",
+export const recursica_recommend_ui_kit: Command = {
+  name: "recursica_recommend_ui_kit",
   description:
-    "Detect installed UI kits in the project or recommend based on a specified UI kit and version name.",
+    "Detect installed UI kits in the project or recommend the most compatible Recursica UI setup based on a specified UI kit and version name.",
   inputSchema: {
     type: "object",
     properties: {
@@ -116,7 +116,7 @@ export const recommend_adapter: Command = {
         output += `### 📦 ${rec.name}\n`;
         output += `- **Recommendation**: Install and integrate **\`@recursica/${rec.recommendedAdapter}-adapter\`**\n`;
         output += `- **Status**: ${rec.notes}\n`;
-        output += `- **Setup Guide**: Run tool \`get_adapter_setup\` with \`adapter: "${rec.recommendedAdapter}"\` to view detailed installation and integration steps.\n`;
+        output += `- **Setup Guide**: Run tool \`recursica_project_setup\` with \`adapter: "${rec.recommendedAdapter}"\` to view detailed installation and integration steps.\n`;
       } else {
         output += `## ⚠️ Unsupported UI Kit Specified\n\n`;
         output += `Currently, Recursica does not support an official adapter for **${rec.name}**.\n\n`;
@@ -229,7 +229,7 @@ export const recommend_adapter: Command = {
         output += `### 📦 ${kit.name} (Detected version: \`${kit.version}\`)\n`;
         output += `- **Recommendation**: Install and integrate **\`@recursica/${kit.recommendedAdapter}-adapter\`**\n`;
         output += `- **Status**: ${kit.notes}\n`;
-        output += `- **Setup Guide**: Run tool \`get_adapter_setup\` with \`adapter: "${kit.recommendedAdapter}"\` to view detailed installation and integration steps.\n\n`;
+        output += `- **Setup Guide**: Run tool \`recursica_project_setup\` with \`adapter: "${kit.recommendedAdapter}"\` to view detailed installation and integration steps.\n\n`;
       }
     }
 
@@ -246,7 +246,7 @@ export const recommend_adapter: Command = {
       output += `To integrate Recursica, we recommend selecting one of our officially supported design-system-adapted libraries:\n\n`;
       output += `1. **Mantine 8** (via \`@recursica/mantine-adapter\`)\n`;
       output += `2. **MUI 7** (via \`@recursica/mui-adapter\`)\n\n`;
-      output += `Once you choose a kit, you can run \`get_adapter_setup\` with \`adapter: "mantine"\` or \`adapter: "mui"\` for the setup guide.\n`;
+      output += `Once you choose a kit, you can run \`recursica_project_setup\` with \`adapter: "mantine"\` or \`adapter: "mui"\` for the setup guide.\n`;
     }
 
     return {

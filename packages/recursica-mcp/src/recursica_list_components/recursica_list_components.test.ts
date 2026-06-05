@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { list_components } from "./list_components.js";
+import { recursica_list_components } from "./recursica_list_components.js";
 import fs from "fs";
 import path from "path";
 
 vi.mock("fs");
 
-describe("list_components", () => {
+describe("recursica_list_components", () => {
   const mockContext = {
     root: "/Users/mock/recursica",
     allAdapters: [
@@ -29,7 +29,7 @@ describe("list_components", () => {
   it("should fail gracefully if components directory does not exist", async () => {
     vi.spyOn(fs, "existsSync").mockReturnValue(false);
 
-    const result = await list_components.handler({}, mockContext);
+    const result = await recursica_list_components.handler({}, mockContext);
 
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain("Internal Error");
@@ -53,7 +53,7 @@ describe("list_components", () => {
       return "";
     });
 
-    const result = await list_components.handler({}, mockContext);
+    const result = await recursica_list_components.handler({}, mockContext);
 
     expect(result.isError).toBeUndefined();
     expect(result.content[0].text).toContain("Recursica Components Directory");
@@ -68,7 +68,7 @@ describe("list_components", () => {
     vi.spyOn(fs, "readdirSync").mockReturnValue(["Accordion.md" as any]);
     vi.spyOn(fs, "readFileSync").mockReturnValue("# Accordion\nDescription");
 
-    const result = await list_components.handler(
+    const result = await recursica_list_components.handler(
       { adapter: "mantine" },
       mockContext,
     );

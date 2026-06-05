@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { get_adapter_setup } from "./get_adapter_setup.js";
+import { recursica_project_setup } from "./recursica_project_setup.js";
 import fs from "fs";
 import path from "path";
 
 vi.mock("fs");
 
-describe("get_adapter_setup", () => {
+describe("recursica_project_setup", () => {
   const mockContext = {
     root: "/Users/mock/recursica",
     allAdapters: [
@@ -27,7 +27,7 @@ describe("get_adapter_setup", () => {
   });
 
   it("should fail gracefully if the requested adapter is not found in the monorepo", async () => {
-    const result = await get_adapter_setup.handler(
+    const result = await recursica_project_setup.handler(
       { adapter: "unsupported-adapter" },
       mockContext,
     );
@@ -52,7 +52,7 @@ describe("get_adapter_setup", () => {
       return "";
     });
 
-    const result = await get_adapter_setup.handler(
+    const result = await recursica_project_setup.handler(
       { adapter: "mantine", projectPath: "/Users/mock/project" },
       mockContext,
     );
@@ -92,7 +92,7 @@ describe("get_adapter_setup", () => {
       return "";
     });
 
-    const result = await get_adapter_setup.handler(
+    const result = await recursica_project_setup.handler(
       { adapter: "mantine", projectPath: "/Users/mock/project" },
       mockContext,
     );
@@ -133,7 +133,7 @@ describe("get_adapter_setup", () => {
       return "";
     });
 
-    const result = await get_adapter_setup.handler(
+    const result = await recursica_project_setup.handler(
       {
         adapter: "@recursica/mantine-adapter",
         projectPath: "/Users/mock/project",

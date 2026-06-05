@@ -2,10 +2,10 @@ import path from "path";
 import fs from "fs";
 import { Command } from "../common/types.js";
 
-export const recommend_component: Command = {
-  name: "recommend_component",
+export const recursica_recommend_component: Command = {
+  name: "recursica_recommend_component",
   description:
-    "Recommend the best Recursica components to use for a given UI design requirement or functional layout scenario.",
+    "Recommend the best Recursica design system component to use for a given UI design requirement or functional layout scenario.",
   inputSchema: {
     type: "object",
     properties: {
@@ -285,11 +285,11 @@ export const recommend_component: Command = {
       output += `1. **Agnostic Layout**: Utilize \`Stack\` (vertical) or \`Group\` (horizontal) to lay out your elements, spacing them with the \`rec-\` prefixed logical tokens (e.g., \`gap="rec-md"\`).\n`;
       output += `2. **No Custom Styling**: Do not try to inject custom \`classNames\`, inline styling objects, or custom paddings. They are actively stripped out by the Recursica design system to maintain visual coherence.\n`;
       output += `3. **Escape Hatch**: If a rare design exceptional case warrants custom styles, use \`overStyled={true}\`. Avoid doing this unless necessary, and prioritize contributing the variant natively back to the adapter.\n\n`;
-      output += `*Tip: To see detailed API properties, call tool \`get_component_doc\` for component name "${matchedRecommendation.component}".*\n`;
+      output += `*Tip: To see detailed API properties, call tool \`recursica_get_component_doc\` for component name "${matchedRecommendation.component}".*\n`;
     } else {
       output += `### 🔍 No Specific Component Matched Directly\n\n`;
       output += `We scanned common patterns but couldn't find a direct component mapping for this specific description. Here is what you should do:\n\n`;
-      output += `1. **Check the Full List**: Use tool \`list_components\` to check all available UI components in your active adapters.\n`;
+      output += `1. **Check the Full List**: Use tool \`recursica_list_components\` to check all available UI components in your active adapters.\n`;
       output += `2. **Fallback Rules**: If the required layout is highly custom, compose it using general primitives like \`<Flex>\`, \`<Stack>\`, or \`<Group>\` and custom native HTML blocks.\n`;
       output += `3. **Pausing Integration / Contributing**: According to Recursica guidelines, if the adapter does not yet implement a required component, the best approach is to pause integration, open the adapter package (e.g. \`packages/mantine-adapter\`), and contribute the missing wrapper component following its \`CONTRIBUTING.md\` guidelines.\n`;
     }

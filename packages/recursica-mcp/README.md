@@ -6,10 +6,12 @@ This MCP server provides a suite of tools for AI assistant agents (like Gemini, 
 
 ## Dynamic Tooling Offered
 
-- **`get_general_guidelines`**: Returns setup and styling rules (variables CSS, fonts, and PostCSS).
-- **`list_components`**: Lists all available custom components across active adapters (e.g. `mantine-adapter`, `mui-adapter`).
-- **`get_component_doc`**: Displays full component notes, API types, and `.tsx` source code signatures.
-- **`recommend_component`**: Recommends the ideal component based on your UI layout constraints or keywords.
+- **`recursica_get_general_guidelines`**: Returns setup and styling rules (variables CSS, fonts, and PostCSS).
+- **`recursica_list_components`**: Lists all available custom components across active adapters (e.g. `mantine-adapter`, `mui-adapter`).
+- **`recursica_get_component_doc`**: Displays full component notes, API types, and `.tsx` source code signatures.
+- **`recursica_recommend_component`**: Recommends the ideal component based on your UI layout constraints or keywords.
+- **`recursica_recommend_ui_kit`**: Detects installed UI kits and recommends matching Recursica adapters.
+- **`recursica_project_setup`**: Serves installation and setup guides for projects integrating Recursica.
 
 ---
 

@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { recommend_component } from "./recommend_component.js";
+import { recursica_recommend_component } from "./recursica_recommend_component.js";
 import fs from "fs";
 import path from "path";
 
 vi.mock("fs");
 
-describe("recommend_component", () => {
+describe("recursica_recommend_component", () => {
   const mockContext = {
     root: "/Users/mock/recursica",
     allAdapters: [
@@ -33,7 +33,7 @@ describe("recommend_component", () => {
 
     vi.spyOn(fs, "existsSync").mockImplementation((p) => p === mockMantinePath);
 
-    const result = await recommend_component.handler(
+    const result = await recursica_recommend_component.handler(
       { requirement: "a collapsible details list of FAQs" },
       mockContext,
     );
@@ -57,7 +57,7 @@ describe("recommend_component", () => {
 
     vi.spyOn(fs, "existsSync").mockImplementation((p) => p === mockMuiPath);
 
-    const result = await recommend_component.handler(
+    const result = await recursica_recommend_component.handler(
       { requirement: "a blocking popup settings wizard" },
       mockContext,
     );
@@ -70,7 +70,7 @@ describe("recommend_component", () => {
   });
 
   it("should suggest fallback strategies when no component matches", async () => {
-    const result = await recommend_component.handler(
+    const result = await recursica_recommend_component.handler(
       { requirement: "unmatched-custom-3d-canvas-layout" },
       mockContext,
     );

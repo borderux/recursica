@@ -20,7 +20,7 @@
     "CONTRIBUTING.md"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && cp -r src/list_components/components dist/list_components/",
+    "build": "tsc -p tsconfig.build.json && cp -r src/recursica_list_components/components dist/recursica_list_components/",
     "dev": "npx @modelcontextprotocol/inspector npx tsx --watch src/index.ts",
     "test": "vitest run",
     "test:watch": "vitest"
