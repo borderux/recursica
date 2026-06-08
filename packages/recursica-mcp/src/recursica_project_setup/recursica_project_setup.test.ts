@@ -3,7 +3,14 @@ import { recursica_project_setup } from "./recursica_project_setup.js";
 import fs from "fs";
 import path from "path";
 
-vi.mock("fs");
+vi.mock("fs", async () => {
+  const actual = await vi.importActual<typeof import("fs")>("fs");
+  return {
+    ...actual,
+  };
+});
+
+const actualFs = await vi.importActual<typeof import("fs")>("fs");
 
 describe("recursica_project_setup", () => {
   const mockContext = {
@@ -28,7 +35,7 @@ describe("recursica_project_setup", () => {
 
   it("should fail gracefully if the requested adapter is not found in the monorepo", async () => {
     const result = await recursica_project_setup.handler(
-      { adapter: "unsupported-adapter" },
+      { "ui-kit": "unsupported-adapter" },
       mockContext,
     );
 
@@ -39,8 +46,11 @@ describe("recursica_project_setup", () => {
   it("should detect when the adapter is already installed in package.json", async () => {
     const mockPkgPath = path.resolve("/Users/mock/project/package.json");
 
-    vi.spyOn(fs, "existsSync").mockImplementation((p) => p === mockPkgPath);
-    vi.spyOn(fs, "readFileSync").mockImplementation((p) => {
+    vi.spyOn(fs, "existsSync").mockImplementation((p) => {
+      if (p === mockPkgPath) return true;
+      return actualFs.existsSync(p);
+    });
+    vi.spyOn(fs, "readFileSync").mockImplementation((p, options) => {
       if (p === mockPkgPath) {
         return JSON.stringify({
           name: "my-app",
@@ -49,22 +59,22 @@ describe("recursica_project_setup", () => {
           },
         });
       }
-      return "";
+      return actualFs.readFileSync(p, options);
     });
 
     const result = await recursica_project_setup.handler(
-      { adapter: "mantine", projectPath: "/Users/mock/project" },
+      { "ui-kit": "mantine", projectPath: "/Users/mock/project" },
       mockContext,
     );
 
     expect(result.isError).toBeUndefined();
-    expect(result.content[0].text).toContain("Recursica Adapter Setup Status");
     expect(result.content[0].text).toContain(
       "is already successfully installed",
     );
+    expect(result.content[0].text).toContain("recursica_get_usage");
   });
 
-  it("should serve SETUP.md documentation when package is not installed", async () => {
+  it("should serve SETUP.md documentation when package is not installed but auto-detected via UI kit", async () => {
     const mockPkgPath = path.resolve("/Users/mock/project/package.json");
     const mockSetupPath = path.resolve(
       "/Users/mock/recursica/packages/mantine-adapter/SETUP.md",
@@ -73,27 +83,26 @@ describe("recursica_project_setup", () => {
     vi.spyOn(fs, "existsSync").mockImplementation((p) => {
       if (p === mockPkgPath) return true;
       if (p === mockSetupPath) return true;
-      return false;
+      return actualFs.existsSync(p);
     });
 
-    vi.spyOn(fs, "readFileSync").mockImplementation((p) => {
+    vi.spyOn(fs, "readFileSync").mockImplementation((p, options) => {
       if (p === mockPkgPath) {
         return JSON.stringify({
           name: "my-app",
           dependencies: {
-            // No recursica-adapter installed
-            react: "^18.0.0",
+            "@mantine/core": "^8.0.0",
           },
         });
       }
       if (p === mockSetupPath) {
         return "# Custom SETUP.md Content";
       }
-      return "";
+      return actualFs.readFileSync(p, options);
     });
 
     const result = await recursica_project_setup.handler(
-      { adapter: "mantine", projectPath: "/Users/mock/project" },
+      { projectPath: "/Users/mock/project" },
       mockContext,
     );
 
@@ -101,51 +110,84 @@ describe("recursica_project_setup", () => {
     expect(result.content[0].text).toBe("# Custom SETUP.md Content");
   });
 
-  it("should inject missing SETUP.md warning and trigger README fallback parsing", async () => {
+  it("should suggest installing supported UI kits when no adapter or UI kit is detected", async () => {
     const mockPkgPath = path.resolve("/Users/mock/project/package.json");
-    const mockReadmePath = path.resolve(
-      "/Users/mock/recursica/packages/mantine-adapter/README.md",
+
+    vi.spyOn(fs, "existsSync").mockImplementation((p) => {
+      if (p === mockPkgPath) return true;
+      return actualFs.existsSync(p);
+    });
+
+    vi.spyOn(fs, "readFileSync").mockImplementation((p, options) => {
+      if (p === mockPkgPath) {
+        return JSON.stringify({
+          name: "my-app",
+          dependencies: {
+            lodash: "^4.17.21",
+          },
+        });
+      }
+      return actualFs.readFileSync(p, options);
+    });
+
+    const result = await recursica_project_setup.handler(
+      { projectPath: "/Users/mock/project" },
+      mockContext,
     );
-    const mockUsagePath = path.resolve(
-      "/Users/mock/recursica/packages/mantine-adapter/USAGE.md",
+
+    expect(result.content[0].text).toContain(
+      "No supported UI Kit or Recursica Adapter detected",
+    );
+    expect(result.content[0].text).toContain(
+      "explicitly specify the `ui-kit` parameter",
+    );
+  });
+
+  it("should suggest installing supported UI kits when no package.json exists at all", async () => {
+    vi.spyOn(fs, "existsSync").mockReturnValue(false);
+
+    const result = await recursica_project_setup.handler(
+      { projectPath: "/Users/mock/nonexistent" },
+      mockContext,
+    );
+
+    expect(result.content[0].text).toContain(
+      "No supported UI Kit or Recursica Adapter detected",
+    );
+  });
+
+  it("should return warning if target adapter is selected/detected but SETUP.md is missing", async () => {
+    const mockPkgPath = path.resolve("/Users/mock/project/package.json");
+    const mockSetupPath = path.resolve(
+      "/Users/mock/recursica/packages/mantine-adapter/SETUP.md",
     );
 
     vi.spyOn(fs, "existsSync").mockImplementation((p) => {
       if (p === mockPkgPath) return true;
-      if (p === mockReadmePath) return true;
-      if (p === mockUsagePath) return true;
-      return false; // SETUP.md is missing!
+      if (p === mockSetupPath) return false; // missing!
+      return actualFs.existsSync(p);
     });
 
-    vi.spyOn(fs, "readFileSync").mockImplementation((p) => {
+    vi.spyOn(fs, "readFileSync").mockImplementation((p, options) => {
       if (p === mockPkgPath) {
         return JSON.stringify({
           name: "my-app",
-          dependencies: { react: "^18.0.0" },
+          dependencies: {
+            "@mantine/core": "^8.0.0",
+          },
         });
       }
-      if (p === mockReadmePath) {
-        return "## Peer Dependencies\n- @mantine/core";
-      }
-      if (p === mockUsagePath) {
-        return "## 1. Setup and Integration\nWrap app in Provider.";
-      }
-      return "";
+      return actualFs.readFileSync(p, options);
     });
 
     const result = await recursica_project_setup.handler(
-      {
-        adapter: "@recursica/mantine-adapter",
-        projectPath: "/Users/mock/project",
-      },
+      { projectPath: "/Users/mock/project" },
       mockContext,
     );
 
-    expect(result.isError).toBeUndefined();
+    expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain(
-      "Warning**: The dedicated `SETUP.md` specification is missing",
+      "Warning**: The SETUP.md for adapter",
     );
-    expect(result.content[0].text).toContain("Peer Dependencies");
-    expect(result.content[0].text).toContain("Setup and Integration");
   });
 });

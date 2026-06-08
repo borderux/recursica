@@ -3,7 +3,14 @@ import { recursica_list_components } from "./recursica_list_components.js";
 import fs from "fs";
 import path from "path";
 
-vi.mock("fs");
+vi.mock("fs", async () => {
+  const actual = await vi.importActual<typeof import("fs")>("fs");
+  return {
+    ...actual,
+  };
+});
+
+const actualFs = await vi.importActual<typeof import("fs")>("fs");
 
 describe("recursica_list_components", () => {
   const mockContext = {
@@ -27,7 +34,10 @@ describe("recursica_list_components", () => {
   });
 
   it("should fail gracefully if components directory does not exist", async () => {
-    vi.spyOn(fs, "existsSync").mockReturnValue(false);
+    vi.spyOn(fs, "existsSync").mockImplementation((p) => {
+      if (p.toString().includes("components_directory_header.md")) return true;
+      return false;
+    });
 
     const result = await recursica_list_components.handler({}, mockContext);
 
@@ -36,13 +46,16 @@ describe("recursica_list_components", () => {
   });
 
   it("should load and consolidate all documented markdown components", async () => {
-    vi.spyOn(fs, "existsSync").mockReturnValue(true);
+    vi.spyOn(fs, "existsSync").mockImplementation((p) => {
+      if (p.toString().includes("components_directory_header.md")) return true;
+      return true;
+    });
     vi.spyOn(fs, "readdirSync").mockReturnValue([
       "Accordion.md" as any,
       "Modal.md" as any,
     ]);
 
-    vi.spyOn(fs, "readFileSync").mockImplementation((p) => {
+    vi.spyOn(fs, "readFileSync").mockImplementation((p, options) => {
       const filename = path.basename(p as string);
       if (filename === "Accordion.md") {
         return "# Accordion\nAlternate Names: collapse\nSimple collapsible list.";
@@ -50,7 +63,7 @@ describe("recursica_list_components", () => {
       if (filename === "Modal.md") {
         return "# Modal\nAlternate Names: popup\nOverlay blocking window.";
       }
-      return "";
+      return actualFs.readFileSync(p, options);
     });
 
     const result = await recursica_list_components.handler({}, mockContext);

@@ -1,11 +1,11 @@
 import path from "path";
 import fs from "fs";
 import { Command } from "../common/types.js";
+import { description } from "./description.js";
 
 export const recursica_get_component_doc: Command = {
   name: "recursica_get_component_doc",
-  description:
-    "Retrieve detailed design decisions, implementation notes, and the TS code/properties interface of a specific Recursica design system component.",
+  description,
   inputSchema: {
     type: "object",
     properties: {

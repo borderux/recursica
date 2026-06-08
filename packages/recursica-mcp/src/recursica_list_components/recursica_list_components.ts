@@ -2,14 +2,15 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import { Command } from "../common/types.js";
+import { description } from "./description.js";
+import { components_directory_header } from "./components_directory_header.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export const recursica_list_components: Command = {
   name: "recursica_list_components",
-  description:
-    "List all UI components defined in the Recursica Design System, including alternate names, description, and usage compatibility.",
+  description,
   inputSchema: {
     type: "object",
     properties: {
@@ -80,8 +81,7 @@ export const recursica_list_components: Command = {
       };
     }
 
-    let output = `# Recursica Components Directory\n\n`;
-    output += `Here is the comprehensive catalog of UI components defined in the Recursica Design System. These premium wrappers ensure complete visual consistency and token mapping.\n\n`;
+    let output = components_directory_header + "\n";
 
     if (matchedAdapter) {
       output += `## 📦 Active Adapter: **\`@recursica/${matchedAdapter.dirName}\`**\n`;

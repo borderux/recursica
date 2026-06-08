@@ -3,7 +3,14 @@ import { recursica_recommend_component } from "./recursica_recommend_component.j
 import fs from "fs";
 import path from "path";
 
-vi.mock("fs");
+vi.mock("fs", async () => {
+  const actual = await vi.importActual<typeof import("fs")>("fs");
+  return {
+    ...actual,
+  };
+});
+
+const actualFs = await vi.importActual<typeof import("fs")>("fs");
 
 describe("recursica_recommend_component", () => {
   const mockContext = {
@@ -31,7 +38,10 @@ describe("recursica_recommend_component", () => {
       "/Users/mock/recursica/packages/mantine-adapter/src/components/Accordion",
     );
 
-    vi.spyOn(fs, "existsSync").mockImplementation((p) => p === mockMantinePath);
+    vi.spyOn(fs, "existsSync").mockImplementation((p) => {
+      if (p === mockMantinePath) return true;
+      return actualFs.existsSync(p);
+    });
 
     const result = await recursica_recommend_component.handler(
       { requirement: "a collapsible details list of FAQs" },
@@ -55,7 +65,10 @@ describe("recursica_recommend_component", () => {
       "/Users/mock/recursica/packages/mui-adapter/src/components/Modal",
     );
 
-    vi.spyOn(fs, "existsSync").mockImplementation((p) => p === mockMuiPath);
+    vi.spyOn(fs, "existsSync").mockImplementation((p) => {
+      if (p === mockMuiPath) return true;
+      return actualFs.existsSync(p);
+    });
 
     const result = await recursica_recommend_component.handler(
       { requirement: "a blocking popup settings wizard" },

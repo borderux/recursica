@@ -1,35 +1,21 @@
 import path from "path";
 import fs from "fs";
 import { Command } from "../common/types.js";
-
-// Helper to traverse up to root to find package.json
-function findPackageJson(startDir: string): string | null {
-  let currentDir = path.resolve(startDir);
-  while (currentDir) {
-    const pkgPath = path.join(currentDir, "package.json");
-    if (fs.existsSync(pkgPath)) {
-      return pkgPath;
-    }
-    const parentDir = path.dirname(currentDir);
-    if (parentDir === currentDir) {
-      break; // Reached root directory
-    }
-    currentDir = parentDir;
-  }
-  return null;
-}
+import { description } from "./description.js";
+import { setup_status } from "./setup_status.js";
+import { missing_kit_message } from "./missing_kit_message.js";
+import { detectAdapterAndUiKit, getCleanAdapterName } from "../common/utils.js";
 
 export const recursica_project_setup: Command = {
   name: "recursica_project_setup",
-  description:
-    "Retrieve step-by-step installation and integration setup guides for Recursica. Call this tool when the user asks 'how do I setup my recursica project', 'how to install/configure recursica', or to verify if recursica is already installed.",
+  description,
   inputSchema: {
     type: "object",
     properties: {
-      adapter: {
+      "ui-kit": {
         type: "string",
         description:
-          "Name of the adapter (e.g. 'mantine', 'mui') or the full package dependency string from package.json (e.g. '@recursica/mantine-adapter', '@recursica/mui-adapter'). Case-insensitive.",
+          "Optional name of the UI kit (e.g. 'mantine', 'mui') or the full package dependency string from package.json (e.g. '@recursica/mantine-adapter', '@recursica/mui-adapter'). Case-insensitive. If not specified, we will attempt to auto-detect whether a supported adapter or UI kit is already installed based on package.json.",
       },
       projectPath: {
         type: "string",
@@ -37,124 +23,85 @@ export const recursica_project_setup: Command = {
           "Optional absolute path to check package.json for existing installation. Defaults to the current working directory.",
       },
     },
-    required: ["adapter"],
     additionalProperties: false,
   },
   handler: async (args, { allAdapters }) => {
-    const adapterName = args?.adapter as string;
+    const explicitUiKit = args?.["ui-kit"] as string | undefined;
     const startPath = args?.projectPath || process.cwd();
 
-    // Clean common package prefixes/suffixes (e.g. '@recursica/mantine-adapter' -> 'mantine')
-    const cleanName = adapterName
-      .toLowerCase()
-      .replace(/^@recursica\//g, "")
-      .replace(/-adapter$/g, "")
-      .trim();
+    const { targetAdapter, isInstalled } = detectAdapterAndUiKit(
+      startPath,
+      allAdapters,
+      explicitUiKit,
+    );
 
-    const matched = allAdapters.find((a) => a.name.toLowerCase() === cleanName);
+    // If we resolved or specified a target adapter
+    if (targetAdapter) {
+      const matched = allAdapters.find(
+        (a) => getCleanAdapterName(a.name) === targetAdapter,
+      );
+      if (!matched) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `❌ Adapter "${targetAdapter}" was not found. Active adapters in the workspace: ${allAdapters
+                .map((a) => a.name)
+                .join(", ")}`,
+            },
+          ],
+          isError: true,
+        };
+      }
 
-    if (!matched) {
+      const cleanName = getCleanAdapterName(matched.name);
+
+      // Always run our own check to see if the adapter is installed
+      if (isInstalled) {
+        const output = setup_status.replace(/\{\{cleanName\}\}/g, cleanName);
+        return {
+          content: [{ type: "text", text: output }],
+        };
+      }
+
+      // If UI kit is detected (or adapter requested) but not yet installed, print the SETUP.md
+      const setupMdPath = path.join(matched.absPath, "SETUP.md");
+      if (fs.existsSync(setupMdPath)) {
+        try {
+          const content = fs.readFileSync(setupMdPath, "utf-8");
+          return {
+            content: [{ type: "text", text: content }],
+          };
+        } catch (e: any) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `❌ Found SETUP.md for ${matched.name} but failed to read it: ${e.message}`,
+              },
+            ],
+            isError: true,
+          };
+        }
+      }
+
+      // Fallback if SETUP.md doesn't exist
       return {
         content: [
           {
             type: "text",
-            text: `❌ Adapter "${adapterName}" was not found. Active adapters: ${allAdapters
-              .map((a) => a.name)
-              .join(", ")}`,
+            text: `⚠️ **Warning**: The SETUP.md for adapter "${cleanName}" was not found. Please verify the adapter package.`,
           },
         ],
         isError: true,
       };
     }
 
-    // 1. Walk up to verify if the adapter package is already installed
-    let isAlreadyInstalled = false;
-    let pkgPath = findPackageJson(startPath);
-    if (pkgPath) {
-      try {
-        const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
-        const allDeps = {
-          ...(pkg.dependencies || {}),
-          ...(pkg.devDependencies || {}),
-        };
-        // Match both raw names and fully namespaced package names (e.g. "@recursica/mantine-adapter")
-        const expectedPackageName = `@recursica/${cleanName}-adapter`;
-        if (allDeps[expectedPackageName] || allDeps[`${cleanName}-adapter`]) {
-          isAlreadyInstalled = true;
-        }
-      } catch (e) {
-        // Ignore parse errors and assume not installed
-      }
-    }
-
-    // 2. If it is already installed, report success and next steps!
-    if (isAlreadyInstalled) {
-      let output = `# Recursica Adapter Setup Status\n\n`;
-      output += `✅ **Status**: **\`@recursica/${cleanName}-adapter\`** is already successfully installed in your project dependencies (\`${pkgPath}\`)! 🎉\n\n`;
-      output += `### 🚀 Recommended Next Steps:\n\n`;
-      output += `1. **CSS Integration**: Ensure that you have imported the design system variables CSS (\`recursica_variables_scoped.css\`) in your application root file (e.g. \`main.tsx\` or \`App.tsx\`).\n`;
-      output += `2. **Integration Spacing Guidelines**: Call the tool **\`recursica_get_general_guidelines\`** with \`adapter: "${cleanName}"\` to review standard layout spacing variables and agnostic coding principles.\n`;
-      output += `3. **Explore Ready-to-use Primitives**: Call the tool **\`recursica_list_components\`** with \`adapter: "${cleanName}"\` to see all premium, adapter-wrapped React components ready to build your layout.\n`;
-
-      return {
-        content: [{ type: "text", text: output }],
-      };
-    }
-
-    // 3. Otherwise, serve the full setup instructions from SETUP.md
-    const setupMdPath = path.join(matched.absPath, "SETUP.md");
-
-    if (fs.existsSync(setupMdPath)) {
-      try {
-        const content = fs.readFileSync(setupMdPath, "utf-8");
-        return {
-          content: [{ type: "text", text: content }],
-        };
-      } catch (e: any) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `❌ Found SETUP.md for ${matched.name} but failed to read it: ${e.message}`,
-            },
-          ],
-          isError: true,
-        };
-      }
-    }
-
-    // Fallback if SETUP.md does not exist
-    let output = `⚠️ **Warning**: The dedicated \`SETUP.md\` specification is missing from the **${matched.name.toUpperCase()}** adapter package! Falling back to README extraction.\n\n`;
-    output += `# ${matched.name.toUpperCase()} Adapter Setup Guide\n\n`;
-    output += `*Package Folder: \`packages/${matched.dirName}\`*\n\n`;
-
-    const readmePath = path.join(matched.absPath, "README.md");
-    const usagePath = path.join(matched.absPath, "USAGE.md");
-
-    if (fs.existsSync(readmePath)) {
-      const readmeContent = fs.readFileSync(readmePath, "utf-8");
-      // Extract Peer Dependencies section if available
-      const peerMatch = readmeContent.match(
-        /## Peer Dependencies[\s\S]*?(?=##|$)/i,
-      );
-      if (peerMatch) {
-        output += peerMatch[0] + "\n";
-      }
-    }
-
-    if (fs.existsSync(usagePath)) {
-      const usageContent = fs.readFileSync(usagePath, "utf-8");
-      // Extract Setup and Integration section if available
-      const setupMatch = usageContent.match(
-        /## 1\. Setup and Integration[\s\S]*?(?=##|$)/i,
-      );
-      if (setupMatch) {
-        output += setupMatch[0] + "\n";
-      }
-    }
+    // Auto-detection failed: no supported UI kit or adapter was found in package.json
+    const text = missing_kit_message;
 
     return {
-      content: [{ type: "text", text: output }],
+      content: [{ type: "text", text }],
     };
   },
 };

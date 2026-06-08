@@ -6,20 +6,20 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { getRecursicaRoot, getActiveAdapters } from "./common/utils.js";
-import { recursica_get_general_guidelines } from "./recursica_get_general_guidelines/index.js";
+import { recursica_get_usage } from "./recursica_get_usage/index.js";
 import { recursica_list_components } from "./recursica_list_components/index.js";
 import { recursica_get_component_doc } from "./recursica_get_component_doc/index.js";
 import { recursica_recommend_component } from "./recursica_recommend_component/index.js";
-import { recursica_recommend_ui_kit } from "./recursica_recommend_ui_kit/index.js";
 import { recursica_project_setup } from "./recursica_project_setup/index.js";
+import { what_is_recursica } from "./what_is_recursica/index.js";
 
 const commands = [
-  recursica_get_general_guidelines,
+  recursica_get_usage,
   recursica_list_components,
   recursica_get_component_doc,
   recursica_recommend_component,
-  recursica_recommend_ui_kit,
   recursica_project_setup,
+  what_is_recursica,
 ];
 
 // Initialize the MCP Server
