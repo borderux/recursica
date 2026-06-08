@@ -1,5 +1,11 @@
 # @recursica/publisher
 
+## 0.22.0
+
+### Minor Changes
+
+- ad79aed: Fix to variable import for latest
+
 ## 0.21.0
 
 ### Minor Changes

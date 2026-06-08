@@ -1,5 +1,11 @@
 # @recursica/mui-adapter
 
+## 0.7.0
+
+### Minor Changes
+
+- 4031b12: Updated docs and finalized MCP
+
 ## 0.6.0
 
 ### Minor Changes
