@@ -1,5 +1,11 @@
 # @recursica/mcp
 
+## 0.2.1
+
+### Patch Changes
+
+- d742c01: Fixed mcp config
+
 ## 0.2.0
 
 ### Minor Changes
