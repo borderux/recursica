@@ -903,8 +903,14 @@ function collectThemeRows(
     if (
       tokenType === "elevation" ||
       tokenType === "boxShadow" ||
+      tokenType === "shadow" ||
       tokenType === "string"
     ) {
+      if (tokenType === "shadow") {
+        warnings.push(
+          `[brand.themes] Shadow type is deprecated and should be updated to elevation or boxShadow at path: ${jsonPath}`,
+        );
+      }
       const str =
         tokenType === "string"
           ? v === null || v === undefined
@@ -1346,6 +1352,13 @@ function collectUiKitVariableNames(
   namesSet: Set<string>,
 ): void {
   if (obj === null || typeof obj !== "object") return;
+  if (
+    obj.$extensions &&
+    typeof obj.$extensions === "object" &&
+    "recursica.component" in (obj.$extensions as Record<string, unknown>)
+  ) {
+    return;
+  }
   if ("$value" in obj) {
     const path = pathSegments.join("/");
     if (path.startsWith(UIKIT_PREFIX))
@@ -1431,6 +1444,13 @@ function collectUiKitRows(
   modeOverride: string | null,
 ): void {
   if (obj === null || typeof obj !== "object") return;
+  if (
+    obj.$extensions &&
+    typeof obj.$extensions === "object" &&
+    "recursica.component" in (obj.$extensions as Record<string, unknown>)
+  ) {
+    return;
+  }
   const mode = modeOverride ?? LAYER_DEFAULT_MODE;
 
   if ("$value" in obj) {
