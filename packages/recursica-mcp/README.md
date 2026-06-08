@@ -13,6 +13,10 @@ This MCP server provides a suite of tools for AI assistant agents (like Gemini, 
 - **`recursica_project_setup`**: Serves installation and setup guides for projects integrating Recursica.
 - **`what_is_recursica`**: Provides general documentation on what Recursica is, its core philosophy, and setup overview.
 
+## Installation & Usage
+
+For instructions on how to set up and run the Recursica MCP server in your environment using `npx`, see the [SETUP.md](SETUP.md) guide.
+
 ---
 
 ## Local Development Setup
