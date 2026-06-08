@@ -9,7 +9,12 @@
   "type": "module",
   "main": "./dist/index.js",
   "bin": {
-    "recursica-mcp": "./dist/index.js"
+    "recursica-mcp": "dist/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/borderux/recursica.git",
+    "directory": "packages/recursica-mcp"
   },
   "files": [
     "dist",
