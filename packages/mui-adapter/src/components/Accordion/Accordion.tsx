@@ -13,6 +13,12 @@ import {
 } from "../../utils/filterStylingProps";
 import styles from "./Accordion.module.css";
 
+import {
+  type RecursicaAccordionProps,
+  type RecursicaAccordionItemProps,
+  type RecursicaAccordionControlProps,
+} from "@recursica/adapter-common";
+
 const ChevronIcon = () => (
   <svg
     viewBox="0 0 24 24"
@@ -35,13 +41,7 @@ const AccordionContext = createContext<{
 
 // ==== ACCORDION CONTAINER ====
 export type AccordionProps = RecursicaOverStyled<
-  React.HTMLAttributes<HTMLDivElement> & {
-    variant?: string;
-    value?: string | string[];
-    defaultValue?: string | string[];
-    onChange?: (value: string | string[] | null) => void;
-    multiple?: boolean;
-  }
+  React.HTMLAttributes<HTMLDivElement> & RecursicaAccordionProps
 >;
 
 const AccordionBase = forwardRef<HTMLDivElement, AccordionProps>(
@@ -106,15 +106,11 @@ const AccordionBase = forwardRef<HTMLDivElement, AccordionProps>(
 );
 AccordionBase.displayName = "Accordion";
 
-// ==== ACCORDION ITEM ====
 export type AccordionItemWrapperProps = RecursicaOverStyled<
   Omit<MuiAccordionProps, "children" | "value"> & {
     children?: React.ReactNode;
-    title?: React.ReactNode;
-    leftIcon?: React.ReactNode;
-    divider?: boolean;
     value: string;
-  }
+  } & RecursicaAccordionItemProps
 >;
 
 export const AccordionItem = forwardRef<
@@ -188,9 +184,7 @@ AccordionItem.displayName = "AccordionItem";
 
 // ==== ACCORDION CONTROL ====
 export type AccordionControlWrapperProps = RecursicaOverStyled<
-  MuiAccordionSummaryProps & {
-    leftIcon?: React.ReactNode;
-  }
+  MuiAccordionSummaryProps & RecursicaAccordionControlProps
 >;
 
 export const AccordionControl = forwardRef<

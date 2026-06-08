@@ -6,10 +6,16 @@ This MCP server provides a suite of tools for AI assistant agents (like Gemini, 
 
 ## Dynamic Tooling Offered
 
-- **`get_general_guidelines`**: Returns setup and styling rules (variables CSS, fonts, and PostCSS).
-- **`list_components`**: Lists all available custom components across active adapters (e.g. `mantine-adapter`, `mui-adapter`).
-- **`get_component_doc`**: Displays full component notes, API types, and `.tsx` source code signatures.
-- **`recommend_component`**: Recommends the ideal component based on your UI layout constraints or keywords.
+- **`recursica_get_usage`**: Returns architectural design rules, component usage patterns, and styling token guidelines.
+- **`recursica_list_components`**: Lists all available custom components across active adapters (e.g. `mantine-adapter`, `mui-adapter`).
+- **`recursica_get_component_doc`**: Displays full component notes, API types, and `.tsx` source code signatures.
+- **`recursica_recommend_component`**: Recommends the ideal component based on your UI layout constraints or keywords.
+- **`recursica_project_setup`**: Serves installation and setup guides for projects integrating Recursica.
+- **`what_is_recursica`**: Provides general documentation on what Recursica is, its core philosophy, and setup overview.
+
+## Installation & Usage
+
+For instructions on how to set up and run the Recursica MCP server in your environment using `npx`, see the [SETUP.md](SETUP.md) guide.
 
 ---
 
@@ -25,53 +31,12 @@ To use this server locally during development (with instant code-sync and no res
 
 2. **Register the local server** in your MCP config (`~/.gemini/antigravity/mcp_config.json`):
    ```json
-   "recursica-mcp": {
-     "command": "node",
-     "args": [
-       "/Users/mattmassey/work/recursica/packages/recursica-mcp/dist/index.js"
-     ]
-   }
+    "recursica-mcp": {
+      "command": "node",
+      "args": [
+        "/absolute/path/to/recursica/packages/recursica-mcp/dist/index.js"
+      ]
+    }
    ```
 
 ---
-
-## Scoped NPM Publishing & `npx` Usage
-
-Once you publish this package to NPM, you and other developers can consume it **without any local installation**, exactly like MUI's MCP!
-
-### 1. How to Publish (via Changesets)
-
-Recursica uses standard Changesets for monorepo release management. To prepare and publish:
-
-```bash
-# 1. Generate a changeset for the new package (follow prompt rules)
-npx changeset
-
-# 2. Version the packages
-npx changeset version
-
-# 3. Publish to NPM (ensures public scoped publishing)
-npm run release
-```
-
-Alternatively, to manually publish this package alone:
-
-```bash
-npm publish --access public
-```
-
-### 2. Registering via `npx`
-
-Once published under the scoped name `@recursica/mcp`, developers can register it globally in their MCP configuration:
-
-```json
-"recursica-mcp": {
-  "command": "npx",
-  "args": [
-    "-y",
-    "@recursica/mcp@latest"
-  ]
-}
-```
-
-_Note: When run via `npx`, developers can optionally configure the path to their active workspace repository using the `RECURSICA_PATH` environment variable if it's running outside their repository._

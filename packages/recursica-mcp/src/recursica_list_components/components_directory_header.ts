@@ -1,0 +1,1 @@
+export const components_directory_header = `# Recursica Components Directory\n\nHere is the comprehensive catalog of UI components defined in the Recursica Design System. These premium wrappers ensure complete visual consistency and token mapping.\n`;

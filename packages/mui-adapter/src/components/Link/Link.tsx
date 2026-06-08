@@ -6,11 +6,7 @@ import {
 } from "../../utils/filterStylingProps";
 import styles from "./Link.module.css";
 
-export interface RecursicaLinkProps {
-  icon?: React.ReactNode;
-  children?: React.ReactNode;
-  component?: React.ElementType;
-}
+import { type RecursicaLinkProps } from "@recursica/adapter-common";
 
 export type LinkProps = RecursicaOverStyled<
   Omit<MUILinkProps, "underline"> & RecursicaLinkProps

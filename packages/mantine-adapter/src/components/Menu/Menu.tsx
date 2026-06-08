@@ -18,6 +18,8 @@ import {
 } from "../../utils/filterStylingProps";
 import styles from "./Menu.module.css";
 
+import { type RecursicaMenuProps } from "@recursica/adapter-common";
+
 // ============================================================
 // MENU ROOT
 // ============================================================
@@ -38,7 +40,9 @@ import styles from "./Menu.module.css";
  * </Menu>
  * ```
  */
-export type MenuProps = RecursicaOverStyled<MantineMenuProps>;
+export type MenuProps = RecursicaOverStyled<
+  MantineMenuProps & RecursicaMenuProps
+>;
 
 const MenuBase = function Menu({ overStyled = false, ...rest }: MenuProps) {
   const sanitizedProps = filterStylingProps(rest, overStyled);

@@ -6,12 +6,12 @@ This server provides tools to discover, configure, and integrate Recursica's pre
 
 ## Provided Tools
 
-- `recommend_adapter`: Analyze project dependencies and recommend the correct Recursica adapter.
-- `get_adapter_setup`: Retrieve installation, peer dependency, and setup instructions.
-- `get_general_guidelines`: View post-setup integration coding principles and spacing variables.
-- `list_components`: Discover all premium adapted components available in the workspace.
-- `get_component_doc`: Inspect TS interfaces and implementation design rules of a specific component.
-- `recommend_component`: Suggest the correct component mapping based on natural language UI requirements.
+- `what_is_recursica`: Provides general documentation on what Recursica is, its core philosophy, and setup overview.
+- `recursica_project_setup`: Retrieve installation, peer dependency, and setup instructions.
+- `recursica_get_usage`: View post-setup integration coding principles and spacing variables.
+- `recursica_list_components`: Discover all premium adapted components available in the workspace.
+- `recursica_get_component_doc`: Inspect TS interfaces and implementation design rules of a specific component.
+- `recursica_recommend_component`: Suggest the correct component mapping based on natural language UI requirements.
 
 ## Documentation
 

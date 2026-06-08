@@ -12,6 +12,8 @@ import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/For
 import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
 import styles from "./NumberInput.module.css";
 
+import { type RecursicaNumberInputProps as BaseRecursicaNumberInputProps } from "@recursica/adapter-common";
+
 export interface RecursicaNumberInputProps
   extends Omit<
       MuiNumberInputProps,
@@ -28,10 +30,8 @@ export interface RecursicaNumberInputProps
       | "labelWithEditIcon"
       | "onLabelEditClick"
     >,
-    ReadOnlyControlProps {
-  /** Enables/disables the controls to increment and decrement the value */
-  hideControls?: boolean;
-}
+    ReadOnlyControlProps,
+    BaseRecursicaNumberInputProps {}
 
 export type NumberInputProps = RecursicaOverStyled<RecursicaNumberInputProps>;
 
@@ -63,6 +63,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
       emptyValueComponent,
       value,
       defaultValue,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       hideControls = false,
       ...rest
     } = props;

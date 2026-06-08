@@ -9,6 +9,8 @@ import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/For
 import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
 import styles from "./TextField.module.css";
 
+import { type RecursicaTextFieldProps as BaseRecursicaTextFieldProps } from "@recursica/adapter-common";
+
 export interface RecursicaTextFieldProps
   extends Omit<InputProps, "size" | "variant" | "radius" | "wrapperProps">,
     Pick<
@@ -23,7 +25,8 @@ export interface RecursicaTextFieldProps
       RecursicaFormControlWrapperProps,
       "controlMaxWidth" | "controlMinWidth"
     >,
-    ReadOnlyControlProps {}
+    ReadOnlyControlProps,
+    BaseRecursicaTextFieldProps {}
 
 export type TextFieldProps = RecursicaOverStyled<RecursicaTextFieldProps>;
 

@@ -2,15 +2,12 @@ import React from "react";
 import { filterStylingProps } from "../../utils/filterStylingProps";
 import styles from "./FormControlLayout.module.css";
 
+import { type RecursicaFormControlLayoutProps } from "@recursica/adapter-common";
+
 export interface FormControlLayoutProps
-  extends React.HTMLAttributes<HTMLDivElement> {
+  extends React.HTMLAttributes<HTMLDivElement>,
+    RecursicaFormControlLayoutProps {
   overStyled?: boolean;
-  formLayout?: "stacked" | "side-by-side";
-  labelSize?: "small" | "default" | "md";
-  controlMaxWidth?: string;
-  controlMinWidth?: string;
-  leftSection?: React.ReactNode;
-  children: React.ReactNode;
 }
 
 export const FormControlLayout = React.forwardRef<

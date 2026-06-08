@@ -8,12 +8,7 @@ import {
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 
-export type RecursicaTitleProps = Omit<MantineTitleProps, "order"> & {
-  /**
-   * Enforces semantic HTML headers (h1-h6) cleanly bound to native typographic scaling variables in the design system.
-   */
-  order?: 1 | 2 | 3 | 4 | 5 | 6;
-};
+import { type RecursicaTitleProps } from "@recursica/adapter-common";
 
 export type TitleProps = RecursicaOverStyled<RecursicaTitleProps>;
 

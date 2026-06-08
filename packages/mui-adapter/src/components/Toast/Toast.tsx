@@ -11,19 +11,9 @@ import {
 } from "../../utils/filterStylingProps";
 import styles from "./Toast.module.css";
 
-export interface RecursicaToastProps {
-  /**
-   * The visual variant of the toast.
-   * @default "default"
-   */
-  variant?: "default" | "error" | "success";
+import { type RecursicaToastProps as BaseRecursicaToastProps } from "@recursica/adapter-common";
 
-  /**
-   * Loading state is natively unsupported by Recursica UI Kit.
-   * If a loading state is required, pass a `<Loader size="sm" />` directly into the `icon` prop.
-   */
-  loading?: false;
-
+export interface RecursicaToastProps extends BaseRecursicaToastProps {
   withCloseButton?: boolean;
   title?: React.ReactNode;
   icon?: React.ReactNode;
@@ -97,7 +87,7 @@ export const Toast = React.forwardRef<HTMLDivElement, ToastProps>(
       });
     }
 
-    const handleClose = (_e: React.SyntheticEvent) => {
+    const handleClose = () => {
       if (onClose) onClose();
     };
 

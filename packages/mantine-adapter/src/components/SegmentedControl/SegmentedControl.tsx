@@ -9,17 +9,7 @@ import {
 } from "../../utils/filterStylingProps";
 import styles from "./SegmentedControl.module.css";
 
-export interface RecursicaSegmentedControlProps {
-  /** The orientation of the control */
-  orientation?: "horizontal" | "vertical";
-  /** If true, the control will take up the full width of its container */
-  fullWidth?: boolean;
-  /**
-   * SegmentedControl should NOT be allowed to be disabled by design.
-   * This component explicitly disables the `disabled` prop.
-   */
-  disabled?: never;
-}
+import { type RecursicaSegmentedControlProps } from "@recursica/adapter-common";
 
 export type SegmentedControlProps = RecursicaOverStyled<
   Omit<

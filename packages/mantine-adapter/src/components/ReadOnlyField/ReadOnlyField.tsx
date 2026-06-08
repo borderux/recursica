@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { forwardRef } from "react";
 import {
-  ReadOnlyFieldType,
   EmptyValueRenderer,
   type ReadOnlyControlProps,
 } from "@recursica/adapter-common";
@@ -16,21 +15,15 @@ import {
 import { ReadOnlyTextField } from "./ReadOnlyTextField";
 import styles from "./ReadOnlyField.module.css";
 
+import { type RecursicaReadOnlyFieldProps as BaseRecursicaReadOnlyFieldProps } from "@recursica/adapter-common";
+
 export interface RecursicaReadOnlyFieldProps
   extends Omit<
       FormControlWrapperProps,
       "children" | "overStyled" | "controlMaxWidth" | "controlMinWidth"
     >,
-    Pick<ReadOnlyControlProps, "emptyValueComponent"> {
-  /** The specific value to be rendered in read-only mode explicitly matching the original field input */
-  value?: any;
-  /** The data type formatting rules bounding how the string is presented to the user */
-  type?: ReadOnlyFieldType;
-  /** Pass the native maximum width design variable dynamically bounding the specific wrapper width exclusively. */
-  controlMaxWidth?: string | undefined;
-  /** Pass the native minimum width design variable dynamically bounding the specific wrapper width exclusively. */
-  controlMinWidth?: string | undefined;
-}
+    Pick<ReadOnlyControlProps, "emptyValueComponent">,
+    BaseRecursicaReadOnlyFieldProps {}
 
 export type ReadOnlyFieldProps =
   RecursicaOverStyled<RecursicaReadOnlyFieldProps>;

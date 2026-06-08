@@ -13,6 +13,8 @@ import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/For
 import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
 import styles from "./Dropdown.module.css";
 
+import { type RecursicaDropdownProps as BaseRecursicaDropdownProps } from "@recursica/adapter-common";
+
 export interface RecursicaDropdownProps
   extends Omit<
       MuiSelectProps,
@@ -29,14 +31,8 @@ export interface RecursicaDropdownProps
       | "labelWithEditIcon"
       | "onLabelEditClick"
     >,
-    ReadOnlyControlProps {
-  /** Internal hook for Selects to override raw layout width properties when necessary */
-  containerWidth?: React.CSSProperties["width"];
-  data?: (string | { value: string; label: ReactNode; disabled?: boolean })[];
-  searchable?: boolean;
-  clearable?: boolean;
-  withAsterisk?: boolean;
-}
+    ReadOnlyControlProps,
+    BaseRecursicaDropdownProps {}
 
 export type DropdownProps = RecursicaOverStyled<RecursicaDropdownProps>;
 
@@ -59,6 +55,7 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
       assistiveWithIcon,
       error,
       required,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       withAsterisk,
       id,
       className,
@@ -70,7 +67,9 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
       value,
       defaultValue,
       data,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       searchable, // Not natively supported by basic MUI Select, stubbed
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       clearable, // Not natively supported by basic MUI Select, stubbed
       ...rest
     } = props;

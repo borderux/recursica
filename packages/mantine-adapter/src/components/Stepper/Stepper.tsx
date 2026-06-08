@@ -9,13 +9,7 @@ import {
 } from "../../utils/filterStylingProps";
 import styles from "./Stepper.module.css";
 
-export interface RecursicaStepperProps
-  extends Omit<
-    MantineStepperProps,
-    "size" | "color" | "radius" | "iconSize" | "contentPadding"
-  > {
-  size?: "small" | "large";
-}
+import { type RecursicaStepperProps } from "@recursica/adapter-common";
 
 export type StepperProps = RecursicaOverStyled<RecursicaStepperProps>;
 

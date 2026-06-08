@@ -4,21 +4,12 @@ import {
   type StackProps as MUIStackProps,
 } from "@mui/material";
 import {
-  type RecursicaSpacing,
   SPACING_MAP,
   type OmitSx,
   filterSxProp,
 } from "../../utils/filterStylingProps";
 
-export interface RecursicaGroupProps {
-  children?: React.ReactNode;
-  gap?: MUIStackProps["spacing"] | RecursicaSpacing;
-  rowGap?: MUIStackProps["spacing"] | RecursicaSpacing;
-  columnGap?: MUIStackProps["spacing"] | RecursicaSpacing;
-  justify?: React.CSSProperties["justifyContent"];
-  align?: React.CSSProperties["alignItems"];
-  wrap?: React.CSSProperties["flexWrap"];
-}
+import { type RecursicaGroupProps } from "@recursica/adapter-common";
 
 export type GroupProps = OmitSx<
   Omit<MUIStackProps, "spacing" | "direction"> & RecursicaGroupProps

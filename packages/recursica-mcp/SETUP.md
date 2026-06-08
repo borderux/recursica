@@ -1,37 +1,29 @@
 # Setting Up Recursica MCP Server
 
-Follow these instructions to configure and run the MCP server in your local development environment.
+The Recursica MCP server is distributed as the `@recursica/mcp` NPM package. You can configure and run it directly using `npx` without needing to clone the repository or set up a local development environment.
 
-## 1. Installation
+## 1. Add to your MCP Client Configuration
 
-Install project dependencies:
+To register the Recursica MCP server, add the following configuration to your client's settings (such as VS Code, Claude Desktop, Gemini, or Antigravity):
 
-```bash
-npm install
+### Claude Desktop
+
+Add the following entry to your `claude_desktop_config.json` file (typically located at `~/Library/Application Support/Claude/claude_desktop_config.json` on macOS, or `%APPDATA%\Claude\claude_desktop_config.json` on Windows):
+
+```json
+{
+  "mcpServers": {
+    "recursica-mcp": {
+      "command": "npx",
+      "args": ["-y", "@recursica/mcp@latest"]
+    }
+  }
+}
 ```
 
-## 2. Compile Server
+### Antigravity / Gemini / Other Clients
 
-Compile TypeScript source files into executable JavaScript:
+For other clients, configure the server using:
 
-```bash
-npm run build
-```
-
-## 3. Run Visual MCP Inspector (with Hot-Reloading)
-
-Launch the interactive, web-based playground interface in your browser to visually test all MCP tools:
-
-```bash
-npm run dev
-```
-
-_(This runs your TypeScript files directly on-the-fly using `tsx --watch`, automatically compiling and hot-reloading the server inside the inspector UI whenever you modify any `.ts` source files.)_
-
-## 4. Run Unit Tests
-
-Execute the Vitest mock-supported unit testing suite:
-
-```bash
-npm run test
-```
+- **Command**: `npx`
+- **Arguments**: `["-y", "@recursica/mcp@latest"]`

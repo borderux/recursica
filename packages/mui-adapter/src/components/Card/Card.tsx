@@ -6,8 +6,13 @@ import {
 } from "../../utils/filterStylingProps";
 import styles from "./Card.module.css";
 
+import {
+  type RecursicaCardProps,
+  type RecursicaCardSectionProps,
+} from "@recursica/adapter-common";
+
 // ==== CARD CONTAINER ====
-export type CardProps = RecursicaOverStyled<MuiCardProps>;
+export type CardProps = RecursicaOverStyled<MuiCardProps & RecursicaCardProps>;
 
 /**
  * The root Card elevation box. It establishes the global background color, border radius, nested component gap, and outer shadow governed by the current `Layer` context.
@@ -53,9 +58,6 @@ const CardBase = forwardRef<HTMLDivElement, CardProps>(function Card(
 CardBase.displayName = "Card";
 
 // ==== NATIVE MANTINE CARD.SECTION ====
-export type RecursicaCardSectionProps = React.HTMLAttributes<HTMLDivElement> & {
-  children?: React.ReactNode;
-};
 export type CardSectionProps = RecursicaOverStyled<RecursicaCardSectionProps>;
 
 /**

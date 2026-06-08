@@ -9,7 +9,10 @@ import {
   filterStylingProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
-import { type RequireAccessibleLabel } from "../../utils/RequireAccessibleLabel";
+import {
+  type RequireAccessibleLabel,
+  type RecursicaRadioProps,
+} from "@recursica/adapter-common";
 import {
   FormControlLayout,
   type FormControlLayoutProps,
@@ -32,19 +35,21 @@ const RadioIcon: React.FC<{
   </svg>
 );
 
-export type RecursicaRadioProps = RequireAccessibleLabel<
-  Omit<
-    MantineRadioProps,
-    "size" | "color" | "radius" | "iconColor" | "variant"
-  > &
-    ReadOnlyControlProps &
-    Pick<
-      FormControlLayoutProps,
-      "formLayout" | "labelSize" | "controlMaxWidth" | "controlMinWidth"
-    >
->;
+export type RadioWrapperProps = Omit<
+  MantineRadioProps,
+  "size" | "color" | "radius" | "iconColor" | "variant"
+> &
+  RecursicaRadioProps &
+  ReadOnlyControlProps &
+  Pick<
+    FormControlLayoutProps,
+    "formLayout" | "labelSize" | "controlMaxWidth" | "controlMinWidth"
+  >;
 
-export type RadioProps = RecursicaOverStyled<RecursicaRadioProps>;
+export type RecursicaRadioPropsAlias =
+  RequireAccessibleLabel<RadioWrapperProps>;
+
+export type RadioProps = RecursicaOverStyled<RecursicaRadioPropsAlias>;
 
 type RadioComponent = React.ForwardRefExoticComponent<
   RadioProps & React.RefAttributes<HTMLInputElement>

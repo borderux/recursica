@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { forwardRef } from "react";
 import {
   // Removed unused Radio import
@@ -13,6 +12,8 @@ import {
 import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
 import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
 import styles from "./Radio.module.css";
+
+import { type RecursicaRadioGroupProps as BaseRecursicaRadioGroupProps } from "@recursica/adapter-common";
 
 export interface RecursicaRadioGroupProps
   extends Omit<
@@ -33,14 +34,8 @@ export interface RecursicaRadioGroupProps
       | "onChange"
       | keyof MuiRadioGroupProps
     >,
-    ReadOnlyControlProps {
-  value?: any;
-  defaultValue?: any;
-  onChange?: (
-    event: React.ChangeEvent<HTMLInputElement>,
-    value: string,
-  ) => void;
-}
+    ReadOnlyControlProps,
+    BaseRecursicaRadioGroupProps {}
 
 export type RadioGroupProps = RecursicaOverStyled<RecursicaRadioGroupProps>;
 
@@ -63,6 +58,7 @@ export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
       assistiveText,
       assistiveWithIcon,
       error,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       required,
       // Removed withAsterisk as it is not supported natively in this interface
       id,

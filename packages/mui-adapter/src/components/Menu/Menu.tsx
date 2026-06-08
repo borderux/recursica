@@ -13,7 +13,9 @@ import {
 } from "../../utils/filterStylingProps";
 import styles from "./Menu.module.css";
 
-export type MenuProps = RecursicaOverStyled<MuiMenuProps>;
+import { type RecursicaMenuProps } from "@recursica/adapter-common";
+
+export type MenuProps = RecursicaOverStyled<MuiMenuProps & RecursicaMenuProps>;
 
 export const Menu = forwardRef<HTMLDivElement, MenuProps>(function Menu(
   { overStyled = false, className, ...rest },

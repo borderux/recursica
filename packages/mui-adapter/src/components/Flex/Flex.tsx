@@ -11,56 +11,12 @@
 import React, { forwardRef } from "react";
 import { Box as MUIBox, type BoxProps as MUIBoxProps } from "@mui/material";
 import {
-  type RecursicaSpacing,
   SPACING_MAP,
   type OmitSx,
   filterSxProp,
 } from "../../utils/filterStylingProps";
 
-export interface RecursicaFlexProps {
-  /**
-   * Content to render inside the flex container.
-   */
-  children?: React.ReactNode;
-
-  /**
-   * The gap between flex items. Accepts standard MUI spacing or Recursica gap tokens
-   * (e.g. "rec-md").
-   */
-  gap?: string | number | RecursicaSpacing;
-
-  /**
-   * The vertical gap between flex items when wrapping. Accepts standard MUI spacing
-   * or Recursica gap tokens.
-   */
-  rowGap?: string | number | RecursicaSpacing;
-
-  /**
-   * The horizontal gap between flex items when wrapping. Accepts standard MUI spacing
-   * or Recursica gap tokens.
-   */
-  columnGap?: string | number | RecursicaSpacing;
-
-  /**
-   * Flex direction
-   */
-  direction?: React.CSSProperties["flexDirection"];
-
-  /**
-   * Align items
-   */
-  align?: React.CSSProperties["alignItems"];
-
-  /**
-   * Justify content
-   */
-  justify?: React.CSSProperties["justifyContent"];
-
-  /**
-   * Flex wrap
-   */
-  wrap?: React.CSSProperties["flexWrap"];
-}
+import { type RecursicaFlexProps } from "@recursica/adapter-common";
 
 export type FlexProps = OmitSx<MUIBoxProps & RecursicaFlexProps>;
 

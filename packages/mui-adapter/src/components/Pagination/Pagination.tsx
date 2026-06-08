@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { forwardRef } from "react";
 import {
   Pagination as MuiPagination,
@@ -10,10 +9,11 @@ import {
 } from "../../utils/filterStylingProps";
 import styles from "./Pagination.module.css";
 
-export type PaginationProps = RecursicaOverStyled<MuiPaginationProps> & {
-  /** If set to true, displays text labels alongside the icons for next/previous/first/last edges. */
-  withLabels?: boolean;
-};
+import { type RecursicaPaginationProps } from "@recursica/adapter-common";
+
+export type PaginationProps = RecursicaOverStyled<
+  MuiPaginationProps & RecursicaPaginationProps
+>;
 
 function usePaginationClassNames(restRecord: Record<string, unknown>): {
   className: string;
@@ -44,7 +44,15 @@ function usePaginationClassNames(restRecord: Record<string, unknown>): {
 }
 
 const _Pagination = forwardRef<HTMLDivElement, PaginationProps>(
-  function Pagination({ overStyled = false, withLabels, ...rest }, ref) {
+  function Pagination(
+    {
+      overStyled = false,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      withLabels,
+      ...rest
+    },
+    ref,
+  ) {
     const sanitizedProps = filterStylingProps(rest, overStyled);
     const stylingParams = usePaginationClassNames(
       sanitizedProps as Record<string, unknown>,

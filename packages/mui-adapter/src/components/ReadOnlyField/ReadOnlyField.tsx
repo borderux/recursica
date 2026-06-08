@@ -7,14 +7,14 @@ import {
 } from "../FormControlWrapper/FormControlWrapper";
 import styles from "./ReadOnlyField.module.css";
 
+import { type RecursicaReadOnlyFieldProps as BaseRecursicaReadOnlyFieldProps } from "@recursica/adapter-common";
+
 export type ReadOnlyFieldProps = Omit<
   RecursicaFormControlWrapperProps,
-  "error" | "focused"
+  "error" | "focused" | "controlMaxWidth" | "controlMinWidth"
 > &
-  ReadOnlyControlProps & {
-    value?: any;
-    type?: "text" | "boolean" | "number" | "switch" | "date";
-  };
+  ReadOnlyControlProps &
+  BaseRecursicaReadOnlyFieldProps;
 
 export const ReadOnlyField = React.forwardRef<
   HTMLDivElement,

@@ -10,13 +10,16 @@ import {
 import styles from "./Timeline.module.css";
 import { TimelineItem } from "./TimelineItem";
 
+import { type RecursicaTimelineProps } from "@recursica/adapter-common";
+
 /**
  * Properties for the strictly-tokenized Timeline component.
  * Native Mantine abstract properties like `color`, `radius`, `bulletSize`, and `lineWidth`
  * have been stripped out to strictly enforce the structural mappings of the Recursica UI Kit.
  */
 export type TimelineProps = RecursicaOverStyled<
-  Omit<MantineTimelineProps, "color" | "radius" | "bulletSize" | "lineWidth">
+  Omit<MantineTimelineProps, "color" | "radius" | "bulletSize" | "lineWidth"> &
+    RecursicaTimelineProps
 >;
 
 interface TimelineComponent

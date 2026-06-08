@@ -87,3 +87,117 @@ export function extractFirstParagraph(filePath: string): string {
   }
   return "";
 }
+
+/**
+ * Helper to traverse up to root to find package.json
+ */
+export function findPackageJson(startDir: string): string | null {
+  let currentDir = path.resolve(startDir);
+  while (currentDir) {
+    const pkgPath = path.join(currentDir, "package.json");
+    if (fs.existsSync(pkgPath)) {
+      return pkgPath;
+    }
+    const parentDir = path.dirname(currentDir);
+    if (parentDir === currentDir) {
+      break; // Reached root directory
+    }
+    currentDir = parentDir;
+  }
+  return null;
+}
+
+export interface DetectionResult {
+  dependencies: Record<string, string>;
+  targetAdapter: string | null;
+  isInstalled: boolean;
+}
+
+/**
+ * Shared logic to clean adapter name formats
+ */
+export function getCleanAdapterName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/^@recursica\//g, "")
+    .replace(/-adapter$/g, "")
+    .trim();
+}
+
+/**
+ * Shared utility to detect UI Kit and Adapter based on package.json
+ */
+export function detectAdapterAndUiKit(
+  startPath: string,
+  allAdapters: AdapterInfo[],
+  explicitUiKit?: string,
+): DetectionResult {
+  let pkgPath = findPackageJson(startPath);
+  let dependencies: Record<string, string> = {};
+  if (pkgPath) {
+    try {
+      const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
+      dependencies = {
+        ...(pkg.dependencies || {}),
+        ...(pkg.devDependencies || {}),
+      };
+    } catch (e) {
+      // Ignore parse errors
+    }
+  }
+
+  const isAdapterInstalled = (cleanName: string) => {
+    const expectedPackageName = `@recursica/${cleanName}-adapter`;
+    return !!(
+      dependencies[expectedPackageName] || dependencies[`${cleanName}-adapter`]
+    );
+  };
+
+  const isUiKitInstalled = (cleanName: string) => {
+    if (cleanName === "mantine") {
+      return !!dependencies["@mantine/core"];
+    }
+    if (cleanName === "mui") {
+      return !!(
+        dependencies["@mui/material"] ||
+        dependencies["@mui/core"] ||
+        dependencies["@material-ui/core"]
+      );
+    }
+    return false;
+  };
+
+  let targetAdapter: string | null = null;
+
+  if (explicitUiKit) {
+    targetAdapter = getCleanAdapterName(explicitUiKit);
+  } else {
+    // Auto-detection mode:
+    // A. Check if any supported Recursica adapter package is installed first
+    for (const adapter of allAdapters) {
+      const clean = getCleanAdapterName(adapter.name);
+      if (isAdapterInstalled(clean)) {
+        targetAdapter = clean;
+        break;
+      }
+    }
+    // B. If not, check if any supported underlying UI kit is installed
+    if (!targetAdapter) {
+      for (const adapter of allAdapters) {
+        const clean = getCleanAdapterName(adapter.name);
+        if (isUiKitInstalled(clean)) {
+          targetAdapter = clean;
+          break;
+        }
+      }
+    }
+  }
+
+  const isInstalled = targetAdapter ? isAdapterInstalled(targetAdapter) : false;
+
+  return {
+    dependencies,
+    targetAdapter,
+    isInstalled,
+  };
+}

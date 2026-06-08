@@ -1,6 +1,5 @@
 import React, { forwardRef } from "react";
 import { Loader } from "../Loader/Loader";
-import type { RecursicaLoaderProps } from "../Loader/Loader";
 import {
   Button as MuiButton,
   type ButtonProps as MuiButtonProps,
@@ -11,21 +10,7 @@ import {
 } from "../../utils/filterStylingProps";
 import styles from "./Button.module.css";
 
-export interface RecursicaButtonProps {
-  variant?: "solid" | "outline" | "text";
-  size?: "default" | "small";
-  icon?: React.ReactNode;
-  /**
-   * For polymorphic support (e.g., `component="a"`), native to MUI.
-   */
-  component?: React.ElementType;
-  /** Which Recursica Loader variant to use */
-  loaderVariant?: RecursicaLoaderProps["variant"];
-  /** The size variant for the loader */
-  loaderSize?: RecursicaLoaderProps["size"];
-  /** Whether to use the Recursica loader or fallback to the Mantine loader */
-  useRecursicaLoader?: boolean;
-}
+import { type RecursicaButtonProps } from "@recursica/adapter-common";
 
 export type ButtonProps = RecursicaOverStyled<
   Omit<MuiButtonProps, "variant" | "size" | "color" | "fullWidth"> &

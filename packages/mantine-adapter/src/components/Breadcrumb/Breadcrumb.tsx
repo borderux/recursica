@@ -11,8 +11,7 @@ import styles from "./Breadcrumb.module.css";
 
 // Currently there are no Recursica prop additions specific to Breadcrumbs (like size or variant)
 // according to recursica_ui-kit.json
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface RecursicaBreadcrumbProps {}
+import { type RecursicaBreadcrumbProps } from "@recursica/adapter-common";
 
 export type BreadcrumbProps = RecursicaOverStyled<
   Omit<MantineBreadcrumbsProps, "variant" | "size"> & RecursicaBreadcrumbProps

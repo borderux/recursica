@@ -12,8 +12,20 @@ import {
 } from "../../utils/filterStylingProps";
 import styles from "./Accordion.module.css";
 
+import {
+  type RecursicaAccordionProps,
+  type RecursicaAccordionItemProps,
+  type RecursicaAccordionControlProps,
+} from "@recursica/adapter-common";
+
 // ==== ACCORDION CONTAINER ====
-export type AccordionProps = RecursicaOverStyled<MantineAccordionProps>;
+export type AccordionProps = RecursicaOverStyled<
+  Omit<
+    MantineAccordionProps,
+    "value" | "defaultValue" | "onChange" | "multiple" | "variant"
+  > &
+    RecursicaAccordionProps
+>;
 
 const AccordionBase = function Accordion({
   variant = "unstyled",
@@ -63,29 +75,9 @@ const AccordionBase = function Accordion({
 };
 AccordionBase.displayName = "Accordion";
 
-// ==== ACCORDION ITEM ====
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface RecursicaAccordionItemProps
-  extends Omit<AccordionItemProps, "className"> {}
 // We need to omit and re-merge native props like in Badge
 export type AccordionItemWrapperProps = RecursicaOverStyled<
-  AccordionItemProps & {
-    /**
-     * When provided alongside `leftIcon` or independently, this auto-generates the Accordion Control and Panel DOM layers natively.
-     */
-    title?: React.ReactNode;
-
-    /**
-     * Leading icon explicitly mapped into the Mantine `Accordion.Control` leftSection boundary natively.
-     */
-    leftIcon?: React.ReactNode;
-
-    /**
-     * Toggles the presence of the bottom trailing divider native to AccordionItems.
-     * @default true
-     */
-    divider?: boolean;
-  }
+  AccordionItemProps & RecursicaAccordionItemProps
 >;
 
 export const AccordionItem = forwardRef<
@@ -127,12 +119,7 @@ AccordionItem.displayName = "AccordionItem";
 
 // ==== ACCORDION CONTROL ====
 export type AccordionControlWrapperProps = RecursicaOverStyled<
-  AccordionControlProps & {
-    /**
-     * Leading icon explicitly mapped into the Mantine `Accordion.Control` leftSection boundary natively.
-     */
-    leftIcon?: React.ReactNode;
-  }
+  AccordionControlProps & RecursicaAccordionControlProps
 >;
 
 export const AccordionControl = forwardRef<

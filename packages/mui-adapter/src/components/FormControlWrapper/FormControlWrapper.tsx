@@ -6,29 +6,14 @@ import { AssistiveElement } from "../AssistiveElement/AssistiveElement";
 import { FormControlLayout } from "../FormControlLayout/FormControlLayout";
 import styles from "./FormControlWrapper.module.css";
 
+import { type RecursicaFormControlWrapperProps as BaseRecursicaFormControlWrapperProps } from "@recursica/adapter-common";
+
 export interface RecursicaFormControlWrapperProps
-  extends Omit<FormControlProps, "margin" | "variant" | "size" | "color"> {
+  extends Omit<FormControlProps, "margin" | "variant" | "size" | "color">,
+    BaseRecursicaFormControlWrapperProps {
   overStyled?: boolean;
   label?: React.ReactNode;
-  /** Primary assistive description bound natively to the component footer. Maps to MUI's 'helperText' dynamically. */
-  assistiveText?: React.ReactNode;
-  /** Secondary parameter fallback identical to assistiveText to match MUI / Mantine native APIs safely. */
-  description?: React.ReactNode;
-  /** Fallback mapping for MUI's native helperText */
-  helperText?: React.ReactNode;
-  assistiveWithIcon?: boolean;
-
-  formLayout?: "stacked" | "side-by-side";
-  labelSize?: "small" | "default" | "md";
-  labelAlignment?: "left" | "right"; // Currently functionally maps to left automatically natively
-  labelOptionalText?: React.ReactNode | true;
-  labelWithEditIcon?: boolean;
-  onLabelEditClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
-  labelActionArea?: React.ReactNode;
-
-  /** Allows layout mapping to limit the input's bounding box without impacting the label */
-  controlMaxWidth?: string;
-  controlMinWidth?: string;
+  focused?: boolean;
 }
 
 export type FormControlWrapperProps = RecursicaFormControlWrapperProps;

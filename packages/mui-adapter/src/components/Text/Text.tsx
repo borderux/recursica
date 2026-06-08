@@ -1,21 +1,7 @@
 import React, { forwardRef } from "react";
 import { Typography } from "../Typography/Typography";
 import { type RecursicaOverStyled } from "../../utils/filterStylingProps";
-import { type TypographyProps as MuiTypographyProps } from "@mui/material";
-
-export type TextVariant =
-  | "body"
-  | "body-small"
-  | "caption"
-  | "overline"
-  | "subtitle"
-  | "subtitle-small";
-
-export type RecursicaTextProps = Omit<MuiTypographyProps, "variant"> & {
-  variant?: TextVariant;
-  children?: React.ReactNode;
-  component?: React.ElementType;
-};
+import { type RecursicaTextProps } from "@recursica/adapter-common";
 
 export type TextProps = RecursicaOverStyled<RecursicaTextProps>;
 

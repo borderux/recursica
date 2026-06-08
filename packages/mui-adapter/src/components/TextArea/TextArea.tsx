@@ -13,6 +13,8 @@ import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/For
 import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
 import styles from "./TextArea.module.css";
 
+import { type RecursicaTextAreaProps as BaseRecursicaTextAreaProps } from "@recursica/adapter-common";
+
 export interface RecursicaTextAreaProps
   extends Omit<
       MuiTextareaProps,
@@ -29,15 +31,8 @@ export interface RecursicaTextAreaProps
       | "labelWithEditIcon"
       | "onLabelEditClick"
     >,
-    ReadOnlyControlProps {
-  withAsterisk?: boolean;
-  /** Maximum rows for autosize textarea to grow */
-  maxRows?: number;
-  /** Minimum rows of autosize textarea */
-  minRows?: number;
-  /** If set, enables textarea height growing with its content */
-  autosize?: boolean;
-}
+    ReadOnlyControlProps,
+    BaseRecursicaTextAreaProps {}
 
 export type TextAreaProps = RecursicaOverStyled<RecursicaTextAreaProps>;
 
@@ -59,6 +54,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
       assistiveWithIcon,
       error,
       required,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       withAsterisk,
       id,
       className,

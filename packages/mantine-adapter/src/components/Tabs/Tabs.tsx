@@ -12,13 +12,7 @@ import {
 } from "../../utils/filterStylingProps";
 import styles from "./Tabs.module.css";
 
-export interface RecursicaTabsProps
-  extends Omit<
-    MantineTabsProps,
-    "variant" | "classNames" | "color" | "radius"
-  > {
-  variant?: "default" | "outline" | "pills";
-}
+import { type RecursicaTabsProps } from "@recursica/adapter-common";
 
 export type TabsProps = RecursicaOverStyled<RecursicaTabsProps>;
 

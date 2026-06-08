@@ -2,16 +2,10 @@ import React, { forwardRef } from "react";
 import {
   filterStylingProps,
   type RecursicaOverStyled,
-  type RecursicaSize,
 } from "../../utils/filterStylingProps";
 import styles from "./Loader.module.css";
 
-export interface RecursicaLoaderProps {
-  /** Map to the component styles defined in variables */
-  variant?: "oval" | "bars" | "dots";
-  /** Map to Recursica sizes */
-  size?: "sm" | "md" | "lg" | RecursicaSize;
-}
+import { type RecursicaLoaderProps } from "@recursica/adapter-common";
 
 export type LoaderProps = RecursicaOverStyled<
   React.HTMLAttributes<HTMLSpanElement> & RecursicaLoaderProps

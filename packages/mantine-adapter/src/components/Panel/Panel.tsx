@@ -13,14 +13,7 @@ import styles from "./Panel.module.css";
 // PANEL (Drawer)
 // ============================================================
 
-export interface RecursicaPanelProps extends MantineDrawerProps {
-  /**
-   * If true, forces the header text to a single line and truncates with an ellipsis.
-   * Note: While the prop is named `wrapHeaderText` for backward compatibility,
-   * setting it to `true` actually PREVENTS wrapping (it forces truncation).
-   */
-  wrapHeaderText?: boolean;
-}
+import { type RecursicaPanelProps } from "@recursica/adapter-common";
 
 /**
  * Recursica Panel root props. Extends Mantine Drawer.

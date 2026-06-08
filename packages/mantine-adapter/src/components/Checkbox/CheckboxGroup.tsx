@@ -13,13 +13,16 @@ import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/For
 import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
 import styles from "./Checkbox.module.css";
 
+import { type RecursicaCheckboxGroupProps as BaseRecursicaCheckboxGroupProps } from "@recursica/adapter-common";
+
 export interface RecursicaCheckboxGroupProps
   extends Omit<MantineCheckboxGroupProps, "size" | "labelProps">,
     Omit<
       RecursicaFormControlWrapperProps,
       "controlMaxWidth" | "controlMinWidth"
     >,
-    ReadOnlyControlProps {}
+    ReadOnlyControlProps,
+    BaseRecursicaCheckboxGroupProps {}
 
 export type CheckboxGroupProps =
   RecursicaOverStyled<RecursicaCheckboxGroupProps>;

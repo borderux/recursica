@@ -10,10 +10,7 @@ import {
 } from "../../utils/filterStylingProps";
 import styles from "./Badge.module.css";
 
-export interface RecursicaBadgeProps {
-  /** Map to the component styles defined in variables */
-  variant?: "alert" | "primary-color" | "success" | "warning";
-}
+import { type RecursicaBadgeProps } from "@recursica/adapter-common";
 
 export type BadgeProps = RecursicaOverStyled<
   Omit<MantineBadgeProps, "variant" | "size" | "color" | "radius"> &

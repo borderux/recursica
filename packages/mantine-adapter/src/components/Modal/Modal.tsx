@@ -9,13 +9,15 @@ import {
 } from "../../utils/filterStylingProps";
 import styles from "./Modal.module.css";
 
+import { type RecursicaModalProps } from "@recursica/adapter-common";
+
 /**
  * Properties for the strictly-tokenized Modal component.
  * Native Mantine abstract properties like `size`, `radius`, and `shadow` have been stripped out
  * because they directly conflict with the non-negotiable pixel boundaries defined in the Recursica UI Kit.
  */
 export type ModalProps = RecursicaOverStyled<
-  Omit<MantineModalProps, "size" | "radius" | "shadow">
+  Omit<MantineModalProps, "size" | "radius" | "shadow"> & RecursicaModalProps
 >;
 
 /**

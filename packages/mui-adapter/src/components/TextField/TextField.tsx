@@ -9,6 +9,8 @@ import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/For
 import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
 import styles from "./TextField.module.css";
 
+import { type RecursicaTextFieldProps as BaseRecursicaTextFieldProps } from "@recursica/adapter-common";
+
 export interface RecursicaTextFieldProps
   extends Omit<
       InputBaseProps,
@@ -33,12 +35,8 @@ export interface RecursicaTextFieldProps
       | "labelWithEditIcon"
       | "onLabelEditClick"
     >,
-    ReadOnlyControlProps {
-  /** Renders a section on the left side of the input (e.g. icon). Maps to Mantine's leftSection natively. */
-  leftSection?: React.ReactNode;
-  /** Renders a section on the right side of the input (e.g. clear button). Maps to Mantine's rightSection natively. */
-  rightSection?: React.ReactNode;
-}
+    ReadOnlyControlProps,
+    BaseRecursicaTextFieldProps {}
 
 export type TextFieldProps = RecursicaOverStyled<RecursicaTextFieldProps>;
 

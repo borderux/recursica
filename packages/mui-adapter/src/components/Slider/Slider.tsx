@@ -13,6 +13,8 @@ import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
 
 import styles from "./Slider.module.css";
 
+import { type RecursicaSliderProps as BaseRecursicaSliderProps } from "@recursica/adapter-common";
+
 export interface RecursicaSliderProps
   extends Omit<
       MuiSliderProps,
@@ -27,23 +29,8 @@ export interface RecursicaSliderProps
       | "withAsterisk"
       | keyof MuiSliderProps
     >,
-    ReadOnlyControlProps {
-  error?: boolean | React.ReactNode;
-  required?: boolean;
-  withAsterisk?: boolean;
-  onChange?: (value: number) => void;
-  onChangeEnd?: (value: number) => void;
-  /** The form control label displayed above or beside the slider track. */
-  label?: React.ReactNode;
-  /** Floating tooltip shown above the thumb when dragging. Replaces Mui's `label`. */
-  tooltipLabel?: React.ReactNode | ((value: number) => React.ReactNode);
-  /** An optional icon rendered to the left of the slider track. */
-  icon?: React.ReactNode;
-  /** Whether to render a numeric input field side-by-side or stacked with the track. Defaults to false. */
-  showInput?: boolean;
-  /** Whether to render min and max labels below the track. Defaults to true. */
-  showMinMaxLabels?: boolean;
-}
+    ReadOnlyControlProps,
+    BaseRecursicaSliderProps {}
 
 export type SliderProps = RecursicaOverStyled<RecursicaSliderProps>;
 
@@ -81,6 +68,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
       assistiveWithIcon,
       error,
       required,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       withAsterisk,
       id,
       className,

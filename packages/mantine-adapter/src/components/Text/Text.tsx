@@ -1,4 +1,4 @@
-import { forwardRef, type ReactNode } from "react";
+import { forwardRef } from "react";
 import {
   Text as MantineText,
   type TextProps as MantineTextProps,
@@ -9,21 +9,7 @@ import {
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 
-export type TextVariant =
-  | "body"
-  | "body-small"
-  | "caption"
-  | "overline"
-  | "subtitle"
-  | "subtitle-small";
-
-export type RecursicaTextProps = Omit<MantineTextProps, "variant"> & {
-  /**
-   * The explicit typography hierarchy dictated by Recursica's global design tokens.
-   */
-  variant?: TextVariant;
-  children?: ReactNode;
-};
+import { type RecursicaTextProps } from "@recursica/adapter-common";
 
 export type TextProps = RecursicaOverStyled<RecursicaTextProps>;
 

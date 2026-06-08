@@ -6,20 +6,7 @@ import {
 } from "../../utils/filterStylingProps";
 import styles from "./Label.module.css";
 
-export interface RecursicaLabelProps {
-  /** Specifies the sizing metrics natively mapping the Label boundaries. */
-  labelSize?: "default" | "small" | "md";
-  /** Overall alignment directive for the label strings natively forcing Left/Right justification. */
-  labelAlignment?: "left" | "right";
-  /** Injects an indicator text block alongside the label. Can be boolean (`true` maps to '(Optional)') or custom React nodes. */
-  labelOptionalText?: boolean | React.ReactNode;
-  /** When true, forces the native Edit Icon to replace the standard asterisk visually. */
-  labelWithEditIcon?: boolean;
-  /** Custom action area to render alongside the label instead of the default edit icon. */
-  labelActionArea?: React.ReactNode;
-  /** Interaction hook invoked whenever a generated edit icon block natively triggers a click event. */
-  onLabelEditClick?: React.MouseEventHandler<HTMLButtonElement>;
-}
+import { type RecursicaLabelProps } from "@recursica/adapter-common";
 
 export type LabelProps = RecursicaOverStyled<
   Omit<InputLabelProps, "size"> & RecursicaLabelProps

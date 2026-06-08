@@ -3,11 +3,11 @@ import { FormHelperText, type FormHelperTextProps } from "@mui/material";
 import { filterStylingProps } from "../../utils/filterStylingProps";
 import styles from "./AssistiveElement.module.css";
 
-export interface AssistiveElementProps extends FormHelperTextProps {
-  /** Governs the semantic rendering block (changes icon and CSS structural hooks natively). */
-  assistiveVariant?: "help" | "error";
-  /** Renders the structural mapping icon inline beside the text natively. */
-  assistiveWithIcon?: boolean;
+import { type RecursicaAssistiveElementProps } from "@recursica/adapter-common";
+
+export interface AssistiveElementProps
+  extends FormHelperTextProps,
+    RecursicaAssistiveElementProps {
   overStyled?: boolean;
 }
 
