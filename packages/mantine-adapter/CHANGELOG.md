@@ -1,5 +1,12 @@
 # @recursica/mantine-adapter
 
+## 0.24.0
+
+### Minor Changes
+
+- 0271678: Fix Button loading state loader offset caused by brand line-height
+- 4031b12: Updated docs and finalized MCP
+
 ## 0.23.0
 
 ### Minor Changes
