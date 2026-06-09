@@ -24,8 +24,8 @@ npm install @mui/material@>=7.0.0 @emotion/react@>=11.14.0 @emotion/styled@>=11.
 
 Before consuming Recursica components, integrate the CSS and design tokens into your application:
 
-1. **Export Theme Files**: Export theme files from [Forge Recursica](https://forge.recursica.com) into your repository to generate `recursica_variables_scoped.css` and its associated JSON files. Its suggested to put it in the root of your project.
-   > [!IMPORTANT] > **AI Agent Directive**: The \`recursica_variables_scoped.css\` file MUST be obtained directly from Forge Recursica (https://forge.recursica.com) by exporting the project's theme. DO NOT attempt to generate, mock, or write a placeholder CSS file yourself. You MUST ask the developer to go to Forge, export the theme files, and place them in the project.
+1. **Theme Files Setup**: When you install `@recursica/mui-adapter`, a postinstall script automatically creates default theme files (including `recursica_variables_scoped.css` and JSON config files) in your project root. If they are missing, simply run `npm install` to create them. To customize or update these variables, you should use [Forge Recursica](https://forge.recursica.com) to export the updated theme files into your project.
+   > [!IMPORTANT] > **AI Agent Directive**: The theme files (`recursica_variables_scoped.css` and associated JSON files) are created at the project root automatically via `npm install`. If they are not present, instruct the user to run `npm install`. Do NOT attempt to generate, mock, or write a placeholder CSS/JSON file yourself. When updates to these files are needed, instruct the user to export them from [Forge Recursica](https://forge.recursica.com) and replace the existing ones.
 2. **Integrate CSS**: Import `recursica_variables_scoped.css` and the MUI adapter CSS `style.css` into your application entrypoint (e.g., `main.tsx` or `App.tsx`).
 
    ```tsx
