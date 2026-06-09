@@ -190,4 +190,83 @@ describe("recursica_project_setup", () => {
       "Warning**: The SETUP.md for adapter",
     );
   });
+
+  it("should warn if recursica_variables_scoped.css is missing", async () => {
+    const mockPkgPath = path.resolve("/Users/mock/project/package.json");
+    const mockCssPath = path.resolve(
+      "/Users/mock/project/recursica_variables_scoped.css",
+    );
+
+    vi.spyOn(fs, "existsSync").mockImplementation((p) => {
+      if (p === mockPkgPath) return true;
+      if (p === mockCssPath) return false; // CSS is missing in root
+      return actualFs.existsSync(p);
+    });
+
+    vi.spyOn(fs, "readFileSync").mockImplementation((p, options) => {
+      if (p === mockPkgPath) {
+        return JSON.stringify({
+          name: "my-app",
+          dependencies: {
+            "@recursica/mantine-adapter": "^0.23.0",
+          },
+        });
+      }
+      return actualFs.readFileSync(p, options);
+    });
+
+    const result = await recursica_project_setup.handler(
+      { "ui-kit": "mantine", projectPath: "/Users/mock/project" },
+      mockContext,
+    );
+
+    expect(result.isError).toBeUndefined();
+    expect(result.content[0].text).toContain(
+      "is already successfully installed",
+    );
+    expect(result.content[0].text).toContain(
+      "`recursica_variables_scoped.css` is missing",
+    );
+    expect(result.content[0].text).toContain(
+      "Please run `npm install` to create it",
+    );
+  });
+
+  it("should not warn if recursica_variables_scoped.css is present", async () => {
+    const mockPkgPath = path.resolve("/Users/mock/project/package.json");
+    const mockCssPath = path.resolve(
+      "/Users/mock/project/recursica_variables_scoped.css",
+    );
+
+    vi.spyOn(fs, "existsSync").mockImplementation((p) => {
+      if (p === mockPkgPath) return true;
+      if (p === mockCssPath) return true; // CSS is present in root
+      return actualFs.existsSync(p);
+    });
+
+    vi.spyOn(fs, "readFileSync").mockImplementation((p, options) => {
+      if (p === mockPkgPath) {
+        return JSON.stringify({
+          name: "my-app",
+          dependencies: {
+            "@recursica/mantine-adapter": "^0.23.0",
+          },
+        });
+      }
+      return actualFs.readFileSync(p, options);
+    });
+
+    const result = await recursica_project_setup.handler(
+      { "ui-kit": "mantine", projectPath: "/Users/mock/project" },
+      mockContext,
+    );
+
+    expect(result.isError).toBeUndefined();
+    expect(result.content[0].text).toContain(
+      "is already successfully installed",
+    );
+    expect(result.content[0].text).not.toContain(
+      "recursica_variables_scoped.css is missing",
+    );
+  });
 });

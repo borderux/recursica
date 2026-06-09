@@ -58,7 +58,20 @@ export const recursica_project_setup: Command = {
 
       // Always run our own check to see if the adapter is installed
       if (isInstalled) {
-        const output = setup_status.replace(/\{\{cleanName\}\}/g, cleanName);
+        // Check for theme files in the project root
+        const targetCssPath = path.join(
+          startPath,
+          "recursica_variables_scoped.css",
+        );
+        let warnMessage = "";
+
+        if (!fs.existsSync(targetCssPath)) {
+          warnMessage =
+            "\n\n⚠️ **Warning**: `recursica_variables_scoped.css` is missing from your project root. Please run `npm install` to create it and then incorporate the files into your application.";
+        }
+
+        const output =
+          setup_status.replace(/\{\{cleanName\}\}/g, cleanName) + warnMessage;
         return {
           content: [{ type: "text", text: output }],
         };

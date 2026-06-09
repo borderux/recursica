@@ -92,6 +92,9 @@
     "vite-plugin-svgr": "^4.3.0",
     "vitest": "^3.2.4"
   },
+  "dependencies": {
+    "@recursica/official-release": "*"
+  },
   "peerDependencies": {
     "@mantine/core": "^8.0.0",
     "@mantine/dates": "^8.0.0",
