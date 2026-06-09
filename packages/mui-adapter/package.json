@@ -98,6 +98,9 @@
     "vite-plugin-svgr": "^4.3.0",
     "vitest": "^3.2.4"
   },
+  "dependencies": {
+    "@recursica/official-release": "*"
+  },
   "peerDependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",

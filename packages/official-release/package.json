@@ -1,0 +1,26 @@
+{
+  "name": "@recursica/official-release",
+  "version": "0.1.0",
+  "description": "Official design tokens and CSS variables release for Recursica",
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "scripts": {
+    "postinstall": "node scripts/postinstall.js"
+  },
+  "files": [
+    "recursica_variables_scoped.css",
+    "recursica_brand.json",
+    "recursica_tokens.json",
+    "recursica_ui-kit.json",
+    "recursica.json",
+    "scripts",
+    "llms.txt",
+    "AGENT.md",
+    "README.md"
+  ],
+  "author": "hi@borderux.com",
+  "license": "MIT"
+}

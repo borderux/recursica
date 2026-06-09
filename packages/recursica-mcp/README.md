@@ -21,22 +21,30 @@ For instructions on how to set up and run the Recursica MCP server in your envir
 
 ## Local Development Setup
 
-To use this server locally during development (with instant code-sync and no restart needed):
+To test and run this server locally during development:
 
-1. **Build the package:**
+### 1. Run the Visual MCP Inspector
 
+You can also inspect and visually test the server tools in an interactive playground:
+
+1. Start the development inspector server:
    ```bash
-   npm run build
+   npm run dev
    ```
+2. The inspector will automatically open the playground interface in your browser (usually at `http://localhost:6274`), which hot-reloads on-the-fly as you modify the source files.
 
-2. **Register the local server** in your MCP config (`~/.gemini/antigravity/mcp_config.json`):
-   ```json
-    "recursica-mcp": {
-      "command": "node",
-      "args": [
-        "/absolute/path/to/recursica/packages/recursica-mcp/dist/index.js"
-      ]
-    }
-   ```
+### 2. Register the Local Server in your Client
+
+Configure your MCP client (such as VS Code, Gemini, or Antigravity) to run the TypeScript source files directly using `tsx` (which requires no manual compile/build steps to see code changes):
+
+```json
+"recursica-mcp": {
+  "command": "npx",
+  "args": [
+    "tsx",
+    "/absolute/path/to/recursica/packages/recursica-mcp/src/index.ts"
+  ]
+}
+```
 
 ---

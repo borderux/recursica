@@ -1,0 +1,18 @@
+# @recursica/official-release
+
+> Official design tokens, CSS variables, and JSON metadata schemas for the Recursica design system.
+
+This package distributes the compiled theme variables and layout tokens required by the Recursica component adapters. It acts as the single source of truth for design tokens.
+
+## Package Contents
+
+- `recursica_variables_scoped.css`: Scoped CSS custom properties containing colors, spacing, typography, and state tokens.
+- `recursica_brand.json`: Core brand design tokens.
+- `recursica_tokens.json`: Layout, typography, and atomic component token values.
+- `recursica_ui-kit.json`: Structural theme definition.
+- `recursica.json`: Versioning configuration metadata.
+
+## Documentation
+
+- [AGENT](AGENT.md): Routing document for AI Agents.
+- [README](README.md)

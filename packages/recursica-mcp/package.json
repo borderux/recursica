@@ -26,7 +26,7 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json && node scripts/copy-md.js",
-    "dev": "npx @modelcontextprotocol/inspector npx tsx --watch src/index.ts",
+    "dev": "npx @modelcontextprotocol/inspector node --watch --import tsx src/index.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
