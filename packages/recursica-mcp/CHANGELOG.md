@@ -1,5 +1,11 @@
 # @recursica/mcp
 
+## 0.4.0
+
+### Minor Changes
+
+- ccf7d19: Updated to cause a new version release
+
 ## 0.3.0
 
 ### Minor Changes

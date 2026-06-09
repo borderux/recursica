@@ -1,6 +1,6 @@
 {
   "name": "@recursica/official-release",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Official design tokens and CSS variables release for Recursica",
   "private": false,
   "publishConfig": {
