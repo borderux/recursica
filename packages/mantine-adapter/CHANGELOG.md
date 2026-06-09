@@ -1,5 +1,19 @@
 # @recursica/mantine-adapter
 
+## 0.25.0
+
+### Minor Changes
+
+- 4329756: Added official release and update mcp
+
+### Patch Changes
+
+- 8897f92: Updated agent instructions for MCP
+- 4329756: Initialize `@recursica/official-release` package to version and distribute design tokens, configure automatic postinstall copying logic, and integrate fallback setup checks.
+- Updated dependencies [4329756]
+- Updated dependencies [4329756]
+  - @recursica/official-release@0.2.0
+
 ## 0.24.0
 
 ### Minor Changes
