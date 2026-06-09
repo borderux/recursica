@@ -1,5 +1,16 @@
 # @recursica/mantine-adapter
 
+## 0.26.0
+
+### Minor Changes
+
+- ccf7d19: Updated to cause a new version release
+
+### Patch Changes
+
+- Updated dependencies [ccf7d19]
+  - @recursica/official-release@0.3.0
+
 ## 0.25.0
 
 ### Minor Changes
