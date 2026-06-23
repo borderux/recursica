@@ -1,5 +1,11 @@
 # @recursica/mantine-adapter
 
+## 0.26.1
+
+### Patch Changes
+
+- 8151cb1: Fixed export of adapter-common from adapters
+
 ## 0.26.0
 
 ### Minor Changes

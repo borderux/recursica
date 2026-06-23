@@ -1,5 +1,11 @@
 # @recursica/mui-adapter
 
+## 0.9.1
+
+### Patch Changes
+
+- 8151cb1: Fixed export of adapter-common from adapters
+
 ## 0.9.0
 
 ### Minor Changes
