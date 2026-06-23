@@ -63,7 +63,6 @@
     "@chromatic-com/storybook": "^5.1.1",
     "@eslint/js": "^9.25.0",
     "@mui/lab": "^7.0.1-beta.25",
-    "@recursica/adapter-common": "*",
     "@recursica/recursica-postcss-vars": "*",
     "@recursica/storybook-template": "*",
     "@recursica/token-analyzer": "*",
@@ -99,6 +98,7 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
+    "@recursica/adapter-common": "*",
     "@recursica/official-release": "*"
   },
   "peerDependencies": {
