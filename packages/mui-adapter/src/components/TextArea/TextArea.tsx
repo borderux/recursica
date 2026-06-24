@@ -20,16 +20,9 @@ export interface RecursicaTextAreaProps
       MuiTextareaProps,
       "size" | "variant" | "radius" | "wrapperProps" | "maxRows" | "minRows"
     >,
-    Pick<
+    Omit<
       RecursicaFormControlWrapperProps,
-      | "assistiveText"
-      | "assistiveWithIcon"
-      | "formLayout"
-      | "labelSize"
-      | "labelAlignment"
-      | "labelOptionalText"
-      | "labelWithEditIcon"
-      | "onLabelEditClick"
+      "controlMaxWidth" | "controlMinWidth"
     >,
     ReadOnlyControlProps,
     BaseRecursicaTextAreaProps {}

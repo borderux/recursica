@@ -19,16 +19,9 @@ export interface RecursicaDropdownProps
       MantineSelectProps,
       "size" | "variant" | "radius" | "wrapperProps" | "data"
     >,
-    Pick<
+    Omit<
       RecursicaFormControlWrapperProps,
-      | "assistiveText"
-      | "assistiveWithIcon"
-      | "formLayout"
-      | "labelSize"
-      | "labelAlignment"
-      | "labelOptionalText"
-      | "labelWithEditIcon"
-      | "onLabelEditClick"
+      "controlMaxWidth" | "controlMinWidth"
     >,
     ReadOnlyControlProps,
     BaseRecursicaDropdownProps {}
