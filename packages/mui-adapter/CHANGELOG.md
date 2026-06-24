@@ -1,5 +1,16 @@
 # @recursica/mui-adapter
 
+## 0.10.0
+
+### Minor Changes
+
+- 2f237f7: Revised component props with integration issues
+
+### Patch Changes
+
+- Updated dependencies [2f237f7]
+  - @recursica/adapter-common@0.8.0
+
 ## 0.9.1
 
 ### Patch Changes

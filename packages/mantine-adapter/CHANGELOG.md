@@ -1,5 +1,16 @@
 # @recursica/mantine-adapter
 
+## 0.27.0
+
+### Minor Changes
+
+- 2f237f7: Revised component props with integration issues
+
+### Patch Changes
+
+- Updated dependencies [2f237f7]
+  - @recursica/adapter-common@0.8.0
+
 ## 0.26.1
 
 ### Patch Changes
