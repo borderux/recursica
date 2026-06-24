@@ -1,5 +1,16 @@
 # recursica-storybook
 
+## 0.20.0
+
+### Minor Changes
+
+- 2f237f7: Revised component props with integration issues
+
+### Patch Changes
+
+- Updated dependencies [2f237f7]
+  - @recursica/mantine-adapter@0.27.0
+
 ## 0.19.0
 
 ### Minor Changes
