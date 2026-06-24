@@ -20,16 +20,9 @@ export interface RecursicaDropdownProps
       MuiSelectProps,
       "size" | "variant" | "classes" | "inputProps" | "SelectDisplayProps"
     >,
-    Pick<
+    Omit<
       RecursicaFormControlWrapperProps,
-      | "assistiveText"
-      | "assistiveWithIcon"
-      | "formLayout"
-      | "labelSize"
-      | "labelAlignment"
-      | "labelOptionalText"
-      | "labelWithEditIcon"
-      | "onLabelEditClick"
+      "controlMaxWidth" | "controlMinWidth"
     >,
     ReadOnlyControlProps,
     BaseRecursicaDropdownProps {}

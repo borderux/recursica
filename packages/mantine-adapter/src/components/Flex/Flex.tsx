@@ -4,7 +4,10 @@ import {
   type FlexProps as MantineFlexProps,
   createPolymorphicComponent,
 } from "@mantine/core";
-import { mapLayoutProps } from "../../utils/filterStylingProps";
+import {
+  mapLayoutProps,
+  type WithRecursicaSpacing,
+} from "../../utils/filterStylingProps";
 import styles from "./Flex.module.css";
 
 import { type RecursicaFlexProps } from "@recursica/adapter-common";
@@ -16,7 +19,9 @@ import { type RecursicaFlexProps } from "@recursica/adapter-common";
  * DO NOT use the `RecursicaOverStyled` gatekeeper. Developers must be able to freely pass
  * width, height, padding, margins, and flexbox alignment props to construct structural layouts.
  */
-export type FlexProps = MantineFlexProps & RecursicaFlexProps;
+export type FlexProps = WithRecursicaSpacing<
+  MantineFlexProps & RecursicaFlexProps
+>;
 
 const _Flex = forwardRef<HTMLDivElement, FlexProps>(function Flex(
   { children, gap = "rec-default", rowGap, columnGap, ...rest },

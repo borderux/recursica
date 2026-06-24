@@ -13,11 +13,18 @@ import styles from "./Panel.module.css";
 // PANEL (Drawer)
 // ============================================================
 
-import { type RecursicaPanelProps } from "@recursica/adapter-common";
+import { type RecursicaPanelProps as BaseRecursicaPanelProps } from "@recursica/adapter-common";
 
 /**
  * Recursica Panel root props. Extends Mui Drawer.
  */
+export interface RecursicaPanelProps
+  extends Omit<
+      MuiDrawerProps,
+      "classes" | "position" | "style" | "anchor" | "open"
+    >,
+    BaseRecursicaPanelProps {}
+
 export type PanelProps = RecursicaOverStyled<RecursicaPanelProps>;
 
 /**
@@ -29,7 +36,7 @@ export type PanelProps = RecursicaOverStyled<RecursicaPanelProps>;
  * cluttering the main interface.
  *
  * ```tsx
- * <Panel opened={opened} onClose={close} title="Panel Title" position="right">
+ * <Panel opened={opened} onClose={close} title="Panel Title" placement="right">
  *   <Panel.Body>
  *     Content goes here
  *   </Panel.Body>
@@ -48,14 +55,12 @@ export type PanelProps = RecursicaOverStyled<RecursicaPanelProps>;
  */
 const PanelBase = function Panel({
   overStyled = false,
-  position = "right",
+  placement = "right",
   keepMounted = true,
   wrapHeaderText = false,
+  opened,
   ...rest
-}: PanelProps & {
-  position?: "left" | "right" | "top" | "bottom";
-  opened?: boolean;
-}) {
+}: PanelProps) {
   const sanitizedProps = filterStylingProps(rest, overStyled);
 
   // Bind CSS module classes to Mui's internal classNames API
@@ -85,9 +90,9 @@ const PanelBase = function Panel({
 
   return (
     <MuiDrawer
-      anchor={position} /* Recursica default: right; Mui default: left */
+      anchor={placement} /* Recursica default: right; Mui default: left */
       keepMounted={keepMounted}
-      open={Boolean(rest.opened)}
+      open={Boolean(opened)}
       {...(sanitizedProps as unknown as MuiDrawerProps)}
       classes={mergedClassNames}
     />

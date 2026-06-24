@@ -1,9 +1,12 @@
 import React, { forwardRef } from "react";
+import { type TypographyProps as MuiTypographyProps } from "@mui/material";
 import { Typography } from "../Typography/Typography";
 import { type RecursicaOverStyled } from "../../utils/filterStylingProps";
 import { type RecursicaTitleProps } from "@recursica/adapter-common";
 
-export type TitleProps = RecursicaOverStyled<RecursicaTitleProps>;
+export type TitleProps = RecursicaOverStyled<
+  Omit<MuiTypographyProps, "variant" | "classes"> & RecursicaTitleProps
+>;
 
 export const Title = forwardRef<HTMLElement, TitleProps>(function Title(
   { order = 1, component, ...rest },

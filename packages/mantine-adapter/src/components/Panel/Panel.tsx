@@ -13,11 +13,18 @@ import styles from "./Panel.module.css";
 // PANEL (Drawer)
 // ============================================================
 
-import { type RecursicaPanelProps } from "@recursica/adapter-common";
+import { type RecursicaPanelProps as BaseRecursicaPanelProps } from "@recursica/adapter-common";
 
 /**
  * Recursica Panel root props. Extends Mantine Drawer.
  */
+export interface RecursicaPanelProps
+  extends Omit<
+      MantineDrawerProps,
+      "size" | "styles" | "classNames" | "style" | "position"
+    >,
+    BaseRecursicaPanelProps {}
+
 export type PanelProps = RecursicaOverStyled<RecursicaPanelProps>;
 
 /**
@@ -29,7 +36,7 @@ export type PanelProps = RecursicaOverStyled<RecursicaPanelProps>;
  * cluttering the main interface.
  *
  * ```tsx
- * <Panel opened={opened} onClose={close} title="Panel Title" position="right">
+ * <Panel opened={opened} onClose={close} title="Panel Title" placement="right">
  *   <Panel.Body>
  *     Content goes here
  *   </Panel.Body>
@@ -48,7 +55,7 @@ export type PanelProps = RecursicaOverStyled<RecursicaPanelProps>;
  */
 const PanelBase = function Panel({
   overStyled = false,
-  position = "right",
+  placement = "right",
   keepMounted = true,
   wrapHeaderText = false,
   ...rest
@@ -82,7 +89,7 @@ const PanelBase = function Panel({
 
   return (
     <MantineDrawer
-      position={position} /* Recursica default: right; Mantine default: left */
+      position={placement} /* Recursica default: right; Mantine default: left */
       keepMounted={keepMounted}
       closeOnClickOutside={rest.closeOnClickOutside ?? Boolean(rest.opened)}
       {...(sanitizedProps as unknown as MantineDrawerProps)}

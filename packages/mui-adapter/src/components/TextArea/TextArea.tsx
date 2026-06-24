@@ -18,18 +18,11 @@ import { type RecursicaTextAreaProps as BaseRecursicaTextAreaProps } from "@recu
 export interface RecursicaTextAreaProps
   extends Omit<
       MuiTextareaProps,
-      "size" | "variant" | "radius" | "wrapperProps"
+      "size" | "variant" | "radius" | "wrapperProps" | "maxRows" | "minRows"
     >,
-    Pick<
+    Omit<
       RecursicaFormControlWrapperProps,
-      | "assistiveText"
-      | "assistiveWithIcon"
-      | "formLayout"
-      | "labelSize"
-      | "labelAlignment"
-      | "labelOptionalText"
-      | "labelWithEditIcon"
-      | "onLabelEditClick"
+      "controlMaxWidth" | "controlMinWidth"
     >,
     ReadOnlyControlProps,
     BaseRecursicaTextAreaProps {}

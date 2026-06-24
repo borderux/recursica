@@ -12,7 +12,17 @@ import {
 } from "@recursica/adapter-common";
 
 // ==== CARD CONTAINER ====
-export type CardProps = RecursicaOverStyled<MuiCardProps & RecursicaCardProps>;
+export type CardProps = RecursicaOverStyled<
+  MuiCardProps & RecursicaCardProps
+> & {
+  flex?: string | number;
+  flexGrow?: string | number;
+  flexShrink?: string | number;
+  flexBasis?: string | number;
+  grow?: string | number;
+  h?: string | number;
+  height?: string | number;
+};
 
 /**
  * The root Card elevation box. It establishes the global background color, border radius, nested component gap, and outer shadow governed by the current `Layer` context.
@@ -22,6 +32,22 @@ const CardBase = forwardRef<HTMLDivElement, CardProps>(function Card(
   ref,
 ) {
   const sanitizedProps = filterStylingProps(rest, overStyled);
+
+  // Expose outer layout/flexbox properties on Card to allow structuring alongside siblings
+  const safeCardLayoutKeys = [
+    "flex",
+    "flexGrow",
+    "flexShrink",
+    "flexBasis",
+    "grow",
+    "h",
+    "height",
+  ] as const;
+  safeCardLayoutKeys.forEach((key) => {
+    if (key in rest && !(key in sanitizedProps)) {
+      (sanitizedProps as any)[key] = (rest as any)[key];
+    }
+  });
 
   const mergedClassNames: Partial<Record<string, string>> = {
     root: styles.root,

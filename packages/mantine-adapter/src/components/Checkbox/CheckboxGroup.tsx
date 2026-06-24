@@ -16,7 +16,10 @@ import styles from "./Checkbox.module.css";
 import { type RecursicaCheckboxGroupProps as BaseRecursicaCheckboxGroupProps } from "@recursica/adapter-common";
 
 export interface RecursicaCheckboxGroupProps
-  extends Omit<MantineCheckboxGroupProps, "size" | "labelProps">,
+  extends Omit<
+      MantineCheckboxGroupProps,
+      "size" | "labelProps" | "defaultValue" | "value" | "onChange"
+    >,
     Omit<
       RecursicaFormControlWrapperProps,
       "controlMaxWidth" | "controlMinWidth"
@@ -99,8 +102,8 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
             /* Natively bind local disabled lock dynamically */
             {...(sanitizedProps as unknown as MantineCheckboxGroupProps)}
             disabled={readOnly || (restRecord as any).disabled}
-            value={value}
-            defaultValue={defaultValue}
+            value={value as any}
+            defaultValue={defaultValue as any}
           >
             <div className={styles.groupRoot} data-layout={formLayout}>
               {children}

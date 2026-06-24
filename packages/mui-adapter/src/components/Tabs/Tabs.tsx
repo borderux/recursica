@@ -13,7 +13,11 @@ import styles from "./Tabs.module.css";
 
 import { type RecursicaTabsProps } from "@recursica/adapter-common";
 
-export type TabsProps = RecursicaOverStyled<RecursicaTabsProps>;
+export interface RecursicaTabsPropsExtended
+  extends Omit<MuiTabsProps, "variant">,
+    RecursicaTabsProps {}
+
+export type TabsProps = RecursicaOverStyled<RecursicaTabsPropsExtended>;
 
 export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
   function Tabs(props, ref) {

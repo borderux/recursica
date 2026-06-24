@@ -21,7 +21,10 @@ export const CheckboxGroupContext = React.createContext<{
 import { type RecursicaCheckboxGroupProps as BaseRecursicaCheckboxGroupProps } from "@recursica/adapter-common";
 
 export interface RecursicaCheckboxGroupProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, "onChange">,
+  extends Omit<
+      React.HTMLAttributes<HTMLDivElement>,
+      "onChange" | "defaultValue"
+    >,
     Omit<
       RecursicaFormControlWrapperProps,
       | "controlMaxWidth"
@@ -29,6 +32,7 @@ export interface RecursicaCheckboxGroupProps
       | "onChange"
       | "classes"
       | "withAsterisk"
+      | "defaultValue"
     >,
     ReadOnlyControlProps,
     BaseRecursicaCheckboxGroupProps {}
@@ -112,7 +116,7 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
         activeComponent={
           <CheckboxGroupContext.Provider
             value={{
-              value: value !== undefined ? value : defaultValue,
+              value: (value !== undefined ? value : defaultValue) as any[],
               onChange: handleChange,
               name: restRecord.name as string | undefined,
               readOnly: readOnly || !!(restRecord as any).disabled,

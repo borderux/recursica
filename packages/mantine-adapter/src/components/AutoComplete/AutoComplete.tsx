@@ -18,7 +18,13 @@ import { type RecursicaAutocompleteProps as BaseRecursicaAutocompleteProps } fro
 export interface RecursicaAutoCompleteProps
   extends Omit<
       MantineAutocompleteProps,
-      "size" | "variant" | "radius" | "wrapperProps"
+      | "size"
+      | "variant"
+      | "radius"
+      | "wrapperProps"
+      | "data"
+      | "defaultValue"
+      | "value"
     >,
     Pick<
       InputWrapperProps,
@@ -29,7 +35,10 @@ export interface RecursicaAutoCompleteProps
       "controlMaxWidth" | "controlMinWidth"
     >,
     ReadOnlyControlProps,
-    BaseRecursicaAutocompleteProps {}
+    BaseRecursicaAutocompleteProps {
+  /** Current input value */
+  value?: string;
+}
 
 export type AutoCompleteProps = RecursicaOverStyled<RecursicaAutoCompleteProps>;
 
@@ -140,8 +149,8 @@ export const AutoComplete = forwardRef<HTMLInputElement, AutoCompleteProps>(
             ref={ref}
             classNames={mergedClassNames}
             disabled={disabled}
-            value={value}
-            defaultValue={defaultValue}
+            value={value as any}
+            defaultValue={defaultValue as any}
             wrapperProps={{
               "data-disabled": disabled ? "true" : undefined,
               "data-error": error ? "true" : undefined,

@@ -1,4 +1,4 @@
-import React, { forwardRef } from "react";
+import { forwardRef } from "react";
 import {
   Stack as MUIStack,
   type StackProps as MUIStackProps,
@@ -7,12 +7,13 @@ import {
   SPACING_MAP,
   type OmitSx,
   filterSxProp,
+  type WithRecursicaSpacing,
 } from "../../utils/filterStylingProps";
 
 import { type RecursicaGroupProps } from "@recursica/adapter-common";
 
-export type GroupProps = OmitSx<
-  Omit<MUIStackProps, "spacing" | "direction"> & RecursicaGroupProps
+export type GroupProps = WithRecursicaSpacing<
+  OmitSx<Omit<MUIStackProps, "spacing" | "direction"> & RecursicaGroupProps>
 >;
 
 export const Group = forwardRef<HTMLDivElement, GroupProps>(function Group(

@@ -19,16 +19,9 @@ export interface RecursicaTextAreaProps
       MantineTextareaProps,
       "size" | "variant" | "radius" | "wrapperProps"
     >,
-    Pick<
+    Omit<
       RecursicaFormControlWrapperProps,
-      | "assistiveText"
-      | "assistiveWithIcon"
-      | "formLayout"
-      | "labelSize"
-      | "labelAlignment"
-      | "labelOptionalText"
-      | "labelWithEditIcon"
-      | "onLabelEditClick"
+      "controlMaxWidth" | "controlMinWidth"
     >,
     ReadOnlyControlProps,
     BaseRecursicaTextAreaProps {}

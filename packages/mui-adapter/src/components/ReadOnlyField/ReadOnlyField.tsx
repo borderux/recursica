@@ -81,7 +81,7 @@ export const ReadOnlyField = React.forwardRef<
   }
 
   // Type coercions securely bounding the output values cleanly explicitly.
-  let displayValue: React.ReactNode = value;
+  let displayValue: React.ReactNode = value as any;
 
   if (type === "boolean" || type === "switch") {
     displayValue = value ? "True" : "False";

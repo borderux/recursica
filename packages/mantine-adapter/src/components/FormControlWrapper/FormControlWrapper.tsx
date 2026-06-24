@@ -10,6 +10,7 @@ import { AssistiveElement } from "../AssistiveElement/AssistiveElement";
 import styles from "./FormControlWrapper.module.css";
 
 import { type RecursicaFormControlWrapperProps } from "@recursica/adapter-common";
+export type { RecursicaFormControlWrapperProps };
 
 export type FormControlWrapperProps = RecursicaOverStyled<
   Omit<InputWrapperProps, "labelProps" | "inputWrapperOrder"> &

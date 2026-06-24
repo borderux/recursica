@@ -4,7 +4,10 @@ import {
   type StackProps as MantineStackProps,
   createPolymorphicComponent,
 } from "@mantine/core";
-import { mapLayoutProps } from "../../utils/filterStylingProps";
+import {
+  mapLayoutProps,
+  type WithRecursicaSpacing,
+} from "../../utils/filterStylingProps";
 import styles from "./Stack.module.css";
 
 import { type RecursicaStackProps } from "@recursica/adapter-common";
@@ -16,7 +19,9 @@ import { type RecursicaStackProps } from "@recursica/adapter-common";
  * DO NOT use the `RecursicaOverStyled` gatekeeper. Developers must be able to freely pass
  * width, height, padding, margins, and flexbox alignment props to construct structural layouts.
  */
-export type StackProps = MantineStackProps & RecursicaStackProps;
+export type StackProps = WithRecursicaSpacing<
+  MantineStackProps & RecursicaStackProps
+>;
 
 const _Stack = forwardRef<HTMLDivElement, StackProps>(function Stack(
   { children, gap = "rec-default", ...rest },

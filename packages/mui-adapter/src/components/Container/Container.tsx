@@ -6,16 +6,18 @@
  * (Stack, Group, Flex), Container explicitly ALLOWS the `sx` prop as an escape hatch
  * for advanced layout positioning.
  */
-import React, { forwardRef } from "react";
+import { forwardRef } from "react";
 import {
   Container as MUIContainer,
   type ContainerProps as MUIContainerProps,
 } from "@mui/material";
 
+import { type WithRecursicaSpacing } from "../../utils/filterStylingProps";
 import { type RecursicaContainerProps } from "@recursica/adapter-common";
 
-export type ContainerProps = Omit<MUIContainerProps, "maxWidth"> &
-  RecursicaContainerProps;
+export type ContainerProps = WithRecursicaSpacing<
+  Omit<MUIContainerProps, "maxWidth"> & RecursicaContainerProps
+>;
 
 export const Container = forwardRef<HTMLDivElement, ContainerProps>(
   function Container({ children, size, ...rest }, ref) {

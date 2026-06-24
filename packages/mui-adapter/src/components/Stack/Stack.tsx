@@ -1,4 +1,4 @@
-import React, { forwardRef } from "react";
+import { forwardRef } from "react";
 import {
   Stack as MUIStack,
   type StackProps as MUIStackProps,
@@ -7,12 +7,13 @@ import {
   SPACING_MAP,
   type OmitSx,
   filterSxProp,
+  type WithRecursicaSpacing,
 } from "../../utils/filterStylingProps";
 
 import { type RecursicaStackProps } from "@recursica/adapter-common";
 
-export type StackProps = OmitSx<
-  Omit<MUIStackProps, "spacing"> & RecursicaStackProps
+export type StackProps = WithRecursicaSpacing<
+  OmitSx<Omit<MUIStackProps, "spacing"> & RecursicaStackProps>
 >;
 
 export const Stack = forwardRef<HTMLDivElement, StackProps>(function Stack(
