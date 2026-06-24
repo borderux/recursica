@@ -10,7 +10,9 @@ import {
 
 import { type RecursicaTitleProps } from "@recursica/adapter-common";
 
-export type TitleProps = RecursicaOverStyled<RecursicaTitleProps>;
+export type TitleProps = RecursicaOverStyled<
+  Omit<MantineTitleProps, "size"> & RecursicaTitleProps
+>;
 
 /**
  * Enforces highly accessible structural markup utilizing semantic `<h1>` through `<h6>` tags securely bound directly to Recursica typographic scales.

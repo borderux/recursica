@@ -8,17 +8,20 @@
  * Like Stack and Group, this is a primitive layout component. It strictly filters out the
  * `sx` prop using `OmitSx` and `filterSxProp` to enforce the use of standard layout scales.
  */
-import React, { forwardRef } from "react";
+import { forwardRef } from "react";
 import { Box as MUIBox, type BoxProps as MUIBoxProps } from "@mui/material";
 import {
   SPACING_MAP,
   type OmitSx,
   filterSxProp,
+  type WithRecursicaSpacing,
 } from "../../utils/filterStylingProps";
 
 import { type RecursicaFlexProps } from "@recursica/adapter-common";
 
-export type FlexProps = OmitSx<MUIBoxProps & RecursicaFlexProps>;
+export type FlexProps = WithRecursicaSpacing<
+  OmitSx<MUIBoxProps & RecursicaFlexProps>
+>;
 
 export const Flex = forwardRef<HTMLDivElement, FlexProps>(function Flex(
   {

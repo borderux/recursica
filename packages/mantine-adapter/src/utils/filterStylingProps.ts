@@ -66,6 +66,7 @@ export {
   type RecursicaOverStyled,
   type BlockedStylingKeys,
   type ForbiddenStyles,
+  type WithRecursicaSpacing,
 } from "@recursica/adapter-common";
 
 const LAYOUT_PROPS = new Set([

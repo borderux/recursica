@@ -107,12 +107,31 @@ export type BlockedStylingKeys =
 export type ForbiddenStyles = { [K in BlockedStylingKeys]?: never };
 
 /**
+ * Utility type to override margin and gap properties with RecursicaSpacing.
+ */
+export type WithRecursicaSpacing<T> = Omit<
+  T,
+  "m" | "mx" | "my" | "mt" | "mb" | "ml" | "mr" | "gap" | "rowGap" | "columnGap"
+> & {
+  m?: string | number | RecursicaSpacing;
+  mx?: string | number | RecursicaSpacing;
+  my?: string | number | RecursicaSpacing;
+  mt?: string | number | RecursicaSpacing;
+  mb?: string | number | RecursicaSpacing;
+  ml?: string | number | RecursicaSpacing;
+  mr?: string | number | RecursicaSpacing;
+  gap?: string | number | RecursicaSpacing;
+  rowGap?: string | number | RecursicaSpacing;
+  columnGap?: string | number | RecursicaSpacing;
+};
+
+/**
  * A wrapper type that blocks styling overrides unless `overStyled: true` is explicitly provided.
  */
 export type RecursicaOverStyled<T> =
-  | (Omit<T, BlockedStylingKeys> &
+  | (Omit<WithRecursicaSpacing<T>, BlockedStylingKeys> &
       ForbiddenStyles & { overStyled?: false | undefined })
-  | (T & { overStyled: true });
+  | (WithRecursicaSpacing<T> & { overStyled: true });
 
 /**
  * Base properties for Recursica label indicators.

@@ -1,4 +1,4 @@
-import React, { forwardRef } from "react";
+import { forwardRef } from "react";
 import { Link as MUILink, type LinkProps as MUILinkProps } from "@mui/material";
 import {
   filterStylingProps,

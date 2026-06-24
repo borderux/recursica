@@ -17,7 +17,7 @@ import { type RecursicaDropdownProps as BaseRecursicaDropdownProps } from "@recu
 export interface RecursicaDropdownProps
   extends Omit<
       MantineSelectProps,
-      "size" | "variant" | "radius" | "wrapperProps"
+      "size" | "variant" | "radius" | "wrapperProps" | "data"
     >,
     Pick<
       RecursicaFormControlWrapperProps,
@@ -157,7 +157,7 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
             disabled={disabled}
             value={value}
             defaultValue={defaultValue}
-            data={data || []}
+            data={(data as any) || []}
             label={undefined}
             description={undefined}
             error={undefined}

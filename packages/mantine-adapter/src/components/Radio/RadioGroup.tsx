@@ -16,7 +16,10 @@ import styles from "./Radio.module.css";
 import { type RecursicaRadioGroupProps as BaseRecursicaRadioGroupProps } from "@recursica/adapter-common";
 
 export interface RecursicaRadioGroupProps
-  extends Omit<MantineRadioGroupProps, "size" | "labelProps">,
+  extends Omit<
+      MantineRadioGroupProps,
+      "size" | "labelProps" | "defaultValue" | "value" | "onChange"
+    >,
     Omit<
       RecursicaFormControlWrapperProps,
       "controlMaxWidth" | "controlMinWidth"
@@ -98,8 +101,8 @@ export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
             /* Natively bind local disabled lock dynamically */
             {...(sanitizedProps as unknown as MantineRadioGroupProps)}
             disabled={readOnly || (restRecord as any).disabled}
-            value={value}
-            defaultValue={defaultValue}
+            value={value as any}
+            defaultValue={defaultValue as any}
           >
             <div className={styles.groupRoot} data-layout={formLayout}>
               {children}

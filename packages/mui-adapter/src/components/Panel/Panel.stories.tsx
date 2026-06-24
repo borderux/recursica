@@ -12,7 +12,7 @@ const meta: Meta = {
   component: Panel,
   tags: ["autodocs"],
   argTypes: {
-    position: {
+    placement: {
       control: "select",
       options: ["left", "right", "top", "bottom"],
       description: "Side of the screen the panel slides in from.",
@@ -45,7 +45,7 @@ const meta: Meta = {
     docs: {
       description: {
         component: `
-The \`Panel\` component slides in or expands from the edge of the screen to reveal additional content or functionality. Built on Mantine's \`Drawer\`, it enforces Recursica design tokens for styling.
+The \`Panel\` component slides in or expands from the edge of the screen to reveal additional content or functionality. Built on Mui's \`Drawer\`, it enforces Recursica design tokens for styling.
 
 ### Anatomy
 1. **Header** — Title and close icon, remains fixed on scroll
@@ -58,7 +58,7 @@ The \`Panel\` component slides in or expands from the edge of the screen to reve
 const [opened, { open, close }] = useDisclosure(false);
 
 <Button onClick={open}>Open Panel</Button>
-<Panel opened={opened} onClose={close} title="Settings" position="right">
+<Panel opened={opened} onClose={close} title="Settings" placement="right">
   Content goes here
   <Panel.Footer>
     <Button variant="outline">Cancel</Button>
@@ -78,7 +78,7 @@ type Story = StoryObj<PanelStoryArgs>;
 
 export const Default: Story = {
   args: {
-    position: "right",
+    placement: "right",
     title: "Panel Title",
     withOverlay: true,
     withCloseButton: true,
@@ -98,7 +98,7 @@ export const Default: Story = {
           opened={opened}
           onClose={() => setOpened(false)}
           title="Panel Title"
-          position="right"
+          placement="right"
           wrapHeaderText={wrapHeaderText}
         >
           <Text>
@@ -118,9 +118,9 @@ export const Default: Story = {
   },
 };
 
-export const LeftPosition: Story = {
+export const LeftPlacement: Story = {
   args: {
-    position: "left",
+    placement: "left",
     title: "Navigation",
     withOverlay: true,
     withCloseButton: true,
@@ -153,7 +153,7 @@ export const LeftPosition: Story = {
 
 export const ScrollableContent: Story = {
   args: {
-    position: "right",
+    placement: "right",
     title: "Scrollable Panel",
     withOverlay: true,
     withCloseButton: true,
@@ -195,7 +195,7 @@ export const ScrollableContent: Story = {
 
 export const LongTitle: Story = {
   args: {
-    position: "right",
+    placement: "right",
     title:
       "This is a ridiculously long panel title designed to test how the header CSS handles text overflow and whether it truncates correctly or breaks the layout",
     withOverlay: true,

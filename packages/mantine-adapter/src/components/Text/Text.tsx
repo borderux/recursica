@@ -11,7 +11,9 @@ import {
 
 import { type RecursicaTextProps } from "@recursica/adapter-common";
 
-export type TextProps = RecursicaOverStyled<RecursicaTextProps>;
+export type TextProps = RecursicaOverStyled<
+  Omit<MantineTextProps, "variant"> & RecursicaTextProps
+>;
 
 const _Text = forwardRef<HTMLDivElement, TextProps>(function Text(
   { overStyled = false, variant = "body", ...rest },

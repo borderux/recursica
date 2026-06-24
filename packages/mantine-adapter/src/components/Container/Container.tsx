@@ -5,6 +5,7 @@ import {
 } from "@mantine/core";
 import styles from "./Container.module.css";
 
+import { type WithRecursicaSpacing } from "../../utils/filterStylingProps";
 import { type RecursicaContainerProps } from "@recursica/adapter-common";
 
 /**
@@ -14,8 +15,9 @@ import { type RecursicaContainerProps } from "@recursica/adapter-common";
  * DO NOT use the `RecursicaOverStyled` gatekeeper. Developers must be able to freely pass
  * width, height, padding, margins, and flexbox alignment props to construct structural layouts.
  */
-export type ContainerProps = Omit<MantineContainerProps, "size"> &
-  RecursicaContainerProps;
+export type ContainerProps = WithRecursicaSpacing<
+  Omit<MantineContainerProps, "size"> & RecursicaContainerProps
+>;
 
 export const Container = forwardRef<HTMLDivElement, ContainerProps>(
   function Container({ children, size, ...rest }, ref) {

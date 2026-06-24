@@ -18,7 +18,7 @@ import { type RecursicaTextAreaProps as BaseRecursicaTextAreaProps } from "@recu
 export interface RecursicaTextAreaProps
   extends Omit<
       MuiTextareaProps,
-      "size" | "variant" | "radius" | "wrapperProps"
+      "size" | "variant" | "radius" | "wrapperProps" | "maxRows" | "minRows"
     >,
     Pick<
       RecursicaFormControlWrapperProps,

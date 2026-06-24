@@ -14,7 +14,11 @@ import styles from "./Tabs.module.css";
 
 import { type RecursicaTabsProps } from "@recursica/adapter-common";
 
-export type TabsProps = RecursicaOverStyled<RecursicaTabsProps>;
+export interface RecursicaTabsPropsExtended
+  extends Omit<MantineTabsProps, "variant">,
+    RecursicaTabsProps {}
+
+export type TabsProps = RecursicaOverStyled<RecursicaTabsPropsExtended>;
 
 const _Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(props, ref) {
   const {

@@ -16,7 +16,10 @@ import styles from "./Switch.module.css";
 import { type RecursicaSwitchGroupProps as BaseRecursicaSwitchGroupProps } from "@recursica/adapter-common";
 
 export interface RecursicaSwitchGroupProps
-  extends Omit<MantineSwitchGroupProps, "size" | "labelProps">,
+  extends Omit<
+      MantineSwitchGroupProps,
+      "size" | "labelProps" | "defaultValue" | "value" | "onChange"
+    >,
     Omit<
       RecursicaFormControlWrapperProps,
       "controlMaxWidth" | "controlMinWidth"
@@ -98,8 +101,8 @@ export const SwitchGroup = forwardRef<HTMLDivElement, SwitchGroupProps>(
             /* Natively bind local disabled lock dynamically */
             {...(sanitizedProps as unknown as MantineSwitchGroupProps)}
             disabled={readOnly || (restRecord as any).disabled}
-            value={value}
-            defaultValue={defaultValue}
+            value={value as any}
+            defaultValue={defaultValue as any}
           >
             <div className={styles.groupRoot} data-layout={formLayout}>
               {children}

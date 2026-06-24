@@ -19,7 +19,11 @@ import styles from "./Stepper.module.css";
 
 import { type RecursicaStepperProps } from "@recursica/adapter-common";
 
-export type StepperProps = RecursicaOverStyled<RecursicaStepperProps>;
+export interface RecursicaStepperPropsExtended
+  extends Omit<Partial<MuiStepperProps>, "size">,
+    RecursicaStepperProps {}
+
+export type StepperProps = RecursicaOverStyled<RecursicaStepperPropsExtended>;
 
 export const Stepper = forwardRef<HTMLDivElement, StepperProps>(
   function Stepper(props, ref) {

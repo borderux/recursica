@@ -3,7 +3,10 @@ import {
   Group as MantineGroup,
   type GroupProps as MantineGroupProps,
 } from "@mantine/core";
-import { mapLayoutProps } from "../../utils/filterStylingProps";
+import {
+  mapLayoutProps,
+  type WithRecursicaSpacing,
+} from "../../utils/filterStylingProps";
 import styles from "./Group.module.css";
 
 import { type RecursicaGroupProps } from "@recursica/adapter-common";
@@ -15,7 +18,9 @@ import { type RecursicaGroupProps } from "@recursica/adapter-common";
  * DO NOT use the `RecursicaOverStyled` gatekeeper. Developers must be able to freely pass
  * width, height, padding, margins, and flexbox alignment props to construct structural layouts.
  */
-export type GroupProps = MantineGroupProps & RecursicaGroupProps;
+export type GroupProps = WithRecursicaSpacing<
+  MantineGroupProps & RecursicaGroupProps
+>;
 
 export const Group = forwardRef<HTMLDivElement, GroupProps>(function Group(
   { children, gap = "rec-default", ...rest },

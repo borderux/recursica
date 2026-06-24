@@ -55,7 +55,11 @@ export const ReadOnlyField = forwardRef<HTMLDivElement, ReadOnlyFieldProps>(
       ? (Renderer as any).check(value)
       : EmptyValueRenderer.check(value);
 
-    const displayValue = isValueEmpty ? <Renderer value={value} /> : value;
+    const displayValue = isValueEmpty ? (
+      <Renderer value={value as any} />
+    ) : (
+      value
+    );
 
     switch (type) {
       case "boolean":

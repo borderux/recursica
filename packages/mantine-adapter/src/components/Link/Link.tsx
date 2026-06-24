@@ -1,4 +1,4 @@
-import React, { forwardRef } from "react";
+import { forwardRef } from "react";
 import {
   Anchor as MantineAnchor,
   type AnchorProps as MantineAnchorProps,
@@ -13,7 +13,7 @@ import styles from "./Link.module.css";
 import { type RecursicaLinkProps } from "@recursica/adapter-common";
 
 export type LinkProps = RecursicaOverStyled<
-  Omit<MantineAnchorProps, "underline"> & RecursicaLinkProps
+  Omit<MantineAnchorProps, "underline"> & Omit<RecursicaLinkProps, "component">
 >;
 
 const _Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link(
@@ -49,7 +49,7 @@ const _Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link(
       classNames={mergedClassNames}
       underline="never"
       {...(icon ? { "data-has-icon": "" } : {})}
-      {...sanitizedProps}
+      {...(sanitizedProps as any)}
     >
       {icon && (
         <span className={styles.iconWrapper} aria-hidden>

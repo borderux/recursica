@@ -55,11 +55,11 @@ Other stylesNames (`overlay`, `root`, `inner`, `close`) are left to Mantine defa
 
 ---
 
-## 4. Default Position Override
+## 4. Default Placement Override
 
-**Decision:** Recursica defaults `position` to `"right"`. Mantine defaults to `"left"`.
+**Decision:** Use `placement` instead of `position` for configuring slide-out direction, and default it to `"right"`.
 
-**Implementation:** The `position="right"` default is set before the prop spread, so developer-provided `position` values still take precedence. Right-side panels are the most common pattern for supplementary content, settings, and detail views.
+**Implementation:** The prop was renamed from `position` to `placement` to prevent collision with the CSS `position` keyword, which is strictly blocked by the styling gatekeeper (`BLOCKED_STYLING_KEYS`). This allows configuring the drawer direction natively while maintaining strict design-system boundaries. The `placement="right"` default is mapped internally to Mantine Drawer's `position` prop before any other sanitized props are applied. Right-side panels are the most common pattern for supplementary content, settings, and detail views.
 
 ---
 

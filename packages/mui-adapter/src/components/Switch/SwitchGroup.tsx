@@ -28,7 +28,11 @@ export interface RecursicaSwitchGroupProps
     >,
     Omit<
       RecursicaFormControlWrapperProps,
-      "controlMaxWidth" | "controlMinWidth" | "classes" | "onChange"
+      | "controlMaxWidth"
+      | "controlMinWidth"
+      | "classes"
+      | "onChange"
+      | "defaultValue"
     >,
     ReadOnlyControlProps,
     BaseRecursicaSwitchGroupProps {}

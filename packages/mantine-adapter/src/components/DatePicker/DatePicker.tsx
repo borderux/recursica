@@ -38,7 +38,7 @@ export interface RecursicaDatePickerProps
 
 export type DatePickerProps = RecursicaOverStyled<RecursicaDatePickerProps>;
 
-export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
+export const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
   function DatePicker(props, ref) {
     const {
       overStyled = false,
@@ -148,9 +148,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
             ref={ref}
             classNames={mergedClassNames}
             disabled={disabled}
-            // @ts-expect-error Mantine 8 DatePickerInput types are overly complex for unified wrappers
             value={value}
-            // @ts-expect-error Mantine 8 DatePickerInput types are overly complex for unified wrappers
             defaultValue={defaultValue}
             label={undefined} // Disable Mantine's native label
             description={undefined} // Disable Mantine's native description
