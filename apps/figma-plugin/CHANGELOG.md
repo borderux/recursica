@@ -1,5 +1,11 @@
 # @recursica/publisher
 
+## 0.23.0
+
+### Minor Changes
+
+- 37396d6: Added version to logs and versioned
+
 ## 0.22.0
 
 ### Minor Changes
