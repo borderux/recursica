@@ -18,6 +18,7 @@ import { type RecursicaAutocompleteProps as BaseRecursicaAutocompleteProps } fro
 
 export interface RecursicaAutocompleteProps
   extends Omit<
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       MuiAutocompleteProps<any, any, any, any, "div">,
       | "variant"
       | "size"
@@ -32,6 +33,7 @@ export interface RecursicaAutocompleteProps
       | "controlMaxWidth"
       | "controlMinWidth"
       | "error"
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       | keyof MuiAutocompleteProps<any, any, any, any, "div">
     >,
     ReadOnlyControlProps,

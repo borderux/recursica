@@ -18,7 +18,13 @@ import { type RecursicaDropdownProps as BaseRecursicaDropdownProps } from "@recu
 export interface RecursicaDropdownProps
   extends Omit<
       MuiSelectProps,
-      "size" | "variant" | "classes" | "inputProps" | "SelectDisplayProps"
+      | keyof React.HTMLAttributes<HTMLDivElement>
+      | "size"
+      | "variant"
+      | "classes"
+      | "inputProps"
+      | "SelectDisplayProps"
+      | "ref"
     >,
     Omit<
       RecursicaFormControlWrapperProps,
@@ -160,7 +166,7 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
             inputProps={{
               "data-disabled": disabled ? "true" : undefined,
               "data-error": error ? "true" : undefined,
-              ...(restRecord.inputProps as any),
+              ...(restRecord.inputProps as Record<string, unknown>),
             }}
             {...(sanitizedProps as unknown as MuiSelectProps)}
           >

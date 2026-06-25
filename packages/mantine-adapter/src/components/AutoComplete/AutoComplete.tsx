@@ -149,8 +149,8 @@ export const AutoComplete = forwardRef<HTMLInputElement, AutoCompleteProps>(
             ref={ref}
             classNames={mergedClassNames}
             disabled={disabled}
-            value={value as any}
-            defaultValue={defaultValue as any}
+            value={value as string | undefined}
+            defaultValue={defaultValue as string | undefined}
             wrapperProps={{
               "data-disabled": disabled ? "true" : undefined,
               "data-error": error ? "true" : undefined,

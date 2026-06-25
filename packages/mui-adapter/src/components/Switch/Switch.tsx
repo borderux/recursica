@@ -37,7 +37,7 @@ export type RecursicaSwitchPropsAlias =
 
 export type SwitchProps = RecursicaOverStyled<RecursicaSwitchPropsAlias>;
 
-type SwitchComponent = any;
+type SwitchComponent = React.ComponentType<SwitchProps>;
 
 export const Switch = forwardRef<HTMLInputElement, SwitchProps>(
   function Switch(props, ref) {
@@ -137,6 +137,7 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(
     // We omit Mui's sizing/coloring so we rely strictly on variables from Switch.module.css
     const switchNode = (
       <MuiSwitch
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ref={ref as any}
         className={!label ? `${finalClass} ${styles.inner}` : styles.inner}
         classes={mergedClassNames}

@@ -1,8 +1,25 @@
 import { Paper, Divider } from "@mui/material";
-import { Container, Stack, Box, Text, Title } from "./components";
-import { Button } from "./components/Button/Button";
+import {
+  Container,
+  Stack,
+  Box,
+  Text as RawText,
+  Title,
+  Switch as RawSwitch,
+} from "./components";
+import { Button as RawButton } from "./components/Button/Button";
+import {
+  useGlobalOverStyled,
+  toggleGlobalOverStyled,
+  wrapComponent,
+} from "@recursica/adapter-common";
+
+const Button = wrapComponent(RawButton);
+const Text = wrapComponent(RawText);
+const Switch = wrapComponent(RawSwitch);
 
 export const OverStylingInfo = () => {
+  const isHighlightActive = useGlobalOverStyled();
   return (
     <Container size="md" style={{ padding: "32px 0" }}>
       <Paper variant="outlined" sx={{ p: 4, borderRadius: 2 }}>
@@ -168,6 +185,50 @@ export const OverStylingInfo = () => {
           <code>overStyled={`{true}`}</code>. The internal custom token mapper
           (such as converting <code>gap="rec-md"</code>) is still active
           natively on these wrappers.
+        </Text>
+
+        <Divider sx={{ mb: 4 }} />
+
+        <Title order={6} mb={1}>
+          Visual Auditing & Highlights (Development Only)
+        </Title>
+        <Text mb={2}>
+          To make it easy to spot technical debt and design system violations,
+          Recursica automatically tracks any component that uses the{" "}
+          <code>overStyled={`{true}`}</code> prop.
+        </Text>
+        <Text mb={2}>
+          In <strong>development builds</strong>, you can highlight all
+          over-styled components on the page. Open your browser's developer
+          console and run:
+        </Text>
+        <Box
+          component="pre"
+          sx={{
+            p: 1.5,
+            bgcolor: "grey.100",
+            borderRadius: 1,
+            fontSize: 13,
+            mt: 1,
+            mb: 2,
+          }}
+        >
+          <code>recursica.toggleOverStyled()</code>
+        </Box>
+        <Stack direction="row" alignItems="center" gap="rec-sm" mb="rec-md">
+          <Switch
+            label="Highlight Over-Styled Components"
+            checked={isHighlightActive}
+            onChange={() => toggleGlobalOverStyled()}
+          />
+        </Stack>
+        <Text mb={4}>
+          This toggles a <strong>cyan 2px box shadow</strong> outline around the
+          children of all over-styled components. The wrapping elements use{" "}
+          <code>display: contents</code> under the hood to ensure they occupy
+          zero DOM space and do not affect flex, grid, or absolute positioning
+          flow. In production builds, this debugging helper is completely
+          disabled and stripped with zero performance overhead.
         </Text>
 
         <Divider sx={{ mb: 4 }} />

@@ -74,7 +74,7 @@ const _Avatar = forwardRef<HTMLDivElement, AvatarProps>(function Avatar(
       ref={ref}
       className={classNameProp}
       classes={mergedClassNames}
-      variant={mapVariant[variant] as any}
+      variant={mapVariant[variant] as unknown as MuiAvatarProps["variant"]}
       src={src}
       data-variant={variant}
       data-size={size}
@@ -98,4 +98,4 @@ _Avatar.displayName = "Avatar";
  *
  * Supports polymorphism via the `component` prop or `renderRoot` for custom element rendering.
  */
-export const Avatar = _Avatar as any;
+export const Avatar = _Avatar;

@@ -15,7 +15,7 @@ export type TableProps = RecursicaOverStyled<
 >;
 
 const TableBase = forwardRef<HTMLTableElement, TableProps>(function Table(
-  { overStyled = false, className, ...rest },
+  { overStyled = false, ...rest },
   ref,
 ) {
   const sanitizedProps = filterStylingProps(rest, overStyled);

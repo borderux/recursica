@@ -63,7 +63,10 @@ const HoverCardBase = function HoverCard({
 
   React.Children.forEach(children, (child) => {
     if (isValidElement(child)) {
-      const childElement = child as any;
+      const childElement = child as unknown as {
+        type?: { displayName?: string };
+        props: { children?: React.ReactNode };
+      };
       if (childElement.type?.displayName === "HoverCardTarget") {
         targetNode = childElement.props.children;
       } else if (childElement.type?.displayName === "HoverCardDropdown") {
@@ -83,7 +86,7 @@ const HoverCardBase = function HoverCard({
   return (
     <MuiTooltip
       title={dropdownNode}
-      placement={position as any}
+      placement={position as unknown as MuiTooltipProps["placement"]}
       arrow={withBeak}
       enterDelay={openDelay}
       leaveDelay={closeDelay}
@@ -100,8 +103,8 @@ const HoverCardBase = function HoverCard({
           ],
         },
       }}
-      classes={mergedClassNames as any}
-      {...(sanitizedProps as any)}
+      classes={mergedClassNames as unknown as MuiTooltipProps["classes"]}
+      {...(sanitizedProps as unknown as Record<string, unknown>)}
     >
       {/* Tooltip requires a single valid React element child that accepts a ref */}
       {isValidElement(targetNode) ? targetNode : <span>{targetNode}</span>}

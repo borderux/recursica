@@ -50,7 +50,9 @@ const CardBase = forwardRef<HTMLDivElement, CardProps>(function Card(
   ] as const;
   safeCardLayoutKeys.forEach((key) => {
     if (key in rest && !(key in sanitizedProps)) {
-      (sanitizedProps as any)[key] = (rest as any)[key];
+      (sanitizedProps as Record<string, unknown>)[key] = (
+        rest as Record<string, unknown>
+      )[key];
     }
   });
 

@@ -1,7 +1,25 @@
-import { Container, Card, Title, Text, Group, Stack } from "./components";
-import { Button } from "./components/Button/Button";
+import {
+  Container,
+  Card,
+  Title,
+  Text as RawText,
+  Group,
+  Stack,
+  Switch as RawSwitch,
+} from "./components";
+import { Button as RawButton } from "./components/Button/Button";
+import {
+  useGlobalOverStyled,
+  toggleGlobalOverStyled,
+  wrapComponent,
+} from "@recursica/adapter-common";
+
+const Button = wrapComponent(RawButton);
+const Text = wrapComponent(RawText);
+const Switch = wrapComponent(RawSwitch);
 
 export const OverStylingInfo = () => {
+  const isHighlightActive = useGlobalOverStyled();
   return (
     <Container size="md" style={{ padding: "32px 0" }}>
       <Card>
@@ -197,6 +215,52 @@ export const OverStylingInfo = () => {
             mb="rec-xl"
           />
 
+          <Title order={3} mb="rec-sm">
+            Visual Auditing & Highlights (Development Only)
+          </Title>
+          <Text mb="rec-sm">
+            To make it easy to spot technical debt and design system violations,
+            Recursica automatically tracks any component that uses the{" "}
+            <code>overStyled={`{true}`}</code> prop.
+          </Text>
+          <Text mb="rec-sm">
+            In <strong>development builds</strong>, you can highlight all
+            over-styled components on the page. Open your browser's developer
+            console and run:
+          </Text>
+          <Stack
+            style={{
+              padding: 12,
+              backgroundColor: "#f5f5f5",
+              borderRadius: 6,
+              fontSize: 13,
+              marginTop: 8,
+              marginBottom: 16,
+            }}
+          >
+            <code>recursica.toggleOverStyled()</code>
+          </Stack>
+          <Group mb="rec-md">
+            <Switch
+              label="Highlight Over-Styled Components"
+              checked={isHighlightActive}
+              onChange={() => toggleGlobalOverStyled()}
+            />
+          </Group>
+          <Text mb="rec-xl">
+            This toggles a <strong>cyan 2px box shadow</strong> outline around
+            the children of all over-styled components. The wrapping elements
+            use <code>display: contents</code> under the hood to ensure they
+            occupy zero DOM space and do not affect flex, grid, or absolute
+            positioning flow. In production builds, this debugging helper is
+            completely disabled and stripped with zero performance overhead.
+          </Text>
+
+          <Stack
+            style={{ height: 1, backgroundColor: "#eaeaea" }}
+            mb="rec-xl"
+          />
+
           <Title order={3} mb="rec-md">
             Live Example
           </Title>
@@ -217,7 +281,7 @@ export const OverStylingInfo = () => {
             </Stack>
             <Stack gap="rec-sm">
               <Text overStyled size="sm" c="dimmed">
-                overStyled={`{true}`}
+                overStyled
               </Text>
               <Button overStyled={true} bg="pink" c="black" radius="xl">
                 Unsafe Pink Marketing Button

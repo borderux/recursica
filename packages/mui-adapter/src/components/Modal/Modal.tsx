@@ -65,7 +65,8 @@ const ModalRoot = forwardRef<HTMLDivElement, ModalProps>(function ModalRoot(
     if (
       React.isValidElement(child) &&
       (child.type === ModalFooter ||
-        (child.type as any)?.displayName === "Modal.Footer")
+        (child.type as unknown as { displayName?: string })?.displayName ===
+          "Modal.Footer")
     ) {
       footer = child;
     } else {
@@ -81,7 +82,11 @@ const ModalRoot = forwardRef<HTMLDivElement, ModalProps>(function ModalRoot(
         paper: styles.inner,
       }}
       {...(sanitizedProps as MuiDialogProps)}
-      open={opened || (sanitizedProps as any).open}
+      open={
+        opened ||
+        ((sanitizedProps as Record<string, unknown>).open as boolean) ||
+        false
+      }
       onClose={onClose}
     >
       {(title || withCloseButton) && (
@@ -117,6 +122,7 @@ const ModalTitle = forwardRef<HTMLDivElement, ModalTitleProps>(
 
     return (
       <MuiDialogTitle
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ref={ref as any}
         className={`${styles.title} ${className || ""}`}
         {...(sanitizedProps as MuiDialogTitleProps)}
@@ -159,10 +165,10 @@ const ModalBody = forwardRef<HTMLDivElement, ModalBodyProps>(function ModalBody(
   return (
     <MuiDialogContent
       ref={(node) => {
-        if (typeof ref === "function") ref(node as any);
+        if (typeof ref === "function") ref(node as HTMLDivElement);
         else if (ref)
           (ref as React.MutableRefObject<HTMLDivElement | null>).current =
-            node as any;
+            node as HTMLDivElement;
         if (internalRef)
           (
             internalRef as React.MutableRefObject<HTMLDivElement | null>
@@ -193,6 +199,7 @@ const ModalFooter = forwardRef<HTMLDivElement, ModalFooterProps>(
 
     return (
       <MuiDialogActions
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ref={ref as any}
         className={`${styles.footer} ${className || ""}`}
         {...(sanitizedProps as MuiDialogActionsProps)}

@@ -18,7 +18,14 @@ import { type RecursicaTextAreaProps as BaseRecursicaTextAreaProps } from "@recu
 export interface RecursicaTextAreaProps
   extends Omit<
       MuiTextareaProps,
-      "size" | "variant" | "radius" | "wrapperProps" | "maxRows" | "minRows"
+      | keyof React.HTMLAttributes<HTMLDivElement>
+      | "size"
+      | "variant"
+      | "radius"
+      | "wrapperProps"
+      | "maxRows"
+      | "minRows"
+      | "classes"
     >,
     Omit<
       RecursicaFormControlWrapperProps,
@@ -122,6 +129,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
           /* Naked Input execution safely decoupled from Mui's macro Input.Wrapper DOM hooks */
           <MuiTextarea
             multiline
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             inputRef={ref as any}
             classes={mergedClassNames}
             disabled={disabled}

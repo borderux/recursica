@@ -108,7 +108,11 @@ const _SegmentedControl = forwardRef<HTMLDivElement, SegmentedControlProps>(
         data-orientation={orientation}
         exclusive
         value={value}
-        onChange={handleChange as any}
+        onChange={
+          handleChange as React.ComponentProps<
+            typeof MuiSegmentedControl
+          >["onChange"]
+        }
         {...(sanitizedProps as Omit<
           MuiSegmentedControlProps,
           "variant" | "size" | "value" | "onChange"

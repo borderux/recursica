@@ -66,4 +66,4 @@ _Badge.displayName = "Badge";
  *
  * Supports polymorphism via the `component` prop or `renderRoot` for custom element rendering.
  */
-export const Badge = _Badge as any;
+export const Badge = _Badge;
