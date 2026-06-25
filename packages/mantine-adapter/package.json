@@ -52,7 +52,7 @@
     "build-storybook": "storybook build -o storybook-static",
     "lint": "eslint .",
     "storybook": "storybook dev -p 6011",
-    "analyze-tokens": "analyze-tokens --css recursica_variables_scoped.css --dir src/components --output token-analysis.json",
+    "analyze-tokens": "analyze-tokens --css @recursica/official-release/recursica_variables_scoped.css --dir src/components --output token-analysis.json",
     "prebuild": "npm run analyze-tokens"
   },
   "devDependencies": {

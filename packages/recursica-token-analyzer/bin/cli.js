@@ -32,19 +32,28 @@ function toKebabCase(str) {
 function analyze() {
   const options = parseArgs();
 
+  let cssPath = options.css;
+  if (!fs.existsSync(cssPath)) {
+    try {
+      cssPath = require.resolve(options.css, { paths: [process.cwd()] });
+    } catch (e) {
+      // Ignore, let the fs.existsSync check below fail
+    }
+  }
+
   console.log(`\n🔍 Recursica Token Analyzer`);
   console.log(`------------------------------`);
-  console.log(`CSS Dictionary : ${options.css}`);
+  console.log(`CSS Dictionary : ${cssPath}`);
   console.log(`Source Dir     : ${options.dir}`);
   console.log(`Output File    : ${options.output}\n`);
 
-  if (!fs.existsSync(options.css)) {
+  if (!fs.existsSync(cssPath)) {
     console.error(`❌ Error: CSS file '${options.css}' not found.`);
     process.exit(1);
   }
 
   // 1. Extract defined generic variables (ignore auto-generated theme variants)
-  const variablesFile = fs.readFileSync(options.css, "utf-8");
+  const variablesFile = fs.readFileSync(cssPath, "utf-8");
   const definedVars = new Set();
   [...variablesFile.matchAll(/(--recursica_[\w-]+)\s*:/g)].forEach((m) => {
     const v = m[1];
