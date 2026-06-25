@@ -1,0 +1,43 @@
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_border-radius */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_border-size */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_button-node-gap */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_horizontal-padding */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_indent */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_item-gap */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_max-width */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_selected-text_font-family */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_selected-text_font-size */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_selected-text_font-style */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_selected-text_font-weight */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_selected-text_letter-spacing */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_selected-text_line-height */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_selected-text_text-decoration */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_selected-text_text-transform */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_unselected-text_font-family */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_unselected-text_font-size */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_unselected-text_font-style */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_unselected-text_font-weight */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_unselected-text_letter-spacing */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_unselected-text_line-height */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_unselected-text_text-decoration */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_unselected-text_text-transform */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_vertical-padding */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_colors_hover-background */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_colors_hover-border-color */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_colors_hover-text */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_colors_selected-background */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_colors_selected-border-color */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_colors_selected-text */
+/* recursica-ignore: --recursica_ui-kit_components_tree_properties_colors_unselected-text */
+
+.root {
+  box-sizing: border-box;
+  font-family: sans-serif;
+  padding: 24px;
+  border: 1px dashed #ccc;
+  border-radius: 8px;
+  color: #666;
+  text-align: center;
+  font-weight: 500;
+  background-color: #fafafa;
+}

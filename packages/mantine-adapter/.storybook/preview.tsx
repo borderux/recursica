@@ -4,10 +4,10 @@ import { MantineProvider } from "@mantine/core";
 import { ColorSchemeWrapper } from "../src/utils/ColorSchemeWrapper";
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
-import "../recursica_variables_scoped.css";
-import recursicaTokens from "../recursica_tokens.json";
-import recursicaBrand from "../recursica_brand.json";
-import recursicaUIKit from "../recursica_ui-kit.json";
+import "@recursica/official-release/recursica_variables_scoped.css";
+import recursicaTokens from "@recursica/official-release/recursica_tokens.json";
+import recursicaBrand from "@recursica/official-release/recursica_brand.json";
+import recursicaUIKit from "@recursica/official-release/recursica_ui-kit.json";
 
 const basePreview = createPreviewConfig({
   defaultTheme: "light",

@@ -47,3 +47,4 @@ export * from "./Title/Title";
 export * from "./Toast";
 export * from "./Tooltip/Tooltip";
 export * from "./TransferList/TransferList";
+export * from "./Tree";

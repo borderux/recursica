@@ -46,3 +46,4 @@ export * from "./Toast";
 export * from "./Tooltip";
 export * from "./TransferList";
 export * from "./Typography";
+export * from "./Tree";

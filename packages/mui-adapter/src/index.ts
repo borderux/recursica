@@ -169,6 +169,9 @@ export const Tooltip = wrapComponent(
 export const TransferList = wrapComponent(
   rawComponents.TransferList,
 ) as typeof rawComponents.TransferList;
+export const Tree = wrapComponent(
+  rawComponents.Tree,
+) as typeof rawComponents.Tree;
 
 export type {
   RecursicaAutocompleteProps,

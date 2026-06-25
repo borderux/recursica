@@ -4,6 +4,9 @@ import svgr from "vite-plugin-svgr";
 import dts from "vite-plugin-dts";
 import { resolve } from "path";
 import recursicaVars from "@recursica/recursica-postcss-vars";
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
 
 export default defineConfig(({ mode }) => {
   const isLibrary = mode === "library";
@@ -25,7 +28,9 @@ export default defineConfig(({ mode }) => {
       postcss: {
         plugins: [
           recursicaVars({
-            cssPath: resolve(__dirname, "recursica_variables_scoped.css"),
+            cssPath: require.resolve(
+              "@recursica/official-release/recursica_variables_scoped.css",
+            ),
           }),
         ],
       },

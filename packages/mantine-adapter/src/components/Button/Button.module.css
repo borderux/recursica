@@ -356,8 +356,22 @@
   color: var(
     --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_text-hover
   );
+  border-color: var(
+    --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_border-color-hover
+  );
   box-shadow: var(
     --recursica_ui-kit_components_button_variants_styles_solid_properties_hover-elevation
+  );
+
+  .iconWrapper {
+    color: var(
+      --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color-hover
+    );
+  }
+}
+.root[data-variant="solid"]:disabled {
+  box-shadow: var(
+    --recursica_ui-kit_components_button_variants_styles_solid_properties_disabled-elevation
   );
 }
 
@@ -389,8 +403,22 @@
   color: var(
     --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_text-hover
   );
+  border-color: var(
+    --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_border-color-hover
+  );
   box-shadow: var(
     --recursica_ui-kit_components_button_variants_styles_outline_properties_hover-elevation
+  );
+
+  .iconWrapper {
+    color: var(
+      --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color-hover
+    );
+  }
+}
+.root[data-variant="outline"]:disabled {
+  box-shadow: var(
+    --recursica_ui-kit_components_button_variants_styles_outline_properties_disabled-elevation
   );
 }
 
@@ -422,7 +450,21 @@
   color: var(
     --recursica_ui-kit_components_button_variants_styles_text_properties_colors_text-hover
   );
+  border-color: var(
+    --recursica_ui-kit_components_button_variants_styles_text_properties_colors_border-color-hover
+  );
   box-shadow: var(
     --recursica_ui-kit_components_button_variants_styles_text_properties_hover-elevation
+  );
+
+  .iconWrapper {
+    color: var(
+      --recursica_ui-kit_components_button_variants_styles_text_properties_colors_icon-color-hover
+    );
+  }
+}
+.root[data-variant="text"]:disabled {
+  box-shadow: var(
+    --recursica_ui-kit_components_button_variants_styles_text_properties_disabled-elevation
   );
 }
