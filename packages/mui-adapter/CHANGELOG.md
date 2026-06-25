@@ -1,5 +1,16 @@
 # @recursica/mui-adapter
 
+## 0.11.0
+
+### Minor Changes
+
+- 8a1ecc5: Updated overStyled and fixed exports
+
+### Patch Changes
+
+- Updated dependencies [8a1ecc5]
+  - @recursica/adapter-common@0.9.0
+
 ## 0.10.0
 
 ### Minor Changes

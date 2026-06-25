@@ -1,5 +1,16 @@
 # @recursica/mantine-adapter
 
+## 0.28.0
+
+### Minor Changes
+
+- 8a1ecc5: Updated overStyled and fixed exports
+
+### Patch Changes
+
+- Updated dependencies [8a1ecc5]
+  - @recursica/adapter-common@0.9.0
+
 ## 0.27.0
 
 ### Minor Changes
