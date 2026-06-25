@@ -1,4 +1,5 @@
 /// <reference types="@figma/plugin-typings" />
+import packageJson from "../../../../package.json";
 
 export interface DebugConsoleMessage {
   type: "error" | "warning" | "log";
@@ -6,7 +7,12 @@ export interface DebugConsoleMessage {
 }
 
 // In-memory log buffer
-const logBuffer: DebugConsoleMessage[] = [];
+const logBuffer: DebugConsoleMessage[] = [
+  {
+    type: "log",
+    message: `Plugin version: ${packageJson.version}`,
+  },
+];
 
 /**
  * Debug console utility for collecting logs in memory
@@ -17,6 +23,10 @@ export const debugConsole = {
   clear: () => {
     console.clear();
     logBuffer.length = 0; // Clear the buffer
+    logBuffer.push({
+      type: "log",
+      message: `Plugin version: ${packageJson.version}`,
+    });
   },
 
   log: (message: string) => {
