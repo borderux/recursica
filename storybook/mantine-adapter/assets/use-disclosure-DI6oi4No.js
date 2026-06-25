@@ -1,0 +1,1 @@
+import{r as l}from"./iframe-C3SWO55l.js";function b(s=!1,e={}){const[a,n]=l.useState(s),c=l.useCallback(()=>{n(r=>{var u;return r||((u=e.onOpen)==null||u.call(e),!0)})},[e.onOpen]),t=l.useCallback(()=>{n(r=>{var u;return r&&((u=e.onClose)==null||u.call(e),!1)})},[e.onClose]),f=l.useCallback(()=>{a?t():c()},[t,c,a]);return[a,{open:c,close:t,toggle:f}]}export{b as u};
