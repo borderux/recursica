@@ -137,7 +137,9 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
         required={required}
         id={id}
         readOnly={readOnly}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         readOnlyComponent={readOnlyComponent as any}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         emptyValueComponent={(emptyValueComponent as any) || undefined}
         readOnlyType="text"
         readOnlyValue={value !== undefined ? value : defaultValue}

@@ -133,7 +133,12 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
         }
       } else {
         if (restRecord.onChange) {
-          (restRecord.onChange as any)(e, e.target.checked);
+          (
+            restRecord.onChange as (
+              event: React.ChangeEvent<HTMLInputElement>,
+              checked: boolean,
+            ) => void
+          )(e, e.target.checked);
         }
       }
     };

@@ -45,7 +45,9 @@ const CardBase = forwardRef<HTMLDivElement, CardProps>(function Card(
   ] as const;
   safeCardLayoutKeys.forEach((key) => {
     if (key in rest && !(key in sanitizedProps)) {
-      (sanitizedProps as any)[key] = (rest as any)[key];
+      (sanitizedProps as Record<string, unknown>)[key] = (
+        rest as Record<string, unknown>
+      )[key];
     }
   });
 
@@ -193,7 +195,7 @@ CardContent.displayName = "CardContent";
  * Supports polymorphism via the `component` prop or `renderRoot` for custom element rendering.
  * Use dot-notation sub-components for structured card layouts.
  */
-const PolymorphicCard = CardBase as any;
+const PolymorphicCard = CardBase;
 
 // Attach static components for dot-notation access
 const _card = PolymorphicCard as unknown as Record<string, unknown>;

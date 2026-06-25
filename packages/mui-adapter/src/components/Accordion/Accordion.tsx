@@ -175,6 +175,7 @@ export const AccordionItem = forwardRef<
           </>
         ) : (
           children
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         )) as any
       }
     </MuiAccordion>

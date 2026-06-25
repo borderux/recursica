@@ -46,6 +46,7 @@ export const Stepper = forwardRef<HTMLDivElement, StepperProps>(
         data-orientation={orientation}
       >
         <MuiStepper
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           ref={ref as any}
           orientation={orientation}
           connector={

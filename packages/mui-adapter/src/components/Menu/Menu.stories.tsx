@@ -13,7 +13,7 @@ import { Menu, MenuItem, MenuDivider } from "./Menu";
 import { Button } from "../Button";
 import { ListSubheader } from "@mui/material";
 
-const SettingsIcon = (props: any) => (
+const SettingsIcon = (props: React.ComponentProps<"svg">) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="14"
@@ -31,7 +31,7 @@ const SettingsIcon = (props: any) => (
   </svg>
 );
 
-const SearchIcon = (props: any) => (
+const SearchIcon = (props: React.ComponentProps<"svg">) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="14"
@@ -49,7 +49,7 @@ const SearchIcon = (props: any) => (
   </svg>
 );
 
-const MessageIcon = (props: any) => (
+const MessageIcon = (props: React.ComponentProps<"svg">) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="14"
@@ -66,7 +66,7 @@ const MessageIcon = (props: any) => (
   </svg>
 );
 
-const ImageIcon = (props: any) => (
+const ImageIcon = (props: React.ComponentProps<"svg">) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="14"
@@ -85,7 +85,7 @@ const ImageIcon = (props: any) => (
   </svg>
 );
 
-const TrashIcon = (props: any) => (
+const TrashIcon = (props: React.ComponentProps<"svg">) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="14"
@@ -103,7 +103,7 @@ const TrashIcon = (props: any) => (
   </svg>
 );
 
-const ArrowsIcon = (props: any) => (
+const ArrowsIcon = (props: React.ComponentProps<"svg">) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="14"
@@ -123,7 +123,7 @@ const ArrowsIcon = (props: any) => (
   </svg>
 );
 
-type MenuStoryArgs = Record<string, any>;
+type MenuStoryArgs = Record<string, unknown>;
 
 const meta: Meta = {
   title: "UI-Kit/Menu",
@@ -135,7 +135,13 @@ export default meta;
 
 type Story = StoryObj<MenuStoryArgs>;
 
-const InteractiveMenu = ({ children, openDelay, ...args }: any) => {
+interface InteractiveMenuProps {
+  children?: React.ReactNode;
+  opened?: boolean;
+  [key: string]: unknown;
+}
+
+const InteractiveMenu = ({ children, ...args }: InteractiveMenuProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 

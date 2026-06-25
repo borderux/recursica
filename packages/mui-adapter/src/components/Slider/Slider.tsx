@@ -129,7 +129,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
       if (!isNaN(parsed)) {
         // Clamp input value to bounds
         const clamped = Math.max(min, Math.min(max, parsed));
-        handleValueChange(null as any, clamped);
+        handleValueChange(null as unknown as Event, clamped);
       }
     };
 
@@ -211,7 +211,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
         label={label}
         assistiveText={assistiveText}
         assistiveWithIcon={assistiveWithIcon}
-        error={error as any}
+        error={!!error}
         required={required}
         id={id}
         readOnly={readOnly}
@@ -239,14 +239,22 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
                 disabled={disabled}
                 value={resolvedValue}
                 onChange={handleValueChange}
-                onChangeCommitted={onChangeEnd as any}
+                onChangeCommitted={
+                  onChangeEnd as unknown as (
+                    event: Event | React.SyntheticEvent,
+                    value: number | number[],
+                  ) => void
+                }
                 min={min}
                 max={max}
                 step={step}
                 valueLabelDisplay={tooltipLabel === null ? "off" : "auto"}
                 valueLabelFormat={
                   typeof tooltipLabel === "function"
-                    ? (tooltipLabel as any)
+                    ? (tooltipLabel as unknown as (
+                        value: number,
+                        index: number,
+                      ) => React.ReactNode)
                     : undefined
                 }
                 {...(sanitizedProps as unknown as MuiSliderProps)}

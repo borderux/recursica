@@ -49,7 +49,7 @@ const _Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link(
       classNames={mergedClassNames}
       underline="never"
       {...(icon ? { "data-has-icon": "" } : {})}
-      {...(sanitizedProps as any)}
+      {...(sanitizedProps as Record<string, unknown>)}
     >
       {icon && (
         <span className={styles.iconWrapper} aria-hidden>

@@ -147,6 +147,7 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(
     // We omit Mui's sizing/coloring so we rely strictly on variables from Radio.module.css
     const radioNode = (
       <MuiRadio
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ref={ref as any}
         icon={<RadioIcon />}
         checkedIcon={<RadioIcon className={styles.checked} />}
