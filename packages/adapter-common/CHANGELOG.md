@@ -1,5 +1,11 @@
 # @recursica/adapter-common
 
+## 0.9.0
+
+### Minor Changes
+
+- 8a1ecc5: Updated overStyled and fixed exports
+
 ## 0.8.0
 
 ### Minor Changes
