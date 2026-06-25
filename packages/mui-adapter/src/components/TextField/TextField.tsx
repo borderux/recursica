@@ -14,7 +14,12 @@ import { type RecursicaTextFieldProps as BaseRecursicaTextFieldProps } from "@re
 export interface RecursicaTextFieldProps
   extends Omit<
       InputBaseProps,
-      "color" | "size" | "startAdornment" | "endAdornment" | "autoComplete"
+      | "color"
+      | "size"
+      | "startAdornment"
+      | "endAdornment"
+      | "autoComplete"
+      | "error"
     >,
     Omit<
       React.ComponentPropsWithoutRef<"input">,

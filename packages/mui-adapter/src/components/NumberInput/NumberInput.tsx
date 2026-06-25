@@ -63,6 +63,11 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
       emptyValueComponent,
       value,
       defaultValue,
+      leftSection,
+      rightSection,
+      min,
+      max,
+      step,
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       hideControls = false,
       ...rest
@@ -88,6 +93,18 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
     const wrapperClass = className
       ? `${styles.layoutOverride} ${className}`
       : styles.layoutOverride;
+
+    const startAdornment = leftSection ? (
+      <div className={mergedClassNames.section} data-position="left">
+        {leftSection}
+      </div>
+    ) : undefined;
+
+    const endAdornment = rightSection ? (
+      <div className={mergedClassNames.section} data-position="right">
+        {rightSection}
+      </div>
+    ) : undefined;
 
     return (
       <WithReadOnlyWrapper
@@ -127,6 +144,16 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
             label={undefined}
             error={undefined}
             required={undefined}
+            InputProps={{
+              startAdornment,
+              endAdornment,
+            }}
+            inputProps={{
+              min,
+              max,
+              step,
+              ...(restRecord.inputProps as Record<string, unknown>),
+            }}
             {...(sanitizedProps as unknown as MuiNumberInputProps)}
           />
         }

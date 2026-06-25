@@ -25,6 +25,7 @@ export interface RecursicaDropdownProps
       | "inputProps"
       | "SelectDisplayProps"
       | "ref"
+      | "error"
     >,
     Omit<
       RecursicaFormControlWrapperProps,

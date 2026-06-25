@@ -9,11 +9,15 @@ import styles from "./FormControlWrapper.module.css";
 import { type RecursicaFormControlWrapperProps as BaseRecursicaFormControlWrapperProps } from "@recursica/adapter-common";
 
 export interface RecursicaFormControlWrapperProps
-  extends Omit<FormControlProps, "margin" | "variant" | "size" | "color">,
+  extends Omit<
+      FormControlProps,
+      "margin" | "variant" | "size" | "color" | "error"
+    >,
     BaseRecursicaFormControlWrapperProps {
   overStyled?: boolean;
   label?: React.ReactNode;
   focused?: boolean;
+  error?: React.ReactNode;
 }
 
 export type FormControlWrapperProps = RecursicaFormControlWrapperProps;

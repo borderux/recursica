@@ -21,7 +21,7 @@ import { type RecursicaPanelProps as BaseRecursicaPanelProps } from "@recursica/
 export interface RecursicaPanelProps
   extends Omit<
       MantineDrawerProps,
-      "size" | "styles" | "classNames" | "style" | "position"
+      "size" | "styles" | "classNames" | "style" | "position" | "opened"
     >,
     BaseRecursicaPanelProps {}
 

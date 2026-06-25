@@ -29,11 +29,13 @@ export const TimelineItem = React.forwardRef<HTMLDivElement, TimelineItemProps>(
       overStyled = false,
       timestamp,
       bulletVariant = "default",
+      bullet,
       children,
       ...rest
     },
     ref,
   ) {
+    void bullet;
     const sanitizedProps = filterStylingProps(rest, overStyled);
 
     const mergedClassNames: Partial<Record<string, string>> = {

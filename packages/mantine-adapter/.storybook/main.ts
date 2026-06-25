@@ -1,15 +1,9 @@
 import { createMainConfig } from "@recursica/storybook-template/main";
-import { dirname } from "path";
-import { fileURLToPath } from "url";
 import { createRequire } from "module";
+import { BLOCKED_STYLING_KEYS } from "../src/utils/filterStylingProps.ts";
+import type { PropItem } from "react-docgen-typescript";
 
 const require = createRequire(import.meta.url);
-
-import {
-  BLOCKED_STYLING_KEYS,
-  BlockedStylingKeys,
-} from "../src/utils/filterStylingProps.ts";
-import type { PropItem } from "react-docgen-typescript";
 
 const config = createMainConfig({
   stories: ["../src/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
@@ -29,7 +23,7 @@ config.typescript = {
     propFilter: (prop: PropItem) => {
       // Exclude blocked native variables universally so they vanish from all docs and controls
       if (
-        BLOCKED_STYLING_KEYS.includes(prop.name as BlockedStylingKeys) ||
+        (BLOCKED_STYLING_KEYS as readonly string[]).includes(prop.name) ||
         ["overStyled", "readOnlyComponent"].includes(prop.name)
       ) {
         return false;

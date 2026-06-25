@@ -26,6 +26,7 @@ export interface RecursicaTextAreaProps
       | "maxRows"
       | "minRows"
       | "classes"
+      | "error"
     >,
     Omit<
       RecursicaFormControlWrapperProps,

@@ -35,9 +35,14 @@ import { type RecursicaPopoverProps } from "@recursica/adapter-common";
  * </Popover>
  * ```
  */
-export type PopoverProps = RecursicaOverStyled<
-  MantinePopoverProps & RecursicaPopoverProps
->;
+export type PopoverProps = Omit<
+  RecursicaOverStyled<
+    Omit<MantinePopoverProps, "position"> & RecursicaPopoverProps
+  >,
+  "position"
+> & {
+  position?: MantinePopoverProps["position"];
+};
 
 const PopoverBase = function Popover({
   overStyled = false,

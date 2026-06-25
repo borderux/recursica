@@ -17,4 +17,6 @@ export interface RecursicaContainerProps {
     | RecursicaSpacing
     | (string & {})
     | number;
+  /** Fluid container takes 100% of max-width */
+  fluid?: boolean;
 }

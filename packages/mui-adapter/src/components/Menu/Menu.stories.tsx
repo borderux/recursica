@@ -145,7 +145,7 @@ const InteractiveMenu = ({ children, ...args }: InteractiveMenuProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const open = Boolean(anchorEl) || args.opened;
+  const open = Boolean(anchorEl) || Boolean(args.opened);
 
   useEffect(() => {
     if (args.opened && buttonRef.current) {

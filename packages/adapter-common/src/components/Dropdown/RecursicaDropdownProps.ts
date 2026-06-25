@@ -17,4 +17,6 @@ export interface RecursicaDropdownProps {
   clearable?: boolean;
   /** Marks field with visual asterisk */
   withAsterisk?: boolean;
+  /** Placeholder text when value is empty */
+  placeholder?: string;
 }
