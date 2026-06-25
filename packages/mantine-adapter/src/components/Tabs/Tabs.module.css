@@ -1,6 +1,8 @@
 /* 
   Recursica Tabs CSS module natively binding to Figma variables.
 */
+/* recursica-ignore: --recursica_ui-kit_components_tabs_properties_hover-color */
+/* recursica-ignore: --recursica_ui-kit_components_tabs_properties_hover-opacity */
 
 .root {
   width: 100%;

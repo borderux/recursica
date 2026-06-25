@@ -14,7 +14,12 @@
    ====================================== */
 
 .root {
-  border-style: none; /* HARDCODE: Reset to ensure clean shadow boundaries */
+  border-radius: var(
+    --recursica_ui-kit_components_toast_properties_border-radius
+  );
+  border-width: var(--recursica_ui-kit_components_toast_properties_border-size);
+  border-style: solid;
+  border-color: transparent;
   box-shadow: var(
     --recursica_ui-kit_components_toast_properties_elevation_layer-0
   );

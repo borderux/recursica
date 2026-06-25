@@ -1,9 +1,9 @@
 import { createMainConfig } from "@recursica/storybook-template/main";
-import { join, dirname } from "path";
+import { dirname } from "path";
 import { fileURLToPath } from "url";
+import { createRequire } from "module";
 
-const currentFilename = fileURLToPath(import.meta.url);
-const currentDirname = dirname(currentFilename);
+const require = createRequire(import.meta.url);
 
 import {
   BLOCKED_STYLING_KEYS,
@@ -16,7 +16,9 @@ const config = createMainConfig({
   basePath: "./",
   enableCORS: true,
   enablePostcssVars: true,
-  recursicaCSSPath: join(currentDirname, "../recursica_variables_scoped.css"),
+  recursicaCSSPath: require.resolve(
+    "@recursica/official-release/recursica_variables_scoped.css",
+  ),
 });
 
 config.typescript = {

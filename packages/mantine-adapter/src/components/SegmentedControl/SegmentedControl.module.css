@@ -3,6 +3,7 @@
    - background-color: transparent; on label hover (overriding Mantine)
    - Scope prefix .root to enforce Figma tokens over Mantine's inline calculation without using !important
 */
+/* recursica-ignore: --recursica_ui-kit_components_segmented-control-item_properties_item_border-radius */
 
 .root {
   background-color: var(
