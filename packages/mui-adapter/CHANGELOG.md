@@ -1,5 +1,20 @@
 # @recursica/mui-adapter
 
+## 0.12.0
+
+### Minor Changes
+
+- f4036cf: Updated official release and added Tree component
+
+### Patch Changes
+
+- f45006a: Fixed linting and typescript errors
+- Updated dependencies [f4036cf]
+- Updated dependencies [f4036cf]
+- Updated dependencies [f45006a]
+  - @recursica/official-release@2.2.0
+  - @recursica/adapter-common@0.9.1
+
 ## 0.11.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # @recursica/token-analyzer
 
+## 1.2.0
+
+### Minor Changes
+
+- f4036cf: Updated official release and added Tree component
+
 ## 1.1.0
 
 ### Minor Changes

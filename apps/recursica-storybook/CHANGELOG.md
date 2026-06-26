@@ -1,5 +1,17 @@
 # recursica-storybook
 
+## 0.22.0
+
+### Minor Changes
+
+- f4036cf: Updated official release and added Tree component
+
+### Patch Changes
+
+- Updated dependencies [f4036cf]
+- Updated dependencies [f45006a]
+  - @recursica/mantine-adapter@0.29.0
+
 ## 0.21.0
 
 ### Minor Changes
