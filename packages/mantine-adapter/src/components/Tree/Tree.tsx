@@ -10,7 +10,8 @@ export interface TreeProps extends React.ComponentPropsWithoutRef<"div"> {
  * Placeholder component for Tree (Coming Soon).
  */
 export const Tree = forwardRef<HTMLDivElement, RecursicaOverStyled<TreeProps>>(
-  function Tree({ overStyled = false, className, ...rest }, ref) {
+  function Tree({ overStyled: _overStyled = false, className, ...rest }, ref) {
+    void _overStyled;
     const finalClass = className ? `${styles.root} ${className}` : styles.root;
     return (
       <div ref={ref} className={finalClass} {...rest}>

@@ -9,4 +9,8 @@ export interface RecursicaStackProps {
   children?: React.ReactNode;
   /** Gap space size */
   gap?: string | number | RecursicaSpacing;
+  /** Align-items flexbox property */
+  align?: React.CSSProperties["alignItems"];
+  /** Justify-content flexbox property */
+  justify?: React.CSSProperties["justifyContent"];
 }

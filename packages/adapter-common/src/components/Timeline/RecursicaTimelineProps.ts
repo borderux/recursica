@@ -18,4 +18,6 @@ export interface RecursicaTimelineItemProps {
   timestamp?: React.ReactNode;
   /** Stylistic bullet marker indicator */
   bulletVariant?: "default" | "avatar" | "icon" | "icon-alternative";
+  /** Custom element to render inside the bullet circle */
+  bullet?: React.ReactNode;
 }

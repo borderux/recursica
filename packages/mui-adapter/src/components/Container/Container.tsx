@@ -20,7 +20,7 @@ export type ContainerProps = WithRecursicaSpacing<
 >;
 
 export const Container = forwardRef<HTMLDivElement, ContainerProps>(
-  function Container({ children, size, ...rest }, ref) {
+  function Container({ children, size, fluid, ...rest }, ref) {
     const mapSize: Record<string, "xs" | "sm" | "md" | "lg" | "xl"> = {
       "rec-sm": "sm",
       "rec-default": "md",
@@ -30,8 +30,11 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(
       "rec-2xl": "xl",
     };
 
-    const resolvedSize =
-      typeof size === "string" && mapSize[size] ? mapSize[size] : size;
+    const resolvedSize = fluid
+      ? false
+      : typeof size === "string" && mapSize[size]
+        ? mapSize[size]
+        : size;
 
     return (
       <MUIContainer

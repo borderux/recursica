@@ -17,7 +17,7 @@ export type StackProps = WithRecursicaSpacing<
 >;
 
 export const Stack = forwardRef<HTMLDivElement, StackProps>(function Stack(
-  { children, gap = "rec-default", ...rest },
+  { children, gap = "rec-default", align, justify, ...rest },
   ref,
 ) {
   const safeProps = filterSxProp(rest as Record<string, unknown>);
@@ -27,7 +27,13 @@ export const Stack = forwardRef<HTMLDivElement, StackProps>(function Stack(
       : gap;
 
   return (
-    <MUIStack ref={ref} spacing={resolvedGap} {...safeProps}>
+    <MUIStack
+      ref={ref}
+      spacing={resolvedGap}
+      alignItems={align}
+      justifyContent={justify}
+      {...safeProps}
+    >
       {children}
     </MUIStack>
   );

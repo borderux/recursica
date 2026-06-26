@@ -42,12 +42,6 @@ const meta: Meta<DropdownStoryProps> = {
     clearable: {
       control: "boolean",
     },
-    checked: {
-      table: { disable: true },
-    },
-    defaultChecked: {
-      table: { disable: true },
-    },
     containerWidth: {
       table: { disable: true },
     },

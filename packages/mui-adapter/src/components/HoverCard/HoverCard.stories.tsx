@@ -159,7 +159,7 @@ export const RichContent: Story = {
 
         <HoverCard.Dropdown>
           <Group>
-            <Avatar src={null} alt="User avatar" />
+            <Avatar src={undefined} alt="User avatar" />
             <Stack>
               <Text>Jane Doe</Text>
               <Text>Software Engineer at Recursica</Text>

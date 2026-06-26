@@ -37,6 +37,7 @@ const ChevronIcon = () => (
 const AccordionContext = createContext<{
   value: string | string[] | null;
   onChange: (val: string) => void;
+  chevron?: React.ReactNode;
 } | null>(null);
 
 // ==== ACCORDION CONTAINER ====
@@ -53,6 +54,7 @@ const AccordionBase = forwardRef<HTMLDivElement, AccordionProps>(
       defaultValue,
       onChange,
       multiple = false,
+      chevron,
       children,
       ...rest
     },
@@ -90,7 +92,7 @@ const AccordionBase = forwardRef<HTMLDivElement, AccordionProps>(
 
     return (
       <AccordionContext.Provider
-        value={{ value: activeValue, onChange: handleItemChange }}
+        value={{ value: activeValue, onChange: handleItemChange, chevron }}
       >
         <div
           ref={ref}
@@ -202,15 +204,14 @@ export const AccordionControl = forwardRef<
   const finalClass =
     [styles.control, classNameProp].filter(Boolean).join(" ") || undefined;
 
+  const ctx = useContext(AccordionContext);
+  const resolvedChevron = ctx?.chevron ?? <ChevronIcon />;
+
   return (
     <MuiAccordionSummary
       ref={ref}
       className={finalClass}
-      expandIcon={
-        <span className={styles.chevron}>
-          <ChevronIcon />
-        </span>
-      }
+      expandIcon={<span className={styles.chevron}>{resolvedChevron}</span>}
       {...(sanitizedProps as unknown as MuiAccordionSummaryProps)}
     >
       {leftIcon && (

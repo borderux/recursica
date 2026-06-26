@@ -11,6 +11,7 @@ import styles from "./Checkbox.module.css";
 
 import { FormGroup as MuiFormGroup } from "@mui/material";
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const CheckboxGroupContext = React.createContext<{
   value?: any[];
   onChange?: (event: React.SyntheticEvent, value: any) => void;

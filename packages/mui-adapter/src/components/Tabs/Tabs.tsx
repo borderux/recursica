@@ -24,6 +24,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
     const {
       variant = "default",
       orientation = "horizontal",
+      inverted = false,
       overStyled = false,
       className,
       ...rest
@@ -38,6 +39,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
         className={`${styles.root} ${className || ""}`}
         data-variant={variant}
         data-orientation={orientation}
+        data-inverted={inverted || undefined}
         classes={{
           flexContainer: styles.list,
           indicator: styles.indicator,

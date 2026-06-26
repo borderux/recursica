@@ -48,7 +48,7 @@ const InteractiveStepper = (args: React.ComponentProps<typeof Stepper>) => {
   ];
 
   return (
-    <Flex direction="column" w={600}>
+    <Flex direction="column" style={{ width: 600 }}>
       <Stepper {...args} activeStep={active}>
         {steps.map((step, index) => (
           <Step key={index} completed={active > index}>
@@ -125,7 +125,7 @@ const StressTestStepper = (args: React.ComponentProps<typeof Stepper>) => {
   ];
 
   return (
-    <Flex direction="column" w={600}>
+    <Flex direction="column" style={{ width: 600 }}>
       <Stepper {...args} activeStep={active}>
         {steps.map((step, index) => (
           <Step key={index} completed={active > index}>

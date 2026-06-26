@@ -14,6 +14,8 @@ export interface RecursicaAccordionProps {
   onChange?: (value: string | string[] | null) => void;
   /** Allow multiple panels to be open simultaneously */
   multiple?: boolean;
+  /** Custom chevron icon to replace the default expand/collapse indicator */
+  chevron?: React.ReactNode;
 }
 
 /**

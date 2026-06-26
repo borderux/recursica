@@ -21,8 +21,6 @@ const meta: Meta<typeof NumberInput> = {
       control: "select",
       options: ["small", "default", "large"],
     },
-    checked: { table: { disable: true } },
-    defaultChecked: { table: { disable: true } },
     assistiveWithIcon: { table: { disable: true } },
     labelOptionalText: { table: { disable: true } },
     labelWithEditIcon: { table: { disable: true } },

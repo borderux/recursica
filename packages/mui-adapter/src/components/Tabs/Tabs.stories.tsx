@@ -43,12 +43,12 @@ const InteractiveTabs = (
 ) => {
   const [value, setValue] = useState("gallery");
 
-  const handleChange = (event: React.SyntheticEvent, newValue: string) => {
+  const handleChange = (_event: React.SyntheticEvent, newValue: string) => {
     setValue(newValue);
   };
 
   return (
-    <Flex w={600} h={300}>
+    <Flex style={{ width: 600, height: 300 }}>
       <TabContext value={value}>
         <Tabs onChange={handleChange} {...args}>
           <Tab

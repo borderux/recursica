@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import { IS_DEV, useGlobalOverStyled } from "./overStyledControl";
 
@@ -8,7 +9,6 @@ export function wrapComponent<T>(Component: T): T {
   }
 
   // If not a component, return as is
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if (
     typeof Component !== "function" &&
     !(Component && (Component as any).$$typeof)
@@ -16,13 +16,11 @@ export function wrapComponent<T>(Component: T): T {
     return Component;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const Wrapped = React.forwardRef<any, any>((props, ref) => {
     const { overStyled } = props;
     const isGlobalActive = useGlobalOverStyled();
 
     // Use React.createElement to avoid TypeScript ref assignment mismatch in HOC
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const element = React.createElement(
       Component as any,
       { ...props, ref } as any,
@@ -36,9 +34,7 @@ export function wrapComponent<T>(Component: T): T {
     return element;
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Wrapped.displayName =
     (Component as any).displayName || (Component as any).name || "Component";
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return Wrapped as any;
 }
