@@ -1,5 +1,11 @@
 # @recursica/adapter-common
 
+## 0.9.1
+
+### Patch Changes
+
+- f45006a: Fixed linting and typescript errors
+
 ## 0.9.0
 
 ### Minor Changes
