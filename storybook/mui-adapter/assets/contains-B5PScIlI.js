@@ -1,0 +1,1 @@
+function f(e,t){var r;if(!e||!t)return!1;if(e.contains(t))return!0;const n=(r=t.getRootNode)==null?void 0:r.call(t);if(n&&n instanceof ShadowRoot){let o=t;for(;o;){if(e===o)return!0;o=o.parentNode??o.host??null}}return!1}export{f as c};
