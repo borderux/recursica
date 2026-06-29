@@ -1,5 +1,11 @@
 # @recursica/official-release
 
+## 2.5.0
+
+### Minor Changes
+
+- 35c910c: Fixed postinstall script
+
 ## 2.4.0
 
 ### Minor Changes
