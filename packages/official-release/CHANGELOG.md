@@ -1,5 +1,11 @@
 # @recursica/official-release
 
+## 2.4.0
+
+### Minor Changes
+
+- 67e9d83: Fixed registry in package.json
+
 ## 2.3.0
 
 ### Minor Changes
