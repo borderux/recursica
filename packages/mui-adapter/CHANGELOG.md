@@ -1,5 +1,16 @@
 # @recursica/mui-adapter
 
+## 0.15.0
+
+### Minor Changes
+
+- e0f2fc5: Update to latest official version
+
+### Patch Changes
+
+- Updated dependencies [e0f2fc5]
+  - @recursica/official-release@2.6.0
+
 ## 0.14.0
 
 ### Minor Changes

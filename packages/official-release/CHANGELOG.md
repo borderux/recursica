@@ -1,5 +1,11 @@
 # @recursica/official-release
 
+## 2.6.0
+
+### Minor Changes
+
+- e0f2fc5: Update to latest official version
+
 ## 2.5.0
 
 ### Minor Changes
