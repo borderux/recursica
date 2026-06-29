@@ -1,5 +1,11 @@
 # @recursica/token-analyzer
 
+## 1.3.0
+
+### Minor Changes
+
+- c7051d2: Fixed official release and rev'd all package
+
 ## 1.2.0
 
 ### Minor Changes

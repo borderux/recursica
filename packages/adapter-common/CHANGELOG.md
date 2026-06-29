@@ -1,5 +1,11 @@
 # @recursica/adapter-common
 
+## 0.10.0
+
+### Minor Changes
+
+- c7051d2: Fixed official release and rev'd all package
+
 ## 0.9.1
 
 ### Patch Changes
