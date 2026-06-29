@@ -1,5 +1,11 @@
 # @recursica/official-release
 
+## 2.3.0
+
+### Minor Changes
+
+- c7051d2: Fixed official release and rev'd all package
+
 ## 2.2.0
 
 ### Minor Changes

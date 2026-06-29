@@ -1,5 +1,17 @@
 # @recursica/mui-adapter
 
+## 0.13.0
+
+### Minor Changes
+
+- c7051d2: Fixed official release and rev'd all package
+
+### Patch Changes
+
+- Updated dependencies [c7051d2]
+  - @recursica/adapter-common@0.10.0
+  - @recursica/official-release@2.3.0
+
 ## 0.12.0
 
 ### Minor Changes
