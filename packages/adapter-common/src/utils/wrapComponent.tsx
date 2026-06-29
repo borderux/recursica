@@ -36,5 +36,24 @@ export function wrapComponent<T>(Component: T): T {
 
   Wrapped.displayName =
     (Component as any).displayName || (Component as any).name || "Component";
+
+  // Preserve compound component static properties (namespaces)
+  // and wrap any component/sub-component properties recursively
+  const keys = Object.keys(Component as any);
+  for (const key of keys) {
+    if (key === "render" || key === "$$typeof") {
+      continue;
+    }
+    const value = (Component as any)[key];
+    if (
+      (typeof value === "function" || (value && (value as any).$$typeof)) &&
+      key[0] === key[0].toUpperCase()
+    ) {
+      (Wrapped as any)[key] = wrapComponent(value);
+    } else {
+      (Wrapped as any)[key] = value;
+    }
+  }
+
   return Wrapped as any;
 }
