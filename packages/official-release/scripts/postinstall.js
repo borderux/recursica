@@ -29,7 +29,7 @@ function findHostProjectRoot(startDir) {
 function run() {
   try {
     const packageDir = path.resolve(__dirname, "..");
-    const hostRoot = findHostProjectRoot(packageDir);
+    const hostRoot = process.env.INIT_CWD || findHostProjectRoot(packageDir);
 
     if (!hostRoot) {
       console.warn(
