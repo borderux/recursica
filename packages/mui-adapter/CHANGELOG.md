@@ -1,5 +1,11 @@
 # @recursica/mui-adapter
 
+## 0.14.0
+
+### Minor Changes
+
+- 584208e: Updated official release
+
 ## 0.13.0
 
 ### Minor Changes
