@@ -1,5 +1,11 @@
 # @recursica/publisher
 
+## 0.23.1
+
+### Patch Changes
+
+- 51889e7: Fixed auth issues on publish
+
 ## 0.23.0
 
 ### Minor Changes
