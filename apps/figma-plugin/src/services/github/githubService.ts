@@ -409,11 +409,15 @@ export class GitHubService {
       { pageName: string; publishNewVersion: boolean; newVersion: number }
     >,
   ): Promise<{ branch: string; pr: GitHubPullRequest }> {
+    // Get current user to include in branch name for uniqueness across users
+    const user = await this.getUser();
+    const sanitizedUser = this.sanitizeBranchName(user.login);
+
     // Sanitize page name for branch naming
     const sanitizedPageName = this.sanitizeBranchName(exportData.pageName);
-    const baseBranchName = `publishing/${sanitizedPageName}`;
+    const baseBranchName = `publishing/${sanitizedUser}/${sanitizedPageName}`;
 
-    // Find unique branch name
+    // Find unique branch name (handles collisions for the same user)
     const branchName = await this.findUniqueBranchName(
       owner,
       repo,

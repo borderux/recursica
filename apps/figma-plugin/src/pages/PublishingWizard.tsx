@@ -40,8 +40,15 @@ interface PagePublishDecision {
 
 export default function PublishingWizard() {
   const location = useLocation();
+  const { isAuthenticated, accessToken, hasWriteAccess } = useAuth();
   const navigate = useNavigate();
-  const { accessToken } = useAuth();
+
+  // Check write access on mount
+  useEffect(() => {
+    if (isAuthenticated && accessToken && hasWriteAccess === false) {
+      navigate("/publish/unauthorized", { replace: true });
+    }
+  }, [isAuthenticated, accessToken, hasWriteAccess, navigate]);
   const [wizardStep, setWizardStep] = useState<WizardStep>("initial");
   const [currentComponentIndex, setCurrentComponentIndex] = useState(0);
   const [pageDecisions, setPageDecisions] = useState<

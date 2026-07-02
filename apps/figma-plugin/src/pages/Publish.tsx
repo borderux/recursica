@@ -20,8 +20,8 @@ export default function Publish() {
   >(null);
   const [indexJsonError, setIndexJsonError] = useState<string | null>(null);
   const [loadingIndexJson, setLoadingIndexJson] = useState(false);
+  const { isAuthenticated, accessToken, hasWriteAccess } = useAuth();
   const navigate = useNavigate();
-  const { isAuthenticated, accessToken } = useAuth();
 
   // Check authentication on mount
   useEffect(() => {
@@ -29,6 +29,13 @@ export default function Publish() {
       navigate("/publish/auth", { replace: true });
     }
   }, [isAuthenticated, accessToken, navigate]);
+
+  // Check write access on mount
+  useEffect(() => {
+    if (isAuthenticated && accessToken && hasWriteAccess === false) {
+      navigate("/publish/unauthorized", { replace: true });
+    }
+  }, [isAuthenticated, accessToken, hasWriteAccess, navigate]);
 
   useEffect(() => {
     const loadMetadata = async () => {
