@@ -1,5 +1,11 @@
 # @recursica/mcp
 
+## 0.5.0
+
+### Minor Changes
+
+- db7701f: Updated layout of docs and mcp
+
 ## 0.4.0
 
 ### Minor Changes
