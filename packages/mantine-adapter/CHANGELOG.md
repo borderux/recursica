@@ -1,5 +1,11 @@
 # @recursica/mantine-adapter
 
+## 0.33.0
+
+### Minor Changes
+
+- db7701f: Updated layout of docs and mcp
+
 ## 0.32.0
 
 ### Minor Changes

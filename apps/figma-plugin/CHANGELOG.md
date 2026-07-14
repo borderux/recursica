@@ -1,5 +1,11 @@
 # @recursica/publisher
 
+## 0.24.0
+
+### Minor Changes
+
+- 095c66b: Fixed auth issues and plugin version
+
 ## 0.23.1
 
 ### Patch Changes
