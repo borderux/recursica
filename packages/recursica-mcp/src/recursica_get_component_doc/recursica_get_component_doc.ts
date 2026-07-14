@@ -6,6 +6,7 @@ import {
   getKnowledgeComponentsDir,
   detectAdapterAndUiKit,
   getCleanAdapterName,
+  getMissingAdapterErrorMessage,
 } from "../common/utils.js";
 import { getUnsupportedComponentMessage } from "./unsupported_component_message.js";
 
@@ -18,12 +19,12 @@ export const recursica_get_component_doc: Command = {
       componentName: {
         type: "string",
         description:
-          "Name of the component (e.g. 'Accordion', 'Button', 'Stack', 'TextField'). Case-insensitive.",
+          "The name of the component (e.g. 'Button', 'TextInput', 'Modal', 'Card', 'Badge', etc.) as defined in our design system component guidelines. Case-insensitive.",
       },
       adapter: {
         type: "string",
         description:
-          "Optional filter for a specific adapter (e.g. 'mantine' or 'mui'). If omitted, auto-detects the active adapter in the user's project.",
+          "Optional specific adapter to return usage for (e.g. 'mui' or 'mantine'). If omitted, we will attempt to automatically detect which adapter is installed in the active project.",
       },
     },
     required: ["componentName"],
@@ -43,7 +44,7 @@ export const recursica_get_component_doc: Command = {
           content: [
             {
               type: "text",
-              text: `❌ Error: The specified adapter "${filterAdapter}" is not installed or active in your project.\n\nPlease run the tool **\`recursica_project_setup\`** to configure your project, install the design system adapter, and set up variables correctly.`,
+              text: getMissingAdapterErrorMessage(process.cwd(), filterAdapter),
             },
           ],
           isError: true,
@@ -61,7 +62,7 @@ export const recursica_get_component_doc: Command = {
           content: [
             {
               type: "text",
-              text: `❌ Error: No active Recursica adapter (e.g. '@recursica/mui-adapter' or '@recursica/mantine-adapter') was detected as installed in your project.\n\nPlease run the tool **\`recursica_project_setup\`** to configure your project, install the design system adapter, and set up variables correctly.`,
+              text: getMissingAdapterErrorMessage(process.cwd()),
             },
           ],
           isError: true,
