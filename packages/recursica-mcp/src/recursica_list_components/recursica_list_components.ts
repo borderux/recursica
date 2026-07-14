@@ -1,12 +1,12 @@
 import path from "path";
 import fs from "fs";
-import { fileURLToPath } from "url";
 import { Command } from "../common/types.js";
 import { description } from "./description.js";
 import { components_directory_header } from "./components_directory_header.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import {
+  getKnowledgeComponentsDir,
+  extractBriefDescription,
+} from "../common/utils.js";
 
 export const recursica_list_components: Command = {
   name: "recursica_list_components",
@@ -52,25 +52,38 @@ export const recursica_list_components: Command = {
       }
     }
 
-    const componentsDir = path.join(__dirname, "components");
-
-    if (!fs.existsSync(componentsDir)) {
+    let componentsDir: string;
+    try {
+      componentsDir = getKnowledgeComponentsDir();
+    } catch (e: any) {
       return {
         content: [
           {
             type: "text",
-            text: `❌ Internal Error: The static components directory could not be resolved at: ${componentsDir}. Please ensure the build completed successfully.`,
+            text: `❌ Internal Error: ${e.message}`,
           },
         ],
         isError: true,
       };
     }
 
-    const mdFiles = fs
-      .readdirSync(componentsDir)
-      .filter((f) => f.endsWith(".md"));
+    if (!fs.existsSync(componentsDir)) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `❌ Internal Error: The components directory could not be resolved at: ${componentsDir}. Please ensure @recursica/knowledge is installed successfully.`,
+          },
+        ],
+        isError: true,
+      };
+    }
 
-    if (mdFiles.length === 0) {
+    const componentDirs = fs
+      .readdirSync(componentsDir, { withFileTypes: true })
+      .filter((ent) => ent.isDirectory());
+
+    if (componentDirs.length === 0) {
       return {
         content: [
           {
@@ -85,18 +98,28 @@ export const recursica_list_components: Command = {
 
     if (matchedAdapter) {
       output += `## 📦 Active Adapter: **\`@recursica/${matchedAdapter.dirName}\`**\n`;
-      output += `*To get detailed TypeScript interfaces and properties for any component below, run tool **\`recursica_get_component_doc\`** with \`componentName: "[Component]"\`.*\n\n`;
     }
+    output += `*To get detailed design specifications, guidelines, and exact TypeScript properties for any component below, run tool **\`recursica_get_component_doc\`** with \`componentName: "[Component]"\`.*\n\n`;
 
     output += `---\n\n`;
 
-    for (const file of mdFiles) {
-      const filePath = path.join(componentsDir, file);
+    for (const dir of componentDirs) {
+      const filePath = path.join(componentsDir, dir.name, "DOCS.md");
+      if (!fs.existsSync(filePath)) {
+        output += `- **${dir.name}**\n`;
+        continue;
+      }
+
       try {
         const fileContent = fs.readFileSync(filePath, "utf-8");
-        output += fileContent + "\n\n---\n\n";
+        const briefDesc = extractBriefDescription(fileContent);
+        if (briefDesc) {
+          output += `- **${dir.name}**: ${briefDesc}\n`;
+        } else {
+          output += `- **${dir.name}**\n`;
+        }
       } catch (e: any) {
-        // Ignore read errors for individual files in production and continue
+        output += `- **${dir.name}**\n`;
       }
     }
 

@@ -31,7 +31,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.4.0"
+    "@modelcontextprotocol/sdk": "^1.4.0",
+    "@recursica/knowledge": "^0.3.0"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

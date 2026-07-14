@@ -2,6 +2,7 @@ import path from "path";
 import fs from "fs";
 import { Command } from "../common/types.js";
 import { description } from "./description.js";
+import { getKnowledgeComponentsDir } from "../common/utils.js";
 
 export const recursica_get_component_doc: Command = {
   name: "recursica_get_component_doc",
@@ -35,8 +36,49 @@ export const recursica_get_component_doc: Command = {
     }
 
     let foundDocs = false;
-    let output = `# Component Documentation: \`<${compNameInput}>\`\n\n`;
+    let output = `# Component Documentation: \`${compNameInput}\`\n\n`;
 
+    // 1. Resolve and read the general design specification from @recursica/knowledge
+    try {
+      const knowledgeDir = getKnowledgeComponentsDir();
+      if (fs.existsSync(knowledgeDir)) {
+        const folders = fs.readdirSync(knowledgeDir);
+        const matchedFolder = folders.find(
+          (f) => f.toLowerCase() === compNameInput.toLowerCase(),
+        );
+
+        if (matchedFolder) {
+          foundDocs = true;
+          const filePath = path.join(knowledgeDir, matchedFolder, "DOCS.md");
+          if (fs.existsSync(filePath)) {
+            try {
+              let fileContent = fs.readFileSync(filePath, "utf-8");
+              if (fileContent.startsWith("---")) {
+                const nextSeparator = fileContent.indexOf("---", 3);
+                if (nextSeparator !== -1) {
+                  fileContent = fileContent.substring(nextSeparator + 3).trim();
+                }
+              }
+              output += `## 🎨 Design Specification & Guidelines\n\n${fileContent}\n\n---\n\n`;
+            } catch (e: any) {
+              // Ignore individual read errors
+            }
+          }
+        }
+      }
+    } catch (e: any) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `❌ Internal Error: ${e.message}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+
+    // 2. Read adapter-specific implementation details
     for (const adapter of selectedAdapters) {
       const componentsDir = path.join(adapter.absPath, "src", "components");
       if (!fs.existsSync(componentsDir)) continue;
@@ -51,44 +93,39 @@ export const recursica_get_component_doc: Command = {
         foundDocs = true;
         const compDir = path.join(componentsDir, matchedFolder);
 
-        output += `## 📦 ${adapter.name.toUpperCase()} Adapter Implementation\n`;
-        output += `- **Import Path**: \`import { ${matchedFolder} } from "@recursica/${adapter.dirName}";\`\n`;
-        output += `- **Local Directory**: \`${compDir}\`\n\n`;
+        output += `## 📦 ${adapter.name.toUpperCase()} Adapter Integration\n\n`;
+        output += `### 📥 Import Path\n`;
+        output +=
+          "```typescript\n" +
+          `import { ${matchedFolder} } from "@recursica/${adapter.dirName}";` +
+          "\n```\n\n";
 
-        // 1. Read Implementation Notes Markdown Files
+        // Read Implementation Notes Markdown Files
         const mdFiles = fs
           .readdirSync(compDir)
           .filter((f) => f.endsWith(".md") && f.includes("IMPLEMENTATION"));
 
         if (mdFiles.length > 0) {
-          output += `### Implementation notes & usage design rules:\n\n`;
+          output += `### 📝 Implementation Notes & Usage Design Rules\n\n`;
           for (const mdFile of mdFiles) {
-            const mdContent = fs.readFileSync(
-              path.join(compDir, mdFile),
-              "utf-8",
-            );
-            output += mdContent + "\n\n";
+            try {
+              const mdContent = fs.readFileSync(
+                path.join(compDir, mdFile),
+                "utf-8",
+              );
+              output += mdContent + "\n\n";
+            } catch (e: any) {
+              // Ignore individual read errors
+            }
           }
-        } else {
-          output += `*⚠️ No detailed IMPLEMENTATION_NOTES.md found in the component folder.*\n\n`;
         }
 
-        // 2. Read first 150 lines of .tsx source code to expose exact TypeScript interfaces & props
-        const tsxFile = path.join(compDir, `${matchedFolder}.tsx`);
-        if (fs.existsSync(tsxFile)) {
-          output += `### TypeScript Component Signature & Properties:\n`;
-          output += `Here is the TypeScript definition extracted directly from the component source code to view the exact interfaces:\n\n`;
-
-          const codeLines = fs.readFileSync(tsxFile, "utf-8").split("\n");
-          const limit = Math.min(codeLines.length, 150);
-          const previewCode = codeLines.slice(0, limit).join("\n");
-
-          output += "```tsx\n" + previewCode + "\n";
-          if (codeLines.length > 150) {
-            output += `// ... [truncated ${codeLines.length - 150} lines of inner rendering logic] ...\n`;
-          }
-          output += "```\n\n";
-        }
+        output += `### 💻 Example Usage\n`;
+        output +=
+          "```tsx\n" +
+          `import React from 'react';\nimport { ${matchedFolder} } from "@recursica/${adapter.dirName}";\n\nexport default function Example() {\n  return (\n    <${matchedFolder}>\n      {/* Add component children and properties here */}\n    </${matchedFolder}>\n  );\n}` +
+          "\n```\n\n";
+        output += `- *Tip for AI: You can easily inspect the exact TypeScript properties and definitions inside your project's \`node_modules/@recursica/${adapter.dirName}\` directory as needed.*\n\n`;
         output += `---\n\n`;
       }
     }
@@ -98,7 +135,7 @@ export const recursica_get_component_doc: Command = {
         content: [
           {
             type: "text",
-            text: `❌ Component "<${compNameInput}>" was not found in any active adapters (${selectedAdapters
+            text: `❌ Component "${compNameInput}" was not found in the design specifications or active adapters (${selectedAdapters
               .map((a) => a.name)
               .join(", ")}).`,
           },

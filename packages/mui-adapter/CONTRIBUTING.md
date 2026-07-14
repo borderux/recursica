@@ -21,7 +21,8 @@ If you are tasked with building, modifying, or reviewing components **inside** t
 1. **Core Philosophy:** Read `docs/PHILOSOPHY.md` to understand why we aggressively block arbitrary styling, how we use the `overStyled` property, and why we never modify MUI natively.
 2. **Component Implementation:** Read `docs/COMPONENT_DEV_GUIDE.md` for the exact rules on structuring scoped CSS, filtering styling props, and building naked component wrappers. **Do not duplicate those rules here; follow them directly from the guide.**
 3. **Storybook Requirements:** Read `docs/COMPONENT_STORYBOOK_GUIDE.md`. **Rule:** You must implement a Storybook story for every new component or variant you build. Verification is required.
-4. **Implementation Notes:** Every component MUST have its own `[COMPONENT]_IMPLEMENTATION_NOTES.md` living within its component folder (e.g., `src/components/Button/IMPLEMENTATION_NOTES.md`). You must update this file documenting exactly _why_ specific layout hacks or logic decisions were made.
+4. **Public Usage Documentation:** Every component MUST have a `USAGE.md` file living within its component folder (e.g., `src/components/Button/USAGE.md`) that documents how to import and use the component, highlighting any adapter-specific behaviors, layout constraints, and accessibility requirements. This is the main public integration reference.
+5. **Internal Implementation Notes:** Every component MUST have its own `[COMPONENT]_IMPLEMENTATION_NOTES.md` file (or `IMPLEMENTATION_NOTES.md`) living within its component folder (e.g., `src/components/Button/IMPLEMENTATION_NOTES.md` or `BUTTON_IMPLEMENTATION_NOTES.md`) to document internal engineering decisions, layout hacks, and CSS workarounds. This file is for internal technical tracking and is not publicly consumable.
 
 ## How Can I Contribute?
 

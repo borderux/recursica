@@ -1,6 +1,7 @@
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
+import { createRequire } from "module";
 import { AdapterInfo } from "./types.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -200,4 +201,58 @@ export function detectAdapterAndUiKit(
     targetAdapter,
     isInstalled,
   };
+}
+
+/**
+ * Resolves the absolute path to the `@recursica/knowledge` components directory.
+ * Throws an error if the package cannot be resolved.
+ */
+export function getKnowledgeComponentsDir(): string {
+  try {
+    const require = createRequire(import.meta.url);
+    const pkgJsonPath = require.resolve("@recursica/knowledge/package.json");
+    return path.join(path.dirname(pkgJsonPath), "docs", "components");
+  } catch (error: any) {
+    throw new Error(
+      `Failed to resolve @recursica/knowledge package path: ${error?.message || error}`,
+    );
+  }
+}
+
+/**
+ * Extracts the bold introductory description from DOCS.md content.
+ */
+export function extractBriefDescription(content: string): string {
+  let cleanContent = content;
+  if (content.startsWith("---")) {
+    const nextSeparator = content.indexOf("---", 3);
+    if (nextSeparator !== -1) {
+      cleanContent = content.substring(nextSeparator + 3);
+    }
+  }
+
+  const lines = cleanContent.split("\n");
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("**") && trimmed.endsWith("**")) {
+      return trimmed.slice(2, -2).trim();
+    }
+  }
+
+  // Fallback: first non-empty line that isn't a header or list item
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (
+      trimmed &&
+      !trimmed.startsWith("#") &&
+      !trimmed.startsWith("-") &&
+      !trimmed.startsWith("*") &&
+      !trimmed.startsWith("<") &&
+      !trimmed.startsWith(">")
+    ) {
+      return trimmed;
+    }
+  }
+
+  return "";
 }
