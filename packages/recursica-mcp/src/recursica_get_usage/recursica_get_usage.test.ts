@@ -91,4 +91,46 @@ describe("recursica_get_usage", () => {
     expect(result.content[0].text).toContain("Importing Components");
     expect(result.content[0].text).not.toContain("Setup and Integration");
   });
+
+  it("should return guidelines when ui-kit is explicitly specified even if not in package dependencies", async () => {
+    const mockPkgPath = path.resolve("./package.json");
+    const mockLlmsPath = path.resolve(
+      "/Users/mock/recursica/packages/mantine-adapter/llms.txt",
+    );
+    const mockUsagePath = path.resolve(
+      "/Users/mock/recursica/packages/mantine-adapter/USAGE.md",
+    );
+
+    vi.spyOn(fs, "existsSync").mockImplementation((p) => {
+      if (p === mockPkgPath) return true;
+      if (p === mockLlmsPath) return true;
+      if (p === mockUsagePath) return true;
+      return false;
+    });
+
+    vi.spyOn(fs, "readFileSync").mockImplementation((p, options) => {
+      if (p === mockPkgPath) {
+        // Return empty dependencies to simulate not installed
+        return JSON.stringify({ dependencies: {} });
+      }
+      if (p === mockLlmsPath) {
+        return "Mantine Adapter LLM Docs";
+      }
+      if (p === mockUsagePath) {
+        return "## 1. Setup and Integration\nSetup details\n## 2. Importing Components\nImport details";
+      }
+      return actualFs.readFileSync(p, options);
+    });
+
+    const result = await recursica_get_usage.handler(
+      { "ui-kit": "mantine" },
+      mockContext,
+    );
+
+    expect(result.content[0].text).toContain("MANTINE Adapter Guidelines");
+    expect(result.content[0].text).toContain("Mantine Adapter LLM Docs");
+    expect(result.content[0].text).not.toContain(
+      "No active Recursica Adapter detected",
+    );
+  });
 });

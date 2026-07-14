@@ -33,7 +33,10 @@ export const recursica_get_usage: Command = {
       ? getCleanAdapterName(explicitUiKit)
       : targetAdapter;
 
-    if (!target || !isInstalled) {
+    // If explicit UI kit is specified, we override the installation check.
+    // Otherwise, we require the adapter to be detected and installed in project dependencies.
+    const shouldCheckInstallation = !explicitUiKit;
+    if (!target || (shouldCheckInstallation && !isInstalled)) {
       return {
         content: [{ type: "text", text: missing_adapter_message }],
       };
