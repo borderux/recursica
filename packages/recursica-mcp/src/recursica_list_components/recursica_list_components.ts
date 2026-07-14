@@ -6,6 +6,7 @@ import { components_directory_header } from "./components_directory_header.js";
 import {
   getKnowledgeComponentsDir,
   extractBriefDescription,
+  getMissingAdapterErrorMessage,
 } from "../common/utils.js";
 
 export const recursica_list_components: Command = {
@@ -42,9 +43,7 @@ export const recursica_list_components: Command = {
           content: [
             {
               type: "text",
-              text: `❌ Adapter "${filterAdapter}" was not found. Active adapters: ${allAdapters
-                .map((a) => a.name)
-                .join(", ")}`,
+              text: getMissingAdapterErrorMessage(process.cwd(), filterAdapter),
             },
           ],
           isError: true,
@@ -60,7 +59,7 @@ export const recursica_list_components: Command = {
         content: [
           {
             type: "text",
-            text: `❌ Internal Error: ${e.message}`,
+            text: `❌ Internal Error: ${e.message}.\n\n*Please ensure that the "cwd" parameter of your MCP client's configuration is set to your active project root so that packages can be resolved correctly.*`,
           },
         ],
         isError: true,
@@ -72,7 +71,7 @@ export const recursica_list_components: Command = {
         content: [
           {
             type: "text",
-            text: `❌ Internal Error: The components directory could not be resolved at: ${componentsDir}. Please ensure @recursica/knowledge is installed successfully.`,
+            text: `❌ Internal Error: The components directory could not be resolved at: ${componentsDir}.\n\n*Please ensure that the "cwd" parameter of your MCP client's configuration is set to your active project root directory (which has Recursica dependencies installed).*`,
           },
         ],
         isError: true,

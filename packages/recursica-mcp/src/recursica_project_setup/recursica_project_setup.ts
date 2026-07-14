@@ -4,7 +4,11 @@ import { Command } from "../common/types.js";
 import { description } from "./description.js";
 import { setup_status } from "./setup_status.js";
 import { missing_kit_message } from "./missing_kit_message.js";
-import { detectAdapterAndUiKit, getCleanAdapterName } from "../common/utils.js";
+import {
+  detectAdapterAndUiKit,
+  getCleanAdapterName,
+  getMissingAdapterErrorMessage,
+} from "../common/utils.js";
 
 export const recursica_project_setup: Command = {
   name: "recursica_project_setup",
@@ -45,9 +49,7 @@ export const recursica_project_setup: Command = {
           content: [
             {
               type: "text",
-              text: `❌ Adapter "${targetAdapter}" was not found. Active adapters in the workspace: ${allAdapters
-                .map((a) => a.name)
-                .join(", ")}`,
+              text: getMissingAdapterErrorMessage(startPath, targetAdapter),
             },
           ],
           isError: true,
