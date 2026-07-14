@@ -5,7 +5,7 @@ If you are an AI agent building components:
 1. You are forbidden from modifying native Mantine source code or injecting system styles directly (no `style={{}}` for design tokens).
 2. All style overrides must be done via `{ComponentName}.module.css` scoped to `.root`.
 3. You must use native CSS variables derived from `recursica_variables_scoped.css`.
-4. You must document any necessary HTML layout hooks in a `{COMPONENT}_IMPLEMENTATION_NOTES.md` file.
+4. You must document integration and usage details in a `USAGE.md` file, and internal technical layout hooks in a `{COMPONENT}_IMPLEMENTATION_NOTES.md` file.
 5. You are strictly FORBIDDEN from using CSS variable fallbacks (e.g. `var(--variable-name, fallback-value)`) in `module.css` files.
    </critical_agent_directive>
 
@@ -120,9 +120,14 @@ Do not use plain `.css` for component overrides, and do not use `.css.ts` with `
 
 ## 8. Files per library implementation
 
-- **Required:** `{ComponentName}.tsx` and `{ComponentName}.module.css`. No `.css.ts`, no separate plain `.css` for overrides.
-- **Optional:** `index.ts` to re-export the component and props type; an audit or doc file (e.g. `Button.mantine.audit.md`) for documentation only.
-- **Implementation notes (Living Document):** You MUST systematically create an `{COMPONENT}_IMPLEMENTATION_NOTES.md` file in the component folder (e.g. `BUTTON_IMPLEMENTATION_NOTES.md`) when you build _any_ new component that requires custom logical layouts or CSS workarounds. Crucially, **keep this file updated as a living document**. As we discover edge cases (e.g. accessibility tweaks, truncation hacks, flex-gap resets) and deploy bug fixes, this document must act as the ultimate source of truth tracking exactly _why_ those fixes exist so future maintainers don't accidentally erase them while refactoring.
+- **Required:**
+  - `{ComponentName}.tsx` and `{ComponentName}.module.css` (No `.css.ts`, no separate plain `.css` for overrides).
+  - `USAGE.md` (Documents how to integrate the component into project code, standard usage examples, and adapter-specific integration details. This is publicly consumable documentation for developers integrating the component).
+- **Optional:**
+  - `index.ts` to re-export the component and props type.
+  - An audit or doc file (e.g. `Button.mantine.audit.md`) for documentation only.
+- **Implementation notes (Living Document - Internal Only):**
+  - You MUST systematically create an `{COMPONENT}_IMPLEMENTATION_NOTES.md` file (or `IMPLEMENTATION_NOTES.md`) in the component folder (e.g., `BUTTON_IMPLEMENTATION_NOTES.md`) when you build _any_ new component that requires custom logical layouts or CSS workarounds. This document is intended as internal notes on the implementation details (why specific layout hacks, accessibility tweaks, truncation hacks, or logic decisions were made) to structurally track why component logic diverges from standard library behavior. This is NOT publicly consumable or user-facing documentation. Keep this file updated as a living document.
 
 ---
 
@@ -146,7 +151,8 @@ Do not use plain `.css` for component overrides, and do not use `.css.ts` with `
 - [ ] No design tokens via props; no `useEffect`/state for token-driven styling (except one documented exception if needed).
 - [ ] displayName and JSDoc set; icon-only / unlabeled usage documented (e.g. aria-label).
 - [ ] Toolbar integration test and any required toolbar/sidebar config added.
-- [ ] Component-specific decisions, edge-cases, and ongoing design-system layout fixes are meticulously documented in a living `{COMPONENT}_IMPLEMENTATION_NOTES.md` file (e.g. `BUTTON_IMPLEMENTATION_NOTES.md`) to structurally track _why_ the component logic diverges from standard library behavior.
+- [ ] Component usage, integration details, and standard import and React usage examples are documented in a public-facing `USAGE.md` file.
+- [ ] Component-specific decisions, edge-cases, and ongoing design-system layout fixes are meticulously documented in an internal living `{COMPONENT}_IMPLEMENTATION_NOTES.md` file (e.g. `BUTTON_IMPLEMENTATION_NOTES.md`) to structurally track _why_ the component logic diverges from standard library behavior.
 
 ---
 

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { recursica_list_components } from "./recursica_list_components.js";
 import fs from "fs";
 import path from "path";
+import * as utils from "../common/utils.js";
 
 vi.mock("fs", async () => {
   const actual = await vi.importActual<typeof import("fs")>("fs");
@@ -34,10 +35,10 @@ describe("recursica_list_components", () => {
   });
 
   it("should fail gracefully if components directory does not exist", async () => {
-    vi.spyOn(fs, "existsSync").mockImplementation((p) => {
-      if (p.toString().includes("components_directory_header.md")) return true;
-      return false;
-    });
+    vi.spyOn(utils, "getKnowledgeComponentsDir").mockReturnValue(
+      "/mock/knowledge/components",
+    );
+    vi.spyOn(fs, "existsSync").mockReturnValue(false);
 
     const result = await recursica_list_components.handler({}, mockContext);
 
@@ -45,23 +46,23 @@ describe("recursica_list_components", () => {
     expect(result.content[0].text).toContain("Internal Error");
   });
 
-  it("should load and consolidate all documented markdown components", async () => {
-    vi.spyOn(fs, "existsSync").mockImplementation((p) => {
-      if (p.toString().includes("components_directory_header.md")) return true;
-      return true;
-    });
+  it("should load and consolidate all documented components with brief descriptions", async () => {
+    vi.spyOn(utils, "getKnowledgeComponentsDir").mockReturnValue(
+      "/mock/knowledge/components",
+    );
+    vi.spyOn(fs, "existsSync").mockReturnValue(true);
     vi.spyOn(fs, "readdirSync").mockReturnValue([
-      "Accordion.md" as any,
-      "Modal.md" as any,
+      { name: "Accordion", isDirectory: () => true } as any,
+      { name: "Modal", isDirectory: () => true } as any,
     ]);
 
     vi.spyOn(fs, "readFileSync").mockImplementation((p, options) => {
-      const filename = path.basename(p as string);
-      if (filename === "Accordion.md") {
-        return "# Accordion\nAlternate Names: collapse\nSimple collapsible list.";
+      const filename = (p as string).replace(/\\/g, "/");
+      if (filename.includes("Accordion/DOCS.md")) {
+        return "# Accordion\n\n**Simple collapsible list.**";
       }
-      if (filename === "Modal.md") {
-        return "# Modal\nAlternate Names: popup\nOverlay blocking window.";
+      if (filename.includes("Modal/DOCS.md")) {
+        return "# Modal\n\n**Overlay blocking window.**";
       }
       return actualFs.readFileSync(p, options);
     });
@@ -69,17 +70,26 @@ describe("recursica_list_components", () => {
     const result = await recursica_list_components.handler({}, mockContext);
 
     expect(result.isError).toBeUndefined();
-    expect(result.content[0].text).toContain("Recursica Components Directory");
-    expect(result.content[0].text).toContain("# Accordion");
-    expect(result.content[0].text).toContain("Alternate Names: collapse");
-    expect(result.content[0].text).toContain("# Modal");
-    expect(result.content[0].text).toContain("Alternate Names: popup");
+    expect(result.content[0].text).toContain("Recursica Components List");
+    expect(result.content[0].text).toContain(
+      "- **Accordion**: Simple collapsible list.",
+    );
+    expect(result.content[0].text).toContain(
+      "- **Modal**: Overlay blocking window.",
+    );
   });
 
   it("should display adapter metadata details when filter is applied", async () => {
+    vi.spyOn(utils, "getKnowledgeComponentsDir").mockReturnValue(
+      "/mock/knowledge/components",
+    );
     vi.spyOn(fs, "existsSync").mockReturnValue(true);
-    vi.spyOn(fs, "readdirSync").mockReturnValue(["Accordion.md" as any]);
-    vi.spyOn(fs, "readFileSync").mockReturnValue("# Accordion\nDescription");
+    vi.spyOn(fs, "readdirSync").mockReturnValue([
+      { name: "Accordion", isDirectory: () => true } as any,
+    ]);
+    vi.spyOn(fs, "readFileSync").mockReturnValue(
+      "# Accordion\n\n**Description**",
+    );
 
     const result = await recursica_list_components.handler(
       { adapter: "mantine" },

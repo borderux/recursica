@@ -1,6 +1,7 @@
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
+import { createRequire } from "module";
 import { AdapterInfo } from "./types.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -36,28 +37,75 @@ export function getRecursicaRoot(): string {
 }
 
 /**
- * Scans the packages directory to find all active UI adapters.
+ * Scans the packages directory to find all active UI adapters, or falls back to resolving
+ * them dynamically via node_modules if running outside the monorepo context.
  */
 export function getActiveAdapters(root: string): AdapterInfo[] {
-  const packagesDir = path.join(root, "packages");
-  if (!fs.existsSync(packagesDir)) {
-    return [];
-  }
-
-  const entries = fs.readdirSync(packagesDir, { withFileTypes: true });
   const adapters: AdapterInfo[] = [];
 
-  for (const entry of entries) {
-    if (entry.isDirectory() && entry.name.endsWith("-adapter")) {
-      const name = entry.name.substring(
-        0,
-        entry.name.length - "-adapter".length,
-      );
-      adapters.push({
-        name,
-        dirName: entry.name,
-        absPath: path.join(packagesDir, entry.name),
-      });
+  // 1. Monorepo scanning (only in explicit development environment, production is the default)
+  const isDev =
+    process.env.NODE_ENV === "development" ||
+    (fs.existsSync(path.join(root, "packages")) &&
+      (() => {
+        try {
+          const pkgJsonPath = path.join(root, "package.json");
+          if (fs.existsSync(pkgJsonPath)) {
+            const pkg = JSON.parse(fs.readFileSync(pkgJsonPath, "utf-8"));
+            return pkg.name === "@recursica/recursica";
+          }
+        } catch {
+          // Ignore
+        }
+        return false;
+      })());
+
+  if (isDev) {
+    const packagesDir = path.join(root, "packages");
+    if (fs.existsSync(packagesDir)) {
+      const entries = fs.readdirSync(packagesDir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (entry.isDirectory() && entry.name.endsWith("-adapter")) {
+          const name = entry.name.substring(
+            0,
+            entry.name.length - "-adapter".length,
+          );
+          adapters.push({
+            name,
+            dirName: entry.name,
+            absPath: path.join(packagesDir, entry.name),
+          });
+        }
+      }
+    }
+  }
+
+  // 2. Dynamic package resolution (installed context / production)
+  if (adapters.length === 0) {
+    const require = createRequire(import.meta.url);
+    const knownAdapters = ["mui-adapter", "mantine-adapter"];
+
+    for (const adapterDir of knownAdapters) {
+      try {
+        const pkgJsonPath = require.resolve(
+          `@recursica/${adapterDir}/package.json`,
+          {
+            paths: [process.cwd(), root],
+          },
+        );
+        const pkgDir = path.dirname(pkgJsonPath);
+        const name = adapterDir.substring(
+          0,
+          adapterDir.length - "-adapter".length,
+        );
+        adapters.push({
+          name,
+          dirName: adapterDir,
+          absPath: pkgDir,
+        });
+      } catch (e) {
+        // Module not installed/resolved, skip
+      }
     }
   }
 
@@ -200,4 +248,58 @@ export function detectAdapterAndUiKit(
     targetAdapter,
     isInstalled,
   };
+}
+
+/**
+ * Resolves the absolute path to the `@recursica/knowledge` components directory.
+ * Throws an error if the package cannot be resolved.
+ */
+export function getKnowledgeComponentsDir(): string {
+  try {
+    const require = createRequire(import.meta.url);
+    const pkgJsonPath = require.resolve("@recursica/knowledge/package.json");
+    return path.join(path.dirname(pkgJsonPath), "docs", "components");
+  } catch (error: any) {
+    throw new Error(
+      `Failed to resolve @recursica/knowledge package path: ${error?.message || error}`,
+    );
+  }
+}
+
+/**
+ * Extracts the bold introductory description from DOCS.md content.
+ */
+export function extractBriefDescription(content: string): string {
+  let cleanContent = content;
+  if (content.startsWith("---")) {
+    const nextSeparator = content.indexOf("---", 3);
+    if (nextSeparator !== -1) {
+      cleanContent = content.substring(nextSeparator + 3);
+    }
+  }
+
+  const lines = cleanContent.split("\n");
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("**") && trimmed.endsWith("**")) {
+      return trimmed.slice(2, -2).trim();
+    }
+  }
+
+  // Fallback: first non-empty line that isn't a header or list item
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (
+      trimmed &&
+      !trimmed.startsWith("#") &&
+      !trimmed.startsWith("-") &&
+      !trimmed.startsWith("*") &&
+      !trimmed.startsWith("<") &&
+      !trimmed.startsWith(">")
+    ) {
+      return trimmed;
+    }
+  }
+
+  return "";
 }

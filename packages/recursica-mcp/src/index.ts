@@ -17,7 +17,7 @@ const commands = [
   recursica_get_usage,
   recursica_list_components,
   recursica_get_component_doc,
-  recursica_recommend_component,
+  // recursica_recommend_component,
   recursica_project_setup,
   what_is_recursica,
 ];
@@ -65,18 +65,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   const root = getRecursicaRoot();
   const allAdapters = getActiveAdapters(root);
-
-  if (allAdapters.length === 0) {
-    return {
-      content: [
-        {
-          type: "text",
-          text: `⚠️ No Recursica adapters (e.g. '*-adapter') were found in the packages directory of the workspace at: ${root}. Please ensure your RECURSICA_PATH is configured correctly.`,
-        },
-      ],
-      isError: true,
-    };
-  }
 
   try {
     return await cmd.handler(args, { root, allAdapters });
