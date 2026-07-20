@@ -1,5 +1,11 @@
 # @recursica/mcp
 
+## 0.6.0
+
+### Minor Changes
+
+- 44f692d: Updated config and docs
+
 ## 0.5.0
 
 ### Minor Changes
