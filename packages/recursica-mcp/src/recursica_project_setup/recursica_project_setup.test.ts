@@ -40,7 +40,9 @@ describe("recursica_project_setup", () => {
     );
 
     expect(result.isError).toBe(true);
-    expect(result.content[0].text).toContain("was not found");
+    expect(result.content[0].text).toContain(
+      "is not installed or active in your project",
+    );
   });
 
   it("should detect when the adapter is already installed in package.json", async () => {

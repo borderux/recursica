@@ -3,8 +3,11 @@ import fs from "fs";
 import { Command } from "../common/types.js";
 import { description } from "./description.js";
 import { guidelines_header } from "./guidelines_header.js";
-import { detectAdapterAndUiKit, getCleanAdapterName } from "../common/utils.js";
-import { missing_adapter_message } from "./missing_adapter_message.js";
+import {
+  detectAdapterAndUiKit,
+  getCleanAdapterName,
+  getMissingAdapterErrorMessage,
+} from "../common/utils.js";
 
 export const recursica_get_usage: Command = {
   name: "recursica_get_usage",
@@ -38,7 +41,9 @@ export const recursica_get_usage: Command = {
     const shouldCheckInstallation = !explicitUiKit;
     if (!target || (shouldCheckInstallation && !isInstalled)) {
       return {
-        content: [{ type: "text", text: missing_adapter_message }],
+        content: [
+          { type: "text", text: getMissingAdapterErrorMessage(process.cwd()) },
+        ],
       };
     }
 

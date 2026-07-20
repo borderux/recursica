@@ -45,9 +45,7 @@ describe("recursica_get_usage", () => {
 
     const result = await recursica_get_usage.handler({}, mockContext);
 
-    expect(result.content[0].text).toContain(
-      "No active Recursica Adapter detected in project dependencies",
-    );
+    expect(result.content[0].text).toContain("No active Recursica adapter");
     expect(result.content[0].text).toContain("recursica_project_setup");
   });
 
@@ -129,8 +127,6 @@ describe("recursica_get_usage", () => {
 
     expect(result.content[0].text).toContain("MANTINE Adapter Guidelines");
     expect(result.content[0].text).toContain("Mantine Adapter LLM Docs");
-    expect(result.content[0].text).not.toContain(
-      "No active Recursica Adapter detected",
-    );
+    expect(result.content[0].text).not.toContain("No active Recursica adapter");
   });
 });

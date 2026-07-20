@@ -303,3 +303,30 @@ export function extractBriefDescription(content: string): string {
 
   return "";
 }
+
+/**
+ * Generates a standardized, generic error message when an active Recursica adapter cannot be found.
+ */
+export function getMissingAdapterErrorMessage(
+  cwd: string,
+  specifiedAdapter?: string,
+): string {
+  const targetDesc = specifiedAdapter
+    ? `The specified adapter "${specifiedAdapter}" is not installed or active in your project`
+    : `No active Recursica adapter (such as '@recursica/mui-adapter' or '@recursica/mantine-adapter') was detected as installed in your project`;
+
+  return `❌ Error: ${targetDesc}.
+
+*We searched in your current working directory: \`${cwd}\` but could not find a valid \`package.json\` with Recursica dependencies.*
+
+### How to fix:
+1. If this is a new project, run the tool **\`recursica_project_setup\`** to configure and install the correct adapter.
+2. If the adapter is already installed, ensure your MCP client's configuration sets the working directory (\`cwd\`) to your project root. For example:
+\`\`\`json
+"recursica-mcp": {
+  "command": "npx",
+  "args": ["recursica-mcp"],
+  "cwd": "/path/to/your/project"
+}
+\`\`\``;
+}
