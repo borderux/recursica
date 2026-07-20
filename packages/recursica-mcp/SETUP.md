@@ -15,11 +15,15 @@ Add the following entry to your `claude_desktop_config.json` file (typically loc
   "mcpServers": {
     "recursica-mcp": {
       "command": "npx",
-      "args": ["-y", "@recursica/mcp@latest"]
+      "args": ["-y", "@recursica/mcp@latest"],
+      "cwd": "/absolute/path/to/your/project-workspace"
     }
   }
 }
 ```
+
+> [!IMPORTANT]
+> The `"cwd"` (current working directory) field is required and must be set to the absolute path of your active project workspace. This allows the Recursica MCP server to locate the appropriate configuration files, local adapters, and node modules to inspect.
 
 ### Antigravity / Gemini / Other Clients
 
@@ -27,3 +31,4 @@ For other clients, configure the server using:
 
 - **Command**: `npx`
 - **Arguments**: `["-y", "@recursica/mcp@latest"]`
+- **Cwd**: `/absolute/path/to/your/project-workspace` (Absolute path to the workspace directory)

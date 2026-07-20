@@ -43,7 +43,8 @@ Configure your MCP client (such as VS Code, Gemini, or Antigravity) to run the T
   "args": [
     "tsx",
     "/absolute/path/to/recursica/packages/recursica-mcp/src/index.ts"
-  ]
+  ],
+  "cwd": "/absolute/path/to/your/project-workspace"
 }
 ```
 
