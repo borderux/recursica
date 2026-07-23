@@ -4,6 +4,8 @@ import {
   Pagination as MantinePagination,
   type PaginationProps as MantinePaginationProps,
   type PaginationRootProps as MantinePaginationRootProps,
+  type PaginationControlProps as MantinePaginationControlProps,
+  type PaginationDotsProps as MantinePaginationDotsProps,
 } from "@mantine/core";
 import {
   filterStylingProps,
@@ -28,11 +30,13 @@ export type PaginationRootProps =
   RecursicaOverStyled<MantinePaginationRootProps>;
 
 export type PaginationEdgeProps<T extends React.ElementType> =
-  React.ComponentProps<T> & {
-    /** If set to true, displays text labels alongside the icon. */
-    withLabel?: boolean;
-    icon?: any;
-  };
+  RecursicaOverStyled<
+    React.ComponentProps<T> & {
+      /** If set to true, displays text labels alongside the icon. */
+      withLabel?: boolean;
+      icon?: any;
+    }
+  >;
 
 function usePaginationClassNames(restRecord: Record<string, unknown>): {
   className: string;
@@ -88,14 +92,18 @@ _PaginationRoot.displayName = "Pagination.Root";
 const _PaginationNext = forwardRef<
   HTMLButtonElement,
   PaginationEdgeProps<typeof MantinePagination.Next>
->(function PaginationNext({ withLabel, icon, ...props }, ref) {
+>(function PaginationNext(
+  { overStyled = false, withLabel, icon, ...rest },
+  ref,
+) {
+  const sanitizedProps = filterStylingProps(rest, overStyled);
   const renderIcon = icon || (withLabel ? NextWithLabel : undefined);
   return (
     <MantinePagination.Next
       ref={ref}
       data-variant="text"
       icon={renderIcon as any}
-      {...props}
+      {...sanitizedProps}
     />
   );
 });
@@ -104,14 +112,18 @@ _PaginationNext.displayName = "Pagination.Next";
 const _PaginationPrevious = forwardRef<
   HTMLButtonElement,
   PaginationEdgeProps<typeof MantinePagination.Previous>
->(function PaginationPrevious({ withLabel, icon, ...props }, ref) {
+>(function PaginationPrevious(
+  { overStyled = false, withLabel, icon, ...rest },
+  ref,
+) {
+  const sanitizedProps = filterStylingProps(rest, overStyled);
   const renderIcon = icon || (withLabel ? PrevWithLabel : undefined);
   return (
     <MantinePagination.Previous
       ref={ref}
       data-variant="text"
       icon={renderIcon as any}
-      {...props}
+      {...sanitizedProps}
     />
   );
 });
@@ -120,14 +132,18 @@ _PaginationPrevious.displayName = "Pagination.Previous";
 const _PaginationFirst = forwardRef<
   HTMLButtonElement,
   PaginationEdgeProps<typeof MantinePagination.First>
->(function PaginationFirst({ withLabel, icon, ...props }, ref) {
+>(function PaginationFirst(
+  { overStyled = false, withLabel, icon, ...rest },
+  ref,
+) {
+  const sanitizedProps = filterStylingProps(rest, overStyled);
   const renderIcon = icon || (withLabel ? FirstWithLabel : undefined);
   return (
     <MantinePagination.First
       ref={ref}
       data-variant="text"
       icon={renderIcon as any}
-      {...props}
+      {...sanitizedProps}
     />
   );
 });
@@ -136,14 +152,18 @@ _PaginationFirst.displayName = "Pagination.First";
 const _PaginationLast = forwardRef<
   HTMLButtonElement,
   PaginationEdgeProps<typeof MantinePagination.Last>
->(function PaginationLast({ withLabel, icon, ...props }, ref) {
+>(function PaginationLast(
+  { overStyled = false, withLabel, icon, ...rest },
+  ref,
+) {
+  const sanitizedProps = filterStylingProps(rest, overStyled);
   const renderIcon = icon || (withLabel ? LastWithLabel : undefined);
   return (
     <MantinePagination.Last
       ref={ref}
       data-variant="text"
       icon={renderIcon as any}
-      {...props}
+      {...sanitizedProps}
     />
   );
 });
@@ -192,14 +212,47 @@ const _Pagination = forwardRef<HTMLDivElement, PaginationProps>(
 );
 _Pagination.displayName = "Pagination";
 
+export type PaginationControlProps =
+  RecursicaOverStyled<MantinePaginationControlProps>;
+
+const _PaginationControl = forwardRef<
+  HTMLButtonElement,
+  PaginationControlProps
+>(function PaginationControl({ overStyled = false, ...rest }, ref) {
+  const sanitizedProps = filterStylingProps(rest, overStyled);
+  return (
+    <MantinePagination.Control
+      ref={ref}
+      {...(sanitizedProps as unknown as MantinePaginationControlProps)}
+    />
+  );
+});
+_PaginationControl.displayName = "Pagination.Control";
+
+export type PaginationDotsProps =
+  RecursicaOverStyled<MantinePaginationDotsProps>;
+
+const _PaginationDots = forwardRef<HTMLDivElement, PaginationDotsProps>(
+  function PaginationDots({ overStyled = false, ...rest }, ref) {
+    const sanitizedProps = filterStylingProps(rest, overStyled);
+    return (
+      <MantinePagination.Dots
+        ref={ref}
+        {...(sanitizedProps as unknown as MantinePaginationDotsProps)}
+      />
+    );
+  },
+);
+_PaginationDots.displayName = "Pagination.Dots";
+
 /**
  * Recursica Pagination component wrapping Mantine's Pagination.
  */
 export const Pagination = _Pagination as typeof _Pagination & {
   Root: typeof _PaginationRoot;
   Items: typeof MantinePagination.Items;
-  Control: typeof MantinePagination.Control;
-  Dots: typeof MantinePagination.Dots;
+  Control: typeof _PaginationControl;
+  Dots: typeof _PaginationDots;
   Next: typeof _PaginationNext;
   Previous: typeof _PaginationPrevious;
   First: typeof _PaginationFirst;
@@ -208,9 +261,12 @@ export const Pagination = _Pagination as typeof _Pagination & {
 };
 
 Pagination.Root = _PaginationRoot;
+// Pagination.Items has no styling props of its own (just a `dotsIcon` prop, no
+// `style`/`className`/BoxProps), so re-exporting Mantine's implementation
+// directly is not a styling-gate gap.
 Pagination.Items = MantinePagination.Items;
-Pagination.Control = MantinePagination.Control;
-Pagination.Dots = MantinePagination.Dots;
+Pagination.Control = _PaginationControl;
+Pagination.Dots = _PaginationDots;
 Pagination.Next = _PaginationNext;
 Pagination.Previous = _PaginationPrevious;
 Pagination.First = _PaginationFirst;

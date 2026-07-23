@@ -18,6 +18,7 @@ import { Button, Stack, Container } from "@recursica/mantine-adapter";
 ```
 
 **Rule:** Do NOT import components directly from `@mantine/core` unless a specific exception has been documented (e.g. `Alert`, which has no planned Recursica equivalent). If you need a standard component, always check the adapter first.
+**Rule** Try to use only Recursica components as much as possible.
 
 ## 3. Passing Design Tokens & Layout Constraints
 
@@ -26,6 +27,8 @@ Our components strictly separate logical structural layouts from visual design t
 - **DO NOT** try to inject arbitrary styling objects, generic padding/margin properties (`p`, `bg`, `fw`), or custom `classNames` directly into component JSX. The components use `filterStylingProps` to actively strip these out.
 - **DO** use the defined logical layout properties (like `gap`, `margin`, `mt`, etc.).
 - When passing sizes to layout wrappers (like `Stack`, `Flex`, `Group`, `Container`), use the `rec-` prefixed sizes explicitly mapped in the library (e.g., `"rec-sm"`, `"rec-default"`, `"rec-md"`, `"rec-lg"`, `"rec-xl"`).
+- **DO NOT** try to pass in styling prop names like styled or className. No external styling should be applied unless absolutely necessary. You must use the `overStyled` prop in order to apply external stylings
+- **DO NOT** directly access Recursica CSS styles, CSS variables, or JSON token definitions to use in your own styling. These are not considered stable and will change between releases.
 
 ## 4. The `overStyled` Escape Hatch
 
@@ -41,10 +44,7 @@ If you encounter an absolute necessity to break out of the design system (e.g., 
 
 ## 5. Fallback Behavior for Missing Components
 
-If the adapter does not yet implement a required component:
-
-1. You may try utilizing standard `recursica_variables_scoped.css` properties on the native Mantine component.
-2. However, **this is not recommended**. The preferred approach is to pause integration, navigate into the `mantine-adapter` package, and natively build the missing wrapper component following the `CONTRIBUTING.md` guidelines.
+If the adapter does not yet implement a required component, the preferred approach is to pause integration, navigate into the `mantine-adapter` package, and natively build the missing wrapper component following the `CONTRIBUTING.md` guidelines. If this is not possible, then utilize the underlying Mantine components directly using the project's preferred styling approach (check setup instructions for details in the project).
 
 ## 6. Managing CSS Changes with PostCSS Plugin
 

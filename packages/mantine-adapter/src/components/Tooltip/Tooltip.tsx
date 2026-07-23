@@ -1,6 +1,8 @@
+import { forwardRef } from "react";
 import {
   Tooltip as MantineTooltip,
   type TooltipProps as MantineTooltipProps,
+  type TooltipFloatingProps as MantineTooltipFloatingProps,
 } from "@mantine/core";
 import {
   filterStylingProps,
@@ -96,14 +98,36 @@ const TooltipBase = function Tooltip({
 TooltipBase.displayName = "Tooltip";
 
 // ============================================================
+// TOOLTIP.FLOATING
+// ============================================================
+
+export type TooltipFloatingProps =
+  RecursicaOverStyled<MantineTooltipFloatingProps>;
+
+export const TooltipFloating = forwardRef<HTMLDivElement, TooltipFloatingProps>(
+  function TooltipFloating({ overStyled = false, ...rest }, ref) {
+    const sanitizedProps = filterStylingProps(rest, overStyled);
+    return (
+      <MantineTooltip.Floating
+        ref={ref}
+        {...(sanitizedProps as unknown as MantineTooltipFloatingProps)}
+      />
+    );
+  },
+);
+TooltipFloating.displayName = "TooltipFloating";
+
+// ============================================================
 // DOT NOTATION EXPORT
 // ============================================================
 
 type TooltipComponent = typeof TooltipBase & {
-  Floating: typeof MantineTooltip.Floating;
+  Floating: typeof TooltipFloating;
   Group: typeof MantineTooltip.Group;
 };
 
 export const Tooltip = TooltipBase as TooltipComponent;
-Tooltip.Floating = MantineTooltip.Floating;
+Tooltip.Floating = TooltipFloating;
+// Tooltip.Group has no styling props of its own (no `style`/`className`/BoxProps),
+// so re-exporting Mantine's implementation directly is not a styling-gate gap.
 Tooltip.Group = MantineTooltip.Group;

@@ -2,6 +2,7 @@ import React, { forwardRef } from "react";
 import {
   Stepper as MantineStepper,
   type StepperProps as MantineStepperProps,
+  type StepperStepProps as MantineStepperStepProps,
 } from "@mantine/core";
 import {
   filterStylingProps,
@@ -56,12 +57,29 @@ const _Stepper = forwardRef<HTMLDivElement, StepperProps>(
   },
 );
 
+export type StepperStepProps = RecursicaOverStyled<MantineStepperStepProps>;
+
+const _StepperStep = forwardRef<HTMLButtonElement, StepperStepProps>(
+  function StepperStep({ overStyled = false, ...rest }, ref) {
+    const sanitizedProps = filterStylingProps(rest, overStyled);
+    return (
+      <MantineStepper.Step
+        ref={ref}
+        {...(sanitizedProps as unknown as MantineStepperStepProps)}
+      />
+    );
+  },
+);
+_StepperStep.displayName = "Stepper.Step";
+
 // We need to re-export the static components Step and Completed
 export const Stepper: typeof _Stepper & {
-  Step: typeof MantineStepper.Step;
+  Step: typeof _StepperStep;
   Completed: typeof MantineStepper.Completed;
 } = Object.assign(_Stepper, {
-  Step: MantineStepper.Step,
+  Step: _StepperStep,
+  // Stepper.Completed only accepts `children` — no styling props to strip,
+  // so re-exporting Mantine's implementation directly is not a gap.
   Completed: MantineStepper.Completed,
 });
 
