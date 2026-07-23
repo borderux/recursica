@@ -2,7 +2,7 @@
 
 An adapter-agnostic Model Context Protocol (MCP) server for the Recursica design system.
 
-This MCP server provides a suite of tools for AI assistant agents (like Gemini, Antigravity, or Claude) to dynamically inspect, query, and consume custom UI components in your active adapters.
+This MCP server provides a suite of tools for AI assistant agents (like Claude, Gemini, or Antigravity) to dynamically inspect, query, and consume custom UI components in your active adapters.
 
 ## Dynamic Tooling Offered
 
@@ -15,7 +15,42 @@ This MCP server provides a suite of tools for AI assistant agents (like Gemini, 
 
 ## Installation & Usage
 
-For instructions on how to set up and run the Recursica MCP server in your environment using `npx`, see the [SETUP.md](SETUP.md) guide.
+The Recursica MCP server is distributed as the `@recursica/mcp` NPM package. You can configure and run it directly using `npx` without needing to clone the repository or set up a local development environment.
+
+### Add to your MCP Client Configuration
+
+To register the Recursica MCP server, add the following configuration to your client's settings (such as Claude Desktop, VS Code, Gemini, or Antigravity):
+
+#### Claude Desktop
+
+Add the following entry to your `claude_desktop_config.json` file (typically located at `~/Library/Application Support/Claude/claude_desktop_config.json` on macOS, or `%APPDATA%\Claude\claude_desktop_config.json` on Windows):
+
+```json
+{
+  "mcpServers": {
+    "recursica-mcp": {
+      "command": "npx",
+      "args": ["-y", "@recursica/mcp@latest"],
+      "cwd": "/absolute/path/to/your/project-workspace"
+    }
+  }
+}
+```
+
+> [!IMPORTANT]
+> The `"cwd"` (current working directory) field is required and must be set to the absolute path of your active project workspace. This allows the Recursica MCP server to locate the appropriate configuration files, local adapters, and node modules to inspect.
+
+#### Antigravity / Gemini / Other Clients
+
+For other clients, configure the server using:
+
+- **Command**: `npx`
+- **Arguments**: `["-y", "@recursica/mcp@latest"]`
+- **Cwd**: `/absolute/path/to/your/project-workspace` (absolute path to the workspace directory)
+
+### Using the Tools
+
+Once registered, ask your AI assistant to use Recursica directly — e.g. "set up Recursica in this project" or "what Recursica components are available?" — and it will call the relevant tool (`recursica_project_setup`, `recursica_list_components`, etc.) automatically. See [Dynamic Tooling Offered](#dynamic-tooling-offered) above for the full list of what each tool does.
 
 ---
 
@@ -47,5 +82,3 @@ Configure your MCP client (such as VS Code, Gemini, or Antigravity) to run the T
   "cwd": "/absolute/path/to/your/project-workspace"
 }
 ```
-
----

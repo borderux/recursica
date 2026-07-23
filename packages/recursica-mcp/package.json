@@ -21,7 +21,6 @@
     "llms.txt",
     "AGENT.md",
     "ARCHITECTURE.md",
-    "SETUP.md",
     "CONTRIBUTING.md"
   ],
   "scripts": {
