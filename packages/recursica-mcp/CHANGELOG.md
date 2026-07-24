@@ -1,5 +1,11 @@
 # @recursica/mcp
 
+## 0.7.0
+
+### Minor Changes
+
+- f52662b: Updated docs and layout. Added Table
+
 ## 0.6.0
 
 ### Minor Changes

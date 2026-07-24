@@ -1,7 +1,7 @@
 {
   "name": "@recursica/mcp",
   "description": "Adapter-agnostic Model Context Protocol (MCP) server for Recursica",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "private": false,
   "publishConfig": {
     "access": "public"

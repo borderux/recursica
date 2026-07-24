@@ -1,5 +1,11 @@
 # @recursica/mantine-adapter
 
+## 0.34.0
+
+### Minor Changes
+
+- f52662b: Updated docs and layout. Added Table
+
 ## 0.33.0
 
 ### Minor Changes
