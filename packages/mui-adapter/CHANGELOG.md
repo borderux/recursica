@@ -1,5 +1,11 @@
 # @recursica/mui-adapter
 
+## 0.17.0
+
+### Minor Changes
+
+- f52662b: Updated docs and layout. Added Table
+
 ## 0.16.0
 
 ### Minor Changes
