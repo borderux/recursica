@@ -21,7 +21,6 @@
     "llms.txt",
     "AGENT.md",
     "ARCHITECTURE.md",
-    "SETUP.md",
     "CONTRIBUTING.md"
   ],
   "scripts": {
@@ -32,7 +31,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.4.0",
-    "@recursica/knowledge": "^0.3.0"
+    "@recursica/knowledge": "^0.4.0"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

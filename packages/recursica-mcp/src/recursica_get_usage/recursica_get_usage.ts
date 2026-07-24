@@ -70,28 +70,21 @@ export const recursica_get_usage: Command = {
     output += `## ${matched.name.toUpperCase()} Adapter Guidelines\n`;
     output += `*Package Folder: \`packages/${matched.dirName}\`*\n\n`;
 
-    const llmsTxtPath = path.join(matched.absPath, "llms.txt");
     const usageMdPath = path.join(matched.absPath, "USAGE.md");
-
-    if (fs.existsSync(llmsTxtPath)) {
-      output += `### High-Level Summary (from llms.txt)\n\n`;
-      output += fs.readFileSync(llmsTxtPath, "utf-8") + "\n\n";
-    }
+    const overstylingMdPath = path.join(matched.absPath, "OVERSTYLING.md");
 
     if (fs.existsSync(usageMdPath)) {
       output += `### Developer & Agent Usage Specification (from USAGE.md)\n\n`;
-      let usageContent = fs.readFileSync(usageMdPath, "utf-8");
-
-      // Strip out the Setup and Integration section (leaving only component importing, tokens, overstyled, and CSS changes management)
-      usageContent = usageContent.replace(
-        /## 1\. Setup and Integration[\s\S]*?(?=## 2\.|$)/i,
-        "",
-      );
-
-      output += usageContent + "\n\n";
+      output += fs.readFileSync(usageMdPath, "utf-8") + "\n\n";
     } else {
       output += `*No detailed USAGE.md found for this adapter.*\n\n`;
     }
+
+    if (fs.existsSync(overstylingMdPath)) {
+      output += `### Over Styling Escape Hatch (from OVERSTYLING.md)\n\n`;
+      output += fs.readFileSync(overstylingMdPath, "utf-8") + "\n\n";
+    }
+
     output += `---\n\n`;
 
     return {

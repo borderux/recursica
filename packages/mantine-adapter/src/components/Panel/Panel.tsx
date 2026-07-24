@@ -2,6 +2,13 @@ import { forwardRef } from "react";
 import {
   Drawer as MantineDrawer,
   type DrawerProps as MantineDrawerProps,
+  type DrawerRootProps as MantineDrawerRootProps,
+  type DrawerOverlayProps as MantineDrawerOverlayProps,
+  type DrawerContentProps as MantineDrawerContentProps,
+  type DrawerHeaderProps as MantineDrawerHeaderProps,
+  type DrawerTitleProps as MantineDrawerTitleProps,
+  type DrawerCloseButtonProps as MantineDrawerCloseButtonProps,
+  type DrawerBodyProps as MantineDrawerBodyProps,
 } from "@mantine/core";
 import {
   filterStylingProps,
@@ -129,28 +136,141 @@ export const PanelFooter = forwardRef<HTMLDivElement, PanelFooterProps>(
 PanelFooter.displayName = "PanelFooter";
 
 // ============================================================
+// PANEL SUB-COMPONENTS (wrapped so overStyled/filterStylingProps applies)
+// ============================================================
+
+export type PanelRootProps = RecursicaOverStyled<MantineDrawerRootProps>;
+
+export const PanelRoot = forwardRef<HTMLDivElement, PanelRootProps>(
+  function PanelRoot({ overStyled = false, ...rest }, ref) {
+    const sanitizedProps = filterStylingProps(rest, overStyled);
+    return (
+      <MantineDrawer.Root
+        ref={ref}
+        {...(sanitizedProps as unknown as MantineDrawerRootProps)}
+      />
+    );
+  },
+);
+PanelRoot.displayName = "PanelRoot";
+
+export type PanelOverlayProps = RecursicaOverStyled<MantineDrawerOverlayProps>;
+
+export const PanelOverlay = forwardRef<HTMLDivElement, PanelOverlayProps>(
+  function PanelOverlay({ overStyled = false, ...rest }, ref) {
+    const sanitizedProps = filterStylingProps(rest, overStyled);
+    return (
+      <MantineDrawer.Overlay
+        ref={ref}
+        {...(sanitizedProps as unknown as MantineDrawerOverlayProps)}
+      />
+    );
+  },
+);
+PanelOverlay.displayName = "PanelOverlay";
+
+export type PanelContentProps = RecursicaOverStyled<MantineDrawerContentProps>;
+
+export const PanelContent = forwardRef<HTMLDivElement, PanelContentProps>(
+  function PanelContent({ overStyled = false, ...rest }, ref) {
+    const sanitizedProps = filterStylingProps(rest, overStyled);
+    return (
+      <MantineDrawer.Content
+        ref={ref}
+        {...(sanitizedProps as unknown as MantineDrawerContentProps)}
+      />
+    );
+  },
+);
+PanelContent.displayName = "PanelContent";
+
+export type PanelHeaderProps = RecursicaOverStyled<MantineDrawerHeaderProps>;
+
+export const PanelHeader = forwardRef<HTMLElement, PanelHeaderProps>(
+  function PanelHeader({ overStyled = false, ...rest }, ref) {
+    const sanitizedProps = filterStylingProps(rest, overStyled);
+    return (
+      <MantineDrawer.Header
+        ref={ref}
+        {...(sanitizedProps as unknown as MantineDrawerHeaderProps)}
+      />
+    );
+  },
+);
+PanelHeader.displayName = "PanelHeader";
+
+export type PanelTitleProps = RecursicaOverStyled<MantineDrawerTitleProps>;
+
+export const PanelTitle = forwardRef<HTMLHeadingElement, PanelTitleProps>(
+  function PanelTitle({ overStyled = false, ...rest }, ref) {
+    const sanitizedProps = filterStylingProps(rest, overStyled);
+    return (
+      <MantineDrawer.Title
+        ref={ref}
+        {...(sanitizedProps as unknown as MantineDrawerTitleProps)}
+      />
+    );
+  },
+);
+PanelTitle.displayName = "PanelTitle";
+
+export type PanelCloseButtonProps =
+  RecursicaOverStyled<MantineDrawerCloseButtonProps>;
+
+export const PanelCloseButton = forwardRef<
+  HTMLButtonElement,
+  PanelCloseButtonProps
+>(function PanelCloseButton({ overStyled = false, ...rest }, ref) {
+  const sanitizedProps = filterStylingProps(rest, overStyled);
+  return (
+    <MantineDrawer.CloseButton
+      ref={ref}
+      {...(sanitizedProps as unknown as MantineDrawerCloseButtonProps)}
+    />
+  );
+});
+PanelCloseButton.displayName = "PanelCloseButton";
+
+export type PanelBodyProps = RecursicaOverStyled<MantineDrawerBodyProps>;
+
+export const PanelBody = forwardRef<HTMLDivElement, PanelBodyProps>(
+  function PanelBody({ overStyled = false, ...rest }, ref) {
+    const sanitizedProps = filterStylingProps(rest, overStyled);
+    return (
+      <MantineDrawer.Body
+        ref={ref}
+        {...(sanitizedProps as unknown as MantineDrawerBodyProps)}
+      />
+    );
+  },
+);
+PanelBody.displayName = "PanelBody";
+
+// ============================================================
 // DOT NOTATION EXPORT
 // ============================================================
 
 type PanelComponent = typeof PanelBase & {
-  Root: typeof MantineDrawer.Root;
-  Overlay: typeof MantineDrawer.Overlay;
-  Content: typeof MantineDrawer.Content;
-  Header: typeof MantineDrawer.Header;
-  Title: typeof MantineDrawer.Title;
-  CloseButton: typeof MantineDrawer.CloseButton;
-  Body: typeof MantineDrawer.Body;
+  Root: typeof PanelRoot;
+  Overlay: typeof PanelOverlay;
+  Content: typeof PanelContent;
+  Header: typeof PanelHeader;
+  Title: typeof PanelTitle;
+  CloseButton: typeof PanelCloseButton;
+  Body: typeof PanelBody;
   Stack: typeof MantineDrawer.Stack;
   Footer: typeof PanelFooter;
 };
 
 export const Panel = PanelBase as PanelComponent;
-Panel.Root = MantineDrawer.Root;
-Panel.Overlay = MantineDrawer.Overlay;
-Panel.Content = MantineDrawer.Content;
-Panel.Header = MantineDrawer.Header;
-Panel.Title = MantineDrawer.Title;
-Panel.CloseButton = MantineDrawer.CloseButton;
-Panel.Body = MantineDrawer.Body;
+Panel.Root = PanelRoot;
+Panel.Overlay = PanelOverlay;
+Panel.Content = PanelContent;
+Panel.Header = PanelHeader;
+Panel.Title = PanelTitle;
+Panel.CloseButton = PanelCloseButton;
+Panel.Body = PanelBody;
+// Panel.Stack (DrawerStack) only accepts `children` — no styling props to
+// strip, so re-exporting Mantine's implementation directly is not a gap.
 Panel.Stack = MantineDrawer.Stack;
 Panel.Footer = PanelFooter;

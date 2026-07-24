@@ -37,7 +37,8 @@
     "llms.txt",
     "USAGE.md",
     "ARCHITECTURE.md",
-    "SETUP.md"
+    "SETUP.md",
+    "OVERSTYLING.md"
   ],
   "keywords": [
     "react",

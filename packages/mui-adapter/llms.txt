@@ -9,8 +9,64 @@ This adapter converts Recursica design tokens into MUI-specific themes and compo
 - Relies on `@mui/material`, `@emotion/react`, and `@emotion/styled` peer dependencies.
 - When building UI in consumer applications, prioritize using components exported by this package to adhere to the Recursica design system.
 
-## Documentation
+## Reference Documentation
 
-- [USAGE](USAGE.md): Detailed usage instructions.
+- [USAGE](USAGE.md): Detailed usage instructions, import rules, and layout/token conventions.
+- [OVERSTYLING](OVERSTYLING.md): The `overStyled` escape hatch — when it's appropriate, what's permitted by default, and how to visually audit its usage.
+- [SETUP](SETUP.md): Installation and integration steps.
 - [ARCHITECTURE](ARCHITECTURE.md): Package architecture and dependencies.
 - [README](README.md)
+
+## Components
+
+Each component has its own `USAGE.md` documenting its props, adapter-specific behaviors, layout constraints, and accessibility requirements.
+
+- [Accordion](src/components/Accordion/USAGE.md)
+- [AssistiveElement](src/components/AssistiveElement/USAGE.md)
+- [Autocomplete](src/components/Autocomplete/USAGE.md)
+- [Avatar](src/components/Avatar/USAGE.md)
+- [Badge](src/components/Badge/USAGE.md)
+- [Box](src/components/Box/USAGE.md)
+- [Breadcrumb](src/components/Breadcrumb/USAGE.md)
+- [Button](src/components/Button/USAGE.md)
+- [Card](src/components/Card/USAGE.md)
+- [Checkbox](src/components/Checkbox/USAGE.md)
+- [Chip](src/components/Chip/USAGE.md)
+- [Container](src/components/Container/USAGE.md)
+- [DatePicker](src/components/DatePicker/USAGE.md)
+- [Dropdown](src/components/Dropdown/USAGE.md)
+- [FileInput](src/components/FileInput/USAGE.md)
+- [FileUpload](src/components/FileUpload/USAGE.md)
+- [Flex](src/components/Flex/USAGE.md)
+- [FormControlLayout](src/components/FormControlLayout/USAGE.md)
+- [FormControlWrapper](src/components/FormControlWrapper/USAGE.md)
+- [Group](src/components/Group/USAGE.md)
+- [HoverCard](src/components/HoverCard/USAGE.md)
+- [Label](src/components/Label/USAGE.md)
+- [Link](src/components/Link/USAGE.md)
+- [Loader](src/components/Loader/USAGE.md)
+- [Menu](src/components/Menu/USAGE.md)
+- [Modal](src/components/Modal/USAGE.md)
+- [NumberInput](src/components/NumberInput/USAGE.md)
+- [Pagination](src/components/Pagination/USAGE.md)
+- [Panel](src/components/Panel/USAGE.md)
+- [Radio](src/components/Radio/USAGE.md)
+- [ReadOnlyField](src/components/ReadOnlyField/USAGE.md)
+- [SegmentedControl](src/components/SegmentedControl/USAGE.md)
+- [Slider](src/components/Slider/USAGE.md)
+- [Stack](src/components/Stack/USAGE.md)
+- [Stepper](src/components/Stepper/USAGE.md)
+- [Switch](src/components/Switch/USAGE.md)
+- [Table](src/components/Table/USAGE.md)
+- [Tabs](src/components/Tabs/USAGE.md)
+- [Text](src/components/Text/USAGE.md)
+- [TextArea](src/components/TextArea/USAGE.md)
+- [TextField](src/components/TextField/USAGE.md)
+- [TimePicker](src/components/TimePicker/USAGE.md)
+- [Timeline](src/components/Timeline/USAGE.md)
+- [Title](src/components/Title/USAGE.md)
+- [Toast](src/components/Toast/USAGE.md)
+- [Tooltip](src/components/Tooltip/USAGE.md)
+- [TransferList](src/components/TransferList/USAGE.md)
+- [Tree](src/components/Tree/USAGE.md)
+- [Typography](src/components/Typography/USAGE.md)

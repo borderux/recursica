@@ -23,6 +23,7 @@ If you are tasked with building, modifying, or reviewing components **inside** t
 3. **Storybook Requirements:** Read `docs/COMPONENT_STORYBOOK_GUIDE.md`. **Rule:** You must implement a Storybook story for every new component or variant you build. Verification is required.
 4. **Public Usage Documentation:** Every component MUST have a `USAGE.md` file living within its component folder (e.g., `src/components/Button/USAGE.md`) that documents how to import and use the component, highlighting any adapter-specific behaviors, layout constraints, and accessibility requirements. This is the main public integration reference.
 5. **Internal Implementation Notes:** Every component MUST have its own `[COMPONENT]_IMPLEMENTATION_NOTES.md` file (or `IMPLEMENTATION_NOTES.md`) living within its component folder (e.g., `src/components/Button/IMPLEMENTATION_NOTES.md` or `BUTTON_IMPLEMENTATION_NOTES.md`) to document internal engineering decisions, layout hacks, and CSS workarounds. This file is for internal technical tracking and is not publicly consumable.
+6. **Update `llms.txt`:** Whenever you add a new component (or rename/remove one), update the package's root `llms.txt` to keep its "Components" list in sync — add a link to the new component's `USAGE.md` (e.g., `- [Button](src/components/Button/USAGE.md)`) in alphabetical order. `llms.txt` is the entry point external AI agents use to discover components, so a missing entry means that component is effectively invisible to them.
 
 ## How Can I Contribute?
 

@@ -15,8 +15,7 @@ This server provides tools to discover, configure, and integrate Recursica's pre
 
 ## Documentation
 
+- [README](README.md): Installation, client configuration, and local development setup.
 - [AGENT](AGENT.md): Routing document for AI Agents.
 - [ARCHITECTURE](ARCHITECTURE.md): Server design and dynamic execution pipeline.
-- [SETUP](SETUP.md): Installation and local playground setup instructions.
 - [CONTRIBUTING](CONTRIBUTING.md): How to add new tools and verify them.
-- [README](README.md)

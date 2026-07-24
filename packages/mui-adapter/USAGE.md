@@ -39,6 +39,8 @@ If you encounter an absolute necessity to break out of the design system (e.g., 
 
 **Warning:** Using `overStyled` should be treated as technical debt. If you find yourself repeatedly needing it for a specific variant, you should instead switch context and **contribute** that variant natively into the `mui-adapter`.
 
+See [OVERSTYLING.md](OVERSTYLING.md) for the full philosophy behind this escape hatch, which layout properties are permitted by default, and how to visually audit over-styled components in development builds.
+
 ## 5. Fallback Behavior for Missing Components
 
 If the adapter does not yet implement a required component:
