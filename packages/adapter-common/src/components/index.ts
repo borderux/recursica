@@ -17,6 +17,8 @@ export * from "./Dropdown/RecursicaDropdownProps";
 export * from "./Flex/RecursicaFlexProps";
 export * from "./FormControlLayout/RecursicaFormControlLayoutProps";
 export * from "./FormControlWrapper/RecursicaFormControlWrapperProps";
+export * from "./Grid/RecursicaGridProps";
+export * from "./Grid/RecursicaGridColProps";
 export * from "./Group/RecursicaGroupProps";
 export * from "./HoverCard/RecursicaHoverCardProps";
 export * from "./Label/RecursicaLabelProps";

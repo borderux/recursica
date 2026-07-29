@@ -15,6 +15,7 @@ export * from "./FileInput/FileInput";
 export * from "./FileUpload/FileUpload";
 export * from "./Flex/Flex";
 export * from "./FormControlLayout/FormControlLayout";
+export * from "./Grid/Grid";
 export * from "./Group/Group";
 export * from "./HoverCard/HoverCard";
 export * from "./Link/Link";
