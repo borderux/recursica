@@ -1,5 +1,16 @@
 # @recursica/mantine-adapter
 
+## 0.35.0
+
+### Minor Changes
+
+- c49adb9: Added a Grid component (Grid, Grid.Col) to both the mantine-adapter and mui-adapter, sharing RecursicaGridProps/RecursicaGridColProps from adapter-common so both adapters expose the exact same prop API. mantine-adapter wraps Mantine's native Grid/Grid.Col directly; mui-adapter hand-composes the same API from MUI's single merged Grid component, since MUI has no separate container/item split.
+
+### Patch Changes
+
+- Updated dependencies [c49adb9]
+  - @recursica/adapter-common@0.11.0
+
 ## 0.34.0
 
 ### Minor Changes
