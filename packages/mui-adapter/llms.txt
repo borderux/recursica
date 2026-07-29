@@ -40,6 +40,7 @@ Each component has its own `USAGE.md` documenting its props, adapter-specific be
 - [Flex](src/components/Flex/USAGE.md)
 - [FormControlLayout](src/components/FormControlLayout/USAGE.md)
 - [FormControlWrapper](src/components/FormControlWrapper/USAGE.md)
+- [Grid](src/components/Grid/USAGE.md)
 - [Group](src/components/Group/USAGE.md)
 - [HoverCard](src/components/HoverCard/USAGE.md)
 - [Label](src/components/Label/USAGE.md)

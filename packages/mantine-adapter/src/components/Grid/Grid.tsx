@@ -129,7 +129,9 @@ const _GridCol = forwardRef<HTMLDivElement, GridColProps>(function GridCol(
 });
 _GridCol.displayName = "GridCol";
 
-const GridCol = createPolymorphicComponent<"div", GridColProps>(_GridCol);
+export const GridCol = createPolymorphicComponent<"div", GridColProps>(
+  _GridCol,
+);
 
 // ============================================================
 // DOT NOTATION EXPORT
