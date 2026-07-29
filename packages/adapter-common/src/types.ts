@@ -194,6 +194,7 @@ export const RECURSICA_COMPONENTS = [
   "Flex",
   "FormControlLayout",
   "FormControlWrapper",
+  "Grid",
   "Group",
   "HoverCard",
   "Label",

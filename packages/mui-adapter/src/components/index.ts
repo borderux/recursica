@@ -17,6 +17,7 @@ export * from "./FileUpload";
 export * from "./Flex";
 export * from "./FormControlLayout";
 export * from "./FormControlWrapper";
+export * from "./Grid";
 export * from "./Group";
 export * from "./HoverCard";
 export * from "./Label";

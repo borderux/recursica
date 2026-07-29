@@ -1,0 +1,72 @@
+/*
+ * HARDCODED VALUES:
+ * - Breakpoint pixel thresholds below (600/900/1200/1536) match MUI's own default
+ *   theme.breakpoints (xs/sm/md/lg/xl). They drive `visibleFrom`/`hiddenFrom`, which
+ *   have no native MUI Grid equivalent to hook into. If the consuming app customizes
+ *   its MUI theme breakpoints, these thresholds will not follow that change —
+ *   structural layout mechanics, not a design token.
+ */
+
+.root {
+}
+
+.col {
+}
+
+.hiddenFromXs {
+  display: none;
+}
+
+@media (min-width: 600px) {
+  .hiddenFromSm {
+    display: none;
+  }
+}
+
+@media (min-width: 900px) {
+  .hiddenFromMd {
+    display: none;
+  }
+}
+
+@media (min-width: 1200px) {
+  .hiddenFromLg {
+    display: none;
+  }
+}
+
+@media (min-width: 1536px) {
+  .hiddenFromXl {
+    display: none;
+  }
+}
+
+@media (max-width: 599.98px) {
+  .visibleFromSm,
+  .visibleFromMd,
+  .visibleFromLg,
+  .visibleFromXl {
+    display: none;
+  }
+}
+
+@media (max-width: 899.98px) {
+  .visibleFromMd,
+  .visibleFromLg,
+  .visibleFromXl {
+    display: none;
+  }
+}
+
+@media (max-width: 1199.98px) {
+  .visibleFromLg,
+  .visibleFromXl {
+    display: none;
+  }
+}
+
+@media (max-width: 1535.98px) {
+  .visibleFromXl {
+    display: none;
+  }
+}

@@ -6,6 +6,8 @@ export * from "@recursica/adapter-common";
 
 // Expose unwrapped structural layout primitives to preserve their polymorphic types
 export const Flex = rawComponents.Flex;
+export const Grid = rawComponents.Grid;
+export const GridCol = rawComponents.GridCol;
 export const Group = rawComponents.Group;
 export const Stack = rawComponents.Stack;
 export const Container = rawComponents.Container;

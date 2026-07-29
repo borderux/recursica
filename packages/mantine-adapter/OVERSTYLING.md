@@ -39,7 +39,7 @@ Available Recursica layout tokens:
 
 ## Primitive Layout Components Exemption
 
-Unlike complex UI components (Buttons, Tabs, Inputs) which are strictly protected, **Primitive Layout Components** (`Flex`, `Stack`, `Group`, `Container`) are entirely exempt from the `RecursicaOverStyled` gatekeeper.
+Unlike complex UI components (Buttons, Tabs, Inputs) which are strictly protected, **Primitive Layout Components** (`Flex`, `Stack`, `Group`, `Container`, `Grid`) are entirely exempt from the `RecursicaOverStyled` gatekeeper.
 
 Because the entire functional purpose of these components is structural layout composition, developers are free to pass any standard Mantine width, height, padding, margin, gap, and alignment property directly to them without needing to flag `overStyled={true}`. The internal custom token mapper (such as converting `gap="rec-md"`) is still active natively on these wrappers.
 

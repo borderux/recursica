@@ -1,0 +1,11 @@
+/* HARDCODED VALUES:
+ * None. This is a generic grid layout wrapper.
+ */
+
+.root {
+  /* Mantine handles the grid geometry (columns, gutter, spans) natively. No intrinsic design-system styles required for pure layout wrappers. */
+}
+
+.col {
+  /* Mantine handles column sizing (span, offset, order, visibleFrom/hiddenFrom) natively. */
+}
