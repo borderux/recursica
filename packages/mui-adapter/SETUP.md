@@ -33,7 +33,7 @@ Before consuming Recursica components, integrate the CSS and design tokens into 
    import "@recursica/mui-adapter/style.css"; // MUI adapter styles
    ```
 
-3. **Configure MUI's CSS Injection & Theme Provider**: Because the Recursica UI components use native CSS modules, they must be given a higher priority than MUI's default engine styles. You **must** wrap your application root in `<StyledEngineProvider injectFirst>` and `<RecursicaThemeProvider theme="light">` to correctly cascade design token properties:
+3. **Configure MUI's CSS Injection & Theme Provider**: Because the Recursica UI components use native CSS modules, they must be given a higher priority than MUI's default engine styles. You **must** wrap your application root in `<StyledEngineProvider injectFirst>` and `<RecursicaThemeProvider theme="light">` to correctly cascade design token properties. By default `RecursicaThemeProvider` also wraps its children in a `<Layer layer={0}>` (via the `initLayer0` prop, which defaults to `true`), so the base page surface/border/elevation variables resolve automatically with no extra setup:
 
    ```tsx
    import { StyledEngineProvider } from "@mui/material/styles";

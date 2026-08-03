@@ -19,7 +19,13 @@ export const withRecursicaTheme = (
     }, []);
 
     return (
-      <RecursicaThemeProvider theme={isDark ? "dark" : "light"}>
+      // initLayer0={false}: each adapter's own preview.tsx already wraps stories in its
+      // own configurable <Layer> (via the withLayer/layer story args), so the provider's
+      // default automatic layer-0 wrap would just add a redundant nested Layer here.
+      <RecursicaThemeProvider
+        theme={isDark ? "dark" : "light"}
+        initLayer0={false}
+      >
         <Story />
       </RecursicaThemeProvider>
     );

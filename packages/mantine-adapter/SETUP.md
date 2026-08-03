@@ -40,7 +40,7 @@ Before consuming Recursica components, integrate the CSS and design tokens into 
    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
    ```
 
-4. **Wrap App in RecursicaThemeProvider**: You must wrap your application in the `<RecursicaThemeProvider>` to correctly cascade design token properties:
+4. **Wrap App in RecursicaThemeProvider**: You must wrap your application in the `<RecursicaThemeProvider>` to correctly cascade design token properties. By default it also wraps its children in a `<Layer layer={0}>` (via the `initLayer0` prop, which defaults to `true`), so the base page surface/border/elevation variables resolve automatically with no extra setup:
 
    ```tsx
    import { MantineProvider } from "@mantine/core";

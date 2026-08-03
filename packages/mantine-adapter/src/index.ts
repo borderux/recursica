@@ -27,6 +27,9 @@ export const AccordionControl = wrapComponent(
 export const AccordionPanel = wrapComponent(
   rawComponents.AccordionPanel,
 ) as typeof rawComponents.AccordionPanel;
+export const AssistiveElement = wrapComponent(
+  rawComponents.AssistiveElement,
+) as typeof rawComponents.AssistiveElement;
 export const AutoComplete = wrapComponent(
   rawComponents.AutoComplete,
 ) as typeof rawComponents.AutoComplete;

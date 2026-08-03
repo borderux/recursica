@@ -1,4 +1,5 @@
 export * from "./Accordion";
+export * from "./AssistiveElement/AssistiveElement";
 export * from "./AutoComplete/AutoComplete";
 export * from "./Avatar";
 export * from "./Badge/Badge";
@@ -21,6 +22,7 @@ export * from "./HoverCard/HoverCard";
 export * from "./Link/Link";
 export * from "./Loader/Loader";
 export * from "./Label";
+export * from "./Layer";
 export * from "./Menu/Menu";
 export * from "./Modal/Modal";
 export * from "./NumberInput/NumberInput";
