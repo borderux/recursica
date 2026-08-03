@@ -22,7 +22,6 @@ export * from "./HoverCard/HoverCard";
 export * from "./Link/Link";
 export * from "./Loader/Loader";
 export * from "./Label";
-export * from "./Layer";
 export * from "./Menu/Menu";
 export * from "./Modal/Modal";
 export * from "./NumberInput/NumberInput";
