@@ -1,5 +1,14 @@
 # @recursica/mantine-adapter
 
+## 0.35.1
+
+### Patch Changes
+
+- 70ad4df: Fixed AssistiveElement not being exported from the package's public entry point (it existed as a component but was missing from both the internal component barrel and the top-level package export, making it unreachable via `import { AssistiveElement } from "@recursica/mantine-adapter"`).
+- 70ad4df: `RecursicaThemeProvider` now automatically wraps its children in a base `<Layer layer={0}>` by default (new `initLayer0` prop, defaults to `true`), so page-level surface/border/elevation CSS variables resolve out of the box instead of requiring an undocumented manual `<Layer layer={0}>` wrapper. Opt out with `initLayer0={false}` to place the base layer yourself. Also documented `Layer` and `RecursicaThemeProvider` (previously referenced by nearly every other component's USAGE.md but undocumented themselves) with dedicated USAGE.md pages and llms.txt entries in both adapters, and updated the shared Storybook theme decorator to opt out of the new default (each adapter's preview already places its own configurable per-story Layer).
+- Updated dependencies [70ad4df]
+  - @recursica/adapter-common@0.12.0
+
 ## 0.35.0
 
 ### Minor Changes
