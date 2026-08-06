@@ -1,43 +1,177 @@
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_border-radius */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_border-size */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_button-node-gap */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_horizontal-padding */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_indent */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_item-gap */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_max-width */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_selected-text_font-family */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_selected-text_font-size */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_selected-text_font-style */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_selected-text_font-weight */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_selected-text_letter-spacing */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_selected-text_line-height */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_selected-text_text-decoration */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_selected-text_text-transform */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_unselected-text_font-family */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_unselected-text_font-size */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_unselected-text_font-style */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_unselected-text_font-weight */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_unselected-text_letter-spacing */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_unselected-text_line-height */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_unselected-text_text-decoration */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_unselected-text_text-transform */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_vertical-padding */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_colors_hover-background */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_colors_hover-border-color */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_colors_hover-text */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_colors_selected-background */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_colors_selected-border-color */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_colors_selected-text */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_colors_unselected-text */
+/* HARDCODED VALUES:
+ * - list-style/margin/padding resets on .root/.subtree: layout resets, no corresponding
+ *   design tokens (structural, not visual design values).
+ * - .expandIcon size (1em) and rotation transition: no dedicated icon-size/icon-color token
+ *   exists for Tree; the glyph is drawn with `currentColor` so it always tracks the row's
+ *   already-tokened text color, and sized relative to the row's own font-size.
+ * - Hover overlay uses the generic --recursica_brand_states_hover_* tokens (same technique as
+ *   Menu/Accordion/Button): Tree has no component-specific hover tokens of its own.
+ */
 
 .root {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-width: var(--recursica_ui-kit_components_tree_properties_max-width);
+  display: flex;
+  flex-direction: column;
+  gap: var(--recursica_ui-kit_components_tree_properties_item-gap);
+
+  /* Mantine computes each node's --label-offset (per-level indent) from --level-offset via its
+     own internal vars resolver (same category of override as Timeline's --mantine-spacing-xl /
+     --tl-line-width). Use !important to reliably beat Mantine's own generated rule. */
+  --level-offset: var(
+    --recursica_ui-kit_components_tree_properties_indent
+  ) !important;
+}
+
+.subtree {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--recursica_ui-kit_components_tree_properties_item-gap);
+}
+
+.node {
+  /* Mantine's own base class already resets margin/padding/list-style and sets cursor:pointer
+     on this <li>; it also holds the subtree as a second child, so all row-level visual styling
+     (box model, colors, typography) lives on .row instead, not here. */
+  position: relative;
+}
+
+.row {
+  position: relative;
   box-sizing: border-box;
-  font-family: sans-serif;
-  padding: 24px;
-  border: 1px dashed #ccc;
-  border-radius: 8px;
-  color: #666;
-  text-align: center;
-  font-weight: 500;
-  background-color: #fafafa;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  margin-left: var(--label-offset, 0px);
+  gap: var(--recursica_ui-kit_components_tree_properties_button-node-gap);
+  padding: var(--recursica_ui-kit_components_tree_properties_vertical-padding)
+    var(--recursica_ui-kit_components_tree_properties_horizontal-padding);
+  border-style: solid; /* HARDCODE: structural border rule; thickness/color are tokened */
+  border-width: var(--recursica_ui-kit_components_tree_properties_border-size);
+  border-radius: var(
+    --recursica_ui-kit_components_tree_properties_border-radius
+  );
+
+  font-family: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_unselected_properties_text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_unselected_properties_text_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_unselected_properties_text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_unselected_properties_text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_unselected_properties_text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_unselected_properties_text_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_unselected_properties_text_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_unselected_properties_text_text-transform
+  );
+
+  color: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_unselected_properties_colors_text-color
+  );
+  background-color: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_unselected_properties_colors_background-color
+  );
+  border-color: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_unselected_properties_colors_border-color
+  );
+}
+
+/* Hover overlay via ::after pseudo-element (same technique as Menu/Accordion) */
+.row::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 0;
+  pointer-events: none;
+  background-color: var(--recursica_brand_states_hover_color);
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+.row:hover::after,
+.row[data-hovered]::after {
+  opacity: var(--recursica_brand_states_hover_opacity);
+}
+
+.row[data-selected] {
+  font-family: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_selected_properties_text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_selected_properties_text_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_selected_properties_text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_selected_properties_text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_selected_properties_text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_selected_properties_text_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_selected_properties_text_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_selected_properties_text_text-transform
+  );
+
+  color: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_selected_properties_colors_text-color
+  );
+  background-color: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_selected_properties_colors_background-color
+  );
+  border-color: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_selected_properties_colors_border-color
+  );
+}
+
+.expandIcon {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1em;
+  height: 1em;
+  color: inherit;
+}
+
+.row[data-has-children] .expandIcon {
+  transition: transform 150ms ease;
+}
+.row[data-expanded] .expandIcon {
+  transform: rotate(90deg);
+}
+
+.label {
+  position: relative;
+  z-index: 1;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-decoration: inherit;
+  text-transform: inherit;
 }

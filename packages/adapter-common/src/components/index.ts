@@ -47,3 +47,4 @@ export * from "./Title/RecursicaTitleProps";
 export * from "./Toast/RecursicaToastProps";
 export * from "./Tooltip/RecursicaTooltipProps";
 export * from "./TransferList/RecursicaTransferListProps";
+export * from "./Tree/RecursicaTreeProps";

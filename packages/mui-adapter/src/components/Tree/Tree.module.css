@@ -1,43 +1,208 @@
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_border-radius */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_border-size */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_button-node-gap */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_horizontal-padding */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_indent */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_item-gap */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_max-width */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_selected-text_font-family */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_selected-text_font-size */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_selected-text_font-style */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_selected-text_font-weight */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_selected-text_letter-spacing */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_selected-text_line-height */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_selected-text_text-decoration */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_selected-text_text-transform */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_unselected-text_font-family */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_unselected-text_font-size */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_unselected-text_font-style */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_unselected-text_font-weight */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_unselected-text_letter-spacing */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_unselected-text_line-height */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_unselected-text_text-decoration */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_unselected-text_text-transform */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_vertical-padding */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_colors_hover-background */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_colors_hover-border-color */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_colors_hover-text */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_colors_selected-background */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_colors_selected-border-color */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_colors_selected-text */
-/* recursica-ignore: --recursica_ui-kit_components_tree_properties_colors_unselected-text */
+/* HARDCODED VALUES:
+ * - list-style/margin/padding resets on .root/.subtree/.node: layout resets, no corresponding
+ *   design tokens (structural, not visual design values).
+ * - .chevron size (1em) and rotation: no dedicated icon-size/icon-color token exists for Tree;
+ *   the glyph is drawn with `currentColor` so it always tracks the row's already-tokened text
+ *   color, and sized relative to the row's own font-size.
+ * - Hover overlay uses the generic --recursica_brand_states_hover_* tokens (same technique as
+ *   Menu/Accordion/Button): Tree has no component-specific hover tokens of its own.
+ * - .row's padding-left keeps MUI's own depth-based indentation formula (base + indent * depth)
+ *   but substitutes our own horizontal-padding token as the base instead of MUI's theme spacing.
+ */
 
 .root {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  outline: 0;
+  max-width: var(--recursica_ui-kit_components_tree_properties_max-width);
+  display: flex;
+  flex-direction: column;
+  gap: var(--recursica_ui-kit_components_tree_properties_item-gap);
+
+  /* MUI sets this as an inline style on the root <ul> (see useTreeViewRootProps in
+     @mui/x-tree-view). Override with !important to reliably beat it regardless of stylesheet
+     injection order (same category of override as mantine-adapter's --level-offset, itself
+     modeled on Timeline's --mantine-spacing-xl / --tl-line-width). */
+  --TreeView-itemChildrenIndentation: var(
+    --recursica_ui-kit_components_tree_properties_indent
+  ) !important;
+}
+
+.subtree {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--recursica_ui-kit_components_tree_properties_item-gap);
+}
+
+.node {
+  list-style: none;
+}
+
+.row {
+  position: relative;
   box-sizing: border-box;
-  font-family: sans-serif;
-  padding: 24px;
-  border: 1px dashed #ccc;
-  border-radius: 8px;
-  color: #666;
-  text-align: center;
-  font-weight: 500;
-  background-color: #fafafa;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  cursor: pointer;
+  gap: var(--recursica_ui-kit_components_tree_properties_button-node-gap);
+
+  padding-top: var(
+    --recursica_ui-kit_components_tree_properties_vertical-padding
+  );
+  padding-bottom: var(
+    --recursica_ui-kit_components_tree_properties_vertical-padding
+  );
+  padding-right: var(
+    --recursica_ui-kit_components_tree_properties_horizontal-padding
+  );
+  padding-left: calc(
+    var(--recursica_ui-kit_components_tree_properties_horizontal-padding) +
+      var(--TreeView-itemChildrenIndentation, 0px) *
+      var(--TreeView-itemDepth, 0)
+  );
+
+  border-style: solid; /* HARDCODE: structural border rule; thickness/color are tokened */
+  border-width: var(--recursica_ui-kit_components_tree_properties_border-size);
+  border-radius: var(
+    --recursica_ui-kit_components_tree_properties_border-radius
+  );
+
+  font-family: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_unselected_properties_text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_unselected_properties_text_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_unselected_properties_text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_unselected_properties_text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_unselected_properties_text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_unselected_properties_text_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_unselected_properties_text_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_unselected_properties_text_text-transform
+  );
+
+  color: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_unselected_properties_colors_text-color
+  );
+  background-color: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_unselected_properties_colors_background-color
+  );
+  border-color: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_unselected_properties_colors_border-color
+  );
+}
+
+/* Neutralize MUI's own hover/focused background-color changes (see TreeItemContent's defaults
+   in @mui/x-tree-view) so only the Recursica hover overlay below controls the hover look. */
+.row:hover,
+.row[data-focused] {
+  background-color: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_unselected_properties_colors_background-color
+  );
+}
+
+/* Hover overlay via ::after pseudo-element (same technique as Menu/Accordion) */
+.row::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 0;
+  pointer-events: none;
+  background-color: var(--recursica_brand_states_hover_color);
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+.row:hover::after {
+  opacity: var(--recursica_brand_states_hover_opacity);
+}
+
+/* Selected row state — written after the hover/focus resets above so it wins the equal-
+   specificity tie via source order, including when hovered/focused while selected. */
+.row[data-selected],
+.row[data-selected]:hover,
+.row[data-selected][data-focused] {
+  font-family: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_selected_properties_text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_selected_properties_text_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_selected_properties_text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_selected_properties_text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_selected_properties_text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_selected_properties_text_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_selected_properties_text_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_selected_properties_text_text-transform
+  );
+
+  color: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_selected_properties_colors_text-color
+  );
+  background-color: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_selected_properties_colors_background-color
+  );
+  border-color: var(
+    --recursica_ui-kit_components_tree_variants_selection-states_selected_properties_colors_border-color
+  );
+}
+
+.row[data-disabled] {
+  opacity: var(--recursica_brand_states_disabled);
+  cursor: auto;
+}
+
+.iconContainer {
+  position: relative;
+  z-index: 1;
+  width: 1em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: inherit;
+}
+
+.chevron {
+  transition: transform 150ms ease;
+}
+.chevronExpanded {
+  transform: rotate(90deg);
+}
+
+.label {
+  position: relative;
+  z-index: 1;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-decoration: inherit;
+  text-transform: inherit;
 }
