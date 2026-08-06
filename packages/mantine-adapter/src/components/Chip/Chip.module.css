@@ -6,12 +6,12 @@
 /* recursica-ignore: --recursica_ui-kit_components_chip_properties_close-icon-color */
 /* recursica-ignore: --recursica_ui-kit_components_chip_properties_leading-icon-color */
 /* recursica-ignore: --recursica_ui-kit_components_chip_properties_text-size */
-/* recursica-ignore: --recursica_ui-kit_components_chip_variants_styles_error_properties_colors_leading-icon-color */
-/* recursica-ignore: --recursica_ui-kit_components_chip_variants_styles_error_properties_colors_selected-icon-color */
-/* recursica-ignore: --recursica_ui-kit_components_chip_variants_styles_error-selected_properties_colors_icon */
-/* recursica-ignore: --recursica_ui-kit_components_chip_variants_styles_error-selected_properties_colors_leading-icon-color */
-/* recursica-ignore: --recursica_ui-kit_components_chip_variants_styles_selected_properties_colors_leading-icon-color */
-/* recursica-ignore: --recursica_ui-kit_components_chip_variants_styles_unselected_properties_colors_selected-icon-color */
+/* recursica-ignore: --recursica_ui-kit_components_chip_variants_selection-states_unselected_variants_states_error_properties_colors_leading-icon-color */
+/* recursica-ignore: --recursica_ui-kit_components_chip_variants_selection-states_unselected_variants_states_error_properties_colors_selected-icon-color */
+/* recursica-ignore: --recursica_ui-kit_components_chip_variants_selection-states_selected_variants_states_error_properties_colors_icon-color */
+/* recursica-ignore: --recursica_ui-kit_components_chip_variants_selection-states_selected_variants_states_error_properties_colors_leading-icon-color */
+/* recursica-ignore: --recursica_ui-kit_components_chip_variants_selection-states_selected_properties_colors_leading-icon-color */
+/* recursica-ignore: --recursica_ui-kit_components_chip_variants_selection-states_unselected_properties_colors_selected-icon-color */
 
 /* HARDCODED VALUES
    border-style: solid;  (Baseline reset)
@@ -31,19 +31,19 @@
   /* Token properties */
   --chip-height: max-content; /* Sizing is driven by padding and line height */
   --chip-bg: var(
-    --recursica_ui-kit_components_chip_variants_styles_unselected_properties_colors_background
+    --recursica_ui-kit_components_chip_variants_selection-states_unselected_properties_colors_background-color
   );
   --chip-border: var(
-    --recursica_ui-kit_components_chip_variants_styles_unselected_properties_colors_border-color
+    --recursica_ui-kit_components_chip_variants_selection-states_unselected_properties_colors_border-color
   );
   --chip-text: var(
-    --recursica_ui-kit_components_chip_variants_styles_unselected_properties_colors_text
+    --recursica_ui-kit_components_chip_variants_selection-states_unselected_properties_colors_text-color
   );
   --chip-icon: var(
-    --recursica_ui-kit_components_chip_variants_styles_unselected_properties_colors_leading-icon-color
+    --recursica_ui-kit_components_chip_variants_selection-states_unselected_properties_colors_leading-icon-color
   );
   --chip-close: var(
-    --recursica_ui-kit_components_chip_variants_styles_unselected_properties_colors_close-icon-color
+    --recursica_ui-kit_components_chip_variants_selection-states_unselected_properties_colors_close-icon-color
   );
 
   /* Override Mantine's internal variables */
@@ -118,55 +118,55 @@
 /* Default (Unselected) hover/active interactions (Mantine overrides) */
 .label.label[data-checked] {
   --chip-bg: var(
-    --recursica_ui-kit_components_chip_variants_styles_selected_properties_colors_background
+    --recursica_ui-kit_components_chip_variants_selection-states_selected_properties_colors_background-color
   );
   --chip-border: var(
-    --recursica_ui-kit_components_chip_variants_styles_selected_properties_colors_border-color
+    --recursica_ui-kit_components_chip_variants_selection-states_selected_properties_colors_border-color
   );
   --chip-text: var(
-    --recursica_ui-kit_components_chip_variants_styles_selected_properties_colors_text
+    --recursica_ui-kit_components_chip_variants_selection-states_selected_properties_colors_text-color
   );
   --chip-icon: var(
-    --recursica_ui-kit_components_chip_variants_styles_selected_properties_colors_selected-icon-color
+    --recursica_ui-kit_components_chip_variants_selection-states_selected_properties_colors_selected-icon-color
   );
   --chip-close: var(
-    --recursica_ui-kit_components_chip_variants_styles_selected_properties_colors_close-icon-color
+    --recursica_ui-kit_components_chip_variants_selection-states_selected_properties_colors_close-icon-color
   );
 }
 
 .root[data-error] .label.label {
   --chip-bg: var(
-    --recursica_ui-kit_components_chip_variants_styles_error_properties_colors_background
+    --recursica_ui-kit_components_chip_variants_selection-states_unselected_variants_states_error_properties_colors_background-color
   );
   --chip-border: var(
-    --recursica_ui-kit_components_chip_variants_styles_error_properties_colors_border-color
+    --recursica_ui-kit_components_chip_variants_selection-states_unselected_variants_states_error_properties_colors_border-color
   );
   --chip-text: var(
-    --recursica_ui-kit_components_chip_variants_styles_error_properties_colors_text
+    --recursica_ui-kit_components_chip_variants_selection-states_unselected_variants_states_error_properties_colors_text-color
   );
   --chip-icon: var(
-    --recursica_ui-kit_components_chip_variants_styles_error_properties_colors_icon
+    --recursica_ui-kit_components_chip_variants_selection-states_unselected_variants_states_error_properties_colors_leading-icon-color
   );
   --chip-close: var(
-    --recursica_ui-kit_components_chip_variants_styles_error_properties_colors_close-icon-color
+    --recursica_ui-kit_components_chip_variants_selection-states_unselected_variants_states_error_properties_colors_close-icon-color
   );
 }
 
 .root[data-error] .label.label[data-checked] {
   --chip-bg: var(
-    --recursica_ui-kit_components_chip_variants_styles_error-selected_properties_colors_background
+    --recursica_ui-kit_components_chip_variants_selection-states_selected_variants_states_error_properties_colors_background-color
   );
   --chip-border: var(
-    --recursica_ui-kit_components_chip_variants_styles_error-selected_properties_colors_border-color
+    --recursica_ui-kit_components_chip_variants_selection-states_selected_variants_states_error_properties_colors_border-color
   );
   --chip-text: var(
-    --recursica_ui-kit_components_chip_variants_styles_error-selected_properties_colors_text
+    --recursica_ui-kit_components_chip_variants_selection-states_selected_variants_states_error_properties_colors_text-color
   );
   --chip-icon: var(
-    --recursica_ui-kit_components_chip_variants_styles_error-selected_properties_colors_selected-icon-color
+    --recursica_ui-kit_components_chip_variants_selection-states_selected_variants_states_error_properties_colors_selected-icon-color
   );
   --chip-close: var(
-    --recursica_ui-kit_components_chip_variants_styles_error-selected_properties_colors_close-icon-color
+    --recursica_ui-kit_components_chip_variants_selection-states_selected_variants_states_error_properties_colors_close-icon-color
   );
 }
 
