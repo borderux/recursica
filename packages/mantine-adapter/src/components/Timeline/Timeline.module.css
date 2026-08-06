@@ -7,6 +7,13 @@
 .root {
   display: flex;
   flex-direction: column;
+  /* Mantine drives item spacing (.item's margin-top) AND the connector line's bridging offset
+     (.item::before's negative bottom) off the SAME --mantine-spacing-xl variable. Overriding it
+     here (rather than adding a flex gap) keeps both in sync automatically instead of introducing
+     a visible break in the connector line. */
+  --mantine-spacing-xl: var(
+    --recursica_ui-kit_components_timeline_properties_item-gap
+  );
 }
 
 .item {

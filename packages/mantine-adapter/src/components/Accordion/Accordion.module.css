@@ -1,3 +1,11 @@
+/* EXEMPTIONS:
+   - accordion-header open-appearance background-color/border-color are ignored because Forge does
+     not apply a visual swap on expand, even though the token schema defines "open" appearance
+     colors distinct from "closed" (see .control below, which intentionally keeps a constant
+     background/border across collapsed/expanded). */
+/* recursica-ignore: --recursica_ui-kit_components_accordion-header_variants_appearance_open_properties_colors_background-color */
+/* recursica-ignore: --recursica_ui-kit_components_accordion-header_variants_appearance_open_properties_colors_border-color */
+
 /* ==== ACCORDION CONTAINER ==== */
 .root {
   box-sizing: border-box;
@@ -31,7 +39,8 @@
 /* ==== ACCORDION ITEM ==== */
 .item {
   box-sizing: border-box;
-  margin: 0;
+  margin: var(--recursica_ui-kit_components_accordion-item_properties_margin);
+  padding: var(--recursica_ui-kit_components_accordion-item_properties_padding);
   position: relative;
   transition: all 0.2s ease;
 
@@ -88,6 +97,22 @@
      background swap on expand, even though the token schema defines an "open" appearance color) */
   background-color: var(
     --recursica_ui-kit_components_accordion-header_variants_appearance_closed_properties_colors_background-color
+  );
+
+  /* Header's own border box, constant across collapsed/expanded (only its closed-state
+     border-color is used, matching the background decision above) */
+  border-style: solid;
+  border-width: var(
+    --recursica_ui-kit_components_accordion-header_properties_border-size
+  );
+  border-radius: var(
+    --recursica_ui-kit_components_accordion-header_properties_border-radius
+  );
+  border-color: var(
+    --recursica_ui-kit_components_accordion-header_variants_appearance_closed_properties_colors_border-color
+  );
+  box-shadow: var(
+    --recursica_ui-kit_components_accordion-header_properties_elevation
   );
 
   transition: background-color 0.15s ease;

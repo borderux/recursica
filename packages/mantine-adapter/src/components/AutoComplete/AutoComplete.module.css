@@ -293,6 +293,9 @@
   color: var(
     --recursica_ui-kit_components_autocomplete_variants_states_disabled_properties_colors_text-color
   );
+  opacity: var(
+    --recursica_ui-kit_components_autocomplete_variants_states_disabled_properties_opacity
+  );
   cursor: not-allowed;
 }
 

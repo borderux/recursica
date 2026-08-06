@@ -25,8 +25,17 @@
 
 .root:has(input:disabled) {
   cursor: not-allowed;
+}
+
+/* Track/thumb dim per selection state; label dims via its own (single, state-agnostic) token */
+.root:has(input:checked:disabled) .track {
   opacity: var(
-    --recursica_ui-kit_components_switch-item_variants_states_disabled_properties_opacity
+    --recursica_ui-kit_components_switch_variants_selection-states_selected_variants_states_disabled_properties_opacity
+  );
+}
+.root:has(input:disabled):not(:has(input:checked)) .track {
+  opacity: var(
+    --recursica_ui-kit_components_switch_variants_selection-states_unselected_variants_states_disabled_properties_opacity
   );
 }
 
@@ -112,6 +121,11 @@
   flex-direction: column;
   max-width: var(
     --recursica_ui-kit_components_switch-item_properties_label-max-width
+  );
+}
+.root:has(input:disabled) .labelWrapper {
+  opacity: var(
+    --recursica_ui-kit_components_switch-item_variants_states_disabled_properties_opacity
   );
 }
 

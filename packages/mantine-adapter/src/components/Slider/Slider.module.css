@@ -419,6 +419,9 @@
 
 .sliderContainer[data-disabled="true"] {
   color: var(--form-field-disabled-text);
+  opacity: var(
+    --recursica_ui-kit_components_slider_variants_states_disabled_properties_opacity
+  );
 }
 
 .inputField:disabled {

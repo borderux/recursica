@@ -381,6 +381,34 @@
     );
 }
 
+/* Currency formatted footer cell layout override */
+.root tfoot td[data-currency="true"] {
+  font-family: var(
+    --recursica_ui-kit_components_table-footer_properties_currency-style_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_table-footer_properties_currency-style_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_table-footer_properties_currency-style_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_table-footer_properties_currency-style_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_table-footer_properties_currency-style_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_table-footer_properties_currency-style_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_table-footer_properties_currency-style_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_table-footer_properties_currency-style_text-transform
+  );
+}
+
 /* Disabled Footer Row/Cells */
 .root tfoot tr[data-disabled="true"] td,
 .root tfoot td[data-disabled="true"] {

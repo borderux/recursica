@@ -283,7 +283,6 @@
 
 /* Disabled */
 .root:disabled {
-  opacity: var(--recursica_brand_states_disabled);
   cursor: not-allowed;
 }
 
@@ -328,6 +327,14 @@
     );
   }
 }
+.root[data-variant="solid"]:disabled {
+  opacity: var(
+    --recursica_ui-kit_components_button_variants_styles_solid_variants_states_disabled_properties_opacity
+  );
+  box-shadow: var(
+    --recursica_ui-kit_components_button_variants_styles_solid_variants_states_disabled_properties_elevation
+  );
+}
 
 /* OUTLINE */
 .root[data-variant="outline"] {
@@ -353,6 +360,14 @@
     );
   }
 }
+.root[data-variant="outline"]:disabled {
+  opacity: var(
+    --recursica_ui-kit_components_button_variants_styles_outline_variants_states_disabled_properties_opacity
+  );
+  box-shadow: var(
+    --recursica_ui-kit_components_button_variants_styles_outline_variants_states_disabled_properties_elevation
+  );
+}
 
 /* TEXT */
 .root[data-variant="text"] {
@@ -377,4 +392,12 @@
       --recursica_ui-kit_components_button_variants_styles_text_properties_colors_icon-color
     );
   }
+}
+.root[data-variant="text"]:disabled {
+  opacity: var(
+    --recursica_ui-kit_components_button_variants_styles_text_variants_states_disabled_properties_opacity
+  );
+  box-shadow: var(
+    --recursica_ui-kit_components_button_variants_styles_text_variants_states_disabled_properties_elevation
+  );
 }

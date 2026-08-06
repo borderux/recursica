@@ -211,6 +211,9 @@
   color: var(
     --recursica_ui-kit_components_date-picker_variants_states_disabled_properties_colors_text-color
   ) !important;
+  opacity: var(
+    --recursica_ui-kit_components_date-picker_variants_states_disabled_properties_opacity
+  ) !important;
   cursor: not-allowed;
 }
 

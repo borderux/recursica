@@ -6,7 +6,7 @@
 /* recursica-ignore: --recursica_ui-kit_components_toast_properties_elevation_layer-3 */
 
 /* HARDCODED VALUES:
-   - border-style: none. To ensure the notification doesn't render unwanted borders unless specified.
+   - border-style: solid. Baseline so the per-variant border-color tokens actually render.
  */
 
 /* ======================================
@@ -19,7 +19,9 @@
   );
   border-width: var(--recursica_ui-kit_components_toast_properties_border-size);
   border-style: solid;
-  border-color: transparent;
+  border-color: var(
+    --recursica_ui-kit_components_toast_variants_styles_default_properties_colors_border-color
+  );
   box-shadow: var(
     --recursica_ui-kit_components_toast_properties_elevation_layer-0
   );
@@ -72,6 +74,9 @@
     background-color: var(
       --recursica_ui-kit_components_toast_variants_styles_error_properties_colors_background-color
     );
+    border-color: var(
+      --recursica_ui-kit_components_toast_variants_styles_error_properties_colors_border-color
+    );
 
     & .icon {
       color: var(
@@ -95,6 +100,9 @@
   &[data-variant="success"] {
     background-color: var(
       --recursica_ui-kit_components_toast_variants_styles_success_properties_colors_background-color
+    );
+    border-color: var(
+      --recursica_ui-kit_components_toast_variants_styles_success_properties_colors_border-color
     );
 
     & .icon {

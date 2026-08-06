@@ -168,5 +168,8 @@
   color: var(
     --recursica_ui-kit_components_textarea_variants_states_disabled_properties_colors_text-color
   ) !important;
+  opacity: var(
+    --recursica_ui-kit_components_textarea_variants_states_disabled_properties_opacity
+  ) !important;
   cursor: not-allowed;
 }
