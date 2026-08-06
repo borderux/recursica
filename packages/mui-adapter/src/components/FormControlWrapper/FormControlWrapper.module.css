@@ -10,28 +10,29 @@
 
   /* Global Form Field Colors */
   --form-field-background: var(
-    --recursica_ui-kit_globals_form_field_colors_background
+    --recursica_ui-kit_globals_form_field_colors_background-color
   );
   --form-field-background-read-only: var(
-    --recursica_ui-kit_globals_form_field_colors_background-read-only
+    --recursica_ui-kit_globals_form_field_colors_background-color-read-only
   );
-  --form-field-border: var(--recursica_ui-kit_globals_form_field_colors_border);
+  --form-field-border: var(
+    --recursica_ui-kit_globals_form_field_colors_border-color
+  );
   --form-field-border-error: var(
-    --recursica_ui-kit_globals_form_field_colors_border-error
-  );
-  --form-field-border-focus: var(
-    --recursica_ui-kit_globals_form_field_colors_border-focus
+    --recursica_ui-kit_globals_form_field_colors_error-border-color
   );
   --form-field-border-selected: var(
     --recursica_ui-kit_globals_form_field_colors_border-selected
   );
   --form-field-disabled-background: var(
-    --recursica_ui-kit_globals_form_field_colors_disabled-background
+    --recursica_ui-kit_globals_form_field_colors_disabled-background-color
   );
   --form-field-disabled-text: var(
     --recursica_ui-kit_globals_form_field_colors_disabled-text
   );
-  --form-field-icon: var(--recursica_ui-kit_globals_form_field_colors_icon);
+  --form-field-icon: var(
+    --recursica_ui-kit_globals_form_field_colors_icon-color
+  );
   --form-field-placeholder-text-opacity: var(
     --recursica_ui-kit_globals_form_field_colors_placeholder-text-opacity
   );
@@ -40,14 +41,13 @@
   );
 
   /* Global Form Field Geometric Sizes */
+  /* No focus-specific border-color/border-size tokens exist anymore; components use the generic
+     --recursica_brand_states_focus_* ring tokens directly instead (see e.g. TextField.module.css). */
   --form-field-border-radius: var(
     --recursica_ui-kit_globals_form_field_size_border-radius
   );
   --form-field-border-size-default: var(
     --recursica_ui-kit_globals_form_field_size_border-size-default
-  );
-  --form-field-border-size-focus: var(
-    --recursica_ui-kit_globals_form_field_size_border-size-focus
   );
   --form-field-horizontal-padding: var(
     --recursica_ui-kit_globals_form_field_size_horizontal-padding

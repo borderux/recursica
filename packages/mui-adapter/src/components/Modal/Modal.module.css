@@ -1,9 +1,13 @@
 /* EXEMPTIONS:
-   - content-style and header-style parent variables represent raw JSON styling objects rather than 
+   - content-style and header-style parent variables represent raw JSON styling objects rather than
      direct CSS variables and cannot be applied directly in standard CSS files.
-     Sub-properties are fully and individually mapped to elements natively. */
+     Sub-properties are fully and individually mapped to elements natively.
+   - header/footer background-color are ignored because .header/.footer are intentionally
+     transparent (inheriting .content's background), matching Panel's header/footer treatment. */
 /* recursica-ignore: --recursica_ui-kit_components_modal_properties_content-style */
 /* recursica-ignore: --recursica_ui-kit_components_modal_properties_header-style */
+/* recursica-ignore: --recursica_ui-kit_components_modal_properties_colors_footer-background-color */
+/* recursica-ignore: --recursica_ui-kit_components_modal_properties_colors_header-background-color */
 
 .root {
 }
@@ -37,7 +41,7 @@
 
   /* Appearance */
   background-color: var(
-    --recursica_ui-kit_components_modal_properties_colors_background
+    --recursica_ui-kit_components_modal_properties_colors_content-background-color
   );
   box-shadow: var(--recursica_ui-kit_components_modal_properties_elevation);
 
@@ -47,8 +51,12 @@
 }
 
 .header {
-  padding: var(--recursica_ui-kit_components_modal_properties_vertical-padding)
-    var(--recursica_ui-kit_components_modal_properties_horizontal-padding);
+  padding: var(
+      --recursica_ui-kit_components_modal_properties_header-footer-vertical-padding
+    )
+    var(
+      --recursica_ui-kit_components_modal_properties_header-footer-horizontal-padding
+    );
   background-color: transparent; /* Inherit from content */
 }
 
@@ -93,8 +101,12 @@
 }
 
 .scrollArea {
-  padding: var(--recursica_ui-kit_components_modal_properties_vertical-padding)
-    var(--recursica_ui-kit_components_modal_properties_horizontal-padding);
+  padding: var(
+      --recursica_ui-kit_components_modal_properties_content-vertical-padding
+    )
+    var(
+      --recursica_ui-kit_components_modal_properties_content-horizontal-padding
+    );
 
   /* Internal scrolling */
   flex: 1 1 auto;
@@ -137,11 +149,11 @@
   /* Smooth divider transitions */
   transition: border-color 0.15s ease;
   border-top: var(
-      --recursica_ui-kit_components_modal_properties_scroll-divider-thickness
+      --recursica_ui-kit_components_modal_properties_scroll-divider-size
     )
     solid transparent;
   border-bottom: var(
-      --recursica_ui-kit_components_modal_properties_scroll-divider-thickness
+      --recursica_ui-kit_components_modal_properties_scroll-divider-size
     )
     solid transparent;
 }
@@ -159,8 +171,12 @@
 }
 
 .footer {
-  padding: var(--recursica_ui-kit_components_modal_properties_vertical-padding)
-    var(--recursica_ui-kit_components_modal_properties_horizontal-padding);
+  padding: var(
+      --recursica_ui-kit_components_modal_properties_header-footer-vertical-padding
+    )
+    var(
+      --recursica_ui-kit_components_modal_properties_header-footer-horizontal-padding
+    );
   background-color: transparent;
   display: flex;
   justify-content: flex-end;

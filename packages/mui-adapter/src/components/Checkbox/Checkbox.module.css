@@ -103,10 +103,10 @@
 
   /* Standard unchecked state */
   background-color: var(
-    --recursica_ui-kit_components_checkbox_properties_colors_background-unchecked
+    --recursica_ui-kit_components_checkbox_variants_selection-states_unchecked_properties_colors_background-color
   );
   border-color: var(
-    --recursica_ui-kit_components_checkbox_properties_colors_border-unchecked
+    --recursica_ui-kit_components_checkbox_variants_selection-states_unchecked_properties_colors_border-color
   );
   transition: all 0.2s ease; /* HARDCODE: consider global transition token */
 }
@@ -115,46 +115,87 @@
 .input:checked,
 .inputChecked {
   background-color: var(
-    --recursica_ui-kit_components_checkbox_properties_colors_background-checked
+    --recursica_ui-kit_components_checkbox_variants_selection-states_checked_properties_colors_background-color
   );
   border-color: var(
-    --recursica_ui-kit_components_checkbox_properties_colors_border-checked
+    --recursica_ui-kit_components_checkbox_variants_selection-states_checked_properties_colors_border-color
   );
 }
 .input[data-indeterminate],
 .inputIndeterminate {
   background-color: var(
-    --recursica_ui-kit_components_checkbox_properties_colors_background-indeterminate
+    --recursica_ui-kit_components_checkbox_variants_selection-states_indeterminate_properties_colors_background-color
   );
   border-color: var(
-    --recursica_ui-kit_components_checkbox_properties_colors_border-indeterminate
+    --recursica_ui-kit_components_checkbox_variants_selection-states_indeterminate_properties_colors_border-color
   );
 }
 
-/* Disabled State */
+/* Disabled State (colors now differ per selection state; MUI applies its
+   `disabled` classKey to the same root element as `root`, so `.root.disabled`
+   targets the actual disabled instance and cascades to the decorative
+   icon divs rendered inside it — mirrors the split now required by the
+   token schema, matching the mantine-adapter reference). */
 .input:disabled {
   cursor: not-allowed; /* HARDCODE: disabled state default */
+}
+.root.disabled .input:not(.inputChecked):not(.inputIndeterminate) {
   opacity: var(
-    --recursica_ui-kit_components_checkbox_properties_disabled-opacity
+    --recursica_ui-kit_components_checkbox_variants_selection-states_unchecked_variants_states_disabled_properties_opacity
   );
   background-color: var(
-    --recursica_ui-kit_components_checkbox_properties_colors_disabled-background
+    --recursica_ui-kit_components_checkbox_variants_selection-states_unchecked_variants_states_disabled_properties_colors_background-color
   );
   border-color: var(
-    --recursica_ui-kit_components_checkbox_properties_colors_disabled-border
+    --recursica_ui-kit_components_checkbox_variants_selection-states_unchecked_variants_states_disabled_properties_colors_border-color
+  );
+}
+.root.disabled .inputChecked {
+  opacity: var(
+    --recursica_ui-kit_components_checkbox_variants_selection-states_checked_variants_states_disabled_properties_opacity
+  );
+  background-color: var(
+    --recursica_ui-kit_components_checkbox_variants_selection-states_checked_variants_states_disabled_properties_colors_background-color
+  );
+  border-color: var(
+    --recursica_ui-kit_components_checkbox_variants_selection-states_checked_variants_states_disabled_properties_colors_border-color
+  );
+}
+.root.disabled .inputIndeterminate {
+  opacity: var(
+    --recursica_ui-kit_components_checkbox_variants_selection-states_indeterminate_variants_states_disabled_properties_opacity
+  );
+  background-color: var(
+    --recursica_ui-kit_components_checkbox_variants_selection-states_indeterminate_variants_states_disabled_properties_colors_background-color
+  );
+  border-color: var(
+    --recursica_ui-kit_components_checkbox_variants_selection-states_indeterminate_variants_states_disabled_properties_colors_border-color
   );
 }
 
 .icon {
   width: var(--recursica_ui-kit_components_checkbox_properties_icon-size);
   height: var(--recursica_ui-kit_components_checkbox_properties_icon-size);
+}
+/* No icon-color token exists for the unchecked state (no icon is visible then) */
+.inputChecked .icon {
   color: var(
-    --recursica_ui-kit_components_checkbox_properties_colors_icon-color
+    --recursica_ui-kit_components_checkbox_variants_selection-states_checked_properties_colors_icon-color
   );
 }
-.input:disabled + .icon {
+.inputIndeterminate .icon {
   color: var(
-    --recursica_ui-kit_components_checkbox_properties_colors_disabled-icon
+    --recursica_ui-kit_components_checkbox_variants_selection-states_indeterminate_properties_colors_icon-color
+  );
+}
+.root.disabled .inputChecked .icon {
+  color: var(
+    --recursica_ui-kit_components_checkbox_variants_selection-states_checked_variants_states_disabled_properties_colors_icon-color
+  );
+}
+.root.disabled .inputIndeterminate .icon {
+  color: var(
+    --recursica_ui-kit_components_checkbox_variants_selection-states_indeterminate_variants_states_disabled_properties_colors_icon-color
   );
 }
 
@@ -172,7 +213,7 @@
   word-wrap: break-word;
   white-space: normal;
   color: var(
-    --recursica_ui-kit_components_checkbox-item_properties_colors_text
+    --recursica_ui-kit_components_checkbox-item_properties_colors_text-color
   );
   font-family: var(
     --recursica_ui-kit_components_checkbox-item_properties_text_font-family
@@ -202,7 +243,7 @@
 .root:has(input:disabled) .label {
   cursor: not-allowed; /* HARDCODE: disabled interaction */
   opacity: var(
-    --recursica_ui-kit_components_checkbox-item_properties_disabled-opacity
+    --recursica_ui-kit_components_checkbox-item_variants_states_disabled_properties_opacity
   );
   color: var(
     --recursica_ui-kit_components_checkbox-item_properties_colors_disabled-text
@@ -226,7 +267,7 @@
 .description[data-disabled="true"],
 .error[data-disabled="true"] {
   opacity: var(
-    --recursica_ui-kit_components_checkbox-item_properties_disabled-opacity
+    --recursica_ui-kit_components_checkbox-item_variants_states_disabled_properties_opacity
   );
 }
 

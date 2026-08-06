@@ -25,8 +25,17 @@
 
 .root:has(input:disabled) {
   cursor: not-allowed;
+}
+
+/* Track/thumb dim per selection state; label dims via its own (single, state-agnostic) token */
+.root:has(input:checked:disabled) .track {
   opacity: var(
-    --recursica_ui-kit_components_switch-item_properties_disabled-opacity
+    --recursica_ui-kit_components_switch_variants_selection-states_selected_variants_states_disabled_properties_opacity
+  );
+}
+.root:has(input:disabled):not(:has(input:checked)) .track {
+  opacity: var(
+    --recursica_ui-kit_components_switch_variants_selection-states_unselected_variants_states_disabled_properties_opacity
   );
 }
 
@@ -39,12 +48,12 @@
 /* HARDCODE: disable native hover color transitions applied by Mantine */
 .track:hover {
   background-color: var(
-    --recursica_ui-kit_components_switch_properties_colors_track-unselected
+    --recursica_ui-kit_components_switch_variants_selection-states_unselected_properties_colors_track-color
   );
 }
 .root input:checked + .track:hover {
   background-color: var(
-    --recursica_ui-kit_components_switch_properties_colors_track-selected
+    --recursica_ui-kit_components_switch_variants_selection-states_selected_properties_colors_track-color
   );
 }
 
@@ -55,7 +64,7 @@
     --recursica_ui-kit_components_switch_properties_track-border-radius
   );
   background-color: var(
-    --recursica_ui-kit_components_switch_properties_colors_track-unselected
+    --recursica_ui-kit_components_switch_variants_selection-states_unselected_properties_colors_track-color
   );
   box-shadow: var(
     --recursica_ui-kit_components_switch_properties_track-elevation
@@ -79,7 +88,7 @@
 
 .root input:checked + .track {
   background-color: var(
-    --recursica_ui-kit_components_switch_properties_colors_track-selected
+    --recursica_ui-kit_components_switch_variants_selection-states_selected_properties_colors_track-color
   );
   border-color: transparent;
 }
@@ -91,7 +100,7 @@
     --recursica_ui-kit_components_switch_properties_thumb-border-radius
   );
   background-color: var(
-    --recursica_ui-kit_components_switch_properties_colors_thumb-unselected
+    --recursica_ui-kit_components_switch_variants_selection-states_unselected_properties_colors_thumb-color
   );
   box-shadow: var(
     --recursica_ui-kit_components_switch_properties_thumb-elevation
@@ -103,7 +112,7 @@
 
 .root input:checked + .track .thumb {
   background-color: var(
-    --recursica_ui-kit_components_switch_properties_colors_thumb-selected
+    --recursica_ui-kit_components_switch_variants_selection-states_selected_properties_colors_thumb-color
   );
 }
 
@@ -112,6 +121,11 @@
   flex-direction: column;
   max-width: var(
     --recursica_ui-kit_components_switch-item_properties_label-max-width
+  );
+}
+.root:has(input:disabled) .labelWrapper {
+  opacity: var(
+    --recursica_ui-kit_components_switch-item_variants_states_disabled_properties_opacity
   );
 }
 
@@ -140,7 +154,9 @@
   text-decoration: var(
     --recursica_ui-kit_components_switch-item_properties_text_text-decoration
   );
-  color: var(--recursica_ui-kit_components_switch-item_properties_colors_text);
+  color: var(
+    --recursica_ui-kit_components_switch-item_properties_colors_text-color
+  );
   cursor: inherit;
 }
 
@@ -167,7 +183,7 @@
 .description[data-disabled="true"],
 .error[data-disabled="true"] {
   opacity: var(
-    --recursica_ui-kit_components_switch-item_properties_disabled-opacity
+    --recursica_ui-kit_components_switch-item_variants_states_disabled_properties_opacity
   );
 }
 
@@ -195,7 +211,7 @@
   opacity: 0;
   transform: scale(0.5);
   color: var(
-    --recursica_ui-kit_components_switch_properties_colors_icon-selected
+    --recursica_ui-kit_components_switch_variants_selection-states_selected_properties_colors_icon-color
   );
 }
 
@@ -203,7 +219,7 @@
   opacity: 1;
   transform: scale(1);
   color: var(
-    --recursica_ui-kit_components_switch_properties_colors_icon-unselected
+    --recursica_ui-kit_components_switch_variants_selection-states_unselected_properties_colors_icon-color
   );
 }
 

@@ -1,3 +1,9 @@
+/* EXEMPTIONS:
+   - layouts_stacked sizes width variables are ignored because stacked labels naturally occupy 100% width block-level
+     real estate in HTML rendering, making explicit width properties redundant. Mirrors the mantine-adapter reference. */
+/* recursica-ignore: --recursica_ui-kit_components_label_variants_layouts_stacked_variants_sizes_default_properties_width */
+/* recursica-ignore: --recursica_ui-kit_components_label_variants_layouts_stacked_variants_sizes_small_properties_width */
+
 .root {
   /* Prevent default MUI absolute positioning logic */
   position: relative;
@@ -37,7 +43,7 @@
     --recursica_ui-kit_components_label_properties_label-text_text-transform
   );
 
-  color: var(--recursica_ui-kit_components_label_properties_colors_text);
+  color: var(--recursica_ui-kit_components_label_properties_colors_text-color);
 }
 
 .innerLayout {
@@ -56,7 +62,9 @@
 
 .required {
   /* Override the `.MuiInputLabel-asterisk` natively */
-  color: var(--recursica_ui-kit_components_label_properties_colors_asterisk);
+  color: var(
+    --recursica_ui-kit_components_label_properties_colors_asterisk-color
+  );
   margin-left: var(
     --recursica_ui-kit_components_label_properties_required-indicator-gap
   );
@@ -70,7 +78,7 @@
    We explicitly override this bleed to prevent the main label text from turning red, 
    while allowing the asterisk to take the error color! */
 .root:global(.Mui-error) {
-  color: var(--recursica_ui-kit_components_label_properties_colors_text);
+  color: var(--recursica_ui-kit_components_label_properties_colors_text-color);
 }
 .root:global(.Mui-error) .required {
   color: var(
@@ -112,11 +120,17 @@
   text-transform: var(
     --recursica_ui-kit_components_label_properties_optional-text_text-transform
   );
+  opacity: var(
+    --recursica_ui-kit_components_label_properties_optional-text-opacity
+  );
 }
 
 .actionArea {
   display: flex;
   align-items: center;
+  margin-left: var(
+    --recursica_ui-kit_components_label_properties_edit-icon-gap
+  );
 }
 
 .editIcon {
@@ -127,6 +141,9 @@
   background: none;
   border: none;
   padding: 0;
+  margin-left: var(
+    --recursica_ui-kit_components_label_properties_edit-icon-gap
+  );
 
   width: 16px;
   height: 16px;

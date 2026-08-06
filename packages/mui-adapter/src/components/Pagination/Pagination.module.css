@@ -145,13 +145,13 @@
     --recursica_ui-kit_components_button_variants_styles_outline_properties_elevation
   );
   background-color: var(
-    --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_background
+    --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_background-color
   );
   border-color: var(
     --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_border-color
   );
   color: var(
-    --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_text
+    --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_text-color
   );
 }
 
@@ -160,13 +160,8 @@
   cursor: not-allowed;
 }
 
-.control:hover:not(:disabled) {
-  color: var(
-    --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_text-hover
-  );
-}
-
-/* Hover Overlay */
+/* Hover Overlay: no per-variant hover-color/hover-opacity tokens exist anymore; use the
+   generic overlay tokens shared across components (same as Button). */
 .control::after {
   content: "";
   position: absolute;
@@ -176,15 +171,11 @@
   pointer-events: none;
   transition: opacity 150ms ease;
   opacity: 0;
-  background-color: var(
-    --recursica_ui-kit_components_button_variants_sizes_default_properties_hover-color
-  );
+  background-color: var(--recursica_brand_states_hover_color);
 }
 
 .control:hover:not(:disabled)::after {
-  opacity: var(
-    --recursica_ui-kit_components_button_variants_sizes_default_properties_hover-opacity
-  );
+  opacity: var(--recursica_brand_states_hover_opacity);
 }
 
 /* Active Style: Solid */
@@ -196,19 +187,13 @@
     --recursica_ui-kit_components_button_variants_styles_solid_properties_elevation
   );
   background-color: var(
-    --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_background
+    --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_background-color
   );
   border-color: var(
     --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_border-color
   );
   color: var(
-    --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_text
-  );
-}
-
-.control[data-active]:hover:not(:disabled) {
-  color: var(
-    --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_text-hover
+    --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_text-color
   );
 }
 
@@ -221,13 +206,13 @@
     --recursica_ui-kit_components_button_variants_styles_text_properties_elevation
   );
   background-color: var(
-    --recursica_ui-kit_components_button_variants_styles_text_properties_colors_background
+    --recursica_ui-kit_components_button_variants_styles_text_properties_colors_background-color
   );
   border-color: var(
     --recursica_ui-kit_components_button_variants_styles_text_properties_colors_border-color
   );
   color: var(
-    --recursica_ui-kit_components_button_variants_styles_text_properties_colors_text
+    --recursica_ui-kit_components_button_variants_styles_text_properties_colors_text-color
   );
 
   /* Also explicitly inherit navigation sizes incase they differ from pages */
@@ -244,24 +229,6 @@
     var(
       --recursica_ui-kit_components_button_variants_sizes_default_properties_horizontal-padding
     );
-}
-
-.control[data-variant="text"]:hover:not(:disabled) {
-  color: var(
-    --recursica_ui-kit_components_button_variants_styles_text_properties_colors_text-hover
-  );
-}
-
-/* Hover Overlay for Navigation */
-.control[data-variant="text"]::after {
-  background-color: var(
-    --recursica_ui-kit_components_button_variants_sizes_default_properties_hover-color
-  );
-}
-.control[data-variant="text"]:hover:not(:disabled)::after {
-  opacity: var(
-    --recursica_ui-kit_components_button_variants_sizes_default_properties_hover-opacity
-  );
 }
 
 /* Dots */

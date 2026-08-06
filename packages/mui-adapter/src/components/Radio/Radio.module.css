@@ -112,10 +112,10 @@
 
   /* Standard unchecked state */
   background-color: var(
-    --recursica_ui-kit_components_radio-button_properties_colors_background-unselected
+    --recursica_ui-kit_components_radio-button_variants_selection-states_unselected_properties_colors_background-color
   );
   border-color: var(
-    --recursica_ui-kit_components_radio-button_properties_colors_border-unselected
+    --recursica_ui-kit_components_radio-button_variants_selection-states_unselected_properties_colors_border-color
   );
   transition: all 0.2s ease; /* HARDCODE: consider global transition token */
 }
@@ -123,24 +123,37 @@
 /* Checked State */
 .root .radio:checked {
   background-color: var(
-    --recursica_ui-kit_components_radio-button_properties_colors_background-selected
+    --recursica_ui-kit_components_radio-button_variants_selection-states_selected_properties_colors_background-color
   );
   border-color: var(
-    --recursica_ui-kit_components_radio-button_properties_colors_border-selected
+    --recursica_ui-kit_components_radio-button_variants_selection-states_selected_properties_colors_border-color
   );
 }
 
-/* Disabled State */
+/* Disabled State (colors now differ per selection state, so each combination is mapped explicitly) */
 .root .radio:disabled {
   cursor: not-allowed; /* HARDCODE: disabled state default */
+}
+.root .radio:disabled:not(:checked) {
   opacity: var(
-    --recursica_ui-kit_components_radio-button_properties_disabled-opacity
+    --recursica_ui-kit_components_radio-button_variants_selection-states_unselected_variants_states_disabled_properties_opacity
   );
   background-color: var(
-    --recursica_ui-kit_components_radio-button_properties_colors_disabled-background
+    --recursica_ui-kit_components_radio-button_variants_selection-states_unselected_variants_states_disabled_properties_colors_background-color
   );
   border-color: var(
-    --recursica_ui-kit_components_radio-button_properties_colors_disabled-border
+    --recursica_ui-kit_components_radio-button_variants_selection-states_unselected_variants_states_disabled_properties_colors_border-color
+  );
+}
+.root .radio:checked:disabled {
+  opacity: var(
+    --recursica_ui-kit_components_radio-button_variants_selection-states_selected_variants_states_disabled_properties_opacity
+  );
+  background-color: var(
+    --recursica_ui-kit_components_radio-button_variants_selection-states_selected_variants_states_disabled_properties_colors_background-color
+  );
+  border-color: var(
+    --recursica_ui-kit_components_radio-button_variants_selection-states_selected_variants_states_disabled_properties_colors_border-color
   );
 }
 
@@ -151,14 +164,18 @@
   pointer-events: none;
   width: var(--recursica_ui-kit_components_radio-button_properties_icon-size);
   height: var(--recursica_ui-kit_components_radio-button_properties_icon-size);
+}
+/* No icon-color token exists for the unselected state (no icon is visible then) */
+.root .radio:checked + .iconWrapper .icon,
+.root .radio:checked + .icon {
   color: var(
-    --recursica_ui-kit_components_radio-button_properties_colors_icon-color
+    --recursica_ui-kit_components_radio-button_variants_selection-states_selected_properties_colors_icon-color
   );
 }
-.root .radio:disabled + .iconWrapper .icon,
-.root .radio:disabled + .icon {
+.root .radio:checked:disabled + .iconWrapper .icon,
+.root .radio:checked:disabled + .icon {
   color: var(
-    --recursica_ui-kit_components_radio-button_properties_colors_disabled-icon
+    --recursica_ui-kit_components_radio-button_variants_selection-states_selected_variants_states_disabled_properties_colors_icon-color
   );
 }
 
@@ -176,7 +193,7 @@
   word-wrap: break-word;
   white-space: normal;
   color: var(
-    --recursica_ui-kit_components_radio-button-item_properties_colors_text
+    --recursica_ui-kit_components_radio-button-item_properties_colors_text-color
   );
   font-family: var(
     --recursica_ui-kit_components_radio-button-item_properties_text_font-family
@@ -209,7 +226,7 @@
     --recursica_ui-kit_components_radio-button-item_properties_colors_disabled-text
   );
   opacity: var(
-    --recursica_ui-kit_components_radio-button-item_properties_disabled-opacity
+    --recursica_ui-kit_components_radio-button-item_variants_states_disabled_properties_opacity
   );
 }
 
@@ -230,6 +247,6 @@
 .root .description[data-disabled="true"],
 .root .error[data-disabled="true"] {
   opacity: var(
-    --recursica_ui-kit_components_radio-button-item_properties_disabled-opacity
+    --recursica_ui-kit_components_radio-button-item_variants_states_disabled_properties_opacity
   );
 }

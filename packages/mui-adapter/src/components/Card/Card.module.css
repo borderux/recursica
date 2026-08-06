@@ -9,7 +9,7 @@
   --card-padding: var(--recursica_ui-kit_components_card_properties_padding);
 
   background-color: var(
-    --recursica_ui-kit_components_card_properties_colors_background
+    --recursica_ui-kit_components_card_properties_colors_background-color
   );
   border-radius: var(
     --recursica_ui-kit_components_card_properties_borders_border-radius
@@ -32,7 +32,7 @@
 
 .header {
   background-color: var(
-    --recursica_ui-kit_components_card_properties_colors_header-background
+    --recursica_ui-kit_components_card_properties_colors_header-background-color
   );
   padding: var(--recursica_ui-kit_components_card_properties_header-padding);
   color: var(--recursica_ui-kit_components_card_properties_colors_title);
@@ -81,7 +81,7 @@
 
 .footer {
   background-color: var(
-    --recursica_ui-kit_components_card_properties_colors_footer-background
+    --recursica_ui-kit_components_card_properties_colors_footer-background-color
   );
   padding: var(--recursica_ui-kit_components_card_properties_footer-padding);
   border-top: var(--recursica_ui-kit_components_card_properties_divider-size)

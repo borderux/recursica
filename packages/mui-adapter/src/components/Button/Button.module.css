@@ -239,18 +239,8 @@
 }
 
 /* Disabled */
-.root[data-size="default"]:disabled,
-.root[data-size="default"]:global(.Mui-disabled) {
-  opacity: var(
-    --recursica_ui-kit_components_button_variants_sizes_default_properties_disabled-opacity
-  );
-  cursor: not-allowed;
-}
-.root[data-size="small"]:disabled,
-.root[data-size="small"]:global(.Mui-disabled) {
-  opacity: var(
-    --recursica_ui-kit_components_button_variants_sizes_small_properties_disabled-opacity
-  );
+.root:disabled,
+.root:global(.Mui-disabled) {
   cursor: not-allowed;
 }
 
@@ -264,21 +254,10 @@
   pointer-events: none;
   transition: opacity 150ms ease;
   opacity: 0;
-}
-.root[data-size="default"]::after {
-  background-color: var(
-    --recursica_ui-kit_components_button_variants_sizes_default_properties_hover-color
-  );
-}
-.root[data-size="small"]::after {
-  background-color: var(
-    --recursica_ui-kit_components_button_variants_sizes_small_properties_hover-color
-  );
+  background-color: var(--recursica_brand_states_hover_color);
 }
 .root:hover:not(:disabled):not(:global(.Mui-disabled))::after {
-  opacity: var(
-    --recursica_ui-kit_components_button_variants_sizes_default_properties_hover-opacity
-  );
+  opacity: var(--recursica_brand_states_hover_opacity);
 }
 
 /* ==== VARIANTS ==== */
@@ -292,13 +271,13 @@
     --recursica_ui-kit_components_button_variants_styles_solid_properties_elevation
   );
   background-color: var(
-    --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_background
+    --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_background-color
   );
   border-color: var(
     --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_border-color
   );
   color: var(
-    --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_text
+    --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_text-color
   );
 }
 .root[data-variant="solid"] .iconWrapper {
@@ -306,12 +285,13 @@
     --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_icon-color
   );
 }
-.root[data-variant="solid"]:hover:not(:disabled):not(:global(.Mui-disabled)) {
-  color: var(
-    --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_text-hover
+.root[data-variant="solid"]:disabled,
+.root[data-variant="solid"]:global(.Mui-disabled) {
+  opacity: var(
+    --recursica_ui-kit_components_button_variants_styles_solid_variants_states_disabled_properties_opacity
   );
   box-shadow: var(
-    --recursica_ui-kit_components_button_variants_styles_solid_properties_hover-elevation
+    --recursica_ui-kit_components_button_variants_styles_solid_variants_states_disabled_properties_elevation
   );
 }
 
@@ -324,13 +304,13 @@
     --recursica_ui-kit_components_button_variants_styles_outline_properties_elevation
   );
   background-color: var(
-    --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_background
+    --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_background-color
   );
   border-color: var(
     --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_border-color
   );
   color: var(
-    --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_text
+    --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_text-color
   );
 }
 .root[data-variant="outline"] .iconWrapper {
@@ -338,12 +318,13 @@
     --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_icon-color
   );
 }
-.root[data-variant="outline"]:hover:not(:disabled):not(:global(.Mui-disabled)) {
-  color: var(
-    --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_text-hover
+.root[data-variant="outline"]:disabled,
+.root[data-variant="outline"]:global(.Mui-disabled) {
+  opacity: var(
+    --recursica_ui-kit_components_button_variants_styles_outline_variants_states_disabled_properties_opacity
   );
   box-shadow: var(
-    --recursica_ui-kit_components_button_variants_styles_outline_properties_hover-elevation
+    --recursica_ui-kit_components_button_variants_styles_outline_variants_states_disabled_properties_elevation
   );
 }
 
@@ -356,13 +337,13 @@
     --recursica_ui-kit_components_button_variants_styles_text_properties_elevation
   );
   background-color: var(
-    --recursica_ui-kit_components_button_variants_styles_text_properties_colors_background
+    --recursica_ui-kit_components_button_variants_styles_text_properties_colors_background-color
   );
   border-color: var(
     --recursica_ui-kit_components_button_variants_styles_text_properties_colors_border-color
   );
   color: var(
-    --recursica_ui-kit_components_button_variants_styles_text_properties_colors_text
+    --recursica_ui-kit_components_button_variants_styles_text_properties_colors_text-color
   );
 }
 .root[data-variant="text"] .iconWrapper {
@@ -370,12 +351,13 @@
     --recursica_ui-kit_components_button_variants_styles_text_properties_colors_icon-color
   );
 }
-.root[data-variant="text"]:hover:not(:disabled):not(:global(.Mui-disabled)) {
-  color: var(
-    --recursica_ui-kit_components_button_variants_styles_text_properties_colors_text-hover
+.root[data-variant="text"]:disabled,
+.root[data-variant="text"]:global(.Mui-disabled) {
+  opacity: var(
+    --recursica_ui-kit_components_button_variants_styles_text_variants_states_disabled_properties_opacity
   );
   box-shadow: var(
-    --recursica_ui-kit_components_button_variants_styles_text_properties_hover-elevation
+    --recursica_ui-kit_components_button_variants_styles_text_variants_states_disabled_properties_elevation
   );
 }
 

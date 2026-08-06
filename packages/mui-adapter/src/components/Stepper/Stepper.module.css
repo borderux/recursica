@@ -267,7 +267,7 @@
   /* Font details are implicitly mapped by sizes, but colors map to states */
   /* Upcoming State (Pending) - Default */
   background-color: var(
-    --recursica_ui-kit_components_stepper_properties_colors_upcoming-indicator-background
+    --recursica_ui-kit_components_stepper_properties_colors_upcoming-indicator-background-color
   );
   border-color: var(
     --recursica_ui-kit_components_stepper_properties_colors_upcoming-indicator-border-color
@@ -281,7 +281,7 @@
 .root .stepIcon.Mui-completed,
 .root .stepIcon:has(.Mui-completed) {
   background-color: var(
-    --recursica_ui-kit_components_stepper_properties_colors_completed-indicator-background
+    --recursica_ui-kit_components_stepper_properties_colors_completed-indicator-background-color
   );
   border-color: var(
     --recursica_ui-kit_components_stepper_properties_colors_completed-indicator-border-color
@@ -316,7 +316,7 @@
 .root .stepIcon.Mui-active,
 .root .stepIcon:has(.Mui-active) {
   background-color: var(
-    --recursica_ui-kit_components_stepper_properties_colors_current-indicator-background
+    --recursica_ui-kit_components_stepper_properties_colors_current-indicator-background-color
   );
   border-color: var(
     --recursica_ui-kit_components_stepper_properties_colors_current-indicator-border-color
