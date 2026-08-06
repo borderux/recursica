@@ -92,8 +92,8 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
       <WithReadOnlyWrapper
         className={wrapperClass}
         style={style as React.CSSProperties}
-        controlMaxWidth="var(--recursica_ui-kit_components_number-input_properties_max-width)"
-        controlMinWidth="var(--recursica_ui-kit_components_number-input_properties_min-width)"
+        controlMaxWidth="var(--number-input-control-max-width)"
+        controlMinWidth="var(--number-input-control-min-width)"
         overStyled={overStyled as true}
         formLayout={formLayout}
         labelSize={labelSize}

@@ -31,7 +31,7 @@
 
   /* Default Variant (Base) */
   background-color: var(
-    --recursica_ui-kit_components_toast_variants_styles_default_properties_colors_background
+    --recursica_ui-kit_components_toast_variants_styles_default_properties_colors_background-color
   );
   gap: var(--recursica_ui-kit_components_toast_properties_spacing);
 
@@ -48,7 +48,7 @@
     background-color: transparent !important; /* Remove Mantine's native circle background */
 
     color: var(
-      --recursica_ui-kit_components_toast_variants_styles_default_properties_colors_text
+      --recursica_ui-kit_components_toast_variants_styles_default_properties_colors_text-color
     );
   }
 
@@ -58,7 +58,7 @@
   & .title,
   & .description {
     color: var(
-      --recursica_ui-kit_components_toast_variants_styles_default_properties_colors_text
+      --recursica_ui-kit_components_toast_variants_styles_default_properties_colors_text-color
     );
   }
   & .closeButton {
@@ -70,18 +70,18 @@
   /* Error Variant styling */
   &[data-variant="error"] {
     background-color: var(
-      --recursica_ui-kit_components_toast_variants_styles_error_properties_colors_background
+      --recursica_ui-kit_components_toast_variants_styles_error_properties_colors_background-color
     );
 
     & .icon {
       color: var(
-        --recursica_ui-kit_components_toast_variants_styles_error_properties_colors_text
+        --recursica_ui-kit_components_toast_variants_styles_error_properties_colors_text-color
       ) !important;
     }
     & .title,
     & .description {
       color: var(
-        --recursica_ui-kit_components_toast_variants_styles_error_properties_colors_text
+        --recursica_ui-kit_components_toast_variants_styles_error_properties_colors_text-color
       );
     }
     & .closeButton {
@@ -94,18 +94,18 @@
   /* Success Variant styling */
   &[data-variant="success"] {
     background-color: var(
-      --recursica_ui-kit_components_toast_variants_styles_success_properties_colors_background
+      --recursica_ui-kit_components_toast_variants_styles_success_properties_colors_background-color
     );
 
     & .icon {
       color: var(
-        --recursica_ui-kit_components_toast_variants_styles_success_properties_colors_text
+        --recursica_ui-kit_components_toast_variants_styles_success_properties_colors_text-color
       ) !important;
     }
     & .title,
     & .description {
       color: var(
-        --recursica_ui-kit_components_toast_variants_styles_success_properties_colors_text
+        --recursica_ui-kit_components_toast_variants_styles_success_properties_colors_text-color
       );
     }
     & .closeButton {

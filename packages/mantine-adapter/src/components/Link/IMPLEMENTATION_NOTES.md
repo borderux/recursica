@@ -1,15 +1,8 @@
 # Link Component Implementation Notes
 
-## Missing States in Design Tokens
+## States in Design Tokens
 
-Currently, the design tokens (`recursica_variables_scoped.css`) only provide states for:
-
-- `default`
-- `hover`
-- `visited`
-- `visited-hover`
-
-There are no tokens for the `active` or `focus` states. If these are needed, they must be added to the Figma variables and exported via the token pipeline. The component relies on the browser's default focus outline for accessibility unless overriden by a global reset.
+The design tokens (`recursica_variables_scoped.css`) provide the base link styling directly on `--recursica_ui-kit_components_link_properties_*` (no distinct `default` state), plus a `visited` variant that overrides only `colors_text-color`/`colors_icon-color`. There is no per-state token for `hover` anymore (a prior schema version had one); the component currently applies no distinct hover treatment beyond the browser's native `cursor: pointer`. There are no tokens for `active` or `focus` either; the component relies on the browser's default focus outline for accessibility unless overridden by a global reset.
 
 ## Overriding Mantine's underline Prop
 

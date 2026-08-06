@@ -37,7 +37,7 @@
 
   /* Appearance */
   background-color: var(
-    --recursica_ui-kit_components_modal_properties_colors_background
+    --recursica_ui-kit_components_modal_properties_colors_content-background-color
   );
   box-shadow: var(--recursica_ui-kit_components_modal_properties_elevation);
 
@@ -47,8 +47,12 @@
 }
 
 .header {
-  padding: var(--recursica_ui-kit_components_modal_properties_vertical-padding)
-    var(--recursica_ui-kit_components_modal_properties_horizontal-padding);
+  padding: var(
+      --recursica_ui-kit_components_modal_properties_header-footer-vertical-padding
+    )
+    var(
+      --recursica_ui-kit_components_modal_properties_header-footer-horizontal-padding
+    );
   background-color: transparent; /* Inherit from content */
 }
 
@@ -93,8 +97,12 @@
 }
 
 .scrollArea {
-  padding: var(--recursica_ui-kit_components_modal_properties_vertical-padding)
-    var(--recursica_ui-kit_components_modal_properties_horizontal-padding);
+  padding: var(
+      --recursica_ui-kit_components_modal_properties_content-vertical-padding
+    )
+    var(
+      --recursica_ui-kit_components_modal_properties_content-horizontal-padding
+    );
 
   /* Internal scrolling */
   flex: 1 1 auto;
@@ -137,11 +145,11 @@
   /* Smooth divider transitions */
   transition: border-color 0.15s ease;
   border-top: var(
-      --recursica_ui-kit_components_modal_properties_scroll-divider-thickness
+      --recursica_ui-kit_components_modal_properties_scroll-divider-size
     )
     solid transparent;
   border-bottom: var(
-      --recursica_ui-kit_components_modal_properties_scroll-divider-thickness
+      --recursica_ui-kit_components_modal_properties_scroll-divider-size
     )
     solid transparent;
 }
@@ -159,8 +167,12 @@
 }
 
 .footer {
-  padding: var(--recursica_ui-kit_components_modal_properties_vertical-padding)
-    var(--recursica_ui-kit_components_modal_properties_horizontal-padding);
+  padding: var(
+      --recursica_ui-kit_components_modal_properties_header-footer-vertical-padding
+    )
+    var(
+      --recursica_ui-kit_components_modal_properties_header-footer-horizontal-padding
+    );
   background-color: transparent;
   display: flex;
   justify-content: flex-end;

@@ -23,7 +23,7 @@
 
 .tooltip {
   background-color: var(
-    --recursica_ui-kit_components_tooltip_properties_colors_background
+    --recursica_ui-kit_components_tooltip_properties_colors_background-color
   );
   border-style: solid; /* HARDCODE: Mantine Box does not set border-style natively */
   border-width: var(
@@ -76,7 +76,9 @@
     --recursica_ui-kit_components_tooltip_properties_text_text-transform
   );
 
-  color: var(--recursica_ui-kit_components_tooltip_properties_colors_text);
+  color: var(
+    --recursica_ui-kit_components_tooltip_properties_colors_text-color
+  );
 }
 
 /* ======================================

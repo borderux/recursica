@@ -75,18 +75,13 @@
 }
 
 /* Hover rows */
+/* Table's dedicated highlight-on-hover token was removed from the schema; hover feedback now
+   uses the generic cross-component overlay tokens instead. */
 .root tbody tr:hover td {
   background-color: color-mix(
     in srgb,
-    var(
-        --recursica_ui-kit_components_table_properties_colors_highlight-on-hover-color
-      )
-      calc(
-        var(
-            --recursica_ui-kit_components_table_properties_opacities_highlight-on-hover-opacity
-          ) *
-          100%
-      ),
+    var(--recursica_brand_states_hover_color)
+      calc(var(--recursica_brand_states_hover_opacity) * 100%),
     transparent
   );
 }
@@ -97,10 +92,10 @@
 
 .root thead th {
   background-color: var(
-    --recursica_ui-kit_components_table-header_properties_colors_cell-color-enabled
+    --recursica_ui-kit_components_table-header_properties_colors_cell-color
   );
   color: var(
-    --recursica_ui-kit_components_table-header_properties_colors_text-color-enabled
+    --recursica_ui-kit_components_table-header_properties_colors_text-color
   );
   padding: var(
       --recursica_ui-kit_components_table-header_properties_padding-vertical
@@ -207,10 +202,13 @@
 /* Disabled Header */
 .root thead th[data-disabled="true"] {
   background-color: var(
-    --recursica_ui-kit_components_table-header_properties_colors_cell-color-disabled
+    --recursica_ui-kit_components_table-header_variants_states_disabled_properties_colors_cell-color
   );
   color: var(
-    --recursica_ui-kit_components_table-header_properties_colors_text-color-disabled
+    --recursica_ui-kit_components_table-header_variants_states_disabled_properties_colors_text-color
+  );
+  opacity: var(
+    --recursica_ui-kit_components_table-header_variants_states_disabled_properties_opacity
   );
 }
 
@@ -229,10 +227,10 @@
 
 .root tbody td {
   background-color: var(
-    --recursica_ui-kit_components_table-cell_properties_colors_cell-color-enabled
+    --recursica_ui-kit_components_table-cell_properties_colors_cell-color
   );
   color: var(
-    --recursica_ui-kit_components_table-cell_properties_colors_text-color-enabled
+    --recursica_ui-kit_components_table-cell_properties_colors_text-color
   );
   padding: var(
       --recursica_ui-kit_components_table-cell_properties_padding-vertical
@@ -305,10 +303,13 @@
 .root tbody tr[data-disabled="true"] td,
 .root tbody td[data-disabled="true"] {
   background-color: var(
-    --recursica_ui-kit_components_table-cell_properties_colors_cell-color-disabled
+    --recursica_ui-kit_components_table-cell_variants_states_disabled_properties_colors_cell-color
   );
   color: var(
-    --recursica_ui-kit_components_table-cell_properties_colors_text-color-disabled
+    --recursica_ui-kit_components_table-cell_variants_states_disabled_properties_colors_text-color
+  );
+  opacity: var(
+    --recursica_ui-kit_components_table-cell_variants_states_disabled_properties_opacity
   );
 }
 
@@ -318,10 +319,10 @@
 
 .root tfoot td {
   background-color: var(
-    --recursica_ui-kit_components_table-footer_properties_colors_cell-color-enabled
+    --recursica_ui-kit_components_table-footer_properties_colors_cell-color
   );
   color: var(
-    --recursica_ui-kit_components_table-footer_properties_colors_text-color-enabled
+    --recursica_ui-kit_components_table-footer_properties_colors_text-color
   );
   padding: var(
       --recursica_ui-kit_components_table-footer_properties_padding-vertical
@@ -384,9 +385,12 @@
 .root tfoot tr[data-disabled="true"] td,
 .root tfoot td[data-disabled="true"] {
   background-color: var(
-    --recursica_ui-kit_components_table-footer_properties_colors_cell-color-disabled
+    --recursica_ui-kit_components_table-footer_variants_states_disabled_properties_colors_cell-color
   );
   color: var(
-    --recursica_ui-kit_components_table-footer_properties_colors_text-color-disabled
+    --recursica_ui-kit_components_table-footer_variants_states_disabled_properties_colors_text-color
+  );
+  opacity: var(
+    --recursica_ui-kit_components_table-footer_variants_states_disabled_properties_opacity
   );
 }

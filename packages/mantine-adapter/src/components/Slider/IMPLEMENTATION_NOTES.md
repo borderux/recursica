@@ -47,3 +47,12 @@ This document contains specific design decisions, architectural constraints, and
 - If `showInput` is enabled, the floating `.currentValue` is hidden since the active value is already displayed and editable within the adjacent numeric text input, avoiding visual redundancy.
 - In `side-by-side` form layouts, the `.currentValue` is positioned inline (static positioning) to the right of the max label rather than floating above it, centered vertically with the max label and aligned right to the container. This uses CSS flexbox ordering (`order: 2` for `.currentValue` and `order: 1` for `.minMaxGuide`) to visually swap their positions while preserving clean, semantic DOM ordering.
 - To ensure perfect, pixel-perfect vertical track alignment between sliders that show numeric text inputs (`showInput={true}`) and sliders that display the active inline value (`showInput={false}`), the `.currentValue` element is globally given a width equal to the input width (`var(--recursica_ui-kit_components_slider_properties_input-width)`) and right-aligned (`text-align: right`). In `side-by-side` layouts, `.rightGuideContainer`'s flex gap is also matched to the horizontal input-to-track gap (`var(--recursica_ui-kit_components_slider_properties_input-gap)`), making the horizontal space occupied by the rightmost elements exactly identical in both component modes.
+
+## 6. Focus Treatment (Generic State Tokens)
+
+**Decision:** The token schema dropped the component-level `focus` state entirely. Only a narrower `active` state remains, covering `colors_track`/`colors_step-indicator-color` for the track/mark while any part of the slider has focus-within.
+**Implementation:**
+
+- Thumb, icon, and numeric input no longer have per-component focus colors. Instead they get a focus _ring_ built from the generic `--recursica_brand_states_focus_{border-size,color,margin,blur}` tokens, applied as a `box-shadow` (crisp inner ring at `border-size` plus a soft outer glow using `blur`/`margin`) rather than a color swap.
+- The thumb's focus box-shadow layers the ring on top of its existing `thumb-elevation` shadow rather than replacing it.
+- `.sliderMark[data-filled]` has no default-state "-active" step-indicator token anymore (only `disabled`/`error` define one); it reuses `colors_track-active` so filled marks stay visually tied to the filled portion of the track. Worth a design review if a distinct filled-mark color is expected.

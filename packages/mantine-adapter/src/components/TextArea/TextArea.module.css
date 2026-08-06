@@ -1,22 +1,35 @@
 /* EXEMPTIONS:
-   - state-specific border-size variables are ignored because a uniform 1px border is applied globally to prevent 
-     unexpected layout shift or flickering during focus, disabled, or error state transitions. */
-/* recursica-ignore: --recursica_ui-kit_components_textarea_variants_states_default_properties_border-size */
+   - border-size variables are ignored because a uniform 1px border is applied globally to prevent
+     unexpected layout shift or flickering during focused, disabled, or error state transitions. */
+/* recursica-ignore: --recursica_ui-kit_components_textarea_properties_border-size */
 /* recursica-ignore: --recursica_ui-kit_components_textarea_variants_states_disabled_properties_border-size */
 /* recursica-ignore: --recursica_ui-kit_components_textarea_variants_states_error_properties_border-size */
-/* recursica-ignore: --recursica_ui-kit_components_textarea_variants_states_focus_properties_border-size */
 
 /* LAYOUT SPACING OVERRIDES:
-   - Sets the --form-control-margin-bottom spacing hook to map component-specific layout tokens. */
+   - Sets the --form-control-margin-bottom spacing hook to map component-specific layout tokens.
+   - Also sets the --textarea-control-{max,min}-width hooks consumed inline in TextArea.tsx, since
+     the token schema no longer provides a single layout-agnostic min/max width. */
 .layoutOverride {
   --form-control-margin-bottom: var(
     --recursica_ui-kit_components_textarea_variants_layouts_stacked_properties_top-bottom-margin
+  );
+  --textarea-control-max-width: var(
+    --recursica_ui-kit_components_textarea_variants_layouts_stacked_properties_max-width
+  );
+  --textarea-control-min-width: var(
+    --recursica_ui-kit_components_textarea_variants_layouts_stacked_properties_min-width
   );
 }
 
 .layoutOverride[data-form-layout="side-by-side"] {
   --form-control-margin-bottom: var(
     --recursica_ui-kit_components_textarea_variants_layouts_side-by-side_properties_top-bottom-margin
+  );
+  --textarea-control-max-width: var(
+    --recursica_ui-kit_components_textarea_variants_layouts_side-by-side_properties_max-width
+  );
+  --textarea-control-min-width: var(
+    --recursica_ui-kit_components_textarea_variants_layouts_side-by-side_properties_min-width
   );
 }
 
@@ -95,13 +108,13 @@
 
   /* Base State Default Execution */
   background-color: var(
-    --recursica_ui-kit_components_textarea_variants_states_default_properties_colors_background
+    --recursica_ui-kit_components_textarea_properties_colors_background-color
   );
   border-color: var(
-    --recursica_ui-kit_components_textarea_variants_states_default_properties_colors_border-color
+    --recursica_ui-kit_components_textarea_properties_colors_border-color
   );
   color: var(
-    --recursica_ui-kit_components_textarea_variants_states_default_properties_colors_text
+    --recursica_ui-kit_components_textarea_properties_colors_text-color
   );
 
   outline: none;
@@ -119,17 +132,16 @@
 -------------------------------------- */
 
 /* Focus State Mapping (Triggered internally via browser focus rules) */
+/* The token schema no longer provides per-component focus colors; apply the generic focus ring
+   tokens as a box-shadow ring instead of a color swap. */
 .input:focus-within,
 .input:focus {
-  border-color: var(
-    --recursica_ui-kit_components_textarea_variants_states_focus_properties_colors_border-color
-  );
-  background-color: var(
-    --recursica_ui-kit_components_textarea_variants_states_focus_properties_colors_background
-  );
-  color: var(
-    --recursica_ui-kit_components_textarea_variants_states_focus_properties_colors_text
-  );
+  box-shadow:
+    0 0 0 var(--recursica_brand_states_focus_border-size)
+      var(--recursica_brand_states_focus_color),
+    0 0 var(--recursica_brand_states_focus_blur)
+      var(--recursica_brand_states_focus_margin)
+      var(--recursica_brand_states_focus_color);
 }
 
 /* Error State Mapping (Propagated strictly down from the wrapper DOM context) */
@@ -138,10 +150,10 @@
     --recursica_ui-kit_components_textarea_variants_states_error_properties_colors_border-color
   ) !important;
   background-color: var(
-    --recursica_ui-kit_components_textarea_variants_states_error_properties_colors_background
+    --recursica_ui-kit_components_textarea_variants_states_error_properties_colors_background-color
   ) !important;
   color: var(
-    --recursica_ui-kit_components_textarea_variants_states_error_properties_colors_text
+    --recursica_ui-kit_components_textarea_variants_states_error_properties_colors_text-color
   ) !important;
 }
 
@@ -151,10 +163,10 @@
     --recursica_ui-kit_components_textarea_variants_states_disabled_properties_colors_border-color
   ) !important;
   background-color: var(
-    --recursica_ui-kit_components_textarea_variants_states_disabled_properties_colors_background
+    --recursica_ui-kit_components_textarea_variants_states_disabled_properties_colors_background-color
   ) !important;
   color: var(
-    --recursica_ui-kit_components_textarea_variants_states_disabled_properties_colors_text
+    --recursica_ui-kit_components_textarea_variants_states_disabled_properties_colors_text-color
   ) !important;
   cursor: not-allowed;
 }
