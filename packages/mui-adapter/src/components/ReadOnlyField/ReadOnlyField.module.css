@@ -45,7 +45,7 @@
     --recursica_ui-kit_components_read-only-field_properties_text_text-transform
   );
   color: var(
-    --recursica_ui-kit_components_read-only-field_properties_colors_text
+    --recursica_ui-kit_components_read-only-field_properties_colors_text-color
   );
 
   min-height: var(

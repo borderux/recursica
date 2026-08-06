@@ -122,8 +122,8 @@ export const Autocomplete = forwardRef<HTMLInputElement, AutocompleteProps>(
       <WithReadOnlyWrapper
         className={wrapperClass}
         style={style as React.CSSProperties}
-        controlMaxWidth="var(--recursica_ui-kit_components_autocomplete_properties_max-width)"
-        controlMinWidth="var(--recursica_ui-kit_components_autocomplete_properties_min-width)"
+        controlMaxWidth="var(--autocomplete-control-max-width)"
+        controlMinWidth="var(--autocomplete-control-min-width)"
         overStyled={overStyled as true}
         formLayout={formLayout}
         labelSize={labelSize}

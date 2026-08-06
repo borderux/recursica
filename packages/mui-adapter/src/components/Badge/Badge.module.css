@@ -68,49 +68,49 @@
 
 .root[data-variant="alert"] {
   background-color: var(
-    --recursica_ui-kit_components_badge_variants_styles_alert_properties_colors_background
+    --recursica_ui-kit_components_badge_variants_styles_alert_properties_colors_background-color
   );
   border-color: var(
     --recursica_ui-kit_components_badge_variants_styles_alert_properties_colors_border-color
   );
   color: var(
-    --recursica_ui-kit_components_badge_variants_styles_alert_properties_colors_text
+    --recursica_ui-kit_components_badge_variants_styles_alert_properties_colors_text-color
   );
 }
 
 .root[data-variant="primary-color"] {
   background-color: var(
-    --recursica_ui-kit_components_badge_variants_styles_primary-color_properties_colors_background
+    --recursica_ui-kit_components_badge_variants_styles_primary-color_properties_colors_background-color
   );
   border-color: var(
     --recursica_ui-kit_components_badge_variants_styles_primary-color_properties_colors_border-color
   );
   color: var(
-    --recursica_ui-kit_components_badge_variants_styles_primary-color_properties_colors_text
+    --recursica_ui-kit_components_badge_variants_styles_primary-color_properties_colors_text-color
   );
 }
 
 .root[data-variant="success"] {
   background-color: var(
-    --recursica_ui-kit_components_badge_variants_styles_success_properties_colors_background
+    --recursica_ui-kit_components_badge_variants_styles_success_properties_colors_background-color
   );
   border-color: var(
     --recursica_ui-kit_components_badge_variants_styles_success_properties_colors_border-color
   );
   color: var(
-    --recursica_ui-kit_components_badge_variants_styles_success_properties_colors_text
+    --recursica_ui-kit_components_badge_variants_styles_success_properties_colors_text-color
   );
 }
 
 .root[data-variant="warning"] {
   background-color: var(
-    --recursica_ui-kit_components_badge_variants_styles_warning_properties_colors_background
+    --recursica_ui-kit_components_badge_variants_styles_warning_properties_colors_background-color
   );
   border-color: var(
     --recursica_ui-kit_components_badge_variants_styles_warning_properties_colors_border-color
   );
   color: var(
-    --recursica_ui-kit_components_badge_variants_styles_warning_properties_colors_text
+    --recursica_ui-kit_components_badge_variants_styles_warning_properties_colors_text-color
   );
 }
 

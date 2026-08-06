@@ -120,8 +120,8 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
       <WithReadOnlyWrapper
         className={wrapperClass}
         style={injectedStyles}
-        controlMaxWidth="var(--recursica_ui-kit_components_dropdown_properties_max-width)"
-        controlMinWidth="var(--recursica_ui-kit_components_dropdown_properties_min-width)"
+        controlMaxWidth="var(--dropdown-control-max-width)"
+        controlMinWidth="var(--dropdown-control-min-width)"
         overStyled={overStyled as true}
         formLayout={formLayout}
         labelSize={labelSize}

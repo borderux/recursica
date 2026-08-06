@@ -19,7 +19,7 @@
 }
 .root[data-size="small"][data-variant="oval"] {
   --loader-thickness: var(
-    --recursica_ui-kit_components_loader_variants_sizes_small_properties_thickness
+    --recursica_ui-kit_components_loader_variants_sizes_small_properties_thickness-size
   );
 }
 .root[data-size="small"]:not([data-variant="oval"]) span {
@@ -36,7 +36,7 @@
 }
 .root[data-size="default"][data-variant="oval"] {
   --loader-thickness: var(
-    --recursica_ui-kit_components_loader_variants_sizes_default_properties_thickness
+    --recursica_ui-kit_components_loader_variants_sizes_default_properties_thickness-size
   );
 }
 .root[data-size="default"]:not([data-variant="oval"]) span {
@@ -53,7 +53,7 @@
 }
 .root[data-size="large"][data-variant="oval"] {
   --loader-thickness: var(
-    --recursica_ui-kit_components_loader_variants_sizes_large_properties_thickness
+    --recursica_ui-kit_components_loader_variants_sizes_large_properties_thickness-size
   );
 }
 .root[data-size="large"]:not([data-variant="oval"]) span {
