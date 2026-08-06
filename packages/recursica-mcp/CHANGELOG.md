@@ -1,5 +1,11 @@
 # @recursica/mcp
 
+## 0.8.0
+
+### Minor Changes
+
+- 6e99afc: Versioned all for refresh
+
 ## 0.7.0
 
 ### Minor Changes

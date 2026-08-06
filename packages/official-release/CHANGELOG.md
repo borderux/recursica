@@ -1,5 +1,13 @@
 # @recursica/official-release
 
+## 2.7.0
+
+### Minor Changes
+
+- 560874f: Update json to latest from Forge
+- 6e99afc: Versioned all for refresh
+- 560874f: Updated to latest JSON and updated adaper
+
 ## 2.6.0
 
 ### Minor Changes

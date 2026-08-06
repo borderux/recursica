@@ -1,5 +1,18 @@
 # @recursica/storybook-template
 
+## 0.7.0
+
+### Minor Changes
+
+- 6e99afc: Versioned all for refresh
+- 560874f: Updated to latest JSON and updated adaper
+
+### Patch Changes
+
+- 560874f: Added Layer story
+- Updated dependencies [dc583f5]
+  - @recursica/adapter-common@0.13.0
+
 ## 0.6.1
 
 ### Patch Changes

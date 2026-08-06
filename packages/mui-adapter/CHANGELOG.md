@@ -1,5 +1,22 @@
 # @recursica/mui-adapter
 
+## 0.19.0
+
+### Minor Changes
+
+- 6e99afc: Versioned all for refresh
+- dc583f5: Add the `Tree` component (mantine-adapter wraps `@mantine/core`'s `Tree`; mui-adapter wraps the new `@mui/x-tree-view` peer dependency). Adds shared `RecursicaTreeProps`/`RecursicaTreeNode` to adapter-common.
+
+### Patch Changes
+
+- c8b21dd: Fix broken/renamed CSS token references and wire up previously-unused tokens across ~30 components, using `@recursica/mantine-adapter` as the reference.
+- Updated dependencies [560874f]
+- Updated dependencies [6e99afc]
+- Updated dependencies [560874f]
+- Updated dependencies [dc583f5]
+  - @recursica/official-release@2.7.0
+  - @recursica/adapter-common@0.13.0
+
 ## 0.18.1
 
 ### Patch Changes

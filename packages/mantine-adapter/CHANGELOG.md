@@ -1,5 +1,22 @@
 # @recursica/mantine-adapter
 
+## 0.36.0
+
+### Minor Changes
+
+- 6e99afc: Versioned all for refresh
+- 560874f: Updated to latest JSON and updated adaper
+- dc583f5: Add the `Tree` component (mantine-adapter wraps `@mantine/core`'s `Tree`; mui-adapter wraps the new `@mui/x-tree-view` peer dependency). Adds shared `RecursicaTreeProps`/`RecursicaTreeNode` to adapter-common.
+
+### Patch Changes
+
+- Updated dependencies [560874f]
+- Updated dependencies [6e99afc]
+- Updated dependencies [560874f]
+- Updated dependencies [dc583f5]
+  - @recursica/official-release@2.7.0
+  - @recursica/adapter-common@0.13.0
+
 ## 0.35.1
 
 ### Patch Changes
