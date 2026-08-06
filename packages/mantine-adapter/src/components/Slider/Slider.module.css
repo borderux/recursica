@@ -4,8 +4,11 @@
  * - flex-grow: 1; flex-shrink: 0; (Layout control structures)
  * - transform: translateX(-50%); (Mantine's standard step marks positioning alignment offset)
  * - outline: none; border-style: solid; (Standard focus reset and border outlines)
+ * - Focus ring on thumb/icon/input: the token schema no longer provides per-component focus
+ *   colors for these (only `active` covers track/step-indicator-color). We apply the generic
+ *   --recursica_brand_states_focus_* ring tokens (border-size/color/margin/blur) as a box-shadow
+ *   ring instead of a color swap.
  */
-/* recursica-ignore: --recursica_ui-kit_components_slider_properties_input-border-size */
 
 /* ==========================================
    1. Baseline, Reset & Layout Overrides
@@ -48,9 +51,7 @@
   flex-shrink: 0;
   width: var(--recursica_ui-kit_components_slider_properties_icon-size);
   height: var(--recursica_ui-kit_components_slider_properties_icon-size);
-  color: var(
-    --recursica_ui-kit_components_slider_variants_states_default_properties_colors_icon-color
-  );
+  color: var(--recursica_ui-kit_components_slider_properties_colors_icon-color);
 }
 
 /* ==========================================
@@ -68,13 +69,13 @@
     --recursica_ui-kit_components_slider_properties_track-border-radius
   );
   background-color: var(
-    --recursica_ui-kit_components_slider_variants_states_default_properties_colors_track
+    --recursica_ui-kit_components_slider_properties_colors_track
   );
 }
 
 .sliderBar {
   background-color: var(
-    --recursica_ui-kit_components_slider_variants_states_default_properties_colors_track-active
+    --recursica_ui-kit_components_slider_properties_colors_track-active
   );
 }
 
@@ -89,7 +90,7 @@
     --recursica_ui-kit_components_slider_properties_thumb-elevation
   );
   background-color: var(
-    --recursica_ui-kit_components_slider_variants_states_default_properties_colors_thumb
+    --recursica_ui-kit_components_slider_properties_colors_thumb
   );
   border: none;
   cursor: pointer;
@@ -99,13 +100,13 @@
 .sliderThumb:focus,
 .sliderThumb:focus-visible {
   outline: none;
-  background-color: var(
-    --recursica_ui-kit_components_slider_variants_states_focus_properties_colors_thumb
-  );
-  box-shadow: 0 0 0 2px
-    var(
-      --recursica_ui-kit_components_slider_variants_states_focus_properties_colors_track-active
-    );
+  box-shadow:
+    var(--recursica_ui-kit_components_slider_properties_thumb-elevation),
+    0 0 0 var(--recursica_brand_states_focus_border-size)
+      var(--recursica_brand_states_focus_color),
+    0 0 var(--recursica_brand_states_focus_blur)
+      var(--recursica_brand_states_focus_margin)
+      var(--recursica_brand_states_focus_color);
 }
 
 .sliderMark {
@@ -120,15 +121,17 @@
     --recursica_ui-kit_components_slider_properties_step-indicator-border-radius
   );
   background-color: var(
-    --recursica_ui-kit_components_slider_variants_states_default_properties_colors_step-indicator-color
+    --recursica_ui-kit_components_slider_properties_colors_step-indicator-color
   );
   transform: translateX(-50%);
   border: none;
 }
 
 .sliderMark[data-filled] {
+  /* No default-state "-active" step-indicator token exists anymore (only disabled/error define
+     one); reusing the active-track color keeps filled marks visually tied to the filled track. */
   background-color: var(
-    --recursica_ui-kit_components_slider_variants_states_default_properties_colors_step-indicator-color-active
+    --recursica_ui-kit_components_slider_properties_colors_track-active
   );
 }
 
@@ -239,17 +242,15 @@
   );
   border-style: solid;
   border-width: var(
-    --recursica_ui-kit_components_slider_variants_states_default_properties_input-border-size
+    --recursica_ui-kit_components_slider_properties_input-border-size
   );
   border-color: var(
-    --recursica_ui-kit_components_slider_variants_states_default_properties_colors_input-border-color
+    --recursica_ui-kit_components_slider_properties_colors_input-border-color
   );
   background-color: var(
-    --recursica_ui-kit_components_slider_variants_states_default_properties_colors_input-background
+    --recursica_ui-kit_components_slider_properties_colors_input-background-color
   );
-  color: var(
-    --recursica_ui-kit_components_slider_variants_states_default_properties_colors_input-text
-  );
+  color: var(--recursica_ui-kit_components_slider_properties_colors_input-text);
 
   font-family: var(
     --recursica_ui-kit_components_slider_properties_input-text_font-family
@@ -296,18 +297,12 @@
 
 .inputField:focus {
   outline: none;
-  background-color: var(
-    --recursica_ui-kit_components_slider_variants_states_focus_properties_colors_input-background
-  );
-  border-color: var(
-    --recursica_ui-kit_components_slider_variants_states_focus_properties_colors_input-border-color
-  );
-  color: var(
-    --recursica_ui-kit_components_slider_variants_states_focus_properties_colors_input-text
-  );
-  border-width: var(
-    --recursica_ui-kit_components_slider_variants_states_focus_properties_input-border-size
-  );
+  box-shadow:
+    0 0 0 var(--recursica_brand_states_focus_border-size)
+      var(--recursica_brand_states_focus_color),
+    0 0 var(--recursica_brand_states_focus_blur)
+      var(--recursica_brand_states_focus_margin)
+      var(--recursica_brand_states_focus_color);
 }
 
 /* Chrome, Safari, Edge, Opera: Hide number spin buttons */
@@ -358,31 +353,29 @@
    ========================================== */
 
 /* Focus states */
+/* The token schema's `active` state (not a separate `focus` state) now covers track/step-indicator
+   color while focus is within the slider; there is no `active` override for the filled mark. */
 .sliderRoot:has(.sliderThumb:focus) .sliderTrack,
 .sliderRoot:focus-within .sliderTrack {
   background-color: var(
-    --recursica_ui-kit_components_slider_variants_states_focus_properties_colors_track
+    --recursica_ui-kit_components_slider_variants_states_active_properties_colors_track
   );
 }
 
 .sliderRoot:has(.sliderThumb:focus) .sliderMark,
 .sliderRoot:focus-within .sliderMark {
   background-color: var(
-    --recursica_ui-kit_components_slider_variants_states_focus_properties_colors_step-indicator-color
-  );
-}
-
-.sliderRoot:has(.sliderThumb:focus) .sliderMark[data-filled],
-.sliderRoot:focus-within .sliderMark[data-filled] {
-  background-color: var(
-    --recursica_ui-kit_components_slider_variants_states_focus_properties_colors_step-indicator-color-active
+    --recursica_ui-kit_components_slider_variants_states_active_properties_colors_step-indicator-color
   );
 }
 
 .sliderContainer:focus-within .iconWrapper {
-  color: var(
-    --recursica_ui-kit_components_slider_variants_states_focus_properties_colors_icon-color
-  );
+  box-shadow:
+    0 0 0 var(--recursica_brand_states_focus_border-size)
+      var(--recursica_brand_states_focus_color),
+    0 0 var(--recursica_brand_states_focus_blur)
+      var(--recursica_brand_states_focus_margin)
+      var(--recursica_brand_states_focus_color);
 }
 
 /* Disabled state */
@@ -426,12 +419,15 @@
 
 .sliderContainer[data-disabled="true"] {
   color: var(--form-field-disabled-text);
+  opacity: var(
+    --recursica_ui-kit_components_slider_variants_states_disabled_properties_opacity
+  );
 }
 
 .inputField:disabled {
   cursor: not-allowed;
   background-color: var(
-    --recursica_ui-kit_components_slider_variants_states_disabled_properties_colors_input-background
+    --recursica_ui-kit_components_slider_variants_states_disabled_properties_colors_input-background-color
   );
   border-color: var(
     --recursica_ui-kit_components_slider_variants_states_disabled_properties_colors_input-border-color
@@ -483,7 +479,7 @@
 
 .inputField[data-error="true"] {
   background-color: var(
-    --recursica_ui-kit_components_slider_variants_states_error_properties_colors_input-background
+    --recursica_ui-kit_components_slider_variants_states_error_properties_colors_input-background-color
   );
   border-color: var(
     --recursica_ui-kit_components_slider_variants_states_error_properties_colors_input-border-color

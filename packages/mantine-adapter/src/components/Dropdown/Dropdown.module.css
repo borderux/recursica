@@ -1,22 +1,35 @@
 /* EXEMPTIONS:
-   - state-specific border-size variables are ignored because a uniform 1px border is applied globally to prevent 
+   - border-size variables are ignored because a uniform 1px border is applied globally to prevent
      unexpected layout shift or flickering during focus, disabled, or error state transitions. */
-/* recursica-ignore: --recursica_ui-kit_components_dropdown_variants_states_default_properties_border-size */
+/* recursica-ignore: --recursica_ui-kit_components_dropdown_properties_border-size */
 /* recursica-ignore: --recursica_ui-kit_components_dropdown_variants_states_disabled_properties_border-size */
 /* recursica-ignore: --recursica_ui-kit_components_dropdown_variants_states_error_properties_border-size */
-/* recursica-ignore: --recursica_ui-kit_components_dropdown_variants_states_focus_properties_border-size */
 
 /* LAYOUT SPACING OVERRIDES:
-   - Sets the --form-control-margin-bottom spacing hook to map component-specific layout tokens. */
+   - Sets the --form-control-margin-bottom spacing hook to map component-specific layout tokens.
+   - Also sets the --dropdown-control-{max,min}-width hooks consumed inline in Dropdown.tsx, since
+     the token schema no longer provides a single layout-agnostic min/max width. */
 .layoutOverride {
   --form-control-margin-bottom: var(
     --recursica_ui-kit_components_dropdown_variants_layouts_stacked_properties_top-bottom-margin
+  );
+  --dropdown-control-max-width: var(
+    --recursica_ui-kit_components_dropdown_variants_layouts_stacked_properties_max-width
+  );
+  --dropdown-control-min-width: var(
+    --recursica_ui-kit_components_dropdown_variants_layouts_stacked_properties_min-width
   );
 }
 
 .layoutOverride[data-form-layout="side-by-side"] {
   --form-control-margin-bottom: var(
     --recursica_ui-kit_components_dropdown_variants_layouts_side-by-side_properties_top-bottom-margin
+  );
+  --dropdown-control-max-width: var(
+    --recursica_ui-kit_components_dropdown_variants_layouts_side-by-side_properties_max-width
+  );
+  --dropdown-control-min-width: var(
+    --recursica_ui-kit_components_dropdown_variants_layouts_side-by-side_properties_min-width
   );
 }
 
@@ -101,13 +114,13 @@
 
   /* Base State Default Execution */
   background-color: var(
-    --recursica_ui-kit_components_dropdown_variants_states_default_properties_colors_background
+    --recursica_ui-kit_components_dropdown_properties_colors_background-color
   );
   border-color: var(
-    --recursica_ui-kit_components_dropdown_variants_states_default_properties_colors_border-color
+    --recursica_ui-kit_components_dropdown_properties_colors_border-color
   );
   color: var(
-    --recursica_ui-kit_components_dropdown_variants_states_default_properties_colors_text
+    --recursica_ui-kit_components_dropdown_properties_colors_text-color
   );
 
   outline: none;
@@ -153,13 +166,13 @@
   width: var(--recursica_ui-kit_components_dropdown_properties_icon-size);
   height: var(--recursica_ui-kit_components_dropdown_properties_icon-size);
   color: var(
-    --recursica_ui-kit_components_dropdown_variants_states_default_properties_colors_leading-icon
+    --recursica_ui-kit_components_dropdown_properties_colors_leading-icon
   );
 }
 
 .section[data-position="right"] :global(svg) {
   color: var(
-    --recursica_ui-kit_components_dropdown_variants_states_default_properties_colors_trailing-icon
+    --recursica_ui-kit_components_dropdown_properties_colors_trailing-icon
   );
 }
 
@@ -168,29 +181,16 @@
 -------------------------------------- */
 
 /* Focus State Mapping (Triggered internally via browser pseudo-pseudo-class) */
+/* The token schema no longer provides per-component focus colors; apply the generic focus ring
+   tokens as a box-shadow ring instead of a color swap. */
 .input:focus-within,
 .input:focus {
-  border-color: var(
-    --recursica_ui-kit_components_dropdown_variants_states_focus_properties_colors_border-color
-  );
-  background-color: var(
-    --recursica_ui-kit_components_dropdown_variants_states_focus_properties_colors_background
-  );
-  color: var(
-    --recursica_ui-kit_components_dropdown_variants_states_focus_properties_colors_text
-  );
-}
-
-.root:focus-within .section[data-position="left"] :global(svg) {
-  color: var(
-    --recursica_ui-kit_components_dropdown_variants_states_focus_properties_colors_leading-icon
-  );
-}
-
-.root:focus-within .section[data-position="right"] :global(svg) {
-  color: var(
-    --recursica_ui-kit_components_dropdown_variants_states_focus_properties_colors_trailing-icon
-  );
+  box-shadow:
+    0 0 0 var(--recursica_brand_states_focus_border-size)
+      var(--recursica_brand_states_focus_color),
+    0 0 var(--recursica_brand_states_focus_blur)
+      var(--recursica_brand_states_focus_margin)
+      var(--recursica_brand_states_focus_color);
 }
 
 /* Error State Mapping (Propagated strictly down from the wrapper DOM context) */
@@ -199,10 +199,10 @@
     --recursica_ui-kit_components_dropdown_variants_states_error_properties_colors_border-color
   ) !important;
   background-color: var(
-    --recursica_ui-kit_components_dropdown_variants_states_error_properties_colors_background
+    --recursica_ui-kit_components_dropdown_variants_states_error_properties_colors_background-color
   ) !important;
   color: var(
-    --recursica_ui-kit_components_dropdown_variants_states_error_properties_colors_text
+    --recursica_ui-kit_components_dropdown_variants_states_error_properties_colors_text-color
   ) !important;
 }
 
@@ -224,10 +224,13 @@
     --recursica_ui-kit_components_dropdown_variants_states_disabled_properties_colors_border-color
   ) !important;
   background-color: var(
-    --recursica_ui-kit_components_dropdown_variants_states_disabled_properties_colors_background
+    --recursica_ui-kit_components_dropdown_variants_states_disabled_properties_colors_background-color
   ) !important;
   color: var(
-    --recursica_ui-kit_components_dropdown_variants_states_disabled_properties_colors_text
+    --recursica_ui-kit_components_dropdown_variants_states_disabled_properties_colors_text-color
+  ) !important;
+  opacity: var(
+    --recursica_ui-kit_components_dropdown_variants_states_disabled_properties_opacity
   ) !important;
   cursor: not-allowed;
 }
@@ -250,12 +253,10 @@
 
 .dropdown {
   background-color: var(
-    --recursica_ui-kit_components_dropdown_variants_states_default_properties_colors_background
+    --recursica_ui-kit_components_dropdown_properties_colors_background-color
   );
   border: 1px solid
-    var(
-      --recursica_ui-kit_components_dropdown_variants_states_default_properties_colors_border-color
-    );
+    var(--recursica_ui-kit_components_dropdown_properties_colors_border-color);
   border-radius: var(
     --recursica_ui-kit_components_dropdown_properties_border-radius
   );
@@ -273,7 +274,7 @@
     --recursica_ui-kit_components_dropdown_properties_text_font-weight
   );
   color: var(
-    --recursica_ui-kit_components_dropdown_variants_states_default_properties_colors_text
+    --recursica_ui-kit_components_dropdown_properties_colors_text-color
   );
   padding: calc(
       var(--recursica_ui-kit_components_dropdown_properties_vertical-padding) *
@@ -283,14 +284,16 @@
   cursor: pointer;
 }
 
+/* No per-option selected/hovered tokens exist in the schema; use the generic overlay tint
+   (same technique as Table's row hover) to highlight the active option. */
 .option[data-selected="true"],
 .option[data-combobox-selected="true"],
 .option[data-hovered="true"],
 .option:hover {
-  background-color: var(
-    --recursica_ui-kit_components_dropdown_variants_states_focus_properties_colors_background
-  );
-  color: var(
-    --recursica_ui-kit_components_dropdown_variants_states_focus_properties_colors_text
+  background-color: color-mix(
+    in srgb,
+    var(--recursica_brand_states_hover_color)
+      calc(var(--recursica_brand_states_hover_opacity) * 100%),
+    transparent
   );
 }

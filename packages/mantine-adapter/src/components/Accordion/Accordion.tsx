@@ -41,6 +41,7 @@ const AccordionBase = function Accordion({
     control: styles.control,
     label: styles.label,
     chevron: styles.chevron,
+    icon: styles.icon,
     panel: styles.panel,
     content: styles.content,
   };

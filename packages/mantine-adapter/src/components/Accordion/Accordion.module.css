@@ -1,3 +1,11 @@
+/* EXEMPTIONS:
+   - accordion-header open-appearance background-color/border-color are ignored because Forge does
+     not apply a visual swap on expand, even though the token schema defines "open" appearance
+     colors distinct from "closed" (see .control below, which intentionally keeps a constant
+     background/border across collapsed/expanded). */
+/* recursica-ignore: --recursica_ui-kit_components_accordion-header_variants_appearance_open_properties_colors_background-color */
+/* recursica-ignore: --recursica_ui-kit_components_accordion-header_variants_appearance_open_properties_colors_border-color */
+
 /* ==== ACCORDION CONTAINER ==== */
 .root {
   box-sizing: border-box;
@@ -16,7 +24,7 @@
     --recursica_ui-kit_components_accordion_properties_colors_border-color
   );
   background-color: var(
-    --recursica_ui-kit_components_accordion_properties_colors_background
+    --recursica_ui-kit_components_accordion_properties_colors_background-color
   );
   box-shadow: var(--recursica_ui-kit_components_accordion_properties_elevation);
 
@@ -31,7 +39,8 @@
 /* ==== ACCORDION ITEM ==== */
 .item {
   box-sizing: border-box;
-  margin: 0;
+  margin: var(--recursica_ui-kit_components_accordion-item_properties_margin);
+  padding: var(--recursica_ui-kit_components_accordion-item_properties_padding);
   position: relative;
   transition: all 0.2s ease;
 
@@ -40,13 +49,13 @@
 
   border-style: solid;
   border-color: var(
-    --recursica_ui-kit_components_accordion-item_properties_colors_item-border-color
+    --recursica_ui-kit_components_accordion-item_properties_colors_border-color
   );
   border-width: var(
-    --recursica_ui-kit_components_accordion-item_properties_item-border-size
+    --recursica_ui-kit_components_accordion-item_properties_border-size
   );
   border-bottom-color: var(
-    --recursica_ui-kit_components_accordion_properties_colors_divider
+    --recursica_ui-kit_components_accordion_properties_colors_divider-color
   );
   border-bottom-width: var(
     --recursica_ui-kit_components_accordion_properties_divider-size
@@ -55,18 +64,11 @@
     --recursica_ui-kit_components_accordion-item_properties_border-radius
   );
   box-shadow: var(
-    --recursica_ui-kit_components_accordion-item_properties_elevation-item
-  );
-
-  background-color: var(
-    --recursica_ui-kit_components_accordion-item_properties_colors_background-collapsed
+    --recursica_ui-kit_components_accordion-item_properties_elevation
   );
 }
-.item[data-active] {
-  background-color: var(
-    --recursica_ui-kit_components_accordion-item_properties_colors_background-expanded
-  );
-}
+/* The collapsed/expanded background now lives on accordion-header (open/closed appearance),
+   applied via .control below, rather than on the item wrapper itself. */
 .noDivider {
   border-bottom: none !important;
   border-bottom-width: 0 !important;
@@ -81,56 +83,86 @@
   justify-content: space-between;
 
   /* Re-apply gap defined by UI Kit for icons vs text */
-  gap: var(--recursica_ui-kit_components_accordion-item_properties_icon-gap);
+  gap: var(--recursica_ui-kit_components_accordion-header_properties_icon-gap);
 
   /* Strip Mantine's baked padding directly */
   padding: var(
-      --recursica_ui-kit_components_accordion-item_properties_header-vertical-padding
+      --recursica_ui-kit_components_accordion-header_properties_vertical-padding
     )
     var(
-      --recursica_ui-kit_components_accordion-item_properties_header-horizontal-padding
+      --recursica_ui-kit_components_accordion-header_properties_horizontal-padding
     );
-  background-color: transparent;
+
+  /* Background is intentionally constant across collapsed/expanded (Forge doesn't apply a
+     background swap on expand, even though the token schema defines an "open" appearance color) */
+  background-color: var(
+    --recursica_ui-kit_components_accordion-header_variants_appearance_closed_properties_colors_background-color
+  );
+
+  /* Header's own border box, constant across collapsed/expanded (only its closed-state
+     border-color is used, matching the background decision above) */
+  border-style: solid;
+  border-width: var(
+    --recursica_ui-kit_components_accordion-header_properties_border-size
+  );
+  border-radius: var(
+    --recursica_ui-kit_components_accordion-header_properties_border-radius
+  );
+  border-color: var(
+    --recursica_ui-kit_components_accordion-header_variants_appearance_closed_properties_colors_border-color
+  );
+  box-shadow: var(
+    --recursica_ui-kit_components_accordion-header_properties_elevation
+  );
 
   transition: background-color 0.15s ease;
   position: relative;
   z-index: 1;
   color: var(
-    --recursica_ui-kit_components_accordion-item_properties_colors_text
+    --recursica_ui-kit_components_accordion-header_variants_appearance_closed_properties_colors_text-color
   );
 
   /* Header Typography */
   font-family: var(
-    --recursica_ui-kit_components_accordion-item_properties_header-text_font-family
+    --recursica_ui-kit_components_accordion-header_properties_text_font-family
   );
   font-size: var(
-    --recursica_ui-kit_components_accordion-item_properties_header-text_font-size
+    --recursica_ui-kit_components_accordion-header_properties_text_font-size
   );
   font-weight: var(
-    --recursica_ui-kit_components_accordion-item_properties_header-text_font-weight
+    --recursica_ui-kit_components_accordion-header_properties_text_font-weight
   );
   font-style: var(
-    --recursica_ui-kit_components_accordion-item_properties_header-text_font-style
+    --recursica_ui-kit_components_accordion-header_properties_text_font-style
   );
   letter-spacing: var(
-    --recursica_ui-kit_components_accordion-item_properties_header-text_letter-spacing
+    --recursica_ui-kit_components_accordion-header_properties_text_letter-spacing
   );
   line-height: var(
-    --recursica_ui-kit_components_accordion-item_properties_header-text_line-height
+    --recursica_ui-kit_components_accordion-header_properties_text_line-height
   );
   text-decoration: var(
-    --recursica_ui-kit_components_accordion-item_properties_header-text_text-decoration
+    --recursica_ui-kit_components_accordion-header_properties_text_text-decoration
   );
   text-transform: var(
-    --recursica_ui-kit_components_accordion-item_properties_header-text_text-transform
+    --recursica_ui-kit_components_accordion-header_properties_text_text-transform
   );
 }
 
-/* Mantine natively places hover states on the control node. 
-   We explicitly override it with our layer hover tokens via an overlay ::after structure
-   so we can cleanly utilize the hover-opacity token! */
+.item[data-active] .control {
+  color: var(
+    --recursica_ui-kit_components_accordion-header_variants_appearance_open_properties_colors_text-color
+  );
+}
+
+/* Mantine natively places hover states on the control node. We explicitly re-apply our own
+   constant background (Mantine's native :hover CSS would otherwise show through) and use an
+   overlay ::after structure with the generic hover tokens for the actual hover tint; no per-item
+   hover-color/hover-opacity tokens exist anymore. */
 .control:hover {
-  background-color: transparent;
+  background-color: var(
+    --recursica_ui-kit_components_accordion-header_variants_appearance_closed_properties_colors_background-color
+  );
 }
 .control::after {
   content: "";
@@ -139,37 +171,58 @@
   border-radius: inherit;
   z-index: -1;
   pointer-events: none;
-  background-color: var(
-    --recursica_ui-kit_components_accordion-item_properties_hover-color
-  );
+  background-color: var(--recursica_brand_states_hover_color);
   opacity: 0;
   transition: opacity 150ms ease;
 }
 .control:hover:not(:disabled)::after {
-  opacity: var(
-    --recursica_ui-kit_components_accordion-item_properties_hover-opacity
-  );
+  opacity: var(--recursica_brand_states_hover_opacity);
+}
+
+/* Recursica focus ring instead of Mantine's default `.mantine-focus-auto:focus-visible` outline
+   (same class+pseudo-class specificity, so !important guarantees ours wins regardless of CSS
+   import order). */
+.control:focus-visible {
+  outline: none !important;
+  box-shadow:
+    0 0 0 var(--recursica_brand_states_focus_border-size)
+      var(--recursica_brand_states_focus_color),
+    0 0 var(--recursica_brand_states_focus_blur)
+      var(--recursica_brand_states_focus_margin)
+      var(--recursica_brand_states_focus_color) !important;
 }
 
 /* Label logic inside the Control wrapper */
 .label {
   flex: 1;
+  min-width: 0; /* HARDCODE: required for text-overflow ellipsis to take effect on a flex child */
   text-align: left;
   color: inherit;
   padding: 0; /* Clear Mantine inner padding */
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ==== ICON SLOT (Mantine's leading-icon wrapper) ==== */
+.icon {
+  /* HARDCODE: Mantine applies its own margin-inline-start/end around this slot; our own
+     icon-gap token (applied as flex `gap` on .control) already provides the spacing. */
+  margin-inline-start: 0;
+  margin-inline-end: 0;
 }
 
 /* ==== CHEVRON / RIGHT ICON ==== */
 .chevron {
   flex-shrink: 0;
   width: var(
-    --recursica_ui-kit_components_accordion-item_properties_icon-right-size
+    --recursica_ui-kit_components_accordion-header_properties_icon-right-size
   );
   height: var(
-    --recursica_ui-kit_components_accordion-item_properties_icon-right-size
+    --recursica_ui-kit_components_accordion-header_properties_icon-right-size
   );
   color: var(
-    --recursica_ui-kit_components_accordion-item_properties_colors_icon
+    --recursica_ui-kit_components_accordion-header_variants_appearance_closed_properties_colors_icon-color
   );
   margin: 0;
   transition: transform 200ms ease;
@@ -184,6 +237,9 @@
 }
 .item[data-active] .chevron {
   transform: rotate(180deg);
+  color: var(
+    --recursica_ui-kit_components_accordion-header_variants_appearance_open_properties_colors_icon-color
+  );
 }
 
 /* ==== LEFT ICON / CUSTOM ICONS ==== */
@@ -193,13 +249,18 @@
   align-items: center;
   justify-content: center;
   width: var(
-    --recursica_ui-kit_components_accordion-item_properties_icon-left-size
+    --recursica_ui-kit_components_accordion-header_properties_icon-left-size
   );
   height: var(
-    --recursica_ui-kit_components_accordion-item_properties_icon-left-size
+    --recursica_ui-kit_components_accordion-header_properties_icon-left-size
   );
   color: var(
-    --recursica_ui-kit_components_accordion-item_properties_colors_icon
+    --recursica_ui-kit_components_accordion-header_variants_appearance_closed_properties_colors_icon-color
+  );
+}
+.item[data-active] .iconLeftWrapper {
+  color: var(
+    --recursica_ui-kit_components_accordion-header_variants_appearance_open_properties_colors_icon-color
   );
 }
 .iconLeftWrapper > * {
@@ -212,24 +273,24 @@
 .panel {
   box-sizing: border-box;
   margin: var(
-    --recursica_ui-kit_components_accordion-item_properties_content-margin
+    --recursica_ui-kit_components_accordion-content_properties_margin
   );
   padding: 0; /* Overriding dynamic layout structure */
   background-color: var(
-    --recursica_ui-kit_components_accordion-item_properties_colors_content-background
+    --recursica_ui-kit_components_accordion-content_properties_colors_background-color
   );
   border-style: solid;
   border-color: var(
-    --recursica_ui-kit_components_accordion-item_properties_colors_content-border-color
+    --recursica_ui-kit_components_accordion-content_properties_colors_border-color
   );
   border-width: var(
-    --recursica_ui-kit_components_accordion-item_properties_content-border-size
+    --recursica_ui-kit_components_accordion-content_properties_border-size
   );
   border-radius: var(
-    --recursica_ui-kit_components_accordion-item_properties_content-border-radius
+    --recursica_ui-kit_components_accordion-content_properties_border-radius
   );
   box-shadow: var(
-    --recursica_ui-kit_components_accordion-item_properties_elevation-content
+    --recursica_ui-kit_components_accordion-content_properties_elevation
   );
 }
 
@@ -238,44 +299,44 @@
   /* Strip Mantine padding and apply logic directly mapped */
   padding: 0
     var(
-      --recursica_ui-kit_components_accordion-item_properties_content-horizontal-padding
+      --recursica_ui-kit_components_accordion-content_properties_horizontal-padding
     )
     var(
-      --recursica_ui-kit_components_accordion-item_properties_content-bottom-padding
+      --recursica_ui-kit_components_accordion-content_properties_bottom-padding
     );
 
   /* Apply offset gap explicitly calculated below header */
   padding-top: var(
-    --recursica_ui-kit_components_accordion-item_properties_content-top-padding
+    --recursica_ui-kit_components_accordion-content_properties_top-padding
   );
 
   color: var(
-    --recursica_ui-kit_components_accordion-item_properties_colors_content-text
+    --recursica_ui-kit_components_accordion-content_properties_colors_text-color
   );
 
   /* Content Typography */
   font-family: var(
-    --recursica_ui-kit_components_accordion-item_properties_content-text_font-family
+    --recursica_ui-kit_components_accordion-content_properties_text_font-family
   );
   font-size: var(
-    --recursica_ui-kit_components_accordion-item_properties_content-text_font-size
+    --recursica_ui-kit_components_accordion-content_properties_text_font-size
   );
   font-weight: var(
-    --recursica_ui-kit_components_accordion-item_properties_content-text_font-weight
+    --recursica_ui-kit_components_accordion-content_properties_text_font-weight
   );
   font-style: var(
-    --recursica_ui-kit_components_accordion-item_properties_content-text_font-style
+    --recursica_ui-kit_components_accordion-content_properties_text_font-style
   );
   letter-spacing: var(
-    --recursica_ui-kit_components_accordion-item_properties_content-text_letter-spacing
+    --recursica_ui-kit_components_accordion-content_properties_text_letter-spacing
   );
   line-height: var(
-    --recursica_ui-kit_components_accordion-item_properties_content-text_line-height
+    --recursica_ui-kit_components_accordion-content_properties_text_line-height
   );
   text-decoration: var(
-    --recursica_ui-kit_components_accordion-item_properties_content-text_text-decoration
+    --recursica_ui-kit_components_accordion-content_properties_text_text-decoration
   );
   text-transform: var(
-    --recursica_ui-kit_components_accordion-item_properties_content-text_text-transform
+    --recursica_ui-kit_components_accordion-content_properties_text_text-transform
   );
 }

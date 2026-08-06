@@ -16,7 +16,7 @@
   align-items: baseline;
   box-sizing: border-box;
   margin: 0;
-  color: var(--recursica_ui-kit_components_label_properties_colors_text);
+  color: var(--recursica_ui-kit_components_label_properties_colors_text-color);
 }
 
 .root[data-alignment="left"] {
@@ -62,7 +62,9 @@
   margin-left: var(
     --recursica_ui-kit_components_label_properties_required-indicator-gap
   );
-  color: var(--recursica_ui-kit_components_label_properties_colors_asterisk);
+  color: var(
+    --recursica_ui-kit_components_label_properties_colors_asterisk-color
+  );
 
   /* Inherit identical typography bounds to prevent flex row line-height stretching */
   font-family: var(
@@ -139,5 +141,7 @@
 }
 
 .editIconWrapper[data-replaces-asterisk="true"] {
-  color: var(--recursica_ui-kit_components_label_properties_colors_asterisk);
+  color: var(
+    --recursica_ui-kit_components_label_properties_colors_asterisk-color
+  );
 }

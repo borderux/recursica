@@ -15,7 +15,7 @@
 }
 .root[data-size="small"][data-variant="oval"]::after {
   border-width: var(
-    --recursica_ui-kit_components_loader_variants_sizes_small_properties_thickness
+    --recursica_ui-kit_components_loader_variants_sizes_small_properties_thickness-size
   );
   border-radius: var(
     --recursica_ui-kit_components_loader_variants_sizes_small_properties_border-radius
@@ -30,7 +30,7 @@
 }
 .root[data-size="default"][data-variant="oval"]::after {
   border-width: var(
-    --recursica_ui-kit_components_loader_variants_sizes_default_properties_thickness
+    --recursica_ui-kit_components_loader_variants_sizes_default_properties_thickness-size
   );
   border-radius: var(
     --recursica_ui-kit_components_loader_variants_sizes_default_properties_border-radius
@@ -45,7 +45,7 @@
 }
 .root[data-size="large"][data-variant="oval"]::after {
   border-width: var(
-    --recursica_ui-kit_components_loader_variants_sizes_large_properties_thickness
+    --recursica_ui-kit_components_loader_variants_sizes_large_properties_thickness-size
   );
   border-radius: var(
     --recursica_ui-kit_components_loader_variants_sizes_large_properties_border-radius

@@ -14,7 +14,7 @@
 
 .dropdown {
   background-color: var(
-    --recursica_ui-kit_components_hover-card-popover_properties_colors_background
+    --recursica_ui-kit_components_hover-card-popover_properties_colors_background-color
   );
   border-style: solid; /* HARDCODE: Mantine Paper does not set border-style natively */
   border-width: var(

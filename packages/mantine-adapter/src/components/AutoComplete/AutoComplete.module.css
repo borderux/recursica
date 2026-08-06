@@ -1,22 +1,35 @@
 /* EXEMPTIONS:
-   - state-specific border-size variables are ignored because the input box uses a uniform static boundary to prevent 
-     unexpected layout shifts or flickering when switching between active, focused, or error states. */
-/* recursica-ignore: --recursica_ui-kit_components_autocomplete_variants_states_default_properties_border-size */
+   - border-size variables are ignored because the input box uses a uniform static boundary to prevent
+     unexpected layout shifts or flickering when switching between focused, disabled, or error states. */
+/* recursica-ignore: --recursica_ui-kit_components_autocomplete_properties_border-size */
 /* recursica-ignore: --recursica_ui-kit_components_autocomplete_variants_states_disabled_properties_border-size */
 /* recursica-ignore: --recursica_ui-kit_components_autocomplete_variants_states_error_properties_border-size */
-/* recursica-ignore: --recursica_ui-kit_components_autocomplete_variants_states_focus_properties_border-size */
 
 /* LAYOUT SPACING OVERRIDES:
-   - Sets the --form-control-margin-bottom spacing hook to map component-specific layout tokens. */
+   - Sets the --form-control-margin-bottom spacing hook to map component-specific layout tokens.
+   - Also sets the --autocomplete-control-{max,min}-width hooks consumed inline in AutoComplete.tsx,
+     since the token schema no longer provides a single layout-agnostic min/max width. */
 .layoutOverride {
   --form-control-margin-bottom: var(
     --recursica_ui-kit_components_autocomplete_variants_layouts_stacked_properties_top-bottom-margin
+  );
+  --autocomplete-control-max-width: var(
+    --recursica_ui-kit_components_autocomplete_variants_layouts_stacked_properties_max-width
+  );
+  --autocomplete-control-min-width: var(
+    --recursica_ui-kit_components_autocomplete_variants_layouts_stacked_properties_min-width
   );
 }
 
 .layoutOverride[data-form-layout="side-by-side"] {
   --form-control-margin-bottom: var(
     --recursica_ui-kit_components_autocomplete_variants_layouts_side-by-side_properties_top-bottom-margin
+  );
+  --autocomplete-control-max-width: var(
+    --recursica_ui-kit_components_autocomplete_variants_layouts_side-by-side_properties_max-width
+  );
+  --autocomplete-control-min-width: var(
+    --recursica_ui-kit_components_autocomplete_variants_layouts_side-by-side_properties_min-width
   );
 }
 
@@ -31,9 +44,7 @@
   display: flex;
   position: relative;
   width: 100%;
-  min-height: var(
-    --recursica_ui-kit_components_autocomplete_properties_min-height
-  );
+  min-height: var(--recursica_ui-kit_components_autocomplete_properties_height);
 
   /* Override Mantine native Input variables governing section spacing padding mathematics safely */
   --input-left-section-size: calc(
@@ -59,9 +70,7 @@
   margin: 0;
 
   /* Box Geometry */
-  min-height: var(
-    --recursica_ui-kit_components_autocomplete_properties_min-height
-  );
+  min-height: var(--recursica_ui-kit_components_autocomplete_properties_height);
   padding-top: var(
     --recursica_ui-kit_components_autocomplete_properties_vertical-padding
   );
@@ -108,13 +117,13 @@
 
   /* Base State Default Execution */
   background-color: var(
-    --recursica_ui-kit_components_autocomplete_variants_states_default_properties_colors_background
+    --recursica_ui-kit_components_autocomplete_properties_colors_background-color
   );
   border-color: var(
-    --recursica_ui-kit_components_autocomplete_variants_states_default_properties_colors_border-color
+    --recursica_ui-kit_components_autocomplete_properties_colors_border-color
   );
   color: var(
-    --recursica_ui-kit_components_autocomplete_variants_states_default_properties_colors_text
+    --recursica_ui-kit_components_autocomplete_properties_colors_text-color
   );
 
   outline: none;
@@ -161,13 +170,13 @@
   width: var(--recursica_ui-kit_components_autocomplete_properties_icon-size);
   height: var(--recursica_ui-kit_components_autocomplete_properties_icon-size);
   color: var(
-    --recursica_ui-kit_components_autocomplete_variants_states_default_properties_colors_leading-icon
+    --recursica_ui-kit_components_autocomplete_properties_colors_leading-icon
   );
 }
 
 .section[data-position="right"] :global(svg) {
   color: var(
-    --recursica_ui-kit_components_autocomplete_variants_states_default_properties_colors_trailing-icon
+    --recursica_ui-kit_components_autocomplete_properties_colors_trailing-icon
   );
 }
 
@@ -175,11 +184,11 @@
 /* We want to make sure the dropdown inherits font correctly. */
 .dropdown {
   background-color: var(
-    --recursica_ui-kit_components_autocomplete_variants_states_default_properties_colors_background
+    --recursica_ui-kit_components_autocomplete_properties_colors_background-color
   );
   border: 1px solid
     var(
-      --recursica_ui-kit_components_autocomplete_variants_states_default_properties_colors_border-color
+      --recursica_ui-kit_components_autocomplete_properties_colors_border-color
     );
   border-radius: var(
     --recursica_ui-kit_components_autocomplete_properties_border-radius
@@ -198,7 +207,7 @@
     --recursica_ui-kit_components_autocomplete_properties_text_font-weight
   );
   color: var(
-    --recursica_ui-kit_components_autocomplete_variants_states_default_properties_colors_text
+    --recursica_ui-kit_components_autocomplete_properties_colors_text-color
   );
   padding: calc(
       var(
@@ -212,6 +221,8 @@
   cursor: pointer;
 }
 
+/* No per-option selected/hovered tokens exist in the schema; use the generic overlay tint
+   (same technique as Table/Dropdown) to highlight the active option. */
 .option[data-selected="true"],
 .option[data-selected],
 .option[data-combobox-selected="true"],
@@ -221,11 +232,11 @@
 .option[data-hovered="true"],
 .option[data-hovered],
 .option:hover {
-  background-color: var(
-    --recursica_ui-kit_components_autocomplete_variants_states_focus_properties_colors_background
-  );
-  color: var(
-    --recursica_ui-kit_components_autocomplete_variants_states_focus_properties_colors_text
+  background-color: color-mix(
+    in srgb,
+    var(--recursica_brand_states_hover_color)
+      calc(var(--recursica_brand_states_hover_opacity) * 100%),
+    transparent
   );
 }
 
@@ -234,29 +245,16 @@
 -------------------------------------- */
 
 /* Focus State Mapping (Triggered internally via browser pseudo-pseudo-class) */
+/* The token schema no longer provides per-component focus colors; apply the generic focus ring
+   tokens as a box-shadow ring instead of a color swap. */
 .input:focus-within,
 .input:focus {
-  border-color: var(
-    --recursica_ui-kit_components_autocomplete_variants_states_focus_properties_colors_border-color
-  );
-  background-color: var(
-    --recursica_ui-kit_components_autocomplete_variants_states_focus_properties_colors_background
-  );
-  color: var(
-    --recursica_ui-kit_components_autocomplete_variants_states_focus_properties_colors_text
-  );
-}
-
-.root:focus-within .section[data-position="left"] :global(svg) {
-  color: var(
-    --recursica_ui-kit_components_autocomplete_variants_states_focus_properties_colors_leading-icon
-  );
-}
-
-.root:focus-within .section[data-position="right"] :global(svg) {
-  color: var(
-    --recursica_ui-kit_components_autocomplete_variants_states_focus_properties_colors_trailing-icon
-  );
+  box-shadow:
+    0 0 0 var(--recursica_brand_states_focus_border-size)
+      var(--recursica_brand_states_focus_color),
+    0 0 var(--recursica_brand_states_focus_blur)
+      var(--recursica_brand_states_focus_margin)
+      var(--recursica_brand_states_focus_color);
 }
 
 /* Error State Mapping (Propagated strictly down from the wrapper DOM context) */
@@ -265,10 +263,10 @@
     --recursica_ui-kit_components_autocomplete_variants_states_error_properties_colors_border-color
   );
   background-color: var(
-    --recursica_ui-kit_components_autocomplete_variants_states_error_properties_colors_background
+    --recursica_ui-kit_components_autocomplete_variants_states_error_properties_colors_background-color
   );
   color: var(
-    --recursica_ui-kit_components_autocomplete_variants_states_error_properties_colors_text
+    --recursica_ui-kit_components_autocomplete_variants_states_error_properties_colors_text-color
   );
 }
 
@@ -290,10 +288,13 @@
     --recursica_ui-kit_components_autocomplete_variants_states_disabled_properties_colors_border-color
   );
   background-color: var(
-    --recursica_ui-kit_components_autocomplete_variants_states_disabled_properties_colors_background
+    --recursica_ui-kit_components_autocomplete_variants_states_disabled_properties_colors_background-color
   );
   color: var(
-    --recursica_ui-kit_components_autocomplete_variants_states_disabled_properties_colors_text
+    --recursica_ui-kit_components_autocomplete_variants_states_disabled_properties_colors_text-color
+  );
+  opacity: var(
+    --recursica_ui-kit_components_autocomplete_variants_states_disabled_properties_opacity
   );
   cursor: not-allowed;
 }

@@ -1,10 +1,7 @@
 /* EXEMPTIONS:
-   - text_text-transform across multiple link states (default, hover, visited, visited-hover) is ignored 
-     because links naturally inherit casing directly from text children rather than requiring custom CSS transforms. */
-/* recursica-ignore: --recursica_ui-kit_components_link_variants_states_default_properties_text_text-transform */
-/* recursica-ignore: --recursica_ui-kit_components_link_variants_states_hover_properties_text_text-transform */
-/* recursica-ignore: --recursica_ui-kit_components_link_variants_states_visited_properties_text_text-transform */
-/* recursica-ignore: --recursica_ui-kit_components_link_variants_states_visited-hover_properties_text_text-transform */
+   - text_text-transform is ignored because links naturally inherit casing directly from text
+     children rather than requiring custom CSS transforms. */
+/* recursica-ignore: --recursica_ui-kit_components_link_properties_text_text-transform */
 
 /* 
 HARDCODED VALUES:
@@ -24,31 +21,27 @@ HARDCODED VALUES:
   text-decoration: none;
   color: inherit;
 
-  /* Typography Default Tokens */
+  /* Typography Tokens */
   font-family: var(
     --recursica_ui-kit_components_link_properties_text_font-family
   );
   font-size: var(--recursica_ui-kit_components_link_properties_text_font-size);
+  font-style: var(
+    --recursica_ui-kit_components_link_properties_text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_link_properties_text_font-weight
+  );
   letter-spacing: var(
     --recursica_ui-kit_components_link_properties_text_letter-spacing
   );
   line-height: var(
     --recursica_ui-kit_components_link_properties_text_line-height
   );
-
-  /* Default State Tokens */
-  font-style: var(
-    --recursica_ui-kit_components_link_variants_states_default_properties_text_font-style
-  );
-  font-weight: var(
-    --recursica_ui-kit_components_link_variants_states_default_properties_text_font-weight
-  );
   text-decoration: var(
-    --recursica_ui-kit_components_link_variants_states_default_properties_text_text-decoration
+    --recursica_ui-kit_components_link_properties_text_text-decoration
   );
-  color: var(
-    --recursica_ui-kit_components_link_variants_states_default_properties_colors_text
-  );
+  color: var(--recursica_ui-kit_components_link_properties_colors_text-color);
 }
 
 .root[data-has-icon] {
@@ -57,49 +50,9 @@ HARDCODED VALUES:
   gap: var(--recursica_ui-kit_components_link_properties_icon-text-gap);
 }
 
-.root:hover {
-  /* Reset Mantine's potential hover override */
-  text-decoration: var(
-    --recursica_ui-kit_components_link_variants_states_hover_properties_text_text-decoration
-  );
-  font-style: var(
-    --recursica_ui-kit_components_link_variants_states_hover_properties_text_font-style
-  );
-  font-weight: var(
-    --recursica_ui-kit_components_link_variants_states_hover_properties_text_font-weight
-  );
-  color: var(
-    --recursica_ui-kit_components_link_variants_states_hover_properties_colors_text
-  );
-}
-
 .root:visited {
-  text-decoration: var(
-    --recursica_ui-kit_components_link_variants_states_visited_properties_text_text-decoration
-  );
-  font-style: var(
-    --recursica_ui-kit_components_link_variants_states_visited_properties_text_font-style
-  );
-  font-weight: var(
-    --recursica_ui-kit_components_link_variants_states_visited_properties_text_font-weight
-  );
   color: var(
-    --recursica_ui-kit_components_link_variants_states_visited_properties_colors_text
-  );
-}
-
-.root:visited:hover {
-  text-decoration: var(
-    --recursica_ui-kit_components_link_variants_states_visited-hover_properties_text_text-decoration
-  );
-  font-style: var(
-    --recursica_ui-kit_components_link_variants_states_visited-hover_properties_text_font-style
-  );
-  font-weight: var(
-    --recursica_ui-kit_components_link_variants_states_visited-hover_properties_text_font-weight
-  );
-  color: var(
-    --recursica_ui-kit_components_link_variants_states_visited-hover_properties_colors_text
+    --recursica_ui-kit_components_link_variants_states_visited_properties_colors_text-color
   );
 }
 
@@ -112,26 +65,12 @@ HARDCODED VALUES:
 
   width: var(--recursica_ui-kit_components_link_properties_icon-size);
   height: var(--recursica_ui-kit_components_link_properties_icon-size);
-  color: var(
-    --recursica_ui-kit_components_link_variants_states_default_properties_colors_icon
-  );
-}
-
-.root:hover .iconWrapper {
-  color: var(
-    --recursica_ui-kit_components_link_variants_states_hover_properties_colors_icon
-  );
+  color: var(--recursica_ui-kit_components_link_properties_colors_icon-color);
 }
 
 .root:visited .iconWrapper {
   color: var(
-    --recursica_ui-kit_components_link_variants_states_visited_properties_colors_icon
-  );
-}
-
-.root:visited:hover .iconWrapper {
-  color: var(
-    --recursica_ui-kit_components_link_variants_states_visited-hover_properties_colors_icon
+    --recursica_ui-kit_components_link_variants_states_visited_properties_colors_icon-color
   );
 }
 

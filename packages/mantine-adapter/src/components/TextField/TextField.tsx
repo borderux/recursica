@@ -101,8 +101,8 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
       <WithReadOnlyWrapper
         className={wrapperClass}
         style={style as React.CSSProperties}
-        controlMaxWidth="var(--recursica_ui-kit_components_text-field_properties_max-width)"
-        controlMinWidth="var(--recursica_ui-kit_components_text-field_properties_min-width)"
+        controlMaxWidth="var(--text-field-control-max-width)"
+        controlMinWidth="var(--text-field-control-min-width)"
         overStyled={overStyled as true}
         formLayout={formLayout}
         labelSize={labelSize}

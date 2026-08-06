@@ -7,17 +7,24 @@
 .root {
   display: flex;
   flex-direction: column;
+  /* Mantine drives item spacing (.item's margin-top) AND the connector line's bridging offset
+     (.item::before's negative bottom) off the SAME --mantine-spacing-xl variable. Overriding it
+     here (rather than adding a flex gap) keeps both in sync automatically instead of introducing
+     a visible break in the connector line. */
+  --mantine-spacing-xl: var(
+    --recursica_ui-kit_components_timeline_properties_item-gap
+  );
 }
 
 .item {
   /* Mantine uses these vars to calculate the exact left: position of the connector line */
   --tl-line-width: var(
-    --recursica_ui-kit_components_timeline_properties_inactive-connector-size
+    --recursica_ui-kit_components_timeline_variants_selection-states_inactive_properties_connector-size
   ) !important;
 
   &[data-active] {
     --tl-line-width: var(
-      --recursica_ui-kit_components_timeline_properties_active-connector-size
+      --recursica_ui-kit_components_timeline_variants_selection-states_active_properties_connector-size
     ) !important;
   }
 
@@ -47,20 +54,20 @@
   /* Inactive connector */
   &::before {
     border-left-width: var(
-      --recursica_ui-kit_components_timeline_properties_inactive-connector-size
+      --recursica_ui-kit_components_timeline_variants_selection-states_inactive_properties_connector-size
     ) !important;
     border-left-color: var(
-      --recursica_ui-kit_components_timeline_properties_colors_inactive-connector-color
+      --recursica_ui-kit_components_timeline_variants_selection-states_inactive_properties_colors_connector-color
     ) !important;
   }
 
   /* Active connector */
   &[data-active]::before {
     border-left-width: var(
-      --recursica_ui-kit_components_timeline_properties_active-connector-size
+      --recursica_ui-kit_components_timeline_variants_selection-states_active_properties_connector-size
     ) !important;
     border-left-color: var(
-      --recursica_ui-kit_components_timeline_properties_colors_active-connector-color
+      --recursica_ui-kit_components_timeline_variants_selection-states_active_properties_colors_connector-color
     ) !important;
   }
 }
@@ -89,18 +96,18 @@
     ) !important;
 
     background-color: var(
-      --recursica_ui-kit_components_timeline-bullet_variants_types_default_properties_colors_inactive-background
+      --recursica_ui-kit_components_timeline-bullet_variants_types_default_variants_selection-states_inactive_properties_colors_background-color
     ) !important;
     border-color: var(
-      --recursica_ui-kit_components_timeline-bullet_variants_types_default_properties_colors_inactive-border-color
+      --recursica_ui-kit_components_timeline-bullet_variants_types_default_variants_selection-states_inactive_properties_colors_border-color
     ) !important;
   }
   :global(.mantine-Timeline-item)[data-variant="default"][data-active] & {
     background-color: var(
-      --recursica_ui-kit_components_timeline-bullet_variants_types_default_properties_colors_active-background
+      --recursica_ui-kit_components_timeline-bullet_variants_types_default_variants_selection-states_active_properties_colors_background-color
     ) !important;
     border-color: var(
-      --recursica_ui-kit_components_timeline-bullet_variants_types_default_properties_colors_active-border-color
+      --recursica_ui-kit_components_timeline-bullet_variants_types_default_variants_selection-states_active_properties_colors_border-color
     ) !important;
   }
 
@@ -120,13 +127,13 @@
     ) !important;
 
     background-color: var(
-      --recursica_ui-kit_components_timeline-bullet_variants_types_icon_properties_colors_inactive-background
+      --recursica_ui-kit_components_timeline-bullet_variants_types_icon_variants_selection-states_inactive_properties_colors_background-color
     ) !important;
     border-color: var(
-      --recursica_ui-kit_components_timeline-bullet_variants_types_icon_properties_colors_inactive-border-color
+      --recursica_ui-kit_components_timeline-bullet_variants_types_icon_variants_selection-states_inactive_properties_colors_border-color
     ) !important;
     color: var(
-      --recursica_ui-kit_components_timeline-bullet_variants_types_icon_properties_colors_inactive-icon-color
+      --recursica_ui-kit_components_timeline-bullet_variants_types_icon_variants_selection-states_inactive_properties_colors_icon-color
     ) !important;
 
     /* Propagate icon size */
@@ -144,13 +151,13 @@
   }
   :global(.mantine-Timeline-item)[data-variant="icon"][data-active] & {
     background-color: var(
-      --recursica_ui-kit_components_timeline-bullet_variants_types_icon_properties_colors_active-background
+      --recursica_ui-kit_components_timeline-bullet_variants_types_icon_variants_selection-states_active_properties_colors_background-color
     ) !important;
     border-color: var(
-      --recursica_ui-kit_components_timeline-bullet_variants_types_icon_properties_colors_active-border-color
+      --recursica_ui-kit_components_timeline-bullet_variants_types_icon_variants_selection-states_active_properties_colors_border-color
     ) !important;
     color: var(
-      --recursica_ui-kit_components_timeline-bullet_variants_types_icon_properties_colors_active-icon-color
+      --recursica_ui-kit_components_timeline-bullet_variants_types_icon_variants_selection-states_active_properties_colors_icon-color
     ) !important;
   }
 
@@ -170,13 +177,13 @@
     ) !important;
 
     background-color: var(
-      --recursica_ui-kit_components_timeline-bullet_variants_types_icon-alternative_properties_colors_inactive-background
+      --recursica_ui-kit_components_timeline-bullet_variants_types_icon-alternative_variants_selection-states_inactive_properties_colors_background-color
     ) !important;
     border-color: var(
-      --recursica_ui-kit_components_timeline-bullet_variants_types_icon-alternative_properties_colors_inactive-border-color
+      --recursica_ui-kit_components_timeline-bullet_variants_types_icon-alternative_variants_selection-states_inactive_properties_colors_border-color
     ) !important;
     color: var(
-      --recursica_ui-kit_components_timeline-bullet_variants_types_icon-alternative_properties_colors_inactive-icon-color
+      --recursica_ui-kit_components_timeline-bullet_variants_types_icon-alternative_variants_selection-states_inactive_properties_colors_icon-color
     ) !important;
 
     font-size: var(
@@ -194,13 +201,13 @@
   :global(.mantine-Timeline-item)[data-variant="icon-alternative"][data-active]
     & {
     background-color: var(
-      --recursica_ui-kit_components_timeline-bullet_variants_types_icon-alternative_properties_colors_active-background
+      --recursica_ui-kit_components_timeline-bullet_variants_types_icon-alternative_variants_selection-states_active_properties_colors_background-color
     ) !important;
     border-color: var(
-      --recursica_ui-kit_components_timeline-bullet_variants_types_icon-alternative_properties_colors_active-border-color
+      --recursica_ui-kit_components_timeline-bullet_variants_types_icon-alternative_variants_selection-states_active_properties_colors_border-color
     ) !important;
     color: var(
-      --recursica_ui-kit_components_timeline-bullet_variants_types_icon-alternative_properties_colors_active-icon-color
+      --recursica_ui-kit_components_timeline-bullet_variants_types_icon-alternative_variants_selection-states_active_properties_colors_icon-color
     ) !important;
   }
 
@@ -214,25 +221,25 @@
       --recursica_ui-kit_components_timeline-bullet_variants_types_avatar_properties_border-size
     ) !important;
     opacity: var(
-      --recursica_ui-kit_components_timeline-bullet_variants_types_avatar_properties_inactive-avatar-opacity
+      --recursica_ui-kit_components_timeline-bullet_variants_types_avatar_variants_selection-states_inactive_properties_avatar-opacity
     ) !important;
 
     background-color: var(
-      --recursica_ui-kit_components_timeline-bullet_variants_types_avatar_properties_colors_inactive-background
+      --recursica_ui-kit_components_timeline-bullet_variants_types_avatar_variants_selection-states_inactive_properties_colors_background-color
     ) !important;
     border-color: var(
-      --recursica_ui-kit_components_timeline-bullet_variants_types_avatar_properties_colors_inactive-border-color
+      --recursica_ui-kit_components_timeline-bullet_variants_types_avatar_variants_selection-states_inactive_properties_colors_border-color
     ) !important;
   }
   :global(.mantine-Timeline-item)[data-variant="avatar"][data-active] & {
     opacity: var(
-      --recursica_ui-kit_components_timeline-bullet_variants_types_avatar_properties_active-avatar-opacity
+      --recursica_ui-kit_components_timeline-bullet_variants_types_avatar_variants_selection-states_active_properties_avatar-opacity
     ) !important;
     background-color: var(
-      --recursica_ui-kit_components_timeline-bullet_variants_types_avatar_properties_colors_active-background
+      --recursica_ui-kit_components_timeline-bullet_variants_types_avatar_variants_selection-states_active_properties_colors_background-color
     ) !important;
     border-color: var(
-      --recursica_ui-kit_components_timeline-bullet_variants_types_avatar_properties_colors_active-border-color
+      --recursica_ui-kit_components_timeline-bullet_variants_types_avatar_variants_selection-states_active_properties_colors_border-color
     ) !important;
   }
 }
@@ -270,13 +277,13 @@
 
   /* Inactive Title Color */
   color: var(
-    --recursica_ui-kit_components_timeline_properties_colors_inactive-title-color
+    --recursica_ui-kit_components_timeline_variants_selection-states_inactive_properties_colors_title-color
   ) !important;
 
   /* Active Title Color */
   :global(.mantine-Timeline-item)[data-active] & {
     color: var(
-      --recursica_ui-kit_components_timeline_properties_colors_active-title-color
+      --recursica_ui-kit_components_timeline_variants_selection-states_active_properties_colors_title-color
     ) !important;
   }
 }
@@ -319,12 +326,12 @@
   );
 
   color: var(
-    --recursica_ui-kit_components_timeline_properties_colors_inactive-description-color
+    --recursica_ui-kit_components_timeline_variants_selection-states_inactive_properties_colors_description-color
   );
 
   :global(.mantine-Timeline-item)[data-active] & {
     color: var(
-      --recursica_ui-kit_components_timeline_properties_colors_active-description-color
+      --recursica_ui-kit_components_timeline_variants_selection-states_active_properties_colors_description-color
     );
   }
 }
@@ -356,12 +363,12 @@
   );
 
   color: var(
-    --recursica_ui-kit_components_timeline_properties_colors_inactive-timestamp-color
+    --recursica_ui-kit_components_timeline_variants_selection-states_inactive_properties_colors_timestamp-color
   );
 
   :global(.mantine-Timeline-item)[data-active] & {
     color: var(
-      --recursica_ui-kit_components_timeline_properties_colors_active-timestamp-color
+      --recursica_ui-kit_components_timeline_variants_selection-states_active_properties_colors_timestamp-color
     );
   }
 }

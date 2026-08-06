@@ -191,7 +191,7 @@ HARDCODED VALUES:
 
   /* Image variant styles */
   background-color: var(
-    --recursica_ui-kit_components_avatar_variants_styles_image_properties_colors_background
+    --recursica_ui-kit_components_avatar_variants_styles_image_properties_colors_background-color
   );
   border-color: var(
     --recursica_ui-kit_components_avatar_variants_styles_image_properties_colors_border-color
@@ -248,7 +248,7 @@ HARDCODED VALUES:
     --recursica_ui-kit_components_avatar_variants_styles_icon_variants_types_solid_properties_border-size
   );
   background-color: var(
-    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_types_solid_properties_colors_background
+    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_types_solid_properties_colors_background-color
   );
   border-color: var(
     --recursica_ui-kit_components_avatar_variants_styles_icon_variants_types_solid_properties_colors_border-color
@@ -263,7 +263,7 @@ HARDCODED VALUES:
     --recursica_ui-kit_components_avatar_variants_styles_icon_variants_types_outline_properties_border-size
   );
   background-color: var(
-    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_types_outline_properties_colors_background
+    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_types_outline_properties_colors_background-color
   );
   border-color: var(
     --recursica_ui-kit_components_avatar_variants_styles_icon_variants_types_outline_properties_colors_border-color
@@ -278,7 +278,7 @@ HARDCODED VALUES:
     --recursica_ui-kit_components_avatar_variants_styles_icon_variants_types_ghost_properties_border-size
   );
   background-color: var(
-    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_types_ghost_properties_colors_background
+    --recursica_ui-kit_components_avatar_variants_styles_icon_variants_types_ghost_properties_colors_background-color
   );
   border-color: var(
     --recursica_ui-kit_components_avatar_variants_styles_icon_variants_types_ghost_properties_colors_border-color
@@ -303,7 +303,7 @@ HARDCODED VALUES:
     --recursica_ui-kit_components_avatar_variants_styles_text_variants_types_solid_properties_border-size
   );
   background-color: var(
-    --recursica_ui-kit_components_avatar_variants_styles_text_variants_types_solid_properties_colors_background
+    --recursica_ui-kit_components_avatar_variants_styles_text_variants_types_solid_properties_colors_background-color
   );
   border-color: var(
     --recursica_ui-kit_components_avatar_variants_styles_text_variants_types_solid_properties_colors_border-color
@@ -318,7 +318,7 @@ HARDCODED VALUES:
     --recursica_ui-kit_components_avatar_variants_styles_text_variants_types_outline_properties_border-size
   );
   background-color: var(
-    --recursica_ui-kit_components_avatar_variants_styles_text_variants_types_outline_properties_colors_background
+    --recursica_ui-kit_components_avatar_variants_styles_text_variants_types_outline_properties_colors_background-color
   );
   border-color: var(
     --recursica_ui-kit_components_avatar_variants_styles_text_variants_types_outline_properties_colors_border-color
@@ -333,7 +333,7 @@ HARDCODED VALUES:
     --recursica_ui-kit_components_avatar_variants_styles_text_variants_types_ghost_properties_border-size
   );
   background-color: var(
-    --recursica_ui-kit_components_avatar_variants_styles_text_variants_types_ghost_properties_colors_background
+    --recursica_ui-kit_components_avatar_variants_styles_text_variants_types_ghost_properties_colors_background-color
   );
   border-color: var(
     --recursica_ui-kit_components_avatar_variants_styles_text_variants_types_ghost_properties_colors_border-color
