@@ -65,31 +65,29 @@ export default meta;
 export const Default: StoryObj<typeof Accordion> = {
   render: () => {
     return (
-      <Layer layer={0} style={{ padding: "24px" }}>
-        <Accordion defaultValue="item-1" chevron={<ChevronIcon />}>
-          <Accordion.Item value="item-1">
-            <Accordion.Control>Billing and Membership</Accordion.Control>
-            <Accordion.Panel>
-              You can manage your billing directly from the dashboard tab. All
-              payments are processed automatically.
-            </Accordion.Panel>
-          </Accordion.Item>
+      <Accordion defaultValue="item-1" chevron={<ChevronIcon />}>
+        <Accordion.Item value="item-1">
+          <Accordion.Control>Billing and Membership</Accordion.Control>
+          <Accordion.Panel>
+            You can manage your billing directly from the dashboard tab. All
+            payments are processed automatically.
+          </Accordion.Panel>
+        </Accordion.Item>
 
-          <Accordion.Item value="item-2">
-            <Accordion.Control>Refund Policy</Accordion.Control>
-            <Accordion.Panel>
-              We offer a 30-day money-back guarantee for all new subscriptions.
-            </Accordion.Panel>
-          </Accordion.Item>
+        <Accordion.Item value="item-2">
+          <Accordion.Control>Refund Policy</Accordion.Control>
+          <Accordion.Panel>
+            We offer a 30-day money-back guarantee for all new subscriptions.
+          </Accordion.Panel>
+        </Accordion.Item>
 
-          <Accordion.Item value="item-3">
-            <Accordion.Control>Technical Support</Accordion.Control>
-            <Accordion.Panel>
-              Our support team is available 24/7 via live chat or email.
-            </Accordion.Panel>
-          </Accordion.Item>
-        </Accordion>
-      </Layer>
+        <Accordion.Item value="item-3">
+          <Accordion.Control>Technical Support</Accordion.Control>
+          <Accordion.Panel>
+            Our support team is available 24/7 via live chat or email.
+          </Accordion.Panel>
+        </Accordion.Item>
+      </Accordion>
     );
   },
 };
@@ -97,32 +95,66 @@ export const Default: StoryObj<typeof Accordion> = {
 export const WithIcons: StoryObj<typeof Accordion> = {
   render: () => {
     return (
-      <Layer layer={0} style={{ padding: "24px" }}>
-        <Accordion defaultValue="security" chevron={<ChevronIcon />}>
-          <Accordion.Item value="security">
-            <Accordion.Control leftIcon={<SVGIcon />}>
-              Security Settings
-            </Accordion.Control>
-            <Accordion.Panel>
-              Enable two-factor authentication (2FA) and monitor active sessions
-              below.
-            </Accordion.Panel>
-          </Accordion.Item>
+      <Accordion defaultValue="security" chevron={<ChevronIcon />}>
+        <Accordion.Item value="security">
+          <Accordion.Control leftIcon={<SVGIcon />}>
+            Security Settings
+          </Accordion.Control>
+          <Accordion.Panel>
+            Enable two-factor authentication (2FA) and monitor active sessions
+            below.
+          </Accordion.Panel>
+        </Accordion.Item>
 
-          <Accordion.Item value="privacy">
-            <Accordion.Control leftIcon={<SVGIcon />}>
-              Privacy Configuration
-            </Accordion.Control>
-            <Accordion.Panel>
-              Choose what data is shared with our analytics partners.
-            </Accordion.Panel>
-          </Accordion.Item>
-        </Accordion>
-      </Layer>
+        <Accordion.Item value="privacy">
+          <Accordion.Control leftIcon={<SVGIcon />}>
+            Privacy Configuration
+          </Accordion.Control>
+          <Accordion.Panel>
+            Choose what data is shared with our analytics partners.
+          </Accordion.Panel>
+        </Accordion.Item>
+      </Accordion>
     );
   },
 };
 
+export const LongTitleTruncation: StoryObj<typeof Accordion> = {
+  render: () => {
+    return (
+      // `style` is stripped from Accordion itself (only passes through with overStyled);
+      // constrain width on a plain wrapper div instead to force truncation.
+      <div style={{ maxWidth: 320 }}>
+        <Accordion defaultValue="long-title" chevron={<ChevronIcon />}>
+          <Accordion.Item value="long-title">
+            <Accordion.Control leftIcon={<SVGIcon />}>
+              This is a deliberately very long accordion item title used to
+              verify that overflowing text truncates with a CSS ellipsis instead
+              of wrapping or overflowing the header
+            </Accordion.Control>
+            <Accordion.Panel>
+              The header label above should truncate to a single line with a
+              trailing ellipsis (…) rather than wrapping onto multiple lines or
+              pushing the chevron out of view.
+            </Accordion.Panel>
+          </Accordion.Item>
+
+          <Accordion.Item value="short-title">
+            <Accordion.Control leftIcon={<SVGIcon />}>
+              Short Title
+            </Accordion.Control>
+            <Accordion.Panel>
+              A short title in the same accordion for visual comparison.
+            </Accordion.Panel>
+          </Accordion.Item>
+        </Accordion>
+      </div>
+    );
+  },
+};
+
+/** Demonstrates the component nested inside a non-default layer — the one case where an
+ * explicit `<Layer>` wrap belongs in a story (see COMPONENT_STORYBOOK_GUIDE.md §9). */
 export const LayerOne: StoryObj<typeof Accordion> = {
   render: () => {
     return (

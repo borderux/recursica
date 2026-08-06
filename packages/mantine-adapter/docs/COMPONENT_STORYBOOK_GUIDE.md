@@ -4,7 +4,7 @@ If you are an AI agent writing stories:
 
 1. You MUST use Component Story Format 3 (CSF3). Do not use the older `storiesOf` API or CSF2 syntax.
 2. You must NEVER import `@mantine/core` raw components into Storybook. Everything rendered must be Recursica components.
-3. Every component must feature a Default playground story wrapped in a `<Layer>`.
+3. Do NOT manually wrap stories in `<Layer>`. The global Storybook decorator already wraps every story in a `<Layer layer={0}>` with `layer`/`withLayer` Story Controls (see §9). Only add an explicit `<Layer layer={N}>` inside a story when demonstrating the component on a specific non-default/nested layer — never as the default pattern.
    </critical_agent_directive>
 
 # Component Storybook Guide
@@ -35,9 +35,9 @@ This guide describes how to create Storybook stories for design-system component
 
 ## 2a. Layer and the Default story
 
-- **Wrap in Layer:** The Default story must wrap the component in a `<Layer>` so layer context is visible. Render the component inside `<Layer layer={layer}>` where `layer` is a **story-level** arg (e.g. 0, 1, 2, 3), not a prop on the component.
-- **Layer control:** Expose a **layer** control in the Default story that sets the wrapping Layer’s `layer` prop. This lets users see how the component looks in each layer. The control drives the Layer wrapper, not the component.
-- **No component layer prop:** Components do not accept `layer` as a prop; layer is set only by wrapping content in `<Layer layer={0|1|2|3}>`. Do not add `layer` to the component’s props in the story. Add it only as a story-level arg and pass it to the Layer wrapper.
+- **Layer is automatic — do not wrap manually:** The global Storybook decorator (see §9) already wraps every story in a `<Layer layer={0}>`, and already exposes `layer`/`withLayer` Story Controls in the Controls panel. Do **not** add your own `<Layer>` wrapper in the Default story's render function, and do **not** add `layer`/`withLayer` to the component's own `argTypes` — both are provided globally.
+- **Destructure, don't forward:** In the render function, destructure `withLayer` and `layer` out of `args` so React doesn't warn about unknown DOM attributes being spread onto the component (see §9 for the exact pattern).
+- **Exception — demonstrating a specific/different layer:** Only add an explicit `<Layer layer={N}>` inside a story when you need to show the component on a layer _other than_ the one currently selected by the global control — for example, a dedicated `LayerOne` story, or a story composing multiple nested layers together. This is the exception, not something every component needs by default.
 
 ---
 
@@ -49,7 +49,7 @@ This guide describes how to create Storybook stories for design-system component
   - **“Which props would an integrator typically change, and which combinations are most important to lock down visually?”**
   - Choose a subset (e.g. 2–4 axes) and document the chosen axes in the story file or in this guide for that component.
 - **Examples (by component):**
-  - **Button:** Major axes might be `variant` (solid, outline, text), `size` (default, small), and a single “with icon” state. Layer is shown by wrapping in `<Layer>` (e.g. static stories “Layer 1 solid”, “Layer 2 outline” render `<Layer layer={1}><Button … /></Layer>`). You might have static stories such as “Solid default”, “Outline small”, “Text with icon”, “Layer 1 solid”, etc., without covering every combination.
+  - **Button:** Major axes might be `variant` (solid, outline, text), `size` (default, small), and a single “with icon” state. You typically do **not** need dedicated layer-specific static stories — every story already gets the global `layer` Story Control, so anyone can preview any story on any layer without a separate story existing for it. Only add a `<Layer layer={N}>`-wrapped static story (e.g. “Layer 1 Solid”) when you specifically want to lock down/document how the component looks composed inside a _non-default_ layer context (e.g. nested inside a Card) — this is the rare exception, not a required axis.
   - **Future components:** Apply the same question—pick the major properties that define how the component looks and behaves, then add a few static stories that cover the most important combinations or edge cases.
 - **Implementation:**
   - Each static story is a **named export** that renders the component with fixed `args` (or no args and inline props). Do not rely on controls for these; the story should look the same every time.
@@ -63,9 +63,9 @@ This guide describes how to create Storybook stories for design-system component
 
 When adding or updating static stories for a component, **decide explicitly** which properties to demonstrate:
 
-1. List the component’s Recursica and key public props (layer is not a prop; use `<Layer>` in stories).
-2. **Which of these are “major” for visual/documentation purposes?** (e.g. variant, size, loading, with/without icon, and layer via wrapping Layer.)
-3. **Which combinations matter most?** (e.g. “all variants at default size” + “one variant at small size” + “one with icon” + “one per layer” using `<Layer layer={N}>`.)
+1. List the component’s Recursica and key public props (layer is not a prop and not a default story axis — it's already covered by the global `layer` Story Control; see §9).
+2. **Which of these are “major” for visual/documentation purposes?** (e.g. variant, size, loading, with/without icon.)
+3. **Which combinations matter most?** (e.g. “all variants at default size” + “one variant at small size” + “one with icon”.) Only add a layer-specific story (using an explicit `<Layer layer={N}>`) if you need to lock down a _non-default_ layer composition — not as a routine combination.
 4. Add one static story per chosen combination (or a small grid in one story if it fits better), and document in a short comment or in this guide which axes were chosen for that component.
 
 This keeps the story count manageable and makes it clear why each static story exists.
@@ -77,7 +77,7 @@ This keeps the story count manageable and makes it clear why each static story e
 - **Default export:** Meta object with `component`, `title` (e.g. under `Design System/Button`), `parameters.docs.description.component` exclusively documenting the purpose and layout usage of the element explicitly for the AutoDocs layout, and optionally `tags` for docs or tests (e.g., `["autodocs"]`).
 - **Default / Primary story:** The “playground” story with controls (e.g. `export const Default` or the default story with `args` and `argTypes`).
 - **Named exports:** One per static state (e.g. `SolidDefault`, `OutlineSmall`). Each uses fixed props and no (or minimal) controls.
-- **Decorators:** If all stories need the same wrapper (e.g. theme context), add a decorator in the meta. For **layer**, wrap the component in `<Layer layer={N}>` in the Default story (with a layer control) and in any static story that should show a specific layer; do not set layer as a component prop. Ensure the Recursica CSS (e.g. `recursica_variables_scoped.css`) is imported in the story file or in Storybook preview so variables resolve.
+- **Decorators:** If all stories need the same wrapper (e.g. theme context), add a decorator in the meta. For **layer**, do not add your own decorator or wrapper — the global preview decorator already wraps every story in a `<Layer>` with `layer`/`withLayer` Story Controls (see §9). Only wrap a specific story in `<Layer layer={N}>` yourself when demonstrating a non-default layer; never set layer as a component prop. Ensure the Recursica CSS (e.g. `recursica_variables_scoped.css`) is imported in the story file or in Storybook preview so variables resolve.
 
 ---
 
@@ -96,7 +96,7 @@ This keeps the story count manageable and makes it clear why each static story e
 - [ ] Default (or primary) story exposes controls for the main props integrators will change.
 - [ ] Major properties for static stories are chosen and documented (in the file or in this guide).
 - [ ] Static stories are added for the chosen combinations; each has fixed props and no controls.
-- [ ] Default story wraps the component in `<Layer layer={layer}>` with a layer control; static stories that need a layer use `<Layer layer={N}>` around the component. Theme (and any other required context) are provided via decorators or wrapper so Recursica styles apply.
+- [ ] No story manually wraps the component in `<Layer>` by default — the global decorator already handles this (see §9). An explicit `<Layer layer={N}>` is added only for a story that specifically demonstrates a non-default/different layer. Theme (and any other required context) are provided via decorators or wrapper so Recursica styles apply.
 - [ ] Recursica CSS (e.g. `recursica_variables_scoped.css`) is loaded in the story or in Storybook preview.
 - [ ] No native UI library components (like `@mantine/core` wrappers) are directly imported into the story. Everything rendered should strictly be Recursica components. Never use HTML primitive components (`div`, `span`, etc.) unless absolutely necessary to demo a story.
 
@@ -116,8 +116,9 @@ This keeps the story count manageable and makes it clear why each static story e
 
 The Storybook preview (`preview.tsx`) provides a **global decorator** that automatically wraps every story in a `<Layer>` component with `withLayer` and `layer` controls. This means:
 
-- **Do NOT** manually wrap your component in `<Layer layer={0}>` inside render functions.
+- **Do NOT** manually wrap your component in `<Layer layer={0}>` inside render functions **by default**. This is the single most common mistake to avoid when writing stories — it's redundant with the global decorator and easy to reach for out of habit.
 - **Do NOT** add `layer` or `withLayer` to your component's `argTypes`—they are globally provided.
+- **Exception:** manually wrapping in `<Layer layer={N}>` is appropriate only when a story specifically needs to demonstrate the component on a _different or additional_ layer than whatever the global control is set to (e.g. a dedicated `LayerOne` story, or a story composing several nested layers together). Reach for this deliberately, not by default.
 - **DO** destructure `withLayer` and `layer` out of args in your render function so they don't get passed to the component:
 
 ```tsx
