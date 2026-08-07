@@ -175,4 +175,5 @@ export type {
   RecursicaSwitchGroupProps,
   RecursicaTextAreaProps,
   RecursicaTextFieldProps,
+  RecursicaTimePickerProps,
 } from "./components";

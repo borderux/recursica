@@ -1,41 +1,197 @@
 /* EXEMPTIONS:
-   This component is a placeholder stub. Once fully implemented, its specific
-   tokens will be fully wired up to direct styles. */
-
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_properties_border-radius */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_properties_horizontal-padding */
+   - state-specific border-size variables are ignored because a uniform border-size is applied globally
+     to prevent unexpected layout shift or flickering during focus, disabled, or error state transitions.
+   - icon-size/icon-color/icon-text-gap have no equivalent here: this composite (a time field plus a
+     separate AM/PM select) has no icon slot, unlike TextField/DatePicker.
+   - placeholder-opacity has no equivalent here: MUI X's field renders empty sections via its own
+     internal placeholder styling, not a native ::placeholder pseudo-element we can target. */
+/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_error_properties_border-size */
+/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_disabled_properties_border-size */
 /* recursica-ignore: --recursica_ui-kit_components_time-picker_properties_icon-size */
 /* recursica-ignore: --recursica_ui-kit_components_time-picker_properties_icon-text-gap */
+/* recursica-ignore: --recursica_ui-kit_components_time-picker_properties_colors_icon-color */
 /* recursica-ignore: --recursica_ui-kit_components_time-picker_properties_placeholder-opacity */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_properties_text_font-family */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_properties_text_font-size */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_properties_text_font-style */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_properties_text_font-weight */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_properties_text_letter-spacing */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_properties_text_line-height */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_properties_text_text-decoration */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_properties_text_text-transform */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_properties_vertical-padding */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_properties_width */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_layouts_side-by-side_properties_top-bottom-margin */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_layouts_stacked_properties_top-bottom-margin */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_default_properties_border-size */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_default_properties_colors_background */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_default_properties_colors_border-color */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_default_properties_colors_icon */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_default_properties_colors_text */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_disabled_properties_border-size */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_disabled_properties_colors_background */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_disabled_properties_colors_border-color */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_disabled_properties_colors_icon */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_disabled_properties_colors_text */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_error_properties_border-size */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_error_properties_colors_background */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_error_properties_colors_border-color */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_error_properties_colors_icon */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_error_properties_colors_text */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_focus_properties_border-size */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_focus_properties_colors_background */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_focus_properties_colors_border-color */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_focus_properties_colors_icon */
-/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_focus_properties_colors_text */
+/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_disabled_properties_colors_icon-color */
+/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_error_properties_colors_icon-color */
+
+/* LAYOUT SPACING OVERRIDES:
+   - Sets the --form-control-margin-bottom spacing hook to map component-specific layout tokens. */
+.layoutOverride {
+  --form-control-margin-bottom: var(
+    --recursica_ui-kit_components_time-picker_variants_layouts_stacked_properties_top-bottom-margin
+  );
+}
+
+.layoutOverride[data-form-layout="side-by-side"] {
+  --form-control-margin-bottom: var(
+    --recursica_ui-kit_components_time-picker_variants_layouts_side-by-side_properties_top-bottom-margin
+  );
+}
+
+/* HARDCODED VALUES:
+   - border-style: solid. Native structural rendering rule.
+   - display: flex on .root — the time field and the separate AM/PM select sit side by side, per
+     the Recursica-specific composite design (see TIMEPICKER_IMPLEMENTATION_NOTES.md).
+   - MUI X's field variant can't be forced from this component's public API (see
+     TIMEPICKER_IMPLEMENTATION_NOTES.md) — whichever native decoration it renders is suppressed
+     below, and our own border/background are applied to .root, which wraps both controls.
+*/
+
+.root {
+  display: flex;
+  align-items: stretch;
+  gap: var(
+    --recursica_ui-kit_components_time-picker_properties_horizontal-padding
+  );
+  /* min-width, not width: the `width` token was authored for a single plain input (confirmed against
+     text-field's identical token shape). This composite has to fit the time field plus the AM/PM
+     select side by side, so a hard width clips/squeezes the select out of view — use the token as a
+     floor and let the box grow to fit its real content instead. */
+  min-width: var(--recursica_ui-kit_components_time-picker_properties_width);
+  width: fit-content;
+  border-radius: var(
+    --recursica_ui-kit_components_time-picker_properties_border-radius
+  );
+  border-width: var(
+    --recursica_ui-kit_components_time-picker_properties_border-size
+  );
+  border-style: solid;
+  border-color: var(
+    --recursica_ui-kit_components_time-picker_properties_colors_border-color
+  );
+  background-color: var(
+    --recursica_ui-kit_components_time-picker_properties_colors_background-color
+  );
+  color: var(
+    --recursica_ui-kit_components_time-picker_properties_colors_text-color
+  );
+  padding-left: var(
+    --recursica_ui-kit_components_time-picker_properties_horizontal-padding
+  );
+  padding-right: var(
+    --recursica_ui-kit_components_time-picker_properties_horizontal-padding
+  );
+}
+
+/* Suppress whichever native field decoration MUI X renders by default (its public API doesn't
+   expose a variant prop to force "standard" in this version) — .root draws the single shared
+   border instead, regardless of whether the field defaults to "outlined" or "standard". */
+.root :global(.MuiPickersInputBase-root::before),
+.root :global(.MuiPickersInputBase-root::after),
+.root :global(.MuiInput-root::before),
+.root :global(.MuiInput-root::after) {
+  border-bottom: none !important;
+}
+
+.root :global(.MuiPickersOutlinedInput-notchedOutline) {
+  border: none !important;
+}
+
+.field {
+  flex: 1 1 auto;
+}
+
+.field :global(.MuiPickersInputBase-sectionsContainer) {
+  padding-top: var(
+    --recursica_ui-kit_components_time-picker_properties_vertical-padding
+  );
+  padding-bottom: var(
+    --recursica_ui-kit_components_time-picker_properties_vertical-padding
+  );
+  padding-left: 0;
+  padding-right: 0;
+
+  font-family: var(
+    --recursica_ui-kit_components_time-picker_properties_text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_time-picker_properties_text_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_time-picker_properties_text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_time-picker_properties_text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_time-picker_properties_text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_time-picker_properties_text_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_time-picker_properties_text_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_time-picker_properties_text_text-transform
+  );
+}
+
+.field :global(.MuiPickersInputBase-input) {
+  color: inherit;
+}
+
+.amPmSelect {
+  flex: 0 0 auto;
+  align-self: center;
+  font-family: var(
+    --recursica_ui-kit_components_time-picker_properties_text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_time-picker_properties_text_font-size
+  );
+  color: inherit;
+}
+
+.amPmSelect :global(.MuiSelect-select) {
+  padding-top: var(
+    --recursica_ui-kit_components_time-picker_properties_vertical-padding
+  );
+  padding-bottom: var(
+    --recursica_ui-kit_components_time-picker_properties_vertical-padding
+  );
+}
+
+/* -------------------------------------
+   STATE CASCADE ARCHITECTURE
+-------------------------------------- */
+
+/* Focus State Mapping — applied once at .root since focus moves between the field and the select. */
+.root:has(:global(.Mui-focused)) {
+  box-shadow:
+    0 0 0 var(--recursica_brand_states_focus_border-size)
+      var(--recursica_brand_states_focus_color),
+    0 0 var(--recursica_brand_states_focus_blur)
+      var(--recursica_brand_states_focus_margin)
+      var(--recursica_brand_states_focus_color);
+}
+
+/* Error State Mapping (data-error is set explicitly by TimePicker.tsx). */
+.root[data-error="true"] {
+  border-color: var(
+    --recursica_ui-kit_components_time-picker_variants_states_error_properties_colors_border-color
+  ) !important;
+  background-color: var(
+    --recursica_ui-kit_components_time-picker_variants_states_error_properties_colors_background-color
+  ) !important;
+  color: var(
+    --recursica_ui-kit_components_time-picker_variants_states_error_properties_colors_text-color
+  ) !important;
+}
+
+/* Disabled State Mapping */
+.root:has(:global(.Mui-disabled)) {
+  border-color: var(
+    --recursica_ui-kit_components_time-picker_variants_states_disabled_properties_colors_border-color
+  ) !important;
+  background-color: var(
+    --recursica_ui-kit_components_time-picker_variants_states_disabled_properties_colors_background-color
+  ) !important;
+  color: var(
+    --recursica_ui-kit_components_time-picker_variants_states_disabled_properties_colors_text-color
+  ) !important;
+  opacity: var(
+    --recursica_ui-kit_components_time-picker_variants_states_disabled_properties_opacity
+  ) !important;
+  cursor: not-allowed;
+}
