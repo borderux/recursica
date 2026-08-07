@@ -1,5 +1,8 @@
 import React, { forwardRef } from "react";
-import { TimeInput, type TimeInputProps } from "@mantine/dates";
+import {
+  TimePicker as MantineTimePicker,
+  type TimePickerProps as MantineTimePickerProps,
+} from "@mantine/dates";
 import { type InputWrapperProps } from "@mantine/core";
 import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import {
@@ -13,14 +16,13 @@ import styles from "./TimePicker.module.css";
 import { type RecursicaTimePickerProps as BaseRecursicaTimePickerProps } from "@recursica/adapter-common";
 
 export interface RecursicaTimePickerProps
-  extends Omit<TimeInputProps, "size" | "variant" | "radius" | "wrapperProps">,
+  extends Omit<
+      MantineTimePickerProps,
+      "size" | "variant" | "radius" | "wrapperProps" | "format" | "min" | "max"
+    >,
     Pick<
       InputWrapperProps,
       "label" | "error" | "required" | "withAsterisk" | "id"
-    >,
-    Omit<
-      React.ComponentPropsWithoutRef<"input">,
-      "size" | "style" | "className" | "id" | "value" | "defaultValue"
     >,
     Omit<
       RecursicaFormControlWrapperProps,
@@ -31,7 +33,7 @@ export interface RecursicaTimePickerProps
 
 export type TimePickerProps = RecursicaOverStyled<RecursicaTimePickerProps>;
 
-export const TimePicker = forwardRef<HTMLInputElement, TimePickerProps>(
+export const TimePicker = forwardRef<HTMLDivElement, TimePickerProps>(
   function TimePicker(props, ref) {
     const {
       overStyled = false,
@@ -62,6 +64,7 @@ export const TimePicker = forwardRef<HTMLInputElement, TimePickerProps>(
       withSeconds,
       minTime,
       maxTime,
+      hideAmPm = false,
       ...rest
     } = props;
 
@@ -75,9 +78,9 @@ export const TimePicker = forwardRef<HTMLInputElement, TimePickerProps>(
 
     // Securely map core native blocks down ensuring nested CSS modules map precisely
     const mergedClassNames: Partial<Record<string, string>> = {
-      wrapper: styles.root, // The nested Input internal relative wrapper bounding box
-      input: styles.input,
-      section: styles.section,
+      wrapper: styles.root, // The nested InputBase internal relative wrapper bounding box
+      fieldsGroup: styles.fieldsGroup,
+      field: styles.field,
     };
 
     const classNamesProp = restRecord.classNames;
@@ -90,12 +93,12 @@ export const TimePicker = forwardRef<HTMLInputElement, TimePickerProps>(
       mergedClassNames.wrapper = o.wrapper
         ? `${styles.root} ${o.wrapper}`
         : styles.root;
-      mergedClassNames.input = o.input
-        ? `${styles.input} ${o.input}`
-        : styles.input;
-      mergedClassNames.section = o.section
-        ? `${styles.section} ${o.section}`
-        : styles.section;
+      mergedClassNames.fieldsGroup = o.fieldsGroup
+        ? `${styles.fieldsGroup} ${o.fieldsGroup}`
+        : styles.fieldsGroup;
+      mergedClassNames.field = o.field
+        ? `${styles.field} ${o.field}`
+        : styles.field;
     }
 
     const wrapperClass = className
@@ -129,21 +132,25 @@ export const TimePicker = forwardRef<HTMLInputElement, TimePickerProps>(
         readOnlyValue={value !== undefined ? value : defaultValue}
         readOnlyNativeProps={props}
         activeComponent={
-          /* Naked Input execution safely decoupled from Mantine's macro Input.Wrapper DOM hooks */
-          <TimeInput
+          /* Naked field execution safely decoupled from Mantine's macro Input.Wrapper DOM hooks.
+             hideAmPm={false} (default) renders Mantine's native 12h format + AM/PM select — this is
+             a Recursica-specific deviation from a plain masked time input; see USAGE.md. */
+          <MantineTimePicker
             ref={ref}
             classNames={mergedClassNames}
             disabled={disabled}
-            value={value as string | undefined}
-            defaultValue={defaultValue as string | undefined}
+            value={value}
+            defaultValue={defaultValue}
+            format={hideAmPm ? "24h" : "12h"}
             withSeconds={withSeconds}
-            minTime={minTime}
-            maxTime={maxTime}
+            min={minTime}
+            max={maxTime}
+            withDropdown={false}
             wrapperProps={{
               "data-disabled": disabled ? "true" : undefined,
               "data-error": error ? "true" : undefined,
             }}
-            {...(sanitizedProps as unknown as TimeInputProps)}
+            {...(sanitizedProps as unknown as MantineTimePickerProps)}
           />
         }
       />

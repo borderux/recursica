@@ -23,7 +23,13 @@ export default function Demo() {
 }
 ```
 
-`TimePicker` is a masked `HH:mm` text input (no calendar/dropdown). Pass `withSeconds` to add a seconds segment (`HH:mm:ss`), and `minTime`/`maxTime` (in the same format) to bound the allowed range.
+> [!IMPORTANT] > **Recursica-specific behavior:** by default, `TimePicker` renders in **12-hour format with a dedicated AM/PM selector** next to the hour/minute input — this deviates from the underlying Mantine library's own default (24-hour, no AM/PM control). Pass `hideAmPm` to switch to a plain 24-hour input with no AM/PM control, matching Mantine's native default instead.
+
+```tsx
+<TimePicker label="Meeting Time" hideAmPm />
+```
+
+Pass `withSeconds` to add a seconds segment, and `minTime`/`maxTime` (`"HH:mm"` or `"HH:mm:ss"` with `withSeconds`) to bound the allowed range — these always describe 24-hour boundaries regardless of `hideAmPm`.
 
 ```tsx
 <TimePicker
@@ -33,6 +39,8 @@ export default function Demo() {
   maxTime="17:00:00"
 />
 ```
+
+**Note:** the AM/PM control renders as a native HTML `<select>` — Mantine's `TimePicker` doesn't support swapping it for a fully custom dropdown component, so it won't pixel-match Recursica's own `Dropdown` component, particularly its open option list (browser/OS-rendered).
 
 ---
 

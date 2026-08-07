@@ -1,9 +1,18 @@
 /* EXEMPTIONS:
-   - state-specific border-size variables are ignored because a uniform border-size (from the base
-     properties token) is applied globally to prevent unexpected layout shift or flickering during
-     disabled/error state transitions. */
+   - state-specific border-size variables are ignored because a uniform border-size is applied
+     globally to prevent unexpected layout shift or flickering during disabled/error transitions.
+   - icon-size/icon-color/icon-text-gap have no equivalent here: this composite (hour/minute/second
+     SpinInputs + an AM/PM select) has no icon slot, unlike TextField/DatePicker.
+   - placeholder-opacity has no direct equivalent: each SpinInput's native "--" placeholder is styled
+     by Mantine's own SpinInput internals, not a ::placeholder pseudo-element we can target directly. */
 /* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_disabled_properties_border-size */
 /* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_error_properties_border-size */
+/* recursica-ignore: --recursica_ui-kit_components_time-picker_properties_icon-size */
+/* recursica-ignore: --recursica_ui-kit_components_time-picker_properties_icon-text-gap */
+/* recursica-ignore: --recursica_ui-kit_components_time-picker_properties_placeholder-opacity */
+/* recursica-ignore: --recursica_ui-kit_components_time-picker_properties_colors_icon-color */
+/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_disabled_properties_colors_icon-color */
+/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_error_properties_colors_icon-color */
 
 /* LAYOUT SPACING OVERRIDES:
    - Sets the --form-control-margin-bottom spacing hook to map component-specific layout tokens. */
@@ -21,39 +30,33 @@
 
 /* HARDCODED VALUES:
    - border-style: solid. Native structural rendering rule.
-   - outline: none. Bypassing browser focus rings to rely strictly on Recursica focus states natively.
-   - flex/layout: display: flex on the root wrapper safely encapsulating internal section rendering.
+   - outline: none on fields. Bypassing browser focus rings to rely strictly on Recursica focus
+     states, applied once at the .root level via :focus-within instead of per-field.
 */
 
 .root {
-  display: flex;
-  position: relative;
   width: var(--recursica_ui-kit_components_time-picker_properties_width);
-
-  /* Override Mantine native Input variables governing section spacing padding mathematics safely */
-  --input-left-section-size: calc(
-    var(
-        --recursica_ui-kit_components_time-picker_properties_horizontal-padding
-      ) +
-      var(--recursica_ui-kit_components_time-picker_properties_icon-size) +
-      var(--recursica_ui-kit_components_time-picker_properties_icon-text-gap)
+  border-radius: var(
+    --recursica_ui-kit_components_time-picker_properties_border-radius
   );
-  --input-right-section-size: calc(
-    var(
-        --recursica_ui-kit_components_time-picker_properties_horizontal-padding
-      ) +
-      var(--recursica_ui-kit_components_time-picker_properties_icon-size) +
-      var(--recursica_ui-kit_components_time-picker_properties_icon-text-gap)
+  border-width: var(
+    --recursica_ui-kit_components_time-picker_properties_border-size
+  );
+  border-style: solid;
+  border-color: var(
+    --recursica_ui-kit_components_time-picker_properties_colors_border-color
+  );
+  background-color: var(
+    --recursica_ui-kit_components_time-picker_properties_colors_background-color
+  );
+  color: var(
+    --recursica_ui-kit_components_time-picker_properties_colors_text-color
   );
 }
 
-.input {
-  /* Structural Overrides */
-  width: 100%;
-  box-sizing: border-box;
-  margin: 0;
-
-  /* Box Geometry */
+.fieldsGroup {
+  display: flex;
+  align-items: center;
   padding-top: var(
     --recursica_ui-kit_components_time-picker_properties_vertical-padding
   );
@@ -66,15 +69,9 @@
   padding-right: var(
     --recursica_ui-kit_components_time-picker_properties_horizontal-padding
   );
-  border-radius: var(
-    --recursica_ui-kit_components_time-picker_properties_border-radius
-  );
-  border-width: var(
-    --recursica_ui-kit_components_time-picker_properties_border-size
-  );
-  border-style: solid;
+}
 
-  /* Strict Typography Unification */
+.field {
   font-family: var(
     --recursica_ui-kit_components_time-picker_properties_text_font-family
   );
@@ -99,75 +96,16 @@
   text-transform: var(
     --recursica_ui-kit_components_time-picker_properties_text_text-transform
   );
-
-  /* Base State Default Execution */
-  background-color: var(
-    --recursica_ui-kit_components_time-picker_properties_colors_background-color
-  );
-  border-color: var(
-    --recursica_ui-kit_components_time-picker_properties_colors_border-color
-  );
-  color: var(
-    --recursica_ui-kit_components_time-picker_properties_colors_text-color
-  );
-
-  outline: none;
-}
-
-.input::placeholder {
-  opacity: var(
-    --recursica_ui-kit_components_time-picker_properties_placeholder-opacity
-  );
   color: inherit;
-}
-
-/* Dynamic Padding Overrides */
-.root[data-with-left-section] .input {
-  padding-left: var(--input-left-section-size);
-}
-
-.root[data-with-right-section] .input {
-  padding-right: var(--input-right-section-size);
-}
-
-/* Flexible End-Caps (Icons, actions) */
-.section {
-  display: flex;
-  align-items: center;
-  height: 100%;
-}
-
-.section[data-position="left"] {
-  justify-content: flex-start;
-  padding-left: var(
-    --recursica_ui-kit_components_time-picker_properties_horizontal-padding
-  );
-}
-
-.section[data-position="right"] {
-  justify-content: flex-end;
-  padding-right: var(
-    --recursica_ui-kit_components_time-picker_properties_horizontal-padding
-  );
-}
-
-.section :global(svg) {
-  width: var(--recursica_ui-kit_components_time-picker_properties_icon-size);
-  height: var(--recursica_ui-kit_components_time-picker_properties_icon-size);
-  color: var(
-    --recursica_ui-kit_components_time-picker_properties_colors_icon-color
-  );
+  outline: none;
 }
 
 /* -------------------------------------
    STATE CASCADE ARCHITECTURE
 -------------------------------------- */
 
-/* Focus State Mapping (Triggered internally via browser pseudo-pseudo-class) */
-/* The token schema does not provide a per-component focus state for time-picker; apply the
-   generic focus ring tokens as a box-shadow ring instead (matches DatePicker/TextField). */
-.input:focus-within,
-.input:focus {
+/* Focus State Mapping — applied once at the wrapper level since focus moves between fields. */
+.root:focus-within {
   box-shadow:
     0 0 0 var(--recursica_brand_states_focus_border-size)
       var(--recursica_brand_states_focus_color),
@@ -177,7 +115,7 @@
 }
 
 /* Error State Mapping (Propagated strictly down from the wrapper DOM context) */
-.root[data-error] .input {
+.root[data-error] {
   border-color: var(
     --recursica_ui-kit_components_time-picker_variants_states_error_properties_colors_border-color
   ) !important;
@@ -189,14 +127,8 @@
   ) !important;
 }
 
-.root[data-error] .section :global(svg) {
-  color: var(
-    --recursica_ui-kit_components_time-picker_variants_states_error_properties_colors_icon-color
-  ) !important;
-}
-
 /* Disabled State Mapping (Propagated strictly down from the wrapper DOM context) */
-.root[data-disabled] .input {
+.root[data-disabled] {
   border-color: var(
     --recursica_ui-kit_components_time-picker_variants_states_disabled_properties_colors_border-color
   ) !important;
@@ -210,10 +142,4 @@
     --recursica_ui-kit_components_time-picker_variants_states_disabled_properties_opacity
   ) !important;
   cursor: not-allowed;
-}
-
-.root[data-disabled] .section :global(svg) {
-  color: var(
-    --recursica_ui-kit_components_time-picker_variants_states_disabled_properties_colors_icon-color
-  ) !important;
 }

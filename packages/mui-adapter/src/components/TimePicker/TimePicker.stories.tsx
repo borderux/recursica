@@ -18,13 +18,14 @@ const meta: Meta<typeof TimePicker> = {
         "assistiveText",
         "readOnly",
         "withSeconds",
+        "hideAmPm",
         "formLayout",
       ],
     },
     docs: {
       description: {
         component: `
-The \`TimePicker\` primitive provides a clock/list-based time selection input (via \`@mui/x-date-pickers\`) integrated directly into the \`FormControlWrapper\` architecture.
+The \`TimePicker\` primitive provides a clock/list-based time selection input (via \`@mui/x-date-pickers\`) integrated directly into the \`FormControlWrapper\` architecture. By default it renders in 12-hour format with a dedicated AM/PM selector — a Recursica-specific deviation from the underlying library's own default. Pass \`hideAmPm\` for a plain 24-hour field instead.
 
 ### Examples
 Always structure horizontal architectures via the generic \`formLayout\` parameter.
@@ -69,6 +70,11 @@ Always structure horizontal architectures via the generic \`formLayout\` paramet
       control: "boolean",
       description: "Shows and allows editing the seconds segment.",
     },
+    hideAmPm: {
+      control: "boolean",
+      description:
+        "Hides the AM/PM selector and switches to 24-hour entry. Recursica-specific; defaults to false (12-hour + AM/PM).",
+    },
   },
 };
 
@@ -97,6 +103,14 @@ export const WithSeconds: Story = {
     label: "Precise Execution Time",
     assistiveText: "Includes a seconds segment for exact scheduling.",
     withSeconds: true,
+  },
+};
+
+export const HiddenAmPm: Story = {
+  args: {
+    label: "24-Hour Time",
+    assistiveText: "hideAmPm switches to a plain 24-hour field.",
+    hideAmPm: true,
   },
 };
 

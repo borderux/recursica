@@ -25,7 +25,7 @@ export default function Demo() {
 }
 ```
 
-`TimePicker`'s value is a plain `"HH:mm"` string (matching `@recursica/mantine-adapter`'s convention). Pass `withSeconds` to add a seconds segment (`"HH:mm:ss"`), and `minTime`/`maxTime` (in the same string format) to bound the allowed range.
+`TimePicker`'s value is a plain `"HH:mm"` string (matching `@recursica/mantine-adapter`'s convention) — always 24-hour, regardless of `hideAmPm`. Pass `withSeconds` to add a seconds segment (`"HH:mm:ss"`), and `minTime`/`maxTime` (in the same string format) to bound the allowed range.
 
 ```tsx
 <TimePicker
@@ -36,6 +36,14 @@ export default function Demo() {
   onChange={(value) => console.log(value)} // "HH:mm:ss" | null
 />
 ```
+
+> [!IMPORTANT] > **Recursica-specific behavior:** by default, `TimePicker` renders a 12-hour field with a dedicated AM/PM selector next to it — a deviation from `@mui/x-date-pickers`'s own default (24-hour, or a single field with an inline meridiem section). Pass `hideAmPm` to switch to a plain 24-hour field with no AM/PM control.
+
+```tsx
+<TimePicker label="Meeting Time" hideAmPm />
+```
+
+**Note:** the AM/PM control uses the same underlying primitive as Recursica's own `Dropdown` component (`@mui/material`'s `Select`), styled to match, but is **not** literally the `Dropdown` component — nesting it here would double up `FormControlWrapper`. See `TIMEPICKER_IMPLEMENTATION_NOTES.md` for why.
 
 ---
 
