@@ -25,6 +25,14 @@ If you are tasked with building, modifying, or reviewing components **inside** t
 5. **Internal Implementation Notes:** Every component MUST have its own `[COMPONENT]_IMPLEMENTATION_NOTES.md` file (or `IMPLEMENTATION_NOTES.md`) living within its component folder (e.g., `src/components/Button/IMPLEMENTATION_NOTES.md` or `BUTTON_IMPLEMENTATION_NOTES.md`) to document internal engineering decisions, layout hacks, and CSS workarounds. This file is for internal technical tracking and is not publicly consumable.
 6. **Update `llms.txt`:** Whenever you add a new component (or rename/remove one), update the package's root `llms.txt` to keep its "Components" list in sync — add a link to the new component's `USAGE.md` (e.g., `- [Button](src/components/Button/USAGE.md)`) in alphabetical order. `llms.txt` is the entry point external AI agents use to discover components, so a missing entry means that component is effectively invisible to them.
 
+## Keeping Shared Docs in Sync
+
+This adapter's `docs/COMPONENT_DEV_GUIDE.md` and `docs/COMPONENT_STORYBOOK_GUIDE.md` are **thin, Mantine-specific deltas** — the full canonical rule set lives in [`packages/adapter-common/docs/`](../adapter-common/docs/). If you're changing a rule that applies to every adapter (not just this one), edit the canonical doc in `adapter-common/docs/`, not this adapter's delta — and check whether `mui-adapter`'s delta doc needs a corresponding update. Only edit this adapter's own `docs/COMPONENT_DEV_GUIDE.md`/`docs/COMPONENT_STORYBOOK_GUIDE.md` for something genuinely specific to Mantine.
+
+`docs/PHILOSOPHY.md` is different: it's a **full, self-contained, published** document (it's in this package's `"files"` array, unlike the two docs above), because it explains consumer-relevant behavior, not just contributor process. It does **not** link to a canonical doc anywhere. If you change something in it that reflects a philosophy shared by every adapter — not something genuinely specific to Mantine — go check whether `mui-adapter/docs/PHILOSOPHY.md` needs the equivalent change too. There's no automated or structural check for this; it's a manual discipline documented in `docs/DOCUMENTATION_STRATEGY.md` §4.
+
+See [`packages/adapter-common/docs/PIPELINE.md`](../adapter-common/docs/PIPELINE.md) for how doc and code changes flow across `adapter-common` → this adapter → `storybook-template` → `recursica-storybook`.
+
 ## How Can I Contribute?
 
 ### Reporting Bugs
