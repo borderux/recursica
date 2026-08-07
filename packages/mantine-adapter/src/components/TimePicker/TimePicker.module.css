@@ -35,7 +35,12 @@
 */
 
 .root {
-  width: var(--recursica_ui-kit_components_time-picker_properties_width);
+  /* min-width, not width: the `width` token was authored for a single plain input (confirmed against
+     text-field's identical token shape). This composite has to fit hour + minute + (seconds) + the
+     AM/PM select side by side, so a hard width clips/squeezes the AM/PM select out of view — use the
+     token as a floor and let the box grow to fit its real content instead. */
+  min-width: var(--recursica_ui-kit_components_time-picker_properties_width);
+  width: fit-content;
   border-radius: var(
     --recursica_ui-kit_components_time-picker_properties_border-radius
   );
