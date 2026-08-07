@@ -11,6 +11,11 @@ Current packages and apps with their own contributing guides:
 - [`packages/adapter-common`](packages/adapter-common/CONTRIBUTING.md)
 - [`packages/common`](packages/common/CONTRIBUTING.md)
 - [`packages/mantine-adapter`](packages/mantine-adapter/CONTRIBUTING.md)
+- [`packages/mui-adapter`](packages/mui-adapter/CONTRIBUTING.md)
+
+## Documentation Structure
+
+See [`docs/DOCUMENTATION_STRATEGY.md`](docs/DOCUMENTATION_STRATEGY.md) for the full philosophy on how documentation is organized across this monorepo — including, notably, how shared vs. adapter-specific contributor docs (`docs/PHILOSOPHY.md`, `docs/COMPONENT_DEV_GUIDE.md`, `docs/COMPONENT_STORYBOOK_GUIDE.md`) are split between the canonical versions in `packages/adapter-common/docs/` and the thin, library-specific deltas in each adapter's own `docs/` folder.
 
 ## How Can I Contribute?
 

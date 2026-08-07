@@ -28,10 +28,10 @@ Please read [PHILOSOPHY.md](./docs/PHILOSOPHY.md) to understand the core princip
 
 ## Developer & AI Guidelines
 
-This repository provides dedicated routing documents for both human developers and AI Agents to ensure strict adherence to our design system constraints.
+This repository provides dedicated routing documents for both human developers and AI Agents to ensure strict adherence to our design system constraints. These are contributor-facing docs that live in the [recursica monorepo](https://github.com/borderux/recursica) rather than in this published package, so they're linked here as GitHub URLs rather than relative paths.
 
-- **For Human Developers:** This `README.md` acts as your primary routing document. If you are integrating this library into an application, please read [USAGE.md](./USAGE.md). If you are building or modifying components inside this library, please read [CONTRIBUTING.md](./CONTRIBUTING.md).
-- **For AI Agents:** All AI Agents operating in this repository must start by reading [AGENT.md](./AGENT.md), which serves as the primary routing document for AI workflows.
+- **For Human Developers:** This `README.md` acts as your primary routing document. If you are integrating this library into an application, please read [USAGE.md](./USAGE.md) (published alongside this README). If you are building or modifying components inside this library, please read [CONTRIBUTING.md](https://github.com/borderux/recursica/blob/main/packages/mui-adapter/CONTRIBUTING.md).
+- **For AI Agents:** All AI Agents operating in the monorepo must start by reading [AGENT.md](https://github.com/borderux/recursica/blob/main/packages/mui-adapter/AGENT.md), which serves as the primary routing document for AI workflows.
 
 ## Development and Architecture
 

@@ -49,3 +49,15 @@ Commit the generated changeset file along with your other changes. When your pul
 ## Code of Conduct
 
 This project is governed by a Code of Conduct. By participating, you are expected to uphold this code.
+
+## Canonical Shared Docs Live Here
+
+`docs/COMPONENT_DEV_GUIDE.md` and `docs/COMPONENT_STORYBOOK_GUIDE.md` in this package are the **canonical** versions of those documents for every adapter — every adapter's own `docs/COMPONENT_DEV_GUIDE.md`/`docs/COMPONENT_STORYBOOK_GUIDE.md` are thin deltas that link back here and add only what's genuinely specific to that UI library. See [`docs/PIPELINE.md`](./docs/PIPELINE.md) for the full rationale and how changes flow across packages.
+
+Because these docs are shared, a change here affects `mantine-adapter`, `mui-adapter`, and any future adapter simultaneously. Before editing:
+
+- Confirm the rule you're changing is genuinely universal, not specific to how one adapter currently happens to work.
+- After editing, check whether either adapter's delta doc (`packages/mantine-adapter/docs/`, `packages/mui-adapter/docs/`) references the section you changed and needs a corresponding update.
+- If a rule turns out to only apply to one adapter, move it out of these canonical docs and into that adapter's own delta doc instead of leaving it here as a false generalization.
+
+**`docs/PHILOSOPHY.md` is intentionally not part of this canonical set.** Each adapter has its own full, self-contained, published `docs/PHILOSOPHY.md` — see `docs/DOCUMENTATION_STRATEGY.md` §4 (root of the monorepo) for why, and each adapter's own `CONTRIBUTING.md` for the manual sync rule that applies to it instead.

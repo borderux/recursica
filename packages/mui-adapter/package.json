@@ -38,7 +38,8 @@
     "USAGE.md",
     "ARCHITECTURE.md",
     "SETUP.md",
-    "OVERSTYLING.md"
+    "OVERSTYLING.md",
+    "docs/PHILOSOPHY.md"
   ],
   "keywords": [
     "react",

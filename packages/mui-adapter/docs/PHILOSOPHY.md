@@ -1,6 +1,6 @@
 # Recursica MUI Adapter: Core Philosophy
 
-Recursica’s component architecture isn't just a wrapper; it's a strict enforcing layer over MUI’s massive API surface. Our primary goal is to ensure consistency, eliminate “design system rot,” and provide clear boundaries for application developers using the UI Kit.
+Recursica's component architecture isn't just a wrapper; it's a strict enforcing layer over MUI's massive API surface. Our primary goal is to ensure consistency, eliminate "design system rot," and provide clear boundaries for application developers using the UI Kit.
 
 This document serves as the governing framework for why the `mui-adapter` components are built the way they are.
 
@@ -8,7 +8,7 @@ This document serves as the governing framework for why the `mui-adapter` compon
 
 Recursica has a **single universal API surface** internally regardless of whether we use MUI or another underlying UI library.
 
-- We decouple our visual properties natively. Instead of mapping perfectly to MUI’s native variants `(contained, outlined, text)`, we intentionally use Recursica's semantic and behavioral structures (e.g., `<Badge variant="alert" />`).
+- We decouple our visual properties natively. Instead of mapping perfectly to MUI's native variants `(contained, outlined, text)`, we intentionally use Recursica's semantic and behavioral structures (e.g., `<Badge variant="alert" />`).
 - We intentionally omit and strip complex underlying parameters if they collide with or circumvent our UI tokens (like stripping `--size` or raw MUI size properties when Recursica enforces a universal scale).
 
 ## 2. Component Wrappers (Leaving MUI Alone)
