@@ -19,8 +19,19 @@ import React from "react";
 import { TimePicker } from "@recursica/mantine-adapter";
 
 export default function Demo() {
-  return <TimePicker label="Select Time" placeholder="Pick a time" />;
+  return <TimePicker label="Select Time" />;
 }
+```
+
+`TimePicker` is a masked `HH:mm` text input (no calendar/dropdown). Pass `withSeconds` to add a seconds segment (`HH:mm:ss`), and `minTime`/`maxTime` (in the same format) to bound the allowed range.
+
+```tsx
+<TimePicker
+  label="Precise Time"
+  withSeconds
+  minTime="09:00:00"
+  maxTime="17:00:00"
+/>
 ```
 
 ---
@@ -31,6 +42,12 @@ All Recursica components in the `@recursica/mantine-adapter` package adhere stri
 
 > [!IMPORTANT]
 >
-> - **Anti-override protection**: Rogues style injections (like inline `style` or arbitrary `className`) are automatically blocked by our prop layer unless `overStyled={true}` is explicitly provided.
+> - **Anti-override protection**: Rogue style injections (like inline `style` or arbitrary `className`) are automatically blocked by our prop layer unless `overStyled={true}` is explicitly provided.
 > - **No Direct Layers**: Do not pass a `layer` prop to this component. To place it on a specific visual layer, wrap it in a `<Layer layer={0|1|2|3}>` component natively.
 > - **Variables and Theming**: Styling is entirely determined by local CSS variables defined in `recursica_variables_scoped.css` and mapped in the component's CSS module.
+
+---
+
+## 4. Read-Only Mode
+
+Pass `readOnly` to render the current value as static text via the shared `FormControlWrapper` read-only presentation, matching every other Recursica form control.
