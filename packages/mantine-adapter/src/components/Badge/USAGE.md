@@ -43,16 +43,13 @@ All Recursica components in the `@recursica/mantine-adapter` package adhere stri
 
 ## 4. Key Integration Features & Constraints
 
-## 1. Stripped Size Properties
+## 1. Sizing
 
-As logged in `COMPONENT_ISSUES.md`, there are currently no Figma variables mapped for different `size` variants (`small`, `default`, etc.). The component explicitly `Omit`s the Mantine `size` property from its signature to prevent integrators from attempting to drive sizes that do not exist in the tokens.
+Badge does not currently support a `size` prop; badges render at a single fixed size.
 
 ## 2. Intent-Based Variants
 
-Mantine supports multiple visual variants (`outline`, `filled`, `light`). However, the existing variable schema for `Badge` only defines "Styles" which act as intents (`alert`, `primary-color`, `success`, `warning`).
-
-- Default is arbitrarily mapped to `primary-color` as we lack a pure `neutral` schema right now.
-- `variant` mapped to underlying Mantine prop has been hardcoded to `filled`, since the Recursica coloring fully replaces the Mantine DOM.
+Badge exposes a `variant` prop with intent-based values (`alert`, `primary-color`, `success`, `warning`) rather than Mantine's `outline`/`filled`/`light` style options. The default variant is `primary-color`.
 
 ## 3. The `overStyled` Prop
 

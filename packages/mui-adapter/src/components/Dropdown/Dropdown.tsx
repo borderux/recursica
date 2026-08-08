@@ -98,6 +98,12 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
               key={`${item}-${index}`}
               value={item}
               className={styles.option}
+              // Dropdown.module.css's own selected-state tint (`.option[data-selected="true"]`)
+              // needs this explicitly — MUI's own `Mui-selected` class carries its default primary-
+              // color tint instead, which is what shows through without it.
+              data-selected={
+                item === (value ?? defaultValue) ? "true" : undefined
+              }
             >
               {item}
             </MenuItem>
@@ -109,6 +115,9 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
             value={item.value}
             disabled={item.disabled}
             className={styles.option}
+            data-selected={
+              item.value === (value ?? defaultValue) ? "true" : undefined
+            }
           >
             {item.label}
           </MenuItem>
@@ -164,6 +173,13 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
             MenuProps={{
               classes: { paper: styles.dropdown },
             }}
+            // Dropdown.module.css's error/disabled state rules key off `.root[data-error]`/
+            // `[data-disabled]` (the outer Select element, matching the `className={styles.root}`
+            // above) — `inputProps` below only reaches the nested accessibility <input>, which that
+            // selector never matches, so these need to be set here too. (Previously only set via
+            // inputProps, which meant the error border never actually appeared on the Dropdown.)
+            data-disabled={disabled ? "true" : undefined}
+            data-error={error ? "true" : undefined}
             inputProps={{
               "data-disabled": disabled ? "true" : undefined,
               "data-error": error ? "true" : undefined,

@@ -183,5 +183,6 @@ export type {
   RecursicaSliderProps,
   RecursicaTextAreaProps,
   RecursicaTextFieldProps,
+  RecursicaTimePickerProps,
   RecursicaToastProps,
 } from "./components";

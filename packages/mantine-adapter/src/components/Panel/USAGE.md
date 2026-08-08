@@ -43,103 +43,14 @@ All Recursica components in the `@recursica/mantine-adapter` package adhere stri
 
 ## 4. Key Integration Features & Constraints
 
-## 1. Mapping to Mantine Drawer
+### Placement
 
-**Decision:** Panel maps to Mantine's `Drawer` component, not `Paper` or `Card`.
+Use the `placement` prop (not `position`) to choose which edge the panel slides in from: `"left"`, `"right"`, `"top"`, or `"bottom"`. It defaults to `"right"`.
 
-**Implementation:** Per the Recursica design system specification, "Panels slide in or expand from the edge of the screen to reveal additional content or functionality." This is the exact behavior of Mantine's `Drawer` component, which provides:
+### Panel.Footer
 
-- Slide-in animation from any screen edge
-- Overlay/backdrop
-- Portal rendering
-- Focus trapping
-- Scroll locking
-- Close button and title in header
+A `Panel.Footer` sub-component is available for footer content and action buttons.
 
-Paper and Card are static containers; Drawer is an overlay that matches Panel's defined behavior.
+### Content Overflow
 
----
-
-## 2. Token Namespace: `panel`
-
-**Decision:** The CSS module exclusively uses variables from the `--recursica_ui-kit_components_panel_*` namespace.
-
-**Implementation:** The Recursica token system defines the `panel` namespace covering:
-
-- Geometry: border-radius, border-size, min-width (200px), max-width (960px)
-- Content padding: content-horizontal-padding (xl), content-vertical-padding (lg)
-- Header/Footer padding: header-footer-horizontal-padding (xl), header-footer-vertical-padding (md)
-- Spacing: header-close-gap (md), footer-button-gap (md)
-- Divider: divider-size (1px), divider-color
-- Elevation: elevation-3
-- Colors (layer-aware): background, border-color, content, divider-color, header-footer-background, title
-- Non-CSS: header-style ("h3") — see §7
-
-No tokens from other component namespaces are referenced.
-
----
-
-## 3. ClassNames Mapping to Drawer
-
-**Decision:** Panel maps CSS module classes to Mantine Drawer's stylesNames.
-
-**Implementation:** The Drawer stylesNames used are:
-
-- `content` — Outer container (background, border, elevation)
-- `header` — Title bar with close button (padding, divider, gap)
-- `title` — Title text color
-- `body` — Scrollable content area (padding)
-
-Other stylesNames (`overlay`, `root`, `inner`, `close`) are left to Mantine defaults.
-
----
-
-## 4. Default Placement Override
-
-**Decision:** Use `placement` instead of `position` for configuring slide-out direction, and default it to `"right"`.
-
-**Implementation:** The prop was renamed from `position` to `placement` to prevent collision with the CSS `position` keyword, which is strictly blocked by the styling gatekeeper (`BLOCKED_STYLING_KEYS`). This allows configuring the drawer direction natively while maintaining strict design-system boundaries. The `placement="right"` default is mapped internally to Mantine Drawer's `position` prop before any other sanitized props are applied. Right-side panels are the most common pattern for supplementary content, settings, and detail views.
-
----
-
-## 5. Custom Panel.Footer
-
-**Decision:** A custom `Panel.Footer` sub-component is provided. Mantine's Drawer does not have a native footer.
-
-**Implementation:** `Panel.Footer` is a `<div>` with inline styles referencing Recursica CSS variables for:
-
-- `header-footer-background` and `header-footer-padding` tokens
-- Top divider using `divider-size` and `divider-color`
-- `footer-button-gap` for action button spacing
-- `margin-top: auto` to push the footer to the bottom
-
-Inline styles are used instead of a CSS module class because the footer is rendered inside the Drawer's `<body>` element, and the CSS variables are applied to the body's parent container. The inline styles ensure the footer correctly references the panel tokens regardless of DOM position.
-
----
-
-## 6. Hardcoded Values
-
-### `border-style: solid` (CSS module, `.content`)
-
-Mantine's Drawer content does not set `border-style` natively. Without this, the border-width and border-color tokens have no visible effect. Same pattern as Card, Menu, HoverCard, Tooltip.
-
----
-
-## 7. `header-style` Typography Utility Class
-
-**Decision:** The `header-style` token exports as the string `"h3"`, so we use the generated global utility class `.recursica_brand_typography_h3`.
-
-**Implementation:** The PostCSS compiler generates `.recursica_brand_typography_<typeName>` classes at the bottom of the scoped variables file to apply full typography definitions without assigning variables inline. We apply this to the `.title` class via `composes: recursica_brand_typography_h3 from global;`.
-
----
-
-## 8. Panel Types: Standard vs Scrollable
-
-**Decision:** Both standard and scrollable types are supported natively.
-
-**Implementation:** Per the Recursica specification:
-
-- **Standard** — All content visible without scrolling. The default behavior when content fits.
-- **Scrollable** — Internal scrollbar enabled when content exceeds the panel height. Header and footer CTAs remain pinned.
-
-Mantine's Drawer handles this automatically — the `body` section scrolls when content overflows, while the `header` remains fixed. The `Panel.Footer` uses `margin-top: auto` to stay at the bottom.
+When content exceeds the panel's available height, the body scrolls internally while the header and footer stay fixed in place.

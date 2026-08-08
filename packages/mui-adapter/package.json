@@ -65,6 +65,7 @@
     "@chromatic-com/storybook": "^5.1.1",
     "@eslint/js": "^9.25.0",
     "@mui/lab": "^7.0.1-beta.25",
+    "@mui/x-date-pickers": "^9.11.0",
     "@mui/x-tree-view": "^9.11.0",
     "@recursica/recursica-postcss-vars": "*",
     "@recursica/storybook-template": "*",
@@ -102,19 +103,24 @@
   },
   "dependencies": {
     "@recursica/adapter-common": "*",
-    "@recursica/official-release": "*"
+    "@recursica/official-release": "*",
+    "dayjs": "^1.11.21"
   },
   "peerDependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@mui/lab": "^7.0.1-beta.25",
     "@mui/material": "^7.3.0",
+    "@mui/x-date-pickers": "^9.11.0",
     "@mui/x-tree-view": "^9.11.0",
     "react": ">=16.8.0",
     "react-dom": ">=16.8.0"
   },
   "peerDependenciesMeta": {
     "@mui/lab": {
+      "optional": true
+    },
+    "@mui/x-date-pickers": {
       "optional": true
     },
     "@mui/x-tree-view": {

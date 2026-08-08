@@ -45,37 +45,19 @@ All Recursica components in the `@recursica/mantine-adapter` package adhere stri
 
 ## Icon size: Recursica defines it
 
-**Decision:** Icon size is **not** left to the developer. Recursica defines it via the design tokens; the Button enforces it so callers cannot pass an arbitrarily sized icon.
-
-**Implementation:**
-
-- When `icon` is provided, the Button wraps it in a single element with class `iconWrapper` before passing it to Mantine’s `leftSection`.
-- In `Button.module.css`, `.iconWrapper` has explicit `width` and `height` from the Recursica tokens mapping natively based on `data-size`.
-- The rule `.iconWrapper > *` sets `width: 100%`, `height: 100%`, and `object-fit: contain` so whatever the caller passes scales cleanly with the token constraints.
+Icon size is **not** left to the developer. Recursica defines it via the design tokens, so callers cannot pass an arbitrarily sized icon — whatever is passed in `icon` is scaled to fit the token-defined dimensions for the button's size.
 
 ---
 
-## Icon-only buttons: accessibility and width
+## Icon-only buttons: accessibility
 
-**Decision:** When the button has an icon and no visible label (icon-only), callers must provide an accessible name, and the button must not show extra space to the right of the icon.
-
-**Accessibility:** We document that icon-only buttons must pass `aria-label` (e.g. `aria-label="Submit"`). In development we log a console warning if `icon` is set, `children` is empty, and `aria-label` is missing.
-
-**Width:** Mantine’s layout natively applies structural section gaps. We detect icon-only and set a `data-icon-only` hook so that `Button.module.css` zeros out the sections spacing allowing the button to precisely hit `min-width` perfectly centered.
+When the button has an icon and no visible label (icon-only), callers must provide an accessible name via `aria-label` (e.g. `aria-label="Submit"`). In development, a console warning is logged if `icon` is set, `children` is empty, and `aria-label` is missing.
 
 ---
 
 ## Label truncation at max-width
 
-**Decision:** When the button hits its Recursica max-width (500px), the label truncates with an ellipsis instead of wrapping.
-
-**Implementation:**
-Mantine's `.mantine-Button-label` flex centering breaks primitive truncation logic. To combat this:
-
-- **`.root`** has `overflow: hidden`.
-- **`.root > *`** forces `min-width: 0`.
-- The structural children wrap into `<span className={styles.labelText}>`.
-- **`.labelText`** binds `overflow: hidden; text-overflow: ellipsis; white-space: nowrap;` creating flawless string cutoffs strictly at exact UI constraints.
+When the button hits its Recursica max-width (500px), the label truncates with an ellipsis instead of wrapping.
 
 ---
 
@@ -95,6 +77,4 @@ Mantine's `.mantine-Button-label` flex centering breaks primitive truncation log
 
 ## Loading state enforces disabled state
 
-**Decision:** When `loading={true}` is passed to the Button, the component explicitly forces `disabled={true}` natively on the underlying element.
-
-**Implementation:** This ensures that loading buttons automatically inherit the brand theme disabled opacities (via the `:disabled` CSS pseudo-class) rather than relying solely on Mantine's native `data-disabled` dataset logic, which may not trigger the strict visual fade required by the Recursica design system.
+When `loading={true}` is passed to the Button, it is also treated as disabled — the button cannot be interacted with while loading.

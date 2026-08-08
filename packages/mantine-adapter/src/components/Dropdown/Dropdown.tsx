@@ -156,9 +156,18 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
             error={undefined}
             required={undefined}
             withAsterisk={undefined}
-            wrapperProps={{
-              "data-disabled": disabled ? "true" : undefined,
-              "data-error": error ? "true" : undefined,
+            // `wrapperProps` targets Mantine's *outer* `Input.Wrapper` (the label/description/error
+            // stacking element) — a different, ancestor element from the "wrapper" styles-api slot
+            // that actually carries `styles.root`'s border/background. Dropdown.module.css's error/
+            // disabled rules (`.root[data-error]`/`[data-disabled]`) need the attribute on that
+            // inner element, so `attributes.wrapper` (which targets the same slot as
+            // `classNames.wrapper`) is the correct hook — `wrapperProps` here meant the error state
+            // never actually applied a border color.
+            attributes={{
+              wrapper: {
+                "data-disabled": disabled ? "true" : undefined,
+                "data-error": error ? "true" : undefined,
+              },
             }}
             {...(sanitizedProps as unknown as MantineSelectProps)}
           />
