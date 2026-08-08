@@ -1,8 +1,8 @@
 /* EXEMPTIONS:
    - state-specific border-size variables are ignored because a uniform border-size is applied
      globally to prevent unexpected layout shift or flickering during disabled/error transitions.
-   - icon-size/icon-color/icon-text-gap have no equivalent here: this composite (hour/minute/second
-     SpinInputs + an AM/PM select) has no icon slot, unlike TextField/DatePicker.
+   - icon-size/icon-color/icon-text-gap have no equivalent here: the time field has no icon slot,
+     unlike TextField/DatePicker.
    - placeholder-opacity has no direct equivalent: each SpinInput's native "--" placeholder is styled
      by Mantine's own SpinInput internals, not a ::placeholder pseudo-element we can target directly. */
 /* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_disabled_properties_border-size */
@@ -30,17 +30,42 @@
 
 /* HARDCODED VALUES:
    - border-style: solid. Native structural rendering rule.
-   - outline: none on fields. Bypassing browser focus rings to rely strictly on Recursica focus
-     states, applied once at the .root level via :focus-within instead of per-field.
+   - display: flex on .root — the time field and the AM/PM BareDropdown are two visually separate
+     controls sitting side by side, not merged into one shared box. See
+     TIMEPICKER_IMPLEMENTATION_NOTES.md for why this composite exists.
 */
 
 .root {
+  display: flex;
+  align-items: flex-start;
+  gap: var(
+    --recursica_ui-kit_components_time-picker_properties_horizontal-padding
+  );
+  width: fit-content;
+}
+
+/* Mantine's own native AM/PM <select> is unconditionally bundled with format="12h" (no prop to
+   omit it) — hide it; our own BareDropdown next to the field is the only AM/PM control. */
+.timeWrapper :global([data-am-pm]) {
+  display: none;
+}
+
+.timeWrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+  box-sizing: border-box;
   /* min-width, not width: the `width` token was authored for a single plain input (confirmed against
-     text-field's identical token shape). This composite has to fit hour + minute + (seconds) + the
-     AM/PM select side by side, so a hard width clips/squeezes the AM/PM select out of view — use the
-     token as a floor and let the box grow to fit its real content instead. */
+     text-field's identical token shape); this is now only the time-entry half of the composite. */
   min-width: var(--recursica_ui-kit_components_time-picker_properties_width);
   width: fit-content;
+  /* time-picker has no dedicated min-height token (unlike text-field/date-picker); this global is
+     the one text-field's own min-height token resolves to, so both controls land on the same 48px
+     height without binding to another component's own namespace. See
+     TIMEPICKER_IMPLEMENTATION_NOTES.md. */
+  min-height: var(
+    --recursica_ui-kit_globals_form_field_size_single-line-input-height
+  );
   border-radius: var(
     --recursica_ui-kit_components_time-picker_properties_border-radius
   );
@@ -57,11 +82,6 @@
   color: var(
     --recursica_ui-kit_components_time-picker_properties_colors_text-color
   );
-}
-
-.fieldsGroup {
-  display: flex;
-  align-items: center;
   padding-top: var(
     --recursica_ui-kit_components_time-picker_properties_vertical-padding
   );
@@ -76,7 +96,36 @@
   );
 }
 
-.field {
+/* Mantine's TimePicker renders its own "input" slot as a real, separately-styled box (border,
+   background, height/min-height, padding-inline) nested *inside* .timeWrapper — not just a plain
+   content container. Left alone, that gave every field its own competing Mantine-default border/
+   background/36px-min-height stacked underneath our own .timeWrapper chrome, which is what made
+   the outer box look far taller than intended. Reset it to a plain, unstyled flex shell; every
+   visual property (border, background, padding, height) is owned by .timeWrapper alone. */
+.timeInput {
+  height: auto;
+  min-height: 0;
+  border: none;
+  background-color: transparent;
+  padding: 0;
+  display: block;
+}
+
+/* Padding lives on .timeWrapper, not .fieldsGroup: Mantine's own field styles set `height: 100%` on
+   every field (hour/minute/second SpinInputs) to fill their direct parent (.fieldsGroup). A
+   percentage height only resolves against a parent with a *concrete* height — giving .fieldsGroup
+   an explicit height (derived from time-picker's own text_line-height token, since there's no
+   dedicated min-height token for this component, unlike text-field/date-picker) avoids that
+   collapsing to zero, and doubles as the "min-height" this component doesn't have a token for. */
+.fieldsGroup {
+  display: flex;
+  align-items: center;
+  height: var(
+    --recursica_ui-kit_components_time-picker_properties_text_line-height
+  );
+}
+
+.timeField {
   font-family: var(
     --recursica_ui-kit_components_time-picker_properties_text_font-family
   );
@@ -105,12 +154,41 @@
   outline: none;
 }
 
+/* The AM/PM BareDropdown reuses Dropdown.module.css's own border/background/padding entirely —
+   this only controls its size/alignment within the flex row. */
+.amPmSelect {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 5.5rem;
+}
+
+/* Dropdown.module.css's own .input sets width: 100% (correct for a standalone Dropdown filling
+   its own column) — resetting that to `auto` still isn't enough here: a native <input>'s intrinsic
+   ("auto"/"fit-content") width is a fixed UA default (~20 characters wide), not based on its actual
+   value text, so it doesn't naturally shrink to "AM"/"PM" either way. Give it an explicit small
+   width sized for a couple of characters instead — the wrapper (.amPmSelect, whose own rendered
+   width just follows this input, since Dropdown.module.css's .section icon is positioned
+   absolutely and doesn't add to flex flow) ends up hugging the content as a result. Target
+   Mantine's own stable global class (not the Dropdown.module.css hash, which this module can't
+   reference directly). See TIMEPICKER_IMPLEMENTATION_NOTES.md.
+   Width math (box-sizing: border-box, so padding eats into this number): Dropdown's own
+   horizontal-padding (16px) on the left + the chevron's reserved right-section padding
+   (horizontal-padding + icon-size + icon-text-gap = 16+24+8 = 48px) on the right leaves very
+   little room for the "AM"/"PM" text itself — 2.5rem (40px) put the padding in a negative content
+   box, which is why the value was invisible and the chevron looked jammed against the border. 6rem
+   leaves a real ~32px content area. */
+.amPmSelect :global(.mantine-Select-input) {
+  width: 6rem;
+}
+
 /* -------------------------------------
    STATE CASCADE ARCHITECTURE
 -------------------------------------- */
 
-/* Focus State Mapping — applied once at the wrapper level since focus moves between fields. */
-.root:focus-within {
+/* Focus State Mapping — applied to the time field only (the BareDropdown has its own via Dropdown's
+   own CSS module). */
+.timeField:focus-within,
+.timeWrapper:focus-within {
   box-shadow:
     0 0 0 var(--recursica_brand_states_focus_border-size)
       var(--recursica_brand_states_focus_color),
@@ -120,7 +198,7 @@
 }
 
 /* Error State Mapping (Propagated strictly down from the wrapper DOM context) */
-.root[data-error] {
+.root[data-error="true"] .timeWrapper {
   border-color: var(
     --recursica_ui-kit_components_time-picker_variants_states_error_properties_colors_border-color
   ) !important;
@@ -133,7 +211,7 @@
 }
 
 /* Disabled State Mapping (Propagated strictly down from the wrapper DOM context) */
-.root[data-disabled] {
+.root[data-disabled="true"] .timeWrapper {
   border-color: var(
     --recursica_ui-kit_components_time-picker_variants_states_disabled_properties_colors_border-color
   ) !important;

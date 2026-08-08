@@ -1,8 +1,8 @@
 /* EXEMPTIONS:
    - state-specific border-size variables are ignored because a uniform border-size is applied globally
      to prevent unexpected layout shift or flickering during focus, disabled, or error state transitions.
-   - icon-size/icon-color/icon-text-gap have no equivalent here: this composite (a time field plus a
-     separate AM/PM select) has no icon slot, unlike TextField/DatePicker.
+   - icon-size/icon-color/icon-text-gap have no equivalent here: the time field has no icon slot,
+     unlike TextField/DatePicker.
    - placeholder-opacity has no equivalent here: MUI X's field renders empty sections via its own
      internal placeholder styling, not a native ::placeholder pseudo-element we can target. */
 /* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_error_properties_border-size */
@@ -30,23 +30,26 @@
 
 /* HARDCODED VALUES:
    - border-style: solid. Native structural rendering rule.
-   - display: flex on .root — the time field and the separate AM/PM select sit side by side, per
-     the Recursica-specific composite design (see TIMEPICKER_IMPLEMENTATION_NOTES.md).
+   - display: flex on .root — the time field and the AM/PM BareDropdown are two visually separate
+     controls sitting side by side, not merged into one shared box (BareDropdown draws its own
+     border/background from Dropdown.module.css). See TIMEPICKER_IMPLEMENTATION_NOTES.md.
    - MUI X's field variant can't be forced from this component's public API (see
      TIMEPICKER_IMPLEMENTATION_NOTES.md) — whichever native decoration it renders is suppressed
-     below, and our own border/background are applied to .root, which wraps both controls.
+     below, and our own border/background are applied to .field instead.
 */
 
 .root {
   display: flex;
-  align-items: stretch;
+  align-items: flex-start;
   gap: var(
     --recursica_ui-kit_components_time-picker_properties_horizontal-padding
   );
+  width: fit-content;
+}
+
+.field {
   /* min-width, not width: the `width` token was authored for a single plain input (confirmed against
-     text-field's identical token shape). This composite has to fit the time field plus the AM/PM
-     select side by side, so a hard width clips/squeezes the select out of view — use the token as a
-     floor and let the box grow to fit its real content instead. */
+     text-field's identical token shape); this is now only the time-entry half of the composite. */
   min-width: var(--recursica_ui-kit_components_time-picker_properties_width);
   width: fit-content;
   border-radius: var(
@@ -65,41 +68,43 @@
   color: var(
     --recursica_ui-kit_components_time-picker_properties_colors_text-color
   );
-  padding-left: var(
-    --recursica_ui-kit_components_time-picker_properties_horizontal-padding
-  );
-  padding-right: var(
-    --recursica_ui-kit_components_time-picker_properties_horizontal-padding
-  );
 }
 
 /* Suppress whichever native field decoration MUI X renders by default (its public API doesn't
-   expose a variant prop to force "standard" in this version) — .root draws the single shared
-   border instead, regardless of whether the field defaults to "outlined" or "standard". */
-.root :global(.MuiPickersInputBase-root::before),
-.root :global(.MuiPickersInputBase-root::after),
-.root :global(.MuiInput-root::before),
-.root :global(.MuiInput-root::after) {
+   expose a variant prop to force "standard" in this version) — .field draws the border instead,
+   regardless of whether the field defaults to "outlined" or "standard". */
+.field :global(.MuiPickersInputBase-root::before),
+.field :global(.MuiPickersInputBase-root::after),
+.field :global(.MuiInput-root::before),
+.field :global(.MuiInput-root::after) {
   border-bottom: none !important;
 }
 
-.root :global(.MuiPickersOutlinedInput-notchedOutline) {
+.field :global(.MuiPickersOutlinedInput-notchedOutline) {
   border: none !important;
 }
 
-.field {
-  flex: 1 1 auto;
-}
-
 .field :global(.MuiPickersInputBase-sectionsContainer) {
+  /* MUI X computes and inline-sets a literal pixel width here based on the format string (e.g.
+     182px for "hh:mm"), sized generously to fit the widest possible rendered value — wider than
+     .field's own `width: fit-content` intends. Reset it so the field visually matches Mantine's
+     equally-compact time input; the section <span>s are real text content, so width: auto sizes to
+     them correctly (unlike the native-<input>-in-BareDropdown case elsewhere in this file, where
+     `auto` didn't help — no UA-default-sizing quirk here since these aren't native inputs). */
+  width: auto !important;
+  flex-grow: 0 !important;
   padding-top: var(
     --recursica_ui-kit_components_time-picker_properties_vertical-padding
   );
   padding-bottom: var(
     --recursica_ui-kit_components_time-picker_properties_vertical-padding
   );
-  padding-left: 0;
-  padding-right: 0;
+  padding-left: var(
+    --recursica_ui-kit_components_time-picker_properties_horizontal-padding
+  );
+  padding-right: var(
+    --recursica_ui-kit_components_time-picker_properties_horizontal-padding
+  );
 
   font-family: var(
     --recursica_ui-kit_components_time-picker_properties_text_font-family
@@ -131,33 +136,48 @@
   color: inherit;
 }
 
+/* The AM/PM BareDropdown reuses Dropdown.module.css's own border/background/padding entirely —
+   this only controls its size/alignment within the flex row. */
 .amPmSelect {
   flex: 0 0 auto;
-  align-self: center;
-  font-family: var(
-    --recursica_ui-kit_components_time-picker_properties_text_font-family
-  );
-  font-size: var(
-    --recursica_ui-kit_components_time-picker_properties_text_font-size
-  );
-  color: inherit;
+  align-self: flex-start;
+  width: auto;
+  min-width: 5.5rem;
 }
 
+/* MUI's own generated class for the select's inner box (a compound selector, e.g.
+   `.css-xxx-...-MuiSelect-select`) has higher specificity than Dropdown.module.css's single-class
+   `.input` rule, so its own `min-height: 1.4375em` (~23px) silently wins over our 48px token —
+   this is a latent bug in the shared Dropdown.module.css itself (the standalone Dropdown
+   component has the exact same undersized box; flagged separately, not fixed here to avoid an
+   app-wide change outside TimePicker's scope). `!important` here only re-asserts the height
+   Dropdown was always supposed to have, scoped to this composite. MUI's outlined variant also
+   renders its own native `fieldset`/`notchedOutline` border *in addition to* `.input`'s own
+   Recursica border — suppressed the same way the time field already suppresses its own native
+   decoration above. See TIMEPICKER_IMPLEMENTATION_NOTES.md. */
 .amPmSelect :global(.MuiSelect-select) {
-  padding-top: var(
-    --recursica_ui-kit_components_time-picker_properties_vertical-padding
-  );
-  padding-bottom: var(
-    --recursica_ui-kit_components_time-picker_properties_vertical-padding
-  );
+  min-height: var(
+    --recursica_ui-kit_globals_form_field_size_single-line-input-height
+  ) !important;
+  box-sizing: border-box !important;
+  /* Forcing min-height above leaves real slack below the (block-flow, top-aligned) text once the
+     box is taller than its own padding + line-height — the value read as "not centered". Flex +
+     center distributes that slack evenly instead. */
+  display: flex !important;
+  align-items: center !important;
+}
+
+.amPmSelect :global(.MuiOutlinedInput-notchedOutline) {
+  border: none !important;
 }
 
 /* -------------------------------------
    STATE CASCADE ARCHITECTURE
 -------------------------------------- */
 
-/* Focus State Mapping — applied once at .root since focus moves between the field and the select. */
-.root:has(:global(.Mui-focused)) {
+/* Focus State Mapping — applied to the time field only (the BareDropdown has its own via
+   Dropdown's own CSS module). */
+.field:has(:global(.Mui-focused)) {
   box-shadow:
     0 0 0 var(--recursica_brand_states_focus_border-size)
       var(--recursica_brand_states_focus_color),
@@ -167,7 +187,7 @@
 }
 
 /* Error State Mapping (data-error is set explicitly by TimePicker.tsx). */
-.root[data-error="true"] {
+.root[data-error="true"] .field {
   border-color: var(
     --recursica_ui-kit_components_time-picker_variants_states_error_properties_colors_border-color
   ) !important;
@@ -180,7 +200,7 @@
 }
 
 /* Disabled State Mapping */
-.root:has(:global(.Mui-disabled)) {
+.field:has(:global(.Mui-disabled)) {
   border-color: var(
     --recursica_ui-kit_components_time-picker_variants_states_disabled_properties_colors_border-color
   ) !important;

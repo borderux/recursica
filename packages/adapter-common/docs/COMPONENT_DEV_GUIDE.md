@@ -124,6 +124,8 @@ Do not use plain `.css` for component overrides, and do not use `.css.ts` with `
 - **Required:**
   - `{ComponentName}.tsx` and `{ComponentName}.module.css` (No `.css.ts`, no separate plain `.css` for overrides).
   - `USAGE.md` (Documents how to integrate the component into project code, standard usage examples, and adapter-specific integration details. This is publicly consumable documentation for developers integrating the component).
+    - **Scope strictly to the consumer's perspective**: props, their behavior, and integration steps. Do not explain _why_ the component is built the way it is, its internal DOM structure, which internal helper components it composes, or any implementation rationale — that belongs exclusively in `{COMPONENT}_IMPLEMENTATION_NOTES.md`. A prop's _effect_ is in scope ("`withSeconds` adds a seconds segment"); the _mechanism behind_ a fixed, non-configurable behavior is not ("this is fixed because the underlying library bundles X unconditionally with Y").
+    - **Never reference `{COMPONENT}_IMPLEMENTATION_NOTES.md`** — by name, by link, or by any other pointer. It's an internal-only doc, never added to a package's `"files"` array (see `docs/DOCUMENTATION_STRATEGY.md` §3, root of the monorepo), so a link to it from `USAGE.md` is a dead link for every real consumer reading it from `node_modules` or npmjs.com — the same class of publish-boundary bug documented there for `README.md` → `PHILOSOPHY.md`, just one file over.
 - **Optional:**
   - `index.ts` to re-export the component and props type.
   - An audit or doc file for documentation only.
@@ -152,7 +154,7 @@ Do not use plain `.css` for component overrides, and do not use `.css.ts` with `
 - [ ] No design tokens via props; no `useEffect`/state for token-driven styling (except one documented exception if needed).
 - [ ] displayName and JSDoc set; icon-only / unlabeled usage documented (e.g. aria-label).
 - [ ] Toolbar integration test and any required toolbar/sidebar config added.
-- [ ] Component usage, integration details, and standard import and React usage examples are documented in a public-facing `USAGE.md` file.
+- [ ] Component usage, integration details, and standard import and React usage examples are documented in a public-facing `USAGE.md` file — consumer-facing prop behavior only, no internal architecture/rationale, and no reference to `{COMPONENT}_IMPLEMENTATION_NOTES.md`.
 - [ ] Component-specific decisions, edge-cases, and ongoing design-system layout fixes are meticulously documented in an internal living `{COMPONENT}_IMPLEMENTATION_NOTES.md` file (e.g. `BUTTON_IMPLEMENTATION_NOTES.md`) to structurally track _why_ the component logic diverges from standard library behavior.
 - [ ] Read your adapter's own `docs/COMPONENT_DEV_GUIDE.md` delta for anything library-specific (e.g. polymorphism mechanism, CSS specificity notes) not covered here.
 

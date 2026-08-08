@@ -47,11 +47,7 @@ All Recursica components in the `@recursica/mantine-adapter` package adhere stri
 
 ## Missing Variants and Sizes
 
-The `Breadcrumb` currently does not establish any size (`xs`, `sm`, etc.) or variant variables in the underlying design tokens (`recursica_ui-kit.json`). Only basic structural definitions for `padding` and `item-gap` exist. Because of this, the `size` and `variant` properties have been explicitly omitted from the passed mantine props.
-
-## Gap Styling
-
-We attach `gap` to `.root` directly within `.module.css`. Mantine's inner `separator` divs can natively accept our CSS variables for structural layout.
+Breadcrumb does not currently support `size` or `variant` props.
 
 ## Composition and Separators
 

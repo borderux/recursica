@@ -8,10 +8,4 @@ export interface RecursicaTimePickerProps {
   minTime?: string;
   /** Maximum possible time string. Format is `HH:mm` normally, or `HH:mm:ss` when `withSeconds` is true. */
   maxTime?: string;
-  /**
-   * Hides the AM/PM selector and switches to 24-hour entry. Defaults to `false` — by default
-   * TimePicker renders a 12-hour input with a dedicated AM/PM control, a Recursica-specific
-   * deviation from the underlying UI library's own default time entry pattern. See USAGE.md.
-   */
-  hideAmPm?: boolean;
 }

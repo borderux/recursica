@@ -36,7 +36,7 @@ All Recursica components in the `@recursica/mantine-adapter` package adhere stri
 
 > [!IMPORTANT]
 >
-> - **Anti-override protection**: `Grid` is a primitive layout component (see [OVERSTYLING.md](../../../OVERSTYLING.md)) and is exempt from the `RecursicaOverStyled` gatekeeper, so standard Mantine layout props pass through freely.
+> - **Anti-override protection**: `Grid` is a primitive layout component (see [OVERSTYLING.md](../../../OVERSTYLING.md)), so standard Mantine layout props pass through freely without needing `overStyled`.
 > - **No Direct Layers**: Do not pass a `layer` prop to this component. To place it on a specific visual layer, wrap it in a `<Layer layer={0|1|2|3}>` component natively.
 > - **Variables and Theming**: Spacing is entirely determined by the `rec-*` token scale, mapped transparently to standard Mantine gutter values.
 

@@ -39,17 +39,14 @@ All Recursica components in the `@recursica/mantine-adapter` package adhere stri
 
 ## 4. Key Integration Features & Constraints
 
-## 1. Native Macro Wrapper Bypass
+## 1. Label, Description, and Error Rendering
 
-**Decision:** The `<NumberInput>` component explicitly bypasses Mantine's native `Input.Wrapper` DOM injections.
-**Implementation:** We pass `label={undefined}`, `description={undefined}`, and `error={undefined}` directly into the primitive `<MantineNumberInput>`. All visual form control geometry is delegated exclusively to our unified `<FormControlWrapper>`, ensuring 100% token adherence for label spacing and assistive text styling without duplicate DOM rendering.
+Label, description, and error text are rendered using Recursica's standard form-control layout rather than Mantine's native label/description/error rendering, so spacing and styling stay consistent with other form fields.
 
-## 2. Right Section & Controls Override
+## 2. Right Section & Controls
 
-**Decision:** Passing a `rightSection` element will natively remove the increment/decrement arrow controls.
-**Implementation:** Mantine inherently renders its stepper controls inside the `rightSection` DOM slot. Providing a custom right-aligned icon or text element intentionally overwrites this slot. If a layout strictly requires both a custom right-aligned element and the stepper controls simultaneously, the integrator must manually rebuild the arrows using Mantine's `handlersRef` within a custom right-section wrapper.
+Providing a custom `rightSection` element replaces the built-in increment/decrement controls. To use both together, rebuild the controls manually using Mantine's `handlersRef` API within your custom right section.
 
 ## 3. Controls Styling
 
-**Decision:** The increment/decrement control arrows rely partially on native Mantine CSS inheritance.
-**Implementation:** The current Recursica design system tokens do not provide explicit UI styling parameters (`background`, `border`, `hover` states) for the inner number-input arrows. We have explicitly removed Mantine's default borders to cleanly nest them inside the unified input box, and mapped the icon colors to the generic `trailing-icon` token variable, but further visual configurations currently fall back to Mantine defaults.
+The increment/decrement control icons currently fall back to Mantine's default styling beyond their color, as design tokens for their background, border, and hover states are not yet defined.

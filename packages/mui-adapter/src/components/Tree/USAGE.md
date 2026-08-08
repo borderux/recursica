@@ -78,6 +78,6 @@ All Recursica components in the `@recursica/mui-adapter` package adhere strictly
 
 ## 5. Known Constraints
 
-- **`expandOnClick`/`selectOnClick` are approximated, not exact.** `@mui/x-tree-view` doesn't expose the same two independent toggles Mantine's `Tree` does. `expandOnClick` maps to MUI's `expansionTrigger` (`"content"` vs `"iconContainer"`); `selectOnClick={false}` maps to `disableSelection` (which disables selection entirely, rather than only suppressing it on a content click while leaving some other path to select). See `IMPLEMENTATION_NOTES.md`.
+- **`expandOnClick`/`selectOnClick` are approximated, not exact.** Setting `selectOnClick={false}` disables selection entirely, rather than only suppressing selection on a content click while leaving some other path available for selecting a node.
 - No checkbox/multi-check styling is exposed — `@mui/x-tree-view` supports checkbox selection, but Recursica's `tree` design tokens don't yet define a checked visual state, so it isn't part of the Recursica API.
 - No per-node `disabled` state — the Figma UI Kit tokens don't define one, and `RecursicaTreeNode` has no `disabled` field either.

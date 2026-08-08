@@ -39,14 +39,6 @@ All Recursica components in the `@recursica/mantine-adapter` package adhere stri
 
 ## 4. Key Integration Features & Constraints
 
-## 1. Stripping Mantine Assumptions
+### Editable Mode
 
-Unlike standard input variables, standard HTML output `<p>` tags inherently carry margin and spacing assumptions from core browser stylesheets. To correctly map `ReadOnlyTextField` elements gracefully inside the generic `FormControlWrapper` bounded context, we hardcode resets:
-
-- `margin: 0` explicitly strips block flow gap so `FormControlWrapper` handles vertical rhythm.
-- `min-height`: Native `Input` boxes typically have baseline padding borders. We map directly to `var(--recursica_ui-kit_components_read-only-field_properties_min-height)` to ensure a side-by-side editable `TextField` and `ReadOnlyField` perfectly share roughly identical visual heights.
-
-## 2. Unidirectional Editable Mode
-
-The main wrapper intercepts `readOnly` boolean blocks, maintaining its own `isReadOnly` state. Natively, if a user clicks an exposed 'Edit' action (like our legacy SVG or custom `labelActionArea`), the context permanently switches to active.
-There is intentionally no built-in reverse toggle inside typical field bindings (like input "Blur") to revert state. Parents must pass external controls to `readOnly` forcing the internal hooks to reset via standard `useEffect` propagation.
+If an edit action (e.g. via `labelActionArea`) is used to let a user switch a field from read-only to editable, that switch is one-directional in the UI — there is no built-in control (such as blurring the input) that switches it back to read-only. To revert to read-only, the parent must pass an updated `readOnly` value.

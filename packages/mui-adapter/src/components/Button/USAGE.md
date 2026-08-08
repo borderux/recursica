@@ -43,16 +43,4 @@ All Recursica components in the `@recursica/mui-adapter` package adhere strictly
 
 ## 4. Key Integration Features & Constraints
 
-## Loader color contrast
-
-**Decision:** When a Button is in a loading state, the `Recursica Loader` component is injected via the `loadingIndicator` prop. The `Loader` component strictly defines its own colors and styles per variant, meaning it does not automatically inherit the text color (`currentColor`) from the Button.
-
-**Constraint:** This can lead to contrast issues (e.g., a blue dots loader inside a solid blue button). Design has explicitly decided not to address this at the moment. As such, developers using the `loading` prop must be aware that the loader's color is fixed by its internal tokens, not by the button's context.
-
----
-
-## Loading state enforces disabled state
-
-**Decision:** When `loading={true}` is passed to the Button, the component explicitly forces `disabled={true}` natively on the underlying element.
-
-**Implementation:** This ensures that loading buttons automatically inherit the brand theme disabled opacities (via the `:disabled` CSS pseudo-class) rather than relying solely on MUI's internal loading opacity adjustments.
+When `loading={true}` is passed to the Button, the button is also automatically disabled, and its loading indicator's color may not always match the button's text color, which can affect contrast in some variants.

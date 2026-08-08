@@ -23,13 +23,9 @@ export default function Demo() {
 }
 ```
 
-> [!IMPORTANT] > **Recursica-specific behavior:** by default, `TimePicker` renders in **12-hour format with a dedicated AM/PM selector** next to the hour/minute input — this deviates from the underlying Mantine library's own default (24-hour, no AM/PM control). Pass `hideAmPm` to switch to a plain 24-hour input with no AM/PM control, matching Mantine's native default instead.
+> [!IMPORTANT] > **Recursica-specific behavior:** `TimePicker` always renders in **12-hour format with a dedicated AM/PM `Dropdown`-style selector** next to the hour/minute input — this deviates from the underlying Mantine library's own default (24-hour, no AM/PM control) and is **not configurable**. There is no prop to switch to a plain 24-hour input; this is the only way the component operates.
 
-```tsx
-<TimePicker label="Meeting Time" hideAmPm />
-```
-
-Pass `withSeconds` to add a seconds segment, and `minTime`/`maxTime` (`"HH:mm"` or `"HH:mm:ss"` with `withSeconds`) to bound the allowed range — these always describe 24-hour boundaries regardless of `hideAmPm`.
+Pass `withSeconds` to add a seconds segment, and `minTime`/`maxTime` (`"HH:mm"` or `"HH:mm:ss"` with `withSeconds`) to bound the allowed range — these always describe 24-hour boundaries.
 
 ```tsx
 <TimePicker
@@ -40,7 +36,7 @@ Pass `withSeconds` to add a seconds segment, and `minTime`/`maxTime` (`"HH:mm"` 
 />
 ```
 
-**Note:** the AM/PM control renders as a native HTML `<select>` — Mantine's `TimePicker` doesn't support swapping it for a fully custom dropdown component, so it won't pixel-match Recursica's own `Dropdown` component, particularly its open option list (browser/OS-rendered).
+The AM/PM control visually matches Recursica's `Dropdown` component exactly, rather than a native `<select>`.
 
 ---
 
@@ -58,4 +54,4 @@ All Recursica components in the `@recursica/mantine-adapter` package adhere stri
 
 ## 4. Read-Only Mode
 
-Pass `readOnly` to render the current value as static text via the shared `FormControlWrapper` read-only presentation, matching every other Recursica form control.
+Pass `readOnly` to render the current value as static text, matching every other Recursica form control. The value is formatted as 12-hour + AM/PM (e.g. `"14:30"` displays as `"2:30 PM"`).
