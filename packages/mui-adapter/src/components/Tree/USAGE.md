@@ -60,7 +60,24 @@ Each node needs a unique `value` and a `label`. Any node with a `children` array
 
 - `initialExpandedValues` accepts an array of node values, or `"*"` to start with every node expanded.
 - `multiple` allows more than one node to be selected at once (default: single-select).
-- `expandOnClick` (default `true`) controls whether clicking a row's content also expands/collapses it (vs. only clicking its chevron); `selectOnClick` (default `true`) controls whether selection is enabled at all. See **Known Constraints** below for how these map onto the underlying library.
+
+### Interaction pattern
+
+Expanding/collapsing and selecting are independent, fixed interactions (not prop-configurable):
+
+- Clicking the expand/collapse chevron toggles that node's subtree only — it never selects.
+- Clicking anywhere else on a row selects it — it never toggles expansion.
+- `Enter`/`Space` on a focused node selects it, even if the node has children.
+- `ArrowLeft`/`ArrowRight` expand/collapse the focused node only, without changing selection.
+- `ArrowUp`/`ArrowDown` move focus between rows.
+
+### Disabled
+
+```tsx
+<Tree data={data} initialSelectedValues={["1.1"]} disabled />
+```
+
+`disabled` disables the whole tree — no expand/collapse or select via click or keyboard, dimmed to the standard disabled opacity. A pre-selected node stays visibly selected, just dimmed along with the rest. There's no per-node disabled state (see **Known Constraints** below).
 
 ---
 
@@ -78,6 +95,5 @@ All Recursica components in the `@recursica/mui-adapter` package adhere strictly
 
 ## 5. Known Constraints
 
-- **`expandOnClick`/`selectOnClick` are approximated, not exact.** Setting `selectOnClick={false}` disables selection entirely, rather than only suppressing selection on a content click while leaving some other path available for selecting a node.
 - No checkbox/multi-check styling is exposed — `@mui/x-tree-view` supports checkbox selection, but Recursica's `tree` design tokens don't yet define a checked visual state, so it isn't part of the Recursica API.
 - No per-node `disabled` state — the Figma UI Kit tokens don't define one, and `RecursicaTreeNode` has no `disabled` field either.

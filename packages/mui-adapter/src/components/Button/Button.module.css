@@ -202,26 +202,29 @@
   );
 }
 
-/* MUI uses .MuiButton-startIcon and .MuiButton-endIcon */
-.root[data-size="default"] .MuiButton-startIcon {
+/* MUI uses .MuiButton-startIcon and .MuiButton-endIcon — real global classes MUI applies
+   directly, not local CSS Modules classes, so they must be wrapped in :global() (same as
+   .Mui-disabled below) or Vite's CSS Modules hashes them into scoped names that never match
+   anything in the actual DOM, silently no-op'ing every rule below. */
+.root[data-size="default"] :global(.MuiButton-startIcon) {
   margin-left: 0;
   margin-right: var(
     --recursica_ui-kit_components_button_variants_sizes_default_properties_icon-text-gap
   );
 }
-.root[data-size="default"] .MuiButton-endIcon {
+.root[data-size="default"] :global(.MuiButton-endIcon) {
   margin-right: 0;
   margin-left: var(
     --recursica_ui-kit_components_button_variants_sizes_default_properties_icon-text-gap
   );
 }
-.root[data-size="small"] .MuiButton-startIcon {
+.root[data-size="small"] :global(.MuiButton-startIcon) {
   margin-left: 0;
   margin-right: var(
     --recursica_ui-kit_components_button_variants_sizes_small_properties_icon-text-gap
   );
 }
-.root[data-size="small"] .MuiButton-endIcon {
+.root[data-size="small"] :global(.MuiButton-endIcon) {
   margin-right: 0;
   margin-left: var(
     --recursica_ui-kit_components_button_variants_sizes_small_properties_icon-text-gap
@@ -232,8 +235,8 @@
 .root[data-content="icon-only"] .labelText {
   display: none;
 }
-.root[data-content="icon-only"] .MuiButton-startIcon,
-.root[data-content="icon-only"] .MuiButton-endIcon {
+.root[data-content="icon-only"] :global(.MuiButton-startIcon),
+.root[data-content="icon-only"] :global(.MuiButton-endIcon) {
   margin-right: 0;
   margin-left: 0;
 }

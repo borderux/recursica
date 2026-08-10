@@ -1,13 +1,17 @@
 /* HARDCODED VALUES:
  * - list-style/margin/padding resets on .root/.subtree/.node: layout resets, no corresponding
  *   design tokens (structural, not visual design values).
- * - .chevron size (1em) and rotation: no dedicated icon-size/icon-color token exists for Tree;
- *   the glyph is drawn with `currentColor` so it always tracks the row's already-tokened text
- *   color, and sized relative to the row's own font-size.
+ * - .chevron rotation timing (150ms ease): no dedicated timing token exists for Tree; the glyph
+ *   itself is sized/colored entirely by Button's own "text"/"small" tokens now, not a hand-drawn
+ *   size/color like the previous plain-SVG implementation.
  * - Hover overlay uses the generic --recursica_brand_states_hover_* tokens (same technique as
  *   Menu/Accordion/Button): Tree has no component-specific hover tokens of its own.
- * - .row's padding-left keeps MUI's own depth-based indentation formula (base + indent * depth)
- *   but substitutes our own horizontal-padding token as the base instead of MUI's theme spacing.
+ * - .row's padding-left keeps MUI's own depth-based indentation formula (indent * depth), just
+ *   without the horizontal-padding base — that base now lives on .label instead (see below).
+ *
+ * NOTE: the row's box model (padding/border/font/color/background) lives entirely on `.label`,
+ * not `.row` — the highlighted "chip" (hover/selected/focus) covers only the label, never the
+ * expand button. `.row` itself is a plain flex layout container (indentation + button-node-gap).
  */
 
 .root {
@@ -42,6 +46,28 @@
   list-style: none;
 }
 
+/* @mui/x-tree-view's roving-tabindex keyboard navigation (arrow up/down moves focus between
+   rows, left/right expand/collapse, matching the WAI-ARIA treeitem pattern) already works out of
+   the box — but with no visible indicator, it looked broken. DOM focus lands on this <li> (.node),
+   not the visible row box, so the ring is drawn on .label instead — the "node" content area,
+   deliberately excluding the expand Button, which never shows a focus state of its own (it's not
+   independently focusable at all: tabIndex={-1}). */
+.node:focus-visible {
+  outline: none;
+}
+/* `> .row` (child combinator), not a plain descendant selector: a node's own `.row` is always a
+   direct child of its `.node` <li>, while every descendant node's `.row` (inside the nested
+   `.subtree` <ul>) is not — without the `>`, focusing a parent node drew the ring on every
+   expanded descendant's label too, since they're all still descendants of the focused `.node`. */
+.node:focus-visible > .row .label {
+  box-shadow:
+    0 0 0 var(--recursica_brand_states_focus_border-size)
+      var(--recursica_brand_states_focus_color),
+    0 0 var(--recursica_brand_states_focus_blur)
+      var(--recursica_brand_states_focus_margin)
+      var(--recursica_brand_states_focus_color);
+}
+
 .row {
   position: relative;
   box-sizing: border-box;
@@ -50,22 +76,77 @@
   width: 100%;
   cursor: pointer;
   gap: var(--recursica_ui-kit_components_tree_properties_button-node-gap);
-
-  padding-top: var(
-    --recursica_ui-kit_components_tree_properties_vertical-padding
-  );
-  padding-bottom: var(
-    --recursica_ui-kit_components_tree_properties_vertical-padding
-  );
-  padding-right: var(
-    --recursica_ui-kit_components_tree_properties_horizontal-padding
-  );
   padding-left: calc(
-    var(--recursica_ui-kit_components_tree_properties_horizontal-padding) +
-      var(--TreeView-itemChildrenIndentation, 0px) *
-      var(--TreeView-itemDepth, 0)
+    var(--TreeView-itemChildrenIndentation, 0px) * var(--TreeView-itemDepth, 0)
   );
+}
 
+/* Neutralize MUI's own hover/focused/selected background-color changes (see TreeItemContent's
+   defaults in @mui/x-tree-view, e.g. its built-in `rgba(25, 118, 210, 0.08)` selected tint) so
+   only the Recursica hover overlay and selected styling on .label below control the look; .row
+   itself carries no background-color of its own to fall back to now. The `[data-selected]
+   [data-focused]` compound needs its own rule: MUI's own equivalent compound selector has higher
+   specificity (2 attributes + its class) than a single-attribute `.row[data-selected]` rule
+   would, so it would otherwise still win regardless of source order. */
+.row:hover,
+.row[data-focused],
+.row[data-selected],
+.row[data-selected][data-focused] {
+  background-color: transparent;
+}
+
+.row[data-disabled] {
+  opacity: var(--recursica_brand_states_disabled);
+  cursor: auto;
+  /* MUI's own disabled checks already block select/expand on click, but hover is pure CSS —
+     without this, a disabled row still showed the hover tint (.label::after opacity) on mouse-
+     over, misleadingly suggesting it's interactive. Matches mantine-adapter's `.root[data-
+     disabled] { pointer-events: none; }`, just scoped per-row instead of tree-wide, since MUI's
+     disabled state is a per-item concept even when driven by our own whole-tree prop. */
+  pointer-events: none;
+}
+
+.iconContainer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: inherit;
+}
+
+/* The expand Button is always rendered (even for leaf nodes, which have nothing to toggle) so
+   every row reserves identical layout space — hidden via visibility (not display) on leaf rows so
+   the label stays aligned across the whole tree without duplicating Button's own size tokens. */
+.expandButton {
+  flex-shrink: 0;
+}
+.expandButtonHidden {
+  visibility: hidden;
+}
+
+.chevron {
+  transition: transform 150ms ease;
+}
+.chevronExpanded {
+  transform: rotate(90deg);
+}
+
+.label {
+  position: relative;
+  z-index: 1;
+  /* Sized to its own content, not stretched to fill the row's remaining width — the
+     hover/selected/focus "chip" should cover just the label, not the full row width.
+     `width: auto` is required in addition to `flex: 0 1 auto`: MuiTreeItem's own default
+     `.MuiTreeItem-label` sets a literal `width: 100%`, which a flex-basis alone can't beat. */
+  flex: 0 1 auto;
+  width: auto;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding: var(--recursica_ui-kit_components_tree_properties_vertical-padding)
+    var(--recursica_ui-kit_components_tree_properties_horizontal-padding);
   border-style: solid; /* HARDCODE: structural border rule; thickness/color are tokened */
   border-width: var(--recursica_ui-kit_components_tree_properties_border-size);
   border-radius: var(
@@ -108,36 +189,33 @@
   );
 }
 
-/* Neutralize MUI's own hover/focused background-color changes (see TreeItemContent's defaults
-   in @mui/x-tree-view) so only the Recursica hover overlay below controls the hover look. */
-.row:hover,
-.row[data-focused] {
-  background-color: var(
-    --recursica_ui-kit_components_tree_variants_selection-states_unselected_properties_colors_background-color
-  );
-}
-
-/* Hover overlay via ::after pseudo-element (same technique as Menu/Accordion) */
-.row::after {
+/* Hover overlay via ::after pseudo-element (same technique as Menu/Accordion), scoped to the
+   label's own box so hover never visually covers the expand button. `.label`'s `position:
+   relative` + `z-index: 1` above already forms a stacking context, so `z-index: -1` here paints
+   the overlay behind the label's real text content within that context, not behind `.label`
+   itself. */
+.label::after {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  z-index: 0;
+  z-index: -1;
   pointer-events: none;
   background-color: var(--recursica_brand_states_hover_color);
   opacity: 0;
   transition: opacity 150ms ease;
 }
-.row:hover::after {
+.row:hover .label::after {
   opacity: var(--recursica_brand_states_hover_opacity);
 }
 
-/* Selected row state — written after the hover/focus resets above so it wins the equal-
-   specificity tie via source order, including when hovered/focused while selected. */
-.row[data-selected],
-.row[data-selected]:hover,
-.row[data-selected][data-focused] {
+/* Selected state — read off `.row`'s own `data-selected`/`data-focused` (set by
+   `getContentProps()`), applied to `.label`. Written after the hover/focus reset above so it
+   wins the equal-specificity tie via source order, including when hovered/focused while
+   selected. */
+.row[data-selected] .label,
+.row[data-selected]:hover .label,
+.row[data-selected][data-focused] .label {
   font-family: var(
     --recursica_ui-kit_components_tree_variants_selection-states_selected_properties_text_font-family
   );
@@ -172,37 +250,4 @@
   border-color: var(
     --recursica_ui-kit_components_tree_variants_selection-states_selected_properties_colors_border-color
   );
-}
-
-.row[data-disabled] {
-  opacity: var(--recursica_brand_states_disabled);
-  cursor: auto;
-}
-
-.iconContainer {
-  position: relative;
-  z-index: 1;
-  width: 1em;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  color: inherit;
-}
-
-.chevron {
-  transition: transform 150ms ease;
-}
-.chevronExpanded {
-  transform: rotate(90deg);
-}
-
-.label {
-  position: relative;
-  z-index: 1;
-  color: inherit;
-  font: inherit;
-  letter-spacing: inherit;
-  text-decoration: inherit;
-  text-transform: inherit;
 }

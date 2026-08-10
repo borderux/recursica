@@ -31,3 +31,25 @@ We explicitly pass `disableRipple` and `disableElevation` to block MUI's dynamic
 **Decision:** When `loading={true}` is passed to the Button, the component explicitly forces `disabled={true}` natively on the underlying element.
 
 **Implementation:** This ensures that loading buttons automatically inherit the brand theme disabled opacities (via the `:disabled` CSS pseudo-class) rather than relying solely on MUI's internal loading opacity adjustments.
+
+---
+
+## `className` overwrite bug (Matt Massey, 2026-08-08)
+
+**Bug:** with `overStyled` and a custom `className` (e.g. Tree embedding a `Button` for its expand chevron), the component's own `styles.root` class silently disappeared from the rendered `<button>` — every `[data-variant]`/`[data-size]` CSS rule stopped applying, and MUI's own default styling (including its default blue "primary" color) showed through instead.
+
+**Root cause:** `className={finalClass}` (`` `${styles.root} ${classNameProp}` ``) was set explicitly on `<MuiButton>`, but `{...sanitizedProps}` was spread _after_ it — and `sanitizedProps` still contained the original, unmodified `className` key, since it had only been _read_ to compute `finalClass`, never deleted. The later spread silently overwrote the merged class with just the caller's own class. Same bug class as `Dropdown.tsx`/`BareDropdown.tsx` had.
+
+**Fix:** delete `className` from the sanitized props record right after reading it, before it reaches the JSX spread. mantine-adapter's `Button.tsx` had the identical mistake — masked there by a separate `classNames={{root: ...}}` object prop unaffected by the bug, but fixed there too for correctness.
+
+---
+
+## `.MuiButton-startIcon`/`.MuiButton-endIcon` selectors never matched anything (Matt Massey, 2026-08-10)
+
+**Bug:** icon-only buttons rendered with the icon visibly off-center — shifted left, with extra empty space on the right. Not a regression from any recent change; `Button.module.css` itself was untouched, and the same unwrapped selectors already existed at `HEAD`. It had just gone unnoticed until the Tree work put an icon-only Button (the chevron) under closer visual scrutiny next to Mantine's (correctly centered) version.
+
+**Root cause:** `.MuiButton-startIcon`/`.MuiButton-endIcon` are real global class names MUI's `Button` applies directly in the DOM — not local CSS Modules classes generated from this file. Referencing them as plain `.MuiButton-startIcon` (rather than `:global(.MuiButton-startIcon)`, the pattern already used correctly for `.Mui-disabled` elsewhere in this same file) meant Vite's CSS Modules silently hashed them into scoped names — `.Button-module__MuiButton-startIcon___<hash>` — that never matched anything real in the DOM. Every rule targeting them (the icon↔label gap margin, and the icon-only margin reset) was a total no-op; icon-only buttons were left with MUI's own unreset default `margin-right` on the icon, which is what visibly pushed the icon off-center.
+
+**Fix:** wrapped every `.MuiButton-startIcon`/`.MuiButton-endIcon` reference in `:global(...)`.
+
+**Not otherwise fixed, flagged separately:** the same unwrapped-global-class pattern shows up in at least `Stepper.module.css` (`.Mui-active`/`.Mui-completed`/`.MuiStepLabel-root`, fully unwrapped) and `SegmentedControl.module.css`, and partially in `Label.module.css`/`Accordion.module.css` — meaning some of those components' MUI-state-driven styling may also be silently no-op'ing. Out of scope for this fix (Button only, per what was asked); worth a dedicated sweep.

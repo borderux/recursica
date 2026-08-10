@@ -59,3 +59,11 @@ Mantine's `.mantine-Button-label` flex centering breaks primitive truncation log
 **Decision:** When `loading={true}` is passed to the Button, the component explicitly forces `disabled={true}` natively on the underlying element.
 
 **Implementation:** This ensures that loading buttons automatically inherit the brand theme disabled opacities (via the `:disabled` CSS pseudo-class) rather than relying solely on Mantine's native `data-disabled` dataset logic, which may not trigger the strict visual fade required by the Recursica design system.
+
+---
+
+## `className` overwrite bug (Matt Massey, 2026-08-08)
+
+**Bug:** with `overStyled` and a custom `className` (surfaced by Tree embedding a `Button` for its expand chevron — see `Tree/IMPLEMENTATION_NOTES.md`), `finalClass` (`` `${styles.root} ${classNameProp}` ``) was set explicitly on `<MantineButton>`, but `{...sanitizedProps}` was spread _after_ it — and `sanitizedProps` still contained the original, unmodified `className` key, since it had only been _read_, never deleted. The later spread would silently overwrite `finalClass` with just the caller's own class. Same bug class as `Dropdown.tsx`/`BareDropdown.tsx` had.
+
+**Why it wasn't visible here:** `classNames={{root: mergedClassNames.root, ...}}` is a _separate_ Mantine prop from the plain `className` string, unaffected by the overwrite, and `mergedClassNames.root` always includes `styles.root` independently — so the root element kept its Recursica styling regardless of the bug. mui-adapter's equivalent `Button.tsx` has no such secondary path (`@mui/material` only has a plain `className`), so the identical mistake there was fully visible (chevron rendered in MUI's own default color). Fixed in both regardless, since this is a real latent bug independent of whether it happens to be masked today.

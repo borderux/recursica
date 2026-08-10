@@ -57,7 +57,24 @@ Each node needs a unique `value` and a `label`. Any node with a `children` array
 
 - `initialExpandedValues` accepts an array of node values, or `"*"` to start with every node expanded.
 - `multiple` allows more than one node to be selected at once (default: single-select).
-- `expandOnClick` / `selectOnClick` (both default `true`) control whether clicking a row toggles its expansion and/or selection.
+
+### Interaction pattern
+
+Expanding/collapsing and selecting are independent, fixed interactions (not prop-configurable):
+
+- Clicking the expand/collapse chevron toggles that node's subtree only — it never selects.
+- Clicking anywhere else on a row selects it — it never toggles expansion.
+- `Enter`/`Space` on a focused node selects it, even if the node has children.
+- `ArrowLeft`/`ArrowRight` expand/collapse the focused node only, without changing selection.
+- `ArrowUp`/`ArrowDown` move focus between rows.
+
+### Disabled
+
+```tsx
+<Tree data={data} initialSelectedValues={["1.1"]} disabled />
+```
+
+`disabled` disables the whole tree — no expand/collapse or select via click or keyboard, dimmed to the standard disabled opacity. A pre-selected node stays visibly selected, just dimmed along with the rest. There's no per-node disabled state (see **Known Constraints** below).
 
 ---
 
