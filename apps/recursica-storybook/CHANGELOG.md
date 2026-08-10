@@ -1,5 +1,16 @@
 # recursica-storybook
 
+## 0.26.0
+
+### Minor Changes
+
+- 8322c0a: Updated Tree component
+
+### Patch Changes
+
+- Updated dependencies [8322c0a]
+  - @recursica/mantine-adapter@0.38.0
+
 ## 0.25.0
 
 ### Minor Changes
