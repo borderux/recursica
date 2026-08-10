@@ -1,5 +1,16 @@
 # @recursica/mantine-adapter
 
+## 0.38.0
+
+### Minor Changes
+
+- 8322c0a: Updated Tree component
+
+### Patch Changes
+
+- Updated dependencies [8322c0a]
+  - @recursica/adapter-common@0.14.0
+
 ## 0.37.0
 
 ### Minor Changes

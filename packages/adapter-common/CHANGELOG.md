@@ -1,5 +1,11 @@
 # @recursica/adapter-common
 
+## 0.14.0
+
+### Minor Changes
+
+- 8322c0a: Updated Tree component
+
 ## 0.13.1
 
 ### Patch Changes
