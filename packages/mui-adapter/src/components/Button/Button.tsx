@@ -87,6 +87,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const finalClass = classNameProp
       ? `${styles.root} ${classNameProp}`
       : styles.root;
+    // className is merged explicitly above — don't let the {...sanitizedProps} spread below
+    // silently overwrite finalClass with just the caller's own class (same bug class as
+    // mui-adapter's Dropdown/BareDropdown.tsx had).
+    delete restRecord["className"];
 
     // We don't map Recursica variant/size to MUI's because we want to completely disable MUI's native
     // variant logic (e.g., elevation, shadows) and style everything strictly through our CSS Modules.

@@ -80,6 +80,19 @@ export const MultipleSelection: StoryObj<typeof Tree> = {
   ),
 };
 
+/** Whole tree disabled, with a node pre-selected so the selected chip's styling under the
+ * disabled dimming can be checked alongside unselected rows. */
+export const Disabled: StoryObj<typeof Tree> = {
+  render: () => (
+    <Tree
+      data={sampleData}
+      initialExpandedValues={["documents"]}
+      initialSelectedValues={["documents/resume.pdf"]}
+      disabled
+    />
+  ),
+};
+
 /** Demonstrates the component nested inside a non-default layer — the one case where an
  * explicit `<Layer>` wrap belongs in a story (see COMPONENT_STORYBOOK_GUIDE.md §9). */
 export const LayerOne: StoryObj<typeof Tree> = {

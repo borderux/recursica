@@ -1,11 +1,15 @@
 /* HARDCODED VALUES:
  * - list-style/margin/padding resets on .root/.subtree: layout resets, no corresponding
  *   design tokens (structural, not visual design values).
- * - .expandIcon size (1em) and rotation transition: no dedicated icon-size/icon-color token
- *   exists for Tree; the glyph is drawn with `currentColor` so it always tracks the row's
- *   already-tokened text color, and sized relative to the row's own font-size.
+ * - .expandGlyph's rotation transition (150ms ease): no dedicated timing token exists for Tree;
+ *   the glyph itself is sized/colored entirely by Button's own "text"/"small" tokens now, not a
+ *   hand-drawn size/color like the previous plain-SVG implementation.
  * - Hover overlay uses the generic --recursica_brand_states_hover_* tokens (same technique as
  *   Menu/Accordion/Button): Tree has no component-specific hover tokens of its own.
+ *
+ * NOTE: the row's box model (padding/border/font/color/background) lives entirely on `.label`,
+ * not `.row` — the highlighted "chip" (hover/selected/focus) covers only the label, never the
+ * expand button. `.row` itself is a plain flex layout container (indentation + button-node-gap).
  */
 
 .root {
@@ -25,6 +29,16 @@
   ) !important;
 }
 
+/* Whole-tree `disabled` (no per-node concept — see RecursicaTreeProps.ts). `pointer-events: none`
+   blocks every mouse interaction tree-wide in one rule (row clicks, chevron clicks); keyboard is
+   separately blocked in Tree.tsx, since pointer-events has no effect on Tab/Enter/Space/arrows.
+   Uses the generic disabled opacity token, same convention as every other disabled component in
+   the design system (no tree-specific disabled token exists). */
+.root[data-disabled] {
+  opacity: var(--recursica_brand_states_disabled);
+  pointer-events: none;
+}
+
 .subtree {
   margin: 0;
   padding: 0;
@@ -36,9 +50,31 @@
 
 .node {
   /* Mantine's own base class already resets margin/padding/list-style and sets cursor:pointer
-     on this <li>; it also holds the subtree as a second child, so all row-level visual styling
-     (box model, colors, typography) lives on .row instead, not here. */
+     on this <li>; it also holds the subtree as a second child, so all node-level visual styling
+     (box model, colors, typography) lives on .label instead, not here. */
   position: relative;
+}
+
+/* Mantine's roving-tabindex keyboard navigation (arrow up/down moves focus between rows, left/
+   right expand/collapse, matching the WAI-ARIA treeitem pattern) already works out of the box —
+   but with no visible indicator, it looked broken. DOM focus lands on this <li> (.node), not the
+   visible row box, so the ring is drawn on .label instead — the "node" content area, deliberately
+   excluding the expand Button, which never shows a focus state of its own (it's not independently
+   focusable at all: tabIndex={-1}). */
+.node:focus-visible {
+  outline: none;
+}
+/* `> .row` (child combinator), not a plain descendant selector: a node's own `.row` is always a
+   direct child of its `.node` <li>, while every descendant node's `.row` (inside the nested
+   `.subtree` <ul>) is not — without the `>`, focusing a parent node drew the ring on every
+   expanded descendant's label too, since they're all still descendants of the focused `.node`. */
+.node:focus-visible > .row .label {
+  box-shadow:
+    0 0 0 var(--recursica_brand_states_focus_border-size)
+      var(--recursica_brand_states_focus_color),
+    0 0 var(--recursica_brand_states_focus_blur)
+      var(--recursica_brand_states_focus_margin)
+      var(--recursica_brand_states_focus_color);
 }
 
 .row {
@@ -49,6 +85,39 @@
   cursor: pointer;
   margin-left: var(--label-offset, 0px);
   gap: var(--recursica_ui-kit_components_tree_properties_button-node-gap);
+}
+
+/* The expand Button is always rendered (even for leaf nodes, which have nothing to toggle) so
+   every row reserves identical layout space — hidden via visibility (not display) on leaf rows so
+   the label stays aligned across the whole tree without duplicating Button's own size tokens. */
+.expandButton {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+}
+.row:not([data-has-children]) .expandButton {
+  visibility: hidden;
+}
+
+.expandGlyph {
+  color: inherit;
+}
+.row[data-has-children] .expandGlyph {
+  transition: transform 150ms ease;
+}
+.row[data-expanded] .expandGlyph {
+  transform: rotate(90deg);
+}
+
+.label {
+  position: relative;
+  z-index: 1;
+  /* Sized to its own content, not stretched to fill the row's remaining width — the
+     hover/selected/focus "chip" should cover just the label, not the full row width. */
+  flex: 0 1 auto;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
   padding: var(--recursica_ui-kit_components_tree_properties_vertical-padding)
     var(--recursica_ui-kit_components_tree_properties_horizontal-padding);
   border-style: solid; /* HARDCODE: structural border rule; thickness/color are tokened */
@@ -93,24 +162,28 @@
   );
 }
 
-/* Hover overlay via ::after pseudo-element (same technique as Menu/Accordion) */
-.row::after {
+/* Hover overlay via ::after pseudo-element (same technique as Menu/Accordion), scoped to the
+   label's own box so hover never visually covers the expand button. `.label`'s `position:
+   relative` + `z-index: 1` above already forms a stacking context, so `z-index: -1` here paints
+   the overlay behind the label's real text content within that context, not behind `.label`
+   itself. */
+.label::after {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  z-index: 0;
+  z-index: -1;
   pointer-events: none;
   background-color: var(--recursica_brand_states_hover_color);
   opacity: 0;
   transition: opacity 150ms ease;
 }
-.row:hover::after,
-.row[data-hovered]::after {
+.row:hover .label::after,
+.row[data-hovered] .label::after {
   opacity: var(--recursica_brand_states_hover_opacity);
 }
 
-.row[data-selected] {
+.label[data-selected] {
   font-family: var(
     --recursica_ui-kit_components_tree_variants_selection-states_selected_properties_text_font-family
   );
@@ -145,33 +218,4 @@
   border-color: var(
     --recursica_ui-kit_components_tree_variants_selection-states_selected_properties_colors_border-color
   );
-}
-
-.expandIcon {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 1em;
-  height: 1em;
-  color: inherit;
-}
-
-.row[data-has-children] .expandIcon {
-  transition: transform 150ms ease;
-}
-.row[data-expanded] .expandIcon {
-  transform: rotate(90deg);
-}
-
-.label {
-  position: relative;
-  z-index: 1;
-  color: inherit;
-  font: inherit;
-  letter-spacing: inherit;
-  text-decoration: inherit;
-  text-transform: inherit;
 }

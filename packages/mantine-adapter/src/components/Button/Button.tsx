@@ -101,6 +101,11 @@ const _Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   const finalClass = classNameProp
     ? `${styles.root} ${classNameProp}`
     : styles.root;
+  // className is merged explicitly above — don't let the {...sanitizedProps} spread below
+  // silently overwrite finalClass with just the caller's own class (same bug class as
+  // mantine-adapter's Dropdown/BareDropdown.tsx had). Masked here today since `classNames.root`
+  // (a separate prop, unaffected) also carries styles.root — but a real latent bug regardless.
+  delete restRecord["className"];
 
   const userLoaderProps = restRecord.loaderProps as
     | Record<string, unknown>
