@@ -101,10 +101,17 @@
    VARIANTS: Error
    ========================================= */
 
+/* MUI's own `FormHelperText` sets its error color via `.MuiFormHelperText-root.Mui-error`
+   (two classes) whenever `error` is set — the exact same specificity as our own
+   `.root[data-variant="error"]` (one class + one attribute), so whichever rule loads later
+   in the merged stylesheet would otherwise win. `!important` makes ours win deterministically
+   regardless of CSS import order (same reasoning as the focus-ring override elsewhere in this
+   codebase). Not needed for the `help` variant above — MUI's unconditional base `color` on
+   `.root` alone has lower specificity than ours there already. */
 .root[data-variant="error"] {
   color: var(
     --recursica_ui-kit_components_assistive-element_variants_types_error_properties_colors_text-color
-  );
+  ) !important;
 }
 
 .root[data-variant="error"] .icon {
