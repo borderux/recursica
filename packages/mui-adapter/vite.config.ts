@@ -20,6 +20,8 @@ export default defineConfig(({ mode }) => {
             dts({
               insertTypesEntry: true,
               exclude: ["**/*.stories.*", ".storybook/**"],
+              rollupTypes: true,
+              bundledPackages: ["@recursica/adapter-common"],
             }),
           ]
         : []),
