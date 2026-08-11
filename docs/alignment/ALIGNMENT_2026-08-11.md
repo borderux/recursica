@@ -113,8 +113,8 @@ component owns. None of these is a finding.
 value pairs across ten components: `selected`/`unselected`, `checked`/`unchecked`/`indeterminate`,
 and `active`/`inactive`. `checkbox` differs for a real reason — it has a genuine third state.
 `tabs-item`, `timeline` and `timeline-bullet` using `active`/`inactive` for what is elsewhere
-`selected`/`unselected` looks like drift rather than intent. **This is the only forge change this
-report raises, and it is a question, not a patch** — see §7.
+`selected`/`unselected` looks like drift rather than intent. **Raised as a question, not a patch**
+— see §7.4. One other forge question is raised at §7.5.
 
 ---
 
@@ -174,24 +174,38 @@ the MUI gap.
 
 **Severity: breaks-silently.** **Fix: skill first, then MUI adapter.**
 
-### 2.4 The `chip` skill denies an error state that forge defines and both adapters implement
+### 2.4 The `chip` skill's stated reason for banning the error state is false — the ban is not
 
-`skills/components/recursica-skill-chip/SKILL.md:47`:
+`skills/components/recursica-skill-chip/SKILL.md:47` (before this sweep):
 
 > **Error and error-selected states are documented outside the token inventory; the kit defines
 > neither, and a chip never carries an error condition anyway.** Do not reach for them.
 
-All three clauses are wrong.
+The **instruction is correct house policy** and is left standing.
+`skills/design-rules/recursica-skill-badges-chips/SKILL.md:105` — *"Do not use a chip to indicate
+an error. Ever."* — and the design router gives a design-rules skill precedence over a component
+skill on composition. `recursica-skill-chip/SKILL.md:65` already routes the error to the group's
+assistive element.
+
+The **stated reason is false**, and that part is the finding:
 
 - **Forge defines it.** `chip.variants.selection-states.{unselected,selected}.variants.states.error` — a nested axis. Forge exports **14** error variables, 7 per selection state (`…_states_error_properties_colors_{background-color,border-color,close-icon-color,icon-color,leading-icon-color,selected-icon-color,text-color}`).
-- **Both adapters implement it.** `mantine-adapter/src/components/Chip/Chip.tsx:40` — `error = false`; `:80` — `const dataError = error ? "" : undefined`; `:93` sets `data-error`. `Chip.module.css:138-143` styles `.root[data-error]` from the forge error variables. The MUI adapter mirrors it.
-- **A chip therefore does carry an error condition**, and the skill instructs the agent not to use it.
+- **Both adapters implement it.** `mantine-adapter/src/components/Chip/Chip.tsx:40` — `error = false`; `:80` — `const dataError = error ? "" : undefined`; `:93` sets `data-error`. `Chip.module.css:138-143` styles `.root[data-error]` from the forge error variables. The MUI adapter mirrors it at `Chip.tsx:60-62,98,107`.
 
-This is the bug class inverted: instead of an agent passing a name that does nothing, an agent is
-told a working name does not exist, and routes the error treatment elsewhere.
+So a skill whose one job is to state what exists gets this one wrong, in a component where forge,
+both adapters, and the design rules all disagree with it. The practical risk is not a wrong render
+— it is that an agent meeting a stray `error` prop concludes the inventory is unreliable.
 
-**Severity: breaks-silently.** **Fix: skill only.** Replace §"What exists" line 47 with the real
-nested axis, and add the `error` prop name to the table.
+**Severity: drift** (downgraded from `breaks-silently` after reading the design rule — the ban
+means no correct build depends on passing `error`).
+
+**Fix: skill, applied.** The axis is now listed as present *and* prohibited, with the design rule
+cited. The prop-name column is still pending §7.1.
+
+**Question for §7:** forge and both adapters ship a chip error variant that the house design rules
+forbid outright. 14 exported variables and an implemented prop in two adapters exist to serve a
+state nobody may use. Either the design rule should relax or the variant should leave the Figma
+source — that is a product decision, not Ivan's. See §7.5.
 
 ### 2.5 `labelSize="md"` silently does nothing in Mantine
 
@@ -640,6 +654,12 @@ No forge entry is proposed for any of these.
 3. **The analyzer's `unused` warning (§4.1)** — should it fail the build? Turning it on today fails both adapters immediately (32 and 145 variables). It is the check that would have caught §2.3 the day it landed. Suggest: fix the dead exemptions and the table family first, then turn it on.
 4. **Forge, and this is the only forge request in the report:** should `selection-states` be normalised so `tabs-item`, `timeline` and `timeline-bullet` use `selected`/`unselected` instead of `active`/`inactive`? `checkbox`'s `checked`/`unchecked`/`indeterminate` should stay as-is — it has a real third state. **This is a request to change the Figma source, not a patch**, since `recursica_ui-kit.json` is an export and a hand edit is overwritten on the next publish. Raising it and stopping.
 
+5. **The chip error variant (§2.4).** Forge exports 14 error variables for `chip` and both
+   adapters implement an `error` prop, while `recursica-skill-badges-chips/SKILL.md:105` forbids a
+   chip from indicating an error, ever. A variant exists in three layers that the house rules
+   prohibit in the fourth. Either the design rule relaxes or the variant leaves the Figma source.
+   **A forge question, not a patch.**
+
 ---
 
 ## 8. Summary
@@ -651,7 +671,7 @@ Fix order is skill, then adapters, then — only after asking — forge.
 | 2.1 | `file-input`, `file-upload`, `transfer-list` are stubs in both adapters; no skill says so | breaks-silently | skill, then adapters |
 | 2.2 | MUI `DatePicker` is a stub; Mantine's is implemented | breaks-silently | skill, then MUI |
 | 2.3 | MUI table family applies 0 of 101 forge vars, unexempted | breaks-silently | skill, then MUI |
-| 2.4 | `chip` skill denies an error state forge defines and both adapters implement | breaks-silently | skill |
+| 2.4 | `chip` skill's reason for banning the error state is false; the ban itself is correct | drift | skill (applied) |
 | 2.5 | `labelSize="md"` applies no width in Mantine | breaks-silently | adapters |
 | 2.6 | `labelAlignment` works in Mantine, discarded by MUI | breaks-silently | adapters (needs §7.2) |
 | 2.7 | MUI stacked label ignores `bottom-padding` and `min-height` | breaks-silently | MUI |
@@ -670,11 +690,11 @@ Fix order is skill, then adapters, then — only after asking — forge.
 | 5 | 15 skills list axes with no prop name | breaks-silently | skill (blocked on table) |
 | 5.2 | `loader` skill says oval/bars/dots are unavailable; both adapters ship them | doc-only | skill |
 
-**7 breaks-silently, 13 drift, 1 doc-only, 1 pending the naming table.** One forge change is
-raised as a question (§7.4) and none is patched.
+**6 breaks-silently, 14 drift, 1 doc-only, 1 pending the naming table.** Two forge questions are
+raised (§7.4, §7.5) and neither is patched.
 
 **By component, breaks-silently only:** `file-input`, `file-upload`, `transfer-list`,
-`date-picker`, `table` (+`-cell`/`-header`/`-footer`), `chip`, `label`. Plus the 15 skills in §5.
+`date-picker`, `table` (+`-cell`/`-header`/`-footer`), `label`. Plus the 15 skills in §5.
 
 **Clean at every layer read** — forge values, contract, both adapters, and every forge variable
 applied in both with nothing exempted and no gap. Note `avatar` reaches 70/70 in both adapters
