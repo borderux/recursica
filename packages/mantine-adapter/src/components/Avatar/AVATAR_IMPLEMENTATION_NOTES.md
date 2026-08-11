@@ -22,3 +22,13 @@ Since Avatar children (icons or initials) require robust centering that might di
 ### CSS Reset Hacks
 
 Noticeable `/* HARDCODE: ... */` hacks are deployed within `.root` to completely zero-out Mantine's `--avatar-bg` and internal variables statically since Recursica handles background-colors inherently via the CSS variants cascade.
+
+### `variant` mapping is a genuine match here (unlike MUI's)
+
+Mantine's native `Avatar.variant` (`'filled'|'light'|'gradient'|'outline'|'transparent'|...`)
+really is the same color-treatment concept Recursica's own `variant` is, so `mapVariant`
+(`solid→filled, outline→outline, ghost→transparent`) is a correct, meaningful mapping — even
+though the CSS reset hack above means it's visually inert either way. Worth noting only because
+the MUI adapter's `Avatar.variant` means something completely different (shape) and had a real
+bug from assuming the same word meant the same thing there; see mui-adapter's own
+`AVATAR_IMPLEMENTATION_NOTES.md`.
