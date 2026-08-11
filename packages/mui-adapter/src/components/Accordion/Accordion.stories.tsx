@@ -123,6 +123,44 @@ export const WithIcons: StoryObj<typeof Accordion> = {
   },
 };
 
+export const Disabled: StoryObj<typeof Accordion> = {
+  render: () => {
+    return (
+      <Layer layer={0} style={{ padding: "24px" }}>
+        <Accordion defaultValue="expanded-disabled" chevron={<ChevronIcon />}>
+          <Accordion.Item value="expanded-disabled" disabled>
+            <Accordion.Control leftIcon={<SVGIcon />}>
+              Expanded and Disabled
+            </Accordion.Control>
+            <Accordion.Panel>
+              This item starts expanded so the panel content's dimming can be
+              verified alongside the control's, not just the collapsed header.
+            </Accordion.Panel>
+          </Accordion.Item>
+
+          <Accordion.Item value="collapsed-disabled" disabled>
+            <Accordion.Control leftIcon={<SVGIcon />}>
+              Collapsed and Disabled
+            </Accordion.Control>
+            <Accordion.Panel>
+              Clicking or tabbing to this control should have no effect.
+            </Accordion.Panel>
+          </Accordion.Item>
+
+          <Accordion.Item value="enabled">
+            <Accordion.Control leftIcon={<SVGIcon />}>
+              Enabled, for Comparison
+            </Accordion.Control>
+            <Accordion.Panel>
+              A normal, interactive item alongside the disabled ones above.
+            </Accordion.Panel>
+          </Accordion.Item>
+        </Accordion>
+      </Layer>
+    );
+  },
+};
+
 export const LayerOne: StoryObj<typeof Accordion> = {
   render: () => {
     return (

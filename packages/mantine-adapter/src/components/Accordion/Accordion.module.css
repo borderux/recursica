@@ -159,7 +159,7 @@
    constant background (Mantine's native :hover CSS would otherwise show through) and use an
    overlay ::after structure with the generic hover tokens for the actual hover tint; no per-item
    hover-color/hover-opacity tokens exist anymore. */
-.control:hover {
+.control:hover:not(:disabled) {
   background-color: var(
     --recursica_ui-kit_components_accordion-header_variants_appearance_closed_properties_colors_background-color
   );
@@ -177,6 +177,15 @@
 }
 .control:hover:not(:disabled)::after {
   opacity: var(--recursica_brand_states_hover_opacity);
+}
+
+/* Dims the whole item — control and any currently-visible panel content alike — using the
+   generic disabled opacity token, same convention as every other disabled component in the
+   design system (no accordion-item-specific disabled token exists). The Control's own native
+   `disabled` attribute already blocks click/keyboard interaction on its own; this only
+   handles the visual dim. */
+.item[data-disabled] {
+  opacity: var(--recursica_brand_states_disabled);
 }
 
 /* Recursica focus ring instead of Mantine's default `.mantine-focus-auto:focus-visible` outline

@@ -17,6 +17,7 @@ import {
   type RecursicaAccordionProps,
   type RecursicaAccordionItemProps,
   type RecursicaAccordionControlProps,
+  type RecursicaAccordionPanelProps,
 } from "@recursica/adapter-common";
 
 const ChevronIcon = () => (
@@ -48,7 +49,7 @@ export type AccordionProps = RecursicaOverStyled<
 const AccordionBase = forwardRef<HTMLDivElement, AccordionProps>(
   function Accordion(
     {
-      variant = "unstyled",
+      variant = "default",
       overStyled = false,
       value,
       defaultValue,
@@ -109,7 +110,15 @@ const AccordionBase = forwardRef<HTMLDivElement, AccordionProps>(
 AccordionBase.displayName = "Accordion";
 
 export type AccordionItemWrapperProps = RecursicaOverStyled<
-  Omit<MuiAccordionProps, "children" | "value"> & {
+  // `expanded`/`onChange` are computed internally from the group context — omitted so a
+  // caller can't silently detach this item from the controlled state. `defaultExpanded` has
+  // no meaning here since expansion is always driven by the group's `value`. `disabled` is
+  // shared as-is with `RecursicaAccordionItemProps.disabled` — same name, same shape, no
+  // reshaping needed; see ACCORDION_IMPLEMENTATION_NOTES.md.
+  Omit<
+    MuiAccordionProps,
+    "children" | "value" | "expanded" | "onChange" | "defaultExpanded"
+  > & {
     children?: React.ReactNode;
     value: string;
   } & RecursicaAccordionItemProps
@@ -125,6 +134,7 @@ export const AccordionItem = forwardRef<
     divider = true,
     children,
     value,
+    disabled = false,
     overStyled = false,
     style,
     ...rest
@@ -163,10 +173,12 @@ export const AccordionItem = forwardRef<
       square
       expanded={isExpanded}
       onChange={handleChange}
+      disabled={disabled}
+      data-disabled={disabled || undefined}
       style={mergedStyle}
       {...(sanitizedProps as unknown as Omit<
         MuiAccordionProps,
-        "expanded" | "onChange"
+        "expanded" | "onChange" | "defaultExpanded" | "disabled"
       >)}
     >
       {
@@ -187,7 +199,9 @@ AccordionItem.displayName = "AccordionItem";
 
 // ==== ACCORDION CONTROL ====
 export type AccordionControlWrapperProps = RecursicaOverStyled<
-  MuiAccordionSummaryProps & RecursicaAccordionControlProps
+  // `expandIcon` is resolved internally from the container's `chevron` (via context) —
+  // omitted so a caller can't silently override it with MUI's native chevron slot.
+  Omit<MuiAccordionSummaryProps, "expandIcon"> & RecursicaAccordionControlProps
 >;
 
 export const AccordionControl = forwardRef<
@@ -226,8 +240,9 @@ export const AccordionControl = forwardRef<
 AccordionControl.displayName = "AccordionControl";
 
 // ==== ACCORDION PANEL ====
-export type AccordionPanelWrapperProps =
-  RecursicaOverStyled<MuiAccordionDetailsProps>;
+export type AccordionPanelWrapperProps = RecursicaOverStyled<
+  MuiAccordionDetailsProps & RecursicaAccordionPanelProps
+>;
 
 export const AccordionPanel = forwardRef<
   HTMLDivElement,

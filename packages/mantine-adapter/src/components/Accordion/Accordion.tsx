@@ -16,6 +16,7 @@ import {
   type RecursicaAccordionProps,
   type RecursicaAccordionItemProps,
   type RecursicaAccordionControlProps,
+  type RecursicaAccordionPanelProps,
 } from "@recursica/adapter-common";
 
 // ==== ACCORDION CONTAINER ====
@@ -27,11 +28,24 @@ export type AccordionProps = RecursicaOverStyled<
     RecursicaAccordionProps
 >;
 
+// Maps Recursica's public variant vocabulary to Mantine's own. `unstyled` is a Mantine
+// sentinel with no meaning to Recursica consumers — it exists only to suppress Mantine's
+// built-in variant CSS so our module CSS is the sole source of styling. Anything outside
+// this map (a caller-supplied custom variant string) passes straight through to Mantine.
+const mapVariant: Record<string, string> = {
+  default: "unstyled",
+};
+
 const AccordionBase = function Accordion({
-  variant = "unstyled",
+  variant = "default",
   overStyled = false,
   ...rest
 }: AccordionProps) {
+  const resolvedVariant =
+    typeof variant === "string" && mapVariant[variant]
+      ? mapVariant[variant]
+      : variant;
+
   const sanitizedProps = filterStylingProps(rest, overStyled);
 
   // Bind all deep CSS module references natively into the global class mapping schema
@@ -67,7 +81,7 @@ const AccordionBase = function Accordion({
 
   return (
     <MantineAccordion
-      variant={variant}
+      variant={resolvedVariant as MantineAccordionProps["variant"]}
       className={classNameProp}
       classNames={mergedClassNames}
       {...(sanitizedProps as unknown as MantineAccordionProps)}
@@ -85,7 +99,15 @@ export const AccordionItem = forwardRef<
   HTMLDivElement,
   AccordionItemWrapperProps
 >(function AccordionItem(
-  { title, leftIcon, divider = true, children, overStyled = false, ...rest },
+  {
+    title,
+    leftIcon,
+    divider = true,
+    children,
+    disabled = false,
+    overStyled = false,
+    ...rest
+  },
   ref,
 ) {
   const sanitizedProps = filterStylingProps(rest, overStyled);
@@ -99,15 +121,22 @@ export const AccordionItem = forwardRef<
 
   // If the user utilizes the explicit 'title' prop from Recursica, we securely auto-construct the Mantine sub-hierarchy natively!
   // If not, we defer to raw composable children (meaning the integrator maps `<Accordion.Control>` manually).
+  // `disabled` has no native concept at the Item level — only Control has a real `disabled`
+  // prop (it renders a `<button>`, so the native HTML `disabled` attribute alone blocks click,
+  // focus, and keyboard activation with no extra guards needed). We forward it there in the
+  // auto-composed path; a manually-composed `<Accordion.Control>` needs it passed explicitly.
   return (
     <MantineAccordion.Item
       ref={ref}
       className={finalClass}
+      data-disabled={disabled || undefined}
       {...(sanitizedProps as unknown as AccordionItemProps)}
     >
       {title ? (
         <>
-          <AccordionControl leftIcon={leftIcon}>{title}</AccordionControl>
+          <AccordionControl leftIcon={leftIcon} disabled={disabled}>
+            {title}
+          </AccordionControl>
           <AccordionPanel>{children}</AccordionPanel>
         </>
       ) : (
@@ -120,7 +149,10 @@ AccordionItem.displayName = "AccordionItem";
 
 // ==== ACCORDION CONTROL ====
 export type AccordionControlWrapperProps = RecursicaOverStyled<
-  AccordionControlProps & RecursicaAccordionControlProps
+  // Mantine's native `icon` slot is resolved internally from `leftIcon` — omitted so a
+  // caller can't silently override it by passing `icon` directly. Mantine's per-control
+  // `chevron` override is left as-is; nothing here computes it, so it passes through safely.
+  Omit<AccordionControlProps, "icon"> & RecursicaAccordionControlProps
 >;
 
 export const AccordionControl = forwardRef<
@@ -154,8 +186,9 @@ export const AccordionControl = forwardRef<
 AccordionControl.displayName = "AccordionControl";
 
 // ==== ACCORDION PANEL ====
-export type AccordionPanelWrapperProps =
-  RecursicaOverStyled<AccordionPanelProps>;
+export type AccordionPanelWrapperProps = RecursicaOverStyled<
+  AccordionPanelProps & RecursicaAccordionPanelProps
+>;
 
 export const AccordionPanel = forwardRef<
   HTMLDivElement,
