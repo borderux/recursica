@@ -9,8 +9,14 @@ import styles from "./Chip.module.css";
 import { type RecursicaChipProps } from "@recursica/adapter-common";
 
 export type ChipProps = RecursicaOverStyled<
-  Omit<MuiChipProps, "variant" | "size" | "color" | "radius"> &
-    RecursicaChipProps
+  Omit<MuiChipProps, "variant" | "size" | "color" | "radius" | "children"> &
+    RecursicaChipProps & {
+      // MUI's own ChipProps types `children` as `null | undefined` (MUI's Chip expects `label`
+      // instead) — this component's actual API is `children` (see the `label={...}` JSX below,
+      // which always wins over any caller-supplied `label` in `sanitizedProps`), so restore a
+      // real type for it here.
+      children?: React.ReactNode;
+    }
 >;
 
 function CloseIcon(props: React.ComponentPropsWithoutRef<"svg">) {

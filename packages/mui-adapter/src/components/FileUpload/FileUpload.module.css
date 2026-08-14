@@ -1,40 +1,178 @@
 /* EXEMPTIONS:
-   This component is a placeholder stub. Once fully implemented, its specific
-   tokens will be fully wired up to direct styles. */
-
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_properties_border-radius */
+   - border-style has no usable var(...) form: the Figma-exported token's value is the literal
+     string `"dashed"` (quotes included), which is not a valid CSS <line-style> keyword — the same
+     class of "structural, not tokenized" property the canonical guide already treats border-style
+     as (see .root's own HARDCODED VALUES note below and TimePicker/DatePicker's identical
+     hardcoded `border-style: solid`). Hardcoded to the keyword `dashed` instead.
+   - properties_icon-size has no equivalent: unlike TextField/DatePicker, file-upload has no
+     dedicated icon-size token. Sized to visually match the Figma reference instead (see
+     HARDCODED VALUES below). */
 /* recursica-ignore: --recursica_ui-kit_components_file-upload_properties_border-style */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_properties_item-gap */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_properties_list-spacing */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_properties_padding */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_properties_text_font-family */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_properties_text_font-size */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_properties_text_font-style */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_properties_text_font-weight */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_properties_text_letter-spacing */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_properties_text_line-height */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_properties_text_text-decoration */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_properties_text_text-transform */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_properties_vertical-element-gap */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_variants_layouts_side-by-side_properties_top-bottom-margin */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_variants_layouts_stacked_properties_top-bottom-margin */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_variants_states_default_properties_border-size */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_variants_states_default_properties_colors_background */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_variants_states_default_properties_colors_border-color */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_variants_states_default_properties_colors_text */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_variants_states_default_properties_colors_upload-icon */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_variants_states_disabled_properties_border-size */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_variants_states_disabled_properties_colors_background */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_variants_states_disabled_properties_colors_border-color */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_variants_states_disabled_properties_colors_text */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_variants_states_disabled_properties_colors_upload-icon */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_variants_states_error_properties_border-size */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_variants_states_error_properties_colors_background */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_variants_states_error_properties_colors_border-color */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_variants_states_error_properties_colors_text */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_variants_states_error_properties_colors_upload-icon */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_variants_states_focus_properties_border-size */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_variants_states_focus_properties_colors_background */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_variants_states_focus_properties_colors_border-color */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_variants_states_focus_properties_colors_text */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_variants_states_focus_properties_colors_upload-icon */
+
+/* HARDCODED VALUES:
+   - .root: display: flex; flex-direction: column; width: 100% — structural layout, not a design
+     token concern (matches how other block-level components like Layer are laid out).
+   - .dropzone: border-style: dashed — see EXEMPTIONS above.
+   - .uploadIcon: width/height: 2rem — no icon-size token exists for file-upload (unlike
+     TextField/DatePicker); sized to visually match the Figma reference. Revisit if a dedicated
+     token is ever added. */
+
+/* LAYOUT SPACING OVERRIDES:
+   - Sets the --form-control-margin-bottom spacing hook to map component-specific layout tokens. */
+.layoutOverride {
+  --form-control-margin-bottom: var(
+    --recursica_ui-kit_components_file-upload_variants_layouts_stacked_properties_top-bottom-margin
+  );
+}
+
+.layoutOverride[data-form-layout="side-by-side"] {
+  --form-control-margin-bottom: var(
+    --recursica_ui-kit_components_file-upload_variants_layouts_side-by-side_properties_top-bottom-margin
+  );
+}
+
+.root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: var(--recursica_ui-kit_components_file-upload_properties_list-spacing);
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  border-style: dashed; /* HARDCODE: see EXEMPTIONS above */
+  border-width: var(
+    --recursica_ui-kit_components_file-upload_properties_border-size
+  );
+  border-radius: var(
+    --recursica_ui-kit_components_file-upload_properties_border-radius
+  );
+  border-color: var(
+    --recursica_ui-kit_components_file-upload_properties_colors_border-color
+  );
+  background-color: var(
+    --recursica_ui-kit_components_file-upload_properties_colors_background-color
+  );
+  padding: var(--recursica_ui-kit_components_file-upload_properties_padding);
+  gap: var(
+    --recursica_ui-kit_components_file-upload_properties_vertical-element-gap
+  );
+}
+
+.uploadIcon {
+  display: flex;
+  width: 2rem; /* HARDCODE: see EXEMPTIONS above */
+  height: 2rem; /* HARDCODE: see EXEMPTIONS above */
+  color: var(
+    --recursica_ui-kit_components_file-upload_properties_colors_upload-icon
+  );
+}
+
+.uploadIcon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.dropzoneText {
+  font-family: var(
+    --recursica_ui-kit_components_file-upload_properties_text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_file-upload_properties_text_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_file-upload_properties_text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_file-upload_properties_text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_file-upload_properties_text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_file-upload_properties_text_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_file-upload_properties_text_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_file-upload_properties_text_text-transform
+  );
+  color: var(
+    --recursica_ui-kit_components_file-upload_properties_colors_text-color
+  );
+  text-align: center;
+}
+
+.fileList {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--recursica_ui-kit_components_file-upload_properties_item-gap);
+}
+
+/* -------------------------------------
+   STATE CASCADE ARCHITECTURE
+-------------------------------------- */
+
+/* Error State Mapping (Propagated strictly down from the wrapper DOM context) */
+.root[data-error="true"] .dropzone {
+  border-width: var(
+    --recursica_ui-kit_components_file-upload_variants_states_error_properties_border-size
+  );
+  border-color: var(
+    --recursica_ui-kit_components_file-upload_variants_states_error_properties_colors_border-color
+  );
+  background-color: var(
+    --recursica_ui-kit_components_file-upload_variants_states_error_properties_colors_background-color
+  );
+}
+
+.root[data-error="true"] .dropzoneText {
+  color: var(
+    --recursica_ui-kit_components_file-upload_variants_states_error_properties_colors_text-color
+  );
+}
+
+.root[data-error="true"] .uploadIcon {
+  color: var(
+    --recursica_ui-kit_components_file-upload_variants_states_error_properties_colors_upload-icon
+  );
+}
+
+/* Disabled State Mapping (Propagated strictly down from the wrapper DOM context) */
+.root[data-disabled="true"] .dropzone {
+  border-width: var(
+    --recursica_ui-kit_components_file-upload_variants_states_disabled_properties_border-size
+  );
+  border-color: var(
+    --recursica_ui-kit_components_file-upload_variants_states_disabled_properties_colors_border-color
+  );
+  background-color: var(
+    --recursica_ui-kit_components_file-upload_variants_states_disabled_properties_colors_background-color
+  );
+}
+
+.root[data-disabled="true"] .dropzoneText {
+  color: var(
+    --recursica_ui-kit_components_file-upload_variants_states_disabled_properties_colors_text-color
+  );
+}
+
+.root[data-disabled="true"] .uploadIcon {
+  color: var(
+    --recursica_ui-kit_components_file-upload_variants_states_disabled_properties_colors_upload-icon
+  );
+}
+
+.root[data-disabled="true"] {
+  opacity: var(
+    --recursica_ui-kit_components_file-upload_variants_states_disabled_properties_opacity
+  );
+  cursor: not-allowed;
+}
