@@ -1,13 +1,46 @@
-/* HARDCODED VALUES 
+/* HARDCODED VALUES
  *
  * 1. track border: none; (we do not use border for the switch track)
  * 2. thumb border: none; (we do not use border for the thumb)
- * 3. outline: none; (focus rings handled internally by mantine)
+ * 3. .switchBase background-color: transparent; (cancels MUI's built-in primary-color
+ *    hover/focus circle so only our tokens and our own explicit focus ring show — see
+ *    SWITCH_IMPLEMENTATION_NOTES.md #5)
+ * 4. .track opacity: 1; (cancels MUI's own always-on track opacity — 0.38 unchecked, 0.5
+ *    checked, both MUI defaults with no equivalent in our tokens; our disabled-state opacity
+ *    rules below are the only intended dimming)
  */
 
 .root {
   /* Provide a stable cursor when not disabled */
   cursor: pointer;
+}
+
+.root:has(input:disabled) {
+  cursor: not-allowed;
+}
+
+/* Sizes MUI's actual switch root span (mapped via classes.root — MUI requires that exact key,
+   but the class name it points to is ours). Kept separate from .root above: when a label is
+   present, .root is applied to *this component's own outer wrapper div* (switch + label side
+   by side), not to the switch itself — giving both the same box-model rules would squeeze that
+   wrapper (and the label inside it) down to the track's own width. See
+   SWITCH_IMPLEMENTATION_NOTES.md #5. */
+.switchRoot {
+  /* Cancel MUI's own hardcoded root box (width: 58px, height: 38px, padding: 12px,
+     overflow: hidden for the medium size) — without this the track/thumb tokens below get
+     clipped/shrunk to MUI's default geometry instead of driving the real size. */
+  width: var(--recursica_ui-kit_components_switch_properties_track-width);
+  height: calc(
+    var(--recursica_ui-kit_components_switch_properties_thumb-height) +
+      (
+        var(
+            --recursica_ui-kit_components_switch_properties_track-inner-padding
+          ) *
+          2
+      )
+  );
+  padding: 0;
+  overflow: visible;
 
   --switch-track-padding: var(
     --recursica_ui-kit_components_switch_properties_track-inner-padding
@@ -23,17 +56,19 @@
   );
 }
 
-.root:has(input:disabled) {
-  cursor: not-allowed;
-}
-
 /* Track/thumb dim per selection state; label dims via its own (single, state-agnostic) token */
-.root:has(input:checked:disabled) .track {
+/* In mantine-adapter, .thumb nests inside .track, so dimming .track's opacity visually dims
+   the thumb too "for free". MUI's DOM has .track and .thumb as siblings (documented
+   structural difference, see SWITCH_IMPLEMENTATION_NOTES.md), so the same selector only dimmed
+   the track — the thumb stayed at full color/opacity. Each selector targets both explicitly. */
+.root:has(input:checked:disabled) .track,
+.root:has(input:checked:disabled) .thumb {
   opacity: var(
     --recursica_ui-kit_components_switch_variants_selection-states_selected_variants_states_disabled_properties_opacity
   );
 }
-.root:has(input:disabled):not(:has(input:checked)) .track {
+.root:has(input:disabled):not(:has(input:checked)) .track,
+.root:has(input:disabled):not(:has(input:checked)) .thumb {
   opacity: var(
     --recursica_ui-kit_components_switch_variants_selection-states_unselected_variants_states_disabled_properties_opacity
   );
@@ -51,7 +86,7 @@
     --recursica_ui-kit_components_switch_variants_selection-states_unselected_properties_colors_track-color
   );
 }
-.root input:checked + .track:hover {
+.root:has(input:checked) .track:hover {
   background-color: var(
     --recursica_ui-kit_components_switch_variants_selection-states_selected_properties_colors_track-color
   );
@@ -69,28 +104,71 @@
   box-shadow: var(
     --recursica_ui-kit_components_switch_properties_track-elevation
   );
-  padding: var(--switch-track-padding);
   border: none; /* HARDCODE */
-
-  /* Mantine uses variables internally for these, but we explicitly override the CSS to ensure our dimensions */
-  --switch-width: var(--switch-track-width);
-  --switch-height: calc(
-    var(--switch-thumb-height) + (var(--switch-track-padding) * 2)
-  );
-  --switch-thumb-size: var(--switch-thumb-width);
-
-  display: flex;
-  align-items: center;
+  opacity: 1; /* HARDCODE */
   box-sizing: border-box;
   transition: background-color 150ms ease;
   cursor: inherit;
 }
 
-.root input:checked + .track {
+.root:has(input:checked) .track {
   background-color: var(
     --recursica_ui-kit_components_switch_variants_selection-states_selected_properties_colors_track-color
   );
   border-color: transparent;
+  /* HARDCODE #4: MUI's own checked-state selector (`.Mui-checked + .track { opacity: 0.5 }`)
+     is more specific than the base .track rule above, so it still wins there — needs its own
+     override here too. */
+  opacity: 1;
+}
+
+/* Positions/sizes the thumb's clickable hit area (MUI's internal SwitchBase). MUI's own
+   defaults here (padding: 9px; top/left: 0) are calibrated for its own hardcoded 20px thumb
+   and 58x38 root — meaningless against our tokens, so every dimension is replaced. The thumb
+   itself (the visible circle) renders as this element's only child, sized by .thumb below;
+   with padding: 0 and matching width/height, .switchBase and .thumb become the same box, so
+   the thumb sits flush inside the track's own inner padding. See
+   SWITCH_IMPLEMENTATION_NOTES.md #5. */
+.switchBase {
+  top: var(--switch-track-padding);
+  left: var(--switch-track-padding);
+  width: var(--switch-thumb-width);
+  height: var(--switch-thumb-height);
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.switchBase:hover,
+.switchBase:global(.Mui-focusVisible) {
+  background-color: transparent; /* HARDCODE */
+}
+
+/* Focus ring reads on the whole visible track (the pill), not the thumb's small 20x20 hit-area
+   circle .switchBase actually is — .switchBase and .track are siblings under .switchRoot (in
+   that DOM order), so the ring is drawn on .track via the general sibling combinator when the
+   hit area is focus-visible. */
+.switchBase:global(.Mui-focusVisible) ~ .track {
+  outline: var(--recursica_brand_states_focus_border-size) solid
+    var(--recursica_brand_states_focus_color);
+  outline-offset: var(--recursica_brand_states_focus_margin);
+  box-shadow: 0 0 var(--recursica_brand_states_focus_blur)
+    var(--recursica_brand_states_focus_color);
+}
+
+/* Moves the thumb from resting-left to resting-right. MUI hardcodes this same transform to
+   translateX(20px) for its own default thumb; ours is calculated from our tokens instead —
+   the exact distance between the thumb's checked and unchecked resting positions inside the
+   track's inner padding. .Mui-checked is MUI's own global state class (not a CSS Modules
+   local class), so it must be wrapped in :global() — same as Accordion's .Mui-expanded and
+   Button's .Mui-disabled — or the build hashes/scopes it into a name that never matches the
+   real DOM. */
+.switchBase:global(.Mui-checked) {
+  transform: translateX(
+    calc(
+      var(--switch-track-width) - var(--switch-thumb-width) -
+        (var(--switch-track-padding) * 2)
+    )
+  );
 }
 
 .thumb {
@@ -110,10 +188,59 @@
   transition: background-color 150ms ease;
 }
 
-.root input:checked + .track .thumb {
+.root:has(input:checked) .thumb {
   background-color: var(
     --recursica_ui-kit_components_switch_variants_selection-states_selected_properties_colors_thumb-color
   );
+}
+
+.thumbIconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.checkIcon,
+.closeIcon {
+  width: var(--recursica_ui-kit_components_switch_properties_thumb-icon-size);
+  height: var(--recursica_ui-kit_components_switch_properties_thumb-icon-size);
+  position: absolute;
+  transition:
+    opacity 150ms ease,
+    transform 150ms ease;
+}
+
+/* Unchecked state */
+.checkIcon {
+  opacity: 0;
+  transform: scale(0.5);
+  color: var(
+    --recursica_ui-kit_components_switch_variants_selection-states_selected_properties_colors_icon-color
+  );
+}
+
+.closeIcon {
+  opacity: 1;
+  transform: scale(1);
+  color: var(
+    --recursica_ui-kit_components_switch_variants_selection-states_unselected_properties_colors_icon-color
+  );
+}
+
+/* Checked state — same :has() scoping already used for track/thumb color above; .thumb isn't
+   a sibling of input here (MUI nests both under switchBase), but :has() only needs input:checked
+   to be a descendant of .root, so this still scopes correctly. */
+.root:has(input:checked) .thumb .checkIcon {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.root:has(input:checked) .thumb .closeIcon {
+  opacity: 0;
+  transform: scale(0.5);
 }
 
 .labelWrapper {
@@ -185,53 +312,6 @@
   opacity: var(
     --recursica_ui-kit_components_switch-item_variants_states_disabled_properties_opacity
   );
-}
-
-.thumbIconWrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  position: relative;
-}
-
-.checkIcon,
-.closeIcon {
-  width: var(--recursica_ui-kit_components_switch_properties_thumb-icon-size);
-  height: var(--recursica_ui-kit_components_switch_properties_thumb-icon-size);
-  position: absolute;
-  transition:
-    opacity 150ms ease,
-    transform 150ms ease;
-}
-
-/* Unchecked state */
-.checkIcon {
-  opacity: 0;
-  transform: scale(0.5);
-  color: var(
-    --recursica_ui-kit_components_switch_variants_selection-states_selected_properties_colors_icon-color
-  );
-}
-
-.closeIcon {
-  opacity: 1;
-  transform: scale(1);
-  color: var(
-    --recursica_ui-kit_components_switch_variants_selection-states_unselected_properties_colors_icon-color
-  );
-}
-
-/* Checked state */
-.root input:checked + .track .thumb .checkIcon {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.root input:checked + .track .thumb .closeIcon {
-  opacity: 0;
-  transform: scale(0.5);
 }
 
 /* --- GROUP STYLES --- */

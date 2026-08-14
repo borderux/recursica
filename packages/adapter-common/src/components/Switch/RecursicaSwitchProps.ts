@@ -16,10 +16,10 @@ export interface RecursicaSwitchProps {
  * Props for the Recursica SwitchGroup component.
  */
 export interface RecursicaSwitchGroupProps {
-  /** Checked values list in controlled mode */
-  value?: unknown[];
+  /** Checked values list in controlled mode — each entry matches a child Switch's own `value` */
+  value?: string[];
   /** Checked default values list in uncontrolled mode */
-  defaultValue?: unknown[];
+  defaultValue?: string[];
   /** Callback triggered when any switch toggles state */
-  onChange?: (value: unknown[]) => void;
+  onChange?: (value: string[]) => void;
 }

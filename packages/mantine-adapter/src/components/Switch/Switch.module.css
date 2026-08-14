@@ -1,8 +1,10 @@
-/* HARDCODED VALUES 
+/* HARDCODED VALUES
  *
  * 1. track border: none; (we do not use border for the switch track)
  * 2. thumb border: none; (we do not use border for the thumb)
- * 3. outline: none; (focus rings handled internally by mantine)
+ * 3. input outline: none; (the real ring is drawn on .track instead, below, from Recursica
+ *    focus tokens — previously left to Mantine's own internal default outline, which renders
+ *    Mantine's theme blue, not a Recursica color)
  */
 
 .root {
@@ -91,6 +93,21 @@
     --recursica_ui-kit_components_switch_variants_selection-states_selected_properties_colors_track-color
   );
   border-color: transparent;
+}
+
+/* HARDCODE #3: the input itself is visually hidden (Mantine's usual pattern) but still
+   receives real keyboard focus and Mantine's own default focus outline — suppressed here so
+   the ring below (drawn on .track, the visible pill) is the only one that shows. */
+.root input:focus-visible {
+  outline: none;
+}
+
+.root input:focus-visible + .track {
+  outline: var(--recursica_brand_states_focus_border-size) solid
+    var(--recursica_brand_states_focus_color);
+  outline-offset: var(--recursica_brand_states_focus_margin);
+  box-shadow: 0 0 var(--recursica_brand_states_focus_blur)
+    var(--recursica_brand_states_focus_color);
 }
 
 .thumb {

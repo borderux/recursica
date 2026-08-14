@@ -74,8 +74,8 @@
   display: none !important;
 }
 
-/* MUI propagates .Mui-error to the label automatically on FormControl error. 
-   We explicitly override this bleed to prevent the main label text from turning red, 
+/* MUI propagates .Mui-error to the label automatically on FormControl error.
+   We explicitly override this bleed to prevent the main label text from turning red,
    while allowing the asterisk to take the error color! */
 .root:global(.Mui-error) {
   color: var(--recursica_ui-kit_components_label_properties_colors_text-color);
@@ -84,6 +84,15 @@
   color: var(
     --recursica_ui-kit_components_assistive-element_variants_types_error_properties_colors_text-color
   );
+}
+
+/* Same bleed, different trigger: MUI's FormControl propagates .Mui-focused to this label
+   whenever any descendant form control (e.g. a grouped Switch/Checkbox) receives focus,
+   turning the whole label MUI's primary blue via InputLabel's own default styling. No
+   Recursica design calls for a focus-reactive label color, so it's reset here — same fix as
+   the .Mui-error case above, just for the focused trigger instead of the error one. */
+.root:global(.Mui-focused) {
+  color: var(--recursica_ui-kit_components_label_properties_colors_text-color);
 }
 
 .endNodes {
