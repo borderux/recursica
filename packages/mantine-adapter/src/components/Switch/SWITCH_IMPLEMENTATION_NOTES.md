@@ -51,3 +51,14 @@ Recursica token). Fixed: `.root input:focus-visible { outline: none }` suppresse
 outline on the input, and `.root input:focus-visible + .track { ... }` draws the real ring
 (same `--recursica_brand_states_focus_*` tokens used elsewhere) on the visible track instead —
 matching the fix made to `mui-adapter`'s Switch for parity.
+
+## `SwitchGroup` side-by-side layout always rendered as if stacked
+
+**Found 2026-08-14, reported by Matt (against mui-adapter, reproduced here too):** `SwitchGroup`
+passed the switch-item's own inline label max-width token (200px) as the group's
+`controlMaxWidth` — but the mandatory side-by-side label column is a fixed 224px, wider than
+that cap, so the label always overflowed onto its own line regardless of layout mode. Not a
+mui-only bug: same code pattern, same result, here. Fixed by not capping the group's control
+width at all — each switch's own label already wraps at 200px via `.labelWrapper`, so no
+group-level cap is needed. Verified live in both adapters: side-by-side now shows the label
+column at left with the switches beside it; stacked layout unaffected.

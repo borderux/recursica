@@ -107,3 +107,15 @@ The external override merge read `restRecord.classNames`, but MUI's actual prop 
 component's own hardcoded elements (styled directly in JSX, not via MUI's `classes` prop) and
 remain unreachable through this override path — a separate, pre-existing gap, not something the
 prop-name fix could address.
+
+## `SwitchGroup` side-by-side layout always rendered as if stacked
+
+**Found 2026-08-14, reported by Matt:** the `SideBySideLayout` story showed the group label
+above the switches instead of beside them. Root cause: `SwitchGroup` passed the switch-item's
+own inline label max-width token (200px) as the group's `controlMaxWidth` — but the mandatory
+side-by-side label column is a fixed 224px, wider than that cap, so the label always overflowed
+onto its own line regardless of layout mode. Reproduced identically in Mantine (same code
+pattern, not a MUI-only bug). Fixed by not capping the group's control width at all — each
+switch's own label already wraps at 200px via `.labelWrapper`, so no group-level cap is needed.
+Verified live in both adapters: side-by-side now shows the label column at left with the
+switches beside it; stacked layout unaffected.
