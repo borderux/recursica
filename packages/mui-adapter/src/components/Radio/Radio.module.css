@@ -70,7 +70,7 @@
   );
 }
 
-.root .inner {
+.inner {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -82,7 +82,7 @@
     --recursica_ui-kit_components_radio-button-item_properties_text_font-size
   );
   /* Mathematically syncs the physical input radio bounding block visually with the center of the text's first line.
-     NOTE: Since the Figma line-height token resolves to an 'em' length (e.g. 1.05em), we CANNOT multiply it by font-size in CSS. 
+     NOTE: Since the Figma line-height token resolves to an 'em' length (e.g. 1.05em), we CANNOT multiply it by font-size in CSS.
      Instead, it naturally evaluates to the correct height because we applied the font-size above. */
   margin-top: calc(
     (
@@ -95,10 +95,16 @@
   );
 }
 
-/* Base explicit reset masking underlying framework defaults */
-.root .radio {
+/* Base explicit reset masking underlying framework defaults.
+   MUI's native <input type="radio"> stays invisible (SwitchBase overlays it with
+   opacity: 0) — it is not the visual circle. The circle is drawn by our own
+   icon/checkedIcon node (see Radio.tsx), a sibling of the input, so it's styled
+   here directly rather than through MUI's `classes` prop (MUI has no "radio" slot). */
+.radio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer; /* HARDCODE: core interaction behavior */
-  appearance: none; /* HARDCODE: reset native widget */
   box-sizing: border-box; /* HARDCODE: ensures size includes borders */
   width: var(--recursica_ui-kit_components_radio-button_properties_size);
   height: var(--recursica_ui-kit_components_radio-button_properties_size);
@@ -121,7 +127,7 @@
 }
 
 /* Checked State */
-.root .radio:checked {
+.radioChecked {
   background-color: var(
     --recursica_ui-kit_components_radio-button_variants_selection-states_selected_properties_colors_background-color
   );
@@ -130,11 +136,14 @@
   );
 }
 
-/* Disabled State (colors now differ per selection state, so each combination is mapped explicitly) */
-.root .radio:disabled {
+/* Disabled State (colors now differ per selection state; MUI applies its `disabled`
+   classKey to the same root element as `root`, so `.root.disabled` targets the
+   actual disabled instance and cascades to the decorative icon div inside it —
+   mirrors Checkbox's split). */
+.root.disabled .radio {
   cursor: not-allowed; /* HARDCODE: disabled state default */
 }
-.root .radio:disabled:not(:checked) {
+.root.disabled .radio:not(.radioChecked) {
   opacity: var(
     --recursica_ui-kit_components_radio-button_variants_selection-states_unselected_variants_states_disabled_properties_opacity
   );
@@ -145,7 +154,7 @@
     --recursica_ui-kit_components_radio-button_variants_selection-states_unselected_variants_states_disabled_properties_colors_border-color
   );
 }
-.root .radio:checked:disabled {
+.root.disabled .radioChecked {
   opacity: var(
     --recursica_ui-kit_components_radio-button_variants_selection-states_selected_variants_states_disabled_properties_opacity
   );
@@ -157,29 +166,32 @@
   );
 }
 
-.root .icon {
-  position: absolute;
-  inset: 0;
-  margin: auto;
+.icon {
   pointer-events: none;
   width: var(--recursica_ui-kit_components_radio-button_properties_icon-size);
   height: var(--recursica_ui-kit_components_radio-button_properties_icon-size);
 }
 /* No icon-color token exists for the unselected state (no icon is visible then) */
-.root .radio:checked + .iconWrapper .icon,
-.root .radio:checked + .icon {
+.radioChecked .icon {
   color: var(
     --recursica_ui-kit_components_radio-button_variants_selection-states_selected_properties_colors_icon-color
   );
 }
-.root .radio:checked:disabled + .iconWrapper .icon,
-.root .radio:checked:disabled + .icon {
+.root.disabled .radioChecked .icon {
   color: var(
     --recursica_ui-kit_components_radio-button_variants_selection-states_selected_variants_states_disabled_properties_colors_icon-color
   );
 }
 
 .root .labelWrapper {
+  /* display: flex (not the browser default block) blockifies the native inline
+     <label> child per the CSS Display spec's flex-item blockification rule —
+     matches Mantine's own labelWrapper (inline-flex), whose flex context does
+     the same to its label. Without it, the label stays inline and its line box
+     picks up extra half-leading height, visually shifting it below vertical
+     center against the circle. */
+  display: flex;
+  flex-direction: column;
   padding: 0; /* HARDCODE: structural layout reset */
   margin: 0; /* HARDCODE: structural layout reset */
   flex: 1;

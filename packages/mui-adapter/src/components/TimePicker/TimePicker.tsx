@@ -209,6 +209,7 @@ export const TimePicker = forwardRef<HTMLDivElement, TimePickerProps>(
           <div className={styles.root} data-error={error ? "true" : undefined}>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <MuiTimePicker
+                {...(sanitizedProps as unknown as Partial<MuiTimePickerProps>)}
                 value={internalValue}
                 onChange={handleFieldChange}
                 disabled={disabled}
@@ -231,7 +232,6 @@ export const TimePicker = forwardRef<HTMLDivElement, TimePickerProps>(
                     className: styles.field,
                   },
                 }}
-                {...(sanitizedProps as unknown as Partial<MuiTimePickerProps>)}
               />
             </LocalizationProvider>
             <BareDropdown

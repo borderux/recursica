@@ -97,9 +97,9 @@ const AccordionBase = forwardRef<HTMLDivElement, AccordionProps>(
       >
         <div
           ref={ref}
+          {...(sanitizedProps as React.HTMLAttributes<HTMLDivElement>)}
           className={finalClass}
           data-variant={variant}
-          {...(sanitizedProps as React.HTMLAttributes<HTMLDivElement>)}
         >
           {children}
         </div>
@@ -167,6 +167,10 @@ export const AccordionItem = forwardRef<
   return (
     <MuiAccordion
       ref={ref}
+      {...(sanitizedProps as unknown as Omit<
+        MuiAccordionProps,
+        "expanded" | "onChange" | "defaultExpanded" | "disabled"
+      >)}
       className={finalClass}
       disableGutters
       elevation={0}
@@ -176,10 +180,6 @@ export const AccordionItem = forwardRef<
       disabled={disabled}
       data-disabled={disabled || undefined}
       style={mergedStyle}
-      {...(sanitizedProps as unknown as Omit<
-        MuiAccordionProps,
-        "expanded" | "onChange" | "defaultExpanded" | "disabled"
-      >)}
     >
       {
         (title ? (
@@ -224,9 +224,9 @@ export const AccordionControl = forwardRef<
   return (
     <MuiAccordionSummary
       ref={ref}
+      {...(sanitizedProps as unknown as MuiAccordionSummaryProps)}
       className={finalClass}
       expandIcon={<span className={styles.chevron}>{resolvedChevron}</span>}
-      {...(sanitizedProps as unknown as MuiAccordionSummaryProps)}
     >
       {leftIcon && (
         <span className={styles.iconLeftWrapper} aria-hidden>
@@ -258,8 +258,8 @@ export const AccordionPanel = forwardRef<
   return (
     <MuiAccordionDetails
       ref={ref}
-      className={finalClass}
       {...(sanitizedProps as unknown as MuiAccordionDetailsProps)}
+      className={finalClass}
     >
       <div className={styles.content}>{children}</div>
     </MuiAccordionDetails>

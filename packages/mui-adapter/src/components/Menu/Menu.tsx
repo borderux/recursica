@@ -26,12 +26,12 @@ export const Menu = forwardRef<HTMLDivElement, MenuProps>(function Menu(
   return (
     <MuiMenu
       ref={ref}
+      {...(sanitizedProps as MuiMenuProps)}
       className={`${styles.dropdown} ${className || ""}`}
       classes={{
         paper: styles.dropdown,
         list: styles.dropdown,
       }}
-      {...(sanitizedProps as MuiMenuProps)}
     />
   );
 });

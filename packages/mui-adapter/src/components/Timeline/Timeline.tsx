@@ -70,11 +70,11 @@ const TimelineInner = React.forwardRef<HTMLUListElement, TimelineProps>(
     return (
       <MuiTimeline
         ref={ref}
-        classes={mergedClassNames}
         {...(sanitizedProps as unknown as Omit<
           MuiTimelineProps,
           "color" | "radius" | "bulletSize" | "lineWidth"
         >)}
+        classes={mergedClassNames}
       />
     );
   },

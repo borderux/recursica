@@ -70,7 +70,38 @@ Do not use plain `.css` for component overrides, and do not use `.css.ts` with `
 - **Preserve Underlying Composability** – When the target UI library utilizes a highly composable dot-notation or multi-part hierarchical API (e.g., `<Accordion>`, `<Accordion.Item>`, `<Accordion.Control>`), **do not flatten or aggregate their functionality** into a single rigid property bucket (e.g., forcing integrators to pass `{ title, content }` objects instead of using nested JSX). Instead, establish a 1:1 React component mapping of the library's sub-components. This strictly preserves the underlying library's dynamic ARIA tracking, semantic HTML behaviors, focus accessibility, and expected Developer Experience (DX) while securely enforcing Recursica styling rules.
 - **Unifying kit-specific concepts** – Kits often differ (e.g. one has `leftSection`/`rightSection`, another has `startIcon`/`endIcon`). When defining the Recursica API, unify where it makes sense: e.g. `icon` can be synonymous for "left/leading icon" if that's the common case; a separate prop or `...rest` can cover the other side. Document the convention (e.g. "icon = leading icon") in the component or guide.
 
-### 3.2 Public props and mapping
+### 3.2 Prop spread order — always spread `...rest`/`sanitizedProps` FIRST
+
+**Rule: when rendering the library component, spread `sanitizedProps` (or `rest`) as the very first JSX attribute, then list every computed/forced prop (`className`, `classes`/`classNames`, `icon`/`checkedIcon`, `sx`, `disabled`, `onChange`, etc.) _after_ it.** In JSX, when the same prop name appears twice, the one written later wins — so spreading last silently lets whatever the caller passed through `...rest` clobber the exact values this component depends on to render or behave correctly.
+
+```tsx
+// WRONG — a caller-supplied `classes`/`icon`/`sx` silently overrides ours
+<MuiRadio
+  icon={<div className={styles.radio} />}
+  classes={mergedClassNames}
+  sx={{ padding: 0 }}
+  {...sanitizedProps}
+/>
+
+// RIGHT — sanitizedProps spreads first; our values always win
+<MuiRadio
+  {...sanitizedProps}
+  icon={<div className={styles.radio} />}
+  classes={mergedClassNames}
+  sx={{ padding: 0 }}
+/>
+```
+
+This isn't theoretical: a real mui-adapter Radio regression shipped exactly this way — `classes` was computed correctly but placed _before_ the spread, so it was always a no-op, and the radio circle never rendered. The same pattern, if hit, can silently drop merged `className`/`classes`, replace a carefully-built `icon`/`checkedIcon` node, or swap out an internal `onChange` handler — all without a type error, since the prop name is usually still valid on the underlying library component.
+
+Two acceptable ways to make a specific prop fully un-overridable by a caller (stronger than ordering alone, use for props that must never be settable, like an internally-computed `expanded`/`onChange` on a controlled item):
+
+- **Omit it from the public props type** (e.g. `Omit<MuiAccordionProps, "expanded" | "onChange">`) so a well-typed caller can't pass it at all.
+- **Destructure it out of `props` before `...rest`** (e.g. `const { className, ...rest } = props`) so it's never present in `sanitizedProps` to begin with, regardless of spread order.
+
+Spread-first ordering is still the right default for everything else, since it's one rule to remember and doesn't require auditing every prop's type surface.
+
+### 3.3 Public props and mapping
 
 - **Public props** – Export `ComponentNameProps = RecursicaProps & LibraryComponentNameProps` (and standard HTML/React props as appropriate). Do not duplicate library props in the Recursica interface.
 - **Recursica preferred** – When Recursica and the library both define the same concern (e.g. size), Recursica wins. In each adapter, map Recursica values to library values and pass the result to the library. Callers can still pass library-specific props via `...rest` or library prop bags for escape hatches.

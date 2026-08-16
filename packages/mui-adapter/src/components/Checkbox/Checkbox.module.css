@@ -86,8 +86,14 @@
   );
 }
 
-/* Base explicit reset masking underlying framework defaults */
+/* Base explicit reset masking underlying framework defaults.
+   display: flex + centering: the checkmark icon renders as a nested child of this box
+   (see Checkbox.tsx — icon/checkedIcon are combined nodes, icon inside .input), so this
+   box has to center it itself rather than relying on a parent's centering. */
 .input {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer; /* HARDCODE: core interaction behavior */
   appearance: none; /* HARDCODE: reset native widget */
   box-sizing: border-box; /* HARDCODE: ensures size includes borders */
@@ -199,7 +205,14 @@
   );
 }
 
+/* display: flex (not the browser default block) blockifies the native inline <label>
+   child per the CSS Display spec's flex-item blockification rule — matches Mantine's
+   own labelWrapper (inline-flex), whose flex context does the same to its label.
+   Without it, the label stays inline and its line box picks up extra half-leading
+   height, visually shifting it below vertical center against the checkbox. */
 .labelWrapper {
+  display: flex;
+  flex-direction: column;
   padding: 0; /* HARDCODE: structural layout reset */
   margin: 0; /* HARDCODE: structural layout reset */
   flex: 1;

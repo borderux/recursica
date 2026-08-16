@@ -77,9 +77,9 @@ const CardBase = forwardRef<HTMLDivElement, CardProps>(function Card(
   return (
     <MuiCard
       ref={ref}
+      {...(sanitizedProps as unknown as MuiCardProps)}
       className={classNameProp}
       classes={mergedClassNames}
-      {...(sanitizedProps as unknown as MuiCardProps)}
     />
   );
 });
@@ -100,10 +100,10 @@ export const CardSection = forwardRef<HTMLDivElement, CardSectionProps>(
     return (
       <div
         ref={ref}
+        {...(sanitizedProps as unknown as React.HTMLAttributes<HTMLDivElement>)}
         className={
           classNameProp ? `${styles.section} ${classNameProp}` : styles.section
         }
-        {...(sanitizedProps as unknown as React.HTMLAttributes<HTMLDivElement>)}
       />
     );
   },
@@ -125,10 +125,10 @@ export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
     return (
       <div
         ref={ref}
+        {...(sanitizedProps as unknown as React.HTMLAttributes<HTMLDivElement>)}
         className={
           classNameProp ? `${styles.header} ${classNameProp}` : styles.header
         }
-        {...(sanitizedProps as unknown as React.HTMLAttributes<HTMLDivElement>)}
       />
     );
   },
@@ -150,10 +150,10 @@ export const CardFooter = forwardRef<HTMLDivElement, CardFooterProps>(
     return (
       <div
         ref={ref}
+        {...(sanitizedProps as unknown as React.HTMLAttributes<HTMLDivElement>)}
         className={
           classNameProp ? `${styles.footer} ${classNameProp}` : styles.footer
         }
-        {...(sanitizedProps as unknown as React.HTMLAttributes<HTMLDivElement>)}
       />
     );
   },
@@ -177,10 +177,10 @@ export const CardContent = forwardRef<HTMLDivElement, CardContentProps>(
     return (
       <div
         ref={ref}
+        {...sanitizedProps}
         className={
           classNameProp ? `${styles.content} ${classNameProp}` : styles.content
         }
-        {...sanitizedProps}
       />
     );
   },

@@ -44,8 +44,8 @@ const TableBase = forwardRef<HTMLTableElement, TableProps>(function Table(
   return (
     <MuiTable
       ref={ref}
-      className={finalClass}
       {...(sanitizedProps as unknown as MuiTableProps)}
+      className={finalClass}
     />
   );
 });

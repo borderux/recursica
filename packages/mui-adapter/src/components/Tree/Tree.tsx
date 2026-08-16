@@ -248,6 +248,7 @@ export const Tree = forwardRef<HTMLUListElement, TreeProps>(function Tree(
   return (
     <RichTreeView
       ref={ref}
+      {...(sanitizedProps as unknown as Record<string, unknown>)}
       items={data}
       getItemId={(item: RecursicaTreeNode) => item.value}
       getItemLabel={(item: RecursicaTreeNode) =>
@@ -284,7 +285,6 @@ export const Tree = forwardRef<HTMLUListElement, TreeProps>(function Tree(
         item: CustomTreeItem,
       }}
       classes={{ root: rootClass }}
-      {...(sanitizedProps as unknown as Record<string, unknown>)}
     />
   );
 });

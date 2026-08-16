@@ -97,6 +97,10 @@ const _SegmentedControl = forwardRef<HTMLDivElement, SegmentedControlProps>(
     return (
       <MuiSegmentedControl
         ref={ref}
+        {...(sanitizedProps as Omit<
+          MuiSegmentedControlProps,
+          "variant" | "size" | "value" | "onChange"
+        >)}
         className={stylingParams.className}
         classes={stylingParams.classNames}
         orientation={orientation}
@@ -109,10 +113,6 @@ const _SegmentedControl = forwardRef<HTMLDivElement, SegmentedControlProps>(
             typeof MuiSegmentedControl
           >["onChange"]
         }
-        {...(sanitizedProps as Omit<
-          MuiSegmentedControlProps,
-          "variant" | "size" | "value" | "onChange"
-        >)}
       >
         {data.map((item) => {
           const itemValue = typeof item === "string" ? item : item.value;

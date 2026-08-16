@@ -46,9 +46,9 @@ export const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
     return (
       <InputLabel
         ref={ref}
+        {...(sanitizedProps as InputLabelProps)}
         shrink={true}
         className={className ? `${styles.root} ${className}` : styles.root}
-        {...(sanitizedProps as InputLabelProps)}
       >
         <div className={styles.innerLayout}>
           <span className={styles.textWrapper}>
@@ -62,7 +62,7 @@ export const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
             )}
             {!required && labelOptionalText && !labelActionArea && (
               <span className={styles.optionalText}>
-                {labelOptionalText === true ? "Optional" : labelOptionalText}
+                {labelOptionalText === true ? "(optional)" : labelOptionalText}
               </span>
             )}
             {labelWithEditIcon && (

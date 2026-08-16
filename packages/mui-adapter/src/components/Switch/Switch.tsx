@@ -248,6 +248,7 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(
         {...(isGrouped
           ? { checked: isChecked, onChange: handleGroupChange }
           : {})}
+        disableRipple
       />
     );
 
@@ -263,21 +264,23 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(
             >
               {label as React.ReactNode}
             </label>
-            {description && (
-              <AssistiveElement
-                assistiveVariant="help"
-                assistiveWithIcon={false}
-              >
-                {description}
-              </AssistiveElement>
-            )}
-            {error && (
+            {/* description/error are mutually exclusive — error takes precedence */}
+            {error ? (
               <AssistiveElement
                 assistiveVariant="error"
                 assistiveWithIcon={false}
               >
                 {error}
               </AssistiveElement>
+            ) : (
+              description && (
+                <AssistiveElement
+                  assistiveVariant="help"
+                  assistiveWithIcon={false}
+                >
+                  {description}
+                </AssistiveElement>
+              )
             )}
           </div>
         </div>

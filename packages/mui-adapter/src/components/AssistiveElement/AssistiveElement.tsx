@@ -74,12 +74,12 @@ export const AssistiveElement = React.forwardRef<
   return (
     <FormHelperText
       ref={ref}
+      {...(sanitizedProps as Omit<FormHelperTextProps, "error" | "component">)}
       component="div"
       error={isError}
       role={resolvedRole}
       data-variant={assistiveVariant}
       className={className ? `${styles.root} ${className}` : styles.root}
-      {...(sanitizedProps as Omit<FormHelperTextProps, "error" | "component">)}
     >
       {assistiveWithIcon && (
         <div className={styles.icon}>

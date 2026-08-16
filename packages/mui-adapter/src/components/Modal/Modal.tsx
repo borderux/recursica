@@ -77,11 +77,11 @@ const ModalRoot = forwardRef<HTMLDivElement, ModalProps>(function ModalRoot(
   return (
     <MuiDialog
       ref={ref}
+      {...(sanitizedProps as MuiDialogProps)}
       className={`${styles.root} ${className || ""}`}
       classes={{
         paper: styles.inner,
       }}
-      {...(sanitizedProps as MuiDialogProps)}
       open={
         opened ||
         ((sanitizedProps as Record<string, unknown>).open as boolean) ||

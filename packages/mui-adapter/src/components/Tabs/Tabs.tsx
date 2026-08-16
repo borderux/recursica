@@ -35,6 +35,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
     return (
       <MuiTabs
         ref={ref}
+        {...(sanitizedProps as MuiTabsProps)}
         orientation={orientation}
         className={`${styles.root} ${className || ""}`}
         data-variant={variant}
@@ -44,7 +45,6 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
           flexContainer: styles.list,
           indicator: styles.indicator,
         }}
-        {...(sanitizedProps as MuiTabsProps)}
       />
     );
   },
