@@ -4,8 +4,10 @@ Decisions and gotchas specific to wrapping `@mui/material`'s `Switch` for the UI
 
 ## Label/description/error
 
-MUI's `Switch` has no built-in label/description/error rendering — built by hand here
-(`<label>` + `.description`/`.error` divs), mirroring what Mantine's `Switch` does natively.
+MUI's `Switch` has no built-in label/description/error rendering — built by hand here.
+The label is a plain `<label>`; description/error render through the shared
+`AssistiveElement` component (`assistiveWithIcon={false}`) instead of local styled divs,
+so they inherit real design tokens rather than hardcoded Mantine defaults.
 
 ## `Switch.Group` compound export
 

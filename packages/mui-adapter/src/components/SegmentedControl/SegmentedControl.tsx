@@ -38,7 +38,6 @@ function useSegmentedControlClassNames(restRecord: Record<string, unknown>): {
     root: styles.root,
     control: styles.control,
     label: styles.label,
-    indicator: styles.indicator,
   };
 
   const classNamesProp = restRecord.classNames;
@@ -55,9 +54,6 @@ function useSegmentedControlClassNames(restRecord: Record<string, unknown>): {
     mergedClassNames.label = o.label
       ? `${styles.label} ${o.label}`
       : styles.label;
-    mergedClassNames.indicator = o.indicator
-      ? `${styles.indicator} ${o.indicator}`
-      : styles.indicator;
   }
 
   const classNameProp = restRecord.className as string | undefined;

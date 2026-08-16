@@ -26,8 +26,6 @@ const _Badge = forwardRef<HTMLDivElement, BadgeProps>(function Badge(
 
   const mergedClassNames: Partial<Record<string, string>> = {
     root: styles.root,
-    section: styles.section,
-    label: styles.label,
   };
 
   const classNamesProp = (sanitizedProps as Record<string, unknown>).classNames;
@@ -38,8 +36,6 @@ const _Badge = forwardRef<HTMLDivElement, BadgeProps>(function Badge(
   ) {
     const o = classNamesProp as Partial<Record<string, string>>;
     mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
-    mergedClassNames.section = o.section ?? styles.section;
-    mergedClassNames.label = o.label ?? styles.label;
   }
 
   const classNameProp = (sanitizedProps as Record<string, unknown>)

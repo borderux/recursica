@@ -17,6 +17,7 @@ import {
   FormControlLayout,
   type FormControlLayoutProps,
 } from "../FormControlLayout/FormControlLayout";
+import { AssistiveElement } from "../AssistiveElement/AssistiveElement";
 
 import styles from "./Checkbox.module.css";
 
@@ -205,24 +206,20 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
               {label as React.ReactNode}
             </label>
             {description && (
-              <div
-                className={styles.description}
-                data-disabled={
-                  readOnly || disabled || isGroupReadOnly ? true : undefined
-                }
+              <AssistiveElement
+                assistiveVariant="help"
+                assistiveWithIcon={false}
               >
                 {description}
-              </div>
+              </AssistiveElement>
             )}
             {error && (
-              <div
-                className={styles.error}
-                data-disabled={
-                  readOnly || disabled || isGroupReadOnly ? true : undefined
-                }
+              <AssistiveElement
+                assistiveVariant="error"
+                assistiveWithIcon={false}
               >
                 {error}
-              </div>
+              </AssistiveElement>
             )}
           </div>
         </div>

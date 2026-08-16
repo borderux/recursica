@@ -230,23 +230,6 @@
   );
 }
 
-.root .description {
-  margin-top: 5px; /* HARDCODE: mantine default */
-  color: #868e96; /* HARDCODE: mantine default dimmed */
-  font-size: 12px; /* HARDCODE: mantine default xs */
-  line-height: 1.2;
-}
-
-.root .error {
-  margin-top: 5px; /* HARDCODE: mantine default */
-  color: #fa5252; /* HARDCODE: mantine default error */
-  font-size: 12px; /* HARDCODE: mantine default xs */
-  line-height: 1.2;
-}
-
-.root .description[data-disabled="true"],
-.root .error[data-disabled="true"] {
-  opacity: var(
-    --recursica_ui-kit_components_radio-button-item_variants_states_disabled_properties_opacity
-  );
-}
+/* description/error text renders via AssistiveElement directly (see Radio.tsx) —
+   it owns its own tokenized styling. AssistiveElement has no disabled state and
+   must never dim. */

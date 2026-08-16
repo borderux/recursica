@@ -195,8 +195,8 @@
   cursor: not-allowed;
 }
 
-/* Override Mantine's built-in check icon colors and size if we keep it */
-.mantineIconWrapper.mantineIconWrapper {
+/* Selected-state check icon colors and size */
+.checkIconWrapper.checkIconWrapper {
   color: var(--chip-icon);
   width: var(--recursica_ui-kit_components_chip_properties_icon-size);
   height: var(--recursica_ui-kit_components_chip_properties_icon-size);

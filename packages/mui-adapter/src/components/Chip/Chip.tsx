@@ -109,7 +109,7 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
       {...sanitizedProps}
       icon={
         checked ? (
-          <span className={styles.mantineIconWrapper} aria-hidden>
+          <span className={styles.checkIconWrapper} aria-hidden>
             <CheckIcon />
           </span>
         ) : icon ? (

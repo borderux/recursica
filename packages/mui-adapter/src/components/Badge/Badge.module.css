@@ -113,15 +113,3 @@
     --recursica_ui-kit_components_badge_variants_styles_warning_properties_colors_text-color
   );
 }
-
-/* Target Mantine internal children if needed for typography constraints */
-.root :global(.mantine-Badge-label),
-.root :global(.mantine-Badge-section) {
-  /* HARDCODE: Prevent Mantine from overriding our typography setup inside inner wrappers */
-  font-size: inherit;
-  font-weight: inherit;
-  line-height: inherit;
-  font-family: inherit;
-  letter-spacing: inherit;
-  text-transform: inherit;
-}

@@ -293,26 +293,9 @@
   );
 }
 
-.description {
-  margin-top: 5px; /* HARDCODE: mantine default */
-  color: #868e96; /* HARDCODE: mantine default dimmed */
-  font-size: 12px; /* HARDCODE: mantine default xs */
-  line-height: 1.2;
-}
-
-.error {
-  margin-top: 5px; /* HARDCODE: mantine default */
-  color: #fa5252; /* HARDCODE: mantine default error */
-  font-size: 12px; /* HARDCODE: mantine default xs */
-  line-height: 1.2;
-}
-
-.description[data-disabled="true"],
-.error[data-disabled="true"] {
-  opacity: var(
-    --recursica_ui-kit_components_switch-item_variants_states_disabled_properties_opacity
-  );
-}
+/* description/error text renders via AssistiveElement directly (see Switch.tsx) —
+   it owns its own tokenized styling. AssistiveElement has no disabled state and
+   must never dim. */
 
 /* --- GROUP STYLES --- */
 .groupRoot {

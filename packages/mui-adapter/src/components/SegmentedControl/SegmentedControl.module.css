@@ -98,13 +98,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-/* Mantine natively wraps label contents in an innerLabel span */
-.root .label :global(.mantine-SegmentedControl-innerLabel) {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   gap: var(
     --recursica_ui-kit_components_segmented-control-item_properties_item_icon-text-gap
   );
