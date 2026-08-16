@@ -48,6 +48,7 @@
 
 .innerLayout {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(
     --recursica_ui-kit_components_label_properties_label-optional-text-gap
@@ -104,6 +105,9 @@
 }
 
 .optionalText {
+  /* Forces the optional text onto its own row below the label text/end nodes,
+     mirroring mantine-adapter's flex-basis: 100% wrap behavior. */
+  flex-basis: 100%;
   color: inherit;
   font-family: var(
     --recursica_ui-kit_components_label_properties_optional-text_font-family

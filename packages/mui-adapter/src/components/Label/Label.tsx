@@ -60,11 +60,6 @@ export const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
             {labelActionArea && (
               <span className={styles.actionArea}>{labelActionArea}</span>
             )}
-            {!required && labelOptionalText && !labelActionArea && (
-              <span className={styles.optionalText}>
-                {labelOptionalText === true ? "(optional)" : labelOptionalText}
-              </span>
-            )}
             {labelWithEditIcon && (
               <button
                 type="button"
@@ -76,6 +71,12 @@ export const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
               </button>
             )}
           </div>
+
+          {!required && labelOptionalText && !labelActionArea && (
+            <span className={styles.optionalText}>
+              {labelOptionalText === true ? "(optional)" : labelOptionalText}
+            </span>
+          )}
         </div>
       </InputLabel>
     );
