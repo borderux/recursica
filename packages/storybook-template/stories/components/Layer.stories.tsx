@@ -14,9 +14,10 @@ const meta: Meta<typeof Layer> = {
     },
   },
   argTypes: {
-    // Controlled globally via the `layer`/`withLayer` Story Controls (see preview.tsx); disable
-    // the duplicate per-story controls here but keep the rows in the autodocs Props table.
-    layer: { control: false },
+    // `layer` here IS the same arg as the global `layer` Story Control (see preview.tsx) —
+    // there's only one `layer` arg key, so a story-level override replaces the global one
+    // rather than adding a "duplicate"; leave it undefined so the global inline-radio control
+    // (already wired to this story's outer Layer wrapper) keeps working.
     contentsOnly: { control: false },
     children: { control: false },
   },

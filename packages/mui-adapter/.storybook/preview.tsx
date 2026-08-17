@@ -7,6 +7,7 @@ import {
   StyledEngineProvider,
 } from "@mui/material";
 import { ColorSchemeWrapper } from "../src/utils/ColorSchemeWrapper";
+import "@recursica/adapter-common/style.css";
 import "@recursica/official-release/recursica_variables_scoped.css";
 import recursicaTokens from "@recursica/official-release/recursica_tokens.json";
 import recursicaBrand from "@recursica/official-release/recursica_brand.json";
