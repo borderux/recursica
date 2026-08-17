@@ -99,7 +99,7 @@ This keeps the story count manageable and makes it clear why each static story e
 - [ ] Major properties for static stories are chosen and documented (in the file or in this guide).
 - [ ] Static stories are added for the chosen combinations; each has fixed props and no controls.
 - [ ] No story manually wraps the component in `<Layer>` by default — the global decorator already handles this (see §9). An explicit `<Layer layer={N}>` is added only for a story that specifically demonstrates a non-default/different layer. Theme (and any other required context) are provided via decorators or wrapper so Recursica styles apply.
-- [ ] Recursica CSS (e.g. `recursica_variables_scoped.css`) is loaded in the story or in Storybook preview.
+- [ ] Recursica CSS (`recursica_variables_scoped.css` and `@recursica/adapter-common/style.css` — see §9) is loaded in the story or in Storybook preview.
 - [ ] No native UI library components are directly imported into the story. Everything rendered should strictly be Recursica components. Never use HTML primitive components (`div`, `span`, etc.) unless absolutely necessary to demo a story.
 - [ ] Read your adapter's own `docs/COMPONENT_STORYBOOK_GUIDE.md` delta for anything library-specific (e.g. controls filtering) not covered here.
 
@@ -118,6 +118,8 @@ This keeps the story count manageable and makes it clear why each static story e
 ## 9. Global Layer Decorator — Do NOT Manually Wrap
 
 The Storybook preview (`preview.tsx`) provides a **global decorator** that automatically wraps every story in a `<Layer>` component with `withLayer` and `layer` controls. This means:
+
+**Required preview.tsx import:** `Layer` is defined in `adapter-common` and its styling ships as a separate CSS file (`@recursica/adapter-common/style.css`), not inlined into `Layer`'s own JS. Each adapter's own package build already includes it automatically (bundled in via the adapter's `src/index.ts`), but Storybook's dev server does not go through that build — `preview.tsx` must explicitly `import "@recursica/adapter-common/style.css"` itself, alongside `recursica_variables_scoped.css`, or every layer will render with no background/border/elevation (the surface color is close enough to white that this is easy to miss visually). Note this can't be centralized inside `@recursica/storybook-template`'s `createPreviewConfig` — Vite's library build strips bare CSS side-effect imports out of that package's own JS bundle, so each adapter's `preview.tsx` must carry this import itself.
 
 - **Do NOT** manually wrap your component in `<Layer layer={0}>` inside render functions **by default**. This is the single most common mistake to avoid when writing stories — it's redundant with the global decorator and easy to reach for out of habit.
 - **Do NOT** add `layer` or `withLayer` to your component's `argTypes` — they are globally provided.
