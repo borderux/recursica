@@ -1,5 +1,24 @@
 # @recursica/adapter-common
 
+## 0.15.0
+
+### Minor Changes
+
+- 106bc34: Accordion: closed silent prop-contract conflicts where native `expanded`/`onChange`/`expandIcon`/`icon` could override Recursica's own computed state, made `variant` a real predefined union instead of a bare string, and formally supported a per-item `disabled` prop in both adapters.
+  Also documented `children` across all Accordion sub-components in `RecursicaAccordionProps.ts`, including a new `RecursicaAccordionPanelProps` interface for the Panel.
+
+### Patch Changes
+
+- 106bc34: AssistiveElement: `assistiveVariant="error"` now defaults `role="alert"` in both adapters so
+  error text is announced by assistive tech as it appears or changes (an explicit `role` still
+  wins). Also (MUI only) closed a prop-contract conflict where native `error`/`component` could
+  silently override Recursica's own computed values, added the missing `RecursicaOverStyled`
+  wrapper, and hardened a CSS specificity tie against MUI's own `.Mui-error` color. Documented
+  `children` in `RecursicaAssistiveElementProps.ts` and added implementation notes to both adapters.
+- 106bc34: Avatar (MUI): fixed `variant` being fed into MUI's native shape prop instead of a color treatment, making it a silent no-op. Also documented `children` in the shared prop types and added missing mui-adapter implementation notes.
+- 106bc34: Fixed RadioGroup selection not updating in mui-adapter — its onChange was typed and wired as MUI's native `(event, value)`, but Mantine's RadioGroup (the cross-adapter source of truth) only ever calls back with `(value)`. Normalized the shared contract and mui-adapter's wiring to single-argument.
+- 106bc34: Switch: attached `SwitchGroup` as the `Switch.Group` compound export (it existed standalone but was never attached), and tightened `RecursicaSwitchGroupProps` value types from `unknown[]` to `string[]`.
+
 ## 0.14.0
 
 ### Minor Changes

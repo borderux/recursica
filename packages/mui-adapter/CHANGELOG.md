@@ -1,5 +1,57 @@
 # @recursica/mui-adapter
 
+## 0.22.0
+
+### Minor Changes
+
+- 106bc34: Accordion: closed silent prop-contract conflicts where native `expanded`/`onChange`/`expandIcon`/`icon` could override Recursica's own computed state, made `variant` a real predefined union instead of a bare string, and formally supported a per-item `disabled` prop in both adapters.
+  Also documented `children` across all Accordion sub-components in `RecursicaAccordionProps.ts`, including a new `RecursicaAccordionPanelProps` interface for the Panel.
+- 106bc34: AssistiveElement: `assistiveVariant="error"` now defaults `role="alert"` in both adapters so
+  error text is announced by assistive tech as it appears or changes (an explicit `role` still
+  wins). Also (MUI only) closed a prop-contract conflict where native `error`/`component` could
+  silently override Recursica's own computed values, added the missing `RecursicaOverStyled`
+  wrapper, and hardened a CSS specificity tie against MUI's own `.Mui-error` color. Documented
+  `children` in `RecursicaAssistiveElementProps.ts` and added implementation notes to both adapters.
+
+### Patch Changes
+
+- 106bc34: Autocomplete (MUI): fixed four bugs, all traced to `renderInput` discarding MUI's `InputProps` (dropping the `classes.inputRoot` className, the anchor ref, and adornment slots). Restored `InputProps` so the design-system border/padding actually applies instead of MUI's default underline chrome; wired `leftSection`/`rightSection` into `startAdornment`/`endAdornment` (previously destructured but never rendered, so icons never showed); and stopped coercing `error` to a boolean before the wrapper, which was discarding the error message string (ErrorState story showed no assistive text).
+- 106bc34: Avatar (MUI): fixed `variant` being fed into MUI's native shape prop instead of a color treatment, making it a silent no-op. Also documented `children` in the shared prop types and added missing mui-adapter implementation notes.
+- 106bc34: Checkbox (MUI): fixed the checkmark never appearing on click — `checked` was always
+  forced onto MUI's native input even for plain uncontrolled usage (no `checked`/only
+  `defaultChecked`), pinning it to a value that never updates after the initial render.
+  Now only forced when grouped (CheckboxGroup owns state) or the caller explicitly passes
+  `checked`, matching the existing `Switch` pattern. Also fixed the label rendering
+  vertically offset from the checkbox (`.labelWrapper` needed `display: flex` to blockify
+  the native inline `<label>`, mirroring Mantine's own wrapper) and the checkmark icon
+  rendering off-center inside the box in both standalone Checkbox and CheckboxGroup
+  (`.input` now centers its icon child directly).
+- 106bc34: Disabled Checkbox/Switch's MUI-default click ripple (not present in Mantine) and made their description/error text mutually exclusive (error wins), matching the same fixes just made to Radio.
+- 106bc34: Chip (MUI): fixed three visual bugs vs `mantine-adapter` — extra right padding on short-text chips (duplicate `min-width`/`max-width` applied on both `.root` and `.label`, now only on `.root`), delete/leading icon color and spacing leaking MUI's own default styles (fixed via CSS specificity match on `.leadingIcon`/`.removeIconWrapper`), and a missing icon-text gap on the leading icon (accidental blanket `margin: 0` collapsed it — restored `margin-right` for the gap, matching the selected-state check icon).
+- 106bc34: FormControlWrapper (MUI): fixed ARIA wiring to match the Mantine adapter — a self-generated
+  `id` fallback (via `useId`) now fires by default instead of only when a caller supplies their
+  own `id`, and help/error text each get their own id (`aria-describedby`/`aria-errormessage`)
+  instead of sharing one. Neither attribute is set if the child already has its own explicit
+  value.
+- 106bc34: Label (MUI): fixed focused descendant controls (e.g. a grouped Switch/Checkbox) bleeding MUI's default blue into the label text, mirroring the existing `.Mui-error` override with a matching `.Mui-focused` one.
+- 106bc34: Label (MUI): fixed optional text rendering inline next to the label instead of on its own line — `innerLayout` now wraps and `optionalText` is forced onto a full-width row, matching `mantine-adapter`.
+- 106bc34: Audited every component for the "spread after computed props" ordering bug (caller props silently overriding internal className/classes/icon/sx/onChange) and reordered spread-first in ~25 components. See COMPONENT_DEV_GUIDE.md §3.2 (adapter-common) for the rule.
+- 106bc34: Removed leftover literal Mantine references from mui-adapter CSS/types (dead `:global(.mantine-*)` selectors, unused classes wiring, a stray `@mantine/core` type augmentation) and swapped a hardcoded Mantine red for the real error-text token in Radio/Checkbox/Switch.
+- 106bc34: Radio/Checkbox/Switch description and error text now render through the shared `AssistiveElement` component instead of locally styled divs, removing the last hardcoded hex values (Mantine's default dimmed gray) from mui-adapter CSS.
+- 106bc34: Fixed Radio rendering no visible circle (only the label) — `classes` was being read as `classNames` with Mantine-shaped slot names MUI doesn't support, so the circle's styling was silently dropped. Also fixed the label rendering vertically offset from the circle, disabled MUI's default click ripple, made description/error mutually exclusive (error wins), and reordered the props spread so it can no longer silently override the render-critical props placed after it.
+- 106bc34: Fixed RadioGroup selection not updating in mui-adapter — its onChange was typed and wired as MUI's native `(event, value)`, but Mantine's RadioGroup (the cross-adapter source of truth) only ever calls back with `(value)`. Normalized the shared contract and mui-adapter's wiring to single-argument.
+- 106bc34: Switch: attached `SwitchGroup` as the `Switch.Group` compound export (it existed standalone but was never attached), and tightened `RecursicaSwitchGroupProps` value types from `unknown[]` to `string[]`.
+- 106bc34: Switch (MUI): `SwitchGroup` now actually controls its children via a `SwitchGroupContext` (same pattern as `Checkbox`/`CheckboxGroup`) — previously `value`/`defaultValue`/`onChange` were destructured and discarded, so grouped switches never checked or updated.
+- 106bc34: SwitchGroup: fixed `side-by-side` layout always rendering as if stacked — the group was capped to the switch-item label's own 200px max-width, narrower than the mandatory 224px label column, guaranteeing a wrap.
+- 106bc34: Switch (MUI): fixed track/thumb geometry, checked-state color and opacity, thumb icon, disabled-state opacity, the focus ring target/color, and a `classes`/`classNames` prop bug — bringing it to visual parity with `mantine-adapter`.
+- 106bc34: Tabs (MUI): fixed missing `value` on `Tabs` (never read `TabContext`, so no tab was ever selected), the panel rendering beside instead of below the tab list, and dead `.Mui-selected`/`.panel` CSS selectors.
+- Updated dependencies [106bc34]
+- Updated dependencies [106bc34]
+- Updated dependencies [106bc34]
+- Updated dependencies [106bc34]
+- Updated dependencies [106bc34]
+  - @recursica/adapter-common@0.15.0
+
 ## 0.21.1
 
 ### Patch Changes
