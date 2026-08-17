@@ -17,6 +17,7 @@ import {
   FormControlLayout,
   type FormControlLayoutProps,
 } from "../FormControlLayout/FormControlLayout";
+import { AssistiveElement } from "../AssistiveElement/AssistiveElement";
 
 import styles from "./Checkbox.module.css";
 
@@ -96,6 +97,12 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
     const isChecked = isGrouped
       ? (groupContext.value || []).includes(restRecord.value)
       : !!(restRecord.checked ?? restRecord.defaultChecked);
+    // Only force controlled mode when we actually own the source of truth (grouped) or the
+    // caller explicitly passed `checked` (controlled). A plain `defaultChecked`/neither-prop
+    // usage must stay uncontrolled — otherwise `checked` gets pinned to a value that never
+    // updates, and MUI's native input silently snaps back after every click. Mirrors Switch's
+    // identical `isGrouped ? { checked: ... } : {}` pattern (Switch never had this bug).
+    const isControlled = isGrouped || restRecord.checked !== undefined;
 
     if (readOnly && !!readOnlyComponent) {
       const ReadOnlyComp = readOnlyComponent;
@@ -166,8 +173,9 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
         classes={mergedClassNames}
         disabled={readOnly || disabled || isGroupReadOnly}
         {...(sanitizedProps as unknown as MuiCheckboxProps)}
-        checked={isChecked as boolean}
+        {...(isControlled ? { checked: isChecked as boolean } : {})}
         onChange={handleChange}
+        disableRipple
         sx={label ? { padding: 0 } : undefined}
         icon={<div className={styles.input} />}
         checkedIcon={
@@ -204,25 +212,23 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
             >
               {label as React.ReactNode}
             </label>
-            {description && (
-              <div
-                className={styles.description}
-                data-disabled={
-                  readOnly || disabled || isGroupReadOnly ? true : undefined
-                }
-              >
-                {description}
-              </div>
-            )}
-            {error && (
-              <div
-                className={styles.error}
-                data-disabled={
-                  readOnly || disabled || isGroupReadOnly ? true : undefined
-                }
+            {/* description/error are mutually exclusive — error takes precedence */}
+            {error ? (
+              <AssistiveElement
+                assistiveVariant="error"
+                assistiveWithIcon={false}
               >
                 {error}
-              </div>
+              </AssistiveElement>
+            ) : (
+              description && (
+                <AssistiveElement
+                  assistiveVariant="help"
+                  assistiveWithIcon={false}
+                >
+                  {description}
+                </AssistiveElement>
+              )
             )}
           </div>
         </div>

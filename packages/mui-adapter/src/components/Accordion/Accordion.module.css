@@ -168,11 +168,11 @@
   margin: 0 !important;
 }
 
-/* Mantine natively places hover states on the control node. We explicitly re-apply our own
+/* MUI natively places hover states on the control node. We explicitly re-apply our own
    constant background (MUI's native :hover CSS would otherwise show through) and use an
    overlay ::after structure with the generic hover tokens for the actual hover tint; no per-item
    hover-color/hover-opacity tokens exist anymore. */
-.control:hover {
+.control:hover:not(:disabled) {
   background-color: var(
     --recursica_ui-kit_components_accordion-header_variants_appearance_closed_properties_colors_background-color
   );
@@ -190,6 +190,25 @@
 }
 .control:hover:not(:disabled)::after {
   opacity: var(--recursica_brand_states_hover_opacity);
+}
+
+/* MUI applies its own default disabled treatment on both the item root and the control
+   (`.Mui-disabled`, each with its own hardcoded background/opacity) — neutralized here so the
+   token-driven dim below is the single source of truth. */
+.item:global(.Mui-disabled) {
+  background-color: transparent;
+}
+.control:global(.Mui-disabled) {
+  opacity: 1;
+}
+
+/* Dims the whole item — control and any currently-visible panel content alike — using the
+   generic disabled opacity token, same convention as every other disabled component in the
+   design system (no accordion-item-specific disabled token exists). MUI's own `disabled` prop
+   already blocks click/keyboard interaction on the control internally; this only handles the
+   visual dim. */
+.item[data-disabled] {
+  opacity: var(--recursica_brand_states_disabled);
 }
 
 /* Label logic inside the Control wrapper */

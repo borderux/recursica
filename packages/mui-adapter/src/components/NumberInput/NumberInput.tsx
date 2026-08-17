@@ -137,6 +137,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
           /* Naked Input execution safely decoupled from Mui's macro Input.Wrapper DOM hooks */
           <MuiNumberInput
             ref={ref}
+            {...(sanitizedProps as unknown as MuiNumberInputProps)}
             classes={mergedClassNames}
             disabled={disabled}
             value={value}
@@ -154,7 +155,6 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
               step,
               ...(restRecord.inputProps as Record<string, unknown>),
             }}
-            {...(sanitizedProps as unknown as MuiNumberInputProps)}
           />
         }
       />

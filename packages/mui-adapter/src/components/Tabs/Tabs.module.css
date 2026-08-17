@@ -222,9 +222,80 @@
 }
 
 /* ---------------------------------
+   SELECTION INDICATOR & BASELINE
+   Mantine draws the active-tab underline/side-border and the full-length baseline natively off
+   the shared --tabs-color/--tabs-border-color vars above. MUI has no equivalent built-in, so we
+   drive its own indicator slot (classes.indicator, wired in Tabs.tsx) and the list's baseline
+   border explicitly from the same vars. Pills has no baseline/indicator — selection is carried
+   entirely by the pill's own background/border (see COLORS & TYPOGRAPHY below).
+--------------------------------- */
+.root[data-variant="default"] .indicator,
+.root[data-variant="outline"] .indicator {
+  background-color: var(--tabs-color) !important;
+}
+.root[data-variant="default"][data-orientation="horizontal"] .indicator,
+.root[data-variant="outline"][data-orientation="horizontal"] .indicator {
+  height: var(--tabs-active-border-size) !important;
+}
+/* MUI's Tabs root has no border/padding of its own, so the list's margin-bottom (the
+   tabs-content-gap, used to space the panel below) collapses into the root's auto height instead
+   of stopping at the list's own border edge. The indicator is absolutely positioned against that
+   inflated root box, so without this offset it renders content-gap pixels below the baseline
+   instead of flush against it. */
+.root[data-variant="default"][data-orientation="horizontal"]:not(
+    [data-inverted]
+  )
+  .indicator {
+  bottom: var(
+    --recursica_ui-kit_components_tabs_variants_styles_default_variants_orientation_horizontal_properties_tabs-content-gap
+  ) !important;
+}
+.root[data-variant="outline"][data-orientation="horizontal"]:not(
+    [data-inverted]
+  )
+  .indicator {
+  bottom: var(
+    --recursica_ui-kit_components_tabs_variants_styles_outline_variants_orientation_horizontal_properties_tabs-content-gap
+  ) !important;
+}
+.root[data-variant="default"][data-orientation="vertical"] .indicator,
+.root[data-variant="outline"][data-orientation="vertical"] .indicator {
+  width: var(--tabs-active-border-size) !important;
+}
+.root[data-variant="default"][data-orientation="horizontal"][data-inverted]
+  .indicator,
+.root[data-variant="outline"][data-orientation="horizontal"][data-inverted]
+  .indicator {
+  bottom: auto !important;
+  top: 0 !important;
+}
+.root[data-variant="pills"] .indicator {
+  display: none !important;
+}
+
+.root[data-variant="default"][data-orientation="horizontal"] .list,
+.root[data-variant="outline"][data-orientation="horizontal"] .list {
+  border-bottom: var(--tabs-inactive-border-size) solid var(--tabs-border-color);
+}
+.root[data-variant="default"][data-orientation="horizontal"][data-inverted]
+  .list,
+.root[data-variant="outline"][data-orientation="horizontal"][data-inverted]
+  .list {
+  border-bottom: none;
+  border-top: var(--tabs-inactive-border-size) solid var(--tabs-border-color);
+}
+.root[data-variant="default"][data-orientation="vertical"] .list,
+.root[data-variant="outline"][data-orientation="vertical"] .list {
+  border-right: var(--tabs-inactive-border-size) solid var(--tabs-border-color);
+}
+
+/* ---------------------------------
    TAB ELEMENT
 --------------------------------- */
 .root .tab {
+  /* MUI defaults icon+label tabs to a 72px min-height; Mantine's tab height is purely
+     content/padding-driven (auto), so without this reset MUI's row is visibly taller. */
+  min-height: auto !important;
   min-width: var(--tabs-min-width);
   max-width: var(--tabs-max-width);
   padding: var(--tabs-vertical-padding) var(--tabs-horizontal-padding);
@@ -334,43 +405,43 @@
   );
 }
 
-.root[data-variant="default"] .tab[data-active] {
+.root[data-variant="default"] .tab:global(.Mui-selected) {
   background-color: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_default_variants_selection-states_active_properties_colors_background-color
-  );
+  ) !important;
   color: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_default_variants_selection-states_active_properties_colors_text-color
-  );
+  ) !important;
 
   font-family: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_default_variants_selection-states_active_properties_text_font-family
-  );
+  ) !important;
   font-size: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_default_variants_selection-states_active_properties_text_font-size
-  );
+  ) !important;
   font-style: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_default_variants_selection-states_active_properties_text_font-style
-  );
+  ) !important;
   font-weight: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_default_variants_selection-states_active_properties_text_font-weight
-  );
+  ) !important;
   letter-spacing: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_default_variants_selection-states_active_properties_text_letter-spacing
-  );
+  ) !important;
   line-height: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_default_variants_selection-states_active_properties_text_line-height
-  );
+  ) !important;
   text-decoration: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_default_variants_selection-states_active_properties_text_text-decoration
-  );
+  ) !important;
   text-transform: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_default_variants_selection-states_active_properties_text_text-transform
-  );
+  ) !important;
 }
-.root[data-variant="default"] .tab[data-active] svg {
+.root[data-variant="default"] .tab:global(.Mui-selected) svg {
   color: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_default_variants_selection-states_active_properties_colors_icon-color
-  );
+  ) !important;
 }
 
 /* Outline Variant Colors & Typography */
@@ -413,43 +484,43 @@
   );
 }
 
-.root[data-variant="outline"] .tab[data-active] {
+.root[data-variant="outline"] .tab:global(.Mui-selected) {
   background-color: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_outline_variants_selection-states_active_properties_colors_background-color
-  );
+  ) !important;
   color: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_outline_variants_selection-states_active_properties_colors_text-color
-  );
+  ) !important;
 
   font-family: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_outline_variants_selection-states_active_properties_text_font-family
-  );
+  ) !important;
   font-size: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_outline_variants_selection-states_active_properties_text_font-size
-  );
+  ) !important;
   font-style: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_outline_variants_selection-states_active_properties_text_font-style
-  );
+  ) !important;
   font-weight: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_outline_variants_selection-states_active_properties_text_font-weight
-  );
+  ) !important;
   letter-spacing: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_outline_variants_selection-states_active_properties_text_letter-spacing
-  );
+  ) !important;
   line-height: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_outline_variants_selection-states_active_properties_text_line-height
-  );
+  ) !important;
   text-decoration: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_outline_variants_selection-states_active_properties_text_text-decoration
-  );
+  ) !important;
   text-transform: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_outline_variants_selection-states_active_properties_text_text-transform
-  );
+  ) !important;
 }
-.root[data-variant="outline"] .tab[data-active] svg {
+.root[data-variant="outline"] .tab:global(.Mui-selected) svg {
   color: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_outline_variants_selection-states_active_properties_colors_icon-color
-  );
+  ) !important;
 }
 
 /* Pills Variant Colors & Typography */
@@ -496,58 +567,64 @@
   );
 }
 
-.root[data-variant="pills"] .tab[data-active] {
+.root[data-variant="pills"] .tab:global(.Mui-selected) {
   background-color: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_pills_variants_selection-states_active_properties_colors_background-color
-  );
+  ) !important;
   color: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_pills_variants_selection-states_active_properties_colors_text-color
-  );
+  ) !important;
   border: var(--tabs-active-border-size) solid
     var(
       --recursica_ui-kit_components_tabs-item_variants_styles_pills_variants_selection-states_active_properties_colors_border-color
-    );
+    ) !important;
 
   font-family: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_pills_variants_selection-states_active_properties_text_font-family
-  );
+  ) !important;
   font-size: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_pills_variants_selection-states_active_properties_text_font-size
-  );
+  ) !important;
   font-style: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_pills_variants_selection-states_active_properties_text_font-style
-  );
+  ) !important;
   font-weight: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_pills_variants_selection-states_active_properties_text_font-weight
-  );
+  ) !important;
   letter-spacing: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_pills_variants_selection-states_active_properties_text_letter-spacing
-  );
+  ) !important;
   line-height: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_pills_variants_selection-states_active_properties_text_line-height
-  );
+  ) !important;
   text-decoration: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_pills_variants_selection-states_active_properties_text_text-decoration
-  );
+  ) !important;
   text-transform: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_pills_variants_selection-states_active_properties_text_text-transform
-  );
+  ) !important;
 }
-.root[data-variant="pills"] .tab[data-active] svg {
+.root[data-variant="pills"] .tab:global(.Mui-selected) svg {
   color: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_pills_variants_selection-states_active_properties_colors_icon-color
-  );
+  ) !important;
 }
 
-/* Content panel */
-.root .panel {
+/* Content panel
+   Note: unlike .list (MUI's internal flexContainer, a true descendant of .root), TabPanel
+   renders as a DOM sibling of <Tabs>, not nested inside it — `.root .panel` would never match.
+   Scope directly off the CSS-module-scoped class name instead. */
+.panel {
   /* Recursica doesn't define panel colors intrinsically, leaves it to child content */
+  /* MUI's TabPanel defaults to theme.spacing(3) padding; Mantine's Tabs.Panel has none, and
+     the tab-to-content gap is already carried by the list's own margin (tabs-content-gap) */
+  padding: 0 !important;
 }
 
 /* Hover state uses a pseudo-element to apply opacity to the background without fading the text.
    No per-variant hover-color/hover-opacity tokens exist anymore; use the generic overlay tokens
    shared across components instead. */
-.root[data-variant] .tab:not([data-active]):hover::before {
+.root[data-variant] .tab:not(:global(.Mui-selected)):hover::before {
   content: "";
   position: absolute;
   inset: 0;

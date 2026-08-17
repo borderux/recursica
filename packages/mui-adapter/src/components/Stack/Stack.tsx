@@ -29,10 +29,10 @@ export const Stack = forwardRef<HTMLDivElement, StackProps>(function Stack(
   return (
     <MUIStack
       ref={ref}
+      {...safeProps}
       spacing={resolvedGap}
       alignItems={align}
       justifyContent={justify}
-      {...safeProps}
     >
       {children}
     </MUIStack>

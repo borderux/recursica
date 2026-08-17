@@ -24,6 +24,7 @@ Because this package (`@recursica/mantine-adapter`) is explicitly built for Mant
 - Many Mantine components apply their own `:hover` styles — disable/override them in your CSS module (see the canonical guide's Hover states section).
 - Mantine's internal flex layouts will often break generic CSS properties like `text-overflow: ellipsis`, or allow injected SVGs to ignore UI Kit max bounds — use internal wrapper `<span>`s as described in the canonical guide.
 - Mantine components apply generic internal padding/gaps that can break specific layout constraints (e.g. icon-only buttons hitting perfect 48x48 min-widths) — compute layout exceptions and use `data-*` attribute hooks as described in the canonical guide.
+- **Spread `sanitizedProps` first, always** (see the canonical guide's §3.2). Mantine's `classNames`/`icon` are more forgiving than MUI's (unmatched slot keys don't silently vanish the same way), but a spread placed after a computed `className`/`classNames`/`icon` is still a live bug — it silently replaces the merged value with whatever the caller happened to pass under that same prop name. Several components in this adapter (e.g. `Radio.tsx`) currently spread last — treat that as the pattern to fix, not to copy, when you touch one of them.
 
 ## Polymorphic Components (Mantine-specific)
 

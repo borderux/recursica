@@ -124,7 +124,7 @@ export const PanelFooter = forwardRef<HTMLDivElement, PanelFooterProps>(
       ? `${styles.footer} ${classNameProp}`
       : styles.footer;
 
-    return <div ref={ref} className={finalClassName} {...sanitizedProps} />;
+    return <div ref={ref} {...sanitizedProps} className={finalClassName} />;
   },
 );
 PanelFooter.displayName = "PanelFooter";

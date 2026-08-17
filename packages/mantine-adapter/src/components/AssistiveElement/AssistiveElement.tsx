@@ -52,6 +52,7 @@ export const AssistiveElement = forwardRef<
     assistiveWithIcon = true,
     children,
     className,
+    role,
     overStyled = false,
     ...rest
   },
@@ -65,13 +66,19 @@ export const AssistiveElement = forwardRef<
 
   const IconComponent = assistiveVariant === "error" ? AlertIcon : InfoIcon;
 
+  // Announce error text as it appears/changes; a caller-supplied `role` always wins. No
+  // default for `help` — static descriptive text doesn't need a live region.
+  const resolvedRole =
+    role ?? (assistiveVariant === "error" ? "alert" : undefined);
+
   return (
     <div
       ref={ref}
       className={finalClass}
       data-variant={assistiveVariant}
+      role={resolvedRole}
       style={restRecord.style as React.CSSProperties}
-      {...restRecord} // Spread standard HTML attributes (like id, aria-*, role) natively.
+      {...restRecord} // Spread standard HTML attributes (like id, aria-*) natively.
     >
       {assistiveWithIcon && (
         <span className={styles.iconWrapper}>

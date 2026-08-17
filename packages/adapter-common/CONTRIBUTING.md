@@ -44,6 +44,8 @@ This will launch an interactive CLI that will guide you through creating a chang
 - Provide a version type for each package (`patch`, `minor`, or `major`).
 - Write a summary of the change.
 
+**Keep the summary to a maximum of 2 lines.** Changesets feed directly into the published CHANGELOG; long, detailed writeups belong in the PR description or commit message, not the changeset file.
+
 Commit the generated changeset file along with your other changes. When your pull request is merged, our release workflow will use this information to automatically version, create changelogs, and publish the packages.
 
 ## Code of Conduct

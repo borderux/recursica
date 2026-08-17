@@ -11,9 +11,12 @@ import styles from "./Avatar.module.css";
 
 import { type RecursicaAvatarProps } from "@recursica/adapter-common";
 
+// MUI's native `variant` is Avatar's *shape* ('circular'|'rounded'|'square'), not a color
+// treatment like every other MUI component's `variant` — unlike Mantine's, where `variant`
+// really is the same color-treatment concept ours is. Omitted so Recursica's own `variant`
+// (a completely different concept) can't be confused with it; see AVATAR_IMPLEMENTATION_NOTES.md.
 export type AvatarProps = RecursicaOverStyled<
-  Omit<MuiAvatarProps, "variant" | "size" | "color" | "radius"> &
-    RecursicaAvatarProps
+  Omit<MuiAvatarProps, "variant"> & RecursicaAvatarProps
 >;
 
 const _Avatar = forwardRef<HTMLDivElement, AvatarProps>(function Avatar(
@@ -28,12 +31,6 @@ const _Avatar = forwardRef<HTMLDivElement, AvatarProps>(function Avatar(
   },
   ref,
 ) {
-  const mapVariant = {
-    solid: "filled",
-    outline: "outline",
-    ghost: "transparent",
-  } as const;
-
   const sanitizedProps = filterStylingProps(rest, overStyled);
   const restRecord = sanitizedProps as Record<string, unknown>;
 
@@ -74,7 +71,7 @@ const _Avatar = forwardRef<HTMLDivElement, AvatarProps>(function Avatar(
       ref={ref}
       className={classNameProp}
       classes={mergedClassNames}
-      variant={mapVariant[variant] as unknown as MuiAvatarProps["variant"]}
+      variant="circular"
       src={src}
       data-variant={variant}
       data-size={size}

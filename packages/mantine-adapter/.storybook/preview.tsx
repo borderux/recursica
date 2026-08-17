@@ -4,6 +4,7 @@ import { MantineProvider } from "@mantine/core";
 import { ColorSchemeWrapper } from "../src/utils/ColorSchemeWrapper";
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
+import "@recursica/adapter-common/style.css";
 import "@recursica/official-release/recursica_variables_scoped.css";
 import recursicaTokens from "@recursica/official-release/recursica_tokens.json";
 import recursicaBrand from "@recursica/official-release/recursica_brand.json";

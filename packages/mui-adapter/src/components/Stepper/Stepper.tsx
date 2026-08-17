@@ -48,6 +48,7 @@ export const Stepper = forwardRef<HTMLDivElement, StepperProps>(
         <MuiStepper
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           ref={ref as any}
+          {...(sanitizedProps as MuiStepperProps)}
           orientation={orientation}
           connector={
             <MuiStepConnector
@@ -62,7 +63,6 @@ export const Stepper = forwardRef<HTMLDivElement, StepperProps>(
           classes={{
             root: styles.steps,
           }}
-          {...(sanitizedProps as MuiStepperProps)}
         />
       </div>
     );
@@ -79,9 +79,9 @@ export const Step = forwardRef<HTMLDivElement, StepProps>(
     return (
       <MuiStep
         ref={ref}
+        {...(filterStylingProps(rest, overStyled) as MuiStepProps)}
         classes={{ root: styles.step }}
         className={className || ""}
-        {...(filterStylingProps(rest, overStyled) as MuiStepProps)}
       />
     );
   },
@@ -116,6 +116,7 @@ export const StepLabel = forwardRef<HTMLDivElement, StepLabelProps>(
     return (
       <MuiStepLabel
         ref={ref}
+        {...(filterStylingProps(rest, overStyled) as MuiStepLabelProps)}
         className={className || ""}
         classes={{
           label: styles.stepLabel,
@@ -128,7 +129,6 @@ export const StepLabel = forwardRef<HTMLDivElement, StepLabelProps>(
             rest.optional
           )
         }
-        {...(filterStylingProps(rest, overStyled) as MuiStepLabelProps)}
       />
     );
   },

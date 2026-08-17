@@ -151,10 +151,7 @@ export const AutoComplete = forwardRef<HTMLInputElement, AutoCompleteProps>(
             disabled={disabled}
             value={value as string | undefined}
             defaultValue={defaultValue as string | undefined}
-            wrapperProps={{
-              "data-disabled": disabled ? "true" : undefined,
-              "data-error": error ? "true" : undefined,
-            }}
+            error={!!error}
             {...(sanitizedProps as unknown as MantineAutocompleteProps)}
           />
         }

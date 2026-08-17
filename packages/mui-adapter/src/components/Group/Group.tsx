@@ -46,6 +46,7 @@ export const Group = forwardRef<HTMLDivElement, GroupProps>(function Group(
   return (
     <MUIStack
       ref={ref}
+      {...safeProps}
       direction="row"
       flexWrap={wrap || "wrap"}
       justifyContent={justify}
@@ -55,7 +56,6 @@ export const Group = forwardRef<HTMLDivElement, GroupProps>(function Group(
         ...(resolvedRowGap ? { rowGap: resolvedRowGap } : {}),
         ...(resolvedColumnGap ? { columnGap: resolvedColumnGap } : {}),
       }}
-      {...safeProps}
     >
       {children}
     </MUIStack>

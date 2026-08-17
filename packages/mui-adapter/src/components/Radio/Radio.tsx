@@ -17,6 +17,7 @@ import {
   FormControlLayout,
   type FormControlLayoutProps,
 } from "../FormControlLayout/FormControlLayout";
+import { AssistiveElement } from "../AssistiveElement/AssistiveElement";
 
 import styles from "./Radio.module.css";
 
@@ -78,38 +79,36 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(
     delete restRecord["size"];
     delete restRecord["color"];
 
+    // NOTE: MUI's actual prop is "classes", not "classNames" (that's Mantine's naming) — this
+    // was reading the wrong key and silently doing nothing. Fixed. Also "body"/"inner"/"radio"/
+    // "icon"/"labelWrapper"/"label" below were never real MUI `classes` slots (MUI's Radio only
+    // recognizes root/checked/disabled/colorPrimary/colorSecondary/sizeSmall, plus "input" from
+    // the underlying SwitchBase) — those slot names are Mantine's own Radio classNames API,
+    // copy-pasted over verbatim. Since none of them existed as real slots, MUI silently dropped
+    // them, so the circle (all its background/border CSS lived under `.radio`) never rendered —
+    // only the label showed. Fixed by keeping only the real slots here and drawing the circle as
+    // our own combined icon/checkedIcon node instead (see radioNode below), same pattern already
+    // used by Checkbox.
     const mergedClassNames: Partial<Record<string, string>> = {
       root: styles.root,
-      body: styles.body,
-      inner: styles.inner,
-      radio: styles.radio,
-      icon: styles.icon,
-      labelWrapper: styles.labelWrapper,
-      label: styles.label,
+      checked: styles.checked,
+      disabled: styles.disabled,
     };
 
-    const classNamesProp = restRecord.classNames;
+    const classesProp = restRecord.classes;
     if (
-      classNamesProp &&
-      typeof classNamesProp === "object" &&
-      !Array.isArray(classNamesProp)
+      classesProp &&
+      typeof classesProp === "object" &&
+      !Array.isArray(classesProp)
     ) {
-      const o = classNamesProp as Partial<Record<string, string>>;
+      const o = classesProp as Partial<Record<string, string>>;
       mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
-      mergedClassNames.body = o.body ? `${styles.body} ${o.body}` : styles.body;
-      mergedClassNames.inner = o.inner
-        ? `${styles.inner} ${o.inner}`
-        : styles.inner;
-      mergedClassNames.radio = o.radio
-        ? `${styles.radio} ${o.radio}`
-        : styles.radio;
-      mergedClassNames.icon = o.icon ? `${styles.icon} ${o.icon}` : styles.icon;
-      mergedClassNames.labelWrapper = o.labelWrapper
-        ? `${styles.labelWrapper} ${o.labelWrapper}`
-        : styles.labelWrapper;
-      mergedClassNames.label = o.label
-        ? `${styles.label} ${o.label}`
-        : styles.label;
+      mergedClassNames.checked = o.checked
+        ? `${styles.checked} ${o.checked}`
+        : styles.checked;
+      mergedClassNames.disabled = o.disabled
+        ? `${styles.disabled} ${o.disabled}`
+        : styles.disabled;
     }
 
     const classNameProp = restRecord.className as string | undefined;
@@ -144,17 +143,28 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(
       return <>{roNode}</>;
     }
 
-    // We omit Mui's sizing/coloring so we rely strictly on variables from Radio.module.css
+    // MUI's icon/checkedIcon fully replace the visual (they're the only child SwitchBase
+    // renders alongside the invisible native input) — so the ring + dot both have to live in
+    // one combined node per state, same pattern as Checkbox's icon/checkedIcon divs.
+    // sanitizedProps spreads FIRST: these render-critical props (icon/checkedIcon/className/
+    // classes/disabled/disableRipple/sx) must win over anything of the same name coming through
+    // from the caller, or they'd silently clobber the exact rendering this component depends on.
     const radioNode = (
       <MuiRadio
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ref={ref as any}
-        icon={<RadioIcon />}
-        checkedIcon={<RadioIcon className={styles.checked} />}
-        className={finalClass}
+        {...(sanitizedProps as unknown as MuiRadioProps)}
+        icon={<div className={styles.radio} />}
+        checkedIcon={
+          <div className={`${styles.radio} ${styles.radioChecked}`}>
+            <RadioIcon className={styles.icon} />
+          </div>
+        }
+        className={!label ? `${finalClass} ${styles.inner}` : styles.inner}
         classes={mergedClassNames}
         disabled={readOnly || disabled}
-        {...(sanitizedProps as unknown as MuiRadioProps)}
+        disableRipple
+        sx={label ? { padding: 0 } : undefined}
       />
     );
 
@@ -170,27 +180,31 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(
             >
               {label as React.ReactNode}
             </label>
-            {description && (
-              <div
-                className={styles.description}
-                data-disabled={readOnly || disabled ? true : undefined}
-              >
-                {description}
-              </div>
-            )}
-            {error && (
-              <div
-                className={styles.error}
-                data-disabled={readOnly || disabled ? true : undefined}
+            {/* description/error are mutually exclusive — error takes precedence */}
+            {error ? (
+              <AssistiveElement
+                assistiveVariant="error"
+                assistiveWithIcon={false}
               >
                 {error}
-              </div>
+              </AssistiveElement>
+            ) : (
+              description && (
+                <AssistiveElement
+                  assistiveVariant="help"
+                  assistiveWithIcon={false}
+                >
+                  {description}
+                </AssistiveElement>
+              )
             )}
           </div>
         </div>
       </div>
     ) : (
-      radioNode
+      <div className={finalClass} style={style as React.CSSProperties}>
+        {radioNode}
+      </div>
     );
 
     if (formLayout) {

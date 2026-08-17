@@ -27,6 +27,7 @@ Because we configure our CSS engine (`<StyledEngineProvider injectFirst>`, wired
 
 - MUI leaks internal system props and complex objects if you're not careful about which props you forward — always route props through `filterStylingProps` (see the canonical guide's Recursica prop layer section) rather than forwarding `...rest` unfiltered.
 - MUI's internal flex layouts can break generic CSS properties like `text-overflow: ellipsis` the same way other libraries' can — use internal wrapper `<span>`s as described in the canonical guide (see `Button.tsx`'s `styles.iconWrapper`/`styles.labelText` for a working example).
+- **Spread `sanitizedProps` first, always** (see the canonical guide's §3.2) — this bit MUI especially hard: `icon`/`checkedIcon` fully _replace_ MUI's rendered visual rather than layering on top of it (see Radio/Checkbox/Switch), so a spread placed after them doesn't just leak an extra class — it can silently blank out the entire control. `classes` has the same failure mode: an unmatched key is dropped with no warning, so a spread landing after it can wipe a component's entire root/checked/disabled styling.
 
 ## Polymorphic Components (MUI-specific)
 

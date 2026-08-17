@@ -20,7 +20,11 @@ export interface RecursicaRadioGroupProps {
   value?: unknown;
   /** Initial selected value in uncontrolled mode */
   defaultValue?: unknown;
-  /** Callback triggered when active value changes */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onChange?: (event: any, value: string) => void;
+  /**
+   * Callback triggered when active value changes.
+   * Single-argument by design (no event): matches Mantine's native RadioGroup
+   * onChange, the cross-adapter source of truth. mui-adapter's RadioGroup
+   * normalizes MUI's native two-argument (event, value) callback down to this.
+   */
+  onChange?: (value: string) => void;
 }

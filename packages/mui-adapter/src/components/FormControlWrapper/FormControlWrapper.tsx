@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useId } from "react";
 import { FormControl, type FormControlProps } from "@mui/material";
 import { filterStylingProps } from "../../utils/filterStylingProps";
 import { Label } from "../Label/Label";
@@ -37,7 +37,7 @@ export const FormControlWrapper = React.forwardRef<
     required,
     disabled,
     focused,
-    id,
+    id: userProvidedId,
 
     formLayout = "stacked",
     labelSize = "default",
@@ -57,19 +57,35 @@ export const FormControlWrapper = React.forwardRef<
 
   const sanitizedProps = filterStylingProps(rest, overStyled);
 
+  // Generate a reliable ID when the caller doesn't provide one — matches the Mantine adapter,
+  // and is what makes the aria wiring below actually fire by default instead of only when a
+  // caller happens to pass their own `id`.
+  const generatedId = useId();
+  const id = userProvidedId || `recursica-fc-${generatedId}`;
+
   // Map descriptions fallback exactly like Mantine
   const finalAssistiveText = assistiveText || description || helperText;
 
-  // ARIA Bindings
-  const labelId = id ? `${id}-label` : undefined;
-  const descriptionId = id ? `${id}-description` : undefined;
+  // ARIA Bindings — separate ids for help text and error text (matching Mantine) so each can
+  // be referenced independently via `aria-describedby`/`aria-errormessage` rather than sharing
+  // one id for both.
+  const labelId = `${id}-label`;
+  const assistiveId = finalAssistiveText ? `${id}-assistive` : undefined;
+  const errorId = error ? `${id}-error` : undefined;
 
-  // Wrap children safely cloning aria hooks down natively
+  // Wrap children safely cloning aria hooks down natively. Never clobber a child's own
+  // explicit aria-describedby/aria-errormessage, matching Mantine's guard.
   const mappedChildren = React.Children.map(children, (child) => {
     if (React.isValidElement(child)) {
+      const childProps = child.props as Record<string, unknown>;
       return React.cloneElement(child, {
         "aria-labelledby": labelId,
-        "aria-describedby": finalAssistiveText ? descriptionId : undefined,
+        ...(assistiveId && !childProps["aria-describedby"]
+          ? { "aria-describedby": assistiveId }
+          : {}),
+        ...(errorId && !childProps["aria-errormessage"]
+          ? { "aria-errormessage": errorId }
+          : {}),
       } as React.HTMLAttributes<HTMLElement>);
     }
     return child;
@@ -117,7 +133,7 @@ export const FormControlWrapper = React.forwardRef<
           {/* Append native assistive block dynamically below the input */}
           {(finalAssistiveText || error) && (
             <AssistiveElement
-              id={descriptionId}
+              id={error ? errorId : assistiveId}
               assistiveVariant={error ? "error" : "help"}
               assistiveWithIcon={assistiveWithIcon}
             >

@@ -13,6 +13,14 @@ import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/For
 import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
 import styles from "./Switch.module.css";
 
+// eslint-disable-next-line react-refresh/only-export-components
+export const SwitchGroupContext = React.createContext<{
+  value?: string[];
+  onChange?: (event: React.SyntheticEvent, value: string[]) => void;
+  name?: string;
+  readOnly?: boolean;
+} | null>(null);
+
 import { type RecursicaSwitchGroupProps as BaseRecursicaSwitchGroupProps } from "@recursica/adapter-common";
 
 export interface RecursicaSwitchGroupProps
@@ -69,7 +77,6 @@ export const SwitchGroup = forwardRef<HTMLDivElement, SwitchGroupProps>(
       emptyValueComponent,
       value,
       defaultValue,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       onChange,
       ...rest
     } = props;
@@ -79,11 +86,23 @@ export const SwitchGroup = forwardRef<HTMLDivElement, SwitchGroupProps>(
     // Delete prohibited sizing hooks from bypassing the variables
     delete restRecord["size"];
 
+    const handleChange = (
+      _event: React.SyntheticEvent,
+      childValue: string[],
+    ) => {
+      if (onChange) {
+        onChange(childValue);
+      }
+    };
+
     return (
       <WithReadOnlyWrapper
         className={className}
         style={style as React.CSSProperties}
-        controlMaxWidth="var(--recursica_ui-kit_components_switch-item_properties_label-max-width)"
+        // No group-level max-width: switch-item label-max-width (200px) caps a single switch's
+        // own label text, not the whole group — reusing it here made the side-by-side label
+        // column (fixed 224px) wider than its container, so it always wrapped onto its own line.
+        controlMaxWidth={undefined}
         controlMinWidth={undefined}
         overStyled={overStyled as true}
         // Strictly override. ARIA grouping prohibits interactive switches nested natively inside <label>.
@@ -107,14 +126,23 @@ export const SwitchGroup = forwardRef<HTMLDivElement, SwitchGroupProps>(
         readOnlyValue={value !== undefined ? value : defaultValue}
         readOnlyNativeProps={props}
         activeComponent={
-          <MuiFormGroup
-            ref={ref}
-            {...(sanitizedProps as unknown as MuiFormGroupProps)}
-            className={`${styles.groupRoot} ${(sanitizedProps as any).className || ""}`.trim()}
-            data-layout={formLayout}
+          <SwitchGroupContext.Provider
+            value={{
+              value: value !== undefined ? value : defaultValue,
+              onChange: handleChange,
+              name: restRecord.name as string | undefined,
+              readOnly: readOnly || !!(restRecord as any).disabled,
+            }}
           >
-            {children}
-          </MuiFormGroup>
+            <MuiFormGroup
+              ref={ref}
+              {...(sanitizedProps as unknown as MuiFormGroupProps)}
+              className={`${styles.groupRoot} ${(sanitizedProps as any).className || ""}`.trim()}
+              data-layout={formLayout}
+            >
+              {children}
+            </MuiFormGroup>
+          </SwitchGroupContext.Provider>
         }
       />
     );
