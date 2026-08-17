@@ -134,7 +134,7 @@ export const Autocomplete = forwardRef<HTMLInputElement, AutocompleteProps>(
         label={label}
         assistiveText={assistiveText}
         assistiveWithIcon={assistiveWithIcon}
-        error={!!error}
+        error={error}
         required={required}
         id={id}
         disabled={disabled}
@@ -165,13 +165,29 @@ export const Autocomplete = forwardRef<HTMLInputElement, AutocompleteProps>(
             }}
             options={data || []}
             renderInput={(params) => {
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               const { InputProps, ...restParams } = params;
               return (
                 <MuiTextField
                   {...restParams}
                   placeholder={placeholder}
                   variant="standard"
+                  InputProps={{
+                    ...InputProps,
+                    startAdornment: leftSection ? (
+                      <span className={styles.section} data-position="left">
+                        {leftSection}
+                      </span>
+                    ) : (
+                      InputProps.startAdornment
+                    ),
+                    endAdornment: rightSection ? (
+                      <span className={styles.section} data-position="right">
+                        {rightSection}
+                      </span>
+                    ) : (
+                      InputProps.endAdornment
+                    ),
+                  }}
                 />
               );
             }}
