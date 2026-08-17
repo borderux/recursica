@@ -63,13 +63,13 @@ const _Pagination = forwardRef<HTMLDivElement, PaginationProps>(
     return (
       <div ref={ref} className={stylingParams.className}>
         <MuiPagination
+          {...(sanitizedProps as MuiPaginationProps)}
           count={total}
           showFirstButton={withEdges}
           showLastButton={withEdges}
           hidePrevButton={withControls === false ? true : undefined}
           hideNextButton={withControls === false ? true : undefined}
           classes={stylingParams.classNames}
-          {...(sanitizedProps as MuiPaginationProps)}
         />
       </div>
     );

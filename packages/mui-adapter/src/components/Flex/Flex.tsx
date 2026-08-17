@@ -54,8 +54,8 @@ export const Flex = forwardRef<HTMLDivElement, FlexProps>(function Flex(
   return (
     <MUIBox
       ref={ref}
-      display="flex"
       {...safeProps}
+      display="flex"
       gap={resolvedGap}
       rowGap={resolvedRowGap}
       columnGap={resolvedColumnGap}

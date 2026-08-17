@@ -85,6 +85,7 @@ const HoverCardBase = function HoverCard({
 
   return (
     <MuiTooltip
+      {...(sanitizedProps as unknown as Record<string, unknown>)}
       title={dropdownNode}
       placement={position as unknown as MuiTooltipProps["placement"]}
       arrow={withBeak}
@@ -104,7 +105,6 @@ const HoverCardBase = function HoverCard({
         },
       }}
       classes={mergedClassNames as unknown as MuiTooltipProps["classes"]}
-      {...(sanitizedProps as unknown as Record<string, unknown>)}
     >
       {/* Tooltip requires a single valid React element child that accepts a ref */}
       {isValidElement(targetNode) ? targetNode : <span>{targetNode}</span>}

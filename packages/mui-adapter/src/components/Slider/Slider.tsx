@@ -235,6 +235,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
 
             <div className={styles.sliderTrackWrapper}>
               <MuiSlider
+                {...(sanitizedProps as unknown as MuiSliderProps)}
                 classes={mergedClassNames}
                 disabled={disabled}
                 value={resolvedValue}
@@ -257,7 +258,6 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
                       ) => React.ReactNode)
                     : undefined
                 }
-                {...(sanitizedProps as unknown as MuiSliderProps)}
               />
             </div>
 

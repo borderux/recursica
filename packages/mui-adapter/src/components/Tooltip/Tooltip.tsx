@@ -77,12 +77,12 @@ const TooltipBase = function Tooltip({
 
   return (
     <MuiTooltip
+      {...(sanitizedProps as unknown as Omit<MuiTooltipProps, "title">)}
       title={label || title || ""}
       open={opened}
       placement="top" /* Recursica default; Mui defaults to "bottom" */
       arrow={resolvedWithArrow}
       classes={mergedClassNames}
-      {...(sanitizedProps as unknown as Omit<MuiTooltipProps, "title">)}
     />
   );
 };

@@ -16,8 +16,8 @@ Decisions and design tweaks strictly tailored for the UI Kit's Accordion wrapped
 
 ## 2. Default Configuration Reset (`unstyled`)
 
-**Decision:** We strip Mantine's inner styles away completely from Accordion mappings by leveraging React's default `variant="unstyled"`.
-**Implementation:** In `Accordion.tsx`, `<MantineAccordion>` binds `variant="unstyled"`. This effectively deletes Mantine's precomputed padding, borders, and shadow mappings allowing our targeted `classNames` inside `Accordion.module.css` to become the exact source of foundational truth without "fighting" `!important` tags or unpredictable flex-layouts inherited globally.
+**Decision:** We strip Mantine's inner styles away completely from Accordion mappings by leveraging Mantine's own `variant="unstyled"`. That Mantine sentinel is an internal implementation detail, not something a Recursica consumer should ever set directly — `RecursicaAccordionProps.variant` is `"default" | (string & {})`: `"default"` is the only value with dedicated Recursica styling, mapped internally via `mapVariant` in `Accordion.tsx`; any other string is a caller-supplied custom variant and passes straight through to Mantine unmapped.
+**Implementation:** `AccordionBase` defaults `variant` to Recursica's `"default"`, looks it up in `mapVariant` (`{ default: "unstyled" }`), and passes the resolved value (or the original string, if it wasn't a recognized key) to `<MantineAccordion variant={...}>`. The `"default"` → `"unstyled"` mapping effectively deletes Mantine's precomputed padding, borders, and shadow mappings allowing our targeted `classNames` inside `Accordion.module.css` to become the exact source of foundational truth without "fighting" `!important` tags or unpredictable flex-layouts inherited globally.
 
 ---
 
@@ -46,3 +46,17 @@ Decisions and design tweaks strictly tailored for the UI Kit's Accordion wrapped
 
 **Decision:** We do not bind isolated `open={true}` state properties natively on individual `<AccordionItem>` configurations.
 **Implementation:** Recursica natively dictates an item-level `open` tracking mapping. However, internally mapping boolean flags structurally across specific tree nodes heavily corrupts Mantine's DOM layout algorithms mapping parent-driven transition listeners. Mantine forces all expanded-height logic to run symmetrically off the `<Accordion value="...">` string matching array to accurately bind ARIA transitions. We explicitly ignore isolated item `<AccordionItem open={...}>` booleans to shield the rendering sequence cleanly.
+
+---
+
+## 7. Native `icon` slot is omitted on `AccordionControl`
+
+**Decision:** Mantine's `AccordionControl` has its own native `icon` prop — a distinct,
+documented slot ("icon displayed next to the label") — which the adapter reuses internally
+to render Recursica's `leftIcon`. Left unguarded, a caller could pass native `icon` directly
+and silently override the `leftIcon`-derived element (spread order would let it win).
+**Implementation:** `AccordionControlWrapperProps` omits `icon` from Mantine's native
+`AccordionControlProps` before merging in `RecursicaAccordionControlProps`, so the only way
+to set that slot is through `leftIcon`. Mantine's separate, per-control `chevron` override
+is _not_ omitted — nothing here computes it, so it still passes through safely if a caller
+wants to override the cascaded container-level chevron for a single item.

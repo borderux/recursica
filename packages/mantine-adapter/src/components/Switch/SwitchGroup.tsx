@@ -71,7 +71,10 @@ export const SwitchGroup = forwardRef<HTMLDivElement, SwitchGroupProps>(
       <WithReadOnlyWrapper
         className={className}
         style={style as React.CSSProperties}
-        controlMaxWidth="var(--recursica_ui-kit_components_switch-item_properties_label-max-width)"
+        // No group-level max-width: switch-item label-max-width (200px) caps a single switch's
+        // own label text, not the whole group — reusing it here made the side-by-side label
+        // column (fixed 224px) wider than its container, so it always wrapped onto its own line.
+        controlMaxWidth={undefined}
         controlMinWidth={undefined}
         overStyled={overStyled as true}
         labelElement="div" // Strictly override. ARIA grouping prohibits interactive switches nested natively inside <label>.
@@ -101,8 +104,8 @@ export const SwitchGroup = forwardRef<HTMLDivElement, SwitchGroupProps>(
             /* Natively bind local disabled lock dynamically */
             {...(sanitizedProps as unknown as MantineSwitchGroupProps)}
             disabled={readOnly || (restRecord as any).disabled}
-            value={value as any}
-            defaultValue={defaultValue as any}
+            value={value}
+            defaultValue={defaultValue}
           >
             <div className={styles.groupRoot} data-layout={formLayout}>
               {children}

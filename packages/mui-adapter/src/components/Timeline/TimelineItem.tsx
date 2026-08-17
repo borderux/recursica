@@ -76,12 +76,12 @@ export const TimelineItem = React.forwardRef<HTMLDivElement, TimelineItemProps>(
     return (
       <MuiTimelineItem
         ref={ref}
-        classes={mergedClassNames}
-        data-variant={bulletVariant}
         {...(sanitizedProps as unknown as Omit<
           MuiTimelineItemProps,
           "radius" | "color" | "lineVariant"
         >)}
+        classes={mergedClassNames}
+        data-variant={bulletVariant}
       >
         {content}
       </MuiTimelineItem>

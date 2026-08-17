@@ -70,6 +70,7 @@ export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
       emptyValueComponent,
       value,
       defaultValue,
+      onChange,
       ...rest
     } = props;
     const sanitizedProps = filterStylingProps(rest, overStyled);
@@ -111,6 +112,10 @@ export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
             {...(sanitizedProps as unknown as MuiRadioGroupProps)}
             value={value}
             defaultValue={defaultValue}
+            // MUI natively calls onChange(event, value); the Recursica contract is
+            // single-argument (value only), matching Mantine's native RadioGroup
+            // onChange (the cross-adapter source of truth) — normalize here.
+            onChange={onChange ? (_event, val) => onChange(val) : undefined}
             className={styles.groupRoot}
             data-layout={formLayout}
           >

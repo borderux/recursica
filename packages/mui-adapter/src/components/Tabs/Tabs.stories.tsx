@@ -48,9 +48,12 @@ const InteractiveTabs = (
   };
 
   return (
-    <Flex style={{ width: 600, height: 300 }}>
+    <Flex
+      direction={args.orientation === "vertical" ? "row" : "column"}
+      style={{ width: 600, height: 300 }}
+    >
       <TabContext value={value}>
-        <Tabs onChange={handleChange} {...args}>
+        <Tabs value={value} onChange={handleChange} {...args}>
           <Tab
             value="gallery"
             label="Gallery"

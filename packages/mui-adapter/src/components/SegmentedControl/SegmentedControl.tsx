@@ -38,7 +38,6 @@ function useSegmentedControlClassNames(restRecord: Record<string, unknown>): {
     root: styles.root,
     control: styles.control,
     label: styles.label,
-    indicator: styles.indicator,
   };
 
   const classNamesProp = restRecord.classNames;
@@ -55,9 +54,6 @@ function useSegmentedControlClassNames(restRecord: Record<string, unknown>): {
     mergedClassNames.label = o.label
       ? `${styles.label} ${o.label}`
       : styles.label;
-    mergedClassNames.indicator = o.indicator
-      ? `${styles.indicator} ${o.indicator}`
-      : styles.indicator;
   }
 
   const classNameProp = restRecord.className as string | undefined;
@@ -101,6 +97,10 @@ const _SegmentedControl = forwardRef<HTMLDivElement, SegmentedControlProps>(
     return (
       <MuiSegmentedControl
         ref={ref}
+        {...(sanitizedProps as Omit<
+          MuiSegmentedControlProps,
+          "variant" | "size" | "value" | "onChange"
+        >)}
         className={stylingParams.className}
         classes={stylingParams.classNames}
         orientation={orientation}
@@ -113,10 +113,6 @@ const _SegmentedControl = forwardRef<HTMLDivElement, SegmentedControlProps>(
             typeof MuiSegmentedControl
           >["onChange"]
         }
-        {...(sanitizedProps as Omit<
-          MuiSegmentedControlProps,
-          "variant" | "size" | "value" | "onChange"
-        >)}
       >
         {data.map((item) => {
           const itemValue = typeof item === "string" ? item : item.value;

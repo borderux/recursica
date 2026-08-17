@@ -1,15 +1,19 @@
 import React from "react";
 import { FormHelperText, type FormHelperTextProps } from "@mui/material";
-import { filterStylingProps } from "../../utils/filterStylingProps";
+import {
+  filterStylingProps,
+  type RecursicaOverStyled,
+} from "../../utils/filterStylingProps";
 import styles from "./AssistiveElement.module.css";
 
 import { type RecursicaAssistiveElementProps } from "@recursica/adapter-common";
 
-export interface AssistiveElementProps
-  extends FormHelperTextProps,
-    RecursicaAssistiveElementProps {
-  overStyled?: boolean;
-}
+// `error`/`component` are computed internally (from `assistiveVariant`, and forced to "div"
+// for layout) — omitted so a caller can't silently override either via spread.
+export type AssistiveElementProps = RecursicaOverStyled<
+  Omit<FormHelperTextProps, "error" | "component"> &
+    RecursicaAssistiveElementProps
+>;
 
 export const AssistiveElement = React.forwardRef<
   HTMLParagraphElement,
@@ -21,6 +25,7 @@ export const AssistiveElement = React.forwardRef<
     overStyled = false,
     className,
     children,
+    role,
     ...rest
   } = props;
 
@@ -61,15 +66,20 @@ export const AssistiveElement = React.forwardRef<
   // Map to MUI's native error prop if it's explicitly an error state
   const isError = assistiveVariant === "error";
 
+  // Announce error text as it appears/changes; a caller-supplied `role` always wins. No
+  // default for `help` — static descriptive text doesn't need a live region.
+  const resolvedRole = role ?? (isError ? "alert" : undefined);
+
   // Force component = "div" so flex layouts execute correctly inside HelperText
   return (
     <FormHelperText
       ref={ref}
+      {...(sanitizedProps as Omit<FormHelperTextProps, "error" | "component">)}
       component="div"
       error={isError}
+      role={resolvedRole}
       data-variant={assistiveVariant}
       className={className ? `${styles.root} ${className}` : styles.root}
-      {...(sanitizedProps as FormHelperTextProps)}
     >
       {assistiveWithIcon && (
         <div className={styles.icon}>

@@ -152,11 +152,11 @@ const GridBase = forwardRef<HTMLDivElement, GridProps>(function Grid(
     <GridContext.Provider value={{ grow }}>
       <MuiGrid
         ref={ref}
+        {...(safeProps as unknown as MuiGridProps)}
         container
         columns={columns}
         spacing={resolvedGap}
         className={styles.root}
-        {...(safeProps as unknown as MuiGridProps)}
         style={{
           justifyContent: justify,
           alignItems: align,

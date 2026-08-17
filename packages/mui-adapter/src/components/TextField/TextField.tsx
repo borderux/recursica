@@ -153,6 +153,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
           /* Naked Input execution safely decoupled from MUI's macro FormControl DOM hooks */
           <InputBase
             inputRef={ref} // MUI specific forward ref mapping
+            {...(sanitizedProps as unknown as InputBaseProps)}
             classes={{
               root: mergedClassNames.wrapper,
               input: mergedClassNames.input,
@@ -167,7 +168,6 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
             data-error={error ? "true" : undefined}
             data-with-left-section={leftSection ? "true" : undefined}
             data-with-right-section={rightSection ? "true" : undefined}
-            {...(sanitizedProps as unknown as InputBaseProps)}
           />
         }
       />

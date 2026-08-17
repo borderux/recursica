@@ -94,6 +94,10 @@ export const Toast = React.forwardRef<HTMLDivElement, ToastProps>(
     return (
       <MuiAlert
         ref={ref}
+        {...(sanitizedProps as unknown as Omit<
+          MuiAlertProps,
+          "color" | "radius" | "variant" | "onClose"
+        >)}
         icon={icon}
         data-variant={variant}
         className={`${className || ""}`}
@@ -110,10 +114,6 @@ export const Toast = React.forwardRef<HTMLDivElement, ToastProps>(
             </MuiIconButton>
           ) : undefined
         }
-        {...(sanitizedProps as unknown as Omit<
-          MuiAlertProps,
-          "color" | "radius" | "variant" | "onClose"
-        >)}
       >
         {title && (
           <MuiAlertTitle className={styles.title}>{title}</MuiAlertTitle>
