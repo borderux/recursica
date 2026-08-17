@@ -128,8 +128,6 @@
   background-color: var(--chip-bg);
   border-color: var(--chip-border);
   color: var(--chip-text);
-  min-width: var(--recursica_ui-kit_components_chip_properties_min-width);
-  max-width: var(--recursica_ui-kit_components_chip_properties_max-width);
   box-shadow: var(--recursica_ui-kit_components_chip_properties_elevation);
 
   transition: all 0.2s ease;
@@ -200,6 +198,7 @@
   color: var(--chip-icon);
   width: var(--recursica_ui-kit_components_chip_properties_icon-size);
   height: var(--recursica_ui-kit_components_chip_properties_icon-size);
+  margin-left: 0;
   margin-right: var(
     --recursica_ui-kit_components_chip_properties_icon-text-gap
   );
@@ -219,13 +218,21 @@
   white-space: nowrap;
 }
 
-.leadingIcon {
+/* Doubled selector for specificity parity with MUI's own compound
+   `.MuiChip-root .MuiChip-icon` rule, which otherwise wins outright on a
+   plain single-class selector and leaks its default margin/color. */
+.leadingIcon.leadingIcon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: var(--chip-icon);
   width: var(--recursica_ui-kit_components_chip_properties_icon-size);
   height: var(--recursica_ui-kit_components_chip_properties_icon-size);
+  /* Reset MUI's default icon margin, keep the icon-text gap */
+  margin-left: 0;
+  margin-right: var(
+    --recursica_ui-kit_components_chip_properties_icon-text-gap
+  );
 }
 
 .leadingIcon svg {
@@ -233,7 +240,9 @@
   height: 100%;
 }
 
-.removeIconWrapper {
+/* Doubled selector for specificity parity with MUI's own compound
+   `.MuiChip-root .MuiChip-deleteIcon` rule (same reasoning as .leadingIcon). */
+.removeIconWrapper.removeIconWrapper {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -247,7 +256,7 @@
   margin: 0;
 }
 
-.removeIconWrapper:focus-visible {
+.removeIconWrapper.removeIconWrapper:focus-visible {
   box-shadow: 0 0 0 2px var(--chip-border); /* HARDCODE: Focus indication */
 }
 
