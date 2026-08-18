@@ -70,7 +70,7 @@ export interface RecursicaFileInputProps {
   placeholder?: React.ReactNode;
   /** Screen-reader label for the control itself. Defaults to `"Choose file"`. */
   browseLabel?: string;
-  /** Screen-reader label for a file chip's remove button (multiple-file mode). Defaults to `"Remove"`. */
+  /** Screen-reader label for a file chip's remove button. Defaults to `"Remove"`. */
   removeFileLabel?: string;
   /** Screen-reader label for the trailing clear-all icon. Defaults to `"Clear"`. */
   clearLabel?: string;

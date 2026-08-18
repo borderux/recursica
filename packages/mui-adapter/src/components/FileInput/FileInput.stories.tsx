@@ -16,7 +16,7 @@ const meta: Meta<typeof FileInput> = {
     docs: {
       description: {
         component: `
-The \`FileInput\` component is a single-line, \`TextField\`-shaped control for choosing files, integrated directly into the \`FormControlWrapper\` architecture. It shares \`FileUpload\`'s selection/validation interface (\`accept\`/\`maxSize\`/\`maxFiles\`, \`readOnly\`) behind a different presentation — a single file renders as plain text, multiple files render as an inline chip row, and a trailing icon clears the current selection.
+The \`FileInput\` component is a single-line, \`TextField\`-shaped control for choosing files, integrated directly into the \`FormControlWrapper\` architecture. It shares \`FileUpload\`'s selection/validation interface (\`accept\`/\`maxSize\`/\`maxFiles\`, \`readOnly\`) behind a different presentation — every selected file renders as a removable chip in a horizontally scrollable row, and a trailing \`Button\` clears the current selection.
 
 ### Examples
 \`\`\`tsx
