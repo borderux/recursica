@@ -41,6 +41,8 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
     icon,
     onRemove,
     removeLabel = "Remove",
+    removeTabIndex,
+    removeIconRef,
     children,
     overStyled = false,
     ...rest
@@ -79,18 +81,24 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
   // Determine state
   const dataError = error ? "" : undefined;
   const isIconOnly = !children && (!!icon || !!onRemove);
+  // A chip only counts as interactive when something actually responds to it — merely passing a
+  // `checked` value (e.g. to pin a display-only chip to a fixed visual state, as FileUpload's
+  // read-only file list does) isn't itself an interaction, since clicking it with no onChange/
+  // onClick wired does nothing observable.
   const isInteractive =
-    restRecord.checked !== undefined ||
-    restRecord.defaultChecked !== undefined ||
     onRemove !== undefined ||
-    restRecord.onClick !== undefined;
+    restRecord.onClick !== undefined ||
+    restRecord.onChange !== undefined;
 
   return (
     <MantineChip
       ref={ref}
       className={finalClass}
       classNames={mergedClassNames}
-      wrapperProps={dataError !== undefined ? { "data-error": "" } : undefined}
+      wrapperProps={{
+        ...(dataError !== undefined ? { "data-error": "" } : {}),
+        ...(isInteractive ? { "data-interactive": "" } : {}),
+      }}
       {...(isIconOnly ? { "data-icon-only": "" } : {})}
       {...(!isInteractive ? { tabIndex: -1, "aria-hidden": true } : {})}
       {...sanitizedProps}
@@ -106,6 +114,7 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
 
         {onRemove && (
           <span
+            ref={removeIconRef}
             role="button"
             className={styles.removeIcon}
             onClick={(e) => {
@@ -123,7 +132,7 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
                 );
               }
             }}
-            tabIndex={0}
+            tabIndex={removeTabIndex ?? 0}
           >
             <CloseIcon />
           </span>

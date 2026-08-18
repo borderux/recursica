@@ -37,8 +37,11 @@ export interface RecursicaFileUploadProps {
   onFileRemove?: (id: string) => void;
   /**
    * Native `accept` attribute for the underlying file input (e.g. `".pdf,.png"`
-   * or `"image/*"`). Only constrains the browse-button file picker and the
-   * dropzone's own drag-and-drop filtering; it is not re-validated beyond that.
+   * or `"image/*"`) — constrains the browse-button file picker natively. Also
+   * enforced against files dropped onto the dropzone: the browser only applies
+   * `accept` to its own file-picker dialog, never to a `drop` event, so files
+   * that don't match are rejected the same way (see `onFilesRejected`) rather
+   * than silently bypassing the restriction.
    */
   accept?: string;
   /** Whether more than one file can be selected/dropped at once. Defaults to `true`. */
@@ -48,8 +51,31 @@ export interface RecursicaFileUploadProps {
    * `onFilesRejected` instead of `onFilesAdded`.
    */
   maxSize?: number;
-  /** Called with any files rejected for exceeding `maxSize`. */
+  /**
+   * Maximum total number of files allowed in `files`. Once reached, further
+   * dropped/picked files are passed to `onFilesRejected` instead of
+   * `onFilesAdded`.
+   */
+  maxFiles?: number;
+  /**
+   * Called with any files rejected for exceeding `maxSize`/`maxFiles` or not
+   * matching `accept`.
+   */
   onFilesRejected?: (files: File[]) => void;
+  /**
+   * Error message shown (via the standard assistive-text error slot) when a
+   * dropped/picked file's extension or MIME type doesn't match `accept`.
+   * Defaults to `"File type not accepted"`.
+   */
+  invalidFileTypeMessage?: React.ReactNode;
+  /**
+   * Error message shown (via the standard assistive-text error slot) when a
+   * dropped/picked file would exceed `maxFiles`. Defaults to
+   * `"Maximum of {maxFiles} files allowed"`.
+   */
+  maxFilesMessage?: React.ReactNode;
+  /** Icon shown above the dropzone label. Defaults to the built-in upload icon. */
+  icon?: React.ReactNode;
   /** Text shown inside the dropzone. Defaults to `"Drag and drop files here to upload"`. */
   dropzoneLabel?: React.ReactNode;
   /** Label for the button that opens the native file picker. Defaults to `"Browse files"`. */
@@ -58,4 +84,9 @@ export interface RecursicaFileUploadProps {
   removeFileLabel?: string;
   /** Disables the dropzone, browse button, and every file chip's remove icon. */
   disabled?: boolean;
+  /**
+   * Renders `files` as a static list of chips with no remove icon, and omits
+   * the dropzone/browse button entirely.
+   */
+  readOnly?: boolean;
 }

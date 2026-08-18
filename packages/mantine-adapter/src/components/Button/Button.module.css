@@ -401,3 +401,16 @@
     --recursica_ui-kit_components_button_variants_styles_text_variants_states_disabled_properties_elevation
   );
 }
+
+/* Focus State Mapping (native browser focus outline replaced with the recursica focus ring).
+   Placed after every variant's own box-shadow (elevation) rule so it wins the cascade at equal
+   attribute-selector specificity regardless of variant. */
+.root:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 var(--recursica_brand_states_focus_border-size)
+      var(--recursica_brand_states_focus_color),
+    0 0 var(--recursica_brand_states_focus_blur)
+      var(--recursica_brand_states_focus_margin)
+      var(--recursica_brand_states_focus_color);
+}

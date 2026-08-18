@@ -43,6 +43,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  position: relative; /* HARDCODE: anchors the drag-over overlay below */
   box-sizing: border-box;
   width: 100%;
   border-style: dashed; /* HARDCODE: see EXEMPTIONS above */
@@ -62,6 +63,32 @@
   gap: var(
     --recursica_ui-kit_components_file-upload_properties_vertical-element-gap
   );
+}
+
+/* Dragging-over state: reuses the generic hover overlay recipe (see Button.module.css) for the
+   background, and the shared "selected" border bridge var FormControlWrapper already exposes
+   (see FormControlWrapper.module.css) for the border — file-upload has no color tokens of its own
+   for this state. See "Dragging-over visual state" in FILEUPLOAD_IMPLEMENTATION_NOTES.md. */
+.dropzone > * {
+  position: relative;
+  z-index: 1;
+}
+.dropzone::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease;
+  opacity: 0;
+  background-color: var(--recursica_brand_states_hover_color);
+}
+.dropzone[data-dragging="true"] {
+  border-color: var(--form-field-border-selected);
+}
+.dropzone[data-dragging="true"]::after {
+  opacity: var(--recursica_brand_states_hover_opacity);
 }
 
 .uploadIcon {

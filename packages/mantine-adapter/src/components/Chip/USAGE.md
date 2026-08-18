@@ -46,3 +46,10 @@ The remove/close action is keyboard accessible — it can be activated via keybo
 ### Sizing
 
 Chip does not support a `size` prop; chips render at a fixed size.
+
+### Building a keyboard-navigable chip group
+
+`removeTabIndex` and `removeIconRef` are optional escape hatches for composing a _group_ of chips
+with roving-tabindex keyboard navigation (Tab reaches one chip at a time, arrow keys move between
+them) — see `FileUpload`'s file list for a working example. Ignore both for a standalone chip; they
+default to a normal `tabIndex={0}` remove icon with no ref.

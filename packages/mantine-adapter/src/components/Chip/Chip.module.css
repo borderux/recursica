@@ -53,9 +53,11 @@
     --recursica_ui-kit_components_chip_properties_border-radius
   );
 
-  cursor: pointer;
   user-select: none;
-  overflow: hidden;
+  overflow-x: hidden; /* HARDCODE: horizontal-only, same descender reasoning as .children below —
+    .root has no visible background of its own (that's .label), so there's nothing here that
+    needs vertical clipping */
+  overflow-y: visible;
 }
 
 /* We target the mantine label directly because that is the visible container in Mantine's Chip */
@@ -67,6 +69,10 @@
 
   /* Reset mantine styles */
   background: transparent; /* HARDCODE: Mantine forces background styling on label */
+  cursor: default; /* HARDCODE: Mantine's own base styles hardcode cursor: pointer on this class —
+    override it to plain default, then only re-enable it below for a chip with a real handler
+    (onRemove/onClick/onChange — see Chip.tsx's `isInteractive`). A display-only chip (e.g. a
+    read-only FileUpload file list) has nothing for a click to do, so it shouldn't look clickable. */
   border-style: solid;
   border-width: var(--recursica_ui-kit_components_chip_properties_border-size);
   padding: var(--recursica_ui-kit_components_chip_properties_vertical-padding)
@@ -110,10 +116,20 @@
 .label.label > span:not(.mantineIconWrapper) {
   display: inline-flex;
   align-items: center;
+  flex: 1 1 auto; /* HARDCODE: let this anonymous wrapper actually fill/shrink to .label's real
+    width instead of sizing to its content — otherwise a long .children label overflows this
+    span well past .label's 200px max-width, and .children's own text-overflow: ellipsis never
+    engages because ITS box is still as wide as the unwrapped text (see CHIP_IMPLEMENTATION_NOTES.md) */
+  min-width: 0; /* HARDCODE: flex items default to min-width: auto (their content's min-content
+    size) — without this override, flex-shrink is a no-op and the span never shrinks below that */
 }
 
 .label.label:hover {
   background-color: var(--chip-bg);
+}
+
+.root[data-interactive] .label.label {
+  cursor: pointer;
 }
 
 /* Default (Unselected) hover/active interactions (Mantine overrides) */
@@ -191,12 +207,21 @@
   align-items: center;
   gap: var(--recursica_ui-kit_components_chip_properties_icon-text-gap);
   width: 100%;
+  min-width: 0; /* HARDCODE: lets .children actually shrink and ellipsize instead of overflowing */
 }
 
 .children {
   flex-grow: 1;
+  min-width: 0; /* HARDCODE: a flex child needs this for text-overflow: ellipsis to engage at all */
   text-overflow: ellipsis;
-  overflow: hidden;
+  overflow-x: clip; /* HARDCODE: text-overflow: ellipsis only needs the x-axis clipped — clipping
+    y too (plain `overflow: hidden`) cut off descenders (e.g. the "g" in "image.png") whenever the
+    line-height token is tighter than the font's natural glyph extent (Matt Massey, 2026-08-18).
+    `clip` rather than `hidden` because `hidden` makes this a scroll container, and Chromium
+    auto-adds scroll containers with overflowing content to the Tab order (so a browser user can
+    arrow-key-scroll them) — `clip` doesn't create a scrollport, so long/truncated chip labels
+    (e.g. a read-only FileUpload file list) don't pick up a phantom, un-styled tab stop. */
+  overflow-y: visible;
   white-space: nowrap;
 }
 
@@ -204,6 +229,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0; /* HARDCODE: keep the icon from being squeezed by a long, truncating label */
   color: var(--chip-icon);
   width: var(--recursica_ui-kit_components_chip_properties_icon-size);
   height: var(--recursica_ui-kit_components_chip_properties_icon-size);
@@ -218,6 +244,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0; /* HARDCODE: keep the remove icon visible when the label truncates instead */
   color: var(--chip-close);
   width: var(--recursica_ui-kit_components_chip_properties_close-icon-size);
   height: var(--recursica_ui-kit_components_chip_properties_close-icon-size);
@@ -227,7 +254,12 @@
 }
 
 .removeIcon:focus-visible {
-  box-shadow: 0 0 0 2px var(--chip-border); /* HARDCODE: Focus indication */
+  box-shadow:
+    0 0 0 var(--recursica_brand_states_focus_border-size)
+      var(--recursica_brand_states_focus_color),
+    0 0 var(--recursica_brand_states_focus_blur)
+      var(--recursica_brand_states_focus_margin)
+      var(--recursica_brand_states_focus_color);
 }
 
 .removeIcon svg {
