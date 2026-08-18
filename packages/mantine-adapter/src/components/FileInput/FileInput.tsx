@@ -4,6 +4,7 @@ import {
   filterStylingProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
+import { Button } from "../Button/Button";
 import { Chip } from "../Chip/Chip";
 import {
   FormControlWrapper,
@@ -233,9 +234,9 @@ export const FileInput = forwardRef<HTMLDivElement, FileInputProps>(
       files.forEach((item) => onFileRemove?.(item.id ?? item.file.name));
     };
 
-    // Roving tabindex across the file chip list (multiple-file mode only): only the "active"
-    // chip's remove icon is a tab stop, and Left/Right/Up/Down move it — same pattern as
-    // FileUpload, see FILEINPUT_IMPLEMENTATION_NOTES.md.
+    // Roving tabindex across the file chip list (single- or multiple-file mode): only the
+    // "active" chip's remove icon is a tab stop, and Left/Right/Up/Down move it — same pattern
+    // as FileUpload, see FILEINPUT_IMPLEMENTATION_NOTES.md.
     const [activeChipIndex, setActiveChipIndex] = useState(0);
     const removeIconRefs = useRef<Array<HTMLSpanElement | null>>([]);
     const prevFileCountRef = useRef(files?.length ?? 0);
@@ -336,11 +337,7 @@ export const FileInput = forwardRef<HTMLDivElement, FileInputProps>(
               </span>
             )}
 
-            {hasFiles && !multiple && (
-              <span className={styles.value}>{files![0].file.name}</span>
-            )}
-
-            {hasFiles && multiple && (
+            {hasFiles && (
               <div
                 className={styles.chipRow}
                 onKeyDown={readOnly ? undefined : handleChipRowKeyDown}
@@ -379,25 +376,20 @@ export const FileInput = forwardRef<HTMLDivElement, FileInputProps>(
           </div>
 
           {hasFiles && !readOnly && (
-            <span
-              role="button"
-              className={styles.trailingIcon}
+            <Button
+              overStyled
+              variant="text"
+              size="small"
+              icon={<ClearIcon />}
               aria-label={clearLabel}
-              tabIndex={disabled ? -1 : 0}
+              className={styles.trailingIcon}
+              disabled={disabled}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 handleClearAll();
               }}
-              onKeyDown={(e) => {
-                if (e.key !== "Enter" && e.key !== " ") return;
-                e.preventDefault();
-                e.stopPropagation();
-                handleClearAll();
-              }}
-            >
-              <ClearIcon />
-            </span>
+            />
           )}
 
           <input

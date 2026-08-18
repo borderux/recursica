@@ -15,11 +15,12 @@ from the reference screenshot alone.
 The control is one clickable, focusable `<div role="button">` containing:
 
 1. **A leading icon** — the upload icon by default, overridable via `icon`.
-2. **A content area** — placeholder text when empty, plain filename text in single-file mode, or
-   an inline row of `Chip`s (reusing `FileUpload`'s chip, same as its file list) in multiple-file
-   mode.
-3. **A trailing "clear" icon** — shown whenever a file is selected; clears the entire current
-   selection (see "Trailing clear icon" below).
+2. **A content area** — placeholder text when empty, or a horizontally scrollable row of `Chip`s
+   (reusing `FileUpload`'s chip, same as its file list) once one or more files are selected —
+   single- and multiple-file mode render identically here; only the selection/replace behavior
+   differs (see "`multiple` defaults to `false`" below).
+3. **A trailing "clear" `Button`** — shown whenever a file is selected; clears the entire current
+   selection (see "Trailing clear button" below).
 4. **A hidden `<input type="file">`**, triggered programmatically — same approach as
    `FileUpload`'s dropzone, not the "invisible overlay input" pattern some styled file inputs use
    (that pattern would need every interactive child — chip remove icons, the clear icon — to sit
@@ -94,12 +95,17 @@ extras to `onFilesRejected` via the same effective-cap-of-1 logic, with the defa
 `maxFilesMessage` reading `"Only one file is allowed"` instead of `FileUpload`'s
 `"Maximum of N files allowed"` phrasing.
 
-## Trailing clear icon
+## Trailing clear button
 
-Forge's per-state `trailing-icon` color token (present in the default/disabled/error color sets)
-is a real, deliberate design element, not a leftover — it drives a clear-all affordance shown
-whenever `files.length > 0`. It calls `onFileRemove` once per currently-selected file (reusing the
-same callback `FileUpload`'s individual chip removal uses, rather than introducing a separate
+The clear-all affordance shown whenever `files.length > 0` is a real shared `Button`
+(`variant="text" size="small"`, icon-only), not a bespoke `<span role="button">` — it gets real
+button semantics and keyboard handling for free, the same reasoning as `Tree`'s expand/collapse
+button (see `Tree.module.css`'s `.expandButton`). It's rendered through Button's own tokened
+color/disabled states, so `file-input`'s own `properties_colors_trailing-icon` token (and its
+`disabled`/`error` state variants) is `recursica-ignore`d rather than applied — it has no
+"clear button is disabled" state of its own anyway, since `disabled` already omits interactivity
+entirely. Clicking/activating it calls `onFileRemove` once per currently-selected file (reusing
+the same callback `FileUpload`'s individual chip removal uses, rather than introducing a separate
 `onClear` prop) — in single-file mode that's one call; in multiple-file mode it clears everything
 at once, distinct from a chip's own individual remove icon.
 
@@ -113,13 +119,22 @@ text) still bubbles up to open the picker, but clicking directly on a chip's bod
 trigger it. Chip's own remove icon already calls `stopPropagation` internally (see `Chip.tsx`), so
 it needed no changes for this.
 
-## Keyboard navigation for the multiple-file chip row
+## Keyboard navigation for the chip row
 
 Same roving-tabindex model as `FileUpload`'s file list (`activeChipIndex`, `removeIconRefs`,
-Left/Right/Up/Down roving, focus-survives-removal `useEffect`) — reused rather than reinvented.
-The only addition specific to `FileInput` is that `Tab` reaches the root control itself first
-(since it's the click/keyboard surface for opening the picker), _then_ the chip row's roving group,
-_then_ the trailing clear icon as its own stop.
+Left/Right/Up/Down roving, focus-survives-removal `useEffect`) — reused rather than reinvented,
+and applies in single-file mode too (a one-chip roving group is a no-op but needs no special
+casing). The only addition specific to `FileInput` is that `Tab` reaches the root control itself
+first (since it's the click/keyboard surface for opening the picker), _then_ the chip row's
+roving group, _then_ the trailing clear button as its own stop.
+
+## The chip row scrolls horizontally instead of wrapping or clipping
+
+`.chipRow` uses `overflow-x: auto; overflow-y: hidden` rather than `FileUpload`'s file list, which
+wraps onto multiple lines below the dropzone — `FileInput` is a fixed single-line, `min-height`d
+control, so wrapping would grow it vertically. Enough chips to overflow the control's own width
+scroll horizontally within it instead (mouse wheel/trackpad or a native scrollbar), same tradeoff
+already made for `.value`'s ellipsis truncation.
 
 ## Read-only vs disabled
 

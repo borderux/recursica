@@ -16,7 +16,7 @@ import { FileInput } from "@recursica/mantine-adapter";
 
 `FileInput` is a **controlled** component: it never stores the selected file(s) itself. `onFilesAdded` reports newly picked/dropped files, `onFileRemove` reports which file was removed (or cleared), and you own the `files` array in between.
 
-It shares `FileUpload`'s selection/validation interface, but is presented as a single-line, `TextField`-shaped control instead of a dropzone — a single file renders as plain text, and (when `multiple`) more than one file renders as an inline chip row.
+It shares `FileUpload`'s selection/validation interface, but is presented as a single-line, `TextField`-shaped control instead of a dropzone — every selected file renders as a removable chip in a horizontally scrollable row, whether `multiple` is set or not.
 
 ```tsx
 import React, { useState } from "react";
@@ -48,7 +48,7 @@ rather than appending — picking a new file in single-file mode always replaces
 | ------------------------ | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `files`                  | `RecursicaFileUploadItem[]` | Files currently selected. Each item is `{ file: File; id?: string }`.                                                                                                                                                                |
 | `onFilesAdded`           | `(files: File[]) => void`   | Called with newly picked/dropped files. Only the new files — merge them into `files` yourself.                                                                                                                                       |
-| `onFileRemove`           | `(id: string) => void`      | Called with a file's `id` (or `file.name` if no `id` was given) when it's removed via a chip's remove icon (multiple-file mode) or the trailing clear icon.                                                                          |
+| `onFileRemove`           | `(id: string) => void`      | Called with a file's `id` (or `file.name` if no `id` was given) when it's removed via a chip's remove icon or the trailing clear button.                                                                                             |
 | `accept`                 | `string`                    | Native `accept` attribute (e.g. `".pdf,.png"` or `"image/*"`) — constrains the picker dialog, and is also enforced against dropped files (via `onFilesRejected`), since the browser never applies `accept` to a `drop` event itself. |
 | `multiple`               | `boolean`                   | Whether more than one file can be selected/dropped at once. Defaults to `false`, unlike `FileUpload` (defaults to `true`).                                                                                                           |
 | `maxSize`                | `number`                    | Maximum size per file, in bytes. Oversized files go to `onFilesRejected` instead of `onFilesAdded`.                                                                                                                                  |
@@ -59,8 +59,8 @@ rather than appending — picking a new file in single-file mode always replaces
 | `icon`                   | `React.ReactNode`           | Leading icon shown inside the control. Defaults to the built-in upload icon.                                                                                                                                                         |
 | `placeholder`            | `React.ReactNode`           | Text shown when no file is selected. Defaults to `"Select a file..."`.                                                                                                                                                               |
 | `browseLabel`            | `string`                    | Screen-reader label for the control itself (it's the sole interactive/focusable surface, there being no separate "Browse" button). Defaults to `"Choose file"`.                                                                      |
-| `removeFileLabel`        | `string`                    | Screen-reader label for a file chip's remove button (multiple-file mode). Defaults to `"Remove"`.                                                                                                                                    |
-| `clearLabel`             | `string`                    | Screen-reader label for the trailing clear-all icon. Defaults to `"Clear"`.                                                                                                                                                          |
+| `removeFileLabel`        | `string`                    | Screen-reader label for a file chip's remove button. Defaults to `"Remove"`.                                                                                                                                                         |
+| `clearLabel`             | `string`                    | Screen-reader label (`aria-label`) for the trailing clear-all `Button`. Defaults to `"Clear"`.                                                                                                                                       |
 | `disabled`               | `boolean`                   | Disables the control and its clear/remove icons.                                                                                                                                                                                     |
 | `readOnly`               | `boolean`                   | Renders `files` as a static, non-interactive display with no clear/remove icons, and disables picking or dropping new files.                                                                                                         |
 
@@ -87,9 +87,9 @@ rather than appending — picking a new file in single-file mode always replaces
 />
 ```
 
-With `multiple`, selected files render as an inline row of removable chips (the same `Chip`
-component `FileUpload` uses), and the trailing icon clears the entire selection at once rather
-than removing a single file.
+With `multiple`, the same horizontally scrollable row of removable chips (the same `Chip`
+component `FileUpload` uses) can hold more than one file, and the trailing `Button` clears the
+entire selection at once rather than removing a single file.
 
 ---
 
