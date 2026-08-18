@@ -387,6 +387,12 @@ export const FileInput = forwardRef<HTMLDivElement, FileInputProps>(
                 e.stopPropagation();
                 handleClearAll();
               }}
+              onKeyDown={(e) => {
+                if (e.key !== "Enter" && e.key !== " ") return;
+                e.preventDefault();
+                e.stopPropagation();
+                handleClearAll();
+              }}
             />
           )}
 
