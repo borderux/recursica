@@ -182,16 +182,19 @@ export const RECURSICA_COMPONENTS = [
   "Autocomplete",
   "Avatar",
   "Badge",
+  "Box",
   "Breadcrumb",
   "Button",
   "Card",
   "Checkbox",
+  "CheckboxGroup",
   "Chip",
   "Container",
   "DatePicker",
   "Dropdown",
   "EmptyValueRenderer",
   "FileInput",
+  "FileUpload",
   "Flex",
   "FormControlLayout",
   "FormControlWrapper",
@@ -226,6 +229,8 @@ export const RECURSICA_COMPONENTS = [
   "Toast",
   "Tooltip",
   "TransferList",
+  "Tree",
+  "Typography",
 ] as const;
 
 /**
