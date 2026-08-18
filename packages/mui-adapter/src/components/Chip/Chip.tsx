@@ -9,8 +9,14 @@ import styles from "./Chip.module.css";
 import { type RecursicaChipProps } from "@recursica/adapter-common";
 
 export type ChipProps = RecursicaOverStyled<
-  Omit<MuiChipProps, "variant" | "size" | "color" | "radius"> &
-    RecursicaChipProps
+  Omit<MuiChipProps, "variant" | "size" | "color" | "radius" | "children"> &
+    RecursicaChipProps & {
+      // MUI's own ChipProps types `children` as `null | undefined` (MUI's Chip expects `label`
+      // instead) — this component's actual API is `children` (see the `label={...}` JSX below,
+      // which always wins over any caller-supplied `label` in `sanitizedProps`), so restore a
+      // real type for it here.
+      children?: React.ReactNode;
+    }
 >;
 
 function CloseIcon(props: React.ComponentPropsWithoutRef<"svg">) {
@@ -56,8 +62,9 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
     error = false,
     icon,
     onRemove,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     removeLabel = "Remove",
+    removeTabIndex,
+    removeIconRef,
     children,
     checked,
     overStyled = false,
@@ -97,6 +104,14 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
   const dataError = error ? "" : undefined;
   const dataChecked = checked ? "" : undefined;
   const isIconOnly = !children && (!!icon || !!onRemove);
+  // A chip only counts as interactive when something actually responds to it — merely passing a
+  // `checked` value (e.g. to pin a display-only chip to a fixed visual state, as FileUpload's
+  // read-only file list does) isn't itself an interaction, since clicking it with no onChange/
+  // onClick wired does nothing observable.
+  const isInteractive =
+    onRemove !== undefined ||
+    restRecord.onClick !== undefined ||
+    restRecord.onChange !== undefined;
 
   return (
     <MuiChip
@@ -106,6 +121,7 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
       {...(dataError !== undefined ? { "data-error": "" } : {})}
       {...(dataChecked !== undefined ? { "data-checked": "" } : {})}
       {...(isIconOnly ? { "data-icon-only": "" } : {})}
+      {...(isInteractive ? { "data-interactive": "" } : {})}
       {...sanitizedProps}
       icon={
         checked ? (
@@ -121,7 +137,27 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
       onDelete={onRemove}
       deleteIcon={
         onRemove ? (
-          <span className={styles.removeIconWrapper}>
+          <span
+            ref={removeIconRef}
+            role="button"
+            className={styles.removeIconWrapper}
+            aria-label={removeLabel}
+            tabIndex={removeTabIndex ?? 0}
+            onKeyDown={(e) => {
+              // MUI's own `onDelete` wiring only reacts to Backspace/Delete, and only when this
+              // span itself is both the event's target and currentTarget — neither holds once a
+              // parent (e.g. FileUpload's roving-tabindex group) moves real focus onto this span
+              // directly. A plain `<span>` also gets no native Enter/Space-triggers-click behavior
+              // the way a real `<button>` would, so it's handled explicitly here instead.
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                e.stopPropagation();
+                onRemove(
+                  e as unknown as React.MouseEvent<HTMLSpanElement, MouseEvent>,
+                );
+              }
+            }}
+          >
             <CloseIcon />
           </span>
         ) : undefined

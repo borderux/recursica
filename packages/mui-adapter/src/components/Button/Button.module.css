@@ -364,6 +364,19 @@
   );
 }
 
+/* Focus State Mapping (native browser focus outline replaced with the recursica focus ring).
+   Placed after every variant's own box-shadow (elevation) rule so it wins the cascade at equal
+   attribute-selector specificity regardless of variant. */
+.root:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 var(--recursica_brand_states_focus_border-size)
+      var(--recursica_brand_states_focus_color),
+    0 0 var(--recursica_brand_states_focus_blur)
+      var(--recursica_brand_states_focus_margin)
+      var(--recursica_brand_states_focus_color);
+}
+
 /* EXEMPTIONS:
    These general button properties are redundant because visual mapping has been refactored
    to content-specific variables (_content_label_sizes_... etc.) or are handled by design defaults. */

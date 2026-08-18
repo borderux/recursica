@@ -34,3 +34,22 @@ All Recursica components in the `@recursica/mui-adapter` package adhere strictly
 > - **Anti-override protection**: Rogues style injections (like inline `style` or arbitrary `className`) are automatically blocked by our prop layer unless `overStyled={true}` is explicitly provided.
 > - **No Direct Layers**: Do not pass a `layer` prop to this component. To place it on a specific visual layer, wrap it in a `<Layer layer={0|1|2|3}>` component natively.
 > - **Variables and Theming**: Styling is entirely determined by local CSS variables defined in `recursica_variables_scoped.css` and mapped in the component's CSS module.
+
+---
+
+## 4. Key Integration Features & Constraints
+
+### Sizing
+
+Chip does not support a `size` prop; chips render at a fixed size.
+
+### Building a keyboard-navigable chip group
+
+`removeTabIndex` and `removeIconRef` are optional escape hatches for composing a _group_ of chips
+with roving-tabindex keyboard navigation (Tab reaches one chip at a time, arrow keys move between
+them) — see `FileUpload`'s file list for a working example. Ignore both for a standalone chip; they
+default to a normal `tabIndex={0}` remove icon with no ref.
+
+Also pass a plain `tabIndex={-1}` on the `<Chip>` itself in a group like this — MUI's `Chip` root
+becomes a focusable element on its own whenever `onRemove` is set, which would otherwise be a
+second, unwanted tab stop ahead of the remove icon (see `CHIP_IMPLEMENTATION_NOTES.md`).

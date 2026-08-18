@@ -273,7 +273,7 @@ export const TimePicker = forwardRef<HTMLDivElement, TimePickerProps>(
               // that actually targets that box. See TIMEPICKER_IMPLEMENTATION_NOTES.md.
               styles={{ wrapper: { width: "fit-content" } }}
               data={AM_PM_DATA}
-              value={hour === undefined ? null : isPM ? "PM" : "AM"}
+              value={isPM ? "PM" : "AM"}
               onChange={handleMeridiemChange}
               disabled={disabled}
               error={!!error}

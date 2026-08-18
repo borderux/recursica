@@ -66,6 +66,16 @@ Previously flagged as a known limitation, now fixed: Mantine's own `TimePicker` 
 
 Implementation: a `useEffect` on mount, gated to only run when there's no real initial `value`/`defaultValue` already (Mantine already derives the correct AM/PM from a real value on its own — this only fixes the genuinely-empty-start case). It sets the native select's `.value` via `Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value").set` (required to make a React-controlled element pick up a value set outside of React) and dispatches a `change` event — access to the native element comes via `amPmRef`, a prop omitted from this component's own public API but still usable internally when calling Mantine's `<TimePicker>` directly.
 
+## Visual review round 6 (Matt Massey, 2026-08-17) — AM/PM dropdown blank until an hour is typed
+
+Round 3 fixed Mantine's internal `amPm` state never becoming valid (the deadlock preventing `onChange` from ever firing). It did not fix a separate problem: the visible `BareDropdown`'s own `value` prop was computed as `hour === undefined ? null : isPM ? "PM" : "AM"` — explicitly `null` whenever no hour had been typed yet, so the control displayed empty on mount even though round 3's mount effect had already seeded Mantine's hidden native `<select>` to "AM". Those are two different pieces of state: the hidden native select (round 3's fix target) and `internalValue`/`hour` (what `BareDropdown` actually renders), and writing to one never touched the other.
+
+The MUI adapter's equivalent (`mui-adapter/src/components/TimePicker/TimePicker.tsx`) never had this problem — its `isPM` is a plain boolean (`internalValue ? internalValue.hour() >= 12 : false`) with no `null`/"unset" branch, so its dropdown always renders a concrete "AM"/"PM".
+
+**Fix**: dropped the `null` branch — `BareDropdown`'s `value` is now just `isPM ? "PM" : "AM"`, matching MUI. `isPM` already evaluates `false` when `hour` is `undefined`, so this alone makes the dropdown default to "AM" with no other changes.
+
+Note: selecting AM/PM before any hour is typed is still a no-op in both adapters (`handleMeridiemChange` bails out when `hour`/`internalValue` is undefined) — that's pre-existing, shared behavior in both adapters, not something this fix touches.
+
 ## Visual review round 5 (Matt Massey, 2026-08-08)
 
 - **AM/PM error-state border wasn't changing**: `BareDropdown` set `data-error`/`data-disabled` via Mantine's `wrapperProps` — which targets the _outer_ `Input.Wrapper` (the label/description/error stacking element), a different, ancestor element from the "wrapper" styles-api slot that actually carries `styles.root`'s border. `Dropdown.module.css`'s `.root[data-error]`/`[data-disabled]` rules never matched as a result. This is the exact same "two different things both called 'wrapper'" trap as the earlier `style` vs `styles.wrapper` bug. Fixed by using `attributes={{ wrapper: {...} }}` instead — the styles-api hook that actually targets the same slot as `classNames.wrapper`. **This is a shared, pre-existing bug** — the real `Dropdown.tsx` had the identical mistake, so its error/disabled states never applied a border color either; fixed there too (low-risk, purely-additive, same reasoning as the `data-selected` fix above).
