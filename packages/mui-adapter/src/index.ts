@@ -13,7 +13,6 @@ export const Group = rawComponents.Group;
 export const Stack = rawComponents.Stack;
 export const Container = rawComponents.Container;
 export const Typography = rawComponents.Typography;
-export const FileInput = rawComponents.FileInput;
 
 // Statically wrap and export components to inject overStyled visual highlight in dev mode
 export const Accordion = wrapComponent(
@@ -64,6 +63,9 @@ export const DatePicker = wrapComponent(
 export const Dropdown = wrapComponent(
   rawComponents.Dropdown,
 ) as typeof rawComponents.Dropdown;
+export const FileInput = wrapComponent(
+  rawComponents.FileInput,
+) as typeof rawComponents.FileInput;
 export const FileUpload = wrapComponent(
   rawComponents.FileUpload,
 ) as typeof rawComponents.FileUpload;

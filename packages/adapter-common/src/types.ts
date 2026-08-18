@@ -191,6 +191,7 @@ export const RECURSICA_COMPONENTS = [
   "DatePicker",
   "Dropdown",
   "EmptyValueRenderer",
+  "FileInput",
   "Flex",
   "FormControlLayout",
   "FormControlWrapper",

@@ -1,47 +1,280 @@
 /* EXEMPTIONS:
-   This component is a placeholder stub. Once fully implemented, its specific
-   tokens will be fully wired up to direct styles. */
-
-/* recursica-ignore: --recursica_ui-kit_components_file-input_properties_border-radius */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_properties_horizontal-padding */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_properties_icon-size */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_properties_icon-text-gap */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_properties_max-width */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_properties_min-height */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_properties_min-width */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_properties_placeholder-opacity */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_properties_text_font-family */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_properties_text_font-size */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_properties_text_font-style */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_properties_text_font-weight */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_properties_text_letter-spacing */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_properties_text_line-height */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_properties_text_text-decoration */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_properties_text_text-transform */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_properties_vertical-padding */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_variants_layouts_side-by-side_properties_top-bottom-margin */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_variants_layouts_stacked_properties_top-bottom-margin */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_variants_states_default_properties_border-size */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_variants_states_default_properties_colors_background */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_variants_states_default_properties_colors_border-color */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_variants_states_default_properties_colors_leading-icon */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_variants_states_default_properties_colors_text */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_variants_states_default_properties_colors_trailing-icon */
+   - The disabled/error states' own border-size variables are ignored so the border never changes
+     thickness across states and shifts the layout — same house policy as TextField/DatePicker.
+     The flat, state-agnostic properties_border-size token below is applied uniformly instead.
+   - There is no forge-defined focus state for file-input (no `states.focus` axis, unlike its
+     disabled/error siblings) — the generic recursica_brand_states_focus_* ring is used instead,
+     same fallback TextField/DatePicker use for the same reason.
+   - properties_icon-text-gap doubles as the gap between chips in multiple-file mode: file-input
+     has no dedicated chip-gap token (unlike file-upload's properties_item-gap). */
 /* recursica-ignore: --recursica_ui-kit_components_file-input_variants_states_disabled_properties_border-size */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_variants_states_disabled_properties_colors_background */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_variants_states_disabled_properties_colors_border-color */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_variants_states_disabled_properties_colors_leading-icon */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_variants_states_disabled_properties_colors_text */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_variants_states_disabled_properties_colors_trailing-icon */
 /* recursica-ignore: --recursica_ui-kit_components_file-input_variants_states_error_properties_border-size */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_variants_states_error_properties_colors_background */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_variants_states_error_properties_colors_border-color */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_variants_states_error_properties_colors_leading-icon */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_variants_states_error_properties_colors_text */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_variants_states_error_properties_colors_trailing-icon */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_variants_states_focus_properties_border-size */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_variants_states_focus_properties_colors_background */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_variants_states_focus_properties_colors_border-color */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_variants_states_focus_properties_colors_leading-icon */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_variants_states_focus_properties_colors_text */
-/* recursica-ignore: --recursica_ui-kit_components_file-input_variants_states_focus_properties_colors_trailing-icon */
+
+/* LAYOUT SPACING OVERRIDES:
+   - Sets the --form-control-margin-bottom spacing hook to map component-specific layout tokens.
+   - Also sets the --file-input-control-{max,min}-width hooks consumed inline in FileInput.tsx,
+     since max-width/min-width are split per layout variant (same shape as TextField). */
+.layoutOverride {
+  --form-control-margin-bottom: var(
+    --recursica_ui-kit_components_file-input_variants_layouts_stacked_properties_top-bottom-margin
+  );
+  --file-input-control-max-width: var(
+    --recursica_ui-kit_components_file-input_variants_layouts_stacked_properties_max-width
+  );
+  --file-input-control-min-width: var(
+    --recursica_ui-kit_components_file-input_variants_layouts_stacked_properties_min-width
+  );
+}
+
+.layoutOverride[data-form-layout="side-by-side"] {
+  --form-control-margin-bottom: var(
+    --recursica_ui-kit_components_file-input_variants_layouts_side-by-side_properties_top-bottom-margin
+  );
+  --file-input-control-max-width: var(
+    --recursica_ui-kit_components_file-input_variants_layouts_side-by-side_properties_max-width
+  );
+  --file-input-control-min-width: var(
+    --recursica_ui-kit_components_file-input_variants_layouts_side-by-side_properties_min-width
+  );
+}
+
+/* HARDCODED VALUES:
+   - border-style: solid. Native structural rendering rule (matches TextField).
+   - outline: none. Bypassing the browser focus ring to rely strictly on the state cascade below.
+   - .root's cursor/position/overflow: structural, not a design-token concern. */
+
+.root {
+  display: flex;
+  align-items: center;
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--file-input-control-max-width);
+  min-width: var(--file-input-control-min-width);
+  min-height: var(
+    --recursica_ui-kit_components_file-input_properties_min-height
+  );
+  gap: var(--recursica_ui-kit_components_file-input_properties_icon-text-gap);
+  padding-top: var(
+    --recursica_ui-kit_components_file-input_properties_vertical-padding
+  );
+  padding-bottom: var(
+    --recursica_ui-kit_components_file-input_properties_vertical-padding
+  );
+  padding-left: var(
+    --recursica_ui-kit_components_file-input_properties_horizontal-padding
+  );
+  padding-right: var(
+    --recursica_ui-kit_components_file-input_properties_horizontal-padding
+  );
+  border-width: var(
+    --recursica_ui-kit_components_file-input_properties_border-size
+  );
+  border-style: solid;
+  border-radius: var(
+    --recursica_ui-kit_components_file-input_properties_border-radius
+  );
+  background-color: var(
+    --recursica_ui-kit_components_file-input_properties_colors_background-color
+  );
+  border-color: var(
+    --recursica_ui-kit_components_file-input_properties_colors_border-color
+  );
+  color: var(
+    --recursica_ui-kit_components_file-input_properties_colors_text-color
+  );
+  cursor: pointer;
+  outline: none;
+}
+
+.root[data-disabled="true"],
+.root[data-readonly="true"] {
+  cursor: default;
+}
+
+.root > * {
+  position: relative;
+}
+
+/* Dragging-over state: reuses the generic hover overlay recipe (see Button.module.css) for the
+   background, and the shared "selected" border bridge var FormControlWrapper already exposes —
+   file-input has no color tokens of its own for this state. Same recipe as FileUpload's
+   dropzone; see "Dragging-over visual state" in FILEINPUT_IMPLEMENTATION_NOTES.md. */
+.root::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease;
+  opacity: 0;
+  background-color: var(--recursica_brand_states_hover_color);
+}
+.root[data-dragging="true"] {
+  border-color: var(--form-field-border-selected);
+}
+.root[data-dragging="true"]::after {
+  opacity: var(--recursica_brand_states_hover_opacity);
+}
+
+.leadingIcon {
+  display: flex;
+  flex: none;
+  width: var(--recursica_ui-kit_components_file-input_properties_icon-size);
+  height: var(--recursica_ui-kit_components_file-input_properties_icon-size);
+  color: var(
+    --recursica_ui-kit_components_file-input_properties_colors_leading-icon
+  );
+}
+.leadingIcon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.content {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0; /* HARDCODE: lets the value/chip row actually shrink and ellipsize */
+  overflow: hidden;
+}
+
+.value {
+  font-family: var(
+    --recursica_ui-kit_components_file-input_properties_text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_file-input_properties_text_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_file-input_properties_text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_file-input_properties_text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_file-input_properties_text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_file-input_properties_text_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_file-input_properties_text_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_file-input_properties_text_text-transform
+  );
+  width: 100%;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  /* HARDCODE: x-only clipping — clipping y too (plain overflow: hidden) cuts off descenders
+     (e.g. the "g" in "image.png"); same fix as Chip.module.css's .children. */
+  overflow-x: clip;
+  overflow-y: visible;
+}
+
+.value[data-placeholder="true"] {
+  opacity: var(
+    --recursica_ui-kit_components_file-input_properties_placeholder-opacity
+  );
+}
+
+.chipRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  gap: var(--recursica_ui-kit_components_file-input_properties_icon-text-gap);
+}
+
+.chipWrapper {
+  display: flex;
+  min-width: 0;
+  flex: none;
+}
+
+.trailingIcon {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--recursica_ui-kit_components_file-input_properties_icon-size);
+  height: var(--recursica_ui-kit_components_file-input_properties_icon-size);
+  color: var(
+    --recursica_ui-kit_components_file-input_properties_colors_trailing-icon
+  );
+  cursor: pointer;
+  outline: none;
+}
+.trailingIcon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* -------------------------------------
+   STATE CASCADE ARCHITECTURE
+-------------------------------------- */
+
+/* Focus State Mapping (Triggered internally via browser pseudo-class on the root control) */
+/* file-input has no per-component focus colors (see EXEMPTIONS above); apply the generic focus
+   ring tokens as a box-shadow ring instead of a color swap (matches TextField/DatePicker). */
+.root:focus-visible {
+  box-shadow:
+    0 0 0 var(--recursica_brand_states_focus_border-size)
+      var(--recursica_brand_states_focus_color),
+    0 0 var(--recursica_brand_states_focus_blur)
+      var(--recursica_brand_states_focus_margin)
+      var(--recursica_brand_states_focus_color);
+}
+
+/* Error State Mapping (Propagated strictly down from the wrapper DOM context) */
+.root[data-error="true"] {
+  border-color: var(
+    --recursica_ui-kit_components_file-input_variants_states_error_properties_colors_border-color
+  ) !important;
+  background-color: var(
+    --recursica_ui-kit_components_file-input_variants_states_error_properties_colors_background-color
+  ) !important;
+  color: var(
+    --recursica_ui-kit_components_file-input_variants_states_error_properties_colors_text-color
+  ) !important;
+}
+.root[data-error="true"] .leadingIcon {
+  color: var(
+    --recursica_ui-kit_components_file-input_variants_states_error_properties_colors_leading-icon
+  ) !important;
+}
+.root[data-error="true"] .trailingIcon {
+  color: var(
+    --recursica_ui-kit_components_file-input_variants_states_error_properties_colors_trailing-icon
+  ) !important;
+}
+
+/* Disabled State Mapping (Propagated strictly down from the wrapper DOM context) */
+.root[data-disabled="true"] {
+  border-color: var(
+    --recursica_ui-kit_components_file-input_variants_states_disabled_properties_colors_border-color
+  ) !important;
+  background-color: var(
+    --recursica_ui-kit_components_file-input_variants_states_disabled_properties_colors_background-color
+  ) !important;
+  color: var(
+    --recursica_ui-kit_components_file-input_variants_states_disabled_properties_colors_text-color
+  ) !important;
+  opacity: var(
+    --recursica_ui-kit_components_file-input_variants_states_disabled_properties_opacity
+  ) !important;
+  cursor: not-allowed;
+}
+.root[data-disabled="true"] .leadingIcon {
+  color: var(
+    --recursica_ui-kit_components_file-input_variants_states_disabled_properties_colors_leading-icon
+  ) !important;
+}
+.root[data-disabled="true"] .trailingIcon {
+  color: var(
+    --recursica_ui-kit_components_file-input_variants_states_disabled_properties_colors_trailing-icon
+  ) !important;
+  cursor: not-allowed;
+}

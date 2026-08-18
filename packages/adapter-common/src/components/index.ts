@@ -14,6 +14,7 @@ export * from "./Chip/RecursicaChipProps";
 export * from "./Container/RecursicaContainerProps";
 export * from "./DatePicker/RecursicaDatePickerProps";
 export * from "./Dropdown/RecursicaDropdownProps";
+export * from "./FileInput/RecursicaFileInputProps";
 export * from "./FileUpload/RecursicaFileUploadProps";
 export * from "./Flex/RecursicaFlexProps";
 export * from "./FormControlLayout/RecursicaFormControlLayoutProps";
