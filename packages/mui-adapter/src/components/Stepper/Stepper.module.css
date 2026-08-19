@@ -1,13 +1,26 @@
-/* 
+/*
   Recursica Stepper CSS module natively binding to Figma variables.
-  
-  HARDCODED CSS NOTE:
-  For horizontal layout, Mantine natively renders the text horizontally alongside the icon.
-  To achieve Recursica's layout where horizontal orientation stacks text below the icon, 
-  we force `.step` to be a column, `.stepBody` to remove margin and text-align center, 
-  and the `.separator`'s margin-top is dynamically calculated `calc((indicator-size / 2) - 1px)` 
-  to ensure it continues to align with the vertical center of the indicator rather than the 
-  whole step wrapper.
+
+  ARCHITECTURE NOTES (see IMPLEMENTATION_NOTES.md for full rationale):
+  - Horizontal orientation uses MUI Stepper's own `alternativeLabel` prop (icon on
+    top, label centered below, connector absolutely positioned circle-to-circle) —
+    this is MUI's real primitive for this exact layout, not a custom column hack.
+  - The visible circle/checkmark is rendered by our own `RecursicaStepIcon`
+    (`.stepIconCircle` / `.stepCompletedIcon`) instead of MUI's default `StepIcon`,
+    which draws its own self-colored (blue) circle+check SVG that never reads
+    our tokens.
+  - Vertical orientation's connecting line is drawn as a `.stepIcon::after` rail
+    (not the `StepConnector` element — see Stepper.tsx) so its length tracks each
+    step's actual rendered height, matching mantine's absolutely-positioned
+    separator.
+
+  HARDCODED VALUES:
+  - `.stepIconCircle` sets `box-sizing: border-box` so the indicator's border is
+    included in `--stepper-indicator-size`, keeping the connector's centering math
+    (indicator-size / 2) exact.
+  - `--stepper-connector-size` is a local bridge custom property (not a design
+    token) used only to let the vertical rail's centering `calc()` reference
+    whichever connector-size token is active for the current state.
 */
 
 .root {
@@ -24,21 +37,12 @@
   );
 }
 
-.root.horizontal .step {
-  flex-direction: column;
-  align-items: center;
-  gap: var(
-    --recursica_ui-kit_components_stepper_variants_orientation_horizontal_properties_indicator-label-gap
-  );
-}
-
 .root.horizontal .stepBody {
   width: var(--stepper-max-text-width);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  margin-left: 0; /* Mantine natively applies a margin-inline-start */
   gap: var(
     --recursica_ui-kit_components_stepper_variants_orientation_horizontal_properties_label-description-gap
   );
@@ -52,14 +56,41 @@
   white-space: normal;
 }
 
-.root.horizontal .separator {
-  align-self: flex-start; /* Force to top regardless of container alignment */
-  margin-top: calc(var(--stepper-indicator-size) / 2 - 1px);
-  margin-left: calc(
-    -1 * (var(--stepper-max-text-width) - var(--stepper-indicator-size)) / 2
+.root.horizontal .stepLabel {
+  /* Replaces MUI's own hardcoded `margin-top: 16px` (applied via its
+     `.Mui-alternativeLabel` state class) with the real indicator-label-gap token. */
+  margin-top: var(
+    --recursica_ui-kit_components_stepper_variants_orientation_horizontal_properties_indicator-label-gap
   );
-  margin-right: calc(
-    -1 * (var(--stepper-max-text-width) - var(--stepper-indicator-size)) / 2
+}
+
+.root.horizontal .separator {
+  /* Root only positions the connector; MUI's own `alternativeLabel` variant
+     already sets `position: absolute`. Centering is exact because our custom
+     StepIconComponent renders a `--stepper-indicator-size` circle flush at the
+     top of `.stepIcon`, centered horizontally within the step. */
+  top: calc(var(--stepper-indicator-size) / 2);
+  left: -50%;
+  right: 50%;
+}
+
+.root.horizontal .separatorLine {
+  border-top: none; /* replace MUI's default border-top line with a token-driven bar */
+  height: var(
+    --recursica_ui-kit_components_stepper_properties_upcoming-connector-size
+  );
+  background-color: var(
+    --recursica_ui-kit_components_stepper_properties_colors_upcoming-connector-color
+  );
+}
+
+.root.horizontal .separator:global(.Mui-active) .separatorLine,
+.root.horizontal .separator:global(.Mui-completed) .separatorLine {
+  height: var(
+    --recursica_ui-kit_components_stepper_properties_completed-connector-size
+  );
+  background-color: var(
+    --recursica_ui-kit_components_stepper_properties_colors_completed-connector-color
   );
 }
 
@@ -68,20 +99,15 @@
   --stepper-step-gap: var(
     --recursica_ui-kit_components_stepper_variants_orientation_vertical_properties_step-gap
   );
-  --separator-spacing: 0px; /* Force the line to touch the circle */
   --stepper-max-text-width: var(
     --recursica_ui-kit_components_stepper_variants_orientation_vertical_properties_max-text-width
   );
 }
 
 .root.vertical .step {
-  gap: var(
-    --recursica_ui-kit_components_stepper_variants_orientation_vertical_properties_indicator-label-gap
-  );
-  margin-top: 0 !important; /* Remove Mantine's gap */
-  padding-bottom: var(
-    --stepper-step-gap
-  ); /* Move gap inside the step so the separator line can stretch through it */
+  /* Moves the gap inside the step (instead of a margin between steps) so the
+     `.stepIcon::after` rail can extend through it into the next step. */
+  padding-bottom: var(--stepper-step-gap);
 }
 
 .root.vertical .step:last-of-type {
@@ -91,6 +117,54 @@
 .root.vertical .stepBody {
   gap: var(
     --recursica_ui-kit_components_stepper_variants_orientation_vertical_properties_label-description-gap
+  );
+}
+
+.root.vertical .stepLabelRoot {
+  /* Lets the icon column (`.stepIcon`) stretch to match the label column's
+     actual rendered height (multi-line descriptions included), so the
+     connecting rail's length always reaches the next step's icon. */
+  align-items: stretch;
+  /* Replaces MUI's own hardcoded `padding: 8px 0` for vertical orientation —
+     without zeroing this, the rail falls 16px short of the next icon (8px
+     here + 8px on the next step's own StepLabelRoot). */
+  padding: 0;
+}
+
+.root.vertical .stepIcon {
+  height: auto;
+  /* Replaces MUI's own hardcoded `padding-right: 8px` on the icon container. */
+  padding-right: var(
+    --recursica_ui-kit_components_stepper_variants_orientation_vertical_properties_indicator-label-gap
+  );
+  --stepper-connector-size: var(
+    --recursica_ui-kit_components_stepper_properties_upcoming-connector-size
+  );
+}
+
+.root.vertical .step:global(.Mui-completed) .stepIcon {
+  --stepper-connector-size: var(
+    --recursica_ui-kit_components_stepper_properties_completed-connector-size
+  );
+}
+
+.root.vertical .step:not(:last-of-type) .stepIcon::after {
+  content: "";
+  position: absolute;
+  top: var(--stepper-indicator-size);
+  bottom: calc(-1 * var(--stepper-step-gap));
+  left: calc(50% - (var(--stepper-connector-size) / 2));
+  width: var(--stepper-connector-size);
+  background-color: var(
+    --recursica_ui-kit_components_stepper_properties_colors_upcoming-connector-color
+  );
+}
+
+.root.vertical
+  .step:global(.Mui-completed):not(:last-of-type)
+  .stepIcon::after {
+  background-color: var(
+    --recursica_ui-kit_components_stepper_properties_colors_completed-connector-color
   );
 }
 
@@ -180,10 +254,6 @@
 }
 
 /* Core Element Structuring using mapped variables */
-.root .step {
-  /* Default to Mantine's native flex behavior (stretch) so the vertical separator spans the full height */
-}
-
 .root .stepBody {
   max-width: var(--stepper-max-text-width);
   display: flex;
@@ -244,11 +314,27 @@
   );
 }
 
+/* `.stepIcon` (MUI's `iconContainer` slot) is a layout host only — it never
+   renders the visible circle itself, so it can stretch (vertical) without
+   distorting it. The circle is `.stepIconCircle`, rendered by our own
+   `RecursicaStepIcon` (see Stepper.tsx). */
 .root .stepIcon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  position: relative;
+  width: var(--stepper-indicator-size);
+  flex-shrink: 0;
+}
+
+.root .stepIconCircle {
+  box-sizing: border-box; /* HARDCODE: keep indicator-size math exact incl. border */
   width: var(--stepper-indicator-size);
   height: var(--stepper-indicator-size);
   min-width: var(--stepper-indicator-size);
   min-height: var(--stepper-indicator-size);
+  border-style: solid; /* HARDCODE: plain span has no default border-style */
   border-width: var(--stepper-border-size);
   border-radius: 50%; /* Override Figma token to ensure perfectly circular indicators */
 
@@ -264,7 +350,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Font details are implicitly mapped by sizes, but colors map to states */
   /* Upcoming State (Pending) - Default */
   background-color: var(
     --recursica_ui-kit_components_stepper_properties_colors_upcoming-indicator-background-color
@@ -278,8 +363,7 @@
 }
 
 /* Completed State */
-.root .stepIcon.Mui-completed,
-.root .stepIcon:has(.Mui-completed) {
+.root .stepIconCircle[data-completed] {
   background-color: var(
     --recursica_ui-kit_components_stepper_properties_colors_completed-indicator-background-color
   );
@@ -289,32 +373,27 @@
 }
 
 .root .stepCompletedIcon {
+  width: var(--stepper-svg-size);
+  height: var(--stepper-svg-size);
   color: var(
     --recursica_ui-kit_components_stepper_properties_colors_completed-indicator-text
   );
 }
 
-.root .stepCompletedIcon svg {
-  width: var(--stepper-svg-size);
-  height: var(--stepper-svg-size);
-}
-
-.root .stepLabel.Mui-completed {
+.root .stepLabel:global(.Mui-completed) {
   color: var(
     --recursica_ui-kit_components_stepper_properties_colors_completed-label-color
   );
 }
 
-.root .stepDescription:has(~ .Mui-completed),
-.root .MuiStepLabel-root.Mui-completed .stepDescription {
+.root .stepBody:has(.stepLabel:global(.Mui-completed)) .stepDescription {
   color: var(
     --recursica_ui-kit_components_stepper_properties_colors_completed-description-color
   );
 }
 
 /* Current State (Progressing) */
-.root .stepIcon.Mui-active,
-.root .stepIcon:has(.Mui-active) {
+.root .stepIconCircle[data-active] {
   background-color: var(
     --recursica_ui-kit_components_stepper_properties_colors_current-indicator-background-color
   );
@@ -326,84 +405,38 @@
   );
 }
 
-.root .stepLabel.Mui-active {
+.root .stepLabel:global(.Mui-active) {
   color: var(
     --recursica_ui-kit_components_stepper_properties_colors_current-label-color
   );
 }
 
-.root .stepDescription:has(~ .Mui-active),
-.root .MuiStepLabel-root.Mui-active .stepDescription {
+.root .stepBody:has(.stepLabel:global(.Mui-active)) .stepDescription {
   color: var(
     --recursica_ui-kit_components_stepper_properties_colors_current-description-color
   );
 }
 
 /* Upcoming State (Pending Labels) */
-.root .stepLabel:not(.Mui-active):not(.Mui-completed) {
+.root .stepLabel:not(:global(.Mui-active)):not(:global(.Mui-completed)) {
   color: var(
     --recursica_ui-kit_components_stepper_properties_colors_upcoming-label-color
   );
 }
 
-.root .MuiStepLabel-root:not(.Mui-active):not(.Mui-completed) .stepDescription {
+.root
+  .stepBody:not(:has(.stepLabel:global(.Mui-active))):not(
+    :has(.stepLabel:global(.Mui-completed))
+  )
+  .stepDescription {
   color: var(
     --recursica_ui-kit_components_stepper_properties_colors_upcoming-description-color
   );
 }
 
-/* Horizontal Separator */
-.root .separator {
-  margin: 0 var(--stepper-step-gap); /* Apply the gap logic to the separator natively */
-  background-color: var(
-    --recursica_ui-kit_components_stepper_properties_colors_upcoming-connector-color
-  );
-  height: var(
-    --recursica_ui-kit_components_stepper_properties_upcoming-connector-size
-  );
-  border: none;
-  min-width: 20px;
-  flex: 1;
-}
-
-.root .separator.Mui-active,
-.root .separator.Mui-completed {
-  background-color: var(
-    --recursica_ui-kit_components_stepper_properties_colors_completed-connector-color
-  );
-  height: var(
-    --recursica_ui-kit_components_stepper_properties_completed-connector-size
-  );
-}
-
-/* Vertical Separator */
-.root .verticalSeparator {
-  border-inline-start: var(
-      --recursica_ui-kit_components_stepper_properties_upcoming-connector-size
-    )
-    solid
-    var(
-      --recursica_ui-kit_components_stepper_properties_colors_upcoming-connector-color
-    );
-  top: var(
-    --stepper-icon-size
-  ); /* Overrides Mantine's gap math to force the line to touch the icon */
-}
-
-.root .verticalSeparator.Mui-active,
-.root .verticalSeparator.Mui-completed {
-  border-inline-start: var(
-      --recursica_ui-kit_components_stepper_properties_completed-connector-size
-    )
-    solid
-    var(
-      --recursica_ui-kit_components_stepper_properties_colors_completed-connector-color
-    );
-}
-
-/* Hide Content 
-   Recursica Steppers are purely navigational/structural. Content should be managed 
-   by the parent layout outside of the Stepper DOM. 
+/* Hide Content
+   Recursica Steppers are purely navigational/structural. Content should be managed
+   by the parent layout outside of the Stepper DOM.
 */
 .root .content {
   display: none;

@@ -135,6 +135,40 @@
   );
 }
 
+/*
+ * Mantine's default markLabel has no dedicated recursica token; it renders with Mantine's own
+ * theme grey instead of inheriting the container text color. Reusing the min-max-label
+ * typography tokens and inheriting color keeps this visually consistent with the min/max guides.
+ */
+.sliderMarkLabel {
+  color: inherit;
+
+  font-family: var(
+    --recursica_ui-kit_components_slider_properties_min-max-label_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_slider_properties_min-max-label_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_slider_properties_min-max-label_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_slider_properties_min-max-label_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_slider_properties_min-max-label_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_slider_properties_min-max-label_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_slider_properties_min-max-label_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_slider_properties_min-max-label_text-transform
+  );
+}
+
 /* ==========================================
    3. Min / Max Custom Typography Labels & Floating Active Value
    ========================================== */

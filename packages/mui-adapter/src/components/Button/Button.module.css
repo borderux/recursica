@@ -24,9 +24,6 @@
   letter-spacing: var(
     --recursica_ui-kit_components_button_variants_sizes_default_properties_text_letter-spacing
   );
-  line-height: var(
-    --recursica_ui-kit_components_button_variants_sizes_default_properties_text_line-height
-  );
   text-decoration: var(
     --recursica_ui-kit_components_button_variants_sizes_default_properties_text_text-decoration
   );
@@ -64,7 +61,9 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: inherit;
-  line-height: inherit;
+  line-height: var(
+    --recursica_ui-kit_components_button_variants_sizes_default_properties_text_line-height
+  );
 }
 /* Removed data-loading background override to rely on native disabled opacities like Mantine */
 
@@ -170,6 +169,9 @@
 .root[data-size="small"] .labelText {
   max-width: var(
     --recursica_ui-kit_components_button_variants_sizes_small_properties_max-label-width
+  );
+  line-height: var(
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_line-height
   );
 }
 
@@ -387,6 +389,5 @@
 /* recursica-ignore: --recursica_ui-kit_components_button_variants_sizes_small_properties_min-width */
 /* recursica-ignore: --recursica_ui-kit_components_button_variants_sizes_small_properties_text_font-style */
 /* recursica-ignore: --recursica_ui-kit_components_button_variants_sizes_small_properties_text_letter-spacing */
-/* recursica-ignore: --recursica_ui-kit_components_button_variants_sizes_small_properties_text_line-height */
 /* recursica-ignore: --recursica_ui-kit_components_button_variants_sizes_small_properties_text_text-decoration */
 /* recursica-ignore: --recursica_ui-kit_components_button_variants_sizes_small_properties_text_text-transform */

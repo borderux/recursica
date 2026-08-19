@@ -39,3 +39,7 @@ All Recursica components in the `@recursica/mui-adapter` package adhere strictly
 > - **Anti-override protection**: Rogues style injections (like inline `style` or arbitrary `className`) are automatically blocked by our prop layer unless `overStyled={true}` is explicitly provided.
 > - **No Direct Layers**: Do not pass a `layer` prop to this component. To place it on a specific visual layer, wrap it in a `<Layer layer={0|1|2|3}>` component natively.
 > - **Variables and Theming**: Styling is entirely determined by local CSS variables defined in `recursica_variables_scoped.css` and mapped in the component's CSS module.
+> - **Default step icon**: `StepLabel` renders its own token-driven circle (with a check mark
+>   once a step is completed) by default. Pass your own `StepIconComponent` prop to `StepLabel`
+>   to override it for a given step, or pass a custom `icon` node (e.g. `<StepLabel icon={<MyIcon />}>`)
+>   to render arbitrary content in place of the circle entirely.

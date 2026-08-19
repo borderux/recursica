@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, useState } from "react";
 import {
   ToggleButtonGroup as MuiSegmentedControl,
   ToggleButton,
@@ -85,12 +85,26 @@ const _SegmentedControl = forwardRef<HTMLDivElement, SegmentedControlProps>(
 
     const stylingParams = useSegmentedControlClassNames(restRecord);
 
+    // MUI's ToggleButtonGroup is controlled-only and selects nothing when `value` is
+    // undefined; Mantine's SegmentedControl instead defaults to the first data item. Track an
+    // uncontrolled fallback so both adapters render the same default selection.
+    const firstValue = data.length
+      ? typeof data[0] === "string"
+        ? data[0]
+        : data[0].value
+      : undefined;
+    const [uncontrolledValue, setUncontrolledValue] = useState<
+      string | undefined
+    >(value ?? firstValue);
+    const activeValue = value !== undefined ? value : uncontrolledValue;
+
     const handleChange = (
       _event: React.MouseEvent<HTMLElement>,
       newValue: string | null,
     ) => {
-      if (newValue !== null && onChange) {
-        onChange(newValue);
+      if (newValue !== null) {
+        setUncontrolledValue(newValue);
+        onChange?.(newValue);
       }
     };
 
@@ -107,7 +121,7 @@ const _SegmentedControl = forwardRef<HTMLDivElement, SegmentedControlProps>(
         fullWidth={fullWidth}
         data-orientation={orientation}
         exclusive
-        value={value}
+        value={activeValue}
         onChange={
           handleChange as React.ComponentProps<
             typeof MuiSegmentedControl

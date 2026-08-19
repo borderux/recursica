@@ -53,3 +53,15 @@ We explicitly pass `disableRipple` and `disableElevation` to block MUI's dynamic
 **Fix:** wrapped every `.MuiButton-startIcon`/`.MuiButton-endIcon` reference in `:global(...)`.
 
 **Not otherwise fixed, flagged separately:** the same unwrapped-global-class pattern shows up in at least `Stepper.module.css` (`.Mui-active`/`.Mui-completed`/`.MuiStepLabel-root`, fully unwrapped) and `SegmentedControl.module.css`, and partially in `Label.module.css`/`Accordion.module.css` — meaning some of those components' MUI-state-driven styling may also be silently no-op'ing. Out of scope for this fix (Button only, per what was asked); worth a dedicated sweep.
+
+---
+
+## `line-height` wiring gap vs Mantine (Matt Massey, 2026-08-19)
+
+**Reported symptom:** descenders on letters like "p"/"g" clipped in the Default story.
+
+**Investigation:** live-verified both adapters in Storybook (Playwright) at the `Default` and `OutlineSmall` stories, including a direct canvas `measureText` check of the `gpqjy` glyph set in Lexend at 14px (`--recursica_tokens_font_line-heights_default: 1.05em` → 14.7px line box vs ~14.0px actual glyph ink) — no visible clipping reproduced in Chromium; both adapters rendered pixel-identical crops. The line-height token itself is objectively tight (near-zero headroom), but that's shared by both adapters and isn't itself mui-specific.
+
+**Real discrepancy found:** `.root`'s "Shared Defaults" set `line-height` once, unconditionally, from the _default_-size token, and `.labelText` merely did `line-height: inherit` — so the small-size line-height token was never actually referenced (it was `recursica-ignore`d as "redundant"). Mantine's `Button.module.css`, by contrast, sets `line-height` directly on `.labelText` per size, from each size's own token. They currently resolve to the same literal value, so this wasn't visually observable, but it's a latent divergence from the source of truth — a future token change to the small-size line-height would silently not apply in mui-adapter.
+
+**Fix:** moved `line-height` off `.root` and onto `.labelText` (default token), added `.root[data-size="small"] .labelText { line-height: ... }` (small token), and removed the now-inaccurate `recursica-ignore` for that token — matching Mantine's structure exactly.
