@@ -7,7 +7,7 @@ import {
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Timeline.module.css";
-import { TimelineItem } from "./TimelineItem";
+import { TimelineItem, type TimelineItemProps } from "./TimelineItem";
 
 import { type RecursicaTimelineProps } from "@recursica/adapter-common";
 
@@ -23,7 +23,7 @@ export type TimelineProps = RecursicaOverStyled<
 
 interface TimelineComponent
   extends React.ForwardRefExoticComponent<
-    TimelineProps & React.RefAttributes<HTMLDivElement>
+    TimelineProps & React.RefAttributes<HTMLUListElement>
   > {
   Item: typeof TimelineItem;
 }
@@ -32,8 +32,10 @@ interface TimelineComponent
  * The `Timeline` component displays a list of events in chronological order.
  *
  * **Recursica Abstract:**
- * This component acts as a structural wrapper around Mui's `<Timeline>`.
- * It forces alignment and geometry strictly via the UI Kit's `.itemBullet` and connector definitions.
+ * This component acts as a structural wrapper around Mui's `<Timeline>`, composing
+ * `TimelineSeparator`/`TimelineDot`/`TimelineConnector`/`TimelineContent` per item
+ * (via `Timeline.Item`) so the bullet marker and connecting line render the same way
+ * they do in the Mantine adapter.
  *
  * @example
  * ```tsx
@@ -43,29 +45,21 @@ interface TimelineComponent
  * ```
  */
 const TimelineInner = React.forwardRef<HTMLUListElement, TimelineProps>(
-  function Timeline({ overStyled = false, ...rest }, ref) {
+  function Timeline(
+    { overStyled = false, active = -1, children, ...rest },
+    ref,
+  ) {
     const sanitizedProps = filterStylingProps(rest, overStyled);
 
-    const mergedClassNames: Partial<Record<string, string>> = {
-      root: styles.root,
-    };
-
-    const classNamesProp = (sanitizedProps as Record<string, unknown>)
-      .classNames;
-    if (
-      classNamesProp &&
-      typeof classNamesProp === "object" &&
-      !Array.isArray(classNamesProp)
-    ) {
-      const o = classNamesProp as Record<string, string>;
-      Object.keys(o).forEach((key) => {
-        if (mergedClassNames[key]) {
-          mergedClassNames[key] = `${mergedClassNames[key]} ${o[key]}`;
-        } else {
-          mergedClassNames[key] = o[key];
-        }
-      });
-    }
+    const items = React.Children.toArray(children);
+    const decoratedItems = items.map((item, index) =>
+      React.isValidElement(item)
+        ? React.cloneElement(item as React.ReactElement<TimelineItemProps>, {
+            __active: active >= index,
+            __isLast: index === items.length - 1,
+          })
+        : item,
+    );
 
     return (
       <MuiTimeline
@@ -74,8 +68,10 @@ const TimelineInner = React.forwardRef<HTMLUListElement, TimelineProps>(
           MuiTimelineProps,
           "color" | "radius" | "bulletSize" | "lineWidth"
         >)}
-        classes={mergedClassNames}
-      />
+        classes={{ root: styles.root }}
+      >
+        {decoratedItems}
+      </MuiTimeline>
     );
   },
 );

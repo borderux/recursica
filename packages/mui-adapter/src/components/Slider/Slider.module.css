@@ -2,12 +2,15 @@
  * HARDCODED VALUES:
  * - display: flex; align-items: center; width: 100%; (Standard CSS flexbox layouts for bidirectional components)
  * - flex-grow: 1; flex-shrink: 0; (Layout control structures)
- * - transform: translateX(-50%); (Mantine's standard step marks positioning alignment offset)
+ * - transform: translateX(-50%); (Step marks/mark labels positioning alignment offset, matching
+ *   Mantine's own offset mechanism)
  * - outline: none; border-style: solid; (Standard focus reset and border outlines)
  * - Focus ring on thumb/input: the token schema no longer provides per-component focus
  *   colors for these (only `active` covers track/step-indicator-color). We apply the generic
  *   --recursica_brand_states_focus_* ring tokens (border-size/color/margin/blur) as a box-shadow
  *   ring instead of a color swap.
+ * - Focus ring on thumb is applied via MUI's own `Mui-focusVisible` class (not native
+ *   `:focus`/`:focus-visible`, which never match the thumb span — see inline comment).
  */
 
 /* ==========================================
@@ -79,16 +82,14 @@
 }
 
 .sliderBar {
-  height: var(
-    --recursica_ui-kit_components_slider_properties_track-height
-  ) !important;
+  height: var(--recursica_ui-kit_components_slider_properties_track-height);
   border-radius: var(
     --recursica_ui-kit_components_slider_properties_track-border-radius
-  ) !important;
+  );
   background-color: var(
     --recursica_ui-kit_components_slider_properties_colors_track-active
-  ) !important;
-  border: none !important;
+  );
+  border: none;
 }
 
 .sliderThumb {
@@ -116,8 +117,21 @@
   );
 }
 
-.sliderThumb:focus,
-.sliderThumb:focus-visible {
+/*
+ * MUI toggles its own `Mui-focusVisible` class on the thumb (for both keyboard focus and
+ * mouse-driven dragging, since MUI's slider routes real DOM focus to a hidden native input,
+ * never the visible thumb span) and pairs it with a hardcoded `theme.palette.primary.main`
+ * box-shadow ring. Native `:focus`/`:focus-visible` never match the thumb span itself, so we
+ * target MUI's own class directly to replace its default-blue ring with the recursica ring.
+ *
+ * MUI also always programmatically re-focuses that hidden input on pointer interaction, which
+ * browsers' `:focus-visible` heuristic treats as keyboard-visible — unlike Mantine's plain div
+ * thumb, where a real click correctly resolves to a non-visible focus. `data-suppress-focus-ring`
+ * (set in Slider.tsx by tracking pointer-vs-keyboard ourselves) keeps the ring keyboard-only,
+ * matching Mantine.
+ */
+.sliderContainer:not([data-suppress-focus-ring="true"])
+  .sliderThumb:global(.Mui-focusVisible) {
   outline: none;
   box-shadow:
     var(--recursica_ui-kit_components_slider_properties_thumb-elevation),
@@ -126,6 +140,14 @@
     0 0 var(--recursica_brand_states_focus_blur)
       var(--recursica_brand_states_focus_margin)
       var(--recursica_brand_states_focus_color);
+}
+
+.sliderContainer[data-suppress-focus-ring="true"]
+  .sliderThumb:global(.Mui-focusVisible) {
+  outline: none;
+  box-shadow: var(
+    --recursica_ui-kit_components_slider_properties_thumb-elevation
+  );
 }
 
 .sliderMark {
@@ -151,6 +173,49 @@
      one); reusing the active-track color keeps filled marks visually tied to the filled track. */
   background-color: var(
     --recursica_ui-kit_components_slider_properties_colors_track-active
+  );
+}
+
+/*
+ * MUI's default markLabel sits ~30-40px below the mark (`top: 30`, `top: 40` under
+ * `(pointer: coarse)`) and uses `theme.palette.text.secondary`. Mantine's equivalent label sits
+ * right under the mark (a half-step-indicator offset plus a small gap) and has no explicit color,
+ * inheriting the container's text color. Reusing the min-max-label typography tokens (the closest
+ * existing "small label near the track" token set) and inheriting color keeps this visually
+ * consistent with Mantine without a dedicated mark-label token.
+ */
+.sliderMarkLabel {
+  top: calc(
+    var(--recursica_ui-kit_components_slider_properties_step-indicator-width) /
+      2 +
+      var(--recursica_ui-kit_globals_form_properties_label-field-gap-vertical)
+  );
+  transform: translateX(-50%);
+  color: inherit;
+
+  font-family: var(
+    --recursica_ui-kit_components_slider_properties_min-max-label_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_slider_properties_min-max-label_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_slider_properties_min-max-label_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_slider_properties_min-max-label_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_slider_properties_min-max-label_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_slider_properties_min-max-label_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_slider_properties_min-max-label_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_slider_properties_min-max-label_text-transform
   );
 }
 
@@ -398,14 +463,12 @@
 
 /* Focus states */
 /* The token schema's `active` state (not a separate `focus` state) now covers track/step-indicator
-   color while focus is within the slider; there is no `active` override for the filled mark. */
-.sliderRoot:has(.sliderThumb:focus) .sliderTrack,
-.sliderRoot:focus-within .sliderTrack {
-  background-color: var(
-    --recursica_ui-kit_components_slider_variants_states_active_properties_colors_track
-  );
-}
-
+   color while focus is within the slider. Unlike Mantine (whose unfilled track is painted by an
+   internal `::before` layer that this rule never actually reaches), MUI's rail element is styled
+   directly by `.sliderTrack`, so applying the active-track color here visibly repaints the rail a
+   different color for the whole duration of a drag. There is no design requirement for the rail to
+   change color while dragging, so the track is intentionally left out of this rule; only the
+   step-indicator (mark) is included, matching the token schema's remaining active-state coverage. */
 .sliderRoot:has(.sliderThumb:focus) .sliderMark,
 .sliderRoot:focus-within .sliderMark {
   background-color: var(

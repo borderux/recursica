@@ -127,6 +127,19 @@
   color: inherit;
 }
 
+/* MUI always renders multiline inputs through TextareaAutosize, which sets an inline `height`
+   that otherwise wins over the min-height above. Pin the height to the same rows-based formula
+   when autosize isn't requested, so it matches the plain (non-autosizing) textarea Mantine renders. */
+.root:not([data-autosize]) .input {
+  height: calc(
+    var(--recursica_ui-kit_components_textarea_properties_rows) *
+      var(--recursica_ui-kit_components_textarea_properties_text_line-height) +
+      2 *
+      var(--recursica_ui-kit_components_textarea_properties_vertical-padding) +
+      2px
+  ) !important;
+}
+
 /* -------------------------------------
    STATE CASCADE ARCHITECTURE
 -------------------------------------- */
@@ -144,8 +157,10 @@
       var(--recursica_brand_states_focus_color);
 }
 
-/* Error State Mapping (Propagated strictly down from the wrapper DOM context) */
-.root[data-error] .input {
+/* Error State Mapping
+   MUI only stamps the global `Mui-error` state class onto the InputBase root slot (not the
+   input element itself), so the error trigger is scoped from `.root` down to `.input`. */
+.root:global(.Mui-error) .input {
   border-color: var(
     --recursica_ui-kit_components_textarea_variants_states_error_properties_colors_border-color
   ) !important;
@@ -157,8 +172,9 @@
   ) !important;
 }
 
-/* Disabled State Mapping (Propagated strictly down from the wrapper DOM context) */
-.root[data-disabled] .input {
+/* Disabled State Mapping
+   MUI stamps `Mui-disabled` onto both the root slot and the input element directly. */
+.input:global(.Mui-disabled) {
   border-color: var(
     --recursica_ui-kit_components_textarea_variants_states_disabled_properties_colors_border-color
   ) !important;

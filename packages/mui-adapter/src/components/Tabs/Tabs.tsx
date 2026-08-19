@@ -62,6 +62,7 @@ export const Tab = forwardRef<HTMLDivElement, TabProps>(
     return (
       <MuiTab
         ref={ref}
+        disableRipple
         className={`${styles.tab} ${className || ""}`}
         {...(sanitizedProps as MuiTabProps)}
       />

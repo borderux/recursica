@@ -1,0 +1,123 @@
+/* HARDCODED VALUES:
+   - border-style: solid. Mui's Tooltip content div does not set border-style natively;
+     without it, the border-width/border-color tokens below have no visible effect.
+     Same pattern as HoverCard / Tooltip / Menu in this adapter.
+   - margin: 0 on the dropdown (per placement, see below). Mui's Tooltip content div ships
+     its own hardcoded 14px (or 24px on touch) margin toward the target for every placement,
+     stacked on top of the `offset` popper modifier Popover.tsx already applies. That modifier
+     alone is what matches Mantine's own gap, so Mui's built-in margin must be zeroed out or
+     the visible gap ends up far larger than Mantine's.
+   - border-style: solid on the arrow's ::before. Mui's arrow pseudo-element has no border by
+     default; without it, the border-color/border-width tokens below have no visible effect.
+   - All structural layout (display, position, overflow) is deferred to Mui's native
+     Popper/Tooltip behavior. We only override visual design tokens (colors, typography,
+     spacing, borders).
+*/
+/* EXEMPTIONS:
+   - beak-size is ignored here because Mui's Tooltip arrow is a fixed-size CSS shape
+     (1em / 0.71em, relative to the tooltip's own font-size) with no size prop of its own —
+     unlike Mantine, there is no JS/pixel hook to bind this token to. */
+/* recursica-ignore: --recursica_ui-kit_components_hover-card-popover_properties_beak-size = 16px */
+
+/* ======================================
+   DROPDOWN CONTAINER
+   ====================================== */
+
+.dropdown {
+  background-color: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_colors_background-color
+  );
+  border-style: solid; /* HARDCODE: Mui's Tooltip content div does not set border-style natively */
+  border-width: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_border-size
+  );
+  border-color: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_colors_border-color
+  );
+  border-radius: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_border-radius
+  );
+  box-shadow: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_elevation
+  );
+
+  min-width: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_min-width
+  );
+  max-width: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_max-width
+  );
+
+  padding: var(
+      --recursica_ui-kit_components_hover-card-popover_properties_vertical-padding
+    )
+    var(
+      --recursica_ui-kit_components_hover-card-popover_properties_horizontal-padding
+    );
+
+  /* Typography */
+  font-family: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_content-text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_content-text_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_content-text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_content-text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_content-text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_content-text_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_content-text_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_content-text_text-transform
+  );
+
+  color: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_colors_content
+  );
+}
+
+/* Mui's Tooltip content div sets its own margin toward the target per placement
+   (marginTop/marginBottom/marginLeft/marginRight), duplicating the gap already produced by
+   the `offset` popper modifier in Popover.tsx. Zero it out so the modifier is the single
+   source of truth for the gap, matching Mantine's gap. Selector specificity matches Mui's own
+   placement rule (class + attribute + class) so it wins on source order (this adapter's
+   modules are injected after Mui's via injectFirst). */
+:global(.MuiTooltip-popper[data-popper-placement]) .dropdown {
+  margin: 0; /* HARDCODE: cancel Mui's built-in per-placement margin, see file header */
+}
+
+/* ======================================
+   ARROW / BEAK
+   ====================================== */
+
+/* Mui's arrow is a solid rotated-square shape filled via `currentColor` (no separate
+   border), unlike Mantine's bordered-diamond arrow. Fill with the panel's own
+   background-color token for the closest visual match Mui's primitive allows. */
+.arrow {
+  color: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_colors_background-color
+  );
+}
+
+/* Mui's arrow ::before has no border by default, so it renders as a solid triangle with no
+   visible edge against a similarly-colored dropdown body. Mantine's arrow gets its visibility
+   the same way — a border using the popover's own border tokens — so replicate that here. */
+.arrow::before {
+  border-style: solid; /* HARDCODE: Mui's arrow ::before does not set border-style natively */
+  border-width: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_border-size
+  );
+  border-color: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_colors_border-color
+  );
+}

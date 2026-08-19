@@ -111,6 +111,9 @@ export const Panel = wrapComponent(
 export const PanelFooter = wrapComponent(
   rawComponents.PanelFooter,
 ) as typeof rawComponents.PanelFooter;
+export const Popover = wrapComponent(
+  rawComponents.Popover,
+) as typeof rawComponents.Popover;
 export const Radio = wrapComponent(
   rawComponents.Radio,
 ) as typeof rawComponents.Radio;

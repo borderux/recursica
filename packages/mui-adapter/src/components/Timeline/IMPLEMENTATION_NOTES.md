@@ -1,5 +1,26 @@
 # Timeline Implementation Notes
 
-- **`TimelineItem.tsx`'s `classes` prop likely does nothing (needs follow-up):** `TimelineItem.tsx` passes `classes={{ item: styles.item, itemBody: styles.itemBody, itemContent: styles.itemContent, itemBullet: styles.itemBullet, itemTitle: styles.itemTitle }}` to `MuiTimelineItem`. But `@mui/lab`'s `TimelineItem` only defines these class slots (see `node_modules/@mui/lab/TimelineItem/timelineItemClasses.d.ts`): `root`, `positionLeft`, `positionRight`, `positionAlternate`, `positionAlternateReverse`, `missingOppositeContent`. There is no `item`/`itemBody`/`itemContent`/`itemBullet`/`itemTitle` slot — `useUtilityClasses` in `TimelineItem.js` builds its class list from a fixed `slots` object keyed only by those real slot names and passes it through `composeClasses`, which ignores any other keys on the `classes` object we pass in. So `.item`, `.itemBody`, `.itemContent`, `.itemBullet`, and `.itemTitle` in `Timeline.module.css` (lines with those selectors) are not actually attached to any rendered element today — they're dead CSS.
-  - Discovered 2026-08-06 while wiring up the `--recursica_ui-kit_components_timeline_properties_item-gap` token (see changeset `fix-mui-adapter-broken-tokens`). That specific fix didn't depend on these classes — it uses `gap` on `.root` (a real, correctly-applied slot), which spaces direct `<li>` children regardless of their own class — so it's unaffected by this bug and needed no workaround.
-  - **Needs a real fix later:** likely means auditing which of `.item`/`.itemBody`/`.itemContent`/`.itemBullet`/`.itemTitle`'s rules are actually load-bearing (vs. now-inert overrides of Mantine's naming that never carried over structurally to MUI), and either (a) finding the correct way to target those parts under MUI's actual DOM (e.g. `:global()` selectors against MUI's own internal class names, similar to the pattern used elsewhere in this adapter for `TableCell`/`TableRow`), or (b) restructuring `TimelineItem.tsx` to apply these as plain `className`s on wrapper elements it already renders internally, since `classes` won't work for slots MUI doesn't define.
+## Architecture
+
+Unlike Mantine, `@mui/lab`'s `TimelineItem` has no built-in bullet/connector — it only
+composes whatever you nest inside it. `TimelineItem.tsx` renders `TimelineSeparator` >
+`TimelineDot` (`.itemBullet`) + `TimelineConnector` (`.itemConnector`), and `TimelineContent`
+(`.itemBody`) containing the `title`/description/`timestamp` nodes, to reproduce Mantine's
+single-component bullet + connecting-line structure.
+
+- `Timeline.tsx` computes `active`/`isLast` per item (Mui has no `active` concept at all) and
+  injects them into each `Timeline.Item` as internal `__active`/`__isLast` props, mirroring
+  Mantine's own `cloneElement` pattern for propagating active state down to children.
+- `data-active` / `data-variant` are set directly on `TimelineItem`'s real `li` root and
+  consumed via plain descendant selectors (`.item[data-active] .itemBullet`, etc.) in
+  `Timeline.module.css` — Mui's `TimelineItem` only defines a `root` classes slot, so (unlike
+  Mantine) passing a `classes` object with `item`/`itemBullet`/`itemBody`/... keys is a no-op;
+  those class names must be applied as plain `className`s on the elements we render ourselves.
+- The last item omits `TimelineConnector` entirely so no trailing line renders past it.
+- `Timeline.module.css` neutralizes Mui's `TimelineItem::before` opposite-content spacer
+  (`flex: 0; padding: 0`), which otherwise pushes the separator/content right since this
+  adapter never renders `TimelineOppositeContent`.
+
+## Limitations & Missing Tokens
+
+- **Avatar Bullet Size**: There is no specific pixel variable provided for the Avatar bullet size in the UI kit tokens (`avatar-size` evaluates to `"default"`). To maintain exact mathematical centering with the connector line, the CSS falls back to inheriting the `default` bullet size (`20px`) for avatar nodes natively. If users supply a custom sized `img` tag, it must adhere to inline structural constraints or flex mappings.

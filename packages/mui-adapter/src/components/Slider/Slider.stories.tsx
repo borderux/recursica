@@ -92,7 +92,7 @@ export const Disabled: Story = {
     label: "Decommissioned Server Node",
     assistiveText: "Modifications to this environment are frozen.",
     defaultValue: 35,
-    disabled: false,
+    disabled: true,
   },
 };
 

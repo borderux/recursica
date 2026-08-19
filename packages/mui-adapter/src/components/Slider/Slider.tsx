@@ -1,4 +1,4 @@
-import React, { forwardRef, useState, useEffect } from "react";
+import React, { forwardRef, useState, useEffect, useRef } from "react";
 import {
   Slider as MuiSlider,
   type SliderProps as MuiSliderProps,
@@ -145,6 +145,36 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
     delete restRecord["color"];
     delete restRecord["wrapperProps"];
 
+    // MUI always programmatically re-focuses its hidden native input on pointer interaction,
+    // which browsers' `:focus-visible` heuristic treats as keyboard-visible — unlike Mantine's
+    // plain div thumb, where a real click correctly resolves to a non-visible focus. Track
+    // pointer-vs-keyboard ourselves so the focus ring only paints for genuine keyboard focus,
+    // matching Mantine (a later keypress while still focused reveals the ring, same as native).
+    const pointerDownRef = useRef(false);
+    const [suppressFocusRing, setSuppressFocusRing] = useState(false);
+    const externalOnMouseDown = (sanitizedProps as MuiSliderProps).onMouseDown;
+    const externalOnFocus = (sanitizedProps as MuiSliderProps).onFocus;
+    const externalOnBlur = (sanitizedProps as MuiSliderProps).onBlur;
+    const externalOnKeyDown = (sanitizedProps as MuiSliderProps).onKeyDown;
+
+    const handleThumbMouseDown = (e: React.MouseEvent<HTMLSpanElement>) => {
+      pointerDownRef.current = true;
+      externalOnMouseDown?.(e);
+    };
+    const handleThumbFocus = (e: React.FocusEvent<HTMLSpanElement>) => {
+      setSuppressFocusRing(pointerDownRef.current);
+      pointerDownRef.current = false;
+      externalOnFocus?.(e);
+    };
+    const handleThumbBlur = (e: React.FocusEvent<HTMLSpanElement>) => {
+      setSuppressFocusRing(false);
+      externalOnBlur?.(e);
+    };
+    const handleThumbKeyDown = (e: React.KeyboardEvent<HTMLSpanElement>) => {
+      setSuppressFocusRing(false);
+      externalOnKeyDown?.(e);
+    };
+
     // Securely map core native blocks down ensuring nested CSS modules map precisely
     const mergedClassNames: Partial<Record<string, string>> = {
       root: styles.sliderRoot,
@@ -226,6 +256,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
             data-form-layout={formLayout}
             data-disabled={disabled ? "true" : undefined}
             data-error={error ? "true" : undefined}
+            data-suppress-focus-ring={suppressFocusRing ? "true" : undefined}
           >
             {leadingIcon}
 
@@ -240,6 +271,10 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
                 disabled={disabled}
                 value={resolvedValue}
                 onChange={handleValueChange}
+                onMouseDown={handleThumbMouseDown}
+                onFocus={handleThumbFocus}
+                onBlur={handleThumbBlur}
+                onKeyDown={handleThumbKeyDown}
                 onChangeCommitted={
                   onChangeEnd as unknown as (
                     event: Event | React.SyntheticEvent,

@@ -2,8 +2,22 @@
   Recursica Tabs CSS module natively binding to Figma variables.
 */
 
-.root {
+/* Unlike Mantine's .root (which internally wraps List+Panel and always spans its parent),
+   MUI's .root is only the tablist — it sits beside the panel in the consumer's own flex row for
+   vertical orientation. Stretching it to 100% width there fights the panel for space and drags
+   the border-right rail/indicator away from the tab content, so only horizontal gets full width;
+   vertical sizes to its content instead, same as Mantine's vertical .list does. */
+.root[data-orientation="horizontal"] {
   width: 100%;
+}
+
+/* Mantine's vertical .list stretches to the root's full height via flex align-items, so a
+   border-right divider on it spans the whole rail. MUI's scroller (the .list's parent) is a plain
+   block for vertical, not a flex container, so .list sizes to its own content (just the stacked
+   tabs) and a divider on it stops short at the last tab instead of running the full height —
+   spell the stretch out explicitly instead. */
+.root[data-orientation="vertical"] .list {
+  height: 100%;
 }
 
 /*
@@ -125,6 +139,15 @@
   --tabs-color: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_outline_variants_selection-states_active_properties_colors_border-color
   ) !important;
+  --tabs-active-bg: var(
+    --recursica_ui-kit_components_tabs-item_variants_styles_outline_variants_selection-states_active_properties_colors_background-color
+  );
+  /* The active tab's own background-color token above is transparent by design (it's meant to
+     let whichever ambient Layer surface sits behind the Tabs show through). That means it can't
+     double as an opaque "eraser" for the baseline-patch trick below, which needs a real paint to
+     replace, not reveal-through. Layer 0 is the default/outermost surface a Tabs instance sits
+     on absent a wrapping <Layer>; see OUTLINE SELECTION BORDER below for why this is needed. */
+  --tabs-baseline-patch-bg: var(--recursica_brand_layer_0_properties_surface);
 }
 
 .root[data-variant="outline"][data-orientation="horizontal"] {
@@ -223,18 +246,17 @@
 
 /* ---------------------------------
    SELECTION INDICATOR & BASELINE
-   Mantine draws the active-tab underline/side-border and the full-length baseline natively off
-   the shared --tabs-color/--tabs-border-color vars above. MUI has no equivalent built-in, so we
-   drive its own indicator slot (classes.indicator, wired in Tabs.tsx) and the list's baseline
-   border explicitly from the same vars. Pills has no baseline/indicator — selection is carried
-   entirely by the pill's own background/border (see COLORS & TYPOGRAPHY below).
+   Mantine draws the active-tab underline natively off the shared --tabs-color var above. MUI has
+   no equivalent built-in, so we drive its own indicator slot (classes.indicator, wired in
+   Tabs.tsx) and the list's baseline border explicitly from the same vars. Pills has no underline
+   indicator — selection shows via the pill's own background/border (see COLORS & TYPOGRAPHY
+   below). Outline repurposes the indicator as a baseline patch rather than an underline (see
+   below).
 --------------------------------- */
-.root[data-variant="default"] .indicator,
-.root[data-variant="outline"] .indicator {
+.root[data-variant="default"] .indicator {
   background-color: var(--tabs-color) !important;
 }
-.root[data-variant="default"][data-orientation="horizontal"] .indicator,
-.root[data-variant="outline"][data-orientation="horizontal"] .indicator {
+.root[data-variant="default"][data-orientation="horizontal"] .indicator {
   height: var(--tabs-active-border-size) !important;
 }
 /* MUI's Tabs root has no border/padding of its own, so the list's margin-bottom (the
@@ -250,27 +272,52 @@
     --recursica_ui-kit_components_tabs_variants_styles_default_variants_orientation_horizontal_properties_tabs-content-gap
   ) !important;
 }
-.root[data-variant="outline"][data-orientation="horizontal"]:not(
-    [data-inverted]
-  )
-  .indicator {
-  bottom: var(
-    --recursica_ui-kit_components_tabs_variants_styles_outline_variants_orientation_horizontal_properties_tabs-content-gap
+/* width: same reasoning as the horizontal height above, rotated 90°.
+   right: same reasoning as the horizontal bottom offset above, rotated 90° — the list's
+   margin-right (this orientation's tabs-content-gap, spacing the panel to its right) inflates the
+   root's auto width past the list's own border-right edge. The indicator is absolutely positioned
+   against that wider box, so without this offset it renders content-gap pixels to the right of the
+   divider instead of flush against it. */
+.root[data-variant="default"][data-orientation="vertical"] .indicator {
+  width: var(--tabs-active-border-size) !important;
+  right: var(
+    --recursica_ui-kit_components_tabs_variants_styles_default_variants_orientation_vertical_properties_tabs-content-gap
   ) !important;
 }
-.root[data-variant="default"][data-orientation="vertical"] .indicator,
-.root[data-variant="outline"][data-orientation="vertical"] .indicator {
-  width: var(--tabs-active-border-size) !important;
-}
 .root[data-variant="default"][data-orientation="horizontal"][data-inverted]
-  .indicator,
-.root[data-variant="outline"][data-orientation="horizontal"][data-inverted]
   .indicator {
   bottom: auto !important;
   top: 0 !important;
 }
 .root[data-variant="pills"] .indicator {
   display: none !important;
+}
+
+/* Outline has no sliding underline of its own, but reuses the indicator element (already
+   positioned/sized by MUI to exactly track the selected tab, no matter which one) as a baseline
+   patch instead of hiding it — see OUTLINE SELECTION BORDER below for why a patch is needed at
+   all, and why it has to live here (in the scroller) rather than on the tab itself. */
+.root[data-variant="outline"] .indicator {
+  background-color: var(--tabs-baseline-patch-bg) !important;
+}
+.root[data-variant="outline"][data-orientation="horizontal"]:not(
+    [data-inverted]
+  )
+  .indicator {
+  height: var(--tabs-inactive-border-size) !important;
+  bottom: var(
+    --recursica_ui-kit_components_tabs_variants_styles_outline_variants_orientation_horizontal_properties_tabs-content-gap
+  ) !important;
+}
+.root[data-variant="outline"][data-orientation="horizontal"][data-inverted]
+  .indicator {
+  height: var(--tabs-inactive-border-size) !important;
+  bottom: auto !important;
+  top: calc(-1 * var(--tabs-inactive-border-size)) !important;
+}
+.root[data-variant="outline"][data-orientation="vertical"] .indicator {
+  width: var(--tabs-inactive-border-size) !important;
+  right: calc(-1 * var(--tabs-inactive-border-size)) !important;
 }
 
 .root[data-variant="default"][data-orientation="horizontal"] .list,
@@ -354,6 +401,41 @@
 .root[data-variant="default"][data-orientation="vertical"] .tab,
 .root[data-variant="outline"][data-orientation="vertical"] .tab {
   border-radius: var(--tabs-border-radius) 0 0 var(--tabs-border-radius);
+}
+
+/* ---------------------------------
+   OUTLINE SELECTION BORDER
+   Mantine's outline tab marks selection with a bordered box left open on the edge that touches
+   the list's own baseline, so the box visually connects to it instead of floating above it.
+   Every tab keeps the border geometry (transparent by default) so selecting a tab doesn't shift
+   layout; only the color changes on selection. The open edge here has 0 border-width, which
+   leaves the list's own baseline border showing straight through underneath — see the indicator
+   patch in SELECTION INDICATOR & BASELINE above, which covers just that segment. (A pseudo-element
+   on the tab itself can't do this: MUI clips tab content to its own bounds for ripple containment,
+   so anything extending past the tab's box to reach the list's border gets clipped away.)
+--------------------------------- */
+.root[data-variant="outline"] .tab {
+  border-style: solid;
+  border-color: transparent;
+}
+.root[data-variant="outline"][data-orientation="horizontal"]:not(
+    [data-inverted]
+  )
+  .tab {
+  border-width: var(--tabs-inactive-border-size)
+    var(--tabs-inactive-border-size) 0 var(--tabs-inactive-border-size);
+}
+.root[data-variant="outline"][data-orientation="horizontal"][data-inverted]
+  .tab {
+  border-width: 0 var(--tabs-inactive-border-size)
+    var(--tabs-inactive-border-size) var(--tabs-inactive-border-size);
+}
+.root[data-variant="outline"][data-orientation="vertical"] .tab {
+  border-width: var(--tabs-inactive-border-size) 0
+    var(--tabs-inactive-border-size) var(--tabs-inactive-border-size);
+}
+.root[data-variant="outline"] .tab:global(.Mui-selected) {
+  border-color: var(--tabs-color) !important;
 }
 
 /* ---------------------------------
@@ -485,9 +567,7 @@
 }
 
 .root[data-variant="outline"] .tab:global(.Mui-selected) {
-  background-color: var(
-    --recursica_ui-kit_components_tabs-item_variants_styles_outline_variants_selection-states_active_properties_colors_background-color
-  ) !important;
+  background-color: var(--tabs-active-bg) !important;
   color: var(
     --recursica_ui-kit_components_tabs-item_variants_styles_outline_variants_selection-states_active_properties_colors_text-color
   ) !important;
@@ -635,8 +715,11 @@
   z-index: 0;
 }
 
-/* Ensure tab content sits above the hover background */
-.root .tab > * {
+/* Ensure tab content sits above the hover background. Excludes MuiTouchRipple-root: it relies on
+   its native position:absolute to stay out of flow, and forcing it to position:relative here
+   turns it into a real flex item — inserting an extra element-gap into the tab's flex row (and
+   growing the tab's width) the first time it's clicked, permanently shifting later siblings. */
+.root .tab > *:not(:global(.MuiTouchRipple-root)) {
   z-index: 1;
   position: relative;
 }

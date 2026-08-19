@@ -52,6 +52,7 @@ Each component has its own `USAGE.md` documenting its props, adapter-specific be
 - [NumberInput](src/components/NumberInput/USAGE.md)
 - [Pagination](src/components/Pagination/USAGE.md)
 - [Panel](src/components/Panel/USAGE.md)
+- [Popover](src/components/Popover/USAGE.md)
 - [Radio](src/components/Radio/USAGE.md)
 - [ReadOnlyField](src/components/ReadOnlyField/USAGE.md)
 - [RecursicaThemeProvider](src/components/RecursicaThemeProvider/USAGE.md)

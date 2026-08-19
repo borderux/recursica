@@ -121,20 +121,16 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
           /* Naked Input execution safely decoupled from Mantine's macro Input.Wrapper DOM hooks */
           <MantineTextarea
             ref={ref}
+            {...(sanitizedProps as unknown as MantineTextareaProps)}
             classNames={mergedClassNames}
             disabled={disabled}
             value={value}
             defaultValue={defaultValue}
             label={undefined}
             description={undefined}
-            error={undefined}
+            error={!!error}
             required={undefined}
             withAsterisk={undefined}
-            wrapperProps={{
-              "data-disabled": disabled ? "true" : undefined,
-              "data-error": error ? "true" : undefined,
-            }}
-            {...(sanitizedProps as unknown as MantineTextareaProps)}
           />
         }
       />

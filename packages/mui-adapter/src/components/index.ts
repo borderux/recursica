@@ -28,6 +28,7 @@ export * from "./Modal";
 export * from "./NumberInput";
 export * from "./Pagination";
 export * from "./Panel";
+export * from "./Popover";
 export * from "./Radio";
 export * from "./ReadOnlyField";
 export * from "./SegmentedControl";

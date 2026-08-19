@@ -2,6 +2,10 @@ import React from "react";
 import MuiTimelineItem, {
   type TimelineItemProps as MuiTimelineItemProps,
 } from "@mui/lab/TimelineItem";
+import TimelineSeparator from "@mui/lab/TimelineSeparator";
+import TimelineDot from "@mui/lab/TimelineDot";
+import TimelineConnector from "@mui/lab/TimelineConnector";
+import TimelineContent from "@mui/lab/TimelineContent";
 import {
   filterStylingProps,
   type RecursicaOverStyled,
@@ -11,8 +15,15 @@ import styles from "./Timeline.module.css";
 import { type RecursicaTimelineItemProps } from "@recursica/adapter-common";
 
 export type TimelineItemProps = RecursicaOverStyled<
-  Omit<MuiTimelineItemProps, "radius" | "color" | "lineVariant"> &
-    RecursicaTimelineItemProps
+  Omit<MuiTimelineItemProps, "radius" | "color" | "lineVariant" | "title"> &
+    RecursicaTimelineItemProps & {
+      /** Heading rendered above the item's description/timestamp */
+      title?: React.ReactNode;
+      /** @internal injected by `Timeline` to mark items up to `active` */
+      __active?: boolean;
+      /** @internal injected by `Timeline`; suppresses the trailing connector on the last item */
+      __isLast?: boolean;
+    }
 >;
 
 /**
@@ -22,48 +33,30 @@ export type TimelineItemProps = RecursicaOverStyled<
  * The `Timeline.Item` has been extended to support a `timestamp` string natively,
  * rendering it below the body content. It also accepts a `bulletVariant` to morph
  * the structural dimensions of the node circle automatically.
+ *
+ * Internally it composes Mui's `TimelineSeparator`/`TimelineDot`/`TimelineConnector`/
+ * `TimelineContent` primitives (Mui has no single "item" abstraction like Mantine's
+ * `Timeline.Item` that renders a bullet + connector on its own).
  */
-export const TimelineItem = React.forwardRef<HTMLDivElement, TimelineItemProps>(
+export const TimelineItem = React.forwardRef<HTMLLIElement, TimelineItemProps>(
   function TimelineItem(
     {
       overStyled = false,
       timestamp,
       bulletVariant = "default",
       bullet,
+      title,
       children,
+      __active = false,
+      __isLast = false,
       ...rest
     },
     ref,
   ) {
-    void bullet;
     const sanitizedProps = filterStylingProps(rest, overStyled);
+    const { className: userClassName, ...restSanitizedProps } =
+      sanitizedProps as Record<string, unknown> & { className?: string };
 
-    const mergedClassNames: Partial<Record<string, string>> = {
-      item: styles.item,
-      itemBody: styles.itemBody,
-      itemContent: styles.itemContent,
-      itemBullet: styles.itemBullet,
-      itemTitle: styles.itemTitle,
-    };
-
-    const classNamesProp = (sanitizedProps as Record<string, unknown>)
-      .classNames;
-    if (
-      classNamesProp &&
-      typeof classNamesProp === "object" &&
-      !Array.isArray(classNamesProp)
-    ) {
-      const o = classNamesProp as Record<string, string>;
-      Object.keys(o).forEach((key) => {
-        if (mergedClassNames[key]) {
-          mergedClassNames[key] = `${mergedClassNames[key]} ${o[key]}`;
-        } else {
-          mergedClassNames[key] = o[key];
-        }
-      });
-    }
-
-    // Embed timestamp inside children if provided, wrapped in a specific class
     const content = timestamp ? (
       <>
         {children && <div className={styles.description}>{children}</div>}
@@ -76,14 +69,24 @@ export const TimelineItem = React.forwardRef<HTMLDivElement, TimelineItemProps>(
     return (
       <MuiTimelineItem
         ref={ref}
-        {...(sanitizedProps as unknown as Omit<
-          MuiTimelineItemProps,
-          "radius" | "color" | "lineVariant"
-        >)}
-        classes={mergedClassNames}
         data-variant={bulletVariant}
+        data-active={__active || undefined}
+        {...(restSanitizedProps as unknown as Omit<
+          MuiTimelineItemProps,
+          "radius" | "color" | "lineVariant" | "title"
+        >)}
+        className={
+          userClassName ? `${styles.item} ${userClassName}` : styles.item
+        }
       >
-        {content}
+        <TimelineSeparator>
+          <TimelineDot className={styles.itemBullet}>{bullet}</TimelineDot>
+          {!__isLast && <TimelineConnector className={styles.itemConnector} />}
+        </TimelineSeparator>
+        <TimelineContent className={styles.itemBody}>
+          {title && <div className={styles.itemTitle}>{title}</div>}
+          <div className={styles.itemContent}>{content}</div>
+        </TimelineContent>
       </MuiTimelineItem>
     );
   },

@@ -86,7 +86,7 @@ export const AssistiveElement = React.forwardRef<
           {assistiveVariant === "error" ? <ErrorIcon /> : <HelpIcon />}
         </div>
       )}
-      <div className={styles.text}>{children}</div>
+      <span className={styles.text}>{children}</span>
     </FormHelperText>
   );
 });

@@ -66,6 +66,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
       emptyValueComponent,
       value,
       defaultValue,
+      autosize,
       ...rest
     } = props;
     const sanitizedProps = filterStylingProps(rest, overStyled);
@@ -75,27 +76,6 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
     delete restRecord["size"];
     delete restRecord["variant"];
     delete restRecord["radius"];
-
-    // Securely map core native blocks down ensuring nested CSS modules map precisely
-    const mergedClassNames: Partial<Record<string, string>> = {
-      wrapper: styles.root, // The nested Input internal relative wrapper bounding box
-      input: styles.input,
-    };
-
-    const classNamesProp = restRecord.classNames;
-    if (
-      classNamesProp &&
-      typeof classNamesProp === "object" &&
-      !Array.isArray(classNamesProp)
-    ) {
-      const o = classNamesProp as Partial<Record<string, string>>;
-      mergedClassNames.wrapper = o.wrapper
-        ? `${styles.root} ${o.wrapper}`
-        : styles.root;
-      mergedClassNames.input = o.input
-        ? `${styles.input} ${o.input}`
-        : styles.input;
-    }
 
     const wrapperClass = className
       ? `${styles.layoutOverride} ${className}`
@@ -130,15 +110,24 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
           /* Naked Input execution safely decoupled from Mui's macro Input.Wrapper DOM hooks */
           <MuiTextarea
             multiline
+            variant="standard"
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             inputRef={ref as any}
-            classes={mergedClassNames}
             disabled={disabled}
             value={value}
             defaultValue={defaultValue}
             label={undefined}
-            error={undefined}
+            error={!!error}
             required={undefined}
+            slotProps={{
+              input: {
+                disableUnderline: true,
+                classes: { root: styles.root, input: styles.input },
+                ...({
+                  "data-autosize": autosize ? "true" : undefined,
+                } as Record<string, unknown>),
+              },
+            }}
             {...(sanitizedProps as unknown as MuiTextareaProps)}
           />
         }

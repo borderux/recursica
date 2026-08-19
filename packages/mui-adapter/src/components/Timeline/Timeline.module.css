@@ -1,6 +1,6 @@
 /* EXEMPTIONS:
    - timeline-bullet_variants_types_avatar_properties_avatar-size is ignored because under the avatar timeline variant,
-     the bullet container size uses fallback bullet-size configurations to maintain vertical alignment with the 
+     the bullet container size uses fallback bullet-size configurations to maintain vertical alignment with the
      inactive/active connector line, while the nested Avatar subcomponent handles its own sizing natively. */
 /* recursica-ignore: --recursica_ui-kit_components_timeline-bullet_variants_types_avatar_properties_avatar-size */
 
@@ -8,74 +8,57 @@
   display: flex;
   flex-direction: column;
   gap: var(--recursica_ui-kit_components_timeline_properties_item-gap);
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 .item {
-  /* Mantine uses these vars to calculate the exact left: position of the connector line */
-  --tl-line-width: var(
-    --recursica_ui-kit_components_timeline_variants_selection-states_inactive_properties_connector-size
-  ) !important;
+  /* Mui gives every item a 70px min-height by default; content should drive height instead */
+  min-height: 0 !important;
+}
 
-  &[data-active] {
-    --tl-line-width: var(
-      --recursica_ui-kit_components_timeline_variants_selection-states_active_properties_connector-size
-    ) !important;
-  }
-
-  &[data-variant="default"] {
-    --tl-bullet-size: var(
-      --recursica_ui-kit_components_timeline-bullet_variants_types_default_properties_bullet-size
-    ) !important;
-  }
-  &[data-variant="icon"] {
-    --tl-bullet-size: var(
-      --recursica_ui-kit_components_timeline-bullet_variants_types_icon_properties_bullet-size
-    ) !important;
-  }
-  &[data-variant="icon-alternative"] {
-    --tl-bullet-size: var(
-      --recursica_ui-kit_components_timeline-bullet_variants_types_icon-alternative_properties_bullet-size
-    ) !important;
-  }
-  &[data-variant="avatar"] {
-    /* Avatar sizing fallback to default to maintain connector alignment */
-    --tl-bullet-size: var(
-      --recursica_ui-kit_components_timeline-bullet_variants_types_default_properties_bullet-size
-    ) !important;
-  }
-
-  /* Control connector lines via the item ::before pseudo-element */
-  /* Inactive connector */
-  &::before {
-    border-left-width: var(
-      --recursica_ui-kit_components_timeline_variants_selection-states_inactive_properties_connector-size
-    ) !important;
-    border-left-color: var(
-      --recursica_ui-kit_components_timeline_variants_selection-states_inactive_properties_colors_connector-color
-    ) !important;
-  }
-
-  /* Active connector */
-  &[data-active]::before {
-    border-left-width: var(
-      --recursica_ui-kit_components_timeline_variants_selection-states_active_properties_connector-size
-    ) !important;
-    border-left-color: var(
-      --recursica_ui-kit_components_timeline_variants_selection-states_active_properties_colors_connector-color
-    ) !important;
-  }
+/* Mui reserves a flex:1 spacer (via ::before) for the opposite-content column even when none is
+   rendered. Recursica's Timeline never uses TimelineOppositeContent, so neutralize it to keep the
+   bullet/connector column flush against the left edge. */
+:global(.MuiTimelineItem-root)::before {
+  content: none !important;
+  flex: 0 !important;
+  padding: 0 !important;
 }
 
 .itemBody {
-  /* Space between the bullet and the content */
-  padding-left: var(
-    --recursica_ui-kit_components_timeline_properties_bullet-content-gap
+  padding: 0 0 0
+    var(--recursica_ui-kit_components_timeline_properties_bullet-content-gap) !important;
+}
+
+.itemConnector {
+  width: var(
+    --recursica_ui-kit_components_timeline_variants_selection-states_inactive_properties_connector-size
+  ) !important;
+  background-color: var(
+    --recursica_ui-kit_components_timeline_variants_selection-states_inactive_properties_colors_connector-color
+  ) !important;
+}
+.item[data-active] .itemConnector {
+  width: var(
+    --recursica_ui-kit_components_timeline_variants_selection-states_active_properties_connector-size
+  ) !important;
+  background-color: var(
+    --recursica_ui-kit_components_timeline_variants_selection-states_active_properties_colors_connector-color
   ) !important;
 }
 
 .itemBullet {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  align-self: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+
   /* Default Variant */
-  :global(.mantine-Timeline-item)[data-variant="default"] & {
+  .item[data-variant="default"] & {
     width: var(
       --recursica_ui-kit_components_timeline-bullet_variants_types_default_properties_bullet-size
     ) !important;
@@ -96,7 +79,7 @@
       --recursica_ui-kit_components_timeline-bullet_variants_types_default_variants_selection-states_inactive_properties_colors_border-color
     ) !important;
   }
-  :global(.mantine-Timeline-item)[data-variant="default"][data-active] & {
+  .item[data-variant="default"][data-active] & {
     background-color: var(
       --recursica_ui-kit_components_timeline-bullet_variants_types_default_variants_selection-states_active_properties_colors_background-color
     ) !important;
@@ -106,7 +89,7 @@
   }
 
   /* Icon Variant */
-  :global(.mantine-Timeline-item)[data-variant="icon"] & {
+  .item[data-variant="icon"] & {
     width: var(
       --recursica_ui-kit_components_timeline-bullet_variants_types_icon_properties_bullet-size
     ) !important;
@@ -143,7 +126,7 @@
       );
     }
   }
-  :global(.mantine-Timeline-item)[data-variant="icon"][data-active] & {
+  .item[data-variant="icon"][data-active] & {
     background-color: var(
       --recursica_ui-kit_components_timeline-bullet_variants_types_icon_variants_selection-states_active_properties_colors_background-color
     ) !important;
@@ -156,7 +139,7 @@
   }
 
   /* Icon Alternative Variant */
-  :global(.mantine-Timeline-item)[data-variant="icon-alternative"] & {
+  .item[data-variant="icon-alternative"] & {
     width: var(
       --recursica_ui-kit_components_timeline-bullet_variants_types_icon-alternative_properties_bullet-size
     ) !important;
@@ -192,8 +175,7 @@
       );
     }
   }
-  :global(.mantine-Timeline-item)[data-variant="icon-alternative"][data-active]
-    & {
+  .item[data-variant="icon-alternative"][data-active] & {
     background-color: var(
       --recursica_ui-kit_components_timeline-bullet_variants_types_icon-alternative_variants_selection-states_active_properties_colors_background-color
     ) !important;
@@ -206,8 +188,14 @@
   }
 
   /* Avatar Variant */
-  :global(.mantine-Timeline-item)[data-variant="avatar"] & {
+  .item[data-variant="avatar"] & {
     /* Avatar sizing is often governed by the avatar itself, but we'll apply the radius and opacity */
+    width: var(
+      --recursica_ui-kit_components_timeline-bullet_variants_types_default_properties_bullet-size
+    ) !important;
+    height: var(
+      --recursica_ui-kit_components_timeline-bullet_variants_types_default_properties_bullet-size
+    ) !important;
     border-radius: var(
       --recursica_ui-kit_components_timeline-bullet_variants_types_avatar_properties_border-radius
     ) !important;
@@ -225,7 +213,7 @@
       --recursica_ui-kit_components_timeline-bullet_variants_types_avatar_variants_selection-states_inactive_properties_colors_border-color
     ) !important;
   }
-  :global(.mantine-Timeline-item)[data-variant="avatar"][data-active] & {
+  .item[data-variant="avatar"][data-active] & {
     opacity: var(
       --recursica_ui-kit_components_timeline-bullet_variants_types_avatar_variants_selection-states_active_properties_avatar-opacity
     ) !important;
@@ -275,7 +263,7 @@
   ) !important;
 
   /* Active Title Color */
-  :global(.mantine-Timeline-item)[data-active] & {
+  .item[data-active] & {
     color: var(
       --recursica_ui-kit_components_timeline_variants_selection-states_active_properties_colors_title-color
     ) !important;
@@ -323,7 +311,7 @@
     --recursica_ui-kit_components_timeline_variants_selection-states_inactive_properties_colors_description-color
   );
 
-  :global(.mantine-Timeline-item)[data-active] & {
+  .item[data-active] & {
     color: var(
       --recursica_ui-kit_components_timeline_variants_selection-states_active_properties_colors_description-color
     );
@@ -360,7 +348,7 @@
     --recursica_ui-kit_components_timeline_variants_selection-states_inactive_properties_colors_timestamp-color
   );
 
-  :global(.mantine-Timeline-item)[data-active] & {
+  .item[data-active] & {
     color: var(
       --recursica_ui-kit_components_timeline_variants_selection-states_active_properties_colors_timestamp-color
     );

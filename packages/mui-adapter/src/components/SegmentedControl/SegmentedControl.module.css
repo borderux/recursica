@@ -2,12 +2,17 @@
    - border-style: solid; on container and indicator
    - background-color: transparent; on label hover (overriding Mantine)
    - Scope prefix .root to enforce Figma tokens over Mantine's inline calculation without using !important
+   - padding/border/border-radius/min-height/min-width: 0 and background-color: transparent on
+     .control (MUI's ToggleButton root) so its own baseline button box model does not stack on
+     top of .label's token-driven height/border/radius, mirroring Mantine's transparent .control wrapper
+   - text-transform: none on .control resets MUI's ToggleButton uppercase default (see comment
+     above that rule); needed because the item text-transform token has no valid scoped value
 */
 
 /* EXEMPTIONS:
    - segmented-control-item_properties_item_border-radius is ignored because the item border-radius
      is fully governed by the per-selection-state tokens (unselected/selected `properties_border-radius`,
-     already applied to `.label` and `.control.Mui-selected` below); this generic, state-agnostic radius
+     already applied to `.label` and `.control:global(.Mui-selected)` below); this generic, state-agnostic radius
      token has no distinct consumption site without conflicting with those state-specific overrides.
      The Mantine reference adapter exempts this same variable for the same reason. */
 /* recursica-ignore: --recursica_ui-kit_components_segmented-control-item_properties_item_border-radius */
@@ -36,6 +41,28 @@
     --recursica_ui-kit_components_segmented-control_properties_elevation
   );
   gap: var(--recursica_ui-kit_components_segmented-control_properties_item-gap);
+}
+
+/* MUI's ToggleButton root ships its own padding/border/border-radius/min-height/min-width and a
+   text-transform: uppercase button default; reset all of it so it doesn't stack on top of (or leak
+   through, via inheritance, into) .label's token-driven box model/typography below. The
+   text-transform reset matters because the item's text-transform token
+   (segmented-control-item_..._text_text-transform) currently has no valid scoped value to resolve
+   to, so without this reset .label's own `text-transform: var(...)` below is invalid and the
+   inherited MUI uppercase default would otherwise show through (Mantine has no such native
+   default, so it never surfaced there). */
+.root .control {
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  min-height: 0;
+  min-width: 0;
+  background-color: transparent;
+  text-transform: none;
+}
+
+.root .control:hover {
+  background-color: transparent;
 }
 
 .root .label {
@@ -128,8 +155,10 @@
   );
 }
 
-/* Indicator mapping (MUI ToggleButton applies .Mui-selected to the button instead of rendering a sliding indicator) */
-.root .control.Mui-selected {
+/* Indicator mapping (MUI ToggleButton applies .Mui-selected to the button instead of rendering a sliding indicator).
+   Mui-selected must be wrapped in :global() — otherwise CSS Modules locally hashes it and the
+   selector never matches MUI's actual global class (silently dropping the selected state). */
+.root .control:global(.Mui-selected) {
   background-color: var(
     --recursica_ui-kit_components_segmented-control-item_variants_selection-states_selected_properties_colors_background-color
   );
@@ -149,7 +178,7 @@
 }
 
 /* Selected label text color override */
-.root .control.Mui-selected .label {
+.root .control:global(.Mui-selected) .label {
   color: var(
     --recursica_ui-kit_components_segmented-control-item_variants_selection-states_selected_properties_colors_text-color
   );
