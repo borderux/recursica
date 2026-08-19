@@ -3,10 +3,8 @@ import {
   filterStylingProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
-import {
-  FormControlWrapper,
-  type FormControlWrapperProps,
-} from "../FormControlWrapper/FormControlWrapper";
+import { type FormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
+import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
 import { Badge } from "../Badge/Badge";
 import { Button } from "../Button/Button";
 import { TextField } from "../TextField/TextField";
@@ -15,6 +13,7 @@ import { CheckboxGroup } from "../Checkbox/CheckboxGroup";
 import styles from "./TransferList.module.css";
 
 import {
+  type ReadOnlyControlProps,
   type RecursicaTransferListProps as BaseRecursicaTransferListProps,
   type RecursicaTransferListItem,
   type RecursicaTransferListData,
@@ -31,6 +30,7 @@ export interface RecursicaTransferListProps
       | "controlMinWidth"
       | "onChange"
     >,
+    ReadOnlyControlProps,
     BaseRecursicaTransferListProps {
   /** Disables the whole control */
   disabled?: boolean;
@@ -116,6 +116,9 @@ export const TransferList = forwardRef<HTMLDivElement, TransferListProps>(
       error,
       required,
       id: userProvidedId,
+      readOnly,
+      readOnlyComponent,
+      emptyValueComponent,
 
       data: controlledData,
       defaultData,
@@ -272,16 +275,20 @@ export const TransferList = forwardRef<HTMLDivElement, TransferListProps>(
               <div className={styles.emptyState}>No items</div>
             )}
 
-            {ungrouped.map((item) => (
-              <Checkbox
-                key={item.value}
-                id={`${id}-${paneId}-${item.value}`}
-                label={item.label}
-                checked={selected.has(item.value)}
-                onChange={() => onToggle(item.value)}
-                disabled={disabled}
-              />
-            ))}
+            {ungrouped.length > 0 && (
+              <CheckboxGroup>
+                {ungrouped.map((item) => (
+                  <Checkbox
+                    key={item.value}
+                    id={`${id}-${paneId}-${item.value}`}
+                    label={item.label}
+                    checked={selected.has(item.value)}
+                    onChange={() => onToggle(item.value)}
+                    disabled={disabled}
+                  />
+                ))}
+              </CheckboxGroup>
+            )}
 
             {groupNames.map((groupName) => (
               <CheckboxGroup
@@ -311,7 +318,7 @@ export const TransferList = forwardRef<HTMLDivElement, TransferListProps>(
       : styles.layoutOverride;
 
     return (
-      <FormControlWrapper
+      <WithReadOnlyWrapper
         ref={ref}
         formLayout={formLayout}
         labelSize={labelSize}
@@ -331,73 +338,80 @@ export const TransferList = forwardRef<HTMLDivElement, TransferListProps>(
         id={id}
         className={wrapperClass}
         style={style}
-      >
-        <div
-          className={styles.root}
-          data-disabled={disabled ? "true" : undefined}
-          data-error={error ? "true" : undefined}
-          {...(sanitizedProps as Record<string, unknown>)}
-        >
-          <div className={styles.panes}>
-            {renderPane(
-              "source",
-              sourceLabel,
-              filteredSource,
-              effectiveData[0],
-              sourceSelected,
-              toggleSourceItem,
-              sourceSearch,
-              setSourceSearch,
-            )}
+        readOnly={readOnly}
+        readOnlyComponent={readOnlyComponent}
+        emptyValueComponent={emptyValueComponent}
+        readOnlyType="text"
+        readOnlyValue={effectiveData[1].map((item) => item.label)}
+        readOnlyNativeProps={props}
+        activeComponent={
+          <div
+            className={styles.root}
+            data-disabled={disabled ? "true" : undefined}
+            data-error={error ? "true" : undefined}
+            {...(sanitizedProps as Record<string, unknown>)}
+          >
+            <div className={styles.panes}>
+              {renderPane(
+                "source",
+                sourceLabel,
+                filteredSource,
+                effectiveData[0],
+                sourceSelected,
+                toggleSourceItem,
+                sourceSearch,
+                setSourceSearch,
+              )}
 
-            <div className={styles.transferColumn}>
-              <Button
-                variant="outline"
-                size="small"
-                icon={<ChevronsIcon direction="right" />}
-                aria-label={`Move all to ${targetLabel}`}
-                disabled={disabled || effectiveData[0].length === 0}
-                onClick={transferAllToTarget}
-              />
-              <Button
-                variant="outline"
-                size="small"
-                icon={<ChevronIcon direction="right" />}
-                aria-label={`Move selected to ${targetLabel}`}
-                disabled={disabled || sourceSelected.size === 0}
-                onClick={transferToTarget}
-              />
-              <Button
-                variant="outline"
-                size="small"
-                icon={<ChevronIcon direction="left" />}
-                aria-label={`Move selected to ${sourceLabel}`}
-                disabled={disabled || targetSelected.size === 0}
-                onClick={transferToSource}
-              />
-              <Button
-                variant="outline"
-                size="small"
-                icon={<ChevronsIcon direction="left" />}
-                aria-label={`Move all to ${sourceLabel}`}
-                disabled={disabled || effectiveData[1].length === 0}
-                onClick={transferAllToSource}
-              />
+              <div className={styles.transferColumn}>
+                <Button
+                  variant="outline"
+                  size="small"
+                  icon={<ChevronsIcon direction="right" />}
+                  aria-label={`Move all to ${targetLabel}`}
+                  disabled={disabled || effectiveData[0].length === 0}
+                  onClick={transferAllToTarget}
+                />
+                <Button
+                  variant="outline"
+                  size="small"
+                  icon={<ChevronIcon direction="right" />}
+                  aria-label={`Move selected to ${targetLabel}`}
+                  disabled={disabled || sourceSelected.size === 0}
+                  onClick={transferToTarget}
+                />
+                <Button
+                  variant="outline"
+                  size="small"
+                  icon={<ChevronIcon direction="left" />}
+                  aria-label={`Move selected to ${sourceLabel}`}
+                  disabled={disabled || targetSelected.size === 0}
+                  onClick={transferToSource}
+                />
+                <Button
+                  variant="outline"
+                  size="small"
+                  icon={<ChevronsIcon direction="left" />}
+                  aria-label={`Move all to ${sourceLabel}`}
+                  disabled={disabled || effectiveData[1].length === 0}
+                  onClick={transferAllToSource}
+                />
+              </div>
+
+              {renderPane(
+                "target",
+                targetLabel,
+                filteredTarget,
+                effectiveData[1],
+                targetSelected,
+                toggleTargetItem,
+                targetSearch,
+                setTargetSearch,
+              )}
             </div>
-
-            {renderPane(
-              "target",
-              targetLabel,
-              filteredTarget,
-              effectiveData[1],
-              targetSelected,
-              toggleTargetItem,
-              targetSearch,
-              setTargetSearch,
-            )}
           </div>
-        </div>
-      </FormControlWrapper>
+        }
+      />
     );
   },
 );

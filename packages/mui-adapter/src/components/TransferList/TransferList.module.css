@@ -109,6 +109,11 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  /* No token exists for the gap between stacked CheckboxGroup blocks (ungrouped row +
+     each named group) — the 31-variable transfer-list schema only defines gaps at the
+     header/search/pane level (see TRANSFERLIST_IMPLEMENTATION_NOTES.md). Left as an
+     intentional hardcoded value rather than borrowing another component's token, same
+     as FileUpload's untokened icon size. */
   gap: 2px;
   min-height: 0;
 }
@@ -129,6 +134,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  /* No token exists for spacing between the four transfer buttons — not part of the
+     31-variable schema. Left as an intentional hardcoded value (see TRANSFERLIST_IMPLEMENTATION_NOTES.md). */
   gap: 4px;
   flex-shrink: 0;
 }

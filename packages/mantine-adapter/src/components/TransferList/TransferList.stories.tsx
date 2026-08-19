@@ -111,3 +111,11 @@ export const Empty: Story = {
     defaultData: [[], []],
   },
 };
+
+export const ReadOnly: Story = {
+  args: {
+    label: "Assigned users",
+    defaultData: [[], SAMPLE_DATA![0]],
+    readOnly: true,
+  },
+};

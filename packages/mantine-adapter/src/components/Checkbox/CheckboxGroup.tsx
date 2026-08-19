@@ -68,6 +68,16 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
     // Delete prohibited sizing hooks from bypassing the variables
     delete restRecord["size"];
 
+    // Mantine's own `Checkbox.Group` always establishes a context whose `value` defaults to
+    // `[]` (see @mantine/core's `useUncontrolled({ finalValue: [] })`), and its `Checkbox` spreads
+    // that context-derived `checked` *after* the individually-passed `checked` prop — so any
+    // `Checkbox` nested in a real `Checkbox.Group`, even one given neither `value` nor
+    // `defaultValue`, has its own `checked` prop silently forced to `false`. Callers who only want
+    // this component for its layout (item-gap spacing), not array-tracked selection — e.g.
+    // `TransferList`'s ungrouped rows, which pass each `Checkbox` its own controlled `checked` —
+    // must skip Mantine's real group primitive entirely rather than hand it an empty value.
+    const isArrayControlled = value !== undefined || defaultValue !== undefined;
+
     return (
       <WithReadOnlyWrapper
         className={className}
@@ -97,18 +107,30 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
         readOnlyValue={value !== undefined ? value : defaultValue}
         readOnlyNativeProps={props}
         activeComponent={
-          <MantineCheckbox.Group
-            ref={ref}
-            /* Natively bind local disabled lock dynamically */
-            {...(sanitizedProps as unknown as MantineCheckboxGroupProps)}
-            disabled={readOnly || (restRecord as any).disabled}
-            value={value as any}
-            defaultValue={defaultValue as any}
-          >
-            <div className={styles.groupRoot} data-layout={formLayout}>
+          isArrayControlled ? (
+            <MantineCheckbox.Group
+              ref={ref}
+              /* Natively bind local disabled lock dynamically */
+              {...(sanitizedProps as unknown as MantineCheckboxGroupProps)}
+              disabled={readOnly || (restRecord as any).disabled}
+              value={value as any}
+              defaultValue={defaultValue as any}
+            >
+              <div className={styles.groupRoot} data-layout={formLayout}>
+                {children}
+              </div>
+            </MantineCheckbox.Group>
+          ) : (
+            <div
+              ref={ref}
+              role="group"
+              {...(sanitizedProps as Record<string, unknown>)}
+              className={styles.groupRoot}
+              data-layout={formLayout}
+            >
               {children}
             </div>
-          </MantineCheckbox.Group>
+          )
         }
       />
     );

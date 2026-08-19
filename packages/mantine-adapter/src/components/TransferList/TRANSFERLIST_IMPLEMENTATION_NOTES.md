@@ -35,12 +35,33 @@ uses the same convention as every other Recursica control: a boolean `disabled` 
 error visuals, exactly like `TextArea`/`CheckboxGroup`. The token export only defines
 `disabled`/`error` state variants (no `focus`), matching Matt's direction to "follow the tokens."
 
-## No `readOnly` mode
+## `readOnly` mode (added 2026-08-19)
 
-Forge's reference has no read-only concept, and none was requested. `TransferList` skips the
-`WithReadOnlyWrapper` indirection every other control routes through and calls `FormControlWrapper`
-directly — if a read-only presentation is wanted later, it's a straightforward follow-up (add
-`readOnly`/`readOnlyComponent` and switch to `WithReadOnlyWrapper`, matching `TextArea`'s shape).
+Forge's reference has no read-only concept, but Matt asked for a `ReadOnly` story demonstrating
+the selected items as a read-only list. Switched from calling `FormControlWrapper` directly to
+routing through `WithReadOnlyWrapper` (the follow-up flagged in the original version of this note),
+matching `TextArea`'s shape: `readOnly`/`readOnlyComponent`/`emptyValueComponent` added to the prop
+surface via `ReadOnlyControlProps`, `readOnlyType="text"`, and `readOnlyValue` set to the target
+pane's item labels (`effectiveData[1].map(item => item.label)`). Renders as a comma-joined text
+list via the shared `ReadOnlyTextField`, same convention `CheckboxGroup`'s own read-only mode
+already uses for an array of values — no new read-only renderer needed. The two panes + transfer
+buttons (`activeComponent`) are skipped entirely when `readOnly` is set, same as every other
+control.
+
+## Height/gap/padding token audit (2026-08-19)
+
+Matt flagged the pane height as "too short" and asked that gap/padding be tied to recursica
+variables. Re-verified against `recursica_variables_scoped.css`: `properties_height` (200px),
+`properties_width`, `properties_vertical-padding`/`properties_horizontal-padding`, and
+`properties_gap` were already wired to their tokens (see "Token interpretation" above) — the 200px
+pane height is the design token's own value, not a hardcoded fallback. Two spacing values genuinely
+have no covering token in the 31-variable schema and are intentionally left as hardcoded pixels
+(see `TransferList.module.css` comments) rather than reusing another component's token: the gap
+between stacked `CheckboxGroup` blocks in `.paneList` (ungrouped row + each named group), and the
+gap between the four transfer buttons in `.transferColumn`. If a token is added to the schema for
+either, wire it in directly; until then this matches the established precedent (e.g. `FileUpload`'s
+untokened icon size) of leaving a truly uncovered value hardcoded with a documented reason instead
+of borrowing a sibling component's namespace.
 
 ## Token interpretation: unlabeled tokens with more than one plausible layout target
 
