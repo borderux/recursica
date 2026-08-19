@@ -92,7 +92,10 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
       : styles.root;
 
     const groupContext = React.useContext(CheckboxGroupContext);
-    const isGrouped = groupContext !== null;
+    // A Checkbox with its own explicit `checked` prop owns its source of truth even when
+    // nested inside a CheckboxGroup used purely for layout (e.g. TransferList's ungrouped
+    // rows) — only defer to the group's value array when the caller hasn't already told us.
+    const isGrouped = groupContext !== null && restRecord.checked === undefined;
     const isGroupReadOnly = isGrouped ? groupContext.readOnly : false;
     const isChecked = isGrouped
       ? (groupContext.value || []).includes(restRecord.value)

@@ -35,12 +35,62 @@ uses the same convention as every other Recursica control: a boolean `disabled` 
 error visuals, exactly like `TextArea`/`CheckboxGroup`. The token export only defines
 `disabled`/`error` state variants (no `focus`), matching Matt's direction to "follow the tokens."
 
-## No `readOnly` mode
+## `readOnly` mode (added 2026-08-19)
 
-Forge's reference has no read-only concept, and none was requested. `TransferList` skips the
-`WithReadOnlyWrapper` indirection every other control routes through and calls `FormControlWrapper`
-directly — if a read-only presentation is wanted later, it's a straightforward follow-up (add
-`readOnly`/`readOnlyComponent` and switch to `WithReadOnlyWrapper`, matching `TextArea`'s shape).
+Forge's reference has no read-only concept, but Matt asked for a `ReadOnly` story demonstrating
+the selected items as a read-only list. Switched from calling `FormControlWrapper` directly to
+routing through `WithReadOnlyWrapper` (the follow-up flagged in the original version of this note),
+matching `TextArea`'s shape: `readOnly`/`readOnlyComponent`/`emptyValueComponent` added to the prop
+surface via `ReadOnlyControlProps`, `readOnlyType="text"`, and `readOnlyValue` set to the target
+pane's item labels (`effectiveData[1].map(item => item.label)`). Renders as a comma-joined text
+list via the shared `ReadOnlyTextField`, same convention `CheckboxGroup`'s own read-only mode
+already uses for an array of values — no new read-only renderer needed. The two panes + transfer
+buttons (`activeComponent`) are skipped entirely when `readOnly` is set, same as every other
+control.
+
+## Height/gap/padding token audit (2026-08-19)
+
+Matt flagged the pane height as "too short" and asked that gap/padding be tied to recursica
+variables. Re-verified against `recursica_variables_scoped.css`: `properties_height` (200px),
+`properties_width`, `properties_vertical-padding`/`properties_horizontal-padding`, and
+`properties_gap` were already wired to their tokens (see "Token interpretation" above) — the 200px
+pane height is the design token's own value, not a hardcoded fallback. Two spacing values genuinely
+have no covering token in the 31-variable schema and are intentionally left as hardcoded pixels
+(see `TransferList.module.css` comments) rather than reusing another component's token: the gap
+between stacked `CheckboxGroup` blocks in `.paneList` (ungrouped row + each named group), and the
+gap between the four transfer buttons in `.transferColumn`. If a token is added to the schema for
+either, wire it in directly; until then this matches the established precedent (e.g. `FileUpload`'s
+untokened icon size) of leaving a truly uncovered value hardcoded with a documented reason instead
+of borrowing a sibling component's namespace.
+
+## Fixed: checkboxes inside `CheckboxGroup` ignored their own `checked`/`onChange` (2026-08-19)
+
+Matt's discrepancy report against the mantine source of truth: clicking an ungrouped checkbox in
+the `Grouped` story showed no checkmark and never toggled selection, though the pane's `Badge`
+count also never changed — meaning it silently did nothing, not "count going up" as literally
+worded, confirmed live via Playwright against both Storybooks (`isChecked()` stayed `false`, badge
+text stayed `5` across repeated clicks in mui; mantine correctly showed `1 / 5`, `2 / 5`).
+
+Root cause was in `Checkbox.tsx`, not `TransferList.tsx`: `TransferList` wraps its ungrouped items
+in a bare `<CheckboxGroup>` purely so they pick up the `item-gap` layout token (see the
+`RECURSICA_COMPONENTS`/gap fix from 2026-08-18), without ever passing that group a `value`/
+`onChange`. But `Checkbox.tsx` derived `isGrouped` from `groupContext !== null` alone — any
+`CheckboxGroup` ancestor forced grouped-array semantics (`isChecked = groupContext.value.includes(...)`,
+`handleChange` dispatching to `groupContext.onChange` instead of the checkbox's own `onChange`),
+even though the group had no `value` array and no `onChange` to dispatch to. `TransferList`'s own
+`checked={selected.has(item.value)}`/`onChange={() => onToggle(item.value)}` props were present but
+silently overridden/ignored. Mantine's `Checkbox.tsx` never had this bug — it doesn't consult any
+group context at all and always passes `checked`/`onChange` straight through to
+`@mantine/core`'s `Checkbox`.
+
+Fixed by only treating a `Checkbox` as group-controlled when it _doesn't_ already have its own
+explicit `checked` prop: `isGrouped = groupContext !== null && restRecord.checked === undefined`.
+A checkbox with its own `checked` (like `TransferList`'s rows) now always owns its source of truth;
+only checkboxes relying on `Checkbox.Group`'s array-tracking (no individual `checked`, matched by
+`value` — `CheckboxGroup.stories.tsx`'s usage) still defer to the group. Audited every
+`CheckboxGroup`/`Checkbox` pairing in mui-adapter (`CheckboxGroup.stories.tsx` and `TransferList`) —
+no existing usage combines both an individual `checked` and group-array `value`, so this is a
+straight bug fix with no regression risk.
 
 ## Token interpretation: unlabeled tokens with more than one plausible layout target
 
