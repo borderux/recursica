@@ -1,5 +1,22 @@
 # @recursica/mantine-adapter
 
+## 0.42.0
+
+### Minor Changes
+
+- e0f5643: Implement `TransferList` (dual listbox) in both adapters, replacing the "coming soon" stub. Composes `FormControlWrapper`, `TextField`, `Checkbox`/`CheckboxGroup`, `Badge`, and `Button` — supports controlled/uncontrolled `data`, per-item grouping, per-pane search, and `stacked`/`side-by-side` form layout.
+- 2fb7069: Fix `Slider`'s `Disabled` story (was passing `disabled: false` in both adapters). In `mui-adapter`, also fix the disabled track showing red instead of grey, make the thumb focus ring keyboard-only (no glow on click/drag) to match Mantine, render assistive text as a `<span>`, and align mark label color/position with Mantine (which now applies its own mark label color token too).
+- 2fb7069: Fix `TextArea`: error state border now uses the recursica error color (was never triggering in either adapter). MUI disabled background/border, focus ring color, and default height now match Mantine instead of MUI's own defaults.
+
+### Patch Changes
+
+- 1616144: Fix `FileInput`'s clear-all button: pressing Enter or Space while it was focused opened the native file picker instead of clearing the selection (a regression from switching the control to the shared `Button` component, which dropped the keydown handler the previous bespoke element had).
+- 3ff5821: Fix `TransferList` checkboxes not toggling/showing checked state in either adapter (grouping-for-layout was silently overriding item selection). Add `readOnly` support and a `ReadOnly` story.
+- Updated dependencies [e0f5643]
+- Updated dependencies [1616144]
+- Updated dependencies [3ff5821]
+  - @recursica/adapter-common@0.18.0
+
 ## 0.41.0
 
 ### Minor Changes
