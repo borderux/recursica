@@ -1,5 +1,31 @@
 # @recursica/mui-adapter
 
+## 0.25.0
+
+### Minor Changes
+
+- e0f5643: Implement `TransferList` (dual listbox) in both adapters, replacing the "coming soon" stub. Composes `FormControlWrapper`, `TextField`, `Checkbox`/`CheckboxGroup`, `Badge`, and `Button` — supports controlled/uncontrolled `data`, per-item grouping, per-pane search, and `stacked`/`side-by-side` form layout.
+- 2fb7069: Add `Popover` component (click-controlled dropdown with beak/arrow, composable `Popover.Target`/`Popover.Dropdown`), bringing mui-adapter in parity with mantine-adapter's Popover.
+- 2fb7069: Fix `Popover`: gap now matches Mantine (Mui's built-in per-placement tooltip margin was stacking on top of our offset), and the beak now has a visible border matching the dropdown body. Fix `Button`: line-height now applies via `labelText` per size (matching Mantine) instead of being dropped from the small-size token.
+- 2fb7069: Fix `SegmentedControl` height (MUI's default `ToggleButton` box model was stacking on top of the token-driven label height) and selected-state styling (`Mui-selected` wasn't wrapped in `:global()`, so CSS Modules silently dropped the selector).
+  Also default to the first item selected when uncontrolled, matching mantine.
+- 2fb7069: Fix `SegmentedControl` labels rendering all-caps in MUI (its `ToggleButton` uppercase default was leaking through an invalid text-transform token). Labels now match Mantine's original casing.
+- 2fb7069: Fix `Slider`'s `Disabled` story (was passing `disabled: false` in both adapters). In `mui-adapter`, also fix the disabled track showing red instead of grey, make the thumb focus ring keyboard-only (no glow on click/drag) to match Mantine, render assistive text as a `<span>`, and align mark label color/position with Mantine (which now applies its own mark label color token too).
+- 2fb7069: Fix `Stepper`: use MUI's `alternativeLabel` so horizontal labels center under the icon and the connector centers on it, render the completed check mark as our own token-colored glyph instead of MUI's default blue `CheckCircle` SVG, and draw the vertical connecting line as a stretch-aware rail so it reaches the next step's circle regardless of description height.
+- 2fb7069: Fix `Tabs` showing a MUI click ripple that Mantine's tabs don't have. `Tab` now passes `disableRipple`.
+- 2fb7069: Fix `Tabs`: `outline` variant's selected tab now shows a connected border box (matching Mantine) with no stray bottom border line. `default` variant no longer shifts sibling tabs when selecting one (a stray ripple element was being pulled into flex layout). `vertical` orientation no longer stretches the tablist to the full row width, and its divider now runs the full height with the selection indicator aligned on it instead of offset to the side.
+- 2fb7069: Fix `TextArea`: error state border now uses the recursica error color (was never triggering in either adapter). MUI disabled background/border, focus ring color, and default height now match Mantine instead of MUI's own defaults.
+- 2fb7069: Fix `Timeline`: rebuild `Timeline.Item` on Mui's `TimelineSeparator`/`TimelineDot`/`TimelineConnector`/`TimelineContent` primitives so the bullet marker, connecting line, active state, and bullet variants render (and left-align) like the Mantine adapter instead of not rendering at all.
+
+### Patch Changes
+
+- 1616144: Fix `FileInput`'s clear-all button: pressing Enter or Space while it was focused opened the native file picker instead of clearing the selection (a regression from switching the control to the shared `Button` component, which dropped the keydown handler the previous bespoke element had).
+- 3ff5821: Fix `TransferList` checkboxes not toggling/showing checked state in either adapter (grouping-for-layout was silently overriding item selection). Add `readOnly` support and a `ReadOnly` story.
+- Updated dependencies [e0f5643]
+- Updated dependencies [1616144]
+- Updated dependencies [3ff5821]
+  - @recursica/adapter-common@0.18.0
+
 ## 0.24.0
 
 ### Minor Changes

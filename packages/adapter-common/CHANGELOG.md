@@ -1,5 +1,16 @@
 # @recursica/adapter-common
 
+## 0.18.0
+
+### Minor Changes
+
+- e0f5643: Implement `TransferList` (dual listbox) in both adapters, replacing the "coming soon" stub. Composes `FormControlWrapper`, `TextField`, `Checkbox`/`CheckboxGroup`, `Badge`, and `Button` — supports controlled/uncontrolled `data`, per-item grouping, per-pane search, and `stacked`/`side-by-side` form layout.
+
+### Patch Changes
+
+- 1616144: Add `FileUpload`, `Tree`, `CheckboxGroup`, `Box`, and `Typography` to `RECURSICA_COMPONENTS` — all are real, shipped components that were missing from the registry.
+- 3ff5821: Fix `TransferList` checkboxes not toggling/showing checked state in either adapter (grouping-for-layout was silently overriding item selection). Add `readOnly` support and a `ReadOnly` story.
+
 ## 0.17.0
 
 ### Minor Changes

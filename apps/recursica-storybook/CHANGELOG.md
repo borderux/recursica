@@ -1,5 +1,20 @@
 # recursica-storybook
 
+## 0.27.0
+
+### Minor Changes
+
+- 3ff5821: Updated with full implementation of stories
+
+### Patch Changes
+
+- Updated dependencies [e0f5643]
+- Updated dependencies [1616144]
+- Updated dependencies [2fb7069]
+- Updated dependencies [2fb7069]
+- Updated dependencies [3ff5821]
+  - @recursica/mantine-adapter@0.42.0
+
 ## 0.26.0
 
 ### Minor Changes
