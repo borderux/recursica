@@ -1,8 +1,3 @@
-/* EXEMPTIONS:
-   - colors_supporting-text-color (selected variant) is ignored because selected menu items do not render
-     supporting secondary text, making the selected-state override for supporting text colors obsolete. */
-/* recursica-ignore: --recursica_ui-kit_components_menu-item_variants_selection-states_selected_properties_colors_supporting-text-color */
-
 /* HARDCODED VALUES:
    - border-style: solid. Structural rendering rule for the dropdown border (Mantine uses Paper which may not set border natively).
    - NOTE: overflow is intentionally NOT set on .dropdown. Mantine renders sub-menu dropdowns

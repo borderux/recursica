@@ -8,13 +8,20 @@
     "components",
     "brokenComponents",
     "missingVariables",
-    "unusedByComponent"
+    "unusedByComponent",
+    "staleExemptions"
   ],
   "properties": {
     "summary": {
       "type": "object",
       "description": "High-level summary of CSS variable health in the analyzed project.",
-      "required": ["totalDefined", "totalUsed", "totalMissing", "totalUnused"],
+      "required": [
+        "totalDefined",
+        "totalUsed",
+        "totalMissing",
+        "totalUnused",
+        "totalStaleExemptions"
+      ],
       "properties": {
         "totalDefined": {
           "type": "integer",
@@ -31,6 +38,10 @@
         "totalUnused": {
           "type": "integer",
           "description": "Number of variables defined in the scoped UI Kit dictionary that are not consumed by any component. These represent unmapped features or states."
+        },
+        "totalStaleExemptions": {
+          "type": "integer",
+          "description": "Number of recursica-ignore directives that reference a CSS variable no longer defined in the UI Kit dictionary at all."
         }
       }
     },
@@ -103,6 +114,32 @@
         "description": "List of unused CSS variables belonging to this component namespace.",
         "items": {
           "type": "string"
+        }
+      }
+    },
+    "staleExemptions": {
+      "type": "array",
+      "description": "Detailed list of recursica-ignore directives that reference a CSS variable no longer defined in the UI Kit dictionary at all (as opposed to a variable that still exists but is simply unused). Pass --cleanup to remove these automatically.",
+      "items": {
+        "type": "object",
+        "required": ["variable", "componentId", "filePath", "line"],
+        "properties": {
+          "variable": {
+            "type": "string",
+            "description": "The exact name of the CSS variable the stale directive references."
+          },
+          "componentId": {
+            "type": "string",
+            "description": "The lowercase ID of the component whose file contains the stale directive."
+          },
+          "filePath": {
+            "type": "string",
+            "description": "The file containing the stale recursica-ignore directive."
+          },
+          "line": {
+            "type": "integer",
+            "description": "The 1-indexed line number of the stale recursica-ignore directive within the file."
+          }
         }
       }
     }

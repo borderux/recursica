@@ -15,9 +15,10 @@ function parseArgs() {
     if (args[i] === "--css") options.css = args[++i];
     else if (args[i] === "--dir") options.dir = args[++i];
     else if (args[i] === "--output") options.output = args[++i];
+    else if (args[i] === "--cleanup") options.cleanup = true;
     else if (args[i] === "--help") {
       console.log(
-        "Usage: analyze-tokens [--css file.css] [--dir src/components] [--output token-analysis.json]",
+        "Usage: analyze-tokens [--css file.css] [--dir src/components] [--output token-analysis.json] [--cleanup]",
       );
       process.exit(0);
     }
@@ -66,6 +67,7 @@ function analyze() {
   const componentsIndex = {};
   const usedVarsMap = new Map(); // varName -> set of { componentId, filePath }
   let exemptions = new Set();
+  const exemptionLocationsMap = new Map(); // varName -> set of { componentId, filePath, line }
 
   if (fs.existsSync(options.dir)) {
     const dirs = fs
@@ -117,7 +119,20 @@ function analyze() {
               ...content.matchAll(/recursica-ignore:\s*(--recursica_[\w-]+)/g),
             ];
             ignoredMatches.forEach((m) => {
-              exemptions.add(m[1]);
+              const varName = m[1];
+              exemptions.add(varName);
+
+              const line = content.slice(0, m.index).split("\n").length;
+              if (!exemptionLocationsMap.has(varName))
+                exemptionLocationsMap.set(varName, new Set());
+              exemptionLocationsMap.get(varName).add(
+                JSON.stringify({
+                  variable: varName,
+                  componentId: compId,
+                  filePath: fullPath,
+                  line,
+                }),
+              );
             });
           }
         });
@@ -153,7 +168,39 @@ function analyze() {
     }
   });
 
-  // 4. Find Unused Variables
+  // 4. Find Stale Exemptions (recursica-ignore directives pointing at variables that no
+  // longer exist in the UI Kit dictionary at all, as opposed to variables that still exist
+  // but are simply unused).
+  const staleExemptions = [];
+  exemptionLocationsMap.forEach((locSet, varName) => {
+    if (!definedVars.has(varName)) {
+      locSet.forEach((loc) => staleExemptions.push(JSON.parse(loc)));
+    }
+  });
+  staleExemptions.sort(
+    (a, b) => a.filePath.localeCompare(b.filePath) || a.line - b.line,
+  );
+
+  if (options.cleanup && staleExemptions.length > 0) {
+    const byFile = {};
+    staleExemptions.forEach((entry) => {
+      if (!byFile[entry.filePath]) byFile[entry.filePath] = new Set();
+      byFile[entry.filePath].add(entry.line);
+    });
+
+    Object.keys(byFile).forEach((filePath) => {
+      const linesToRemove = byFile[filePath];
+      const lines = fs.readFileSync(filePath, "utf-8").split("\n");
+      const kept = lines.filter((_, i) => !linesToRemove.has(i + 1));
+      fs.writeFileSync(filePath, kept.join("\n"));
+    });
+
+    console.log(
+      `🧹 Cleaned up ${staleExemptions.length} stale recursica-ignore directive(s) across ${Object.keys(byFile).length} file(s).\n`,
+    );
+  }
+
+  // 5. Find Unused Variables
   const unusedVars = new Set(definedVars);
   usedVarsMap.forEach((_, varName) => unusedVars.delete(varName));
 
@@ -180,7 +227,7 @@ function analyze() {
     }
   });
 
-  // 5. Output Results
+  // 6. Output Results
   if (missingVars.length > 0) {
     console.error(`❌ FOUND ${missingVars.length} BROKEN VARIABLE REFERENCES!`);
     console.error(
@@ -196,6 +243,20 @@ function analyze() {
     console.log(
       `✅ No broken variables found! All references map to the UI Kit.\n`,
     );
+  }
+
+  if (staleExemptions.length > 0) {
+    const verb = options.cleanup ? "Removed" : "FOUND";
+    console.warn(
+      `⚠️ ${verb} ${staleExemptions.length} STALE recursica-ignore DIRECTIVE(S) — pointing at variables that no longer exist in the UI Kit.`,
+    );
+    if (!options.cleanup) {
+      console.warn(
+        `   Re-run with --cleanup to remove them automatically, or check ${options.output}.\n`,
+      );
+    } else {
+      console.warn();
+    }
   }
 
   const newComponents = Object.keys(unusedByComponent).length;
@@ -222,11 +283,13 @@ function analyze() {
           totalUsed: usedVarsMap.size,
           totalMissing: missingVars.length,
           totalUnused: unusedVars.size,
+          totalStaleExemptions: staleExemptions.length,
         },
         components: componentsIndex,
         brokenComponents: Array.from(brokenComponents).sort(),
         missingVariables: missingVars,
         unusedByComponent,
+        staleExemptions,
       },
       null,
       2,

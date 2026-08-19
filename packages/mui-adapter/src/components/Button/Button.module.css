@@ -378,16 +378,3 @@
       var(--recursica_brand_states_focus_margin)
       var(--recursica_brand_states_focus_color);
 }
-
-/* EXEMPTIONS:
-   These general button properties are redundant because visual mapping has been refactored
-   to content-specific variables (_content_label_sizes_... etc.) or are handled by design defaults. */
-/* recursica-ignore: --recursica_ui-kit_components_button_variants_sizes_default_properties_horizontal-padding */
-/* recursica-ignore: --recursica_ui-kit_components_button_variants_sizes_default_properties_min-width */
-/* recursica-ignore: --recursica_ui-kit_components_button_variants_sizes_small_properties_horizontal-padding */
-/* recursica-ignore: --recursica_ui-kit_components_button_variants_sizes_small_properties_hover-opacity */
-/* recursica-ignore: --recursica_ui-kit_components_button_variants_sizes_small_properties_min-width */
-/* recursica-ignore: --recursica_ui-kit_components_button_variants_sizes_small_properties_text_font-style */
-/* recursica-ignore: --recursica_ui-kit_components_button_variants_sizes_small_properties_text_letter-spacing */
-/* recursica-ignore: --recursica_ui-kit_components_button_variants_sizes_small_properties_text_text-decoration */
-/* recursica-ignore: --recursica_ui-kit_components_button_variants_sizes_small_properties_text_text-transform */

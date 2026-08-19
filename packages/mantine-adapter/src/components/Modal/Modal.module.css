@@ -1,14 +1,3 @@
-/* EXEMPTIONS:
-   - content-style and header-style parent variables represent raw JSON styling objects rather than
-     direct CSS variables and cannot be applied directly in standard CSS files.
-     Sub-properties are fully and individually mapped to elements natively.
-   - header/footer background-color are ignored because .header/.footer are intentionally
-     transparent (inheriting .content's background), matching Panel's header/footer treatment. */
-/* recursica-ignore: --recursica_ui-kit_components_modal_properties_content-style */
-/* recursica-ignore: --recursica_ui-kit_components_modal_properties_header-style */
-/* recursica-ignore: --recursica_ui-kit_components_modal_properties_colors_footer-background-color */
-/* recursica-ignore: --recursica_ui-kit_components_modal_properties_colors_header-background-color */
-
 .root {
 }
 
