@@ -7,6 +7,8 @@ import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 
 import {
   filterStylingProps,
+  omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import {
@@ -100,14 +102,19 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(
       style,
       ...rest
     } = props;
-    const sanitizedProps = filterStylingProps(rest, overStyled);
-    const restRecord = sanitizedProps as Record<string, unknown>;
+    // Props this component intentionally doesn't support — deleted at runtime so they can't leak
+    // through even if a caller forces them via plain JavaScript, bypassing the Omit<> above. We
+    // rely strictly on variables from Switch.module.css instead of MUI's own dimension/palette props.
+    const UNSUPPORTED_PROPS = [
+      "size", // Recursica controls sizing via design tokens, not MUI's native small/medium size
+      "color", // Recursica hardcodes color="default" below; MUI's palette-driven colors are unused
+    ] as const satisfies readonly (keyof MuiSwitchProps)[];
 
-    // Actively delete dimension bindings that bypass the abstraction
-    delete restRecord["size"];
-    delete restRecord["color"];
-    delete restRecord["radius"];
-    delete restRecord["variant"];
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled),
+      UNSUPPORTED_PROPS,
+    );
+    const restRecord = sanitizedProps as Record<string, unknown>;
 
     // NOTE: classes.root must stay keyed "root" (MUI's own slot name), but it targets a
     // dedicated .switchRoot CSS class, not .root — .root is this component's own outer
@@ -119,47 +126,24 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(
     // replaces that slot outright (confirmed against MUI's SwitchBase/Switch source: icon and
     // checkedIcon substitute the whole default thumb, they don't add to it), so the .thumb
     // class is applied directly to our own node instead.
-    const mergedClassNames: Partial<Record<string, string>> = {
-      root: styles.switchRoot,
-      body: styles.body,
-      track: styles.track,
-      switchBase: styles.switchBase,
-      trackLabel: styles.trackLabel,
-      labelWrapper: styles.labelWrapper,
-      label: styles.label,
-    };
-
-    // NOTE: MUI's actual prop is "classes", not "classNames" (that's Mantine's naming) — this
-    // was reading the wrong key and silently doing nothing. Fixed. Also note "body"/
-    // "trackLabel"/"labelWrapper"/"label" below aren't real MUI `classes` slots at all (MUI
-    // only recognizes root/switchBase/track/thumb/input/checked/disabled/colorX/sizeX/edgeX) —
-    // those four are this component's own hardcoded elements, styled directly in the JSX below,
-    // not through MUI's classes mechanism. Only root/track/switchBase actually take effect via
-    // this override path; the rest are pre-existing dead weight, unrelated to the classNames bug.
-    const classesProp = restRecord.classes;
-    if (
-      classesProp &&
-      typeof classesProp === "object" &&
-      !Array.isArray(classesProp)
-    ) {
-      const o = classesProp as Partial<Record<string, string>>;
-      mergedClassNames.root = o.root
-        ? `${styles.switchRoot} ${o.root}`
-        : styles.switchRoot;
-      mergedClassNames.body = o.body ? `${styles.body} ${o.body}` : styles.body;
-      mergedClassNames.track = o.track
-        ? `${styles.track} ${o.track}`
-        : styles.track;
-      mergedClassNames.trackLabel = o.trackLabel
-        ? `${styles.trackLabel} ${o.trackLabel}`
-        : styles.trackLabel;
-      mergedClassNames.labelWrapper = o.labelWrapper
-        ? `${styles.labelWrapper} ${o.labelWrapper}`
-        : styles.labelWrapper;
-      mergedClassNames.label = o.label
-        ? `${styles.label} ${o.label}`
-        : styles.label;
-    }
+    // NOTE: MUI's actual prop is "classes", not "classNames" (that's Mantine's naming). Also
+    // note "body"/"trackLabel"/"labelWrapper"/"label" below aren't real MUI `classes` slots at
+    // all (MUI only recognizes root/switchBase/track/thumb/input/checked/disabled/colorX/sizeX/
+    // edgeX) — those four are this component's own hardcoded elements, styled directly in the
+    // JSX below, not through MUI's classes mechanism. Only root/track/switchBase actually take
+    // effect via this merge; the rest are pre-existing dead weight, unrelated to the merge itself.
+    const mergedClassNames = mergeClassNames(
+      {
+        root: styles.switchRoot,
+        body: styles.body,
+        track: styles.track,
+        switchBase: styles.switchBase,
+        trackLabel: styles.trackLabel,
+        labelWrapper: styles.labelWrapper,
+        label: styles.label,
+      },
+      restRecord.classes as Partial<Record<string, string>> | undefined,
+    );
 
     const classNameProp = restRecord.className as string | undefined;
     const finalClass = classNameProp
@@ -237,6 +221,7 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(
       <MuiSwitch
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ref={ref as any}
+        {...(sanitizedProps as unknown as MuiSwitchProps)}
         className={!label ? `${finalClass} ${styles.inner}` : styles.inner}
         classes={mergedClassNames}
         color="default"
@@ -244,7 +229,6 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(
         data-disabled={isSwitchDisabled || undefined}
         icon={thumbNode}
         checkedIcon={thumbNode}
-        {...(sanitizedProps as unknown as MuiSwitchProps)}
         {...(isGrouped
           ? { checked: isChecked, onChange: handleGroupChange }
           : {})}

@@ -7,6 +7,7 @@ import {
 import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
@@ -62,11 +63,17 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
       defaultValue,
       ...rest
     } = props;
-    const sanitizedProps = filterStylingProps(rest, overStyled);
-    const restRecord = sanitizedProps as Record<string, unknown>;
+    // Props this component intentionally doesn't support — deleted at runtime so they can't leak
+    // through even if a caller forces them via plain JavaScript, bypassing the `Omit<>` above.
+    const UNSUPPORTED_PROPS = [
+      "size", // Recursica controls sizing via Checkbox.module.css variables, not Mantine's native size scale.
+    ] as const satisfies readonly (keyof MantineCheckboxGroupProps)[];
 
-    // Delete prohibited sizing hooks from bypassing the variables
-    delete restRecord["size"];
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled) as Record<string, unknown>,
+      UNSUPPORTED_PROPS,
+    ) as Partial<typeof rest>;
+    const restRecord = sanitizedProps as Record<string, unknown>;
 
     // Mantine's own `Checkbox.Group` always establishes a context whose `value` defaults to
     // `[]` (see @mantine/core's `useUncontrolled({ finalValue: [] })`), and its `Checkbox` spreads
@@ -123,8 +130,8 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
           ) : (
             <div
               ref={ref}
-              role="group"
               {...(sanitizedProps as Record<string, unknown>)}
+              role="group"
               className={styles.groupRoot}
               data-layout={formLayout}
             >

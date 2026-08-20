@@ -7,6 +7,7 @@ import {
 import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
@@ -61,11 +62,17 @@ export const SwitchGroup = forwardRef<HTMLDivElement, SwitchGroupProps>(
       defaultValue,
       ...rest
     } = props;
-    const sanitizedProps = filterStylingProps(rest, overStyled);
-    const restRecord = sanitizedProps as Record<string, unknown>;
+    // Props this component intentionally doesn't support — deleted at runtime so they can't leak
+    // through even if a caller forces them via plain JavaScript, bypassing the `Omit<>` above.
+    const UNSUPPORTED_PROPS = [
+      "size", // Recursica controls sizing via Switch.module.css variables, not Mantine's native size scale.
+    ] as const satisfies readonly (keyof MantineSwitchGroupProps)[];
 
-    // Delete prohibited sizing hooks from bypassing the variables
-    delete restRecord["size"];
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled) as Record<string, unknown>,
+      UNSUPPORTED_PROPS,
+    ) as Partial<typeof rest>;
+    const restRecord = sanitizedProps as Record<string, unknown>;
 
     return (
       <WithReadOnlyWrapper

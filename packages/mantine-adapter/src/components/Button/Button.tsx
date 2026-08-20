@@ -7,6 +7,9 @@ import {
 } from "@mantine/core";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
+  withCallerOverride,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Button.module.css";
@@ -49,11 +52,17 @@ const _Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
     small: "sm",
   } as const;
 
-  const sanitizedProps = filterStylingProps(rest, overStyled);
-  const restRecord = sanitizedProps as Record<string, unknown>;
+  // Props this component intentionally doesn't support — deleted at runtime so they can't leak
+  // through even if a caller forces them via plain JavaScript, bypassing the `Omit<>` above.
+  const UNSUPPORTED_PROPS = [
+    "fullWidth", // Recursica Button width comes from layout/token constraints, not Mantine's boolean fullWidth toggle.
+  ] as const satisfies readonly (keyof MantineButtonProps)[];
 
-  // Explicitly delete blocked semantic expansion dimension props
-  delete restRecord["fullWidth"];
+  const sanitizedProps = omitUnsupportedProps(
+    filterStylingProps(rest, overStyled) as Record<string, unknown>,
+    UNSUPPORTED_PROPS,
+  ) as Partial<typeof rest>;
+  const restRecord = sanitizedProps as Record<string, unknown>;
 
   const hasLeftSection = !!icon || !!restRecord["leftSection"];
   const hasRightSection = !!restRecord["rightSection"];
@@ -78,41 +87,33 @@ const _Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
     );
   }
 
-  const mergedClassNames: Partial<Record<string, string>> = {
-    root: styles.root,
-    section: styles.section,
-    label: styles.label,
-    loader: styles.loader,
-  };
-
-  const classNamesProp = restRecord.classNames;
-  if (
-    classNamesProp &&
-    typeof classNamesProp === "object" &&
-    !Array.isArray(classNamesProp)
-  ) {
-    const o = classNamesProp as Partial<Record<string, string>>;
-    mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
-    mergedClassNames.section = o.section ?? styles.section;
-    mergedClassNames.label = o.label ?? styles.label;
-  }
+  const mergedClassNames = mergeClassNames(
+    {
+      root: styles.root,
+      section: styles.section,
+      label: styles.label,
+      loader: styles.loader,
+    },
+    restRecord.classNames as Partial<Record<string, string>> | undefined,
+  );
 
   const classNameProp = restRecord.className as string | undefined;
   const finalClass = classNameProp
     ? `${styles.root} ${classNameProp}`
     : styles.root;
-  // className is merged explicitly above — don't let the {...sanitizedProps} spread below
-  // silently overwrite finalClass with just the caller's own class (same bug class as
-  // mantine-adapter's Dropdown/BareDropdown.tsx had). Masked here today since `classNames.root`
-  // (a separate prop, unaffected) also carries styles.root — but a real latent bug regardless.
-  delete restRecord["className"];
+  // Note: `finalClass` is safe from being clobbered by `{...sanitizedProps}` below purely
+  // because of spread order — `className` (like `classNames`, `variant`, `size`, `leftSection`,
+  // and the `data-*` attributes) is spread first, then re-asserted after, so our computed value
+  // always wins. See the canonical guide's §3.3 for why ordering (not deletion) is the fix here.
 
   const userLoaderProps = restRecord.loaderProps as
     | Record<string, unknown>
     | undefined;
 
-  const resolvedLoaderSize =
-    loaderSize ?? (size === "small" ? "small" : "default");
+  const resolvedLoaderSize = withCallerOverride(
+    size === "small" ? "small" : "default",
+    loaderSize,
+  );
 
   let mergedLoaderProps = userLoaderProps;
   if (useRecursicaLoader) {
@@ -125,6 +126,7 @@ const _Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   return (
     <MantineButton
       ref={ref}
+      {...sanitizedProps}
       className={finalClass}
       classNames={mergedClassNames}
       variant={mapVariant[variant]}
@@ -140,7 +142,6 @@ const _Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
       data-variant={variant}
       data-size={size}
       data-content={contentType}
-      {...sanitizedProps}
       disabled={!!restRecord.disabled || !!restRecord.loading}
     >
       <span className={styles.labelText}>{children}</span>

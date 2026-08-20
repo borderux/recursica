@@ -73,11 +73,10 @@ export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
       onChange,
       ...rest
     } = props;
+    // NOTE: MuiRadioGroupProps (via FormGroupProps) has no native "size" (or other
+    // Recursica-unsupported) prop to leak through here — nothing to add to an UNSUPPORTED_PROPS
+    // list beyond what filterStylingProps already blocks.
     const sanitizedProps = filterStylingProps(rest, overStyled);
-    const restRecord = sanitizedProps as Record<string, unknown>;
-
-    // Delete prohibited sizing hooks from bypassing the variables
-    delete restRecord["size"];
 
     return (
       <WithReadOnlyWrapper

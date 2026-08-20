@@ -7,6 +7,8 @@ import { type InputWrapperProps } from "@mantine/core";
 import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
@@ -102,6 +104,14 @@ export interface RecursicaTimePickerProps
 
 export type TimePickerProps = RecursicaOverStyled<RecursicaTimePickerProps>;
 
+// Props this component intentionally doesn't support — deleted at runtime so they can't leak
+// through even if a caller forces them via plain JavaScript, bypassing the `Omit<>` above.
+const UNSUPPORTED_PROPS = [
+  "size", // Recursica controls sizing via the `size` variant + design tokens, not raw dimensions.
+  "variant", // Colors/variants are token-driven; the library's native palette isn't exposed.
+  "radius", // Recursica does not expose the library's native corner-radius system.
+] as const satisfies readonly (keyof MantineTimePickerProps)[];
+
 export const TimePicker = forwardRef<HTMLDivElement, TimePickerProps>(
   function TimePicker(props, ref) {
     const {
@@ -137,12 +147,11 @@ export const TimePicker = forwardRef<HTMLDivElement, TimePickerProps>(
       ...rest
     } = props;
 
-    const sanitizedProps = filterStylingProps(rest, overStyled);
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled) as Record<string, unknown>,
+      UNSUPPORTED_PROPS,
+    );
     const restRecord = sanitizedProps as Record<string, unknown>;
-
-    delete restRecord["size"];
-    delete restRecord["variant"];
-    delete restRecord["radius"];
 
     // Internal full 24-hour value. Needed because Mantine's TimePicker (hour/minute/second entry)
     // and our own BareDropdown (AM/PM) both mutate the same conceptual value — see
@@ -241,12 +250,18 @@ export const TimePicker = forwardRef<HTMLDivElement, TimePickerProps>(
           >
             <MantineTimePicker
               ref={ref}
-              classNames={{
-                wrapper: styles.timeWrapper,
-                input: styles.timeInput,
-                fieldsGroup: styles.fieldsGroup,
-                field: styles.timeField,
-              }}
+              {...(sanitizedProps as unknown as MantineTimePickerProps)}
+              classNames={mergeClassNames(
+                {
+                  wrapper: styles.timeWrapper,
+                  input: styles.timeInput,
+                  fieldsGroup: styles.fieldsGroup,
+                  field: styles.timeField,
+                },
+                restRecord.classNames as
+                  | Partial<Record<string, string>>
+                  | undefined,
+              )}
               disabled={disabled}
               value={internalValue}
               onChange={handleFieldChange}
@@ -259,7 +274,6 @@ export const TimePicker = forwardRef<HTMLDivElement, TimePickerProps>(
               // to seed the mount-time AM default onto Mantine's own hidden native select. See
               // TIMEPICKER_IMPLEMENTATION_NOTES.md.
               amPmRef={amPmRef}
-              {...(sanitizedProps as unknown as MantineTimePickerProps)}
             />
             <BareDropdown
               overStyled

@@ -6,6 +6,8 @@ import {
 } from "@mui/material";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
+  withCallerOverride,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Button.module.css";
@@ -54,11 +56,17 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref,
   ) {
-    const sanitizedProps = filterStylingProps(rest, overStyled);
-    const restRecord = sanitizedProps as Record<string, unknown>;
+    // Props this component intentionally doesn't support — deleted at runtime so they can't leak
+    // through even if a caller forces them via plain JavaScript, bypassing the Omit<> above.
+    const UNSUPPORTED_PROPS = [
+      "color", // Recursica handles colors internally via tokens
+    ] as const satisfies readonly (keyof MuiButtonProps)[];
 
-    // Explicitly delete blocked semantic expansion dimension props that MUI uses natively
-    delete restRecord["color"]; // Recursica handles colors internally via tokens
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled),
+      UNSUPPORTED_PROPS,
+    );
+    const restRecord = sanitizedProps as Record<string, unknown>;
 
     const hasStartIcon = !!icon || !!restRecord["startIcon"];
     const hasEndIcon = !!restRecord["endIcon"];
@@ -87,18 +95,16 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const finalClass = classNameProp
       ? `${styles.root} ${classNameProp}`
       : styles.root;
-    // className is merged explicitly above — don't let the {...sanitizedProps} spread below
-    // silently overwrite finalClass with just the caller's own class (same bug class as
-    // mui-adapter's Dropdown/BareDropdown.tsx had).
-    delete restRecord["className"];
 
     // We don't map Recursica variant/size to MUI's because we want to completely disable MUI's native
     // variant logic (e.g., elevation, shadows) and style everything strictly through our CSS Modules.
     // However, Mui Button requires some string, but we can just leave it as standard or ignore since
     // our CSS resets its properties anyway, but to be clean we just don't pass variant to MUI.
 
-    const resolvedLoaderSize =
-      loaderSize ?? (size === "small" ? "small" : "default");
+    const resolvedLoaderSize = withCallerOverride(
+      size === "small" ? "small" : "default",
+      loaderSize,
+    );
 
     let loadingIndicator = restRecord.loadingIndicator as React.ReactNode;
     if (useRecursicaLoader) {
@@ -110,6 +116,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <MuiButton
         ref={ref}
+        {...sanitizedProps}
         disableRipple
         disableElevation
         className={finalClass}
@@ -131,7 +138,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         data-size={size}
         data-content={contentType}
         {...(restRecord.loading ? { "data-loading": "true" } : {})}
-        {...sanitizedProps}
         disabled={!!restRecord.disabled || !!restRecord.loading}
       >
         <span className={styles.labelText}>{children}</span>

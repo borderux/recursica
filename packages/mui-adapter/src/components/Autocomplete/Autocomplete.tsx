@@ -8,6 +8,8 @@ import {
 import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
@@ -77,42 +79,50 @@ export const Autocomplete = forwardRef<HTMLInputElement, AutocompleteProps>(
       ListboxProps,
       ...rest
     } = props;
-    const sanitizedProps = filterStylingProps(rest, overStyled);
+    // Props this component intentionally doesn't support — deleted at runtime so they can't leak
+    // through even if a caller forces them via plain JavaScript, bypassing the Omit<> above.
+    const UNSUPPORTED_PROPS = [
+      "size", // Recursica controls sizing via design tokens, not MUI's native small/medium size
+    ] as const satisfies readonly (keyof MuiAutocompleteProps<
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      any,
+      "div"
+    >)[];
+
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled),
+      UNSUPPORTED_PROPS,
+    );
     const restRecord = sanitizedProps as Record<string, unknown>;
 
-    // Delete prohibited sizing hooks from bypassing variables natively
-    delete restRecord["size"];
-    delete restRecord["variant"];
-    delete restRecord["radius"];
-
-    // Securely map core native blocks down ensuring nested CSS modules map precisely
-    const mergedClassNames: Partial<Record<string, string>> = {
-      root: styles.root,
-      inputRoot: styles.input, // Map Mantine .input (wrapper) to MUI's inputRoot
-      listbox: styles.dropdown, // Map Mantine .dropdown to MUI's listbox
-      option: styles.option,
-    };
-
-    const classNamesProp = restRecord.classNames;
-    if (
-      classNamesProp &&
-      typeof classNamesProp === "object" &&
-      !Array.isArray(classNamesProp)
-    ) {
-      const o = classNamesProp as Partial<Record<string, string>>;
-      mergedClassNames.root = o.wrapper
-        ? `${styles.root} ${o.wrapper}`
-        : styles.root;
-      mergedClassNames.inputRoot = o.input
-        ? `${styles.input} ${o.input}`
-        : styles.input;
-      mergedClassNames.listbox = o.dropdown
-        ? `${styles.dropdown} ${o.dropdown}`
-        : styles.dropdown;
-      mergedClassNames.option = o.option
-        ? `${styles.option} ${o.option}`
-        : styles.option;
-    }
+    // Securely map core native blocks down ensuring nested CSS modules map precisely. Note MUI's
+    // actual prop is "classes", not "classNames" (that's Mantine's naming) — this used to read
+    // the wrong key, silently no-op-ing any caller-supplied classes. The caller-facing slot names
+    // below (wrapper/input/dropdown/option) mirror the mantine-adapter's own Autocomplete
+    // classNames slots, translated to MUI's real classes slot names (root/inputRoot/listbox/option).
+    const callerClasses = restRecord.classes as
+      | Partial<Record<string, string>>
+      | undefined;
+    const mergedClassNames = mergeClassNames(
+      {
+        root: styles.root,
+        inputRoot: styles.input, // Map Mantine .input (wrapper) to MUI's inputRoot
+        listbox: styles.dropdown, // Map Mantine .dropdown to MUI's listbox
+        option: styles.option,
+      },
+      callerClasses && {
+        root: callerClasses.wrapper,
+        inputRoot: callerClasses.input,
+        listbox: callerClasses.dropdown,
+        option: callerClasses.option,
+      },
+    );
 
     const wrapperClass = className
       ? `${styles.layoutOverride} ${className}`
@@ -148,6 +158,8 @@ export const Autocomplete = forwardRef<HTMLInputElement, AutocompleteProps>(
           /* Naked Input execution safely decoupled from Mui's macro Input.Wrapper DOM hooks */
           <MuiAutocomplete
             ref={ref}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            {...(sanitizedProps as any)}
             freeSolo
             disableClearable
             classes={mergedClassNames}

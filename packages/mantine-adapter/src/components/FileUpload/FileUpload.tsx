@@ -268,10 +268,10 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(
       >
         <div
           ref={ref}
+          {...restRecord}
           className={styles.root}
           data-disabled={disabled ? "true" : undefined}
           data-error={effectiveError ? "true" : undefined}
-          {...restRecord}
         >
           {!readOnly && (
             <div

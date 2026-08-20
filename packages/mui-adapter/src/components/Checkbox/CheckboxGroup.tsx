@@ -75,11 +75,11 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
       row,
       ...rest
     } = props;
+    // NOTE: this component's props surface (HTMLAttributes<HTMLDivElement>-based) has no native
+    // "size" (or other Recursica-unsupported) prop to leak through here — nothing to add to an
+    // UNSUPPORTED_PROPS list beyond what filterStylingProps already blocks.
     const sanitizedProps = filterStylingProps(rest, overStyled);
     const restRecord = sanitizedProps as Record<string, unknown>;
-
-    // Delete prohibited sizing hooks
-    delete restRecord["size"];
 
     const handleChange = (_event: React.SyntheticEvent, childValue: any) => {
       if (onChange) {

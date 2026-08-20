@@ -5,6 +5,7 @@ import {
 } from "@mantine/core";
 import {
   filterStylingProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Breadcrumb.module.css";
@@ -24,24 +25,15 @@ export const Breadcrumb = forwardRef<HTMLDivElement, BreadcrumbProps>(
       overStyled,
     );
 
-    const mergedClassNames: Partial<Record<string, string>> = {
-      root: styles.root,
-      separator: styles.separator,
-    };
-
-    const classNamesProp = (sanitizedProps as Record<string, unknown>)
-      .classNames;
-    if (
-      classNamesProp &&
-      typeof classNamesProp === "object" &&
-      !Array.isArray(classNamesProp)
-    ) {
-      const o = classNamesProp as Partial<Record<string, string>>;
-      mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
-      mergedClassNames.separator = o.separator
-        ? `${styles.separator} ${o.separator}`
-        : styles.separator;
-    }
+    const mergedClassNames = mergeClassNames(
+      {
+        root: styles.root,
+        separator: styles.separator,
+      },
+      (sanitizedProps as Record<string, unknown>).classNames as
+        | Partial<Record<string, string>>
+        | undefined,
+    );
 
     const classNameProp = (sanitizedProps as Record<string, unknown>)
       .className as string | undefined;

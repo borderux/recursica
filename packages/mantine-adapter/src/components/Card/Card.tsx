@@ -7,6 +7,8 @@ import {
 } from "@mantine/core";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Card.module.css";
@@ -32,11 +34,23 @@ export type CardProps = RecursicaOverStyled<
 /**
  * The root Card elevation box. It establishes the global background color, border radius, nested component gap, and outer shadow governed by the current `Layer` context.
  */
+// Props this component intentionally doesn't support — deleted at runtime so they can't leak
+// through even if a caller forces them via plain JavaScript. `Card.module.css` unconditionally
+// drives these from Recursica UI Kit tokens on `.root`; the native prop is never consulted.
+const UNSUPPORTED_PROPS = [
+  "radius", // Border radius is token-driven (`--recursica_..._borders_border-radius`), not caller-set.
+  "withBorder", // Border is always applied via tokens on `.root`; not an optional caller toggle.
+  "padding", // Padding is token-driven (`--card-padding`), not Mantine's spacing-scale prop.
+] as const satisfies readonly (keyof MantineCardProps)[];
+
 const CardBase = forwardRef<HTMLDivElement, CardProps>(function Card(
   { overStyled = false, ...rest },
   ref,
 ) {
-  const sanitizedProps = filterStylingProps(rest, overStyled);
+  const sanitizedProps = omitUnsupportedProps(
+    filterStylingProps(rest, overStyled),
+    UNSUPPORTED_PROPS,
+  );
 
   // Expose outer layout/flexbox properties on Card to allow structuring alongside siblings
   const safeCardLayoutKeys = [
@@ -56,25 +70,14 @@ const CardBase = forwardRef<HTMLDivElement, CardProps>(function Card(
     }
   });
 
-  const mergedClassNames: Partial<Record<string, string>> = {
-    root: styles.root,
-  };
-
-  const classNamesProp = (sanitizedProps as Record<string, unknown>).classNames;
-  if (
-    classNamesProp &&
-    typeof classNamesProp === "object" &&
-    !Array.isArray(classNamesProp)
-  ) {
-    const o = classNamesProp as Record<string, string>;
-    Object.keys(o).forEach((key) => {
-      if (mergedClassNames[key]) {
-        mergedClassNames[key] = `${mergedClassNames[key]} ${o[key]}`;
-      } else {
-        mergedClassNames[key] = o[key];
-      }
-    });
-  }
+  const mergedClassNames = mergeClassNames(
+    {
+      root: styles.root,
+    },
+    (sanitizedProps as Record<string, unknown>).classNames as
+      | Partial<Record<string, string>>
+      | undefined,
+  );
 
   const classNameProp = (sanitizedProps as Record<string, unknown>)
     .className as string | undefined;
@@ -82,9 +85,9 @@ const CardBase = forwardRef<HTMLDivElement, CardProps>(function Card(
   return (
     <MantineCard
       ref={ref}
+      {...(sanitizedProps as unknown as MantineCardProps)}
       className={classNameProp}
       classNames={mergedClassNames}
-      {...(sanitizedProps as unknown as MantineCardProps)}
     />
   );
 });
@@ -106,10 +109,10 @@ export const CardSection = forwardRef<HTMLDivElement, CardSectionProps>(
     return (
       <MantineCard.Section
         ref={ref}
+        {...(sanitizedProps as unknown as MantineCardSectionProps)}
         className={
           classNameProp ? `${styles.section} ${classNameProp}` : styles.section
         }
-        {...(sanitizedProps as unknown as MantineCardSectionProps)}
       />
     );
   },
@@ -122,19 +125,32 @@ export type CardHeaderProps = RecursicaOverStyled<RecursicaCardSectionProps>;
 /**
  * Replaces standard generic Mantine `<Card.Section>` wrappers by directly injecting the strict Recursica design tokens for header sizing, background drops, and intrinsic padding limits.
  */
+// Props this component intentionally doesn't support — deleted at runtime so they can't leak
+// through even if a caller forces them via plain JavaScript. `CardHeaderProps` already omits all
+// native Mantine section props from the public type, but that alone doesn't stop a forced-typed
+// caller from smuggling one through `...rest`; `.header` in Card.module.css unconditionally
+// drives background/padding/border from Recursica tokens, so these native toggles are meaningless.
+const HEADER_FOOTER_UNSUPPORTED_PROPS = [
+  "withBorder", // The divider border is always applied via tokens on `.header`/`.footer`.
+  "inheritPadding", // Padding is fixed by the `.header`/`.footer` token-driven padding, not Mantine's default.
+] as const satisfies readonly (keyof MantineCardSectionProps)[];
+
 export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
   function CardHeader({ overStyled = false, ...rest }, ref) {
-    const sanitizedProps = filterStylingProps(rest, overStyled);
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled),
+      HEADER_FOOTER_UNSUPPORTED_PROPS,
+    );
     const classNameProp = (sanitizedProps as Record<string, unknown>)
       .className as string | undefined;
 
     return (
       <MantineCard.Section
         ref={ref}
+        {...(sanitizedProps as unknown as MantineCardSectionProps)}
         className={
           classNameProp ? `${styles.header} ${classNameProp}` : styles.header
         }
-        {...(sanitizedProps as unknown as MantineCardSectionProps)}
       />
     );
   },
@@ -149,17 +165,22 @@ export type CardFooterProps = RecursicaOverStyled<RecursicaCardSectionProps>;
  */
 export const CardFooter = forwardRef<HTMLDivElement, CardFooterProps>(
   function CardFooter({ overStyled = false, ...rest }, ref) {
-    const sanitizedProps = filterStylingProps(rest, overStyled);
+    // Reuses HEADER_FOOTER_UNSUPPORTED_PROPS (declared above with CardHeader) — same rationale
+    // applies: `.footer` in Card.module.css unconditionally drives padding/border from tokens.
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled),
+      HEADER_FOOTER_UNSUPPORTED_PROPS,
+    );
     const classNameProp = (sanitizedProps as Record<string, unknown>)
       .className as string | undefined;
 
     return (
       <MantineCard.Section
         ref={ref}
+        {...(sanitizedProps as unknown as MantineCardSectionProps)}
         className={
           classNameProp ? `${styles.footer} ${classNameProp}` : styles.footer
         }
-        {...(sanitizedProps as unknown as MantineCardSectionProps)}
       />
     );
   },
@@ -183,10 +204,10 @@ export const CardContent = forwardRef<HTMLDivElement, CardContentProps>(
     return (
       <div
         ref={ref}
+        {...sanitizedProps}
         className={
           classNameProp ? `${styles.content} ${classNameProp}` : styles.content
         }
-        {...sanitizedProps}
       />
     );
   },

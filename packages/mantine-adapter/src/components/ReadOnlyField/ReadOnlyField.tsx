@@ -100,10 +100,10 @@ export const ReadOnlyField = forwardRef<HTMLDivElement, ReadOnlyFieldProps>(
     return (
       <FormControlWrapper
         ref={ref}
+        {...(sanitizedProps as any)}
         overStyled={overStyled as true}
         className={wrapperClass}
         style={style}
-        {...(sanitizedProps as any)}
       >
         {content}
       </FormControlWrapper>

@@ -31,8 +31,8 @@ const _Text = forwardRef<HTMLDivElement, TextProps>(function Text(
   return (
     <MantineText
       ref={ref}
-      className={mergedClassName}
       {...(sanitizedProps as unknown as MantineTextProps)}
+      className={mergedClassName}
     />
   );
 });

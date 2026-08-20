@@ -5,6 +5,7 @@ import {
 } from "@mantine/core";
 import {
   filterStylingProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Loader.module.css";
@@ -33,23 +34,14 @@ export const Loader = forwardRef<HTMLSpanElement, LoaderProps>(function Loader(
   // Strip all visual override injections unless developer has specifically opted into overStyling.
   // External layout props like margins are safely preserved.
   const sanitizedProps = filterStylingProps(rest, overStyled);
+  const restRecord = sanitizedProps as Record<string, unknown>;
 
-  const mergedClassNames: Partial<Record<string, string>> = {
-    root: styles.root,
-  };
+  const mergedClassNames = mergeClassNames(
+    { root: styles.root },
+    restRecord.classNames as Partial<Record<string, string>> | undefined,
+  );
 
-  const classNamesProp = (sanitizedProps as Record<string, unknown>).classNames;
-  if (
-    classNamesProp &&
-    typeof classNamesProp === "object" &&
-    !Array.isArray(classNamesProp)
-  ) {
-    const o = classNamesProp as Partial<Record<string, string>>;
-    mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
-  }
-
-  const classNameProp = (sanitizedProps as Record<string, unknown>)
-    .className as string | undefined;
+  const classNameProp = restRecord.className as string | undefined;
   const finalClass = classNameProp
     ? `${styles.root} ${classNameProp}`
     : styles.root;
@@ -57,10 +49,10 @@ export const Loader = forwardRef<HTMLSpanElement, LoaderProps>(function Loader(
   return (
     <MantineLoader
       ref={ref}
+      {...sanitizedProps}
       type={variant}
       data-variant={variant}
       data-size={resolvedSize}
-      {...sanitizedProps}
       className={finalClass}
       classNames={mergedClassNames}
     />

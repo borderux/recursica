@@ -6,6 +6,7 @@ import {
 } from "@mantine/core";
 import {
   filterStylingProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Stepper.module.css";
@@ -30,28 +31,34 @@ const _Stepper = forwardRef<HTMLDivElement, StepperProps>(
     } = props;
 
     const sanitizedProps = filterStylingProps(rest, overStyled);
+    const restRecord = sanitizedProps as Record<string, unknown>;
+
+    const mergedClassNames = mergeClassNames(
+      {
+        steps: styles.steps,
+        step: styles.step,
+        stepIcon: styles.stepIcon,
+        stepCompletedIcon: styles.stepCompletedIcon,
+        stepBody: styles.stepBody,
+        stepLabel: styles.stepLabel,
+        stepDescription: styles.stepDescription,
+        separator: styles.separator,
+        verticalSeparator: styles.verticalSeparator,
+        content: styles.content,
+      },
+      restRecord.classNames as Partial<Record<string, string>> | undefined,
+    );
 
     return (
       <MantineStepper
         ref={ref}
+        {...(sanitizedProps as MantineStepperProps)}
         orientation={orientation}
         className={`${styles.root} ${orientation === "horizontal" ? styles.horizontal : styles.vertical} ${size === "large" ? styles.large : styles.small} ${className || ""}`}
         style={style as React.CSSProperties}
         data-size={size}
         data-orientation={orientation}
-        classNames={{
-          steps: styles.steps,
-          step: styles.step,
-          stepIcon: styles.stepIcon,
-          stepCompletedIcon: styles.stepCompletedIcon,
-          stepBody: styles.stepBody,
-          stepLabel: styles.stepLabel,
-          stepDescription: styles.stepDescription,
-          separator: styles.separator,
-          verticalSeparator: styles.verticalSeparator,
-          content: styles.content,
-        }}
-        {...(sanitizedProps as MantineStepperProps)}
+        classNames={mergedClassNames}
       />
     );
   },

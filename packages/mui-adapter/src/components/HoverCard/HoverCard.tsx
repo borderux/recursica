@@ -5,6 +5,7 @@ import {
 } from "@mui/material";
 import {
   filterStylingProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./HoverCard.module.css";
@@ -35,27 +36,18 @@ const HoverCardBase = function HoverCard({
     overStyled,
   );
 
-  // Bind CSS module classes to Mui's internal classNames API
-  const mergedClassNames: Partial<Record<string, string>> = {
-    tooltip: styles.dropdown,
-    arrow: styles.arrow,
-  };
-
-  const classNamesProp = (sanitizedProps as Record<string, unknown>).classNames;
-  if (
-    classNamesProp &&
-    typeof classNamesProp === "object" &&
-    !Array.isArray(classNamesProp)
-  ) {
-    const o = classNamesProp as Record<string, string>;
-    Object.keys(o).forEach((key) => {
-      if (mergedClassNames[key]) {
-        mergedClassNames[key] = `${mergedClassNames[key]} ${o[key]}`;
-      } else {
-        mergedClassNames[key] = o[key];
-      }
-    });
-  }
+  // Bind CSS module classes to Mui's internal classNames API. Note MUI's actual prop is
+  // "classes", not "classNames" (that's Mantine's naming) — this used to read the wrong key,
+  // silently no-op-ing any caller-supplied classes.
+  const mergedClassNames = mergeClassNames(
+    {
+      tooltip: styles.dropdown,
+      arrow: styles.arrow,
+    },
+    (sanitizedProps as Record<string, unknown>).classes as
+      | Partial<Record<string, string>>
+      | undefined,
+  );
 
   // Find Target and Dropdown children
   let targetNode: React.ReactNode = null;

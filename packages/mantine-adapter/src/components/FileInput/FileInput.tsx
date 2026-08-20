@@ -309,6 +309,7 @@ export const FileInput = forwardRef<HTMLDivElement, FileInputProps>(
       >
         <div
           ref={ref}
+          {...restRecord}
           className={styles.root}
           role="button"
           aria-label={browseLabel}
@@ -324,7 +325,6 @@ export const FileInput = forwardRef<HTMLDivElement, FileInputProps>(
           onDragLeave={interactive ? handleDragLeave : undefined}
           onDragOver={interactive ? handleDragOver : undefined}
           onDrop={interactive ? handleDrop : undefined}
-          {...restRecord}
         >
           <span className={styles.leadingIcon} aria-hidden>
             {icon ?? <UploadIcon />}

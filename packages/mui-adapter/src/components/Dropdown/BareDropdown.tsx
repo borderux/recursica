@@ -6,6 +6,7 @@ import {
 } from "@mui/material";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Dropdown.module.css";
@@ -52,14 +53,19 @@ export const BareDropdown = forwardRef<
     error,
     ...rest
   } = props;
-  const sanitizedProps = filterStylingProps(rest, overStyled);
-  const restRecord = sanitizedProps as Record<string, unknown>;
+  // Props this component intentionally doesn't support — deleted at runtime so they can't leak
+  // through even if a caller forces them via plain JavaScript, bypassing the Omit<> above.
+  const UNSUPPORTED_PROPS = [
+    "size", // Recursica controls sizing via design tokens, not MUI's native small/medium size
+    "variant", // Recursica styles the naked select directly; MUI's standard/filled/outlined unused
+    "classes", // Recursica computes its own classes object below; caller's would silently clobber it
+  ] as const satisfies readonly (keyof MuiSelectProps)[];
 
-  delete restRecord["size"];
-  delete restRecord["variant"];
-  // className is merged explicitly below — don't let the spread further down silently overwrite
-  // styles.root with just the caller's own class.
-  delete restRecord["className"];
+  const sanitizedProps = omitUnsupportedProps(
+    filterStylingProps(rest, overStyled),
+    UNSUPPORTED_PROPS,
+  );
+  const restRecord = sanitizedProps as Record<string, unknown>;
 
   const mergedClassName = className
     ? `${styles.root} ${className}`
@@ -100,6 +106,7 @@ export const BareDropdown = forwardRef<
   return (
     <MuiSelect
       ref={ref}
+      {...(sanitizedProps as unknown as MuiSelectProps)}
       disabled={disabled}
       value={value}
       defaultValue={defaultValue}
@@ -125,7 +132,6 @@ export const BareDropdown = forwardRef<
         "data-error": error ? "true" : undefined,
         ...(restRecord.inputProps as Record<string, unknown>),
       }}
-      {...(sanitizedProps as unknown as MuiSelectProps)}
     >
       {renderOptions()}
     </MuiSelect>

@@ -7,6 +7,7 @@ import {
 import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
@@ -73,12 +74,18 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
       clearable, // Not natively supported by basic MUI Select, stubbed
       ...rest
     } = props;
-    const sanitizedProps = filterStylingProps(rest, overStyled);
-    const restRecord = sanitizedProps as Record<string, unknown>;
+    // Props this component intentionally doesn't support — deleted at runtime so they can't leak
+    // through even if a caller forces them via plain JavaScript, bypassing the Omit<> above.
+    const UNSUPPORTED_PROPS = [
+      "size", // Recursica controls sizing via design tokens, not MUI's native small/medium size
+      "variant", // Recursica styles the naked select directly; MUI's standard/filled/outlined unused
+    ] as const satisfies readonly (keyof MuiSelectProps)[];
 
-    // Delete prohibited sizing hooks
-    delete restRecord["size"];
-    delete restRecord["variant"];
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled),
+      UNSUPPORTED_PROPS,
+    );
+    const restRecord = sanitizedProps as Record<string, unknown>;
 
     const injectedStyles = {
       ...((style as React.CSSProperties) || {}),
@@ -159,6 +166,7 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
         activeComponent={
           <MuiSelect
             ref={ref}
+            {...(sanitizedProps as unknown as MuiSelectProps)}
             disabled={disabled}
             value={value}
             defaultValue={defaultValue}
@@ -185,7 +193,6 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
               "data-error": error ? "true" : undefined,
               ...(restRecord.inputProps as Record<string, unknown>),
             }}
-            {...(sanitizedProps as unknown as MuiSelectProps)}
           >
             {renderOptions()}
           </MuiSelect>

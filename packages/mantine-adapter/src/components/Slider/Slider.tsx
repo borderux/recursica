@@ -7,6 +7,8 @@ import {
 import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
@@ -133,51 +135,36 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
       setInputValue(resolvedValue.toString());
     };
 
-    const sanitizedProps = filterStylingProps(rest, overStyled);
+    // Props this component intentionally doesn't support — deleted at runtime so they can't leak
+    // through even if a caller forces them via plain JavaScript, bypassing the `Omit<>` above.
+    const UNSUPPORTED_PROPS = [
+      "size", // Recursica controls sizing via Slider.module.css variables, not Mantine's native size scale.
+      "variant", // Slider has a single Recursica-defined visual treatment; Mantine's variant isn't exposed.
+      "radius", // Corner radius is fixed by Recursica tokens in Slider.module.css, not caller-configurable.
+      // Not currently a real key of Mantine's SliderProps (that's an Input.Wrapper-only prop) — kept
+      // as a defensive no-op delete since it predates this consolidation and the public prop type
+      // already `Omit`s it; Recursica's own FormControlLayout/WithReadOnlyWrapper own wrapper markup.
+      "wrapperProps",
+    ] as const satisfies readonly (keyof MantineSliderProps | "wrapperProps")[];
+
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled) as Record<string, unknown>,
+      UNSUPPORTED_PROPS,
+    ) as Partial<typeof rest>;
     const restRecord = sanitizedProps as Record<string, unknown>;
 
-    // Delete prohibited sizing hooks from bypassing variables natively
-    delete restRecord["size"];
-    delete restRecord["variant"];
-    delete restRecord["radius"];
-    delete restRecord["wrapperProps"];
-
     // Securely map core native blocks down ensuring nested CSS modules map precisely
-    const mergedClassNames: Partial<Record<string, string>> = {
-      root: styles.sliderRoot,
-      track: styles.sliderTrack,
-      bar: styles.sliderBar,
-      thumb: styles.sliderThumb,
-      mark: styles.sliderMark,
-      markLabel: styles.sliderMarkLabel,
-    };
-
-    const classNamesProp = restRecord.classNames;
-    if (
-      classNamesProp &&
-      typeof classNamesProp === "object" &&
-      !Array.isArray(classNamesProp)
-    ) {
-      const o = classNamesProp as Partial<Record<string, string>>;
-      mergedClassNames.root = o.root
-        ? `${styles.sliderRoot} ${o.root}`
-        : styles.sliderRoot;
-      mergedClassNames.track = o.track
-        ? `${styles.sliderTrack} ${o.track}`
-        : styles.sliderTrack;
-      mergedClassNames.bar = o.bar
-        ? `${styles.sliderBar} ${o.bar}`
-        : styles.sliderBar;
-      mergedClassNames.thumb = o.thumb
-        ? `${styles.sliderThumb} ${o.thumb}`
-        : styles.sliderThumb;
-      mergedClassNames.mark = o.mark
-        ? `${styles.sliderMark} ${o.mark}`
-        : styles.sliderMark;
-      mergedClassNames.markLabel = o.markLabel
-        ? `${styles.sliderMarkLabel} ${o.markLabel}`
-        : styles.sliderMarkLabel;
-    }
+    const mergedClassNames = mergeClassNames(
+      {
+        root: styles.sliderRoot,
+        track: styles.sliderTrack,
+        bar: styles.sliderBar,
+        thumb: styles.sliderThumb,
+        mark: styles.sliderMark,
+        markLabel: styles.sliderMarkLabel,
+      },
+      restRecord.classNames as Partial<Record<string, string>> | undefined,
+    );
 
     const wrapperClass = className
       ? `${styles.layoutOverride} ${className}`
@@ -232,6 +219,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
 
             <div className={styles.sliderTrackWrapper}>
               <MantineSlider
+                {...(sanitizedProps as unknown as MantineSliderProps)}
                 classNames={mergedClassNames}
                 disabled={disabled}
                 value={resolvedValue}
@@ -241,7 +229,6 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
                 max={max}
                 step={step}
                 label={tooltipLabel}
-                {...(sanitizedProps as unknown as MantineSliderProps)}
               />
             </div>
 

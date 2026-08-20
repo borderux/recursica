@@ -6,6 +6,7 @@ import {
 } from "@mantine/core";
 import {
   filterStylingProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./HoverCard.module.css";
@@ -42,54 +43,37 @@ export type HoverCardProps = RecursicaOverStyled<
 const HoverCardBase = function HoverCard({
   overStyled = false,
   withBeak = true,
+  position = "top", // Recursica default; Mantine defaults to "bottom". Consumers can still override.
+  // arrowSize must be a JS number prop — Mantine uses it for inline width/height
+  // and positioning offset (-arrowSize/2) calculations that cannot be CSS-driven.
+  // Default to 16 to match the Recursica beak-size token (16px). Consumers can still override.
+  arrowSize = 16,
+  withArrow,
   ...rest
 }: HoverCardProps) {
   const sanitizedProps = filterStylingProps(rest, overStyled);
+  const restRecord = sanitizedProps as Record<string, unknown>;
 
   // Bind CSS module classes to Mantine's internal classNames API
-  const mergedClassNames: Partial<Record<string, string>> = {
-    dropdown: styles.dropdown,
-    arrow: styles.arrow,
-  };
-
-  const classNamesProp = (sanitizedProps as Record<string, unknown>).classNames;
-  if (
-    classNamesProp &&
-    typeof classNamesProp === "object" &&
-    !Array.isArray(classNamesProp)
-  ) {
-    const o = classNamesProp as Record<string, string>;
-    Object.keys(o).forEach((key) => {
-      if (mergedClassNames[key]) {
-        mergedClassNames[key] = `${mergedClassNames[key]} ${o[key]}`;
-      } else {
-        mergedClassNames[key] = o[key];
-      }
-    });
-  }
-
-  // arrowSize must be a JS number prop — Mantine uses it for inline width/height
-  // and positioning offset (-arrowSize/2) calculations that cannot be CSS-driven.
-  // Default to 16 to match the Recursica beak-size token (16px).
-  const arrowSize =
-    ((sanitizedProps as Record<string, unknown>).arrowSize as
-      | number
-      | undefined) ?? 16;
+  const mergedClassNames = mergeClassNames(
+    {
+      dropdown: styles.dropdown,
+      arrow: styles.arrow,
+    },
+    restRecord.classNames as Partial<Record<string, string>> | undefined,
+  );
 
   // Resolve withBeak (Recursica) vs withArrow (Mantine).
   // withBeak takes precedence when both are provided.
-  const withArrow = (sanitizedProps as Record<string, unknown>).withArrow as
-    | boolean
-    | undefined;
   const resolvedWithArrow = withBeak ?? withArrow;
 
   return (
     <MantineHoverCard
-      position="top" /* Recursica default; Mantine defaults to "bottom" */
+      {...(sanitizedProps as unknown as MantineHoverCardProps)}
+      position={position}
       arrowSize={arrowSize}
       withArrow={resolvedWithArrow}
       classNames={mergedClassNames}
-      {...(sanitizedProps as unknown as MantineHoverCardProps)}
     />
   );
 };
@@ -128,8 +112,8 @@ const HoverCardDropdown = function HoverCardDropdown({
 
   return (
     <MantineHoverCard.Dropdown
-      className={classNameProp}
       {...(sanitizedProps as unknown as MantineHoverCardDropdownProps)}
+      className={classNameProp}
     />
   );
 };

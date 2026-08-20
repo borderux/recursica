@@ -14,6 +14,8 @@ import {
 } from "@mantine/core";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Menu.module.css";
@@ -46,38 +48,26 @@ export type MenuProps = RecursicaOverStyled<
 
 const MenuBase = function Menu({ overStyled = false, ...rest }: MenuProps) {
   const sanitizedProps = filterStylingProps(rest, overStyled);
+  const restRecord = sanitizedProps as Record<string, unknown>;
 
   // Bind CSS module classes to Mantine's internal classNames API
-  const mergedClassNames: Partial<Record<string, string>> = {
-    dropdown: styles.dropdown,
-    item: styles.item,
-    itemLabel: styles.itemLabel,
-    itemSection: styles.itemSection,
-    divider: styles.divider,
-    label: styles.label,
-    chevron: styles.chevron,
-  };
-
-  const classNamesProp = (sanitizedProps as Record<string, unknown>).classNames;
-  if (
-    classNamesProp &&
-    typeof classNamesProp === "object" &&
-    !Array.isArray(classNamesProp)
-  ) {
-    const o = classNamesProp as Record<string, string>;
-    Object.keys(o).forEach((key) => {
-      if (mergedClassNames[key]) {
-        mergedClassNames[key] = `${mergedClassNames[key]} ${o[key]}`;
-      } else {
-        mergedClassNames[key] = o[key];
-      }
-    });
-  }
+  const mergedClassNames = mergeClassNames(
+    {
+      dropdown: styles.dropdown,
+      item: styles.item,
+      itemLabel: styles.itemLabel,
+      itemSection: styles.itemSection,
+      divider: styles.divider,
+      label: styles.label,
+      chevron: styles.chevron,
+    },
+    restRecord.classNames as Partial<Record<string, string>> | undefined,
+  );
 
   return (
     <MantineMenu
-      classNames={mergedClassNames}
       {...(sanitizedProps as unknown as MantineMenuProps)}
+      classNames={mergedClassNames}
     />
   );
 };
@@ -91,10 +81,19 @@ MenuBase.displayName = "Menu";
  * Wrapper for the element that triggers the menu.
  * Requires a single child element that supports ref forwarding.
  */
-export type MenuTargetProps = MantineMenuTargetProps;
+export type MenuTargetProps = RecursicaOverStyled<MantineMenuTargetProps>;
 
-const MenuTarget = function MenuTarget(props: MenuTargetProps) {
-  return <MantineMenu.Target {...props} />;
+const MenuTarget = function MenuTarget({
+  overStyled = false,
+  ...rest
+}: MenuTargetProps) {
+  const sanitizedProps = filterStylingProps(rest, overStyled);
+
+  return (
+    <MantineMenu.Target
+      {...(sanitizedProps as unknown as MantineMenuTargetProps)}
+    />
+  );
 };
 MenuTarget.displayName = "MenuTarget";
 
@@ -113,9 +112,9 @@ const MenuDropdown = forwardRef<HTMLDivElement, MenuDropdownProps>(
 
     return (
       <MantineMenu.Dropdown
+        {...(sanitizedProps as unknown as MantineMenuDropdownProps)}
         ref={ref}
         className={classNameProp}
-        {...(sanitizedProps as unknown as MantineMenuDropdownProps)}
       />
     );
   },
@@ -129,8 +128,7 @@ MenuDropdown.displayName = "MenuDropdown";
 /**
  * An individual actionable item within the menu dropdown.
  *
- * **Note:** Mantine's `color` prop is stripped in strict mode to enforce
- * design token adherence. Use `overStyled={true}` if you need to bypass.
+ * **Note:** Mantine's `color` prop is stripped to enforce design token adherence.
  */
 export type MenuItemProps = RecursicaOverStyled<
   Omit<MantineMenuItemProps, "color">
@@ -138,21 +136,25 @@ export type MenuItemProps = RecursicaOverStyled<
 
 const _MenuItem = forwardRef<HTMLButtonElement, MenuItemProps>(
   function MenuItem({ overStyled = false, ...rest }, ref) {
-    const sanitizedProps = filterStylingProps(rest, overStyled);
-    const restRecord = sanitizedProps as Record<string, unknown>;
+    // Props this component intentionally doesn't support — deleted at runtime so they can't leak
+    // through even if a caller forces them via plain JavaScript, bypassing the `Omit<>` above.
+    const UNSUPPORTED_PROPS = [
+      "color", // Colors are token-driven; the library's native palette isn't exposed.
+    ] as const satisfies readonly (keyof MantineMenuItemProps)[];
 
-    // Strip Mantine's `color` prop to enforce token-driven styling
-    if (!overStyled) {
-      delete restRecord["color"];
-    }
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled) as Record<string, unknown>,
+      UNSUPPORTED_PROPS,
+    );
+    const restRecord = sanitizedProps as Record<string, unknown>;
 
     const classNameProp = restRecord.className as string | undefined;
 
     return (
       <MantineMenu.Item
+        {...(sanitizedProps as unknown as MantineMenuItemProps)}
         ref={ref}
         className={classNameProp}
-        {...(sanitizedProps as unknown as MantineMenuItemProps)}
       />
     );
   },
@@ -185,9 +187,9 @@ const MenuDivider = forwardRef<HTMLHRElement, MenuDividerProps>(
 
     return (
       <MantineMenu.Divider
+        {...(sanitizedProps as unknown as MantineMenuDividerProps)}
         ref={ref}
         className={classNameProp}
-        {...(sanitizedProps as unknown as MantineMenuDividerProps)}
       />
     );
   },
@@ -211,9 +213,9 @@ const MenuLabel = forwardRef<HTMLDivElement, MenuLabelProps>(function MenuLabel(
 
   return (
     <MantineMenu.Label
+      {...(sanitizedProps as unknown as MantineMenuLabelProps)}
       ref={ref}
       className={classNameProp}
-      {...(sanitizedProps as unknown as MantineMenuLabelProps)}
     />
   );
 });
@@ -257,20 +259,25 @@ export type MenuSubItemProps = RecursicaOverStyled<
 
 const _MenuSubItem = forwardRef<HTMLButtonElement, MenuSubItemProps>(
   function MenuSubItem({ overStyled = false, ...rest }, ref) {
-    const sanitizedProps = filterStylingProps(rest, overStyled);
-    const restRecord = sanitizedProps as Record<string, unknown>;
+    // Props this component intentionally doesn't support — deleted at runtime so they can't leak
+    // through even if a caller forces them via plain JavaScript, bypassing the `Omit<>` above.
+    const UNSUPPORTED_PROPS = [
+      "color", // Colors are token-driven; the library's native palette isn't exposed.
+    ] as const satisfies readonly (keyof MantineMenuItemProps)[];
 
-    if (!overStyled) {
-      delete restRecord["color"];
-    }
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled) as Record<string, unknown>,
+      UNSUPPORTED_PROPS,
+    );
+    const restRecord = sanitizedProps as Record<string, unknown>;
 
     const classNameProp = restRecord.className as string | undefined;
 
     return (
       <MantineMenu.Sub.Item
+        {...(sanitizedProps as unknown as MantineMenuItemProps)}
         ref={ref}
         className={classNameProp}
-        {...(sanitizedProps as unknown as MantineMenuItemProps)}
       />
     );
   },
@@ -302,9 +309,9 @@ const MenuSubDropdown = forwardRef<HTMLDivElement, MenuSubDropdownProps>(
 
     return (
       <MantineMenu.Sub.Dropdown
+        {...(sanitizedProps as unknown as MantineMenuSubDropdownProps)}
         ref={ref}
         className={classNameProp}
-        {...(sanitizedProps as unknown as MantineMenuSubDropdownProps)}
       />
     );
   },

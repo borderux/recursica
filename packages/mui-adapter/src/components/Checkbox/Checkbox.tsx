@@ -7,6 +7,8 @@ import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import { CheckboxGroup, CheckboxGroupContext } from "./CheckboxGroup";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import {
@@ -58,33 +60,27 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
       ...rest
     } = props;
 
-    const sanitizedProps = filterStylingProps(rest, overStyled);
+    // Props this component intentionally doesn't support — deleted at runtime so they can't leak
+    // through even if a caller forces them via plain JavaScript, bypassing the Omit<> above.
+    const UNSUPPORTED_PROPS = [
+      "size", // Recursica controls sizing via design tokens, not MUI's native small/medium size
+      "color", // Colors are token-driven; MUI's native palette isn't exposed
+    ] as const satisfies readonly (keyof MuiCheckboxProps)[];
+
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled),
+      UNSUPPORTED_PROPS,
+    );
     const restRecord = sanitizedProps as Record<string, unknown>;
 
-    delete restRecord["size"];
-    delete restRecord["color"];
-
-    const mergedClassNames: Partial<Record<string, string>> = {
-      root: styles.root,
-      checked: styles.checked,
-      disabled: styles.disabled,
-    };
-
-    const classesProp = restRecord.classes;
-    if (
-      classesProp &&
-      typeof classesProp === "object" &&
-      !Array.isArray(classesProp)
-    ) {
-      const o = classesProp as Partial<Record<string, string>>;
-      mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
-      mergedClassNames.checked = o.checked
-        ? `${styles.checked} ${o.checked}`
-        : styles.checked;
-      mergedClassNames.disabled = o.disabled
-        ? `${styles.disabled} ${o.disabled}`
-        : styles.disabled;
-    }
+    const mergedClassNames = mergeClassNames(
+      {
+        root: styles.root,
+        checked: styles.checked,
+        disabled: styles.disabled,
+      },
+      restRecord.classes as Partial<Record<string, string>> | undefined,
+    );
 
     const classNameProp = restRecord.className as string | undefined;
     const finalClass = classNameProp
@@ -172,10 +168,10 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
     const checkboxNode = (
       <MuiCheckbox
         ref={ref}
+        {...(sanitizedProps as unknown as MuiCheckboxProps)}
         className={!label ? `${finalClass} ${styles.inner}` : styles.inner}
         classes={mergedClassNames}
         disabled={readOnly || disabled || isGroupReadOnly}
-        {...(sanitizedProps as unknown as MuiCheckboxProps)}
         {...(isControlled ? { checked: isChecked as boolean } : {})}
         onChange={handleChange}
         disableRipple

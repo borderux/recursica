@@ -80,11 +80,11 @@ export const SwitchGroup = forwardRef<HTMLDivElement, SwitchGroupProps>(
       onChange,
       ...rest
     } = props;
+    // NOTE: MuiFormGroupProps has no native "size" (or other Recursica-unsupported) prop to
+    // leak through here — nothing to add to an UNSUPPORTED_PROPS list beyond what
+    // filterStylingProps already blocks.
     const sanitizedProps = filterStylingProps(rest, overStyled);
     const restRecord = sanitizedProps as Record<string, unknown>;
-
-    // Delete prohibited sizing hooks from bypassing the variables
-    delete restRecord["size"];
 
     const handleChange = (
       _event: React.SyntheticEvent,

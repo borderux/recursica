@@ -3,6 +3,8 @@ import { InputBase, type InputBaseProps } from "@mui/material";
 import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
@@ -77,34 +79,36 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
       ...rest
     } = props;
 
-    const sanitizedProps = filterStylingProps(rest, overStyled);
+    // Props this component intentionally doesn't support — deleted at runtime so they can't leak
+    // through even if a caller forces them via plain JavaScript, bypassing the Omit<> above.
+    const UNSUPPORTED_PROPS = [
+      "size", // Recursica controls sizing via design tokens, not MUI's native small/medium size
+      "color", // Colors are token-driven; MUI's native palette isn't exposed
+    ] as const satisfies readonly (keyof InputBaseProps)[];
+
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled),
+      UNSUPPORTED_PROPS,
+    );
     const restRecord = sanitizedProps as Record<string, unknown>;
 
-    // Delete prohibited sizing hooks from bypassing variables natively
-    delete restRecord["size"];
-    delete restRecord["color"];
-
-    // Securely map core native blocks down ensuring nested CSS modules map precisely
-    const mergedClassNames: Partial<Record<string, string>> = {
-      wrapper: styles.root, // The nested Input internal relative wrapper bounding box
-      input: styles.input,
-      section: styles.section,
-    };
-
-    const classesProp = restRecord.classes;
-    if (
-      classesProp &&
-      typeof classesProp === "object" &&
-      !Array.isArray(classesProp)
-    ) {
-      const o = classesProp as Partial<Record<string, string>>;
-      mergedClassNames.wrapper = o.root
-        ? `${styles.root} ${o.root}`
-        : styles.root;
-      mergedClassNames.input = o.input
-        ? `${styles.input} ${o.input}`
-        : styles.input;
-    }
+    // Securely map core native blocks down ensuring nested CSS modules map precisely. The
+    // caller-facing "root"/"input" slot names (MUI's own InputBase `classes` shape) are
+    // translated to this component's internal "wrapper"/"input" naming below.
+    const callerClasses = restRecord.classes as
+      | Partial<Record<string, string>>
+      | undefined;
+    const mergedClassNames = mergeClassNames(
+      {
+        wrapper: styles.root, // The nested Input internal relative wrapper bounding box
+        input: styles.input,
+        section: styles.section,
+      },
+      callerClasses && {
+        wrapper: callerClasses.root,
+        input: callerClasses.input,
+      },
+    );
 
     const wrapperClass = className
       ? `${styles.layoutOverride} ${className}`

@@ -6,6 +6,8 @@ import {
 } from "@mui/material";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./SegmentedControl.module.css";
@@ -34,27 +36,14 @@ function useSegmentedControlClassNames(restRecord: Record<string, unknown>): {
   className: string;
   classNames: Partial<Record<string, string>>;
 } {
-  const mergedClassNames: Partial<Record<string, string>> = {
-    root: styles.root,
-    control: styles.control,
-    label: styles.label,
-  };
-
-  const classNamesProp = restRecord.classNames;
-  if (
-    classNamesProp &&
-    typeof classNamesProp === "object" &&
-    !Array.isArray(classNamesProp)
-  ) {
-    const o = classNamesProp as Partial<Record<string, string>>;
-    mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
-    mergedClassNames.control = o.control
-      ? `${styles.control} ${o.control}`
-      : styles.control;
-    mergedClassNames.label = o.label
-      ? `${styles.label} ${o.label}`
-      : styles.label;
-  }
+  const mergedClassNames = mergeClassNames(
+    {
+      root: styles.root,
+      control: styles.control,
+      label: styles.label,
+    },
+    restRecord.classNames as Partial<Record<string, string>> | undefined,
+  );
 
   const classNameProp = restRecord.className as string | undefined;
   const finalClass = classNameProp
@@ -77,11 +66,17 @@ const _SegmentedControl = forwardRef<HTMLDivElement, SegmentedControlProps>(
     },
     ref,
   ) {
-    const sanitizedProps = filterStylingProps(rest, overStyled);
-    const restRecord = sanitizedProps as Record<string, unknown>;
+    // Props this component intentionally doesn't support — deleted at runtime so they can't leak
+    // through even if a caller forces them via plain JavaScript, bypassing the Omit<> above.
+    const UNSUPPORTED_PROPS = [
+      "disabled", // Recursica controls per-item disabled state via `data.disabled`, not the group
+    ] as const satisfies readonly (keyof MuiSegmentedControlProps)[];
 
-    // Explicitly prevent consumers from bypassing the disabled restriction
-    delete restRecord["disabled"];
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled),
+      UNSUPPORTED_PROPS,
+    );
+    const restRecord = sanitizedProps as Record<string, unknown>;
 
     const stylingParams = useSegmentedControlClassNames(restRecord);
 

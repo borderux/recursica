@@ -5,6 +5,7 @@ import {
 } from "@mantine/core";
 import {
   filterStylingProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Timeline.module.css";
@@ -46,36 +47,21 @@ interface TimelineComponent
 const TimelineInner = React.forwardRef<HTMLDivElement, TimelineProps>(
   function Timeline({ overStyled = false, ...rest }, ref) {
     const sanitizedProps = filterStylingProps(rest, overStyled);
+    const restRecord = sanitizedProps as Record<string, unknown>;
 
-    const mergedClassNames: Partial<Record<string, string>> = {
-      root: styles.root,
-    };
-
-    const classNamesProp = (sanitizedProps as Record<string, unknown>)
-      .classNames;
-    if (
-      classNamesProp &&
-      typeof classNamesProp === "object" &&
-      !Array.isArray(classNamesProp)
-    ) {
-      const o = classNamesProp as Record<string, string>;
-      Object.keys(o).forEach((key) => {
-        if (mergedClassNames[key]) {
-          mergedClassNames[key] = `${mergedClassNames[key]} ${o[key]}`;
-        } else {
-          mergedClassNames[key] = o[key];
-        }
-      });
-    }
+    const mergedClassNames = mergeClassNames(
+      { root: styles.root },
+      restRecord.classNames as Partial<Record<string, string>> | undefined,
+    );
 
     return (
       <MantineTimeline
         ref={ref}
-        classNames={mergedClassNames}
         {...(sanitizedProps as unknown as Omit<
           MantineTimelineProps,
           "color" | "radius" | "bulletSize" | "lineWidth"
         >)}
+        classNames={mergedClassNames}
       />
     );
   },

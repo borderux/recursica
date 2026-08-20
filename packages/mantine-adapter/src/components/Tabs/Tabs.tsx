@@ -8,6 +8,7 @@ import {
 } from "@mantine/core";
 import {
   filterStylingProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Tabs.module.css";
@@ -30,21 +31,27 @@ const _Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(props, ref) {
   } = props;
 
   const sanitizedProps = filterStylingProps(rest, overStyled);
+  const restRecord = sanitizedProps as Record<string, unknown>;
+
+  const mergedClassNames = mergeClassNames(
+    {
+      list: styles.list,
+      tab: styles.tab,
+      panel: styles.panel,
+    },
+    restRecord.classNames as Partial<Record<string, string>> | undefined,
+  );
 
   return (
     <MantineTabs
       ref={ref}
+      {...(sanitizedProps as MantineTabsProps)}
       variant={variant}
       orientation={orientation}
       className={`${styles.root} ${className || ""}`}
       data-variant={variant}
       data-orientation={orientation}
-      classNames={{
-        list: styles.list,
-        tab: styles.tab,
-        panel: styles.panel,
-      }}
-      {...(sanitizedProps as MantineTabsProps)}
+      classNames={mergedClassNames}
     />
   );
 });

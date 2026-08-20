@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import {
   filterStylingProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Stepper.module.css";
@@ -83,6 +84,13 @@ export const Stepper = forwardRef<HTMLDivElement, StepperProps>(
     const sanitizedProps = filterStylingProps(rest, overStyled);
     const isHorizontal = orientation === "horizontal";
 
+    const mergedClassNames = mergeClassNames(
+      { root: styles.steps },
+      (sanitizedProps as Record<string, unknown>).classes as
+        | Partial<Record<string, string>>
+        | undefined,
+    );
+
     return (
       <div
         className={`${styles.root} ${isHorizontal ? styles.horizontal : styles.vertical} ${size === "large" ? styles.large : styles.small} ${className || ""}`}
@@ -117,9 +125,7 @@ export const Stepper = forwardRef<HTMLDivElement, StepperProps>(
               <></>
             )
           }
-          classes={{
-            root: styles.steps,
-          }}
+          classes={mergedClassNames}
         />
       </div>
     );
@@ -133,11 +139,18 @@ export type StepProps = RecursicaOverStyled<MuiStepProps>;
 export const Step = forwardRef<HTMLDivElement, StepProps>(
   function Step(props, ref) {
     const { overStyled = false, className, ...rest } = props;
+    const sanitizedProps = filterStylingProps(rest, overStyled);
+    const mergedClassNames = mergeClassNames(
+      { root: styles.step },
+      (sanitizedProps as Record<string, unknown>).classes as
+        | Partial<Record<string, string>>
+        | undefined,
+    );
     return (
       <MuiStep
         ref={ref}
-        {...(filterStylingProps(rest, overStyled) as MuiStepProps)}
-        classes={{ root: styles.step }}
+        {...(sanitizedProps as MuiStepProps)}
+        classes={mergedClassNames}
         className={className || ""}
       />
     );
@@ -173,21 +186,28 @@ export const StepLabel = forwardRef<HTMLDivElement, StepLabelProps>(
       overStyled = false,
       className,
       description,
-      StepIconComponent,
+      StepIconComponent = RecursicaStepIcon,
       ...rest
     } = props;
+    const sanitizedProps = filterStylingProps(rest, overStyled);
+    const mergedClassNames = mergeClassNames(
+      {
+        root: styles.stepLabelRoot,
+        label: styles.stepLabel,
+        iconContainer: styles.stepIcon,
+        labelContainer: styles.stepBody,
+      },
+      (sanitizedProps as Record<string, unknown>).classes as
+        | Partial<Record<string, string>>
+        | undefined,
+    );
     return (
       <MuiStepLabel
         ref={ref}
-        {...(filterStylingProps(rest, overStyled) as MuiStepLabelProps)}
+        {...(sanitizedProps as MuiStepLabelProps)}
         className={className || ""}
-        classes={{
-          root: styles.stepLabelRoot,
-          label: styles.stepLabel,
-          iconContainer: styles.stepIcon,
-          labelContainer: styles.stepBody,
-        }}
-        StepIconComponent={StepIconComponent ?? RecursicaStepIcon}
+        classes={mergedClassNames}
+        StepIconComponent={StepIconComponent}
         optional={
           description ? (
             <div className={styles.stepDescription}>{description}</div>

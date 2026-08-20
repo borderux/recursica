@@ -69,12 +69,12 @@ export const TimelineItem = React.forwardRef<HTMLLIElement, TimelineItemProps>(
     return (
       <MuiTimelineItem
         ref={ref}
-        data-variant={bulletVariant}
-        data-active={__active || undefined}
         {...(restSanitizedProps as unknown as Omit<
           MuiTimelineItemProps,
           "radius" | "color" | "lineVariant" | "title"
         >)}
+        data-variant={bulletVariant}
+        data-active={__active || undefined}
         className={
           userClassName ? `${styles.item} ${userClassName}` : styles.item
         }

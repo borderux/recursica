@@ -74,11 +74,11 @@ export const AssistiveElement = forwardRef<
   return (
     <div
       ref={ref}
+      {...restRecord} // Spread standard HTML attributes (like id, aria-*) natively.
       className={finalClass}
       data-variant={assistiveVariant}
       role={resolvedRole}
       style={restRecord.style as React.CSSProperties}
-      {...restRecord} // Spread standard HTML attributes (like id, aria-*) natively.
     >
       {assistiveWithIcon && (
         <span className={styles.iconWrapper}>

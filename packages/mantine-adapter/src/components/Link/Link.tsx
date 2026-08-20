@@ -6,6 +6,7 @@ import {
 } from "@mantine/core";
 import {
   filterStylingProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Link.module.css";
@@ -23,19 +24,10 @@ const _Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link(
   const sanitizedProps = filterStylingProps(rest, overStyled);
   const restRecord = sanitizedProps as Record<string, unknown>;
 
-  const mergedClassNames: Partial<Record<string, string>> = {
-    root: styles.root,
-  };
-
-  const classNamesProp = restRecord.classNames;
-  if (
-    classNamesProp &&
-    typeof classNamesProp === "object" &&
-    !Array.isArray(classNamesProp)
-  ) {
-    const o = classNamesProp as Partial<Record<string, string>>;
-    mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
-  }
+  const mergedClassNames = mergeClassNames(
+    { root: styles.root },
+    restRecord.classNames as Partial<Record<string, string>> | undefined,
+  );
 
   const classNameProp = restRecord.className as string | undefined;
   const finalClass = classNameProp
@@ -45,11 +37,11 @@ const _Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link(
   return (
     <MantineAnchor
       ref={ref}
+      {...(sanitizedProps as Record<string, unknown>)}
       className={finalClass}
       classNames={mergedClassNames}
       underline="never"
       {...(icon ? { "data-has-icon": "" } : {})}
-      {...(sanitizedProps as Record<string, unknown>)}
     >
       {icon && (
         <span className={styles.iconWrapper} aria-hidden>

@@ -67,12 +67,12 @@ export const WithReadOnlyWrapper = forwardRef<
     return (
       <ReadOnlyField
         ref={ref}
+        {...wrapperProps}
         type={readOnlyType}
         value={readOnlyValue}
         emptyValueComponent={emptyValueComponent}
         onLabelEditClick={onLabelEditClick}
         overStyled={overStyled as true}
-        {...wrapperProps}
       />
     );
   }

@@ -8,6 +8,7 @@ import {
 import { useMergedRef } from "@mantine/hooks";
 import {
   filterStylingProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import { type RecursicaTreeProps } from "@recursica/adapter-common";
@@ -186,8 +187,8 @@ export const Tree = forwardRef<HTMLUListElement, TreeProps>(function Tree(
   }, [disabled]);
   const mergedRef = useMergedRef(ref, rootRef);
 
-  const classNameProp = (sanitizedProps as Record<string, unknown>)
-    .className as string | undefined;
+  const restRecord = sanitizedProps as Record<string, unknown>;
+  const classNameProp = restRecord.className as string | undefined;
   const rootClass = classNameProp
     ? `${styles.root} ${classNameProp}`
     : styles.root;
@@ -195,6 +196,7 @@ export const Tree = forwardRef<HTMLUListElement, TreeProps>(function Tree(
   return (
     <MantineTree
       ref={mergedRef}
+      {...(sanitizedProps as unknown as Record<string, unknown>)}
       data={data}
       tree={tree}
       expandOnClick={false}
@@ -202,12 +204,10 @@ export const Tree = forwardRef<HTMLUListElement, TreeProps>(function Tree(
       expandOnSpace={false}
       renderNode={createRenderTreeNode(disabled)}
       data-disabled={disabled || undefined}
-      classNames={{
-        root: rootClass,
-        node: styles.node,
-        subtree: styles.subtree,
-      }}
-      {...(sanitizedProps as unknown as Record<string, unknown>)}
+      classNames={mergeClassNames(
+        { root: rootClass, node: styles.node, subtree: styles.subtree },
+        restRecord.classNames as Partial<Record<string, string>> | undefined,
+      )}
     />
   );
 });

@@ -7,6 +7,8 @@ import {
 import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
@@ -42,6 +44,14 @@ export interface RecursicaAutoCompleteProps
 
 export type AutoCompleteProps = RecursicaOverStyled<RecursicaAutoCompleteProps>;
 
+// Props this component intentionally doesn't support — deleted at runtime so they can't leak
+// through even if a caller forces them via plain JavaScript, bypassing the `Omit<>` above.
+const UNSUPPORTED_PROPS = [
+  "size", // Recursica controls sizing via the `size` variant + design tokens, not raw dimensions.
+  "variant", // Colors/variants are token-driven; the library's native palette isn't exposed.
+  "radius", // Recursica does not expose the library's native corner-radius system.
+] as const satisfies readonly (keyof MantineAutocompleteProps)[];
+
 export const AutoComplete = forwardRef<HTMLInputElement, AutoCompleteProps>(
   function AutoComplete(props, ref) {
     const {
@@ -72,46 +82,24 @@ export const AutoComplete = forwardRef<HTMLInputElement, AutoCompleteProps>(
       defaultValue,
       ...rest
     } = props;
-    const sanitizedProps = filterStylingProps(rest, overStyled);
+
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled) as Record<string, unknown>,
+      UNSUPPORTED_PROPS,
+    );
     const restRecord = sanitizedProps as Record<string, unknown>;
 
-    // Delete prohibited sizing hooks from bypassing variables natively
-    delete restRecord["size"];
-    delete restRecord["variant"];
-    delete restRecord["radius"];
-
     // Securely map core native blocks down ensuring nested CSS modules map precisely
-    const mergedClassNames: Partial<Record<string, string>> = {
-      wrapper: styles.root, // The nested Input internal relative wrapper bounding box
-      input: styles.input,
-      section: styles.section,
-      dropdown: styles.dropdown,
-      option: styles.option,
-    };
-
-    const classNamesProp = restRecord.classNames;
-    if (
-      classNamesProp &&
-      typeof classNamesProp === "object" &&
-      !Array.isArray(classNamesProp)
-    ) {
-      const o = classNamesProp as Partial<Record<string, string>>;
-      mergedClassNames.wrapper = o.wrapper
-        ? `${styles.root} ${o.wrapper}`
-        : styles.root;
-      mergedClassNames.input = o.input
-        ? `${styles.input} ${o.input}`
-        : styles.input;
-      mergedClassNames.section = o.section
-        ? `${styles.section} ${o.section}`
-        : styles.section;
-      mergedClassNames.dropdown = o.dropdown
-        ? `${styles.dropdown} ${o.dropdown}`
-        : styles.dropdown;
-      mergedClassNames.option = o.option
-        ? `${styles.option} ${o.option}`
-        : styles.option;
-    }
+    const mergedClassNames = mergeClassNames(
+      {
+        wrapper: styles.root, // The nested Input internal relative wrapper bounding box
+        input: styles.input,
+        section: styles.section,
+        dropdown: styles.dropdown,
+        option: styles.option,
+      },
+      restRecord.classNames as Partial<Record<string, string>> | undefined,
+    );
 
     const wrapperClass = className
       ? `${styles.layoutOverride} ${className}`
@@ -147,12 +135,12 @@ export const AutoComplete = forwardRef<HTMLInputElement, AutoCompleteProps>(
           /* Naked Input execution safely decoupled from Mantine's macro Input.Wrapper DOM hooks */
           <MantineAutocomplete
             ref={ref}
+            {...(sanitizedProps as unknown as MantineAutocompleteProps)}
             classNames={mergedClassNames}
             disabled={disabled}
             value={value as string | undefined}
             defaultValue={defaultValue as string | undefined}
             error={!!error}
-            {...(sanitizedProps as unknown as MantineAutocompleteProps)}
           />
         }
       />

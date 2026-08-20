@@ -7,6 +7,8 @@ import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import { CheckboxGroup } from "./CheckboxGroup";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import {
@@ -56,49 +58,34 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
       ...rest
     } = props;
     // Checkbox doesn't use Label onLabelEditClick natively since it isn't mapped inside FormControlWrapper intrinsically.
-    const sanitizedProps = filterStylingProps(rest, overStyled);
+    // Props this component intentionally doesn't support — deleted at runtime so they can't leak
+    // through even if a caller forces them via plain JavaScript, bypassing the `Omit<>` above.
+    const UNSUPPORTED_PROPS = [
+      "size", // Recursica controls sizing via Checkbox.module.css variables, not Mantine's native size scale.
+      "color", // Colors are token-driven via Checkbox.module.css; Mantine's native palette isn't exposed.
+      "radius", // Corner radius is fixed by Recursica tokens in Checkbox.module.css, not caller-configurable.
+      "variant", // Checkbox has a single Recursica-defined visual treatment; Mantine's variant isn't exposed.
+      "iconColor", // Icon color is token-driven via Checkbox.module.css, not a native Mantine override.
+    ] as const satisfies readonly (keyof MantineCheckboxProps)[];
+
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled) as Record<string, unknown>,
+      UNSUPPORTED_PROPS,
+    ) as Partial<typeof rest>;
     const restRecord = sanitizedProps as Record<string, unknown>;
 
-    // Actively delete dimension bindings that bypass the abstraction
-    delete restRecord["size"];
-    delete restRecord["color"];
-    delete restRecord["radius"];
-    delete restRecord["variant"];
-    delete restRecord["iconColor"];
-
-    const mergedClassNames: Partial<Record<string, string>> = {
-      root: styles.root,
-      body: styles.body,
-      inner: styles.inner,
-      input: styles.input,
-      icon: styles.icon,
-      labelWrapper: styles.labelWrapper,
-      label: styles.label,
-    };
-
-    const classNamesProp = restRecord.classNames;
-    if (
-      classNamesProp &&
-      typeof classNamesProp === "object" &&
-      !Array.isArray(classNamesProp)
-    ) {
-      const o = classNamesProp as Partial<Record<string, string>>;
-      mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
-      mergedClassNames.body = o.body ? `${styles.body} ${o.body}` : styles.body;
-      mergedClassNames.inner = o.inner
-        ? `${styles.inner} ${o.inner}`
-        : styles.inner;
-      mergedClassNames.input = o.input
-        ? `${styles.input} ${o.input}`
-        : styles.input;
-      mergedClassNames.icon = o.icon ? `${styles.icon} ${o.icon}` : styles.icon;
-      mergedClassNames.labelWrapper = o.labelWrapper
-        ? `${styles.labelWrapper} ${o.labelWrapper}`
-        : styles.labelWrapper;
-      mergedClassNames.label = o.label
-        ? `${styles.label} ${o.label}`
-        : styles.label;
-    }
+    const mergedClassNames = mergeClassNames(
+      {
+        root: styles.root,
+        body: styles.body,
+        inner: styles.inner,
+        input: styles.input,
+        icon: styles.icon,
+        labelWrapper: styles.labelWrapper,
+        label: styles.label,
+      },
+      restRecord.classNames as Partial<Record<string, string>> | undefined,
+    );
 
     const classNameProp = restRecord.className as string | undefined;
     const finalClass = classNameProp
@@ -136,10 +123,10 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
     const checkboxNode = (
       <MantineCheckbox
         ref={ref}
+        {...(sanitizedProps as unknown as MantineCheckboxProps)}
         className={finalClass}
         classNames={mergedClassNames}
         disabled={readOnly || disabled}
-        {...(sanitizedProps as unknown as MantineCheckboxProps)}
       />
     );
 

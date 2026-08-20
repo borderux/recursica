@@ -2,6 +2,7 @@ import React, { forwardRef } from "react";
 import { Chip as MuiChip, type ChipProps as MuiChipProps } from "@mui/material";
 import {
   filterStylingProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Chip.module.css";
@@ -75,25 +76,17 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
   const sanitizedProps = filterStylingProps(rest, overStyled);
   const restRecord = sanitizedProps as Record<string, unknown>;
 
-  const mergedClassNames: Partial<Record<string, string>> = {
-    root: styles.root,
-    label: styles.label,
-    icon: styles.leadingIcon,
-    deleteIcon: styles.removeIconWrapper,
-  };
-
-  const classNamesProp = restRecord.classNames;
-  if (
-    classNamesProp &&
-    typeof classNamesProp === "object" &&
-    !Array.isArray(classNamesProp)
-  ) {
-    const o = classNamesProp as Partial<Record<string, string>>;
-    mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
-    mergedClassNames.label = o.label
-      ? `${styles.label} ${o.label}`
-      : styles.label;
-  }
+  // Note MUI's actual prop is "classes", not "classNames" (that's Mantine's naming) — this
+  // used to read the wrong key, silently no-op-ing any caller-supplied classes.
+  const mergedClassNames = mergeClassNames(
+    {
+      root: styles.root,
+      label: styles.label,
+      icon: styles.leadingIcon,
+      deleteIcon: styles.removeIconWrapper,
+    },
+    restRecord.classes as Partial<Record<string, string>> | undefined,
+  );
 
   const classNameProp = restRecord.className as string | undefined;
   const finalClass = classNameProp

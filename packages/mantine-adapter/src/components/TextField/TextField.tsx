@@ -3,6 +3,8 @@ import { Input, type InputProps, type InputWrapperProps } from "@mantine/core";
 import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
@@ -29,6 +31,14 @@ export interface RecursicaTextFieldProps
     BaseRecursicaTextFieldProps {}
 
 export type TextFieldProps = RecursicaOverStyled<RecursicaTextFieldProps>;
+
+// Props this component intentionally doesn't support — deleted at runtime so they can't leak
+// through even if a caller forces them via plain JavaScript, bypassing the `Omit<>` above.
+const UNSUPPORTED_PROPS = [
+  "size", // Recursica controls sizing via the `size` variant + design tokens, not raw dimensions.
+  "variant", // Colors/variants are token-driven; the library's native palette isn't exposed.
+  "radius", // Recursica does not expose the library's native corner-radius system.
+] as const satisfies readonly (keyof InputProps)[];
 
 export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
   function TextField(props, ref) {
@@ -60,38 +70,21 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
       defaultValue,
       ...rest
     } = props;
-    const sanitizedProps = filterStylingProps(rest, overStyled);
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled) as Record<string, unknown>,
+      UNSUPPORTED_PROPS,
+    );
     const restRecord = sanitizedProps as Record<string, unknown>;
 
-    // Delete prohibited sizing hooks from bypassing variables natively
-    delete restRecord["size"];
-    delete restRecord["variant"];
-    delete restRecord["radius"];
-
     // Securely map core native blocks down ensuring nested CSS modules map precisely
-    const mergedClassNames: Partial<Record<string, string>> = {
-      wrapper: styles.root, // The nested Input internal relative wrapper bounding box
-      input: styles.input,
-      section: styles.section,
-    };
-
-    const classNamesProp = restRecord.classNames;
-    if (
-      classNamesProp &&
-      typeof classNamesProp === "object" &&
-      !Array.isArray(classNamesProp)
-    ) {
-      const o = classNamesProp as Partial<Record<string, string>>;
-      mergedClassNames.wrapper = o.wrapper
-        ? `${styles.root} ${o.wrapper}`
-        : styles.root;
-      mergedClassNames.input = o.input
-        ? `${styles.input} ${o.input}`
-        : styles.input;
-      mergedClassNames.section = o.section
-        ? `${styles.section} ${o.section}`
-        : styles.section;
-    }
+    const mergedClassNames = mergeClassNames(
+      {
+        wrapper: styles.root, // The nested Input internal relative wrapper bounding box
+        input: styles.input,
+        section: styles.section,
+      },
+      restRecord.classNames as Partial<Record<string, string>> | undefined,
+    );
 
     const wrapperClass = className
       ? `${styles.layoutOverride} ${className}`
@@ -127,6 +120,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
           /* Naked Input execution safely decoupled from Mantine's macro Input.Wrapper DOM hooks */
           <Input
             ref={ref}
+            {...(sanitizedProps as unknown as InputProps)}
             classNames={mergedClassNames}
             disabled={disabled}
             value={value}
@@ -135,7 +129,6 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
               "data-disabled": disabled ? "true" : undefined,
               "data-error": error ? "true" : undefined,
             }}
-            {...(sanitizedProps as unknown as InputProps)}
           />
         }
       />

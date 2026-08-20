@@ -94,6 +94,7 @@ export const FormControlWrapper = React.forwardRef<
   return (
     <FormControl
       ref={ref}
+      {...(sanitizedProps as FormControlProps)}
       error={!!error}
       required={required}
       disabled={disabled}
@@ -103,7 +104,6 @@ export const FormControlWrapper = React.forwardRef<
       data-error={error ? "true" : undefined}
       data-disabled={disabled ? "true" : undefined}
       data-focused={focused ? "true" : undefined}
-      {...(sanitizedProps as FormControlProps)}
     >
       <FormControlLayout
         formLayout={formLayout}

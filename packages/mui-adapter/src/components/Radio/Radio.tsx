@@ -7,6 +7,8 @@ import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import { RadioGroup } from "./RadioGroup";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import {
@@ -72,12 +74,18 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(
       style,
       ...rest
     } = props;
-    const sanitizedProps = filterStylingProps(rest, overStyled);
-    const restRecord = sanitizedProps as Record<string, unknown>;
+    // Props this component intentionally doesn't support — deleted at runtime so they can't leak
+    // through even if a caller forces them via plain JavaScript, bypassing the Omit<> above.
+    const UNSUPPORTED_PROPS = [
+      "size", // Recursica controls sizing via design tokens, not MUI's native small/medium size
+      "color", // Colors are token-driven; MUI's native palette isn't exposed
+    ] as const satisfies readonly (keyof MuiRadioProps)[];
 
-    // Actively delete dimension bindings that bypass the abstraction
-    delete restRecord["size"];
-    delete restRecord["color"];
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled),
+      UNSUPPORTED_PROPS,
+    );
+    const restRecord = sanitizedProps as Record<string, unknown>;
 
     // NOTE: MUI's actual prop is "classes", not "classNames" (that's Mantine's naming) — this
     // was reading the wrong key and silently doing nothing. Fixed. Also "body"/"inner"/"radio"/
@@ -89,27 +97,14 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(
     // only the label showed. Fixed by keeping only the real slots here and drawing the circle as
     // our own combined icon/checkedIcon node instead (see radioNode below), same pattern already
     // used by Checkbox.
-    const mergedClassNames: Partial<Record<string, string>> = {
-      root: styles.root,
-      checked: styles.checked,
-      disabled: styles.disabled,
-    };
-
-    const classesProp = restRecord.classes;
-    if (
-      classesProp &&
-      typeof classesProp === "object" &&
-      !Array.isArray(classesProp)
-    ) {
-      const o = classesProp as Partial<Record<string, string>>;
-      mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
-      mergedClassNames.checked = o.checked
-        ? `${styles.checked} ${o.checked}`
-        : styles.checked;
-      mergedClassNames.disabled = o.disabled
-        ? `${styles.disabled} ${o.disabled}`
-        : styles.disabled;
-    }
+    const mergedClassNames = mergeClassNames(
+      {
+        root: styles.root,
+        checked: styles.checked,
+        disabled: styles.disabled,
+      },
+      restRecord.classes as Partial<Record<string, string>> | undefined,
+    );
 
     const classNameProp = restRecord.className as string | undefined;
     const finalClass = classNameProp
