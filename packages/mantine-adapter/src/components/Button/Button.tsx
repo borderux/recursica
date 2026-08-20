@@ -8,6 +8,8 @@ import {
 import {
   filterStylingProps,
   omitUnsupportedProps,
+  withCallerOverride,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Button.module.css";
@@ -85,24 +87,15 @@ const _Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
     );
   }
 
-  const mergedClassNames: Partial<Record<string, string>> = {
-    root: styles.root,
-    section: styles.section,
-    label: styles.label,
-    loader: styles.loader,
-  };
-
-  const classNamesProp = restRecord.classNames;
-  if (
-    classNamesProp &&
-    typeof classNamesProp === "object" &&
-    !Array.isArray(classNamesProp)
-  ) {
-    const o = classNamesProp as Partial<Record<string, string>>;
-    mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
-    mergedClassNames.section = o.section ?? styles.section;
-    mergedClassNames.label = o.label ?? styles.label;
-  }
+  const mergedClassNames = mergeClassNames(
+    {
+      root: styles.root,
+      section: styles.section,
+      label: styles.label,
+      loader: styles.loader,
+    },
+    restRecord.classNames as Partial<Record<string, string>> | undefined,
+  );
 
   const classNameProp = restRecord.className as string | undefined;
   const finalClass = classNameProp
@@ -117,8 +110,10 @@ const _Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
     | Record<string, unknown>
     | undefined;
 
-  const resolvedLoaderSize =
-    loaderSize ?? (size === "small" ? "small" : "default");
+  const resolvedLoaderSize = withCallerOverride(
+    size === "small" ? "small" : "default",
+    loaderSize,
+  );
 
   let mergedLoaderProps = userLoaderProps;
   if (useRecursicaLoader) {

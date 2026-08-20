@@ -130,8 +130,8 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
           ) : (
             <div
               ref={ref}
-              role="group"
               {...(sanitizedProps as Record<string, unknown>)}
+              role="group"
               className={styles.groupRoot}
               data-layout={formLayout}
             >

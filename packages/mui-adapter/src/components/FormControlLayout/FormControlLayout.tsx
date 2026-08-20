@@ -32,6 +32,7 @@ export const FormControlLayout = React.forwardRef<
   return (
     <div
       ref={ref}
+      {...sanitizedProps}
       className={className ? `${styles.root} ${className}` : styles.root}
       data-form-layout={formLayout}
       style={
@@ -45,7 +46,6 @@ export const FormControlLayout = React.forwardRef<
             : {}),
         } as React.CSSProperties
       }
-      {...sanitizedProps}
     >
       {/* 
         The left section strictly enforces the Label boundary sizes 

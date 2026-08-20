@@ -5,6 +5,7 @@ import {
 } from "@mui/material";
 import {
   filterStylingProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Avatar.module.css";
@@ -42,27 +43,16 @@ const _Avatar = forwardRef<HTMLDivElement, AvatarProps>(function Avatar(
     computedStyle = "icon";
   }
 
-  const mergedClassNames: Partial<Record<string, string>> = {
-    root: styles.root,
-    image: styles.image,
-    placeholder: styles.placeholder,
-  };
-
-  const classNamesProp = restRecord.classNames;
-  if (
-    classNamesProp &&
-    typeof classNamesProp === "object" &&
-    !Array.isArray(classNamesProp)
-  ) {
-    const o = classNamesProp as Partial<Record<string, string>>;
-    mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
-    mergedClassNames.image = o.image
-      ? `${styles.image} ${o.image}`
-      : styles.image;
-    mergedClassNames.placeholder = o.placeholder
-      ? `${styles.placeholder} ${o.placeholder}`
-      : styles.placeholder;
-  }
+  // Note MUI's actual prop is "classes", not "classNames" (that's Mantine's naming) — this
+  // used to read the wrong key, silently no-op-ing any caller-supplied classes.
+  const mergedClassNames = mergeClassNames(
+    {
+      root: styles.root,
+      image: styles.image,
+      placeholder: styles.placeholder,
+    },
+    restRecord.classes as Partial<Record<string, string>> | undefined,
+  );
 
   const classNameProp = restRecord.className as string | undefined;
 

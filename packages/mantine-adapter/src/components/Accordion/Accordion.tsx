@@ -9,6 +9,7 @@ import {
 import {
   filterStylingProps,
   omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Accordion.module.css";
@@ -48,37 +49,24 @@ const AccordionBase = function Accordion({
       : variant;
 
   const sanitizedProps = filterStylingProps(rest, overStyled);
+  const restRecord = sanitizedProps as Record<string, unknown>;
 
   // Bind all deep CSS module references natively into the global class mapping schema
-  const mergedClassNames: Partial<Record<string, string>> = {
-    root: styles.root,
-    item: styles.item,
-    control: styles.control,
-    label: styles.label,
-    chevron: styles.chevron,
-    icon: styles.icon,
-    panel: styles.panel,
-    content: styles.content,
-  };
+  const mergedClassNames = mergeClassNames(
+    {
+      root: styles.root,
+      item: styles.item,
+      control: styles.control,
+      label: styles.label,
+      chevron: styles.chevron,
+      icon: styles.icon,
+      panel: styles.panel,
+      content: styles.content,
+    },
+    restRecord.classNames as Partial<Record<string, string>> | undefined,
+  );
 
-  const classNamesProp = (sanitizedProps as Record<string, unknown>).classNames;
-  if (
-    classNamesProp &&
-    typeof classNamesProp === "object" &&
-    !Array.isArray(classNamesProp)
-  ) {
-    const o = classNamesProp as Record<string, string>;
-    Object.keys(o).forEach((key) => {
-      if (mergedClassNames[key]) {
-        mergedClassNames[key] = `${mergedClassNames[key]} ${o[key]}`;
-      } else {
-        mergedClassNames[key] = o[key];
-      }
-    });
-  }
-
-  const classNameProp = (sanitizedProps as Record<string, unknown>)
-    .className as string | undefined;
+  const classNameProp = restRecord.className as string | undefined;
 
   return (
     <MantineAccordion

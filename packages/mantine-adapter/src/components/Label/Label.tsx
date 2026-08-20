@@ -3,6 +3,7 @@ import { Input, type InputLabelProps } from "@mantine/core";
 import {
   filterStylingProps,
   omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Label.module.css";
@@ -48,25 +49,13 @@ export const Label = forwardRef<HTMLLabelElement, LabelProps>(function Label(
   );
   const restRecord = sanitizedProps as Record<string, unknown>;
 
-  const mergedClassNames: Partial<Record<string, string>> = {
-    label: styles.root,
-    required: styles.required,
-  };
-
-  const classNamesProp = restRecord.classNames;
-  if (
-    classNamesProp &&
-    typeof classNamesProp === "object" &&
-    !Array.isArray(classNamesProp)
-  ) {
-    const o = classNamesProp as Partial<Record<string, string>>;
-    mergedClassNames.label = o.label
-      ? `${styles.root} ${o.label}`
-      : styles.root;
-    mergedClassNames.required = o.required
-      ? `${styles.required} ${o.required}`
-      : styles.required;
-  }
+  const mergedClassNames = mergeClassNames(
+    {
+      label: styles.root,
+      required: styles.required,
+    },
+    restRecord.classNames as Partial<Record<string, string>> | undefined,
+  );
 
   const classNameProp = restRecord.className as string | undefined;
   const finalClass = classNameProp
@@ -76,12 +65,12 @@ export const Label = forwardRef<HTMLLabelElement, LabelProps>(function Label(
   return (
     <Input.Label
       ref={ref}
+      {...sanitizedProps}
       className={finalClass}
       classNames={mergedClassNames}
       data-size={labelSize}
       data-alignment={resolvedAlignment}
       required={required && !labelWithEditIcon}
-      {...sanitizedProps}
     >
       <span className={styles.labelText}>{children}</span>
       {resolvedOptionalText && (

@@ -8,6 +8,7 @@ import { CheckboxGroup } from "./CheckboxGroup";
 import {
   filterStylingProps,
   omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import {
@@ -73,39 +74,18 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
     ) as Partial<typeof rest>;
     const restRecord = sanitizedProps as Record<string, unknown>;
 
-    const mergedClassNames: Partial<Record<string, string>> = {
-      root: styles.root,
-      body: styles.body,
-      inner: styles.inner,
-      input: styles.input,
-      icon: styles.icon,
-      labelWrapper: styles.labelWrapper,
-      label: styles.label,
-    };
-
-    const classNamesProp = restRecord.classNames;
-    if (
-      classNamesProp &&
-      typeof classNamesProp === "object" &&
-      !Array.isArray(classNamesProp)
-    ) {
-      const o = classNamesProp as Partial<Record<string, string>>;
-      mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
-      mergedClassNames.body = o.body ? `${styles.body} ${o.body}` : styles.body;
-      mergedClassNames.inner = o.inner
-        ? `${styles.inner} ${o.inner}`
-        : styles.inner;
-      mergedClassNames.input = o.input
-        ? `${styles.input} ${o.input}`
-        : styles.input;
-      mergedClassNames.icon = o.icon ? `${styles.icon} ${o.icon}` : styles.icon;
-      mergedClassNames.labelWrapper = o.labelWrapper
-        ? `${styles.labelWrapper} ${o.labelWrapper}`
-        : styles.labelWrapper;
-      mergedClassNames.label = o.label
-        ? `${styles.label} ${o.label}`
-        : styles.label;
-    }
+    const mergedClassNames = mergeClassNames(
+      {
+        root: styles.root,
+        body: styles.body,
+        inner: styles.inner,
+        input: styles.input,
+        icon: styles.icon,
+        labelWrapper: styles.labelWrapper,
+        label: styles.label,
+      },
+      restRecord.classNames as Partial<Record<string, string>> | undefined,
+    );
 
     const classNameProp = restRecord.className as string | undefined;
     const finalClass = classNameProp

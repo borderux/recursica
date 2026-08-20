@@ -4,6 +4,7 @@ import MuiTimeline, {
 } from "@mui/lab/Timeline";
 import {
   filterStylingProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Timeline.module.css";
@@ -51,6 +52,13 @@ const TimelineInner = React.forwardRef<HTMLUListElement, TimelineProps>(
   ) {
     const sanitizedProps = filterStylingProps(rest, overStyled);
 
+    const mergedClassNames = mergeClassNames(
+      { root: styles.root },
+      (sanitizedProps as Record<string, unknown>).classes as
+        | Partial<Record<string, string>>
+        | undefined,
+    );
+
     const items = React.Children.toArray(children);
     const decoratedItems = items.map((item, index) =>
       React.isValidElement(item)
@@ -68,7 +76,7 @@ const TimelineInner = React.forwardRef<HTMLUListElement, TimelineProps>(
           MuiTimelineProps,
           "color" | "radius" | "bulletSize" | "lineWidth"
         >)}
-        classes={{ root: styles.root }}
+        classes={mergedClassNames}
       >
         {decoratedItems}
       </MuiTimeline>

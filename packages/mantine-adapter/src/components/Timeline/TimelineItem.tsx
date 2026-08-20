@@ -5,6 +5,7 @@ import {
 } from "@mantine/core";
 import {
   filterStylingProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Timeline.module.css";
@@ -36,31 +37,18 @@ export const TimelineItem = React.forwardRef<HTMLDivElement, TimelineItemProps>(
     ref,
   ) {
     const sanitizedProps = filterStylingProps(rest, overStyled);
+    const restRecord = sanitizedProps as Record<string, unknown>;
 
-    const mergedClassNames: Partial<Record<string, string>> = {
-      item: styles.item,
-      itemBody: styles.itemBody,
-      itemContent: styles.itemContent,
-      itemBullet: styles.itemBullet,
-      itemTitle: styles.itemTitle,
-    };
-
-    const classNamesProp = (sanitizedProps as Record<string, unknown>)
-      .classNames;
-    if (
-      classNamesProp &&
-      typeof classNamesProp === "object" &&
-      !Array.isArray(classNamesProp)
-    ) {
-      const o = classNamesProp as Record<string, string>;
-      Object.keys(o).forEach((key) => {
-        if (mergedClassNames[key]) {
-          mergedClassNames[key] = `${mergedClassNames[key]} ${o[key]}`;
-        } else {
-          mergedClassNames[key] = o[key];
-        }
-      });
-    }
+    const mergedClassNames = mergeClassNames(
+      {
+        item: styles.item,
+        itemBody: styles.itemBody,
+        itemContent: styles.itemContent,
+        itemBullet: styles.itemBullet,
+        itemTitle: styles.itemTitle,
+      },
+      restRecord.classNames as Partial<Record<string, string>> | undefined,
+    );
 
     // Embed timestamp inside children if provided, wrapped in a specific class
     const content = timestamp ? (
@@ -75,12 +63,12 @@ export const TimelineItem = React.forwardRef<HTMLDivElement, TimelineItemProps>(
     return (
       <MantineTimelineItem
         ref={ref}
-        classNames={mergedClassNames}
-        data-variant={bulletVariant}
         {...(sanitizedProps as unknown as Omit<
           MantineTimelineItemProps,
           "radius" | "color" | "lineVariant"
         >)}
+        classNames={mergedClassNames}
+        data-variant={bulletVariant}
       >
         {content}
       </MantineTimelineItem>

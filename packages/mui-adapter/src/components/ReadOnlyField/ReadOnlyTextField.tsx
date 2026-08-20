@@ -27,12 +27,12 @@ export const ReadOnlyTextField: React.FC<ReadOnlyTextFieldProps> = ({
   return (
     <Box
       component="p"
+      {...sanitizedProps}
       className={
         classNameProp
           ? `${styles.textField} ${classNameProp}`
           : styles.textField
       }
-      {...sanitizedProps}
     >
       {value != null
         ? React.isValidElement(value)

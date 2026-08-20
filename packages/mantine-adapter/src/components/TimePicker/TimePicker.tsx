@@ -8,6 +8,7 @@ import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import {
   filterStylingProps,
   omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
@@ -150,6 +151,7 @@ export const TimePicker = forwardRef<HTMLDivElement, TimePickerProps>(
       filterStylingProps(rest, overStyled) as Record<string, unknown>,
       UNSUPPORTED_PROPS,
     );
+    const restRecord = sanitizedProps as Record<string, unknown>;
 
     // Internal full 24-hour value. Needed because Mantine's TimePicker (hour/minute/second entry)
     // and our own BareDropdown (AM/PM) both mutate the same conceptual value — see
@@ -249,12 +251,17 @@ export const TimePicker = forwardRef<HTMLDivElement, TimePickerProps>(
             <MantineTimePicker
               ref={ref}
               {...(sanitizedProps as unknown as MantineTimePickerProps)}
-              classNames={{
-                wrapper: styles.timeWrapper,
-                input: styles.timeInput,
-                fieldsGroup: styles.fieldsGroup,
-                field: styles.timeField,
-              }}
+              classNames={mergeClassNames(
+                {
+                  wrapper: styles.timeWrapper,
+                  input: styles.timeInput,
+                  fieldsGroup: styles.fieldsGroup,
+                  field: styles.timeField,
+                },
+                restRecord.classNames as
+                  | Partial<Record<string, string>>
+                  | undefined,
+              )}
               disabled={disabled}
               value={internalValue}
               onChange={handleFieldChange}

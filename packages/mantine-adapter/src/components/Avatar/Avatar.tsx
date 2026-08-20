@@ -7,6 +7,7 @@ import {
 import {
   filterStylingProps,
   omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Avatar.module.css";
@@ -63,33 +64,21 @@ const _Avatar = forwardRef<HTMLDivElement, AvatarProps>(function Avatar(
     computedStyle = "icon";
   }
 
-  const mergedClassNames: Partial<Record<string, string>> = {
-    root: styles.root,
-    image: styles.image,
-    placeholder: styles.placeholder,
-  };
-
-  const classNamesProp = restRecord.classNames;
-  if (
-    classNamesProp &&
-    typeof classNamesProp === "object" &&
-    !Array.isArray(classNamesProp)
-  ) {
-    const o = classNamesProp as Partial<Record<string, string>>;
-    mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
-    mergedClassNames.image = o.image
-      ? `${styles.image} ${o.image}`
-      : styles.image;
-    mergedClassNames.placeholder = o.placeholder
-      ? `${styles.placeholder} ${o.placeholder}`
-      : styles.placeholder;
-  }
+  const mergedClassNames = mergeClassNames(
+    {
+      root: styles.root,
+      image: styles.image,
+      placeholder: styles.placeholder,
+    },
+    restRecord.classNames as Partial<Record<string, string>> | undefined,
+  );
 
   const classNameProp = restRecord.className as string | undefined;
 
   return (
     <MantineAvatar
       ref={ref}
+      {...sanitizedProps}
       className={classNameProp}
       classNames={mergedClassNames}
       variant={mapVariant[variant]}
@@ -98,7 +87,6 @@ const _Avatar = forwardRef<HTMLDivElement, AvatarProps>(function Avatar(
       data-variant={variant}
       data-size={size}
       data-style={computedStyle}
-      {...sanitizedProps}
     >
       {icon != null ? (
         <span className={styles.iconWrapper} aria-hidden>

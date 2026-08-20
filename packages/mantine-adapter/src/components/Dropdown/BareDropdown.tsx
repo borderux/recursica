@@ -6,6 +6,7 @@ import {
 import {
   filterStylingProps,
   omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Dropdown.module.css";
@@ -55,14 +56,18 @@ export const BareDropdown = forwardRef<
     filterStylingProps(rest, overStyled) as Record<string, unknown>,
     UNSUPPORTED_PROPS,
   );
+  const restRecord = sanitizedProps as Record<string, unknown>;
 
-  const mergedClassNames: Partial<Record<string, string>> = {
-    wrapper: className ? `${styles.root} ${className}` : styles.root,
-    input: styles.input,
-    section: styles.section,
-    dropdown: styles.dropdown,
-    option: styles.option,
-  };
+  const mergedClassNames = mergeClassNames(
+    {
+      wrapper: className ? `${styles.root} ${className}` : styles.root,
+      input: styles.input,
+      section: styles.section,
+      dropdown: styles.dropdown,
+      option: styles.option,
+    },
+    restRecord.classNames as Partial<Record<string, string>> | undefined,
+  );
 
   return (
     <MantineSelect

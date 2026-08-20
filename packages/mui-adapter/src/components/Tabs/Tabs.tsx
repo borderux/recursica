@@ -7,6 +7,7 @@ import {
 } from "@mui/material";
 import {
   filterStylingProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Tabs.module.css";
@@ -32,6 +33,16 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
 
     const sanitizedProps = filterStylingProps(rest, overStyled);
 
+    const mergedClassNames = mergeClassNames(
+      {
+        flexContainer: styles.list,
+        indicator: styles.indicator,
+      },
+      (sanitizedProps as Record<string, unknown>).classes as
+        | Partial<Record<string, string>>
+        | undefined,
+    );
+
     return (
       <MuiTabs
         ref={ref}
@@ -41,10 +52,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
         data-variant={variant}
         data-orientation={orientation}
         data-inverted={inverted || undefined}
-        classes={{
-          flexContainer: styles.list,
-          indicator: styles.indicator,
-        }}
+        classes={mergedClassNames}
       />
     );
   },

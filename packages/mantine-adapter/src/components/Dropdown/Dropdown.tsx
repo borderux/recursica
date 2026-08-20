@@ -7,6 +7,7 @@ import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import {
   filterStylingProps,
   omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
@@ -76,37 +77,16 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
     const restRecord = sanitizedProps as Record<string, unknown>;
 
     // Securely map core native blocks down ensuring nested CSS modules map precisely
-    const mergedClassNames: Partial<Record<string, string>> = {
-      wrapper: styles.root, // The nested Input internal relative wrapper bounding box
-      input: styles.input,
-      section: styles.section,
-      dropdown: styles.dropdown,
-      option: styles.option,
-    };
-
-    const classNamesProp = restRecord.classNames;
-    if (
-      classNamesProp &&
-      typeof classNamesProp === "object" &&
-      !Array.isArray(classNamesProp)
-    ) {
-      const o = classNamesProp as Partial<Record<string, string>>;
-      mergedClassNames.wrapper = o.wrapper
-        ? `${styles.root} ${o.wrapper}`
-        : styles.root;
-      mergedClassNames.input = o.input
-        ? `${styles.input} ${o.input}`
-        : styles.input;
-      mergedClassNames.section = o.section
-        ? `${styles.section} ${o.section}`
-        : styles.section;
-      mergedClassNames.dropdown = o.dropdown
-        ? `${styles.dropdown} ${o.dropdown}`
-        : styles.dropdown;
-      mergedClassNames.option = o.option
-        ? `${styles.option} ${o.option}`
-        : styles.option;
-    }
+    const mergedClassNames = mergeClassNames(
+      {
+        wrapper: styles.root, // The nested Input internal relative wrapper bounding box
+        input: styles.input,
+        section: styles.section,
+        dropdown: styles.dropdown,
+        option: styles.option,
+      },
+      restRecord.classNames as Partial<Record<string, string>> | undefined,
+    );
 
     const injectedStyles = {
       ...((style as React.CSSProperties) || {}),

@@ -13,6 +13,7 @@ import {
 import {
   filterStylingProps,
   omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Modal.module.css";
@@ -68,30 +69,19 @@ const ModalInner = React.forwardRef<HTMLDivElement, ModalProps>(function Modal(
     UNSUPPORTED_PROPS,
   ) as Partial<typeof rest>;
 
-  const mergedClassNames: Partial<Record<string, string>> = {
-    root: styles.root,
-    inner: styles.inner,
-    content: styles.content,
-    header: styles.header,
-    title: styles.title,
-    close: styles.close,
-  };
-
-  const classNamesProp = (sanitizedProps as Record<string, unknown>).classNames;
-  if (
-    classNamesProp &&
-    typeof classNamesProp === "object" &&
-    !Array.isArray(classNamesProp)
-  ) {
-    const o = classNamesProp as Record<string, string>;
-    Object.keys(o).forEach((key) => {
-      if (mergedClassNames[key]) {
-        mergedClassNames[key] = `${mergedClassNames[key]} ${o[key]}`;
-      } else {
-        mergedClassNames[key] = o[key];
-      }
-    });
-  }
+  const mergedClassNames = mergeClassNames(
+    {
+      root: styles.root,
+      inner: styles.inner,
+      content: styles.content,
+      header: styles.header,
+      title: styles.title,
+      close: styles.close,
+    },
+    (sanitizedProps as Record<string, unknown>).classNames as
+      | Partial<Record<string, string>>
+      | undefined,
+  );
 
   return (
     <MantineModal.Root
@@ -142,8 +132,8 @@ const ModalFooter = React.forwardRef<HTMLDivElement, ModalFooterProps>(
     return (
       <div
         ref={ref}
-        className={`${styles.footer} ${className || ""}`}
         {...sanitizedProps}
+        className={`${styles.footer} ${className || ""}`}
       />
     );
   },

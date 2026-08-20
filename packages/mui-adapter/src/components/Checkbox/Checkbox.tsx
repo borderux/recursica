@@ -8,6 +8,7 @@ import { CheckboxGroup, CheckboxGroupContext } from "./CheckboxGroup";
 import {
   filterStylingProps,
   omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import {
@@ -72,27 +73,14 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
     );
     const restRecord = sanitizedProps as Record<string, unknown>;
 
-    const mergedClassNames: Partial<Record<string, string>> = {
-      root: styles.root,
-      checked: styles.checked,
-      disabled: styles.disabled,
-    };
-
-    const classesProp = restRecord.classes;
-    if (
-      classesProp &&
-      typeof classesProp === "object" &&
-      !Array.isArray(classesProp)
-    ) {
-      const o = classesProp as Partial<Record<string, string>>;
-      mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
-      mergedClassNames.checked = o.checked
-        ? `${styles.checked} ${o.checked}`
-        : styles.checked;
-      mergedClassNames.disabled = o.disabled
-        ? `${styles.disabled} ${o.disabled}`
-        : styles.disabled;
-    }
+    const mergedClassNames = mergeClassNames(
+      {
+        root: styles.root,
+        checked: styles.checked,
+        disabled: styles.disabled,
+      },
+      restRecord.classes as Partial<Record<string, string>> | undefined,
+    );
 
     const classNameProp = restRecord.className as string | undefined;
     const finalClass = classNameProp

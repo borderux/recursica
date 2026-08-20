@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import {
   filterStylingProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Popover.module.css";
@@ -85,24 +86,15 @@ const PopoverBase = function Popover({
   );
 
   // Bind CSS module classes to Mui's internal classNames API
-  const mergedClassNames: Partial<Record<string, string>> = {
-    tooltip: styles.dropdown,
-    arrow: styles.arrow,
-  };
-
-  const classesProp = (sanitizedProps as Record<string, unknown>).classes;
-  if (
-    classesProp &&
-    typeof classesProp === "object" &&
-    !Array.isArray(classesProp)
-  ) {
-    const o = classesProp as Record<string, string>;
-    Object.keys(o).forEach((key) => {
-      mergedClassNames[key] = mergedClassNames[key]
-        ? `${mergedClassNames[key]} ${o[key]}`
-        : o[key];
-    });
-  }
+  const mergedClassNames = mergeClassNames(
+    {
+      tooltip: styles.dropdown,
+      arrow: styles.arrow,
+    },
+    (sanitizedProps as Record<string, unknown>).classes as
+      | Partial<Record<string, string>>
+      | undefined,
+  );
 
   const [internalOpened, setInternalOpened] = useState(defaultOpened);
   const isControlled = opened !== undefined;

@@ -4,6 +4,7 @@ import {
 } from "@mui/material";
 import {
   filterStylingProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Tooltip.module.css";
@@ -48,32 +49,18 @@ const TooltipBase = function Tooltip({
   const { title, ...restProps } = rest;
   const sanitizedProps = filterStylingProps(restProps, overStyled);
 
-  // Bind CSS module classes to Mui's internal classNames API
-  const mergedClassNames: Partial<Record<string, string>> = {
-    tooltip: styles.tooltip,
-    arrow: styles.arrow,
-  };
-
-  const classNamesProp = (sanitizedProps as Record<string, unknown>).classNames;
-  if (
-    classNamesProp &&
-    typeof classNamesProp === "object" &&
-    !Array.isArray(classNamesProp)
-  ) {
-    const o = classNamesProp as Record<string, string>;
-    Object.keys(o).forEach((key) => {
-      if (mergedClassNames[key]) {
-        mergedClassNames[key] = `${mergedClassNames[key]} ${o[key]}`;
-      } else {
-        mergedClassNames[key] = o[key];
-      }
-    });
-  }
-
-  const withArrow = (sanitizedProps as Record<string, unknown>).withArrow as
-    | boolean
-    | undefined;
-  const resolvedWithArrow = withBeak ?? withArrow;
+  // Bind CSS module classes to Mui's internal classNames API. Note MUI's actual prop is
+  // "classes", not "classNames" (that's Mantine's naming) — this used to read the wrong key,
+  // silently no-op-ing any caller-supplied classes.
+  const mergedClassNames = mergeClassNames(
+    {
+      tooltip: styles.tooltip,
+      arrow: styles.arrow,
+    },
+    (sanitizedProps as Record<string, unknown>).classes as
+      | Partial<Record<string, string>>
+      | undefined,
+  );
 
   return (
     <MuiTooltip
@@ -81,7 +68,7 @@ const TooltipBase = function Tooltip({
       title={label || title || ""}
       open={opened}
       placement="top" /* Recursica default; Mui defaults to "bottom" */
-      arrow={resolvedWithArrow}
+      arrow={withBeak}
       classes={mergedClassNames}
     />
   );

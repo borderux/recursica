@@ -5,6 +5,7 @@ import {
 } from "@mui/material";
 import {
   filterStylingProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Badge.module.css";
@@ -24,19 +25,14 @@ const _Badge = forwardRef<HTMLDivElement, BadgeProps>(function Badge(
   // External layout props like margins are safely preserved.
   const sanitizedProps = filterStylingProps(rest, overStyled);
 
-  const mergedClassNames: Partial<Record<string, string>> = {
-    root: styles.root,
-  };
-
-  const classNamesProp = (sanitizedProps as Record<string, unknown>).classNames;
-  if (
-    classNamesProp &&
-    typeof classNamesProp === "object" &&
-    !Array.isArray(classNamesProp)
-  ) {
-    const o = classNamesProp as Partial<Record<string, string>>;
-    mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
-  }
+  // Note MUI's actual prop is "classes", not "classNames" (that's Mantine's naming) — this
+  // used to read the wrong key, silently no-op-ing any caller-supplied classes.
+  const mergedClassNames = mergeClassNames(
+    { root: styles.root },
+    (sanitizedProps as Record<string, unknown>).classes as
+      | Partial<Record<string, string>>
+      | undefined,
+  );
 
   const classNameProp = (sanitizedProps as Record<string, unknown>)
     .className as string | undefined;

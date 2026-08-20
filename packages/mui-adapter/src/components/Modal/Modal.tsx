@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import {
   filterStylingProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Modal.module.css";
@@ -58,6 +59,13 @@ const ModalRoot = forwardRef<HTMLDivElement, ModalProps>(function ModalRoot(
 ) {
   const sanitizedProps = filterStylingProps(rest, overStyled);
 
+  const mergedClassNames = mergeClassNames(
+    { paper: styles.inner },
+    (sanitizedProps as Record<string, unknown>).classes as
+      | Partial<Record<string, string>>
+      | undefined,
+  );
+
   let footer: React.ReactNode = null;
   const bodyChildren: React.ReactNode[] = [];
 
@@ -79,9 +87,7 @@ const ModalRoot = forwardRef<HTMLDivElement, ModalProps>(function ModalRoot(
       ref={ref}
       {...(sanitizedProps as MuiDialogProps)}
       className={`${styles.root} ${className || ""}`}
-      classes={{
-        paper: styles.inner,
-      }}
+      classes={mergedClassNames}
       open={
         opened ||
         ((sanitizedProps as Record<string, unknown>).open as boolean) ||
@@ -124,8 +130,8 @@ const ModalTitle = forwardRef<HTMLDivElement, ModalTitleProps>(
       <MuiDialogTitle
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ref={ref as any}
-        className={`${styles.title} ${className || ""}`}
         {...(sanitizedProps as MuiDialogTitleProps)}
+        className={`${styles.title} ${className || ""}`}
       />
     );
   },
@@ -174,11 +180,11 @@ const ModalBody = forwardRef<HTMLDivElement, ModalBodyProps>(function ModalBody(
             internalRef as React.MutableRefObject<HTMLDivElement | null>
           ).current = node as HTMLDivElement;
       }}
+      {...(sanitizedProps as MuiDialogContentProps)}
       onScroll={() => checkScroll()}
       data-scrolled-top={scrolledTop || undefined}
       data-scrolled-bottom={scrolledBottom || undefined}
       className={`${styles.content} ${styles.scrollArea} ${className || ""}`}
-      {...(sanitizedProps as MuiDialogContentProps)}
     >
       {children}
     </MuiDialogContent>
@@ -201,8 +207,8 @@ const ModalFooter = forwardRef<HTMLDivElement, ModalFooterProps>(
       <MuiDialogActions
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ref={ref as any}
-        className={`${styles.footer} ${className || ""}`}
         {...(sanitizedProps as MuiDialogActionsProps)}
+        className={`${styles.footer} ${className || ""}`}
       />
     );
   },

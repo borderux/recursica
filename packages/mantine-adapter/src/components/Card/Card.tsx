@@ -8,6 +8,7 @@ import {
 import {
   filterStylingProps,
   omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Card.module.css";
@@ -69,25 +70,14 @@ const CardBase = forwardRef<HTMLDivElement, CardProps>(function Card(
     }
   });
 
-  const mergedClassNames: Partial<Record<string, string>> = {
-    root: styles.root,
-  };
-
-  const classNamesProp = (sanitizedProps as Record<string, unknown>).classNames;
-  if (
-    classNamesProp &&
-    typeof classNamesProp === "object" &&
-    !Array.isArray(classNamesProp)
-  ) {
-    const o = classNamesProp as Record<string, string>;
-    Object.keys(o).forEach((key) => {
-      if (mergedClassNames[key]) {
-        mergedClassNames[key] = `${mergedClassNames[key]} ${o[key]}`;
-      } else {
-        mergedClassNames[key] = o[key];
-      }
-    });
-  }
+  const mergedClassNames = mergeClassNames(
+    {
+      root: styles.root,
+    },
+    (sanitizedProps as Record<string, unknown>).classNames as
+      | Partial<Record<string, string>>
+      | undefined,
+  );
 
   const classNameProp = (sanitizedProps as Record<string, unknown>)
     .className as string | undefined;

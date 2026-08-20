@@ -6,6 +6,8 @@ import {
 import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
@@ -137,13 +139,18 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
       setInputValue(resolvedValue.toString());
     };
 
-    const sanitizedProps = filterStylingProps(rest, overStyled);
-    const restRecord = sanitizedProps as Record<string, unknown>;
+    // Props this component intentionally doesn't support — deleted at runtime so they can't leak
+    // through even if a caller forces them via plain JavaScript, bypassing the Omit<> above.
+    const UNSUPPORTED_PROPS = [
+      "size", // Recursica controls sizing via design tokens, not MUI's native small/medium size
+      "color", // Colors are token-driven; MUI's native palette isn't exposed
+    ] as const satisfies readonly (keyof MuiSliderProps)[];
 
-    // Delete prohibited sizing hooks from bypassing variables natively
-    delete restRecord["size"];
-    delete restRecord["color"];
-    delete restRecord["wrapperProps"];
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled),
+      UNSUPPORTED_PROPS,
+    );
+    const restRecord = sanitizedProps as Record<string, unknown>;
 
     // MUI always programmatically re-focuses its hidden native input on pointer interaction,
     // which browsers' `:focus-visible` heuristic treats as keyboard-visible — unlike Mantine's
@@ -175,43 +182,33 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
       externalOnKeyDown?.(e);
     };
 
-    // Securely map core native blocks down ensuring nested CSS modules map precisely
-    const mergedClassNames: Partial<Record<string, string>> = {
-      root: styles.sliderRoot,
-      rail: styles.sliderTrack,
-      track: styles.sliderBar,
-      thumb: styles.sliderThumb,
-      mark: styles.sliderMark,
-      markLabel: styles.sliderMarkLabel,
-      valueLabel: styles.sliderTooltip,
-    };
-
-    const classNamesProp = restRecord.classNames;
-    if (
-      classNamesProp &&
-      typeof classNamesProp === "object" &&
-      !Array.isArray(classNamesProp)
-    ) {
-      const o = classNamesProp as Partial<Record<string, string>>;
-      mergedClassNames.root = o.root
-        ? `${styles.sliderRoot} ${o.root}`
-        : styles.sliderRoot;
-      mergedClassNames.rail = o.track
-        ? `${styles.sliderTrack} ${o.track}`
-        : styles.sliderTrack;
-      mergedClassNames.track = o.bar
-        ? `${styles.sliderBar} ${o.bar}`
-        : styles.sliderBar;
-      mergedClassNames.thumb = o.thumb
-        ? `${styles.sliderThumb} ${o.thumb}`
-        : styles.sliderThumb;
-      mergedClassNames.mark = o.mark
-        ? `${styles.sliderMark} ${o.mark}`
-        : styles.sliderMark;
-      mergedClassNames.markLabel = o.markLabel
-        ? `${styles.sliderMarkLabel} ${o.markLabel}`
-        : styles.sliderMarkLabel;
-    }
+    // Securely map core native blocks down ensuring nested CSS modules map precisely. Note MUI's
+    // actual prop is "classes", not "classNames" (that's Mantine's naming) — this used to read
+    // the wrong key, silently no-op-ing any caller-supplied classes. The caller-facing slot names
+    // below (root/track/bar/thumb/mark/markLabel) mirror the mantine-adapter's own Slider
+    // classNames slots, translated to MUI's real classes slot names (root/rail/track/thumb/...).
+    const callerClasses = restRecord.classes as
+      | Partial<Record<string, string>>
+      | undefined;
+    const mergedClassNames = mergeClassNames(
+      {
+        root: styles.sliderRoot,
+        rail: styles.sliderTrack,
+        track: styles.sliderBar,
+        thumb: styles.sliderThumb,
+        mark: styles.sliderMark,
+        markLabel: styles.sliderMarkLabel,
+        valueLabel: styles.sliderTooltip,
+      },
+      callerClasses && {
+        root: callerClasses.root,
+        rail: callerClasses.track,
+        track: callerClasses.bar,
+        thumb: callerClasses.thumb,
+        mark: callerClasses.mark,
+        markLabel: callerClasses.markLabel,
+      },
+    );
 
     const wrapperClass = className
       ? `${styles.layoutOverride} ${className}`

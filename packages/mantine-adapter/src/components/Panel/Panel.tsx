@@ -12,6 +12,8 @@ import {
 } from "@mantine/core";
 import {
   filterStylingProps,
+  mergeClassNames,
+  withCallerOverride,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Panel.module.css";
@@ -68,38 +70,29 @@ const PanelBase = function Panel({
   ...rest
 }: PanelProps) {
   const sanitizedProps = filterStylingProps(rest, overStyled);
+  const restRecord = sanitizedProps as Record<string, unknown>;
 
   // Bind CSS module classes to Mantine's internal classNames API
-  const mergedClassNames: Partial<Record<string, string>> = {
-    content: styles.content,
-    header: styles.header,
-    title: wrapHeaderText ? styles.titleTruncate : styles.title,
-    body: styles.body,
-    inner: styles.inner,
-  };
-
-  const classNamesProp = (sanitizedProps as Record<string, unknown>).classNames;
-  if (
-    classNamesProp &&
-    typeof classNamesProp === "object" &&
-    !Array.isArray(classNamesProp)
-  ) {
-    const o = classNamesProp as Record<string, string>;
-    Object.keys(o).forEach((key) => {
-      if (mergedClassNames[key]) {
-        mergedClassNames[key] = `${mergedClassNames[key]} ${o[key]}`;
-      } else {
-        mergedClassNames[key] = o[key];
-      }
-    });
-  }
+  const mergedClassNames = mergeClassNames(
+    {
+      content: styles.content,
+      header: styles.header,
+      title: wrapHeaderText ? styles.titleTruncate : styles.title,
+      body: styles.body,
+      inner: styles.inner,
+    },
+    restRecord.classNames as Partial<Record<string, string>> | undefined,
+  );
 
   return (
     <MantineDrawer
+      {...(sanitizedProps as unknown as MantineDrawerProps)}
       position={placement} /* Recursica default: right; Mantine default: left */
       keepMounted={keepMounted}
-      closeOnClickOutside={rest.closeOnClickOutside ?? Boolean(rest.opened)}
-      {...(sanitizedProps as unknown as MantineDrawerProps)}
+      closeOnClickOutside={withCallerOverride(
+        Boolean(rest.opened),
+        rest.closeOnClickOutside,
+      )}
       classNames={mergedClassNames}
     />
   );
@@ -130,7 +123,7 @@ export const PanelFooter = forwardRef<HTMLDivElement, PanelFooterProps>(
       ? `${styles.footer} ${classNameProp}`
       : styles.footer;
 
-    return <div ref={ref} className={finalClassName} {...sanitizedProps} />;
+    return <div ref={ref} {...sanitizedProps} className={finalClassName} />;
   },
 );
 PanelFooter.displayName = "PanelFooter";

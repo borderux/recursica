@@ -6,6 +6,7 @@ import {
 import {
   filterStylingProps,
   omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./SegmentedControl.module.css";
@@ -32,31 +33,15 @@ function useSegmentedControlClassNames(restRecord: Record<string, unknown>): {
   className: string;
   classNames: Partial<Record<string, string>>;
 } {
-  const mergedClassNames: Partial<Record<string, string>> = {
-    root: styles.root,
-    control: styles.control,
-    label: styles.label,
-    indicator: styles.indicator,
-  };
-
-  const classNamesProp = restRecord.classNames;
-  if (
-    classNamesProp &&
-    typeof classNamesProp === "object" &&
-    !Array.isArray(classNamesProp)
-  ) {
-    const o = classNamesProp as Partial<Record<string, string>>;
-    mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
-    mergedClassNames.control = o.control
-      ? `${styles.control} ${o.control}`
-      : styles.control;
-    mergedClassNames.label = o.label
-      ? `${styles.label} ${o.label}`
-      : styles.label;
-    mergedClassNames.indicator = o.indicator
-      ? `${styles.indicator} ${o.indicator}`
-      : styles.indicator;
-  }
+  const mergedClassNames = mergeClassNames(
+    {
+      root: styles.root,
+      control: styles.control,
+      label: styles.label,
+      indicator: styles.indicator,
+    },
+    restRecord.classNames as Partial<Record<string, string>> | undefined,
+  );
 
   const classNameProp = restRecord.className as string | undefined;
   const finalClass = classNameProp

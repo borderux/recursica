@@ -6,6 +6,7 @@ import {
 import {
   filterStylingProps,
   omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Toast.module.css";
@@ -46,32 +47,20 @@ export const Toast = React.forwardRef<HTMLDivElement, ToastProps>(
     );
 
     // Bind CSS module classes to Mantine's internal classNames API
-    const mergedClassNames: Partial<Record<string, string>> = {
-      root: styles.root,
-      body: styles.body,
-      title: styles.title,
-      description: styles.description,
-      closeButton: styles.closeButton,
-      icon: styles.icon,
-      loader: styles.loader,
-    };
-
-    const classNamesProp = (sanitizedProps as Record<string, unknown>)
-      .classNames;
-    if (
-      classNamesProp &&
-      typeof classNamesProp === "object" &&
-      !Array.isArray(classNamesProp)
-    ) {
-      const o = classNamesProp as Record<string, string>;
-      Object.keys(o).forEach((key) => {
-        if (mergedClassNames[key]) {
-          mergedClassNames[key] = `${mergedClassNames[key]} ${o[key]}`;
-        } else {
-          mergedClassNames[key] = o[key];
-        }
-      });
-    }
+    const mergedClassNames = mergeClassNames(
+      {
+        root: styles.root,
+        body: styles.body,
+        title: styles.title,
+        description: styles.description,
+        closeButton: styles.closeButton,
+        icon: styles.icon,
+        loader: styles.loader,
+      },
+      (sanitizedProps as Record<string, unknown>).classNames as
+        | Partial<Record<string, string>>
+        | undefined,
+    );
 
     return (
       <MantineNotification

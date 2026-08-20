@@ -15,6 +15,7 @@ import {
 import {
   filterStylingProps,
   omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Menu.module.css";
@@ -47,38 +48,26 @@ export type MenuProps = RecursicaOverStyled<
 
 const MenuBase = function Menu({ overStyled = false, ...rest }: MenuProps) {
   const sanitizedProps = filterStylingProps(rest, overStyled);
+  const restRecord = sanitizedProps as Record<string, unknown>;
 
   // Bind CSS module classes to Mantine's internal classNames API
-  const mergedClassNames: Partial<Record<string, string>> = {
-    dropdown: styles.dropdown,
-    item: styles.item,
-    itemLabel: styles.itemLabel,
-    itemSection: styles.itemSection,
-    divider: styles.divider,
-    label: styles.label,
-    chevron: styles.chevron,
-  };
-
-  const classNamesProp = (sanitizedProps as Record<string, unknown>).classNames;
-  if (
-    classNamesProp &&
-    typeof classNamesProp === "object" &&
-    !Array.isArray(classNamesProp)
-  ) {
-    const o = classNamesProp as Record<string, string>;
-    Object.keys(o).forEach((key) => {
-      if (mergedClassNames[key]) {
-        mergedClassNames[key] = `${mergedClassNames[key]} ${o[key]}`;
-      } else {
-        mergedClassNames[key] = o[key];
-      }
-    });
-  }
+  const mergedClassNames = mergeClassNames(
+    {
+      dropdown: styles.dropdown,
+      item: styles.item,
+      itemLabel: styles.itemLabel,
+      itemSection: styles.itemSection,
+      divider: styles.divider,
+      label: styles.label,
+      chevron: styles.chevron,
+    },
+    restRecord.classNames as Partial<Record<string, string>> | undefined,
+  );
 
   return (
     <MantineMenu
-      classNames={mergedClassNames}
       {...(sanitizedProps as unknown as MantineMenuProps)}
+      classNames={mergedClassNames}
     />
   );
 };

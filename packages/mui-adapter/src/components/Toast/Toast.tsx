@@ -7,6 +7,7 @@ import {
 } from "@mui/material";
 import {
   filterStylingProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Toast.module.css";
@@ -63,29 +64,19 @@ export const Toast = React.forwardRef<HTMLDivElement, ToastProps>(
   ) {
     const sanitizedProps = filterStylingProps(rest, overStyled);
 
-    const mergedClassNames: Partial<Record<string, string>> = {
-      root: styles.root,
-      message: styles.body,
-      icon: styles.icon,
-      action: styles.closeButton,
-    };
-
-    const classNamesProp = (sanitizedProps as Record<string, unknown>)
-      .classNames;
-    if (
-      classNamesProp &&
-      typeof classNamesProp === "object" &&
-      !Array.isArray(classNamesProp)
-    ) {
-      const o = classNamesProp as Record<string, string>;
-      Object.keys(o).forEach((key) => {
-        if (mergedClassNames[key]) {
-          mergedClassNames[key] = `${mergedClassNames[key]} ${o[key]}`;
-        } else {
-          mergedClassNames[key] = o[key];
-        }
-      });
-    }
+    // Note MUI's actual prop is "classes", not "classNames" (that's Mantine's naming) — this
+    // used to read the wrong key, silently no-op-ing any caller-supplied classes.
+    const mergedClassNames = mergeClassNames(
+      {
+        root: styles.root,
+        message: styles.body,
+        icon: styles.icon,
+        action: styles.closeButton,
+      },
+      (sanitizedProps as Record<string, unknown>).classes as
+        | Partial<Record<string, string>>
+        | undefined,
+    );
 
     const handleClose = () => {
       if (onClose) onClose();

@@ -68,6 +68,9 @@ export {
   type ForbiddenStyles,
   type WithRecursicaSpacing,
   omitUnsupportedProps,
+  withCallerOverride,
+  mergeClassNames,
+  mergeStyles,
 } from "@recursica/adapter-common";
 
 const LAYOUT_PROPS = new Set([

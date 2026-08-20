@@ -7,6 +7,8 @@ import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 // Removed unused TextField import
 import {
   filterStylingProps,
+  omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
@@ -69,13 +71,32 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
       autosize,
       ...rest
     } = props;
-    const sanitizedProps = filterStylingProps(rest, overStyled);
+
+    // Props this component intentionally doesn't support — deleted at runtime so they can't leak
+    // through even if a caller forces them via plain JavaScript, bypassing the Omit<> above.
+    const UNSUPPORTED_PROPS = [
+      "size", // Recursica controls sizing via design tokens, not MUI's native small/medium size
+      "variant", // Recursica styles the naked textarea directly; MUI's standard/filled/outlined unused
+    ] as const satisfies readonly (keyof MuiTextareaProps)[];
+
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled),
+      UNSUPPORTED_PROPS,
+    );
     const restRecord = sanitizedProps as Record<string, unknown>;
 
-    // Delete prohibited sizing hooks from bypassing variables natively
-    delete restRecord["size"];
-    delete restRecord["variant"];
-    delete restRecord["radius"];
+    // The `slotProps` prop is NOT omitted from this component's public type, so a caller can
+    // legitimately supply it — merge it (rather than letting our own `slotProps.input` spread
+    // after theirs and clobber `disableUnderline`/`classes`/`data-autosize` wholesale).
+    const callerSlotProps = restRecord.slotProps as
+      | { input?: Record<string, unknown> }
+      | undefined;
+    const mergedInputClasses = mergeClassNames(
+      { root: styles.root, input: styles.input },
+      callerSlotProps?.input?.classes as
+        | Partial<Record<string, string>>
+        | undefined,
+    );
 
     const wrapperClass = className
       ? `${styles.layoutOverride} ${className}`
@@ -109,6 +130,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
         activeComponent={
           /* Naked Input execution safely decoupled from Mui's macro Input.Wrapper DOM hooks */
           <MuiTextarea
+            {...(sanitizedProps as unknown as MuiTextareaProps)}
             multiline
             variant="standard"
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -120,15 +142,16 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
             error={!!error}
             required={undefined}
             slotProps={{
+              ...callerSlotProps,
               input: {
+                ...callerSlotProps?.input,
                 disableUnderline: true,
-                classes: { root: styles.root, input: styles.input },
+                classes: mergedInputClasses,
                 ...({
                   "data-autosize": autosize ? "true" : undefined,
                 } as Record<string, unknown>),
               },
             }}
-            {...(sanitizedProps as unknown as MuiTextareaProps)}
           />
         }
       />

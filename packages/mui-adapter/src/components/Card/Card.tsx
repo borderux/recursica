@@ -2,6 +2,7 @@ import { forwardRef } from "react";
 import { Card as MuiCard, type CardProps as MuiCardProps } from "@mui/material";
 import {
   filterStylingProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Card.module.css";
@@ -51,25 +52,14 @@ const CardBase = forwardRef<HTMLDivElement, CardProps>(function Card(
     }
   });
 
-  const mergedClassNames: Partial<Record<string, string>> = {
-    root: styles.root,
-  };
-
-  const classNamesProp = (sanitizedProps as Record<string, unknown>).classNames;
-  if (
-    classNamesProp &&
-    typeof classNamesProp === "object" &&
-    !Array.isArray(classNamesProp)
-  ) {
-    const o = classNamesProp as Record<string, string>;
-    Object.keys(o).forEach((key) => {
-      if (mergedClassNames[key]) {
-        mergedClassNames[key] = `${mergedClassNames[key]} ${o[key]}`;
-      } else {
-        mergedClassNames[key] = o[key];
-      }
-    });
-  }
+  // Note MUI's actual prop is "classes", not "classNames" (that's Mantine's naming) — this
+  // used to read the wrong key, silently no-op-ing any caller-supplied classes.
+  const mergedClassNames = mergeClassNames(
+    { root: styles.root },
+    (sanitizedProps as Record<string, unknown>).classes as
+      | Partial<Record<string, string>>
+      | undefined,
+  );
 
   const classNameProp = (sanitizedProps as Record<string, unknown>)
     .className as string | undefined;

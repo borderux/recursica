@@ -8,6 +8,7 @@ import { RadioGroup } from "./RadioGroup";
 import {
   filterStylingProps,
   omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import {
@@ -96,27 +97,14 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(
     // only the label showed. Fixed by keeping only the real slots here and drawing the circle as
     // our own combined icon/checkedIcon node instead (see radioNode below), same pattern already
     // used by Checkbox.
-    const mergedClassNames: Partial<Record<string, string>> = {
-      root: styles.root,
-      checked: styles.checked,
-      disabled: styles.disabled,
-    };
-
-    const classesProp = restRecord.classes;
-    if (
-      classesProp &&
-      typeof classesProp === "object" &&
-      !Array.isArray(classesProp)
-    ) {
-      const o = classesProp as Partial<Record<string, string>>;
-      mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
-      mergedClassNames.checked = o.checked
-        ? `${styles.checked} ${o.checked}`
-        : styles.checked;
-      mergedClassNames.disabled = o.disabled
-        ? `${styles.disabled} ${o.disabled}`
-        : styles.disabled;
-    }
+    const mergedClassNames = mergeClassNames(
+      {
+        root: styles.root,
+        checked: styles.checked,
+        disabled: styles.disabled,
+      },
+      restRecord.classes as Partial<Record<string, string>> | undefined,
+    );
 
     const classNameProp = restRecord.className as string | undefined;
     const finalClass = classNameProp

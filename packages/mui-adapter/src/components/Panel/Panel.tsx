@@ -5,6 +5,7 @@ import {
 } from "@mui/material";
 import {
   filterStylingProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Panel.module.css";
@@ -63,30 +64,21 @@ const PanelBase = function Panel({
 }: PanelProps) {
   const sanitizedProps = filterStylingProps(rest, overStyled);
 
-  // Bind CSS module classes to Mui's internal classNames API
-  const mergedClassNames: Partial<Record<string, string>> = {
-    content: styles.content,
-    header: styles.header,
-    title: wrapHeaderText ? styles.titleTruncate : styles.title,
-    body: styles.body,
-    inner: styles.inner,
-  };
-
-  const classNamesProp = (sanitizedProps as Record<string, unknown>).classNames;
-  if (
-    classNamesProp &&
-    typeof classNamesProp === "object" &&
-    !Array.isArray(classNamesProp)
-  ) {
-    const o = classNamesProp as Record<string, string>;
-    Object.keys(o).forEach((key) => {
-      if (mergedClassNames[key]) {
-        mergedClassNames[key] = `${mergedClassNames[key]} ${o[key]}`;
-      } else {
-        mergedClassNames[key] = o[key];
-      }
-    });
-  }
+  // Bind CSS module classes to Mui's internal classNames API. Note MUI's actual prop is
+  // "classes", not "classNames" (that's Mantine's naming) — this used to read the wrong key,
+  // silently no-op-ing any caller-supplied classes.
+  const mergedClassNames = mergeClassNames(
+    {
+      content: styles.content,
+      header: styles.header,
+      title: wrapHeaderText ? styles.titleTruncate : styles.title,
+      body: styles.body,
+      inner: styles.inner,
+    },
+    (sanitizedProps as Record<string, unknown>).classes as
+      | Partial<Record<string, string>>
+      | undefined,
+  );
 
   return (
     <MuiDrawer
@@ -94,7 +86,7 @@ const PanelBase = function Panel({
       keepMounted={keepMounted}
       open={Boolean(opened)}
       {...(sanitizedProps as unknown as MuiDrawerProps)}
-      classes={mergedClassNames}
+      classes={mergedClassNames as unknown as MuiDrawerProps["classes"]}
     />
   );
 };

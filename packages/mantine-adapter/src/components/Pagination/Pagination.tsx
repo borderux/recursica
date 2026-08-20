@@ -9,6 +9,8 @@ import {
 } from "@mantine/core";
 import {
   filterStylingProps,
+  withCallerOverride,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Pagination.module.css";
@@ -42,25 +44,14 @@ function usePaginationClassNames(restRecord: Record<string, unknown>): {
   className: string;
   classNames: Partial<Record<string, string>>;
 } {
-  const mergedClassNames: Partial<Record<string, string>> = {
-    root: styles.root,
-    control: styles.control,
-    dots: styles.dots,
-  };
-
-  const classNamesProp = restRecord.classNames;
-  if (
-    classNamesProp &&
-    typeof classNamesProp === "object" &&
-    !Array.isArray(classNamesProp)
-  ) {
-    const o = classNamesProp as Partial<Record<string, string>>;
-    mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
-    mergedClassNames.control = o.control
-      ? `${styles.control} ${o.control}`
-      : styles.control;
-    mergedClassNames.dots = o.dots ? `${styles.dots} ${o.dots}` : styles.dots;
-  }
+  const mergedClassNames = mergeClassNames(
+    {
+      root: styles.root,
+      control: styles.control,
+      dots: styles.dots,
+    },
+    restRecord.classNames as Partial<Record<string, string>> | undefined,
+  );
 
   const classNameProp = restRecord.className as string | undefined;
   const finalClass = classNameProp
@@ -80,9 +71,9 @@ const _PaginationRoot = forwardRef<HTMLDivElement, PaginationRootProps>(
     return (
       <MantinePagination.Root
         ref={ref}
+        {...(sanitizedProps as MantinePaginationRootProps)}
         className={stylingParams.className}
         classNames={stylingParams.classNames}
-        {...(sanitizedProps as MantinePaginationRootProps)}
       />
     );
   },
@@ -97,13 +88,13 @@ const _PaginationNext = forwardRef<
   ref,
 ) {
   const sanitizedProps = filterStylingProps(rest, overStyled);
-  const renderIcon = icon || (withLabel ? NextWithLabel : undefined);
+  const computedIcon = withLabel ? NextWithLabel : undefined;
   return (
     <MantinePagination.Next
       ref={ref}
-      data-variant="text"
-      icon={renderIcon as any}
       {...sanitizedProps}
+      data-variant="text"
+      icon={withCallerOverride(computedIcon, icon) as any}
     />
   );
 });
@@ -117,13 +108,13 @@ const _PaginationPrevious = forwardRef<
   ref,
 ) {
   const sanitizedProps = filterStylingProps(rest, overStyled);
-  const renderIcon = icon || (withLabel ? PrevWithLabel : undefined);
+  const computedIcon = withLabel ? PrevWithLabel : undefined;
   return (
     <MantinePagination.Previous
       ref={ref}
-      data-variant="text"
-      icon={renderIcon as any}
       {...sanitizedProps}
+      data-variant="text"
+      icon={withCallerOverride(computedIcon, icon) as any}
     />
   );
 });
@@ -137,13 +128,13 @@ const _PaginationFirst = forwardRef<
   ref,
 ) {
   const sanitizedProps = filterStylingProps(rest, overStyled);
-  const renderIcon = icon || (withLabel ? FirstWithLabel : undefined);
+  const computedIcon = withLabel ? FirstWithLabel : undefined;
   return (
     <MantinePagination.First
       ref={ref}
-      data-variant="text"
-      icon={renderIcon as any}
       {...sanitizedProps}
+      data-variant="text"
+      icon={withCallerOverride(computedIcon, icon) as any}
     />
   );
 });
@@ -157,13 +148,13 @@ const _PaginationLast = forwardRef<
   ref,
 ) {
   const sanitizedProps = filterStylingProps(rest, overStyled);
-  const renderIcon = icon || (withLabel ? LastWithLabel : undefined);
+  const computedIcon = withLabel ? LastWithLabel : undefined;
   return (
     <MantinePagination.Last
       ref={ref}
-      data-variant="text"
-      icon={renderIcon as any}
       {...sanitizedProps}
+      data-variant="text"
+      icon={withCallerOverride(computedIcon, icon) as any}
     />
   );
 });
@@ -201,11 +192,11 @@ const _Pagination = forwardRef<HTMLDivElement, PaginationProps>(
     return (
       <MantinePagination
         ref={ref}
+        {...labelsIcons}
+        {...(sanitizedProps as MantinePaginationProps)}
         className={stylingParams.className}
         classNames={stylingParams.classNames}
         getControlProps={mergedGetControlProps}
-        {...labelsIcons}
-        {...(sanitizedProps as MantinePaginationProps)}
       />
     );
   },

@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import {
   filterStylingProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Menu.module.css";
@@ -23,15 +24,22 @@ export const Menu = forwardRef<HTMLDivElement, MenuProps>(function Menu(
 ) {
   const sanitizedProps = filterStylingProps(rest, overStyled);
 
+  const mergedClassNames = mergeClassNames(
+    {
+      paper: styles.dropdown,
+      list: styles.dropdown,
+    },
+    (sanitizedProps as Record<string, unknown>).classes as
+      | Partial<Record<string, string>>
+      | undefined,
+  );
+
   return (
     <MuiMenu
       ref={ref}
       {...(sanitizedProps as MuiMenuProps)}
       className={`${styles.dropdown} ${className || ""}`}
-      classes={{
-        paper: styles.dropdown,
-        list: styles.dropdown,
-      }}
+      classes={mergedClassNames}
     />
   );
 });
@@ -47,8 +55,8 @@ export const MenuItem = forwardRef<HTMLLIElement, MenuItemProps>(
     return (
       <MuiMenuItem
         ref={ref}
-        className={`${styles.item} ${className || ""}`}
         {...(sanitizedProps as MuiMenuItemProps)}
+        className={`${styles.item} ${className || ""}`}
       />
     );
   },
@@ -65,8 +73,8 @@ export const MenuDivider = forwardRef<HTMLHRElement, MenuDividerProps>(
     return (
       <MuiDivider
         ref={ref}
-        className={`${styles.divider} ${className || ""}`}
         {...(sanitizedProps as MuiDividerProps)}
+        className={`${styles.divider} ${className || ""}`}
       />
     );
   },

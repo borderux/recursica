@@ -8,6 +8,7 @@ import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import {
   filterStylingProps,
   omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
@@ -153,41 +154,17 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
     const restRecord = sanitizedProps as Record<string, unknown>;
 
     // Securely map core native blocks down ensuring nested CSS modules map precisely
-    const mergedClassNames: Partial<Record<string, string>> = {
-      root: styles.sliderRoot,
-      track: styles.sliderTrack,
-      bar: styles.sliderBar,
-      thumb: styles.sliderThumb,
-      mark: styles.sliderMark,
-      markLabel: styles.sliderMarkLabel,
-    };
-
-    const classNamesProp = restRecord.classNames;
-    if (
-      classNamesProp &&
-      typeof classNamesProp === "object" &&
-      !Array.isArray(classNamesProp)
-    ) {
-      const o = classNamesProp as Partial<Record<string, string>>;
-      mergedClassNames.root = o.root
-        ? `${styles.sliderRoot} ${o.root}`
-        : styles.sliderRoot;
-      mergedClassNames.track = o.track
-        ? `${styles.sliderTrack} ${o.track}`
-        : styles.sliderTrack;
-      mergedClassNames.bar = o.bar
-        ? `${styles.sliderBar} ${o.bar}`
-        : styles.sliderBar;
-      mergedClassNames.thumb = o.thumb
-        ? `${styles.sliderThumb} ${o.thumb}`
-        : styles.sliderThumb;
-      mergedClassNames.mark = o.mark
-        ? `${styles.sliderMark} ${o.mark}`
-        : styles.sliderMark;
-      mergedClassNames.markLabel = o.markLabel
-        ? `${styles.sliderMarkLabel} ${o.markLabel}`
-        : styles.sliderMarkLabel;
-    }
+    const mergedClassNames = mergeClassNames(
+      {
+        root: styles.sliderRoot,
+        track: styles.sliderTrack,
+        bar: styles.sliderBar,
+        thumb: styles.sliderThumb,
+        mark: styles.sliderMark,
+        markLabel: styles.sliderMarkLabel,
+      },
+      restRecord.classNames as Partial<Record<string, string>> | undefined,
+    );
 
     const wrapperClass = className
       ? `${styles.layoutOverride} ${className}`

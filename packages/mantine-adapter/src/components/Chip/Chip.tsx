@@ -5,6 +5,8 @@ import {
 } from "@mantine/core";
 import {
   filterStylingProps,
+  mergeClassNames,
+  withCallerOverride,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Chip.module.css";
@@ -45,6 +47,9 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
     removeIconRef,
     children,
     overStyled = false,
+    wrapperProps,
+    tabIndex,
+    "aria-hidden": ariaHidden,
     ...rest
   },
   ref,
@@ -52,26 +57,16 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
   const sanitizedProps = filterStylingProps(rest, overStyled);
   const restRecord = sanitizedProps as Record<string, unknown>;
 
-  const mergedClassNames: Partial<Record<string, string>> = {
-    root: styles.root,
-    label: styles.label,
-    input: styles.input,
-    iconWrapper: styles.mantineIconWrapper,
-    checkIcon: styles.checkIcon,
-  };
-
-  const classNamesProp = restRecord.classNames;
-  if (
-    classNamesProp &&
-    typeof classNamesProp === "object" &&
-    !Array.isArray(classNamesProp)
-  ) {
-    const o = classNamesProp as Partial<Record<string, string>>;
-    mergedClassNames.root = o.root ? `${styles.root} ${o.root}` : styles.root;
-    mergedClassNames.label = o.label
-      ? `${styles.label} ${o.label}`
-      : styles.label;
-  }
+  const mergedClassNames = mergeClassNames(
+    {
+      root: styles.root,
+      label: styles.label,
+      input: styles.input,
+      iconWrapper: styles.mantineIconWrapper,
+      checkIcon: styles.checkIcon,
+    },
+    restRecord.classNames as Partial<Record<string, string>> | undefined,
+  );
 
   const classNameProp = restRecord.className as string | undefined;
   const finalClass = classNameProp
@@ -90,18 +85,30 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
     restRecord.onClick !== undefined ||
     restRecord.onChange !== undefined;
 
+  // Our own computed default for Mantine's `wrapperProps` — flags the internal error/interactive
+  // CSS hooks. This is a real Mantine `ChipProps` slot a caller could legitimately pass their own
+  // value for, so it must merge via `withCallerOverride`, not silently clobber theirs.
+  const computedWrapperProps = {
+    ...(dataError !== undefined ? { "data-error": "" } : {}),
+    ...(isInteractive ? { "data-interactive": "" } : {}),
+  } as NonNullable<MantineChipProps["wrapperProps"]>;
+
   return (
     <MantineChip
       ref={ref}
+      {...sanitizedProps}
       className={finalClass}
       classNames={mergedClassNames}
-      wrapperProps={{
-        ...(dataError !== undefined ? { "data-error": "" } : {}),
-        ...(isInteractive ? { "data-interactive": "" } : {}),
-      }}
-      {...(isIconOnly ? { "data-icon-only": "" } : {})}
-      {...(!isInteractive ? { tabIndex: -1, "aria-hidden": true } : {})}
-      {...sanitizedProps}
+      wrapperProps={withCallerOverride(computedWrapperProps, wrapperProps)}
+      data-icon-only={isIconOnly ? "" : undefined}
+      tabIndex={withCallerOverride<number | undefined>(
+        isInteractive ? undefined : -1,
+        tabIndex,
+      )}
+      aria-hidden={withCallerOverride<boolean | "true" | "false" | undefined>(
+        isInteractive ? undefined : true,
+        ariaHidden,
+      )}
     >
       <span className={styles.innerWrapper}>
         {icon && (

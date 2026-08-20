@@ -94,36 +94,51 @@ const sanitizedProps = omitUnsupportedProps(
 - This replaces one-off `delete restRecord["propName"]` calls scattered through a component body — consolidate them into the single `UNSUPPORTED_PROPS` const instead, keeping each prop's rationale comment.
 - Layout primitives (`Flex`, `Stack`, `Group`, `Container`, `Grid`) are the documented exception: they intentionally skip both `filterStylingProps` and `omitUnsupportedProps` so callers can freely pass width/height/padding/margin/flex props. Don't add `UNSUPPORTED_PROPS` there.
 
-### 3.3 Prop spread order — always spread `...rest`/`sanitizedProps` FIRST
+### 3.3 Prop merging — always `{...sanitizedProps, ...overrides}`, intent lives in named helpers
 
-**Rule: when rendering the library component, spread `sanitizedProps` (or `rest`) as the very first JSX attribute, then list every computed/forced prop (`className`, `classes`/`classNames`, `icon`/`checkedIcon`, `sx`, `disabled`, `onChange`, etc.) _after_ it.** In JSX, when the same prop name appears twice, the one written later wins — so spreading last silently lets whatever the caller passed through `...rest` clobber the exact values this component depends on to render or behave correctly.
+**Rule: when rendering the library component, always spread `sanitizedProps` (or `rest`) first, then list every computed/forced prop after it — no exceptions, not even for props where the caller "should" win.** In JSX, when the same prop name appears twice, the one written later wins, so this is what makes our computed values win by default. But that rule alone is ambiguous: it can't tell you whether a given attribute after the spread means "our value always wins" or "the caller may override our default" — those are opposite intents that look identical in JSX. Resolve that ambiguity by name, not by where you place the attribute:
+
+| Intent                                                                                                                          | Mechanism                                                                                                                                                                                                                                          |
+| ------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Our value must always win, no exceptions                                                                                        | Put it directly in the JSX after the spread — plain value, no helper.                                                                                                                                                                              |
+| A plain literal default the caller may override                                                                                 | Destructure it with a JS default before `...rest` even exists: `const { variant = "solid", ...rest } = props`. Never use spread order for this — it's the same syntax as "always wins," which is exactly the ambiguity this rule exists to remove. |
+| A computed default (depends on other props/state, not known until inside the component body) that the caller may still override | `withCallerOverride(ourComputedDefault, callerValue)`                                                                                                                                                                                              |
+| A `classNames`-shaped prop (per-slot library class strings) that the caller should extend, never fully replace                  | `mergeClassNames(ourSlotClasses, callerValue)`                                                                                                                                                                                                     |
+| A `styles`-shaped prop (per-slot `CSSProperties`) that the caller should extend, never fully replace                            | `mergeStyles(ourSlotStyles, callerValue)`                                                                                                                                                                                                          |
+
+All four helpers live in `@recursica/adapter-common`, re-exported from each adapter's `filterStylingProps.ts` alongside `filterStylingProps`/`omitUnsupportedProps`.
 
 ```tsx
-// WRONG — a caller-supplied `classes`/`icon`/`sx` silently overrides ours
+// WRONG — placement alone doesn't say whether the caller may override this
 <MuiRadio
   icon={<div className={styles.radio} />}
   classes={mergedClassNames}
-  sx={{ padding: 0 }}
   {...sanitizedProps}
 />
 
-// RIGHT — sanitizedProps spreads first; our values always win
+// WRONG — spread-first, but the intent (can the caller override `icon`?) is still implicit
 <MuiRadio
   {...sanitizedProps}
   icon={<div className={styles.radio} />}
-  classes={mergedClassNames}
-  sx={{ padding: 0 }}
+/>
+
+// RIGHT — spread first; each override's intent is explicit in the code, not the ordering
+<MuiRadio
+  {...sanitizedProps}
+  icon={withCallerOverride(<div className={styles.radio} />, icon)}
+  classes={mergeClassNames({ root: styles.radio }, restRecord.classes)}
+  onChange={handleChange}
 />
 ```
 
-This isn't theoretical: a real mui-adapter Radio regression shipped exactly this way — `classes` was computed correctly but placed _before_ the spread, so it was always a no-op, and the radio circle never rendered. The same pattern, if hit, can silently drop merged `className`/`classes`, replace a carefully-built `icon`/`checkedIcon` node, or swap out an internal `onChange` handler — all without a type error, since the prop name is usually still valid on the underlying library component.
+Why `mergeClassNames`/`mergeStyles` and not a bare override for slot props: the underlying library's `classNames`/`styles` slots are singular values per slot (a string, or a `CSSProperties` object) — if a caller-supplied slot value fully replaced ours via `withCallerOverride`, the component's own module styling for that slot would vanish, not just extend. These helpers merge per slot instead (string concat for `classNames`, object merge for `styles`) so the caller's value layers on top without dropping ours, across the union of slots either side names — a slot the caller targets that Recursica has no default for still passes through.
 
-Two acceptable ways to make a specific prop fully un-overridable by a caller (stronger than ordering alone, use for props that must never be settable, like an internally-computed `expanded`/`onChange` on a controlled item):
+This isn't theoretical: a real mui-adapter Radio regression shipped from a spread-order mistake — `classes` was computed correctly but placed _before_ the spread, so it was always a no-op, and the radio circle never rendered. Mantine Switch's `thumbIcon` and Pagination's arrow icons had the opposite bug: placed after the spread with no helper, so a caller-passed value could silently clobber ours when the intent was actually "ours must always win." Naming the mechanism instead of relying on ordering is what prevents both.
+
+Two acceptable ways to make a specific prop fully un-settable by a caller (stronger than any of the above — use for props that must never be settable at all, like an internally-computed `expanded`/`onChange` on a controlled item):
 
 - **Omit it from the public props type** (e.g. `Omit<MuiAccordionProps, "expanded" | "onChange">`) so a well-typed caller can't pass it at all.
-- **Destructure it out of `props` before `...rest`** (e.g. `const { className, ...rest } = props`) so it's never present in `sanitizedProps` to begin with, regardless of spread order.
-
-Spread-first ordering is still the right default for everything else, since it's one rule to remember and doesn't require auditing every prop's type surface.
+- **Destructure it out of `props` before `...rest`** (e.g. `const { className, ...rest } = props`) so it's never present in `sanitizedProps` to begin with.
 
 ### 3.4 Public props and mapping
 

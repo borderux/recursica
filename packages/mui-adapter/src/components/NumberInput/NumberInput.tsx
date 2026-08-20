@@ -7,6 +7,7 @@ import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import {
   filterStylingProps,
   omitUnsupportedProps,
+  mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
@@ -87,14 +88,20 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
     );
     const restRecord = sanitizedProps as Record<string, unknown>;
 
-    // Securely map core native blocks down ensuring nested CSS modules map precisely
-    const mergedClassNames: Partial<Record<string, string>> = {
-      wrapper: styles.root, // The nested Input internal relative wrapper bounding box
-      input: styles.input,
-      section: styles.section,
-      controls: styles.controls,
-      control: styles.control,
-    };
+    // Securely map core native blocks down ensuring nested CSS modules map precisely. This
+    // previously always overwrote the caller's `classes` prop wholesale (no merge at all) —
+    // now merged per-slot via mergeClassNames so a caller-supplied slot value extends rather
+    // than replaces ours.
+    const mergedClassNames = mergeClassNames(
+      {
+        wrapper: styles.root, // The nested Input internal relative wrapper bounding box
+        input: styles.input,
+        section: styles.section,
+        controls: styles.controls,
+        control: styles.control,
+      },
+      restRecord.classes as Partial<Record<string, string>> | undefined,
+    );
 
     const wrapperClass = className
       ? `${styles.layoutOverride} ${className}`
@@ -144,7 +151,9 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
           <MuiNumberInput
             ref={ref}
             {...(sanitizedProps as unknown as MuiNumberInputProps)}
-            classes={mergedClassNames}
+            classes={
+              mergedClassNames as unknown as MuiNumberInputProps["classes"]
+            }
             disabled={disabled}
             value={value}
             defaultValue={defaultValue}

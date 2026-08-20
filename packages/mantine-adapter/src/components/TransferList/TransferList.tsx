@@ -346,10 +346,10 @@ export const TransferList = forwardRef<HTMLDivElement, TransferListProps>(
         readOnlyNativeProps={props}
         activeComponent={
           <div
+            {...(sanitizedProps as Record<string, unknown>)}
             className={styles.root}
             data-disabled={disabled ? "true" : undefined}
             data-error={error ? "true" : undefined}
-            {...(sanitizedProps as Record<string, unknown>)}
           >
             <div className={styles.panes}>
               {renderPane(

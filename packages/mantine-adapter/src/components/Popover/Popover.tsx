@@ -6,6 +6,8 @@ import {
 } from "@mantine/core";
 import {
   filterStylingProps,
+  mergeClassNames,
+  withCallerOverride,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Popover.module.css";
@@ -47,53 +49,39 @@ export type PopoverProps = Omit<
 const PopoverBase = function Popover({
   overStyled = false,
   withBeak = true,
+  position = "top", // Recursica default; Mantine defaults to "bottom"
   ...rest
 }: PopoverProps) {
   const sanitizedProps = filterStylingProps(rest, overStyled);
+  const restRecord = sanitizedProps as Record<string, unknown>;
 
   // Bind CSS module classes to Mantine's internal classNames API
-  const mergedClassNames: Partial<Record<string, string>> = {
-    dropdown: styles.dropdown,
-    arrow: styles.arrow,
-  };
-
-  const classNamesProp = (sanitizedProps as Record<string, unknown>).classNames;
-  if (
-    classNamesProp &&
-    typeof classNamesProp === "object" &&
-    !Array.isArray(classNamesProp)
-  ) {
-    const o = classNamesProp as Record<string, string>;
-    Object.keys(o).forEach((key) => {
-      if (mergedClassNames[key]) {
-        mergedClassNames[key] = `${mergedClassNames[key]} ${o[key]}`;
-      } else {
-        mergedClassNames[key] = o[key];
-      }
-    });
-  }
+  const mergedClassNames = mergeClassNames(
+    { dropdown: styles.dropdown, arrow: styles.arrow },
+    restRecord.classNames as Partial<Record<string, string>> | undefined,
+  );
 
   // arrowSize must be a JS number prop — Mantine uses it for inline width/height
   // and positioning offset (-arrowSize/2) calculations that cannot be CSS-driven.
   // Default to 16 to match the Recursica beak-size token (16px).
-  const arrowSize =
-    ((sanitizedProps as Record<string, unknown>).arrowSize as
-      | number
-      | undefined) ?? 16;
+  const arrowSize = withCallerOverride<number>(
+    16,
+    restRecord.arrowSize as number | undefined,
+  );
 
   // Resolve withBeak (Recursica) vs withArrow (Mantine).
   // withBeak takes precedence when both are provided.
-  const withArrow = (sanitizedProps as Record<string, unknown>).withArrow as
-    | boolean
-    | undefined;
-  const resolvedWithArrow = withBeak ?? withArrow;
+  const resolvedWithArrow = withCallerOverride<boolean | undefined>(
+    withBeak,
+    restRecord.withArrow as boolean | undefined,
+  );
 
   return (
     <MantinePopover
-      position="top" /* Recursica default; Mantine defaults to "bottom" */
+      {...(sanitizedProps as unknown as MantinePopoverProps)}
+      position={position}
       arrowSize={arrowSize}
       withArrow={resolvedWithArrow}
-      {...(sanitizedProps as unknown as MantinePopoverProps)}
       classNames={mergedClassNames}
     />
   );

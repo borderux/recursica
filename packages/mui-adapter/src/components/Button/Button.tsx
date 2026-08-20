@@ -7,6 +7,7 @@ import {
 import {
   filterStylingProps,
   omitUnsupportedProps,
+  withCallerOverride,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Button.module.css";
@@ -100,8 +101,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     // However, Mui Button requires some string, but we can just leave it as standard or ignore since
     // our CSS resets its properties anyway, but to be clean we just don't pass variant to MUI.
 
-    const resolvedLoaderSize =
-      loaderSize ?? (size === "small" ? "small" : "default");
+    const resolvedLoaderSize = withCallerOverride(
+      size === "small" ? "small" : "default",
+      loaderSize,
+    );
 
     let loadingIndicator = restRecord.loadingIndicator as React.ReactNode;
     if (useRecursicaLoader) {

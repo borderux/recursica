@@ -43,8 +43,8 @@ export const Title = forwardRef<HTMLHeadingElement, TitleProps>(function Title(
   return (
     <MantineTitle
       ref={ref}
-      order={order}
       {...(sanitizedProps as unknown as MantineTitleProps)}
+      order={order}
       className={mergedClassName}
     />
   );
