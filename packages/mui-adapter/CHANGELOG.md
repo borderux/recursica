@@ -1,5 +1,16 @@
 # @recursica/mui-adapter
 
+## 0.27.0
+
+### Minor Changes
+
+- d171a96: Update revision to latest
+
+### Patch Changes
+
+- Updated dependencies [d171a96]
+  - @recursica/adapter-common@0.19.0
+
 ## 0.26.0
 
 ### Minor Changes
