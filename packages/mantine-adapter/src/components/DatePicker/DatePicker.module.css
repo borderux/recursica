@@ -110,6 +110,14 @@
   );
 
   outline: none;
+
+  /* Single-line enforcement: DatePickerInput renders its value/placeholder as a <button>'s text
+     content (not a native <input>), so it wraps by default like any other block text — clip it to
+     one line with ellipsis instead, same convention as FileInput's .value. */
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 .input::placeholder {
@@ -256,10 +264,257 @@
   );
 }
 
-.day {
+/* Month label + prev/next nav controls: styled as Recursica's own "text" button variant (small
+   size) rather than bare popover text — same border/background/color/typography tokens Button
+   uses for data-variant="text", since these are functionally buttons inside the popover. */
+.calendarHeaderControl,
+.calendarHeaderLevel {
+  position: relative;
+  border-style: solid;
+  border-width: var(
+    --recursica_ui-kit_components_button_variants_styles_text_properties_border-size
+  );
+  border-color: var(
+    --recursica_ui-kit_components_button_variants_styles_text_properties_colors_border-color
+  );
+  background-color: var(
+    --recursica_ui-kit_components_button_variants_styles_text_properties_colors_background-color
+  );
+  box-shadow: var(
+    --recursica_ui-kit_components_button_variants_styles_text_properties_elevation
+  );
+  color: var(
+    --recursica_ui-kit_components_button_variants_styles_text_properties_colors_text-color
+  );
+  font-family: var(
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_letter-spacing
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_text-transform
+  );
+  transition: all 0.2s ease;
+}
+
+/* Prev/next nav: icon-only button sizing (small). */
+.calendarHeaderControl {
+  min-width: var(
+    --recursica_ui-kit_components_button_variants_content_icon-only_variants_sizes_small_properties_min-width
+  );
+  height: var(
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_height
+  );
+  border-radius: var(
+    --recursica_ui-kit_components_button_variants_content_icon-only_variants_sizes_small_properties_border-radius
+  );
+  padding: 0
+    var(
+      --recursica_ui-kit_components_button_variants_content_icon-only_variants_sizes_small_properties_horizontal-padding
+    );
+}
+
+/* Month/year label: label-content button sizing (small). */
+.calendarHeaderLevel {
+  height: var(
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_height
+  );
+  border-radius: var(
+    --recursica_ui-kit_components_button_variants_content_label_variants_sizes_small_properties_border-radius
+  );
+  padding: 0
+    var(
+      --recursica_ui-kit_components_button_variants_content_label_variants_sizes_small_properties_horizontal-padding
+    );
+}
+
+/* Neutralize Mantine's own native :hover background-color (gray-0/dark-5) so only our
+   token-driven overlay below is visible — same reasoning as .day above. */
+.calendarHeaderControl:hover:not(:disabled, [data-disabled]),
+.calendarHeaderLevel:hover:not(:disabled, [data-disabled]) {
+  background-color: transparent;
+}
+
+.calendarHeaderControl::after,
+.calendarHeaderLevel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--recursica_brand_states_hover_color);
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.calendarHeaderControl:hover:not(:disabled, [data-disabled])::after,
+.calendarHeaderLevel:hover:not(:disabled, [data-disabled])::after {
+  opacity: var(--recursica_brand_states_hover_opacity);
+}
+
+.calendarHeaderControl:disabled,
+.calendarHeaderControl[data-disabled],
+.calendarHeaderLevel:disabled,
+.calendarHeaderLevel[data-disabled] {
+  opacity: var(
+    --recursica_ui-kit_components_button_variants_styles_text_variants_states_disabled_properties_opacity
+  );
+  box-shadow: var(
+    --recursica_ui-kit_components_button_variants_styles_text_variants_states_disabled_properties_elevation
+  );
+}
+
+/* Focus ring, same convention as Button's own :focus-visible treatment. */
+.calendarHeaderControl:focus-visible,
+.calendarHeaderLevel:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 var(--recursica_brand_states_focus_border-size)
+      var(--recursica_brand_states_focus_color),
+    0 0 var(--recursica_brand_states_focus_blur)
+      var(--recursica_brand_states_focus_margin)
+      var(--recursica_brand_states_focus_color);
+}
+
+.calendarHeaderControlIcon {
+  color: var(
+    --recursica_ui-kit_components_button_variants_styles_text_properties_colors_icon-color
+  );
+  width: var(
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_icon
+  );
+  height: var(
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_icon
+  );
+}
+
+/* Weekday row (Mo, Tu, We...) */
+.weekday {
   color: var(
     --recursica_ui-kit_components_hover-card-popover_properties_colors_content
   );
+}
+
+.day {
+  position: relative;
+  color: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_colors_content
+  );
+  border-radius: var(--recursica_brand_dimensions_border-radii_default);
+}
+
+/* Weekend days: Mantine's default colors them red; the UI Kit has no such concept, so they're
+   intentionally kept identical to any other day rather than left on Mantine's un-tokenized default. */
+.day[data-weekend] {
+  color: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_colors_content
+  );
+}
+
+/* Today marker: reuse the popover border-size/color tokens already used for the dropdown
+   surface itself, since the UI Kit exports no dedicated "today" indicator token. */
+.day[data-today][data-highlight-today]:not([data-selected], [data-in-range]) {
+  border-style: solid;
+  border-width: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_border-size
+  );
+  border-color: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_colors_border-color
+  );
+}
+
+/* Outside-month & disabled days: dim with the generic disabled-opacity token used everywhere else
+   in the design system for elements with no dedicated disabled token. */
+.day[data-outside],
+.day[data-disabled] {
+  opacity: var(--recursica_brand_states_disabled);
+}
+
+.day[data-disabled] {
+  cursor: not-allowed;
+}
+
+/* Unlike Button (a plain button with no built-in library hover), Mantine's Day ships its own
+   native :hover background-color (gray-0/dark-5) — neutralize it so only our token-driven
+   overlay below is visible. Same specificity as Mantine's own selector, so this relies on our
+   CSS module loading after @mantine/dates' stylesheet to win the tie (true today; see
+   DATEPICKER_IMPLEMENTATION_NOTES.md if that load order ever changes). */
+.day:hover:not(:disabled, [data-disabled], [data-static]) {
+  background-color: transparent;
+}
+
+/* Hover overlay, same generic mechanism used by Button/Menu for components without a dedicated
+   hover token. Unlike Button, the day number here is a bare text node (Mantine's Day renders it
+   directly, with no wrapping span to z-index above the overlay), so this sits at z-index: -1
+   instead — still scoped to .day's own positioned box, just painted behind the digit rather than
+   in front of it. */
+.day::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--recursica_brand_states_hover_color);
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.day:hover:not(:disabled, [data-disabled], [data-static])::after {
+  opacity: var(--recursica_brand_states_hover_opacity);
+}
+
+/* Range selection (type="range"): the UI Kit exports no dedicated in-range token, so the generic
+   overlay token — meant for exactly this kind of translucent tint — fills the band between the
+   two selected endpoints. Painted via ::before (behind the day number and the ::after hover
+   overlay) so the fill's opacity never dims the text itself. */
+.day[data-in-range] {
+  border-radius: 0;
+}
+
+.day[data-in-range]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--recursica_brand_states_overlay_color);
+  opacity: var(--recursica_brand_states_overlay_opacity);
+}
+
+.day[data-first-in-range] {
+  border-radius: 0;
+  border-start-start-radius: var(
+    --recursica_brand_dimensions_border-radii_default
+  );
+  border-end-start-radius: var(
+    --recursica_brand_dimensions_border-radii_default
+  );
+}
+
+.day[data-last-in-range] {
+  border-radius: 0;
+  border-end-end-radius: var(--recursica_brand_dimensions_border-radii_default);
+  border-start-end-radius: var(
+    --recursica_brand_dimensions_border-radii_default
+  );
+}
+
+.day[data-first-in-range][data-last-in-range] {
   border-radius: var(--recursica_brand_dimensions_border-radii_default);
 }
 
@@ -271,4 +526,5 @@
   color: var(
     --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_text-color
   );
+  opacity: 1;
 }

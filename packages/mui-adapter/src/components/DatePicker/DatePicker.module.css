@@ -1,0 +1,451 @@
+/* HARDCODED VALUES:
+   - border-style: solid. Native structural rendering rule.
+   - outline: none. Bypassing browser focus rings to rely strictly on Recursica focus states natively.
+   - MUI X's field variant can't be forced from this component's public API (see
+     DATEPICKER_IMPLEMENTATION_NOTES.md) — whichever native decoration it renders is suppressed
+     below, and our own border/background are applied to .field instead, same convention as
+     TimePicker.module.css.
+   - disabled/error border-size: intentionally not consumed. border-width is set once on .field
+     from the base border-size token and held constant across states, so a uniform border is
+     preserved and no layout shift/flicker occurs on disabled/error transitions. Matches
+     Mantine's DatePicker convention. */
+
+/* LAYOUT SPACING OVERRIDES:
+   - Sets the --form-control-margin-bottom spacing hook to map component-specific layout tokens. */
+.layoutOverride {
+  --form-control-margin-bottom: var(
+    --recursica_ui-kit_components_date-picker_variants_layouts_stacked_properties_top-bottom-margin
+  );
+}
+
+.layoutOverride[data-form-layout="side-by-side"] {
+  --form-control-margin-bottom: var(
+    --recursica_ui-kit_components_date-picker_variants_layouts_side-by-side_properties_top-bottom-margin
+  );
+}
+
+.root {
+  display: flex;
+  width: fit-content;
+}
+
+.field {
+  width: var(--recursica_ui-kit_components_date-picker_properties_width);
+  border-radius: var(
+    --recursica_ui-kit_components_date-picker_properties_border-radius
+  );
+  border-width: var(
+    --recursica_ui-kit_components_date-picker_properties_border-size
+  );
+  border-style: solid;
+  border-color: var(
+    --recursica_ui-kit_components_date-picker_properties_colors_border-color
+  );
+  background-color: var(
+    --recursica_ui-kit_components_date-picker_properties_colors_background-color
+  );
+  color: var(
+    --recursica_ui-kit_components_date-picker_properties_colors_text-color
+  );
+  outline: none;
+}
+
+/* Suppress whichever native field decoration MUI X renders by default — .field draws the border
+   instead, same technique as TimePicker.module.css. */
+.field :global(.MuiPickersInputBase-root::before),
+.field :global(.MuiPickersInputBase-root::after),
+.field :global(.MuiInput-root::before),
+.field :global(.MuiInput-root::after) {
+  border-bottom: none !important;
+}
+
+.field :global(.MuiPickersOutlinedInput-notchedOutline) {
+  border: none !important;
+}
+
+.field :global(.MuiPickersInputBase-root) {
+  min-height: var(
+    --recursica_ui-kit_components_date-picker_properties_min-height
+  );
+}
+
+.field :global(.MuiPickersInputBase-sectionsContainer) {
+  padding-top: var(
+    --recursica_ui-kit_components_date-picker_properties_vertical-padding
+  );
+  padding-bottom: var(
+    --recursica_ui-kit_components_date-picker_properties_vertical-padding
+  );
+
+  font-family: var(
+    --recursica_ui-kit_components_date-picker_properties_text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_date-picker_properties_text_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_date-picker_properties_text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_date-picker_properties_text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_date-picker_properties_text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_date-picker_properties_text_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_date-picker_properties_text_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_date-picker_properties_text_text-transform
+  );
+  margin-left: var(
+    --recursica_ui-kit_components_date-picker_properties_icon-text-gap
+  );
+}
+
+.field :global(.MuiPickersInputBase-input) {
+  color: inherit;
+}
+
+/* Empty segments ("MM", "DD", "YYYY") render via MUI X's own placeholder styling, not a native
+   ::placeholder pseudo-element — there is no equivalent selector to hook the placeholder-opacity
+   token onto, same constraint TimePicker documents for its own empty sections. */
+
+/* Leading calendar icon button (see DatePicker.tsx's `openPickerButtonPosition="start"`). */
+.field :global(.MuiInputAdornment-root) {
+  margin: 0;
+}
+
+.field :global(.MuiButtonBase-root.MuiIconButton-root) {
+  padding: 0;
+  padding-left: var(
+    --recursica_ui-kit_components_date-picker_properties_horizontal-padding
+  );
+}
+
+.field :global(.MuiButtonBase-root.MuiIconButton-root) :global(svg) {
+  width: var(--recursica_ui-kit_components_date-picker_properties_icon-size);
+  height: var(--recursica_ui-kit_components_date-picker_properties_icon-size);
+  color: var(
+    --recursica_ui-kit_components_date-picker_properties_colors_leading-icon
+  );
+}
+
+/* -------------------------------------
+   STATE CASCADE ARCHITECTURE
+-------------------------------------- */
+
+.field:has(:global(.Mui-focused)) {
+  box-shadow:
+    0 0 0 var(--recursica_brand_states_focus_border-size)
+      var(--recursica_brand_states_focus_color),
+    0 0 var(--recursica_brand_states_focus_blur)
+      var(--recursica_brand_states_focus_margin)
+      var(--recursica_brand_states_focus_color);
+}
+
+.root[data-error="true"] .field {
+  border-color: var(
+    --recursica_ui-kit_components_date-picker_variants_states_error_properties_colors_border-color
+  ) !important;
+  background-color: var(
+    --recursica_ui-kit_components_date-picker_variants_states_error_properties_colors_background-color
+  ) !important;
+  color: var(
+    --recursica_ui-kit_components_date-picker_variants_states_error_properties_colors_text-color
+  ) !important;
+}
+
+.root[data-error="true"]
+  .field
+  :global(.MuiButtonBase-root.MuiIconButton-root svg) {
+  color: var(
+    --recursica_ui-kit_components_date-picker_variants_states_error_properties_colors_leading-icon
+  ) !important;
+}
+
+.field:has(:global(.Mui-disabled)) {
+  border-color: var(
+    --recursica_ui-kit_components_date-picker_variants_states_disabled_properties_colors_border-color
+  ) !important;
+  background-color: var(
+    --recursica_ui-kit_components_date-picker_variants_states_disabled_properties_colors_background-color
+  ) !important;
+  color: var(
+    --recursica_ui-kit_components_date-picker_variants_states_disabled_properties_colors_text-color
+  ) !important;
+  opacity: var(
+    --recursica_ui-kit_components_date-picker_variants_states_disabled_properties_opacity
+  ) !important;
+  cursor: not-allowed;
+}
+
+.field:has(:global(.Mui-disabled))
+  :global(.MuiButtonBase-root.MuiIconButton-root svg) {
+  color: var(
+    --recursica_ui-kit_components_date-picker_variants_states_disabled_properties_colors_leading-icon
+  ) !important;
+}
+
+/* =========================================
+   CALENDAR POPOVER OVERRIDES
+   Maps generic popover & solid button tokens
+   to enforce Recursica's global styling.
+   Mirrors mantine-adapter's DatePicker.module.css mapping 1:1 — see
+   DATEPICKER_IMPLEMENTATION_NOTES.md for the full rationale per token choice.
+   ========================================= */
+
+.dropdown {
+  background-color: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_colors_background-color
+  ) !important;
+  border: var(
+      --recursica_ui-kit_components_hover-card-popover_properties_border-size
+    )
+    solid
+    var(
+      --recursica_ui-kit_components_hover-card-popover_properties_colors_border-color
+    ) !important;
+  border-radius: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_border-radius
+  ) !important;
+  box-shadow: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_elevation
+  ) !important;
+  padding: var(
+      --recursica_ui-kit_components_hover-card-popover_properties_vertical-padding
+    )
+    var(
+      --recursica_ui-kit_components_hover-card-popover_properties_horizontal-padding
+    ) !important;
+  font-family: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_content-text_font-family
+  );
+}
+
+.dropdown :global(.MuiPickersCalendarHeader-root),
+.dropdown :global(.MuiDayCalendar-weekDayLabel) {
+  color: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_colors_content
+  );
+}
+
+/* Month label + prev/next nav controls: styled as Recursica's own "text" button variant (small
+   size) rather than bare popover text — same treatment as mantine-adapter's
+   .calendarHeaderControl/.calendarHeaderLevel. */
+.dropdown :global(.MuiPickersArrowSwitcher-button),
+.dropdown :global(.MuiPickersCalendarHeader-switchViewButton) {
+  position: relative;
+  border-style: solid;
+  border-width: var(
+    --recursica_ui-kit_components_button_variants_styles_text_properties_border-size
+  );
+  border-color: var(
+    --recursica_ui-kit_components_button_variants_styles_text_properties_colors_border-color
+  );
+  background-color: var(
+    --recursica_ui-kit_components_button_variants_styles_text_properties_colors_background-color
+  );
+  box-shadow: var(
+    --recursica_ui-kit_components_button_variants_styles_text_properties_elevation
+  );
+  color: var(
+    --recursica_ui-kit_components_button_variants_styles_text_properties_colors_text-color
+  );
+  font-family: var(
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_font-family
+  );
+  transition: all 0.2s ease;
+}
+
+.dropdown :global(.MuiPickersArrowSwitcher-button) {
+  min-width: var(
+    --recursica_ui-kit_components_button_variants_content_icon-only_variants_sizes_small_properties_min-width
+  );
+  height: var(
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_height
+  );
+  border-radius: var(
+    --recursica_ui-kit_components_button_variants_content_icon-only_variants_sizes_small_properties_border-radius
+  );
+  padding: 0
+    var(
+      --recursica_ui-kit_components_button_variants_content_icon-only_variants_sizes_small_properties_horizontal-padding
+    );
+}
+
+.dropdown :global(.MuiPickersCalendarHeader-switchViewButton) {
+  height: var(
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_height
+  );
+  border-radius: var(
+    --recursica_ui-kit_components_button_variants_content_label_variants_sizes_small_properties_border-radius
+  );
+  padding: 0
+    var(
+      --recursica_ui-kit_components_button_variants_content_label_variants_sizes_small_properties_horizontal-padding
+    );
+}
+
+/* The "August 2026" label sits beside (not inside) .switchViewButton — the only actual button in
+   this header — but recoloring it to match keeps the whole month control reading as one unit,
+   same as mantine-adapter's single calendarHeaderLevel button. labelContainer has `role="none"`
+   (MUI marks it decorative), so this is presentation-only, no false interactive affordance. */
+.dropdown :global(.MuiPickersCalendarHeader-label) {
+  color: var(
+    --recursica_ui-kit_components_button_variants_styles_text_properties_colors_text-color
+  );
+  font-family: var(
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_text_letter-spacing
+  );
+}
+
+/* Hover overlay, same generic mechanism (and ::after-behind-content layering) mantine-adapter uses
+   for its .calendarHeaderControl/.calendarHeaderLevel — a plain background-color+opacity change on
+   the button itself would dim its icon/text along with the fill, not just tint the surface. */
+.dropdown :global(.MuiPickersArrowSwitcher-button)::after,
+.dropdown :global(.MuiPickersCalendarHeader-switchViewButton)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--recursica_brand_states_hover_color);
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.dropdown
+  :global(.MuiPickersArrowSwitcher-button:hover:not(.Mui-disabled))::after,
+.dropdown
+  :global(
+    .MuiPickersCalendarHeader-switchViewButton:hover:not(.Mui-disabled)
+  )::after {
+  opacity: var(--recursica_brand_states_hover_opacity);
+}
+
+.dropdown :global(.MuiPickersArrowSwitcher-button.Mui-disabled),
+.dropdown :global(.MuiPickersCalendarHeader-switchViewButton.Mui-disabled) {
+  opacity: var(
+    --recursica_ui-kit_components_button_variants_styles_text_variants_states_disabled_properties_opacity
+  );
+  box-shadow: var(
+    --recursica_ui-kit_components_button_variants_styles_text_variants_states_disabled_properties_elevation
+  );
+}
+
+.dropdown :global(.MuiPickersArrowSwitcher-button.Mui-focusVisible),
+.dropdown :global(.MuiPickersCalendarHeader-switchViewButton.Mui-focusVisible) {
+  outline: none;
+  box-shadow:
+    0 0 0 var(--recursica_brand_states_focus_border-size)
+      var(--recursica_brand_states_focus_color),
+    0 0 var(--recursica_brand_states_focus_blur)
+      var(--recursica_brand_states_focus_margin)
+      var(--recursica_brand_states_focus_color);
+}
+
+.dropdown :global(.MuiPickersArrowSwitcher-leftArrowIcon),
+.dropdown :global(.MuiPickersArrowSwitcher-rightArrowIcon),
+.dropdown :global(.MuiPickersCalendarHeader-switchViewIcon) {
+  color: var(
+    --recursica_ui-kit_components_button_variants_styles_text_properties_colors_icon-color
+  );
+  width: var(
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_icon
+  );
+  height: var(
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_icon
+  );
+}
+
+/* Day cells */
+.dropdown :global(.MuiPickerDay-root) {
+  position: relative;
+  color: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_colors_content
+  );
+  border-radius: var(--recursica_brand_dimensions_border-radii_default);
+}
+
+/* Today marker: reuse the popover border-size/color tokens already used for the dropdown surface
+   itself, same reasoning as mantine-adapter (no dedicated "today" indicator token exists).
+   background-color reset because MUI's own default .MuiPickerDay-today rule ships a light
+   primary-color tint that this design system has no equivalent for. */
+.dropdown :global(.MuiPickerDay-today:not(.Mui-selected)) {
+  background-color: transparent;
+  border-style: solid;
+  border-width: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_border-size
+  );
+  border-color: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_colors_border-color
+  );
+}
+
+/* Hover overlay: same ::after-behind-content technique as the header buttons above and
+   mantine-adapter's .day — MUI's PickerDay renders the day number as a bare text node with no
+   wrapping span to z-index above the overlay, so this sits at z-index: -1 instead. */
+.dropdown :global(.MuiPickerDay-root)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--recursica_brand_states_hover_color);
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.dropdown
+  :global(.MuiPickerDay-root:hover:not(.Mui-disabled, .Mui-selected))::after {
+  opacity: var(--recursica_brand_states_hover_opacity);
+}
+
+/* Outside-month & disabled days: dim with the generic disabled-opacity token, same convention used
+   repo-wide for elements with no dedicated disabled token. */
+.dropdown :global(.MuiPickerDay-dayOutsideMonth),
+.dropdown :global(.MuiPickerDay-root.Mui-disabled) {
+  opacity: var(--recursica_brand_states_disabled);
+}
+
+.dropdown :global(.MuiPickerDay-root.Mui-disabled) {
+  cursor: not-allowed;
+}
+
+.dropdown :global(.MuiPickerDay-root.Mui-selected) {
+  background-color: var(
+    --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_background-color
+  ) !important;
+  color: var(
+    --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_text-color
+  ) !important;
+  opacity: 1;
+}
+
+.dropdown :global(.MuiPickerDay-root.Mui-focusVisible) {
+  outline: none;
+  box-shadow:
+    0 0 0 var(--recursica_brand_states_focus_border-size)
+      var(--recursica_brand_states_focus_color),
+    0 0 var(--recursica_brand_states_focus_blur)
+      var(--recursica_brand_states_focus_margin)
+      var(--recursica_brand_states_focus_color);
+}
