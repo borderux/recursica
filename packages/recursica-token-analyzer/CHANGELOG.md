@@ -1,5 +1,11 @@
 # @recursica/token-analyzer
 
+## 1.4.0
+
+### Minor Changes
+
+- 56e0d63: Detect `recursica-ignore` directives pointing at CSS variables that no longer exist in the UI Kit dictionary (`staleExemptions` in the report). Add `--cleanup` to remove them automatically.
+
 ## 1.3.0
 
 ### Minor Changes

@@ -1,5 +1,15 @@
 # @recursica/mui-adapter
 
+## 0.26.0
+
+### Minor Changes
+
+- 015c809: Implemented DatePicker (was a non-functional placeholder stub). Wraps MUI X's `DatePicker` with the same token mapping as the mantine-adapter's DatePicker: tokenized field border/background/text, a default token-styled calendar popover (hover, today, disabled/outside days, selected-day fill, header nav/month-label as Recursica text buttons), default `MM/DD/YY` format, and a default calendar icon that opens the picker (overridable via `slots.openPickerIcon`). `value`/`defaultValue`/`onChange` use plain `Date`, matching the mantine-adapter's convention.
+
+### Patch Changes
+
+- 56e0d63: Remove all `recursica-ignore` exemption comments so the token analyzer report reflects true unused/unimplemented Figma variables. No runtime behavior change.
+
 ## 0.25.0
 
 ### Minor Changes
