@@ -1,14 +1,3 @@
-/* EXEMPTIONS:
-   - border-style has no usable var(...) form: the Figma-exported token's value is the literal
-     string `"dashed"` (quotes included), which is not a valid CSS <line-style> keyword — the same
-     class of "structural, not tokenized" property the canonical guide already treats border-style
-     as (see .root's own HARDCODED VALUES note below and TimePicker/DatePicker's identical
-     hardcoded `border-style: solid`). Hardcoded to the keyword `dashed` instead.
-   - properties_icon-size has no equivalent: unlike TextField/DatePicker, file-upload has no
-     dedicated icon-size token. Sized to visually match the Figma reference instead (see
-     HARDCODED VALUES below). */
-/* recursica-ignore: --recursica_ui-kit_components_file-upload_properties_border-style */
-
 /* HARDCODED VALUES:
    - .root: display: flex; flex-direction: column; width: 100% — structural layout, not a design
      token concern (matches how other block-level components like Layer are laid out).

@@ -1,10 +1,3 @@
-/* EXEMPTIONS:
-   - border-size variables are ignored because a uniform 1px border is applied globally to prevent
-     unexpected layout shift or flickering during focused, disabled, or error state transitions. */
-/* recursica-ignore: --recursica_ui-kit_components_date-picker_properties_border-size */
-/* recursica-ignore: --recursica_ui-kit_components_date-picker_variants_states_disabled_properties_border-size */
-/* recursica-ignore: --recursica_ui-kit_components_date-picker_variants_states_error_properties_border-size */
-
 /* LAYOUT SPACING OVERRIDES:
    - Sets the --form-control-margin-bottom spacing hook to map component-specific layout tokens. */
 .layoutOverride {

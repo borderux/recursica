@@ -7,14 +7,6 @@ HARDCODED VALUES:
 - Image has no explicit size tokens other than root size, assume it scales 100%
 */
 
-/* EXEMPTIONS:
-   The generic size variables below are defined in Figma but unused.
-   We explicitly style the avatar's dimensions using the dedicated width and height tokens
-   (e.g., small_properties_width and small_properties_height) for precise component layout. */
-/* recursica-ignore: --recursica_ui-kit_components_avatar_variants_sizes_default_properties_size */
-/* recursica-ignore: --recursica_ui-kit_components_avatar_variants_sizes_large_properties_size */
-/* recursica-ignore: --recursica_ui-kit_components_avatar_variants_sizes_small_properties_size */
-
 .root {
   box-sizing: border-box;
   margin: 0;

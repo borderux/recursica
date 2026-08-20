@@ -9,14 +9,6 @@
      above that rule); needed because the item text-transform token has no valid scoped value
 */
 
-/* EXEMPTIONS:
-   - segmented-control-item_properties_item_border-radius is ignored because the item border-radius
-     is fully governed by the per-selection-state tokens (unselected/selected `properties_border-radius`,
-     already applied to `.label` and `.control:global(.Mui-selected)` below); this generic, state-agnostic radius
-     token has no distinct consumption site without conflicting with those state-specific overrides.
-     The Mantine reference adapter exempts this same variable for the same reason. */
-/* recursica-ignore: --recursica_ui-kit_components_segmented-control-item_properties_item_border-radius */
-
 .root {
   background-color: var(
     --recursica_ui-kit_components_segmented-control_properties_colors_background-color

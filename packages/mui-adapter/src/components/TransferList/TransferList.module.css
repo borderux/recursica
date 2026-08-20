@@ -1,11 +1,3 @@
-/* EXEMPTIONS:
-   - border-size variables are ignored because a uniform 1px border is applied globally to prevent
-     unexpected layout shift or flickering during disabled/error state transitions (same exemption
-     TextArea takes). */
-/* recursica-ignore: --recursica_ui-kit_components_transfer-list_properties_border-size */
-/* recursica-ignore: --recursica_ui-kit_components_transfer-list_variants_states_disabled_properties_border-size */
-/* recursica-ignore: --recursica_ui-kit_components_transfer-list_variants_states_error_properties_border-size */
-
 /* TOKEN INTERPRETATION NOTES (see TRANSFERLIST_IMPLEMENTATION_NOTES.md):
    - `properties_gap` is applied to the row that holds [source pane, transfer buttons, target pane] —
      it's the only unnested gap the schema defines at the component's own level.
