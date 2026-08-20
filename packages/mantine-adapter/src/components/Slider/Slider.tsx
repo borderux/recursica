@@ -7,6 +7,7 @@ import {
 import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
@@ -133,14 +134,23 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
       setInputValue(resolvedValue.toString());
     };
 
-    const sanitizedProps = filterStylingProps(rest, overStyled);
-    const restRecord = sanitizedProps as Record<string, unknown>;
+    // Props this component intentionally doesn't support — deleted at runtime so they can't leak
+    // through even if a caller forces them via plain JavaScript, bypassing the `Omit<>` above.
+    const UNSUPPORTED_PROPS = [
+      "size", // Recursica controls sizing via Slider.module.css variables, not Mantine's native size scale.
+      "variant", // Slider has a single Recursica-defined visual treatment; Mantine's variant isn't exposed.
+      "radius", // Corner radius is fixed by Recursica tokens in Slider.module.css, not caller-configurable.
+      // Not currently a real key of Mantine's SliderProps (that's an Input.Wrapper-only prop) — kept
+      // as a defensive no-op delete since it predates this consolidation and the public prop type
+      // already `Omit`s it; Recursica's own FormControlLayout/WithReadOnlyWrapper own wrapper markup.
+      "wrapperProps",
+    ] as const satisfies readonly (keyof MantineSliderProps | "wrapperProps")[];
 
-    // Delete prohibited sizing hooks from bypassing variables natively
-    delete restRecord["size"];
-    delete restRecord["variant"];
-    delete restRecord["radius"];
-    delete restRecord["wrapperProps"];
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled) as Record<string, unknown>,
+      UNSUPPORTED_PROPS,
+    ) as Partial<typeof rest>;
+    const restRecord = sanitizedProps as Record<string, unknown>;
 
     // Securely map core native blocks down ensuring nested CSS modules map precisely
     const mergedClassNames: Partial<Record<string, string>> = {
@@ -232,6 +242,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
 
             <div className={styles.sliderTrackWrapper}>
               <MantineSlider
+                {...(sanitizedProps as unknown as MantineSliderProps)}
                 classNames={mergedClassNames}
                 disabled={disabled}
                 value={resolvedValue}
@@ -241,7 +252,6 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
                 max={max}
                 step={step}
                 label={tooltipLabel}
-                {...(sanitizedProps as unknown as MantineSliderProps)}
               />
             </div>
 

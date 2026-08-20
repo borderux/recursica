@@ -5,6 +5,7 @@ import {
 } from "@mantine/core";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 
@@ -21,7 +22,16 @@ export const Title = forwardRef<HTMLHeadingElement, TitleProps>(function Title(
   { overStyled = false, order = 1, ...rest },
   ref,
 ) {
-  const sanitizedProps = filterStylingProps(rest, overStyled);
+  // Props this component intentionally doesn't support — deleted at runtime so they can't leak
+  // through even if a caller forces them via plain JavaScript, bypassing the `Omit<>` above.
+  const UNSUPPORTED_PROPS = [
+    "size", // Recursica controls Title sizing via the `order` prop + typography tokens, not Mantine's native `size`.
+  ] as const satisfies readonly (keyof MantineTitleProps)[];
+
+  const sanitizedProps = omitUnsupportedProps(
+    filterStylingProps(rest, overStyled),
+    UNSUPPORTED_PROPS,
+  );
   const classNameProp = (sanitizedProps as Record<string, unknown>)
     .className as string | undefined;
 
@@ -34,8 +44,8 @@ export const Title = forwardRef<HTMLHeadingElement, TitleProps>(function Title(
     <MantineTitle
       ref={ref}
       order={order}
-      className={mergedClassName}
       {...(sanitizedProps as unknown as MantineTitleProps)}
+      className={mergedClassName}
     />
   );
 });

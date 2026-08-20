@@ -5,6 +5,7 @@ import {
 } from "@mantine/core";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Dropdown.module.css";
@@ -37,17 +38,23 @@ export interface BareDropdownProps
 
 export type BareDropdownComponentProps = RecursicaOverStyled<BareDropdownProps>;
 
+// Props this component intentionally doesn't support — deleted at runtime so they can't leak
+// through even if a caller forces them via plain JavaScript, bypassing the `Omit<>` above.
+const UNSUPPORTED_PROPS = [
+  "size", // Recursica controls sizing via the `size` variant + design tokens, not raw dimensions.
+  "variant", // Colors/variants are token-driven; the library's native palette isn't exposed.
+  "radius", // Recursica does not expose the library's native corner-radius system.
+] as const satisfies readonly (keyof MantineSelectProps)[];
+
 export const BareDropdown = forwardRef<
   HTMLInputElement,
   BareDropdownComponentProps
 >(function BareDropdown(props, ref) {
   const { overStyled = false, className, disabled, error, ...rest } = props;
-  const sanitizedProps = filterStylingProps(rest, overStyled);
-  const restRecord = sanitizedProps as Record<string, unknown>;
-
-  delete restRecord["size"];
-  delete restRecord["variant"];
-  delete restRecord["radius"];
+  const sanitizedProps = omitUnsupportedProps(
+    filterStylingProps(rest, overStyled) as Record<string, unknown>,
+    UNSUPPORTED_PROPS,
+  );
 
   const mergedClassNames: Partial<Record<string, string>> = {
     wrapper: className ? `${styles.root} ${className}` : styles.root,
@@ -60,6 +67,7 @@ export const BareDropdown = forwardRef<
   return (
     <MantineSelect
       ref={ref}
+      {...(sanitizedProps as unknown as MantineSelectProps)}
       classNames={mergedClassNames}
       disabled={disabled}
       label={undefined}
@@ -77,7 +85,6 @@ export const BareDropdown = forwardRef<
           "data-error": error ? "true" : undefined,
         },
       }}
-      {...(sanitizedProps as unknown as MantineSelectProps)}
     />
   );
 });

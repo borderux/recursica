@@ -7,6 +7,7 @@ import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import { RadioGroup } from "./RadioGroup";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import {
@@ -70,15 +71,21 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(
       controlMinWidth,
       ...rest
     } = props;
-    const sanitizedProps = filterStylingProps(rest, overStyled);
-    const restRecord = sanitizedProps as Record<string, unknown>;
+    // Props this component intentionally doesn't support — deleted at runtime so they can't leak
+    // through even if a caller forces them via plain JavaScript, bypassing the `Omit<>` above.
+    const UNSUPPORTED_PROPS = [
+      "size", // Recursica controls sizing via Radio.module.css variables, not Mantine's native size scale.
+      "color", // Colors are token-driven via Radio.module.css; Mantine's native palette isn't exposed.
+      "radius", // Corner radius is fixed by Recursica tokens in Radio.module.css, not caller-configurable.
+      "variant", // Radio has a single Recursica-defined visual treatment; Mantine's variant isn't exposed.
+      "iconColor", // Icon color is token-driven via Radio.module.css, not a native Mantine override.
+    ] as const satisfies readonly (keyof MantineRadioProps)[];
 
-    // Actively delete dimension bindings that bypass the abstraction
-    delete restRecord["size"];
-    delete restRecord["color"];
-    delete restRecord["radius"];
-    delete restRecord["variant"];
-    delete restRecord["iconColor"];
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled) as Record<string, unknown>,
+      UNSUPPORTED_PROPS,
+    ) as Partial<typeof rest>;
+    const restRecord = sanitizedProps as Record<string, unknown>;
 
     const mergedClassNames: Partial<Record<string, string>> = {
       root: styles.root,
@@ -150,11 +157,11 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(
     const radioNode = (
       <MantineRadio
         ref={ref}
+        {...(sanitizedProps as unknown as MantineRadioProps)}
         icon={RadioIcon}
         className={finalClass}
         classNames={mergedClassNames}
         disabled={readOnly || disabled}
-        {...(sanitizedProps as unknown as MantineRadioProps)}
       />
     );
 

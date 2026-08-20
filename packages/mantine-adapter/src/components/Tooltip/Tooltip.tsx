@@ -87,11 +87,11 @@ const TooltipBase = function Tooltip({
   return (
     <MantineTooltip
       position="top" /* Recursica default; Mantine defaults to "bottom" */
-      multiline /* Always allow text wrapping within max-width */
       arrowSize={arrowSize}
       withArrow={resolvedWithArrow}
-      classNames={mergedClassNames}
       {...(sanitizedProps as unknown as MantineTooltipProps)}
+      multiline /* Always allow text wrapping within max-width */
+      classNames={mergedClassNames}
     />
   );
 };

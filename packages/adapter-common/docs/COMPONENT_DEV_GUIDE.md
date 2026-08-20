@@ -70,7 +70,31 @@ Do not use plain `.css` for component overrides, and do not use `.css.ts` with `
 - **Preserve Underlying Composability** – When the target UI library utilizes a highly composable dot-notation or multi-part hierarchical API (e.g., `<Accordion>`, `<Accordion.Item>`, `<Accordion.Control>`), **do not flatten or aggregate their functionality** into a single rigid property bucket (e.g., forcing integrators to pass `{ title, content }` objects instead of using nested JSX). Instead, establish a 1:1 React component mapping of the library's sub-components. This strictly preserves the underlying library's dynamic ARIA tracking, semantic HTML behaviors, focus accessibility, and expected Developer Experience (DX) while securely enforcing Recursica styling rules.
 - **Unifying kit-specific concepts** – Kits often differ (e.g. one has `leftSection`/`rightSection`, another has `startIcon`/`endIcon`). When defining the Recursica API, unify where it makes sense: e.g. `icon` can be synonymous for "left/leading icon" if that's the common case; a separate prop or `...rest` can cover the other side. Document the convention (e.g. "icon = leading icon") in the component or guide.
 
-### 3.2 Prop spread order — always spread `...rest`/`sanitizedProps` FIRST
+### 3.2 Unsupported props — explicit removal via `omitUnsupportedProps`
+
+`filterStylingProps` blocks a fixed set of styling escape hatches. Separately, most components also have their own set of props the underlying library exposes but Recursica doesn't support at all (e.g. the library's native `size`/`color`/`radius`/`variant`, superseded by Recursica's own version of that concern). `Omit<LibraryProps, "size">` on the public props type stops a well-typed caller from passing it — but does nothing against a caller forcing the prop through plain JavaScript (or `as any`), which then leaks straight through `...rest`/`sanitizedProps` into the wrapped component, unprotected.
+
+`omitUnsupportedProps` (from `@recursica/adapter-common`, re-exported alongside `filterStylingProps` in each adapter's own `filterStylingProps.ts`) is the runtime backstop for that. Call it immediately after `filterStylingProps`, passing a component-local `UNSUPPORTED_PROPS` const — declared at the top of the component function, one entry per prop, each with a comment explaining why it isn't supported:
+
+```tsx
+// Props this component intentionally doesn't support — deleted at runtime so they can't leak
+// through even if a caller forces them via plain JavaScript, bypassing the `Omit<>` above.
+const UNSUPPORTED_PROPS = [
+  "size", // Recursica controls sizing via the `size` variant + design tokens, not raw dimensions.
+  "color", // Colors are token-driven; the library's native palette isn't exposed.
+] as const satisfies readonly (keyof MantineButtonProps)[];
+
+const sanitizedProps = omitUnsupportedProps(
+  filterStylingProps(rest, overStyled),
+  UNSUPPORTED_PROPS,
+);
+```
+
+- Apply this to **every** component, including sub-components merged onto a parent via dot-notation or `Object.assign` (e.g. `Table.Th`, `Accordion.Control`, `Menu.Item`) — each sub-component declares its own `UNSUPPORTED_PROPS` for its own prop surface.
+- This replaces one-off `delete restRecord["propName"]` calls scattered through a component body — consolidate them into the single `UNSUPPORTED_PROPS` const instead, keeping each prop's rationale comment.
+- Layout primitives (`Flex`, `Stack`, `Group`, `Container`, `Grid`) are the documented exception: they intentionally skip both `filterStylingProps` and `omitUnsupportedProps` so callers can freely pass width/height/padding/margin/flex props. Don't add `UNSUPPORTED_PROPS` there.
+
+### 3.3 Prop spread order — always spread `...rest`/`sanitizedProps` FIRST
 
 **Rule: when rendering the library component, spread `sanitizedProps` (or `rest`) as the very first JSX attribute, then list every computed/forced prop (`className`, `classes`/`classNames`, `icon`/`checkedIcon`, `sx`, `disabled`, `onChange`, etc.) _after_ it.** In JSX, when the same prop name appears twice, the one written later wins — so spreading last silently lets whatever the caller passed through `...rest` clobber the exact values this component depends on to render or behave correctly.
 
@@ -101,7 +125,7 @@ Two acceptable ways to make a specific prop fully un-overridable by a caller (st
 
 Spread-first ordering is still the right default for everything else, since it's one rule to remember and doesn't require auditing every prop's type surface.
 
-### 3.3 Public props and mapping
+### 3.4 Public props and mapping
 
 - **Public props** – Export `ComponentNameProps = RecursicaProps & LibraryComponentNameProps` (and standard HTML/React props as appropriate). Do not duplicate library props in the Recursica interface.
 - **Recursica preferred** – When Recursica and the library both define the same concern (e.g. size), Recursica wins. In each adapter, map Recursica values to library values and pass the result to the library. Callers can still pass library-specific props via `...rest` or library prop bags for escape hatches.

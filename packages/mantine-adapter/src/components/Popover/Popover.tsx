@@ -93,8 +93,8 @@ const PopoverBase = function Popover({
       position="top" /* Recursica default; Mantine defaults to "bottom" */
       arrowSize={arrowSize}
       withArrow={resolvedWithArrow}
-      classNames={mergedClassNames}
       {...(sanitizedProps as unknown as MantinePopoverProps)}
+      classNames={mergedClassNames}
     />
   );
 };
@@ -133,8 +133,8 @@ const PopoverDropdown = function PopoverDropdown({
 
   return (
     <MantinePopover.Dropdown
-      className={classNameProp}
       {...(sanitizedProps as unknown as MantinePopoverDropdownProps)}
+      className={classNameProp}
     />
   );
 };

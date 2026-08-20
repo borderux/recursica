@@ -7,6 +7,7 @@ import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import { RadioGroup } from "./RadioGroup";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import {
@@ -72,12 +73,18 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(
       style,
       ...rest
     } = props;
-    const sanitizedProps = filterStylingProps(rest, overStyled);
-    const restRecord = sanitizedProps as Record<string, unknown>;
+    // Props this component intentionally doesn't support — deleted at runtime so they can't leak
+    // through even if a caller forces them via plain JavaScript, bypassing the Omit<> above.
+    const UNSUPPORTED_PROPS = [
+      "size", // Recursica controls sizing via design tokens, not MUI's native small/medium size
+      "color", // Colors are token-driven; MUI's native palette isn't exposed
+    ] as const satisfies readonly (keyof MuiRadioProps)[];
 
-    // Actively delete dimension bindings that bypass the abstraction
-    delete restRecord["size"];
-    delete restRecord["color"];
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled),
+      UNSUPPORTED_PROPS,
+    );
+    const restRecord = sanitizedProps as Record<string, unknown>;
 
     // NOTE: MUI's actual prop is "classes", not "classNames" (that's Mantine's naming) — this
     // was reading the wrong key and silently doing nothing. Fixed. Also "body"/"inner"/"radio"/

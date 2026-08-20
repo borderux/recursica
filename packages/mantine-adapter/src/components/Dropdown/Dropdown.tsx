@@ -6,6 +6,7 @@ import {
 import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
@@ -27,6 +28,14 @@ export interface RecursicaDropdownProps
     BaseRecursicaDropdownProps {}
 
 export type DropdownProps = RecursicaOverStyled<RecursicaDropdownProps>;
+
+// Props this component intentionally doesn't support — deleted at runtime so they can't leak
+// through even if a caller forces them via plain JavaScript, bypassing the `Omit<>` above.
+const UNSUPPORTED_PROPS = [
+  "size", // Recursica controls sizing via the `size` variant + design tokens, not raw dimensions.
+  "variant", // Colors/variants are token-driven; the library's native palette isn't exposed.
+  "radius", // Recursica does not expose the library's native corner-radius system.
+] as const satisfies readonly (keyof MantineSelectProps)[];
 
 export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
   function Dropdown(props, ref) {
@@ -60,13 +69,11 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
       data,
       ...rest
     } = props;
-    const sanitizedProps = filterStylingProps(rest, overStyled);
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled) as Record<string, unknown>,
+      UNSUPPORTED_PROPS,
+    );
     const restRecord = sanitizedProps as Record<string, unknown>;
-
-    // Delete prohibited sizing hooks from bypassing variables natively
-    delete restRecord["size"];
-    delete restRecord["variant"];
-    delete restRecord["radius"];
 
     // Securely map core native blocks down ensuring nested CSS modules map precisely
     const mergedClassNames: Partial<Record<string, string>> = {
@@ -146,6 +153,7 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
           /* Naked Select execution safely decoupled from Mantine's macro Input.Wrapper DOM hooks */
           <MantineSelect
             ref={ref}
+            {...(sanitizedProps as unknown as MantineSelectProps)}
             classNames={mergedClassNames}
             disabled={disabled}
             value={value}
@@ -169,7 +177,6 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
                 "data-error": error ? "true" : undefined,
               },
             }}
-            {...(sanitizedProps as unknown as MantineSelectProps)}
           />
         }
       />

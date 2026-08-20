@@ -5,6 +5,7 @@ import {
 } from "@mantine/core";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./SegmentedControl.module.css";
@@ -70,26 +71,36 @@ const _SegmentedControl = forwardRef<HTMLDivElement, SegmentedControlProps>(
     { overStyled = false, orientation = "horizontal", fullWidth, ...rest },
     ref,
   ) {
-    const sanitizedProps = filterStylingProps(rest, overStyled);
-    const restRecord = sanitizedProps as Record<string, unknown>;
+    // Props this component intentionally doesn't support — deleted at runtime so they can't leak
+    // through even if a caller forces them via plain JavaScript, bypassing the `Omit<>` above.
+    const UNSUPPORTED_PROPS = [
+      // SegmentedControl only supports per-item disabling via the `data` array (each item may set
+      // its own `disabled`); a top-level `disabled` is intentionally unsupported (typed as `never`
+      // in RecursicaSegmentedControlProps) because Mantine's top-level `disabled` would disable
+      // the whole control uniformly instead of per-item.
+      "disabled",
+    ] as const satisfies readonly (keyof MantineSegmentedControlProps)[];
 
-    // Explicitly prevent consumers from bypassing the disabled restriction
-    delete restRecord["disabled"];
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled) as Record<string, unknown>,
+      UNSUPPORTED_PROPS,
+    ) as Partial<typeof rest>;
+    const restRecord = sanitizedProps as Record<string, unknown>;
 
     const stylingParams = useSegmentedControlClassNames(restRecord);
 
     return (
       <MantineSegmentedControl
         ref={ref}
+        {...(sanitizedProps as Omit<
+          MantineSegmentedControlProps,
+          "variant" | "size"
+        >)}
         className={stylingParams.className}
         classNames={stylingParams.classNames}
         orientation={orientation}
         fullWidth={fullWidth}
         data-orientation={orientation}
-        {...(sanitizedProps as Omit<
-          MantineSegmentedControlProps,
-          "variant" | "size"
-        >)}
       />
     );
   },

@@ -7,6 +7,7 @@ import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import { CheckboxGroup, CheckboxGroupContext } from "./CheckboxGroup";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import {
@@ -58,11 +59,18 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
       ...rest
     } = props;
 
-    const sanitizedProps = filterStylingProps(rest, overStyled);
-    const restRecord = sanitizedProps as Record<string, unknown>;
+    // Props this component intentionally doesn't support — deleted at runtime so they can't leak
+    // through even if a caller forces them via plain JavaScript, bypassing the Omit<> above.
+    const UNSUPPORTED_PROPS = [
+      "size", // Recursica controls sizing via design tokens, not MUI's native small/medium size
+      "color", // Colors are token-driven; MUI's native palette isn't exposed
+    ] as const satisfies readonly (keyof MuiCheckboxProps)[];
 
-    delete restRecord["size"];
-    delete restRecord["color"];
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled),
+      UNSUPPORTED_PROPS,
+    );
+    const restRecord = sanitizedProps as Record<string, unknown>;
 
     const mergedClassNames: Partial<Record<string, string>> = {
       root: styles.root,
@@ -172,10 +180,10 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
     const checkboxNode = (
       <MuiCheckbox
         ref={ref}
+        {...(sanitizedProps as unknown as MuiCheckboxProps)}
         className={!label ? `${finalClass} ${styles.inner}` : styles.inner}
         classes={mergedClassNames}
         disabled={readOnly || disabled || isGroupReadOnly}
-        {...(sanitizedProps as unknown as MuiCheckboxProps)}
         {...(isControlled ? { checked: isChecked as boolean } : {})}
         onChange={handleChange}
         disableRipple

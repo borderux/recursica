@@ -7,6 +7,7 @@ import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 
 import {
   filterStylingProps,
+  omitUnsupportedProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import {
@@ -100,14 +101,19 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(
       style,
       ...rest
     } = props;
-    const sanitizedProps = filterStylingProps(rest, overStyled);
-    const restRecord = sanitizedProps as Record<string, unknown>;
+    // Props this component intentionally doesn't support — deleted at runtime so they can't leak
+    // through even if a caller forces them via plain JavaScript, bypassing the Omit<> above. We
+    // rely strictly on variables from Switch.module.css instead of MUI's own dimension/palette props.
+    const UNSUPPORTED_PROPS = [
+      "size", // Recursica controls sizing via design tokens, not MUI's native small/medium size
+      "color", // Recursica hardcodes color="default" below; MUI's palette-driven colors are unused
+    ] as const satisfies readonly (keyof MuiSwitchProps)[];
 
-    // Actively delete dimension bindings that bypass the abstraction
-    delete restRecord["size"];
-    delete restRecord["color"];
-    delete restRecord["radius"];
-    delete restRecord["variant"];
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled),
+      UNSUPPORTED_PROPS,
+    );
+    const restRecord = sanitizedProps as Record<string, unknown>;
 
     // NOTE: classes.root must stay keyed "root" (MUI's own slot name), but it targets a
     // dedicated .switchRoot CSS class, not .root — .root is this component's own outer
@@ -237,6 +243,7 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(
       <MuiSwitch
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ref={ref as any}
+        {...(sanitizedProps as unknown as MuiSwitchProps)}
         className={!label ? `${finalClass} ${styles.inner}` : styles.inner}
         classes={mergedClassNames}
         color="default"
@@ -244,7 +251,6 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(
         data-disabled={isSwitchDisabled || undefined}
         icon={thumbNode}
         checkedIcon={thumbNode}
-        {...(sanitizedProps as unknown as MuiSwitchProps)}
         {...(isGrouped
           ? { checked: isChecked, onChange: handleGroupChange }
           : {})}

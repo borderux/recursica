@@ -38,8 +38,8 @@ const TableBase = forwardRef<HTMLTableElement, TableProps>(function Table(
   return (
     <MantineTable
       ref={ref}
-      className={finalClass}
       {...(sanitizedProps as unknown as MantineTableProps)}
+      className={finalClass}
     />
   );
 });

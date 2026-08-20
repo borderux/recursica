@@ -6,6 +6,7 @@ import {
 } from "@mantine/core";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Avatar.module.css";
@@ -41,7 +42,17 @@ const _Avatar = forwardRef<HTMLDivElement, AvatarProps>(function Avatar(
     large: "lg",
   } as const;
 
-  const sanitizedProps = filterStylingProps(rest, overStyled);
+  // Props this component intentionally doesn't support — deleted at runtime so they can't leak
+  // through even if a caller forces them via plain JavaScript, bypassing the `Omit<>` above.
+  const UNSUPPORTED_PROPS = [
+    "color", // Colors are token-driven via `data-variant`; Mantine's native palette isn't exposed.
+    "radius", // Avatar corner radius is controlled by design tokens, not a raw radius prop.
+  ] as const satisfies readonly (keyof MantineAvatarProps)[];
+
+  const sanitizedProps = omitUnsupportedProps(
+    filterStylingProps(rest, overStyled),
+    UNSUPPORTED_PROPS,
+  );
   const restRecord = sanitizedProps as Record<string, unknown>;
 
   // Determine semantic style based on provided props

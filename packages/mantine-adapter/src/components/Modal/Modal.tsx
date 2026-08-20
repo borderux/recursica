@@ -8,9 +8,11 @@ import {
   type ModalHeaderProps as MantineModalHeaderProps,
   type ModalTitleProps as MantineModalTitleProps,
   type ModalCloseButtonProps as MantineModalCloseButtonProps,
+  type ModalBodyProps as MantineModalBodyProps,
 } from "@mantine/core";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Modal.module.css";
@@ -54,7 +56,17 @@ const ModalInner = React.forwardRef<HTMLDivElement, ModalProps>(function Modal(
   },
   ref,
 ) {
-  const sanitizedProps = filterStylingProps(rest, overStyled);
+  // Props this component intentionally doesn't support — deleted at runtime so they can't leak
+  // through even if a caller forces them via plain JavaScript, bypassing the `Omit<>` above.
+  const UNSUPPORTED_PROPS = [
+    "size", // Modal width/height are enforced via CSS module tokens (min/max-width, min/max-height), not Mantine's `size` scale.
+    "radius", // Modal corner radius is token-driven via `.content` in Modal.module.css, not Mantine's `radius` prop.
+  ] as const satisfies readonly (keyof MantineModalProps)[];
+
+  const sanitizedProps = omitUnsupportedProps(
+    filterStylingProps(rest, overStyled) as Record<string, unknown>,
+    UNSUPPORTED_PROPS,
+  ) as Partial<typeof rest>;
 
   const mergedClassNames: Partial<Record<string, string>> = {
     root: styles.root,
@@ -84,11 +96,11 @@ const ModalInner = React.forwardRef<HTMLDivElement, ModalProps>(function Modal(
   return (
     <MantineModal.Root
       ref={ref}
-      classNames={mergedClassNames}
       {...(sanitizedProps as unknown as Omit<
         MantineModalProps,
         "size" | "radius" | "shadow"
       >)}
+      classNames={mergedClassNames}
     >
       {withOverlay && <MantineModal.Overlay {...overlayProps} />}
       <MantineModal.Content>
@@ -138,73 +150,79 @@ const ModalFooter = React.forwardRef<HTMLDivElement, ModalFooterProps>(
 );
 ModalFooter.displayName = "Modal.Footer";
 
-const ModalBody = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentPropsWithoutRef<typeof MantineModal.Body>
->(function ModalBody({ className, onScroll, children, ...rest }, ref) {
-  const internalRef = React.useRef<HTMLDivElement>(null);
-  const [scrolledTop, setScrolledTop] = React.useState(false);
-  const [scrolledBottom, setScrolledBottom] = React.useState(false);
+export type ModalBodyProps = RecursicaOverStyled<MantineModalBodyProps>;
 
-  const checkScroll = React.useCallback(() => {
-    if (internalRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = internalRef.current;
-      setScrolledTop(scrollTop > 0);
-      setScrolledBottom(Math.ceil(scrollTop + clientHeight) < scrollHeight);
-    }
-  }, []);
+const ModalBody = React.forwardRef<HTMLDivElement, ModalBodyProps>(
+  function ModalBody(
+    { overStyled = false, className, onScroll, children, ...rest },
+    ref,
+  ) {
+    const sanitizedProps = filterStylingProps(rest, overStyled);
+    const internalRef = React.useRef<HTMLDivElement>(null);
+    const [scrolledTop, setScrolledTop] = React.useState(false);
+    const [scrolledBottom, setScrolledBottom] = React.useState(false);
 
-  // Re-check scroll on mount and window resize
-  React.useEffect(() => {
-    checkScroll();
-    window.addEventListener("resize", checkScroll);
-    return () => window.removeEventListener("resize", checkScroll);
-  }, [checkScroll, children]);
+    const checkScroll = React.useCallback(() => {
+      if (internalRef.current) {
+        const { scrollTop, scrollHeight, clientHeight } = internalRef.current;
+        setScrolledTop(scrollTop > 0);
+        setScrolledBottom(Math.ceil(scrollTop + clientHeight) < scrollHeight);
+      }
+    }, []);
 
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    checkScroll();
-    onScroll?.(e);
-  };
+    // Re-check scroll on mount and window resize
+    React.useEffect(() => {
+      checkScroll();
+      window.addEventListener("resize", checkScroll);
+      return () => window.removeEventListener("resize", checkScroll);
+    }, [checkScroll, children]);
 
-  // Intercept children to pull Modal.Footer out of the scrolling container
-  let footer: React.ReactNode = null;
-  const bodyChildren: React.ReactNode[] = [];
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+      checkScroll();
+      onScroll?.(e);
+    };
 
-  React.Children.forEach(children, (child) => {
-    if (
-      React.isValidElement(child) &&
-      (child.type === ModalFooter ||
-        (child.type as React.ComponentType)?.displayName === "Modal.Footer")
-    ) {
-      footer = child;
-    } else {
-      bodyChildren.push(child);
-    }
-  });
+    // Intercept children to pull Modal.Footer out of the scrolling container
+    let footer: React.ReactNode = null;
+    const bodyChildren: React.ReactNode[] = [];
 
-  return (
-    <MantineModal.Body
-      {...rest}
-      ref={(node) => {
-        if (typeof ref === "function") ref(node);
-        else if (ref)
-          (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
-      }}
-      className={`${styles.bodyWrapper} ${className || ""}`}
-    >
-      <div
-        ref={internalRef}
-        onScroll={handleScroll}
-        data-scrolled-top={scrolledTop || undefined}
-        data-scrolled-bottom={scrolledBottom || undefined}
-        className={styles.scrollArea}
+    React.Children.forEach(children, (child) => {
+      if (
+        React.isValidElement(child) &&
+        (child.type === ModalFooter ||
+          (child.type as React.ComponentType)?.displayName === "Modal.Footer")
+      ) {
+        footer = child;
+      } else {
+        bodyChildren.push(child);
+      }
+    });
+
+    return (
+      <MantineModal.Body
+        {...sanitizedProps}
+        ref={(node) => {
+          if (typeof ref === "function") ref(node);
+          else if (ref)
+            (ref as React.MutableRefObject<HTMLDivElement | null>).current =
+              node;
+        }}
+        className={`${styles.bodyWrapper} ${className || ""}`}
       >
-        {bodyChildren}
-      </div>
-      {footer}
-    </MantineModal.Body>
-  );
-});
+        <div
+          ref={internalRef}
+          onScroll={handleScroll}
+          data-scrolled-top={scrolledTop || undefined}
+          data-scrolled-bottom={scrolledBottom || undefined}
+          className={styles.scrollArea}
+        >
+          {bodyChildren}
+        </div>
+        {footer}
+      </MantineModal.Body>
+    );
+  },
+);
 ModalBody.displayName = "Modal.Body";
 
 // ============================================================
@@ -213,9 +231,20 @@ ModalBody.displayName = "Modal.Body";
 
 export type ModalRootProps = RecursicaOverStyled<MantineModalRootProps>;
 
+// Props this component intentionally doesn't support — deleted at runtime so they can't leak
+// through even if a caller forces them via plain JavaScript. `Modal.Root` is used directly for
+// advanced composition, so it doesn't benefit from the top-level `Modal`'s `Omit<>` protection.
+const MODAL_ROOT_UNSUPPORTED_PROPS = [
+  "size", // Modal width/height are enforced via CSS module tokens, not Mantine's `size` scale.
+  "radius", // Modal corner radius is token-driven via `.content` in Modal.module.css, not Mantine's `radius` prop.
+] as const satisfies readonly (keyof MantineModalRootProps)[];
+
 const ModalRoot = React.forwardRef<HTMLDivElement, ModalRootProps>(
   function ModalRoot({ overStyled = false, ...rest }, ref) {
-    const sanitizedProps = filterStylingProps(rest, overStyled);
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled) as Record<string, unknown>,
+      MODAL_ROOT_UNSUPPORTED_PROPS,
+    ) as Partial<typeof rest>;
     return (
       <MantineModal.Root
         ref={ref}
@@ -243,9 +272,18 @@ ModalOverlay.displayName = "Modal.Overlay";
 
 export type ModalContentProps = RecursicaOverStyled<MantineModalContentProps>;
 
+// Modal corner radius is token-driven via `.content` in Modal.module.css, not Mantine's
+// native `radius` prop — deleted at runtime so it can't leak through via plain JavaScript.
+const MODAL_CONTENT_UNSUPPORTED_PROPS = [
+  "radius",
+] as const satisfies readonly (keyof MantineModalContentProps)[];
+
 const ModalContent = React.forwardRef<HTMLDivElement, ModalContentProps>(
   function ModalContent({ overStyled = false, ...rest }, ref) {
-    const sanitizedProps = filterStylingProps(rest, overStyled);
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled) as Record<string, unknown>,
+      MODAL_CONTENT_UNSUPPORTED_PROPS,
+    ) as Partial<typeof rest>;
     return (
       <MantineModal.Content
         ref={ref}
@@ -289,11 +327,21 @@ ModalTitle.displayName = "Modal.Title";
 export type ModalCloseButtonProps =
   RecursicaOverStyled<MantineModalCloseButtonProps>;
 
+// The close button's dimensions and corner radius are enforced by Modal.module.css's `.close`
+// (standard icon-button tokens), not Mantine's native `size`/`radius` scales.
+const MODAL_CLOSE_BUTTON_UNSUPPORTED_PROPS = [
+  "size",
+  "radius",
+] as const satisfies readonly (keyof MantineModalCloseButtonProps)[];
+
 const ModalCloseButton = React.forwardRef<
   HTMLButtonElement,
   ModalCloseButtonProps
 >(function ModalCloseButton({ overStyled = false, ...rest }, ref) {
-  const sanitizedProps = filterStylingProps(rest, overStyled);
+  const sanitizedProps = omitUnsupportedProps(
+    filterStylingProps(rest, overStyled) as Record<string, unknown>,
+    MODAL_CLOSE_BUTTON_UNSUPPORTED_PROPS,
+  ) as Partial<typeof rest>;
   return (
     <MantineModal.CloseButton
       ref={ref}

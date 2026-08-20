@@ -88,8 +88,8 @@ const HoverCardBase = function HoverCard({
       position="top" /* Recursica default; Mantine defaults to "bottom" */
       arrowSize={arrowSize}
       withArrow={resolvedWithArrow}
-      classNames={mergedClassNames}
       {...(sanitizedProps as unknown as MantineHoverCardProps)}
+      classNames={mergedClassNames}
     />
   );
 };
@@ -128,8 +128,8 @@ const HoverCardDropdown = function HoverCardDropdown({
 
   return (
     <MantineHoverCard.Dropdown
-      className={classNameProp}
       {...(sanitizedProps as unknown as MantineHoverCardDropdownProps)}
+      className={classNameProp}
     />
   );
 };

@@ -5,6 +5,7 @@ import {
 } from "@mantine/core";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import styles from "./Toast.module.css";
@@ -31,7 +32,18 @@ export const Toast = React.forwardRef<HTMLDivElement, ToastProps>(
     },
     ref,
   ) {
-    const sanitizedProps = filterStylingProps(rest, overStyled);
+    // Props this component intentionally doesn't support — deleted at runtime so they can't leak
+    // through even if a caller forces them via plain JavaScript, bypassing the `Omit<>` above.
+    const UNSUPPORTED_PROPS = [
+      "color", // Colors are token-driven via `data-variant`; Mantine's native palette isn't exposed.
+      "radius", // Toast corner radius is controlled by design tokens, not a raw radius prop.
+      "loading", // Toast never renders a loading state; always forced off via `loading={false}` below.
+    ] as const satisfies readonly (keyof MantineNotificationProps)[];
+
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled),
+      UNSUPPORTED_PROPS,
+    );
 
     // Bind CSS module classes to Mantine's internal classNames API
     const mergedClassNames: Partial<Record<string, string>> = {
@@ -64,15 +76,15 @@ export const Toast = React.forwardRef<HTMLDivElement, ToastProps>(
     return (
       <MantineNotification
         ref={ref}
+        {...(sanitizedProps as unknown as Omit<
+          MantineNotificationProps,
+          "color" | "radius" | "variant" | "loading"
+        >)}
         withCloseButton={withCloseButton}
         withBorder={false} // Border is handled via CSS or tokens if needed
         data-variant={variant}
         classNames={mergedClassNames}
         loading={false}
-        {...(sanitizedProps as unknown as Omit<
-          MantineNotificationProps,
-          "color" | "radius" | "variant" | "loading"
-        >)}
       />
     );
   },

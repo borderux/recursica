@@ -3,6 +3,7 @@ import { DatePickerInput, type DatePickerInputProps } from "@mantine/dates";
 import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import {
   filterStylingProps,
+  omitUnsupportedProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
 import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
@@ -39,6 +40,15 @@ export interface RecursicaDatePickerProps
 
 export type DatePickerProps = RecursicaOverStyled<RecursicaDatePickerProps>;
 
+// Props this component intentionally doesn't support — deleted at runtime so they can't leak
+// through even if a caller forces them via plain JavaScript, bypassing the `Omit<>` above.
+const UNSUPPORTED_PROPS = [
+  "size", // Recursica controls sizing via the `size` variant + design tokens, not raw dimensions.
+  "variant", // Colors/variants are token-driven; the library's native palette isn't exposed.
+  "radius", // Recursica does not expose the library's native corner-radius system.
+  "description", // Managed by FormControlWrapper via assistiveText.
+] as const satisfies readonly (keyof DatePickerInputProps)[];
+
 export const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
   function DatePicker(props, ref) {
     const {
@@ -70,14 +80,11 @@ export const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
       ...rest
     } = props;
 
-    const sanitizedProps = filterStylingProps(rest, overStyled);
+    const sanitizedProps = omitUnsupportedProps(
+      filterStylingProps(rest, overStyled) as Record<string, unknown>,
+      UNSUPPORTED_PROPS,
+    );
     const restRecord = sanitizedProps as Record<string, unknown>;
-
-    // Delete prohibited sizing hooks from bypassing variables natively
-    delete restRecord["size"];
-    delete restRecord["variant"];
-    delete restRecord["radius"];
-    delete restRecord["description"]; // Managed by FormControlWrapper via assistiveText
 
     // Securely map core native blocks down ensuring nested CSS modules map precisely
     const mergedClassNames: Partial<Record<string, string>> = {
@@ -177,6 +184,11 @@ export const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
           /* Naked Input execution safely decoupled from Mantine's macro Input.Wrapper DOM hooks */
           <DatePickerInput
             ref={ref}
+            highlightToday // Default on so today is visually marked; consumers can still override via rest
+            valueFormat="MM/DD/YY" // Default display format; consumers can still override via rest
+            placeholder="MM / DD / YY" // Default placeholder; consumers can still override via rest
+            leftSection={<CalendarIcon />} // Default leading icon; consumers can still override via rest
+            {...(sanitizedProps as unknown as DatePickerInputProps)}
             classNames={mergedClassNames}
             disabled={disabled}
             value={value}
@@ -189,12 +201,7 @@ export const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
               "data-disabled": disabled ? "true" : undefined,
               "data-error": error ? "true" : undefined,
             }}
-            highlightToday // Default on so today is visually marked; consumers can still override via rest
-            valueFormat="MM/DD/YY" // Default display format; consumers can still override via rest
-            placeholder="MM / DD / YY" // Default placeholder; consumers can still override via rest
-            leftSection={<CalendarIcon />} // Default leading icon; consumers can still override via rest
             popoverProps={mergedPopoverProps}
-            {...(sanitizedProps as unknown as DatePickerInputProps)}
           />
         }
       />
