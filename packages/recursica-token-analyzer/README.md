@@ -31,13 +31,15 @@ _(This runs `analyze-tokens --css recursica_variables_scoped.css --dir src/compo
 
 The analyzer is deeply integrated into the adapter build pipelines. It runs automatically during the `prebuild` hook.
 
-If the analyzer finds **ANY broken variables** or **ANY un-exempted unused variables**, it will exit with a `1` status code and **instantly fail the build.**
+If the analyzer finds **ANY broken variables** (variables your code references that no longer exist in the UI Kit), it will exit with a `1` status code and **instantly fail the build.**
+
+Unused variables — including un-exempted ones — never fail the build on their own; they're reported as warnings in the console and in `token-analysis.json` so you can track and address them on your own schedule.
 
 ## The Exemption System (`recursica-ignore`)
 
-Because the analyzer is ultra-strict, it will fail your build if the design team adds a variable to Figma that you haven't implemented yet, or if they export a redundant variable you don't need.
+The analyzer will warn on unused variables — e.g. if the design team adds a variable to Figma that you haven't implemented yet, or exports a redundant variable you don't need — but this never fails the build on its own.
 
-If there is a variable that you purposely want to ignore and have no intention of implementing, you can exempt it directly inside the CSS file where it belongs!
+If there is a variable that you purposely want to ignore and have no intention of implementing, you can exempt it directly inside the CSS file where it belongs, keeping the warning noise down.
 
 Simply add a special `recursica-ignore:` comment block anywhere in your `.module.css` file:
 
@@ -45,7 +47,19 @@ Simply add a special `recursica-ignore:` comment block anywhere in your `.module
 /* recursica-ignore: --recursica_ui-kit_components_button_some_weird_state_we_dont_want */
 ```
 
-The analyzer will scan your component files, extract these ignore directives, and completely exclude them from the Unused Variables calculations—allowing your build to pass!
+The analyzer will scan your component files, extract these ignore directives, and completely exclude them from the Unused Variables calculations.
+
+### Stale Exemptions
+
+Exemptions themselves can go stale: if the design team later removes or renames the variable a `recursica-ignore:` directive points to, that directive is now exempting nothing and is just dead weight in the CSS file.
+
+The analyzer detects these automatically and reports them as `staleExemptions` (distinct from `unusedByComponent`—a stale exemption's variable doesn't exist in the UI Kit at all, it isn't just unimplemented). Run with `--cleanup` to have the analyzer remove the stale `recursica-ignore:` comment lines from your source files directly:
+
+```bash
+analyze-tokens --cleanup
+```
+
+`--cleanup` only ever removes directives confirmed stale by this run; it never touches exemptions for variables that still exist but are simply unused.
 
 ## JSON Report Schema
 

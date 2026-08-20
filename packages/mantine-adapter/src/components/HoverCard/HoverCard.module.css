@@ -5,13 +5,7 @@
      and positioning (-arrowSize/2) calculations that cannot be CSS-driven. The default matches
      the Recursica beak-size token (16px). See COMPONENT_ISSUES.md for details.
    - All structural layout (display, position, overflow) is deferred to Mantine's native
-     behavior. We only override visual design tokens (colors, typography, spacing, borders).
-/* EXEMPTIONS:
-   - beak-size is ignored here because Mantine's popover arrows compute their sizing and positional offsets
-     dynamically within the React rendering engine (requires inline pixel number rather than standard CSS variables).
-     The beak size is checked in JS against a fixed value of 16px. If this variable changes, the TSX components
-     need to be reviewed/re-compiled. */
-/* recursica-ignore: --recursica_ui-kit_components_hover-card-popover_properties_beak-size = 16px */
+     behavior. We only override visual design tokens (colors, typography, spacing, borders). */
 
 /* ======================================
    DROPDOWN CONTAINER

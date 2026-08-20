@@ -13,11 +13,6 @@
      Popper/Tooltip behavior. We only override visual design tokens (colors, typography,
      spacing, borders).
 */
-/* EXEMPTIONS:
-   - beak-size is ignored here because Mui's Tooltip arrow is a fixed-size CSS shape
-     (1em / 0.71em, relative to the tooltip's own font-size) with no size prop of its own —
-     unlike Mantine, there is no JS/pixel hook to bind this token to. */
-/* recursica-ignore: --recursica_ui-kit_components_hover-card-popover_properties_beak-size = 16px */
 
 /* ======================================
    DROPDOWN CONTAINER

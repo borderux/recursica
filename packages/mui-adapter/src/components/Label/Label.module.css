@@ -1,9 +1,3 @@
-/* EXEMPTIONS:
-   - layouts_stacked sizes width variables are ignored because stacked labels naturally occupy 100% width block-level
-     real estate in HTML rendering, making explicit width properties redundant. Mirrors the mantine-adapter reference. */
-/* recursica-ignore: --recursica_ui-kit_components_label_variants_layouts_stacked_variants_sizes_default_properties_width */
-/* recursica-ignore: --recursica_ui-kit_components_label_variants_layouts_stacked_variants_sizes_small_properties_width */
-
 .root {
   /* Prevent default MUI absolute positioning logic */
   position: relative;

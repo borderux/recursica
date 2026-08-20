@@ -1,11 +1,3 @@
-/* EXEMPTIONS:
-   - accordion-header open-appearance background-color/border-color are ignored because Forge does
-     not apply a visual swap on expand, even though the token schema defines "open" appearance
-     colors distinct from "closed" (see .control below, which intentionally keeps a constant
-     background/border across collapsed/expanded). Mirrors the mantine-adapter reference. */
-/* recursica-ignore: --recursica_ui-kit_components_accordion-header_variants_appearance_open_properties_colors_background-color */
-/* recursica-ignore: --recursica_ui-kit_components_accordion-header_variants_appearance_open_properties_colors_border-color */
-
 /* ==== ACCORDION CONTAINER ==== */
 .root {
   box-sizing: border-box;

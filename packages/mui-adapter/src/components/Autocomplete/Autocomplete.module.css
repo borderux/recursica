@@ -1,11 +1,3 @@
-/* EXEMPTIONS:
-   - state-specific border-size variables are ignored because the input box uses a uniform static boundary to prevent 
-     unexpected layout shifts or flickering when switching between active, focused, or error states. */
-/* recursica-ignore: --recursica_ui-kit_components_autocomplete_variants_states_default_properties_border-size */
-/* recursica-ignore: --recursica_ui-kit_components_autocomplete_variants_states_disabled_properties_border-size */
-/* recursica-ignore: --recursica_ui-kit_components_autocomplete_variants_states_error_properties_border-size */
-/* recursica-ignore: --recursica_ui-kit_components_autocomplete_variants_states_focus_properties_border-size */
-
 /* LAYOUT SPACING OVERRIDES:
    - Sets the --form-control-margin-bottom spacing hook to map component-specific layout tokens.
    - Also sets the --autocomplete-control-{max,min}-width hooks consumed inline in Autocomplete.tsx,
