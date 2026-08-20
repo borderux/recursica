@@ -7,6 +7,7 @@ import {
 } from "../../utils/filterStylingProps";
 import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
 import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
+import { CalendarIcon } from "./DatePicker.icons";
 import styles from "./DatePicker.module.css";
 
 import { type RecursicaDatePickerProps as BaseRecursicaDatePickerProps } from "@recursica/adapter-common";
@@ -83,9 +84,12 @@ export const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
       wrapper: styles.root, // The nested Input internal relative wrapper bounding box
       input: styles.input,
       section: styles.section,
-      dropdown: styles.dropdown,
       day: styles.day,
+      weekday: styles.weekday,
       calendarHeader: styles.calendarHeader,
+      calendarHeaderControl: styles.calendarHeaderControl,
+      calendarHeaderLevel: styles.calendarHeaderLevel,
+      calendarHeaderControlIcon: styles.calendarHeaderControlIcon,
     };
 
     const classNamesProp = restRecord.classNames;
@@ -105,6 +109,33 @@ export const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
         ? `${styles.section} ${o.section}`
         : styles.section;
     }
+
+    // The calendar popover surface (.dropdown) is styled by Mantine's underlying `Popover`
+    // component, not `DatePickerInput` itself — it only accepts classNames via `popoverProps`,
+    // not the top-level `classNames` map above (which only reaches the Input/Calendar parts).
+    const popoverPropsInput = restRecord.popoverProps;
+    const consumerPopoverProps =
+      popoverPropsInput &&
+      typeof popoverPropsInput === "object" &&
+      !Array.isArray(popoverPropsInput)
+        ? (popoverPropsInput as Record<string, unknown>)
+        : undefined;
+    const consumerPopoverClassNames =
+      consumerPopoverProps?.classNames &&
+      typeof consumerPopoverProps.classNames === "object" &&
+      !Array.isArray(consumerPopoverProps.classNames)
+        ? (consumerPopoverProps.classNames as Partial<Record<string, string>>)
+        : undefined;
+    delete restRecord["popoverProps"];
+    const mergedPopoverProps = {
+      ...consumerPopoverProps,
+      classNames: {
+        ...consumerPopoverClassNames,
+        dropdown: consumerPopoverClassNames?.dropdown
+          ? `${styles.dropdown} ${consumerPopoverClassNames.dropdown}`
+          : styles.dropdown,
+      },
+    };
 
     const wrapperClass = className
       ? `${styles.layoutOverride} ${className}`
@@ -158,6 +189,11 @@ export const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
               "data-disabled": disabled ? "true" : undefined,
               "data-error": error ? "true" : undefined,
             }}
+            highlightToday // Default on so today is visually marked; consumers can still override via rest
+            valueFormat="MM/DD/YY" // Default display format; consumers can still override via rest
+            placeholder="MM / DD / YY" // Default placeholder; consumers can still override via rest
+            leftSection={<CalendarIcon />} // Default leading icon; consumers can still override via rest
+            popoverProps={mergedPopoverProps}
             {...(sanitizedProps as unknown as DatePickerInputProps)}
           />
         }

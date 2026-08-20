@@ -65,7 +65,6 @@ export const Default: Story = {
   args: {
     disabled: false,
     label: "Project Deadline",
-    placeholder: "Select a deadline...",
     assistiveText: "Specify the absolute cutoff for code submission.",
   },
 };
@@ -73,7 +72,6 @@ export const Default: Story = {
 export const FormsSideBySide: Story = {
   args: {
     label: "Incident Start Date",
-    placeholder: "Pick date...",
     assistiveText: "When did the incident originally occur?",
     formLayout: "side-by-side",
   },
@@ -82,7 +80,6 @@ export const FormsSideBySide: Story = {
 export const WithLeadingIcon: Story = {
   args: {
     label: "Launch Date",
-    placeholder: "Select launch date...",
     leftSection: (
       <svg
         width="24"
@@ -106,7 +103,6 @@ export const WithLeadingIcon: Story = {
 export const Disabled: Story = {
   args: {
     label: "Disabled Date Range",
-    placeholder: "Disabled selection...",
     disabled: true,
   },
 };
@@ -114,7 +110,6 @@ export const Disabled: Story = {
 export const ErrorState: Story = {
   args: {
     label: "Execution Date",
-    placeholder: "Pick a valid date...",
     error: "The chosen date conflicts with an existing deployment freeze.",
     required: true,
   },
@@ -123,7 +118,6 @@ export const ErrorState: Story = {
 export const StaticReadOnly: Story = {
   args: {
     label: "Static ReadOnly Review",
-    placeholder: "Ignored...",
     value: new Date("2026-05-21"),
     readOnly: true,
   },
@@ -132,7 +126,6 @@ export const StaticReadOnly: Story = {
 export const EditableReadOnly: Story = {
   args: {
     label: "Editable ReadOnly Review",
-    placeholder: "Ignored until active...",
     defaultValue: new Date("2026-06-01"),
     readOnly: true,
     labelWithEditIcon: true,
