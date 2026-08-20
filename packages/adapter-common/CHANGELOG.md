@@ -1,5 +1,11 @@
 # @recursica/adapter-common
 
+## 0.19.0
+
+### Minor Changes
+
+- d171a96: Update revision to latest
+
 ## 0.18.0
 
 ### Minor Changes
