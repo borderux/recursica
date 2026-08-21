@@ -1,5 +1,16 @@
 # recursica-storybook
 
+## 0.30.0
+
+### Minor Changes
+
+- bcac5c7: Updated to latest css and fixed link
+
+### Patch Changes
+
+- Updated dependencies [bcac5c7]
+  - @recursica/mantine-adapter@0.45.0
+
 ## 0.29.0
 
 ### Minor Changes
