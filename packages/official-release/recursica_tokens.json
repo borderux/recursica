@@ -43,6 +43,9 @@
           "$value": "#131313"
         },
         "alias": "gray",
+        "$extensions": {
+          "com.recursica.friendlyName": "Gray"
+        },
         "000": {
           "$type": "color",
           "$value": "#fcfcfc"
@@ -94,6 +97,9 @@
           "$value": "#00090b"
         },
         "alias": "cornflower",
+        "$extensions": {
+          "com.recursica.friendlyName": "Cornflower"
+        },
         "000": {
           "$type": "color",
           "$value": "#eaf7fb"
@@ -145,6 +151,9 @@
           "$value": "#00130d"
         },
         "alias": "greensheen",
+        "$extensions": {
+          "com.recursica.friendlyName": "Greensheen"
+        },
         "000": {
           "$type": "color",
           "$value": "#e9fbf1"
@@ -196,6 +205,9 @@
           "$value": "#2a1004"
         },
         "alias": "mandarin",
+        "$extensions": {
+          "com.recursica.friendlyName": "Mandarin"
+        },
         "000": {
           "$type": "color",
           "$value": "#fff4ea"
@@ -247,6 +259,9 @@
           "$value": "#120000"
         },
         "alias": "mandy",
+        "$extensions": {
+          "com.recursica.friendlyName": "Mandy"
+        },
         "000": {
           "$type": "color",
           "$value": "#faf5f5"
@@ -298,6 +313,9 @@
           "$value": "#24060b"
         },
         "alias": "salmon",
+        "$extensions": {
+          "com.recursica.friendlyName": "Salmon"
+        },
         "000": {
           "$type": "color",
           "$value": "#fbeff1"
@@ -774,8 +792,8 @@
   },
   "$extensions": {
     "recursica.metadata": {
-      "exportedAt": "2026-08-03T22:22:28.146Z",
-      "version": "0.24.3"
+      "exportedAt": "2026-08-21T22:15:07.934Z",
+      "version": "0.25.0"
     }
   }
 }
