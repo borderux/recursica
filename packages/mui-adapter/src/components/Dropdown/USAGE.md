@@ -39,3 +39,10 @@ All Recursica components in the `@recursica/mui-adapter` package adhere strictly
 > - **Anti-override protection**: Rogues style injections (like inline `style` or arbitrary `className`) are automatically blocked by our prop layer unless `overStyled={true}` is explicitly provided.
 > - **No Direct Layers**: Do not pass a `layer` prop to this component. To place it on a specific visual layer, wrap it in a `<Layer layer={0|1|2|3}>` component natively.
 > - **Variables and Theming**: Styling is entirely determined by local CSS variables defined in `recursica_variables_scoped.css` and mapped in the component's CSS module.
+
+---
+
+## 4. Notes
+
+- Pass `startAdornment` for a leading icon, and `clearable` (with a value present) to show a clear button — both render using the dropdown's own icon-color tokens, matching the mantine-adapter's `leftSection`/`clearable` behavior.
+- `onChange` follows MUI's native `Select` signature: `(event: SelectChangeEvent, child: ReactNode) => void`.

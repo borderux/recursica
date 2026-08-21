@@ -5,7 +5,13 @@
      and positioning (-arrowSize/2) calculations that cannot be CSS-driven. The default matches
      the Recursica beak-size token (16px). See COMPONENT_ISSUES.md for details.
    - All structural layout (display, position, overflow) is deferred to Mantine's native
-     behavior. We only override visual design tokens (colors, typography, spacing, borders). */
+     behavior. We only override visual design tokens (colors, typography, spacing, borders).
+   - margin: 0 !important on .dropdown. Mui's Tooltip hardcodes a per-placement margin
+     (14px, reset to 0 only when arrow is enabled) on top of whatever offset the popper
+     "offset" modifier applies, so with withBeak=false the trigger-to-dropdown gap was
+     offset + 14px instead of just offset. There is no Recursica token for this spacing —
+     the gap is driven purely by the `offset` prop (a plain number, same as Mantine's
+     HoverCard), so we zero out Mui's extra margin to make offset the only source of gap. */
 
 /* ======================================
    DROPDOWN CONTAINER
@@ -72,14 +78,30 @@
   color: var(
     --recursica_ui-kit_components_hover-card-popover_properties_colors_content
   );
+
+  margin: 0 !important; /* HARDCODE: cancel Mui's built-in per-placement margin, see note above */
 }
 
 /* ======================================
    ARROW / BEAK
    ====================================== */
 
+/* Mui's arrow is a rotated square (via ::before, background-color: currentColor)
+   sized in em units off font-size, not a bordered CSS triangle. `color` (not
+   border-color) is what actually fills it, which is why setting border-color here
+   previously had no visible effect and left it defaulting to the inherited text
+   color (solid black). Fill it with the same background-color token the card body
+   uses so it blends into the card exactly like Mantine's beak, and size it off the
+   beak-size token instead of Mui's default 1em/0.71em (font-size-relative) box. */
 .arrow {
-  border-color: var(
-    --recursica_ui-kit_components_hover-card-popover_properties_colors_border-color
+  color: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_colors_background-color
   );
+  width: var(
+    --recursica_ui-kit_components_hover-card-popover_properties_beak-size
+  );
+  height: calc(
+    var(--recursica_ui-kit_components_hover-card-popover_properties_beak-size) *
+      0.7071
+  ); /* = width / sqrt(2), same ratio Mui's default arrow uses */
 }

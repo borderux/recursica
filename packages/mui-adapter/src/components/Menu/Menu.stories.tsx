@@ -12,6 +12,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { Menu, MenuItem, MenuDivider } from "./Menu";
 import { Button } from "../Button";
 import { ListSubheader } from "@mui/material";
+import styles from "./Menu.module.css";
 
 const SettingsIcon = (props: React.ComponentProps<"svg">) => (
   <svg
@@ -123,6 +124,56 @@ const ArrowsIcon = (props: React.ComponentProps<"svg">) => (
   </svg>
 );
 
+const ChevronRightIcon = (props: React.ComponentProps<"svg">) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <polyline points="9 18 15 12 9 6" />
+  </svg>
+);
+
+// mui-adapter's Menu is monolithic (see IMPLEMENTATION_NOTES.md) — there is no
+// Menu.Sub composable, so a submenu is just a MenuItem that anchors its own
+// nested Menu, mirroring how the top-level trigger manages its own anchorEl.
+interface SubMenuTriggerProps {
+  label: string;
+  children: React.ReactNode;
+}
+
+const SubMenuTrigger = ({ label, children }: SubMenuTriggerProps) => {
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+  return (
+    <>
+      <MenuItem onClick={(event) => setAnchorEl(event.currentTarget)}>
+        {label}
+        <ChevronRightIcon
+          className={styles.chevron}
+          style={{ marginLeft: "auto", paddingLeft: 8 }}
+        />
+      </MenuItem>
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={() => setAnchorEl(null)}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
+      >
+        {children}
+      </Menu>
+    </>
+  );
+};
+
 type MenuStoryArgs = Record<string, unknown>;
 
 const meta: Meta = {
@@ -225,9 +276,84 @@ export const WithDisabledItems: Story = {
   },
 };
 
-export const HoverTrigger: Story = {
+export const WithSubmenus: Story = {
   render: (args) => (
     <InteractiveMenu {...args}>
+      <MenuItem>Dashboard</MenuItem>
+      <SubMenuTrigger label="Products">
+        <MenuItem>All products</MenuItem>
+        <MenuItem>Categories</MenuItem>
+        <MenuItem>Tags</MenuItem>
+      </SubMenuTrigger>
+      <SubMenuTrigger label="Orders">
+        <MenuItem>Open</MenuItem>
+        <MenuItem>Completed</MenuItem>
+        <MenuItem>Cancelled</MenuItem>
+      </SubMenuTrigger>
+    </InteractiveMenu>
+  ),
+  args: {
+    opened: true,
+    // Match mantine's explicit `width: 200` for this story so the row has room for the
+    // "Products"/"Orders" label plus the submenu chevron without clipping it.
+    slotProps: { paper: { style: { minWidth: 200 } } },
+  },
+};
+
+// mui-adapter's Menu has no native hover-trigger support (unlike Mantine's `trigger` prop),
+// so this story implements open-on-hover itself: hovering the target opens the menu, and a
+// short close delay (mirroring Mantine's `closeDelay`) keeps it open while the pointer moves
+// from the target into the dropdown, since MUI's Menu renders in a portal outside the
+// wrapper's DOM subtree.
+const HoverMenu = ({ children, ...args }: InteractiveMenuProps) => {
+  const [open, setOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
+
+  const cancelClose = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+  };
+  const scheduleClose = () => {
+    closeTimer.current = setTimeout(() => setOpen(false), 300);
+  };
+
+  return (
+    <div>
+      <Button
+        ref={buttonRef}
+        variant="solid"
+        onClick={() => setOpen((prev) => !prev)}
+        onMouseEnter={() => {
+          cancelClose();
+          setOpen(true);
+        }}
+        onMouseLeave={scheduleClose}
+      >
+        Hover or Click
+      </Button>
+      <Menu
+        {...args}
+        anchorEl={buttonRef.current}
+        open={open}
+        onClose={() => setOpen(false)}
+        slotProps={{
+          paper: {
+            onMouseEnter: cancelClose,
+            onMouseLeave: scheduleClose,
+          },
+        }}
+      >
+        {children}
+      </Menu>
+    </div>
+  );
+};
+
+export const HoverTrigger: Story = {
+  render: (args) => (
+    <HoverMenu {...args}>
       <MenuItem>
         <SettingsIcon style={{ marginRight: 8 }} /> Settings
       </MenuItem>
@@ -237,9 +363,6 @@ export const HoverTrigger: Story = {
       <MenuItem>
         <ImageIcon style={{ marginRight: 8 }} /> Gallery
       </MenuItem>
-    </InteractiveMenu>
+    </HoverMenu>
   ),
-  args: {
-    opened: true,
-  },
 };

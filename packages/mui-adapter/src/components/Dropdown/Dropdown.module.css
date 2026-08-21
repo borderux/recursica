@@ -59,20 +59,28 @@
   box-sizing: border-box;
   margin: 0;
 
-  /* Box Geometry */
-  min-height: var(--recursica_ui-kit_components_dropdown_properties_min-height);
+  /* Box Geometry
+     `!important` throughout: MUI's own `.MuiSelect-select`/`.MuiOutlinedInput-input` styled rules
+     (e.g. `minHeight: 1.4375em`, and outlined-variant default padding) are equal-specificity
+     single-class selectors injected by emotion at runtime, after this CSS module's own stylesheet
+     — on that tie they win by source order, which is what silently shrank the control below the
+     min-height token (measured 42.8px vs Mantine's 48px) even though the token was already wired
+     here. Same root cause as the notchedOutline double-border fix below. */
+  min-height: var(
+    --recursica_ui-kit_components_dropdown_properties_min-height
+  ) !important;
   padding-top: var(
     --recursica_ui-kit_components_dropdown_properties_vertical-padding
-  );
+  ) !important;
   padding-bottom: var(
     --recursica_ui-kit_components_dropdown_properties_vertical-padding
-  );
+  ) !important;
   padding-left: var(
     --recursica_ui-kit_components_dropdown_properties_horizontal-padding
-  );
+  ) !important;
   padding-right: var(
     --recursica_ui-kit_components_dropdown_properties_horizontal-padding
-  );
+  ) !important;
   border-radius: var(
     --recursica_ui-kit_components_dropdown_properties_border-radius
   );
@@ -125,23 +133,47 @@
   color: inherit;
 }
 
+/* MUI's outlined variant renders its own `<fieldset class="MuiOutlinedInput-notchedOutline">` as a
+   separate absolutely-positioned sibling of `.input` — independent of the border we already draw
+   on `.input` above. Left alone, it shows its own default/focused/error border (theme grays/blue/
+   red) UNDERNEATH ours, which is what produced the double border (bug: static-error story showing
+   a leftover dark border under the red one) and MUI's own blue focus ring leaking in alongside the
+   Recursica focus box-shadow. We own the border entirely via `.input`, so this native outline is
+   never needed — always neutralize it. */
+.root :global(.MuiOutlinedInput-notchedOutline) {
+  border: none !important;
+}
+
 /* Dynamic Padding Overrides */
 .root[data-with-left-section] .input {
-  padding-left: var(--input-left-section-size);
+  padding-left: var(--input-left-section-size) !important;
 }
 
 .root[data-with-right-section] .input {
-  padding-right: var(--input-right-section-size);
+  padding-right: var(--input-right-section-size) !important;
 }
 
-/* Flexible End-Caps (Icons, actions) */
+/* Flexible End-Caps (Icons, actions)
+   Absolutely positioned within `.root` (already `position: relative`), NOT flex siblings of
+   `.input` in the row. MUI passes `startAdornment`/`endAdornment` as ordinary flex children next
+   to the select div, so as siblings they'd add their own width on top of `.input`'s already-100%-
+   width box instead of sharing it — the reserved padding above only carves out space *inside*
+   `.input`'s own bordered box, so a sibling rendered outside that box overflows past the visible
+   border (bug: leading icon / the clear+chevron pair sat outside the control's right edge).
+   Absolute positioning is Mantine's own technique for the equivalent `Input.Section` slot, which
+   is why the mantine-adapter never had this bug. */
 .section {
+  position: absolute;
+  top: 0;
+  bottom: 0;
   display: flex;
   align-items: center;
-  height: 100%;
+  gap: var(--recursica_ui-kit_components_dropdown_properties_icon-text-gap);
+  pointer-events: none;
 }
 
 .section[data-position="left"] {
+  left: 0;
   justify-content: flex-start;
   padding-left: var(
     --recursica_ui-kit_components_dropdown_properties_horizontal-padding
@@ -149,10 +181,14 @@
 }
 
 .section[data-position="right"] {
+  right: 0;
   justify-content: flex-end;
   padding-right: var(
     --recursica_ui-kit_components_dropdown_properties_horizontal-padding
   );
+  /* Unlike the left section (decorative icon only), this one can hold the interactive clear
+     button, so it needs to opt back into pointer events itself. */
+  pointer-events: auto;
 }
 
 .section :global(svg) {
@@ -167,6 +203,42 @@
   color: var(
     --recursica_ui-kit_components_dropdown_properties_colors_trailing-icon
   );
+}
+
+/* Clear ("x") button rendered inside the right section when `clearable` and a value is present.
+   Sized/colored via the same icon tokens as the rest of the right section (rather than any
+   default browser/library button chrome), same treatment as the mantine-adapter's equivalent
+   fix to its native clear button (see DROPDOWN_IMPLEMENTATION_NOTES.md). */
+.clearButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--recursica_ui-kit_components_dropdown_properties_icon-size);
+  height: var(--recursica_ui-kit_components_dropdown_properties_icon-size);
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(
+    --recursica_ui-kit_components_dropdown_properties_colors_trailing-icon
+  );
+  cursor: pointer;
+  outline: none;
+}
+
+.clearButton svg {
+  width: 100%;
+  height: 100%;
+}
+
+.clearButton:focus-visible {
+  box-shadow:
+    0 0 0 var(--recursica_brand_states_focus_border-size)
+      var(--recursica_brand_states_focus_color),
+    0 0 var(--recursica_brand_states_focus_blur)
+      var(--recursica_brand_states_focus_margin)
+      var(--recursica_brand_states_focus_color);
 }
 
 /* -------------------------------------
@@ -256,6 +328,21 @@
   overflow: hidden;
 }
 
+/* The visible top/bottom gap inside the open menu, before/after the option list, is MUI's own
+   `.MuiList-padding` default (8px) on the inner `<ul>` — not driven by any Recursica token. Wire
+   it to the same dropdown vertical-padding token the closed control itself uses, matching the
+   mantine-adapter fix (its `.dropdown` had the same gap, driven by Mantine's own untokenized
+   4px `--combobox-padding` default). `!important` needed to beat MUI's own emotion-generated
+   `.MuiList-padding` rule at equal selector specificity. */
+.dropdown :global(.MuiMenu-list) {
+  padding-top: var(
+    --recursica_ui-kit_components_dropdown_properties_vertical-padding
+  ) !important;
+  padding-bottom: var(
+    --recursica_ui-kit_components_dropdown_properties_vertical-padding
+  ) !important;
+}
+
 .option {
   font-family: var(
     --recursica_ui-kit_components_dropdown_properties_text_font-family
@@ -277,10 +364,11 @@
   cursor: pointer;
 }
 
-/* No per-option selected/hovered tokens exist in the schema; use the generic overlay tint
-   (same technique as the Mantine reference implementation) to highlight the active option. */
-.option[data-selected="true"],
-.option[data-combobox-selected="true"],
+/* No per-option hovered token exists in the schema; use the generic overlay tint (same technique
+   as the Mantine reference implementation) to highlight a hovered-but-not-selected option.
+   `!important` is required here: MUI's own `.Mui-selected` (and `.Mui-selected:hover`) classes
+   carry their own default primary-blue tint at equal selector specificity, and without it that
+   default tint wins over this token-driven one. */
 .option[data-hovered="true"],
 .option:hover {
   background-color: color-mix(
@@ -288,5 +376,19 @@
     var(--recursica_brand_states_hover_color)
       calc(var(--recursica_brand_states_hover_opacity) * 100%),
     transparent
-  );
+  ) !important;
+}
+
+/* No dedicated dropdown-option "selected" token exists in the schema either, but the menu-item
+   component's selected-state colors are the closest real token family for the same concept (a
+   selected row in a list) — reused here rather than the neutral hover tint above, which is what
+   previously made the selected option read as grey instead of Recursica's brand color. */
+.option[data-selected="true"],
+.option[data-combobox-selected="true"] {
+  background-color: var(
+    --recursica_ui-kit_components_menu-item_variants_selection-states_selected_properties_colors_background-color
+  ) !important;
+  color: var(
+    --recursica_ui-kit_components_menu-item_variants_selection-states_selected_properties_colors_text-color
+  ) !important;
 }

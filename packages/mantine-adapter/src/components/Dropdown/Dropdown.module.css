@@ -169,6 +169,39 @@
   );
 }
 
+/* Mantine's own clear button (rendered via `clearButtonProps`, see Dropdown.tsx) is a bare
+   `CloseButton` by default — its own module CSS hardcodes a gray icon color and a circular gray
+   hover background, neither of which is Recursica-token-driven. The double class selector (same
+   specificity-boosting trick as Chip.module.css's `.root.root`) beats that default without
+   needing `!important`. Same icon-size/trailing-icon tokens as the rest of this section, same
+   focus-visible ring technique as Chip's own `.removeIcon` — the established inline icon-button
+   pattern elsewhere in this adapter. */
+.clearButton.clearButton {
+  width: var(--recursica_ui-kit_components_dropdown_properties_icon-size);
+  height: var(--recursica_ui-kit_components_dropdown_properties_icon-size);
+  min-width: var(--recursica_ui-kit_components_dropdown_properties_icon-size);
+  min-height: var(--recursica_ui-kit_components_dropdown_properties_icon-size);
+  border-radius: 50%;
+  background: transparent;
+  color: var(
+    --recursica_ui-kit_components_dropdown_properties_colors_trailing-icon
+  );
+  outline: none;
+}
+
+.clearButton.clearButton:hover {
+  background: transparent;
+}
+
+.clearButton.clearButton:focus-visible {
+  box-shadow:
+    0 0 0 var(--recursica_brand_states_focus_border-size)
+      var(--recursica_brand_states_focus_color),
+    0 0 var(--recursica_brand_states_focus_blur)
+      var(--recursica_brand_states_focus_margin)
+      var(--recursica_brand_states_focus_color);
+}
+
 /* -------------------------------------
    STATE CASCADE ARCHITECTURE
 -------------------------------------- */
@@ -254,6 +287,17 @@
     --recursica_ui-kit_components_dropdown_properties_border-radius
   );
   overflow: hidden;
+
+  /* The visible top/bottom gap before/after the option list was previously left to Mantine's own
+     untokenized `--combobox-padding` default (4px) — wire it to the same dropdown vertical-padding
+     token the closed control itself uses instead (mirrors the mui-adapter fix to the equivalent
+     gap there, which came from MUI's own untokenized 8px `.MuiList-padding` default). */
+  padding-top: var(
+    --recursica_ui-kit_components_dropdown_properties_vertical-padding
+  );
+  padding-bottom: var(
+    --recursica_ui-kit_components_dropdown_properties_vertical-padding
+  );
 }
 
 .option {
@@ -277,10 +321,8 @@
   cursor: pointer;
 }
 
-/* No per-option selected/hovered tokens exist in the schema; use the generic overlay tint
-   (same technique as Table's row hover) to highlight the active option. */
-.option[data-selected="true"],
-.option[data-combobox-selected="true"],
+/* No per-option hovered token exists in the schema; use the generic overlay tint (same technique
+   as Table's row hover) to highlight a hovered-but-not-selected option. */
 .option[data-hovered="true"],
 .option:hover {
   background-color: color-mix(
@@ -288,5 +330,20 @@
     var(--recursica_brand_states_hover_color)
       calc(var(--recursica_brand_states_hover_opacity) * 100%),
     transparent
+  );
+}
+
+/* No dedicated dropdown-option "selected" token exists in the schema either, but the menu-item
+   component's selected-state colors are the closest real token family for the same concept (a
+   selected row in a list) — reused here rather than the neutral hover tint above, which is what
+   previously made the selected option read as grey instead of Recursica's brand color. Matches
+   the mui-adapter fix for the same gap. */
+.option[data-selected="true"],
+.option[data-combobox-selected="true"] {
+  background-color: var(
+    --recursica_ui-kit_components_menu-item_variants_selection-states_selected_properties_colors_background-color
+  );
+  color: var(
+    --recursica_ui-kit_components_menu-item_variants_selection-states_selected_properties_colors_text-color
   );
 }

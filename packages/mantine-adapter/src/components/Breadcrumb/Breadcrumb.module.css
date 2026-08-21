@@ -23,4 +23,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Neutralize Mantine's built-in margin-inline (--mantine-spacing-xs default) so .root's gap alone controls spacing */
+  margin-inline: 0;
 }

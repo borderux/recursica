@@ -45,3 +45,4 @@ All Recursica components in the `@recursica/mantine-adapter` package adhere stri
 ## 4. Notes
 
 - `Dropdown` is styled independently from `TextField`; even though they look similar, they are themed using separate design tokens.
+- Pass `leftSection` for a leading icon, and `clearable` (with a value present) to show a clear button — both render using the dropdown's own icon-color tokens.

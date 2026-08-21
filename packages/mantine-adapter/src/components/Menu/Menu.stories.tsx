@@ -199,7 +199,9 @@ export const Default: Story = {
     position: "bottom-start",
     withArrow: false,
     offset: 5,
-    opened: undefined,
+    // Rendered open by default so this story is diffable against the MUI adapter
+    // without an interaction step.
+    opened: true,
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   render: ({ withLayer, layer, ...args }: MenuStoryArgs) => {
@@ -230,6 +232,9 @@ export const Default: Story = {
 export const WithDisabledItems: Story = {
   args: {
     position: "bottom-start",
+    // Rendered open by default so this story is diffable against the MUI adapter
+    // without an interaction step.
+    opened: true,
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   render: ({ withLayer, layer, ...args }: MenuStoryArgs) => {
@@ -258,6 +263,9 @@ export const WithSubmenus: Story = {
   args: {
     position: "bottom-start",
     width: 200,
+    // Rendered open by default so this story is diffable against the MUI adapter
+    // without an interaction step.
+    opened: true,
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   render: ({ withLayer, layer, ...args }: MenuStoryArgs) => {

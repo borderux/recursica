@@ -38,7 +38,7 @@ export const Menu = forwardRef<HTMLDivElement, MenuProps>(function Menu(
     <MuiMenu
       ref={ref}
       {...(sanitizedProps as MuiMenuProps)}
-      className={`${styles.dropdown} ${className || ""}`}
+      className={className}
       classes={mergedClassNames}
     />
   );
