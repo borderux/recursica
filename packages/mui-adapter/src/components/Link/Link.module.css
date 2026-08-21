@@ -51,6 +51,10 @@ HARDCODED VALUES:
   );
 }
 
+.root:hover {
+  text-decoration: var(--recursica_brand_states_link_decoration);
+}
+
 /* Icon Support */
 .iconWrapper {
   /* HARDCODE: maintain intrinsic icon bounds */

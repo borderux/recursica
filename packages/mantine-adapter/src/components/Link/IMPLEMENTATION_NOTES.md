@@ -2,7 +2,7 @@
 
 ## States in Design Tokens
 
-The design tokens (`recursica_variables_scoped.css`) provide the base link styling directly on `--recursica_ui-kit_components_link_properties_*` (no distinct `default` state), plus a `visited` variant that overrides only `colors_text-color`/`colors_icon-color`. There is no per-state token for `hover` anymore (a prior schema version had one); the component currently applies no distinct hover treatment beyond the browser's native `cursor: pointer`. There are no tokens for `active` or `focus` either; the component relies on the browser's default focus outline for accessibility unless overridden by a global reset.
+The design tokens (`recursica_variables_scoped.css`) provide the base link styling directly on `--recursica_ui-kit_components_link_properties_*` (no distinct `default` state), plus a `visited` variant that overrides only `colors_text-color`/`colors_icon-color`. Hover is not a per-component `link_variants_states_hover_*` token; it's driven by the brand-level `--recursica_brand_states_link_decoration` token (resolves to `underline`), applied on `.root:hover`. Earlier this token was exported as an invalid quoted string (`"underline"`), which silently failed and was mistaken for the token not existing at all — now fixed upstream to a bare keyword. There are no tokens for `active` or `focus` either; the component relies on the browser's default focus outline for accessibility unless overridden by a global reset.
 
 ## Overriding Mantine's underline Prop
 
