@@ -1,7 +1,8 @@
-import React, { forwardRef, ReactNode } from "react";
+import React, { forwardRef, ReactNode, useEffect, useState } from "react";
 import {
   Select as MuiSelect,
   SelectProps as MuiSelectProps,
+  SelectChangeEvent,
   MenuItem,
 } from "@mui/material";
 import { type ReadOnlyControlProps } from "@recursica/adapter-common";
@@ -12,9 +13,17 @@ import {
 } from "../../utils/filterStylingProps";
 import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
 import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
+import { ChevronIcon, ClearIcon } from "./Dropdown.icons";
 import styles from "./Dropdown.module.css";
 
 import { type RecursicaDropdownProps as BaseRecursicaDropdownProps } from "@recursica/adapter-common";
+
+// Swapped in for MUI's default `IconComponent` only when we're rendering our own combined
+// clear+chevron `endAdornment` (see `showClear` below) — a stable reference so it isn't recreated
+// every render.
+function HiddenIcon() {
+  return null;
+}
 
 export interface RecursicaDropdownProps
   extends Omit<
@@ -28,9 +37,13 @@ export interface RecursicaDropdownProps
       | "ref"
       | "error"
     >,
+    // `onChange` is swept up by the `keyof React.HTMLAttributes<HTMLDivElement>` omission above
+    // (it's a standard DOM attribute name too) even though MUI's own `Select#onChange` has a
+    // completely different, non-DOM signature — add it back explicitly with MUI's real signature.
+    Pick<MuiSelectProps, "onChange">,
     Omit<
       RecursicaFormControlWrapperProps,
-      "controlMaxWidth" | "controlMinWidth"
+      "controlMaxWidth" | "controlMinWidth" | "onChange"
     >,
     ReadOnlyControlProps,
     BaseRecursicaDropdownProps {}
@@ -67,11 +80,12 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
       emptyValueComponent,
       value,
       defaultValue,
+      onChange,
       data,
+      startAdornment,
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       searchable, // Not natively supported by basic MUI Select, stubbed
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      clearable, // Not natively supported by basic MUI Select, stubbed
+      clearable,
       ...rest
     } = props;
     // Props this component intentionally doesn't support — deleted at runtime so they can't leak
@@ -86,6 +100,47 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
       UNSUPPORTED_PROPS,
     );
     const restRecord = sanitizedProps as Record<string, unknown>;
+
+    // MUI's basic `Select` has no built-in "clearable" concept (unlike Mantine's `Select`, which
+    // manages its own internal value so it can reset itself to `null` on demand) — the clear
+    // button needs somewhere to write an empty value to, so the value is lifted here rather than
+    // left for MUI's own internal uncontrolled state.
+    const [internalValue, setInternalValue] = useState<unknown>(
+      () => value ?? defaultValue ?? "",
+    );
+
+    useEffect(() => {
+      if (value !== undefined) setInternalValue(value);
+    }, [value]);
+
+    const handleChange = (
+      event: SelectChangeEvent<unknown>,
+      child: ReactNode,
+    ) => {
+      setInternalValue(event.target.value);
+      (
+        onChange as
+          | ((event: SelectChangeEvent<unknown>, child: ReactNode) => void)
+          | undefined
+      )?.(event, child);
+    };
+
+    const hasValue =
+      internalValue !== "" &&
+      internalValue !== null &&
+      internalValue !== undefined;
+    const showClear = !!clearable && hasValue && !disabled && !readOnly;
+
+    const handleClear = (event: React.MouseEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setInternalValue("");
+      (
+        onChange as
+          | ((event: SelectChangeEvent<unknown>, child: ReactNode) => void)
+          | undefined
+      )?.({ target: { value: "" } } as SelectChangeEvent<unknown>, null);
+    };
 
     const injectedStyles = {
       ...((style as React.CSSProperties) || {}),
@@ -105,12 +160,11 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
               key={`${item}-${index}`}
               value={item}
               className={styles.option}
+              disableRipple
               // Dropdown.module.css's own selected-state tint (`.option[data-selected="true"]`)
               // needs this explicitly — MUI's own `Mui-selected` class carries its default primary-
               // color tint instead, which is what shows through without it.
-              data-selected={
-                item === (value ?? defaultValue) ? "true" : undefined
-              }
+              data-selected={item === internalValue ? "true" : undefined}
             >
               {item}
             </MenuItem>
@@ -122,15 +176,34 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
             value={item.value}
             disabled={item.disabled}
             className={styles.option}
-            data-selected={
-              item.value === (value ?? defaultValue) ? "true" : undefined
-            }
+            disableRipple
+            data-selected={item.value === internalValue ? "true" : undefined}
           >
             {item.label}
           </MenuItem>
         );
       });
     };
+
+    const wrappedStartAdornment = startAdornment ? (
+      <span className={styles.section} data-position="left">
+        {startAdornment}
+      </span>
+    ) : undefined;
+
+    const wrappedEndAdornment = showClear ? (
+      <span className={styles.section} data-position="right">
+        <button
+          type="button"
+          className={styles.clearButton}
+          aria-label="Clear"
+          onClick={handleClear}
+        >
+          <ClearIcon />
+        </button>
+        <ChevronIcon />
+      </span>
+    ) : undefined;
 
     return (
       <WithReadOnlyWrapper
@@ -168,8 +241,8 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
             ref={ref}
             {...(sanitizedProps as unknown as MuiSelectProps)}
             disabled={disabled}
-            value={value}
-            defaultValue={defaultValue}
+            value={internalValue}
+            onChange={handleChange}
             error={!!error}
             required={required}
             displayEmpty
@@ -178,6 +251,9 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
               select: styles.input,
               icon: styles.icon,
             }}
+            IconComponent={showClear ? HiddenIcon : undefined}
+            startAdornment={wrappedStartAdornment}
+            endAdornment={wrappedEndAdornment}
             MenuProps={{
               classes: { paper: styles.dropdown },
             }}
@@ -188,6 +264,8 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
             // inputProps, which meant the error border never actually appeared on the Dropdown.)
             data-disabled={disabled ? "true" : undefined}
             data-error={error ? "true" : undefined}
+            data-with-left-section={startAdornment ? "true" : undefined}
+            data-with-right-section={showClear ? "true" : undefined}
             inputProps={{
               "data-disabled": disabled ? "true" : undefined,
               "data-error": error ? "true" : undefined,

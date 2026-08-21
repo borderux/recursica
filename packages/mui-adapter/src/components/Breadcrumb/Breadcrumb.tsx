@@ -28,6 +28,7 @@ export const Breadcrumb = forwardRef<HTMLDivElement, BreadcrumbProps>(
     const mergedClassNames = mergeClassNames(
       {
         root: styles.root,
+        ol: styles.ol,
         separator: styles.separator,
       },
       (sanitizedProps as Record<string, unknown>).classes as

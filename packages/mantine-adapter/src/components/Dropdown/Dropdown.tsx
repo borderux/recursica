@@ -68,6 +68,7 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
       value,
       defaultValue,
       data,
+      clearButtonProps,
       ...rest
     } = props;
     const sanitizedProps = omitUnsupportedProps(
@@ -75,6 +76,21 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
       UNSUPPORTED_PROPS,
     );
     const restRecord = sanitizedProps as Record<string, unknown>;
+
+    // Mantine's own clear button (rendered when `clearable` + a value are both present) otherwise
+    // renders unstyled — bare `CloseButton` defaults, no Recursica icon-button treatment. Merge in
+    // our own class (see `.clearButton` in Dropdown.module.css) alongside anything the caller
+    // already passed, same merge shape as `mergeClassNames` but for a single `className` string
+    // rather than a per-slot classNames map.
+    const consumerClearButtonProps = clearButtonProps as
+      | Record<string, unknown>
+      | undefined;
+    const mergedClearButtonProps = {
+      ...consumerClearButtonProps,
+      className: consumerClearButtonProps?.className
+        ? `${styles.clearButton} ${consumerClearButtonProps.className as string}`
+        : styles.clearButton,
+    };
 
     // Securely map core native blocks down ensuring nested CSS modules map precisely
     const mergedClassNames = mergeClassNames(
@@ -139,6 +155,7 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
             value={value}
             defaultValue={defaultValue}
             data={(data as unknown as MantineSelectProps["data"]) || []}
+            clearButtonProps={mergedClearButtonProps}
             label={undefined}
             description={undefined}
             error={undefined}

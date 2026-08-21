@@ -3,18 +3,21 @@
 */
 
 .root {
-  /* HARDCODE: Basic structural flex layout for breadcrumbs */
-  display: flex;
-  align-items: center;
-
   /* Base style resets */
   background-color: transparent;
   color: inherit;
 
   /* Apply global breadcrumb properties */
   padding: var(--recursica_ui-kit_components_breadcrumb_properties_padding);
+}
 
-  /* Mantine's breadcrumbs uses gap on the root or pseudo classes, but standard gap is safest since flex is used */
+/* MUI renders items/separators inside the <ol>, not directly under <nav> (.root) — the
+   gap must live here to land uniformly between item/separator/item, matching Mantine. */
+.ol {
+  /* HARDCODE: Basic structural flex layout for breadcrumbs */
+  display: flex;
+  align-items: center;
+
   gap: var(--recursica_ui-kit_components_breadcrumb_properties_item-gap);
 }
 
@@ -23,4 +26,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Neutralize MUI's built-in 8px marginLeft/marginRight so .ol's gap alone controls spacing */
+  margin: 0;
 }

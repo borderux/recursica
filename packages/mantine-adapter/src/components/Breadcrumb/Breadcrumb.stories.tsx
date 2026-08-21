@@ -56,12 +56,6 @@ export const Default: Story = {
   },
 };
 
-export const StaticExample: Story = {
-  args: {
-    items: ["Store", "Electronics", "Computers", "Laptops"],
-  },
-};
-
 export const CustomSeparator: Story = {
   args: {
     items: ["Root", "Branch", "Leaf"],

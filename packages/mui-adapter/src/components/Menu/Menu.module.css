@@ -271,4 +271,7 @@
   position: relative;
   z-index: 1;
   color: inherit;
+  /* HARDCODE: prevent the flex row from shrinking the chevron below its intrinsic 14px size
+     when the row is tight, which otherwise reads as the submenu indicator being clipped. */
+  flex-shrink: 0;
 }
