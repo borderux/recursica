@@ -1,5 +1,11 @@
 # @recursica/mantine-adapter
 
+## 0.44.0
+
+### Minor Changes
+
+- adab23c: Revised Dropwdown, Menu, Breadcrumb
+
 ## 0.43.0
 
 ### Minor Changes

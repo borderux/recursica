@@ -1,5 +1,16 @@
 # recursica-storybook
 
+## 0.29.0
+
+### Minor Changes
+
+- adab23c: Revised Dropwdown, Menu, Breadcrumb
+
+### Patch Changes
+
+- Updated dependencies [adab23c]
+  - @recursica/mantine-adapter@0.44.0
+
 ## 0.28.0
 
 ### Minor Changes
