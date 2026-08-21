@@ -1,5 +1,12 @@
 # @recursica/official-release
 
+## 2.8.0
+
+### Minor Changes
+
+- bcac5c7: Updated to latest css and fixed link
+- bcac5c7: Updated to forge latest at 0.25.0
+
 ## 2.7.0
 
 ### Minor Changes

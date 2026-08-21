@@ -1,5 +1,17 @@
 # @recursica/mui-adapter
 
+## 0.29.0
+
+### Minor Changes
+
+- bcac5c7: Updated to latest css and fixed link
+
+### Patch Changes
+
+- Updated dependencies [bcac5c7]
+- Updated dependencies [bcac5c7]
+  - @recursica/official-release@2.8.0
+
 ## 0.28.0
 
 ### Minor Changes
