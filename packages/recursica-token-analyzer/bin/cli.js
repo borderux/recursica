@@ -68,6 +68,7 @@ function analyze() {
   const usedVarsMap = new Map(); // varName -> set of { componentId, filePath }
   let exemptions = new Set();
   const exemptionLocationsMap = new Map(); // varName -> set of { componentId, filePath, line }
+  const layerViolations = []; // { variable, layer, componentId, filePath, line, reason }
 
   if (fs.existsSync(options.dir)) {
     const dirs = fs
@@ -113,6 +114,55 @@ function analyze() {
                   JSON.stringify({ componentId: compId, filePath: fullPath }),
                 );
             });
+
+            // Layer enforcement: components must never touch the raw --recursica_tokens_*
+            // primitives, and may only touch --recursica_brand_* directly when the CSS file's
+            // own header explicitly exempts that variable via recursica-allow-brand. Scoped to
+            // .module.css (the header-exemption model doesn't map cleanly onto .tsx files).
+            if (fullPath.endsWith(".module.css")) {
+              const headerEnd = content.indexOf("{");
+              const header =
+                headerEnd === -1 ? content : content.slice(0, headerEnd);
+              const allowedBrandVars = new Set(
+                [
+                  ...header.matchAll(
+                    /recursica-allow-brand:\s*(--recursica_brand_[\w-]+)/g,
+                  ),
+                ].map((h) => h[1]),
+              );
+
+              matches.forEach((m) => {
+                const varName = m[1];
+                const line = content.slice(0, m.index).split("\n").length;
+
+                if (varName.startsWith("--recursica_tokens_")) {
+                  layerViolations.push({
+                    variable: varName,
+                    layer: "tokens",
+                    componentId: compId,
+                    filePath: fullPath,
+                    line,
+                    reason:
+                      "Components must never consume raw --recursica_tokens_* primitives directly, with no exemption. Route through a --recursica_ui-kit_components_* or --recursica_brand_* token instead.",
+                  });
+                } else if (
+                  varName.startsWith("--recursica_brand_") &&
+                  !allowedBrandVars.has(varName)
+                ) {
+                  layerViolations.push({
+                    variable: varName,
+                    layer: "brand",
+                    componentId: compId,
+                    filePath: fullPath,
+                    line,
+                    reason:
+                      "Direct --recursica_brand_* consumption requires an explicit exemption declared in this file's header, e.g. /* recursica-allow-brand: " +
+                      varName +
+                      " */.",
+                  });
+                }
+              });
+            }
 
             // Extract inline exemptions
             const ignoredMatches = [
@@ -201,8 +251,21 @@ function analyze() {
   }
 
   // 5. Find Unused Variables
+  // Raw --recursica_brand_* and --recursica_tokens_* primitives are excluded entirely: components
+  // are architecturally never supposed to consume these directly (they resolve down through the
+  // --recursica_ui-kit_components_* layer), so they always read as "unused" regardless of how
+  // complete a component is. That's noise, not signal — see layerViolations above for the actual
+  // enforcement of that rule.
   const unusedVars = new Set(definedVars);
   usedVarsMap.forEach((_, varName) => unusedVars.delete(varName));
+  Array.from(unusedVars).forEach((varName) => {
+    if (
+      varName.startsWith("--recursica_brand_") ||
+      varName.startsWith("--recursica_tokens_")
+    ) {
+      unusedVars.delete(varName);
+    }
+  });
 
   const unusedByComponent = {};
 
@@ -228,6 +291,22 @@ function analyze() {
   });
 
   // 6. Output Results
+  if (layerViolations.length > 0) {
+    console.error(
+      `🚫 FOUND ${layerViolations.length} LAYER VIOLATION(S) — component CSS consuming --recursica_brand_*/--recursica_tokens_* without a declared exemption:\n`,
+    );
+    layerViolations.forEach((v) =>
+      console.error(`   - ${v.filePath}:${v.line} — ${v.variable}`),
+    );
+    console.error(
+      `\n   Check ${options.output} for details. --recursica_tokens_* has no exemption path; --recursica_brand_* requires a\n   recursica-allow-brand: <var> directive in the file's own header.\n`,
+    );
+  } else {
+    console.log(
+      `✅ No layer violations! All brand-layer consumption is explicitly exempted, tokens layer untouched.\n`,
+    );
+  }
+
   if (missingVars.length > 0) {
     console.error(`❌ FOUND ${missingVars.length} BROKEN VARIABLE REFERENCES!`);
     console.error(
@@ -284,12 +363,14 @@ function analyze() {
           totalMissing: missingVars.length,
           totalUnused: unusedVars.size,
           totalStaleExemptions: staleExemptions.length,
+          totalLayerViolations: layerViolations.length,
         },
         components: componentsIndex,
         brokenComponents: Array.from(brokenComponents).sort(),
         missingVariables: missingVars,
         unusedByComponent,
         staleExemptions,
+        layerViolations,
       },
       null,
       2,
@@ -300,6 +381,11 @@ function analyze() {
 
   if (missingVars.length > 0) {
     console.error(`🚨 BUILD FAILED: Token analysis found missing variables.`);
+    process.exit(1);
+  }
+
+  if (layerViolations.length > 0) {
+    console.error(`🚨 BUILD FAILED: Token analysis found layer violations.`);
     process.exit(1);
   }
 }

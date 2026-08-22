@@ -9,7 +9,8 @@
     "brokenComponents",
     "missingVariables",
     "unusedByComponent",
-    "staleExemptions"
+    "staleExemptions",
+    "layerViolations"
   ],
   "properties": {
     "summary": {
@@ -20,7 +21,8 @@
         "totalUsed",
         "totalMissing",
         "totalUnused",
-        "totalStaleExemptions"
+        "totalStaleExemptions",
+        "totalLayerViolations"
       ],
       "properties": {
         "totalDefined": {
@@ -42,6 +44,10 @@
         "totalStaleExemptions": {
           "type": "integer",
           "description": "Number of recursica-ignore directives that reference a CSS variable no longer defined in the UI Kit dictionary at all."
+        },
+        "totalLayerViolations": {
+          "type": "integer",
+          "description": "Number of --recursica_brand_*/--recursica_tokens_* direct consumptions in .module.css files with no valid exemption. Non-zero fails the build."
         }
       }
     },
@@ -139,6 +145,48 @@
           "line": {
             "type": "integer",
             "description": "The 1-indexed line number of the stale recursica-ignore directive within the file."
+          }
+        }
+      }
+    },
+    "layerViolations": {
+      "type": "array",
+      "description": "Detailed list of --recursica_brand_*/--recursica_tokens_* variables consumed directly by a component's .module.css with no valid exemption. Non-zero fails the build.",
+      "items": {
+        "type": "object",
+        "required": [
+          "variable",
+          "layer",
+          "componentId",
+          "filePath",
+          "line",
+          "reason"
+        ],
+        "properties": {
+          "variable": {
+            "type": "string",
+            "description": "The exact name of the offending CSS variable."
+          },
+          "layer": {
+            "type": "string",
+            "enum": ["brand", "tokens"],
+            "description": "Which restricted layer the variable belongs to. 'tokens' can never be exempted; 'brand' requires a recursica-allow-brand directive in the file's header."
+          },
+          "componentId": {
+            "type": "string",
+            "description": "The lowercase ID of the component whose file contains the violation."
+          },
+          "filePath": {
+            "type": "string",
+            "description": "The file containing the unexempted usage."
+          },
+          "line": {
+            "type": "integer",
+            "description": "The 1-indexed line number of the unexempted usage within the file."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Human-readable explanation of why this usage is a violation and how to fix it."
           }
         }
       }

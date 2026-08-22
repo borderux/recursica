@@ -1,3 +1,12 @@
+/* Brand-layer exemptions (recursica-allow-brand) — see recursica-token-analyzer README.md.
+ * Outline variant's baseline-patch trick needs an opaque paint (active background is transparent by design); borrows Layer 0's surface as the default ambient layer absent a wrapping <Layer> (see IMPLEMENTATION_NOTES.md 'Outline selected-tab border'). Schema gap: no generic 'current ambient layer' token exists — flagged for the token-schema owner.
+ *   recursica-allow-brand: --recursica_brand_layer_0_properties_surface
+ * Global hover/focus/disabled state tokens (recursica_variables_scoped.css header, 'Hover & Focus states' / 'Disabled state' — implicit rule for every interactive element; components must not define their own per-component treatment).
+ *   recursica-allow-brand: --recursica_brand_states_disabled
+ *   recursica-allow-brand: --recursica_brand_states_hover_color
+ *   recursica-allow-brand: --recursica_brand_states_hover_opacity
+ */
+
 /*
   Recursica Tabs CSS module natively binding to Figma variables.
 */
