@@ -58,8 +58,8 @@
     "dev": "tsc -b --watch"
   },
   "dependencies": {
-    "@recursica/adapter-common": "*",
-    "@recursica/recursica-postcss-vars": "*"
+    "@recursica/adapter-common": "^0.19.0",
+    "@recursica/recursica-postcss-vars": "^1.5.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
