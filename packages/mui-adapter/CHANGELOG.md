@@ -1,5 +1,21 @@
 # @recursica/mui-adapter
 
+## 0.29.0
+
+### Minor Changes
+
+- bcac5c7: Updated to latest css and fixed link
+- 40832c5: Updated Table
+
+### Patch Changes
+
+- 8376651: Pin internal `@recursica/*` dependencies to real semver ranges instead of `*`. Published packages previously depended on internal packages (e.g. `@recursica/adapter-common`, `@recursica/official-release`, `@recursica/schemas`, `@recursica/recursica-postcss-vars`) with an unconstrained `*` version range, meaning a fresh install could pull in any future major version, including breaking changes. These now use `^<current-version>` ranges, which Changesets will keep in sync automatically via `updateInternalDependencies: "patch"` on future releases. No effect on local monorepo development — npm workspaces links sibling packages by name regardless of the declared range.
+- Updated dependencies [bcac5c7]
+- Updated dependencies [bcac5c7]
+- Updated dependencies [40832c5]
+  - @recursica/official-release@2.8.0
+  - @recursica/adapter-common@0.20.0
+
 ## 0.28.0
 
 ### Minor Changes

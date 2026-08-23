@@ -1,5 +1,11 @@
 # @recursica/adapter-common
 
+## 0.20.0
+
+### Minor Changes
+
+- 40832c5: Updated Table
+
 ## 0.19.0
 
 ### Minor Changes
