@@ -1,7 +1,448 @@
+/* Brand-layer exemptions (recursica-allow-brand) — see recursica-token-analyzer README.md.
+ * Global hover state tokens (recursica_variables_scoped.css header, 'Hover & Focus states' —
+ * implicit rule for every interactive element; components must not define their own
+ * per-component hover treatment).
+ *   recursica-allow-brand: --recursica_brand_states_hover_color
+ *   recursica-allow-brand: --recursica_brand_states_hover_opacity
+ */
+
 /* HARDCODED VALUES:
- * None. This is a generic layout wrapper.
+ * - border-collapse: separate; border-spacing: 0; (To support custom border-radius on table elements)
+ * - overflow: hidden; (To prevent content from bleeding outside the rounded table border)
  */
 
 .root {
-  /* MUI Table handles table layout natively. */
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: var(
+    --recursica_ui-kit_components_table_properties_border-radius
+  );
+  border: var(--recursica_ui-kit_components_table_properties_border-size) solid
+    var(--recursica_ui-kit_components_table_properties_colors_border-color);
+  overflow: hidden;
+}
+
+/* ==========================================
+   1. General Cell Dividers & Padding Defaults
+   ========================================== */
+
+.root .cell {
+  padding: var(--recursica_ui-kit_components_table_properties_row-padding)
+    var(--recursica_ui-kit_components_table_properties_padding);
+  border-bottom: var(
+      --recursica_ui-kit_components_table_properties_row-divider-size
+    )
+    solid
+    var(--recursica_ui-kit_components_table_properties_colors_row-divider-color);
+}
+
+.root .cell + .cell {
+  border-left: var(
+      --recursica_ui-kit_components_table_properties_column-divider-size
+    )
+    solid
+    var(
+      --recursica_ui-kit_components_table_properties_colors_column-divider-color
+    );
+}
+
+/* ==========================================
+   2. Row Highlighting & Selection Styles
+   ========================================== */
+
+/* Striped rows */
+.root tbody .row:nth-of-type(even) .cell {
+  background-color: color-mix(
+    in srgb,
+    var(--recursica_ui-kit_components_table_properties_colors_striped-color)
+      calc(
+        var(
+            --recursica_ui-kit_components_table_properties_opacities_striped-opacity
+          ) *
+          100%
+      ),
+    transparent
+  );
+}
+
+/* MUI's TableRow applies its own default background when `selected` — reset it so only the
+   token-driven .cell background below shows (kept as a genuine `<tr selected>` for the
+   aria-selected/Mui-selected semantics MUI derives from it, just not its default coloring). */
+.root tbody .row:global(.Mui-selected) {
+  background-color: transparent;
+}
+
+/* Selected rows */
+.root tbody .row[data-selected="true"] .cell {
+  background-color: color-mix(
+    in srgb,
+    var(--recursica_ui-kit_components_table_properties_colors_selected-color)
+      calc(
+        var(
+            --recursica_ui-kit_components_table_properties_opacities_selected-opacity
+          ) *
+          100%
+      ),
+    transparent
+  );
+}
+
+/* Hover rows */
+/* Table's dedicated highlight-on-hover token was removed from the schema; hover feedback now
+   uses the generic cross-component overlay tokens instead. */
+.root tbody .row:hover .cell {
+  background-color: color-mix(
+    in srgb,
+    var(--recursica_brand_states_hover_color)
+      calc(var(--recursica_brand_states_hover_opacity) * 100%),
+    transparent
+  );
+}
+
+/* ==========================================
+   3. Table Headers (th)
+   ========================================== */
+
+.root thead .cell {
+  background-color: var(
+    --recursica_ui-kit_components_table-header_properties_colors_cell-color
+  );
+  color: var(
+    --recursica_ui-kit_components_table-header_properties_colors_text-color
+  );
+  padding: var(
+      --recursica_ui-kit_components_table-header_properties_padding-vertical
+    )
+    var(
+      --recursica_ui-kit_components_table-header_properties_padding-horizontal
+    );
+  margin-top: var(
+    --recursica_ui-kit_components_table-header_properties_vertical-margin
+  );
+  margin-bottom: var(
+    --recursica_ui-kit_components_table-header_properties_vertical-margin
+  );
+  border-bottom: var(
+      --recursica_ui-kit_components_table-header_properties_horizontal-divider-size
+    )
+    solid
+    var(
+      --recursica_ui-kit_components_table-header_properties_colors_horizontal-divider-color
+    );
+
+  /* Unsorted text style by default */
+  font-family: var(
+    --recursica_ui-kit_components_table-header_properties_unsorted-text-style_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_table-header_properties_unsorted-text-style_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_table-header_properties_unsorted-text-style_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_table-header_properties_unsorted-text-style_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_table-header_properties_unsorted-text-style_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_table-header_properties_unsorted-text-style_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_table-header_properties_unsorted-text-style_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_table-header_properties_unsorted-text-style_text-transform
+  );
+}
+
+.root thead .cell + .cell {
+  border-left: var(
+      --recursica_ui-kit_components_table-header_properties_vertical-divider-size
+    )
+    solid
+    var(
+      --recursica_ui-kit_components_table-header_properties_colors_vertical-divider-color
+    );
+}
+
+/* Unsorted specific state overrides */
+.root thead .cell:not([data-sorted="true"]) {
+  background-color: var(
+    --recursica_ui-kit_components_table-header_properties_colors_unsorted-cell-color
+  );
+  color: var(
+    --recursica_ui-kit_components_table-header_properties_colors_unsorted-text-color
+  );
+}
+
+/* Sorted specific state overrides */
+.root thead .cell[data-sorted="true"] {
+  background-color: var(
+    --recursica_ui-kit_components_table-header_properties_colors_sorted-cell-color
+  );
+  color: var(
+    --recursica_ui-kit_components_table-header_properties_colors_sorted-text-color
+  );
+
+  font-family: var(
+    --recursica_ui-kit_components_table-header_properties_sorted-text-style_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_table-header_properties_sorted-text-style_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_table-header_properties_sorted-text-style_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_table-header_properties_sorted-text-style_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_table-header_properties_sorted-text-style_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_table-header_properties_sorted-text-style_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_table-header_properties_sorted-text-style_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_table-header_properties_sorted-text-style_text-transform
+  );
+}
+
+/* Disabled Header */
+.root thead .cell[data-disabled="true"] {
+  background-color: var(
+    --recursica_ui-kit_components_table-header_variants_states_disabled_properties_colors_cell-color
+  );
+  color: var(
+    --recursica_ui-kit_components_table-header_variants_states_disabled_properties_colors_text-color
+  );
+  opacity: var(
+    --recursica_ui-kit_components_table-header_variants_states_disabled_properties_opacity
+  );
+}
+
+/* Sort label — MUI's TableSortLabel renders its own arrow icon; re-color it to inherit the
+   cell's own text color (instead of MUI's default sort-label color) and size/space it with the
+   same tokens Mantine's own inline chevron uses. */
+.sortLabel {
+  color: inherit;
+}
+
+.sortLabel:global(.Mui-active) {
+  color: inherit;
+}
+
+.sortLabel :global(.MuiTableSortLabel-icon) {
+  width: var(--recursica_ui-kit_components_table-header_properties_icon-size);
+  height: var(--recursica_ui-kit_components_table-header_properties_icon-size);
+  margin-left: var(
+    --recursica_ui-kit_components_table-header_properties_label-sort-gap
+  );
+  color: inherit;
+}
+
+/* ==========================================
+   4. Table Cells (td)
+   ========================================== */
+
+.root tbody .cell {
+  background-color: var(
+    --recursica_ui-kit_components_table-cell_properties_colors_cell-color
+  );
+  color: var(
+    --recursica_ui-kit_components_table-cell_properties_colors_text-color
+  );
+  padding: var(
+      --recursica_ui-kit_components_table-cell_properties_padding-vertical
+    )
+    var(--recursica_ui-kit_components_table-cell_properties_padding-horizontal);
+  max-width: var(--recursica_ui-kit_components_table-cell_properties_max-width);
+
+  /* Standard text style */
+  font-family: var(
+    --recursica_ui-kit_components_table-cell_properties_text-style_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_table-cell_properties_text-style_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_table-cell_properties_text-style_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_table-cell_properties_text-style_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_table-cell_properties_text-style_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_table-cell_properties_text-style_line-height
+  );
+  text-align: var(
+    --recursica_ui-kit_components_table-cell_properties_text-style_text-align
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_table-cell_properties_text-style_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_table-cell_properties_text-style_text-transform
+  );
+}
+
+/* Currency formatted cell layout override */
+.root tbody .cell[data-currency="true"] {
+  font-family: var(
+    --recursica_ui-kit_components_table-cell_properties_currency-style_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_table-cell_properties_currency-style_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_table-cell_properties_currency-style_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_table-cell_properties_currency-style_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_table-cell_properties_currency-style_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_table-cell_properties_currency-style_line-height
+  );
+  text-align: var(
+    --recursica_ui-kit_components_table-cell_properties_currency-style_text-align
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_table-cell_properties_currency-style_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_table-cell_properties_currency-style_text-transform
+  );
+}
+
+/* Disabled Cells */
+.root tbody .row[data-disabled="true"] .cell,
+.root tbody .cell[data-disabled="true"] {
+  background-color: var(
+    --recursica_ui-kit_components_table-cell_variants_states_disabled_properties_colors_cell-color
+  );
+  color: var(
+    --recursica_ui-kit_components_table-cell_variants_states_disabled_properties_colors_text-color
+  );
+  opacity: var(
+    --recursica_ui-kit_components_table-cell_variants_states_disabled_properties_opacity
+  );
+}
+
+/* ==========================================
+   5. Table Footers (tfoot td)
+   ========================================== */
+
+.root tfoot .cell {
+  background-color: var(
+    --recursica_ui-kit_components_table-footer_properties_colors_cell-color
+  );
+  color: var(
+    --recursica_ui-kit_components_table-footer_properties_colors_text-color
+  );
+  padding: var(
+      --recursica_ui-kit_components_table-footer_properties_padding-vertical
+    )
+    var(
+      --recursica_ui-kit_components_table-footer_properties_padding-horizontal
+    );
+  margin-top: var(
+    --recursica_ui-kit_components_table-footer_properties_vertical-margin
+  );
+  margin-bottom: var(
+    --recursica_ui-kit_components_table-footer_properties_vertical-margin
+  );
+  border-top: var(
+      --recursica_ui-kit_components_table-footer_properties_horizontal-divider-size
+    )
+    solid
+    var(
+      --recursica_ui-kit_components_table-footer_properties_colors_horizontal-divider-color
+    );
+
+  /* Footer typography style */
+  font-family: var(
+    --recursica_ui-kit_components_table-footer_properties_text-style_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_table-footer_properties_text-style_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_table-footer_properties_text-style_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_table-footer_properties_text-style_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_table-footer_properties_text-style_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_table-footer_properties_text-style_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_table-footer_properties_text-style_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_table-footer_properties_text-style_text-transform
+  );
+}
+
+.root tfoot .cell + .cell {
+  border-left: var(
+      --recursica_ui-kit_components_table-footer_properties_vertical-divider-size
+    )
+    solid
+    var(
+      --recursica_ui-kit_components_table-footer_properties_colors_vertical-divider-color
+    );
+}
+
+/* Currency formatted footer cell layout override */
+.root tfoot .cell[data-currency="true"] {
+  font-family: var(
+    --recursica_ui-kit_components_table-footer_properties_currency-style_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_table-footer_properties_currency-style_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_table-footer_properties_currency-style_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_table-footer_properties_currency-style_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_table-footer_properties_currency-style_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_table-footer_properties_currency-style_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_table-footer_properties_currency-style_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_table-footer_properties_currency-style_text-transform
+  );
+}
+
+/* Disabled Footer Row/Cells */
+.root tfoot .row[data-disabled="true"] .cell,
+.root tfoot .cell[data-disabled="true"] {
+  background-color: var(
+    --recursica_ui-kit_components_table-footer_variants_states_disabled_properties_colors_cell-color
+  );
+  color: var(
+    --recursica_ui-kit_components_table-footer_variants_states_disabled_properties_colors_text-color
+  );
+  opacity: var(
+    --recursica_ui-kit_components_table-footer_variants_states_disabled_properties_opacity
+  );
 }
