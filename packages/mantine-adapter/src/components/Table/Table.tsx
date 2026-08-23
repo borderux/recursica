@@ -15,8 +15,14 @@ import {
   filterStylingProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
-import { type RecursicaTableProps } from "@recursica/adapter-common";
+import {
+  type RecursicaTableProps,
+  type RecursicaTableRowProps,
+  type RecursicaTableHeaderCellProps,
+  type RecursicaTableCellProps,
+} from "@recursica/adapter-common";
 import styles from "./Table.module.css";
+import { ChevronUpIcon, ChevronDownIcon } from "./Table.icons";
 
 export type TableProps = RecursicaOverStyled<
   MantineTableProps & RecursicaTableProps
@@ -80,45 +86,77 @@ export const TableTbody = forwardRef<HTMLTableSectionElement, TableTbodyProps>(
 );
 TableTbody.displayName = "TableTbody";
 
-export type TableTrProps = RecursicaOverStyled<MantineTableTrProps>;
+export type TableTrProps = RecursicaOverStyled<
+  Omit<MantineTableTrProps, "children"> & RecursicaTableRowProps
+>;
 
 export const TableTr = forwardRef<HTMLTableRowElement, TableTrProps>(
-  function TableTr({ overStyled = false, ...rest }, ref) {
+  function TableTr(
+    { overStyled = false, selected = false, disabled = false, ...rest },
+    ref,
+  ) {
     const sanitizedProps = filterStylingProps(rest, overStyled);
     return (
       <MantineTable.Tr
         ref={ref}
         {...(sanitizedProps as unknown as MantineTableTrProps)}
+        data-selected={selected ? "true" : undefined}
+        data-disabled={disabled ? "true" : undefined}
       />
     );
   },
 );
 TableTr.displayName = "TableTr";
 
-export type TableThProps = RecursicaOverStyled<MantineTableThProps>;
+export type TableThProps = RecursicaOverStyled<
+  Omit<MantineTableThProps, "children"> & RecursicaTableHeaderCellProps
+>;
 
 export const TableTh = forwardRef<HTMLTableCellElement, TableThProps>(
-  function TableTh({ overStyled = false, ...rest }, ref) {
+  function TableTh(
+    { overStyled = false, sorted = false, disabled = false, children, ...rest },
+    ref,
+  ) {
     const sanitizedProps = filterStylingProps(rest, overStyled);
     return (
       <MantineTable.Th
         ref={ref}
         {...(sanitizedProps as unknown as MantineTableThProps)}
-      />
+        data-sorted={sorted ? "true" : undefined}
+        data-disabled={disabled ? "true" : undefined}
+        aria-sort={
+          sorted === "asc"
+            ? "ascending"
+            : sorted === "desc"
+              ? "descending"
+              : undefined
+        }
+      >
+        {children}
+        {sorted === "asc" && <ChevronUpIcon className={styles.sortIcon} />}
+        {sorted === "desc" && <ChevronDownIcon className={styles.sortIcon} />}
+      </MantineTable.Th>
     );
   },
 );
 TableTh.displayName = "TableTh";
 
-export type TableTdProps = RecursicaOverStyled<MantineTableTdProps>;
+export type TableTdProps = RecursicaOverStyled<
+  Omit<MantineTableTdProps, "children"> & RecursicaTableCellProps
+>;
 
 export const TableTd = forwardRef<HTMLTableCellElement, TableTdProps>(
-  function TableTd({ overStyled = false, ...rest }, ref) {
+  function TableTd(
+    { overStyled = false, disabled = false, variant = "default", ...rest },
+    ref,
+  ) {
     const sanitizedProps = filterStylingProps(rest, overStyled);
     return (
       <MantineTable.Td
         ref={ref}
         {...(sanitizedProps as unknown as MantineTableTdProps)}
+        data-disabled={disabled ? "true" : undefined}
+        data-currency={variant === "currency" ? "true" : undefined}
       />
     );
   },

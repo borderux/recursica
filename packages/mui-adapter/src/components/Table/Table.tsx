@@ -21,8 +21,18 @@ import {
   filterStylingProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
-import { type RecursicaTableProps } from "@recursica/adapter-common";
+import {
+  type RecursicaTableProps,
+  type RecursicaTableRowProps,
+  type RecursicaTableHeaderCellProps,
+  type RecursicaTableCellProps,
+} from "@recursica/adapter-common";
 import styles from "./Table.module.css";
+
+/** Merges a Recursica-controlled `className` with a caller-supplied one, same idiom as `TableBase`. */
+function withRootClass(rootClass: string, classNameProp: string | undefined) {
+  return classNameProp ? `${rootClass} ${classNameProp}` : rootClass;
+}
 
 export type TableProps = RecursicaOverStyled<
   MuiTableProps & RecursicaTableProps
@@ -72,17 +82,50 @@ export const TableBodyComponent = forwardRef<
 });
 TableBodyComponent.displayName = "TableBody";
 
-export type TableCellPropsRecursica = RecursicaOverStyled<MuiTableCellProps>;
+// MUI's `TableCell` is the single primitive used for header, body, and footer cells alike — it
+// auto-detects which one it is (and whether to render a `<th>` or `<td>`) from its ancestor
+// (`Table.Head`/`Table.Body`/`Table.Footer`). Recursica mirrors that: one cell component whose
+// props cover both the header-only concern (`sorted`) and the body/footer concern (`variant`).
+export type TableCellPropsRecursica = RecursicaOverStyled<
+  // MUI's own `variant` ('head' | 'body' | 'footer') is superseded by Recursica's `variant`
+  // ('default' | 'currency') — MUI still auto-detects head/body/footer from ancestor context
+  // when its native `variant` prop is omitted, so nothing is lost by dropping it here.
+  Omit<MuiTableCellProps, "children" | "variant"> &
+    RecursicaTableHeaderCellProps &
+    RecursicaTableCellProps
+>;
 
 export const TableCellComponent = forwardRef<
   HTMLTableCellElement,
   TableCellPropsRecursica
->(function TableCell({ overStyled = false, ...rest }, ref) {
+>(function TableCell(
+  {
+    overStyled = false,
+    sorted = false,
+    disabled = false,
+    variant = "default",
+    ...rest
+  },
+  ref,
+) {
   const sanitizedProps = filterStylingProps(rest, overStyled);
+  const classNameProp = (sanitizedProps as Record<string, unknown>)
+    .className as string | undefined;
   return (
     <MuiTableCell
       ref={ref}
       {...(sanitizedProps as unknown as MuiTableCellProps)}
+      className={withRootClass(styles.cell, classNameProp)}
+      data-sorted={sorted ? "true" : undefined}
+      data-disabled={disabled ? "true" : undefined}
+      data-currency={variant === "currency" ? "true" : undefined}
+      aria-sort={
+        sorted === "asc"
+          ? "ascending"
+          : sorted === "desc"
+            ? "descending"
+            : undefined
+      }
     />
   );
 });
@@ -121,17 +164,28 @@ export const TableHeadComponent = forwardRef<
 });
 TableHeadComponent.displayName = "TableHead";
 
-export type TableRowPropsRecursica = RecursicaOverStyled<MuiTableRowProps>;
+export type TableRowPropsRecursica = RecursicaOverStyled<
+  Omit<MuiTableRowProps, "children"> & RecursicaTableRowProps
+>;
 
 export const TableRowComponent = forwardRef<
   HTMLTableRowElement,
   TableRowPropsRecursica
->(function TableRow({ overStyled = false, ...rest }, ref) {
+>(function TableRow(
+  { overStyled = false, selected = false, disabled = false, ...rest },
+  ref,
+) {
   const sanitizedProps = filterStylingProps(rest, overStyled);
+  const classNameProp = (sanitizedProps as Record<string, unknown>)
+    .className as string | undefined;
   return (
     <MuiTableRow
       ref={ref}
       {...(sanitizedProps as unknown as MuiTableRowProps)}
+      className={withRootClass(styles.row, classNameProp)}
+      selected={selected}
+      data-selected={selected ? "true" : undefined}
+      data-disabled={disabled ? "true" : undefined}
     />
   );
 });
@@ -162,10 +216,13 @@ export const TableSortLabelComponent = forwardRef<
   TableSortLabelPropsRecursica
 >(function TableSortLabel({ overStyled = false, ...rest }, ref) {
   const sanitizedProps = filterStylingProps(rest, overStyled);
+  const classNameProp = (sanitizedProps as Record<string, unknown>)
+    .className as string | undefined;
   return (
     <MuiTableSortLabel
       ref={ref}
       {...(sanitizedProps as unknown as MuiTableSortLabelProps)}
+      className={withRootClass(styles.sortLabel, classNameProp)}
     />
   );
 });
