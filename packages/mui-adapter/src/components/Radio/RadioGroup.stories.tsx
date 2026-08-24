@@ -44,7 +44,7 @@ export const Default: Story = {
   render: function StoryRender({ withLayer, layer, ...args }: any) {
     const [value, setValue] = useState<string>("");
     return (
-      <RadioGroup {...args} value={value} onChange={setValue}>
+      <RadioGroup {...args} value={value} onChange={(_e, val) => setValue(val)}>
         <Radio value="1" label="Option 1" />
         <Radio value="2" label="Option 2" />
       </RadioGroup>
@@ -63,7 +63,7 @@ export const StackedLayout: Story = {
   render: function StoryRender({ withLayer, layer, ...args }: any) {
     const [value, setValue] = useState<string>("aws");
     return (
-      <RadioGroup {...args} value={value} onChange={setValue}>
+      <RadioGroup {...args} value={value} onChange={(_e, val) => setValue(val)}>
         <Radio value="aws" label="Amazon Web Services" />
         <Radio
           value="gcp"
@@ -87,7 +87,7 @@ export const SideBySideLayout: Story = {
   render: function StoryRender({ withLayer, layer, ...args }: any) {
     const [value, setValue] = useState<string>("us-east");
     return (
-      <RadioGroup {...args} value={value} onChange={setValue}>
+      <RadioGroup {...args} value={value} onChange={(_e, val) => setValue(val)}>
         <Radio value="us-east" label="US East (N. Virginia)" />
         <Radio value="us-west" label="US West (Oregon)" />
         <Radio value="eu-central" label="EU Central (Frankfurt)" />
@@ -108,7 +108,7 @@ export const ReadOnly: Story = {
   render: function StoryRender({ withLayer, layer, ...args }: any) {
     const [value, setValue] = useState<string>("react");
     return (
-      <RadioGroup {...args} value={value} onChange={setValue}>
+      <RadioGroup {...args} value={value} onChange={(_e, val) => setValue(val)}>
         <Radio value="react" label="React" />
         <Radio value="vue" label="Vue" />
       </RadioGroup>

@@ -16,6 +16,7 @@ export interface RecursicaSegmentedControlProps {
   >;
   /** Active selected item value key */
   value?: string;
-  /** Callback triggered when selected item changes */
-  onChange?: (value: string) => void;
+  // `onChange` is intentionally not declared here. Each adapter picks it up straight from its
+  // own underlying kit (Mantine's SegmentedControl vs MUI's ToggleButtonGroup), signature and
+  // all, so a Recursica component drops in over an existing implementation with no caller changes.
 }

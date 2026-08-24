@@ -19,7 +19,7 @@ import { type RecursicaRadioGroupProps as BaseRecursicaRadioGroupProps } from "@
 export interface RecursicaRadioGroupProps
   extends Omit<
       MantineRadioGroupProps,
-      "size" | "labelProps" | "defaultValue" | "value" | "onChange"
+      "size" | "labelProps" | "defaultValue" | "value"
     >,
     Omit<
       RecursicaFormControlWrapperProps,

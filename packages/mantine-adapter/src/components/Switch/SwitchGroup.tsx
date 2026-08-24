@@ -19,7 +19,7 @@ import { type RecursicaSwitchGroupProps as BaseRecursicaSwitchGroupProps } from 
 export interface RecursicaSwitchGroupProps
   extends Omit<
       MantineSwitchGroupProps,
-      "size" | "labelProps" | "defaultValue" | "value" | "onChange"
+      "size" | "labelProps" | "defaultValue" | "value"
     >,
     Omit<
       RecursicaFormControlWrapperProps,

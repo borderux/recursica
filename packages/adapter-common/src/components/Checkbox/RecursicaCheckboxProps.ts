@@ -20,6 +20,8 @@ export interface RecursicaCheckboxGroupProps {
   value?: unknown[];
   /** Default selected values in uncontrolled mode */
   defaultValue?: unknown[];
-  /** Callback triggered on selection change */
-  onChange?: (value: unknown[]) => void;
+  // `onChange` is intentionally not declared here. mantine-adapter picks it up straight from
+  // Mantine's own native Checkbox.Group (identical signature already). mui-adapter has no
+  // native checkbox-group concept to match — MUI's own `FormGroup` is layout-only, no value/
+  // onChange — so it declares this signature itself, same as TransferList/Accordion.
 }

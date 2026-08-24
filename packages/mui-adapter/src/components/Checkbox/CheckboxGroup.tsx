@@ -36,7 +36,11 @@ export interface RecursicaCheckboxGroupProps
       | "defaultValue"
     >,
     ReadOnlyControlProps,
-    BaseRecursicaCheckboxGroupProps {}
+    BaseRecursicaCheckboxGroupProps {
+  // MUI has no native checkbox-group concept to match (its own `FormGroup` is layout-only,
+  // no value/onChange) — this signature is Recursica's own, same as TransferList/Accordion.
+  onChange?: (value: unknown[]) => void;
+}
 
 export type CheckboxGroupProps =
   RecursicaOverStyled<RecursicaCheckboxGroupProps>;

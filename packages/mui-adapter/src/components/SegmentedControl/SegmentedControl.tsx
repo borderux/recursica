@@ -25,7 +25,6 @@ export type SegmentedControlProps = RecursicaOverStyled<
     | "className"
     | "disabled"
     | "value"
-    | "onChange"
   > & {
     className?: string;
     classNames?: Partial<Record<string, string>>;
@@ -94,12 +93,12 @@ const _SegmentedControl = forwardRef<HTMLDivElement, SegmentedControlProps>(
     const activeValue = value !== undefined ? value : uncontrolledValue;
 
     const handleChange = (
-      _event: React.MouseEvent<HTMLElement>,
+      event: React.MouseEvent<HTMLElement>,
       newValue: string | null,
     ) => {
       if (newValue !== null) {
         setUncontrolledValue(newValue);
-        onChange?.(newValue);
+        onChange?.(event, newValue);
       }
     };
 

@@ -20,11 +20,7 @@ export interface RecursicaRadioGroupProps {
   value?: unknown;
   /** Initial selected value in uncontrolled mode */
   defaultValue?: unknown;
-  /**
-   * Callback triggered when active value changes.
-   * Single-argument by design (no event): matches Mantine's native RadioGroup
-   * onChange, the cross-adapter source of truth. mui-adapter's RadioGroup
-   * normalizes MUI's native two-argument (event, value) callback down to this.
-   */
-  onChange?: (value: string) => void;
+  // `onChange` is intentionally not declared here. Each adapter picks it up straight from its
+  // own underlying kit (Mantine's RadioGroup vs MUI's RadioGroup), signature and all, so a
+  // Recursica component drops in over an existing implementation with no caller changes.
 }

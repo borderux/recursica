@@ -19,7 +19,7 @@ import { type RecursicaCheckboxGroupProps as BaseRecursicaCheckboxGroupProps } f
 export interface RecursicaCheckboxGroupProps
   extends Omit<
       MantineCheckboxGroupProps,
-      "size" | "labelProps" | "defaultValue" | "value" | "onChange"
+      "size" | "labelProps" | "defaultValue" | "value"
     >,
     Omit<
       RecursicaFormControlWrapperProps,
