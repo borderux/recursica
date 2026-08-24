@@ -121,7 +121,7 @@ it needed no changes for this.
 
 ## Keyboard navigation for the chip row
 
-Same roving-tabindex model as `FileUpload`'s file list (`activeChipIndex`, `removeIconRefs`,
+Same roving-tabindex model as `FileUpload`'s file list (`activeChipIndex`, `deleteIconRefs`,
 Left/Right/Up/Down roving, focus-survives-removal `useEffect`) — reused rather than reinvented,
 and applies in single-file mode too (a one-chip roving group is a no-op but needs no special
 casing). The only addition specific to `FileInput` is that `Tab` reaches the root control itself
@@ -140,7 +140,7 @@ already made for `.value`'s ellipsis truncation.
 
 `readOnly` renders the same content (placeholder/filename/chip row) but the root loses its
 `role="button"` interactivity (no `tabIndex`, no click/keyboard/drag handlers), chips render with
-no `removeLabel`/`onDelete` (so `Chip` itself renders no remove icon, same as `FileUpload`'s
+no `deleteLabel`/`onDelete` (so `Chip` itself renders no delete icon, same as `FileUpload`'s
 read-only chips), and the trailing clear icon is omitted entirely. `disabled` keeps the control
 structurally the same but inert (`tabIndex={-1}`, `aria-disabled`, no handlers, native `<input>`
 disabled) — both are computed together as a single `interactive` flag used throughout, but remain

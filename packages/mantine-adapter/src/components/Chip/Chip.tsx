@@ -42,9 +42,9 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
     error = false,
     icon,
     onDelete,
-    removeLabel = "Remove",
-    removeTabIndex,
-    removeIconRef,
+    deleteLabel = "Delete",
+    deleteTabIndex,
+    deleteIconRef,
     children,
     overStyled = false,
     wrapperProps,
@@ -121,15 +121,15 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
 
         {onDelete && (
           <span
-            ref={removeIconRef}
+            ref={deleteIconRef}
             role="button"
-            className={styles.removeIcon}
+            className={styles.deleteIcon}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               onDelete(e);
             }}
-            aria-label={removeLabel}
+            aria-label={deleteLabel}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
@@ -139,7 +139,7 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
                 );
               }
             }}
-            tabIndex={removeTabIndex ?? 0}
+            tabIndex={deleteTabIndex ?? 0}
           >
             <CloseIcon />
           </span>

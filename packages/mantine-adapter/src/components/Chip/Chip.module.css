@@ -224,11 +224,11 @@
   height: 100%;
 }
 
-.removeIcon {
+.deleteIcon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0; /* HARDCODE: keep the remove icon visible when the label truncates instead */
+  flex-shrink: 0; /* HARDCODE: keep the delete icon visible when the label truncates instead */
   color: var(--chip-close);
   width: var(--recursica_ui-kit_components_chip_properties_close-icon-size);
   height: var(--recursica_ui-kit_components_chip_properties_close-icon-size);
@@ -237,7 +237,7 @@
   outline: none;
 }
 
-.removeIcon:focus-visible {
+.deleteIcon:focus-visible {
   box-shadow:
     0 0 0 var(--recursica_brand_states_focus_border-size)
       var(--recursica_brand_states_focus_color),
@@ -246,7 +246,7 @@
       var(--recursica_brand_states_focus_color);
 }
 
-.removeIcon svg {
+.deleteIcon svg {
   width: 100%;
   height: 100%;
 }

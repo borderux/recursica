@@ -95,7 +95,7 @@ list's read-only form is the same chip list, just without the ability to remove 
 `readOnly` is handled directly in `FileUpload.tsx` rather than reusing `WithReadOnlyWrapper`:
 
 - The dropzone (icon, instructional text, Browse button, hidden `<input>`) is omitted entirely.
-- Each `Chip` is rendered with no `onDelete` (and no `removeTabIndex`/`removeIconRef`/roving
+- Each `Chip` is rendered with no `onDelete` (and no `deleteTabIndex`/`deleteIconRef`/roving
   keyboard handlers, which only exist to manage the remove icon) — `Chip` itself already renders no
   remove icon at all when `onDelete` is `undefined`, so this falls out for free rather than needing
   a separate `readOnly` prop on `Chip`.
@@ -176,7 +176,7 @@ Implemented a standard roving-tabindex pattern instead, matching `Tree`'s existi
 (see `../Tree/IMPLEMENTATION_NOTES.md`) rather than inventing a new one:
 
 - **Tab reaches exactly one stop per chip list, landing on the first chip.** `FileUpload` tracks
-  `activeChipIndex` (initially `0`) and passes `removeTabIndex={index === activeChipIndex ? 0 : -1}`
+  `activeChipIndex` (initially `0`) and passes `deleteTabIndex={index === activeChipIndex ? 0 : -1}`
   to each `Chip` — a new pass-through prop added to `RecursicaChipProps`/both adapters' `Chip.tsx`
   (see `../Chip/CHIP_IMPLEMENTATION_NOTES.md`) that overrides the remove icon's own tabIndex. Every
   chip in the Mantine adapter is also given a plain `tabIndex={-1}` directly (flows through to
@@ -186,11 +186,11 @@ Implemented a standard roving-tabindex pattern instead, matching `Tree`'s existi
 - **Enter removes the focused chip, with focus already on its remove icon.** No new code needed —
   `Chip`'s remove icon already calls `onDelete` on `Enter`/`Space`, and it's already the focused
   element by construction (see above), so "focus ring on the remove icon" falls out for free from
-  the existing `.removeIcon:focus-visible` style.
+  the existing `.deleteIcon:focus-visible` style.
 - **Left/Right or Up/Down move focus between chips.** A `onKeyDown` handler on the file list `<div>`
   (event delegation — it fires for keydowns on any focused chip inside it) computes the next index
-  (wrapping at both ends) and moves real DOM focus there via `removeIconRefs`, an array of refs
-  populated through the new `removeIconRef` prop on `Chip` (same PR as `removeTabIndex`).
+  (wrapping at both ends) and moves real DOM focus there via `deleteIconRefs`, an array of refs
+  populated through the new `deleteIconRef` prop on `Chip` (same PR as `deleteTabIndex`).
 - **Focus survives removal.** Since `files` is a controlled prop `FileUpload` doesn't mutate
   itself, removing a chip doesn't shrink `files` until the consumer's own state update flows back
   down as a new prop — a `useEffect` keyed on `files` detects the length decreasing, clamps

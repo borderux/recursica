@@ -174,7 +174,7 @@
    hover background, neither of which is Recursica-token-driven. The double class selector (same
    specificity-boosting trick as Chip.module.css's `.root.root`) beats that default without
    needing `!important`. Same icon-size/trailing-icon tokens as the rest of this section, same
-   focus-visible ring technique as Chip's own `.removeIcon` — the established inline icon-button
+   focus-visible ring technique as Chip's own `.deleteIcon` — the established inline icon-button
    pattern elsewhere in this adapter. */
 .clearButton.clearButton {
   width: var(--recursica_ui-kit_components_dropdown_properties_icon-size);

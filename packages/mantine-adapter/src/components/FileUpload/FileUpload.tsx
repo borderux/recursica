@@ -194,11 +194,11 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(
       event.target.value = "";
     };
 
-    // Roving tabindex across the file chip list: only the "active" chip's remove icon is a tab
+    // Roving tabindex across the file chip list: only the "active" chip's delete icon is a tab
     // stop (Tab lands on the first chip), and Left/Right/Up/Down move it — see
     // FILEUPLOAD_IMPLEMENTATION_NOTES.md.
     const [activeChipIndex, setActiveChipIndex] = useState(0);
-    const removeIconRefs = useRef<Array<HTMLSpanElement | null>>([]);
+    const deleteIconRefs = useRef<Array<HTMLSpanElement | null>>([]);
     const prevFileCountRef = useRef(files?.length ?? 0);
 
     useEffect(() => {
@@ -208,7 +208,7 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(
       if (count > 0 && count < prevFileCountRef.current) {
         const nextIndex = Math.min(activeChipIndex, count - 1);
         setActiveChipIndex(nextIndex);
-        removeIconRefs.current[nextIndex]?.focus();
+        deleteIconRefs.current[nextIndex]?.focus();
       }
       prevFileCountRef.current = count;
       // Only react to the file list itself shrinking/growing, not to activeChipIndex changes.
@@ -229,7 +229,7 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(
       if (nextIndex === undefined) return;
       event.preventDefault();
       setActiveChipIndex(nextIndex);
-      removeIconRefs.current[nextIndex]?.focus();
+      deleteIconRefs.current[nextIndex]?.focus();
     };
 
     // The built-in `accept`-mismatch message is only shown when the integrator hasn't supplied
@@ -330,10 +330,10 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(
                       key={itemId}
                       checked={false}
                       tabIndex={-1}
-                      removeLabel={removeFileLabel}
-                      removeTabIndex={index === activeChipIndex ? 0 : -1}
-                      removeIconRef={(el) => {
-                        removeIconRefs.current[index] = el;
+                      deleteLabel={removeFileLabel}
+                      deleteTabIndex={index === activeChipIndex ? 0 : -1}
+                      deleteIconRef={(el) => {
+                        deleteIconRefs.current[index] = el;
                       }}
                       onDelete={
                         disabled ? undefined : () => onFileRemove?.(itemId)

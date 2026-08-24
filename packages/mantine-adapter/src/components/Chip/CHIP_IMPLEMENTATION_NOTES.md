@@ -42,10 +42,10 @@ During implementation, the parsed Figma design tokens natively exported specific
 `.children` already had `text-overflow: ellipsis; overflow: hidden; white-space: nowrap;`, but
 neither it nor its parent `.innerWrapper` had `min-width: 0` — a flex child without that refuses
 to shrink below its intrinsic (full, unwrapped) content width, so `text-overflow: ellipsis` never
-actually engaged. A long label overflowed the flex row instead, and since `.removeIcon` had no
+actually engaged. A long label overflowed the flex row instead, and since `.deleteIcon` had no
 `flex-shrink: 0`, it got squeezed out of the clipped (`max-width`-bounded) chip entirely. Fixed by
 adding `min-width: 0` to `.innerWrapper`/`.children` and `flex-shrink: 0` to `.leadingIcon`/
-`.removeIcon`. Reproduces easily with `FileUpload`'s file list, since its chip `max-width`
+`.deleteIcon`. Reproduces easily with `FileUpload`'s file list, since its chip `max-width`
 (`--recursica_ui-kit_components_chip_properties_max-width`, 200px) is small enough that most real
 filenames overflow it.
 
@@ -63,10 +63,10 @@ y-axis has no visual side effect.
 
 ### Roving tabindex support for chip groups (Matt Massey, 2026-08-17)
 
-Added two optional pass-through props — `removeTabIndex` and `removeIconRef` — purely so a parent
+Added two optional pass-through props — `deleteTabIndex` and `deleteIconRef` — purely so a parent
 managing a _group_ of chips (e.g. `FileUpload`'s file list, see its own `IMPLEMENTATION_NOTES.md`)
-can implement roving-tabindex/arrow-key navigation across them: set `removeTabIndex={-1}` on every
-chip but the currently-active one, and use `removeIconRef` to move real DOM focus there
+can implement roving-tabindex/arrow-key navigation across them: set `deleteTabIndex={-1}` on every
+chip but the currently-active one, and use `deleteIconRef` to move real DOM focus there
 imperatively on arrow-key press. Both are no-ops for a standalone `Chip` (defaults: `tabIndex={0}`,
 no ref) — this doesn't change any existing single-chip behavior.
 
