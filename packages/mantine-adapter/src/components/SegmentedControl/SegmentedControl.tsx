@@ -23,6 +23,7 @@ export type SegmentedControlProps = RecursicaOverStyled<
     | "classNames"
     | "className"
     | "disabled"
+    | "data"
   > & {
     className?: string;
     classNames?: Partial<Record<string, string>>;
@@ -53,7 +54,13 @@ function useSegmentedControlClassNames(restRecord: Record<string, unknown>): {
 
 const _SegmentedControl = forwardRef<HTMLDivElement, SegmentedControlProps>(
   function SegmentedControl(
-    { overStyled = false, orientation = "horizontal", fullWidth, ...rest },
+    {
+      overStyled = false,
+      orientation = "horizontal",
+      fullWidth,
+      data = [],
+      ...rest
+    },
     ref,
   ) {
     // Props this component intentionally doesn't support — deleted at runtime so they can't leak
@@ -74,6 +81,23 @@ const _SegmentedControl = forwardRef<HTMLDivElement, SegmentedControlProps>(
 
     const stylingParams = useSegmentedControlClassNames(restRecord);
 
+    // Mantine's own data item has no icon slot; compose one into `label` (already a ReactNode)
+    // so Mantine's native innerLabel wrapper lays it out using the icon-size/gap tokens already
+    // wired in SegmentedControl.module.css.
+    const mappedData = data.map((item) =>
+      typeof item === "string" || !item.icon
+        ? item
+        : {
+            ...item,
+            label: (
+              <>
+                {item.icon}
+                {item.label}
+              </>
+            ),
+          },
+    );
+
     return (
       <MantineSegmentedControl
         ref={ref}
@@ -86,6 +110,7 @@ const _SegmentedControl = forwardRef<HTMLDivElement, SegmentedControlProps>(
         orientation={orientation}
         fullWidth={fullWidth}
         data-orientation={orientation}
+        data={mappedData}
       />
     );
   },

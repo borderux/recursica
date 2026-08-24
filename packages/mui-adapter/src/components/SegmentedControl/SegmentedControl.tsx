@@ -126,6 +126,7 @@ const _SegmentedControl = forwardRef<HTMLDivElement, SegmentedControlProps>(
           const itemValue = typeof item === "string" ? item : item.value;
           const itemLabel = typeof item === "string" ? item : item.label;
           const itemDisabled = typeof item === "string" ? false : item.disabled;
+          const itemIcon = typeof item === "string" ? undefined : item.icon;
 
           return (
             <ToggleButton
@@ -134,7 +135,10 @@ const _SegmentedControl = forwardRef<HTMLDivElement, SegmentedControlProps>(
               disabled={itemDisabled}
               className={stylingParams.classNames.control}
             >
-              <div className={stylingParams.classNames.label}>{itemLabel}</div>
+              <div className={stylingParams.classNames.label}>
+                {itemIcon}
+                {itemLabel}
+              </div>
             </ToggleButton>
           );
         })}

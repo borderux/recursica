@@ -12,7 +12,14 @@ export interface RecursicaSegmentedControlProps {
   disabled?: never;
   /** Data configuration options array */
   data?: Array<
-    string | { label: React.ReactNode; value: string; disabled?: boolean }
+    | string
+    | {
+        label: React.ReactNode;
+        value: string;
+        disabled?: boolean;
+        /** Optional leading icon rendered alongside the item's label */
+        icon?: React.ReactNode;
+      }
   >;
   /** Active selected item value key */
   value?: string;

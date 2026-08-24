@@ -15,3 +15,7 @@ Mantine uses an `::before` pseudo-element on the `.control` block to draw standa
 ## 4. Indicator Mapping
 
 The moving active background element (`.indicator`) is decoupled from the actual text label. It is styled natively with its own background color, border size, and elevation shadow variables to match the exact visual parity of a "floating active chip" as defined in the Recursica properties map.
+
+## 5. Per-item `icon`
+
+`RecursicaSegmentedControlProps.data` objects accept an optional `icon`. Mantine's own `data` item has no such slot, so this component `Omit`s Mantine's native `data` type and composes `icon`+`label` into a single `label` ReactNode before handing it to Mantine — Mantine's own `innerLabel` wrapper then lays it out using the icon-size/gap tokens already present in `SegmentedControl.module.css`.

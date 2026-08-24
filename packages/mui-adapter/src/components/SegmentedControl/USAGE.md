@@ -23,6 +23,17 @@ export default function Demo() {
 }
 ```
 
+Each `data` item may also be an object with an optional `icon`, rendered ahead of the label:
+
+```tsx
+<SegmentedControl
+  data={[
+    { value: "daily", label: "Daily", icon: <CheckIcon /> },
+    { value: "weekly", label: "Weekly" },
+  ]}
+/>
+```
+
 ---
 
 ## 3. Design System Integration

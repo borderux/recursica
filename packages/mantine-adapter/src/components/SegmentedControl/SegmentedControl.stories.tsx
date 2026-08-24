@@ -81,33 +81,9 @@ const CheckIcon = () => (
 export const WithIcons: Story = {
   args: {
     data: [
-      {
-        value: "daily",
-        label: (
-          <>
-            <CheckIcon />
-            <span>Daily</span>
-          </>
-        ),
-      },
-      {
-        value: "weekly",
-        label: (
-          <>
-            <CheckIcon />
-            <span>Weekly</span>
-          </>
-        ),
-      },
-      {
-        value: "monthly",
-        label: (
-          <>
-            <CheckIcon />
-            <span>Monthly</span>
-          </>
-        ),
-      },
+      { value: "daily", label: "Daily", icon: <CheckIcon /> },
+      { value: "weekly", label: "Weekly", icon: <CheckIcon /> },
+      { value: "monthly", label: "Monthly", icon: <CheckIcon /> },
     ],
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
