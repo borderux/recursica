@@ -140,7 +140,7 @@ already made for `.value`'s ellipsis truncation.
 
 `readOnly` renders the same content (placeholder/filename/chip row) but the root loses its
 `role="button"` interactivity (no `tabIndex`, no click/keyboard/drag handlers), chips render with
-no `removeLabel`/`onRemove` (so `Chip` itself renders no remove icon, same as `FileUpload`'s
+no `removeLabel`/`onDelete` (so `Chip` itself renders no remove icon, same as `FileUpload`'s
 read-only chips), and the trailing clear icon is omitted entirely. `disabled` keeps the control
 structurally the same but inert (`tabIndex={-1}`, `aria-disabled`, no handlers, native `<input>`
 disabled) — both are computed together as a single `interactive` flag used throughout, but remain

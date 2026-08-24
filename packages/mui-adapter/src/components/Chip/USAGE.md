@@ -51,5 +51,5 @@ them) — see `FileUpload`'s file list for a working example. Ignore both for a 
 default to a normal `tabIndex={0}` remove icon with no ref.
 
 Also pass a plain `tabIndex={-1}` on the `<Chip>` itself in a group like this — MUI's `Chip` root
-becomes a focusable element on its own whenever `onRemove` is set, which would otherwise be a
+becomes a focusable element on its own whenever `onDelete` is set, which would otherwise be a
 second, unwanted tab stop ahead of the remove icon (see `CHIP_IMPLEMENTATION_NOTES.md`).

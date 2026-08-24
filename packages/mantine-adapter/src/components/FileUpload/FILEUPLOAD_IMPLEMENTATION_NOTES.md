@@ -11,7 +11,7 @@ deliberately did not add — see "Why not `@mantine/dropzone`" below). The compo
    (`onDragOver`/`onDrop`), containing an upload icon, instructional text, and a hidden
    `<input type="file">` triggered by...
 2. **The browse button** — this adapter's own `<Button variant="outline" size="small">`.
-3. **The file list** — this adapter's own `<Chip>` component (with `onRemove`), one per entry in
+3. **The file list** — this adapter's own `<Chip>` component (with `onDelete`), one per entry in
    the controlled `files` prop.
 
 This shape is **not configurable** — there is no prop to render a bare native file input without
@@ -34,7 +34,7 @@ Massey, 2026-08-11.)
 (spacing between/around file entries) but **no color/border tokens of its own for the file
 entries themselves** — the visual design intentionally delegates that to the existing `Chip`
 component's own token namespace (`--recursica_ui-kit_components_chip_...`). Reusing `<Chip
-onRemove={...}>` directly (rather than reimplementing a similar-looking element) keeps that
+onDelete={...}>` directly (rather than reimplementing a similar-looking element) keeps that
 separation intact per the canonical guide's "Component Specificity" rule — `FileUpload.module.css`
 never reaches into `chip`'s namespace, and `Chip.module.css` never reaches into `file-upload`'s.
 
@@ -95,9 +95,9 @@ list's read-only form is the same chip list, just without the ability to remove 
 `readOnly` is handled directly in `FileUpload.tsx` rather than reusing `WithReadOnlyWrapper`:
 
 - The dropzone (icon, instructional text, Browse button, hidden `<input>`) is omitted entirely.
-- Each `Chip` is rendered with no `onRemove` (and no `removeTabIndex`/`removeIconRef`/roving
+- Each `Chip` is rendered with no `onDelete` (and no `removeTabIndex`/`removeIconRef`/roving
   keyboard handlers, which only exist to manage the remove icon) — `Chip` itself already renders no
-  remove icon at all when `onRemove` is `undefined`, so this falls out for free rather than needing
+  remove icon at all when `onDelete` is `undefined`, so this falls out for free rather than needing
   a separate `readOnly` prop on `Chip`.
 - `disabled` is independent of `readOnly` and has no effect when `readOnly` is set (there's no
   dropzone/remove icon left for it to disable).
@@ -171,7 +171,7 @@ adapters).
 The file list previously had no group-level keyboard model at all — each chip's remove icon was
 simply the next `tabIndex={0}` element in natural DOM order (and, in the Mantine adapter, so was
 each chip's own hidden checkbox `<input>`, since `Chip`'s `isInteractive` check treats any chip
-with `onRemove` as tabbable-by-default — a second, redundant tab stop specific to this adapter).
+with `onDelete` as tabbable-by-default — a second, redundant tab stop specific to this adapter).
 Implemented a standard roving-tabindex pattern instead, matching `Tree`'s existing keyboard model
 (see `../Tree/IMPLEMENTATION_NOTES.md`) rather than inventing a new one:
 
@@ -184,7 +184,7 @@ Implemented a standard roving-tabindex pattern instead, matching `Tree`'s existi
   kill that second, unwanted tab stop — the chip's label/checkbox was never meant to be
   interactive here (`checked={false}`, no `onChange`), only its remove icon is.
 - **Enter removes the focused chip, with focus already on its remove icon.** No new code needed —
-  `Chip`'s remove icon already calls `onRemove` on `Enter`/`Space`, and it's already the focused
+  `Chip`'s remove icon already calls `onDelete` on `Enter`/`Space`, and it's already the focused
   element by construction (see above), so "focus ring on the remove icon" falls out for free from
   the existing `.removeIcon:focus-visible` style.
 - **Left/Right or Up/Down move focus between chips.** A `onKeyDown` handler on the file list `<div>`
@@ -211,7 +211,7 @@ triggers both.
 ## Read-only chips were still interactive (Matt Massey, 2026-08-18)
 
 The `readOnly` file list (added 2026-08-18, see USAGE.md §7) rendered each filename as a
-`<Chip checked={false} tabIndex={-1}>` with no `onRemove`, expecting that to be fully inert. Two
+`<Chip checked={false} tabIndex={-1}>` with no `onDelete`, expecting that to be fully inert. Two
 separate, previously-latent bugs made it look and behave otherwise — both fixed in
 `Chip`/`Chip.module.css`, not `FileUpload` itself, so every consumer of a non-interactive `Chip`
 benefits, not just this one:
@@ -221,7 +221,7 @@ benefits, not just this one:
   the tabbable/exposed branch — but a `checked`-controlled chip with no `onChange` can't actually be
   toggled by a click (Mantine's `useUncontrolled` just ignores the click when `value` is externally
   controlled), so that heuristic was measuring the wrong thing. `isInteractive` now only looks at
-  whether something actually responds to interaction: `onRemove`, `onClick`, or `onChange`.
+  whether something actually responds to interaction: `onDelete`, `onClick`, or `onChange`.
 - **A read-only chip's cursor still showed `pointer` on hover.** Mantine's own base styles hardcode
   `cursor: pointer` on the chip label class; our CSS never overrode it, so it always leaked through
   regardless of the chip's actual behavior. `.label.label` now resets it to `cursor: default` and a

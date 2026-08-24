@@ -358,7 +358,7 @@ export const FileInput = forwardRef<HTMLDivElement, FileInputProps>(
                         removeIconRef={(el) => {
                           removeIconRefs.current[index] = el;
                         }}
-                        onRemove={
+                        onDelete={
                           readOnly || disabled
                             ? undefined
                             : () => onFileRemove?.(itemId)

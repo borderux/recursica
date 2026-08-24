@@ -20,7 +20,7 @@ To achieve this without breaking Mantine's `Chip` input architecture, we wrapped
 <span className={styles.innerWrapper}>
   {icon}
   <span className={styles.children}>{children}</span>
-  {onRemove}
+  {onDelete}
 </span>
 ```
 
@@ -73,14 +73,14 @@ no ref) — this doesn't change any existing single-chip behavior.
 ### `isInteractive` was measuring the wrong signal, and leaked a pointer cursor + phantom Tab stop (Matt Massey, 2026-08-18)
 
 A `Chip` rendered with `checked` but no real handler (e.g. `FileUpload`'s `readOnly` file list —
-`<Chip checked={false} tabIndex={-1}>`, no `onRemove`) still looked and behaved clickable, from two
+`<Chip checked={false} tabIndex={-1}>`, no `onDelete`) still looked and behaved clickable, from two
 separate bugs:
 
 - `isInteractive` treated `checked !== undefined` (even `false`) as proof of interactivity. That's
   the wrong signal — a `checked`-controlled chip with no `onChange` can't actually be toggled by a
   click (Mantine's `useUncontrolled` discards the click when `value` is externally controlled), so
   clicking it does nothing observable regardless. `isInteractive` now only looks at whether
-  something actually responds: `onRemove`, `onClick`, or `onChange`.
+  something actually responds: `onDelete`, `onClick`, or `onChange`.
 - `.label.label` never set its own `cursor`, so Mantine's base style (`cursor: pointer`, hardcoded
   on the underlying `mantine-Chip-label` class) always leaked through, independent of whether the
   chip was actually interactive. Reset it to `cursor: default` and added a `data-interactive`

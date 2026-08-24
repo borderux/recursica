@@ -63,7 +63,7 @@
   transition: all 0.2s ease;
 }
 
-/* Only a chip with a real handler (onRemove/onClick/onChange — see Chip.tsx's `isInteractive`)
+/* Only a chip with a real handler (onDelete/onClick/onChange — see Chip.tsx's `isInteractive`)
    gets the pointer cursor. A display-only chip (e.g. a read-only FileUpload file list) has
    nothing for a click to do, so it shouldn't look clickable. */
 .root.root[data-interactive] {

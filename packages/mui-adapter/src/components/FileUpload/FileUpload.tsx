@@ -333,7 +333,7 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(
                       removeIconRef={(el) => {
                         removeIconRefs.current[index] = el;
                       }}
-                      onRemove={
+                      onDelete={
                         disabled ? undefined : () => onFileRemove?.(itemId)
                       }
                     >

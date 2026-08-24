@@ -9,7 +9,7 @@ export interface RecursicaChipProps {
   /** Leading icon content */
   icon?: React.ReactNode;
   /** Called when the remove (X) icon is clicked. If provided, the remove icon will be displayed. */
-  onRemove?: (e: React.MouseEvent<HTMLSpanElement, MouseEvent>) => void;
+  onDelete?: (e: React.MouseEvent<HTMLSpanElement, MouseEvent>) => void;
   /** Screen reader label for the remove button. Defaults to 'Remove' */
   removeLabel?: string;
   /** Checked state for the chip (acts as a checkbox) */

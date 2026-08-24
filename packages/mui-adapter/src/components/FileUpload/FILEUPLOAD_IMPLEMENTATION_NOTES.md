@@ -10,7 +10,7 @@ core or as a separate package). The component composes:
    (`onDragOver`/`onDrop`), containing an upload icon, instructional text, and a hidden
    `<input type="file">` triggered by...
 2. **The browse button** — this adapter's own `<Button variant="outline" size="small">`.
-3. **The file list** — this adapter's own `<Chip>` component (with `onRemove`), one per entry in
+3. **The file list** — this adapter's own `<Chip>` component (with `onDelete`), one per entry in
    the controlled `files` prop.
 
 This shape is **not configurable** — there is no prop to render a bare native file input without
@@ -37,7 +37,7 @@ change (the runtime already accepted arbitrary `children`). (Matt Massey, 2026-0
 (spacing between/around file entries) but **no color/border tokens of its own for the file
 entries themselves** — the visual design intentionally delegates that to the existing `Chip`
 component's own token namespace (`--recursica_ui-kit_components_chip_...`). Reusing `<Chip
-onRemove={...}>` directly (rather than reimplementing a similar-looking element) keeps that
+onDelete={...}>` directly (rather than reimplementing a similar-looking element) keeps that
 separation intact per the canonical guide's "Component Specificity" rule — `FileUpload.module.css`
 never reaches into `chip`'s namespace, and `Chip.module.css` never reaches into `file-upload`'s.
 
@@ -105,9 +105,9 @@ list's read-only form is the same chip list, just without the ability to remove 
 `readOnly` is handled directly in `FileUpload.tsx` rather than reusing `WithReadOnlyWrapper`:
 
 - The dropzone (icon, instructional text, Browse button, hidden `<input>`) is omitted entirely.
-- Each `Chip` is rendered with no `onRemove` (and no `removeTabIndex`/`removeIconRef`/roving
+- Each `Chip` is rendered with no `onDelete` (and no `removeTabIndex`/`removeIconRef`/roving
   keyboard handlers, which only exist to manage the remove icon) — `Chip` itself already renders no
-  `deleteIcon` at all when `onRemove` is `undefined`, so this falls out for free rather than needing
+  `deleteIcon` at all when `onDelete` is `undefined`, so this falls out for free rather than needing
   a separate `readOnly` prop on `Chip`. (It also means MUI's own `ButtonBase`-on-`onDelete` quirk —
   see the keyboard-navigation section below — never triggers in read-only mode either.)
 - `disabled` is independent of `readOnly` and has no effect when `readOnly` is set (there's no
@@ -225,7 +225,7 @@ triggers both.
 ## Read-only chips were still interactive (Matt Massey, 2026-08-18)
 
 The `readOnly` file list (added 2026-08-18, see USAGE.md §7) rendered each filename as a
-`<Chip tabIndex={-1}>` with no `onRemove`, expecting that to be fully inert. It wasn't, because of
+`<Chip tabIndex={-1}>` with no `onDelete`, expecting that to be fully inert. It wasn't, because of
 a bug shared with the Mantine adapter that lives entirely in `Chip`/`Chip.module.css`, not
 `FileUpload` — see the Mantine adapter's `FILEUPLOAD_IMPLEMENTATION_NOTES.md` for the parallel
 write-up. The MUI-specific pieces:
@@ -233,7 +233,7 @@ write-up. The MUI-specific pieces:
 - **The chip's cursor still showed `pointer` on hover with no real interaction wired.** `.root.root`
   hardcoded `cursor: pointer` unconditionally — unlike Mantine, this wasn't inherited from MUI's own
   base styles, just a pre-existing hardcode here that never accounted for a non-interactive chip.
-  Added an `isInteractive` check to `Chip.tsx` (`onRemove`/`onClick`/`onChange` — MUI's `Chip` has
+  Added an `isInteractive` check to `Chip.tsx` (`onDelete`/`onClick`/`onChange` — MUI's `Chip` has
   no `checked`-driven native-input case to misread, unlike Mantine's) and a `data-interactive`
   attribute that gates `cursor: pointer` in CSS; a chip with none of those handlers now falls back
   to whatever MUI's own un-clickable `Chip` renders as (no cursor override, no `ButtonBase`).
