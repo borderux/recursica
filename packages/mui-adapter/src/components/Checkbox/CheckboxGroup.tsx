@@ -72,7 +72,6 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
       value,
       defaultValue,
       onChange,
-      row,
       ...rest
     } = props;
     // NOTE: this component's props surface (HTMLAttributes<HTMLDivElement>-based) has no native
@@ -125,7 +124,6 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
           >
             <MuiFormGroup
               ref={ref}
-              row={row}
               {...(sanitizedProps as any)}
               className={`${styles.groupRoot} ${(sanitizedProps as any).className || ""}`.trim()}
               data-layout={formLayout}

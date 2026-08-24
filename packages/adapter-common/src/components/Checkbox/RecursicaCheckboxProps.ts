@@ -22,6 +22,4 @@ export interface RecursicaCheckboxGroupProps {
   defaultValue?: unknown[];
   /** Callback triggered on selection change */
   onChange?: (value: unknown[]) => void;
-  /** Toggle horizontal row display */
-  row?: boolean;
 }
