@@ -139,15 +139,24 @@ export type RecursicaOverStyled<T> =
 export interface RecursicaLabelProps {
   /** Specifies the sizing metrics natively mapping the Label boundaries. */
   labelSize?: "default" | "small" | "md";
-  /** Overall alignment directive for the label strings natively forcing Left/Right justification. */
+  /**
+   * Overall alignment directive for the label strings natively forcing Left/Right justification.
+   * Not renamed to Forge's `labelAlign`: our own vocabulary, not either kit's native term.
+   */
   labelAlignment?: "left" | "right";
-  /** Injects an indicator text block alongside the label. Can be boolean (`true` maps to '(Optional)') or custom React nodes. */
+  /**
+   * Injects an indicator text block alongside the label. Can be boolean (`true` maps to '(Optional)') or custom React nodes.
+   * Not renamed to Forge's `optional`: same reason as `labelAlignment` above.
+   */
   labelOptionalText?: boolean | React.ReactNode;
   /** When true, forces the native Edit Icon to replace the standard asterisk visually. */
   labelWithEditIcon?: boolean;
   /** Custom action area to render alongside the label instead of the default edit icon. */
   labelActionArea?: React.ReactNode;
-  /** Interaction hook invoked whenever a generated edit icon block natively triggers a click event. */
+  /**
+   * Interaction hook invoked whenever a generated edit icon block natively triggers a click event.
+   * Not renamed to Forge's `onEditIconClick`: same reason as `labelAlignment` above.
+   */
   onLabelEditClick?: React.MouseEventHandler<HTMLButtonElement>;
 }
 
@@ -157,7 +166,12 @@ export interface RecursicaLabelProps {
 export interface RecursicaFormControlWrapperProps extends RecursicaLabelProps {
   /** Overall structural flow mapping the Form Control natively cascading down to Label and Input logic. */
   formLayout?: "stacked" | "side-by-side";
-  /** Securely replaces standard descriptions safely providing standard Assistive properties. */
+  /**
+   * Securely replaces standard descriptions safely providing standard Assistive properties.
+   * Not renamed to Forge's `helpText`/`errorText`: our own vocabulary, covering both help and
+   * error copy via one prop plus `assistiveVariant`; `description`/`helperText` below already
+   * exist as native-API fallback aliases.
+   */
   assistiveText?: React.ReactNode;
   /** Fallback description prop to match native APIs safely. */
   description?: React.ReactNode;
