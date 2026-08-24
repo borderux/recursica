@@ -124,6 +124,7 @@ export const FileInput = forwardRef<HTMLDivElement, FileInputProps>(
         ? `Maximum of ${maxFiles} files allowed`
         : "Only one file is allowed",
       icon,
+      clearIcon,
       placeholder = "Select a file...",
       browseLabel = "Choose file",
       removeFileLabel = "Remove",
@@ -378,7 +379,7 @@ export const FileInput = forwardRef<HTMLDivElement, FileInputProps>(
               overStyled
               variant="text"
               size="small"
-              icon={<ClearIcon />}
+              icon={clearIcon ?? <ClearIcon />}
               aria-label={clearLabel}
               className={styles.trailingIcon}
               disabled={disabled}

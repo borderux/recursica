@@ -66,6 +66,12 @@ export interface RecursicaFileInputProps {
   maxFilesMessage?: React.ReactNode;
   /** Leading icon shown inside the control. Defaults to the built-in upload icon. */
   icon?: React.ReactNode;
+  /**
+   * Trailing clear-all icon shown once a file is selected. Defaults to the built-in X icon.
+   * Forge's `file-input` token set exposes a `trailing-icon` color alongside `leading-icon`
+   * for exactly this slot.
+   */
+  clearIcon?: React.ReactNode;
   /** Text shown when no file is selected. Defaults to `"Select a file..."`. */
   placeholder?: React.ReactNode;
   /** Screen-reader label for the control itself. Defaults to `"Choose file"`. */

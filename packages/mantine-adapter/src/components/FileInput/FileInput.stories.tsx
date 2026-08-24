@@ -63,6 +63,9 @@ The \`FileInput\` component is a single-line, \`TextField\`-shaped control for c
     icon: {
       table: { disable: true },
     },
+    clearIcon: {
+      table: { disable: true },
+    },
     files: {
       table: { disable: true },
     },

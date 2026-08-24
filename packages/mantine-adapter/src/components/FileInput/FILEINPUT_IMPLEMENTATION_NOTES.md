@@ -20,7 +20,7 @@ The control is one clickable, focusable `<div role="button">` containing:
    single- and multiple-file mode render identically here; only the selection/replace behavior
    differs (see "`multiple` defaults to `false`" below).
 3. **A trailing "clear" `Button`** — shown whenever a file is selected; clears the entire current
-   selection (see "Trailing clear button" below).
+   selection, icon overridable via `clearIcon` (see "Trailing clear button" below).
 4. **A hidden `<input type="file">`**, triggered programmatically — same approach as
    `FileUpload`'s dropzone, not the "invisible overlay input" pattern some styled file inputs use
    (that pattern would need every interactive child — chip remove icons, the clear icon — to sit
@@ -107,7 +107,9 @@ color/disabled states, so `file-input`'s own `properties_colors_trailing-icon` t
 entirely. Clicking/activating it calls `onFileRemove` once per currently-selected file (reusing
 the same callback `FileUpload`'s individual chip removal uses, rather than introducing a separate
 `onClear` prop) — in single-file mode that's one call; in multiple-file mode it clears everything
-at once, distinct from a chip's own individual remove icon.
+at once, distinct from a chip's own individual remove icon. The icon itself defaults to the
+built-in X glyph and is overridable via `clearIcon` — the same pattern as the leading `icon`,
+giving Forge's `leading-icon`/`trailing-icon` token pair a matching pair of override props.
 
 ## Why each chip is wrapped with its own `stopPropagation`
 
