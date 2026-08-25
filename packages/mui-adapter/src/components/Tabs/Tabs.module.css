@@ -96,6 +96,18 @@
     --recursica_ui-kit_components_tabs_variants_styles_default_variants_orientation_horizontal_properties_tabs-content-gap
   );
 }
+/* Inverted puts the tablist below the panel (the story reorders the DOM — see
+   Tabs.stories.tsx; unlike Mantine, MUI's `.root` is only the tablist, so there's no shared
+   wrapper here to swap `order` on). A bottom margin on `.list` in that position would land past
+   the tablist, at the very bottom of the whole layout, not between it and the panel above — move
+   the content-gap to the top instead. */
+.root[data-variant="default"][data-orientation="horizontal"][data-inverted]
+  .list {
+  margin-bottom: 0;
+  margin-top: var(
+    --recursica_ui-kit_components_tabs_variants_styles_default_variants_orientation_horizontal_properties_tabs-content-gap
+  );
+}
 
 .root[data-variant="default"][data-orientation="vertical"] {
   --tabs-content-alignment: var(
@@ -174,6 +186,14 @@
     --recursica_ui-kit_components_tabs_variants_styles_outline_variants_orientation_horizontal_properties_tabs-content-gap
   );
 }
+/* See the default-variant inverted comment above — same reasoning. */
+.root[data-variant="outline"][data-orientation="horizontal"][data-inverted]
+  .list {
+  margin-bottom: 0;
+  margin-top: var(
+    --recursica_ui-kit_components_tabs_variants_styles_outline_variants_orientation_horizontal_properties_tabs-content-gap
+  );
+}
 
 .root[data-variant="outline"][data-orientation="vertical"] {
   --tabs-content-alignment: var(
@@ -234,6 +254,14 @@
   gap: var(--tabs-space-between-tabs);
   width: 100%;
   margin-bottom: var(
+    --recursica_ui-kit_components_tabs_variants_styles_pills_variants_orientation_horizontal_properties_tabs-content-gap
+  );
+}
+/* See the default-variant inverted comment above — same reasoning. */
+.root[data-variant="pills"][data-orientation="horizontal"][data-inverted]
+  .list {
+  margin-bottom: 0;
+  margin-top: var(
     --recursica_ui-kit_components_tabs_variants_styles_pills_variants_orientation_horizontal_properties_tabs-content-gap
   );
 }

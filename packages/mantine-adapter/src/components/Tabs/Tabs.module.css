@@ -13,6 +13,31 @@
   width: 100%;
 }
 
+/* Horizontal orientation is `display: block` by default (both ours and Mantine's own), so List
+   and Panel simply stack in DOM/JSX order — there's no layout mechanism for `inverted` ("tabs at
+   the bottom") short of a consumer hand-reordering their own children. Make it a flex column with
+   an explicit `order` per child instead, so `data-inverted` (set natively by Mantine's own
+   `Tabs` when `orientation="horizontal"`) can swap List below Panel purely in CSS — mirrors how
+   Mantine's own vertical `data-placement="right"` reorders via `flex-direction: row-reverse`
+   rather than requiring JSX reordering. Inactive panels stay `display: none` internally (Mantine
+   TabsPanel), so `order` on `.panel` is safe even with multiple panels mounted. */
+.root[data-orientation="horizontal"] {
+  display: flex;
+  flex-direction: column;
+}
+.root[data-orientation="horizontal"] .list {
+  order: 1;
+}
+.root[data-orientation="horizontal"] .panel {
+  order: 2;
+}
+.root[data-orientation="horizontal"][data-inverted] .list {
+  order: 2;
+}
+.root[data-orientation="horizontal"][data-inverted] .panel {
+  order: 1;
+}
+
 /*
   Mantine Tabs Anatomy:
   .root
@@ -77,6 +102,16 @@
   gap: var(--tabs-space-between-tabs);
   width: 100%;
   margin-bottom: var(
+    --recursica_ui-kit_components_tabs_variants_styles_default_variants_orientation_horizontal_properties_tabs-content-gap
+  );
+}
+/* Inverted flips List below Panel (see the `order` rules above), so the content-gap must move to
+   the top of the list instead — a bottom margin there would land past the list, at the very
+   bottom of the whole component, not between it and the panel above. */
+.root[data-variant="default"][data-orientation="horizontal"][data-inverted]
+  .list {
+  margin-bottom: 0;
+  margin-top: var(
     --recursica_ui-kit_components_tabs_variants_styles_default_variants_orientation_horizontal_properties_tabs-content-gap
   );
 }
@@ -149,6 +184,14 @@
     --recursica_ui-kit_components_tabs_variants_styles_outline_variants_orientation_horizontal_properties_tabs-content-gap
   );
 }
+/* See the default-variant inverted comment above — same reasoning. */
+.root[data-variant="outline"][data-orientation="horizontal"][data-inverted]
+  .list {
+  margin-bottom: 0;
+  margin-top: var(
+    --recursica_ui-kit_components_tabs_variants_styles_outline_variants_orientation_horizontal_properties_tabs-content-gap
+  );
+}
 
 .root[data-variant="outline"][data-orientation="vertical"] {
   --tabs-content-alignment: var(
@@ -209,6 +252,14 @@
   gap: var(--tabs-space-between-tabs);
   width: 100%;
   margin-bottom: var(
+    --recursica_ui-kit_components_tabs_variants_styles_pills_variants_orientation_horizontal_properties_tabs-content-gap
+  );
+}
+/* See the default-variant inverted comment above — same reasoning. */
+.root[data-variant="pills"][data-orientation="horizontal"][data-inverted]
+  .list {
+  margin-bottom: 0;
+  margin-top: var(
     --recursica_ui-kit_components_tabs_variants_styles_pills_variants_orientation_horizontal_properties_tabs-content-gap
   );
 }

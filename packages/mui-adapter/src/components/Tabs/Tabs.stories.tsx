@@ -47,86 +47,106 @@ const InteractiveTabs = (
     setValue(newValue);
   };
 
+  // Unlike Mantine (a single wrapping `<Tabs>` root the adapter can reorder internally via CSS
+  // `order`), MUI's `Tabs` (the tablist) and `TabPanel` are DOM siblings with no shared wrapper —
+  // see IMPLEMENTATION_NOTES.md. "Inverted" (tabs at the bottom) is therefore a consumer-level
+  // JSX ordering concern: swap which one renders first in this column-direction Flex.
+  const tabsElement = (
+    <Tabs value={value} onChange={handleChange} {...args}>
+      <Tab
+        value="gallery"
+        label="Gallery"
+        disabled={args.disabled}
+        icon={
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            width={16}
+            height={16}
+          >
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+        }
+        iconPosition="start"
+      />
+      <Tab
+        value="messages"
+        label="Messages"
+        disabled={args.disabled}
+        icon={
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            width={16}
+            height={16}
+          >
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+        }
+        iconPosition="start"
+      />
+      <Tab
+        value="settings"
+        label="Settings"
+        disabled={args.disabled}
+        icon={
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            width={16}
+            height={16}
+          >
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        }
+        iconPosition="start"
+      />
+    </Tabs>
+  );
+
+  const panelsElement = (
+    <>
+      <TabPanel value="gallery">Gallery tab content</TabPanel>
+      <TabPanel value="messages">Messages tab content</TabPanel>
+      <TabPanel value="settings">Settings tab content</TabPanel>
+    </>
+  );
+
   return (
     <Flex
       direction={args.orientation === "vertical" ? "row" : "column"}
       style={{ width: 600, height: 300 }}
     >
       <TabContext value={value}>
-        <Tabs value={value} onChange={handleChange} {...args}>
-          <Tab
-            value="gallery"
-            label="Gallery"
-            disabled={args.disabled}
-            icon={
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                width={16}
-                height={16}
-              >
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                <polyline points="21 15 16 10 5 21"></polyline>
-              </svg>
-            }
-            iconPosition="start"
-          />
-          <Tab
-            value="messages"
-            label="Messages"
-            disabled={args.disabled}
-            icon={
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                width={16}
-                height={16}
-              >
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-              </svg>
-            }
-            iconPosition="start"
-          />
-          <Tab
-            value="settings"
-            label="Settings"
-            disabled={args.disabled}
-            icon={
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                width={16}
-                height={16}
-              >
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-              </svg>
-            }
-            iconPosition="start"
-          />
-        </Tabs>
-
-        <TabPanel value="gallery">Gallery tab content</TabPanel>
-
-        <TabPanel value="messages">Messages tab content</TabPanel>
-
-        <TabPanel value="settings">Settings tab content</TabPanel>
+        {args.inverted ? (
+          <>
+            {panelsElement}
+            {tabsElement}
+          </>
+        ) : (
+          <>
+            {tabsElement}
+            {panelsElement}
+          </>
+        )}
       </TabContext>
     </Flex>
   );
