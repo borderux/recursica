@@ -12,7 +12,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@recursica/mantine-adapter": "*"
+    "@recursica/mantine-adapter": "^0.46.0"
   },
   "devDependencies": {
     "gh-pages": "^6.3.0"

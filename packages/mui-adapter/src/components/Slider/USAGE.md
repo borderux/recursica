@@ -34,3 +34,9 @@ All Recursica components in the `@recursica/mui-adapter` package adhere strictly
 > - **Anti-override protection**: Rogues style injections (like inline `style` or arbitrary `className`) are automatically blocked by our prop layer unless `overStyled={true}` is explicitly provided.
 > - **No Direct Layers**: Do not pass a `layer` prop to this component. To place it on a specific visual layer, wrap it in a `<Layer layer={0|1|2|3}>` component natively.
 > - **Variables and Theming**: Styling is entirely determined by local CSS variables defined in `recursica_variables_scoped.css` and mapped in the component's CSS module.
+
+---
+
+## 4. Key Integration Features & Constraints
+
+The `label` prop is passed through to the surrounding form label rather than MUI's dragging tooltip; use `tooltipLabel` to set the label shown while dragging. When `showInput` is enabled, a numeric text input is rendered alongside the track and stays in sync with the slider's value. Set `showMinMaxLabels` to `false` to hide the min/max guides shown at either end of the track. Otherwise, the current value is displayed near the track instead — pass `tooltipLabel` as a formatter function (`(value) => ReactNode`) and that same formatter is reused for this display, instead of always showing the raw number. `minLabel`/`maxLabel` override the text shown at either end of the track (defaults to the numeric `min`/`max`). `icon` renders a leading icon next to the track; `trailingIcon` renders one on the opposite side.
