@@ -27,3 +27,13 @@ This document contains specific design decisions, architectural constraints, and
 ## 4. Mark Label Color
 
 **Root cause:** MUI's `.sliderMarkLabel` already inherited the container text color using the min-max-label typography tokens. Mantine's equivalent class (`styles.sliderMarkLabel`) was referenced in `Slider.tsx`'s `classNames` map but was never defined in Mantine's `Slider.module.css`, so Mantine silently fell back to its own default theme grey instead of any recursica token. Fixed in `mantine-adapter` by adding the missing `.sliderMarkLabel` rule (same tokens/inherit-color approach as MUI) rather than copying Mantine's undefined behavior into MUI.
+
+## 5. Formatted Current Value, Label Overrides, Trailing Icon
+
+**Symptom:** `.currentValue` always rendered the raw numeric value, even when `tooltipLabel` was a formatter function (already used for MUI's own `valueLabelFormat`) — a caller mapping values onto custom text got the formatted tooltip while dragging but the raw number next to the track otherwise. Same bug as `mantine-adapter`.
+
+**Fix:** `.currentValue` now runs `resolvedValue` through `tooltipLabel` when it's a function, reusing the same formatter passed to `valueLabelFormat`. Added `minLabel`/`maxLabel` (new `adapter-common` props) to override the `.minMaxGuide` text at either end of the track, and `trailingIcon` (new `adapter-common` prop) to render a second icon opposite the existing `icon`, reusing the same `.iconWrapper` styling.
+
+## 6. No Dual-Thumb / Range Support
+
+**Decision:** Requested (MUI's `Slider` already accepts `number[]` for `value`/`onChange` and renders multiple thumbs natively), declined — no current use case needs it. `Slider` stays single-thumb only; `value`/`onChange` remain typed as `number` and arrays continue to be collapsed to `value[0]`.

@@ -57,3 +57,16 @@ This document contains specific design decisions, architectural constraints, and
 - The thumb's focus box-shadow layers the ring on top of its existing `thumb-elevation` shadow rather than replacing it.
 - `.sliderMark[data-filled]` has no default-state "-active" step-indicator token anymore (only `disabled`/`error` define one); it reuses `colors_track-active` so filled marks stay visually tied to the filled portion of the track. Worth a design review if a distinct filled-mark color is expected.
 - `markLabel` was already mapped in the `classNames` prop but had no matching `.sliderMarkLabel` rule in this file, so Mantine silently fell back to its own default theme grey instead of any recursica token. Added a `.sliderMarkLabel` rule reusing the min-max-label typography tokens with `color: inherit`, matching the mui-adapter's equivalent.
+
+## 7. Formatted Current Value, Label Overrides, Trailing Icon
+
+**Decision:** The floating `.currentValue` display (see §5) always rendered the raw numeric value, even when `tooltipLabel` was a formatter function — a caller mapping values onto custom text (e.g. 0-4 → XS/S/M/L/XL) got the formatted tooltip while dragging but the raw number next to the track otherwise.
+**Implementation:**
+
+- `.currentValue` now runs `resolvedValue` through `tooltipLabel` when it's a function, so both displays agree. No change when `tooltipLabel` is absent or a static node — still the raw number.
+- `minLabel`/`maxLabel` (new `adapter-common` props) override the `.minMaxGuide` text at either end of the track, falling back to the numeric `min`/`max`.
+- `trailingIcon` (new `adapter-common` prop) renders a second icon on the opposite side of the track from the existing `icon`, reusing the same `.iconWrapper` styling (disabled/error/focus states already target `.iconWrapper` generically, so no new CSS was needed).
+
+## 8. No Dual-Thumb / Range Support
+
+**Decision:** Requested (a caller passing `[number, number]` for `value`/`onChange`, backed by Mantine's separate `RangeSlider` component), declined — no current use case needs it. `Slider` stays single-thumb only; `value`/`onChange` remain typed as `number`.

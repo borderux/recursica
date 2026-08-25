@@ -51,7 +51,8 @@ const SliderReadOnlyValue: React.FC<{ value: number }> = ({ value }) => {
  * Recursica Slider component wrapping Mantine's Slider.
  *
  * Implements a bidirectional text input field next to the slider track, responsive layouts,
- * custom typography-bound min/max labels, an optional leading icon, and an explicit read-only layout.
+ * custom typography-bound min/max labels (optionally overridden via `minLabel`/`maxLabel`),
+ * optional leading/trailing icons, and an explicit read-only layout.
  */
 export const Slider = forwardRef<HTMLDivElement, SliderProps>(
   function Slider(props, ref) {
@@ -84,10 +85,13 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
       value,
       defaultValue,
       icon,
+      trailingIcon,
       showInput = false,
       showMinMaxLabels = true,
       min = 0,
       max = 100,
+      minLabel,
+      maxLabel,
       step = 1,
       onChange,
       onChangeEnd,
@@ -176,6 +180,19 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
       </span>
     ) : null;
 
+    const trailingIconEl = trailingIcon ? (
+      <span className={styles.iconWrapper} aria-hidden>
+        {trailingIcon}
+      </span>
+    ) : null;
+
+    // Duplicates the raw numeric value next to the track by default; when `tooltipLabel` is a
+    // formatter, reuse it here too so both displays agree instead of one showing raw numbers.
+    const displayValue =
+      typeof tooltipLabel === "function"
+        ? tooltipLabel(resolvedValue)
+        : resolvedValue;
+
     return (
       <WithReadOnlyWrapper
         ref={ref}
@@ -214,7 +231,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
             {leadingIcon}
 
             {showMinMaxLabels && (
-              <span className={styles.minMaxGuide}>{min}</span>
+              <span className={styles.minMaxGuide}>{minLabel ?? min}</span>
             )}
 
             <div className={styles.sliderTrackWrapper}>
@@ -234,10 +251,10 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
 
             <div className={styles.rightGuideContainer}>
               {!showInput && (
-                <span className={styles.currentValue}>{resolvedValue}</span>
+                <span className={styles.currentValue}>{displayValue}</span>
               )}
               {showMinMaxLabels && (
-                <span className={styles.minMaxGuide}>{max}</span>
+                <span className={styles.minMaxGuide}>{maxLabel ?? max}</span>
               )}
             </div>
 
@@ -255,6 +272,8 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
                 data-error={error ? "true" : undefined}
               />
             )}
+
+            {trailingIconEl}
           </div>
         }
       />

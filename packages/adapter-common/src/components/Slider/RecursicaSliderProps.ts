@@ -20,8 +20,14 @@ export interface RecursicaSliderProps {
   tooltipLabel?: React.ReactNode | ((value: number) => React.ReactNode);
   /** Icon shown to the left of the slider track */
   icon?: React.ReactNode;
+  /** Icon shown to the right of the slider track */
+  trailingIcon?: React.ReactNode;
   /** Render numeric input side-by-side or stacked */
   showInput?: boolean;
   /** Show min and max labels below track */
   showMinMaxLabels?: boolean;
+  /** Override the label shown at the minimum end of the track. Defaults to the numeric `min`. */
+  minLabel?: React.ReactNode;
+  /** Override the label shown at the maximum end of the track. Defaults to the numeric `max`. */
+  maxLabel?: React.ReactNode;
 }
