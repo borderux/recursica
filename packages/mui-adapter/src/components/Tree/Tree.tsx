@@ -71,7 +71,12 @@ function ChevronGlyph({ rotated }: { rotated?: boolean }) {
  * not by this Button itself, so the row stays the only focusable element and the button never
  * shows its own focus state. Rendered for every row, including leaf items, so row alignment
  * stays consistent; `hidden` (visibility, not display) is used for leaf rows instead of omitting
- * the button, so the layout space is reserved without duplicating Button's own size tokens. */
+ * the button, so the layout space is reserved without duplicating Button's own size tokens.
+ * `onMouseDown` prevents the browser's default click-focuses-the-button behavior (tabIndex={-1}
+ * only removes it from the tab order, it doesn't stop a direct mouse click on the chevron from
+ * focusing this button) — without this, clicking the chevron leaves the (aria-hidden) button
+ * focused, which browsers now flag as an accessibility violation ("focus must not be hidden from
+ * assistive technology"). */
 function ExpandToggleButton({
   rotated,
   hidden,
@@ -88,6 +93,7 @@ function ExpandToggleButton({
       aria-label="Toggle subtree"
       aria-hidden="true"
       tabIndex={-1}
+      onMouseDown={(event) => event.preventDefault()}
       className={
         hidden
           ? `${styles.expandButton} ${styles.expandButtonHidden}`
