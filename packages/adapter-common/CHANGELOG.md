@@ -1,5 +1,11 @@
 # @recursica/adapter-common
 
+## 0.23.0
+
+### Minor Changes
+
+- b7f76d8: Slider: added two-thumb range mode via a `[number, number]` value/onChange, fixed `trailingIcon` rendering after the numeric input instead of before it, and fixed marks (mantine) and mark labels (mantine, mui) rendering off Mantine/MUI internal defaults instead of recursica tokens, leaving marks vertically off-center and label spacing too tight.
+
 ## 0.22.0
 
 ### Minor Changes
