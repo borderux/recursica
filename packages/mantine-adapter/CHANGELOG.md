@@ -1,5 +1,18 @@
 # @recursica/mantine-adapter
 
+## 0.46.0
+
+### Minor Changes
+
+- 0bb2dab: **Breaking:** `Chip`'s `onRemove` prop is renamed to `onDelete` in both adapters, matching MUI's own `onDelete` naming and removing the previous internal aliasing between the two. Update any `Chip` usage passing `onRemove` to `onDelete` — the behavior (rendering the remove/X icon and firing on click or Enter/Space) is unchanged. `FileInput` and `FileUpload`'s own public props are unaffected; they only consume `Chip` internally.
+- 0bb2dab: Updated props with breaking changes
+
+### Patch Changes
+
+- Updated dependencies [0bb2dab]
+- Updated dependencies [0bb2dab]
+  - @recursica/adapter-common@0.21.0
+
 ## 0.45.0
 
 ### Minor Changes

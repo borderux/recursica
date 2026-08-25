@@ -1,5 +1,17 @@
 # recursica-storybook
 
+## 0.31.0
+
+### Minor Changes
+
+- 0bb2dab: Updated props with breaking changes
+
+### Patch Changes
+
+- Updated dependencies [0bb2dab]
+- Updated dependencies [0bb2dab]
+  - @recursica/mantine-adapter@0.46.0
+
 ## 0.30.0
 
 ### Minor Changes
