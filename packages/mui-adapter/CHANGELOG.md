@@ -1,5 +1,17 @@
 # @recursica/mui-adapter
 
+## 0.32.0
+
+### Minor Changes
+
+- b7f76d8: Slider: added two-thumb range mode via a `[number, number]` value/onChange, fixed `trailingIcon` rendering after the numeric input instead of before it, and fixed marks (mantine) and mark labels (mantine, mui) rendering off Mantine/MUI internal defaults instead of recursica tokens, leaving marks vertically off-center and label spacing too tight.
+
+### Patch Changes
+
+- d8a0da1: Fix Tree's chevron button stealing DOM focus on click while `aria-hidden`, which browsers flag as an accessibility violation.
+- Updated dependencies [b7f76d8]
+  - @recursica/adapter-common@0.23.0
+
 ## 0.31.0
 
 ### Minor Changes
