@@ -1,5 +1,11 @@
 # @recursica/mui-adapter
 
+## 0.32.1
+
+### Patch Changes
+
+- 5369e5b: Hide the FileInput chip row's native horizontal scrollbar while keeping it scrollable.
+
 ## 0.32.0
 
 ### Minor Changes
