@@ -23,6 +23,17 @@ export default function Demo() {
 }
 ```
 
+Each `data` item may also be an object with an optional `icon`, rendered ahead of the label:
+
+```tsx
+<SegmentedControl
+  data={[
+    { value: "daily", label: "Daily", icon: <CheckIcon /> },
+    { value: "weekly", label: "Weekly" },
+  ]}
+/>
+```
+
 ---
 
 ## 3. Design System Integration
@@ -34,3 +45,5 @@ All Recursica components in the `@recursica/mui-adapter` package adhere strictly
 > - **Anti-override protection**: Rogues style injections (like inline `style` or arbitrary `className`) are automatically blocked by our prop layer unless `overStyled={true}` is explicitly provided.
 > - **No Direct Layers**: Do not pass a `layer` prop to this component. To place it on a specific visual layer, wrap it in a `<Layer layer={0|1|2|3}>` component natively.
 > - **Variables and Theming**: Styling is entirely determined by local CSS variables defined in `recursica_variables_scoped.css` and mapped in the component's CSS module.
+
+A top-level `disabled` disables every item at once; an individual item can still be disabled on its own via `data[].disabled`.

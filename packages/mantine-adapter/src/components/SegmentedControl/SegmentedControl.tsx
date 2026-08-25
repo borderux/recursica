@@ -5,7 +5,6 @@ import {
 } from "@mantine/core";
 import {
   filterStylingProps,
-  omitUnsupportedProps,
   mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
@@ -22,7 +21,7 @@ export type SegmentedControlProps = RecursicaOverStyled<
     | "color"
     | "classNames"
     | "className"
-    | "disabled"
+    | "data"
   > & {
     className?: string;
     classNames?: Partial<Record<string, string>>;
@@ -53,26 +52,38 @@ function useSegmentedControlClassNames(restRecord: Record<string, unknown>): {
 
 const _SegmentedControl = forwardRef<HTMLDivElement, SegmentedControlProps>(
   function SegmentedControl(
-    { overStyled = false, orientation = "horizontal", fullWidth, ...rest },
+    {
+      overStyled = false,
+      orientation = "horizontal",
+      fullWidth,
+      data = [],
+      ...rest
+    },
     ref,
   ) {
-    // Props this component intentionally doesn't support — deleted at runtime so they can't leak
-    // through even if a caller forces them via plain JavaScript, bypassing the `Omit<>` above.
-    const UNSUPPORTED_PROPS = [
-      // SegmentedControl only supports per-item disabling via the `data` array (each item may set
-      // its own `disabled`); a top-level `disabled` is intentionally unsupported (typed as `never`
-      // in RecursicaSegmentedControlProps) because Mantine's top-level `disabled` would disable
-      // the whole control uniformly instead of per-item.
-      "disabled",
-    ] as const satisfies readonly (keyof MantineSegmentedControlProps)[];
-
-    const sanitizedProps = omitUnsupportedProps(
-      filterStylingProps(rest, overStyled) as Record<string, unknown>,
-      UNSUPPORTED_PROPS,
-    ) as Partial<typeof rest>;
+    const sanitizedProps = filterStylingProps(rest, overStyled) as Partial<
+      typeof rest
+    >;
     const restRecord = sanitizedProps as Record<string, unknown>;
 
     const stylingParams = useSegmentedControlClassNames(restRecord);
+
+    // Mantine's own data item has no icon slot; compose one into `label` (already a ReactNode)
+    // so Mantine's native innerLabel wrapper lays it out using the icon-size/gap tokens already
+    // wired in SegmentedControl.module.css.
+    const mappedData = data.map((item) =>
+      typeof item === "string" || !item.icon
+        ? item
+        : {
+            ...item,
+            label: (
+              <>
+                {item.icon}
+                {item.label}
+              </>
+            ),
+          },
+    );
 
     return (
       <MantineSegmentedControl
@@ -86,6 +97,7 @@ const _SegmentedControl = forwardRef<HTMLDivElement, SegmentedControlProps>(
         orientation={orientation}
         fullWidth={fullWidth}
         data-orientation={orientation}
+        data={mappedData}
       />
     );
   },

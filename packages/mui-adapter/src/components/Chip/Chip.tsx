@@ -62,10 +62,10 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
   {
     error = false,
     icon,
-    onRemove,
-    removeLabel = "Remove",
-    removeTabIndex,
-    removeIconRef,
+    onDelete,
+    deleteLabel = "Delete",
+    deleteTabIndex,
+    deleteIconRef,
     children,
     checked,
     overStyled = false,
@@ -83,7 +83,7 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
       root: styles.root,
       label: styles.label,
       icon: styles.leadingIcon,
-      deleteIcon: styles.removeIconWrapper,
+      deleteIcon: styles.deleteIconWrapper,
     },
     restRecord.classes as Partial<Record<string, string>> | undefined,
   );
@@ -96,13 +96,13 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
   // Determine state
   const dataError = error ? "" : undefined;
   const dataChecked = checked ? "" : undefined;
-  const isIconOnly = !children && (!!icon || !!onRemove);
+  const isIconOnly = !children && (!!icon || !!onDelete);
   // A chip only counts as interactive when something actually responds to it — merely passing a
   // `checked` value (e.g. to pin a display-only chip to a fixed visual state, as FileUpload's
   // read-only file list does) isn't itself an interaction, since clicking it with no onChange/
   // onClick wired does nothing observable.
   const isInteractive =
-    onRemove !== undefined ||
+    onDelete !== undefined ||
     restRecord.onClick !== undefined ||
     restRecord.onChange !== undefined;
 
@@ -127,25 +127,26 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
           </span>
         ) : undefined
       }
-      onDelete={onRemove}
+      onDelete={onDelete}
       deleteIcon={
-        onRemove ? (
+        onDelete ? (
           <span
-            ref={removeIconRef}
+            ref={deleteIconRef}
             role="button"
-            className={styles.removeIconWrapper}
-            aria-label={removeLabel}
-            tabIndex={removeTabIndex ?? 0}
+            className={styles.deleteIconWrapper}
+            aria-label={deleteLabel}
+            tabIndex={deleteTabIndex ?? 0}
             onKeyDown={(e) => {
-              // MUI's own `onDelete` wiring only reacts to Backspace/Delete, and only when this
-              // span itself is both the event's target and currentTarget — neither holds once a
-              // parent (e.g. FileUpload's roving-tabindex group) moves real focus onto this span
-              // directly. A plain `<span>` also gets no native Enter/Space-triggers-click behavior
-              // the way a real `<button>` would, so it's handled explicitly here instead.
+              // MUI's native `onDelete` wiring (distinct from our own `onDelete` prop above) only
+              // reacts to Backspace/Delete, and only when this span itself is both the event's
+              // target and currentTarget — neither holds once a parent (e.g. FileUpload's
+              // roving-tabindex group) moves real focus onto this span directly. A plain `<span>`
+              // also gets no native Enter/Space-triggers-click behavior the way a real `<button>`
+              // would, so it's handled explicitly here instead.
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
                 e.stopPropagation();
-                onRemove(
+                onDelete(
                   e as unknown as React.MouseEvent<HTMLSpanElement, MouseEvent>,
                 );
               }

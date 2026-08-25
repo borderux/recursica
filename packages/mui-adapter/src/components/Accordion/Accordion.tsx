@@ -43,7 +43,12 @@ const AccordionContext = createContext<{
 
 // ==== ACCORDION CONTAINER ====
 export type AccordionProps = RecursicaOverStyled<
-  React.HTMLAttributes<HTMLDivElement> & RecursicaAccordionProps
+  React.HTMLAttributes<HTMLDivElement> &
+    RecursicaAccordionProps & {
+      // MUI has no native multi-panel accordion group to match (its own `Accordion` is a
+      // single controlled item) — this signature is Recursica's own, same as TransferList.
+      onChange?: (value: string | string[] | null) => void;
+    }
 >;
 
 const AccordionBase = forwardRef<HTMLDivElement, AccordionProps>(

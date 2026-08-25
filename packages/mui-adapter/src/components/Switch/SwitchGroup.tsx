@@ -43,7 +43,11 @@ export interface RecursicaSwitchGroupProps
       | "defaultValue"
     >,
     ReadOnlyControlProps,
-    BaseRecursicaSwitchGroupProps {}
+    BaseRecursicaSwitchGroupProps {
+  // MUI has no native switch-group concept to match (its own `FormGroup` is layout-only, no
+  // value/onChange) — this signature is Recursica's own, same as TransferList/Accordion/CheckboxGroup.
+  onChange?: (value: string[]) => void;
+}
 
 export type SwitchGroupProps = RecursicaOverStyled<RecursicaSwitchGroupProps>;
 

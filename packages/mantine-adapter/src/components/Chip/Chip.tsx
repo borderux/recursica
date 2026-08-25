@@ -41,10 +41,10 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
   {
     error = false,
     icon,
-    onRemove,
-    removeLabel = "Remove",
-    removeTabIndex,
-    removeIconRef,
+    onDelete,
+    deleteLabel = "Delete",
+    deleteTabIndex,
+    deleteIconRef,
     children,
     overStyled = false,
     wrapperProps,
@@ -75,13 +75,13 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
 
   // Determine state
   const dataError = error ? "" : undefined;
-  const isIconOnly = !children && (!!icon || !!onRemove);
+  const isIconOnly = !children && (!!icon || !!onDelete);
   // A chip only counts as interactive when something actually responds to it — merely passing a
   // `checked` value (e.g. to pin a display-only chip to a fixed visual state, as FileUpload's
   // read-only file list does) isn't itself an interaction, since clicking it with no onChange/
   // onClick wired does nothing observable.
   const isInteractive =
-    onRemove !== undefined ||
+    onDelete !== undefined ||
     restRecord.onClick !== undefined ||
     restRecord.onChange !== undefined;
 
@@ -119,27 +119,27 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
 
         <span className={styles.children}>{children}</span>
 
-        {onRemove && (
+        {onDelete && (
           <span
-            ref={removeIconRef}
+            ref={deleteIconRef}
             role="button"
-            className={styles.removeIcon}
+            className={styles.deleteIcon}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              onRemove(e);
+              onDelete(e);
             }}
-            aria-label={removeLabel}
+            aria-label={deleteLabel}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
                 e.stopPropagation();
-                onRemove(
+                onDelete(
                   e as unknown as React.MouseEvent<HTMLSpanElement, MouseEvent>,
                 );
               }
             }}
-            tabIndex={removeTabIndex ?? 0}
+            tabIndex={deleteTabIndex ?? 0}
           >
             <CloseIcon />
           </span>

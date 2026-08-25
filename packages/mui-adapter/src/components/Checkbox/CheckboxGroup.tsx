@@ -36,7 +36,11 @@ export interface RecursicaCheckboxGroupProps
       | "defaultValue"
     >,
     ReadOnlyControlProps,
-    BaseRecursicaCheckboxGroupProps {}
+    BaseRecursicaCheckboxGroupProps {
+  // MUI has no native checkbox-group concept to match (its own `FormGroup` is layout-only,
+  // no value/onChange) — this signature is Recursica's own, same as TransferList/Accordion.
+  onChange?: (value: unknown[]) => void;
+}
 
 export type CheckboxGroupProps =
   RecursicaOverStyled<RecursicaCheckboxGroupProps>;
@@ -72,7 +76,6 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
       value,
       defaultValue,
       onChange,
-      row,
       ...rest
     } = props;
     // NOTE: this component's props surface (HTMLAttributes<HTMLDivElement>-based) has no native
@@ -125,7 +128,6 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
           >
             <MuiFormGroup
               ref={ref}
-              row={row}
               {...(sanitizedProps as any)}
               className={`${styles.groupRoot} ${(sanitizedProps as any).className || ""}`.trim()}
               data-layout={formLayout}

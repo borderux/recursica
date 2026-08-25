@@ -16,9 +16,9 @@ export interface RecursicaAutocompleteProps {
   id?: string;
   /** Initial default value */
   defaultValue?: unknown;
-  /** Left section decoration (e.g. icon) */
+  /** Left section decoration (e.g. icon). Naming rationale: see `RecursicaTextFieldProps.leftSection`. */
   leftSection?: React.ReactNode;
-  /** Right section decoration (e.g. action button) */
+  /** Right section decoration (e.g. action button). Same rationale as `leftSection` above. */
   rightSection?: React.ReactNode;
   /** Placeholder text */
   placeholder?: string;

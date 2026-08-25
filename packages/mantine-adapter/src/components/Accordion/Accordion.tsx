@@ -25,7 +25,7 @@ import {
 export type AccordionProps = RecursicaOverStyled<
   Omit<
     MantineAccordionProps,
-    "value" | "defaultValue" | "onChange" | "multiple" | "variant"
+    "value" | "defaultValue" | "multiple" | "variant"
   > &
     RecursicaAccordionProps
 >;

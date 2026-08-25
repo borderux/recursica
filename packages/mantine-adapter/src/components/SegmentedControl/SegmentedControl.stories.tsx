@@ -21,7 +21,9 @@ const meta: Meta<typeof SegmentedControl> = {
     fullWidth: {
       control: "boolean",
     },
-    disabled: { table: { disable: true } },
+    disabled: {
+      control: "boolean",
+    },
     data: { table: { disable: true } },
     defaultChecked: { table: { disable: true } },
   },
@@ -64,6 +66,17 @@ export const Vertical: Story = {
   },
 };
 
+export const Disabled: Story = {
+  args: {
+    data: ["Preview", "Code", "Edit"],
+    disabled: true,
+  },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+  render: ({ withLayer, layer, ...args }: any) => {
+    return <SegmentedControl {...args} />;
+  },
+};
+
 const CheckIcon = () => (
   <svg
     viewBox="0 0 24 24"
@@ -81,33 +94,9 @@ const CheckIcon = () => (
 export const WithIcons: Story = {
   args: {
     data: [
-      {
-        value: "daily",
-        label: (
-          <>
-            <CheckIcon />
-            <span>Daily</span>
-          </>
-        ),
-      },
-      {
-        value: "weekly",
-        label: (
-          <>
-            <CheckIcon />
-            <span>Weekly</span>
-          </>
-        ),
-      },
-      {
-        value: "monthly",
-        label: (
-          <>
-            <CheckIcon />
-            <span>Monthly</span>
-          </>
-        ),
-      },
+      { value: "daily", label: "Daily", icon: <CheckIcon /> },
+      { value: "weekly", label: "Weekly", icon: <CheckIcon /> },
+      { value: "monthly", label: "Monthly", icon: <CheckIcon /> },
     ],
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars

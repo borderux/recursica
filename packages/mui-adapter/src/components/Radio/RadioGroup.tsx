@@ -18,13 +18,7 @@ import { type RecursicaRadioGroupProps as BaseRecursicaRadioGroupProps } from "@
 export interface RecursicaRadioGroupProps
   extends Omit<
       MuiRadioGroupProps,
-      | "size"
-      | "labelProps"
-      | "classes"
-      | "ref"
-      | "onChange"
-      | "value"
-      | "defaultValue"
+      "size" | "labelProps" | "classes" | "ref" | "value" | "defaultValue"
     >,
     Omit<
       RecursicaFormControlWrapperProps,
@@ -70,7 +64,6 @@ export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
       emptyValueComponent,
       value,
       defaultValue,
-      onChange,
       ...rest
     } = props;
     // NOTE: MuiRadioGroupProps (via FormGroupProps) has no native "size" (or other
@@ -111,10 +104,6 @@ export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
             {...(sanitizedProps as unknown as MuiRadioGroupProps)}
             value={value}
             defaultValue={defaultValue}
-            // MUI natively calls onChange(event, value); the Recursica contract is
-            // single-argument (value only), matching Mantine's native RadioGroup
-            // onChange (the cross-adapter source of truth) — normalize here.
-            onChange={onChange ? (_event, val) => onChange(val) : undefined}
             className={styles.groupRoot}
             data-layout={formLayout}
           >

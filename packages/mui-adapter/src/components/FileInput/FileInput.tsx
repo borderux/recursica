@@ -124,6 +124,7 @@ export const FileInput = forwardRef<HTMLDivElement, FileInputProps>(
         ? `Maximum of ${maxFiles} files allowed`
         : "Only one file is allowed",
       icon,
+      clearIcon,
       placeholder = "Select a file...",
       browseLabel = "Choose file",
       removeFileLabel = "Remove",
@@ -234,10 +235,10 @@ export const FileInput = forwardRef<HTMLDivElement, FileInputProps>(
     };
 
     // Roving tabindex across the file chip list (single- or multiple-file mode): only the
-    // "active" chip's remove icon is a tab stop, and Left/Right/Up/Down move it — same pattern
+    // "active" chip's delete icon is a tab stop, and Left/Right/Up/Down move it — same pattern
     // as FileUpload, see FILEINPUT_IMPLEMENTATION_NOTES.md.
     const [activeChipIndex, setActiveChipIndex] = useState(0);
-    const removeIconRefs = useRef<Array<HTMLSpanElement | null>>([]);
+    const deleteIconRefs = useRef<Array<HTMLSpanElement | null>>([]);
     const prevFileCountRef = useRef(files?.length ?? 0);
 
     useEffect(() => {
@@ -245,7 +246,7 @@ export const FileInput = forwardRef<HTMLDivElement, FileInputProps>(
       if (count > 0 && count < prevFileCountRef.current) {
         const nextIndex = Math.min(activeChipIndex, count - 1);
         setActiveChipIndex(nextIndex);
-        removeIconRefs.current[nextIndex]?.focus();
+        deleteIconRefs.current[nextIndex]?.focus();
       }
       prevFileCountRef.current = count;
       // Only react to the file list itself shrinking/growing, not to activeChipIndex changes.
@@ -267,7 +268,7 @@ export const FileInput = forwardRef<HTMLDivElement, FileInputProps>(
       event.preventDefault();
       event.stopPropagation();
       setActiveChipIndex(nextIndex);
-      removeIconRefs.current[nextIndex]?.focus();
+      deleteIconRefs.current[nextIndex]?.focus();
     };
 
     // The built-in `accept`/cap-mismatch message is only shown when the integrator hasn't
@@ -351,14 +352,14 @@ export const FileInput = forwardRef<HTMLDivElement, FileInputProps>(
                     >
                       <Chip
                         tabIndex={-1}
-                        removeLabel={readOnly ? undefined : removeFileLabel}
-                        removeTabIndex={
+                        deleteLabel={readOnly ? undefined : removeFileLabel}
+                        deleteTabIndex={
                           !readOnly && index === activeChipIndex ? 0 : -1
                         }
-                        removeIconRef={(el) => {
-                          removeIconRefs.current[index] = el;
+                        deleteIconRef={(el) => {
+                          deleteIconRefs.current[index] = el;
                         }}
-                        onRemove={
+                        onDelete={
                           readOnly || disabled
                             ? undefined
                             : () => onFileRemove?.(itemId)
@@ -378,7 +379,7 @@ export const FileInput = forwardRef<HTMLDivElement, FileInputProps>(
               overStyled
               variant="text"
               size="small"
-              icon={<ClearIcon />}
+              icon={clearIcon ?? <ClearIcon />}
               aria-label={clearLabel}
               className={styles.trailingIcon}
               disabled={disabled}

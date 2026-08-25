@@ -6,7 +6,6 @@ import {
 } from "@mui/material";
 import {
   filterStylingProps,
-  omitUnsupportedProps,
   mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
@@ -23,9 +22,7 @@ export type SegmentedControlProps = RecursicaOverStyled<
     | "color"
     | "classNames"
     | "className"
-    | "disabled"
     | "value"
-    | "onChange"
   > & {
     className?: string;
     classNames?: Partial<Record<string, string>>;
@@ -61,21 +58,13 @@ const _SegmentedControl = forwardRef<HTMLDivElement, SegmentedControlProps>(
       fullWidth,
       data = [],
       value,
+      disabled,
       onChange,
       ...rest
     },
     ref,
   ) {
-    // Props this component intentionally doesn't support — deleted at runtime so they can't leak
-    // through even if a caller forces them via plain JavaScript, bypassing the Omit<> above.
-    const UNSUPPORTED_PROPS = [
-      "disabled", // Recursica controls per-item disabled state via `data.disabled`, not the group
-    ] as const satisfies readonly (keyof MuiSegmentedControlProps)[];
-
-    const sanitizedProps = omitUnsupportedProps(
-      filterStylingProps(rest, overStyled),
-      UNSUPPORTED_PROPS,
-    );
+    const sanitizedProps = filterStylingProps(rest, overStyled);
     const restRecord = sanitizedProps as Record<string, unknown>;
 
     const stylingParams = useSegmentedControlClassNames(restRecord);
@@ -94,12 +83,12 @@ const _SegmentedControl = forwardRef<HTMLDivElement, SegmentedControlProps>(
     const activeValue = value !== undefined ? value : uncontrolledValue;
 
     const handleChange = (
-      _event: React.MouseEvent<HTMLElement>,
+      event: React.MouseEvent<HTMLElement>,
       newValue: string | null,
     ) => {
       if (newValue !== null) {
         setUncontrolledValue(newValue);
-        onChange?.(newValue);
+        onChange?.(event, newValue);
       }
     };
 
@@ -116,6 +105,7 @@ const _SegmentedControl = forwardRef<HTMLDivElement, SegmentedControlProps>(
         fullWidth={fullWidth}
         data-orientation={orientation}
         exclusive
+        disabled={disabled}
         value={activeValue}
         onChange={
           handleChange as React.ComponentProps<
@@ -126,7 +116,12 @@ const _SegmentedControl = forwardRef<HTMLDivElement, SegmentedControlProps>(
         {data.map((item) => {
           const itemValue = typeof item === "string" ? item : item.value;
           const itemLabel = typeof item === "string" ? item : item.label;
-          const itemDisabled = typeof item === "string" ? false : item.disabled;
+          // `undefined` (not `false`) for items with no per-item override, so the group-level
+          // `disabled` above can cascade through MUI's ToggleButtonGroupContext instead of being
+          // masked by an explicit `false` on every ToggleButton.
+          const itemDisabled =
+            typeof item === "string" ? undefined : item.disabled;
+          const itemIcon = typeof item === "string" ? undefined : item.icon;
 
           return (
             <ToggleButton
@@ -135,7 +130,10 @@ const _SegmentedControl = forwardRef<HTMLDivElement, SegmentedControlProps>(
               disabled={itemDisabled}
               className={stylingParams.classNames.control}
             >
-              <div className={stylingParams.classNames.label}>{itemLabel}</div>
+              <div className={stylingParams.classNames.label}>
+                {itemIcon}
+                {itemLabel}
+              </div>
             </ToggleButton>
           );
         })}

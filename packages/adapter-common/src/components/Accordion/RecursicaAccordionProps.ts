@@ -16,8 +16,10 @@ export interface RecursicaAccordionProps {
   value?: string | string[];
   /** Initial expanded value(s) in uncontrolled mode */
   defaultValue?: string | string[];
-  /** Callback triggered when value changes */
-  onChange?: (value: string | string[] | null) => void;
+  // `onChange` is intentionally not declared here. mantine-adapter picks it up straight from
+  // Mantine's own native Accordion (identical signature already). mui-adapter has no native
+  // multi-panel accordion group to match — MUI's own `Accordion` is single-item — so it declares
+  // this signature itself, same as TransferList; see mui-adapter's `Accordion.tsx`.
   /** Allow multiple panels to be open simultaneously */
   multiple?: boolean;
   /** Custom chevron icon to replace the default expand/collapse indicator. Applies to every

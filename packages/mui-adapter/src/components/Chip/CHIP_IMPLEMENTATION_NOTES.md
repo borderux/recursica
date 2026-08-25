@@ -44,7 +44,7 @@ a child span directly (which is exactly what happens once you `.focus()` the rem
 imperatively, as `FileUpload`'s roving-tabindex group does below). A plain `<span>` also gets no
 native Enter/Space-triggers-click behavior the way a real `<button>` would. Fixed by adding
 `role="button"`, `aria-label={removeLabel}`, and an explicit `onKeyDown` for `Enter`/`Space` that
-calls `onRemove` directly — matching the mantine-adapter `Chip`'s remove icon, which already did all
+calls `onDelete` directly — matching the mantine-adapter `Chip`'s remove icon, which already did all
 three.
 
 ### Roving tabindex support for chip groups (Matt Massey, 2026-08-17)
@@ -83,11 +83,11 @@ string size variants (`sm`/`md`/`lg`), so `size` is omitted from `RecursicaChipP
 
 ### A non-interactive chip still looked clickable, and had a phantom Tab stop (Matt Massey, 2026-08-18)
 
-A `Chip` with no `onRemove`/`onClick`/`onChange` (e.g. `FileUpload`'s `readOnly` file list) still
+A `Chip` with no `onDelete`/`onClick`/`onChange` (e.g. `FileUpload`'s `readOnly` file list) still
 showed a pointer cursor on hover — `.root.root` hardcoded `cursor: pointer` unconditionally, with
 no notion of whether the chip actually did anything. Added an `isInteractive` check (mirroring the
 one added to mantine-adapter's `Chip`, see its `CHIP_IMPLEMENTATION_NOTES.md`) based on
-`onRemove`/`onClick`/`onChange` — this adapter's `Chip` has no `checked`-driven native-input case to
+`onDelete`/`onClick`/`onChange` — this adapter's `Chip` has no `checked`-driven native-input case to
 misread the way Mantine's did, since MUI's `Chip` has no real underlying form control. A new
 `data-interactive` attribute (set from `isInteractive`) gates `cursor: pointer` in CSS; without it,
 the chip falls back to whatever MUI's own non-clickable `Chip` renders as (no cursor override, no

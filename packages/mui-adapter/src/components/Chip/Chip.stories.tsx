@@ -12,7 +12,7 @@ const meta: Meta<ChipStoryProps> = {
     docs: {
       description: {
         component:
-          "The Chip component is used to represent interactive selections, descriptive tags, or dynamic filters natively bounded to Recursica variables. It can be used as a toggleable input, can render a custom leading `icon`, and handles close constraints automatically via the `onRemove` property.",
+          "The Chip component is used to represent interactive selections, descriptive tags, or dynamic filters natively bounded to Recursica variables. It can be used as a toggleable input, can render a custom leading `icon`, and handles close constraints automatically via the `onDelete` property.",
       },
     },
   },
@@ -86,7 +86,7 @@ export const Removable: Story = {
   args: {
     children: "Dismissible",
     checked: false,
-    onRemove: () => console.log("Removal Action Triggered"),
+    onDelete: () => console.log("Removal Action Triggered"),
   },
   render: (args: ChipStoryProps) => <Chip {...args} />,
 };
