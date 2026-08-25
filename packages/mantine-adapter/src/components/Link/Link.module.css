@@ -1,3 +1,8 @@
+/* Brand-layer exemptions (recursica-allow-brand) — see recursica-token-analyzer README.md.
+ * Only source for link hover-underline; no per-component token exists (see IMPLEMENTATION_NOTES.md).
+ *   recursica-allow-brand: --recursica_brand_states_link_decoration
+ */
+
 /*
 HARDCODED VALUES:
 - display: inline-flex; (Base layout to align icon and text correctly)

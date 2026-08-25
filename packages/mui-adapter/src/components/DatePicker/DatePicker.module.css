@@ -1,3 +1,16 @@
+/* Brand-layer exemptions (recursica-allow-brand) — see recursica-token-analyzer README.md.
+ * No ui-kit_components_date-picker radius token exists for the calendar day cells; reuses the brand default border-radius.
+ *   recursica-allow-brand: --recursica_brand_dimensions_border-radii_default
+ * Global hover/focus/disabled state tokens (recursica_variables_scoped.css header, 'Hover & Focus states' / 'Disabled state' — implicit rule for every interactive element; components must not define their own per-component treatment).
+ *   recursica-allow-brand: --recursica_brand_states_disabled
+ *   recursica-allow-brand: --recursica_brand_states_focus_blur
+ *   recursica-allow-brand: --recursica_brand_states_focus_border-size
+ *   recursica-allow-brand: --recursica_brand_states_focus_color
+ *   recursica-allow-brand: --recursica_brand_states_focus_margin
+ *   recursica-allow-brand: --recursica_brand_states_hover_color
+ *   recursica-allow-brand: --recursica_brand_states_hover_opacity
+ */
+
 /* HARDCODED VALUES:
    - border-style: solid. Native structural rendering rule.
    - outline: none. Bypassing browser focus rings to rely strictly on Recursica focus states natively.

@@ -37,8 +37,7 @@ export const Default: Story = {
       <div
         style={{
           padding: "48px",
-          backgroundColor:
-            "var(--recursica_brand_palettes_neutral_050_color_tone)",
+          backgroundColor: "#e9ecef",
         }}
       >
         <Layer layer={0}>
@@ -73,8 +72,7 @@ export const HeaderlessAndFooterless: Story = {
       <div
         style={{
           padding: "48px",
-          backgroundColor:
-            "var(--recursica_brand_palettes_neutral_050_color_tone)",
+          backgroundColor: "#e9ecef",
         }}
       >
         <Layer layer={0}>
