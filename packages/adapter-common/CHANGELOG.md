@@ -1,5 +1,11 @@
 # @recursica/adapter-common
 
+## 0.22.0
+
+### Minor Changes
+
+- e4759d1: Slider: fixed the raw numeric value duplicating next to the track when `tooltipLabel` is a formatter (now reuses the same formatter), added `minLabel`/`maxLabel` overrides for the track's end labels, and added a `trailingIcon` prop alongside the existing leading `icon`.
+
 ## 0.21.0
 
 ### Minor Changes

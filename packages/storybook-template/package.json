@@ -13,7 +13,7 @@
     "url": "git+https://github.com/borderux/recursica.git",
     "directory": "packages/storybook-template"
   },
-  "version": "0.7.2",
+  "version": "0.7.3",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -58,7 +58,7 @@
     "dev": "tsc -b --watch"
   },
   "dependencies": {
-    "@recursica/adapter-common": "^0.21.0",
+    "@recursica/adapter-common": "^0.22.0",
     "@recursica/recursica-postcss-vars": "^1.5.0"
   },
   "devDependencies": {
