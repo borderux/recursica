@@ -1,1 +1,0 @@
-import{r as e,j as p}from"./iframe-BVGGXDP1.js";import{a as i}from"./factory-DtoON0bI.js";function x(o){const t=e.forwardRef(o);return t.withProps=n=>{const r=e.forwardRef((s,a)=>p.jsx(t,{...n,...s,ref:a}));return r.extend=t.extend,r.displayName=`WithProps(${t.displayName})`,r},t.extend=i,t}export{x as p};
