@@ -1,5 +1,12 @@
 # @recursica/storybook-template
 
+## 0.7.3
+
+### Patch Changes
+
+- Updated dependencies [e4759d1]
+  - @recursica/adapter-common@0.22.0
+
 ## 0.7.2
 
 ### Patch Changes
