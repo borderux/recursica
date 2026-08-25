@@ -2,7 +2,11 @@
  * HARDCODED VALUES:
  * - display: flex; align-items: center; width: 100%; (Standard CSS flexbox layouts for bidirectional components)
  * - flex-grow: 1; flex-shrink: 0; (Layout control structures)
- * - transform: translateX(-50%); (Mantine's standard step marks positioning alignment offset)
+ * - transform: translate(-50%, -50%); (custom step-mark centering offset — see .sliderMarkWrapper
+ *   / .sliderMark below; not inherited from Mantine, which centers marks via its own
+ *   --slider-size variable that our step-indicator-width token doesn't participate in)
+ * - top: 50%; on .sliderMarkWrapper (re-anchors Mantine's zero-height mark wrapper to the
+ *   track's vertical midpoint instead of its top edge)
  * - outline: none; border-style: solid; (Standard focus reset and border outlines)
  * - Focus ring on thumb/icon/input: the token schema no longer provides per-component focus
  *   colors for these (only `active` covers track/step-indicator-color). We apply the generic
@@ -109,6 +113,18 @@
       var(--recursica_brand_states_focus_color);
 }
 
+/*
+ * Mantine positions the mark dot inside a zero-height `markWrapper` anchored to the track's
+ * top edge, relying on the dot's height matching Mantine's own `--slider-size` to land centered.
+ * Our step-indicator-width token is independent of that, so without an explicit vertical
+ * transform the dot sits flush to the track's top instead of centered. `sliderMarkWrapper`
+ * moves the anchor to the track's vertical midpoint; `translate(-50%, -50%)` below centers the
+ * dot on that midpoint (in addition to the pre-existing horizontal centering).
+ */
+.sliderMarkWrapper {
+  top: 50%;
+}
+
 .sliderMark {
   box-sizing: border-box;
   width: var(
@@ -123,7 +139,7 @@
   background-color: var(
     --recursica_ui-kit_components_slider_properties_colors_step-indicator-color
   );
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   border: none;
 }
 
@@ -139,8 +155,18 @@
  * Mantine's default markLabel has no dedicated recursica token; it renders with Mantine's own
  * theme grey instead of inheriting the container text color. Reusing the min-max-label
  * typography tokens and inheriting color keeps this visually consistent with the min/max guides.
+ *
+ * The vertical gap between mark and label is also Mantine's own default (half of
+ * --mantine-spacing-xs, unbound to any recursica token) unless overridden here. The transform's
+ * horizontal term (`-50% + var(--slider-size) / 2`) is Mantine's own mark-offset compensation
+ * and is left untouched; only the vertical term is replaced with the same label-field gap token
+ * the mui-adapter's markLabel already uses, for cross-adapter consistency.
  */
 .sliderMarkLabel {
+  transform: translate(
+    calc(-50% + var(--slider-size) / 2),
+    var(--recursica_ui-kit_globals_form_properties_label-field-gap-vertical)
+  );
   color: inherit;
 
   font-family: var(

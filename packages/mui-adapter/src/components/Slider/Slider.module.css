@@ -2,8 +2,11 @@
  * HARDCODED VALUES:
  * - display: flex; align-items: center; width: 100%; (Standard CSS flexbox layouts for bidirectional components)
  * - flex-grow: 1; flex-shrink: 0; (Layout control structures)
- * - transform: translateX(-50%); (Step marks/mark labels positioning alignment offset, matching
- *   Mantine's own offset mechanism)
+ * - transform: translate(-50%, -50%); on .sliderMark (preserves MUI's own vertical mark
+ *   centering while re-deriving the horizontal offset for our step-indicator-width token — see
+ *   .sliderMark below)
+ * - transform: translateX(-50%); on .sliderMarkLabel (horizontal-only; matches Mantine's offset
+ *   mechanism)
  * - outline: none; border-style: solid; (Standard focus reset and border outlines)
  * - Focus ring on thumb/input: the token schema no longer provides per-component focus
  *   colors for these (only `active` covers track/step-indicator-color). We apply the generic
@@ -164,7 +167,13 @@
   background-color: var(
     --recursica_ui-kit_components_slider_properties_colors_step-indicator-color
   );
-  transform: translateX(-50%);
+  /* MUI's own mark is `top: 50%; transform: translate(-1px, -50%)` — the -1px assumes its
+     built-in 2px-wide dot and the -50% is real vertical centering, not decoration. Overriding
+     width/height above without preserving that vertical -50% would leave the dot vertically
+     un-centered (it would hang below the track's midpoint); translateX(-50%) alone stomped it.
+     translate(-50%, -50%) keeps the vertical centering and swaps the horizontal offset to match
+     our (non-2px) step-indicator-width. */
+  transform: translate(-50%, -50%);
   border: none;
 }
 

@@ -34,6 +34,22 @@ This document contains specific design decisions, architectural constraints, and
 
 **Fix:** `.currentValue` now runs `resolvedValue` through `tooltipLabel` when it's a function, reusing the same formatter passed to `valueLabelFormat`. Added `minLabel`/`maxLabel` (new `adapter-common` props) to override the `.minMaxGuide` text at either end of the track, and `trailingIcon` (new `adapter-common` prop) to render a second icon opposite the existing `icon`, reusing the same `.iconWrapper` styling.
 
-## 6. No Dual-Thumb / Range Support
+## 6. Dual-Thumb / Range Support
 
-**Decision:** Requested (MUI's `Slider` already accepts `number[]` for `value`/`onChange` and renders multiple thumbs natively), declined — no current use case needs it. `Slider` stays single-thumb only; `value`/`onChange` remain typed as `number` and arrays continue to be collapsed to `value[0]`.
+**Decision:** Previously requested and declined (see git history for this section) as no use case needed it; reopened with a full spec and implemented. `value`/`defaultValue`/`onChange`/`onChangeEnd` are now typed `number | [number, number]` in `@recursica/adapter-common`'s `RecursicaSliderProps`.
+**Implementation:**
+
+- MUI's `Slider` already accepts `number[]` for `value`/`onChange` and renders two thumbs natively, so unlike `mantine-adapter` (which must swap to a separate `RangeSlider` component) this stays the same `<MuiSlider>` — arrays are no longer collapsed to `value[0]`.
+- Internal state (`internalValue`, `resolvedValue`, `inputValue`) generalized from `number` to `number | [number, number]`; range-mode input handlers (`handleLowerInputChange`/`handleUpperInputChange`) clamp each thumb against the other's current value (not the shared `min`/`max`) so the two inputs can't cross.
+- `SliderReadOnlyValue` and the floating `.currentValue` display both render `"lower – upper"` for a range value, running each side through `tooltipLabel` independently (`valueLabelFormat` already handled this per-thumb natively, unchanged).
+- DOM order in range mode (input → leading icon → min label → track → max label → trailing icon → input) mirrors Forge's own Material/Carbon range layouts — see §7 below.
+
+## 7. Trailing Icon Order Relative to the Input Field
+
+**Decision:** `trailingIcon` previously rendered after the numeric input (`... max label, input, trailing icon`), reversed from Forge's Material/Carbon kits, which always render the trailing icon directly after the max label and before the input.
+**Implementation:** Moved `{trailingIconEl}` before the `showInput` input block in the single-value layout; the range layout was built with this order from the start (input → icon → min label → track → max label → trailing icon → input).
+
+## 8. Mark Vertically Off-Center
+
+**Decision:** MUI's own mark is `top: 50%; transform: translate(-1px, -50%)` — the `-1px` assumes MUI's built-in 2px dot, the `-50%` is real vertical centering. `.sliderMark` overrode `transform` to `translateX(-50%)` (horizontal-only, meant to mirror the mantine-adapter) without noticing it dropped MUI's vertical `-50%`, leaving the dot hanging below the track's midpoint instead of centered.
+**Implementation:** Changed `.sliderMark`'s transform to `translate(-50%, -50%)` — keeps MUI's vertical centering and swaps the horizontal term to properly center our (non-2px) `step-indicator-width` instead of MUI's hardcoded 1px.

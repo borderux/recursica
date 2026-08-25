@@ -67,6 +67,26 @@ This document contains specific design decisions, architectural constraints, and
 - `minLabel`/`maxLabel` (new `adapter-common` props) override the `.minMaxGuide` text at either end of the track, falling back to the numeric `min`/`max`.
 - `trailingIcon` (new `adapter-common` prop) renders a second icon on the opposite side of the track from the existing `icon`, reusing the same `.iconWrapper` styling (disabled/error/focus states already target `.iconWrapper` generically, so no new CSS was needed).
 
-## 8. No Dual-Thumb / Range Support
+## 8. Dual-Thumb / Range Support
 
-**Decision:** Requested (a caller passing `[number, number]` for `value`/`onChange`, backed by Mantine's separate `RangeSlider` component), declined — no current use case needs it. `Slider` stays single-thumb only; `value`/`onChange` remain typed as `number`.
+**Decision:** Previously requested and declined (see git history for this section) as no use case needed it; reopened with a full spec and implemented. `value`/`defaultValue`/`onChange`/`onChangeEnd` are now typed `number | [number, number]` in `@recursica/adapter-common`'s `RecursicaSliderProps`.
+**Implementation:**
+
+- `isRange = Array.isArray(resolvedValue)` picks which underlying Mantine component to render: single-thumb `Slider` (unchanged) or two-thumb `RangeSlider` — Mantine ships these as two separate components (unlike raw MUI, which renders two thumbs off a single `Slider` given a tuple `value`), so this is a real component swap, not just a type/prop change. Both share the same `SliderStylesNames` shape, so `mergedClassNames` (root/track/bar/thumb/mark/markLabel) applies unchanged to either.
+- Internal state (`internalValue`, `resolvedValue`, `inputValue`) generalized from `number` to `number | [number, number]`; range-mode input handlers (`handleLowerInputChange`/`handleUpperInputChange`) clamp each thumb against the other's current value (not the shared `min`/`max`) so the two inputs can't cross.
+- `SliderReadOnlyValue` and the floating `.currentValue` display both render `"lower – upper"` for a range value, running each side through `tooltipLabel` independently when it's a formatter.
+- DOM order in range mode (input → leading icon → min label → track → max label → trailing icon → input) mirrors Forge's own Material/Carbon range layouts — see §9 below.
+- Not carried over: Mantine `RangeSlider`'s own `minRange`/`maxRange`/`pushOnOverlap`/`thumbFromLabel`/`thumbToLabel` pass through via the existing unsanitized `...rest` spread if a caller sets them directly; no adapter-level default is applied (e.g. Mantine's own `minRange` default of `10` is left as-is).
+
+## 9. Trailing Icon Order Relative to the Input Field
+
+**Decision:** `trailingIcon` previously rendered after the numeric input (`... max label, input, trailing icon`), reversed from Forge's Material/Carbon kits, which always render the trailing icon directly after the max label and before the input.
+**Implementation:** Moved `{trailingIconEl}` before the `showInput` input block in the single-value layout; the range layout was built with this order from the start (input → icon → min label → track → max label → trailing icon → input).
+
+## 10. Marks Rendering Off Mantine Defaults Instead of Recursica Tokens
+
+**Decision:** §3 claimed marks were "fully styles-mapped back to our scoped variables" — not quite true. Mantine's `markWrapper` style slot (the zero-height, top-anchored positioning wrapper around each mark dot + label) was never mapped in `mergedClassNames`, and `markLabel`'s vertical position was never overridden, so both stayed on raw Mantine defaults.
+**Implementation:**
+
+- `markWrapper` is anchored to Mantine's own `top: 0` (the track's top edge), with the mark dot inside it unpositioned. Mantine's own dot has no size override so it happens to fill the track height exactly by default; our `step-indicator-width` token is independent of track height, so the dot rendered small and flush to the top instead of centered. Added `markWrapper: styles.sliderMarkWrapper` to `mergedClassNames`, with `.sliderMarkWrapper { top: 50%; }`, and changed `.sliderMark`'s transform from `translateX(-50%)` to `translate(-50%, -50%)` to center the dot on that midpoint.
+- `.sliderMarkLabel` never overrode `transform`, so its vertical offset stayed Mantine's own `calc(var(--mantine-spacing-xs) / 2)` — an unbound theme default, not a recursica token. Replaced the vertical term with `--recursica_ui-kit_globals_form_properties_label-field-gap-vertical` (the same token the mui-adapter's markLabel already uses), keeping the horizontal term (`-50% + var(--slider-size) / 2`, Mantine's own mark-offset compensation) unchanged.

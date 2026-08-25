@@ -20,7 +20,13 @@ import { type RecursicaSliderProps as BaseRecursicaSliderProps } from "@recursic
 export interface RecursicaSliderProps
   extends Omit<
       MuiSliderProps,
-      "size" | "color" | "classes" | "onChange" | "onChangeCommitted"
+      | "size"
+      | "color"
+      | "classes"
+      | "onChange"
+      | "onChangeCommitted"
+      | "value"
+      | "defaultValue"
     >,
     Omit<
       RecursicaFormControlWrapperProps,
@@ -38,14 +44,22 @@ export type SliderProps = RecursicaOverStyled<RecursicaSliderProps>;
 
 /**
  * Custom Read-Only visual representation of the Slider value.
- * Utilizes component-specific read-only typography variables.
+ * Utilizes component-specific read-only typography variables. Renders a "lower – upper" pair
+ * when the value is a range tuple.
  */
-const SliderReadOnlyValue: React.FC<{ value: number }> = ({ value }) => {
-  return <div className={styles.readOnlyValue}>{value}</div>;
+const SliderReadOnlyValue: React.FC<{ value: number | [number, number] }> = ({
+  value,
+}) => {
+  const display = Array.isArray(value) ? `${value[0]} – ${value[1]}` : value;
+  return <div className={styles.readOnlyValue}>{display}</div>;
 };
 
 /**
  * Recursica Slider component wrapping Mui's Slider.
+ *
+ * MUI's own `Slider` already renders two thumbs natively when given a tuple `value`, so range
+ * mode here is a typing/handler concern rather than a different underlying component (contrast
+ * with the mantine-adapter, which swaps in Mantine's separate `RangeSlider`).
  *
  * Implements a bidirectional text input field next to the slider track, responsive layouts,
  * custom typography-bound min/max labels (optionally overridden via `minLabel`/`maxLabel`),
@@ -96,35 +110,45 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
       ...rest
     } = props;
 
-    // Bidirectional state linking the slider track value to the input field string representation
-    const [internalValue, setInternalValue] = useState<number>(() => {
-      if (value !== undefined) return Array.isArray(value) ? value[0] : value;
-      if (defaultValue !== undefined)
-        return Array.isArray(defaultValue) ? defaultValue[0] : defaultValue;
+    // Bidirectional state linking the slider track value to the input field string
+    // representation. A `[number, number]` value/defaultValue switches the component into
+    // two-thumb range mode — MUI's own Slider already renders two thumbs for a tuple value.
+    type SliderValue = number | [number, number];
+
+    const [internalValue, setInternalValue] = useState<SliderValue>(() => {
+      if (value !== undefined) return value;
+      if (defaultValue !== undefined) return defaultValue;
       return min;
     });
 
-    const resolvedValue =
-      value !== undefined
-        ? Array.isArray(value)
-          ? value[0]
-          : value
-        : internalValue;
-    const [inputValue, setInputValue] = useState<string>(
-      resolvedValue.toString(),
+    const resolvedValue: SliderValue =
+      value !== undefined ? value : internalValue;
+    const isRange = Array.isArray(resolvedValue);
+
+    const [inputValue, setInputValue] = useState<string | [string, string]>(
+      () =>
+        Array.isArray(resolvedValue)
+          ? [resolvedValue[0].toString(), resolvedValue[1].toString()]
+          : resolvedValue.toString(),
     );
 
-    // Synchronize text input whenever the slider value changes
+    // Synchronize text input(s) whenever the slider value changes
     useEffect(() => {
-      setInputValue(resolvedValue.toString());
+      setInputValue(
+        Array.isArray(resolvedValue)
+          ? [resolvedValue[0].toString(), resolvedValue[1].toString()]
+          : resolvedValue.toString(),
+      );
     }, [resolvedValue]);
 
     const handleValueChange = (_e: Event, val: number | number[]) => {
-      const singleVal = Array.isArray(val) ? val[0] : val;
+      const normalized: SliderValue = Array.isArray(val)
+        ? [val[0], val[1]]
+        : val;
       if (value === undefined) {
-        setInternalValue(singleVal);
+        setInternalValue(normalized);
       }
-      onChange?.(singleVal);
+      onChange?.(normalized);
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -140,7 +164,38 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
     };
 
     const handleInputBlur = () => {
-      setInputValue(resolvedValue.toString());
+      setInputValue((resolvedValue as number).toString());
+    };
+
+    // Range-mode input handlers: each bound clamps against the other thumb rather than the
+    // shared min/max, so the lower thumb can never cross the upper one and vice versa.
+    const handleLowerInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const current = resolvedValue as [number, number];
+      const valStr = e.target.value;
+      setInputValue([valStr, current[1].toString()]);
+
+      const parsed = parseFloat(valStr);
+      if (!isNaN(parsed)) {
+        const clamped = Math.max(min, Math.min(current[1], parsed));
+        handleValueChange(null as unknown as Event, [clamped, current[1]]);
+      }
+    };
+
+    const handleUpperInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const current = resolvedValue as [number, number];
+      const valStr = e.target.value;
+      setInputValue([current[0].toString(), valStr]);
+
+      const parsed = parseFloat(valStr);
+      if (!isNaN(parsed)) {
+        const clamped = Math.max(current[0], Math.min(max, parsed));
+        handleValueChange(null as unknown as Event, [current[0], clamped]);
+      }
+    };
+
+    const handleRangeInputBlur = () => {
+      const current = resolvedValue as [number, number];
+      setInputValue([current[0].toString(), current[1].toString()]);
     };
 
     // Props this component intentionally doesn't support — deleted at runtime so they can't leak
@@ -232,8 +287,12 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
 
     // Duplicates the raw numeric value next to the track by default; when `tooltipLabel` is a
     // formatter, reuse it here too so both displays agree instead of one showing raw numbers.
-    const displayValue =
-      typeof tooltipLabel === "function"
+    // Range mode formats each thumb independently and joins them with an en dash.
+    const displayValue = Array.isArray(resolvedValue)
+      ? typeof tooltipLabel === "function"
+        ? `${tooltipLabel(resolvedValue[0])} – ${tooltipLabel(resolvedValue[1])}`
+        : `${resolvedValue[0]} – ${resolvedValue[1]}`
+      : typeof tooltipLabel === "function"
         ? tooltipLabel(resolvedValue)
         : resolvedValue;
 
@@ -272,6 +331,22 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
             data-error={error ? "true" : undefined}
             data-suppress-focus-ring={suppressFocusRing ? "true" : undefined}
           >
+            {isRange && showInput && (
+              <input
+                type="number"
+                className={styles.inputField}
+                value={(inputValue as [string, string])[0]}
+                onChange={handleLowerInputChange}
+                onBlur={handleRangeInputBlur}
+                min={min}
+                max={(resolvedValue as [number, number])[1]}
+                step={step ?? undefined}
+                disabled={disabled}
+                data-error={error ? "true" : undefined}
+                aria-label="Minimum value"
+              />
+            )}
+
             {leadingIcon}
 
             {showMinMaxLabels && (
@@ -319,22 +394,37 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
               )}
             </div>
 
-            {showInput && (
-              <input
-                type="number"
-                className={styles.inputField}
-                value={inputValue}
-                onChange={handleInputChange}
-                onBlur={handleInputBlur}
-                min={min}
-                max={max}
-                step={step ?? undefined}
-                disabled={disabled}
-                data-error={error ? "true" : undefined}
-              />
-            )}
-
             {trailingIconEl}
+
+            {showInput &&
+              (isRange ? (
+                <input
+                  type="number"
+                  className={styles.inputField}
+                  value={(inputValue as [string, string])[1]}
+                  onChange={handleUpperInputChange}
+                  onBlur={handleRangeInputBlur}
+                  min={(resolvedValue as [number, number])[0]}
+                  max={max}
+                  step={step ?? undefined}
+                  disabled={disabled}
+                  data-error={error ? "true" : undefined}
+                  aria-label="Maximum value"
+                />
+              ) : (
+                <input
+                  type="number"
+                  className={styles.inputField}
+                  value={inputValue as string}
+                  onChange={handleInputChange}
+                  onBlur={handleInputBlur}
+                  min={min}
+                  max={max}
+                  step={step ?? undefined}
+                  disabled={disabled}
+                  data-error={error ? "true" : undefined}
+                />
+              ))}
           </div>
         }
       />
