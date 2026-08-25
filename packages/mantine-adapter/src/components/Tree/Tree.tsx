@@ -65,12 +65,16 @@ function createRenderTreeNode(disabled: boolean) {
             row. Stops propagation so the click never also reaches `.row`'s own handler and
             selects the node. Never independently focusable/tab-stoppable (tabIndex={-1},
             aria-hidden), so the row stays the only focusable element and this button never
-            shows its own focus state. Always rendered, even for leaf nodes, so every row
-            reserves the same layout space; CSS hides it (visibility, not display) when there
-            are no children to toggle. Guards `disabled` itself (not just via the CSS
-            `pointer-events: none` on `.root`) since this handler bypasses Mantine's own
-            `expandOnClick`/`selectOnClick` flags entirely by calling `tree.toggleExpanded`
-            directly. */}
+            shows its own focus state. `onMouseDown` prevents the browser's default
+            click-focuses-the-button behavior (tabIndex={-1} only removes it from the tab
+            order, it doesn't stop a direct mouse click from focusing it) — without this, a
+            click here leaves the (aria-hidden) button focused, which browsers now flag as an
+            accessibility violation ("focus must not be hidden from assistive technology").
+            Always rendered, even for leaf nodes, so every row reserves the same layout space;
+            CSS hides it (visibility, not display) when there are no children to toggle. Guards
+            `disabled` itself (not just via the CSS `pointer-events: none` on `.root`) since this
+            handler bypasses Mantine's own `expandOnClick`/`selectOnClick` flags entirely by
+            calling `tree.toggleExpanded` directly. */}
         <Button
           overStyled
           variant="text"
@@ -80,6 +84,7 @@ function createRenderTreeNode(disabled: boolean) {
           aria-hidden="true"
           tabIndex={-1}
           className={styles.expandButton}
+          onMouseDown={(event) => event.preventDefault()}
           onClick={(event) => {
             event.stopPropagation();
             if (disabled) return;
