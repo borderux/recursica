@@ -178,6 +178,13 @@
   overflow-x: auto;
   overflow-y: hidden;
   gap: var(--recursica_ui-kit_components_file-input_properties_icon-text-gap);
+  /* HARDCODE: scrollbar stays functional (still scrolls via wheel/trackpad/drag) but hidden —
+     the control isn't tall enough to host a visible scrollbar without clipping the chips. */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* legacy Edge */
+}
+.chipRow::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
 }
 
 .chipWrapper {
