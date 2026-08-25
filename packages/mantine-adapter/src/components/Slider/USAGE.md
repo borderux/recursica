@@ -39,4 +39,18 @@ All Recursica components in the `@recursica/mantine-adapter` package adhere stri
 
 ## 4. Key Integration Features & Constraints
 
-The `label` prop is passed through to the surrounding form label rather than Mantine's dragging tooltip; use `tooltipLabel` to set the label shown while dragging. When `showInput` is enabled, a numeric text input is rendered alongside the track and stays in sync with the slider's value. Set `showMinMaxLabels` to `false` to hide the min/max guides shown at either end of the track. Otherwise, the current value is displayed near the track instead — pass `tooltipLabel` as a formatter function (`(value) => ReactNode`) and that same formatter is reused for this display, instead of always showing the raw number. `minLabel`/`maxLabel` override the text shown at either end of the track (defaults to the numeric `min`/`max`). `icon` renders a leading icon next to the track; `trailingIcon` renders one on the opposite side.
+The `label` prop is passed through to the surrounding form label rather than Mantine's dragging tooltip; use `tooltipLabel` to set the label shown while dragging. When `showInput` is enabled, a numeric text input is rendered alongside the track and stays in sync with the slider's value. Set `showMinMaxLabels` to `false` to hide the min/max guides shown at either end of the track. Otherwise, the current value is displayed near the track instead — pass `tooltipLabel` as a formatter function (`(value) => ReactNode`) and that same formatter is reused for this display, instead of always showing the raw number. `minLabel`/`maxLabel` override the text shown at either end of the track (defaults to the numeric `min`/`max`). `icon` renders a leading icon next to the track; `trailingIcon` renders one on the opposite side, rendered right after the max label and before the numeric input.
+
+### Range Mode
+
+Pass a `[number, number]` tuple as `value`/`defaultValue` to render a two-thumb range slider — `onChange`/`onChangeEnd` are then called with a `[number, number]` tuple instead of a `number`. This is a real component swap under the hood (Mantine's `RangeSlider`, not `Slider`), so `value` and `defaultValue` must agree on shape for a given instance. With `showInput` enabled, a second numeric input for the upper bound appears after the trailing icon, with the lower-bound input before the leading icon:
+
+```tsx
+<Slider
+  label="Price Range"
+  defaultValue={[20, 80]}
+  min={0}
+  max={100}
+  onChange={(value) => console.log(value)} // [number, number]
+/>
+```

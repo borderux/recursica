@@ -10,10 +10,14 @@ export interface RecursicaSliderProps {
   required?: boolean;
   /** Render visual asterisk */
   withAsterisk?: boolean;
+  /** Controlled value. Pass a `[number, number]` tuple to render a two-thumb range slider. */
+  value?: number | [number, number];
+  /** Uncontrolled initial value. Pass a `[number, number]` tuple to render a two-thumb range slider. */
+  defaultValue?: number | [number, number];
   /** Callback triggered when slider value changes */
-  onChange?: (value: number) => void;
+  onChange?: (value: number | [number, number]) => void;
   /** Callback triggered when dragging ends */
-  onChangeEnd?: (value: number) => void;
+  onChangeEnd?: (value: number | [number, number]) => void;
   /** Visual form label above track */
   label?: React.ReactNode;
   /** Custom formatter function or React node for tooltip label */
