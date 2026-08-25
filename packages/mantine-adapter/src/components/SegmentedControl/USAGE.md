@@ -51,3 +51,5 @@ All Recursica components in the `@recursica/mantine-adapter` package adhere stri
 ## 4. Key Integration Features & Constraints
 
 The `variant`, `size`, `radius`, and `color` props are not available on this component, since appearance is fully controlled by the design system tokens. The active segment is shown as a floating indicator that moves behind the selected label, with a divider rendered between adjacent segments.
+
+A top-level `disabled` disables every item at once; an individual item can still be disabled on its own via `data[].disabled`.

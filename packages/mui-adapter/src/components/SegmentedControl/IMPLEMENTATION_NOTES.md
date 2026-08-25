@@ -8,3 +8,7 @@
 ## Per-item `icon`
 
 `RecursicaSegmentedControlProps.data` objects accept an optional `icon`, rendered ahead of `label` inside the existing `.label` div (already a flex container with the icon-size/gap tokens wired), so no CSS changes were needed.
+
+## Whole-control `disabled`
+
+`RecursicaSegmentedControlProps.disabled` was previously typed `never` and stripped at runtime. It's now a real `boolean?`, passed straight through to MUI's native `ToggleButtonGroup.disabled`, which cascades to every child `ToggleButton` via `ToggleButtonGroupContext`. Per-item `data[].disabled` now passes `undefined` (not `false`) when unset, so it doesn't mask that context cascade — an item's own explicit `disabled` still overrides the group.

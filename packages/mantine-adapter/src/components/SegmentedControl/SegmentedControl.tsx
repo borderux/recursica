@@ -5,7 +5,6 @@ import {
 } from "@mantine/core";
 import {
   filterStylingProps,
-  omitUnsupportedProps,
   mergeClassNames,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
@@ -22,7 +21,6 @@ export type SegmentedControlProps = RecursicaOverStyled<
     | "color"
     | "classNames"
     | "className"
-    | "disabled"
     | "data"
   > & {
     className?: string;
@@ -63,20 +61,9 @@ const _SegmentedControl = forwardRef<HTMLDivElement, SegmentedControlProps>(
     },
     ref,
   ) {
-    // Props this component intentionally doesn't support — deleted at runtime so they can't leak
-    // through even if a caller forces them via plain JavaScript, bypassing the `Omit<>` above.
-    const UNSUPPORTED_PROPS = [
-      // SegmentedControl only supports per-item disabling via the `data` array (each item may set
-      // its own `disabled`); a top-level `disabled` is intentionally unsupported (typed as `never`
-      // in RecursicaSegmentedControlProps) because Mantine's top-level `disabled` would disable
-      // the whole control uniformly instead of per-item.
-      "disabled",
-    ] as const satisfies readonly (keyof MantineSegmentedControlProps)[];
-
-    const sanitizedProps = omitUnsupportedProps(
-      filterStylingProps(rest, overStyled) as Record<string, unknown>,
-      UNSUPPORTED_PROPS,
-    ) as Partial<typeof rest>;
+    const sanitizedProps = filterStylingProps(rest, overStyled) as Partial<
+      typeof rest
+    >;
     const restRecord = sanitizedProps as Record<string, unknown>;
 
     const stylingParams = useSegmentedControlClassNames(restRecord);

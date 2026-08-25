@@ -21,7 +21,9 @@ const meta: Meta<typeof SegmentedControl> = {
     fullWidth: {
       control: "boolean",
     },
-    disabled: { table: { disable: true } },
+    disabled: {
+      control: "boolean",
+    },
     data: { table: { disable: true } },
     defaultChecked: { table: { disable: true } },
   },
@@ -57,6 +59,17 @@ export const Vertical: Story = {
   args: {
     data: ["Option 1", "Option 2", "Option 3"],
     orientation: "vertical",
+  },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+  render: ({ withLayer, layer, ...args }: any) => {
+    return <SegmentedControl {...args} />;
+  },
+};
+
+export const Disabled: Story = {
+  args: {
+    data: ["Preview", "Code", "Edit"],
+    disabled: true,
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
   render: ({ withLayer, layer, ...args }: any) => {

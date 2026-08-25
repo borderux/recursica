@@ -8,8 +8,8 @@ export interface RecursicaSegmentedControlProps {
   orientation?: "horizontal" | "vertical";
   /** If true, the control will stretch full-width */
   fullWidth?: boolean;
-  /** SegmentedControl explicitly forbids disabled prop */
-  disabled?: never;
+  /** Disables every item in the control at once; a single item can still be disabled via `data` */
+  disabled?: boolean;
   /** Data configuration options array */
   data?: Array<
     | string

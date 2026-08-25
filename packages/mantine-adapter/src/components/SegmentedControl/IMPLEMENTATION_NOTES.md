@@ -19,3 +19,7 @@ The moving active background element (`.indicator`) is decoupled from the actual
 ## 5. Per-item `icon`
 
 `RecursicaSegmentedControlProps.data` objects accept an optional `icon`. Mantine's own `data` item has no such slot, so this component `Omit`s Mantine's native `data` type and composes `icon`+`label` into a single `label` ReactNode before handing it to Mantine — Mantine's own `innerLabel` wrapper then lays it out using the icon-size/gap tokens already present in `SegmentedControl.module.css`.
+
+## 6. Whole-control `disabled`
+
+`RecursicaSegmentedControlProps.disabled` was previously typed `never` and stripped at runtime. It's now a real `boolean?`, passed straight through to Mantine's own native `disabled` — Mantine's `SegmentedControl` already disables every item when set. Per-item disabling via `data[].disabled` continues to work independently of it.
