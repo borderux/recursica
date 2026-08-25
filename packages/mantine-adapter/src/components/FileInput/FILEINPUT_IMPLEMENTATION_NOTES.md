@@ -136,7 +136,10 @@ roving group, _then_ the trailing clear button as its own stop.
 wraps onto multiple lines below the dropzone — `FileInput` is a fixed single-line, `min-height`d
 control, so wrapping would grow it vertically. Enough chips to overflow the control's own width
 scroll horizontally within it instead (mouse wheel/trackpad or a native scrollbar), same tradeoff
-already made for `.value`'s ellipsis truncation.
+already made for `.value`'s ellipsis truncation. The native scrollbar itself is hidden
+(`scrollbar-width: none`, `-ms-overflow-style: none`, `::-webkit-scrollbar { display: none }`) —
+the control's `min-height` isn't tall enough to host a visible horizontal scrollbar without
+clipping the chips, and scrolling (wheel/trackpad/drag) still works with it hidden.
 
 ## Read-only vs disabled
 
