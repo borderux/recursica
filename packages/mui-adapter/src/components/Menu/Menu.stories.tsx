@@ -300,6 +300,43 @@ export const WithSubmenus: Story = {
   },
 };
 
+export const WithMaxHeight: Story = {
+  render: (args) => (
+    <InteractiveMenu {...args}>
+      <MenuItem>
+        <SettingsIcon style={{ marginRight: 8 }} /> Settings
+      </MenuItem>
+      <MenuItem>
+        <MessageIcon style={{ marginRight: 8 }} /> Messages
+      </MenuItem>
+      <MenuItem>
+        <ImageIcon style={{ marginRight: 8 }} /> Gallery
+      </MenuItem>
+      <MenuItem>
+        <SearchIcon style={{ marginRight: 8 }} /> Search
+      </MenuItem>
+      <MenuItem>
+        <ArrowsIcon style={{ marginRight: 8 }} /> Transfer my data
+      </MenuItem>
+      <MenuItem>
+        <TrashIcon style={{ marginRight: 8 }} /> Delete my account
+      </MenuItem>
+    </InteractiveMenu>
+  ),
+  args: {
+    opened: true,
+    maxHeight: 160,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "`maxHeight` overrides the token-driven dropdown max-height with an explicit pixel value, scrolling the item list once it's exceeded.",
+      },
+    },
+  },
+};
+
 // mui-adapter's Menu has no native hover-trigger support (unlike Mantine's `trigger` prop),
 // so this story implements open-on-hover itself: hovering the target opens the menu, and a
 // short close delay (mirroring Mantine's `closeDelay`) keeps it open while the pointer moves

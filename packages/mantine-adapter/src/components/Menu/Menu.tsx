@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, type CSSProperties } from "react";
 import {
   Menu as MantineMenu,
   type MenuProps as MantineMenuProps,
@@ -49,6 +49,7 @@ export type MenuProps = RecursicaOverStyled<
 const MenuBase = function Menu({ overStyled = false, ...rest }: MenuProps) {
   const sanitizedProps = filterStylingProps(rest, overStyled);
   const restRecord = sanitizedProps as Record<string, unknown>;
+  const { maxHeight, ...menuRestRecord } = restRecord;
 
   // Bind CSS module classes to Mantine's internal classNames API
   const mergedClassNames = mergeClassNames(
@@ -64,10 +65,31 @@ const MenuBase = function Menu({ overStyled = false, ...rest }: MenuProps) {
     restRecord.classNames as Partial<Record<string, string>> | undefined,
   );
 
+  // `maxHeight` is a caller-supplied override of the token-driven dropdown max-height, applied
+  // via Mantine's per-part `styles` API (same mechanism as `classNames` above) rather than a CSS
+  // module change, since it's an explicit per-instance escape hatch, not a design token. The CSS
+  // module deliberately leaves `overflow` unset (see MENU_IMPLEMENTATION_NOTES.md §8) so it
+  // doesn't clip sub-menus at the token default height; once a caller opts into a fixed
+  // `maxHeight`, though, items need to scroll instead of spilling out past the boundary.
+  const callerStyles = menuRestRecord.styles as
+    | Partial<Record<string, CSSProperties>>
+    | undefined;
+  const mergedStyles = maxHeight
+    ? {
+        ...callerStyles,
+        dropdown: {
+          ...callerStyles?.dropdown,
+          maxHeight: maxHeight as CSSProperties["maxHeight"],
+          overflowY: "auto" as CSSProperties["overflowY"],
+        },
+      }
+    : callerStyles;
+
   return (
     <MantineMenu
-      {...(sanitizedProps as unknown as MantineMenuProps)}
+      {...(menuRestRecord as unknown as MantineMenuProps)}
       classNames={mergedClassNames}
+      {...(mergedStyles ? { styles: mergedStyles } : {})}
     />
   );
 };

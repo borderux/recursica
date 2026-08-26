@@ -76,3 +76,13 @@ Decisions and design tweaks strictly tailored for the UI Kit's Menu wrapped agai
 - `pointer-events` on disabled items (Mantine handles disabled natively)
 
 **Rationale:** Early iterations included aggressive structural resets (like `overflow: hidden`, `box-sizing: border-box`, `margin: 0`) cargo-culted from the Dropdown component. These caused sub-menus to render clipped inside the parent dropdown with scrollbars. The lesson: default to Mantine's native behavior and only override what the Recursica token system explicitly needs to control.
+
+---
+
+## 9. `maxHeight` Override
+
+**Decision:** `<Menu maxHeight={...}>` lets a caller override the token-driven `.dropdown` max-height with an explicit pixel (or other CSS length) value.
+
+**Implementation:** This is the one deliberate exception to "no inline design tokens in TSX" (see `COMPONENT_DEV_GUIDE.md`) — it's applied via Mantine's per-part `styles` API (`styles={{ dropdown: { maxHeight } }}`), the same mechanism already used for `classNames`, merged with any caller-supplied `styles`. It only takes effect when `maxHeight` is actually passed; otherwise the CSS module's token-driven `max-height` is untouched.
+
+**Caveat:** Because sub-menu dropdowns inherit the root Menu's `classNames`/`styles` mapping (see §6), setting `maxHeight` on the root also caps `Menu.Sub.Dropdown`'s height, not just the top-level dropdown.

@@ -52,3 +52,4 @@ All Recursica components in the `@recursica/mantine-adapter` package adhere stri
 
 - The full Mantine composition API is supported, including sub-menus: `Menu`, `Menu.Target`, `Menu.Dropdown`, `Menu.Item`, `Menu.Divider`, `Menu.Label`, `Menu.Sub`, `Menu.Sub.Target`, `Menu.Sub.Item`, and `Menu.Sub.Dropdown`.
 - The `color` prop on `Menu.Item` (and `Menu.Sub.Item`) — used by Mantine for semantics like a "danger" item — is ignored unless `overStyled={true}` is set.
+- `maxHeight` on the root `<Menu>` overrides the dropdown's token-driven max-height with an explicit pixel (or other CSS length) value, e.g. `<Menu maxHeight={320}>`. It's a per-instance escape hatch, not a design token — leave it unset to use the token default.

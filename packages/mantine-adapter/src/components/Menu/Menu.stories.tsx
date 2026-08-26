@@ -161,6 +161,11 @@ const meta: Meta = {
       description:
         "Controlled open state. Leave undefined for uncontrolled behavior.",
     },
+    maxHeight: {
+      control: "number",
+      description:
+        "Overrides the token-driven dropdown max-height with an explicit pixel value.",
+    },
   },
   parameters: {
     docs: {
@@ -297,6 +302,43 @@ export const WithSubmenus: Story = {
               <Menu.Item>Cancelled</Menu.Item>
             </Menu.Sub.Dropdown>
           </Menu.Sub>
+        </Menu.Dropdown>
+      </Menu>
+    );
+  },
+};
+
+export const WithMaxHeight: Story = {
+  args: {
+    position: "bottom-start",
+    maxHeight: 160,
+    // Rendered open by default so this story is diffable against the MUI adapter
+    // without an interaction step.
+    opened: true,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "`maxHeight` overrides the token-driven dropdown max-height with an explicit pixel value, scrolling the item list once it's exceeded.",
+      },
+    },
+  },
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  render: ({ withLayer, layer, ...args }: MenuStoryArgs) => {
+    return (
+      <Menu {...args}>
+        <Menu.Target>
+          <Button variant="solid">Menu with maxHeight</Button>
+        </Menu.Target>
+
+        <Menu.Dropdown>
+          <Menu.Item leftSection={<SettingsIcon />}>Settings</Menu.Item>
+          <Menu.Item leftSection={<MessageIcon />}>Messages</Menu.Item>
+          <Menu.Item leftSection={<ImageIcon />}>Gallery</Menu.Item>
+          <Menu.Item leftSection={<SearchIcon />}>Search</Menu.Item>
+          <Menu.Item leftSection={<ArrowsIcon />}>Transfer my data</Menu.Item>
+          <Menu.Item leftSection={<TrashIcon />}>Delete my account</Menu.Item>
         </Menu.Dropdown>
       </Menu>
     );
