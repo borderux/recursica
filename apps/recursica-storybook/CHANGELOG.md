@@ -1,5 +1,13 @@
 # recursica-storybook
 
+## 0.31.3
+
+### Patch Changes
+
+- Updated dependencies [bc70636]
+- Updated dependencies [bc70636]
+  - @recursica/mantine-adapter@0.49.0
+
 ## 0.31.2
 
 ### Patch Changes
