@@ -115,6 +115,31 @@ export const ErrorState: Story = {
   },
 };
 
+export const OpenedCalendar: Story = {
+  args: {
+    label: "Meeting Date",
+    assistiveText: "Calendar rendered open by default for styling review.",
+    // `popoverProps.opened` overrides Mantine's own internal disclosure state (see
+    // PickerInputBase's `opened: dropdownOpened, ...popoverProps` spread order), so the
+    // dropdown stays open with no click interaction needed — same convention as Menu's
+    // `opened: true` stories.
+    popoverProps: { opened: true },
+    // Fixed (not computed) so the selected-day fill is visible on load, alongside the
+    // today marker, for styling review. Local-component constructor, not an ISO date
+    // string — `new Date("2026-08-26")` parses as UTC midnight, which renders as the
+    // 25th in any timezone behind UTC.
+    defaultValue: new Date(2026, 7, 26),
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "The calendar dropdown renders open by default so its styling can be reviewed without a click interaction.",
+      },
+    },
+  },
+};
+
 export const StaticReadOnly: Story = {
   args: {
     label: "Static ReadOnly Review",
