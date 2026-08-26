@@ -1,5 +1,11 @@
 # @recursica/adapter-common
 
+## 0.25.0
+
+### Minor Changes
+
+- 2369301: Add optional `maxHeight` prop to Menu, overriding the token-driven dropdown max-height with an explicit pixel value.
+
 ## 0.24.0
 
 ### Minor Changes

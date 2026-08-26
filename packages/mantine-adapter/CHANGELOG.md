@@ -1,5 +1,16 @@
 # @recursica/mantine-adapter
 
+## 0.50.0
+
+### Minor Changes
+
+- 2369301: Add optional `maxHeight` prop to Menu, overriding the token-driven dropdown max-height with an explicit pixel value.
+
+### Patch Changes
+
+- Updated dependencies [2369301]
+  - @recursica/adapter-common@0.25.0
+
 ## 0.49.0
 
 ### Minor Changes
