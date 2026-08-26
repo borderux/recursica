@@ -42,7 +42,8 @@
   },
   "files": [
     "dist",
-    "templates"
+    "templates",
+    "stories"
   ],
   "keywords": [
     "storybook",
