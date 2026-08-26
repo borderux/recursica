@@ -544,3 +544,16 @@
   );
   opacity: 1;
 }
+
+/* Focus ring, same convention as calendarHeaderControl/input's own :focus-visible treatment.
+   Mantine's Day ships no explicit focus style of its own, so without this it fell through to
+   the browser's native (blue) :focus-visible outline instead of a Recursica token. */
+.day:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 var(--recursica_brand_states_focus_border-size)
+      var(--recursica_brand_states_focus_color),
+    0 0 var(--recursica_brand_states_focus_blur)
+      var(--recursica_brand_states_focus_margin)
+      var(--recursica_brand_states_focus_color);
+}

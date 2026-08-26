@@ -120,6 +120,31 @@ export const ErrorState: Story = {
   },
 };
 
+export const OpenedCalendar: Story = {
+  args: {
+    label: "Meeting Date",
+    assistiveText: "Calendar rendered open by default for styling review.",
+    // MUI X's DatePicker supports a controlled `open` prop directly; pairing it with a
+    // no-op `onClose` keeps the calendar open with no click interaction needed — same
+    // intent as the mantine-adapter's `OpenedCalendar` story.
+    open: true,
+    onClose: () => {},
+    // Fixed (not computed) so the selected-day fill is visible on load, alongside the
+    // today marker, for styling review. Local-component constructor, not an ISO date
+    // string — `new Date("2026-08-26")` parses as UTC midnight, which renders as the
+    // 25th in any timezone behind UTC.
+    defaultValue: new Date(2026, 7, 26),
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "The calendar dropdown renders open by default so its styling can be reviewed without a click interaction.",
+      },
+    },
+  },
+};
+
 export const StaticReadOnly: Story = {
   args: {
     label: "Static ReadOnly Review",
