@@ -45,3 +45,9 @@ All Recursica components in the `@recursica/mui-adapter` package adhere strictly
 > - **Anti-override protection**: Rogues style injections (like inline `style` or arbitrary `className`) are automatically blocked by our prop layer unless `overStyled={true}` is explicitly provided.
 > - **No Direct Layers**: Do not pass a `layer` prop to this component. To place it on a specific visual layer, wrap it in a `<Layer layer={0|1|2|3}>` component natively.
 > - **Variables and Theming**: Styling is entirely determined by local CSS variables defined in `recursica_variables_scoped.css` and mapped in the component's CSS module.
+
+---
+
+## 4. Notes
+
+- `maxHeight` on `<Menu>` overrides the dropdown's token-driven max-height with an explicit pixel (or other CSS length) value, e.g. `<Menu maxHeight={320}>`. It's a per-instance escape hatch, not a design token — leave it unset to use the token default.
