@@ -1,5 +1,11 @@
 # @recursica/mantine-adapter
 
+## 0.50.1
+
+### Patch Changes
+
+- a41c9ce: Fix DatePicker calendar day focus ring using the browser's default blue outline instead of a Recursica token.
+
 ## 0.50.0
 
 ### Minor Changes

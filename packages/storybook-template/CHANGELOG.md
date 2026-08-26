@@ -1,5 +1,11 @@
 # @recursica/storybook-template
 
+## 0.7.7
+
+### Patch Changes
+
+- 1c7d630: Include `stories` in the published package so `createMainConfig()`'s default token/theme demo stories resolve for consumers installing from npm, not just workspace consumers symlinked to source.
+
 ## 0.7.6
 
 ### Patch Changes
