@@ -1,5 +1,17 @@
 # @recursica/mui-adapter
 
+## 0.33.0
+
+### Minor Changes
+
+- bc70636: Add optional `leadingIcon`/`supportingText` fields to Autocomplete/Dropdown `data` items, rendered inside the option row by default. Add a `wrapItemText` prop (default `false`) to wrap label/supportingText instead of truncating with an ellipsis.
+
+### Patch Changes
+
+- bc70636: Fix Dropdown/Autocomplete selected-option background highlight. mantine-adapter was keying off `data-combobox-selected` (Mantine's transient keyboard-nav highlight) instead of `data-combobox-active` (the real "matches current value" attribute), so the highlight only showed while arrow-key navigating. mui-adapter's Autocomplete had no selected-state rule at all; now keys off MUI's own `aria-selected`.
+- Updated dependencies [bc70636]
+  - @recursica/adapter-common@0.24.0
+
 ## 0.32.1
 
 ### Patch Changes
