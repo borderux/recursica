@@ -3,7 +3,10 @@ import {
   Select as MantineSelect,
   type SelectProps as MantineSelectProps,
 } from "@mantine/core";
-import { type ReadOnlyControlProps } from "@recursica/adapter-common";
+import {
+  type ReadOnlyControlProps,
+  normalizeComboboxData,
+} from "@recursica/adapter-common";
 import {
   filterStylingProps,
   omitUnsupportedProps,
@@ -12,6 +15,7 @@ import {
 } from "../../utils/filterStylingProps";
 import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
 import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
+import { renderRichOption } from "../../utils/renderRichOption";
 import styles from "./Dropdown.module.css";
 
 import { type RecursicaDropdownProps as BaseRecursicaDropdownProps } from "@recursica/adapter-common";
@@ -69,6 +73,8 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
       defaultValue,
       data,
       clearButtonProps,
+      renderOption,
+      wrapItemText = false,
       ...rest
     } = props;
     const sanitizedProps = omitUnsupportedProps(
@@ -76,6 +82,13 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
       UNSUPPORTED_PROPS,
     );
     const restRecord = sanitizedProps as Record<string, unknown>;
+
+    // Mantine's own data parser only preserves extra fields (`leadingIcon`/`supportingText`) when
+    // an item already has both `value` and `label` — an item with `value` only is rebuilt into a
+    // bare `{value, label: value, disabled}` object, silently dropping them (see
+    // get-parsed-combobox-data.mjs, and AutoComplete.tsx's identical use of this). Matters here
+    // too now that `label` is optional (shared `RecursicaComboboxItem` — see adapter-common).
+    const normalizedData = normalizeComboboxData(data);
 
     // Mantine's own clear button (rendered when `clearable` + a value are both present) otherwise
     // renders unstyled — bare `CloseButton` defaults, no Recursica icon-button treatment. Merge in
@@ -103,6 +116,14 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
       },
       restRecord.classNames as Partial<Record<string, string>> | undefined,
     );
+
+    const optionClassNames = {
+      optionContent: styles.optionContent,
+      optionIcon: styles.optionIcon,
+      optionText: styles.optionText,
+      optionTextWrap: styles.optionTextWrap,
+      optionSupportingText: styles.optionSupportingText,
+    };
 
     const injectedStyles = {
       ...((style as React.CSSProperties) || {}),
@@ -154,7 +175,14 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
             disabled={disabled}
             value={value}
             defaultValue={defaultValue}
-            data={(data as unknown as MantineSelectProps["data"]) || []}
+            data={
+              (normalizedData as unknown as MantineSelectProps["data"]) || []
+            }
+            renderOption={
+              renderOption ??
+              ((input) =>
+                renderRichOption(input, optionClassNames, wrapItemText))
+            }
             clearButtonProps={mergedClearButtonProps}
             label={undefined}
             description={undefined}

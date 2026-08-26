@@ -323,12 +323,19 @@
   color: var(
     --recursica_ui-kit_components_dropdown_properties_colors_text-color
   );
-  padding: calc(
-      var(--recursica_ui-kit_components_dropdown_properties_vertical-padding) *
-        0.75
+  /* Padding/inter-item gap reuse the menu-item component's tokens (same reasoning as the icon/
+     supporting-text tokens below) instead of an arbitrary scaled dropdown padding — matches
+     Menu.module.css's `.item` padding + `margin-bottom` gap exactly. */
+  padding: var(
+      --recursica_ui-kit_components_menu-item_properties_vertical-padding
     )
-    var(--recursica_ui-kit_components_dropdown_properties_horizontal-padding);
+    var(--recursica_ui-kit_components_menu-item_properties_horizontal-padding);
+  margin-bottom: var(--recursica_ui-kit_components_menu_properties_item-gap);
   cursor: pointer;
+}
+
+.option:last-of-type {
+  margin-bottom: 0;
 }
 
 /* No per-option hovered token exists in the schema; use the generic overlay tint (same technique
@@ -347,13 +354,114 @@
    component's selected-state colors are the closest real token family for the same concept (a
    selected row in a list) — reused here rather than the neutral hover tint above, which is what
    previously made the selected option read as grey instead of Recursica's brand color. Matches
-   the mui-adapter fix for the same gap. */
+   the mui-adapter fix for the same gap. Despite the name, Mantine's `data-combobox-active` — not
+   `data-combobox-selected` — is the attribute it sets when an option's value matches the current
+   field value (see OptionsDropdown.mjs: `active: checked`); `data-combobox-selected` is an
+   unrelated transient keyboard-navigation highlight (imperatively set/cleared via arrow keys —
+   use-combobox.mjs's `selectOption`/`clearSelectedItem`). Keying this off `data-combobox-selected`
+   meant the real selected option only showed the brand color while arrow-key navigating, and lost
+   it as soon as the dropdown was reopened normally. */
 .option[data-selected="true"],
-.option[data-combobox-selected="true"] {
+.option[data-combobox-active="true"] {
   background-color: var(
     --recursica_ui-kit_components_menu-item_variants_selection-states_selected_properties_colors_background-color
   );
   color: var(
     --recursica_ui-kit_components_menu-item_variants_selection-states_selected_properties_colors_text-color
+  );
+}
+
+/* Rich option content (leadingIcon/supportingText — see MANTINE_ADAPTER_RICH_OPTION_DATA.md). No
+   dedicated dropdown-option icon or supporting-text token exists in the schema either; reuse the
+   menu-item component's tokens for the same reason the selected-state colors above do. */
+.optionContent {
+  display: flex;
+  align-items: center;
+  gap: var(--recursica_ui-kit_components_menu-item_properties_icon-text-gap);
+}
+
+.optionIcon {
+  display: flex;
+  flex-shrink: 0;
+  width: var(
+    --recursica_ui-kit_components_menu-item_properties_icon-leading-size
+  );
+  height: var(
+    --recursica_ui-kit_components_menu-item_properties_icon-leading-size
+  );
+  color: var(
+    --recursica_ui-kit_components_menu-item_variants_selection-states_unselected_properties_colors_leading-icon-color
+  );
+}
+
+.optionIcon :global(svg) {
+  width: 100%;
+  height: 100%;
+}
+
+.optionText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: var(--recursica_ui-kit_components_menu-item_properties_text-gap);
+}
+
+/* Default: label/supportingText each truncate to a single line with an ellipsis. */
+.optionText > * {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Applied alongside .optionText when `wrapItemText` is true — long values wrap onto additional
+   lines instead of overflowing the fixed-width dropdown. */
+.optionTextWrap > * {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.optionSupportingText {
+  font-family: var(
+    --recursica_ui-kit_components_menu-item_properties_supporting-text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_menu-item_properties_supporting-text_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_menu-item_properties_supporting-text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_menu-item_properties_supporting-text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_menu-item_properties_supporting-text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_menu-item_properties_supporting-text_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_menu-item_properties_supporting-text_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_menu-item_properties_supporting-text_text-transform
+  );
+  color: var(
+    --recursica_ui-kit_components_menu-item_variants_selection-states_unselected_properties_colors_supporting-text-color
+  );
+}
+
+.option[data-selected="true"] .optionIcon,
+.option[data-combobox-active="true"] .optionIcon {
+  color: var(
+    --recursica_ui-kit_components_menu-item_variants_selection-states_selected_properties_colors_leading-icon-color
+  );
+}
+
+.option[data-selected="true"] .optionSupportingText,
+.option[data-combobox-active="true"] .optionSupportingText {
+  color: var(
+    --recursica_ui-kit_components_menu-item_variants_selection-states_selected_properties_colors_supporting-text-color
   );
 }

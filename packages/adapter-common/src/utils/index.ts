@@ -2,6 +2,7 @@ export * from "./copyToClipboard";
 export * from "./fileMatchesAccept";
 export * from "./mergeClassNames";
 export * from "./mergeStyles";
+export * from "./normalizeComboboxData";
 export * from "./omitUnsupportedProps";
 export * from "./overStyledControl";
 export * from "./withCallerOverride";

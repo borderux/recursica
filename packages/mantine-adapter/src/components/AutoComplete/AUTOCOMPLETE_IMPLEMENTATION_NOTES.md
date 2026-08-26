@@ -16,6 +16,22 @@ The Mantine `<Autocomplete>` dropdown menu and options are styled strictly using
 
 Focus, errors, and disabled visual states are enforced explicitly via the outer `<FormControlWrapper>` boundary emitting context down structurally (`[data-error]`, `[data-disabled]`) and evaluated efficiently against scoped nested selectors natively inside `AutoComplete.module.css`.
 
-## Missing Active Option Color
+## Missing Selected Option Highlight
 
-Currently, there is no explicit JSON token for the background color of an active/hovered option in the AutoComplete dropdown. We temporarily map `.option:hover` and `.option[data-combobox-active]` to the `--recursica_ui-kit_components_autocomplete_variants_states_focus_properties_colors_background` variable. Because this variable maps to the base field background, the highlight is currently invisible. This will be updated once the correct token is added to the UI kit.
+`.option:hover`/`.option[data-hovered="true"]` work — hover has a real background tint. There's no
+equivalent for "this option matches the current value" though, and it isn't fixable in CSS alone:
+Mantine's `Autocomplete` never passes a `value` prop into its internal `OptionsDropdown` (only
+`search`, for filtering — see `node_modules/@mantine/core/esm/components/Autocomplete/Autocomplete.mjs`),
+so `OptionsDropdown`'s `checked` (and the `data-combobox-active` attribute it drives — the same one
+`Dropdown`'s equivalent highlight below keys off) never gets set on any option, no matter what's
+typed into the field. See `Dropdown.module.css`'s `.option[data-combobox-active="true"]` rule for
+what a real fix would key off, if this ever gets solved upstream or by reimplementing option
+rendering with our own value comparison.
+
+## Rich Option Content (`leadingIcon`/`supportingText`)
+
+`data` items accept optional `leadingIcon`/`supportingText` fields, via the shared `RecursicaComboboxItem` type in `@recursica/adapter-common` (see `MANTINE_ADAPTER_RICH_OPTION_DATA.md` at the repo root) — the same type `Dropdown` and both `mui-adapter` components use. `AutoComplete.tsx` installs a default `renderOption` (`../../utils/renderRichOption.tsx`, shared with `Dropdown`) that reads these off Mantine's parsed `option`. `label` on the shared type is optional — Mantine's `getParsedComboboxData` only preserves an item's extra fields when it already has both `value` and `label`; an item with `value` only is rebuilt into a bare `{value, label: value, disabled}` object first, dropping `leadingIcon`/`supportingText`. `AutoComplete.tsx` runs `data` through adapter-common's `normalizeComboboxData` (backfills `label` from `value`) before handing it to Mantine, so the rich fields always survive regardless of whether the caller set `label` (`Dropdown.tsx` does the same now that its `label` is optional too). New CSS classes (`.optionContent`/`.optionIcon`/`.optionText`/`.optionSupportingText`) reuse the menu-item component's icon/supporting-text tokens, matching Dropdown's equivalent addition — no dedicated autocomplete-option tokens exist for either. The icon is a conditional child (only rendered when `leadingIcon` is set, not a hidden reserved slot), so label/supportingText shift left when there's no icon; `.optionContent`'s `align-items: center` keeps the label vertically centered when there's no `supportingText`.
+
+## `wrapItemText`
+
+`label`/`supportingText` default to single-line truncation with an ellipsis (`.optionText > *` — `overflow: hidden; text-overflow: ellipsis; white-space: nowrap`). Passing `wrapItemText` adds `.optionTextWrap` alongside `.optionText`, which re-enables wrapping (`white-space: normal; overflow-wrap: anywhere`) for both children — same later-cascade-wins mechanism (`.optionTextWrap > *` declared after `.optionText > *`, equal specificity) as the rest of this file's overrides. `renderRichOption`/`renderRichOptionContent` (shared util, both adapters) take `wrapItemText` as a third parameter and combine the two class names when it's true.

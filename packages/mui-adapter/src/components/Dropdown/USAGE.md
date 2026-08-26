@@ -46,3 +46,23 @@ All Recursica components in the `@recursica/mui-adapter` package adhere strictly
 
 - Pass `startAdornment` for a leading icon, and `clearable` (with a value present) to show a clear button — both render using the dropdown's own icon-color tokens, matching the mantine-adapter's `leftSection`/`clearable` behavior.
 - `onChange` follows MUI's native `Select` signature: `(event: SelectChangeEvent, child: ReactNode) => void`.
+- `data` items can carry a `leadingIcon` and `supportingText`, rendered inside each option row
+  (the closed field always shows the plain `label`, matching the mantine-adapter):
+
+  ```tsx
+  <Dropdown
+    label="Assignee"
+    data={[
+      {
+        value: "jdoe",
+        label: "Jane Doe",
+        leadingIcon: <UserIcon />,
+        supportingText: "jane.doe@example.com",
+      },
+      { value: "asmith", label: "Alex Smith" },
+    ]}
+  />
+  ```
+
+  By default `label`/`supportingText` truncate to a single line with an ellipsis. Set
+  `wrapItemText` to wrap them onto additional lines instead: `<Dropdown data={data} wrapItemText />`.

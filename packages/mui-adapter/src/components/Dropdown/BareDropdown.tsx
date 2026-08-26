@@ -1,14 +1,19 @@
-import React, { forwardRef } from "react";
+import { forwardRef } from "react";
 import {
   Select as MuiSelect,
   type SelectProps as MuiSelectProps,
   MenuItem,
 } from "@mui/material";
 import {
+  type RecursicaComboboxData,
+  normalizeComboboxData,
+} from "@recursica/adapter-common";
+import {
   filterStylingProps,
   omitUnsupportedProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
+import { renderRichOptionContent } from "../../utils/renderRichOption";
 import styles from "./Dropdown.module.css";
 
 /**
@@ -26,10 +31,7 @@ export interface BareDropdownProps
     MuiSelectProps,
     "size" | "variant" | "classes" | "error" | "onChange"
   > {
-  data: (
-    | string
-    | { value: string; label: React.ReactNode; disabled?: boolean }
-  )[];
+  data: RecursicaComboboxData;
   /** Normalized to just the selected value, unlike MUI's raw (event, child) Select onChange. */
   onChange?: (value: string | null) => void;
   /** Applies the error visual state (via `data-error`) — no error message is rendered here. */
@@ -73,8 +75,19 @@ export const BareDropdown = forwardRef<
 
   const selectedValue = value ?? defaultValue;
 
+  const optionClassNames = {
+    optionContent: styles.optionContent,
+    optionIcon: styles.optionIcon,
+    optionText: styles.optionText,
+    optionTextWrap: styles.optionTextWrap,
+    optionSupportingText: styles.optionSupportingText,
+  };
+
+  // See Dropdown.tsx's identical use of `normalizeComboboxData` (adapter-common).
+  const normalizedData = normalizeComboboxData(data) ?? [];
+
   const renderOptions = () =>
-    data.map((item, index) => {
+    normalizedData.map((item, index) => {
       if (typeof item === "string") {
         return (
           <MenuItem
@@ -98,10 +111,23 @@ export const BareDropdown = forwardRef<
           className={styles.option}
           data-selected={item.value === selectedValue ? "true" : undefined}
         >
-          {item.label}
+          {renderRichOptionContent(item, optionClassNames)}
         </MenuItem>
       );
     });
+
+  // See Dropdown.tsx's identical `renderValue` — keeps the closed field showing just the plain
+  // label now that a MenuItem's children can be a rich icon+label+supportingText row.
+  const renderValue = (selected: unknown) => {
+    if (selected === "" || selected === undefined || selected === null) {
+      return "";
+    }
+    const match = normalizedData.find((item) =>
+      typeof item === "string" ? item === selected : item.value === selected,
+    );
+    if (!match) return "";
+    return typeof match === "string" ? match : match.label;
+  };
 
   return (
     <MuiSelect
@@ -112,6 +138,7 @@ export const BareDropdown = forwardRef<
       defaultValue={defaultValue}
       onChange={(event) => onChange?.((event.target.value as string) ?? null)}
       displayEmpty
+      renderValue={renderValue}
       error={!!error}
       className={mergedClassName}
       classes={{

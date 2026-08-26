@@ -5,7 +5,11 @@ import {
   TextField as MuiTextField,
   // removed InputWrapperProps
 } from "@mui/material";
-import { type ReadOnlyControlProps } from "@recursica/adapter-common";
+import {
+  type ReadOnlyControlProps,
+  type RecursicaComboboxItemWithLabel,
+  normalizeComboboxData,
+} from "@recursica/adapter-common";
 import {
   filterStylingProps,
   omitUnsupportedProps,
@@ -14,6 +18,7 @@ import {
 } from "../../utils/filterStylingProps";
 import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
 import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
+import { renderRichOptionContent } from "../../utils/renderRichOption";
 import styles from "./Autocomplete.module.css";
 
 import { type RecursicaAutocompleteProps as BaseRecursicaAutocompleteProps } from "@recursica/adapter-common";
@@ -77,6 +82,8 @@ export const Autocomplete = forwardRef<HTMLInputElement, AutocompleteProps>(
       rightSection,
       placeholder,
       ListboxProps,
+      renderOption,
+      wrapItemText = false,
       ...rest
     } = props;
     // Props this component intentionally doesn't support — deleted at runtime so they can't leak
@@ -128,6 +135,43 @@ export const Autocomplete = forwardRef<HTMLInputElement, AutocompleteProps>(
       ? `${styles.layoutOverride} ${className}`
       : styles.layoutOverride;
 
+    const optionClassNames = {
+      optionContent: styles.optionContent,
+      optionIcon: styles.optionIcon,
+      optionText: styles.optionText,
+      optionTextWrap: styles.optionTextWrap,
+      optionSupportingText: styles.optionSupportingText,
+    };
+
+    // See Dropdown.tsx's identical use of `normalizeComboboxData` (adapter-common) — items always
+    // have a real `label` after this, so `defaultRenderOption` below doesn't need its own fallback.
+    const normalizedData = normalizeComboboxData(data);
+
+    // Default per-option rendering — kept as a fallback so a caller-supplied `renderOption` (an
+    // escape hatch, see MANTINE_ADAPTER_RICH_OPTION_DATA.md) still wins.
+    const defaultRenderOption = (
+      liProps: React.HTMLAttributes<HTMLLIElement> & { key?: React.Key },
+      option: unknown,
+    ) => {
+      const { key, ...otherProps } = liProps;
+      if (typeof option === "string") {
+        return (
+          <li key={key} {...otherProps}>
+            {option}
+          </li>
+        );
+      }
+      return (
+        <li key={key} {...otherProps}>
+          {renderRichOptionContent(
+            option as RecursicaComboboxItemWithLabel,
+            optionClassNames,
+            wrapItemText,
+          )}
+        </li>
+      );
+    };
+
     return (
       <WithReadOnlyWrapper
         className={wrapperClass}
@@ -175,7 +219,8 @@ export const Autocomplete = forwardRef<HTMLInputElement, AutocompleteProps>(
               ...ListboxProps,
               className: mergedClassNames.listbox,
             }}
-            options={data || []}
+            options={normalizedData || []}
+            renderOption={renderOption ?? defaultRenderOption}
             renderInput={(params) => {
               const { InputProps, ...restParams } = params;
               return (

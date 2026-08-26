@@ -4,7 +4,10 @@ import {
   type AutocompleteProps as MantineAutocompleteProps,
   type InputWrapperProps,
 } from "@mantine/core";
-import { type ReadOnlyControlProps } from "@recursica/adapter-common";
+import {
+  type ReadOnlyControlProps,
+  normalizeComboboxData,
+} from "@recursica/adapter-common";
 import {
   filterStylingProps,
   omitUnsupportedProps,
@@ -13,6 +16,7 @@ import {
 } from "../../utils/filterStylingProps";
 import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
 import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
+import { renderRichOption } from "../../utils/renderRichOption";
 import styles from "./AutoComplete.module.css";
 
 import { type RecursicaAutocompleteProps as BaseRecursicaAutocompleteProps } from "@recursica/adapter-common";
@@ -80,6 +84,9 @@ export const AutoComplete = forwardRef<HTMLInputElement, AutoCompleteProps>(
       emptyValueComponent,
       value,
       defaultValue,
+      data,
+      renderOption,
+      wrapItemText = false,
       ...rest
     } = props;
 
@@ -88,6 +95,13 @@ export const AutoComplete = forwardRef<HTMLInputElement, AutoCompleteProps>(
       UNSUPPORTED_PROPS,
     );
     const restRecord = sanitizedProps as Record<string, unknown>;
+
+    // Mantine's own data parser only preserves extra fields (`leadingIcon`/`supportingText`) when
+    // an item already has both `value` and `label` — an item with `value` only is rebuilt into a
+    // bare `{value, label: value, disabled}` object, silently dropping them (see
+    // get-parsed-combobox-data.mjs). `normalizeComboboxData` backfills `label` so the rich fields
+    // always survive regardless of whether the caller set it.
+    const normalizedData = normalizeComboboxData(data);
 
     // Securely map core native blocks down ensuring nested CSS modules map precisely
     const mergedClassNames = mergeClassNames(
@@ -100,6 +114,14 @@ export const AutoComplete = forwardRef<HTMLInputElement, AutoCompleteProps>(
       },
       restRecord.classNames as Partial<Record<string, string>> | undefined,
     );
+
+    const optionClassNames = {
+      optionContent: styles.optionContent,
+      optionIcon: styles.optionIcon,
+      optionText: styles.optionText,
+      optionTextWrap: styles.optionTextWrap,
+      optionSupportingText: styles.optionSupportingText,
+    };
 
     const wrapperClass = className
       ? `${styles.layoutOverride} ${className}`
@@ -141,6 +163,12 @@ export const AutoComplete = forwardRef<HTMLInputElement, AutoCompleteProps>(
             value={value as string | undefined}
             defaultValue={defaultValue as string | undefined}
             error={!!error}
+            data={normalizedData as unknown as MantineAutocompleteProps["data"]}
+            renderOption={
+              renderOption ??
+              ((input) =>
+                renderRichOption(input, optionClassNames, wrapItemText))
+            }
           />
         }
       />
