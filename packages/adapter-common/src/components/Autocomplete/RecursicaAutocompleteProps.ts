@@ -1,11 +1,12 @@
 import React from "react";
+import { type RecursicaComboboxData } from "../Combobox/RecursicaComboboxItem";
 
 /**
  * Props for the Recursica Autocomplete input component.
  */
 export interface RecursicaAutocompleteProps {
   /** Data options to show in the dropdown */
-  data?: unknown[];
+  data?: RecursicaComboboxData;
   /** Error message or toggle state */
   error?: boolean | React.ReactNode;
   /** Marks input as required */
@@ -22,4 +23,7 @@ export interface RecursicaAutocompleteProps {
   rightSection?: React.ReactNode;
   /** Placeholder text */
   placeholder?: string;
+  /** Wrap `label`/`supportingText` onto additional lines instead of truncating with an ellipsis.
+   * Defaults to `false` (single-line, truncated). */
+  wrapItemText?: boolean;
 }

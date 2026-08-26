@@ -5,7 +5,10 @@ import {
   SelectChangeEvent,
   MenuItem,
 } from "@mui/material";
-import { type ReadOnlyControlProps } from "@recursica/adapter-common";
+import {
+  type ReadOnlyControlProps,
+  normalizeComboboxData,
+} from "@recursica/adapter-common";
 import {
   filterStylingProps,
   omitUnsupportedProps,
@@ -13,6 +16,7 @@ import {
 } from "../../utils/filterStylingProps";
 import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
 import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
+import { renderRichOptionContent } from "../../utils/renderRichOption";
 import { ChevronIcon, ClearIcon } from "./Dropdown.icons";
 import styles from "./Dropdown.module.css";
 
@@ -86,6 +90,7 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       searchable, // Not natively supported by basic MUI Select, stubbed
       clearable,
+      wrapItemText = false,
       ...rest
     } = props;
     // Props this component intentionally doesn't support — deleted at runtime so they can't leak
@@ -151,9 +156,22 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
       ? `${styles.layoutOverride} ${className}`
       : styles.layoutOverride;
 
+    const optionClassNames = {
+      optionContent: styles.optionContent,
+      optionIcon: styles.optionIcon,
+      optionText: styles.optionText,
+      optionTextWrap: styles.optionTextWrap,
+      optionSupportingText: styles.optionSupportingText,
+    };
+
+    // See AutoComplete.tsx's identical use of `normalizeComboboxData` (adapter-common) — items
+    // always have a real `label` after this, so downstream code doesn't need its own `?? value`
+    // fallback at every read.
+    const normalizedData = normalizeComboboxData(data);
+
     const renderOptions = () => {
-      if (!data) return null;
-      return data.map((item, index) => {
+      if (!normalizedData) return null;
+      return normalizedData.map((item, index) => {
         if (typeof item === "string") {
           return (
             <MenuItem
@@ -179,10 +197,24 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
             disableRipple
             data-selected={item.value === internalValue ? "true" : undefined}
           >
-            {item.label}
+            {renderRichOptionContent(item, optionClassNames, wrapItemText)}
           </MenuItem>
         );
       });
+    };
+
+    // MUI's closed-field display otherwise mirrors the selected `MenuItem`'s children directly —
+    // now that those can be a rich icon+label+supportingText row, `renderValue` keeps the closed
+    // field showing just the plain label, matching the field's own single-line text control.
+    const renderValue = (selected: unknown) => {
+      if (selected === "" || selected === undefined || selected === null) {
+        return "";
+      }
+      const match = normalizedData?.find((item) =>
+        typeof item === "string" ? item === selected : item.value === selected,
+      );
+      if (!match) return "";
+      return typeof match === "string" ? match : match.label;
     };
 
     const wrappedStartAdornment = startAdornment ? (
@@ -246,6 +278,7 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
             error={!!error}
             required={required}
             displayEmpty
+            renderValue={renderValue}
             className={styles.root}
             classes={{
               select: styles.input,

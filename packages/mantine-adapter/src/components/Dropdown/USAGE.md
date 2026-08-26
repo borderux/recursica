@@ -46,3 +46,24 @@ All Recursica components in the `@recursica/mantine-adapter` package adhere stri
 
 - `Dropdown` is styled independently from `TextField`; even though they look similar, they are themed using separate design tokens.
 - Pass `leftSection` for a leading icon, and `clearable` (with a value present) to show a clear button — both render using the dropdown's own icon-color tokens.
+- `data` items can carry a `leadingIcon` and `supportingText`, rendered inside each option row:
+
+  ```tsx
+  <Dropdown
+    label="Assignee"
+    data={[
+      {
+        value: "jdoe",
+        label: "Jane Doe",
+        leadingIcon: <UserIcon />,
+        supportingText: "jane.doe@example.com",
+      },
+      { value: "asmith", label: "Alex Smith" },
+    ]}
+  />
+  ```
+
+  Pass your own `renderOption` to opt out of this default rendering for a given instance.
+
+  By default `label`/`supportingText` truncate to a single line with an ellipsis. Set
+  `wrapItemText` to wrap them onto additional lines instead: `<Dropdown data={data} wrapItemText />`.

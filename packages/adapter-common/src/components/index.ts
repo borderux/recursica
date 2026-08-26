@@ -11,6 +11,7 @@ export * from "./Button/RecursicaButtonProps";
 export * from "./Card/RecursicaCardProps";
 export * from "./Checkbox/RecursicaCheckboxProps";
 export * from "./Chip/RecursicaChipProps";
+export * from "./Combobox/RecursicaComboboxItem";
 export * from "./Container/RecursicaContainerProps";
 export * from "./DatePicker/RecursicaDatePickerProps";
 export * from "./Dropdown/RecursicaDropdownProps";

@@ -366,12 +366,25 @@
   color: var(
     --recursica_ui-kit_components_dropdown_properties_colors_text-color
   );
-  padding: calc(
-      var(--recursica_ui-kit_components_dropdown_properties_vertical-padding) *
-        0.75
+  /* Padding/inter-item gap reuse the menu-item component's tokens (same reasoning as the icon/
+     supporting-text tokens below) instead of an arbitrary scaled dropdown padding — matches the
+     mantine-adapter's equivalent Menu.module.css `.item` padding + gap exactly. `!important` on
+     padding: MUI's `MenuItem` root sets its own paddingTop/Bottom (MenuItem.js) plus paddingLeft/
+     Right 16px via its `gutters` variant, both at equal selector specificity to this rule, so
+     without it the winner depends on emotion's injection order rather than this stylesheet. */
+  padding: var(
+      --recursica_ui-kit_components_menu-item_properties_vertical-padding
     )
-    var(--recursica_ui-kit_components_dropdown_properties_horizontal-padding);
+    var(--recursica_ui-kit_components_menu-item_properties_horizontal-padding) !important;
+  margin-bottom: var(--recursica_ui-kit_components_menu_properties_item-gap);
   cursor: pointer;
+  /* MUI's `MenuItem` also forces `white-space: nowrap` by default; override it so long
+     labels/supportingText wrap instead of overflowing. Same equal-specificity reasoning. */
+  white-space: normal !important;
+}
+
+.option:last-of-type {
+  margin-bottom: 0;
 }
 
 /* No per-option hovered token exists in the schema; use the generic overlay tint (same technique
@@ -400,5 +413,101 @@
   ) !important;
   color: var(
     --recursica_ui-kit_components_menu-item_variants_selection-states_selected_properties_colors_text-color
+  ) !important;
+}
+
+/* Rich option content (leadingIcon/supportingText — see MANTINE_ADAPTER_RICH_OPTION_DATA.md). No
+   dedicated dropdown-option icon or supporting-text token exists in the schema either; reuse the
+   menu-item component's tokens for the same reason the selected-state colors above do. Matches
+   the mantine-adapter's equivalent classes. */
+.optionContent {
+  display: flex;
+  align-items: center;
+  gap: var(--recursica_ui-kit_components_menu-item_properties_icon-text-gap);
+}
+
+.optionIcon {
+  display: flex;
+  flex-shrink: 0;
+  width: var(
+    --recursica_ui-kit_components_menu-item_properties_icon-leading-size
+  );
+  height: var(
+    --recursica_ui-kit_components_menu-item_properties_icon-leading-size
+  );
+  color: var(
+    --recursica_ui-kit_components_menu-item_variants_selection-states_unselected_properties_colors_leading-icon-color
+  );
+}
+
+.optionIcon :global(svg) {
+  width: 100%;
+  height: 100%;
+}
+
+.optionText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: var(--recursica_ui-kit_components_menu-item_properties_text-gap);
+}
+
+/* Default: label/supportingText each truncate to a single line with an ellipsis. */
+.optionText > * {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Applied alongside .optionText when `wrapItemText` is true — long values wrap onto additional
+   lines instead of overflowing the fixed-width dropdown. */
+.optionTextWrap > * {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.optionSupportingText {
+  font-family: var(
+    --recursica_ui-kit_components_menu-item_properties_supporting-text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_menu-item_properties_supporting-text_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_menu-item_properties_supporting-text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_menu-item_properties_supporting-text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_menu-item_properties_supporting-text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_menu-item_properties_supporting-text_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_menu-item_properties_supporting-text_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_menu-item_properties_supporting-text_text-transform
+  );
+  color: var(
+    --recursica_ui-kit_components_menu-item_variants_selection-states_unselected_properties_colors_supporting-text-color
+  );
+}
+
+.option[data-selected="true"] .optionIcon,
+.option[data-combobox-selected="true"] .optionIcon {
+  color: var(
+    --recursica_ui-kit_components_menu-item_variants_selection-states_selected_properties_colors_leading-icon-color
+  ) !important;
+}
+
+.option[data-selected="true"] .optionSupportingText,
+.option[data-combobox-selected="true"] .optionSupportingText {
+  color: var(
+    --recursica_ui-kit_components_menu-item_variants_selection-states_selected_properties_colors_supporting-text-color
   ) !important;
 }
