@@ -65,3 +65,13 @@ We explicitly pass `disableRipple` and `disableElevation` to block MUI's dynamic
 **Real discrepancy found:** `.root`'s "Shared Defaults" set `line-height` once, unconditionally, from the _default_-size token, and `.labelText` merely did `line-height: inherit` — so the small-size line-height token was never actually referenced (it was `recursica-ignore`d as "redundant"). Mantine's `Button.module.css`, by contrast, sets `line-height` directly on `.labelText` per size, from each size's own token. They currently resolve to the same literal value, so this wasn't visually observable, but it's a latent divergence from the source of truth — a future token change to the small-size line-height would silently not apply in mui-adapter.
 
 **Fix:** moved `line-height` off `.root` and onto `.labelText` (default token), added `.root[data-size="small"] .labelText { line-height: ... }` (small token), and removed the now-inaccurate `recursica-ignore` for that token — matching Mantine's structure exactly.
+
+---
+
+## Button doesn't shrink inside a constraining container (Genesis, 2026-08-27)
+
+**Bug:** in the `TruncatedLabel` story (`<div style={{ maxWidth: 250 }}><Button>...long label.../Button></div>`), the button ignored the 250px wrapper entirely and rendered at its full 534px intrinsic width, overflowing the wrapper instead of shrinking and showing the ellipsis.
+
+**Root cause:** `.root` has `width: fit-content` (to hug its own content instead of stretching in flex columns) but no `max-width`. Verified via Playwright: the wrapper measured exactly 250px, but `fit-content` on `.root` still resolved to its 534px `max-content` size — it doesn't reliably clamp against a narrower containing block on its own. Same root cause and identical fix in mantine-adapter.
+
+**Fix:** added `max-width: 100%` to `.root`. It's a no-op when the parent is wide enough (confirmed no change to `Default`/`IconOnly`/`TextWithIcon` story widths), and clamps the button to the parent's resolved width when the parent is narrower — at which point the existing `overflow: hidden` (`.root`) + `text-overflow: ellipsis`/`white-space: nowrap` (`.labelText`) take over, exactly as already documented above.

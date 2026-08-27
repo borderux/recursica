@@ -24,6 +24,7 @@
   position: relative;
   transition: all 0.2s ease;
   width: fit-content; /* Prevent stretching in flex columns */
+  max-width: 100%; /* Let a constraining parent (e.g. max-width container) actually shrink the button; fit-content alone ignores it */
 
   /* Shared Defaults */
   font-family: var(
