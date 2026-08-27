@@ -1,3 +1,14 @@
+/* Brand-layer exemptions (recursica-allow-brand) — see recursica-token-analyzer README.md.
+ * Close button is styled to match the Button component's text/icon-only variant, so it reuses
+ * the same global hover/focus state tokens Button.module.css exempts.
+ *   recursica-allow-brand: --recursica_brand_states_focus_blur
+ *   recursica-allow-brand: --recursica_brand_states_focus_border-size
+ *   recursica-allow-brand: --recursica_brand_states_focus_color
+ *   recursica-allow-brand: --recursica_brand_states_focus_margin
+ *   recursica-allow-brand: --recursica_brand_states_hover_color
+ *   recursica-allow-brand: --recursica_brand_states_hover_opacity
+ */
+
 .root {
 }
 
@@ -40,6 +51,9 @@
 }
 
 .header {
+  display: flex; /* HARDCODE: puts the title and close button side-by-side so the title has a bounded width to truncate against */
+  align-items: center;
+  justify-content: space-between;
   padding: var(
       --recursica_ui-kit_components_modal_properties_header-footer-vertical-padding
     )
@@ -50,6 +64,12 @@
 }
 
 .title {
+  flex: 1 1 auto; /* HARDCODE: let the title claim the space between the header edge and the close button */
+  min-width: 0; /* HARDCODE: required for text-overflow ellipsis to take effect on a flex child */
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
   color: var(--recursica_ui-kit_components_modal_properties_colors_title);
 
   /* Direct Figma Typography Mapping */
@@ -173,5 +193,87 @@
 }
 
 .close {
-  /* Inherits standard icon button tokens natively, but we can override if required */
+  /* Matches the Button component's text-variant, icon-only, small-size visual treatment
+     (see Button.module.css) so the modal close control looks like a Recursica Button
+     rather than MUI's native IconButton. */
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
+
+  height: var(
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_height
+  );
+  min-width: var(
+    --recursica_ui-kit_components_button_variants_content_icon-only_variants_sizes_small_properties_min-width
+  );
+  padding: 0
+    var(
+      --recursica_ui-kit_components_button_variants_content_icon-only_variants_sizes_small_properties_horizontal-padding
+    );
+  border-radius: var(
+    --recursica_ui-kit_components_button_variants_content_icon-only_variants_sizes_small_properties_border-radius
+  );
+
+  border-style: solid;
+  border-width: var(
+    --recursica_ui-kit_components_button_variants_styles_text_properties_border-size
+  );
+  border-color: var(
+    --recursica_ui-kit_components_button_variants_styles_text_properties_colors_border-color
+  );
+  background-color: var(
+    --recursica_ui-kit_components_button_variants_styles_text_properties_colors_background-color
+  );
+  color: var(
+    --recursica_ui-kit_components_button_variants_styles_text_properties_colors_icon-color
+  );
+}
+
+.close svg {
+  position: relative;
+  z-index: 1;
+  width: var(
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_icon
+  );
+  height: var(
+    --recursica_ui-kit_components_button_variants_sizes_small_properties_icon
+  );
+}
+
+.close::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease;
+  opacity: 0;
+  background-color: var(--recursica_brand_states_hover_color);
+}
+.close:hover:not(:disabled)::after {
+  opacity: var(--recursica_brand_states_hover_opacity);
+}
+
+/* MuiIconButton injects its own `:hover` background via emotion at render time, which lands in
+   the DOM after this stylesheet and wins the tie at equal specificity — same class of conflict
+   documented in DatePicker.module.css's error/disabled state overrides. `!important` keeps the
+   button's own background transparent so only the `::after` overlay above renders the hover
+   feedback, matching Button's single-overlay hover treatment exactly. */
+.close:hover {
+  background-color: transparent !important;
+}
+
+.close:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 var(--recursica_brand_states_focus_border-size)
+      var(--recursica_brand_states_focus_color),
+    0 0 var(--recursica_brand_states_focus_blur)
+      var(--recursica_brand_states_focus_margin)
+      var(--recursica_brand_states_focus_color);
 }
