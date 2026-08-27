@@ -10,7 +10,7 @@ Your objective is to ensure that Recursica's custom CSS variables, layouts, and 
 
 ## 2. Running the Tests
 
-- **Run all components in headless visual regression**: `npm run test:visual`
+- **Run all components in headless visual regression**: `npm run adapter-tester:automated`
 - **Reviewing Output**: The test automatically compiles a comprehensive, fully styled HTML report. You can review all side-by-side screenshots, visual diff highlights, and DOM JSON tree files by opening the standard `playwright-report/index.html` file in a browser.
 
 ### Test Directory and Output Standard
@@ -33,14 +33,14 @@ A component is considered "Close Enough" and passing if:
 
 ### Thresholds
 
-- The global visual diff threshold is defined in `tests/config.ts` as `VISUAL_DIFF_THRESHOLD_PIXELS`.
-- **⚠️ AI AGENT GUARDRAIL**: Under no circumstances are AI agents allowed to modify the global `VISUAL_DIFF_THRESHOLD_PIXELS` in `tests/config.ts`. Only human developers are permitted to alter this global threshold. Bypassing this threshold by altering the file is an automatic failure.
+- The global visual diff threshold is the `diffThresholdPixels` field in the consuming project's `adapter-tester.config.json` (e.g. `packages/mui-adapter/adapter-tester.config.json`, or this package's own `adapter-tester.config.json` for the monorepo/non-standard mode).
+- **⚠️ AI AGENT GUARDRAIL**: Under no circumstances are AI agents allowed to modify `diffThresholdPixels` in any `adapter-tester.config.json`. Only human developers are permitted to alter this global threshold. Bypassing this threshold by editing the file is an automatic failure.
 - If a test fails this threshold, it is almost certainly a genuine CSS mapping bug that must be investigated and fixed in the adapter styling code itself.
 
 ## 4. Handling Acceptable Exemptions
 
 When you encounter an unfixable or acceptable difference that exceeds the global threshold and cannot be resolved through code styling fixes:
 
-1. **Document It**: Add a comment directly above the `expect.soft(diffPixels).toBeLessThan(X);` assertion in the `visual-regression.spec.ts` file explaining exactly _why_ the difference exists (e.g., "MUI forces a non-removable wrapper div that shifts the baseline by 1px").
-2. **Increase Threshold for Specific Case**: If necessary and explicitly permitted by the developer, you may use a local hardcoded threshold override inside that specific test block using a localized expectation. Do not alter the global `config.ts` threshold.
+1. **Document It**: Explain exactly _why_ the difference exists (e.g., "MUI forces a non-removable wrapper div that shifts the baseline by 1px") when you propose the change.
+2. **Increase Threshold for Specific Case**: If necessary and explicitly permitted by the developer, add the story's id prefix to `relaxedThresholdStoryIds` and set `relaxedThresholdPixels` in the same `adapter-tester.config.json`. Do not alter the global `diffThresholdPixels`.
 3. **Notify User**: Inform the user of the exemption and the reasoning behind it during your summary.

@@ -4,3 +4,4 @@ diffs/
 report/
 playwright-report/
 test-results/
+.adapter-tester/

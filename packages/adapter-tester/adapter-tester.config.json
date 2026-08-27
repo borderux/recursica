@@ -1,0 +1,32 @@
+{
+  "$schema": "./src/adapter-tester.schema.json",
+  "name": "MUI",
+  "storybook": {
+    "port": 6012,
+    "command": "npm run storybook",
+    "cwd": "../mui-adapter"
+  },
+  "sourceOfTruth": {
+    "type": "url",
+    "name": "Mantine",
+    "port": 6011,
+    "command": "npm run storybook",
+    "cwd": "../mantine-adapter"
+  },
+  "diffThresholdPixels": 3500,
+  "relaxedThresholdStoryIds": [
+    "ui-kit-checkboxgroup",
+    "ui-kit-radiogroup",
+    "ui-kit-switchgroup",
+    "ui-kit-checkbox",
+    "ui-kit-radio",
+    "ui-kit-switch",
+    "ui-kit-segmentedcontrol",
+    "ui-kit-numberinput",
+    "ui-kit-slider",
+    "ui-kit-textfield",
+    "ui-kit-timeline",
+    "ui-kit-title"
+  ],
+  "relaxedThresholdPixels": 15000
+}

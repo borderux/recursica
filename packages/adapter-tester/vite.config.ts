@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
         ? [
             dts({
               insertTypesEntry: true,
-              exclude: ["**/*.spec.*", "tests/**", "src/dev.ts"],
+              exclude: ["**/*.spec.*"],
             }),
           ]
         : []),
@@ -23,6 +23,7 @@ export default defineConfig(({ mode }) => {
               entry: {
                 index: resolve(__dirname, "src/index.ts"),
                 testing: resolve(__dirname, "src/testing.ts"),
+                cli: resolve(__dirname, "src/cli.ts"),
               },
               formats: ["es", "cjs"],
               fileName: (format, entryName) =>
@@ -34,7 +35,18 @@ export default defineConfig(({ mode }) => {
               // consumer's own node_modules resolves them.
               external: (id) =>
                 id.startsWith("node:") ||
-                ["@playwright/test", "pixelmatch", "pngjs"].includes(id),
+                [
+                  "@playwright/test",
+                  "pixelmatch",
+                  "pngjs",
+                  "express",
+                  "http-proxy-middleware",
+                ].includes(id),
+              output: {
+                // Only the `cli` entry is directly executed via `bin`.
+                banner: (chunk) =>
+                  chunk.name === "cli" ? "#!/usr/bin/env node" : "",
+              },
             },
             sourcemap: true,
             emptyOutDir: true,

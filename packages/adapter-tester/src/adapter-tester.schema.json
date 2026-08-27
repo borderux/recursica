@@ -1,0 +1,113 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/borderux/recursica/tree/main/packages/adapter-tester/src/adapter-tester.schema.json",
+  "title": "adapter-tester.config.json",
+  "description": "Configuration for @recursica/adapter-tester. All fields are optional — an adapter repo with a normal `storybook` npm script needs no config file at all.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Optional pointer to this schema for editor autocomplete, e.g. \"./node_modules/@recursica/adapter-tester/src/adapter-tester.schema.json\"."
+    },
+    "name": {
+      "type": "string",
+      "description": "Label for this project's own target. Defaults to the unscoped name in this project's package.json (e.g. \"@recursica/mui-adapter\" -> \"mui-adapter\")."
+    },
+    "storybook": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "This project's own Storybook target.",
+      "properties": {
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "Port the target's Storybook is served on. Auto-detected from this project's own `scripts.storybook` (a `-p <port>`/`--port <port>` flag) when omitted, falling back to Storybook's own default of 6006."
+        },
+        "command": {
+          "type": "string",
+          "description": "Command that boots the target's Storybook. Defaults to `npm run storybook`."
+        },
+        "cwd": {
+          "type": "string",
+          "description": "Directory the command runs in, relative to the config file. Defaults to \".\"."
+        }
+      }
+    },
+    "sourceOfTruth": {
+      "description": "The comparison target. Defaults to `{ \"type\": \"mantine-harness\" }`.",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Default mode: boots a throwaway harness that installs the published @recursica/mantine-adapter from npm — no monorepo checkout required.",
+          "properties": {
+            "type": { "const": "mantine-harness" },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535,
+              "description": "Port the throwaway harness's Storybook is served on. Defaults to 6011."
+            },
+            "mantineAdapterVersion": {
+              "type": "string",
+              "description": "npm version/tag of @recursica/mantine-adapter to install in the harness. Defaults to `latest`."
+            },
+            "storybookTemplateVersion": {
+              "type": "string",
+              "description": "npm version/tag of @recursica/storybook-template to install in the harness. Defaults to `latest`."
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Non-standard mode: points at an already-addressable Storybook — e.g. a sibling workspace package's own Storybook inside this monorepo.",
+          "required": ["type", "port"],
+          "properties": {
+            "type": { "const": "url" },
+            "name": {
+              "type": "string",
+              "description": "Label for the source-of-truth target. Defaults to \"Mantine\"."
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535,
+              "description": "Port the source-of-truth Storybook is served on."
+            },
+            "command": {
+              "type": "string",
+              "description": "Command that boots the source-of-truth Storybook. Defaults to `npm run storybook`."
+            },
+            "cwd": {
+              "type": "string",
+              "description": "Directory the command runs in, relative to the config file. Defaults to \".\"."
+            }
+          }
+        }
+      ]
+    },
+    "diffThresholdPixels": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Global visual diff threshold, in mismatched pixels, before a story is considered a failure. Defaults to 3500. AI agents must not modify this field — see AGENT.md."
+    },
+    "relaxedThresholdStoryIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Story id prefixes that use `relaxedThresholdPixels` instead of the global `diffThresholdPixels`."
+    },
+    "relaxedThresholdPixels": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Diff threshold applied to stories matching `relaxedThresholdStoryIds`."
+    },
+    "excludeTitlePrefixes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Storybook title prefixes to exclude from comparison, in addition to the built-in denylist (`Theme/*`, `Tokens/*`, `Introduction`)."
+    }
+  }
+}

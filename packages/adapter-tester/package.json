@@ -31,7 +31,10 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "public",
+    "report-header.txt",
+    "src/adapter-tester.schema.json"
   ],
   "keywords": [
     "recursica",
@@ -40,12 +43,21 @@
     "testing",
     "playwright"
   ],
+  "bin": {
+    "adapter-tester": "./dist/cli.js"
+  },
   "scripts": {
     "build": "vite build --mode library",
-    "test:visual": "playwright test",
-    "dev": "ts-node src/dev.ts"
+    "postbuild": "chmod +x dist/cli.js",
+    "adapter-tester": "node dist/cli.js --serve",
+    "adapter-tester:automated": "node dist/cli.js",
+    "dev": "tsx src/cli.ts --serve"
   },
   "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^2.1.1",
+    "express": "^5.2.1",
+    "http-proxy-middleware": "^4.0.0",
     "pixelmatch": "^7.2.0",
     "pngjs": "^7.0.0"
   },
@@ -55,13 +67,11 @@
   "devDependencies": {
     "@playwright/test": "^1.60.0",
     "@repo/typescript-config": "*",
+    "@types/express": "^5.0.0",
     "@types/node": "^25.9.1",
     "@types/pixelmatch": "^5.2.6",
     "@types/pngjs": "^6.0.5",
-    "express": "^5.2.1",
-    "http-proxy-middleware": "^4.0.0",
     "playwright": "^1.60.0",
-    "ts-node": "^10.9.2",
     "tsx": "^4.22.3",
     "typescript": "~5.8.3",
     "vite": "^6.3.5",
