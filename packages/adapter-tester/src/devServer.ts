@@ -9,10 +9,13 @@ import type { AdapterTesterConfig } from "./config.js";
 import type { HarnessWebServerConfig } from "./harness/mantineSourceOfTruth.js";
 
 /**
- * Interactive Dev Mode: a synced, side-by-side browser view of the source of
- * truth and this project's own Storybook, with per-story note taking and an
- * AI-report export. Boots both Storybooks (reusing them if already running)
- * behind a proxy so the source-of-truth pane loads same-origin.
+ * Interactive Dev Mode: a synced, side-by-side browser view of this
+ * project's own Storybook and the source of truth, with per-story note
+ * taking and an AI-report export. Boots both Storybooks (reusing them if
+ * already running) behind a proxy so the own/target pane — which drives
+ * the sync and carries Storybook's nav sidebar — loads same-origin on the
+ * left, with the source of truth following along as a bare preview on the
+ * right.
  *
  * Config-driven — takes the same `{ engineConfig, webServers }` shape
  * `resolveConfig()` produces, in the same [sourceOfTruth, target] order.
@@ -142,9 +145,9 @@ export function startDevServer(
     const html = readFileSync(join(publicDir, "index.html"), "utf8").replace(
       "<head>",
       `<head>\n  <script>window.__ADAPTER_TESTER__ = ${JSON.stringify({
+        ownName: target.name,
         sourceOfTruthName: sourceOfTruth.name,
-        targetName: target.name,
-        targetPort,
+        sourceOfTruthPort,
       })};</script>`,
     );
     res.send(html);
@@ -159,12 +162,13 @@ export function startDevServer(
     }
   });
 
-  // Proxy everything else to the source of truth's Storybook, preserving
+  // Proxy everything else to this project's own Storybook, preserving
   // absolute paths (e.g. /@vite/client) so HMR keeps working same-origin.
+  // This is the pane that drives the sync and shows Storybook's nav sidebar.
   app.use(
     "/",
     createProxyMiddleware({
-      target: `http://localhost:${sourceOfTruthPort}`,
+      target: `http://localhost:${targetPort}`,
       changeOrigin: true,
       ws: true,
     }),

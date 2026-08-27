@@ -20,7 +20,7 @@ import { Stack } from "@recursica/mui-adapter";
 
 export default function Demo() {
   return (
-    <Stack gap="md" align="stretch">
+    <Stack spacing="md" alignItems="stretch">
       <Text>Item 1</Text>
       <Text>Item 2</Text>
     </Stack>

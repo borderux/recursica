@@ -2,8 +2,10 @@
  * Flex layout wrapper.
  *
  * NOTE: MUI does not have a native `<Flex>` component (it relies on `<Box display="flex">`
- * or `<Stack>`). To maintain API parity with the mantine-adapter and provide a consistent
- * developer experience, this component wraps MUI's Box and forces `display="flex"`.
+ * or `<Stack>`). Per the layout-components rule, when a UI kit lacks an equivalent component
+ * it's built following a prop definition similar to Mantine's own `Flex` (gap/rowGap/columnGap/
+ * direction/align/justify/wrap) — this shape is owned locally here, not shared as a formal
+ * cross-adapter Recursica contract.
  *
  * Like Stack and Group, this is a primitive layout component. It strictly filters out the
  * `sx` prop using `OmitSx` and `filterSxProp` to enforce the use of standard layout scales.
@@ -17,10 +19,25 @@ import {
   type WithRecursicaSpacing,
 } from "../../utils/filterStylingProps";
 
-import { type RecursicaFlexProps } from "@recursica/adapter-common";
+interface FlexOwnProps {
+  /** Global gap spacing key or CSS value */
+  gap?: string | number;
+  /** Horizontal row spacing */
+  rowGap?: string | number;
+  /** Vertical column spacing */
+  columnGap?: string | number;
+  /** Flex direction */
+  direction?: React.CSSProperties["flexDirection"];
+  /** Align items */
+  align?: React.CSSProperties["alignItems"];
+  /** Justify content */
+  justify?: React.CSSProperties["justifyContent"];
+  /** Flex wrap */
+  wrap?: React.CSSProperties["flexWrap"];
+}
 
 export type FlexProps = WithRecursicaSpacing<
-  OmitSx<MUIBoxProps & RecursicaFlexProps>
+  OmitSx<MUIBoxProps & FlexOwnProps>
 >;
 
 export const Flex = forwardRef<HTMLDivElement, FlexProps>(function Flex(

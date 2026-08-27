@@ -1,3 +1,12 @@
+/**
+ * Group layout wrapper.
+ *
+ * NOTE: MUI has no native `<Group>` component. Per the layout-components rule, when a UI kit
+ * lacks an equivalent component it's built following a prop definition similar to Mantine's
+ * own `Group` (gap/rowGap/columnGap/justify/align/wrap) — this shape is owned locally here,
+ * not shared as a formal cross-adapter Recursica contract. It's implemented as a row-direction,
+ * wrapping MUI `Stack`.
+ */
 import { forwardRef } from "react";
 import {
   Stack as MUIStack,
@@ -10,10 +19,23 @@ import {
   type WithRecursicaSpacing,
 } from "../../utils/filterStylingProps";
 
-import { type RecursicaGroupProps } from "@recursica/adapter-common";
+interface GroupOwnProps {
+  /** Gap spacing */
+  gap?: string | number;
+  /** Row gap spacing */
+  rowGap?: string | number;
+  /** Column gap spacing */
+  columnGap?: string | number;
+  /** Align items justify properties */
+  justify?: React.CSSProperties["justifyContent"];
+  /** Align items vertical alignment */
+  align?: React.CSSProperties["alignItems"];
+  /** Flex-wrap settings */
+  wrap?: React.CSSProperties["flexWrap"];
+}
 
 export type GroupProps = WithRecursicaSpacing<
-  OmitSx<Omit<MUIStackProps, "spacing" | "direction"> & RecursicaGroupProps>
+  OmitSx<Omit<MUIStackProps, "spacing" | "direction"> & GroupOwnProps>
 >;
 
 export const Group = forwardRef<HTMLDivElement, GroupProps>(function Group(

@@ -40,7 +40,7 @@ Both boot Storybooks themselves — nothing needs to be running beforehand.
 
 ## Interactive Dev Mode
 
-The **Dev Mode** is a powerful visual auditing tool that syncs the source-of-truth and target Storybooks in real-time. When you interact with controls (like toggling 'disabled' or changing 'size') in the left pane, Dev Mode instantly updates the right pane to match that exact state.
+The **Dev Mode** is a powerful visual auditing tool that syncs the target adapter's and source-of-truth's Storybooks in real-time. The left pane is this project's own Storybook (with its full nav sidebar) and drives the sync; when you interact with controls (like toggling 'disabled' or changing 'size') there, Dev Mode instantly updates the right pane — the source of truth — to match that exact state.
 
 ### How to Start
 

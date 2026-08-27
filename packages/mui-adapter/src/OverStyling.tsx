@@ -35,7 +35,7 @@ export const OverStylingInfo = () => {
           Try It Yourself
         </Title>
 
-        <Stack direction="row" alignItems="center" gap="rec-sm" mb="rec-md">
+        <Stack direction="row" alignItems="center" spacing="rec-sm" mb="rec-md">
           <Switch
             label="Highlight Over-Styled Components"
             checked={isHighlightActive}
@@ -50,7 +50,7 @@ export const OverStylingInfo = () => {
           styling generics to punch right through the sandbox layout.
         </Text>
 
-        <Stack direction="row" gap="rec-default">
+        <Stack direction="row" spacing="rec-default">
           <Box>
             <Text
               variant="caption"

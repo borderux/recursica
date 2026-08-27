@@ -165,11 +165,11 @@
 <body>
   <div class="pane" id="leftPane">
     <div class="header">
-      <span id="sourceOfTruthLabel">Source of Truth</span>
-      <span class="status connected" id="mantineStatus">Connected & Syncing</span>
+      <span id="ownLabel">Target</span>
+      <span class="status connected" id="ownStatus">Connected & Syncing</span>
     </div>
-    <!-- Load the source of truth via the SAME ORIGIN proxy -->
-    <iframe id="mantine" src="/?path=/story/ui-kit-slider--default"></iframe>
+    <!-- Load this project's own Storybook via the SAME ORIGIN proxy -->
+    <iframe id="own" src="/?path=/story/ui-kit-slider--default"></iframe>
   </div>
 
   <div class="divider" id="vDivider"></div>
@@ -177,13 +177,13 @@
   <div class="pane" id="rightPane">
     <div class="right-top" id="rightTop">
       <div class="header">
-        <span id="targetLabel">Target</span>
-        <span class="status connected" id="muiStatus">Ready</span>
+        <span id="sourceOfTruthLabel">Source of Truth</span>
+        <span class="status connected" id="sourceOfTruthStatus">Ready</span>
       </div>
-      <!-- Spacer to align the view with the source of truth's Storybook header (40px) -->
+      <!-- Spacer to align the view with the own Storybook's header (40px) -->
       <div style="height: 40px; flex: 0 0 40px; background-color: #fff; border-bottom: 1px solid #e6e6e6; box-sizing: border-box;"></div>
-      <!-- Load the bare target component preview -->
-      <iframe id="mui" src=""></iframe>
+      <!-- Load the bare source-of-truth component preview -->
+      <iframe id="sourceOfTruth" src=""></iframe>
     </div>
     
     <div class="h-divider" id="hDivider"></div>
@@ -214,13 +214,13 @@
 
   <script>
     // Injected by the dev server — see src/devServer.ts.
-    const devConfig = window.__ADAPTER_TESTER__ || { sourceOfTruthName: 'Source of Truth', targetName: 'Target', targetPort: 6012 };
+    const devConfig = window.__ADAPTER_TESTER__ || { ownName: 'Target', sourceOfTruthName: 'Source of Truth', sourceOfTruthPort: 6011 };
+    document.getElementById('ownLabel').textContent = devConfig.ownName;
     document.getElementById('sourceOfTruthLabel').textContent = `${devConfig.sourceOfTruthName} (Source of Truth)`;
-    document.getElementById('targetLabel').textContent = devConfig.targetName;
 
-    const muiIframe = document.getElementById('mui');
-    const mantineIframe = document.getElementById('mantine');
-    const muiStatus = document.getElementById('muiStatus');
+    const ownIframe = document.getElementById('own');
+    const sourceOfTruthIframe = document.getElementById('sourceOfTruth');
+    const sourceOfTruthStatus = document.getElementById('sourceOfTruthStatus');
 
     // Sync initial iframe sources with outer URL if params exist, else fall
     // back to a sensible default story so both panes load something on open.
@@ -228,17 +228,17 @@
     const initialId = outerParams.get('id') || 'ui-kit-slider--default';
     const initialArgs = outerParams.get('args');
 
-    let mSrc = `/?path=/story/${initialId}`;
+    let ownSrc = `/?path=/story/${initialId}`;
     if (initialArgs) {
-      mSrc += `&args=${initialArgs}`;
+      ownSrc += `&args=${initialArgs}`;
     }
-    mantineIframe.src = mSrc;
+    ownIframe.src = ownSrc;
 
-    let uSrc = `http://localhost:${devConfig.targetPort}/iframe.html?id=${initialId}&viewMode=story`;
+    let sotSrc = `http://localhost:${devConfig.sourceOfTruthPort}/iframe.html?id=${initialId}&viewMode=story`;
     if (initialArgs) {
-      uSrc += `&args=${initialArgs}`;
+      sotSrc += `&args=${initialArgs}`;
     }
-    muiIframe.src = uSrc;
+    sourceOfTruthIframe.src = sotSrc;
 
     // Resizers
     const vDivider = document.getElementById('vDivider');
@@ -263,8 +263,8 @@
     vDivider.addEventListener('mousedown', (e) => {
       isVResizing = true;
       document.body.style.cursor = 'col-resize';
-      mantineIframe.style.pointerEvents = 'none';
-      muiIframe.style.pointerEvents = 'none';
+      ownIframe.style.pointerEvents = 'none';
+      sourceOfTruthIframe.style.pointerEvents = 'none';
     });
 
     document.addEventListener('mousemove', (e) => {
@@ -288,8 +288,8 @@
         isVResizing = false;
         isHResizing = false;
         document.body.style.cursor = 'default';
-        mantineIframe.style.pointerEvents = 'auto';
-        muiIframe.style.pointerEvents = 'auto';
+        ownIframe.style.pointerEvents = 'auto';
+        sourceOfTruthIframe.style.pointerEvents = 'auto';
       }
     });
 
@@ -298,8 +298,8 @@
     hDivider.addEventListener('mousedown', (e) => {
       isHResizing = true;
       document.body.style.cursor = 'row-resize';
-      mantineIframe.style.pointerEvents = 'none';
-      muiIframe.style.pointerEvents = 'none';
+      ownIframe.style.pointerEvents = 'none';
+      sourceOfTruthIframe.style.pointerEvents = 'none';
     });
 
     // Auto-save notes logic
@@ -406,7 +406,7 @@
     let lastUrl = '';
     setInterval(() => {
       try {
-        const currentUrl = mantineIframe.contentWindow.location.href;
+        const currentUrl = ownIframe.contentWindow.location.href;
         
         if (currentUrl && currentUrl !== lastUrl && currentUrl !== 'about:blank') {
           lastUrl = currentUrl;
@@ -440,19 +440,19 @@
               window.history.replaceState({}, '', outerUrl.pathname + outerUrl.search);
             }
             
-            let muiUrl = `http://localhost:${devConfig.targetPort}/iframe.html?id=${id}&viewMode=story`;
+            let sotUrl = `http://localhost:${devConfig.sourceOfTruthPort}/iframe.html?id=${id}&viewMode=story`;
             if (args) {
-              muiUrl += `&args=${args}`;
+              sotUrl += `&args=${args}`;
             }
-            
-            if (muiIframe.src !== muiUrl) {
-              muiStatus.textContent = 'Updating...';
-              muiStatus.classList.remove('connected');
-              muiIframe.src = muiUrl;
-              
+
+            if (sourceOfTruthIframe.src !== sotUrl) {
+              sourceOfTruthStatus.textContent = 'Updating...';
+              sourceOfTruthStatus.classList.remove('connected');
+              sourceOfTruthIframe.src = sotUrl;
+
               setTimeout(() => {
-                muiStatus.textContent = 'Synced';
-                muiStatus.classList.add('connected');
+                sourceOfTruthStatus.textContent = 'Synced';
+                sourceOfTruthStatus.classList.add('connected');
               }, 500);
             }
           }

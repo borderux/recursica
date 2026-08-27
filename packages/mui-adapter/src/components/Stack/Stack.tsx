@@ -1,3 +1,10 @@
+/**
+ * Stack layout wrapper.
+ *
+ * MUI has a native `Stack`, so this simply passes through its own props (`direction`,
+ * `spacing`, `alignItems`, `justifyContent`, etc.) with no Recursica renaming — only
+ * `spacing` gains `rec-*` token support via `WithRecursicaSpacing`.
+ */
 import { forwardRef } from "react";
 import {
   Stack as MUIStack,
@@ -10,29 +17,23 @@ import {
   type WithRecursicaSpacing,
 } from "../../utils/filterStylingProps";
 
-import { type RecursicaStackProps } from "@recursica/adapter-common";
-
-export type StackProps = WithRecursicaSpacing<
-  OmitSx<Omit<MUIStackProps, "spacing"> & RecursicaStackProps>
->;
+export type StackProps = WithRecursicaSpacing<OmitSx<MUIStackProps>>;
 
 export const Stack = forwardRef<HTMLDivElement, StackProps>(function Stack(
-  { children, gap = "rec-default", align, justify, ...rest },
+  { children, spacing = "rec-default", ...rest },
   ref,
 ) {
   const safeProps = filterSxProp(rest as Record<string, unknown>);
-  const resolvedGap =
-    typeof gap === "string" && gap in SPACING_MAP
-      ? SPACING_MAP[gap as keyof typeof SPACING_MAP]
-      : gap;
+  const resolvedSpacing =
+    typeof spacing === "string" && spacing in SPACING_MAP
+      ? SPACING_MAP[spacing as keyof typeof SPACING_MAP]
+      : spacing;
 
   return (
     <MUIStack
       ref={ref}
-      {...safeProps}
-      spacing={resolvedGap}
-      alignItems={align}
-      justifyContent={justify}
+      {...(safeProps as unknown as MUIStackProps)}
+      spacing={resolvedSpacing}
     >
       {children}
     </MUIStack>
