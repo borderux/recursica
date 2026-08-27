@@ -1,5 +1,11 @@
 # @recursica/adapter-tester
 
+## 2.0.2
+
+### Patch Changes
+
+- 662c591: Dev Mode: current adapter now renders in the left pane (with Storybook's nav sidebar, driving the sync) and Mantine (source of truth) renders as the bare preview on the right.
+
 ## 2.0.1
 
 ### Patch Changes
