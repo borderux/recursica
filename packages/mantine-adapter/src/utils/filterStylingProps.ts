@@ -100,17 +100,34 @@ export const SPACING_MAP: Record<string, string> = {
   "rec-2xl": "var(--recursica_brand_dimensions_general_2xl)",
 };
 
+/**
+ * Resolves `rec-*` spacing tokens to their CSS-variable equivalents.
+ *
+ * Recurses one level into per-breakpoint responsive objects (e.g. `{ base: "rec-sm", xl: "rec-lg" }`)
+ * so responsive spacing props are mapped just like their scalar counterparts. Breakpoint keys are
+ * Mantine-native (`base`/`xs`/`sm`/`md`/`lg`/`xl`) and pass through untouched. Non-token and
+ * non-object values are returned as-is.
+ */
+export function resolveRecValue(value: unknown): unknown {
+  if (typeof value === "string" && value.startsWith("rec-")) {
+    return value in SPACING_MAP ? SPACING_MAP[value] : value;
+  }
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([bp, v]) => [
+        bp,
+        resolveRecValue(v),
+      ]),
+    );
+  }
+  return value;
+}
+
 export function mapLayoutProps<T extends Record<string, unknown>>(props: T): T {
   const mapped = { ...props };
   for (const [key, value] of Object.entries(mapped)) {
-    if (
-      typeof value === "string" &&
-      value.startsWith("rec-") &&
-      LAYOUT_PROPS.has(key)
-    ) {
-      if (value in SPACING_MAP) {
-        (mapped as Record<string, unknown>)[key] = SPACING_MAP[value];
-      }
+    if (LAYOUT_PROPS.has(key)) {
+      (mapped as Record<string, unknown>)[key] = resolveRecValue(value);
     }
   }
   return mapped;
@@ -132,16 +149,10 @@ export function filterStylingProps<T extends Record<string, unknown>>(
     }
   }
 
-  // Intercept Recursica spacing tokens for valid layout properties
+  // Intercept Recursica spacing tokens for valid layout properties (incl. responsive objects)
   for (const [key, value] of Object.entries(sanitized)) {
-    if (
-      typeof value === "string" &&
-      value.startsWith("rec-") &&
-      LAYOUT_PROPS.has(key)
-    ) {
-      if (value in SPACING_MAP) {
-        (sanitized as Record<string, unknown>)[key] = SPACING_MAP[value];
-      }
+    if (LAYOUT_PROPS.has(key)) {
+      (sanitized as Record<string, unknown>)[key] = resolveRecValue(value);
     }
   }
 

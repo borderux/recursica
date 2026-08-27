@@ -1,6 +1,8 @@
 import React from "react";
+import { RecursicaBreakpoint } from "../../types";
 
-type RecursicaGridBreakpoint = "base" | "xs" | "sm" | "md" | "lg" | "xl";
+/** @deprecated Use the shared {@link RecursicaBreakpoint} instead. */
+type RecursicaGridBreakpoint = RecursicaBreakpoint;
 
 /**
  * Props for the Recursica Grid.Col layout component.

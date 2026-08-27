@@ -46,3 +46,24 @@ All Recursica components in the `@recursica/mantine-adapter` package adhere stri
 
 The `Flex` component is a generic unopinionated flex layout wrapper mapped directly to Mantine's `Flex`.
 All spacing props (`gap`, `align`, `justify`, `direction`, `wrap`) pass through as normal, with `rec-` dimension tokens mapped transparently to standard gap values.
+
+---
+
+## 5. Responsive Layout Props
+
+Every layout prop (`direction`, `align`, `justify`, `wrap`, `gap`, `rowGap`, `columnGap`, and the Mantine dimension props like `w`/`h`/`maw`) accepts either a single value or a per-breakpoint object. Breakpoint keys are `base` (smallest / default), `xs`, `sm`, `md`, `lg`, `xl`.
+
+```tsx
+<Flex
+  direction={{ base: "column", xl: "row" }}
+  gap={{ base: "rec-sm", xl: "rec-xl" }}
+  align={{ base: "stretch", xl: "center" }}
+>
+  <Text>Item 1</Text>
+  <Text>Item 2</Text>
+</Flex>
+```
+
+`rec-` dimension tokens are mapped transparently inside responsive objects too, so `gap={{ base: "rec-sm", xl: "rec-xl" }}` resolves each breakpoint to the corresponding gap value.
+
+The breakpoint values themselves come from your Mantine theme (`theme.breakpoints`), so overriding them in your `MantineProvider` applies here automatically. Custom breakpoint _names_ added via Mantine's `MantineThemeSizesOverride` module augmentation are accepted as keys as well (e.g. `direction={{ base: "column", xxl: "row" }}`), mirroring Mantine's own responsive props.

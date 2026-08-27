@@ -126,3 +126,27 @@ export const StaticGapLargeRow: Story = {
     </Flex>
   ),
 };
+
+export const Responsive: Story = {
+  args: {
+    direction: { base: "column", md: "row" },
+    gap: { base: "rec-sm", md: "rec-xl" },
+    align: { base: "stretch", md: "center" },
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Responsive props: `direction={{ base: 'column', md: 'row' }}`, `gap={{ base: 'rec-sm', md: 'rec-xl' }}`, `align={{ base: 'stretch', md: 'center' }}`.",
+      },
+    },
+  },
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ withLayer, layer, ...args }: any) => (
+    <Flex {...args}>
+      <Button variant="solid">Block A</Button>
+      <Button variant="outline">Block B</Button>
+      <Button variant="solid">Block C</Button>
+    </Flex>
+  ),
+};

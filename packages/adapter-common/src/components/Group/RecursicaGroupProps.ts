@@ -8,11 +8,11 @@ export interface RecursicaGroupProps {
   /** Children elements to align horizontally */
   children?: React.ReactNode;
   /** Gap spacing */
-  gap?: string | RecursicaSpacing;
+  gap?: string | number | RecursicaSpacing;
   /** Row gap spacing */
-  rowGap?: string | RecursicaSpacing;
+  rowGap?: string | number | RecursicaSpacing;
   /** Column gap spacing */
-  columnGap?: string | RecursicaSpacing;
+  columnGap?: string | number | RecursicaSpacing;
   /** Align items justify properties */
   justify?: React.CSSProperties["justifyContent"];
   /** Align items vertical alignment */

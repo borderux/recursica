@@ -113,6 +113,37 @@ export const ResponsiveSpans: Story = {
   ),
 };
 
+export const ResponsiveGutter: Story = {
+  args: {
+    gap: { base: "rec-sm", md: "rec-xl" },
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "The `gap` (gutter) accepts a per-breakpoint object: `gap={{ base: 'rec-sm', md: 'rec-xl' }}`. `rec-*` tokens are resolved inside the responsive object. Resize the preview to see the gutter grow at the `md` breakpoint.",
+      },
+    },
+  },
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ withLayer, layer, ...args }: any) => (
+    <Grid {...args}>
+      <Grid.Col span={6}>
+        <Swatch>span 6</Swatch>
+      </Grid.Col>
+      <Grid.Col span={6}>
+        <Swatch>span 6</Swatch>
+      </Grid.Col>
+      <Grid.Col span={6}>
+        <Swatch>span 6</Swatch>
+      </Grid.Col>
+      <Grid.Col span={6}>
+        <Swatch>span 6</Swatch>
+      </Grid.Col>
+    </Grid>
+  ),
+};
+
 export const Offset: Story = {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
   render: ({ withLayer, layer, ...args }: any) => (

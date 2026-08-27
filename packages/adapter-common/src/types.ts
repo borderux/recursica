@@ -18,6 +18,37 @@ export type RecursicaSpacing =
 export type RecursicaSize = "small" | "default" | "large";
 
 /**
+ * Breakpoint keys shared by every responsive Recursica prop.
+ *
+ * `base` is the smallest/default breakpoint (Mantine's native default key). Adapters that use
+ * a UI library without a `base` breakpoint (e.g. MUI) map `base` onto their smallest breakpoint
+ * (`xs`) at the boundary, so the same responsive object works across every adapter.
+ */
+export type RecursicaBreakpoint = "base" | "xs" | "sm" | "md" | "lg" | "xl";
+
+/**
+ * A scalar value or a per-breakpoint responsive object.
+ *
+ * Structurally mirrors Mantine's `StyleProp<T>` and MUI's `ResponsiveStyleValue<T>`, so a value
+ * typed as `Responsive<T>` intersects cleanly with either library's own responsive prop type
+ * instead of collapsing to the bare scalar. Framework-agnostic on purpose — `adapter-common`
+ * must never import a UI framework.
+ *
+ * The key includes `(string & {})` so consumers that add custom breakpoint names (e.g. Mantine's
+ * `MantineThemeSizesOverride` module augmentation) can use them here too, mirroring Mantine's own
+ * `StyleProp` key (`MantineBreakpoint | (string & {})`). The `RecursicaBreakpoint` literals are kept
+ * for editor autocomplete; the `(string & {})` half is what permits augmented breakpoint keys.
+ *
+ * @example
+ * ```tsx
+ * <Flex direction={{ base: "column", xl: "row" }} />
+ * ```
+ */
+export type Responsive<T> =
+  | T
+  | Partial<Record<RecursicaBreakpoint | (string & {}), T>>;
+
+/**
  * Enforces accessibility by strictly requiring at least one form of labeling:
  * either a visual `label`, an `aria-label`, or an `aria-labelledby`.
  */
@@ -107,22 +138,25 @@ export type BlockedStylingKeys =
 export type ForbiddenStyles = { [K in BlockedStylingKeys]?: never };
 
 /**
- * Utility type to override margin and gap properties with RecursicaSpacing.
+ * Utility type to override margin properties with RecursicaSpacing.
+ *
+ * Margins map to Mantine's Box style props, which are responsive on every component, so they are
+ * wrapped in {@link Responsive}. `gap`/`rowGap`/`columnGap` are intentionally NOT overridden here:
+ * whether a gap is responsive depends on the specific component (Flex and Grid type it as a
+ * responsive `StyleProp`; Stack and Group type it as a single value), so each component's own prop
+ * interface decides, and this wrapper leaves gap to the underlying Mantine × Recursica intersection.
  */
 export type WithRecursicaSpacing<T> = Omit<
   T,
-  "m" | "mx" | "my" | "mt" | "mb" | "ml" | "mr" | "gap" | "rowGap" | "columnGap"
+  "m" | "mx" | "my" | "mt" | "mb" | "ml" | "mr"
 > & {
-  m?: string | number | RecursicaSpacing;
-  mx?: string | number | RecursicaSpacing;
-  my?: string | number | RecursicaSpacing;
-  mt?: string | number | RecursicaSpacing;
-  mb?: string | number | RecursicaSpacing;
-  ml?: string | number | RecursicaSpacing;
-  mr?: string | number | RecursicaSpacing;
-  gap?: string | number | RecursicaSpacing;
-  rowGap?: string | number | RecursicaSpacing;
-  columnGap?: string | number | RecursicaSpacing;
+  m?: Responsive<string | number | RecursicaSpacing>;
+  mx?: Responsive<string | number | RecursicaSpacing>;
+  my?: Responsive<string | number | RecursicaSpacing>;
+  mt?: Responsive<string | number | RecursicaSpacing>;
+  mb?: Responsive<string | number | RecursicaSpacing>;
+  ml?: Responsive<string | number | RecursicaSpacing>;
+  mr?: Responsive<string | number | RecursicaSpacing>;
 };
 
 /**
