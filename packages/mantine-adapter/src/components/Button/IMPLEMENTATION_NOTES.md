@@ -38,6 +38,8 @@ Mantine's `.mantine-Button-label` flex centering breaks primitive truncation log
 - The structural children wrap into `<span className={styles.labelText}>`.
 - **`.labelText`** binds `overflow: hidden; text-overflow: ellipsis; white-space: nowrap;` creating flawless string cutoffs strictly at exact UI constraints.
 
+**Bug found (2026-08-27):** none of the above clips the button itself against a _constraining ancestor_ (e.g. `<div style={{ maxWidth: 250 }}>` — see the `TruncatedLabel` story). `.root` uses `width: fit-content` so it hugs its own content when unconstrained, but `fit-content` on this box doesn't reliably resize down against a narrower parent's resolved width — verified via Playwright: the button rendered at its full 534px `max-content` width and visually overflowed the 250px wrapper, even though the wrapper itself measured 250px. `max-width: 100%` on `.root` (percentage of the actual containing block) fixes it — it doesn't fight `width: fit-content` for the normal unconstrained case, it only kicks in when the parent is narrower than the content's intrinsic width.
+
 ---
 
 ## Disabled state: brand theme opacity (implicit)
