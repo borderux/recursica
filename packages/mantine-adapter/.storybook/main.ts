@@ -13,6 +13,7 @@ const config = createMainConfig({
   recursicaCSSPath: require.resolve(
     "@recursica/official-release/recursica_variables_scoped.css",
   ),
+  postCSSStrictMode: process.env.NODE_ENV === "production",
 });
 
 config.typescript = {

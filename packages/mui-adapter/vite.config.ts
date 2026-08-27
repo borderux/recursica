@@ -33,6 +33,7 @@ export default defineConfig(({ mode }) => {
             cssPath: require.resolve(
               "@recursica/official-release/recursica_variables_scoped.css",
             ),
+            strict: isLibrary,
           }),
         ],
       },

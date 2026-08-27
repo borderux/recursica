@@ -13,6 +13,7 @@ const config = createMainConfig({
   enableCORS: true,
   enablePostcssVars: true,
   recursicaCSSPath: join(currentDirname, "../recursica_variables_scoped.css"),
+  postCSSStrictMode: process.env.NODE_ENV === "production",
 });
 
 config.typescript = {
