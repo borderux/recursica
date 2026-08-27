@@ -1,5 +1,11 @@
 # @recursica/token-analyzer
 
+## 1.5.0
+
+### Minor Changes
+
+- 9d06c41: Published publicly
+
 ## 1.4.0
 
 ### Minor Changes
