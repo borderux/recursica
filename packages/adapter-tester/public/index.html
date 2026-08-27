@@ -165,25 +165,25 @@
 <body>
   <div class="pane" id="leftPane">
     <div class="header">
-      Mantine Adapter (Source of Truth)
+      <span id="sourceOfTruthLabel">Source of Truth</span>
       <span class="status connected" id="mantineStatus">Connected & Syncing</span>
     </div>
-    <!-- Load Mantine via the SAME ORIGIN proxy -->
+    <!-- Load the source of truth via the SAME ORIGIN proxy -->
     <iframe id="mantine" src="/?path=/story/ui-kit-slider--default"></iframe>
   </div>
-  
+
   <div class="divider" id="vDivider"></div>
-  
+
   <div class="pane" id="rightPane">
     <div class="right-top" id="rightTop">
       <div class="header">
-        MUI Adapter (Syncing)
+        <span id="targetLabel">Target</span>
         <span class="status connected" id="muiStatus">Ready</span>
       </div>
-      <!-- Spacer to align the view with Mantine's Storybook header (40px) -->
+      <!-- Spacer to align the view with the source of truth's Storybook header (40px) -->
       <div style="height: 40px; flex: 0 0 40px; background-color: #fff; border-bottom: 1px solid #e6e6e6; box-sizing: border-box;"></div>
-      <!-- Load the bare MUI component preview -->
-      <iframe id="mui" src="http://localhost:6012/iframe.html?id=ui-kit-slider--default&viewMode=story"></iframe>
+      <!-- Load the bare target component preview -->
+      <iframe id="mui" src=""></iframe>
     </div>
     
     <div class="h-divider" id="hDivider"></div>
@@ -213,28 +213,33 @@
   </div>
 
   <script>
+    // Injected by the dev server — see src/devServer.ts.
+    const devConfig = window.__ADAPTER_TESTER__ || { sourceOfTruthName: 'Source of Truth', targetName: 'Target', targetPort: 6012 };
+    document.getElementById('sourceOfTruthLabel').textContent = `${devConfig.sourceOfTruthName} (Source of Truth)`;
+    document.getElementById('targetLabel').textContent = devConfig.targetName;
+
     const muiIframe = document.getElementById('mui');
     const mantineIframe = document.getElementById('mantine');
     const muiStatus = document.getElementById('muiStatus');
 
-    // Sync initial iframe sources with outer URL if params exist
+    // Sync initial iframe sources with outer URL if params exist, else fall
+    // back to a sensible default story so both panes load something on open.
     const outerParams = new URLSearchParams(window.location.search);
-    const initialId = outerParams.get('id');
+    const initialId = outerParams.get('id') || 'ui-kit-slider--default';
     const initialArgs = outerParams.get('args');
-    if (initialId) {
-      let mSrc = `/?path=/story/${initialId}`;
-      if (initialArgs) {
-        mSrc += `&args=${initialArgs}`;
-      }
-      mantineIframe.src = mSrc;
-      
-      let uSrc = `http://localhost:6012/iframe.html?id=${initialId}&viewMode=story`;
-      if (initialArgs) {
-        uSrc += `&args=${initialArgs}`;
-      }
-      muiIframe.src = uSrc;
+
+    let mSrc = `/?path=/story/${initialId}`;
+    if (initialArgs) {
+      mSrc += `&args=${initialArgs}`;
     }
-    
+    mantineIframe.src = mSrc;
+
+    let uSrc = `http://localhost:${devConfig.targetPort}/iframe.html?id=${initialId}&viewMode=story`;
+    if (initialArgs) {
+      uSrc += `&args=${initialArgs}`;
+    }
+    muiIframe.src = uSrc;
+
     // Resizers
     const vDivider = document.getElementById('vDivider');
     const leftPane = document.getElementById('leftPane');
@@ -435,7 +440,7 @@
               window.history.replaceState({}, '', outerUrl.pathname + outerUrl.search);
             }
             
-            let muiUrl = `http://localhost:6012/iframe.html?id=${id}&viewMode=story`;
+            let muiUrl = `http://localhost:${devConfig.targetPort}/iframe.html?id=${id}&viewMode=story`;
             if (args) {
               muiUrl += `&args=${args}`;
             }

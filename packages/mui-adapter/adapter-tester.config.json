@@ -1,0 +1,19 @@
+{
+  "$schema": "./node_modules/@recursica/adapter-tester/src/adapter-tester.schema.json",
+  "diffThresholdPixels": 3500,
+  "relaxedThresholdStoryIds": [
+    "ui-kit-checkboxgroup",
+    "ui-kit-radiogroup",
+    "ui-kit-switchgroup",
+    "ui-kit-checkbox",
+    "ui-kit-radio",
+    "ui-kit-switch",
+    "ui-kit-segmentedcontrol",
+    "ui-kit-numberinput",
+    "ui-kit-slider",
+    "ui-kit-textfield",
+    "ui-kit-timeline",
+    "ui-kit-title"
+  ],
+  "relaxedThresholdPixels": 15000
+}

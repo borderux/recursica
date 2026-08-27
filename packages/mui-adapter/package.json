@@ -59,7 +59,9 @@
     "lint": "eslint .",
     "storybook": "storybook dev -p 6012",
     "analyze-tokens": "analyze-tokens --css @recursica/official-release/recursica_variables_scoped.css --dir src/components --output token-analysis.json",
-    "prebuild": "npm run analyze-tokens"
+    "prebuild": "npm run analyze-tokens",
+    "adapter-tester": "adapter-tester --serve",
+    "adapter-tester:automated": "adapter-tester"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^5.1.1",
@@ -67,6 +69,8 @@
     "@mui/lab": "^7.0.1-beta.25",
     "@mui/x-date-pickers": "^9.11.0",
     "@mui/x-tree-view": "^9.11.0",
+    "@playwright/test": "^1.53.0",
+    "@recursica/adapter-tester": "*",
     "@recursica/recursica-postcss-vars": "*",
     "@recursica/storybook-template": "*",
     "@recursica/token-analyzer": "*",
