@@ -1,4 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
+import { getSourceOfTruth } from "./src/config";
+import config from "./adapter-tester.config";
+
+const sourceOfTruth = getSourceOfTruth(config);
+const [target] = config.targets.filter((t) => !t.sourceOfTruth);
 
 export default defineConfig({
   testDir: "./tests",
@@ -19,14 +24,14 @@ export default defineConfig({
   webServer: [
     {
       command: "npm run storybook",
-      port: 6011,
+      port: Number(new URL(sourceOfTruth.url).port),
       reuseExistingServer: !process.env.CI,
       cwd: "../mantine-adapter",
       timeout: 120 * 1000,
     },
     {
       command: "npm run storybook",
-      port: 6012,
+      port: Number(new URL(target.url).port),
       reuseExistingServer: !process.env.CI,
       cwd: "../mui-adapter",
       timeout: 120 * 1000,
