@@ -1,5 +1,19 @@
 # @recursica/mantine-adapter
 
+## 0.50.4
+
+### Patch Changes
+
+- d0e6275: Fixed stories to remove layer
+- 662c591: Layout components (Flex, Stack, Group, Grid) no longer share a formal Recursica prop contract from `adapter-common` — removed `RecursicaFlexProps`/`RecursicaStackProps`/`RecursicaGroupProps`/`RecursicaGridProps`/`RecursicaGridColProps`. Each adapter's layout components now simply pass through the underlying kit's own props, plus `rec-*` spacing token support.
+
+  - mantine-adapter: Flex/Stack/Group unchanged at the API level (Mantine's own props already matched). **Grid's `gap` prop reverts to Mantine's native `gutter`**; `Grid.Col`'s responsive breakpoint objects use Mantine's own `xs` (not the invented `base`) as the smallest key.
+  - mui-adapter: Flex/Group keep their Mantine-shaped props (MUI has no native equivalent). **Stack now passes through MUI's own `spacing`/`alignItems`/`justifyContent` directly** (fixes a bug where passing native `alignItems`/`justifyContent` was silently clobbered). **Grid is rebuilt on MUI's own vocabulary** (`spacing`, `size`, `offset`, `order`, `xs`/`sm`/`md`/`lg`/`xl`) instead of mirroring Mantine's `gap`/`span`/`base`; container-level `grow` is dropped in favor of MUI's native per-column `size="grow"`.
+
+- 4fdd1af: Wired vitest into `npm test` (unit tests for utils). Added a Button/kit CSS-isolation DOM test, run separately via `npm run test:dom` (not part of `npm test`/CI). Added empty test scaffolds per component.
+- Updated dependencies [662c591]
+  - @recursica/adapter-common@0.25.1
+
 ## 0.50.3
 
 ### Patch Changes
