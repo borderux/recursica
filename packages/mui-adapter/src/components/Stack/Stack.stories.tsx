@@ -19,12 +19,12 @@ const meta: Meta<StackStoryProps> = {
     },
   },
   args: {
-    gap: "rec-default",
-    align: "stretch",
-    justify: "flex-start",
+    spacing: "rec-default",
+    alignItems: "stretch",
+    justifyContent: "flex-start",
   },
   argTypes: {
-    gap: {
+    spacing: {
       control: "select",
       options: [
         "rec-none",
@@ -40,14 +40,14 @@ const meta: Meta<StackStoryProps> = {
         "lg",
         "xl",
       ],
-      description: "Gap between elements",
+      description: "Space between elements",
     },
-    align: {
+    alignItems: {
       control: "select",
       options: ["flex-start", "center", "flex-end", "stretch"],
       description: "Align-items property",
     },
-    justify: {
+    justifyContent: {
       control: "select",
       options: [
         "flex-start",
@@ -81,7 +81,7 @@ export const Default: Story = {
 
 export const StaticGapSmall: Story = {
   args: {
-    gap: "rec-sm",
+    spacing: "rec-sm",
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
   render: ({ withLayer, layer, ...args }: any) => (
@@ -95,7 +95,7 @@ export const StaticGapSmall: Story = {
 
 export const StaticGapLarge: Story = {
   args: {
-    gap: "rec-xl",
+    spacing: "rec-xl",
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
   render: ({ withLayer, layer, ...args }: any) => (

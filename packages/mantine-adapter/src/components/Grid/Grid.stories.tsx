@@ -19,12 +19,12 @@ const meta: Meta<GridStoryProps> = {
     },
   },
   args: {
-    gap: "rec-default",
+    gutter: "rec-default",
     columns: 12,
     grow: false,
   },
   argTypes: {
-    gap: {
+    gutter: {
       control: "select",
       options: [
         "rec-none",
@@ -35,7 +35,7 @@ const meta: Meta<GridStoryProps> = {
         "rec-xl",
         "rec-2xl",
       ],
-      description: "Gap between columns",
+      description: "Gutter between columns",
     },
     columns: {
       control: "number",
@@ -97,17 +97,17 @@ export const ResponsiveSpans: Story = {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
   render: ({ withLayer, layer, ...args }: any) => (
     <Grid {...args}>
-      <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
-        <Swatch>base 12 / sm 6 / md 3</Swatch>
+      <Grid.Col span={{ xs: 12, sm: 6, md: 3 }}>
+        <Swatch>xs 12 / sm 6 / md 3</Swatch>
       </Grid.Col>
-      <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
-        <Swatch>base 12 / sm 6 / md 3</Swatch>
+      <Grid.Col span={{ xs: 12, sm: 6, md: 3 }}>
+        <Swatch>xs 12 / sm 6 / md 3</Swatch>
       </Grid.Col>
-      <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
-        <Swatch>base 12 / sm 6 / md 3</Swatch>
+      <Grid.Col span={{ xs: 12, sm: 6, md: 3 }}>
+        <Swatch>xs 12 / sm 6 / md 3</Swatch>
       </Grid.Col>
-      <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
-        <Swatch>base 12 / sm 6 / md 3</Swatch>
+      <Grid.Col span={{ xs: 12, sm: 6, md: 3 }}>
+        <Swatch>xs 12 / sm 6 / md 3</Swatch>
       </Grid.Col>
     </Grid>
   ),

@@ -84,6 +84,7 @@ const LAYOUT_PROPS = new Set([
   "gap",
   "rowGap",
   "columnGap",
+  "gutter",
   "top",
   "left",
   "bottom",

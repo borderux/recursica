@@ -20,9 +20,9 @@ import { Grid } from "@recursica/mantine-adapter";
 
 export default function Demo() {
   return (
-    <Grid gap="rec-default">
+    <Grid gutter="rec-default">
       <Grid.Col span={6}>Half width</Grid.Col>
-      <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>Responsive width</Grid.Col>
+      <Grid.Col span={{ xs: 12, sm: 6, md: 3 }}>Responsive width</Grid.Col>
     </Grid>
   );
 }
@@ -44,4 +44,4 @@ All Recursica components in the `@recursica/mantine-adapter` package adhere stri
 
 ## 4. Key Integration Features & Constraints
 
-The `Grid` component maps directly to Mantine's `Grid`/`Grid.Col`. The one deviation from Mantine's native API: the prop for spacing between columns is named `gap` (not Mantine's `gutter`), for consistency with `Flex`, `Stack`, and `Group`. Everything else — `columns`, `grow`, `justify`, `align` on `Grid`, and `span`, `offset`, `order`, `visibleFrom`, `hiddenFrom` on `Grid.Col` — matches Mantine's own naming and accepts the same shapes, including per-breakpoint objects (`{ base, xs, sm, md, lg, xl }`).
+The `Grid` component maps directly to Mantine's `Grid`/`Grid.Col` with no Recursica-specific prop renaming — `gutter`, `columns`, `grow`, `justify`, `align` on `Grid`, and `span`, `offset`, `order`, `visibleFrom`, `hiddenFrom` on `Grid.Col` all match Mantine's own naming and accept the same shapes, including per-breakpoint objects (`{ xs, sm, md, lg, xl }`). `gutter` additionally accepts `rec-*` spacing tokens.

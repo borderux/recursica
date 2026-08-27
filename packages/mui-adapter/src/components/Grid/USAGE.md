@@ -20,9 +20,9 @@ import { Grid } from "@recursica/mui-adapter";
 
 export default function Demo() {
   return (
-    <Grid gap="rec-default">
-      <Grid.Col span={6}>Half width</Grid.Col>
-      <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>Responsive width</Grid.Col>
+    <Grid spacing="rec-default">
+      <Grid.Col size={6}>Half width</Grid.Col>
+      <Grid.Col size={{ xs: 12, sm: 6, md: 3 }}>Responsive width</Grid.Col>
     </Grid>
   );
 }
@@ -44,8 +44,10 @@ All Recursica components in the `@recursica/mui-adapter` package adhere strictly
 
 ## 4. Key Integration Features & Constraints
 
-- `gap` controls the spacing between grid items.
-- `span` accepts a column count, `"auto"`, `"content"`, or a responsive object (`{ base, sm, md, ... }`).
+This Grid uses MUI's own prop vocabulary directly (see [IMPLEMENTATION_NOTES.md](./IMPLEMENTATION_NOTES.md)) — it is not name-for-name identical to the mantine-adapter's Grid.
+
+- `spacing` controls the space between grid items (accepts `rec-*` tokens).
+- `size` accepts a column count, `"auto"`, `"grow"`, or a responsive object (`{ xs, sm, md, ... }`).
 - `offset` shifts a column by a number of columns.
-- `order` accepts a fixed number to control a column's visual order. A responsive object (`{ base, sm, md, ... }`) is **not** fully supported yet — only the smallest specified breakpoint's value is applied.
+- `order` accepts a fixed number to control a column's visual order (single value only, no responsive object).
 - `visibleFrom`/`hiddenFrom` show or hide a column at the standard breakpoints (600/900/1200/1536px).

@@ -10,18 +10,18 @@ import {
 } from "../../utils/filterStylingProps";
 import styles from "./Flex.module.css";
 
-import { type RecursicaFlexProps } from "@recursica/adapter-common";
-
 /**
  * Flex layout wrapper.
  *
  * Note: Unlike complex UI components, primitive layout components (Flex, Stack, Group, Container)
  * DO NOT use the `RecursicaOverStyled` gatekeeper. Developers must be able to freely pass
  * width, height, padding, margins, and flexbox alignment props to construct structural layouts.
+ *
+ * No formal Recursica prop contract here: this simply passes through Mantine's own
+ * `FlexProps` (gap/rowGap/columnGap/direction/align/justify/wrap are all native to Mantine),
+ * layered only with rec- spacing token support via `WithRecursicaSpacing`.
  */
-export type FlexProps = WithRecursicaSpacing<
-  MantineFlexProps & RecursicaFlexProps
->;
+export type FlexProps = WithRecursicaSpacing<MantineFlexProps>;
 
 const _Flex = forwardRef<HTMLDivElement, FlexProps>(function Flex(
   { children, gap = "rec-default", rowGap, columnGap, ...rest },

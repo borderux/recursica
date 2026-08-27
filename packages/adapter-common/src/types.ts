@@ -107,11 +107,26 @@ export type BlockedStylingKeys =
 export type ForbiddenStyles = { [K in BlockedStylingKeys]?: never };
 
 /**
- * Utility type to override margin and gap properties with RecursicaSpacing.
+ * Utility type to override margin and gap-shaped properties with RecursicaSpacing.
+ *
+ * Covers every spacing prop name used natively across the underlying kits (Mantine's
+ * `gap`/`gutter`, MUI's `spacing`) so each adapter can type its layout components
+ * directly off the kit's own props without redeclaring a shared Recursica shape.
  */
 export type WithRecursicaSpacing<T> = Omit<
   T,
-  "m" | "mx" | "my" | "mt" | "mb" | "ml" | "mr" | "gap" | "rowGap" | "columnGap"
+  | "m"
+  | "mx"
+  | "my"
+  | "mt"
+  | "mb"
+  | "ml"
+  | "mr"
+  | "gap"
+  | "rowGap"
+  | "columnGap"
+  | "gutter"
+  | "spacing"
 > & {
   m?: string | number | RecursicaSpacing;
   mx?: string | number | RecursicaSpacing;
@@ -123,6 +138,8 @@ export type WithRecursicaSpacing<T> = Omit<
   gap?: string | number | RecursicaSpacing;
   rowGap?: string | number | RecursicaSpacing;
   columnGap?: string | number | RecursicaSpacing;
+  gutter?: string | number | RecursicaSpacing;
+  spacing?: string | number | RecursicaSpacing;
 };
 
 /**
