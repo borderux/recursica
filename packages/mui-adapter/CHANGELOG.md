@@ -1,5 +1,12 @@
 # @recursica/mui-adapter
 
+## 0.34.1
+
+### Patch Changes
+
+- f34665a: Modal close button now matches the Button component's styling (radius, padding, color tokens, hover/focus states, icon sizing).
+- f34665a: Modal title now truncates with an ellipsis instead of wrapping when it's too long, and mantine-adapter's Modal width scales with content again instead of being pinned at 440px. Added an open-by-default `LongTitle` story to both adapters.
+
 ## 0.34.0
 
 ### Minor Changes
