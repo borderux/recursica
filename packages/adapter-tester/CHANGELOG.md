@@ -1,5 +1,16 @@
 # @recursica/adapter-tester
 
+## 2.0.0
+
+### Major Changes
+
+- ba94657: Replaced the TS `playwright.config.ts`/`defineAdapterTesterConfig` integration with a single `adapter-tester` CLI reading `adapter-tester.config.json`. Default mode now diffs the current project's own Storybook against a published-Mantine harness with near-zero config; `sourceOfTruth.type: "url"` supports the prior monorepo-only comparison mode.
+
+### Minor Changes
+
+- ba94657: `adapter-tester.config.json` is now validated against a published JSON schema (`dist/adapter-tester.schema.json`) — unknown fields and wrong types fail fast with a specific error. Reference it via `"$schema"` for editor autocomplete.
+- ba94657: Interactive Dev Mode (the synced dual-Storybook comparison UI) is now config-driven and bundled into the CLI via `adapter-tester --serve`, instead of hardcoded to monorepo paths. Installing this package now wires up two npm scripts: `adapter-tester` (Dev Mode) and `adapter-tester:automated` (the headless Playwright suite, replacing `test:visual`).
+
 ## 1.2.0
 
 ### Minor Changes
