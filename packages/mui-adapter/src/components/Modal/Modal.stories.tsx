@@ -19,7 +19,8 @@ export default meta;
 type Story = StoryObj<typeof Modal>;
 
 const DefaultWrapper = (args: ModalProps) => {
-  const [opened, setOpened] = useState(false);
+  // Starts opened so the modal is visible without pressing a button first.
+  const [opened, setOpened] = useState(true);
   return (
     <>
       <Modal {...args} opened={opened} onClose={() => setOpened(false)}>
@@ -43,8 +44,33 @@ export const Default: Story = {
   render: (args) => <DefaultWrapper {...args} />,
 };
 
+const LongTitleWrapper = (args: ModalProps) => {
+  const [opened, setOpened] = useState(true);
+  return (
+    <>
+      <Modal {...args} opened={opened} onClose={() => setOpened(false)}>
+        The title above is longer than the header can display, so it truncates
+        with an ellipsis instead of wrapping onto a second line.
+        <Modal.Footer>
+          <Button onClick={() => setOpened(false)}>Got it</Button>
+        </Modal.Footer>
+      </Modal>
+      <Button onClick={() => setOpened(true)}>Open Modal</Button>
+    </>
+  );
+};
+
+export const LongTitle: Story = {
+  args: {
+    title:
+      "This Modal Title Is Deliberately Long Enough To Exceed The Available Header Width",
+  },
+  render: (args) => <LongTitleWrapper {...args} />,
+};
+
 const ScrollingWrapper = (args: ModalProps) => {
-  const [opened, setOpened] = useState(false);
+  // Starts opened so the modal is visible without pressing a button first.
+  const [opened, setOpened] = useState(true);
   return (
     <>
       <Modal {...args} opened={opened} onClose={() => setOpened(false)}>
