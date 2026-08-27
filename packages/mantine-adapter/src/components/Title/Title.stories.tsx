@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { Title } from "./Title";
-import { Layer } from "@recursica/adapter-common";
 
 const meta: Meta<typeof Title> = {
   title: "UI-Kit/Title",
@@ -33,31 +32,19 @@ export const Default: Story = {
     order: 1,
     children: "Semantic H1 Document Boundary",
   },
-  render: ({ ...args }) => (
-    <Layer layer={0} style={{ padding: "48px" }}>
-      <Title {...args} />
-    </Layer>
-  ),
+  render: ({ ...args }) => <Title {...args} />,
 };
 
 export const StaticVariations: Story = {
   args: {},
   render: () => (
-    <Layer
-      layer={0}
-      style={{
-        padding: "48px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "24px",
-      }}
-    >
+    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
       <Title order={1}>H1 Title</Title>
       <Title order={2}>H2 Title</Title>
       <Title order={3}>H3 Title</Title>
       <Title order={4}>H4 Title</Title>
       <Title order={5}>H5 Title</Title>
       <Title order={6}>H6 Title</Title>
-    </Layer>
+    </div>
   ),
 };
