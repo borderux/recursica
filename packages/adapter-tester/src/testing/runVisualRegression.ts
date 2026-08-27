@@ -78,6 +78,41 @@ async function fetchStories(
 }
 
 /**
+ * Fetches just the set of story ids a target's own Storybook actually has —
+ * used to skip a comparison up front rather than let it burn the full
+ * per-test timeout navigating to a story id the target doesn't implement
+ * yet. A target with a partially-built component set (a fresh adapter with
+ * a handful of real components and many still-stub ones, for example) is
+ * the normal case, not an error, so a failed/empty fetch here degrades to
+ * "assume nothing exists yet" (every story against this target gets
+ * skipped) rather than throwing — unlike `fetchStories` above, where the
+ * source of truth being unreachable really is fatal to the whole run.
+ */
+async function fetchTargetStoryIds(target: AdapterTarget): Promise<Set<string>> {
+  try {
+    const response = await fetch(`${target.url}/index.json`);
+    if (!response.ok) {
+      console.warn(
+        `Could not load Storybook index from target "${target.name}" (${response.status} ${response.statusText}) — every story will be reported as skipped for this target.`,
+      );
+      return new Set();
+    }
+    const data = (await response.json()) as any;
+    const entries = data.entries || {};
+    const ids = Object.values(entries)
+      .filter((entry: any) => entry.type === "story")
+      .map((entry: any) => entry.id as string);
+    return new Set(ids);
+  } catch (error) {
+    console.warn(
+      `Could not load Storybook index from target "${target.name}" — every story will be reported as skipped for this target.`,
+      error,
+    );
+    return new Set();
+  }
+}
+
+/**
  * Defines a Playwright suite that diffs every target in `config.targets`
  * against `config.targets`' single `sourceOfTruth` entry, story by story.
  * Call this with a top-level `await` from a Playwright `*.spec.ts` file — it
@@ -98,12 +133,26 @@ export async function runVisualRegression(
   // describe block below.
   const stories = await fetchStories(sourceOfTruth, excludeTitlePrefixes);
 
+  // One index fetch per target, not per story — a fresh/partially-built adapter is expected to
+  // be missing most of the source of truth's stories, and each miss should be a cheap, fast
+  // skip rather than a full-timeout navigation to a story id that will never resolve.
+  const targetStoryIds = new Map<string, Set<string>>();
   for (const target of targets) {
+    targetStoryIds.set(target.name, await fetchTargetStoryIds(target));
+  }
+
+  for (const target of targets) {
+    const storyIds = targetStoryIds.get(target.name) ?? new Set<string>();
     test.describe(`${sourceOfTruth.name} vs ${target.name} — Dynamic Visual Regression Suite`, () => {
       for (const story of stories) {
         test(`Visual regression for: ${story.title} - ${story.name} (${story.id})`, async ({
           browser,
         }, testInfo) => {
+          test.skip(
+            !storyIds.has(story.id),
+            `${target.name} has no story with id "${story.id}" yet — not yet implemented, not a failure.`,
+          );
+
           const sourcePage = await browser.newPage();
           const targetPage = await browser.newPage();
 
