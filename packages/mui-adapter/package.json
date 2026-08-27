@@ -61,7 +61,9 @@
     "analyze-tokens": "analyze-tokens --css @recursica/official-release/recursica_variables_scoped.css --dir src/components --output token-analysis.json",
     "prebuild": "npm run analyze-tokens",
     "adapter-tester": "adapter-tester --serve",
-    "adapter-tester:automated": "adapter-tester"
+    "adapter-tester:automated": "adapter-tester",
+    "test": "vitest run --project unit",
+    "test:dom": "vitest run --project dom"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^5.1.1",

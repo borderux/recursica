@@ -52,3 +52,6 @@ test-build.mjs
 scratch/
 
 token-analysis.json
+
+# Vitest browser-mode failure screenshots (@vitest/browser screenshotFailures)
+__screenshots__/
