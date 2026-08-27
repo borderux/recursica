@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { Text } from "./Text";
-import { Layer } from "@recursica/adapter-common";
 
 const meta: Meta<typeof Text> = {
   title: "UI-Kit/Text",
@@ -46,25 +45,13 @@ export const Default: Story = {
     children:
       "This is standard body typography controlled by the central UI-kit boundaries exclusively.",
   },
-  render: ({ ...args }) => (
-    <Layer layer={0} style={{ padding: "48px" }}>
-      <Text {...args} />
-    </Layer>
-  ),
+  render: ({ ...args }) => <Text {...args} />,
 };
 
 export const StaticVariations: Story = {
   args: {},
   render: () => (
-    <Layer
-      layer={0}
-      style={{
-        padding: "48px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "16px",
-      }}
-    >
+    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       <Text variant="body">
         Body (Base paragraph and generic information flow)
       </Text>
@@ -83,6 +70,6 @@ export const StaticVariations: Story = {
       <Text variant="subtitle-small">
         Subtitle Small (Section anchors deep in hierarchy)
       </Text>
-    </Layer>
+    </div>
   ),
 };
