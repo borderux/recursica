@@ -1,26 +1,70 @@
 {
   "name": "@recursica/adapter-tester",
+  "description": "Visual regression tester between Recursica adapters — usable inside the Recursica monorepo, or installed standalone as a devDependency in any adapter repo to diff its Storybook against Mantine as the source of truth.",
+  "private": false,
+  "homepage": "https://github.com/borderux/recursica/tree/main/packages/adapter-tester",
+  "author": "hi@borderux.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/borderux/recursica/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/borderux/recursica.git",
+    "directory": "packages/adapter-tester"
+  },
   "version": "1.1.0",
-  "private": true,
-  "description": "Visual regression tester between recursica adapters",
-  "main": "index.js",
   "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "import": "./dist/testing.js",
+      "require": "./dist/testing.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "recursica",
+    "storybook",
+    "visual-regression",
+    "testing",
+    "playwright"
+  ],
   "scripts": {
+    "build": "vite build --mode library",
     "test:visual": "playwright test",
     "dev": "ts-node src/dev.ts"
   },
+  "dependencies": {
+    "pixelmatch": "^7.2.0",
+    "pngjs": "^7.0.0"
+  },
+  "peerDependencies": {
+    "@playwright/test": ">=1.40.0"
+  },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
+    "@repo/typescript-config": "*",
     "@types/node": "^25.9.1",
     "@types/pixelmatch": "^5.2.6",
     "@types/pngjs": "^6.0.5",
     "express": "^5.2.1",
     "http-proxy-middleware": "^4.0.0",
-    "pixelmatch": "^7.2.0",
     "playwright": "^1.60.0",
-    "pngjs": "^7.0.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.22.3",
-    "typescript": "^6.0.3"
+    "typescript": "~5.8.3",
+    "vite": "^6.3.5",
+    "vite-plugin-dts": "^4.5.4"
   }
 }
