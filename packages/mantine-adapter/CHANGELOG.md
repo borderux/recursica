@@ -1,5 +1,11 @@
 # @recursica/mantine-adapter
 
+## 0.50.3
+
+### Patch Changes
+
+- df9d189: Fixed Button ignoring a constraining parent width — it now shrinks and truncates the label with an ellipsis instead of overflowing.
+
 ## 0.50.2
 
 ### Patch Changes
