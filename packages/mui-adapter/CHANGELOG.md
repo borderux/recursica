@@ -1,5 +1,11 @@
 # @recursica/mui-adapter
 
+## 0.34.4
+
+### Patch Changes
+
+- d48149c: Chip's selected checkmark now overlays the leading icon instead of sitting to its left, matching MUI's native behavior (mui-adapter already did this; mantine-adapter now matches).
+
 ## 0.34.3
 
 ### Patch Changes
