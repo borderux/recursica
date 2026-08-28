@@ -95,3 +95,16 @@ filename text before ever reaching a real control. Switched to `overflow-x: clip
 establish a scrollport (same visual clipping, still x-axis only per the descender fix above), so
 it's no longer a focus candidate. This affected every chip with long enough content, not just
 read-only ones — see `FileUpload`'s own `IMPLEMENTATION_NOTES.md` for how it surfaced there.
+
+### Selected check icon sat to the left of the leading icon instead of replacing it (Matt Massey, 2026-08-28)
+
+A checked `Chip` with a custom `icon` (leading icon) rendered both: Mantine's own default check
+icon (via its native `iconWrapper`/`checkIcon` slot, always shown whenever `checked` and its own
+`icon` prop — a different, unrelated slot — is left `undefined`) came first in the DOM, immediately
+followed by this adapter's own `.leadingIcon` span, which we always rendered regardless of checked
+state. mui-adapter's `Chip` never had this problem, since its `icon={checked ? checkIcon : icon}`
+was already a straight swap. Fixed mantine-adapter to match: the custom `.leadingIcon` span now
+only renders when `!checked`, so Mantine's native checkmark overlays/replaces it instead of sitting
+to its left. Required destructuring `checked` explicitly (previously left in `...rest` and passed
+through opaquely) so the render condition and the explicit `checked` prop on `<MantineChip>` stay
+in sync.
