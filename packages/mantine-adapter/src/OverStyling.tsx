@@ -3,7 +3,7 @@ import { TypographyStylesProvider } from "@mantine/core";
 import {
   Container,
   Card,
-  Title,
+  Heading,
   Text as RawText,
   Group,
   Stack,
@@ -36,9 +36,9 @@ export const OverStylingInfo = () => {
             my="rec-xl"
           />
 
-          <Title order={3} mb="rec-md">
+          <Heading order={3} mb="rec-md">
             Try It Yourself
-          </Title>
+          </Heading>
 
           <Group mb="rec-xl">
             <Switch

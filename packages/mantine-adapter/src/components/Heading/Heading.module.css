@@ -1,7 +1,7 @@
 /*
  * HARDCODED VALUES
  * - `.root` `text-wrap: balance` — not a design token; a layout algorithm choice requested by
- *   UX (Matt Massey, 2026-08-28) to even out wrapped line lengths. See TEXT_IMPLEMENTATION_NOTES.md.
+ *   UX (Matt Massey, 2026-08-28) to even out wrapped line lengths. See HEADING_IMPLEMENTATION_NOTES.md.
  */
 
 .root {

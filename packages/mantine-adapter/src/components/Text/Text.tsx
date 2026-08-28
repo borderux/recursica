@@ -41,7 +41,7 @@ _Text.displayName = "Text";
 
 /**
  * A generalized typographical wrapper limiting text properties to bounded Recursica UI-kit tokens inherently.
- * Do not use for semantic headings; use the explicit `<Title>` component for `<h1>` - `<h6>`.
+ * Do not use for semantic headings; use the explicit `<Heading>` component for `<h1>` - `<h6>`.
  *
  * Supports polymorphism via the `component` prop or `renderRoot` for custom element rendering.
  * @example

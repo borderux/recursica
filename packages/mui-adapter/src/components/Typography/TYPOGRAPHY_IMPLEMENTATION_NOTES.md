@@ -1,12 +1,12 @@
 # Typography – Implementation Notes
 
-`Typography` is the shared rendering base for both `Text` and `Title` in mui-adapter — anything
+`Typography` is the shared rendering base for both `Text` and `Heading` in mui-adapter — anything
 applied here reaches both components.
 
 ## `.root` `text-wrap: balance` (Matt Massey, 2026-08-28)
 
 **Decision:** Added `text-wrap: balance` via a new `Typography.module.css` `.root` class, merged
-onto the typography class alongside the caller's own `className`. Since both `Text` and `Title`
+onto the typography class alongside the caller's own `className`. Since both `Text` and `Heading`
 render through this component, it covers all `order` heading levels (h1–h6) and paragraph text in
 one place.
 

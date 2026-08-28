@@ -1,15 +1,15 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Title } from "./Title";
+import { Heading } from "./Heading";
 
-const meta: Meta<typeof Title> = {
-  title: "UI-Kit/Title",
-  component: Title,
+const meta: Meta<typeof Heading> = {
+  title: "UI-Kit/Heading",
+  component: Heading,
   tags: ["autodocs"],
   parameters: {
     docs: {
       description: {
         component:
-          "The semantic `<Title>` abstraction intrinsically links pure `h1-h6` tag generation with exact Recursica design boundaries to preserve SEO and screen reader trees uniformly globally.",
+          "The semantic `<Heading>` abstraction intrinsically links pure `h1-h6` tag generation with exact Recursica design boundaries to preserve SEO and screen reader trees uniformly globally.",
       },
     },
   },
@@ -25,26 +25,26 @@ const meta: Meta<typeof Title> = {
 
 export default meta;
 
-type Story = StoryObj<typeof Title>;
+type Story = StoryObj<typeof Heading>;
 
 export const Default: Story = {
   args: {
     order: 1,
     children: "Semantic H1 Document Boundary",
   },
-  render: ({ ...args }) => <Title {...args} />,
+  render: ({ ...args }) => <Heading {...args} />,
 };
 
 export const StaticVariations: Story = {
   args: {},
   render: () => (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-      <Title order={1}>H1 Title</Title>
-      <Title order={2}>H2 Title</Title>
-      <Title order={3}>H3 Title</Title>
-      <Title order={4}>H4 Title</Title>
-      <Title order={5}>H5 Title</Title>
-      <Title order={6}>H6 Title</Title>
+      <Heading order={1}>H1 Heading</Heading>
+      <Heading order={2}>H2 Heading</Heading>
+      <Heading order={3}>H3 Heading</Heading>
+      <Heading order={4}>H4 Heading</Heading>
+      <Heading order={5}>H5 Heading</Heading>
+      <Heading order={6}>H6 Heading</Heading>
     </div>
   ),
 };
