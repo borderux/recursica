@@ -5,7 +5,7 @@ import {
   Stack,
   Box,
   Text as RawText,
-  Title,
+  Heading,
   Switch as RawSwitch,
 } from "./components";
 import { Button as RawButton } from "./components/Button/Button";
@@ -31,9 +31,9 @@ export const OverStylingInfo = () => {
 
         <Divider sx={{ my: 4 }} />
 
-        <Title order={6} mb={2}>
+        <Heading order={6} mb={2}>
           Try It Yourself
-        </Title>
+        </Heading>
 
         <Stack direction="row" alignItems="center" spacing="rec-sm" mb="rec-md">
           <Switch

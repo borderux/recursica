@@ -6,7 +6,7 @@ import {
   Container,
   Stack,
   Group,
-  Title,
+  Heading,
   Text,
   Link,
   Button,
@@ -21,9 +21,9 @@ function IntroductionContent() {
       <Group gap="rec-md" mb="rec-xl" align="flex-start" wrap="nowrap">
         <MantineLogo width={80} height={80} />
         <Stack gap={0}>
-          <Title order={1} m={0}>
+          <Heading order={1} m={0}>
             Recursica Design System (Mantine Adapter)
-          </Title>
+          </Heading>
           <Link href="https://mantine.dev" target="_blank" rel="noreferrer">
             mantine.dev
           </Link>
@@ -36,9 +36,9 @@ function IntroductionContent() {
       </Text>
 
       <Stack mb="rec-xl">
-        <Title order={2} mb="rec-md">
+        <Heading order={2} mb="rec-md">
           Looking for another UI Kit?
-        </Title>
+        </Heading>
         <Text mb="rec-md">
           Are you using a different UI Kit (like Material UI)? Recursica
           provides multiple adapters for different frameworks.
@@ -56,9 +56,9 @@ function IntroductionContent() {
       </Stack>
 
       <Stack mb="rec-xl">
-        <Title order={2} mb="rec-md">
+        <Heading order={2} mb="rec-md">
           Installation
-        </Title>
+        </Heading>
         <Text mb="rec-md">
           To install the Mantine adapter in your project, run:
         </Text>
@@ -78,9 +78,9 @@ function IntroductionContent() {
       </Stack>
 
       <Stack mb="rec-xl">
-        <Title order={2} mb="rec-md">
+        <Heading order={2} mb="rec-md">
           Tokens
-        </Title>
+        </Heading>
         <Text mb="rec-md">
           Raw design tokens (colors, sizes, font weights, opacities, etc.) that
           feed the theme and components. These are the primitive values defined
@@ -89,9 +89,9 @@ function IntroductionContent() {
       </Stack>
 
       <Stack mb="rec-xl">
-        <Title order={2} mb="rec-md">
+        <Heading order={2} mb="rec-md">
           Theme
-        </Title>
+        </Heading>
         <Text mb="rec-md">
           Brand and theme layer built on top of tokens. Typography types,
           dimensions, and layout grids are defined here. Theme uses the tokens
@@ -101,9 +101,9 @@ function IntroductionContent() {
       </Stack>
 
       <Stack mb="rec-xl">
-        <Title order={2} mb="rec-md">
+        <Heading order={2} mb="rec-md">
           Configuring Recursica
-        </Title>
+        </Heading>
         <Text mb="rec-md">
           To modify the Recursica configuration (tokens, brand, theme), go to{" "}
           <Link href={FORGE_URL} target="_blank" rel="noopener noreferrer">
@@ -114,9 +114,9 @@ function IntroductionContent() {
       </Stack>
 
       <Stack mb="rec-xl">
-        <Title order={2} mb="rec-md">
+        <Heading order={2} mb="rec-md">
           Documentation
-        </Title>
+        </Heading>
         <Text mb="rec-md">
           For full documentation, guides, and API reference, visit{" "}
           <Link href={DOCS_URL} target="_blank" rel="noopener noreferrer">

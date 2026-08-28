@@ -6,7 +6,7 @@ import { OverStylingInfo } from "./OverStyling";
 const DOCS_URL = "https://recursica.com";
 const FORGE_URL = "https://forge.recursica.com";
 
-import { Container, Box, Group, Title, Text, Link } from "./components";
+import { Container, Box, Group, Heading, Text, Link } from "./components";
 
 function IntroductionContent() {
   return (
@@ -14,9 +14,9 @@ function IntroductionContent() {
       <Group gap="rec-md" mb={2}>
         <MuiLogo width={40} height={40} />
         <Box>
-          <Title order={1} m={0}>
+          <Heading order={1} m={0}>
             Recursica Design System (MUI Adapter)
-          </Title>
+          </Heading>
           <Link href="https://mui.com" target="_blank" rel="noreferrer">
             mui.com
           </Link>
@@ -29,9 +29,9 @@ function IntroductionContent() {
       </Text>
 
       <Box component="section" sx={{ mb: 4 }}>
-        <Title order={2} mb={1}>
+        <Heading order={2} mb={1}>
           Looking for another UI Kit?
-        </Title>
+        </Heading>
         <Text>
           Are you using a different UI Kit (like Mantine)? Recursica provides
           multiple adapters for different frameworks.
@@ -85,9 +85,9 @@ function IntroductionContent() {
       </Box>
 
       <Box component="section" sx={{ mb: 4 }}>
-        <Title order={2} mb={1}>
+        <Heading order={2} mb={1}>
           Installation
-        </Title>
+        </Heading>
         <Text>To install the MUI adapter in your project, run:</Text>
         <Box
           component="pre"
@@ -107,9 +107,9 @@ function IntroductionContent() {
       </Box>
 
       <Box component="section" sx={{ mb: 4 }}>
-        <Title order={2} mb={1}>
+        <Heading order={2} mb={1}>
           Tokens
-        </Title>
+        </Heading>
         <Text>
           Raw design tokens (colors, sizes, font weights, opacities, etc.) that
           feed the theme and components. These are the primitive values defined
@@ -118,9 +118,9 @@ function IntroductionContent() {
       </Box>
 
       <Box component="section" sx={{ mb: 4 }}>
-        <Title order={2} mb={1}>
+        <Heading order={2} mb={1}>
           Theme
-        </Title>
+        </Heading>
         <Text>
           Brand and theme layer built on top of tokens. Typography types,
           dimensions, and layout grids are defined here. Theme uses the tokens
@@ -130,9 +130,9 @@ function IntroductionContent() {
       </Box>
 
       <Box component="section" sx={{ mb: 4 }}>
-        <Title order={2} mb={1}>
+        <Heading order={2} mb={1}>
           Configuring Recursica
-        </Title>
+        </Heading>
         <Text>
           To modify the Recursica configuration (tokens, brand, theme), go to{" "}
           <Link href={FORGE_URL} target="_blank" rel="noopener noreferrer">
@@ -143,9 +143,9 @@ function IntroductionContent() {
       </Box>
 
       <Box component="section" sx={{ mb: 4 }}>
-        <Title order={2} mb={1}>
+        <Heading order={2} mb={1}>
           Documentation
-        </Title>
+        </Heading>
         <Text>
           For full documentation, guides, and API reference, visit{" "}
           <Link href={DOCS_URL} target="_blank" rel="noopener noreferrer">

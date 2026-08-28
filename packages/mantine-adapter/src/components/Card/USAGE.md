@@ -22,7 +22,7 @@ export default function Demo() {
   return (
     <Card>
       <Card.Header>
-        <Title order={3}>Card Title</Title>
+        <Heading order={3}>Card Title</Heading>
       </Card.Header>
       <Card.Content>
         <Text>

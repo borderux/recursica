@@ -9,7 +9,7 @@ const meta: Meta<typeof Text> = {
     docs: {
       description: {
         component:
-          "The standard `<Text>` component controls common body sizing scales and implicit paragraphs governed by the active theme layer. For semantic headings (`h1` through `h6`), use `<Title>` instead.",
+          "The standard `<Text>` component controls common body sizing scales and implicit paragraphs governed by the active theme layer. For semantic headings (`h1` through `h6`), use `<Heading>` instead.",
       },
     },
   },

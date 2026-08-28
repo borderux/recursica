@@ -75,6 +75,9 @@ export const FormControlLayout = wrapComponent(
 export const FormControlWrapper = wrapComponent(
   rawComponents.FormControlWrapper,
 ) as typeof rawComponents.FormControlWrapper;
+export const Heading = wrapComponent(
+  rawComponents.Heading,
+) as typeof rawComponents.Heading;
 export const HoverCard = wrapComponent(
   rawComponents.HoverCard,
 ) as typeof rawComponents.HoverCard;
@@ -166,9 +169,6 @@ export const Timeline = wrapComponent(
 export const TimelineItem = wrapComponent(
   rawComponents.TimelineItem,
 ) as typeof rawComponents.TimelineItem;
-export const Title = wrapComponent(
-  rawComponents.Title,
-) as typeof rawComponents.Title;
 export const Toast = wrapComponent(
   rawComponents.Toast,
 ) as typeof rawComponents.Toast;

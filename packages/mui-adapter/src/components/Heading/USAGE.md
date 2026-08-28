@@ -1,13 +1,13 @@
-# Title - Usage Guide
+# Heading - Usage Guide
 
-This document describes how to integrate and use the `Title` component in your projects using `@recursica/mantine-adapter`.
+This document describes how to integrate and use the `Heading` component in your projects using `@recursica/mui-adapter`.
 
 ---
 
 ## 1. Import Reference
 
 ```tsx
-import { Title } from "@recursica/mantine-adapter";
+import { Heading } from "@recursica/mui-adapter";
 ```
 
 ---
@@ -16,10 +16,10 @@ import { Title } from "@recursica/mantine-adapter";
 
 ```tsx
 import React from "react";
-import { Title } from "@recursica/mantine-adapter";
+import { Heading } from "@recursica/mui-adapter";
 
 export default function Demo() {
-  return <Title order={1}>This is a Heading 1</Title>;
+  return <Heading order={1}>This is a Heading 1</Heading>;
 }
 ```
 
@@ -27,7 +27,7 @@ export default function Demo() {
 
 ## 3. Design System Integration
 
-All Recursica components in the `@recursica/mantine-adapter` package adhere strictly to design system spacing, scaling, and behavior patterns.
+All Recursica components in the `@recursica/mui-adapter` package adhere strictly to design system spacing, scaling, and behavior patterns.
 
 > [!IMPORTANT]
 >
