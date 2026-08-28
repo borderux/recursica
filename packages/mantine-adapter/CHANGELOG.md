@@ -1,5 +1,11 @@
 # @recursica/mantine-adapter
 
+## 0.50.6
+
+### Patch Changes
+
+- 9f00386: Fix `FormControlWrapper`: label now uses `htmlFor` instead of `id`, and the field's `id` is cloned onto the child, so `label.control` resolves and clicking the label focuses the field.
+
 ## 0.50.5
 
 ### Patch Changes
