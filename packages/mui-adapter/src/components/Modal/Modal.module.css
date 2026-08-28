@@ -66,7 +66,10 @@
 .title {
   flex: 1 1 auto; /* HARDCODE: let the title claim the space between the header edge and the close button */
   min-width: 0; /* HARDCODE: required for text-overflow ellipsis to take effect on a flex child */
-  overflow: hidden;
+  overflow: clip; /* HARDCODE: `hidden` clips descenders (e.g. "g") when text_line-height is
+    tighter than the font's natural ascent+descent; overflow-clip-margin gives ink a small bleed
+    allowance while still clipping genuinely overflowing text (see Chip's IMPLEMENTATION_NOTES.md). */
+  overflow-clip-margin: 0.35em;
   white-space: nowrap;
   text-overflow: ellipsis;
 

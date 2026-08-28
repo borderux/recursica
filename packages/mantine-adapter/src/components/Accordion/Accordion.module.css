@@ -211,7 +211,11 @@
   text-align: left;
   color: inherit;
   padding: 0; /* Clear Mantine inner padding */
-  overflow: hidden;
+  overflow: clip; /* HARDCODE: `hidden` clipped descenders (e.g. "g") whenever the text_line-height
+    token is tighter than the font's natural ascent+descent; `overflow-clip-margin` gives ink a
+    small bleed allowance while still clipping genuinely overflowing text — same fix project-wide,
+    see Chip/FileInput's IMPLEMENTATION_NOTES.md for the original discovery. */
+  overflow-clip-margin: 0.35em;
   white-space: nowrap;
   text-overflow: ellipsis;
 }

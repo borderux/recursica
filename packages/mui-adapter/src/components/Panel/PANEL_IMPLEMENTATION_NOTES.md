@@ -62,3 +62,13 @@ No tokens from other component namespaces are referenced.
 **Decision:** Accept `opened` prop to match the standard Recursica component API.
 
 **Implementation:** MUI Drawer natively expects the `open` boolean prop. The wrapper maps the incoming framework-agnostic `opened` prop to MUI's `open={Boolean(opened)}`, allowing consistent usage across both adapter implementations.
+
+---
+
+## `.titleTruncate` descender clipping (Matt Massey, 2026-08-28)
+
+`.titleTruncate` used plain `overflow: hidden` to make `text-overflow: ellipsis` work, which also
+clips descenders (e.g. the "g" in a long title) whenever `text_line-height` is tighter than the
+font's natural ascent+descent. Switched to `overflow: clip; overflow-clip-margin: 0.35em;` — same
+truncation, but ink can bleed slightly past the line box before it's actually clipped.
+Project-wide fix; see Chip's `CHIP_IMPLEMENTATION_NOTES.md` for the original discovery.

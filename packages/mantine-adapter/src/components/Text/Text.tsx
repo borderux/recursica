@@ -10,6 +10,7 @@ import {
 } from "../../utils/filterStylingProps";
 
 import { type RecursicaTextProps } from "@recursica/adapter-common";
+import styles from "./Text.module.css";
 
 export type TextProps = RecursicaOverStyled<
   Omit<MantineTextProps, "variant"> & RecursicaTextProps
@@ -24,9 +25,9 @@ const _Text = forwardRef<HTMLDivElement, TextProps>(function Text(
     .className as string | undefined;
 
   const typographyClass = `recursica_brand_typography_${variant}`;
-  const mergedClassName = classNameProp
-    ? `${typographyClass} ${classNameProp}`
-    : typographyClass;
+  const mergedClassName = [typographyClass, styles.root, classNameProp]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <MantineText

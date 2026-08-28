@@ -16,7 +16,12 @@ Mantine internally handles scroll state natively, dynamically showing/hiding a d
 
 ### 3. Title truncation
 
-`.title` truncates with an ellipsis (`overflow: hidden`, `white-space: nowrap`, `text-overflow: ellipsis`) rather than wrapping. It also needs `flex: 1 1 auto; min-width: 0;` since it's a flex child of `.header` alongside the close button — without `min-width: 0`, a flex item won't shrink below its content's intrinsic width, so ellipsis never engages. `.header`'s `display: flex` is likewise explicit rather than relied upon from Mantine's own header class, so the mui-adapter's plain-`<div>` header gets identical layout.
+`.title` truncates with an ellipsis (`overflow: clip; overflow-clip-margin: 0.35em`, `white-space: nowrap`, `text-overflow: ellipsis`) rather than wrapping. It also needs `flex: 1 1 auto; min-width: 0;` since it's a flex child of `.header` alongside the close button — without `min-width: 0`, a flex item won't shrink below its content's intrinsic width, so ellipsis never engages. `.header`'s `display: flex` is likewise explicit rather than relied upon from Mantine's own header class, so the mui-adapter's plain-`<div>` header gets identical layout.
+
+`.title` used plain `overflow: hidden` until 2026-08-28 (Matt Massey) — it clipped descenders
+(e.g. "g" in a long title) whenever `text_line-height` is tighter than the font's natural
+ascent+descent. `overflow-clip-margin` gives ink a small bleed allowance while still clipping
+genuinely overflowing text, same project-wide fix as Chip's `CHIP_IMPLEMENTATION_NOTES.md`.
 
 ### 4. Width was pinned to Mantine's `md` size, not content-driven
 

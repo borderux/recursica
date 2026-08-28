@@ -7,6 +7,7 @@ import {
   filterStylingProps,
   type RecursicaOverStyled,
 } from "../../utils/filterStylingProps";
+import styles from "./Typography.module.css";
 
 export type TypographyProps = RecursicaOverStyled<
   Omit<MuiTypographyProps, "variant"> & {
@@ -24,9 +25,9 @@ export const Typography = forwardRef<HTMLElement, TypographyProps>(
     const restRecord = sanitizedProps as Record<string, unknown>;
 
     const classNameProp = restRecord.className as string | undefined;
-    const finalClass = classNameProp
-      ? `${typographyClass} ${classNameProp}`
-      : typographyClass;
+    const finalClass = [typographyClass, styles.root, classNameProp]
+      .filter(Boolean)
+      .join(" ");
 
     return (
       <MuiTypography

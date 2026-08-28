@@ -60,3 +60,13 @@ and silently override the `leftIcon`-derived element (spread order would let it 
 to set that slot is through `leftIcon`. Mantine's separate, per-control `chevron` override
 is _not_ omitted — nothing here computes it, so it still passes through safely if a caller
 wants to override the cascaded container-level chevron for a single item.
+
+---
+
+## `.label` descender clipping (Matt Massey, 2026-08-28)
+
+`.label` used plain `overflow: hidden` to make `text-overflow: ellipsis` work, which also clips
+descenders (e.g. the "g" in a long title) whenever `text_line-height` is tighter than the font's
+natural ascent+descent. Switched to `overflow: clip; overflow-clip-margin: 0.35em;` — same
+truncation, but ink can bleed slightly past the line box before it's actually clipped. Project-wide
+fix; see Chip's `CHIP_IMPLEMENTATION_NOTES.md` for the original discovery.

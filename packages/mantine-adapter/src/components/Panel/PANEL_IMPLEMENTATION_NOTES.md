@@ -104,3 +104,13 @@ Mantine's Drawer content does not set `border-style` natively. Without this, the
 - **Scrollable** — Internal scrollbar enabled when content exceeds the panel height. Header and footer CTAs remain pinned.
 
 Mantine's Drawer handles this automatically — the `body` section scrolls when content overflows, while the `header` remains fixed. The `Panel.Footer` uses `margin-top: auto` to stay at the bottom.
+
+---
+
+## `.titleTruncate` descender clipping (Matt Massey, 2026-08-28)
+
+`.titleTruncate` used plain `overflow: hidden` to make `text-overflow: ellipsis` work, which also
+clips descenders (e.g. the "g" in a long title) whenever `text_line-height` is tighter than the
+font's natural ascent+descent. Switched to `overflow: clip; overflow-clip-margin: 0.35em;` — same
+truncation, but ink can bleed slightly past the line box before it's actually clipped.
+Project-wide fix; see Chip's `CHIP_IMPLEMENTATION_NOTES.md` for the original discovery.

@@ -69,3 +69,15 @@ Mantine's `.mantine-Button-label` flex centering breaks primitive truncation log
 **Bug:** with `overStyled` and a custom `className` (surfaced by Tree embedding a `Button` for its expand chevron — see `Tree/IMPLEMENTATION_NOTES.md`), `finalClass` (`` `${styles.root} ${classNameProp}` ``) was set explicitly on `<MantineButton>`, but `{...sanitizedProps}` was spread _after_ it — and `sanitizedProps` still contained the original, unmodified `className` key, since it had only been _read_, never deleted. The later spread would silently overwrite `finalClass` with just the caller's own class. Same bug class as `Dropdown.tsx`/`BareDropdown.tsx` had.
 
 **Why it wasn't visible here:** `classNames={{root: mergedClassNames.root, ...}}` is a _separate_ Mantine prop from the plain `className` string, unaffected by the overwrite, and `mergedClassNames.root` always includes `styles.root` independently — so the root element kept its Recursica styling regardless of the bug. mui-adapter's equivalent `Button.tsx` has no such secondary path (`@mui/material` only has a plain `className`), so the identical mistake there was fully visible (chevron rendered in MUI's own default color). Fixed in both regardless, since this is a real latent bug independent of whether it happens to be masked today.
+
+---
+
+## `.labelText` descender clipping (Matt Massey, 2026-08-28)
+
+`.labelText` used plain `overflow: hidden` to make `text-overflow: ellipsis` work, which also
+clips descenders (e.g. the "g" in a long label) whenever `text_line-height` is tighter than the
+font's natural ascent+descent. Switched to `overflow: clip; overflow-clip-margin: 0.35em;` — same
+truncation, but ink can bleed slightly past the line box before it's actually clipped. `.root`'s
+own `overflow: hidden` (the max-width truncation bounding box) is untouched — it has padding
+around the label so it isn't tight against the glyphs the way `.labelText` is. Project-wide fix;
+see Chip's `CHIP_IMPLEMENTATION_NOTES.md` for the original discovery.
