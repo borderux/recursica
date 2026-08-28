@@ -1,5 +1,16 @@
 # recursica-storybook
 
+## 0.32.0
+
+### Minor Changes
+
+- f618b38: Breaking change from Title to Heading component
+
+### Patch Changes
+
+- Updated dependencies [f618b38]
+  - @recursica/mantine-adapter@0.52.0
+
 ## 0.31.5
 
 ### Patch Changes
