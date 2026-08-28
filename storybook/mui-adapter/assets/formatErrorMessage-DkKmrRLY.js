@@ -1,0 +1,1 @@
+function o(e,...s){const r=new URL("https://mui.com/x/production-error");return r.searchParams.set("code",e.toString()),s.forEach(a=>r.searchParams.append("args[]",a)),`MUI X error #${e}; visit ${r} for the full message.`}export{o as f};
