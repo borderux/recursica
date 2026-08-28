@@ -1,5 +1,11 @@
 # @recursica/adapter-tester
 
+## 2.1.0
+
+### Minor Changes
+
+- ae939ef: Latest adapters and tester
+
 ## 2.0.3
 
 ### Patch Changes
