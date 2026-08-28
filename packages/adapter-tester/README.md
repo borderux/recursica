@@ -86,6 +86,12 @@ npm run adapter-tester:automated   # runs the `adapter-tester` CLI
 
 Pass `--dry-run` to print the resolved config and generated files without booting anything — useful for checking what a config resolves to.
 
+Any other args are forwarded to `playwright test`, so you can scope a run to specific stories instead of running the full suite every time:
+
+```bash
+npm run adapter-tester:automated -- --grep "Toast"
+```
+
 ### What happens during execution?
 
 1. **Automatic Storybook Bootup**: `adapter-tester` boots both sides of the comparison — this project's own Storybook, and the source-of-truth Storybook (a throwaway Mantine harness by default) — reusing them if already running.
@@ -149,6 +155,12 @@ If your repo already has a `storybook` npm script with a port set (`storybook de
 ```bash
 npm run adapter-tester              # Interactive Dev Mode
 npm run adapter-tester:automated    # headless Playwright suite
+```
+
+Any extra args after `adapter-tester:automated` are passed straight through to `playwright test`, so you can scope a run instead of executing the full suite:
+
+```bash
+npm run adapter-tester:automated -- --grep "Toast"
 ```
 
 Add `adapter-tester.config.json` only to override defaults (see [Configuring `adapter-tester.config.json`](#configuring-adapter-testerconfigjson) above), e.g. to raise the diff threshold or relax specific stories. Add `.adapter-tester/` to your `.gitignore` — it's regenerated on every run.

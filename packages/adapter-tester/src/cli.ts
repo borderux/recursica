@@ -23,6 +23,15 @@ if (process.argv.includes("--dry-run")) {
   process.exit(0);
 }
 
+// Any arg besides our own `--dry-run`/`--serve` flags is passed straight
+// through to `playwright test` — e.g. `npm run adapter-tester:automated --
+// --grep "Toast"` to scope a run to matching stories, instead of every
+// invocation running the full suite.
+const OWN_FLAGS = new Set(["--dry-run", "--serve"]);
+const passthroughArgs = process.argv
+  .slice(2)
+  .filter((arg) => !OWN_FLAGS.has(arg));
+
 if (process.argv.includes("--serve")) {
   // Dual-Storybook interactive Dev Mode — no Playwright, no screenshots.
   // Used by the `adapter-tester` npm script.
@@ -73,7 +82,13 @@ await runVisualRegression(${JSON.stringify(config, null, 2)});
 
   const result = spawnSync(
     "npx",
-    ["playwright", "test", "--config", join(runDir, "playwright.config.js")],
+    [
+      "playwright",
+      "test",
+      "--config",
+      join(runDir, "playwright.config.js"),
+      ...passthroughArgs,
+    ],
     { stdio: "inherit", cwd, shell: process.platform === "win32" },
   );
 
