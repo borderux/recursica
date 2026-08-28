@@ -208,8 +208,23 @@ export function mantineSourceOfTruthWebServer(
   options: MantineSourceOfTruthHarnessOptions,
 ): HarnessWebServerConfig {
   const dir = scaffoldMantineSourceOfTruthHarness(options);
+  const {
+    mantineAdapterVersion = "latest",
+    storybookTemplateVersion = "latest",
+  } = options;
+
+  // A bare `npm install` is satisfied by a package-lock.json already sitting
+  // in `dir` from a prior run and skips re-resolving against the registry
+  // entirely — no network call — so a run can silently keep testing against
+  // a stale @recursica/mantine-adapter/storybook-template even after a newer
+  // version is published. Naming the two version-pinned packages as explicit
+  // `pkg@specifier` CLI args instead forces npm to re-check just those two
+  // against the registry every run, while the rest of node_modules stays
+  // cached.
+  const command = `npm install @recursica/mantine-adapter@${mantineAdapterVersion} @recursica/storybook-template@${storybookTemplateVersion} --no-audit --no-fund && npm run storybook`;
+
   return {
-    command: "npm install --no-audit --no-fund && npm run storybook",
+    command,
     port: options.port,
     cwd: dir,
     reuseExistingServer: !process.env.CI,
