@@ -1,5 +1,15 @@
 # @recursica/adapter-tester
 
+## 2.2.0
+
+### Minor Changes
+
+- f618b38: Breaking change from Title to Heading component
+
+### Patch Changes
+
+- 8f7288b: `adapter-tester:automated` now forwards extra args to `playwright test`, e.g. `npm run adapter-tester:automated -- --grep "Toast"` to scope a run.
+
 ## 2.1.0
 
 ### Minor Changes

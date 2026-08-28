@@ -1,7 +1,7 @@
 {
   "name": "recursica-storybook",
   "private": true,
-  "version": "0.31.5",
+  "version": "0.32.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -12,7 +12,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@recursica/mantine-adapter": "^0.51.0"
+    "@recursica/mantine-adapter": "^0.52.0"
   },
   "devDependencies": {
     "gh-pages": "^6.3.0"

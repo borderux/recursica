@@ -1,5 +1,11 @@
 # @recursica/adapter-common
 
+## 0.26.0
+
+### Minor Changes
+
+- f618b38: Renamed the `Title` component to `Heading` (and `RecursicaTitleProps` to `RecursicaHeadingProps`) to match designers' semantic vocabulary. `Text` is unchanged. Breaking: update imports from `Title`/`TitleProps` to `Heading`/`HeadingProps`.
+
 ## 0.25.1
 
 ### Patch Changes
