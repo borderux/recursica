@@ -1,5 +1,16 @@
 # @recursica/mantine-adapter
 
+## 0.51.0
+
+### Minor Changes
+
+- ae939ef: Latest adapters and tester
+
+### Patch Changes
+
+- ae939ef: Fixed descender clipping (e.g. the "g" in a long label) on single-line ellipsis truncation across Accordion, AutoComplete/Autocomplete, Button, Dropdown, Modal, and Panel — switched `overflow: hidden` to `overflow: clip; overflow-clip-margin: 0.35em`.
+- ae939ef: Added `text-wrap: balance` to `Text` and `Title` so wrapped multi-line text (headings and paragraphs) gets more even line lengths.
+
 ## 0.50.6
 
 ### Patch Changes
