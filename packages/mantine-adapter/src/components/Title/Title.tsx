@@ -10,6 +10,7 @@ import {
 } from "../../utils/filterStylingProps";
 
 import { type RecursicaTitleProps } from "@recursica/adapter-common";
+import styles from "./Title.module.css";
 
 export type TitleProps = RecursicaOverStyled<
   Omit<MantineTitleProps, "size"> & RecursicaTitleProps
@@ -36,9 +37,9 @@ export const Title = forwardRef<HTMLHeadingElement, TitleProps>(function Title(
     .className as string | undefined;
 
   const typographyClass = `recursica_brand_typography_h${order}`;
-  const mergedClassName = classNameProp
-    ? `${typographyClass} ${classNameProp}`
-    : typographyClass;
+  const mergedClassName = [typographyClass, styles.root, classNameProp]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <MantineTitle

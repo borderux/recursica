@@ -12,4 +12,9 @@ New CSS classes (`.optionContent`/`.optionIcon`/`.optionText`/`.optionSupporting
 
 ## `wrapItemText`
 
-`label`/`supportingText` default to single-line truncation with an ellipsis (`.optionText > *` — `overflow: hidden; text-overflow: ellipsis; white-space: nowrap`). Passing `wrapItemText` adds `.optionTextWrap` alongside `.optionText`, re-enabling wrapping (`white-space: normal; overflow-wrap: anywhere`) for both children — later-cascade-wins, equal specificity. `renderRichOptionContent` takes `wrapItemText` as a third parameter and combines the two class names when it's true. `Dropdown.tsx` exposes this as a public prop; `BareDropdown.tsx` (internal-only, not part of the public `Dropdown`/`AutoComplete` API this was requested for) doesn't take the prop and always truncates.
+`label`/`supportingText` default to single-line truncation with an ellipsis (`.optionText > *` — `overflow: clip; overflow-clip-margin: 0.35em; text-overflow: ellipsis; white-space: nowrap`). Passing `wrapItemText` adds `.optionTextWrap` alongside `.optionText`, re-enabling wrapping (`white-space: normal; overflow-wrap: anywhere`) for both children — later-cascade-wins, equal specificity. `renderRichOptionContent` takes `wrapItemText` as a third parameter and combines the two class names when it's true. `Dropdown.tsx` exposes this as a public prop; `BareDropdown.tsx` (internal-only, not part of the public `Dropdown`/`AutoComplete` API this was requested for) doesn't take the prop and always truncates.
+
+`.optionText > *` used plain `overflow: hidden` until 2026-08-28 (Matt Massey) — it clipped
+descenders (e.g. "g") whenever `text_line-height` is tighter than the font's natural
+ascent+descent. `overflow-clip-margin` gives ink a small bleed allowance while still clipping
+genuinely overflowing text; same project-wide fix as Chip's `CHIP_IMPLEMENTATION_NOTES.md`.

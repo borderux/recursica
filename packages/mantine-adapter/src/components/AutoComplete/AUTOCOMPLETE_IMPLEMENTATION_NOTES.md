@@ -34,4 +34,9 @@ rendering with our own value comparison.
 
 ## `wrapItemText`
 
-`label`/`supportingText` default to single-line truncation with an ellipsis (`.optionText > *` — `overflow: hidden; text-overflow: ellipsis; white-space: nowrap`). Passing `wrapItemText` adds `.optionTextWrap` alongside `.optionText`, which re-enables wrapping (`white-space: normal; overflow-wrap: anywhere`) for both children — same later-cascade-wins mechanism (`.optionTextWrap > *` declared after `.optionText > *`, equal specificity) as the rest of this file's overrides. `renderRichOption`/`renderRichOptionContent` (shared util, both adapters) take `wrapItemText` as a third parameter and combine the two class names when it's true.
+`label`/`supportingText` default to single-line truncation with an ellipsis (`.optionText > *` — `overflow: clip; overflow-clip-margin: 0.35em; text-overflow: ellipsis; white-space: nowrap`). Passing `wrapItemText` adds `.optionTextWrap` alongside `.optionText`, which re-enables wrapping (`white-space: normal; overflow-wrap: anywhere`) for both children — same later-cascade-wins mechanism (`.optionTextWrap > *` declared after `.optionText > *`, equal specificity) as the rest of this file's overrides. `renderRichOption`/`renderRichOptionContent` (shared util, both adapters) take `wrapItemText` as a third parameter and combine the two class names when it's true.
+
+`.optionText > *` used plain `overflow: hidden` until 2026-08-28 (Matt Massey) — it clipped
+descenders (e.g. "g") whenever `text_line-height` is tighter than the font's natural
+ascent+descent. `overflow-clip-margin` gives ink a small bleed allowance while still clipping
+genuinely overflowing text; same project-wide fix as Chip's `CHIP_IMPLEMENTATION_NOTES.md`.

@@ -75,3 +75,15 @@ We explicitly pass `disableRipple` and `disableElevation` to block MUI's dynamic
 **Root cause:** `.root` has `width: fit-content` (to hug its own content instead of stretching in flex columns) but no `max-width`. Verified via Playwright: the wrapper measured exactly 250px, but `fit-content` on `.root` still resolved to its 534px `max-content` size — it doesn't reliably clamp against a narrower containing block on its own. Same root cause and identical fix in mantine-adapter.
 
 **Fix:** added `max-width: 100%` to `.root`. It's a no-op when the parent is wide enough (confirmed no change to `Default`/`IconOnly`/`TextWithIcon` story widths), and clamps the button to the parent's resolved width when the parent is narrower — at which point the existing `overflow: hidden` (`.root`) + `text-overflow: ellipsis`/`white-space: nowrap` (`.labelText`) take over, exactly as already documented above.
+
+---
+
+## `.labelText` descender clipping (Matt Massey, 2026-08-28)
+
+`.labelText` used plain `overflow: hidden` to make `text-overflow: ellipsis` work, which also
+clips descenders (e.g. the "g" in a long label) whenever `text_line-height` is tighter than the
+font's natural ascent+descent. Switched to `overflow: clip; overflow-clip-margin: 0.35em;` — same
+truncation, but ink can bleed slightly past the line box before it's actually clipped. `.root`'s
+own `overflow: hidden` (the max-width truncation bounding box, above) is untouched — it has
+padding around the label so it isn't tight against the glyphs the way `.labelText` is.
+Project-wide fix; see Chip's `CHIP_IMPLEMENTATION_NOTES.md` for the original discovery.

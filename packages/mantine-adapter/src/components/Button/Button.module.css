@@ -72,7 +72,10 @@
 .labelText {
   display: block;
   min-width: 0;
-  overflow: hidden;
+  overflow: clip; /* HARDCODE: `hidden` clips descenders (e.g. "g") when text_line-height is
+    tighter than the font's natural ascent+descent; overflow-clip-margin gives ink a small bleed
+    allowance while still clipping genuinely overflowing text (see Chip's IMPLEMENTATION_NOTES.md). */
+  overflow-clip-margin: 0.35em;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: inherit;

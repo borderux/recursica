@@ -1,0 +1,13 @@
+/*
+ * HARDCODED VALUES
+ * - `.root` `text-wrap: balance` — not a design token; a layout algorithm choice requested by
+ *   UX (Matt Massey, 2026-08-28) to even out wrapped line lengths. See TEXT_IMPLEMENTATION_NOTES.md.
+ */
+
+.root {
+  /* HARDCODE: balances wrapped line lengths instead of leaving a ragged short last line. Most
+     effective on short text; browsers cap balancing at ~6 lines, so long paragraphs silently
+     fall back to normal wrapping past that point — no fallback needed, unsupported browsers
+     just ignore the declaration. */
+  text-wrap: balance;
+}
