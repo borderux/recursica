@@ -113,3 +113,14 @@ export const WithLeadingIcon: Story = {
   },
   render: (args: ChipStoryProps) => <Chip {...args} />,
 };
+
+// Selecting a chip with a leading icon swaps in the checkmark rather than showing both —
+// matches MUI's native behavior of the check icon overlaying the leading icon.
+export const WithLeadingIconSelected: Story = {
+  args: {
+    ...WithLeadingIcon.args,
+    children: "Leading Icon Selected",
+    checked: true,
+  },
+  render: (args: ChipStoryProps) => <Chip {...args} onChange={() => {}} />,
+};

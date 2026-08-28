@@ -46,6 +46,7 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
     deleteTabIndex,
     deleteIconRef,
     children,
+    checked,
     overStyled = false,
     wrapperProps,
     tabIndex,
@@ -97,6 +98,7 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
     <MantineChip
       ref={ref}
       {...sanitizedProps}
+      checked={checked}
       className={finalClass}
       classNames={mergedClassNames}
       wrapperProps={withCallerOverride(computedWrapperProps, wrapperProps)}
@@ -111,7 +113,10 @@ export const Chip = forwardRef<HTMLInputElement, ChipProps>(function Chip(
       )}
     >
       <span className={styles.innerWrapper}>
-        {icon && (
+        {/* When checked, Mantine's own check icon (rendered in its native iconWrapper slot,
+            ahead of this children span) overlays/replaces the leading icon rather than sitting
+            next to it — matching mui-adapter's `icon={checked ? checkIcon : icon}` swap. */}
+        {icon && !checked && (
           <span className={styles.leadingIcon} aria-hidden>
             {icon}
           </span>
