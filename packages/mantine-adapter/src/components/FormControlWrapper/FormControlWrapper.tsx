@@ -51,6 +51,7 @@ export const FormControlWrapper = forwardRef<
   // Generate a reliable ID to map the Label's HTML context down to the component array natively.
   const generatedId = useId();
   const id = userProvidedId || `recursica-fc-${generatedId}`;
+  const labelId = `${id}-label`;
 
   // Evaluate explicit assistive fallbacks ensuring assistiveText correctly prioritizes natively over underlying Mantine configurations!
   const resolvedAssistive = assistiveText || description;
@@ -67,11 +68,15 @@ export const FormControlWrapper = forwardRef<
     ? `${rootClass} ${classNameProp}`
     : rootClass;
 
-  // Clone ARIA identifiers directly back down into the nested children wrapper so screen-readers natively hook the external strings
+  // Clone ARIA identifiers directly back down into the nested children wrapper so screen-readers natively hook the external strings.
+  // `id` is cloned down here too — the label's `htmlFor` below only resolves to the field's
+  // native `label.control` when the field itself actually carries this id.
   const content = React.isValidElement(children)
     ? React.cloneElement(
         children as React.ReactElement<Record<string, unknown>>,
         {
+          ...(!(children.props as Record<string, unknown>)["id"] ? { id } : {}),
+          "aria-labelledby": labelId,
           ...(resolvedAssistive &&
           !(children.props as Record<string, unknown>)["aria-describedby"]
             ? { "aria-describedby": assistiveId }
@@ -86,7 +91,8 @@ export const FormControlWrapper = forwardRef<
 
   const labelNode = label ? (
     <Label
-      id={id} // Directly binds ARIA references down
+      id={labelId}
+      htmlFor={id} // Native label/control association — must not also be set on the label's own id
       labelAlignment={labelAlignment}
       labelOptionalText={labelOptionalText}
       labelWithEditIcon={labelWithEditIcon}
