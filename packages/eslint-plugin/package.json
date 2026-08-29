@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-recursica",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "ESLint plugin enforcing Recursica design-system conventions in consuming applications.",
   "private": false,
   "homepage": "https://github.com/borderux/recursica/tree/main/packages/eslint-plugin",
