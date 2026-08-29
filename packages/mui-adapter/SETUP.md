@@ -76,3 +76,19 @@ Before consuming Recursica components, integrate the CSS and design tokens into 
      },
    };
    ```
+
+6. **Configure ESLint Plugin (Optional but Recommended)**: It is highly recommended (but optional) to install `eslint-plugin-recursica`, which flags use of the `overStyled` escape-hatch prop so it stays easy to audit.
+
+   Install the plugin as a dev dependency:
+
+   ```bash
+   npm install eslint-plugin-recursica --save-dev
+   ```
+
+   Then, add it to your `eslint.config.js`:
+
+   ```javascript
+   import recursica from "eslint-plugin-recursica";
+
+   export default [recursica.configs.recommended];
+   ```
