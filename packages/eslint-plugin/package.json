@@ -1,0 +1,59 @@
+{
+  "name": "eslint-plugin-recursica",
+  "version": "0.1.0",
+  "description": "ESLint plugin enforcing Recursica design-system conventions in consuming applications.",
+  "private": false,
+  "homepage": "https://github.com/borderux/recursica/tree/main/packages/eslint-plugin",
+  "author": "hi@borderux.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/borderux/recursica.git",
+    "directory": "packages/eslint-plugin"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "eslint",
+    "eslintplugin",
+    "eslint-plugin",
+    "recursica"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "lint": "eslint .",
+    "check-types": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "peerDependencies": {
+    "eslint": "^8.57.0 || ^9.0.0"
+  },
+  "dependencies": {
+    "@typescript-eslint/utils": "^8.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.28.0",
+    "@types/node": "^20.11.0",
+    "@typescript-eslint/rule-tester": "^8.68.0",
+    "eslint": "^9.28.0",
+    "globals": "^16.2.0",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.33.0",
+    "vitest": "^3.2.4"
+  },
+  "license": "MIT"
+}
