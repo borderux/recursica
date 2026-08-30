@@ -9,7 +9,7 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default tseslint.config(
-  { ignores: ["dist", "storybook-static"] },
+  { ignores: ["dist", "storybook-static", ".adapter-tester"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],

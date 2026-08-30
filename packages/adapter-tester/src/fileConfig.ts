@@ -1,9 +1,14 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import type { AdapterTesterConfig } from "./config.js";
+import type {
+  AdapterTesterConfig,
+  SourceOfTruthGoldenLocation,
+} from "./config.js";
 import type { HarnessWebServerConfig } from "./harness/mantineSourceOfTruth.js";
 import { mantineSourceOfTruthWebServer } from "./harness/mantineSourceOfTruth.js";
 import { validateFileConfig } from "./validateFileConfig.js";
+
+const MANTINE_ADAPTER_PACKAGE_NAME = "@recursica/mantine-adapter";
 
 export const CONFIG_FILE_NAME = "adapter-tester.config.json";
 const DEFAULT_STORYBOOK_COMMAND = "npm run storybook";
@@ -53,9 +58,16 @@ export interface AdapterTesterFileConfig {
   storybook?: StorybookTargetFileConfig;
   sourceOfTruth?: SourceOfTruthFileConfig;
   diffThresholdPixels?: number;
-  relaxedThresholdStoryIds?: string[];
-  relaxedThresholdPixels?: number;
+  storyThresholds?: Record<string, number>;
   excludeTitlePrefixes?: string[];
+  excludeStoryIds?: string[];
+  /**
+   * True only for the source-of-truth adapter's own config (mantine-adapter).
+   * Skips `sourceOfTruth` entirely — there's nothing above it to diverge
+   * from — and runs the own-drift golden check standalone, against just this
+   * project's own Storybook. Defaults to false.
+   */
+  isSourceOfTruthAdapter?: boolean;
 }
 
 export interface ResolvedAdapterTesterConfig {
@@ -109,11 +121,49 @@ function loadFileConfig(cwd: string): AdapterTesterFileConfig {
  */
 export function resolveConfig(cwd: string): ResolvedAdapterTesterConfig {
   const file = loadFileConfig(cwd);
+  const isSourceOfTruthAdapter = file.isSourceOfTruthAdapter ?? false;
 
   const ownName = file.name ?? detectOwnName(cwd);
   const ownPort = file.storybook?.port ?? detectOwnPort(cwd);
   const ownCommand = file.storybook?.command ?? DEFAULT_STORYBOOK_COMMAND;
   const ownCwd = resolve(cwd, file.storybook?.cwd ?? ".");
+  const ownWebServer: HarnessWebServerConfig = {
+    command: ownCommand,
+    port: ownPort,
+    cwd: ownCwd,
+    reuseExistingServer: !process.env.CI,
+    timeout: 120 * 1000,
+  };
+
+  const sharedEngineConfig = {
+    diffThresholdPixels:
+      file.diffThresholdPixels ?? DEFAULT_DIFF_THRESHOLD_PIXELS,
+    storyThresholds: file.storyThresholds,
+    excludeTitlePrefixes: file.excludeTitlePrefixes,
+    excludeStoryIds: file.excludeStoryIds,
+    // Keyed off `ownCwd`, not `cwd` — the project actually being tested, not
+    // wherever the config file happens to live. Matters for this monorepo's
+    // own non-standard config, whose `storybook.cwd` points at a sibling
+    // package: its goldens must resolve to that package's own `test/golden/`
+    // (the same directory used when that package runs adapter-tester
+    // directly), not a directory under `packages/adapter-tester/`.
+    goldenDir: join(ownCwd, "test", "golden"),
+    isSourceOfTruthAdapter,
+    // Overwritten by the CLI from --update-golden/--approve-divergence.
+    goldenMode: "check" as const,
+  };
+
+  // The source-of-truth adapter's own config has nothing above it to
+  // diverge from — no second target, no harness/webServer for it at all.
+  if (isSourceOfTruthAdapter) {
+    return {
+      engineConfig: {
+        ...sharedEngineConfig,
+        targets: [{ name: ownName, url: `http://localhost:${ownPort}` }],
+      },
+      webServers: [ownWebServer],
+    };
+  }
 
   const sourceOfTruth = file.sourceOfTruth ?? {
     type: "mantine-harness" as const,
@@ -122,16 +172,25 @@ export function resolveConfig(cwd: string): ResolvedAdapterTesterConfig {
   let sourceOfTruthName: string;
   let sourceOfTruthPort: number;
   let sourceOfTruthWebServer: HarnessWebServerConfig;
+  let sourceOfTruthGolden: SourceOfTruthGoldenLocation;
 
   if (sourceOfTruth.type === "url") {
     sourceOfTruthName = sourceOfTruth.name ?? DEFAULT_SOURCE_OF_TRUTH_NAME;
     sourceOfTruthPort = sourceOfTruth.port;
+    const sourceOfTruthCwd = resolve(cwd, sourceOfTruth.cwd ?? ".");
     sourceOfTruthWebServer = {
       command: sourceOfTruth.command ?? DEFAULT_STORYBOOK_COMMAND,
       port: sourceOfTruth.port,
-      cwd: resolve(cwd, sourceOfTruth.cwd ?? "."),
+      cwd: sourceOfTruthCwd,
       reuseExistingServer: !process.env.CI,
       timeout: 120 * 1000,
+    };
+    // Sibling package already checked out locally — read its golden files
+    // directly, including any uncommitted local changes. No install, no
+    // network call.
+    sourceOfTruthGolden = {
+      type: "local",
+      dir: join(sourceOfTruthCwd, "test", "golden"),
     };
   } else {
     sourceOfTruthName = DEFAULT_SOURCE_OF_TRUTH_NAME;
@@ -142,34 +201,34 @@ export function resolveConfig(cwd: string): ResolvedAdapterTesterConfig {
       mantineAdapterVersion: sourceOfTruth.mantineAdapterVersion,
       storybookTemplateVersion: sourceOfTruth.storybookTemplateVersion,
     });
+    // No local checkout — resolve the installed version against the npm
+    // registry and fetch that version's golden files from the public repo.
+    // Never needs `sourceOfTruthWebServer` above; the golden check on its
+    // own doesn't boot a second Storybook at all (see cli.ts).
+    sourceOfTruthGolden = {
+      type: "npm",
+      packageName: MANTINE_ADAPTER_PACKAGE_NAME,
+      versionSpec: sourceOfTruth.mantineAdapterVersion ?? "latest",
+      cacheDir: join(cwd, ".adapter-tester/mantine-golden-cache"),
+    };
   }
 
-  const engineConfig: AdapterTesterConfig = {
-    targets: [
-      {
-        name: sourceOfTruthName,
-        url: `http://localhost:${sourceOfTruthPort}`,
-        sourceOfTruth: true,
-      },
-      { name: ownName, url: `http://localhost:${ownPort}` },
-    ],
-    diffThresholdPixels:
-      file.diffThresholdPixels ?? DEFAULT_DIFF_THRESHOLD_PIXELS,
-    relaxedThresholdStoryIds: file.relaxedThresholdStoryIds,
-    relaxedThresholdPixels: file.relaxedThresholdPixels,
-    excludeTitlePrefixes: file.excludeTitlePrefixes,
-  };
-
-  const webServers: HarnessWebServerConfig[] = [
-    sourceOfTruthWebServer,
-    {
-      command: ownCommand,
-      port: ownPort,
-      cwd: ownCwd,
-      reuseExistingServer: !process.env.CI,
-      timeout: 120 * 1000,
+  return {
+    engineConfig: {
+      ...sharedEngineConfig,
+      targets: [
+        {
+          name: sourceOfTruthName,
+          url: `http://localhost:${sourceOfTruthPort}`,
+          sourceOfTruth: true,
+        },
+        { name: ownName, url: `http://localhost:${ownPort}` },
+      ],
+      sourceOfTruthGolden,
     },
-  ];
-
-  return { engineConfig, webServers };
+    // [sourceOfTruth, own] — Dev Mode needs both; the automated golden run
+    // (cli.ts) only ever boots the last entry, since its divergence check
+    // reads stored golden files, not a live source-of-truth page.
+    webServers: [sourceOfTruthWebServer, ownWebServer],
+  };
 }

@@ -18,26 +18,47 @@ const testingEntry = pathToFileURL(join(distDir, "testing.js")).href;
 const cwd = process.cwd();
 const { engineConfig, webServers } = resolveConfig(cwd);
 
+if (process.argv.includes("--update-golden")) {
+  engineConfig.goldenMode = "update-golden";
+} else if (process.argv.includes("--approve-divergence")) {
+  engineConfig.goldenMode = "approve-divergence";
+}
+
 if (process.argv.includes("--dry-run")) {
   console.log(JSON.stringify({ engineConfig, webServers }, null, 2));
   process.exit(0);
 }
 
-// Any arg besides our own `--dry-run`/`--serve` flags is passed straight
-// through to `playwright test` — e.g. `npm run adapter-tester:automated --
-// --grep "Toast"` to scope a run to matching stories, instead of every
-// invocation running the full suite.
-const OWN_FLAGS = new Set(["--dry-run", "--serve"]);
+// Any arg besides our own flags is passed straight through to `playwright
+// test` — e.g. `npm run adapter-tester:automated -- --grep "Toast"` to scope
+// a run to matching stories, instead of every invocation running the full
+// suite. `--update-golden`/`--approve-divergence` are consumed above, not
+// forwarded — Playwright itself doesn't know about them.
+const OWN_FLAGS = new Set([
+  "--dry-run",
+  "--serve",
+  "--update-golden",
+  "--approve-divergence",
+]);
 const passthroughArgs = process.argv
   .slice(2)
   .filter((arg) => !OWN_FLAGS.has(arg));
 
 if (process.argv.includes("--serve")) {
+  if (engineConfig.isSourceOfTruthAdapter) {
+    throw new Error(
+      "Dev Mode (--serve) has nothing to sync this project's Storybook against — isSourceOfTruthAdapter is true in this project's adapter-tester.config.json.",
+    );
+  }
   // Dual-Storybook interactive Dev Mode — no Playwright, no screenshots.
   // Used by the `adapter-tester` npm script.
   startDevServer(engineConfig, webServers);
 } else {
-  runAutomated(webServers, engineConfig);
+  // The golden-image checks never need the source-of-truth adapter's own
+  // Storybook running — the divergence check reads its stored golden files,
+  // not a live page — so only the last (own) webServer is booted here. Dev
+  // Mode above is the one thing that still needs both.
+  runAutomated(webServers.slice(-1), engineConfig);
 }
 
 /**
@@ -59,10 +80,13 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: ${JSON.stringify(runDir)},
-  fullyParallel: true,
+  // Golden checks read-modify-write the same manifest.json across every
+  // story's test body — forced sequential (no worker parallelism) so those
+  // writes never race each other.
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: 1,
   reporter: [["html", { open: "never" }], ["list"]],
   use: { trace: "on-first-retry" },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],

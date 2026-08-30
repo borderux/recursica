@@ -14,19 +14,18 @@
     "cwd": "../mantine-adapter"
   },
   "diffThresholdPixels": 3500,
-  "relaxedThresholdStoryIds": [
-    "ui-kit-checkboxgroup",
-    "ui-kit-radiogroup",
-    "ui-kit-switchgroup",
-    "ui-kit-checkbox",
-    "ui-kit-radio",
-    "ui-kit-switch",
-    "ui-kit-segmentedcontrol",
-    "ui-kit-numberinput",
-    "ui-kit-slider",
-    "ui-kit-textfield",
-    "ui-kit-timeline",
-    "ui-kit-title"
-  ],
-  "relaxedThresholdPixels": 15000
+  "storyThresholds": {
+    "ui-kit-checkboxgroup": 15000,
+    "ui-kit-radiogroup": 15000,
+    "ui-kit-switchgroup": 15000,
+    "ui-kit-checkbox": 15000,
+    "ui-kit-radio": 15000,
+    "ui-kit-switch": 15000,
+    "ui-kit-segmentedcontrol": 15000,
+    "ui-kit-numberinput": 15000,
+    "ui-kit-slider": 15000,
+    "ui-kit-textfield": 15000,
+    "ui-kit-timeline": 15000,
+    "ui-kit-title": 15000
+  }
 }

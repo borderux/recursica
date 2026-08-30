@@ -25,6 +25,10 @@ If you are tasked with building, modifying, or reviewing components **inside** t
 5. **Internal Implementation Notes:** Every component MUST have its own `[COMPONENT]_IMPLEMENTATION_NOTES.md` file (or `IMPLEMENTATION_NOTES.md`) living within its component folder (e.g., `src/components/Button/IMPLEMENTATION_NOTES.md` or `BUTTON_IMPLEMENTATION_NOTES.md`) to document internal engineering decisions, layout hacks, and CSS workarounds. This file is for internal technical tracking and is not publicly consumable.
 6. **Update `llms.txt`:** Whenever you add a new component (or rename/remove one), update the package's root `llms.txt` to keep its "Components" list in sync — add a link to the new component's `USAGE.md` (e.g., `- [Button](src/components/Button/USAGE.md)`) in alphabetical order. `llms.txt` is the entry point external AI agents use to discover components, so a missing entry means that component is effectively invisible to them.
 
+## Visual Regression Testing
+
+This adapter runs `@recursica/adapter-tester` as `isSourceOfTruthAdapter` — its committed `test/golden/` images are the baseline every other adapter diverges against. See [`packages/adapter-tester/README.md`](../adapter-tester/README.md) and [`packages/adapter-tester/AGENT.md`](../adapter-tester/AGENT.md) for the full workflow, thresholds, and exemption rules; don't duplicate them here.
+
 ## Keeping Shared Docs in Sync
 
 This adapter's `docs/COMPONENT_DEV_GUIDE.md` and `docs/COMPONENT_STORYBOOK_GUIDE.md` are **thin, Mantine-specific deltas** — the full canonical rule set lives in [`packages/adapter-common/docs/`](../adapter-common/docs/). If you're changing a rule that applies to every adapter (not just this one), edit the canonical doc in `adapter-common/docs/`, not this adapter's delta — and check whether `mui-adapter`'s delta doc needs a corresponding update. Only edit this adapter's own `docs/COMPONENT_DEV_GUIDE.md`/`docs/COMPONENT_STORYBOOK_GUIDE.md` for something genuinely specific to Mantine.
