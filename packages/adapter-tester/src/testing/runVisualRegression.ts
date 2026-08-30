@@ -1,34 +1,16 @@
 import { test, expect } from "@playwright/test";
-import pixelmatch from "pixelmatch";
-import { PNG } from "pngjs";
-import fs from "node:fs";
-import type { AdapterTarget, AdapterTesterConfig } from "../config.js";
-import { getSourceOfTruth } from "../config.js";
+import { existsSync, readFileSync } from "node:fs";
+import type { AdapterTesterConfig } from "../config.js";
+import { diffPngBuffers } from "../golden/diffPng.js";
+import {
+  goldenImagePath,
+  loadManifest,
+  saveGoldenImage,
+  saveManifest,
+} from "../golden/manifestStore.js";
+import { resolveSourceOfTruthGolden } from "../golden/resolveSourceOfTruthGolden.js";
 
 const DEFAULT_EXCLUDE_TITLE_PREFIXES = ["Theme", "Tokens", "Introduction"];
-
-const COMMON_STYLES_TO_CAPTURE = [
-  "color",
-  "background-color",
-  "padding-top",
-  "padding-right",
-  "padding-bottom",
-  "padding-left",
-  "margin-top",
-  "margin-right",
-  "margin-bottom",
-  "margin-left",
-  "border-top-left-radius",
-  "border-top-right-radius",
-  "border-bottom-left-radius",
-  "border-bottom-right-radius",
-  "font-size",
-  "font-weight",
-  "display",
-  "flex-direction",
-  "gap",
-  "height",
-];
 
 interface StorybookEntry {
   type: string;
@@ -37,17 +19,18 @@ interface StorybookEntry {
   title: string;
 }
 
-function slug(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+function matchesPrefix(id: string, prefix: string): boolean {
+  return id === prefix || id.startsWith(prefix);
 }
 
 async function fetchStories(
-  sourceOfTruth: AdapterTarget,
+  target: { name: string; url: string },
   excludeTitlePrefixes: string[],
+  excludeStoryIds: string[],
 ): Promise<StorybookEntry[]> {
   let stories: StorybookEntry[];
   try {
-    const response = await fetch(`${sourceOfTruth.url}/index.json`);
+    const response = await fetch(`${target.url}/index.json`);
     if (!response.ok) {
       throw new Error(
         `Failed to fetch Storybook index: ${response.statusText}`,
@@ -61,223 +44,191 @@ async function fetchStories(
         !excludeTitlePrefixes.some(
           (prefix) =>
             entry.title === prefix || entry.title.startsWith(`${prefix}/`),
-        ),
+        ) &&
+        !excludeStoryIds.some((prefix) => matchesPrefix(entry.id, prefix)),
     ) as StorybookEntry[];
     stories.sort((a, b) => a.id.localeCompare(b.id));
   } catch (error) {
     console.error(
       "Failed to load Storybook index from",
-      `${sourceOfTruth.url}/index.json`,
+      `${target.url}/index.json`,
       error,
     );
     throw new Error(
-      `Storybook source of truth "${sourceOfTruth.name}" is not responsive or index.json is missing. Please ensure its Storybook is running.`,
+      `Storybook target "${target.name}" is not responsive or index.json is missing. Please ensure its Storybook is running.`,
     );
   }
   return stories;
 }
 
-/**
- * Fetches just the set of story ids a target's own Storybook actually has —
- * used to skip a comparison up front rather than let it burn the full
- * per-test timeout navigating to a story id the target doesn't implement
- * yet. A target with a partially-built component set (a fresh adapter with
- * a handful of real components and many still-stub ones, for example) is
- * the normal case, not an error, so a failed/empty fetch here degrades to
- * "assume nothing exists yet" (every story against this target gets
- * skipped) rather than throwing — unlike `fetchStories` above, where the
- * source of truth being unreachable really is fatal to the whole run.
- */
-async function fetchTargetStoryIds(target: AdapterTarget): Promise<Set<string>> {
-  try {
-    const response = await fetch(`${target.url}/index.json`);
-    if (!response.ok) {
-      console.warn(
-        `Could not load Storybook index from target "${target.name}" (${response.status} ${response.statusText}) — every story will be reported as skipped for this target.`,
-      );
-      return new Set();
+/** Resolves the diff threshold for `storyId`: the longest (most specific)
+ * `storyThresholds` key matching by prefix, falling back to
+ * `diffThresholdPixels` when nothing matches. */
+function resolveThreshold(
+  storyId: string,
+  storyThresholds: Record<string, number>,
+  diffThresholdPixels: number,
+): number {
+  let bestMatch: string | undefined;
+  for (const prefix of Object.keys(storyThresholds)) {
+    if (
+      matchesPrefix(storyId, prefix) &&
+      (!bestMatch || prefix.length > bestMatch.length)
+    ) {
+      bestMatch = prefix;
     }
-    const data = (await response.json()) as any;
-    const entries = data.entries || {};
-    const ids = Object.values(entries)
-      .filter((entry: any) => entry.type === "story")
-      .map((entry: any) => entry.id as string);
-    return new Set(ids);
-  } catch (error) {
-    console.warn(
-      `Could not load Storybook index from target "${target.name}" — every story will be reported as skipped for this target.`,
-      error,
-    );
-    return new Set();
   }
+  return bestMatch !== undefined
+    ? storyThresholds[bestMatch]!
+    : diffThresholdPixels;
 }
 
 /**
- * Defines a Playwright suite that diffs every target in `config.targets`
- * against `config.targets`' single `sourceOfTruth` entry, story by story.
- * Call this with a top-level `await` from a Playwright `*.spec.ts` file — it
- * calls `test.describe` at module scope, so it must run inside Playwright's
- * test runner during test-graph compilation.
+ * Defines a Playwright suite that golden-image-tests every story in
+ * `config`'s own target (the one target in `config.targets` not marked
+ * `sourceOfTruth`). Call this with a top-level `await` from a Playwright
+ * `*.spec.ts` file — it calls `test.describe` at module scope, so it must
+ * run inside Playwright's test runner during test-graph compilation.
+ *
+ * Two independent checks per story, neither of which boots the
+ * source-of-truth adapter's own Storybook — the divergence check below
+ * compares stored golden files, not live pages:
+ *
+ * 1. **Own-drift (hard fail):** this run's live render vs this project's own
+ *    stored `test/golden/<story-id>.png`. No golden yet for a story is not a
+ *    failure — one is captured from this run instead (same as
+ *    `--update-golden`, scoped to just that story).
+ * 2. **Source-of-truth divergence (soft flag, never fails the run):** this
+ *    project's own golden vs the source-of-truth's golden (`config`'s
+ *    `sourceOfTruthGolden`). Skipped entirely when
+ *    `config.isSourceOfTruthAdapter` is true — the source-of-truth adapter
+ *    has nothing above it to diverge from — and skipped per-story when
+ *    neither side has a baseline yet. A once-flagged divergence stays quiet
+ *    after `--approve-divergence`, until the source of truth's own golden
+ *    changes again.
  */
 export async function runVisualRegression(
   config: AdapterTesterConfig,
 ): Promise<void> {
-  const sourceOfTruth = getSourceOfTruth(config);
-  const targets = config.targets.filter((target) => !target.sourceOfTruth);
+  const ownTarget = config.isSourceOfTruthAdapter
+    ? config.targets[0]
+    : config.targets.find((target) => !target.sourceOfTruth);
+  if (!ownTarget) {
+    throw new Error(
+      "adapter-tester config has no non-sourceOfTruth target to run the golden check against.",
+    );
+  }
   const excludeTitlePrefixes =
     config.excludeTitlePrefixes ?? DEFAULT_EXCLUDE_TITLE_PREFIXES;
-  const relaxedThresholdStoryIds = config.relaxedThresholdStoryIds ?? [];
-  const relaxedThresholdPixels = config.relaxedThresholdPixels;
+  const excludeStoryIds = config.excludeStoryIds ?? [];
+  const storyThresholds = config.storyThresholds ?? {};
+  const goldenDir = config.goldenDir;
+  const goldenMode = config.goldenMode;
 
-  // Fetched once at test-graph compilation time and shared by every target's
-  // describe block below.
-  const stories = await fetchStories(sourceOfTruth, excludeTitlePrefixes);
+  const stories = await fetchStories(
+    ownTarget,
+    excludeTitlePrefixes,
+    excludeStoryIds,
+  );
+  const manifest = loadManifest(goldenDir);
 
-  // One index fetch per target, not per story — a fresh/partially-built adapter is expected to
-  // be missing most of the source of truth's stories, and each miss should be a cheap, fast
-  // skip rather than a full-timeout navigation to a story id that will never resolve.
-  const targetStoryIds = new Map<string, Set<string>>();
-  for (const target of targets) {
-    targetStoryIds.set(target.name, await fetchTargetStoryIds(target));
-  }
+  const sourceOfTruthGolden =
+    config.isSourceOfTruthAdapter || !config.sourceOfTruthGolden
+      ? null
+      : await resolveSourceOfTruthGolden(config.sourceOfTruthGolden);
 
-  for (const target of targets) {
-    const storyIds = targetStoryIds.get(target.name) ?? new Set<string>();
-    test.describe(`${sourceOfTruth.name} vs ${target.name} — Dynamic Visual Regression Suite`, () => {
-      for (const story of stories) {
-        test(`Visual regression for: ${story.title} - ${story.name} (${story.id})`, async ({
-          browser,
-        }, testInfo) => {
-          test.skip(
-            !storyIds.has(story.id),
-            `${target.name} has no story with id "${story.id}" yet — not yet implemented, not a failure.`,
+  test.describe(`${ownTarget.name} — Golden Image Visual Regression`, () => {
+    for (const story of stories) {
+      test(`Golden regression for: ${story.title} - ${story.name} (${story.id})`, async ({
+        browser,
+      }, testInfo) => {
+        const page = await browser.newPage();
+        await page.setViewportSize({ width: 800, height: 600 });
+        await page.goto(
+          `${ownTarget.url}/iframe.html?id=${story.id}&viewMode=story`,
+          { waitUntil: "networkidle" },
+        );
+        await page.waitForSelector("#storybook-root");
+        await page.waitForTimeout(300);
+        const liveBuffer = await page.screenshot();
+
+        const imagePath = goldenImagePath(goldenDir, story.id);
+        const entry = manifest[story.id];
+        const capturingNewGolden =
+          goldenMode !== "check" || !entry || !existsSync(imagePath);
+
+        if (capturingNewGolden) {
+          saveGoldenImage(goldenDir, story.id, liveBuffer);
+          manifest[story.id] = entry?.sourceOfTruthCreatedAt
+            ? {
+                createdAt: new Date().toISOString(),
+                sourceOfTruthCreatedAt: entry.sourceOfTruthCreatedAt,
+              }
+            : { createdAt: new Date().toISOString() };
+          if (!entry) {
+            testInfo.annotations.push({
+              type: "golden-created",
+              description: `No golden existed yet for "${story.id}" — captured one from this run.`,
+            });
+          }
+        } else {
+          const goldenBuffer = readFileSync(imagePath);
+          const diffPixels = diffPngBuffers(liveBuffer, goldenBuffer);
+          await testInfo.attach("Live vs Golden Diff", {
+            body: `${diffPixels} mismatched pixels`,
+            contentType: "text/plain",
+          });
+          const threshold = resolveThreshold(
+            story.id,
+            storyThresholds,
+            config.diffThresholdPixels,
           );
+          expect
+            .soft(
+              diffPixels,
+              `"${story.id}" has drifted from its own golden image`,
+            )
+            .toBeLessThan(threshold);
+        }
 
-          const sourcePage = await browser.newPage();
-          const targetPage = await browser.newPage();
+        // Guaranteed set by the branch above — either just captured, or
+        // already present since !capturingNewGolden implies `entry` existed.
+        const currentEntry = manifest[story.id]!;
 
-          await sourcePage.setViewportSize({ width: 800, height: 600 });
-          await targetPage.setViewportSize({ width: 800, height: 600 });
+        if (sourceOfTruthGolden) {
+          const sourceOfTruthEntry = sourceOfTruthGolden.manifest[story.id];
+          const sourceOfTruthImage = sourceOfTruthEntry
+            ? await sourceOfTruthGolden.readImage(story.id)
+            : null;
 
-          await Promise.all([
-            sourcePage.goto(
-              `${sourceOfTruth.url}/iframe.html?id=${story.id}&viewMode=story`,
-              { waitUntil: "networkidle" },
-            ),
-            targetPage.goto(
-              `${target.url}/iframe.html?id=${story.id}&viewMode=story`,
-              { waitUntil: "networkidle" },
-            ),
-          ]);
-
-          await Promise.all([
-            sourcePage.waitForSelector("#storybook-root"),
-            targetPage.waitForSelector("#storybook-root"),
-          ]);
-
-          await Promise.all([
-            sourcePage.waitForTimeout(300),
-            targetPage.waitForTimeout(300),
-          ]);
-
-          // 1. EXTRACT DOM STRUCTURE AND STYLES
-          const extractFn = (stylesToCapture: string[]) => {
-            function crawl(el: Element): any {
-              const data: any = {
-                tag: el.tagName.toLowerCase(),
-                styles: {},
-                children: [],
+          if (sourceOfTruthEntry && sourceOfTruthImage) {
+            if (goldenMode === "approve-divergence") {
+              manifest[story.id] = {
+                ...currentEntry,
+                sourceOfTruthCreatedAt: sourceOfTruthEntry.createdAt,
               };
-              const computed = window.getComputedStyle(el);
-              for (const prop of stylesToCapture) {
-                data.styles[prop] = computed.getPropertyValue(prop);
+            } else {
+              const ownImage = readFileSync(imagePath);
+              const diffPixels = diffPngBuffers(ownImage, sourceOfTruthImage);
+              const approvedAt = currentEntry.sourceOfTruthCreatedAt;
+              const isKnownDivergence =
+                diffPixels === 0 ||
+                (approvedAt !== undefined &&
+                  approvedAt >= sourceOfTruthEntry.createdAt);
+              if (!isKnownDivergence) {
+                testInfo.annotations.push({
+                  type: "source-of-truth-divergence",
+                  description: `"${story.id}" differs from the source of truth's golden and hasn't been reviewed — run with --approve-divergence if this is intentional, or fix the adapter styling.`,
+                });
               }
-              for (const child of Array.from(el.children)) {
-                data.children.push(crawl(child));
-              }
-              return data;
             }
-            const root = document.querySelector("#storybook-root");
-            return root ? crawl(root) : null;
-          };
+          }
+        }
 
-          const sourceDOM = await sourcePage.evaluate(
-            extractFn,
-            COMMON_STYLES_TO_CAPTURE,
-          );
-          const targetDOM = await targetPage.evaluate(
-            extractFn,
-            COMMON_STYLES_TO_CAPTURE,
-          );
-
-          await testInfo.attach(`${sourceOfTruth.name} DOM Tree JSON`, {
-            body: JSON.stringify(sourceDOM, null, 2),
-            contentType: "application/json",
-          });
-          await testInfo.attach(`${target.name} DOM Tree JSON`, {
-            body: JSON.stringify(targetDOM, null, 2),
-            contentType: "application/json",
-          });
-
-          const sourceSlug = slug(sourceOfTruth.name);
-          const targetSlug = slug(target.name);
-          fs.writeFileSync(
-            `/tmp/${story.id}-${sourceSlug}DOM.json`,
-            JSON.stringify(sourceDOM, null, 2),
-          );
-          fs.writeFileSync(
-            `/tmp/${story.id}-${targetSlug}DOM.json`,
-            JSON.stringify(targetDOM, null, 2),
-          );
-
-          // 2. CAPTURE Headless Viewport Screenshots
-          const sourceBuffer = await sourcePage.screenshot();
-          const targetBuffer = await targetPage.screenshot();
-
-          // 3. PIXEL-BY-PIXEL COMPARISON
-          const img1 = PNG.sync.read(sourceBuffer);
-          const img2 = PNG.sync.read(targetBuffer);
-          const diff = new PNG({ width: img1.width, height: img1.height });
-
-          const diffPixels = pixelmatch(
-            img1.data,
-            img2.data,
-            diff.data,
-            img1.width,
-            img1.height,
-            { threshold: 0.1 },
-          );
-
-          fs.writeFileSync(`/tmp/${story.id}-diff.png`, PNG.sync.write(diff));
-          fs.writeFileSync(`/tmp/${story.id}-${sourceSlug}.png`, sourceBuffer);
-          fs.writeFileSync(`/tmp/${story.id}-${targetSlug}.png`, targetBuffer);
-
-          await testInfo.attach("Visual Diff Overlay", {
-            body: PNG.sync.write(diff),
-            contentType: "image/png",
-          });
-          await testInfo.attach(
-            `${sourceOfTruth.name} Screenshot (Source of Truth)`,
-            {
-              body: sourceBuffer,
-              contentType: "image/png",
-            },
-          );
-          await testInfo.attach(`${target.name} Screenshot (Target)`, {
-            body: targetBuffer,
-            contentType: "image/png",
-          });
-
-          const threshold =
-            relaxedThresholdPixels !== undefined &&
-            relaxedThresholdStoryIds.some((id) => story.id.startsWith(id))
-              ? relaxedThresholdPixels
-              : config.diffThresholdPixels;
-
-          // Perform soft assertions so failures are logged but other stories continue
-          expect.soft(diffPixels).toBeLessThan(threshold);
-        });
-      }
-    });
-  }
+        // Playwright runs this generated spec with workers: 1 specifically so
+        // this read-modify-write is never racing another story's test body.
+        saveManifest(goldenDir, manifest);
+      });
+    }
+  });
 }

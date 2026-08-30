@@ -34,7 +34,8 @@
     "dist",
     "public",
     "report-header.txt",
-    "src/adapter-tester.schema.json"
+    "src/adapter-tester.schema.json",
+    "src/golden/manifest.schema.json"
   ],
   "keywords": [
     "recursica",

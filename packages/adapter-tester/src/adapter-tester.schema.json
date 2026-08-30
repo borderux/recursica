@@ -89,25 +89,29 @@
         }
       ]
     },
+    "isSourceOfTruthAdapter": {
+      "type": "boolean",
+      "description": "True only for the source-of-truth adapter's own config (mantine-adapter). Skips `sourceOfTruth` entirely — there's nothing above it to diverge from — and runs the own-drift golden check standalone, against just this project's own Storybook. Defaults to false."
+    },
     "diffThresholdPixels": {
       "type": "number",
       "minimum": 0,
       "description": "Global visual diff threshold, in mismatched pixels, before a story is considered a failure. Defaults to 3500. AI agents must not modify this field — see AGENT.md."
     },
-    "relaxedThresholdStoryIds": {
-      "type": "array",
-      "items": { "type": "string" },
-      "description": "Story id prefixes that use `relaxedThresholdPixels` instead of the global `diffThresholdPixels`."
-    },
-    "relaxedThresholdPixels": {
-      "type": "number",
-      "minimum": 0,
-      "description": "Diff threshold applied to stories matching `relaxedThresholdStoryIds`."
+    "storyThresholds": {
+      "type": "object",
+      "additionalProperties": { "type": "number", "minimum": 0 },
+      "description": "Per-story diff threshold overrides, keyed by story id prefix (a story matches if its id equals the key or starts with it). Overrides `diffThresholdPixels` for matching stories. When more than one key matches a story, the longest (most specific) key wins."
     },
     "excludeTitlePrefixes": {
       "type": "array",
       "items": { "type": "string" },
       "description": "Storybook title prefixes to exclude from comparison, in addition to the built-in denylist (`Theme/*`, `Tokens/*`, `Introduction`)."
+    },
+    "excludeStoryIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Story id prefixes to skip entirely — no own-drift check, no divergence check, no golden captured. For excluding individual stories that don't have a cross-adapter counterpart; use `excludeTitlePrefixes` to drop a whole title instead."
     }
   }
 }

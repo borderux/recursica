@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/borderux/recursica/tree/main/packages/adapter-tester/src/golden/manifest.schema.json",
+  "title": "test/golden/manifest.json",
+  "description": "Tracks golden (baseline) image metadata for @recursica/adapter-tester's golden-image visual regression checks. One manifest lives alongside its adapter's test/golden/<story-id>.png files, keyed by story id.",
+  "type": "object",
+  "additionalProperties": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["createdAt"],
+    "properties": {
+      "createdAt": {
+        "type": "string",
+        "format": "date-time",
+        "description": "When this story's own golden PNG was last captured, via --update-golden, --approve-divergence, or first-run auto-create."
+      },
+      "sourceOfTruthCreatedAt": {
+        "type": "string",
+        "format": "date-time",
+        "description": "The source-of-truth adapter's (mantine) manifest `createdAt` for this story at the time this adapter's divergence from it was last reviewed via --approve-divergence. Omitted on the source-of-truth adapter's own manifest, and omitted here until the first approval. If mantine's current `createdAt` for this story is newer than this value, the divergence is flagged again for re-review."
+      }
+    }
+  }
+}
