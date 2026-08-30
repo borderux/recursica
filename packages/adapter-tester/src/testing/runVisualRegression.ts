@@ -90,22 +90,23 @@ function resolveThreshold(
  * `*.spec.ts` file — it calls `test.describe` at module scope, so it must
  * run inside Playwright's test runner during test-graph compilation.
  *
- * Two independent checks per story, neither of which boots the
- * source-of-truth adapter's own Storybook — the divergence check below
- * compares stored golden files, not live pages:
+ * Two independent checks per story, gated by `config.checkMode`, neither of
+ * which boots the source-of-truth adapter's own Storybook — the divergence
+ * check below compares stored golden files, not live pages:
  *
- * 1. **Own-drift (hard fail):** this run's live render vs this project's own
- *    stored `test/golden/<story-id>.png`. No golden yet for a story is not a
- *    failure — one is captured from this run instead (same as
- *    `--update-golden`, scoped to just that story).
- * 2. **Source-of-truth divergence (soft flag, never fails the run):** this
- *    project's own golden vs the source-of-truth's golden (`config`'s
- *    `sourceOfTruthGolden`). Skipped entirely when
- *    `config.isSourceOfTruthAdapter` is true — the source-of-truth adapter
- *    has nothing above it to diverge from — and skipped per-story when
- *    neither side has a baseline yet. A once-flagged divergence stays quiet
- *    after `--approve-divergence`, until the source of truth's own golden
- *    changes again.
+ * 1. **Own-drift (`checkMode: "own"`, the default; hard fail):** this run's
+ *    live render vs this project's own stored `test/golden/<story-id>.png`.
+ *    No golden yet for a story is not a failure — one is captured from this
+ *    run instead (same as `--update-golden`, scoped to just that story), in
+ *    either mode.
+ * 2. **Source-of-truth divergence (`checkMode: "divergence"`; soft flag,
+ *    never fails the run):** this project's own golden vs the
+ *    source-of-truth's golden (`config`'s `sourceOfTruthGolden`). Skipped
+ *    entirely when `config.isSourceOfTruthAdapter` is true — the
+ *    source-of-truth adapter has nothing above it to diverge from — and
+ *    skipped per-story when neither side has a baseline yet. A
+ *    once-flagged divergence stays quiet after `--approve-divergence`,
+ *    until the source of truth's own golden changes again.
  */
 export async function runVisualRegression(
   config: AdapterTesterConfig,
@@ -120,10 +121,18 @@ export async function runVisualRegression(
   }
   const excludeTitlePrefixes =
     config.excludeTitlePrefixes ?? DEFAULT_EXCLUDE_TITLE_PREFIXES;
-  const excludeStoryIds = config.excludeStoryIds ?? [];
-  const storyThresholds = config.storyThresholds ?? {};
+  const storyOverrides = config.stories ?? {};
+  const excludeStoryIds = Object.keys(storyOverrides).filter(
+    (id) => storyOverrides[id]!.exclude,
+  );
+  const storyThresholds = Object.fromEntries(
+    Object.entries(storyOverrides)
+      .filter(([, override]) => override.threshold !== undefined)
+      .map(([id, override]) => [id, override.threshold!]),
+  );
   const goldenDir = config.goldenDir;
   const goldenMode = config.goldenMode;
+  const checkMode = config.checkMode;
 
   const stories = await fetchStories(
     ownTarget,
@@ -133,11 +142,18 @@ export async function runVisualRegression(
   const manifest = loadManifest(goldenDir);
 
   const sourceOfTruthGolden =
-    config.isSourceOfTruthAdapter || !config.sourceOfTruthGolden
+    checkMode !== "divergence" ||
+    config.isSourceOfTruthAdapter ||
+    !config.sourceOfTruthGolden
       ? null
       : await resolveSourceOfTruthGolden(config.sourceOfTruthGolden);
 
-  test.describe(`${ownTarget.name} — Golden Image Visual Regression`, () => {
+  const suiteLabel =
+    checkMode === "divergence"
+      ? "Source-of-Truth Divergence Check"
+      : "Own-Drift Golden Image Check";
+
+  test.describe(`${ownTarget.name} — ${suiteLabel}`, () => {
     for (const story of stories) {
       test(`Golden regression for: ${story.title} - ${story.name} (${story.id})`, async ({
         browser,
@@ -171,7 +187,7 @@ export async function runVisualRegression(
               description: `No golden existed yet for "${story.id}" — captured one from this run.`,
             });
           }
-        } else {
+        } else if (checkMode === "own") {
           const goldenBuffer = readFileSync(imagePath);
           const diffPixels = diffPngBuffers(liveBuffer, goldenBuffer);
           await testInfo.attach("Live vs Golden Diff", {

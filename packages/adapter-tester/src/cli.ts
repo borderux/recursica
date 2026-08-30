@@ -15,16 +15,48 @@ import type { HarnessWebServerConfig } from "./harness/mantineSourceOfTruth.js";
 const distDir = dirname(fileURLToPath(import.meta.url));
 const testingEntry = pathToFileURL(join(distDir, "testing.js")).href;
 
-const cwd = process.cwd();
-const { engineConfig, webServers } = resolveConfig(cwd);
+// `--source-of-truth-version <value>` takes a value, unlike every other own
+// flag below — pulled out of argv first so the boolean flags/passthrough
+// logic never has to know it exists.
+const args = process.argv.slice(2);
+let sourceOfTruthVersion: string | undefined;
+const sourceOfTruthVersionFlagIndex = args.indexOf("--source-of-truth-version");
+if (sourceOfTruthVersionFlagIndex !== -1) {
+  const value = args[sourceOfTruthVersionFlagIndex + 1];
+  if (value === undefined || value.startsWith("--")) {
+    throw new Error(
+      "--source-of-truth-version requires a value, e.g. --source-of-truth-version 0.53.0",
+    );
+  }
+  sourceOfTruthVersion = value;
+  args.splice(sourceOfTruthVersionFlagIndex, 2);
+}
 
-if (process.argv.includes("--update-golden")) {
+const cwd = process.cwd();
+const { engineConfig, webServers } = resolveConfig(cwd, {
+  mantineAdapterVersion: sourceOfTruthVersion,
+});
+
+if (args.includes("--update-golden")) {
   engineConfig.goldenMode = "update-golden";
-} else if (process.argv.includes("--approve-divergence")) {
+} else if (args.includes("--approve-divergence")) {
   engineConfig.goldenMode = "approve-divergence";
 }
 
-if (process.argv.includes("--dry-run")) {
+if (args.includes("--divergence-only")) {
+  if (engineConfig.isSourceOfTruthAdapter) {
+    throw new Error(
+      "--divergence-only has nothing to diverge from — isSourceOfTruthAdapter is true in this project's adapter-tester.config.json.",
+    );
+  }
+  engineConfig.checkMode = "divergence";
+} else if (engineConfig.goldenMode === "approve-divergence") {
+  throw new Error(
+    "--approve-divergence only makes sense with --divergence-only — there's nothing to approve without the divergence check running.",
+  );
+}
+
+if (args.includes("--dry-run")) {
   console.log(JSON.stringify({ engineConfig, webServers }, null, 2));
   process.exit(0);
 }
@@ -32,19 +64,18 @@ if (process.argv.includes("--dry-run")) {
 // Any arg besides our own flags is passed straight through to `playwright
 // test` — e.g. `npm run adapter-tester:automated -- --grep "Toast"` to scope
 // a run to matching stories, instead of every invocation running the full
-// suite. `--update-golden`/`--approve-divergence` are consumed above, not
-// forwarded — Playwright itself doesn't know about them.
+// suite. Our own flags are consumed above, not forwarded — Playwright itself
+// doesn't know about them.
 const OWN_FLAGS = new Set([
   "--dry-run",
   "--serve",
   "--update-golden",
   "--approve-divergence",
+  "--divergence-only",
 ]);
-const passthroughArgs = process.argv
-  .slice(2)
-  .filter((arg) => !OWN_FLAGS.has(arg));
+const passthroughArgs = args.filter((arg) => !OWN_FLAGS.has(arg));
 
-if (process.argv.includes("--serve")) {
+if (args.includes("--serve")) {
   if (engineConfig.isSourceOfTruthAdapter) {
     throw new Error(
       "Dev Mode (--serve) has nothing to sync this project's Storybook against — isSourceOfTruthAdapter is true in this project's adapter-tester.config.json.",
