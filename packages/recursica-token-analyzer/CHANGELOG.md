@@ -1,5 +1,11 @@
 # @recursica/token-analyzer
 
+## 1.6.0
+
+### Minor Changes
+
+- 786d870: Version bumped
+
 ## 1.5.0
 
 ### Minor Changes

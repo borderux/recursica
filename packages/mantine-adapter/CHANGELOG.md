@@ -1,5 +1,11 @@
 # @recursica/mantine-adapter
 
+## 0.53.0
+
+### Minor Changes
+
+- 786d870: Version bumped
+
 ## 0.52.0
 
 ### Minor Changes
