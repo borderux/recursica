@@ -30,9 +30,7 @@ export default defineConfig(({ mode }) => {
       postcss: {
         plugins: [
           recursicaVars({
-            cssPath: require.resolve(
-              "@recursica/official-release/recursica_variables_scoped.css",
-            ),
+            cssPath: require.resolve("./recursica_variables_scoped.css"),
             strict: isLibrary,
           }),
         ],
