@@ -1,5 +1,11 @@
 # @recursica/mui-adapter
 
+## 0.37.0
+
+### Minor Changes
+
+- 786d870: Version bumped
+
 ## 0.36.0
 
 ### Minor Changes
