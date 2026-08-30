@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { FormControlLayout } from "./FormControlLayout";
 import { Switch } from "../Switch/Switch";
+import { Label } from "../Label/Label";
 
 const meta: Meta<typeof FormControlLayout> = {
   title: "UI-Kit/FormControlLayout",
@@ -78,5 +79,40 @@ export const SideBySideLayout: Story = {
     formLayout: "side-by-side",
     labelSize: "default",
     children: <Switch label="Offset switch aligning with grid" />,
+  },
+};
+
+/**
+ * A real Label (not a placeholder) in a stacked layout, at `labelSize="default"`. Even
+ * though the label sits above the field rather than beside it, its own column still caps
+ * to the design system's stacked-layout width (224px) rather than stretching to the full
+ * container — long label text wraps instead of spanning edge-to-edge.
+ */
+export const StackedLayoutWithLabelDefault: Story = {
+  args: {
+    formLayout: "stacked",
+    labelSize: "default",
+    leftSection: (
+      <Label labelSize="default">
+        A fairly long label to show the stacked-layout width cap in action
+      </Label>
+    ),
+    children: <Switch label="Input area content" />,
+  },
+};
+
+/**
+ * Same as above, at `labelSize="small"` — the stacked-layout width cap is narrower (80px).
+ */
+export const StackedLayoutWithLabelSmall: Story = {
+  args: {
+    formLayout: "stacked",
+    labelSize: "small",
+    leftSection: (
+      <Label labelSize="small">
+        A fairly long label to show the stacked-layout width cap in action
+      </Label>
+    ),
+    children: <Switch label="Input area content" />,
   },
 };

@@ -23,7 +23,7 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 65535,
-          "description": "Port the target's Storybook is served on. Auto-detected from this project's own `scripts.storybook` (a `-p <port>`/`--port <port>` flag) when omitted, falling back to Storybook's own default of 6006."
+          "description": "First-guess port only, not authoritative — the real port is auto-detected from this Storybook's own startup output, since Storybook silently falls back to an OS-assigned port whenever this one is taken. Auto-detected from this project's own `scripts.storybook` (a `-p <port>`/`--port <port>` flag) when omitted, falling back to 6006."
         },
         "command": {
           "type": "string",
@@ -48,7 +48,7 @@
               "type": "integer",
               "minimum": 1,
               "maximum": 65535,
-              "description": "Port the throwaway harness's Storybook is served on. Defaults to 6011."
+              "description": "First-guess port only, not authoritative — the real port is auto-detected from the throwaway harness's Storybook's own startup output."
             },
             "mantineAdapterVersion": {
               "type": "string",
@@ -64,7 +64,7 @@
           "type": "object",
           "additionalProperties": false,
           "description": "Non-standard mode: points at an already-addressable Storybook — e.g. a sibling workspace package's own Storybook inside this monorepo.",
-          "required": ["type", "port"],
+          "required": ["type"],
           "properties": {
             "type": { "const": "url" },
             "name": {
@@ -75,7 +75,7 @@
               "type": "integer",
               "minimum": 1,
               "maximum": 65535,
-              "description": "Port the source-of-truth Storybook is served on."
+              "description": "First-guess port only, not authoritative — the real port is auto-detected from the source-of-truth Storybook's own startup output. Defaults to 6011."
             },
             "command": {
               "type": "string",
@@ -93,10 +93,17 @@
       "type": "boolean",
       "description": "True only for the source-of-truth adapter's own config (mantine-adapter). Skips `sourceOfTruth` entirely — there's nothing above it to diverge from — and runs the own-drift golden check standalone, against just this project's own Storybook. Defaults to false."
     },
-    "diffThresholdPixels": {
+    "goldenThresholdPixels": {
       "type": "number",
       "minimum": 0,
-      "description": "Global visual diff threshold, in mismatched pixels, before a story is considered a failure. Defaults to 3500. AI agents must not modify this field — see AGENT.md."
+      "description": "Global visual diff threshold for the own-drift check (this project's live render vs. its own committed `test/golden/` image), in mismatched pixels, before a story is considered a failure. Same library/component on both sides, so this should stay tight. Defaults to 10. AI agents must not modify this field — see AGENT.md.",
+      "default": 10
+    },
+    "sourceOfTruthThresholdPixels": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Global visual diff threshold for the source-of-truth divergence check (this project's golden vs. the source-of-truth adapter's golden), in mismatched pixels, before a difference is flagged. Comparing across two different component libraries has legitimate structural variation (native control widgets, font rendering, etc.), so this is expected to be set much higher than `goldenThresholdPixels`. Ignored on the source-of-truth adapter's own config (`isSourceOfTruthAdapter: true`), which has no divergence check. Defaults to 3500. AI agents must not modify this field — see AGENT.md.",
+      "default": 3500
     },
     "stories": {
       "type": "object",
@@ -104,10 +111,15 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "threshold": {
+          "goldenThreshold": {
             "type": "number",
             "minimum": 0,
-            "description": "Diff threshold override for matching stories, in mismatched pixels. Overrides `diffThresholdPixels`."
+            "description": "Diff threshold override for matching stories' own-drift check, in mismatched pixels. Overrides `goldenThresholdPixels`."
+          },
+          "sourceOfTruthThreshold": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Diff threshold override for matching stories' source-of-truth divergence check, in mismatched pixels. Overrides `sourceOfTruthThresholdPixels`."
           },
           "exclude": {
             "type": "boolean",

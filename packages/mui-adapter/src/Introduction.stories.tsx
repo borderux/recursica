@@ -6,7 +6,8 @@ import { OverStylingInfo } from "./OverStyling";
 const DOCS_URL = "https://recursica.com";
 const FORGE_URL = "https://forge.recursica.com";
 
-import { Container, Box, Group, Heading, Text, Link } from "./components";
+import { Box } from "@mui/material";
+import { Container, Group, Heading, Text, Link } from "./components";
 
 function IntroductionContent() {
   return (

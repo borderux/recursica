@@ -1,12 +1,12 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { readFileSync } from "node:fs";
-import net from "node:net";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import express from "express";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import type { AdapterTesterConfig } from "./config.js";
 import type { HarnessWebServerConfig } from "./harness/mantineSourceOfTruth.js";
+import { launchAndDetectStorybook, toLaunchTarget } from "./portDiscovery.js";
 
 /**
  * Interactive Dev Mode: a synced, side-by-side browser view of this
@@ -22,69 +22,6 @@ import type { HarnessWebServerConfig } from "./harness/mantineSourceOfTruth.js";
  */
 
 const distDir = dirname(fileURLToPath(import.meta.url));
-
-function isPortActive(port: number): Promise<boolean> {
-  return new Promise((resolve) => {
-    const socket = new net.Socket();
-    socket.setTimeout(200);
-    socket.once("connect", () => {
-      socket.destroy();
-      resolve(true);
-    });
-    socket.once("timeout", () => {
-      socket.destroy();
-      resolve(false);
-    });
-    socket.once("error", () => {
-      socket.destroy();
-      resolve(false);
-    });
-    socket.connect(port, "127.0.0.1");
-  });
-}
-
-async function waitForPort(port: number, timeoutMs = 60000): Promise<boolean> {
-  const start = Date.now();
-  while (Date.now() - start < timeoutMs) {
-    if (await isPortActive(port)) return true;
-    await new Promise((resolve) => setTimeout(resolve, 500));
-  }
-  return false;
-}
-
-function portOf(url: string): number {
-  return Number(new URL(url).port);
-}
-
-function launchStorybook(
-  name: string,
-  server: HarnessWebServerConfig,
-): ChildProcess {
-  console.log(
-    `[Dev Launcher] Port ${server.port} is inactive. Launching Storybook for ${name}...`,
-  );
-  const child = spawn(server.command, {
-    cwd: server.cwd,
-    stdio: "pipe",
-    shell: true,
-  });
-
-  child.stdout?.on("data", (data: Buffer) => {
-    for (const line of data.toString().split("\n")) {
-      if (line.trim()) console.log(`[${name} SB] ${line.trim()}`);
-    }
-  });
-  child.stderr?.on("data", (data: Buffer) => {
-    for (const line of data.toString().split("\n")) {
-      if (line.trim()) console.error(`[${name} SB ERROR] ${line.trim()}`);
-    }
-  });
-  child.on("error", (err) => {
-    console.error(`[${name} SB ERROR] Failed to start process:`, err);
-  });
-
-  return child;
-}
 
 function openBrowser(url: string): void {
   const startCmd =
@@ -107,11 +44,11 @@ export interface DevServerOptions {
   port?: number;
 }
 
-export function startDevServer(
+export async function startDevServer(
   engineConfig: AdapterTesterConfig,
   webServers: HarnessWebServerConfig[],
   options: DevServerOptions = {},
-): void {
+): Promise<void> {
   const [sourceOfTruth, target] = engineConfig.targets;
   const [sourceOfTruthServer, targetServer] = webServers;
   if (
@@ -127,8 +64,25 @@ export function startDevServer(
   }
 
   const devPort = options.port ?? 6010;
-  const sourceOfTruthPort = portOf(sourceOfTruth.url);
-  const targetPort = portOf(target.url);
+
+  // Neither Storybook is pinned to a specific port — each one silently
+  // falls back to an OS-assigned port whenever its default/configured one is
+  // taken, so the real port is only known once it reports it (see
+  // portDiscovery.ts). Booted concurrently since neither depends on the other.
+  console.log(
+    `[Dev Launcher] Resolving ${sourceOfTruth.name} and ${target.name} Storybooks...`,
+  );
+  const [sourceOfTruthRunning, targetRunning] = await Promise.all([
+    launchAndDetectStorybook(
+      toLaunchTarget(sourceOfTruth.name, sourceOfTruthServer),
+    ),
+    launchAndDetectStorybook(toLaunchTarget(target.name, targetServer)),
+  ]);
+  console.log(`[Dev Launcher] Both Storybooks are active and responsive!`);
+
+  const spawned = [sourceOfTruthRunning.process, targetRunning.process].filter(
+    (child): child is ChildProcess => child !== null,
+  );
 
   const app = express();
   const publicDir = join(distDir, "../public");
@@ -147,7 +101,7 @@ export function startDevServer(
       `<head>\n  <script>window.__ADAPTER_TESTER__ = ${JSON.stringify({
         ownName: target.name,
         sourceOfTruthName: sourceOfTruth.name,
-        sourceOfTruthPort,
+        sourceOfTruthPort: sourceOfTruthRunning.port,
       })};</script>`,
     );
     res.send(html);
@@ -168,13 +122,12 @@ export function startDevServer(
   app.use(
     "/",
     createProxyMiddleware({
-      target: `http://localhost:${targetPort}`,
+      target: targetRunning.url,
       changeOrigin: true,
       ws: true,
     }),
   );
 
-  const spawned: ChildProcess[] = [];
   let cleaningUp = false;
   const cleanup = () => {
     if (cleaningUp) return;
@@ -188,52 +141,13 @@ export function startDevServer(
   process.on("SIGINT", cleanup);
   process.on("SIGTERM", cleanup);
 
-  app.listen(devPort, async () => {
+  app.listen(devPort, () => {
     console.log(`
 ====================================================
 🚀 Adapter Dev Mode proxy running at:
    http://localhost:${devPort}
 ====================================================
 `);
-
-    const [sourceOfTruthRunning, targetRunning] = await Promise.all([
-      isPortActive(sourceOfTruthPort),
-      isPortActive(targetPort),
-    ]);
-
-    if (sourceOfTruthRunning) {
-      console.log(
-        `[Dev Launcher] ${sourceOfTruth.name} is already running on port ${sourceOfTruthPort}.`,
-      );
-    } else {
-      spawned.push(launchStorybook(sourceOfTruth.name, sourceOfTruthServer));
-    }
-    if (targetRunning) {
-      console.log(
-        `[Dev Launcher] ${target.name} is already running on port ${targetPort}.`,
-      );
-    } else {
-      spawned.push(launchStorybook(target.name, targetServer));
-    }
-
-    const waits: Promise<boolean>[] = [];
-    if (!sourceOfTruthRunning) waits.push(waitForPort(sourceOfTruthPort));
-    if (!targetRunning) waits.push(waitForPort(targetPort));
-
-    if (waits.length > 0) {
-      console.log(`[Dev Launcher] Waiting for Storybooks to be responsive...`);
-      const results = await Promise.all(waits);
-      if (results.every(Boolean)) {
-        console.log(`[Dev Launcher] All Storybooks are active and responsive!`);
-      } else {
-        console.warn(
-          `[Dev Launcher] Warning: some Storybooks timed out during startup, but proceeding...`,
-        );
-      }
-    } else {
-      console.log(`[Dev Launcher] Both Storybooks already active.`);
-    }
-
     openBrowser(`http://localhost:${devPort}`);
   });
 }

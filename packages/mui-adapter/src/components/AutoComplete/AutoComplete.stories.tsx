@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Autocomplete as AutoComplete } from "./Autocomplete";
+import { AutoComplete } from "./AutoComplete";
 import { formControlArgTypes } from "../../../.storybook/commonArgTypes";
 import { renderRichOptionContent } from "../../utils/renderRichOption";
-import styles from "./Autocomplete.module.css";
+import styles from "./AutoComplete.module.css";
 
 const meta: Meta<typeof AutoComplete> = {
   title: "UI-Kit/AutoComplete",

@@ -16,12 +16,15 @@ const DEFAULT_STORYBOOK_COMMAND = "npm run storybook";
 const DEFAULT_STORYBOOK_PORT = 6006;
 const DEFAULT_SOURCE_OF_TRUTH_PORT = 6011;
 const DEFAULT_SOURCE_OF_TRUTH_NAME = "Mantine";
-const DEFAULT_DIFF_THRESHOLD_PIXELS = 3500;
+const DEFAULT_GOLDEN_THRESHOLD_PIXELS = 10;
+const DEFAULT_SOURCE_OF_TRUTH_THRESHOLD_PIXELS = 3500;
 
 interface StorybookTargetFileConfig {
-  /** Port the target's Storybook is served on. Auto-detected from this
-   * project's own `scripts.storybook` (a `-p <port>`/`--port <port>` flag)
-   * when omitted, falling back to Storybook's own default of 6006. */
+  /** First-guess port only, not authoritative — the real port is
+   * auto-detected from this Storybook's own startup output, since Storybook
+   * silently falls back to an OS-assigned port whenever this one is taken.
+   * Auto-detected from this project's own `scripts.storybook` (a `-p
+   * <port>`/`--port <port>` flag) when omitted, falling back to 6006. */
   port?: number;
   /** Command that boots the target's Storybook. Defaults to `npm run storybook`. */
   command?: string;
@@ -33,6 +36,7 @@ interface MantineHarnessSourceOfTruthFileConfig {
   /** Default mode: boots a throwaway harness that installs the published
    * `@recursica/mantine-adapter` from npm — no monorepo checkout required. */
   type?: "mantine-harness";
+  /** First-guess port only, not authoritative — see `HarnessWebServerConfig.port`. */
   port?: number;
   mantineAdapterVersion?: string;
   storybookTemplateVersion?: string;
@@ -43,7 +47,9 @@ interface UrlSourceOfTruthFileConfig {
    * sibling workspace package's own Storybook inside this monorepo. */
   type: "url";
   name?: string;
-  port: number;
+  /** First-guess port only, not authoritative — see `HarnessWebServerConfig.port`.
+   * Defaults to 6011. */
+  port?: number;
   command?: string;
   cwd?: string;
 }
@@ -58,7 +64,8 @@ export interface AdapterTesterFileConfig {
   name?: string;
   storybook?: StorybookTargetFileConfig;
   sourceOfTruth?: SourceOfTruthFileConfig;
-  diffThresholdPixels?: number;
+  goldenThresholdPixels?: number;
+  sourceOfTruthThresholdPixels?: number;
   stories?: Record<string, StoryOverride>;
   excludeTitlePrefixes?: string[];
   /**
@@ -152,12 +159,16 @@ export function resolveConfig(
     port: ownPort,
     cwd: ownCwd,
     reuseExistingServer: !process.env.CI,
+    cacheFile: join(cwd, ".adapter-tester", "last-port-own.json"),
     timeout: 120 * 1000,
   };
 
   const sharedEngineConfig = {
-    diffThresholdPixels:
-      file.diffThresholdPixels ?? DEFAULT_DIFF_THRESHOLD_PIXELS,
+    goldenThresholdPixels:
+      file.goldenThresholdPixels ?? DEFAULT_GOLDEN_THRESHOLD_PIXELS,
+    sourceOfTruthThresholdPixels:
+      file.sourceOfTruthThresholdPixels ??
+      DEFAULT_SOURCE_OF_TRUTH_THRESHOLD_PIXELS,
     stories: file.stories,
     excludeTitlePrefixes: file.excludeTitlePrefixes,
     // Keyed off `ownCwd`, not `cwd` — the project actually being tested, not
@@ -202,13 +213,14 @@ export function resolveConfig(
       );
     }
     sourceOfTruthName = sourceOfTruth.name ?? DEFAULT_SOURCE_OF_TRUTH_NAME;
-    sourceOfTruthPort = sourceOfTruth.port;
+    sourceOfTruthPort = sourceOfTruth.port ?? DEFAULT_SOURCE_OF_TRUTH_PORT;
     const sourceOfTruthCwd = resolve(cwd, sourceOfTruth.cwd ?? ".");
     sourceOfTruthWebServer = {
       command: sourceOfTruth.command ?? DEFAULT_STORYBOOK_COMMAND,
-      port: sourceOfTruth.port,
+      port: sourceOfTruthPort,
       cwd: sourceOfTruthCwd,
       reuseExistingServer: !process.env.CI,
+      cacheFile: join(cwd, ".adapter-tester", "last-port-source-of-truth.json"),
       timeout: 120 * 1000,
     };
     // Sibling package already checked out locally — read its golden files
