@@ -116,6 +116,30 @@ export interface VisualRegressionPlan {
   ) => Promise<void>;
 }
 
+/** Everything a generated Playwright spec needs to register the golden-image
+ * suite itself. Split out from the actual `test.describe`/`test` calls so
+ * those calls execute in the spec file that imports this, not in this
+ * library file — otherwise Playwright's HTML report groups every story under
+ * this file's own (sourcemapped) path instead of a stable spec name. */
+export interface VisualRegressionPlan {
+  /** `config`'s own (non-source-of-truth) target name, for the suite title. */
+  ownTargetName: string;
+  /** Suite title suffix describing which check mode is running. */
+  suiteLabel: string;
+  /** Stories to check, already filtered and sorted by id. */
+  stories: StorybookEntry[];
+  /** Golden-checks one story. Call this from inside a `test(story.id, ...)`
+   * body — safe to run concurrently across Playwright workers, since each
+   * call only ever reads/writes its own story's manifest entry (locked at
+   * the point it writes it back, so concurrent workers never race each
+   * other's entries — see `updateManifestEntry`). */
+  checkStory: (
+    story: StorybookEntry,
+    browser: Browser,
+    testInfo: TestInfo,
+  ) => Promise<void>;
+}
+
 /**
  * Resolves the golden-image plan for `config`'s own target (the one target
  * in `config.targets` not marked `sourceOfTruth`).
