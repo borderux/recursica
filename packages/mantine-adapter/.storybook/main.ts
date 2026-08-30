@@ -1,18 +1,18 @@
 import { createMainConfig } from "@recursica/storybook-template/main";
-import { createRequire } from "module";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 import { BLOCKED_STYLING_KEYS } from "../src/utils/filterStylingProps.ts";
 import type { PropItem } from "react-docgen-typescript";
 
-const require = createRequire(import.meta.url);
+const currentFilename = fileURLToPath(import.meta.url);
+const currentDirname = dirname(currentFilename);
 
 const config = createMainConfig({
   stories: ["../src/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
   basePath: "./",
   enableCORS: true,
   enablePostcssVars: true,
-  recursicaCSSPath: require.resolve(
-    "@recursica/official-release/recursica_variables_scoped.css",
-  ),
+  recursicaCSSPath: join(currentDirname, "../recursica_variables_scoped.css"),
   postCSSStrictMode: process.env.NODE_ENV === "production",
 });
 
