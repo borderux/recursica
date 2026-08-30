@@ -1,6 +1,6 @@
 # @recursica/token-analyzer
 
-A lightweight, blazing-fast CLI tool designed to enforce strict parity between Recursica design tokens and React adapter components (`@recursica/mantine-adapter`, `@recursica/mui-adapter`, etc.).
+A lightweight, blazing-fast CLI tool designed to enforce strict parity between Recursica design tokens and React adapter components.
 
 ## What it does
 

@@ -4,10 +4,15 @@
   "description": "CLI tool to analyze unused and missing CSS variables across adapter packages",
   "private": false,
   "bin": {
-    "analyze-tokens": "./bin/cli.js"
+    "analyze-tokens": "bin/cli.js"
   },
   "scripts": {
     "start": "node ./bin/cli.js"
   },
-  "author": "hi@borderux.com"
+  "author": "hi@borderux.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/borderux/recursica.git",
+    "directory": "packages/recursica-token-analyzer"
+  }
 }
