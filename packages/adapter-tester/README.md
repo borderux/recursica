@@ -74,6 +74,8 @@ You can modify this instructional header at any time by editing:
 
 The Dev Mode server fetches this file dynamically, so any changes you make to `report-header.txt` will instantly appear the next time you click **Full Report**—no restart required!
 
+Alternatively, set `reportHeader` in `adapter-tester.config.json` to override the text directly, without editing `report-header.txt`. When set, it takes precedence over the file.
+
 ---
 
 ## Automated Visual Tests

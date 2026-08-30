@@ -133,6 +133,10 @@
       "type": "array",
       "items": { "type": "string" },
       "description": "Storybook title prefixes to exclude from comparison, in addition to the built-in denylist (`Theme/*`, `Tokens/*`, `Introduction`)."
+    },
+    "reportHeader": {
+      "type": "string",
+      "description": "Overrides the AI report header text shown in Dev Mode's \"Full Report\" export. Defaults to the contents of `report-header.txt`."
     }
   }
 }

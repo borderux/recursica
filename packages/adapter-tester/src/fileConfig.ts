@@ -68,6 +68,9 @@ export interface AdapterTesterFileConfig {
   sourceOfTruthThresholdPixels?: number;
   stories?: Record<string, StoryOverride>;
   excludeTitlePrefixes?: string[];
+  /** Overrides the AI report header text shown in Dev Mode's "Full Report"
+   * export. Defaults to the contents of `report-header.txt`. */
+  reportHeader?: string;
   /**
    * True only for the source-of-truth adapter's own config (mantine-adapter).
    * Skips `sourceOfTruth` entirely — there's nothing above it to diverge
@@ -171,6 +174,7 @@ export function resolveConfig(
       DEFAULT_SOURCE_OF_TRUTH_THRESHOLD_PIXELS,
     stories: file.stories,
     excludeTitlePrefixes: file.excludeTitlePrefixes,
+    reportHeader: file.reportHeader,
     // Keyed off `ownCwd`, not `cwd` — the project actually being tested, not
     // wherever the config file happens to live. Matters whenever
     // `storybook.cwd` points at a sibling package: its goldens must resolve

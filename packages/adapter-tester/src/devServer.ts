@@ -108,7 +108,12 @@ export async function startDevServer(
   });
 
   // Serve the AI prompt header dynamically so it can be edited externally.
+  // `reportHeader` in adapter-tester.config.json overrides the file entirely.
   app.get("/report-header.txt", (req, res) => {
+    if (engineConfig.reportHeader !== undefined) {
+      res.type("text/plain").send(engineConfig.reportHeader);
+      return;
+    }
     try {
       res.type("text/plain").send(readFileSync(headerPath, "utf8"));
     } catch {

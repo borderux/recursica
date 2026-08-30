@@ -287,6 +287,9 @@ export async function resolveVisualRegressionPlan(
         { waitUntil: "networkidle" },
       );
       await page.waitForSelector("#storybook-root");
+      await page.addStyleTag({
+        content: `* { -webkit-font-smoothing: antialiased !important; -moz-osx-font-smoothing: grayscale !important; }`,
+      });
       await page.waitForTimeout(300);
       const liveBuffer = await page.screenshot();
 
