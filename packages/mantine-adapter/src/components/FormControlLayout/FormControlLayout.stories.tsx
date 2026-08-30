@@ -23,7 +23,7 @@ const meta: Meta<typeof FormControlLayout> = {
     },
     labelSize: {
       control: "radio",
-      options: ["default", "small", "md"],
+      options: ["default", "small"],
       description: "Dictates the physical width of the left column.",
     },
     children: {

@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/borderux/recursica/main/packages/adapter-tester/src/adapter-tester.schema.json",
   "sourceOfTruth": { "type": "url", "cwd": "../mantine-adapter", "port": 6011 },
   "goldenThresholdPixels": 10,
-  "sourceOfTruthThresholdPixels": 3500,
+  "sourceOfTruthThresholdPixels": 2500,
   "stories": {
     "ui-kit-loader--default": { "exclude": true },
     "ui-kit-loader--layer-two-oval": { "exclude": true }

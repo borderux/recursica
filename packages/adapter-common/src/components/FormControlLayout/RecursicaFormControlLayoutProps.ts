@@ -6,8 +6,9 @@ import React from "react";
 export interface RecursicaFormControlLayoutProps {
   /** Layout structure direction */
   formLayout?: "stacked" | "side-by-side";
-  /** Label sizing constraint */
-  labelSize?: "small" | "default" | "md";
+  /** Label sizing constraint. Only `small`/`default` are defined by Recursica's Label tokens —
+   * `md` was never a real design size and has been removed. */
+  labelSize?: "small" | "default";
   /** Optional left section element (usually Label) */
   leftSection?: React.ReactNode;
   /** Main wrapper bounding maximum width */

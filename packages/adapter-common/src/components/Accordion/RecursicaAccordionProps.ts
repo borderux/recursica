@@ -44,8 +44,11 @@ export interface RecursicaAccordionItemProps {
   leftIcon?: React.ReactNode;
   /** Toggle visibility of the divider below the item */
   divider?: boolean;
-  /** Unique value identifier for this item */
-  value?: string;
+  /** Unique value identifier for this item. Required — omitting it on multiple items collapses
+   * them to the same identity and they toggle together (see beam-adapter's
+   * docs/OPEN_DECISIONS.md #23b). Was optional in the type until 2026-08-29 even though every
+   * real consumer already supplied it. */
+  value: string;
   /** Disables interaction with this item — it can't be expanded or collapsed, and is dimmed */
   disabled?: boolean;
 }

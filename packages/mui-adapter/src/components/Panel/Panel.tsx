@@ -58,7 +58,7 @@ const PanelBase = function Panel({
   overStyled = false,
   placement = "right",
   keepMounted = true,
-  wrapHeaderText = false,
+  wrapHeaderText = true,
   opened,
   ...rest
 }: PanelProps) {

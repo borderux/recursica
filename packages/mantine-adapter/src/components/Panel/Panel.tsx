@@ -66,7 +66,7 @@ const PanelBase = function Panel({
   overStyled = false,
   placement = "right",
   keepMounted = true,
-  wrapHeaderText = false,
+  wrapHeaderText = true,
   ...rest
 }: PanelProps) {
   const sanitizedProps = filterStylingProps(rest, overStyled);

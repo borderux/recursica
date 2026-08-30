@@ -27,7 +27,6 @@ const meta: Meta<DropdownStoryProps> = {
     disabled: false,
     required: false,
     readOnly: false,
-    searchable: false,
     clearable: false,
   },
   argTypes: {
@@ -36,9 +35,6 @@ const meta: Meta<DropdownStoryProps> = {
     },
     ...formControlArgTypes,
     readOnly: {
-      control: "boolean",
-    },
-    searchable: {
       control: "boolean",
     },
     clearable: {
@@ -63,12 +59,10 @@ export const Default: Story = {
   args: {},
 };
 
-export const SearchableClearable: Story = {
+export const Clearable: Story = {
   args: {
-    label: "Search & Clear Options",
-    searchable: true,
+    label: "Clearable Options",
     clearable: true,
-    placeholder: "Start typing...",
   },
 };
 

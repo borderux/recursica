@@ -20,7 +20,7 @@ const meta: Meta<LabelStoryProps> = {
   argTypes: {
     labelSize: {
       control: "inline-radio",
-      options: ["default", "small", "md"],
+      options: ["default", "small"],
       description:
         "Sizing metrics for the Label. Only visually distinguishable once composed inside a `side-by-side` FormControlLayout, which is where the resulting width constraint applies.",
     },
