@@ -12,7 +12,7 @@
     },
     "name": {
       "type": "string",
-      "description": "Label for this project's own target. Defaults to the unscoped name in this project's package.json (e.g. \"@recursica/mui-adapter\" -> \"mui-adapter\")."
+      "description": "Label for this project's own target. Defaults to the unscoped name in this project's package.json (e.g. \"@recursica/some-adapter\" -> \"some-adapter\")."
     },
     "storybook": {
       "type": "object",

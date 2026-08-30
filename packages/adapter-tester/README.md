@@ -10,11 +10,11 @@ This package provides three primary utilities:
 
 1. **Automated Visual Tests:** Headless, golden-image regression checks for all stories, run as a single CLI command (`adapter-tester`) reading a small JSON config — no Playwright config or spec files to author. See [Golden Images](#golden-images) below for the model.
 2. **Interactive Dev Mode:** A side-by-side synchronized browser environment with built-in note taking for auditing components and feeding fixes directly to an AI agent.
-3. **An installable devDependency**, wired into both `@recursica/mui-adapter` and `@recursica/mantine-adapter` — mantine-adapter runs it in `isSourceOfTruthAdapter` mode (own-drift check only, since it's the source of truth and has nothing above it to diverge from). Any other adapter repo — including one that never checked out this monorepo — can install it the same way. See [Using this package in another adapter repo](#using-this-package-in-another-adapter-repo).
+3. **An installable devDependency**, wired into `@recursica/mantine-adapter` — the source-of-truth adapter, run in `isSourceOfTruthAdapter` mode (own-drift check only, since it has nothing above it to diverge from). Any other adapter repo — including one that never checked out this monorepo — can install it the same way. See [Using this package in another adapter repo](#using-this-package-in-another-adapter-repo).
 
-**Default mode** (used by `@recursica/mui-adapter`, and any external adapter repo installing this package): checks this project's own Storybook — the one already defined by its `storybook` npm script — against its own committed golden images, and flags divergence from the source-of-truth adapter's (`@recursica/mantine-adapter`) own golden images. No monorepo checkout, no manual config, in most cases no config file at all.
+**Default mode** (used by any adapter repo installing this package): checks this project's own Storybook — the one already defined by its `storybook` npm script — against its own committed golden images, and flags divergence from the source-of-truth adapter's (`@recursica/mantine-adapter`) own golden images. No monorepo checkout, no manual config, in most cases no config file at all.
 
-**Non-standard mode**: this monorepo also runs adapter-tester against itself, pointed at `@recursica/mui-adapter`'s and `@recursica/mantine-adapter`'s local sibling workspace packages — so the divergence check sees local, uncommitted `mantine-adapter` golden changes before they're published, not whatever was last published to npm. See `adapter-tester.config.json` in this package for that config; it's the same CLI, just pointed at `sourceOfTruth.type: "url"` instead of the default Mantine harness.
+**Non-standard mode**: this monorepo also runs adapter-tester against itself, pointed at an adapter's and `@recursica/mantine-adapter`'s local sibling workspace packages — so the divergence check sees local, uncommitted `mantine-adapter` golden changes before they're published, not whatever was last published to npm. See `adapter-tester.config.json` in this package for that config; it's the same CLI, just pointed at `sourceOfTruth.type: "url"` instead of the default Mantine harness.
 
 ---
 
@@ -119,7 +119,7 @@ All test outcomes and visual outputs are compiled into the standard, git-ignored
 Each adapter's `test/golden/` directory — committed to git, alongside a `manifest.json` tracking when each was captured — is its own baseline:
 
 - **Own-drift check (hard fail):** this run's live render vs this project's own golden. Catches unintended CSS regressions.
-- **Divergence check (soft flag, never fails a run):** this project's own golden vs the source-of-truth adapter's golden — different underlying libraries (Mantine vs MUI) can legitimately render a component differently, so a divergence isn't automatically wrong, just unreviewed.
+- **Divergence check (soft flag, never fails a run):** this project's own golden vs the source-of-truth adapter's golden — different underlying UI libraries can legitimately render a component differently, so a divergence isn't automatically wrong, just unreviewed.
 
 These are explicit, developer-run workflows — not run in CI, and not scoped down automatically; use `--grep` to target specific stories.
 
@@ -165,7 +165,7 @@ Every `adapter-tester.config.json` is validated against [`src/adapter-tester.sch
 - `name` — label for this project's own target. Defaults to the unscoped `package.json` name.
 - `storybook.port` — defaults to whatever `-p`/`--port` is set on this project's own `storybook` script; falls back to Storybook's default of `6006`.
 - `storybook.command`/`storybook.cwd` — default to `npm run storybook` in the current directory.
-- `sourceOfTruth` — defaults to `{ "type": "mantine-harness" }`: a throwaway harness that installs the _published_ `@recursica/mantine-adapter` from npm, so you never need this monorepo checked out. This is the standard mode every external adapter repo (and `@recursica/mui-adapter`) uses.
+- `sourceOfTruth` — defaults to `{ "type": "mantine-harness" }`: a throwaway harness that installs the _published_ `@recursica/mantine-adapter` from npm, so you never need this monorepo checked out. This is the standard mode every external adapter repo uses.
 - `sourceOfTruth.type: "url"` — the **non-standard** mode: points at an already-addressable Storybook via `command`/`port`/`cwd` instead of the harness, and reads that sibling package's `test/golden/` directly from disk for the divergence check (including uncommitted local changes) instead of resolving a published npm version. Used inside this monorepo — see `adapter-tester.config.json` in this package.
 - `isSourceOfTruthAdapter` — set `true` only in the source-of-truth adapter's own config (`@recursica/mantine-adapter`). Skips `sourceOfTruth`/the divergence check entirely; runs the own-drift check standalone. Also disables Dev Mode (`--serve`) — there's nothing to sync against.
 - `diffThresholdPixels`/`storyThresholds`/`excludeTitlePrefixes`/`excludeStoryIds` — same meaning as before; see `src/adapter-tester.schema.json` for full docs.
