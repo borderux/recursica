@@ -102,6 +102,9 @@ export interface AdapterTesterConfig {
   goldenMode: GoldenMode;
   /** Set by the CLI from `--divergence-only`. Defaults to `"own"`. */
   checkMode: CheckMode;
+  /** Overrides the AI report header text (normally read from
+   * `report-header.txt`) shown in Dev Mode's "Full Report" export. */
+  reportHeader?: string;
 }
 
 export function defineAdapterTesterConfig(
