@@ -13,7 +13,7 @@
     "url": "git+https://github.com/borderux/recursica.git",
     "directory": "packages/adapter-tester"
   },
-  "version": "5.0.1",
+  "version": "5.0.2",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
