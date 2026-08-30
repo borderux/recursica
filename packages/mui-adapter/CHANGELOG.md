@@ -1,5 +1,15 @@
 # @recursica/mui-adapter
 
+## 0.39.1
+
+### Patch Changes
+
+- a104e8a: Removed `searchable` from `Dropdown`'s shared contract — not a supported feature (that's `AutoComplete`'s job). mantine-adapter now strips it at runtime like its other unsupported native props; mui-adapter never wired it up.
+- a104e8a: Fixed `Panel`'s `wrapHeaderText` default (was `false`, contract documents `true`) in both adapters.
+- Updated dependencies [a104e8a]
+- Updated dependencies [a104e8a]
+  - @recursica/adapter-common@0.28.1
+
 ## 0.39.0
 
 ### Minor Changes
