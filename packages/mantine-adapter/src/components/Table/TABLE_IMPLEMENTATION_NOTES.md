@@ -56,6 +56,17 @@ recipe with a plain `Checkbox`; the only MUI product with built-in selection is
 selected-row background/token state; wiring an actual checkbox column is a separate,
 not-yet-scoped ask.
 
+## Currency alignment on header/footer reuses the table-cell token
+
+`--recursica_ui-kit_components_table-cell_properties_currency-style_text-align` (`right`) is the
+only currency-style text-align token the UI Kit exports — there's no
+`table-header_properties_currency-style_*` block at all, and the
+`table-footer_properties_currency-style_*` block skips `text-align` specifically. `Table.module.css`
+reuses the table-cell token for both `thead th[data-currency="true"]` and
+`tfoot td[data-currency="true"]` so header/footer currency cells stay right-aligned in step with
+the body. `Table.Th` gained a `variant` prop (mirroring `Table.Td`) to set `data-currency` since
+header cells had no way to opt into this before.
+
 ## Deliberately not changed
 
 - **No wrapper divs** — Forge wraps the table in two divs to get a scrollable bordered

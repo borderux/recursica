@@ -2,6 +2,14 @@
    - border-style: solid. Baseline so the per-variant border-color tokens actually render.
  */
 
+/* EXEMPTIONS:
+   - elevation_layer-1/2/3 are ignored: a toast's elevation doesn't depend on the layer it's
+     summoned from — all four layer variants resolve to the same brand elevation value, so
+     layer-0 (already wired below) is the correct, layer-agnostic choice for all of them. */
+/* recursica-ignore: --recursica_ui-kit_components_toast_properties_elevation_layer-1 */
+/* recursica-ignore: --recursica_ui-kit_components_toast_properties_elevation_layer-2 */
+/* recursica-ignore: --recursica_ui-kit_components_toast_properties_elevation_layer-3 */
+
 /* ======================================
    TOAST / NOTIFICATION ROOT
    ====================================== */

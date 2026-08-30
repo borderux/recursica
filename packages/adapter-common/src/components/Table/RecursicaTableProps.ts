@@ -31,6 +31,8 @@ export interface RecursicaTableHeaderCellProps {
   sorted?: "asc" | "desc" | false;
   /** Disables the header cell, dimming it and applying the disabled cell colors */
   disabled?: boolean;
+  /** `"currency"` right-aligns the header cell to match a currency column's value cells */
+  variant?: "default" | "currency";
 }
 
 /**

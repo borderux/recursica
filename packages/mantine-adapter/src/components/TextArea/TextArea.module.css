@@ -35,11 +35,16 @@
 }
 
 /* HARDCODED VALUES:
-   - border-width: 1px. Native geometric boundary for the input box.
    - border-style: solid. Native structural rendering rule.
    - outline: none. Bypassing browser focus rings to rely strictly on Recursica focus states natively.
    - flex/layout: display: flex on the root wrapper safely encapsulating internal section rendering.
 */
+
+/* EXEMPTIONS:
+   - border-size is constant across disabled/error states — only border-color changes; the
+     disabled/error border-size tokens are never applied by design. */
+/* recursica-ignore: --recursica_ui-kit_components_textarea_variants_states_disabled_properties_border-size */
+/* recursica-ignore: --recursica_ui-kit_components_textarea_variants_states_error_properties_border-size */
 
 .root {
   display: flex;
@@ -78,7 +83,9 @@
   border-radius: var(
     --recursica_ui-kit_components_textarea_properties_border-radius
   );
-  border-width: 1px;
+  border-width: var(
+    --recursica_ui-kit_components_textarea_properties_border-size
+  );
   border-style: solid;
 
   /* Strict Typography Unification */

@@ -1,9 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 import { Label } from "./Label";
-import { TextField } from "../TextField/TextField";
-import { formControlArgTypes } from "../../../.storybook/commonArgTypes";
+import { Button } from "../Button/Button";
 
 type LabelStoryProps = React.ComponentProps<typeof Label>;
 
@@ -15,12 +13,43 @@ const meta: Meta<LabelStoryProps> = {
     docs: {
       description: {
         component:
-          "The `Label` component is a strict Recursica-styled wrapper around Mantine's native `Input.Label`. It serves as the primary compositional primitive for all form fields, preserving Mantine's accessibility associations and context while strictly enforcing the Recursica atomic design system.\n\n### Usage with Form Inputs\nWhen working with form structures, render this `Label` component directly above your inputs or supply it to a component's overriding properties. The component automatically maps structural layout dimensions, dynamic alignment (`left` vs `right`), custom indicator gaps, and integrates a customized `optionalText` and `withEditIcon` flow that safely bypasses Mantine's native required asterisk mechanisms.",
+          "The `Label` component is a strict Recursica-styled wrapper around Mantine's native `Input.Label`. It serves as the primary compositional primitive for all form fields, preserving Mantine's accessibility associations and context while strictly enforcing the Recursica atomic design system.\n\n### Usage with Form Inputs\nThis component only renders the label itself — layout concerns like `stacked` vs `side-by-side` positioning relative to an input live on `FormControlLayout`/`FormControlWrapper`, not here. Render this `Label` in isolation to verify its own states, or see `UI-Kit/FormControlLayout` for how it composes into a full form field.",
       },
     },
   },
   argTypes: {
-    ...formControlArgTypes,
+    labelSize: {
+      control: "inline-radio",
+      options: ["default", "small", "md"],
+      description:
+        "Sizing metrics for the Label. Only visually distinguishable once composed inside a `side-by-side` FormControlLayout, which is where the resulting width constraint applies.",
+    },
+    labelAlignment: {
+      control: "inline-radio",
+      options: ["left", "right"],
+      description: "Text alignment of the label content.",
+    },
+    required: {
+      control: "boolean",
+      description:
+        "Renders the required asterisk (suppressed automatically when `labelWithEditIcon` is set, and mutually exclusive with `labelOptionalText`).",
+    },
+    labelOptionalText: {
+      control: "text",
+      description:
+        "Secondary text rendered beneath the label. Pass `true` for the default '(Optional)' string, or a custom node/string. Suppressed when `required` is true.",
+    },
+    labelWithEditIcon: {
+      control: "boolean",
+      description:
+        "Replaces the default edit icon slot with an interactive edit affordance; replaces the required asterisk visually when both are set.",
+    },
+    labelActionArea: {
+      table: { disable: true },
+    },
+    onLabelEditClick: {
+      table: { disable: true },
+    },
   },
 };
 
@@ -28,95 +57,75 @@ export default meta;
 
 type Story = StoryObj<LabelStoryProps>;
 
-// Utility mapping to pipe raw Label args structurally into TextField accurately
-const renderWithTextField = ({ children, ...args }: LabelStoryProps) => (
-  <TextField
-    label={children as React.ReactNode}
-    placeholder="Form Control primitive mapped..."
-    {...(args as any)}
-  />
-);
-
 export const Default: Story = {
   args: {
-    children: "Dynamic Label (Controls)",
-
+    children: "Label",
     labelSize: "default",
     labelAlignment: "left",
     required: false,
     labelOptionalText: "",
     labelWithEditIcon: false,
   },
-  render: renderWithTextField,
 };
 
-export const StackedDefault: Story = {
+export const Required: Story = {
   args: {
-    children: "Email Address",
-  },
-  render: renderWithTextField,
-};
-
-export const StackedRequired: Story = {
-  args: {
-    children: "Primary Network Node",
-
+    children: "Required Field",
     required: true,
   },
-  render: renderWithTextField,
-};
-
-export const StackedWithEditIcon: Story = {
-  args: {
-    children: "Environment Variables",
-
-    labelWithEditIcon: true,
-  },
-  render: renderWithTextField,
-};
-
-export const SideBySideDefault: Story = {
-  args: {
-    children: "Status",
-
-    labelSize: "default",
-  },
-  render: renderWithTextField,
 };
 
 export const RequiredSuppressesOptionalText: Story = {
   args: {
     children: "Full Name",
-
     required: true,
     labelOptionalText: "This should not render",
   },
-  render: renderWithTextField,
+};
+
+export const WithOptionalText: Story = {
+  args: {
+    children: "Bio",
+    labelOptionalText: "Max 100 characters",
+  },
 };
 
 export const BooleanOptionalText: Story = {
   args: {
     children: "Middle Initial",
-
     labelOptionalText: true,
   },
-  render: renderWithTextField,
 };
 
 export const WithEditIcon: Story = {
   args: {
     children: "Shipping Address",
-
     labelWithEditIcon: true,
   },
-  render: renderWithTextField,
 };
 
-export const LayerOneSideBySide: Story = {
+export const RequiredWithEditIcon: Story = {
   args: {
-    children: "Configuration",
-
+    children: "Primary Network Node",
+    required: true,
     labelWithEditIcon: true,
   },
-  render: renderWithTextField,
+};
+
+export const RightAligned: Story = {
+  args: {
+    children: "Status",
+    labelAlignment: "right",
+  },
+};
+
+export const WithActionArea: Story = {
+  args: {
+    children: "Configuration",
+    labelActionArea: (
+      <Button variant="text" size="small">
+        Edit
+      </Button>
+    ),
+  },
 };

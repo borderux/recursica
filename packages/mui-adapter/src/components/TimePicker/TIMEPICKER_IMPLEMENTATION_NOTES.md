@@ -32,7 +32,8 @@ Lowercase `hh` renders 12-hour digits (1–12) with no `a` (meridiem) token, so 
 ## Design tokens
 
 - No dedicated `min-height` token exists for `time-picker` (unlike `text-field`/`date-picker`) — the field's height is derived from its own padding + line-height instead of a fixed token.
-- `icon-size`/`icon-color`/`icon-text-gap`/`placeholder-opacity` are exempted (`recursica-ignore`) — the time field has no icon slot and MUI X's field renders empty sections via its own internal placeholder styling, not a native `::placeholder` pseudo-element.
+- `icon-size`/`icon-color`/`icon-text-gap` (plus the disabled/error `icon-color` variants) are wired via `leftSection` — see "Leading icon" below.
+- `placeholder-opacity` remains exempted (`recursica-ignore`) — MUI X's field renders its empty-state "hh"/"mm" placeholder via its own internal `isFieldValueEmpty` styled-component variant (an inline opacity applied through emotion), not a native `::placeholder` pseudo-element this CSS module can target. Unlike mantine-adapter's `SpinInput` (a real `<input placeholder="--">`), there's no stable selector here to hook a token to without depending on MUI X's internal class names.
 - The AM/PM `BareDropdown` draws its own border/background/padding from `Dropdown`'s own tokens via `Dropdown.module.css` — it does not reuse any `time-picker` tokens.
 
 ## Known limitation — the popup clock/list view is unstyled
@@ -42,6 +43,12 @@ This pass covers the closed-state field and the AM/PM `BareDropdown` only. The o
 ## Read-Only Implementation
 
 `readOnlyType="text"`, matching `DatePicker`'s convention.
+
+## Leading icon (Matt Massey, 2026-08-30)
+
+Added `leftSection` (`RecursicaTimePickerProps`), matching `TextField`'s naming/convention: purely decorative, consumer-supplied, no default (unlike `DatePicker`'s fixed `CalendarIcon` — there's no single icon that fits every `TimePicker` use).
+
+MUI X's `TimePicker` has no `leftSection` concept — wired via `slotProps.textField.slotProps.input.startAdornment` (the `textField`/`input` slots are exposed at the top level of `TimePicker`'s own `slotProps`, sibling to `field`, via `PickerFieldUISlotPropsFromContext` — confirmed by reading `useDesktopPicker.types.d.ts`/`PickerFieldUI.d.ts` directly, not just the top-level `TimePickerProps` surface). `startAdornment` renders as a plain sibling of `.MuiPickersInputBase-sectionsContainer` inside `PickersInputBase` (confirmed via `PickersInputBase.js`), so it's wrapped in the same `<div className={styles.section} data-position="left">` shape `TextField.tsx` already uses, rather than depending on MUI's own adornment styling. Also added `data-with-left-section` on `.root` so `.MuiPickersInputBase-sectionsContainer`'s own hardcoded `padding-left` (previously always the field's full `horizontal-padding`, structured for the no-icon case) collapses to just `icon-text-gap` once the icon itself is doing the border-inset job instead.
 
 ## Visual review fix (Matt Massey, 2026-08-07)
 

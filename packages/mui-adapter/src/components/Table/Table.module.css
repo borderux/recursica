@@ -225,6 +225,15 @@
   );
 }
 
+/* Currency column header alignment override. No dedicated table-header currency-style token
+   exists yet, so this reuses the table-cell currency-style text-align token to match the
+   currency value cells below it. */
+.root thead .cell[data-currency="true"] {
+  text-align: var(
+    --recursica_ui-kit_components_table-cell_properties_currency-style_text-align
+  );
+}
+
 /* Sort label — MUI's TableSortLabel renders its own arrow icon; re-color it to inherit the
    cell's own text color (instead of MUI's default sort-label color) and size/space it with the
    same tokens Mantine's own inline chevron uses. */
@@ -424,6 +433,11 @@
   );
   line-height: var(
     --recursica_ui-kit_components_table-footer_properties_currency-style_line-height
+  );
+  /* No table-footer currency-style text-align token exists yet; reuse the table-cell one so
+     footer currency cells match the body's right alignment. */
+  text-align: var(
+    --recursica_ui-kit_components_table-cell_properties_currency-style_text-align
   );
   text-decoration: var(
     --recursica_ui-kit_components_table-footer_properties_currency-style_text-decoration

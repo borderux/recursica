@@ -117,7 +117,7 @@ export const CurrencyColumnWithFooter: Story = {
         <Table.Thead>
           <Table.Tr>
             <Table.Th>Item</Table.Th>
-            <Table.Th>Price</Table.Th>
+            <Table.Th variant="currency">Price</Table.Th>
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>

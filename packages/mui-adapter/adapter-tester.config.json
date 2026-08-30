@@ -2,6 +2,8 @@
   "$schema": "https://raw.githubusercontent.com/borderux/recursica/main/packages/adapter-tester/src/adapter-tester.schema.json",
   "diffThresholdPixels": 3500,
   "stories": {
+    "ui-kit-loader--default": { "exclude": true },
+    "ui-kit-loader--layer-two-oval": { "exclude": true },
     "ui-kit-checkboxgroup": { "threshold": 15000 },
     "ui-kit-radiogroup": { "threshold": 15000 },
     "ui-kit-switchgroup": { "threshold": 15000 },

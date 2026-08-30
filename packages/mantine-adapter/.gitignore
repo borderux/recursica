@@ -31,3 +31,4 @@ token-analysis.json
 .adapter-tester/
 playwright-report
 test-results
+test/golden/manifest.json.lock

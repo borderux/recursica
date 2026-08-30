@@ -114,7 +114,14 @@ export type TableThProps = RecursicaOverStyled<
 
 export const TableTh = forwardRef<HTMLTableCellElement, TableThProps>(
   function TableTh(
-    { overStyled = false, sorted = false, disabled = false, children, ...rest },
+    {
+      overStyled = false,
+      sorted = false,
+      disabled = false,
+      variant = "default",
+      children,
+      ...rest
+    },
     ref,
   ) {
     const sanitizedProps = filterStylingProps(rest, overStyled);
@@ -124,6 +131,7 @@ export const TableTh = forwardRef<HTMLTableCellElement, TableThProps>(
         {...(sanitizedProps as unknown as MantineTableThProps)}
         data-sorted={sorted ? "true" : undefined}
         data-disabled={disabled ? "true" : undefined}
+        data-currency={variant === "currency" ? "true" : undefined}
         aria-sort={
           sorted === "asc"
             ? "ascending"

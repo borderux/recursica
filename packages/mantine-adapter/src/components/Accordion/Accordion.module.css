@@ -96,14 +96,11 @@
       --recursica_ui-kit_components_accordion-header_properties_horizontal-padding
     );
 
-  /* Background is intentionally constant across collapsed/expanded (Forge doesn't apply a
-     background swap on expand, even though the token schema defines an "open" appearance color) */
+  /* Closed (resting) background/border — swapped to the open appearance below when expanded */
   background-color: var(
     --recursica_ui-kit_components_accordion-header_variants_appearance_closed_properties_colors_background-color
   );
 
-  /* Header's own border box, constant across collapsed/expanded (only its closed-state
-     border-color is used, matching the background decision above) */
   border-style: solid;
   border-width: var(
     --recursica_ui-kit_components_accordion-header_properties_border-size
@@ -153,18 +150,30 @@
 }
 
 .item[data-active] .control {
+  background-color: var(
+    --recursica_ui-kit_components_accordion-header_variants_appearance_open_properties_colors_background-color
+  );
+  border-color: var(
+    --recursica_ui-kit_components_accordion-header_variants_appearance_open_properties_colors_border-color
+  );
   color: var(
     --recursica_ui-kit_components_accordion-header_variants_appearance_open_properties_colors_text-color
   );
 }
 
-/* Mantine natively places hover states on the control node. We explicitly re-apply our own
-   constant background (Mantine's native :hover CSS would otherwise show through) and use an
-   overlay ::after structure with the generic hover tokens for the actual hover tint; no per-item
-   hover-color/hover-opacity tokens exist anymore. */
+/* Mantine natively places hover states on the control node. We explicitly re-apply our own real
+   background (Mantine's native :hover CSS would otherwise show through) — closed or open,
+   matching whichever appearance is currently active — and use an overlay ::after structure with
+   the generic hover tokens for the actual hover tint; no per-item hover-color/hover-opacity
+   tokens exist anymore. */
 .control:hover:not(:disabled) {
   background-color: var(
     --recursica_ui-kit_components_accordion-header_variants_appearance_closed_properties_colors_background-color
+  );
+}
+.item[data-active] .control:hover:not(:disabled) {
+  background-color: var(
+    --recursica_ui-kit_components_accordion-header_variants_appearance_open_properties_colors_background-color
   );
 }
 .control::after {

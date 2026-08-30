@@ -3,6 +3,11 @@
  *   recursica-allow-brand: --recursica_brand_states_link_decoration
  */
 
+/* EXEMPTIONS:
+   - text_text-transform is ignored because links naturally inherit casing directly from text
+     children rather than requiring custom CSS transforms. */
+/* recursica-ignore: --recursica_ui-kit_components_link_properties_text_text-transform */
+
 /*
 HARDCODED VALUES:
 - display: inline-flex; (Base layout to align icon and text correctly)

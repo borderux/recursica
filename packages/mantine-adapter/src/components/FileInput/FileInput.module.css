@@ -8,6 +8,12 @@
  *   recursica-allow-brand: --recursica_brand_states_hover_opacity
  */
 
+/* EXEMPTIONS:
+   - border-size is constant across disabled/error states — only border-color changes; the
+     disabled/error border-size tokens are never applied by design. */
+/* recursica-ignore: --recursica_ui-kit_components_file-input_variants_states_disabled_properties_border-size */
+/* recursica-ignore: --recursica_ui-kit_components_file-input_variants_states_error_properties_border-size */
+
 /* LAYOUT SPACING OVERRIDES:
    - Sets the --form-control-margin-bottom spacing hook to map component-specific layout tokens.
    - Also sets the --file-input-control-{max,min}-width hooks consumed inline in FileInput.tsx,
@@ -205,6 +211,12 @@
 
 /* Structural placement only — the button's own "text" variant/size="small" tokens (including its
    own disabled state) own its visual appearance, same as Tree's .expandButton. */
+/* EXEMPTIONS:
+   - trailing-icon color (base/disabled/error) is ignored — the trailing icon is a nested Button
+     that owns its own color tokens per state; FileInput never recolors it directly. */
+/* recursica-ignore: --recursica_ui-kit_components_file-input_properties_colors_trailing-icon */
+/* recursica-ignore: --recursica_ui-kit_components_file-input_variants_states_disabled_properties_colors_trailing-icon */
+/* recursica-ignore: --recursica_ui-kit_components_file-input_variants_states_error_properties_colors_trailing-icon */
 .trailingIcon {
   position: relative;
   z-index: 1;

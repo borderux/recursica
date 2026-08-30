@@ -9,6 +9,7 @@
     "brokenComponents",
     "missingVariables",
     "unusedByComponent",
+    "unusedGlobals",
     "staleExemptions",
     "layerViolations"
   ],
@@ -121,6 +122,13 @@
         "items": {
           "type": "string"
         }
+      }
+    },
+    "unusedGlobals": {
+      "type": "array",
+      "description": "Unused --recursica_ui-kit_globals_* variables. These have no owning component — they're the shared indirection layer other ui-kit_components_*/ui-kit_themes_* tokens resolve through — so they're tracked separately from unusedByComponent rather than being silently dropped from the report while still counting toward summary.totalUnused.",
+      "items": {
+        "type": "string"
       }
     },
     "staleExemptions": {

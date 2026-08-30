@@ -45,14 +45,14 @@ export default function Demo() {
 ## 3. Row and Cell States
 
 - **`Table.Row`**: `selected` applies the selected-row background (and MUI's own `selected`/`aria-selected`); `disabled` dims the row and applies the disabled cell colors to every cell in it.
-- **`Table.Cell`**: `sorted="asc" | "desc"` applies the sorted header style (pair with `Table.SortLabel` for the actual sort icon — see below); `variant="currency"` applies the currency text style; `disabled` dims the cell.
+- **`Table.Cell`**: `sorted="asc" | "desc"` applies the sorted header style (pair with `Table.SortLabel` for the actual sort icon — see below); `variant="currency"` applies the currency text style, right-aligning it in any context (header, body, or footer); `disabled` dims the cell.
 - **`Table.SortLabel`** (wraps MUI's `TableSortLabel`): renders the actual sort arrow. Compose it inside a `Table.Cell` the same way MUI's own docs do.
 
 ```tsx
 <Table.Head>
   <Table.Row>
     <Table.Cell>Name</Table.Cell>
-    <Table.Cell sorted="asc">
+    <Table.Cell sorted="asc" variant="currency">
       <Table.SortLabel active direction="asc">
         Balance
       </Table.SortLabel>

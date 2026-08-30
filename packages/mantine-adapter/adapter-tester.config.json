@@ -1,5 +1,9 @@
 {
   "$schema": "https://raw.githubusercontent.com/borderux/recursica/main/packages/adapter-tester/src/adapter-tester.schema.json",
   "isSourceOfTruthAdapter": true,
-  "diffThresholdPixels": 500
+  "diffThresholdPixels": 10,
+  "stories": {
+    "ui-kit-loader--default": { "exclude": true },
+    "ui-kit-loader--layer-two-oval": { "exclude": true }
+  }
 }
