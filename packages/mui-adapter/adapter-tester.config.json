@@ -1,18 +1,18 @@
 {
-  "$schema": "./node_modules/@recursica/adapter-tester/src/adapter-tester.schema.json",
+  "$schema": "https://raw.githubusercontent.com/borderux/recursica/main/packages/adapter-tester/src/adapter-tester.schema.json",
   "diffThresholdPixels": 3500,
-  "storyThresholds": {
-    "ui-kit-checkboxgroup": 15000,
-    "ui-kit-radiogroup": 15000,
-    "ui-kit-switchgroup": 15000,
-    "ui-kit-checkbox": 15000,
-    "ui-kit-radio": 15000,
-    "ui-kit-switch": 15000,
-    "ui-kit-segmentedcontrol": 15000,
-    "ui-kit-numberinput": 15000,
-    "ui-kit-slider": 15000,
-    "ui-kit-textfield": 15000,
-    "ui-kit-timeline": 15000,
-    "ui-kit-title": 15000
+  "stories": {
+    "ui-kit-checkboxgroup": { "threshold": 15000 },
+    "ui-kit-radiogroup": { "threshold": 15000 },
+    "ui-kit-switchgroup": { "threshold": 15000 },
+    "ui-kit-checkbox": { "threshold": 15000 },
+    "ui-kit-radio": { "threshold": 15000 },
+    "ui-kit-switch": { "threshold": 15000 },
+    "ui-kit-segmentedcontrol": { "threshold": 15000 },
+    "ui-kit-numberinput": { "threshold": 15000 },
+    "ui-kit-slider": { "threshold": 15000 },
+    "ui-kit-textfield": { "threshold": 15000 },
+    "ui-kit-timeline": { "threshold": 15000 },
+    "ui-kit-title": { "threshold": 15000 }
   }
 }

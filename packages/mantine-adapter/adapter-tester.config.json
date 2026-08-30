@@ -1,5 +1,5 @@
 {
-  "$schema": "./node_modules/@recursica/adapter-tester/src/adapter-tester.schema.json",
+  "$schema": "https://raw.githubusercontent.com/borderux/recursica/main/packages/adapter-tester/src/adapter-tester.schema.json",
   "isSourceOfTruthAdapter": true,
-  "diffThresholdPixels": 3500
+  "diffThresholdPixels": 500
 }

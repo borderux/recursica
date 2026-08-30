@@ -8,7 +8,7 @@
   "properties": {
     "$schema": {
       "type": "string",
-      "description": "Optional pointer to this schema for editor autocomplete, e.g. \"./node_modules/@recursica/adapter-tester/src/adapter-tester.schema.json\"."
+      "description": "Optional pointer to this schema for editor autocomplete, e.g. \"https://raw.githubusercontent.com/borderux/recursica/main/packages/adapter-tester/src/adapter-tester.schema.json\"."
     },
     "name": {
       "type": "string",
@@ -98,20 +98,29 @@
       "minimum": 0,
       "description": "Global visual diff threshold, in mismatched pixels, before a story is considered a failure. Defaults to 3500. AI agents must not modify this field — see AGENT.md."
     },
-    "storyThresholds": {
+    "stories": {
       "type": "object",
-      "additionalProperties": { "type": "number", "minimum": 0 },
-      "description": "Per-story diff threshold overrides, keyed by story id prefix (a story matches if its id equals the key or starts with it). Overrides `diffThresholdPixels` for matching stories. When more than one key matches a story, the longest (most specific) key wins."
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "threshold": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Diff threshold override for matching stories, in mismatched pixels. Overrides `diffThresholdPixels`."
+          },
+          "exclude": {
+            "type": "boolean",
+            "description": "Skip matching stories entirely — no own-drift check, no divergence check, no golden captured. For stories that don't have a cross-adapter counterpart; use `excludeTitlePrefixes` to drop a whole title instead."
+          }
+        }
+      },
+      "description": "Per-story overrides, keyed by story id prefix (a story matches if its id equals the key or starts with it). When more than one key matches a story, the longest (most specific) key wins."
     },
     "excludeTitlePrefixes": {
       "type": "array",
       "items": { "type": "string" },
       "description": "Storybook title prefixes to exclude from comparison, in addition to the built-in denylist (`Theme/*`, `Tokens/*`, `Introduction`)."
-    },
-    "excludeStoryIds": {
-      "type": "array",
-      "items": { "type": "string" },
-      "description": "Story id prefixes to skip entirely — no own-drift check, no divergence check, no golden captured. For excluding individual stories that don't have a cross-adapter counterpart; use `excludeTitlePrefixes` to drop a whole title instead."
     }
   }
 }

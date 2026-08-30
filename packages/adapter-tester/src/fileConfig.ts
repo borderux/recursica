@@ -3,6 +3,7 @@ import { join, resolve } from "node:path";
 import type {
   AdapterTesterConfig,
   SourceOfTruthGoldenLocation,
+  StoryOverride,
 } from "./config.js";
 import type { HarnessWebServerConfig } from "./harness/mantineSourceOfTruth.js";
 import { mantineSourceOfTruthWebServer } from "./harness/mantineSourceOfTruth.js";
@@ -58,9 +59,8 @@ export interface AdapterTesterFileConfig {
   storybook?: StorybookTargetFileConfig;
   sourceOfTruth?: SourceOfTruthFileConfig;
   diffThresholdPixels?: number;
-  storyThresholds?: Record<string, number>;
+  stories?: Record<string, StoryOverride>;
   excludeTitlePrefixes?: string[];
-  excludeStoryIds?: string[];
   /**
    * True only for the source-of-truth adapter's own config (mantine-adapter).
    * Skips `sourceOfTruth` entirely — there's nothing above it to diverge
@@ -73,6 +73,11 @@ export interface AdapterTesterFileConfig {
 export interface ResolvedAdapterTesterConfig {
   engineConfig: AdapterTesterConfig;
   webServers: HarnessWebServerConfig[];
+}
+
+export interface ResolveConfigOverrides {
+  /** From `--source-of-truth-version`. Overrides `sourceOfTruth.mantineAdapterVersion`. */
+  mantineAdapterVersion?: string;
 }
 
 function readOwnPackageJson(cwd: string): any {
@@ -118,10 +123,25 @@ function loadFileConfig(cwd: string): AdapterTesterFileConfig {
  * own Storybook against a throwaway Mantine harness — no monorepo checkout
  * required. Set `sourceOfTruth.type: "url"` for the non-standard mode used
  * to compare sibling workspace packages inside this monorepo.
+ *
+ * `overrides.mantineAdapterVersion` (from `--source-of-truth-version`) pins
+ * the mantine-harness install/golden-fetch version for this run, overriding
+ * `sourceOfTruth.mantineAdapterVersion`. Throws if passed together with
+ * `isSourceOfTruthAdapter` or `sourceOfTruth.type: "url"` — neither has a
+ * version to pin.
  */
-export function resolveConfig(cwd: string): ResolvedAdapterTesterConfig {
+export function resolveConfig(
+  cwd: string,
+  overrides: ResolveConfigOverrides = {},
+): ResolvedAdapterTesterConfig {
   const file = loadFileConfig(cwd);
   const isSourceOfTruthAdapter = file.isSourceOfTruthAdapter ?? false;
+
+  if (overrides.mantineAdapterVersion && isSourceOfTruthAdapter) {
+    throw new Error(
+      "--source-of-truth-version has no effect on the source-of-truth adapter's own config (isSourceOfTruthAdapter: true) — there's nothing to pin a version for.",
+    );
+  }
 
   const ownName = file.name ?? detectOwnName(cwd);
   const ownPort = file.storybook?.port ?? detectOwnPort(cwd);
@@ -138,19 +158,20 @@ export function resolveConfig(cwd: string): ResolvedAdapterTesterConfig {
   const sharedEngineConfig = {
     diffThresholdPixels:
       file.diffThresholdPixels ?? DEFAULT_DIFF_THRESHOLD_PIXELS,
-    storyThresholds: file.storyThresholds,
+    stories: file.stories,
     excludeTitlePrefixes: file.excludeTitlePrefixes,
-    excludeStoryIds: file.excludeStoryIds,
     // Keyed off `ownCwd`, not `cwd` — the project actually being tested, not
-    // wherever the config file happens to live. Matters for this monorepo's
-    // own non-standard config, whose `storybook.cwd` points at a sibling
-    // package: its goldens must resolve to that package's own `test/golden/`
-    // (the same directory used when that package runs adapter-tester
-    // directly), not a directory under `packages/adapter-tester/`.
+    // wherever the config file happens to live. Matters whenever
+    // `storybook.cwd` points at a sibling package: its goldens must resolve
+    // to that package's own `test/golden/` (the same directory used when
+    // that package runs adapter-tester directly), not a directory under
+    // wherever this config file lives.
     goldenDir: join(ownCwd, "test", "golden"),
     isSourceOfTruthAdapter,
     // Overwritten by the CLI from --update-golden/--approve-divergence.
     goldenMode: "check" as const,
+    // Overwritten by the CLI from --divergence-only.
+    checkMode: "own" as const,
   };
 
   // The source-of-truth adapter's own config has nothing above it to
@@ -175,6 +196,11 @@ export function resolveConfig(cwd: string): ResolvedAdapterTesterConfig {
   let sourceOfTruthGolden: SourceOfTruthGoldenLocation;
 
   if (sourceOfTruth.type === "url") {
+    if (overrides.mantineAdapterVersion) {
+      throw new Error(
+        '--source-of-truth-version has no effect with sourceOfTruth.type: "url" — that mode reads a sibling package\'s local checkout directly, not a published version.',
+      );
+    }
     sourceOfTruthName = sourceOfTruth.name ?? DEFAULT_SOURCE_OF_TRUTH_NAME;
     sourceOfTruthPort = sourceOfTruth.port;
     const sourceOfTruthCwd = resolve(cwd, sourceOfTruth.cwd ?? ".");
@@ -195,10 +221,12 @@ export function resolveConfig(cwd: string): ResolvedAdapterTesterConfig {
   } else {
     sourceOfTruthName = DEFAULT_SOURCE_OF_TRUTH_NAME;
     sourceOfTruthPort = sourceOfTruth.port ?? DEFAULT_SOURCE_OF_TRUTH_PORT;
+    const mantineAdapterVersion =
+      overrides.mantineAdapterVersion ?? sourceOfTruth.mantineAdapterVersion;
     sourceOfTruthWebServer = mantineSourceOfTruthWebServer({
       dir: join(cwd, ".adapter-tester/mantine-harness"),
       port: sourceOfTruthPort,
-      mantineAdapterVersion: sourceOfTruth.mantineAdapterVersion,
+      mantineAdapterVersion,
       storybookTemplateVersion: sourceOfTruth.storybookTemplateVersion,
     });
     // No local checkout — resolve the installed version against the npm
@@ -208,7 +236,7 @@ export function resolveConfig(cwd: string): ResolvedAdapterTesterConfig {
     sourceOfTruthGolden = {
       type: "npm",
       packageName: MANTINE_ADAPTER_PACKAGE_NAME,
-      versionSpec: sourceOfTruth.mantineAdapterVersion ?? "latest",
+      versionSpec: mantineAdapterVersion ?? "latest",
       cacheDir: join(cwd, ".adapter-tester/mantine-golden-cache"),
     };
   }

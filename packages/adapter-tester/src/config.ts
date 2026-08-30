@@ -35,23 +35,34 @@ export type SourceOfTruthGoldenLocation =
 
 export type GoldenMode = "check" | "update-golden" | "approve-divergence";
 
+/**
+ * Which check(s) a run performs. `"own"` (the default) is what a normal,
+ * fast, no-network run does: this project's own live render vs. its own
+ * committed golden images. `"divergence"` is the separate, opt-in check
+ * against the source-of-truth adapter's published golden images.
+ */
+export type CheckMode = "own" | "divergence";
+
+export interface StoryOverride {
+  /** Diff threshold override for this story. Overrides `diffThresholdPixels`
+   * for components with acceptable cross-library structural variation (e.g.
+   * native control widgets). */
+  threshold?: number;
+  /** Skip this story entirely — no own-drift check, no divergence check, no
+   * golden captured. For stories with no meaningful cross-adapter counterpart. */
+  exclude?: boolean;
+}
+
 export interface AdapterTesterConfig {
   targets: AdapterTarget[];
   /** Global pixel-diff threshold applied to every story comparison. */
   diffThresholdPixels: number;
   /**
-   * Per-story diff threshold overrides, keyed by story id prefix (a story
-   * matches if its id equals the key or starts with it). Overrides
-   * `diffThresholdPixels` for components with acceptable cross-library
-   * structural variation (e.g. native control widgets). When more than one
-   * key matches, the longest (most specific) key wins.
+   * Per-story overrides, keyed by story id prefix (a story matches if its id
+   * equals the key or starts with it). When more than one key matches, the
+   * longest (most specific) key wins.
    */
-  storyThresholds?: Record<string, number>;
-  /**
-   * Story id prefixes (same matching rule as `storyThresholds`) skipped
-   * entirely — no own-drift check, no divergence check, no golden captured.
-   */
-  excludeStoryIds?: string[];
+  stories?: Record<string, StoryOverride>;
   /**
    * Storybook entry title categories excluded from the comparison — an
    * entry is excluded if its title equals one of these or starts with
@@ -76,6 +87,8 @@ export interface AdapterTesterConfig {
   sourceOfTruthGolden?: SourceOfTruthGoldenLocation;
   /** Set by the CLI from `--update-golden`/`--approve-divergence`. Defaults to `"check"`. */
   goldenMode: GoldenMode;
+  /** Set by the CLI from `--divergence-only`. Defaults to `"own"`. */
+  checkMode: CheckMode;
 }
 
 export function defineAdapterTesterConfig(
