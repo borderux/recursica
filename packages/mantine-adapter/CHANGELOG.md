@@ -1,5 +1,20 @@
 # @recursica/mantine-adapter
 
+## 0.54.0
+
+### Minor Changes
+
+- c31d5ae: Added an `animate` prop to `Loader` (default `true`) — set `false` to freeze its CSS animation for a deterministic render, e.g. a visual-regression snapshot. The `Static*` Loader stories now use it, and the animated `Default`/`LayerTwoOval` stories are excluded from adapter-tester's visual regression.
+
+### Patch Changes
+
+- c31d5ae: Wired up unused design tokens (Accordion open state, Modal header/footer background, stacked Label width, TimePicker leading icon + placeholder opacity) and added `recursica-ignore` exemptions for tokens confirmed inapplicable by design.
+- c31d5ae: Fixed `Table` currency columns so header and footer cells right-align to match value cells. `Table.Th`/`Table.Cell` header context now supports `variant="currency"`.
+- Updated dependencies [c31d5ae]
+- Updated dependencies [c31d5ae]
+- Updated dependencies [c31d5ae]
+  - @recursica/adapter-common@0.27.0
+
 ## 0.53.0
 
 ### Minor Changes
