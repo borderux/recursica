@@ -154,8 +154,10 @@ export type RecursicaOverStyled<T> =
  * Base properties for Recursica label indicators.
  */
 export interface RecursicaLabelProps {
-  /** Specifies the sizing metrics natively mapping the Label boundaries. */
-  labelSize?: "default" | "small" | "md";
+  /** Specifies the sizing metrics natively mapping the Label boundaries. Only `default`/`small`
+   * are defined by Recursica's Label tokens — `md` was never a real design size (no adapter had
+   * a width rule for it) and has been removed; see docs/OPEN_DECISIONS.md #41 in beam-adapter. */
+  labelSize?: "default" | "small";
   /**
    * Overall alignment directive for the label strings natively forcing Left/Right justification.
    * Not renamed to Forge's `labelAlign`: our own vocabulary, not either kit's native term.

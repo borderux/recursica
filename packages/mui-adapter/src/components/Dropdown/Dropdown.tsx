@@ -87,8 +87,6 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
       onChange,
       data,
       startAdornment,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      searchable, // Not natively supported by basic MUI Select, stubbed
       clearable,
       wrapItemText = false,
       ...rest

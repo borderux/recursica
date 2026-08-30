@@ -23,7 +23,7 @@ import { type RecursicaDropdownProps as BaseRecursicaDropdownProps } from "@recu
 export interface RecursicaDropdownProps
   extends Omit<
       MantineSelectProps,
-      "size" | "variant" | "radius" | "wrapperProps" | "data"
+      "size" | "variant" | "radius" | "wrapperProps" | "data" | "searchable"
     >,
     Omit<
       RecursicaFormControlWrapperProps,
@@ -40,6 +40,7 @@ const UNSUPPORTED_PROPS = [
   "size", // Recursica controls sizing via the `size` variant + design tokens, not raw dimensions.
   "variant", // Colors/variants are token-driven; the library's native palette isn't exposed.
   "radius", // Recursica does not expose the library's native corner-radius system.
+  "searchable", // Not a supported Dropdown feature — that's what makes it an AutoComplete.
 ] as const satisfies readonly (keyof MantineSelectProps)[];
 
 export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(

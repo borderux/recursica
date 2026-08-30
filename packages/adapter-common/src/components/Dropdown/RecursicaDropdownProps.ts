@@ -11,8 +11,6 @@ export interface RecursicaDropdownProps {
    * selected display text — stays a real string (a whole subtree can't be matched/written),
    * unlike the `ReactNode` this was previously typed as. Falls back to `value` when omitted. */
   data?: RecursicaComboboxData;
-  /** Enable autocomplete search functionality */
-  searchable?: boolean;
   /** Show input clear option button */
   clearable?: boolean;
   /** Marks field with visual asterisk */

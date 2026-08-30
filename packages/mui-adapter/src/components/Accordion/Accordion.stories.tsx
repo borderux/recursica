@@ -196,24 +196,3 @@ export const Disabled: StoryObj<typeof Accordion> = {
     );
   },
 };
-
-export const LayerOne: StoryObj<typeof Accordion> = {
-  render: () => {
-    return (
-      <Layer layer={1} style={{ padding: "24px" }}>
-        <Accordion defaultValue="demo" chevron={<ChevronIcon />}>
-          <Accordion.Item value="demo">
-            <Accordion.Control leftIcon={<SVGIcon />}>
-              Layer 1 Render Engine
-            </Accordion.Control>
-            <Accordion.Panel>
-              This Accordion dynamically updates its colors, borders, and
-              typography variables because it is wrapped securely by the
-              simulated `data-recursica-layer="1"`.
-            </Accordion.Panel>
-          </Accordion.Item>
-        </Accordion>
-      </Layer>
-    );
-  },
-};
