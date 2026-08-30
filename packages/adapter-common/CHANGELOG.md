@@ -1,5 +1,16 @@
 # @recursica/adapter-common
 
+## 0.28.0
+
+### Minor Changes
+
+- cb3796a: Added an `animate` prop to `Loader` (default `true`) — set `false` to freeze its CSS animation for a deterministic render, e.g. a visual-regression snapshot. The `Static*` Loader stories now use it, and the animated `Default`/`LayerTwoOval` stories are excluded from adapter-tester's visual regression.
+
+### Patch Changes
+
+- cb3796a: Fixed `Table` currency columns so header and footer cells right-align to match value cells. `Table.Th`/`Table.Cell` header context now supports `variant="currency"`.
+- cb3796a: Added `leftSection` support to `TimePicker` for an optional leading icon, matching `TextField`'s convention.
+
 ## 0.27.0
 
 ### Minor Changes

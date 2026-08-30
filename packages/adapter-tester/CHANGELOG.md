@@ -1,5 +1,16 @@
 # @recursica/adapter-tester
 
+## 5.0.0
+
+### Major Changes
+
+- cb3796a: Split `diffThresholdPixels` into `goldenThresholdPixels` (own-drift check, default 10) and `sourceOfTruthThresholdPixels` (divergence check, default 3500) — cross-library divergence needs far more tolerance than same-library drift. Per-story `stories.<id>.threshold` is likewise split into `goldenThreshold`/`sourceOfTruthThreshold`. The divergence check is now threshold-based instead of requiring an exact pixel match. Breaking: rename these fields in any `adapter-tester.config.json`.
+
+### Patch Changes
+
+- cb3796a: Storybook ports are no longer pinned — the real port is auto-detected from each Storybook's own startup output instead of trusted from config, fixing flaky `webServer` timeouts when a configured port was already taken. Applies to both the automated run and interactive Dev Mode. `storybook.port`/`sourceOfTruth.port` in `adapter-tester.config.json` are now optional first-guess hints only.
+- cb3796a: Fixed the HTML report grouping failures under a sourcemapped path into adapter-tester's own library code instead of the generated spec file, shortened test titles to just the story id, and attached expected/actual/diff images to failed golden checks. Golden checks now run across Playwright's parallel workers instead of forced to one, with per-story manifest.json writes locked so concurrent workers don't race each other. `--update-golden` now also prunes goldens (image + manifest entry) for stories no longer in Storybook.
+
 ## 4.0.0
 
 ### Major Changes
