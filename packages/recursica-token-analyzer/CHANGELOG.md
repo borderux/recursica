@@ -1,5 +1,11 @@
 # @recursica/token-analyzer
 
+## 1.7.1
+
+### Patch Changes
+
+- 2e94fdf: Fixed repository url in packages.json for token-analyzer
+
 ## 1.7.0
 
 ### Minor Changes
