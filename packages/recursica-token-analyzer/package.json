@@ -1,6 +1,6 @@
 {
   "name": "@recursica/token-analyzer",
-  "version": "1.7.2",
+  "version": "1.7.3",
   "description": "CLI tool to analyze unused and missing CSS variables across adapter packages",
   "private": false,
   "bin": {
