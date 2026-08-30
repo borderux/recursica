@@ -1,9 +1,8 @@
 import ReactMarkdown from "react-markdown";
-import { Paper, Divider } from "@mui/material";
+import { Box, Paper, Divider } from "@mui/material";
 import {
   Container,
   Stack,
-  Box,
   Text as RawText,
   Heading,
   Switch as RawSwitch,

@@ -108,9 +108,10 @@ Only meaningful with the default `sourceOfTruth.type: "mantine-harness"` mode �
 1. **Automatic Storybook Bootup**: `adapter-tester` boots only this project's own Storybook — the divergence check reads the source-of-truth adapter's stored golden files, never a live Storybook, so nothing else needs to boot.
 2. **Story Discovery**: The test suite fetches this project's own Storybook index (`/index.json`) to dynamically discover and parameterize tests for every component story, excluding `@recursica/storybook-template`'s own default token/theme demo stories (`Theme/*`, `Tokens/*`) and each adapter's own onboarding stories (`Introduction/*`).
 3. **Headless Snapshot**: It launches headless Chrome, navigates to the isolated iframe view, and takes a screenshot. A missing golden is captured from this screenshot regardless of which check is running.
-4. **Own-Drift Check** (`adapter-tester:automated`): Diffs the screenshot against this project's own `test/golden/<story-id>.png` using `pixelmatch`, against the configured mismatch threshold. No golden yet for a story is not a failure — one is captured from this run.
-5. **Divergence Check** (`adapter-tester:source-of-truth`): Diffs this project's own golden against the source-of-truth adapter's golden (skipped for the source-of-truth adapter's own config). Different and not yet reviewed via `--approve-divergence`? Flagged as a report annotation — never a failure on its own.
-6. **Native Report Generation**: Screenshots, diff overlays, and divergence flags are embedded directly as test attachments/annotations.
+4. **Own-Drift Check** (`adapter-tester:automated`): Diffs the screenshot against this project's own `test/golden/<story-id>.png` using `pixelmatch`, against `goldenThresholdPixels`. No golden yet for a story is not a failure — one is captured from this run.
+5. **Divergence Check** (`adapter-tester:source-of-truth`): Diffs this project's own golden against the source-of-truth adapter's golden (skipped for the source-of-truth adapter's own config), against `sourceOfTruthThresholdPixels`. Past that threshold and not yet reviewed via `--approve-divergence`? Flagged as a report annotation and fails the run.
+6. **Story Parity Check** (`adapter-tester:source-of-truth` only): Compares this project's live Storybook story ids against every id the source-of-truth adapter has a golden for. A source-of-truth story this adapter hasn't built at all — and hasn't marked `exclude: true` under `stories` — fails the run as a single `story parity with source of truth` test. The reverse (a story only this adapter has) is never flagged.
+7. **Native Report Generation**: Screenshots, diff overlays, and divergence flags are embedded directly as test attachments/annotations.
 
 ### Output & Reports
 
@@ -130,7 +131,7 @@ All test outcomes and visual outputs are compiled into the standard, git-ignored
 Each adapter's `test/golden/` directory — committed to git, alongside a `manifest.json` tracking when each was captured — is its own baseline:
 
 - **Own-drift check (hard fail):** this run's live render vs this project's own golden. Catches unintended CSS regressions.
-- **Divergence check (soft flag, never fails a run):** this project's own golden vs the source-of-truth adapter's golden — different underlying UI libraries can legitimately render a component differently, so a divergence isn't automatically wrong, just unreviewed.
+- **Divergence check (hard fail):** this project's own golden vs the source-of-truth adapter's golden — different underlying UI libraries can legitimately render a component differently, so review a flagged divergence and either fix the styling or `--approve-divergence` it as intentional.
 
 These are explicit, developer-run workflows — not run in CI, and not scoped down automatically; use `--grep` to target specific stories.
 
@@ -157,7 +158,7 @@ Renamed/removed stories just leave an orphaned `test/golden/<story-id>.png`/mani
 
 ## Configuring `adapter-tester.config.json`
 
-All fields are optional — an adapter repo with a normal `storybook` npm script (e.g. `storybook dev -p 6012`) needs no config file at all.
+All fields are optional — an adapter repo with a normal `storybook` npm script (e.g. `storybook dev`, no fixed port) needs no config file at all.
 
 Every `adapter-tester.config.json` is validated against [`src/adapter-tester.schema.json`](./src/adapter-tester.schema.json) before a run — unknown fields, wrong types, and invalid `sourceOfTruth` shapes fail fast with a specific error instead of silently doing the wrong thing. Point your editor at it for autocomplete/inline docs:
 
@@ -167,9 +168,10 @@ Every `adapter-tester.config.json` is validated against [`src/adapter-tester.sch
   "name": "MyAdapter",
   "storybook": { "port": 6006, "command": "npm run storybook" },
   "sourceOfTruth": { "type": "mantine-harness" },
-  "diffThresholdPixels": 3500,
+  "goldenThresholdPixels": 10,
+  "sourceOfTruthThresholdPixels": 3500,
   "stories": {
-    "ui-kit-slider": { "threshold": 15000 },
+    "ui-kit-slider": { "sourceOfTruthThreshold": 15000 },
     "ui-kit-slider--range-mode-with-icons-and-inputs": { "exclude": true }
   },
   "excludeTitlePrefixes": ["Theme", "Tokens", "Introduction"]
@@ -177,12 +179,15 @@ Every `adapter-tester.config.json` is validated against [`src/adapter-tester.sch
 ```
 
 - `name` — label for this project's own target. Defaults to the unscoped `package.json` name.
-- `storybook.port` — defaults to whatever `-p`/`--port` is set on this project's own `storybook` script; falls back to Storybook's default of `6006`.
-- `storybook.command`/`storybook.cwd` — default to `npm run storybook` in the current directory.
+- `storybook.port` — a first-guess only, not authoritative. Storybook is never pinned to it — the real port is auto-detected from Storybook's own startup output, since Storybook silently falls back to an OS-assigned port whenever its default/configured one is taken. Defaults to whatever `-p`/`--port` is set on this project's own `storybook` script, falling back to `6006`.
+- `storybook.command`/`storybook.cwd` — default to `npm run storybook` in the current directory. Leave `-p`/`--port` off the script entirely unless you specifically need a fixed port — the tool doesn't need one.
 - `sourceOfTruth` — defaults to `{ "type": "mantine-harness" }`: a throwaway harness that installs the _published_ `@recursica/mantine-adapter` from npm, so you never need this monorepo checked out. This is the standard mode every external adapter repo uses. `sourceOfTruth.mantineAdapterVersion` pins the version installed/fetched (defaults to `latest`) — or override it per-run with `--source-of-truth-version` instead of hardcoding it in the config.
-- `sourceOfTruth.type: "url"` — the **non-standard** mode: points at an already-addressable Storybook via `command`/`port`/`cwd` instead of the harness, and reads that sibling package's `test/golden/` directly from disk for the divergence check (including uncommitted local changes) instead of resolving a published npm version. For comparing two locally checked-out sibling adapters instead of a published one.
+- `sourceOfTruth.type: "url"` — the **non-standard** mode: points at an already-addressable Storybook via `command`/`port`/`cwd` instead of the harness, and reads that sibling package's `test/golden/` directly from disk for the divergence check (including uncommitted local changes) instead of resolving a published npm version. For comparing two locally checked-out sibling adapters instead of a published one. `port` here is the same first-guess-only hint as `storybook.port` above.
 - `isSourceOfTruthAdapter` — set `true` only in the source-of-truth adapter's own config (`@recursica/mantine-adapter`). Skips `sourceOfTruth`/the divergence check entirely; runs the own-drift check standalone. Also disables Dev Mode (`--serve`) — there's nothing to sync against.
-- `diffThresholdPixels`/`stories`/`excludeTitlePrefixes` — same meaning as before; see `src/adapter-tester.schema.json` for full docs.
+- `goldenThresholdPixels` — global threshold for the own-drift check (this project's live render vs. its own committed golden). Same library on both sides, so keep this tight; defaults to `10`.
+- `sourceOfTruthThresholdPixels` — global threshold for the source-of-truth divergence check (this project's golden vs. the source-of-truth adapter's golden). Comparing across two different component libraries has legitimate structural variation, so this is expected to sit much higher than `goldenThresholdPixels`; defaults to `3500`. Unused on the source-of-truth adapter's own config (`isSourceOfTruthAdapter: true`).
+- `stories.<id>.goldenThreshold`/`stories.<id>.sourceOfTruthThreshold` — per-story overrides of the two thresholds above, keyed by story id prefix.
+- `stories.<id>.exclude`/`excludeTitlePrefixes` — same meaning as before; see `src/adapter-tester.schema.json` for full docs.
 
 ---
 
@@ -195,7 +200,7 @@ npm install --save-dev @recursica/adapter-tester @playwright/test
 npx playwright install chromium
 ```
 
-If your repo already has a `storybook` npm script with a port set (`storybook dev -p 6006`), no config file is required. Add the scripts from [npm scripts](#npm-scripts) above to your `package.json`, then:
+If your repo already has a `storybook` npm script (a plain `storybook dev`, no port needed), no config file is required. Add the scripts from [npm scripts](#npm-scripts) above to your `package.json`, then:
 
 ```bash
 npm run adapter-tester                    # Interactive Dev Mode

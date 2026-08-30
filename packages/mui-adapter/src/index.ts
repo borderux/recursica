@@ -5,7 +5,6 @@ import { wrapComponent } from "@recursica/adapter-common";
 export * from "@recursica/adapter-common";
 
 // Expose unwrapped structural layout primitives to preserve their polymorphic types
-export const Box = rawComponents.Box;
 export const Flex = rawComponents.Flex;
 export const Grid = rawComponents.Grid;
 export const GridCol = rawComponents.GridCol;
@@ -30,9 +29,9 @@ export const AccordionPanel = wrapComponent(
 export const AssistiveElement = wrapComponent(
   rawComponents.AssistiveElement,
 ) as typeof rawComponents.AssistiveElement;
-export const Autocomplete = wrapComponent(
-  rawComponents.Autocomplete,
-) as typeof rawComponents.Autocomplete;
+export const AutoComplete = wrapComponent(
+  rawComponents.AutoComplete,
+) as typeof rawComponents.AutoComplete;
 export const Avatar = wrapComponent(
   rawComponents.Avatar,
 ) as typeof rawComponents.Avatar;

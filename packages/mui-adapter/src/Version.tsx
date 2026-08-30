@@ -1,6 +1,6 @@
 import ReactMarkdown from "react-markdown";
-import { Paper, Divider } from "@mui/material";
-import { Container, Heading, Group, Link, Box } from "./components";
+import { Paper, Divider, Box } from "@mui/material";
+import { Container, Heading, Group, Link } from "./components";
 import pkg from "../package.json";
 import changelog from "../CHANGELOG.md?raw";
 

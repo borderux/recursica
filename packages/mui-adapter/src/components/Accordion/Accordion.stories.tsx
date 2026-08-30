@@ -123,6 +123,42 @@ export const WithIcons: StoryObj<typeof Accordion> = {
   },
 };
 
+export const LongTitleTruncation: StoryObj<typeof Accordion> = {
+  render: () => {
+    return (
+      // `style` is stripped from Accordion itself (only passes through with overStyled);
+      // constrain width on a plain wrapper div instead to force truncation.
+      <Layer layer={0} style={{ padding: "24px" }}>
+        <div style={{ maxWidth: 320 }}>
+          <Accordion defaultValue="long-title" chevron={<ChevronIcon />}>
+            <Accordion.Item value="long-title">
+              <Accordion.Control leftIcon={<SVGIcon />}>
+                This is a deliberately very long accordion item title used to
+                verify that overflowing text truncates with a CSS ellipsis
+                instead of wrapping or overflowing the header
+              </Accordion.Control>
+              <Accordion.Panel>
+                The header label above should truncate to a single line with a
+                trailing ellipsis (…) rather than wrapping onto multiple lines
+                or pushing the chevron out of view.
+              </Accordion.Panel>
+            </Accordion.Item>
+
+            <Accordion.Item value="short-title">
+              <Accordion.Control leftIcon={<SVGIcon />}>
+                Short Title
+              </Accordion.Control>
+              <Accordion.Panel>
+                A short title in the same accordion for visual comparison.
+              </Accordion.Panel>
+            </Accordion.Item>
+          </Accordion>
+        </div>
+      </Layer>
+    );
+  },
+};
+
 export const Disabled: StoryObj<typeof Accordion> = {
   render: () => {
     return (

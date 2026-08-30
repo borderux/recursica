@@ -19,7 +19,7 @@ import {
 import { type RecursicaFormControlWrapperProps } from "../FormControlWrapper/FormControlWrapper";
 import { WithReadOnlyWrapper } from "../ReadOnlyField/WithReadOnlyWrapper";
 import { renderRichOptionContent } from "../../utils/renderRichOption";
-import styles from "./Autocomplete.module.css";
+import styles from "./AutoComplete.module.css";
 
 import { type RecursicaAutocompleteProps as BaseRecursicaAutocompleteProps } from "@recursica/adapter-common";
 
@@ -46,10 +46,10 @@ export interface RecursicaAutocompleteProps
     ReadOnlyControlProps,
     BaseRecursicaAutocompleteProps {}
 
-export type AutocompleteProps = RecursicaOverStyled<RecursicaAutocompleteProps>;
+export type AutoCompleteProps = RecursicaOverStyled<RecursicaAutocompleteProps>;
 
-export const Autocomplete = forwardRef<HTMLInputElement, AutocompleteProps>(
-  function Autocomplete(props, ref) {
+export const AutoComplete = forwardRef<HTMLInputElement, AutoCompleteProps>(
+  function AutoComplete(props, ref) {
     const {
       overStyled = false,
       formLayout = "stacked",
@@ -255,4 +255,4 @@ export const Autocomplete = forwardRef<HTMLInputElement, AutocompleteProps>(
   },
 );
 
-Autocomplete.displayName = "Autocomplete";
+AutoComplete.displayName = "AutoComplete";

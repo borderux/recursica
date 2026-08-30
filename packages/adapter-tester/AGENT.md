@@ -36,16 +36,23 @@ A component is considered "Close Enough" and passing if:
 
 ### Thresholds
 
-- The global visual diff threshold is the `diffThresholdPixels` field in the consuming project's `adapter-tester.config.json` (e.g. `mantine-adapter`'s or `mui-adapter`'s own). This package has no `adapter-tester.config.json` of its own — it's a tool other adapters configure, not something that runs against itself.
-- **⚠️ AI AGENT GUARDRAIL**: Under no circumstances are AI agents allowed to modify `diffThresholdPixels` in any `adapter-tester.config.json`. Only human developers are permitted to alter this global threshold. Bypassing this threshold by editing the file is an automatic failure.
-- If a test fails this threshold, it is almost certainly a genuine CSS mapping bug that must be investigated and fixed in the adapter styling code itself.
+There are two independent global thresholds in the consuming project's `adapter-tester.config.json` (e.g. `mantine-adapter`'s or `mui-adapter`'s own). This package has no `adapter-tester.config.json` of its own — it's a tool other adapters configure, not something that runs against itself.
+
+- `goldenThresholdPixels` — gates the **own-drift check** (this project's live render vs. its own committed golden). Same library on both sides, so it stays tight (default 10). A failure here is almost certainly a genuine CSS regression in this adapter's own styling code.
+- `sourceOfTruthThresholdPixels` — gates the **divergence check** (this project's golden vs. Mantine's golden). Comparing across two different component libraries has legitimate structural variation, so this is deliberately much higher (default 3500). Unused on `@recursica/mantine-adapter`'s own config, which has no divergence check.
+- **⚠️ AI AGENT GUARDRAIL**: Under no circumstances are AI agents allowed to modify `goldenThresholdPixels` or `sourceOfTruthThresholdPixels` in any `adapter-tester.config.json`. Only human developers are permitted to alter either global threshold. Bypassing either by editing the file is an automatic failure.
+- If a test fails one of these thresholds, it is almost certainly a genuine CSS mapping bug that must be investigated and fixed in the adapter styling code itself.
+
+### Story Parity Check
+
+`npm run adapter-tester:source-of-truth` also fails a single `story parity with source of truth` test if the source-of-truth adapter has a golden for a story id this adapter's Storybook doesn't have at all. This only runs one direction — a story only this adapter has is never flagged. Porting the missing story is almost always the right fix; falling back to `stories.<id>.exclude` is the same developer-permission-only guardrail as any other `exclude` (§4.3).
 
 ## 4. Handling Acceptable Exemptions
 
-When you encounter an unfixable or acceptable difference that exceeds the global threshold and cannot be resolved through code styling fixes:
+When you encounter an unfixable or acceptable difference that exceeds the relevant global threshold and cannot be resolved through code styling fixes:
 
 1. **Document It**: Explain exactly _why_ the difference exists (e.g., "the underlying library forces a non-removable wrapper div that shifts the baseline by 1px") when you propose the change.
-2. **Increase Threshold for Specific Case**: If necessary and explicitly permitted by the developer, add the story's id prefix to `stories` with a `threshold` in the same `adapter-tester.config.json`. Do not alter the global `diffThresholdPixels`.
+2. **Increase Threshold for Specific Case**: If necessary and explicitly permitted by the developer, add the story's id prefix to `stories` with a `goldenThreshold`/`sourceOfTruthThreshold` (matching whichever check flagged it) in the same `adapter-tester.config.json`. Do not alter either global threshold.
 3. **Skip a Story Entirely**: If a story has no meaningful cross-adapter counterpart to diff (and only if explicitly permitted by the developer), set `exclude: true` on its id prefix in `stories` instead of relaxing its threshold.
 4. **Notify User**: Inform the user of the exemption and the reasoning behind it during your summary.
 

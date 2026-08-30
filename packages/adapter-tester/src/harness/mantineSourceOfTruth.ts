@@ -22,7 +22,8 @@ export interface MantineSourceOfTruthHarnessOptions {
    * call — add it to your .gitignore rather than committing it.
    */
   dir: string;
-  /** Port the harness's Storybook dev server boots on. */
+  /** First-guess port, shown for `--dry-run` visibility only. The harness's
+   * Storybook is never pinned to this — see `HarnessWebServerConfig.port`. */
   port: number;
   /** npm version/range for @recursica/mantine-adapter. Defaults to "latest". */
   mantineAdapterVersion?: string;
@@ -32,9 +33,17 @@ export interface MantineSourceOfTruthHarnessOptions {
 
 export interface HarnessWebServerConfig {
   command: string;
+  /** First-guess port, shown for `--dry-run` visibility only — not
+   * authoritative. The real port is whatever this Storybook's own startup
+   * banner reports once it's actually running (see portDiscovery.ts), since
+   * Storybook silently falls back to an OS-assigned port whenever this one
+   * is taken. */
   port: number;
   cwd: string;
   reuseExistingServer: boolean;
+  /** File the real, detected port is cached in between runs, so a later
+   * `reuseExistingServer` run can find this instance again. */
+  cacheFile: string;
   timeout: number;
 }
 
@@ -68,14 +77,16 @@ const WORKAROUND_DEPENDENCIES = {
 function harnessPackageJson(options: {
   mantineAdapterVersion: string;
   storybookTemplateVersion: string;
-  port: number;
 }) {
   return {
     name: "adapter-tester-mantine-source-of-truth-harness",
     private: true,
     type: "module",
     scripts: {
-      storybook: `storybook dev -p ${options.port}`,
+      // No `-p` pin — Storybook silently falls back to an OS-assigned port
+      // whenever its default is taken, so the caller detects the real port
+      // from this process's own output rather than trusting a fixed one.
+      storybook: `storybook dev`,
     },
     dependencies: {
       "@recursica/mantine-adapter": options.mantineAdapterVersion,
@@ -175,7 +186,6 @@ export function scaffoldMantineSourceOfTruthHarness(
 ): string {
   const {
     dir,
-    port,
     mantineAdapterVersion = "latest",
     storybookTemplateVersion = "latest",
   } = options;
@@ -187,7 +197,6 @@ export function scaffoldMantineSourceOfTruthHarness(
       harnessPackageJson({
         mantineAdapterVersion,
         storybookTemplateVersion,
-        port,
       }),
       null,
       2,
@@ -228,6 +237,7 @@ export function mantineSourceOfTruthWebServer(
     port: options.port,
     cwd: dir,
     reuseExistingServer: !process.env.CI,
+    cacheFile: join(dir, "last-port.json"),
     timeout: 180 * 1000,
   };
 }

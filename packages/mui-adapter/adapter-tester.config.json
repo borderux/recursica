@@ -1,20 +1,10 @@
 {
   "$schema": "https://raw.githubusercontent.com/borderux/recursica/main/packages/adapter-tester/src/adapter-tester.schema.json",
-  "diffThresholdPixels": 3500,
+  "sourceOfTruth": { "type": "url", "cwd": "../mantine-adapter", "port": 6011 },
+  "goldenThresholdPixels": 10,
+  "sourceOfTruthThresholdPixels": 3500,
   "stories": {
     "ui-kit-loader--default": { "exclude": true },
-    "ui-kit-loader--layer-two-oval": { "exclude": true },
-    "ui-kit-checkboxgroup": { "threshold": 15000 },
-    "ui-kit-radiogroup": { "threshold": 15000 },
-    "ui-kit-switchgroup": { "threshold": 15000 },
-    "ui-kit-checkbox": { "threshold": 15000 },
-    "ui-kit-radio": { "threshold": 15000 },
-    "ui-kit-switch": { "threshold": 15000 },
-    "ui-kit-segmentedcontrol": { "threshold": 15000 },
-    "ui-kit-numberinput": { "threshold": 15000 },
-    "ui-kit-slider": { "threshold": 15000 },
-    "ui-kit-textfield": { "threshold": 15000 },
-    "ui-kit-timeline": { "threshold": 15000 },
-    "ui-kit-title": { "threshold": 15000 }
+    "ui-kit-loader--layer-two-oval": { "exclude": true }
   }
 }

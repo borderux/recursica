@@ -44,10 +44,14 @@ export type GoldenMode = "check" | "update-golden" | "approve-divergence";
 export type CheckMode = "own" | "divergence";
 
 export interface StoryOverride {
-  /** Diff threshold override for this story. Overrides `diffThresholdPixels`
-   * for components with acceptable cross-library structural variation (e.g.
-   * native control widgets). */
-  threshold?: number;
+  /** Diff threshold override for this story's own-drift check. Overrides
+   * `goldenThresholdPixels`. */
+  goldenThreshold?: number;
+  /** Diff threshold override for this story's source-of-truth divergence
+   * check. Overrides `sourceOfTruthThresholdPixels` for components with
+   * acceptable cross-library structural variation (e.g. native control
+   * widgets). */
+  sourceOfTruthThreshold?: number;
   /** Skip this story entirely — no own-drift check, no divergence check, no
    * golden captured. For stories with no meaningful cross-adapter counterpart. */
   exclude?: boolean;
@@ -55,8 +59,17 @@ export interface StoryOverride {
 
 export interface AdapterTesterConfig {
   targets: AdapterTarget[];
-  /** Global pixel-diff threshold applied to every story comparison. */
-  diffThresholdPixels: number;
+  /** Global pixel-diff threshold for the own-drift check (this project's live
+   * render vs. its own committed golden). Same library on both sides, so this
+   * should stay tight. */
+  goldenThresholdPixels: number;
+  /** Global pixel-diff threshold for the source-of-truth divergence check
+   * (this project's golden vs. the source-of-truth adapter's golden).
+   * Comparing across two different component libraries has legitimate
+   * structural variation, so this is expected to be much higher than
+   * `goldenThresholdPixels`. Unused on the source-of-truth adapter's own
+   * config (`isSourceOfTruthAdapter: true`). */
+  sourceOfTruthThresholdPixels: number;
   /**
    * Per-story overrides, keyed by story id prefix (a story matches if its id
    * equals the key or starts with it). When more than one key matches, the
