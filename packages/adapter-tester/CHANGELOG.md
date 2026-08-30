@@ -1,5 +1,11 @@
 # @recursica/adapter-tester
 
+## 5.0.1
+
+### Patch Changes
+
+- 9531598: Default automated runs to 1 Playwright worker (1 Chromium instance) instead of Playwright's CPU-based default, to avoid exhausting memory. Override with `--workers <n>`.
+
 ## 5.0.0
 
 ### Major Changes
