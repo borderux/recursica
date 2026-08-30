@@ -142,10 +142,12 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: ${JSON.stringify(runDir)},
-  // Stories run across Playwright's default worker pool — each golden check
-  // only reads/writes its own story's manifest.json entry, under a lock, so
-  // concurrent workers never race each other (see \`updateManifestEntry\`).
-  // Override with \`--workers <n>\` (forwarded straight through to Playwright).
+  // Each golden check only reads/writes its own story's manifest.json entry,
+  // under a lock, so concurrent workers never race each other (see
+  // \`updateManifestEntry\`). Defaults to 1 worker (1 Chromium instance) to
+  // avoid exhausting memory running the full suite; override with
+  // \`--workers <n>\` (forwarded straight through to Playwright) to parallelize.
+  workers: 1,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
