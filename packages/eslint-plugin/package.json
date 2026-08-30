@@ -1,5 +1,5 @@
 {
-  "name": "eslint-plugin-recursica",
+  "name": "@recursica/eslint-plugin",
   "version": "0.2.0",
   "description": "ESLint plugin enforcing Recursica design-system conventions in consuming applications.",
   "private": false,
