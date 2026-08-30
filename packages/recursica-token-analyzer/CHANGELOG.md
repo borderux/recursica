@@ -1,5 +1,11 @@
 # @recursica/token-analyzer
 
+## 1.7.2
+
+### Patch Changes
+
+- c31d5ae: Fixed the unused-variable report silently dropping `--recursica_ui-kit_globals_*` entries from `unusedByComponent` even though they counted toward `summary.totalUnused`. They're now surfaced in a new `unusedGlobals` field.
+
 ## 1.7.1
 
 ### Patch Changes
