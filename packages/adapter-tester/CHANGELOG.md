@@ -1,5 +1,11 @@
 # @recursica/adapter-tester
 
+## 3.0.0
+
+### Major Changes
+
+- e9f225d: `adapter-tester:automated` now diffs stories against committed golden images (`test/golden/`) instead of two live Storybooks, and flags cross-adapter divergence for review. New `--update-golden`/`--approve-divergence` flags and `isSourceOfTruthAdapter`/`excludeStoryIds`/`storyThresholds` config fields.
+
 ## 2.2.0
 
 ### Minor Changes
