@@ -4,6 +4,12 @@
    - Scope prefix .root to enforce Figma tokens over Mantine's inline calculation without using !important
 */
 
+/* EXEMPTIONS:
+   - The generic, non-state-specific segmented-control-item border-radius is ignored: the
+     selected/unselected state-specific border-radius tokens below already cover both states an
+     item can be in. */
+/* recursica-ignore: --recursica_ui-kit_components_segmented-control-item_properties_item_border-radius */
+
 .root {
   background-color: var(
     --recursica_ui-kit_components_segmented-control_properties_colors_background-color

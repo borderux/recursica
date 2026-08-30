@@ -128,6 +128,37 @@
   color: inherit;
 }
 
+/* Leading icon (leftSection), rendered via slotProps.textField.slotProps.input.startAdornment —
+   a sibling of .MuiPickersInputBase-sectionsContainer inside .field, same shape as TextField's own
+   startAdornment wrapping. Only one icon-color token exists for time-picker (unlike text-field's
+   separate leading/trailing) — this field has no right-side icon slot. */
+.section {
+  display: flex;
+  align-items: center;
+  padding-left: var(
+    --recursica_ui-kit_components_time-picker_properties_horizontal-padding
+  );
+}
+
+.section :global(svg) {
+  width: var(--recursica_ui-kit_components_time-picker_properties_icon-size);
+  height: var(--recursica_ui-kit_components_time-picker_properties_icon-size);
+  color: var(
+    --recursica_ui-kit_components_time-picker_properties_colors_icon-color
+  );
+}
+
+/* With a leftSection present, the icon (not .field's own border) now owns the inset from the left
+   edge — sectionsContainer's own padding-left collapses to just the icon-text-gap between icon and
+   digits. */
+.root[data-with-left-section="true"]
+  .field
+  :global(.MuiPickersInputBase-sectionsContainer) {
+  padding-left: var(
+    --recursica_ui-kit_components_time-picker_properties_icon-text-gap
+  ) !important;
+}
+
 /* The AM/PM BareDropdown reuses Dropdown.module.css's own border/background/padding entirely —
    this only controls its size/alignment within the flex row. */
 .amPmSelect {
@@ -191,6 +222,12 @@
   ) !important;
 }
 
+.root[data-error="true"] .section :global(svg) {
+  color: var(
+    --recursica_ui-kit_components_time-picker_variants_states_error_properties_colors_icon-color
+  ) !important;
+}
+
 /* Disabled State Mapping */
 .field:has(:global(.Mui-disabled)) {
   border-color: var(
@@ -206,4 +243,10 @@
     --recursica_ui-kit_components_time-picker_variants_states_disabled_properties_opacity
   ) !important;
   cursor: not-allowed;
+}
+
+.field:has(:global(.Mui-disabled)) .section :global(svg) {
+  color: var(
+    --recursica_ui-kit_components_time-picker_variants_states_disabled_properties_colors_icon-color
+  ) !important;
 }

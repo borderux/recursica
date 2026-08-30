@@ -7,10 +7,15 @@
 /* HARDCODED VALUES:
    - .root: display: flex; flex-direction: column; width: 100% — structural layout, not a design
      token concern (matches how other block-level components like Layer are laid out).
-   - .dropzone: border-style: dashed — see EXEMPTIONS above.
+   - .dropzone: border-style: dashed — see EXEMPTIONS below.
    - .uploadIcon: width/height: 2rem — no icon-size token exists for file-upload (unlike
      TextField/DatePicker); sized to visually match the Figma reference. Revisit if a dedicated
      token is ever added. */
+
+/* EXEMPTIONS:
+   - border-style is ignored: the dropzone is deliberately dashed (conventional drop-target
+     affordance), not the UI Kit's solid-border default. */
+/* recursica-ignore: --recursica_ui-kit_components_file-upload_properties_border-style */
 
 /* LAYOUT SPACING OVERRIDES:
    - Sets the --form-control-margin-bottom spacing hook to map component-specific layout tokens. */

@@ -116,7 +116,7 @@ function loadFileConfig(cwd: string): AdapterTesterFileConfig {
 /**
  * Loads `adapter-tester.config.json` from `cwd` (or falls back to defaults
  * when the file doesn't exist) and resolves it into the engine config
- * `runVisualRegression` consumes plus the Playwright `webServer` entries
+ * `resolveVisualRegressionPlan` consumes plus the Playwright `webServer` entries
  * needed to boot both sides of the comparison.
  *
  * Default mode (no `sourceOfTruth`/`storybook` set): compares this project's

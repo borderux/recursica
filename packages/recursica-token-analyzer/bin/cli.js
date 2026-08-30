@@ -268,6 +268,13 @@ function analyze() {
   });
 
   const unusedByComponent = {};
+  // --recursica_ui-kit_globals_* has no owning component — these are the shared indirection
+  // layer other ui-kit_components_*/ui-kit_themes_* tokens resolve through (see README.md).
+  // Tracked separately from unusedByComponent instead of being silently dropped: previously
+  // varName.match(/ui-kit_components_([a-z-]+)_/) simply didn't match ui-kit_globals_* names, so
+  // they never got bucketed anywhere in the report even though they still counted toward
+  // summary.totalUnused above — a real one, not exempted, just invisible in the breakdown.
+  const unusedGlobals = [];
 
   // Create reverse lookup for tokenPrefix -> componentId
   const prefixToCompId = {};
@@ -287,8 +294,14 @@ function analyze() {
       const compId = prefixToCompId[prefix] || prefix; // Fallback to raw prefix if no component exists yet
       if (!unusedByComponent[compId]) unusedByComponent[compId] = [];
       unusedByComponent[compId].push(varName);
+      return;
+    }
+
+    if (varName.startsWith("--recursica_ui-kit_globals_")) {
+      unusedGlobals.push(varName);
     }
   });
+  unusedGlobals.sort();
 
   // 6. Output Results
   if (layerViolations.length > 0) {
@@ -352,6 +365,12 @@ function analyze() {
     );
   }
 
+  if (unusedGlobals.length > 0) {
+    console.warn(
+      `⚠️ Of those, ${unusedGlobals.length} are --recursica_ui-kit_globals_* value(s) with no owning component — see unusedGlobals in ${options.output}.\n`,
+    );
+  }
+
   fs.writeFileSync(
     options.output,
     JSON.stringify(
@@ -369,6 +388,7 @@ function analyze() {
         brokenComponents: Array.from(brokenComponents).sort(),
         missingVariables: missingVars,
         unusedByComponent,
+        unusedGlobals,
         staleExemptions,
         layerViolations,
       },

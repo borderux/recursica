@@ -41,6 +41,18 @@
   );
 }
 
+.root[data-form-layout="stacked"] .leftSection[data-size="default"] {
+  width: var(
+    --recursica_ui-kit_components_label_variants_layouts_stacked_variants_sizes_default_properties_width
+  );
+}
+
+.root[data-form-layout="stacked"] .leftSection[data-size="small"] {
+  width: var(
+    --recursica_ui-kit_components_label_variants_layouts_stacked_variants_sizes_small_properties_width
+  );
+}
+
 /* SideBySide Layout constraints */
 .root[data-form-layout="side-by-side"] .leftSection {
   padding-top: var(

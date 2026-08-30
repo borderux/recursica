@@ -66,6 +66,7 @@
     "prebuild": "npm run analyze-tokens",
     "adapter-tester": "adapter-tester --serve",
     "adapter-tester:automated": "adapter-tester",
+    "adapter-tester:update-golden": "adapter-tester --update-golden",
     "adapter-tester:source-of-truth": "adapter-tester --divergence-only",
     "test": "vitest run --project unit",
     "test:dom": "vitest run --project dom"

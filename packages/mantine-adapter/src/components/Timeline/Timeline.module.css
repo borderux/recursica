@@ -43,6 +43,11 @@
       --recursica_ui-kit_components_timeline-bullet_variants_types_default_properties_bullet-size
     ) !important;
   }
+  /* EXEMPTIONS:
+     - The avatar variant's own avatar-size token is ignored — sizing is deliberately pinned to
+       the default bullet-size above (not the avatar's own size) to keep the connector line
+       aligned across bullet variants; the child Avatar component governs its own visual size. */
+  /* recursica-ignore: --recursica_ui-kit_components_timeline-bullet_variants_types_avatar_properties_avatar-size */
 
   /* Control connector lines via the item ::before pseudo-element */
   /* Inactive connector */

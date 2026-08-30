@@ -62,7 +62,8 @@
     "prebuild": "npm run analyze-tokens",
     "test": "vitest run --project unit",
     "test:dom": "vitest run --project dom",
-    "adapter-tester:automated": "adapter-tester"
+    "adapter-tester:automated": "adapter-tester",
+    "adapter-tester:update-golden": "adapter-tester --update-golden"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",

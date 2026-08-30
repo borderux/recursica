@@ -41,6 +41,11 @@ const meta: Meta<LoaderStoryArgs> = {
       description:
         "Applies a wrapping context to observe rendering logic externally",
     },
+    animate: {
+      control: "boolean",
+      description:
+        "Freezes the CSS animation when false — deterministic, for visual regression",
+    },
   },
 };
 
@@ -48,6 +53,11 @@ export default meta;
 
 type Story = StoryObj<LoaderStoryArgs>;
 
+/**
+ * Animated — excluded from visual regression (`adapter-tester.config.json`),
+ * since a moving animation diffs differently every run. See the `Static*`
+ * stories below for the deterministic, visual-regression-covered equivalents.
+ */
 export const Default: Story = {
   args: {
     variant: "oval",
@@ -62,33 +72,43 @@ export const Default: Story = {
   ),
 };
 
+/** `animate: false` freezes the spin — deterministic for visual regression. */
 export const StaticOvalDefault: Story = {
   args: {
     variant: "oval",
     size: "default",
+    animate: false,
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
   render: ({ withLayer, layer, ...args }: any) => <Loader {...args} />,
 };
 
+/** `animate: false` freezes the bars — deterministic for visual regression. */
 export const StaticBarsLarge: Story = {
   args: {
     variant: "bars",
     size: "large",
+    animate: false,
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
   render: ({ withLayer, layer, ...args }: any) => <Loader {...args} />,
 };
 
+/** `animate: false` freezes the dots — deterministic for visual regression. */
 export const StaticDotsSmall: Story = {
   args: {
     variant: "dots",
     size: "sm",
+    animate: false,
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
   render: ({ withLayer, layer, ...args }: any) => <Loader {...args} />,
 };
 
+/**
+ * Animated — excluded from visual regression, same as `Default`; this one
+ * additionally demonstrates rendering inside a `layer={2}` context.
+ */
 export const LayerTwoOval: Story = {
   args: {
     variant: "oval",

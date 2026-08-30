@@ -1,12 +1,15 @@
-import { test, expect } from "@playwright/test";
+import { expect } from "@playwright/test";
+import type { Browser, TestInfo } from "@playwright/test";
 import { existsSync, readFileSync } from "node:fs";
 import type { AdapterTesterConfig } from "../config.js";
 import { diffPngBuffers } from "../golden/diffPng.js";
 import {
+  type GoldenManifestEntry,
   goldenImagePath,
   loadManifest,
+  pruneOrphanedGoldens,
   saveGoldenImage,
-  saveManifest,
+  updateManifestEntry,
 } from "../golden/manifestStore.js";
 import { resolveSourceOfTruthGolden } from "../golden/resolveSourceOfTruthGolden.js";
 
@@ -83,12 +86,33 @@ function resolveThreshold(
     : diffThresholdPixels;
 }
 
+/** Everything a generated Playwright spec needs to register the golden-image
+ * suite itself. Split out from the actual `test.describe`/`test` calls so
+ * those calls execute in the spec file that imports this, not in this
+ * library file — otherwise Playwright's HTML report groups every story under
+ * this file's own (sourcemapped) path instead of a stable spec name. */
+export interface VisualRegressionPlan {
+  /** `config`'s own (non-source-of-truth) target name, for the suite title. */
+  ownTargetName: string;
+  /** Suite title suffix describing which check mode is running. */
+  suiteLabel: string;
+  /** Stories to check, already filtered and sorted by id. */
+  stories: StorybookEntry[];
+  /** Golden-checks one story. Call this from inside a `test(story.id, ...)`
+   * body — safe to run concurrently across Playwright workers, since each
+   * call only ever reads/writes its own story's manifest entry (locked at
+   * the point it writes it back, so concurrent workers never race each
+   * other's entries — see `updateManifestEntry`). */
+  checkStory: (
+    story: StorybookEntry,
+    browser: Browser,
+    testInfo: TestInfo,
+  ) => Promise<void>;
+}
+
 /**
- * Defines a Playwright suite that golden-image-tests every story in
- * `config`'s own target (the one target in `config.targets` not marked
- * `sourceOfTruth`). Call this with a top-level `await` from a Playwright
- * `*.spec.ts` file — it calls `test.describe` at module scope, so it must
- * run inside Playwright's test runner during test-graph compilation.
+ * Resolves the golden-image plan for `config`'s own target (the one target
+ * in `config.targets` not marked `sourceOfTruth`).
  *
  * Two independent checks per story, gated by `config.checkMode`, neither of
  * which boots the source-of-truth adapter's own Storybook — the divergence
@@ -108,9 +132,9 @@ function resolveThreshold(
  *    once-flagged divergence stays quiet after `--approve-divergence`,
  *    until the source of truth's own golden changes again.
  */
-export async function runVisualRegression(
+export async function resolveVisualRegressionPlan(
   config: AdapterTesterConfig,
-): Promise<void> {
+): Promise<VisualRegressionPlan> {
   const ownTarget = config.isSourceOfTruthAdapter
     ? config.targets[0]
     : config.targets.find((target) => !target.sourceOfTruth);
@@ -139,7 +163,24 @@ export async function runVisualRegression(
     excludeTitlePrefixes,
     excludeStoryIds,
   );
-  const manifest = loadManifest(goldenDir);
+
+  // `--update-golden` redefines this project's own baseline, so it's also
+  // the point a renamed/removed story's now-orphaned golden gets cleaned up
+  // — otherwise nothing ever prunes it, since a run only ever adds/updates
+  // entries for stories it actually saw in this pass. Uses the full current
+  // story list (not narrowed by any `--grep` Playwright itself applies), so
+  // this catches every orphan regardless of how the run is scoped.
+  if (goldenMode === "update-golden") {
+    const prunedStoryIds = await pruneOrphanedGoldens(
+      goldenDir,
+      new Set(stories.map((story) => story.id)),
+    );
+    if (prunedStoryIds.length > 0) {
+      console.warn(
+        `Pruned ${prunedStoryIds.length} orphaned golden(s) no longer in Storybook: ${prunedStoryIds.join(", ")}`,
+      );
+    }
+  }
 
   const sourceOfTruthGolden =
     checkMode !== "divergence" ||
@@ -153,98 +194,133 @@ export async function runVisualRegression(
       ? "Source-of-Truth Divergence Check"
       : "Own-Drift Golden Image Check";
 
-  test.describe(`${ownTarget.name} — ${suiteLabel}`, () => {
-    for (const story of stories) {
-      test(`Golden regression for: ${story.title} - ${story.name} (${story.id})`, async ({
-        browser,
-      }, testInfo) => {
-        const page = await browser.newPage();
-        await page.setViewportSize({ width: 800, height: 600 });
-        await page.goto(
-          `${ownTarget.url}/iframe.html?id=${story.id}&viewMode=story`,
-          { waitUntil: "networkidle" },
-        );
-        await page.waitForSelector("#storybook-root");
-        await page.waitForTimeout(300);
-        const liveBuffer = await page.screenshot();
+  return {
+    ownTargetName: ownTarget.name,
+    suiteLabel,
+    stories,
+    checkStory: async (story, browser, testInfo) => {
+      const page = await browser.newPage();
+      await page.setViewportSize({ width: 800, height: 600 });
+      await page.goto(
+        `${ownTarget.url}/iframe.html?id=${story.id}&viewMode=story`,
+        { waitUntil: "networkidle" },
+      );
+      await page.waitForSelector("#storybook-root");
+      await page.waitForTimeout(300);
+      const liveBuffer = await page.screenshot();
 
-        const imagePath = goldenImagePath(goldenDir, story.id);
-        const entry = manifest[story.id];
-        const capturingNewGolden =
-          goldenMode !== "check" || !entry || !existsSync(imagePath);
+      const imagePath = goldenImagePath(goldenDir, story.id);
+      // Only this worker ever touches this story's key, so reading it here
+      // (outside the lock `updateManifestEntry` takes at the end) can't
+      // race another worker — they're all reading/writing different keys.
+      const entry = loadManifest(goldenDir)[story.id];
+      const capturingNewGolden =
+        goldenMode !== "check" || !entry || !existsSync(imagePath);
 
-        if (capturingNewGolden) {
-          saveGoldenImage(goldenDir, story.id, liveBuffer);
-          manifest[story.id] = entry?.sourceOfTruthCreatedAt
-            ? {
-                createdAt: new Date().toISOString(),
-                sourceOfTruthCreatedAt: entry.sourceOfTruthCreatedAt,
-              }
-            : { createdAt: new Date().toISOString() };
-          if (!entry) {
-            testInfo.annotations.push({
-              type: "golden-created",
-              description: `No golden existed yet for "${story.id}" — captured one from this run.`,
-            });
-          }
-        } else if (checkMode === "own") {
-          const goldenBuffer = readFileSync(imagePath);
-          const diffPixels = diffPngBuffers(liveBuffer, goldenBuffer);
-          await testInfo.attach("Live vs Golden Diff", {
-            body: `${diffPixels} mismatched pixels`,
-            contentType: "text/plain",
+      let currentEntry: GoldenManifestEntry;
+      if (capturingNewGolden) {
+        saveGoldenImage(goldenDir, story.id, liveBuffer);
+        currentEntry = entry?.sourceOfTruthCreatedAt
+          ? {
+              createdAt: new Date().toISOString(),
+              sourceOfTruthCreatedAt: entry.sourceOfTruthCreatedAt,
+            }
+          : { createdAt: new Date().toISOString() };
+        if (!entry) {
+          testInfo.annotations.push({
+            type: "golden-created",
+            description: `No golden existed yet for "${story.id}" — captured one from this run.`,
           });
+        }
+      } else {
+        currentEntry = entry;
+        if (checkMode === "own") {
+          const goldenBuffer = readFileSync(imagePath);
+          const { diffPixels, diffImage } = diffPngBuffers(
+            liveBuffer,
+            goldenBuffer,
+          );
           const threshold = resolveThreshold(
             story.id,
             storyThresholds,
             config.diffThresholdPixels,
           );
+          if (diffPixels >= threshold) {
+            await testInfo.attach("expected", {
+              body: goldenBuffer,
+              contentType: "image/png",
+            });
+            await testInfo.attach("actual", {
+              body: liveBuffer,
+              contentType: "image/png",
+            });
+            if (diffImage) {
+              await testInfo.attach("diff", {
+                body: diffImage,
+                contentType: "image/png",
+              });
+            }
+          }
           expect
             .soft(
               diffPixels,
-              `"${story.id}" has drifted from its own golden image`,
+              `"${story.id}" has drifted from its own golden image (${diffPixels} mismatched pixels, threshold ${threshold})`,
             )
             .toBeLessThan(threshold);
         }
+      }
 
-        // Guaranteed set by the branch above — either just captured, or
-        // already present since !capturingNewGolden implies `entry` existed.
-        const currentEntry = manifest[story.id]!;
+      if (sourceOfTruthGolden) {
+        const sourceOfTruthEntry = sourceOfTruthGolden.manifest[story.id];
+        const sourceOfTruthImage = sourceOfTruthEntry
+          ? await sourceOfTruthGolden.readImage(story.id)
+          : null;
 
-        if (sourceOfTruthGolden) {
-          const sourceOfTruthEntry = sourceOfTruthGolden.manifest[story.id];
-          const sourceOfTruthImage = sourceOfTruthEntry
-            ? await sourceOfTruthGolden.readImage(story.id)
-            : null;
-
-          if (sourceOfTruthEntry && sourceOfTruthImage) {
-            if (goldenMode === "approve-divergence") {
-              manifest[story.id] = {
-                ...currentEntry,
-                sourceOfTruthCreatedAt: sourceOfTruthEntry.createdAt,
-              };
-            } else {
-              const ownImage = readFileSync(imagePath);
-              const diffPixels = diffPngBuffers(ownImage, sourceOfTruthImage);
-              const approvedAt = currentEntry.sourceOfTruthCreatedAt;
-              const isKnownDivergence =
-                diffPixels === 0 ||
-                (approvedAt !== undefined &&
-                  approvedAt >= sourceOfTruthEntry.createdAt);
-              if (!isKnownDivergence) {
-                testInfo.annotations.push({
-                  type: "source-of-truth-divergence",
-                  description: `"${story.id}" differs from the source of truth's golden and hasn't been reviewed — run with --approve-divergence if this is intentional, or fix the adapter styling.`,
+        if (sourceOfTruthEntry && sourceOfTruthImage) {
+          if (goldenMode === "approve-divergence") {
+            currentEntry = {
+              ...currentEntry,
+              sourceOfTruthCreatedAt: sourceOfTruthEntry.createdAt,
+            };
+          } else {
+            const ownImage = readFileSync(imagePath);
+            const { diffPixels, diffImage } = diffPngBuffers(
+              ownImage,
+              sourceOfTruthImage,
+            );
+            const approvedAt = currentEntry.sourceOfTruthCreatedAt;
+            const isKnownDivergence =
+              diffPixels === 0 ||
+              (approvedAt !== undefined &&
+                approvedAt >= sourceOfTruthEntry.createdAt);
+            if (!isKnownDivergence) {
+              await testInfo.attach("expected", {
+                body: sourceOfTruthImage,
+                contentType: "image/png",
+              });
+              await testInfo.attach("actual", {
+                body: ownImage,
+                contentType: "image/png",
+              });
+              if (diffImage) {
+                await testInfo.attach("diff", {
+                  body: diffImage,
+                  contentType: "image/png",
                 });
               }
+              testInfo.annotations.push({
+                type: "source-of-truth-divergence",
+                description: `"${story.id}" differs from the source of truth's golden and hasn't been reviewed — run with --approve-divergence if this is intentional, or fix the adapter styling.`,
+              });
             }
           }
         }
+      }
 
-        // Playwright runs this generated spec with workers: 1 specifically so
-        // this read-modify-write is never racing another story's test body.
-        saveManifest(goldenDir, manifest);
-      });
-    }
-  });
+      // Locked read-modify-write of just this story's entry — see
+      // `updateManifestEntry` for why that's enough to make this safe
+      // across concurrent Playwright workers.
+      await updateManifestEntry(goldenDir, story.id, () => currentEntry);
+    },
+  };
 }

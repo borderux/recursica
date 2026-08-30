@@ -5,6 +5,16 @@
   );
 }
 
+/* `animate={false}` — freezes every variant's animation (the oval's own
+ * spinning ::after, and the bars'/dots' individually-animated child spans)
+ * so the loader renders deterministically, e.g. for a visual-regression
+ * snapshot that would otherwise diff differently every run. */
+.root[data-animate="false"],
+.root[data-animate="false"] *,
+.root[data-animate="false"]::after {
+  animation: none !important;
+}
+
 /* data-size mapping */
 
 /* SMALL */

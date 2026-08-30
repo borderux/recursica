@@ -1,3 +1,5 @@
+import React from "react";
+
 /**
  * Props for the Recursica TimePicker component.
  */
@@ -8,4 +10,6 @@ export interface RecursicaTimePickerProps {
   minTime?: string;
   /** Maximum possible time string. Format is `HH:mm` normally, or `HH:mm:ss` when `withSeconds` is true. */
   maxTime?: string;
+  /** Section rendered inside the time field on the left (e.g. icon). Naming rationale: see `RecursicaTextFieldProps.leftSection`. */
+  leftSection?: React.ReactNode;
 }

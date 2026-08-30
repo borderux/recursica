@@ -10,7 +10,7 @@ export interface AdapterTarget {
   sourceOfTruth?: boolean;
 }
 
-/** How `runVisualRegression` reaches the source-of-truth adapter's (mantine)
+/** How `resolveVisualRegressionPlan` reaches the source-of-truth adapter's (mantine)
  * own golden images, for the divergence check. Never involves booting a
  * Storybook — both `readImage` targets are plain files on disk. */
 export type SourceOfTruthGoldenLocation =

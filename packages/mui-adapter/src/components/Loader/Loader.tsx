@@ -12,7 +12,13 @@ export type LoaderProps = RecursicaOverStyled<
 >;
 
 export const Loader = forwardRef<HTMLSpanElement, LoaderProps>(function Loader(
-  { variant = "oval", size = "default", overStyled = false, ...rest },
+  {
+    variant = "oval",
+    size = "default",
+    animate = true,
+    overStyled = false,
+    ...rest
+  },
   ref,
 ) {
   const mapSize = {
@@ -54,6 +60,7 @@ export const Loader = forwardRef<HTMLSpanElement, LoaderProps>(function Loader(
       ref={ref}
       data-variant={variant}
       data-size={resolvedSize}
+      data-animate={animate}
       {...sanitizedProps}
       className={finalClass}
     >

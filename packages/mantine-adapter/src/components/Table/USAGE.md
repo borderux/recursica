@@ -43,7 +43,7 @@ export default function Demo() {
 ## 3. Row and Cell States
 
 - **`Table.Tr`**: `selected` applies the selected-row background; `disabled` dims the row and applies the disabled cell colors to every cell in it.
-- **`Table.Th`**: `sorted="asc" | "desc"` applies the sorted header style and renders the matching chevron icon; omit it (or pass `false`) for the unsorted style. `disabled` dims the header cell.
+- **`Table.Th`**: `sorted="asc" | "desc"` applies the sorted header style and renders the matching chevron icon; omit it (or pass `false`) for the unsorted style. `disabled` dims the header cell. `variant="currency"` right-aligns the header to match a currency column's value cells.
 - **`Table.Td`**: `variant="currency"` applies the currency text style (for numeric/monetary columns); `disabled` dims the cell.
 
 ```tsx
@@ -51,7 +51,9 @@ export default function Demo() {
   <Table.Thead>
     <Table.Tr>
       <Table.Th>Name</Table.Th>
-      <Table.Th sorted="asc">Balance</Table.Th>
+      <Table.Th sorted="asc" variant="currency">
+        Balance
+      </Table.Th>
     </Table.Tr>
   </Table.Thead>
   <Table.Tbody>

@@ -255,6 +255,7 @@ export const TimePicker = forwardRef<HTMLDivElement, TimePickerProps>(
                 {
                   wrapper: styles.timeWrapper,
                   input: styles.timeInput,
+                  section: styles.section,
                   fieldsGroup: styles.fieldsGroup,
                   field: styles.timeField,
                 },

@@ -124,6 +124,7 @@ export const TimePicker = forwardRef<HTMLDivElement, TimePickerProps>(
       withSeconds,
       minTime,
       maxTime,
+      leftSection,
       ...rest
     } = props;
 
@@ -147,6 +148,12 @@ export const TimePicker = forwardRef<HTMLDivElement, TimePickerProps>(
     const wrapperClass = className
       ? `${styles.layoutOverride} ${className}`
       : styles.layoutOverride;
+
+    const startAdornment = leftSection ? (
+      <div className={styles.section} data-position="left">
+        {leftSection}
+      </div>
+    ) : undefined;
 
     const emitChange = (next: Dayjs | null) => {
       setInternalValue(next);
@@ -206,7 +213,11 @@ export const TimePicker = forwardRef<HTMLDivElement, TimePickerProps>(
              format="hh:mm" is always on (12-hour digits, no native meridiem section) — this is the
              only way this component operates, not a user choice. The AM/PM BareDropdown next to it
              is the only AM/PM control; see TIMEPICKER_IMPLEMENTATION_NOTES.md. */
-          <div className={styles.root} data-error={error ? "true" : undefined}>
+          <div
+            className={styles.root}
+            data-error={error ? "true" : undefined}
+            data-with-left-section={leftSection ? "true" : undefined}
+          >
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <MuiTimePicker
                 {...(sanitizedProps as unknown as Partial<MuiTimePickerProps>)}
@@ -221,15 +232,22 @@ export const TimePicker = forwardRef<HTMLDivElement, TimePickerProps>(
                 }
                 minTime={toDayjs(minTime)}
                 maxTime={toDayjs(maxTime)}
-                // No icon/open-picker button: time-picker's own token schema has no icon slot (see
-                // EXEMPTIONS above), and the popup clock/list view this button opens isn't styled
-                // to Recursica tokens anyway (see TIMEPICKER_IMPLEMENTATION_NOTES.md) — showing an
-                // affordance to open an unstyled popup would be worse than not showing one. Typing
-                // directly into the field's masked hour/minute segments is the only interaction.
+                // No open-picker button: the popup clock/list view it opens isn't styled to
+                // Recursica tokens (see TIMEPICKER_IMPLEMENTATION_NOTES.md) — showing an affordance
+                // to open an unstyled popup would be worse than not showing one. Typing directly
+                // into the field's masked hour/minute segments is the only interaction. leftSection
+                // (below) is purely decorative, unrelated to this button.
                 slots={{ openPickerButton: () => null }}
                 slotProps={{
                   field: {
                     className: styles.field,
+                  },
+                  textField: {
+                    slotProps: {
+                      input: {
+                        startAdornment,
+                      },
+                    },
                   },
                 }}
               />

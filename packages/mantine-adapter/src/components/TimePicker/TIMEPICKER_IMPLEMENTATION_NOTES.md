@@ -36,7 +36,7 @@ Because the AM/PM behavior is fixed, several of Mantine's `TimePicker` props are
 ## Design tokens
 
 - No dedicated `min-height` token exists for `time-picker` (unlike `text-field`/`date-picker`) — `.fieldsGroup`'s explicit `height` is derived from `text_line-height` instead, which also fixes a real bug: Mantine's own field CSS sets `height: 100%` on every field to fill `.fieldsGroup`, and a percentage height only resolves against a _concrete_ parent height. Before this, `.fieldsGroup` was auto-height (padding only), so `100%` resolved to `0` — this is why the AM/PM control was invisible in early builds (verified via real headless-browser inspection, not just markup checks — a raw server-render test had missed this entirely since it doesn't compute layout).
-- `icon-size`/`icon-color`/`icon-text-gap`/`placeholder-opacity` are exempted (`recursica-ignore`) — the time field has no icon slot and no native `::placeholder` pseudo-element to target (each `SpinInput`'s `"--"` placeholder is styled internally by Mantine).
+- `icon-size`/`icon-color`/`icon-text-gap`/`placeholder-opacity` (plus the disabled/error `icon-color` variants) are wired via `leftSection` — see "Leading icon" below. Not exempted: despite an earlier note here claiming otherwise, `SpinInput` (`@mantine/dates`) renders a real `<input placeholder="--">` per hour/minute/second segment, so `::placeholder` targets it like any other input.
 - The AM/PM `BareDropdown` draws its own border/background/padding from `Dropdown`'s own tokens via `Dropdown.module.css` — it does not reuse any `time-picker` tokens.
 
 ## Read-Only Implementation
@@ -75,6 +75,12 @@ The MUI adapter's equivalent (`mui-adapter/src/components/TimePicker/TimePicker.
 **Fix**: dropped the `null` branch — `BareDropdown`'s `value` is now just `isPM ? "PM" : "AM"`, matching MUI. `isPM` already evaluates `false` when `hour` is `undefined`, so this alone makes the dropdown default to "AM" with no other changes.
 
 Note: selecting AM/PM before any hour is typed is still a no-op in both adapters (`handleMeridiemChange` bails out when `hour`/`internalValue` is undefined) — that's pre-existing, shared behavior in both adapters, not something this fix touches.
+
+## Leading icon (Matt Massey, 2026-08-30)
+
+Added `leftSection` (`RecursicaTimePickerProps`), matching `TextField`/`AutoComplete`'s naming and convention: purely decorative, consumer-supplied, no default. Unlike `DatePicker`'s fixed `CalendarIcon`, there's no single icon that makes sense for every `TimePicker` use, so this is opt-in only.
+
+Mantine's `TimePicker` already accepts `leftSection` (inherited from `@mantine/core`'s `__InputProps` via `InputBase`, which it renders through internally with `component: "div"` — confirmed by reading `TimePicker.mjs`/`Input.mjs` directly) — it was already passing through unstyled before this change (not blocked by `filterStylingProps`), just never mapped to a `classNames.section`/CSS, so an icon would render with no size or color. Added `section: styles.section` to the `classNames` map and the token-driven `.section`/`.section svg` rules (icon-size, icon-color, disabled/error icon-color) to actually style it.
 
 ## Visual review round 5 (Matt Massey, 2026-08-08)
 

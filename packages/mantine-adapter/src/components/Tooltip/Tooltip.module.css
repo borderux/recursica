@@ -3,10 +3,18 @@
      which may not set border-style natively). Same pattern as Menu / HoverCard.
    - arrowSize defaults to 16 in Tooltip.tsx. Mantine uses arrowSize for inline width/height
      and positioning (-arrowSize/2) calculations that cannot be CSS-driven. The default matches
-     the Recursica beak-size token (16px). See COMPONENT_ISSUES.md for details.
+     the Recursica beak-size token (16px).
+   - arrow inset/offset is Mantine's own default (no arrowOffset override) — same "must be a JS
+     prop, not CSS-driven" constraint as arrowSize.
    - All structural layout (display, position, overflow) is deferred to Mantine's native
      behavior. We only override visual design tokens (colors, typography, spacing, borders).
 */
+
+/* EXEMPTIONS:
+   - beak-size/beak-inset are ignored: the arrow's size and position are Mantine's own
+     `arrowSize`/`arrowOffset` JS props, not CSS-driven — see HARDCODED VALUES above. */
+/* recursica-ignore: --recursica_ui-kit_components_tooltip_properties_beak-size */
+/* recursica-ignore: --recursica_ui-kit_components_tooltip_properties_beak-inset */
 
 /* ======================================
    TOOLTIP CONTAINER

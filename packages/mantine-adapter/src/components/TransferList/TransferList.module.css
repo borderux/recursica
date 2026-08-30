@@ -4,6 +4,12 @@
    - `properties_title-filter-gap` sits between each pane's header row and its search field.
    - `properties_filter-items-gap` sits between each pane's search field and its item list. */
 
+/* EXEMPTIONS:
+   - border-size is constant across disabled/error states — only border-color changes; the
+     disabled/error border-size tokens are never applied by design. */
+/* recursica-ignore: --recursica_ui-kit_components_transfer-list_variants_states_disabled_properties_border-size */
+/* recursica-ignore: --recursica_ui-kit_components_transfer-list_variants_states_error_properties_border-size */
+
 .layoutOverride {
   --form-control-margin-bottom: var(
     --recursica_ui-kit_components_transfer-list_variants_layouts_stacked_properties_top-bottom-margin
@@ -41,7 +47,9 @@
     var(
       --recursica_ui-kit_components_transfer-list_properties_horizontal-padding
     );
-  border-width: 1px;
+  border-width: var(
+    --recursica_ui-kit_components_transfer-list_properties_border-size
+  );
   border-style: solid;
   border-radius: var(
     --recursica_ui-kit_components_transfer-list_properties_border-radius

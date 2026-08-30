@@ -55,6 +55,17 @@ than Mantine's. `Table.module.css` resets `.row:global(.Mui-selected)` to
 `background-color: transparent` so only the Recursica token color shows — same
 override-the-library's-own-styling rule the canonical guide documents for hover.
 
+## Currency alignment on header/footer reuses the table-cell token
+
+`--recursica_ui-kit_components_table-cell_properties_currency-style_text-align` (`right`) is the
+only currency-style text-align token the UI Kit exports — there's no
+`table-header_properties_currency-style_*` block at all, and the
+`table-footer_properties_currency-style_*` block skips `text-align` specifically.
+`Table.module.css` reuses the table-cell token for both `thead .cell[data-currency="true"]` and
+`tfoot .cell[data-currency="true"]` so header/footer currency cells stay right-aligned in step
+with the body. `Table.Cell` already threads `variant`/`data-currency` through regardless of
+context, so no `Table.tsx` change was needed here (unlike `mantine-adapter`'s `Table.Th`).
+
 ## Selectable rows (checkboxes)
 
 See `mantine-adapter`'s `TABLE_IMPLEMENTATION_NOTES.md` — confirmed 2026-08-22 that neither

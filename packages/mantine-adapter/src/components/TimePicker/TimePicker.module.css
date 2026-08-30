@@ -6,6 +6,12 @@
  *   recursica-allow-brand: --recursica_brand_states_focus_margin
  */
 
+/* EXEMPTIONS:
+   - border-size is constant across disabled/error states — only border-color changes; the
+     disabled/error border-size tokens are never applied by design. */
+/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_disabled_properties_border-size */
+/* recursica-ignore: --recursica_ui-kit_components_time-picker_variants_states_error_properties_border-size */
+
 /* LAYOUT SPACING OVERRIDES:
    - Sets the --form-control-margin-bottom spacing hook to map component-specific layout tokens. */
 .layoutOverride {
@@ -45,6 +51,9 @@
 .timeWrapper {
   display: flex;
   align-items: center;
+  /* Gap between the leading-icon section (when leftSection is passed) and the field itself — a
+     no-op with no icon, since gap has no effect between fewer than two flex children. */
+  gap: var(--recursica_ui-kit_components_time-picker_properties_icon-text-gap);
   position: relative;
   box-sizing: border-box;
   /* min-width, not width: the `width` token was authored for a single plain input (confirmed against
@@ -115,6 +124,29 @@
   height: var(
     --recursica_ui-kit_components_time-picker_properties_text_line-height
   );
+}
+
+/* Leading icon (leftSection). Only one icon-color token exists for time-picker (unlike
+   text-field's separate leading/trailing) — this field has no right-side icon slot. */
+.section {
+  display: flex;
+  align-items: center;
+}
+
+.section :global(svg) {
+  width: var(--recursica_ui-kit_components_time-picker_properties_icon-size);
+  height: var(--recursica_ui-kit_components_time-picker_properties_icon-size);
+  color: var(
+    --recursica_ui-kit_components_time-picker_properties_colors_icon-color
+  );
+}
+
+/* SpinInput renders a real <input placeholder="--">, one per hour/minute/second segment. */
+.timeField::placeholder {
+  opacity: var(
+    --recursica_ui-kit_components_time-picker_properties_placeholder-opacity
+  );
+  color: inherit;
 }
 
 .timeField {
@@ -202,6 +234,12 @@
   ) !important;
 }
 
+.root[data-error="true"] .section :global(svg) {
+  color: var(
+    --recursica_ui-kit_components_time-picker_variants_states_error_properties_colors_icon-color
+  ) !important;
+}
+
 /* Disabled State Mapping (Propagated strictly down from the wrapper DOM context) */
 .root[data-disabled="true"] .timeWrapper {
   border-color: var(
@@ -217,4 +255,10 @@
     --recursica_ui-kit_components_time-picker_variants_states_disabled_properties_opacity
   ) !important;
   cursor: not-allowed;
+}
+
+.root[data-disabled="true"] .section :global(svg) {
+  color: var(
+    --recursica_ui-kit_components_time-picker_variants_states_disabled_properties_colors_icon-color
+  ) !important;
 }
