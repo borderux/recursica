@@ -1,5 +1,11 @@
 # @recursica/token-analyzer
 
+## 1.7.0
+
+### Minor Changes
+
+- ab33870: Fixed publishing
+
 ## 1.6.0
 
 ### Minor Changes
