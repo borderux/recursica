@@ -1,5 +1,11 @@
 # @recursica/adapter-tester
 
+## 5.0.2
+
+### Patch Changes
+
+- f8301b0: Normalize font smoothing during screenshot capture to reduce anti-aliasing noise in diffs.
+
 ## 5.0.1
 
 ### Patch Changes
