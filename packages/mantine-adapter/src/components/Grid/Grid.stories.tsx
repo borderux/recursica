@@ -113,6 +113,30 @@ export const ResponsiveSpans: Story = {
   ),
 };
 
+// Mirrors mui-adapter's `ResponsiveSizes` story (same breakpoints/content) under mantine's own
+// prop name — Mantine's Grid.Col has no `size` prop, only `span`, which is what `ResponsiveSpans`
+// above already exercises. This one exists purely so mui-adapter's `responsive-sizes` story id
+// has a source-of-truth counterpart to diff against (see Grid's IMPLEMENTATION_NOTES.md).
+export const ResponsiveSizes: Story = {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  render: ({ withLayer, layer, ...args }: any) => (
+    <Grid {...args}>
+      <Grid.Col span={{ xs: 12, sm: 6, md: 3 }}>
+        <Swatch>xs 12 / sm 6 / md 3</Swatch>
+      </Grid.Col>
+      <Grid.Col span={{ xs: 12, sm: 6, md: 3 }}>
+        <Swatch>xs 12 / sm 6 / md 3</Swatch>
+      </Grid.Col>
+      <Grid.Col span={{ xs: 12, sm: 6, md: 3 }}>
+        <Swatch>xs 12 / sm 6 / md 3</Swatch>
+      </Grid.Col>
+      <Grid.Col span={{ xs: 12, sm: 6, md: 3 }}>
+        <Swatch>xs 12 / sm 6 / md 3</Swatch>
+      </Grid.Col>
+    </Grid>
+  ),
+};
+
 export const Offset: Story = {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
   render: ({ withLayer, layer, ...args }: any) => (

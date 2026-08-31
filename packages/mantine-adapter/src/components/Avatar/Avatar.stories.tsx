@@ -1,7 +1,6 @@
 import React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 import { Avatar } from "./Avatar";
-import { Layer } from "@recursica/adapter-common";
 
 type AvatarStoryProps = React.ComponentProps<typeof Avatar>;
 
@@ -90,18 +89,4 @@ export const IconSmallGhost: Story = {
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
   render: ({ withLayer, layer, ...args }: any) => <Avatar {...args} />,
-};
-
-export const LayerOneOutline: Story = {
-  args: {
-    children: "L1",
-    variant: "outline",
-    size: "default",
-  },
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
-  render: ({ withLayer, layer, ...args }: any) => (
-    <Layer layer={1} style={{ padding: "24px", display: "inline-block" }}>
-      <Avatar {...args} />
-    </Layer>
-  ),
 };

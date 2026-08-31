@@ -73,3 +73,17 @@ The time field itself rendered wider than intended (220px vs. the 130px `time-pi
 - **AM/PM error-state border wasn't changing**: `Dropdown.tsx`'s error/disabled state was set via `inputProps` (`data-error`/`data-disabled`), which only reaches the nested accessibility `<input>` — a different element from `.root` (the actual Select root carrying the border), which is what `Dropdown.module.css`'s `.root[data-error]`/`[data-disabled]` selectors require. The error border never actually applied, in the real `Dropdown` component or `BareDropdown`. Fixed by also setting `data-error`/`data-disabled` directly as top-level props on `<MuiSelect>` (they land on its root element) in both `Dropdown.tsx` and `BareDropdown.tsx` — the latter also needed an `error?: boolean` prop added to its own interface, since it previously had none.
 - **Static/Editable ReadOnly showed "Invalid Date" instead of a value**: a real, separate bug — `toDayjs`'s 2-argument `dayjs(value, format)` call silently does nothing without the `customParseFormat` plugin registered; without it, dayjs falls back to native `Date` parsing, which fails on a bare "HH:mm" string (no date component). This went unnoticed until now because every prior interactive test produced `Dayjs` objects directly from the picker's own `onChange`, never actually exercising `toDayjs` with a real initial `value`/`defaultValue` string. Fixed by adding `dayjs.extend(customParseFormat)`.
 - **Static/Editable ReadOnly showed the raw 24-hour value with no AM/PM** (e.g. "14:30" instead of "2:30 PM"): `readOnlyValue` was passed the raw internal string as-is. Added `formatReadOnlyTime` (uses `toDayjs` + dayjs's own `.format("h:mm A")`) before handing it to `WithReadOnlyWrapper`.
+
+## Leading icon positioned too far right (bug fix, Matt Massey, 2026-08-30)
+
+Found during a mantine-vs-mui source-of-truth comparison of `ui-kit-timepicker--with-leading-icon`:
+the icon rendered ~14px further right than `Dropdown`/`AutoComplete`/`TextField`'s own leading
+icons, with a correspondingly oversized gap to the field's own border. Root cause: MUI X's
+`MuiPickersInputBase-root` applies its own native `padding-left: 14px` whenever a `startAdornment`
+is present (`.MuiPickersInputBase-adornedStart`, mirroring MUI core `InputBase`'s own adornment
+padding) — on top of `.section`'s own token-driven `padding-left` (`horizontal-padding`), this
+doubled the inset. Fixed by neutralizing MUI's native padding
+(`.field :global(.MuiPickersInputBase-adornedStart) { padding-left: 0 !important; }`) so `.section`
+is the sole source of the icon's inset from the border, matching mantine-adapter's corrected
+rendering (see mantine-adapter's own `TIMEPICKER_IMPLEMENTATION_NOTES.md`, "Leading icon overlapped
+the field text").

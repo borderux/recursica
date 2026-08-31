@@ -1,13 +1,27 @@
 /* HARDCODED VALUES:
    - border-style: solid: Structural rendering rule for the panel border.
-   - .inner { left: 0 }: Prevents the fixed Drawer portal from being pushed off-screen in centered flex environments (like Storybook Canvas).
    - flexbox layout on .content & .body: Required to create a vertical flex context that pushes the footer to the bottom.
    - position: sticky & negative margins on .footer: A CSS technique used to break the footer out of the .body padding constraints so it stretches edge-to-edge, while remaining fixed at the bottom of the scroll container.
    - z-index: 10 on .footer: Ensures the footer covers the body content as it scrolls underneath.
  */
 
 /* ======================================
-   PANEL CONTENT (outer drawer container)
+   PANEL PAPER (MUI Drawer's actual positioned/sized DOM node)
+   ====================================== */
+
+.paper {
+  /* MUI's Drawer `classes` prop only exposes its own slots (root, paper, docked, ...) — unlike
+     Mantine's `classNames`, it has no content/header/title/body slots to bind the rest of this
+     file's classes into. The box-model/appearance chrome below lives on `.content` instead,
+     rendered as an explicit child of Paper (see Panel.tsx). Strip Paper's own default MUI
+     appearance (elevation box-shadow, paper background) so only `.content`'s chrome shows —
+     otherwise the two would double up as a square-cornered shadow behind the rounded one. */
+  background-color: transparent;
+  box-shadow: none;
+}
+
+/* ======================================
+   PANEL CONTENT (the whole visible panel box, rendered inside Paper)
    ====================================== */
 
 .content {
@@ -31,17 +45,18 @@
   height: 100%;
 }
 
-.inner {
-  /* Forces the Drawer Inner container to the left edge, preventing it from inheriting
-     a centered static position in flex environments like Storybook's Canvas wrapper */
-  left: 0;
-}
-
 /* ======================================
    PANEL HEADER
    ====================================== */
 
 .header {
+  /* HARDCODE: Mantine's `Drawer.Header` is flex (title + close button side-by-side) natively;
+     MUI's header here is a plain manually-built div (see Panel.tsx), so the layout has to be
+     declared explicitly. */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
   background-color: var(
     --recursica_ui-kit_components_panel_properties_colors_header-background-color
   );
@@ -57,6 +72,13 @@
     solid
     var(--recursica_ui-kit_components_panel_properties_colors_divider-color);
   gap: var(--recursica_ui-kit_components_panel_properties_header-close-gap);
+}
+
+.close {
+  /* No Recursica token namespace exists for a panel close icon (Mantine's own Panel doesn't
+     style one either — it renders Mantine's plain default CloseButton) — flex-shrink keeps it
+     from being squeezed by a long, truncating title. */
+  flex-shrink: 0;
 }
 
 /* ======================================

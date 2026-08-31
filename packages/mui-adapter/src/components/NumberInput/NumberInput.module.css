@@ -35,12 +35,17 @@
 }
 
 /* HARDCODED VALUES:
-   - border-width: 1px. Native geometric boundary for the input box.
    - border-style: solid. Native structural rendering rule.
    - outline: none. Bypassing browser focus rings to rely strictly on Recursica focus states natively.
    - flex/layout: display: flex on the root wrapper safely encapsulating internal section rendering.
-   - Controls: Hardcoded to bypass Mantine's default borders and backgrounds on the increment/decrement arrows.
+   - Controls: Hardcoded to bypass MUI's default borders and backgrounds on the increment/decrement arrows.
 */
+
+/* EXEMPTIONS:
+   - border-size is constant across disabled/error states — only border-color changes; the
+     disabled/error border-size tokens are never applied by design. */
+/* recursica-ignore: --recursica_ui-kit_components_number-input_variants_states_disabled_properties_border-size */
+/* recursica-ignore: --recursica_ui-kit_components_number-input_variants_states_error_properties_border-size */
 
 .root {
   display: flex;
@@ -50,7 +55,53 @@
     --recursica_ui-kit_components_number-input_properties_min-height
   );
 
-  /* Override Mantine native Input variables governing section spacing padding mathematics safely */
+  /* Strict Typography Unification placed on root for MUI InputBase inheritance */
+  font-family: var(
+    --recursica_ui-kit_components_number-input_properties_text_font-family
+  );
+  font-size: var(
+    --recursica_ui-kit_components_number-input_properties_text_font-size
+  );
+  font-style: var(
+    --recursica_ui-kit_components_number-input_properties_text_font-style
+  );
+  font-weight: var(
+    --recursica_ui-kit_components_number-input_properties_text_font-weight
+  );
+  letter-spacing: var(
+    --recursica_ui-kit_components_number-input_properties_text_letter-spacing
+  );
+  line-height: var(
+    --recursica_ui-kit_components_number-input_properties_text_line-height
+  );
+  text-decoration: var(
+    --recursica_ui-kit_components_number-input_properties_text_text-decoration
+  );
+  text-transform: var(
+    --recursica_ui-kit_components_number-input_properties_text_text-transform
+  );
+
+  /* Box Geometry placed on root so MUI InputBase boundary executes */
+  border-radius: var(
+    --recursica_ui-kit_components_number-input_properties_border-radius
+  );
+  border-width: var(
+    --recursica_ui-kit_components_number-input_properties_border-size
+  );
+  border-style: solid;
+
+  /* Base State Default Execution */
+  background-color: var(
+    --recursica_ui-kit_components_number-input_properties_colors_background-color
+  );
+  border-color: var(
+    --recursica_ui-kit_components_number-input_properties_colors_border-color
+  );
+  color: var(
+    --recursica_ui-kit_components_number-input_properties_colors_text-color
+  );
+
+  /* Override native Input variables governing section spacing padding mathematics safely */
   --input-left-section-size: calc(
     var(
         --recursica_ui-kit_components_number-input_properties_horizontal-padding
@@ -89,50 +140,12 @@
   padding-right: var(
     --recursica_ui-kit_components_number-input_properties_horizontal-padding
   );
-  border-radius: var(
-    --recursica_ui-kit_components_number-input_properties_border-radius
-  );
-  border-width: 1px;
-  border-style: solid;
-
-  /* Strict Typography Unification */
-  font-family: var(
-    --recursica_ui-kit_components_number-input_properties_text_font-family
-  );
-  font-size: var(
-    --recursica_ui-kit_components_number-input_properties_text_font-size
-  );
-  font-style: var(
-    --recursica_ui-kit_components_number-input_properties_text_font-style
-  );
-  font-weight: var(
-    --recursica_ui-kit_components_number-input_properties_text_font-weight
-  );
-  letter-spacing: var(
-    --recursica_ui-kit_components_number-input_properties_text_letter-spacing
-  );
-  line-height: var(
-    --recursica_ui-kit_components_number-input_properties_text_line-height
-  );
-  text-decoration: var(
-    --recursica_ui-kit_components_number-input_properties_text_text-decoration
-  );
-  text-transform: var(
-    --recursica_ui-kit_components_number-input_properties_text_text-transform
-  );
-
-  /* Base State Default Execution */
-  background-color: var(
-    --recursica_ui-kit_components_number-input_properties_colors_background-color
-  );
-  border-color: var(
-    --recursica_ui-kit_components_number-input_properties_colors_border-color
-  );
-  color: var(
-    --recursica_ui-kit_components_number-input_properties_colors_text-color
-  );
 
   outline: none;
+  border: none; /* Because root handles border in MUI */
+  background: transparent;
+  color: inherit;
+  height: auto; /* overrides MUI's 1.1876em */
 }
 
 .input::placeholder {
@@ -143,11 +156,11 @@
 }
 
 /* Dynamic Padding Overrides */
-.root[data-with-left-section] .input {
+.root[data-with-left-section="true"] .input {
   padding-left: var(--input-left-section-size);
 }
 
-.root[data-with-right-section] .input {
+.root[data-with-right-section="true"] .input {
   padding-right: var(--input-right-section-size);
 }
 
@@ -156,49 +169,51 @@
   display: flex;
   align-items: center;
   height: 100%;
+  position: absolute;
 }
 
 .section[data-position="left"] {
   justify-content: flex-start;
+  left: 0;
   padding-left: var(
     --recursica_ui-kit_components_number-input_properties_horizontal-padding
+  );
+  /* Mantine's native Input.Section slot defaults its own text color to the icon-muted gray
+     regardless of whether the slot holds an <svg> or plain text (e.g. a "$"/"%" span) — set it
+     here too, not just on :global(svg) below, so non-icon section content matches visually. */
+  color: var(
+    --recursica_ui-kit_components_number-input_properties_colors_leading-icon
   );
 }
 
 .section[data-position="right"] {
   justify-content: flex-end;
+  right: 0;
   padding-right: var(
     --recursica_ui-kit_components_number-input_properties_horizontal-padding
+  );
+  color: var(
+    --recursica_ui-kit_components_number-input_properties_colors_trailing-icon
   );
 }
 
 .section :global(svg) {
   width: var(--recursica_ui-kit_components_number-input_properties_icon-size);
   height: var(--recursica_ui-kit_components_number-input_properties_icon-size);
-  color: var(
-    --recursica_ui-kit_components_number-input_properties_colors_leading-icon
-  );
-}
-
-.section[data-position="right"] :global(svg) {
-  color: var(
-    --recursica_ui-kit_components_number-input_properties_colors_trailing-icon
-  );
 }
 
 /* -------------------------------------
-   CONTROLS (Mantine Specific Up/Down Arrows)
+   CONTROLS (increment/decrement arrows — not currently rendered by this adapter; rules kept
+   for structural parity with Mantine's class map and to style them if/when implemented).
 -------------------------------------- */
 
 .controls {
-  /* Adjust right padding so controls do not overlap borders */
   padding-right: var(
     --recursica_ui-kit_components_number-input_properties_horizontal-padding
   );
 }
 
 .control {
-  /* Override Mantine borders for the inner controls */
   border: none;
   background: transparent;
   color: var(
@@ -214,11 +229,11 @@
    STATE CASCADE ARCHITECTURE
 -------------------------------------- */
 
-/* Focus State Mapping (Triggered internally via browser pseudo-pseudo-class) */
+/* Focus State Mapping (Triggered internally via browser focus rules) */
 /* The token schema no longer provides per-component focus colors; apply the generic focus ring
-   tokens as a box-shadow ring instead of a color swap. */
-.input:focus-within,
-.input:focus {
+   tokens as a box-shadow ring instead of a color swap (matches mantine-adapter reference). */
+.root:focus-within,
+.root:focus {
   box-shadow:
     0 0 0 var(--recursica_brand_states_focus_border-size)
       var(--recursica_brand_states_focus_color),
@@ -228,57 +243,61 @@
 }
 
 /* Error State Mapping (Propagated strictly down from the wrapper DOM context) */
-.root[data-error] .input {
+.root[data-error="true"] {
   border-color: var(
     --recursica_ui-kit_components_number-input_variants_states_error_properties_colors_border-color
-  ) !important;
+  );
   background-color: var(
     --recursica_ui-kit_components_number-input_variants_states_error_properties_colors_background-color
-  ) !important;
+  );
   color: var(
     --recursica_ui-kit_components_number-input_variants_states_error_properties_colors_text-color
-  ) !important;
+  );
 }
 
-.root[data-error] .section[data-position="left"] :global(svg) {
+.root[data-error="true"] .section[data-position="left"] {
   color: var(
     --recursica_ui-kit_components_number-input_variants_states_error_properties_colors_leading-icon
-  ) !important;
+  );
 }
 
-.root[data-error] .section[data-position="right"] :global(svg),
-.root[data-error] .control {
+.root[data-error="true"] .section[data-position="right"],
+.root[data-error="true"] .control {
   color: var(
     --recursica_ui-kit_components_number-input_variants_states_error_properties_colors_trailing-icon
-  ) !important;
+  );
 }
 
 /* Disabled State Mapping (Propagated strictly down from the wrapper DOM context) */
-.root[data-disabled] .input {
+.root[data-disabled="true"] {
   border-color: var(
     --recursica_ui-kit_components_number-input_variants_states_disabled_properties_colors_border-color
-  ) !important;
+  );
   background-color: var(
     --recursica_ui-kit_components_number-input_variants_states_disabled_properties_colors_background-color
-  ) !important;
+  );
   color: var(
     --recursica_ui-kit_components_number-input_variants_states_disabled_properties_colors_text-color
-  ) !important;
+  );
   opacity: var(
     --recursica_ui-kit_components_number-input_variants_states_disabled_properties_opacity
-  ) !important;
+  );
   cursor: not-allowed;
 }
 
-.root[data-disabled] .section[data-position="left"] :global(svg) {
-  color: var(
-    --recursica_ui-kit_components_number-input_variants_states_disabled_properties_colors_leading-icon
-  ) !important;
+.root[data-disabled="true"] .input {
+  cursor: not-allowed;
 }
 
-.root[data-disabled] .section[data-position="right"] :global(svg),
-.root[data-disabled] .control {
+.root[data-disabled="true"] .section[data-position="left"] {
+  color: var(
+    --recursica_ui-kit_components_number-input_variants_states_disabled_properties_colors_leading-icon
+  );
+}
+
+.root[data-disabled="true"] .section[data-position="right"],
+.root[data-disabled="true"] .control {
   color: var(
     --recursica_ui-kit_components_number-input_variants_states_disabled_properties_colors_trailing-icon
-  ) !important;
+  );
 }

@@ -161,6 +161,11 @@
   align-items: center;
   gap: inherit;
   flex: 1;
+  min-width: 0; /* HARDCODE: a flex item's automatic min-width otherwise defaults to its
+    content's min-content size — since .label's text is `white-space: nowrap`, that min-content
+    size is the full unwrapped title width, which propagates up through this intermediate flex
+    item and blocks .label's own `min-width: 0` from letting text-overflow: ellipsis kick in at
+    all (title wraps/overflows the control instead of truncating). */
 }
 
 .control :global(.MuiAccordionSummary-content.Mui-expanded) {
@@ -213,9 +218,17 @@
 /* Label logic inside the Control wrapper */
 .label {
   flex: 1;
+  min-width: 0; /* HARDCODE: required for text-overflow ellipsis to take effect on a flex child */
   text-align: left;
   color: inherit;
   padding: 0; /* Clear Mantine inner padding */
+  overflow: clip; /* HARDCODE: `hidden` clips descenders (e.g. "g") whenever the text_line-height
+    token is tighter than the font's natural ascent+descent; `overflow-clip-margin` gives ink a
+    small bleed allowance while still clipping genuinely overflowing text — same fix project-wide,
+    see Chip/FileInput's IMPLEMENTATION_NOTES.md for the original discovery. */
+  overflow-clip-margin: 0.35em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 /* ==== CHEVRON / RIGHT ICON ==== */
@@ -241,8 +254,9 @@
   height: 100%;
   object-fit: contain;
 }
+/* Rotation itself comes from MUI's own `.MuiAccordionSummary-expandIconWrapper.Mui-expanded`,
+   which already wraps this span — rotating here too would double it back to 0deg. */
 .item:global(.Mui-expanded) .chevron {
-  transform: rotate(180deg);
   color: var(
     --recursica_ui-kit_components_accordion-header_variants_appearance_open_properties_colors_icon-color
   );

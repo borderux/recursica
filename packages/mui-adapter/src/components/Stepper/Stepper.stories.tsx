@@ -57,13 +57,9 @@ const InteractiveStepper = (args: React.ComponentProps<typeof Stepper>) => {
         ))}
       </Stepper>
 
-      {active === steps.length ? (
+      {active === steps.length && (
         <div style={{ marginTop: 24, textAlign: "center" }}>
           Completed, click back button to get to previous step
-        </div>
-      ) : (
-        <div style={{ marginTop: 24, textAlign: "center" }}>
-          Step {active + 1} content
         </div>
       )}
 

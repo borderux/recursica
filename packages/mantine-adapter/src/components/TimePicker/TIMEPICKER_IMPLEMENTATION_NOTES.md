@@ -82,6 +82,37 @@ Added `leftSection` (`RecursicaTimePickerProps`), matching `TextField`/`AutoComp
 
 Mantine's `TimePicker` already accepts `leftSection` (inherited from `@mantine/core`'s `__InputProps` via `InputBase`, which it renders through internally with `component: "div"` — confirmed by reading `TimePicker.mjs`/`Input.mjs` directly) — it was already passing through unstyled before this change (not blocked by `filterStylingProps`), just never mapped to a `classNames.section`/CSS, so an icon would render with no size or color. Added `section: styles.section` to the `classNames` map and the token-driven `.section`/`.section svg` rules (icon-size, icon-color, disabled/error icon-color) to actually style it.
 
+## Leading icon overlapped the field text (bug fix, Matt Massey, 2026-08-30)
+
+Follow-up to the section above, found during a mantine-vs-mui source-of-truth comparison: `.section`
+(the leading icon) is absolutely positioned — Mantine's own default for `Input.Section`, same as
+`Dropdown`/`AutoComplete`'s equivalent — so it never occupies real flex-flow space. `.timeWrapper`'s
+own `gap` (added in the round above, intended to space the icon from the field) has **no effect** on
+it for exactly that reason: `gap` only spaces in-flow flex siblings, and an absolutely-positioned
+child isn't one. Nothing else reserved room for the icon either, so `.fieldsGroup`'s hour/minute/
+second inputs rendered right where `.timeWrapper`'s own base `padding-left` put them — directly
+underneath the icon (visually, the icon and the leading "-- : --" overlapped).
+
+Separately, `.section[data-position="left"]` had no explicit `left`/`padding-left` of its own,
+so it fell back to Mantine's un-tokenized default: centered in a fixed-width box flush against the
+border, not inset by `horizontal-padding` the way `Dropdown`/`AutoComplete`'s own left sections are.
+
+**Fix** (mirrors `Dropdown.module.css`'s established pattern exactly):
+
+- `.section[data-position="left"] { position: absolute; left: 0; padding-left: horizontal-padding; }`
+  — explicit instead of relying on Mantine's un-tokenized default.
+- `.timeWrapper[data-with-left-section] .fieldsGroup { padding-left: calc(icon-size + icon-text-gap); }`
+  — reserves the room the (now out-of-flow) icon needs, on top of `.timeWrapper`'s own existing
+  base `padding-left` (which already covers the initial `horizontal-padding` inset).
+
+**Why mui-adapter, once it fixes its own "icon too far right" bug for the same story, should match
+this corrected rendering and not the previous (overlapping) one**: the previous rendering was a
+straightforward layout bug, not an intentional design — an icon and adjacent text overlapping is
+never a valid state for any other component in either adapter (`Dropdown`, `AutoComplete`,
+`TextField`, `DatePicker` all reserve real space for a leading icon before rendering the field's
+own text/placeholder). This fix brings `TimePicker` in line with that same, already-established
+convention.
+
 ## Visual review round 5 (Matt Massey, 2026-08-08)
 
 - **AM/PM error-state border wasn't changing**: `BareDropdown` set `data-error`/`data-disabled` via Mantine's `wrapperProps` — which targets the _outer_ `Input.Wrapper` (the label/description/error stacking element), a different, ancestor element from the "wrapper" styles-api slot that actually carries `styles.root`'s border. `Dropdown.module.css`'s `.root[data-error]`/`[data-disabled]` rules never matched as a result. This is the exact same "two different things both called 'wrapper'" trap as the earlier `style` vs `styles.wrapper` bug. Fixed by using `attributes={{ wrapper: {...} }}` instead — the styles-api hook that actually targets the same slot as `classNames.wrapper`. **This is a shared, pre-existing bug** — the real `Dropdown.tsx` had the identical mistake, so its error/disabled states never applied a border color either; fixed there too (low-risk, purely-additive, same reasoning as the `data-selected` fix above).

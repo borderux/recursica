@@ -51,7 +51,7 @@ export const Default: Story = {
 export const StaticVariations: Story = {
   args: {},
   render: () => (
-    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       <Text variant="body">
         Body (Base paragraph and generic information flow)
       </Text>

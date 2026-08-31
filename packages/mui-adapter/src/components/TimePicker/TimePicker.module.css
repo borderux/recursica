@@ -140,6 +140,16 @@
   );
 }
 
+/* MUI X's `MuiPickersInputBase-root` adds its own native 14px `padding-left` whenever a
+   startAdornment is present (`.MuiPickersInputBase-adornedStart`, mirroring MUI core InputBase's
+   own adornment padding) — stacked on top of `.section`'s own token-driven padding-left above,
+   this doubled the inset and pushed the icon noticeably right of where Dropdown/TextField/
+   AutoComplete's own leading icons sit (bug: icon read as "too far right"). `.section` alone
+   should own this inset. */
+.field :global(.MuiPickersInputBase-adornedStart) {
+  padding-left: 0 !important;
+}
+
 .section :global(svg) {
   width: var(--recursica_ui-kit_components_time-picker_properties_icon-size);
   height: var(--recursica_ui-kit_components_time-picker_properties_icon-size);

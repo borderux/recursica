@@ -144,9 +144,9 @@ export interface VisualRegressionPlan {
  * Resolves the golden-image plan for `config`'s own target (the one target
  * in `config.targets` not marked `sourceOfTruth`).
  *
- * Two independent checks per story, gated by `config.checkMode`, neither of
- * which boots the source-of-truth adapter's own Storybook — the divergence
- * check below compares stored golden files, not live pages:
+ * Two independent checks per story, gated by `config.checkMode`. Neither
+ * boots the source-of-truth adapter's own Storybook — its side of both
+ * checks is always a stored golden file, never a live page:
  *
  * 1. **Own-drift (`checkMode: "own"`, the default; hard fail):** this run's
  *    live render vs this project's own stored `test/golden/<story-id>.png`.
@@ -154,12 +154,12 @@ export interface VisualRegressionPlan {
  *    run instead (same as `--update-golden`, scoped to just that story), in
  *    either mode.
  * 2. **Source-of-truth divergence (`checkMode: "divergence"`; hard fail):**
- *    this project's own golden vs the source-of-truth's golden (`config`'s
- *    `sourceOfTruthGolden`). Skipped entirely when
- *    `config.isSourceOfTruthAdapter` is true — the
- *    source-of-truth adapter has nothing above it to diverge from — and
- *    skipped per-story when neither side has a baseline yet. A
- *    once-flagged divergence stays quiet after `--approve-divergence`,
+ *    this run's live render vs the source-of-truth's stored golden (`config`'s
+ *    `sourceOfTruthGolden`) — always fresh, no `--update-golden` step needed
+ *    first. Skipped entirely when `config.isSourceOfTruthAdapter` is true —
+ *    the source-of-truth adapter has nothing above it to diverge from — and
+ *    skipped per-story when the source of truth has no baseline for it yet.
+ *    A once-flagged divergence stays quiet after `--approve-divergence`,
  *    until the source of truth's own golden changes again.
  */
 export async function resolveVisualRegressionPlan(
@@ -251,7 +251,7 @@ export async function resolveVisualRegressionPlan(
   console.log(
     [
       `[adapter-tester] target: "${ownTarget.name}" (${ownTarget.url})`,
-      `[adapter-tester] checkMode: "${checkMode}" (${checkMode === "divergence" ? "this project's golden vs source-of-truth's golden" : "live render vs this project's own golden"})`,
+      `[adapter-tester] checkMode: "${checkMode}" (${checkMode === "divergence" ? "live render vs source-of-truth's golden" : "live render vs this project's own golden"})`,
       `[adapter-tester] goldenMode: "${goldenMode}"`,
       `[adapter-tester] goldenThresholdPixels: ${config.goldenThresholdPixels}`,
       `[adapter-tester] sourceOfTruthThresholdPixels: ${config.sourceOfTruthThresholdPixels}`,
@@ -367,9 +367,11 @@ export async function resolveVisualRegressionPlan(
               sourceOfTruthCreatedAt: sourceOfTruthEntry.createdAt,
             };
           } else {
-            const ownImage = readFileSync(imagePath);
+            // Always this run's live render, never the stored own-drift
+            // golden — divergence should reflect what's on screen right now,
+            // not whatever was last captured via --update-golden.
             const { diffPixels, diffImage } = diffPngBuffers(
-              ownImage,
+              liveBuffer,
               sourceOfTruthImage,
             );
             const threshold = resolveThreshold(
@@ -388,7 +390,7 @@ export async function resolveVisualRegressionPlan(
                 contentType: "image/png",
               });
               await testInfo.attach("actual", {
-                body: ownImage,
+                body: liveBuffer,
                 contentType: "image/png",
               });
               if (diffImage) {

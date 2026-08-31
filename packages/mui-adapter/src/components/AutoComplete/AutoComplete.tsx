@@ -219,6 +219,14 @@ export const AutoComplete = forwardRef<HTMLInputElement, AutoCompleteProps>(
               ...ListboxProps,
               className: mergedClassNames.listbox,
             }}
+            slotProps={{
+              ...(restRecord.slotProps as Record<string, unknown> | undefined),
+              popper: {
+                ...((restRecord.slotProps as { popper?: object } | undefined)
+                  ?.popper ?? {}),
+                className: styles.popper,
+              },
+            }}
             options={normalizedData || []}
             renderOption={renderOption ?? defaultRenderOption}
             renderInput={(params) => {

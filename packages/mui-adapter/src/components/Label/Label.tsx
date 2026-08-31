@@ -14,6 +14,7 @@ export const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
     const {
       overStyled = false,
       required = false,
+      labelAlignment,
       labelOptionalText = "",
       labelWithEditIcon = false,
       onLabelEditClick,
@@ -22,6 +23,8 @@ export const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
       className,
       ...rest
     } = props;
+
+    const resolvedAlignment = labelAlignment || "left";
 
     const sanitizedProps = filterStylingProps(rest, overStyled);
 
@@ -48,6 +51,7 @@ export const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
         ref={ref}
         {...(sanitizedProps as InputLabelProps)}
         shrink={true}
+        data-alignment={resolvedAlignment}
         className={className ? `${styles.root} ${className}` : styles.root}
       >
         <div className={styles.innerLayout}>
@@ -74,7 +78,13 @@ export const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
 
           {!required && labelOptionalText && !labelActionArea && (
             <span className={styles.optionalText}>
-              {labelOptionalText === true ? "(optional)" : labelOptionalText}
+              {(() => {
+                const resolved =
+                  labelOptionalText === true ? "optional" : labelOptionalText;
+                return typeof resolved === "string"
+                  ? `(${resolved})`
+                  : resolved;
+              })()}
             </span>
           )}
         </div>

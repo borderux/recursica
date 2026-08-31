@@ -334,6 +334,14 @@
   color: var(
     --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_text-color
   );
+  /* Exposed so the loading-state Loader (color="var(--button-color)" in Button.tsx) matches
+     this exact text-color token instead of Mantine's own unrelated --button-color default.
+     !important: Mantine's own Button sets --button-color via an inline `style` attribute on
+     this same root element, which normal-weight stylesheet rules can never outrank regardless
+     of selector specificity (see IMPLEMENTATION_NOTES.md). */
+  --button-color: var(
+    --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_text-color
+  ) !important;
 
   .iconWrapper {
     color: var(
@@ -367,6 +375,10 @@
   color: var(
     --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_text-color
   );
+  /* !important: see solid variant's identical comment above. */
+  --button-color: var(
+    --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_text-color
+  ) !important;
 
   .iconWrapper {
     color: var(
@@ -400,6 +412,10 @@
   color: var(
     --recursica_ui-kit_components_button_variants_styles_text_properties_colors_text-color
   );
+  /* !important: see solid variant's identical comment above. */
+  --button-color: var(
+    --recursica_ui-kit_components_button_variants_styles_text_properties_colors_text-color
+  ) !important;
 
   .iconWrapper {
     color: var(

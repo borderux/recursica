@@ -32,6 +32,19 @@
   background-color: var(
     --recursica_ui-kit_components_timeline_variants_selection-states_inactive_properties_colors_connector-color
   ) !important;
+  /* `.root`'s flex `gap` (item-gap) puts real space between adjacent `<li>`s, but
+     this connector is `flex: 1` (MUI default) filling only its own `<li>`'s
+     content height — it always ended flush with its own item's bottom edge,
+     short of the next item's bullet by exactly `item-gap`. A negative
+     margin-bottom the same size as the gap grows the connector's own flex
+     size by that amount (flexbox distributes remaining main-size accounting
+     for margins, so a negative margin here hands the connector extra grow
+     space) while the *container's* own layout size is pulled back in by the
+     same amount — net effect: the rendered line visually extends the full
+     `item-gap` past its own item, reaching the next bullet. */
+  margin-bottom: calc(
+    -1 * var(--recursica_ui-kit_components_timeline_properties_item-gap)
+  ) !important;
 }
 .item[data-active] .itemConnector {
   width: var(

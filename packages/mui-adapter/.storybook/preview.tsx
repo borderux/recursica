@@ -99,7 +99,20 @@ const preview: Preview = {
       return (
         <StyledEngineProvider injectFirst>
           <ThemeProvider
-            theme={createTheme({ colorSchemes: { light: true, dark: true } })}
+            theme={createTheme({
+              colorSchemes: { light: true, dark: true },
+              // No Recursica token governs raw/untokenized body text (every component's
+              // own font-family is a per-component token — see recursica_variables_scoped.css).
+              // Left alone, MUI's own default (Roboto) would diverge from Mantine's own
+              // default (its system-font stack) purely because CssBaseline stamps a
+              // library-specific choice onto `body`, which also shifts inline-flow baseline
+              // metrics for any component that isn't display:block. Matching Mantine's
+              // default stack here keeps source-of-truth comparisons free of that noise.
+              typography: {
+                fontFamily:
+                  '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"',
+              },
+            })}
           >
             <CssBaseline />
             <ColorSchemeWrapper>

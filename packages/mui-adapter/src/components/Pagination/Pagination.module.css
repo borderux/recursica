@@ -9,6 +9,15 @@
   display: flex;
   align-items: center;
   gap: var(--recursica_ui-kit_components_pagination_properties_item-gap);
+
+  /* Mantine's own native Pagination CSS defines `--pagination-control-size` (their
+     internal size scale) on the DOM already, which mantine-adapter's `.baseIcon`
+     below reads directly. MUI has no equivalent variable, so it's bridged here to
+     the same Button height token `.control` itself is sized from, keeping the
+     chevron glyphs proportional to the actual rendered circle size. */
+  --pagination-control-size: var(
+    --recursica_ui-kit_components_button_variants_sizes_default_properties_height
+  );
 }
 
 .control {

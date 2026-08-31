@@ -41,6 +41,10 @@
     height: var(--recursica_ui-kit_components_toast_properties_icon) !important;
     margin-right: 0 !important; /* Override Mantine's native spacing in favor of flex gap */
     background-color: transparent !important; /* Remove Mantine's native circle background */
+    /* MUI's `.MuiAlert-icon` ships its own default `padding: 7px 0`, stacking on top of
+       `--recursica_ui-kit_components_toast_properties_vertical-padding` already applied to
+       `.root` below — zero it for the same reason as `.body`'s padding override. */
+    padding: 0 !important;
 
     color: var(
       --recursica_ui-kit_components_toast_variants_styles_default_properties_colors_text-color
@@ -60,6 +64,12 @@
     color: var(
       --recursica_ui-kit_components_toast_variants_styles_default_properties_colors_button
     );
+    /* MUI's `.MuiAlert-action` ships its own default `padding: 4px 0 0 16px`, adding vertical
+       space beyond `.root`'s own vertical-padding token (mantine's close button has no built-in
+       padding to conflict with it) — zero it so `.root`'s padding is the single source of
+       truth, same as `.body` below. `margin-left: auto` (MUI's own default, untouched) still
+       keeps it pinned to the row's end. */
+    padding: 0 !important;
   }
 
   /* Error Variant styling */
@@ -123,6 +133,13 @@
 
 .body {
   /* No extra gap here, root handles icon-to-text, body can handle title-to-description if needed */
+  /* MUI's `.MuiAlert-message` ships its own default `padding: 8px 0`, doubling up on top of
+     `--recursica_ui-kit_components_toast_properties_vertical-padding` already applied to
+     `.root` above (mantine's Notification body has no built-in padding to conflict with the
+     same token — confirmed via computed styles: mui's root measured 93.7px tall vs mantine's
+     76.8px for identical content). Zero it so `.root`'s own padding is the single source of
+     truth, matching mantine exactly. */
+  padding: 0 !important;
 }
 
 .title {

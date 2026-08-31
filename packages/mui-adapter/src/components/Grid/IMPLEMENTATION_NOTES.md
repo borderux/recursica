@@ -14,3 +14,11 @@ Per the layout-components rule (no formal Recursica common props definition — 
 - **`visibleFrom` / `hiddenFrom`**: no native MUI Grid mechanism at all, so — per the rule that a missing kit feature is built following Mantine's own shape — implemented via `Grid.module.css` media-query classes, hardcoded to MUI's own default `theme.breakpoints` pixel values (`xs:0, sm:600, md:900, lg:1200, xl:1536`). If the consuming app customizes its MUI theme breakpoints, these thresholds won't follow — structural layout mechanics, not a design token.
 
 **Cross-adapter parity caveat**: `visibleFrom`/`hiddenFrom` are pinned to MUI's default breakpoints here, while the mantine-adapter's equivalent behavior is driven by Mantine's own default breakpoints (576/768/992/1200/1408). The two adapters' Grid stories may show different columns at the exact same viewport width in the `adapter-tester` visual-regression suite as a result — a real, structural difference between the two underlying libraries' breakpoint scales, not a bug in either adapter. The two adapters' Grid APIs are also no longer prop-name-identical (`spacing`/`size` here vs. `gutter`/`span` in mantine-adapter) — this is intentional per the layout-components rule; each adapter's Grid speaks its own kit's vocabulary.
+
+**Story parity exclude**: for the same `size`/`span` reason above, this story is named `ResponsiveSizes` here vs. mantine-adapter's `ResponsiveSpans` — different story ids. `ui-kit-grid--responsive-spans` is marked `exclude: true` in `adapter-tester.config.json`'s `story parity with source of truth` check rather than renamed to match, per developer direction (2026-08-30).
+
+**Update (2026-08-30):** mantine-adapter now also has its own `ResponsiveSizes` story (using its
+own `span` prop, same breakpoints/content as this one) purely so this adapter's `responsive-sizes`
+story id has a source-of-truth golden to diff against — see mantine-adapter's own
+`GRID_IMPLEMENTATION_NOTES.md`. The `responsive-spans`/`responsive-sizes` naming split itself is
+unchanged/still intentional; this just closes the one-directional story-parity gap.

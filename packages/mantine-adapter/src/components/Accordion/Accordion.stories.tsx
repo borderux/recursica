@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { Accordion } from "./Accordion";
-import { Layer } from "@recursica/adapter-common";
 
 const SVGIcon = () => (
   <svg
@@ -185,29 +184,6 @@ export const Disabled: StoryObj<typeof Accordion> = {
           </Accordion.Panel>
         </Accordion.Item>
       </Accordion>
-    );
-  },
-};
-
-/** Demonstrates the component nested inside a non-default layer — the one case where an
- * explicit `<Layer>` wrap belongs in a story (see COMPONENT_STORYBOOK_GUIDE.md §9). */
-export const LayerOne: StoryObj<typeof Accordion> = {
-  render: () => {
-    return (
-      <Layer layer={1} style={{ padding: "24px" }}>
-        <Accordion defaultValue="demo" chevron={<ChevronIcon />}>
-          <Accordion.Item value="demo">
-            <Accordion.Control leftIcon={<SVGIcon />}>
-              Layer 1 Render Engine
-            </Accordion.Control>
-            <Accordion.Panel>
-              This Accordion dynamically updates its colors, borders, and
-              typography variables because it is wrapped securely by the
-              simulated `data-recursica-layer="1"`.
-            </Accordion.Panel>
-          </Accordion.Item>
-        </Accordion>
-      </Layer>
     );
   },
 };

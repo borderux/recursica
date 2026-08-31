@@ -218,6 +218,14 @@
   );
 }
 
+/* Loading state: hide the label/icon (they stay in the DOM/layout, matching
+   mantine-adapter's opacity:0 approach) so only MUI's own centered
+   loadingIndicator is visible — see IMPLEMENTATION_NOTES.md. */
+.root[data-loading="true"] .labelText,
+.root[data-loading="true"] .iconWrapper {
+  opacity: 0;
+}
+
 /* MUI uses .MuiButton-startIcon and .MuiButton-endIcon — real global classes MUI applies
    directly, not local CSS Modules classes, so they must be wrapped in :global() (same as
    .Mui-disabled below) or Vite's CSS Modules hashes them into scoped names that never match
@@ -298,6 +306,11 @@
   color: var(
     --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_text-color
   );
+  /* Exposed so the loading-state Loader (style={{ "--loader-color": "var(--button-color)" }}
+     in Button.tsx) matches this exact text-color token — see IMPLEMENTATION_NOTES.md. */
+  --button-color: var(
+    --recursica_ui-kit_components_button_variants_styles_solid_properties_colors_text-color
+  );
 }
 .root[data-variant="solid"] .iconWrapper {
   color: var(
@@ -331,6 +344,9 @@
   color: var(
     --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_text-color
   );
+  --button-color: var(
+    --recursica_ui-kit_components_button_variants_styles_outline_properties_colors_text-color
+  );
 }
 .root[data-variant="outline"] .iconWrapper {
   color: var(
@@ -362,6 +378,9 @@
     --recursica_ui-kit_components_button_variants_styles_text_properties_colors_border-color
   );
   color: var(
+    --recursica_ui-kit_components_button_variants_styles_text_properties_colors_text-color
+  );
+  --button-color: var(
     --recursica_ui-kit_components_button_variants_styles_text_properties_colors_text-color
   );
 }

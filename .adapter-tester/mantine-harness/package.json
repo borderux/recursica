@@ -1,0 +1,24 @@
+{
+  "name": "adapter-tester-mantine-source-of-truth-harness",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "storybook": "storybook dev"
+  },
+  "dependencies": {
+    "@recursica/mantine-adapter": "latest",
+    "@recursica/storybook-template": "latest",
+    "@recursica/official-release": "latest",
+    "@recursica/adapter-common": "latest",
+    "@mantine/core": "^8.0.0",
+    "@mantine/dates": "^8.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "storybook": "^10.3.3",
+    "@storybook/react-vite": "^10.3.3",
+    "@storybook/addon-docs": "^10.3.3",
+    "@storybook/addon-a11y": "^10.3.3",
+    "storybook-dark-mode": "^5.0.0",
+    "react-markdown": "^10.1.0"
+  }
+}

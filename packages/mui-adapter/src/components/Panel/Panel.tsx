@@ -1,7 +1,8 @@
-import { forwardRef } from "react";
+import { forwardRef, type ReactNode } from "react";
 import {
   Drawer as MuiDrawer,
   type DrawerProps as MuiDrawerProps,
+  IconButton as MuiIconButton,
 } from "@mui/material";
 import {
   filterStylingProps,
@@ -22,11 +23,34 @@ import { type RecursicaPanelProps as BaseRecursicaPanelProps } from "@recursica/
 export interface RecursicaPanelProps
   extends Omit<
       MuiDrawerProps,
-      "classes" | "position" | "style" | "anchor" | "open"
+      "classes" | "position" | "style" | "anchor" | "open" | "title"
     >,
-    BaseRecursicaPanelProps {}
+    BaseRecursicaPanelProps {
+  /** Panel header title label. */
+  title?: ReactNode;
+  /** Whether to display a background overlay. Default true. */
+  withOverlay?: boolean;
+  /** Whether to display the close button in the header. Default true. */
+  withCloseButton?: boolean;
+}
 
 export type PanelProps = RecursicaOverStyled<RecursicaPanelProps>;
+
+const CloseIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M18 6L6 18M6 6l12 12" />
+  </svg>
+);
 
 /**
  * Recursica Panel component wrapping Mui's Drawer.
@@ -60,21 +84,26 @@ const PanelBase = function Panel({
   keepMounted = true,
   wrapHeaderText = true,
   opened,
+  title,
+  withOverlay = true,
+  withCloseButton = true,
+  onClose,
+  children,
   ...rest
 }: PanelProps) {
   const sanitizedProps = filterStylingProps(rest, overStyled);
 
-  // Bind CSS module classes to Mui's internal classNames API. Note MUI's actual prop is
-  // "classes", not "classNames" (that's Mantine's naming) — this used to read the wrong key,
-  // silently no-op-ing any caller-supplied classes.
+  // MUI Drawer's `classes` prop only recognizes its own slot names (`root`, `paper`,
+  // `docked`, ...) — unlike Mantine's `classNames`, it has no `content`/`header`/`title`/`body`
+  // slots to bind into. Passing those keys here used to silently no-op every one of them, which
+  // is why the panel rendered with none of its Recursica chrome (border, radius, sizing) and no
+  // header at all: MUI's raw Drawer has no `title`/`withCloseButton` convenience API the way
+  // Mantine's does, so those props were being spread onto the DOM as inert attributes instead of
+  // building a header. The box-model/appearance chrome (border, radius, shadow, size bounds) now
+  // lives on an explicit `.content` wrapper rendered as Paper's child instead; `.paper` strips
+  // MUI's own default Paper appearance so only the wrapper's chrome is visible.
   const mergedClassNames = mergeClassNames(
-    {
-      content: styles.content,
-      header: styles.header,
-      title: wrapHeaderText ? styles.titleTruncate : styles.title,
-      body: styles.body,
-      inner: styles.inner,
-    },
+    { paper: styles.paper },
     (sanitizedProps as Record<string, unknown>).classes as
       | Partial<Record<string, string>>
       | undefined,
@@ -85,9 +114,36 @@ const PanelBase = function Panel({
       anchor={placement} /* Recursica default: right; Mui default: left */
       keepMounted={keepMounted}
       open={Boolean(opened)}
+      onClose={onClose}
+      hideBackdrop={!withOverlay}
       {...(sanitizedProps as unknown as MuiDrawerProps)}
       classes={mergedClassNames as unknown as MuiDrawerProps["classes"]}
-    />
+    >
+      <div className={styles.content}>
+        {(title || withCloseButton) && (
+          <div className={styles.header}>
+            {title && (
+              <div
+                className={wrapHeaderText ? styles.titleTruncate : styles.title}
+              >
+                {title}
+              </div>
+            )}
+            {withCloseButton && (
+              <MuiIconButton
+                size="small"
+                aria-label="Close"
+                onClick={(e) => onClose?.(e, "backdropClick")}
+                className={styles.close}
+              >
+                <CloseIcon />
+              </MuiIconButton>
+            )}
+          </div>
+        )}
+        <div className={styles.body}>{children}</div>
+      </div>
+    </MuiDrawer>
   );
 };
 PanelBase.displayName = "Panel";

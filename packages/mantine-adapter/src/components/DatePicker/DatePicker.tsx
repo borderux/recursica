@@ -1,5 +1,9 @@
 import React, { forwardRef } from "react";
-import { DatePickerInput, type DatePickerInputProps } from "@mantine/dates";
+import {
+  DatePickerInput,
+  type DatePickerInputProps,
+  getFormattedDate,
+} from "@mantine/dates";
 import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import {
   filterStylingProps,
@@ -161,13 +165,23 @@ export const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
         readOnlyComponent={readOnlyComponent}
         emptyValueComponent={emptyValueComponent}
         readOnlyType="text"
-        readOnlyValue={
-          value !== undefined
-            ? String(value)
-            : defaultValue
-              ? String(defaultValue)
-              : undefined
-        }
+        readOnlyValue={(() => {
+          const readOnlyDate = value !== undefined ? value : defaultValue;
+          // `DatePickerInput` formats its own displayed value via `valueFormat` internally
+          // (using this same `getFormattedDate` helper) — the read-only text swap-in bypassed
+          // that entirely and rendered `String(date)` instead (a raw JS `Date.toString()`, e.g.
+          // "Wed May 20 2026 17:00:00 GMT-0700 (Pacific Daylight Time)"), so a read-only
+          // DatePicker never matched what the same value looks like while editable.
+          return readOnlyDate
+            ? getFormattedDate({
+                type: "default",
+                date: readOnlyDate,
+                locale: "en",
+                format: valueFormat,
+                labelSeparator: "",
+              })
+            : undefined;
+        })()}
         readOnlyNativeProps={props}
         activeComponent={
           /* Naked Input execution safely decoupled from Mantine's macro Input.Wrapper DOM hooks */
