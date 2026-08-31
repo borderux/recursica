@@ -26,3 +26,23 @@
   /* Neutralize Mantine's built-in margin-inline (--mantine-spacing-xs default) so .root's gap alone controls spacing */
   margin-inline: 0;
 }
+
+/* Current-page item (last crumb): Breadcrumb.tsx (via markCurrentPageItem) marks it
+   aria-current="page". This is a style-layer backstop in case that item still renders as a Link
+   despite having its href/onClick stripped — see BREADCRUMB_IMPLEMENTATION_NOTES.md. Two classes'
+   worth of specificity beats Link's single .root color/text-decoration rule regardless of module
+   load order. pointer-events only blocks mouse activation, not a router Link's own internal
+   handler — the last crumb should really just be plain text. */
+.root [aria-current="page"] {
+  color: inherit;
+  text-decoration: none;
+  pointer-events: none;
+
+  /* Per product decision: the current-page item should match Link's font-family/size (it's
+     typically rendered as plain text, with no font styling of its own — otherwise it falls back
+     to Mantine's default font-size) but not any of Link's other styling. */
+  font-family: var(
+    --recursica_ui-kit_components_link_properties_text_font-family
+  );
+  font-size: var(--recursica_ui-kit_components_link_properties_text_font-size);
+}

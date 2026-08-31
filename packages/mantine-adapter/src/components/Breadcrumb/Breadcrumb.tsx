@@ -12,16 +12,30 @@ import styles from "./Breadcrumb.module.css";
 
 // Currently there are no Recursica prop additions specific to Breadcrumbs (like size or variant)
 // according to recursica_ui-kit.json
-import { type RecursicaBreadcrumbProps } from "@recursica/adapter-common";
+import {
+  markCurrentPageItem,
+  type RecursicaBreadcrumbProps,
+} from "@recursica/adapter-common";
 
 export type BreadcrumbProps = RecursicaOverStyled<
   Omit<MantineBreadcrumbsProps, "variant" | "size"> & RecursicaBreadcrumbProps
 >;
 
+/**
+ * The last child should always be plain, non-interactive text (e.g. a `<span>`) — it represents
+ * the current page and shouldn't be a link. Breadcrumb tries to correct for a Link/anchor passed
+ * there anyway via `markCurrentPageItem` (aria-current, stripped href/onClick, CSS reset in
+ * Breadcrumb.module.css), but that's a best-effort safety net, not a guarantee — it can't stop a
+ * custom Link component (e.g. a router Link) that navigates from its own internal handler. See
+ * BREADCRUMB_IMPLEMENTATION_NOTES.md.
+ */
 export const Breadcrumb = forwardRef<HTMLDivElement, BreadcrumbProps>(
-  function Breadcrumb({ overStyled = false, separator = ">", ...rest }, ref) {
+  function Breadcrumb(
+    { overStyled = false, separator = ">", children, ...rest },
+    ref,
+  ) {
     const sanitizedProps = filterStylingProps(
-      { separator, ...rest },
+      { separator, children: markCurrentPageItem(children), ...rest },
       overStyled,
     );
 

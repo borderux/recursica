@@ -1,6 +1,13 @@
 /* Brand-layer exemptions (recursica-allow-brand) — see recursica-token-analyzer README.md.
  * Only source for link hover-underline; no per-component token exists (see IMPLEMENTATION_NOTES.md).
  *   recursica-allow-brand: --recursica_brand_states_link_decoration
+ * Global focus-ring tokens (recursica_variables_scoped.css header, 'Hover & Focus states' —
+ * implicit rule for every interactive element; components must not define their own per-component
+ * treatment). Same pattern as Button.module.css.
+ *   recursica-allow-brand: --recursica_brand_states_focus_blur
+ *   recursica-allow-brand: --recursica_brand_states_focus_border-size
+ *   recursica-allow-brand: --recursica_brand_states_focus_color
+ *   recursica-allow-brand: --recursica_brand_states_focus_margin
  */
 
 /* EXEMPTIONS:
@@ -63,6 +70,19 @@ HARDCODED VALUES:
 
 .root:hover {
   text-decoration: var(--recursica_brand_states_link_decoration);
+}
+
+/* Focus State Mapping (native browser focus outline replaced with the recursica focus ring).
+   Was previously unset here, so Link (and anything using it, e.g. Breadcrumb) fell back to the
+   browser's native focus outline instead of the recursica ring. */
+.root:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 var(--recursica_brand_states_focus_border-size)
+      var(--recursica_brand_states_focus_color),
+    0 0 var(--recursica_brand_states_focus_blur)
+      var(--recursica_brand_states_focus_margin)
+      var(--recursica_brand_states_focus_color);
 }
 
 /* Icon Support */
