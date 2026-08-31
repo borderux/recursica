@@ -117,8 +117,21 @@ const _Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
 
   let mergedLoaderProps = userLoaderProps;
   if (useRecursicaLoader) {
+    // color="var(--button-color)" makes the loader ring match this button's own text color
+    // (Mantine's Button sets --button-color per variant/state) instead of Loader's own
+    // standalone indicator-color token, which Loader.module.css's `.root` would otherwise
+    // apply unconditionally, ignoring this nesting context. overStyled is required to pass
+    // `color` at all (blocked by default) — fully internal composition, no prop threading to
+    // callers, so it doesn't widen Loader's public API. See Button's IMPLEMENTATION_NOTES.md.
     mergedLoaderProps = {
-      children: <Loader variant={loaderVariant} size={resolvedLoaderSize} />,
+      children: (
+        <Loader
+          variant={loaderVariant}
+          size={resolvedLoaderSize}
+          overStyled
+          color="var(--button-color)"
+        />
+      ),
       ...userLoaderProps,
     };
   }

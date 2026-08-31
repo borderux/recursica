@@ -50,6 +50,11 @@
   width: 100%;
 }
 
+.root[data-alignment="right"] .innerLayout {
+  justify-content: flex-end;
+  text-align: right;
+}
+
 .text {
   /* Natively intercepts MUI asterisk rendering securely wrapping inline with typography */
   display: inline;

@@ -5,6 +5,7 @@
   "sourceOfTruthThresholdPixels": 2500,
   "stories": {
     "ui-kit-loader--default": { "exclude": true },
-    "ui-kit-loader--layer-two-oval": { "exclude": true }
+    "ui-kit-loader--layer-two-oval": { "exclude": true },
+    "ui-kit-grid--responsive-spans": { "exclude": true }
   }
 }

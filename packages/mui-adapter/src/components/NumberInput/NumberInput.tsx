@@ -1,8 +1,5 @@
-import React, { forwardRef } from "react";
-import {
-  TextField as MuiNumberInput,
-  type TextFieldProps as MuiNumberInputProps,
-} from "@mui/material";
+import React, { forwardRef, useCallback } from "react";
+import { InputBase, type InputBaseProps } from "@mui/material";
 import { type ReadOnlyControlProps } from "@recursica/adapter-common";
 import {
   filterStylingProps,
@@ -18,11 +15,20 @@ import { type RecursicaNumberInputProps as BaseRecursicaNumberInputProps } from 
 
 export interface RecursicaNumberInputProps
   extends Omit<
-      MuiNumberInputProps,
-      "size" | "variant" | "radius" | "wrapperProps" | "classNames" | "styles"
+      InputBaseProps,
+      | "color"
+      | "size"
+      | "startAdornment"
+      | "endAdornment"
+      | "autoComplete"
+      | "error"
     >,
     Pick<
       RecursicaFormControlWrapperProps,
+      | "label"
+      | "error"
+      | "required"
+      | "id"
       | "assistiveText"
       | "assistiveWithIcon"
       | "formLayout"
@@ -36,6 +42,56 @@ export interface RecursicaNumberInputProps
     BaseRecursicaNumberInputProps {}
 
 export type NumberInputProps = RecursicaOverStyled<RecursicaNumberInputProps>;
+
+// Props this component intentionally doesn't support — deleted at runtime so they can't leak
+// through even if a caller forces them via plain JavaScript, bypassing the `Omit<>` above.
+const UNSUPPORTED_PROPS = [
+  "size", // Recursica controls sizing via design tokens, not MUI's native small/medium size
+  "color", // Colors are token-driven; MUI's native palette isn't exposed
+] as const satisfies readonly (keyof InputBaseProps)[];
+
+// Keys a plain, non-destructive keystroke always passes through (navigation, editing, shortcuts).
+const NON_CHARACTER_KEYS = new Set([
+  "Backspace",
+  "Delete",
+  "Tab",
+  "Escape",
+  "Enter",
+  "ArrowLeft",
+  "ArrowRight",
+  "ArrowUp",
+  "ArrowDown",
+  "Home",
+  "End",
+]);
+
+/**
+ * Restricts keystrokes to what a numeric value can legally contain — digits, a single decimal
+ * point, and (when negative values are allowed) a single leading minus sign. Mirrors Mantine's
+ * `NumberInput`, which parses/rejects non-numeric characters internally; MUI's `InputBase` has
+ * no such behavior built in, so it has to be reimplemented here.
+ */
+function isAllowedNumericKeystroke(
+  event: React.KeyboardEvent<HTMLInputElement>,
+  allowNegative: boolean,
+): boolean {
+  if (event.ctrlKey || event.metaKey || event.altKey) return true;
+  if (NON_CHARACTER_KEYS.has(event.key)) return true;
+  if (/^[0-9]$/.test(event.key)) return true;
+
+  const target = event.currentTarget;
+  if (event.key === "." && !target.value.includes(".")) return true;
+  if (
+    allowNegative &&
+    event.key === "-" &&
+    target.selectionStart === 0 &&
+    !target.value.includes("-")
+  ) {
+    return true;
+  }
+
+  return false;
+}
 
 export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
   function NumberInput(props, ref) {
@@ -55,7 +111,6 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
       assistiveWithIcon,
       error,
       required,
-      // removed withAsterisk
       id,
       className,
       style,
@@ -75,23 +130,18 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
       ...rest
     } = props;
 
-    // Props this component intentionally doesn't support — deleted at runtime so they can't leak
-    // through even if a caller forces them via plain JavaScript, bypassing the Omit<> above.
-    const UNSUPPORTED_PROPS = [
-      "size", // Recursica controls sizing via design tokens, not MUI's native small/medium size
-      "variant", // Recursica styles the naked input directly; MUI's standard/filled/outlined unused
-    ] as const satisfies readonly (keyof MuiNumberInputProps)[];
-
     const sanitizedProps = omitUnsupportedProps(
       filterStylingProps(rest, overStyled),
       UNSUPPORTED_PROPS,
     );
     const restRecord = sanitizedProps as Record<string, unknown>;
 
-    // Securely map core native blocks down ensuring nested CSS modules map precisely. This
-    // previously always overwrote the caller's `classes` prop wholesale (no merge at all) —
-    // now merged per-slot via mergeClassNames so a caller-supplied slot value extends rather
-    // than replaces ours.
+    // Securely map core native blocks down ensuring nested CSS modules map precisely. The
+    // caller-facing "root"/"input" slot names (MUI's own InputBase `classes` shape) are
+    // translated to this component's internal "wrapper"/"input" naming below.
+    const callerClasses = restRecord.classes as
+      | Partial<Record<string, string>>
+      | undefined;
     const mergedClassNames = mergeClassNames(
       {
         wrapper: styles.root, // The nested Input internal relative wrapper bounding box
@@ -100,7 +150,10 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
         controls: styles.controls,
         control: styles.control,
       },
-      restRecord.classes as Partial<Record<string, string>> | undefined,
+      callerClasses && {
+        wrapper: callerClasses.root,
+        input: callerClasses.input,
+      },
     );
 
     const wrapperClass = className
@@ -118,6 +171,42 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
         {rightSection}
       </div>
     ) : undefined;
+
+    // Mantine's NumberInput refuses a leading "-" once `min` rules out negative values; mirror
+    // that here since it also drives what a keystroke is allowed to produce.
+    const allowNegative = min === undefined || min < 0;
+
+    const handleKeyDown = useCallback(
+      (event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (!isAllowedNumericKeystroke(event, allowNegative)) {
+          event.preventDefault();
+        }
+        (
+          restRecord.onKeyDown as
+            | React.KeyboardEventHandler<HTMLInputElement>
+            | undefined
+        )?.(event);
+      },
+      [allowNegative, restRecord.onKeyDown],
+    );
+
+    const handlePaste = useCallback(
+      (event: React.ClipboardEvent<HTMLInputElement>) => {
+        const pasted = event.clipboardData.getData("text");
+        const pattern = allowNegative
+          ? /^-?[0-9]*\.?[0-9]*$/
+          : /^[0-9]*\.?[0-9]*$/;
+        if (!pattern.test(pasted)) {
+          event.preventDefault();
+        }
+        (
+          restRecord.onPaste as
+            | React.ClipboardEventHandler<HTMLInputElement>
+            | undefined
+        )?.(event);
+      },
+      [allowNegative, restRecord.onPaste],
+    );
 
     return (
       <WithReadOnlyWrapper
@@ -148,28 +237,32 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
         readOnlyNativeProps={props}
         activeComponent={
           /* Naked Input execution safely decoupled from Mui's macro Input.Wrapper DOM hooks */
-          <MuiNumberInput
-            ref={ref}
-            {...(sanitizedProps as unknown as MuiNumberInputProps)}
-            classes={
-              mergedClassNames as unknown as MuiNumberInputProps["classes"]
-            }
+          <InputBase
+            inputRef={ref}
+            {...(sanitizedProps as unknown as InputBaseProps)}
+            classes={{
+              root: mergedClassNames.wrapper,
+              input: mergedClassNames.input,
+            }}
             disabled={disabled}
             value={value}
             defaultValue={defaultValue}
-            label={undefined}
-            error={undefined}
-            required={undefined}
-            InputProps={{
-              startAdornment,
-              endAdornment,
-            }}
+            startAdornment={startAdornment}
+            endAdornment={endAdornment}
+            inputMode="decimal"
+            onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
             inputProps={{
               min,
               max,
               step,
               ...(restRecord.inputProps as Record<string, unknown>),
             }}
+            // Bind native CSS selectors for errors / adornments explicitly to the root boundary
+            data-disabled={disabled ? "true" : undefined}
+            data-error={error ? "true" : undefined}
+            data-with-left-section={leftSection ? "true" : undefined}
+            data-with-right-section={rightSection ? "true" : undefined}
           />
         }
       />

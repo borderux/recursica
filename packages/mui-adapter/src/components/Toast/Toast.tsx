@@ -89,7 +89,10 @@ export const Toast = React.forwardRef<HTMLDivElement, ToastProps>(
           MuiAlertProps,
           "color" | "radius" | "variant" | "onClose"
         >)}
-        icon={icon}
+        // MUI's Alert falls back to its own built-in severity icon (default severity is
+        // "success", hence a checkmark) when `icon` is left `undefined` — `icon={false}`
+        // is required to render no icon at all, which is Recursica's own default.
+        icon={icon ?? false}
         data-variant={variant}
         className={`${className || ""}`}
         classes={mergedClassNames}

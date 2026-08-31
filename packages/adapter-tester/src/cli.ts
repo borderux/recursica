@@ -33,6 +33,24 @@ if (sourceOfTruthVersionFlagIndex !== -1) {
   args.splice(sourceOfTruthVersionFlagIndex, 2);
 }
 
+// `--story <story-id>` scopes a run to exactly one story — pulled out the
+// same way, ahead of the passthrough logic, since it's consumed here (to
+// filter the generated spec) rather than forwarded to Playwright. Equivalent
+// to `--grep "<story-id>"`, but exact-match and easier to reach for when
+// iterating on a single component.
+let storyId: string | undefined;
+const storyFlagIndex = args.indexOf("--story");
+if (storyFlagIndex !== -1) {
+  const value = args[storyFlagIndex + 1];
+  if (value === undefined || value.startsWith("--")) {
+    throw new Error(
+      "--story requires a story id, e.g. --story ui-kit-button--loading",
+    );
+  }
+  storyId = value;
+  args.splice(storyFlagIndex, 2);
+}
+
 const cwd = process.cwd();
 const { engineConfig, webServers } = resolveConfig(cwd, {
   mantineAdapterVersion: sourceOfTruthVersion,
@@ -172,8 +190,18 @@ import { resolveVisualRegressionPlan } from ${JSON.stringify(testingEntry)};
 const { ownTargetName, suiteLabel, stories, missingFromSourceOfTruth, checkStory } =
   await resolveVisualRegressionPlan(${JSON.stringify(config, null, 2)});
 
+// Set from \`--story <story-id>\` — scopes this run to exactly one story and
+// skips the (suite-wide) parity check, which has nothing to do with it.
+const storyId = ${JSON.stringify(storyId ?? null)};
+const scopedStories = storyId
+  ? stories.filter((story) => story.id === storyId)
+  : stories;
+if (storyId && scopedStories.length === 0) {
+  throw new Error(\`--story "\${storyId}" matched no story in this Storybook.\`);
+}
+
 test.describe(\`\${ownTargetName} — \${suiteLabel}\`, () => {
-  if (missingFromSourceOfTruth.length > 0) {
+  if (!storyId && missingFromSourceOfTruth.length > 0) {
     test("story parity with source of truth", () => {
       expect(
         missingFromSourceOfTruth,
@@ -181,7 +209,7 @@ test.describe(\`\${ownTargetName} — \${suiteLabel}\`, () => {
       ).toEqual([]);
     });
   }
-  for (const story of stories) {
+  for (const story of scopedStories) {
     test(story.id, async ({ browser }, testInfo) => {
       await checkStory(story, browser, testInfo);
     });

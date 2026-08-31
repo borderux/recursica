@@ -38,8 +38,9 @@ export type GoldenMode = "check" | "update-golden" | "approve-divergence";
 /**
  * Which check(s) a run performs. `"own"` (the default) is what a normal,
  * fast, no-network run does: this project's own live render vs. its own
- * committed golden images. `"divergence"` is the separate, opt-in check
- * against the source-of-truth adapter's published golden images.
+ * committed golden images. `"divergence"` is the separate, opt-in check:
+ * this project's own live render vs. the source-of-truth adapter's
+ * published golden images.
  */
 export type CheckMode = "own" | "divergence";
 
@@ -64,7 +65,7 @@ export interface AdapterTesterConfig {
    * should stay tight. */
   goldenThresholdPixels: number;
   /** Global pixel-diff threshold for the source-of-truth divergence check
-   * (this project's golden vs. the source-of-truth adapter's golden).
+   * (this project's live render vs. the source-of-truth adapter's golden).
    * Comparing across two different component libraries has legitimate
    * structural variation, so this is expected to be much higher than
    * `goldenThresholdPixels`. Unused on the source-of-truth adapter's own

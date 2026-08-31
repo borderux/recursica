@@ -51,8 +51,10 @@
 .timeWrapper {
   display: flex;
   align-items: center;
-  /* Gap between the leading-icon section (when leftSection is passed) and the field itself — a
-     no-op with no icon, since gap has no effect between fewer than two flex children. */
+  /* This `gap` is a no-op: the leading-icon `.section` is absolutely positioned (Mantine's own
+     default for Input.Section, same as Dropdown/AutoComplete), so it never participates in flex
+     gap spacing as a normal flow sibling — see `.fieldsGroup` below for the fix that actually
+     reserves room for it. Left in place only because it's harmless with a single in-flow child. */
   gap: var(--recursica_ui-kit_components_time-picker_properties_icon-text-gap);
   position: relative;
   box-sizing: border-box;
@@ -127,10 +129,22 @@
 }
 
 /* Leading icon (leftSection). Only one icon-color token exists for time-picker (unlike
-   text-field's separate leading/trailing) — this field has no right-side icon slot. */
+   text-field's separate leading/trailing) — this field has no right-side icon slot.
+   Positioned explicitly (left:0 + padding-left) rather than left on Mantine's own absolute-
+   positioning default alone (bug fix, see `.fieldsGroup` below): Mantine centers it in a
+   fixed-width box flush against the border with no Recursica padding token applied at all,
+   same technique Dropdown/AutoComplete's own `.section[data-position="left"]` already use. */
 .section {
   display: flex;
   align-items: center;
+}
+
+.section[data-position="left"] {
+  position: absolute;
+  left: 0;
+  padding-left: var(
+    --recursica_ui-kit_components_time-picker_properties_horizontal-padding
+  );
 }
 
 .section :global(svg) {
@@ -138,6 +152,19 @@
   height: var(--recursica_ui-kit_components_time-picker_properties_icon-size);
   color: var(
     --recursica_ui-kit_components_time-picker_properties_colors_icon-color
+  );
+}
+
+/* Reserves room for the (absolutely positioned, see `.section` above) leading icon in the actual
+   text flow — without this, `.fieldsGroup`'s hour/minute/second inputs start right where
+   `.timeWrapper`'s own base `padding-left` (horizontal-padding) puts them, which is directly
+   underneath the icon (bug: the icon and the field's leading ":" visibly overlapped). Only the
+   icon-size/icon-text-gap on top of that base padding is needed here, since `.timeWrapper`'s own
+   padding-left already reserves the horizontal-padding portion. */
+.timeWrapper[data-with-left-section] .fieldsGroup {
+  padding-left: calc(
+    var(--recursica_ui-kit_components_time-picker_properties_icon-size) +
+      var(--recursica_ui-kit_components_time-picker_properties_icon-text-gap)
   );
 }
 

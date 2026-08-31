@@ -11,9 +11,9 @@ Your objective is to ensure that Recursica's custom CSS variables, layouts, and 
 ## 2. Running the Tests
 
 - **Run all components against their own golden images**: `npm run adapter-tester:automated` — the normal one, no network calls.
-- **Run the separate divergence check against Mantine**: `npm run adapter-tester:source-of-truth` — opt-in, not run by default. Not available for `@recursica/mantine-adapter` itself (it _is_ the source of truth).
+- **Run the separate divergence check against Mantine**: `npm run adapter-tester:source-of-truth` — opt-in, not run by default. Not available for `@recursica/mantine-adapter` itself (it _is_ the source of truth). Always diffs this run's **live** render against Mantine's stored golden — no `--update-golden` step needed first, so it reflects a styling fix immediately.
 - **Reviewing Output**: The test automatically compiles a comprehensive, fully styled HTML report. You can review all screenshots, visual diff highlights, and source-of-truth divergence flags by opening the standard `playwright-report/index.html` file in a browser.
-- These are developer-run workflows, not CI checks — scope with `--grep` rather than always running the full suite.
+- These are developer-run workflows, not CI checks — scope with `--grep`, or `--story <story-id>` for one exact story while iterating (e.g. `npm run adapter-tester:source-of-truth -- --story ui-kit-button--loading`), rather than always running the full suite.
 
 ### Test Directory and Output Standard
 
@@ -39,7 +39,7 @@ A component is considered "Close Enough" and passing if:
 There are two independent global thresholds in the consuming project's `adapter-tester.config.json` (e.g. `mantine-adapter`'s or `mui-adapter`'s own). This package has no `adapter-tester.config.json` of its own — it's a tool other adapters configure, not something that runs against itself.
 
 - `goldenThresholdPixels` — gates the **own-drift check** (this project's live render vs. its own committed golden). Same library on both sides, so it stays tight (default 10). A failure here is almost certainly a genuine CSS regression in this adapter's own styling code.
-- `sourceOfTruthThresholdPixels` — gates the **divergence check** (this project's golden vs. Mantine's golden). Comparing across two different component libraries has legitimate structural variation, so this is deliberately much higher (default 3500). Unused on `@recursica/mantine-adapter`'s own config, which has no divergence check.
+- `sourceOfTruthThresholdPixels` — gates the **divergence check** (this project's live render vs. Mantine's golden). Comparing across two different component libraries has legitimate structural variation, so this is deliberately much higher (default 3500). Unused on `@recursica/mantine-adapter`'s own config, which has no divergence check.
 - **⚠️ AI AGENT GUARDRAIL**: Under no circumstances are AI agents allowed to modify `goldenThresholdPixels` or `sourceOfTruthThresholdPixels` in any `adapter-tester.config.json`. Only human developers are permitted to alter either global threshold. Bypassing either by editing the file is an automatic failure.
 - If a test fails one of these thresholds, it is almost certainly a genuine CSS mapping bug that must be investigated and fixed in the adapter styling code itself.
 

@@ -1,0 +1,218 @@
+OPEN QUESTIONS — mui-adapter source-of-truth audit (2026-08-30)
+================================================================
+
+Context: full adapter-tester:source-of-truth run against mantine-adapter found 65 failing
+stories (213 passed) plus 2 stories missing from mui entirely. This file tracks what's still
+unresolved after fixes. See IMPLEMENTATION_NOTES.md in each component's folder for fixes that
+were made.
+
+IMPORTANT CAVEAT ON EVERYTHING BELOW
+-------------------------------------
+The source-of-truth divergence check compares two *committed* golden PNGs on disk
+(test/golden/*.png), never a live render. None of the fixes below will show as passing in
+adapter-tester:source-of-truth until mui-adapter's own goldens are regenerated with
+--update-golden (gated to explicit developer permission per AGENT.md — asked Matt, awaiting
+answer as of this writing). All "diffPixels" numbers below were measured by hand — computing
+pixelmatch() directly between mui's current live render and mantine's committed golden,
+bypassing the stale committed mui golden.
+
+ROOT-CAUSE FIX WITH BROAD IMPACT
+-------------------------------------
+.storybook/preview.tsx: mui's Storybook decorator used MUI's `createTheme()` + `<CssBaseline />`
+with no `typography.fontFamily` override, so CssBaseline stamped `body { font-family: Roboto,
+Helvetica, Arial, sans-serif }` — MUI's own default. Mantine's global reset uses its own
+different default stack (`-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, ...`). Neither
+is a real Recursica token (no component in recursica_variables_scoped.css defines a global body
+font — every font-family variable is per-component), so this was pure incidental noise from
+each kit's own opinionated default, not a design decision either adapter made on purpose.
+
+Fixed by setting `typography.fontFamily` in the Storybook theme to match Mantine's default
+stack exactly. This measurably fixed ui-kit-layer--default (diffPixels 3989 -> 1062, now under
+the 2500 threshold) and almost certainly meaningfully improves most of the "whole component
+fails, every variant" cases below, since font metrics affect: (a) any plain/untokenized text,
+and (b) baseline alignment of any `display: inline-flex`/`inline-block` component root sitting
+in normal document flow (the browser's inline-formatting "strut" is sized off the parent's own
+font metrics). Recommend re-running the full source-of-truth check after a golden regen to see
+the real remaining list before investing more time story-by-story — a lot of what's below may
+already be resolved or much closer.
+
+FIXED (see each component's own IMPLEMENTATION_NOTES.md for detail)
+-------------------------------------
+- Accordion: chevron double-rotation canceled out visually (Accordion.module.css)
+- Modal: vertical-centered by default instead of anchored near top like mantine; MUI's paper
+  also had a redundant 32px margin (Modal.module.css)
+- Toast: rendered MUI's own default "success" checkmark icon instead of no icon (Toast.tsx)
+
+STILL OPEN — investigated, not resolved (3 attempts each per your instruction)
+-------------------------------------
+
+1. Chip (ui-kit-chip--default and likely all 6 chip failures)
+   The chip box itself is pixel-identical in size to mantine's (102.4x24.7), but sits ~18px
+   lower relative to its Layer wrapper's top padding. Root.MuiChip-root is `display:
+   inline-flex` sitting in a plain-block Layer wrapper (same as mantine's `display:
+   inline-flex` chip root) — this is baseline-alignment-of-an-inline-level-box territory
+   (browser positions an inline-flex box against the surrounding line box's baseline, and
+   that baseline math depends on font metrics of both the parent context and the box's own
+   content). Applied the global font-family fix (see above) — reduced diffPixels 3048 -> 2882,
+   still over threshold; the ~18px vertical offset itself didn't move. Didn't find the exact
+   mechanism in the time budgeted. Suspect it's related to the same inline-baseline-alignment
+   family affecting Toast's residual issue below, but couldn't confirm a shared fix.
+
+2. Modal (ui-kit-modal--default and 2 others)
+   Fixed the two big issues (vertical anchor, double margin) — diffPixels dropped ~172k -> 25k.
+   Residual: mantine's modal is visibly wider (content right edge further right) and mui's
+   text is shifted slightly left, causing double-vision ghosting in the diff overlay. Didn't
+   trace whether this is a width token, a max-width breakpoint MUI's Dialog defaults to, or a
+   horizontal-padding difference within the time budgeted for a 3rd attempt.
+
+3. Toast (ui-kit-toast--default and 1 other)
+   Fixed the icon bug (see above) — diffPixels dropped 33437 -> 18487 (measured before the
+   font fix) but a second live check after the icon fix + font fix together showed 30743,
+   which is confusing (should have gone down further). The diff image shows a solid-red band
+   across the toast's bottom border — the box height itself differs by enough that the two
+   borders land on different rows entirely, which reads as a huge diff even though the content
+   above it looks nearly identical. Likely a line-height/font-metric cumulative effect across
+   the 3-line body text (same family as Chip's issue) rather than a new bug, but didn't
+   confirm.
+
+4. Menu (all 4 menu failures)
+   mui's Menu renders with the first item ("Settings") in a highlighted/focused-looking state
+   on open; mantine's renders all items in the same plain unselected state. No `selected` prop
+   is passed in either story — this is MUI's Menu auto-focusing the first MenuItem on open
+   (standard MUI keyboard-accessibility behavior), and Recursica's own menu-item CSS applies a
+   background highlight on focus. This is a real accessibility-vs-visual-parity tradeoff, not
+   a straightforward bug: suppressing MUI's autoFocus to match mantine's static screenshot
+   would remove keyboard-navigation behavior that's arguably *more* correct than mantine's.
+   Flagging for your call rather than unilaterally changing autoFocus behavior.
+
+5. Slider (all 6 slider failures)
+   mui's Slider always shows the "60" value-tooltip above the thumb; mantine's never shows one
+   in its static default story. Code already computes `valueLabelDisplay="auto"` (only MUI's
+   own `"on"` mode should force it always-visible), and no element has DOM focus at capture
+   time (checked document.activeElement === body). Per MUI's own Slider.js source, "auto"
+   should only render the tooltip when its internal `open`/`active` state is set (hover/drag/
+   focus), so something is causing that internal state to read as active without a focus or
+   hover event in a totally fresh page load. Didn't find the mechanism in the time budgeted.
+
+6. Stepper (all 4 stepper failures)
+   mui's Stepper+content+buttons block renders noticeably taller than mantine's for the exact
+   same story code and content (Layer wrapper height 510px vs mantine's 297px on an identical
+   3-step/description/button layout). Both get Storybook's `layout: "centered"` treatment
+   correctly (verified `sb-main-centered` class + flex/align-items:center on `<body>` in both).
+   The extra height must be coming from within the Stepper/Flex/Group composition itself, not
+   from the story-level Storybook layout config. Didn't isolate which element inside is adding
+   height in the time budgeted.
+
+NOT YET INDIVIDUALLY INVESTIGATED (spot-checked via golden image only, no live/DOM digging)
+-------------------------------------
+TextArea, Timeline, and Table's failing stories were eyeballed side-by-side and look
+essentially pixel-identical to mantine's goldens already — a few px of text/line shift
+consistent with the font-metric noise described above, not an obvious separate bug. Tabs looks
+the same way. Did not check: Autocomplete, DatePicker, Dropdown, FormControlLayout,
+FormControlWrapper, NumberInput, Popover, ReadOnlyField, Switch, TextField, TransferList, Tree
+beyond the initial failure list — recommend re-running the full suite after a golden
+regeneration (see caveat above) before spending more time on these, since several are likely
+already resolved or much smaller than they appear against the stale goldens.
+
+================================================================
+ROUND 2 (2026-08-31) — fixes against Matt's manual discrepancy report
+================================================================
+
+Matt sent a second, manually-written report of 30+ specific discrepancies across ~20 components
+(NumberInput, Stepper, Dropdown, Accordion, Grid, Avatar, Text, Pagination, Switch, TextArea,
+DatePicker, Label, Button, Modal, Timeline, Toast, Tree, Panel, Tabs, Autocomplete, TimePicker).
+Worked in 5 parallel clusters. All fixes documented in each component's own
+IMPLEMENTATION_NOTES.md (mui-adapter and, where a genuine source-of-truth bug was found,
+mantine-adapter). Note: this likely supersedes some ROUND 1 entries above (Stepper's height
+issue and Toast's residual border-position gap both look plausibly resolved by this round's
+Group.tsx/Pagination/Toast padding fixes) — re-check after a golden regen rather than assuming
+ROUND 1's numbers still apply.
+
+Confirmed genuine mantine-adapter bugs fixed this round (mantine is source of truth elsewhere,
+but these were real defects, not intentional design):
+- DatePicker: read-only mode used raw `Date.toString()`, ignoring `valueFormat` entirely.
+- TimePicker: leading icon overlapped the field text — `.section` is absolutely positioned in
+  Mantine's own default and nothing reserved room for it.
+- Stepper (layout-stress-test): subtext color selectors checked `data-progress="completed"`
+  etc. (string values) but Mantine's Stepper.Step only ever stamps boolean presence attributes
+  (`data-completed`, `data-progress`) — selectors never matched, silently falling back to
+  Mantine's own default gray instead of the Recursica token.
+- Button (loading): loader color didn't match label text color as it should — Loader.module.css
+  unconditionally self-declares --loader-color, shadowing what Button tried to pass down.
+- Tabs (inverted): `inverted` never actually reordered tabs-below-content in either kit, despite
+  being a documented prop — only flipped indicator/border-radius styling. Fixed in both.
+
+Story-set changes (both kits kept in sync):
+- Deleted `ui-kit-accordion--layer-one` and `ui-kit-avatar--layer-one-outline` from both
+  mui-adapter and mantine-adapter (mantine had identical stories) — Matt confirmed not needed.
+- Added `ui-kit-grid--responsive-sizes` to mantine-adapter (existed only in mui) using Mantine's
+  own `span` prop (no `size` prop exists in Mantine's Grid API).
+- ui-kit-stepper--default's "Step 2 content" complaint: not a component bug — mui's own story
+  had an extra `<div>Step X content</div>` mantine's story never had. Removed from mui's story.
+
+New open questions / residual items — not fixed, need a design-system decision or another pass:
+1. NumberInput icon color (with-right-icon / with-left-icon): Recursica's own
+   leading-icon/trailing-icon tokens for number-input resolve to near-black (#131313).
+   Mantine's demo shows a visibly lighter gray, but that comes from an unrelated Mantine
+   library default (--mantine-color-placeholder) leaking onto a plain-text `<span>` stand-in,
+   not any Recursica token. Hardcoding a gray to fake-match would violate the no-hardcoded-
+   colors rule. Needs a design call on whether the icon-color token itself should be lighter.
+   [ANSWER] Can we unset the --mantine-color-placeholder just for the icon area?
+2. Dropdown (standalone Select/Menu popup, not Autocomplete): has the same missing gap between
+   input and menu that Autocomplete had — same fix technique (popper margin token) would apply,
+   just wasn't in this round's assigned scope.
+   [ANSWER] Go head to use the popper margin.
+3. Dropdown with-leading-icon: could not reproduce the reported "icon too far left" on this
+   branch — measured icon inset already matches mantine within ~1px. Likely the original
+   report was against a stale committed golden. Flagging in case it resurfaces after golden
+   regen.
+   [ANSWER] We can re-review after golden sample refresh
+4. Pagination: prev/next chevron control renders a perfect 48px square in mui vs ~51.8px in
+   mantine — mantine's icon-only nav button doesn't collapse fully to its own min-width token.
+   Minor/cosmetic, everything else in Pagination is now pixel-matched.
+5. Tabs (non-inverted default): mui's default Tabs-to-content gap is 32px (24px Tabs-root
+   margin + 8px from the outer Flex's own default gap) vs mantine's 24px — pre-existing,
+   independent of the inverted fix, out of this round's scope.
+6. Tabs vertical+inverted: no Storybook story exercises orientation="vertical" with inverted in
+   either kit, so the inverted fix is scoped to horizontal only; "list should move to the
+   right" for vertical+inverted is unverified/unimplemented in both adapters.
+   [ANSWER] I'm not sure what you're talking about, but you fixed it.  The only problem is on MUI now.  The red line designating the selected item is floating too high in MUI.  Its not inline with the grey line below
+
+================================================================
+ROUND 3 (2026-08-31) — answers to Round 2's open questions, after golden refresh
+================================================================
+
+1. NumberInput icon color — RESOLVED (mantine-adapter bug, fixed there). The plain-text `<span>`
+   icon stand-ins in the story picked up Mantine's own `Input.Section` default
+   (`--mantine-color-dimmed`, wired through `--input-section-color`, not literally
+   `--mantine-color-placeholder` as originally guessed — same leaking-library-default family).
+   Per Matt's answer, unset it: `.section` now sets `--input-section-color` (the exact variable
+   Mantine's own rule reads) to the Recursica leading-icon/trailing-icon token instead, so any
+   section content — svg or plain text — gets the real token color. See
+   NumberInput/NUMBER_INPUT_IMPLEMENTATION_NOTES.md (mantine-adapter).
+
+2. Dropdown popper margin gap — RESOLVED. Added the same `margin-top:
+   var(--recursica_brand_dimensions_general_default)` fix Autocomplete's `.popper` got, to
+   Dropdown's `.dropdown` class (the `MenuProps.classes.paper` target). No `!important` needed
+   here — Select's menu is a Popover (computed top/left), not a Popper (inline `margin: 0`).
+   See Dropdown/DROPDOWN_IMPLEMENTATION_NOTES.md.
+
+3. Dropdown with-leading-icon — per Matt's answer, re-reviewed after the golden refresh: still
+   not reproducible, no code change made. Consider closed unless it resurfaces.
+
+4. Pagination chevron 48px vs ~51.8px — no answer this round, still open/cosmetic, untouched.
+
+5. Tabs non-inverted default 32px vs 24px gap — no answer this round, still open, untouched.
+
+6. Tabs vertical+inverted floating indicator — RESOLVED in mui-adapter. Root cause: the
+   horizontal `inverted` fix (Round 1) was scoped to `[data-orientation="horizontal"]` only, so
+   toggling `inverted` on vertical did nothing — the list stayed put but the divider/indicator's
+   right-side offsets assumed a margin that no longer matched, hence the "floating" look. Fixed
+   by mirroring the horizontal flip rotated 90° (order, margin, divider, indicator, radius all
+   flip from right-side to left-side). Verified via live DOM attribute injection — no story
+   exists yet for this combo in either kit (still true after this fix), so it isn't covered by
+   the automated report. mantine-adapter has the identical "vertical inverted unimplemented" gap
+   and was NOT touched — Matt's report was MUI-specific ("The only problem is on MUI now").
+   Recommend adding a real `VerticalInverted` story to both kits if this combo needs ongoing
+   regression coverage; flagging rather than adding unasked-for stories. See
+   Tabs/IMPLEMENTATION_NOTES.md.

@@ -38,9 +38,7 @@ export const DefaultHelp: Story = {
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
   render: ({ withLayer, layer, ...args }: any) => (
-    <Layer layer={0} style={{ padding: "48px" }}>
-      <AssistiveElement {...args} />
-    </Layer>
+    <AssistiveElement {...args} />
   ),
 };
 
@@ -53,9 +51,7 @@ export const ErrorState: Story = {
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
   render: ({ withLayer, layer, ...args }: any) => (
-    <Layer layer={0} style={{ padding: "48px" }}>
-      <AssistiveElement {...args} />
-    </Layer>
+    <AssistiveElement {...args} />
   ),
 };
 
@@ -68,8 +64,6 @@ export const NoIconHelp: Story = {
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
   render: ({ withLayer, layer, ...args }: any) => (
-    <Layer layer={0} style={{ padding: "48px" }}>
-      <AssistiveElement {...args} />
-    </Layer>
+    <AssistiveElement {...args} />
   ),
 };

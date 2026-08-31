@@ -6,6 +6,10 @@
  *   recursica-allow-brand: --recursica_brand_states_focus_margin
  *   recursica-allow-brand: --recursica_brand_states_hover_color
  *   recursica-allow-brand: --recursica_brand_states_hover_opacity
+ * No ui-kit token exists for the input-to-menu gap (see `.dropdown` below) — reusing the same
+ * generic dimension token AutoComplete.module.css's `.popper` uses, instead of hardcoding an
+ * unexplained pixel value.
+ *   recursica-allow-brand: --recursica_brand_dimensions_general_default
  */
 
 /* LAYOUT SPACING OVERRIDES:
@@ -139,6 +143,14 @@
 
 .input::placeholder {
   /* HARDCODE: Dropdown properties currently missing placeholder-opacity tokens from Figma JSON */
+  opacity: 0.5;
+  color: inherit;
+}
+
+/* MUI's Select has no native placeholder concept (it isn't a text <input>) — the closed field's
+   `renderValue` wraps the placeholder string in this span instead, matching `.input::placeholder`
+   above so an empty Select reads the same as an empty text control. */
+.placeholder {
   opacity: 0.5;
   color: inherit;
 }
@@ -336,6 +348,13 @@
     --recursica_ui-kit_components_dropdown_properties_border-radius
   );
   overflow: hidden;
+  /* Same missing input-to-menu gap as AutoComplete.module.css's `.popper` — MUI's Select renders
+     this menu flush against the input, with no offset token in the schema either. Reusing the
+     same --recursica_brand_dimensions_general_default stand-in for consistency; see AutoComplete's
+     comment for the full reasoning. No inline `margin: 0` to beat here (Select's Menu is a
+     Popover, not a Popper — it positions via computed `top`/`left`, not an inline margin), so no
+     `!important` needed. */
+  margin-top: var(--recursica_brand_dimensions_general_default);
 }
 
 /* The visible top/bottom gap inside the open menu, before/after the option list, is MUI's own

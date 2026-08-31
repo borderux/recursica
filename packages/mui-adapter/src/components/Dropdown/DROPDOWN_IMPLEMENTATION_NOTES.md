@@ -18,3 +18,28 @@ New CSS classes (`.optionContent`/`.optionIcon`/`.optionText`/`.optionSupporting
 descenders (e.g. "g") whenever `text_line-height` is tighter than the font's natural
 ascent+descent. `overflow-clip-margin` gives ink a small bleed allowance while still clipping
 genuinely overflowing text; same project-wide fix as Chip's `CHIP_IMPLEMENTATION_NOTES.md`.
+
+## Missing placeholder (bug fix, Matt Massey, 2026-08-30)
+
+`placeholder` (a real prop on `RecursicaDropdownProps` via `adapter-common`) was accepted but
+silently did nothing — it fell through to `...rest`/`sanitizedProps` and got spread onto
+`<MuiSelect>`, which only forwards it to its own hidden accessibility `<input>` (invisible to the
+user); MUI's `Select` is not a native text `<input>`, so it has no `::placeholder` rendering path
+of its own. mantine-adapter's `Select` supports `placeholder` natively, so the equivalent bug never
+existed there. Fixed by destructuring `placeholder` explicitly and rendering it from `renderValue`
+when the field is empty, wrapped in a new `.placeholder` class (same opacity treatment as
+`.input::placeholder`) since a `<span>` inside a non-input element has no pseudo-element to target.
+
+The `ui-kit-dropdown--with-rich-options`/`-wrapped` stories were also flagged as "text isn't
+vertically centered" — with no placeholder rendering, MUI's empty `.MuiSelect-select` fell back to
+its own zero-width-space filler content (`&#8203;`, used internally to preserve the box's height),
+which doesn't establish the same line box a real placeholder string does. Rendering the actual
+placeholder text resolved this too — verified via screenshot, no separate CSS change needed.
+
+## Missing input-to-menu gap (Matt Massey, ROUND 2 2026-08-31)
+
+Same gap AutoComplete had: MUI's Select renders its open menu flush against the input, no offset
+token exists in the schema for it either. Fixed with the identical technique — `margin-top: var(
+--recursica_brand_dimensions_general_default)` on `.dropdown` (the `MenuProps.classes.paper`
+target). Unlike AutoComplete's Popper, Select's menu is a Popover, which positions via computed
+`top`/`left` rather than an inline `margin: 0`, so no `!important` was needed here.

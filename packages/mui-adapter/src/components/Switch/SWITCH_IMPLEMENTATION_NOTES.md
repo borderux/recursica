@@ -110,6 +110,30 @@ component's own hardcoded elements (styled directly in JSX, not via MUI's `class
 remain unreachable through this override path — a separate, pre-existing gap, not something the
 prop-name fix could address.
 
+## `CustomReadOnly` story showed no label text
+
+**Found 2026-08-30, source-of-truth audit against mantine.** `Switch.tsx` destructures `label`
+out of `props` (needed for the normal, non-read-only render path), but the `readOnly` branch
+built its `roNode` from `restRecord.label` — `restRecord` comes from `rest`, which no longer has
+`label` on it since it was already pulled off `props` separately. Result: the `readOnlyComponent`
+render prop always received `label={undefined}`, so `ui-kit-switch--custom-read-only` rendered
+just "DISABLED" instead of "Standard Switch DISABLED". Mantine's version never destructures
+`label` separately, so `restRecord.label` was always populated there — same story args on both
+sides, the bug was purely in this component's own prop plumbing. Fixed by reading the already-
+destructured `label` variable instead of `restRecord.label`.
+
+## `StaticVariations` story spacing didn't match mantine
+
+**Found 2026-08-30, source-of-truth audit against mantine.** The story used `<Stack
+spacing="xl">`, but `"xl"` isn't a key in this adapter's `SPACING_MAP` (only `"rec-*"`-prefixed
+tokens are) — MUI's `Stack` then received an unrecognized raw string as its native `spacing`
+prop, which resolves to an invalid CSS length and collapses to no gap at all, bunching every
+switch together. Fixed by using `spacing="rec-xl"` (24px via
+`--recursica_brand_dimensions_general_xl`), the closest existing token. Note this is 24px vs.
+mantine's native `gap="xl"` (32px, Mantine's own spacing scale, unrelated to Recursica tokens) —
+close enough visually and no exact rec-\* equivalent of Mantine's "xl" exists; flagged rather than
+chasing pixel-parity on an arbitrary story-only value.
+
 ## `SwitchGroup` side-by-side layout always rendered as if stacked
 
 **Found 2026-08-14, reported by Matt:** the `SideBySideLayout` story showed the group label

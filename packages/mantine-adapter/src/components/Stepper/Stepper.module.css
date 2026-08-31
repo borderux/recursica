@@ -298,13 +298,13 @@
   height: var(--stepper-svg-size);
 }
 
-.root .step[data-progress="completed"] .stepLabel {
+.root .step[data-completed] .stepLabel {
   color: var(
     --recursica_ui-kit_components_stepper_properties_colors_completed-label-color
   );
 }
 
-.root .step[data-progress="completed"] .stepDescription {
+.root .step[data-completed] .stepDescription {
   color: var(
     --recursica_ui-kit_components_stepper_properties_colors_completed-description-color
   );
@@ -323,26 +323,26 @@
   );
 }
 
-.root .step[data-progress="progress"] .stepLabel {
+.root .step[data-progress] .stepLabel {
   color: var(
     --recursica_ui-kit_components_stepper_properties_colors_current-label-color
   );
 }
 
-.root .step[data-progress="progress"] .stepDescription {
+.root .step[data-progress] .stepDescription {
   color: var(
     --recursica_ui-kit_components_stepper_properties_colors_current-description-color
   );
 }
 
 /* Upcoming State (Pending Labels) */
-.root .step[data-progress="pending"] .stepLabel {
+.root .step:not([data-completed]):not([data-progress]) .stepLabel {
   color: var(
     --recursica_ui-kit_components_stepper_properties_colors_upcoming-label-color
   );
 }
 
-.root .step[data-progress="pending"] .stepDescription {
+.root .step:not([data-completed]):not([data-progress]) .stepDescription {
   color: var(
     --recursica_ui-kit_components_stepper_properties_colors_upcoming-description-color
   );

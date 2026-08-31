@@ -77,7 +77,7 @@ export const SideBySideLayout: Story = {
 export const StaticVariations: Story = {
   args: {},
   render: () => (
-    <Stack spacing="xl">
+    <Stack spacing="rec-xl">
       <Switch label="Default Unchecked State" />
       <Switch label="Checked State" defaultChecked />
       <Switch label="Disabled Unchecked" disabled />

@@ -108,8 +108,19 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     let loadingIndicator = restRecord.loadingIndicator as React.ReactNode;
     if (useRecursicaLoader) {
+      // overStyled + style unlock the "--loader-color" override below — this is a fully
+      // internal composition (no external prop threading), so it doesn't widen Loader's public
+      // contract. Matches the button's own text-color token instead of Loader's standalone
+      // indicator-color default. See IMPLEMENTATION_NOTES.md.
       loadingIndicator = (
-        <Loader variant={loaderVariant} size={resolvedLoaderSize} />
+        <Loader
+          variant={loaderVariant}
+          size={resolvedLoaderSize}
+          overStyled
+          style={
+            { "--loader-color": "var(--button-color)" } as React.CSSProperties
+          }
+        />
       );
     }
 
@@ -124,11 +135,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         loadingIndicator={loadingIndicator}
         fullWidth={!!restRecord.fullWidth}
         startIcon={
-          restRecord.loading ? (
-            <span className={styles.iconWrapper} aria-hidden>
-              {loadingIndicator}
-            </span>
-          ) : icon != null ? (
+          icon != null ? (
             <span className={styles.iconWrapper} aria-hidden>
               {icon}
             </span>

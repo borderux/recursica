@@ -6,6 +6,9 @@
  *   recursica-allow-brand: --recursica_brand_states_focus_margin
  *   recursica-allow-brand: --recursica_brand_states_hover_color
  *   recursica-allow-brand: --recursica_brand_states_hover_opacity
+ * No ui-kit token exists for the input-to-menu gap (see `.popper` below) — reusing the closest
+ * matching generic dimension token instead of hardcoding an unexplained pixel value.
+ *   recursica-allow-brand: --recursica_brand_dimensions_general_default
  */
 
 /* LAYOUT SPACING OVERRIDES:
@@ -196,6 +199,18 @@
   color: var(
     --recursica_ui-kit_components_autocomplete_properties_colors_trailing-icon
   );
+}
+
+/* MUI's Autocomplete positions its Popper flush against the input — it sets `margin: 0px` as an
+   inline style, so the option list touches the control's bottom border with no gap. Mantine's
+   equivalent (Combobox, built on its own Popover) leaves an 8px gap, but that comes from
+   Popover.mjs's own untokenized `offset: 8` default, not any Recursica token — there's no
+   dedicated "menu offset" token in the schema. `--recursica_brand_dimensions_general_default`
+   happens to also resolve to 8px, so it's reused here rather than hardcoding an unexplained
+   magic number; if the schema ever adds a real gap token for this, prefer it over this one.
+   `!important` needed: MUI's inline `margin: 0px` otherwise always wins over a class rule. */
+.popper {
+  margin-top: var(--recursica_brand_dimensions_general_default) !important;
 }
 
 /* Dropdown and Options */

@@ -125,6 +125,14 @@
   justify-content: center;
   flex-shrink: 0;
   color: inherit;
+  /* MUI's own `.MuiTreeItem-iconContainer` hardcodes `width: 16px` (sized for a
+     plain icon glyph), narrower than our 32px expand `Button`. The button
+     doesn't shrink to fit, so it overflowed this container by 8px on each
+     side — meaning `.row`'s `gap` (button-node-gap) measured a 4px space
+     between the *container* and `.label`, while the actual button visually
+     overlapped the label by 4px. `width: auto` lets the container size to its
+     real (button) content instead of MUI's icon-sized default. */
+  width: auto;
 }
 
 /* The expand Button is always rendered (even for leaf nodes, which have nothing to toggle) so

@@ -89,6 +89,7 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
       startAdornment,
       clearable,
       wrapItemText = false,
+      placeholder,
       ...rest
     } = props;
     // Props this component intentionally doesn't support — deleted at runtime so they can't leak
@@ -206,7 +207,11 @@ export const Dropdown = forwardRef<HTMLInputElement, DropdownProps>(
     // field showing just the plain label, matching the field's own single-line text control.
     const renderValue = (selected: unknown) => {
       if (selected === "" || selected === undefined || selected === null) {
-        return "";
+        return placeholder ? (
+          <span className={styles.placeholder}>{placeholder}</span>
+        ) : (
+          ""
+        );
       }
       const match = normalizedData?.find((item) =>
         typeof item === "string" ? item === selected : item.value === selected,

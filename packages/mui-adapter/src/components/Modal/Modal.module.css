@@ -12,8 +12,32 @@
 .root {
 }
 
+/* MUI's Dialog container centers its paper vertically by default. Mantine's Modal has no such
+   behavior — it anchors near the top (its own `.mantine-Modal-inner` default: align-items:
+   flex-start, padding: 30px 40px, unstyled by any Recursica token). Reproducing that shape here
+   since nothing here is Recursica-token-driven; it's purely "match the source of truth's own
+   default library behavior" per the layout-components rule (see Grid's IMPLEMENTATION_NOTES.md). */
+.root :global(.MuiDialog-container) {
+  align-items: flex-start;
+  padding: 30px 40px;
+}
+
 .inner {
   /* Mantine applies padding to inner to keep modal away from edges. We rely on content constraints. */
+  /* MUI's paper also ships its own default 32px margin on top of that — zero it out so the
+     container's padding (below) is the only source of edge spacing, matching Mantine's shape. */
+  margin: 0;
+
+  /* Unlike Mantine, where `.content` (Modal.Content) wraps header/body/footer as one element,
+     MUI's Dialog renders header/body(.content)/footer as separate siblings inside this Paper
+     (mapped via `classes.paper`) — so the border-radius belongs here, on the Paper that is the
+     whole visible modal, not on the body's DialogContent below. `overflow: hidden` clips the
+     header/footer's square corners to match. No box-shadow — Mantine's static default story
+     renders with none. */
+  border-radius: var(
+    --recursica_ui-kit_components_modal_properties_border-radius
+  );
+  overflow: hidden;
 }
 
 .content {
@@ -30,9 +54,6 @@
   overflow: hidden;
 
   /* Box model */
-  border-radius: var(
-    --recursica_ui-kit_components_modal_properties_border-radius
-  );
   border-width: var(--recursica_ui-kit_components_modal_properties_border-size);
   border-color: var(
     --recursica_ui-kit_components_modal_properties_colors_border-color
@@ -43,7 +64,6 @@
   background-color: var(
     --recursica_ui-kit_components_modal_properties_colors_content-background-color
   );
-  box-shadow: var(--recursica_ui-kit_components_modal_properties_elevation);
 
   /* Internal Flex container to trap header and let body scroll */
   display: flex;

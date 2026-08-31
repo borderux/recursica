@@ -163,6 +163,14 @@
   display: flex;
   align-items: center;
   height: 100%;
+  /* Mantine's own Input.Section rule falls back to --mantine-color-dimmed via
+     --input-section-color when nothing else sets it, which leaks a library gray onto
+     plain (non-svg) section content like text stand-ins. Feed the real Recursica token
+     into the same variable Mantine already reads so text content is token-colored too,
+     not just the svg-specific override below. */
+  --input-section-color: var(
+    --recursica_ui-kit_components_number-input_properties_colors_leading-icon
+  );
 }
 
 .section[data-position="left"] {
@@ -176,6 +184,9 @@
   justify-content: flex-end;
   padding-right: var(
     --recursica_ui-kit_components_number-input_properties_horizontal-padding
+  );
+  --input-section-color: var(
+    --recursica_ui-kit_components_number-input_properties_colors_trailing-icon
   );
 }
 

@@ -178,7 +178,7 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(
         <ReadOnlyComp
           {...props}
           checked={isChecked}
-          label={restRecord.label as React.ReactNode}
+          label={label as React.ReactNode}
         />
       );
 

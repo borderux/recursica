@@ -37,6 +37,16 @@
   );
 }
 
+.root.horizontal .step {
+  /* MUI's own `.MuiStep-root` hardcodes `padding: 0 8px` for horizontal Steps.
+     The alternativeLabel connector centers itself via `left: -50%; right: 50%`
+     relative to each Step's full box width, so this padding silently widened
+     every gap by 16px (8px from each neighboring Step) beyond the real
+     `stepBody` content width (--stepper-max-text-width), drifting the
+     connector length away from mantine's edge-to-edge gap. */
+  padding: 0;
+}
+
 .root.horizontal .stepBody {
   width: var(--stepper-max-text-width);
   display: flex;
@@ -108,6 +118,27 @@
   /* Moves the gap inside the step (instead of a margin between steps) so the
      `.stepIcon::after` rail can extend through it into the next step. */
   padding-bottom: var(--stepper-step-gap);
+}
+
+.root.vertical .step:not(:last-of-type) {
+  /* Mantine's own `Stepper.Step` (mantine/core's native, unmodified CSS) ships
+     a hardcoded `min-height: icon-size + mantine-spacing-xl + separator-spacing`
+     (~32px + ~5px on top of the icon) that isn't tied to any Recursica token —
+     it's an incidental library default, not a design decision — but it's what
+     actually governs mantine's real per-step vertical spacing, independent of
+     (and larger than) the `--stepper-step-gap` token's own value. MUI has no
+     such native default, so without reproducing it here every vertical step
+     renders visibly tighter than mantine's. Matches mantine's own `:last-of-
+     type { min-height: auto }` reset by excluding the last step.
+
+     `display: flex` (Step is `display: block` by default) is required so this
+     min-height actually reaches the icon/rail: `.stepLabelRoot`'s existing
+     `align-items: stretch` only stretches its flex children to *its own* box
+     height, and without this, `.stepLabelRoot` itself would just sit at its
+     natural (smaller) content height inside the taller `.step`, leaving the
+     `.stepIcon::after` rail exactly as short as it was before this rule. */
+  display: flex;
+  min-height: calc(var(--stepper-indicator-size) + 2rem + 0.3125rem);
 }
 
 .root.vertical .step:last-of-type {

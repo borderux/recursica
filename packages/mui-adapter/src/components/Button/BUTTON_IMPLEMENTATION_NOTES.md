@@ -18,7 +18,41 @@ We explicitly pass `disableRipple` and `disableElevation` to block MUI's dynamic
 
 ---
 
-## Loader color contrast
+## Loader color contrast — fixed (source-of-truth audit, 2026-08-30)
+
+**Superseded:** the entry below originally documented an explicit decision _not_ to fix this.
+Re-verified during the mantine-vs-mui source-of-truth audit: mantine's own loader ring was
+measured (via computed styles) rendering `#c21b43` (the Loader's standalone `indicator-color`
+token) against a label text color of `rgb(249, 249, 249)` — a real, confirmed contrast mismatch,
+not a false report. Fixed in both adapters; see mantine-adapter's own `IMPLEMENTATION_NOTES.md`
+for the equivalent fix there.
+
+**Original problem:** `Loader.module.css`'s `.root` unconditionally sets
+`--loader-color: var(--recursica_..._loader_properties_indicator-color)` on its own root
+element, regardless of context — so nesting a `<Loader>` inside a Button's loading state always
+used the Loader's own standalone token, never the button's actual per-variant text color.
+
+**Fix:** `Button.module.css` now exposes `--button-color` per variant (solid/outline/text),
+set to that variant's own `colors_text-color` token. The Button-owned `<Loader>` instance passed
+to MUI's `loadingIndicator` prop is now given `overStyled` + `style={{ "--loader-color":
+"var(--button-color)" }}` — an inline style on the Loader's own root, which (being inline) beats
+the stylesheet default and inherits whatever `--button-color` resolves to at that point in the
+DOM. `overStyled` is required to let `style` through `filterStylingProps`; this is a fully
+internal composition (no prop threading to callers), so it doesn't widen Loader's public API.
+
+**Also fixed alongside this:** the loading state previously rendered the label text at full
+opacity _and_ injected a second, redundant Loader into `startIcon` (on top of MUI's own native
+`loadingIndicator`/`loadingWrapper` slot) — so loading buttons showed both the label and two
+overlapping loaders instead of just one centered loader. Removed the `startIcon` loader override
+(startIcon now only ever shows the real `icon` prop, exactly as in the non-loading case) and
+added `.root[data-loading="true"] .labelText, .root[data-loading="true"] .iconWrapper { opacity:
+0; }` so the label/icon stay in the DOM/layout (matching mantine's own `opacity: 0` approach,
+not `display: none`) while only MUI's native centered `loadingIndicator` is visible. Verified
+live against mantine's `ui-kit-button--loading` story — now pixel-equivalent.
+
+---
+
+## Loader color contrast (original entry, see "fixed" above)
 
 **Decision:** When a Button is in a loading state, the `Recursica Loader` component is injected via the `loadingIndicator` prop. The `Loader` component strictly defines its own colors and styles per variant, meaning it does not automatically inherit the text color (`currentColor`) from the Button.
 

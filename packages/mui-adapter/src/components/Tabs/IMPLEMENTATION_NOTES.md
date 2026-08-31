@@ -21,6 +21,56 @@
 - **Vertical `.list` doesn't stretch to the root's full height:** Mantine's vertical `.list` stretches via flex `align-items`, so its `border-right` divider runs the whole rail. MUI's scroller (the `.list`'s parent) is a plain block for vertical, not a flex container, so `.list` sizes to just its stacked tab content and the divider stopped at the last tab. Fixed with an explicit `height: 100%` on `.list` for vertical orientation.
 - **Vertical indicator needs the same content-gap offset as horizontal, rotated 90°:** the list's `margin-right` (vertical's tabs-content-gap) inflates the root's auto width past the list's own border-right edge, same mechanism as the existing horizontal `bottom` offset trick — without a matching `right` offset, the indicator renders content-gap pixels to the right of the divider instead of on it.
 
+## `inverted` never actually moved the tab list below the content (2026-08-30, source-of-truth audit)
+
+**Reported symptom:** in the `Inverted` story, content should render above the tab list (tabs
+below), with padding between them — the padding looked missing "when content is on top".
+
+**What was actually happening (both adapters):** `inverted` already worked for its _documented_
+scope — flipping the active-indicator line and border-radius direction (top vs bottom) via
+`data-inverted` selectors already in this file — but neither adapter actually repositioned the
+tab list below the panel content. The story always renders `<Tabs>` before `<TabPanel>` in JSX
+regardless of `inverted`, so "padding missing when content is on top" wasn't reproducible as
+such: content was never on top to begin with, in either adapter, before this fix.
+
+**Fix:** per USAGE.md, consumers already wrap `Tabs`+`TabPanel` in their own column-direction
+`Flex` — meaning this component's own root and each `TabPanel` are real flex siblings under that
+consumer container. Added `.root[data-orientation="horizontal"][data-inverted] { order: 1; }`
+(scoped to horizontal only — vertical's "instead of left" flip isn't exercised by any story) so
+the tab list visually moves after every `TabPanel` (which stay default `order: 0`) with zero DOM
+changes. Also introduced a shared `--tabs-content-gap` custom property per variant (previously
+each variant inlined its own long token reference directly into `.list`'s `margin-bottom`) so the
+same gap can be redirected: `margin-bottom: 0; margin-top: var(--tabs-content-gap);` when
+inverted, since the gap now needs to land above the now-trailing tab list instead of below it.
+The existing indicator `bottom`/`top` offset math elsewhere in this file needed no changes — it
+positions the indicator within `.root`'s own local box, which is unaffected by where flex `order`
+places that whole box among its siblings. Verified live against mantine-adapter's identical fix
+(see its own `Tabs/IMPLEMENTATION_NOTES.md`) — pixel-equivalent stacking order and gap.
+
+## Vertical `inverted` — "instead of left" flip (Matt Massey, ROUND 2 2026-08-31)
+
+**Reported symptom:** no story exercises `orientation="vertical"` + `inverted` in either adapter
+(flagged as an open question, unimplemented, in the prior round). After toggling it live, MUI's
+red active-indicator line floated disconnected from the grey divider below it.
+
+**Root cause:** the horizontal `inverted` fix above was explicitly scoped to
+`[data-orientation="horizontal"]` only — none of its `order`/margin/indicator/border/radius rules
+applied to vertical, so `inverted` on a vertical Tabs silently did nothing: the list stayed on the
+left, but the divider/indicator's `right`-side offsets stayed anchored to a content-gap margin
+that no longer existed once toggled (`.list`'s margin-right token expects the panel to still be
+on its right), producing the disconnected look.
+
+**Fix:** mirrored the horizontal flip rotated 90°, for `[data-orientation="vertical"][data-inverted]`:
+`order: 1` on `.root` (list moves after the panel in the consumer's row `Flex`), `.list`'s
+content-gap margin flips from `margin-right` to `margin-left`, the divider flips from
+`border-right` to `border-left`, the indicator's offset flips from `right` to `left` (both the
+default variant's underline and outline's baseline patch), and tab border-radius/outline
+open-edge geometry flip from left-rounded/right-open to right-rounded/left-open. Verified live via
+DOM attribute injection (no story exists yet to exercise this combo automatically) — divider and
+indicator render flush on the list's new left edge, list correctly moves to the right of the
+panel. mantine-adapter has the same "vertical inverted unimplemented" gap and wasn't touched here
+(out of scope — only the MUI symptom was reported); flagged in `OPEN_QUESTIONS.txt` for parity.
+
 ## Ripple removal (2026-08-19)
 
 - **MUI `Tab` shows a click ripple; Mantine's has none.** `Tab` extends `ButtonBase`, which renders a `TouchRipple` on click by default. Fixed by passing `disableRipple` on `MuiTab` in `Tab` (the same official escape hatch already used by `Button`/`Switch`/`Radio`/`Checkbox`). With `disableRipple`, the `MuiTouchRipple-root` span is never rendered at all, which also makes the `.root .tab > *:not(:global(.MuiTouchRipple-root))` layout-shift workaround above moot going forward (left in place defensively).

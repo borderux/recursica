@@ -48,11 +48,37 @@ Mantine's `.mantine-Button-label` flex centering breaks primitive truncation log
 
 ---
 
-## Loader color contrast
+## Loader color contrast — fixed (source-of-truth audit, 2026-08-30)
 
-**Decision:** When a Button is in a loading state, the `Recursica Loader` component is injected. The `Loader` component strictly defines its own colors and styles per variant, meaning it does not inherit the text color (`currentColor`) from the Button.
+**Superseded:** the entry below originally documented an explicit decision _not_ to fix this.
+Re-verified during the mantine-vs-mui source-of-truth audit by measuring actual computed styles
+in the `Loading` story: the loader ring rendered `#c21b43` (Loader's own standalone
+`indicator-color` token) against a label text color of `rgb(249, 249, 249)` — a real, confirmed
+mismatch on the `solid` variant, not a false report.
 
-**Constraint:** This can lead to contrast issues (e.g., a blue dots loader inside a solid blue button). Design has explicitly decided not to address this at the moment. As such, developers using the `loading` prop must be aware that the loader's color is fixed by its internal tokens, not by the button's context.
+**Root cause:** `Loader.module.css`'s `.root` unconditionally sets `--loader-color:
+var(--recursica_..._loader_properties_indicator-color)` directly on the Loader's own root
+`<span>`. Mantine's own Button internally wraps `loaderProps.children` in a generic `<Loader
+size color>` that sets `--loader-color: var(--button-color)` as an _inline_ style on an outer
+wrapper div — but our own nested `<Loader>` (rendered as `loaderProps.children`) has an identical
+class (`mantine-Loader-root`) on its own root, so its own stylesheet rule locally re-declares
+`--loader-color`, shadowing the inherited value from that outer wrapper for anything computed on
+or under our own element (CSS custom properties resolve against the nearest self-or-ancestor
+declaration — a local re-declaration always wins over what an ancestor tried to pass down,
+regardless of whether the ancestor's value came from an inline style or not).
+
+**Fix:** pass `color="var(--button-color)"` to the Button-owned `<Loader>` — Mantine's own
+`Loader` factory writes any `color` prop straight through `getThemeColor()`/`parseThemeColor()`
+(safely falls through unresolved CSS values like a `var()` reference verbatim, per
+`@mantine/core`'s own `parse-theme-color.cjs`) into an _inline_ `--loader-color` style on that
+same root span — which, being inline, now wins over our own `.root` stylesheet declaration.
+Also added `--button-color` (`!important`) to each variant's own block in `Button.module.css`,
+set to that variant's own `colors_text-color` token — needed because Mantine's Button sets its
+own generic `--button-color: var(--mantine-color-white)` via an inline style on the button root
+itself, which our external stylesheet couldn't otherwise outrank at equal/lower priority
+regardless of selector specificity. Verified live: loader ring color now matches the label text
+color exactly (`rgb(249, 249, 249)`) across solid/outline/text variants, no visual regression on
+non-loading stories.
 
 ---
 

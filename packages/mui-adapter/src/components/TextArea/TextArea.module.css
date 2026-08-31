@@ -141,6 +141,17 @@
   ) !important;
 }
 
+/* TextareaAutosize measures natural content height using a second, aria-hidden shadow
+   <textarea> that shares this exact className (see @mui/material/TextareaAutosize). Our
+   min-height above is meant only as the visible textarea's cosmetic floor; left on the shadow
+   node it forces every measured "row" up to that same floor, which corrupts the
+   minRows-based-on-singleRowHeight calculation and roughly doubles the real, computed height.
+   Neutralizing it here restores accurate content measurement — the visible textarea still gets
+   the min-height floor applied to it directly. */
+.input[aria-hidden="true"] {
+  min-height: 0;
+}
+
 /* -------------------------------------
    STATE CASCADE ARCHITECTURE
 -------------------------------------- */
