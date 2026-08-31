@@ -164,6 +164,14 @@ export const Tree = wrapComponent(
 ) as typeof rawComponents.Tree;
 
 export type {
+  FlexProps,
+  GridProps,
+  GridColProps,
+  GroupProps,
+  StackProps,
+  ContainerProps,
+  LinkProps,
+  TextProps,
   RecursicaCheckboxGroupProps,
   RecursicaDatePickerProps,
   RecursicaDropdownProps,
