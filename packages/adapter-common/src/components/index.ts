@@ -7,6 +7,7 @@ export * from "./Autocomplete/RecursicaAutocompleteProps";
 export * from "./Avatar/RecursicaAvatarProps";
 export * from "./Badge/RecursicaBadgeProps";
 export * from "./Breadcrumb/RecursicaBreadcrumbProps";
+export * from "./Breadcrumb/markCurrentPageItem";
 export * from "./Button/RecursicaButtonProps";
 export * from "./Card/RecursicaCardProps";
 export * from "./Checkbox/RecursicaCheckboxProps";

@@ -2,16 +2,16 @@
 
 ## Missing Variants and Sizes
 
-The `Breadcrumb` currently does not establish any size (`xs`, `sm`, etc.) or variant variables in the underlying design tokens (`recursica_ui-kit.json`). Only basic structural definitions for `padding` and `item-gap` exist. Because of this, the `size` and `variant` properties have been explicitly omitted from the passed mantine props.
+The `Breadcrumb` currently does not establish any size (`xs`, `sm`, etc.) or variant variables in the underlying design tokens (`recursica_ui-kit.json`). Only basic structural definitions for `padding` and `item-gap` exist. Because of this, the `size` and `variant` properties have been explicitly omitted from the passed MUI props.
 
 ## Gap Styling
 
-We attach `gap` to `.root` directly within `.module.css`. Mantine's inner `separator` divs can natively accept our CSS variables for structural layout.
+MUI renders items/separators inside the `<ol>`, not directly under the `<nav>` root — `gap` lives on `.ol` in `.module.css` so it lands uniformly between item/separator/item, matching mantine-adapter.
 
 ## Composition and Separators
 
-We preserve standard hierarchical composition based on Mantine's defaults. The component natively accepts typical anchor tags as children without wrapping them in structural spans, allowing developers to utilize `Link` wrappers as needed contextually.
-The separator character is inherited natively from Mantine's default configuration (`/`) unless overridden by passing `separator={<Icon />}` to the component props.
+MUI natively accepts typical anchor tags as children, wrapping each in its own `<li>` internally — Breadcrumb.tsx doesn't add any structural spans of its own, allowing developers to utilize `Link` wrappers as needed contextually.
+The separator character is inherited natively from MUI's default configuration (`/`) unless overridden by passing `separator={<Icon />}` to the component props.
 
 ## Current-page Crumb: Best-effort Enforcement, Not a Guarantee
 
@@ -20,7 +20,7 @@ represents the current page; per standard breadcrumb UX and the ARIA breadcrumb 
 shouldn't be clickable. Passing a `Link` (or an anchor) for the last item is a misuse of the
 component, even though `Breadcrumb.tsx` tries to correct for it — see below.
 
-Breadcrumb intentionally keeps the flexible Mantine `children`-as-anchors interface (unlike BEAM's
+Breadcrumb intentionally keeps the flexible MUI `children`-as-anchors interface (unlike BEAM's
 `Breadcrumb.Item`, which renders its own `Link` internally and can't accept a caller-supplied
 router-aware Link or `onClick`). That flexibility means Breadcrumb.tsx can't fully own what the
 last item renders as, so it does what it can via `markCurrentPageItem` (`@recursica/adapter-common`):
@@ -45,3 +45,7 @@ the right thing and passing plain text for the last crumb.
 
 The story's `items` convenience prop demonstrates the correct pattern: every crumb except the last
 is wrapped in `Link`, and the last is a plain `<span>`.
+
+This logic is shared with mantine-adapter — `markCurrentPageItem` lives once in
+`@recursica/adapter-common` (`components/Breadcrumb/markCurrentPageItem.ts`) and is unit-tested
+there via mantine-adapter's test suite (`markCurrentPageItem.test.ts`), not duplicated here.
