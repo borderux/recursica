@@ -1,5 +1,21 @@
 # @recursica/mui-adapter
 
+## 0.39.2
+
+### Patch Changes
+
+- 46b123a: Breadcrumb now marks its last child `aria-current="page"` and, if it looks interactive (has `href`/`onClick`), strips both and drops it from the tab order — best-effort, not a guarantee for custom Link components with their own internal navigation. Backed by a CSS reset (no color/underline/pointer-events) and the current item now picks up Link's font-family. New shared `markCurrentPageItem` util in adapter-common. mui-adapter's story also gets parity with mantine-adapter's: the last crumb renders as plain text, not a `Link`.
+- 39de7b2: mui-adapter: Dropdown now renders its `placeholder` prop and gains a matching `.placeholder` style; Autocomplete's open menu now has the same input-to-menu gap as mantine; TimePicker's leading icon is no longer offset too far right.
+  mantine-adapter: DatePicker's read-only value is now formatted via `valueFormat` instead of a raw `Date.toString()`; TimePicker's leading icon no longer overlaps the field text.
+- 46b123a: Link now replaces the browser's native focus outline with the recursica focus ring (`--recursica_brand_states_focus_*`), matching Button/every other interactive component instead of falling back to the browser default. Fixes the same incorrect ring on Breadcrumb, since its items are typically Links.
+- 39de7b2: Fix Accordion chevron not rotating on expand, Modal centering instead of anchoring near top, and Toast showing a default icon it shouldn't. Add missing Accordion LayerOne story and exclude the intentional Grid span/size naming divergence from story parity. Fix NumberInput's default MUI focus ring/non-numeric input/icon spacing-color/height/border-radius, and TextArea's oversized autosize height.
+- 39de7b2: mui-adapter: Stepper's connector gap, description content, and button spacing now match mantine; Stepper vertical spacing now matches mantine; Timeline's connector now reaches the next bullet; Tree's chevron-to-label gap now uses the right token; Pagination is now fully wired up (circle size/colors/outline, chevron colors/hover, ripple removed, ellipsis centering, text labels).
+  mantine-adapter: Stepper's completed/current label and description colors now apply (were silently falling back to Mantine's own default gray/black).
+- 39de7b2: mui-adapter: Switch's read-only label and static-variations spacing now match mantine; Label's right-alignment and optional-text parentheses now work; Button's loading state shows only a centered loader (no label); Text's static-variations spacing matches mantine; Tabs' `inverted` variant now actually renders the tab list below the content.
+  mantine-adapter: Button's loader color now matches its label text color; Tabs' `inverted` variant now actually renders the tab list below the content; Grid gains a `ResponsiveSizes` story mirroring mui-adapter's.
+- Updated dependencies [46b123a]
+  - @recursica/adapter-common@0.28.2
+
 ## 0.39.1
 
 ### Patch Changes
