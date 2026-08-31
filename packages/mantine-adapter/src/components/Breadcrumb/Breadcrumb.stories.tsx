@@ -35,11 +35,17 @@ const meta: Meta<BreadcrumbStoryProps> = {
   },
   render: ({ items, children, ...args }) => {
     const mappedChildren = items
-      ? items.map((label, index) => (
-          <Link href="#" key={index}>
-            {label}
-          </Link>
-        ))
+      ? items.map((label, index) =>
+          // The last crumb represents the current page, so it's plain text,
+          // not a link — matches standard breadcrumb UX.
+          index === items.length - 1 ? (
+            <span key={index}>{label}</span>
+          ) : (
+            <Link href="#" key={index}>
+              {label}
+            </Link>
+          ),
+        )
       : children;
 
     return <Breadcrumb children={mappedChildren} {...args} />;
