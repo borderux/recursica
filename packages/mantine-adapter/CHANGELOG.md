@@ -1,5 +1,13 @@
 # @recursica/mantine-adapter
 
+## 0.55.3
+
+### Patch Changes
+
+- 13bc7b1: CheckboxGroup/RadioGroup: no longer apply the per-item max-width token to the group's whole label+field row — was squeezing the group's own label in side-by-side layout. Group row now sizes naturally, matching SwitchGroup.
+- Updated dependencies [12eaece]
+  - @recursica/adapter-common@0.29.0
+
 ## 0.55.2
 
 ### Patch Changes
