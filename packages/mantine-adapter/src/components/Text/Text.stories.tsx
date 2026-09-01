@@ -27,6 +27,18 @@ const meta: Meta<typeof Text> = {
       description:
         "Controls the standard logical boundary definitions natively extracted from Figma.",
     },
+    emphasis: {
+      control: "inline-radio",
+      options: ["high", "low"],
+      description:
+        "Text opacity level. `high` (default) is fully opaque; `low` dims the text without changing its color, so it is safe on any layer.",
+    },
+    state: {
+      control: "inline-radio",
+      options: [undefined, "success", "alert", "warning"],
+      description:
+        "Semantic text color. When unset, the text inherits the surrounding layer color. Composes with `emphasis`.",
+    },
     c: {
       control: "text",
       description:
@@ -70,6 +82,19 @@ export const StaticVariations: Story = {
       <Text variant="subtitle-small">
         Subtitle Small (Section anchors deep in hierarchy)
       </Text>
+    </div>
+  ),
+};
+
+export const EmphasisAndState: Story = {
+  args: {},
+  render: () => (
+    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+      <Text emphasis="high">Emphasis high (default) — fully opaque</Text>
+      <Text emphasis="low">Emphasis low — same color, dimmed opacity</Text>
+      <Text state="success">State success — semantic success color</Text>
+      <Text state="alert">State alert — semantic alert color</Text>
+      <Text state="warning">State warning — semantic warning color</Text>
     </div>
   ),
 };

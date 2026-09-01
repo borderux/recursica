@@ -1,5 +1,20 @@
 # Heading – Implementation Notes
 
+## `emphasis` (opacity) + `state` (color) props
+
+**Decision:** Same treatment as `Text` (see `Text/TEXT_IMPLEMENTATION_NOTES.md`) — both props
+are surfaced as `data-*` attributes (`data-emphasis`, `data-state`) and `Heading.module.css`
+maps them to tokens via attribute selectors. `RecursicaHeadingProps` reuses the `TextEmphasis` /
+`TextState` types from `RecursicaTextProps` so the two typography primitives share one source of
+truth.
+
+**Token mapping (validated against `recursica_variables_scoped.css`):** `emphasis` sets
+**opacity** only (`high` → `--recursica_brand_text-emphasis_high` = 1.0, `low` →
+`--recursica_brand_text-emphasis_low` = 0.94), so it is layer-agnostic. `state` sets **color**
+(`--recursica_brand_palettes_core-colors_{state}_tone`). `state` wins over `emphasis` — the
+opacity rules are gated with `:not([data-state])` so a stateful heading renders at full opacity;
+`emphasis` defaults to `"high"` (a visual no-op) so existing usage is unchanged.
+
 ## Renamed from `Title` (Matt Massey, 2026-08-28)
 
 **Decision:** Renamed the component from `Title` to `Heading` — designers refer to semantic tags
