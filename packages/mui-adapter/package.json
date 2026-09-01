@@ -13,7 +13,7 @@
     "url": "git+https://github.com/borderux/recursica.git",
     "directory": "packages/mui-adapter"
   },
-  "version": "0.39.1",
+  "version": "0.39.2",
   "publishConfig": {
     "access": "public"
   },
@@ -113,7 +113,7 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
-    "@recursica/adapter-common": "^0.28.1",
+    "@recursica/adapter-common": "^0.28.2",
     "dayjs": "^1.11.21"
   },
   "peerDependencies": {
