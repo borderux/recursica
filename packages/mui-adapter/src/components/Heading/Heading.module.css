@@ -1,3 +1,14 @@
+/* Brand-layer exemptions (recursica-allow-brand) — see recursica-token-analyzer README.md.
+ * `Heading` is itself a UI-Kit primitive; there is no UI-Kit-layer token for generic text
+ * emphasis (opacity) or semantic text state color, so these brand-level tokens are consumed
+ * directly. Mirrors the mantine adapter. See HEADING_IMPLEMENTATION_NOTES.md.
+ *   recursica-allow-brand: --recursica_brand_text-emphasis_high
+ *   recursica-allow-brand: --recursica_brand_text-emphasis_low
+ *   recursica-allow-brand: --recursica_brand_palettes_core-colors_success_tone
+ *   recursica-allow-brand: --recursica_brand_palettes_core-colors_alert_tone
+ *   recursica-allow-brand: --recursica_brand_palettes_core-colors_warning_tone
+ */
+
 /* `emphasis` → opacity only (never color). Applies only when no `state` is set — `state`
  * takes precedence, so a stateful heading always renders at full opacity. Default is `high`. */
 .root[data-emphasis="high"]:not([data-state]) {
