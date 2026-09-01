@@ -124,3 +124,31 @@ export const WithLeadingIconSelected: Story = {
   },
   render: (args: ChipStoryProps) => <Chip {...args} onChange={() => {}} />,
 };
+
+// A label long enough to exceed the chip's own max-width token — should stay a single line and
+// truncate with an ellipsis, never wrap, even with both a leading icon and a dismiss button
+// competing for space.
+export const MaxWidthEllipsis: Story = {
+  args: {
+    children:
+      "A very long chip label that exceeds the maximum width and should truncate with an ellipsis",
+    checked: false,
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M12 8v4"></path>
+        <path d="M12 16h.01"></path>
+      </svg>
+    ),
+    onDelete: () => console.log("Removal Action Triggered"),
+  },
+  render: (args: ChipStoryProps) => <Chip {...args} />,
+};

@@ -94,7 +94,11 @@ export const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
       <WithReadOnlyWrapper
         className={className}
         style={style as React.CSSProperties}
-        controlMaxWidth="var(--recursica_ui-kit_components_checkbox-item_properties_max-width)"
+        // Not the group's own row width: this token caps a single checkbox+its own label
+        // (applied per-item in Checkbox.module.css's `.root`). The group has no max-width token
+        // of its own in the schema, so this must stay undefined or FormControlLayout caps the
+        // whole label+items row (including the group's own label) at 400px in side-by-side layout.
+        controlMaxWidth={undefined}
         controlMinWidth={undefined}
         overStyled={overStyled as true}
         // strictly override

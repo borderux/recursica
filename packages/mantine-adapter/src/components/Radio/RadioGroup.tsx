@@ -78,7 +78,11 @@ export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
       <WithReadOnlyWrapper
         className={className}
         style={style as React.CSSProperties}
-        controlMaxWidth="var(--recursica_ui-kit_components_radio-button-item_properties_max-width)"
+        // Not the group's own row width: this token caps a single radio+its own label (applied
+        // per-item in Radio.module.css's `.root`). The group has no max-width token of its own
+        // in the schema, so this must stay undefined or FormControlLayout caps the whole
+        // label+items row (including the group's own label) at 400px in side-by-side layout.
+        controlMaxWidth={undefined}
         controlMinWidth={undefined}
         overStyled={overStyled as true}
         labelElement="div" // Strictly override. ARIA grouping prohibits interactive radios nested natively inside <label>.
