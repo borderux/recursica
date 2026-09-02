@@ -17,7 +17,7 @@ export type TextProps = RecursicaOverStyled<
 >;
 
 const _Text = forwardRef<HTMLDivElement, TextProps>(function Text(
-  { overStyled = false, variant = "body", ...rest },
+  { overStyled = false, variant = "body", emphasis = "high", state, ...rest },
   ref,
 ) {
   const sanitizedProps = filterStylingProps(rest, overStyled);
@@ -34,6 +34,8 @@ const _Text = forwardRef<HTMLDivElement, TextProps>(function Text(
       ref={ref}
       {...(sanitizedProps as unknown as MantineTextProps)}
       className={mergedClassName}
+      data-emphasis={emphasis}
+      data-state={state}
     />
   );
 });

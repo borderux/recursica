@@ -20,7 +20,10 @@ export type HeadingProps = RecursicaOverStyled<
  * Enforces highly accessible structural markup utilizing semantic `<h1>` through `<h6>` tags securely bound directly to Recursica typographic scales.
  */
 export const Heading = forwardRef<HTMLHeadingElement, HeadingProps>(
-  function Heading({ overStyled = false, order = 1, ...rest }, ref) {
+  function Heading(
+    { overStyled = false, order = 1, emphasis = "high", state, ...rest },
+    ref,
+  ) {
     // Props this component intentionally doesn't support — deleted at runtime so they can't leak
     // through even if a caller forces them via plain JavaScript, bypassing the `Omit<>` above.
     const UNSUPPORTED_PROPS = [
@@ -45,6 +48,8 @@ export const Heading = forwardRef<HTMLHeadingElement, HeadingProps>(
         {...(sanitizedProps as unknown as MantineTitleProps)}
         order={order}
         className={mergedClassName}
+        data-emphasis={emphasis}
+        data-state={state}
       />
     );
   },
