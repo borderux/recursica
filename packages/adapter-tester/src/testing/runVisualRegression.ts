@@ -290,6 +290,35 @@ export async function resolveVisualRegressionPlan(
       await page.addStyleTag({
         content: `* { -webkit-font-smoothing: antialiased !important; -moz-osx-font-smoothing: grayscale !important; }`,
       });
+      // Web fonts (e.g. `withRecursicaFonts`'s Google Fonts `<link>`s, injected
+      // from a React effect after this page's `networkidle` already fired) can
+      // still be mid-download here. Wait for any `<link>` stylesheet that's
+      // still loading to settle — so the browser has parsed its `@font-face`
+      // rules and started the actual font-file fetches `document.fonts.ready`
+      // below needs to know about — then for the fonts themselves. Without
+      // this, the very first golden capture of a newly-introduced font family
+      // is a coin flip between the real font and its fallback, depending on
+      // how fast the network happens to be.
+      await page.evaluate(() =>
+        Promise.all(
+          Array.from(
+            document.querySelectorAll<HTMLLinkElement>(
+              'link[rel="stylesheet"]',
+            ),
+          ).map((link) =>
+            link.sheet
+              ? Promise.resolve()
+              : new Promise<void>((resolve) => {
+                  link.addEventListener("load", () => resolve(), {
+                    once: true,
+                  });
+                  link.addEventListener("error", () => resolve(), {
+                    once: true,
+                  });
+                }),
+          ),
+        ).then(() => document.fonts.ready),
+      );
       await page.waitForTimeout(300);
       const liveBuffer = await page.screenshot();
 
