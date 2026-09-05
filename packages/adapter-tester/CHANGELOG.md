@@ -1,5 +1,12 @@
 # @recursica/adapter-tester
 
+## 5.1.2
+
+### Patch Changes
+
+- f1e4a75: Golden-image capture now waits for pending stylesheets and web fonts to finish loading before screenshotting, instead of a flat 300ms delay. Fixes flaky/false-positive diffs whenever a brand's font family changes (a fresh network font fetch could previously lose the race against the fixed wait).
+- f1e4a75: Source-of-truth harness/golden-fetch now installs `@recursica/adapter-mantine-v8` from its new standalone repo (golden at repo root) instead of the old in-monorepo `@recursica/mantine-adapter` (`packages/<name>`), following Mantine's extraction out of this monorepo.
+
 ## 5.1.1
 
 ### Patch Changes
