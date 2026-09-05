@@ -327,8 +327,34 @@ export async function resolveVisualRegressionPlan(
       // (outside the lock `updateManifestEntry` takes at the end) can't
       // race another worker — they're all reading/writing different keys.
       const entry = loadManifest(goldenDir)[story.id];
+      const goldenMissing = !entry || !existsSync(imagePath);
+      const threshold = resolveThreshold(
+        story.id,
+        goldenStoryThresholds,
+        config.goldenThresholdPixels,
+      );
+      // `update-golden` never blindly overwrites every story — only a
+      // missing golden, or one whose live render has actually drifted past
+      // the own-drift threshold, gets written. Otherwise a full unscoped
+      // `--update-golden` pass would dirty every story's PNG (fresh capture
+      // bytes differ trivially from the stored ones even with nothing
+      // perceptibly different) instead of just the ones that changed.
+      // Only computed when it'll actually be used — skipped for a pure
+      // `--divergence-only` run (checkMode "divergence", goldenMode "check"),
+      // which has no use for the own-golden diff at all.
+      let ownDiff: { diffPixels: number; diffImage: Buffer | null } | null =
+        null;
+      let goldenBuffer: Buffer | null = null;
+      if (
+        !goldenMissing &&
+        (goldenMode === "update-golden" || checkMode === "own")
+      ) {
+        goldenBuffer = readFileSync(imagePath);
+        ownDiff = diffPngBuffers(liveBuffer, goldenBuffer);
+      }
       const capturingNewGolden =
-        goldenMode !== "check" || !entry || !existsSync(imagePath);
+        goldenMissing ||
+        (goldenMode === "update-golden" && ownDiff!.diffPixels >= threshold);
 
       let currentEntry: GoldenManifestEntry;
       if (capturingNewGolden) {
@@ -344,23 +370,19 @@ export async function resolveVisualRegressionPlan(
             type: "golden-created",
             description: `No golden existed yet for "${story.id}" — captured one from this run.`,
           });
+        } else {
+          testInfo.annotations.push({
+            type: "golden-updated",
+            description: `"${story.id}" drifted from its stored golden by ${ownDiff!.diffPixels} pixels (threshold ${threshold}) — captured a new one from this run.`,
+          });
         }
       } else {
         currentEntry = entry;
         if (checkMode === "own") {
-          const goldenBuffer = readFileSync(imagePath);
-          const { diffPixels, diffImage } = diffPngBuffers(
-            liveBuffer,
-            goldenBuffer,
-          );
-          const threshold = resolveThreshold(
-            story.id,
-            goldenStoryThresholds,
-            config.goldenThresholdPixels,
-          );
+          const { diffPixels, diffImage } = ownDiff!;
           if (diffPixels >= threshold) {
             await testInfo.attach("expected", {
-              body: goldenBuffer,
+              body: goldenBuffer!,
               contentType: "image/png",
             });
             await testInfo.attach("actual", {
