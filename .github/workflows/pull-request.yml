@@ -44,6 +44,11 @@ jobs:
       - name: Check types
         run: npm run check-types
 
+      # Validates packages/mui-adapter/ADAPTER_STATUS.md's structure — it's
+      # machine-parsed by recursica.com via stable `recursica:table` markers.
+      - name: Validate mui-adapter ADAPTER_STATUS.md
+        run: npm run validate-adapter-status --workspace=packages/mui-adapter
+
       # Builds the project.
       - name: Build
         run: npm run build

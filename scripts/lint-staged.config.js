@@ -44,4 +44,10 @@ module.exports = {
 
     return commands;
   },
+
+  // packages/mui-adapter/ADAPTER_STATUS.md is machine-parsed by recursica.com (stable
+  // `recursica:table` markers) — validate its structure on every commit that touches
+  // it, not just in CI, so a malformed doc never even makes it into a commit.
+  "packages/mui-adapter/ADAPTER_STATUS.md": () =>
+    "npm run validate-adapter-status --workspace=packages/mui-adapter",
 };

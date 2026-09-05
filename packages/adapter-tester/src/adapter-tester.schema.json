@@ -41,7 +41,7 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "description": "Default mode: boots a throwaway harness that installs the published @recursica/mantine-adapter from npm — no monorepo checkout required.",
+          "description": "Default mode: boots a throwaway harness that installs the published @recursica/adapter-mantine-v8 from npm — no monorepo checkout required.",
           "properties": {
             "type": { "const": "mantine-harness" },
             "port": {
@@ -52,7 +52,7 @@
             },
             "mantineAdapterVersion": {
               "type": "string",
-              "description": "npm version/tag of @recursica/mantine-adapter to install in the harness. Defaults to `latest`."
+              "description": "npm version/tag of @recursica/adapter-mantine-v8 to install in the harness. Defaults to `latest`."
             },
             "storybookTemplateVersion": {
               "type": "string",

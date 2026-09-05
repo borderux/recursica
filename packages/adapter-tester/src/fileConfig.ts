@@ -9,7 +9,7 @@ import type { HarnessWebServerConfig } from "./harness/mantineSourceOfTruth.js";
 import { mantineSourceOfTruthWebServer } from "./harness/mantineSourceOfTruth.js";
 import { validateFileConfig } from "./validateFileConfig.js";
 
-const MANTINE_ADAPTER_PACKAGE_NAME = "@recursica/mantine-adapter";
+const MANTINE_ADAPTER_PACKAGE_NAME = "@recursica/adapter-mantine-v8";
 
 export const CONFIG_FILE_NAME = "adapter-tester.config.json";
 const DEFAULT_STORYBOOK_COMMAND = "npm run storybook";
@@ -34,7 +34,7 @@ interface StorybookTargetFileConfig {
 
 interface MantineHarnessSourceOfTruthFileConfig {
   /** Default mode: boots a throwaway harness that installs the published
-   * `@recursica/mantine-adapter` from npm — no monorepo checkout required. */
+   * `@recursica/adapter-mantine-v8` from npm — no monorepo checkout required. */
   type?: "mantine-harness";
   /** First-guess port only, not authoritative — see `HarnessWebServerConfig.port`. */
   port?: number;

@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 /**
  * Generates a small, throwaway Storybook project that installs
- * `@recursica/mantine-adapter` as a real npm dependency (not a workspace
+ * `@recursica/adapter-mantine-v8` as a real npm dependency (not a workspace
  * link) and boots a real Storybook from its published `src/**\/*.stories.tsx`
  * files, using `@recursica/storybook-template`'s exported factories.
  *
@@ -25,7 +25,7 @@ export interface MantineSourceOfTruthHarnessOptions {
   /** First-guess port, shown for `--dry-run` visibility only. The harness's
    * Storybook is never pinned to this — see `HarnessWebServerConfig.port`. */
   port: number;
-  /** npm version/range for @recursica/mantine-adapter. Defaults to "latest". */
+  /** npm version/range for @recursica/adapter-mantine-v8. Defaults to "latest". */
   mantineAdapterVersion?: string;
   /** npm version/range for @recursica/storybook-template. Defaults to "latest". */
   storybookTemplateVersion?: string;
@@ -65,7 +65,7 @@ const DEFAULT_ADDON_DEPENDENCIES = {
   "storybook-dark-mode": "^5.0.0",
 };
 
-// mantine-adapter's Introduction.stories.tsx (Version.tsx/OverStyling.tsx)
+// adapter-mantine-v8's Introduction.stories.tsx (Version.tsx/OverStyling.tsx)
 // needs react-markdown, but it's a devDependency there — Storybook-only,
 // never bundled into dist — so an external `npm install` of the published
 // package won't pull it in. The harness boots a real Storybook against
@@ -89,7 +89,7 @@ function harnessPackageJson(options: {
       storybook: `storybook dev`,
     },
     dependencies: {
-      "@recursica/mantine-adapter": options.mantineAdapterVersion,
+      "@recursica/adapter-mantine-v8": options.mantineAdapterVersion,
       "@recursica/storybook-template": options.storybookTemplateVersion,
       "@recursica/official-release": "latest",
       "@recursica/adapter-common": "latest",
@@ -109,7 +109,7 @@ const MAIN_TS = `import { createMainConfig } from "@recursica/storybook-template
 
 const config = createMainConfig({
   stories: [
-    "../node_modules/@recursica/mantine-adapter/src/**/*.stories.@(js|jsx|mjs|ts|tsx)",
+    "../node_modules/@recursica/adapter-mantine-v8/src/**/*.stories.@(js|jsx|mjs|ts|tsx)",
   ],
   enableCORS: true,
 });
@@ -145,7 +145,7 @@ const basePreview = createPreviewConfig({
   recursicaUIKitJsonPath: recursicaUIKit,
 });
 
-// Mirrors mantine-adapter's own .storybook/preview.tsx decorator (every story defaults to
+// Mirrors adapter-mantine-v8's own .storybook/preview.tsx decorator (every story defaults to
 // withLayer: true, layer: 0, wrapped with 48px padding) — every real adapter's own preview.tsx
 // applies this same wrapping, so a target adapter's story renders inside the same Layer
 // chrome/padding the source-of-truth side does. Without this, target screenshots come out
@@ -225,12 +225,12 @@ export function mantineSourceOfTruthWebServer(
   // A bare `npm install` is satisfied by a package-lock.json already sitting
   // in `dir` from a prior run and skips re-resolving against the registry
   // entirely — no network call — so a run can silently keep testing against
-  // a stale @recursica/mantine-adapter/storybook-template even after a newer
+  // a stale @recursica/adapter-mantine-v8/storybook-template even after a newer
   // version is published. Naming the two version-pinned packages as explicit
   // `pkg@specifier` CLI args instead forces npm to re-check just those two
   // against the registry every run, while the rest of node_modules stays
   // cached.
-  const command = `npm install @recursica/mantine-adapter@${mantineAdapterVersion} @recursica/storybook-template@${storybookTemplateVersion} --no-audit --no-fund && npm run storybook`;
+  const command = `npm install @recursica/adapter-mantine-v8@${mantineAdapterVersion} @recursica/storybook-template@${storybookTemplateVersion} --no-audit --no-fund && npm run storybook`;
 
   return {
     command,
