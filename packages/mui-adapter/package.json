@@ -69,7 +69,8 @@
     "adapter-tester:update-golden": "adapter-tester --update-golden",
     "adapter-tester:source-of-truth": "adapter-tester --divergence-only",
     "test": "vitest run --project unit",
-    "test:dom": "vitest run --project dom"
+    "test:dom": "vitest run --project dom",
+    "validate-adapter-status": "node scripts/validate-adapter-status.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",

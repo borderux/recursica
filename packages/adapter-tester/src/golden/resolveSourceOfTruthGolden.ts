@@ -9,7 +9,9 @@ import {
 } from "./manifestStore.js";
 import { validateGoldenManifest } from "./validateManifest.js";
 
-const GITHUB_REPO = "borderux/recursica";
+// The source-of-truth adapter (Mantine) lives in its own standalone repo, not
+// this monorepo — its golden images are fetched from here, not from borderux/recursica.
+const GITHUB_REPO = "borderux/recursica-adapter-mantine-v8";
 
 export interface SourceOfTruthGolden {
   manifest: GoldenManifest;
@@ -41,13 +43,6 @@ async function resolveNpmVersion(
     );
   }
   return resolved;
-}
-
-// This monorepo's packages all live at `packages/<unscoped-name>` — mirrors
-// the same convention `mantineSourceOfTruthHarness` and every existing
-// `packages/*/package.json`'s `repository.directory` field already assume.
-function packageDirectory(packageName: string): string {
-  return `packages/${packageName.split("/").pop()}`;
 }
 
 /**
@@ -105,7 +100,10 @@ export async function resolveSourceOfTruthGolden(
 
   const cacheDir = join(location.cacheDir, version);
   const tag = `${location.packageName}@${version}`;
-  const rawBase = `https://raw.githubusercontent.com/${GITHUB_REPO}/${tag}/${packageDirectory(location.packageName)}/test/golden`;
+  // @recursica/adapter-mantine-v8 is a standalone single-package repo (unlike
+  // the old @recursica/mantine-adapter, which lived at `packages/<name>`
+  // inside this monorepo) — its `test/golden/` sits directly at the repo root.
+  const rawBase = `https://raw.githubusercontent.com/${GITHUB_REPO}/${tag}/test/golden`;
 
   let manifest: GoldenManifest;
   const cachedManifestPath = manifestPath(cacheDir);
