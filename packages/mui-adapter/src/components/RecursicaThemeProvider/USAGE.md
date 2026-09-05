@@ -52,9 +52,3 @@ import { RecursicaThemeProvider, Layer } from "@recursica/mui-adapter";
 > - **Required for setup**: `RecursicaThemeProvider` must wrap your entire application, once, near the root, inside `<StyledEngineProvider injectFirst>`. See [SETUP.md](../../../SETUP.md) for the full setup sequence.
 > - **`initLayer0` (default `true`)**: Automatically wraps `children` in a layer-0 [`Layer`](../Layer/USAGE.md). `RecursicaThemeProvider` itself only sets `data-recursica-theme` (`"light"` or `"dark"`, defaults to `"light"`) on `document.documentElement` — without a `Layer` in the tree (either the automatic one or one you add yourself with `initLayer0={false}`), none of Recursica's surface CSS variables resolve.
 > - **Runtime theme switching**: Changing the `theme` prop re-runs the effect and updates `data-recursica-theme` immediately, so you can drive light/dark switching from application state.
-
----
-
-## 4. Key Integration Features & Constraints
-
-`RecursicaThemeProvider` also wires up the `overStyled` development-mode visual auditing helper (see [OVERSTYLING.md](../../../OVERSTYLING.md)) — `recursica.toggleOverStyled()` in the browser console only works once this provider has mounted.

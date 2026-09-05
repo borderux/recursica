@@ -1,7 +1,6 @@
 import type { Meta } from "@storybook/react-vite";
 import { AdaptersContent, MuiLogo } from "@recursica/storybook-template";
 import { VersionInfo } from "./Version";
-import { OverStylingInfo } from "./OverStyling";
 
 const DOCS_URL = "https://recursica.com";
 const FORGE_URL = "https://forge.recursica.com";
@@ -171,11 +170,6 @@ export const Welcome = {
 
 export const Adapters = {
   render: () => <AdaptersContent />,
-};
-
-export const OverStyling = {
-  name: "Over Styling",
-  render: () => <OverStylingInfo />,
 };
 
 export const VersionInfoStory = {

@@ -1,10 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import {
-  injectOverStyledStyles,
-  registerOverStyledConsoleCommand,
-} from "../utils/overStyledControl";
 import { Layer } from "../components/Layer/Layer";
 
 const THEME_ATTRIBUTE = "data-recursica-theme";
@@ -39,11 +35,6 @@ export function RecursicaThemeProvider({
       root.removeAttribute(THEME_ATTRIBUTE);
     };
   }, [theme]);
-
-  useEffect(() => {
-    injectOverStyledStyles();
-    registerOverStyledConsoleCommand();
-  }, []);
 
   return initLayer0 ? <Layer layer={0}>{children}</Layer> : <>{children}</>;
 }

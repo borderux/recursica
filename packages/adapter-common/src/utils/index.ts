@@ -6,4 +6,3 @@ export * from "./normalizeComboboxData";
 export * from "./omitUnsupportedProps";
 export * from "./overStyledControl";
 export * from "./withCallerOverride";
-export * from "./wrapComponent";

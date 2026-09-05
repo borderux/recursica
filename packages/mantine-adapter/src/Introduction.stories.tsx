@@ -1,7 +1,6 @@
 import type { Meta } from "@storybook/react-vite";
 import { AdaptersContent, MantineLogo } from "@recursica/storybook-template";
 import { VersionInfo } from "./Version";
-import { OverStylingInfo } from "./OverStyling";
 import {
   Container,
   Stack,
@@ -141,11 +140,6 @@ export const Welcome = {
 
 export const Adapters = {
   render: () => <AdaptersContent />,
-};
-
-export const OverStyling = {
-  name: "Over Styling",
-  render: () => <OverStylingInfo />,
 };
 
 export const VersionInfoStory = {

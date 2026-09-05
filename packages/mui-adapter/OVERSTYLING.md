@@ -45,15 +45,3 @@ Available Recursica layout tokens:
 Unlike complex UI components (Buttons, Tabs, Inputs) which are strictly protected, **Primitive Layout Components** (`Flex`, `Stack`, `Group`, `Container`, `Grid`) are entirely exempt from the `RecursicaOverStyled` gatekeeper.
 
 Because the entire functional purpose of these components is structural layout composition, developers are free to pass any standard MUI width, height, padding, margin, gap, and alignment property directly to them without needing to flag `overStyled={true}`. The internal custom token mapper (such as converting `gap="rec-md"`) is still active natively on these wrappers.
-
-## Visual Auditing & Highlights (Development Only)
-
-To make it easy to spot technical debt and design system violations, Recursica automatically tracks any component that uses the `overStyled={true}` prop.
-
-In **development builds**, you can highlight all over-styled components on the page. Open your browser's developer console and run:
-
-```js
-recursica.toggleOverStyled();
-```
-
-This toggles a **cyan 2px box shadow** outline around the children of all over-styled components. The wrapping elements use `display: contents` under the hood to ensure they occupy zero DOM space and do not affect flex, grid, or absolute positioning flow. In production builds, this debugging helper is completely disabled and stripped with zero performance overhead.
