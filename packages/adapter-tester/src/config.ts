@@ -22,13 +22,14 @@ export type SourceOfTruthGoldenLocation =
       dir: string;
     }
   | {
-      /** No local checkout (the default, standalone-repo mode) — resolve the
-       * installed version against the npm registry, then fetch that git tag's
-       * `test/golden/` from the public GitHub repo, caching what's downloaded. */
-      type: "npm";
+      /** No local checkout (the default, standalone-repo mode) — always
+       * fetches `test/golden/` straight from the source-of-truth repo's
+       * `main` branch (not a published npm version or release tag — the
+       * standalone repo isn't guaranteed to tag every release), caching what's
+       * downloaded under the resolved commit it read. */
+      type: "github-main";
+      /** Only used in log/warning messages. */
       packageName: string;
-      /** npm version/dist-tag to resolve, e.g. "latest" or a pinned version. */
-      versionSpec: string;
       /** Directory downloaded manifest/images are cached in between runs. */
       cacheDir: string;
     };

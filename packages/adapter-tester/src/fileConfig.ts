@@ -245,14 +245,15 @@ export function resolveConfig(
       mantineAdapterVersion,
       storybookTemplateVersion: sourceOfTruth.storybookTemplateVersion,
     });
-    // No local checkout — resolve the installed version against the npm
-    // registry and fetch that version's golden files from the public repo.
-    // Never needs `sourceOfTruthWebServer` above; the golden check on its
-    // own doesn't boot a second Storybook at all (see cli.ts).
+    // No local checkout — always read golden files from the public repo's
+    // `main` branch, not a pinned/published version (that's what
+    // `mantineAdapterVersion` is for below, and it's only relevant to Dev
+    // Mode's live harness install, not this golden fetch). Never needs
+    // `sourceOfTruthWebServer` above; the golden check on its own doesn't
+    // boot a second Storybook at all (see cli.ts).
     sourceOfTruthGolden = {
-      type: "npm",
+      type: "github-main",
       packageName: MANTINE_ADAPTER_PACKAGE_NAME,
-      versionSpec: mantineAdapterVersion ?? "latest",
       cacheDir: join(cwd, ".adapter-tester/mantine-golden-cache"),
     };
   }

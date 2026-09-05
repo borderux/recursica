@@ -12,6 +12,7 @@ import { validateGoldenManifest } from "./validateManifest.js";
 // The source-of-truth adapter (Mantine) lives in its own standalone repo, not
 // this monorepo — its golden images are fetched from here, not from borderux/recursica.
 const GITHUB_REPO = "borderux/recursica-adapter-mantine-v8";
+const GITHUB_BRANCH = "main";
 
 export interface SourceOfTruthGolden {
   manifest: GoldenManifest;
@@ -20,29 +21,23 @@ export interface SourceOfTruthGolden {
   readImage(storyId: string): Promise<Buffer | null>;
 }
 
-async function resolveNpmVersion(
-  packageName: string,
-  versionSpec: string,
+/** Resolves `GITHUB_BRANCH`'s current commit sha, so downloaded goldens can
+ * be cached by an immutable ref instead of re-fetched every run, while still
+ * always comparing against the branch's latest state. */
+async function resolveGithubBranchSha(
+  repo: string,
+  branch: string,
 ): Promise<string> {
-  const response = await fetch(`https://registry.npmjs.org/${packageName}`);
+  const response = await fetch(
+    `https://api.github.com/repos/${repo}/commits/${branch}`,
+    { headers: { Accept: "application/vnd.github.sha" } },
+  );
   if (!response.ok) {
     throw new Error(
-      `Could not reach npm registry for ${packageName}: ${response.statusText}`,
+      `Could not resolve ${repo}@${branch} on GitHub: ${response.statusText}`,
     );
   }
-  const data = (await response.json()) as {
-    "dist-tags"?: Record<string, string>;
-    versions?: Record<string, unknown>;
-  };
-  const resolved =
-    data["dist-tags"]?.[versionSpec] ??
-    (data.versions?.[versionSpec] ? versionSpec : undefined);
-  if (!resolved) {
-    throw new Error(
-      `${packageName} has no version or dist-tag "${versionSpec}" on the npm registry.`,
-    );
-  }
-  return resolved;
+  return (await response.text()).trim();
 }
 
 /**
@@ -54,15 +49,16 @@ async function resolveNpmVersion(
  * monorepo's own `sourceOfTruth.type: "url"` mode) — read its
  * `test/golden/` directly, including any uncommitted local changes.
  *
- * `location.type === "npm"`: no local checkout (the default, standalone-repo
- * mode) — resolve the installed version against the npm registry, then fetch
- * that exact version's `test/golden/` from the public GitHub repo at the
- * matching release tag (changesets tags every release as
- * `<packageName>@<version>`), caching what's downloaded under `cacheDir`.
+ * `location.type === "github-main"`: no local checkout (the default,
+ * standalone-repo mode) — always reads `test/golden/` from the source-of-truth
+ * repo's `main` branch, not a published npm version or release tag (the
+ * standalone repo isn't guaranteed to tag every release, and its tag format
+ * has changed before — reading `main` directly sidesteps both). The branch's
+ * current commit is resolved once per run and used as the cache key, so
+ * a repeated run against the same commit doesn't re-download anything.
  *
  * Returns `null` — degrading the divergence check to a skip, not a failure —
- * when no golden baseline exists yet for this version, or the registry/repo
- * is unreachable.
+ * when no golden baseline exists yet, or GitHub is unreachable.
  */
 export async function resolveSourceOfTruthGolden(
   location: SourceOfTruthGoldenLocation,
@@ -84,26 +80,22 @@ export async function resolveSourceOfTruthGolden(
     };
   }
 
-  let version: string;
+  let sha: string;
   try {
-    version = await resolveNpmVersion(
-      location.packageName,
-      location.versionSpec,
-    );
+    sha = await resolveGithubBranchSha(GITHUB_REPO, GITHUB_BRANCH);
   } catch (error) {
     console.warn(
-      `Could not resolve ${location.packageName}@${location.versionSpec} — source-of-truth divergence check skipped for this run.`,
+      `Could not resolve ${location.packageName}'s ${GITHUB_BRANCH} branch on GitHub — source-of-truth divergence check skipped for this run.`,
       error,
     );
     return null;
   }
 
-  const cacheDir = join(location.cacheDir, version);
-  const tag = `${location.packageName}@${version}`;
+  const cacheDir = join(location.cacheDir, sha);
   // @recursica/adapter-mantine-v8 is a standalone single-package repo (unlike
   // the old @recursica/mantine-adapter, which lived at `packages/<name>`
   // inside this monorepo) — its `test/golden/` sits directly at the repo root.
-  const rawBase = `https://raw.githubusercontent.com/${GITHUB_REPO}/${tag}/test/golden`;
+  const rawBase = `https://raw.githubusercontent.com/${GITHUB_REPO}/${sha}/test/golden`;
 
   let manifest: GoldenManifest;
   const cachedManifestPath = manifestPath(cacheDir);
@@ -115,14 +107,14 @@ export async function resolveSourceOfTruthGolden(
       response = await fetch(`${rawBase}/manifest.json`);
     } catch (error) {
       console.warn(
-        `Could not reach GitHub to fetch ${tag}'s golden baseline — source-of-truth divergence check skipped for this run.`,
+        `Could not reach GitHub to fetch ${location.packageName}'s ${GITHUB_BRANCH} golden baseline — source-of-truth divergence check skipped for this run.`,
         error,
       );
       return null;
     }
     if (!response.ok) {
       console.warn(
-        `No golden baseline published for ${tag} — source-of-truth divergence check skipped for this run.`,
+        `No golden baseline published for ${location.packageName}'s ${GITHUB_BRANCH} branch — source-of-truth divergence check skipped for this run.`,
       );
       return null;
     }

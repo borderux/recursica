@@ -103,13 +103,13 @@ Own flag `--story <story-id>` scopes to exactly one story (unlike `--grep`, exac
 npm run adapter-tester:source-of-truth -- --story ui-kit-toast--default
 ```
 
-Pin the source-of-truth adapter's version for the divergence check (instead of resolving `@recursica/adapter-mantine-v8`'s `latest` on npm) with `--source-of-truth-version`:
+Pin the version Dev Mode's live harness installs of `@recursica/adapter-mantine-v8` (instead of `latest`) with `--source-of-truth-version`:
 
 ```bash
-npm run adapter-tester:source-of-truth -- --source-of-truth-version 0.53.0
+npm run adapter-tester -- --source-of-truth-version 0.53.0
 ```
 
-Only meaningful with the default `sourceOfTruth.type: "mantine-harness"` mode — throws if combined with `sourceOfTruth.type: "url"` (that mode reads a sibling package's local checkout directly, there's no version to pin) or with `isSourceOfTruthAdapter: true` (nothing to pin a version for).
+Only affects Dev Mode's live side-by-side harness — the automated divergence check (`adapter-tester:source-of-truth`) always reads golden images straight from the source-of-truth repo's `main` branch, never a pinned/published version, so this flag has no effect there. Throws if combined with `sourceOfTruth.type: "url"` (that mode reads a sibling package's local checkout directly, there's no version to pin) or with `isSourceOfTruthAdapter: true` (nothing to pin a version for).
 
 ### What happens during execution?
 
