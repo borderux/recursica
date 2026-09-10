@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { AssistiveElement } from "./AssistiveElement";
-import { Layer } from "@recursica/adapter-common";
 
 const meta: Meta<typeof AssistiveElement> = {
   title: "UI-Kit/AssistiveElement",

@@ -2,7 +2,111 @@ import "@recursica/adapter-common/style.css";
 import * as rawComponents from "./components";
 import { wrapComponent } from "@recursica/adapter-common";
 
-export * from "@recursica/adapter-common";
+// Pass-through components that have no mantine-specific implementation — each is
+// redeclared in its own components/ folder and re-exported from adapter-common there.
+export {
+  Layer,
+  EmptyValueRenderer,
+  RecursicaThemeProvider,
+} from "./components";
+export type {
+  RecursicaLayerProps,
+  LayerProps,
+  EmptyValueRendererProps,
+  RecursicaEmptyValueRendererProps,
+  RecursicaThemeProviderProps,
+} from "./components";
+export { markCurrentPageItem } from "@recursica/adapter-common";
+
+// Foundational types and utilities re-exported explicitly from @recursica/adapter-common
+export type {
+  RecursicaSpacing,
+  RecursicaSize,
+  RequireAccessibleLabel,
+  BlockedStylingKeys,
+  ForbiddenStyles,
+  WithRecursicaSpacing,
+  RecursicaOverStyled,
+  RecursicaLabelProps,
+  RecursicaFormControlWrapperProps,
+  RecursicaComponent,
+} from "@recursica/adapter-common";
+export { RECURSICA_COMPONENTS } from "@recursica/adapter-common";
+export {
+  copyToClipboard,
+  fileMatchesAccept,
+  mergeClassNames,
+  mergeStyles,
+  normalizeComboboxData,
+  omitUnsupportedProps,
+  withCallerOverride,
+  wrapComponent,
+  IS_DEV,
+  toggleGlobalOverStyled,
+  isGlobalOverStyledActive,
+  useGlobalOverStyled,
+  injectOverStyledStyles,
+  registerOverStyledConsoleCommand,
+} from "@recursica/adapter-common";
+
+// Shared Recursica prop types that have no mantine-specific extension — re-exported
+// explicitly since each component only imports these internally, never by name.
+export type {
+  ReadOnlyControlProps,
+  ReadOnlyFieldType,
+  RecursicaAccordionProps,
+  RecursicaAccordionItemProps,
+  RecursicaAccordionControlProps,
+  RecursicaAccordionPanelProps,
+  RecursicaAssistiveElementProps,
+  RecursicaAutocompleteProps,
+  RecursicaAvatarProps,
+  RecursicaBadgeProps,
+  RecursicaBreadcrumbProps,
+  RecursicaButtonProps,
+  RecursicaCardProps,
+  RecursicaCardSectionProps,
+  RecursicaCheckboxProps,
+  RecursicaChipProps,
+  RecursicaComboboxItem,
+  RecursicaComboboxData,
+  RecursicaComboboxItemWithLabel,
+  RecursicaContainerProps,
+  RecursicaFileInputProps,
+  RecursicaFileInputItem,
+  RecursicaFileUploadProps,
+  RecursicaFileUploadItem,
+  RecursicaFormControlLayoutProps,
+  RecursicaHeadingProps,
+  RecursicaHoverCardProps,
+  RecursicaLinkProps,
+  RecursicaLoaderProps,
+  RecursicaMenuProps,
+  RecursicaModalProps,
+  RecursicaPaginationProps,
+  RecursicaPanelProps,
+  RecursicaPopoverProps,
+  RecursicaRadioProps,
+  RecursicaSegmentedControlProps,
+  RecursicaStepperProps,
+  RecursicaSwitchProps,
+  RecursicaTableProps,
+  RecursicaTableRowProps,
+  RecursicaTableHeaderCellProps,
+  RecursicaTableCellProps,
+  RecursicaTabsProps,
+  TextVariant,
+  RecursicaTextProps,
+  RecursicaTimelineProps,
+  RecursicaTimelineItemProps,
+  RecursicaToastProps,
+  RecursicaTooltipProps,
+  RecursicaTransferListProps,
+  RecursicaTransferListItem,
+  RecursicaTransferListData,
+  RecursicaTreeProps,
+  RecursicaTreeNode,
+} from "@recursica/adapter-common";
 
 // Expose unwrapped structural layout primitives to preserve their polymorphic types
 export const Flex = rawComponents.Flex;
