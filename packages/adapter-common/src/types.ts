@@ -144,10 +144,17 @@ export type WithRecursicaSpacing<T> = Omit<
 
 /**
  * A wrapper type that blocks styling overrides unless `overStyled: true` is explicitly provided.
+ *
+ * `Allow` is constrained to `BlockedStylingKeys` so only genuinely-blocked keys can be un-blocked,
+ * and defaults to `never` — `RecursicaOverStyled<T>` is byte-identical to the pre-`Allow` behavior.
+ *
+ * NOTE: this only lifts the *type-level* block. A component un-blocking a key is responsible for
+ * consuming it (destructuring it before `filterStylingProps`, or otherwise handling it) so it does
+ * not leak through the runtime styling filter.
  */
-export type RecursicaOverStyled<T> =
-  | (Omit<WithRecursicaSpacing<T>, BlockedStylingKeys> &
-      ForbiddenStyles & { overStyled?: false | undefined })
+export type RecursicaOverStyled<T, Allow extends BlockedStylingKeys = never> =
+  | (Omit<WithRecursicaSpacing<T>, Exclude<BlockedStylingKeys, Allow>> &
+      Omit<ForbiddenStyles, Allow> & { overStyled?: false | undefined })
   | (WithRecursicaSpacing<T> & { overStyled: true });
 
 /**
