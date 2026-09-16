@@ -60,19 +60,19 @@ async function resolveNpmVersion(
  * matching release tag (changesets tags every release as
  * `<packageName>@<version>`), caching what's downloaded under `cacheDir`.
  *
- * Returns `null` — degrading the divergence check to a skip, not a failure —
- * when no golden baseline exists yet for this version, or the registry/repo
- * is unreachable.
+ * Throws when no golden baseline exists yet for this version, or the
+ * registry/repo is unreachable — a divergence check that can't reach its
+ * baseline must fail loudly, not degrade to a silent skip that Playwright
+ * then reports as a pass.
  */
 export async function resolveSourceOfTruthGolden(
   location: SourceOfTruthGoldenLocation,
-): Promise<SourceOfTruthGolden | null> {
+): Promise<SourceOfTruthGolden> {
   if (location.type === "local") {
     if (!existsSync(manifestPath(location.dir))) {
-      console.warn(
-        `No golden baseline found yet at ${location.dir} — source-of-truth divergence check skipped for this run.`,
+      throw new Error(
+        `No golden baseline found at ${location.dir} — the source-of-truth divergence check has nothing to compare against. Capture one there first (--update-golden), or fix sourceOfTruth.dir if it's pointing at the wrong checkout.`,
       );
-      return null;
     }
     const manifest = loadManifest(location.dir);
     return {
@@ -91,11 +91,10 @@ export async function resolveSourceOfTruthGolden(
       location.versionSpec,
     );
   } catch (error) {
-    console.warn(
-      `Could not resolve ${location.packageName}@${location.versionSpec} — source-of-truth divergence check skipped for this run.`,
-      error,
+    throw new Error(
+      `Could not resolve ${location.packageName}@${location.versionSpec} on the npm registry — the source-of-truth divergence check has nothing to compare against.`,
+      { cause: error },
     );
-    return null;
   }
 
   const cacheDir = join(location.cacheDir, version);
@@ -114,17 +113,15 @@ export async function resolveSourceOfTruthGolden(
     try {
       response = await fetch(`${rawBase}/manifest.json`);
     } catch (error) {
-      console.warn(
-        `Could not reach GitHub to fetch ${tag}'s golden baseline — source-of-truth divergence check skipped for this run.`,
-        error,
+      throw new Error(
+        `Could not reach GitHub to fetch ${tag}'s golden baseline (${rawBase}/manifest.json) — the source-of-truth divergence check has nothing to compare against.`,
+        { cause: error },
       );
-      return null;
     }
     if (!response.ok) {
-      console.warn(
-        `No golden baseline published for ${tag} — source-of-truth divergence check skipped for this run.`,
+      throw new Error(
+        `No golden baseline published for tag "${tag}" in ${GITHUB_REPO} (${rawBase}/manifest.json returned ${response.status}) — the source-of-truth divergence check has nothing to compare against. Confirm that tag exists and its release actually published test/golden/.`,
       );
-      return null;
     }
     const text = await response.text();
     const parsed = JSON.parse(text);
