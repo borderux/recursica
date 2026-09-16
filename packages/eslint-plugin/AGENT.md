@@ -1,6 +1,6 @@
 # AGENT.md — eslint-plugin-recursica
 
-This package is an ESLint plugin that enforces Recursica design-system conventions in applications consuming the Recursica adapters (`@recursica/mantine-adapter`, `@recursica/mui-adapter`).
+This package is an ESLint plugin that enforces Recursica design-system conventions in applications consuming the Recursica adapters (`@recursica/adapter-mantine-v8`, `@recursica/adapter-mui-v7`).
 
 ## Purpose
 

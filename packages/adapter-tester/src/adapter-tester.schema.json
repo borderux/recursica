@@ -91,7 +91,7 @@
     },
     "isSourceOfTruthAdapter": {
       "type": "boolean",
-      "description": "True only for the source-of-truth adapter's own config (mantine-adapter). Skips `sourceOfTruth` entirely — there's nothing above it to diverge from — and runs the own-drift golden check standalone, against just this project's own Storybook. Defaults to false."
+      "description": "True only for the source-of-truth adapter's own config (@recursica/adapter-mantine-v8). Skips `sourceOfTruth` entirely — there's nothing above it to diverge from — and runs the own-drift golden check standalone, against just this project's own Storybook. Defaults to false."
     },
     "goldenThresholdPixels": {
       "type": "number",

@@ -35,13 +35,11 @@ Recursica is a design system and component library monorepo. It uses **Turborepo
 ```
 recursica/
 ├── apps/
-│   ├── figma-plugin/              → @recursica/figma-plugin
-│   └── recursica-storybook/       → recursica-storybook
+│   └── figma-plugin/              → @recursica/figma-plugin
 ├── packages/
 │   ├── adapter-common/            → @recursica/adapter-common
 │   ├── common/                    → @recursica/common
 │   ├── eslint-config/             → @repo/eslint-config
-│   ├── mantine-adapter/           → @recursica/mantine-adapter
 │   ├── recursica-postcss-vars/    → @recursica/recursica-postcss-vars
 │   ├── schemas/                   → @recursica/schemas
 │   ├── storybook-template/        → @recursica/storybook-template
@@ -58,10 +56,9 @@ recursica/
 
 ## Apps
 
-| Directory                   | Package Name              | Purpose                                                                                                  |
-| --------------------------- | ------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `apps/figma-plugin/`        | `@recursica/figma-plugin` | Figma plugin for exporting design tokens and assets. Has its own [AGENT.md](apps/figma-plugin/AGENT.md). |
-| `apps/recursica-storybook/` | `recursica-storybook`     | Storybook app for showcasing components and design tokens.                                               |
+| Directory            | Package Name              | Purpose                                                                                                  |
+| -------------------- | ------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `apps/figma-plugin/` | `@recursica/figma-plugin` | Figma plugin for exporting design tokens and assets. Has its own [AGENT.md](apps/figma-plugin/AGENT.md). |
 
 ## Core Packages
 
@@ -83,13 +80,11 @@ recursica/
 
 Adapters convert Recursica design tokens (exported from Figma as JSON) into framework-specific code: themes, types, CSS variables, and components. If you need to work on how tokens are consumed, this is where to look.
 
-| Directory                   | Package Name                 | Purpose                                                                                                    |
-| --------------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `packages/adapter-common/`  | `@recursica/adapter-common`  | Framework-agnostic component primitives and hooks shared by all adapters.                                  |
-| `packages/mantine-adapter/` | `@recursica/mantine-adapter` | Primary adapter — Mantine 8+ component library. Has its own [AGENT.md](packages/mantine-adapter/AGENT.md). |
-| `packages/mui-adapter/`     | `@recursica/mui-adapter`     | Material UI (MUI) v7 component library adapter. Has its own [AGENT.md](packages/mui-adapter/AGENT.md).     |
+| Directory                  | Package Name                | Purpose                                                                   |
+| -------------------------- | --------------------------- | ------------------------------------------------------------------------- |
+| `packages/adapter-common/` | `@recursica/adapter-common` | Framework-agnostic component primitives and hooks shared by all adapters. |
 
-`adapter-common` provides shared primitives. `mantine-adapter` depends on it and extends with Mantine-specific behavior.
+The actual UI-kit adapters (Mantine, MUI) are no longer packages in this monorepo — they now live in their own independently-versioned repos, `recursica-adapter-mantine-v8` (npm: `@recursica/adapter-mantine-v8`) and `recursica-adapter-mui-v7` (npm: `@recursica/adapter-mui-v7`). `adapter-common` provides the shared primitives those adapters depend on.
 
 ## Forge
 
@@ -108,12 +103,9 @@ Many packages and apps contain their own documentation. Always check the target 
 Every package and app has its own `AGENT.md`. Read it before making changes:
 
 - [`apps/figma-plugin/AGENT.md`](apps/figma-plugin/AGENT.md)
-- [`apps/recursica-storybook/AGENT.md`](apps/recursica-storybook/AGENT.md)
 - [`packages/adapter-common/AGENT.md`](packages/adapter-common/AGENT.md)
 - [`packages/common/AGENT.md`](packages/common/AGENT.md)
 - [`packages/eslint-config/AGENT.md`](packages/eslint-config/AGENT.md)
-- [`packages/mantine-adapter/AGENT.md`](packages/mantine-adapter/AGENT.md)
-- [`packages/mui-adapter/AGENT.md`](packages/mui-adapter/AGENT.md)
 - [`packages/recursica-postcss-vars/AGENT.md`](packages/recursica-postcss-vars/AGENT.md)
 - [`packages/schemas/AGENT.md`](packages/schemas/AGENT.md)
 - [`packages/storybook-template/AGENT.md`](packages/storybook-template/AGENT.md)
@@ -123,8 +115,6 @@ Every package and app has its own `AGENT.md`. Read it before making changes:
 
 - [`packages/adapter-common/CONTRIBUTING.md`](packages/adapter-common/CONTRIBUTING.md)
 - [`packages/common/CONTRIBUTING.md`](packages/common/CONTRIBUTING.md)
-- [`packages/mantine-adapter/CONTRIBUTING.md`](packages/mantine-adapter/CONTRIBUTING.md)
-- [`packages/mui-adapter/CONTRIBUTING.md`](packages/mui-adapter/CONTRIBUTING.md)
 
 ## Root Documentation Index
 

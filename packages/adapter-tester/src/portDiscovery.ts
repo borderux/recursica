@@ -8,7 +8,7 @@ import type { HarnessWebServerConfig } from "./harness/mantineSourceOfTruth.js";
  * Boots a target's Storybook and discovers the real port it ends up on,
  * instead of pinning one via `-p`/`--port`. Storybook silently falls back to
  * an OS-assigned port whenever its default/configured one is taken (this is
- * what caused the flaky `webServer` timeouts noted in mui-adapter), so the
+ * what caused the flaky `webServer` timeouts noted in @recursica/adapter-mui-v7), so the
  * only reliable source of truth is the URL it prints in its own startup
  * banner. Used by both the automated/headless run (cli.ts) and Dev Mode
  * (devServer.ts) — neither pins a port anymore.

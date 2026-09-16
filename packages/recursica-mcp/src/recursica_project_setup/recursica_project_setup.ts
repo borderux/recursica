@@ -19,7 +19,7 @@ export const recursica_project_setup: Command = {
       "ui-kit": {
         type: "string",
         description:
-          "Optional name of the UI kit (e.g. 'mantine', 'mui') or the full package dependency string from package.json (e.g. '@recursica/mantine-adapter', '@recursica/mui-adapter'). Case-insensitive. If not specified, we will attempt to auto-detect whether a supported adapter or UI kit is already installed based on package.json. DO NOT guess, assume, or auto-select a UI kit on behalf of the developer if auto-detection fails; instead, you must explicitly ask the developer to choose.",
+          "Optional name of the UI kit (e.g. 'mantine', 'mui') or the full package dependency string from package.json (e.g. '@recursica/adapter-mantine-v8', '@recursica/adapter-mui-v7'). Case-insensitive. If not specified, we will attempt to auto-detect whether a supported adapter or UI kit is already installed based on package.json. DO NOT guess, assume, or auto-select a UI kit on behalf of the developer if auto-detection fails; instead, you must explicitly ask the developer to choose.",
       },
       projectPath: {
         type: "string",

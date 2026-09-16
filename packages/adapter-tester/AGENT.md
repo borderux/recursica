@@ -36,7 +36,7 @@ A component is considered "Close Enough" and passing if:
 
 ### Thresholds
 
-There are two independent global thresholds in the consuming project's `adapter-tester.config.json` (e.g. `mantine-adapter`'s or `mui-adapter`'s own). This package has no `adapter-tester.config.json` of its own — it's a tool other adapters configure, not something that runs against itself.
+There are two independent global thresholds in the consuming project's `adapter-tester.config.json` (e.g. `@recursica/adapter-mantine-v8`'s or `@recursica/adapter-mui-v7`'s own). This package has no `adapter-tester.config.json` of its own — it's a tool other adapters configure, not something that runs against itself.
 
 - `goldenThresholdPixels` — gates the **own-drift check** (this project's live render vs. its own committed golden). Same library on both sides, so it stays tight (default 10). A failure here is almost certainly a genuine CSS regression in this adapter's own styling code.
 - `sourceOfTruthThresholdPixels` — gates the **divergence check** (this project's live render vs. Mantine's golden). Comparing across two different component libraries has legitimate structural variation, so this is deliberately much higher (default 3500). Unused on `@recursica/adapter-mantine-v8`'s own config, which has no divergence check.

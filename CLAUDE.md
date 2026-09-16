@@ -8,7 +8,7 @@ Recursica is a design system and component library monorepo (Turborepo + npm wor
 
 **This repo already has an `AGENT.md` at the root and inside almost every package/app** — read the relevant one(s) before working in a given package; they contain more detail than is duplicated here. Root `AGENT.md` also documents a repo-wide `llms.txt` convention (docs for _external_ consumers of published packages) that is distinct from `AGENT.md` (docs for agents working _inside_ this monorepo) — don't confuse the two when adding documentation.
 
-Note: `README.md` and the root `AGENT.md`'s package tables are **out of date** — they omit `packages/adapter-tester`, `packages/official-release`, `packages/recursica-mcp`, `packages/recursica-token-analyzer`, and list only `mantine-adapter` (README) despite `mui-adapter` also existing. Trust the actual `packages/`/`apps/` directory listing over those tables.
+Note: `README.md` and the root `AGENT.md`'s package tables are **out of date** — they omit `packages/adapter-tester`, `packages/official-release`, `packages/recursica-mcp`, `packages/recursica-token-analyzer`. Trust the actual `packages/`/`apps/` directory listing over those tables. Also note: the Mantine and MUI adapters used to live in this monorepo as `packages/mantine-adapter`/`packages/mui-adapter`; they've since been extracted into their own separate, independently-versioned repos (`@recursica/adapter-mantine-v8`, `@recursica/adapter-mui-v7`) and no longer exist here.
 
 ## Commands
 
@@ -30,20 +30,13 @@ Scope any of these to one package with npm workspaces or Turborepo filtering:
 
 ```bash
 npm run build -w @recursica/common
-npx turbo run test --filter=@recursica/mantine-adapter
+npx turbo run test --filter=@recursica/adapter-common
 ```
 
-Run a single test file with Vitest (used by `common`, `mantine-adapter`, `mui-adapter`, `recursica-mcp`, etc.):
+Run a single test file with Vitest (used by `common`, `recursica-mcp`, etc.):
 
 ```bash
 cd packages/<pkg> && npx vitest run path/to/file.test.ts
-```
-
-Storybook dev servers (used for adapter development and by `adapter-tester`'s visual diffing):
-
-```bash
-npm run storybook -w @recursica/mantine-adapter   # port 6011
-npm run storybook -w @recursica/mui-adapter          # port 6012
 ```
 
 ## Architecture
@@ -54,26 +47,20 @@ npm run storybook -w @recursica/mui-adapter          # port 6012
 
 ### Adapter architecture
 
-`packages/adapter-common` holds framework-agnostic primitives/hooks shared by every adapter and must never import a UI framework (Mantine, MUI, etc.). `packages/mantine-adapter` (Mantine 8, the primary/reference adapter) and `packages/mui-adapter` (MUI 7) each wrap their underlying library's components behind a single semantic Recursica prop API, decoupled from the underlying library's own variant/prop names. Both follow the same rules (detailed in each package's `CONTRIBUTING.md`/`docs/PHILOSOPHY.md`):
+`packages/adapter-common` holds framework-agnostic primitives/hooks shared by every adapter and must never import a UI framework (Mantine, MUI, etc.). The actual adapters that wrap Mantine and MUI components behind a single semantic Recursica prop API no longer live in this monorepo — they were extracted into their own separate, independently-versioned repos (`@recursica/adapter-mantine-v8`, `@recursica/adapter-mui-v7`), owned separately. To change actual adapter components/stories, work in those repos, not here.
 
-- Wrap component props with `RecursicaOverStyled`; never hardcode colors or sizing — only consume CSS variables from `recursica_variables_scoped.css`. If no token exists for a need, stop and ask rather than inventing one.
-- Never mutate the underlying library's theme object or internals; style via scoped `.module.css` + targeted `className`/`classNames` only.
-- Arbitrary styling props (`p`, `bg`, `c`, `styles`, `classNames`) are stripped by default; only DOM layout props pass through. `overStyled={true}` is a deliberate, visible escape hatch meant to be temporary.
-- Every component needs a Storybook story, a `USAGE.md` (public integration docs), and an `IMPLEMENTATION_NOTES.md` (internal rationale/CSS hacks).
-
-`packages/adapter-tester` runs Playwright visual-regression tests comparing the MUI adapter's rendering against the Mantine adapter (source of truth) pixel-by-pixel — goal is visual/token parity, not DOM parity. The global diff threshold lives in `tests/config.ts` (`VISUAL_DIFF_THRESHOLD_PIXELS`) and must not be changed globally; use a documented local override instead.
+`packages/adapter-tester` runs Playwright visual-regression tests comparing the MUI adapter's rendering against the Mantine adapter (source of truth) pixel-by-pixel, installing both as real npm dependencies — goal is visual/token parity, not DOM parity. The global diff threshold lives in `tests/config.ts` (`VISUAL_DIFF_THRESHOLD_PIXELS`) and must not be changed globally; use a documented local override instead.
 
 ### Other packages
 
-- `packages/recursica-mcp` (`@recursica/mcp`, bin `recursica-mcp`) — MCP server exposing Recursica component/usage lookup tools to AI assistants.
-- `packages/storybook-template` — shared, framework-agnostic Storybook config/decorators reused by `apps/recursica-storybook` and the adapters.
+- `packages/recursica-mcp` (`@recursica/mcp`, bin `recursica-mcp`) — MCP server exposing Recursica component/usage lookup tools to AI assistants; likely to be retired.
+- `packages/storybook-template` — shared, framework-agnostic Storybook config/decorators reused by the adapters (now external repos) and `packages/adapter-tester`'s harness.
 - `packages/typescript-config` / `packages/eslint-config` — shared `tsconfig`/ESLint presets; changes here are monorepo-wide, treat with care.
 - `packages/eslint-plugin` — appears to be an orphaned/in-progress package (no `package.json`, no git history); don't treat it as an active, maintained package without checking with the user first.
 
 ### Apps
 
 - `apps/figma-plugin` (`@recursica/figma-plugin`, internally "Recursica Publisher") — the Figma plugin that exports design tokens/components as JSON and opens sync PRs against a GitHub repo (or imports Figma content from a repo). Uses `documentAccess: "dynamic-page"`, so plugin code must use Figma's **async** API (`getMainComponentAsync()`, `getNodeByIdAsync()`, etc.) — never the sync equivalents. Figma node properties (fills/strokes/effects) are read-only; clone before mutating and reassign, or use setters like `setBoundVariable()`. Two separate Vite builds: `vite.config.ts` (UI, React 19) and `vite.config.lib.ts` (plugin sandbox code in `src/plugin/`).
-- `apps/recursica-storybook` — thin build/deploy wrapper with no stories of its own; it builds and publishes the adapters' Storybooks to GitHub Pages. To change actual stories/components, edit `packages/mantine-adapter` or `packages/mui-adapter`, not this app.
 
 ## Repo-wide agent rules (from root `AGENT.md`)
 

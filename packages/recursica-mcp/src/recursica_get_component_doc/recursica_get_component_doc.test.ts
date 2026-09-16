@@ -19,13 +19,13 @@ describe("recursica_get_component_doc", () => {
     allAdapters: [
       {
         name: "mantine",
-        dirName: "mantine-adapter",
-        absPath: "/Users/mock/recursica/packages/mantine-adapter",
+        dirName: "adapter-mantine-v8",
+        absPath: "/Users/mock/recursica/packages/adapter-mantine-v8",
       },
       {
         name: "mui",
-        dirName: "mui-adapter",
-        absPath: "/Users/mock/recursica/packages/mui-adapter",
+        dirName: "adapter-mui-v7",
+        absPath: "/Users/mock/recursica/packages/adapter-mui-v7",
       },
     ],
   };
@@ -55,7 +55,7 @@ describe("recursica_get_component_doc", () => {
   it("should succeed and load USAGE.md if auto-detection succeeds", async () => {
     // Spies to mock active adapter detection of 'mui'
     vi.spyOn(utils, "detectAdapterAndUiKit").mockReturnValue({
-      dependencies: { "@recursica/mui-adapter": "0.15.0" },
+      dependencies: { "@recursica/adapter-mui-v7": "0.15.0" },
       targetAdapter: "mui",
       isInstalled: true,
     });
@@ -70,7 +70,10 @@ describe("recursica_get_component_doc", () => {
 
     vi.spyOn(fs, "existsSync").mockImplementation((p) => {
       const filename = (p as string).replace(/\\/g, "/");
-      if (filename.includes("knowledge") || filename.includes("mui-adapter")) {
+      if (
+        filename.includes("knowledge") ||
+        filename.includes("adapter-mui-v7")
+      ) {
         return true;
       }
       return false;
@@ -81,7 +84,7 @@ describe("recursica_get_component_doc", () => {
       if (filename.includes("knowledge")) {
         return ["Button"] as any;
       }
-      if (filename.includes("mui-adapter")) {
+      if (filename.includes("adapter-mui-v7")) {
         return ["Button"] as any;
       }
       return [];
@@ -92,7 +95,10 @@ describe("recursica_get_component_doc", () => {
       if (filename.endsWith("Button/DOCS.md")) {
         return "# Button\n\n**A clickable element.**";
       }
-      if (filename.includes("mui-adapter") && filename.endsWith("USAGE.md")) {
+      if (
+        filename.includes("adapter-mui-v7") &&
+        filename.endsWith("USAGE.md")
+      ) {
         return "### MUI Component Usage\n\nUse `<Button onClick={...}>` in MUI.";
       }
       return actualFs.readFileSync(p, options);
@@ -125,7 +131,7 @@ describe("recursica_get_component_doc", () => {
       const filename = (p as string).replace(/\\/g, "/");
       if (
         filename.includes("knowledge") ||
-        filename.includes("mantine-adapter")
+        filename.includes("adapter-mantine-v8")
       ) {
         return true;
       }
@@ -136,7 +142,7 @@ describe("recursica_get_component_doc", () => {
       const filename = (p as string).replace(/\\/g, "/");
       if (
         filename.includes("knowledge") ||
-        filename.includes("mantine-adapter")
+        filename.includes("adapter-mantine-v8")
       ) {
         return ["Button"] as any;
       }
@@ -149,7 +155,7 @@ describe("recursica_get_component_doc", () => {
         return "# Button\n\n**A clickable element.**";
       }
       if (
-        filename.includes("mantine-adapter") &&
+        filename.includes("adapter-mantine-v8") &&
         filename.endsWith("USAGE.md")
       ) {
         return "### Mantine Component Usage\n\nUse `<Button>` in Mantine.";
@@ -170,7 +176,7 @@ describe("recursica_get_component_doc", () => {
 
   it("should fail and return generic unsupported message without DOCS.md when USAGE.md is missing", async () => {
     vi.spyOn(utils, "detectAdapterAndUiKit").mockReturnValue({
-      dependencies: { "@recursica/mui-adapter": "0.15.0" },
+      dependencies: { "@recursica/adapter-mui-v7": "0.15.0" },
       targetAdapter: "mui",
       isInstalled: true,
     });
@@ -182,7 +188,10 @@ describe("recursica_get_component_doc", () => {
     // Mock existsSync such that USAGE.md does NOT exist
     vi.spyOn(fs, "existsSync").mockImplementation((p) => {
       const filename = (p as string).replace(/\\/g, "/");
-      if (filename.includes("knowledge") || filename.includes("mui-adapter")) {
+      if (
+        filename.includes("knowledge") ||
+        filename.includes("adapter-mui-v7")
+      ) {
         // Explicitly return false if it's USAGE.md to simulate missing usage
         if (filename.endsWith("USAGE.md")) {
           return false;
@@ -194,7 +203,10 @@ describe("recursica_get_component_doc", () => {
 
     vi.spyOn(fs, "readdirSync").mockImplementation((p) => {
       const filename = (p as string).replace(/\\/g, "/");
-      if (filename.includes("knowledge") || filename.includes("mui-adapter")) {
+      if (
+        filename.includes("knowledge") ||
+        filename.includes("adapter-mui-v7")
+      ) {
         return ["Button"] as any;
       }
       return [];

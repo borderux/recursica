@@ -47,7 +47,7 @@ export interface HarnessWebServerConfig {
   timeout: number;
 }
 
-// Peer/dev ranges pinned to what @recursica/mantine-adapter and
+// Peer/dev ranges pinned to what @recursica/adapter-mantine-v8 and
 // @recursica/storybook-template themselves require, so the harness can't
 // drift onto an incompatible Mantine or Storybook major version.
 const MANTINE_CORE_RANGE = "^8.0.0";
@@ -152,7 +152,7 @@ const basePreview = createPreviewConfig({
 // dramatically smaller/differently-positioned than the source of truth's (no Layer padding,
 // background, or border-radius at all), which alone can blow past the pixel-diff threshold
 // regardless of whether the actual Recursica tokens match — a false positive, not a real
-// component bug. ColorSchemeWrapper (mantine-adapter's dark-mode-toggle sync helper) is
+// component bug. ColorSchemeWrapper (adapter-mantine-v8's dark-mode-toggle sync helper) is
 // intentionally not replicated — it only matters for the interactive dev-mode UI, not automated
 // screenshot diffing, which always runs in a single theme.
 const preview: Preview = {

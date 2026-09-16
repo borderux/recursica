@@ -39,6 +39,9 @@ export function getRecursicaRoot(): string {
 /**
  * Scans the packages directory to find all active UI adapters, or falls back to resolving
  * them dynamically via node_modules if running outside the monorepo context.
+ *
+ * NOTE: This package is likely to be retired soon; the `knownAdapters` list below is
+ * hardcoded and will need revisiting if a new adapter is added before that happens.
  */
 export function getActiveAdapters(root: string): AdapterInfo[] {
   const adapters: AdapterInfo[] = [];
@@ -83,7 +86,7 @@ export function getActiveAdapters(root: string): AdapterInfo[] {
   // 2. Dynamic package resolution (installed context / production)
   if (adapters.length === 0) {
     const require = createRequire(import.meta.url);
-    const knownAdapters = ["mui-adapter", "mantine-adapter"];
+    const knownAdapters = ["adapter-mui-v7", "adapter-mantine-v8"];
 
     for (const adapterDir of knownAdapters) {
       try {
@@ -94,10 +97,9 @@ export function getActiveAdapters(root: string): AdapterInfo[] {
           },
         );
         const pkgDir = path.dirname(pkgJsonPath);
-        const name = adapterDir.substring(
-          0,
-          adapterDir.length - "-adapter".length,
-        );
+        // Derive the bare UI-kit name (e.g. "mantine") by stripping the
+        // "adapter-" prefix and trailing "-vN" major-version suffix.
+        const name = adapterDir.replace(/^adapter-/, "").replace(/-v\d+$/, "");
         adapters.push({
           name,
           dirName: adapterDir,
@@ -168,7 +170,9 @@ export function getCleanAdapterName(name: string): string {
   return name
     .toLowerCase()
     .replace(/^@recursica\//g, "")
-    .replace(/-adapter$/g, "")
+    .replace(/^adapter-/g, "") // new naming, e.g. "adapter-mantine-v8"
+    .replace(/-adapter$/g, "") // old naming, e.g. "mantine-adapter"
+    .replace(/-v\d+$/g, "") // trailing major-version suffix, e.g. "-v8"
     .trim();
 }
 
@@ -195,9 +199,18 @@ export function detectAdapterAndUiKit(
   }
 
   const isAdapterInstalled = (cleanName: string) => {
-    const expectedPackageName = `@recursica/${cleanName}-adapter`;
+    // Package names no longer follow a uniform "<kit>-adapter" pattern (e.g.
+    // "@recursica/adapter-mantine-v8"), so look up the real dirName from the
+    // known adapters list instead of reconstructing it from cleanName.
+    const dirName = allAdapters.find(
+      (a) => getCleanAdapterName(a.name) === cleanName,
+    )?.dirName;
+    const expectedPackageName = dirName
+      ? `@recursica/${dirName}`
+      : `@recursica/${cleanName}-adapter`;
     return !!(
-      dependencies[expectedPackageName] || dependencies[`${cleanName}-adapter`]
+      dependencies[expectedPackageName] ||
+      (dirName && dependencies[dirName])
     );
   };
 
@@ -313,7 +326,7 @@ export function getMissingAdapterErrorMessage(
 ): string {
   const targetDesc = specifiedAdapter
     ? `The specified adapter "${specifiedAdapter}" is not installed or active in your project`
-    : `No active Recursica adapter (such as '@recursica/mui-adapter' or '@recursica/mantine-adapter') was detected as installed in your project`;
+    : `No active Recursica adapter (such as '@recursica/adapter-mui-v7' or '@recursica/adapter-mantine-v8') was detected as installed in your project`;
 
   return `❌ Error: ${targetDesc}.
 

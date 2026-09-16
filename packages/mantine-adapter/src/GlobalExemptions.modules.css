@@ -1,7 +1,0 @@
-/**
- * GLOBAL EXEMPTIONS
- *
- * This file hosts global, brand, and layout variables that are defined in
- * recursica_variables_scoped.css but are not used by any specific component.
- * Isolating them here keeps individual component stylesheets clean and focused.
- */

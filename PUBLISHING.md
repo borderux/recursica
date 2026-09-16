@@ -196,7 +196,7 @@ node scripts/test-release-workflow.mjs --upload
 ]
 ```
 
-Note: Only packages with publish commands (like Figma plugins) will appear in the publish results. NPM-only packages like `@recursica/mui-adapter` are handled by Changesets directly.
+Note: Only packages with publish commands (like Figma plugins) will appear in the publish results. NPM-only packages like `@recursica/adapter-common` are handled by Changesets directly.
 
 ## Error Handling
 

@@ -19,13 +19,13 @@ describe("recursica_list_components", () => {
     allAdapters: [
       {
         name: "mantine",
-        dirName: "mantine-adapter",
-        absPath: "/Users/mock/recursica/packages/mantine-adapter",
+        dirName: "adapter-mantine-v8",
+        absPath: "/Users/mock/recursica/packages/adapter-mantine-v8",
       },
       {
         name: "mui",
-        dirName: "mui-adapter",
-        absPath: "/Users/mock/recursica/packages/mui-adapter",
+        dirName: "adapter-mui-v7",
+        absPath: "/Users/mock/recursica/packages/adapter-mui-v7",
       },
     ],
   };
@@ -98,7 +98,7 @@ describe("recursica_list_components", () => {
 
     expect(result.isError).toBeUndefined();
     expect(result.content[0].text).toContain(
-      "Active Adapter: **`@recursica/mantine-adapter`**",
+      "Active Adapter: **`@recursica/adapter-mantine-v8`**",
     );
   });
 });
