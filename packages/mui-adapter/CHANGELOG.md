@@ -1,5 +1,13 @@
 # @recursica/mui-adapter
 
+## 0.39.4
+
+### Patch Changes
+
+- f82fa40: Exposed the previously-orphaned `RecursicaEmptyValueRendererProps` type from `adapter-common` and re-exported it from `mantine-adapter`/`mui-adapter`. Also fixed a pre-existing unused-import lint failure and a `Chip` story type error in their Storybook files.
+- Updated dependencies [f82fa40]
+  - @recursica/adapter-common@0.29.1
+
 ## 0.39.3
 
 ### Patch Changes
