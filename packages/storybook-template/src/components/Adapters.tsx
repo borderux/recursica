@@ -77,8 +77,9 @@ export function AdaptersContent() {
             </p>
           </div>
           <a
-            href="/recursica/storybook/mantine-adapter/"
-            target="_parent"
+            href="https://borderux.github.io/recursica-adapter-mantine-v8/"
+            target="_blank"
+            rel="noopener noreferrer"
             className="adapter-btn"
           >
             Switch to Mantine Storybook
@@ -95,8 +96,9 @@ export function AdaptersContent() {
             </p>
           </div>
           <a
-            href="/recursica/storybook/mui-adapter/"
-            target="_parent"
+            href="https://borderux.github.io/recursica-adapter-mui-v7/"
+            target="_blank"
+            rel="noopener noreferrer"
             className="adapter-btn"
           >
             Switch to MUI Storybook
