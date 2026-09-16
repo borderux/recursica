@@ -1,5 +1,12 @@
 # @recursica/mui-adapter
 
+## 0.39.5
+
+### Patch Changes
+
+- Updated dependencies [70bb1a5]
+  - @recursica/adapter-common@0.30.0
+
 ## 0.39.4
 
 ### Patch Changes

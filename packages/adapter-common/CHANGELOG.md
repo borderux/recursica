@@ -1,5 +1,11 @@
 # @recursica/adapter-common
 
+## 0.30.0
+
+### Minor Changes
+
+- 70bb1a5: Added optional `color` (`default` | `warning` | `alert` | `success`, defaults to `default`) and `emphasis` (`low` | `high`, defaults to `high`) props to `RecursicaTextProps` and `RecursicaHeadingProps`.
+
 ## 0.29.1
 
 ### Patch Changes
