@@ -260,9 +260,10 @@ export async function resolveVisualRegressionPlan(
           ? `[adapter-tester] sourceOfTruthGolden: skipped — this is the source-of-truth adapter, nothing to diverge from`
           : !config.sourceOfTruthGolden
             ? `[adapter-tester] sourceOfTruthGolden: skipped — no sourceOfTruthGolden configured`
-            : sourceOfTruthGolden
-              ? `[adapter-tester] sourceOfTruthGolden: resolved, ${Object.keys(sourceOfTruthGolden.manifest).length} golden(s) available (config: ${JSON.stringify(config.sourceOfTruthGolden)})`
-              : `[adapter-tester] sourceOfTruthGolden: unavailable — no baseline found or unreachable (config: ${JSON.stringify(config.sourceOfTruthGolden)}); divergence check will skip every story`
+            : // Unresolvable-baseline case never reaches here — resolveSourceOfTruthGolden
+              // throws instead of returning null, failing the whole run before this
+              // logs, rather than letting the divergence check silently no-op.
+              `[adapter-tester] sourceOfTruthGolden: resolved, ${Object.keys(sourceOfTruthGolden!.manifest).length} golden(s) available (config: ${JSON.stringify(config.sourceOfTruthGolden)})`
         : `[adapter-tester] sourceOfTruthGolden: not used in "own" checkMode`,
       `[adapter-tester] stories: ${stories.length} to check (excluded: ${excludeStoryIds.length}, title prefixes excluded: ${excludeTitlePrefixes.join(", ") || "none"})`,
       `[adapter-tester] story parity with source of truth: ${missingFromSourceOfTruth.length === 0 ? "OK" : `${missingFromSourceOfTruth.length} missing (see error above)`}`,
