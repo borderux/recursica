@@ -1,5 +1,12 @@
 # @recursica/mantine-adapter
 
+## 0.55.5
+
+### Patch Changes
+
+- Updated dependencies [70bb1a5]
+  - @recursica/adapter-common@0.30.0
+
 ## 0.55.4
 
 ### Patch Changes
