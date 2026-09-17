@@ -14,7 +14,7 @@ This package provides three primary utilities:
 
 **Default mode** (used by any adapter repo installing this package): checks this project's own Storybook — the one already defined by its `storybook` npm script — against its own committed golden images. No monorepo checkout, no manual config, in most cases no config file at all. Diffing this project's **live** Storybook against the source-of-truth adapter's (`@recursica/adapter-mantine-v8`) committed golden images is a separate, opt-in check — see [`--divergence-only`](#automated-visual-tests).
 
-`@recursica/adapter-tester` itself has no default mode and no `adapter-tester.config.json` of its own — it's purely a tool other adapters install and configure. `mantine-adapter` and `mui-adapter` are the ones that run it, each with their own config.
+`@recursica/adapter-tester` itself has no default mode and no `adapter-tester.config.json` of its own — it's purely a tool other adapters install and configure. `@recursica/adapter-mantine-v8` and `@recursica/adapter-mui-v7` are the ones that run it, each with their own config.
 
 ---
 

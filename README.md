@@ -65,13 +65,11 @@ npm run build
 ```
 recursica/
 ├── apps/
-│   ├── figma-plugin/          # Figma plugin for design token export
-│   └── recursica-storybook/   # Storybook for component showcase
+│   └── figma-plugin/          # Figma plugin for design token export
 ├── packages/
 │   ├── adapter-common/        # Shared adapter primitives
 │   ├── common/                # Shared utilities and types
 │   ├── eslint-config/         # Shared ESLint configuration
-│   ├── mantine-adapter/       # Mantine UI component library
 │   ├── recursica-postcss-vars/# PostCSS plugin for CSS variable validation
 │   ├── schemas/               # JSON schemas and TypeScript types
 │   ├── storybook-template/    # Shared Storybook configuration
@@ -81,10 +79,9 @@ recursica/
 
 ### Apps
 
-| App                                              | Package                   | Description                                                                     |
-| ------------------------------------------------ | ------------------------- | ------------------------------------------------------------------------------- |
-| [figma-plugin](apps/figma-plugin/)               | `@recursica/figma-plugin` | Figma plugin for exporting design tokens and assets from Figma to your codebase |
-| [recursica-storybook](apps/recursica-storybook/) | `recursica-storybook`     | Storybook application for showcasing design tokens and components               |
+| App                                | Package                   | Description                                                                     |
+| ---------------------------------- | ------------------------- | ------------------------------------------------------------------------------- |
+| [figma-plugin](apps/figma-plugin/) | `@recursica/figma-plugin` | Figma plugin for exporting design tokens and assets from Figma to your codebase |
 
 ### Packages
 
@@ -103,10 +100,11 @@ Adapters are the bridge between Recursica design tokens (exported from Figma) an
 
 The **adapter-common** package provides shared, framework-agnostic component primitives and hooks that all adapters build on top of.
 
-| Adapter                                      | Package                      | Description                                                            |
-| -------------------------------------------- | ---------------------------- | ---------------------------------------------------------------------- |
-| [adapter-common](packages/adapter-common/)   | `@recursica/adapter-common`  | Shared agnostic design-system component primitives for all adapters    |
-| [mantine-adapter](packages/mantine-adapter/) | `@recursica/mantine-adapter` | Mantine 8+ UI component library — the primary adapter for building UIs |
+| Adapter                                    | Package                     | Description                                                         |
+| ------------------------------------------ | --------------------------- | ------------------------------------------------------------------- |
+| [adapter-common](packages/adapter-common/) | `@recursica/adapter-common` | Shared agnostic design-system component primitives for all adapters |
+
+The actual UI-kit adapters (Mantine, MUI) are no longer packages in this monorepo — they now live in their own separate, independently-versioned repos, `@recursica/adapter-mantine-v8` and `@recursica/adapter-mui-v7`.
 
 ## Forge
 

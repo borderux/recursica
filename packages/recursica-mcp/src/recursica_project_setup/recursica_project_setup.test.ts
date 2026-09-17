@@ -18,13 +18,13 @@ describe("recursica_project_setup", () => {
     allAdapters: [
       {
         name: "mantine",
-        dirName: "mantine-adapter",
-        absPath: "/Users/mock/recursica/packages/mantine-adapter",
+        dirName: "adapter-mantine-v8",
+        absPath: "/Users/mock/recursica/packages/adapter-mantine-v8",
       },
       {
         name: "mui",
-        dirName: "mui-adapter",
-        absPath: "/Users/mock/recursica/packages/mui-adapter",
+        dirName: "adapter-mui-v7",
+        absPath: "/Users/mock/recursica/packages/adapter-mui-v7",
       },
     ],
   };
@@ -57,7 +57,7 @@ describe("recursica_project_setup", () => {
         return JSON.stringify({
           name: "my-app",
           dependencies: {
-            "@recursica/mantine-adapter": "^0.23.0",
+            "@recursica/adapter-mantine-v8": "^0.23.0",
           },
         });
       }
@@ -79,7 +79,7 @@ describe("recursica_project_setup", () => {
   it("should serve SETUP.md documentation when package is not installed but auto-detected via UI kit", async () => {
     const mockPkgPath = path.resolve("/Users/mock/project/package.json");
     const mockSetupPath = path.resolve(
-      "/Users/mock/recursica/packages/mantine-adapter/SETUP.md",
+      "/Users/mock/recursica/packages/adapter-mantine-v8/SETUP.md",
     );
 
     vi.spyOn(fs, "existsSync").mockImplementation((p) => {
@@ -161,7 +161,7 @@ describe("recursica_project_setup", () => {
   it("should return warning if target adapter is selected/detected but SETUP.md is missing", async () => {
     const mockPkgPath = path.resolve("/Users/mock/project/package.json");
     const mockSetupPath = path.resolve(
-      "/Users/mock/recursica/packages/mantine-adapter/SETUP.md",
+      "/Users/mock/recursica/packages/adapter-mantine-v8/SETUP.md",
     );
 
     vi.spyOn(fs, "existsSync").mockImplementation((p) => {
@@ -210,7 +210,7 @@ describe("recursica_project_setup", () => {
         return JSON.stringify({
           name: "my-app",
           dependencies: {
-            "@recursica/mantine-adapter": "^0.23.0",
+            "@recursica/adapter-mantine-v8": "^0.23.0",
           },
         });
       }
@@ -251,7 +251,7 @@ describe("recursica_project_setup", () => {
         return JSON.stringify({
           name: "my-app",
           dependencies: {
-            "@recursica/mantine-adapter": "^0.23.0",
+            "@recursica/adapter-mantine-v8": "^0.23.0",
           },
         });
       }

@@ -10,8 +10,6 @@ Current packages and apps with their own contributing guides:
 
 - [`packages/adapter-common`](packages/adapter-common/CONTRIBUTING.md)
 - [`packages/common`](packages/common/CONTRIBUTING.md)
-- [`packages/mantine-adapter`](packages/mantine-adapter/CONTRIBUTING.md)
-- [`packages/mui-adapter`](packages/mui-adapter/CONTRIBUTING.md)
 
 ## Documentation Structure
 

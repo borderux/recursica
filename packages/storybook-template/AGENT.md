@@ -25,8 +25,8 @@ import {
 
 ## Consumers
 
-- `apps/recursica-storybook` — Storybook deployment app
-- `packages/mantine-adapter` — Component Storybook
+- `@recursica/adapter-mantine-v8` and `@recursica/adapter-mui-v7` — separate, independently-versioned repos, not packages in this monorepo
+- `packages/adapter-tester` — visual-regression harness (installs both adapters as npm dependencies)
 
 ## Guidelines
 

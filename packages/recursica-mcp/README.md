@@ -7,7 +7,7 @@ This MCP server provides a suite of tools for AI assistant agents (like Claude, 
 ## Dynamic Tooling Offered
 
 - **`recursica_get_usage`**: Returns architectural design rules, component usage patterns, and styling token guidelines.
-- **`recursica_list_components`**: Lists all available custom components across active adapters (e.g. `mantine-adapter`, `mui-adapter`).
+- **`recursica_list_components`**: Lists all available custom components across active adapters (e.g. `adapter-mantine-v8`, `adapter-mui-v7`).
 - **`recursica_get_component_doc`**: Displays full component notes, API types, and `.tsx` source code signatures.
 - **`recursica_recommend_component`**: Recommends the ideal component based on your UI layout constraints or keywords.
 - **`recursica_project_setup`**: Serves installation and setup guides for projects integrating Recursica.

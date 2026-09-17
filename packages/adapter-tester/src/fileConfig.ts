@@ -60,7 +60,7 @@ type SourceOfTruthFileConfig =
 
 export interface AdapterTesterFileConfig {
   /** Label for this project's own target. Defaults to the unscoped name in
-   * this project's package.json (e.g. "@recursica/mui-adapter" -> "mui-adapter"). */
+   * this project's package.json (e.g. "@recursica/adapter-mui-v7" -> "adapter-mui-v7"). */
   name?: string;
   storybook?: StorybookTargetFileConfig;
   sourceOfTruth?: SourceOfTruthFileConfig;
@@ -72,7 +72,7 @@ export interface AdapterTesterFileConfig {
    * export. Defaults to the contents of `report-header.txt`. */
   reportHeader?: string;
   /**
-   * True only for the source-of-truth adapter's own config (mantine-adapter).
+   * True only for the source-of-truth adapter's own config (@recursica/adapter-mantine-v8).
    * Skips `sourceOfTruth` entirely — there's nothing above it to diverge
    * from — and runs the own-drift golden check standalone, against just this
    * project's own Storybook. Defaults to false.

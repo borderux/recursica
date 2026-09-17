@@ -18,13 +18,13 @@ describe("recursica_recommend_component", () => {
     allAdapters: [
       {
         name: "mantine",
-        dirName: "mantine-adapter",
-        absPath: "/Users/mock/recursica/packages/mantine-adapter",
+        dirName: "adapter-mantine-v8",
+        absPath: "/Users/mock/recursica/packages/adapter-mantine-v8",
       },
       {
         name: "mui",
-        dirName: "mui-adapter",
-        absPath: "/Users/mock/recursica/packages/mui-adapter",
+        dirName: "adapter-mui-v7",
+        absPath: "/Users/mock/recursica/packages/adapter-mui-v7",
       },
     ],
   };
@@ -35,7 +35,7 @@ describe("recursica_recommend_component", () => {
 
   it("should recommend Accordion component for collapsible accordion queries", async () => {
     const mockMantinePath = path.resolve(
-      "/Users/mock/recursica/packages/mantine-adapter/src/components/Accordion",
+      "/Users/mock/recursica/packages/adapter-mantine-v8/src/components/Accordion",
     );
 
     vi.spyOn(fs, "existsSync").mockImplementation((p) => {
@@ -62,7 +62,7 @@ describe("recursica_recommend_component", () => {
 
   it("should recommend Modal component for dialog/popup queries", async () => {
     const mockMuiPath = path.resolve(
-      "/Users/mock/recursica/packages/mui-adapter/src/components/Modal",
+      "/Users/mock/recursica/packages/adapter-mui-v7/src/components/Modal",
     );
 
     vi.spyOn(fs, "existsSync").mockImplementation((p) => {

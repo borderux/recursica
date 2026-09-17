@@ -18,8 +18,8 @@ describe("recursica_get_usage", () => {
     allAdapters: [
       {
         name: "mantine",
-        dirName: "mantine-adapter",
-        absPath: "/Users/mock/recursica/packages/mantine-adapter",
+        dirName: "adapter-mantine-v8",
+        absPath: "/Users/mock/recursica/packages/adapter-mantine-v8",
       },
     ],
   };
@@ -52,7 +52,7 @@ describe("recursica_get_usage", () => {
   it("should return guidelines with the unmodified USAGE.md content if adapter is detected as installed", async () => {
     const mockPkgPath = path.resolve("./package.json");
     const mockUsagePath = path.resolve(
-      "/Users/mock/recursica/packages/mantine-adapter/USAGE.md",
+      "/Users/mock/recursica/packages/adapter-mantine-v8/USAGE.md",
     );
 
     vi.spyOn(fs, "existsSync").mockImplementation((p) => {
@@ -65,7 +65,7 @@ describe("recursica_get_usage", () => {
       if (p === mockPkgPath) {
         return JSON.stringify({
           dependencies: {
-            "@recursica/mantine-adapter": "^0.23.0",
+            "@recursica/adapter-mantine-v8": "^0.23.0",
           },
         });
       }
@@ -86,7 +86,7 @@ describe("recursica_get_usage", () => {
   it("should return guidelines when ui-kit is explicitly specified even if not in package dependencies", async () => {
     const mockPkgPath = path.resolve("./package.json");
     const mockUsagePath = path.resolve(
-      "/Users/mock/recursica/packages/mantine-adapter/USAGE.md",
+      "/Users/mock/recursica/packages/adapter-mantine-v8/USAGE.md",
     );
 
     vi.spyOn(fs, "existsSync").mockImplementation((p) => {
@@ -118,10 +118,10 @@ describe("recursica_get_usage", () => {
   it("should append OVERSTYLING.md content after USAGE.md when present", async () => {
     const mockPkgPath = path.resolve("./package.json");
     const mockUsagePath = path.resolve(
-      "/Users/mock/recursica/packages/mantine-adapter/USAGE.md",
+      "/Users/mock/recursica/packages/adapter-mantine-v8/USAGE.md",
     );
     const mockOverstylingPath = path.resolve(
-      "/Users/mock/recursica/packages/mantine-adapter/OVERSTYLING.md",
+      "/Users/mock/recursica/packages/adapter-mantine-v8/OVERSTYLING.md",
     );
 
     vi.spyOn(fs, "existsSync").mockImplementation((p) => {
@@ -135,7 +135,7 @@ describe("recursica_get_usage", () => {
       if (p === mockPkgPath) {
         return JSON.stringify({
           dependencies: {
-            "@recursica/mantine-adapter": "^0.23.0",
+            "@recursica/adapter-mantine-v8": "^0.23.0",
           },
         });
       }
@@ -160,7 +160,7 @@ describe("recursica_get_usage", () => {
   it("should not append an OVERSTYLING.md section when the file is absent", async () => {
     const mockPkgPath = path.resolve("./package.json");
     const mockUsagePath = path.resolve(
-      "/Users/mock/recursica/packages/mantine-adapter/USAGE.md",
+      "/Users/mock/recursica/packages/adapter-mantine-v8/USAGE.md",
     );
 
     vi.spyOn(fs, "existsSync").mockImplementation((p) => {
@@ -173,7 +173,7 @@ describe("recursica_get_usage", () => {
       if (p === mockPkgPath) {
         return JSON.stringify({
           dependencies: {
-            "@recursica/mantine-adapter": "^0.23.0",
+            "@recursica/adapter-mantine-v8": "^0.23.0",
           },
         });
       }
@@ -200,7 +200,7 @@ describe("recursica_get_usage", () => {
       if (p === mockPkgPath) {
         return JSON.stringify({
           dependencies: {
-            "@recursica/mantine-adapter": "^0.23.0",
+            "@recursica/adapter-mantine-v8": "^0.23.0",
           },
         });
       }

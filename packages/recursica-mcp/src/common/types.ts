@@ -1,7 +1,7 @@
 export interface AdapterInfo {
   name: string; // e.g. "mantine" or "mui"
-  dirName: string; // e.g. "mantine-adapter"
-  absPath: string; // e.g. "/Users/mattmassey/work/recursica/packages/mantine-adapter"
+  dirName: string; // e.g. "adapter-mantine-v8" (the `@recursica/<dirName>` package suffix)
+  absPath: string; // e.g. resolved path to the installed @recursica/adapter-mantine-v8 package
 }
 
 export interface CommandContext {

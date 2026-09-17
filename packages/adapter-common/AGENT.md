@@ -14,7 +14,7 @@ import { Layer, RecursicaThemeProvider } from "@recursica/adapter-common";
 
 ## Consumers
 
-- `@recursica/mantine-adapter`
+- `@recursica/adapter-mantine-v8` and `@recursica/adapter-mui-v7` — separate, independently-versioned repos, not packages in this monorepo
 - `@recursica/storybook-template`
 
 ## Guidelines
