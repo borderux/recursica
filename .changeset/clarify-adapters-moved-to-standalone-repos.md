@@ -1,5 +1,4 @@
 ---
-"@recursica/recursica": patch
 "@recursica/adapter-common": patch
 ---
 
