@@ -98,10 +98,14 @@ export async function resolveSourceOfTruthGolden(
   }
 
   const cacheDir = join(location.cacheDir, version);
-  const tag = `${location.packageName}@${version}`;
   // @recursica/adapter-mantine-v8 is a standalone single-package repo (unlike
   // the old @recursica/mantine-adapter, which lived at `packages/<name>`
   // inside this monorepo) — its `test/golden/` sits directly at the repo root.
+  // changesets/action tags single-package repos as `v<version>`, not
+  // `<packageName>@<version>` (that longer form is only its default for
+  // multi-package/monorepo releases) — this repo's release.yml confirms
+  // `v<version>` is what actually gets tagged and pushed on every release.
+  const tag = `v${version}`;
   const rawBase = `https://raw.githubusercontent.com/${GITHUB_REPO}/${tag}/test/golden`;
 
   let manifest: GoldenManifest;
