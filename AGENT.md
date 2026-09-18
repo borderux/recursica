@@ -86,6 +86,8 @@ Adapters convert Recursica design tokens (exported from Figma as JSON) into fram
 
 The actual UI-kit adapters (Mantine, MUI) are no longer packages in this monorepo — they now live in their own independently-versioned repos, `recursica-adapter-mantine-v8` (npm: `@recursica/adapter-mantine-v8`) and `recursica-adapter-mui-v7` (npm: `@recursica/adapter-mui-v7`). `adapter-common` provides the shared primitives those adapters depend on.
 
+**`recursica-adapter-mantine-v8` is the source-of-truth adapter.** Every other adapter is built and visually diffed against its published Storybook/golden images — see `packages/adapter-tester` (`mantineSourceOfTruth.ts`, `resolveSourceOfTruthGolden.ts`) for how that comparison works.
+
 ## Forge
 
 [Recursica Forge](https://forge.recursica.com) is the official tool for managing Recursica JSON token files. It lives in a **separate repository** — it is not part of this monorepo. Visit [forge.recursica.com](https://forge.recursica.com) for documentation and access.

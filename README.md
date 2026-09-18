@@ -104,7 +104,7 @@ The **adapter-common** package provides shared, framework-agnostic component pri
 | ------------------------------------------ | --------------------------- | ------------------------------------------------------------------- |
 | [adapter-common](packages/adapter-common/) | `@recursica/adapter-common` | Shared agnostic design-system component primitives for all adapters |
 
-The actual UI-kit adapters (Mantine, MUI) are no longer packages in this monorepo — they now live in their own separate, independently-versioned repos, `@recursica/adapter-mantine-v8` and `@recursica/adapter-mui-v7`.
+The actual UI-kit adapters (Mantine, MUI) are no longer packages in this monorepo — they now live in their own separate, independently-versioned repos, [`recursica-adapter-mantine-v8`](https://github.com/borderux/recursica-adapter-mantine-v8) (`@recursica/adapter-mantine-v8`) and [`recursica-adapter-mui-v7`](https://github.com/borderux/recursica-adapter-mui-v7) (`@recursica/adapter-mui-v7`). **`recursica-adapter-mantine-v8` is the source-of-truth adapter** — every other adapter (including `mui-v7`) is built and visually diffed against it (see `packages/adapter-tester`).
 
 ## Forge
 
