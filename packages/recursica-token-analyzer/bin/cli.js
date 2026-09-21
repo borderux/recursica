@@ -58,7 +58,7 @@ function analyze() {
   const definedVars = new Set();
   [...variablesFile.matchAll(/(--recursica_[\w-]+)\s*:/g)].forEach((m) => {
     const v = m[1];
-    if (!v.includes("_themes_")) {
+    if (!v.includes("_themes_") && !v.includes("_modes_")) {
       definedVars.add(v);
     }
   });
