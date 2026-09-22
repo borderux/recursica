@@ -20,6 +20,8 @@ export * from "./FileInput/RecursicaFileInputProps";
 export * from "./FileUpload/RecursicaFileUploadProps";
 export * from "./FormControlLayout/RecursicaFormControlLayoutProps";
 export * from "./FormControlWrapper/RecursicaFormControlWrapperProps";
+export * from "./Grid/RecursicaGridColProps";
+export * from "./Grid/RecursicaGridProps";
 export * from "./Heading/RecursicaHeadingProps";
 export * from "./HoverCard/RecursicaHoverCardProps";
 export * from "./Label/RecursicaLabelProps";
