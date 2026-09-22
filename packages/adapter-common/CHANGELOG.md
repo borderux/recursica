@@ -1,5 +1,12 @@
 # @recursica/adapter-common
 
+## 0.31.0
+
+### Minor Changes
+
+- 65a2e36: Added `RecursicaGridColProps` — currently just a `children` scaffold. `span`, `order`, `visibleFrom`, and `hiddenFrom` were drafted as a formal Grid.Col prop contract (mantine-v8 and mui-v7 had independently built matching `span`/`order` behavior, and `visibleFrom`/`hiddenFrom` need a Recursica-specific breakpoint naming convention that doesn't exist yet) but are commented out with a TODO, paused to get the rest of this Grid work merged. `offset` was never added — still undiffed between the two adapters.
+- 65a2e36: Added `RecursicaGridProps` — a formal prop contract for Grid layout components exposing `columns` as a token-backed override, matching the pattern `RecursicaContainerProps.size` already uses.
+
 ## 0.30.1
 
 ### Patch Changes
