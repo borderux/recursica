@@ -1,5 +1,11 @@
 # @recursica/adapter-tester
 
+## 5.2.0
+
+### Minor Changes
+
+- 0de5abb: Updated default mode to use shared json and css between both adapters
+
 ## 5.1.4
 
 ### Patch Changes
