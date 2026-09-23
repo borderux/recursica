@@ -5,7 +5,10 @@ import type {
   SourceOfTruthGoldenLocation,
   StoryOverride,
 } from "./config.js";
-import type { HarnessWebServerConfig } from "./harness/mantineSourceOfTruth.js";
+import type {
+  HarnessWebServerConfig,
+  MantineSourceOfTruthTokensSource,
+} from "./harness/mantineSourceOfTruth.js";
 import { mantineSourceOfTruthWebServer } from "./harness/mantineSourceOfTruth.js";
 import { validateFileConfig } from "./validateFileConfig.js";
 
@@ -40,6 +43,13 @@ interface MantineHarnessSourceOfTruthFileConfig {
   port?: number;
   mantineAdapterVersion?: string;
   storybookTemplateVersion?: string;
+  /** See `MantineSourceOfTruthTokensSource`. Defaults to `"target"` — the
+   * harness renders Mantine's components with *this* project's own
+   * committed Recursica tokens, not Mantine's own bundled snapshot or (the
+   * one thing neither ever means) the deprecated `@recursica/official-release`
+   * package. Set to `"mantine-package"` to test against
+   * `@recursica/adapter-mantine-v8`'s own bundled tokens instead. */
+  tokensSource?: MantineSourceOfTruthTokensSource;
 }
 
 interface UrlSourceOfTruthFileConfig {
@@ -239,11 +249,18 @@ export function resolveConfig(
     sourceOfTruthPort = sourceOfTruth.port ?? DEFAULT_SOURCE_OF_TRUTH_PORT;
     const mantineAdapterVersion =
       overrides.mantineAdapterVersion ?? sourceOfTruth.mantineAdapterVersion;
+    const tokensSource: MantineSourceOfTruthTokensSource =
+      sourceOfTruth.tokensSource ?? "target";
     sourceOfTruthWebServer = mantineSourceOfTruthWebServer({
       dir: join(cwd, ".adapter-tester/mantine-harness"),
       port: sourceOfTruthPort,
       mantineAdapterVersion,
       storybookTemplateVersion: sourceOfTruth.storybookTemplateVersion,
+      tokensSource,
+      // `ownCwd`, not `cwd` — the project actually being tested (same
+      // reasoning `goldenDir` above uses), source of the 4 token files
+      // copied into the harness when `tokensSource` is "target".
+      targetDir: ownCwd,
     });
     // No local checkout — resolve the installed version against the npm
     // registry and fetch that version's golden files from the public repo.

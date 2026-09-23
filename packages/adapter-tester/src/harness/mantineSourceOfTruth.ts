@@ -1,6 +1,14 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
+/** The 4 Recursica token files every real adapter commits at its own repo root. */
+const TOKEN_FILES = [
+  "recursica_variables_scoped.css",
+  "recursica_tokens.json",
+  "recursica_brand.json",
+  "recursica_ui-kit.json",
+];
+
 /**
  * Generates a small, throwaway Storybook project that installs
  * `@recursica/adapter-mantine-v8` as a real npm dependency (not a workspace
@@ -16,6 +24,33 @@ import { join } from "node:path";
  * is built from, and the three upstream gaps it works around.
  */
 
+/**
+ * Which Recursica token snapshot the harness's Mantine components render
+ * with:
+ *
+ * - `"target"` (default): the target adapter's own committed
+ *   `recursica_variables_scoped.css`/`recursica_tokens.json`/
+ *   `recursica_brand.json`/`recursica_ui-kit.json` (read from `targetDir`,
+ *   copied into the harness once `npm install` finishes) — makes the
+ *   divergence check mean exactly "given the *same* tokens this target
+ *   adapter is using, does it render the same as Mantine's own components,"
+ *   isolating adapter-mapping correctness from any token-snapshot drift
+ *   between the two repos.
+ * - `"mantine-package"`: `@recursica/adapter-mantine-v8`'s own bundled
+ *   token files (whatever it was last published with) — tests against
+ *   Mantine's own understanding of the tokens instead, which also (as a
+ *   side effect) flags a target repo whose own committed tokens have gone
+ *   stale relative to Mantine's.
+ *
+ * Never `@recursica/official-release` — confirmed live (not a theoretical
+ * concern) to be a stale, deprecated, generic token snapshot unrelated to
+ * either adapter's real ones: it resolves the brand's primary/secondary
+ * fonts to Lexend/Bellota Text, not this design system's actual Dongle/
+ * Nunito Sans. An earlier version of this harness imported from it
+ * directly — this type/its two real options replace that entirely.
+ */
+export type MantineSourceOfTruthTokensSource = "target" | "mantine-package";
+
 export interface MantineSourceOfTruthHarnessOptions {
   /**
    * Directory the harness project is scaffolded into. Regenerated on every
@@ -29,6 +64,14 @@ export interface MantineSourceOfTruthHarnessOptions {
   mantineAdapterVersion?: string;
   /** npm version/range for @recursica/storybook-template. Defaults to "latest". */
   storybookTemplateVersion?: string;
+  /** See `MantineSourceOfTruthTokensSource`. Defaults to `"target"`. */
+  tokensSource?: MantineSourceOfTruthTokensSource;
+  /**
+   * The target adapter's own repo root — required when `tokensSource` is
+   * `"target"` (the default), the source the 4 token files are copied
+   * from. Unused (and not required) for `"mantine-package"`.
+   */
+  targetDir?: string;
 }
 
 export interface HarnessWebServerConfig {
@@ -91,7 +134,6 @@ function harnessPackageJson(options: {
     dependencies: {
       "@recursica/adapter-mantine-v8": options.mantineAdapterVersion,
       "@recursica/storybook-template": options.storybookTemplateVersion,
-      "@recursica/official-release": "latest",
       "@recursica/adapter-common": "latest",
       "@mantine/core": MANTINE_CORE_RANGE,
       "@mantine/dates": MANTINE_CORE_RANGE,
@@ -126,17 +168,28 @@ config.typescript = { ...config.typescript, reactDocgen: false };
 export default config;
 `;
 
-const PREVIEW_TSX = `import type { Preview } from "@storybook/react-vite";
+// Both `tokensSource` modes copy the 4 token files into the harness's own
+// root (see `copyTokensScript()`) before Storybook boots, rather than
+// importing a package subpath directly — `@recursica/adapter-mantine-v8`'s
+// own `package.json` `exports` map only lists `"."`/`"./style.css"`, so a
+// bare `import "@recursica/adapter-mantine-v8/recursica_tokens.json"` would
+// fail to resolve under strict ESM exports-map enforcement even though the
+// file physically ships in the package (confirmed by reading that package's
+// real, installed `package.json` directly). Copying sidesteps that
+// entirely, and gives both modes the identical, simple `../recursica_*`
+// relative-import shape a real adapter's own `preview.tsx` already uses.
+function previewTsx(): string {
+  return `import type { Preview } from "@storybook/react-vite";
 import { createPreviewConfig } from "@recursica/storybook-template/preview";
 import { MantineProvider } from "@mantine/core";
 import { Layer } from "@recursica/adapter-common";
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
 import "@recursica/adapter-common/style.css";
-import "@recursica/official-release/recursica_variables_scoped.css";
-import recursicaTokens from "@recursica/official-release/recursica_tokens.json";
-import recursicaBrand from "@recursica/official-release/recursica_brand.json";
-import recursicaUIKit from "@recursica/official-release/recursica_ui-kit.json";
+import "../recursica_variables_scoped.css";
+import recursicaTokens from "../recursica_tokens.json";
+import recursicaBrand from "../recursica_brand.json";
+import recursicaUIKit from "../recursica_ui-kit.json";
 
 const basePreview = createPreviewConfig({
   defaultTheme: "light",
@@ -179,6 +232,43 @@ const preview: Preview = {
 
 export default preview;
 `;
+}
+
+/**
+ * Generates `copy-tokens.mjs` — run as its own step between `npm install`
+ * and `npm run storybook` (see `mantineSourceOfTruthWebServer`'s `command`),
+ * not inlined into `scaffoldMantineSourceOfTruthHarness` itself: for
+ * `"mantine-package"` mode, the source files live inside
+ * `node_modules/@recursica/adapter-mantine-v8`, which doesn't exist yet at
+ * scaffold time (scaffolding runs before `npm install`) — this script only
+ * runs once the package is actually on disk. `"target"` mode's source files
+ * are already on disk at scaffold time, but uses the same after-install
+ * timing for one consistent code path rather than two.
+ */
+function copyTokensScript(
+  tokensSource: MantineSourceOfTruthTokensSource,
+  dir: string,
+  targetDir: string | undefined,
+): string {
+  const sourceDir =
+    tokensSource === "target"
+      ? targetDir!
+      : join(dir, "node_modules/@recursica/adapter-mantine-v8");
+
+  return `import { copyFileSync } from "node:fs";
+import { join } from "node:path";
+
+const sourceDir = ${JSON.stringify(sourceDir)};
+const destDir = ${JSON.stringify(dir)};
+const files = ${JSON.stringify(TOKEN_FILES, null, 2)};
+
+for (const file of files) {
+  copyFileSync(join(sourceDir, file), join(destDir, file));
+}
+
+console.log(\`[adapter-tester] copied Recursica tokens from \${sourceDir}\`);
+`;
+}
 
 /** Writes the harness project's files to `options.dir` without booting it. */
 export function scaffoldMantineSourceOfTruthHarness(
@@ -188,7 +278,15 @@ export function scaffoldMantineSourceOfTruthHarness(
     dir,
     mantineAdapterVersion = "latest",
     storybookTemplateVersion = "latest",
+    tokensSource = "target",
+    targetDir,
   } = options;
+
+  if (tokensSource === "target" && !targetDir) {
+    throw new Error(
+      'mantineSourceOfTruthWebServer: tokensSource "target" (the default) requires targetDir — the target adapter\'s own repo root, source of its 4 committed Recursica token files.',
+    );
+  }
 
   mkdirSync(join(dir, ".storybook"), { recursive: true });
   writeFileSync(
@@ -203,8 +301,12 @@ export function scaffoldMantineSourceOfTruthHarness(
     ) + "\n",
   );
   writeFileSync(join(dir, ".storybook/main.ts"), MAIN_TS);
-  writeFileSync(join(dir, ".storybook/preview.tsx"), PREVIEW_TSX);
-  writeFileSync(join(dir, ".gitignore"), "node_modules\n");
+  writeFileSync(join(dir, ".storybook/preview.tsx"), previewTsx());
+  writeFileSync(
+    join(dir, "copy-tokens.mjs"),
+    copyTokensScript(tokensSource, dir, targetDir),
+  );
+  writeFileSync(join(dir, ".gitignore"), "node_modules\n*.json\n*.css\n");
 
   return dir;
 }
@@ -229,8 +331,10 @@ export function mantineSourceOfTruthWebServer(
   // version is published. Naming the two version-pinned packages as explicit
   // `pkg@specifier` CLI args instead forces npm to re-check just those two
   // against the registry every run, while the rest of node_modules stays
-  // cached.
-  const command = `npm install @recursica/adapter-mantine-v8@${mantineAdapterVersion} @recursica/storybook-template@${storybookTemplateVersion} --no-audit --no-fund && npm run storybook`;
+  // cached. `copy-tokens.mjs` runs after install completes (see its own doc
+  // comment for why) and before Storybook boots, so `preview.tsx`'s own
+  // `../recursica_*` imports resolve correctly on first render.
+  const command = `npm install @recursica/adapter-mantine-v8@${mantineAdapterVersion} @recursica/storybook-template@${storybookTemplateVersion} --no-audit --no-fund && node copy-tokens.mjs && npm run storybook`;
 
   return {
     command,

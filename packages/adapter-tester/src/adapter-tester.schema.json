@@ -57,6 +57,11 @@
             "storybookTemplateVersion": {
               "type": "string",
               "description": "npm version/tag of @recursica/storybook-template to install in the harness. Defaults to `latest`."
+            },
+            "tokensSource": {
+              "type": "string",
+              "enum": ["target", "mantine-package"],
+              "description": "Which Recursica token snapshot the harness's Mantine components render with. \"target\" (default): this project's own committed recursica_variables_scoped.css/recursica_tokens.json/recursica_brand.json/recursica_ui-kit.json — makes the divergence check mean exactly \"given the same tokens this project is using, does it render the same as Mantine's own components,\" isolating adapter-mapping correctness from any token-snapshot drift between repos. \"mantine-package\": @recursica/adapter-mantine-v8's own bundled token files instead (whatever it was last published with) — also flags, as a side effect, a project whose own committed tokens have gone stale relative to Mantine's. Never the deprecated @recursica/official-release package."
             }
           }
         },
