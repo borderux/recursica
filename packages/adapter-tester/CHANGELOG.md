@@ -1,5 +1,11 @@
 # @recursica/adapter-tester
 
+## 5.2.1
+
+### Patch Changes
+
+- 0002063: Fixed report header reference to mui
+
 ## 5.2.0
 
 ### Minor Changes
