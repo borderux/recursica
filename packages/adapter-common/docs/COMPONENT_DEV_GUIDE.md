@@ -92,7 +92,7 @@ const sanitizedProps = omitUnsupportedProps(
 
 - Apply this to **every** component, including sub-components merged onto a parent via dot-notation or `Object.assign` (e.g. `Table.Th`, `Accordion.Control`, `Menu.Item`) — each sub-component declares its own `UNSUPPORTED_PROPS` for its own prop surface.
 - This replaces one-off `delete restRecord["propName"]` calls scattered through a component body — consolidate them into the single `UNSUPPORTED_PROPS` const instead, keeping each prop's rationale comment.
-- Layout primitives (`Flex`, `Stack`, `Group`, `Container`, `Grid`) are the documented exception: they intentionally skip both `filterStylingProps` and `omitUnsupportedProps` so callers can freely pass width/height/padding/margin/flex props. Don't add `UNSUPPORTED_PROPS` there.
+- Layout primitives (`Flex`, `Stack`, `Group`, `Container`, `LayoutGrid`) are the documented exception: they intentionally skip both `filterStylingProps` and `omitUnsupportedProps` so callers can freely pass width/height/padding/margin/flex props. Don't add `UNSUPPORTED_PROPS` there.
 
 ### 3.3 Prop merging — always `{...sanitizedProps, ...overrides}`, intent lives in named helpers
 

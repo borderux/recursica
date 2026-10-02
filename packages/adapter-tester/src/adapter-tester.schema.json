@@ -126,6 +126,16 @@
             "minimum": 0,
             "description": "Diff threshold override for matching stories' source-of-truth divergence check, in mismatched pixels. Overrides `sourceOfTruthThresholdPixels`."
           },
+          "viewport": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["width", "height"],
+            "description": "Browser viewport (CSS pixels) matching stories are captured at, instead of the default 800x600. For stories whose rendering depends on the page width itself, such as `@media` breakpoints, which a story can't change from inside.",
+            "properties": {
+              "width": { "type": "integer", "minimum": 1 },
+              "height": { "type": "integer", "minimum": 1 }
+            }
+          },
           "exclude": {
             "type": "boolean",
             "description": "Skip matching stories entirely — no own-drift check, no divergence check, no golden captured. For stories that don't have a cross-adapter counterpart; use `excludeTitlePrefixes` to drop a whole title instead."

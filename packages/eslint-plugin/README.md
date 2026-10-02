@@ -1,11 +1,11 @@
-# eslint-plugin-recursica
+# @recursica/eslint-plugin
 
 ESLint plugin enforcing Recursica design-system conventions in applications that consume the Recursica adapters.
 
 ## Installation
 
 ```bash
-npm install --save-dev eslint-plugin-recursica
+npm install --save-dev @recursica/eslint-plugin
 ```
 
 ## Usage
@@ -13,7 +13,7 @@ npm install --save-dev eslint-plugin-recursica
 Flat config (`eslint.config.js`):
 
 ```js
-import recursica from "eslint-plugin-recursica";
+import recursica from "@recursica/eslint-plugin";
 
 export default [
   {
@@ -28,7 +28,7 @@ export default [
 Or use the recommended config directly:
 
 ```js
-import recursica from "eslint-plugin-recursica";
+import recursica from "@recursica/eslint-plugin";
 
 export default [recursica.configs.recommended];
 ```

@@ -1,7 +1,7 @@
 import { expect } from "@playwright/test";
 import type { Browser, TestInfo } from "@playwright/test";
 import { existsSync, readFileSync } from "node:fs";
-import type { AdapterTesterConfig } from "../config.js";
+import type { AdapterTesterConfig, StoryOverride } from "../config.js";
 import { diffPngBuffers } from "../golden/diffPng.js";
 import {
   type GoldenManifestEntry,
@@ -63,6 +63,29 @@ async function fetchStories(
     );
   }
   return stories;
+}
+
+const DEFAULT_VIEWPORT = { width: 800, height: 600 };
+
+/** Resolves the capture viewport for `storyId`: the longest (most specific)
+ * `stories` key with a `viewport` matching by prefix, else the default. */
+function resolveViewport(
+  storyId: string,
+  storyOverrides: Record<string, StoryOverride>,
+): { width: number; height: number } {
+  let bestMatch: string | undefined;
+  for (const prefix of Object.keys(storyOverrides)) {
+    if (
+      storyOverrides[prefix]!.viewport &&
+      matchesPrefix(storyId, prefix) &&
+      (!bestMatch || prefix.length > bestMatch.length)
+    ) {
+      bestMatch = prefix;
+    }
+  }
+  return bestMatch !== undefined
+    ? storyOverrides[bestMatch]!.viewport!
+    : DEFAULT_VIEWPORT;
 }
 
 /** Resolves the diff threshold for `storyId`: the longest (most specific)
@@ -282,7 +305,7 @@ export async function resolveVisualRegressionPlan(
     missingFromSourceOfTruth,
     checkStory: async (story, browser, testInfo) => {
       const page = await browser.newPage();
-      await page.setViewportSize({ width: 800, height: 600 });
+      await page.setViewportSize(resolveViewport(story.id, storyOverrides));
       await page.goto(
         `${ownTarget.url}/iframe.html?id=${story.id}&viewMode=story`,
         { waitUntil: "networkidle" },

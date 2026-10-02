@@ -1,7 +1,7 @@
 import React from "react";
 
 /**
- * Props for the Recursica Grid.Col layout component.
+ * Props for the Recursica LayoutGrid.Col layout component.
  *
  * TODO(grid-col-contract): `span`, `order`, `visibleFrom`, and `hiddenFrom` are all drafted below,
  * commented out, and NOT part of this contract yet (2026-09-22, Matt — paused to get the Grid
@@ -19,7 +19,7 @@ import React from "react";
  *   together with `visibleFrom`/`hiddenFrom` when that convention lands.
  * - `offset`: never added — still undiffed between the two adapters.
  */
-// export type RecursicaGridColSpan =
+// export type RecursicaLayoutGridColSpan =
 //   | number
 //   | "auto"
 //   | "content"
@@ -27,11 +27,11 @@ import React from "react";
 //       Record<"xs" | "sm" | "md" | "lg" | "xl", number | "auto" | "content">
 //     >;
 
-export interface RecursicaGridColProps {
+export interface RecursicaLayoutGridColProps {
   /** Content inside the column */
   children?: React.ReactNode;
   // /** Number of columns this item spans, or a per-breakpoint map */
-  // span?: RecursicaGridColSpan;
+  // span?: RecursicaLayoutGridColSpan;
   // /** Reorders the column at different viewport sizes */
   // order?: number | Partial<Record<"xs" | "sm" | "md" | "lg" | "xl", number>>;
   // /** Hides the column below the given breakpoint */

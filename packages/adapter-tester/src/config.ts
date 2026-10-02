@@ -56,6 +56,10 @@ export interface StoryOverride {
   /** Skip this story entirely — no own-drift check, no divergence check, no
    * golden captured. For stories with no meaningful cross-adapter counterpart. */
   exclude?: boolean;
+  /** Browser viewport this story is captured at, in CSS pixels. Defaults to
+   * 800x600. For stories whose rendering depends on the page width itself
+   * (e.g. `@media` breakpoints), which a story can't change from inside. */
+  viewport?: { width: number; height: number };
 }
 
 export interface AdapterTesterConfig {

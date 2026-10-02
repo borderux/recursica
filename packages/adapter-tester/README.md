@@ -195,6 +195,7 @@ Every `adapter-tester.config.json` is validated against [`src/adapter-tester.sch
 - `goldenThresholdPixels` — global threshold for the own-drift check (this project's live render vs. its own committed golden). Same library on both sides, so keep this tight; defaults to `10`.
 - `sourceOfTruthThresholdPixels` — global threshold for the source-of-truth divergence check (this project's live render vs. the source-of-truth adapter's golden). Comparing across two different component libraries has legitimate structural variation, so this is expected to sit much higher than `goldenThresholdPixels`; defaults to `3500`. Unused on the source-of-truth adapter's own config (`isSourceOfTruthAdapter: true`).
 - `stories.<id>.goldenThreshold`/`stories.<id>.sourceOfTruthThreshold` — per-story overrides of the two thresholds above, keyed by story id prefix.
+- `stories.<id>.viewport` — `{ width, height }` the matching stories are captured at instead of the default `800x600`, keyed by story id prefix. For stories that depend on the page width itself (e.g. `@media` breakpoints).
 - `stories.<id>.exclude`/`excludeTitlePrefixes` — same meaning as before; see `src/adapter-tester.schema.json` for full docs.
 
 ---
