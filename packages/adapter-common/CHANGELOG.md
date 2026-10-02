@@ -1,5 +1,16 @@
 # @recursica/adapter-common
 
+## 1.0.0
+
+### Major Changes
+
+- 035c992: Removed `columns` from `RecursicaGridProps`; Grid's column count is now managed by Forge's breakpoint-aware layout grids.
+- 035c992: Renamed `RecursicaGridProps`/`RecursicaGridColProps` to `RecursicaLayoutGridProps`/`RecursicaLayoutGridColProps`, and `"Grid"` to `"LayoutGrid"` in `RECURSICA_COMPONENTS`.
+
+### Minor Changes
+
+- 035c992: `RecursicaThemeProvider` warns in development when Forge defines a breakpoint name the app's UI kit lacks.
+
 ## 0.31.0
 
 ### Minor Changes

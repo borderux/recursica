@@ -1,5 +1,11 @@
 # @recursica/adapter-tester
 
+## 5.3.0
+
+### Minor Changes
+
+- 035c992: Added an optional per-story `viewport` in `adapter-tester.config.json` so stories that depend on page width (such as `@media` breakpoints) can be captured at a specific size instead of 800x600.
+
 ## 5.2.1
 
 ### Patch Changes
