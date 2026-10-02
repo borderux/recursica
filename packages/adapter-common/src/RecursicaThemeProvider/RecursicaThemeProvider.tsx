@@ -6,11 +6,10 @@ import {
   registerOverStyledConsoleCommand,
 } from "../utils/overStyledControl";
 import { Layer } from "../components/Layer/Layer";
-import { IS_DEV } from "../utils/overStyledControl";
 import {
-  findMissingBreakpoints,
-  type RecursicaManifestBreakpoints,
-} from "../utils/checkBreakpointNames";
+  RecursicaManifestContext,
+  type RecursicaManifest,
+} from "./RecursicaManifestContext";
 
 const THEME_ATTRIBUTE = "data-recursica-theme";
 
@@ -25,16 +24,10 @@ export interface RecursicaThemeProviderProps {
    */
   initLayer0?: boolean;
   /**
-   * Optional, development only. The parsed `recursica_manifest.json`. Together with `breakpoints`,
-   * warns in the console when Forge defines a breakpoint (e.g. `mobile`) that `breakpoints` does
-   * not. Never changes the UI kit's theme.
+   * The parsed `recursica_manifest.json` from your Forge export. Required by components that read
+   * it (e.g. Pagination, for its component variants), which throw without it.
    */
-  manifest?: RecursicaManifestBreakpoints;
-  /**
-   * Optional, development only. The app's own UI-kit breakpoints, keyed by name (e.g. Mantine's
-   * `theme.breakpoints`). Only the names are compared against Forge's, not the widths.
-   */
-  breakpoints?: Record<string, unknown>;
+  manifest?: RecursicaManifest;
   children: React.ReactNode;
 }
 
@@ -48,7 +41,6 @@ export function RecursicaThemeProvider({
   theme = "light",
   initLayer0 = true,
   manifest,
-  breakpoints,
 }: RecursicaThemeProviderProps) {
   useEffect(() => {
     const root = document.documentElement;
@@ -63,15 +55,14 @@ export function RecursicaThemeProvider({
     registerOverStyledConsoleCommand();
   }, []);
 
-  useEffect(() => {
-    if (!IS_DEV || !manifest || !breakpoints) return;
-    const missing = findMissingBreakpoints(manifest, breakpoints);
-    if (missing.length > 0) {
-      console.warn(
-        `[recursica] Forge defines breakpoint(s) ${missing.map((name) => `"${name}"`).join(", ")} that the app's breakpoints (${Object.keys(breakpoints).join(", ")}) do not. Add them to the UI kit theme under the same names so Forge and the UI kit stay aligned.`,
-      );
-    }
-  }, [manifest, breakpoints]);
-
-  return initLayer0 ? <Layer layer={0}>{children}</Layer> : <>{children}</>;
+  const content = initLayer0 ? (
+    <Layer layer={0}>{children}</Layer>
+  ) : (
+    <>{children}</>
+  );
+  return (
+    <RecursicaManifestContext.Provider value={manifest}>
+      {content}
+    </RecursicaManifestContext.Provider>
+  );
 }
