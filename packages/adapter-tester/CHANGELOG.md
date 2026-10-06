@@ -1,5 +1,11 @@
 # @recursica/adapter-tester
 
+## 5.3.1
+
+### Patch Changes
+
+- f7e739a: Docs and comments now point to the moved adapter repos; `@recursica/official-release` is retired.
+
 ## 5.3.0
 
 ### Minor Changes
