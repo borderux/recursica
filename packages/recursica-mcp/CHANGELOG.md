@@ -1,5 +1,11 @@
 # @recursica/mcp
 
+## 0.8.1
+
+### Patch Changes
+
+- f7e739a: Docs and comments now point to the moved adapter repos; `@recursica/official-release` is retired.
+
 ## 0.8.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # @recursica/adapter-common
 
+## 1.1.1
+
+### Patch Changes
+
+- f7e739a: Docs and comments now point to the moved adapter repos; `@recursica/official-release` is retired.
+
 ## 1.1.0
 
 ### Minor Changes

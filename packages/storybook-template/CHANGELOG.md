@@ -1,5 +1,13 @@
 # @recursica/storybook-template
 
+## 0.7.15
+
+### Patch Changes
+
+- f7e739a: Docs and comments now point to the moved adapter repos; `@recursica/official-release` is retired.
+- Updated dependencies [f7e739a]
+  - @recursica/adapter-common@1.1.1
+
 ## 0.7.14
 
 ### Patch Changes
