@@ -1,5 +1,11 @@
 # eslint-plugin-recursica
 
+## 0.2.2
+
+### Patch Changes
+
+- af27c87: Fix README usage: correct flat-config setup and note that `configs.recommended` is not valid flat config.
+
 ## 0.2.1
 
 ### Patch Changes
