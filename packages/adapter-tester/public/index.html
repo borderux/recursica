@@ -216,7 +216,7 @@
     // Injected by the dev server — see src/devServer.ts.
     const devConfig = window.__ADAPTER_TESTER__ || { ownName: 'Target', sourceOfTruthName: 'Source of Truth', sourceOfTruthPort: 6011 };
     document.getElementById('ownLabel').textContent = devConfig.ownName;
-    document.getElementById('sourceOfTruthLabel').textContent = `${devConfig.sourceOfTruthName} (Source of Truth)`;
+    document.getElementById('sourceOfTruthLabel').textContent = `${devConfig.sourceOfTruthName} v${devConfig.sourceOfTruthVersion} (Source of Truth)`;
 
     const ownIframe = document.getElementById('own');
     const sourceOfTruthIframe = document.getElementById('sourceOfTruth');

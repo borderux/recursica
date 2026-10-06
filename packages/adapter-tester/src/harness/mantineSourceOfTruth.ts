@@ -182,7 +182,7 @@ function previewTsx(): string {
   return `import type { Preview } from "@storybook/react-vite";
 import { createPreviewConfig } from "@recursica/storybook-template/preview";
 import { MantineProvider } from "@mantine/core";
-import { Layer } from "@recursica/adapter-common";
+import { Layer, RecursicaManifestContext } from "@recursica/adapter-common";
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
 import "@recursica/adapter-common/style.css";
@@ -190,6 +190,7 @@ import "../recursica_variables_scoped.css";
 import recursicaTokens from "../recursica_tokens.json";
 import recursicaBrand from "../recursica_brand.json";
 import recursicaUIKit from "../recursica_ui-kit.json";
+import recursicaManifest from "../recursica_manifest.json";
 
 const basePreview = createPreviewConfig({
   defaultTheme: "light",
@@ -216,13 +217,15 @@ const preview: Preview = {
       const content = <Story />;
       return (
         <MantineProvider>
-          {withLayer ? (
-            <Layer layer={layer as 0 | 1 | 2 | 3} style={{ padding: "48px" }}>
-              {content}
-            </Layer>
-          ) : (
-            content
-          )}
+          <RecursicaManifestContext.Provider value={recursicaManifest}>
+            {withLayer ? (
+              <Layer layer={layer as 0 | 1 | 2 | 3} style={{ padding: "48px" }}>
+                {content}
+              </Layer>
+            ) : (
+              content
+            )}
+          </RecursicaManifestContext.Provider>
         </MantineProvider>
       );
     },
@@ -255,15 +258,32 @@ function copyTokensScript(
       ? targetDir!
       : join(dir, "node_modules/@recursica/adapter-mantine-v8");
 
-  return `import { copyFileSync } from "node:fs";
+  // The mantine package doesn't publish recursica_manifest.json, so it
+  // always comes from the target adapter (the Storybook being evaluated).
+  // A target without one is tolerated with a warning: an empty manifest is
+  // written so preview.tsx's import still resolves, and only stories that
+  // actually read the manifest (e.g. Pagination) will fail.
+  const manifestDir = targetDir ?? sourceDir;
+
+  return `import { copyFileSync, existsSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const sourceDir = ${JSON.stringify(sourceDir)};
 const destDir = ${JSON.stringify(dir)};
 const files = ${JSON.stringify(TOKEN_FILES, null, 2)};
+const manifestDir = ${JSON.stringify(manifestDir)};
 
 for (const file of files) {
   copyFileSync(join(sourceDir, file), join(destDir, file));
+}
+const manifestSource = join(manifestDir, "recursica_manifest.json");
+if (existsSync(manifestSource)) {
+  copyFileSync(manifestSource, join(destDir, "recursica_manifest.json"));
+} else {
+  writeFileSync(join(destDir, "recursica_manifest.json"), "{}");
+  console.warn(
+    \`[adapter-tester] WARNING: no recursica_manifest.json at \${manifestSource} — using an empty manifest. Stories that read the manifest (e.g. Pagination) will fail on the Mantine side.\`,
+  );
 }
 
 console.log(\`[adapter-tester] copied Recursica tokens from \${sourceDir}\`);

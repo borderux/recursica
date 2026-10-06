@@ -33,6 +33,19 @@ if (sourceOfTruthVersionFlagIndex !== -1) {
   args.splice(sourceOfTruthVersionFlagIndex, 2);
 }
 
+// `--port <n>` sets the Dev Mode proxy port (default 6010) — pulled out the
+// same way, since it's consumed here rather than forwarded to Playwright.
+let devPort: number | undefined;
+const portFlagIndex = args.indexOf("--port");
+if (portFlagIndex !== -1) {
+  const value = args[portFlagIndex + 1];
+  devPort = Number(value);
+  if (value === undefined || !Number.isInteger(devPort) || devPort <= 0) {
+    throw new Error("--port requires a port number, e.g. --port 6020");
+  }
+  args.splice(portFlagIndex, 2);
+}
+
 // `--story <story-id>` scopes a run to exactly one story — pulled out the
 // same way, ahead of the passthrough logic, since it's consumed here (to
 // filter the generated spec) rather than forwarded to Playwright. Equivalent
@@ -110,7 +123,7 @@ async function main(): Promise<void> {
     }
     // Dual-Storybook interactive Dev Mode — no Playwright, no screenshots.
     // Used by the `adapter-tester` npm script.
-    await startDevServer(engineConfig, webServers);
+    await startDevServer(engineConfig, webServers, { port: devPort });
   } else {
     // The golden-image checks never need the source-of-truth adapter's own
     // Storybook running — the divergence check reads its stored golden files,

@@ -32,6 +32,8 @@ Installing `@recursica/adapter-tester` as a devDependency (see [below](#using-th
 }
 ```
 
+Dev Mode listens on port 6010 by default; pass `--port <n>` (e.g. `npm run adapter-tester -- --port 6020`) to run a second instance alongside it.
+
 - `npm run adapter-tester` — Interactive Dev Mode: boots both Storybooks (reusing them if already running) and opens the synced side-by-side comparison browser.
 - `npm run adapter-tester:automated` — the headless own-drift check against this project's own committed goldens; see [Automated Visual Tests](#automated-visual-tests) below. This is the one to run normally — fast, no network calls.
 - `npm run adapter-tester:source-of-truth` — the separate, opt-in divergence check: this project's **live** Storybook render against the source-of-truth adapter's published goldens. Not wired up for `@recursica/adapter-mantine-v8` itself — it _is_ the source of truth, so it has nothing to diverge from.

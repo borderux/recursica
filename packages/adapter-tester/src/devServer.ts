@@ -1,5 +1,5 @@
 import { spawn, type ChildProcess } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import express from "express";
@@ -37,6 +37,17 @@ function openBrowser(url: string): void {
       console.error(`[Dev Launcher] Failed to auto-launch browser:`, err);
     },
   );
+}
+
+/** Version of `@recursica/adapter-mantine-v8` installed in the harness (or
+ * read from a local source-of-truth checkout's own package.json). */
+function readInstalledMantineVersion(cwd: string): string {
+  const installed = join(
+    cwd,
+    "node_modules/@recursica/adapter-mantine-v8/package.json",
+  );
+  const path = existsSync(installed) ? installed : join(cwd, "package.json");
+  return JSON.parse(readFileSync(path, "utf8")).version;
 }
 
 export interface DevServerOptions {
@@ -91,6 +102,10 @@ export async function startDevServer(
   // Serve the Dev Mode UI at the root path ONLY if there is no query string.
   // This allows the iframe (which loads with ?path=/story/...) to pass
   // through to the proxy, avoiding an infinite loop of nested wrappers.
+  const sourceOfTruthVersion = readInstalledMantineVersion(
+    sourceOfTruthServer.cwd,
+  );
+
   app.get("/", (req, res, next) => {
     if (req.query.path) {
       next();
@@ -101,6 +116,7 @@ export async function startDevServer(
       `<head>\n  <script>window.__ADAPTER_TESTER__ = ${JSON.stringify({
         ownName: target.name,
         sourceOfTruthName: sourceOfTruth.name,
+        sourceOfTruthVersion,
         sourceOfTruthPort: sourceOfTruthRunning.port,
       })};</script>`,
     );
@@ -146,7 +162,7 @@ export async function startDevServer(
   process.on("SIGINT", cleanup);
   process.on("SIGTERM", cleanup);
 
-  app.listen(devPort, () => {
+  const server = app.listen(devPort, () => {
     console.log(`
 ====================================================
 🚀 Adapter Dev Mode proxy running at:
@@ -154,5 +170,12 @@ export async function startDevServer(
 ====================================================
 `);
     openBrowser(`http://localhost:${devPort}`);
+  });
+  server.on("error", (err) => {
+    console.error(
+      `[Dev Launcher] Dev Mode server failed to listen on port ${devPort}: ${err.message}. Pass --port <n> to use another port.`,
+    );
+    for (const child of spawned) child.kill("SIGINT");
+    process.exit(1);
   });
 }
