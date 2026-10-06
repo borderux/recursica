@@ -43,7 +43,7 @@ const TOKEN_FILES = [
  *   stale relative to Mantine's.
  *
  * Never `@recursica/official-release` — confirmed live (not a theoretical
- * concern) to be a stale, deprecated, generic token snapshot unrelated to
+ * concern) to be a stale, retired, generic token snapshot unrelated to
  * either adapter's real ones: it resolves the brand's primary/secondary
  * fonts to Lexend/Bellota Text, not this design system's actual Dongle/
  * Nunito Sans. An earlier version of this harness imported from it

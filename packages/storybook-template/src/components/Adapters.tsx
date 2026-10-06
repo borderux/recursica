@@ -72,7 +72,7 @@ export function AdaptersContent() {
           <div>
             <h2 style={headingStyle}>Mantine Adapter (Default)</h2>
             <p style={bodyStyle}>
-              Built on top of Mantine v7. This is our primary, most robust
+              Built on top of Mantine v8. This is our primary, most robust
               adapter recommended for most new React applications.
             </p>
           </div>

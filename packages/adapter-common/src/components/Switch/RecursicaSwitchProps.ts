@@ -20,8 +20,8 @@ export interface RecursicaSwitchGroupProps {
   value?: string[];
   /** Checked default values list in uncontrolled mode */
   defaultValue?: string[];
-  // `onChange` is intentionally not declared here. mantine-adapter picks it up straight from
-  // Mantine's own native Switch.Group (identical signature already). mui-adapter has no native
+  // `onChange` is intentionally not declared here. adapter-mantine-v8 picks it up straight from
+  // Mantine's own native Switch.Group (identical signature already). adapter-mui-v7 has no native
   // switch-group concept to match — MUI's own `FormGroup` is layout-only, no value/onChange —
   // so it declares this signature itself, same as TransferList/Accordion/CheckboxGroup.
 }
