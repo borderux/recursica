@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import type { Browser, TestInfo } from "@playwright/test";
+import type { Browser, Page, TestInfo } from "@playwright/test";
 import { existsSync, readFileSync } from "node:fs";
 import type { AdapterTesterConfig, StoryOverride } from "../config.js";
 import { diffPngBuffers } from "../golden/diffPng.js";
@@ -69,7 +69,7 @@ const DEFAULT_VIEWPORT = { width: 800, height: 600 };
 
 /** Resolves the capture viewport for `storyId`: the longest (most specific)
  * `stories` key with a `viewport` matching by prefix, else the default. */
-function resolveViewport(
+export function resolveViewport(
   storyId: string,
   storyOverrides: Record<string, StoryOverride>,
 ): { width: number; height: number } {
@@ -91,7 +91,7 @@ function resolveViewport(
 /** Resolves the diff threshold for `storyId`: the longest (most specific)
  * `storyThresholds` key matching by prefix, falling back to
  * `defaultThresholdPixels` when nothing matches. */
-function resolveThreshold(
+export function resolveThreshold(
   storyId: string,
   storyThresholds: Record<string, number>,
   defaultThresholdPixels: number,
@@ -108,6 +108,45 @@ function resolveThreshold(
   return bestMatch !== undefined
     ? storyThresholds[bestMatch]!
     : defaultThresholdPixels;
+}
+
+/** Waits for the story on an already-navigated `page` to settle (root
+ * mounted, fonts loaded), then screenshots it. Shared by the golden checks
+ * and Dev Mode's golden-diff badge so both capture identically. */
+export async function captureStoryScreenshot(page: Page): Promise<Buffer> {
+  await page.waitForSelector("#storybook-root");
+  await page.addStyleTag({
+    content: `* { -webkit-font-smoothing: antialiased !important; -moz-osx-font-smoothing: grayscale !important; }`,
+  });
+  // Web fonts (e.g. `withRecursicaFonts`'s Google Fonts `<link>`s, injected
+  // from a React effect after this page's `networkidle` already fired) can
+  // still be mid-download here. Wait for any `<link>` stylesheet that's
+  // still loading to settle — so the browser has parsed its `@font-face`
+  // rules and started the actual font-file fetches `document.fonts.ready`
+  // below needs to know about — then for the fonts themselves. Without
+  // this, the very first golden capture of a newly-introduced font family
+  // is a coin flip between the real font and its fallback, depending on
+  // how fast the network happens to be.
+  await page.evaluate(() =>
+    Promise.all(
+      Array.from(
+        document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]'),
+      ).map((link) =>
+        link.sheet
+          ? Promise.resolve()
+          : new Promise<void>((resolve) => {
+              link.addEventListener("load", () => resolve(), {
+                once: true,
+              });
+              link.addEventListener("error", () => resolve(), {
+                once: true,
+              });
+            }),
+      ),
+    ).then(() => document.fonts.ready),
+  );
+  await page.waitForTimeout(300);
+  return page.screenshot();
 }
 
 /** Everything a generated Playwright spec needs to register the golden-image
@@ -310,41 +349,7 @@ export async function resolveVisualRegressionPlan(
         `${ownTarget.url}/iframe.html?id=${story.id}&viewMode=story`,
         { waitUntil: "networkidle" },
       );
-      await page.waitForSelector("#storybook-root");
-      await page.addStyleTag({
-        content: `* { -webkit-font-smoothing: antialiased !important; -moz-osx-font-smoothing: grayscale !important; }`,
-      });
-      // Web fonts (e.g. `withRecursicaFonts`'s Google Fonts `<link>`s, injected
-      // from a React effect after this page's `networkidle` already fired) can
-      // still be mid-download here. Wait for any `<link>` stylesheet that's
-      // still loading to settle — so the browser has parsed its `@font-face`
-      // rules and started the actual font-file fetches `document.fonts.ready`
-      // below needs to know about — then for the fonts themselves. Without
-      // this, the very first golden capture of a newly-introduced font family
-      // is a coin flip between the real font and its fallback, depending on
-      // how fast the network happens to be.
-      await page.evaluate(() =>
-        Promise.all(
-          Array.from(
-            document.querySelectorAll<HTMLLinkElement>(
-              'link[rel="stylesheet"]',
-            ),
-          ).map((link) =>
-            link.sheet
-              ? Promise.resolve()
-              : new Promise<void>((resolve) => {
-                  link.addEventListener("load", () => resolve(), {
-                    once: true,
-                  });
-                  link.addEventListener("error", () => resolve(), {
-                    once: true,
-                  });
-                }),
-          ),
-        ).then(() => document.fonts.ready),
-      );
-      await page.waitForTimeout(300);
-      const liveBuffer = await page.screenshot();
+      const liveBuffer = await captureStoryScreenshot(page);
 
       const imagePath = goldenImagePath(goldenDir, story.id);
       // Only this worker ever touches this story's key, so reading it here

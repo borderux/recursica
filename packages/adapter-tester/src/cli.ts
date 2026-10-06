@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import type { AdapterTesterConfig } from "./config.js";
 import { startDevServer } from "./devServer.js";
-import { resolveConfig } from "./fileConfig.js";
+import { CONFIG_FILE_NAME, resolveConfig } from "./fileConfig.js";
 import type { HarnessWebServerConfig } from "./harness/mantineSourceOfTruth.js";
 import { launchAndDetectStorybook, toLaunchTarget } from "./portDiscovery.js";
 
@@ -123,7 +123,10 @@ async function main(): Promise<void> {
     }
     // Dual-Storybook interactive Dev Mode — no Playwright, no screenshots.
     // Used by the `adapter-tester` npm script.
-    await startDevServer(engineConfig, webServers, { port: devPort });
+    await startDevServer(engineConfig, webServers, {
+      port: devPort,
+      configPath: join(cwd, CONFIG_FILE_NAME),
+    });
   } else {
     // The golden-image checks never need the source-of-truth adapter's own
     // Storybook running — the divergence check reads its stored golden files,
